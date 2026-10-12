@@ -24,3 +24,16 @@ INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node scripts/b
 ```sh
 python3 patches/native-stages/tools/verify-source.py --source .codex-stage-sources/KiTrix/stages --assets .codex-stage-sources/generated --report .browser-evidence/native-stage5/source-comparison.json
 ```
+
+## 機能検証
+
+```sh
+INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node --experimental-vm-modules --test patches/native-stages/tests/*.test.mjs
+node scripts/check-inkwave-native-stages.mjs _site-native .browser-evidence/native-stage5
+node scripts/check-inkwave-native-online.mjs _site-native .browser-evidence/native-online
+node scripts/check-inkwave-native-lifecycle.mjs _site-native .browser-evidence/native-lifecycle
+```
+
+Node >=22、`esbuild@0.28.2`、`playwright@1.62.1`、`ws@8`、Chromium が必要。ブラウザ検証は `/usr/bin/chromium`（`CHROMIUM_PATH` で変更可）と SwiftShader を使う。画像・モデルを含む成果物は ignored ローカル領域に置く。数値検証の要約だけを reports に保存する。
+
+本体の品質変更は CPU 塗り・物理・ナビを保持する。塗り atlas の再配置は元の三角形に paint UV を再生成し、テクスチャ表現だけを変更する。オンラインではモデル/チャートと native runtime の fingerprint を検査する。元のガチ4ルール placement/geometry は未復元で、到達可能な Pnt 地形上のローカル調整値を使う。

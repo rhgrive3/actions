@@ -21,20 +21,24 @@ try{
   await page.evaluate(()=>{const g=NG.game;g._skipRender=true;for(let i=0;i<300;i++)g._frame(1/60);g._skipRender=false;});
   await page.waitForFunction(()=>NG.game.match?.state==='playing',null,{timeout:60000});
   console.log('match '+id);
+  console.log('spawn-before '+JSON.stringify(await page.evaluate(()=>({spawn:NG.local.s3?.squidSpawn,paused:NG.match.paused,controller:NG.match.controller.enabled,blocked:NG.match.controller.menuBlocked,menu:NG.game.menus.current,input:NG.input.mouse}))));
   await page.evaluate(()=>{const g=NG.game;g._skipRender=true;g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);g._skipRender=false;});
+  console.log('spawn-after '+JSON.stringify(await page.evaluate(()=>({spawn:NG.local.s3?.squidSpawn,intent:NG.local.intent.fire,paused:NG.match.paused,controller:NG.match.controller.enabled,blocked:NG.match.controller.menuBlocked,menu:NG.game.menus.current,input:NG.input.mouse}))));
   await page.evaluate(()=>{
    const G=NG;globalThis.nativeProfile={};
-   const wrap=(obj,name,label)=>{const fn=obj?.[name];if(typeof fn!=='function')return;obj[name]=function(...args){const t=performance.now();try{return fn.apply(this,args);}finally{const m=nativeProfile[label]||(nativeProfile[label]={milliseconds:0,calls:0});m.milliseconds+=performance.now()-t;m.calls++;}};};
+   const wrap=(obj,name,label)=>{const fn=obj?.[name];if(typeof fn!=='function')return;obj[name]=function(...args){const t=performance.now();try{return fn.apply(this,args);}finally{const m=nativeProfile[label]||(nativeProfile[label]={milliseconds:0,calls:0});const elapsed=performance.now()-t;m.milliseconds+=elapsed;m.calls++;if(label==='paint._advanceSplatOwnership'){const radius=Math.round(args[0].R*10)/10,key='paint.radius.'+radius,b=nativeProfile[key]||(nativeProfile[key]={milliseconds:0,calls:0,faceVisits:0});b.milliseconds+=elapsed;b.calls++;b.faceVisits+=args[0].entries.length/7;}}};};
    for(const n of ['raycast','collideBody','bodyFits','groundProbe'])wrap(G.physics,n,'physics.'+n);
-   for(const n of ['splat','_cpuSplat','flush','_drawQuads','_emitGrowth'])wrap(G.paint,n,'paint.'+n);
+   for(const n of ['splat','_cpuSplat','advanceSimulation','_advanceSplatOwnership','coverage','flush','_drawQuads','_emitGrowth'])wrap(G.paint,n,'paint.'+n);
    for(const n of ['path','nearest'])wrap(G.nav,n,'nav.'+n);
    for(const a of G.actors){wrap(a,'update','actor.update');wrap(a.character,'update','character.update');wrap(a.bot,'update','bot.update');}
+   wrap(G.game,'_updateHud','hud.update');wrap(G.game.minimap,'update','minimap.update');wrap(G.env,'update','environment.update');
    wrap(G.projectiles,'update','projectiles.update');wrap(G.fx,'update','fx.update');
   });
+  await page.evaluate(n=>globalThis.nativeTestFrames=n,Number(process.env.NATIVE_TEST_FRAMES||180));
   const report=await page.evaluate(()=>{
    const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;
    const positions=G.actors.map(a=>a.pos.toArray());const times=[];
-   for(let frame=0;frame<300;frame++){const t=performance.now();g._frame(1/60);times.push(performance.now()-t);}
+   for(let frame=0;frame<Number(globalThis.nativeTestFrames||180);frame++){const t=performance.now();g._frame(1/60);times.push(performance.now()-t);}
    g._skipRender=false;const a=g.match.local;
    const physics=G.physics,vec=a.pos.clone(),hit=physics.raycast(vec.clone().setY(vec.y+2),vec.clone().set(0,-1,0),5);
    if(hit.hit)G.paint.splat(hit.point.clone().addScaledVector(hit.normal,.03),2,a.team,{seed:.25,instant:true});
@@ -48,7 +52,25 @@ try{
   // Same integrated scene in a top-down reference view, both teams + source scenery.
   await page.evaluate(()=>{const G=NG,B=G.level.bounds,c=G.camera;c.position.set((B.minX+B.maxX)/2,180,(B.minZ+B.maxZ)/2+.01);c.lookAt((B.minX+B.maxX)/2,0,(B.minZ+B.maxZ)/2);G.renderer.render(G.scene,c);});
   await page.screenshot({path:path.join(evidence,id+'-overhead.png'),timeout:60000});
-  report.errors=errors;reports.push(report);fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(report));
+  await page.evaluate(()=>{NG.game.levelMesh.visible=false;for(const a of NG.actors)a.character.root.visible=false;NG.renderer.render(NG.scene,NG.camera);});
+  await page.screenshot({path:path.join(evidence,id+'-source-only.png'),timeout:60000});
+  await page.evaluate(()=>{NG.game.levelMesh.visible=true;for(const a of NG.actors)a.character.root.visible=true;});
+  report.rules=[];reports.push(report);fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));
+  for(const mode of ['zones','tower','rainmaker','clams']){
+   console.log('rule '+id+' '+mode);
+   await page.evaluate(async({id,mode})=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode,difficulty:'easy'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();}, {id,mode});
+   const rule=await page.evaluate(mode=>{
+    const G=NG,m=G.match,e=m.ranked,w=m.rankedWorld,a=m.local;
+    if(!e||!w)throw Error('Native ranked systems missing');
+    if(mode==='zones'){w.captureZone(0,0);m.advanceRanked(1.2);if(e.counts[0]>98)throw Error('Native zone paint did not score: '+JSON.stringify({cells:w._zoneCells.map(a=>a.length),coverage:w.zoneCoverage(),counts:e.counts,zone:e.stage.zones}));}
+    if(mode==='tower'){a.pos.fromArray(e.rule.state.position);a.pos.x+=.7;a._resolve(false,a.pos.y,false);if(a.ground.block!==w.towerBlockId)throw Error('Native triangle + dynamic tower support failed');m.advanceRanked(1);if(e.rule.state.controllingTeam!==a.team)throw Error('Native tower rider not counted');}
+    if(mode==='rainmaker'){m.rankedBarrierHits.push({id:String(a.nid??`${a.team}:${a.slot}`),team:a.team,damage:2000,kind:'main'});m.advanceRanked(1/60);if(e.rule.state.barrier.active)throw Error('Barrier did not pop');a.pos.fromArray(e.rule.state.pos);m.advanceRanked(1/60);if(e.rule.state.carrier===null)throw Error('Holder pickup failed');}
+    if(mode==='clams'){const c=e.rule.state.clams[0];a.pos.fromArray(c.pos);a.grounded=true;m.advanceRanked(1/60);const id=String(a.nid??`${a.team}:${a.slot}`);if(!(e.rule.state.inventories[id]?.small||e.rule.state.inventories[id]?.power))throw Error('Clam pickup failed');}
+    const snap=e.snapshot();if(!e.restore(snap))throw Error('Own rule snapshot rejected');
+    return {mode,state:m.state,actors:m.actors.length,counts:[...e.counts],snapshotBytes:JSON.stringify(snap).length,calibration:e.stage.calibration};
+   },mode);report.rules.push(rule);
+  }
+  report.errors=errors;fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(report));
   assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(report.native,true);assert.equal(report.actors,8);assert.equal(report.bots,7);assert.ok(report.moved.some(n=>n>1));assert.ok(report.coverage.some(n=>n>0));
   await context.close();
  }

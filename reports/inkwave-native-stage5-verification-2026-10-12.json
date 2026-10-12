@@ -1,0 +1,486 @@
+{
+  "mainStart": "b078c37907351f1bbc13d0e7d4b5cbeb0a330009",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "version1130Verified": false,
+  "sources": [
+    {
+      "id": "brinewater",
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "objSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+      "mtlSha256": "50b0e704370cfcf4a6825b2b0b5592baba8736b8f9da0b3c9b5ca89457d21e80",
+      "vertices": 510342,
+      "triangles": 405943,
+      "positionsFloat32Identical": true,
+      "normalsFloat32Identical": true,
+      "uvFloat32Identical": true,
+      "sourceTexturesIdentical": 520,
+      "maxPositionDifference": 0.0,
+      "version1130Verified": false,
+      "textureAndMtlGitTreeVerified": true
+    },
+    {
+      "id": "hagglefish",
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "objSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+      "mtlSha256": "3533c36d79c5da2fefc36c74a2f3437313054deea2c224e8988dda8e90a25625",
+      "vertices": 356466,
+      "triangles": 246063,
+      "positionsFloat32Identical": true,
+      "normalsFloat32Identical": true,
+      "uvFloat32Identical": true,
+      "sourceTexturesIdentical": 298,
+      "maxPositionDifference": 0.0,
+      "version1130Verified": false,
+      "textureAndMtlGitTreeVerified": true
+    },
+    {
+      "id": "inkblot",
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "objSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+      "mtlSha256": "eb9f51b355ab662299a0678938535b570b60abe9f52226989618fbfee83cedee",
+      "vertices": 299938,
+      "triangles": 205075,
+      "positionsFloat32Identical": true,
+      "normalsFloat32Identical": true,
+      "uvFloat32Identical": true,
+      "sourceTexturesIdentical": 223,
+      "maxPositionDifference": 0.0,
+      "version1130Verified": false,
+      "textureAndMtlGitTreeVerified": true
+    },
+    {
+      "id": "mako",
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "objSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+      "mtlSha256": "8d58a67199c565b20876664be6ff20034cac22015a4b73ccfd579325353a4bb1",
+      "vertices": 602231,
+      "triangles": 343399,
+      "positionsFloat32Identical": true,
+      "normalsFloat32Identical": true,
+      "uvFloat32Identical": true,
+      "sourceTexturesIdentical": 195,
+      "maxPositionDifference": 0.0,
+      "version1130Verified": false,
+      "textureAndMtlGitTreeVerified": true
+    },
+    {
+      "id": "scorch",
+      "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "objSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "mtlSha256": "53e8d7e568d4328f1a38cabc4f62181b45ba2d872bf39be62f7e3492fa6b827b",
+      "vertices": 319113,
+      "triangles": 279299,
+      "positionsFloat32Identical": true,
+      "normalsFloat32Identical": true,
+      "uvFloat32Identical": true,
+      "sourceTexturesIdentical": 235,
+      "maxPositionDifference": 0.0,
+      "version1130Verified": false,
+      "textureAndMtlGitTreeVerified": true
+    }
+  ],
+  "offline": {
+    "stages": [
+      {
+        "id": "scorch",
+        "actors": 8,
+        "bots": 7,
+        "movedBots": 7,
+        "rules": [
+          "zones",
+          "tower",
+          "rainmaker",
+          "clams"
+        ],
+        "errors": []
+      },
+      {
+        "id": "hagglefish",
+        "actors": 8,
+        "bots": 7,
+        "movedBots": 6,
+        "rules": [
+          "zones",
+          "tower",
+          "rainmaker",
+          "clams"
+        ],
+        "errors": []
+      },
+      {
+        "id": "inkblot",
+        "actors": 8,
+        "bots": 7,
+        "movedBots": 7,
+        "rules": [
+          "zones",
+          "tower",
+          "rainmaker",
+          "clams"
+        ],
+        "errors": []
+      },
+      {
+        "id": "mako",
+        "actors": 8,
+        "bots": 7,
+        "movedBots": 7,
+        "rules": [
+          "zones",
+          "tower",
+          "rainmaker",
+          "clams"
+        ],
+        "errors": []
+      },
+      {
+        "id": "brinewater",
+        "actors": 8,
+        "bots": 7,
+        "movedBots": 7,
+        "rules": [
+          "zones",
+          "tower",
+          "rainmaker",
+          "clams"
+        ],
+        "errors": []
+      }
+    ],
+    "cases": 25
+  },
+  "online": {
+    "status": "passed",
+    "cases": 25,
+    "transport": "real WebSocket + production RoomDurableObject",
+    "checks": [
+      {
+        "id": "scorch",
+        "mode": "turf",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "scorch",
+        "mode": "zones",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "scorch",
+        "mode": "tower",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "scorch",
+        "mode": "rainmaker",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "scorch",
+        "mode": "clams",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "turf",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "zones",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "tower",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "rainmaker",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "hagglefish",
+        "mode": "clams",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "turf",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "zones",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "tower",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "rainmaker",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "inkblot",
+        "mode": "clams",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "mako",
+        "mode": "turf",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "mako",
+        "mode": "zones",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "mako",
+        "mode": "tower",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "mako",
+        "mode": "rainmaker",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "mako",
+        "mode": "clams",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "turf",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "zones",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "tower",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "rainmaker",
+        "actors": 8,
+        "stateEqual": true
+      },
+      {
+        "id": "brinewater",
+        "mode": "clams",
+        "actors": 8,
+        "stateEqual": true
+      }
+    ]
+  },
+  "lifecycle": {
+    "status": "passed",
+    "quality": {
+      "cpuGridUnchanged": true,
+      "trianglePositionsUnchanged": true,
+      "authoritiesRetained": true,
+      "finalAtlas": 2048,
+      "textureCount": 81
+    },
+    "failureRollback": {
+      "rejected": true,
+      "levelRetained": true,
+      "paintRetained": true,
+      "displayRetained": true
+    },
+    "cancellation": {
+      "id": "inkblot",
+      "nativeGroups": 1
+    },
+    "switches": [
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 105,
+          "textures": 24
+        }
+      },
+      {
+        "id": "brinewater",
+        "native": true,
+        "nativeGroups": 1,
+        "memory": {
+          "geometries": 290,
+          "textures": 170
+        }
+      },
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 105,
+          "textures": 24
+        }
+      }
+    ],
+    "fingerprint": {
+      "same": true,
+      "changed": false,
+      "missing": false
+    }
+  },
+  "mobileEmulation": [
+    {
+      "id": "scorch",
+      "viewport": [
+        844,
+        390
+      ],
+      "touch": true,
+      "actors": 8,
+      "native": true,
+      "atlas": 2048,
+      "textureCount": 81,
+      "cpuFrame": {
+        "p50": 24.799999999813735,
+        "p95": 58.299999999813735,
+        "max": 2467
+      },
+      "gpuDrainRenderMs": 4.5,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "local": {
+        "grounded": true,
+        "spawn": false
+      },
+      "mobileHardwareMeasured": false
+    },
+    {
+      "id": "hagglefish",
+      "viewport": [
+        844,
+        390
+      ],
+      "touch": true,
+      "actors": 8,
+      "native": true,
+      "atlas": 2048,
+      "textureCount": 108,
+      "cpuFrame": {
+        "p50": 10.5,
+        "p95": 21.299999999813735,
+        "max": 33.700000000186265
+      },
+      "gpuDrainRenderMs": 2.3999999994412065,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "local": {
+        "grounded": true,
+        "spawn": false
+      },
+      "mobileHardwareMeasured": false
+    },
+    {
+      "id": "inkblot",
+      "viewport": [
+        844,
+        390
+      ],
+      "touch": true,
+      "actors": 8,
+      "native": true,
+      "atlas": 2048,
+      "textureCount": 94,
+      "cpuFrame": {
+        "p50": 11.700000000186265,
+        "p95": 32.40000000037253,
+        "max": 45.200000000186265
+      },
+      "gpuDrainRenderMs": 18,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "local": {
+        "grounded": true,
+        "spawn": false
+      },
+      "mobileHardwareMeasured": false
+    },
+    {
+      "id": "mako",
+      "viewport": [
+        844,
+        390
+      ],
+      "touch": true,
+      "actors": 8,
+      "native": true,
+      "atlas": 2048,
+      "textureCount": 73,
+      "cpuFrame": {
+        "p50": 35.80000000074506,
+        "p95": 75.59999999962747,
+        "max": 4564.5
+      },
+      "gpuDrainRenderMs": 38.799999999813735,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "local": {
+        "grounded": true,
+        "spawn": false
+      },
+      "mobileHardwareMeasured": false
+    },
+    {
+      "id": "brinewater",
+      "viewport": [
+        844,
+        390
+      ],
+      "touch": true,
+      "actors": 8,
+      "native": true,
+      "atlas": 2048,
+      "textureCount": 170,
+      "cpuFrame": {
+        "p50": 12.399999999441206,
+        "p95": 36.5,
+        "max": 1986.3999999994412
+      },
+      "gpuDrainRenderMs": 5.2999999998137355,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "local": {
+        "grounded": true,
+        "spawn": false
+      },
+      "mobileHardwareMeasured": false
+    }
+  ],
+  "performanceNotes": "CPU simulation timings include live eight-actor game work; warmup/first-draw spikes and workload variance exist. Some measurement overlapped regression processes. SwiftShader viewport emulation is not real mobile hardware or retail FPS."
+}
