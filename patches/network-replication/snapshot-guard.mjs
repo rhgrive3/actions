@@ -11,6 +11,54 @@ const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min
 export function validSnapshotTimestamp(timestamp) {
   return finite(timestamp) && timestamp >= 0 && Number.isSafeInteger(Math.round(timestamp * 1000));
 }
+
+const OWNER_CLOCK_MAX = 365 * 24 * 60 * 60;
+const OWNER_TICK_FORWARD_GRACE = 5;
+const OWNER_SIM_TICK_MAX = 90 * 24 * 60 * 60 * 60;
+const OWNER_SIM_TICK_GRACE = 600;
+const EVENT_SEQUENCE_MAX = 10_000_000;
+const EVENT_SEQUENCE_FORWARD_WINDOW = 65_536;
+export const NETWORK_PROJECTILE_LIFE_MAX = 10;
+export const NETWORK_PROJECTILE_DELAY_MAX = 2;
+
+// Owner performance.now() clocks may have arbitrary offsets across peers, so
+// the first packet establishes the offset. After that, sender time may advance
+// only by the local receive elapsed time plus a generous hitch/jitter budget.
+export function validOwnerTickAdvance(timestamp, previousTimestamp, receivedAt, previousReceivedAt) {
+  if (!validSnapshotTimestamp(timestamp) || timestamp > OWNER_CLOCK_MAX) return false;
+  if (previousTimestamp === undefined) return true;
+  if (!validSnapshotTimestamp(previousTimestamp) || timestamp <= previousTimestamp) return false;
+  const senderDelta = timestamp - previousTimestamp;
+  if (!finite(receivedAt) || !finite(previousReceivedAt)) return senderDelta <= OWNER_TICK_FORWARD_GRACE;
+  const receiveDelta = Math.max(0, receivedAt - previousReceivedAt);
+  return senderDelta <= receiveDelta + OWNER_TICK_FORWARD_GRACE;
+}
+
+// d.u is G.time * 60. It may stall while gameplay is paused, but within one
+// owner epoch it must not run backwards or jump hundreds of seconds ahead of
+// the corresponding owner timestamp.
+export function validOwnerSimulationTick(tick, timestamp, points) {
+  if (!integer(tick, 0, OWNER_SIM_TICK_MAX) || !validSnapshotTimestamp(timestamp)) return false;
+  if (!Array.isArray(points) || points.length < 2) return true;
+  const previousTimestamp = points[points.length - 2], previousTick = points[points.length - 1];
+  if (!validSnapshotTimestamp(previousTimestamp) || !integer(previousTick, 0, OWNER_SIM_TICK_MAX)
+    || timestamp <= previousTimestamp || tick < previousTick) return false;
+  const expectedTicks = Math.ceil((timestamp - previousTimestamp) * 60);
+  return tick - previousTick <= expectedTicks + OWNER_SIM_TICK_GRACE;
+}
+
+// Sequence identity is session-scoped and can legitimately have gaps, but a
+// single packet must never be able to jump the replay watermark near MAX_SAFE.
+export function validEventSequence(sequence, previousSequence = 0) {
+  if (!integer(sequence, 1, EVENT_SEQUENCE_MAX)) return false;
+  if (!integer(previousSequence, 0, EVENT_SEQUENCE_MAX) || previousSequence === 0) return true;
+  return sequence > previousSequence && sequence - previousSequence <= EVENT_SEQUENCE_FORWARD_WINDOW;
+}
+
+export function validNetworkProjectileTiming(delay, life) {
+  return bounded(delay, 0, NETWORK_PROJECTILE_DELAY_MAX)
+    && bounded(life, Number.EPSILON, NETWORK_PROJECTILE_LIFE_MAX);
+}
 // Native Boss.pack has 18 fields, plus an optional full move record. Match the
 // producer's structural contract before Boss.unpack/Hermite/guest follow.
 export function validBossSnapshotRow(row, timestamp) {
