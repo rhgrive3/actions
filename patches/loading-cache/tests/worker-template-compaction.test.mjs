@@ -49,3 +49,19 @@ test('template compaction never bypasses the unchanged worker size ceiling',t=>{
   const plan={assets,precache:Object.keys(assets),assetBytes:1000,precacheBytes:1000};
   assert.throws(()=>finalizeLoadingWorker(root,revision,plan,()=> 'const BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;'),/68 KiB/);
 });
+
+
+test('production precache indices preserve the complete ordered integrity manifest',t=>{
+  const root=setup(t);
+  const assets={'z/long/dependency/alpha.mjs':[7,'b'.repeat(64)],'a/long/dependency/beta.css':[9,'c'.repeat(64)]};
+  const plan={assets,precache:['a/long/dependency/beta.css','z/long/dependency/alpha.mjs'],
+    assetBytes:16,precacheBytes:16,budget:{mode:'production',worker:69*1024}};
+  const result=finalizeLoadingWorker(root,revision,plan);
+  const raw=literal(root),names=Object.keys(raw.assets);
+  assert.deepEqual(raw.precache,[1,0]);
+  assert.deepEqual(raw.precache.map(i=>names[i]),plan.precache);
+  assert.deepEqual(raw.assets,assets);
+  assert.equal(result.precacheCount,plan.precache.length);
+  assert.equal(result.workerBytes,fs.statSync(path.join(root,'sw.js')).size);
+  assert.throws(()=>finalizeLoadingWorker(root,revision,{...plan,precache:['missing.js']}),/missing precache dependency/);
+});

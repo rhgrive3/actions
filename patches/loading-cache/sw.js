@@ -4,6 +4,16 @@
  * no skipWaiting, automatic reload, or cross-revision response substitution.
  */
 const BUILD = /*__INKWAVE_CACHE_BUILD__*/ null;
+// Production builds reference the canonical asset keys instead of duplicating
+// every long path in the stamped worker. Legacy string-path manifests remain
+// supported; missing/corrupt indexed entries must reject installation.
+if(BUILD.precache.some(value=>typeof value==='number')){
+  const paths=Object.keys(BUILD.assets);
+  BUILD.precache=BUILD.precache.map(index=>{
+    if(!Number.isSafeInteger(index)||index<0||index>=paths.length)throw new Error('Invalid precache index');
+    return paths[index];
+  });
+}
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `inkwave-startup-v2:${SCOPE.pathname}:`;
 const META = PREFIX + 'state';

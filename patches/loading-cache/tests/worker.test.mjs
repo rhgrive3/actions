@@ -7,6 +7,21 @@ const asset=(revision,path='src/main.js')=>`_versions/${revision}/${path}`;
 const get=async(w,path,opts)=> (await w.request(path,opts)).response;
 async function installed(build=makeBuild(),world=new World()) {world.serve(build);const worker=world.worker(build);await worker.install();await worker.activate();return {world,worker,build};}
 
+
+test('numeric production precache resolves immutable asset paths and rejects corrupt indices',async()=>{
+  const world=new World(),build=makeBuild();
+  const paths=Object.keys(build.config.assets);
+  build.config.precache=build.config.precache.map(rel=>paths.indexOf(rel));
+  world.serve(build);
+  const worker=world.worker(build);
+  await worker.install();await worker.activate();
+  assert.equal((await worker.status()).offlineReady,true);
+  world.offline=true;
+  for(const rel of paths)assert.equal((await get(worker,asset(REV_A,rel))).status,200);
+  const broken=makeBuild(REV_B);broken.config.precache=[paths.length];
+  assert.throws(()=>world.worker(broken),/Invalid precache index/);
+});
+
 test('complete snapshot commits last, claims only on activation, never skipWaiting',async()=>{
  const world=new World(),build=makeBuild();world.serve(build);const worker=world.worker(build);await worker.install();
  assert.equal(worker.counts.claims,0);assert.equal(worker.counts.skipWaiting,0);
