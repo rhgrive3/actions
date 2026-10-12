@@ -25,15 +25,17 @@ const oldClockGate = (rel, source) => rel === 'src/net/netmatch.js'
       .replace('if (!Number.isFinite(d?.ts) || Math.abs(d.ts) > 1e12) return;', '')
   : source;
 
-test('#1178 old finite-only clock accepts an extreme timestamp and rejects the next native owner tick', async () => {
-  const f = await pair(oldClockGate);
+test('#1178 extreme sender clock cannot poison a later valid owner snapshot', async () => {
+  const f = await pair();
   try {
-    f.receive(f.packet(2));
+    const first = f.packet(2); f.receive(first);
+    const peer = f.viewer.net.peers.get('A');
     const invalid = f.packet(40); invalid.ts = 1e308; f.receive(invalid);
+    assert.equal(peer.lastTs, first.ts);
+    assert.equal(f.viewer.attacker.net.buf.at(-1).x, 2);
     const next = f.packet(7); f.receive(next);
-    assert.equal(f.viewer.net.peers.get('A').lastTs, 1e308);
-    assert.equal(f.viewer.attacker.net.buf.at(-1).x, 40);
-    assert.notEqual(f.viewer.attacker.net.buf.at(-1).t, next.ts);
+    assert.equal(peer.lastTs, next.ts);
+    assert.equal(f.viewer.attacker.net.buf.at(-1).x, 7);
   } finally { f.dispose(); }
 });
 

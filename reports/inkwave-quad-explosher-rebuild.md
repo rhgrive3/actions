@@ -1,6 +1,6 @@
 # Quad and Explosher procedural reconstruction
 
-Base: `b078c37907351f1bbc13d0e7d4b5cbeb0a330009`. Scope is only `s3-maneuver-stepper` (Dark Tetra Dualies / クアッドホッパーブラック) and `s3-slosher-washtub` (Explosher / エクスプロッシャー).
+Current comparison base: `1fca80b32c98455924afbbffeccd952fd0122b71`. Earlier measurements below used `b078c37907351f1bbc13d0e7d4b5cbeb0a330009`. Scope is only `s3-maneuver-stepper` (Dark Tetra Dualies / クアッドホッパーブラック) and `s3-slosher-washtub` (Explosher / エクスプロッシャー).
 
 ## Source and design
 
@@ -49,3 +49,7 @@ The native rear hand grip on Explosher has no clearly visible counterpart in the
 Correction to the first snapshot inventory: `sloshers.MODELS` excludes the legacy native Slosher. `bdda231` actually tested eleven registered models and nine untouched geometry hashes, not the previously stated twelve/ten. The second reconstruction adds legacy Slosher explicitly so the executed inventory is now twelve models and ten unchanged geometry comparisons.
 
 Second reconstruction source metrics: Quad 11,715 static body+ink triangles / 303,290 bytes; Explosher 11,989 / 306,614. Draw groups remain merged and no cache, LOD, animation, hold or emission code changes. New emitted images and eight-Actor performance evidence must be reviewed before judging this candidate.
+
+## Latest-main composition
+
+The second reconstruction includes main `1fca80b32c98455924afbbffeccd952fd0122b71` (camera, collision, paint and networking updates). The model family files are unchanged on that main. Both baseline and candidate builds in the new review use this same main composition; old bdda performance values are not reused as evidence for this version. The 43-file shared main delta was independently checked against each Git blob SHA before local composition.
