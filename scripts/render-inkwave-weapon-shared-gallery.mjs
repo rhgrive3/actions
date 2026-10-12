@@ -14,7 +14,8 @@ import { chromium } from 'playwright';
 const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n < 0 ? fallback : process.argv[n + 1]; };
 const site = path.resolve(arg('--site', '_site')), out = path.resolve(arg('--out', '.ci-scratch/weapon-gallery'));
 const ids = (arg('--ids', '') || '').split(',').filter(Boolean), held = !process.argv.includes('--no-held');
-const size = Number(arg('--size', 400)), crowd = process.argv.includes('--crowd');
+const size = Number(arg('--size', 600)), crowd = false; // visual/contracts only
+if (process.argv.includes('--crowd')) throw Error('Use measure-inkwave-weapon-shell-cost.mjs for completed-output crowd timing');
 const compareClearcoat = process.argv.includes('--compare-clearcoat');
 const hostSnapshot = () => {
   const cpus = os.cpus(), times = { user: 0, nice: 0, sys: 0, idle: 0, irq: 0 };
@@ -60,8 +61,8 @@ try {
     renderer.setSize(size, size); renderer.setClearColor(0xffffff, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; document.body.append(renderer.domElement);
     const scene = new THREE.Scene();
-    const px = new Uint8Array(32 * 16 * 4); for (let y = 0; y < 16; y++) for (let x = 0; x < 32; x++) { const v = y < 9 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 32 + x) * 4); }
-    const sky = new THREE.DataTexture(px, 32, 16); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
+    const px = new Uint8Array(1024 * 512 * 4); for (let y = 0; y < 512; y++) for (let x = 0; x < 1024; x++) { const v = y / 512 < 9 / 16 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 1024 + x) * 4); }
+    const sky = new THREE.DataTexture(px, 1024, 512); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
     const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(sky).texture;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
     const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3, 4, 2); scene.add(key);
@@ -223,106 +224,26 @@ try {
 
         }
       }
-      // Fixed-pose render submission including a GPU completion boundary. Same-runner A/B only.
-      const benchCam=new THREE.PerspectiveCamera(32,1,.05,30);benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.15)));
-      const samples=[],gl=renderer.getContext();for(let j=0;j<100;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=20)samples.push(performance.now()-t);}
-      samples.sort((a,b)=>a-b);res.renderMs={p50:samples[Math.floor(samples.length*.5)],p95:samples[Math.floor(samples.length*.95)]};
-      res.drawCalls=renderer.info.render.calls;res.renderTriangles=renderer.info.render.triangles;
-      if(crowd){
-        const actors=[a], ids=['s3-spinner-downpour','s3-maneuver-short','s3-maneuver-gallon','s3-slosher-launcher'];
-        for(let k=1;k<8;k++){
-          const other=new Actor({team:k%2,weapon:ids[k%ids.length],CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),c=other.character;
-          c.actor=other;c.onEvent=null;other.grounded=other.ground.hit=true;scene.add(c.root);actors.push(other);
-          if(c._sourceMotionLoader)await c._sourceMotionLoader;if(c.sourceMotion?.ready)await c.sourceMotion.ready;
-        }
-        const shells=actors.map(o=>o.character.weapon.off.getObjectByName('weapon-glass')).filter(Boolean);
-        if (shells.length && new Set(shells.map(s=>s.material)).size !== 1) throw Error('Glass material is not shared');
-        res.glassMaterials = new Set(shells.map(s=>s.material)).size;
-        G.actors=actors;const camera=new THREE.PerspectiveCamera(40,1,.05,60);camera.position.set(-5,3.5,8);camera.lookAt(0,.8,0);
-        // Keep original sample order; old p50/p95-only artifacts cannot reconstruct it.
-        const quant=(arr)=>{const sorted=[...arr].sort((a,b)=>a-b);return{n:arr.length,p50:sorted[Math.floor(arr.length*.5)],p95:sorted[Math.floor(arr.length*.95)],samples:[...arr]};};
-        res.crowd={};
-        for(const tier of['game','far']){
-          for(let k=0;k<actors.length;k++){const o=actors[k];o.pos.set((k%4-1.5)*1.15,0,Math.floor(k/4)*1.5);o.intent.fire=false;o.character.setLod(tier);for(let z=0;z<4;z++)o._finishFrame(1/60);}
-          const cpu=[],done=[],anim=[];for(let k=0;k<80;k++){const t0=performance.now();for(const o of actors)o._finishFrame(1/60);const t1=performance.now();renderer.render(scene,camera);const t2=performance.now();gl.finish();const t3=performance.now();if(k>=20){anim.push(t1-t0);cpu.push(t2-t1);done.push(t3-t1);}}
-          const geos=new Set();scene.traverseVisible(o=>{if(o.isMesh&&o.geometry)geos.add(o.geometry);});let geometryBytes=0;for(const g of geos){for(const a of Object.values(g.attributes))geometryBytes+=a.array.byteLength;if(g.index)geometryBytes+=g.index.array.byteLength;}
-          res.crowd[tier]={actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
-          res.images['crowd-'+tier]=snap();
-        }
-        // Same eight Actors and camera through the real game's full post stack.
-        const { Renderer } = await import(prefix + 'src/core/renderer.js');
-        const container=document.createElement('div');document.body.append(container);
-        const full=new Renderer(container,{quality:'high',shadows:true,bloom:true});full.renderer.debug.checkShaderErrors=true;full.setScene(scene,camera);
-        if(!full.gtao)throw Error('Crowd production GTAO is not active');res.productionCrowd={};
-        const fullGL=full.renderer.getContext(),sharedRanges=new Map(shells.map(s=>[s.geometry,s.geometry.drawRange.count]));
-        const debugRenderer=fullGL.getExtension('WEBGL_debug_renderer_info');
-        res.timingNotes='Wall-time intervals: full.render includes driver blocking; finishWait is remaining synchronization, not an isolated GPU timer. Static posed Actors exclude animation from production timing.';
-        res.browser={userAgent:navigator.userAgent,hardwareConcurrency:navigator.hardwareConcurrency,
-          glVendor:fullGL.getParameter(fullGL.VENDOR),glRenderer:fullGL.getParameter(fullGL.RENDERER),
-          unmaskedVendor:debugRenderer?fullGL.getParameter(debugRenderer.UNMASKED_VENDOR_WEBGL):null,
-          unmaskedRenderer:debugRenderer?fullGL.getParameter(debugRenderer.UNMASKED_RENDERER_WEBGL):null};
-        const countFrame=()=>{
-          const counter=observeDraws(full.renderer);
-          try{full.renderer.info.reset();full.render();fullGL.finish();const result=counter.read();if(result.nonzero+result.zero!==full.renderer.info.render.calls)throw Error('Production GL call tally mismatch');return result;}
-          finally{counter.restore();}
-        };
-        const measureNative=(label,instrumented,measured=24,warm=12)=>{
-          const complete=[],submit=[],finishWait=[],startedAt=performance.timeOrigin+performance.now(),counter=instrumented?observeDraws(full.renderer):null;
-          try{
-            for(let j=0;j<warm+measured;j++){
-              full.renderer.info.reset();counter?.reset();const t=performance.now();full.render();const submitted=performance.now();fullGL.finish();const finished=performance.now();
-              if(j>=warm){submit.push(submitted-t);finishWait.push(finished-submitted);complete.push(finished-t);}
-              for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Production crowd leaked shared glass range');
-            }
-            const draws=counter?counter.read():countFrame();
-            if(draws.nonzero+draws.zero!==full.renderer.info.render.calls)throw Error('Production GL call tally mismatch');
-            return{label,instrumented,warmFrames:warm,measuredFrames:measured,startedAt,
-              glNonzeroDrawCalls:draws.nonzero,glZeroCountCalls:draws.zero,drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles,
-              renderCompleteMs:quant(complete),renderSubmitMs:quant(submit),finishWaitMs:quant(finishWait),allGlassRangesRestored:true};
-          }finally{counter?.restore();}
-        };
-        for(const tier of ['game','far']){
-          for(const o of actors){o.character.setLod(tier);for(let j=0;j<8;j++)o._finishFrame(1/60);}
-          // The GL observer is deliberately absent from primary timing. Count a
-          // separate frame, then measure observer overhead in the probe below.
-          res.productionCrowd[tier]={...measureNative('primary-uninstrumented',false),actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled};
-          res.images['crowd-production-'+tier]=full.renderer.domElement.toDataURL('image/png').split(',')[1];
-        }
-        if(compareClearcoat){
-          const material=shells[0]?.material,original=material?.clearcoat;
-          const probe={onlyChangedProperty:material?'clearcoat':null,originalClearcoat:original??null,variantClearcoat:material?0:null,pose:'same static posed Actors; animation excluded',tiers:{}};
-          res[material?'clearcoatProbe':'observerProbe']=probe;
-          try{
-            for(const tier of ['game','far']){
-              for(const o of actors){o.character.setLod(tier);for(let j=0;j<8;j++)o._finishFrame(1/60);}
-              const rounds=[];
-              const settings=material?[['control-A',original],['zero-B',0],['zero-B2',0],['control-A2',original]]:[['no-shell-control',null]];
-              for(const [name,value]of settings){
-                if(material)material.clearcoat=value;const hostBefore=await window.__weaponHostSnapshot(),blocks=[];
-                for(const [label,on]of[['observer-off',false],['observer-on',true],['observer-off-repeat',false]]){
-                  const blockHostBefore=await window.__weaponHostSnapshot(),block=measureNative(label,on,120,24);
-                  block.hostBefore=blockHostBefore;block.hostAfter=await window.__weaponHostSnapshot();blocks.push(block);
-                }
-                const hostAfter=await window.__weaponHostSnapshot();rounds.push({name,clearcoat:value,hostBefore,hostAfter,blocks});
-                res.images['crowd-clearcoat-'+tier+'-'+name]=full.renderer.domElement.toDataURL('image/png').split(',')[1];
-              }
-              const expected=rounds[0].blocks[0];
-              for(const round of rounds)for(const block of round.blocks)for(const key of['glNonzeroDrawCalls','glZeroCountCalls','drawCalls','triangles'])if(block[key]!==expected[key])throw Error('Clearcoat-only probe changed '+key);
-              probe.tiers[tier]=rounds;
-            }
-          }finally{if(material)material.clearcoat=original;}
-          probe.materialRestored=!material||material.clearcoat===original;
-        }
-        full._disposeComposer();full.renderer.dispose();container.remove();
-        for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
-        G.actors=[a];
-      }
+      // No short gl.finish timing: this run produces visual and channel evidence only.
       if (!crowd && id === 's3-spinner-downpour') {
         // Render the actual emitted game post stack, not a studio substitute:
         // native HDR/MSAA, GTAO, bloom, colour grade and output on real Actor.
         const { Renderer } = await import(prefix + 'src/core/renderer.js');
         const container=document.createElement('div');document.body.append(container);
         const gameRenderer=new Renderer(container,{quality:'high',shadows:true,bloom:true});
+        // Build native PMREM inside the very GL context that samples it. Never
+        // reuse studio render-target textures across WebGL contexts.
+        const { Environment } = await import(prefix+'src/world/environment.js');
+        const savedEnvironment=scene.environment,savedIntensity=scene.environmentIntensity,savedGEnv=G.env,savedGRenderer=G.renderer;
+        const savedLights=scene.children.filter(o=>o.isLight);for(const light of savedLights)scene.remove(light);
+        const nativeScene=new THREE.Scene();
+        G.renderer=gameRenderer.renderer;
+        const nativeEnvironment=new Environment(gameRenderer.renderer,nativeScene,{theme:'day'});
+        scene.environment=nativeEnvironment.envMap;scene.environmentIntensity=nativeScene.environmentIntensity;
+        scene.add(nativeEnvironment.sun,nativeEnvironment.hemi);G.env=nativeEnvironment;
+        gameRenderer.renderer.toneMapping=THREE.NeutralToneMapping;gameRenderer.renderer.toneMappingExposure=.94;
+        if(scene.environment!==nativeEnvironment.envMap||scene.environment.image.width<256||scene.environment.image.height<256)throw Error('Invalid native same-context environment');
+        res.environmentFixture={studio:{equirect:[1024,512],pmremCubeSize:256,ownContext:true},production:{theme:'day',pmremImage:[scene.environment.image.width,scene.environment.image.height],ownContext:true,intensity:scene.environmentIntensity,toneMapping:gameRenderer.renderer.toneMapping,exposure:gameRenderer.renderer.toneMappingExposure},scope:'isolated real Actor, native Environment lights/reflections/grade and high post stack; no arena geometry or gameplay FPS claim'};
         gameRenderer.renderer.debug.checkShaderErrors=true;
         const camera=new THREE.PerspectiveCamera(32,innerWidth/innerHeight,.05,30);
         gameRenderer.setScene(scene,camera);
@@ -351,7 +272,9 @@ try {
           pipelineRows.push({glNonzeroDrawCalls:visibleDraws.nonzero,glZeroCountCalls:visibleDraws.zero,withoutGlassGlDraws:hiddenDraws,tier,background,inkColor,distance,drawCalls:calls,withoutGlassDrawCalls:hiddenCalls,glassVisible:!!shell?.visible,rangeRestored:!shell||d.glass.drawRange.count===originalRange});
         }
         res.productionPipeline={quality:'high',ao:!!gameRenderer.gtao,bloom:!!gameRenderer.bloom?.enabled,rows:pipelineRows,failures:pipelineFailures};
-        draws.restore();gameRenderer._disposeComposer();gameRenderer.renderer.dispose();container.remove();
+        draws.restore();scene.remove(nativeEnvironment.sun,nativeEnvironment.hemi);scene.add(...savedLights);
+        scene.environment=savedEnvironment;scene.environmentIntensity=savedIntensity;G.env=savedGEnv;G.renderer=savedGRenderer;
+        nativeEnvironment.dispose();gameRenderer._disposeComposer();gameRenderer.renderer.dispose();container.remove();
         scene.background=null;ch.setColor(color);ch.setLod('hero');
       }
       a.weaponRunner.reset(); scene.remove(ch.root); ch.dispose();

@@ -7,6 +7,7 @@ on:
       - patches/splatoon3/runtime/weapon-models/**
       - patches/splatoon3/tests/weapon-shared-rendering.test.mjs
       - scripts/render-inkwave-weapon-shared-gallery.mjs
+      - scripts/measure-inkwave-weapon-shell-cost.mjs
       - .github/workflows/inkwave-weapon-shared-rendering.yml
 permissions:
   contents: read
@@ -25,7 +26,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -49,7 +50,7 @@ jobs:
         run: |
           IDS=s3-spinner-downpour,s3-maneuver-short,s3-maneuver-gallon,s3-slosher-launcher
           node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
-          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500 --compare-clearcoat
+          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -57,7 +58,7 @@ jobs:
           path: |
             .model-evidence
           include-hidden-files: true
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
 
   crowd:
@@ -71,7 +72,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -86,23 +87,22 @@ jobs:
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
           node scripts/build-inkwave.mjs inkwave-public .model-after-site
-      - name: Eight mixed Actors game and far LOD ABBA
+      - name: Limited completed-output adoption ABBA, raw frames retained
         run: |
-          for pair in before-A after-B after-B2 before-A2; do
-            version="${pair%%-*}"
-            node scripts/render-inkwave-weapon-shared-gallery.mjs --site ".model-${version}-site" --out ".model-crowd/${pair}" --ids s3-spinner-downpour --size 600 --crowd --compare-clearcoat
+          for pair in before-A1 after-B1 after-B2 before-A2; do
+            version="${pair%%-*}"; variant="${pair#*-}"
+            node scripts/measure-inkwave-weapon-shell-cost.mjs --site ".model-${version}-site" --out ".model-crowd/${variant}" --variant "$variant"
           done
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
-          const all={};for(const name of['before-A','after-B','after-B2','before-A2']){const d=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/gallery.json'));if(d.errors.length)throw Error(d.errors.join('\n'));all[name]={...d.rows[0].crowd,production:d.rows[0].productionCrowd};}
-          fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));console.log('WEAPON_SHARED_ABBA '+JSON.stringify(all));
-          for(const tier of['game','far'])for(const name of['after-B','after-B2']){
-            if(all[name][tier].actors!==8||new Set(all[name][tier].ids).size!==4)throw Error('Incomplete mixed-model crowd');
-            if(all[name][tier].drawCalls>all['before-A'][tier].drawCalls+2)throw Error('More than one transparent draw per Ballpoint '+tier);
-            const actual=all[name].production[tier],base=all['before-A'].production[tier];
-            if(actual.glNonzeroDrawCalls!==base.glNonzeroDrawCalls+2||actual.glZeroCountCalls!==base.glZeroCountCalls+2||actual.drawCalls!==base.drawCalls+4)throw Error('Production GL nonzero/zero gate budget differs '+tier);
+          const all={};for(const name of['A1','B1','B2','A2']){const d=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/result.json'));if(d.errors.length)throw Error(d.errors.join('\n'));all[name]=d;}
+          fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));
+          for(const tier of['game','far'])for(const name of['B1','B2']){
+            const actual=all[name].tiers[tier].preparation,base=all.A1.tiers[tier].preparation;
+            if(actual.nonzero!==base.nonzero+2||actual.zero!==base.zero+2)throw Error('Nonzero/zero gate budget differs '+tier);
+            if(all[name].tiers[tier].frames.filter(f=>f.phase==='measured').length!==12)throw Error('Incomplete adoption samples');
           }
-
+          console.log('Adoption ABBA complete; interpret 12-frame raw/range, not device FPS');
           JS
       - uses: actions/upload-artifact@v4
         if: always()
@@ -110,5 +110,5 @@ jobs:
           name: weapon-shared-crowd-${{ github.event.pull_request.head.sha }}
           path: .model-crowd
           include-hidden-files: true
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14

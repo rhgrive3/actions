@@ -11,7 +11,7 @@ test('Ballpoint glass is independent, cached, transparent and retained at both L
  const a=actor(f,'s3-spinner-downpour'),b=actor(f,'s3-spinner-downpour');
  const shell=a.character.weapon.off.getObjectByName('weapon-glass'),other=b.character.weapon.off.getObjectByName('weapon-glass');
  assert.equal(shell.geometry,d.glass);assert.equal(other.geometry,d.glass);assert.equal(shell.material,other.material);assert.equal(shell.material,f.Kit.getWeaponGlassMaterial());
- const m=shell.material;assert.equal(m.transparent,true);assert.equal(m.depthWrite,false);assert.equal(m.depthTest,true);assert.equal(m.side,f.THREE.FrontSide);assert.equal(m.transmission,0);assert(m.opacity>0&&m.opacity<.4);assert.equal(shell.castShadow,false);
+ const m=shell.material;assert.equal(m.transparent,true);assert.equal(m.depthWrite,false);assert.equal(m.depthTest,true);assert.equal(m.side,f.THREE.FrontSide);assert.equal(m.transmission,0);assert.equal(m.clearcoat,.65);assert.equal(m.roughness,.16);assert(m.opacity>0&&m.opacity<.4);assert.equal(shell.castShadow,false);
  const shader={fragmentShader:'#include <opaque_fragment>'};m.onBeforeCompile(shader);assert(shader.fragmentShader.includes('iwShellEdge'));assert.equal(m.customProgramCacheKey(),'iw-weapon-glass-fresnel-1');
  // Shared geometry cannot stay suppressed after GTAO or leak into another Actor.
  const range=d.glass.drawRange.count,rangeStart=d.glass.drawRange.start,opaque={overrideMaterial:new f.THREE.MeshNormalMaterial()},beauty={overrideMaterial:null};
