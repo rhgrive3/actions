@@ -1,0 +1,69 @@
+name: Fixed-head weapon emission origin diagnosis
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/weapon-emission-origin-diagnostic.yml
+      - tools/quad-explosher-emission/**
+permissions:
+  contents: read
+concurrency:
+  group: weapon-emission-origin-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  emission:
+    if: github.head_ref == 'diagnostic/inkwave-weapon-emission-origin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shape: fe242
+            ref: fe242d9bf10154ad7d14aeac9bb9d1a245c91474
+            origin: native
+          - shape: fe242
+            ref: fe242d9bf10154ad7d14aeac9bb9d1a245c91474
+            origin: mouth
+          - shape: f3fd
+            ref: f3fd40ca327f29beea832d4508d40a55cfa6493b
+            origin: native
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ github.event.pull_request.head.sha }}', persist-credentials: false}
+      - uses: actions/checkout@v4
+        with: {ref: '80555b8cf12e3a9529c0f461bd2acc3ee17f1764', path: .source, persist-credentials: false}
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          path: .models
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /patches/splatoon3/runtime/weapon-models/dualies.mjs
+            /patches/splatoon3/runtime/weapon-models/sloshers.mjs
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build exact fixed-main and exact geometry snapshot
+        run: |
+          mkdir -p .emission-evidence
+          git -C .source rev-parse HEAD > .emission-evidence/runtime-commit.txt
+          git -C .models rev-parse HEAD > .emission-evidence/geometry-commit.txt
+          cp .models/patches/splatoon3/runtime/weapon-models/{dualies,sloshers}.mjs .source/patches/splatoon3/runtime/weapon-models/
+          git -C .source hash-object patches/splatoon3/runtime/weapon-models/{dualies,sloshers}.mjs > .emission-evidence/geometry-blobs.txt
+          ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node .source/scripts/build-inkwave.mjs .source/inkwave-public .emission-site
+      - name: Native FX and real projectile emission at 30, 60 and 120 Hz
+        run: |
+          node tools/quad-explosher-emission/render.mjs --site .emission-site --out .emission-evidence --shape '${{ matrix.shape }}' --origin '${{ matrix.origin }}'
+          python3 tools/quad-explosher-emission/compose.py .emission-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-emission-${{ matrix.shape }}-${{ matrix.origin }}-${{ github.event.pull_request.head.sha }}
+          path: .emission-evidence
+          include-hidden-files: true
+          retention-days: 14
