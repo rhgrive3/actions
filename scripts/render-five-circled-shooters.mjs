@@ -33,7 +33,7 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 let browser; const errors = [];
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-  const page = await browser.newPage({ viewport: { width: size * 2, height: size * 2 } });
+  const page = await browser.newPage({ viewport: { width: size, height: size } });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:' + server.address().port + '/review');
   await page.evaluate(async ({ prefix, size, environmentMode }) => {
@@ -64,14 +64,23 @@ try {
     G.projectiles = new api.Projectiles({ add() {}, remove() {} }); // real emission path, projectiles not drawn
     G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
     const snap = () => renderer.domElement.toDataURL('image/png').split(',')[1];
-    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G };
+    let postReview=null;
+    if(environmentMode==='productionDay'){
+      const {Renderer}=await import(prefix+'src/core/renderer.js'),{Environment}=await import(prefix+'src/world/environment.js');
+      const post=new Renderer(document.body,{quality:'high',bloom:true,shadows:true}),postScene=new THREE.Scene(),envScene=new THREE.Scene();
+      // A GPU PMREM cannot cross WebGL contexts. Generate this IBL on the post renderer itself.
+      const env=new Environment(post.renderer,envScene);postScene.add(env.sun,env.hemi);postScene.environment=env.envMap;postScene.environmentIntensity=envScene.environmentIntensity;postScene.background=new THREE.Color('#b2d5ee');
+      const floor=new THREE.Mesh(new THREE.PlaneGeometry(8,8),new THREE.MeshStandardMaterial({color:'#bfc7c9',roughness:.85}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;postScene.add(floor);
+      const camera=new THREE.PerspectiveCamera(32,1,.05,30);post.setScene(postScene,camera);postReview={post,postScene,camera,env};
+    }
+    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G, postReview, prefix };
   }, { prefix, size, environmentMode });
   const all = await page.evaluate(() => Object.keys(window.__gallery.WEAPONS).filter(id => window.__gallery.WEAPONS[id]?.class !== undefined || window.__gallery.WEAPONS[id]?.catalogRecord));
   const list = ids.length ? ids : all;
   const rows = [];
   for (const id of list) {
     const row = await page.evaluate(async ({ id, held }) => {
-      const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
+      const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G, postReview, prefix } = window.__gallery;
       const { Actor, Character } = api;
       const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
       let bytes = 0; const geos = [d.body, d.ink, d.bodyStatic, d.inkStatic, d.drum, d.drumCaps, d.glow, ...Object.values(d.parts || {}).map(p => p.geo)];
@@ -94,7 +103,11 @@ try {
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap();
       const extra={};for(const[name,dir]of[['opposite',[3,0,0]],['rear',[0,0,-3]],['frontQuarter',[-2,.7,2]],['rearQuarter',[2,.7,-2]]]){const cc=new THREE.PerspectiveCamera(30,1,.01,50);cc.position.copy(c).add(new THREE.Vector3(...dir).normalize().multiplyScalar(span*2.7));cc.lookAt(c);renderer.render(scene,cc);extra[name]=snap();}
-      scene.remove(g);
+      const {farGeometry}=await import(prefix+'src/game/character-lod.js');
+      const fg=new THREE.Group(),fb=farGeometry(d.body,700),fi=farGeometry(d.ink,300);fg.add(new THREE.Mesh(fb,Mt.getPlasticMaterial()),new THREE.Mesh(fi,Mt.getInkMaterial(G.teamColors[0])));
+      scene.remove(g);scene.add(fg);
+      for(let team=0;team<2;team++){fg.children[1].material=Mt.getInkMaterial(G.teamColors[team]);renderer.render(scene,ortho);extra['far'+team+'Side']=snap();renderer.render(scene,cam);extra['far'+team+'Persp']=snap();}
+      scene.remove(fg);scene.add(g);g.children[1].material=Mt.getInkMaterial(G.teamColors[1]);renderer.render(scene,cam);extra.team1Persp=snap();g.children[1].material=Mt.getInkMaterial(G.teamColors[0]);scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
@@ -103,12 +116,19 @@ try {
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;
       ch.actor = a; ch.onEvent = null; a.grounded = a.ground.hit = true; G.actors = [a]; scene.add(ch.root);
-      if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready;
+      if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready; if(ch.sourceMotion?.status!=='ready')throw Error(id+' source motion not ready'); res.sourceMotion=ch.sourceMotion.status;
       const look = (frame, side) => {
         const camera = new THREE.PerspectiveCamera(32, 1, .05, 30);
         const off = side === 'right' ? new THREE.Vector3(-2.6, 1.0, 0.35) : side === 'left' ? new THREE.Vector3(2.6, 1.0, 0.35) : side === 'back' ? new THREE.Vector3(-0.9, 1.5, -2.4) : new THREE.Vector3(-1.6, 1.15, 2.4);
         camera.position.copy(a.pos).add(off); camera.lookAt(a.pos.clone().add(new THREE.Vector3(0, .8, .15)));
         renderer.render(scene, camera); return snap();
+      };
+      const postShot=team=>{
+        if(!postReview)return null;
+        const {post,postScene,camera,env}=postReview,priorEnv=G.env;
+        ch.setColor(G.teamColors[team]);postScene.add(ch.root);camera.position.copy(a.pos).add(new THREE.Vector3(-2.6,1.1,1.25));camera.lookAt(a.pos.clone().add(new THREE.Vector3(0,.86,.2)));G.env=env;post.render();
+        const data=post.renderer.domElement.toDataURL('image/png').split(',')[1];scene.add(ch.root);ch.setColor(G.teamColors[0]);G.env=priorEnv;
+        res.post={sameRendererEnvironment:true,pmrem:[env.envMap.image.width,env.envMap.image.height],gtao:!!post.gtao,bloom:!!post.bloom,grade:!!post.grade,exposure:env.grade.uExposure,scope:'Native post stack and day IBL in isolated real Actor scene; not a complete live stage'};return data;
       };
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0;
       const C = api.CHARACTER_CHANNELS;
@@ -125,8 +145,8 @@ try {
         }
         if (frame === 25) { shots.idle = look(frame, 'front'); shots.idleSide = look(frame, 'right'); }
         if (frame === 55) shots.walk = look(frame, 'front');
-        if (frame === 110) { shots.fire = look(frame, 'front'); shots.fireSide = look(frame, 'right'); shots.fireLeft = look(frame, 'left'); }
-        if (frame === 160) shots.fireLate = look(frame, 'back');
+        if (frame === 110) { shots.fire = look(frame, 'front'); shots.fireSide = look(frame, 'right'); shots.fireLeft = look(frame, 'left'); if(postReview){shots.postFireTeam0=postShot(0);shots.postFireTeam1=postShot(1);} }
+        if (frame === 160) {shots.fireLate = look(frame, 'back');ch.setLod('far');a._finishFrame(1/60);shots.heldFar=look(frame,'front');if(postReview)shots.postFar=postShot(0);ch.setLod('game');a._finishFrame(1/60);}
         if (frame === 215) shots.after = look(frame, 'front');
       }
       a.weaponRunner.reset(); scene.remove(ch.root); ch.dispose();
