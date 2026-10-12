@@ -3,10 +3,11 @@
 // distribution is not presented as a recovered Nintendo PRNG.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { catalogAngularLaunch, catalogAngularEnvelope, advanceCatalogJumpClock } from '../runtime/main-weapon-catalog.mjs';
+import { catalogAngularLaunch, catalogAngularEnvelope, catalogSpinnerLaunchSpeed, advanceCatalogJumpClock } from '../runtime/main-weapon-catalog.mjs';
 import { biasQuantile } from '../runtime/weapon-accuracy.mjs';
 import { ShooterAccuracy } from '../runtime/shooter-accuracy.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
+import { fixture } from './source-fixture.mjs';
 
 const near = (a, b, label, tolerance = 1e-9) =>
   assert.ok(Math.abs(a - b) <= tolerance, label + ': ' + a + ' != ' + b);
@@ -144,6 +145,45 @@ test('catalog Dualies/Blasters retain air maximum through landing, not Shooter l
   near(catalogAngularEnvelope('splatling',false,3.3,7,null),7,'Spinner not changed by these owners');
   near(catalogAngularEnvelope('shooter',false,4.86,11.66,null,.5),8.26,
     'Action Strength reduces airborne maximum but not ordinary ground');
+});
+
+test('all six 11.3.0 source Spinners pin asymmetric speed bias and rate, including Ballpoint long mode',()=>{
+  const entries=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='splatling');
+  assert.equal(entries.length,6);
+  for(const r of entries){
+    const m=r.parameters.MoveParam;
+    assert.ok(Number.isFinite(m.SpawnSpeedRandomRate)&&m.SpawnSpeedRandomRate>0,r.names.en+' source rate');
+    assert.equal(m.SpawnSpeedRandomBias,.2,r.names.en+' source median');
+    for(const [u,signed] of [[0,-1],[.5,0],[1,1]]){
+      const actual=catalogSpinnerLaunchSpeed(100,m,()=>u);
+      near(actual,100*(1+m.SpawnSpeedRandomRate*signed),r.names.en+' speed quantile u='+u);
+    }
+  }
+  const ballpoint=entries.find(r=>r.sourceRow==='Spinner_Downpour_00');
+  assert.equal(ballpoint.parameters.MoveParam.SpawnSpeedRandomRate,.12);
+  assert.equal(ballpoint.parameters.VariableMoveParam.SpawnSpeedRandomRate,.03);
+  near(catalogSpinnerLaunchSpeed(100,ballpoint.parameters.VariableMoveParam,()=>1),103,
+    'Ballpoint long mode pinned +-3% not short-mode +-12%');
+});
+
+test('native added Mini Splatling projectile stores the source-randomized emitted velocity',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
+    extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
+  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
+  const r=MAIN_WEAPON_CATALOG.records.find(r=>r.sourceRow==='Spinner_Quick_00');
+  try{
+    for(const u of [0,.5,1-1e-12]){
+      f.G.projectiles.clear();f.G.actors.length=0;
+      f.setRandom(()=>u);
+      const a=f.make(r.id);a.form='kid';a.intent.fire=true;
+      f.tick(a,r.parameters.WeaponParam.ChargeFrame_Second);
+      a.intent.fire=false;f.tick(a,8);
+      const p=f.G.projectiles.list.find(p=>p.wid===r.id);
+      assert.ok(p?.catalog,'actual native projectile at quantile '+u);
+      near(p.vel.length(),catalogSpinnerLaunchSpeed(p.catalog.descriptor.speed,
+        p.catalog.descriptor.m,()=>u),'source speed written to emitted projectile u='+u,1e-7);
+    }
+  }finally{f.restoreRandom();}
 });
 
 test('catalog unsupported shot families retain existing provisional fallback until source is verified',()=>{
