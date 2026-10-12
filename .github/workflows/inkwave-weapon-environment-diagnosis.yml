@@ -1,0 +1,51 @@
+name: INKWAVE same-context weapon environment diagnosis
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/inkwave-weapon-environment-diagnosis.yml
+      - reports/weapon-environment/**
+permissions:
+  contents: read
+concurrency:
+  group: weapon-environment-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  visual:
+    if: github.head_ref == 'diagnose/weapon-output-completion'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 18f062d803271e57c7ef6a1a7c90c876af879bfb
+          path: .candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and Chromium
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build frozen glass runtime and correct only the review environment
+        run: |
+          test "$(git -C .candidate rev-parse HEAD)" = 18f062d803271e57c7ef6a1a7c90c876af879bfb
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .candidate/scripts/build-inkwave.mjs .candidate/inkwave-public .after-site
+          node reports/weapon-environment/instrument-valid-environment.mjs .candidate/scripts/render-inkwave-weapon-shared-gallery.mjs scripts/check-valid-weapon-environment.mjs
+          node --check scripts/check-valid-weapon-environment.mjs
+      - name: Compare clearcoat only under valid same-context studio and native Environment
+        run: |
+          node scripts/check-valid-weapon-environment.mjs --site .after-site --out .environment-evidence --ids s3-spinner-downpour --size 600 --compare-clearcoat
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-valid-environment-${{ github.event.pull_request.head.sha }}
+          path: .environment-evidence
+          if-no-files-found: warn
+          retention-days: 14
