@@ -1,0 +1,111 @@
+name: Fixed-head weapon loading and lighting diagnosis
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/weapon-lod-load-lighting-diagnostic.yml
+      - tools/weapon-lod-diagnostics/**
+permissions:
+  contents: read
+concurrency:
+  group: weapon-load-lighting-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  loading:
+    if: github.head_ref == 'diagnostic/inkwave-lod-load-lighting'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        models: [main, quad-explosher-205d]
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ github.event.pull_request.head.sha }}', persist-credentials: false}
+      - uses: actions/checkout@v4
+        with: {ref: '5ed08c6376696dd67391afed7c36463106959de8', path: .before, persist-credentials: false}
+      - uses: actions/checkout@v4
+        with: {ref: '80a4e1e641de49fcf3378e7a5ee750c29c8a6875', path: .after, persist-credentials: false}
+      - uses: actions/checkout@v4
+        if: matrix.models == 'quad-explosher-205d'
+        with:
+          ref: 205d4e4e96864dda2e2c9e6a9194e9f7b47fa231
+          path: .models
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /patches/splatoon3/runtime/weapon-models/dualies.mjs
+            /patches/splatoon3/runtime/weapon-models/sloshers.mjs
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build fixed before and after runtime inputs
+        env: {MODEL_SOURCE: '${{ matrix.models }}'}
+        run: |
+          mkdir -p .loading-evidence
+          for version in before after; do
+            git -C ".$version" rev-parse HEAD >> .loading-evidence/source-commits.txt
+            if [ "$MODEL_SOURCE" = quad-explosher-205d ]; then
+              cp .models/patches/splatoon3/runtime/weapon-models/{dualies,sloshers}.mjs ".$version/patches/splatoon3/runtime/weapon-models/"
+            fi
+            sha256sum ".$version/patches/splatoon3/runtime/weapon-models/"{dualies,sloshers}.mjs >> .loading-evidence/model-sha256.txt
+            ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node ".$version/scripts/build-inkwave.mjs" ".$version/inkwave-public" ".$version-site"
+          done
+      - name: Native loading fade and first post-warm far transition ABBA
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node tools/weapon-lod-diagnostics/render-loading.mjs --site ".$version-site" --out ".loading-evidence/$pair" --size 600 --load
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const all={};for(const name of['before-A','after-B','after-B2','before-A2']){const d=JSON.parse(fs.readFileSync('.loading-evidence/'+name+'/measurements.json'));assert.equal(d.loading.actors,8);assert.equal(d.loading.sourceMotionReady,true);assert.equal(d.loading.readyCompleted,8);assert.equal(d.loading.timedOut,false);all[name]=d;}
+          fs.writeFileSync('.loading-evidence/comparison.json',JSON.stringify(all,null,2));console.log('LOADING_ABBA '+JSON.stringify(all));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-cold-loading-${{ matrix.models }}-${{ github.event.pull_request.head.sha }}
+          path: .loading-evidence
+          include-hidden-files: true
+          retention-days: 14
+  shape-lighting:
+    if: github.head_ref == 'diagnostic/inkwave-lod-load-lighting'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: '${{ github.event.pull_request.head.sha }}', persist-credentials: false}
+      - uses: actions/checkout@v4
+        with: {ref: '5ed08c6376696dd67391afed7c36463106959de8', path: .before, persist-credentials: false}
+      - uses: actions/checkout@v4
+        with: {ref: '7d8c34e4ba20d531ca006f444489643320ef1d1c', path: .after, persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build fixed shape revisions without material changes
+        run: |
+          for version in before after; do
+            git -C ".$version" rev-parse HEAD
+            ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node ".$version/scripts/build-inkwave.mjs" ".$version/inkwave-public" ".$version-site"
+          done
+      - name: Reference cameras and real Actors under valid studio and native day IBL
+        run: |
+          for environment in studio1024 productionDay; do
+            for version in before after; do
+              node tools/weapon-lod-diagnostics/render-shapes.mjs --site ".$version-site" --out ".shape-evidence/$environment/$version" --ids s3-maneuver-stepper,s3-slosher-washtub --size 500 --environment "$environment"
+            done
+            python3 tools/weapon-lod-diagnostics/compare-shapes.py ".shape-evidence/$environment" .after/reports/inkwave-weapon-model-workspace/refs s3-maneuver-stepper s3-slosher-washtub
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quad-explosher-fixed-shape-valid-lighting-${{ github.event.pull_request.head.sha }}
+          path: .shape-evidence
+          include-hidden-files: true
+          retention-days: 14
