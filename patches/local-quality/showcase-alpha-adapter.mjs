@@ -21,8 +21,8 @@ export function selectShowcaseAlphaTarget(THREE, composer, width, height) {
 export function adaptShowcaseAlpha(rel, code, replaceOnce) {
   if (rel !== 'src/game/showcase.js') return code;
   code = replaceOnce(code,
-    '  // MSAA HDR target: the composer\'s spare ping-pong buffer when it matches the canvas, else a private one.',
-    selectShowcaseAlphaTarget.toString() + '\n\n  // MSAA HDR target: the composer\'s spare ping-pong buffer when it matches the canvas, else a private one.',
+    'const TAU = Math.PI * 2;',
+    selectShowcaseAlphaTarget.toString() + '\n\nconst TAU = Math.PI * 2;',
     'showcase result alpha-safe target helper');
   return replaceOnce(code,
     '    const b = comp && comp.writeBuffer;\n    if (b && b.isWebGLRenderTarget && b.depthBuffer && b.texture.type !== THREE.UnsignedByteType && Math.abs(b.width - w) <= 1 && Math.abs(b.height - h) <= 1) {',
