@@ -3077,5 +3077,101 @@
         "ties": 9
       }
     }
+  },
+  "mainSync": {
+    "main": "ac1159b76b42a10ff02fe58add74a8285cc08d32",
+    "merge": "c22cdacdd3b995c7f786ddd9bdc009367687844b",
+    "sourceTestsPassed": 23,
+    "sourceTestsSkipped": 0,
+    "mainRegressionTestsPassed": 20,
+    "packagingTestsPassed": 9,
+    "budget": {
+      "status": "passed",
+      "revision": "f96dec49e3a157e8dc546223e032f3ed70554cebfbf3f59974eb5605896dd137",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2854847,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5743681,
+      "workerBytes": 70515,
+      "declaredBytes": 10361711,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "publicSelection": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "scorch",
+          "sourceMode": "browser-direct",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "geometry": {
+            "vertices": 319113,
+            "triangles": 279299,
+            "collisionTriangles": 133737,
+            "bvhNodes": 32767,
+            "paintFaces": 45171
+          },
+          "actors": 8,
+          "bots": 7,
+          "coverage": [
+            0.003989558479467145,
+            0.011657582381748539
+          ],
+          "spawn": {
+            "grounded": true,
+            "active": false
+          },
+          "sourceMetrics": {
+            "cached": false,
+            "conversionMilliseconds": 6000.60000000149,
+            "recipe": "inkwave-browser-source-v2"
+          },
+          "gameMetrics": {
+            "loadMilliseconds": 68371.40000000596,
+            "navMilliseconds": 273,
+            "shaderWarmMilliseconds": 73,
+            "vertices": 319113,
+            "triangles": 279299,
+            "faces": 45171,
+            "gridBytes": 1469898,
+            "atlas": 2048,
+            "ppm": 4,
+            "textureCount": 81,
+            "quality": "low",
+            "version1130Verified": false
+          },
+          "render": {
+            "frame": 1295,
+            "calls": 180,
+            "triangles": 593369,
+            "points": 0,
+            "lines": 0
+          },
+          "version1130Verified": false
+        }
+      ],
+      "errors": [],
+      "downloads": 1,
+      "menu": [
+        "タイドウォーター広場",
+        "ケルプライン埠頭",
+        "ハリヤードマリーナ",
+        "ユノハナ大渓谷",
+        "ヤガラ市場",
+        "海女美術大学",
+        "ザトウマーケット",
+        "クサヤ温泉"
+      ],
+      "cache": {
+        "id": "scorch",
+        "derivedCacheHit": true,
+        "objDownloads": 0
+      }
+    },
+    "engineBytesUnchanged": true
   }
 }

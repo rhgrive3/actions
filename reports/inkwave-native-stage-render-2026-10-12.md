@@ -65,3 +65,5 @@ main mergeの全体CI [38254171278](https://github.com/rhgrive3/actions/actions/
 同じLeanny commitの11.3.0 `SceneInfo.json`（SHA-256 `37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e`）と `MapObjReplicaInfo.json`（`3ed4332dad172f0253172e6b504f99aed2f024e3180814749b122e67498aec42`）も調べた。前者はscene ID/label/model resource等、後者は45種のrow IDだけで、spawnやルール配置のtransform座標を含まない。この資料から本家配置の確定値は作らない。
 
 最終のsource-composed/emitted paint-mask WebGL検証は124ケース・1512 hash query・15295 cellに成功した。Roller body99ケースのCPU-only/GPU-onlyは0（境界tie9）。全体CIで止まった入口を実際に通し、判定閾値・sample数・canonical hashの検査を維持した。
+
+mainの並行更新 `ac1159b7`（#1284/#1296/#1297）を `c22cdacd` で統合し、共有比較記録の追記を両方保持した。原典23件、更新された弾道/受信20件、最終packaging9件、通常ビルドのScorch実選択/8人/着地/再訪cache/consoleエラー0を再確認した。native engineのバイト列は上記SHA-256と同じ。統合後revision `f96dec49e3a157e8dc546223e032f3ed70554cebfbf3f59974eb5605896dd137`、precache 5,743,681 byte、worker 70,515 byteで既存上限内。追加変更はレビュー用 [PR #1312](https://github.com/rhgrive3/actions/pull/1312) に保存し、mainへはマージしない。
