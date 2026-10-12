@@ -66,7 +66,13 @@ try {
   for (const id of (process.env.NATIVE_STAGE_IDS || 'scorch').split(',')) {
     const context = await browser.newContext({viewport:{width:600,height:600},deviceScaleFactor:1,serviceWorkers:'block'});
     const page = await context.newPage();
-    const stage = {id,status:'running',frames:[],comparisons:[],errors:[]};result.stages.push(stage);save();
+    const stage = {id,status:'running',frames:[],comparisons:[],errors:[],sourceResponses:[]};result.stages.push(stage);save();
+    const pendingResponses=new Set();
+    context.on('response',response=>{
+      if(!response.url().startsWith('https://api.github.com/repos/kirakira-dev/KiTrix/git/trees/'))return;
+      const pending=(async()=>{const headers=await response.allHeaders();const row={url:response.url(),status:response.status(),headers:{}};for(const key of ['date','x-ratelimit-limit','x-ratelimit-remaining','x-ratelimit-reset','retry-after','x-github-request-id'])if(headers[key])row.headers[key]=headers[key];if(response.status()>=400)row.body=(await response.text()).slice(0,4096);stage.sourceResponses.push(row);save();})().catch(error=>{stage.sourceResponses.push({observationError:error.message});save();}).finally(()=>pendingResponses.delete(pending));
+      pendingResponses.add(pending);
+    });
     page.on('pageerror',e => {stage.errors.push(e.message);save();});
     page.on('console',m => {if(m.type()==='error'){stage.errors.push(m.text());save();}});
     try {
@@ -77,7 +83,9 @@ try {
       await page.goto(`http://127.0.0.1:${server.address().port}/?map=${id}&shadercheck`,{waitUntil:'domcontentloaded'});
       await page.evaluate(async () => {globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
       await page.waitForFunction(() => (NG.game?.menus && NG.mode!=='boot') || document.getElementById('boot-error')?.textContent,null,{timeout:240000});
-      assert.equal(await page.locator('#boot-error').textContent(),'');
+      const bootError=await page.locator('#boot-error').textContent();
+      if(bootError){await Promise.allSettled([...pendingResponses]);await page.screenshot({path:path.join(out,`${id}-boot-error.png`)});stage.bootError=bootError;save();}
+      assert.equal(bootError,'');
       await page.evaluate(async id => {
         const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();
         await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});
@@ -244,7 +252,7 @@ try {
       assert(stage.frames.some(f=>f.view==='return'&&f.inkCalls.some(c=>c.indices>0)),'Ink did not return after leaving the view');
       stage.status=stage.setup.missingSurfaceCoverage.length?'coverage-incomplete':'comparison-complete';save();
     } catch(error){stage.status='failed-or-inconclusive';stage.error=error.stack;save();throw error;}
-    finally{await context.close();}
+    finally{await Promise.allSettled([...pendingResponses]);await context.close();}
   }
   result.status=result.stages.every(s=>s.status==='comparison-complete')?'comparison-complete':'coverage-incomplete';
   result.shaderDifferencesRequireReview=result.stages.flatMap(s=>s.comparisons).filter(c=>c.shader.changedPixels>0).length;
