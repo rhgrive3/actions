@@ -125,7 +125,7 @@ function slosherMachine(d) {
 // ------------------------------------------------------------------------------------------ Bloblobber
 // Wmn_Slosher_Bathtub, rebuilt from the official render, the S3 Deco turntable and the S2 turntable strip: an
 // open white ceramic bathtub (thick rolled rim, sloped backrest with an overflow cap, recessed grab handles in
-// both side walls, drain and jets in the floor, anti-slip strips on the front ramp) set into a black hull, a
+// both side walls, drain and jets in the floor, ink-coloured anti-slip chevrons on the front ramp) set into a black hull, a
 // black strap with a print looping round the hull (chrome posts, clips, buckles), chrome rails under the front
 // lip and round the back, a brown foot block under the front, and the chrome thermostat bar (red/blue ring
 // knob, mixer block, two posts) across the back that the right fist holds.
@@ -133,7 +133,10 @@ function slosherMachine(d) {
 // fist's grip point on the faucet bar is the weapon origin. Scale: basin 0.20 m wide (reference doc).
 const TUB = { a: 0.10, b: 0.15, n: 3.2, zc: 0.15 };
 const TUB_GRIP = [0.036, 0.040, 0.012];          // fist on the faucet bar's inner half (S3 screenshots; tub space)
-const TUB_LEVEL = -0.055;                        // ink level, 5.5 cm under the rim
+const TUB_LEVEL = -0.06;                         // ink level when the tub is upright, 6 cm under the rim
+// Hanging carry (opening forward): the ink runs to the front end; its level pool lies in the plane through
+// TUB_POOL_C normal to the carry's world up (tub space), spanning the basin there (oversize sinks into the walls).
+const TUB_POOL_C = [0, -0.038, 0.24], TUB_POOL_V = [0, 0.91, 0.42], TUB_POOL_GROW = 1000;
 // Depth scale along the tub (tub z): KIN for the basin below the rim roll, KOUT for the hull below the band.
 const KIN = [[0, 0.25], [0.03, 0.4], [0.07, 0.8], [0.1, 1], [0.19, 0.95], [0.21, 0.78], [0.24, 0.5], [0.275, 0.25], [0.3, 0.18]];
 // KB: the white band deepens toward the front lip, where the hull tapers away under it.
@@ -261,13 +264,13 @@ const TUB_GLYPHS = {
 };
 
 function bloblobber(d) {
-  const C = { white: '#efede4', hull: '#2f2f2e', strap: '#161617', clip: '#121213', chrome: '#c9cdd2', dark: '#1c1d20',
+  const C = { white: '#efede4', hull: '#2f2f2e', strap: '#161617', clip: '#121213', chrome: '#aab0b6', dark: '#1c1d20',
     slot: '#4f5156', brown: '#5e4f43', print: '#e9e9e6', red: '#d8262c', blue: '#2848c8', label: '#b9bcc0' };
-  const tub = new Pieces(), ink = new Pieces(), knob = new Pieces(), surf = new Pieces();
+  const tub = new Pieces(), ink = new Pieces(), knob = new Pieces(), surf = new Pieces(), pool = new Pieces();
   // ---- ceramic tub and hull
   tub.add(tubSweep(TUB_WHITE, 64, 10, [0, 1, 0]), C.white, M.gloss);
   tub.add(tubSweep(TUB_HULL, 64, 7, [0, -1, 0]), C.hull, M.satin);
-  // ---- basin details: overflow cap on the back rest, drain, jets, anti-slip strips (team ink), grab recesses
+  // ---- basin details: overflow cap on the back rest, drain, jets, anti-slip chevrons (team ink), grab recesses
   const keelUp = [0, 0, 1], keelN = z => { const [, s] = tubKeel(z), l = Math.hypot(1, s); return [0, 1 / l, -s / l]; };
   { const z = 0.036, [y] = tubKeel(z);
     tub.add(tubPlace(zlathe([[0, -0.004], [0.0105, -0.004], [0.0105, 0.002], [0.0075, 0.0055], [0, 0.0065]], 0, 0, 0, 6), [0, y, z], keelN(z), keelUp), C.chrome, M.gloss); }
@@ -277,8 +280,10 @@ function bloblobber(d) {
     for (const a of [0, Math.PI / 2]) tub.add(tubPlace(box(0.02, 0.0025, 0.002, 0, 0, 0.001, 0.4, 6, 4).rotateZ(a), [0, y, z], n, keelUp), C.chrome, M.gloss); }
   for (const z of [0.207, 0.222]) for (const sx of [-1, 1]) { const [y] = tubKeel(z);
     tub.add(tubPlace(zcyl(0.0036, -0.002, 0.0009, 0, 0, 10), [sx * 0.012, y, z], keelN(z), keelUp), C.dark, M.satin); }
-  for (const sx of [-1, 1]) { const z = 0.25, [y] = tubKeel(z);
-    ink.add(tubPlace(box(0.027, 0.008, 0.0024, 0, 0, 0.0004, 0.35, 8, 4), [sx * 0.022, y, z], keelN(z), keelUp)); }
+  for (const sx of [-1, 1]) for (const z of [0.236, 0.252]) {          // chevrons pointing to the front lip
+    const [y] = tubKeel(z);
+    for (const k of [-1, 1]) ink.add(tubPlace(box(0.013, 0.0032, 0.0022, k * 0.0052, 0, 0.0004, 0.4, 6, 4).rotateZ(-k * 0.6), [sx * 0.021, y, z], keelN(z), keelUp));
+  }
   for (const sx of [-1, 1]) {
     const yPre = -0.034, wall = z => tubAt(tubTheta(z, sx), [1, -0.0255, yPre, 'in']);
     const slot = new Pieces().add(box(0.0035, 0.024, 0.104, 0, 0, 0, 0.3, 12, 6), C.slot, M.satin);
@@ -363,14 +368,20 @@ function bloblobber(d) {
   { const z = 0.19; tub.add(box(0.13, 0.009, 0.022, 0, tubY(-0.162, z, 'out') - 0.002, z, 0.3, 10, 6), '#202021', M.satin); }
   // ---- ink: level free surface inside the basin (kept level by the native slosher animation)
   const sr = [[0, 0, TUB_LEVEL, 0], [1, -0.022, TUB_LEVEL, 0], [1, -0.022, TUB_LEVEL - 0.003, 0], [0, 0, TUB_LEVEL - 0.003, 0]];
-  surf.add(tubSweep(sr, 48, 1, [0, 1, 0], [0.036, 0.236]), '#ffffff', M.satin);
+  surf.add(tubSweep(sr, 48, 1, [0, 1, 0], [0.036, 0.243]), '#ffffff', M.satin);
+  { // hanging pool: authored collapsed about its pivot (static views show only the upright surface);
+    // bathtubAnimate grows it by TUB_POOL_GROW while the opening faces sideways
+    const X = V(1, 0, 0), Yv = V(...TUB_POOL_V).normalize(), Z = X.clone().cross(Yv), [cx, cy, cz] = TUB_POOL_C;
+    pool.add(sphere(0.072, 0.037, 0.0012, 0, 0, 0, 24, 6).applyMatrix4(new THREE.Matrix4().makeBasis(X, Yv, Z))
+      .scale(1 / TUB_POOL_GROW, 1 / TUB_POOL_GROW, 1 / TUB_POOL_GROW).translate(cx, cy, cz), '#ffffff', M.satin);
+  }
   // ---- tub space → weapon space (grip point on the bar at the origin)
   const [gx, gy, gz] = TUB_GRIP, mv = g => g.translate(-gx, -gy, -gz);
-  tub.transform(mv); ink.transform(mv); knob.transform(mv); surf.transform(mv);
+  tub.transform(mv); ink.transform(mv); knob.transform(mv); surf.transform(mv); pool.transform(mv);
   const W = (x, y, z) => [x - gx, y - gy, z - gz];
   return rebuild(d, {
     body: tub, ink,
-    parts: { surface: part(surf, W(0, TUB_LEVEL, 0.135), 'ink'), lever: part(knob, W(-0.07, fy, fz)) },
+    parts: { surface: part(surf, W(0, TUB_LEVEL, 0.135), 'ink'), pool: part(pool, W(...TUB_POOL_C), 'ink'), lever: part(knob, W(-0.07, fy, fz)) },
     // right fist round the faucet bar: thumb along +X (toward the body in the carry), wrist away from the tub's mass
     gripR: gripSpec([0, 0, 0], [1, 0, 0], [0, 0.42, -0.9]),
     gripL: gripSpec(W(0, -0.067, 0.304), [-1, 0, 0], [0.25, -0.85, 0.45]),
@@ -381,7 +392,7 @@ function bloblobber(d) {
 // Yaw π + roll π orient the same hang as pitch 1.14 but flip the native heave's pitch sense, so the slosh
 // heave scoops the tub forward and up (windup back, release with the opening to the target).
 const BATHTUB_HOLD = {
-  carry: { p: [-0.22, 0.67, 0.06], r: [2.0, Math.PI - 0.25, Math.PI] }, twoCarry: 0,
+  carry: { p: [-0.23, 0.63, 0.05], r: [2.0, Math.PI - 0.25, Math.PI] }, twoCarry: 0,
   run: { p: [-0.23, 0.69, 0.05], r: [1.88, Math.PI - 0.3, Math.PI] },
   aim: { p: [-0.2, -0.25, 0.08], r: [1.92, Math.PI - 0.2, Math.PI] }, twoAim: 0,
   raise: { p: [-0.2, 1.08, 0.16], r: [1.2, Math.PI - 0.3, Math.PI] },
@@ -392,7 +403,7 @@ const BATHTUB_HOLD = {
 // forward-up so the open basin faces up/forward when the blobs leave, holds, and drops back to the hang.
 // Euler pitch + = forward-up for this yaw/roll-π hold. Keys in seconds from the lift start.
 const SWING_T = [0, 0.1, 0.2, 0.32, 0.56];
-const SWING = { P: [0, -0.45, 1.45, 1.55, 0], W: [0, 0.12, -0.18, -0.2, 0], Y: [0, -0.02, 0.12, 0.13, 0], Z: [0, -0.04, 0.09, 0.08, 0],
+const SWING = { P: [0, -0.45, 1.45, 1.55, 0], W: [0, 0.12, -0.18, -0.2, 0], Y: [0, -0.02, 0.15, 0.16, 0], Z: [0, -0.04, 0.09, 0.08, 0],
   SPINE: [0, 0.08, -0.1, -0.08, 0], CHEST1: [0, 0.16, -0.14, -0.12, 0] };
 const swingState = new WeakMap();
 function swingKey(k, t) {
@@ -492,8 +503,21 @@ function model(d, c) {
   });
 }
 
+const _bathUp = new THREE.Vector3();
+/** Bloblobber liquid: the native level surface while the opening faces up (swing), the front-end pool while
+ *  the tub hangs (opening sideways). Runs after the native slosher animation; allocation-free. */
+function bathtubAnimate(w, st) {
+  const P = w.parts;
+  if (!P?.surface || !P.pool) return;
+  let up = 1;
+  if (st.worldQuat) up = _bathUp.set(0, 1, 0).applyQuaternion(st.worldQuat).y;
+  const pool = up < 0.6 ? 1 : 0, dt = Math.min(0.1, Math.max(0, st.dt || 0));
+  w.bathPool = (w.bathPool ?? pool) + (pool - (w.bathPool ?? pool)) * (1 - Math.exp(-18 * dt));
+  P.surface.visible = w.bathPool < 0.5;
+  P.pool.scale.setScalar(TUB_POOL_GROW * Math.max(1e-3, w.bathPool));
+}
 // Per-weapon hold / pose extras (Bloblobber: hanging one-hand carry by the faucet bar, native data carry).
-const EXTRA = { 's3-slosher-bathtub': { hold: BATHTUB_HOLD, nativeCarry: true, pose: bathtubPose } };
+const EXTRA = { 's3-slosher-bathtub': { hold: BATHTUB_HOLD, nativeCarry: true, pose: bathtubPose, animate: bathtubAnimate } };
 
 // The legacy Slosher keeps its reference model: its verified drawn-fill drain and indexed handle
 // regressions (weapon-detail-motion tests) depend on that bucket's inner fill and handles.
