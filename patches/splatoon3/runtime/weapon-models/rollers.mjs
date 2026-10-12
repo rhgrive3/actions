@@ -171,7 +171,11 @@ function dynamoRoller(d) {
   // black clamp block, a finned motor cylinder with ink lines, a long thin rod
   // and a rubber grip.
   const C = { gun: '#55565b', dark: '#28282c', steel: '#a9abb1', black: '#18181b', copper: '#c27a3c' };
-  const W = drumWidth(3.4), r = 0.19, dz = 1.13, dx = -0.37, hz = 0.88;
+  // Reference-aligned front/back axes put the handle on the drum midline.
+  // Keep the authored hand/fold frames and gameplay/VFX socket unchanged;
+  // only the visible drum, bearings and connecting cross rod are re-centred.
+  const W = drumWidth(3.4), r = 0.19, dz = 1.13, dx = 0, hz = 0.88;
+  const muzzleX = -0.37; // stable native socket; independent of visual axle centre
   const body = new Pieces(), ink = new Pieces(), frame = new Pieces(), frameInk = new Pieces(), caps = new Pieces();
   body.add(zlathe([[0, -0.12], [0.013, -0.12], [0.019, -0.11], [0.019, 0.1], [0.015, 0.11], [0, 0.112]], 0, 0, 0, 14), C.black, M.rubber);
   for (let k = 0; k < 6; k++) body.add(ring(0.0195, 0.0018, 0, 0, -0.08 + k * 0.035, 'z', 4, 14), C.dark, M.rubber);
@@ -208,7 +212,7 @@ function dynamoRoller(d) {
   // the gear housing is centred on the drum axle: author it there
   rebuild(d, {
     body, ink, parts: { hinge: part(frame, [0, 0, hz]), hingeInk: part(frameInk, [0, 0, hz], 'ink') },
-    gripR: GRIP_R(), gripL: GRIP_L(0.14), muzzle: [dx, 0, dz],
+    gripR: GRIP_R(), gripL: GRIP_L(0.14), muzzle: [muzzleX, 0, dz],
     drum: { geo: drum, caps, at: [dx, 0, dz], r },
   });
   return setFold(d, [0, 0, hz]);

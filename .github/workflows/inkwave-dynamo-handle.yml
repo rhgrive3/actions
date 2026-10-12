@@ -1,0 +1,62 @@
+name: INKWAVE measured Dynamo handle review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/rollers.mjs
+      - patches/splatoon3/tests/dynamo-handle-center.test.mjs
+      - scripts/render-dynamo-handle.mjs
+      - .github/workflows/inkwave-dynamo-handle.yml
+permissions:
+  contents: read
+concurrency:
+  group: dynamo-handle-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  geometry-and-browser:
+    if: github.head_ref == 'fix/dynamo-handle-center-measured'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          path: .dynamo-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Source contracts, all 65 models and three frame rates
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/dynamo-handle-center.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/weapon-reference-models.test.mjs patches/splatoon3/tests/roller-detail-motion.test.mjs patches/splatoon3/tests/roller-fold-native.test.mjs
+      - name: Build pinned main and candidate production compositions
+        run: |
+          mkdir -p .dynamo-evidence
+          git rev-parse HEAD > .dynamo-evidence/candidate-source.txt
+          git -C .dynamo-baseline rev-parse HEAD > .dynamo-evidence/baseline-source.txt
+          sha256sum patches/splatoon3/runtime/weapon-models/rollers.mjs .dynamo-baseline/patches/splatoon3/runtime/weapon-models/rollers.mjs > .dynamo-evidence/source-hashes.txt
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .dynamo-baseline/scripts/build-inkwave.mjs .dynamo-baseline/inkwave-public .dynamo-before-site
+          node scripts/build-inkwave.mjs inkwave-public .dynamo-after-site
+      - name: Emitted Dynamo and all-model contracts
+        run: |
+          INKWAVE_BUILT_SITE=.dynamo-after-site node --experimental-vm-modules --test patches/splatoon3/tests/dynamo-handle-center.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Same-camera valid IBL, native Environment, real Actors and native post stack
+        run: |
+          node scripts/render-dynamo-handle.mjs --site .dynamo-before-site --out .dynamo-evidence/before
+          node scripts/render-dynamo-handle.mjs --site .dynamo-after-site --out .dynamo-evidence/after
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dynamo-handle-${{ github.event.pull_request.head.sha }}
+          path: .dynamo-evidence/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
