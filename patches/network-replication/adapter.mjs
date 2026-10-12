@@ -573,6 +573,16 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       }
       if (e[1] === 's') {
         if (e._netSeq !== undefined && e._netSeq <= Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0)) continue;
+        // #1281: score-affecting paint must not disappear when the generic
+        // timeline FIFO is saturated. Apply only this paint immediately using
+        // canonical ownership, but do not advance the playback watermark: older
+        // queued paint still needs to replay and fill cells outside the newer stamp.
+        if (p.events.length >= 512) {
+          if (!this._applyRemoteSplatEvent(e, false)) continue;
+          e._finishPaintApplied = true;
+          if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
+          continue;
+        }
         if (receivePaintOrder(this, from, e) === false) continue;
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
@@ -765,15 +775,13 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
     this.stats.in++;`, 'ordered tick replay guard');
     }
-    patch('  _playEvents() {', `  _applyRemoteSplatEvent(e) {
+    patch('  _playEvents() {', `  _applyRemoteSplatEvent(e, commitReplay = true) {
     const order = readPaintOrder(this, e._netPeer, e);
     if (order === false) return false;
     const state = this._paintClockState;
     if (e._netSeq !== undefined) {
       if (e._netSeq <= (state.applied.get(e._netPeer) || 0)) return false;
-      state.applied.set(e._netPeer, e._netSeq);
     }
-    receivePaintOrder(this, e._netPeer, e);
     this.applying = true;
     try {
       const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
@@ -784,8 +792,10 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
       if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
       G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
-      return true;
     } finally { this.applying = false; }
+    if (e._netSeq !== undefined && commitReplay) state.applied.set(e._netPeer, e._netSeq);
+    receivePaintOrder(this, e._netPeer, e);
+    return true;
   }
 
   commitDeadlinePaint() {

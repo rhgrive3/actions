@@ -35,5 +35,5 @@ for wid in ids:
   y=row*(tile+30);label.text((8,y+8),wid+' '+view+' | reference / baseline / current',fill='#182027')
   source=Image.open(refs/(wid+'.3d.png')).convert('RGBA') if view=='refOblique' else reference.crop(crops[wid][view])
   for col,im in enumerate([source,Image.open(root/'before'/(wid+'.'+view+'.png')).convert('RGBA'),Image.open(root/'after'/(wid+'.'+view+'.png')).convert('RGBA')]):
-   im.thumbnail((tile-16,tile-16));bg=Image.new('RGBA',(tile,tile),'white');bg.alpha_composite(im,((tile-im.width)//2,(tile-im.height)//2));paired.paste(bg.convert('RGB'),(col*tile,y+30))
+   scale=min((tile-16)/im.width,(tile-16)/im.height);im=im.resize((round(im.width*scale),round(im.height*scale)),Image.Resampling.LANCZOS);bg=Image.new('RGBA',(tile,tile),'white');bg.alpha_composite(im,((tile-im.width)//2,(tile-im.height)//2));paired.paste(bg.convert('RGB'),(col*tile,y+30))
  paired.save(root/(wid+'.reference-pairs.jpg'),quality=90)

@@ -103,16 +103,16 @@ function darkTetra(d) {
   body.add(shell(rear,.027,.003,36),C.black,M.satin);
   for(const sx of[-1,1]){
     const cheek=[[-.035,.088],[-.020,.099],[.015,.091],[.016,.060],[.002,.026],[-.007,-.034],[-.026,-.065],[-.055,-.077],[-.052,-.059],[-.031,-.043],[-.026,.005]];
-    body.add(shell(cheek,.003,.0015,30).translate(sx*.015,0,0),C.white,M.satin);
+    body.add(shell(cheek,.003,.0015,30).translate(sx*.015,0,0),sx<0?C.black:C.white,M.satin);
     const pad=[[-.019,.044],[-.034,.030],[-.038,.002],[-.029,-.030],[-.017,-.045],[-.006,-.033],[-.001,-.006],[-.005,.023]];
-    body.add(shell(pad,.0035,.0012,28).translate(sx*.018,0,0),C.black,M.rubber);
-    body.add(shell(pad.map(([z,y])=>[-.019+(z+.019)*.73,y*.80]),.0018,.0006,24).translate(sx*.020,0,0),sx<0?C.grey:C.black,M.satin);
-    for(const y of[-.026,.025]){body.add(cyl(.004,[sx*.020,y,-.021],[sx*.022,y,-.021],10),C.silver,M.satin);body.add(box(.001,.0012,.005,sx*.023,y,-.021,.15,6,4),C.black,M.print);}
+    body.add(shell(pad,.0035,.0012,28).translate(sx*.018,.022,0),C.black,M.rubber);
+    body.add(shell(pad.map(([z,y])=>[-.019+(z+.019)*.73,y*.80]),.0018,.0006,24).translate(sx*.020,.022,0),sx<0?C.grey:C.black,M.satin);
+    for(const y of[-.004,.047]){body.add(cyl(.004,[sx*.020,y,-.021],[sx*.022,y,-.021],10),C.silver,M.satin);body.add(box(.001,.0012,.005,sx*.023,y,-.021,.15,6,4),C.black,M.print);}
     // Fine grip ribs follow the curved grey pad, without changing its hand-contact thickness.
-    if(sx<0)for(let i=0;i<8;i++)body.add(cyl(.0007,[sx*.022,-.020+i*.006,-.031],[sx*.022,-.017+i*.005,-.010],6),C.silver,M.satin);
+    if(sx<0)for(let i=0;i<8;i++)body.add(cyl(.0007,[sx*.022,.002+i*.006,-.031],[sx*.022,.005+i*.005,-.010],6),C.silver,M.satin);
   }
   // The upper receiver is a short rear block; most of the chamber remains visible between the cheeks.
-  body.add(box(.034,.037,.034,0,.069,-.012,.24,10,6),C.black,M.satin);
+  body.add(box(.034,.037,.054,0,.069,-.002,.24,10,6),C.black,M.satin);
   body.add(box(.032,.012,.043,0,.092,-.006,.23,10,6),C.white,M.satin);
   for(const y of[.079,.052]){
     ink.add(zcyl(.015,.006,.127,0,y,20));
@@ -141,11 +141,12 @@ function darkTetra(d) {
   const loop=[[0,.102,.132],[0,.131,.134],[0,.165,.148],[0,.179,.163],[0,.177,.174],[0,.164,.178],[0,.148,.163],[0,.119,.141],[0,.103,.137]];
   body.add(sweep(loop.map(p=>V(...p)),{seg:30,radial:8,capSteps:2,radius:()=>.0038,flat:1.75,outward:(_p,out)=>out.set(1,0,0)}).geo,C.white,M.satin);
   // Swept shoe: width and pitch change along its length. Side profile alone cannot describe this volume.
-  const deck=[[-.098,-.069,.024],[-.073,-.083,.029],[-.025,-.088,.033],[.035,-.083,.036],[.087,-.064,.049],[.128,-.043,.058],[.159,-.025,.043],[.177,-.019,.018]];
+  const deck=[[-.098,-.069,.024],[-.073,-.083,.029],[-.025,-.088,.033],[.035,-.083,.036],[.087,-.064,.049],[.126,-.050,.056],[.141,-.040,.050]];
   const p=[],idx=[];for(const[z,y,w]of deck){for(const[x,dy]of[[-w+.002,.004],[w-.002,.004],[w,.001],[w,-.004],[w-.002,-.006],[-w+.002,-.006],[-w,-.004],[-w,.001]])p.push(x,y+dy,z);}
   for(let j=0;j<deck.length-1;j++)for(let k=0;k<8;k++){const a=j*8+k,b=j*8+(k+1)%8,c=b+8,e=a+8;idx.push(a,c,b,a,e,c);}for(let k=1;k<7;k++){idx.push(0,k,k+1);const a=(deck.length-1)*8;idx.push(a,a+k+1,a+k);}
   const shoe=new THREE.BufferGeometry();shoe.setAttribute('position',new THREE.Float32BufferAttribute(p,3));shoe.setIndex(idx);shoe.computeVertexNormals();body.add(shoe,C.black,M.rubber);
   for(const sx of[-1,1])body.add(pipe(deck.map(([z,y,w])=>[sx*(w-.001),y+.004,z]),.0027,32,5),C.white,M.satin);
+  ink.add(slab([[-.070,-.019],[-.020,0],[-.070,.019]],.001,0,.0004).rotateZ(Math.PI/2).translate(0,-.078,0));
   // Three thick rebound cushions, visibly separated from the swept deck. Ink volumes carry team colour.
   for(const[x,z,y]of[[0,-.056,-.096],[-.032,.082,-.080],[.032,.082,-.080]]){
     const spring=ylathe([[0,-.014],[.014,-.014],[.022,-.010],[.022,-.006],[.017,-.004],[.022,0],[.022,.005],[.017,.008],[.018,.013],[0,.013]],0,0,0,18).scale(1,1,.78).translate(x,y,z);ink.add(spring);
@@ -153,12 +154,12 @@ function darkTetra(d) {
   }
   // The two broad front rebound faces are the shoe's defining front-view silhouette.
   for(const sx of[-1,1]){
-    const x=sx*.036,y=-.068,z=.119,foot=new Pieces(),col=new Pieces();
+    const x=sx*.036,y=-.044,z=.153,foot=new Pieces(),col=new Pieces();
     foot.add(zlathe([[0,-.010],[.021,-.010],[.025,-.004],[.026,.005],[.022,.011],[0,.011]],0,0,0,20),C.white,M.satin);
     foot.add(zlathe([[0,.010],[.023,.010],[.023,.015],[.020,.017],[0,.017]],0,0,0,20),C.black,M.rubber);
     col.add(zlathe([[0,.017],[.012,.017],[.013,.019],[0,.020]],0,0,0,18));
     foot.add(ring(.008,.0012,0,0,.021,'z',4,16),C.grey,M.satin);
-    body.merge(foot.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));ink.merge(col.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));
+    body.merge(foot.transform(g=>g.scale(1,.88,1).rotateX(-.95).translate(x,y,z)));ink.merge(col.transform(g=>g.scale(1,.88,1).rotateX(-.95).translate(x,y,z)));
   }
   return finish(d,body,ink,trig,[0,.065,.147]);
 }

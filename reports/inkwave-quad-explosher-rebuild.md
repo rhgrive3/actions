@@ -1,6 +1,6 @@
 # Quad and Explosher procedural reconstruction
 
-Current comparison base: `1fca80b32c98455924afbbffeccd952fd0122b71`. Earlier measurements below used `b078c37907351f1bbc13d0e7d4b5cbeb0a330009`. Scope is only `s3-maneuver-stepper` (Dark Tetra Dualies / クアッドホッパーブラック) and `s3-slosher-washtub` (Explosher / エクスプロッシャー).
+Current comparison base: `bca45e7cb55f3331a58459ea0219e42b44762712`. Earlier measurements below used `b078c37907351f1bbc13d0e7d4b5cbeb0a330009`. Scope is only `s3-maneuver-stepper` (Dark Tetra Dualies / クアッドホッパーブラック) and `s3-slosher-washtub` (Explosher / エクスプロッシャー).
 
 ## Source and design
 
@@ -55,3 +55,13 @@ Second reconstruction source metrics: Quad 11,715 static body+ink triangles / 30
 The second reconstruction includes main `1fca80b32c98455924afbbffeccd952fd0122b71` (camera, collision, paint and networking updates). The model family files are unchanged on that main. Both baseline and candidate builds in the new review use this same main composition; old bdda performance values are not reused as evidence for this version. The 43-file shared main delta was independently checked against each Git blob SHA before local composition.
 
 An additional static review corrected the new Quad swept deck's inward face winding before candidate visual acceptance. Triangle count and positions are unchanged. A top-face normal witness now requires outward winding so back-face culling cannot hide its upper skin.
+
+## Four-view review of 4d5e7f0 and targeted refinement
+
+The browser reference pairs exposed remaining visible gaps: Quad's white outer rear cheek and under-mounted front discs, and Explosher's exposed gold outer cone, underspecified black housing/base, smooth pale cage and missing pale side mark. This version is retained as an intermediate, not an accepted result.
+
+Reference camera roll, pair offsets and framing are corrected before judging body proportions. Source crop windows are now enlarged uniformly to the review tile; no source image is warped. The model side/front/rear/oblique cameras remain exactly shared by baseline and candidate. Quad's side source depicts the pair, so that view now compares two instances as well.
+
+The next local refinement makes Quad's outer rear face black with a higher kidney pad and moves the two front rebound faces into the end of a shortened deck, instead of below an overlapping nose. Explosher now has a dark outer burner housing over the gold inner throat, a layered angular mount, four hand-authored pale glyph silhouettes and hard-faced rectangular cage rails. The source glyphs are coarse visual approximations, not a decoded alphabet or an imported texture. Flat rail faces distinguish brushed metal from the black rubber grips; the cross-section change also reduces rail tessellation rather than adding runtime work. All edits remain static geometry/material data in the two builders.
+
+The refined candidate also includes main `bca45e7` (the two-file saturated network-paint FIFO correction). Its review baseline is pinned to the same commit. Refined static totals are Quad 11,731 triangles / 303,786 bytes and Explosher 10,757 / 274,262; no budget was raised.

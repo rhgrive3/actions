@@ -97,15 +97,16 @@ try {
       // Reference-paired cameras are independent from authored geometry. Both revisions use these exact poses.
       const referenceImages={},referenceCameras={},isQuad=id==='s3-maneuver-stepper';
       const refCenter=new THREE.Vector3(0,isQuad?.036:.027,isQuad?.039:.153);
-      const refViews=isQuad?{refSide:[-3,.22,.45],refFront:[0,.12,3],refRear:[0,.12,-3],refOblique:[-.9,.53,1.1]}:{refSide:[-3,.35,.30],refFront:[-.20,.18,3],refRear:[-.30,.25,-3],refOblique:[-.9,.72,1.1]};
+      const refViews=isQuad?{refSide:[-3,.22,.45],refFront:[0,.12,3],refRear:[0,.12,-3],refOblique:[-.9,.53,1.1]}:{refSide:[-3,.35,.30],refFront:[-.20,.18,3],refRear:[-.30,.25,-3],refOblique:[-.9,1.02,1.1]};
       for(const [name,eye]of Object.entries(refViews)){
-        const isPair=isQuad&&name==='refOblique',span=isQuad?(isPair?.43:.34):.43;
-        const camera=new THREE.PerspectiveCamera(25,1,.01,30),offset=new THREE.Vector3(...eye).normalize().multiplyScalar(span*2.85),up=new THREE.Vector3(0,1,0);
+        const isPair=isQuad&&['refOblique','refSide'].includes(name),span=isQuad?(isPair?.36:.34):.40;
+        const camera=new THREE.PerspectiveCamera(25,1,.01,30),offset=new THREE.Vector3(...eye).normalize().multiplyScalar(span*(isQuad?(isPair?2.1:2.85):(name==='refSide'?2.2:2.05))),up=new THREE.Vector3(0,1,0);
         // The Explosher source turntable displays a tilted can. Align the camera basis, never deform the model.
         if(!isQuad&&name!=='refOblique'){offset.applyAxisAngle(new THREE.Vector3(1,0,0),.18);up.applyAxisAngle(new THREE.Vector3(1,0,0),.18);}
+        const roll=isQuad?0:({refFront:-.22,refRear:.22,refSide:0,refOblique:-.30}[name]||0);up.applyAxisAngle(offset.clone().normalize(),roll);
         camera.position.copy(refCenter).add(offset);camera.up.copy(up);camera.lookAt(refCenter);
-        let second;if(isPair){second=g.clone(true);g.position.set(-.049,0,.029);second.position.set(.049,0,-.029);scene.add(second);}
-        renderer.render(scene,camera);referenceImages[name]=snap();referenceCameras[name]={position:camera.position.toArray(),up:up.toArray(),target:refCenter.toArray(),fov:25,pair:isPair};
+        let second;if(isPair){second=g.clone(true);g.position.set(-.064,-.010,-.022);second.position.set(.064,.010,.022);scene.add(second);}
+        renderer.render(scene,camera);referenceImages[name]=snap();referenceCameras[name]={position:camera.position.toArray(),up:up.toArray(),target:refCenter.toArray(),fov:25,pair:isPair,roll};
         if(second){scene.remove(second);g.position.set(0,0,0);}
       }
       scene.remove(g);

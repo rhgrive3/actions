@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 1fca80b32c98455924afbbffeccd952fd0122b71
+          ref: bca45e7cb55f3331a58459ea0219e42b44762712
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
