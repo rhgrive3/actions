@@ -166,10 +166,10 @@ export function registerMainWeaponCatalog(api) {
 // Reuse the same horizontal / independent Spinner pitch kernel as the seven
 // legacy main weapons. Source parameters are read per added main weapon.
 const ANGULAR_FAMILIES = new Set(['shooter', 'dualies', 'blaster', 'splatling']);
-export function catalogAngularLaunch(projectiles, direction, actor, family, param, accuracy, maximumDegrees) {
+export function catalogAngularLaunch(projectiles, direction, actor, family, param, accuracy, maximumDegrees, jumpAgeSeconds = actor.weaponRunner?.s3JumpSpreadAge) {
   if (!ANGULAR_FAMILIES.has(family)) {
     // Other source families have no verified common angular law here.
-    const chance = accuracy.shot(!!actor.grounded, actor.weaponRunner?.s3JumpSpreadAge);
+    const chance = accuracy.shot(!!actor.grounded, jumpAgeSeconds);
     return projectiles._spread(direction, Math.random() < chance ? maximumDegrees : maximumDegrees * .45);
   }
   const spinner = family === 'splatling';
@@ -178,18 +178,33 @@ export function catalogAngularLaunch(projectiles, direction, actor, family, para
   // Sparse unextracted defaults remain neutral (0.5), not invented values.
   const median = spinner
     ? actor.grounded ? finite(param.Stand_DegBiasMax, .5) : finite(param.Jump_DegBiasMax, .5)
-    : accuracy.shot(!!actor.grounded, actor.weaponRunner?.s3JumpSpreadAge);
+    : accuracy.shot(!!actor.grounded, jumpAgeSeconds);
   return withShotBias(actor, median, spinner ? finite(param.PitchDegBias, .5) : null,
     () => spreadWeaponRound(projectiles, direction, actor,
       {kind:family, spreadPitchGround:spinner ? finite(param.PitchDegSwerve, 0) : null},
       maximumDegrees));
 }
 
-function initialState(r) {
+// A ledge fall is not a newly admitted jump: source recovery begins only
+// after the Actor's native jump serial advances. Recovery keeps running
+// across landing, and rendered frame rate does not affect the fixed clock.
+export function advanceCatalogJumpClock(state, actor, family, dt) {
+  const serial = actor.s3JumpSerial || 0;
+  if (state.jumpSerial !== serial) {
+    state.jumpSerial = serial;
+    state.jumpAge = 0;
+  } else if (state.jumpAge != null && Number.isFinite(dt) && dt > 0) state.jumpAge += dt;
+  if (state.jumpAge != null && state.jumpAge * HZ + EPS >= state.accuracy.jumpEnd &&
+    (actor.grounded || family === 'dualies')) state.jumpAge = null;
+  return state.jumpAge;
+}
+
+function initialState(r,actor) {
   return { id:r.id, pressed:false, frame:0, pending:null, chargeF:0, paid:0, reserved:0,
     stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
-    accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0 };
+    accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
+    jumpSerial:actor?.s3JumpSerial || 0, jumpAge:null };
 }
 
 export function installMainWeaponCatalogRuntime(api, profile) {
@@ -206,7 +221,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
 
   function state(runner) {
     const r = runner.a.weapon.catalogRecord;
-    if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r);
+    if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r,runner.a);
     return runner.catalogState;
   }
   function cancel(runner, keep = false) {
@@ -389,7 +404,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.projectiles._spread(aim,spread);
     } else {
       // Variable-charge modes may omit fields present in the base WeaponParam.
-      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread);
+      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,s.jumpAge);
     }
     runner.spread=spread;
     spawn(a,r,desc,aim,muzzle,{volley});notify(a,r,muzzle,aim,charge);
@@ -934,7 +949,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     legacyUpdate.call(this,dt,{...input,fire:false,firePressed:false});
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
-    s.stop=Math.max(0,s.stop-dt);if(r.family!=='splatling')s.accuracy.advance(dt);
+    s.stop=Math.max(0,s.stop-dt);
+    if(r.family!=='splatling') {
+      s.accuracy.advance(dt);
+      if(ANGULAR_FAMILIES.has(r.family))advanceCatalogJumpClock(s,a,r.family,dt);
+    }
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
