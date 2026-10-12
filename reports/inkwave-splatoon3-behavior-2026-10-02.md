@@ -4041,7 +4041,7 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 
 参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
 
-- **本家の根拠**: 公式回転動画「S3 Splattershot Pro FRZ-N model rotating.mp4」「S3 Jet Squelcher COB-R model rotating.mp4」（同形状の別キット）の真横フレーム、本家3Dレンダー「S3 Weapon Main <名前>.png」、持ち方は S2 プロモ画像と S3 3D プロモ（Inkipedia）。本家のメッシュ寸法・ソケット位置・構えの数値は公開されておらず、すべて画像からの推定。
+- **本家の根拠**: 公式回転動画「S3 Splattershot Pro FRZ-N model rotating.mp4」「S3 Jet Squelcher COB-R model rotating.mp4」（同形状の別キット）の真横・正面・背面・斜めフレーム、「S3 Custom Jet Squelcher Promotional 3D Render.jpg」、本家3Dレンダー「S3 Weapon Main <名前>.png」、持ち方は S2 プロモ画像と S3 3D プロモ（Inkipedia）。本家のメッシュ寸法・ソケット位置・構えの数値は公開されておらず、すべて画像からの推定。
 - **INKWAVE の実装箇所**: `patches/splatoon3/runtime/weapon-models/shooters-b.mjs`（`expert` / `longJet`、`MODELS['s3-shooter-long'].hold`）。記録は `patches/splatoon3/reference/weapon-models/shooters-b.md` の「2026-10-12 作り直し」。
 
 | 差分 | 再現操作 | プレイへの影響 | 確認状態 |
@@ -4049,6 +4049,6 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 | 両ブキのモデルを立体で作り直し（プライム: 右側だけを回るホース・円錐タンク・くさび等、ジェット: 上下2本体を持ち手でつなぐ構造） | ブキを選び待機・射撃 | 見た目のみ | 回転動画の真横フレーム・3Dレンダーとの画像比較のみ。実機寸法は未確認 |
 | **ジェットの銃口（弾の発生位置）を竿先のノズルへ移動**。ブキ空間 (0, 0.155, 0.482)→(0, 0.063, 0.664) m。キャラ基準の長押し射撃中の発生位置: 前方 0.800→0.874 m、高さ 0.958→0.884 m、横 −0.045→−0.027 m | 立ち止まって長押し射撃 | 弾の発生位置が約 7 cm 前・7 cm 下へ。壁際・段差際の射撃、足元の塗りの始点に影響 | ロジック単独の計測（30/60/120 Hz で同値）。本家実機の発生位置とは未比較（実機計測が必要） |
 | プライムの銃口 (0, 0.137, 0.393)→(0, 0.130, 0.402) m。長押し射撃中: 前方 0.711→0.720 m、高さ 0.938→0.931 m | 同上 | ほぼ変化なし（1 cm 未満） | ロジック単独の計測（30/60/120 Hz で同値）。未確認 |
-| グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.175 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
+| グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
 
 計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。

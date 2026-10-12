@@ -56,7 +56,7 @@ function roundPoly(pts, r, n = 3) {
   return out;
 }
 /** Side-profile solid: outline [[z, y], ...] with filleted corners, extruded `thick` across X about x. */
-const sideSolid = (pts, thick, r = 0.004, bevel = 0.004, x = 0) => slab(roundPoly(pts, r), thick, x, bevel);
+const sideSolid = (pts, thick, r = 0.004, bevel = 0.004, x = 0) => slab(roundPoly(pts, r, 2), thick, x, bevel);
 /** Chamfered-rectangle loft along +Z: sections [{ z, y, w, h, c }] (full width / height, chamfer c). Flat facets. */
 function chamferLoft(sections) {
   const ring = s => {
@@ -229,101 +229,122 @@ function heavy(d) {
 // ------------------------------------------------------------------------------------------ Jet Squelcher
 // Wmn_Shooter_Long, a pressure-washer gun. Proportions from the true-side frame of the official turntable
 // "S3 Jet Squelcher COB-R model rotating.mp4" (same mesh, other kit; frame rotated so the lance is level),
-// colours and the ink part from the base "S3 Weapon Main Jet Squelcher 3D" render (its pale nozzle sleeve
-// is team ink; yellow on the S3 Custom promo render). Overall length ≈ 0.82 m (image-estimated).
-// Two solids joined by the handle: an upper gun body (narrow, tall at the back, sloping down to the lance;
-// dark rear end cap and underside block, side vents and a label, a big black knob on each flank, a
-// ribbed black fitting carrying the thin black lance and the ink nozzle) and a lower pump block (open
-// D-loop at the back with a rubber bar, dark front panel with two knobs, vents) hanging under the hand.
-// A black hose leaves the lance fitting, loops over it on the right and drops into the pump block.
+// its front / back / 3/4 frames for the sections, the 1920 px "S3 Custom Jet Squelcher Promotional 3D
+// Render" for the details, colours and the ink part from the base "S3 Weapon Main Jet Squelcher" render
+// (its pale nozzle sleeve is team ink; yellow on the Custom promo). Overall length ≈ 0.83 m (estimated).
+// Upper gun: a dark textured core (shield-shaped slanted rear cap with a centre seam, a dark strip along
+// the whole underside) clamped between two teal cheeks whose rounded top ridges stand above it, leaving
+// a dark groove along the top of the rear half; ahead of the cheeks a narrower rounded teal neck runs
+// down to a long ribbed black sleeve, the thin black lance and the ink nozzle. Vents, label and warning
+// prints on the cheeks, a big eight-sided black knob low on each side of the neck, a small knurled button
+// on the right. Lower pump block: open D-loop at the back (teal jaws round a ribbed rubber roller), top
+// and bottom vents, a dark box over the front half with two domed hex bolts and the hose port. A raked,
+// slotted teal handle joins them. A thin black hose leaves the sleeve, loops over the lance on the right
+// and drops into the pump block's port.
 function longJet(d) {
-  const C = { teal: '#0b6b6e', dteal: '#08585b', dark: '#2b3032', black: '#151618', white: '#e9ece6', steel: '#8b9196' };
-  const LY = 0.0627, RAKE = 0.175;                               // lance axis height, handle rake
+  const C = { teal: '#0d6366', dteal: '#0a4f52', core: '#2a2e30', black: '#151618', white: '#eceee8', red: '#c8312c', steel: '#8b9196' };
+  const LY = 0.0627, RAKE = 0.28;                                // lance axis height, handle rake
   const body = new Pieces(), ink = new Pieces(), trig = new Pieces();
-  // ---- upper gun body
-  const UW = 0.050;
-  body.add(sideSolid([[-0.090, 0.175], [-0.050, 0.170], [0.044, 0.154], [0.110, 0.140], [0.177, 0.124], [0.244, 0.112], [0.297, 0.100],
-    [0.318, 0.092], [0.326, 0.082], [0.327, 0.036], [0.313, 0.022], [0.285, 0.008], [0.240, 0.0], [0.190, 0.002], [0.124, 0.008], [0.064, 0.022],
-    [0.0, 0.031], [-0.05, 0.044], [-0.083, 0.075], [-0.093, 0.115]], UW, 0.012, 0.009), C.teal, M.satin);
-  // dark underside block (rear-lower quarter) and the faceted dark rear end cap with its centre seam
-  body.add(sideSolid([[-0.096, 0.156], [-0.096, 0.100], [-0.087, 0.072], [-0.05, 0.041], [0.0, 0.0285], [0.045, 0.0235], [0.066, 0.022],
-    [0.060, 0.036], [-0.076, 0.134], [-0.086, 0.156]], UW + 0.003, 0.006, 0.005), C.dark, M.satin);
-  body.add(chamferLoft([{ z: -0.104, y: 0.135, w: 0.044, h: 0.07, c: 0.016 }, { z: -0.090, y: 0.135, w: 0.054, h: 0.084, c: 0.018 }]), C.dark, M.satin);
-  body.add(box(0.0016, 0.07, 0.003, 0, 0.135, -0.1045, 0.2, 4, 4), C.black, M.satin);
+  // a +X-facing detail placed on side sx (mirrored with valid winding for the right side)
+  const onSide = (g, sx, x, y, z) => { if (sx > 0) return at(g, x, y, z); const m = mirrored(g); g.dispose(); return at(m, -x, y, z); };
+  // ---- upper gun: dark core, two teal cheeks over its rear half, rounded teal neck in front
+  const CW = 0.030, WX = 0.0215, WT = 0.017, NW = 0.048;        // core width, cheek centre / thickness, neck width
+  body.add(sideSolid([[-0.113, 0.170], [-0.102, 0.088], [-0.088, 0.064], [-0.05, 0.039], [0.0, 0.027], [0.064, 0.019], [0.124, 0.012],
+    [0.19, 0.008], [0.24, 0.008], [0.285, 0.014], [0.312, 0.026], [0.322, 0.036], [0.322, 0.070], [0.25, 0.100], [0.12, 0.128],
+    [0.04, 0.146], [-0.05, 0.160]], CW, 0.006, 0.008), C.core, M.rubber);
+  body.add(box(0.0018, 0.074, 0.003, 0, 0.128, -0.1035, 0.2, 4, 4).rotateX(-0.08), C.black, M.satin);   // rear cap seam
   for (const sx of [-1, 1]) {
-    // label strip near the top, five vent grooves under it (parallel to the sloping top), warning prints
-    const along = (z0, z1, y0, h) => { const k = -0.16; return [[z0, y0 + k * z0], [z1, y0 + k * z1], [z1, y0 + h + k * z1], [z0, y0 + h + k * z0]]; };
-    body.add(decal(along(-0.082, -0.022, 0.150, 0.010), sx, UW / 2), C.white, M.print);
-    for (let k = 0; k < 5; k++) body.add(decal(along(-0.080, -0.026, 0.139 - k * 0.0085, 0.0034), sx, UW / 2), C.black, M.print);
-    body.add(decal([[0.035, 0.112], [0.051, 0.112], [0.043, 0.126]], sx, UW / 2), C.white, M.print);
-    body.add(decal(roundPoly([[0.060, 0.106], [0.074, 0.106], [0.074, 0.120], [0.060, 0.120]], 0.007, 2), sx, UW / 2), C.white, M.print);
-    body.add(decal(roundPoly([[0.083, 0.102], [0.093, 0.102], [0.093, 0.116], [0.083, 0.116]], 0.002), sx, UW / 2), C.white, M.print);
-    // screws
-    for (const [z, y] of [[-0.075, 0.09], [0.030, 0.034], [0.29, 0.03]]) {
-      body.add(xcyl(0.0035, sx * UW / 2, sx * (UW / 2 + 0.0015), y, z, 10), C.steel, M.metal);
-    }
-    // big black knob on each flank (adjuster), knurled rim
-    const kz = 0.2306, ky = 0.047, f = UW / 2 - 0.003;
-    const kn = xlathe([[0, 0], [0.026, 0], [0.027, 0.006], [0.0255, 0.012], [0.018, 0.013], [0.0155, 0.017], [0, 0.017]], 0, 0, 0, 28);
-    body.add(at(sx < 0 ? mirrored(kn) : kn, sx * f, ky, kz), C.black, M.rubber);
-    for (let k = 0; k < 12; k++) {
-      const a = (k / 12) * Math.PI * 2;
-      body.add(box(0.008, 0.003, 0.003, sx * (f + 0.0065), ky + Math.cos(a) * 0.0265, kz + Math.sin(a) * 0.0265, 0.5, 4, 4), C.black, M.rubber);
-    }
+    body.add(sideSolid([[-0.093, 0.179], [-0.05, 0.173], [0.044, 0.157], [0.120, 0.141], [0.140, 0.128], [0.128, 0.085], [0.098, 0.048],
+      [0.066, 0.029], [0.057, 0.038], [-0.076, 0.137], [-0.090, 0.152]], WT, 0.012, 0.0055, sx * WX), C.teal, M.satin);
   }
-  // ribbed black fitting at the front, thin black lance, ink nozzle with a dark bore
-  body.add(zlathe([[0, 0.316], [0.0205, 0.316], [0.0215, 0.33], [0.0185, 0.345], [0.0135, 0.352], [0.0135, 0.398], [0.0105, 0.405], [0.008, 0.41], [0, 0.41]],
-    0, LY, 0, 24), C.black, M.rubber);
-  for (let k = 0; k < 6; k++) body.add(ring(0.0138, 0.0017, 0, LY, 0.357 + k * 0.0075, 'z', 4, 14), C.black, M.rubber);
-  body.add(zcyl(0.0068, 0.405, 0.556, 0, LY, 14), C.black, M.metal);
+  body.add(sideSolid([[0.10, 0.148], [0.177, 0.126], [0.244, 0.114], [0.297, 0.102], [0.318, 0.094], [0.326, 0.084], [0.327, 0.040],
+    [0.313, 0.035], [0.285, 0.024], [0.240, 0.019], [0.190, 0.020], [0.124, 0.024], [0.10, 0.026]], NW, 0.008, 0.011), C.teal, M.satin);
+  // cheek prints: label strip, six vent grooves parallel to the sloping top, warning triangle / disc / text
+  const FX = WX + WT / 2;
+  for (const sx of [-1, 1]) {
+    const along = (z0, z1, y0, h) => { const k = -0.165; return [[z0, y0 + k * z0], [z1, y0 + k * z1], [z1, y0 + h + k * z1], [z0, y0 + h + k * z0]]; };
+    body.add(decal(along(-0.083, -0.012, 0.152, 0.011), sx, FX), C.white, M.print);
+    body.add(decal(along(-0.068, -0.03, 0.1555, 0.0035), sx, FX + 0.0002), C.red, M.print);
+    for (let k = 0; k < 6; k++) body.add(decal(along(-0.082, -0.018, 0.1425 - k * 0.0072, 0.0028), sx, FX), C.black, M.print);
+    body.add(decal([[0.030, 0.104], [0.050, 0.104], [0.040, 0.121]], sx, FX), C.white, M.print);
+    body.add(decal([[0.034, 0.1065], [0.046, 0.1065], [0.040, 0.117]], sx, FX + 0.0002), C.teal, M.print);
+    body.add(decal(roundPoly([[0.057, 0.100], [0.073, 0.100], [0.073, 0.116], [0.057, 0.116]], 0.008, 2), sx, FX), C.white, M.print);
+    body.add(decal(roundPoly([[0.080, 0.097], [0.091, 0.097], [0.091, 0.113], [0.080, 0.113]], 0.002), sx, FX), C.white, M.print);
+    body.add(decal(along(0.026, 0.096, 0.101 - 0.0145, 0.0022), sx, FX), C.white, M.print);
+    for (const [z, y] of [[-0.072, 0.098], [0.115, 0.05]]) body.add(xcyl(0.0032, sx * FX, sx * (FX + 0.0014), y, z, 10), C.steel, M.metal);
+    // big eight-sided knob low on the neck, on a round washer
+    const kz = 0.236, ky = 0.038, f = NW / 2 - 0.004;
+    body.add(onSide(xlathe([[0, 0], [0.027, 0], [0.027, 0.005], [0, 0.005]], 0, 0, 0, 24), sx, f, ky, kz), C.black, M.rubber);
+    body.add(onSide(xlathe([[0, 0.004], [0.029, 0.004], [0.032, 0.008], [0.032, 0.016], [0.028, 0.020], [0.015, 0.0215], [0, 0.022]], 0, 0, 0, 8)
+      .rotateX(Math.PI / 8), sx, f, ky, kz), C.black, M.satin);
+    body.add(onSide(xlathe([[0, 0.0212], [0.009, 0.0212], [0.0095, 0.0235], [0, 0.024]], 0, 0, 0, 16), sx, f, ky, kz), C.core, M.satin);
+  }
+  // small knurled button on the right cheek
+  body.add(onSide(xlathe([[0, 0], [0.0085, 0], [0.0085, 0.008], [0.007, 0.0095], [0, 0.0095]], 0, 0, 0, 14), -1, FX - 0.001, 0.086, 0.158),
+    C.black, M.rubber);
+  // long ribbed black sleeve, thin black lance, ink nozzle with a dark bore
+  body.add(zlathe([[0, 0.314], [0.021, 0.314], [0.022, 0.326], [0.019, 0.340], [0.0165, 0.346], [0.0165, 0.398], [0.0125, 0.407], [0.0085, 0.414],
+    [0, 0.414]], 0, LY, 0, 20), C.black, M.rubber);
+  for (let k = 0; k < 6; k++) body.add(ring(0.0168, 0.0018, 0, LY, 0.352 + k * 0.0085, 'z', 4, 12), C.black, M.rubber);
+  body.add(zcyl(0.0068, 0.410, 0.556, 0, LY, 14), C.black, M.metal);
   ink.add(zlathe([[0, 0.548], [0.0095, 0.548], [0.0105, 0.556], [0.019, 0.561], [0.0238, 0.569], [0.0238, 0.582], [0.0212, 0.585], [0.0212, 0.591],
     [0.0238, 0.594], [0.0238, 0.603], [0.0212, 0.606], [0.0212, 0.612], [0.0238, 0.615], [0.0232, 0.652], [0.0205, 0.661], [0.0085, 0.6635],
     [0.0045, 0.659], [0, 0.659]], 0, LY, 0, 26), '#cfe5de', M.gloss);
   body.add(zcyl(0.0046, 0.655, 0.6602, 0, LY, 12), C.black, M.satin);
-  // black hose: out of the fitting, a loop over the lance on the right, down into the pump block
-  body.add(pipe([[-0.002, 0.076, 0.33], [-0.008, 0.093, 0.343], [-0.015, 0.102, 0.367], [-0.020, 0.090, 0.391], [-0.023, LY, 0.399],
-    [-0.022, 0.034, 0.388], [-0.020, 0.015, 0.355], [-0.018, 0.003, 0.318], [-0.016, -0.013, 0.294], [-0.014, -0.032, 0.284]], 0.0046, 40, 8),
-  C.black, M.rubber);
-  body.add(ycyl(0.0085, -0.040, -0.026, -0.014, 0.284, 14), C.black, M.rubber);
-  // ---- lower pump block: C-shaped rear (open D-loop), vents, dark front panel with two knobs
-  const LW = 0.056;
-  body.add(sideSolid([[-0.160, -0.044], [-0.090, -0.037], [-0.023, -0.033], [0.044, -0.028], [0.110, -0.023], [0.177, -0.023], [0.244, -0.028],
+  // thin black hose: off the sleeve's front end, a loop over the lance on the right, down into the pump block's port
+  body.add(ycyl(0.0055, LY + 0.012, LY + 0.021, -0.002, 0.346, 10), C.black, M.rubber);
+  body.add(pipe([[-0.002, LY + 0.016, 0.346], [-0.004, 0.094, 0.356], [-0.008, 0.110, 0.383], [-0.014, 0.100, 0.407], [-0.019, 0.074, 0.415],
+    [-0.022, 0.046, 0.406], [-0.021, 0.022, 0.386], [-0.018, 0.004, 0.356], [-0.014, -0.012, 0.320], [-0.011, -0.025, 0.299],
+    [-0.010, -0.032, 0.295]], 0.0042, 36, 8), C.black, M.rubber);
+  // ---- lower pump block
+  const LW = 0.068, LX = LW / 2;
+  body.add(sideSolid([[-0.162, -0.042], [-0.090, -0.037], [-0.023, -0.033], [0.044, -0.028], [0.110, -0.023], [0.177, -0.023], [0.244, -0.028],
     [0.304, -0.039], [0.313, -0.048], [0.314, -0.099], [0.304, -0.108], [0.244, -0.124], [0.177, -0.141], [0.110, -0.157], [0.044, -0.164],
-    [-0.023, -0.164], [-0.090, -0.161], [-0.163, -0.150], [-0.163, -0.134], [-0.142, -0.136], [-0.118, -0.132], [-0.103, -0.118],
-    [-0.098, -0.099], [-0.103, -0.080], [-0.118, -0.066], [-0.142, -0.062], [-0.160, -0.060]], LW, 0.006, 0.008), C.teal, M.satin);
-  // rubber bar across the open back of the D-loop
-  body.add(ylathe([[0, -0.143], [0.0095, -0.143], [0.0105, -0.136], [0.0105, -0.066], [0.0095, -0.058], [0, -0.058]], 0, 0, -0.151, 16), C.black, M.rubber);
-  for (let k = 0; k < 7; k++) body.add(ring(0.0108, 0.0016, 0, -0.130 + k * 0.0105, -0.151, 'y', 4, 12), C.black, M.rubber);
-  body.add(sideSolid([[0.168, -0.021], [0.244, -0.026], [0.305, -0.036], [0.317, -0.046], [0.318, -0.101], [0.306, -0.111], [0.262, -0.118],
-    [0.214, -0.090], [0.168, -0.050]], LW + 0.003, 0.006, 0.005), C.dark, M.satin);
+    [-0.023, -0.164], [-0.090, -0.161], [-0.165, -0.151], [-0.165, -0.135], [-0.142, -0.137], [-0.118, -0.134], [-0.102, -0.119],
+    [-0.096, -0.099], [-0.102, -0.079], [-0.118, -0.065], [-0.142, -0.061], [-0.162, -0.058]], LW, 0.006, 0.009), C.teal, M.satin);
+  // raised lip round the D opening and a groove following it on each side
+  const lip = [[-0.150, -0.061], [-0.120, -0.064], [-0.104, -0.078], [-0.098, -0.099], [-0.104, -0.120], [-0.120, -0.134], [-0.150, -0.137]];
   for (const sx of [-1, 1]) {
-    for (const [z, y] of [[0.217, -0.047], [0.258, -0.068]]) {
-      body.add(xcyl(0.0092, sx * (LW / 2), sx * (LW / 2 + 0.0055), y, z, 18), C.black, M.rubber);
-      body.add(xcyl(0.0055, sx * (LW / 2), sx * (LW / 2 + 0.0075), y, z, 14), C.black, M.rubber);
+    body.add(pipe(lip.map(([z, y]) => [sx * (LX - 0.002), y, z]), 0.0028, 24, 6), C.teal, M.satin);
+    body.add(pipe(lip.map(([z, y]) => [sx * (LX + 0.0002), y, z + 0.016]), 0.0012, 24, 4), C.dteal, M.satin);
+  }
+  // ribbed rubber roller across the back of the D-loop
+  body.add(ylathe([[0, -0.144], [0.0095, -0.144], [0.0105, -0.137], [0.0105, -0.064], [0.0095, -0.057], [0, -0.057]], 0, 0, -0.153, 16), C.black, M.rubber);
+  for (let k = 0; k < 8; k++) body.add(ring(0.0108, 0.0024, 0, -0.1335 + k * 0.0098, -0.153, 'y', 4, 10), C.black, M.rubber);
+  // dark front box with two domed hex bolts and the hose port
+  body.add(sideSolid([[0.160, -0.019], [0.244, -0.024], [0.307, -0.035], [0.320, -0.045], [0.321, -0.102], [0.308, -0.113], [0.262, -0.120],
+    [0.212, -0.092], [0.160, -0.052]], LW + 0.004, 0.006, 0.006), C.core, M.rubber);
+  body.add(ycyl(0.0085, -0.030, -0.017, -0.010, 0.295, 14), C.black, M.rubber);
+  for (const sx of [-1, 1]) {
+    for (const [z, y] of [[0.214, -0.046], [0.258, -0.067]]) {
+      body.add(onSide(xlathe([[0, 0], [0.0115, 0], [0.0115, 0.005], [0, 0.005]], 0, 0, 0, 6).rotateX(Math.PI / 6), sx, LX + 0.001, y, z), C.black, M.satin);
+      body.add(onSide(xlathe([[0, 0], [0.0085, 0], [0.0075, 0.003], [0.004, 0.0052], [0, 0.0056]], 0, 0, 0, 14), sx, LX + 0.0055, y, z), C.black, M.satin);
     }
-    const vent = (z, w, y0, y1) => body.add(decal(roundPoly([[z, y0], [z + w, y0], [z + w, y1], [z, y1 - 0.001]], 0.002), sx, LW / 2), C.black, M.print);
-    for (let k = 0; k < 3; k++) vent(0.050 + k * 0.017, 0.009, -0.076, -0.051);
-    for (let k = 0; k < 4; k++) vent(0.010 + k * 0.022, 0.012, -0.156, -0.130);
-    for (const [z, y] of [[-0.07, -0.05], [-0.07, -0.148], [0.15, -0.03], [0.29, -0.104]]) {
-      body.add(xcyl(0.0035, sx * LW / 2, sx * (LW / 2 + 0.0015), y, z, 10), C.steel, M.metal);
+    // vents: three at the top behind the handle, four slanted in a recess at the bottom
+    const vent = (pts, col = C.black) => body.add(decal(roundPoly(pts, 0.0018), sx, LX), col, M.print);
+    for (let k = 0; k < 3; k++) { const z = 0.046 + k * 0.017; vent([[z, -0.077], [z + 0.009, -0.077], [z + 0.009, -0.050], [z, -0.051]]); }
+    vent([[-0.004, -0.160], [0.104, -0.152], [0.104, -0.126], [-0.004, -0.133]], C.dteal);
+    for (let k = 0; k < 4; k++) { const z = 0.004 + k * 0.025; vent([[z, -0.155], [z + 0.011, -0.154], [z + 0.016, -0.130], [z + 0.005, -0.131]]); }
+    for (const [z, y] of [[-0.080, -0.048], [-0.080, -0.150], [0.135, -0.030], [0.296, -0.104], [0.17, -0.046]]) {
+      body.add(xcyl(0.0032, sx * LX, sx * (LX + 0.0014), y, z, 10), C.steel, M.metal);
     }
   }
-  // ---- handle between the two bodies (raked; fist round the native axis), vents, dark trigger
+  // ---- raked teal handle between the two bodies (fist round the native axis), six side slots, dark trigger
   const handle = new Pieces();
-  handle.add(sideSolid([[-0.021, -0.058], [0.021, -0.058], [0.0215, 0.0], [0.021, 0.058], [-0.021, 0.058], [-0.0215, 0.0]], 0.029, 0.007, 0.007),
-    C.teal, M.satin);
-  for (const sx of [-1, 1]) for (let k = 0; k < 5; k++) {
-    const y = -0.022 + k * 0.011;
-    handle.add(decal(roundPoly([[-0.011, y], [0.012, y + 0.002], [0.012, y + 0.0055], [-0.011, y + 0.0035]], 0.0012, 1), sx, 0.0145), C.black, M.print);
+  handle.add(sideSolid([[-0.025, -0.060], [0.021, -0.060], [0.025, -0.03], [0.026, 0.0], [0.024, 0.062], [-0.024, 0.062], [-0.027, 0.0]],
+    0.032, 0.008, 0.008), C.teal, M.satin);
+  for (const sx of [-1, 1]) for (let k = 0; k < 6; k++) {
+    const y = -0.034 + k * 0.0115;
+    handle.add(decal(roundPoly([[-0.014, y], [0.014, y + 0.002], [0.014, y + 0.0058], [-0.014, y + 0.0038]], 0.0014, 1), sx, 0.016), C.black, M.print);
   }
   body.merge(handle.transform(g => g.rotateX(RAKE)));
-  trig.add(sideSolid([[0.022, 0.037], [0.031, 0.034], [0.035, 0.022], [0.033, 0.010], [0.027, 0.006], [0.028, 0.018], [0.024, 0.031]], 0.009, 0.002, 0.002),
-    C.dark, M.satin);
+  trig.add(sideSolid([[0.024, 0.040], [0.033, 0.036], [0.037, 0.024], [0.035, 0.012], [0.029, 0.008], [0.030, 0.020], [0.026, 0.033]], 0.010, 0.002, 0.002),
+    C.black, M.rubber);
   return rebuild(d, {
     body, ink,
     parts: { trigger: part(trig, TRIGGER_PIVOT) },
     gripR: rakedGrip(RAKE),
-    // the support hand closes round the front of the gun body, under the knobs (image-estimated)
+    // the support hand closes round the front of the gun neck, under the knobs (image-estimated)
     gripL: tubeGrip([0, 0.03, 0.26]),
     muzzle: [0, LY, 0.664],
   });
