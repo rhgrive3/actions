@@ -1,0 +1,30 @@
+name: INKWAVE 65 floor paint audit
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/**'
+      - 'scripts/measure-inkwave-floor-actions.mjs'
+      - '.github/workflows/inkwave-65-floor-audit.yml'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  65-main-weapon-paint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Measure all native source-composed main weapon paint
+        env:
+          INKWAVE_PAINT_AUDIT_OUT: paint-action-audit.json
+        run: node --experimental-vm-modules scripts/measure-inkwave-floor-actions.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: paint-action-audit
+          path: paint-action-audit.json
+          retention-days: 14
+          if-no-files-found: warn
