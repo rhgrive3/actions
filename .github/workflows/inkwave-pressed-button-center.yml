@@ -87,6 +87,9 @@ jobs:
               const [visible,logical]=row.animatedRepress;assert.equal(visible.before,1);assert.equal(logical.before,1);assert.equal(logical.after,2);
               assert.equal(visible.after,label.startsWith('A')?1:2,label+' '+row.engine+' natural pressed reinput');
               assert.equal(visible.routed.kind,label.startsWith('A')?'look':'btn');
+              assert.equal(row.centerGeometry.length,6);
+              for(const c of row.centerGeometry){const [x,y]=c.transformOrigin.split(' ').map(parseFloat);assert(Math.abs(x-c.layoutWidth/2)<.1&&Math.abs(y-c.layoutHeight/2)<.1,'native centered transform origin');}
+              if(label.startsWith('B'))for(const c of row.centerGeometry)assert(c.centerError<.1,'edited/resized/rotated actual CSS center '+c.label+'/'+c.id);
               if(label.startsWith('B'))for(const event of row.heldActionTimeline){
                 const e=event.detail;if(!event.label.startsWith('pointer-')||!e?.box||!e.rect)continue;
                 assert(Math.hypot(e.rect.x+e.rect.width/2-e.box.x,e.rect.y+e.rect.height/2-e.box.y)<.1,'animated visible and logical centers aligned');

@@ -38,7 +38,7 @@ once("      await page.locator('[data-c=\"fire\"]').tap(); await page.locator('[
             const el=event.target.closest?.('[data-c]'),id=el?.dataset.c,rect=el?.getBoundingClientRect(),box=id?mobile._box(id):null;
             heldSnapshot('pointer-'+(capture?'before':'after'),{type,id,pointerId:event.pointerId,isTrusted:event.isTrusted,
               x:event.clientX,y:event.clientY,hit:mobile._hitButton(event.clientX,event.clientY),box,
-              rect:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null,scale:el?getComputedStyle(el).scale:null});
+              rect:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null,scale:el?getComputedStyle(el).scale:null,transformOrigin:el?getComputedStyle(el).transformOrigin:null});
           },{capture,passive:true});
         }
         heldSnapshot('native-trial-ready');
@@ -91,6 +91,34 @@ once("      entry.checks.push('native-taps-and-DOM-touch-repress-reach-actual-Ac
       await page.mouse.click(mousePoint.x,mousePoint.y);
       entry.nativeMouseControl=await page.evaluate(()=>({pointers:mobile._ptr.size,fire:mobile.buttons.fire,pressed:[...mobile.pressed]}));
       assert.deepEqual(entry.nativeMouseControl,{pointers:0,fire:false,pressed:[]},'native mouse is not reclassified as touch');
+      // Browser geometry checks supplement source ownership; they inspect real CSS.
+      entry.centerGeometry=[];
+      const centers=async label=>{
+        const rows=await page.evaluate(label=>['fire','jump'].map(id=>{
+          const e=mobile.els[id],r=e.getBoundingClientRect(),b=mobile._box(id),s=getComputedStyle(e);
+          return{label,id,box:b,rect:{x:r.x,y:r.y,width:r.width,height:r.height},scale:s.scale,transformOrigin:s.transformOrigin,layoutWidth:parseFloat(s.width),layoutHeight:parseFloat(s.height),
+            centerError:Math.hypot(r.x+r.width/2-b.x,r.y+r.height/2-b.y),editing:mobile.editing};
+        }),label);
+        entry.centerGeometry.push(...rows);
+      };
+      await page.evaluate(()=>{mobile.reset();input.lastDevice='touch';mobile.setVisible(true);mobile.openEditor();});
+      const editStart=await page.evaluate(()=>mobile._box('fire'));
+      await page.mouse.move(editStart.x,editStart.y);await page.mouse.down();
+      await page.mouse.move(editStart.x-52,editStart.y-64,{steps:8});await page.mouse.up();
+      const editEnd=await page.evaluate(()=>mobile._box('fire'));
+      assert(Math.hypot(editEnd.x-editStart.x,editEnd.y-editStart.y)>40,'native mouse editor drag moves button');
+      await centers('after-native-mouse-edit');
+      await page.evaluate(()=>mobile._closeEditor(false));
+      await page.setViewportSize({width:844,height:390});
+      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+      await page.evaluate(()=>{mobile.reset();input.lastDevice='touch';mobile.setVisible(true);actionPointer('fire',901,'pointerdown');});
+      await page.waitForFunction(()=>Math.abs(parseFloat(getComputedStyle(mobile.els.fire).scale)-.92)<1e-5);
+      await centers('resized-natural-pressed');
+      await page.evaluate(()=>{actionPointer('fire',901,'pointerup');mobile.reset();});
+      await page.setViewportSize({width:390,height:844});
+      await page.evaluate(()=>{window.dispatchEvent(new Event('orientationchange'));mobile.openEditor();return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+      await centers('portrait-editor-after-rotation');
+      await page.evaluate(()=>mobile._closeEditor(false));
       // Bound the diagnostic; later unrelated cases remain unobserved.
       continue;`);
 // Preserve partial trace if an earlier unchanged assertion fails.
