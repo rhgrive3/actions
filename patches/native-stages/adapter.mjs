@@ -5,9 +5,12 @@ export function adaptNativeStages(rel,code){
   once('export const OFFLINE_MAPS =',"if (nativeStageEnabled) { for (const m of NATIVE_MAPS) { const i = MAPS.findIndex(x => x.id === m.id); if (i >= 0) MAPS[i] = m; else MAPS.push(m); } }\nexport const OFFLINE_MAPS =");
  }
  if(rel==='src/world/maps.js')code="import { nativeStageEnabled, NATIVE_LAYOUTS } from '../../patches/native-stages/runtime/registry.mjs';\n"+code+"\nif (nativeStageEnabled) Object.assign(MAP_LAYOUTS, NATIVE_LAYOUTS);\n";
+ if(rel==='styles/ui.css')code+='\n/* Long stage lists stay inside their column and scroll above match settings. */\n.iw-ss__list{overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scroll-padding-block:calc(var(--u)*.8);padding-left:calc(var(--u)*.9);margin-left:calc(var(--u)*-.9);}\n';
  if(rel==='src/ui/menus.js'){
   code="import { nativeStageArt } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('const stageArt = (id, time, small) => `${STAGE_DIR}', 'const stageArt = (id, time, small) => nativeStageArt(id, time) || `${STAGE_DIR}');
+  once("const sc = next.closest('.iw-rows, .iw-lob__roster');", "const sc = next.closest('.iw-rows, .iw-lob__roster, .iw-ss__list');");
+  once("const sc = f.closest('.iw-rows');", "const sc = f.closest('.iw-rows, .iw-ss__list');");
  }
  if(rel==='src/main.js'){
   code="import { nativeStageEnabled, NATIVE_IDS } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
