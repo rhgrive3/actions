@@ -1,4 +1,4 @@
-name: Owned paint scan performance (diagnostic only)
+name: Single-piece paint sample performance (diagnostic only)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      BASELINE_SHA: 90b4fea706d6018fcf48dc205198f19194fd5886
-      CANDIDATE_SHA: 17dd528116a3f95884a35cd13929b2fa6a717696
+      BASELINE_SHA: b078c37907351f1bbc13d0e7d4b5cbeb0a330009
+      CANDIDATE_SHA: 79bb26a988f28d42dfa0c3f9a4c43330895f6bc0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,12 +33,12 @@ jobs:
           JS
       - uses: actions/checkout@v4
         with:
-          ref: 90b4fea706d6018fcf48dc205198f19194fd5886
+          ref: b078c37907351f1bbc13d0e7d4b5cbeb0a330009
           path: .paint-baseline
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 17dd528116a3f95884a35cd13929b2fa6a717696
+          ref: 79bb26a988f28d42dfa0c3f9a4c43330895f6bc0
           path: .paint-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -59,7 +59,7 @@ jobs:
           cp .paint-before-site/inkwave-build.json .paint-performance-evidence/baseline-manifest.json
           cp .paint-after-site/inkwave-build.json .paint-performance-evidence/candidate-manifest.json
           git rev-parse HEAD > .paint-performance-evidence/probe-sha.txt
-      - name: Measure exact owned-cell scan with unchanged rectangles and wire
+      - name: Measure direct-piece predicates with unchanged masks and wire
         run: |
           node scripts/measure-paint-piece-workload.mjs \
             --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" \
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: owned-scan-minimal-${{ matrix.profile }}-17dd5281
+          name: single-piece-minimal-${{ matrix.profile }}-79bb26a9
           path: .paint-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
