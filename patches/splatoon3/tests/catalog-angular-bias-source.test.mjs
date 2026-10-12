@@ -218,6 +218,46 @@ test('Ballpoint long mode uses source .2 vertical bias and .75-degree pitch enve
   near(deg(Math.atan2(d.y,Math.hypot(d.x,d.z))),.75*.2,'Ballpoint long pitch median');
 });
 
+test('11.3.0 .96 Gal shot buildup and full idle recovery match the article boundaries',()=>{
+  const r=MAIN_WEAPON_CATALOG.records.find(x=>x.sourceRow==='Shooter_Heavy_00'),p=r.parameters.WeaponParam;
+  assert.deepEqual([p.Stand_DegBiasMin,p.Stand_DegBiasMax,p.Stand_DegBiasKf,p.Stand_DegBiasDecrease,p.RepeatFrame],
+    [.04,.30,.03,.02,12]);
+  const a=new ShooterAccuracy(p),frame=1/60;
+  near(a.shot(true,null),.04,'first Gal shot');
+  for(let i=1;i<9;i++)a.shot(true,null);
+  near(a.stand,.3,'ninth emitted shot reaches max');
+  a.advance(12*frame);near(a.stand,.3,'12F recovery gate');
+  a.advance(13*frame);near(a.stand,.04,'13F of -0.02 b recovery returns minimum');
+});
+
+test('11.3.0 Splattershot Pro settles after 24 shots and resets after 56F',()=>{
+  const r=MAIN_WEAPON_CATALOG.records.find(x=>x.sourceRow==='Shooter_Expert_00'),p=r.parameters.WeaponParam;
+  assert.equal(p.Stand_DegSwerve,2.5,'post Ver9.2.0, never 2024 2.7-degree value');
+  assert.deepEqual([p.Stand_DegBiasMin,p.Stand_DegBiasKf,p.Stand_DegBiasDecrease,p.RepeatFrame],
+    [.01,.01,.005,8]);
+  assert.equal(p.Stand_DegBiasMax,undefined,'missing Nintendo default is treated separately from source');
+  const a=new ShooterAccuracy(p);
+  for(let i=0;i<24;i++)a.shot(true,null);
+  near(a.stand,.25,'24th admitted shot reaches 0.25 community-supported ceiling');
+  a.advance(8/60);near(a.stand,.25,'8F unchanged');
+  a.advance(48/60);near(a.stand,.01,'48F linear recovery after the gate');
+});
+
+test('Rapid, Rapid Pro and Clash Blaster use the extracted 40F jump recovery start',()=>{
+  for(const name of ['Blaster_Light_00','Blaster_LightLong_00','Blaster_LightShort_00']){
+    const p=MAIN_WEAPON_CATALOG.records.find(x=>x.sourceRow===name).parameters.WeaponParam;
+    near(catalogAngularEnvelope('blaster',true,0,p.Jump_DegSwerve,39/60,0,p),
+      p.Jump_DegSwerve,name+' remains full air envelope at F39');
+    near(catalogAngularEnvelope('blaster',true,0,p.Jump_DegSwerve,40/60,0,p),
+      p.Jump_DegSwerve,name+' full at sourced 40F');
+    assert.equal(p.Jump_DegBiasDecreaseStartFrame,40,name+' canonical source');
+    const accuracy=new ShooterAccuracy(p);
+    near(accuracy.chance(true,40/60),p.Jump_DegBiasMax,name+' bias held through F40');
+    assert.ok(accuracy.chance(true,50/60)<p.Jump_DegBiasMax,name+' median recovers');
+    near(accuracy.chance(true,70/60),0,name+' final median zero');
+  }
+});
+
 test('catalog unsupported shot families retain existing provisional fallback until source is verified',()=>{
   const a=actor(true),direction=vec(),accuracy={shot(){return .25;}};
   let received=null;
