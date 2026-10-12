@@ -1,0 +1,54 @@
+name: INKWAVE native ray live equivalence diagnostic
+on:
+  push:
+    branches: [perf/inkwave-native-ray-live-equivalence]
+permissions:
+  contents: read
+jobs:
+  full-game:
+    strategy:
+      fail-fast: false
+      matrix:
+        stage: [scorch]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASELINE_SHA: ac1159b76b42a10ff02fe58add74a8285cc08d32
+      CANDIDATE_SHA: 9e97f5f734586f667f960d8b29b862add708e96d
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ac1159b76b42a10ff02fe58add74a8285cc08d32
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 9e97f5f734586f667f960d8b29b862add708e96d
+          path: .candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verified builds and live differential ray audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node --test scripts/tests/live-ray-mirror.test.mjs
+          mkdir -p .fullgame-evidence
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .before-site > .fullgame-evidence/before-build.log
+          node .candidate/scripts/build-inkwave.mjs .candidate/inkwave-public .after-site > .fullgame-evidence/after-build.log
+          timeout --signal=TERM --kill-after=30s 20m node scripts/diagnose-inkwave-native-ray-live-equivalence.mjs --stage '${{ matrix.stage }}' --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" --baseline-root .baseline --candidate-root .candidate --baseline-site .before-site --candidate-site .after-site --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --evidence-dir .fullgame-evidence | tee .fullgame-evidence/diagnostic.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-equivalence-native-ray-${{ matrix.stage }}-${{ github.sha }}
+          path: .fullgame-evidence/
+          include-hidden-files: true
