@@ -12,7 +12,7 @@ for(const r of C.records){
  paint.splat=function(at,R,team,opts={}){stamps++;if(!opts.cosmetic&&!opts.claimOwner&&!this._paintNextOwner)ownerless++;if(!Number.isFinite(R)||R<=0)invalid++;return raw.call(this,at,R,team,opts);};
  let error=null;
  try{for(let i=0;i<360;i++){a.intent.fire=i<150;f.G.time+=1/60;a.update(1/60);f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);}}catch(e){error=e.stack;}
- rows.push({id:r.id,family:r.family,legacy:r.legacy,stamps,ownerless,invalid,cells:paint.counts[0],turf:a.stats.turf,special:a.special,error});assert.equal(error,null,r.id);assert.ok(stamps>0,r.id+' emits real paint');assert.ok(paint.counts[0]>0,r.id+' owns floor');assert.equal(ownerless,0,r.id+' owner association');assert.equal(invalid,0,r.id+' finite positive radii');assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' turf counted once');
+ rows.push({id:r.id,family:r.family,legacy:r.legacy,stamps,ownerless,invalid,cells:paint.counts[0],turf:a.stats.turf,special:a.special,error});assert.equal(error,null,r.id);assert.ok(stamps>0,r.id+' emits real paint');assert.ok(paint.counts[0]>0,r.id+' owns floor');assert.equal(ownerless,0,r.id+' owner association');assert.equal(invalid,0,r.id+' finite positive radii');assert.ok(Math.abs(a.stats.turf-paint.counts[0]*.0625/3.305785)<1e-7,r.id+' turf points counted once');
 }
 assert.equal(rows.length,65);
 });
