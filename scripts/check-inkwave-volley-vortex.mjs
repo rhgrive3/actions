@@ -84,14 +84,16 @@ try{
   // The sourced Ink Vac cone starts at zero length and extends by 0.3334 per 60 Hz frame.
   // Grow it with real Actor updates while the victim is outside the 15 m maximum reach.
   for(let i=0;i<20;i++){
-   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>G.local.update(1/60));await frames(1);
+   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>{ vac.advanceInkVacReplica(G.actors[0],1/60); G.local.update(1/60); });await frames(1);
   }
   assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).absorbedDamage ?? 0),0);
   assert(await host.evaluate(()=>vac.inkVacState(G.local).length>5));
+  // This minimal fake Match never calls NetMatch.applyRemote; drive the same replica hook explicitly.
+  assert(await guest.evaluate(()=>vac.inkVacState(G.actors[0])?.length>5), 'remote owner cone did not advance in fixture');
   await Promise.all(pages.map(p=>p.evaluate(()=>G.actors[1].pos.set(0,0,5))));
   // From the first contact frame, count exactly 30 real 60 Hz suction updates.
   for(let i=0;i<30;i++){
-   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>G.local.update(1/60));await frames(1);
+   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>{ vac.advanceInkVacReplica(G.actors[0],1/60); G.local.update(1/60); });await frames(1);
   }
   const owner=await host.evaluate(()=>({damage:vac.inkVacState(G.local).absorbedDamage,count:vac.inkVacState(G.local).absorbed,remoteInk:G.actors[1].ink}));
   const victim=await guest.evaluate(()=>({ink:G.local.ink,hp:G.local.hp,replicaDamage:vac.inkVacState(G.actors[0]).absorbedDamage||0}));
