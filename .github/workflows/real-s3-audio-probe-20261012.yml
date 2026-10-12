@@ -24,7 +24,7 @@ jobs:
           for name,id in arr:
             path='probe/'+name
             try:
-              ok=gdown.download(id=id,output=path,quiet=True,fuzzy=True)
+              ok=gdown.download(id=id,output=path,quiet=True)
               if not ok:raise ValueError('No download')
               b=pathlib.Path(path).read_bytes()
               probe=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration,format_name','-of','json',path],capture_output=True,text=True)
