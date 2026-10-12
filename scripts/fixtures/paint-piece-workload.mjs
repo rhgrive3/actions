@@ -4,6 +4,8 @@
 export async function runWallWorkload(assetRoot, options={}) {
  const actorCount=options.actors??8,pattern=options.pattern??'continuous';
  if(![1,8].includes(actorCount)||!['idle','continuous','mixed'].includes(pattern))throw Error('Invalid fixed workload profile');
+ const atlasSize=options.atlasSize??4096,maxDensity=options.maxDensity??30;
+ if(!((atlasSize===4096&&maxDensity===30)||(atlasSize===2048&&maxDensity===18)))throw Error('Invalid production paint quality pair');
  const firing=i=>i>=0&&i<180&&pattern!=='idle'&&(pattern!=='mixed'||i%30<6);
  const [{install},profile]=await Promise.all([import(assetRoot+'/patches/splatoon3/runtime/install.mjs'),fetch(assetRoot+'/patches/splatoon3/profile.json').then(r=>r.json())]);
  const api=install(profile),{THREE,G,Actor,Projectiles,Physics,PaintSystem,NetMatch}=api;
@@ -18,7 +20,7 @@ export async function runWallWorkload(assetRoot, options={}) {
   {kind:'box',min:[-40,-2,-5],max:[40,0,100],noPaint:[[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]]},
   {kind:'box',min:[-40,0,8],max:[40,20,9],noPaint:[[1,0,0],[-1,0,0],[0,1,0],[0,0,1]]}]};
  const level=new Level(layout);G.level=level;G.physics=new Physics(level);
- const paint=new PaintSystem(renderer,level,{atlasSize:4096,maxDensity:30,cell:.25});G.paint=paint;
+ const paint=new PaintSystem(renderer,level,{atlasSize,maxDensity,cell:.25});G.paint=paint;
  const material=createLevelMaterial(paint.texture,paint.size,null,{paint,ppm:paint.ppm});
  G.scene.add(new THREE.Mesh(level.buildGeometry(paint.size),material));
  G.scene.add(new THREE.HemisphereLight(0xeaf2ff,0x46505a,2));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(-10,25,-20);G.scene.add(sun);
@@ -69,7 +71,7 @@ export async function runWallWorkload(assetRoot, options={}) {
  const gridSha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',paint.grid))).map(v=>v.toString(16).padStart(2,'0')).join('');
  const heapAfterWorkload=await globalThis.__probeHeap();
  if(initialHandshake.messages!==initialControlCount)throw Error('Steady-state handshake traffic');
- const result={frames,coldFrames,wireNegotiation:{compressedMessages,initialHandshake},heap:{beforeWarmup:heapBeforeWarmup,afterWarmup:heapAfterWarmup,afterWorkload:heapAfterWorkload},counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,gridSha256,floorCells:paint.counts[0]},fixture:{actors:actorCount,pattern,legacyPeer:!!options.legacyPeer,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize:4096,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. sendTickInclusive includes wire serialization, receiving decode and exact-row verification; it is outside stepWithDrain. stepAndWire adds that isolated send transaction. Receiver is decoding only, gameplay replay correctness is covered by separate tests. cpuGrowth includes nested body work; do not sum nested timing columns.'};
+ const result={frames,coldFrames,wireNegotiation:{compressedMessages,initialHandshake},heap:{beforeWarmup:heapBeforeWarmup,afterWarmup:heapAfterWarmup,afterWorkload:heapAfterWorkload},counts:{totalQuads,totalAtlasDraws,totalRows,eventArrayBytes,tickJsonBytes,totalMessages,maxQueue,maxDrops,wallCells,gridSha256,floorCells:paint.counts[0]},fixture:{actors:actorCount,pattern,legacyPeer:!!options.legacyPeer,firingFrames:180,settlingFrames:60,warmupFrames:60,simulationHz:60,sendHz:20,atlasSize,maxDensity,actualPpm:paint.ppm,cell:.25,viewport:[960,600],seed:.37,paintFaces:level.paintFaces?.length??level.faces.filter(f=>f.paintable).length,quality:'native level material, fixed lighting; no postprocess'},renderer:{name:rendererName,unmasked:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):null},limitation:'Controlled paint-workload step, not whole-game frame or hardware GPU FPS. sendTickInclusive includes wire serialization, receiving decode and exact-row verification; it is outside stepWithDrain. stepAndWire adds that isolated send transaction. Receiver is decoding only, gameplay replay correctness is covered by separate tests. cpuGrowth includes nested body work; do not sum nested timing columns.'};
  if(pattern==='idle'){if(wallCells||totalRows||totalQuads||paint.counts[0])throw Error('Idle workload unexpectedly painted');}
  else if(!wallCells||totalRows===0||maxQueue>=512)throw Error('Incomplete or queue-overflow workload '+JSON.stringify(result.counts));
  return result;

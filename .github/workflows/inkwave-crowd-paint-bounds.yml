@@ -28,7 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .crowd-evidence
-          node --experimental-vm-modules --test patches/local-quality/tests/paint-body-bounds.test.mjs patches/local-quality/tests/paint-hotpath.test.mjs patches/native-stages/tests/ancillary-all-stage-bounds.test.mjs patches/native-stages/tests/paint-cache.test.mjs patches/splatoon3/tests/paint-piece-local-ownership.test.mjs patches/splatoon3/tests/issue-264-paint-temporal-ownership.test.mjs | tee .crowd-evidence/regression.log
+          node --experimental-vm-modules --test scripts/tests/paint-piece-performance-contract.test.mjs patches/splatoon3/tests/paint-mask-probe-level.test.mjs patches/local-quality/tests/paint-body-bounds.test.mjs patches/local-quality/tests/paint-hotpath.test.mjs patches/native-stages/tests/ancillary-all-stage-bounds.test.mjs patches/native-stages/tests/paint-cache.test.mjs patches/splatoon3/tests/paint-piece-local-ownership.test.mjs patches/splatoon3/tests/issue-264-paint-temporal-ownership.test.mjs | tee .crowd-evidence/regression.log
       - name: Eight bot CPU ABBA with every paint growth step retained
         shell: bash
         run: |
@@ -74,6 +74,7 @@ jobs:
           set -euo pipefail
           mkdir -p .crowd-evidence
           node scripts/build-inkwave.mjs inkwave-public .crowd-site | tee .crowd-evidence/build.log
+          INKWAVE_BUILT_SITE="$GITHUB_WORKSPACE/.crowd-site" node --experimental-vm-modules --test patches/splatoon3/tests/paint-mask-probe-level.test.mjs | tee .crowd-evidence/fixture-built.log
           cp .crowd-site/inkwave-build.json .crowd-evidence/manifest.json
           node scripts/check-inkwave-paint-mask.mjs --site .crowd-site --exact-source --engine '${{ matrix.engine }}' --evidence-dir .crowd-evidence/gpu --profile-dir .crowd-browser-profile | tee .crowd-evidence/gpu.log
       - uses: actions/upload-artifact@v4
@@ -86,7 +87,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [aggregate, single_continuous]
+        profile: [aggregate, single_continuous, aggregate_mobile, single_continuous_mobile]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:

@@ -34,3 +34,33 @@ test('all-stage filtering keeps native-only dead-cell and shared-mask behavior s
  assert.match(adapted,/if \(!nativeAncillaryCanClaim/);
  assert.doesNotMatch(adapted,/if \(nativeMasks && !nativeAncillaryCanClaim/);
 });
+
+test('multi-seed drip-depth margin neighbors and projected floor/wall crossings keep every claim',()=>{
+ const byteBuffer=new ArrayBuffer(8),view=new DataView(byteBuffer);
+ const next=(x,up)=>{view.setFloat64(0,x);let bits=view.getBigUint64(0);bits+=up?1n:-1n;view.setBigUint64(0,bits);return view.getFloat64(0);};
+ for(const seed of [0,.0000152587890625,.125,.37,.4321,.75,.9999847412109375,-.25])
+ for(const angle of [-Math.PI,-1.37,0,.81,Math.PI])for(const ppm of [1,8,30,64]){
+  const floor={atlas:{ppm},wall:false,turf:true,grid:0,nu:16,nv:16,cu:.25,cv:.25};
+  const wall={...floor,wall:true,turf:false,grid:256};
+  // This is the already projected entry list of one splat crossing two
+  // differently oriented faces. Face-local stretch axes differ on the wall.
+  const entries=[floor,2.03,1.97,.03,Math.sin(angle),Math.cos(angle),.8,
+    wall,1.97,2.03,.17,Math.cos(angle),-Math.sin(angle),1.3];
+  const template={entries,R:10,team:0,seed,kind:3,dripDur:1,paintOrder:1};
+  const m=reference.prepareAncillary(template,wall,1.97,2.03,.17,Math.cos(angle),-Math.sin(angle),1.3,3,1,contract);
+  const drip=m.pieces.filter(p=>p.type===3);assert.ok(drip.length>0);
+  const ratio=Math.max(...drip.map(p=>Math.max(p.w,p.w*(1.2+.35*p.h2)) / Math.sqrt(100-.17*.17)));
+  const margin=1.5/Math.max(ppm,1),rAt=margin/ratio,RAt=Math.sqrt(rAt*rAt+.17*.17);
+  // Global .14 bound and actual deepest drip bound, both sides and adjacent
+  // Float64 values. The tiny boundary guard must retain uncertain cases.
+  const allAt=Math.sqrt((margin/.14)**2+.17*.17);
+  for(const R of [next(RAt,false),RAt,next(RAt,true),RAt*(1-2e-11),RAt*(1+2e-11),next(allAt,false),allAt,next(allAt,true)]){
+   const a=fresh(false),b=fresh(false);for(const p of[a,b])p._paintOrderRecords.push({clock:12,peer:'a',seq:1});
+   const g={...template,R};
+   for(const [tn,dT] of [[.8,.4],[1.2,.8],[3,1]]){
+    assert.equal(candidate.claimAncillaryCells(b,g,tn,dT,contract),reference.claimAncillaryCells(a,g,tn,dT,contract));
+    assert.deepEqual(b.grid,a.grid);assert.deepEqual(b._paintOwnershipOrder,a._paintOwnershipOrder);assert.deepEqual(b.counts,a.counts);assert.equal(b.version,a.version);
+   }
+  }
+ }
+});

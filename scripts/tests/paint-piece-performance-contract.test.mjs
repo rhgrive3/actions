@@ -9,3 +9,9 @@ test('standalone diagnostic preserves main validation and uses read-only isolate
 });
 
 test('paint-only probe cannot silently change either wire protocol',()=>{const f=fs.readFileSync(new URL('../fixtures/paint-piece-workload.mjs',import.meta.url),'utf8');assert.doesNotMatch(f,/import.*paint-packet-codec/);assert.match(f,/Unexpected codec/);assert.match(f,/Unexpected control/);const s=fs.readFileSync(script,'utf8');assert.match(s,/Paint-only diagnostic changed wire protocol/);});
+
+test('mobile diagnostic uses the real production atlas/density pair and reports effective ppm',()=>{
+ const f=fs.readFileSync(new URL('../fixtures/paint-piece-workload.mjs',import.meta.url),'utf8');
+ assert.match(f,/atlasSize===2048&&maxDensity===18/);assert.match(f,/atlasSize,maxDensity,actualPpm:paint.ppm/);
+ const s=fs.readFileSync(script,'utf8');assert.match(s,/aggregate_mobile:\{actors:8,pattern:'continuous',atlasSize:2048,maxDensity:18\}/);assert.match(s,/single_continuous_mobile:\{actors:1,pattern:'continuous',atlasSize:2048,maxDensity:18\}/);
+});

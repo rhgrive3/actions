@@ -43,3 +43,40 @@ Local Chromium could not start: its process-singleton socket failed with EPERM i
 All source hash outputs `h1/h2/h3` lie in[0,1). Ray base width is at most `.115*r`; radius-driven ray heads at most `.072*r`; pixel-driven heads at most `1.35*pixel`. Satellite radius is at most `.113*r`; spatter radius at most `max(.031*r,.9*pixel)`. Drip width is at most `.082*1.1*r`, and the bulb at most `.082*1.1*1.55*r=.13981*r`. Hence the already-adopted conservative global maximum `max(.14*r,1.35*pixel)+1e-10` applies to block faces exactly as to native faces. If it remains below `1.5*pixel`, no sample can pass. Individual-piece pruning retains an additional near-equality guard and unknown piece types. No result depends on a face being rectangular or triangulated, and the five interior sample positions are unchanged.
 
 This skips CPU claims only. It neither changes shader pieces nor removes GPU-visible sub-cell details. The existing native-specific treatment of dead cells is kept behind the native condition; block dead cells retain their prior sampling behavior. Ownership comparison, order records and score credit remain untouched.
+
+## Updated evidence and production-quality correction (16:17 UTC)
+
+The initial density-8 diagnostic is historical only: production mobile/touch passes
+atlasSize 2048 and maxDensity 18. Do not use the density-8 46% CI result as the main
+performance claim. With production settings the Tidewater atlas resolves to ppm
+12.895073280000002. Local instrumented ABBA raw times were 8684.136204,
+6242.608668, 6571.373034, 7467.471483 ms (A/B/B/A), median 8075.803844 to
+6406.990851 ms, 20.66% lower, with exact state/ownership/order/actors/RNG and 41850
+GPU command COUNT equality. A1-to-A2 drift is substantial; these are not iPad FPS.
+Full GPU command ARGUMENT equality is covered by the separate full-runtime tests,
+not by the benchmark's command counter. The primary Node probe now uses production
+settings and disables all nested performance wrappers by default; --instrument
+explicitly enables function-level timing. Uninstrumented ABBA is the acceptance run.
+
+Immutable ed3 vs cb292 browser run 38274085664 completed both legacy controlled
+paint fixtures at 4096/30 (Chromium SwiftShader, not actual iPad hardware). Aggregate
+8-actor runs retained identical 185830 quads, 229 atlas draws, 1440 events,
+80 messages, 2340 wall and 1528 floor cells and exact PNG SHA256
+3da720c1bb250b4ae55bea6dcea1c127759afd801d6672339684f1bc27c8ae74.
+Median across 3 runs of cpuGrowth p50 was 14.0 -> 14.0 ms; whole paint-step p50
+19.8 -> 19.6 ms. There is no established high-quality browser speedup.
+Single-actor measurements also overlap. Raw aggregate artifact 11758194282 SHA256
+41146f62725021e089a340535555031c614f26d2a159e2b4feb81d650de8faa4;
+single artifact 11758817209 SHA256
+2c965249cccf0c35ec62d92233789c6e30b0605e01ffc6b871db827bc4500ec3.
+
+Added mobile aggregate/single profiles pass 2048/18 identically to both builds,
+retain all previous high-quality profiles, and record the actual atlas ppm.
+Browser ownership validation previously failed BEFORE GPU execution due to missing
+namespace then constructor-bypass level setup. The verifier and fixture repairs
+are copied exactly from PR1304 fdd7988 (no gameplay change); an executable
+positive/negative fixture test runs on source and emitted production builds.
+Additional regression includes 8 seeds, 5 angles, 4 ppm settings, next-Float64
+neighbors of actual drip and global bound thresholds, and actual crossing
+floor/wall runtime behavior at 30/60/120 Hz. Original 17 expanded tests passed;
+new CI repeats them. No result is an actual iPad mini 6 measurement.

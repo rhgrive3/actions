@@ -49,12 +49,12 @@ function baseline(rel,source){
  if(rel==='patches/splatoon3/runtime/paint-ownership.mjs')return code.replace('if (!nativeAncillaryCanClaim(g.R, dn, face.atlas.ppm))','if (nativeMasks && !nativeAncillaryCanClaim(g.R, dn, face.atlas.ppm))').replace('if (mask) {\n        mask.pieces','if (nativeMasks && mask) {\n        mask.pieces');
  return rel==='src/world/paint.js'?once(code,'!paintBodyContains(d, r, Math.atan2(py, px), seed, 1)','d / (r * blobWobble(Math.atan2(py, px), seed)) > 1'):code;
 }
-async function world(before){
+async function world(before,corner=false){
  let rng=0x2174;const f=await fixture({fullRuntime:true,realProjectiles:true,adaptNative:before?baseline:adaptBuildSource,adaptRuntime:before?baseline:adaptBuildSource,vmMathRandom:()=>((rng=(Math.imul(rng,1664525)+1013904223)>>>0)/4294967296)});
  const {G,THREE,PaintSystem}=f,V=(...a)=>new THREE.Vector3(...a);
  const face={origin:V(-4,0,-4),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:8,sv:8,wall:false,turf:true,paintable:true};
  const block={id:0,solid:true,grate:false,center:V(0,-1,0),half:V(4,1,4),axes:[V(1,0,0),V(0,1,0),V(0,0,1)],faces:[0,-1,-1,-1,-1,-1],aabbMin:V(-4,-2,-4),aabbMax:V(4,0,4)};
- const level={faces:[face],blocks:[block],pointInside:()=>false,queryBlocks(_a,_b,_c,_d,out=[]){out.length=0;out.push(0);return out;}};
+ const level=corner?new f.Level({bounds:{minX:-4,maxX:4,minZ:-4,maxZ:4},spawnPads:[[0,0,-3],[0,0,3]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-4,-2,-4],max:[4,0,4]},{kind:'box',min:[-4,0,1],max:[4,4,1.3]}]}):{faces:[face],blocks:[block],pointInside:()=>false,queryBlocks(_a,_b,_c,_d,out=[]){out.length=0;out.push(0);return out;}};
  G.level=level;G.physics=new f.Physics(level);G.camera={position:V(0,3,-4)};
  class CPU extends PaintSystem {_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};this.submitted=[];} _pushQuad(...args){this.submitted.push(args.slice(1));} _drawQuads(){this.quads=0;this.dryMesh.visible=false;}}
  const paint=G.paint=new CPU(null,level,{atlasSize:512,maxDensity:8,cell:.25});
@@ -73,4 +73,21 @@ for(const hz of [30,60,120])test(`full composed ownership, dead cells and ordere
  }
  for(let i=0;i<hz;i++)for(const w of pair)w.paint.advanceSimulation(1/hz);
  assert.deepEqual(snapshot(pair[1]),snapshot(pair[0]));
+});
+
+for(const hz of [30,60,120])test(`real Level floor/wall crossing preserves delayed claims and command arguments at ${hz}Hz`,async()=>{
+ const pair=await Promise.all([world(true,true),world(false,true)]);
+ const snap=w=>({grid:Array.from(w.paint.grid),orders:Array.from(w.paint._paintOwnershipOrder||[]),counts:Array.from(w.paint.counts),version:w.paint.version,records:JSON.parse(JSON.stringify(w.paint._paintOrderRecords)),area:w.area,stats:JSON.parse(JSON.stringify(w.owner.stats)),special:w.owner.special,rng:w.rng(),commands:w.paint.submitted});
+ let crossed=false;
+ for(let i=0;i<24;i++){
+  for(const w of pair){const {paint,owner,V}=w;owner.team=i%2;
+   w.area=paint.splat(V(Math.sin(i)*1.5,.08,.87),.41+(i%5)*.3,owner.team,{seed:(i*.371)%1,kind:['shot','bomb','line','drop'][i%4],claimOwner:owner,stretch:V(Math.sin(i),.3,Math.cos(i)),stretchAmt:(i%4)*.4});
+   crossed ||= paint.growing.some(g=>g.entries.some((v,k)=>k%7===0&&v.wall)&&g.entries.some((v,k)=>k%7===0&&v.turf));
+   paint.advanceSimulation(1/hz);
+  }
+  assert.deepEqual(snap(pair[1]),snap(pair[0]),`crossing stamp ${i}`);
+ }
+ assert.equal(crossed,true,'one real splat must address both floor and wall entries');
+ for(let i=0;i<hz*2;i++)for(const w of pair)w.paint.advanceSimulation(1/hz);
+ assert.deepEqual(snap(pair[1]),snap(pair[0]));
 });
