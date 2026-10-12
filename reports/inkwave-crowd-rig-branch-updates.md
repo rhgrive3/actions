@@ -16,11 +16,11 @@ PR #1298 is a separate unadopted geometry compaction experiment and is not integ
 
 ## Local verification
 
-Pure baseline build input identities match all 689 official main inputs; after materializing source text for esbuild's path-sensitive family bundler, the optimized build content hash is exactly `5f967f1dc85094ccbca443250caa97207e81286a86a70a73768087580781ff95`.
+Pure baseline build input identities match all 689 official main inputs; after materializing source text for esbuild's path-sensitive family bundler, the pure baseline build content hash is exactly `5f967f1dc85094ccbca443250caa97207e81286a86a70a73768087580781ff95`.
 
 Native Character plus actual Player00 and Player01 source banks, 30/60/120 Hz, 576 frame pairs, and 72 explicit foot-clearance CCD corrections (36 left and 36 right, separately asserted): complete node local/world transforms, foot diagnostics and muzzle coordinates compare exactly. The fixture includes a moving/rotating/nonuniformly scaled ancestor, root motion, small form scale, shooter/dualies/roller/charger switches and hero/game/far LOD switches. Transform calls fall from 591,765 to 320,925 (45.77%) in this contact-heavy fixture. This is an operation count, not frame-rate improvement or a general whole-game speedup. The terrain query is a deterministic slope fixture, not the production collision engine.
 
-Local Chromium cannot launch because its singleton socket is forbidden (`EPERM`). This is not a passing browser test. Dedicated GitHub Actions builds the exact main and candidate and runs native source-motion lifecycle and completed-output ABBA, retaining all poses, raw CPU timing, full-frame pixel hashes, screenshots, draw counts and readback timing. Browser evidence remains pending until its artifact is reviewed.
+Local Chromium cannot launch because its singleton socket is forbidden (`EPERM`). This is not a passing browser test. Dedicated GitHub Actions builds the exact main and candidate and runs native source-motion lifecycle and completed-output ABBA, retaining all poses, raw CPU timing, full-frame pixel hashes, screenshots, draw counts and readback timing. Dedicated browser evidence currently fails exact output parity; see the completed-run findings below.
 
 ## Browser fixture limits
 
@@ -29,3 +29,7 @@ Eight actual Actors and production source-motion/rendering modules under native 
 The comparison requires identical recorded actor/node/foot/muzzle state, identical final RGBA pixels, identical draws/triangles/quality, fewer matrix updates, no browser errors and all four ABBA runs. Timing variance is retained rather than converted into a guaranteed device speedup.
 
 Candidate product contentHash is `af763730a778` (distinct from the pure-main baseline). The browser candidate checkout pins the PR head SHA. Snapshots are captured before any render-driven/forced scene refresh, so comparison cannot hide stale sibling matrices. Final PNG bytes are captured synchronously before awaiting pixel hashing.
+
+## Completed browser diagnosis (fixed ed3 baseline)
+
+Run 38279519060 at f9ed54b5 failed the unchanged final-pixel gate. Artifact 11761410371 (SHA256 0375bd232cadb164a7b69cd180c153a05e27290a4d5c872420d85f5700edb4a6) ties two same-phase frozen frames to 179 identical GL draws, actual uniforms, texture-binding identities, FBO/depth/blend state and identical bone matrices. Nevertheless 31 final pixels differ, and the first native RenderPass RGBA16F output already differs. Thus the first difference precedes post processing. Texture contents and scene draw localization remain under investigation. No pixel tolerance has been relaxed. The next diagnostic uses a small per-draw readback region after the unchanged primary measurements; its extra synchronization is not a performance measurement.
