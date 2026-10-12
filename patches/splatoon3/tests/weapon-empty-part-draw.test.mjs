@@ -31,5 +31,5 @@ test('all 65 weapons preserve every geometry byte and animated channel while hid
   await cb.warmAll(renderer,new B.THREE.PerspectiveCamera(),B.G.scene);for(const [,m,p]of mb)assert.equal(m.visible,p.hidden!==true);
   ca.dispose();cb.dispose();
  }
- assert.ok(hidden>100);assert.ok(weapons>50);console.log(JSON.stringify({hiddenParts:hidden,affectedWeapons:weapons}));
+ assert.equal(hidden,154);assert.equal(weapons,58);console.log(JSON.stringify({hiddenParts:hidden,affectedWeapons:weapons}));
 });

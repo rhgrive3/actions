@@ -2,6 +2,10 @@ import json,sys,pathlib
 from PIL import Image,ImageChops
 root=pathlib.Path(sys.argv[1]);results={v:json.loads((root/v/'result.json').read_text()) for v in ['A','B','B2','A2']}
 rows=[];failures=[]
+for variant in results:
+ for p in (root/variant).glob('*.png'):
+  im=Image.open(p).convert('RGBA'); extrema=im.getextrema()
+  if extrema[3]!=(255,255) or len(im.getcolors(360001))<2:failures.append({'invalidScreenshot':variant+'/'+p.name,'extrema':extrema})
 for left,right in [('A','A2'),('B','B2'),('A','B'),('A2','B2')]:
  for p in sorted((root/left).glob('*.png')):
   a=Image.open(p).convert('RGBA');b=Image.open(root/right/p.name).convert('RGBA');diff=ImageChops.difference(a,b);changed=sum(any(px) for px in diff.getdata());maximum=max(max(px)for px in diff.getdata());row={'left':left,'right':right,'image':p.name,'changedPixels':changed,'maxChannel':maximum};rows.append(row)

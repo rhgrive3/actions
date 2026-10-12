@@ -29,6 +29,15 @@ const hostBefore=host();const result=await page.evaluate(async ({prefix,variant}
  const geometryBytes=roots=>{const geos=new Set(),arrays=new Set();for(const root of roots)root.traverseVisible(o=>{if(o.isMesh&&o.geometry)geos.add(o.geometry);});for(const g of geos){if(g.index)arrays.add(g.index.array);for(const a of Object.values(g.attributes))arrays.add(a.array);}return{geometries:geos.size,typedArrays:arrays.size,bytes:[...arrays].reduce((n,a)=>n+a.byteLength,0)};};
  const observe=()=>{const saved=[],counts={zero:0,nonzero:0};for(const[n,c,i]of[['drawElements',1],['drawArrays',2],['drawElementsInstanced',1,4],['drawArraysInstanced',2,3]]){const f=gl[n];saved.push([n,f]);gl[n]=function(...a){counts[a[c]>0&&(i===undefined||a[i]>0)?'nonzero':'zero']++;return f.apply(this,a);};}return{reset(){counts.zero=counts.nonzero=0;},read:()=>({...counts}),restore(){for(const[n,f]of saved)gl[n]=f;}};};
  const pixel=new Uint8Array(4),read=()=>{if(r.getRenderTarget()!==null)throw Error('Wrong final output target');gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);gl.readPixels(300,300,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);};
+ const validateImage=(rgba,width,height,drawn)=>{
+  if(!drawn||rgba.length!==width*height*4)throw Error('Screenshot has no completed draw');
+  let varied=false;for(let i=0;i<rgba.length;i+=4){if(rgba[i+3]!==255)throw Error('Screenshot is transparent or discarded');if(rgba[i]!==rgba[0]||rgba[i+1]!==rgba[1]||rgba[i+2]!==rgba[2])varied=true;}
+  if(!varied)throw Error('Screenshot contains background only');
+ };
+ for(const [name,rgba,drawn]of [['discarded',new Uint8Array(16),true],['background',new Uint8Array([238,243,248,255,238,243,248,255,238,243,248,255,238,243,248,255]),true],['undrawn',new Uint8Array([1,2,3,255,4,5,6,255,7,8,9,255,1,2,3,255]),false]]){let rejected=false;try{validateImage(rgba,2,2,drawn);}catch{rejected=true;}if(!rejected)throw Error('Screenshot negative control not rejected: '+name);}
+ const capture=(name)=>{
+  const width=gl.drawingBufferWidth,height=gl.drawingBufferHeight,rgba=new Uint8Array(width*height*4);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,rgba);validateImage(rgba,width,height,r.info.render.calls>0);if(gl.getError()||gl.isContextLost())throw Error('Screenshot GL error');return{record:'image',name,png:r.domElement.toDataURL('image/png').split(',')[1]};
+ };
  const validate=()=>{const error=gl.getError();if(error||gl.isContextLost()||pixel[3]!==255||pixel.slice(0,3).every(v=>v===0))throw Error('Invalid completed output '+JSON.stringify({error,pixel:[...pixel]}));};
  const failureState=(name,error)=>{let png;try{png=r.domElement.toDataURL('image/png').split(',')[1];}catch{}return{record:'failure',name,png,error:String(error),pixel:[...pixel],contextLost:gl.isContextLost(),defaultReadFramebuffer:gl.getParameter(gl.READ_FRAMEBUFFER_BINDING)===null,defaultOutput:r.getRenderTarget()===null,poses:actors.map(a=>({pos:a.pos.toArray(),lod:a.character.lod.tier,near:a.character.weapon.near})),ranges:parts.map(p=>({...p.geometry.drawRange}))};};
  const countFrame=async()=>{const observer=observe();try{const programsBefore=r.info.programs.length,t=performance.now();r.info.reset();post.render();read();const completed=performance.now();validate();const counts=observer.read();if(counts.zero+counts.nonzero!==r.info.render.calls)throw Error('GL count mismatch');return{...counts,triangles:r.info.render.triangles,preparationCompletedMs:completed-t,programsBefore,programsAfter:r.info.programs.length};}catch(error){const failure=failureState('preparation-failure',error);await window.__save(failure);throw error;}finally{observer.restore();}};
@@ -49,17 +58,18 @@ const hostBefore=host();const result=await page.evaluate(async ({prefix,variant}
    const animated=performance.now(),programsBefore=r.info.programs.length;r.info.reset();post.render();const submitted=performance.now();read();const completed=performance.now();
    const row={variant,scope,tier,index,phase:index<4?'warmup':'measured',startedAt:performance.timeOrigin+t,animationCpuMs:animated-t,submitMs:submitted-animated,readbackMs:completed-submitted,completedRenderMs:completed-animated,completedFrameMs:completed-t,pixel:[...pixel],programsBefore,programsAfter:r.info.programs.length,drawCalls:r.info.render.calls,triangles:r.info.render.triangles,glError:gl.getError(),contextLost:gl.isContextLost()};
    const invalid=row.glError||row.contextLost||pixel[3]!==255||pixel.slice(0,3).every(v=>v===0);const failure=invalid?failureState(tier+'-frame-'+index+'-failure','Invalid completed frame'):null;
-   await window.__save(row);if(failure){await window.__save(failure);throw Error('Invalid completed frame');}if(index>=4&&row.programsBefore!==row.programsAfter)throw Error('Measured frame compiled a shader');validate();frames.push(row);if(index>=4)await window.__save({record:'image',name:scope+'-'+tier+'-frame'+index,png:r.domElement.toDataURL('image/png').split(',')[1]});
+   const frameImage=index>=4?capture(scope+'-'+tier+'-frame'+index):null;
+   await window.__save(row);if(failure){await window.__save(failure);throw Error('Invalid completed frame');}if(index>=4&&row.programsBefore!==row.programsAfter)throw Error('Measured frame compiled a shader');validate();frames.push(row);if(frameImage)await window.__save(frameImage);
   }
   const hostEnd=await window.__host();await window.__save({record:'tier-end',variant,tier,host:hostEnd});
   const finalCounts=await countFrame();if(finalCounts.zero!==preparation.zero||finalCounts.nonzero!==preparation.nonzero||finalCounts.triangles!==preparation.triangles)throw Error('Per-frame draw budget changed');
-  post.render();read();validate();await window.__save({record:'image',name:scope+'-'+tier+'-beauty',png:r.domElement.toDataURL('image/png').split(',')[1]});
+  post.render();read();validate();await window.__save(capture(scope+'-'+tier+'-beauty'));
   const additional={};
   for(const [mode,material]of [['normal',new THREE.MeshNormalMaterial()],['depth',new THREE.MeshDepthMaterial()]]){
-   const old=scene.overrideMaterial;scene.overrideMaterial=material;const observer=observe();r.info.reset();r.setRenderTarget(null);r.render(scene,camera);read();const counts=observer.read();observer.restore();additional[mode]={...counts,triangles:r.info.render.triangles};await window.__save({record:'image',name:scope+'-'+tier+'-'+mode,png:r.domElement.toDataURL('image/png').split(',')[1]});scene.overrideMaterial=old;material.dispose();
+   const old=scene.overrideMaterial;scene.overrideMaterial=material;const observer=observe();r.info.reset();r.setRenderTarget(null);r.render(scene,camera);read();const counts=observer.read();observer.restore();additional[mode]={...counts,triangles:r.info.render.triangles};await window.__save(capture(scope+'-'+tier+'-'+mode));scene.overrideMaterial=old;material.dispose();
   }
   // Beauty must recover after the override passes.
-  post.render();read();validate();await window.__save({record:'image',name:scope+'-'+tier+'-restored',png:r.domElement.toDataURL('image/png').split(',')[1]});
+  post.render();read();validate();await window.__save(capture(scope+'-'+tier+'-restored'));
   scene.traverse(o=>{if(o.isMesh)allGeometry.add(o.geometry);});
   tiers[scope+'-'+tier]={retainedGeometryHashes:await geometryHash(),additional,frames,preparation,finalCounts,memory,hostStart,hostEnd,states,tierPrepareCpuMs};
  }
