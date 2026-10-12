@@ -1,0 +1,44 @@
+#!/usr/bin/env node
+// Diagnostic only: boots the shipped index/bootstrap/main and retains real Character/render.
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import os from 'node:os';import {pathToFileURL} from 'node:url';
+import {verifyRuntimeBuild,hash,sampleStats} from './lib/inkwave-runtime-evidence.mjs';
+const arg=n=>{const i=process.argv.indexOf(n);if(i<0||!process.argv[i+1])throw Error('Required '+n);return process.argv[i+1];};
+const stage=arg('--stage');if(!['tidewater','scorch'].includes(stage))throw Error('Fixed stage required');
+const evidence=path.resolve(arg('--evidence-dir'));fs.mkdirSync(evidence,{recursive:true});
+const variants=Object.fromEntries(['before','after'].map(mode=>{const prefix=mode==='before'?'baseline':'candidate',root=path.resolve(arg('--'+prefix+'-root')),site=path.resolve(arg('--'+prefix+'-site')),sha=arg('--'+prefix+'-sha');return[mode,{root,site,sha,manifest:verifyRuntimeBuild(site,root,sha),receipts:new Set()}];}));
+const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml'};
+const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://localhost'),m=u.pathname.match(/^\/(before|after)\/(.*)$/);if(!m)throw Error('variant path required');const v=variants[m[1]],rel=decodeURIComponent(m[2]||'index.html'),file=path.resolve(v.site,rel);if(!file.startsWith(v.site+'/'))throw Error('path traversal');const b=fs.readFileSync(file);if(rel!=='inkwave-build.json'&&(!v.manifest.artifacts[rel]||hash(b)!==v.manifest.artifacts[rel]))throw Error('unverified artifact '+rel);v.receipts.add(rel);res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});res.end(b);}catch(e){res.writeHead(404);res.end(String(e));}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const {chromium}=await import(pathToFileURL(arg('--playwright')).href);
+const result={status:'running',stage,order:['before','after','after','before'],environment:{cpu:os.cpus()[0]?.model,cores:os.cpus().length,node:process.version,renderer:'Chromium SwiftShader, not iPad hardware'},runs:[],limitations:['Real full game fixed-step diagnostic, not hardware FPS.','Eight real bot brains run before fixed scene input forces stationary continuous shooting at the center.','All original gameplay, collision, resource, paint, Character and renderer owners remain active; no invulnerability or timing/quality pruning.','CPU frame includes GL submission/backpressure; final gl.finish drain is reported separately.']};
+const save=()=>fs.writeFileSync(path.join(evidence,'fullgame.json'),JSON.stringify(result,null,2));let browser;
+try{
+ browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});result.environment.browser=browser.version();
+ for(const [ordinal,mode] of result.order.entries()){
+  const context=await browser.newContext({viewport:{width:960,height:600},hasTouch:true,isMobile:true,deviceScaleFactor:1}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.addInitScript(()=>{let seed=20261012;window.resetCrowdSeed=i=>{seed=(20261012+Math.imul(i,2654435761))>>>0;};Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,frameRate:60,musicVolume:0}));});
+  await page.goto(`http://127.0.0.1:${server.address().port}/${mode}/?map=${stage}&autopilot`,{waitUntil:'domcontentloaded'});
+  await page.evaluate(async()=>{window.CG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
+  await page.waitForFunction(()=>{const g=CG.game;if(g)g.frozen=true;return (g?.debug&&CG.s3?.installed&&CG.mode!=='boot')||document.getElementById('boot-error')?.textContent;},null,{timeout:900000});
+  const bootError=await page.locator('#boot-error').textContent();if(bootError)throw Error(bootError);
+  const setup=await page.evaluate(async stage=>{
+   const G=CG,g=G.game;g.debug.freeze();g.menus.wipe.cancel();window.resetCrowdSeed(0);G.time=0;g.rig.time=0;g.rig.shakeSeed=Math.random()*100;
+   if(G.audio){let seed=13579;G.audio.rng=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
+   await g.startMatch({mapId:stage,mode:'turf',difficulty:'normal',duration:180});g.debug.freeze();g.R.setDynamicScale(1);g._skipRender=false;
+   // Warm/countdown uses the real frame path, including all rigs/rendering.
+   for(let i=0;i<330;i++){window.resetCrowdSeed(i);g._frame(1/60);}
+   if(g.match.state!=='playing'||G.actors.length!==8||G.actors.some(a=>!a.bot))throw Error('Expected eight live autopilot actors');
+   const nodes=G.nav.nodes.filter(n=>Number.isFinite(n.y)).sort((a,b)=>(a.x*a.x+a.z*a.z)-(b.x*b.x+b.z*b.z)||a.id-b.id);if(nodes.length<8)throw Error('Insufficient nav cells');
+   const anchor=nodes[0],near=nodes.filter(n=>Math.abs(n.y-anchor.y)<.5&&Math.hypot(n.x-anchor.x,n.z-anchor.z)<5).slice(0,8);if(near.length!==8)throw Error('No compact eight-node crowd');
+   for(let i=0;i<8;i++){const a=G.actors[i],n=near[i];a.setWeapon('shooter');a.spawnAt(a.pos.clone().set(n.x,n.y+.05,n.z),0);const update=a.bot.update;a.bot.update=function(dt){const out=update.call(this,dt);a.intent.move.set(0,0,0);a.intent.fire=true;a.intent.squid=false;a.intent.jump=false;a.intent.sub=false;a.intent.special=false;a.aimYaw=Math.atan2(anchor.x-a.pos.x,anchor.z-a.pos.z);a.aimPitch=-.6;a.aimPoint.set(anchor.x,anchor.y,anchor.z);return out;};}
+   g.s3Clock?.reset();for(let i=0;i<30;i++){window.resetCrowdSeed(330+i);g._frame(1/60);}G.renderer.getContext().finish();
+   return {map:G.level.layout?.id,native:!!G.level.native,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,atlas:G.paint.size,ppm:G.paint.ppm,quality:g.settings.quality,touch:!!g.mobile.touch,positions:G.actors.map(a=>a.pos.toArray()),weapons:G.actors.map(a=>a.weaponId),characterTypes:G.actors.map(a=>a.character.constructor.name),bootComplete:true};
+  },stage);
+  if(setup.atlas!==2048||setup.bots!==8||setup.native!==(stage==='scorch'))throw Error('Incorrect production fixture '+JSON.stringify(setup));
+  const windows=[];
+  for(let windowIndex=0;windowIndex<4;windowIndex++)windows.push(await page.evaluate(w=>{const G=CG,g=G.game,frames=[];for(let i=0;i<30;i++){window.resetCrowdSeed(360+w*30+i);const t=performance.now();g._frame(1/60);frames.push(performance.now()-t);}const t=performance.now();G.renderer.getContext().finish();return {frames,drainMs:performance.now()-t,renderInfo:{calls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles},alive:G.actors.filter(a=>a.alive).length,actors:G.actors.map(a=>({p:a.pos.toArray(),hp:a.hp,ink:a.ink,alive:a.alive})),counts:[...G.paint.counts],grid:Array.from(G.paint.grid)};},windowIndex));
+  const row={mode,ordinal,sourceSha:variants[mode].sha,contentHash:variants[mode].manifest.contentHash,setup,windows:windows.map(({grid,...w})=>({...w,gridHash:hash(Buffer.from(grid))})),timing:sampleStats(windows.flatMap(w=>w.frames)),errors};
+  // Canvas capture after a real render; retain all UI/Character geometry in screenshot.
+  await page.screenshot({path:path.join(evidence,`${mode}-${ordinal}.png`),timeout:180000});result.runs.push(row);save();console.log(JSON.stringify({mode,ordinal,setup,timing:row.timing,errors}));await context.close();if(errors.length)throw Error('Browser errors '+errors.join(';'));
+ }
+ const stable=r=>JSON.stringify({setup:r.setup,windows:r.windows.map(({frames,drainMs,...s})=>s)});result.exactState=result.runs.every(r=>stable(r)===stable(result.runs[0]));if(!result.exactState)throw Error('Full-game scenario diverged; timings not accepted');result.status='measured';
+}catch(e){result.status='failed';result.error=e.stack;process.exitCode=1;}finally{result.receipts=Object.fromEntries(Object.entries(variants).map(([k,v])=>[k,[...v.receipts].sort()]));save();await browser?.close();await new Promise(r=>server.close(r));}
