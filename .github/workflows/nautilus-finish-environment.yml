@@ -1,10 +1,11 @@
-name: Nautilus fixed-shape material environment diagnosis
+name: Nautilus finish and inner-coil reference diagnosis
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - .github/workflows/nautilus-finish-environment.yml
       - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-finish-environment.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-inner-coil-candidate.mjs
 permissions:
   contents: read
 jobs:
@@ -33,12 +34,12 @@ jobs:
           test "$(git -C .finish-source rev-parse HEAD)" = f2a87e9e56387ada0487205c195eeee4e73baa6f
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node .finish-source/scripts/build-inkwave.mjs .finish-source/inkwave-public .finish-site
-      - name: Current satin versus 4d metallic palette on identical f2a shape
+      - name: Restore metal, test inner coil, and isolate silver cap finish
         run: node reports/weapon-model-rebuild-20261012/diagnostics/nautilus-finish-environment.mjs --site .finish-site --source .finish-source --out .finish-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nautilus-finish-fixed-f2a-${{ github.run_attempt }}
+          name: nautilus-inner-coil-and-finish-${{ github.run_attempt }}
           path: .finish-evidence
           include-hidden-files: true
           if-no-files-found: error
