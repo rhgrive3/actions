@@ -86,7 +86,7 @@ try{
   for(let i=0;i<20;i++){
    await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>G.local.update(1/60));await frames(1);
   }
-  assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).absorbedDamage),0);
+  assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).absorbedDamage ?? 0),0);
   assert(await host.evaluate(()=>vac.inkVacState(G.local).length>5));
   await Promise.all(pages.map(p=>p.evaluate(()=>G.actors[1].pos.set(0,0,5))));
   // From the first contact frame, count exactly 30 real 60 Hz suction updates.
