@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { installAttractBotBudget, menuAttractAiEligible, attractAiStep, ATTRACT_AI_STEP, ATTRACT_AI_TOUCH_STEP } from '../attract-bot-budget.mjs';
+import { installAttractBotBudget, menuAttractAiEligible, attractAiStep, ATTRACT_AI_STEP, ATTRACT_AI_TOUCH_STEP } from '../offline-offscreen-budget.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { qualityIdentity } from '../adapter.mjs';
 
@@ -134,5 +134,5 @@ test('production composition checks demo turf coverage only twice a second, neve
   g._updateAttract(1 / 60);
   assert.equal(resets, 2, '110 second hard cap is checked every frame');
   assert.equal(scans, before, 'hard cap never needs a grid scan');
-  assert.ok(qualityIdentity()['attract-bot-budget.mjs'], 'runtime source integrity is pinned');
+  assert.ok(qualityIdentity()['offline-offscreen-budget.mjs'], 'runtime source integrity is pinned');
 });
