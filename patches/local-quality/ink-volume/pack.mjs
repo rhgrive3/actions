@@ -52,7 +52,7 @@ export async function loadVolumePack(url, { signal } = {}) {
   const read = async data => {
     if (!data.ok) throw Error('Ink binary HTTP ' + data.status);
     transported = await data.arrayBuffer();
-    if (manifest.compression && transported.byteLength > 20 * 1024 * 1024) throw Error('Ink transport exceeds cache budget');
+    if ((manifest.compression || slot) && transported.byteLength > 20 * 1024 * 1024) throw Error('Ink transport exceeds cache budget');
     const buffer = await decodeVolumeBinary(manifest, transported);
     const digest = await crypto.subtle.digest('SHA-256', buffer);
     const hex = Array.from(new Uint8Array(digest), x => x.toString(16).padStart(2, '0')).join('');

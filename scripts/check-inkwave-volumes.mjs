@@ -85,6 +85,7 @@ try {
   const G=window.__G,g=window.__inkwave,a=G.local;g.debug.freeze();a.setWeapon('roller');a.ink=100;
   const beforeRegistration={...G.renderer.info.memory};
   if(await G.fx.inkVolumeReady!==true)throw Error('Automatic game pack load failed: '+G.fx.inkVolumeError);
+  if([...G.fx.inkVolumes.assets.keys()].sort().join(',')!=='roller,shooter')throw Error('Both default family packs must be owned by FX');
   G.projectiles.clear();g.debug.fire(true);g._skipRender=true;
   let ticks=0;while(ticks++<100 && !G.projectiles.list.some(p=>p._inkVolumeHorizontal))g._frame(1/60);
   g.debug.fire(false);g._skipRender=false;g._frame(1/60);
@@ -130,7 +131,7 @@ try {
   const beforeDispose={...G.renderer.info.memory};e.dispose();G.renderer.render(G.scene,G.camera);return {initial,counts,beforeDispose,afterDispose:{...G.renderer.info.memory}};
  });
  for(const counts of result.lifecycle.counts){assert.equal(counts.bytes,result.lifecycle.initial);assert.equal(counts.active,0);assert.equal(counts.geometries,result.lifecycle.counts[0].geometries);assert.equal(counts.textures,result.lifecycle.counts[0].textures);}
- assert(result.lifecycle.afterDispose.geometries<result.lifecycle.beforeDispose.geometries);assert.equal(result.lifecycle.afterDispose.textures,result.lifecycle.beforeDispose.textures-2);
+ assert(result.lifecycle.afterDispose.geometries<result.lifecycle.beforeDispose.geometries);assert.equal(result.lifecycle.afterDispose.textures,result.lifecycle.beforeDispose.textures-4,'dispose releases both two-texture family packs');
  }
  result.errors=errors;fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify(result,null,2));assert.deepEqual(errors,[]);console.log(JSON.stringify({integration:result.integration,performance:result.performance,comparison:result.comparison.comparisons,errors},null,2));
 }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}

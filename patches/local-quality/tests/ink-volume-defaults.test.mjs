@@ -57,4 +57,7 @@ test('default binary cache reuses verified bytes offline, repairs corruption and
   const [key]=entries.keys();entries.set(key,new Response(new Uint8Array([1,2,3])));offline=false;
   await loadVolumePack(url);assert.equal(requests,2,'invalid gzip is removed and fetched again');assert.equal(entries.size,1);
   manifest.binarySHA256='2'.repeat(64);await assert.rejects(loadVolumePack(url),/checksum/);assert.equal(entries.size,1,'unverified bytes never enter the cache');
+  delete manifest.compression;manifest.byteLength=21*1024*1024;
+  globalThis.fetch=async target=>{const response=new Response(String(target).endsWith('.json')?JSON.stringify(manifest):new Uint8Array(manifest.byteLength));Object.defineProperty(response,'url',{value:String(target)});return response;};
+  await assert.rejects(loadVolumePack(url),/cache budget/);assert.equal(entries.size,1,'the slot ceiling also bounds an uncompressed extension');
 });

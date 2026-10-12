@@ -84,3 +84,5 @@ First row compares the original VTF front with the same source-derived front and
 ![Native default vertical Roller, Shooter and Slosher: front, side and oblique](native-comparison.webp)
 
 These native heads were emitted by ordinary game inputs in the final default-enabled build. Only the inspection camera/lighting environment is controlled; the head positions, ages, source frames, team colours, size and direction come from the game. This is not a Nintendo retail screenshot comparison.
+
+The first default-delivery CI found that the older sheet-only browser probe still expected two texture releases after FX disposal. Ordinary FX now owns both two-texture packs; its observed retirement was four, as already verified by both native default runs. The probe now asserts both registered family names and exactly four texture releases. No disposal assertion was removed or relaxed. The generic loader’s 20 MiB slot ceiling also now rejects an uncompressed extension before checksum/storage; a negative-control test covers that case. Default compressed bytes, geometry and shaders remain unchanged. Full CI is rerun at the corrected head.
