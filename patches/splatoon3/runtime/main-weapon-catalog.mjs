@@ -8,7 +8,7 @@ import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias } from './weapon-accuracy.mjs';
-import { spreadWeaponRound } from './weapon-edgecases.mjs';
+import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
 
@@ -203,6 +203,16 @@ export function advanceCatalogJumpClock(state, actor, family, dt) {
 // angular maximum gradually recovers from 25F to 70F; Dualies/Blasters keep
 // their maximum air cone while their angular median recovers. Keep these
 // separate: their sourced DegSwerve and DegBias control different quantities.
+// #10 S3 Spinner studies: an independent signed biased draw also changes
+// launch speed. The extracted 11.3.0 fields are relative amplitude and bias,
+// not an extra fixed world-units-per-frame acceleration.
+export function catalogSpinnerLaunchSpeed(baseSpeed, move, random = Math.random) {
+  const rate = move?.SpawnSpeedRandomRate;
+  if (!Number.isFinite(rate) || rate <= 0) return baseSpeed;
+  const bias = finite(move.SpawnSpeedRandomBias, .5);
+  return baseSpeed * (1 + rate * signedBiasSample(random(), bias));
+}
+
 export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, actionReduction = 0, param = {}) {
   const airborne = lerp(ground, jump, 1 - clamp(actionReduction));
   if (Number.isFinite(jumpAge)) {
@@ -429,7 +439,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,s.jumpAge);
     }
     runner.spread=spread;
-    spawn(a,r,desc,aim,muzzle,{volley});notify(a,r,muzzle,aim,charge);
+    spawn(a,r,desc,aim,muzzle,{volley,
+      speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
+    notify(a,r,muzzle,aim,charge);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
