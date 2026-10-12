@@ -63,14 +63,23 @@ test('Dynamo copper stator occupies a separate drive axis behind the drum, not t
  assert.ok(d.drumAt.z-max[2]>.12,'winding remains behind drum centre');
  assert.ok(min[0]>.91&&max[0]<1.15,'windings face outboard on their separate case');
  assert.ok(max[1]-min[1]>.43&&max[1]-min[1]<.47,'measured winding radial envelope');
- const mesh=new f.THREE.Mesh(g,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ // The production build deliberately tree-shakes Raycaster. Intersect the
+ // actual indexed triangles along -X here, without enlarging production exports.
+ const firstFaceAt=(y,z)=>{
+  let bestX=-Infinity,best=-1;const ii=g.index.array;
+  for(let t=0;t<ii.length;t+=3){
+   const a=ii[t],b=ii[t+1],c=ii[t+2],ay=p.getY(a),az=p.getZ(a),by=p.getY(b),bz=p.getZ(b),cy=p.getY(c),cz=p.getZ(c);
+   const det=(bz-cz)*(ay-cy)+(cy-by)*(az-cz);if(Math.abs(det)<1e-12)continue;
+   const u=((bz-cz)*(y-cy)+(cy-by)*(z-cz))/det,v=((cz-az)*(y-cy)+(ay-cy)*(z-cz))/det,w=1-u-v;
+   if(Math.min(u,v,w)<-1e-7)continue;const x=u*p.getX(a)+v*p.getX(b)+w*p.getX(c);if(x<2&&x>bestX){bestX=x;best=a;}
+  }return best;
+ };
  let visibleCopper=0;
  for(let k=0;k<24;k++){
-  const angle=k/24*Math.PI*2,ray=new f.THREE.Raycaster(new f.THREE.Vector3(2,Math.cos(angle)*.204,.77-d.parts.hinge.pivot.z+Math.sin(angle)*.204),new f.THREE.Vector3(-1,0,0));
-  const hit=ray.intersectObject(mesh,false)[0];
-  if(hit&&Math.abs(c.getX(hit.face.a)-copper.r)<1e-6&&Math.abs(c.getY(hit.face.a)-copper.g)<1e-6)visibleCopper++;
+  const angle=k/24*Math.PI*2,hit=firstFaceAt(Math.cos(angle)*.204,.77-d.parts.hinge.pivot.z+Math.sin(angle)*.204);
+  if(hit>=0&&Math.abs(c.getX(hit)-copper.r)<1e-6&&Math.abs(c.getY(hit)-copper.g)<1e-6)visibleCopper++;
  }
- mesh.material.dispose();assert.ok(visibleCopper>=18,'stator opening exposes copper, not an opaque support plate: '+visibleCopper+'/24');
+ assert.ok(visibleCopper>=18,'stator opening exposes copper, not an opaque support plate: '+visibleCopper+'/24');
  console.log('DYNAMO_STATOR_VISIBILITY '+visibleCopper+'/24');
  console.log('DYNAMO_DRIVE_GEOMETRY '+JSON.stringify({vertices:g.attributes.position.count,triangles:g.index.count/3,bodyVertices:d.body.attributes.position.count,bodyTriangles:d.body.index.count/3,copperBounds:{min,max}}));
 });

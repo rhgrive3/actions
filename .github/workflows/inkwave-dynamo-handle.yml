@@ -54,6 +54,13 @@ jobs:
         run: |
           node scripts/render-dynamo-handle.mjs --site .dynamo-before-site --out .dynamo-evidence/before --baseline
           node scripts/render-dynamo-handle.mjs --site .dynamo-after-site --out .dynamo-evidence/after
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dynamo-visual-${{ github.event.pull_request.head.sha }}
+          path: .dynamo-evidence/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
       - name: Eight source Actors near/far on one runner, ABBA
         run: |
           for pair in before-A after-B after-B2 before-A2; do
