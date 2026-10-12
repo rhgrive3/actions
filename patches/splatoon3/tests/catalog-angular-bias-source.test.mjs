@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { catalogAngularLaunch } from '../runtime/main-weapon-catalog.mjs';
 import { biasQuantile } from '../runtime/weapon-accuracy.mjs';
 import { ShooterAccuracy } from '../runtime/shooter-accuracy.mjs';
+import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 
 const near = (a, b, label, tolerance = 1e-9) =>
   assert.ok(Math.abs(a - b) <= tolerance, label + ': ' + a + ' != ' + b);
@@ -65,6 +66,28 @@ test('catalog explicit maximum overrides the Shooter-only community 0.25 default
   const defaults=new ShooterAccuracy();
   for(let i=0;i<30;i++)defaults.shot(true,null);
   near(defaults.stand,.25,'sparse 11.3 Shooter still uses documented .25 fallback');
+});
+
+test('11.3.0 added Shooters and Dualies honor every explicitly extracted median cap',()=>{
+  const caps=[
+    ['Shooter_Short_00',.4],
+    ['Shooter_First_00',.4],
+    ['Shooter_Blaze_00',.5],
+    ['Shooter_Heavy_00',.3],
+    ['Shooter_QuickLong_00',.25],
+    ['Maneuver_Short_00',.4],
+    ['Maneuver_Dual_00',.3],
+    ['Maneuver_Long_00',.3]
+  ];
+  for(const [source,expected] of caps){
+    const r=MAIN_WEAPON_CATALOG.records.find(x=>x.sourceRow===source);
+    assert.ok(r&&!r.legacy,'added canonical record: '+source);
+    const param=r.parameters.WeaponParam;
+    assert.equal(param.Stand_DegBiasMax,expected,'pinned source: '+source);
+    const accuracy=new ShooterAccuracy(param);
+    for(let j=0;j<120;j++)accuracy.shot(true,null);
+    near(accuracy.stand,expected,'sourced main weapon bias cap: '+source);
+  }
 });
 
 test('catalog unsupported shot families retain existing provisional fallback until source is verified',()=>{
