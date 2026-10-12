@@ -71,6 +71,16 @@ try {
     const row = await page.evaluate(async ({ id, held, crowd, prefix }) => {
       const { THREE, api, W, Mt, R, Kit, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
+      // r186 records zero-count drawElements calls for native override gates.
+      // Separate actual nonempty draws from raw API calls without altering them.
+      const observeDraws=renderer=>{
+        const gl=renderer.getContext(),saved=[],counts={nonzero:0,zero:0};
+        for(const [name,countAt,instancesAt] of [['drawElements',1],['drawArrays',2],['drawElementsInstanced',1,4],['drawArraysInstanced',2,3]]){
+          const original=gl[name];saved.push([name,original]);gl[name]=function(...args){counts[args[countAt]>0&&(instancesAt===undefined||args[instancesAt]>0)?'nonzero':'zero']++;return original.apply(this,args);};
+        }
+        return{reset(){counts.nonzero=counts.zero=0;},read(){return{nonzero:counts.nonzero,zero:counts.zero};},restore(){for(const [name,fn]of saved)gl[name]=fn;}};
+      };
+
       const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
       let bytes = 0; const geos = [d.body, d.ink, d.bodyStatic, d.inkStatic, d.drum, d.drumCaps, d.glow, d.glass, ...Object.values(d.parts || {}).map(p => p.geo)];
       for (const geo of new Set(geos.filter(Boolean))) { for (const a of Object.values(geo.attributes)) bytes += a.array.byteLength; if (geo.index) bytes += geo.index.array.byteLength; }
@@ -223,15 +233,16 @@ try {
         const container=document.createElement('div');document.body.append(container);
         const full=new Renderer(container,{quality:'high',shadows:true,bloom:true});full.renderer.debug.checkShaderErrors=true;full.setScene(scene,camera);
         if(!full.gtao)throw Error('Crowd production GTAO is not active');res.productionCrowd={};
-        const fullGL=full.renderer.getContext(),sharedRanges=new Map(shells.map(s=>[s.geometry,s.geometry.drawRange.count]));
+        const draws=observeDraws(full.renderer),fullGL=full.renderer.getContext(),sharedRanges=new Map(shells.map(s=>[s.geometry,s.geometry.drawRange.count]));
         for(const tier of ['game','far']){
           for(const o of actors){o.character.setLod(tier);for(let j=0;j<8;j++)o._finishFrame(1/60);}
           const complete=[];
-          for(let j=0;j<36;j++){full.renderer.info.reset();const t=performance.now();full.render();fullGL.finish();if(j>=12)complete.push(performance.now()-t);for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Production crowd leaked shared glass range');}
-          res.productionCrowd[tier]={actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled,allGlassRangesRestored:true,renderCompleteMs:quant(complete),drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles};
+          for(let j=0;j<36;j++){full.renderer.info.reset();draws.reset();const t=performance.now();full.render();fullGL.finish();if(j>=12)complete.push(performance.now()-t);for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Production crowd leaked shared glass range');}
+          const measuredDraws=draws.read();if(measuredDraws.nonzero+measuredDraws.zero!==full.renderer.info.render.calls)throw Error('Production GL call tally mismatch');
+          res.productionCrowd[tier]={glNonzeroDrawCalls:measuredDraws.nonzero,glZeroCountCalls:measuredDraws.zero,actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled,allGlassRangesRestored:true,renderCompleteMs:quant(complete),drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles};
           res.images['crowd-production-'+tier]=full.renderer.domElement.toDataURL('image/png').split(',')[1];
         }
-        full._disposeComposer();full.renderer.dispose();container.remove();
+        draws.restore();full._disposeComposer();full.renderer.dispose();container.remove();
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
         G.actors=[a];
       }
@@ -245,7 +256,7 @@ try {
         const camera=new THREE.PerspectiveCamera(32,innerWidth/innerHeight,.05,30);
         gameRenderer.setScene(scene,camera);
         if(!gameRenderer.gtao)throw Error('Production high-quality GTAO is not active');
-        const shell=ch.weapon.off.getObjectByName('weapon-glass'),pipelineRows=[];
+        const shell=ch.weapon.off.getObjectByName('weapon-glass'),pipelineRows=[],pipelineFailures=[],draws=observeDraws(gameRenderer.renderer);
         for(const tier of ['game','far'])for(const background of ['#101321','#eef3f8'])for(const inkColor of ['#ff8825','#484ce8']){
           ch.setLod(tier);ch.setColor(new THREE.Color(inkColor));scene.background=new THREE.Color(background);
           for(let frame=0;frame<8;frame++)a._finishFrame(1/60);
@@ -253,14 +264,15 @@ try {
           camera.position.copy(a.pos).add(new THREE.Vector3(-distance,1,.35));camera.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.15)));
           for(let k=0;k<2;k++)gameRenderer.render();
           const originalRange=d.glass?.drawRange.count;
-          if(shell)shell.visible=false;gameRenderer.renderer.info.reset();gameRenderer.render();const hiddenCalls=gameRenderer.renderer.info.render.calls;
-          if(shell)shell.visible=true;gameRenderer.renderer.info.reset();gameRenderer.render();const calls=gameRenderer.renderer.info.render.calls;
-          if(shell&&(calls!==hiddenCalls+1||d.glass.drawRange.count!==originalRange))throw Error('Production post stack added extra glass passes or leaked range');
+          if(shell)shell.visible=false;gameRenderer.renderer.info.reset();draws.reset();gameRenderer.render();const hiddenCalls=gameRenderer.renderer.info.render.calls,hiddenDraws=draws.read();
+          if(shell)shell.visible=true;gameRenderer.renderer.info.reset();draws.reset();gameRenderer.render();const calls=gameRenderer.renderer.info.render.calls,visibleDraws=draws.read();
+          if(shell&&(calls!==hiddenCalls+2||visibleDraws.nonzero!==hiddenDraws.nonzero+1||visibleDraws.zero!==hiddenDraws.zero+1||d.glass.drawRange.count!==originalRange))pipelineFailures.push({tier,background,inkColor,calls,hiddenCalls,visibleDraws,hiddenDraws,rangeRestored:d.glass.drawRange.count===originalRange});
+          if(calls!==visibleDraws.nonzero+visibleDraws.zero)throw Error('Production GL call tally mismatch');
           res.images['production-'+tier+'-'+background.slice(1)+'-'+inkColor.slice(1)]=gameRenderer.renderer.domElement.toDataURL('image/png').split(',')[1];
-          pipelineRows.push({tier,background,inkColor,distance,drawCalls:calls,withoutGlassDrawCalls:hiddenCalls,glassVisible:!!shell?.visible,rangeRestored:!shell||d.glass.drawRange.count===originalRange});
+          pipelineRows.push({glNonzeroDrawCalls:visibleDraws.nonzero,glZeroCountCalls:visibleDraws.zero,withoutGlassGlDraws:hiddenDraws,tier,background,inkColor,distance,drawCalls:calls,withoutGlassDrawCalls:hiddenCalls,glassVisible:!!shell?.visible,rangeRestored:!shell||d.glass.drawRange.count===originalRange});
         }
-        res.productionPipeline={quality:'high',ao:!!gameRenderer.gtao,bloom:!!gameRenderer.bloom?.enabled,rows:pipelineRows};
-        gameRenderer._disposeComposer();gameRenderer.renderer.dispose();container.remove();
+        res.productionPipeline={quality:'high',ao:!!gameRenderer.gtao,bloom:!!gameRenderer.bloom?.enabled,rows:pipelineRows,failures:pipelineFailures};
+        draws.restore();gameRenderer._disposeComposer();gameRenderer.renderer.dispose();container.remove();
         scene.background=null;ch.setColor(color);ch.setLod('hero');
       }
       a.weaponRunner.reset(); scene.remove(ch.root); ch.dispose();
@@ -270,6 +282,7 @@ try {
     }, { id, held, crowd, prefix });
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);
+    if(row.productionPipeline?.failures?.length)errors.push('Production shell draw/range contract: '+JSON.stringify(row.productionPipeline.failures));
     console.log(JSON.stringify(row));
   }
   fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, rows, errors }, null, 2));
