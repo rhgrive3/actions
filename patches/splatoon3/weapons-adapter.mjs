@@ -190,7 +190,7 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     '    const inkDrop0 = n;\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);\n    for (let i = inkDrop0; i < n; i++) {\n      writeInkLook(inkLook, i, INK_LOOK.droplet, i * 0.618);\n      B.getMatrixAt(i, _m); _m.scale(_s.setScalar(INK_LOOK.droplet[4])); B.setMatrixAt(i, _m);\n      shp[i * 4] *= INK_LOOK.droplet[3];\n    }',
     'ink look detached droplets');
   patch('    B.count = n;',
-    '    n = appendSourcedSplashVisuals(this, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _dir, ZAX, G.camera?.position);\\n    B.count = n;',
+    '    n = appendSourcedSplashVisuals(this, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _dir, ZAX, G.camera?.position);\n    B.count = n;',
     'sourced falling ink draws from authoritative 60Hz state');
   patch('    this.blobFourPetals.needsUpdate = true;\n  }',
     `    this.blobFourPetals.needsUpdate = true;
