@@ -94,11 +94,19 @@ try {
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap();
       cam.position.copy(c).add(new THREE.Vector3(.9,.45,-1.1).normalize().multiplyScalar(span*2.5));cam.lookAt(c);renderer.render(scene,cam);const rear = snap();
+      // A fixed 12-heading turntable permits reference-cell pairing instead of comparing one source view
+      // with unrelated candidate angles. Both before and after use this exact framing and 10.2-degree pitch.
+      const turntable={};
+      if(!crowd)for(let k=0;k<12;k++){
+        const a=k*Math.PI/6;
+        cam.position.copy(c).add(new THREE.Vector3(-Math.sin(a),.18,Math.cos(a)).normalize().multiplyScalar(span*2.5));
+        cam.lookAt(c);renderer.render(scene,cam);turntable['turntable-'+String(k*30).padStart(3,'0')]=snap();
+      }
       scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
-        images: { side, above, front: muzzleView, persp, rear } };
+        turntableCamera: {fov:30,pitchDegrees:Math.atan(.18)*180/Math.PI,headingsDegrees:Array.from({length:12},(_,k)=>k*30),headingConvention:"from +Z toward -X"}, images: { side, above, front: muzzleView, persp, rear, ...turntable } };
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;

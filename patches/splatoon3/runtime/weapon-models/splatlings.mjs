@@ -152,9 +152,10 @@ function ballpoint(d) {
 }
 
 function nautilus(d) {
-  // The turntable resolves the rear into a deep dished shell, a raised opposite-side hub, and a
+  // The turntable resolves the rear into an asymmetric rounded shell, a projecting opposite-side hub, and a
   // truncated front/lower lip. The middle is an angular cast shroud, not a long round tube.
-  const AX=.07,C={dark:'#303338',black:'#181b1e',gold:'#b6a159',silver:'#aeb8bb',light:'#d0d5d4'};
+  // Silver hardware follows the Nautilus 47 still. The alternate 79 turntable is shape-only.
+  const AX=.07,C={dark:'#303338',black:'#181b1e',trim:'#d0d5d4',silver:'#aeb8bb'};
   const body=new Pieces(),B=new Pieces(),ink=new Pieces();
   const tr=pistolGrip(body,{color:C.black,triggerColor:C.dark,guardColor:C.dark});
   const sy=.121,sz=-.096;
@@ -166,8 +167,12 @@ function nautilus(d) {
       p.setY(i,sy+y*(1-.15*cut));p.setZ(i,sz+z*(1-.15*cut));
     }p.needsUpdate=true;g.computeVertexNormals();return g;
   };
-  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.105,.009],[.083,-.011],[.054,-.019],[0,-.019]],0,sy,sz,36)),C.dark,M.satin);
-  body.add(shellShape(xlathe([[.123,.014],[.133,.016],[.133,.022],[.124,.026]],0,sy,sz,36)),C.gold,M.satin);
+  // The black-disc side remains smooth. The opposite silver-hub face is shallowly convex,
+  // with two stamped shoulders visible in the side and rear-oblique reference views.
+  // The rolled lip wraps both faces, rather than sitting behind the dark shell on the outer side.
+  // Maximum shell radius, axial envelope and the existing hub/neck stay fixed.
+  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.11,.014],[.103,.022],[.096,.028],[.09,.031],[.085,.025],[.078,.03],[.073,.036],[.067,.039],[.061,.029],[.054,.033],[.046,.036],[0,.036]],0,sy,sz,36)),C.silver,M.metal);
+  body.add(shellShape(xlathe([[.123,.003],[.127,.005],[.133,.012],[.133,.023],[.128,.026],[.123,.026],[.123,.003]],0,sy,sz,36)),C.trim,M.metal);
   // Raised concentric back-cap and short projecting coupling are visible on the opposite side.
   body.add(xlathe([[0,-.053],[.038,-.053],[.055,-.048],[.06,-.042],[.06,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
   body.add(ring(.059,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
@@ -183,15 +188,15 @@ function nautilus(d) {
   ink.add(sphere(.018,.014,.025,-.02,.122,-.028,14,8));
   body.add(cyl(.013,[-.02,.108,-.022],[-.02,.127,-.032],12),C.silver,M.metal);
   // The shroud's sides are full cast sections with a broad faceted face and a dark top bridge.
-  body.add(zlathe([[0,.026],[.032,.026],[.045,.047],[.047,.151],[.042,.171],[0,.171]],0,AX,0,12),C.silver,M.satin);
+  body.add(zlathe([[0,.026],[.032,.026],[.045,.047],[.047,.151],[.042,.171],[0,.171]],0,AX,0,12),C.silver,M.metal);
   body.add(box(.061,.009,.123,0,AX+.044,.102,.25,8,4),C.dark,M.satin);
-  for(const x of[-.042,.042])body.add(slab([[.048,.055],[.06,.089],[.147,.091],[.162,.078],[.15,.049],[.064,.05]],.003,x,.001),C.silver,M.satin);
-  for(const z of[.026,.171])body.add(zlathe([[.038,z-.004],[.046,z-.004],[.048,z],[.044,z+.006],[.038,z+.006]],0,AX,0,12).scale(1,1.06,1),C.gold,M.satin);
+  for(const x of[-.042,.042])body.add(slab([[.048,.055],[.06,.089],[.147,.091],[.162,.078],[.15,.049],[.064,.05]],.003,x,.001),C.silver,M.metal);
+  for(const z of[.026,.171])body.add(zlathe([[.038,z-.004],[.046,z-.004],[.048,z],[.044,z+.006],[.038,z+.006]],0,AX,0,12).scale(1,1.06,1),C.trim,M.metal);
   body.add(pipe([[0,.11,.025],[0,.135,.032],[0,.139,.057],[0,.119,.069]],.004,12,6),C.silver,M.metal);
   // Exposed bearing gap precedes the hemispherical three-nozzle rotor.
   body.add(zcyl(.026,.178,.212,0,AX,20),C.black,M.satin);
   ink.add(ring(.029,.0025,0,AX,.187,'z',4,20));
-  B.add(zlathe([[.022,.198],[.042,.198],[.047,.211],[.046,.229],[.04,.246],[.032,.262],[.019,.271],[0,.273]],0,AX,0,30),C.dark,M.satin);
+  B.add(zlathe([[.022,.198],[.042,.198],[.047,.211],[.046,.229],[.04,.246],[.032,.262],[.019,.271],[0,.273]],0,AX,0,30),C.silver,M.metal);
   B.add(ring(.044,.004,0,AX,.212,'z',5,26),C.silver,M.metal);
   for(let k=0;k<3;k++){
     const a=Math.PI/2+k*Math.PI*2/3,x=Math.cos(a)*.026,y=AX+Math.sin(a)*.026;

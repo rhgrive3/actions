@@ -5,6 +5,7 @@ on:
     paths:
       - patches/splatoon3/runtime/weapon-models/splatlings.mjs
       - patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs
+      - patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs
       - scripts/render-inkwave-mini-nautilus-gallery.mjs
       - scripts/compare-inkwave-mini-nautilus-gallery.py
       - .github/workflows/inkwave-mini-nautilus-models.yml
@@ -25,7 +26,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: b078c37907351f1bbc13d0e7d4b5cbeb0a330009
+          ref: bca45e7cb55f3331a58459ea0219e42b44762712
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -43,7 +44,7 @@ jobs:
           node scripts/build-inkwave.mjs inkwave-public .model-after-site
       - name: Verify rebuilt geometry and preserved motion
         run: |
-          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
       - name: Render real production Actor and all model angles on the same runner
         run: |
           IDS=s3-spinner-quick,s3-spinner-serein
@@ -69,7 +70,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: b078c37907351f1bbc13d0e7d4b5cbeb0a330009
+          ref: bca45e7cb55f3331a58459ea0219e42b44762712
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -88,7 +89,7 @@ jobs:
         env:
           INKWAVE_BUILT_SITE: .model-after-site
           WEAPON_IDS: s3-spinner-quick,s3-spinner-serein
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
       - name: Eight mixed-weapon Actors, gameplay and far LOD, controlled ABBA
         run: |
           for pair in before-A after-B after-B2 before-A2; do

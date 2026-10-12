@@ -67,5 +67,18 @@ export function adaptPaintHotpath(rel, code, replaceOnce) {
       const vi = q * 4 + c;
       this.aLocal[vi * 3 + 2] = dn;`,
     'reuse identical paint quad positions and local coordinates');
+  // Exact inner-disc admission: all five sine terms sum to no less
+  // than -(0.12+0.08+0.05+0.03+0.018) = -0.298, and the two cos^even
+  // spikes are nonnegative. Hence blobWobble >= 0.702 for any seed/angle.
+  // With the historical CPU cutoff 0.97, d < 0.68*r guarantees
+  // d/(r*blobWobble) < 0.96867 < 0.97; the canonical cutoff 1 is also safe.
+  // Do not alter the body boundary, GPU shader, roll band, or claim order.
+  const bodyRatio = code.match(/          if \(d \/ \(r \* blobWobble\(Math\.atan2\(py, px\), seed\)\) > (?:0\.97|1)\) continue;/g);
+  if (!bodyRatio || bodyRatio.length !== 1) {
+    throw new Error('paint hotpath: expected one native/canonical blob wobble cut');
+  }
+  change(bodyRatio[0],
+    bodyRatio[0].replace('if (d /', 'if (d >= r * 0.68 && d /'),
+    'skip guaranteed-inside ink body trigonometry');
   return code;
 }
