@@ -1,0 +1,111 @@
+name: INKWAVE lossless LOD compaction
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - inkwave-public/src/game/character-lod.js
+      - patches/splatoon3/tests/weapon-lod-compaction.test.mjs
+      - patches/splatoon3/tests/fixtures/character-lod-main80555b8.mjs
+      - scripts/render-inkwave-lod-compaction.mjs
+      - scripts/measure-inkwave-lod-compaction.mjs
+      - .github/workflows/inkwave-lod-compaction.yml
+permissions:
+  contents: read
+concurrency:
+  group: weapon-lod-compaction-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  strict:
+    if: github.head_ref == 'fix/inkwave-lossless-lod-compaction'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        models: [main805, nine7630]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 7630c58a3a8dedf4e3bf79c48c2dd7583b457db2
+          path: .nine-models
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /patches/splatoon3/runtime/weapon-models/splatanas.mjs
+            /patches/splatoon3/runtime/weapon-models/stringers.mjs
+            /patches/splatoon3/runtime/weapon-models/brellas.mjs
+      - uses: actions/checkout@v4
+        with:
+          ref: 4afb25c1512fef0ee115aef4f61cad3af11085bc
+          path: .four-models
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /patches/splatoon3/runtime/weapon-models/shooters-b.mjs
+      - uses: actions/checkout@v4
+        with:
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          path: .pre-boundary
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /inkwave-public/src/game/character-lod.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Record fixed composition and verify fixture identity
+        env:
+          MODEL_SET: ${{ matrix.models }}
+        run: |
+          mkdir -p .compaction-evidence
+          if [ "$MODEL_SET" = nine7630 ]; then
+            for family in splatanas stringers brellas; do
+              cp ".nine-models/patches/splatoon3/runtime/weapon-models/$family.mjs" "patches/splatoon3/runtime/weapon-models/$family.mjs"
+            done
+          fi
+          test "$(git hash-object patches/splatoon3/tests/fixtures/character-lod-main80555b8.mjs)" = aeaed818231b333acc2dae0e164a19115455a4e9
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';import{execFileSync}from'node:child_process';
+          const files=['inkwave-public/src/game/character-lod.js',...['splatanas','stringers','brellas','shooters-b'].map(x=>'patches/splatoon3/runtime/weapon-models/'+x+'.mjs')];
+          fs.writeFileSync('.compaction-evidence/composition.json',JSON.stringify({candidate:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),base:'80555b8cf12e3a9529c0f461bd2acc3ee17f1764',modelSet:process.env.MODEL_SET,nine:'7630c58a3a8dedf4e3bf79c48c2dd7583b457db2',four:'4afb25c1512fef0ee115aef4f61cad3af11085bc',files:Object.fromEntries(files.map(p=>[p,execFileSync('git',['hash-object',p],{encoding:'utf8'}).trim()]))},null,2));
+          JS
+      - name: Raw corner bytes, bounds, index promotion, source, cache and empty-part contracts
+        env:
+          WEAPON_LOD_REPORT: .compaction-evidence/structural.json
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-compaction.test.mjs
+      - name: Existing boundary guard remains unchanged for adopted main and nine-model compositions
+        env:
+          WEAPON_LOD_BASELINE: .pre-boundary/inkwave-public/src/game/character-lod.js
+          WEAPON_LOD_REPORT: .compaction-evidence/boundary-guard.json
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
+      - name: Future four-model composition lossless contract only (not relative-budget approval)
+        if: matrix.models == 'nine7630'
+        run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';import path from 'node:path';
+          fs.writeFileSync('.compaction-evidence/future-overrides.json',JSON.stringify({'patches/splatoon3/runtime/weapon-models/shooters-b.mjs':path.resolve('.four-models/patches/splatoon3/runtime/weapon-models/shooters-b.mjs')}));
+          JS
+          WEAPON_LOD_MODEL_OVERRIDES=.compaction-evidence/future-overrides.json WEAPON_LOD_REPORT=.compaction-evidence/future-structural.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-compaction.test.mjs
+      - name: Cold construction CPU ABBA (all65, cache calls, raw per-model samples)
+        env:
+          WEAPON_LOD_REPORT: .compaction-evidence/cold.json
+        run: node --expose-gc --experimental-vm-modules scripts/measure-inkwave-lod-compaction.mjs
+      - name: Build exact candidate production composition once
+        run: ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public .compaction-site
+      - name: Strict full-RGBA A/A and A/B, all65 static and nine actual Actors
+        run: node scripts/render-inkwave-lod-compaction.mjs --site .compaction-site --out .compaction-evidence/rgba --size 320
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lossless-lod-${{ matrix.models }}-${{ github.event.pull_request.head.sha }}
+          path: .compaction-evidence
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

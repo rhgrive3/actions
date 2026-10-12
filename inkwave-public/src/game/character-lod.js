@@ -61,6 +61,32 @@ export function ditherMaterial(base, fadeU) {
 // ------------------------------------------------------------------------------------------------
 const _farCache = new WeakMap();
 
+// Corner-preserving weapon splits can leave cluster representatives unreferenced.
+// Pack only those unused rows out of the finished buffers. Keep the index type,
+// triangle order and pre-compaction bounds, so culling and every rendered corner
+// remain unchanged. This does not remove faces or approximate any attribute.
+function compactReferencedWeaponVertices(geo) {
+  const count = geo.attributes.position.count, index = geo.index;
+  const used = new Uint8Array(count);
+  let live = 0;
+  for (const i of index.array) if (!used[i]) { used[i] = 1; live++; }
+  if (live === count) return geo;
+  const remap = new Uint32Array(count);
+  for (let old = 0, next = 0; old < count; old++) if (used[old]) remap[old] = next++;
+  for (const name in geo.attributes) {
+    const a = geo.attributes[name], size = a.itemSize;
+    const packed = new a.array.constructor(live * size);
+    for (let old = 0; old < count; old++) if (used[old]) {
+      packed.set(a.array.subarray(old * size, (old + 1) * size), remap[old] * size);
+    }
+    // These are freshly generated, noninterleaved BufferAttributes. Reusing the
+    // object preserves normalized, usage, gpuType and any attribute metadata.
+    a.array = packed; a.count = live;
+  }
+  for (let i = 0; i < index.count; i++) index.array[i] = remap[index.array[i]];
+  return geo;
+}
+
 /**
  * Decimate an (indexed or not) skinned geometry by vertex clustering. Cluster key = grid cell + dominant bone + discrete
  * material ids (aEx, aCloth.xy, aTint gear class), so clothing material borders survive; opposite-facing members split off (thin
@@ -165,6 +191,7 @@ export function clusterDecimate(src, cell) {
   }
   out.userData = { ...src.userData, iwLod: 'far', cell };
   out.computeBoundingSphere();
+  if (A.aMat && A.color) compactReferencedWeaponVertices(out);
   return out;
 }
 
