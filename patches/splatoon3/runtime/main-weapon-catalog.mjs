@@ -199,6 +199,28 @@ export function advanceCatalogJumpClock(state, actor, family, dt) {
   return state.jumpAge;
 }
 
+// Source-grounded launch envelope through an admitted jump. Shooter's
+// angular maximum gradually recovers from 25F to 70F; Dualies/Blasters keep
+// their maximum air cone while their angular median recovers. Keep these
+// separate: their sourced DegSwerve and DegBias control different quantities.
+export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, actionReduction = 0, param = {}) {
+  const airborne = lerp(ground, jump, 1 - clamp(actionReduction));
+  if (Number.isFinite(jumpAge)) {
+    if (family === 'shooter') {
+      const frames = jumpAge * HZ;
+      const hold = finite(param.Jump_DegBiasDecreaseStartFrame, 25);
+      const end = Math.max(hold + EPS, finite(param.Jump_DegBiasEndFrame, 70));
+      return frames <= hold ? airborne
+        : frames >= end ? ground : lerp(airborne, ground, (frames - hold) / (end - hold));
+    }
+    if (family === 'dualies' || family === 'blaster') return airborne;
+  }
+  // The native Blaster's jump-serial owner rejects edge falls, whereas
+  // Shooter and Dualies retain their ordinary airborne envelope.
+  if (family === 'blaster') return ground;
+  return grounded ? ground : airborne;
+}
+
 function initialState(r,actor) {
   return { id:r.id, pressed:false, frame:0, pending:null, chargeF:0, paid:0, reserved:0,
     stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
@@ -392,11 +414,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
-    const airFactor=1-(a.s3?.modifiers?.actionAirSpread??0);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
     const spread=key==='turret'&&r.family==='dualies'
       ? finite(t.LapOver_DegSwerve,0)
-      : a.grounded?ground:lerp(ground,jump,airFactor);
+      : catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,s.jumpAge,
+        a.s3?.modifiers?.actionAirSpread??0,{...weaponParam(r),...t});
     const aim=dir.clone();
     if (key==='turret'&&r.family==='dualies') {
       // Post-roll turret has its own sourced cone and must not advance normal
