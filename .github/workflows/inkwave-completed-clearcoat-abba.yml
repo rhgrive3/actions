@@ -1,0 +1,50 @@
+name: INKWAVE completed-output clearcoat ABBA
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/inkwave-completed-clearcoat-abba.yml
+      - reports/weapon-clearcoat-completed/**
+permissions:
+  contents: read
+concurrency:
+  group: completed-clearcoat-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  abba:
+    if: github.head_ref == 'diagnose/weapon-clearcoat-completed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 18f062d803271e57c7ef6a1a7c90c876af879bfb
+          path: .candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and Chromium
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable runtime and check measurement source
+        run: |
+          test "$(git -C .candidate rev-parse HEAD)" = 18f062d803271e57c7ef6a1a7c90c876af879bfb
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .candidate/scripts/build-inkwave.mjs .candidate/inkwave-public .candidate-site
+          node --check reports/weapon-clearcoat-completed/measure-clearcoat.mjs
+      - name: One same-scene completed-output ABBA per LOD, raw frames retained
+        run: |
+          node reports/weapon-clearcoat-completed/measure-clearcoat.mjs --site .candidate-site --out clearcoat-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clearcoat-completed-${{ github.event.pull_request.head.sha }}
+          path: clearcoat-evidence
+          if-no-files-found: error
+          retention-days: 14
