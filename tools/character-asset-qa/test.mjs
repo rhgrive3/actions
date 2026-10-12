@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {inspectGLB,hash,assertScenarioMatrix,assertLifecycle} from './glb.mjs';
 import {syntheticGLB} from './synthetic.mjs';
 import {containedFile,verifyBuild} from './run.mjs';
+import {threeImports} from './core.mjs';
 function mutateJSON(bytes,fn){const n=bytes.readUInt32LE(12),g=JSON.parse(bytes.subarray(20,20+n)),bin=bytes.subarray(20+n);fn(g);const raw=Buffer.from(JSON.stringify(g)),j=Buffer.alloc(Math.ceil(raw.length/4)*4,32);raw.copy(j);const out=Buffer.concat([bytes.subarray(0,20),j,bin]);out.writeUInt32LE(out.length,8);out.writeUInt32LE(j.length,12);return out;}
 test('original synthetic fixture has deterministic geometry/maps and both UV sets',()=>{const a=syntheticGLB();assert.deepEqual(a,syntheticGLB());const r=inspectGLB(a,hash(a));assert.equal(r.triangles,24);assert.equal(r.images,3);assert.deepEqual(r.uvSets,['TEXCOORD_0','TEXCOORD_1']);assert.equal(r.skins,0);});
 test('reject wrong identity, truncated buffers, unsafe texture URIs and invalid indices',()=>{
@@ -25,3 +26,5 @@ test('lifecycle gate rejects missing cycles, retained resources and skipped disp
 test('file server rejects directory traversal',()=>{const here=path.dirname(fileURLToPath(import.meta.url));assert.throws(()=>containedFile(here,'../../../../etc/passwd'),/Outside/);assert.equal(containedFile(here,'glb.mjs'),path.join(here,'glb.mjs'));});
 test('explicit actual candidate is optional local-only structural evidence', {skip:!process.env.CHARACTER_QA_LOCAL_GLB},()=>{const file=process.env.CHARACTER_QA_LOCAL_GLB;assert(process.env.CHARACTER_QA_LOCAL_SHA);const r=inspectGLB(fs.readFileSync(file),process.env.CHARACTER_QA_LOCAL_SHA);assert.equal(r.triangles,1624);assert.equal(r.images,3);});
 test('existing production build identity is optional read-only local evidence', {skip:!process.env.INKWAVE_BUILT_SITE},()=>{const m=verifyBuild(fs.realpathSync(process.env.INKWAVE_BUILT_SITE));assert.match(m.contentHash,/^[a-f0-9]{64}$/);});
+
+test('core planner merges named and namespace imports without aliasing duplicate exports',()=>{assert.deepEqual(threeImports("import {Mesh, Bone as B, MeshPhysicalMaterial} from 'three'; const m = new THREE.Mesh(); THREE.REVISION;"),['Bone','Mesh','MeshPhysicalMaterial','REVISION']);});

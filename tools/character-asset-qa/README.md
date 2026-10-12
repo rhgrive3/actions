@@ -1,6 +1,6 @@
 # Isolated character-asset QA
 
-This is a development fixture, not a character replacement. No production module, build adapter, cache/deployment list or source character asset changes. It loads the actual content-addressed built INKWAVE Character and Three r186, then renders separate static-asset probes. The existing Character animation, weapons and collision authority are not replaced.
+This is a development fixture, not a character replacement. No production module, build adapter, cache/deployment list or source character asset changes. It loads the actual content-addressed built INKWAVE Character and Three r186, then renders separate static-asset probes with a QA-only expanded Three core (see compatibility finding below). The existing Character animation, weapons and collision authority are not replaced.
 
 ## Asset privacy and the default CI case
 
@@ -10,7 +10,7 @@ A separate, unpublished local candidate can use the exact same fixture with expl
 
 ## Run
 
-CI pins official dependencies to esbuild 0.28.2, Playwright 1.62.1 and Three.js 0.186.0. The GLTFLoader/addons come from that official npm package, while the imported `three` core comes from the actual game build. Both must be r186. The old modeler's r159 preview is not used.
+CI pins official dependencies to esbuild 0.28.2, Playwright 1.62.1 and Three.js 0.186.0. The GLTFLoader/addons come from that official npm package. The QA core is generated from the exact vendored r186 source with the production export set plus required loader/fixture exports. The old modeler's r159 preview is not used.
 
 ```sh
 npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 three@0.186.0
@@ -45,3 +45,13 @@ node tools/character-asset-qa/run.mjs --site /existing/verified/_site --out /pri
 ## Still outside scope
 
 No real character activation, skin weighting, bone retarget, hair spring chains, face/blink/morph compatibility, weapon socket changes, movement equivalence or Splatoon 3 behavior claim. These remain separate full-asset/game integration gates. Source texture provenance and permission for any newly published derived asset must be established separately; an exported GLB is not evidence of a distribution license.
+
+## Verified production compatibility gap and isolated candidate
+
+The first browser CI reached the unchanged production core but failed importing official GLTFLoader: `AnimationClip` is not exported. The game deliberately retains only 142 of 444 Three exports, so it is **not directly GLB-loader compatible today**.
+
+`core.mjs` reconstructs the 142-export production bundle using the same esbuild settings and must match its SHA exactly. It walks the official loader's relative dependency graph, collects named Three imports and computes the smallest static named-export superset for that graph. It separately records fixture-only symbols. It builds these candidates in memory and reports baseline, loader-only and fixture raw/gzip bytes, hashes, added names and addon paths. This is not a global minimum for every conceivable specialized loader.
+
+The fixture's import map points all game modules, official loader modules and QA code to one expanded candidate module. It does not mix two Three copies. Browser checks verify native Character root/bones and decoded GLTF meshes share those class identities. The original production bundle is fetched and hash-verified as a receipt but never instantiated in this page. No production file, manifest, cache, deployment or startup budget is changed. The candidate's extra bytes are **outside** the unchanged production budget pass and would require a new bundle/budget decision before real integration.
+
+Consequently, a successful run means the isolated expanded-core candidate works with the built game Character code. It does not mean the present production core can import GLTFLoader unchanged.
