@@ -30,9 +30,9 @@ try{
   if(run.wireNegotiation?.compressedMessages!==0||run.wireNegotiation?.initialHandshake?.messages!==0)throw Error('Paint-only diagnostic changed wire protocol');
   if(profile==='single_legacy'&&run.wireNegotiation?.compressedMessages!==0)throw Error('Mixed legacy peer unexpectedly received compressed paint');
   if(mode==='before'&&run.wireNegotiation?.compressedMessages!==0)throw Error('Baseline unexpectedly compressed');
-  const metrics=['stepSubmit','stepWithDrain','finishWait','cpuBody','cpuGrowth','splatInclusive','paintAdvanceInclusive','flushInclusive','atlasSubmit','wireSerialize','receiveDecode','sendTickInclusive','stepAndWire'];
+  const metrics=['stepSubmit','stepWithDrain','finishWait','ownerScan','cpuBody','cpuGrowth','splatInclusive','paintAdvanceInclusive','flushInclusive','atlasSubmit','wireSerialize','receiveDecode','sendTickInclusive','stepAndWire'];
   if([...run.frames,...run.coldFrames].some(f=>metrics.some(k=>!Number.isFinite(f[k])||f[k]<0)))throw Error('Missing or invalid timing sample '+mode);
-  for(const k of (profile==='single_idle'?['sendTickInclusive']:['cpuBody','cpuGrowth','atlasSubmit','sendTickInclusive']))if(!run.frames.some(f=>f[k]>0))throw Error('Inactive timing probe '+mode+' '+k);
+  for(const k of (profile==='single_idle'?['sendTickInclusive']:['ownerScan','cpuBody','cpuGrowth','atlasSubmit','sendTickInclusive']))if(!run.frames.some(f=>f[k]>0))throw Error('Inactive timing probe '+mode+' '+k);
   if(profile==='single_idle'){if(run.counts.totalQuads!==0||run.counts.totalRows!==0)throw Error('Idle workload painted');}
   else if(!(run.counts.totalQuads>0&&run.counts.totalAtlasDraws>0))throw Error('Inactive GPU workload '+mode);
   if(run.counts.totalMessages!==80)throw Error('Missing measured wire transactions');

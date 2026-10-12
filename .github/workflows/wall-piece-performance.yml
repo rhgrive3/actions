@@ -1,4 +1,4 @@
-name: Owned paint rectangle performance (diagnostic only)
+name: Owned paint scan performance (diagnostic only)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      BASELINE_SHA: d1ad48d1c10b5ded6a4fe273fe953e49e8bd7b04
-      CANDIDATE_SHA: 95d395bf7a61f1caac9993df79727ce43f63469b
+      BASELINE_SHA: ae21924c59046cc0fe81922322ac093418113586
+      CANDIDATE_SHA: 338438ba0933f27d501cbaf6a98ef247cce1598e
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,12 +33,12 @@ jobs:
           JS
       - uses: actions/checkout@v4
         with:
-          ref: d1ad48d1c10b5ded6a4fe273fe953e49e8bd7b04
+          ref: ae21924c59046cc0fe81922322ac093418113586
           path: .paint-baseline
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 95d395bf7a61f1caac9993df79727ce43f63469b
+          ref: 338438ba0933f27d501cbaf6a98ef247cce1598e
           path: .paint-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -59,19 +59,19 @@ jobs:
           cp .paint-before-site/inkwave-build.json .paint-performance-evidence/baseline-manifest.json
           cp .paint-after-site/inkwave-build.json .paint-performance-evidence/candidate-manifest.json
           git rev-parse HEAD > .paint-performance-evidence/probe-sha.txt
-      - name: Measure exact owned rectangle coalescing with unchanged wire
+      - name: Measure exact owned-cell scan with unchanged rectangles and wire
         run: |
           node scripts/measure-paint-piece-workload.mjs \
             --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" \
             --baseline-root .paint-baseline --candidate-root .paint-candidate \
             --baseline-site .paint-before-site --candidate-site .paint-after-site \
             --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" \
-            --profile "${{ matrix.profile }}" --require-equivalent-paint \
+            --profile "${{ matrix.profile }}" --require-equivalent-work \
             --evidence-dir ".paint-performance-evidence/${{ matrix.profile }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: owned-run-performance-${{ matrix.profile }}-95d395bf
+          name: owned-scan-performance-${{ matrix.profile }}-338438ba
           path: .paint-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
