@@ -189,6 +189,31 @@ try {
         }
         G.projectiles.clear();
       }
+      const mistChecks=[];
+      {
+        const saved={actors:G.actors,projectiles:G.projectiles,time:G.time};
+        G.projectiles=new Projectiles(G.scene);G.actors=[];
+        const source=makeActor('s3-slosher-diffusion'),victim=makeActor('shooter');victim.team=1;G.actors=[source,victim];
+        source.aimDir.set(0,-1,.1).normalize();source.aimPoint.set(0,0,1);source.intent.sub=true;
+        for(let i=0;i<10;i++){G.time+=1/60;source.update(1/60);}source.intent.sub=false;
+        for(let i=0;i<10;i++){G.time+=1/60;source.update(1/60);}
+        const cloud=G.projectiles._s3SubObjects?.find(o=>o.subId==='toxicMist');check(!!cloud,'Mist native release');
+        for(let i=0;i<120&&cloud.phase!=='deployed';i++){G.time+=1/60;G.projectiles.update(1/60);}
+        check(cloud.phase==='deployed','Mist native deployment');
+        for(const ap of [0,10,57])for(const squid of [false,true]){
+          victim.pos.copy(cloud.pos);victim.s3.loadout=emptyLoadout();
+          if(ap===10)victim.s3.loadout[0].main='subResistance';
+          if(ap===57)for(const p of victim.s3.loadout){p.main='subResistance';p.subs.fill('subResistance');}
+          victim.s3RefreshGear();victim.grounded=true;victim.form=squid?'squid':'kid';victim.submerged=squid;victim.intent.move.set(0,0,1);victim.vel.set(0,0,0);
+          for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
+          const expected=(squid?11.52:5.76)*(1-.28*gearCurve(ap,1,.75,.5));
+          check(Math.abs(victim.vel.z-expected)<1e-8,'Mist victim reduction '+ap+' '+squid);
+          mistChecks.push({ap,squid,speed:victim.vel.z});
+          victim.pos.x+=20;victim.vel.set(0,0,0);for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
+          check(Math.abs(victim.vel.z-(squid?11.52:5.76))<1e-8,'Mist exit restores target speed');
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const accelerationChecks=[];
       for(const id of ['s3-shooter-short','s3-shooter-first'])for(const squid of [false,true])for(const ready of [false,true]){
         const a=makeActor(id);a.s3.loadout=emptyLoadout();a.s3RefreshGear();
@@ -352,6 +377,32 @@ try {
         a.reset();check(a.weapon.sub===k.sub&&a.weapon.special===k.special,record.id+' kit after reset');
         kitChecks.push({id:record.id,sub:k.sub,special:k.special,points:k.specialCost,inkCost:cost});
       }
+      const {Level:WallProbeLevel}=await import('/src/world/level.js');
+      const wallFacingChecks=[];
+      {
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};G.netm=null;G.match={playing:()=>true,state:'playing',time:180};
+        G.level=new WallProbeLevel({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});G.physics=new api.Physics(G.level);
+        for(const yaw of [0,Math.PI/3]){
+          G.projectiles.clear();const o=makeActor('shooter'),enemy=makeActor('shooter');o.team=0;enemy.team=1;o.weapon={...o.weapon,sub:'splashWall'};o.pos.set(-10,0,-10);enemy.pos.set(80,0,80);o.aimYaw=yaw;o.aimDir.set(Math.sin(yaw),0,Math.cos(yaw));G.actors=[o,enemy];const p=G.projectiles.throwBomb(o);p.pos.set(0,1,0);p.prev.copy(p.pos);p.vel.set(0,-2,0);for(let i=0;i<120&&p.phase!=='deployed';i++){G.time+=1/60;G.projectiles.update(1/60);}check(p.phase==='deployed','wall native deployment');const normal=new THREE.Vector3(Math.sin(p.yaw),0,Math.cos(p.yaw));for(let i=0;i<60;i++){G.time+=1/60;G.projectiles.update(1/60);p.mesh.updateMatrixWorld(true);check(new THREE.Vector3(0,0,1).transformDirection(p.mesh.matrixWorld).distanceTo(normal)<1e-8,'wall rendered plane retains collision yaw');}const center=p.pos.clone().add(new THREE.Vector3(0,1,0)),start=center.clone().addScaledVector(normal,2),end=center.clone().addScaledVector(normal,-2);check(G.projectiles.kitBarrierCandidate({owner:enemy,team:1,damage:1,wid:'shooter',size:.05,prev:start,pos:end},start,end)?.object===p,'rendered wall is barrier plane');wallFacingChecks.push({yaw:p.yaw,meshYaw:p.mesh.rotation.y,frames:60,hp:p.hp});
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
+      const catalogueSubChecks=[];
+      {
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
+        G.netm=null;G.match={playing:()=>true,state:'playing',time:180};
+        G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);
+        const equipCatalogue=(a,ap)=>{a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout)if(ap>=10){p.main='subResistance';ap-=10;}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]='subResistance';ap-=3;}a.s3RefreshGear();};
+        for(const ap of [0,10,57]){
+          G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');o.team=0;v.team=1;v.invuln=0;o.pos.set(0,0,-4);v.pos.set(0,0,2);o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub:'burst'};equipCatalogue(v,ap);G.actors=[o,v];const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);for(let i=0;i<10;i++){G.time+=1/60;G.projectiles.update(1/60);}const expected=Math.floor(60*gearCurve(ap,1,.75,.6)*10+1e-9)/10;check(hits.length===1&&hits[0][0]===60&&Math.abs(hp-v.hp-expected)<1e-8,'Burst direct is one source-family hit');catalogueSubChecks.push({source:'burst',ap,native:true,damage:hp-v.hp});
+        }
+        for(const [w,n]of [['burst',60],['fizzy',50],['torpedo',60],['torpedo-splash',12],['inkMine',45]]){
+          const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipCatalogue(v,57);let packet,ack;
+          const tx=new NetMatch({myId:o.owner,hostId:o.owner,isHost:true,tr:{sendTo:(_id,p)=>packet=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,n,w);
+          const rx=new NetMatch({myId:v.owner,hostId:o.owner,isHost:false,tr:{sendTo:(_id,p)=>ack=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;rx.onMessage(o.owner,{...packet,d:n+.1});check(v.hp===hp,'oversized catalogue hit rejected');rx.onMessage(o.owner,packet);const expected=Math.floor(n*(w==='inkMine'?.5:.6)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8&&ack.d===expected,'catalogue hit victim/ACK match');rx.onMessage(o.owner,packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});tx.dispose();rx.dispose();G.netm=null;
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const directSubChecks=[];
       {
         const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
@@ -422,7 +473,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,
