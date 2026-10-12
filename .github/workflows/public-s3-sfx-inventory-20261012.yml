@@ -1,0 +1,89 @@
+name: Public Splatoon 3 SFX index
+on:
+  push:
+    branches: [research/splatoon3-public-sfx-inventory-20261012]
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Install public-page crawler
+        run: |
+          python -m pip install --quiet requests playwright
+          python -m playwright install chromium
+      - name: Read publicly shared SFX folder (metadata only)
+        run: |
+          python - <<'PY'
+          import re,json,requests
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          F='1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ'
+          out=Path('inventory');out.mkdir(exist_ok=True)
+          names=set();raw=[];errors=[]
+          PAT=re.compile(r'([A-Za-z0-9_ .()\-]{5,180}\.mp3)',re.I)
+          ID=re.compile(r'[A-Za-z0-9_-]{27,55}')
+          entries={}
+          def scan(s,origin):
+              for m in PAT.finditer(s):
+                  n=m.group(1)[-180:]
+                  if n.count('/') or n.startswith('http'):continue
+                  names.add(n)
+                  pre=s[max(0,m.start()-220):m.start()]
+                  cand=ID.findall(pre)
+                  ent=entries.setdefault(n,{'name':n,'ids':[],'origins':[]})
+                  if cand and cand[-1]!=F and cand[-1] not in ent['ids']:ent['ids'].append(cand[-1])
+                  if origin not in ent['origins']:ent['origins'].append(origin)
+          for mode,url in [('embedded',f'https://drive.google.com/embeddedfolderview?id={F}#list'),('folder',f'https://drive.google.com/drive/folders/{F}')]:
+              try:
+                  rr=requests.get(url,timeout=40)
+                  scan(rr.text,mode+'-http')
+                  raw.append({'mode':mode,'status':rr.status_code,'len':len(rr.content)})
+              except Exception as e:errors.append(repr(e))
+          with sync_playwright() as pw:
+              browser=pw.chromium.launch(headless=True,args=['--no-sandbox','--disable-dev-shm-usage'])
+              for mode,url in [('embedded',f'https://drive.google.com/embeddedfolderview?id={F}#list'),('folder',f'https://drive.google.com/drive/folders/{F}')]:
+                  page=browser.new_page(viewport={'width':1440,'height':980})
+                  net=[0]
+                  def response(r):
+                      if net[0]>=100 or not any(x in r.url for x in ['batchexecute','folders','embeddedfolderview']):return
+                      try:
+                          body=r.text()
+                          if '.mp3' not in body:return
+                          net[0]+=1
+                          scan(body,mode+'-network')
+                          (out/f'{mode}-response-{net[0]:03d}.txt').write_text(body[:3000000])
+                      except Exception:pass
+                  page.on('response',response)
+                  try:
+                      page.goto(url,wait_until='domcontentloaded',timeout=90000)
+                      page.wait_for_timeout(3500)
+                      stalled=0;last=0
+                      for i in range(450):
+                          if i%10==0:
+                              scan(page.content(),mode+'-dom')
+                              sz=len(entries)
+                              print(mode,i,'found',sz,flush=True)
+                              if sz==last:stalled+=1
+                              else:stalled=0
+                              last=sz
+                              if stalled>=15:break
+                          page.mouse.wheel(0,5600)
+                          page.evaluate("""() => {for(const e of document.querySelectorAll('[role="grid"],[role="list"],[role="main"],[class*="scroll"]'))if(e.scrollHeight>e.clientHeight+30)e.scrollTop+=1300}""")
+                          page.wait_for_timeout(225)
+                      raw.append({'mode':mode,'url':page.url,'title':page.title(),'network':net[0]})
+                      (out/f'{mode}-page.html').write_text(page.content()[:1500000])
+                  except Exception as e:errors.append(mode+':'+repr(e))
+                  page.close()
+              browser.close()
+          (out/'inventory.json').write_text(json.dumps({'folder':F,'entries':list(entries.values()),'evidence':raw,'errors':errors},indent=2))
+          (out/'names.txt').write_text('\n'.join(sorted(names)))
+          print('TOTAL',len(names),raw,errors,flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-s3-sfx-inventory
+          path: inventory/
+          retention-days: 2
