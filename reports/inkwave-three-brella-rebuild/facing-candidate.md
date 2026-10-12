@@ -55,7 +55,16 @@ error reproduces against the unchanged model-only emitted baseline. It is not
 silently classified as passing. #857 and #973 are also run through their supported
 source fixture. No unrelated network code or old test is changed for this candidate.
 
-Real-browser anatomy/reverse comparison is pending. No merge/adoption or exact Splatoon 3 animation parity is claimed.
+Real-browser anatomy/reverse comparison passed on candidate `e18b8742` in
+[run 38214750016](https://github.com/rhgrive3/actions/actions/runs/38214750016),
+[artifact 11732441211](https://github.com/rhgrive3/actions/actions/runs/38214750016/artifacts/11732441211).
+The three models' worst browser reverse angle/centre error is respectively
+Normal 0.100° / 1.20 mm, Tenta 0.326° / 4.70 mm, Recycled 0.100° / 1.31 mm;
+all support-hand gaps are below 1e-14 m. Front/rear/side holding and reverse images
+were inspected: body orientation follows the guarded aim while backpedalling,
+without the rejected 180° torso twist. Source 37/37 and emitted geometry/wire 7/7
+passed in that run. This is candidate evidence, not final integrated-head approval.
+No exact Splatoon 3 animation parity is claimed.
 
 ## Behavior comparison record
 
@@ -67,7 +76,7 @@ roller and special priority, and remote yaw; Undercover is excluded. Reproduce b
 holding a selected Brella while backpedalling, then closing/reopening or launching it.
 Source reference remains the pinned Splatoon 3 Ver.11.3.0 weapon data and multi-angle
 weapon references; these do not establish retail body-turn timing. INKWAVE's 30/60/120
-Hz tests and pending real-browser proof are separate from unmeasured retail motion.
+Hz tests and real-browser proof are separate from unmeasured retail motion.
 The candidate evidence and limits are recorded above.
 
 ## Built remote and wire closure
@@ -81,3 +90,31 @@ monotonic adoption sequence increment (asserted explicitly). No new wire slot or
 sidecar is emitted. Undercover's actual continuous-fire/release path never receives
 a preparing property. Both scoped built tests pass; the older #857 fixture failure
 is retained and is not represented as fixed by changing unrelated network code.
+
+## Integrated-head test routing
+
+The source 65-weapon A/B test deliberately disables the candidate helper in the
+control fixture. The immutable built fixture does not apply adaptRuntime, so its
+A/B repeat would compare the same helper and is not independent evidence. Integrated
+CI retains the full source comparison, and limits built guard tests to the actual
+243 live holds, preparation/lifecycle and native yaw-owner contracts. Geometry,
+shield and real NetMatch/wire tests also run against the exact emitted composition.
+No source assertion or case is relaxed; a redundant, invalid built A/B claim is avoided.
+
+## General CI limitation on the standalone candidate
+
+The dedicated facing/browser gate passed, but the general Validate run
+[38214749951](https://github.com/rhgrive3/actions/actions/runs/38214749951) failed its
+UI shard at round-three `menu entrance` after 30.046 seconds. Rounds one and two,
+touch layout, room/gyro and reliability checks passed. Its failed evidence is
+[artifact 11732427819](https://github.com/rhgrive3/actions/actions/runs/38214749951/artifacts/11732427819).
+
+Comparison with the existing PR #1263 artifact shows a related CSS-start symptom,
+not an identical failed gate: #1275 stops before the focused menu button finishes
+entering, with the cursor still hidden; #1263 passed entrance but its visible,
+correctly aligned cursor remained at opacity zero. Both recorded an opacity
+transition at currentTime zero/startTime null while the visible document and native
+frame driver were active. #1275 lacks the richer focus-style/pending/timeline fields,
+so common root cause and independence from the candidate are not established.
+No UI assertion, wait threshold, CSS or unrelated runtime is changed here. General
+CI is not all green, and final integrated-head validation remains outstanding.

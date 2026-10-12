@@ -139,7 +139,7 @@ with the same fixed camera offset and expands the identical before/after field o
 view to include the entire held shield. These are measurement-condition corrections;
 no model geometry is changed to hide a draw-count difference.
 
-## Unresolved reverse-facing contract
+## Historical model-only reverse-facing failure
 
 An independent real-Actor review added reverse input (±0.05 horizontal, -1 forward,
 1.4 m/s) at 30/60/120 Hz. When the firing pose expires, native `Actor._face` turns the
@@ -152,10 +152,33 @@ without disguising this known failure as a passed movement gate.
 Removing the visual ±90° torso clamp can cure Tenta's wrist gap numerically, but would
 spread a 180° twist across the torso and does not resolve the other models' transient
 sway. That workaround was rejected. A separately reviewed, narrowly scoped live-guard
-facing contract is needed; no shared Actor/firing behavior is changed by this PR yet.
-This is an adoption blocker, not a retail-parity claim or a completed holding fix.
+facing contract was required. This model-only failure is preserved here rather than
+reclassified as a pass; the separately reviewed resolution is described below.
 
-Status: fixed-framing/fixed-LOD and reverse diagnostic browser evidence pending. The local socket/browser restriction is not a passed
-browser test. This remains a Draft review candidate until the actual images have been
-inspected and the CI lifecycle/cost results checked. No retail-camera alignment, IoU,
-full device performance, exact scale or official-animation parity is claimed.
+## Integrated guard-facing review
+
+The model-only fixed-framing/fixed-LOD pass `317e4230` passed all four workflows,
+including visual and ABBA crowd in [run 38209331238](https://github.com/rhgrive3/actions/actions/runs/38209331238).
+Its actual front/rear/side, neutral-material and held images were inspected. Main
+remains `b078c379` at integration preparation; the before composition stays pinned to
+that exact main head.
+
+The narrowly scoped resolution from Draft #1275 uses the existing successful paid-shot
+preparation and open/unlaunched state to admit only the three selected Brellas to
+native Actor aim-facing. It retains native facing spring, roller/special priority,
+remote replicated yaw and shot/movement/collision owners. It changes neither upstream
+actor.js nor the shared movement-physics adapter. Undercover remains excluded and
+never receives the preparing flag. See [facing-candidate.md](facing-candidate.md) for
+the rejected alternatives, 65-weapon equality traces, 243 live holds, remote/wire
+proof and exact browser evidence. Parent review accepted the candidate anatomy after
+viewing its reverse images; no unnatural torso twist is used.
+
+The integrated PR workflow reruns source contracts, actual emitted-runtime guard and
+NetMatch/wire tests, full-angle/lifecycle/reverse browser checks and the same main-vs-
+candidate eight-Actor ABBA cost test on its new head. Previous green commits are
+historical evidence only. Integrated-head CI and measurements are reported on the PR
+when complete. Until then this remains Draft and is not declared ready to merge.
+The existing #857 emitted-test harness limitation is documented in the scoped report;
+its supported source fixture and a new direct real-NetMatch built test both run.
+No retail-camera alignment, IoU, full device performance, exact scale or official-
+animation parity is claimed.
