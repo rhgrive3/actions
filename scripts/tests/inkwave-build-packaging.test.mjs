@@ -182,7 +182,8 @@ test('emitted identity binds every input to one canonical tracked path including
   const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3',
     'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability',
     'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication',
-    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
+    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache',
+    'native-stages': 'patches/native-stages', 'build-script': 'scripts' };
   const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8' })
     .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const mapped = [];
