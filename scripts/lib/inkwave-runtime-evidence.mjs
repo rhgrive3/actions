@@ -25,8 +25,9 @@ export function verifyRuntimeBuild(site,root,sha){
   if(!resolved.startsWith(fs.realpathSync(site)+'/'))throw Error('Artifact outside site');
   if(hash(fs.readFileSync(resolved))!==expected)throw Error('Artifact mismatch: '+file);
  }
- const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','build-script/':'scripts/'};
+ const namespaces={'upstream/':'inkwave-public/','patch/':'patches/splatoon3/','touch-layout/':'patches/touch-layout/','reliability/':'patches/reliability/','local-quality/':'patches/local-quality/','network-replication/':'patches/network-replication/','loading-cache/':'patches/loading-cache/','practice-range/':'patches/practice-range/','native-stages/':'patches/native-stages/','build-script/':'scripts/'};
  const inputs=Object.entries(manifest.files).map(([name,expected])=>{
+  if(name.split('/').some(p=>!p||p==='.'||p==='..'||p.includes('\\')))throw Error('Unknown input: '+name);
   const prefix=Object.keys(namespaces).find(p=>name.startsWith(p));if(!prefix)throw Error('Unknown input: '+name);
   return [namespaces[prefix]+name.slice(prefix.length),expected];
  });
