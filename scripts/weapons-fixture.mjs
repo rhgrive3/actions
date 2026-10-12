@@ -4,16 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { adaptSource } from '../patches/splatoon3/adapter.mjs';
-import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
-import { adaptReliability } from '../patches/reliability/adapter.mjs';
-import { adaptQualitySource } from '../patches/local-quality/adapter.mjs';
-import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
-import { adaptRange } from '../patches/practice-range/adapter.mjs';
+import { adaptBuildSource } from './inkwave-source-composition.mjs';
 export const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const SOURCE = path.join(ROOT, 'inkwave-public');
-const adaptBuildSource = (rel, code) => adaptRange(rel,
-  adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
 export const BASELINE = process.env.INKWAVE_BASELINE_SITE || path.join(ROOT, '.baseline');
 export async function fixture({site = BASELINE, seed = 0x1a2b3c4d, floor = true, cell = .25, fidelity = false, network = false, jumpSpreadControl = false} = {}) {
   site = path.resolve(site);

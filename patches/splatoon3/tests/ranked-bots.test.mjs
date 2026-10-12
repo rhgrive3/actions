@@ -171,6 +171,20 @@ test('Clam bots collect and throw on a dedicated edge without triggering bombs',
   assert.equal(thrower.actor.intent.sub, false);
 });
 
+test('Clam bots hold the power throw until the native aim spring reaches the target', () => {
+  const { actor, brain } = setup('clams', 'throw', [4, 0, 0]);
+  brain.aimYaw = 1.3;
+  brain.aimPitch = 0.3;
+  brain.update(1 / 60);
+  assert.equal(actor.intent.throw, false, 'turning must not release a misaligned clam');
+  assert.equal(brain._rankedThrowCd, 0, 'no cooldown before a real throw');
+  brain.aimYaw = brain.tailCalls.at(-1).yaw;
+  brain.aimPitch = brain.tailCalls.at(-1).pitch;
+  brain.update(1 / 60);
+  assert.equal(actor.intent.throw, true, 'aligned real aim can throw');
+  assert.equal(brain._rankedThrowCd, 0.9);
+});
+
 test('Clam carrier keeps moving toward the basket until a throw can reach it', () => {
   const thrower = setup('clams', 'throw', [20, 0, 0]);
   thrower.brain.update(1 / 60);

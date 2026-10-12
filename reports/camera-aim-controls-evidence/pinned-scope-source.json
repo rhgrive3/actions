@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "referenceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "records": [
+    {
+      "id": "s3-charger-quick",
+      "names": {
+        "en": "Classic Squiffer",
+        "ja": "スクイックリンα"
+      },
+      "sourceRow": "Charger_Quick_00",
+      "sourceSha256": "9327cad5946b2871bcb8f914382bb32955a644ea3f811d7fba711c2d315ccd57",
+      "rowPointer": "/82",
+      "WeaponScopeParam": null
+    },
+    {
+      "id": "charger",
+      "names": {
+        "en": "Splat Charger",
+        "ja": "スプラチャージャー"
+      },
+      "sourceRow": "Charger_Normal_00",
+      "sourceSha256": "dfe4637def507f933b0bbecbc805331f6357bb69ac165608a6e558406a4b72c1",
+      "rowPointer": "/73",
+      "WeaponScopeParam": null
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "names": {
+        "en": "Splatterscope",
+        "ja": "スプラスコープ"
+      },
+      "sourceRow": "Charger_NormalScope_00",
+      "sourceSha256": "4d51f887e3567250500160f929682e0493540685271380e666507191b3637468",
+      "rowPointer": "/69",
+      "WeaponScopeParam": {}
+    },
+    {
+      "id": "s3-charger-long",
+      "names": {
+        "en": "E-liter 4K",
+        "ja": "リッター4K"
+      },
+      "sourceRow": "Charger_Long_00",
+      "sourceSha256": "7aad1211d9934990ff666de960010ceaa05f676212e1e4c2543564cea22b2fa8",
+      "rowPointer": "/64",
+      "WeaponScopeParam": null
+    },
+    {
+      "id": "s3-charger-longscope",
+      "names": {
+        "en": "E-liter 4K Scope",
+        "ja": "4Kスコープ"
+      },
+      "sourceRow": "Charger_LongScope_00",
+      "sourceSha256": "0a1a82683eb21e9016b235b3a116f231950ad8f95baee2d533410cad582d0caf",
+      "rowPointer": "/61",
+      "WeaponScopeParam": {
+        "CameraFovy": 20
+      }
+    },
+    {
+      "id": "s3-charger-light",
+      "names": {
+        "en": "Bamboozler 14 Mk I",
+        "ja": "14式竹筒銃・甲"
+      },
+      "sourceRow": "Charger_Light_00",
+      "sourceSha256": "6678865b3853d30a538ae374c09f7ddee07b32a400296792dfbfbf4d71d52402",
+      "rowPointer": "/57",
+      "WeaponScopeParam": null
+    },
+    {
+      "id": "s3-charger-keeper",
+      "names": {
+        "en": "Goo Tuber",
+        "ja": "ソイチューバー"
+      },
+      "sourceRow": "Charger_Keeper_00",
+      "sourceSha256": "228e257d89a4aad30d423f7230349a10bb31e121ce96716e3334a3fc4f060803",
+      "rowPointer": "/53",
+      "WeaponScopeParam": null
+    },
+    {
+      "id": "s3-charger-pencil",
+      "names": {
+        "en": "Snipewriter 5H",
+        "ja": "R-PEN/5H"
+      },
+      "sourceRow": "Charger_Pencil_00",
+      "sourceSha256": "b1fa33f41fb36d36d42d849dd0c20516339734dc8946e3cc752402faa30da690",
+      "rowPointer": "/79",
+      "WeaponScopeParam": null
+    }
+  ]
+}
