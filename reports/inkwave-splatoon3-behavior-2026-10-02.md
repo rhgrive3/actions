@@ -4028,3 +4028,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **拡張の最終ローカル描画/負荷**: ChromiumとWebKit touchの実ゲーム9操作・各5方向45比較で不透明本体の黒いRGB/透明欠損0。停止同一場面off/on/off/onで縦3頭、Shooter1頭、Slosher発生済み4頭を測定し、描画コール+6/+6/+10、ソフトウェアGPU時間の組差は約-10%～+3%。高速化や実機FPSとは判定しない。GPUアップロード推定39,520,236byte、20reset安定・136geometry/4texture破棄。詳細は `reports/ink-volume/projectile-measurements.json` と `results.md`。
 
 - **最終ビルドの追加レビュー**: 自然落下の初期25F猶予をジャンプ扱いにしたテスト設定の誤りを修正。全5ローラーの縦検証は実Actorジャンプ入力とジャンプ成立/上向き速度の確認から始め、自然落下初期は横振りのままという負対照も追加。本番描画/物理の変更は不要だった。Source fixtureは既存#479 freefall adapterを適用し、本番ビルドと同じ規則で評価。ソース14・最終ビルド+packaging23がskip/失敗0で成功。
+
+- **CI と進行中mainの統合**: 最終393007dbで立体描画CIと他13ジョブは成功。既存validatorは4909件（4890pass/既存skip19）と品質927件（919pass/既存skip8）を通過後、新mainのworkflowが追加したowned-run-scanテストを旧headへ要求して停止。main b078c379のPR1262更新6ファイルを改変せずmergeし、検査を弱めず整合。本番ビルドの立体/packaging/厳密矩形/局所塗り/Map寿命33件がskip/失敗0で成功。3D描画と物理のコードは変更していない。計測の全シーン数値は90b4fea7ベース時点の証拠として保持する。
