@@ -193,7 +193,7 @@ export function hiddenPart(p) { return { ...p, src: emptyGeometry() }; }
 /**
  * Replace the visible weapon while keeping every native channel the family runtime animates.
  *   d      — the family base def (pre-finishParts: parts carry `src` + `pivot`).
- *   spec   — { body: Pieces, ink: Pieces, parts: { name: part(...) }, keepParts: [names to keep as-is],
+ *   spec   — { body: Pieces, ink: Pieces, glass: Pieces (optional static shell), parts: { name: part(...) }, keepParts: [names to keep as-is],
  *              gripR, gripL, muzzle: [x,y,z], drop: ['glow' | 'drum'], glow: geometry (with aSeg),
  *              drum: { geo, caps, at: [x,y,z], r } }
  * Native parts not listed in `parts`/`keepParts` become invisible channels (the runtime may still move
@@ -201,6 +201,8 @@ export function hiddenPart(p) { return { ...p, src: emptyGeometry() }; }
  */
 export function rebuild(d, spec) {
   d.body?.dispose?.(); d.ink?.dispose?.();
+  d.glass?.dispose?.();
+  d.glass = spec.glass ? spec.glass.build() : null;
   d.body = spec.body ? spec.body.build() : emptyGeometry();
   d.ink = spec.ink ? spec.ink.build() : emptyGeometry();
   const keep = new Set(spec.keepParts || []);
@@ -240,3 +242,25 @@ export const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 export const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 /** Frame-rate independent exponential approach. */
 export const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
+
+// Transparent weapon shells are a separate, shared draw at every LOD. Never merge
+// them into opaque body/ink geometry or simplify a thin closed sleeve into a cap.
+// No screen-space transmission buffer or per-actor material is allocated.
+let weaponGlassMaterial;
+export function getWeaponGlassMaterial() {
+  return weaponGlassMaterial ||= new THREE.MeshPhysicalMaterial({
+    name: 'iw-weapon-glass', color: 0xdfe9ee, roughness: 0.16, metalness: 0,
+    clearcoat: 0.65, clearcoatRoughness: 0.12, transparent: true, opacity: 0.22,
+    depthWrite: false, depthTest: true, side: THREE.FrontSide, transmission: 0,
+  });
+}
+export function attachWeaponGlass(d, off) {
+  if (!d.glass) return null;
+  const glass = new THREE.Mesh(d.glass, getWeaponGlassMaterial());
+  glass.name = 'weapon-glass';
+  // Keep normal transparent distance sorting. It must not cast an opaque shadow
+  // or write depth in front of its own ink/barrels or other actors.
+  glass.castShadow = false; glass.receiveShadow = false;
+  off.add(glass);
+  return glass;
+}

@@ -1,0 +1,77 @@
+name: INKWAVE weapon transparent shell review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/adapter.mjs
+      - patches/splatoon3/runtime/weapon-models/**
+      - patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+      - scripts/render-inkwave-weapon-shared-gallery.mjs
+      - .github/workflows/inkwave-weapon-shared-rendering.yml
+permissions:
+  contents: read
+concurrency:
+  group: weapon-shared-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    if: github.head_ref == 'fix/weapon-shared-mirror-glass'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: b078c37907351f1bbc13d0e7d4b5cbeb0a330009
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable main and candidate
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Source and emitted material, LOD, hand and gameplay contracts
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+          INKWAVE_BUILT_SITE=.model-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+          INKWAVE_BUILT_SITE=.model-after-site WEAPON_IDS=s3-spinner-downpour,s3-maneuver-short,s3-maneuver-gallon,s3-slosher-launcher node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Same-camera main and candidate, real Actor source motion, dark and light backgrounds
+        run: |
+          IDS=s3-spinner-downpour,s3-maneuver-short,s3-maneuver-gallon,s3-slosher-launcher
+          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
+          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+      - name: Eight mixed Actors game and far LOD ABBA
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node scripts/render-inkwave-weapon-shared-gallery.mjs --site ".model-${version}-site" --out ".model-crowd/${pair}" --ids s3-spinner-downpour --size 600 --crowd
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const all={};for(const name of['before-A','after-B','after-B2','before-A2']){const d=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/gallery.json'));if(d.errors.length)throw Error(d.errors.join('\n'));all[name]=d.rows[0].crowd;}
+          for(const tier of['game','far'])for(const name of['after-B','after-B2']){
+            if(all[name][tier].actors!==8||new Set(all[name][tier].ids).size!==4)throw Error('Incomplete mixed-model crowd');
+            if(all[name][tier].drawCalls>all['before-A'][tier].drawCalls+2)throw Error('More than one transparent draw per Ballpoint '+tier);
+          }
+          fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));console.log('WEAPON_SHARED_ABBA '+JSON.stringify(all));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-shared-review-${{ github.event.pull_request.head.sha }}
+          path: |
+            .model-evidence
+            .model-crowd
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

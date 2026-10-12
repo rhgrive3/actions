@@ -18,10 +18,10 @@ function barrelRing(B, o) {
 /** Shared finish: the native support hand stays on d.gripL (drawn as a foregrip), the native trigger and
  *  barrel channels take the new pieces, the native charge coil is kept (a charging splatling must stay readable
  *  to other players), the muzzle sits at the nozzle exit. */
-function finish(d, body, B, tr, AX, muzzleZ, supportColor, ink = new Pieces()) {
+function finish(d, body, B, tr, AX, muzzleZ, supportColor, ink = new Pieces(), glass = null) {
   supportHandle(body, d.gripL, supportColor);
   return rebuild(d, {
-    body, ink,
+    body, ink, glass,
     parts: { trigger: part(tr, TRIGGER_PIVOT), barrels: part(B, [0, AX, 0.3]) },
     muzzle: [0, AX, muzzleZ],
   });
@@ -108,23 +108,25 @@ function hydra(d) {
 }
 
 function ballpoint(d) {
-  // Rebuilt (Opus): a long pen-like barrel — a clear sleeve (drawn as ribs and rings so the ink-filled
-  // barrel bundle inside stays visible), a black front ring and nose, a white rear cap, a black band with a
+  // Standard Ballpoint: a real transparent sleeve over separate ink barrels, a
+  // black front ring and nose, a white rear cap, a black band with a
   // logo panel, a white ribbed foregrip below and a silver carry handle on top.
-  const AX = 0.07, C = { white: '#eceae4', black: '#1a1b1f', clear: '#d6dade', silver: '#c1c4c8' };
-  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
+  const AX = 0.07, C = { white: '#eceae4', black: '#1a1b1f', silver: '#c1c4c8' };
+  const body = new Pieces(), B = new Pieces(), ink = new Pieces(), glass = new Pieces();
   const tr = pistolGrip(body, { color: C.black, triggerColor: C.black, guardColor: C.black });
   body.add(zlathe([[0, -0.11], [0.03, -0.112], [0.05, -0.095], [0.052, -0.04], [0, -0.04]], 0, AX, 0, 28), C.white, M.gloss);  // rear cap
   body.add(zlathe([[0, -0.04], [0.054, -0.04], [0.054, 0.06], [0, 0.06]], 0, AX, 0, 28), C.black, M.satin);                     // black band
-  for (const z of [0.07, 0.17, 0.27, 0.36]) body.add(ring(0.05, 0.0035, 0, AX, z, 'z', 6, 28), C.clear, M.gloss);               // sleeve rings
-  for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; body.add(cyl(0.003, [Math.cos(a) * 0.05, AX + Math.sin(a) * 0.05, 0.06], [Math.cos(a) * 0.05, AX + Math.sin(a) * 0.05, 0.37], 6), C.clear, M.gloss); }
+  // A 64-triangle open sleeve. The opaque end bands close the two ends; no
+  // opaque bars, end caps or ink cylinder conceal the six internal barrels.
+  glass.add(zlathe([[0.05, 0.06], [0.05, 0.37]], 0, AX, 0, 32), '#ffffff');
   body.add(zlathe([[0.05, 0.37], [0.054, 0.37], [0.05, 0.4], [0.03, 0.42], [0.03, 0.43], [0, 0.43]], 0, AX, 0, 28), C.black, M.satin);  // nose
   body.add(box(0.05, 0.05, 0.13, 0, -0.005, 0.16, 0.35), C.white, M.gloss);                                     // ribbed foregrip block
   for (let k = 0; k < 5; k++) body.add(box(0.054, 0.006, 0.01, 0, -0.03, 0.115 + k * 0.022, 0.5), C.white, M.gloss);
   body.add(pipe([[0, AX + 0.05, -0.02], [0, AX + 0.1, 0.0], [0, AX + 0.1, 0.06], [0, AX + 0.052, 0.07]], 0.006, 16, 6), C.silver, M.satin);
   for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; B.add(zcyl(0.011, 0.06, 0.37, Math.cos(a) * 0.026, AX + Math.sin(a) * 0.026, 10), '#ffffff', M.gloss); }
-  ink.add(zcyl(0.042, 0.065, 0.365, 0, AX, 20));                                                                 // ink inside the sleeve
-  return finish(d, body, B, tr, AX, 0.432, C.black, ink);
+  finish(d, body, B, tr, AX, 0.432, C.black, ink, glass);
+  d.parts.barrels.mat = 'ink'; // Each ink tube stays visible through the sleeve.
+  return d;
 }
 
 function nautilus(d) {

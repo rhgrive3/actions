@@ -4010,3 +4010,7 @@ Sub-mark follow-up: retain bounded per-owner accepted births independently of re
 ## 2026-10-11: grounded Fast squid acceleration connection (candidate)
 
 Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinary grounded squid gets the measured 1.5x rate; humanoid and all attack/ready states retain existing rates. Baseline actual Actor delta0.6 becomes0.9 WU/s at60Hz, other ordinary forms remain0.6, attack remains1.2. Absolute36/72calibration and air behavior are unchanged. See `reports/inkwave-fast-swim-acceleration-2026-10-11.md` for source, real-Physics/FPS/snapshot checks and unverified retail boundaries.
+
+## 2026-10-12: Ballpoint shell / dual-hand / standard Sloshing Machine audit
+
+Current main b078c379 did not contain a transparent Ballpoint shell: opaque ribs/rings and a large ink cylinder hid the internal barrel cluster. The candidate adds one 64-triangle, non-transmission alpha shell retained across weapon LODs and exposes the animated ink tubes. Grip/muzzle/part pivots, shot timing and gameplay are unchanged. Dapple/Glooga left-only reversal was not reproduced by actual Actor idle/walk/fire coordinate checks; no mirror is enabled. Standard Sloshing Machine frame is already neutral body material and is preserved; the prior rotation sheet is the Neo variant. See `inkwave-weapon-shared-rendering-2026-10-12.md` for references, checks, costs and limitations. Retail gameplay comparison remains unmeasured; images/SwiftShader checks are not retail parity or real-device FPS claims.
