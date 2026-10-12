@@ -35,3 +35,11 @@ Wall: only decorative rotation is removed from the deployed rectangular barrier.
 Sprinkler already adopted in the base: AP10 second period's community936 versus existing interpolation936.36/937simulation-frame boundary remains unresolved. No rounding guess is made by this integration.
 
 See the component reports for pinned raw source URLs/SHA256, native Actor, FPS, JSON, lifecycle and defense tests. Nothing here represents all gear, all sub/special behavior or complete retail fidelity as finished.
+
+## Final main alignment
+
+The first combined head3d7eb2560a4ad4e3ae5f1dcd17963a6328a5359b completed all exact CI successfully: Validate38190394998, numerical38190394928 and reopened38190395000. Hosted Chromium/WebKit confirmed Mist6, catalogue sub8 and wall2 conditions in the same run (job114621716297, artifact11720908867).
+
+The final composition incorporates adopted main90b4fea706d6018fcf48dc205198f19194fd5886, including local paint Map key pruning and mandatory Chromium/WebKit paint gates. No gameplay merge conflicts occurred. The first concurrently executed local suites had file-worker failures (source2, network4, built1) without signal details in the default reporter. Resource contention is a hypothesis, not an established cause; original logs are retained. No code was changed to suppress the failures. Sequential reruns with diagnostic TAP completed: full source4983 total/4964 pass/19 optional skips/0fail, network448/448, production-built114/114 including Map and engine-gate tests. Full source retained its default test parallelism; only independent suites were serialized, with built/network limited to two workers.
+
+Aligned build contentHash7b13c275a0de525a8c8f01923f61c018c21b5be5d1c5c39664dea4bffeab0dfa. The new aligned exact-head hosted verification remains required. Earlier success is retained as evidence for the earlier tree, not substituted for the final gate.
