@@ -69,12 +69,14 @@ function drain(f, ts = 1001, tick = 0) {
   f.nm._playEvents(); return peer;
 }
 
-test('#1178 counterfactual impossible future event blocks subsequent native trigger playback', async () => {
+test('#1178 impossible future event cannot block the next native trigger', async () => {
   for (const bad of [trigger(1e308, 0, 1), trigger(1000, Number.MAX_SAFE_INTEGER, 1)]) {
-    const f = await rig({ negative: true });
-    receive(f, 1000, [bad]); receive(f, 1000.1, [trigger(1000.1, 0, 2)]);
+    const f = await rig();
+    receive(f, 1000, [bad]); receive(f, 1000.1, [trigger(1000.1, 0, 1)]);
     const peer = drain(f);
-    assert.equal(peer.events.length, 2); assert.deepEqual(f.played, []);
+    assert.equal(peer.events.length, 0);
+    assert.deepEqual(f.played, ['jump']);
+    assert.equal(peer._lastEventSeq, 1, 'invalid event must not consume sequence identity');
   }
 });
 
@@ -142,13 +144,14 @@ test('#1178 valid queued playback after a rejected future event is fixed-step eq
 });
 
 
-test('#1178 old R2 tick-type fallback plays before the owner simulation tick is ready', async () => {
-  const old = await rig({negative:'tick-type'});
-  receive(old,1000,[trigger(1000,null,1)]);drain(old,1000,-1);
-  assert.deepEqual(old.played,['jump']);
-  const valid = await rig();receive(valid,1000,[trigger(1000,0,1)]);drain(valid,1000,-1);
-  assert.deepEqual(valid.played,[]);assert.equal(valid.nm.peers.get('p2').events.length,1);
-  drain(valid,1000,0);assert.deepEqual(valid.played,['jump']);
+test('#1178 a missing R2 event tick cannot gain replay authority', async () => {
+  const f = await rig();
+  receive(f,1000,[trigger(1000,null,1)],0,2);drain(f,1000,0);
+  assert.deepEqual(f.played,[]);
+  assert.equal(f.nm.peers.get('p2').events.length,0);
+  receive(f,1000.1,[trigger(1000.1,0,1)],0,2);drain(f,1000.1,0);
+  assert.deepEqual(f.played,['jump']);
+  assert.equal(f.nm.peers.get('p2')._lastEventSeq,1);
 });
 
 test('#1178 R2 noninteger ticks never queue or burn the next valid event sequence', async () => {

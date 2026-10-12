@@ -605,13 +605,14 @@ test('#71 WebHID session lifecycle protects against detach and pending getDevice
 
     // Case 2: New session attached, disconnect event cleans up active reader
     const input2 = new MockInput();
-    const handle2 = attachWebHIDControllerMotion(input2);
+    const handle2 = attachWebHIDControllerMotion(input2, { integrateReports: false, initiallySuspended: false });
     const slowPromise = new Promise(resolve => { getDevicesResolve = resolve; });
     mockNavigatorHid.getDevices = () => slowPromise;
 
     // Simulate user connecting device
     await mockNavigatorHid.onconnect({ device: mockDev });
     assert.ok(input2.s3ControllerMotionReader, 'reader attached on connect');
+    assert.equal(input2.s3ControllerMotionReader.integratesReports, true, 'real WebHID cannot downgrade to last-rate sampling');
 
     // Disconnect removes the current reader. A later connect creates a fresh one.
     mockNavigatorHid.ondisconnect({ device: mockDev });
@@ -752,6 +753,7 @@ test('#71 production UI activation in adapters calls requestDevice during the ad
     assert.equal(res.connected, true);
     assert.equal(res.status, 'bridge-available');
     assert.ok(input.s3ControllerMotionReader, 'reader installed via production UI path');
+    assert.equal(input.s3ControllerMotionReader.integratesReports, true, 'production WebHID consumes integrated three-sample reports');
     assert.deepEqual(menu.toasts, [{
       text: 'Controller motion connected; nominal gyro calibration used (SPI unavailable).',
       options: { kind: 'good' }

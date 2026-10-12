@@ -2,6 +2,7 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/splatoon3/camera-aim-controls-adapter.mjs',
   'patches/splatoon3/ranked-adapter.mjs',
   'patches/splatoon3/ranked-ui-adapter.mjs',
   'patches/splatoon3/weapon-catalog-adapter.mjs',
@@ -56,6 +57,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/match-retainer-adapter.mjs',
   'patches/local-quality/menu-navigation-timer-adapter.mjs',
   'patches/local-quality/mural-atlas-adapter.mjs',
+  'patches/local-quality/collision-hotpath-adapter.mjs',
   'patches/local-quality/paint-hotpath-adapter.mjs',
   'patches/local-quality/platform-adapter.mjs',
   'patches/local-quality/portrait-guard-adapter.mjs',
