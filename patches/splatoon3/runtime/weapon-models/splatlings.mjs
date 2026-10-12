@@ -5,7 +5,7 @@
 // local Z through a pivot on the barrel axis). The native charge coil is kept for readability although none of the six references
 // shows a charge meter. Everything is procedural geometry.
 import { Pieces, M, zlathe, xlathe, ylathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
-  part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
+  slab, part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
 
 /** Barrels on a ring of radius R about the spin axis (ay): n tubes from z0 to z1, each with a nozzle tip. */
 function barrelRing(B, o) {
@@ -62,23 +62,47 @@ function heavy(d) {
 // Wmn_Spinner_QuickT. A purple housing with a black carry bail, a white bulb-shaped tank at the rear and a
 // yellow drum at the front. Six blue nozzles sit on a ring about a black centre.
 function mini(d) {
-  // Rebuilt (Opus): purple frame with a black carry handle, an ink bulb tank (teal = team ink in the
-  // turntable) low at the rear wrapped by a yellow strap, six black barrels with a purple collar and a
-  // yellow front disc carrying six blue nozzles (the spun cluster).
-  const AX = 0.07, C = { purple: '#4a2fb0', black: '#16171b', yellow: '#e8c22a', blue: '#2f5ee0', grey: '#9aa0a8' };
+  // Reconstructed from the PR1246 PNG and all turntable views: a motor cradled by two open side
+  // cheeks, offset under-slung pump bottle, long exposed six-barrel cage, and a thick muzzle plate.
+  // The legacy firing socket, native two-hand hold and Z spin pivot are deliberately unchanged.
+  const AX = 0.07, C = { purple: '#493098', black: '#18191d', yellow: '#e5bc21', blue: '#255cd2', silver: '#b8bec1' };
   const body = new Pieces(), B = new Pieces(), ink = new Pieces();
   const tr = pistolGrip(body, { color: C.black, triggerColor: C.purple, guardColor: C.purple });
-  body.add(box(0.05, 0.05, 0.15, 0, AX + 0.01, 0.07, 0.3), C.purple, M.gloss);                                   // frame
-  body.add(pipe([[0, AX + 0.035, 0.0], [0, AX + 0.085, 0.02], [0, AX + 0.085, 0.09], [0, AX + 0.035, 0.11]], 0.008, 18, 6), C.black, M.satin);
-  ink.add(sphere(0.058, 0.05, 0.085, 0, 0.012, -0.04, 22, 14));                                                // ink bulb (tucked under the frame)
-  body.add(pipe([[-0.056, 0.012, -0.11], [-0.06, 0.045, -0.04], [-0.04, 0.06, 0.03], [0.04, 0.06, 0.03], [0.06, 0.045, -0.04], [0.056, 0.012, -0.11]], 0.006, 30, 6), C.yellow, M.gloss);
-  body.add(ring(0.057, 0.006, 0, 0.012, -0.04, 'z', 6, 24).scale(1, 0.9, 1), C.yellow, M.gloss);
-  barrelRing(B, { n: 6, a0: Math.PI / 2, R: 0.026, ay: AX, r: 0.008, z0: 0.15, z1: 0.31, tipL: 0.004, tipR: 0.008, barrel: C.black, tip: C.black });
-  B.add(zlathe([[0, 0.15], [0.044, 0.15], [0.046, 0.175], [0, 0.175]], 0, AX, 0, 24), C.purple, M.gloss);
-  B.add(zlathe([[0, 0.3], [0.05, 0.3], [0.052, 0.318], [0.046, 0.326], [0, 0.326]], 0, AX, 0, 28), C.yellow, M.gloss);
-  for (let k = 0; k < 6; k++) { const a = Math.PI / 2 + k * Math.PI / 3; B.add(zlathe([[0, 0.322], [0.009, 0.322], [0.009, 0.33], [0, 0.331]], Math.cos(a) * 0.03, AX + Math.sin(a) * 0.03, 0, 12), C.blue, M.gloss); }
-  B.add(zcyl(0.008, 0.32, 0.332, 0, AX, 10), C.grey, M.satin);
-  return finish(d, body, B, tr, AX, 0.334, C.black, ink);
+  body.add(zlathe([[0,-.038],[.034,-.038],[.041,-.023],[.041,.073],[.034,.086],[0,.086]],0,AX,0,24),C.black,M.satin);
+  // Purple saddle rises at the front while leaving the black motor and handle opening visible.
+  const cheek=[[-.045,.022],[-.058,.047],[-.054,.091],[-.037,.117],[-.022,.123],[-.024,.082],[-.013,.058],[.015,.046],[.039,.055],[.077,.102],[.096,.114],[.118,.111],[.123,.096],[.098,.092],[.062,.046],[.039,.02]];
+  for(const x of[-.037,.037]) {
+    body.add(slab(cheek,.01,x,.0025),C.purple,M.gloss);
+    for(const [z,y] of[[-.043,.063],[.04,.033]])body.add(cyl(.0032,[x-.0055,y,z],[x+.0055,y,z],8),C.silver,M.metal);
+  }
+  body.add(box(.081,.014,.065,0,.018,.008,.28,8,4),C.purple,M.gloss);
+  // Rear pump lever and silver neck are distinct from the reservoir, not a box on the barrel axis.
+  body.add(box(.039,.023,.112,-.022,.127,-.087,.24,8,4),C.purple,M.gloss);
+  body.add(box(.031,.043,.025,-.022,.103,-.039,.3,8,4),C.purple,M.gloss);
+  body.add(zlathe([[.007,-.148],[.011,-.148],[.011,-.135],[.007,-.135]],-.022,.127,0,12),C.silver,M.metal);
+  body.add(pipe([[0,.108,.009],[0,.177,.018],[0,.183,.034],[0,.18,.079],[0,.114,.09]],.008,18,6),C.black,M.satin);
+  // The bottle is low, behind and to the holder's right. Its flattened egg section has a long axis Z.
+  const tx=-.041,ty=-.004,tz=-.072;
+  ink.add(zlathe([[0,-.166],[.021,-.161],[.049,-.141],[.061,-.116],[.063,-.07],[.057,-.026],[.039,-.007],[.023,0],[0,.004]],tx,ty,0,24).scale(1,.88,1));
+  body.add(zlathe([[0,-.19],[.012,-.19],[.018,-.182],[.018,-.164],[.024,-.158],[0,-.158]],tx,ty,0,14),C.blue,M.gloss);
+  body.add(cyl(.01,[tx,ty,-.157],[tx,.03,-.032],12),C.silver,M.metal);
+  // Two broad, flat straps wrap the tank; rings have actual axial thickness, not a wire cage.
+  for(const z of[-.128,-.042])body.add(zlathe([[.057,z-.005],[.064,z-.005],[.064,z+.005],[.057,z+.005]],tx,ty,0,24).scale(1,.88,1),C.yellow,M.gloss);
+  body.add(pipe([[tx-.057,-.02,-.132],[tx-.058,.044,-.111],[tx-.043,.055,-.04],[-.012,.016,.082],[.011,.01,.122],[.014,.028,.166]],.006,24,6),C.yellow,M.gloss);
+  body.add(pipe([[tx+.055,-.025,-.13],[tx+.056,-.054,-.103],[tx+.04,-.057,-.035],[.012,-.04,-.011]],.0055,16,6),C.yellow,M.gloss);
+  // Exposed tubes and their midpoint clamp rotate together. A dark centre remains visible end-on.
+  barrelRing(B,{n:6,a0:Math.PI/2,R:.027,ay:AX,r:.008,z0:.074,z1:.294,tipL:.01,tipR:.0085,barrel:C.black,tip:C.black});
+  B.add(zcyl(.012,.071,.326,0,AX,12),C.black,M.satin);
+  B.add(zlathe([[.032,.143],[.044,.143],[.046,.149],[.046,.168],[.041,.178],[.032,.178]],0,AX,0,24),C.purple,M.gloss);
+  // Flat-annular stepped yellow plate keeps six independent open blue nozzle mouths.
+  B.add(zlathe([[.013,.276],[.047,.276],[.055,.291],[.055,.314],[.052,.324],[.014,.324],[.013,.314]],0,AX,0,30),C.yellow,M.gloss);
+  for(let k=0;k<6;k++) {
+    const a=Math.PI/2+k*Math.PI/3,x=Math.cos(a)*.033,y=AX+Math.sin(a)*.033;
+    B.add(zlathe([[.006,.32],[.01,.32],[.011,.326],[.01,.332],[.006,.332],[.006,.32]],x,y,0,12),C.blue,M.gloss);
+    B.add(zcyl(.0058,.321,.322,x,y,10),C.black,M.rubber);
+  }
+  B.add(zlathe([[0,.316],[.014,.316],[.014,.326],[.01,.332],[0,.332]],0,AX,0,14),C.black,M.satin);
+  return finish(d,body,B,tr,AX,.334,C.black,ink);
 }
 
 function hydra(d) {
@@ -128,24 +152,53 @@ function ballpoint(d) {
 }
 
 function nautilus(d) {
-  // Rebuilt (Opus): a large round dark reservoir disc with a gold rim at the rear (flat faces sideways),
-  // a silver neck bracket, a dark cylindrical body with a teal window and silver clamp rings, a cone head
-  // with three short nozzles (the spun cluster) and a black pistol grip.
-  const AX = 0.07, C = { dark: '#2b2c31', gold: '#b99a45', silver: '#b9bcc1', teal: '#6fb7a8', black: '#16171a' };
-  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
-  const tr = pistolGrip(body, { color: C.black, triggerColor: C.dark, guardColor: C.dark });
-  const dy = AX + 0.03, dz = -0.075;
-  body.add(xlathe([[0, -0.036], [0.07, -0.032], [0.098, -0.018], [0.104, 0], [0.098, 0.018], [0.07, 0.032], [0, 0.036]], 0, dy, dz, 32), C.dark, M.gloss);
-  body.add(ring(0.103, 0.006, 0, dy, dz, 'x', 6, 36), C.gold, M.metal);
-  body.add(box(0.03, 0.06, 0.05, 0, AX + 0.01, 0.0, 0.4), C.silver, M.satin);                                   // neck bracket
-  body.add(zlathe([[0, -0.01], [0.034, -0.01], [0.036, 0.02], [0.036, 0.19], [0.03, 0.2], [0, 0.2]], 0, AX, 0, 24), C.dark, M.satin);
-  for (const z of [0.03, 0.17]) body.add(ring(0.037, 0.005, 0, AX, z, 'z', 6, 24), C.silver, M.satin);
-  ink.add(box(0.012, 0.03, 0.08, -0.036, AX, 0.1, 0.3));                                                         // teal window (ink)
-  ink.add(box(0.012, 0.03, 0.08, 0.036, AX, 0.1, 0.3));
-  B.add(zlathe([[0, 0.2], [0.034, 0.2], [0.03, 0.235], [0.018, 0.26], [0, 0.262]], 0, AX, 0, 24), C.dark, M.satin);
-  B.add(ring(0.032, 0.004, 0, AX, 0.205, 'z', 6, 24), C.gold, M.metal);
-  for (const [x, y] of [[0, 0.016], [-0.014, -0.009], [0.014, -0.009]]) B.add(zcyl(0.0055, 0.24, 0.296, x, AX + y, 10), C.black, M.satin);
-  return finish(d, body, B, tr, AX, 0.298, C.black, ink);
+  // The turntable resolves the rear into a deep dished shell, a raised opposite-side hub, and a
+  // truncated front/lower lip. The middle is an angular cast shroud, not a long round tube.
+  const AX=.07,C={dark:'#303338',black:'#181b1e',gold:'#b6a159',silver:'#aeb8bb',light:'#d0d5d4'};
+  const body=new Pieces(),B=new Pieces(),ink=new Pieces();
+  const tr=pistolGrip(body,{color:C.black,triggerColor:C.dark,guardColor:C.dark});
+  const sy=.121,sz=-.096;
+  // Shape the YZ edge toward its low/front neck; all X layers share this contour, preserving volume.
+  const shellShape=g=>{
+    const p=g.attributes.position;for(let i=0;i<p.count;i++){
+      const y=p.getY(i)-sy,z=p.getZ(i)-sz,r=Math.hypot(y,z);
+      const cut=Math.max(0,(z-y)/Math.max(r,1e-8)-.68);
+      p.setY(i,sy+y*(1-.15*cut));p.setZ(i,sz+z*(1-.15*cut));
+    }p.needsUpdate=true;g.computeVertexNormals();return g;
+  };
+  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.105,.009],[.083,-.011],[.054,-.019],[0,-.019]],0,sy,sz,36)),C.dark,M.metal);
+  body.add(shellShape(xlathe([[.123,.014],[.133,.016],[.133,.022],[.124,.026]],0,sy,sz,36)),C.gold,M.metal);
+  // Raised concentric back-cap and short projecting coupling are visible on the opposite side.
+  body.add(xlathe([[0,-.053],[.038,-.053],[.055,-.048],[.06,-.042],[.06,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
+  body.add(ring(.059,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
+  body.add(xlathe([[0,.001],[.023,.001],[.029,.013],[.029,.043],[.022,.049],[0,.049]],0,sy,sz,20),C.silver,M.metal);
+  body.add(xlathe([[0,.049],[.018,.049],[.018,.051],[0,.051]],0,sy,sz,16),C.black,M.rubber);
+  for(let i=0;i<7;i++){
+    const a=-.88+i*.19;
+    body.add(box(.004,.004,.008,-.029,sy+Math.sin(a)*.09,sz-Math.cos(a)*.09,.28,6,4),C.silver,M.satin);
+  }
+  // A ribbed neck remains exposed between shell and sleeve; the small ink cap is attached here.
+  body.add(zlathe([[0,-.06],[.026,-.06],[.03,-.037],[.029,.026],[0,.026]],0,AX,0,20),C.silver,M.metal);
+  for(const z of[-.032,-.018,-.004])body.add(ring(.03,.004,0,AX,z,'z',4,18),C.dark,M.satin);
+  ink.add(sphere(.018,.014,.025,-.02,.122,-.028,14,8));
+  body.add(cyl(.013,[-.02,.108,-.022],[-.02,.127,-.032],12),C.silver,M.metal);
+  // The shroud's sides are full cast sections with a broad faceted face and a dark top bridge.
+  body.add(box(.082,.086,.146,0,AX,.103,.31,12,8),C.silver,M.metal);
+  body.add(box(.061,.009,.123,0,AX+.044,.102,.25,8,4),C.dark,M.satin);
+  for(const x of[-.043,.043])body.add(slab([[.031,.033],[.047,.112],[.148,.113],[.173,.082],[.165,.027],[.051,.025]],.004,x,.0015),C.dark,M.metal);
+  for(const z of[.026,.171])body.add(zlathe([[.038,z-.004],[.046,z-.004],[.048,z],[.044,z+.006],[.038,z+.006]],0,AX,0,12).scale(1,1.06,1),C.gold,M.metal);
+  body.add(pipe([[0,.11,.025],[0,.135,.032],[0,.139,.057],[0,.119,.069]],.004,12,6),C.silver,M.metal);
+  // Exposed bearing gap precedes the hemispherical three-nozzle rotor.
+  body.add(zcyl(.026,.178,.212,0,AX,20),C.black,M.satin);
+  ink.add(ring(.029,.0025,0,AX,.187,'z',4,20));
+  B.add(zlathe([[.022,.198],[.042,.198],[.047,.211],[.046,.229],[.04,.246],[.032,.262],[.019,.271],[0,.273]],0,AX,0,30),C.dark,M.metal);
+  B.add(ring(.044,.004,0,AX,.212,'z',5,26),C.silver,M.metal);
+  for(let k=0;k<3;k++){
+    const a=Math.PI/2+k*Math.PI*2/3,x=Math.cos(a)*.026,y=AX+Math.sin(a)*.026;
+    B.add(zlathe([[.0058,.248],[.01,.248],[.011,.258],[.01,.292],[.008,.296],[.0058,.296],[.0058,.248]],x,y,0,14),C.silver,M.metal);
+    B.add(zcyl(.0056,.285,.287,x,y,12),C.black,M.rubber);
+  }
+  return finish(d,body,B,tr,AX,.298,C.black,ink);
 }
 
 function examiner(d) {
