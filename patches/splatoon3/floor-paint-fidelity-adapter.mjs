@@ -3,6 +3,11 @@
 // Native S3 WidthHalf records are half-width envelopes, not permission for an
 // extra 10-30% main body expansion from INKWAVE's procedural ink lobes.
 export function adaptFloorPaintFidelity(rel, code, replaceOnce) {
+  if (rel === 'src/config.js') {
+    return replaceOnce(code, '  pointsPerM2: 1.0,          // turf points per square metre newly inked',
+      '  pointsPerM2: 1 / 3.305785,    // verified owned world-area -> provisional S3 Turf-point mapping',
+      'floor: shared match descriptor respects physical-area to Turf conversion');
+  }
   if (rel === 'src/world/paint.js') {
     // Bound the irregular body to its source width. Preserve the interior
     // lobes and the existing source depthScale/heading elongation.
