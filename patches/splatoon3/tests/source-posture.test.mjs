@@ -114,10 +114,10 @@ function drive(api, ch, st, { speed = 0, frames = 1, hz = 60, firing = false, on
 }
 function measure(api, ch) {
   const { THREE } = api, w = n => ch.bones[n].getWorldPosition(new THREE.Vector3()).sub(ch.root.position);
-  const hips = w('hips'), chest = w('chest'), neck = w('neck'), head = w('head'), hand = w('handR');
+  const hips = w('hips'), chest = w('chest'), neck = w('neck'), head = w('head'), hand = w('handR'), handL = w('handL');
   const muzzle = ch.getMuzzle(new THREE.Vector3()).sub(ch.root.position), m = muzzle.clone().sub(hand).normalize();
   const tilt = v => Math.atan2(v.z, v.y) * DEG;
-  return { torso: tilt(chest.clone().sub(hips)), neck: tilt(head.clone().sub(neck)), pitch: Math.asin(m.y) * DEG, yaw: Math.atan2(m.x, m.z) * DEG, hand, muzzle };
+  return { handL, hands: hand.distanceTo(handL), reach: hand.z - chest.z, torso: tilt(chest.clone().sub(hips)), neck: tilt(head.clone().sub(neck)), pitch: Math.asin(m.y) * DEG, yaw: Math.atan2(m.x, m.z) * DEG, hand, muzzle };
 }
 function maxOver(api, ch, st, opts, fn) {
   let best = -Infinity;
@@ -137,6 +137,7 @@ function legFlex(api, ch) {
 test('adapter connects the source posture hooks exactly once', () => {
   const retarget = adaptSource('src/game/motion/retarget.js', fs.readFileSync(path.join(SRC, 'src/game/motion/retarget.js'), 'utf8'));
   const controller = adaptSource('src/game/motion/source-controller.js', fs.readFileSync(path.join(SRC, 'src/game/motion/source-controller.js'), 'utf8'));
+  assert.equal(controller.match(/sourceCarryHand\(this,this\.handP,this\.fitR,this\.wristQ,leftWeight,explicitLeft\);/g)?.length, 1);
   assert.equal(retarget.match(/sourcePostureBone\(this,target,this\.q,dir,isUpper&&upper\);/g)?.length, 1);
   assert.equal(retarget.match(/sourceFootLift\(this,this\.v3,label\);/g)?.length, 1);
   assert.equal(controller.match(/sourceCarryWeapon\(this,this\.weaponQ\);this\.weaponQ\.premultiply\(this\.retarget\.aim\);/g)?.length, 1);
@@ -170,11 +171,13 @@ test('the Wii U hold clips lean forward; the corrected stance, walk and run stay
   ch.dispose();
 });
 
-test('a non-firing shooter is carried at the right hip: level-forward when moving, muzzle down when standing', async () => {
+test('a non-firing shooter: two-hand level carry when moving, one-handed forward-down hold when standing', async () => {
   const api = await production(), ch = await rig(api), st = state();
   api.posture.setSourcePostureEnabled(false);
   drive(api, ch, st, { speed: 1.6, frames: 150 });
   const rawWalk = measure(api, ch);
+  drive(api, ch, st, { frames: 150 });
+  const rawStand = measure(api, ch);
   api.posture.setSourcePostureEnabled(true);
   drive(api, ch, st, { speed: 1.6, frames: 150 });
   const walk = measure(api, ch);
@@ -186,8 +189,23 @@ test('a non-firing shooter is carried at the right hip: level-forward when movin
   for (const [name, m] of [['walk', walk], ['run', run]]) {
     assert.ok(Math.abs(m.yaw) < 25 && m.pitch > -25 && m.pitch < 10, `${name}: pitch ${m.pitch.toFixed(1)}°, yaw ${m.yaw.toFixed(1)}°`);
   }
-  assert.ok(stand.pitch < -45, `standing muzzle down (${stand.pitch.toFixed(1)}°)`);
+  // S3 y7Zl26Zl12n after a burst: muzzle forward-down, gun held out in front by the forearm.
+  assert.ok(stand.pitch < -30 && stand.pitch > -60 && Math.abs(stand.yaw) < 30, `standing muzzle ${stand.pitch.toFixed(1)}°, yaw ${stand.yaw.toFixed(1)}°`);
+  assert.ok(stand.reach > rawStand.reach + 0.04, `grip ahead of the chest (${rawStand.reach.toFixed(3)} -> ${stand.reach.toFixed(3)})`);
   assert.ok(stand.hand.x < -0.1, 'the grip stays on the right side');
+  assert.ok(ch.ikErr[1] < 1e-6, `right arm reaches the moved grip (${ch.ikErr[1]})`);
+  // One-handed lowered hold: the support hand leaves the foregrip and hangs at the left side;
+  // moving restores the native two-hand carry.
+  console.log(`hand separation: raw stand ${rawStand.hands.toFixed(3)}, walk ${walk.hands.toFixed(3)}, stand ${stand.hands.toFixed(3)} m`);
+  assert.ok(walk.hands < 0.2 && rawStand.hands < 0.2, `two-hand carry (walk ${walk.hands.toFixed(3)}, raw stand ${rawStand.hands.toFixed(3)})`);
+  assert.ok(stand.hands > walk.hands + 0.1 && stand.handL.x > 0.1, `support hand hangs at the side (${stand.hands.toFixed(3)}, x ${stand.handL.x.toFixed(3)})`);
+  // Stopping and starting move the support hand over several frames, never in one jump.
+  let last = null, jump = 0;
+  const track = () => { const p = measure(api, ch).handL; if (last) jump = Math.max(jump, p.distanceTo(last)); last = p; };
+  drive(api, ch, st, { speed: 1.6, frames: 90, onFrame: track });
+  drive(api, ch, st, { frames: 90, onFrame: track });
+  // A snap between foregrip and hang is ~0.3 m in one frame; ordinary arm motion stays far below.
+  assert.ok(jump < 0.06, `support hand per-frame travel ${jump.toFixed(4)} m`);
   ch.dispose();
 });
 
