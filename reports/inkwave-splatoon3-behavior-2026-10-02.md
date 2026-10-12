@@ -4041,3 +4041,12 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **設定なしの最終描画**: Chromium/SwiftShaderとWebKit/Mesa touchで通常起動から実ゲーム9操作・各45方向が成功、黒いRGB/透明欠損0。sourceとexact emitted new+packaging 27件すべて成功・skip0。既存起動snapshot 5,658,810byte、core revision 10,276,777byte、worker 69,493byteで従来上限を維持。追加素材transport/cacheは16.875MiB、GPU配置推定は37.69MiB。全起動105,208/27,793msは既存world/shader/softwareGPUを含むローカルサーバーの値であり、実機ネットワークや素材単独の比較値ではない。`reports/ink-volume/default-measurements.json`と元素材/通常起動の比較画像を参照。
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
+
+## 2026-10-12: 立ち方・ブキの持ち方・足運び（P02 の一部）
+
+- **本家の根拠**: 参照版は Ver.11.3.0。任天堂公式ブキ紹介のシューター動画 `y7Zl26Zl12n`（側面の歩き、射撃後の待機）と `9LnjRgbl2Ng`（背後からの射撃しながらの走り）。どちらも過去の記録と SHA-256 が一致した。収録版・入力・ギアは不明。上体と頭は待機・歩き・走りで直立し、射撃していないシューターは右手で腰の高さに持つ（歩きは銃身がほぼ水平で前向き、立ち止まると銃口が下）。歩きで後ろのすねは水平まで上がらない。
+- **INKWAVE の実装箇所**: 試合中の体は初代（Wii U）`Player00` クリップをリターゲットした `src/game/motion/source-controller.js` / `retarget.js` が決める。射撃中の上半身だけが本体の手続き姿勢。初代の Hold 系クリップは上体 16〜31°・首 最大 25°前傾していて、そのまま出ていた。シューターの銃身は体の左へ 63〜72°横向き、遊脚の足首は弱い入力でも 0.25 m 上がり膝が 100°曲がる。
+- **再現操作**: シューターで止まる、弱い入力で歩く、最大入力で走る。正面と側面から見る。
+- **変更**: `patches/splatoon3/runtime/source-posture.mjs` を adapter で 3 箇所に接続。idle/move 状態だけ、上体の前傾を 20〜40%、首を 25% に縮める。射撃していないシューターのブキを持ち手の周りで前向き〜下向きへ回す。遊脚の足首の高さを歩き 50%、走り 70% にする。補正後は待機の上体 4.7°・首 4.8°、歩きは上体 3°・首 2°・銃口ピッチ −10°、膝 93°。
+- **プレイへの影響**: 見た目だけ。発射位置の差は初弾 0.000 mm、射撃 1 秒後 0.010 mm。移動・接地・射撃のロジックは不変。
+- **確認状態**: 実ソースバンクを読み込む VM テスト（`patches/splatoon3/tests/source-posture.test.mjs`）と Chromium 描画で確認。Switch 実機比較ではない。射撃中にブキを体から離して構える差（発射位置に影響するため未変更）、シューター以外の持ち方、待機のしゃがみの深さ、歩幅・歩調・横歩き・後ろ歩き・坂は未確認のまま。詳細は `patches/splatoon3/reference/stance-carry-comparison-2026-10-12.md`。
