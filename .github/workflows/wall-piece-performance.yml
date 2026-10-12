@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      BASELINE_SHA: ae21924c59046cc0fe81922322ac093418113586
-      CANDIDATE_SHA: 338438ba0933f27d501cbaf6a98ef247cce1598e
+      BASELINE_SHA: 90b4fea706d6018fcf48dc205198f19194fd5886
+      CANDIDATE_SHA: 17dd528116a3f95884a35cd13929b2fa6a717696
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,12 +33,12 @@ jobs:
           JS
       - uses: actions/checkout@v4
         with:
-          ref: ae21924c59046cc0fe81922322ac093418113586
+          ref: 90b4fea706d6018fcf48dc205198f19194fd5886
           path: .paint-baseline
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 338438ba0933f27d501cbaf6a98ef247cce1598e
+          ref: 17dd528116a3f95884a35cd13929b2fa6a717696
           path: .paint-candidate
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: owned-scan-minimal-${{ matrix.profile }}-338438ba
+          name: owned-scan-minimal-${{ matrix.profile }}-17dd5281
           path: .paint-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
