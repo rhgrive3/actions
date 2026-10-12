@@ -2122,5 +2122,39 @@
         "seed": 4024983612
       }
     }
+  },
+  "integrationMain": "545c6b3fcfc0d25c43678e9b44b1af4e26400fec",
+  "productContentHashUnchanged": "60c31f4d5235dc9e595640eca6d10c6a0dbbb44d7e352fcafd4f8b6e6e08dda1",
+  "browserDiagnostic": {
+    "run": 38284051070,
+    "harness": "19e9de3",
+    "baseline": "ac1159b76b42a10ff02fe58add74a8285cc08d32",
+    "candidate": "555929715ba914fa6a78533e32ed492e1f03b564",
+    "acceptance": "failed: A/A baseline grid differs, not a deterministic speed comparison",
+    "aliveActors": 8,
+    "profileWindowFrames": 60,
+    "raySelfMilliseconds": {
+      "before": 95.087,
+      "after": 82.927
+    },
+    "rayCallersSelfMilliseconds": {
+      "fxDrops": [
+        52.863,
+        58.371
+      ],
+      "characterGround": [
+        23.205,
+        15.989
+      ],
+      "physicsGroundProbe": [
+        17.951,
+        6.427
+      ],
+      "botGroundHeight": [
+        1.068,
+        1.076
+      ]
+    },
+    "timingLimitation": "single sampled profiles; GPU readPixels synchronization stalls; no whole-game or device FPS claim"
   }
 }

@@ -1,5 +1,11 @@
 # Native-stage downward ray specialization
 
+## Current integration and browser status
+
+Main `545c6b3fcfc0d25c43678e9b44b1af4e26400fec` integrates the shared PR1304 verifier fixes. Reapply only this PR's five owned files on that main: production contentHash remains exactly `60c31f4d5235dc9e595640eca6d10c6a0dbbb44d7e352fcafd4f8b6e6e08dda1`, identical to original candidate5559297. Local focused23/23 and production build pass. Original5559297 native-integration CI [38281620667](https://github.com/rhgrive3/actions/actions/runs/38281620667) succeeds. Final-head native/general CI remain required.
+
+Actual Scorch main-loop diagnostic [38284051070](https://github.com/rhgrive3/actions/actions/runs/38284051070), harness19e9de3, completed four runs with8actors alive. **Performance acceptance fails:** repeated A/A baseline paint grids differ, so the fixture is not deterministic. Keep these results; do not claim whole-game or device speedup. Separate60-frame CDP samples do establish that ray is a live cost: before95.087ms, after82.927ms. These are one sampled window per build, not a passing ABBA speed result. Caller self samples are FX droplets52.863→58.371ms, Character ground23.205→15.989ms, Physics groundProbe17.951→6.427ms, bot groundHeight1.068→1.076ms (plus1.064ms sampled camera ray only after). GPU synchronization waits of about39s also contaminate long wall times. Repair fixture clock/RAF/asynchronous asset control before another full-game acceptance run; the proposed same-input actual-browser ray replay is a separate bounded measurement.
+
 ## Scope and immutable baseline
 
 Baseline `ac1159b76b42a10ff02fe58add74a8285cc08d32` (main verified 2026-10-12). The only product change is in `patches/native-stages/runtime/triangle-world.mjs`: exact vertical-down rays bypass the generic three-axis BVH slab loop. Both positive and negative zero qualify in X/Z; Y must be exactly -1. The original Y division, min/max arithmetic, stack order, triangle intersection, hit tie behavior, flags, normal filters and counters remain. No caches, geometry changes, slower AI, actor-count reductions, quality changes, or changes to paint/rig/weapon models.
