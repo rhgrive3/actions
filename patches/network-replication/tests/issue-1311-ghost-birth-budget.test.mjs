@@ -133,8 +133,11 @@ test('#1311 terminal retirement and owner handoff release budget without affecti
   playback(r,'p2',17,1,ACTOR_LIMIT+1);
   assert.equal(live(f,'p2').length,ACTOR_LIMIT,'released slot permits a new legitimate birth');
 
+  const departed = f.projectiles.list.filter(p=>p.ghost&&p.owner?.nid===17);
+  assert.equal(departed.length, ACTOR_LIMIT);
   nm.onLeave('p2',false);
-  assert.equal(live(f,'p2').length,0,'departed sender visuals are retired');
+  assert.ok(departed.every(p=>!f.projectiles.list.includes(p)),
+    'handoff must remove each departed owner ghost, not merely rename its owner');
   assert.equal(live(f,'p3').length,12,'other sender visuals survive handoff');
   playback(r,'p3',27,4,13);
   assert.equal(live(f,'p3').length,16,'another sender retains remaining capacity');
