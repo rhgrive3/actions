@@ -15,6 +15,7 @@ import { chromium } from 'playwright';
 const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n < 0 ? fallback : process.argv[n + 1]; };
 const site = path.resolve(arg('--site', '_site')), out = path.resolve(arg('--out', '.ci-scratch/weapon-gallery'));
 const ids = (arg('--ids', '') || '').split(',').filter(Boolean), held = !process.argv.includes('--no-held');
+const environmentMode=arg('--environment','studio1024');
 const size = Number(arg('--size', 400)), crowd = process.argv.includes('--crowd');
 fs.mkdirSync(out, { recursive: true });
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
@@ -37,7 +38,7 @@ try {
   const page = await browser.newPage({ viewport: { width: size * 2, height: size * 2 } });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:' + server.address().port + '/review');
-  await page.evaluate(async ({ prefix, size }) => {
+  await page.evaluate(async ({ prefix, size, environmentMode }) => {
     const THREE = await import('three'), { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
     const api = install(profile), { G, Physics } = api;
@@ -52,19 +53,21 @@ try {
     renderer.setSize(size, size); renderer.setClearColor(0xffffff, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; document.body.append(renderer.domElement);
     const scene = new THREE.Scene();
-    const px = new Uint8Array(32 * 16 * 4); for (let y = 0; y < 16; y++) for (let x = 0; x < 32; x++) { const v = y < 9 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 32 + x) * 4); }
-    const sky = new THREE.DataTexture(px, 32, 16); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
+    const px = new Uint8Array(1024 * 512 * 4); for (let y = 0; y < 512; y++) for (let x = 0; x < 1024; x++) { const v = y < 288 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 1024 + x) * 4); }
+    const sky = new THREE.DataTexture(px, 1024, 512); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
     const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(sky).texture;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
     const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3, 4, 2); scene.add(key);
+    if(environmentMode==='productionDay'){const {Environment}=await import(prefix+'src/world/environment.js'),nativeScene=new THREE.Scene(),env=new Environment(renderer,nativeScene);for(const light of scene.children.filter(o=>o.isLight))scene.remove(light);scene.add(env.sun,env.hemi);scene.environment=env.envMap;scene.environmentIntensity=nativeScene.environmentIntensity;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=1;}
+    const environmentMeta={mode:environmentMode,pmremWidth:scene.environment.image.width,pmremHeight:scene.environment.image.height,intensity:scene.environmentIntensity,toneMapping:renderer.toneMapping,exposure:renderer.toneMappingExposure,postprocessing:false};
     G.scene = scene; G.teamColors = [new THREE.Color('#ff8825'), new THREE.Color('#484ce8')];
     G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, o) => { o.length = 0; return o; } };
     G.physics = new Physics(G.level); G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true }; G.time = 0;
     G.projectiles = new api.Projectiles({ add() {}, remove() {} }); // real emission path, projectiles not drawn
     G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
     const snap = () => renderer.domElement.toDataURL('image/png').split(',')[1];
-    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G };
-  }, { prefix, size });
+    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G, environmentMeta };
+  }, { prefix, size, environmentMode });
   const all = await page.evaluate(() => Object.keys(window.__gallery.WEAPONS).filter(id => window.__gallery.WEAPONS[id]?.class !== undefined || window.__gallery.WEAPONS[id]?.catalogRecord));
   const list = ids.length ? ids : all;
   const references = {
@@ -241,6 +244,6 @@ try {
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
   }
-  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, references, host:{start:hostStart,end:{at:new Date().toISOString(),load:os.loadavg()},timingClock:"performance.now; SwiftShader host; method diagnostics inclusive and separate from ABBA"}, rows, errors }, null, 2));
+  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, references, environment:await page.evaluate(()=>window.__gallery.environmentMeta),host:{start:hostStart,end:{at:new Date().toISOString(),load:os.loadavg()},timingClock:"performance.now; SwiftShader host; method diagnostics inclusive and separate from ABBA"}, rows, errors }, null, 2));
   if (errors.length) { console.error('page errors:', errors.slice(0, 10)); process.exitCode = 1; }
 } finally { await browser?.close(); await new Promise(r => server.close(r)); }

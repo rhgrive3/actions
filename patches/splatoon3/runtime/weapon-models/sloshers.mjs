@@ -184,16 +184,16 @@ function explosher(d) {
   for(let i=0;i<10;i++){const a=i*Math.PI/5;body.add(box(.004,.012,.004,-.026+Math.cos(a)*.021,cy+.106,cz-.004+Math.sin(a)*.021,.16,6,4),C.darkOlive,M.satin);}
   // Burner bolts onto the sloped shoulder. The silver yoke is open-sided; bronze remains visible within it.
   const by=cy+.061,bz=cz+.091,tilt=-.48,burner=new Pieces();
-  burner.add(box(.141,.124,.011,0,0,-.018,.18,10,4),C.silver,M.metal);
-  burner.add(box(.132,.113,.005,0,0,-.011,.14,10,4),C.steel,M.satin);
+  burner.add(box(.120,.109,.005,0,0,-.018,.38,12,6),C.silver,M.metal);
+  // Thin mounting plate plus annular socket. The old broad dark square obscured this round junction.
+  burner.add(zlathe([[.043,-.020],[.058,-.020],[.061,-.014],[.060,-.009],[.051,-.008],[.043,-.008]],0,0,0,24),C.silver,M.metal);
+  burner.add(ring(.055,.0023,0,0,-.006,'z',4,24),C.steel,M.satin);
   burner.add(zlathe([[.040,-.014],[.041,.012],[.051,.064],[.058,.076],[.054,.078],[.048,.055],[.038,-.014],[.040,-.014]],0,0,0,24),C.brass,M.metal);
-  burner.add(zlathe([[.045,-.012],[.052,-.012],[.057,.043],[.058,.062],[.054,.064],[.049,.045],[.041,-.008],[.045,-.012]],0,0,0,24),C.black,M.satin);
+  burner.add(zlathe([[.043,-.008],[.049,-.008],[.050,.038],[.053,.055],[.051,.060],[.047,.041],[.040,-.004],[.043,-.008]],0,0,0,24),C.black,M.satin);
   burner.add(ring(.056,.0021,0,0,.076,'z',5,30),C.brassEdge,M.metal);
   // Dark burner body and the four machined silver retaining rails are separate volumes.
   for(const sx of[-1,1]){
-    burner.add(box(.014,.076,.045,sx*.048,0,.015,.22,10,6),C.black,M.satin);
-    burner.add(box(.009,.010,.089,sx*.055,-.038,.023,.25,10,4),C.silver,M.metal);
-    burner.add(box(.009,.010,.078,sx*.052,.037,.017,.25,10,4),C.silver,M.metal);
+    for(const sy of[-1,1])burner.add(box(.009,.010,.069,sx*.040,sy*.034,.023,.22,10,4),C.silver,M.metal);
     for(const y of[-.034,.034])burner.add(zlathe([[0,.047],[.004,.047],[.004,.052],[0,.052]],sx*.050,y,0,10),C.steel,M.satin);
     // Orange spring wire, elbow and brass gas fitting are anchored to the yoke rather than floating rings.
     burner.add(pipe([[sx*.044,-.025,-.009],[sx*.052,-.025,.001],[sx*.053,-.018,.018],[sx*.054,.006,.040]],.0017,16,5),C.orange,M.gloss);
@@ -214,7 +214,7 @@ function explosher(d) {
     body.add(beam([[x,cy+.024,cz+.068],[x,cy+.030,cz-.065],[x,cy+.013,cz-.094],[x,cy-.041,cz-.094],[x,cy-.064,cz-.071],[x,cy-.064,cz+.070]],.0064,34),C.silver,M.metal);
     body.add(cyl(.0077,[x,cy-.064,cz-.037],[x,cy-.064,cz+.064],12),C.black,M.rubber);
     body.add(beam([[x,cy+.028,cz-.063],[sx*.079,cy+.125,cz-.071],[sx*.066,cy+.144,cz-.064]],.0056,20),C.silver,M.metal);
-    body.add(beam([[x,cy-.064,cz+.069],[sx*.098,cy-.047,cz+.139],[sx*.082,cy-.037,cz+.157]],.007,18),C.silver,M.metal);
+    body.add(beam([[x,cy-.064,cz+.069],[sx*.095,cy-.050,cz+.124],[sx*.082,cy-.042,cz+.139]],.0058,18),C.silver,M.metal);
     for(const z of[cz-.064,cz+.061]){body.add(cyl(.006,[sx*.087,cy+.024,z],[sx*.099,cy+.024,z],12),C.steel,M.satin);body.add(cyl(.0025,[sx*.099,cy+.024,z],[sx*.101,cy+.024,z],8),C.black,M.satin);}
     // Diagonal external shock, measured from the side turntable view. Both orange anchors meet the frame.
     const low=[x,cy+.023,cz+.004],high=[x,cy+.063,cz+.072];body.add(cyl(.0047,low,high,10),C.black,M.rubber);
@@ -222,7 +222,7 @@ function explosher(d) {
     const pts=[];for(let i=0;i<=48;i++){const t=i/48,a=t*Math.PI*10;pts.push([x+Math.cos(a)*.0085,cy+.028+t*.031+Math.sin(a)*.0073,cz+.012+t*.052-Math.sin(a)*.0044]);}body.add(pipe(pts,.0017,56,5),C.steel,M.satin);
   }
   body.add(cyl(.009,[-.066,cy+.144,cz-.064],[.066,cy+.144,cz-.064],14),C.black,M.rubber);
-  body.add(beam([[-.082,cy-.037,cz+.157],[.082,cy-.037,cz+.157]],.007,6),C.silver,M.metal);
+  body.add(beam([[-.082,cy-.042,cz+.139],[.082,cy-.042,cz+.139]],.0058,6),C.silver,M.metal);
   // The native hand grip is retained at the origin; it is not the high reference carry handle.
   wireHandle(body,cz-.107,C.black);
   return rebuild(d,{body,ink,parts:{surface:inkDisc(.035,BY-.004+.06,BZ+.02)}});

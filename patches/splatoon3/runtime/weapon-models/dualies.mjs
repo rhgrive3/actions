@@ -112,30 +112,29 @@ function darkTetra(d) {
     // Fine grip ribs follow the curved grey pad, without changing its hand-contact thickness.
     if(sx<0)for(let i=0;i<8;i++)body.add(cyl(.0007,[sx*.022,.002+i*.006,-.031],[sx*.022,.005+i*.005,-.010],6),C.silver,M.satin);
   }
-  // The upper receiver is a short rear block; most of the chamber remains visible between the cheeks.
-  body.add(box(.034,.037,.054,0,.069,-.002,.24,10,6),C.black,M.satin);
-  body.add(box(.032,.012,.043,0,.092,-.006,.23,10,6),C.white,M.satin);
+  // Dark receiver: a rounded mechanical rear housing and one broad recessed central band.
+  // The earlier two-slot rectangular cheek read as a thin ladder and hid the chamber's volume.
+  body.add(box(.044,.042,.076,0,.069,.009,.38,12,8),C.black,M.satin);
+  body.add(box(.036,.011,.042,0,.094,.003,.28,10,6),C.white,M.satin);
   for(const y of[.079,.052]){
-    for(const sx of[-1,1]){
-      body.add(box(.0045,.006,.110,sx*.0145,y,.067,.25,8,4),C.black,M.satin);
-      body.add(box(.003,.007,.016,sx*.017,y,.018,.18,8,4),C.silver,M.satin);
-    }
+    body.add(zlathe([[0,.034],[.016,.034],[.018,.041],[.018,.124],[.015,.134],[0,.134]],0,y,0,12),C.black,M.satin);
     body.add(zlathe([[.004,.132],[.016,.132],[.018,.137],[.017,.144],[.006,.146],[.004,.143]],0,y,0,22),C.white,M.satin);
     body.add(zlathe([[0,.141],[.005,.141],[.005,.146],[0,.146]],0,y,0,12),C.grey,M.satin);
     body.add(ring(.006,.0013,0,y,.146,'z',4,14),C.white,M.satin);
   }
-  // The Dark render shows broad, planar chamber cheeks with two narrow recessed slots,
-  // not four exposed longitudinal tubes. The two openings retain visible dark inner rails.
-  const chamber=[[.003,.042],[.014,.035],[.112,.035],[.121,.045],[.121,.092],[.006,.097]];
-  const slots=[[[.016,.049],[.110,.049],[.110,.057],[.016,.057]],[[.016,.078],[.110,.078],[.110,.086],[.016,.086]]];
+  const chamber=[[.033,.051],[.041,.041],[.070,.035],[.111,.036],[.122,.045],[.122,.092],[.041,.096],[.030,.085]];
+  const slot=[[[.039,.058],[.116,.058],[.116,.074],[.036,.074]]];
   for(const sx of[-1,1]){
-    body.add(slab(chamber,.003,sx*.018,0,slots),C.white,M.satin);
+    const cover=slab(chamber,.003,sx*.022,0,slot),pos=cover.attributes.position;
+    // The rounded rear is wider than the front collar. This thickness is visible in front/oblique views.
+    for(let i=0;i<pos.count;i++){const t=Math.max(0,Math.min(1,(pos.getZ(i)-.033)/.089));pos.setX(i,pos.getX(i)-sx*t*.003);}
+    cover.computeVertexNormals();body.add(cover,C.white,M.satin);
+    body.add(box(.003,.016,.073,sx*.022,.066,.078,.16,8,4),C.black,M.rubber);
+    for(let k=0;k<6;k++)body.add(new THREE.BoxGeometry(.001,.012,.0013).translate(sx*.024,.066,.063+k*.008),C.grey,M.satin);
+    for(const y of[.066,.086]){body.add(cyl(.004,[sx*.023,y,.043],[sx*.025,y,.043],10),C.silver,M.satin);body.add(new THREE.BoxGeometry(.0008,.001,.005).translate(sx*.0258,y,.043),C.black,M.print);}
     body.add(slab([[.124,.038],[.130,.037],[.132,.098],[.124,.100]],.0018,sx*.018,0),C.purple,M.gloss);
   }
-  // Metal top bridge with recessed dark strip and screw heads, not a featureless white cuboid.
-  body.add(box(.036,.009,.099,0,.098,.060,.18,12,4),C.white,M.satin);
-  for(const sx of[-1,1])for(const z of[.018,.106])body.add(cyl(.0028,[sx*.018,.099,z],[sx*.020,.099,z],8),C.grey,M.satin);
-  body.add(box(.038,.004,.068,0,.067,.062,.2,10,4),C.black,M.rubber);
+  body.add(box(.035,.007,.076,0,.098,.079,.3,10,4),C.white,M.satin);
   body.add(box(.032,.068,.009,0,.067,.128,.25,10,6),C.purple,M.gloss);
   // The front leg is a curved black load-bearing core with two thin white cheeks and rounded ankle covers.
   const leg=[[.118,.102],[.133,.098],[.136,.038],[.126,.005],[.110,-.022],[.095,-.051],[.077,-.060],[.068,-.052],[.085,-.029],[.103,.010],[.109,.053]];
@@ -160,14 +159,20 @@ function darkTetra(d) {
     const spring=ylathe([[0,-.014],[.014,-.014],[.022,-.010],[.022,-.006],[.017,-.004],[.022,0],[.022,.005],[.017,.008],[.018,.013],[0,.013]],0,0,0,18).scale(1,1,.78).translate(x,y,z);body.add(spring,C.white,M.satin);
     for(const dy of[-.012,.004,.012])body.add(ylathe([[.014,dy],[.022,dy],[.022,dy+.0018],[.014,dy+.0018]],0,0,0,18).scale(1,1,.78).translate(x,y,z),C.white,M.satin);
   }
-  // The two broad front rebound faces are the shoe's defining front-view silhouette.
+  // Front rebound faces are the raised ends of long black blades, not detached round buttons.
   for(const sx of[-1,1]){
     const x=sx*.036,y=-.044,z=.153,foot=new Pieces(),col=new Pieces();
-    foot.add(zlathe([[0,-.004],[.024,-.004],[.026,0],[.025,.003],[0,.003]],0,0,0,20),C.white,M.satin);
-    foot.add(zlathe([[0,.002],[.024,.002],[.025,.005],[.023,.007],[0,.007]],0,0,0,20),C.black,M.rubber);
+    const contour=Array.from({length:18},(_,i)=>{const a=i*Math.PI/9;return[Math.cos(a)*.024,Math.sin(a)*.027*(Math.sin(a)<0?2:1)];});
+    foot.add(slab(contour,.004,0,0).rotateY(Math.PI/2),C.white,M.satin);
+    foot.add(slab(contour.map(([u,v])=>[u*.985,v*.985]),.004,-.003,0).rotateY(Math.PI/2),C.black,M.rubber);
     col.add(zlathe([[0,.007],[.012,.007],[.013,.0085],[0,.009]],0,0,0,18));
     foot.add(ring(.008,.0012,0,0,.010,'z',4,16),C.grey,M.satin);
-    body.merge(foot.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));ink.merge(col.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));
+    const bendBlade=g=>{
+      const p=g.attributes.position,along=Array.from({length:p.count},(_,i)=>p.getY(i));g.rotateX(-.45).rotateY(sx*.52);
+      for(let i=0;i<p.count;i++){const t=Math.max(0,Math.min(1,(-along[i]-.014)/.040));p.setY(i,p.getY(i)+.020*t);p.setZ(i,p.getZ(i)-.103*t);}
+      g.computeVertexNormals();return g.translate(x,y,z);
+    };
+    body.merge(foot.transform(bendBlade));ink.merge(col.transform(bendBlade));
   }
   return finish(d,body,ink,trig,[0,.065,.147]);
 }
