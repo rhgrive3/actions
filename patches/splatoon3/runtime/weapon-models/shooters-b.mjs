@@ -7,7 +7,7 @@
 // reference pixels, with the handle centre at the origin. Internal model names come from Leanny/splat3
 // ActorInfo (Fmdb). Everything is procedural geometry.
 import { THREE, Pieces, M, V, zlathe, zcyl, ring, pipe, slab, smoothOutline, pistolGrip, gripSpec, part, rebuild,
-  TRIGGER_PIVOT } from './kit.mjs';
+  TRIGGER_PIVOT, box, xcyl } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = handle centre in the image, s = metres/pixel.
 // Returns [z, y] so that slab / zlathe outlines take it directly.
@@ -69,37 +69,81 @@ function expert(d) {
 
 // ------------------------------------------------------------------------------------------ .96 Gal
 function heavy(d) {
-  // Wmn_Shooter_Heavy: black shoulder stock with a hooked butt, a round ink tank (team colour, pulses
-  // per shot) on a black frame with pink clips, a sand-grey barrel with a black front ring and a pink
-  // muzzle band, a black front bracket and foot plate, a pink raked grip, silver trigger guard.
-  const s = 0.11 / 88, P = px(88, 236, s), Z = x => P(x, 0)[0], Y = y => P(0, y)[1];
-  const C = { black: '#2b2c2f', dark: '#353738', pink: '#e0208a', barrel: '#9d9a92', silver: '#8f9298' };
-  const RAKE = 0.40;
+  // S3 standard .96 Gal. Measured on the 1280x720 Nintendo turntable at 7.50 s:
+  // total 820 px; tank L=268 / D=214; purifier L=280; axis (786,326)-(1061,326).
+  // Preserve the already-shipped muzzle, right-hand and support-hand frames.
+  // 0.0006 m/px is a visual scale, not a claim about retail world units.
+  const u = .0006, AX = .065, END = .38625;
+  const Z = x => END + (x - 1061) * u, Y = y => AX + (326 - y) * u;
+  const C = { black:'#27282b', edge:'#484a4b', pink:'#dc167f', metal:'#a7aaa9', rim:'#c6c8c2', quartz:'#babba7' };
   const body = new Pieces(), can = new Pieces();
-  body.add(side(P, [[0, 157], [12, 152], [24, 149], [48, 141], [60, 137], [70, 134], [72, 190], [60, 200], [48, 207],
-    [36, 251], [24, 251], [12, 223], [0, 171]], 0.05, 16), C.black, M.satin);
-  const ty = Y(186), tz0 = Z(96), tz1 = Z(226), R = 66 * s;
-  can.add(zlathe([[0, tz0], [R * 0.9, tz0], [R, tz0 + 0.015], [R, tz1 - 0.015], [R * 0.9, tz1], [0, tz1]], 0, ty, 0, 32),
-    '#e8e6e0', M.gloss);
-  body.add(side(P, [[80, 120], [190, 116], [196, 130], [80, 136]], 0.03), C.dark, M.satin);
-  for (const x of [120, 170]) body.add(side(P, [[x, 116], [x + 14, 116], [x + 14, 132], [x, 132]], 0.03), C.pink, M.gloss);
-  body.add(side(P, [[246, 140], [254, 96], [266, 84], [276, 92], [274, 120], [268, 142]], 0.02), C.black, M.satin);
-  // black coupling ring between the tank and the canister barrel (the top fin stands on it)
-  body.add(zlathe([[0, Z(224)], [44 * s, Z(224)], [46 * s, Z(232)], [46 * s, Z(282)], [36 * s, Z(290)], [0, Z(290)]], 0, Y(184), 0, 28), C.black, M.satin);
-  body.add(zlathe([[0, Z(288)], [27 * s, Z(288)], [27 * s, Z(356)], [32 * s, Z(360)], [32 * s, Z(386)], [27 * s, Z(388)],
-    [0, Z(388)]], 0, Y(184), 0, 24), C.barrel, M.satin);
-  body.add(zlathe([[0, Z(388)], [24 * s, Z(388)], [24 * s, Z(397)], [20 * s, Z(397)], [0, Z(397)]], 0, Y(184), 0, 20), C.pink, M.gloss);
-  body.add(side(P, [[286, 150], [302, 150], [308, 236], [318, 289], [306, 290], [296, 246], [286, 240]], 0.02), C.black, M.satin);
-  body.add(side(P, [[316, 246], [330, 244], [372, 286], [362, 292]], 0.03), C.dark, M.satin);
-  body.add(sideTube(P, [[100, 262], [94, 280], [120, 286], [160, 285], [182, 276], [186, 262]], 2.5 * s, 0, 2), C.silver, M.metal);
-  const trig = raked(body, RAKE, { color: C.pink, triggerColor: C.black, guardColor: C.silver });
-  return rebuild(d, {
-    body, ink: new Pieces(),
-    parts: { can: part(can, [0, ty, (tz0 + tz1) / 2], 'ink'), trigger: part(trig, TRIGGER_PIVOT) },
-    gripR: rakedGrip(RAKE),
-    gripL: supportGrip([0, Y(228), Z(300)], 0),
-    muzzle: [0, Y(184), Z(397)],
-  });
+  const sideAt = (points, width, x = 0, bevel=.0015, holes=[]) =>
+    slab(points.map(([z,y])=>[Z(z),Y(y)]),width,x,bevel,holes.map(h=>h.map(([z,y])=>[Z(z),Y(y)])));
+  const tubeAt = (points, radius, x=0) => pipe(points.map(([z,y])=>[x,Y(y),Z(z)]),radius,Math.max(8,points.length*3),6);
+  // The water-cooler bottle has two broad end ribs and a recessed centre belt.
+  const tankProfile = [[0,491],[91,491],[101,499],[107,512],[108,560],[104,575],
+    [93,590],[91,606],[91,646],[96,660],[107,674],[108,739],[102,754],[88,765],[0,768]];
+  can.add(zlathe(tankProfile.map(([r,z])=>[r*u,Z(z)]),0,AX,0,40),'#f4f1e7',M.gloss);
+  // Separate cast caps, two uprights and the top straps. The central gap stays open.
+  for (const [a,b] of [[482,494],[763,782]]) {
+    body.add(zlathe([[0,Z(a)],[103*u,Z(a)],[107*u,Z(a+3)],[107*u,Z(b-3)],[98*u,Z(b)],[0,Z(b)]],0,AX,0,32),C.black,M.satin);
+  }
+  for (const [a,b] of [[479,584],[662,756]]) {
+    body.add(box(.037,19*u,(b-a)*u,0,Y(228),Z((a+b)/2),.16,8,4),C.black,M.satin);
+    body.add(box(.038,21*u,9*u,0,Y(231),Z(b-3),.18,8,4),C.pink,M.gloss);
+  }
+  // Stock is an open triangular brace, with a thin curved butt and a vented upper pad.
+  body.add(sideAt([[242,265],[392,233],[410,328],[304,369],[286,458],[273,452]],.044,0,.002,
+    [[[307,350],[398,327],[310,409]]]),C.black,M.satin);
+  body.add(sideAt([[240,264],[250,263],[293,456],[285,461]],.049,0,.001),C.edge,M.satin);
+  body.add(sideAt([[395,254],[478,231],[481,250],[400,275]],.018),C.black,M.satin);
+  for (const sx of [-1,1]) {
+    for (const [x,y] of [[275,316],[305,310],[340,302],[283,331],[316,325],[349,318]])
+      body.add(box(.001,7*u,22*u,sx*.0225,Y(y),Z(x),.2,4,4), '#101216',M.rubber);
+    body.add(tubeAt([[470,224],[465,266],[480,280],[492,278]],.0024,sx*.019),C.metal,M.metal);
+  }
+  // Visible raked pistol and trigger retain their native attachment/recoil frame.
+  const trig = raked(body,.40,{color:C.pink,triggerColor:C.black,guard:false,baseColor:C.black});
+  body.add(sideAt([[382,361],[425,327],[472,303],[494,340],[491,393],[460,408],[451,383],[420,397]],.028),C.pink,M.gloss);
+  // The long wire guard terminates at the tank's front saddle, not a loose V in space.
+  for (const sx of [-1,1]) body.add(tubeAt([[359,479],[401,507],[617,506],[667,458],[746,458],[755,444]],.0022,sx*.013),C.metal,M.metal);
+  body.add(sideAt([[666,459],[745,458],[751,471],[655,471]],.033),C.black,M.satin);
+  // Upper sight is a pierced loop. Its side profile is broad only in the axial view.
+  body.add(sideAt([[749,283],[761,246],[777,214],[791,176],[802,159],[817,157],[813,191],[801,241],[798,288]],.014,0,.002),C.black,M.satin);
+  body.add(ring(.019,.0035,0,0,0,'z',6,28).rotateX(-.30).translate(0,Y(196),Z(794)),C.edge,M.satin);
+  // Short neck, the long packed purifier and a separate circumferential front clamp.
+  body.add(zcyl(50*u,Z(780),Z(853),0,AX,32),C.quartz,M.gloss);
+  body.add(zlathe([[0,Z(780)],[56*u,Z(783)],[56*u,Z(800)],[48*u,Z(808)],[0,Z(808)]],0,AX,0,32),C.black,M.satin);
+  body.add(zcyl(46*u,Z(808),Z(1021),0,AX,40),'#c6c3ac',M.gloss);
+  // Deterministic faceted aggregate; no image texture or per-frame work.
+  const pos=[],norm=[],col=[],mat=[],idx=[];
+  const palette=['#e0d7bf','#b5af94','#ccc5a9','#8d917f','#e1dfc7'].map(c=>new THREE.Color(c));
+  const sectors=40,rows=17;
+  for(let k=0;k<rows;k++)for(let j=0;j<sectors;j++){
+    const seed=((k+3)*92821+(j+5)*68917)%997;
+    const a=j*Math.PI*2/sectors,b=(j+1)*Math.PI*2/sectors;
+    const z0=Z(809+(1021-809)*k/rows),z1=Z(809+(1021-809)*(k+1)/rows);
+    const r=(45.6+(seed%9)*.24)*u,base=pos.length/3,c=palette[seed%palette.length];
+    for(const [t,z] of [[a,z0],[b,z0],[b,z1],[a,z1]]){pos.push(Math.cos(t)*r,AX+Math.sin(t)*r,z);norm.push(Math.cos(t),Math.sin(t),0);col.push(c.r,c.g,c.b);mat.push(M.satin);}
+    idx.push(base,base+1,base+2,base,base+2,base+3);
+  }
+  const gravel=new THREE.BufferGeometry();gravel.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));gravel.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));gravel.setAttribute('color',new THREE.Float32BufferAttribute(col,3));gravel.setAttribute('aMat',new THREE.Float32BufferAttribute(mat,1));gravel.setIndex(idx);body.list.push(gravel);
+  body.add(zlathe([[0,Z(837)],[53*u,Z(837)],[57*u,Z(845)],[57*u,Z(881)],[50*u,Z(889)],[0,Z(889)]],0,AX,0,32),C.black,M.satin);
+  // Front clamp is a wide pierced paddle; its lower eye stays open in three-quarter views.
+  body.add(sideAt([[851,358],[886,357],[899,404],[925,478],[926,501],[915,516],[901,507],[883,470],[866,415]],.016,0,.003,
+    [[[903,467],[914,486],[914,501],[906,496]]]),C.black,M.satin);
+  body.add(zlathe([[0,Z(1016)],[51*u,Z(1016)],[54*u,Z(1020)],[54*u,Z(1058)],[49*u,Z(1061)],
+    [36*u,Z(1061)],[36*u,Z(1047)],[0,Z(1047)]],0,AX,0,40),C.rim,M.metal);
+  body.add(zcyl(36*u,Z(1044),Z(1047),0,AX,32),'#202126',M.rubber);
+  body.add(ring(42*u,3.2*u,0,AX,Z(1060),'z',6,36),C.pink,M.gloss);
+  body.add(zlathe([[51.8*u,Z(1021)],[52.2*u,Z(1021)],[52.2*u,Z(1034)],[51.8*u,Z(1034)]],0,AX,0,40),'#c1a839',M.satin);
+  for(let j=0;j<8;j++){const a=j*Math.PI/4;body.add(box(.005,.008,.004,Math.cos(a)*53*u,AX+Math.sin(a)*53*u,Z(1028),.2,4,4),j%2?C.pink:'#68645a',M.satin);}
+  for(const sx of [-1,1]){
+    body.add(xcyl(.004,sx*.015,sx*.018,Y(319),Z(468),10),C.metal,M.metal);
+    body.add(xcyl(.004,sx*.012,sx*.015,Y(483),Z(909),10),C.metal,M.metal);
+  }
+  return rebuild(d,{body,ink:new Pieces(),parts:{can:part(can,[0,AX,(Z(491)+Z(768))/2],'ink'),trigger:part(trig,TRIGGER_PIVOT)},
+    gripR:rakedGrip(.40),gripL:supportGrip([0,.01,.265],0),muzzle:[0,.065,.38625]});
 }
 
 // ------------------------------------------------------------------------------------------ Jet Squelcher
@@ -245,3 +289,4 @@ export const MODELS = {
     // the bottle's fore-grip is far forward: carry it closer so the support hand still reaches (image-estimated)
     hold: { carry: { p: [-0.17, 0.79, 0.05], r: [0.45, 0.14, -0.14] }, run: { p: [-0.16, 0.81, 0.09] }, aim: { p: [-0.04, -0.07, 0.15] } } },
 };
+

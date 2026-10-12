@@ -1,0 +1,63 @@
+name: Five circled shooters model review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/shooters-b.mjs
+      - patches/splatoon3/tests/five-circled-shooters.test.mjs
+      - scripts/render-five-circled-shooters.mjs
+      - .github/workflows/five-circled-shooters.yml
+permissions:
+  contents: read
+concurrency:
+  group: five-circled-shooters-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  measured-visual:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify source geometry, preserved sockets, real emission and all 65 models
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-circled-shooters.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Build exact production compositions
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .before-site
+          node scripts/build-inkwave.mjs inkwave-public .after-site
+      - name: Verify emitted candidate with real Actor
+        env:
+          INKWAVE_BUILT_SITE: .after-site
+          WEAPON_IDS: s3-shooter-heavy
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-circled-shooters.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Real browser views, supported PMREM and native Environment
+        run: |
+          for environment in studio1024 productionDay; do
+            for version in before after; do
+              node scripts/render-five-circled-shooters.mjs --site ".${version}-site" --out ".evidence/${environment}/${version}" --ids s3-shooter-heavy --size 640 --environment "$environment"
+            done
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-circled-shooters-${{ github.event.pull_request.head.sha }}
+          path: .evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
