@@ -14,7 +14,7 @@ export async function run(config) {
   const profile = await fetch(config.prefix + 'patches/splatoon3/profile.json').then(r => { check(r.ok, 'profile load'); return r.json(); });
   const {install} = await import(config.prefix + 'patches/splatoon3/runtime/install.mjs'); install(profile);
   const {Character} = await import(config.prefix + 'src/game/character.js');
-  const renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true}); renderer.setSize(640,480); renderer.setPixelRatio(1); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .94; renderer.info.autoReset = false; renderer.shadowMap.type = THREE.PCFSoftShadowMap; document.body.appendChild(renderer.domElement);
+  const renderer = new THREE.WebGLRenderer({antialias: true, preserveDrawingBuffer: true}); renderer.setSize(640,480); renderer.setPixelRatio(1); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .94; renderer.info.autoReset = false; renderer.shadowMap.type = THREE.PCFShadowMap; document.body.appendChild(renderer.domElement);
   const gl = renderer.getContext(); check(!gl.isContextLost(), 'WebGL context');
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#38404c');
   const camera = new THREE.OrthographicCamera(-2.35,2.35,1.7625,-1.7625,.01,30);
@@ -44,7 +44,7 @@ export async function run(config) {
     for(let i=0;i<count;i++){const pivot=new THREE.Group(),clone=root.clone(true);clone.position.sub(center);pivot.add(clone);pivot.scale.setScalar(scale);pivot.position.set(count===1?.5:(i%4)*.6-.7, count===1?1.0:Math.floor(i/4)*.8+.58,0);batch.add(pivot);}
     scene.add(batch); active={batch,root,loadMs:performance.now()-start}; return active;
   }
-  function unload() { if(!active)return null;scene.remove(active.batch);active.batch.clear();const result=dispose(active.root);active=null;renderer.renderLists.dispose();render();return result; }
+  function unload() { if(!active)return null;const removed=active;active=null;scene.remove(removed.batch);removed.batch.clear();progress.stage+=':detach';renderer.renderLists.dispose();render();const result=dispose(removed.root);progress.stage+=':dispose';renderer.renderLists.dispose();render();return result; }
   const rows=progress.rows, lifecycle=progress.lifecycle, images=[];
   try {
     progress.stage='native-witness';view('front');lighting('day',false);render();const withWitness=pixels();setWitnessCount(0);render();const withoutWitness=pixels();setWitnessCount(1);check(changed(withWitness,withoutWitness)>100,'built Character generated visible pixels');
