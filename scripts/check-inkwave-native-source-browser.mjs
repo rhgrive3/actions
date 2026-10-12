@@ -23,7 +23,8 @@ try{
  await page.evaluate(()=>{NG.game._skipRender=true;NG.game.menus.show('setup');});
  result.menu=await page.locator('.iw-ticket__name').allTextContents();for(const s of SOURCE_STAGES)assert(result.menu.includes(s.name),s.name+' not selectable');console.log('five source choices visible');save();
  for(const s of SOURCE_STAGES.filter(s=>!process.env.NATIVE_STAGE_IDS||process.env.NATIVE_STAGE_IDS.split(',').includes(s.id))){
-  console.log('select '+s.id);await page.evaluate(()=>{NG.game.debug.unfreeze();NG.game._skipRender=true;NG.game.menus.show('setup');});
+  console.log('select '+s.id);await page.evaluate(()=>{NG.game.input.exitLock();NG.game.debug.unfreeze();NG.game._skipRender=true;NG.game.menus.show('setup');});
+  await page.waitForFunction(()=>!document.pointerLockElement);
   await page.waitForFunction(name=>{const root=NG.game.menus._scr?.el,ticket=[...root.querySelectorAll('.iw-ticket')].find(e=>e.textContent.includes(name));if(!ticket)return false;let opacity=1;for(let e=ticket;e&&e!==root.parentElement;e=e.parentElement)opacity*=Number(getComputedStyle(e).opacity);return opacity>.7;},s.name);
   await page.locator('.iw-ticket').filter({hasText:s.name}).click();assert.equal(await page.evaluate(()=>NG.game.menus._setup.mapId),s.id);
   await page.locator('.iw-btn--start').click();
@@ -37,6 +38,17 @@ try{
   await page.evaluate(async()=>{const {MAPS}=await import(new URL('src/config.js',document.baseURI));await NG.game._buildWorld(MAPS.find(m=>m.id==='tidewater'));});
   await page.evaluate(async id=>{const {MAPS}=await import(new URL('src/config.js',document.baseURI));await NG.game._buildWorld(MAPS.find(m=>m.id===id));},last);
   result.cache={id:last,derivedCacheHit:await page.evaluate(()=>NG.level.data.sourceMetrics.cached),objDownloads:result.downloads-before};assert.equal(result.cache.derivedCacheHit,true);assert.equal(result.cache.objDownloads,0);
+ }
+ if(result.stages.length===5){
+  console.log('source failure rollback');const first=SOURCE_STAGES[0];
+  await context.route('**/stages/'+first.internal+'/'+first.internal+'.obj',route=>route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},body:Buffer.alloc(4)}));
+  await page.evaluate(()=>{globalThis.rollbackLevel=NG.level;NG.game.input.exitLock();NG.game.debug.unfreeze();NG.game._skipRender=true;NG.game.menus.show('setup');});
+  await page.waitForFunction(()=>!document.pointerLockElement);
+  await page.waitForFunction(()=>{const e=[...NG.game.menus._scr.el.querySelectorAll('.iw-ticket')].find(e=>e.textContent.includes('ユノハナ大渓谷'));return Number(getComputedStyle(e).opacity)>.7;});
+  await page.locator('.iw-ticket').filter({hasText:first.name}).click();await page.locator('.iw-btn--start').click();
+  await page.waitForFunction(()=>NG.game.menus.current==='setup'&&document.body.textContent.includes('ステージを読み込めませんでした'),null,{timeout:180000});
+  result.failureRollback=await page.evaluate(()=>({levelRetained:NG.level===rollbackLevel,menu:NG.game.menus.current,loadingRemoved:!document.getElementById('native-stage-loading')}));
+  assert.equal(result.failureRollback.levelRetained,true);assert.equal(result.failureRollback.loadingRemoved,true);
  }
  assert.equal(result.errors.length,0,JSON.stringify(result.errors));result.status='passed';
 }catch(error){result.status='failed';result.error=error.stack;result.state=await page.evaluate(()=>({mode:NG?.mode,map:NG?.level?.layout.id,menu:NG?.game?.menus?.current,loading:document.getElementById('native-stage-loading')?.textContent,boot:document.getElementById('boot-error')?.textContent})).catch(()=>null);await page.screenshot({path:path.join(out,'failure.png'),timeout:15000}).catch(()=>{});throw error;}
