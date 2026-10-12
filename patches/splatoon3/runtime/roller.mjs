@@ -635,26 +635,66 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
   };
 }
 
+// Native attack release owns the exact end of windup for both swings. The
+// authored *pose* uses C1-continuous nonuniform Hermite segments. Shared
+// velocities at coil / release / follow-through eliminate the stop-and-go
+// motion produced by chaining several independent smoothsteps. These are
+// INKWAVE grip coordinates, NOT recovered Nintendo bone tracks.
+const HORIZONTAL_GRIPS = [
+  { a: READY_ANCHOR, r: READY_ROTATION },
+  { a: [-.13, 1.06, -.02], r: [-2.3, .3, 0] },
+  { a: [-.07, 1.18 + DRUM_LIFT, .3], r: [-.1, .05, 0] },
+  { a: [-.06, .79, .3], r: [.75, .05, 0] },
+  { a: READY_ANCHOR, r: READY_ROTATION },
+];
+const VERTICAL_GRIPS = [
+  { a: READY_ANCHOR, r: READY_ROTATION },
+  { a: [.015, 1.11, .025], r: [VERTICAL_SWING.coil, .015, Math.PI / 2] },
+  { a: [-.025, 1.05, .23], r: [VERTICAL_SWING.release, 0, Math.PI / 2] },
+  { a: [-.025, 1.12, .28], r: [VERTICAL_SWING.follow, 0, 0] },
+  { a: READY_ANCHOR, r: READY_ROTATION },
+];
+function slope(keys, times, i, joint, component) {
+  if (i === 0 || i === keys.length - 1) return 0;
+  const before = (keys[i][joint][component] - keys[i - 1][joint][component]) / (times[i] - times[i - 1]);
+  const after = (keys[i + 1][joint][component] - keys[i][joint][component]) / (times[i + 1] - times[i]);
+  if (before * after <= 0) return 0;
+  // Weighted harmonic mean prevents overshoot while keeping the same tangent
+  // on both sides of a keyframe (including the release frame).
+  const a = times[i] - times[i - 1], b = times[i + 1] - times[i];
+  const w1 = 2 * b + a, w2 = b + 2 * a;
+  return (w1 + w2) / (w1 / before + w2 / after);
+}
+function swingPose(elapsed, windup, interval, keys) {
+  const release = Math.max(1e-6, windup);
+  const end = Math.max(release + 1 / 60, interval);
+  const follow = release + Math.min(.12, (end - release) * .55);
+  const times = [0, release * .65, release, follow, end];
+  const t = Math.max(0, Math.min(end, elapsed));
+  let segment = 0;
+  while (segment < 3 && t > times[segment + 1]) segment++;
+  const h = times[segment + 1] - times[segment], u = Math.max(0, Math.min(1, (t - times[segment]) / h));
+  const u2 = u * u, u3 = u2 * u;
+  const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u;
+  const h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+  const sample = (joint, component) =>
+    h00 * keys[segment][joint][component]
+    + h10 * h * slope(keys, times, segment, joint, component)
+    + h01 * keys[segment + 1][joint][component]
+    + h11 * h * slope(keys, times, segment + 1, joint, component);
+  const anchor = [sample('a', 0), sample('a', 1), sample('a', 2)];
+  const rotation = [sample('r', 0), sample('r', 1), sample('r', 2)];
+  return { anchor, rotation, weight: ease(t / (2 / 60)) * (1 - ease((t - follow) / (end - follow))),
+    coil: ease(t / (release * .65)) * (1 - ease((t - release * .65) / (release * .35))),
+    whip: ease((t - release * .65) / (release * .35)) * (1 - ease((t - follow) / (end - follow))) };
+}
+export function horizontalRollerPose(elapsed, windup, interval) {
+  return swingPose(elapsed, windup, interval, HORIZONTAL_GRIPS);
+}
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
 export function verticalRollerPose(elapsed, windup, interval) {
-  const coil = ease(elapsed / (windup * .68));
-  const whip = ease((elapsed - windup * .76) / (windup * .24));
-  const follow = ease((elapsed - windup) / .12);
-  const recover = ease((elapsed - windup - .12) / Math.max(.01, interval - windup - .12));
-  const weight = ease(elapsed / (2 / 60)) * (1 - recover);
-  const anchor = [mix(READY_ANCHOR[0], .015, coil), mix(READY_ANCHOR[1], 1.11, coil), mix(READY_ANCHOR[2], .025, coil)];
-  const rotation = [mix(READY_ROTATION[0], VERTICAL_SWING.coil, coil), mix(READY_ROTATION[1], .015, coil), mix(READY_ROTATION[2], Math.PI / 2, coil)];
-  // Keep the upright drum clear of the floor through its follow-through. A
-  // horizontal carry-height target clips the lower cap while the axis is tilted.
-  const release = [-.025, 1.05, .23], end = [-.025, 1.12, .28];
-  for (let i = 0; i < 3; i++) anchor[i] = mix(mix(anchor[i], release[i], whip), end[i], follow);
-  rotation[0] = mix(mix(rotation[0], VERTICAL_SWING.release, whip), VERTICAL_SWING.follow, follow);
-  rotation[1] = mix(rotation[1], 0, whip);
-  // The drum lands across the front: an upright drum as wide as the Inkling is
-  // tall would drive its lower end into the floor at the bottom of the slam.
-  rotation[2] = mix(rotation[2], ROLL_ROTATION[2], follow);
-  return { anchor, rotation, weight, coil: coil * (1 - whip), whip: whip * (1 - recover) };
+  return swingPose(elapsed, windup, interval, VERTICAL_GRIPS);
 }
 
 export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {
@@ -761,22 +801,18 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // roll begins. Input release/cancel before admission still uses recovery.
     if (state.released && state.rolling && this.kidForm && this.grounded && !this.dance) return;
     if (!state.vertical) {
-      // Preserve the upstream horizontal joints, retiming coil/whip/recovery to
-      // the actual attack, including the existing calibrated cooldown.
-      const age = state.elapsed < state.windup ? state.elapsed / state.windup * .23 : .23 + (state.elapsed - state.windup) / (state.interval - state.windup) * .45;
+      // Torso effort and arm IK remain native, but the actual two-hand grip
+      // is sampled directly from the Runner's release time instead of
+      // borrowing the incompatible fixed .23/.68-second preview timeline.
+      const age = state.elapsed < state.windup
+        ? state.elapsed / state.windup * .23
+        : .23 + (state.elapsed - state.windup) / Math.max(1 / 60, state.interval - state.windup) * .45;
       const base = P.slice();
       flick.call(this, P, age);
-      const coil = ease(state.elapsed / (state.windup * .65)) * (1 - ease((state.elapsed - state.windup * .65) / (state.windup * .35)));
-      const recover = ease((age - .42) / .26);
-      P[C.ANC + 1] -= .16 * coil;
-      // The sweep keeps the larger drum (roller-model.mjs) at the same floor clearance.
-      P[C.ANC + 1] += (.2 + DRUM_LIFT) * ease((state.elapsed - state.windup) / .08) * (1 - recover);
-      // Start from the raised carry instead of first dropping to the upstream
-      // low carry and lifting again. Keep its arm/body curves for the swing.
-      const lift = ease(state.elapsed / (state.windup * .64));
+      const curve = horizontalRollerPose(state.elapsed, state.windup, state.interval);
       for (let i = 0; i < 3; i++) {
-        P[C.ANC + i] = mix(base[C.ANC + i], P[C.ANC + i], lift);
-        P[C.ANCR + i] = mix(base[C.ANCR + i], P[C.ANCR + i], lift);
+        P[C.ANC + i] = curve.anchor[i];
+        P[C.ANCR + i] = curve.rotation[i];
       }
       const weight = ease(state.elapsed / (3 / 60)) * (state.released && state.rolling ? 1 - this.wRoll : 1);
       for (let i = 0; i < P.length; i++) P[i] = mix(base[i], P[i], weight);
