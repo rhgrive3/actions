@@ -6,6 +6,9 @@ on:
       - .github/workflows/nautilus-finish-environment.yml
       - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-finish-environment.mjs
       - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-inner-coil-candidate.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-environment.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-candidate.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-inner-coil-cap-baseline.mjs
 permissions:
   contents: read
 jobs:
@@ -34,8 +37,8 @@ jobs:
           test "$(git -C .finish-source rev-parse HEAD)" = f2a87e9e56387ada0487205c195eeee4e73baa6f
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node .finish-source/scripts/build-inkwave.mjs .finish-source/inkwave-public .finish-site
-      - name: Restore metal, test inner coil, and isolate silver cap finish
-        run: node reports/weapon-model-rebuild-20261012/diagnostics/nautilus-finish-environment.mjs --site .finish-site --source .finish-source --out .finish-evidence
+      - name: Compare neck dial against the frozen coil and shell candidate
+        run: node reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-environment.mjs --site .finish-site --source .finish-source --out .finish-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
