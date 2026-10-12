@@ -58,10 +58,9 @@ jobs:
           cmp .baseline/scripts/check-held-timeline.mjs .candidate/scripts/check-held-timeline.mjs
           node --check .baseline/scripts/check-held-timeline.mjs
           printf '%s\n%s\n' "$BASE_SHA" "$CANDIDATE_SHA" > "$DIAG/source-shas.txt"
-      - name: Source and production-built layout ownership contracts
+      - name: Source ownership and actual-built native layout
         run: |
           node --test patches/reliability/tests/pressed-button-center.test.mjs
-          INKWAVE_BUILT_SITE="$DIAG/candidate-site" node --test patches/reliability/tests/pressed-button-center.test.mjs
           node scripts/check-inkwave-touch-layout.mjs --site "$DIAG/candidate-site" --evidence-dir "$DIAG/evidence/native-layout" --profile-dir "$DIAG/profiles/native-layout"
       - name: Predeclared ABBA with fresh browser profiles and original assertions
         run: |

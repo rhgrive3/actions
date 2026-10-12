@@ -7,7 +7,8 @@ import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const upstream=process.env.INKWAVE_UPSTREAM_SOURCE||path.join(root,'inkwave-public');
 const raw=fs.readFileSync(path.join(upstream,'src/core/mobile.js'),'utf8');
-const code=process.env.INKWAVE_BUILT_SITE?fs.readFileSync(path.join(process.env.INKWAVE_BUILT_SITE,'src/core/mobile.js'),'utf8'):adaptTouchLayout('src/core/mobile.js',raw);
+// Source ownership contract; the dedicated browser gate executes minified production bytes.
+const code=adaptTouchLayout('src/core/mobile.js',raw);
 const layout=code.match(/  _layoutAll\(\) \{[\s\S]*?\n  \}/)?.[0];
 assert(layout,'actual native layout method retained');
 const ids=['fire','jump','sub','squid','special','map','pause','gyro','stick'];
