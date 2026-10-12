@@ -88,7 +88,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (!this.grounded) {
       // Retain each form's target speed. The shared humanoid air calibration
       // owns ordinary acceleration and neutral/reverse braking in both forms.
-      const mist=toxicMistScale(this);
+      const mist=isSquid?1:toxicMistScale(this);
       // Squid airborne momentum remains unchanged until its retail Mist
       // rule is established; do not introduce an inferred velocity cap.
       const target = isSquid ? Math.max(P.squidDrySpeed,sp) : Math.max(this.weaponRunner.moveSpeed(), P.airMinSpeed*mist);
@@ -103,7 +103,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (groundStart < 0 || groundEnd < groundStart) throw new Error('Movement physics: missing grounded movement block');
     replace(code.slice(groundStart, groundEnd),
 `    // ---- grounded: Splatoon 3 constant vector acceleration model
-    const mist=toxicMistScale(this);
+    const mist=(isSquid||onEnemy)?toxicMistScale(this):1;
     let vt;
     if (isSquid && this.submerged) vt = P.swimSpeed*mist;
     else if (isSquid) vt = P.squidDrySpeed*mist;

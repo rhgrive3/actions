@@ -189,7 +189,7 @@ try {
         }
         G.projectiles.clear();
       }
-      const mistChecks=[];
+      const mistChecks=[];const mistQueryChecks=[];
       {
         const saved={actors:G.actors,projectiles:G.projectiles,time:G.time};
         G.projectiles=new Projectiles(G.scene);G.actors=[];
@@ -212,6 +212,18 @@ try {
           victim.pos.x+=20;victim.vel.set(0,0,0);for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
           check(Math.abs(victim.vel.z-(squid?11.52:5.76))<1e-8,'Mist exit restores target speed');
         }
+        const live=G.projectiles._s3SubObjects,los=G.physics.los;let losCalls=0;
+        G.physics.los=function(...args){losCalls++;return los.apply(this,args);};
+        try {
+          victim.pos.copy(cloud.pos);victim.form='kid';victim.grounded=true;
+          for(const count of [1,96]){
+            G.projectiles._s3SubObjects=Array.from({length:count},()=>({...cloud}));losCalls=0;
+            victim._horizontal(1/60,false,false);check(losCalls===1,'Mist human query has one LOS for '+count+' equal volumes');
+            mistQueryChecks.push({volumes:count,form:'kid',losCalls});
+          }
+          victim.grounded=false;victim.form='squid';losCalls=0;victim._horizontal(1/60,true,false);
+          check(losCalls===0,'Mist airborne squid skips unused query');mistQueryChecks.push({volumes:96,form:'air-squid',losCalls});
+        } finally {G.physics.los=los;G.projectiles._s3SubObjects=live;}
         G.projectiles.clear();Object.assign(G,saved);
       }
       const accelerationChecks=[];
@@ -473,7 +485,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
+        wallFacingChecks, catalogueSubChecks, directSubChecks, accelerationChecks, mistChecks, mistQueryChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

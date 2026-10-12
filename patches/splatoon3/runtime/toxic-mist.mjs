@@ -18,7 +18,9 @@ export function toxicMistScale(actor) {
   // Reuse the bounded live-object list. No lease can outlive a cloud, match
   // clear, departure from its volume, or a death/respawn transition.
   for (const cloud of context?.G.projectiles?._s3SubObjects || []) {
-    if (toxicMistContains(actor,cloud)) base=Math.min(base,cloud.spec.slowScale);
+    // Once a stronger live volume is proven, equal/weaker volumes cannot
+    // change this query. This skips LOS only; no position or tick cache is kept.
+    if (cloud.subId==='toxicMist' && cloud.spec?.slowScale<base && toxicMistContains(actor,cloud)) base=cloud.spec.slowScale;
   }
   const rate=actor.s3?.modifiers?.subMistResistance;
   return 1-(1-base)*(Number.isFinite(rate)?Math.max(.5,Math.min(1,rate)):1);
