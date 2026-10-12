@@ -1,6 +1,6 @@
 # Five circled shooters: measurement-led rebuild
 
-Work in progress. This first candidate changes only the standard .96 Gal. The other four circled weapons (Splattershot Nova, L-3 Nozzlenose, H-3 Nozzlenose and Squeezer) are being measured. Splattershot Pro and Jet Squelcher are outside the user's circles and untouched. Do not merge before individual multi-view review and final integration.
+Work in progress. The second candidate changes .96 Gal, L-3 Nozzlenose, H-3 Nozzlenose and Squeezer. Splattershot Nova is measured but its replacement and outlet verification are pending. Splattershot Pro and Jet Squelcher are outside the user's circles and untouched. Do not merge before individual multi-view review and final integration.
 
 ## Reference identity and measurement
 
@@ -42,3 +42,26 @@ Changes: ribbed/waisted water bottle rather than a smooth cylinder; open stock b
 - Browser renders use supported 1024×512 equirectangular PMREM (cube256) and a second native Environment day IBL/sun/hemisphere + Neutral tone-map. They are direct-render pre-postprocessing evidence, not a full game poststack claim.
 - The former 32×16 gallery's cube8 PMREM is invalid for material acceptance; its dark reflections are not used to infer black paint.
 - Multi-angle, held views, source-motion, exact-head full CI and final online/LOD integration remain pending before acceptance.
+
+## Second candidate: three further measured shapes
+
+The next candidate includes L-3, H-3 and Squeezer, plus .96 purifier granule and muzzle-depth corrections. Nova remains unchanged while its upper outlet/lower pump relationship is checked against firing footage. No shot or aim data has changed. Exact muzzle and both hand frames remain the previous values for all four candidates.
+
+| Weapon / frame | Image-plane roll | Corrected principal measurements (pixels) | Dimensionless checks |
+|---|---:|---|---|
+| Nova standard / 7.50 s / 1280×720 | 8.5308° | total 719; rear bottle L426/D182; upper bulb D130; upper axis310, lower axis424 | rear bottle L/total .593; upper/lower axis separation .159 total |
+| L-3 D / 11.50 s / 1280×720 | 14.0362° | total626; reel L247/D224; reel axis354, outlet axis310; front collar779→976 | reel L/total .395; D/total .358; axis offset .070 total |
+| H-3 VIP-R / 1.50 s / 1920×1080 | 8.6065° | total1140; reel L290/D266; reel axis575, outlet axis519; union996→1194; front cap1270→1510 | reel L/total .254; D/total .233; axis offset .049 total |
+| Squeezer Foil / 0.00 s / 1920×1080 | 16.7954° | total1130; bottle608→1519 L911; maximum D372; straps771→803 and951→989 | bottle L/total .806; D/total .329; strap spacing .159 total |
+
+Axis corrections use the barrel/plumbing centre line, not the weapon's bounding box. Grids and selected axes are in `*-measurement.jpg` and `measurement-inputs.json`. Estimates retain ±3 px hard-edge and ±6 px curved/occluded uncertainty. Images still have residual perspective; these are measured authoring constraints, not calibrated scan dimensions. The Squeezer's foil-specific long cap is excluded from the standard candidate even though it is visible in the measured source. The .96 standard render shows both an exterior yellow band and an interior pink muzzle lip; those are separate surfaces.
+
+L-3 and H-3 now have four thick hose turns, distinct reel flange/axle/frame, offset plumbing, broad nozzle heads, recessed face detail and model-specific valve/lever. H-3 uses the standard blue lever and silver hex-union assembly. Squeezer has a rounded bottle with a tapering long neck, broad metal straps, thin wire cage, wood-coloured grip, red/white body finish and short standard cap. Grip fitting uses the existing attachment frame and does not assert that retail hand positions are reproduced.
+
+### First exact-head browser result
+
+Draft head `28cc4b9006060e2af8a3d5397fabd9041aa4641f`: [dedicated build/browser workflow](https://github.com/rhgrive3/actions/actions/runs/38246761291) passed. It built baseline and candidate production sites and rendered eight isolated directions plus idle/walk/fire/after poses under both supported studio PMREM and native day Environment. Actual .96 Actor emission at 30/60/120 Hz passed, maximum support-hand distance 0.000466 m. Inspection found a coplanar muzzle-backplate artifact and overly rectangular purifier grains; these were corrected in the second candidate and require its own browser evidence. No acceptance is claimed for the pending tank label or full game poststack.
+
+### Updated integration base
+
+The second candidate composes main `80555b8cf12e3a9529c0f461bd2acc3ee17f1764`, including the merged far-LOD material-boundary fix. The review baseline is updated to the same main so geometry comparisons do not confound the shared LOD change. The seven original family definitions remain the socket baseline; outside-circle Pro/Jet and still-pending Nova are byte-identical geometry in this pass. The per-model files do not alter the shared LOD implementation.

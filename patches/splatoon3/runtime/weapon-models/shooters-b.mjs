@@ -7,7 +7,7 @@
 // reference pixels, with the handle centre at the origin. Internal model names come from Leanny/splat3
 // ActorInfo (Fmdb). Everything is procedural geometry.
 import { THREE, Pieces, M, V, zlathe, zcyl, ring, pipe, slab, smoothOutline, pistolGrip, gripSpec, part, rebuild,
-  TRIGGER_PIVOT, box, xcyl } from './kit.mjs';
+  TRIGGER_PIVOT, box, xcyl, ycyl } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = handle centre in the image, s = metres/pixel.
 // Returns [z, y] so that slab / zlathe outlines take it directly.
@@ -118,14 +118,23 @@ function heavy(d) {
   // Deterministic faceted aggregate; no image texture or per-frame work.
   const pos=[],norm=[],col=[],mat=[],idx=[];
   const palette=['#e0d7bf','#b5af94','#ccc5a9','#8d917f','#e1dfc7'].map(c=>new THREE.Color(c));
-  const sectors=40,rows=17;
+  const sectors=42,rows=30;
+  // 6-8 reference-pixel mineral granules, staggered and irregular rather than brick strips.
   for(let k=0;k<rows;k++)for(let j=0;j<sectors;j++){
     const seed=((k+3)*92821+(j+5)*68917)%997;
-    const a=j*Math.PI*2/sectors,b=(j+1)*Math.PI*2/sectors;
-    const z0=Z(809+(1021-809)*k/rows),z1=Z(809+(1021-809)*(k+1)/rows);
-    const r=(45.6+(seed%9)*.24)*u,base=pos.length/3,c=palette[seed%palette.length];
-    for(const [t,z] of [[a,z0],[b,z0],[b,z1],[a,z1]]){pos.push(Math.cos(t)*r,AX+Math.sin(t)*r,z);norm.push(Math.cos(t),Math.sin(t),0);col.push(c.r,c.g,c.b);mat.push(M.satin);}
-    idx.push(base,base+1,base+2,base,base+2,base+3);
+    const angle=(j+(k%2)*.5+(seed%13-6)*.019)*Math.PI*2/sectors;
+    const zz=813+(1017-813)*(k+.5)/rows+(seed%7-3)*.27;
+    const radius=(46.1+(seed%5)*.24)*u,c=palette[seed%palette.length];
+    const points=[[angle,Z(zz)]];
+    for(let e=0;e<6;e++){const t=e*Math.PI/3,sh=.83+((seed*(e+3))%19)*.013;
+      points.push([angle+Math.cos(t)*(Math.PI/sectors)*sh,Z(zz+Math.sin(t)*3.6*sh)]);}
+    for(let e=0;e<6;e++){
+      const base=pos.length/3,shade=.88+((seed+e*7)%17)*.009;
+      for(const n of[0,e+1,(e+1)%6+1]){const[t,z]=points[n],r=radius+(n===0?.4:0)*u;
+        pos.push(Math.cos(t)*r,AX+Math.sin(t)*r,z);norm.push(Math.cos(t),Math.sin(t),0);
+        col.push(c.r*shade,c.g*shade,c.b*shade);mat.push(M.satin);}
+      idx.push(base,base+1,base+2);
+    }
   }
   const gravel=new THREE.BufferGeometry();gravel.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));gravel.setAttribute('normal',new THREE.Float32BufferAttribute(norm,3));gravel.setAttribute('color',new THREE.Float32BufferAttribute(col,3));gravel.setAttribute('aMat',new THREE.Float32BufferAttribute(mat,1));gravel.setIndex(idx);body.list.push(gravel);
   body.add(zlathe([[0,Z(837)],[53*u,Z(837)],[57*u,Z(845)],[57*u,Z(881)],[50*u,Z(889)],[0,Z(889)]],0,AX,0,32),C.black,M.satin);
@@ -134,10 +143,10 @@ function heavy(d) {
     [[[903,467],[914,486],[914,501],[906,496]]]),C.black,M.satin);
   body.add(zlathe([[0,Z(1016)],[51*u,Z(1016)],[54*u,Z(1020)],[54*u,Z(1058)],[49*u,Z(1061)],
     [36*u,Z(1061)],[36*u,Z(1047)],[0,Z(1047)]],0,AX,0,40),C.rim,M.metal);
-  body.add(zcyl(36*u,Z(1044),Z(1047),0,AX,32),'#202126',M.rubber);
+  body.add(zcyl(36*u,Z(1047.2),Z(1048),0,AX,32),'#202126',M.rubber);
   body.add(ring(42*u,3.2*u,0,AX,Z(1060),'z',6,36),C.pink,M.gloss);
-  body.add(zlathe([[51.8*u,Z(1021)],[52.2*u,Z(1021)],[52.2*u,Z(1034)],[51.8*u,Z(1034)]],0,AX,0,40),'#c1a839',M.satin);
-  for(let j=0;j<8;j++){const a=j*Math.PI/4;body.add(box(.005,.008,.004,Math.cos(a)*53*u,AX+Math.sin(a)*53*u,Z(1028),.2,4,4),j%2?C.pink:'#68645a',M.satin);}
+  body.add(zlathe([[54.4*u,Z(1021)],[54.8*u,Z(1021)],[54.8*u,Z(1034)],[54.4*u,Z(1034)]],0,AX,0,40),'#c1a839',M.satin);
+  for(let j=0;j<8;j++){const a=j*Math.PI/4;body.add(box(.005,.008,.004,Math.cos(a)*55.2*u,AX+Math.sin(a)*55.2*u,Z(1028),.2,4,4),j%2?C.pink:'#68645a',M.satin);}
   for(const sx of [-1,1]){
     body.add(xcyl(.004,sx*.015,sx*.018,Y(319),Z(468),10),C.metal,M.metal);
     body.add(xcyl(.004,sx*.012,sx*.015,Y(483),Z(909),10),C.metal,M.metal);
@@ -206,28 +215,85 @@ function nova(d) {
 /** Shared Nozzlenose frame: a reel (blue flanges, ribbed core = the ink hose, pulses per shot), a black frame,
  *  a coupler, a collar and a big nozzle cap set higher than the reel axis. Per-model numbers in `o`. */
 function nozzlenose(d, o) {
-  const P = px(o.gx, o.gy, o.s), Z = x => P(x, 0)[0], Y = y => P(0, y)[1];
-  const C = { blue: '#2a3ec2', black: '#1e1f23', silver: '#9aa0aa', reel: '#c9c8dc' };
-  const body = new Pieces(), can = new Pieces();
-  const reelY = Y(o.reelY), nozY = Y(o.nozY), R = o.reelR * o.s, Rc = o.coreR * o.s;
-  const [f0, f1, f2, f3] = o.reel;
-  for (const [a, b] of [[f0, f1], [f2, f3]]) body.add(zcyl(R, Z(a), Z(b), 0, reelY, 28), C.blue, M.gloss);
-  can.add(zcyl(Rc, Z(f1), Z(f2), 0, reelY, 28), C.reel, M.satin);
-  for (let x = f1 + 6; x < f2; x += 9) can.add(ring(Rc + 0.0006, 0.0012, 0, reelY, Z(x), 'z', 4, 24), C.reel, M.satin);
-  body.add(side(P, o.bar, 0.035), o.barColor, M.satin);
-  body.add(side(P, o.front, 0.035), C.black, M.satin);
-  body.add(side(P, o.rear, 0.035), C.black, M.satin);
-  body.add(zcyl(o.couplerR * o.s, Z(o.coupler[0]), Z(o.coupler[1]), 0, nozY, 6), C.silver, M.metal);
-  if (o.collar) body.add(zcyl(o.collarR * o.s, Z(o.collar[0]), Z(o.collar[1]), 0, nozY, 24), o.collarColor, M.gloss);
-  body.add(capLathe(P, o.s, o.cap, nozY, 30), o.capColor, M.gloss);
-  const trig = raked(body, o.rake, { color: o.gripColor, triggerColor: C.black, guardColor: C.black, w: o.w });
-  return rebuild(d, {
-    body, ink: new Pieces(),
-    parts: { can: part(can, [0, reelY, Z((f1 + f2) / 2)], 'body'), trigger: part(trig, TRIGGER_PIVOT) },
-    gripR: rakedGrip(o.rake),
-    gripL: supportGrip([0, Y(o.supY), Z(o.supX)], 0),
-    muzzle: [0, nozY, Z(o.muzzleX)],
-  });
+  // Measure S3 D / VIP-R turntables after 14.04 / 8.61 degree roll correction.
+  // Use ONLY the common reel/frame/plumbing; base-variant finish comes from its S3 render.
+  // No D logo/silver frame or VIP-R snake skin, straps or spikes are transferred.
+  const h = o === H3;
+  const q = h ? {end:1510,origin:480,axis:519,reelY:575,reel:[615,643,877,905],r:133,
+    top:425,bottom:743,front:995,cap:[1270,1375,1510],collar:[1190,1280],scale:(388-36)*(0.11/84)/(1510-480)}
+    : {end:976,origin:405,axis:310,reelY:354,reel:[459,484,680,706],r:112,
+      top:239,bottom:484,front:777,cap:[842,918,976],collar:[779,844],scale:(377-60)*(0.11/100)/(976-405)};
+  const oldP=px(o.gx,o.gy,o.s), muzzle=[0,oldP(0,o.nozY)[1],oldP(o.muzzleX,0)[0]],AX=muzzle[1];
+  const u=q.scale,Z=x=>muzzle[2]+(x-q.end)*u,Y=y=>AX+(q.axis-y)*u;
+  const C={blue:'#293b99',blueEdge:'#364cb2',black:'#202329',edge:'#363a3d',mint:'#87bbb0',metal:'#b9bfbc',hose:'#d8d6c9'};
+  const body=new Pieces(),can=new Pieces(),[f0,f1,f2,f3]=q.reel,ry=Y(q.reelY),rr=q.r*u;
+  const panel=(points,width,x=0,bevel=.001)=>slab(points.map(([z,y])=>[Z(z),Y(y)]),width,x,bevel);
+  const tube=(points,r,x=0)=>pipe(points.map(([z,y])=>[x,Y(y),Z(z)]),r,Math.max(10,points.length*3),6);
+  // Broad reel flanges with recessed dishes, raised outer rim and a real axle.
+  for(const [a,b]of[[f0,f1],[f2,f3]]){
+    body.add(zlathe([[0,Z(a)],[rr*.77,Z(a)],[rr*.96,Z(a+3)],[rr,Z(a+8)],[rr,Z(b-5)],[rr*.9,Z(b)],[0,Z(b)]],0,ry,0,36),C.blue,M.gloss);
+    body.add(ring(rr*.88,.0018,0,ry,Z((a+b)/2),'z',5,36),C.blueEdge,M.gloss);
+    body.add(zcyl(rr*.19,Z(a-1),Z(b+1),0,ry,14),C.edge,M.satin);
+  }
+  body.add(zcyl(rr*.28,Z(f0-47),Z(f3+5),0,ry,14),C.metal,M.metal);
+  // Four thick helical hose turns, rather than a solid cylinder with many fine rings.
+  const coils=h?4:4.25, hoseR=(h?25:23)*u, major=rr-hoseR-3*u,points=[];
+  const start=Z(f1)+hoseR*.8,end=Z(f2)-hoseR*.8;
+  for(let k=0;k<=192;k++){const t=k/192,a=t*Math.PI*2*coils;points.push([Math.cos(a)*major,ry+Math.sin(a)*major,start+(end-start)*t]);}
+  can.add(pipe(points,hoseR,192,8),C.hose,M.satin);
+  // Fine raised tracer follows the hose, kept below the silhouette and in the same draw.
+  const trace=[];for(let k=0;k<=192;k++){const t=k/192,a=t*Math.PI*2*coils;trace.push([Math.cos(a)*(major+hoseR*.94),ry+Math.sin(a)*(major+hoseR*.94),start+(end-start)*t]);}
+  can.add(pipe(trace,.0008,192,4),'#aaaec0',M.satin);
+  // Narrow top/bottom rails, a raked front foot and rear axle bridge leave the reel exposed.
+  const frontTop=h?985:767,frontFoot=h?940:739,rearTop=h?633:483,rearFoot=h?594:442;
+  body.add(panel([[rearTop,q.top],[frontTop,q.top-4],[frontTop+9,q.top+13],[rearTop-5,q.top+15]],.023),C.black,M.satin);
+  body.add(panel([[rearFoot,q.bottom-9],[frontFoot,q.bottom+10],[frontFoot+8,q.bottom+29],[rearFoot-9,q.bottom+8]],.023),C.black,M.satin);
+  body.add(panel([[f3-4,q.top+18],[frontTop+12,q.top+13],[frontTop+8,q.bottom-35],[frontFoot+7,q.bottom+29],[frontFoot-13,q.bottom+18],[f3+8,q.bottom-6]],.038),C.black,M.satin);
+  body.add(panel([[rearTop-16,q.top+9],[f0+13,q.top+22],[f0-11,q.bottom-16],[rearFoot-7,q.bottom+12],[rearFoot-25,q.bottom-4]],.023),C.black,M.satin);
+  // Revolver-like rear hammer/lever and narrow silver linkage are visible in both side views.
+  const lever=h?[[467,447],[523,473],[493,505],[472,548],[475,603],[501,634]]:[[351,251],[398,270],[373,298],[360,344],[364,382],[391,407]];
+  body.add(tube(lever,.0042),C.black,M.satin);
+  const endLever=lever.at(-1),linkTarget=h?[539,676]:[423,451];
+  body.add(tube([endLever,linkTarget],.003),C.metal,M.metal);
+  body.add(panel(h?[[460,644],[516,661],[606,603],[619,706],[572,765],[480,740]]:[[361,415],[407,437],[449,402],[459,461],[432,511],[394,493]],.032),C.black,M.satin);
+  const trig=raked(body,o.rake,{color:o.gripColor,triggerColor:C.black,guardColor:C.black,w:o.w});
+  for(const sx of[-1,1])body.add(xcyl(.004,sx*.016,sx*.019,h?Y(722):Y(475),h?Z(478):Z(409),10),C.metal,M.metal);
+  // Standard H-3 has a prominent T-valve, forward hex union, lower bypass and top lever.
+  if(h){
+    body.add(zcyl(43*u,Z(996),Z(1194),0,AX,24),C.metal,M.metal);
+    body.add(zcyl(70*u,Z(999),Z(1102),0,AX,6),C.metal,M.metal);
+    body.add(zcyl(73*u,Z(1107),Z(1186),0,AX,6),'#a9b1b0',M.metal);
+    body.add(zcyl(40*u,Z(1185),Z(1290),0,AX,24),C.metal,M.metal);
+    body.add(ycyl(36*u,Y(495),Y(409),0,Z(1045),20),C.metal,M.metal);
+    body.add(ycyl(52*u,Y(410),Y(387),0,Z(1045),24),'#a5adab',M.metal);
+    body.add(panel([[675,319],[948,326],[995,363],[1090,376],[1110,394],[1019,420],[955,383],[680,358]],.022,0,.002),C.blue,M.gloss);
+    body.add(panel([[977,367],[1033,377],[1092,377],[1110,394],[1020,410],[980,391]],.027),C.metal,M.metal);
+    body.add(zcyl(16*u,Z(982),Z(1133),0,Y(619),16),C.metal,M.metal);
+    body.add(zcyl(26*u,Z(1093),Z(1141),0,Y(619),18),C.black,M.satin);
+    for(let k=0;k<4;k++)body.add(ring(25*u,.001,0,Y(619),Z(1101+k*9),'z',4,16),C.edge,M.satin);
+  }else{
+    body.add(zcyl(48*u,Z(706),Z(801),0,AX,24),C.black,M.satin);
+    body.add(zcyl(17*u,Z(756),Z(801),0,Y(385),12),C.edge,M.satin);
+  }
+  const [ca,cb]=q.collar,[a,b,c]=q.cap;
+  body.add(zlathe([[0,Z(ca)],[49*u,Z(ca)],[56*u,Z(ca+8)],[56*u,Z(cb-6)],[49*u,Z(cb)],[0,Z(cb)]],0,AX,0,32),h?C.blue:C.mint,M.gloss);
+  for(const x of[ca+7,cb-7])body.add(ring(52*u,.0023,0,AX,Z(x),'z',5,28),C.blue,M.gloss);
+  const capBack=h?40:65,capFront=h?111:89,capColor=h?'#292d2e':C.blue;
+  // Concave neck + faceted knob; the face is recessed, with a central outlet and radial dial holes.
+  body.add(zlathe([[0,Z(a)],[capBack*u,Z(a)],[capBack*u,Z(a+16)],[(capFront-12)*u,Z(b-7)],
+    [capFront*u,Z(b)],[capFront*u,Z(c-8)],[(capFront-7)*u,Z(c)],[(capFront-25)*u,Z(c)],
+    [(capFront-25)*u,Z(c-11)],[0,Z(c-11)]],0,AX,0,h?16:20),capColor,M.gloss);
+  if(!h)body.add(zlathe([[65*u,Z(a)],[76*u,Z(a+35)],[89*u,Z(b)],[88*u,Z(b+2)]],0,AX,0,24),C.mint,M.satin);
+  body.add(zcyl((capFront-28)*u,Z(c-13),Z(c-10),0,AX,32),'#17232b',M.rubber);
+  body.add(ring((capFront-26)*u,.002,0,AX,Z(c-8),'z',5,32),h?C.blue:C.blueEdge,M.gloss);
+  body.add(ring(17*u,4*u,0,AX,Z(c-8),'z',5,24),h?C.blue:C.mint,M.gloss);
+  for(let j=0;j<(h?16:28);j++){
+    const t=j*Math.PI*2/(h?16:28),r=(capFront+1)*u;
+    const ridge=box(7*u,7*u,(c-b-4)*u,0,0,0,.2,4,4).rotateZ(t).translate(Math.cos(t)*r,AX+Math.sin(t)*r,Z((b+c)/2));body.add(ridge,capColor,M.satin);
+  }
+  for(let j=0;j<10;j++){const t=j*Math.PI/5,r=(capFront-37)*u;body.add(zcyl(5*u,Z(c-10),Z(c-8),Math.cos(t)*r,AX+Math.sin(t)*r,8),C.black,M.rubber);}
+  return rebuild(d,{body,ink:new Pieces(),parts:{can:part(can,[0,ry,Z((f1+f2)/2)],'body'),trigger:part(trig,TRIGGER_PIVOT)},
+    gripR:rakedGrip(o.rake),gripL:supportGrip([0,oldP(0,o.supY)[1],oldP(o.supX,0)[0]],0),muzzle});
 }
 const L3 = {
   s: 0.11 / 100, gx: 60, gy: 268, reelY: 181, nozY: 142, reel: [78, 98, 176, 196], reelR: 62, coreR: 50,
@@ -250,29 +316,63 @@ const nozzleH3 = d => nozzlenose(d, H3);
 
 // ------------------------------------------------------------------------------------------ Squeezer
 function squeezer(d) {
-  // Wmn_Shooter_Flash: a white ink bulb (pulses per shot; the red stripes of the render are not modelled yet),
-  // a black glass neck, a cream cap with a ring, two silver straps on the bulb, an orange-brown raked grip.
-  const s = 0.11 / 64, P = px(36, 274, s), Z = x => P(x, 0)[0], Y = y => P(0, y)[1];
-  const C = { white: '#ececea', black: '#1d1e22', silver: '#8c8f96', cream: '#e5e2d8', wood: '#a85d2a' };
-  const RAKE = 0.49;
-  const body = new Pieces(), can = new Pieces();
-  const by = Y(166), bz0 = Z(40), bz1 = Z(206);
-  can.add(zlathe([[0, bz0], [30 * s, Z(50)], [62 * s, Z(70)], [74 * s, Z(96)], [76 * s, Z(140)], [72 * s, Z(176)], [56 * s, Z(200)],
-    [52 * s, bz1], [0, bz1]], 0, by, 0, 32), C.white, M.gloss);
-  body.add(zlathe([[0, Z(196)], [52 * s, Z(204)], [50 * s, Z(224)], [44 * s, Z(256)], [34 * s, Z(300)], [32 * s, Z(340)],
-    [31 * s, Z(344)], [0, Z(344)]], 0, by, 0, 28), C.black, M.gloss);
-  body.add(zlathe([[0, Z(338)], [30 * s, Z(340)], [30 * s, Z(346)], [21 * s, Z(348)], [21 * s, Z(386)], [24 * s, Z(390)],
-    [24 * s, Z(392)], [0, Z(392)]], 0, by, 0, 24), C.cream, M.gloss);
-  for (const x of [84, 146]) body.add(ring(76 * s + 0.0012, 0.0018, 0, by, Z(x), 'z', 4, 28), C.silver, M.metal);
-  body.add(sideTube(P, [[70, 262], [92, 284], [170, 284], [196, 266]], 2.2 * s, 0, 2), C.silver, M.metal);
-  const trig = raked(body, RAKE, { color: C.wood, triggerColor: C.silver, guardColor: C.silver });
-  return rebuild(d, {
-    body, ink: new Pieces(),
-    parts: { can: part(can, [0, by, (bz0 + bz1) / 2], 'body'), trigger: part(trig, TRIGGER_PIVOT) },
-    gripR: rakedGrip(RAKE),
-    gripL: supportGrip([0, Y(214), Z(236)], 0),
-    muzzle: [0, Y(163), Z(392)],
-  });
+  // S3 Foil turntable supplies the shared bottle/cage shape after 16.80° roll correction.
+  // Standard S3 render supplies red/orange foil, white chevrons and SHORT cream cap.
+  // Foil's green finish and long gold wrap are deliberately not imported.
+  const P=px(36,274,.11/64),muzzle=[0,P(0,163)[1],P(392,0)[0]],AX=muzzle[1];
+  const u=muzzle[2]/(1560-515),Z=x=>muzzle[2]+(x-1560)*u,Y=y=>AX+(540-y)*u;
+  const C={red:'#b9401f',white:'#e6e7da',black:'#142323',metal:'#aab2ad',dark:'#454e4b',wood:'#a7582f'};
+  const body=new Pieces(),can=new Pieces();
+  const shape=[[0,608],[110,622],[166,651],[184,685],[186,770],[182,854],[171,929],[159,977],[145,1051],
+    [124,1140],[100,1210],[78,1285],[65,1360],[60,1440],[59,1519]];
+  const radius=x=>{for(let k=1;k<shape.length;k++)if(x<=shape[k][1]){const[a,z0]=shape[k-1],[b,z1]=shape[k];return(a+(b-a)*(x-z0)/(z1-z0))*u;}return shape.at(-1)[0]*u;};
+  // Per-face painted foil patches keep hard white chevron edges, not a blank white bulb.
+  const pos=[],nor=[],colors=[],materials=[],index=[],cols=64,rows=48;
+  const red=new THREE.Color(C.red),white=new THREE.Color(C.white),black=new THREE.Color(C.black);
+  for(let k=0;k<rows;k++)for(let j=0;j<cols;j++){
+    const x0=608+(1519-608)*k/rows,x1=608+(1519-608)*(k+1)/rows,a=j*Math.PI*2/cols,b=(j+1)*Math.PI*2/cols;
+    const xm=(x0+x1)/2,tm=(a+b)/2,zig=.085*Math.asin(Math.sin(tm*3))*2/Math.PI;
+    const phase=(((xm-637)/238+tm/Math.PI*.56+zig)%1+1)%1;
+    const whitePanel=xm<1225&&phase<.31;
+    const c=whitePanel?white:xm>1195?black:red, m=whitePanel?M.satin:xm>1195?M.gloss:M.metal;
+    const start=pos.length/3;
+    for(const[x,t]of[[x0,a],[x0,b],[x1,b],[x1,a]]){const r=radius(x);pos.push(Math.cos(t)*r,AX+Math.sin(t)*r,Z(x));nor.push(Math.cos(t),Math.sin(t),0);colors.push(c.r,c.g,c.b);materials.push(m);}
+    index.push(start,start+1,start+2,start,start+2,start+3);
+  }
+  const bottle=new THREE.BufferGeometry();bottle.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));bottle.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));bottle.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));bottle.setAttribute('aMat',new THREE.Float32BufferAttribute(materials,1));bottle.setIndex(index);bottle.computeVertexNormals();can.list.push(bottle);
+  // Broad stainless straps conform to the bottle's actual changing radius.
+  for(const[a,b]of[[771,803],[951,989]]){
+    const profile=[[radius(a)+.0009,Z(a)],[radius(a)+.0042,Z(a)],[radius(b)+.0042,Z(b)],[radius(b)+.0009,Z(b)]];
+    body.add(zlathe(profile,0,AX,0,48),C.metal,M.metal);
+    for(const x of[a,b])body.add(ring(radius(x)+.0043,.0015,0,AX,Z(x),'z',5,36),C.metal,M.metal);
+  }
+  // Eight slender retaining wires stretch from the front band to the cap; four join the rear cage.
+  for(let j=0;j<8;j++){
+    const a=(j+.5)*Math.PI/4,points=[];
+    for(const x of[969,1040,1170,1320,1492,1544]){const r=x<1000?radius(x)+.008:x<1200?radius(x)+.012:radius(x)+.004;points.push([Math.cos(a)*r,AX+Math.sin(a)*r,Z(x)]);}
+    body.add(pipe(points,.0017,18,5),C.metal,M.metal);
+  }
+  for(let j=0;j<4;j++){
+    const a=(j+.5)*Math.PI/2,points=[];for(const x of[614,650,695,785]){const r=x<650?radius(x)+.016:radius(x)+.009;points.push([Math.cos(a)*r,AX+Math.sin(a)*r,Z(x)]);}body.add(pipe(points,.0016,16,5),C.metal,M.metal);
+  }
+  // Side saddle, rear vertical catch and real wood grip are separate from the round bottle.
+  const panel=(points,width,x=0)=>slab(points.map(([z,y])=>[Z(z),Y(y)]),width,x,.0015);
+  for(const sx of[-1,1]){
+    body.add(panel([[604,688],[668,708],[979,710],[1006,731],[948,723],[652,728]],.005,sx*.032),C.metal,M.metal);
+    body.add(panel([[542,419],[568,411],[602,480],[589,514],[615,568],[615,694],[638,722],[610,743],[564,717],[550,553],[558,504]],.009,sx*.023),C.dark,M.metal);
+    for(const x of[784,972])body.add(box(.012,.007,.018,sx*.018,AX+radius(x)+.003,Z(x),.25,6,4),C.metal,M.metal);
+  }
+  const trig=raked(body,.49,{color:C.wood,triggerColor:C.metal,guard:false,base:false,mat:M.satin});
+  for(const sx of[-1,1])for(const[y,z]of[[.015,.006],[-.035,-.020]])body.add(xcyl(.0035,sx*.012,sx*.014,y,z,10),C.metal,M.metal);
+  body.add(pipe([[0,.032,.031],[0,.011,.041],[0,-.017,.049],[0,-.043,.059]],.0032,14,6),C.metal,M.metal);
+  // Standard cork-coloured collar and a short pale metal lip. The outlet is recessed.
+  body.add(zcyl(59*u,Z(1492),Z(1531),0,AX,32),'#a58660',M.satin);
+  body.add(zlathe([[0,Z(1529)],[65*u,Z(1529)],[68*u,Z(1537)],[68*u,Z(1558)],[60*u,Z(1560)],
+    [35*u,Z(1560)],[35*u,Z(1546)],[0,Z(1546)]],0,AX,0,24),C.white,M.gloss);
+  body.add(zcyl(35*u,Z(1544),Z(1547),0,AX,24),C.black,M.rubber);
+  body.add(ring(48*u,.0018,0,AX,Z(1559),'z',5,28),C.metal,M.metal);
+  return rebuild(d,{body,ink:new Pieces(),parts:{can:part(can,[0,AX,Z((608+1519)/2)],'body'),trigger:part(trig,TRIGGER_PIVOT)},
+    gripR:rakedGrip(.49),gripL:supportGrip([0,P(0,214)[1],P(236,0)[0]],0),muzzle});
 }
 
 export const MODELS = {

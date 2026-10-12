@@ -93,7 +93,7 @@ try {
       const span = Math.max(s.x, s.y, s.z), cam = new THREE.PerspectiveCamera(30, 1, .01, 50);
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap();
-      const extra={};for(const[name,dir]of[['opposite',[-3,0,0]],['rear',[0,0,-3]],['frontQuarter',[-2,.7,2]],['rearQuarter',[2,.7,-2]]]){const cc=new THREE.PerspectiveCamera(30,1,.01,50);cc.position.copy(c).add(new THREE.Vector3(...dir).normalize().multiplyScalar(span*2.7));cc.lookAt(c);renderer.render(scene,cc);extra[name]=snap();}
+      const extra={};for(const[name,dir]of[['opposite',[3,0,0]],['rear',[0,0,-3]],['frontQuarter',[-2,.7,2]],['rearQuarter',[2,.7,-2]]]){const cc=new THREE.PerspectiveCamera(30,1,.01,50);cc.position.copy(c).add(new THREE.Vector3(...dir).normalize().multiplyScalar(span*2.7));cc.lookAt(c);renderer.render(scene,cc);extra[name]=snap();}
       scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
