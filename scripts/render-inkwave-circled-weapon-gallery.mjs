@@ -79,15 +79,18 @@ try {
       if (d.drum) { const drum = new THREE.Group(); drum.position.copy(d.drumAt); drum.add(new THREE.Mesh(d.drum, Mt.getInkMaterial(color)), new THREE.Mesh(d.drumCaps, Mt.getPlasticMaterial())); g.add(drum); }
       if (d.glow) g.add(new THREE.Mesh(d.glow, new THREE.MeshStandardMaterial({ color: '#797d85', roughness: .3 })));
       scene.add(g); g.updateMatrixWorld(true);
-      const box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
-      const half = Math.max(s.y, s.z) * 0.56;
+      const box = new THREE.Box3().setFromObject(g), s = box.getSize(new THREE.Vector3());
+      // Immutable authored framing is shared by baseline/candidate. Do not auto-fit each version.
+      const bow=id.startsWith('s3-stringer-'), frame=bow?{x:.17,y:.90,z:.53}:{x:.13,y:.15,z:.53};
+      const c=new THREE.Vector3(0,bow?.085:.015,bow?-.035:.155);
+      const half = Math.max(frame.y, frame.z) * 0.56;
       const ortho = new THREE.OrthographicCamera(-half, half, half, -half, 0.01, 20);
       ortho.position.set(c.x - 3, c.y, c.z); ortho.up.set(0, 1, 0); ortho.lookAt(c); renderer.render(scene, ortho); const side = snap();
-      const top = new THREE.OrthographicCamera(-Math.max(s.x, s.z) * .56, Math.max(s.x, s.z) * .56, Math.max(s.x, s.z) * .56, -Math.max(s.x, s.z) * .56, .01, 20);
+      const top = new THREE.OrthographicCamera(-Math.max(frame.x, frame.z) * .56, Math.max(frame.x, frame.z) * .56, Math.max(frame.x, frame.z) * .56, -Math.max(frame.x, frame.z) * .56, .01, 20);
       top.position.set(c.x, c.y + 3, c.z); top.up.set(0, 0, 1); top.lookAt(c); renderer.render(scene, top); const above = snap();
-      const front = new THREE.OrthographicCamera(-Math.max(s.x, s.y) * .56, Math.max(s.x, s.y) * .56, Math.max(s.x, s.y) * .56, -Math.max(s.x, s.y) * .56, .01, 20);
+      const front = new THREE.OrthographicCamera(-Math.max(frame.x, frame.y) * .56, Math.max(frame.x, frame.y) * .56, Math.max(frame.x, frame.y) * .56, -Math.max(frame.x, frame.y) * .56, .01, 20);
       front.position.set(c.x, c.y, c.z + 3); front.lookAt(c); renderer.render(scene, front); const muzzleView = snap();
-      const span = Math.max(s.x, s.y, s.z), cam = new THREE.PerspectiveCamera(30, 1, .01, 50);
+      const span = Math.max(frame.x, frame.y, frame.z), cam = new THREE.PerspectiveCamera(30, 1, .01, 50);
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap();
       cam.position.copy(c).add(new THREE.Vector3(.9,.45,-1.1).normalize().multiplyScalar(span*2.5));cam.lookAt(c);renderer.render(scene,cam);const rear = snap();
