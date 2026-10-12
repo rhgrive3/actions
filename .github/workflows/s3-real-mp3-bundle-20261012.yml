@@ -1,0 +1,82 @@
+name: Download source-shared S3 audio for local integration
+on:
+  push:
+    branches: [research/splatoon3-public-sfx-inventory-20261012]
+permissions:
+  contents: read
+jobs:
+  public-samples:
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [0, 1, 2, 3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Install downloader
+        run: python -m pip install --quiet gdown beautifulsoup4 requests
+      - name: Download original public MP3s with source metadata
+        env:
+          PART: ${{ matrix.part }}
+        run: |
+          python - <<'PY'
+          import os,sys,json,hashlib,time,subprocess,pathlib,requests,gdown
+          from bs4 import BeautifulSoup
+          folder='1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ'
+          part=int(os.environ['PART']);root=pathlib.Path('bundle')
+          target=root/'real-s3';target.mkdir(parents=True,exist_ok=True)
+          url=f'https://drive.google.com/embeddedfolderview?id={folder}#list'
+          html=requests.get(url,timeout=45).text
+          soup=BeautifulSoup(html,'html.parser')
+          entries=[]
+          for a in soup.select('a[href*="drive.google.com/file/d/"]'):
+            div=a.select_one('.flip-entry-title')
+            if not div:continue
+            name=div.get_text(strip=True)
+            if not (name.startswith('Wp_') or name.startswith('Sp_')) or not name.endswith('.mp3'):continue
+            id=a['href'].split('/file/d/')[1].split('/')[0]
+            entries.append((name,id))
+          entries=sorted(set(entries))
+          subset=[v for i,v in enumerate(entries) if i%4==part]
+          print('TOTAL',len(entries),'PART',part,'SELECTED',len(subset),flush=True)
+          report=[]
+          for i,(name,id) in enumerate(subset):
+            dest=target/name
+            err=None
+            for attempt in range(3):
+              try:
+                p=gdown.download(id=id,output=str(dest),quiet=True)
+                if not dest.is_file():
+                  other=pathlib.Path(name)
+                  if other.is_file():other.replace(dest)
+                if not dest.is_file() or dest.stat().st_size<100:
+                  raise ValueError('missing or empty download')
+                proc=subprocess.run(['ffprobe','-v','error','-show_entries','format=duration,format_name','-of','json',str(dest)],capture_output=True,text=True,timeout=20)
+                if proc.returncode:
+                  raise ValueError('invalid audio file '+proc.stderr[:130])
+                metadata=json.loads(proc.stdout)['format']
+                if 'mp3' not in metadata.get('format_name',''):
+                  raise ValueError('unexpected format '+str(metadata))
+                sha=hashlib.sha256(dest.read_bytes()).hexdigest()
+                report.append({'name':name,'source_id':id,'sha256':sha,'bytes':dest.stat().st_size,'duration':float(metadata['duration']),'status':'verified'})
+                err=None
+                break
+              except Exception as e:
+                err=repr(e)
+                dest.unlink(missing_ok=True)
+                time.sleep(1.5*(attempt+1))
+            if err:
+              report.append({'name':name,'source_id':id,'status':'failed','error':err})
+            if i%15==0:print('PROGRESS',part,i+1,'/',len(subset),'ok',sum(x['status']=='verified' for x in report),flush=True)
+          (root/'verification.json').write_text(json.dumps({'part':part,'total':len(subset),'entries':report},indent=2))
+          good=sum(x['status']=='verified' for x in report)
+          print('FINISHED',part,'downloaded',good,'failed',len(subset)-good,flush=True)
+          if good==0:sys.exit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s3-original-2022-part-${{ matrix.part }}
+          path: bundle/
+          compression-level: 2
+          retention-days: 1
