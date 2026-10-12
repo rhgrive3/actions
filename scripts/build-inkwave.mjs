@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { NATIVE_ROOT, nativeStageIdentity, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
@@ -53,6 +54,7 @@ const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;
 const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
 
 // Build as a transaction: only a fully patched, validated tree replaces OUT.
+const nativePrepared = prepareNativeStageBuild(process.env.INKWAVE_NATIVE_STAGE_ASSETS);
 const BUILD = OUT + '.building';
 fs.rmSync(BUILD, { recursive: true, force: true });
 let rawJs = 0, minJs = 0, gzRaw = 0, gzMin = 0, rawCss = 0, minCss = 0;
@@ -152,15 +154,25 @@ overlayScorchStageAssets(BUILD);
 for (const [root, prefix] of [
   [RELIABILITY_ROOT, 'patches/reliability'],
   [NETWORK_ROOT, 'patches/network-replication'],
+  [NATIVE_ROOT, 'patches/native-stages'],
 ]) {
   for (const file of walk(root)) {
     const rel = path.relative(root, file).split(path.sep).join('/');
-    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
+    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
+    // One native runtime module avoids inflating the bounded worker manifest.
+    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
+    if (prefix === 'patches/native-stages' && rel === 'runtime/engine.mjs' && !unminified) {
+      const bundled = await esbuild.build({ entryPoints:[file], bundle:true, format:'esm', minify:true, charset:'utf8', write:false,
+        external:['three','../../../src/*','./registry.mjs','./build-config.mjs'], legalComments:'inline' });
+      fs.writeFileSync(dst,bundled.outputFiles[0].contents); continue;
+    }
     if (/\.(?:m?js|css)$/.test(rel)) {
       const sourcefile = prefix + '/' + rel;
-      const result = await transform(adaptBuildSource(sourcefile, fs.readFileSync(file, 'utf8')), {
+      const nativeConfig = prefix === 'patches/native-stages' && rel === 'runtime/build-config.mjs';
+      const source = nativeConfig ? `export const nativeStageBuild = ${JSON.stringify(nativePrepared?.config || null)};` : fs.readFileSync(file, 'utf8');
+      const result = await transform(adaptBuildSource(sourcefile, source), {
         loader: rel.endsWith('.css') ? 'css' : 'js',
         format: rel.endsWith('.mjs') ? 'esm' : undefined,
         minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
@@ -206,7 +218,7 @@ if (fs.existsSync(pwaWorker)) fs.copyFileSync(pwaWorker, path.join(BUILD, 'sw.js
 // access in the sources is static (verified: no computed THREE[...] lookups), so the namespace keeps what it needs.
 const THREE_DIR = path.join(SRC, 'vendor/three/build');
 if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && process.env.INKWAVE_NO_THREE_SHAKE !== '1') {
-  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RELIABILITY_ROOT), ...walk(NETWORK_ROOT), ...walk(RANGE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
+  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RELIABILITY_ROOT), ...walk(NETWORK_ROOT), ...walk(RANGE_ROOT), ...walk(NATIVE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
   const used = new Set();
   for (const f of srcFiles) {
     const s = fs.readFileSync(f, 'utf8');
@@ -492,8 +504,12 @@ for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) i
 for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lightmap-compaction.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
+for (const [file, hash] of Object.entries(nativeStageIdentity())) identity.files['native-stages/' + file] = hash;
+identity.build.nativeStages = nativePrepared?.config || null;
+identity.files['build-script/lib/inkwave-native-stages.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-stages.mjs', import.meta.url)));
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
+copyLocalNativeAssets(BUILD, nativePrepared);
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.renameSync(BUILD, OUT);
 console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slice(0, 12)}`);

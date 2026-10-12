@@ -14,3 +14,6 @@ _site/
 .codex-stage-sources/
 inkwave-public/assets/native-stages/
 _site-native*/
+
+# Python import/build caches.
+**/__pycache__/

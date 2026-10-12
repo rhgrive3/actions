@@ -1,13 +1,13 @@
 // BVH and segment/triangle distance adapted from the user-supplied R6 handoff.
-import * as T from 'three';
+import * as THREE from 'three';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-const V=()=>new T.Vector3();
+const V=()=>new THREE.Vector3();
 
 /** Read-only source-triangle BVH. The render model is never substituted with boxes. */
 export class TriangleWorld {
  constructor(data) {
   Object.assign(this,data);this.triangleCount=this.triangles.length/9;
-  this._box=new T.Box3();this._ta=V();this._tb=V();this._tc=V();this._triangle=new T.Triangle();
+  this._box=new THREE.Box3();this._ta=V();this._tb=V();this._tc=V();this._triangle=new THREE.Triangle();
   this._u=V();this._v=V();this._w=V();this._p=V();this._q=V();this._cp=V();this._sp=V();this._bestp=V();this._bests=V();this._d=V();this._s0=V();this._s1=V();this._center=V();this._normal=V();
   this.queryCount=0;this.triangleTests=0;
  }
@@ -40,7 +40,7 @@ export class TriangleWorld {
    }
   }
   if(id<0)return null;
-  const normal=new T.Vector3().fromArray(norm,id*3);if(normal.dot(dir)>0)normal.negate();
+  const normal=new THREE.Vector3().fromArray(norm,id*3);if(normal.dot(dir)>0)normal.negate();
   return {triangle:id,distance:best,point:origin.clone().addScaledVector(dir,best),normal,u:bu,v:bv,flags:this.flags[id],object:this.objectIds[id]};
  }
  queryBox(min,max,fn){
@@ -50,7 +50,7 @@ export class TriangleWorld {
   }
  }
  triangle(id,out=this._triangle){const i=id*9,a=this.triangles;out.a.fromArray(a,i);out.b.fromArray(a,i+3);out.c.fromArray(a,i+6);return out;}
- ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(new T.Vector3(x,y+up,z),new T.Vector3(0,-1,0),up+down,{ignoreGrates:squid,minNormalY:.62});}
+ ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(new THREE.Vector3(x,y+up,z),new THREE.Vector3(0,-1,0),up+down,{ignoreGrates:squid,minNormalY:.62});}
  // Closest pair of points on two finite segments (degenerates included).
  _segments(a,b,c,d,outP,outQ){
   const u=this._u.subVectors(b,a),v=this._v.subVectors(d,c),w=this._w.subVectors(a,c),A=u.dot(u),B=u.dot(v),C=v.dot(v),D=u.dot(w),E=v.dot(w);let s=0,t=0;
@@ -73,7 +73,7 @@ export class TriangleWorld {
   return Math.sqrt(best);
  }
  resolveCapsule(feet,height=1.45,radius=.38,ignoreGrates=false){
-  let ground=false,wall=false,maxPush=0;const velocityNormal=new T.Vector3();
+  let ground=false,wall=false,maxPush=0;const velocityNormal=new THREE.Vector3();
   const s0=this._s0,s1=this._s1,box=this._box,tri=this._triangle;
   for(let pass=0;pass<4;pass++){
    s0.set(feet.x,feet.y+radius,feet.z);s1.set(feet.x,feet.y+Math.max(radius,height-radius),feet.z);

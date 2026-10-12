@@ -21,10 +21,23 @@ git sparse-checkout set "${DIRS[@]}"
 git fetch --depth 1 origin "$REFERENCE_COMMIT"
 GIT_LFS_SKIP_SMUDGE=1 git checkout --detach "$REFERENCE_COMMIT"
 # LFS requires a network route that allows GitHub's LFS batch endpoint and object redirects.
-PATTERNS=()
-for stage in "${STAGES[@]}"; do PATTERNS+=("stages/$stage/$stage.obj"); done
-INCLUDE=$(IFS=,; echo "${PATTERNS[*]}")
-git lfs pull --include="$INCLUDE" --exclude=''
+# Smudge only the five OBJ pointers. A partial clone plus `lfs pull` scans
+# unrelated promised blobs and can trigger thousands of one-blob fetches.
+for stage in "${STAGES[@]}"; do
+  obj="stages/$stage/$stage.obj"
+  if [ "$(wc -c < "$obj")" -lt 512 ]; then
+    expected=$(awk '/^oid sha256:/ {sub("sha256:", "", $2); print $2}' "$obj")
+    if ! GIT_LFS_SKIP_SMUDGE=0 git lfs smudge < "$obj" > "$obj.download"; then
+      # Public GitHub LFS media endpoint; retain proxy/TLS and verify the LFS OID.
+      # This is an authentication fallback, never a network-policy bypass.
+      curl --fail --location --silent --show-error "https://media.githubusercontent.com/media/kirakira-dev/KiTrix/$REFERENCE_COMMIT/$obj" -o "$obj.download"
+      printf 'LFS media fallback: %s\n' "$obj" >&2
+    fi
+    actual=$(sha256sum "$obj.download" | awk '{print $1}')
+    test "$actual" = "$expected" || { echo "LFS OID mismatch: $obj" >&2; exit 6; }
+    mv "$obj.download" "$obj"
+  fi
+done
 for stage in "${STAGES[@]}"; do
   obj="stages/$stage/$stage.obj"
   test -s "$obj" || { echo "Missing $obj" >&2; exit 3; }

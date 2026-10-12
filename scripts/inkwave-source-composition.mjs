@@ -1,3 +1,4 @@
+import { adaptNativeStages } from '../patches/native-stages/adapter.mjs';
 import { adaptSource } from '../patches/splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../patches/touch-layout/adapter.mjs';
 import { adaptReliability } from '../patches/reliability/adapter.mjs';
@@ -13,5 +14,5 @@ export function adaptBuildSource(rel, code) {
   code = adaptReliability(rel, code);
   code = adaptQualitySource(rel, code);
   code = adaptNetworkSource(rel, code);
-  return adaptRanked(rel, adaptRange(rel, code));
+  return adaptNativeStages(rel, adaptRanked(rel, adaptRange(rel, code)));
 }
