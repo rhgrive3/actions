@@ -1,18 +1,19 @@
 // Reconstructed from both the 3D references and the twelve-view turntables in PR1246.
 // Separate shells, open frames, cross sections and hardware; no imported meshes or textures.
 // The existing hand anchors, muzzle sockets and slash/charge state below are deliberately retained.
-import { Pieces, M, box, sphere, zlathe, zcyl, xcyl, ring, pipe, slab, rebuild, gripSpec, clamp, damp, smooth } from './kit.mjs';
+import { THREE, Pieces, M, box, sphere, zlathe, zcyl, xcyl, ring, pipe, slab, rebuild, gripSpec, clamp, damp, smooth } from './kit.mjs';
 const HANDLE_GRIP = () => gripSpec([0, 0, -0.01], [0, 0, 1], [-0.3, 1, 0]);
 const smallBox = (w,h,d,x,y,z,e=.25) => box(w,h,d,x,y,z,e,8,4);
+const badge=(w,h,d,x,y,z)=>new THREE.BoxGeometry(w,h,d).translate(x,y,z);
 
 function stamper(d) {
   const C={blue:'#283456',steel:'#8e9193',edge:'#d5d5cb',dark:'#303235',rubber:'#171a1d'};
   const body=new Pieces(),ink=new Pieces();
   // A genuinely open D-handle. The fist closes on the rear cross-member, not a solid blue stick.
-  body.add(slab([[-.087,-.028],[-.078,-.037],[.025,-.033],[.047,-.018],[.047,.025],[.021,.034],[-.079,.031],[-.09,.016]],.037,0,.003,
-    [[[-.066,-.012],[.014,-.012],[.025,-.005],[.025,.012],[-.067,.013]]]),C.blue,M.rubber);
-  for(let k=0;k<5;k++)body.add(smallBox(.038,.003,.008,0,.032,-.065+k*.013), '#52617b',M.satin);
-  for(const x of [-.019,.019])body.add(smallBox(.001,.009,.038,x,-.017,-.029),'#e1e5de',M.print);
+  body.add(slab([[-.087,-.014],[-.078,-.020],[.025,-.018],[.047,-.005],[.047,.033],[.021,.041],[-.079,.038],[-.09,.021]],.037,0,.003,
+    [[[-.066,.013],[.014,.013],[.025,.018],[.025,.027],[-.067,.027]]]),C.blue,M.rubber);
+  for(let k=0;k<5;k++)body.add(smallBox(.038,.003,.008,0,.039,-.065+k*.013), '#52617b',M.satin);
+  for(const x of [-.019,.019])body.add(badge(.001,.009,.038,x,-.017,-.029),'#e1e5de',M.print);
   // Wheel between both side plates; a dark rubber belt follows the nose radius.
   body.add(xcyl(.048,-.023,.023,0,.062,24),C.rubber,M.rubber);
   for(const x of [-.024,.024])body.add(ring(.042,.002,x,0,.062,'x',4,24),C.dark,M.satin);
@@ -35,7 +36,7 @@ function stamper(d) {
     body.add(xcyl(.013,s>0?.028:-.031,s>0?.031:-.028,0,.064,6),C.edge,M.metal);
     body.add(xcyl(.007,s>0?.031:-.0315,s>0?.0315:-.031,0,.064,6),'#4d5053',M.satin);
     body.add(xcyl(.008,s>0?.023:-.027,s>0?.027:-.023,0,.335,6),C.steel,M.metal);
-    for(let k=0;k<3;k++)body.add(smallBox(.001,.003,.011,s*.024,-.023+k*.006,.032+k*.002),C.edge,M.print);
+    for(let k=0;k<3;k++)body.add(badge(.001,.003,.011,s*.024,-.023+k*.006,.032+k*.002),C.edge,M.print);
   }
   return rebuild(d,{body,ink,gripR:HANDLE_GRIP(),gripL:gripSpec([0,0,-.05],[0,0,1],[.5,1,0]),muzzle:[0,0,.36]});
 }
@@ -44,11 +45,11 @@ function wiper(d) {
   const C={black:'#191c20',steel:'#b9bfbc',white:'#e8e7d9',edge:'#4b4f53'};
   const body=new Pieces(),ink=new Pieces();
   // The handle sits above the blade. The offset and open spring underneath survive the end views.
-  body.add(zlathe([[0,-.078],[.015,-.078],[.014,-.066],[.011,.027],[.008,.045],[0,.045]],0,.025,0,16),C.black,M.rubber);
-  for(let k=0;k<8;k++)body.add(ring(.012,.0014,0,.025,-.062+k*.012,'z',4,12),C.edge,M.rubber);
-  body.add(zcyl(.007,.036,.131,0,.027,12),C.steel,M.metal);
-  body.add(zcyl(.008,.061,.121,0,.027,12),C.black,M.satin);
-  body.add(pipe([[0,.025,-.077],[0,-.017,-.080],[0,-.027,-.068]],.0028,10,5),C.steel,M.metal);
+  body.add(zlathe([[0,-.078],[.015,-.078],[.014,-.066],[.011,.027],[.008,.045],[0,.045]],0,0,0,16),C.black,M.rubber);
+  for(let k=0;k<8;k++)body.add(ring(.012,.0014,0,0,-.062+k*.012,'z',4,12),C.edge,M.rubber);
+  body.add(zcyl(.007,.036,.131,0,0,12),C.steel,M.metal);
+  body.add(zcyl(.008,.061,.121,0,0,12),C.black,M.satin);
+  body.add(pipe([[0,0,-.077],[0,-.017,-.080],[0,-.027,-.068]],.0028,10,5),C.steel,M.metal);
   const spring=[];
   for(let k=0;k<=40;k++){const t=k/40,a=t*Math.PI*12; spring.push([Math.sin(a)*.006,-.025+Math.cos(a)*.006,-.065+t*.055]);}
   body.add(pipe(spring,.0016,60,4),C.steel,M.metal);
@@ -69,6 +70,7 @@ function wiper(d) {
     body.add(xcyl(.0025,-.020,.020,.013,z,8),C.edge,M.satin);
   }
   body.add(smallBox(.025,.018,.025,0,.037,.139),C.black,M.satin);
+  body.add(pipe([[0,0,.113],[0,.013,.129],[0,.037,.139]],.0045,8,5),C.black,M.satin);
   body.add(pipe([[0,.034,.129],[0,.066,.139],[0,.060,.198],[0,.024,.254]],.0022,18,5),C.steel,M.metal);
   body.add(ring(.013,.0023,0,.040,.115,'x',5,16),C.steel,M.metal);
   return rebuild(d,{body,ink,gripR:HANDLE_GRIP(),gripL:gripSpec([0,0,-.045],[0,0,1],[.5,1,0]),muzzle:[0,0,.4]});
@@ -78,7 +80,7 @@ function decavitator(d) {
   const C={silver:'#c6cecf',white:'#f3f4e8',blue:'#67b9db',dark:'#303d47',label:'#283e87',clear:'#dde9e6',mint:'#92dcca'};
   const body=new Pieces(),ink=new Pieces();
   // Flared grip, heel ring and shallow finger recesses. The hand anchor is unchanged.
-  body.add(zlathe([[0,-.087],[.020,-.087],[.024,-.074],[.020,-.053],[.017,.011],[.024,.036],[.026,.044],[0,.044]],0,0,0,18),C.silver,M.metal);
+  body.add(zlathe([[0,-.087],[.020,-.087],[.024,-.074],[.020,-.053],[.017,.011],[.024,.036],[.026,.044],[0,.044]],0,0,0,18),C.silver,M.satin);
   for(const z of [-.077,.030])body.add(ring(.022,.002,0,0,z,'z',4,20),C.dark,M.satin);
   for(const s of [-1,1]){
     body.add(slab([[-.06,-.010],[.010,-.010],[.019,-.005],[.008,.007],[-.047,.010],[-.061,.005]],.002,s*.019,.001), '#a8b6b9',M.satin);
@@ -91,7 +93,7 @@ function decavitator(d) {
   for(const s of [-1,1]){
     body.add(slab([[.073,-.021],[.313,-.026],[.334,-.010],[.326,.021],[.091,.024]],.002,s*.033,.001),C.mint,M.gloss);
     body.add(pipe([[s*.030,.021,.066],[s*.034,.028,.103],[s*.032,.029,.309],[s*.027,.023,.340]],.003,16,5),C.white,M.gloss);
-    body.add(pipe([[s*.025,-.023,.063],[s*.032,-.030,.108],[s*.026,-.031,.315],[s*.025,-.019,.340]],.003,16,5),C.silver,M.metal);
+    body.add(pipe([[s*.025,-.023,.063],[s*.032,-.030,.108],[s*.026,-.031,.315],[s*.025,-.019,.340]],.003,16,5),C.silver,M.satin);
     // Printed fictional mark built from thin strokes on the shell; no blue box through its cross section.
     for(let k=0;k<6;k++){
       const z=.121+k*.029, x=s*.035;
@@ -106,11 +108,13 @@ function decavitator(d) {
     ink.add(smallBox(.025,.003,.018,0,-.040,z));
   }
   // Finger loop stands clear of the housing and is readable from the other side.
-  body.add(ring(.021,.0035,0,.051,.086,'x',6,24),C.silver,M.metal);
-  body.add(smallBox(.015,.025,.016,0,.032,.080),C.silver,M.metal);
-  body.add(zlathe([[0,.336],[.040,.336],[.044,.343],[.044,.362],[.040,.373],[0,.375]],0,0,0,28),C.blue,M.gloss);
-  body.add(ring(.043,.0018,0,0,.351,'z',4,28),'#97d8ed',M.gloss);
-  for(const s of [-1,1])body.add(smallBox(.004,.012,.017,s*.044,0,.350,.4),'#9ddaea',M.gloss);
+  body.add(ring(.021,.0035,0,.051,.086,'x',6,24),C.silver,M.satin);
+  body.add(smallBox(.015,.025,.016,0,.032,.080),C.silver,M.satin);
+  body.add(zlathe([[0,.336],[.037,.336],[.041,.343],[.041,.362],[.038,.370],[.034,.373],[0,.374]],0,0,0,28),C.blue,M.gloss);
+  body.add(ring(.040,.0015,0,0,.351,'z',4,28),'#97d8ed',M.gloss);
+  body.add(zlathe([[0,.373],[.032,.373],[.034,.374],[.031,.375],[0,.375]],0,0,0,24),'#79c2df',M.gloss);
+  body.add(zcyl(.0014,.375,.3753,.006,.003,8),'#579bbb',M.satin);
+  for(const s of [-1,1])body.add(smallBox(.003,.010,.014,s*.041,0,.350,.4),'#9ddaea',M.gloss);
   return rebuild(d,{body,ink,gripR:HANDLE_GRIP(),gripL:gripSpec([0,0,-.06],[0,0,1],[.5,1,0]),muzzle:[0,0,.375]});
 }
 

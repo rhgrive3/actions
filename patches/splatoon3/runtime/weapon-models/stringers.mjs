@@ -4,6 +4,7 @@ import { THREE, Pieces, M, V, box, sphere, zlathe, zcyl, xcyl, ycyl, ring, pipe,
   pistolGrip, glowGeometry, clamp, damp, smooth } from './kit.mjs';
 const YC=.085, GROUND_ROLL=1.25;
 const rb=(w,h,d,x,y,z,e=.3)=>box(w,h,d,x,y,z,e,8,4);
+const badge=(w,h,d,x,y,z)=>new THREE.BoxGeometry(w,h,d).translate(x,y,z);
 
 // Rectangular laminated limb; four flat faces, separately coloured edges, rather than a round hose.
 function ribbon(body, stations, color, edgeColor) {
@@ -39,7 +40,7 @@ function finishBow(d,cfg,body,ink,tr){
 function tri(d){
   const C={wood:'#65412d',steel:'#adb5b7',dark:'#34393c',black:'#1d2124'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.black,guardColor:C.dark});
-  const cfg={span:.4,tipZ:-.24,arrowFront:.02,coilR:.052,coil0:-.02,coil1:.13,muzzleZ:.178,
+  const cfg={span:.4,tipZ:-.24,arrowFront:.02,coilR:.062,coil0:-.070,coil1:.065,muzzleZ:.178,
     gripL:gripSpec([0,0,.11],[0,0,1],[.75,-.62,-.1])};
   for(const s of[-1,1]){
     // Tapered wooden laminations with squared metal sockets at both ends.
@@ -57,14 +58,14 @@ function tri(d){
     body.add(pipe([[.023,YC,-.005],[.034,YC+s*.065,.023],[0,YC+s*.104,.036]],.008,12,6),C.steel,M.metal);
   }
   // Central reel has exposed ink surface and two thick collars; not ink buried in an opaque can.
-  ink.add(zcyl(.046,-.052,.105,0,YC,24));
-  for(const z of[-.052,.080])body.add(zlathe([[0,z],[.048,z],[.050,z+.007],[.050,z+.021],[.042,z+.027],[0,z+.027]],0,YC,0,24),C.dark,M.satin);
-  body.add(zlathe([[0,.107],[.038,.107],[.047,.135],[.045,.163],[.017,.178],[0,.178]],0,YC,0,8),C.steel,M.metal);
+  ink.add(zcyl(.059,-.100,.102,0,YC,24));
+  for(const z of[-.100,-.022,.079])body.add(zlathe([[0,z],[.059,z],[.063,z+.005],[.063,z+.023],[.055,z+.029],[0,z+.029]],0,YC,0,24),C.dark,M.satin);
+  body.add(zlathe([[0,.107],[.049,.107],[.052,.135],[.048,.163],[.017,.178],[0,.178]],0,YC,0,8),C.steel,M.metal);
   nozzle(body,0,YC,.158,.179,.014,C.dark);
   for(const sx of[-1,1]){
-    body.add(pipe([[sx*.023,YC-.025,-.048],[sx*.017,YC-.018,-.19],[sx*.010,YC,-.24]],.005,15,6),C.steel,M.metal);
-    body.add(pipe([[sx*.026,YC+.025,-.048],[sx*.017,YC+.018,-.19],[sx*.010,YC,-.24]],.005,15,6),C.dark,M.satin);
-    body.add(rb(.002,.023,.048,sx*.047,YC,.012), '#606b6e',M.print);
+    body.add(pipe([[sx*.027,YC-.028,-.100],[sx*.017,YC-.018,-.19],[sx*.010,YC,-.24]],.005,15,6),C.steel,M.metal);
+    body.add(pipe([[sx*.028,YC+.028,-.100],[sx*.017,YC+.018,-.19],[sx*.010,YC,-.24]],.005,15,6),C.dark,M.satin);
+    body.add(badge(.002,.026,.039,sx*.060,YC,.035), '#606b6e',M.print);
   }
   // A narrow mechanical support grip encloses the retained IK anchor.
   body.add(zcyl(.014,.079,.139,0,0,12),C.black,M.rubber);
@@ -102,9 +103,9 @@ function reef(d){
   for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(rb(.005,.005,.018,Math.cos(a)*.035,YC+Math.sin(a)*.035,.133),C.edge,M.metal);}
   nozzle(body,0,YC,.137,.151,.016,C.dark);ink.add(ring(.030,.0028,0,YC,.151,'z',4,18));
   for(const s of[-1,1]){
-    body.add(rb(.0018,.023,.045,s*.057,YC,.007),C.edge,M.print);
-    body.add(rb(.002,.015,.038,s*.0585,YC,.007),C.black,M.print);
-    for(let k=0;k<3;k++)body.add(rb(.002,.002,.014,s*.060,YC-.005+k*.005,.018),C.white,M.print);
+    body.add(badge(.0018,.023,.045,s*.057,YC,.007),C.edge,M.print);
+    body.add(badge(.002,.015,.038,s*.0585,YC,.007),C.black,M.print);
+    for(let k=0;k<3;k++)body.add(badge(.002,.002,.014,s*.060,YC-.005+k*.005,.018),C.white,M.print);
     ink.add(rb(.002,.006,.025,s*.055,YC+.027,.020));
   }
   body.add(zcyl(.014,.068,.125,0,0,12),C.black,M.rubber);
@@ -143,10 +144,10 @@ function wellstring(d){
   body.add(sphere(.014,.014,.014,0,YC+.102,.109,14,8),C.green,M.satin);
   for(const s of[-1,1]){
     body.add(rb(.002,.041,.073,s*.064,YC,.038),C.brass,M.metal);
-    body.add(rb(.003,.033,.065,s*.066,YC,.038),C.edge,M.print);
+    body.add(badge(.003,.033,.065,s*.066,YC,.038),C.edge,M.print);
     for(let k=0;k<5;k++){
-      body.add(rb(.002,.016,.007,s*.068,YC,.014+k*.011),C.brass,M.print);
-      body.add(rb(.003,.011,.003,s*.069,YC,.016+k*.011),C.edge,M.print);
+      body.add(badge(.002,.016,.007,s*.068,YC,.014+k*.011),C.brass,M.print);
+      body.add(badge(.003,.011,.003,s*.069,YC,.016+k*.011),C.edge,M.print);
     }
   }
   body.add(pipe([[0,YC-.048,-.004],[.018,.018,-.016],[.018,-.029,.006],[0,-.005,.059]],.010,14,8),C.blue,M.rubber);
