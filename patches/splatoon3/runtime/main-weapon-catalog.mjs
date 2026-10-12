@@ -9,6 +9,8 @@ import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { withShotBias } from './weapon-accuracy.mjs';
+import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
 
@@ -161,11 +163,82 @@ export function registerMainWeaponCatalog(api) {
   return MAIN_WEAPON_CATALOG;
 }
 
-function initialState(r) {
+// The 2024 S3 shot-accuracy study models DegBias as the median angular
+// fraction, not as a probability of choosing between two arbitrary cones.
+// Reuse the same horizontal / independent Spinner pitch kernel as the seven
+// legacy main weapons. Source parameters are read per added main weapon.
+const ANGULAR_FAMILIES = new Set(['shooter', 'dualies', 'blaster', 'splatling']);
+export function catalogAngularLaunch(projectiles, direction, actor, family, param, accuracy, maximumDegrees, jumpAgeSeconds = actor.weaponRunner?.s3JumpSpreadAge) {
+  if (!ANGULAR_FAMILIES.has(family)) {
+    // Other source families have no verified common angular law here.
+    const chance = accuracy.shot(!!actor.grounded, jumpAgeSeconds);
+    return projectiles._spread(direction, Math.random() < chance ? maximumDegrees : maximumDegrees * .45);
+  }
+  const spinner = family === 'splatling';
+  // Splatlings have no Shooter-style first-shot buildup: each round reads
+  // the fixed standing/jumping median and independent vertical median.
+  // Sparse unextracted defaults remain neutral (0.5), not invented values.
+  const median = spinner
+    ? actor.grounded ? finite(param.Stand_DegBiasMax, .5) : finite(param.Jump_DegBiasMax, .5)
+    : accuracy.shot(!!actor.grounded, jumpAgeSeconds);
+  return withShotBias(actor, median, spinner ? finite(param.PitchDegBias, .5) : null,
+    () => spreadWeaponRound(projectiles, direction, actor,
+      {kind:family, spreadPitchGround:spinner ? finite(param.PitchDegSwerve, 0) : null},
+      maximumDegrees));
+}
+
+// A ledge fall is not a newly admitted jump: source recovery begins only
+// after the Actor's native jump serial advances. Recovery keeps running
+// across landing, and rendered frame rate does not affect the fixed clock.
+export function advanceCatalogJumpClock(state, actor, family, dt) {
+  const serial = actor.s3JumpSerial || 0;
+  if (state.jumpSerial !== serial) {
+    state.jumpSerial = serial;
+    state.jumpAge = 0;
+  } else if (state.jumpAge != null && Number.isFinite(dt) && dt > 0) state.jumpAge += dt;
+  if (state.jumpAge != null && state.jumpAge * HZ + EPS >= state.accuracy.jumpEnd &&
+    (actor.grounded || family === 'dualies')) state.jumpAge = null;
+  return state.jumpAge;
+}
+
+// #10 S3 Spinner studies: an independent signed biased draw also changes
+// launch speed. The extracted 11.3.0 fields are relative amplitude and bias,
+// not an extra fixed world-units-per-frame acceleration.
+export function catalogSpinnerLaunchSpeed(baseSpeed, move, random = Math.random) {
+  const rate = move?.SpawnSpeedRandomRate;
+  if (!Number.isFinite(rate) || rate <= 0) return baseSpeed;
+  const bias = finite(move.SpawnSpeedRandomBias, .5);
+  return baseSpeed * (1 + rate * signedBiasSample(random(), bias));
+}
+
+// Source-grounded launch envelope through an admitted jump. Shooter and
+// Spinner maximum angles recover after 25F and reach ground by 70F. The
+// established Splatling jump clock is owned by splatling-jump-spread.mjs;
+// this catalog only reads it, not advancing a duplicate clock.
+export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, actionReduction = 0, param = {}) {
+  const airborne = lerp(ground, jump, 1 - clamp(actionReduction));
+  if (Number.isFinite(jumpAge)) {
+    if (family === 'shooter' || family === 'splatling') {
+      const frames = jumpAge * HZ;
+      const hold = finite(param.Jump_DegBiasDecreaseStartFrame, 25);
+      const end = Math.max(hold + EPS, finite(param.Jump_DegBiasEndFrame, 70));
+      return frames <= hold ? airborne
+        : frames >= end ? ground : lerp(airborne, ground, (frames - hold) / (end - hold));
+    }
+    if (family === 'dualies' || family === 'blaster') return airborne;
+  }
+  // The native Blaster's jump-serial owner rejects edge falls, whereas
+  // Shooter and Dualies retain their ordinary airborne envelope.
+  if (family === 'blaster') return ground;
+  return grounded ? ground : airborne;
+}
+
+function initialState(r,actor) {
   return { id:r.id, pressed:false, frame:0, pending:null, chargeF:0, paid:0, reserved:0,
     stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
-    accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0 };
+    accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
+    jumpSerial:actor?.s3JumpSerial || 0, jumpAge:null };
 }
 
 export function installMainWeaponCatalogRuntime(api, profile) {
@@ -182,7 +255,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
 
   function state(runner) {
     const r = runner.a.weapon.catalogRecord;
-    if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r);
+    if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r,runner.a);
     return runner.catalogState;
   }
   function cancel(runner, keep = false) {
@@ -353,14 +426,26 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
-    const airFactor=1-(a.s3?.modifiers?.actionAirSpread??0);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
-    const spread=a.grounded?ground:lerp(ground,jump,airFactor);
+    const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
+      ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
+    const spread=key==='turret'&&r.family==='dualies'
+      ? finite(t.LapOver_DegSwerve,0)
+      : catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,jumpAge,
+        a.s3?.modifiers?.actionAirSpread??0,{...weaponParam(r),...t});
     const aim=dir.clone();
-    const chance=s.accuracy.shot(a.grounded,runner.s3JumpSpreadAge);
-    G.projectiles._spread(aim, Math.random()<chance?spread:spread*.45);
+    if (key==='turret'&&r.family==='dualies') {
+      // Post-roll turret has its own sourced cone and must not advance normal
+      // Dualies bias; the common S3 Splat Dualies turret cone is exactly zero.
+      G.projectiles._spread(aim,spread);
+    } else {
+      // Variable-charge modes may omit fields present in the base WeaponParam.
+      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,s.jumpAge);
+    }
     runner.spread=spread;
-    spawn(a,r,desc,aim,muzzle,{volley});notify(a,r,muzzle,aim,charge);
+    spawn(a,r,desc,aim,muzzle,{volley,
+      speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
+    notify(a,r,muzzle,aim,charge);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
@@ -905,7 +990,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     legacyUpdate.call(this,dt,{...input,fire:false,firePressed:false});
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
-    s.stop=Math.max(0,s.stop-dt);s.accuracy.advance(dt);
+    s.stop=Math.max(0,s.stop-dt);
+    if(r.family!=='splatling') {
+      s.accuracy.advance(dt);
+      if(ANGULAR_FAMILIES.has(r.family))advanceCatalogJumpClock(s,a,r.family,dt);
+    }
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}

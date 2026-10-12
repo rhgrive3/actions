@@ -35,6 +35,7 @@ if(process.argv.includes('--exact-source')) {
     if(key.startsWith('network-replication/')) return 'patches/network-replication/'+key.slice(20);
     if(key.startsWith('loading-cache/')) return 'patches/loading-cache/'+key.slice(14);
     if(key.startsWith('practice-range/')) return 'patches/practice-range/'+key.slice(15);
+    if(key.startsWith('native-stages/')) return 'patches/native-stages/'+key.slice(14);
     if(key.startsWith('build-script/')) return 'scripts/'+key.slice(13);
     throw new Error('Unknown build input namespace: '+key);
   });
