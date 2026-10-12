@@ -44,3 +44,41 @@ The single-stamp body difference scales with `R²` for uniform radius changes. T
 - `worldUnitsPerSourceUnit=1` is the project's working calibration, not an independent retail-world scale match.
 - Horizontal and vertical Roller flick **flight path/landing positions** are separately owned by projectile physics/②; no out-of-scope retiming is bundled to conceal source landing gaps.
 - The source-scheduled intermediate ink-drop counts/spacings and final paint area require direct comparable measured retail ground masks before claiming exact 11.3.0 equivalence.
+
+## Follow-up: significant *systemic* mismatch, not just an 11–13% blob correction (Oct 13 JST)
+
+**Important correction:** The earlier isolated blob area change of ~11–13% is NOT an estimate of total per-shot or retail area accuracy. A new source-audit found the larger issues below, which must be resolved before this PR can be described as full retail paint fidelity.
+
+### 1. Impact smear expands forward **and backward** without narrowing laterally
+
+Production `inkwave-public/src/world/paint.js`, shader `PAINT_FS` and CPU `_cpuSplat`, remap incoming physical ink locations so that:
+
+- positive forward axis scales by `1 + sa`;
+- backward axis scales by `1 + .25*sa`;
+- lateral axis is unchanged.
+
+The verified [Splatoon 3 system investigation](https://wikiwiki.jp/splatoon3mix/%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E8%A9%B3%E7%B4%B0%E4%BB%95%E6%A7%98#) explicitly distinguishes fore-aft elongation with **reduced sideways ink width** for Shooter, Roller, Spinner/Splatling, Dualies and Stringer. It says the exact scaling law is still unknown. Hence the native width/length shape is **not reproduced** merely by passing sourced DepthScaleMax/Min into the existing smear.
+
+For a unit circle and `DepthScaleMax=2.24` (`sa=1.24`), the current affine area multiplication is `(2.24 + 1.31)/2 = 1.775`, even before organic lobes and satellite rays, whereas the actual retail lateral-width compensation is not applied. A **hypothetical** width divisor `sqrt(1+0.625*sa)` would lower this single-stamp area by ~25%, but **this is not an extracted Nintendo law and must NOT be adopted as established physics**. A shape/coverage calibration with real reference is required.
+
+### 2. Physical area and scored paint points are incorrectly treated as the same unit
+
+`inkwave-public/src/game/actor.js`: `addTurf(area)` increments `stats.turf` **and** the special gauge by raw area. `inkwave-public/src/config.js`: `MATCH.pointsPerM2=1`, but this constant does not establish native score conversion. In INKWAVE, one world-unit-square of newly painted turf is treated approximately as one displayed/charging point. Source-backed 11.3.0 paint radius values alone do not justify that scoring rule.
+
+The game's [community data](https://wikiwiki.jp/splatoon3mix/%E6%A4%9C%E8%A8%BC/%E3%83%A1%E3%82%A4%E3%83%B3%E3%82%A6%E3%82%A7%E3%83%9D%E3%83%B3) report Splattershot **4.0p/shot**, Splat Roller **20.4p horizontal /17.8p vertical** and full Splat Charger **23p/shot** under their measured action conditions. The separate historic INKWAVE source-composed diagnostic in Drive (`INKWAVE-weapon-audit-20261009.md`, base `5d0be6b7`) measured: Shooter **12.25 WU²**, Roller horizontal **78.625 WU²**, vertical **67.875 WU²**, Charger full **81.6875 WU²**, Slosher **14.625 WU²**. These are actual **INKWAVE CPU cells** on a single horizontal/action fixture but they are **NOT official game points or a new measurement on this PR's head**.
+
+| Historical action | Historical INKWAVE WU² | Retail Wiki p/action | **Numeric WU²/p** (NOT a physical overpaint multiple) |
+| --- | ---: | ---: | ---: |
+| Splattershot single shot | 12.25 | 4.0 | 3.06 |
+| Splat Roller horizontal | 78.625 | 20.4 | 3.85 |
+| Splat Roller vertical | 67.875 | 17.8 | 3.81 |
+| Splat Charger full | 81.6875 | 23.0 | 3.55 |
+| Slosher | 14.625 | 13.6 | 1.08 |
+
+**Do not interpret this table as “INKWAVE paints N times more physical ground.”** The numerator is INKWAVE world-square-area and the denominator is Nintendo turf **points**. Nevertheless it proves that equating world-unit-square to one native point is not independently calibrated, and changing only blob radii does not solve scored points or special buildup. Splatoon 2 community sources estimate ~3.3m² per point; transplanting that exactly into Splatoon 3 without verifying the shared physical area and map scaling is also unproven. The Slosher exception is further reason to measure weapon-specific footprint and contact timing instead of a blanket scale.
+
+### 3. Shooter/Charger intermediate emissions must be measured separately
+
+A Splattershot's source `SplashSpawnParam.SpawnNum=1.5` schedules 1 or 2 candidate drops by successful shot count; only released, surviving, physically landed droplets should ink. The existing projectile/drop owner is separate from this PR's ink rasterizer. Existing catalogue Chargers also use a repeated `floorPaint(..., d.radius)` sweep; whether that full radius applies along the entire line and its actual overlap with the terminal stamp is not established by the sparse `RadiusFullCharge` field. This is a concrete area-inflation hypothesis that needs matched action-level area tests, not an assertion of an already proven retail mismatch.
+
+**Current acceptance stance:** PR #1302 contains limited structural improvements and tests, NOT a fully calibrated 65-weapon paint solution. Do not merge claiming retail footprint or native point/charge equivalence until the complete composed runtime is action-level calibrated and the width/length formula is justified. No arbitrary universal radius multiplier or point-scale correction is silently inserted into production.
