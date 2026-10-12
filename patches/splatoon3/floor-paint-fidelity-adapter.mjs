@@ -19,21 +19,7 @@ export function adaptFloorPaintFidelity(rel, code, replaceOnce) {
       'if (d / (r * Math.min(1, blobWobble(Math.atan2(py, px), seed))) > 1) continue;',
       'floor: CPU owns precisely capped body interior');
 
-    // Match the roller band's seeded transverse wave at the zero-crossing.
-    // The source GPU rolls at SD<=0; the original CPU omitted the wave and
-    // applied a further negative inset, creating visible but unowned seams.
-    code = replaceOnce(code,
-      '          const qa = Math.abs(px * sdu + py * sdv) - r * BAND_L, qb = Math.abs(-px * sdv + py * sdu) - r * BAND_W;\n' +
-      '          const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;\n' +
-      '          if (sd > -0.03 * r) continue;',
-      '          const along = px * sdu + py * sdv, across = -px * sdv + py * sdu;\n' +
-      '          const wv = r * (0.03 * Math.sin(along / r * 9.0 + seed * 30.0) + 0.018 * Math.sin(along / r * 23.0 + seed * 11.0));\n' +
-      '          const qa = Math.abs(along) - r * BAND_L, qb = Math.abs(across) - (r * BAND_W + wv);\n' +
-      '          const sd = Math.hypot(Math.max(qa, 0), Math.max(qb, 0)) + Math.min(Math.max(qa, qb), 0) - r * BAND_R;\n' +
-      '          if (sd > 0) continue;',
-      'floor: exactly share roller band zero edge');
-
-    // Wall and occluded geometry can remain inked/swimmable, but cannot award
+    // #1165 CPU/GPU roller band agreement is already installed by\n    // issue-batch-1171-adapter; do not apply that native patch twice.\n\n    // Wall and occluded geometry can remain inked/swimmable, but cannot award
     // Turf-War floor m² or extra special gauge credit.
     code = replaceOnce(code,
       '        this.grid[k] = val;\n        claimed += cellA;\n        if (f.turf && !this.dead[k]) {',
