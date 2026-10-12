@@ -113,12 +113,18 @@ try {
         }
         G.paint.flush(1/60);
         const grid=G.paint.grid.slice(),positions=geometry.attributes.position.array.slice(),level=G.level,physics=G.physics,nav=G.nav;
-        const comp=G.post.composer;
-        const originalState={material:ink.material,index:geometry.index,drawRange:{...geometry.drawRange},drawIndex:ink._drawIndex.array.slice(),visible:ink._visible.slice(),callback:ink.onBeforeRender,camera:original,shadowNeeds:r.shadowMap.needsUpdate,sunNeeds:G.env.sun.shadow.needsUpdate,target:r.getRenderTarget(),readBuffer:comp.readBuffer,writeBuffer:comp.writeBuffer,getDelta:comp.timer.getDelta,time:G.time,paintClock:G.paint.clock,characters:G.actors.map(a=>[a.character.root,a.character.root.visible])};
+        const characters=G.actors.map(a=>[a.character.root,a.character.root.visible]);
         // Do not freeze object hooks: Character partGate, reflection hooks and
         // shadowUngate are production render contracts, not animation ticks.
-        for(const [root] of originalState.characters)root.visible=false;
-        comp.timer.getDelta=()=>0;
+        for(const [root] of characters)root.visible=false;
+        // Production owns a lazy composer façade. Use its public render(delta)
+        // method, not the private native Timer, and instantiate targets first.
+        r.setRenderTarget(null);G.post.render();
+        const preparationPixel=new Uint8Array(4);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,preparationPixel);
+        const preparationError=gl.getError(),comp=G.post.composer;
+        if(preparationError!==gl.NO_ERROR||!comp.readBuffer?.texture||!comp.writeBuffer?.texture)throw Error('Native composer warm/readback failed: '+preparationError);
+        const originalState={material:ink.material,index:geometry.index,drawRange:{...geometry.drawRange},drawIndex:ink._drawIndex.array.slice(),visible:ink._visible.slice(),callback:ink.onBeforeRender,camera:original,shadowNeeds:r.shadowMap.needsUpdate,sunNeeds:G.env.sun.shadow.needsUpdate,target:r.getRenderTarget(),readBuffer:comp.readBuffer,writeBuffer:comp.writeBuffer,composerRender:comp.render,time:G.time,paintClock:G.paint.clock,characters};
+        comp.render=function(){return originalState.composerRender.call(this,0);};
         const shadowHooks=new Map();
         const d={G,g,r,gl,THREE,ink,geometry,newMaterial,oldMaterial,syncOld,grid,positions,level,physics,nav,originalState,faceViews,pixels:new Map(),active:null,calls:[],shadowDraws:0};
         d.classify=pixels=>{
@@ -172,6 +178,7 @@ try {
           r.shadowMap.needsUpdate=true;G.env.sun.shadow.needsUpdate=true;
           const beforeError=gl.getError();if(beforeError!==gl.NO_ERROR)throw Error('Pending GL error '+beforeError);
           const t0=performance.now();G.post.render();const submitMs=performance.now()-t0;
+          if(G.post.composer!==comp)throw Error('Composer changed during fixed-phase comparison');
           // This read MUST happen before any await/yield with preserveDrawingBuffer=false.
           const {pixels,png,meta:capture}=d.readOutput();
           const meta={variant,view:d.view,...capture,submitMs,completedWallMs:submitMs+capture.readMs,inkCalls:d.calls,shadowDraws:d.shadowDraws,render:{...r.info.render},phase:{time:G.time,paintClock:G.paint.clock,startRead:originalState.readBuffer.texture.uuid,startWrite:originalState.writeBuffer.texture.uuid,delta:0},shadowMapAllocated:!!G.env.sun.shadow.map,passes:G.post.composer.passes.filter(p=>p.enabled).map(p=>p.constructor.name)};
@@ -182,14 +189,14 @@ try {
         };
         d.restore=()=>{
           for(const[o,hook]of shadowHooks)o.onBeforeShadow=hook;shadowHooks.clear();ink.material=originalState.material;ink.onBeforeRender=originalState.callback;
-          comp.readBuffer=originalState.readBuffer;comp.writeBuffer=originalState.writeBuffer;comp.timer.getDelta=originalState.getDelta;
+          comp.readBuffer=originalState.readBuffer;comp.writeBuffer=originalState.writeBuffer;comp.render=originalState.composerRender;
           for(const[root,visible]of originalState.characters)root.visible=visible;
           geometry.setIndex(originalState.index);ink._drawIndex.array.set(originalState.drawIndex);ink._drawIndex.clearUpdateRanges();ink._drawIndex.addUpdateRange(0,ink._drawIndex.count);ink._drawIndex.needsUpdate=true;
           ink._visible.set(originalState.visible);geometry.setDrawRange(originalState.drawRange.start,originalState.drawRange.count);
           G.camera.copy(original);G.camera.updateMatrixWorld();r.setRenderTarget(originalState.target);
           r.shadowMap.needsUpdate=originalState.shadowNeeds;G.env.sun.shadow.needsUpdate=originalState.sunNeeds;oldMaterial.dispose();
           if(G.level!==level||G.physics!==physics||G.nav!==nav||ink.geometry!==geometry||grid.some((v,i)=>v!==G.paint.grid[i])||positions.some((v,i)=>v!==geometry.attributes.position.array[i]))throw Error('Rendering changed gameplay authority or source positions');
-          return {authoritiesUnchanged:true,cpuPaintUnchanged:true,positionsUnchanged:true,geometryIndexRestored:geometry.index===originalState.index,callbackRestored:ink.onBeforeRender===originalState.callback,composerPhaseRestored:comp.readBuffer===originalState.readBuffer&&comp.writeBuffer===originalState.writeBuffer&&comp.timer.getDelta===originalState.getDelta,characterVisibilityRestored:originalState.characters.every(([root,visible])=>root.visible===visible),drawRangeRestored:geometry.drawRange.start===originalState.drawRange.start&&geometry.drawRange.count===originalState.drawRange.count};
+          return {authoritiesUnchanged:true,cpuPaintUnchanged:true,positionsUnchanged:true,geometryIndexRestored:geometry.index===originalState.index,callbackRestored:ink.onBeforeRender===originalState.callback,composerPhaseRestored:comp.readBuffer===originalState.readBuffer&&comp.writeBuffer===originalState.writeBuffer&&comp.render===originalState.composerRender,characterVisibilityRestored:originalState.characters.every(([root,visible])=>root.visible===visible),drawRangeRestored:geometry.drawRange.start===originalState.drawRange.start&&geometry.drawRange.count===originalState.drawRange.count};
         };
         globalThis.nativeFullpostReview=d;
         const ext=gl.getExtension('WEBGL_debug_renderer_info');
