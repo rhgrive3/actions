@@ -7,6 +7,8 @@ import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { withShotBias } from './weapon-accuracy.mjs';
+import { spreadWeaponRound } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
 
@@ -157,6 +159,30 @@ export function registerMainWeaponCatalog(api) {
     }
   }
   return MAIN_WEAPON_CATALOG;
+}
+
+// The 2024 S3 shot-accuracy study models DegBias as the median angular
+// fraction, not as a probability of choosing between two arbitrary cones.
+// Reuse the same horizontal / independent Spinner pitch kernel as the seven
+// legacy main weapons. Source parameters are read per added main weapon.
+const ANGULAR_FAMILIES = new Set(['shooter', 'dualies', 'blaster', 'splatling']);
+export function catalogAngularLaunch(projectiles, direction, actor, family, param, accuracy, maximumDegrees) {
+  if (!ANGULAR_FAMILIES.has(family)) {
+    // Other source families have no verified common angular law here.
+    const chance = accuracy.shot(!!actor.grounded, actor.weaponRunner?.s3JumpSpreadAge);
+    return projectiles._spread(direction, Math.random() < chance ? maximumDegrees : maximumDegrees * .45);
+  }
+  const spinner = family === 'splatling';
+  // Splatlings have no Shooter-style first-shot buildup: each round reads
+  // the fixed standing/jumping median and independent vertical median.
+  // Sparse unextracted defaults remain neutral (0.5), not invented values.
+  const median = spinner
+    ? actor.grounded ? finite(param.Stand_DegBiasMax, .5) : finite(param.Jump_DegBiasMax, .5)
+    : accuracy.shot(!!actor.grounded, actor.weaponRunner?.s3JumpSpreadAge);
+  return withShotBias(actor, median, spinner ? finite(param.PitchDegBias, .5) : null,
+    () => spreadWeaponRound(projectiles, direction, actor,
+      {kind:family, spreadPitchGround:spinner ? finite(param.PitchDegSwerve, 0) : null},
+      maximumDegrees));
 }
 
 function initialState(r) {
@@ -353,10 +379,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     origin(a);
     const airFactor=1-(a.s3?.modifiers?.actionAirSpread??0);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
-    const spread=a.grounded?ground:lerp(ground,jump,airFactor);
+    const spread=key==='turret'&&r.family==='dualies'
+      ? finite(t.LapOver_DegSwerve,0)
+      : a.grounded?ground:lerp(ground,jump,airFactor);
     const aim=dir.clone();
-    const chance=s.accuracy.shot(a.grounded,runner.s3JumpSpreadAge);
-    G.projectiles._spread(aim, Math.random()<chance?spread:spread*.45);
+    if (key==='turret'&&r.family==='dualies') {
+      // Post-roll turret has its own sourced cone and must not advance normal
+      // Dualies bias; the common S3 Splat Dualies turret cone is exactly zero.
+      G.projectiles._spread(aim,spread);
+    } else {
+      // Variable-charge modes may omit fields present in the base WeaponParam.
+      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread);
+    }
     runner.spread=spread;
     spawn(a,r,desc,aim,muzzle,{volley});notify(a,r,muzzle,aim,charge);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
@@ -900,7 +934,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     legacyUpdate.call(this,dt,{...input,fire:false,firePressed:false});
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
-    s.stop=Math.max(0,s.stop-dt);s.accuracy.advance(dt);
+    s.stop=Math.max(0,s.stop-dt);if(r.family!=='splatling')s.accuracy.advance(dt);
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
