@@ -26,6 +26,18 @@ export function adaptTouchLayout(rel, code) {
     // Let native buttons/selects/ranges receive their touch-generated clicks.
     code = connect(code, "if (e.target.closest?.('#iw-mobile-controls') || e.target === this.canvas) stop(e);",
       "if (!e.target.closest?.('.iwm-edit__bar, .iwm-edit__sel') && (e.target.closest?.('#iw-mobile-controls') || e.target === this.canvas)) stop(e);", 'editor touch actions');
+    // A button's individual CSS scale must shrink around its own center. A
+    // translated transform is scaled as well, moving the visible button away
+    // from the fixed input hitbox. Keep the floating stick's transform path.
+    code = connect(code,
+      '      el.style.transform = `translate3d(${(b.x - b.d / 2).toFixed(1)}px,${(b.y - b.d / 2).toFixed(1)}px,0)`;',
+      `      if (id === 'stick') {
+        el.style.transform = \`translate3d(\${(b.x - b.d / 2).toFixed(1)}px,\${(b.y - b.d / 2).toFixed(1)}px,0)\`;
+      } else {
+        el.style.left = (b.x - b.d / 2).toFixed(1) + 'px';
+        el.style.top = (b.y - b.d / 2).toFixed(1) + 'px';
+        el.style.transform = 'none';
+      }`, 'pressed button center');
     // A floating stick moved to the right must still accept input at its new home.
     code = connect(code, ": x < W * 0.42;",
       ": x < W * 0.42 || Math.hypot(x - this._stickHome.x, y - this._stickHome.y) <= this._stickR * 1.6;", 'moved floating stick');
