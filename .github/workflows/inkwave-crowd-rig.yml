@@ -18,10 +18,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: candidate
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: baseline
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22

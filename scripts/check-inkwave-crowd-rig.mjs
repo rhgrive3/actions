@@ -26,7 +26,7 @@ const result=await page.evaluate(async({prefix})=>{
     if(frame%24===0){if(phase===4)ch.trigger('jump');if(phase===5)ch.trigger('land');if(phase===7){ch.trigger('spawn');a.setWeapon(k%2?'roller':'dualies');}ch.setLod(['hero','game','far'][phase%3]);}
     a._finishFrame(1/hz);
    }
-   if(frame%6===0){scene.updateMatrixWorld(true);snapshots.push({hz,frame,...snap()});}
+   if(frame%6===0){snapshots.push({hz,frame,...snap()});}
   }
   scenarios.push({hz,frames:192,actors:8});
  }
@@ -36,9 +36,9 @@ const result=await page.evaluate(async({prefix})=>{
  for(let f=0;f<120;f++)tick();
  for(let batch=0;batch<6;batch++){const start=performance.now();for(let f=0;f<60;f++)tick();cpu.push(performance.now()-start);}
  const orig=THREE.Object3D.prototype.updateWorldMatrix;let calls=0;THREE.Object3D.prototype.updateWorldMatrix=function(...args){calls++;return orig.apply(this,args)};for(let f=0;f<60;f++)tick();THREE.Object3D.prototype.updateWorldMatrix=orig;
- scene.updateMatrixWorld(true);snapshots.push({final:true,...snap()});
+ snapshots.push({final:true,...snap()});
  const render=[];const pixel=new Uint8Array(4);for(let frame=0;frame<4;frame++){r.info.reset();const t=performance.now();post.render();const submitted=performance.now();gl.readPixels(320,240,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);const completed=performance.now();if(gl.getError()||gl.isContextLost()||pixel[3]!==255)throw Error('Invalid completed output');render.push({frame,submitMs:submitted-t,readbackMs:completed-submitted,completedMs:completed-t,calls:r.info.render.calls,triangles:r.info.render.triangles,pixel:[...pixel]});}
- const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);const pixelHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',pixels))).map(n=>n.toString(16).padStart(2,'0')).join('');
- const ext=gl.getExtension('WEBGL_debug_renderer_info');return {cpu,render,worldUpdatesPerActorFrame:calls/480,snapshots,scenarios,pixelHash,png:r.domElement.toDataURL('image/png').split(',')[1],source:actors.map(a=>a.character.sourceMotion.state),backend:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),q:post.q,scope:'Native Actor/source-motion rig fixture with renderer-owned native day environment and touch profile. No real iPad timing; no populated arena, AI or collision benchmark.'};
+ const pixels=new Uint8Array(gl.drawingBufferWidth*gl.drawingBufferHeight*4);gl.readPixels(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight,gl.RGBA,gl.UNSIGNED_BYTE,pixels);const png=r.domElement.toDataURL('image/png').split(',')[1];const pixelHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',pixels))).map(n=>n.toString(16).padStart(2,'0')).join('');
+ const ext=gl.getExtension('WEBGL_debug_renderer_info');return {cpu,render,worldUpdatesPerActorFrame:calls/480,snapshots,scenarios,pixelHash,png,source:actors.map(a=>a.character.sourceMotion.state),backend:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),q:post.q,scope:'Native Actor/source-motion rig fixture with renderer-owned native day environment and touch profile. No real iPad timing; no populated arena, AI or collision benchmark.'};
 },{prefix});fs.writeFileSync(path.join(out,'crowd.png'),Buffer.from(result.png,'base64'));delete result.png;fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({contentHash:manifest.contentHash,errors,...result}));console.log(JSON.stringify({cpu:result.cpu,pixelHash:result.pixelHash,worldUpdatesPerActorFrame:result.worldUpdatesPerActorFrame,source:result.source,errors}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
