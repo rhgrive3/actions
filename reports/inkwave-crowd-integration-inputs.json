@@ -1,0 +1,127 @@
+{
+  "main": "545c6b3fcfc0d25c43678e9b44b1af4e26400fec",
+  "parents": [
+    "c98f4007ee2f57584009f8b32871f43c350498cf",
+    "05733ac40fd0f932be7e04c8d8574e76adbeb85e",
+    "09e7b83660b305ed3d757ac79fa095c3ee3c3acd",
+    "9e97f5f734586f667f960d8b29b862add708e96d"
+  ],
+  "canonicalProductTree": "11701c19ae432be9b5f2239774e00520d6440e8b",
+  "selected": {
+    ".github/workflows/inkwave-cloth-derivatives.yml": {
+      "sha": "45a2d582291260f11a819e1102c8f5476308fa14",
+      "pr": 1306
+    },
+    "patches/local-quality/adapter.mjs": {
+      "sha": "870a7f699daac706d041ea6092f8a4748134a768",
+      "pr": 1306
+    },
+    "patches/local-quality/cloth-derivative-adapter.mjs": {
+      "sha": "ba625ebd314a884f243db10d027b9e5f1b6e4c39",
+      "pr": 1306
+    },
+    "patches/local-quality/tests/cloth-derivative.test.mjs": {
+      "sha": "0feb51a6e6a184fd5f3d46306283e14d4e8051ce",
+      "pr": 1306
+    },
+    "reports/inkwave-cloth-derivative-flow.md": {
+      "sha": "780027079f51442f4ebf600dfda45bd76c847975",
+      "pr": 1306
+    },
+    "scripts/check-inkwave-cloth-game.mjs": {
+      "sha": "824b534a47bfe5ede9b7535be938bbf9e4c3e4cd",
+      "pr": 1306
+    },
+    "scripts/check-inkwave-cloth-rig.mjs": {
+      "sha": "3a25710e3893fe413750d5393a6ef317a84765cf",
+      "pr": 1306
+    },
+    "scripts/lib/inkwave-build-only-modules.mjs": {
+      "sha": "7db0eb162163fc4196aa6b2fa12f174c6ab86141",
+      "pr": 1306
+    },
+    ".github/workflows/inkwave-crowd-rig.yml": {
+      "sha": "724a452082c548976e62fdf9ed9966da4e010e41",
+      "pr": 1306
+    },
+    "patches/local-quality/retarget-branch-update-adapter.mjs": {
+      "sha": "ad1b54712848d9c381258db81059dae3f85b752c",
+      "pr": 1306
+    },
+    "patches/local-quality/tests/retarget-branch-update.test.mjs": {
+      "sha": "83ae2a7cc5ee341421cb14512155f72dd9cc6acf",
+      "pr": 1306
+    },
+    "reports/inkwave-crowd-rig-branch-updates.md": {
+      "sha": "816dbf2be19ecfb3c7954811f4f8afa3b02567d6",
+      "pr": 1306
+    },
+    "scripts/check-inkwave-crowd-rig.mjs": {
+      "sha": "b391dd51eec5731d8698dfe7bd7d0c0dfab7718c",
+      "pr": 1306
+    },
+    "scripts/compare-inkwave-crowd-rig.mjs": {
+      "sha": "b5c5648fb09e462fde6cfa0e9e401fb37ceab693",
+      "pr": 1306
+    },
+    ".github/workflows/inkwave-empty-weapon-draws.yml": {
+      "sha": "6a3ff79f82e1cb09eb202100a43af2ba1a4c5df0",
+      "pr": 1314
+    },
+    "patches/splatoon3/adapter.mjs": {
+      "sha": "a9f43a4ce0b14fc00d956508ac6899ffad4c2db8",
+      "pr": 1314
+    },
+    "patches/splatoon3/runtime/weapon-models/kit.mjs": {
+      "sha": "060aec58f73ee1ca5ae2a028972c53252ab9c9f6",
+      "pr": 1314
+    },
+    "patches/splatoon3/tests/weapon-empty-part-draw.test.mjs": {
+      "sha": "b91df29c76829578929b1d0604aa7a1b0d62f8da",
+      "pr": 1314
+    },
+    "reports/inkwave-empty-weapon-draws.md": {
+      "sha": "7fc32acccba369b28cf654a59b9857cbd724708b",
+      "pr": 1314
+    },
+    "scripts/compare-inkwave-empty-weapon-draws.py": {
+      "sha": "50cfbde2542b9ff2467411107cb1eea76a7efb03",
+      "pr": 1314
+    },
+    "scripts/measure-inkwave-empty-weapon-draws.mjs": {
+      "sha": "f1a660edf3677529bec9eb0edd1ab818396e7c19",
+      "pr": 1314
+    },
+    ".github/workflows/validate-inkwave-update.yml": {
+      "sha": "c8c56be2dad597ace2f0b074af631534e8289a40",
+      "pr": 1316
+    },
+    "patches/native-stages/runtime/triangle-world.mjs": {
+      "sha": "724ec376a7d13e0e01fb9193a7b4dd476acefeec",
+      "pr": 1316
+    },
+    "patches/native-stages/tests/ray-down-parity.test.mjs": {
+      "sha": "0a495a6237e63fc4404cbdaf34f460bfdd4d985e",
+      "pr": 1316
+    },
+    "reports/inkwave-native-down-ray-2026-10-12.json": {
+      "sha": "1b62055ea877fa7dce68cbe527df37d5688fdebc",
+      "pr": 1316
+    },
+    "reports/inkwave-native-down-ray-2026-10-12.md": {
+      "sha": "c398d125b3a7b902df96c55013ed53c367acc9d7",
+      "pr": 1316
+    },
+    "scripts/probes/inkwave-native-down-ray.mjs": {
+      "sha": "b1bede17a8be68b2e01d67d5a6a72ca277a95e56",
+      "pr": 1316
+    }
+  },
+  "liveEvidenceHead": "51c67269450daae9effcd4fd031f2fb9465d894a",
+  "liveEvidenceFiles": {
+    "scripts/diagnose-inkwave-native-ray-live-equivalence.mjs": "4e652880197553d080ad5126a0db8af4a377853d",
+    "scripts/lib/live-ray-mirror.mjs": "fbd57161f6516c077bcb1307aa310cbd91aa3131",
+    "scripts/tests/live-ray-mirror.test.mjs": "902ab74df8154ce1cb8f428a5787efca4a2ac86a"
+  },
+  "combinedContentHash": "01532452656a50dbf624778f40a2f21123057f35db212f58a2610788fb79feae"
+}

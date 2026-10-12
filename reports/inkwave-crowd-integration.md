@@ -1,0 +1,25 @@
+# Reviewed crowd changes: final composition
+
+## Source and scope
+
+The merge has first parent main `545c6b3fcfc0d25c43678e9b44b1af4e26400fec` and four ordered reviewed parents: cloth `c98f4007ee2f57584009f8b32871f43c350498cf`, rig `05733ac40fd0f932be7e04c8d8574e76adbeb85e`, hidden placeholders `09e7b83660b305ed3d757ac79fa095c3ee3c3acd`, and exact-down ray `9e97f5f734586f667f960d8b29b862add708e96d`.
+
+The canonical 27-file union has tree `11701c19ae432be9b5f2239774e00520d6440e8b`. Every product blob is copied exactly from a reviewed parent. Three overlaps are resolved by selecting the rig parent's quality adapter/build-only list (each already includes the identical cloth correction) and the latest cloth report. There is no duplicated cloth application, new optimization, model change, dropped evidence, quality reduction or changed simulation cadence. The authoritative file receipt is `inkwave-crowd-integration-inputs.json`.
+
+Local production build contentHash: `01532452656a50dbf624778f40a2f21123057f35db212f58a2610788fb79feae`. All 691 source identity inputs pass tracked-commit packaging verification (9/9 tests). Combined focused cloth/rig/weapon/ray source regressions pass 16/16 with zero skips. The normal emitted product differs from the common-cloth baseline only in character.js, retarget.js, weapon kit.mjs, and native engine.mjs/build-config.mjs, besides index/service-worker revision metadata. The final published commit, required CI and combined browser comparisons remain pending until their exact-head results are inspected.
+
+## Final composed-head verification
+
+The new integration workflow checks its exact immutable checkout and five-parent source receipt before building. Its controls begin as a second checkout of that same commit, and a fail-closed guard allows only the listed counterfactual changes. Source identities and all distributed artifact bytes are verified. Build manifests require this pinned candidate contentHash.
+
+1. Rig: remove only the rig adapter and restore the cloth-only quality adapter/build-only list in the control. Cloth, hidden placeholders and native rays remain common. Keep the existing exact comparator unchanged: both Player00/Player01 source-bank fixtures, full ABBA, 30/60/120Hz native lifecycle, every node/contact/muzzle, all uniforms and geometry, all camera/composer-phase pixels, and identical draw/triangle counts. Independently decode all 200 PNGs and require opaque nonempty exact pixels.
+2. Hidden placeholders: restore only the reviewed cloth-only splatoon3 adapter and weapon kit in the control. Cloth, rig and native rays remain common. Keep the original 128-PNG/160-comparison zero-pixel gate and geometry equality. Additionally require raw draws 361→289 in full near and 217→145 in weapon-only near, exactly 36 fewer degenerate triangles, 36 fewer zero-count plus 36 fewer positive-count calls, and unchanged far draws (217/105).
+3. Native ray: retain the exact observer/helper/tests from verified diagnostic head `51c67269450daae9effcd4fd031f2fb9465d894a` ([successful run38300585862](https://github.com/rhgrive3/actions/actions/runs/38300585862)). On the final combined production build, compare every actual-main candidate ray with an isolated original implementation, including complete hit fields, signed zeros, counters, input/RNG immutability and all six collision arrays. Require 12 rendered frames, eight living actors, nonempty FX/Character/Physics/Bot coverage, zero page errors and opaque actual canvas output. This diagnostic is not timed performance acceptance.
+
+The old rig-only diagnostic uses a pinned rig-only product hash, so its job is routed to its original component branch or explicit dispatch. Its entire strict comparison responsibility is reproduced by the new integration rig job with a proper common-background control. Other component diagnostic routing is unchanged. General validation, native integration, UI thresholds, workflow permissions and mandatory jobs are not relaxed. Normal required CI runs on the published final head.
+
+## Evidence and limits
+
+The independent component evidence remains valid for its measured scope. Exact ray replay showed 11.84–14.92% less ray-only elapsed work; rig traversal counted 396.5→266.5 update calls per actor-frame (32.79% fewer); near placeholder drawing counted 361→289 raw calls with identical completed images under common cloth. These figures are not additive whole-frame savings and do not establish iPad mini 6 FPS or resolution of the game's bottleneck.
+
+The latest exact-head rig repeat [run38299940242](https://github.com/rhgrive3/actions/actions/runs/38299940242) again preserved every output and the call reduction, but CPU timings were variable: default ABBA 112.3/145.0/91.0/109.1 ms and mixed 107.5/97.8/92.7/102.5 ms. No consistent CPU-time or FPS speedup is claimed. The original cloth instability and earlier failed comparisons remain documented; thresholds were not loosened. Physical iPad and wider real-match measurements remain unverified.
