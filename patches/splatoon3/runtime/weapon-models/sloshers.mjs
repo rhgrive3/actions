@@ -147,35 +147,78 @@ function bloblobber(d) {
   return rebuild(d, { body, ink, parts: { surface: inkDisc(0.07, top + 0.004, cz) } });
 }
 function explosher(d) {
-  // Wmn_Slosher_Washtub: an olive jerry can with embossed side panels and a dark back panel, a brass barrel
-  // with a bar grid on its mouth angled up from the front shoulder (silver collar, orange spring clamps),
-  // a chrome tube cage round both flanks and a black rubber top handle.
-  const C = { olive: '#5f6a2c', oliveD: '#4b5523', brass: '#b9893a', silver: '#c8cbcf', chrome: '#c3c6ca', black: '#1e1f23', orange: '#e8662a', panel: '#2b2d35' };
-  const cy = BY - 0.004, cz = BZ + 0.02, w = 0.13, h = 0.2, dep = 0.19;
-  const body = new Pieces(), ink = new Pieces();
-  body.add(box(w, h, dep, 0, cy, cz, 0.28, 14, 10), C.olive, M.satin);
-  for (const sx of [-1, 1]) {
-    body.add(box(0.008, h * 0.7, dep * 0.62, sx * (w / 2 + 0.002), cy - 0.01, cz, 0.3), C.oliveD, M.satin);     // embossed panel
-    body.add(box(0.004, 0.012, dep * 0.8, sx * (w / 2 + 0.005), cy - 0.01, cz, 0.4).rotateX(0.6).translate(0, 0, 0), C.oliveD, M.satin);
+  // Wmn_Slosher_Washtub: volumetric jerrycan, independent crash cage and open burner.
+  // Reference: stored official 3D render plus turntable; the top handle is not the hand anchor.
+  // The native rear D grip, support hand, muzzle and slosh surface channel stay in their old frame.
+  const C = { olive:'#626e35', ridge:'#778348', darkOlive:'#414b28', brass:'#b09250', silver:'#aeb8bd', black:'#22262c', orange:'#ec742d', panel:'#343842' };
+  const body=new Pieces(), ink=new Pieces(), cy=BY-.004, cz=BZ+.010;
+  const w=.144, h=.186, dep=.170;
+  body.add(box(w,h,dep,0,cy,cz,.25,16,10),C.olive,M.satin);
+  // Pressed side wells with raised X ribs, separately built on the two broad faces.
+  for(const sx of[-1,1]) {
+    const x=sx*.073;
+    body.add(box(.003,.129,.121,x,cy-.006,cz,.28,12,8),C.darkOlive,M.satin);
+    body.add(box(.004,.117,.108,x+sx*.0018,cy-.006,cz,.3,12,8),C.olive,M.satin);
+    for(const dir of[-1,1]) body.add(cyl(.0033,[x+sx*.004,cy-.049,cz-dir*.043],[x+sx*.004,cy+.037,cz+dir*.043],8),C.ridge,M.satin);
+    body.add(box(.0035,.028,.029,x+sx*.006,cy-.006,cz,.22,8,4),C.olive,M.satin);
+    // Lower moulded runner protects the can, leaving the support-hand axis unobstructed.
+    body.add(box(.018,.016,.134,sx*.051,cy-.097,cz,.3,10,6),C.darkOlive,M.satin);
   }
-  body.add(box(w * 0.92, h * 0.86, 0.012, 0, cy - 0.006, cz - dep / 2 - 0.004, 0.25), C.panel, M.satin);        // back panel
-  body.add(box(0.03, 0.026, 0.002, 0.025, cy + 0.03, cz - dep / 2 - 0.011, 0.2), '#e8c21a', M.print);          // warning label
-  // brass barrel on the front shoulder, angled up
-  const bz = cz + dep / 2 - 0.02, by = cy + h / 2 - 0.02;
-  const barrel = new Pieces();
-  barrel.add(zlathe([[0, -0.02], [0.044, -0.02], [0.044, 0.05], [0.05, 0.056], [0.05, 0.066], [0.04, 0.066], [0.04, 0.06], [0, 0.06]], 0, 0, 0, 24), C.brass, M.metal);
-  barrel.add(ring(0.046, 0.006, 0, 0, 0.0, 'z', 6, 24), C.silver, M.metal);
-  for (const z of [0.012, 0.03]) barrel.add(ring(0.047, 0.004, 0, 0, z, 'z', 5, 24), C.orange, M.gloss);
-  for (let k = -2; k <= 2; k++) barrel.add(box(0.004, 0.084, 0.004, k * 0.016, 0, 0.064, 0.5), C.brass, M.metal);  // bar grid
-  body.merge(barrel.transform(g => g.rotateX(-0.5).translate(0, by, bz)));
-  ink.add(zlathe([[0, -0.01], [0.038, -0.01], [0.038, 0.055], [0, 0.055]], 0, 0, 0, 20).rotateX(-0.5).translate(0, by, bz)); // ink in the barrel
-  // chrome cage on both flanks + black top handle
-  for (const sx of [-1, 1]) body.add(pipe([[sx * 0.078, cy - h / 2 + 0.01, cz - dep / 2 + 0.02], [sx * 0.08, cy - h / 2 - 0.006, cz + 0.03],
-    [sx * 0.082, cy + 0.02, cz + dep / 2 + 0.03], [sx * 0.07, cy + h / 2 + 0.05, cz + 0.03], [sx * 0.07, cy + h / 2 + 0.06, cz - 0.04]], 0.0055, 40, 8), C.chrome, M.metal);
-  body.add(cyl(0.012, [-0.07, cy + h / 2 + 0.06, cz - 0.04], [0.07, cy + h / 2 + 0.06, cz - 0.04], 14), C.black, M.rubber);
-  wireHandle(body, cz - dep / 2 - 0.006, C.chrome);
-  return rebuild(d, { body, ink, parts: { surface: inkDisc(0.035, cy + 0.06, cz) } });
+  // Rear electrical box: chamfered volume, warning plate and a separate bank of vents.
+  body.add(box(.112,.147,.033,0,cy-.003,cz-.088,.22,12,8),C.panel,M.satin);
+  body.add(box(.035,.041,.0018,-.026,cy+.008,cz-.105,.15,8,4),'#dad8c6',M.print);
+  body.add(box(.031,.009,.002,-.026,cy+.028,cz-.106,.15,8,4),'#a12f32',M.print);
+  body.add(slab([[-.026,-.005],[-.012,.018],[.002,-.005]],.002,0,.0001).rotateY(Math.PI/2).translate(-.013,cy,cz-.107),'#d2b83d',M.print);
+  for(let i=0;i<5;i++) body.add(box(.028,.003,.002,.024,cy+.023-i*.011,cz-.106,.15,8,4),C.black,M.satin);
+  // Integral carry aperture at the back shoulder and a serrated filler cap.
+  for(const x of[-.025,.025]) body.add(box(.008,.023,.012,x,cy+.103,cz-.055,.18,8,4),C.olive,M.satin);
+  body.add(box(.058,.008,.012,0,cy+.117,cz-.055,.18,10,4),C.olive,M.satin);
+  body.add(ylathe([[0,.095],[.014,.095],[.018,.100],[.018,.113],[.014,.116],[0,.116]],-.028,cy,cz+.012,16),C.olive,M.satin);
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;body.add(box(.004,.011,.004,-.028+Math.cos(a)*.017,cy+.108,cz+.012+Math.sin(a)*.017,.18,6,4),C.darkOlive,M.satin);}
+  // Large hollow bronze burner rises from the front shoulder; horizontal bars cross its OPEN mouth.
+  const by=cy+.060,bz=cz+.069,tilt=-.62,burner=new Pieces();
+  burner.add(zlathe([[.038,-.027],[.050,-.025],[.051,-.009],[.050,.032],[.057,.067],[.057,.075],[.051,.075],[.047,.064],[.041,.010],[.038,-.027]],0,0,0,28),C.brass,M.metal);
+  burner.add(zlathe([[.039,-.026],[.057,-.026],[.061,-.019],[.061,-.011],[.054,-.005],[.047,-.004]],0,0,0,24),C.silver,M.metal);
+  // Narrow graphite sleeve ribs and silver retaining band reveal the warm interior.
+  for(const sx of[-1,1]) burner.add(box(.010,.080,.041,sx*.050,0,.020,.22,10,6),C.panel,M.satin);
+  burner.add(ring(.051,.0028,0,0,.040,'z',5,24),C.silver,M.metal);
+  burner.add(ring(.056,.0025,0,0,.074,'z',5,28),C.brass,M.metal);
+  for(const y of[-.031,0,.031]) {
+    const width=2*Math.sqrt(.051*.051-y*y);
+    burner.add(box(width,.0035,.007,0,y,.074,.22,10,4),C.brass,M.metal);
+  }
+  for(const sx of[-1,1]) {
+    burner.add(pipe([[sx*.043,-.024,-.014],[sx*.050,-.025,.005],[sx*.055,-.017,.035]],.0018,10,5),C.orange,M.gloss);
+    burner.add(box(.014,.010,.012,sx*.045,-.029,.005,.15,8,4),C.brass,M.metal);
+  }
+  // Recessed team ink is at the burner throat, not a solid coloured cap across the grille.
+  ink.add(zlathe([[0,-.014],[.037,-.014],[.037,-.010],[0,-.010]],0,0,0,20).rotateX(tilt).translate(0,by,bz));
+  body.merge(burner.transform(g=>g.rotateX(tilt).translate(0,by,bz)));
+  // Pressure gauge sits outside the left side of the neck.
+  body.add(zcylGauge(),C.silver,M.metal);
+  function zcylGauge(){return zlathe([[0,0],[.012,0],[.012,.008],[0,.008]],0,0,0,16).rotateX(-.8).translate(-.060,cy+.095,cz+.076);}
+  body.add(sphere(.009,.002,.009,-.060,cy+.103,cz+.082,12,6),'#dadfd5',M.print);
+  body.add(cyl(.001,[-.060,cy+.105,cz+.082],[-.064,cy+.105,cz+.085],6),'#b74e38',M.print);
+  // A single continuous side crash loop per flank, with a dark lower sleeve.
+  for(const sx of[-1,1]) {
+    const x=sx*.089;
+    body.add(pipe([[x,cy+.032,cz+.073],[x,cy+.020,cz-.060],[x,cy-.028,cz-.099],[x,cy-.078,cz-.071],[x,cy-.079,cz+.053]],.0055,32,7),C.silver,M.metal);
+    body.add(cyl(.007,[x,cy-.079,cz-.032],[x,cy-.079,cz+.056],10),C.black,M.rubber);
+    body.add(pipe([[x,cy+.031,cz-.063],[sx*.079,cy+.135,cz-.060],[sx*.065,cy+.154,cz-.055]],.005,18,7),C.silver,M.metal);
+    body.add(pipe([[x,cy-.079,cz+.055],[sx*.091,cy-.057,cz+.124],[sx*.060,cy-.047,cz+.140]],.005,16,7),C.silver,M.metal);
+    // Orange spring anchors and a real helical shock on each shoulder.
+    const start=[x,cy+.029,cz+.011],end=[x,cy+.040,cz+.072];
+    body.add(cyl(.005,start,end,10),C.black,M.rubber);
+    for(const z of[cz+.011,cz+.072]) body.add(box(.017,.020,.008,x,cy+.034,z,.2,8,4),C.orange,M.gloss);
+    const pts=[];for(let i=0;i<=48;i++){const t=i/48,a=t*Math.PI*10;pts.push([x+Math.cos(a)*.009,cy+.029+t*.011+Math.sin(a)*.009,cz+.016+t*.050]);}
+    body.add(pipe(pts,.0018,56,5),C.silver,M.metal);
+  }
+  body.add(cyl(.009,[-.065,cy+.154,cz-.055],[.065,cy+.154,cz-.055],14),C.black,M.rubber);
+  body.add(cyl(.005,[-.060,cy-.047,cz+.140],[.060,cy-.047,cz+.140],12),C.silver,M.metal);
+  wireHandle(body,cz-dep/2-.006,C.silver);
+  return rebuild(d,{body,ink,parts:{surface:inkDisc(.035,BY-.004+.06,BZ+.02)}});
 }
+
 function dreadWringer(d) {
   // Wmn_Slosher_Double: a low wide mop bucket — yellow open tub at the front, a grey metal wringer housing
   // at the back with two black rubber rollers and a long grey press lever hinged over it, a flat grey base

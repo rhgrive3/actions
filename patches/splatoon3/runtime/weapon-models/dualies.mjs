@@ -92,20 +92,48 @@ function squelchers(d) {
 }
 
 function darkTetra(d) {
-  // Wmn_Maneuver_Stepper: a white C-frame with a purple strip and a looped hook on top, a black body by the
-  // grip, a long curved skid under it like a blade with oval cut-outs filled with ink, a black nozzle.
-  const C = { white: '#e9e9e6', black: '#1b1c20', purple: '#6a2fb3', grey: '#8d9299' };
+  // Wmn_Maneuver_Stepper, rebuilt from the stored 3D render AND 12-view rotation sheet.
+  // One pistol: twin front discs, open pull loop, narrow receiver and a wide rebound shoe.
+  // Native hand frame, dual flag, launch point and hidden recoil channels are unchanged.
+  const C = { white: '#e4e5dc', black: '#181b21', grey: '#7c858a', sole: '#292d32', purple: '#742da7' };
   const body = new Pieces(), ink = new Pieces();
-  const trig = pistolGrip(body, { color: C.black, triggerColor: C.black, guardColor: C.black, base: false });
-  body.add(shell([[-0.05, 0.05], [-0.04, 0.09], [0.08, 0.1], [0.12, 0.08], [0.12, 0.04], [0.02, 0.04]], 0.036, 0.006, 24), C.black, M.satin);
-  body.add(shell([[0.06, 0.1], [0.1, 0.12], [0.12, 0.08], [0.115, -0.05], [0.09, -0.055], [0.09, 0.06]], 0.03, 0.005, 24), C.white, M.gloss); // front C
-  body.add(box(0.032, 0.09, 0.01, 0, 0.03, 0.105, 0.3), C.purple, M.gloss);
-  body.add(pipe([[0, 0.11, 0.08], [0, 0.15, 0.085], [0, 0.155, 0.11], [0, 0.125, 0.112]], 0.004, 16, 5), C.white, M.gloss); // hook
-  // skid: a flat curved blade from under the grip forward, with ink ovals
-  body.add(shell([[-0.08, -0.07], [-0.05, -0.09], [0.06, -0.095], [0.15, -0.075], [0.17, -0.055], [0.15, -0.06], [0.06, -0.078], [-0.05, -0.074]], 0.05, 0.004, 32), C.white, M.gloss);
-  for (const z of [-0.03, 0.02, 0.07, 0.12]) ink.add(sphere(0.016, 0.004, 0.012, 0, -0.08 + (z > 0.1 ? 0.006 : 0), z, 14, 4));
-  body.add(zlathe([[0, 0.12], [0.017, 0.12], [0.017, 0.14], [0.012, 0.145], [0, 0.145]], 0, 0.065, 0, 16), C.black, M.satin);
-  return finish(d, body, ink, trig, [0, 0.065, 0.147]);
+  const trig = pistolGrip(body, { color: C.black, triggerColor: C.black, guard: false, base: false });
+  // The grip is the rear leg of the open frame. Small oval plates have real thickness.
+  for (const sx of [-1, 1]) {
+    body.add(sphere(.0025, .037, .018, sx * .014, .001, -.005, 12, 8).rotateX(.12), C.grey, M.satin);
+    for (const y of [-.018, .023]) body.add(cyl(.004, [sx * .015, y, -.003], [sx * .018, y, -.003], 8), C.black, M.satin);
+  }
+  body.add(box(.034, .030, .079, 0, .071, .035, .26, 10, 6), C.black, M.satin);
+  body.add(box(.031, .018, .069, 0, .099, .036, .2, 10, 6), C.white, M.satin);
+  // Ink cylinders sit between the rear receiver and the front plate, rather than a solid C silhouette.
+  for (const y of [.083, .052]) {
+    ink.add(zcyl(.013, .051, .137, 0, y, 16));
+    body.add(zcyl(.0095, .050, .136, 0, y, 14), C.black, M.satin);
+    for (const sx of [-1, 1]) body.add(box(.006, .007, .079, sx * .013, y, .091, .3, 8, 4), C.black, M.satin);
+    body.add(zlathe([[.006,.136],[.017,.136],[.018,.141],[.015,.146],[.005,.146],[.005,.142]], 0, y, 0, 20), C.white, M.gloss);
+    body.add(zcyl(.004, .141, .1465, 0, y, 10), C.grey, M.satin);
+  }
+  // White tapered front spine and its purple rear gasket, with a genuinely open pull loop.
+  body.add(shell([[.128,.037],[.139,.036],[.132,-.018],[.111,-.062],[.096,-.065],[.111,-.011]], .027, .002), C.white, M.satin);
+  body.add(box(.031, .076, .008, 0, .074, .133, .24, 10, 6), C.purple, M.gloss);
+  body.add(pipe([[0,.102,.130],[0,.131,.129],[0,.165,.142],[0,.178,.157],[0,.175,.169],[0,.161,.174],[0,.145,.159],[0,.117,.141]], .0042, 28, 6), C.white, M.satin);
+  // The shoe is wider than the upper receiver: independent side rails around a thin black deck.
+  const shoe=[[-.075,-.065],[-.052,-.080],[.035,-.082],[.105,-.064],[.164,-.039],[.169,-.048],[.113,-.079],[.038,-.097],[-.050,-.094],[-.083,-.077]];
+  body.add(shell(shoe, .045, .0025), C.sole, M.rubber);
+  for (const sx of [-1, 1]) {
+    body.add(pipe([[sx*.025,-.069,-.077],[sx*.027,-.083,-.047],[sx*.029,-.084,.040],[sx*.025,-.067,.111],[sx*.018,-.043,.166]], .0028, 28, 5), C.white, M.satin);
+    body.add(pipe([[sx*.024,-.083,-.066],[sx*.028,-.096,.023],[sx*.031,-.086,.078],[sx*.027,-.070,.121]], .002, 20, 5), C.black, M.satin);
+    // Two laterally separated rebound pods flare around the front foot, ink caps face forward.
+    const x=sx*.023;
+    body.add(zlathe([[0,.077],[.012,.077],[.017,.087],[.017,.104],[.014,.110],[0,.110]],x,-.083,0,16),C.black,M.rubber);
+    ink.add(zlathe([[0,.110],[.012,.110],[.012,.112],[0,.112]],x,-.083,0,16));
+    body.add(ring(.010,.0016,x,-.083,.113,'z',4,16),C.grey,M.satin);
+  }
+  for (const z of [-.038,.012,.062]) {
+    ink.add(box(.043,.013,.028,0,-.095+(z>.04?.008:0),z,.55,10,6));
+    body.add(box(.046,.003,.030,0,-.094+(z>.04?.008:0),z,.4,10,4),C.grey,M.satin);
+  }
+  return finish(d, body, ink, trig, [0, .065, .147]);
 }
 
 function douser(d) {
