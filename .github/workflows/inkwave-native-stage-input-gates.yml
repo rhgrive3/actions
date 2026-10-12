@@ -14,6 +14,8 @@ on:
       - scripts/tests/inkwave-build-packaging.test.mjs
       - scripts/tests/inkwave-runtime-evidence.test.mjs
       - patches/splatoon3/tests/motion-catalog-gates.test.mjs
+      - patches/reliability/tests/start.test.mjs
+      - patches/splatoon3/tests/issue-1039-host-ready.test.mjs
       - .github/workflows/inkwave-native-stage-input-gates.yml
 permissions:
   contents: read
@@ -44,7 +46,7 @@ jobs:
             echo 'Negative control unexpectedly passed'; exit 1
           fi
           grep -q 'Catalog input namespace/path native-stages/' input-gate-evidence/before.log
-          node --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs | tee input-gate-evidence/after.log
+          node --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs | tee input-gate-evidence/after.log
       - name: Unchanged production build and all emitted input identities
         run: |
           npm install --no-save --no-package-lock esbuild@0.28.2
