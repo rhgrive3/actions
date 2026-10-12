@@ -539,6 +539,13 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       'attach validated Drop Roller clock and direction');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
       // #1200/#1265/#1266/#1267: event identity is admitted only on an accepted owner clock.\n      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts) continue;
+      // #1283: invalid Slam/vector fields must not occupy the playback FIFO
+      // or consume sender event identity. Owner admission stays authoritative.
+      if (e[1] === 'ev' && !validForwardedEventPayload(e[2], e[3])) continue;
+      if (e[1] === 'ev' && e[2] === 'special:slam') {
+        const slamActor = this.byNid.get(e[3].actor.n);
+        if (!slamActor?.remote || slamActor.owner !== from) continue;
+      }
       e._netPeer = from;
       if (d.r === 2) {
         const hasOwnerTick = ownerSimulationTickAccepted && Number.isSafeInteger(d.u) && d.u >= 0;
@@ -848,7 +855,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     if (eventKind === 'b') for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
     if (eventKind === 'pe' && e[4] === 1 && (!Number.isFinite(e[5]) || !Number.isFinite(e[6]) || !Number.isFinite(e[7]))) return;
     if (eventKind === 'tr' && typeof e[3] !== 'string') return;
-    if (eventKind === 'ev' && typeof e[2] !== 'string') return;
+    if (eventKind === 'ev' && !validForwardedEventPayload(e[2], e[3])) return;
     if (e._netSeq !== undefined && eventPeer && !validEventSequence(e._netSeq, eventPeer._lastEventSeq || 0)) return;
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
       const actor = this.byNid.get(e[2]);
@@ -2326,7 +2333,7 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
       'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
       'validate host Boss snapshot before unpacking and buffering');
@@ -2404,6 +2411,9 @@ ${bombHit}`;
   }
   if (rel === 'src/net/netmatch.js') {
     code = adaptKitPaintAdmission(code, once);
+    patch('  _playEvent(name, d) {\n    const e = unpackEvent(d, this);',
+      '  _playEvent(name, d) {\n    if (!validForwardedEventPayload(name, d)) return;\n    const e = unpackEvent(d, this);',
+      'defense in depth for direct forwarded event playback');
     patch('  _tick(from, d) {',
       "  _tick(from, d) {\n    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
       'validate owner envelope before kit normalization or pending births');
