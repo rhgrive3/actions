@@ -1,0 +1,11 @@
+# Native-stage build input identity admission
+
+Base: ed3a046574208471c5db5309e2469d263cacfdfd. This change touches verifier/test source only; it does not modify any model, material, stage runtime, source payload or build implementation.
+
+The production builder now adds native-stages/*.mjs identities. Its primary check-inkwave-browser validator recognizes the namespace, but seven other consumers did not. Pure-main validation run 38254171278 fails before rendering: catalog job 114828118877 reports `Catalog input namespace/path native-stages/adapter.mjs` with zero modules loaded; active/Flow, UI identity-negative fixture and network exact-source checks reject the same key. Glass candidate af22d6e inherits the identical catalog failure in run 38258854153/job114843872595. This is separate from main's #1184 pending-Promise and #1039 stylesheet failures, which remain unresolved here.
+
+The seven existing allowlists gain exactly native-stages -> patches/native-stages. No unknown namespace fallback is added. Noncanonical empty, dot, parent or backslash path components are rejected before mapping; existing digest, realpath and committed-blob checks remain in place. Packaging/runtime-evidence acceptance fixtures are updated to the same bounded namespace.
+
+New focused tests execute each actual mapping expression/callback without launching its top-level browser runner; those mapping-only tests explicitly use mock bytes. Separately, every nativeStageIdentity source byte is hashed, canonical catalog receipts are checked, and an isolated committed Git fixture verifies the real runtime receipt reader. Missing/forged receipts, a forged manifest following an uncommitted adapter edit, unknown namespaces and path traversal must fail.
+
+Local before/after control: unchanged ed3 verifier source rejects the new acceptance tests with the same native namespace error. Candidate passes 3/3 new tests and all 58 existing catalog acceptance tests. These are source/identity tests, not real-browser motion or GPU evidence. The dedicated CI repeats the exact ed3 negative control, candidate tests and emitted build identity checks. General CI/browser outcomes are pending at publication. Other known main failures are retained rather than hidden or rerun until green.
