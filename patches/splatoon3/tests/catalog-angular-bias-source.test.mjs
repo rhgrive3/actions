@@ -3,7 +3,7 @@
 // distribution is not presented as a recovered Nintendo PRNG.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { catalogAngularLaunch, advanceCatalogJumpClock } from '../runtime/main-weapon-catalog.mjs';
+import { catalogAngularLaunch, catalogAngularEnvelope, advanceCatalogJumpClock } from '../runtime/main-weapon-catalog.mjs';
 import { biasQuantile } from '../runtime/weapon-accuracy.mjs';
 import { ShooterAccuracy } from '../runtime/shooter-accuracy.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
@@ -115,6 +115,35 @@ test('catalog Dualies end the airborne jump window without entering a false zero
   for(let i=0;i<70;i++)advanceCatalogJumpClock(s,a,'dualies',1/60);
   assert.equal(s.jumpAge,null,'70F is the end even before landing');
   near(s.accuracy.chance(false,s.jumpAge),.4,'normal airborne median restored');
+});
+
+test('catalog Shooter maximum angle continuously recovers across landing, never snaps at touch-down',()=>{
+  const source={Jump_DegBiasDecreaseStartFrame:25,Jump_DegBiasEndFrame:70};
+  for(const grounded of [false,true]){
+    const f=t=>catalogAngularEnvelope('shooter',grounded,4.86,11.66,t/60,0,source);
+    near(f(0),11.66,'jump 0F held');
+    near(f(25),11.66,'jump 25F held');
+    near(f(47.5),(11.66+4.86)/2,'47.5F maximum angle recovers halfway');
+    near(f(70),4.86,'70F source ground maximum');
+  }
+  near(catalogAngularEnvelope('shooter',true,4.86,11.66,null),4.86,'ordinary ground');
+  near(catalogAngularEnvelope('shooter',false,4.86,11.66,null),11.66,'ledge fall airborne');
+});
+
+test('catalog Dualies/Blasters retain air maximum through landing, not Shooter lerp',()=>{
+  const d={Jump_DegBiasDecreaseStartFrame:25,Jump_DegBiasEndFrame:70};
+  for(const [family,ground,jump] of [['dualies',2,7.5],['blaster',0,8]]){
+    for(const frames of [0,25,47.5,69.99]){
+      near(catalogAngularEnvelope(family,true,ground,jump,frames/60,0,d),jump,
+        family+' active recovery after landing '+frames+'F');
+    }
+    near(catalogAngularEnvelope(family,true,ground,jump,null),ground,family+' recovered ground');
+  }
+  near(catalogAngularEnvelope('blaster',false,0,8,null),0,'non-jump ledge fall cannot start blaster penalty');
+  near(catalogAngularEnvelope('dualies',false,2,7.5,null),7.5,'non-jump dualies stay airborne');
+  near(catalogAngularEnvelope('splatling',false,3.3,7,null),7,'Spinner not changed by these owners');
+  near(catalogAngularEnvelope('shooter',false,4.86,11.66,null,.5),8.26,
+    'Action Strength reduces airborne maximum but not ordinary ground');
 });
 
 test('catalog unsupported shot families retain existing provisional fallback until source is verified',()=>{
