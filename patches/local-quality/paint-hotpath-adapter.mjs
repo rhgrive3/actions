@@ -73,12 +73,44 @@ export function adaptPaintHotpath(rel, code, replaceOnce) {
   // With the historical CPU cutoff 0.97, d < 0.68*r guarantees
   // d/(r*blobWobble) < 0.96867 < 0.97; the canonical cutoff 1 is also safe.
   // Do not alter the body boundary, GPU shader, roll band, or claim order.
-  const bodyRatio = code.match(/          if \(d \/ \(r \* blobWobble\(Math\.atan2\(py, px\), seed\)\) > (?:0\.97|1)\) continue;/g);
-  if (!bodyRatio || bodyRatio.length !== 1) {
+  const nativeCut = '          if (d / (r * blobWobble(Math.atan2(py, px), seed)) > ';
+  const cappedCut = '          if (d / (r * Math.min(1, blobWobble(Math.atan2(py, px), seed))) > ';
+  const bodyRatio = [nativeCut, cappedCut].flatMap(prefix => [0.97, 1].map(cut => prefix + cut + ') continue;'))
+    .filter(anchor => code.includes(anchor));
+  if (bodyRatio.length !== 1) {
     throw new Error('paint hotpath: expected one native/canonical blob wobble cut');
   }
   change(bodyRatio[0],
     bodyRatio[0].replace('if (d /', 'if (d >= r * 0.68 && d /'),
     'skip guaranteed-inside ink body trigonometry');
+  // The two narrow spikes are nonnegative and bounded by 0.17 + 0.12.
+  // Use those bounds only with a wide floating-point guard; ambiguous edge
+  // cells run the exact original additions, multiplication and division.
+  const body = `export function blobWobble(ang, seed) {
+  return 1 + 0.12 * Math.sin(3 * ang + seed * 6.2831) + 0.08 * Math.sin(5 * ang + seed * 17.0) +
+    0.05 * Math.sin(7 * ang + seed * 41.0) + 0.03 * Math.sin(11 * ang + seed * 73.0) + 0.018 * Math.sin(17 * ang + seed * 29.0) +
+    0.17 * Math.pow(Math.max(Math.cos(ang - seed * 37.7), 0), 28) + 0.12 * Math.pow(Math.max(Math.cos(ang - seed * 53.3 - 2.1), 0), 36);
+}`;
+  // A separately adopted width-cap adapter may precede this optimization.
+  // Preserve that cap at EVERY bound and at the exact fallback; never add one.
+  const capped = bodyRatio[0].includes('Math.min(1,');
+  const bound = expression => capped ? `Math.min(1, ${expression})` : expression;
+  change(body, `function paintBodyContains(d, r, ang, seed, cutoff) {
+  const base = 1 + 0.12 * Math.sin(3 * ang + seed * 6.2831) + 0.08 * Math.sin(5 * ang + seed * 17.0) +
+    0.05 * Math.sin(7 * ang + seed * 41.0) + 0.03 * Math.sin(11 * ang + seed * 73.0) + 0.018 * Math.sin(17 * ang + seed * 29.0);
+  if (d / (r * ${bound('base')}) < cutoff * (1 - 1e-12)) return true;
+  if (d / (r * (${bound('base + 0.29')})) > cutoff * (1 + 1e-12)) return false;
+  const withFirst = base + 0.17 * Math.pow(Math.max(Math.cos(ang - seed * 37.7), 0), 28);
+  if (d / (r * ${bound('withFirst')}) < cutoff * (1 - 1e-12)) return true;
+  if (d / (r * (${bound('withFirst + 0.12')})) > cutoff * (1 + 1e-12)) return false;
+  const exact = withFirst + 0.12 * Math.pow(Math.max(Math.cos(ang - seed * 53.3 - 2.1), 0), 36);
+  return !(d / (r * ${bound('exact')}) > cutoff);
+}
+
+${body}`, 'bounded paint spike evaluation');
+  const cutoff = bodyRatio[0].includes('> 0.97') ? '0.97' : '1';
+  change(bodyRatio[0].replace('if (d /', 'if (d >= r * 0.68 && d /'),
+    `          if (d >= r * 0.68 && !paintBodyContains(d, r, Math.atan2(py, px), seed, ${cutoff})) continue;`,
+    'short circuit only proven body spike interiors and exteriors');
   return code;
 }
