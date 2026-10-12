@@ -258,10 +258,14 @@ test('Rapid, Rapid Pro and Clash Blaster use the extracted 40F jump recovery sta
   }
 });
 
-test('catalog unsupported shot families retain existing provisional fallback until source is verified',()=>{
+test('catalog unsupported shot families retain both original provisional fallback cones',()=>{
   const a=actor(true),direction=vec(),accuracy={shot(){return .25;}};
   let received=null;
-  withDraws([.2],()=>catalogAngularLaunch({_spread(_dir,angle){received=angle;return _dir;}},
-    direction,a,'charger',{},accuracy,2));
-  near(received,.9,'unchanged prior two-cone fallback for nonresearched families');
+  const system={_spread(_dir,angle){received=angle;return _dir;}};
+  // This intentionally unchanged provisional path selects full spread for
+  // U < 0.25, and 0.45-scaled spread otherwise. Both branches must be tested.
+  withDraws([.2],()=>catalogAngularLaunch(system,direction,a,'charger',{},accuracy,2));
+  near(received,2,'legacy full cone chosen when random draw < 0.25');
+  withDraws([.8],()=>catalogAngularLaunch(system,direction,a,'charger',{},accuracy,2));
+  near(received,.9,'legacy inner cone chosen when random draw >= 0.25');
 });
