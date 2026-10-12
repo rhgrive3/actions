@@ -34,8 +34,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .ray-browser-evidence
-          node scripts/probes/inkwave-native-ray-browser.mjs --assets .ray-browser-assets --out .ray-browser-evidence --playwright node_modules/playwright/index.mjs 2>&1 | tee .ray-browser-evidence/run.log
+          mkdir -p ray-browser-evidence
+          node scripts/probes/inkwave-native-ray-browser.mjs --assets .ray-browser-assets --out ray-browser-evidence --playwright node_modules/playwright/index.mjs 2>&1 | tee ray-browser-evidence/run.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -43,5 +43,5 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: |
-            .ray-browser-evidence/*.json
-            .ray-browser-evidence/run.log
+            ray-browser-evidence/*.json
+            ray-browser-evidence/run.log
