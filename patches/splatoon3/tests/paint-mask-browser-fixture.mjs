@@ -195,7 +195,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
-    body, hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows() };
+    body, hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
 }
 
 // PR1188: bidirectional CPU-grid / GPU-body agreement. The GPU program is the
@@ -381,3 +381,21 @@ function ownedRunScanRows() {
   return rows;
 }
 
+
+function localOrderMapRows() {
+  const p=Object.create(PaintSystem.prototype);p.grid=new Uint8Array(64);
+  const network={clock:9,peer:'order-map-browser',seq:1,epoch:'probe'};
+  const first=p._paintOrderId(network), local=[];
+  for(let n=0;n<10000;n++)local.push(p._paintOrderId());
+  check(p._paintOrderId(network)===first,'network duplicate identity survives local allocations');
+  check(p._paintOrderIds.size===1,'only network dedupe key is retained');
+  check(p._paintOrderRecords.length===10002,'local order records remain available');
+  check(new Set(local).size===10000,'local IDs remain distinct');
+  check(p._paintOrderComesAfter(local[9999],local[0]),'local chronology remains intact');
+  const result={localIds:local.length,networkKeys:p._paintOrderIds.size,records:p._paintOrderRecords.length};
+  p._clearPaintOwnership();
+  check(p._paintOrderIds.size===0&&p._paintOrderRecords.length===1,'clear releases both order stores');
+  check(p._paintOrderId(network)===1,'new match restarts network identity');
+  check(p._paintOrderId()===2&&p._paintOrderIds.size===1,'new local identity remains outside dedupe map');
+  return {...result,clear:true};
+}
