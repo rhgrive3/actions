@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildInkMesh } from '../ink-volume/mesh.mjs';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
+import { adaptIssue479 } from '../../splatoon3/issue-479-adapter.mjs';
 async function api() {
-  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {InkVolumes} from './patches/local-quality/ink-volume/runtime.mjs'; export {captureInkVolume,submitInkVolume} from './patches/local-quality/ink-volume/recipes.mjs'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs'; export const buffers={Uint8Array,Uint16Array,Uint32Array,Float32Array};"});
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,adaptRuntime:adaptIssue479,extraExports:"export {InkVolumes} from './patches/local-quality/ink-volume/runtime.mjs'; export {captureInkVolume,submitInkVolume} from './patches/local-quality/ink-volume/recipes.mjs'; export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs'; export {MAIN_WEAPON_CATALOG} from './patches/splatoon3/runtime/main-weapon-catalog-data.mjs'; export const buffers={Uint8Array,Uint16Array,Uint32Array,Float32Array};"});
   f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;
 }
 function pack(f,width=16,height=16,frames=1) {
@@ -13,6 +14,10 @@ function pack(f,width=16,height=16,frames=1) {
 }
 function renderer(f,capacity=128) {return new f.InkVolumes(new f.THREE.Group(),{sunDir:new f.THREE.Vector3(0,1,0),sunCol:new f.THREE.Color('white'),sky:new f.THREE.Color('gray'),ground:new f.THREE.Color('gray')},{capacity,triangleBudget:600000});}
 function snapshot(p) {return {wid:p.wid,type:p.type,age:p.age,life:p.life,delay:p.delay,damage:p.damage,team:p.team,ghost:p.ghost,straight:p.straight,radius:p.radius,size:p.size,grav:p.grav,drag:p.drag,seed:p.seed,pos:p.pos.toArray(),prev:p.prev?.toArray(),start:p.start?.toArray(),vel:p.vel.toArray(),meta:JSON.stringify(p.inkMeta),vertical:p.s3Vertical};}
+test('early natural freefall remains horizontal; the renderer never infers vertical from airborne position',async()=>{
+  const f=await api(),a=f.make('roller');a.form='kid';a.ink=100;a.grounded=false;a.intent.fire=true;f.tick(a,35);a.intent.fire=false;assert(f.G.projectiles.list.length);
+  for(const p of f.G.projectiles.list){assert.equal(p.s3Vertical,false,'native freefall grace owns mode');assert.equal(p._inkVolumeRecipe,'roller-horizontal');}
+});
 test('composite reservation is atomic, reuses batches, keeps nonuniform transforms finite and culls conservatively',async()=>{
   const f=await api(),e=renderer(f,2);e.register('a',pack(f));const owner=f.make('shooter'),p={owner,age:.1,pos:new f.THREE.Vector3(),vel:new f.THREE.Vector3(0,0,1)};
   const part={name:'a',size:1,stretch:new f.THREE.Vector3(4,.3,.6)},parts=[part,part,part];
@@ -32,7 +37,7 @@ test('all 36 supported main definitions emit classified native rounds and render
     assert(system.list.every(p=>p._inkVolumeRecipe),r.id+' classification');for(let i=0;i<3;i++)system.update(1/60);assert(system.list.length,r.id+' actual flight');const before=system.list.map(snapshot);e.begin();let drawn=0;for(const p of system.list)if(f.submitInkVolume(e,p))drawn++;e.end();assert(drawn>0,r.id+' positive finite presentation');assert.deepEqual(system.list.map(snapshot),before,r.id+' authoritative state');
   }
   for(const r of records.filter(r=>r.family==='roller')){
-    system.clear();f.G.actors.length=0;const a=f.make(r.id);a.form='kid';a.ink=100;a.grounded=false;a.intent.fire=true;f.tick(a,130);a.intent.fire=false;f.tick(a,35);assert(system.list.length,r.id+' airborne swing');assert(system.list.every(p=>p._inkVolumeRecipe==='roller-vertical'),r.id+' immutable vertical classification');
+    system.clear();f.G.actors.length=0;const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.jump=true;f.tick(a);assert.equal(a.grounded,false,r.id+' native jump admitted');assert(a.vel.y>0,r.id+' native jump velocity');a.intent.jump=false;a.intent.fire=true;f.tick(a,130);a.intent.fire=false;f.tick(a,35);assert(system.list.length,r.id+' jump swing');assert(system.list.every(p=>p._inkVolumeRecipe==='roller-vertical'),r.id+' immutable vertical classification');
     for(let i=0;i<3;i++)system.update(1/60);const before=system.list.map(snapshot);e.begin();let drawn=0;for(const p of system.list)if(f.submitInkVolume(e,p))drawn++;e.end();assert(drawn>0,r.id+' vertical volume');assert.deepEqual(system.list.map(snapshot),before);
   }e.dispose();
 });

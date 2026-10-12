@@ -4026,3 +4026,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **未確認/制約**: S3の元エフェクト素材の正確な輪郭/立体形状と縦振りアニメーションの完全一致、曲がる尾の履歴メッシュ、全36種の実機視覚比較、スマホ/iPad性能、渦/泡/爆発型Slosherの専用素材、元素材の公開再配布許可。源データのない部分を完全一致や公式造形値としない。ローラーVTFの縦振り利用は独自の描画適用である。
 
 - **拡張の最終ローカル描画/負荷**: ChromiumとWebKit touchの実ゲーム9操作・各5方向45比較で不透明本体の黒いRGB/透明欠損0。停止同一場面off/on/off/onで縦3頭、Shooter1頭、Slosher発生済み4頭を測定し、描画コール+6/+6/+10、ソフトウェアGPU時間の組差は約-10%～+3%。高速化や実機FPSとは判定しない。GPUアップロード推定39,520,236byte、20reset安定・136geometry/4texture破棄。詳細は `reports/ink-volume/projectile-measurements.json` と `results.md`。
+
+- **最終ビルドの追加レビュー**: 自然落下の初期25F猶予をジャンプ扱いにしたテスト設定の誤りを修正。全5ローラーの縦検証は実Actorジャンプ入力とジャンプ成立/上向き速度の確認から始め、自然落下初期は横振りのままという負対照も追加。本番描画/物理の変更は不要だった。Source fixtureは既存#479 freefall adapterを適用し、本番ビルドと同じ規則で評価。ソース14・最終ビルド+packaging23がskip/失敗0で成功。
