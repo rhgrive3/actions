@@ -4032,3 +4032,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **CI と進行中mainの統合**: 最終393007dbで立体描画CIと他13ジョブは成功。既存validatorは4909件（4890pass/既存skip19）と品質927件（919pass/既存skip8）を通過後、新mainのworkflowが追加したowned-run-scanテストを旧headへ要求して停止。main b078c379のPR1262更新6ファイルを改変せずmergeし、検査を弱めず整合。本番ビルドの立体/packaging/厳密矩形/局所塗り/Map寿命33件がskip/失敗0で成功。3D描画と物理のコードは変更していない。計測の全シーン数値は90b4fea7ベース時点の証拠として保持する。
 
 - **通常起動への接続**: ユーザーの素材許可取得済みとの指示を受け、元4 VTF/VMTと不変画素・事前生成形状packを同梱。FXは両packを自動読み込みし、既存のウォームアップ内で完了してからshader/ゲームを開始する。URL指定や有効化操作は不要。gzipは元画素/形状を変えず45,557,516→17,694,762 byte。既存10MiB起動snapshotは維持し、manifestをprecache、binaryは別の2スロット上限付きcacheへ保存する。初回download負荷と未訪問状態の初回offline fallbackは制約として記録する。原典画素34フレーム、標準起動、圧縮/破損/上限、cache再利用/修復/世代削除をテストへ追加。
+
+- **設定なしの最終描画**: Chromium/SwiftShaderとWebKit/Mesa touchで通常起動から実ゲーム9操作・各45方向が成功、黒いRGB/透明欠損0。sourceとexact emitted new+packaging 27件すべて成功・skip0。既存起動snapshot 5,658,810byte、core revision 10,276,777byte、worker 69,493byteで従来上限を維持。追加素材transport/cacheは16.875MiB、GPU配置推定は37.69MiB。全起動105,208/27,793msは既存world/shader/softwareGPUを含むローカルサーバーの値であり、実機ネットワークや素材単独の比較値ではない。`reports/ink-volume/default-measurements.json`と元素材/通常起動の比較画像を参照。

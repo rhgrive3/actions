@@ -45,8 +45,9 @@ jobs:
         run: |
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/site
           node scripts/check-inkwave-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/evidence
+          node scripts/check-inkwave-volumes.mjs .ci-scratch/site patches/local-quality/ink-volume/assets/roller .ci-scratch/original-evidence --shape-only
       - name: WebKit touch viewport shader and all-frame comparison
-        run: node scripts/check-inkwave-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/evidence-webkit --webkit --touch --shape-only
+        run: node scripts/check-inkwave-volumes.mjs .ci-scratch/site patches/local-quality/ink-volume/assets/roller .ci-scratch/evidence-webkit --webkit --touch --shape-only
       - name: Native vertical Roller, Shooter, Slosher and catalogue presentation
         run: node scripts/check-inkwave-projectile-volumes.mjs .ci-scratch/site patches/local-quality/ink-volume/assets/roller patches/local-quality/ink-volume/assets/shooter .ci-scratch/projectile-evidence --default --quick
       - uses: actions/upload-artifact@v4
@@ -55,5 +56,6 @@ jobs:
           name: ink-volume-render-evidence
           path: |
             .ci-scratch/evidence
+            .ci-scratch/original-evidence
             .ci-scratch/evidence-webkit
             .ci-scratch/projectile-evidence
