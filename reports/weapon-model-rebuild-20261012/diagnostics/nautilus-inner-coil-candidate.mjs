@@ -157,7 +157,7 @@ function nautilus(d) {
   // S3 47 exact reverse geometry/materials are still unverified; no retail mesh or texture is used.
   // Silver hardware follows the Nautilus 47 still. The alternate 79 turntable is shape-only.
   // The former black-metal result came from undersized review PMREM, not the native shader.
-  // Restore the 4d silver/metal finish on fixed f2a shape; inner coil/tank and outer cap remain under review.
+  // Restore the 4d silver/metal finish. Coil/tank dimensions and exact S3 47 reverse remain under review.
   const AX=.07,C={dark:'#303338',black:'#181b1e',trim:'#d0d5d4',silver:'#aeb8bb'};
   const body=new Pieces(),B=new Pieces(),ink=new Pieces();
   const tr=pistolGrip(body,{color:C.black,triggerColor:C.dark,guardColor:C.dark});
@@ -173,23 +173,31 @@ function nautilus(d) {
   // Keep the outer surface geometry fixed; the reverse is a smooth raised coil housing, not two grooves.
   // The rolled lip wraps both faces, rather than sitting behind the dark shell on the outer side.
   // Shell radius and Z length stay fixed. Only the inner (+X) coil/tank expands the transverse envelope.
-  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.11,.014],[.103,.017],[.096,.022],[.09,.028],[.085,.033],[.078,.037],[.073,.039],[.067,.039],[.061,.032],[.054,.023],[.046,.018],[0,.018]],0,sy,sz,36)),C.silver,M.metal);
+  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.11,.032],[.103,.039],[.096,.045],[.09,.05],[.085,.054],[.078,.057],[.073,.058],[.067,.056],[.061,.05],[.054,.043],[.046,.039],[0,.037]],0,sy,sz,36)),C.silver,M.metal);
   body.add(shellShape(xlathe([[.123,.003],[.127,.005],[.133,.012],[.133,.023],[.128,.026],[.123,.026],[.123,.003]],0,sy,sz,36)),C.trim,M.metal);
   // The outer central cap geometry is retained for this inner-face candidate.
   // Its dark finish is NOT proven black paint; original metallic reflections remain under review.
   // This outer cap is distinct from the silver hub on the opposite (+X) face.
   body.add(xlathe([[0,-.053],[.0538,-.053],[.0779,-.048],[.085,-.042],[.085,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
   body.add(ring(.084,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
-  // Hollow 3 1/8-turn metal band. UV.u tracks angular position before the native Pieces merge.
-  // The observed coil outside diameter is about .4-.5 of the shell diameter across the two references.
-  const coil=new THREE.TorusGeometry(.052,.009,4,84,Math.PI*2*3.125);
-  coil.rotateY(Math.PI/2).scale(.38,1,1).rotateX(Math.PI*.75);
+  // A tapered roll of flat metal strip, not a round wire spring. The free mouth is narrower
+  // than the base, as the return-facing source views show. The angular outer reference is approximate.
+  const coil=new THREE.TorusGeometry(1,1,8,72,Math.PI*2*3.125);
   const cp=coil.attributes.position,cu=coil.attributes.uv;
-  for(let i=0;i<cp.count;i++)cp.setX(i,cp.getX(i)+.041+cu.getX(i)*.034);
-  coil.translate(0,.097,-.072);coil.computeVertexNormals();body.add(coil,C.silver,M.metal);
-  // Pale angular insert occupies the holder-facing side of the neck, with a bent return tube around it.
-  body.add(box(.038,.077,.075,.049,.086,.013,.22,8,4),'#e6cdd4',M.satin);
-  body.add(pipe([[.075,.097,-.020],[.079,.042,-.007],[.078,.038,.040],[.074,.055,.059],[.070,.116,.052],[.064,.133,.021],[.057,.118,.002]],.0047,28,6),C.silver,M.metal);
+  const cross=[[-.0058,-.0016],[-.0048,-.0023],[.0048,-.0023],[.0058,-.0016],[.0058,.0016],[.0048,.0023],[-.0048,.0023],[-.0058,.0016]];
+  for(let i=0;i<cp.count;i++){
+    const u=cu.getX(i),[axial,radial]=cross[Math.round(cu.getY(i)*8)%8],a=Math.PI*.75+Math.PI*2*3.125*u,R=.056-.014*u+radial;
+    cp.setXYZ(i,.049+.038*u+axial,.097+Math.cos(a)*R,-.072+Math.sin(a)*R);
+  }
+  coil.computeVertexNormals();body.add(coil,C.silver,M.metal);
+  // Chamfered, visibly thick tank. Long side / coil OD is about .88 rather than v1's .63.
+  // The profile is angular; a pale planar face and depth should remain legible at both inner obliques.
+  const tank=[[-.045,.047],[-.036,.053],[.037,.053],[.046,.042],[.046,-.038],[.034,-.05],[-.03,-.05],[-.045,-.038]];
+  body.add(slab(tank,.044,.062,.0015).translate(-.062,0,0).rotateX(-.18).translate(.062,.078,.029),'#e6cdd4',M.satin);
+  // The return loop has a flattened strip section and eight purposeful bends around the tank.
+  const loopOuter=[[-.058,.051],[-.041,.065],[.043,.065],[.061,.047],[.061,-.042],[.043,-.063],[-.03,-.063],[-.056,-.044]];
+  const loopInner=[[-.05,.048],[-.038,.057],[.04,.057],[.053,.043],[.053,-.038],[.04,-.055],[-.027,-.055],[-.048,-.041]];
+  body.add(slab(loopOuter,.012,.087,.001,[loopInner]).translate(-.087,0,0).rotateX(-.18).translate(.087,.078,.029),C.silver,M.metal);
   for(let i=0;i<7;i++){
     const a=-.88+i*.19;
     body.add(box(.004,.004,.008,-.029,sy+Math.sin(a)*.09,sz-Math.cos(a)*.09,.28,6,4),C.silver,M.satin);
