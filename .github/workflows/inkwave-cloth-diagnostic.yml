@@ -1,0 +1,49 @@
+name: Diagnose native cloth pixel stability
+on:
+  push:
+    branches: [codex/diagnose-cloth-pixel-stability]
+    paths:
+      - scripts/diagnose-inkwave-cloth-stability.mjs
+      - .github/workflows/inkwave-cloth-diagnostic.yml
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned tools
+        run: |
+          cd harness
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build fixed production baseline
+        run: |
+          export ESBUILD_MODULE="$PWD/harness/node_modules/esbuild/lib/main.js"
+          cd baseline
+          node scripts/build-inkwave.mjs inkwave-public ../site-a
+          node -e "if(require('../site-a/inkwave-build.json').contentHash!=='5f967f1dc85094ccbca443250caa97207e81286a86a70a73768087580781ff95')throw Error('Baseline mismatch')"
+      - name: Diagnose same native scene and reversible cloth controls
+        run: |
+          export CHROMIUM_PATH="$(node -e "console.log(require('./harness/node_modules/playwright').chromium.executablePath())")"
+          node harness/scripts/diagnose-inkwave-cloth-stability.mjs "$PWD/site-a" "$PWD/evidence/A1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloth-pixel-diagnostic
+          path: |
+            evidence
+            site-a/inkwave-build.json
