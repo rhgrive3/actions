@@ -197,8 +197,10 @@ test('pre-Kit33-slot birth retains its explicit immutable unit through the actua
    assert.deepEqual(plain(ghosts[i].fidelityPlayerCollision),plain(f.births[i].fidelityPlayerCollision));
   }
   for(const event of f.receiver.peers.get('p2').events)f.receiver._play('p2',event);assert.equal(ghosts.length,f.births.length);
-  f.local.G.time=1000.1;f.sender.out.length=0;f.sender._rec(['pe',f.actor.nid,f.births[0]._netId,0]);
-  f.receiver.onMessage('p2',{k:'t',ts:1000.1,u:60006,r:2,e:plain(f.sender.out)});
+  // Sender simulation advanced 6 ticks since the initial u=60 owner packet,
+  // not an impossible 59946-tick leap in 0.1s.
+  f.local.G.time=1.1;f.sender.out.length=0;f.sender._rec(['pe',f.actor.nid,f.births[0]._netId,0]);
+  f.receiver.onMessage('p2',{k:'t',ts:1000.1,u:66,r:2,e:plain(f.sender.out)});
   const terminal=f.receiver.peers.get('p2').events.find(e=>e[1]==='pe');assert.ok(terminal);f.receiver._play('p2',terminal);
   assert.equal(ghosts[0]._netEnded,true,'terminal event binds the original legacy birth identity');assert.equal(ghosts[1]._netEnded,false);
  }

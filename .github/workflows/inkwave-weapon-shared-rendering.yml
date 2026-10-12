@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: b078c37907351f1bbc13d0e7d4b5cbeb0a330009
+          ref: bca45e7cb55f3331a58459ea0219e42b44762712
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -44,12 +44,48 @@ jobs:
         run: |
           node --experimental-vm-modules --test patches/splatoon3/tests/weapon-shared-rendering.test.mjs
           INKWAVE_BUILT_SITE=.model-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-shared-rendering.test.mjs
-          INKWAVE_BUILT_SITE=.model-after-site WEAPON_IDS=s3-spinner-downpour,s3-maneuver-short,s3-maneuver-gallon,s3-slosher-launcher node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs
+          INKWAVE_BUILT_SITE=.model-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs
       - name: Same-camera main and candidate, real Actor source motion, dark and light backgrounds
         run: |
           IDS=s3-spinner-downpour,s3-maneuver-short,s3-maneuver-gallon,s3-slosher-launcher
           node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
           node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-shared-visual-${{ github.event.pull_request.head.sha }}
+          path: |
+            .model-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  crowd:
+    if: github.head_ref == 'fix/weapon-shared-mirror-glass'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: bca45e7cb55f3331a58459ea0219e42b44762712
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable main and candidate
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
       - name: Eight mixed Actors game and far LOD ABBA
         run: |
           for pair in before-A after-B after-B2 before-A2; do
@@ -68,10 +104,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: weapon-shared-review-${{ github.event.pull_request.head.sha }}
-          path: |
-            .model-evidence
-            .model-crowd
+          name: weapon-shared-crowd-${{ github.event.pull_request.head.sha }}
+          path: .model-crowd
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14

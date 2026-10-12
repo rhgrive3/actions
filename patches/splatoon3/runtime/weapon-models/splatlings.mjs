@@ -116,10 +116,10 @@ function ballpoint(d) {
   const tr = pistolGrip(body, { color: C.black, triggerColor: C.black, guardColor: C.black });
   body.add(zlathe([[0, -0.11], [0.03, -0.112], [0.05, -0.095], [0.052, -0.04], [0, -0.04]], 0, AX, 0, 28), C.white, M.gloss);  // rear cap
   body.add(zlathe([[0, -0.04], [0.054, -0.04], [0.054, 0.06], [0, 0.06]], 0, AX, 0, 28), C.black, M.satin);                     // black band
-  // A 64-triangle open sleeve. The opaque end bands close the two ends; no
-  // opaque bars, end caps or ink cylinder conceal the six internal barrels.
-  glass.add(zlathe([[0.05, 0.06], [0.05, 0.37]], 0, AX, 0, 32), '#ffffff');
-  body.add(zlathe([[0.05, 0.37], [0.054, 0.37], [0.05, 0.4], [0.03, 0.42], [0.03, 0.43], [0, 0.43]], 0, AX, 0, 28), C.black, M.satin);  // nose
+  // The clear sleeve continues around the rounded front shoulder. Only the
+  // small central tip is black; the former opaque cone concealed this boundary.
+  glass.add(zlathe([[0.05, 0.06], [0.05, 0.375], [0.048, 0.39], [0.041, 0.408], [0.03, 0.422]], 0, AX, 0, 32), '#ffffff');
+  body.add(zlathe([[0, 0.422], [0.03, 0.422], [0.03, 0.43], [0, 0.43]], 0, AX, 0, 28), C.black, M.satin); // small opaque tip
   body.add(box(0.05, 0.05, 0.13, 0, -0.005, 0.16, 0.35), C.white, M.gloss);                                     // ribbed foregrip block
   for (let k = 0; k < 5; k++) body.add(box(0.054, 0.006, 0.01, 0, -0.03, 0.115 + k * 0.022, 0.5), C.white, M.gloss);
   body.add(pipe([[0, AX + 0.05, -0.02], [0, AX + 0.1, 0.0], [0, AX + 0.1, 0.06], [0, AX + 0.052, 0.07]], 0.006, 16, 6), C.silver, M.satin);

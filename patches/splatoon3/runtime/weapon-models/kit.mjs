@@ -248,12 +248,27 @@ export const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 // No screen-space transmission buffer or per-actor material is allocated.
 let weaponGlassMaterial;
 export function getWeaponGlassMaterial() {
-  return weaponGlassMaterial ||= new THREE.MeshPhysicalMaterial({
-    name: 'iw-weapon-glass', color: 0xdfe9ee, roughness: 0.16, metalness: 0,
-    clearcoat: 0.65, clearcoatRoughness: 0.12, transparent: true, opacity: 0.22,
-    depthWrite: false, depthTest: true, side: THREE.FrontSide, transmission: 0,
-  });
+  if (!weaponGlassMaterial) {
+    const m = new THREE.MeshPhysicalMaterial({
+      name: 'iw-weapon-glass', color: 0xdfe9ee, roughness: 0.16, metalness: 0,
+      clearcoat: 0.65, clearcoatRoughness: 0.12, transparent: true, opacity: 0.22,
+      depthWrite: false, depthTest: true, side: THREE.FrontSide, transmission: 0,
+    });
+    // Thin clear plastic reflects more light at grazing angles. Raising only
+    // silhouette alpha keeps the transparent centre and costs no extra pass.
+    m.onBeforeCompile = shader => {
+      shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `
+        float iwShellEdge = 1.0 - saturate(dot(geometryNormal, geometryViewDir));
+        diffuseColor.a = min(0.68, opacity + 0.46 * iwShellEdge * iwShellEdge);
+        #include <opaque_fragment>
+      `);
+    };
+    m.customProgramCacheKey = () => 'iw-weapon-glass-fresnel-1';
+    weaponGlassMaterial = m;
+  }
+  return weaponGlassMaterial;
 }
+
 export function attachWeaponGlass(d, off) {
   if (!d.glass) return null;
   const glass = new THREE.Mesh(d.glass, getWeaponGlassMaterial());

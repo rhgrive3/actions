@@ -6,12 +6,13 @@ const setup=()=>loaded??=fixture({fullRuntime:true,includeCharacter:true,product
 const actor=(f,id)=>{const a=new f.Actor({team:0,weapon:id,CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});a.character.actor=a;a.character.onEvent=null;a.grounded=a.ground.hit=true;f.G.actors=[a];return a;};
 
 test('Ballpoint glass is independent, cached, transparent and retained at both LODs',async()=>{
- const f=await setup(),d=f.getWeaponDef('s3-spinner-downpour');assert(d.glass);assert.equal(d.glass.index.count/3,64);assert.equal(d.parts.barrels.mat,'ink');
+ const f=await setup(),d=f.getWeaponDef('s3-spinner-downpour');assert(d.glass);assert.equal(d.glass.index.count/3,256);d.glass.computeBoundingBox();assert(d.glass.boundingBox.max.z>.42);assert.deepEqual(Array.from(d.muzzle.toArray()),[0,.07,.432]);assert.equal(d.parts.barrels.mat,'ink');
  assert.notEqual(d.glass,d.body);assert.notEqual(d.glass,d.ink);
  const a=actor(f,'s3-spinner-downpour'),b=actor(f,'s3-spinner-downpour');
  const shell=a.character.weapon.off.getObjectByName('weapon-glass'),other=b.character.weapon.off.getObjectByName('weapon-glass');
  assert.equal(shell.geometry,d.glass);assert.equal(other.geometry,d.glass);assert.equal(shell.material,other.material);assert.equal(shell.material,f.Kit.getWeaponGlassMaterial());
  const m=shell.material;assert.equal(m.transparent,true);assert.equal(m.depthWrite,false);assert.equal(m.depthTest,true);assert.equal(m.side,f.THREE.FrontSide);assert.equal(m.transmission,0);assert(m.opacity>0&&m.opacity<.4);assert.equal(shell.castShadow,false);
+ const shader={fragmentShader:'#include <opaque_fragment>'};m.onBeforeCompile(shader);assert(shader.fragmentShader.includes('iwShellEdge'));assert.equal(m.customProgramCacheKey(),'iw-weapon-glass-fresnel-1');
  let disposed=0;m.addEventListener('dispose',()=>disposed++);
  for(const tier of ['game','far','hero','far','game']){a.character.setLod(tier);for(let n=0;n<8;n++)a._finishFrame(1/60);assert(shell.visible);assert.equal(shell.geometry,d.glass);assert.equal(shell.material,m);assert.equal(a.character.weapon.off.getObjectByName('weapon-glass'),shell);}
  b.character.dispose();a.character.setColor('#1144ee');assert.equal(shell.material,m);assert.equal(disposed,0);a.character.dispose();assert.equal(disposed,0,'shared material survives actor disposal');

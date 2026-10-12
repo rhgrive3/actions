@@ -149,16 +149,18 @@ try {
           const probe = new THREE.Scene(); probe.environment = scene.environment;
           probe.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
           const copy = new THREE.Mesh(shell.geometry, shell.material); probe.add(copy);
-          const camera = new THREE.OrthographicCamera(-.03, .03, .03, -.03, .01, 10);
+          const camera = new THREE.OrthographicCamera(-.065, .065, .065, -.065, .01, 10);
           camera.position.set(-1, .07, .20); camera.lookAt(0, .07, .20);
-          const target = new THREE.WebGLRenderTarget(16, 16), samples = [];
+          const target = new THREE.WebGLRenderTarget(16, 16), samples = [], edgeSamples = [];
           for (const bg of [0x000000, 0xffffff]) {
             probe.background = new THREE.Color(bg); renderer.setRenderTarget(target); renderer.render(probe, camera);
-            const px = new Uint8Array(4); renderer.readRenderTargetPixels(target, 8, 8, 1, 1, px); samples.push([...px]);
+            const px = new Uint8Array(4); renderer.readRenderTargetPixels(target, 8, 8, 1, 1, px); samples.push([...px]);renderer.readRenderTargetPixels(target, 8, 2, 1, 1, px);edgeSamples.push([...px]);
           }
           renderer.setRenderTarget(null); target.dispose();
-          res.glass.backgroundPixels = samples;
+          res.glass.backgroundPixels = samples;res.glass.edgeBackgroundPixels = edgeSamples;
           if (samples[1][0] - samples[0][0] < 80) throw Error('Sleeve is not visibly transparent');
+          if (samples[0][0] < 2 || samples[1][0] > 250) throw Error('Sleeve did not render at the centre');
+          if (Kit.getWeaponGlassMaterial().customProgramCacheKey() === 'iw-weapon-glass-fresnel-1' && edgeSamples[1][0]-edgeSamples[0][0] >= samples[1][0]-samples[0][0]-10) throw Error('Glass silhouette does not gain reflection');
         }
       }
       // Fixed-pose render submission including a GPU completion boundary. Same-runner A/B only.
