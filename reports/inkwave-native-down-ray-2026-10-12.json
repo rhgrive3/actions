@@ -1,0 +1,2126 @@
+{
+  "baseline": "ac1159b76b42a10ff02fe58add74a8285cc08d32",
+  "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+  "rayReplay": {
+    "queries": 79827,
+    "verticalDown": 69884,
+    "triangleTests": 2097385,
+    "repetitionsPerSample": 2,
+    "milliseconds": {
+      "A": 235.489109,
+      "B": 202.817488,
+      "B2": 206.173981,
+      "A2": 238.604509
+    }
+  },
+  "nodeVmLogicAbba": {
+    "A": {
+      "reference": true,
+      "instrumented": false,
+      "atlasSize": 2048,
+      "actualPpm": 3.774873600000001,
+      "maxDensity": 18,
+      "kind": "Node native logic fixture; no Character or GPU; paint growth retained",
+      "grid": "2416c8c3227ae00bca0040fa85b8da1dddafceb844bad6efb1c165e6639a19a7",
+      "orders": "7df84fa76c0fae20ffe58a6583ef4f8418478e57eb4105943096234ccfed4306",
+      "counts": [
+        3841,
+        1240
+      ],
+      "commands": 95057,
+      "version": 896,
+      "records": 150,
+      "recordsHash": "59747983cfb0896b041b7d0d006f1da3e1b490b1a9dfbbb4c2b565a1e1293936",
+      "milliseconds": 8091.048383,
+      "groups": {},
+      "actors": [
+        {
+          "alive": true,
+          "position": [
+            -3.896908042158625,
+            3.015000104904175,
+            12.867796452930971
+          ],
+          "velocity": [
+            -11.251776045323455,
+            0,
+            2.466497330427557
+          ],
+          "hp": 96.63333333333347,
+          "ink": 22.926666666667096,
+          "special": 47.468592430572315,
+          "stats": {
+            "turf": 47.468592430572315,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.875816092155258,
+            3,
+            0.39697045401492465
+          ],
+          "velocity": [
+            3.506001792061513,
+            0,
+            -2.5239555134869924
+          ],
+          "hp": 91.57000000000005,
+          "ink": 45.59333333333337,
+          "special": 37.96714988971249,
+          "stats": {
+            "turf": 37.96714988971249,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.357650103743058,
+            3,
+            11.08512864997781
+          ],
+          "velocity": [
+            -3.896545673484009,
+            0,
+            -1.8652967094950121
+          ],
+          "hp": 100,
+          "ink": 43.24666666666638,
+          "special": 33.75874985712836,
+          "stats": {
+            "turf": 33.75874985712836,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            4.736501310477171,
+            3.712805555555555,
+            -2.604878420889853
+          ],
+          "velocity": [
+            -4.0725492150911595,
+            0.7383333333333325,
+            -2.1387713507199315
+          ],
+          "hp": 100,
+          "ink": 54.26666666666647,
+          "special": 16.54210238762153,
+          "stats": {
+            "turf": 16.54210238762153,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -9.324302772960818,
+            3,
+            7.50378766036212
+          ],
+          "velocity": [
+            -2.3359310439145466,
+            0,
+            -3.633982134972071
+          ],
+          "hp": 100,
+          "ink": 12.599999999999845,
+          "special": 100.90980950278497,
+          "stats": {
+            "turf": 100.90980950278497,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -2.5759373242107966,
+            3.009999990463257,
+            3.2257216554724737
+          ],
+          "velocity": [
+            -4.169011612421971,
+            0,
+            1.132140528153844
+          ],
+          "hp": 78.43000000000002,
+          "ink": 4.900000000000279,
+          "special": 35.53540203929432,
+          "stats": {
+            "turf": 35.53540203929432,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            7.837649938053657,
+            3.009999990463257,
+            3.1775910658025865
+          ],
+          "velocity": [
+            -1.5693806470772778,
+            0,
+            -5.542078012871461
+          ],
+          "hp": 100,
+          "ink": 11.893333333333317,
+          "special": 107.41193988988397,
+          "stats": {
+            "turf": 107.41193988988397,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            0.01597190025929839,
+            3,
+            5.592048191272599
+          ],
+          "velocity": [
+            1.5693810180188443,
+            0,
+            5.5420793228067495
+          ],
+          "hp": 100,
+          "ink": 29.966666666666637,
+          "special": 4.045635999810005,
+          "stats": {
+            "turf": 4.045635999810005,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        }
+      ],
+      "seed": 3299942215
+    },
+    "B": {
+      "reference": false,
+      "instrumented": false,
+      "atlasSize": 2048,
+      "actualPpm": 3.774873600000001,
+      "maxDensity": 18,
+      "kind": "Node native logic fixture; no Character or GPU; paint growth retained",
+      "grid": "2416c8c3227ae00bca0040fa85b8da1dddafceb844bad6efb1c165e6639a19a7",
+      "orders": "7df84fa76c0fae20ffe58a6583ef4f8418478e57eb4105943096234ccfed4306",
+      "counts": [
+        3841,
+        1240
+      ],
+      "commands": 95057,
+      "version": 896,
+      "records": 150,
+      "recordsHash": "59747983cfb0896b041b7d0d006f1da3e1b490b1a9dfbbb4c2b565a1e1293936",
+      "milliseconds": 5468.522446,
+      "groups": {},
+      "actors": [
+        {
+          "alive": true,
+          "position": [
+            -3.896908042158625,
+            3.015000104904175,
+            12.867796452930971
+          ],
+          "velocity": [
+            -11.251776045323455,
+            0,
+            2.466497330427557
+          ],
+          "hp": 96.63333333333347,
+          "ink": 22.926666666667096,
+          "special": 47.468592430572315,
+          "stats": {
+            "turf": 47.468592430572315,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.875816092155258,
+            3,
+            0.39697045401492465
+          ],
+          "velocity": [
+            3.506001792061513,
+            0,
+            -2.5239555134869924
+          ],
+          "hp": 91.57000000000005,
+          "ink": 45.59333333333337,
+          "special": 37.96714988971249,
+          "stats": {
+            "turf": 37.96714988971249,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.357650103743058,
+            3,
+            11.08512864997781
+          ],
+          "velocity": [
+            -3.896545673484009,
+            0,
+            -1.8652967094950121
+          ],
+          "hp": 100,
+          "ink": 43.24666666666638,
+          "special": 33.75874985712836,
+          "stats": {
+            "turf": 33.75874985712836,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            4.736501310477171,
+            3.712805555555555,
+            -2.604878420889853
+          ],
+          "velocity": [
+            -4.0725492150911595,
+            0.7383333333333325,
+            -2.1387713507199315
+          ],
+          "hp": 100,
+          "ink": 54.26666666666647,
+          "special": 16.54210238762153,
+          "stats": {
+            "turf": 16.54210238762153,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -9.324302772960818,
+            3,
+            7.50378766036212
+          ],
+          "velocity": [
+            -2.3359310439145466,
+            0,
+            -3.633982134972071
+          ],
+          "hp": 100,
+          "ink": 12.599999999999845,
+          "special": 100.90980950278497,
+          "stats": {
+            "turf": 100.90980950278497,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -2.5759373242107966,
+            3.009999990463257,
+            3.2257216554724737
+          ],
+          "velocity": [
+            -4.169011612421971,
+            0,
+            1.132140528153844
+          ],
+          "hp": 78.43000000000002,
+          "ink": 4.900000000000279,
+          "special": 35.53540203929432,
+          "stats": {
+            "turf": 35.53540203929432,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            7.837649938053657,
+            3.009999990463257,
+            3.1775910658025865
+          ],
+          "velocity": [
+            -1.5693806470772778,
+            0,
+            -5.542078012871461
+          ],
+          "hp": 100,
+          "ink": 11.893333333333317,
+          "special": 107.41193988988397,
+          "stats": {
+            "turf": 107.41193988988397,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            0.01597190025929839,
+            3,
+            5.592048191272599
+          ],
+          "velocity": [
+            1.5693810180188443,
+            0,
+            5.5420793228067495
+          ],
+          "hp": 100,
+          "ink": 29.966666666666637,
+          "special": 4.045635999810005,
+          "stats": {
+            "turf": 4.045635999810005,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        }
+      ],
+      "seed": 3299942215
+    },
+    "B2": {
+      "reference": false,
+      "instrumented": false,
+      "atlasSize": 2048,
+      "actualPpm": 3.774873600000001,
+      "maxDensity": 18,
+      "kind": "Node native logic fixture; no Character or GPU; paint growth retained",
+      "grid": "2416c8c3227ae00bca0040fa85b8da1dddafceb844bad6efb1c165e6639a19a7",
+      "orders": "7df84fa76c0fae20ffe58a6583ef4f8418478e57eb4105943096234ccfed4306",
+      "counts": [
+        3841,
+        1240
+      ],
+      "commands": 95057,
+      "version": 896,
+      "records": 150,
+      "recordsHash": "59747983cfb0896b041b7d0d006f1da3e1b490b1a9dfbbb4c2b565a1e1293936",
+      "milliseconds": 5086.92586,
+      "groups": {},
+      "actors": [
+        {
+          "alive": true,
+          "position": [
+            -3.896908042158625,
+            3.015000104904175,
+            12.867796452930971
+          ],
+          "velocity": [
+            -11.251776045323455,
+            0,
+            2.466497330427557
+          ],
+          "hp": 96.63333333333347,
+          "ink": 22.926666666667096,
+          "special": 47.468592430572315,
+          "stats": {
+            "turf": 47.468592430572315,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.875816092155258,
+            3,
+            0.39697045401492465
+          ],
+          "velocity": [
+            3.506001792061513,
+            0,
+            -2.5239555134869924
+          ],
+          "hp": 91.57000000000005,
+          "ink": 45.59333333333337,
+          "special": 37.96714988971249,
+          "stats": {
+            "turf": 37.96714988971249,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.357650103743058,
+            3,
+            11.08512864997781
+          ],
+          "velocity": [
+            -3.896545673484009,
+            0,
+            -1.8652967094950121
+          ],
+          "hp": 100,
+          "ink": 43.24666666666638,
+          "special": 33.75874985712836,
+          "stats": {
+            "turf": 33.75874985712836,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            4.736501310477171,
+            3.712805555555555,
+            -2.604878420889853
+          ],
+          "velocity": [
+            -4.0725492150911595,
+            0.7383333333333325,
+            -2.1387713507199315
+          ],
+          "hp": 100,
+          "ink": 54.26666666666647,
+          "special": 16.54210238762153,
+          "stats": {
+            "turf": 16.54210238762153,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -9.324302772960818,
+            3,
+            7.50378766036212
+          ],
+          "velocity": [
+            -2.3359310439145466,
+            0,
+            -3.633982134972071
+          ],
+          "hp": 100,
+          "ink": 12.599999999999845,
+          "special": 100.90980950278497,
+          "stats": {
+            "turf": 100.90980950278497,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -2.5759373242107966,
+            3.009999990463257,
+            3.2257216554724737
+          ],
+          "velocity": [
+            -4.169011612421971,
+            0,
+            1.132140528153844
+          ],
+          "hp": 78.43000000000002,
+          "ink": 4.900000000000279,
+          "special": 35.53540203929432,
+          "stats": {
+            "turf": 35.53540203929432,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            7.837649938053657,
+            3.009999990463257,
+            3.1775910658025865
+          ],
+          "velocity": [
+            -1.5693806470772778,
+            0,
+            -5.542078012871461
+          ],
+          "hp": 100,
+          "ink": 11.893333333333317,
+          "special": 107.41193988988397,
+          "stats": {
+            "turf": 107.41193988988397,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            0.01597190025929839,
+            3,
+            5.592048191272599
+          ],
+          "velocity": [
+            1.5693810180188443,
+            0,
+            5.5420793228067495
+          ],
+          "hp": 100,
+          "ink": 29.966666666666637,
+          "special": 4.045635999810005,
+          "stats": {
+            "turf": 4.045635999810005,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        }
+      ],
+      "seed": 3299942215
+    },
+    "A2": {
+      "reference": true,
+      "instrumented": false,
+      "atlasSize": 2048,
+      "actualPpm": 3.774873600000001,
+      "maxDensity": 18,
+      "kind": "Node native logic fixture; no Character or GPU; paint growth retained",
+      "grid": "2416c8c3227ae00bca0040fa85b8da1dddafceb844bad6efb1c165e6639a19a7",
+      "orders": "7df84fa76c0fae20ffe58a6583ef4f8418478e57eb4105943096234ccfed4306",
+      "counts": [
+        3841,
+        1240
+      ],
+      "commands": 95057,
+      "version": 896,
+      "records": 150,
+      "recordsHash": "59747983cfb0896b041b7d0d006f1da3e1b490b1a9dfbbb4c2b565a1e1293936",
+      "milliseconds": 7909.579881,
+      "groups": {},
+      "actors": [
+        {
+          "alive": true,
+          "position": [
+            -3.896908042158625,
+            3.015000104904175,
+            12.867796452930971
+          ],
+          "velocity": [
+            -11.251776045323455,
+            0,
+            2.466497330427557
+          ],
+          "hp": 96.63333333333347,
+          "ink": 22.926666666667096,
+          "special": 47.468592430572315,
+          "stats": {
+            "turf": 47.468592430572315,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.875816092155258,
+            3,
+            0.39697045401492465
+          ],
+          "velocity": [
+            3.506001792061513,
+            0,
+            -2.5239555134869924
+          ],
+          "hp": 91.57000000000005,
+          "ink": 45.59333333333337,
+          "special": 37.96714988971249,
+          "stats": {
+            "turf": 37.96714988971249,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -6.357650103743058,
+            3,
+            11.08512864997781
+          ],
+          "velocity": [
+            -3.896545673484009,
+            0,
+            -1.8652967094950121
+          ],
+          "hp": 100,
+          "ink": 43.24666666666638,
+          "special": 33.75874985712836,
+          "stats": {
+            "turf": 33.75874985712836,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            4.736501310477171,
+            3.712805555555555,
+            -2.604878420889853
+          ],
+          "velocity": [
+            -4.0725492150911595,
+            0.7383333333333325,
+            -2.1387713507199315
+          ],
+          "hp": 100,
+          "ink": 54.26666666666647,
+          "special": 16.54210238762153,
+          "stats": {
+            "turf": 16.54210238762153,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -9.324302772960818,
+            3,
+            7.50378766036212
+          ],
+          "velocity": [
+            -2.3359310439145466,
+            0,
+            -3.633982134972071
+          ],
+          "hp": 100,
+          "ink": 12.599999999999845,
+          "special": 100.90980950278497,
+          "stats": {
+            "turf": 100.90980950278497,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            -2.5759373242107966,
+            3.009999990463257,
+            3.2257216554724737
+          ],
+          "velocity": [
+            -4.169011612421971,
+            0,
+            1.132140528153844
+          ],
+          "hp": 78.43000000000002,
+          "ink": 4.900000000000279,
+          "special": 35.53540203929432,
+          "stats": {
+            "turf": 35.53540203929432,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            7.837649938053657,
+            3.009999990463257,
+            3.1775910658025865
+          ],
+          "velocity": [
+            -1.5693806470772778,
+            0,
+            -5.542078012871461
+          ],
+          "hp": 100,
+          "ink": 11.893333333333317,
+          "special": 107.41193988988397,
+          "stats": {
+            "turf": 107.41193988988397,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        },
+        {
+          "alive": true,
+          "position": [
+            0.01597190025929839,
+            3,
+            5.592048191272599
+          ],
+          "velocity": [
+            1.5693810180188443,
+            0,
+            5.5420793228067495
+          ],
+          "hp": 100,
+          "ink": 29.966666666666637,
+          "special": 4.045635999810005,
+          "stats": {
+            "turf": 4.045635999810005,
+            "splats": 0,
+            "assists": 0,
+            "deaths": 0,
+            "specials": 0
+          }
+        }
+      ],
+      "seed": 3299942215
+    }
+  },
+  "perFrameParity": {
+    "30": {
+      "A": {
+        "reference": true,
+        "hz": 30,
+        "frames": 60,
+        "parity": true,
+        "commandsHash": "3a475d8f8bec6c683da1a99a9cb0b99abeb124e74cf35509fff29f0a2554af99",
+        "framesHash": "416c5930a94369127015f85550ebad091461a9cb52e2acd1d243348331768fff",
+        "instrumented": false,
+        "atlasSize": 2048,
+        "actualPpm": 3.774873600000001,
+        "maxDensity": 18,
+        "kind": "Node fixture only; Character, finishFrame and spawn-barrier hooks are stubbed; paint growth and Actor integration retained",
+        "grid": "c5cb4841aef742ea694c2051f5200ba1897dd04307bf21a0d1b020c13b7a7e7e",
+        "orders": "ac3eedcc756546a75bbd2048eaab4a2ba310f821890ddc936451ba91501ffe43",
+        "counts": [
+          225,
+          0
+        ],
+        "commands": 604,
+        "version": 7,
+        "records": 26,
+        "recordsHash": "3244820a37fef9f0011e8f5051f5aaa41bd37887564a5137d1d554903c6cb0d4",
+        "milliseconds": 1310.3979420000005,
+        "groups": {},
+        "actors": [
+          {
+            "alive": true,
+            "position": [
+              -3.32734353971293,
+              3.743222212685479,
+              3.457404603286453
+            ],
+            "velocity": [
+              -4.238544418724138,
+              0.44666666666666655,
+              -1.787278675075178
+            ],
+            "hp": 100,
+            "ink": 87.11999999999998,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -0.05949153715741837,
+              3.262222212685479,
+              -4.268312363286962
+            ],
+            "velocity": [
+              -3.9805814431132305,
+              7.566666666666667,
+              -1.6785027181142038
+            ],
+            "hp": 100,
+            "ink": 86.86666666666663,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -3.2549829115632924,
+              3.4109999904632566,
+              3.143221611441325
+            ],
+            "velocity": [
+              -1.9024526098119154,
+              4.463333333333334,
+              4.07931785224146
+            ],
+            "hp": 100,
+            "ink": 89.7866666666666,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              5.307029383321495,
+              3.72833332379659,
+              6.289057260864992
+            ],
+            "velocity": [
+              -1.5846151319594524,
+              1.13,
+              4.318448203177218
+            ],
+            "hp": 100,
+            "ink": 82.51999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              0.15934154928626945,
+              3.615222222222222,
+              8.630056340460834
+            ],
+            "velocity": [
+              3.9943028513254353,
+              2.796666666666667,
+              2.2815662891544743
+            ],
+            "hp": 100,
+            "ink": 87.11999999999998,
+            "special": 13.586181349188623,
+            "stats": {
+              "turf": 13.586181349188623,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              3.985161224754592,
+              3.009999990463257,
+              1.3327882843237637
+            ],
+            "velocity": [
+              -3.7510865875359114,
+              0,
+              -2.142639910987596
+            ],
+            "hp": 100,
+            "ink": 85.02666666666663,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -3.271864192050571,
+              3.72833332379659,
+              3.0236339295642756
+            ],
+            "velocity": [
+              -3.8683138962800285,
+              1.13,
+              -2.409786527864944
+            ],
+            "hp": 100,
+            "ink": 94.47999999999999,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              2.1582138375856523,
+              3.009999990463257,
+              -3.358501593807983
+            ],
+            "velocity": [
+              0.3656964531596987,
+              0,
+              0.31116559445059955
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          }
+        ],
+        "seed": 2138640995
+      },
+      "B": {
+        "reference": false,
+        "hz": 30,
+        "frames": 60,
+        "parity": true,
+        "commandsHash": "3a475d8f8bec6c683da1a99a9cb0b99abeb124e74cf35509fff29f0a2554af99",
+        "framesHash": "416c5930a94369127015f85550ebad091461a9cb52e2acd1d243348331768fff",
+        "instrumented": false,
+        "atlasSize": 2048,
+        "actualPpm": 3.774873600000001,
+        "maxDensity": 18,
+        "kind": "Node fixture only; Character, finishFrame and spawn-barrier hooks are stubbed; paint growth and Actor integration retained",
+        "grid": "c5cb4841aef742ea694c2051f5200ba1897dd04307bf21a0d1b020c13b7a7e7e",
+        "orders": "ac3eedcc756546a75bbd2048eaab4a2ba310f821890ddc936451ba91501ffe43",
+        "counts": [
+          225,
+          0
+        ],
+        "commands": 604,
+        "version": 7,
+        "records": 26,
+        "recordsHash": "3244820a37fef9f0011e8f5051f5aaa41bd37887564a5137d1d554903c6cb0d4",
+        "milliseconds": 1058.4856570000002,
+        "groups": {},
+        "actors": [
+          {
+            "alive": true,
+            "position": [
+              -3.32734353971293,
+              3.743222212685479,
+              3.457404603286453
+            ],
+            "velocity": [
+              -4.238544418724138,
+              0.44666666666666655,
+              -1.787278675075178
+            ],
+            "hp": 100,
+            "ink": 87.11999999999998,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -0.05949153715741837,
+              3.262222212685479,
+              -4.268312363286962
+            ],
+            "velocity": [
+              -3.9805814431132305,
+              7.566666666666667,
+              -1.6785027181142038
+            ],
+            "hp": 100,
+            "ink": 86.86666666666663,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -3.2549829115632924,
+              3.4109999904632566,
+              3.143221611441325
+            ],
+            "velocity": [
+              -1.9024526098119154,
+              4.463333333333334,
+              4.07931785224146
+            ],
+            "hp": 100,
+            "ink": 89.7866666666666,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              5.307029383321495,
+              3.72833332379659,
+              6.289057260864992
+            ],
+            "velocity": [
+              -1.5846151319594524,
+              1.13,
+              4.318448203177218
+            ],
+            "hp": 100,
+            "ink": 82.51999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              0.15934154928626945,
+              3.615222222222222,
+              8.630056340460834
+            ],
+            "velocity": [
+              3.9943028513254353,
+              2.796666666666667,
+              2.2815662891544743
+            ],
+            "hp": 100,
+            "ink": 87.11999999999998,
+            "special": 13.586181349188623,
+            "stats": {
+              "turf": 13.586181349188623,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              3.985161224754592,
+              3.009999990463257,
+              1.3327882843237637
+            ],
+            "velocity": [
+              -3.7510865875359114,
+              0,
+              -2.142639910987596
+            ],
+            "hp": 100,
+            "ink": 85.02666666666663,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -3.271864192050571,
+              3.72833332379659,
+              3.0236339295642756
+            ],
+            "velocity": [
+              -3.8683138962800285,
+              1.13,
+              -2.409786527864944
+            ],
+            "hp": 100,
+            "ink": 94.47999999999999,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              2.1582138375856523,
+              3.009999990463257,
+              -3.358501593807983
+            ],
+            "velocity": [
+              0.3656964531596987,
+              0,
+              0.31116559445059955
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          }
+        ],
+        "seed": 2138640995
+      }
+    },
+    "60": {
+      "A": {
+        "reference": true,
+        "hz": 60,
+        "frames": 120,
+        "parity": true,
+        "commandsHash": "d9fc5954f153b13edd431161ebb0af934982a77ac57b01fc9f81844eb702a8f4",
+        "framesHash": "6d1043d0e07da8db899d88bd79cd873bf9ff34b9a548f7dcb2360303dc861840",
+        "instrumented": false,
+        "atlasSize": 2048,
+        "actualPpm": 3.774873600000001,
+        "maxDensity": 18,
+        "kind": "Node fixture only; Character, finishFrame and spawn-barrier hooks are stubbed; paint growth and Actor integration retained",
+        "grid": "ef652c4a2b0f499f7bc578bc1d1f95cd077a6fbd0cebd7f06938b8289e6ffe88",
+        "orders": "fb86a2a3c2e723b0f88b3463201e92e773bd4e2981c2209ef10f3d526dbb1dbf",
+        "counts": [
+          317,
+          74
+        ],
+        "commands": 1596,
+        "version": 17,
+        "records": 27,
+        "recordsHash": "ce08d2b310290ee4659d3c584605a7b87271a4c3548cb815ee84cbffa18c70e5",
+        "milliseconds": 1820.4719299999988,
+        "groups": {},
+        "actors": [
+          {
+            "alive": true,
+            "position": [
+              2.8341111481455505,
+              3.6854999999999984,
+              6.460647928223885
+            ],
+            "velocity": [
+              5.756093391609618,
+              -1.1066666666666674,
+              0.21210579205245533
+            ],
+            "hp": 100,
+            "ink": 88.53999999999999,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              2.940018405064448,
+              3.009999990463257,
+              -1.6271825950139713
+            ],
+            "velocity": [
+              -5.75550667985302,
+              0,
+              -0.212084172361222
+            ],
+            "hp": 100,
+            "ink": 86.53333333333332,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -2.6669201960187965,
+              3.5045833237965898,
+              3.0268843823227995
+            ],
+            "velocity": [
+              -1.213056277983277,
+              3.504999999999999,
+              4.437171899553523
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              3.9201075808106216,
+              3.5045833237965898,
+              -5.1622871415060025
+            ],
+            "velocity": [
+              -4.42107023622985,
+              3.504999999999999,
+              1.2704872948101416
+            ],
+            "hp": 100,
+            "ink": 82.51999999999997,
+            "special": 4.605120410308435,
+            "stats": {
+              "turf": 4.605120410308435,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -0.19916699655365214,
+              3.7004999999999995,
+              9.078045481744367
+            ],
+            "velocity": [
+              2.003004317382131,
+              1.0799999999999992,
+              4.141011193472094
+            ],
+            "hp": 100,
+            "ink": 86.19999999999997,
+            "special": 19.014542316559695,
+            "stats": {
+              "turf": 19.014542316559695,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              6.928313863140776,
+              3.556055546018812,
+              5.630487803916475
+            ],
+            "velocity": [
+              2.003004317384882,
+              3.0883333333333325,
+              4.1410111934777785
+            ],
+            "hp": 100,
+            "ink": 82.51999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -2.2506788916068907,
+              3.725555546018811,
+              4.784170336275239
+            ],
+            "velocity": [
+              -0.4264140295109646,
+              -0.2866666666666675,
+              4.566170464705946
+            ],
+            "hp": 100,
+            "ink": 99.08,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              2.116736824564498,
+              3.009999990463257,
+              -3.065077151947597
+            ],
+            "velocity": [
+              2.523709837847047,
+              0,
+              1.3894008394966595
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          }
+        ],
+        "seed": 1631370769
+      },
+      "B": {
+        "reference": false,
+        "hz": 60,
+        "frames": 120,
+        "parity": true,
+        "commandsHash": "d9fc5954f153b13edd431161ebb0af934982a77ac57b01fc9f81844eb702a8f4",
+        "framesHash": "6d1043d0e07da8db899d88bd79cd873bf9ff34b9a548f7dcb2360303dc861840",
+        "instrumented": false,
+        "atlasSize": 2048,
+        "actualPpm": 3.774873600000001,
+        "maxDensity": 18,
+        "kind": "Node fixture only; Character, finishFrame and spawn-barrier hooks are stubbed; paint growth and Actor integration retained",
+        "grid": "ef652c4a2b0f499f7bc578bc1d1f95cd077a6fbd0cebd7f06938b8289e6ffe88",
+        "orders": "fb86a2a3c2e723b0f88b3463201e92e773bd4e2981c2209ef10f3d526dbb1dbf",
+        "counts": [
+          317,
+          74
+        ],
+        "commands": 1596,
+        "version": 17,
+        "records": 27,
+        "recordsHash": "ce08d2b310290ee4659d3c584605a7b87271a4c3548cb815ee84cbffa18c70e5",
+        "milliseconds": 1463.304091,
+        "groups": {},
+        "actors": [
+          {
+            "alive": true,
+            "position": [
+              2.8341111481455505,
+              3.6854999999999984,
+              6.460647928223885
+            ],
+            "velocity": [
+              5.756093391609618,
+              -1.1066666666666674,
+              0.21210579205245533
+            ],
+            "hp": 100,
+            "ink": 88.53999999999999,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              2.940018405064448,
+              3.009999990463257,
+              -1.6271825950139713
+            ],
+            "velocity": [
+              -5.75550667985302,
+              0,
+              -0.212084172361222
+            ],
+            "hp": 100,
+            "ink": 86.53333333333332,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -2.6669201960187965,
+              3.5045833237965898,
+              3.0268843823227995
+            ],
+            "velocity": [
+              -1.213056277983277,
+              3.504999999999999,
+              4.437171899553523
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              3.9201075808106216,
+              3.5045833237965898,
+              -5.1622871415060025
+            ],
+            "velocity": [
+              -4.42107023622985,
+              3.504999999999999,
+              1.2704872948101416
+            ],
+            "hp": 100,
+            "ink": 82.51999999999997,
+            "special": 4.605120410308435,
+            "stats": {
+              "turf": 4.605120410308435,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -0.19916699655365214,
+              3.7004999999999995,
+              9.078045481744367
+            ],
+            "velocity": [
+              2.003004317382131,
+              1.0799999999999992,
+              4.141011193472094
+            ],
+            "hp": 100,
+            "ink": 86.19999999999997,
+            "special": 19.014542316559695,
+            "stats": {
+              "turf": 19.014542316559695,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              6.928313863140776,
+              3.556055546018812,
+              5.630487803916475
+            ],
+            "velocity": [
+              2.003004317384882,
+              3.0883333333333325,
+              4.1410111934777785
+            ],
+            "hp": 100,
+            "ink": 82.51999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -2.2506788916068907,
+              3.725555546018811,
+              4.784170336275239
+            ],
+            "velocity": [
+              -0.4264140295109646,
+              -0.2866666666666675,
+              4.566170464705946
+            ],
+            "hp": 100,
+            "ink": 99.08,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              2.116736824564498,
+              3.009999990463257,
+              -3.065077151947597
+            ],
+            "velocity": [
+              2.523709837847047,
+              0,
+              1.3894008394966595
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          }
+        ],
+        "seed": 1631370769
+      }
+    },
+    "120": {
+      "A": {
+        "reference": true,
+        "hz": 120,
+        "frames": 240,
+        "parity": true,
+        "commandsHash": "10bc38020dbe8f0b0511e4f49fbbc746c31a8ea145ece9c5f29aec4b6c338cac",
+        "framesHash": "82dad44a3f29b37e6fd1710aabc6e05d1525fb2fd23f957f3c5b8425f84c7912",
+        "instrumented": false,
+        "atlasSize": 2048,
+        "actualPpm": 3.774873600000001,
+        "maxDensity": 18,
+        "kind": "Node fixture only; Character, finishFrame and spawn-barrier hooks are stubbed; paint growth and Actor integration retained",
+        "grid": "c58ddf0876939798077a622bb9c74e33ef687c4c971132516e17dce6690fe89f",
+        "orders": "77178fa438bc81d588b6a89a88c165ff085df86c99dbd05af243d7f8b6657ea5",
+        "counts": [
+          0,
+          142
+        ],
+        "commands": 13777,
+        "version": 217,
+        "records": 25,
+        "recordsHash": "27fa24a024205ca2f81a8eec9fd23b43b5c6ec607bdd9274ab952402ce7790ff",
+        "milliseconds": 3139.0273099999995,
+        "groups": {},
+        "actors": [
+          {
+            "alive": true,
+            "position": [
+              -7.972049548839015,
+              3.7212528646675094,
+              -1.9350856013788096
+            ],
+            "velocity": [
+              -2.375477340625043,
+              -0.5508333333333331,
+              -3.93917598034763
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -1.2087935521757878,
+              3.576701388888889,
+              -6.013593720104427
+            ],
+            "velocity": [
+              -2.375475293181034,
+              2.6091666666666673,
+              -3.9391725851385417
+            ],
+            "hp": 100,
+            "ink": 85.27999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -1.4210389513317467,
+              3.0782638793521455,
+              4.350700668193717
+            ],
+            "velocity": [
+              -1.8416715256784357,
+              8.191666666666666,
+              -3.9077673921920493
+            ],
+            "hp": 100,
+            "ink": 86.36333333333324,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              5.94133136102015,
+              3.7109513888888888,
+              -2.087637846291564
+            ],
+            "velocity": [
+              -3.026793408104872,
+              0.37166666666666687,
+              -3.4638521619163263
+            ],
+            "hp": 100,
+            "ink": 86.19666666666659,
+            "special": 4.1572590850497795,
+            "stats": {
+              "turf": 4.1572590850497795,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              3.1076472476925106,
+              3.009999990463257,
+              6.104738529775494
+            ],
+            "velocity": [
+              -2.3513466637339655,
+              0,
+              5.203432903417607
+            ],
+            "hp": 100,
+            "ink": 99.6633333333333,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -0.6445472628158873,
+              3.009999990463257,
+              -3.9089768808447474
+            ],
+            "velocity": [
+              2.5270146957893425,
+              0,
+              -3.503525036173326
+            ],
+            "hp": 100,
+            "ink": 96.32,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              1.496021454048161,
+              3,
+              5.476667061788079
+            ],
+            "velocity": [
+              4.212573842226689,
+              0,
+              -0.9566137467185464
+            ],
+            "hp": 100,
+            "ink": 88.95999999999998,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              8.256612393965156,
+              3.6810138793521454,
+              2.7828638994033104
+            ],
+            "velocity": [
+              2.7319921816355612,
+              1.3966666666666672,
+              -3.6951139812473586
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          }
+        ],
+        "seed": 4024983612
+      },
+      "B": {
+        "reference": false,
+        "hz": 120,
+        "frames": 240,
+        "parity": true,
+        "commandsHash": "10bc38020dbe8f0b0511e4f49fbbc746c31a8ea145ece9c5f29aec4b6c338cac",
+        "framesHash": "82dad44a3f29b37e6fd1710aabc6e05d1525fb2fd23f957f3c5b8425f84c7912",
+        "instrumented": false,
+        "atlasSize": 2048,
+        "actualPpm": 3.774873600000001,
+        "maxDensity": 18,
+        "kind": "Node fixture only; Character, finishFrame and spawn-barrier hooks are stubbed; paint growth and Actor integration retained",
+        "grid": "c58ddf0876939798077a622bb9c74e33ef687c4c971132516e17dce6690fe89f",
+        "orders": "77178fa438bc81d588b6a89a88c165ff085df86c99dbd05af243d7f8b6657ea5",
+        "counts": [
+          0,
+          142
+        ],
+        "commands": 13777,
+        "version": 217,
+        "records": 25,
+        "recordsHash": "27fa24a024205ca2f81a8eec9fd23b43b5c6ec607bdd9274ab952402ce7790ff",
+        "milliseconds": 2703.4318489999996,
+        "groups": {},
+        "actors": [
+          {
+            "alive": true,
+            "position": [
+              -7.972049548839015,
+              3.7212528646675094,
+              -1.9350856013788096
+            ],
+            "velocity": [
+              -2.375477340625043,
+              -0.5508333333333331,
+              -3.93917598034763
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -1.2087935521757878,
+              3.576701388888889,
+              -6.013593720104427
+            ],
+            "velocity": [
+              -2.375475293181034,
+              2.6091666666666673,
+              -3.9391725851385417
+            ],
+            "hp": 100,
+            "ink": 85.27999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -1.4210389513317467,
+              3.0782638793521455,
+              4.350700668193717
+            ],
+            "velocity": [
+              -1.8416715256784357,
+              8.191666666666666,
+              -3.9077673921920493
+            ],
+            "hp": 100,
+            "ink": 86.36333333333324,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              5.94133136102015,
+              3.7109513888888888,
+              -2.087637846291564
+            ],
+            "velocity": [
+              -3.026793408104872,
+              0.37166666666666687,
+              -3.4638521619163263
+            ],
+            "hp": 100,
+            "ink": 86.19666666666659,
+            "special": 4.1572590850497795,
+            "stats": {
+              "turf": 4.1572590850497795,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              3.1076472476925106,
+              3.009999990463257,
+              6.104738529775494
+            ],
+            "velocity": [
+              -2.3513466637339655,
+              0,
+              5.203432903417607
+            ],
+            "hp": 100,
+            "ink": 99.6633333333333,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              -0.6445472628158873,
+              3.009999990463257,
+              -3.9089768808447474
+            ],
+            "velocity": [
+              2.5270146957893425,
+              0,
+              -3.503525036173326
+            ],
+            "hp": 100,
+            "ink": 96.32,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              1.496021454048161,
+              3,
+              5.476667061788079
+            ],
+            "velocity": [
+              4.212573842226689,
+              0,
+              -0.9566137467185464
+            ],
+            "hp": 100,
+            "ink": 88.95999999999998,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          },
+          {
+            "alive": true,
+            "position": [
+              8.256612393965156,
+              3.6810138793521454,
+              2.7828638994033104
+            ],
+            "velocity": [
+              2.7319921816355612,
+              1.3966666666666672,
+              -3.6951139812473586
+            ],
+            "hp": 100,
+            "ink": 83.43999999999997,
+            "special": 0,
+            "stats": {
+              "turf": 0,
+              "splats": 0,
+              "assists": 0,
+              "deaths": 0,
+              "specials": 0
+            }
+          }
+        ],
+        "seed": 4024983612
+      }
+    }
+  }
+}
