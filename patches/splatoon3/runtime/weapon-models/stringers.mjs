@@ -30,11 +30,15 @@ function sweptRect(body, stations, color, material=M.satin, offsetX=0) {
 // The center remains star-shaped, so a center fan closes each end without filling the grooves.
 const REEF_CAST_SECTION=[[-.30,-.5],[-.44,-.46],[-.5,-.34],[-.49,-.25],[-.42,-.18],[-.40,0],[-.42,.18],[-.49,.25],[-.5,.34],[-.44,.46],[-.30,.5],[.30,.5],[.44,.46],[.5,.34],[.49,.25],[.42,.18],[.40,0],[.42,-.18],[.49,-.25],[.5,-.34],[.44,-.46],[.30,-.5]].reverse();
 const REEF_ROUND_SECTION=Array.from({length:12},(_,k)=>[-.5*Math.cos(k*Math.PI/6),.5*Math.sin(k*Math.PI/6)]).reverse();
-function castSection(body,stations,section,color,material=M.satin){
+function castSection(body,stations,section,color,material=M.satin,solidRoot=false){
   const vertices=[],indices=[],r=section.length;
   for(let i=0;i<stations.length;i++){
     const[y,z,w,t]=stations[i],a=stations[Math.max(0,i-1)],b=stations[Math.min(stations.length-1,i+1)],dy=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dy,dz);
-    for(const[x,n]of section)vertices.push(x*w,YC+y-dz/len*n*t,z+dy/len*n*t);
+    const fill=solidRoot?1-smooth((i/(stations.length-1)-.12)/.22):0;
+    for(const[x,n]of section){
+      const sx=x+Math.sign(x)*(Math.abs(n)<.26?Math.max(0,.49-Math.abs(x))*fill:0);
+      vertices.push(sx*w,YC+y-dz/len*n*t,z+dy/len*n*t);
+    }
   }
   for(let i=0;i<stations.length-1;i++)for(let k=0;k<r;k++){
     const a=i*r+k,b=i*r+(k+1)%r,c=b+r,d=a+r;indices.push(a,c,b,a,d,c);
@@ -126,13 +130,13 @@ function tri(d){
 function reef(d){
   const C={white:'#d5d5c8',edge:'#8b9492',steel:'#aab4b4',black:'#242a2c',dark:'#42494a'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.white,guardColor:C.black});
-  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0795,coil0:-.025,coil1:.064,muzzleZ:.15,castNock:true,
+  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0818,coil0:-.004,coil1:.057,muzzleZ:.15,castNock:true,
     gripL:gripSpec([0,0,.095],[0,0,1],[.75,-.62,-.1])};
   for(const s of[-1,1]){
     // The root seats in the enlarged forward receiver collar. Rounded rims and
     // recessed web are one connected solid casting, rather than a grey stripe.
     const limb=smoothLimb(s,REEF_LIMB_SECTIONS,20);
-    castSection(body,limb,REEF_CAST_SECTION,C.white);
+    castSection(body,limb,REEF_CAST_SECTION,C.white,M.satin,true);
     const boot=smoothLimb(s,[[.042,.017,.083,.068],[.066,.020,.089,.064],[.085,.023,.078,.053]],5);
     castSection(body,boot,REEF_ROUND_SECTION,C.black);
     for(const x of[-.023,.023])body.add(pipe([[x,YC+s*.290,-.162],[x,YC+s*.12,-.170],[-x,YC,-.167]],.0012,10,4),'#a9b2a4',M.metal);
@@ -141,10 +145,10 @@ function reef(d){
       body.add(ring(.026,.003,sx*.019,YC+s*.3,-.17,'x',5,20),C.edge,M.metal);
       body.add(xcyl(.009,sx>0?.019:-.023,sx>0?.023:-.019,YC+s*.3,-.17,12),C.steel,M.metal);
       body.add(xcyl(.004,sx>0?.022:-.024,sx>0?.024:-.022,YC+s*.3,-.17,8),C.dark,M.satin);
-      body.add(xcyl(.0055,sx>0?.036:-.041,sx>0?.041:-.036,YC+s*.087,.023,10),C.steel,M.metal);
+      body.add(xcyl(.0055,sx>0?.032:-.037,sx>0?.037:-.032,YC+s*.104,.029,10),C.steel,M.metal);
     }
-    body.add(zcyl(.010,-.019,.069,0,YC+s*.155,12),C.white,M.satin);
-    body.add(ring(.010,.0018,0,YC+s*.155,.060,'z',4,14),C.edge,M.metal);
+    body.add(zcyl(.010,.031,.094,0,YC+s*.155,12),C.white,M.satin);
+    body.add(ring(.010,.0018,0,YC+s*.155,.085,'z',4,14),C.edge,M.metal);
   }
   // Distinct rear barrel and stepped front/root collar; do not blur them into an egg.
   body.add(zlathe([[0,-.118],[.049,-.118],[.057,-.112],[.059,-.095],[.059,-.024],[.062,-.018],[.073,-.018],[.080,-.006],[.080,.058],[.075,.071],[.060,.085],[.056,.095],[0,.095]],0,YC,0,24),C.black,M.satin);

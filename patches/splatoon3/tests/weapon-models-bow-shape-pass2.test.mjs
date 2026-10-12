@@ -52,7 +52,7 @@ test('LACT cast arms have outward closed recessed sections, seated forward roots
  const f=await production();
  for(const sign of[-1,1])for(const section of[f.REEF_CAST_SECTION,f.REEF_ROUND_SECTION]){
   const stations=f.smoothLimb(sign,f.REEF_LIMB_SECTIONS,20);let g;
-  f.castSection({add:geo=>{g=geo;}},stations,section,'#fff');
+  f.castSection({add:geo=>{g=geo;}},stations,section,'#fff',undefined,section===f.REEF_CAST_SECTION);
   const p=g.attributes.position,ix=g.index.array;let volume=0;const edges=new Map();
   for(let j=0;j<ix.length;j+=3){const a=new f.THREE.Vector3().fromBufferAttribute(p,ix[j]),b=new f.THREE.Vector3().fromBufferAttribute(p,ix[j+1]),c=new f.THREE.Vector3().fromBufferAttribute(p,ix[j+2]);volume+=a.dot(b.cross(c))/6;
    for(let k=0;k<3;k++){const u=ix[j+k],v=ix[j+(k+1)%3],key=Math.min(u,v)+':'+Math.max(u,v);edges.set(key,(edges.get(key)||0)+(u<v?1:-1));}}
@@ -62,4 +62,7 @@ test('LACT cast arms have outward closed recessed sections, seated forward roots
  assert.ok(web.every(p=>rim-Math.abs(p[0])>=.099),'geometric relief, not a painted surface');
  assert.ok(f.REEF_LIMB_SECTIONS[0][1]>.01,'root registers with forward collar');
  const d=f.getWeaponDef('s3-stringer-short'),g=d.parts.arrow.geo;g.computeBoundingBox();assert.ok(g.boundingBox.getSize(new f.THREE.Vector3()).x>.018,'readable pale center shaft');
+ const glow=d.glow.attributes.position;for(let i=0;i<glow.count;i++)assert.ok(Math.hypot(glow.getX(i),glow.getY(i)-.085)>.0801,'charge rings clear .080 collar');
+ let root;const stations=f.smoothLimb(1,f.REEF_LIMB_SECTIONS,20);f.castSection({add:g=>{root=g;}},stations,f.REEF_CAST_SECTION,'#fff',undefined,true);
+ const webIndex=section.findIndex(p=>p[1]===0);assert.ok(Math.abs(root.attributes.position.getX(webIndex))>stations[0][2]*.485,'groove blends out into full pale cuff');
 });
