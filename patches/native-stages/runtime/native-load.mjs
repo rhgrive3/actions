@@ -1,14 +1,18 @@
 import * as THREE from 'three';
 import { nativeStageURL } from './registry.mjs';
 import { nativeStageBuild } from './build-config.mjs';
+import {loadBrowserSource} from './source-data.mjs';
+import {sourceBytes} from './source-cache.mjs';
 const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join('');
 async function verified(id,file,integrity,signal){
+ if(nativeStageBuild.mode==='browser-direct')return sourceBytes(id,nativeStageURL(id,file),integrity[file],signal);
  const response=await fetch(nativeStageURL(id,file),{signal});if(!response.ok)throw Error(`Native asset ${response.status}: ${id}/${file}`);
  const bytes=await response.arrayBuffer(),expected=integrity[file];
  if(!expected||bytes.byteLength!==expected.bytes||hex(await crypto.subtle.digest('SHA-256',bytes))!==expected.sha256)throw Error('Native integrity mismatch: '+id+'/'+file);
  return bytes;
 }
 export async function loadNativeData(id,signal){
+ if(nativeStageBuild.mode==='browser-direct')return loadBrowserSource(id,signal);
  const r=await fetch(nativeStageURL(id,'integrity.json'),{signal});if(!r.ok)throw Error('Missing native integrity: '+id);
  const raw=await r.arrayBuffer(),digest=hex(await crypto.subtle.digest('SHA-256',raw));
  if(digest!==nativeStageBuild.stages.find(s=>s.id===id)?.integritySha256)throw Error('Native integrity manifest changed: '+id);
@@ -29,9 +33,25 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  }
  let next=0;const rows=[...jobs];
  const worker=async()=>{while(next<rows.length){
-  const [file,{role,encoding}]=rows[next++];const buffer=await verified(id,file,data.integrity,signal),blob=new Blob([buffer],{type:'image/png'});
+  const [file,job]=rows[next++],{role}=job;let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal),blob=new Blob([buffer],{type:'image/png'});
   let bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});const ratio=Math.min(1,limit/Math.max(bitmap.width,bitmap.height));
   if(ratio<1){const original=bitmap;bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});original.close();}
+  if(data.manifest.sourceMode==='browser-direct'){
+   const matched=Object.values(data.manifest.materials).filter(m=>m.albedo===file||Object.values(m.maps).includes(file));
+   let pixels;
+   const readPixels=()=>{if(!pixels){const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;}return pixels;};
+   if(role==='albedo'){
+    let alpha=false;const pngType=new Uint8Array(buffer)[25];if(pngType===6||pngType===4){const p=readPixels();for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;break;}}
+    for(const m of matched)if(m.albedo===file)m.hasAlpha=alpha;
+   }
+   if(['normal','roughness','opacity'].includes(role)){
+    const p=readPixels(),mean=[0,0,0],lo=[255,255,255],hi=[0,0,0];let unorm=0,signed=0;
+    for(let i=0;i<p.length;i+=4){for(let k=0;k<3;k++){mean[k]+=p[i+k];lo[k]=Math.min(lo[k],p[i+k]);hi[k]=Math.max(hi[k],p[i+k]);}if(role==='normal'){const x=p[i]/127.5-1,y=p[i+1]/127.5-1,sx=(p[i]>127?p[i]-256:p[i])/127,sy=(p[i+1]>127?p[i+1]-256:p[i+1])/127;unorm+=x*x+y*y>1.02;signed+=sx*sx+sy*sy>1.02;}}
+    const count=p.length/4;for(let k=0;k<3;k++)mean[k]/=count;
+    if(role==='normal'){encoding=mean[2]<1?(signed/count+.1<unorm/count?'signed-byte-rg':'unorm-rg'):'rgb';for(const m of matched)m.normalEncoding=encoding;}
+    else for(const m of matched)m.channels[role]=mean[1]<1&&(mean[0]>2||hi[0]-lo[0]>4)?'r':'g';
+   }
+  }
   let texture;
   if(role==='normal'&&['rg-reconstruct-z','unorm-rg','signed-byte-rg'].includes(encoding)){
    const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;

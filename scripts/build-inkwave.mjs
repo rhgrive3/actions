@@ -160,10 +160,10 @@ for (const [root, prefix] of [
     const rel = path.relative(root, file).split(path.sep).join('/');
     if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     // One native runtime module avoids inflating the bounded worker manifest.
-    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs'].includes(rel)) continue;
+    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
-    if (prefix === 'patches/native-stages' && rel === 'runtime/engine.mjs' && !unminified) {
+    if (prefix === 'patches/native-stages' && ['runtime/engine.mjs','runtime/registry.mjs','runtime/source-worker.mjs'].includes(rel) && !unminified) {
       const bundled = await esbuild.build({ entryPoints:[file], bundle:true, format:'esm', minify:true, charset:'utf8', write:false,
         external:['three','../../../src/*','./registry.mjs','./build-config.mjs'], legalComments:'inline' });
       fs.writeFileSync(dst,bundled.outputFiles[0].contents); continue;
@@ -263,7 +263,7 @@ const visit = (rel) => {
   // The registry is a bundle of weapon families. Discover dependencies from
   // its emitted imports, not its pre-bundle source imports: the family files
   // do not ship separately and would hide their shared kit.mjs dependency.
-  const emittedRegistry = !unminified && rel === 'patches/splatoon3/runtime/weapon-models/registry.mjs';
+  const emittedRegistry = !unminified && (rel === 'patches/splatoon3/runtime/weapon-models/registry.mjs' || rel.startsWith('patches/native-stages/runtime/'));
   const s = emittedRegistry ? fs.readFileSync(abs, 'utf8')
     : fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
   // esbuild emits import{...}from"./kit.mjs" without spaces. Parse the
@@ -279,6 +279,9 @@ const visit = (rel) => {
 };
 visit('src/main.js');
 visit('patches/splatoon3/bootstrap.mjs');
+// Worker modules have no main-thread static importer, but must retain their
+// own immutable offline dependencies. The source payload stays outside it.
+visit('patches/native-stages/runtime/source-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
@@ -286,6 +289,7 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/native-stages/runtime/source-worker.mjs',
   // ContactPolish: lazily import source animation at runtime, never a new eager HTML hint.
   'src/game/motion/source-bank.js',
   'src/game/motion/source-controller.js',

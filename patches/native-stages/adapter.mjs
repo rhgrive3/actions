@@ -5,6 +5,10 @@ export function adaptNativeStages(rel,code){
   once('export const OFFLINE_MAPS =',"if (nativeStageEnabled) { for (const m of NATIVE_MAPS) { const i = MAPS.findIndex(x => x.id === m.id); if (i >= 0) MAPS[i] = m; else MAPS.push(m); } }\nexport const OFFLINE_MAPS =");
  }
  if(rel==='src/world/maps.js')code="import { nativeStageEnabled, NATIVE_LAYOUTS } from '../../patches/native-stages/runtime/registry.mjs';\n"+code+"\nif (nativeStageEnabled) Object.assign(MAP_LAYOUTS, NATIVE_LAYOUTS);\n";
+ if(rel==='src/ui/menus.js'){
+  code="import { nativeStageArt } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('const stageArt = (id, time, small) => `${STAGE_DIR}', 'const stageArt = (id, time, small) => nativeStageArt(id, time) || `${STAGE_DIR}');
+ }
  if(rel==='src/main.js'){
   code="import { nativeStageEnabled, NATIVE_IDS } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('if (this._builtQuality !== this.settings?.quality) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });', 'if (this._builtQuality !== this.settings?.quality) await applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });');
@@ -14,6 +18,18 @@ export function adaptNativeStages(rel,code){
     this._nativeAbort?.abort();
     this._builtQuality = this.settings?.quality;`);
   once('    if (this.levelMesh) { scene.remove(this.levelMesh, this.grateMesh);', '    releaseNativeWorld(this);\n    if (this.levelMesh) { scene.remove(this.levelMesh, this.grateMesh);');
+  once('    if ((map.layout || map.id) !== this.layoutId || this._builtQuality !== this.settings?.quality) await this._buildWorld(map, flow);\n    if (!flow.current()) return;\n    const theme = mapTheme(map, opts.time);',`    if ((map.layout || map.id) !== this.layoutId || this._builtQuality !== this.settings?.quality) {
+      try { await this._buildWorld(map, flow); }
+      catch (error) {
+        if (!map.nativeSource) throw error;
+        if (!flow.current()) return;
+        this.input.exitLock();this._startAttract();G.mode='menu';this.menus?.show('setup');
+        this.menus?.toast?.('ステージを読み込めませんでした。接続を確認して再試行してください。');
+        await this._fade(0,200);return;
+      }
+    }
+    if (!flow.current()) return;
+    const theme = mapTheme(map, opts.time);`);
  }
  if(rel==='src/net/session.js'){
   code="import { nativeStageFingerprint, nativeStageCompatible } from '../../patches/native-stages/runtime/registry.mjs';\n"+code;

@@ -6,7 +6,9 @@ import { prepareNativeStageBuild } from '../../../scripts/lib/inkwave-native-sta
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
 const IDS=['scorch','hagglefish','inkblot','mako','brinewater'];
 
-test('public builds have no reference model payload',()=>assert.equal(prepareNativeStageBuild(null),null));
+test('public builds offer five source choices without reference model payload',()=>{
+ const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');assert.deepEqual(build.config.stages.map(s=>s.id),IDS);
+});
 for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async()=>{
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);
  G.level=level;G.physics=physics;

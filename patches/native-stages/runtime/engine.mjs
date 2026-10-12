@@ -7,3 +7,4 @@ export { nativeRankedStage } from './native-ranked.mjs';
 export { nativeInitialLanding } from './native-spawn.mjs';
 export { nativePaintGoalIds } from './native-bots.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
+export { nativeStageArt } from './source-menu.mjs';

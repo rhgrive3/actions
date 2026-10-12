@@ -8,6 +8,7 @@ import { loadNativeData,loadNativeTextures } from './native-load.mjs';
 import { NativeLevel } from './native-level.mjs';
 import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
+import {sourceLoadingStatus} from './source-menu.mjs';
 
 function releaseCurrent(game){
  if(game.nativeWorld){game.nativeWorld.dispose();game.nativeWorld=null;}
@@ -22,8 +23,10 @@ function releaseCurrent(game){
 export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
  let display,paint,inkGeometry,inkMat;
+ const status=sourceLoadingStatus(map.name);
  try{
   const data=await loadNativeData(map.id,signal);if(!current())return;
+  status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   const quality=['high','ultra'].includes(game.settings.quality)?'high':game.settings.quality==='low'?'low':'balanced';
   const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,game.mobile?.touch?1024:undefined);display=nativeDisplay(data,textures,quality);
@@ -43,6 +46,7 @@ export async function buildNativeWorld(game,map,current){
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
   const inkMesh=new THREE.Mesh(inkGeometry,inkMat);inkMesh.name='native-game-ink';inkMesh.receiveShadow=true;
+  status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   const navStart=performance.now(),nav=new NavGraph(level,physics);
   if(!current()){display.dispose();paint.dispose();inkGeometry.dispose();inkMat.dispose();return;}
   releaseCurrent(game);
@@ -59,7 +63,7 @@ export async function buildNativeWorld(game,map,current){
  }catch(error){
   display?.dispose();paint?.dispose();inkGeometry?.dispose();inkMat?.dispose();
   if(error.name!=='AbortError'&&current())throw error;
- }
+ }finally{status.close();}
 }
 
 export function releaseNativeWorld(game){
