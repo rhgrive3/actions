@@ -39,6 +39,7 @@ export function catalogVisualRadius(spec,ageSeconds=0){
 export function updateCatalogVisual(p){
   const v=p?.catalogVisual;if(!v)return;
   p.vis=catalogVisualRadius(v,p.age);
+  if(v.style==='bubble')p.vis*=catalogBubbleRadiusScale(p.catalog?.bounces??0);
   if(v.style==='sheet'){
     const speed=p.vel?.length?.()??0;
     const length=clamp(speed*Math.min(Math.max(0,p.age),v.tailSolid),v.tailMin,v.tailMax);
@@ -57,4 +58,13 @@ export function updateCatalogVisual(p){
 // moving by 0.05 regardless of source radius re-detects the same hit at t=0.
 export function catalogReboundSeparation(fieldRadius){
   return Math.max(.015,finite(fieldRadius,0)+.015);
+}
+
+// Inkipedia Splatoon 3 Bloblobber physics: two floor rebounds, unlimited wall
+// reflections at 0.8 velocity, projectile collision/draw radius x0.75 per hit.
+export function catalogBubbleCanBounce(groundBounces,normalY){
+  return normalY<=.35||groundBounces<2;
+}
+export function catalogBubbleRadiusScale(totalBounces){
+  return Math.pow(.75,Math.max(0,Math.floor(totalBounces||0)));
 }
