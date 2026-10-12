@@ -1,0 +1,68 @@
+name: INKWAVE native ink full-post independent review
+on:
+  push:
+    branches: [diagnose/native-ink-fullpost-1312]
+permissions:
+  contents: read
+jobs:
+  fullpost:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and browser tools
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify unchanged main545 product and pinned review inputs
+        run: |
+          set -euo pipefail
+          mkdir -p native-fullpost-evidence
+          if bash --noprofile --norc -e -o pipefail -c 'node -e "process.exit(23)" | tee native-fullpost-evidence/pipeline-negative.log'; then
+            echo 'False-green pipeline'; exit 1
+          else
+            status=$?; test "$status" -eq 23
+          fi
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node scripts/build-inkwave.mjs inkwave-public .native-main-site | tee native-fullpost-evidence/main-build.log
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs'; import assert from 'node:assert/strict';
+          const m=JSON.parse(fs.readFileSync('.native-main-site/inkwave-build.json'));
+          const expected={contentHash:'43ddefa5e29081aba0eed716ac9e8240e9f5fee46178ea6685dba6faf265fdcd',inputHash:'3a604dc1ed5027f53aec5c553b50c23a6ceb5edc5dc85dbf06526336ced49cab',revision:'6f6f90a3ba61500609c4d79f9350ee5f3fe897aaa87e2bea055560b4292f2f00'};
+          assert.equal(m.contentHash,expected.contentHash);assert.equal(m.inputHash,expected.inputHash);assert.equal(m.build.revision,expected.revision);
+          const proof={testedHead:process.env.GITHUB_SHA,base:'545c6b3fcfc0d25c43678e9b44b1af4e26400fec',sameProductAs:'ac1159b76b42a10ff02fe58add74a8285cc08d32',...expected};
+          fs.writeFileSync('native-fullpost-evidence/unchanged-main.json',JSON.stringify(proof,null,2));
+          JS
+          export NATIVE_REVIEW_FIXTURES="$GITHUB_WORKSPACE/scripts/fixtures/native-fullpost"
+          node --check scripts/check-inkwave-native-fullpost-review.mjs
+          node scripts/check-inkwave-native-fullpost-review.mjs --prepare-check | tee native-fullpost-evidence/source-check.json
+          for name in native-render.mjs native-ink-chunks.mjs native-world.mjs; do
+            cp "$NATIVE_REVIEW_FIXTURES/patches/native-stages/runtime/$name" "patches/native-stages/runtime/$name"
+          done
+          node scripts/build-inkwave.mjs inkwave-public .native-review-site | tee native-fullpost-evidence/candidate-build.log
+          cp .native-review-site/inkwave-build.json native-fullpost-evidence/candidate-build.json
+      - name: Four-cell actual GTAO and shadow comparison with readback negative controls
+        env:
+          NATIVE_STAGE_IDS: scorch
+        run: |
+          set -euo pipefail
+          export NATIVE_REVIEW_FIXTURES="$GITHUB_WORKSPACE/scripts/fixtures/native-fullpost"
+          export CHROMIUM_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          node scripts/check-inkwave-native-fullpost-review.mjs .native-review-site native-fullpost-evidence/frames | tee native-fullpost-evidence/browser.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-fullpost-review-${{ github.sha }}
+          path: native-fullpost-evidence
+          if-no-files-found: error
+          retention-days: 14
