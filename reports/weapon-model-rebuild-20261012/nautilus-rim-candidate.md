@@ -15,3 +15,7 @@ This candidate changes only the two Nautilus shell lathe profiles: roll the exis
 - Eight mixed Actors at game/far LOD use controlled ABBA against 42505752; results pending
 
 The dimensions are reconstruction choices inferred from images, not measured retail values. The candidate is not yet accepted into PR1276 and must not be confused with its earlier measurements.
+
+## Multi-direction comparison protocol
+
+The first five generic views are insufficient on their own for all-around reference acceptance. The candidate gallery also renders twelve headings at 30-degree intervals (from +Z toward -X), a fixed 10.2-degree elevation and 30-degree FOV, with identical framing for the frozen before and candidate. Each distinct turntable reference direction will be paired to the closest heading by nozzle/front-face, shell hub, inner/outer face and neck landmarks. The retail camera is unknown, so these are explicitly approximate orientation pairs; camera mismatch, lighting/material mismatch and actual geometry mismatch will be listed separately. No silhouette or pixel-parity score is claimed.
