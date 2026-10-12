@@ -16,6 +16,8 @@ on:
       - patches/splatoon3/tests/motion-catalog-gates.test.mjs
       - patches/reliability/tests/start.test.mjs
       - patches/splatoon3/tests/issue-1039-host-ready.test.mjs
+      - patches/splatoon3/tests/paint-mask-browser-fixture.mjs
+      - patches/splatoon3/tests/paint-mask-probe-level.test.mjs
       - .github/workflows/inkwave-native-stage-input-gates.yml
 permissions:
   contents: read
@@ -58,14 +60,14 @@ jobs:
             echo 'Negative control unexpectedly passed'; exit 1
           fi
           grep -q 'Catalog input namespace/path native-stages/' input-gate-evidence/before.log
-          node --experimental-vm-modules --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs | tee input-gate-evidence/after.log
+          node --experimental-vm-modules --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs patches/splatoon3/tests/paint-mask-probe-level.test.mjs | tee input-gate-evidence/after.log
       - name: Unchanged production build and all emitted input identities
         run: |
           set -euo pipefail
           npm install --no-save --no-package-lock esbuild@0.28.2
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node scripts/build-inkwave.mjs inkwave-public .gate-site | tee input-gate-evidence/build.log
-          INKWAVE_BUILT_SITE=.gate-site node --test scripts/tests/inkwave-build-packaging.test.mjs | tee input-gate-evidence/packaging.log
+          INKWAVE_BUILT_SITE=.gate-site node --experimental-vm-modules --test scripts/tests/inkwave-build-packaging.test.mjs patches/splatoon3/tests/paint-mask-probe-level.test.mjs | tee input-gate-evidence/packaging.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
