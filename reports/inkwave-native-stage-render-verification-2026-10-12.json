@@ -2774,5 +2774,308 @@
     "packets": 2068
   },
   "retail1130VersionPlacementMasksVerified": false,
-  "mobileHardwareMeasured": false
+  "mobileHardwareMeasured": false,
+  "ciBrowserVerification": {
+    "flow": {
+      "status": "passed",
+      "contentHash": "8558f01e7c3437632e3caee4b8c036ab433de391ce6726573ca46f468c59ce61",
+      "summary": {
+        "scenarios": 11,
+        "overridePixelEquality": true,
+        "nativeBuffers": 38,
+        "disposedViews": 4,
+        "components": [
+          "shell",
+          "glint",
+          "ribbon"
+        ]
+      },
+      "toolchain": {
+        "node": "v24.19.0",
+        "chromium": "154.0.8037.57"
+      }
+    },
+    "wall": {
+      "status": "passed",
+      "contentHash": "8558f01e7c3437632e3caee4b8c036ab433de391ce6726573ca46f468c59ce61",
+      "summary": {
+        "scenarios": 10,
+        "overridePixelEquality": true,
+        "nativeBuffers": 99,
+        "indexedReadyViews": 4,
+        "unsafeOverridesDetected": true,
+        "affineCounterexampleDetected": true
+      },
+      "toolchain": {
+        "node": "v24.19.0",
+        "chromium": "154.0.8037.57"
+      }
+    },
+    "catalog": {
+      "status": "passed",
+      "contentHash": "8558f01e7c3437632e3caee4b8c036ab433de391ce6726573ca46f468c59ce61",
+      "summary": [
+        {
+          "name": "carry-walk-fire-return",
+          "frames": 240,
+          "renderPairs": 12,
+          "visibleFrames": 240,
+          "heldHandSamples": 480,
+          "maximumHeldGrip": 1.336885555457667e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "ordinary-aimed-jump",
+          "frames": 180,
+          "renderPairs": 13,
+          "visibleFrames": 180,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 1.0011263372118013e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "hard-landing-recovery",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 240,
+          "maximumHeldGrip": 1.1247859265068955e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "swim-turn-brake",
+          "frames": 180,
+          "renderPairs": 11,
+          "visibleFrames": 180,
+          "heldHandSamples": 0,
+          "maximumHeldGrip": null,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "wall-surge-ready-crest",
+          "frames": 180,
+          "renderPairs": 18,
+          "visibleFrames": 180,
+          "heldHandSamples": 0,
+          "maximumHeldGrip": null,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "form-both-directions-interrupt",
+          "frames": 180,
+          "renderPairs": 15,
+          "visibleFrames": 180,
+          "heldHandSamples": 215,
+          "maximumHeldGrip": 0.00026214027035415313,
+          "nativeIKMaximum": 0.02357113330130628
+        },
+        {
+          "name": "dualies-roll-lock-interrupt",
+          "frames": 240,
+          "renderPairs": 22,
+          "visibleFrames": 237,
+          "heldHandSamples": 473,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 1.1102230246251565e-16
+        },
+        {
+          "name": "roller-horizontal-push",
+          "frames": 180,
+          "renderPairs": 13,
+          "visibleFrames": 180,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0.007960126221951162,
+          "nativeIKMaximum": 0.007960107751186829
+        },
+        {
+          "name": "roller-vertical-land",
+          "frames": 180,
+          "renderPairs": 11,
+          "visibleFrames": 180,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0.0009910201388404203,
+          "nativeIKMaximum": 0.000990389779273182
+        },
+        {
+          "name": "superjump-short",
+          "frames": 300,
+          "renderPairs": 17,
+          "visibleFrames": 300,
+          "heldHandSamples": 169,
+          "maximumHeldGrip": 9.639819490876587e-16,
+          "nativeIKMaximum": 0.042690138574407954
+        },
+        {
+          "name": "superjump-vertical",
+          "frames": 300,
+          "renderPairs": 17,
+          "visibleFrames": 300,
+          "heldHandSamples": 169,
+          "maximumHeldGrip": 1.0931786361305639e-15,
+          "nativeIKMaximum": 0.042690138574407954
+        },
+        {
+          "name": "superjump-long",
+          "frames": 300,
+          "renderPairs": 17,
+          "visibleFrames": 300,
+          "heldHandSamples": 169,
+          "maximumHeldGrip": 1.432833034877994e-14,
+          "nativeIKMaximum": 0.042690138574407954
+        },
+        {
+          "name": "squidroll-finish",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 159,
+          "maximumHeldGrip": 2.0263946393602667e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "squidroll-interrupt",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 215,
+          "maximumHeldGrip": 1.8610729195778454e-15,
+          "nativeIKMaximum": 0.0055306207341888625
+        },
+        {
+          "name": "hit-spawn-reset",
+          "frames": 300,
+          "renderPairs": 16,
+          "visibleFrames": 300,
+          "heldHandSamples": 600,
+          "maximumHeldGrip": 1.807312143953211e-15,
+          "nativeIKMaximum": 0.0005808087005549911
+        },
+        {
+          "name": "quiet-idle-held-sub",
+          "frames": 180,
+          "renderPairs": 13,
+          "visibleFrames": 180,
+          "heldHandSamples": 269,
+          "maximumHeldGrip": 0.00012419806870635796,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "victory-fade-lobby-0",
+          "frames": 360,
+          "renderPairs": 17,
+          "visibleFrames": 360,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 0.32777411049038707
+        },
+        {
+          "name": "victory-fade-lobby-1",
+          "frames": 360,
+          "renderPairs": 17,
+          "visibleFrames": 360,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 0.08820733736826292
+        },
+        {
+          "name": "victory-fade-lobby-2",
+          "frames": 360,
+          "renderPairs": 17,
+          "visibleFrames": 360,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 0.32777411049038707
+        },
+        {
+          "name": "native-slam-phases",
+          "frames": 180,
+          "renderPairs": 16,
+          "visibleFrames": 180,
+          "heldHandSamples": 222,
+          "maximumHeldGrip": 1.7903959895615594e-15,
+          "nativeIKMaximum": 3.885780586188048e-16
+        },
+        {
+          "name": "native-storm-deploy",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 198,
+          "maximumHeldGrip": 9.683779997520993e-05,
+          "nativeIKMaximum": 0.24746867781360238
+        },
+        {
+          "name": "gaze-face-actions",
+          "frames": 180,
+          "renderPairs": 11,
+          "visibleFrames": 180,
+          "heldHandSamples": 299,
+          "maximumHeldGrip": 0.00012776549936363517,
+          "nativeIKMaximum": 0.023022762174154998
+        },
+        {
+          "name": "lifecycle-interruptions",
+          "frames": 180,
+          "renderPairs": 18,
+          "visibleFrames": 155,
+          "heldHandSamples": 289,
+          "maximumHeldGrip": 1.0163999321966297e-15,
+          "nativeIKMaximum": 0.054668593170556945
+        },
+        {
+          "name": "nullable-preview",
+          "frames": 90,
+          "renderPairs": 9,
+          "visibleFrames": 90,
+          "heldHandSamples": 180,
+          "maximumHeldGrip": 7.4165058627159095e-16,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "cadence-30",
+          "frames": 60,
+          "renderPairs": 3,
+          "visibleFrames": 60,
+          "heldHandSamples": 120,
+          "maximumHeldGrip": 8.326961800248723e-16,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "cadence-60",
+          "frames": 60,
+          "renderPairs": 3,
+          "visibleFrames": 60,
+          "heldHandSamples": 120,
+          "maximumHeldGrip": 8.326961800248723e-16,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "cadence-120",
+          "frames": 60,
+          "renderPairs": 3,
+          "visibleFrames": 60,
+          "heldHandSamples": 120,
+          "maximumHeldGrip": 8.326961800248723e-16,
+          "nativeIKMaximum": 0
+        }
+      ]
+    },
+    "paintMask": {
+      "status": "passed",
+      "engine": "chromium",
+      "sourceSha": "61c05a2bc5f29a4db360d778e8677f30d81e9d01",
+      "cases": 124,
+      "hashQueries": 1512,
+      "cells": 15295,
+      "negativeUnsupported": 4261,
+      "body": {
+        "cases": 99,
+        "cpuCells": 40016,
+        "gpuCells": 40007,
+        "cpuOnly": 0,
+        "gpuOnly": 0,
+        "ties": 9
+      }
+    }
+  }
 }
