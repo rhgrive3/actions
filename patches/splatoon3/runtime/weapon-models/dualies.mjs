@@ -207,7 +207,24 @@ function gloogaWire(pts, r, bend = 0.004) {
   }
   out.push(P[P.length - 1]);
   let len = 0; for (let i = 1; i < out.length; i++) len += out[i].distanceTo(out[i - 1]);
-  return pipe(out, r, Math.max(16, Math.round(len / 0.004)), 6);
+  return pipe(out, r, Math.max(16, Math.round(len / 0.006)), 5);
+}
+
+/** Closed polygon [[z, y, r?], ...] with each corner filleted (radius r or the default rr, `n` arc steps) — crisp,
+ *  machined outlines for dappleRoundSlab (dappleOutline's spline rounds every corner). */
+function gloogaPoly(pts, rr = 0.002, n = 3) {
+  const out = [], L = pts.length;
+  for (let i = 0; i < L; i++) {
+    const p = pts[i], a = pts[(i - 1 + L) % L], b = pts[(i + 1) % L], r = p[2] ?? rr;
+    const ux = a[0] - p[0], uy = a[1] - p[1], vx = b[0] - p[0], vy = b[1] - p[1], lu = Math.hypot(ux, uy), lv = Math.hypot(vx, vy);
+    const cosT = (ux * vx + uy * vy) / (lu * lv), th = Math.acos(Math.max(-1, Math.min(1, cosT)));
+    const t = Math.min(r / Math.tan(th / 2), lu * 0.45, lv * 0.45);
+    if (!(r > 0) || th > 3.1) { out.push([p[0], p[1]]); continue; }
+    const A = [p[0] + ux / lu * t, p[1] + uy / lu * t], B = [p[0] + vx / lv * t, p[1] + vy / lv * t];
+    for (let k = 0; k <= n; k++) { const s = k / n, q = 1 - s;   // quadratic Bezier A → p → B (close to a circular fillet)
+      out.push([q * q * A[0] + 2 * q * s * p[0] + s * s * B[0], q * q * A[1] + 2 * q * s * p[1] + s * s * B[1]]); }
+  }
+  return out;
 }
 
 function glooga(d) {
@@ -224,64 +241,65 @@ function glooga(d) {
   // px → m: z = (X − 170)·S, y = (263 − Y)·S (t=3.3 s frame, mirrored).
   const S = 0.00078, P = (x, y) => [(x - 170) * S, (263 - y) * S], Z = x => (x - 170) * S, Y = y => (263 - y) * S;
   const C = { blue: '#2a3cb4', red: '#a81e18', inner: '#7c1510', silver: '#c4c6c8', knurl: '#a9acb0', steel: '#7d8086', tab: '#3a3b3e',
-    rubber: '#2c2c2e', gasket: '#3a2e2a', hose: '#dcc8b6', wire: '#b9bcc0', print: '#14161e', label: '#ecebe6' };
+    rubber: '#2c2c2e', gasket: '#3a2e2a', hose: '#dcc8b6', wire: '#c9ccd0', print: '#14161e', label: '#ecebe6' };
   const body = new Pieces(), ink = new Pieces(), trig = new Pieces();
   const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
-  const pts = a => a.map(([x, y]) => P(x, y));
+  const pts = a => a.map(([x, y, r]) => [...P(x, y), r]);
   const AY = 0.098;                                                                           // canister / nozzle axis
   // ---- body: slotted upper box, rear block over the grip, slightly wider front lower block
   const bodyW = (z, y) => 0.0325 + 0.0015 * sm((z - Z(244)) / 0.004) * sm((Y(150) - y) / 0.004);
   const slots = [[[171, 103], [195, 152]], [[198, 103], [222, 152]], [[225, 103], [248, 151]],
     [[251, 103], [266, 126]], [[277, 103], [292, 126]], [[303, 103], [318, 126]]].map(([a, b]) => gloogaSlot(P(...a), P(...b), 0.0039));
-  body.add(dappleRoundSlab(dappleOutline(pts([[133, 92], [139, 85], [230, 84], [318, 84], [331, 88], [337, 100], [337, 190], [333, 197],
-    [300, 198], [252, 198], [247, 192], [246, 167], [210, 166], [204, 172], [203, 200], [150, 201], [138, 196], [133, 186], [132, 140]]), 0.004),
-  bodyW, 0.008, slots, 0.0016, 3), C.blue, M.gloss);
+  body.add(dappleRoundSlab(gloogaPoly(pts([[132, 85, 0.0075], [337, 84, 0.011], [337, 198, 0.006], [248, 198, 0.0055], [247, 166, 0.002], [204, 166, 0.002], [204, 200, 0.0055], [132, 200, 0.007]]), 0.0055),
+  bodyW, 0.0055, slots, 0.0016, 3), C.blue, M.gloss);
   ink.add(zcyl(0.0262, Z(100), Z(250), 0, AY, 20));                                             // ink tank seen through the rear slots
   body.add(box(0.054, 0.034, 0.064, 0, 0.114, Z(287), 0.2, 8, 4), C.inner, M.satin);             // interior behind the front slots
   // side prints: grille slits, embossed plate, warning triangle
   for (const sx of [-1, 1]) {
     const fx = sx * (0.034 + 0.0003);
     for (const [z0, z1] of [[258, 287], [292, 324]]) for (const yy of [131, 137, 143, 149])
-      body.add(box(0.0008, 0.0022, (z1 - z0) * S, fx, Y(yy), Z((z0 + z1) / 2), 0.3, 6, 4), C.print, M.print);
+      body.add(box(0.0008, 0.0022, (z1 - z0) * S, fx, Y(yy), Z((z0 + z1) / 2), 0.3, 4, 2), C.print, M.print);
     body.add(box(0.0016, Y(161) - Y(189), Z(291) - Z(232), sx * 0.0342, Y(175), Z(261.5), 0.25, 6, 4), C.blue, M.gloss);
     for (const yy of [168, 176, 183]) body.add(box(0.0006, 0.0018, Z(284) - Z(240), sx * 0.0352, Y(yy), Z(262), 0.3, 6, 4), '#1d2a80', M.print);
     body.add(slab(pts([[297, 189], [322, 189], [309.5, 166]]), 0.0008, sx * 0.0344, 0), C.print, M.print);
     body.add(slab(pts([[304, 185], [315, 185], [309.5, 175]]), 0.0008, sx * 0.0348, 0), C.label, M.print);
   }
   // ---- red frame band under the body (trigger housing, front-leg seat)
-  body.add(dappleRoundSlab(dappleOutline(pts([[204, 160], [249, 160], [250, 192], [334, 193], [335, 202], [329, 208], [210, 208], [204, 203]]), 0.004),
+  body.add(dappleRoundSlab(gloogaPoly(pts([[204, 160], [249, 160], [250, 192], [334, 193], [335, 202], [329, 208], [210, 208], [204, 203]]), 0.004),
     0.029, 0.0035, [], 0.002, 2), C.red, M.gloss);
   // ---- legs and foot
-  body.add(dappleRoundSlab(dappleOutline(pts([[148, 196], [206, 196], [201, 250], [192, 326], [134, 326], [140, 250]]), 0.004), 0.0125, 0.0055, [], 0.002, 2), C.blue, M.gloss);
-  body.add(dappleRoundSlab(dappleOutline(pts([[284, 204], [336, 204], [334, 214], [268, 362], [222, 344], [281, 214]]), 0.004), 0.0125, 0.0055, [], 0.002, 2), C.blue, M.gloss);
-  body.add(dappleRoundSlab(dappleOutline(pts([[136, 318], [244, 318], [273, 350], [265, 378], [162, 379], [137, 372]]), 0.004), 0.0145, 0.004, [], 0.002, 2), C.red, M.gloss);
+  body.add(dappleRoundSlab(gloogaPoly(pts([[148, 196], [206, 196], [201, 250], [192, 326], [134, 326], [140, 250]]), 0.005), 0.0125, 0.0045, [], 0.002, 2), C.blue, M.gloss);
+  body.add(dappleRoundSlab(gloogaPoly(pts([[284, 204], [336, 204], [334, 214], [268, 362], [222, 344], [281, 214]]), 0.005), 0.0125, 0.0045, [], 0.002, 2), C.blue, M.gloss);
+  body.add(dappleRoundSlab(gloogaPoly(pts([[136, 318], [244, 318], [273, 350], [265, 378], [162, 379], [137, 372]]), 0.0045), 0.0145, 0.004, [], 0.002, 2), C.red, M.gloss);
   for (const sx of [-1, 1]) {
     body.add(box(0.0006, Y(342) - Y(362), Z(246) - Z(196), sx * 0.0148, Y(352), Z(221), 0.2, 6, 4), C.label, M.print);
     for (let k = 0; k < 4; k++) body.add(box(0.0006, 0.007, 0.0055, sx * 0.0152, Y(352), Z(203 + k * 11.5), 0.3, 4, 4), C.print, M.print);
   }
   // ---- trigger (part): hooked red blade hanging from the band in front of the grip
-  trig.add(slab(dappleOutline(pts([[215, 205], [246, 205], [241, 248], [237, 276], [224, 287], [196, 291], [200, 278], [212, 262], [214, 240]]), 0.003), 0.008, 0, 0.002), C.red, M.gloss);
+  trig.add(slab(dappleOutline(pts([[220, 205], [246, 205], [242, 248], [238, 276], [226, 288], [198, 292], [202, 280], [216, 268], [220, 240]]), 0.005), 0.008, 0, 0.002), C.red, M.gloss);
   // ---- nozzle: knurled ring, perforated dome, ink centre, wire hanger
-  body.add(zlathe([[0, 0.127], [0.0232, 0.127], [0.0242, 0.1295], [0.0242, 0.1465], [0.0232, 0.1485], [0, 0.1485]], 0, AY, 0, 24), C.knurl, M.metal);
-  for (let k = 0; k < 5; k++) body.add(ring(0.0243, 0.0006, 0, AY, 0.1315 + k * 0.0033, 'z', 3, 24), C.steel, M.metal);
-  body.add(zlathe([[0, 0.148], [0.0218, 0.148], [0.0215, 0.151], [0.0178, 0.1575], [0.0128, 0.1622], [0.0118, 0.1632], [0, 0.1632]], 0, AY, 0, 24), C.silver, M.metal);
+  body.add(zlathe([[0, 0.127], [0.0232, 0.127], [0.0242, 0.1295], [0.0242, 0.1465], [0.0232, 0.1485], [0, 0.1485]], 0, AY, 0, 24), C.knurl, M.satin);
+  for (let k = 0; k < 4; k++) body.add(ring(0.0243, 0.0006, 0, AY, 0.1325 + k * 0.004, 'z', 3, 20), C.steel, M.metal);
+  for (let k = 0; k < 20; k++) body.add(box(0.0022, 0.0014, 0.0168, 0, 0.0242, 0.1378, 0.5, 4, 2).rotateZ(k * Math.PI / 10).translate(0, AY, 0), C.knurl, M.satin);  // knurl ribs
+  body.add(zlathe([[0, 0.148], [0.0218, 0.148], [0.0215, 0.151], [0.0178, 0.1575], [0.0128, 0.1622], [0.0118, 0.1632], [0, 0.1632]], 0, AY, 0, 24), C.silver, M.satin);
   for (let k = 0; k < 8; k++) {
     const a = (k + 0.5) * Math.PI / 4, cr = 0.0158, nz = 0.155;
-    body.add(sphere(0.0019, 0.0019, 0.0009, 0, 0, 0, 8, 4).rotateX(-0.85).rotateZ(a - Math.PI / 2).translate(cr * Math.cos(a), AY + cr * Math.sin(a), nz + 0.0012), C.print, M.satin);
+    body.add(sphere(0.0019, 0.0019, 0.0009, 0, 0, 0, 6, 3).rotateX(-0.85).rotateZ(a - Math.PI / 2).translate(cr * Math.cos(a), AY + cr * Math.sin(a), nz + 0.0012), C.print, M.satin);
   }
   ink.add(zlathe([[0, 0.162], [0.0058, 0.162], [0.0062, 0.1636], [0.0052, 0.1645], [0, 0.1648]], 0, AY, 0, 16));
-  const half = sx => [[sx * 0.0255, Y(205), Z(305)], [sx * 0.0292, Y(208), Z(308)], [sx * 0.0295, Y(247), Z(312)], [sx * 0.0295, Y(247), Z(344)],
-    [sx * 0.0295, Y(100), Z(343)], [sx * 0.030, Y(46), Z(390)], [0, Y(80), Z(398)]];
-  body.add(gloogaWire([...half(-1), ...half(1).reverse().slice(1)], 0.0019, 0.005), C.wire, M.metal);
+  const half = sx => [[sx * 0.026, Y(204), Z(305)], [sx * 0.0315, Y(208), Z(308)], [sx * 0.0315, Y(247), Z(312)], [sx * 0.0315, Y(247), Z(344)],
+    [sx * 0.0315, Y(98), Z(343)], [sx * 0.026, Y(37), Z(392)], [0, Y(70), Z(400)]];
+  body.add(gloogaWire([...half(-1), ...half(1).reverse().slice(1)], 0.0019, 0.005), C.wire, M.satin);
   // ---- canister: glass (ink) behind a stack of disks, rear knurled face with a top tab
   ink.add(zcyl(0.0268, Z(98), Z(134), 0, AY, 20));
-  body.add(zlathe([[0, Z(18)], [0.03, Z(18)], [0.031, Z(17)], [0.0395, Z(17)], [0.0418, Z(19)], [0.042, Z(40)], [0.0405, Z(42)], [0, Z(42)]], 0, AY, 0, 24), C.silver, M.metal);
-  for (let k = 0; k < 4; k++) body.add(ring(0.0421, 0.0007, 0, AY, Z(22 + k * 5), 'z', 3, 24), C.steel, M.metal);   // knurl grooves
+  body.add(zlathe([[0, Z(18)], [0.03, Z(18)], [0.031, Z(17)], [0.0395, Z(17)], [0.0418, Z(19)], [0.042, Z(40)], [0.0405, Z(42)], [0, Z(42)]], 0, AY, 0, 24), C.silver, M.satin);
+  for (let k = 0; k < 3; k++) body.add(ring(0.0421, 0.0007, 0, AY, Z(24 + k * 6), 'z', 3, 22), C.steel, M.metal);   // knurl grooves
+  for (let k = 0; k < 24; k++) body.add(box(0.0024, 0.0014, Z(40) - Z(20), 0, 0.042, Z(30), 0.5, 4, 2).rotateZ(k * Math.PI / 12).translate(0, AY, 0), C.knurl, M.satin);
   body.add(ring(0.035, 0.0012, 0, AY, Z(16.6), 'z', 4, 24), C.knurl, M.metal);                                    // rear face knurl band
   body.add(zlathe([[0, Z(15)], [0.0085, Z(15)], [0.0095, Z(16.5)], [0, Z(16.5)]], 0, AY, 0, 16), C.steel, M.metal);   // centre boss
-  body.add(zlathe([[0.0405, Z(41)], [0.0415, Z(43)], [0.0415, Z(58)], [0.0402, Z(60)], [0.03, Z(60)]], 0, AY, 0, 24), C.silver, M.metal);
+  body.add(zlathe([[0.0405, Z(41)], [0.0415, Z(43)], [0.0415, Z(58)], [0.0402, Z(60)], [0.03, Z(60)]], 0, AY, 0, 24), C.silver, M.satin);
   body.add(zcyl(0.0392, Z(59), Z(64), 0, AY, 24), C.rubber, M.rubber);
-  body.add(zlathe([[0.03, Z(63)], [0.0392, Z(63)], [0.0402, Z(65)], [0.0402, Z(78)], [0.0392, Z(80)], [0.03, Z(80)]], 0, AY, 0, 24), C.silver, M.metal);
+  body.add(zlathe([[0.03, Z(63)], [0.0392, Z(63)], [0.0402, Z(65)], [0.0402, Z(78)], [0.0392, Z(80)], [0.03, Z(80)]], 0, AY, 0, 24), C.silver, M.satin);
   body.add(zlathe([[0.026, Z(79)], [0.0335, Z(79)], [0.0345, Z(83)], [0.0345, Z(97)], [0.0335, Z(100)], [0.026, Z(100)]], 0, AY, 0, 22), C.gasket, M.rubber);
   body.add(zlathe([[0.026, Z(99)], [0.0302, Z(99)], [0.0302, Z(105)], [0.026, Z(105)]], 0, AY, 0, 22), C.silver, M.metal);
   body.add(box(0.013, 0.05, 0.004, 0, AY + 0.024, Z(15), 0.3, 6, 4), C.tab, M.metal);                          // tab on the rear face
@@ -290,13 +308,13 @@ function glooga(d) {
   const RX = 0.02, RY = Y(197);
   for (const [z0, z1] of [[41, 53], [66, 78]]) body.add(box(0.016, AY - 0.03 - Y(214), (z1 - z0) * S, RX, (AY - 0.03 + Y(214)) / 2, Z((z0 + z1) / 2), 0.25, 6, 4), C.silver, M.metal);
   body.add(zcyl(0.0034, Z(28), Z(134), RX, RY, 10), C.steel, M.metal);
-  for (let k = 0; k < 16; k++) body.add(ring(0.0035, 0.0007, RX, RY, Z(84 + k * 3.2), 'z', 3, 10), C.steel, M.metal);
+  for (let k = 0; k < 10; k++) body.add(ring(0.0035, 0.0007, RX, RY, Z(84 + k * 5), 'z', 3, 8), C.steel, M.metal);
   body.add(zlathe([[0, Z(4)], [0.0118, Z(4)], [0.0132, Z(7)], [0.0132, Z(26)], [0.0118, Z(29)], [0, Z(29)]], RX, RY, 0, 16), C.rubber, M.rubber);
   for (let k = 0; k < 8; k++) body.add(box(0.005, 0.004, 0.017, 0, 0.0128, Z(16.5), 0.4, 4, 4).rotateZ(k * Math.PI / 4).translate(RX, RY, 0), C.rubber, M.rubber);
   body.add(zlathe([[0, Z(28)], [0.0068, Z(28)], [0.0068, Z(40)], [0, Z(40)]], RX, RY, 0, 14), C.steel, M.metal);
   // ---- hose (−X): out of the body side low at the back, up and over the canister into the tab
   body.add(pipe([[-0.034, Y(200), Z(170)], [-0.0395, Y(190), Z(164)], [-0.0425, Y(150), Z(157)], [-0.041, Y(100), Z(150)], [-0.034, Y(62), Z(135)],
-    [-0.022, Y(48), Z(105)], [-0.01, Y(55), Z(70)], [-0.003, Y(70), Z(42)], [0, Y(80), Z(32)]], 0.0036, 40, 8), C.hose, M.rubber);
+    [-0.022, Y(48), Z(105)], [-0.01, Y(55), Z(70)], [-0.003, Y(70), Z(42)], [0, Y(80), Z(32)]], 0.0036, 30, 7), C.hose, M.satin);
   return rebuild(d, { body, ink, parts: { trigger: part(trig, [0, Y(207), Z(230)]) }, muzzle: [0, AY, 0.1652] });   // trigger hinge at its top
 }
 
