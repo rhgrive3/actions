@@ -40,7 +40,7 @@ test('#1283 malformed owner Slam does not block subsequent valid Slam, trigger, 
   f.G.fx = { explosion(pos, _color, radius) {
     assert.equal(pos.x, 2); assert.equal(pos.y, .3); assert.equal(pos.z, 3);
     assert.equal(radius, 5.2); seen.slam++;
-  } };
+  }, muzzle() {} };
   f.G.audio = { play(name) { if (name === 'special_slam') seen.audio++; } };
   f.G.paint = { splat() { seen.paint++; return 0; } };
   remote.character._netTrig = name => { seen.triggers.push(name); };
