@@ -109,6 +109,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .origin-main
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -116,9 +121,13 @@ jobs:
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
           npx playwright install --with-deps chromium
       - name: Build unchanged production origin
-        run: node scripts/build-inkwave.mjs inkwave-public .origin-site
+        run: |
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node scripts/build-inkwave.mjs inkwave-public .origin-site
+          node .origin-main/scripts/build-inkwave.mjs .origin-main/inkwave-public .origin-main-site
       - name: Native origin versus single-field mouth candidate, real FX and projectiles
         run: |
+          node scripts/render-nova-origin-review.mjs --site .origin-main-site --out .origin-evidence/main --origin native --shape main-ed3
           for origin in native mouth; do
             node scripts/render-nova-origin-review.mjs --site .origin-site --out ".origin-evidence/$origin" --origin "$origin"
           done
@@ -192,6 +201,65 @@ jobs:
             .refinement-evidence
             .refinement-network
             .refinement-crowd-before
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  refinement-candidates:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - candidate: gal-hidden-grains
+            ids: s3-shooter-heavy
+          - candidate: nova-cheek
+            ids: s3-shooter-quicklong
+          - candidate: nozzlenose-braid
+            ids: s3-shooter-triplequick,s3-shooter-triplemiddle
+          - candidate: squeezer-smooth
+            ids: s3-shooter-flash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build original and isolated unadopted shape candidate
+        env:
+          CANDIDATE: ${{ matrix.candidate }}
+        run: |
+          mkdir -p .candidate-evidence
+          git rev-parse HEAD > .candidate-evidence/exact-head.txt
+          node scripts/build-inkwave.mjs inkwave-public .candidate-before-site
+          cp "reports/five-circled-shooters/candidates/$CANDIDATE.mjs.txt" patches/splatoon3/runtime/weapon-models/shooters-b.mjs
+          sha256sum patches/splatoon3/runtime/weapon-models/shooters-b.mjs > .candidate-evidence/source-sha256.txt
+          node scripts/build-inkwave.mjs inkwave-public .candidate-after-site
+      - name: Source assembly and unchanged LOD attributes and budget guards
+        env:
+          WEAPON_LOD_BASELINE: reports/five-circled-shooters/candidates/lod-before.mjs.txt
+          WEAPON_LOD_REPORT: .candidate-evidence/lod.json
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-circled-shooters.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
+      - name: Same-view native-lighting before and unadopted candidate
+        if: always()
+        env:
+          IDS: ${{ matrix.ids }}
+        run: |
+          for version in before after; do
+            node scripts/render-five-circled-shooters.mjs --site ".candidate-$version-site" --out ".candidate-evidence/$version" --ids "$IDS" --size 640 --environment productionDay
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-unadopted-${{ matrix.candidate }}-${{ github.event.pull_request.head.sha }}
+          path: .candidate-evidence
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14
