@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          ref: 80555b8cf12e3a9529c0f461bd2acc3ee17f1764
           path: .dynamo-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
