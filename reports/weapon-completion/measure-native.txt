@@ -1,0 +1,52 @@
+        const measureNative=async(tier)=>{
+          // Diagnostic only: same 8 Actors, camera, 600px output and native post stack.
+          // Neither gl.finish() nor short submission windows establish completion.
+          const blocks=[],pixel=new Uint8Array(4),gl=fullGL;
+          const readOutput=()=>{
+            if(full.renderer.getRenderTarget()!==null)throw Error('Composer did not end at final output');
+            // Select the actual default output for reading, not an AO/MSAA intermediate.
+            gl.bindFramebuffer(gl.READ_FRAMEBUFFER,null);
+            gl.readPixels(Math.floor(gl.drawingBufferWidth/2),Math.floor(gl.drawingBufferHeight/2),1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
+          };
+          const checkRead=()=>{
+            const error=gl.getError(),defaultRead=gl.getParameter(gl.READ_FRAMEBUFFER_BINDING)===null;
+            if(error!==gl.NO_ERROR||!defaultRead||gl.isContextLost())throw Error('Invalid final-output read '+JSON.stringify({error,defaultRead,lost:gl.isContextLost()}));
+            if(pixel[3]!==255||pixel.slice(0,3).every(v=>v===0))throw Error('Unexpected final-output pixel '+[...pixel]);
+            return{glError:error,defaultReadFramebuffer:defaultRead,pixel:[...pixel]};
+          };
+          const waitFence=async()=>{
+            const sync=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);if(!sync)throw Error('fenceSync returned null');
+            const started=performance.now();let polls=0,status;
+            try{
+              gl.flush();
+              while(true){
+                if(gl.isContextLost())throw Error('Context lost while waiting for fence');
+                status=gl.clientWaitSync(sync,0,0);polls++;
+                if(status===gl.ALREADY_SIGNALED||status===gl.CONDITION_SATISFIED)return{polls,status,waitMs:performance.now()-started};
+                if(status===gl.WAIT_FAILED)throw Error('clientWaitSync WAIT_FAILED');
+                if(status!==gl.TIMEOUT_EXPIRED)throw Error('Unexpected fence status '+status);
+                if(performance.now()-started>60000)throw Error('Completion fence timeout after 60 seconds');
+                await new Promise(resolve=>setTimeout(resolve,0)); // yield, never busy-spin
+              }
+            }finally{gl.deleteSync(sync);}
+          };
+          for(const mode of ['read-output','fence-then-read','read-output-repeat']){
+            const hostBefore=await window.__weaponHostSnapshot(),frames=[];
+            for(let index=0;index<5;index++){
+              const programsBefore=full.renderer.info.programs?.length||0,t=performance.now();
+              full.renderer.info.reset();full.render();const submitted=performance.now();
+              gl.finish();const finishReturned=performance.now();
+              const fence=mode==='fence-then-read'?await waitFence():null,readStarted=performance.now();
+              readOutput();const completed=performance.now();const verification=checkRead();
+              for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Shared glass range leaked');
+              const row={tier,mode,index,phase:index<2?'warmup-or-compile':'boundary-observation',startedAt:performance.timeOrigin+t,
+                submitMs:submitted-t,finishCallMs:finishReturned-submitted,fence,readbackMs:completed-readStarted,throughReadbackMs:completed-t,
+                programsBefore,programsAfter:full.renderer.info.programs?.length||0,drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles,
+                width:gl.drawingBufferWidth,height:gl.drawingBufferHeight,...verification};
+              frames.push(row);await window.__weaponSyncCheckpoint(row);
+            }
+            blocks.push({mode,hostBefore,hostAfter:await window.__weaponHostSnapshot(),frames});
+          }
+          const draws=countFrame();readOutput();const countedRead=checkRead();
+          return{diagnosticOnly:true,scope:'completion mechanism, not performance acceptance',blocks,draws,countedRead,allGlassRangesRestored:true};
+        };

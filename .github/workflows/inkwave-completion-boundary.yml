@@ -1,0 +1,60 @@
+name: INKWAVE final-output completion boundary diagnosis
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/inkwave-completion-boundary.yml
+      - reports/weapon-completion/**
+permissions:
+  contents: read
+concurrency:
+  group: completion-boundary-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  completion:
+    if: github.head_ref == 'diagnose/weapon-output-completion'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 18f062d803271e57c7ef6a1a7c90c876af879bfb
+          path: .candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and Chromium
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build exact main and frozen glass head
+        run: |
+          test "$(git -C .baseline rev-parse HEAD)" = 5ed08c6376696dd67391afed7c36463106959de8
+          test "$(git -C .candidate rev-parse HEAD)" = 18f062d803271e57c7ef6a1a7c90c876af879bfb
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .before-site
+          node .candidate/scripts/build-inkwave.mjs .candidate/inkwave-public .after-site
+          node reports/weapon-completion/instrument-completion.mjs .candidate/scripts/render-inkwave-weapon-shared-gallery.mjs scripts/check-completion-boundary.mjs
+          node --check scripts/check-completion-boundary.mjs
+      - name: Observe output readback and fence completion, never a performance acceptance gate
+        run: |
+          for version in before after; do
+            node scripts/check-completion-boundary.mjs --site ".$version-site" --out ".completion-evidence/$version" --ids s3-spinner-downpour --size 600 --crowd
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-output-completion-${{ github.event.pull_request.head.sha }}
+          path: .completion-evidence
+          if-no-files-found: warn
+          retention-days: 14
