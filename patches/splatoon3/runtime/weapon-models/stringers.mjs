@@ -6,18 +6,32 @@ const YC=.085, GROUND_ROLL=1.25;
 const rb=(w,h,d,x,y,z,e=.3)=>box(w,h,d,x,y,z,e,8,4);
 const badge=(w,h,d,x,y,z)=>new THREE.BoxGeometry(w,h,d).translate(x,y,z);
 
-// Rectangular laminated limb; four flat faces, separately coloured edges, rather than a round hose.
-function ribbon(body, stations, color, edgeColor) {
-  const verts=[],indices=[];
-  for(const[y,z,w,t]of stations)for(const[x,dz]of[[-w/2,-t/2],[w/2,-t/2],[w/2,t/2],[-w/2,t/2]])verts.push(x,YC+y,z+dz);
-  for(let j=0;j<stations.length-1;j++)for(let k=0;k<4;k++){
-    const a=j*4+k,b=j*4+(k+1)%4,c=b+4,d=a+4;indices.push(a,b,c,a,c,d);
+// Tangent-normal sections keep real thickness through the curved tips. Fixed-Z
+// thickness collapsed to 0.0086 at the old REEF tip despite a 0.021 input.
+function sweptRect(body, stations, color, material=M.satin, offsetX=0) {
+  const vertices=[],indices=[];
+  for(let i=0;i<stations.length;i++){
+    const [y,z,w,t]=stations[i],a=stations[Math.max(0,i-1)],b=stations[Math.min(stations.length-1,i+1)];
+    const dy=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dy,dz),ny=-dz/len,nz=dy/len;
+    const ox=typeof offsetX==='function'?offsetX(i):offsetX;
+    for(const[x,n]of[[-.5,-.32],[-.32,-.5],[.32,-.5],[.5,-.32],[.5,.32],[.32,.5],[-.32,.5],[-.5,.32]])
+      vertices.push(ox+x*w,YC+y+ny*n*t,z+nz*n*t);
   }
-  indices.push(0,2,1,0,3,2);const n=verts.length/3-4;indices.push(n,n+1,n+2,n,n+2,n+3);
-  if(stations.at(-1)[0]<stations[0][0])for(let i=0;i<indices.length;i+=3)[indices[i+1],indices[i+2]]=[indices[i+2],indices[i+1]];
-  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setIndex(indices);
-  const flat=geo.toNonIndexed();flat.computeVertexNormals();geo.dispose();body.add(flat,color,M.satin);
-  if(edgeColor)for(const s of[-1,1])body.add(pipe(stations.map(([y,z,w])=>[s*w/2,YC+y,z]),.0016,18,4),edgeColor,M.metal);
+  for(let i=0;i<stations.length-1;i++)for(let k=0;k<8;k++){
+    const a=i*8+k,b=i*8+(k+1)%8,c=b+8,d=a+8;indices.push(a,b,c,a,c,d);
+  }
+  for(let k=1;k<7;k++){indices.push(0,k+1,k);const n=(stations.length-1)*8;indices.push(n,n+k,n+k+1);}
+  // This section basis follows the tangent on both mirrored limbs. Reverse the
+  // inward ring ordering once, for both signs, so the casting has outward faces.
+  for(let i=0;i<indices.length;i+=3)[indices[i+1],indices[i+2]]=[indices[i+2],indices[i+1]];
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.setIndex(indices);g.computeVertexNormals();body.add(g,color,material);
+}
+function cubicLimb(s,controls,n,width,thick){
+  const out=[];for(let k=0;k<=n;k++){const t=k/n,u=1-t,p=[0,0];for(let j=0;j<2;j++)p[j]=u*u*u*controls[0][j]+3*u*u*t*controls[1][j]+3*u*t*t*controls[2][j]+t*t*t*controls[3][j];out.push([s*p[0],p[1],width(t),thick(t)]);}return out;
+}
+function smoothLimb(s,points,n){
+  const c=new THREE.CatmullRomCurve3(points.map(([y,z])=>V(0,y,z)),false,'centripetal'),out=[];
+  for(let k=0;k<=n;k++){const t=k/n,p=c.getPoint(t),f=t*(points.length-1),j=Math.min(points.length-2,Math.floor(f)),a=f-j;out.push([s*p.y,p.z,points[j][2]*(1-a)+points[j+1][2]*a,points[j][3]*(1-a)+points[j+1][3]*a]);}return out;
 }
 function nozzle(body,x,y,z0,z1,r,C){
   body.add(zlathe([[r*.65,z0],[r,z0],[r,z1-.006],[r*.85,z1],[r*.58,z1],[r*.58,z1-.012]],x,y,0,16),C,M.metal);
@@ -37,78 +51,90 @@ function finishBow(d,cfg,body,ink,tr){
   for(let k=0;k<6;k++)rings.add(ring(cfg.coilR,.0016,0,YC,cfg.coil0+(cfg.coil1-cfg.coil0)*k/5,'z',4,18),'#fff',M.led);
   return rebuild(d,{body,ink,parts,gripL:cfg.gripL,muzzle:[0,YC,cfg.muzzleZ],glow:glowGeometry(rings,cfg.coil0-.002,cfg.coil1+.002,'z')});
 }
+const TRI_LIMB_CONTROLS=[[.063,-.041],[.170,-.050],[.318,-.145],[.400,-.240]];
+const REEF_LIMB_SECTIONS=[[.062,-.025,.080,.058],[.135,-.006,.063,.048],[.211,-.036,.050,.039],[.269,-.101,.041,.032],[.300,-.170,.034,.028]];
 function tri(d){
-  const C={wood:'#65412d',steel:'#adb5b7',dark:'#34393c',black:'#1d2124'};
+  const C={wood:'#68452d',steel:'#a5afb2',dark:'#30373b',black:'#1c2124'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.black,guardColor:C.dark});
-  const cfg={span:.4,tipZ:-.24,arrowFront:.02,coilR:.062,coil0:-.070,coil1:.065,muzzleZ:.178,
+  const cfg={span:.4,tipZ:-.24,arrowFront:.02,coilR:.0545,coil0:-.070,coil1:.065,muzzleZ:.178,
     gripL:gripSpec([0,0,.11],[0,0,1],[.75,-.62,-.1])};
   for(const s of[-1,1]){
-    // Tapered wooden laminations with squared metal sockets at both ends.
-    ribbon(body,[[s*.063,-.041,.045,.021],[s*.14,-.077,.041,.018],[s*.23,-.125,.034,.014],[s*.32,-.181,.027,.012],[s*.4,-.240,.022,.011]],C.wood,C.steel);
-    ribbon(body,[[s*.055,-.035,.049,.028],[s*.11,-.061,.046,.025]],C.steel);
-    body.add(rb(.027,.031,.024,0,YC+s*.388,-.230),C.steel,M.metal);
-    body.add(xcyl(.007,-.017,.017,YC+s*.389,-.235,10),C.dark,M.satin);
-    body.add(xcyl(.003,-.018,.018,YC+s*.389,-.235,8),C.steel,M.metal);
-    // Each outer cartridge is a complete separate barrel, clamped to a forked bridge.
-    ink.add(zcyl(.021,-.048,.093,0,YC+s*.104,18));
-    for(const z of[-.040,.068])body.add(zcyl(.023,z,z+.018,0,YC+s*.104,16),C.dark,M.satin);
-    body.add(zlathe([[0,.092],[.021,.092],[.019,.127],[.013,.141],[0,.143]],0,YC+s*.104,0,16),C.black,M.rubber);
-    nozzle(body,0,YC+s*.104,.131,.155,.012,C.steel);
-    body.add(pipe([[-.023,YC,-.005],[-.034,YC+s*.065,.023],[0,YC+s*.104,.036]],.008,12,6),C.steel,M.metal);
-    body.add(pipe([[.023,YC,-.005],[.034,YC+s*.065,.023],[0,YC+s*.104,.036]],.008,12,6),C.steel,M.metal);
+    // 8.3% chord sag (old 3.2%): a continuously swept, tapering laminate.
+    const limb=cubicLimb(s,TRI_LIMB_CONTROLS,18,t=>.050-.035*Math.pow(t,1.05),t=>.025-.0145*t);
+    sweptRect(body,limb,C.wood);
+    const laminate=limb.map(([y,z,w,t],i)=>{const a=limb[Math.max(0,i-1)],b=limb[Math.min(limb.length-1,i+1)],dy=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dy,dz);return[y-dz/l*t*.47,z+dy/l*t*.47,w*.88,.0018];});
+    sweptRect(body,laminate,'#b8b5a0',M.satin);
+    // The socket follows the limb rather than being an isolated straight cuff.
+    sweptRect(body,[[s*.051,-.034,.067,.040],[s*.075,-.041,.060,.034],[s*.108,-.048,.049,.029]],C.steel,M.metal);
+    sweptRect(body,limb.slice(-3).map(([y,z,w,t])=>[y,z,w+.009,t+.006]),C.steel,M.metal);
+    body.add(xcyl(.0055,-.015,.015,YC+s*.391,-.228,10),C.dark,M.satin);
+    // Outer cartridges splay away from the central barrel, as the side turntable shows.
+    const shell=new Pieces(),fill=new Pieces();
+    fill.add(zcyl(.020,-.054,.084,0,0,16));
+    for(const z of[-.050,.060])shell.add(zcyl(.022,z,z+.019,0,0,14),C.dark,M.satin);
+    shell.add(zlathe([[0,.081],[.020,.081],[.018,.119],[.013,.136],[0,.138]],0,0,0,16),C.black,M.rubber);
+    nozzle(shell,0,0,.128,.150,.0115,C.steel);
+    const tilt=g=>g.translate(0,0,-.020).rotateX(-s*.22).translate(0,YC+s*.105,.020);
+    shell.transform(tilt);fill.transform(tilt);body.merge(shell);ink.merge(fill);
+    body.add(slab([[.003,YC+s*.036],[.049,YC+s*.042],[.067,YC+s*.114],[.039,YC+s*.126],[-.011,YC+s*.095],[-.023,YC+s*.057]],.049,0,.004),C.dark,M.satin);
+    for(const x of[-.026,.026])body.add(pipe([[x,YC+s*.042,-.014],[x,YC+s*.073,.005],[x,YC+s*.099,.031]],.0045,8,5),C.steel,M.metal);
   }
-  // Central reel has exposed ink surface and two thick collars; not ink buried in an opaque can.
-  ink.add(zcyl(.059,-.100,.102,0,YC,24));
-  for(const z of[-.100,-.022,.079])body.add(zlathe([[0,z],[.059,z],[.063,z+.005],[.063,z+.023],[.055,z+.029],[0,z+.029]],0,YC,0,24),C.dark,M.satin);
-  body.add(zlathe([[0,.107],[.049,.107],[.052,.135],[.048,.163],[.017,.178],[0,.178]],0,YC,0,8),C.steel,M.metal);
+  // Keep the long cartridge, with a slimmer diameter relative to the long limbs.
+  ink.add(zcyl(.0505,-.100,.102,0,YC,24));
+  for(const z of[-.100,-.022,.079])body.add(zlathe([[0,z],[.051,z],[.055,z+.005],[.055,z+.023],[.048,z+.029],[0,z+.029]],0,YC,0,24),C.dark,M.satin);
+  body.add(zlathe([[0,.107],[.044,.107],[.047,.135],[.043,.163],[.017,.178],[0,.178]],0,YC,0,12),C.steel,M.metal);
   nozzle(body,0,YC,.158,.179,.014,C.dark);
   for(const sx of[-1,1]){
-    body.add(pipe([[sx*.027,YC-.028,-.100],[sx*.017,YC-.018,-.19],[sx*.010,YC,-.24]],.005,15,6),C.steel,M.metal);
-    body.add(pipe([[sx*.028,YC+.028,-.100],[sx*.017,YC+.018,-.19],[sx*.010,YC,-.24]],.005,15,6),C.dark,M.satin);
-    body.add(badge(.002,.026,.039,sx*.060,YC,.035), '#606b6e',M.print);
+    body.add(pipe([[sx*.025,YC-.040,-.100],[sx*.017,YC-.025,-.19],[sx*.010,YC,-.24]],.0055,14,6),C.steel,M.metal);
+    body.add(pipe([[sx*.025,YC+.040,-.100],[sx*.017,YC+.025,-.19],[sx*.010,YC,-.24]],.0055,14,6),C.dark,M.satin);
+    body.add(badge(.002,.024,.039,sx*.052,YC,.035),'#5d686a',M.print);
   }
-  // A narrow mechanical support grip encloses the retained IK anchor.
   body.add(zcyl(.014,.079,.139,0,0,12),C.black,M.rubber);
   body.add(pipe([[0,YC-.04,.047],[0,.016,.094],[0,0,.12]],.005,10,6),C.steel,M.metal);
   return finishBow(d,cfg,body,ink,tr);
 }
 function reef(d){
-  const C={white:'#d8d9ce',edge:'#929b98',steel:'#aab4b4',black:'#24292d',dark:'#42494a'};
-  const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.black,guardColor:C.black});
-  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.056,coil0:-.01,coil1:.09,muzzleZ:.15,
+  const C={white:'#d5d5c8',edge:'#8b9492',steel:'#aab4b4',black:'#242a2c',dark:'#42494a'};
+  const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.white,guardColor:C.black});
+  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0795,coil0:-.025,coil1:.064,muzzleZ:.15,
     gripL:gripSpec([0,0,.095],[0,0,1],[.75,-.62,-.1])};
   for(const s of[-1,1]){
-    const ss=[[s*.062,-.025,.055,.039],[s*.135,-.006,.045,.026],[s*.211,-.036,.040,.023],[s*.269,-.101,.033,.022],[s*.300,-.170,.031,.021]];
-    ribbon(body,ss,C.white,C.edge);
-    // Long dark recessed channel on the broad curved limbs.
-    ribbon(body,ss.slice(1).map(([y,z,w,t])=>[y,z-t*.53,w*.48,.0015]),'#8a9391');
-    for(const x of[-.022,.022]){
-      body.add(pipe([[x,YC+s*.286,-.158],[x,YC+s*.12,-.170],[-x,YC,-.167]],.0012,10,4),'#a9b2a4',M.metal);
-    }
-    body.add(xcyl(.027,-.017,.017,YC+s*.3,-.17,18),C.white,M.satin);
+    // The existing arc was close; its fixed-Z section was not. Preserve the sweep
+    // with a flared cast root and real normal thickness all the way into the boss.
+    const limb=smoothLimb(s,REEF_LIMB_SECTIONS,24);
+    sweptRect(body,limb,C.white);
+    // A narrow recessed-looking channel sits within the casting, not in place of its mass.
+    const groove=limb.slice(4,-2),slot=groove.map(([y,z,w,t])=>[y,z,.0013,t*.31]);
+    for(const sx of[-1,1])sweptRect(body,slot,'#818b89',M.satin,i=>sx*(groove[i][2]*.499));
+    for(const x of[-.023,.023])body.add(pipe([[x,YC+s*.290,-.162],[x,YC+s*.12,-.170],[-x,YC,-.167]],.0012,10,4),'#a9b2a4',M.metal);
+    body.add(xcyl(.033,-.018,.018,YC+s*.3,-.17,20),C.white,M.satin);
     for(const sx of[-1,1]){
-      body.add(ring(.020,.002,sx*.018,YC+s*.3,-.17,'x',4,18),C.edge,M.metal);
-      body.add(xcyl(.008,sx>0?.018:-.021,sx>0?.021:-.018,YC+s*.3,-.17,10),C.steel,M.metal);
+      body.add(ring(.026,.003,sx*.019,YC+s*.3,-.17,'x',5,20),C.edge,M.metal);
+      body.add(xcyl(.009,sx>0?.019:-.023,sx>0?.023:-.019,YC+s*.3,-.17,12),C.steel,M.metal);
+      body.add(xcyl(.004,sx>0?.022:-.024,sx>0?.024:-.022,YC+s*.3,-.17,8),C.dark,M.satin);
+      body.add(xcyl(.0055,sx>0?.036:-.041,sx>0?.041:-.036,YC+s*.086,-.022,10),C.steel,M.metal);
     }
-    body.add(zcyl(.009,-.019,.064,0,YC+s*.155,12),C.white,M.satin);
-    body.add(ring(.009,.0015,0,YC+s*.155,.055,'z',4,14),C.edge,M.metal);
-    body.add(xcyl(.005,-.028,.028,YC+s*.093,-.015,8),C.steel,M.metal);
+    body.add(zcyl(.010,-.019,.069,0,YC+s*.155,12),C.white,M.satin);
+    body.add(ring(.010,.0018,0,YC+s*.155,.060,'z',4,14),C.edge,M.metal);
   }
-  // Cast black cartridge with a beveled shoulder, rear circular vent and front threaded coupler.
-  body.add(zlathe([[0,-.090],[.040,-.090],[.050,-.073],[.058,-.020],[.057,.066],[.046,.090],[0,.090]],0,YC,0,28),C.black,M.satin);
-  body.add(zcyl(.040,-.092,-.088,0,YC,24),C.dark,M.satin);
-  for(let k=-3;k<=3;k++)body.add(rb(.059-Math.abs(k)*.007,.002,.001,0,YC+k*.009,-.093),C.edge,M.satin);
-  body.add(zlathe([[.012,.089],[.045,.089],[.045,.117],[.037,.126],[.035,.145],[.012,.15]],0,YC,0,24),C.steel,M.metal);
-  for(let k=0;k<5;k++)body.add(ring(.044-k*.001,.0016,0,YC,.094+k*.008,'z',4,24),C.white,M.metal);
-  for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(rb(.005,.005,.018,Math.cos(a)*.035,YC+Math.sin(a)*.035,.133),C.edge,M.metal);}
-  nozzle(body,0,YC,.137,.151,.016,C.dark);ink.add(ring(.030,.0028,0,YC,.151,'z',4,18));
+  // A short, full cast housing: span/diameter ~3.8 rather than the old 5.17.
+  body.add(zlathe([[0,-.116],[.047,-.116],[.064,-.108],[.077,-.073],[.079,.018],[.071,.072],[.057,.095],[0,.095]],0,YC,0,28),C.black,M.satin);
+  body.add(zcyl(.050,-.118,-.113,0,YC,24),C.dark,M.satin);
+  for(let k=-4;k<=4;k++)body.add(badge(.078-Math.abs(k)*.009,.002,.0015,0,YC+k*.009,-.119),C.edge,M.satin);
+  // The turntable's pink threaded coupler is team ink, while cast shoulders stay black/ivory.
+  ink.add(zlathe([[.012,.093],[.052,.093],[.052,.117],[.044,.125],[.036,.145],[.012,.150]],0,YC,0,24));
+  for(let k=0;k<5;k++)body.add(ring(.051-k*.002,.0017,0,YC,.097+k*.009,'z',4,24),C.steel,M.metal);
+  for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(rb(.006,.006,.018,Math.cos(a)*.036,YC+Math.sin(a)*.036,.134),C.edge,M.metal);}
+  nozzle(body,0,YC,.137,.151,.016,C.dark);
   for(const s of[-1,1]){
-    body.add(badge(.0018,.023,.045,s*.057,YC,.007),C.edge,M.print);
-    body.add(badge(.002,.015,.038,s*.0585,YC,.007),C.black,M.print);
-    for(let k=0;k<3;k++)body.add(badge(.002,.002,.014,s*.060,YC-.005+k*.005,.018),C.white,M.print);
-    ink.add(rb(.002,.006,.025,s*.055,YC+.027,.020));
+    body.add(badge(.0018,.032,.049,s*.078,YC,-.007),C.edge,M.print);
+    body.add(badge(.002,.025,.042,s*.0792,YC,-.007),C.black,M.print);
+    for(let k=0;k<3;k++)body.add(badge(.002,.002,.018,s*.0805,YC-.007+k*.006,.004),C.white,M.print);
+    ink.add(rb(.002,.008,.030,s*.069,YC+.030,.040));
   }
-  body.add(zcyl(.014,.068,.125,0,0,12),C.black,M.rubber);
+  // Rounded black saddle carries into the pale lower grip without moving either IK anchor.
+  body.add(slab([[-.035,.019],[.032,.027],[.065,.008],[.046,-.016],[.023,-.048],[.001,-.050],[-.014,-.017]],.038,0,.007),C.black,M.rubber);
+  body.add(zcyl(.014,.068,.125,0,0,12),C.white,M.rubber);
   return finishBow(d,cfg,body,ink,tr);
 }
 function wellstring(d){

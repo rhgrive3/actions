@@ -1,0 +1,80 @@
+name: INKWAVE two-bow shape refinement
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/stringers.mjs
+      - patches/splatoon3/tests/weapon-models-bow-shape-pass2.test.mjs
+      - .github/workflows/inkwave-two-bow-refinement.yml
+permissions:
+  contents: read
+concurrency:
+  group: two-bow-shape-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    if: github.head_ref == 'feat/inkwave-tri-lact-shape-pass2'
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [visual, crowd]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: bac165e44ff97657639e57c85bcecf20590e13df
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build pinned previous shapes and the two-only new candidate
+        run: |
+          git rev-parse HEAD
+          git -C .model-baseline rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Assert winding, real normal thickness, curvature and untouched green bow/motion
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-bow-shape-pass2.test.mjs
+      - name: Check emitted real Actor and model contracts
+        env:
+          INKWAVE_BUILT_SITE: .model-after-site
+          WEAPON_IDS: s3-stringer-normal,s3-stringer-short
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-circled-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Same-camera full multi-angle and Actor-held comparison
+        if: matrix.mode == 'visual'
+        run: |
+          node scripts/render-inkwave-circled-weapon-gallery.mjs --site .model-before-site --out .two-bow/before --ids s3-stringer-normal,s3-stringer-short --size 640
+          node scripts/render-inkwave-circled-weapon-gallery.mjs --site .model-after-site --out .two-bow/after --ids s3-stringer-normal,s3-stringer-short --size 640
+          python3 scripts/compare-inkwave-circled-weapon-gallery.py .two-bow reports/inkwave-weapon-model-workspace/refs s3-stringer-normal s3-stringer-short
+      - name: Eight mixed Actors near/far controlled ABBA
+        if: matrix.mode == 'crowd'
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node scripts/render-inkwave-circled-weapon-gallery.mjs --site ".model-${version}-site" --out ".two-bow/${pair}" --ids s3-saber-normal --size 600 --crowd
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const all={};for(const name of ['before-A','after-B','after-B2','before-A2']){const data=JSON.parse(fs.readFileSync('.two-bow/'+name+'/gallery.json'));if(data.errors.length)throw Error(data.errors.join('\n'));all[name]=data.rows[0].crowd;}
+          for(const tier of ['game','far'])for(const name of ['after-B','after-B2'])if(all[name][tier].drawCalls!==all['before-A'][tier].drawCalls)throw Error('Draw regression '+tier);
+          fs.writeFileSync('.two-bow/crowd-comparison.json',JSON.stringify(all,null,2));console.log('TWO_BOW_CROWD_ABBA '+JSON.stringify(all));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: two-bow-shape-${{ matrix.mode }}-${{ github.event.pull_request.head.sha }}
+          path: .two-bow
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
