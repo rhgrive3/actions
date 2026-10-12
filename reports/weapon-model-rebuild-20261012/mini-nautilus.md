@@ -31,3 +31,11 @@ Mini is reconstructed around an open purple saddle, black motor, raised carry ha
 - Visual acceptance is pending inspection of those exact-head CI images. No retail in-game animation measurement or hardware/mobile GPU benchmark has been performed.
 
 The dedicated workflow uses the same immutable baseline and fixed cameras for before/after. It includes five model angles, actual Actor idle/walk/charge/fire/recovery angles and eight mixed target Actors at forced game/far LOD. Timing is same-runner software rendering with a gl.finish boundary, not GPU-only time or a full match benchmark. No merge or deployment is requested.
+
+## Initial-image corrections
+
+The first exact-head CI gallery was inspected at 640px. Mini's open saddle, pump and tank straps are visible; Nautilus's shell depth and stepped back hub are established, but the first metallic material made the shroud read as a black box in the game shader. The shroud is now a rounded twelve-sided cast sleeve with silver faces; the dark shell uses the established satin surface so its curvature remains legible. This is restricted to Nautilus, without shared material changes. Mini's dark nozzle floors now sit in front of the plate, recessed behind each blue lip; a triangle-ray test prevents yellow plate caps.
+
+The inherited gallery used charge-frame images under a firing label. The dedicated harness now records charge at frame110, verified real projectile emission while streaming at215, rear streaming at260, and settled recovery at430. It fails if these actual states are absent. Eight-Actor timing starts after full recovery for every weapon.
+
+Initial full source aggregate completed with 4865 passes, 4 failures and 19 skips. All four failures came from deliberately sparse-checkout omissions (three server-import tests and a report-hash test). Restoring those existing baseline inputs yields 29/29 server tests and 1/1 report test passing. This is not reported as a clean single aggregate run; remote full CI remains the final whole-checkout gate.

@@ -99,7 +99,7 @@ function mini(d) {
   for(let k=0;k<6;k++) {
     const a=Math.PI/2+k*Math.PI/3,x=Math.cos(a)*.033,y=AX+Math.sin(a)*.033;
     B.add(zlathe([[.006,.32],[.01,.32],[.011,.326],[.01,.332],[.006,.332],[.006,.32]],x,y,0,12),C.blue,M.gloss);
-    B.add(zcyl(.0058,.321,.322,x,y,10),C.black,M.rubber);
+    B.add(zcyl(.0058,.327,.328,x,y,10),C.black,M.rubber);
   }
   B.add(zlathe([[0,.316],[.014,.316],[.014,.326],[.01,.332],[0,.332]],0,AX,0,14),C.black,M.satin);
   return finish(d,body,B,tr,AX,.334,C.black,ink);
@@ -166,8 +166,8 @@ function nautilus(d) {
       p.setY(i,sy+y*(1-.15*cut));p.setZ(i,sz+z*(1-.15*cut));
     }p.needsUpdate=true;g.computeVertexNormals();return g;
   };
-  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.105,.009],[.083,-.011],[.054,-.019],[0,-.019]],0,sy,sz,36)),C.dark,M.metal);
-  body.add(shellShape(xlathe([[.123,.014],[.133,.016],[.133,.022],[.124,.026]],0,sy,sz,36)),C.gold,M.metal);
+  body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.105,.009],[.083,-.011],[.054,-.019],[0,-.019]],0,sy,sz,36)),C.dark,M.satin);
+  body.add(shellShape(xlathe([[.123,.014],[.133,.016],[.133,.022],[.124,.026]],0,sy,sz,36)),C.gold,M.satin);
   // Raised concentric back-cap and short projecting coupling are visible on the opposite side.
   body.add(xlathe([[0,-.053],[.038,-.053],[.055,-.048],[.06,-.042],[.06,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
   body.add(ring(.059,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
@@ -183,15 +183,15 @@ function nautilus(d) {
   ink.add(sphere(.018,.014,.025,-.02,.122,-.028,14,8));
   body.add(cyl(.013,[-.02,.108,-.022],[-.02,.127,-.032],12),C.silver,M.metal);
   // The shroud's sides are full cast sections with a broad faceted face and a dark top bridge.
-  body.add(box(.082,.086,.146,0,AX,.103,.31,12,8),C.silver,M.metal);
+  body.add(zlathe([[0,.026],[.032,.026],[.045,.047],[.047,.151],[.042,.171],[0,.171]],0,AX,0,12),C.silver,M.satin);
   body.add(box(.061,.009,.123,0,AX+.044,.102,.25,8,4),C.dark,M.satin);
-  for(const x of[-.043,.043])body.add(slab([[.031,.033],[.047,.112],[.148,.113],[.173,.082],[.165,.027],[.051,.025]],.004,x,.0015),C.dark,M.metal);
-  for(const z of[.026,.171])body.add(zlathe([[.038,z-.004],[.046,z-.004],[.048,z],[.044,z+.006],[.038,z+.006]],0,AX,0,12).scale(1,1.06,1),C.gold,M.metal);
+  for(const x of[-.042,.042])body.add(slab([[.048,.055],[.06,.089],[.147,.091],[.162,.078],[.15,.049],[.064,.05]],.003,x,.001),C.silver,M.satin);
+  for(const z of[.026,.171])body.add(zlathe([[.038,z-.004],[.046,z-.004],[.048,z],[.044,z+.006],[.038,z+.006]],0,AX,0,12).scale(1,1.06,1),C.gold,M.satin);
   body.add(pipe([[0,.11,.025],[0,.135,.032],[0,.139,.057],[0,.119,.069]],.004,12,6),C.silver,M.metal);
   // Exposed bearing gap precedes the hemispherical three-nozzle rotor.
   body.add(zcyl(.026,.178,.212,0,AX,20),C.black,M.satin);
   ink.add(ring(.029,.0025,0,AX,.187,'z',4,20));
-  B.add(zlathe([[.022,.198],[.042,.198],[.047,.211],[.046,.229],[.04,.246],[.032,.262],[.019,.271],[0,.273]],0,AX,0,30),C.dark,M.metal);
+  B.add(zlathe([[.022,.198],[.042,.198],[.047,.211],[.046,.229],[.04,.246],[.032,.262],[.019,.271],[0,.273]],0,AX,0,30),C.dark,M.satin);
   B.add(ring(.044,.004,0,AX,.212,'z',5,26),C.silver,M.metal);
   for(let k=0;k<3;k++){
     const a=Math.PI/2+k*Math.PI*2/3,x=Math.cos(a)*.026,y=AX+Math.sin(a)*.026;

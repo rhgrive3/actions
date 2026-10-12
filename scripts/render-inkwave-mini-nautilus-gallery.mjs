@@ -112,7 +112,8 @@ try {
       };
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0;
       const C = api.CHARACTER_CHANNELS;
-      for (let frame = 0; frame < 240; frame++) {
+      const shotStart=G.projectiles.list.length,heldStates={};
+      for (let frame = 0; frame < 440; frame++) {
         const fire = frame >= 70 && frame < 200;
         a.ink = 100; a.intent.fire = fire; a.aimPitch = 0;
         if (frame >= 30 && frame < 60) { a.vel.set(0, 0, 2.4); a.pos.z += 2.4 / 60; } else a.vel.set(0, 0, 0);
@@ -125,9 +126,10 @@ try {
         }
         if (frame === 25) { shots.idle = look(frame, 'front'); shots.idleSide = look(frame, 'right'); }
         if (frame === 55) shots.walk = look(frame, 'front');
-        if (frame === 110) { shots.fire = look(frame, 'front'); shots.fireSide = look(frame, 'right'); shots.fireLeft = look(frame, 'left'); }
-        if (frame === 160) shots.fireLate = look(frame, 'back');
-        if (frame === 215) shots.after = look(frame, 'front');
+        if (frame === 110) { shots.charge=look(frame,'front');shots.chargeSide=look(frame,'right');heldStates.charge={charging:!!a.weaponRunner.charging,streaming:!!a.weaponRunner.streaming,shots:G.projectiles.list.length-shotStart}; }
+        if (frame === 215) { shots.fire=look(frame,'front');shots.fireSide=look(frame,'right');shots.fireLeft=look(frame,'left');heldStates.fire={charging:!!a.weaponRunner.charging,streaming:!!a.weaponRunner.streaming,shots:G.projectiles.list.length-shotStart}; }
+        if (frame === 260) shots.fireLate=look(frame,'back');
+        if (frame === 430) { shots.after=look(frame,'front');heldStates.recovery={charging:!!a.weaponRunner.charging,streaming:!!a.weaponRunner.streaming,shots:G.projectiles.list.length-shotStart}; }
       }
       // Fixed-pose render submission including a GPU completion boundary. Same-runner A/B only.
       const benchCam=new THREE.PerspectiveCamera(32,1,.05,30);benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.15)));
@@ -154,6 +156,8 @@ try {
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
         G.actors=[a];
       }
+      if(!heldStates.charge.charging||heldStates.charge.shots!==0||!heldStates.fire.streaming||heldStates.fire.shots<=0||heldStates.recovery.charging||heldStates.recovery.streaming)throw Error(id+' incomplete charge/fire/recovery evidence '+JSON.stringify(heldStates));
+      res.heldStates=heldStates;
       a.weaponRunner.reset(); scene.remove(ch.root); ch.dispose();
       Object.assign(res.images, shots); res.maxGrip = +maxGrip.toFixed(4); res.nonFinite = nonFinite; res.firingFrames = fired;
       res.weaponKind = ch.weaponKind; res.weaponModel = ch.weaponModel;

@@ -19,8 +19,15 @@ test('rebuilt Mini and Nautilus retain firing, grip and spin sockets without ext
 test('actual Actor keeps two-hand attachment and barrel motion finite at 30, 60 and 120 Hz',async()=>{
  const f=await production(),{G,THREE}=f;G.scene=new THREE.Scene();G.physics=new f.Physics(G.level);G.level.queryBlocks=(_a,_b,_c,_d,o)=>{o.length=0;return o;};G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
  for(const id of TARGETS)for(const hz of[30,60,120]){
-  const a=new f.Actor({team:0,weapon:id,CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;ch.actor=a;ch.onEvent=null;a.grounded=a.ground.hit=true;G.actors=[a];G.scene.add(ch.root);let attacked=0,maxGrip=0;
+  const a=new f.Actor({team:0,weapon:id,CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;ch.actor=a;ch.onEvent=null;a.grounded=a.ground.hit=true;G.actors=[a];G.scene.add(ch.root);let attacked=0,maxGrip=0;const shotStart=G.projectiles.list.length;
   for(let n=0;n<4*hz;n++){const fire=n>=hz&&n<3*hz;a.intent.fire=fire;a.ink=100;G.time+=1/hz;a.weaponRunner.update(1/hz,{fire,firePressed:n===hz});a._finishFrame(1/hz);ch.root.updateMatrixWorld(true);assert.ok([...ch.P].every(Number.isFinite));assert.ok(ch.getMuzzle(new THREE.Vector3()).toArray().every(Number.isFinite));if(a.weaponRunner.charging||a.weaponRunner.streaming)attacked++;if(n>hz/2&&ch.P[f.CHARACTER_CHANNELS.IKL]>.99&&ch.P[f.CHARACTER_CHANNELS.LTW]<.001)maxGrip=Math.max(maxGrip,ch.weapon.off.localToWorld(ch.weapon.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3())));}
-  assert.ok(attacked>0);assert.ok(maxGrip<.008,id+' '+hz+'Hz '+maxGrip);assert.ok(ch.weapon.parts.barrels.rotation.toArray().slice(0,3).every(Number.isFinite));a.weaponRunner.reset();G.scene.remove(ch.root);ch.dispose();
+  assert.ok(attacked>0);assert.ok(G.projectiles.list.length>shotStart,id+' actually emitted projectiles at '+hz+'Hz');assert.ok(maxGrip<.008,id+' '+hz+'Hz '+maxGrip);assert.ok(ch.weapon.parts.barrels.rotation.toArray().slice(0,3).every(Number.isFinite));a.weaponRunner.reset();G.scene.remove(ch.root);ch.dispose();
+ }
+});
+// Scalar ray/triangle sampling also works against the tree-shaken emitted runtime (no Raycaster dependency).
+function frontHit(g,x,y){const p=g.attributes.position,c=g.attributes.color,idx=g.index.array;let hit=null;for(let j=0;j<idx.length;j+=3){const a=idx[j],b=idx[j+1],d=idx[j+2],ax=p.getX(a),ay=p.getY(a),ux=p.getX(b)-ax,uy=p.getY(b)-ay,vx=p.getX(d)-ax,vy=p.getY(d)-ay,det=ux*vy-uy*vx;if(Math.abs(det)<1e-12)continue;const u=((x-ax)*vy-(y-ay)*vx)/det,v=(ux*(y-ay)-uy*(x-ax))/det;if(u<0||v<0||u+v>1)continue;const z=p.getZ(a)+u*(p.getZ(b)-p.getZ(a))+v*(p.getZ(d)-p.getZ(a));if(!hit||z>hit.z)hit={z,color:[c.getX(a),c.getY(a),c.getZ(a)]};}return hit;}
+test('six Mini and three Nautilus nozzles have visible recessed dark throats, not plate-colored caps',async()=>{
+ const f=await production();for(const[id,n,r,end]of[['s3-spinner-quick',6,.033,.332],['s3-spinner-serein',3,.026,.296]]){
+  const d=f.getWeaponDef(id);for(let k=0;k<n;k++){const a=Math.PI/2+k*Math.PI*2/n,hit=frontHit(d.body,Math.cos(a)*r,.07+Math.sin(a)*r);assert.ok(hit,id+' nozzle '+k);assert.ok(hit.z<end-.003&&hit.z>end-.012,id+' recessed throat '+hit.z);assert.ok(Math.max(...hit.color)<.025,id+' no front plate closing the throat');}
  }
 });
