@@ -43,6 +43,7 @@ const auditedBuildExports = new Map([
   ['patches/local-quality/issue-480-camera-shake-fidelity.mjs', ['REQUIRED_WIRING', 'ISSUE_480_CAMERA_RIG', 'ISSUE_480_SCREENFX', 'ISSUE_480_MENUS']],
   ['patches/local-quality/medal-adapter.mjs', ['replaceOnce', 'S3_AWARDS', 'S3_PRIORITY_RANKS', 'S3_AWARD_ORDER']],
   ['patches/local-quality/minimap-resource-adapter.mjs', ['replaceOnceMinimap']],
+  ['patches/local-quality/showcase-alpha-adapter.mjs', ['selectShowcaseAlphaTarget']],
   ['patches/local-quality/team-special-signal-adapter.mjs', []],
   ['patches/local-quality/texlib-adapter.mjs', ['replaceOnceTexlib']],
   ['patches/reliability/map-look.mjs', []],
@@ -182,7 +183,8 @@ test('emitted identity binds every input to one canonical tracked path including
   const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3',
     'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability',
     'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication',
-    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
+    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache',
+    'native-stages': 'patches/native-stages', 'build-script': 'scripts' };
   const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8' })
     .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const mapped = [];
