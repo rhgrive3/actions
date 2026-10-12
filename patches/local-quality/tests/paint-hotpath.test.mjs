@@ -226,6 +226,8 @@ test('0.68 inner-disc gate has a strict mathematical margin beneath historical 0
     assert.ok(0.68 / v < 0.97, 'inner circle always kept by native scorer');
   }
   assert.match(FIXED, /if \(d >= r \* 0\.68 && d \/ \(r \* blobWobble/);
+  // In production the source WidthHalf cap is applied before the unchanged
+  // mathematically safe inner-disc shortcut. Test the whole composed path.
   assert.match(adaptBuildSource('src/world/paint.js', ORIGINAL),
-    /if \(d >= r \* 0\.68 && d \/ \(r \* blobWobble\(Math\.atan2\(py, px\), seed\)\) > 1\)/);
+    /if \(d >= r \* 0\.68 && d \/ \(r \* Math\.min\(1, blobWobble\(Math\.atan2\(py, px\), seed\)\)\) > 1\)/);
 });
