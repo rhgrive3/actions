@@ -78,7 +78,8 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const spread = 6.2831 + (2.5 - 6.2831) * clamp(sa * 1.2, 0, 1);
   const big = kind > 1.5 && kind < 3.5;
   const bodyGrow = 0.4 + 0.6 * (1 - Math.pow(1 - clamp(tn, 0, 1), 4));
-  const bodyEdge = a => r * bodyGrow * wobble(a, seed);
+  // Mirror the composed GPU/CPU WidthHalf bound, including the ancillary ray roots.
+  const bodyEdge = a => r * bodyGrow * Math.min(1, wobble(a, seed));
 
   const tsp = 1 - Math.pow(1 - clamp(tn * 1.4, 0, 1), 3);
   for (let k = 0; k < rayCount; k++) {
