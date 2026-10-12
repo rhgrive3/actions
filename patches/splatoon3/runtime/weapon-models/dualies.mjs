@@ -318,23 +318,6 @@ function glooga(d) {
   return rebuild(d, { body, ink, parts: { trigger: part(trig, [0, Y(207), Z(230)]) }, muzzle: [0, AY, 0.1652] });   // trigger hinge at its top
 }
 
-function squelchers(d) {
-  // Wmn_Maneuver_Dual_L: a red power-drill body (wedge top sloping to the front), a raked red grip with a
-  // black battery pack under it, a black ribbed hose nozzle reaching forward with an ink tip.
-  const C = { red: '#c0281e', black: '#1b1c20', grey: '#6c7077' };
-  const body = new Pieces(), ink = new Pieces();
-  const trig = pistolGrip(body, { color: C.red, triggerColor: C.black, guardColor: C.red, base: false });
-  body.add(shell([[-0.07, 0.04], [-0.07, 0.11], [-0.04, 0.12], [0.06, 0.095], [0.1, 0.07], [0.1, 0.045], [0.0, 0.035]], 0.042, 0.007, 24), C.red, M.satin);
-  body.add(box(0.044, 0.012, 0.12, 0, 0.037, 0.01, 0.4), C.black, M.satin);
-  body.add(box(0.05, 0.034, 0.075, 0, -0.08, -0.025, 0.3), C.black, M.satin);                                   // battery
-  body.add(box(0.052, 0.008, 0.078, 0, -0.064, -0.025, 0.3), C.red, M.satin);
-  const hose = [[0, 0.07, 0.095], [0, 0.072, 0.13], [0, 0.07, 0.17], [0, 0.068, 0.21]];
-  body.add(pipe(hose, 0.007, 20, 8), C.black, M.rubber);
-  for (let k = 0; k < 6; k++) body.add(ring(0.0078, 0.0016, 0, 0.071, 0.11 + k * 0.016, 'z', 4, 12), C.grey, M.satin);
-  ink.add(zlathe([[0, 0.205], [0.011, 0.205], [0.012, 0.235], [0.009, 0.24], [0, 0.24]], 0, 0.068, 0, 16));      // ink nozzle tip
-  return finish(d, body, ink, trig, [0, 0.068, 0.242]);
-}
-
 function darkTetra(d) {
   // Wmn_Maneuver_Stepper: a white C-frame with a purple strip and a looped hook on top, a black body by the
   // grip, a long curved skid under it like a blade with oval cut-outs filled with ink, a black nozzle.

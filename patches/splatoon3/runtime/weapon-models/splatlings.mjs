@@ -4,8 +4,8 @@
 // splatling channels are kept: `trigger` (pistol trigger) and `barrels` (the spun cluster, rotating about its
 // local Z through a pivot on the barrel axis). The native charge coil is kept for readability although none of the six references
 // shows a charge meter. Everything is procedural geometry.
-import { THREE, V, Pieces, M, zlathe, xlathe, ylathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, slab, pistolGrip, supportHandle,
-  gripSpec, glowGeometry, part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
+import { THREE, V, Pieces, M, zlathe, xlathe, ylathe, zcyl, xcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, slab, pistolGrip, supportHandle, mirrored,
+  gripSpec, glowGeometry, part, rebuild, TRIGGER_PIVOT, clamp, damp } from './kit.mjs';
 
 /** Barrels on a ring of radius R about the spin axis (ay): n tubes from z0 to z1, each with a nozzle tip. */
 function barrelRing(B, o) {
@@ -275,24 +275,258 @@ function hydra(d) {
   return finish(d, body, B, tr, AX, 0.334, C.black, ink);
 }
 
+// ------------------------------------------------------------------------------------------ Ballpoint Splatling
+// Wmn_Spinner_Downpour, rebuilt from the official 3D render (base kit; team-ink parts drawn neutral there), the
+// turntable video (S3 Ballpoint Splatling Nouveau model rotating.mp4: t≈1.5 s front, 5 s left side, 7.5 s rear,
+// 11 s right side; red = team ink in that kit) and the S3 gameplay clips ("S3 Ballpoint Splatling firing.mp4" /
+// "firing rear.mp4": yellow ink in the rear cap, the fins, the core behind the body slots and the six barrels,
+// which fill with the charge and drain while firing; right hand on the top bar, left hand on the front clevis).
+// A clicky-pen-shaped gun: a faceted (12-sided) team-ink rear cap behind a metal ring, a glossy black 12-sided
+// body with four diagonal slots that show the ink core and carry four ink fins, a threaded collar, then a long
+// faceted CLEAR shell (dome nose with a black nozzle cap) round six clear barrels with silver bullet tips spinning
+// on a centre axle, a white U-shaped ribbed foregrip cradling the shell from below, and a dark flat-bar top handle
+// that ends in a raked clevis with a silver bolt.
+// Weapon space: origin = the right fist on the top bar; the shell/barrel axis runs 0.087 m below it. Scale: body
+// Ø 0.12 m (≈ 2.2 × the kid's fist width in the gameplay clip); the right-side video frame reads 0.0006 m/px.
+// The clear shell is a 'lamp' part that `ballpointAnimate` turns into a see-through material on the near LOD
+// (the shared weapon plastic has no transparency); the far LOD / static renders show it as frosted plastic.
+const BP = { AX: -0.087, R: 0.06, ph: Math.PI / 12, seats: 0.031 };
+const bpRad = d => (d * Math.PI) / 180;
+/** Regular n-gon (CCW seen from +Z) of circumradius r about (0, AX), vertices at ph + k·2π/n. */
+function bpNgon(r, n = 12, ph = BP.ph, cy = BP.AX) {
+  const out = [];
+  for (let k = 0; k < n; k++) { const a = ph + (k * 2 * Math.PI) / n; out.push([Math.cos(a) * r, cy + Math.sin(a) * r]); }
+  return out;
+}
+/** Annular sector outline (CCW): outer arc a0 → a1 at ro, inner arc back at ri, about (0, AX). */
+function bpSector(ri, ro, a0, a1, n = 14) {
+  const out = [];
+  for (let k = 0; k <= n; k++) { const a = a0 + ((a1 - a0) * k) / n; out.push([Math.cos(a) * ro, BP.AX + Math.sin(a) * ro]); }
+  for (let k = n; k >= 0; k--) { const a = a0 + ((a1 - a0) * k) / n; out.push([Math.cos(a) * ri, BP.AX + Math.sin(a) * ri]); }
+  return out;
+}
+/** Polygon loft along +Z through sections [{ z, pts (CCW, equal counts), sharp }]. `sharp` corners (true = all,
+ *  or an index list) keep split normals (facets / creases); a section with sharp: true creases the ring there.
+ *  Flat end caps. Returns an indexed geometry with normals (Pieces keeps them). */
+function bpLoft(sections, sharp = true, caps = [true, true]) {
+  const n = sections[0].pts.length, pos = [], idx = [];
+  const isSharp = k => sharp === true || (Array.isArray(sharp) && sharp.includes(k));
+  const add = (x, y, z) => { pos.push(x, y, z); return pos.length / 3 - 1; };
+  const rings = sections.map(S => {
+    const mk = () => S.pts.map(([x, y], k) => { const a = add(x, y, S.z); return [a, isSharp(k) ? add(x, y, S.z) : a]; });
+    const lo = mk(); return { lo, hi: S.sharp ? mk() : lo };
+  });
+  for (let s = 0; s < sections.length - 1; s++) for (let k = 0; k < n; k++) {
+    const k1 = (k + 1) % n, A = rings[s].hi, B = rings[s + 1].lo;
+    idx.push(A[k][1], A[k1][0], B[k1][0], A[k][1], B[k1][0], B[k][1]);
+  }
+  for (const [s, dir] of [[0, -1], [sections.length - 1, 1]]) {
+    if (!caps[s === 0 ? 0 : 1]) continue;
+    const S = sections[s], o = pos.length / 3;
+    for (const [x, y] of S.pts) add(x, y, S.z);
+    for (const f of THREE.ShapeUtils.triangulateShape(S.pts.map(([x, y]) => new THREE.Vector2(x, y)), [])) {
+      const [a, b, c] = f.map(i => S.pts[i]), cz = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+      if (cz * dir > 0) idx.push(o + f[0], o + f[1], o + f[2]); else idx.push(o + f[0], o + f[2], o + f[1]);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+/** Faceted 12-sided lathe: profile [[r, z, crease?], …] → bpLoft of n-gons. */
+const bpFacet = (profile, caps = [true, true], n = 12, ph = BP.ph, facets = true) => bpLoft(profile.map(([r, z, c]) => ({ z, pts: bpNgon(r, n, ph), sharp: !!c })), facets, caps);
+/** Flat band (width × thick) swept through points, lying flat against the given normals (flat-shaded faces). */
+function bpRibbon(points, normals, width, thick) {
+  const n = points.length, pos = [], idx = [], T = V(), N = V(), B = V(), rings = [];
+  for (let i = 0; i < n; i++) {
+    const a = points[Math.max(0, i - 1)], b = points[Math.min(n - 1, i + 1)];
+    T.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]).normalize();
+    N.set(...normals[i]); N.addScaledVector(T, -N.dot(T)).normalize(); B.crossVectors(T, N).normalize();
+    const p = V(...points[i]);
+    rings.push([[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([u, v]) => p.clone().addScaledVector(B, (u * width) / 2).addScaledVector(N, (v * thick) / 2)));
+  }
+  const quad = (a, b, c, d) => { const o = pos.length / 3; for (const v of [a, b, c, d]) pos.push(v.x, v.y, v.z); idx.push(o, o + 1, o + 2, o, o + 2, o + 3); };
+  for (let i = 0; i < n - 1; i++) for (let f = 0; f < 4; f++) { const g = (f + 1) % 4; quad(rings[i][f], rings[i][g], rings[i + 1][g], rings[i + 1][f]); }
+  quad(rings[0][3], rings[0][2], rings[0][1], rings[0][0]); quad(rings[n - 1][0], rings[n - 1][1], rings[n - 1][2], rings[n - 1][3]);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+/** Body cross-section: the 12-gon (circumradius R) with four parallel-sided slots (half width hw, floor at rIn) on the
+ *  diagonals, CCW. */
+function bpSlotted(R, hw, rIn, nG = 24) {
+  const out = [], V0 = bpNgon(R, nG, 0).map(([x, y]) => [x, y - BP.AX]), n = V0.length; out.sharp = [];
+  // where the slot wall (t·d + o·p) crosses the polygon edge A→B
+  const cross = (d, p, o, A, B) => {
+    const ex = B[0] - A[0], ey = B[1] - A[1], qx = o * p[0] - A[0], qy = o * p[1] - A[1], den = d[0] * ey - d[1] * ex;
+    const t = (ex * qy - ey * qx) / den; return [t * d[0] + o * p[0], BP.AX + t * d[1] + o * p[1]];
+  };
+  for (let k = 0; k < n; k++) {
+    const [x, y] = V0[k], a = Math.atan2(y, x), deg = ((a * 180) / Math.PI + 360) % 360;
+    if (Math.abs(((deg - 45) % 90 + 90) % 90) > 1e-3) { out.push([x, y + BP.AX]); continue; }
+    // a diagonal vertex: replace it by the slot (outer wall point → floor → floor → outer wall point)
+    const d = [Math.cos(a), Math.sin(a)], p = [-d[1], d[0]], ri = Math.sqrt(rIn * rIn - hw * hw);
+    out.sharp.push(out.length, out.length + 1, out.length + 2, out.length + 3);
+    out.push(cross(d, p, -hw, V0[(k + n - 1) % n], V0[k]), [d[0] * ri - p[0] * hw, BP.AX + d[1] * ri - p[1] * hw],
+      [d[0] * ri + p[0] * hw, BP.AX + d[1] * ri + p[1] * hw], cross(d, p, hw, V0[k], V0[(k + 1) % n]));
+  }
+  return out;
+}
+/** Raised print stroke on a flank flat (x = side · xs) from (z0, y0) to (z1, y1), stroke width t. */
+function bpStroke(p, side, rs, z0, v0, z1, v1, t, color) {
+  // authored on the +X flank (v = height above the axis, wrapped round the body at the stroke centre), mirrored for −X
+  const L = Math.hypot(z1 - z0, v1 - v0) + t, phi = Math.asin(clamp((v0 + v1) / 2 / rs, -1, 1));
+  const g = box(0.0008, t, L, 0, 0, 0, 0.15, 4, 4).rotateX(-Math.atan2(v1 - v0, z1 - z0)).translate(rs, 0, (z0 + z1) / 2).rotateZ(phi).translate(0, BP.AX, 0);
+  p.add(side < 0 ? mirrored(g) : g, color, M.print);
+}
+/** Maker logo (icon + four glyphs + a text row) and the "0820" plate on one flank. Glyph strokes are authored in
+ *  (u along the reading direction, v up from the axis); the right flank reads toward the muzzle, the left flank
+ *  toward the cap (as in the video: logo behind on the right, logo ahead on the left). */
+function bpLogo(p, side, color) {
+  const rs = BP.R + 0.0004, lift = 0.011;
+  const zOf = u => (side < 0 ? -0.048 + u : 0.059 - u), st = (u0, v0, u1, v1, t = 0.0024) => bpStroke(p, side, rs, zOf(u0), lift + v0, zOf(u1), lift + v1, t, color);
+  st(0, -0.008, 0.009, 0.009); st(0.009, 0.009, 0.018, -0.008); st(0, -0.008, 0.018, -0.008);          // icon: triangle
+  st(0.0045, -0.0025, 0.0085, -0.0005, 0.0018); st(0.0085, -0.0005, 0.0135, -0.0035, 0.0018);          // icon: wave
+  st(0.027, 0.004, 0.024, -0.008); st(0.031, 0.006, 0.036, -0.008);                                     // ハ
+  st(0.052, 0.008, 0.04, -0.002); st(0.047, 0.003, 0.047, -0.008);                                      // イ
+  st(0.059, 0.004, 0.056, -0.008); st(0.063, 0.006, 0.068, -0.008); st(0.069, 0.007, 0.0705, 0.0085, 0.002); // パ
+  st(0.073, 0, 0.085, 0);                                                                               // ー
+  for (let k = 0; k < 7; k++) st(0.022 + k * 0.009, -0.0125, 0.027 + k * 0.009, -0.0125, 0.0016);         // small text row
+  const c = 0.1035;                                                                                     // "0820" plate
+  st(c - 0.013, 0.006, c + 0.013, 0.006, 0.0014); st(c - 0.013, -0.006, c + 0.013, -0.006, 0.0014);
+  st(c - 0.0135, -0.0055, c - 0.0135, 0.0055, 0.0014); st(c + 0.0135, -0.0055, c + 0.0135, 0.0055, 0.0014);
+  for (let k = 0; k < 4; k++) st(c - 0.0085 + k * 0.0057, -0.0022, c - 0.0085 + k * 0.0057, 0.0022, 0.0028);
+  for (let k = 0; k < 3; k++) st(c - 0.01 + k * 0.008, -0.0105, c - 0.005 + k * 0.008, -0.0105, 0.0014);
+}
+// Hold: the right fist round the top bar, the left fist round the clevis bolt (both as in the gameplay clip:
+// gun low at the right hip, barrels forward). Same anchor family as the Heavy (its top grip / transverse support
+// bar sit at the same height over the axis), moved back in a little (no side tank).
+const HOLD_BALLPOINT = {
+  carry: { p: [-0.2, 0.78, 0.17], r: [0.15, 0.06, -0.1] }, aim: { p: [-0.15, -0.12, 0.2], r: [0.05, 0.02, 0] },
+  raise: { p: [-0.2, 1.29, 0.1] }, lobby: { p: [-0.2, 0.89, 0.2], r: [0.25, 0.15, -0.15] },
+  poleR: HEAVY_POLE_IN,
+};
+/** Barrel ink follows the spun cluster (same angle, same per-round nudge) and fills with the charge / drains with
+ *  the remaining stream; the clear shell becomes see-through once (per instance). Allocation-free. */
+function ballpointAnimate(w, st) {
+  const P = w.parts, b = P.barrels; if (!b) return;
+  const sh = P.shell?.userData?.mesh?.material;
+  if (sh && !sh.transparent) { sh.transparent = true; sh.opacity = 0.2; sh.depthWrite = false; sh.side = THREE.DoubleSide; sh.needsUpdate = true; }
+  const R = st.runner, cs = R?.catalogState;
+  let want = 0;
+  if (R) {
+    if (R.charging) want = clamp(R.charge || 0);
+    else if (R.streaming) want = cs && cs.streamTime > 0 ? clamp(cs.streamCharge ?? 1) * clamp(1 - Math.max(0, cs.streamElapsed || 0) / cs.streamTime) : 1;
+  } else want = st.firing ? 1 : clamp(st.charge || 0);
+  w.bpFill = damp(w.bpFill ?? want, want, 14, st.dt || 0);
+  const dz = b.position.z - b.userData.rest.z;
+  for (const k of ['barrelInk', 'tipInk']) {
+    const g = P[k]; if (!g) continue;
+    g.rotation.z = b.rotation.z; g.position.z = g.userData.rest.z + dz;
+  }
+  const f = P.barrelInk;
+  if (f) { f.visible = w.bpFill > 0.02; f.scale.z = Math.max(0.02, w.bpFill); }
+  // pen tip: clicks out of the nozzle ring when the stream passes into its second (variable) phase after 30 frames,
+  // retracts when the stream ends (gameplay clip: tip out while firing, in at rest)
+  const pt = P.penTip;
+  if (pt) {
+    const out = R ? (R.streaming && cs ? clamp(((cs.streamElapsed || 0) * 60 - 30) / 10) : 0) : st.firing ? 1 : 0;
+    w.bpTip = damp(w.bpTip ?? 0, out, 18, st.dt || 0); pt.position.z = pt.userData.rest.z + 0.028 * w.bpTip;
+  }
+}
 function ballpoint(d) {
-  // Rebuilt (Opus): a long pen-like barrel — a clear sleeve (drawn as ribs and rings so the ink-filled
-  // barrel bundle inside stays visible), a black front ring and nose, a white rear cap, a black band with a
-  // logo panel, a white ribbed foregrip below and a silver carry handle on top.
-  const AX = 0.07, C = { white: '#eceae4', black: '#1a1b1f', clear: '#d6dade', silver: '#c1c4c8' };
-  const body = new Pieces(), B = new Pieces(), ink = new Pieces();
-  const tr = pistolGrip(body, { color: C.black, triggerColor: C.black, guardColor: C.black });
-  body.add(zlathe([[0, -0.11], [0.03, -0.112], [0.05, -0.095], [0.052, -0.04], [0, -0.04]], 0, AX, 0, 28), C.white, M.gloss);  // rear cap
-  body.add(zlathe([[0, -0.04], [0.054, -0.04], [0.054, 0.06], [0, 0.06]], 0, AX, 0, 28), C.black, M.satin);                     // black band
-  for (const z of [0.07, 0.17, 0.27, 0.36]) body.add(ring(0.05, 0.0035, 0, AX, z, 'z', 6, 28), C.clear, M.gloss);               // sleeve rings
-  for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; body.add(cyl(0.003, [Math.cos(a) * 0.05, AX + Math.sin(a) * 0.05, 0.06], [Math.cos(a) * 0.05, AX + Math.sin(a) * 0.05, 0.37], 6), C.clear, M.gloss); }
-  body.add(zlathe([[0.05, 0.37], [0.054, 0.37], [0.05, 0.4], [0.03, 0.42], [0.03, 0.43], [0, 0.43]], 0, AX, 0, 28), C.black, M.satin);  // nose
-  body.add(box(0.05, 0.05, 0.13, 0, -0.005, 0.16, 0.35), C.white, M.gloss);                                     // ribbed foregrip block
-  for (let k = 0; k < 5; k++) body.add(box(0.054, 0.006, 0.01, 0, -0.03, 0.115 + k * 0.022, 0.5), C.white, M.gloss);
-  body.add(pipe([[0, AX + 0.05, -0.02], [0, AX + 0.1, 0.0], [0, AX + 0.1, 0.06], [0, AX + 0.052, 0.07]], 0.006, 16, 6), C.silver, M.satin);
-  for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; B.add(zcyl(0.011, 0.06, 0.37, Math.cos(a) * 0.026, AX + Math.sin(a) * 0.026, 10), '#ffffff', M.gloss); }
-  ink.add(zcyl(0.042, 0.065, 0.365, 0, AX, 20));                                                                 // ink inside the sleeve
-  return finish(d, body, B, tr, AX, 0.432, C.black, ink);
+  const { AX, R } = BP;
+  const C = { black: '#141417', ring: '#8e8f94', collar: '#4a4a4f', white: '#ecebe5', nose: '#1e1e21', bar: '#38383c',
+    bolt: '#b6b4ac', screw: '#8b8d91', tube: '#a9b7be', tip: '#b9bcc0', hub: '#4a4a4f', shell: '#bcc6cb', print: '#f1f1ec' };
+  const body = new Pieces(), ink = new Pieces(), B = new Pieces(), BI = new Pieces(), TI = new Pieces(), S = new Pieces(), tr = new Pieces(), G = new Pieces(), PT = new Pieces();
+
+  // ---- rear: faceted team-ink cap (chamfered, nearly flat face with a parting seam) and a metal ring
+  ink.add(bpFacet([[0.022, -0.1285], [0.04, -0.1265], [0.048, -0.1225], [0.0535, -0.115], [0.0552, -0.106], [0.0552, -0.074], [0.054, -0.068, 1]], [true, false]));
+  ink.add(box(0.0016, 0.05, 0.0016, 0, AX, -0.1286, 0.2, 4, 4));
+  ink.add(box(0.0016, 0.0016, 0.012, 0, AX + 0.0545, -0.112, 0.2, 4, 4)); ink.add(box(0.0016, 0.0016, 0.012, 0, AX - 0.0545, -0.112, 0.2, 4, 4));
+  body.add(zlathe([[0.05, -0.0725], [0.0555, -0.0722], [0.0572, -0.0705], [0.0572, -0.0625], [0.0555, -0.0608], [0.05, -0.0605]], 0, AX, 0, 24), C.ring, M.metal);
+  // charge meter: a ring and a centre dot on the cap face (the rear face lights while charging in game)
+  G.add(ring(0.0445, 0.0022, 0, AX, -0.1238, 'z', 5, 24)); G.add(zcyl(0.0055, -0.1293, -0.1284, 0, AX, 12));
+
+  // ---- body: black 12-gon with four diagonal slots (ink core and fins inside), solid end bands, logo prints
+  const slotted = bpSlotted(R, 0.0115, 0.044);
+  body.add(bpFacet([[0.055, -0.0615, 1], [0.0585, -0.059], [R, -0.0565], [R, -0.05, 1]], [true, false], 24, 0, false), C.black, M.gloss);
+  body.add(bpLoft([{ z: -0.0502, pts: slotted }, { z: 0.0752, pts: slotted }], slotted.sharp, [false, false]), C.black, M.gloss);
+  body.add(bpFacet([[R, 0.075, 1], [R, 0.087], [0.0575, 0.0905], [0.053, 0.0925, 1]], [false, true], 24, 0, false), C.black, M.gloss);
+  ink.add(bpFacet([[0.047, -0.058], [0.047, 0.084]], [true, true], 12));
+  for (const a of [45, 135, 225, 315].map(bpRad)) {
+    const fin = slab([[-0.055, 0.046], [-0.046, 0.0635], [-0.038, 0.0758], [-0.006, 0.0758], [0.01, 0.0645], [0.024, 0.046]], 0.0178, 0, 0.004);
+    ink.add(fin.rotateZ(a - Math.PI / 2).translate(0, AX, 0));
+  }
+  bpLogo(body, -1, C.print); bpLogo(body, 1, C.print);
+
+  // ---- threaded collar between the body and the shell
+  body.add(zlathe([[0, 0.091], [0.0505, 0.091], [0.0515, 0.093], [0.0515, 0.114], [0.05, 0.1165], [0, 0.1165]], 0, AX, 0, 24), C.collar, M.metal);
+  for (let k = 0; k < 5; k++) body.add(ring(0.0518, 0.0013, 0, AX, 0.0955 + k * 0.0042, 'z', 4, 24), C.collar, M.metal);
+
+  // ---- clear shell (see-through part) and the black nozzle cap at its tip
+  S.add(bpFacet([[0.0535, 0.1135, 1], [0.056, 0.118, 1], [0.056, 0.294], [0.0548, 0.307], [0.0505, 0.322], [0.0425, 0.3345], [0.032, 0.3435], [0.0235, 0.3482], [0.019, 0.3496]], [true, true]), C.shell, M.lens);
+  // black nozzle ring at the dome tip (open bore with a dark throat) and the retractable silver pen tip inside it
+  body.add(bpLoft([0.3445, 0.348, 0.3595, 0.3675, 0.3722].map((z, i) => ({ z, pts: [...bpNgon([0.0158, 0.0178, 0.0181, 0.0155, 0.0118][i], 8, Math.PI / 8)], sharp: i === 0 })), true, [true, false]), C.nose, M.satin);
+  body.add(zlathe([[0.0119, 0.3721], [0.0098, 0.3728], [0.0088, 0.372], [0.0086, 0.352], [0, 0.352]], 0, AX, 0, 16), '#0b0b0d', M.satin);   // bore throat
+  PT.add(zlathe([[0, 0.338], [0.0074, 0.338], [0.0077, 0.3585], [0.0073, 0.3635], [0.006, 0.3668], [0.0036, 0.3685], [0, 0.369]], 0, AX, 0, 14), C.tip, M.metal);
+  PT.add(ring(0.0076, 0.0008, 0, AX, 0.3555, 'z', 4, 14), C.collar, M.metal);
+
+  // ---- spun cluster: hex hub, centre axle, six clear barrels with collars and silver bullet tips
+  B.add(zlathe([[0, 0.1165], [0.04, 0.1165], [0.0425, 0.119], [0.0425, 0.1225], [0.039, 0.125], [0, 0.125]], 0, AX, 0, 6), C.hub, M.metal);
+  B.add(zcyl(0.0045, 0.124, 0.3465, 0, AX, 10), C.tip, M.metal);
+  for (let k = 0; k < 6; k++) {
+    const a = k * Math.PI / 3, x = Math.cos(a) * BP.seats, y = AX + Math.sin(a) * BP.seats;
+    B.add(zcyl(0.0082, 0.124, 0.268, x, y, 12), C.tube, M.lens);
+    B.add(zlathe([[0, 0.146], [0.0105, 0.146], [0.011, 0.148], [0.011, 0.158], [0.0105, 0.16], [0, 0.16]], x, y, 0, 12), C.collar, M.metal);
+    B.add(zlathe([[0, 0.266], [0.0094, 0.266], [0.0094, 0.279], [0.0087, 0.2805], [0.0087, 0.2865], [0.0094, 0.288], [0.0094, 0.295], [0.0079, 0.3025], [0.0052, 0.3085], [0, 0.3095]], x, y, 0, 12), C.tip, M.metal);
+    BI.add(zcyl(0.0086, 0.1255, 0.2665, x, y, 12));
+    TI.add(zlathe([[0, 0.3082], [0.0037, 0.3082], [0.0037, 0.3102], [0, 0.311]], x, y, 0, 6));
+  }
+
+  // ---- white U foregrip cradling the shell (ribbed flanks, four screws)
+  const ga0 = bpRad(171), ga1 = bpRad(369), gs = bpSector(0.0565, 0.066, ga0, ga1), gsIn = bpSector(0.0565, 0.0612, ga0, ga1);
+  const gsh = [0, 14, 15, 29];
+  body.add(bpLoft([{ z: 0.1165, pts: gsIn }, { z: 0.122, pts: gs, sharp: true }, { z: 0.252, pts: gs, sharp: true }, { z: 0.2655, pts: bpSector(0.0565, 0.0598, ga0, ga1) }], gsh), C.white, M.gloss);
+  for (let k = 0; k < 5; k++) {
+    const z = 0.143 + k * 0.0225, rs = bpSector(0.0645, 0.0698, bpRad(177), bpRad(363)), rl = bpSector(0.0645, 0.0665, bpRad(177), bpRad(363));
+    body.add(bpLoft([{ z: z - 0.0045, pts: rl }, { z: z - 0.0018, pts: rs }, { z: z + 0.0018, pts: rs }, { z: z + 0.0045, pts: rl }], gsh), C.white, M.gloss);
+  }
+  for (const a of [bpRad(222), bpRad(318)]) for (const z of [0.1305, 0.2455]) {
+    const c = Math.cos(a), s = Math.sin(a);
+    body.add(cyl(0.0042, [c * 0.0652, AX + s * 0.0652, z], [c * 0.0688, AX + s * 0.0688, z], 10), C.screw, M.metal);
+    body.add(box(0.0012, 0.0012, 0.0062, c * 0.069, AX + s * 0.069, z, 0.2, 4, 4), '#3a3b3f', M.satin);
+  }
+
+  // ---- top handle: dark flat bar from a rear foot over to the clevis; the clevis (two raked arms on a saddle) and its bolt
+  const bar = [[0, -0.0255, -0.057], [0, -0.0165, -0.051], [0, -0.006, -0.043], [0, 0.0015, -0.032], [0, 0.003, -0.018], [0, 0.003, 0.0],
+    [0, 0.003, 0.03], [0, 0.0005, 0.046], [0, -0.007, 0.06], [0, -0.016, 0.072], [0, -0.0245, 0.083]];
+  const barN = bar.map((p, i) => { const a = bar[Math.max(0, i - 1)], b = bar[Math.min(bar.length - 1, i + 1)]; return [0, b[2] - a[2], -(b[1] - a[1])]; });
+  body.add(bpRibbon(bar, barN, 0.0135, 0.0078), C.bar, M.metal);
+  body.add(box(0.019, 0.01, 0.018, 0, AX + 0.0585, -0.056, 0.3, 8, 6), C.bar, M.metal);                                          // rear foot
+  body.add(bpLoft([{ z: 0.074, pts: bpSector(0.0535, 0.0595, bpRad(52), bpRad(128), 8) }, { z: 0.098, pts: bpSector(0.0535, 0.0595, bpRad(52), bpRad(128), 8) }], [0, 8, 9, 17]), C.bar, M.metal); // saddle
+  for (const sx of [-1, 1]) {
+    const arm = slab([[0.074, -0.05], [0.097, -0.05], [0.104, -0.022], [0.111, 0.004], [0.1135, 0.015], [0.109, 0.0225], [0.1, 0.0235], [0.0935, 0.018], [0.088, 0.0], [0.081, -0.024]], 0.0068, 0, 0.0018);
+    body.add(arm.translate(sx * 0.0315, 0, 0), C.bar, M.metal);
+    body.add(xcyl(0.0062, sx * 0.0345, sx * 0.0372, 0.0145, 0.1025, 6), C.bolt, M.metal);                                   // bolt heads
+  }
+  body.add(xcyl(0.0034, -0.035, 0.035, 0.0145, 0.1025, 10), C.bolt, M.metal);                                                       // bolt
+  tr.add(box(0.0055, 0.013, 0.0075, 0, -0.008, 0.024, 0.3, 6, 4), '#2a2a2e', M.satin);                                             // trigger blade
+
+  return rebuild(d, {
+    body, ink,
+    parts: {
+      trigger: part(tr, [0, -0.002, 0.024]),
+      barrels: part(B, [0, AX, 0.2]),
+      barrelInk: part(BI, [0, AX, 0.1255], 'ink'),
+      tipInk: part(TI, [0, AX, 0.2], 'ink'),
+      penTip: part(PT, [0, AX, 0.36]),
+      shell: part(S, [0, AX, 0.2], 'lamp', { color: '#eef3f5', emissive: '#000000', intensity: 0, roughness: 0.05 }),
+    },
+    glow: glowGeometry(G, AX - 0.036, AX + 0.036, 'y'),
+    // right fist round the top bar (axis along Z, wrist up and out); left fist round the clevis bolt (axis along X)
+    gripR: gripSpec([0, 0.003, 0.004], [0, 0.0, 1], [0.5, 1, -0.35]),
+    gripL: gripSpec([0, 0.0145, 0.1025], [-1, 0, 0], [0.45, 0.6, -0.65]),
+    muzzle: [0, AX, 0.3735],   // nozzle ring exit (the pen tip slides 0.028 m past it while streaming)
+  });
 }
 
 function nautilus(d) {
@@ -343,7 +577,7 @@ export const MODELS = {
   'splatling': { sourceModel: 'Wmn_Spinner_StandardT', build: heavy, hold: HOLD_HEAVY, nativeCarry: true, pose: heavyPose },
   's3-spinner-quick': { sourceModel: 'Wmn_Spinner_QuickT', build: mini },
   's3-spinner-hyper': { sourceModel: 'Wmn_Spinner_HyperT', build: hydra },
-  's3-spinner-downpour': { sourceModel: 'Wmn_Spinner_Downpour', build: ballpoint },
+  's3-spinner-downpour': { sourceModel: 'Wmn_Spinner_Downpour', build: ballpoint, animate: ballpointAnimate, hold: HOLD_BALLPOINT, nativeCarry: true, pose: heavyPose },
   's3-spinner-hypershort': { sourceModel: 'Wmn_Spinner_HyperShort', build: examiner },
   's3-spinner-serein': { sourceModel: 'Wmn_Spinner_Serein', build: nautilus },
 };
