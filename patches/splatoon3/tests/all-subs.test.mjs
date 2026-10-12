@@ -1,19 +1,29 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import test from 'node:test';
 import { ALL_SUB_IDS, ALL_SUB_SPECS } from '../runtime/all-subs.mjs';
 import { VAC_ID } from '../runtime/kit-ink-vac.mjs';
+import { objectDamageScale } from '../runtime/sub-resistance.mjs';
 import { fixture } from './source-fixture.mjs';
 
 const frames = n => n / 60;
 const rawDamage = n => n / 10;
 const near = (actual, expected, label) => assert.ok(Math.abs(actual - expected) < 1e-9, `${label}: ${actual} ≠ ${expected}`);
 const SOURCE_RECEIPT = JSON.parse(fs.readFileSync(new URL('./fixtures/catalogue-sub-source-1130.json', import.meta.url), 'utf8'));
+const SOURCE_WEAPONS = new URL('./fixtures/source-1130/weapon/', import.meta.url);
 function source(name) {
   const record = SOURCE_RECEIPT.weapons[name];
   assert.ok(record, `pinned source fixture includes ${name}`);
   assert.match(record.sha256, /^[a-f0-9]{64}$/);
-  return record.fields.GameParameters;
+  return rawSource(name);
+}
+function rawSource(name) {
+  const record=SOURCE_RECEIPT.weapons[name];
+  assert.ok(record, `pinned source receipt includes ${name}`);
+  const text=fs.readFileSync(new URL(record.sourceFile,SOURCE_WEAPONS));
+  assert.equal(createHash('sha256').update(text).digest('hex'),record.sha256,`${name} raw table matches the pinned receipt hash`);
+  return JSON.parse(text).GameParameters;
 }
 function equip(actor, sub) { actor.weapon = { ...actor.weapon, sub }; }
 function deployed(f, actor, sub, pos = [0, 1, 0]) {
@@ -54,22 +64,52 @@ test('catalogue exposes fourteen entries and extracted rows follow the pinned 11
   assert.deepEqual([ALL_SUB_SPECS.burst.damageMax, ALL_SUB_SPECS.burst.damageMin], quick.BlastParam.DistanceDamage.map(row => rawDamage(row.Damage)));
   assert.equal(ALL_SUB_SPECS.burst.damageInner, quick.BlastParam.DistanceDamage[0].Distance);
   assert.equal(ALL_SUB_SPECS.burst.damageOuter, quick.BlastParam.DistanceDamage[1].Distance);
-  assert.equal(ALL_SUB_SPECS.burst.damageFalloff, 'calibrated-quadratic', 'Quick Bomb explicitly has DamageLinear=false, so interpolated runtime curve remains labelled calibrated');
+  assert.equal(ALL_SUB_SPECS.burst.damageFalloff, 'discrete', 'Wiki testing confirms 35 damage through the near band and 25 through the far band');
+  assert.equal(ALL_SUB_SPECS.burst.directDamage, 25, 'the Wiki measures a separate 25-point contact event');
+  assert.equal(ALL_SUB_SPECS.burst.contactBurstDelayFrames, 1, 'the Wiki measures the near blast one frame after direct contact');
+  assert.equal(quick.MoveParam.DirectDamage, undefined, '11.3.0 has no separate direct-hit field; this 25-point event is Wiki-measured');
 
   const fizzy = source('WeaponBombFizzy');
+  const fizzyRaw = rawSource('WeaponBombFizzy');
   assert.deepEqual(ALL_SUB_SPECS.fizzy.chargeFrames, fizzy.MoveParam.ChargeFrameArray);
   assert.equal(ALL_SUB_SPECS.fizzy.maxChargeTime, frames(fizzy.MoveParam.ChargeFrameArray.reduce((n, x) => n + x, 0)),
     'S3 gameplay interprets the extracted [40, 80] charge rows as sequential stages, totaling 120 frames');
   assert.deepEqual(ALL_SUB_SPECS.fizzy.burstWaitFrames, fizzy.MoveParam.BurstWaitFrameArray);
   assert.deepEqual(ALL_SUB_SPECS.fizzy.bursts.map(row => row.damageInner), fizzy.MoveParam.BlastParamArray.map(row => row.DistanceDamage[0].Distance));
   assert.equal(ALL_SUB_SPECS.fizzy.objectDamage, rawDamage(fizzy.MoveParam.ObjColDamage));
+  const hop=ALL_SUB_SPECS.fizzy.hop;
+  assert.deepEqual([hop.lowPitchDeg,hop.highPitchDeg],[fizzyRaw.MoveParam.HopPitchL,fizzyRaw.MoveParam.HopPitchH]);
+  near(hop.lowVelocity,fizzyRaw.MoveParam.HopVelL*60,'low hop velocity converts the extracted per-frame value at 60 FPS');
+  near(hop.highVelocity,fizzyRaw.MoveParam.HopVelH*60,'high hop velocity converts the extracted per-frame value at 60 FPS');
+  assert.equal(ALL_SUB_SPECS.fizzy.groundGravity,fizzyRaw.MoveParam.GroundGravity*3600);
+  assert.equal(ALL_SUB_SPECS.fizzy.flyRotateAirResist,fizzyRaw.MoveParam.FlyRotateAirResist);
+  assert.deepEqual([...ALL_SUB_SPECS.fizzy.flySplashDistance],fizzyRaw.MoveParam.FlySplashDistanceArray);
+  assert.deepEqual([...ALL_SUB_SPECS.fizzy.flySplashPaintRadius],fizzyRaw.MoveParam.FlySplashPaintRadiusArray);
+  assert.deepEqual([...ALL_SUB_SPECS.fizzy.flySplashPaintParam].map(x=>[x.widthHalf,x.depthScaleMin,x.depthScaleMax]),fizzyRaw.MoveParam.FlySplashPaintParamArray.map(x=>[x.WidthHalf,x.DepthScaleMin,x.DepthScaleMax]));
 
   const robot=source('WeaponBombRobot');
+  const robotRaw=rawSource('WeaponBombRobot');
   assert.equal(ALL_SUB_SPECS.autobomb.chaseSeconds,frames(robot.MoveParam.ChaseFrame));
   assert.equal(ALL_SUB_SPECS.autobomb.noTargetSeconds,frames(robot.MoveParam.NoReceiveTargetBurstWaitFrame));
+  assert.equal(ALL_SUB_SPECS.autobomb.findRotateFrames,robotRaw.MoveParam.FindRotateFrame);
+  assert.equal(ALL_SUB_SPECS.autobomb.noTargetBurstWaitFrames,robotRaw.MoveParam.NoReceiveTargetBurstWaitFrame);
+  assert.equal(ALL_SUB_SPECS.autobomb.chaseBurstWaitFrames,robotRaw.MoveParam.ChaseBurstWaitFrame);
+  assert.equal(ALL_SUB_SPECS.autobomb.approachBurstWaitFrames,robotRaw.MoveParam.FindApproachBurstWaitFrame);
+  assert.equal(ALL_SUB_SPECS.autobomb.unfindBurstWaitFrames,robotRaw.MoveParam.UnfindBurstWaitFrame);
+  assert.equal(ALL_SUB_SPECS.autobomb.gravity,robotRaw.MoveParam.FlyGravity*3600);
+  assert.equal(ALL_SUB_SPECS.autobomb.flyPositionAirResist,robotRaw.MoveParam.FlyPositionAirResist);
+  assert.equal(ALL_SUB_SPECS.autobomb.flyRotateAirResist,robotRaw.MoveParam.FlyRotateAirResist);
   assert.deepEqual([ALL_SUB_SPECS.autobomb.damageMax,ALL_SUB_SPECS.autobomb.damageMin],robot.BlastParam.DistanceDamage.map(row=>rawDamage(row.Damage)));
+  const chase=ALL_SUB_SPECS.autobomb.chaseMovement;
+  assert.deepEqual([chase.beforeRotateFrames,chase.yawDegreesPerFrame],[robotRaw.MoveParam.BeforeRotateFrame,robotRaw.MoveParam.ChaseYawDegree]);
+  near(chase.groundAcceleration,robotRaw.MoveParam.ChaseGroundAddSpeedPerFrame*3600,'Autobomb ground acceleration');near(chase.groundMaxSpeed,robotRaw.MoveParam.ChaseGroundMaxSpeed*60,'Autobomb ground speed cap');
+  near(chase.airAcceleration,robotRaw.MoveParam.ChaseAirAddSpeedXZPerFrame*3600,'Autobomb air acceleration');near(chase.airMaxSpeedXZ,robotRaw.MoveParam.ChaseAirMaxSpeedXZ*60,'Autobomb air speed cap');
+  near(chase.airMaxSpeedY,robotRaw.MoveParam.ChaseAirMaxSpeedY*60,'Autobomb vertical speed cap');near(chase.approachDistance,robotRaw.MoveParam.DeathTargetApprouchDistance,'Autobomb approach distance');
 
   const torpedo = source('WeaponBombTorpedo');
+  const torpedoRaw=rawSource('WeaponBombTorpedo');
+  assert.equal(ALL_SUB_SPECS.torpedo.flyRotateAirResist,torpedoRaw.MoveParam.FlyRotateAirResist);
+  assert.equal(ALL_SUB_SPECS.torpedo.chaseStartFrames,torpedo.MoveParam.BetweenRotEndAndStartChaseFrame);
   assert.equal(ALL_SUB_SPECS.torpedo.splashRadius, torpedo.BlastParamChase.SplashBlastParam.DistanceDamage[0].Distance);
   assert.equal(ALL_SUB_SPECS.torpedo.splashPaintRadius, torpedo.BlastParamChase.SplashBlastParam.PaintRadius);
   assert.equal(ALL_SUB_SPECS.torpedo.burstSeconds,frames(torpedo.MoveParam.BurstFrame));
@@ -81,23 +121,150 @@ test('catalogue exposes fourteen entries and extracted rows follow the pinned 11
   assert.equal(ALL_SUB_SPECS.inkMine.lifetime,Infinity,'public gameplay mine duration is indefinite; the table omits a lifetime field');
 
   const mist=source('WeaponPoisonMist');
-  assert.equal(ALL_SUB_SPECS.toxicMist.radius,mist.AreaParam.DistanceForOff);
-  const marker=source('WeaponLineMarker');
+  assert.equal(ALL_SUB_SPECS.toxicMist.sourceCutoff,mist.AreaParam.DistanceForOff);
+  assert.deepEqual(ALL_SUB_SPECS.toxicMist.effectLevels,mist.AreaParam.EffectParam.Level.map(({Frame,NextLevelCount})=>({frame:Frame,nextLevelCount:NextLevelCount})));
+  assert.equal(ALL_SUB_SPECS.toxicMist.radius,1.05*5,'Wiki 1.05 trial-line radius converts at 5 world units per trial line');
+  assert.equal(ALL_SUB_SPECS.toxicMist.lifetime,5,'community Wiki gives 300F / 5s cloud duration');
+  const wallRaw=rawSource('WeaponShield');
+  assert.equal(ALL_SUB_SPECS.splashWall.gravity,wallRaw.MoveParam.FlyGravity*3600);
+  assert.equal(ALL_SUB_SPECS.splashWall.flyPositionAirResist,wallRaw.MoveParam.FlyPositionAirResist);
+  const marker=rawSource('WeaponLineMarker');
   assert.equal(ALL_SUB_SPECS.angleShooter.directDamage,rawDamage(marker.MoveParam.DirectDamage));
   assert.equal(ALL_SUB_SPECS.angleShooter.collisionRadius,marker.MoveParam.CollisionRadius);
+  assert.equal(ALL_SUB_SPECS.angleShooter.gravity,marker.MoveParam.FlyGravity*3600);
+  assert.equal(ALL_SUB_SPECS.angleShooter.flyPositionAirResist,marker.MoveParam.FlyPositionAirResist);
   assert.deepEqual(ALL_SUB_SPECS.angleShooter.markFrames,[marker.MoveParam.MarkingFrame.Low,marker.MoveParam.MarkingFrame.Mid,marker.MoveParam.MarkingFrame.High]);
+  assert.equal(ALL_SUB_SPECS.angleShooter.flightFrames,marker.MoveParam.FlyingFrame);
 
   const shield = source('WeaponShield');
   assert.deepEqual(ALL_SUB_SPECS.splashWall.wallHpTiers, [shield.MoveParam.MaxHP.Low, shield.MoveParam.MaxHP.Mid, shield.MoveParam.MaxHP.High].map(rawDamage));
   assert.equal(ALL_SUB_SPECS.splashWall.gravity,shield.MoveParam.FlyGravity*3600);
+  assert.equal(ALL_SUB_SPECS.splashWall.damageSpanFrames,shield.MoveParam.DamageSpanFrame);
+  assert.equal(ALL_SUB_SPECS.splashWall.lifetime,frames(400),'Wiki-tested wall lifetime is 400F');
   const sprinkler = source('WeaponSprinkler');
   assert.deepEqual(ALL_SUB_SPECS.sprinkler.firstPeriodFrames, [sprinkler.MoveParam.PeriodFirst.Low, sprinkler.MoveParam.PeriodFirst.Mid, sprinkler.MoveParam.PeriodFirst.High]);
   assert.deepEqual(ALL_SUB_SPECS.sprinkler.laterPeriodFrames, [sprinkler.MoveParam.PeriodSecond.Low, sprinkler.MoveParam.PeriodSecond.Mid, sprinkler.MoveParam.PeriodSecond.High]);
   assert.equal(ALL_SUB_SPECS.sprinkler.hitPaintRadius,sprinkler.MoveParam.HitPaintRadius);
-  assert.equal(ALL_SUB_SPECS.sprinkler.paintRadius,sprinkler.MoveParam.SpoutInkDrawRadius);
+  assert.equal(ALL_SUB_SPECS.sprinkler.spoutDrawRadius,sprinkler.MoveParam.SpoutInkDrawRadius);
+  assert.equal(ALL_SUB_SPECS.sprinkler.paintRadius,sprinkler.MoveParam.SpoutInkPaintRadiusMaxRate);
+  assert.equal(ALL_SUB_SPECS.sprinkler.dropletDamage,20);
   assert.equal(ALL_SUB_SPECS.sprinkler.lifetime, Infinity, 'public gameplay has no natural sprinkler expiry');
   assert.equal(ALL_SUB_SPECS.beakon.lifetime, Infinity, 'public gameplay has no natural Beakon expiry');
   assert.equal(ALL_SUB_SPECS.beakon.maxOwnerObjects, 3);
+});
+
+test('Burst Bomb contact applies 25 direct damage, then its sourced near-band 35 one frame later', async () => {
+  const f=await fixture({fullRuntime:true,realProjectiles:true});
+  const owner=f.make('shooter'),enemy=f.make('shooter');owner.team=0;enemy.team=1;
+  owner.pos.set(0,0,0);enemy.pos.set(.5,0,0);equip(owner,'burst');
+  f.G.physics.segment=(_start,_end,hit)=>{hit.hit=false;return hit;};
+  const hits=[],applyHit=f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit=function(attacker,target,damage,weapon){hits.push({damage,weapon});return applyHit.call(this,attacker,target,damage,weapon);};
+  const bomb=f.G.projectiles.throwBomb(owner);
+  bomb.pos.set(1,1,0);bomb.prev.copy(bomb.pos);bomb.vel.set(-60,0,0);bomb.age=0;
+  f.G.projectiles.update(1/60);
+  assert.deepEqual(hits.map(hit=>hit.damage),[25],'direct contact is its own first event');
+  assert.equal(bomb.phase,'burstWait');
+  assert.ok(f.G.projectiles._s3SubObjects.includes(bomb),'contact leaves the bomb at the hit point during its one-frame warning');
+  f.G.projectiles.update(1/60);
+  assert.deepEqual(hits.map(hit=>hit.damage),[25,35],'one frame later the actor receives the near-band blast');
+  assert.equal(bomb.dead,true);
+});
+
+test('Toxic Mist radius converts Wiki trial lines to world units and holds the boundary at 30/60/120 Hz', async () => {
+  for(const hz of [30,60,120]){
+    const f=await fixture({fullRuntime:true,realProjectiles:true});
+    const owner=f.make('shooter'),inside=f.make('shooter'),outside=f.make('shooter');
+    owner.team=0;inside.team=1;outside.team=1;inside.pos.set(5.2,0,0);outside.pos.set(5.3,0,0);
+    const mist=deployed(f,owner,'toxicMist',[0,1,0]);mist.expireAt=Infinity;
+    const dt=1/hz;
+    for(let i=0;i<hz;i++){f.G.time+=dt;f.G.projectiles.update(dt);}
+    assert.ok(inside.s3?.toxicMistScale<1,`1.05 trial lines = 5.25 world units includes 5.2 at ${hz} Hz`);
+    assert.equal(outside.s3?.toxicMistScale,undefined,`5.3 world units stays outside the converted radius at ${hz} Hz`);
+  }
+});
+
+test('per-sub ink saver curves follow each extracted SubInkSaveLv', async () => {
+  const f=await fixture({fullRuntime:true,realProjectiles:true});
+  const expected={burst:[1,.855555,.711111],autobomb:[1,.85,.7],fizzy:[1,.85,.7],torpedo:[1,.85,.7],
+    inkMine:[1,.8,.6],toxicMist:[1,.85,.7],angleShooter:[1,.9,.8],splashWall:[1,.825,.65],sprinkler:[1,.8,.6],beakon:[1,.8,.6]};
+  for(const [id,curve] of Object.entries(expected))assert.deepEqual([...f.SUB[id].inkSaverCurve],curve,`${id} uses its own source level curve`);
+});
+
+test('Autobomb flight applies extracted per-frame gravity and position resistance at 30/60/120 Hz', async () => {
+  const robot=rawSource('WeaponBombRobot'),h=1/60,steps=60;
+  const retention=1-robot.MoveParam.FlyPositionAirResist;
+  let expectedX=0,expectedY=10,expectedVx=10,expectedVy=10;
+  for(let i=0;i<steps;i++){
+    expectedVy-=robot.MoveParam.FlyGravity*60;
+    expectedVx*=retention;expectedVy*=retention;
+    expectedX+=expectedVx*h;expectedY+=expectedVy*h;
+  }
+  for(const hz of [30,60,120]){
+    const f=await fixture({fullRuntime:true,realProjectiles:true});
+    const owner=f.make('shooter');owner.team=0;
+    const pos=new f.THREE.Vector3(0,10,0);
+    const object={subId:'autobomb',spec:ALL_SUB_SPECS.autobomb,owner,team:0,seq:900,sourceLife:0,
+      pos,prev:pos.clone(),vel:new f.THREE.Vector3(10,10,0),phase:'flight',age:0,seed:1,
+      ghost:false,dead:false,fuse:0,grounded:false};
+    (f.G.projectiles._s3SubObjects ||= []).push(object);
+    f.G.physics.segment=()=>null;
+    const dt=1/hz;
+    for(let i=0;i<hz;i++){f.G.time+=dt;f.G.projectiles.update(dt);}
+    near(object.vel.x,expectedVx,`source per-frame air retention at ${hz} Hz`);
+    near(object.vel.y,expectedVy,`source FlyGravity converted from frames at ${hz} Hz`);
+    near(object.pos.x,expectedX,`horizontal flight is rate-invariant at ${hz} Hz`);
+    near(object.pos.y,expectedY,`vertical flight is rate-invariant at ${hz} Hz`);
+  }
+});
+
+test('Toxic Mist status and jump reduction use the extracted resistance curve at 30/60/120 Hz', async () => {
+  async function simulate(dt,resistanceAP){
+    const f=await fixture({fullRuntime:true,realProjectiles:true});
+    const owner=f.make('shooter'),victim=f.make('shooter');owner.team=0;victim.team=1;victim.pos.set(0,0,0);
+    victim.s3={...victim.s3,abilityPoints:{...victim.s3.abilityPoints,subResistance:resistanceAP}};
+    const normalSpeed=victim.weaponRunner.moveSpeed();
+    assert.equal(typeof victim._integrateMovementStep,'function','the production movement adapter exposes the actual jump integrator');
+    victim.ink=100;
+    const mist=deployed(f,owner,'toxicMist',[0,1,0]);mist.expireAt=5;
+    const steps=Math.round(5/dt);
+    for(let i=0;i<steps;i++){f.G.time+=dt;f.G.projectiles.update(dt);}
+    const speed=victim.weaponRunner.moveSpeed();
+    f.G.physics.collideBody=()=>({ceiling:false,wall:false});
+    victim.vel.y=10;victim._integrateMovementStep(0,false,true);
+    return {speedScale:victim.s3.toxicMistScale,jumpScale:victim.s3.toxicMistJumpScale,
+      speedRatio:speed/normalSpeed,jumpVelocity:victim.vel.y,ink:victim.ink};
+  }
+  for(const dt of [1/30,1/60,1/120]){
+    const low=await simulate(dt,0),high=await simulate(dt,57);
+    near(low.speedScale,.5,`GP0 mist slow at dt=${dt}`);near(low.speedRatio,.5,`GP0 actual moveSpeed at dt=${dt}`);
+    near(low.jumpScale,.5,`GP0 mist jump at dt=${dt}`);near(low.jumpVelocity,5,`GP0 actual jump integration at dt=${dt}`);near(low.ink,60,`GP0 max drain at dt=${dt}`);
+    near(high.speedScale,.75,`GP57 resistance-adjusted speed at dt=${dt}`);near(high.speedRatio,.75,`GP57 actual moveSpeed at dt=${dt}`);
+    near(high.jumpScale,.75,`GP57 resistance-adjusted jump at dt=${dt}`);near(high.jumpVelocity,7.5,`GP57 actual jump integration at dt=${dt}`);near(high.ink,80,`GP57 resistance-adjusted drain at dt=${dt}`);
+  }
+});
+
+test('Splash Wall lifetime and proportional HP decay remain 400 source frames at 30/60/120 Hz', async () => {
+  for(const hz of [30,60,120]){
+    const f=await fixture({fullRuntime:true,realProjectiles:true});
+    const owner=f.make('shooter');owner.team=0;
+    const wall=deployed(f,owner,'splashWall');
+    wall.expireAt=frames(400);
+    const initial=wall.hp;
+    const dt=1/hz;
+    const liveFrames=hz===30?398:399;
+    for(let i=0;i<liveFrames*hz/60;i++){
+      f.G.time+=dt;
+      f.G.projectiles.update(dt);
+    }
+    assert.ok(f.G.projectiles._s3SubObjects.includes(wall),`wall survives ${liveFrames} source frames at ${hz} Hz`);
+    near(wall.hp,initial*(400-liveFrames)/400,`wall HP falls by one 1/400 slice per source frame at ${hz} Hz`);
+    for(let elapsed=liveFrames;elapsed<400;elapsed+=60/hz){
+      f.G.time+=dt;
+      f.G.projectiles.update(dt);
+    }
+    assert.ok(!f.G.projectiles._s3SubObjects.includes(wall),`wall expires at 400 source frames at ${hz} Hz`);
+  }
 });
 
 test('real WeaponRunner sub hold and release pay the selected cost and create a seeded event', async () => {
@@ -361,6 +528,9 @@ test('the real Ink Vac defense consumes one custom sub object and charges only o
   shooter.team=0;shooter.pos.set(30,0,30);equip(shooter,'burst');
   vac.team=1;vac.weapon={...vac.weapon,special:VAC_ID,specialCost:190};vac.special=190;
   vac.intent.special=true;f.tick(vac);vac.intent.special=false;
+  // 11.3.0 LengthAddPerFrame=.3334 takes about 45 frames to reach LengthMax=15;
+  // this far projectile exercises the grown intake instead of an empty first frame.
+  f.tick(vac,14);
   assert.equal(f.installedRuntime.inkVacState(vac)?.phase,'inhale','the live Ink Vac is active');
 
   const object=f.G.projectiles.throwBomb(shooter);
@@ -415,7 +585,8 @@ test('a custom sub sweep settles against the existing Big Bubbler and Splash Wal
   f.G.projectiles.update(1/60);
   assert.equal(second.dead,true,'the existing Splash Wall candidate also consumes the thrown sub');
   assert.equal(f.G.projectiles._s3SubObjects.includes(second),false);
-  assert.equal(wall.hp,wallHp-ALL_SUB_SPECS.burst.damageMax,'the wall receives the custom sub damage once');
+  near(wall.hp,wallHp-ALL_SUB_SPECS.burst.damageMax*objectDamageScale(second,'splashWall')-wall.wallHpInitial/400,
+    'the burst uses Bomb_DirectHit ×2 once, plus the wall’s 1/400-per-frame lifetime drain');
 });
 
 test('a locked Torpedo is shootable, defuses at 20 HP without bursting, and owner replay accepts its flight hit', async () => {
@@ -480,4 +651,39 @@ test('a live Torpedo blocks a second release before native ink payment',async()=
  const first=f.G.projectiles.throwBomb(a);assert.ok(first);assert.equal(f.G.projectiles.throwBomb(a),undefined);
  a.weaponRunner.update(1/60,{sub:true});a.weaponRunner.update(1/60,{sub:false,subReleased:true});assert.equal(a.ink,100);assert.equal(f.G.projectiles._s3SubObjects.filter(o=>!o.dead).length,1);
  first.dead=true;assert.ok(f.G.projectiles.throwBomb(a),'a consumed Torpedo releases the one-live-object gate');
+});
+
+test('Torpedo does not enter its chase phase before the extracted 20-frame delay', async () => {
+  const f=await fixture({fullRuntime:true,realProjectiles:true});
+  const owner=f.make('shooter'),enemy=f.make('shooter');owner.team=0;enemy.team=1;
+  const torpedo=deployed(f,owner,'torpedo',[0,6,0]);torpedo.phase='flight';torpedo.activeAt=0;torpedo.vel.set(0,0,0);
+  enemy.pos.set(5,0,0);
+  f.G.physics.segment=()=>null;
+  for(let i=0;i<19;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
+  assert.equal(torpedo.phase,'flight','the extracted transition delay has not elapsed');
+  f.G.time+=1/60;f.G.projectiles.update(1/60);
+  assert.equal(torpedo.phase,'chase','the extracted 20F delay starts guidance');
+});
+
+test('Fizzy blast and native Splat Bomb explosion damage nearby sub devices through source object rates', async () => {
+  const fizzyFixture=await fixture({fullRuntime:true,realProjectiles:true});
+  const fizzyOwner=fizzyFixture.make('shooter'),wallOwner=fizzyFixture.make('shooter');
+  fizzyOwner.team=1;wallOwner.team=0;equip(fizzyOwner,'fizzy');equip(wallOwner,'splashWall');
+  const wall=deployed(fizzyFixture,wallOwner,'splashWall',[0,1,0]);
+  const fizzy=fizzyFixture.G.projectiles.throwBomb(fizzyOwner);
+  fizzy.pos.set(0,1,0);fizzy.prev.copy(fizzy.pos);fizzy.vel.set(0,0,0);fizzy.fuse=1/60;fizzy.popLimit=1;fizzy.pops=1;
+  const fizzyRate=objectDamageScale(fizzy,'splashWall','Bomb_Fizzy'),fizzyHp=wall.hp;
+  fizzyFixture.G.projectiles.update(1/60);
+  near(wall.hp,fizzyHp-ALL_SUB_SPECS.fizzy.bursts[0].damageMax*fizzyRate-fizzyHp/400,
+    'Fizzy uses Bomb_Fizzy ×3.6 and one Wiki lifetime-decay frame');
+
+  const bombFixture=await fixture({fullRuntime:true,realProjectiles:true});
+  const bombOwner=bombFixture.make('shooter'),otherWallOwner=bombFixture.make('shooter');
+  bombOwner.team=1;otherWallOwner.team=0;equip(otherWallOwner,'splashWall');
+  const otherWall=deployed(bombFixture,otherWallOwner,'splashWall',[0,1,0]);
+  const nativeBomb={kind:'bomb',owner:bombOwner,team:1,ghost:false,pos:new bombFixture.THREE.Vector3(0,1,0),s3Sub:{id:'bomb'},
+    s3Resolved:{radius:7,damageInnerDistance:3.6,damageOuterDistance:7,damageMax:180,damageMin:30}};
+  const bombHp=otherWall.hp,bombRate=objectDamageScale(nativeBomb,'splashWall','Bomb');
+  bombFixture.G.projectiles._explodeBomb(nativeBomb);
+  near(otherWall.hp,bombHp-180*bombRate,'native _explodeBomb reaches Splash Wall with Bomb ×2');
 });

@@ -36,6 +36,33 @@ test('Triple Splashdown consumes native gauge/stats and protects only at 50F; ca
  f.G.projectiles.update(1/60);assert.equal(f.G.projectiles._catalogueFists.length,1);
  for(let i=0;i<100;i++)f.G.projectiles.update(1/60);assert.equal(f.G.projectiles._catalogueFists.length,0);
 });
+test('Triple Splashdown impact consumes source SPU tiers for damage reach and paint at 0/57 AP',async()=>{
+ async function impact(ap){
+  const f=await setup(),owner=f.make(),victim=f.make(),hits=[],stamps=[];
+  const loadout=ap===0?Array.from({length:3},()=>({main:'none',subs:['none','none','none']})):
+   Array.from({length:3},()=>({main:'specialPower',subs:['specialPower','specialPower','specialPower']}));
+  owner.s3.loadout=loadout;owner.s3RefreshGear();assert.equal(owner.s3.abilityPoints.specialPower||0,ap);
+  equip(f,owner,'bomb','tripleSplashdown');owner.pos.set(0,0,0);owner.aimYaw=0;owner.team=0;victim.team=1;
+  f.G.actors=[owner,victim];
+  f.G.projectiles.applyHit=(source,target,damage,cause)=>hits.push({source,target,damage,cause});
+  f.G.paint.splat=(pos,radius,team,opts)=>{stamps.push({x:pos.x,z:pos.z,radius,team,opts});return 1;};
+  owner._startSpecial();const fists=f.G.projectiles._catalogueFists.slice();assert.equal(fists.length,2);
+  const center=fists[0].target,radial=Math.sqrt(10.2**2-.7**2);
+  // Place the victim away from the second fist so only the expanded first
+  // radius can reach it at maximum gear.
+  victim.pos.set(center.x-radial,center.y,center.z);
+  for(let i=0;i<86;i++)f.G.projectiles.update(1/60);
+  const extent=Math.max(...stamps.map(s=>Math.min(...fists.map(fist=>Math.hypot(s.x-fist.target.x,s.z-fist.target.z)))));
+  return {hits,stamps,extent};
+ }
+ const base=await impact(0),max=await impact(57);
+ assert.equal(base.hits.length,0,'10.2 units is beyond the source 9.6 far radius at base AP');
+ assert.equal(max.hits.length,1,'57 AP grows the far damage radius to 10.56');
+ assert.ok(Math.abs(max.hits[0].damage-(220+(60-220)*((10.2-7.04)/(10.56-7.04))))<1e-8);
+ assert.ok(max.stamps.length>base.stamps.length,'the source 12 paint-radius tier stamps a larger impact footprint than the 10 tier');
+ assert.ok(base.extent<=8.5+1e-8&&max.extent<=10.5+1e-8,'the sampled stamp centers stay inside each sourced radius less the 1.5-unit stamp inset');
+ assert.ok(max.extent>base.extent+1.5,'maximum gear expands the observed source paint footprint');
+});
 test('Super Jump Splashdown creates player descent without extra fists',async()=>{
  const f=await setup(),a=f.make();equip(f,a,'bomb','tripleSplashdown');a.superJumpState={phase:'flight'};a.intent.special=true;a.pos.y=20;
  a._updateSuperJump(1/60);assert.equal(a.specialActive.superJump,true);assert.equal(a.superJumpState,null);assert.equal(f.G.projectiles._catalogueFists?.length||0,0);assert.equal(a.vel.y,-39);
@@ -123,9 +150,9 @@ test('remote Ink Vac absorption admits new equipped attacks with registry limits
  const f=await setup(),vac=f.make('charger'),shooter=f.make();equip(f,vac,'bomb','inkVac');vac._startSpecial();const state=f.inkVacState(vac);assert.ok(state);
  Object.assign(shooter,{remote:true,team:1,nid:2,owner:'A'});equip(f,shooter,'burst','inkjet');f.installInkVacSenderValidator(()=>true);
  const payload={actor:shooter,target:vac,kit:'inkVac',serial:state.serial,key:'2#catalogue1',damage:60,sub:'burst'};
- assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.absorb,shooter,{...payload,damage:61},{from:'A'}).applied,true);assert.equal(state.absorbedDamage,60,'claimed damage is clamped to the equipped sub registry');
- assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.absorb,shooter,payload,{from:'A'}).applied,false);assert.equal(state.absorbedDamage,60);
+ assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.absorb,shooter,{...payload,damage:61},{from:'A'}).applied,true);assert.equal(state.absorbedDamage,35,'Burst blast registry is35; the separate25 contact hit is not absorbed twice');
+ assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.absorb,shooter,payload,{from:'A'}).applied,false);assert.equal(state.absorbedDamage,35);
  const special={...payload,key:'2#catalogue2',damage:120,special:'inkjet'};delete special.sub;
- assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.absorb,shooter,special,{from:'A'}).applied,true);assert.equal(state.absorbedDamage,180);
+ assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.absorb,shooter,special,{from:'A'}).applied,true);assert.equal(state.absorbedDamage,155);
  assert.equal(f.replayInkVac(f.INK_VAC_EVENTS.absorb,shooter,{...special,key:'2#catalogue3',special:'crabTank'},{from:'A'}).applied,false);
 });
