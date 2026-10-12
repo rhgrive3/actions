@@ -14,6 +14,8 @@ const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n
 const site = path.resolve(arg('--site', '_site')), out = path.resolve(arg('--out', '.ci-scratch/weapon-gallery'));
 const ids = (arg('--ids', '') || '').split(',').filter(Boolean), held = !process.argv.includes('--no-held');
 const size = Number(arg('--size', 400)), crowd = process.argv.includes('--crowd');
+const crowdIds = (arg('--crowd-ids', '') || '').split(',').filter(Boolean);
+if (crowdIds.length && (!crowd || crowdIds.length !== 8 || ids.length !== 1 || ids[0] !== crowdIds[0])) throw Error('--crowd-ids requires eight IDs and --ids equal to the first crowd weapon');
 fs.mkdirSync(out, { recursive: true });
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
 const prefix = '/_versions/' + identity.build.revision + '/';
@@ -67,7 +69,7 @@ try {
   const list = ids.length ? ids : all;
   const rows = [];
   for (const id of list) {
-    const row = await page.evaluate(async ({ id, held, crowd }) => {
+    const row = await page.evaluate(async ({ id, held, crowd, crowdIds }) => {
       const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
       const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
@@ -168,20 +170,20 @@ try {
       samples.sort((a,b)=>a-b);res.renderMs={p50:samples[Math.floor(samples.length*.5)],p95:samples[Math.floor(samples.length*.95)]};
       res.drawCalls=renderer.info.render.calls;res.renderTriangles=renderer.info.render.triangles;
       if(crowd){
-        const actors=[a], ids=['s3-saber-normal','s3-saber-lite','s3-saber-heavy','s3-stringer-normal','s3-stringer-short','s3-stringer-explosion'];
+        const actors=[a], ids=crowdIds.length?crowdIds:['s3-saber-normal','s3-saber-lite','s3-saber-heavy','s3-stringer-normal','s3-stringer-short','s3-stringer-explosion'];
         for(let k=1;k<8;k++){
           const other=new Actor({team:k%2,weapon:ids[k%ids.length],CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),c=other.character;
           c.actor=other;c.onEvent=null;other.grounded=other.ground.hit=true;scene.add(c.root);actors.push(other);
           if(c._sourceMotionLoader)await c._sourceMotionLoader;if(c.sourceMotion?.ready)await c.sourceMotion.ready;
         }
-        G.actors=actors;const camera=new THREE.PerspectiveCamera(40,1,.05,60);camera.position.set(-5,3.5,8);camera.lookAt(0,.8,0);
+        G.actors=actors;const camera=new THREE.PerspectiveCamera(40,1,.05,60),cameraTarget=new THREE.Vector3(0,.8,0);camera.position.set(-5,3.5,8);camera.lookAt(cameraTarget);
         const quant=(arr)=>{arr.sort((a,b)=>a-b);return{p50:arr[Math.floor(arr.length*.5)],p95:arr[Math.floor(arr.length*.95)]};};
         res.crowd={};
         for(const tier of['game','far']){
           for(let k=0;k<actors.length;k++){const o=actors[k];o.pos.set((k%4-1.5)*1.15,0,Math.floor(k/4)*1.5);o.intent.fire=false;o.character.setLod(tier);for(let z=0;z<4;z++)o._finishFrame(1/60);}
           const cpu=[],done=[],anim=[];for(let k=0;k<80;k++){const t0=performance.now();for(const o of actors)o._finishFrame(1/60);const t1=performance.now();renderer.render(scene,camera);const t2=performance.now();gl.finish();const t3=performance.now();if(k>=20){anim.push(t1-t0);cpu.push(t2-t1);done.push(t3-t1);}}
           const geos=new Set();scene.traverseVisible(o=>{if(o.isMesh&&o.geometry)geos.add(o.geometry);});let geometryBytes=0;for(const g of geos){for(const a of Object.values(g.attributes))geometryBytes+=a.array.byteLength;if(g.index)geometryBytes+=g.index.array.byteLength;}
-          res.crowd[tier]={actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
+          res.crowd[tier]={camera:{position:camera.position.toArray(),target:cameraTarget.toArray(),fov:camera.fov,direction:camera.getWorldDirection(new THREE.Vector3()).toArray()},lodTiers:actors.map(o=>o.character.lodTier),lodStates:actors.map(o=>({force:o.character.lod.force,tier:o.character.lod.tier,to:o.character.lod.to})),weaponNear:actors.map(o=>o.character.weapon.near),actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
           res.images['crowd-'+tier]=snap();
         }
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
@@ -191,7 +193,7 @@ try {
       Object.assign(res.images, shots); res.maxGrip = +maxGrip.toFixed(4); res.nonFinite = nonFinite; res.firingFrames = fired;
       res.weaponKind = ch.weaponKind; res.weaponModel = ch.weaponModel;
       return res;
-    }, { id, held, crowd });
+    }, { id, held, crowd, crowdIds });
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));

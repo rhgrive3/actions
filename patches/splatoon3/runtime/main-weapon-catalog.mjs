@@ -194,7 +194,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     else if (!keep) s.stored = null;
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     s.roll = null; s.lunge=null; s.melee=null; s.turret = 0;
-    if (s.canopy && !s.canopy.launched) s.canopy.open = false;
+    if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
   }
   R.reset = function(...args) { this.catalogState = null; return legacyReset.apply(this,args); };
@@ -815,6 +815,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(canopy.launched){canopy.pos.addScaledVector(canopy.dir,finite(c.CanopyInitSpeed,7.92)*dt);floorPaint(a,canopy.pos,finite(c.CanopyPaintRadius,1));
         canopy.remaining-=dt;if(canopy.remaining<=EPS||canopy.hp<=0)s.canopy=null;}
       else {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
+        // Read-only facing consumers use the same admitted-canopy opening boundary.
+        // This is not an extra hold timer, and stops before a failed open payment.
+        if(canopy.preparing)canopy.preparing=!!input.fire&&canopy.age*HZ<measure.open;
         canopy.open=!!input.fire&&canopy.age*HZ>=measure.open;
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
@@ -837,7 +840,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(!pay(runner,finite(t.InkConsume,.05)*100*inkMod(a)))return;
       if(s.naked<=EPS&&!s.canopy)s.canopy={hp:finite(c.CanopyHP,measure.hp*10)/10,age:0,open:false,launched:false,
         pos:a.pos.clone(),dir:a.aimDir.clone(),radius:finite(c.CanopyColRadius,measure.radius)};
-      if(s.canopy&&!s.canopy.launched&&!continuous)s.canopy.age=-measure.startup/HZ;
+      if(s.canopy&&!s.canopy.launched&&!continuous){s.canopy.age=-measure.startup/HZ;s.canopy.preparing=true;}
       beginPending(s,measure.startup,()=>{emitPellets(runner,r);runner.firingT=.35;});
       runner.cooldown=measure.repeat/HZ;
     }
@@ -892,6 +895,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const a=this.a,r=a.weapon.catalogRecord;
     if(!r)return legacyUpdate.call(this,dt,input);
     const s=state(this);
+    if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
     // Cancel BEFORE the installed sub preparation owner checks main busy state.
     if(input.sub||a.specialActive||!a.alive)cancel(this);
     if(a.form==='squid'){
