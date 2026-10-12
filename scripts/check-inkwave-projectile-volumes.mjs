@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Native game input + presentation-only frozen comparisons. Original packs
-// stay on private routes; fixture runs are structural tests, not retail art.
+// Fixture runs are structural tests; --default uses the shipped original pack
+// through ordinary startup, without a global setting or registration call.
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -17,14 +18,16 @@ const server=http.createServer((req,res)=>{
  if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
  res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});fs.createReadStream(file).pipe(res);
 });
-await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+server.address().port,useWebkit=process.argv.includes('--webkit'),quick=process.argv.includes('--quick');
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+server.address().port,useWebkit=process.argv.includes('--webkit'),quick=process.argv.includes('--quick'),useDefaults=process.argv.includes('--default');
 const identity=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 let browser,page;const errors=[],result={buildIdentity:{contentHash:identity.contentHash,inputHash:identity.inputHash},environment:useWebkit?'WebKit Linux software WebGL, emulated touch viewport':'Chromium Linux SwiftShader',physicalDevice:false,cases:[]};
 try {
  browser=useWebkit?await webkit.launch({headless:true}):await chromium.launch({executablePath:process.env.VOLUME_CHROMIUM||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':chromium.executablePath()),headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
  page=await browser.newPage({viewport:useWebkit?{width:844,height:390}:{width:960,height:640},hasTouch:useWebkit,isMobile:useWebkit});page.setDefaultTimeout(120000);page.on('pageerror',e=>{errors.push(String(e));console.error(String(e));});page.on('console',m=>{if(m.type()==='error'){errors.push(m.text());console.error(m.text());}});
- await page.goto(base+'/?range&skipTitle');await page.waitForFunction(()=>window.__G?.match?.range&&window.__G.match.state==='playing',null,{timeout:240000});
- await page.evaluate(async()=>{const G=window.__G,g=window.__inkwave;g.debug.freeze();g.debug.freezeBots();window.volumeSpawn=G.local.pos.clone();await Promise.all([G.fx.loadInkVolume('roller','/local-sheet/manifest.json'),G.fx.loadInkVolume('shooter','/local-rod/manifest.json')]);});
+ if(!useDefaults)await page.addInitScript(()=>{globalThis.INKWAVE_INK_VOLUME_URLS={roller:'/local-sheet/manifest.json',shooter:'/local-rod/manifest.json'};});
+ const bootStart=Date.now();await page.goto(base+'/?range&skipTitle');await page.waitForFunction(()=>window.__G?.match?.range&&window.__G.match.state==='playing',null,{timeout:240000});
+ result.startup=await page.evaluate(async(useDefaults)=>{const G=window.__G,g=window.__inkwave;g.debug.freeze();g.debug.freezeBots();window.volumeSpawn=G.local.pos.clone();const ready=await G.fx.inkVolumeReady;window.volumePackURLs=useDefaults?(await import('/patches/local-quality/ink-volume/pack.mjs')).DEFAULT_INK_VOLUME_URLS:{roller:'/local-sheet/manifest.json',shooter:'/local-rod/manifest.json'};return {ready,error:G.fx.inkVolumeError||null,assets:[...G.fx.inkVolumes.assets.keys()],withoutConfiguration:globalThis.INKWAVE_INK_VOLUME_URL===undefined&&globalThis.INKWAVE_INK_VOLUME_URLS===undefined,geometry:G.renderer.info.memory.geometries,textures:G.renderer.info.memory.textures};},useDefaults);
+ result.startup.elapsedMs=Date.now()-bootStart;assert.equal(result.startup.ready,true);assert.equal(result.startup.error,null);assert.deepEqual([...result.startup.assets].sort(),['roller','shooter']);if(useDefaults)assert(result.startup.withoutConfiguration);
  const cases=[['roller',false],['roller',true],['shooter',false],['slosher',false],['dualies',false],['splatling',false],['s3-roller-compact',true],['s3-shooter-first',false],['s3-slosher-diffusion',false]];
  for(const [id,vertical] of cases) {
   const label=id+(vertical?'-vertical':'');console.log('native input',label);
@@ -49,7 +52,7 @@ try {
   data.views=await page.evaluate(async()=>{
    const G=window.__G,T=await import('three'),{InkVolumes}=await import('/patches/local-quality/ink-volume/runtime.mjs'),{submitInkVolume}=await import('/patches/local-quality/ink-volume/recipes.mjs'),{loadVolumePack}=await import('/patches/local-quality/ink-volume/pack.mjs');
    if(!window.volumeInspector){
-    const root=new T.Group(),scene=new T.Scene();scene.add(root);const engine=new InkVolumes(root,G.fx._light),packs=await Promise.all([loadVolumePack('/local-sheet/manifest.json'),loadVolumePack('/local-rod/manifest.json')]);engine.register('roller',packs[0]);engine.register('shooter',packs[1]);
+    const root=new T.Group(),scene=new T.Scene();scene.add(root);const engine=new InkVolumes(root,G.fx._light),packs=await Promise.all([loadVolumePack(volumePackURLs.roller),loadVolumePack(volumePackURLs.shooter)]);engine.register('roller',packs[0]);engine.register('shooter',packs[1]);
     const renderer=new T.WebGLRenderer({alpha:true,antialias:true,preserveDrawingBuffer:true});renderer.setSize(640,640);renderer.setClearColor(0x161c2a,1);renderer.domElement.id='volume-inspect';renderer.domElement.style.cssText='position:fixed;left:0;top:0;z-index:999999';window.volumeInspector={engine,renderer,scene,root,target:new T.WebGLRenderTarget(256,256)};
    }
    const {engine:e,renderer,scene,root}=volumeInspector;document.body.append(renderer.domElement);

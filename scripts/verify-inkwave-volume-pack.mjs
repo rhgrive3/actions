@@ -2,10 +2,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import { unpackVolumes } from '../patches/local-quality/ink-volume/pack.mjs';
+import { unpackVolumes, decodeVolumeBinary } from '../patches/local-quality/ink-volume/pack.mjs';
 import { decodeVTF } from '../patches/local-quality/ink-volume/vtf.mjs';
 const [directory,...inputs]=process.argv.slice(2), manifest=JSON.parse(fs.readFileSync(path.join(directory,'manifest.json'))),bytes=fs.readFileSync(path.join(directory,manifest.binary));
-const pack=unpackVolumes(manifest,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));let total=0;
+const binary=await decodeVolumeBinary(manifest,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
+const pack=unpackVolumes(manifest,binary);let total=0;
 for(let p=0;p<pack.patterns.length;p++) {
  const original=inputs[p]?decodeVTF(fs.readFileSync(inputs[p])):null;
  for(let f=0;f<pack.patterns[p].frames.length;f++) {

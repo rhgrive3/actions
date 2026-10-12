@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Optional original assets live outside Git. This checks the emitted game, then
+// This checks the emitted game and a specified pack, then
 // the same renderer in a controlled orthographic comparison. No retail/device claim.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -79,11 +79,12 @@ try {
  for (const frame of result.comparison.comparisons) assert(frame.alphaMean < .3, 'front alpha mean error (byte units): '+JSON.stringify(frame));
  for (const view of result.comparison.grazingViews) {assert.equal(view.darkTransparent,0,'black transparent interior seam: '+JSON.stringify(view));assert.equal(view.blackPixels,0,'unlit black interior seam: '+JSON.stringify(view));}
  if (!process.argv.includes('--shape-only')) {
+ await page.addInitScript(()=>{globalThis.INKWAVE_INK_VOLUME_URLS={roller:'/local-ink/manifest.json'};});
  await page.goto(base+'/?range&skipTitle');console.log('loaded document');await page.waitForFunction(()=>window.__G?.match?.range && window.__G.match.state==='playing',null,{timeout:240000});
  console.log('playing range');result.integration=await page.evaluate(async()=>{
   const G=window.__G,g=window.__inkwave,a=G.local;g.debug.freeze();a.setWeapon('roller');a.ink=100;
   const beforeRegistration={...G.renderer.info.memory};
-  await G.fx.loadInkVolume('roller','/local-ink/manifest.json');
+  if(await G.fx.inkVolumeReady!==true)throw Error('Automatic game pack load failed: '+G.fx.inkVolumeError);
   G.projectiles.clear();g.debug.fire(true);g._skipRender=true;
   let ticks=0;while(ticks++<100 && !G.projectiles.list.some(p=>p._inkVolumeHorizontal))g._frame(1/60);
   g.debug.fire(false);g._skipRender=false;g._frame(1/60);

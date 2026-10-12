@@ -3,15 +3,17 @@
 export function adaptInkVolumes(rel, code, replaceOnce) {
   const patch = (a, b, why) => { code = replaceOnce(code, a, b, 'ink volume: ' + why); };
   if (rel === 'src/fx/fx.js') {
-    code = "import { InkVolumes } from '../../patches/local-quality/ink-volume/runtime.mjs';\nimport { loadVolumePack } from '../../patches/local-quality/ink-volume/pack.mjs';\n" + code;
+    code = "import { InkVolumes } from '../../patches/local-quality/ink-volume/runtime.mjs';\nimport { loadVolumePack, DEFAULT_INK_VOLUME_URLS } from '../../patches/local-quality/ink-volume/pack.mjs';\n" + code;
     patch('    this._sq = new Float32Array(96 * 14); this._sqN = 0;\n  }', `    this._sq = new Float32Array(96 * 14); this._sqN = 0;
-    // Deployment-owned, licensed external pack. No automatic asset request unless configured.
+    // Original source-derived packs are included and enabled on ordinary boot.
+    // Optional overrides remain available to the asset registration API/tests.
     const volumeURL = globalThis.INKWAVE_INK_VOLUME_URL;
     const volumeURLs = globalThis.INKWAVE_INK_VOLUME_URLS;
-    const entries = volumeURLs && typeof volumeURLs === 'object' ? Object.entries(volumeURLs) : [];
-    if (typeof volumeURL === 'string' && volumeURL && !entries.some(([name]) => name === 'roller')) entries.push(['roller',volumeURL]);
-    if (entries.length) this.inkVolumeReady = Promise.all(entries.map(([name,url]) => this.loadInkVolume(name,url).then(() => true))).then(() => true).catch(error => { this.inkVolumeError = String(error); return null; });
-  }`, 'optional licensed deployment pack');
+    const entries = Object.entries({ ...DEFAULT_INK_VOLUME_URLS, ...(volumeURLs && typeof volumeURLs === 'object' ? volumeURLs : {}) });
+    if (typeof volumeURL === 'string' && volumeURL) entries.find(([name]) => name === 'roller')[1] = volumeURL;
+    this._inkVolumeAbort = typeof AbortController === 'function' ? new AbortController() : null;
+    this.inkVolumeReady = Promise.all(entries.map(([name,url]) => this.loadInkVolume(name,url,{ signal: this._inkVolumeAbort?.signal }).then(() => true))).then(() => true).catch(error => { this.inkVolumeError = String(error); return null; });
+  }`, 'automatic bundled source packs');
     patch('  setCollider(fn) { this.collider = fn; }', `  setCollider(fn) { this.collider = fn; }
   async loadInkVolume(name, url, options) {
     const pack = await loadVolumePack(url, options);
@@ -23,8 +25,11 @@ export function adaptInkVolumes(rel, code, replaceOnce) {
     return this.inkVolumes.register(name, pack);
   }`, 'shared renderer registration');
     patch('    this.dN = 0; this.dGeo.instanceCount = 0;', '    this.inkVolumes?.clear();\n    this.dN = 0; this.dGeo.instanceCount = 0;', 'match reset');
-    patch('  dispose() {\n    this.scene.remove(this.root);', '  dispose() {\n    this._inkVolumeDisposed = true;\n    this.inkVolumeReady = null;\n    this.inkVolumes?.dispose();\n    this.scene.remove(this.root);', 'owned resources released before FX traversal');
+    patch('  dispose() {\n    this.scene.remove(this.root);', '  dispose() {\n    this._inkVolumeDisposed = true;\n    this._inkVolumeAbort?.abort();\n    this._inkVolumeAbort = null;\n    this.inkVolumeReady = null;\n    this.inkVolumes?.dispose();\n    this.scene.remove(this.root);', 'owned resources released before FX traversal');
     patch('return { drops: this.dN,', 'return { inkVolumes: this.inkVolumes?.metrics || null, drops: this.dN,', 'telemetry');
+  }
+  if (rel === 'src/main.js') {
+    patch("    await progress(0.85, t('Warming up…'));", "    // Complete the default pack load in the existing warmup phase, before\n    // shader compilation and the first shot.\n    await Promise.all([G.fx.inkVolumeReady, progress(0.85, t('Warming up…'))]);", 'default packs ready before gameplay');
   }
   if (rel === 'src/game/weapons.js') {
     code = "import { captureInkVolume, submitInkVolume } from '../../patches/local-quality/ink-volume/recipes.mjs';\n" + code;

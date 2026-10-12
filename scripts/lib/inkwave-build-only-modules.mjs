@@ -3,6 +3,9 @@
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/ink-volume-adapter.mjs',
+  // Source decoding/shape construction belong to the offline bake, not gameplay.
+  'patches/local-quality/ink-volume/vtf.mjs',
+  'patches/local-quality/ink-volume/mesh.mjs',
   'patches/splatoon3/ranked-adapter.mjs',
   'patches/splatoon3/ranked-ui-adapter.mjs',
   'patches/splatoon3/weapon-catalog-adapter.mjs',

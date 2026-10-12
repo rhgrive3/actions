@@ -7,6 +7,7 @@ on:
       - 'patches/local-quality/adapter.mjs'
       - 'patches/local-quality/tests/ink-volume.test.mjs'
       - 'patches/local-quality/tests/ink-volume-recipes.test.mjs'
+      - 'patches/local-quality/tests/ink-volume-defaults.test.mjs'
       - 'scripts/*inkwave-volume*.mjs'
       - 'scripts/*inkwave-projectile*.mjs'
       - 'reports/ink-volume/**'
@@ -36,6 +37,10 @@ jobs:
           node scripts/verify-inkwave-volume-pack.mjs .ci-scratch/fixture .ci-scratch/fixture/authored-test-0.vtf .ci-scratch/fixture/authored-test-1.vtf
           node scripts/create-inkwave-projectile-fixture.mjs .ci-scratch/rods
           node scripts/verify-inkwave-volume-pack.mjs .ci-scratch/rods .ci-scratch/rods/authored-line.vtf .ci-scratch/rods/authored-dot.vtf
+      - name: Original source pixels and all shipped closed meshes
+        run: |
+          node scripts/verify-inkwave-volume-pack.mjs patches/local-quality/ink-volume/assets/roller reports/ink-volume/source/rollerink1.vtf reports/ink-volume/source/rollerink2.vtf
+          node scripts/verify-inkwave-volume-pack.mjs patches/local-quality/ink-volume/assets/shooter reports/ink-volume/source/line.vtf reports/ink-volume/source/dot.vtf
       - name: Render the emitted game and compare every fixture frame
         run: |
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/site
@@ -43,11 +48,11 @@ jobs:
       - name: WebKit touch viewport shader and all-frame comparison
         run: node scripts/check-inkwave-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/evidence-webkit --webkit --touch --shape-only
       - name: Native vertical Roller, Shooter, Slosher and catalogue presentation
-        run: node scripts/check-inkwave-projectile-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/rods .ci-scratch/projectile-evidence --quick
+        run: node scripts/check-inkwave-projectile-volumes.mjs .ci-scratch/site patches/local-quality/ink-volume/assets/roller patches/local-quality/ink-volume/assets/shooter .ci-scratch/projectile-evidence --default --quick
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: authored-ink-volume-render-evidence
+          name: ink-volume-render-evidence
           path: |
             .ci-scratch/evidence
             .ci-scratch/evidence-webkit

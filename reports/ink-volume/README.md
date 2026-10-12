@@ -1,4 +1,4 @@
-# INKWAVE alpha volume engine — local original-asset verification
+# INKWAVE alpha volume engine — enabled in the production game
 
 Work began from latest main `bf38901475fa857016cf06bcc98cd764898795d0` on 2026-10-11. PR #401 was not inspected or changed. The upstream `inkwave-public/` source remains intact; the existing production source composition adds the renderer.
 
@@ -30,7 +30,7 @@ Registration assembles source pixels into separate per-pattern atlases with no m
 
 ## Rights and original-source findings
 
-Local checkout: `https://github.com/zerokizo/splatoonsweps`, commit `a74592726f38f26fd1d3a15ed315701068283847`. Its README describes Wii U/first-generation Splatoon and requires Team Fortress 2 and Enhanced Inklings. No repository LICENSE or redistribution permission for the VTF/VMT/PCF/models was found. Neither original nor derived assets/screenshots are committed or published by this PR. The locally generated pack contains original pixels and must remain private until redistribution rights are established.
+Local checkout: `https://github.com/zerokizo/splatoonsweps`, commit `a74592726f38f26fd1d3a15ed315701068283847`. Its README describes Wii U/first-generation Splatoon and requires Team Fortress 2 and Enhanced Inklings. No repository LICENSE was found during source inspection. The user subsequently confirmed that asset permission had been obtained and instructed ordinary default activation. The four required VTFs and their VMTs are now included unchanged in `reports/ink-volume/source/`; their source-derived packs ship with the game. Other inspected models/PCF/ring assets are not needed for this renderer and are not bundled.
 
 Inspected files:
 
@@ -45,41 +45,33 @@ The supplied `splatoonsweps_RollerSplash_MuzzleRing_v6_ATTACHMENT_FIX.html` (SHA
 
 The prototype's 12-shot first-generation physics, `UNIT=.045`, approximate birth-to-muzzle interpolation and demonstration hand root `[0,.62,-1.11]` are not INKWAVE gameplay parameters. Its model-rest `roll` attachment metadata and separate 672-triangle MuzzleRing/16 PCF particles were cross-checked; the original/ enhanced front, side, oblique and top views were rendered locally. The optional external Valve glow dependency was unavailable in this comparison and remained hidden, with no substitute. The HTML and its embedded images are local-only. Splatoon 3 Ver.11.3.0 exact visual/physical-device footage is not available here; this work does not claim a retail-perfect match or official thickness, shine, FPS, physics or geometry values.
 
-## Reproduce with legitimately available assets
+## Ordinary startup and reproduction
+
+Build and start the game normally. FX automatically loads the included Roller and Shooter packs; both complete in the existing warmup phase before shader compilation and the first shot. No URL setting, console command or opt-in is required. Original source/geometry bytes use lossless gzip (17,636,846 + 57,916 bytes, **16.875 MiB** combined) with SHA-256 over the uncompressed pack. The 34 source RGBA frames and all mesh bytes remain unchanged. VTF decoding and mesh construction are offline-only modules, excluded from the emitted runtime graph; their source hashes remain bound to the build identity.
 
 ```sh
 npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 meshoptimizer@1.3.0
-node scripts/bake-inkwave-volumes.mjs .reference-data/roller-volume \
-  /path/to/SplatoonSWEPs/materials/splatoonsweps/effects/rollerink1.vtf \
-  /path/to/SplatoonSWEPs/materials/splatoonsweps/effects/rollerink2.vtf
-node scripts/verify-inkwave-volume-pack.mjs .reference-data/roller-volume \
-  /path/to/rollerink1.vtf /path/to/rollerink2.vtf
 node scripts/build-inkwave.mjs inkwave-public .built-site/volume
-node scripts/check-inkwave-volumes.mjs .built-site/volume \
-  .reference-data/roller-volume .browser-evidence/ink-volume
-```
-
-The verification server serves the pack only under its private `/local-ink/` route. To use an authorized pack in an actual deployment, set `globalThis.INKWAVE_INK_VOLUME_URL` before the game's module boot, or call `await window.__G.fx.loadInkVolume('roller', '/authorized-pack/manifest.json')` after boot. Registration completes before the new renderer is used; a failed/missing pack retains the existing renderer. FX exposes `inkVolumeReady` and `inkVolumeError` for deployment diagnostics. The automatic completion promise resolves to status rather than retaining the asset/buffer graph; disposal releases it and rejects late registration. Manifest and binary must share an origin and SHA-256 must match. There is no automatic public download of third-party assets.
-
-For both families, provide `globalThis.INKWAVE_INK_VOLUME_URLS = { roller: '/authorized/sheets/manifest.json', shooter: '/authorized/rods/manifest.json' }`. An explicit map entry overrides the backward-compatible single Roller URL. Weapon-specific registrations use `projectile:<weapon-id>:<recipe>` (recipes: `roller-horizontal`, `roller-vertical`, `brush`, `shooter`, `slosher`). The shared sheet fallback is restricted to Rollers/Brushes and the standard/Tri-Slosher. Machine vortices, Bloblobber bubbles, Explosher and Dread Wringer do not silently receive unrelated artwork; their own asset mapping remains required.
-
-```sh
-node scripts/bake-inkwave-projectile-volumes.mjs /path/to/SplatoonSWEPs .reference-data/shooter-volume
-node scripts/verify-inkwave-volume-pack.mjs .reference-data/shooter-volume \
-  /path/to/SplatoonSWEPs/materials/splatoonsweps/crosshair/line.vtf \
-  /path/to/SplatoonSWEPs/materials/splatoonsweps/crosshair/dot.vtf
 node scripts/check-inkwave-projectile-volumes.mjs .built-site/volume \
-  .reference-data/roller-volume .reference-data/shooter-volume .browser-evidence/projectiles
+  patches/local-quality/ink-volume/assets/roller \
+  patches/local-quality/ink-volume/assets/shooter \
+  .browser-evidence/projectiles --default --no-performance
 ```
 
-The rod tool uses documented independent art settings: full thickness 1, symmetric back/front, no upper bias, and the original beam UV window. Pixel alpha, colour and source SHA remain immutable. Independent Pillow DDS decoding of both original DXT5 images reported zero RGBA differences. CI generates labelled authored structural pixels for the rod pack, never replacement gameplay artwork.
+FX exposes `inkVolumeReady` (status only) and `inkVolumeError` for diagnostics. Disposal aborts pending network work, releases readiness and rejects late registration. A network/decode failure preserves existing gameplay and rendering; it does not require an enabling setting. URLs resolve beside the versioned pack module, including subdirectory hosting. Manifest and binary share an origin; decoded size and SHA-256 are checked before registration. Invalid cached data is evicted and fetched again, and storage/quota failures do not discard a verified usable pack.
 
-CI generates explicitly authored structural test data using `create-inkwave-volume-fixture.mjs`; it is not a replacement artwork or evidence of matching Splatoon. The exact emitted-game connection is exercised in both local original-asset runs and CI fixture runs. CI uploads fixture images and metrics only. Original-source images remain in the ignored local evidence directory.
+The existing 10 MiB startup snapshot and 12 MiB revision budget stay unchanged. Both small pack manifests enter its precache. Compressed binaries use a separate content-addressed CacheStorage with two slots (one per family, at most 20 MiB each); a successful first game load warms them automatically and evicts a prior version in the same slot. Already loaded assets work in later offline launches without a new per-code-revision binary copy. A fresh offline install that has not previously downloaded these packs can still use the existing renderer. The current combined transport/cache payload is 16.875 MiB, not part of the 10 MiB snapshot, and its first online download adds startup/network cost.
+
+Asset registration remains available for extensions, not for enabling the bundled feature. `FX.registerInkVolume(name, decodedPack)` / `FX.loadInkVolume(name, manifestURL)` accept compatible new packs. Individual mappings use `projectile:<weapon-id>:<recipe>` (`roller-horizontal`, `roller-vertical`, `brush`, `shooter`, `slosher`). Machine vortices, bubbles, explosions and Dread Wringer require their own art rather than an unrelated sheet.
+
+To reproduce the bake, use the unchanged source VTFs in `reports/ink-volume/source/` with `bake-inkwave-volumes.mjs`. `bake-inkwave-projectile-volumes.mjs` takes a SplatoonSWEPs checkout. `package-inkwave-volume-packs.mjs <sheet-bake> <rod-bake>` performs the reviewed lossless transport conversion. `verify-inkwave-volume-pack.mjs` accepts either uncompressed research bakes or shipped gzip packs. Source hashes, 34 RGBA comparisons, gzip limits/corruption, default automatic boot, cache reuse/repair/eviction and late disposal are covered by tests.
+
+CI retains authored structural fixtures for generic topology tests, verifies every original shipped mesh and pixel against the committed source VTF, and renders the native nine-action game with its **default original assets**. Review images are in this report and CI artifacts; they are source-based implementation evidence, not a claim of Nintendo retail-perfect imagery.
 
 ## Verification and limits
 
 Results and measurements are recorded in `results.md` / `measurements.json`. Front comparison uses orthographic rendered alpha at 512×512 for all 32 original frames. Byte-for-byte source preservation, mesh validity and rendered raster agreement are separate checks; rasterization at clipped/bilinear edge cells need not be byte-identical to a full plane. Each frame additionally receives side/top/bottom alpha and RGB readback against its truly opaque source regions: every eroded body pixel must remain opaque and avoid a black seam. Six camera directions and an oblique 16-frame image sequence are saved locally. The native game run fires through real input in the Practice Range, follows flight/landing, compares its existing renderer against the registered volume renderer, and checks repeated match resets.
 
-No arbitrary new physics, damage, paint or muzzle constants enter gameplay. Physical iPhone/Android/iPad measurements, retail Ver.11.3.0 equivalence, unrestricted overlap order for translucent instancing and licensed public asset delivery remain explicit limitations. Opaque bodies have correct depth occlusion; partial-alpha fringes do not implement order-independent transparency. The original pack uses substantial memory and cannot be described as mobile-validated. Offline asset-cache policy is unchanged; external volume packs are not automatically added to the 10 MiB PWA snapshot.
+No arbitrary new physics, damage, paint or muzzle constants enter gameplay. Physical iPhone/Android/iPad measurements, retail Ver.11.3.0 equivalence, unrestricted overlap order for translucent instancing remain explicit limitations. Opaque bodies have correct depth occlusion; partial-alpha fringes do not implement order-independent transparency. The original pack uses substantial memory and cannot be described as mobile-validated. The shipped packs are automatically downloaded and cached separately as described above; initial offline use and physical-device memory/thermal behavior still need separate validation.
 
 CI/base alignment: during review, main advanced to `b078c379` with the separate owned-run paint scan change. Its workflow referenced a new test while checking out the older feature SHA. That six-file main update is adopted intact; no scan test is removed or replaced. The combined build passes the strict paint and volume packaging gates. Renderer core is unchanged, and measurements retain their original implementation/base scope.
