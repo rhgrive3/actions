@@ -186,26 +186,118 @@ function dapple(d) {
   return finish(d, body, ink, trig, [0, DY, 0.201]);
 }
 
+// ------------------------------------------------------------------------------------------ Glooga Dualies
+/** Closed stadium outline [[z, y], ...] from a to b (centre line) with half width w. */
+function gloogaSlot(a, b, w, n = 6) {
+  const dz = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dz, dy), ux = dz / l, uy = dy / l, out = [];
+  for (const [c, a0] of [[b, -Math.PI / 2], [a, Math.PI / 2]]) for (let i = 0; i <= n; i++) {
+    const t = a0 + (i / n) * Math.PI, cs = Math.cos(t), sn = Math.sin(t);
+    out.push([c[0] + w * (ux * cs - uy * sn), c[1] + w * (uy * cs + ux * sn)]);
+  }
+  return out;
+}
+/** Bent wire: a polyline [[x, y, z], ...] with each inner corner rounded over `bend` m, as a tube of radius r. */
+function gloogaWire(pts, r, bend = 0.004) {
+  const V3 = DK.THREE.Vector3, P = pts.map(p => new V3(...p)), out = [P[0]];
+  for (let i = 1; i < P.length - 1; i++) {
+    const a = P[i].clone().sub(P[i - 1]), b = P[i + 1].clone().sub(P[i]);
+    const ka = Math.min(bend, a.length() * 0.45), kb = Math.min(bend, b.length() * 0.45);
+    out.push(P[i].clone().addScaledVector(a.normalize(), -ka), P[i].clone().addScaledVector(a, -ka * 0.3).addScaledVector(b.clone().normalize(), kb * 0.3),
+      P[i].clone().addScaledVector(b.normalize(), kb));
+  }
+  out.push(P[P.length - 1]);
+  let len = 0; for (let i = 1; i < out.length; i++) len += out[i].distanceTo(out[i - 1]);
+  return pipe(out, r, Math.max(16, Math.round(len / 0.004)), 6);
+}
+
 function glooga(d) {
-  // Wmn_Maneuver_Gallon: a blue boxy upper body with vent slots on two legs (the grip and a squared front
-  // leg), red foot plates, a silver drum canister on the back with an ink window, wire hooks on top.
-  const C = { blue: '#2346c0', red: '#b8262c', silver: '#c3c6ca', dark: '#26282d', white: '#e8e8e4' };
-  const body = new Pieces(), ink = new Pieces();
-  const trig = pistolGrip(ink, { color: '#ffffff', triggerColor: C.dark, base: false });                                             // grip leg is ink
-  ink.add(box(0.06, 0.06, 0.2, 0, 0.07, 0.04, 0.2));
-  for (let k = 0; k < 4; k++) for (const sx of [-1, 1]) body.add(box(0.002, 0.008, 0.03, sx * 0.031, 0.08, 0.0 + k * 0.035, 0.4), C.dark, M.satin);
-  ink.add(shell([[0.09, 0.05], [0.13, 0.05], [0.13, -0.06], [0.115, -0.06], [0.115, 0.0], [0.105, 0.0], [0.105, -0.06], [0.09, -0.06]], 0.045, 0.004));  // front leg
-  body.add(box(0.05, 0.012, 0.17, 0, -0.068, 0.05, 0.3), C.red, M.satin);                                         // foot plate under both legs
-  body.add(zcyl(0.03, -0.12, -0.06, 0, 0.07, 22), C.silver, M.satin);                                             // rear canister
-  for (const z of [-0.11, -0.07]) body.add(ring(0.031, 0.003, 0, 0.07, z, 'z', 4, 22), C.dark, M.satin);
-  body.add(zlathe([[0, -0.13], [0.02, -0.13], [0.022, -0.122], [0, -0.12]], 0, 0.07, 0, 16), C.dark, M.satin);       // rear gear disc
-  ink.add(box(0.008, 0.02, 0.03, -0.03, 0.07, -0.09, 0.4));                                                      // ink window
-  body.add(pipe([[0, 0.1, -0.02], [0, 0.135, 0.0], [0, 0.14, 0.03], [0, 0.12, 0.04]], 0.0025, 16, 5), C.silver, M.satin);
-  body.add(pipe([[0, 0.1, 0.1], [0, 0.135, 0.12], [0, 0.14, 0.15], [0, 0.12, 0.16]], 0.0025, 16, 5), C.silver, M.satin);
-  body.add(zlathe([[0, 0.14], [0.022, 0.14], [0.024, 0.15], [0.02, 0.16], [0, 0.16]], 0, 0.07, 0, 18), C.silver, M.satin);  // mesh nozzle
-  body.add(ring(0.016, 0.002, 0, 0.07, 0.16, 'z', 4, 16), C.dark, M.satin);
-  body.add(pipe([[0, 0.1, -0.1], [0, 0.135, -0.075], [0, 0.11, -0.04]], 0.004, 14, 6), C.white, M.rubber);         // hose loop over the back
-  return finish(d, body, ink, trig, [0, 0.07, 0.162]);
+  // Wmn_Maneuver_Gallon, rebuilt from the official turntable (S3 Glooga Dualies Deco model rotating.mp4: same shape,
+  // Deco colours), the Deco promo render and the main-kit 3d.png (colours). A big blue box body with six diagonal
+  // through-slots (the rear three show the ink tank inside, the front three the red interior), a grille print, an
+  // embossed plate and a warning triangle; a red frame band under it; two blue legs (the raked grip and a front leg
+  // leaning back 23°) joined by a red foot block — the hand closes round the grip, the fingers sit in the opening.
+  // Front: a knurled ring and a perforated dome nozzle (ink centre) inside a bent-wire hanger (side posts hooked under
+  // the band, an M over the nozzle). Rear: the ink canister (glass, ink) behind a stack of knurled disks with a top
+  // tab, a clamp (two plates, threaded rod, fluted knob) under it, and a hose looping from the body side over to the
+  // tab. The turntable pair is mirrored (hose on each pistol's outer side); INKWAVE holds one geometry in both hands,
+  // so this is the right-hand variant: hose on −X, clamp rod on +X. Scale: visible grip leg 0.09 m; side reference
+  // px → m: z = (X − 170)·S, y = (263 − Y)·S (t=3.3 s frame, mirrored).
+  const S = 0.00078, P = (x, y) => [(x - 170) * S, (263 - y) * S], Z = x => (x - 170) * S, Y = y => (263 - y) * S;
+  const C = { blue: '#2a3cb4', red: '#a81e18', inner: '#7c1510', silver: '#c4c6c8', knurl: '#a9acb0', steel: '#7d8086', tab: '#3a3b3e',
+    rubber: '#2c2c2e', gasket: '#3a2e2a', hose: '#dcc8b6', wire: '#b9bcc0', print: '#14161e', label: '#ecebe6' };
+  const body = new Pieces(), ink = new Pieces(), trig = new Pieces();
+  const sm = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+  const pts = a => a.map(([x, y]) => P(x, y));
+  const AY = 0.098;                                                                           // canister / nozzle axis
+  // ---- body: slotted upper box, rear block over the grip, slightly wider front lower block
+  const bodyW = (z, y) => 0.0325 + 0.0015 * sm((z - Z(244)) / 0.004) * sm((Y(150) - y) / 0.004);
+  const slots = [[[171, 103], [195, 152]], [[198, 103], [222, 152]], [[225, 103], [248, 151]],
+    [[251, 103], [266, 126]], [[277, 103], [292, 126]], [[303, 103], [318, 126]]].map(([a, b]) => gloogaSlot(P(...a), P(...b), 0.0039));
+  body.add(dappleRoundSlab(dappleOutline(pts([[133, 92], [139, 85], [230, 84], [318, 84], [331, 88], [337, 100], [337, 190], [333, 197],
+    [300, 198], [252, 198], [247, 192], [246, 167], [210, 166], [204, 172], [203, 200], [150, 201], [138, 196], [133, 186], [132, 140]]), 0.004),
+  bodyW, 0.008, slots, 0.0016, 3), C.blue, M.gloss);
+  ink.add(zcyl(0.0262, Z(100), Z(250), 0, AY, 20));                                             // ink tank seen through the rear slots
+  body.add(box(0.054, 0.034, 0.064, 0, 0.114, Z(287), 0.2, 8, 4), C.inner, M.satin);             // interior behind the front slots
+  // side prints: grille slits, embossed plate, warning triangle
+  for (const sx of [-1, 1]) {
+    const fx = sx * (0.034 + 0.0003);
+    for (const [z0, z1] of [[258, 287], [292, 324]]) for (const yy of [131, 137, 143, 149])
+      body.add(box(0.0008, 0.0022, (z1 - z0) * S, fx, Y(yy), Z((z0 + z1) / 2), 0.3, 6, 4), C.print, M.print);
+    body.add(box(0.0016, Y(161) - Y(189), Z(291) - Z(232), sx * 0.0342, Y(175), Z(261.5), 0.25, 6, 4), C.blue, M.gloss);
+    for (const yy of [168, 176, 183]) body.add(box(0.0006, 0.0018, Z(284) - Z(240), sx * 0.0352, Y(yy), Z(262), 0.3, 6, 4), '#1d2a80', M.print);
+    body.add(slab(pts([[297, 189], [322, 189], [309.5, 166]]), 0.0008, sx * 0.0344, 0), C.print, M.print);
+    body.add(slab(pts([[304, 185], [315, 185], [309.5, 175]]), 0.0008, sx * 0.0348, 0), C.label, M.print);
+  }
+  // ---- red frame band under the body (trigger housing, front-leg seat)
+  body.add(dappleRoundSlab(dappleOutline(pts([[204, 160], [249, 160], [250, 192], [334, 193], [335, 202], [329, 208], [210, 208], [204, 203]]), 0.004),
+    0.029, 0.0035, [], 0.002, 2), C.red, M.gloss);
+  // ---- legs and foot
+  body.add(dappleRoundSlab(dappleOutline(pts([[148, 196], [206, 196], [201, 250], [192, 326], [134, 326], [140, 250]]), 0.004), 0.0125, 0.0055, [], 0.002, 2), C.blue, M.gloss);
+  body.add(dappleRoundSlab(dappleOutline(pts([[284, 204], [336, 204], [334, 214], [268, 362], [222, 344], [281, 214]]), 0.004), 0.0125, 0.0055, [], 0.002, 2), C.blue, M.gloss);
+  body.add(dappleRoundSlab(dappleOutline(pts([[136, 318], [244, 318], [273, 350], [265, 378], [162, 379], [137, 372]]), 0.004), 0.0145, 0.004, [], 0.002, 2), C.red, M.gloss);
+  for (const sx of [-1, 1]) {
+    body.add(box(0.0006, Y(342) - Y(362), Z(246) - Z(196), sx * 0.0148, Y(352), Z(221), 0.2, 6, 4), C.label, M.print);
+    for (let k = 0; k < 4; k++) body.add(box(0.0006, 0.007, 0.0055, sx * 0.0152, Y(352), Z(203 + k * 11.5), 0.3, 4, 4), C.print, M.print);
+  }
+  // ---- trigger (part): hooked red blade hanging from the band in front of the grip
+  trig.add(slab(dappleOutline(pts([[215, 205], [246, 205], [241, 248], [237, 276], [224, 287], [196, 291], [200, 278], [212, 262], [214, 240]]), 0.003), 0.008, 0, 0.002), C.red, M.gloss);
+  // ---- nozzle: knurled ring, perforated dome, ink centre, wire hanger
+  body.add(zlathe([[0, 0.127], [0.0232, 0.127], [0.0242, 0.1295], [0.0242, 0.1465], [0.0232, 0.1485], [0, 0.1485]], 0, AY, 0, 24), C.knurl, M.metal);
+  for (let k = 0; k < 5; k++) body.add(ring(0.0243, 0.0006, 0, AY, 0.1315 + k * 0.0033, 'z', 3, 24), C.steel, M.metal);
+  body.add(zlathe([[0, 0.148], [0.0218, 0.148], [0.0215, 0.151], [0.0178, 0.1575], [0.0128, 0.1622], [0.0118, 0.1632], [0, 0.1632]], 0, AY, 0, 24), C.silver, M.metal);
+  for (let k = 0; k < 8; k++) {
+    const a = (k + 0.5) * Math.PI / 4, cr = 0.0158, nz = 0.155;
+    body.add(sphere(0.0019, 0.0019, 0.0009, 0, 0, 0, 8, 4).rotateX(-0.85).rotateZ(a - Math.PI / 2).translate(cr * Math.cos(a), AY + cr * Math.sin(a), nz + 0.0012), C.print, M.satin);
+  }
+  ink.add(zlathe([[0, 0.162], [0.0058, 0.162], [0.0062, 0.1636], [0.0052, 0.1645], [0, 0.1648]], 0, AY, 0, 16));
+  const half = sx => [[sx * 0.0255, Y(205), Z(305)], [sx * 0.0292, Y(208), Z(308)], [sx * 0.0295, Y(247), Z(312)], [sx * 0.0295, Y(247), Z(344)],
+    [sx * 0.0295, Y(100), Z(343)], [sx * 0.030, Y(46), Z(390)], [0, Y(80), Z(398)]];
+  body.add(gloogaWire([...half(-1), ...half(1).reverse().slice(1)], 0.0019, 0.005), C.wire, M.metal);
+  // ---- canister: glass (ink) behind a stack of disks, rear knurled face with a top tab
+  ink.add(zcyl(0.0268, Z(98), Z(134), 0, AY, 20));
+  body.add(zlathe([[0, Z(18)], [0.03, Z(18)], [0.031, Z(17)], [0.0395, Z(17)], [0.0418, Z(19)], [0.042, Z(40)], [0.0405, Z(42)], [0, Z(42)]], 0, AY, 0, 24), C.silver, M.metal);
+  for (let k = 0; k < 4; k++) body.add(ring(0.0421, 0.0007, 0, AY, Z(22 + k * 5), 'z', 3, 24), C.steel, M.metal);   // knurl grooves
+  body.add(ring(0.035, 0.0012, 0, AY, Z(16.6), 'z', 4, 24), C.knurl, M.metal);                                    // rear face knurl band
+  body.add(zlathe([[0, Z(15)], [0.0085, Z(15)], [0.0095, Z(16.5)], [0, Z(16.5)]], 0, AY, 0, 16), C.steel, M.metal);   // centre boss
+  body.add(zlathe([[0.0405, Z(41)], [0.0415, Z(43)], [0.0415, Z(58)], [0.0402, Z(60)], [0.03, Z(60)]], 0, AY, 0, 24), C.silver, M.metal);
+  body.add(zcyl(0.0392, Z(59), Z(64), 0, AY, 24), C.rubber, M.rubber);
+  body.add(zlathe([[0.03, Z(63)], [0.0392, Z(63)], [0.0402, Z(65)], [0.0402, Z(78)], [0.0392, Z(80)], [0.03, Z(80)]], 0, AY, 0, 24), C.silver, M.metal);
+  body.add(zlathe([[0.026, Z(79)], [0.0335, Z(79)], [0.0345, Z(83)], [0.0345, Z(97)], [0.0335, Z(100)], [0.026, Z(100)]], 0, AY, 0, 22), C.gasket, M.rubber);
+  body.add(zlathe([[0.026, Z(99)], [0.0302, Z(99)], [0.0302, Z(105)], [0.026, Z(105)]], 0, AY, 0, 22), C.silver, M.metal);
+  body.add(box(0.013, 0.05, 0.004, 0, AY + 0.024, Z(15), 0.3, 6, 4), C.tab, M.metal);                          // tab on the rear face
+  body.add(box(0.013, 0.006, Z(46) - Z(13), 0, Y(83), Z(29.5), 0.3, 6, 4), C.tab, M.metal);                  // and over the disks
+  // ---- clamp under the canister (+X): two hanging plates, threaded rod into the body, fluted knob
+  const RX = 0.02, RY = Y(197);
+  for (const [z0, z1] of [[41, 53], [66, 78]]) body.add(box(0.016, AY - 0.03 - Y(214), (z1 - z0) * S, RX, (AY - 0.03 + Y(214)) / 2, Z((z0 + z1) / 2), 0.25, 6, 4), C.silver, M.metal);
+  body.add(zcyl(0.0034, Z(28), Z(134), RX, RY, 10), C.steel, M.metal);
+  for (let k = 0; k < 16; k++) body.add(ring(0.0035, 0.0007, RX, RY, Z(84 + k * 3.2), 'z', 3, 10), C.steel, M.metal);
+  body.add(zlathe([[0, Z(4)], [0.0118, Z(4)], [0.0132, Z(7)], [0.0132, Z(26)], [0.0118, Z(29)], [0, Z(29)]], RX, RY, 0, 16), C.rubber, M.rubber);
+  for (let k = 0; k < 8; k++) body.add(box(0.005, 0.004, 0.017, 0, 0.0128, Z(16.5), 0.4, 4, 4).rotateZ(k * Math.PI / 4).translate(RX, RY, 0), C.rubber, M.rubber);
+  body.add(zlathe([[0, Z(28)], [0.0068, Z(28)], [0.0068, Z(40)], [0, Z(40)]], RX, RY, 0, 14), C.steel, M.metal);
+  // ---- hose (−X): out of the body side low at the back, up and over the canister into the tab
+  body.add(pipe([[-0.034, Y(200), Z(170)], [-0.0395, Y(190), Z(164)], [-0.0425, Y(150), Z(157)], [-0.041, Y(100), Z(150)], [-0.034, Y(62), Z(135)],
+    [-0.022, Y(48), Z(105)], [-0.01, Y(55), Z(70)], [-0.003, Y(70), Z(42)], [0, Y(80), Z(32)]], 0.0036, 40, 8), C.hose, M.rubber);
+  return rebuild(d, { body, ink, parts: { trigger: part(trig, [0, Y(207), Z(230)]) }, muzzle: [0, AY, 0.1652] });   // trigger hinge at its top
 }
 
 function squelchers(d) {
