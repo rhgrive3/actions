@@ -142,7 +142,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   return pieces.length ? { pieces, sa, sdu, sdv, margin: pixel * 1.5, seed, dT } : null;
 }
 
-function pointInsideAncillary(mask, x, y, seed, pieceIndex = -1) {
+// The sole caller enumerates one piece at a time; do not re-enter a generic
+// piece-index loop for each of the five samples of every candidate cell.
+function pointInsideAncillary(mask, x, y, seed, p) {
   let px = x, py = y;
   if (mask.sa > 0) {
     const along = px * mask.sdu + py * mask.sdv;
@@ -150,32 +152,29 @@ function pointInsideAncillary(mask, x, y, seed, pieceIndex = -1) {
     const perpX = px - along * mask.sdu, perpY = py - along * mask.sdv;
     px = perpX + mask.sdu * (along / scale); py = perpY + mask.sdv * (along / scale);
   }
-  const end = pieceIndex < 0 ? mask.pieces.length : pieceIndex + 1;
-  for (let n = pieceIndex < 0 ? 0 : pieceIndex; n < end; n++) {
-    const p = mask.pieces[n], sx = p.type === 3 ? x : px, sy = p.type === 3 ? y : py;
-    if (sx < p.minX - mask.margin || sx > p.maxX + mask.margin || sy < p.minY - mask.margin || sy > p.maxY + mask.margin) continue;
-    if (p.type === 0 && sdRay(sx, sy, p.ax, p.ay, p.bx, p.by, p.ra, p.rb) < -mask.margin) return true;
-    if (p.type === 1 && Math.hypot(sx - p.x, sy - p.y) - p.radius < -mask.margin) return true;
-    if (p.type === 2) {
-      let qx = sx - p.x, qy = sy - p.y, along = qx * p.ux + qy * p.uy;
-      qx -= p.ux * along * (1 - 1 / p.el); qy -= p.uy * along * (1 - 1 / p.el);
-      if (Math.hypot(qx, qy) - p.radius < -mask.margin) return true;
-    }
-    if (p.type === 3) {
-      let qx = sx - p.x0, qy = sy - p.yTop;
-      const ty = clamp(-qy / Math.max(p.len, 1e-4), 0, 1);
-      qx += Math.sin(qy / p.r * 9 + seed * 20 + p.k * 2.3) * p.w * 0.35 * ty;
-      const wt = p.w * (1 + (0.6 - 1) * smoothstep(0.05, 0.85, ty));
-      const stream = Math.max(Math.abs(qx) - wt, Math.max(qy, -p.len - qy));
-      const tqy = (qy + p.len - p.w * 0.3) * 0.8;
-      const bulb = Math.hypot(qx, tqy) - p.w * (1.2 + 0.35 * p.h2) * (0.6 + 0.4 * mask.dT);
-      if (stream < -mask.margin || bulb < -mask.margin) return true;
-    }
+  const sx = p.type === 3 ? x : px, sy = p.type === 3 ? y : py;
+  if (sx < p.minX - mask.margin || sx > p.maxX + mask.margin || sy < p.minY - mask.margin || sy > p.maxY + mask.margin) return false;
+  if (p.type === 0 && sdRay(sx, sy, p.ax, p.ay, p.bx, p.by, p.ra, p.rb) < -mask.margin) return true;
+  if (p.type === 1 && Math.hypot(sx - p.x, sy - p.y) - p.radius < -mask.margin) return true;
+  if (p.type === 2) {
+    let qx = sx - p.x, qy = sy - p.y, along = qx * p.ux + qy * p.uy;
+    qx -= p.ux * along * (1 - 1 / p.el); qy -= p.uy * along * (1 - 1 / p.el);
+    if (Math.hypot(qx, qy) - p.radius < -mask.margin) return true;
+  }
+  if (p.type === 3) {
+    let qx = sx - p.x0, qy = sy - p.yTop;
+    const ty = clamp(-qy / Math.max(p.len, 1e-4), 0, 1);
+    qx += Math.sin(qy / p.r * 9 + seed * 20 + p.k * 2.3) * p.w * 0.35 * ty;
+    const wt = p.w * (1 + (0.6 - 1) * smoothstep(0.05, 0.85, ty));
+    const stream = Math.max(Math.abs(qx) - wt, Math.max(qy, -p.len - qy));
+    const tqy = (qy + p.len - p.w * 0.3) * 0.8;
+    const bulb = Math.hypot(qx, tqy) - p.w * (1.2 + 0.35 * p.h2) * (0.6 + 0.4 * mask.dT);
+    if (stream < -mask.margin || bulb < -mask.margin) return true;
   }
   return false;
 }
 
-function cellIsSolidlyVisible(mask, face, x, y, pieceIndex = -1) {
+function cellIsSolidlyVisible(mask, face, x, y, piece) {
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites
@@ -183,7 +182,7 @@ function cellIsSolidlyVisible(mask, face, x, y, pieceIndex = -1) {
   for (let i = 0; i < 5; i++) {
     const sx = x + (i === 1 || i === 3 ? -dx : i > 1 ? dx : 0);
     const sy = y + (i === 1 || i === 2 ? -dy : i > 2 ? dy : 0);
-    if (pointInsideAncillary(mask, sx, sy, mask.seed, pieceIndex)) return true;
+    if (pointInsideAncillary(mask, sx, sy, mask.seed, piece)) return true;
   }
   return false;
 }
@@ -313,7 +312,8 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const pad = Math.max(face.cu, face.cv) * 0.32 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
     const yLo = -Math.max(ext, down);
     for (let n2 = 0; n2 < mask.pieces.length; n2++) {
-      const box = pieceCellBox(mask, mask.pieces[n2], pad);
+      const piece = mask.pieces[n2];
+      const box = pieceCellBox(mask, piece, pad);
       const bi0 = Math.max(i0, Math.ceil((box[0] + lu) / face.cu - 0.5)), bi1 = Math.min(i1, Math.floor((box[1] + lu) / face.cu - 0.5));
       const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / face.cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / face.cv - 0.5));
       for (let j = bj0; j <= bj1; j++) {
@@ -331,7 +331,7 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
           // This cell was enumerated from this piece's conservative box.
           // Test only that piece, marking it visited only after a hit. A miss
           // must remain eligible for overlapping pieces later in this stamp.
-          if (!cellIsSolidlyVisible(mask, face, x, y, n2)) continue;
+          if (!cellIsSolidlyVisible(mask, face, x, y, piece)) continue;
           visit[index] = stamp;
           if (previous === value) {
             claimPaintCell(paint, index, value, order);
