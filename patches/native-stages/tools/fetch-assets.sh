@@ -46,5 +46,4 @@ for stage in "${STAGES[@]}"; do
 done
 )
 printf 'Reference asset directory (do not commit): %s\n' "$TARGET/stages"
-printf 'To regenerate stage5, set INKWAVE_NATIVE_ASSETS=%s/stages\n' "$TARGET"
-printf 'INKWAVE_MAIN_SOURCE=%s/inkwave-public\n' "$REPO_ROOT"
+printf 'Convert with: python3 patches/native-stages/tools/build-native.py --source %s/stages --out %s/.codex-stage-sources/generated\n' "$TARGET" "$REPO_ROOT"

@@ -63,7 +63,11 @@ def materials(src,objects,dst):
    with Image.open(src/p) as im:
     a=np.asarray(im.convert('RGB')).reshape(-1,3);mean=a.mean(axis=0);spread=np.ptp(a.astype('i2'),axis=0)
     if role in ['opacity','roughness']:m['channels'][role]='r' if mean[1]<1 and (mean[0]>2 or spread[0]>4) else 'g'
-    if role=='normal':m['normalEncoding']='rg-reconstruct-z' if mean[2]<1 else 'rgb'
+    if role=='normal':
+     af=a.astype('f4');unorm=af[:,:2]/127.5-1;signed=np.where(af[:,:2]>127,af[:,:2]-256,af[:,:2])/127
+     u=float(np.mean(np.sum(unorm*unorm,axis=1)>1.02));sg=float(np.mean(np.sum(signed*signed,axis=1)>1.02))
+     m['normalEncoding']='signed-byte-rg' if mean[2]<1 and sg+.1<u else 'unorm-rg' if mean[2]<1 else 'rgb'
+     m['normalDecodeEvidence']=dict(unormOutsideUnitDisk=u,signedOutsideUnitDisk=sg,assurance='PNG statistics inference; BFRES shader metadata unavailable')
   with Image.open(src/original) as im:m['hasAlpha']=im.mode=='RGBA' and im.getchannel('A').getextrema()[0]<250
   if m.get('albedo'):needed.add(m['albedo'])
   needed.update(m['maps'].values())
@@ -107,7 +111,7 @@ def build(source,out,spec):
  for key,a in dict(collision=tri,normals=norm,flags=flags,objects=oids,bvh=nodes,order=order,triangleFace=triangle_face).items():a.tofile(dst/(key+'.bin'))
  mats,tex=materials(src,objects,dst)
  # Derive references solely from the pinned, local display export. No version claim.
- manifest=dict(schema=1,id=sid,internal=internal,name=name,sourceCommit=REV,sourceSha256=digest,version1130Verified=False,coordinates='OBJ Y-up float32, no scale/translation',bounds=dict(minX=bounds[0],minZ=bounds[1],maxX=bounds[2],maxZ=bounds[3]),spawnPads=[pad,[-pad[0],pad[1],-pad[2]]],spawnStatus='R6 inferred support estimates; not recovered retail placements',spawnBarrier=2.5,collisionStatus='inferred display triangles, not native collision',paintStatus='inferred name/material flags and planar polygon masks, not native paint masks',ruleStatus='Pnt display layer only; ranked objectives are local calibration',faces=faces,objects=objects,materials=mats,textureIntegrity=tex,gridCells=grid_offset,geometry=dict(vertices=len(geo),triangles=len(idx)//3,collisionTriangles=len(tri),bvhNodes=len(nodes),paintFaces=len(faces)),chartMaxPlaneError=maxerror,cell=.25)
+ manifest=dict(schema=1,id=sid,internal=internal,name=name,sourceCommit=REV,sourceSha256=digest,version1130Verified=False,coordinates='OBJ Y-up float32, no scale/translation; retail unit equivalence unverified',boundsStatus='R6 core subobject selection, inferred interactive extent',bounds=dict(minX=bounds[0],minZ=bounds[1],maxX=bounds[2],maxZ=bounds[3]),spawnPads=[pad,[-pad[0],pad[1],-pad[2]]],spawnStatus='R6 inferred support estimates; not recovered retail placements',spawnBarrier=2.5,collisionStatus='inferred display triangles, not native collision',paintStatus='inferred name/material flags and planar polygon masks, not native paint masks',ruleStatus='Pnt display layer only; ranked objectives are local calibration',faces=faces,objects=objects,materials=mats,textureIntegrity=tex,gridCells=grid_offset,geometry=dict(vertices=len(geo),triangles=len(idx)//3,collisionTriangles=len(tri),bvhNodes=len(nodes),paintFaces=len(faces)),chartMaxPlaneError=maxerror,cell=.25)
  (dst/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,separators=(',',':')))
  files={p.relative_to(dst).as_posix():dict(bytes=p.stat().st_size,sha256=sha(p)) for p in sorted(dst.rglob('*')) if p.is_file() and p.name!='integrity.json'}
  (dst/'integrity.json').write_text(json.dumps(files,separators=(',',':')))

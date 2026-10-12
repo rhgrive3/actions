@@ -9,6 +9,7 @@ KiTrix の指定 commit は `0611f51b35c9736ee986fb2218461e2585b7875e`。第三�
 ## 再開
 
 ```sh
+python3 -m pip install -r patches/native-stages/tools/requirements-build.txt
 bash patches/native-stages/tools/fetch-assets.sh "$PWD"
 python3 patches/native-stages/tools/build-native.py --source .codex-stage-sources/KiTrix/stages --out .codex-stage-sources/generated
 INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node scripts/build-inkwave.mjs inkwave-public _site-native
@@ -17,3 +18,9 @@ INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node scripts/b
 通常のビルドは原典アセットを同梱せず既存ステージを維持する。ローカルビルドだけで5ステージを選択できる。外部データを含むビルド成果物の公開可否は未確認。main にはマージしない。
 
 検証内容と残件は `reports/inkwave-native-stage5-2026-10-12.md` に記録する。
+
+表示メッシュの法線マップは RGB / UNORM RG / signed-byte RG を PNG の統計から判別する。BFRES の元シェーダーとの一致は未確認。コピー元 MTL/PNG は固定 Git tree と照合できる:
+
+```sh
+python3 patches/native-stages/tools/verify-source.py --source .codex-stage-sources/KiTrix/stages --assets .codex-stage-sources/generated --report .browser-evidence/native-stage5/source-comparison.json
+```
