@@ -199,10 +199,6 @@ export function advanceCatalogJumpClock(state, actor, family, dt) {
   return state.jumpAge;
 }
 
-// Source-grounded launch envelope through an admitted jump. Shooter's
-// angular maximum gradually recovers from 25F to 70F; Dualies/Blasters keep
-// their maximum air cone while their angular median recovers. Keep these
-// separate: their sourced DegSwerve and DegBias control different quantities.
 // #10 S3 Spinner studies: an independent signed biased draw also changes
 // launch speed. The extracted 11.3.0 fields are relative amplitude and bias,
 // not an extra fixed world-units-per-frame acceleration.
@@ -213,10 +209,14 @@ export function catalogSpinnerLaunchSpeed(baseSpeed, move, random = Math.random)
   return baseSpeed * (1 + rate * signedBiasSample(random(), bias));
 }
 
+// Source-grounded launch envelope through an admitted jump. Shooter and
+// Spinner maximum angles recover after 25F and reach ground by 70F. The
+// established Splatling jump clock is owned by splatling-jump-spread.mjs;
+// this catalog only reads it, not advancing a duplicate clock.
 export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, actionReduction = 0, param = {}) {
   const airborne = lerp(ground, jump, 1 - clamp(actionReduction));
   if (Number.isFinite(jumpAge)) {
-    if (family === 'shooter') {
+    if (family === 'shooter' || family === 'splatling') {
       const frames = jumpAge * HZ;
       const hold = finite(param.Jump_DegBiasDecreaseStartFrame, 25);
       const end = Math.max(hold + EPS, finite(param.Jump_DegBiasEndFrame, 70));
@@ -425,9 +425,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
+    const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
+      ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
     const spread=key==='turret'&&r.family==='dualies'
       ? finite(t.LapOver_DegSwerve,0)
-      : catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,s.jumpAge,
+      : catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,jumpAge,
         a.s3?.modifiers?.actionAirSpread??0,{...weaponParam(r),...t});
     const aim=dir.clone();
     if (key==='turret'&&r.family==='dualies') {
