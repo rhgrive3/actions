@@ -1,0 +1,28 @@
+name: Validate INKWAVE native stage integration
+on:
+  pull_request:
+    paths:
+      - 'patches/native-stages/**'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - 'scripts/lib/inkwave-native-stages.mjs'
+      - '.github/workflows/validate-inkwave-native-stage5.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2
+      - name: Geometry, paint and existing stage/rule contracts (no third-party assets)
+        run: node --experimental-vm-modules --test patches/native-stages/tests/*.test.mjs patches/splatoon3/tests/scorch-gorge-stage.test.mjs patches/splatoon3/tests/ranked-world.test.mjs
+      - name: Build public composition without reference models
+        run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Assert reference model payload remains excluded
+        run: test ! -e _site/_native-reference-assets && node --test scripts/tests/inkwave-stage-assets.test.mjs

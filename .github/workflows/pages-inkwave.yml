@@ -13,6 +13,9 @@ on:
       - "patches/local-quality/**"
       - "patches/loading-cache/**"
       - "patches/practice-range/**"
+      - "patches/native-stages/**"
+      - "scripts/lib/inkwave-native-stages.mjs"
+      - "scripts/inkwave-source-composition.mjs"
       - ".github/workflows/pages-inkwave.yml"
   workflow_dispatch:
 permissions:
