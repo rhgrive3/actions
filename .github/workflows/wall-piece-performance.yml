@@ -66,12 +66,12 @@ jobs:
             --baseline-root .paint-baseline --candidate-root .paint-candidate \
             --baseline-site .paint-before-site --candidate-site .paint-after-site \
             --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" \
-            --profile "${{ matrix.profile }}" --require-equivalent-work \
+            --profile "${{ matrix.profile }}" --require-equivalent-work --minimal-timing \
             --evidence-dir ".paint-performance-evidence/${{ matrix.profile }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: owned-scan-performance-${{ matrix.profile }}-338438ba
+          name: owned-scan-minimal-${{ matrix.profile }}-338438ba
           path: .paint-performance-evidence/
           include-hidden-files: true
           if-no-files-found: warn
