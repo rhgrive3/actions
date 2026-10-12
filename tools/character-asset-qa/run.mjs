@@ -34,7 +34,7 @@ async function main() {
   const esbuild=await import(process.env.ESBUILD_MODULE?pathToFileURL(process.env.ESBUILD_MODULE).href:'esbuild');
   const core=await expandedCore({builtFile:containedFile(site,prefix.slice(1)+'vendor/three/build/three.module.js'),sourceRoot:fs.realpathSync(option('--source-three-root')||'inkwave-public/vendor/three/build'),addonRoot:vendorRoot,browserSource:browserModule.toString(),esbuild});
   basis.core=core.report;
-  let server,browser,page;const errors=[],loaded=new Set(),blocked=[];let result;
+  let server,browser,page;const errors=[],warnings=[],loaded=new Set(),blocked=[];let result;
   try {
     server=http.createServer((req,res)=>{
       try {
@@ -54,15 +54,15 @@ async function main() {
     const origin='http://127.0.0.1:'+server.address().port;
     const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
     browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader'],...(process.env.CHROMIUM_EXECUTABLE?{executablePath:process.env.CHROMIUM_EXECUTABLE}:{})});
-    page=await browser.newPage({viewport:{width:640,height:480},deviceScaleFactor:1});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+    page=await browser.newPage({viewport:{width:640,height:480},deviceScaleFactor:1});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());else if(m.type()==='warning'&&warnings.length<50)warnings.push(m.text());});
     await page.route('**/*',route=>{const url=route.request().url();if(url.startsWith(origin+'/'))return route.continue();blocked.push(url);return route.abort();});
     await page.goto(origin+'/qa/');
     result=await page.evaluate(async config=>(await import('/qa/browser.mjs')).run(config),{prefix,asset,assetMode,contentHash:manifest.contentHash,buildRevision:manifest.build.revision,core:core.report});
     assertScenarioMatrix(result.rows);assertLifecycle(result.lifecycle);assert.equal(blocked.length,0,'no external requests');assert.equal(errors.length,0,errors.join('\n'));
     for(const suffix of ['src/game/character.js','src/core/ctx.js','patches/splatoon3/runtime/install.mjs','vendor/three/build/three.module.js'])assert([...loaded].some(f=>f.endsWith('/'+suffix)),'actual built module receipt '+suffix);
     for(const image of result.images){assert.match(image.name,/^[a-z0-9-]+$/);fs.writeFileSync(path.join(output,image.name+'.png'),Buffer.from(image.png.split(',')[1],'base64'));}
-    delete result.images;write({...result,...basis,loaded:[...loaded].sort(),browserVersion:browser.version(),browserRun:true,blocked,errors});console.log(JSON.stringify({status:'passed',assetMode,scenarios:result.rows.length,cycles:result.lifecycle.length,contentHash:manifest.contentHash}));
-  } catch(error) {write({status:'failed',...basis,browserRun:!!page,error:error.message,blocked,errors,partial:result?{rows:result.rows,lifecycle:result.lifecycle}:null});throw error;}
+    delete result.images;write({...result,...basis,loaded:[...loaded].sort(),browserVersion:browser.version(),browserRun:true,blocked,errors,warnings});console.log(JSON.stringify({status:'passed',assetMode,scenarios:result.rows.length,cycles:result.lifecycle.length,contentHash:manifest.contentHash}));
+  } catch(error) {const partial=page?await page.evaluate(()=>globalThis.__characterAssetQA||null).catch(()=>null):null;if(page)await page.screenshot({path:path.join(output,'failed-neutral-or-local.png')}).catch(()=>{});write({status:'failed',...basis,browserRun:!!page,error:error.message,blocked,errors,warnings,partial});throw error;}
   finally {await browser?.close();if(server)await new Promise(resolve=>server.close(resolve));}
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{console.error(error);process.exitCode=1;});

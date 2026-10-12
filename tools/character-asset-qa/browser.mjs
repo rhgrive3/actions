@@ -6,6 +6,7 @@ function resources(root) { const geometry = new Set(), material = new Set(), tex
 function dispose(root) { const r = resources(root); for (const g of r.geometry) g.dispose(); for (const m of r.material) m.dispose(); const images = new Set(); for (const t of r.texture) { t.dispose(); if (t.image?.close) images.add(t.image); } for (const im of images) im.close(); return Object.fromEntries(Object.entries(r).map(([k, s]) => [k, s.size])); }
 function changed(a, b) { let count = 0; for (let i = 0; i < a.length; i += 4) if (Math.max(...[0,1,2].map(k => Math.abs(a[i+k] - b[i+k]))) >= 3) count++; return count; }
 export async function run(config) {
+  const progress=globalThis.__characterAssetQA={stage:'starting',rows:[],lifecycle:[]};
   check(THREE.REVISION === '186', 'QA expanded core must be r186');
   const baseline=await fetch(config.prefix+'vendor/three/build/three.module.js').then(r=>{check(r.ok,'production core receipt');return r.arrayBuffer();});
   const baselineHash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',baseline))].map(v=>v.toString(16).padStart(2,'0')).join('');check(baselineHash===config.core.base.sha256,'production core fetched for receipt only, not instantiated');
@@ -28,8 +29,8 @@ export async function run(config) {
   setWitnessCount(1);
   function view(name) { const a={front:0,side65:65,back:180}[name]*Math.PI/180; camera.position.set(6*Math.sin(a),2.0,6*Math.cos(a)); camera.lookAt(0,1.02,0); camera.updateMatrixWorld(true); }
   function lighting(name, shadows) { hemi.intensity=name==='day'?2.2:.5; sun.intensity=name==='day'?2.5:.7; sun.color.set(name==='day'?'#fff2dd':'#b3ccff'); renderer.shadowMap.enabled=shadows; G.settings.shadows=shadows; }
-  function render() { renderer.info.reset(); renderer.render(scene,camera); gl.finish(); check(!gl.isContextLost(),'WebGL context retained'); return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles}; }
-  function pixels() { const a=new Uint8Array(640*480*4); gl.readPixels(0,0,640,480,gl.RGBA,gl.UNSIGNED_BYTE,a); check(gl.getError()===gl.NO_ERROR,'WebGL readback'); return a; }
+  function render() { renderer.info.reset(); renderer.render(scene,camera); gl.finish(); check(!gl.isContextLost(),'WebGL context retained');const code=gl.getError();check(code===gl.NO_ERROR,'WebGL render error 0x'+code.toString(16)+' at '+progress.stage); return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles}; }
+  function pixels() { const a=new Uint8Array(640*480*4); gl.readPixels(0,0,640,480,gl.RGBA,gl.UNSIGNED_BYTE,a); const code=gl.getError();check(code===gl.NO_ERROR,'WebGL readback error 0x'+code.toString(16)+' at '+progress.stage); return a; }
   const loader = new GLTFLoader();
   let active = null;
   async function load(count) {
@@ -44,13 +45,13 @@ export async function run(config) {
     scene.add(batch); active={batch,root,loadMs:performance.now()-start}; return active;
   }
   function unload() { if(!active)return null;scene.remove(active.batch);active.batch.clear();const result=dispose(active.root);active=null;renderer.renderLists.dispose();render();return result; }
-  const rows=[], lifecycle=[], images=[];
+  const rows=progress.rows, lifecycle=progress.lifecycle, images=[];
   try {
-    view('front');lighting('day',false);render();const withWitness=pixels();setWitnessCount(0);render();const withoutWitness=pixels();setWitnessCount(1);check(changed(withWitness,withoutWitness)>100,'built Character generated visible pixels');
+    progress.stage='native-witness';view('front');lighting('day',false);render();const withWitness=pixels();setWitnessCount(0);render();const withoutWitness=pixels();setWitnessCount(1);check(changed(withWitness,withoutWitness)>100,'built Character generated visible pixels');
     for(const count of [1,8]) {
-      const loaded=await load(count);const t=performance.now();await renderer.compileAsync(scene,camera);const compileMs=performance.now()-t;
+      progress.stage='load-'+count;const loaded=await load(count);const t=performance.now();await renderer.compileAsync(scene,camera);const compileMs=performance.now()-t;
       for(const light of ['day','shade'])for(const angle of ['front','side65','back'])for(const shadows of [false,true]) {
-        lighting(light,shadows);view(angle);render();render();const timing=[];let info;
+        progress.stage=`${count}/${light}/${angle}/${shadows}`;lighting(light,shadows);view(angle);render();render();const timing=[];let info;
         for(let frame=0;frame<12;frame++){const start=performance.now();info=render();timing.push(performance.now()-start);}timing.sort((a,b)=>a-b);
         const full=pixels(),png=renderer.domElement.toDataURL('image/png');loaded.batch.visible=false;render();const hidden=pixels();loaded.batch.visible=true;render();
         const row={count,nativeCharacters:witnesses.filter(c=>c.root.visible).length,light,view:angle,shadows,...info,loadMs:loaded.loadMs,compileMs,p50Ms:timing[6],p95Ms:timing[11],renderSamples:12,changedPixels:changed(full,hidden),memory:memory(renderer)};check(row.changedPixels>=16,'visible asset '+JSON.stringify(row));rows.push(row);images.push({name:`${count}-${light}-${angle}-${shadows?'shadow':'no-shadow'}`,png});
@@ -58,8 +59,8 @@ export async function run(config) {
       unload();
     }
     // Warm all pass allocations before comparing retained counts across repeated fresh parses.
-    view('front');lighting('day',true);await load(8);await renderer.compileAsync(scene,camera);render();unload();
-    for(let cycle=0;cycle<10;cycle++){const count=cycle%2?8:1;await load(count);render();const memoryLoaded=memory(renderer);const disposed=unload();lifecycle.push({cycle,count,memoryLoaded,disposed,memoryAfter:memory(renderer),remainingCandidates:scene.children.filter(o=>o.name==='qa-candidate-batch').length});}
+    progress.stage='lifecycle-warmup';view('front');lighting('day',true);await load(8);await renderer.compileAsync(scene,camera);render();unload();
+    for(let cycle=0;cycle<10;cycle++){progress.stage='lifecycle-'+cycle;const count=cycle%2?8:1;await load(count);render();const memoryLoaded=memory(renderer);const disposed=unload();lifecycle.push({cycle,count,memoryLoaded,disposed,memoryAfter:memory(renderer),remainingCandidates:scene.children.filter(o=>o.name==='qa-candidate-batch').length});}
     const debug=gl.getExtension('WEBGL_debug_renderer_info');return {status:'passed',threeRevision:THREE.REVISION,assetMode:config.assetMode,asset:config.asset,contentHash:config.contentHash,buildRevision:config.buildRevision,witnessBones:witnesses.map(c=>c.skeleton.bones.length),witnessVisiblePixels:changed(withWitness,withoutWitness),renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),rows,lifecycle,images,measurementKind:'Real WebGL with built game Character code and a QA-only expanded r186 core, 1/8 Characters plus 1/8 probes; not unchanged production GLB support, full-game or adopted-character visual acceptance.'};
   } finally {unload();for(const c of witnesses)c.dispose();floor.geometry.dispose();floor.material.dispose();sun.shadow.map?.dispose();renderer.dispose();}
 }
