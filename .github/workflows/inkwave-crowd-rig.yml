@@ -1,0 +1,67 @@
+name: Verify lossless crowd rig updates
+on:
+  pull_request:
+    paths:
+      - 'patches/local-quality/retarget-branch-update-adapter.mjs'
+      - 'patches/local-quality/tests/retarget-branch-update.test.mjs'
+      - 'scripts/check-inkwave-crowd-rig.mjs'
+      - 'scripts/compare-inkwave-crowd-rig.mjs'
+      - '.github/workflows/inkwave-crowd-rig.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: baseline
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and browser tools
+        run: |
+          cd candidate
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Exact native rig and guarded-source tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd candidate
+          node --experimental-vm-modules --test patches/local-quality/tests/retarget-branch-update.test.mjs | tee ../rig-tests.log
+      - name: Build baseline and candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$PWD/candidate/node_modules/esbuild/lib/main.js"
+          cd baseline
+          node scripts/build-inkwave.mjs inkwave-public ../site-a
+          cd ../candidate
+          node scripts/build-inkwave.mjs inkwave-public ../site-b
+          node -e "const a=require('../site-a/inkwave-build.json');if(a.contentHash!=='5f967f1dc85094ccbca443250caa97207e81286a86a70a73768087580781ff95')throw Error('Baseline mismatch')"
+      - name: Native source-motion and completed-output ABBA
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CHROMIUM_PATH="$(node -e "console.log(require('./candidate/node_modules/playwright').chromium.executablePath())")"
+          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/A1"
+          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/B1"
+          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/B2"
+          node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/A2"
+          node candidate/scripts/compare-inkwave-crowd-rig.mjs evidence/{A1,B1,B2,A2}/result.json | tee evidence/comparison.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lossless-crowd-rig-evidence
+          path: |
+            evidence
+            rig-tests.log
+            site-a/inkwave-build.json
+            site-b/inkwave-build.json

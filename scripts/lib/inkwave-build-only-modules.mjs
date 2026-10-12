@@ -2,6 +2,7 @@
 // Keep this explicit: other *-adapter modules export real runtime helpers.
 // Regression tests require transformer-only exports and reject runtime imports.
 export const BUILD_ONLY_PATCH_MODULES = new Set([
+  'patches/local-quality/retarget-branch-update-adapter.mjs',
   'patches/local-quality/ink-volume-adapter.mjs',
   // Source decoding/shape construction belong to the offline bake, not gameplay.
   'patches/local-quality/ink-volume/vtf.mjs',
