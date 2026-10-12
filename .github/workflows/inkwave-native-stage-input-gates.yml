@@ -24,6 +24,9 @@ jobs:
     if: github.head_ref == 'fix/native-stage-input-identities'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,7 +42,15 @@ jobs:
           node-version: 22
       - name: Exact baseline rejection and candidate receipt acceptance
         run: |
+          set -euo pipefail
           mkdir -p input-gate-evidence
+          if bash --noprofile --norc -e -o pipefail -c 'node -e "process.exit(23)" | tee input-gate-evidence/pipeline-negative.log'; then
+            echo 'Pipeline negative control unexpectedly passed'; exit 1
+          else
+            status=$?
+            test "$status" -eq 23
+            printf 'Expected pipeline failure exit=%s\n' "$status" | tee input-gate-evidence/pipeline-negative-status.log
+          fi
           for source in inkwave-public patches/native-stages scripts/build-inkwave.mjs scripts/inkwave-source-composition.mjs; do
             git diff --no-index --exit-code ".baseline/$source" "$source"
           done
@@ -47,9 +58,10 @@ jobs:
             echo 'Negative control unexpectedly passed'; exit 1
           fi
           grep -q 'Catalog input namespace/path native-stages/' input-gate-evidence/before.log
-          node --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs | tee input-gate-evidence/after.log
+          node --experimental-vm-modules --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs | tee input-gate-evidence/after.log
       - name: Unchanged production build and all emitted input identities
         run: |
+          set -euo pipefail
           npm install --no-save --no-package-lock esbuild@0.28.2
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node scripts/build-inkwave.mjs inkwave-public .gate-site | tee input-gate-evidence/build.log
