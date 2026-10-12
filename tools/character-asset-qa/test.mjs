@@ -28,3 +28,4 @@ test('explicit actual candidate is optional local-only structural evidence', {sk
 test('existing production build identity is optional read-only local evidence', {skip:!process.env.INKWAVE_BUILT_SITE},()=>{const m=verifyBuild(fs.realpathSync(process.env.INKWAVE_BUILT_SITE));assert.match(m.contentHash,/^[a-f0-9]{64}$/);});
 
 test('core planner merges named and namespace imports without aliasing duplicate exports',()=>{assert.deepEqual(threeImports("import {Mesh, Bone as B, MeshPhysicalMaterial} from 'three'; const m = new THREE.Mesh(); THREE.REVISION;"),['Bone','Mesh','MeshPhysicalMaterial','REVISION']);});
+test('named-only addon scan ignores THREE diagnostic message strings',()=>assert.deepEqual(threeImports("import {Mesh} from 'three'; console.warn('THREE.BufferGeometryUtils: test');",false),['Mesh']));

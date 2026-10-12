@@ -4,15 +4,15 @@ import {pathToFileURL} from 'node:url';
 import {gzipSync} from 'node:zlib';
 import assert from 'node:assert/strict';
 import {hash} from './glb.mjs';
-export function threeImports(source) {
+export function threeImports(source, namespace=true) {
   const names=new Set();
   for(const m of source.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]three['"]/g))for(const n of m[1].split(',')){const name=n.trim().split(/\s+as\s+/)[0];if(name)names.add(name);}
-  for(const m of source.matchAll(/THREE\.([A-Za-z_$][\w$]*)/g))names.add(m[1]);
+  if(namespace)for(const m of source.matchAll(/THREE\.([A-Za-z_$][\w$]*)/g))names.add(m[1]);
   return [...names].sort();
 }
 export function addonGraph(root, entry) {
   const files=new Set(),names=new Set();
-  function visit(file){const real=fs.realpathSync(file);assert(real.startsWith(root+path.sep),'addon stays within official package');if(files.has(real))return;files.add(real);const src=fs.readFileSync(real,'utf8');for(const n of threeImports(src))names.add(n);for(const m of src.matchAll(/(?:^|\n)\s*import\s+(?:[^'";]*?\s+from\s*)?['"]([^'"]+)['"]/g)){if(m[1]==='three')continue;assert(m[1].startsWith('.'),'unexpected addon dependency '+m[1]);visit(path.resolve(path.dirname(real),m[1]));}}
+  function visit(file){const real=fs.realpathSync(file);assert(real.startsWith(root+path.sep),'addon stays within official package');if(files.has(real))return;files.add(real);const src=fs.readFileSync(real,'utf8');assert(!/import\s*\*\s*as\s+\w+\s+from\s*['"]three['"]/.test(src),'namespace addon import needs explicit planner support');for(const n of threeImports(src,false))names.add(n);for(const m of src.matchAll(/(?:^|\n)\s*import\s+(?:[^'";]*?\s+from\s*)?['"]([^'"]+)['"]/g)){if(m[1]==='three')continue;assert(m[1].startsWith('.'),'unexpected addon dependency '+m[1]);visit(path.resolve(path.dirname(real),m[1]));}}
   visit(path.join(root,entry));return {files:[...files].map(f=>path.relative(root,f)).sort(),names:[...names].sort()};
 }
 export async function expandedCore({builtFile,sourceRoot,addonRoot,browserSource,esbuild}) {
