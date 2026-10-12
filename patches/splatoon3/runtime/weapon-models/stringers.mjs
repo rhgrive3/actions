@@ -130,14 +130,14 @@ function tri(d){
 function reef(d){
   const C={white:'#d5d5c8',edge:'#8b9492',steel:'#aab4b4',black:'#242a2c',dark:'#42494a'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.white,guardColor:C.black});
-  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0818,coil0:-.004,coil1:.057,muzzleZ:.15,castNock:true,
+  const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0678,coil0:-.002,coil1:.041,muzzleZ:.15,castNock:true,
     gripL:gripSpec([0,0,.095],[0,0,1],[.75,-.62,-.1])};
   for(const s of[-1,1]){
     // The root seats in the enlarged forward receiver collar. Rounded rims and
     // recessed web are one connected solid casting, rather than a grey stripe.
     const limb=smoothLimb(s,REEF_LIMB_SECTIONS,20);
     castSection(body,limb,REEF_CAST_SECTION,C.white,M.satin,true);
-    const boot=smoothLimb(s,[[.042,.017,.083,.068],[.066,.020,.089,.064],[.085,.023,.078,.053]],5);
+    const boot=smoothLimb(s,[[.042,.017,.076,.068],[.066,.020,.082,.064],[.085,.023,.078,.053]],5);
     castSection(body,boot,REEF_ROUND_SECTION,C.black);
     for(const x of[-.023,.023])body.add(pipe([[x,YC+s*.290,-.162],[x,YC+s*.12,-.170],[-x,YC,-.167]],.0012,10,4),'#a9b2a4',M.metal);
     body.add(xcyl(.033,-.018,.018,YC+s*.3,-.17,20),C.white,M.satin);
@@ -151,25 +151,25 @@ function reef(d){
     body.add(ring(.010,.0018,0,YC+s*.155,.085,'z',4,14),C.edge,M.metal);
   }
   // Distinct rear barrel and stepped front/root collar; do not blur them into an egg.
-  body.add(zlathe([[0,-.118],[.049,-.118],[.057,-.112],[.059,-.095],[.059,-.024],[.062,-.018],[.073,-.018],[.080,-.006],[.080,.058],[.075,.071],[.060,.085],[.056,.095],[0,.095]],0,YC,0,24),C.black,M.satin);
-  body.add(zlathe([[.016,-.122],[.045,-.122],[.053,-.119],[.053,-.114],[.045,-.112],[.016,-.112]],0,YC,0,20),C.dark,M.satin);
-  body.add(zcyl(.016,-.120,-.115,0,YC,14),C.black,M.rubber);
-  for(let k=-3;k<=3;k++)if(k)body.add(badge(.078-Math.abs(k)*.009,.002,.0015,0,YC+k*.010,-.123),C.edge,M.satin);
-  for(let k=0;k<8;k++){const a=k*Math.PI/4;body.add(zcyl(.0045,.068,.074,Math.cos(a)*.068,YC+Math.sin(a)*.068,8),C.dark,M.satin);}
+  body.add(zlathe([[0,-.096],[.044,-.096],[.050,-.090],[.051,-.080],[.051,-.020],[.054,-.014],[.061,-.014],[.066,-.004],[.066,.044],[.060,.061],[.048,.076],[.044,.084],[.044,.095],[0,.095]],0,YC,0,24),C.black,M.satin);
+  body.add(zlathe([[.013,-.100],[.039,-.100],[.047,-.097],[.047,-.092],[.040,-.090],[.013,-.090]],0,YC,0,20),C.dark,M.satin);
+  body.add(zcyl(.013,-.098,-.093,0,YC,14),C.black,M.rubber);
+  for(let k=-3;k<=3;k++)if(k)body.add(badge(.066-Math.abs(k)*.008,.002,.0015,0,YC+k*.008,-.101),C.edge,M.satin);
+  for(let k=0;k<8;k++){const a=k*Math.PI/4;body.add(zcyl(.0038,.060,.065,Math.cos(a)*.056,YC+Math.sin(a)*.056,8),C.dark,M.satin);}
   // The turntable's pink threaded coupler is team ink, while cast shoulders stay black/ivory.
-  ink.add(zlathe([[.012,.093],[.052,.093],[.052,.117],[.044,.125],[.036,.145],[.012,.150]],0,YC,0,24));
-  for(let k=0;k<5;k++)body.add(ring(.051-k*.002,.0017,0,YC,.097+k*.009,'z',4,24),C.steel,M.metal);
-  for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(rb(.006,.006,.018,Math.cos(a)*.036,YC+Math.sin(a)*.036,.134),C.edge,M.metal);}
-  nozzle(body,0,YC,.137,.151,.016,C.dark);
+  ink.add(zlathe([[.012,.093],[.044,.093],[.044,.116],[.037,.126],[.030,.145],[.012,.150]],0,YC,0,24));
+  for(let k=0;k<5;k++)body.add(ring([.0445,.0445,.0445,.038,.0348][k],.0012,0,YC,.098+k*.009,'z',4,24),C.steel,M.metal);
+  for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(rb(.0045,.0045,.014,Math.cos(a)*.0337,YC+Math.sin(a)*.0337,.135),C.edge,M.metal);}
+  nozzle(body,0,YC,.137,.151,.014,C.dark);
   for(const s of[-1,1]){
-    body.add(badge(.0018,.032,.049,s*.059,YC,-.064),C.edge,M.print);
-    body.add(badge(.002,.025,.042,s*.0602,YC,-.064),C.black,M.print);
-    for(let k=0;k<3;k++)body.add(badge(.002,.002,.018,s*.0615,YC-.007+k*.006,-.053),C.white,M.print);
-    ink.add(rb(.002,.008,.030,s*.056,YC+.021,-.059));
+    body.add(badge(.0018,.027,.040,s*.051,YC,-.052),C.edge,M.print);
+    body.add(badge(.002,.021,.034,s*.0522,YC,-.052),C.black,M.print);
+    for(let k=0;k<3;k++)body.add(badge(.002,.0018,.014,s*.0535,YC-.006+k*.005,-.043),C.white,M.print);
+    ink.add(rb(.002,.007,.025,s*.049,YC+.016,-.049));
   }
   // Rounded black saddle carries into the pale lower grip without moving either IK anchor.
-  body.add(sphere(.039,.028,.064,0,.012,-.019,16,8),C.black,M.rubber);
-  body.add(sphere(.025,.026,.037,0,-.007,.016,12,8),C.black,M.rubber);
+  body.add(sphere(.033,.024,.054,0,.012,-.010,16,8),C.black,M.rubber);
+  body.add(sphere(.022,.023,.030,0,-.007,.016,12,8),C.black,M.rubber);
   body.add(zcyl(.014,.068,.125,0,0,12),C.white,M.rubber);
   return finishBow(d,cfg,body,ink,tr);
 }

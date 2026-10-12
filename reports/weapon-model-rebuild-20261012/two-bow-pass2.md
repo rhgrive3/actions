@@ -54,3 +54,9 @@ Reference turntable views 1/1, 1/4 and 2/1 support the root/collar registration,
 ### Full-resolution pass3 corrections
 
 The new actual images confirmed the stepped receiver, forward root registration, rounded yoke/pale shaft and geometric groove. They also exposed two introduced fit errors: charge rings intersected the enlarged collar, and the guide pegs retained their old rear endpoints after the arm moved forward. Ring radius/axial span now clear the constant-radius collar; the guides start within the relocated arm and project forward only. The recessed section now blends into a solid pale root cuff before reaching the black seat, with the bolt moved onto that cuff. This last change adds no vertices. A geometry test checks ring clearance and the full root web. These bounded corrections require new images; pass3's prior pixels are preserved as evidence.
+
+### User-requested central-body reduction
+
+At 07:04 the user judged the pass3 center too large. The previous projected span/diameter estimate did not establish an acceptable assembled proportion. This candidate retains the white limbs/yoke and their thickness, but reduces the main front collar diameter .160→.132 (17.5%), rear barrel diameter .118→.102, and rearward receiver extent .118→.096. The main shoulder also ends earlier, with a small neck reaching the unchanged muzzle assembly. The front threaded coupler shrinks .104→.088 and the lower saddle is reduced to match. The geometry is not globally scaled: hand/muzzle/nock anchors stay fixed. Ring clearance, root cuffs and guide seating are adjusted in the same candidate.
+
+The next fixed-camera comparison uses the user-reviewed pass3 head28332388 as baseline. It must also show actual Actor-held scale relative to the hands/head, not just an isolated silhouette. No adoption is claimed until that image, new performance measurements and exact-head CI are reviewed.
