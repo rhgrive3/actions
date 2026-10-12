@@ -170,6 +170,9 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
     'ink look instanced geometry');
   patch("  mat.customProgramCacheKey = () => 'iw-blob-4-four-petals';",
     "  mat.customProgramCacheKey = () => 'iw-blob-5-ink-look';", 'ink look shader cache identity');
+  patch('      let vis = (p.vis || p.size) * g * (1 + 0.3 * Math.sin(g * Math.PI));',
+    '      let vis = (p.catalogVisual ? p.vis : (p.vis || p.size)) * g * (1 + 0.3 * Math.sin(g * Math.PI));\\n      if (p.catalogVisual && vis <= 0) continue;',
+    'catalog source-size zero-visibility presentation');
   patch('fourPetals = this.blobFourPetals.array;',
     'fourPetals = this.blobFourPetals.array, inkLook = this.blobInkLook.array;', 'ink look per-instance buffer');
   patch('      _s.setScalar(vis);\n      _m.compose(p.pos, _q, _s);',
