@@ -65,15 +65,22 @@ test('Dynamo copper stator occupies a separate drive axis behind the drum, not t
  assert.ok(max[1]-min[1]>.43&&max[1]-min[1]<.47,'measured winding radial envelope');
  // The production build deliberately tree-shakes Raycaster. Intersect the
  // actual indexed triangles along -X here, without enlarging production exports.
- const firstFaceAt=(y,z)=>{
-  let bestX=-Infinity,best=-1;const ii=g.index.array;
+ const axialFacesAt=(y,z)=>{
+  const hits=[],ii=g.index.array;
   for(let t=0;t<ii.length;t+=3){
    const a=ii[t],b=ii[t+1],c=ii[t+2],ay=p.getY(a),az=p.getZ(a),by=p.getY(b),bz=p.getZ(b),cy=p.getY(c),cz=p.getZ(c);
    const det=(bz-cz)*(ay-cy)+(cy-by)*(az-cz);if(Math.abs(det)<1e-12)continue;
    const u=((bz-cz)*(y-cy)+(cy-by)*(z-cz))/det,v=((cz-az)*(y-cy)+(ay-cy)*(z-cz))/det,w=1-u-v;
-   if(Math.min(u,v,w)<-1e-7)continue;const x=u*p.getX(a)+v*p.getX(b)+w*p.getX(c);if(x<2&&x>bestX){bestX=x;best=a;}
-  }return best;
+   if(Math.min(u,v,w)<-1e-7)continue;const x=u*p.getX(a)+v*p.getX(b)+w*p.getX(c);if(x<2)hits.push({x,index:a});
+  }return hits.sort((a,b)=>b.x-a.x);
  };
+ const firstFaceAt=(y,z)=>axialFacesAt(y,z)[0]?.index??-1;
+ const steel=new f.THREE.Color('#a9abb1'),bearingHits=axialFacesAt(-.074,1.13-d.parts.hinge.pivot.z).filter(({index:i})=>Math.abs(c.getX(i)-steel.r)<1e-6&&Math.abs(c.getY(i)-steel.g)<1e-6&&Math.abs(c.getZ(i)-steel.b)<1e-6);
+ assert.ok(bearingHits.length>1,'real steel bearing faces intersect the radial support section');
+ const bearingSpan=[Math.min(...bearingHits.map(h=>h.x)),Math.max(...bearingHits.map(h=>h.x))],gx=1.821/2;
+ console.log('DYNAMO_BEARING_SUPPORT_SPAN '+JSON.stringify({radial:.074,span:bearingSpan,platePlanes:[gx-.015,gx+.165]}));
+ assert.ok(bearingSpan[0]<gx-.015,'rear fork bearing plate overlaps steel collar');
+ assert.ok(bearingSpan[1]>gx+.165,'front fork bearing plate overlaps steel taper outside its hole');
  let visibleCopper=0;
  for(let k=0;k<24;k++){
   const angle=k/24*Math.PI*2,hit=firstFaceAt(Math.cos(angle)*.204,.77-d.parts.hinge.pivot.z+Math.sin(angle)*.204);

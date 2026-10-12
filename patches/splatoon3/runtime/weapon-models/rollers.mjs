@@ -237,7 +237,9 @@ function dynamoRoller(d) {
     for(const side of [-1,1])frame.add(forkStrip(side,x),C.gun,M.metal);
   }
   // The drum has its own narrow end collar, tapered bearing and axle nut.
-  frame.add(xlathe([[0,0],[r*1.02,0],[r*1.04,.024],[r*.97,.045],[.092,.049],[.092,.105],[.061,.14],[.036,.21],[0,.215]],gx,0,dz,28),C.steel,M.metal);
+  // Its steel section overlaps both fork plates around the 0.070 holes;
+  // an over-short taper would leave the front bearing plate floating.
+  frame.add(xlathe([[0,-.025],[r*1.02,-.025],[r*1.04,.024],[r*.97,.045],[.092,.049],[.092,.105],[.092,.14],[.072,.21],[0,.215]],gx,0,dz,28),C.steel,M.metal);
   frame.add(xcyl(0.043,gx+.18,gx+.24,0,dz,8),C.gun,M.metal);
   frame.add(xcyl(0.025,gx+.23,gx+.275,0,dz,12),C.steel,M.metal);
   for(const sy of [-1,1]) frame.add(xcyl(0.012,gx+.15,gx+.185,sy*.075,dz+.085,8),C.steel,M.metal);
