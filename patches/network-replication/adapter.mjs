@@ -514,12 +514,13 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       '      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const dropRoll = packDropRollSnapshot(x);\n      if (dropRoll) dr[x.nid] = dropRoll;',
       'pack owner Drop Roller presentation without gameplay AP');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
-    patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
+    patch('    // actors\n    if (d.a)', `    const ownerSimulationTickAccepted = d.u === undefined || validOwnerSimulationTick(d.u, d.ts, p.physicsPoints);
+    if (d.u !== undefined && ownerSimulationTickAccepted) {
       const points = p.physicsPoints || (p.physicsPoints = []);
       points.push(d.ts,d.u); if (points.length > 80) { points.copyWithin(0,points.length-80); points.length = 80; }
     }
     // actors
-    if (d.a)`, 'snapshot physics tick pair');
+    if (d.a)`, 'bounded snapshot physics tick pair');
     patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(dr).length) msg.dr = dr;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
@@ -537,13 +538,27 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      // #1200: a sender event cannot be dated after its enclosing owner tick.\n      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts) continue;
+      // #1200/#1265/#1266/#1267: event identity is admitted only on an accepted owner clock.\n      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts) continue;
       e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (!Number.isSafeInteger(tick) || tick < 0 || !(Number.isSafeInteger(d.u) && d.u >= 0 ? tick <= d.u : d.u === undefined && e[1] === 's')) continue; e._netTick = tick; }
+      if (d.r === 2) {
+        const hasOwnerTick = ownerSimulationTickAccepted && Number.isSafeInteger(d.u) && d.u >= 0;
+        // Older R2 paint envelopes can omit d.u; validate the event tick against
+        // the established sender timeline without granting non-paint event authority.
+        const legacyPaintWithoutOwnerTick = d.u === undefined && e[1] === 's'
+          && validOwnerSimulationTick(e[e.length-2], d.ts, p.physicsPoints);
+        if (!hasOwnerTick && !legacyPaintWithoutOwnerTick) continue;
+        const seq = e[e.length-1];
+        const sequenceBaseline = Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0);
+        if (!validEventSequence(seq, sequenceBaseline)) continue;
+        e._netSeq = seq;
+        const tick = e[e.length-2];
+        if (!Number.isSafeInteger(tick) || tick < 0 || (hasOwnerTick && tick > d.u)) continue;
+        e._netTick = tick;
+      }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
-        && d.r === 2 && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
+        && d.r === 2 && ownerSimulationTickAccepted && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
         && e._netTick >= 0 && e._netTick <= d.u;
       e._finishPaintApplied = false;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
@@ -552,7 +567,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       if (stormActor?.remote && stormActor.owner === from && snap?.t === d.ts
         && Number.isSafeInteger(snap.life) && snap.life === stormActor.net.lastLife
         && (snap.f & F.alive) && (snap.f & F.special)
-        && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
+        && ownerSimulationTickAccepted && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
         && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
         e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
       }
@@ -817,8 +832,14 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (!validBossMove(e[2])) return;
       } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
     }
-    const eventPeer = this.peers.get(from);
-    if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
+    const eventKind = e[1], eventPeer = this.peers.get(from);
+    if (!['s','p','pe','b','tr','ev','bm','bc'].includes(eventKind)) return;
+    if (eventKind === 'p' && !validNetworkProjectileTiming(e[11], e[12])) return;
+    if (eventKind === 'b') for (let index = 4; index <= 9; index++) if (!Number.isFinite(e[index])) return;
+    if (eventKind === 'pe' && e[4] === 1 && (!Number.isFinite(e[5]) || !Number.isFinite(e[6]) || !Number.isFinite(e[7]))) return;
+    if (eventKind === 'tr' && typeof e[3] !== 'string') return;
+    if (eventKind === 'ev' && typeof e[2] !== 'string') return;
+    if (e._netSeq !== undefined && eventPeer && !validEventSequence(e._netSeq, eventPeer._lastEventSeq || 0)) return;
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
       const actor = this.byNid.get(e[2]);
       if (!actor?.remote || actor.owner !== from) return;
@@ -828,6 +849,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
     }
+    if (e._netSeq !== undefined && eventPeer) eventPeer._lastEventSeq = e._netSeq;
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
       const bombWithKitMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }";
@@ -894,7 +916,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     }`, 'respawn invalidates storm and hit authority state');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
-        if (e[11] < 0 || e[12] <= 0) return;
+        if (!validNetworkProjectileTiming(e[11], e[12])) return;
         const prepareProjectile = G.projectiles?.prepareFidelityProjectilePacket;
         const packet = typeof prepareProjectile === 'function' ? prepareProjectile.call(G.projectiles, e) : e;
         if (typeof prepareProjectile === 'function' && !packet) return;
@@ -904,7 +926,11 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         const birthId = packet[29 + inkMetaOffset + kitOffset];
         if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
         const a = this.byNid.get(packet[2]), p = a && G.projectiles?.ghostProjectile(a, packet);
-        if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
+        if (p) {
+          p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0;
+          const hardMaxSteps = Math.ceil((NETWORK_PROJECTILE_LIFE_MAX + NETWORK_PROJECTILE_DELAY_MAX) * 60) + 2;
+          p._netMaxSteps = Math.min(Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2, hardMaxSteps);
+        }
         break;
       }
       case 'pe': {
@@ -2102,11 +2128,11 @@ ${bombHit}`;
         const clock = Math.min(p._netPeer.tr,p._netPeer.lastTs ?? p._netPeer.tr);
         const ownerElapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
         const target = Math.min(Math.floor(ownerElapsed+.0306)+1,p._netEndStep ?? Infinity);
-        const limit = p._netMaxSteps;
+        const limit = p._netMaxSteps, catchupTarget = Math.min(target, p._netSteps + 30);
         let dead = false;
         if (nm) nm.mute++;
         try {
-          while (!dead && p._netSteps < target && p._netSteps < limit) {
+          while (!dead && p._netSteps < catchupTarget && p._netSteps < limit) {
             p._netSteps++;
             const activeDt = Math.max(0, SIM_DT - Math.max(0, p.delay || 0));
             p.delay = Math.max(0, (p.delay || 0) - SIM_DT);
@@ -2129,11 +2155,11 @@ ${bombHit}`;
           // Step on the owner's playback clock, never on receipt wall time.
           // .0306 tick tolerates 0.51 ms legacy timestamp rounding, not travel distance.
           // Finite lifetime bounds catch-up work, including a delayed birth.
-          const limit = p._netMaxSteps;
+          const limit = p._netMaxSteps, catchupTarget = Math.min(target, p._netSteps + 30);
           let dead = false;
           if (nm) nm.mute++;
           try {
-            while (!dead && p._netSteps < target && p._netSteps < limit) {
+            while (!dead && p._netSteps < catchupTarget && p._netSteps < limit) {
               p._netSteps++;
               if (p.delay > 0) { p.delay -= SIM_DT; if (p.delay > 0) continue; }
               dead = this._step(p, SIM_DT);
@@ -2290,7 +2316,7 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
       'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
       'validate host Boss snapshot before unpacking and buffering');
@@ -2300,6 +2326,19 @@ ${bombHit}`;
     patch('    if (!Number.isFinite(d.ts)) return;',
       '    if (!validSnapshotTimestamp(d.ts)) return;',
       'reject unsafe owner clock before replay watermark mutation');
+    patch(`    if (!validSnapshotTimestamp(d.ts)) return;
+    const previous = this.peers.get(from);
+    // One ordered replay gate owns both combat-life admission and projectile/event chronology.
+    if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
+    this.stats.in++;
+    const p = this._peer(from);`,
+      `    const receivedAt = now();
+    const previous = this.peers.get(from);
+    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, receivedAt, previous?.lastReceiveAt)) return;
+    this.stats.in++;
+    const p = this._peer(from);
+    p.lastReceiveAt = receivedAt;`,
+      'bound owner tick forward progression');
     // #574: use the established authenticated, life-scoped, deduplicated hit
     // transaction. A zero-damage Blaster contact is admitted only with bounded
     // geometry; no other cause gains a zero/negative-damage exception.
