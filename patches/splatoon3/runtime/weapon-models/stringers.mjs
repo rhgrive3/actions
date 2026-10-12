@@ -26,6 +26,24 @@ function sweptRect(body, stations, color, material=M.satin, offsetX=0) {
   for(let i=0;i<indices.length;i+=3)[indices[i+1],indices[i+2]]=[indices[i+2],indices[i+1]];
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.setIndex(indices);g.computeVertexNormals();body.add(g,color,material);
 }
+// LACT-only cast section: a real recessed web between rounded raised rims.
+// The center remains star-shaped, so a center fan closes each end without filling the grooves.
+const REEF_CAST_SECTION=[[-.30,-.5],[-.44,-.46],[-.5,-.34],[-.49,-.25],[-.42,-.18],[-.40,0],[-.42,.18],[-.49,.25],[-.5,.34],[-.44,.46],[-.30,.5],[.30,.5],[.44,.46],[.5,.34],[.49,.25],[.42,.18],[.40,0],[.42,-.18],[.49,-.25],[.5,-.34],[.44,-.46],[.30,-.5]].reverse();
+const REEF_ROUND_SECTION=Array.from({length:12},(_,k)=>[-.5*Math.cos(k*Math.PI/6),.5*Math.sin(k*Math.PI/6)]).reverse();
+function castSection(body,stations,section,color,material=M.satin){
+  const vertices=[],indices=[],r=section.length;
+  for(let i=0;i<stations.length;i++){
+    const[y,z,w,t]=stations[i],a=stations[Math.max(0,i-1)],b=stations[Math.min(stations.length-1,i+1)],dy=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dy,dz);
+    for(const[x,n]of section)vertices.push(x*w,YC+y-dz/len*n*t,z+dy/len*n*t);
+  }
+  for(let i=0;i<stations.length-1;i++)for(let k=0;k<r;k++){
+    const a=i*r+k,b=i*r+(k+1)%r,c=b+r,d=a+r;indices.push(a,c,b,a,d,c);
+  }
+  const first=vertices.length/3,last=first+1,a=stations[0],b=stations.at(-1),end=(stations.length-1)*r;
+  vertices.push(0,YC+a[0],a[1],0,YC+b[0],b[1]);
+  for(let k=0;k<r;k++)indices.push(first,k,(k+1)%r,last,end+(k+1)%r,end+k);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.setIndex(indices);g.computeVertexNormals();body.add(g,color,material);
+}
 function cubicLimb(s,controls,n,width,thick){
   const out=[];for(let k=0;k<=n;k++){const t=k/n,u=1-t,p=[0,0];for(let j=0;j<2;j++)p[j]=u*u*u*controls[0][j]+3*u*u*t*controls[1][j]+3*u*t*t*controls[2][j]+t*t*t*controls[3][j];out.push([s*p[0],p[1],width(t),thick(t)]);}return out;
 }
@@ -49,10 +67,13 @@ function finishBow(d,cfg,body,ink,tr){
   if(cfg.castNock){
     // The pale rear pull-yoke follows the existing nock motion, not the static
     // body. Its centre remains on the original string/arrow anchor.
-    nock.add(slab([[-.162,YC+.075],[-.185,YC+.062],[-.198,YC+.015],[-.197,YC-.025],[-.179,YC-.069],[-.152,YC-.083],[-.148,YC-.062],[-.164,YC-.046],[-.173,YC-.018],[-.174,YC+.018],[-.164,YC+.052],[-.147,YC+.058]],.041,0,.004),'#d5d5c8',M.satin);
-    for(const x of[-.022,.022])nock.add(xcyl(.004,x-.001,x+.001,YC,tipZ-.010,8),'#909b98',M.metal);
+    const yoke=smoothLimb(1,[[.080,-.155,.016,.010],[.069,-.171,.037,.020],[.036,-.185,.047,.026],[-.028,-.188,.050,.027],[-.068,-.173,.038,.021],[-.083,-.153,.016,.010]],16);
+    castSection(nock,yoke,REEF_ROUND_SECTION,'#d5d5c8');
+    nock.add(zlathe([[.009,tipZ-.022],[.014,tipZ-.018],[.015,tipZ-.006],[.012,tipZ+.009],[.009,tipZ+.011]],0,YC,0,14),'#d5d5c8',M.satin);
+    for(const x of[-.024,.024])nock.add(xcyl(.0038,x-.001,x+.001,YC,tipZ-.014,8),'#909b98',M.metal);
   }
-  arrow.add(zcyl(.003,tipZ+.012,arrowFront,0,YC,8),'#353b3c',M.satin);
+  if(cfg.castNock)arrow.add(zcyl(.0095,tipZ,arrowFront,0,YC,14),'#c4c8bc',M.satin);
+  else arrow.add(zcyl(.003,tipZ+.012,arrowFront,0,YC,8),'#353b3c',M.satin);
   d.bowCfg={span,tipZ,arrowFront};
   const parts={trigger:part(tr,[0,.0315,.0282]),string:part(s1,[0,YC+span,tipZ],'ink'),stringL:part(s2,[0,YC-span,tipZ],'ink'),
     nock:part(nock,[0,YC,tipZ]),arrow:part(arrow,[0,YC,arrowFront])};
@@ -61,7 +82,7 @@ function finishBow(d,cfg,body,ink,tr){
   return rebuild(d,{body,ink,parts,gripL:cfg.gripL,muzzle:[0,YC,cfg.muzzleZ],glow:glowGeometry(rings,cfg.coil0-.002,cfg.coil1+.002,'z')});
 }
 const TRI_LIMB_CONTROLS=[[.063,-.041],[.170,-.050],[.318,-.145],[.400,-.240]];
-const REEF_LIMB_SECTIONS=[[.062,-.025,.080,.058],[.135,-.006,.063,.048],[.211,-.036,.050,.039],[.269,-.101,.041,.032],[.300,-.170,.034,.028]];
+const REEF_LIMB_SECTIONS=[[.068,.021,.076,.055],[.138,.028,.061,.046],[.216,-.020,.051,.039],[.272,-.106,.041,.032],[.300,-.170,.034,.028]];
 function tri(d){
   const C={wood:'#68452d',steel:'#a5afb2',dark:'#30373b',black:'#1c2124'};
   const body=new Pieces(),ink=new Pieces(),tr=pistolGrip(body,{color:C.black,guardColor:C.dark});
@@ -108,41 +129,43 @@ function reef(d){
   const cfg={span:.3,tipZ:-.17,arrowFront:.02,coilR:.0795,coil0:-.025,coil1:.064,muzzleZ:.15,castNock:true,
     gripL:gripSpec([0,0,.095],[0,0,1],[.75,-.62,-.1])};
   for(const s of[-1,1]){
-    // The existing arc was close; its fixed-Z section was not. Preserve the sweep
-    // with a flared cast root and real normal thickness all the way into the boss.
-    const limb=smoothLimb(s,REEF_LIMB_SECTIONS,24);
-    sweptRect(body,limb,C.white);
-    // A narrow recessed-looking channel sits within the casting, not in place of its mass.
-    const groove=limb.slice(4,-2),slot=groove.map(([y,z,w,t])=>[y,z,.0013,t*.31]);
-    for(const sx of[-1,1])sweptRect(body,slot,'#818b89',M.satin,i=>sx*(groove[i][2]*.499));
+    // The root seats in the enlarged forward receiver collar. Rounded rims and
+    // recessed web are one connected solid casting, rather than a grey stripe.
+    const limb=smoothLimb(s,REEF_LIMB_SECTIONS,20);
+    castSection(body,limb,REEF_CAST_SECTION,C.white);
+    const boot=smoothLimb(s,[[.042,.017,.083,.068],[.066,.020,.089,.064],[.085,.023,.078,.053]],5);
+    castSection(body,boot,REEF_ROUND_SECTION,C.black);
     for(const x of[-.023,.023])body.add(pipe([[x,YC+s*.290,-.162],[x,YC+s*.12,-.170],[-x,YC,-.167]],.0012,10,4),'#a9b2a4',M.metal);
     body.add(xcyl(.033,-.018,.018,YC+s*.3,-.17,20),C.white,M.satin);
     for(const sx of[-1,1]){
       body.add(ring(.026,.003,sx*.019,YC+s*.3,-.17,'x',5,20),C.edge,M.metal);
       body.add(xcyl(.009,sx>0?.019:-.023,sx>0?.023:-.019,YC+s*.3,-.17,12),C.steel,M.metal);
       body.add(xcyl(.004,sx>0?.022:-.024,sx>0?.024:-.022,YC+s*.3,-.17,8),C.dark,M.satin);
-      body.add(xcyl(.0055,sx>0?.036:-.041,sx>0?.041:-.036,YC+s*.086,-.022,10),C.steel,M.metal);
+      body.add(xcyl(.0055,sx>0?.036:-.041,sx>0?.041:-.036,YC+s*.087,.023,10),C.steel,M.metal);
     }
     body.add(zcyl(.010,-.019,.069,0,YC+s*.155,12),C.white,M.satin);
     body.add(ring(.010,.0018,0,YC+s*.155,.060,'z',4,14),C.edge,M.metal);
   }
-  // A short, full cast housing: span/diameter ~3.8 rather than the old 5.17.
-  body.add(zlathe([[0,-.116],[.047,-.116],[.064,-.108],[.077,-.073],[.079,.018],[.071,.072],[.057,.095],[0,.095]],0,YC,0,28),C.black,M.satin);
-  body.add(zcyl(.050,-.118,-.113,0,YC,24),C.dark,M.satin);
-  for(let k=-4;k<=4;k++)body.add(badge(.078-Math.abs(k)*.009,.002,.0015,0,YC+k*.009,-.119),C.edge,M.satin);
+  // Distinct rear barrel and stepped front/root collar; do not blur them into an egg.
+  body.add(zlathe([[0,-.118],[.049,-.118],[.057,-.112],[.059,-.095],[.059,-.024],[.062,-.018],[.073,-.018],[.080,-.006],[.080,.058],[.075,.071],[.060,.085],[.056,.095],[0,.095]],0,YC,0,24),C.black,M.satin);
+  body.add(zlathe([[.016,-.122],[.045,-.122],[.053,-.119],[.053,-.114],[.045,-.112],[.016,-.112]],0,YC,0,20),C.dark,M.satin);
+  body.add(zcyl(.016,-.120,-.115,0,YC,14),C.black,M.rubber);
+  for(let k=-3;k<=3;k++)if(k)body.add(badge(.078-Math.abs(k)*.009,.002,.0015,0,YC+k*.010,-.123),C.edge,M.satin);
+  for(let k=0;k<8;k++){const a=k*Math.PI/4;body.add(zcyl(.0045,.068,.074,Math.cos(a)*.068,YC+Math.sin(a)*.068,8),C.dark,M.satin);}
   // The turntable's pink threaded coupler is team ink, while cast shoulders stay black/ivory.
   ink.add(zlathe([[.012,.093],[.052,.093],[.052,.117],[.044,.125],[.036,.145],[.012,.150]],0,YC,0,24));
   for(let k=0;k<5;k++)body.add(ring(.051-k*.002,.0017,0,YC,.097+k*.009,'z',4,24),C.steel,M.metal);
   for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(rb(.006,.006,.018,Math.cos(a)*.036,YC+Math.sin(a)*.036,.134),C.edge,M.metal);}
   nozzle(body,0,YC,.137,.151,.016,C.dark);
   for(const s of[-1,1]){
-    body.add(badge(.0018,.032,.049,s*.078,YC,-.007),C.edge,M.print);
-    body.add(badge(.002,.025,.042,s*.0792,YC,-.007),C.black,M.print);
-    for(let k=0;k<3;k++)body.add(badge(.002,.002,.018,s*.0805,YC-.007+k*.006,.004),C.white,M.print);
-    ink.add(rb(.002,.008,.030,s*.069,YC+.030,.040));
+    body.add(badge(.0018,.032,.049,s*.059,YC,-.064),C.edge,M.print);
+    body.add(badge(.002,.025,.042,s*.0602,YC,-.064),C.black,M.print);
+    for(let k=0;k<3;k++)body.add(badge(.002,.002,.018,s*.0615,YC-.007+k*.006,-.053),C.white,M.print);
+    ink.add(rb(.002,.008,.030,s*.056,YC+.021,-.059));
   }
   // Rounded black saddle carries into the pale lower grip without moving either IK anchor.
-  body.add(slab([[-.035,.019],[.032,.027],[.065,.008],[.046,-.016],[.023,-.048],[.001,-.050],[-.014,-.017]],.038,0,.007),C.black,M.rubber);
+  body.add(sphere(.039,.028,.064,0,.012,-.019,16,8),C.black,M.rubber);
+  body.add(sphere(.025,.026,.037,0,-.007,.016,12,8),C.black,M.rubber);
   body.add(zcyl(.014,.068,.125,0,0,12),C.white,M.rubber);
   return finishBow(d,cfg,body,ink,tr);
 }

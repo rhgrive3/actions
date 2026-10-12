@@ -40,3 +40,13 @@ The first exact-head Chromium sheet visibly improved the continuous Tri sweep an
 The REEF rear pale C-shaped pull-yoke visible in the reference was still missing. It is now geometry of the existing nock channel, with its original pivot unchanged. A test verifies the complete casting moves back exactly .17 model units at full draw and returns to the same anchor; no new motion or instance node is added. This is an image-guided attachment interpretation, not confirmed source animation parity.
 
 The threaded front coupler appears pink throughout the supplied turntable while the static PNG uses neutral grey. Only the corresponding external coupler is assigned team ink; the narrow silver metal ribs and black outlet remain fixed. The complete new images and eight-Actor measurements remain required before acceptance.
+
+## LACT-only cast-structure rework after renewed review
+
+The user's 06:40 request concerned the lower LACT shown in the first pass2 sheet, before the rear-yoke correction was delivered. The yoke was already present in bb284899; this rework does not report it as still missing. That head passed all general CI, but LACT acceptance and the planned PR1271 integration remain on hold.
+
+Actual corrected 640px views and the original turntable still expose three problems beyond overall ratios: the smaller rear cylinder and larger front/root collar read as one swollen barrel; the root seats and lower saddle lack distinct rounded mass; the rear yoke is a flat-sided strap with an overly thin dark shaft. The limb channel was a grey strip, not geometric relief.
+
+This new candidate changes only LACT. It separates a narrower straight rear receiver from a stepped front collar, seats the pale roots into rounded black cuffs on that collar, and gives the lower saddle volume. The curved pale limbs use a connected cast cross-section with raised rounded rims and a physically recessed web. The painted groove strips are removed. The rear yoke has a smoothly varying oval section and tapered ends, and a pale 19mm-diameter model-space shaft connects it visibly to the rear receiver. That diameter is an authored approximation, not an official measurement. Existing nock/arrow pivots and draw laws remain unchanged.
+
+Reference turntable views 1/1, 1/4 and 2/1 support the root/collar registration, but do not establish an exact Z coordinate or groove depth. The new arm shape must be checked in side and reverse-oblique images rather than accepted from source or a single span ratio. Tri and Wellstring builds and all motion remain unchanged. Latest exact-head screenshots and cost measurements are required; earlier green checks do not validate this rework.
