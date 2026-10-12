@@ -10,6 +10,8 @@ on:
       - scripts/render-inkwave-brella-gallery.mjs
       - scripts/compare-inkwave-brella-gallery.py
       - scripts/verify-inkwave-nine-model-crowd.mjs
+      - scripts/render-inkwave-nine-model-crowd.mjs
+      - scripts/render-inkwave-nine-far-gallery.mjs
       - .github/workflows/inkwave-circled-weapon-models.yml
 permissions:
   contents: read
@@ -34,7 +36,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -66,12 +68,21 @@ jobs:
           fi
           node scripts/render-inkwave-${GALLERY}-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
           node scripts/render-inkwave-${GALLERY}-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+          node scripts/render-inkwave-nine-far-gallery.mjs --site .model-before-site --out .model-evidence/far-before --ids "$IDS" --size 400
+          node scripts/render-inkwave-nine-far-gallery.mjs --site .model-after-site --out .model-evidence/far-after --ids "$IDS" --size 400
           python3 scripts/compare-inkwave-${GALLERY}-gallery.py .model-evidence reports/inkwave-weapon-model-workspace/refs ${IDS//,/ }
           python3 - <<'PY'
           import json,os
           data=json.load(open('.model-evidence/after/gallery.json'))
           assert not data['errors']
           assert len(data['rows'])==3
+          before=json.load(open('.model-evidence/far-before/far-gallery.json'));after=json.load(open('.model-evidence/far-after/far-gallery.json'))
+          assert not before['errors'] and not after['errors']
+          assert len(before['rows'])==len(after['rows'])==3
+          for a,b in zip(before['rows'],after['rows']):
+            assert a['id']==b['id']
+            for view in a['views']: assert a['views'][view]['camera']==b['views'][view]['camera']
+          print('FAR_FIXED_CAMERA_GATE passed')
           if os.environ['FAMILY']=='brella':
             for row in data['rows']:
               assert len(row['reverseCases'])==2
@@ -102,7 +113,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -117,6 +128,9 @@ jobs:
           node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/weapon-catalog-adapter.test.mjs patches/splatoon3/tests/brella-guard-facing.test.mjs patches/splatoon3/tests/issue-857-roller-heading.test.mjs patches/splatoon3/tests/issue-973-facing-speed.test.mjs patches/splatoon3/tests/brella-facing-wire.test.mjs
           WEAPON_IDS=s3-saber-normal,s3-saber-lite,s3-saber-heavy,s3-stringer-normal,s3-stringer-short,s3-stringer-explosion,s3-shelter-normal,s3-shelter-wide,s3-shelter-focus,s3-shelter-compact node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs
           node --experimental-vm-modules --test patches/network-replication/tests/paint-canonical-order.test.mjs
+          node --test patches/splatoon3/tests/nine-model-crowd-budget.test.mjs
+          # Current all65 correctness is mandatory; the unchanged 20% algorithm guard uses immutable main805 model sources.
+          WEAPON_LOD_REPORT=.current-lod.json WEAPON_LOD_FIXED_REPORT=.fixed-main805-lod.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
       - name: Build immutable main and candidate
         run: |
           git rev-parse HEAD
@@ -135,16 +149,17 @@ jobs:
         env:
           INKWAVE_BUILT_SITE: .model-after-site
         run: node --experimental-vm-modules --test patches/splatoon3/tests/camera-aim-controls.test.mjs patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-94-muzzle-feedback.test.mjs patches/splatoon3/tests/issue-945-muzzle-feedback-cache.test.mjs patches/splatoon3/tests/issue-413-world-aim.test.mjs patches/splatoon3/tests/issue-608-fidelity-aim.test.mjs
-      - name: Two eight-weapon rosters cover all nine, game and far, controlled ABBA
+      - name: Two eight-weapon rosters, native warmAll and full-post completion-read ABBA
         run: |
           for roster in A B; do
             IDS=$(node scripts/verify-inkwave-nine-model-crowd.mjs --roster "$roster")
             for pair in before-A after-B after-B2 before-A2; do
               version="${pair%%-*}"
-              node scripts/render-inkwave-circled-weapon-gallery.mjs --site ".model-${version}-site" --out ".model-crowd/${roster}/${pair}" --ids "${IDS%%,*}" --size 600 --crowd --crowd-ids "$IDS"
+              node scripts/render-inkwave-nine-model-crowd.mjs --site ".model-${version}-site" --out ".model-crowd/${roster}/${pair}" --roster "$roster"
             done
           done
           node scripts/verify-inkwave-nine-model-crowd.mjs .model-crowd
+          cp .current-lod.json .fixed-main805-lod.json .model-crowd/
       - uses: actions/upload-artifact@v4
         if: always()
         with:

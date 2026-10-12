@@ -50,10 +50,10 @@ try {
     const { WEAPONS } = await import(prefix + 'src/config.js');
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setSize(size, size); renderer.setClearColor(0xffffff, 0);
-    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; document.body.append(renderer.domElement);
+    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1; document.body.append(renderer.domElement);
     const scene = new THREE.Scene();
-    const px = new Uint8Array(32 * 16 * 4); for (let y = 0; y < 16; y++) for (let x = 0; x < 32; x++) { const v = y < 9 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 32 + x) * 4); }
-    const sky = new THREE.DataTexture(px, 32, 16); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
+    const px = new Uint8Array(1024 * 512 * 4); for (let y = 0; y < 512; y++) for (let x = 0; x < 1024; x++) { const v = y / 512 < 9 / 16 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 1024 + x) * 4); }
+    const sky = new THREE.DataTexture(px, 1024, 512); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
     const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(sky).texture;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
     const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3, 4, 2); scene.add(key);
@@ -164,10 +164,10 @@ try {
       if(res.tieMotion){
         const m=res.tieMotion;if(m.maxFrontError>1e-7||m.maxRearError>1e-7||m.maxDraw<.08||!m.releaseSeen||Math.abs(m.returnedDraw)>.0001)throw Error('LACT tie continuity/state coverage '+JSON.stringify(m));
       }
-      // Fixed-pose render submission including a GPU completion boundary. Same-runner A/B only.
+      // Historical submission/flush-only sample, not GPU completion. The dedicated nine-model crowd harness uses verified final-output readback.
       const benchCam=new THREE.PerspectiveCamera(32,1,.05,30);benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.15)));
       const samples=[],gl=renderer.getContext();for(let j=0;j<100;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=20)samples.push(performance.now()-t);}
-      samples.sort((a,b)=>a-b);res.renderMs={p50:samples[Math.floor(samples.length*.5)],p95:samples[Math.floor(samples.length*.95)]};
+      samples.sort((a,b)=>a-b);res.renderMs={scope:'CPU submission plus gl.finish flush/backpressure only; GPU completion is not established. Use the dedicated final-output readback crowd for completion.',p50:samples[Math.floor(samples.length*.5)],p95:samples[Math.floor(samples.length*.95)]};
       res.drawCalls=renderer.info.render.calls;res.renderTriangles=renderer.info.render.triangles;
       if(crowd){
         const actors=[a], ids=crowdIds.length?crowdIds:['s3-saber-normal','s3-saber-lite','s3-saber-heavy','s3-stringer-normal','s3-stringer-short','s3-stringer-explosion'];
@@ -183,7 +183,7 @@ try {
           for(let k=0;k<actors.length;k++){const o=actors[k];o.pos.set((k%4-1.5)*1.15,0,Math.floor(k/4)*1.5);o.intent.fire=false;o.character.setLod(tier);for(let z=0;z<4;z++)o._finishFrame(1/60);}
           const cpu=[],done=[],anim=[];for(let k=0;k<80;k++){const t0=performance.now();for(const o of actors)o._finishFrame(1/60);const t1=performance.now();renderer.render(scene,camera);const t2=performance.now();gl.finish();const t3=performance.now();if(k>=20){anim.push(t1-t0);cpu.push(t2-t1);done.push(t3-t1);}}
           const geos=new Set();scene.traverseVisible(o=>{if(o.isMesh&&o.geometry)geos.add(o.geometry);});let geometryBytes=0;for(const g of geos){for(const a of Object.values(g.attributes))geometryBytes+=a.array.byteLength;if(g.index)geometryBytes+=g.index.array.byteLength;}
-          res.crowd[tier]={camera:{position:camera.position.toArray(),target:cameraTarget.toArray(),fov:camera.fov,direction:camera.getWorldDirection(new THREE.Vector3()).toArray()},lodTiers:actors.map(o=>o.character.lodTier),lodStates:actors.map(o=>({force:o.character.lod.force,tier:o.character.lod.tier,to:o.character.lod.to})),weaponNear:actors.map(o=>o.character.weapon.near),actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
+          res.crowd[tier]={camera:{position:camera.position.toArray(),target:cameraTarget.toArray(),fov:camera.fov,direction:camera.getWorldDirection(new THREE.Vector3()).toArray()},lodTiers:actors.map(o=>o.character.lodTier),lodStates:actors.map(o=>({force:o.character.lod.force,tier:o.character.lod.tier,to:o.character.lod.to})),weaponNear:actors.map(o=>o.character.weapon.near),actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),timingScope:'Historical renderCompleteMs key means CPU submission plus gl.finish flush/backpressure; it is not a completion guarantee.',drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
           res.images['crowd-'+tier]=snap();
         }
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}

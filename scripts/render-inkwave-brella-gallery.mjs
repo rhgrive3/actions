@@ -48,10 +48,10 @@ try {
     const { WEAPONS } = await import(prefix + 'src/config.js');
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     renderer.setSize(size, size); renderer.setClearColor(0xffffff, 0);
-    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; document.body.append(renderer.domElement);
+    renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1; document.body.append(renderer.domElement);
     const scene = new THREE.Scene();
-    const px = new Uint8Array(32 * 16 * 4); for (let y = 0; y < 16; y++) for (let x = 0; x < 32; x++) { const v = y < 9 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 32 + x) * 4); }
-    const sky = new THREE.DataTexture(px, 32, 16); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
+    const px = new Uint8Array(1024 * 512 * 4); for (let y = 0; y < 512; y++) for (let x = 0; x < 1024; x++) { const v = y / 512 < 9 / 16 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 1024 + x) * 4); }
+    const sky = new THREE.DataTexture(px, 1024, 512); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
     const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(sky).texture;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
     const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3, 4, 2); scene.add(key);
@@ -130,7 +130,7 @@ try {
       };
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0, sawOpen=false,sawLaunched=false,sawHidden=false,sawFolded=false;
       const benchCam=new THREE.PerspectiveCamera(42,1,.05,30);benchCam.position.set(-1.6,1.15,2.4);benchCam.lookAt(0,.8,.25);
-      const bench=()=>{benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4).multiplyScalar(1.15));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.25)));const gl=renderer.getContext(),ms=[];for(let j=0;j<50;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=10)ms.push(performance.now()-t);}ms.sort((a,b)=>a-b);return{lod:ch.lodTier,weaponNear:ch.weapon.near,p50:ms[Math.floor(ms.length*.5)],p95:ms[Math.floor(ms.length*.95)],drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
+      const bench=()=>{benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4).multiplyScalar(1.15));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.25)));const gl=renderer.getContext(),ms=[];for(let j=0;j<50;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=10)ms.push(performance.now()-t);}ms.sort((a,b)=>a-b);return{scope:'CPU submission plus gl.finish flush/backpressure only; GPU completion is not established.',lod:ch.lodTier,weaponNear:ch.weapon.near,p50:ms[Math.floor(ms.length*.5)],p95:ms[Math.floor(ms.length*.95)],drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
       const C = api.CHARACTER_CHANNELS;
       const firstEnd=70+({"s3-shelter-normal":50,"s3-shelter-wide":85,"s3-shelter-focus":40}[id]||60),secondStart=firstEnd+80;
       for (let frame = 0; frame < secondStart+750; frame++) {
@@ -215,7 +215,7 @@ try {
           for(let k=0;k<actors.length;k++){const o=actors[k];o.pos.set((k%4-1.5)*1.15,0,Math.floor(k/4)*1.5);o.intent.fire=false;o.character.setLod(tier);for(let z=0;z<4;z++)o._finishFrame(1/60);}
           const gl=renderer.getContext(),cpu=[],done=[],anim=[];for(let k=0;k<80;k++){const t0=performance.now();for(const o of actors)o._finishFrame(1/60);const t1=performance.now();renderer.render(scene,camera);const t2=performance.now();gl.finish();const t3=performance.now();if(k>=20){anim.push(t1-t0);cpu.push(t2-t1);done.push(t3-t1);}}
           const geos=new Set();scene.traverseVisible(o=>{if(o.isMesh&&o.geometry)geos.add(o.geometry);});let geometryBytes=0;for(const g of geos){for(const a of Object.values(g.attributes))geometryBytes+=a.array.byteLength;if(g.index)geometryBytes+=g.index.array.byteLength;}
-          res.crowd[tier]={weaponNear:actors.map(o=>o.character.weapon.near),actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
+          res.crowd[tier]={weaponNear:actors.map(o=>o.character.weapon.near),actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),timingScope:'Historical renderCompleteMs key means CPU submission plus gl.finish flush/backpressure; it is not a completion guarantee.',drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
           res.images['crowd-'+tier]=snap();
         }
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}

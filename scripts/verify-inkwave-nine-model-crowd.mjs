@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
 
 export const selected = ['s3-saber-normal','s3-saber-lite','s3-saber-heavy','s3-stringer-normal','s3-stringer-short','s3-stringer-explosion','s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];
 // Two eight-player scenarios are required: neither can silently omit the ninth weapon.
@@ -8,6 +9,7 @@ export const rosters = { A: selected.slice(0,8), B: selected.slice(1) };
 assert.deepEqual([...new Set(Object.values(rosters).flat())].sort(), [...selected].sort());
 for (const ids of Object.values(rosters)) assert.equal(new Set(ids).size,8);
 
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
 if (process.argv[2] === '--roster') {
   assert.ok(rosters[process.argv[3]], 'Unknown roster');
   console.log(rosters[process.argv[3]].join(','));
@@ -16,9 +18,10 @@ if (process.argv[2] === '--roster') {
   for (const [scenario,ids] of Object.entries(rosters)) {
     const all={};
     for (const pair of ['before-A','after-B','after-B2','before-A2']) {
-      const data=JSON.parse(fs.readFileSync(path.join(root,scenario,pair,'gallery.json')));
-      assert.deepEqual(data.errors,[]); assert.equal(data.rows.length,1);
-      all[pair]=data.rows[0].crowd;
+      const data=JSON.parse(fs.readFileSync(path.join(root,scenario,pair,'crowd.json')));
+      assert.deepEqual(data.errors,[]);assert.equal(data.roster,scenario);assert.equal(data.environment.inputWidth,1024);assert.equal(data.browser.width,600);assert.equal(data.browser.height,600);
+      assert.ok(Number.isFinite(data.warm.warmAllMs)&&data.warm.warmAllMs>0);assert.ok(Number.isFinite(data.warm.actorSetupMs)&&data.warm.actorSetupMs>0);assert.equal(data.post.gtao,true);assert.equal(data.post.bloomEnabled,true);assert.equal(data.post.dynamicScale,1);assert.equal(data.post.quality,'high');assert.ok(data.warm.firstPostFrame.renderThroughReadbackMs>0);
+      all[pair]=data.tiers;all[pair]._warm=data.warm;all[pair]._browser=data.browser;
       for (const tier of ['game','far']) {
         const row=all[pair][tier]; assert.equal(row.actors,8); assert.deepEqual(row.ids,ids);
         assert.deepEqual(row.lodTiers,ids.map(()=>tier));
@@ -28,16 +31,30 @@ if (process.argv[2] === '--roster') {
         assert.equal(row.camera.direction.length,3);
         row.camera.direction.forEach((v,i)=>assert.ok(Math.abs(v-delta[i]/length)<1e-12));
         assert.deepEqual(row.weaponNear,ids.map(()=>tier==='game'));
-        for (const metric of ['animationMs','renderSubmitMs','renderCompleteMs'])
+        for (const metric of ['animationMs','renderSubmitMs','completionWaitMs','renderThroughReadbackMs'])
           for (const percentile of ['p50','p95']) assert.ok(Number.isFinite(row[metric][percentile]));
+        assert.equal(row.frames.length,15);assert.equal(row.frames.filter(f=>f.phase==='measured').length,12);
+        for(const [index,frame] of row.frames.entries()){assert.equal(frame.index,index);assert.equal(frame.phase,index<3?'warmup':'measured');for(const key of ['animationMs','submitMs','readbackWaitMs','renderThroughReadbackMs'])assert.ok(Number.isFinite(frame[key])&&frame[key]>=0,key+' valid raw timing');assert.equal(frame.glError,0);assert.equal(frame.contextLost,false);assert.equal(frame.defaultReadFramebuffer,true);assert.equal(frame.pixel.length,4);assert.equal(frame.pixel[3],255);assert.ok(frame.pixel.slice(0,3).some(x=>x!==0));assert.ok(frame.renderThroughReadbackMs>=frame.submitMs);assert.equal(frame.width,600);assert.equal(frame.height,600);}
+        assert.equal(row.drawCalls,tier==='far'?59:scenario==='A'?118:119,'approved logical-pass draw budget');
       }
     }
     for (const tier of ['game','far']) for (const pair of ['after-B','after-B2','before-A2']) {
       assert.equal(all[pair][tier].drawCalls,all['before-A'][tier].drawCalls,`${scenario}/${pair}/${tier}: draw-call difference`);
       assert.deepEqual(all[pair][tier].weaponNear,all['before-A'][tier].weaponNear,`${scenario}/${pair}/${tier}: LOD mismatch`);
     }
+    for(const tier of ['game','far']){
+      const base=all['before-A'][tier],repeat=all['before-A2'][tier],cap=tier==='game'?1024*1024:128*1024;
+      assert.equal(base.visibleGeometryBytes,repeat.visibleGeometryBytes,'stable baseline geometry allocation');
+      assert.equal(base.triangles,repeat.triangles,'stable baseline triangles');
+      for(const pair of ['after-B','after-B2']){
+        assert.ok(all[pair][tier].visibleGeometryBytes-base.visibleGeometryBytes<=cap,`${scenario}/${pair}/${tier}: approved absolute model-complexity memory increase`);
+        assert.equal(all[pair][tier].triangles,all['after-B'][tier].triangles,'stable candidate triangles');
+      }
+    }
     comparison[scenario]=all;
   }
-  fs.writeFileSync(path.join(root,'comparison.json'),JSON.stringify({selected,rosters,comparison},null,2));
+  fs.writeFileSync(path.join(root,'comparison.json'),JSON.stringify({scope:'Approved model-complexity envelope, not a lightweight/performance-success claim. Game +1MiB, far +128KiB versus the same immutable main ed3a composition; existing per-model <=16000 triangle and geometry-attribute contracts run separately. Completion timing uses actual postprocessor final-output readPixels on SwiftShader and requires manual review.',selected,rosters,comparison},null,2));
   console.log('NINE_MODEL_CROWD_ABBA '+JSON.stringify({selected,rosters,comparison}));
+}
+
 }
