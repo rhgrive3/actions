@@ -120,17 +120,17 @@ try {
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;
-      ch.actor = a; ch.onEvent = null; a.grounded = a.ground.hit = true; G.actors = [a]; scene.add(ch.root);
+      ch.actor = a; ch.onEvent = null; ch.setLod('game'); a.grounded = a.ground.hit = true; G.actors = [a]; scene.add(ch.root);
       if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready;
       const look = (frame, side) => {
-        const camera = new THREE.PerspectiveCamera(32, 1, .05, 30);
+        const camera = new THREE.PerspectiveCamera(42, 1, .05, 30);
         const off = side === 'right' ? new THREE.Vector3(-2.6, 1.0, 0.35) : side === 'left' ? new THREE.Vector3(2.6, 1.0, 0.35) : side === 'back' ? new THREE.Vector3(-0.9, 1.5, -2.4) : new THREE.Vector3(-1.6, 1.15, 2.4);
-        camera.position.copy(a.pos).add(off); camera.lookAt(a.pos.clone().add(new THREE.Vector3(0, .8, .15)));
+        camera.position.copy(a.pos).add(off.multiplyScalar(1.15)); camera.lookAt(a.pos.clone().add(new THREE.Vector3(0, .8, .25)));
         renderer.render(scene, camera); return snap();
       };
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0, sawOpen=false,sawLaunched=false,sawHidden=false,sawFolded=false;
-      const benchCam=new THREE.PerspectiveCamera(32,1,.05,30);benchCam.position.set(-1.6,1.15,2.4);benchCam.lookAt(0,.8,.15);
-      const bench=()=>{const gl=renderer.getContext(),ms=[];for(let j=0;j<50;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=10)ms.push(performance.now()-t);}ms.sort((a,b)=>a-b);return{p50:ms[Math.floor(ms.length*.5)],p95:ms[Math.floor(ms.length*.95)],drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
+      const benchCam=new THREE.PerspectiveCamera(42,1,.05,30);benchCam.position.set(-1.6,1.15,2.4);benchCam.lookAt(0,.8,.25);
+      const bench=()=>{benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4).multiplyScalar(1.15));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.25)));const gl=renderer.getContext(),ms=[];for(let j=0;j<50;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=10)ms.push(performance.now()-t);}ms.sort((a,b)=>a-b);return{lod:ch.lodTier,weaponNear:ch.weapon.near,p50:ms[Math.floor(ms.length*.5)],p95:ms[Math.floor(ms.length*.95)],drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
       const C = api.CHARACTER_CHANNELS;
       const firstEnd=70+({"s3-shelter-normal":50,"s3-shelter-wide":85,"s3-shelter-focus":40}[id]||60),secondStart=firstEnd+80;
       for (let frame = 0; frame < secondStart+750; frame++) {
@@ -168,6 +168,38 @@ try {
           const dir=new THREE.Vector3(0,0,1).transformDirection(ch.weapon.off.matrixWorld),centre=new THREE.Vector3(0,.075,plane).applyMatrix4(ch.weapon.off.matrixWorld);
           res.guardCases.push({name,yaw,speed,angleDeg:Math.acos(Math.max(-1,Math.min(1,dir.dot(can.dir))))*180/Math.PI,centreOffset:centre.distanceTo(can.pos)});shots[name]=look(0,'front');
         }
+      }
+      if(!crowd){
+        // Diagnostic coverage for native Actor turning toward reverse travel after firing expires.
+        // This is intentionally reported separately from the accepted strafe-alignment gate.
+        res.reverseCases=[];ch.root.visible=false;
+        for(const [name,mx]of[['reverseLeft',-.05],['reverseRight',.05]]){
+          const r=new Actor({team:0,weapon:id,isLocal:true,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),rc=r.character;
+          rc.actor=r;rc.onEvent=null;rc.setLod('game');r.grounded=r.ground.hit=true;G.actors=[r];scene.add(rc.root);
+          if(rc._sourceMotionLoader)await rc._sourceMotionLoader;if(rc.sourceMotion?.ready)await rc.sourceMotion.ready;
+          r.aimDir.set(0,0,1);r.intent.move.set(mx,0,-1).normalize();
+          let guardAt=null,maxAngle=0,maxCentre=0,maxGrip=0,count=0,captured=false;
+          const plane={'s3-shelter-normal':.5,'s3-shelter-wide':.74,'s3-shelter-focus':.525}[id],at={'s3-shelter-normal':.9,'s3-shelter-wide':1.83,'s3-shelter-focus':.75}[id];
+          for(let j=0;j<180;j++){
+            r.ink=100;r.intent.fire=true;r.vel.copy(r.intent.move).multiplyScalar(1.4);r.pos.addScaledVector(r.vel,1/60);
+            G.time+=1/60;r.weaponRunner.update(1/60,{fire:true,firePressed:j===0});r._finishFrame(1/60);rc.root.updateMatrixWorld(true);
+            if(![...rc.P].every(Number.isFinite))throw Error('Nonfinite reverse pose');
+            const can=r.weaponRunner.catalogState.canopy;if(!can?.open||can.launched||r.anim.firing)continue;
+            guardAt??=j/60;
+            if(j/60-guardAt>.20){
+              count++;const dir=new THREE.Vector3(0,0,1).transformDirection(rc.weapon.off.matrixWorld),centre=new THREE.Vector3(0,.075,plane).applyMatrix4(rc.weapon.off.matrixWorld);
+              maxAngle=Math.max(maxAngle,Math.acos(Math.max(-1,Math.min(1,dir.dot(can.dir))))*180/Math.PI);maxCentre=Math.max(maxCentre,centre.distanceTo(can.pos));
+              if(rc.P[C.IKL]>.99)maxGrip=Math.max(maxGrip,rc.weapon.off.localToWorld(rc.weapon.def.handL.pos.clone()).distanceTo(rc.bones.handL.getWorldPosition(new THREE.Vector3())));
+            }
+            if(!captured&&j/60>=at){
+              captured=true;const camera=new THREE.PerspectiveCamera(42,1,.05,30);camera.position.copy(r.pos).add(new THREE.Vector3(-1.6,1.15,2.4).multiplyScalar(1.15));camera.lookAt(r.pos.clone().add(new THREE.Vector3(0,.8,.25)));renderer.render(scene,camera);shots[name]=snap();
+            }
+          }
+          if(!captured||!count)throw Error('Missing reverse diagnostic '+id+' '+name);
+          res.reverseCases.push({name,moveX:mx,count,maxAngle,maxCentre,maxGrip,meetsGuardBounds:maxAngle<6&&maxCentre<.05&&maxGrip<.008});
+          r.weaponRunner.reset();scene.remove(rc.root);rc.dispose();
+        }
+        ch.root.visible=true;G.actors=[a];
       }
       if(crowd){
         const actors=[a], ids=['s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];

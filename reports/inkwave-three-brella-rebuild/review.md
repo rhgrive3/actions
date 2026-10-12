@@ -94,6 +94,25 @@ p50 2.1/2.3→2.5/2.5 ms and p95 4.2/4.2→5.4/7.9 ms. Far LOD retained 56 draws
 80,290→82,639 triangles and 588,024→595,034 bytes. Timing is a headless software-renderer
 comparison, not device FPS. Final corrected code must be remeasured before adoption.
 
+## Corrected crowd cost (same runtime as the final framing pass)
+
+The corrective model pass completed its strict 8-Actor ABBA gate in
+[run 38207681732](https://github.com/rhgrive3/actions/actions/runs/38207681732),
+[artifact 11729050049](https://github.com/rhgrive3/actions/actions/runs/38207681732/artifacts/11729050049).
+Game draws remain 110 and far draws remain 56. Game triangles are
+288,350→313,372 (+8.68%) and unique visible geometry is
+2,078,566→2,379,712 bytes (+14.49%). Far is 80,290→82,052 triangles (+2.19%) and
+588,024→593,954 bytes (+1.01%). All eight actors select the expected near/far weapon path.
+
+Game ABBA render-complete p50 is 2.8/2.5 ms before versus 3.1/2.1 ms after;
+p95 is 6.9/6.9 versus 6.6/3.1 ms. Animation p50 is 5.9/5.7 versus 6.0/5.5 ms;
+p95 is 12.7/12.7 versus 15.6/8.2 ms. Far completion p50 is 2.6/1.9 versus
+2.0/2.7 ms, and p95 is 5.4/2.8 versus 4.9/4.9 ms. These interleaved software-renderer
+samples overlap, including their variability; they do not prove a device FPS gain
+or zero cost. The deterministic geometry/memory increases remain explicit adoption
+tradeoffs. The original draw increase was removed by using the existing Recycled ink
+channel, not by changing the gate.
+
 ## Browser evidence gate
 
 Dedicated `INKWAVE three Brella model review` CI builds exact main/candidate production
@@ -105,7 +124,38 @@ A separate same-runner ABBA pass measures eight Actors holding the three models 
 game and far LOD, including animation, CPU submission, GPU-completion, unique visible
 geometry memory and actual near/far weapon selection.
 
-Status: corrective-pass browser evidence pending. The local socket/browser restriction is not a passed
+Corrective pass `d0e39ce4` completed all images and live states in
+[run 38207681732](https://github.com/rhgrive3/actions/actions/runs/38207681732).
+Its visual summary failed the strict draw-count equality: Tenta open changed from
+9 to 8 scene draws as the corrected shield entered a different camera region. The
+telemetry also exposed an uncontrolled body LOD (closed ~36k scene triangles versus
+open ~111k) and the fixed bench camera did not follow the actor's walked position.
+The raw failing artifact is retained as
+[11727369555](https://github.com/rhgrive3/actions/actions/runs/38207681732/artifacts/11727369555).
+
+The next harness revision keeps the strict equality assertion. It locks actual
+Character LOD to game, records/asserts game/near selection, follows actor position
+with the same fixed camera offset and expands the identical before/after field of
+view to include the entire held shield. These are measurement-condition corrections;
+no model geometry is changed to hide a draw-count difference.
+
+## Unresolved reverse-facing contract
+
+An independent real-Actor review added reverse input (±0.05 horizontal, -1 forward,
+1.4 m/s) at 30/60/120 Hz. When the firing pose expires, native `Actor._face` turns the
+body toward travel while the live shield still follows aim. Tenta can then lose left
+hand contact by about 4.47 cm; Normal/Recycled can reach about 8.7° / 7.9 cm of shield
+misalignment during the reverse turn. The existing stationary/strafe checks did not
+cover this case. The browser harness now emits a separately labelled reverse diagnostic,
+without disguising this known failure as a passed movement gate.
+
+Removing the visual ±90° torso clamp can cure Tenta's wrist gap numerically, but would
+spread a 180° twist across the torso and does not resolve the other models' transient
+sway. That workaround was rejected. A separately reviewed, narrowly scoped live-guard
+facing contract is needed; no shared Actor/firing behavior is changed by this PR yet.
+This is an adoption blocker, not a retail-parity claim or a completed holding fix.
+
+Status: fixed-framing/fixed-LOD and reverse diagnostic browser evidence pending. The local socket/browser restriction is not a passed
 browser test. This remains a Draft review candidate until the actual images have been
 inspected and the CI lifecycle/cost results checked. No retail-camera alignment, IoU,
 full device performance, exact scale or official-animation parity is claimed.

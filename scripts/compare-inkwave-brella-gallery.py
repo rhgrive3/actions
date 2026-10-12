@@ -20,6 +20,7 @@ def sheet(name,columns):
 sheet('open-comparison',['reference','openFront','openPersp','openBack','openSide'])
 sheet('held-comparison',['idleSide','heldOpen','heldOpenRear','heldOpenSide','launched','folded'])
 sheet('material-guard-comparison',['reference','openReferenceInk','openReferenceBackInk','guardLeft','guardRight'])
+sheet('reverse-diagnostic',['reverseLeft','reverseRight'])
 a=json.loads((root/'before'/'gallery.json').read_text());b=json.loads((root/'after'/'gallery.json').read_text())
 assert not a['errors'] and not b['errors']
 rows=[]
@@ -28,8 +29,10 @@ for x,y in zip(a['rows'],b['rows']):
  for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']:assert x[k] and y[k],(y['id'],k)
  # Moving paper reuses the existing native ink draw; no new draw channel.
  expected=0
- for state in ['closedRender','openRender']:assert y[state]['drawCalls']-x[state]['drawCalls']==expected,(y['id'],state,x[state],y[state])
+ for state in ['closedRender','openRender']:
+  assert x[state]['lod']==y[state]['lod']=='game' and x[state]['weaponNear'] and y[state]['weaponNear'],(y['id'],'uncontrolled LOD',state,x[state],y[state])
+  assert y[state]['drawCalls']-x[state]['drawCalls']==expected,(y['id'],state,x[state],y[state])
  for case in y.get('guardCases',[]):assert case['angleDeg']<6 and case['centreOffset']<.05,(y['id'],'guard alignment',case)
- row={'id':x['id'],'guardCases':y.get('guardCases'),'before':{k:x[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'after':{k:y[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'maxGrip':y['maxGrip'],'lifecycle':{k:y[k]for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']}}
+ row={'id':x['id'],'guardCases':y.get('guardCases'),'reverseBefore':x.get('reverseCases'),'reverseAfter':y.get('reverseCases'),'before':{k:x[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'after':{k:y[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'maxGrip':y['maxGrip'],'lifecycle':{k:y[k]for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']}}
  rows.append(row);print('BRELLA_AB '+json.dumps(row))
 (root/'comparison.json').write_text(json.dumps(rows,indent=2))
