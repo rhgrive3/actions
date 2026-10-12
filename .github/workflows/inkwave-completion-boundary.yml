@@ -49,12 +49,12 @@ jobs:
       - name: Observe output readback and fence completion, never a performance acceptance gate
         run: |
           for version in before after; do
-            node scripts/check-completion-boundary.mjs --site ".$version-site" --out ".completion-evidence/$version" --ids s3-spinner-downpour --size 600 --crowd
+            node scripts/check-completion-boundary.mjs --site ".$version-site" --out "completion-evidence/$version" --ids s3-spinner-downpour --size 600 --crowd
           done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: weapon-output-completion-${{ github.event.pull_request.head.sha }}
-          path: .completion-evidence
-          if-no-files-found: warn
+          path: completion-evidence
+          if-no-files-found: error
           retention-days: 14
