@@ -105,6 +105,10 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   assert.equal(engine.metrics.bytes, 0);
   assert.equal(engine.assets.size, 0);
   pattern.frames[0].levels[1].normals=f.inkBufferTypes.Int16Array.from(pattern.frames[0].levels[1].normals,x=>Math.round(x*32767));
+  // A decoded view may occupy a tiny portion of a much larger serialized
+  // pack. The live GPU attribute cache must not retain unrelated pack bytes.
+  const backing=new f.inkBufferTypes.Float32Array(16*1024*1024/4),sourcePositions=pattern.frames[0].levels[0].positions;
+  backing.set(sourcePositions);pattern.frames[0].levels[0].positions=backing.subarray(0,sourcePositions.length);
   engine.register('roller', { schema: 'inkwave-volume-v1', patterns: [pattern, pattern] });
   assert.equal(root.children.length, 128);
   const resources = [...engine.assets.get('roller').resources], disposals = new Map();
@@ -116,6 +120,9 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   engine.begin(camera); assert(f.submitRollerVolume(engine, p)); assert(f.submitRollerVolume(engine, p)); assert.equal(f.submitRollerVolume(engine, p), false); engine.end();
   assert.equal(engine.metrics.active, 2); assert.equal(engine.metrics.batches, 2); assert.equal(engine.metrics.overflow, 1);
   const batch=engine.assets.get('roller').patterns[0].frames[0][0];
+  assert.notEqual(batch.mesh.geometry.attributes.position.array.buffer,backing.buffer,'GPU cache does not pin the unrelated serialized pack');
+  assert.equal(batch.mesh.geometry.attributes.position.array.buffer.byteLength,sourcePositions.byteLength,'retain only live vertex storage');
+  assert.deepEqual(batch.mesh.geometry.attributes.position.array,sourcePositions,'copy preserves every vertex bit');
   for(const key of ['position','normal','uv'])assert.equal(batch.fringe.geometry.attributes[key],batch.mesh.geometry.attributes[key]);assert.equal(batch.fringe.geometry.index,batch.mesh.geometry.index);assert.equal(batch.fringe.instanceMatrix,batch.mesh.instanceMatrix);assert.equal(batch.fringe.instanceColor,batch.mesh.instanceColor);
   assert.equal(batch.mesh.material.depthWrite,true);assert.equal(batch.fringe.material.depthWrite,false);
   assert.equal(engine.assets.get('roller').patterns[0].frames[0][1].mesh.geometry.attributes.normal.normalized,true);

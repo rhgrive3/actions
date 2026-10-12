@@ -4034,3 +4034,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **通常起動への接続**: ユーザーの素材許可取得済みとの指示を受け、元4 VTF/VMTと不変画素・事前生成形状packを同梱。FXは両packを自動読み込みし、既存のウォームアップ内で完了してからshader/ゲームを開始する。URL指定や有効化操作は不要。gzipは元画素/形状を変えず45,557,516→17,694,762 byte。既存10MiB起動snapshotは維持し、manifestをprecache、binaryは別の2スロット上限付きcacheへ保存する。初回download負荷と未訪問状態の初回offline fallbackは制約として記録する。原典画素34フレーム、標準起動、圧縮/破損/上限、cache再利用/修復/世代削除をテストへ追加。
 
 - **設定なしの最終描画**: Chromium/SwiftShaderとWebKit/Mesa touchで通常起動から実ゲーム9操作・各45方向が成功、黒いRGB/透明欠損0。sourceとexact emitted new+packaging 27件すべて成功・skip0。既存起動snapshot 5,658,810byte、core revision 10,276,777byte、worker 69,493byteで従来上限を維持。追加素材transport/cacheは16.875MiB、GPU配置推定は37.69MiB。全起動105,208/27,793msは既存world/shader/softwareGPUを含むローカルサーバーの値であり、実機ネットワークや素材単独の比較値ではない。`reports/ink-volume/default-measurements.json`と元素材/通常起動の比較画像を参照。
+
+- **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。

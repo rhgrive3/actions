@@ -3340,5 +3340,20 @@
       "revision": 12582912,
       "worker": 69632
     }
+  },
+  "registeredArrayStorage": {
+    "before": {
+      "arrayBackingBytes": 68992952,
+      "arrayBuffers": 278,
+      "GPUUploadLayoutEstimate": 39520236
+    },
+    "after": {
+      "arrayBackingBytes": 39520236,
+      "arrayBuffers": 412,
+      "GPUUploadLayoutEstimate": 39520236
+    },
+    "savedBytes": 29472716,
+    "method": "Measured unique ArrayBuffer.byteLength across both registered original assets: position/normal/UV/index, shared instance attributes and texture atlas storage. Source fixture uses actual baked packs; this excludes object/driver/temporary decode memory and does not establish JS GC or total process memory.",
+    "change": "Copy only required position/normal attribute ranges at registration; GPU bytes and every attribute bit stay identical."
   }
 }

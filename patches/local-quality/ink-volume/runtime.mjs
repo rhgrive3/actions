@@ -81,7 +81,10 @@ export class InkVolumes {
             const g = new THREE.BufferGeometry(); asset.resources.push(g);
             const uv = data.uvs.slice(); for (let i = 0; i < uv.length; i += 2) { uv[i] = (uv[i] + f % cols) / cols; uv[i + 1] = (uv[i + 1] + Math.floor(f / cols)) / rows; }
             const opaque=data.opaqueIndices||data.indices,partial=data.fringeIndices||data.indices,drawIndices=new data.indices.constructor(opaque.length+partial.length);drawIndices.set(opaque);drawIndices.set(partial,opaque.length);
-            g.setAttribute('position', new THREE.BufferAttribute(data.positions, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(drawIndices, 1)); g.setAttribute('normal', new THREE.BufferAttribute(data.normals, 3, data.normals instanceof Int16Array)); g.setDrawRange(0,opaque.length);g.computeBoundingSphere();
+            // Packed views share one large source buffer, including unused
+            // master indices/source UVs. Retain just the required attributes
+            // so registration does not pin that complete decode in memory.
+            g.setAttribute('position', new THREE.BufferAttribute(data.positions.slice(), 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(new THREE.BufferAttribute(drawIndices, 1)); g.setAttribute('normal', new THREE.BufferAttribute(data.normals.slice(), 3, data.normals instanceof Int16Array)); g.setDrawRange(0,opaque.length);g.computeBoundingSphere();
             pattern.radius = Math.max(pattern.radius, g.boundingSphere.radius + g.boundingSphere.center.length());
             const mesh = new THREE.InstancedMesh(g, material, this.capacity);
             mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); mesh.setColorAt(0, new THREE.Color()); mesh.instanceColor.setUsage(THREE.DynamicDrawUsage);
