@@ -1,0 +1,67 @@
+name: INKWAVE circled weapon model review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/splatanas.mjs
+      - patches/splatoon3/runtime/weapon-models/stringers.mjs
+      - patches/splatoon3/tests/weapon-models-circled-rebuild.test.mjs
+      - scripts/render-inkwave-circled-weapon-gallery.mjs
+      - scripts/compare-inkwave-circled-weapon-gallery.py
+      - .github/workflows/inkwave-circled-weapon-models.yml
+permissions:
+  contents: read
+concurrency:
+  group: circled-weapon-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  visual:
+    if: github.head_ref == 'feat/inkwave-splatana-stringer-rebuild'
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [saber, stringer]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: b078c37907351f1bbc13d0e7d4b5cbeb0a330009
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build exact before and after production compositions
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Verify rebuilt geometry and preserved motion
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-circled-rebuild.test.mjs patches/splatoon3/tests/weapon-models-stringers-splatanas.test.mjs
+      - name: Render real production Actor and all model angles on the same runner
+        env:
+          FAMILY: ${{ matrix.family }}
+        run: |
+          if [ "$FAMILY" = saber ]; then IDS=s3-saber-normal,s3-saber-lite,s3-saber-heavy; else IDS=s3-stringer-normal,s3-stringer-short,s3-stringer-explosion; fi
+          node scripts/render-inkwave-circled-weapon-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
+          node scripts/render-inkwave-circled-weapon-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+          python3 scripts/compare-inkwave-circled-weapon-gallery.py .model-evidence reports/inkwave-weapon-model-workspace/refs ${IDS//,/ }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-model-review-${{ matrix.family }}-${{ github.event.pull_request.head.sha }}
+          path: .model-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
