@@ -19,7 +19,7 @@ try{
    const {installWeaponsFidelity}=await import(prefix+'patches/splatoon3/runtime/weapons-fidelity.mjs'),{installMainWeaponCatalogRuntime}=await import(prefix+'patches/splatoon3/runtime/main-weapon-catalog.mjs');installWeaponsFidelity(api,profile);installMainWeaponCatalogRuntime(api,profile);
    const scene=new THREE.Scene(),renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(600,600);renderer.setClearColor(0xe8edf2,1);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=1;document.body.append(renderer.domElement);
    const {Environment}=await import(prefix+'src/world/environment.js');const env=new Environment(renderer,scene);
-   const camera=new THREE.PerspectiveCamera(30,1,.01,30);camera.position.set(-1.45,1.15,.65);camera.lookAt(0,.91,.30);G.camera=camera;G.scene=scene;G.time=0;G.teamColors=[new THREE.Color('#ff8825'),new THREE.Color('#484ce8')];
+   const camera=new THREE.PerspectiveCamera(34,1,.01,30);camera.position.set(-2.0,1.2,.85);camera.lookAt(0,.80,.52);G.camera=camera;G.scene=scene;G.time=0;G.teamColors=[new THREE.Color('#ff8825'),new THREE.Color('#484ce8')];
    const block=(id,x,y,z,hx,hy,hz)=>({id,solid:true,grate:false,center:new THREE.Vector3(x,y,z),half:new THREE.Vector3(hx,hy,hz),axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]});
    const blocks=[block(0,0,-.08,0,10,.08,10)];if(spec.wall)blocks.push(block(1,0,1,.80,2,1,.025));
    G.level={blocks,faces:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,o)=>{o.length=0;for(let i=0;i<blocks.length;i++)o.push(i);return o;}};G.physics=new Physics(G.level);const paints=[];G.paint={sample:()=>1,splat:(...x)=>{paints.push(x.slice(0,3).map(v=>v?.toArray?.()??v));return 0;}};G.match={playing:()=>true};
@@ -39,9 +39,9 @@ try{
    G.projectiles.clear();G.fx.clear();births.length=0;fxCalls.length=0;events.length=0;impacts.length=0;
    const frames=[];let first=-1;
    for(let i=0;i<spec.fps*3;i++){step(first<0,i===0);if(first<0&&births.length)first=i;if(first<0)continue;const since=i-first;if(since>=16)break;
-    const p=points();renderer.render(scene,camera);const images={side:renderer.domElement.toDataURL('image/png').split(',')[1]};
-    if(spec.fps===60&&spec.pitch===0&&!spec.wall){camera.position.set(-.95,1.3,1.45);camera.lookAt(0,.91,.32);renderer.render(scene,camera);images.oblique=renderer.domElement.toDataURL('image/png').split(',')[1];camera.position.set(-1.45,1.15,.65);camera.lookAt(0,.91,.30);}
-    frames.push({index:since,time:G.time,...p,projectiles:G.projectiles.list.filter(p=>p.wid===spec.id).map(p=>({pos:p.pos.toArray(),start:p.start.toArray(),vel:p.vel.toArray(),age:p.age,delay:p.delay})),images});
+    const p=points();camera.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(ch.weapon.off);let maxProjection=0;for(const x of[box.min.x,box.max.x])for(const y of[box.min.y,box.max.y])for(const z of[box.min.z,box.max.z]){const v=new THREE.Vector3(x,y,z).project(camera);maxProjection=Math.max(maxProjection,Math.abs(v.x),Math.abs(v.y));}if(maxProjection>.98)throw Error('Weapon clipping '+maxProjection);renderer.render(scene,camera);const images={side:renderer.domElement.toDataURL('image/png').split(',')[1]};
+    if(spec.fps===60&&spec.pitch===0&&!spec.wall){camera.position.set(-1.55,1.3,1.9);camera.lookAt(0,.80,.52);renderer.render(scene,camera);images.oblique=renderer.domElement.toDataURL('image/png').split(',')[1];camera.position.set(-2.0,1.2,.85);camera.lookAt(0,.80,.52);}
+    frames.push({index:since,time:G.time,maxProjection,...p,projectiles:G.projectiles.list.filter(p=>p.wid===spec.id).map(p=>({pos:p.pos.toArray(),start:p.start.toArray(),vel:p.vel.toArray(),age:p.age,delay:p.delay})),images});
    }
    if(first<0||!frames.length)throw Error('No actual projectile birth '+spec.id);
    for(let i=0;i<Math.round(spec.fps*2.4)&&G.projectiles.list.some(p=>p.wid===spec.id);i++)step(false,false);

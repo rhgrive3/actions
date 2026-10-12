@@ -7,6 +7,8 @@ on:
       - patches/splatoon3/tests/five-circled-shooters.test.mjs
       - scripts/render-five-circled-shooters.mjs
       - scripts/render-nova-origin-review.mjs
+      - scripts/compare-five-refinement-images.mjs
+      - patches/splatoon3/tests/five-shooter-compact-stripes.test.mjs
       - scripts/check-five-shooter-network.mjs
       - scripts/fixtures/five-shooter-network.mjs
       - .github/workflows/five-circled-shooters.yml
@@ -122,7 +124,7 @@ jobs:
           done
       - name: Candidate origin through both native network owners and remote replay
         if: always()
-        run: node scripts/check-five-shooter-network.mjs --site .origin-site --evidence-dir .origin-network --profile-dir .origin-profiles --exact-source --nova-mouth
+        run: node scripts/check-five-shooter-network.mjs --site .origin-site --evidence-dir .origin-network --profile-dir .origin-profiles --exact-source --nova-mouth --ids s3-shooter-quicklong
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -130,6 +132,66 @@ jobs:
           path: |
             .origin-evidence
             .origin-network
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  refinement-audit:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f7be4ee248df60206ca590564b42e93a80e5e256
+          path: .f7
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Exact indexed stripe data and bounds
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-shooter-compact-stripes.test.mjs
+      - name: Build pinned pre-compaction, current and main sites
+        run: |
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .f7/scripts/build-inkwave.mjs .f7/inkwave-public .f7-site
+          node scripts/build-inkwave.mjs inkwave-public .refinement-site
+          node .main/scripts/build-inkwave.mjs .main/inkwave-public .main-site
+      - name: Repeated near/far RGBA, including 8m and 16m cameras
+        run: |
+          for repeat in A B; do
+            node scripts/render-five-circled-shooters.mjs --site .f7-site --out ".refinement-evidence/before$repeat" --ids s3-shooter-flash --size 640 --environment productionDay --no-held
+            node scripts/render-five-circled-shooters.mjs --site .refinement-site --out ".refinement-evidence/after$repeat" --ids s3-shooter-flash --size 640 --environment productionDay --no-held
+          done
+          node scripts/compare-five-refinement-images.mjs .refinement-evidence
+      - name: Nova old-main/current ordered network flight ages and image sequence
+        if: always()
+        run: |
+          node scripts/check-five-shooter-network.mjs --site .main-site --evidence-dir .refinement-network/before --profile-dir .refinement-profiles/before --baseline --ids s3-shooter-quicklong --trace-flight
+          node scripts/check-five-shooter-network.mjs --site .refinement-site --evidence-dir .refinement-network/after --profile-dir .refinement-profiles/after --exact-source --ids s3-shooter-quicklong --trace-flight
+      - name: Main baseline eight-Actor geometry and rendering costs
+        if: always()
+        run: node scripts/render-five-circled-shooters.mjs --site .main-site --out .refinement-crowd-before --environment productionDay --size 640 --crowd-only
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-shooter-refinement-${{ github.event.pull_request.head.sha }}
+          path: |
+            .refinement-evidence
+            .refinement-network
+            .refinement-crowd-before
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14

@@ -106,7 +106,9 @@ try {
       const {farGeometry}=await import(prefix+'src/game/character-lod.js');
       const fg=new THREE.Group(),fb=farGeometry(d.body,700),fi=farGeometry(d.ink,300);fg.add(new THREE.Mesh(fb,Mt.getPlasticMaterial()),new THREE.Mesh(fi,Mt.getInkMaterial(G.teamColors[0])));
       scene.remove(g);scene.add(fg);
-      for(let team=0;team<2;team++){fg.children[1].material=Mt.getInkMaterial(G.teamColors[team]);renderer.render(scene,ortho);extra['far'+team+'Side']=snap();renderer.render(scene,cam);extra['far'+team+'Persp']=snap();}
+      for(let team=0;team<2;team++){fg.children[1].material=Mt.getInkMaterial(G.teamColors[team]);renderer.render(scene,ortho);extra['far'+team+'Side']=snap();renderer.render(scene,cam);extra['far'+team+'Persp']=snap();
+        for(const distance of [8,16]){const dc=new THREE.PerspectiveCamera(40,1,.01,50);dc.position.copy(c).add(new THREE.Vector3(-.9,.45,1.1).normalize().multiplyScalar(distance));dc.lookAt(c);renderer.render(scene,dc);extra['far'+team+'Distance'+distance]=snap();}
+      }
       scene.remove(fg);scene.add(g);g.children[1].material=Mt.getInkMaterial(G.teamColors[1]);renderer.render(scene,cam);extra.team1Persp=snap();g.children[1].material=Mt.getInkMaterial(G.teamColors[0]);scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),

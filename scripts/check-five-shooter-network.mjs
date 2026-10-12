@@ -13,7 +13,8 @@ import {WebSocketServer} from 'ws';
 import {RoomDurableObject} from '../server/src/index.js';
 const ROOT=fileURLToPath(new URL('../',import.meta.url));
 const option=n=>{const i=process.argv.indexOf(n);assert(i>=0&&process.argv[i+1],n+' required');return path.resolve(process.argv[i+1]);};
-const baseline=process.argv.includes('--baseline'),novaMouth=process.argv.includes('--nova-mouth');
+const baseline=process.argv.includes('--baseline'),novaMouth=process.argv.includes('--nova-mouth'),traceFlight=process.argv.includes('--trace-flight');
+const idsIndex=process.argv.indexOf('--ids'),selectedIds=idsIndex<0?null:process.argv[idsIndex+1]?.split(',');
 const lagIndex=process.argv.indexOf('--delay-frames'),delayFrames=lagIndex<0?0:Number(process.argv[lagIndex+1]);assert(Number.isSafeInteger(delayFrames)&&delayFrames>=0&&delayFrames<=30);
 const site=option('--site'),evidence=option('--evidence-dir'),profile=option('--profile-dir');
 const physical=p=>fs.existsSync(p)?fs.realpathSync(p):path.join(physical(path.dirname(p)),path.basename(p));
@@ -49,6 +50,9 @@ relay.on('connection',(ws,req)=>{const url=new URL(req.url,'http://localhost'),c
 });
 const address='http://127.0.0.1:'+server.address().port+'/network-fixture.html?relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port)+(novaMouth?'&novaMouth=1':'');
 const contexts=[],pages=[],errors=[],receipts=new Set();let result;
+// This arena contains only the native WebGL canvas. Read its rendered pixels
+// directly, avoiding a background-page compositor screenshot timeout.
+const capture=async(page,file)=>{await page.bringToFront();const data=await page.evaluate(()=>NG.renderer.domElement.toDataURL('image/png').split(',')[1]);fs.writeFileSync(file,Buffer.from(data,'base64'));};
 try{
  for(let i=0;i<2;i++){
   const context=await chromium.launchPersistentContext(path.join(profile,'player-'+i),{headless:true,viewport:{width:1000,height:700},args:['--no-sandbox','--disable-features=LocalNetworkAccessChecks','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});contexts.push(context);await context.grantPermissions(['local-network-access']);
@@ -85,11 +89,11 @@ try{
  for(const page of pages)await page.evaluate(()=>{
   const G=NG;G.projectiles.clear();G.fx.clear();G.netm.peers.clear();G.netm.out=[];G.netm.tickT=0;for(const a of G.actors){a.net.buf=[];a.weaponRunner.reset();}
   globalThis.clock=100000;Object.defineProperty(performance,'now',{configurable:true,value:()=>clock});
-  globalThis.shotTrace=[];globalThis.shotSequence=new Map();globalThis.frameTrace={maxGrip:0,nonFinite:0,maxLabelError:0};
+  globalThis.shotTrace=[];globalThis.shotSequence=new Map();globalThis.projectileTags=new WeakMap();globalThis.flightFrames=[];globalThis.frameTrace={maxGrip:0,nonFinite:0,maxLabelError:0};
   // Native transport retains per-owner event order, not a stable projectile id.
   const record=p=>{const key=p.owner.nid+'/'+!!p.ghost,id=(shotSequence.get(key)||0)+1;shotSequence.set(key,id);return {weapon:p.owner.weaponId,owner:p.owner.nid,id,start:p.start.toArray(),velocity:p.vel.toArray(),ghost:!!p.ghost};};
-  const push=G.projectiles._push.bind(G.projectiles);G.projectiles._push=p=>{push(p);if(!p.ghost)shotTrace.push(record(p));};
-  const ghost=G.projectiles.ghostProjectile.bind(G.projectiles);G.projectiles.ghostProjectile=(a,e)=>{const p=ghost(a,e)||G.projectiles.list.at(-1);if(p)shotTrace.push(record(p));return p;};
+  const push=G.projectiles._push.bind(G.projectiles);G.projectiles._push=p=>{push(p);if(!p.ghost){const s=record(p);shotTrace.push(s);projectileTags.set(p,s);}};
+  const ghost=G.projectiles.ghostProjectile.bind(G.projectiles);G.projectiles.ghostProjectile=(a,e)=>{const p=ghost(a,e)||G.projectiles.list.at(-1);if(p){const s=record(p);shotTrace.push(s);projectileTags.set(p,s);}return p;};
   globalThis.advance=fire=>{
    clock+=1000/60;G.net.update(1/60);G.time+=1/60;
    for(const a of G.actors){if(a.remote)G.netm.applyRemote(a,1/60);else{a.ink=100;a.intent.fire=fire;a.weaponRunner.update(1/60,{fire,firePressed:fire&&!a._reviewWasFire});a._reviewWasFire=fire;a._finishFrame(1/60);}
@@ -101,17 +105,21 @@ try{
   };
  });
  const runFrames=async(n,fire)=>{for(let i=0;i<n;i++){await Promise.all(pages.map(p=>p.evaluate(f=>advance(f),fire)));flushWire();await Promise.all(pages.map(p=>p.evaluate(()=>new Promise(r=>setTimeout(r,0)))));}};
- const ids=['s3-shooter-heavy','s3-shooter-quicklong','s3-shooter-triplequick','s3-shooter-triplemiddle','s3-shooter-flash'],rows=[];
+ const allIds=['s3-shooter-heavy','s3-shooter-quicklong','s3-shooter-triplequick','s3-shooter-triplemiddle','s3-shooter-flash'],ids=selectedIds||allIds,rows=[];assert(ids.length&&ids.every(id=>allIds.includes(id)),'Only scoped five-shooter ids');
+ const trace=async(id,frame)=>{for(let i=0;i<2;i++){
+  await pages[i].evaluate(frame=>{NG.camera.position.set(-4.4,2.6,5);NG.camera.lookAt(0,.9,.25);NG.renderer.render(NG.scene,NG.camera);flightFrames.push({frame,inkVolumes:NG.fx.inkVolumes?{...NG.fx.inkVolumes.metrics}:null,inkVolumeReady:!!NG.fx.inkVolumes,inkVolumeError:NG.fx.inkVolumeError||null,projectiles:NG.projectiles.list.map(p=>({tag:projectileTags.get(p)||null,wid:p.wid,type:p.type,ghost:!!p.ghost,age:p.age,delay:p.delay,pos:p.pos.toArray(),start:p.start.toArray(),vel:p.vel.toArray(),recipe:p._inkVolumeRecipe,asset:p._inkVolumeAssetName,catalog:p.catalog?.r?.id||null,drawRadius:p.catalog?.descriptor?.b?.DrawSizeParam||p.fidelityDrawRadius||null,vis:p.vis,size:p.size,tail0:p.tail0,tailK:p.tailK,qualityDead:!!p._qualityDead}))});},frame);
+  await capture(pages[i],path.join(evidence,id+'.player'+i+'.frame'+frame+'.png'));
+ }};
  for(const id of ids){
-  await Promise.all(pages.map(p=>p.evaluate(id=>{NG.projectiles.clear();shotTrace.length=0;shotSequence.clear();frameTrace={maxGrip:0,nonFinite:0,maxLabelError:0};for(const a of NG.actors){a.setWeapon(id);a.character.setLod('game');a._reviewWasFire=false;a.ink=100;}},id)));
-  await runFrames(30,false);await runFrames(60,true);
+  await Promise.all(pages.map(p=>p.evaluate(id=>{NG.projectiles.clear();shotTrace.length=0;shotSequence.clear();flightFrames.length=0;frameTrace={maxGrip:0,nonFinite:0,maxLabelError:0};for(const a of NG.actors){a.setWeapon(id);a.character.setLod('game');a._reviewWasFire=false;a.ink=100;}},id)));
+  await runFrames(30,false);if(traceFlight){await runFrames(54,true);for(let frame=55;frame<=60;frame++){await runFrames(1,true);await trace(id,frame);}}else await runFrames(60,true);
   for(let i=0;i<2;i++){
-   await pages[i].evaluate(()=>{NG.camera.position.set(-4.4,2.6,5);NG.camera.lookAt(0,.9,.25);NG.renderer.render(NG.scene,NG.camera);});await pages[i].screenshot({path:path.join(evidence,id+'.player'+i+'.near.png')});
-   await pages[i].evaluate(()=>{for(const a of NG.actors){a.character.setLod('far');a._finishFrame(1/60);}NG.renderer.render(NG.scene,NG.camera);});await pages[i].screenshot({path:path.join(evidence,id+'.player'+i+'.far.png')});
+   await pages[i].evaluate(()=>{NG.camera.position.set(-4.4,2.6,5);NG.camera.lookAt(0,.9,.25);NG.renderer.render(NG.scene,NG.camera);});await capture(pages[i],path.join(evidence,id+'.player'+i+'.near.png'));
+   await pages[i].evaluate(()=>{for(const a of NG.actors){a.character.setLod('far');a._finishFrame(1/60);}NG.renderer.render(NG.scene,NG.camera);});await capture(pages[i],path.join(evidence,id+'.player'+i+'.far.png'));
    await pages[i].evaluate(()=>{for(const a of NG.actors){a.character.setLod('game');a._finishFrame(1/60);}});
   }
-  await runFrames(120,false);
-  const traces=await Promise.all(pages.map(p=>p.evaluate(()=>({shots:shotTrace,frames:frameTrace,models:NG.actors.map(a=>({id:a.weaponId,model:a.character.weaponModel,remote:a.remote,motion:a.character.sourceMotion.status})),remaining:NG.projectiles.list.length}))));
+  if(traceFlight){for(let frame=61;frame<=66;frame++){await runFrames(1,false);await trace(id,frame);}await runFrames(114,false);}else await runFrames(120,false);
+  const traces=await Promise.all(pages.map(p=>p.evaluate(()=>({flightFrames,shots:shotTrace,frames:frameTrace,models:NG.actors.map(a=>({id:a.weaponId,model:a.character.weaponModel,remote:a.remote,motion:a.character.sourceMotion.status})),remaining:NG.projectiles.list.length}))));
   let paired=0,maxSpawn=0,maxVelocity=0;
   for(let owner=0;owner<2;owner++)for(const shot of traces[owner].shots.filter(s=>!s.ghost)){
    const remote=traces[1-owner].shots.find(s=>s.ghost&&s.owner===shot.owner&&s.id===shot.id);assert(remote,'missing remote shot '+id+'/'+shot.id);paired++;
@@ -122,7 +130,7 @@ try{
   assert(paired>0,id+' both owners actually emit');assert(maxSpawn<.01&&maxVelocity<.01,id+' serialized shot geometry');
   for(const t of traces){assert.equal(t.frames.nonFinite,0);assert(t.frames.maxGrip<.008,id+' grip');assert(t.frames.maxLabelError<1e-8,id+' label');assert(t.models.every(m=>m.id===id&&m.model===id&&m.motion==='ready'));}
  }
- assert.equal(errors.length,0,JSON.stringify(errors));result={status:'passed',novaMouthCandidate:novaMouth,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket and production RoomDurableObject/NetSession/NetMatch',scope:'Two real Actors and Characters in controlled arena; five fixed equip cases, not a full live stage or network weapon-switch UI test',rows,loadedArtifacts:[...receipts],errors};
+ assert.equal(errors.length,0,JSON.stringify(errors));result={status:'passed',capture:'native rendered WebGL canvas PNG, no model overlay',baseline,traceFlight,novaMouthCandidate:novaMouth,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket and production RoomDurableObject/NetSession/NetMatch',scope:'Two real Actors and Characters in controlled arena; five fixed equip cases, not a full live stage or network weapon-switch UI test',rows,loadedArtifacts:[...receipts],errors};
 }catch(error){const diagnostic=await Promise.all(pages.map(async p=>{const d=await p.evaluate(()=>({mode:globalThis.NG?.mode,s3:globalThis.NG?.s3,game:!!globalThis.NG?.game,bootError:document.querySelector('#boot-error')?.textContent,base:document.baseURI})).catch(e=>({error:e.message}));await p.screenshot({path:path.join(evidence,'failure-'+pages.indexOf(p)+'.png'),timeout:15000}).catch(()=>{});return d;}));result={diagnostic,status:'failed',sourceSha,contentHash:build.contentHash,error:error.stack,errors};process.exitCode=1;}
 finally{for(const c of contexts)await c.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
 const out=path.join(evidence,'five-shooter-network-result.json');fs.writeFileSync(out+'.pending',JSON.stringify(result,null,2)+'\n');fs.renameSync(out+'.pending',out);console.log(JSON.stringify({...result,loadedArtifacts:result.loadedArtifacts?.length}));

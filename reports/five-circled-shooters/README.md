@@ -99,3 +99,26 @@ A real Actor/Runner/Projectiles probe confirms an INKWAVE-specific connection de
 The diagnostic browser job renders actual native Projectiles(scene), native FX and ready source motions for first and steady fire,30/60/120Hz, up/down aim and close walls. It compares the unchanged production origin with an explicitly labelled review-only upper-mouth candidate on the same build. The candidate is then exercised in the same real owner/remote network test. No shared rendering/physics API or production muzzle change is included. Adoption awaits visual, near-cover/aim/network review and the original-game outlet evidence.
 
 The next composition includes main ed3a046574208471c5db5309e2469d263cacfdfd (52 Git-blob-verified files after b4dc), including the native-stage build/composition additions. All standard weapon images were rechecked: L3/H3 have blue reels; H3 has its blue lever, silver unions and black front; standard Squeezer has red/white finish, black neck and short cream cap. D silver frame/logo, VIP-R snake/spikes/green livery and Foil green/gold extended cap are not transferred. Current hose surface and printed marks remain procedural approximations.
+
+## Exact f7be4ee review and separate origin evidence
+
+The main-ed3-composed head `f7be4ee248df60206ca590564b42e93a80e5e256` passed source/emitted geometry, all-65 model integration, two supported lighting paths, held/post views, and the ordinary two-browser five-shooter run. The native ordered-wire replay paired 84 real births, maximum spawn-coordinate quantization distance 0.007965 m and zero launch-velocity difference. These are controlled real-Actor arena results, not a full live-stage match claim.
+
+Eight-Actor visible-geometry comparison with the original model definitions on the same main-ed3 composition:
+
+| Tier | Original | f7 candidate | Draws original → candidate |
+|---|---:|---:|---:|
+| Near | 2,140,558 B | 4,645,850 B | 96 → 98 |
+| Far | 638,800 B | 660,202 B | 56 → 56 |
+
+The two extra near draws are the white moving .96 label on the two .96 instances. The +2.39 MiB near increase is unapproved model cost, not validated merely by passing functional CI. An eight-Actor original-main browser A/B and component-level accounting are being added. L3/H3 still lack the reference hose's fine braided pattern; the current plain hose is a recorded visual residual.
+
+The native Projectiles + FX origin diagnostic completed all 18 first/steady/30–60–120 Hz/pitch/wall cases. In the actual loaded source-motion first-shot pose, the old Nova socket-to-birth distance is 0.710601 m; the upper opening-to-birth distance is 0.641169 m. In steady fire, birth and native FX exactly use the old lower socket, 0.092965 m from the visible upper opening. Changing only the definition's muzzle to the upper opening fixes steady contact but leaves a 0.706452 m first-shot pose/prediction discrepancy. These two issues must not be conflated. No production origin or shared pose change is made here.
+
+The origin diagnostic's first camera clipped Nova's tip. Its numerical traces are retained, but those images are not sufficient visual contact evidence. The next capture widens the camera and asserts whole-weapon screen bounds. The opt-in upper-origin network run failed on the page compositor's far screenshot timeout, not a numerical assertion; it is not reported as passed. The retry is scoped to Nova and captures the native rendered canvas directly. First-shot prediction remains a separate open issue. Source retail firing clips inspected so far are obscured/rear-view and do not establish the retail outlet or bottle deformation.
+
+## Limited Squeezer stripe allocation refinement
+
+The f7 Squeezer stripe generator allocated four vertices for every clipped cell even when no triangle referenced the cell. The refinement rejects the empty cell before appending vertices. This removes exactly 9,480 unused vertices / 379,200 bytes from the can geometry; every surviving indexed attribute bit and triangle order, near bounds and triangle count remain unchanged. No shared LOD or material change is included.
+
+The old far clustering algorithm counted these unused vertices in its centroids. Removing them therefore also changes the resulting far mesh: 697 triangles and identical corner colour/material remain, while 126 position corners (maximum component delta 30.4 mm) and 106 normal corners differ. The far geometry itself is 120 B smaller. This is explicitly not a claim of bit-identical far appearance. A/A repeated native-day browser renders, full-size near/far views and 8 m/16 m projections are compared before acceptance. The change remains a candidate until that visual review and online retry are complete.
