@@ -4005,6 +4005,8 @@ Pinned 11.3.0 MarkingTimeRt and MarkingTimeRt_Trap now reach victim-local Point 
 
 Sub-mark follow-up: retain bounded per-owner accepted births independently of receiver visual retirement; retire them on ordered owner terminal events, current match/identity reset, or the source 96-live-object cap. Added delayed JSON mark, owner respawn, other-owner burst, eviction replay and leave/rejoin regressions. See the 2026-10-11 sub-mark report for limits.
 
+2026-10-11: Independent native Sprinkler Sub Power candidate connects pinned period curves and constant throw-speed tiers at owner throw admission. Actual Actor and render-rate regressions cover AP0/10/57, frozen per-device values and native phase progression. Existing AP0 phase interpretation/deployment/paint calibration remains unchanged; broader and browser gates pending. See reports/inkwave-native-sprinkler-power-2026-10-11.md.
+
 ## 2026-10-11: grounded Fast squid acceleration connection (candidate)
 
 Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinary grounded squid gets the measured 1.5x rate; humanoid and all attack/ready states retain existing rates. Baseline actual Actor delta0.6 becomes0.9 WU/s at60Hz, other ordinary forms remain0.6, attack remains1.2. Absolute36/72calibration and air behavior are unchanged. See `reports/inkwave-fast-swim-acceleration-2026-10-11.md` for source, real-Physics/FPS/snapshot checks and unverified retail boundaries.

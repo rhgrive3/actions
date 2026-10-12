@@ -44,3 +44,10 @@ test('native Sprinkler admission and ordered real JSON paint keep ownership, cre
  assert.equal(a.f.G.projectiles.bombs.length,0);assert.equal(b.f.G.projectiles.bombs.length,0);
  assert.ok(a.paint.counts[0]>0);assert.deepEqual(Array.from(b.paint.grid),Array.from(a.paint.grid));
 });
+import {emptyLoadout} from '../runtime/gear.mjs';
+test('powered native Sprinkler keeps actual JSON ownership through phase changes without receiver gear',async()=>{
+ const a=await client('a'),b=await client('b');a.actor.s3.loadout=emptyLoadout();for(const p of a.actor.s3.loadout){p.main='subPower';p.subs.fill('subPower');}a.actor.s3RefreshGear();a.actor.weapon={...a.actor.weapon,sub:'sprinkler'};a.actor.weaponRunner.reset();a.actor.pos.z=b.actor.pos.z=0;
+ for(let i=0;i<8;i++)a.actor.weaponRunner.update(1/60,{sub:true});a.actor.weaponRunner.update(1/60,{subReleased:true});a.actor.weaponRunner.update(1/60,{subReleased:true});const device=a.f.G.projectiles.bombs[0];assert.equal(device.s3Resolved.spec.periodFirstFrames,780);assert.equal(device.s3Resolved.spec.periodSecondFrames,1020);const seen=[];
+ for(let frame=0;frame<1200;frame++){advance(a,1);for(const row of a.nm.out.splice(0)){seen.push(row);wire(a,b,row);}advance(b,1);}
+ assert.equal(device.s3Sprinkler.phase,2);assert.ok(a.paint.counts[0]>0);assert.deepEqual(Array.from(b.paint.grid),Array.from(a.paint.grid));const before=Array.from(b.paint.grid);for(const row of seen)wire(a,b,row);advance(b,120);assert.deepEqual(Array.from(b.paint.grid),before);assert.equal(b.actor.stats.turf,0,'remote ghost never earns owner credit');
+});
