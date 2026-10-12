@@ -67,7 +67,9 @@ test('all pinned Charger full-charge ranges are retained by the actual catalog f
     assert.ok(raw.DistanceFullCharge>raw.DistanceMinCharge);
     f.G.projectiles.clear();f.G.actors.length=0;
     const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;
-    f.tick(a,r.parameters.WeaponParam.ChargeFrameFullCharge+1);
+    const fullFrames=Number.isFinite(r.parameters.WeaponParam.ChargeFrameFullCharge)
+      ?r.parameters.WeaponParam.ChargeFrameFullCharge:60; // sparse scoped Charger inherits runtime's 60F model
+    f.tick(a,fullFrames+1);
     a.intent.fire=false;
     let p=null;
     for(let i=0;i<65&&!p;i++){
