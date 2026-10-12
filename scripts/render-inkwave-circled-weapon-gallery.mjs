@@ -111,12 +111,35 @@ try {
         renderer.render(scene, camera); return snap();
       };
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0;
+      let previousDraw=0;
+      if(d.bowCfg?.ties)res.tieMotion={maxDraw:0,maxFrontError:0,maxRearError:0,releaseSeen:false,returnedDraw:null,frames:0};
+      const tieCloseup=()=>{
+        const w=ch.weapon,cam=new THREE.OrthographicCamera(-.38,.38,.38,-.38,.01,20);
+        cam.position.copy(w.off.localToWorld(new THREE.Vector3(-1.2,.085,-.08)));
+        cam.up.copy(new THREE.Vector3(0,1,0).applyQuaternion(w.off.getWorldQuaternion(new THREE.Quaternion())));
+        cam.lookAt(w.off.localToWorld(new THREE.Vector3(0,.085,-.08)));renderer.render(scene,cam);return snap();
+      };
       const C = api.CHARACTER_CHANNELS;
       for (let frame = 0; frame < 240; frame++) {
         const fire = frame >= 70 && frame < 200;
         a.ink = 100; a.intent.fire = fire; a.aimPitch = 0;
         if (frame >= 30 && frame < 60) { a.vel.set(0, 0, 2.4); a.pos.z += 2.4 / 60; } else a.vel.set(0, 0, 0);
         G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire, firePressed: frame === 70 }); a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true);
+        if(res.tieMotion){
+          const w=ch.weapon,m=res.tieMotion,draw=w.ps?.draw||0;
+          for(const t of d.bowCfg.ties){
+            const a=w.parts.arrow.localToWorld(new THREE.Vector3(...t.front).sub(d.parts.arrow.pivot));
+            const b=w.off.localToWorld(new THREE.Vector3(...t.front));
+            const c=w.parts.arrow.localToWorld(new THREE.Vector3(...t.back).sub(d.parts.arrow.pivot));
+            const e=w.parts.nock.localToWorld(new THREE.Vector3(...t.back).sub(d.parts.nock.pivot));
+            m.maxFrontError=Math.max(m.maxFrontError,a.distanceTo(b));m.maxRearError=Math.max(m.maxRearError,c.distanceTo(e));
+          }
+          m.frames++;if(frame===25)shots.tiesRest=tieCloseup();
+          if(draw>m.maxDraw+1e-6){m.maxDraw=draw;shots.tiesCharge=tieCloseup();}
+          if(frame>=200&&!a.weaponRunner.charging&&previousDraw>.08&&draw<previousDraw&&!m.releaseSeen){m.releaseSeen=true;shots.tiesRelease=tieCloseup();}
+          if(frame===239){m.returnedDraw=draw;shots.tiesReturned=tieCloseup();}
+          previousDraw=draw;
+        }
         if (![...ch.P].every(Number.isFinite)) nonFinite = true;
         if (a.weaponRunner.firingT > 0 || a.weaponRunner.charging || a.weaponRunner.busy?.()) fired++;
         if (!ch.dual && ch.P[C.IKL] > .99 && ch.P[C.LTW] < .001) {
@@ -128,6 +151,9 @@ try {
         if (frame === 110) { shots.fire = look(frame, 'front'); shots.fireSide = look(frame, 'right'); shots.fireLeft = look(frame, 'left'); }
         if (frame === 160) shots.fireLate = look(frame, 'back');
         if (frame === 215) shots.after = look(frame, 'front');
+      }
+      if(res.tieMotion){
+        const m=res.tieMotion;if(m.maxFrontError>1e-7||m.maxRearError>1e-7||m.maxDraw<.08||!m.releaseSeen||Math.abs(m.returnedDraw)>.0001)throw Error('LACT tie continuity/state coverage '+JSON.stringify(m));
       }
       // Fixed-pose render submission including a GPU completion boundary. Same-runner A/B only.
       const benchCam=new THREE.PerspectiveCamera(32,1,.05,30);benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.15)));

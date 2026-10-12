@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fixture } from './source-fixture.mjs';
 let loaded;
-const production=()=>loaded??=fixture({fullRuntime:true,includeCharacter:true,productionComposition:true,
+const production=()=>loaded??=fixture({fullRuntime:true,includeCharacter:true,productionComposition:true,realProjectiles:true,
  adaptRuntime:(rel,source)=>rel.endsWith('/weapon-models/stringers.mjs')?source+'\nexport {sweptRect,cubicLimb,smoothLimb,laminateFace,castSection,REEF_CAST_SECTION,REEF_ROUND_SECTION,TRI_LIMB_CONTROLS,REEF_LIMB_SECTIONS};':source,
  extraExports:"export {sweptRect,cubicLimb,smoothLimb,laminateFace,castSection,REEF_CAST_SECTION,REEF_ROUND_SECTION,TRI_LIMB_CONTROLS,REEF_LIMB_SECTIONS} from './patches/splatoon3/runtime/weapon-models/stringers.mjs';\nexport {getWeaponDef} from './inkwave-public/src/game/character-weapons.js';\nexport {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"}).then(f=>{f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);return f;});
 test('both mirrored swept sections have outward winding and retain normal thickness at the hooked ends',async()=>{
@@ -65,4 +65,34 @@ test('LACT cast arms have outward closed recessed sections, seated forward roots
  const glow=d.glow.attributes.position;for(let i=0;i<glow.count;i++)assert.ok(Math.hypot(glow.getX(i),glow.getY(i)-.085)>.0661,'charge rings clear .066 collar');
  let root;const stations=f.smoothLimb(1,f.REEF_LIMB_SECTIONS,20);f.castSection({add:g=>{root=g;}},stations,f.REEF_CAST_SECTION,'#fff',undefined,true);
  const webIndex=section.findIndex(p=>p[1]===0);assert.ok(Math.abs(root.attributes.position.getX(webIndex))>stations[0][2]*.485,'groove blends out into full pale cuff');
+});
+
+test('LACT diagonal ties keep front roots fixed and follow the yoke during charge, release and return',async()=>{
+ const f=await production(),d=f.getWeaponDef('s3-stringer-short'),ties=d.bowCfg.ties;assert.equal(ties.length,2);
+ const parts={};for(const name of['nock','arrow']){const p=d.parts[name],o=new f.THREE.Object3D();o.position.copy(p.pivot);o.userData.rest=p.pivot.clone();parts[name]=o;}
+ const w={def:d,parts,ps:{}},v=p=>new f.THREE.Vector3(...p),world=(name,p)=>v(p).sub(d.parts[name].pivot).multiply(parts[name].scale).add(parts[name].position);
+ for(const hz of[30,60,120])for(let frame=0;frame<2*hz;frame++){
+  const st=Object.freeze({charge:frame<hz?frame/hz:0,sinceRelease:frame<hz?99:(frame-hz)/hz,dt:1/hz});d.animate(w,st);
+  for(const t of ties){assert.ok(world('arrow',t.front).distanceTo(v(t.front))<1e-12,'forward root fixed');assert.ok(world('arrow',t.back).distanceTo(world('nock',t.back))<1e-12,'rear yoke attached');}
+ }
+ d.parts.arrow.geo.computeBoundingBox();assert.ok(d.parts.arrow.geo.boundingBox.getSize(new f.THREE.Vector3()).y>.20,'both physical diagonal branches exist');
+ assert.ok(ties.every(t=>Math.abs(t.front[1]-.085)>Math.abs(t.back[1]-.085)),'front shoulders are outside the yoke ends');
+});
+
+test('real LACT Actor keeps both tie joints connected through observed draw, release and recovery',async()=>{
+ const f=await production(),{G,THREE}=f;G.scene=new THREE.Scene();G.physics=new f.Physics(G.level);G.level.queryBlocks=(_a,_b,_c,_d,o)=>{o.length=0;return o;};G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+ const a=new f.Actor({team:0,weapon:'s3-stringer-short',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;ch.actor=a;ch.onEvent=null;a.grounded=a.ground.hit=true;G.actors=[a];G.scene.add(ch.root);
+ let maxDraw=0,previous=0,released=false,maxFront=0,maxRear=0,returned=0;
+ for(let frame=0;frame<240;frame++){
+  const fire=frame>=70&&frame<200;a.intent.fire=fire;a.ink=100;G.time+=1/60;a.weaponRunner.update(1/60,{fire,firePressed:frame===70});a._finishFrame(1/60);ch.root.updateMatrixWorld(true);
+  const w=ch.weapon,d=w.def,draw=w.ps.draw||0;maxDraw=Math.max(maxDraw,draw);if(frame>=200&&!a.weaponRunner.charging&&previous>.08&&draw<previous)released=true;previous=draw;returned=draw;
+  for(const t of d.bowCfg.ties){
+   const actualFront=w.parts.arrow.localToWorld(new THREE.Vector3(...t.front).sub(d.parts.arrow.pivot)),expectedFront=w.off.localToWorld(new THREE.Vector3(...t.front));
+   const actualRear=w.parts.arrow.localToWorld(new THREE.Vector3(...t.back).sub(d.parts.arrow.pivot)),expectedRear=w.parts.nock.localToWorld(new THREE.Vector3(...t.back).sub(d.parts.nock.pivot));
+   maxFront=Math.max(maxFront,actualFront.distanceTo(expectedFront));maxRear=Math.max(maxRear,actualRear.distanceTo(expectedRear));
+  }
+ }
+ console.log('LACT_TIE_ACTOR '+JSON.stringify({maxDraw,released,returned,maxFront,maxRear}));
+ assert.ok(maxFront<1e-7&&maxRear<1e-7);assert.ok(maxDraw>.08);assert.ok(released);assert.ok(Math.abs(returned)<.0001);
+ a.weaponRunner.reset();G.scene.remove(ch.root);ch.dispose();
 });

@@ -1,6 +1,6 @@
 // Independent volumetric reconstructions from the PR1246 3D renders and twelve-view turntables.
 // Geometry remains cached/merged by the existing registry. Existing sockets and animation are retained.
-import { THREE, Pieces, M, V, box, sphere, zlathe, zcyl, xcyl, ycyl, ring, pipe, slab, part, rebuild, gripSpec,
+import { THREE, Pieces, M, V, box, sphere, zlathe, zcyl, xcyl, ycyl, cyl, ring, pipe, slab, part, rebuild, gripSpec,
   pistolGrip, glowGeometry, clamp, damp, smooth } from './kit.mjs';
 const YC=.085, GROUND_ROLL=1.25;
 const rb=(w,h,d,x,y,z,e=.3)=>box(w,h,d,x,y,z,e,8,4);
@@ -76,9 +76,16 @@ function finishBow(d,cfg,body,ink,tr){
     nock.add(zlathe([[.009,tipZ-.022],[.014,tipZ-.018],[.015,tipZ-.006],[.012,tipZ+.009],[.009,tipZ+.011]],0,YC,0,14),'#d5d5c8',M.satin);
     for(const x of[-.024,.024])nock.add(xcyl(.0038,x-.001,x+.001,YC,tipZ-.014,8),'#909b98',M.metal);
   }
-  if(cfg.castNock)arrow.add(zcyl(.0095,tipZ,arrowFront,0,YC,14),'#c4c8bc',M.satin);
+  if(cfg.castNock){
+    arrow.add(zcyl(.0095,tipZ,arrowFront,0,YC,14),'#c4c8bc',M.satin);
+    // Two diagonal ties, distinct from the outer vertical bowstrings. Putting
+    // them in the existing arrow channel fixes the forward ends at arrowFront
+    // and moves the rear ends exactly with the nock, without new motion logic.
+    for(const tie of REEF_TIES)arrow.add(cyl(.0016,tie.back,tie.front,8),'#7f8a82',M.satin);
+  }
   else arrow.add(zcyl(.003,tipZ+.012,arrowFront,0,YC,8),'#353b3c',M.satin);
   d.bowCfg={span,tipZ,arrowFront};
+  if(cfg.castNock)d.bowCfg.ties=REEF_TIES;
   const parts={trigger:part(tr,[0,.0315,.0282]),string:part(s1,[0,YC+span,tipZ],'ink'),stringL:part(s2,[0,YC-span,tipZ],'ink'),
     nock:part(nock,[0,YC,tipZ]),arrow:part(arrow,[0,YC,arrowFront])};
   const rings=new Pieces();
@@ -86,6 +93,7 @@ function finishBow(d,cfg,body,ink,tr){
   return rebuild(d,{body,ink,parts,gripL:cfg.gripL,muzzle:[0,YC,cfg.muzzleZ],glow:glowGeometry(rings,cfg.coil0-.002,cfg.coil1+.002,'z')});
 }
 const TRI_LIMB_CONTROLS=[[.063,-.041],[.170,-.050],[.318,-.145],[.400,-.240]];
+const REEF_TIES=[-1,1].map(s=>({back:[-.018,YC+s*.069,-.17],front:[-.027,YC+s*.104,.02]}));
 const REEF_LIMB_SECTIONS=[[.068,.021,.076,.055],[.138,.028,.061,.046],[.216,-.020,.051,.039],[.272,-.106,.041,.032],[.300,-.170,.034,.028]];
 function tri(d){
   const C={wood:'#68452d',steel:'#a5afb2',dark:'#30373b',black:'#1c2124'};
