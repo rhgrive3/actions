@@ -95,3 +95,25 @@ test('all pinned Charger full-charge ranges are retained by the actual catalog f
     f.G.physics.level=savedLevel;
   }
 });
+
+test('sourced falling shooter droplets reuse simulated positions without paint side-effects',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const P=f.G.projectiles,color=new f.THREE.Color(1,.3,.7);
+  const drop={owner:{color,remote:false},pos:new f.THREE.Vector3(1,2,3),
+    vel:new f.THREE.Vector3(.4,-6,2),seed:.23,frames:4,radius:1.8};
+  P._s3SplashDrops=[drop];
+  let paints=0;f.G.paint.splat=()=>{paints++;return 1;};
+  const start=[drop.pos.x,drop.pos.y,drop.pos.z,drop.vel.y];
+  P._draw();
+  assert.equal(P.blobs.count,1,'source-simulated falling ink must appear');
+  const matrix=new f.THREE.Matrix4(),pos=new f.THREE.Vector3(),rot=new f.THREE.Quaternion(),scale=new f.THREE.Vector3();
+  P.blobs.getMatrixAt(0,matrix);matrix.decompose(pos,rot,scale);
+  assert.ok(pos.distanceTo(drop.pos)<1e-6,'display uses real falling-ink position');
+  assert.ok(scale.x>.04&&scale.x<=.071,'render radius independent from floor paint radius');
+  assert.ok(Math.abs(P.blobInkLook.array[0]-1.3)<1e-6);
+  assert.equal(paints,0,'render does not score/paint');
+  assert.deepEqual([drop.pos.x,drop.pos.y,drop.pos.z,drop.vel.y],start,'render is read-only');
+  P._s3SplashDrops=Array.from({length:100},(_,i)=>({...drop,pos:new f.THREE.Vector3(1+i*.001,2,3)}));
+  P._draw();assert.equal(P.blobs.count,48,'bounded VFX instance budget');
+  assert.equal(paints,0);
+});

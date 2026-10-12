@@ -189,6 +189,9 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);',
     '    const inkDrop0 = n;\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);\n    for (let i = inkDrop0; i < n; i++) {\n      writeInkLook(inkLook, i, INK_LOOK.droplet, i * 0.618);\n      B.getMatrixAt(i, _m); _m.scale(_s.setScalar(INK_LOOK.droplet[4])); B.setMatrixAt(i, _m);\n      shp[i * 4] *= INK_LOOK.droplet[3];\n    }',
     'ink look detached droplets');
+  patch('    B.count = n;',
+    '    n = appendSourcedSplashVisuals(this, B, shp, inkLook, fourPetals, n, MAX_BLOBS, _m, _q, _s, _dir, ZAX, G.camera?.position);\\n    B.count = n;',
+    'sourced falling ink draws from authoritative 60Hz state');
   patch('    this.blobFourPetals.needsUpdate = true;\n  }',
     `    this.blobFourPetals.needsUpdate = true;
     const lr = this._blobInkLookRange || (this._blobInkLookRange = { start: 0, count: 0 });
@@ -291,5 +294,5 @@ export function adaptWeaponsFidelity(code,replaceOnce) {
   patch('G.time - (this.rollHits.get(key) || -9) > 0.5',
     'G.time - (this.rollHits.get(key) ?? -Infinity) + 1e-10 >= w.rollContactInterval', 'Roller Boss contact interval');
   patch("    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", "    area += fidelityRollerMaximumPaint(this,w,fx,fz);\n    a.addTurf(area);\n    emit('weapon:impact', { pos: _v.set(a.pos.x + fx * 0.75", 'source maximum Roller floor width');
-  return "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, configureFidelityInkFlight, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityDualiesLaunchPlan, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint, INK_LOOK, fidelityInkLook, fidelityInkTail, writeInkLook } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
+  return "import { appendSourcedSplashVisuals } from '../../patches/splatoon3/runtime/projectile-presentation.mjs';\n" + "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { EPSILON as WEAPONS_FIDELITY_EPSILON, advanceFidelityProjectile, advanceFidelityWallDrop, beginFidelityWallDrop, configureFidelityFlick, configureFidelityInkFlight, fidelityProjectileTargets, fidelityPlayerCollisionRadius, fidelityVolleyDamage, fidelityBossHit, fidelityWorldHit, applyFidelityProjectileHit, applyFidelitySlosherSplash, fidelityAimConvergence, fidelityDualiesAimTarget, fidelityDualiesLaunchPlan, fidelityFlightPaintRadius, fidelityRollerMaximumPaint, fidelitySlosherImpactPaint, applyFidelityBlasterFlightPaint, applyFidelityBlasterBurstPaint, INK_LOOK, fidelityInkLook, fidelityInkTail, writeInkLook } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n"+code;
 }

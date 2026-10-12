@@ -60,3 +60,13 @@ Owner: projectile motion, world/player collision, finite reach, and visual effec
   to lane ③ and deliberately remain unmodified.
 - Confirm build-patch adapter and the targeted Node tests in CI. Browser GPU
   pixel/video A/B parity needs a comparable 11.3.0 reference capture.
+
+## Source-simulated in-flight Shooter drops
+
+Existing catalog `_s3SplashDrops` objects are the authoritative fixed-60Hz
+falling droplets for touchdown/paint but previously had no airborne visual.
+The instanced renderer now reads the **same** positions and velocities, capped
+at 48 display-only instances per frame and 30 world units from the camera.
+It never spawns additional paint drops, modifies the landing event, changes
+collision/damage or claims territory. Sprite width remains a labelled local
+visual calibration because Nintendo's sprite-mesh size is not in these tables.

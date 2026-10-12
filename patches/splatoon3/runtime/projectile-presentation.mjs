@@ -92,3 +92,37 @@ export function catalogBubbleCanBounce(groundBounces,normalY){
 export function catalogBubbleRadiusScale(totalBounces){
   return Math.pow(.75,Math.max(0,Math.floor(totalBounces||0)));
 }
+
+// Source-owned, fixed-60Hz falling paint drops already live in _s3SplashDrops.
+// Draw their actual positions, NOT a guessed second visual trajectory.
+// This path never modifies collision, lifetime, landing paint or network state.
+// A 48-instance budget and camera distance cull preserve shader/CPU budgets.
+export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals,
+  count, capacity, matrix, rotation, scale, direction, axis, cameraPosition) {
+  const queue=system?._s3SplashDrops;
+  if(!queue?.length)return count;
+  let drawn=0;
+  for(let i=queue.length-1;i>=0&&count<capacity&&drawn<48;i--){
+    const d=queue[i];
+    if(!d?.owner?.color||!d.pos||!d.vel||d.owner.remote)continue;
+    if(cameraPosition&&cameraPosition.distanceToSquared(d.pos)>900)continue;
+    const speed=d.vel.length();
+    direction.copy(d.vel);
+    if(speed>1e-6)direction.multiplyScalar(1/speed);
+    else direction.copy(axis);
+    rotation.setFromUnitVectors(axis,direction);
+    // d.radius is a *floor paint* footprint, not an ink model radius.
+    const radius=Math.min(.07,.042+Math.sqrt(Math.max(0,d.radius||0))*.008);
+    scale.setScalar(radius);
+    matrix.compose(d.pos,rotation,scale);
+    mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
+    const o=count*4;
+    shapes[o]=1.1+Math.min(1.1,speed*.009);
+    shapes[o+1]=.025;shapes[o+2]=(d.seed||0)*30+(d.frames||0)*.65;shapes[o+3]=0;
+    inkLook[o]=1.3;inkLook[o+1]=6;inkLook[o+2]=.35;
+    inkLook[o+3]=((d.seed||0)*43.98)%(Math.PI*2);
+    petals[count*2]=0;petals[count*2+1]=0;
+    count++;drawn++;
+  }
+  return count;
+}
