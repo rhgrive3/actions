@@ -149,6 +149,14 @@ try {
         let second;if(isPair){second=g.clone(true);g.position.set(-.064,-.010,-.022);second.position.set(.064,.010,.022);scene.add(second);}
         renderer.render(scene,camera);referenceImages[name]=snap();referenceCameras[name]={position:camera.position.toArray(),up:up.toArray(),target:refCenter.toArray(),fov:18,pair:isPair,roll};
         if(second){scene.remove(second);g.position.set(0,0,0);}
+        // Sensitivity sweep, not a calibrated error bound: references have no known camera intrinsics.
+        if(!isQuad&&name==='refSide')for(const [axis,degrees]of[['yaw',-4],['yaw',4],['pitch',-4],['pitch',4]]){
+          const axisVector=axis==='yaw'?new THREE.Vector3(0,1,0):new THREE.Vector3().crossVectors(up,offset).normalize();
+          const o=offset.clone().applyAxisAngle(axisVector,degrees*Math.PI/180),u=up.clone().applyAxisAngle(axisVector,degrees*Math.PI/180);
+          camera.position.copy(refCenter).add(o);camera.up.copy(u);camera.lookAt(refCenter);
+          const key='refSide'+axis+(degrees<0?'Minus':'Plus')+'4';renderer.render(scene,camera);referenceImages[key]=snap();
+          referenceCameras[key]={position:camera.position.toArray(),up:u.toArray(),target:refCenter.toArray(),fov:18,roll,sensitivityAxis:axis,degrees,note:'manual nominal fit; +/-4 degree sensitivity sweep, not calibrated confidence bounds'};
+        }
       }
       scene.remove(g);
       // Isolate only the authored metal triangles; compare the native shader with standard PBR

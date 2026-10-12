@@ -182,9 +182,12 @@ function explosher(d) {
   body.add(box(.096,.010,.017,0,cy+.119,cz-.073,.2,12,4),C.olive,M.satin);
   body.add(ylathe([[0,.090],[.017,.090],[.022,.096],[.023,.109],[.020,.116],[0,.116]],-.026,cy,cz-.004,20),C.olive,M.satin);
   for(let i=0;i<10;i++){const a=i*Math.PI/5;body.add(box(.004,.012,.004,-.026+Math.cos(a)*.021,cy+.106,cz-.004+Math.sin(a)*.021,.16,6,4),C.darkOlive,M.satin);}
-  // Burner axis is nearly parallel to the tank depth axis in the calibrated side reference.
-  // The previous upturned mounting angle was not supported by that view. Burner bolts onto the front shoulder. The silver yoke is open-sided; bronze remains visible within it.
-  const by=cy+.025,bz=cz+.115,tilt=.08,burner=new Pieces();
+  // Burner bolts onto the sloped shoulder. The silver yoke is open-sided; bronze remains visible within it.
+  // Angle-only candidate: keep the fe242 lip-plane centre fixed while pivoting the burner.
+  // The -0.70 rad trial is not inferred directly from a projected 2D reference angle.
+  const tilt=-.70,lipDepth=.076*.72;
+  const lipY=cy+.061-Math.sin(-.48)*lipDepth,lipZ=cz+.091+Math.cos(-.48)*lipDepth;
+  const by=lipY+Math.sin(tilt)*lipDepth,bz=lipZ-Math.cos(tilt)*lipDepth,burner=new Pieces();
   burner.add(box(.120,.109,.005,0,0,-.018,.38,12,6),C.silver,M.metal);
   // Thin mounting plate plus annular socket. The old broad dark square obscured this round junction.
   burner.add(zlathe([[.043,-.020],[.058,-.020],[.061,-.014],[.060,-.009],[.051,-.008],[.043,-.008]],0,0,0,24),C.silver,M.metal);
@@ -202,13 +205,13 @@ function explosher(d) {
   }
   for(const y of[-.033,0,.033]){const half=Math.sqrt(.054*.054-y*y);burner.add(box(half*2,.0035,.008,0,y,.078,.12,10,4),C.brassEdge,M.metal);}
   burner.add(zlathe([[0,.037],[.043,.037],[.043,.039],[0,.039]],0,0,0,24),'#453c26',M.satin);
-  ink.add(sphere(.027,.009,.0015,0,-.016,.041,18,8).scale(.94,.94,.72).rotateX(tilt).translate(0,by,bz));
-  body.merge(burner.transform(g=>g.scale(.94,.94,.72).rotateX(tilt).translate(0,by,bz)));
+  ink.add(sphere(.027,.009,.0015,0,-.016,.041,18,8).scale(1,1,.72).rotateX(tilt).translate(0,by,bz));
+  body.merge(burner.transform(g=>g.scale(1,1,.72).rotateX(tilt).translate(0,by,bz)));
   // Gauge has a bevelled body, pale dial, red needle and two short connector stems.
-  body.add(cyl(.004,[-.048,cy+.045,cz+.078],[-.062,cy+.060,cz+.090],10),C.silver,M.metal);
-  body.add(zlathe([[0,0],[.013,0],[.014,.004],[.014,.010],[.011,.012],[0,.012]],0,0,0,20).rotateX(-.65).translate(-.064,cy+.061,cz+.090),C.silver,M.metal);
-  body.add(zlathe([[0,.012],[.010,.012],[.010,.013],[0,.013]],0,0,0,18).rotateX(-.65).translate(-.064,cy+.061,cz+.090),'#e0e3d9',M.print);
-  body.add(cyl(.001,[-.064,cy+.069,cz+.101],[-.068,cy+.073,cz+.100],6),'#b84032',M.print);
+  body.add(cyl(.004,[-.048,cy+.081,cz+.054],[-.062,cy+.096,cz+.066],10),C.silver,M.metal);
+  body.add(zlathe([[0,0],[.013,0],[.014,.004],[.014,.010],[.011,.012],[0,.012]],0,0,0,20).rotateX(-.65).translate(-.064,cy+.097,cz+.066),C.silver,M.metal);
+  body.add(zlathe([[0,.012],[.010,.012],[.010,.013],[0,.013]],0,0,0,18).rotateX(-.65).translate(-.064,cy+.097,cz+.066),'#e0e3d9',M.print);
+  body.add(cyl(.001,[-.064,cy+.105,cz+.077],[-.068,cy+.109,cz+.076],6),'#b84032',M.print);
   // Brushed rectangular-section crash frame: U side loops, reinforced front bumper and upright carry hoop.
   for(const sx of[-1,1]){
     const x=sx*.088;

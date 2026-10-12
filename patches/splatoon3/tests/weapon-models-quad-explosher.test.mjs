@@ -59,6 +59,17 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  const ex=f.getWeaponDef(IDS[1]).body,ep=ex.attributes.position,em=ex.attributes.aMat;let cageMetal=0;for(let i=0;i<ep.count;i++)if(Math.abs(ep.getX(i))>.084&&ep.getZ(i)>.06&&ep.getZ(i)<.245&&Math.round(em.getX(i))===3)cageMetal++;assert.ok(cageMetal>50,'explosher exposed cage uses existing brushed-metal class');
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));
 });
+test('angle-only Explosher trial keeps the fe242 mouth centre fixed',async()=>{
+ const f=await production(),g=f.getWeaponDef(IDS[1]).body,p=g.attributes.position,c=g.attributes.color;
+ const centre=new f.THREE.Vector3(0,.069+Math.sin(.48)*.05472,.249+Math.cos(.48)*.05472),axis=new f.THREE.Vector3(0,Math.sin(.70),Math.cos(.70));
+ const brass=new f.THREE.Color('#d1b76e'),bounds=new f.THREE.Box3();let witnesses=0;
+ for(let i=0;i<p.count;i++){
+  if(Math.max(Math.abs(c.getX(i)-brass.r),Math.abs(c.getY(i)-brass.g),Math.abs(c.getZ(i)-brass.b))>1e-6)continue;
+  const point=new f.THREE.Vector3().fromBufferAttribute(p,i),delta=point.clone().sub(centre),axial=delta.dot(axis),radius=Math.sqrt(Math.max(0,delta.lengthSq()-axial*axial));
+  if(Math.abs(axial)<.0016&&radius>.0538&&radius<.0582){bounds.expandByPoint(point);witnesses++;}
+ }
+ assert.ok(witnesses>=140,'lip-ring vertex witnesses');assert.ok(bounds.getCenter(new f.THREE.Vector3()).distanceTo(centre)<2e-6,'authored lip centre stays within 2 micrometres');
+});
 test('Dark Tetra target palette does not inherit Light Tetra colour volumes',async()=>{
  const f=await production(),d=f.getWeaponDef(IDS[0]),p=d.body.attributes.position,c=d.body.attributes.color,ip=d.ink.attributes.position;
  // The target render shows team colour only on the sole triangle and paired front circles.
