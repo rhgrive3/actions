@@ -4,7 +4,7 @@ Targets: `s3-spinner-quick` and `s3-spinner-serein`. Production composition is `
 
 ## Current composition and scope
 
-The final candidate is composed with main `bca45e7cb55f3331a58459ea0219e42b44762712` (tree `cc437da59713b09808cd5b5b8c8aae4a9e862c03`). The dedicated workflow compares that immutable main with this branch using the same cameras, lighting, actor states and runner. Earlier results against b078 or frozen425 are historical evidence, not current-main performance measurements. Exact final-head artifacts and status are linked in PR1276.
+The final candidate is composed with main `3165f4f26a1a4b30aec228939dd92adf6fdbfd06`, including the merged 3D-ink implementation. The dedicated workflow compares that immutable main with this branch using the same cameras, lighting, actor states and runner. Earlier results against b078 or frozen425 are historical evidence, not current-main performance measurements. Exact final-head artifacts and status are linked in PR1276.
 
 Only Mini and Nautilus builders change, plus the slab import. Heavy, Hydra, Ballpoint and Heavy Edit keep every geometry attribute/index byte, including their moving channels. The separate Ballpoint glass work needs an explicit combined integration baseline and must not be overwritten by copying this complete file over it.
 
@@ -40,7 +40,7 @@ The shape-only correction `7e8e32606460c1deedd110be308c7f082f0c6c0a` restores th
 - Actual Actor/Runner/Character checks at 30, 60 and 120 Hz require finite transforms, real projectile emission and support-hand error below .008m.
 - Scalar triangle-ray tests require six/three recessed dark nozzle mouths, a visible neutral lip on both shell sides, smooth black-disc-side profile and raised hub-side shoulders.
 - Neutral silver/polished-metal/dark vertex classes are checked independently; alternate-kit gold is rejected.
-- Current-main source checks: four target contracts plus three shell/material contracts pass. All-model registry/finite-geometry/actual-Actor checks narrowed to Heavy and both targets: 3/3 pass.
+- Current-main source checks: four target contracts plus four shell/material/proportion contracts pass. All-model registry/finite-geometry/actual-Actor checks narrowed to Heavy and both targets: 3/3 pass.
 - Mini full definition triangles: 4584 → 6624. Nautilus: 4124 → 7396. No extra draw groups/channels. Triangle count alone is not performance acceptance.
 
 ## Historical measured evidence
@@ -71,3 +71,13 @@ No merge or deployment is performed by this task.
 Head `4d339ad` completed emitted source contracts, visual rendering and eight-Actor ABBA against bca45, but its broad `M.metal` plates were visually rejected: under the same production shader/environment they read as black chrome with narrow white specular highlights, obscuring the 47 still's broad silver regions. This was not accepted merely because vertex colors were neutral or CI was green.
 
 The correction keeps all position/normal/UV/index buffers fixed. Broad shell/rotor surfaces use neutral silver-grey in the existing satin channel; the cast sleeve, rolled edge and hub have brighter neutral satin values. Narrow rings and nozzle sleeves keep the polished-metal channel, while dark discs, grips, rib gaps, bearings and throat floors are retained. This is an image-guided material approximation, not a claim that the retail shader uses dielectric paint. No shared shader or gallery lighting is changed. The dedicated workflow runs visual review before crowd timing so future appearance failures are visible sooner.
+
+## Black-disc proportion correction
+
+The brighter 8479e8b material revealed a major area mismatch that the preceding dark finish had hidden. On the same black-disc side of the verified 47 still, the black perimeter diameter is approximately 142px against a shell diameter of 206px (about 0.69, with several pixels of boundary uncertainty). The fixed-heading 8479 render is about 96px / 202px (0.48). Squared diameter ratios give roughly 47% versus 23% of the projected disc area, so this is a primary proportion error, not a minor finish difference. These are within-image ratios, avoiding absolute scale and reducing camera-yaw sensitivity; the exact retail projection remains unknown.
+
+Only the negative-X black cap and its thin boundary ring are enlarged (nominal cap radius .060 to .085, shell radius .133 fixed). Cap axial depths and segment counts remain unchanged. The opposite positive-X face, its silver hub/shoulders, shell contour, neck, shroud, rotor, grips and sockets are protected. All positive-X vertex attributes and all index buffers are compared byte-for-byte, as are the other five complete splatling definitions. The 8479 benchmark is retained separately before this candidate is published. Actual projected ratio and oblique edge relief must be checked again in the new exact-head render.
+
+The frozen 8479e8b [visual/ABBA run](https://github.com/rhgrive3/actions/actions/runs/38231703192) completed successfully before this cap correction. Against bca45, game draw calls remain 88 and triangles 293568 to 314816; far remains 64 calls and triangles 84476 to 83608. Game update p95 before 17.9/12.6ms, after 12.8/11.0ms; far before 4.6/7.9ms, after 5.4/7.1ms. Game completion p95 before 10.3/8.6ms, after 10.5/5.0ms; far before 2.3/5.0ms, after 4.0/2.8ms. Mixed order variation does not establish a speedup or consistent regression. Current cap-candidate timing remains separately required.
+
+The cap correction is composed onto current main 3165f4f after 8479 completed. Its seven owned paths are layered onto that immutable main tree; binary volume assets and every unrelated main change are preserved by SHA. The dedicated baseline is also updated to 3165f4f. Local 8/8 checks were run on the preceding bca45 composition; the exact 3165 composition is validated separately in CI before acceptance.

@@ -175,9 +175,10 @@ function nautilus(d) {
   // Maximum shell radius, axial envelope and the existing hub/neck stay fixed.
   body.add(shellShape(xlathe([[0,-.041],[.053,-.041],[.073,-.036],[.099,-.023],[.121,-.003],[.132,.016],[.13,.022],[.12,.025],[.11,.014],[.103,.022],[.096,.028],[.09,.031],[.085,.025],[.078,.03],[.073,.036],[.067,.039],[.061,.029],[.054,.033],[.046,.036],[0,.036]],0,sy,sz,36)),C.shell,M.satin);
   body.add(shellShape(xlathe([[.123,.003],[.127,.005],[.133,.012],[.133,.023],[.128,.026],[.123,.026],[.123,.003]],0,sy,sz,36)),C.trim,M.satin);
-  // Raised concentric back-cap and short projecting coupling are visible on the opposite side.
-  body.add(xlathe([[0,-.053],[.038,-.053],[.055,-.048],[.06,-.042],[.06,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
-  body.add(ring(.059,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
+  // The 47 still gives a black-cap / shell diameter ratio near .68 in projection.
+  // This outer cap is distinct from the silver hub on the opposite (+X) face.
+  body.add(xlathe([[0,-.053],[.0538,-.053],[.0779,-.048],[.085,-.042],[.085,-.036],[0,-.036]],0,sy,sz,28),C.black,M.satin);
+  body.add(ring(.084,.0025,-.042,sy,sz,'x',4,28),C.silver,M.metal);
   body.add(xlathe([[0,.001],[.023,.001],[.029,.013],[.029,.043],[.022,.049],[0,.049]],0,sy,sz,20),C.silver,M.satin);
   body.add(xlathe([[0,.049],[.018,.049],[.018,.051],[0,.051]],0,sy,sz,16),C.black,M.rubber);
   for(let i=0;i<7;i++){

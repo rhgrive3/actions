@@ -1,0 +1,2331 @@
+{
+  "buildIdentity": {
+    "contentHash": "67e33b65bd21b8197b82844bc5802beefe8d19103749edfb73f8965ee656c3cd",
+    "inputHash": "ef9cf6a5af9acaf2df01d7fe451be12ff85dc724571f9b96473307564dfc3721"
+  },
+  "environment": "Chromium Linux SwiftShader",
+  "physicalDevice": false,
+  "cases": [
+    {
+      "id": "roller",
+      "vertical": false,
+      "ticks": 23,
+      "eligible": 13,
+      "recipes": [
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal",
+        "roller-horizontal"
+      ],
+      "metrics": {
+        "active": 13,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 355036,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "authorityUnchanged": true,
+      "calls": 198,
+      "triangles": 1567541,
+      "positions": [
+        [
+          -1.1006997857163592,
+          1.7456411898310251,
+          -12.609615551523138
+        ],
+        [
+          -0.541886224908549,
+          1.7882256147081201,
+          -12.938740269832621
+        ],
+        [
+          -0.20815820259162043,
+          1.9336317120439586,
+          -12.758629651773493
+        ],
+        [
+          -0.11408833972494184,
+          1.589014189643645,
+          -11.318454472605119
+        ],
+        [
+          0.3683230693971481,
+          1.7732228686712896,
+          -11.25717395698359
+        ],
+        [
+          0.888903216200809,
+          1.8980780659609897,
+          -12.454140311172758
+        ],
+        [
+          1.0792835010442985,
+          1.9274024280777884,
+          -12.742359798676304
+        ],
+        [
+          1.423520797230105,
+          1.9687981748405103,
+          -13.075625318139878
+        ],
+        [
+          2.0980314046159654,
+          1.7639929002327244,
+          -11.703457837156765
+        ],
+        [
+          1.9874188165968079,
+          1.9649081255148537,
+          -13.535911814953899
+        ],
+        [
+          3.0276272892240113,
+          1.6363800323928492,
+          -11.077569181565472
+        ],
+        [
+          3.5081750917888956,
+          1.6914443619094381,
+          -11.043273128035402
+        ],
+        [
+          1.2805521656452603,
+          2.08486629727686,
+          -14.540647440140368
+        ]
+      ],
+      "views": {
+        "active": 13,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 355036,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 1888,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 820,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 1248,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 850,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 600,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 13,
+            "positions": [
+              [
+                -1.4089988306574432,
+                1.6261770739829822,
+                -11.668053274747253
+              ],
+              [
+                -0.7676736183465039,
+                1.6842613105010051,
+                -12.106622292041761
+              ],
+              [
+                -0.39433468736548644,
+                1.8237068438270758,
+                -11.866203399799959
+              ],
+              [
+                -0.2834369973465266,
+                1.4340015765441696,
+                -10.044092200683698
+              ],
+              [
+                0.27239618686970135,
+                1.6206485880706523,
+                -9.995471850008023
+              ],
+              [
+                0.8580483995628116,
+                1.7818938842278524,
+                -11.491084775237049
+              ],
+              [
+                1.0999321106637459,
+                1.8177560101814705,
+                -11.833264191806448
+              ],
+              [
+                1.482441809735758,
+                1.8734812908299485,
+                -12.28733325501449
+              ],
+              [
+                2.266465621577228,
+                1.6256981529270793,
+                -10.568974085832782
+              ],
+              [
+                2.1150097563195027,
+                1.881112473910279,
+                -12.852782981694753
+              ],
+              [
+                3.384864889903713,
+                1.4749278342330086,
+                -9.787133673213752
+              ],
+              [
+                3.953689487248706,
+                1.5251564048101067,
+                -9.738142884075346
+              ],
+              [
+                1.3036106282749071,
+                2.031082871596075,
+                -14.095202042193971
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.021404539480331084,
+          0
+        ]
+      }
+    },
+    {
+      "id": "roller",
+      "vertical": true,
+      "ticks": 33,
+      "eligible": 3,
+      "recipes": [
+        "roller-vertical",
+        "roller-vertical",
+        "roller-vertical"
+      ],
+      "metrics": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 78736,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "authorityUnchanged": true,
+      "calls": 193,
+      "triangles": 957069,
+      "positions": [
+        [
+          0.9904027378916139,
+          2.8799498516188224,
+          -8.987664750694684
+        ],
+        [
+          0.9904027378916139,
+          2.0861179863662196,
+          -9.790729901971794
+        ],
+        [
+          0.9904027378916139,
+          1.8624468908088647,
+          -10.603944414771064
+        ]
+      ],
+      "views": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 78736,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 3924,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 1715,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 2971,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 2099,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 1767,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "performance": {
+        "fixedScene": true,
+        "pausedSimulation": true,
+        "rows": [
+          {
+            "enabled": false,
+            "headCount": 3,
+            "cpuMedianMs": 0.09999999776482582,
+            "gpuMedianMs": 3108.170425,
+            "gpuSamples": 7,
+            "pacedFPS": 0.33899454218787145,
+            "calls": 157,
+            "triangles": 699499
+          },
+          {
+            "enabled": true,
+            "headCount": 3,
+            "cpuMedianMs": 0.19999999925494194,
+            "gpuMedianMs": 3188.373254,
+            "gpuSamples": 7,
+            "pacedFPS": 0.3225910513242369,
+            "calls": 163,
+            "triangles": 835211
+          },
+          {
+            "enabled": false,
+            "headCount": 3,
+            "cpuMedianMs": 0.09999999776482582,
+            "gpuMedianMs": 3213.466177,
+            "gpuSamples": 7,
+            "pacedFPS": 0.32787960260992227,
+            "calls": 157,
+            "triangles": 699499
+          },
+          {
+            "enabled": true,
+            "headCount": 3,
+            "cpuMedianMs": 0.19999999925494194,
+            "gpuMedianMs": 3117.848925,
+            "gpuSamples": 7,
+            "pacedFPS": 0.3225910513242399,
+            "calls": 163,
+            "triangles": 835211
+          }
+        ]
+      },
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 3,
+            "positions": [
+              [
+                0.9904027378916139,
+                2.899937314523528,
+                -7.153973680386866
+              ],
+              [
+                0.9904027378916139,
+                2.0326474829577745,
+                -8.157805119483253
+              ],
+              [
+                0.9904027378916139,
+                1.753058613511081,
+                -9.17432326048234
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.029034516226409443,
+          0
+        ]
+      }
+    },
+    {
+      "id": "shooter",
+      "vertical": false,
+      "ticks": 4,
+      "eligible": 1,
+      "recipes": [
+        "shooter"
+      ],
+      "metrics": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "authorityUnchanged": true,
+      "calls": 190,
+      "triangles": 806580,
+      "positions": [
+        [
+          0.5927143706107184,
+          1.0786504338915428,
+          -7.352354403245638
+        ]
+      ],
+      "views": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 238,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 214,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 146,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 70,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 71,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "performance": {
+        "fixedScene": true,
+        "pausedSimulation": true,
+        "rows": [
+          {
+            "enabled": false,
+            "headCount": 1,
+            "cpuMedianMs": 0,
+            "gpuMedianMs": 3366.140003,
+            "gpuSamples": 7,
+            "pacedFPS": 0.2970444081390168,
+            "calls": 157,
+            "triangles": 673529
+          },
+          {
+            "enabled": true,
+            "headCount": 1,
+            "cpuMedianMs": 0.19999999925494194,
+            "gpuMedianMs": 3161.353639,
+            "gpuSamples": 7,
+            "pacedFPS": 0.3092911047878252,
+            "calls": 163,
+            "triangles": 685585
+          },
+          {
+            "enabled": false,
+            "headCount": 1,
+            "cpuMedianMs": 0,
+            "gpuMedianMs": 3126.181906,
+            "gpuSamples": 7,
+            "pacedFPS": 0.29703558486306353,
+            "calls": 157,
+            "triangles": 673529
+          },
+          {
+            "enabled": true,
+            "headCount": 1,
+            "cpuMedianMs": 0.19999999925494194,
+            "gpuMedianMs": 3123.896243,
+            "gpuSamples": 7,
+            "pacedFPS": 0.31250976593018875,
+            "calls": 163,
+            "triangles": 685585
+          }
+        ]
+      },
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 1,
+            "positions": [
+              [
+                0.5592939820165647,
+                0.9414751683541491,
+                -6.3997847041022125
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.029034516226409443,
+          0
+        ]
+      }
+    },
+    {
+      "id": "slosher",
+      "vertical": false,
+      "ticks": 14,
+      "eligible": 4,
+      "recipes": [
+        "slosher",
+        "slosher",
+        "slosher",
+        "slosher"
+      ],
+      "metrics": {
+        "active": 4,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 86828,
+        "bytes": 39520236,
+        "batches": 6
+      },
+      "authorityUnchanged": true,
+      "calls": 192,
+      "triangles": 959546,
+      "positions": [
+        [
+          0.8487963023300715,
+          1.2206666232927192,
+          -10.055302293559759
+        ],
+        [
+          0.6741971559627952,
+          1.3538204518602266,
+          -11.897951574827596
+        ],
+        [
+          0.8688540100695503,
+          1.4453335926173563,
+          -13.643959050243883
+        ],
+        [
+          0.9240232809714453,
+          1.4832558567517014,
+          -15.266097620527225
+        ]
+      ],
+      "views": {
+        "active": 4,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 86828,
+        "bytes": 39520236,
+        "batches": 6
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 235,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 0,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 169,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 834,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 874,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "performance": {
+        "fixedScene": true,
+        "pausedSimulation": true,
+        "rows": [
+          {
+            "enabled": false,
+            "headCount": 4,
+            "cpuMedianMs": 0,
+            "gpuMedianMs": 3474.381867,
+            "gpuSamples": 7,
+            "pacedFPS": 0.28708408692906245,
+            "calls": 153,
+            "triangles": 677590
+          },
+          {
+            "enabled": true,
+            "headCount": 4,
+            "cpuMedianMs": 0.19999999925494194,
+            "gpuMedianMs": 3138.614218,
+            "gpuSamples": 7,
+            "pacedFPS": 0.3015226895823911,
+            "calls": 163,
+            "triangles": 840366
+          },
+          {
+            "enabled": false,
+            "headCount": 4,
+            "cpuMedianMs": 0.09999999776482582,
+            "gpuMedianMs": 3293.526925,
+            "gpuSamples": 7,
+            "pacedFPS": 0.30303030303030304,
+            "calls": 153,
+            "triangles": 677590
+          },
+          {
+            "enabled": true,
+            "headCount": 4,
+            "cpuMedianMs": 0.10000000149011612,
+            "gpuMedianMs": 3369.914127,
+            "gpuSamples": 7,
+            "pacedFPS": 0.2985252850916535,
+            "calls": 163,
+            "triangles": 840366
+          }
+        ]
+      },
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 4,
+            "positions": [
+              [
+                0.8487963023300715,
+                1.063428928207781,
+                -8.86392791482275
+              ],
+              [
+                0.6246529060166921,
+                1.234490959928494,
+                -10.668127571141184
+              ],
+              [
+                0.8691056027162977,
+                1.3694268122520263,
+                -12.38508566759134
+              ],
+              [
+                0.9703360711033893,
+                1.4570853486018462,
+                -13.99525263619283
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.030863930086263758,
+          0
+        ]
+      }
+    },
+    {
+      "id": "dualies",
+      "vertical": false,
+      "ticks": 4,
+      "eligible": 1,
+      "recipes": [
+        "shooter"
+      ],
+      "metrics": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "authorityUnchanged": true,
+      "calls": 203,
+      "triangles": 803599,
+      "positions": [
+        [
+          0.954827876511727,
+          0.9732168884187391,
+          -7.903856660234517
+        ]
+      ],
+      "views": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 423,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 431,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 292,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 178,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 185,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 1,
+            "positions": [
+              [
+                0.9385993312007377,
+                0.7922033291950905,
+                -6.437897344778963
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.030863930086263758,
+          0
+        ]
+      }
+    },
+    {
+      "id": "splatling",
+      "vertical": false,
+      "ticks": 3,
+      "eligible": 1,
+      "recipes": [
+        "shooter"
+      ],
+      "metrics": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "authorityUnchanged": true,
+      "calls": 189,
+      "triangles": 802376,
+      "positions": [
+        [
+          1.025796329655074,
+          1.1482343963069506,
+          -9.253751727819747
+        ]
+      ],
+      "views": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 316,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 320,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 167,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 92,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 97,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 1,
+            "positions": [
+              [
+                1.0388128287397864,
+                1.0644084283750517,
+                -7.469845654212879
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.03518580953412516,
+          0
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-compact",
+      "vertical": true,
+      "ticks": 14,
+      "eligible": 5,
+      "recipes": [
+        "roller-vertical",
+        "roller-vertical",
+        "roller-vertical",
+        "roller-vertical",
+        "roller-vertical"
+      ],
+      "metrics": {
+        "active": 5,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 158920,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "authorityUnchanged": true,
+      "calls": 192,
+      "triangles": 1107500,
+      "positions": [
+        [
+          0.9304856442581525,
+          3.1894286359782664,
+          -10.145728138100733
+        ],
+        [
+          0.9379854185521771,
+          2.9430267349797066,
+          -10.866400517681907
+        ],
+        [
+          0.9454753768786531,
+          2.9612987901968633,
+          -11.58612965598493
+        ],
+        [
+          0.9532098832929331,
+          2.6395925480405977,
+          -12.329358041791952
+        ],
+        [
+          0.9606547682466829,
+          2.7205269967937116,
+          -13.04475596511369
+        ]
+      ],
+      "views": {
+        "active": 5,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 158920,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 4978,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 2005,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 4154,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 2313,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 2452,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 5,
+            "positions": [
+              [
+                0.9147064252691351,
+                3.217109070945612,
+                -8.629462867850137
+              ],
+              [
+                0.9240811431366659,
+                2.909106694697412,
+                -9.530303342326604
+              ],
+              [
+                0.9334435910447609,
+                2.931946763718858,
+                -10.429964765205384
+              ],
+              [
+                0.9431117240626109,
+                2.529813961023526,
+                -11.359000247464161
+              ],
+              [
+                0.9524178302547982,
+                2.6309820219649183,
+                -12.253247651616334
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.03518580953412516,
+          0
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-first",
+      "vertical": false,
+      "ticks": 2,
+      "eligible": 1,
+      "recipes": [
+        "shooter"
+      ],
+      "metrics": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "authorityUnchanged": true,
+      "calls": 188,
+      "triangles": 795972,
+      "positions": [
+        [
+          0.9461499800245453,
+          0.8421446032590199,
+          -8.37772763690079
+        ]
+      ],
+      "views": {
+        "active": 3,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 7388,
+        "bytes": 39520236,
+        "batches": 4
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 646,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 565,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 444,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 258,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 277,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 1,
+            "positions": [
+              [
+                0.9478478814333324,
+                0.6312959398081353,
+                -7.584269195540276
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.03518580953412516,
+          0
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "vertical": false,
+      "ticks": 14,
+      "eligible": 7,
+      "recipes": [
+        "slosher",
+        "slosher",
+        "slosher",
+        "slosher",
+        "slosher",
+        "slosher",
+        "slosher"
+      ],
+      "metrics": {
+        "active": 7,
+        "culled": 0,
+        "overflow": 0,
+        "triangles": 176268,
+        "bytes": 39520236,
+        "batches": 8
+      },
+      "authorityUnchanged": true,
+      "calls": 193,
+      "triangles": 1146384,
+      "positions": [
+        [
+          0.8871223184980583,
+          1.8782414040376232,
+          -11.692020715806848
+        ],
+        [
+          0.9012990383053235,
+          1.8758045648816997,
+          -13.268332247879307
+        ],
+        [
+          0.9137024685135771,
+          1.8386759215928898,
+          -14.647471452175747
+        ],
+        [
+          0.9232357724172233,
+          1.8101387642050266,
+          -15.707480896276323
+        ],
+        [
+          0.9138262427104633,
+          1.8383054137634116,
+          -14.661233923084193
+        ],
+        [
+          1.1536570875656271,
+          1.8142761016342013,
+          -15.582199101955679
+        ],
+        [
+          0.690598442324827,
+          1.8142761016342013,
+          -15.586363667483713
+        ]
+      ],
+      "views": {
+        "active": 1,
+        "culled": 6,
+        "overflow": 0,
+        "triangles": 19322,
+        "bytes": 39520236,
+        "batches": 2
+      },
+      "grazing": [
+        {
+          "view": "front",
+          "interior": 4,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "side",
+          "interior": 0,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "oblique",
+          "interior": 0,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "top",
+          "interior": 41,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        },
+        {
+          "view": "bottom",
+          "interior": 41,
+          "darkTransparent": 0,
+          "blackPixels": 0
+        }
+      ],
+      "flight": {
+        "samples": [
+          {
+            "tick": 0,
+            "alive": 7,
+            "positions": [
+              [
+                0.8784353717897461,
+                1.8190450611055857,
+                -10.726117851041629
+              ],
+              [
+                0.8927190647920419,
+                1.8614880065307766,
+                -12.314323748188789
+              ],
+              [
+                0.9056042277622343,
+                1.8629173360302798,
+                -13.747026888173103
+              ],
+              [
+                0.916572594818184,
+                1.8300844356919432,
+                -14.96660121237161
+              ],
+              [
+                0.9057898890575636,
+                1.8623615742860624,
+                -13.767670594535772
+              ],
+              [
+                1.3774152251149916,
+                1.8383591105502926,
+                -14.716037623730323
+              ],
+              [
+                0.45129793463339135,
+                1.8383591105502926,
+                -14.724366754786391
+              ]
+            ]
+          },
+          {
+            "tick": 15,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 30,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 45,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 60,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 75,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 90,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 105,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 120,
+            "alive": 0,
+            "positions": []
+          },
+          {
+            "tick": 135,
+            "alive": 0,
+            "positions": []
+          }
+        ],
+        "remaining": 0,
+        "paint": [
+          0.03649659033141866,
+          0
+        ]
+      }
+    }
+  ],
+  "lifecycle": {
+    "counts": [
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      },
+      {
+        "geometries": 330,
+        "textures": 50,
+        "bytes": 39520236,
+        "active": 0
+      }
+    ],
+    "before": {
+      "geometries": 330,
+      "textures": 50
+    },
+    "after": {
+      "geometries": 194,
+      "textures": 46
+    }
+  },
+  "errors": [],
+  "implementationCommit": "27b0af977cb04ba92a86521bb50a5433582cfbaa",
+  "assetRedistribution": "original VTF, derived packs and original screenshots remain local only",
+  "measurementNotes": [
+    "Linux software GPU; paused scene; not real-device gameplay FPS",
+    "Each mode 4 warmup + 8 CPU/render samples; 7 available GPU queries",
+    "Reference and candidate share same native heads, pose and scene; four off/on/off/on blocks",
+    "Values vary across blocks: do not infer a universal GPU improvement",
+    "GPU bytes are upload-layout estimate, not measured VRAM"
+  ],
+  "webkitValidation": {
+    "buildIdentity": {
+      "contentHash": "67e33b65bd21b8197b82844bc5802beefe8d19103749edfb73f8965ee656c3cd",
+      "inputHash": "ef9cf6a5af9acaf2df01d7fe451be12ff85dc724571f9b96473307564dfc3721"
+    },
+    "environment": "WebKit Linux software WebGL, emulated touch viewport",
+    "cases": [
+      {
+        "id": "roller",
+        "vertical": false,
+        "eligible": 13,
+        "metrics": {
+          "active": 13,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 396576,
+          "bytes": 39323852,
+          "batches": 4
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 3340,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 1214,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 2634,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 1411,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 1245,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "roller",
+        "vertical": true,
+        "eligible": 3,
+        "metrics": {
+          "active": 3,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 99506,
+          "bytes": 39323852,
+          "batches": 4
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 5648,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 2048,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 4259,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 2449,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 2507,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "shooter",
+        "vertical": false,
+        "eligible": 1,
+        "metrics": {
+          "active": 3,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 7388,
+          "bytes": 39323852,
+          "batches": 4
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 238,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 213,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 129,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 72,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 73,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "slosher",
+        "vertical": false,
+        "eligible": 4,
+        "metrics": {
+          "active": 4,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 141082,
+          "bytes": 39323852,
+          "batches": 8
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 569,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 121,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 559,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 1936,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 1930,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "dualies",
+        "vertical": false,
+        "eligible": 1,
+        "metrics": {
+          "active": 3,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 7388,
+          "bytes": 39323852,
+          "batches": 4
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 424,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 436,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 294,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 182,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 184,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "splatling",
+        "vertical": false,
+        "eligible": 1,
+        "metrics": {
+          "active": 3,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 7388,
+          "bytes": 39323852,
+          "batches": 4
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 245,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 216,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 146,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 63,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 63,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "s3-roller-compact",
+        "vertical": true,
+        "eligible": 5,
+        "metrics": {
+          "active": 5,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 117380,
+          "bytes": 39323852,
+          "batches": 4
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 2676,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 1347,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 2292,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 1570,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 1429,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "s3-shooter-first",
+        "vertical": false,
+        "eligible": 1,
+        "metrics": {
+          "active": 3,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 7388,
+          "bytes": 39323852,
+          "batches": 4
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 643,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 733,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 455,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 284,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 278,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      },
+      {
+        "id": "s3-slosher-diffusion",
+        "vertical": false,
+        "eligible": 7,
+        "metrics": {
+          "active": 7,
+          "culled": 0,
+          "overflow": 0,
+          "triangles": 230522,
+          "bytes": 39323852,
+          "batches": 10
+        },
+        "grazing": [
+          {
+            "view": "front",
+            "interior": 0,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "side",
+            "interior": 0,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "oblique",
+            "interior": 0,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "top",
+            "interior": 0,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          },
+          {
+            "view": "bottom",
+            "interior": 0,
+            "darkTransparent": 0,
+            "blackPixels": 0
+          }
+        ],
+        "flightRemaining": 0
+      }
+    ],
+    "lifecycle": {
+      "counts": [
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        },
+        {
+          "geometries": 311,
+          "textures": 33,
+          "bytes": 39323852,
+          "active": 0
+        }
+      ],
+      "before": {
+        "geometries": 311,
+        "textures": 33
+      },
+      "after": {
+        "geometries": 175,
+        "textures": 29
+      }
+    },
+    "errors": []
+  }
+}
