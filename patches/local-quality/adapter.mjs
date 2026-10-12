@@ -29,6 +29,7 @@ import { adaptFxActorLifetime } from './fx-actor-lifetime-adapter.mjs';
 import { adaptHudSnapshots } from './hud-snapshots-adapter.mjs';
 import { adaptResultContinuation } from './result-continuation-adapter.mjs';
 import { adaptShowcaseShadow } from './showcase-shadow-adapter.mjs';
+import { adaptShowcaseAlpha } from './showcase-alpha-adapter.mjs';
 import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
 import { adaptSplatlingReticle } from './splatling-reticle-adapter.mjs';
 import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
@@ -90,7 +91,7 @@ const IDENTITY_FILES = [
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
-  'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
+  'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs', 'showcase-alpha-adapter.mjs',
   'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
   'splatling-reticle.mjs', 'splatling-reticle-adapter.mjs',
   'portrait-guard.mjs', 'portrait-guard-adapter.mjs',
@@ -218,6 +219,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptTenacity(rel, code, replaceOnce);
   if (rel !== 'src/ui/menus.js') code = adaptResultContinuation(rel, code, replaceOnce);
   code = adaptShowcaseShadow(rel, code, replaceOnce);
+  code = adaptShowcaseAlpha(rel, code, replaceOnce);
   code = adaptTeamWipeout(rel, code, replaceOnce);
   code = adaptSplatlingReticle(rel, code, replaceOnce);
   code = adaptPortraitGuard(rel, code, replaceOnce);
