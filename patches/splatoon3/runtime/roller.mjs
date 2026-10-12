@@ -709,7 +709,14 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
   let center, axisX, axisY, axisZ, lift, weaponQ, inverseHandQ;
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
-    if (this._s3RollerContactPose && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
+    // The existing solved drum bound owns *all* grounded visual roller poses.
+    // The roll state pins the drum to contact; a flick only lifts the grip if
+    // its independently timed spline would cut through the floor. A full
+    // ground snap in the flick would destroy the overhead coil.
+    const onGround = this._s3RollerContactPose;
+    const flickClearance = !onGround && !!this.s3RollerFlick &&
+      this.kidForm && this.grounded && !this.dance;
+    if ((onGround || flickClearance) && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
       const d = this.weapon.def;
       let bound = bounds.get(d);
       if (!bound) {
@@ -736,8 +743,11 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       axisY.set(0, 1, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
       axisZ.set(0, 0, 1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
       const bottom = center.y - bound.halfWidth * Math.abs(axisX.y) - bound.radius * Math.hypot(axisY.y, axisZ.y);
-      if (Number.isFinite(bottom) && bottom !== 0) {
-        lift.set(0, -bottom, 0).applyQuaternion(inverseHandQ.copy(kid.quaternion).invert()).divide(kid.scale);
+      // A margin under one centimetre keeps the existing indexed mesh above
+      // the floor during a backswing without retiming the 60 Hz release.
+      const correction = onGround ? -bottom : Math.max(0, .006 - bottom);
+      if (Number.isFinite(correction) && correction !== 0) {
+        lift.set(0, correction, 0).applyQuaternion(inverseHandQ.copy(kid.quaternion).invert()).divide(kid.scale);
         target.add(lift);
       }
     }
