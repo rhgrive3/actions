@@ -207,7 +207,10 @@ function nautilus(d) {
   for(let i=1;i<route.length-1;i++){
     const p=route[i],prev=route[i-1],next=route[i+1],d=Math.min(.0035,p.distanceTo(prev)*.2,p.distanceTo(next)*.2);
     const before=p.clone().addScaledVector(prev.clone().sub(p).normalize(),d),after=p.clone().addScaledVector(next.clone().sub(p).normalize(),d);
-    returnPath.add(new THREE.LineCurve3(from,before));returnPath.add(new THREE.QuadraticBezierCurve3(before,p,after));from=after;
+    returnPath.add(new THREE.LineCurve3(from,before));let last=before;
+    // Four explicit quadratic-bend chords also work in the frozen review vendor surface.
+    for(let k=1;k<=4;k++){const t=k/4,q=before.clone().multiplyScalar((1-t)*(1-t)).addScaledVector(p,2*(1-t)*t).addScaledVector(after,t*t);returnPath.add(new THREE.LineCurve3(last,q));last=q;}
+    from=after;
   }
   returnPath.add(new THREE.LineCurve3(from,route.at(-1)));
   const band=new THREE.TubeGeometry(returnPath,48,1,8,false),bp=band.attributes.position,bu=band.attributes.uv;
