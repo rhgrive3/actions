@@ -389,7 +389,7 @@ function squelchers(d) {
   // the main kit's is black). Scale: visible grip 0.09 m; side reference (t=10.35 frame levelled by +16°):
   // z = (X − 313)·S, y = (372 − Y)·S.
   const S = 0.000508, Z = x => (x - 313) * S, Y = y => (372 - y) * S;
-  const C = { red: '#b02a0c', redDark: '#7e1d08', core: '#272623', rubber: '#1d1c1a', nozzle: '#2c2b28', rod: '#151513', screw: '#3c3b38',
+  const C = { red: '#a3260a', redDark: '#741b07', core: '#272623', rubber: '#1d1c1a', nozzle: '#2c2b28', rod: '#151513', screw: '#3c3b38',
     white: '#f2f1ec', print: '#18181a', groove: '#1a1917', silver: '#a9aaa6', logo: '#d8331a' };
   const body = new Pieces(), side = new Pieces(), trig = new Pieces();
   const AY = Y(237);                                                                    // barrel / nozzle axis
