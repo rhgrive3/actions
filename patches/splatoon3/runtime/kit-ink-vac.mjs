@@ -17,12 +17,10 @@
 // PHYSICAL SCALE LIMITATION of copying the raw Splatoon number into INKWAVE's HP
 // pool, not a claim about the hardware. (rawToHp = 100/3000 is NOT used here.)
 //
-// Intake geometry INTERPRETATION (labelled calibration, not a source claim):
-// RadiusMin/RadiusMax are read as the NEAR (muzzle-end) and FAR (LengthMax-end)
-// radius of a frustum that widens away from the player, and Low/High as the ends
-// of the charge range. The shape is therefore a widening frustum along the full 3D
-// aim vector (not a cylinder, and not a cone of revolution about horizontal only).
-// Nintendo's actual field meaning of RadiusMin/RadiusMax is UNCONFIRMED.
+// The radius fields' spatial meaning remains an interpretation: this runtime reads
+// RadiusMin/RadiusMax as the near/far ends of a widening frustum. Their Low/Mid/High
+// values are Special Power Up tiers (not charge tiers); the source controls are
+// evenly spaced, so the normalized profile gear curve resolves them exactly.
 //
 // REMOTE REPLAY: this module owns an explicit replay API (replayInkVac) that the
 // parent wires into the native NetMatch transport. No native source, adapter,
@@ -30,6 +28,7 @@
 
 import { kitSubFor } from './kit-subs.mjs';
 import { createVacVortex } from './special-motion.mjs';
+import { bigBubblerDomes, bigBubblerRemoteDomes, damageBigBubblerFromInkVac } from './kit-big-bubbler.mjs';
 
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
@@ -44,8 +43,11 @@ const MAX_ACCEPTED_DAMAGE_HP = 220;
 const INHALE_LENGTH = 15;         // pinned LengthMax
 const OWNER_MOVE_SPEED_MIN_CHARGE = 0.09;   // pinned WeaponParam.MoveSpeedMinCharge (per 60 Hz frame)
 const OWNER_MOVE_SPEED_FULL_CHARGE = 0.07;  // pinned WeaponParam.MoveSpeedFullCharge (per 60 Hz frame)
-const NEAR_LOW = 0.8, NEAR_HIGH = 1.4;   // pinned RadiusMin.Low/.High
-const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
+const INHALE_LENGTH_ADD_PER_FRAME = 0.3334; // pinned LengthAddPerFrame
+const OBJECT_DAMAGE_PER_FRAME = 20 / RAW_TO_HP; // pinned DamagePerFrameByObject, raw -> HP
+const INHALE_OBJECT_CAUSE = 'BlowerInhale'; // object-rate table row; exhale uses BlowerExhale_BombCore
+const NEAR_LOW = 0.8, NEAR_MID = 1.1, NEAR_HIGH = 1.4; // pinned RadiusMin Low/Mid/High
+const FAR_LOW = 3.3, FAR_MID = 3.8, FAR_HIGH = 4.3;    // pinned RadiusMax Low/Mid/High
 const SPEED_LOW = 0.55, SPEED_HIGH = 0.7;// pinned SpawnSpeedZ (per frame)
 const FLY_GRAVITY = 0.003;        // pinned per frame^2
 const FLY_AIR_RESIST = 0.01;      // pinned per frame
@@ -66,6 +68,8 @@ const KEY_PATTERN = /^[A-Za-z0-9#._:-]{1,64}$/;
 export const INK_VAC_CALIBRATION = Object.freeze({
   // #1149: ReceiveDamageForPlayer 15 raw /10 *60 = 90 HP-equivalent/s.
   actorContactDamagePerSecond: 90,
+  objectContactDamagePerSecond: OBJECT_DAMAGE_PER_FRAME * 60,
+  objectContactDamagePerSourceFrame: OBJECT_DAMAGE_PER_FRAME,
   // Pinned 11.3.0 PoisonMistForPlayer.SideStepInkConsumeRate. This multiplier
   // is explicit even though ordinary drain/speed defaults are absent.
   actorDodgeInkCostScale: 3.5,
@@ -82,10 +86,14 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   absorbCapacityDamage: ABSORB_CAPACITY_HP,
   absorbDamageLimit: MAX_ACCEPTED_DAMAGE_HP,
   absorbStatus: 'damage-proportional, 1100 approximate S3 capacity; remote source damage requires separate authoritative hit attestation',
-  geometry: 'frustum: near radius at the muzzle growing linearly to far radius at LengthMax; RadiusMin/RadiusMax read as near/far and Low/High as charge ends',
-  geometryStatus: 'interpretation / calibration; Nintendo field meaning unconfirmed',
+  inhaleLengthAddPerFrame: INHALE_LENGTH_ADD_PER_FRAME,
+  inhaleLengthStatus: 'pinned LengthAddPerFrame .3334 and LengthMax 15; reach grows to maximum in about 45 gameplay frames',
+  intakeRadiusTiers: Object.freeze({ near: Object.freeze([NEAR_LOW, NEAR_MID, NEAR_HIGH]), far: Object.freeze([FAR_LOW, FAR_MID, FAR_HIGH]) }),
+  geometry: 'frustum grows from zero to LengthMax at LengthAddPerFrame; RadiusMin/RadiusMax are interpreted as near/far, with Low/Mid/High as Special Power Up tiers',
+  geometryStatus: 'reach and Special Power Up control points pinned; near/far interpretation of RadiusMin/RadiusMax remains calibrated',
   speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
   damageStatus: 'pinned raw 2200 with repository /10 conversion; exceeds the 100 HP pool (instakill) — physical scale limitation',
+  objectDamageStatus: 'pinned InhaleParam.DamagePerFrameByObject 20 raw /10 = 2 HP per 60 Hz source frame (120 HP/s); Big Bubbler uses its own owner damage API and applies BarrierParam.DamgeRatio once',
   // #1042: S3 suction lasts up to 360F / 6 s. ExhaleWaitFrame is a
   // separate 150F / 2.5 s return-shot hold and must never cap suction.
   inhaleDurationSeconds: 6,
@@ -187,14 +195,15 @@ function remoteStateOf(actor) {
   return s && s.remote ? s : null;
 }
 
-// Charge-scaled frustum radii (pinned Low/High ends).
+// The pinned Low/Mid/High radii use normalized Special Power Up gear progress.
+// The middle values are exact midpoints, so lerp matches the canonical gear curve.
+export function intakeNearRadius(specialPower) { return lerp(NEAR_LOW, NEAR_HIGH, specialPower); }
+export function intakeFarRadius(specialPower) { return lerp(FAR_LOW, FAR_HIGH, specialPower); }
 // Owner walking target while the Vac is held (inhale and the pre-release hold).
-// Endpoints are pinned; the linear charge interpolation between them is INKWAVE's.
+// Source endpoints are pinned; interpolation between them is INKWAVE's.
 export function inkVacOwnerMoveSpeed(charge) {
   return lerp(OWNER_MOVE_SPEED_MIN_CHARGE, OWNER_MOVE_SPEED_FULL_CHARGE, Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0))) * 60;
 }
-export function intakeNearRadius(charge) { return lerp(NEAR_LOW, NEAR_HIGH, charge); }
-export function intakeFarRadius(charge) { return lerp(FAR_LOW, FAR_HIGH, charge); }
 export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge); }
 export function exhaleDamage() { return 2200 / RAW_TO_HP; }
 // Pinned per-frame spawn speed -> INKWAVE units/second.
@@ -244,7 +253,8 @@ function firstEntry(state, start, end) {
   m.copy(start).sub(o);
   e.copy(end).sub(start);
   const segLen = e.length();
-  const L = INHALE_LENGTH, near = state.nearR, far = state.farR;
+  const L = state.length, near = state.nearR, far = state.farR;
+  if (!(L > 0)) return Infinity;
   const k = (far - near) / L;
   const a0 = m.dot(f), a1 = e.dot(f);
 
@@ -429,19 +439,20 @@ function makeState(actor, opts = {}) {
   // #1010: suction geometry is selected by Special Power Up, not absorbed charge.
   const specialPower = clamp01(Number.isFinite(opts.specialPower)
     ? opts.specialPower : actor?.s3?.modifiers?.specialPower || 0);
-  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower,
+  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower, length: 0,
     fireHeld: false, exhaleArmed: false,
     nearR: intakeNearRadius(specialPower), farR: intakeFarRadius(specialPower), baseFar: FAR_HIGH,
     mesh: null, geo: null, mat: null,
     _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
-    _m: new api.THREE.Vector3(), _e: new api.THREE.Vector3(), _up: new api.THREE.Vector3(0, 1, 0) };
+    _m: new api.THREE.Vector3(), _e: new api.THREE.Vector3(), _axis: new api.THREE.Vector3(),
+    _radial: new api.THREE.Vector3(), _contact: new api.THREE.Vector3(), _up: new api.THREE.Vector3(0, 1, 0) };
 }
 
 function createVisual(state) {
   const { THREE, G } = api;
   const scene = G.scene;
   if (!scene || typeof scene.add !== 'function' || typeof THREE?.Mesh !== 'function') return;
-  const mesh=createVacVortex(state.actor.color || 0xffffff, INHALE_LENGTH, state.nearR, state.farR, api.THREE);
+  const mesh=createVacVortex(state.actor.color || 0xffffff, state.length, state.nearR, state.farR, api.THREE);
   const geo=mesh.geometry,mat=mesh.material;
   mesh.position.copy(originOf(state.actor, state._org));
   mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), forwardOf(state.actor, state._fwd));
@@ -459,12 +470,14 @@ function disposeVisual(state) {
 
 // Presentation advance, shared by the held local intake and by a replica cone.
 function updateVisual(state) {
+  state.length = Math.min(INHALE_LENGTH, state.t * INK_VAC_CALIBRATION.framesPerSecond * INHALE_LENGTH_ADD_PER_FRAME);
   if (!state.mesh) return;
   const a = state.actor;
   state.mesh.position.copy(originOf(a, state._org));
   state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
   state.mat.uniforms.near.value=state.nearR;
   state.mat.uniforms.far.value=state.farR;
+  state.mat.uniforms.extent.value=state.length;
   state.mat.uniforms.age.value=state.t;
 }
 
@@ -542,6 +555,66 @@ function suppressMovement(actor) {
   if (speed > cap && cap >= 0) { actor.vel.x *= cap / speed; actor.vel.z *= cap / speed; }
 }
 
+// Test a deployed object's representative contact point against the same
+// aim-aligned frustum used for projectile absorption. The shared object APIs
+// retain their own team/HP/network checks; the callback supplies this geometric
+// test so a large query radius cannot turn suction into radial damage.
+function inkVacObjectContact(state, object) {
+  const point = object?.pos;
+  if (!point?.isVector3 || !Number.isFinite(firstEntry(state, point, point))) return false;
+  return !api.G.physics?.los || !!api.G.physics.los(state._org, point);
+}
+
+// Big Bubbler is managed by kit-big-bubbler.mjs rather than the generic special
+// object array. Find where its damageable shell meets the frustum: use the
+// nearest point in the finite frustum and require the dome sphere to reach it.
+function bubblerConeContact(state, dome) {
+  const center = dome?.pos;
+  const domeRadius = dome?.radius;
+  if (!center?.isVector3 || !(domeRadius >= 0) || !(state.length > 0)) return null;
+  originOf(state.actor, state._org); forwardOf(state.actor, state._fwd);
+  state._m.copy(center).sub(state._org);
+  const along = state._m.dot(state._fwd);
+  state._axis.copy(state._org).addScaledVector(state._fwd, along);
+  state._radial.copy(center).sub(state._axis);
+  const radialDistance = state._radial.length();
+  const axisAlong = Math.max(0, Math.min(state.length, along));
+  const radius = state.nearR + (state.farR - state.nearR) * axisAlong / state.length;
+  const radialOutside = Math.max(0, radialDistance - radius);
+  if (Math.hypot(along - axisAlong, radialOutside) > domeRadius) return null;
+  state._contact.copy(state._org).addScaledVector(state._fwd, axisAlong);
+  if (radialDistance > radius && radialDistance > 1e-12)
+    state._contact.addScaledVector(state._radial, radius / radialDistance);
+  else state._contact.add(state._radial);
+  if (!Number.isFinite(firstEntry(state, state._contact, state._contact))) return null;
+  if (api.G.physics?.los && !api.G.physics.los(state._org, state._contact)) return null;
+  return state._contact;
+}
+
+function damageInhaleObjects(state, eligible, seen) {
+  const actor = state.actor, projectiles = api.G.projectiles;
+  if (!projectiles || actor.remote || state.remote || !actor.alive || !(eligible > 0)) return;
+  const amount = OBJECT_DAMAGE_PER_FRAME * INK_VAC_CALIBRATION.framesPerSecond * eligible;
+  const center = originOf(actor, state._org);
+  const radius = Math.hypot(state.length, state.farR);
+  const damageAtContact = (_distance, object) => {
+    if (!object || seen.has(object) || object.team === actor.team || object.owner?.team === actor.team) return 0;
+    if (!inkVacObjectContact(state, object)) return 0;
+    seen.add(object);
+    return amount;
+  };
+  projectiles.s3DamageSubObjects?.(actor, center, radius, damageAtContact, INHALE_OBJECT_CAUSE);
+  projectiles.s3DamageSpecialObjects?.(actor, center, radius, damageAtContact, INHALE_OBJECT_CAUSE);
+
+  for (const dome of [...bigBubblerDomes(), ...bigBubblerRemoteDomes()]) {
+    if (!dome || seen.has(dome) || dome.team === actor.team || dome.owner?.team === actor.team) continue;
+    const contact = bubblerConeContact(state, dome);
+    if (!contact) continue;
+    seen.add(dome);
+    damageBigBubblerFromInkVac(dome, actor, amount, contact);
+  }
+}
+
 // Per-frame advance of a LOCALLY owned inhale. dt <= 0 is a strict no-op.
 function inkVacUpdate(a, dt) {
   const state = states.get(a);
@@ -556,6 +629,7 @@ function inkVacUpdate(a, dt) {
     }
     const amount = count * eligible * INK_VAC_CALIBRATION.actorContactDamagePerSecond;
     if (amount > 0) creditCharge(state, amount, false);
+    damageInhaleObjects(state, eligible, new Set());
   }
   state.t += dt;
   updateVisual(state);

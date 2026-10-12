@@ -3,6 +3,8 @@ import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
+
+import { catalogueAttackRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
@@ -431,8 +433,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
       if(distance>radius||!G.physics.los(p.pos,base))continue;
-      const damage=damageBands(bands,distance);if(damage>0)system.applyHit(p.owner,a,damage,p.wid);
+      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>system.applyHit(p.owner,a,damage,p.wid));
     }
+    const area={...p,type:'area'},cause=catalogueAttackRow(area);
+    system.s3DamageSubObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
+    system.s3DamageSpecialObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
     G.boss?.splash(p.owner,p.pos,radius,bands[0]?.Damage/10||0,0,p.wid);
     G.fx?.explosion(p.pos,p.owner.color,radius);
     emit('weapon:impact',{pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
@@ -593,7 +598,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)this.applyHit(p.owner,target,amount,p.wid);}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>this.applyHit(p.owner,target,amount,p.wid));}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
@@ -637,7 +642,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(runner);s.contactTimes ||= new Map();
     for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
-      G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id);s.contactTimes.set(enemy,G.time);
+      withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }
   }
   function beginPending(s,frames,fire){s.pending={remaining:frames/HZ,fire};}
@@ -744,7 +749,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const x=dx*cy-dz*sy-center.X,z=dx*sy+dz*cy-center.Z;
       if(Math.abs(x)<ext.X+PLAYER.radius&&Math.abs(z)<ext.Z+PLAYER.radius&&
         Math.abs(enemy.pos.y-a.pos.y)<ext.Y+PLAYER.height&&G.physics.los(a.pos,enemy.pos))
-        G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id);
+        withObjectDamageCause({owner:a,type:'saber-melee',catalog:{r,descriptor:{key}}},()=>G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id));
     }
   }
   function swing(runner,r,input,s,dt) {
@@ -828,7 +833,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         canopy.contacts ||= new Map();
         for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(canopy.pos)<canopy.radius+PLAYER.radius&&
           G.time-(canopy.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(canopy.pos,enemy.pos)){
-          G.projectiles.applyHit(a,enemy,finite(c.CanopyDamage,300)/10,r.id);canopy.contacts.set(enemy,G.time);
+          withObjectDamageCause({owner:a,type:'canopy',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(c.CanopyDamage,300)/10,r.id));canopy.contacts.set(enemy,G.time);
         }
       }
     }
