@@ -779,7 +779,9 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     const order = readPaintOrder(this, e._netPeer, e);
     if (order === false) return false;
     const state = this._paintClockState;
-    if (e._netSeq !== undefined && e._netSeq <= (state.applied.get(e._netPeer) || 0)) return false;
+    if (e._netSeq !== undefined) {
+      if (e._netSeq <= (state.applied.get(e._netPeer) || 0)) return false;
+    }
     this.applying = true;
     try {
       const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
