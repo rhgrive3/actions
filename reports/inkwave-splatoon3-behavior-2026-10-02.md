@@ -3932,6 +3932,84 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 
 修正範囲はテストと検証記録のみで、原典値・ゲーム本体の半径や伸長・CPU/GPU 採点境界は変更していない。この数値は INKWAVE の計測 receipt であり、Nintendo 実機との未確認事項を完了扱いにする根拠ではない。
 
+## 2026-10-11: メインブキ個別モデル・持ち方・銃口位置（第1段階 37種）
+
+参照版 Ver.11.3.0。ギア・状態の前提なし（見た目と保持の比較）。
+
+- **本家の根拠**: Inkipedia の本家3Dレンダー「S3 Weapon Main <名前>.png」と回転動画「S3 <名前> model rotating.mp4」（一部は同形状の別キット）。内部モデル名は Leanny/splat3（7280ff9）`ActorInfo` の Fmdb。本家メッシュ・骨格・アニメーションの数値（BFRES）は公開されておらず未使用。
+- **INKWAVE の実装箇所**: `patches/splatoon3/runtime/weapon-models/`（registry・kit・各ファミリー）、`weapon-family-motion.mjs`、`weapon-catalog-adapter.mjs`（Character.setWeapon をブキID単位に）、`adapter.mjs`（getWeaponDef）。記録は `patches/splatoon3/reference/weapon-models/*.md`。
+- **対象**: シューター14、ブラスター7、チャージャー8、ローラー5、フデ3。マニューバー・シェルター・スロッシャー・スピナー・ストリンガー・ワイパー（28種）は従来の共通モデルのまま（次段階）。
+
+| 差分 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|
+| ブキごとの独自モデル（側面輪郭IoU：例 ブラスター系 0.27〜0.61→0.73〜0.84、シューターB 0.28〜0.43→0.62〜0.82） | ブキを選び待機・射撃 | 見た目のみ | 画像との輪郭比較のみ。実機の寸法は未確認 |
+| **銃口（弾の発生位置）をブキごとのノズル出口へ移動**（例 ロングブラスター 前方 0.212→0.533 m） | 射撃開始直後の弾の出る位置 | 弾の発生位置・壁際の射撃に影響 | 画像からの推定。実機の発生位置とは未比較（実機計測が必要） |
+| 持ち方の個別調整（.96ガロン・ボトルガイザー・.52ガロン等の構えを体へ寄せる、カーボンの両手Dグリップ等） | 待機・歩行・射撃 | 見た目のみ | 画像からの推定 |
+| フデの横振り（左右交互）と長押しの両手ドラッグ（ローラーのフリックを置換） | パブロ等で連打・長押し | 見た目のみ（攻撃判定は既存） | 公開映像からの推定。本家フレーム値は未確認 |
+| カタログ版ローラーの振り・中折れ・ドラム回転をRunner状態から再生（従来は振りモーションなし） | カーボン等で振り | 見た目のみ | 各ブキの SwingFrame を使用。関節曲線は未確認 |
+
+検証: `patches/splatoon3/tests/weapon-models-all.test.mjs`（全65種の形状・グリップ・銃口・実Actorでの保持と攻撃、支え手誤差 ≤ 0.008 m）、各ファミリーの既存テスト、`scripts/render-inkwave-weapon-gallery.mjs`（Chromium、比較画像）。ロジック単独・ブラウザ描画のみで、実機比較ではない。
+
+## 2026-10-11: メインブキ個別モデル（第2段階 28種：マニューバー・シェルター・スロッシャー・スピナー・ストリンガー・ワイパー）
+
+参照版 Ver.11.3.0。根拠・実装箇所は第1段階と同じ（記録は `patches/splatoon3/reference/weapon-models/{dualies,brellas,sloshers,splatlings,stringers,splatanas}.md`）。スロッシャー・スピナー・マニューバーは、品質不足だった初版を同じ参照画像から作り直した。バケットスロッシャーは既存テストが従来のインク量表示・取っ手位置に依存するため従来モデルのまま。
+
+| 差分 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|
+| ブキごとの独自モデル（28種中27種。スパッタリー・ノーチラス47も登録） | ブキを選び待機・射撃 | 見た目のみ | 本家レンダー・回転映像との比較のみ。実機寸法は未確認。マニューバーの参照は2丁重ね像で、側面IoUは参考値 |
+| 銃口をブキごとのノズル出口へ移動（マニューバー：例 ガエンFF 前方 0.274 m、デュアルスイーパー 0.242 m。スピナー：銃身群の前端。シェルター：軸先ハブ z 0.605〜0.87 m） | 射撃開始直後の弾の発生位置 | 弾の発生位置・壁際の射撃に影響 | 画像からの推定。実機の発生位置とは未比較（実機計測が必要） |
+| スロッシャーの銃口はネイティブ値のまま、インク面 `surface` を各容器の開口へ配置 | 振り・待機 | 見た目のみ | 画像からの推定 |
+| シェルターの傘開閉、ストリンガーの弦の引き・弓の傾き、ワイパーの斬り（横・縦）を Runner 状態から再生 | 長押し・離す・連打 | 見た目のみ（判定は既存） | 公開映像からの推定。フレーム値は未確認 |
+| スピナーの銃身回転・充電コイル、マニューバーのトリガーを保持。マニューバー上部の反動スライドは非表示 | 長押しチャージ・射撃 | 見た目のみ | 実機で動く部品の有無は未確認 |
+
+検証: `weapon-models-all.test.mjs`（全65種）、ファミリー別テスト（スロッシャー109件、スピナー関連165件、マニューバー関連153件）、`check-inkwave-patches.mjs` 全体。ロジック単独・ブラウザ描画のみで、実機比較ではない。
+
+## 2026-10-11: ガチ4ルールの追加
+
+参照版は Splatoon 3 Ver.11.3.0。最新 main `f2c870859d637fccba88031c3786ecec4d95248d` の公開ビルド構成へ、ガチエリア・ガチヤグラ・ガチホコ・ガチアサリを追加した。調査根拠、資料間の食い違い、実機で未測定の項目は [4ルール調査](inkwave-ranked-research-2026-10-11.md) を参照する。
+
+共通エンジンが300秒の時計、カウント、ペナルティ、ルール別延長、ノックアウト、勝者と結果を所有する。オンラインはホストが目的物と勝敗を更新し、ゲストは試合ID・ホストID・リビジョン・状態形式を検証して受信する。プレイヤーの移動と通常戦闘は既存の所有者方式を継続し、専用ホコ弾のダメージはホストから対象所有者へ送る。これは不正クライアント全般への対策を完了したという意味ではない。
+
+ステージのルート、目的物配置、投球の距離換算、ホコ弾の重力と持ち運び速度は既存 INKWAVE のジオメトリに合わせたローカル調整を含む。本家のステージ衝突データや実機の一致確認として扱わない。ヤグラの床と柱は動く物理コライダーを持つ。床は既存 PaintSystem に決定的な face と独立アトラス領域を追加し、通常の着弾・塗り・所有セル・通信を利用する。移動後も床のローカル座標に塗りを保持し、再戦時に追加領域とコライダーを解放する。金網の描画は塗らない。床の表示shaderは通常床より簡単なチーム色表示、柱の衝突形状は円柱を囲む箱であり、原作形状の一致は未確認。
+
+検証スクリプトは `patches/splatoon3/tests/ranked-*.test.mjs`（ルールとネイティブ接続）、`scripts/check-inkwave-ranked-browser.mjs`（本番ビルドの画面、オフライン目的物、別ブラウザ間の実ルーム同期）。ブラウザ確認と Switch 実機計測は別であり、後者は実施していない。
+
+
+### 2026-10-11: ボットの実操作と最終検証の補足
+
+ヤグラの目標を静的ナビゲーションへ直接渡すだけでは、床下へ到達して乗れないケースがあった。`runtime/ranked/bots.mjs` は実際のジャンプ初速と重力から到達可能な近傍床ノードを選び、既存A*で接近してから動く床へ飛び乗る。床上判定は実際の接地と移動床の接触を用いる。ホコではシールド操作が既存の敵認識後の戦闘入力を上書きしていたため、奇数スロットの護衛は視認中の近距離敵へ既存戦闘入力を使う。ホコ所持者の専用溜め・発射入力は保持する。シールドへは既存ナビゲーション上の到達可能な射線から撃ち、照準の距離だけを目的物に合わせる。既存の照準角のばね・旋回制限、弾道と世界衝突は維持する。通常シューターのプロファイル付き弾道がシールド判定を通らない接続漏れも修正し、壁・敵・シールドの最初の接触とネイティブの距離減衰ダメージを使う。これはINKWAVEのボット設計であり、本家のプレイヤーやAIの動作一致を主張するものではない。
+
+`ranked-autonomy-integration.test.mjs` は公開ビルドと同じ合成モジュール、実際のActor・Physics・NavGraph・WeaponRunner・Projectiles・CPU PaintSystemで各チーム2ボットを最大60秒動かし、塗りの時間更新も行う。ホコの交戦と、敵のいない経路での専用発射・運搬・関門通過は別シナリオで確認する。描画提出とキャラクター表示のみを代替し、エリア確保と採点、移動ヤグラへの実接地と進行、ホコのシールド破壊・拾得・専用発射・関門、アサリ拾得・ガチアサリ生成・投球・得点を検証する。意図だけの模擬ボットテストやNintendo実機計測の代用として扱わない。
+
+ブラウザは本番ビルドの4オフラインモードと独立2コンテキストの実ルーム中継を確認し、200msの順序付き通信遅延でもカウントとKO勝敗が一致した。CIのソフトウェアGPUでは対戦処理と通信を継続し、画面描画と撮影を順番に行う。アサリのA操作はSwitchの右ボタン（標準Gamepad index 1）であることを案内へ明記した。開始時のmainは上記f2c87085、最終調整ではmain `343e7afa72a67ae53a58a7529c55def84af7cd6f` のカタログ・塗り・キャッシュ・描画・オブジェクトギア変更も取り込んだ。新しい日本語案内の不足7字は既存OFLフォントに補い、既存文字の輪郭と幅を維持した。
+
+### 最新mainのネイティブスプリンクラーとの弾道接続
+
+通常シューターのInkFlightRuntimeがkitBarrierCandidateを呼ばず、新しいスプリンクラーを通過する経路を本番合成の実弾道で確認した。スプリンクラーの候補だけを独立したnativeSprinklerCandidateへ公開し、ホコのシールドと同じ距離順判定へ接続する。壁・敵・シールド・装置の最初の接触を維持し、onHitには実際の距離減衰ダメージを渡す。既存の装置所有者・ライフ・出生・再送検証と対物攻撃力アップ倍率は維持する。一般のkitBarrier全体を弾道へ新規接続する変更は含めない。
+
+## 2026-10-11: accepted equipment during owner departure
+
+- Before: a remote Actor retained empty equipment, then its host-adopted bot lost run-speed AP and main-only gear.
+- Candidate: a match/actor/life/sequence-bound identity-only sidecar restores legal slots from already-admitted owner snapshots. Actual Actor movement at 30/60/120 Hz and Tenacity updates retain the equipment; stale/foreign/malformed claims fail closed.
+- Source/built focused 17 cases and network 448 cases pass. Full source, exact-head browser CI and merge are still pending. Conditional effect clocks and server-attested equipment remain outside this static-loadout correction. See `inkwave-gear-loadout-adoption-2026-10-11.md`.
+
+2026-10-11: Gear adoption additionally retains the latest admitted loadout before remote death playback clears snapshots. Actual owner JSON, death event playback before visual sampling, and subsequent bot adoption retain 57 AP. No conditional-clock protocol is included in this static-loadout correction.
+
+2026-10-11: Separate conditional-gear adoption candidate preserves bounded owner-admitted Comeback and Opening clocks across host takeover. Active receiver simulation dt prevents host-clock rollback from refunding effect time; pause does not age clocks. Existing 20/30/15-second profile values are unchanged. Source/built actual JSON tests cover death/new life, stale identity, extension counts and new-match isolation. Remote earned-credit truth remains owner-authoritative, not server-attested.
+
+2026-10-11: An independent transient-gear takeover candidate preserves bounded Tacticooler/Drop Roller remainders only after native owner adoption, without granting remote presentation AP. Actual pickup/landing JSON regressions cover 30/60/120 Hz and replay/life boundaries; broader gates and browser publication remain pending. See `reports/inkwave-transient-gear-adoption-2026-10-11.md`.
+
+2026-10-11: Independent direct-sub resistance candidate connects pinned DamageRt_LineMarker and DamageRt_Sprinkler to victim-local AP, preserves raw hit damage and old bomb classification, and admits the missing catalogue Angle Shooter cause with its sourced 40-damage bound. Actual contact/JSON/object, full source, network and production-built gates pass; browser remains pending. Existing Crab spillover 0.25 flag behavior is recorded separately in reports/inkwave-direct-sub-resistance-2026-10-11.md.
+### Sub Resistance marking follow-up (2026-10-11)
+Pinned 11.3.0 MarkingTimeRt and MarkingTimeRt_Trap now reach victim-local Point Sensor/Angle Shooter/Ink Mine deadlines. Actual JSON preserves raw attacker duration and applies resistance once; Mine/Angle owner-life omission is repaired with known-birth and raw-frame checks. Existing overlap/equipment/death behavior is retained; integer-frame rounding and transport-age parity remain unverified. See `reports/inkwave-sub-mark-resistance-2026-10-11.md` for raw hash, reproduction and verification boundaries.
+
+Sub-mark follow-up: retain bounded per-owner accepted births independently of receiver visual retirement; retire them on ordered owner terminal events, current match/identity reset, or the source 96-live-object cap. Added delayed JSON mark, owner respawn, other-owner burst, eviction replay and leave/rejoin regressions. See the 2026-10-11 sub-mark report for limits.
+
+2026-10-11: Independent native Sprinkler Sub Power candidate connects pinned period curves and constant throw-speed tiers at owner throw admission. Actual Actor and render-rate regressions cover AP0/10/57, frozen per-device values and native phase progression. Existing AP0 phase interpretation/deployment/paint calibration remains unchanged; broader and browser gates pending. See reports/inkwave-native-sprinkler-power-2026-10-11.md.
+
+## 2026-10-11: grounded Fast squid acceleration connection (candidate)
+
+Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinary grounded squid gets the measured 1.5x rate; humanoid and all attack/ready states retain existing rates. Baseline actual Actor delta0.6 becomes0.9 WU/s at60Hz, other ordinary forms remain0.6, attack remains1.2. Absolute36/72calibration and air behavior are unchanged. See `reports/inkwave-fast-swim-acceleration-2026-10-11.md` for source, real-Physics/FPS/snapshot checks and unverified retail boundaries.
 
 
 ## 2026-10-11 サブ14種・スペシャル19種の性能再照合

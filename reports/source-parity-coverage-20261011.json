@@ -15857,6 +15857,12 @@
       "result": "Actual NiceBall/Stamp/Crab shooter/cannon launch and 30/60/120Hz flight paths passed. Object gear25/25 runnable cases passed; integration37/37 passed. Final merged suite and GitHub CI pending.",
       "evidence": "New all-specials actual launch test plus main gear/network owner/life regressions. Gear identity is shoes-main/accepted snapshot, applied once with source attack rows.",
       "limit": "Splash landing projection remains calibrated; no Switch retail comparison."
+    },
+    {
+      "scope": "Latest main source integration",
+      "result": "Focused suites passed: sub/recon/resistance91, shared67, peer marks/nativeSprinkler39, specials/slope51; scopes overlap. Actual compiled game14sub/19special activation passes.",
+      "evidence": "Main90b4fea7 integrations retained. Booyah62total packets acrosssixsourcepaintframes vs156 repeatedringpackets, existing65cap retained.",
+      "limit": "Final native object receiver and immutableheadCI pending; no retail certification."
     }
   ],
   "runtimeProtocolNotes": {

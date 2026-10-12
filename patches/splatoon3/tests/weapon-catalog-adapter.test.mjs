@@ -135,7 +135,7 @@ test('bot, player, and HUD decisions use temporary catalog behavior families', (
   assert.equal(adaptWeaponCatalog('src/game/weapon-runtime.js', 'fixture'), 'fixture', 'the catalog runtime is outside this adapter');
 });
 
-test('weapon menus and showcase route catalog IDs through modelKind', () => {
+test('weapon menus and showcase route catalog IDs to their own models', () => {
   const menus = adaptWeaponCatalog('src/ui/menus.js', source('src/ui/menus.js'));
   assert.equal(menus.split('weaponIcon(W.id || lo.weapon)').length - 1, 5);
   assert.equal(menus.split('weaponIcon(w.id || id)').length - 1, 2);
@@ -156,9 +156,12 @@ test('weapon menus and showcase route catalog IDs through modelKind', () => {
     catalog: { kind: 'catalog', modelKind: 'charger' },
     legacy: { kind: 'roller' },
   });
-  assert.equal(weaponKind('catalog'), 'charger', 'catalog modelKind takes precedence');
-  assert.equal(weaponKind('legacy'), 'roller', 'legacy kind remains the fallback');
+  // The showcase hands Character the weapon ID; Character resolves its own
+  // model and the family HOLD/behaviour kind (registry weaponModelKey/Family).
+  assert.equal(weaponKind('catalog'), 'catalog', 'catalog ID keeps its own model');
+  assert.equal(weaponKind('legacy'), 'legacy', 'legacy ID is its family kind');
   assert.equal(weaponKind('unknown'), 'unknown');
+  assert.equal(weaponKind(undefined), 'shooter');
 });
 
 test('menu and showcase family anchors fail closed on source drift', () => {

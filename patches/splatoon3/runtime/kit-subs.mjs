@@ -33,7 +33,7 @@ import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidel
 // scope, so these hooks always read the one live registry and still behave exactly
 // like the native code when installKitSubs has not been applied.
 
-import { SPRINKLER, beginSprinkler, stepSprinkler } from './kit-sprinkler.mjs';
+import { SPRINKLER, beginSprinkler, stepSprinkler, resolveSprinklerPower } from './kit-sprinkler.mjs';
 import { AUTOBOMB, startAutobomb, stepAutobomb } from './kit-autobomb.mjs';
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
@@ -340,6 +340,10 @@ export function resolveSubAtCharge(sub, charge) {
 function actorSubSpec(actor, sub) {
   const m = actor?.s3?.modifiers || {}, power = m.subPower ?? 1;
   const cost = sub.inkCost ?? sub.inkCostFallback;
+  if(sub.mode==='sprinkler'){
+    const resolved=resolveSprinklerPower(sub,actor?.s3?.abilityPoints?.subPower);
+    return {...resolved,inkCost:Number.isFinite(cost)?cost*(m.inkSaverSub??1):cost};
+  }
   return { ...sub, inkCost: Number.isFinite(cost) ? cost * (m.inkSaverSub ?? 1) : cost,
     throwSpeed: Number.isFinite(sub.throwSpeed) ? sub.throwSpeed * power : sub.throwSpeed,
     throwSpeedMaxCharge: Number.isFinite(sub.throwSpeedMaxCharge) ? sub.throwSpeedMaxCharge * power : sub.throwSpeedMaxCharge };

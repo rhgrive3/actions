@@ -26,3 +26,7 @@ Focused verification, reported by scope rather than added into one total because
 - **1/1 focused Big Bubbler inert-query regression** passed after updating the test for the parent's optional fourth `excludedDomeIds` argument. The failure was a stale arity assertion; the query had no position, HP, turf, or event mutation, so no runtime fix was needed.
 
 These counts are separate focused runs, not a unique-test total. The test runs use Node's `--experimental-vm-modules`; no failures remain in the listed scopes.
+
+## Canonical native Sprinkler source interactions
+
+The latest-main native Sprinkler in the bomb collection now uses the same pinned source-row × fixed gear calculation as catalogue sub devices. Raw owner proposals carry the attack row and shoes identity; accepted receivers apply both once. A stable native device facade lets the central sub-object AoE path reach canonical Sprinklers, including native bomb explosions and Vac/Storm/Wail/Screen callers. Birth, owner/life, reordered replay, monotone application and owner-state wrappers remain intact. LOS is retained except explicit piercing callers. Focused checks pass: 12 native-device cases, three original Sprinkler authority/replay cases, and 96 related sub/special/resistance cases (overlapping scopes). HP and physical native-hitbox calibration are unchanged.

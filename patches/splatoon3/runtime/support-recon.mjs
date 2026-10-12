@@ -1,3 +1,4 @@
+import { subMarkSeconds } from './sub-mark-resistance.mjs';
 // Splatoon 3 Point Sensor and team-scoped Turf Map marks (#710).
 // Extracted from the pinned 11.3.0 source, not guessed from another weapon:
 // Splatoon3-resources/splat3/data/parameter/1130/weapon/
@@ -6,7 +7,6 @@
 // Wiki system units: 50 DU = 5 m = one test-range line. Source distance
 // 6 m agrees with the measured 1.2-line radius; actual capsule/collision
 // agreement still requires real-console comparison.
-import { subMarkScale } from './sub-resistance.mjs';
 export const POINT_SENSOR_SOURCE = Object.freeze({
   areaDistance: Object.freeze([6, 6, 6]),
   markingFrames: Object.freeze([480, 720, 960]),
@@ -40,7 +40,7 @@ export function pointSensorMark(victim, team, now, seconds = POINT_SENSOR.markSe
   victim.s3 ||= {};
   const marks = victim.s3.revealedUntil ||= {};
   const before = marks[team];
-  const until = now + seconds * subMarkScale(victim,'marking');
+  const until = now + subMarkSeconds(victim, seconds);
   if (!finite(until) || (finite(before) && before >= until)) return false;
   marks[team] = until;
   return true;

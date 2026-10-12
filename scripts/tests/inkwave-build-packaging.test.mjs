@@ -10,6 +10,7 @@ import { networkIdentity } from '../../patches/network-replication/adapter.mjs';
 import { qualityIdentity } from '../../patches/local-quality/adapter.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
+import { staticEsModuleImports } from '../lib/inkwave-module-imports.mjs';
 import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
 import { decodeGrayLightmap } from '../lib/inkwave-lossless-lightmap.mjs';
 
@@ -98,6 +99,12 @@ test('runtime helper URLs retain their exports without carrying build-time sourc
       assert.equal(quality[relative], hash, transformer);
     }
   }
+});
+
+test('minified static ESM imports are found without whitespace and with re-exports', () => {
+  const compact = 'import{Pieces as P}from"./kit.mjs";export{THING}from"../catalog.mjs";export*from"../../common.mjs";';
+  assert.deepEqual(staticEsModuleImports(compact), ['./kit.mjs', '../catalog.mjs', '../../common.mjs']);
+  assert.deepEqual(staticEsModuleImports('const a = { name: "import fake from \\"nothing\\"" };'), []);
 });
 
 const site = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);
@@ -210,6 +217,18 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   assert.equal(profileEmitted, JSON.stringify(JSON.parse(profileSource)), 'compact only emitted JSON whitespace');
   assert.equal(identity.files['patch/profile.json'], hash(Buffer.from(profileSource)), 'identity retains raw profile input');
   assert(config.precache.includes('patches/splatoon3/profile.json'), 'all tuning data remains available offline');
+  // The model-family bundle still has a static import of its separate kit.mjs.
+  for (const file of ['patches/splatoon3/runtime/weapon-models/registry.mjs',
+    'patches/splatoon3/runtime/weapon-models/kit.mjs']) {
+    assert(config.precache.includes(file), 'weapon model dependency not offline-ready: ' + file);
+  }
+  const weaponRegistry = 'patches/splatoon3/runtime/weapon-models/registry.mjs';
+  const emittedImports = staticEsModuleImports(fs.readFileSync(path.join(site, weaponRegistry), 'utf8'));
+  assert(emittedImports.includes('./kit.mjs'), 'minified weapon registry retains its shared modelling-kit import');
+  for (const spec of emittedImports.filter(spec => spec.startsWith('.'))) {
+    const dependency = path.posix.normalize(path.posix.join(path.posix.dirname(weaponRegistry), spec));
+    assert(config.precache.includes(dependency), 'weapon bundle static import not precached: ' + dependency);
+  }
   assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= PRECACHE_BUDGET_BYTES,
     'precache ceiling includes the complete runtime dependency graph');
   for (const file of BUILD_ONLY_PATCH_MODULES) {

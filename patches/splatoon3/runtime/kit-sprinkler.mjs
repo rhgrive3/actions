@@ -3,11 +3,12 @@
 // Physics ejection and PNG paint shapes are calibrated, NOT retail binary code.
 // Source: Leanny/splat3@7280ff9c/WeaponSprinkler.game__GameParameterTable.json
 // S3 verification: https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/スプリンクラー
+import {gearCurve} from './gear.mjs';
 const FRAME=1/60, EPS=1e-9;
 export const SPRINKLER=Object.freeze({
   id:'sprinkler', name:'Sprinkler', mode:'sprinkler', chargeable:false,
   inkCost:60, inkCostStatus:'extracted', inkRecoverStop:60*FRAME,
-  throwSpeed:1.12*60, throwSpeedStatus:'extracted',
+  throwSpeed:1.12*60, throwSpeedTiers:Object.freeze({low:1.12*60,mid:1.12*60,high:1.12*60}), throwSpeedStatus:'extracted',
   spawnSpeedY:.24*60, hitPaintRadius:2.9,
   deploymentPaintRadius:.3, dropletPaintRadius:1.4, dropletDamage:20,
   hp:120, deployFrames:30, periodFirstFrames:480, periodSecondFrames:900,
@@ -15,6 +16,11 @@ export const SPRINKLER=Object.freeze({
   maxDrops:96, dropletSpeed:10, dropletLift:5, dropletGravity:24, dropletDrag:.015,
   status:'extracted+community-verified+calibrated-droplet-dynamics',
 });
+export function resolveSprinklerPower(spec,ap){
+  const points=Number.isFinite(ap)?Math.max(0,Math.min(57,ap)):0;
+  return {...spec,periodFirstFrames:gearCurve(points,480,630,780),
+    periodSecondFrames:gearCurve(points,900,960,1020),throwSpeed:SPRINKLER.throwSpeed};
+}
 export function sprinklerPhase(f,spec=SPRINKLER){
   if(!Number.isFinite(f)||f<spec.deployFrames)return -1;
   return f<spec.periodFirstFrames?0:f<spec.periodSecondFrames?1:2;

@@ -32,24 +32,45 @@ test('the new readiness poll does not mask broken controller admission or a diff
 
 // Execute the current atomic snapshot poll instead of a retired separate
 // focus-ring evaluate predicate. Its final snapshot remains the assertion input.
-const alignmentSource=source.slice(source.indexOf('const alignedFocusSnapshot ='),source.indexOf('const check ='));
-assert.ok(alignmentSource.startsWith('const alignedFocusSnapshot ='),'actual lifecycle atomic alignment poll');
-function ringRig(){
- let clock=0;
- const snapshot={ringOn:true,ringVisible:true,ringOnFocus:true,focusConnected:true};
+const alignmentSource=source.slice(source.indexOf('const waitForFocusFrame ='),source.indexOf('const check ='));
+assert.ok(alignmentSource.startsWith('const waitForFocusFrame ='),'actual lifecycle bounded frame and atomic alignment polls');
+function ringRig(snapshots,{stalledFrames=false}={}){
+ let clock=0, reads=0, frames=0, waits=0, cleared=0, maxWait=0;
  const read=vm.runInNewContext(alignmentSource+'\nalignedFocusSnapshot;',{
-  operationTrace:{run:(_name,action)=>action()},snap:async()=>snapshot,
-  page:{waitForTimeout:async dt=>{clock+=dt;}},Date:{now:()=>clock}
+  operationTrace:{run:(_name,action)=>action()},
+  snap:async()=>snapshots[Math.min(reads++,snapshots.length-1)],
+  page:{evaluate:async action=>stalledFrames?new Promise(()=>{}):action()},
+  requestAnimationFrame:callback=>{frames++;clock+=16;callback(clock);return frames;},
+  setTimeout:(callback,ms)=>{waits++;maxWait=Math.max(maxWait,ms);if(stalledFrames){clock+=ms;callback();}return waits;},
+  clearTimeout:()=>{cleared++;},
+  Date:{now:()=>clock}
  });
- return {snapshot,read};
+ return {read,counts:()=>({reads,frames,waits,cleared,maxWait})};
 }
-test('rematch returns one atomic snapshot containing native ring placement and visible entrance',async()=>{
- const {snapshot,read}=ringRig();assert.equal(await read('touch'),snapshot);
- for(const key of ['ringOn','ringVisible','ringOnFocus']){
-  snapshot[key]=false;const observed=await read('touch');assert.equal(observed[key],false,'an unmet gate is preserved for the assertion: '+key);snapshot[key]=true;
- }
+test('rematch samples the native cursor after a browser frame and waits through its opacity entrance',async()=>{
+ const entering={ringOn:true,ringVisible:false,ringOnFocus:true,focusConnected:true};
+ const visible={ringOn:true,ringVisible:true,ringOnFocus:true,focusConnected:true};
+ const {read,counts}=ringRig([entering,visible]);
+ assert.equal(await read('touch'),visible);
+ assert.deepEqual(counts(),{reads:2,frames:2,waits:2,cleared:2,maxWait:1000});
  assert.match(source,/ringStyle\.visibility === 'visible' && ringStyle\.display !== 'none' && \+ringStyle\.opacity > 0\.6/);
  assert.match(source,/if \(C\?\.on && f\?\.isConnected\)/);
+});
+test('the frame poll keeps every visible and aligned ring condition strict through timeout',async()=>{
+ for(const key of ['ringOn','ringVisible','ringOnFocus']){
+  const snapshot={ringOn:true,ringVisible:true,ringOnFocus:true,focusConnected:true};
+  snapshot[key]=false;
+  const {read}=ringRig([snapshot]);
+  const observed=await read('touch');
+  assert.equal(observed[key],false,'an unmet gate is preserved for the assertion: '+key);
+ }
+});
+test('a suspended browser frame falls back within one second and preserves the 30 second strict gate',async()=>{
+ const invisible={ringOn:true,ringVisible:false,ringOnFocus:true,focusConnected:true};
+ const {read,counts}=ringRig([invisible],{stalledFrames:true});
+ const observed=await read('touch');
+ assert.equal(observed.ringVisible,false,'a missing browser frame cannot satisfy visible-ring acceptance');
+ assert.deepEqual(counts(),{reads:30,frames:0,waits:30,cleared:30,maxWait:1000});
 });
 test('touch return and keyboard handoff retain the same strict atomic ring acceptance',()=>{
  assert.match(source,/alignedFocusSnapshot\('touch-owned menu'\)/);

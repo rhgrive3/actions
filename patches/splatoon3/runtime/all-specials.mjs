@@ -64,6 +64,12 @@ const actorStates = new WeakMap();
 const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
 const SEEN_LIMIT = 384;
+const SPECIAL_ROUND_FIELDS = Object.freeze(['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce',
+  's3TentaTarget','s3TentaAge','s3TentaDescending','s3TentaDirection','s3TentaLaunchedAt','s3AllSpecialMode','s3PaintNoSpecial',
+  's3SpecialPowerAP','s3AllSpecialCrossPaintRadius','s3AllSpecialCrossPaintLength','s3AllSpecialSplashAroundRadius','s3AllSpecialSplashAroundCount',
+  's3AllSpecialSplashAroundOffsetY','s3AllSpecialSplashAroundVelocityMin','s3AllSpecialSplashAroundVelocityMax','s3AllSpecialSplashAroundPitchMin',
+  's3AllSpecialSplashAroundPitchMax','s3AllSpecialTrailPaintWidth','s3AllSpecialTrailPaintDepthScale','s3AllSpecialTrailPaintSpanFrames',
+  's3AllSpecialFlight','s3AllSpecialFlightCarry']);
 
 function vecArray(v) {
   return v && [v.x, v.y, v.z].every(finite) ? [q2(v.x), q2(v.y), q2(v.z)] : null;
@@ -232,18 +238,20 @@ function stepSourceFlight(system,p,dt,step) {
   }
   return false;
 }
-function projectileDescriptor(id, ap = 0) {
-  const spec = specialDescription(id, ap);
+function projectileDescriptor(id, ap=0) {
+  const power=Number.isFinite(ap)?clamp(ap,0,57):0;
+  const spec=specialDescription(id,power);
   if (!spec) return null;
-  const bands = spec.splashBands.map(([r,d]) => [r,d]);
+  const paint=spec.paintRadius??spec.radius;
+  const bands=spec.splashBands.map(([r,d])=>[r,d]);
   return {
-    id, wid: id, kind: id, name: SPECIALS[id].name,
-    type: 'blast', splashRadius: spec.radius, burstRadius: spec.radius,
-    impactRadius: Math.min(spec.paintRadius ?? spec.radius, MAX_STAMP_RADIUS),
-    paintRadius: Math.min(spec.paintRadius ?? spec.radius, MAX_STAMP_RADIUS), splashDamageMax: spec.damageMax,
-    splashDamageMin: spec.damageMin, damageMax: spec.damageMax, damageMin: spec.damageMin,
-    directDamage: spec.directDamage, splashBands: bands, damageBands: bands,
-    status: SPECIALS[id].status,
+    id, wid:id, kind:id, name:SPECIALS[id].name,
+    type:'blast', splashRadius:spec.radius, burstRadius:spec.radius,
+    ...(['inkjet','tentaMissiles'].includes(id)?{specialPowerAP:power}:{}),
+    impactRadius:Math.min(paint,MAX_STAMP_RADIUS),
+    paintRadius:Math.min(paint,MAX_STAMP_RADIUS),splashDamageMax:spec.damageMax,
+    splashDamageMin:spec.damageMin,damageMax:spec.damageMax,damageMin:spec.damageMin,
+    directDamage:spec.directDamage,splashBands:bands,damageBands:bands,status:SPECIALS[id].status,
   };
 }
 function directProjectileDescriptor(id, radius) {
@@ -253,19 +261,18 @@ function directProjectileDescriptor(id, radius) {
 function launch(rt, actor, id, origin, direction, opts = {}) {
   const system = rt.api.G.projectiles;
   if (!system?._new || !system?._push || actor.remote) return null;
-  const ap = actor.s3?.abilityPoints?.specialPower || 0;
-  const descriptor = projectileDescriptor(id, ap), p = system._new();
+  const ap=actorStates.get(actor)?.specialPowerAP||0, descriptor=projectileDescriptor(id,ap), p=system._new();
   const dir = direction.clone();
   if (dir.lengthSq() < 1e-9) dir.copy(actor.aimDir);
   dir.normalize();
   const speed = opts.speed || 17;
   Object.assign(p, {
-    type: opts.type || 'blast', owner: actor, team: actor.team, age: 0,
+    type: opts.type || 'blast', wid:id, owner: actor, team: actor.team, age: 0,
     life: opts.life || 1.8, straight: opts.straight ?? .16,
     radius: opts.radius ?? descriptor.paintRadius, damage: opts.damage ?? descriptor.directDamage,
     size: opts.size ?? .22, trail: 0, trailEvery: opts.trailEvery || 0,
     trailRadius: .45, grav: opts.grav ?? 20, drag: opts.drag ?? .24,
-    seed: seedUnit(opts.seed ?? nextSeed(actorStates.get(actor) || { seed: 1 }), 1),
+    seed: seedUnit(opts.seed ?? nextSeed(actorStates.get(actor) || { seed: 1 }), 0),
     vis: .19, tail0: .55, tailK: .9, wob: .04, wobF: 23, nose: .12, sats: 2,
   });
   if(opts.sourceMode)p.s3AllSpecialMode=opts.sourceMode;
@@ -282,9 +289,8 @@ function launch(rt, actor, id, origin, direction, opts = {}) {
   // Direct rounds still need a special identity so main-weapon wrappers cannot
   // substitute the owner's gravity, collision, flight paint or weapon id.
   p.s3SpecialWeapon = opts.directOnly ? directProjectileDescriptor(id, opts.radius ?? .22) : descriptor;
-  p.wid = id;
   p.s3Weapon = opts.weapon || p.s3SpecialWeapon || { id, kind: 'special', special: id };
-  p.s3AllSpecial = id;
+  p.s3AllSpecial = id;p.s3SpecialPowerAP=ap;
   p.s3PaintNoSpecial = true;
   const paint = specialPaintParams(id, ap);
   p.s3AllSpecialPaintRadius = opts.paintRadius ?? paint.radius ?? 0;
@@ -317,11 +323,8 @@ function paintStamp(rt, actor, point, radius, seed) {
   if (finite(area) && area > 0) actor.addTurfNoSpecial?.(area);
   return finite(area) ? area : 0;
 }
-function paintDisk(rt, actor, point, radius, seed) {
-  if (radius <= MAX_STAMP_RADIUS) return paintStamp(rt, actor, point, radius, seed);
-  // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
-  // row, which the public replication owner correctly rejects.
-  const spacing = 2.82, rowZ = spacing * Math.sqrt(3) / 2, inset = .2;
+function paintDiskLayout(rt, point, radius) {
+  const spacing = 2.82, rowZ = spacing * Math.sqrt(3) / 2;
   // Tile in the nearby contact plane. Keeping every tile at the same world Y
   // leaves large holes on slopes; projecting each tile from above can instead
   // jump between disconnected floors. The short probe avoids both mistakes.
@@ -330,22 +333,53 @@ function paintDisk(rt, actor, point, radius, seed) {
   if(contact?.hit&&contact.normal?.y>.4)normal.copy(contact.normal).normalize();
   const tangent=new rt.api.THREE.Vector3(1,0,0).addScaledVector(normal,-normal.x).normalize();
   const bitangent=new rt.api.THREE.Vector3().crossVectors(tangent,normal).normalize();
-  let area = 0, index = 0;
-  for (let row = -Math.ceil(radius / rowZ); row <= Math.ceil(radius / rowZ); row++) {
-    const z = row * rowZ, shift = row & 1 ? spacing * .5 : 0;
-    for (let col = -Math.ceil(radius / spacing); col <= Math.ceil(radius / spacing); col++) {
-      const x = col * spacing + shift;
-      if (Math.hypot(x,z) > radius - inset) continue;
-      const at = rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);
-      at.set(q2(at.x),q2(at.y),q2(at.z));
-
-      const s = seedUnit(seed, index++);
-      const got = rt.api.G.paint.splat(at, MAX_STAMP_RADIUS, actor.team,
-        { seed: s, claimOwner: actor, claimMode: 'no-special' });
-      if (finite(got) && got > 0) area += got;
+  // A constant-radius stamp must remain inside the nominal source disk.
+  // An outer ring closes lattice scallops without placing stamp centres near R.
+  // Reuse one mask seed so the R=3.74 transition cannot union unrelated shapes.
+  let area=0;const maxCentre=Math.max(0,radius-MAX_STAMP_RADIUS),centres=[[0,0]];
+  for(let row=-Math.ceil(maxCentre/rowZ);row<=Math.ceil(maxCentre/rowZ);row++){
+    const z=row*rowZ,shift=row&1?spacing*.5:0;
+    for(let col=-Math.ceil(maxCentre/spacing);col<=Math.ceil(maxCentre/spacing);col++){
+      const x=col*spacing+shift;if((x||z)&&Math.hypot(x,z)<=maxCentre)centres.push([x,z]);
     }
   }
+  if(maxCentre>0){// Doubling retains every previous angle; n-to-n+1 rephasing can remove painted cells.
+    const count=6*2**Math.max(0,Math.ceil(Math.log2((2*Math.PI*maxCentre/spacing)/6)));for(let i=0;i<count;i++){const angle=2*Math.PI*i/count;centres.push([Math.cos(angle)*maxCentre,Math.sin(angle)*maxCentre]);}}
+  const seen=new Set(),tiles=[];
+  for(const [x,z]of centres){
+    const at=rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);at.set(q2(at.x),q2(at.y),q2(at.z));
+    const key=at.x+','+at.y+','+at.z;if(seen.has(key))continue;seen.add(key);tiles.push({x,z,key});
+  }
+  return {tangent,bitangent,tiles};
+}
+function paintDiskTile(rt,actor,point,layout,tile,maskSeed){
+  const at=rt.v4.copy(point).addScaledVector(layout.tangent,tile.x).addScaledVector(layout.bitangent,tile.z);
+  at.set(q2(at.x),q2(at.y),q2(at.z));
+  const got=rt.api.G.paint.splat(at,MAX_STAMP_RADIUS,actor.team,{seed:maskSeed,claimOwner:actor,claimMode:'no-special'});
+  return finite(got)?got:0;
+}
+function paintDisk(rt, actor, point, radius, seed, maskSeed = seedUnit(seed,0), alreadyPainted = null) {
+  if (radius <= MAX_STAMP_RADIUS) return paintStamp(rt, actor, point, radius, seed);
+  // Cluster ordinary network-admissible stamps; do not emit one over-limit paint
+  // row, which the public replication owner correctly rejects.
+  const layout=paintDiskLayout(rt,point,radius);let area=0;
+  for(const tile of layout.tiles){if(alreadyPainted?.has(tile.key))continue;area+=paintDiskTile(rt,actor,point,layout,tile,maskSeed);}
   if (area > 0) actor.addTurfNoSpecial?.(area);
+  return area;
+}
+function paintBooyahGrowth(rt,object,paintFrame,paintRadius,seed){
+  const growthRadius=paintRadius*paintFrame/6;
+  if(paintFrame===1){const area=paintStamp(rt,object.owner,object.pos,growthRadius,seed);object.paintFrame=paintFrame;object.paintedRadius=growthRadius;return area;}
+  object.paintDiskTiles||=new Set();
+  const layout=paintDiskLayout(rt,object.pos,paintRadius),maskSeed=seedUnit(seed,0),limit=growthRadius-MAX_STAMP_RADIUS;
+  let area=0;
+  for(const tile of layout.tiles){
+    if(object.paintDiskTiles.has(tile.key)||Math.hypot(tile.x,tile.z)>limit+1e-8)continue;
+    area+=paintDiskTile(rt,object.owner,object.pos,layout,tile,maskSeed);object.paintDiskTiles.add(tile.key);
+  }
+  if(area>0)object.owner.addTurfNoSpecial?.(area);
+  object.paintFrame=paintFrame;object.paintedRadius=growthRadius;
+  if(paintFrame===6)paintDisk(rt,object.owner,object.pos,paintRadius,seed,maskSeed,object.paintDiskTiles);
   return area;
 }
 function paintCross(rt,actor,point,radius,checkLength,seed) {
@@ -542,7 +576,7 @@ function emitObject(rt, object, action) {
   return emitAction(rt, object.owner, object.id, object.activation, action,
     object.pos, target, object.seed, { object: object.serial || 0, index: object.index || 0,
       hp: object.hp || 0, radius: q2(object.maxRadius || 0), duration: q3(object.dur || 0), kind: object.kind,
-      width: object.width || 0, height: object.height || 0, waveFrame: object.maxWaveFrame || 0,
+      specialPowerAP: object.specialPowerAP || 0, width: object.width || 0, height: object.height || 0, waveFrame: object.maxWaveFrame || 0,
       startDelay: object.startDelay || 0, expand: object.expand || 0,
       pulse: object.pulse || 0, tick: object.eventSerial });
 }
@@ -766,7 +800,7 @@ function inkjetExhaustAdvance(rt,actor,state,dt) {
 }
 function deployObject(rt, actor, id, kind, pos, state, extra={}) {
   const spec=SPECIALS[id], object={
-    kind,id,owner:actor,team:actor.team,activation:state.serial,serial:(state.objectSerial=((state.objectSerial||0)+1)),
+    kind,id,owner:actor,team:actor.team,specialPowerAP:state.specialPowerAP||0,activation:state.serial,serial:(state.objectSerial=((state.objectSerial||0)+1)),
     pos:pos.clone(),age:0,dur:extra.dur??spec.duration,maxRadius:extra.maxRadius??spec.radius,
     damage:extra.damage??spec.near,seed:normalizedSeed(extra.seed??nextSeed(state)),dead:false,
     hp:extra.hp||0,maxHp:extra.hp||0,phase:extra.phase||'armed',index:extra.index||0,
@@ -776,6 +810,11 @@ function deployObject(rt, actor, id, kind, pos, state, extra={}) {
     waves:[],lastMoveEvent:0,previous:new WeakMap(),lastCross:new WeakMap(),remote:!!actor.remote,
     startDelay:extra.startDelay||0,expand:extra.expand||0,
   };
+  if(kind==='decoy'){
+    const rate=gearCurve(object.specialPowerAP,1,1.1,1.2);
+    object.maxRadius=6*rate;object.paintRadius=gearCurve(object.specialPowerAP,3.5,3.8,4.1);
+    object.damageBands=descriptions.superChump.splashBands.map(([r,d])=>[r*rate,d]);
+  }
   if(kind==='screen'){
     const yaw=finite(extra.yaw)?extra.yaw:actor.aimYaw||actor.yaw||0;
     object.normal.set(Math.sin(yaw),0,Math.cos(yaw));object.tangent.set(Math.cos(yaw),0,-Math.sin(yaw));
@@ -812,8 +851,7 @@ function prepareMissiles(rt, actor, state) {
     const target=targets[group],dest=target?groundAt(rt,target.pos,rt.v2).clone():groundAt(rt,aimPoint(rt,actor,28,rt.v3),rt.v4).clone();
     const count=counts[group];
     emitAction(rt,actor,'tentaMissiles',state.serial,'target',origin,dest,nextSeed(state),{index:group,count});
-    for(let i=0;i<count;i++)missiles.push({dest:dest.clone(),index:i,count});
-  }
+    for(let i=0;i<count;i++)missiles.push({dest:dest.clone(),index:i,count});  }
   state.pendingMissiles=missiles;state.missileIndex=0;state.missileOrigin=origin;state.nextMissileAt=state.t;state.phase='launching';
 }
 function launchMissileStep(rt, actor, state) {
@@ -832,7 +870,8 @@ function launchMissileStep(rt, actor, state) {
 }
 function launchInkjet(rt,actor,state) {
   const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
-  launch(rt,actor,'inkjet',origin,dir,{speed:21,grav:13,drag:.06,life:1.55,arc:.3,seed:nextSeed(state),size:.24});
+  launch(rt,actor,'inkjet',origin,dir,{speed:21,grav:13,drag:.06,life:1.55,arc:.3,seed:nextSeed(state),size:.24,
+    paintRadius:gearCurve(state.specialPowerAP,3.2,3.6,4)});
   emitAction(rt,actor,'inkjet',state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state));
 }
 function throwBooyah(rt,actor,state,charge) {
@@ -863,8 +902,8 @@ function crabBomb(rt,actor,state) {
 }
 function reefImpact(rt,actor,state,center) {
   if(state.impacted)return;state.impacted=true;
-  const seed=nextSeed(state),ap=actor.s3?.abilityPoints?.specialPower||0,point=groundAt(rt,center,rt.v1).clone(),desc=specialDescription('reefslider',ap);
-  paintDisk(rt,actor,point,desc.paintRadius,seed);
+  const seed=nextSeed(state),ap=state.specialPowerAP||0,point=groundAt(rt,center,rt.v1).clone(),desc=specialDescription('reefslider',ap);
+  paintDisk(rt,actor,point,state.paintRadius??desc.paintRadius,seed);
   paintSpecialChannels(rt,actor,point,specialPaintParams('reefslider',ap),seed);
   damageBandRadius(rt,actor,center,desc.splashBands,desc.radius,'reefslider',null,5);
   fxBurst(rt,actor,point,desc.radius,'impact');
@@ -894,7 +933,7 @@ function throwChumps(rt,actor,state) {
   if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
   else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
   groundAt(rt,target,target);
-  const count=8,desc=specialDescription('superChump',actor.s3?.abilityPoints?.specialPower||0);
+  const count=8,desc=specialDescription('superChump',state.specialPowerAP||0);
   for(let i=0;i<count;i++) {
     const angle=(i/count)*Math.PI*2+seedUnit(state.seed,17)*Math.PI*2, radius=6.5;
     const pos=target.clone();pos.x+=Math.cos(angle)*radius;pos.z+=Math.sin(angle)*radius;
@@ -909,13 +948,13 @@ function deployScreen(rt,actor,state) {
   const aim=aimPoint(rt,actor,28,rt.v0).clone(),pos=actor.pos.clone().addScaledVector(rt.v1.copy(aim).sub(actor.pos).setY(0).normalize(),2.5);
   pos.y=Math.max(.08,actor.pos.y);
   const direction=rt.v2.copy(aim).sub(pos).setY(0).normalize();
-  const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:3.18,seed:nextSeed(state),scale:[15/8,2,1]});
+  const object=deployObject(rt,actor,'splattercolorScreen','screen',pos,state,{dur:680/FPS,maxRadius:15,damage:40,width:15,height:9,yaw:Math.atan2(direction.x,direction.z),direction,moveSpeed:gearCurve(state.specialPowerAP,.04,.053,.06)*FPS,seed:nextSeed(state),scale:[15/8,2,1]});
   object.target=pos.clone().add(object.normal);
   emitAction(rt,actor,'splattercolorScreen',state.serial,'screen',pos,object.target,object.seed,{object:object.serial});
   endSpecial(rt,actor,'deployed');
 }
 function deployWave(rt,actor,state) {
-  const pos=groundAt(rt,aimPoint(rt,actor,16,rt.v0),rt.v1).clone(),ap=actor.s3?.abilityPoints?.specialPower||0;
+  const pos=groundAt(rt,aimPoint(rt,actor,16,rt.v0),rt.v1).clone(),ap=state.specialPowerAP;
   const maxRadius=gearCurve(ap,20,24,27),maxFrame=gearCurve(ap,160,192,216)/FPS;
   const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
@@ -1144,10 +1183,7 @@ function updateWorld(rt,dt) {
           damageRadius(rt,o.owner,'booyahBomb',center,3.3,3.3,Math.max(.1,radius),'booyahBomb');
           if(o.frameCount<=46){
             const paintFrame=o.frameCount-40,paintRadius=(o.paintRadius||13.5)*paintFrame/6;
-            if(paintFrame===1)paintStamp(rt,o.owner,o.pos,paintRadius,o.seed);
-            else if(paintFrame===6)paintDisk(rt,o.owner,o.pos,o.paintRadius||13.5,o.seed);
-            else paintRing(rt,o.owner,o.pos,paintRadius,seedUnit(o.seed,paintFrame));
-            o.paintFrame=paintFrame;o.paintedRadius=paintRadius;
+            paintBooyahGrowth(rt,o,paintFrame,o.paintRadius||13.5,o.seed);
           }
         }
       }
@@ -1187,15 +1223,17 @@ function updateWorld(rt,dt) {
         if(k>=1){o.phase='active';o.mesh?.scale.setScalar(1.15);emitObject(rt,o,'active');}
       }
       if(o.age>=o.dur){
-        const ap=o.owner.s3?.abilityPoints?.specialPower||0,desc=specialDescription('superChump',ap),bands=o.splashBands||desc.splashBands,radius=o.maxRadius||desc.radius;
-        if(!o.owner.remote){paintDisk(rt,o.owner,o.pos,o.paintRadius??desc.paintRadius,o.seed);paintSpecialChannels(rt,o.owner,o.pos,specialPaintParams('superChump',ap),o.seed);damageBandRadius(rt,o.owner,o.pos,bands,radius,'superChump');fxBurst(rt,o.owner,o.pos,radius,'explode');}
-        else fxBurst(rt,o.owner,o.pos,radius,'explode');
+        const ap=o.specialPowerAP||0,radius=o.maxRadius||descriptions.superChump.radius;
+        if(!o.owner.remote){paintDisk(rt,o.owner,o.pos,o.paintRadius,o.seed);paintSpecialChannels(rt,o.owner,o.pos,specialPaintParams('superChump',ap),o.seed);
+          damageBandRadius(rt,o.owner,o.pos,o.damageBands||specialDescription('superChump',ap).splashBands,radius,'superChump');}
+        fxBurst(rt,o.owner,o.pos,radius,'explode');
         removeWorld(rt,o,'expire');
       }
     }else if(o.kind==='screen'){
       const runStart=1,runEnd=1+560/FPS;
       const oldScreenPos=o.lastObjectScreenPos?.clone()||o.pos.clone();
-      if(o.age>=runStart&&o.age<=runEnd)o.pos.addScaledVector(o.direction,o.moveSpeed*dt);
+      const movingSeconds=Math.max(0,Math.min(o.age,runEnd)-Math.max(o.age-dt,runStart));
+      if(movingSeconds>0)o.pos.addScaledVector(o.direction,o.moveSpeed*movingSeconds);
       o.mesh?.position.copy(o.pos).setY(o.pos.y+o.height/2);
       if(o.mesh){o.mesh.material.opacity=.27+.06*Math.sin(o.age*7);o.mesh.rotation.y=Math.atan2(o.normal.x,o.normal.z);}
       for(const victim of rt.api.G.actors||[]){
@@ -1277,7 +1315,7 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='booyahBomb'){
     moveActor(rt,actor,dt,state,{squid:true});
-    const ap=actor.s3?.abilityPoints?.specialPower||0;
+    const ap=state.specialPowerAP;
     state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
     if(edges.fire||edges.booyah)state.charge=Math.min(1,state.charge+.077);
     state.cheerHeld ||= new WeakMap();
@@ -1323,7 +1361,7 @@ function activeStep(rt,actor,dt) {
         fxBurst(rt,actor,state.zipTarget,5.25,'hit');
         emitAction(rt,actor,'zipcaster',state.serial,'hookImpact',state.zipTarget,null,nextSeed(state),{targets:victimHits.length,index:state.zips});}
     }else if(state.phase==='ready')moveActor(rt,actor,dt,state,{speed:actor.intent.squid?6:4.2,squid:true,jump:true});
-    state.inkFuel=Math.max(0,state.inkFuel-(state.inkPerSecond??.1305)*100*dt);
+    state.inkFuel=Math.max(0,state.inkFuel-(state.inkDrainPerSecond??((state.inkPerSecond??.1305)*100))*dt);
     // Zipcaster has its own 1.5x special ink tank. Let the equipped native
     // WeaponRunner spend from that tank while preserving the player's normal
     // ink reserve for after the special ends.
@@ -1336,7 +1374,7 @@ function activeStep(rt,actor,dt) {
       state.inkFuel=clamp(Number(actor.ink)||0,0,150);
       actor.ink=normalInk;
     }
-    const hookInk=(state.hookInk??.025)*100;
+    const hookInk=state.hookInkCost??(state.hookInk??.025)*100;
     if(state.phase==='ready'&&edges.sub&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>=hookInk){
       state.inkFuel-=hookInk;const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z).clone(),target=aimPoint(rt,actor,35,rt.v0).clone();
       if(origin.distanceTo(target)<3){state.nextHookAt=elapsed+20/FPS;state.failedHooks=(state.failedHooks||0)+1;}
@@ -1476,26 +1514,24 @@ function activeStep(rt,actor,dt) {
 function makeState(rt,actor,id) {
   const definition=SPECIALS[id],serial=activationSerial(actor),ap=actor.s3?.abilityPoints?.specialPower||0;
   const duration=Array.isArray(definition.duration)?gearCurve(ap,...definition.duration):definition.duration;
-  const state={ id,serial,t:0,duration,seed:(Math.random()*0xffffffff)>>>0,
+  const state={ id,serial,specialPowerAP:ap,t:0,duration,seed:(Math.random()*0xffffffff)>>>0,
     held:{fire:!!actor._prevIntent?.fire,sub:!!actor._prevIntent?.sub,jump:!!actor._prevIntent?.jump,squid:!!actor._prevIntent?.squid,booyah:!!actor._prevIntent?.booyah},
     phase:'active',origin:actor.pos.clone(),shots:0,beams:0,swings:0,strikes:0,zips:0,nextSwing:.05,nextBeam:.1,
     charge:0,travel:0,objectSerial:0,armor:false,hitIds:new Set(),nextBody:.2,
   };
   if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;}
   if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.fireStart=null;state.wasRolling=false;}
-  if(id==='reefslider'){state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startupT=0;state.footHits=new Set();}
+  if(id==='reefslider'){state.paintRadius=gearCurve(ap,7.51,8.26,9.012);state.damageDistanceRate=gearCurve(ap,1,1.1,1.2);state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startupT=0;state.footHits=new Set();}
   if(id==='tripleInkstrike')state.nextMarker=0;
   if(id==='waveBreaker')state.phase='ready';
   if(id==='zipcaster')state.phase='ready';
   if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='active';state.direction=new rt.api.THREE.Vector3();}
   if(id==='killerWail')state.phase='charge';
   if(id==='inkjet')actor.vel.y=Math.max(actor.vel.y,7.4);
-  if(id==='zipcaster')state.inkFuel=150;
-  if(id==='zipcaster'){
-    state.abilityPoints=ap;
-    state.hookInk=gearCurve(ap,.04,.025,.015);
-    state.inkPerSecond=gearCurve(ap,.15,.1305,.12);
-  }
+  if(id==='zipcaster'){state.inkFuel=150;state.abilityPoints=ap;
+    state.hookInkCost=gearCurve(ap,4,2.5,1.5);state.inkDrainPerSecond=gearCurve(ap,15,13.05,12);
+    state.hookInk=gearCurve(ap,.04,.025,.015);state.inkPerSecond=gearCurve(ap,.15,.1305,.12);}
+
   actorStates.set(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
   emitAction(rt,actor,id,serial,'activate',actor.pos,null,state.seed,{duration:q3(duration)});
@@ -1572,13 +1608,10 @@ function installRuntime(api) {
     return damage.call(this,amount,attacker,source);
   };
   const P=Projectiles.prototype,update=P.update,clear=P.clear,baseCandidate=P.kitDefenseCandidate,blast=P._blastBurst,newProjectile=P._new,projectileStep=P._step;
-  // Projectiles are pooled: every field owned by this module must expire on reuse.
+  // Projectiles are pooled, so every field owned by this module expires on reuse.
   P._new=function(...args){
     const p=newProjectile.apply(this,args);
-    p.s3AllSpecial=null;p.s3AllSpecialPaintRadius=0;p.s3AllSpecialActivation=0;
-    p.s3AllSpecialSeed=0;p.s3AllSpecialMode=null;p.s3PaintNoSpecial=false;
-    p.s3DamageReduce=null;p.s3TentaTarget=null;p.s3TentaAge=0;
-    p.s3TentaDescending=false;p.s3TentaDirection=null;p.s3AllSpecialFlight=null;p.s3AllSpecialFlightCarry=0;
+    for(const key of SPECIAL_ROUND_FIELDS)delete p[key];
     return p;
   };
   if(typeof projectileStep==='function')P._step=function(p,...args){
@@ -1589,7 +1622,18 @@ function installRuntime(api) {
     return cause&&!p?.ghost&&!p?.owner?.remote?withObjectDamageCause(p,advance,cause):advance();
   };
   P.update=function(dt){
-    rt.system=this;updateWorld(rt,dt);
+    rt.system=this;
+    // World effects use source frames too: e.g. NiceBall's 3.3 damage is per
+    // 60 Hz frame, never per rendered update. Native projectile motion keeps
+    // its own integrator; only catalogue devices consume this accumulator.
+    if(Number.isFinite(dt)&&dt>0&&(this._s3AllSpecialObjects?.length||0)>0){
+      this._s3AllSpecialWorldClock=(this._s3AllSpecialWorldClock||0)+dt;
+      while(this._s3AllSpecialWorldClock+1e-10>=1/FPS){
+        this._s3AllSpecialWorldClock=Math.max(0,this._s3AllSpecialWorldClock-1/FPS);
+        updateWorld(rt,1/FPS);
+        if(!this._s3AllSpecialObjects.length){this._s3AllSpecialWorldClock=0;break;}
+      }
+    }else if(!(this._s3AllSpecialObjects?.length||0))this._s3AllSpecialWorldClock=0;
     for(const p of this.list||[]){
       if(p?.s3TentaTarget&&p.s3AllSpecial==='tentaMissiles'){
         p.s3TentaAge=(p.s3TentaAge||0)+dt;
@@ -1611,9 +1655,12 @@ function installRuntime(api) {
   if(typeof blast==='function')P._blastBurst=function(p,at,...args){
     rt.system=this;
     const owner=p?.owner,previousCause=owner?._s3AllSpecialDamageCause;
-    if(owner&&!p?.ghost&&!owner.remote)owner._s3AllSpecialDamageCause=projectileObjectCause({...p,s3AllSpecialMode:'blast'});
+    const cause=projectileObjectCause({...p,s3AllSpecialMode:'blast'});
+    if(owner&&!p?.ghost&&!owner.remote)owner._s3AllSpecialDamageCause=cause;
     let result;
-    try{result=blast.call(this,p,at,...args);}finally{if(owner){if(previousCause===undefined)delete owner._s3AllSpecialDamageCause;else owner._s3AllSpecialDamageCause=previousCause;}}
+    try{result=blast.call(this,p,at,...args);}finally{
+      if(owner){if(previousCause===undefined)delete owner._s3AllSpecialDamageCause;else owner._s3AllSpecialDamageCause=previousCause;}
+    }
     const weapon=p?.s3SpecialWeapon||p?.s3Weapon||api.WEAPONS?.[p?.wid]||api.WEAPONS?.blaster;
     const bands=weapon?.splashBands||weapon?.damageBands;
     if(!p?.ghost&&!p?.owner?.remote&&bands?.length&&p.s3AllSpecial!=='booyahBomb'){
@@ -1622,10 +1669,10 @@ function installRuntime(api) {
         if(d<=bands[0][0])return bands[0][1];
         for(let i=1;i<bands.length;i++)if(d<=bands[i][0]){const [r0,d0]=bands[i-1],[r1,d1]=bands[i];return r1===r0?d1:d0+(d1-d0)*((d-r0)/(r1-r0));}
         return bands.at(-1)?.[1]||0;
-      },p.s3AllSpecial||p.s3SpecialWeapon||p.s3AllSpecialMode==='blast'?projectileObjectCause({...p,s3AllSpecialMode:'blast'}):null);
+      },cause);
     }
     if(!p?.ghost&&!p?.owner?.remote&&p?.s3AllSpecial&&p.s3AllSpecial!=='booyahBomb'&&finite(p.s3AllSpecialPaintRadius)&&p.s3AllSpecialPaintRadius>MAX_STAMP_RADIUS)
-      paintDisk(rt,p.owner,at,p.s3AllSpecialPaintRadius,p.s3AllSpecialSeed||0);
+      paintDisk(rt,p.owner,at,p.s3AllSpecialPaintRadius,p.s3AllSpecialSeed||0,p.seed);
     if(!p?.ghost&&!p?.owner?.remote&&p?.s3AllSpecial&&p.s3AllSpecial!=='booyahBomb')
       paintSpecialChannels(rt,p.owner,at,{crossRadius:p.s3AllSpecialCrossPaintRadius,crossLength:p.s3AllSpecialCrossPaintLength,
         splashAroundRadius:p.s3AllSpecialSplashAroundRadius,splashAroundCount:p.s3AllSpecialSplashAroundCount,
@@ -1642,14 +1689,14 @@ function installRuntime(api) {
   P.clear=function(...args){
     rt.system=this;
     for(const object of [...(this._s3AllSpecialObjects||[])])removeWorld(rt,object,'expire');
-    this._s3AllSpecialObjects=[];return clear?.apply(this,args);
+    this._s3AllSpecialObjects=[];this._s3AllSpecialWorldClock=0;return clear?.apply(this,args);
   };
   for(const [id,definition]of Object.entries(SPECIALS)){
     const current=api.SPECIALS[id]||{id,name:definition.name};
     Object.assign(current,{id,name:definition.name,duration:Array.isArray(definition.duration)?definition.duration[1]:definition.duration,
       radius:definition.radius,mechanicsInstalled:true,reference:`Leanny/splat3 11.3.0 ${definition.source}`,status:definition.status,
       projectileDescriptor:p=>id==='crabTank'&&p?.type==='shot'
-        ? directProjectileDescriptor(id,finite(p.radius)?p.radius:.22) : projectileDescriptor(id)});
+        ? directProjectileDescriptor(id,finite(p.radius)?p.radius:.22) : projectileDescriptor(id,p?.s3SpecialPowerAP)});
     api.SPECIALS[id]=current;
   }
   api.allSpecialObjectCandidate=(p,startPoint,endPoint)=>candidate(rt,p,startPoint||p?.prev,endPoint||p?.pos);
@@ -1702,11 +1749,11 @@ function replayObjectEvent(rt,actor,event) {
   if(['deploy','device','screen','balloon','marker'].includes(event.action)&&!object){
     const kind=typeof event.kind==='string'?event.kind:(event.id==='splattercolorScreen'?'screen':event.id==='waveBreaker'?'wave':event.id==='superChump'?'decoy':event.id==='tripleInkstrike'?'marker':'');
     if(!kind)return false;
-    const state={serial:event.activation,objectSerial:serial-1,seed:event.seed};
+    const state={serial:event.activation,objectSerial:serial-1,seed:event.seed,specialPowerAP:finite(event.specialPowerAP)?clamp(event.specialPowerAP,0,57):0};
     const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
     if(kind==='screen'){
       const direction=target?target.clone().sub(point).setY(0).normalize():new rt.api.THREE.Vector3(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
-      extra.direction=direction;extra.moveSpeed=3.18;extra.yaw=Math.atan2(direction.x,direction.z);
+      extra.direction=direction;extra.moveSpeed=gearCurve(state.specialPowerAP,.04,.053,.06)*FPS;extra.yaw=Math.atan2(direction.x,direction.z);
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);

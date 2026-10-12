@@ -8,10 +8,10 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
   adaptRuntime:(r,s)=>{
     if(!r.endsWith('all-specials.mjs'))return s;
     if(old){
-      s=s.replace('const at = rt.v4.copy(point).addScaledVector(tangent,x).addScaledVector(bitangent,z);','const at = rt.v4.set(point.x+x,point.y,point.z+z);');
-      // Reconstruct the horizontal full-disk geometry control. The newly sourced
-      // growth-ring stamps must not fill its holes and mask this negative control.
-      s=s.replace(/if\(paintFrame===1\)paintStamp[^;]+;\s*else if\(paintFrame===6\)(paintDisk[^;]+;)\s*else paintRing[^;]+;/,'if(paintFrame===6)$1');
+      s=s.replace('const at=rt.v4.copy(point).addScaledVector(layout.tangent,tile.x).addScaledVector(layout.bitangent,tile.z);','const at=rt.v4.set(point.x+tile.x,point.y,point.z+tile.z);');
+      // Reconstruct the old one-shot horizontal disk; progressive envelope tiles
+      // would otherwise fill the negative control's central holes before frame 6.
+      s=s.replace('paintBooyahGrowth(rt,o,paintFrame,o.paintRadius||13.5,o.seed);','if(paintFrame===6)paintDisk(rt,o.owner,o.pos,o.paintRadius||13.5,o.seed);');
     }
     if(oldGround)s=s.replace('from.y += .25;','from.y += 24;').replace('rt.down, .5, rt.hit','rt.down, 60, rt.hit');
     return s;
@@ -68,15 +68,15 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
 
 
 test('large special disk follows a nearby slope without central holes or projection-area inflation',async()=>{
- const flat=await bomb();
+ const flat=await bomb();assert.ok(flat.outside/flat.area<.06,'edge tiles keep external area bounded');assert.ok(flat.stamps.length<=65,'bounded disk does not increase paint packets');
  for(const slope of[15,30]){
-  const after=await bomb({slope});assert.equal(after.holes,0);assert.ok(Math.abs(after.area-flat.area)/flat.area<.01);
+  const after=await bomb({slope});assert.equal(after.holes,0);assert.ok(Math.abs(after.area-flat.area)/flat.area<.01);assert.ok(after.outside/after.area<.06);
   if(!process.env.INKWAVE_BUILT_SITE){const before=await bomb({old:true,slope});assert.ok(before.holes>2000);assert.ok(after.area>before.area);}
  }
 });
 test('large special disk keeps flat terrain and remote upper storey isolated',async()=>{
  const flat=await bomb(),roof=await bomb({roof:true});assert.equal(roof.roofCells,0);assert.ok(Math.abs(roof.area-flat.area)/flat.area<.001,'adding an atlas face may change texel wobble by a few cells');assert.equal(roof.holes,0);
- if(!process.env.INKWAVE_BUILT_SITE){const before=await bomb({roof:true,oldGround:true});assert.ok(before.roofCells>10000,'broad old ground projection selected the remote upper floor');}
+ if(!process.env.INKWAVE_BUILT_SITE){const before=await bomb({roof:true,oldGround:true});assert.ok(before.roofCells>9000,'broad old ground projection selected the remote upper floor (bounded envelope)');}
 });
 test('slope disk is deterministic at 30, 60 and 120 render Hz',async()=>{
  const expected=await bomb({slope:30});for(const rate of[30,120])assert.deepEqual((await bomb({slope:30,rate})).grid,expected.grid);

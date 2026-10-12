@@ -1,3 +1,4 @@
+import { weightSpeedCurve } from './weapon-weight.mjs';
 import { installThermalTracking } from './private-tracking.mjs';
 import { installHaunt } from './haunt.mjs';
 import { installDryInk } from './dry-ink.mjs';
@@ -10,13 +11,14 @@ import { shooterMovementActive, shooterShotReady } from './shooter-movement.mjs'
 import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
 import { refreshFlowEffects } from './flow-effects.mjs';
 import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGear } from './conditional-gear.mjs';
-import { installSubResistance } from './sub-resistance.mjs';
+import { installSubResistance, DIRECT_SUB_RESISTANCE_CURVES } from './sub-resistance.mjs';
+import { SUB_MARK_RESISTANCE_CURVES } from './sub-mark-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
   haunt: 'リベンジ', thermalInk: 'サーマルインク', respawnPunisher: '復活ペナルティアップ', abilityDoubler: 'フェスT：追加ギアパワー倍化',
   objectShredder: '対物攻撃力アップ',
   ninjaSquid: 'イカニンジャ',
-  lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
+  tenacity: '逆境強化', lastDitchEffort: 'ラストスパート', comeback: 'カムバック', openingGambit: 'スタートダッシュ', subResistance: 'サブ影響軽減',
   none: 'なし', runSpeed: 'ヒト移動速度アップ', swimSpeed: 'イカダッシュ速度アップ',
   inkSaverMain: 'インク効率アップ（メイン）', inkSaverSub: 'インク効率アップ（サブ）',
   inkRecovery: 'インク回復力アップ', inkResistance: '相手インク影響軽減',
@@ -24,7 +26,7 @@ export const ABILITIES = Object.freeze({
   specialPower: 'スペシャル性能アップ',
   specialSaver: 'スペシャル減少量ダウン', quickRespawn: '復活時間短縮',
   quickSuperJump: 'スーパージャンプ時間短縮', stealthJump: 'ステルスジャンプ',
-  dropRoller: '受け身術', subPower: 'cµブ性能アップ',
+  dropRoller: '受け身術', subPower: 'サブ性能アップ',
 });
 // Pinned 11.3.0 Leanny gear traits identify Object Shredder as shoes-only.
 // It is a fixed primary ability, not a stackable AP curve.
@@ -160,6 +162,8 @@ export function installGear(api, tuning) {
     a.s3.abilityPoints = Object.freeze({ ...points }); // permanent/equipment AP stays canonical
     a.s3.modifiers = modifiersFor(loadout, tuning.gear, effectivePoints);
     const m = a.s3.modifiers;
+    m.runSpeed = gearCurve(effectivePoints.runSpeed || 0, ...weightSpeedCurve(a.weaponId, 'run')) * 60 / tuning.player.runSpeed;
+    m.swimSpeed = gearCurve(effectivePoints.swimSpeed || 0, ...weightSpeedCurve(a.weaponId, 'swim')) * 60 / tuning.player.swimSpeed;
     m.ninjaSquid = loadout[1].main === 'ninjaSquid';
     m.objectShredder = loadout[2].main === 'objectShredder';
     // #272: Stealth Jump is a shoes-only primary ability in Splatoon 3.
@@ -168,6 +172,10 @@ export function installGear(api, tuning) {
     m.stealthJump = loadout[2].main === 'stealthJump';
     m.dropRoller = loadout[2].main === 'dropRoller';
     const ap = effectivePoints, extra = tuning.gearExtra;
+    m.subLineMarkerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.angleShooter);
+    m.subSprinklerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.sprinkler);
+    m.subMarkResistance = gearCurve(ap.subResistance || 0, ...SUB_MARK_RESISTANCE_CURVES.normal);
+    m.subMineMarkResistance = gearCurve(ap.subResistance || 0, ...SUB_MARK_RESISTANCE_CURVES.trap);
     m.specialPowerAP = points.specialPower || 0;
     const aroundBase = extra.quickRespawnAroundFrames[0], chaseBase = tuning.respawnChaseTime * 60;
     const around = Math.floor(gearCurve(ap.quickRespawn || 0, ...extra.quickRespawnAroundFrames) + 1e-10);
