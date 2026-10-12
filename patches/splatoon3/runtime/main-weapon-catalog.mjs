@@ -514,7 +514,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function finishContact(system,p,h) {
     const s=p.catalog,d=s.descriptor,r=s.r;
-    if(p.ghost)return true;
+    if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub')return true;
     const at=h.point||p.pos;
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
     if(d.key==='arrow') {
@@ -528,18 +528,19 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const ground=h.normal.y>.35;
       const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
       // Keep the established paint owner and footprint untouched (lane ③).
-      paint(p.owner,at,finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index);
+      if(!p.ghost)paint(p.owner,at,finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index);
       const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
       p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
       if(!ground)p.vel.multiplyScalar(.8); // sourced wall reflection, no wall-bounce cap
-      if(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625)
+      if(!p.ghost&&(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
         G.fx?.burst(at,h.normal,p.owner.color,{count:5,speed:1.8,size:.09,spread:.8,paint:false});
       // BounceAfterMaxSpeed is explicit only for the smaller bubble group.
       if(bp.BounceAfterMaxSpeed!=null&&p.vel.length()>bp.BounceAfterMaxSpeed*HZ)p.vel.setLength(bp.BounceAfterMaxSpeed*HZ);
       s.bounces++;if(ground)s.groundBounces++;
       updateCatalogVisual(p);return false;
     }
+    if(p.ghost)return true;
     const footprint=impactPaint(p);
     paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
     if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
