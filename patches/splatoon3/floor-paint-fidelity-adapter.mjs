@@ -19,12 +19,9 @@ export function adaptFloorPaintFidelity(rel, code, replaceOnce) {
       'if (d / (r * Math.min(1, blobWobble(Math.atan2(py, px), seed))) > 1) continue;',
       'floor: CPU owns precisely capped body interior');
 
-    // #1165 CPU/GPU roller band agreement is already installed by\n    // issue-batch-1171-adapter; do not apply that native patch twice.\n\n    // Wall and occluded geometry can remain inked/swimmable, but cannot award
-    // Turf-War floor m² or extra special gauge credit.
-    code = replaceOnce(code,
-      '        this.grid[k] = val;\n        claimed += cellA;\n        if (f.turf && !this.dead[k]) {',
-      '        this.grid[k] = val;\n        if (f.turf && !this.dead[k]) {\n          claimed += cellA;',
-      'floor: m² credit only for live turf cells');
+    // #1165 GPU/CPU roller core parity and live-turf-only scoring are already
+    // composed by issue-batch-1171-adapter and score-hud-adapter.
+    // This layer changes only the body footprint on those established owners.
     return code;
   }
 
