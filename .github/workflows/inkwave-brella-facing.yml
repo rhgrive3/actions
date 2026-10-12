@@ -1,0 +1,71 @@
+name: INKWAVE selected Brella guard-facing candidate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/adapter.mjs
+      - patches/splatoon3/brella-guard-facing-adapter.mjs
+      - patches/splatoon3/runtime/brella-guard-facing.mjs
+      - patches/splatoon3/runtime/main-weapon-catalog.mjs
+      - patches/splatoon3/tests/brella-guard-facing.test.mjs
+      - .github/workflows/inkwave-brella-facing.yml
+permissions:
+  contents: read
+concurrency:
+  group: brella-facing-candidate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  contracts-and-browser:
+    if: github.head_ref == 'feat/inkwave-brella-facing-candidate'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 317e4230267c6281785f1d241690da88b20361ea
+          path: .guard-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build immutable model-only and facing-candidate production compositions
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .guard-baseline/scripts/build-inkwave.mjs .guard-baseline/inkwave-public .guard-before-site
+          node scripts/build-inkwave.mjs inkwave-public .guard-after-site
+      - name: All 65 facing boundaries, 243 live holds, runner admission and existing regressions
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/brella-guard-facing.test.mjs patches/splatoon3/tests/issue-857-roller-heading.test.mjs patches/splatoon3/tests/issue-973-facing-speed.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs
+          INKWAVE_BUILT_SITE=.guard-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs
+      - name: Real browser before and after, full framing and reverse-hand contact
+        run: |
+          IDS=s3-shelter-normal,s3-shelter-wide,s3-shelter-focus
+          node scripts/render-inkwave-brella-gallery.mjs --site .guard-before-site --out .guard-evidence/before --ids "$IDS" --size 600
+          node scripts/render-inkwave-brella-gallery.mjs --site .guard-after-site --out .guard-evidence/after --ids "$IDS" --size 600
+          python3 scripts/compare-inkwave-brella-gallery.py .guard-evidence reports/inkwave-weapon-model-workspace/refs ${IDS//,/ }
+          python3 - <<'PY'
+          import json
+          rows=json.load(open('.guard-evidence/after/gallery.json'))['rows']
+          for row in rows:
+            assert len(row['reverseCases'])==2
+            for case in row['reverseCases']:
+              assert case['meetsGuardBounds'],(row['id'],case)
+          print('BRELLA_REVERSE_BROWSER_GATE passed')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: brella-guard-facing-${{ github.event.pull_request.head.sha }}
+          path: .guard-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
