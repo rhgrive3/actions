@@ -39,7 +39,8 @@ jobs:
       - name: Diagnose same native scene and reversible cloth controls
         run: |
           export CHROMIUM_PATH="$(node -e "console.log(require('./harness/node_modules/playwright').chromium.executablePath())")"
-          node harness/scripts/diagnose-inkwave-cloth-stability.mjs "$PWD/site-a" "$PWD/evidence/A1"
+          node harness/scripts/diagnose-inkwave-cloth-stability.mjs "$PWD/site-a" "$PWD/evidence/default/A1"
+          INKWAVE_RIG_MIXED=1 node harness/scripts/diagnose-inkwave-cloth-stability.mjs "$PWD/site-a" "$PWD/evidence/mixed/A1"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
