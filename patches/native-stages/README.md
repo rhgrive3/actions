@@ -1,6 +1,7 @@
 # 原典メッシュ統合（ローカル検証用）
 
 開始 main: `b078c37907351f1bbc13d0e7d4b5cbeb0a330009`。作業ブランチ: `codex/stage5-native-integration`。
+作業中の main 更新 `bca45e7cb55f3331a58459ea0219e42b44762712` は作業ブランチ側へ取り込み済み。カメラ補正は composition の最終処理として維持する。
 
 ユーザー添付 R6 の OBJ パーサーと三角形 BVH を移植し、既存ビルドアダプター、本体キャラクター・武器・PaintSystem の authority に接続する。独立デモは配信しない。
 

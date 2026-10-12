@@ -518,5 +518,771 @@
       "shaderWarmMilliseconds": 11.400000000372529,
       "errors": []
     }
-  ]
+  ],
+  "latestMain": {
+    "commit": "bca45e7cb55f3331a58459ea0219e42b44762712",
+    "mergedIntoWorkBranchOnly": true,
+    "nativeBuildRevision": "6377751abcce9e3cee0d6301748f9691e35508fce6a651d15a9796191c6844bb",
+    "nativeBuildContentHash": "15373c2c661cd113fad85c21347c2c7088ec8c38e0c05249a9e031d8d223117a",
+    "publicBuildContentHash": "0311a01537f8dbd11f7b82a1fdefee60aa368b123a513bd1212cbbb74cc3a7f0",
+    "nativeIntegrationTests": {
+      "passed": 9,
+      "failed": 0
+    },
+    "expandedRegression": {
+      "tests": 707,
+      "initialPassed": 705,
+      "initialSkipped": 1,
+      "initialFailed": 1,
+      "failure": "camera final composition order guard",
+      "correction": "keep camera correction last",
+      "affectedRecheckTests": 16,
+      "affectedRecheckPassed": 16,
+      "affectedRecheckFailed": 0,
+      "overlapsEarlierRegression": true
+    },
+    "compositionOrderProof": {
+      "compared": 404,
+      "changed": [],
+      "composedBytesIdentical": true
+    },
+    "publicUI": {
+      "passed": true,
+      "verifiedResponses": 387,
+      "errors": []
+    },
+    "offline": {
+      "cases": 25,
+      "stages": [
+        {
+          "id": "scorch",
+          "actors": 8,
+          "bots": 7,
+          "modes": [
+            "turf",
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ],
+          "errors": [],
+          "cpuFrame": {
+            "p50": 24.700000001117587,
+            "p95": 56.90000000037253,
+            "max": 66.80000000074506
+          },
+          "performanceComparableToDevice": false
+        },
+        {
+          "id": "hagglefish",
+          "actors": 8,
+          "bots": 7,
+          "modes": [
+            "turf",
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ],
+          "errors": [],
+          "cpuFrame": {
+            "p50": 23.5,
+            "p95": 58.19999999925494,
+            "max": 83.90000000037253
+          },
+          "performanceComparableToDevice": false
+        },
+        {
+          "id": "inkblot",
+          "actors": 8,
+          "bots": 7,
+          "modes": [
+            "turf",
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ],
+          "errors": [],
+          "cpuFrame": {
+            "p50": 11,
+            "p95": 20,
+            "max": 34.40000000037253
+          },
+          "performanceComparableToDevice": false
+        },
+        {
+          "id": "mako",
+          "actors": 8,
+          "bots": 7,
+          "modes": [
+            "turf",
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ],
+          "errors": [],
+          "cpuFrame": {
+            "p50": 36.59999999962747,
+            "p95": 86,
+            "max": 969.5
+          },
+          "performanceComparableToDevice": false
+        },
+        {
+          "id": "brinewater",
+          "actors": 8,
+          "bots": 7,
+          "modes": [
+            "turf",
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ],
+          "errors": [],
+          "cpuFrame": {
+            "p50": 23.200000001117587,
+            "p95": 54.40000000037253,
+            "max": 1173.9000000003725
+          },
+          "performanceComparableToDevice": false
+        }
+      ]
+    },
+    "onlineComparisonCorrection": {
+      "failedFixedFrameProbe": {
+        "unplayedPaintEvents": 7,
+        "unplayedEvents": 25,
+        "receivedPaintSequence": 278,
+        "appliedSequence": 253,
+        "differentCells": 69
+      },
+      "correction": "await actual paint sequence playback and zero local/remote growth, outbound paint and queued paint; retain complete-grid SHA-256 assertion",
+      "runtimeSynchronizationChanged": false
+    },
+    "online": {
+      "status": "passed",
+      "cases": 25,
+      "errors": [],
+      "transport": "real WebSocket + production RoomDurableObject",
+      "checks": [
+        {
+          "id": "scorch",
+          "mode": "turf",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": [
+            "b14ae2fbdda6c7afcdaf7d12a9b9e82ad7abe1bb7657dd3d59c014b77325600a",
+            "b14ae2fbdda6c7afcdaf7d12a9b9e82ad7abe1bb7657dd3d59c014b77325600a"
+          ],
+          "coverage": [
+            [
+              0.00403695496371023,
+              0.011277783231057128
+            ],
+            [
+              0.00403695496371023,
+              0.011277783231057128
+            ]
+          ],
+          "rankedCounts": null,
+          "playback": {
+            "settled": true,
+            "frames": 200
+          },
+          "growthQueueLengths": [
+            0,
+            0
+          ],
+          "queuedPaintEvents": [
+            [
+              0
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "id": "scorch",
+          "mode": "zones",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "scorch",
+          "mode": "tower",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "scorch",
+          "mode": "rainmaker",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "scorch",
+          "mode": "clams",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "hagglefish",
+          "mode": "turf",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": [
+            "7c777cfcc211cfb4d7f18cfe82dffb0b3b34922f13b189b586cfd14efc9068cd",
+            "7c777cfcc211cfb4d7f18cfe82dffb0b3b34922f13b189b586cfd14efc9068cd"
+          ],
+          "coverage": [
+            [
+              0.007689732374096656,
+              0.0032201870773912737
+            ],
+            [
+              0.007689732374096656,
+              0.0032201870773912737
+            ]
+          ],
+          "rankedCounts": null,
+          "playback": {
+            "settled": true,
+            "frames": 210
+          },
+          "growthQueueLengths": [
+            0,
+            0
+          ],
+          "queuedPaintEvents": [
+            [
+              0
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "id": "hagglefish",
+          "mode": "zones",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "hagglefish",
+          "mode": "tower",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "hagglefish",
+          "mode": "rainmaker",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "hagglefish",
+          "mode": "clams",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "inkblot",
+          "mode": "turf",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": [
+            "7d75565358eb59675d833078f149a8e9f456b9d3188c8c66ccb57c9d89f7483c",
+            "7d75565358eb59675d833078f149a8e9f456b9d3188c8c66ccb57c9d89f7483c"
+          ],
+          "coverage": [
+            [
+              0.0016209945213667403,
+              0.0010694433396883948
+            ],
+            [
+              0.0016209945213667403,
+              0.0010694433396883948
+            ]
+          ],
+          "rankedCounts": null,
+          "playback": {
+            "settled": true,
+            "frames": 100
+          },
+          "growthQueueLengths": [
+            0,
+            0
+          ],
+          "queuedPaintEvents": [
+            [
+              0
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "id": "inkblot",
+          "mode": "zones",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "inkblot",
+          "mode": "tower",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "inkblot",
+          "mode": "rainmaker",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "inkblot",
+          "mode": "clams",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "mako",
+          "mode": "turf",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": [
+            "ed43d9a3563248565dc068338227f59739010e66d9a70a4f96219f8c3bffeba7",
+            "ed43d9a3563248565dc068338227f59739010e66d9a70a4f96219f8c3bffeba7"
+          ],
+          "coverage": [
+            [
+              0.001842470346720735,
+              0.007715202012588455
+            ],
+            [
+              0.001842470346720735,
+              0.007715202012588455
+            ]
+          ],
+          "rankedCounts": null,
+          "playback": {
+            "settled": true,
+            "frames": 225
+          },
+          "growthQueueLengths": [
+            0,
+            0
+          ],
+          "queuedPaintEvents": [
+            [
+              0
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "id": "mako",
+          "mode": "zones",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "mako",
+          "mode": "tower",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "mako",
+          "mode": "rainmaker",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "mako",
+          "mode": "clams",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "brinewater",
+          "mode": "turf",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": [
+            "3e1ed440051bcd62e4d520ec32c8564b3aa85464946391da253e153c30320841",
+            "3e1ed440051bcd62e4d520ec32c8564b3aa85464946391da253e153c30320841"
+          ],
+          "coverage": [
+            [
+              0.0005239740508485182,
+              0.003821727156115589
+            ],
+            [
+              0.0005239740508485182,
+              0.003821727156115589
+            ]
+          ],
+          "rankedCounts": null,
+          "playback": {
+            "settled": true,
+            "frames": 210
+          },
+          "growthQueueLengths": [
+            0,
+            0
+          ],
+          "queuedPaintEvents": [
+            [
+              0
+            ],
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "id": "brinewater",
+          "mode": "zones",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "brinewater",
+          "mode": "tower",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "brinewater",
+          "mode": "rainmaker",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        },
+        {
+          "id": "brinewater",
+          "mode": "clams",
+          "actors": 8,
+          "nativeFingerprintsMatch": true,
+          "gridSha256": null,
+          "coverage": null,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "playback": null,
+          "growthQueueLengths": null,
+          "queuedPaintEvents": null
+        }
+      ],
+      "settlingFramesAreNotLatencyMeasurements": true
+    },
+    "githubAtCheck": {
+      "head": "dfb3a6128123bd5f494a9bde78a8967f66874958",
+      "prMergeability": "dirty",
+      "compareBehind": 0,
+      "compareMergeBase": "bca45e7cb55f3331a58459ea0219e42b44762712",
+      "workflowRunsReturned": 0,
+      "localChecksAreNotGithubCIRuns": true
+    }
+  }
 }
