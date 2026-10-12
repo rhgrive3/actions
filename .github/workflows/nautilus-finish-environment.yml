@@ -9,6 +9,9 @@ on:
       - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-environment.mjs
       - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-candidate.mjs
       - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-inner-coil-cap-baseline.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-refined-candidate.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-orange-baseline.mjs
+      - reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-refined-environment.mjs
 permissions:
   contents: read
 jobs:
@@ -37,8 +40,8 @@ jobs:
           test "$(git -C .finish-source rev-parse HEAD)" = f2a87e9e56387ada0487205c195eeee4e73baa6f
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
           node .finish-source/scripts/build-inkwave.mjs .finish-source/inkwave-public .finish-site
-      - name: Compare neck dial against the frozen coil and shell candidate
-        run: node reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-environment.mjs --site .finish-site --source .finish-source --out .finish-evidence
+      - name: Compare47 silver dial size with fixed718b placement
+        run: node reports/weapon-model-rebuild-20261012/diagnostics/nautilus-neck-cap-refined-environment.mjs --site .finish-site --source .finish-source --out .finish-evidence
       - uses: actions/upload-artifact@v4
         if: always()
         with:
