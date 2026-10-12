@@ -79,14 +79,18 @@ export function adaptNativeStages(rel,code){
   once('  let claimed = 0, changed = false;\n  for (let n = 0; n < E.length; n += 7)', '  let claimed = 0, changed = false;\n  const nativeMasks = paint.level?.native ? new Map() : null;\n  for (let n = 0; n < E.length; n += 7)');
   once('    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0) continue;', '    if (!face?.atlas || dn >= g.R || face.cu <= 0 || face.cv <= 0 || (nativeMasks && face.nativeEmpty)) continue;');
   once('          const previousOrder = paint._paintOwnershipOrder[index] || 0;', '          if (nativeMasks && paint.dead[index]) { visit[index] = stamp; continue; }\n          const previousOrder = paint._paintOwnershipOrder[index] || 0;');
-  once('    const cellArea = face.cu * face.cv;', '    if (nativeMasks && !nativeAncillaryCanClaim(g.R, dn, face.atlas.ppm)) continue;\n    const cellArea = face.cu * face.cv;');
+  // The exact SDF depth bound is independent of stage geometry. A piece
+  // shallower than the unchanged ownership margin cannot claim any sample
+  // on block stages either. Only this zero-contribution pruning is shared;
+  // native dead-cell handling and per-plane mask reuse remain native-only.
+  once('    const cellArea = face.cu * face.cv;', '    if (!nativeAncillaryCanClaim(g.R, dn, face.atlas.ppm)) continue;\n    const cellArea = face.cu * face.cv;');
   // Fail closed if a future source changes the SDF constants behind the bound.
   for (const term of ['0.055 + 0.06 * h3','tipR * (1.6 + 1.4 * h2)','0.028 + 0.085 * h3','0.042 + 0.04 * h3','1.2 + 0.35 * p.h2']) if (!code.includes(term)) throw Error('Native ancillary bound needs review: '+term);
   once('    const mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);', `    const nativeMaskKey = nativeMasks ? [face.wall, face.atlas.ppm, dn, sdu, sdv, sa].join('/') : null;
     let mask = nativeMasks?.get(nativeMaskKey);
     if (mask === undefined) {
       mask = prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract);
-      if (nativeMasks && mask) {
+      if (mask) {
         mask.pieces = mask.pieces.filter(p => nativePieceHasInterior(mask, p));
         if (!mask.pieces.length) mask = null;
       }

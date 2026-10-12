@@ -225,7 +225,7 @@ test('0.68 inner-disc gate has a strict mathematical margin beneath historical 0
     assert.ok(v > 0.701999, 'no angle/seed violates conservative body bound');
     assert.ok(0.68 / v < 0.97, 'inner circle always kept by native scorer');
   }
-  assert.match(FIXED, /if \(d >= r \* 0\.68 && d \/ \(r \* blobWobble/);
+  assert.match(FIXED, /if \(d >= r \* 0\.68 && !paintBodyContains/);
   assert.match(adaptBuildSource('src/world/paint.js', ORIGINAL),
-    /if \(d >= r \* 0\.68 && d \/ \(r \* blobWobble\(Math\.atan2\(py, px\), seed\)\) > 1\)/);
+    /if \(d >= r \* 0\.68 && !paintBodyContains\(d, r, Math\.atan2\(py, px\), seed, 1\)\)/);
 });

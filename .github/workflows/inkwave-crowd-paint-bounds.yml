@@ -1,0 +1,129 @@
+name: INKWAVE exact crowd paint bounds
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/local-quality/paint-hotpath-adapter.mjs
+      - patches/local-quality/tests/paint-body-bounds.test.mjs
+      - patches/native-stages/adapter.mjs
+      - patches/native-stages/tests/ancillary-all-stage-bounds.test.mjs
+      - scripts/probes/inkwave-crowd-cpu.mjs
+      - .github/workflows/inkwave-crowd-paint-bounds.yml
+permissions:
+  contents: read
+jobs:
+  cpu-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Exact boundary, growth and ownership regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .crowd-evidence
+          node --experimental-vm-modules --test patches/local-quality/tests/paint-body-bounds.test.mjs patches/local-quality/tests/paint-hotpath.test.mjs patches/native-stages/tests/ancillary-all-stage-bounds.test.mjs patches/native-stages/tests/paint-cache.test.mjs patches/splatoon3/tests/paint-piece-local-ownership.test.mjs patches/splatoon3/tests/issue-264-paint-temporal-ownership.test.mjs | tee .crowd-evidence/regression.log
+      - name: Eight bot CPU ABBA with every paint growth step retained
+        shell: bash
+        run: |
+          set -euo pipefail
+          for mode in A B B2 A2; do
+            arg=(); case "$mode" in A|A2) arg=(--reference);; esac
+            node --experimental-vm-modules scripts/probes/inkwave-crowd-cpu.mjs "${arg[@]}" --out ".crowd-evidence/$mode.json" > ".crowd-evidence/$mode.log" 2>&1
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';import assert from 'node:assert/strict';
+          const rows=['A','B','B2','A2'].map(k=>JSON.parse(fs.readFileSync('.crowd-evidence/'+k+'.json')));
+          const stable=({reference,milliseconds,groups,...r})=>r;
+          for(const row of rows)assert.deepEqual(stable(row),stable(rows[0]));
+          console.log(JSON.stringify(rows.map(({reference,milliseconds,groups})=>({reference,milliseconds,groups})),null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crowd-paint-cpu-${{ github.event.pull_request.head.sha }}
+          path: .crowd-evidence/
+          include-hidden-files: true
+  browser-parity:
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Exact production build and source/built WebGL ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .crowd-evidence
+          node scripts/build-inkwave.mjs inkwave-public .crowd-site | tee .crowd-evidence/build.log
+          cp .crowd-site/inkwave-build.json .crowd-evidence/manifest.json
+          node scripts/check-inkwave-paint-mask.mjs --site .crowd-site --exact-source --engine '${{ matrix.engine }}' --evidence-dir .crowd-evidence/gpu --profile-dir .crowd-browser-profile | tee .crowd-evidence/gpu.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crowd-paint-gpu-${{ matrix.engine }}-${{ github.event.pull_request.head.sha }}
+          path: .crowd-evidence/
+          include-hidden-files: true
+  paint-abba:
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [aggregate, single_continuous]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      BASELINE_SHA: ed3a046574208471c5db5309e2469d263cacfdfd
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .paint-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Same-runner immutable baseline and candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C .paint-baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          mkdir -p .crowd-evidence
+          node .paint-baseline/scripts/build-inkwave.mjs .paint-baseline/inkwave-public .paint-before-site > .crowd-evidence/before-build.log
+          node scripts/build-inkwave.mjs inkwave-public .paint-after-site > .crowd-evidence/after-build.log
+          cp .paint-before-site/inkwave-build.json .crowd-evidence/before-manifest.json
+          cp .paint-after-site/inkwave-build.json .crowd-evidence/after-manifest.json
+          node scripts/measure-paint-piece-workload.mjs --baseline-sha "$BASELINE_SHA" --candidate-sha "$CANDIDATE_SHA" --baseline-root .paint-baseline --candidate-root . --baseline-site .paint-before-site --candidate-site .paint-after-site --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --profile '${{ matrix.profile }}' --require-equivalent-work --evidence-dir '.crowd-evidence/performance' | tee .crowd-evidence/performance.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: crowd-paint-abba-${{ matrix.profile }}-${{ github.event.pull_request.head.sha }}
+          path: .crowd-evidence/
+          include-hidden-files: true
