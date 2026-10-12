@@ -193,20 +193,30 @@ function nautilus(d) {
   coil.computeVertexNormals();
   // Join both cut cross-sections to the return strip, leaving no exposed open ends.
   // The visible coil and tank-surrounding band are in both cited views; the hidden path is approximate.
-  // Radial width is 15mm; maximum coil OD remains the v2 116.6mm. No double-sided material.
+  // Coil radial width is15mm, easing to8mm on the tank return; maximum coil OD remains116.6mm.
+  // The return taper is an approximation to the narrower visible tank band, not a retail dimension claim.
   const start=new THREE.Vector3(.049,.097+Math.SQRT1_2*.0508,-.072+Math.SQRT1_2*.0508);
   const end=new THREE.Vector3(.087,.097,-.0235);
-  const returnPath=new THREE.CatmullRomCurve3([end,
-    new THREE.Vector3(.087,.074,-.027),new THREE.Vector3(.087,.033,-.012),
-    new THREE.Vector3(.087,.026,.043),new THREE.Vector3(.087,.045,.079),
-    new THREE.Vector3(.085,.12,.077),new THREE.Vector3(.073,.132,.041),
-    new THREE.Vector3(.056,.133,-.012),new THREE.Vector3(.049,.141,-.039),start],false,'centripetal');
-  const band=new THREE.TubeGeometry(returnPath,32,1,8,false),bp=band.attributes.position,bu=band.attributes.uv;
+  // Follow the tank's chamfered outline instead of rounding across its pale face. Small
+  // corner arcs soften the metal bends; exact hidden routing remains an approximation.
+  const around=[[-.051,-.041],[-.035,-.057],[.039,-.057],[.053,-.044],
+    [.053,.045],[.044,.06],[-.039,.06]].map(([z,y])=>new THREE.Vector3(.087,y,z).applyAxisAngle(new THREE.Vector3(1,0,0),-.18).add(new THREE.Vector3(0,.078,.029)));
+  const entryTangent=new THREE.Vector3(.038,-Math.SQRT1_2*.0508*Math.PI*2*3.125,Math.SQRT1_2*.0508*Math.PI*2*3.125).normalize();
+  const approach=start.clone().addScaledVector(entryTangent,-.017);
+  const route=[end,...around,approach,start],returnPath=new THREE.CurvePath();let from=route[0];
+  for(let i=1;i<route.length-1;i++){
+    const p=route[i],prev=route[i-1],next=route[i+1],d=Math.min(.0035,p.distanceTo(prev)*.2,p.distanceTo(next)*.2);
+    const before=p.clone().addScaledVector(prev.clone().sub(p).normalize(),d),after=p.clone().addScaledVector(next.clone().sub(p).normalize(),d);
+    returnPath.add(new THREE.LineCurve3(from,before));returnPath.add(new THREE.QuadraticBezierCurve3(before,p,after));from=after;
+  }
+  returnPath.add(new THREE.LineCurve3(from,route.at(-1)));
+  const band=new THREE.TubeGeometry(returnPath,48,1,8,false),bp=band.attributes.position,bu=band.attributes.uv;
   for(let i=0;i<bp.count;i++){
     const u=bu.getX(i),j=Math.round(bu.getY(i)*8)%8,[axial,radial]=cross[j];
     if(u===0||u===1){const k=j*73+(u===0?72:0);bp.setXYZ(i,cp.getX(k),cp.getY(k),cp.getZ(k));continue;}
     const t=returnPath.getTangentAt(u),b=new THREE.Vector3(1,0,0).addScaledVector(t,-t.x).normalize(),n=new THREE.Vector3().crossVectors(t,b).normalize();
-    const p=returnPath.getPointAt(u).addScaledVector(b,axial).addScaledVector(n,radial);bp.setXYZ(i,p.x,p.y,p.z);
+    const blend=Math.min(1,u/.12,(1-u)/.12),width=1-(1-8/15)*blend;
+    const p=returnPath.getPointAt(u).addScaledVector(b,axial).addScaledVector(n,radial*width);bp.setXYZ(i,p.x,p.y,p.z);
   }
   const bi=band.index.array;for(let i=0;i<bi.length;i+=3){const t=bi[i+1];bi[i+1]=bi[i+2];bi[i+2]=t;}
   band.computeVertexNormals();body.add(coil,C.silver,M.metal);body.add(band,C.silver,M.metal);
