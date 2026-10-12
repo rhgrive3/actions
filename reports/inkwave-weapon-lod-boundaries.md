@@ -31,3 +31,9 @@ Local Node24 scan of 205d: all 65 have identical indexed position sequences and 
 - Fixed procedural seed/order; lighting is unchanged. Construction time is recorded separately from cached per-frame work. Host load is recorded to distinguish scheduler contention from a geometry allocation claim.
 
 No adoption or main merge is authorized by these preliminary measurements. The parent will review exact-head images and timings alongside the model material diagnosis.
+
+## Correcting the diagnostic environment, not production material
+
+The original 32×16 gallery equirectangular map yields an 8px PMREM cube (`maxMip=3`, output336×32). The bundled Three CubeUV sampler assumes minimum mip4/tile16, so this is below its supported layout. In PR1277's exact-geometry comparison, both native and unpatched standard PBR metal are equally dark (mean23.09/23.15), while a nonmetal control is180.13. Independent normals and environment uniforms were verified. This evidence does not justify changing production metal into plastic.
+
+This harness now records 32/64/256/1024 input-width controls, keeping angular radiance, intensity, colours and direct lights fixed. The primary old/new comparison uses1024×512 (cube256), matching the game's native PMREM resolution. It also attempts the actual `Environment` day IBL and native sun/hemisphere lights on the identical source metal triangles of Explosher, Mini and Nautilus; this is explicitly a pre-postprocessing material control, not a full game screenshot. Environment probe errors are retained in the JSON and are not a pass. Old small-environment evidence is preserved separately. Production `Environment` uses fromScene size256; the lobby uses128. No production lighting or material is altered here.
