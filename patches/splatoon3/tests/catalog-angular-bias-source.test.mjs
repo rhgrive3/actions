@@ -186,6 +186,38 @@ test('native added Mini Splatling projectile stores the source-randomized emitte
   }finally{f.restoreRandom();}
 });
 
+test('five added Spinners share authoritative Heavy Splatling 25F/70F jump recovery endpoints',()=>{
+  const src=MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='splatling'&&!r.legacy);
+  assert.equal(src.length,5);
+  for(const r of src){
+    const p=r.parameters.WeaponParam;
+    assert.equal(p.Jump_DegBiasDecreaseStartFrame,25,r.names.en+' hold');
+    assert.equal(p.Jump_DegBiasEndFrame,70,r.names.en+' end');
+    const ground=p.Stand_DegSwerve,jump=p.Jump_DegSwerve;
+    for(const onGround of [true,false]){
+      for(const [frame,expected] of [[0,jump],[25,jump],[47.5,(jump+ground)/2],[70,ground]]){
+        near(catalogAngularEnvelope('splatling',onGround,ground,jump,frame/60,0,p),expected,
+          r.names.en+' frame '+frame+' grounded='+onGround);
+      }
+    }
+  }
+  near(catalogAngularEnvelope('splatling',true,3.3,7,null),3.3,'regular ground');
+  near(catalogAngularEnvelope('splatling',false,3.3,7,null),7,'regular air');
+});
+
+test('Ballpoint long mode uses source .2 vertical bias and .75-degree pitch envelope',()=>{
+  const record=MAIN_WEAPON_CATALOG.records.find(r=>r.sourceRow==='Spinner_Downpour_00');
+  const p=record.parameters.VariableShotParam,actorRef=actor(true),d=vec();
+  assert.equal(p.PitchDegBias,.2);
+  assert.equal(p.PitchDegSwerve,.75);
+  assert.equal(p.Stand_DegSwerve,1.5);
+  const acc={shot(){throw Error('Spin mode must not grow shot bias');}};
+  withDraws([.75,.75],()=>catalogAngularLaunch({_spread(){throw Error('old scatter');}},
+    d,actorRef,'splatling',p,acc,p.Stand_DegSwerve));
+  near(deg(Math.atan2(d.x,d.z)),p.Stand_DegSwerve*p.Stand_DegBiasMax,'Ballpoint long yaw median');
+  near(deg(Math.atan2(d.y,Math.hypot(d.x,d.z))),.75*.2,'Ballpoint long pitch median');
+});
+
 test('catalog unsupported shot families retain existing provisional fallback until source is verified',()=>{
   const a=actor(true),direction=vec(),accuracy={shot(){return .25;}};
   let received=null;
