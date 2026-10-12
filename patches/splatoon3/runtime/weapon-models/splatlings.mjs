@@ -38,7 +38,7 @@ const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, 
 // openwork rear hub, centre axle — all in the spun `barrels` part), a magenta nose cone, a dark-grey receiver
 // (front plate, block with hex bolts and two side slots that carry the charge meter, rear housing), the top grip
 // with its front post and rear C hook, a raked transverse carry loop in front of it (support hand), a bottom feed
-// coupling, and on the holder's right the big team-ink bottle tank leaning back 55° in a wire cage (two hoops,
+// coupling, and on the holder's right the big team-ink bottle tank (Ø 0.22 m, 0.3 m tall) leaning back 48° in a wire cage (two hoops,
 // four bars, bottom ring), held by two magenta clips, with a black ribbed outlet and a braided team-ink hose that
 // loops under the gun into the coupling. Prints (white logo, small text row, magenta square) on the tank's flank.
 // Tank authored at R 0.074 / L 0.2 in its own frame, then scaled by k, leaned back and placed at B (bottom face centre).
@@ -81,15 +81,27 @@ function heavyWire(p, pts, rc, r, color, closed = false) {
   if (closed) P.push(P[0]);
   p.add(pipe(P, r, Math.max(6, pts.length * 2), 5), color, M.satin);
 }
-// The right fist sits on top of the gun (the barrels hang 0.075 m below it), so every native splatling anchor is
-// raised 0.09 m: the barrels stay at hip height as in the Tableturf card / class promo; native carry keeps that hold.
-// The anchors sit a little inboard and yaw less across the body, so the right arm comes down inside the big tank
-// (0.17 m outboard of the barrel axis) and the tank rides beside the right hip instead of pressing into the belly.
+// The right fist sits on top of the gun (the barrels hang 0.075 m below it), so the native splatling anchors are
+// raised 0.04 m (barrels at hip height, as in the Tableturf card / class promo) and moved ~0.08 m out to the right
+// with less yaw across the body: the tank (0.185 m outboard of the barrel axis) rides beside the right hip, the
+// right arm comes down between tank and body (measured: arm bones ≥ 5 cm from the tank axis surface through idle,
+// carry and firing; torso ≥ 15 cm). Native carry (data hold) keeps this hold in idle/walk too.
+const HEAVY_POLE_DEF = [-0.7, -0.55, -0.45], HEAVY_POLE_IN = [0.75, -0.25, -0.6];
 const HOLD_HEAVY = {
   carry: { p: [-0.24, 0.78, 0.17], r: [0.4, 0.06, -0.1] }, aim: { p: [-0.17, -0.12, 0.2], r: [0.05, 0.02, 0] },
   raise: { p: [-0.2, 1.29, 0.1] }, lobby: { p: [-0.2, 0.89, 0.2], r: [0.25, 0.15, -0.15] },
-  poleR: [0.15, -0.3, -0.95],
+  poleR: HEAVY_POLE_IN,
 };
+// Native carry keeps the right elbow on the default outward pole (−0.7, −0.55, −0.45), which swings it into the tank
+// beside the gun; only the aim pose reads HOLD.poleR. While carrying, ease that default pole to the same inward/back
+// pole the aim uses (elbow between the tank and the body). Special layers (jump coil, roll, tuck…) that moved the
+// pole well away from the default are left alone. Allocation-free.
+function heavyPose(ch, dt, s, CH) {
+  const P = ch.P, o = CH.POLER; if (!P || o === undefined) return;
+  const dx = P[o] - HEAVY_POLE_DEF[0], dy = P[o + 1] - HEAVY_POLE_DEF[1], dz = P[o + 2] - HEAVY_POLE_DEF[2];
+  const w = Math.max(0, 1 - Math.hypot(dx, dy, dz) / 0.4) * (1 - Math.min(1, Math.max(0, ch.wAim || 0)));
+  for (let i = 0; i < 3; i++) P[o + i] += (HEAVY_POLE_IN[i] - P[o + i]) * w;
+}
 function heavy(d) {
   const { AX, R, L } = HEAVY;
   const C = { grey: '#76767c', dark: '#46464b', black: '#1d1e21', sleeve: '#2a2b2e', pink: '#d42a78', wire: '#5f5f64',
@@ -127,12 +139,15 @@ function heavy(d) {
   body.add(heavyLoft([{ z: 0.068, y: AX - 0.002, w: 0.088, h: 0.122, r: 0.012 }, { z: 0.1, y: AX, w: 0.092, h: 0.126, r: 0.014 },
     { z: 0.11, y: AX + 0.002, w: 0.084, h: 0.112, r: 0.016 }]), C.grey, M.satin);                                              // front plate
   body.add(heavyLoft([{ z: -0.002, y: AX - 0.006, w: 0.072, h: 0.112, r: 0.008 }, { z: 0.07, y: AX - 0.006, w: 0.074, h: 0.114, r: 0.008 }]), C.grey, M.satin);  // block
-  body.add(heavyLoft([{ z: -0.104, y: AX - 0.008, w: 0.058, h: 0.08, r: 0.007 }, { z: 0.002, y: AX - 0.008, w: 0.058, h: 0.084, r: 0.007 }]), C.grey, M.satin); // rear housing
-  body.add(heavyLoft([{ z: -0.112, y: AX - 0.008, w: 0.064, h: 0.09, r: 0.008 }, { z: -0.088, y: AX - 0.008, w: 0.066, h: 0.092, r: 0.008 }]), C.grey, M.satin); // end cap
-  body.add(box(0.034, 0.014, 0.006, 0, AX - 0.008, -0.113, 0.15, 8, 6), C.black, M.satin);                                            // rear slot
-  body.add(box(0.05, 0.012, 0.09, 0, AX + 0.034, -0.05, 0.3, 8, 6), C.dark, M.satin);                                                // housing top rail
+  // rear housing: an upper tube running back past the grip (lighter end frame with a dark recessed window) over a
+  // shorter lower block
+  body.add(heavyLoft([{ z: -0.118, y: AX + 0.018, w: 0.05, h: 0.046, r: 0.006 }, { z: 0.002, y: AX + 0.018, w: 0.05, h: 0.046, r: 0.006 }]), C.grey, M.satin);
+  body.add(heavyLoft([{ z: -0.13, y: AX + 0.018, w: 0.058, h: 0.054, r: 0.007 }, { z: -0.112, y: AX + 0.018, w: 0.058, h: 0.054, r: 0.007 }]), C.grey, M.satin);
+  body.add(box(0.036, 0.03, 0.006, 0, AX + 0.018, -0.131, 0.15, 6, 4), C.black, M.satin);                                          // rear window
+  body.add(heavyLoft([{ z: -0.092, y: AX - 0.03, w: 0.056, h: 0.06, r: 0.007 }, { z: 0.002, y: AX - 0.03, w: 0.056, h: 0.062, r: 0.007 }]), C.dark, M.satin);   // lower block
+  for (const z of [-0.07, -0.04]) body.add(heavyLoft([{ z: z - 0.003, y: AX + 0.018, w: 0.054, h: 0.05, r: 0.006 }, { z: z + 0.003, y: AX + 0.018, w: 0.054, h: 0.05, r: 0.006 }]), C.dark, M.satin); // tube bands
   for (const sx of [-1, 1]) {
-    body.add(box(0.006, 0.06, 0.05, sx * 0.0335, AX - 0.02, -0.045, 0.2, 8, 6), C.dark, M.satin);                                   // housing side panel
+    body.add(box(0.005, 0.044, 0.06, sx * 0.0285, AX - 0.03, -0.045, 0.2, 6, 4), C.grey, M.satin);                                  // lower block side panel
     for (const y of [AX - 0.032, AX - 0.06]) body.add(box(0.004, 0.016, 0.06, sx * 0.0365, y, 0.034, 0.2, 6, 4), C.black, M.satin);  // slot recess
     body.add(xlathe([[0, 0], [0.0095, 0], [0.0095, 0.004], [0.006, 0.0055], [0, 0.0055]].map(([r, x]) => [r, sx * x]), sx * 0.0365, AX - 0.042, 0.078, 6), C.bolt, M.metal); // hex bolt
     body.add(sphere(0.003, 0.003, 0.003, sx * 0.0425, AX - 0.042, 0.078, 8, 6), C.blue, M.gloss);
@@ -187,15 +202,17 @@ function heavy(d) {
   for (const h of [0.115, 0.03]) T.add(box(0.016, 0.026, 0.03, rc + 0.002, h, 0, 0.3, 8, 6), C.pink, M.gloss);
   for (const P of [T, TI]) P.transform(g => g.scale(HEAVY.k, HEAVY.k, HEAVY.k).rotateX(-HEAVY.lean).translate(...HEAVY.B));
   body.merge(T); ink.merge(TI);
+  // dark brackets from the tank clips to the receiver's right side
+  for (const h of [0.115, 0.03]) { const p = heavyTank(rc + 0.002, h, 0); body.add(box(Math.abs(p[0]) - 0.02, 0.016, 0.022, (p[0] - 0.02) / 2, p[1], p[2], 0.3, 6, 4), C.dark, M.satin); }
   // cage strut from the coupling up to the upper hoop's rear
   body.add(pipe([[-0.012, -0.19, 0.04], heavyTank(Math.cos(4.4) * rc, 0.115, Math.sin(4.4) * rc)], 0.0038, 2, 6), C.wire, M.satin);
   // braided team-ink hose: outlet tip → loop under the gun → coupling bottom
   const tip = heavyTank(0, -0.046, 0), out = heavyTank(0, -0.066, 0), hosePath = [tip, out, [-0.082, -0.224, 0.142], [-0.038, -0.228, 0.088], [-0.007, -0.216, 0.061], [0, -0.198, 0.052]];
-  ink.add(pipe(hosePath, 0.0125, 24, 8));
+  ink.add(pipe(hosePath, 0.016, 24, 8));
+  const hoseCurve = new THREE.CatmullRomCurve3(hosePath.map(p => V(...p)), false, 'centripetal');
   for (let k = 0; k < 9; k++) {                                                                                                // braid ribs
-    const t = (k + 0.5) / 9, c = new THREE.CatmullRomCurve3(hosePath.map(p => V(...p)), false, 'centripetal');
-    const p = c.getPoint(t), tg = c.getTangent(t);
-    ink.add(torus(0.0128, 0.0018, 3, 10).applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), tg)).translate(p.x, p.y, p.z));
+    const t = (k + 0.5) / 9, p = hoseCurve.getPoint(t), tg = hoseCurve.getTangent(t);
+    ink.add(torus(0.0163, 0.002, 3, 10).applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 0, 1), tg)).translate(p.x, p.y, p.z));
   }
 
   return rebuild(d, {
@@ -323,7 +340,7 @@ function examiner(d) {
 }
 
 export const MODELS = {
-  'splatling': { sourceModel: 'Wmn_Spinner_StandardT', build: heavy, hold: HOLD_HEAVY, nativeCarry: true },
+  'splatling': { sourceModel: 'Wmn_Spinner_StandardT', build: heavy },
   's3-spinner-quick': { sourceModel: 'Wmn_Spinner_QuickT', build: mini },
   's3-spinner-hyper': { sourceModel: 'Wmn_Spinner_HyperT', build: hydra },
   's3-spinner-downpour': { sourceModel: 'Wmn_Spinner_Downpour', build: ballpoint },
