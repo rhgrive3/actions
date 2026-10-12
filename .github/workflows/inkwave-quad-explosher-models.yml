@@ -67,6 +67,14 @@ jobs:
           node scripts/render-inkwave-quad-explosher-gallery.mjs --site .model-before-site --out .model-evidence/before --ids s3-maneuver-stepper,s3-slosher-washtub --size 500
           node scripts/render-inkwave-quad-explosher-gallery.mjs --site .model-after-site --out .model-evidence/after --ids s3-maneuver-stepper,s3-slosher-washtub --size 500
           python3 scripts/compare-inkwave-quad-explosher-gallery.py .model-evidence reports/inkwave-weapon-model-workspace/refs s3-maneuver-stepper s3-slosher-washtub
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quad-explosher-visual-${{ github.event.pull_request.head.sha }}
+          path: .model-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
       - name: Eight-Actor mixed-model gameplay and far LOD ABBA on one runner
         run: |
           for pair in before-A after-B after-B2 before-A2; do

@@ -20,3 +20,20 @@ for x,y in zip(a['rows'],b['rows']):
  assert x['id']==y['id'];assert x['muzzle']==y['muzzle'];assert not y['nonFinite'];assert y['maxGrip']<.008
  assert x['drawCalls']==y['drawCalls'],(x['id'],'draw-call regression',x['drawCalls'],y['drawCalls'])
  print('QUAD_EXPLOSHER_AB '+json.dumps({'id':x['id'],'before':{k:x[k] for k in ['tris','geometryKB','buildMs','renderMs','drawCalls','renderTriangles']},'after':{k:y[k] for k in ['tris','geometryKB','buildMs','renderMs','drawCalls','renderTriangles']}}))
+
+# Each source view has its own paired current/baseline camera, recorded in gallery.json.
+# Crops are inspection windows on the stored turntable, not silhouette warps or geometry inputs.
+rot=refs.parent/'rotsheets'
+crops={
+ 's3-maneuver-stepper':{'refFront':(1090,676,1235,914),'refSide':(1006,44,1279,249),'refRear':(682,48,788,245)},
+ 's3-slosher-washtub':{'refFront':(1020,676,1260,941),'refSide':(984,48,1278,253),'refRear':(686,48,877,250)}
+}
+for wid in ids:
+ tile=400;paired=Image.new('RGB',(tile*3,(tile+30)*4),'#f0f2f4');label=ImageDraw.Draw(paired)
+ reference=Image.open(rot/(wid+'.rot.jpg')).convert('RGBA')
+ for row,view in enumerate(['refFront','refSide','refRear','refOblique']):
+  y=row*(tile+30);label.text((8,y+8),wid+' '+view+' | reference / baseline / current',fill='#182027')
+  source=Image.open(refs/(wid+'.3d.png')).convert('RGBA') if view=='refOblique' else reference.crop(crops[wid][view])
+  for col,im in enumerate([source,Image.open(root/'before'/(wid+'.'+view+'.png')).convert('RGBA'),Image.open(root/'after'/(wid+'.'+view+'.png')).convert('RGBA')]):
+   im.thumbnail((tile-16,tile-16));bg=Image.new('RGBA',(tile,tile),'white');bg.alpha_composite(im,((tile-im.width)//2,(tile-im.height)//2));paired.paste(bg.convert('RGB'),(col*tile,y+30))
+ paired.save(root/(wid+'.reference-pairs.jpg'),quality=90)

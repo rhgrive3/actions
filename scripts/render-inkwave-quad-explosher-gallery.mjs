@@ -94,11 +94,25 @@ try {
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap();
       cam.position.copy(c).add(new THREE.Vector3(.9,.45,-1.1).normalize().multiplyScalar(span*2.5));cam.lookAt(c);renderer.render(scene,cam);const rear = snap();
+      // Reference-paired cameras are independent from authored geometry. Both revisions use these exact poses.
+      const referenceImages={},referenceCameras={},isQuad=id==='s3-maneuver-stepper';
+      const refCenter=new THREE.Vector3(0,isQuad?.036:.027,isQuad?.039:.153);
+      const refViews=isQuad?{refSide:[-3,.22,.45],refFront:[0,.12,3],refRear:[0,.12,-3],refOblique:[-.9,.53,1.1]}:{refSide:[-3,.35,.30],refFront:[-.20,.18,3],refRear:[-.30,.25,-3],refOblique:[-.9,.72,1.1]};
+      for(const [name,eye]of Object.entries(refViews)){
+        const isPair=isQuad&&name==='refOblique',span=isQuad?(isPair?.43:.34):.43;
+        const camera=new THREE.PerspectiveCamera(25,1,.01,30),offset=new THREE.Vector3(...eye).normalize().multiplyScalar(span*2.85),up=new THREE.Vector3(0,1,0);
+        // The Explosher source turntable displays a tilted can. Align the camera basis, never deform the model.
+        if(!isQuad&&name!=='refOblique'){offset.applyAxisAngle(new THREE.Vector3(1,0,0),.18);up.applyAxisAngle(new THREE.Vector3(1,0,0),.18);}
+        camera.position.copy(refCenter).add(offset);camera.up.copy(up);camera.lookAt(refCenter);
+        let second;if(isPair){second=g.clone(true);g.position.set(-.049,0,.029);second.position.set(.049,0,-.029);scene.add(second);}
+        renderer.render(scene,camera);referenceImages[name]=snap();referenceCameras[name]={position:camera.position.toArray(),up:up.toArray(),target:refCenter.toArray(),fov:25,pair:isPair};
+        if(second){scene.remove(second);g.position.set(0,0,0);}
+      }
       scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
-        images: { side, above, front: muzzleView, persp, rear } };
+        referenceCameras, images: { side, above, front: muzzleView, persp, rear, ...referenceImages } };
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;

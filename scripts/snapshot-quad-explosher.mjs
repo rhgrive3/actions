@@ -5,7 +5,7 @@ const base=process.env.MODEL_BASELINE_DIR;
 const f=await fixture({fullRuntime:true,includeCharacter:true,productionComposition:true,adaptRuntime:(rel,s)=>base&&/weapon-models\/(dualies|sloshers)\.mjs$/.test(rel)?fs.readFileSync(`${base}/${rel.split('/').at(-1).replace('.mjs','.before.mjs')}`,'utf8'):s,extraExports:"export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js';\nexport { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
 f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
 const pinned=JSON.parse(fs.readFileSync(new URL('../patches/splatoon3/tests/fixtures/quad-explosher-main-contracts.json',import.meta.url))).models;
-const ids=Object.keys(pinned);if(process.env.MODEL_SNAPSHOT_REVERSE)ids.reverse();
+const ids=Object.keys(pinned);if(!ids.includes('slosher'))ids.push('slosher');if(process.env.MODEL_SNAPSHOT_REVERSE)ids.reverse();
 const all={};
 for(const id of ids){
  const d=f.getWeaponDef(id),h=crypto.createHash('sha256');let bytes=0,triangles=0;
