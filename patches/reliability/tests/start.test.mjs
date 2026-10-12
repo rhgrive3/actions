@@ -76,6 +76,12 @@ function boot(source, held = []) {
   };
   const sandbox = {
     isRankedMode,
+    // The stage-source build adapter imports these bindings into main.js.
+    // Exercise the same non-native path as the synthetic a/b/c fixtures.
+    nativeStageEnabled: true,
+    NATIVE_IDS: ['scorch','hagglefish','inkblot','mako','brinewater'],
+    buildNativeWorld: () => { throw new Error('unexpected native stage in non-native startup fixture'); },
+    releaseNativeWorld: () => {},
     console: { warn() {}, error(...args) { record('error', ...args); } }, Promise, G, Match, Level, PropKit,
     MAPS: maps, OFFLINE_MAPS: maps, MAP_LAYOUTS: Object.fromEntries(maps.map(m => [m.id, m])),
     mapOfflineOk: () => true, mapBossOk: () => true, mapNoBots: () => false, isRangeMap: () => false,

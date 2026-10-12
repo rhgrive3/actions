@@ -80,6 +80,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/screenfx-damage-reset-adapter.mjs',
   'patches/local-quality/screenfx-lens-release-adapter.mjs',
   'patches/local-quality/showcase-shadow-adapter.mjs',
+  'patches/local-quality/showcase-alpha-adapter.mjs',
   'patches/local-quality/splatling-reticle-adapter.mjs',
   'patches/local-quality/team-wipeout-adapter.mjs',
   'patches/local-quality/tenacity-adapter.mjs',

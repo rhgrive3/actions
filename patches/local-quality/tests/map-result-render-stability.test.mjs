@@ -10,6 +10,7 @@ import vm from 'node:vm';
 import { adaptShowcaseAlpha, selectShowcaseAlphaTarget } from '../showcase-alpha-adapter.mjs';
 import { adaptMinimapResources } from '../minimap-resource-adapter.mjs';
 import { adaptQualitySource } from '../adapter.mjs';
+import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 
 const source = (rel) => fs.readFileSync(new URL('../../../inkwave-public/' + rel, import.meta.url), 'utf8');
 const replaceOnce = (code, before, after, label) => {
@@ -89,4 +90,8 @@ test('hidden corner map remains hidden in diorama and ordinary map modes remain 
   assert.ok(selector?.includes('body.iw-dio-on .iw-callouts'));
   assert.match(patched, /\.iw-map\.is-expanded \.iw-map__label \{ opacity: 0; \}/);
   assert.equal(adaptMinimapResources('src/game/showcase.js', 'not map source'), 'not map source');
+});
+
+test('the new showcase source transformer remains build-only and never ships to iPad', () => {
+  assert.equal(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/showcase-alpha-adapter.mjs'), true);
 });
