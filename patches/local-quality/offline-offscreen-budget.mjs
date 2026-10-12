@@ -27,8 +27,9 @@
 // really submitted. The grace is a local renderer-frame policy, not a Splatoon 3
 // timing value. A chained pre-submission hook repairs feet/hair if the camera
 // turns toward a bot between its Character update and render. Range, local
-// actors, remotes (PR #1175), non-bots, attract scenes, forced LOD, menus and
-// characters that have never been drawn stay at full rate.
+// actors, remotes (PR #1175), non-bots, forced LOD, the bootstrap attract
+// preview, and characters never drawn stay full rate. Only the inactive menu
+// backdrop's long-undrawn bots may defer decorative work.
 const INSTALLED = Symbol.for('inkwave.local-quality.offline-offscreen-budget.v1');
 const CHAINED = Symbol.for('inkwave.local-quality.offline-offscreen-budget.render-hook.v1');
 export const GRACE_FRAMES = 30;
