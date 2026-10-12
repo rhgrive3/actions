@@ -23,7 +23,7 @@ The four source images in PR1246 at `2555b20cb7757209b776ed48edf4c63e8c9f8329` w
 
 Important correction: `alt-kits.json` identifies the rotation sheets as alternate finishes, including **Nautilus 79**, not Nautilus 47. The sheets are used for shared geometry only. The verified Nautilus 47 still supplies the neutral metal/dark component boundaries. The earlier decision to retain black/gold was based on conflating finishes and has been withdrawn. The Mini still supplies purple/yellow hardware; its reservoir retains the established team-ink channel.
 
-For Nautilus 47, the shell plate, rolled rim, sleeve, shroud edging, rotor and nozzle sleeves use neutral metal surfaces. The central black disc, hub inset, grips, rib gaps, exposed bearing and recessed nozzle throats remain dark. This is a per-component split, not a single silver override. The small team-ink cap/ring and native charge tell are retained as gameplay conventions. Exact retail material parameters and manufacturing dimensions are not known.
+For Nautilus 47, the shell plate, rolled rim, sleeve, shroud edging, rotor and nozzle sleeves use neutral silver surfaces. The central black disc, hub inset, grips, rib gaps, exposed bearing and recessed nozzle throats remain dark. This is a per-component split, not a single silver override. The small team-ink cap/ring and native charge tell are retained as gameplay conventions. Exact retail material parameters and manufacturing dimensions are not known.
 
 The gallery renders twelve fixed headings at 30-degree steps and 10.2-degree elevation, five additional views and real held states. Six distinct source directions are paired by muzzle axis, black-disc/silver-hub identity and neck attachment. The retail camera is unknown; nearest-direction comparisons explicitly retain yaw/pitch uncertainty. Both versions share one framing and one union crop. There is no pixel-parity score or claim of exact retail reproduction.
 
@@ -39,7 +39,7 @@ The shape-only correction `7e8e32606460c1deedd110be308c7f082f0c6c0a` restores th
 - Both left grips `[0,0,.1515]`, right grips `[0,0,0]`, trigger pivot `[0,.0315,.0282]`, barrel pivot `[0,.07,.3]`.
 - Actual Actor/Runner/Character checks at 30, 60 and 120 Hz require finite transforms, real projectile emission and support-hand error below .008m.
 - Scalar triangle-ray tests require six/three recessed dark nozzle mouths, a visible neutral lip on both shell sides, smooth black-disc-side profile and raised hub-side shoulders.
-- Metal/dark vertex classes are checked independently; alternate-kit gold is rejected.
+- Neutral silver/polished-metal/dark vertex classes are checked independently; alternate-kit gold is rejected.
 - Current-main source checks: four target contracts plus three shell/material contracts pass. All-model registry/finite-geometry/actual-Actor checks narrowed to Heavy and both targets: 3/3 pass.
 - Mini full definition triangles: 4584 → 6624. Nautilus: 4124 → 7396. No extra draw groups/channels. Triangle count alone is not performance acceptance.
 
@@ -65,3 +65,9 @@ The first local aggregate had 4865 passes, 4 sparse-input import/report failures
 The renderer composes the emitted production runtime and uses real Actor, Runner, Character and projectile emission. Charging is captured at frame110, actual streaming with four emitted shots at215, rear streaming at260 and recovery at430. The crowd benchmark begins only after every actor's recovery. Software rendering measures Actor-update wall time and render submission/completion with gl.finish; it is not GPU-only or mobile-hardware FPS. Timing variation does not establish a speedup. The isolated scene excludes stages, paint/network traffic and rendered projectiles, so full-match performance is not claimed.
 
 No merge or deployment is performed by this task.
+
+## Silver finish image correction
+
+Head `4d339ad` completed emitted source contracts, visual rendering and eight-Actor ABBA against bca45, but its broad `M.metal` plates were visually rejected: under the same production shader/environment they read as black chrome with narrow white specular highlights, obscuring the 47 still's broad silver regions. This was not accepted merely because vertex colors were neutral or CI was green.
+
+The correction keeps all position/normal/UV/index buffers fixed. Broad shell/rotor surfaces use neutral silver-grey in the existing satin channel; the cast sleeve, rolled edge and hub have brighter neutral satin values. Narrow rings and nozzle sleeves keep the polished-metal channel, while dark discs, grips, rib gaps, bearings and throat floors are retained. This is an image-guided material approximation, not a claim that the retail shader uses dielectric paint. No shared shader or gallery lighting is changed. The dedicated workflow runs visual review before crowd timing so future appearance failures are visible sooner.
