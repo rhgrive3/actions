@@ -1,0 +1,9 @@
+# Exact owned-rectangle scan candidate
+
+Base: adopted main ae21924c59046cc0fe81922322ac093418113586. Only the CPU scan of a row's ownership IDs changes: skip non-owned cells, then traverse each owned run. Rectangle clipping arithmetic, rectangle sequence, number of quads, shader inputs, event ownership, timing, score and wire are preserved. No cache or additional retained memory is introduced. This is independent of unadopted rectangle coalescing #1254 and codec #1245.
+
+The immutable previous implementation is the existing paint-piece-ownership baseline fixture. Source regression compares 1,200 deterministic grids (empty/full/checker/random, fractional cell sizes and padded edges) at three order IDs, using raw Float64 bytes for rectangle sequence equality. The actual composed runtime repeats 160 grids at three orders. Source 2/2 and actual production-built scan/hidden/temporal suite17/17 pass. Build dbf3ed28669a377308e2dcbb218f73021a2f5832f69bebae6838923f84b9b7e0.
+
+A reproducible isolated Node AB/BA benchmark in scripts/measure-owned-run-scan.mjs measures 15,000 scans per sample, after warmup: old203.52–208.29ms, candidate87.40–88.36ms (three each). This is a component microbenchmark, not an observed whole-game speedup. The older d1ad48 real SwiftShader workload had paintAdvance3579.9–3817.7ms/4s and nested cpuGrowth2764.6–2926.4ms/4s; these nested metrics must not be added or presented as this candidate's result.
+
+The new browser oracle compares all ordered native quad arguments, counts, exact CPU grid/order/turf and every RGBA byte against the old scan for six floor/wall/shot/line/roller cases. Both Chromium and WebKit are mandatory. Real browser, exact-head CI and current-main fixed AB remain pending. The #1254 tolerance is not relaxed or reused to accept differences.

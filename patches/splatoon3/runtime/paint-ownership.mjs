@@ -428,29 +428,29 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     const j1 = Math.min(face.nv - 1, Math.floor(Math.min(face.sv, v1) / face.cv));
     let scratch = this._paintOrderRunScratch, runCount = 0;
     for (let j = j0; j <= j1; j++) {
-      let start = -1;
-      for (let i = i0; i <= i1 + 1; i++) {
-        const owns = i <= i1 && this._paintOwnershipOrder[face.grid + j * face.nu + i] === orderId;
-        if (owns && start < 0) start = i;
-        if ((!owns || i === i1 + 1) && start >= 0) {
-          const end = owns ? i : i - 1;
-          let x0 = Math.max(u0, start * face.cu), x1 = Math.min(u1, (end + 1) * face.cu);
-          let y0 = Math.max(v0, j * face.cv), y1 = Math.min(v1, (j + 1) * face.cv);
-          if (start === 0) x0 = Math.max(u0, -padM);
-          if (end === face.nu - 1) x1 = Math.min(u1, face.su + padM);
-          if (j === 0) y0 = Math.max(v0, -padM);
-          if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
-          if (x1 > x0 && y1 > y0) {
-            const offset = runCount * 4;
-            if (offset + 4 > scratch.length) {
-              const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
-              grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
-            }
-            scratch[offset] = x0; scratch[offset + 1] = x1;
-            scratch[offset + 2] = y0; scratch[offset + 3] = y1;
-            runCount++;
+      const row = face.grid + j * face.nu, owners = this._paintOwnershipOrder;
+      let i = i0;
+      while (i <= i1) {
+        while (i <= i1 && owners[row + i] !== orderId) i++;
+        if (i > i1) break;
+        const start = i++;
+        while (i <= i1 && owners[row + i] === orderId) i++;
+        const end = i - 1;
+        let x0 = Math.max(u0, start * face.cu), x1 = Math.min(u1, (end + 1) * face.cu);
+        let y0 = Math.max(v0, j * face.cv), y1 = Math.min(v1, (j + 1) * face.cv);
+        if (start === 0) x0 = Math.max(u0, -padM);
+        if (end === face.nu - 1) x1 = Math.min(u1, face.su + padM);
+        if (j === 0) y0 = Math.max(v0, -padM);
+        if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
+        if (x1 > x0 && y1 > y0) {
+          const offset = runCount * 4;
+          if (offset + 4 > scratch.length) {
+            const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
+            grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
           }
-          start = -1;
+          scratch[offset] = x0; scratch[offset + 1] = x1;
+          scratch[offset + 2] = y0; scratch[offset + 3] = y1;
+          runCount++;
         }
       }
     }

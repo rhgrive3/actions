@@ -291,6 +291,10 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify exact owned rectangle scans against production build
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/paint-owned-run-scan.test.mjs
       - name: Verify built piece-local paint ownership against the immutable baseline
         run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-piece-local-ownership.test.mjs
       - name: Verify built weapons fidelity measurements and packet parity
@@ -325,7 +329,7 @@ jobs:
           - suite: responsive
             browsers: chromium webkit
           - suite: network
-            browsers: chromium
+            browsers: chromium webkit
           - suite: range
             browsers: chromium webkit
           - suite: startup
@@ -377,6 +381,9 @@ jobs:
       - name: Verify exact ancillary paint hashes and canonical GPU masks
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-paint-mask.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask" --profile-dir "$CI_STORAGE/cache/paint-mask" --exact-source
+      - name: Verify exact paint masks and ordered run scan in WebKit
+        if: matrix.suite == 'network'
+        run: node scripts/check-inkwave-paint-mask.mjs --engine webkit --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/paint-mask-webkit" --profile-dir "$CI_STORAGE/cache/paint-mask-webkit" --exact-source
       - name: Verify two-player network trajectories and rendered FX
         if: matrix.suite == 'network'
         run: node scripts/check-inkwave-network-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/network" --profile-dir "$CI_STORAGE/cache/network" --exact-source
