@@ -1,0 +1,73 @@
+name: INKWAVE invisible weapon draw audit
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/adapter.mjs
+      - patches/splatoon3/runtime/weapon-models/kit.mjs
+      - patches/splatoon3/tests/weapon-empty-part-draw.test.mjs
+      - scripts/measure-inkwave-empty-weapon-draws.mjs
+      - scripts/compare-inkwave-empty-weapon-draws.py
+      - .github/workflows/inkwave-empty-weapon-draws.yml
+permissions:
+  contents: read
+concurrency:
+  group: empty-weapon-draws-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  compare:
+    if: github.head_ref == 'perf/inkwave-invisible-weapon-draws'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ac1159b76b42a10ff02fe58add74a8285cc08d32
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python -m pip install Pillow
+      - name: Build exact before and after
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .empty-evidence
+          git rev-parse HEAD | tee .empty-evidence/candidate-sha.txt
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .before-site
+          node scripts/build-inkwave.mjs inkwave-public .after-site
+          cp .before-site/inkwave-build.json .empty-evidence/before-build.json
+          cp .after-site/inkwave-build.json .empty-evidence/after-build.json
+          node --input-type=module -e "import fs from 'node:fs';if(JSON.parse(fs.readFileSync('.before-site/inkwave-build.json')).contentHash!=='43ddefa5e29081aba0eed716ac9e8240e9f5fee46178ea6685dba6faf265fdcd')throw Error('Unexpected baseline bytes')"
+      - name: Source and emitted contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-empty-part-draw.test.mjs | tee .empty-evidence/source-test.log
+          INKWAVE_BUILT_SITE=.after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs | tee .empty-evidence/emitted-test.log
+      - name: Completed output A B B A
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/measure-inkwave-empty-weapon-draws.mjs --site .before-site --out .empty-evidence/A --variant A
+          node scripts/measure-inkwave-empty-weapon-draws.mjs --site .after-site --out .empty-evidence/B --variant B
+          node scripts/measure-inkwave-empty-weapon-draws.mjs --site .after-site --out .empty-evidence/B2 --variant B2
+          node scripts/measure-inkwave-empty-weapon-draws.mjs --site .before-site --out .empty-evidence/A2 --variant A2
+          python scripts/compare-inkwave-empty-weapon-draws.py .empty-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: empty-weapon-draws-${{ github.event.pull_request.head.sha }}
+          path: .empty-evidence
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
