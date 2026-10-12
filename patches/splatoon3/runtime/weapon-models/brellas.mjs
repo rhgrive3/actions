@@ -58,26 +58,42 @@ function fabric(map, u0 = 0, u1 = 1, v0 = 0, v1 = 1, nu = 6, nv = 3, thickness =
   g.setIndex(ix); g.computeVertexNormals(); return g;
 }
 /** A polygonal gore: sewn radial edges and a lightly hollowed hem, not a round disc. */
-function gore(k, R, depth, zH, n, power = 1.6) {
+function gore(k, R, depth, zH, n, power = 1.6, billow = 0.014, hemInset = 0.018) {
   const a = k * TAU / n, b = (k + 1) * TAU / n;
   return (u, t) => {
-    const hem = 1 - 0.018 * Math.sin(Math.PI * t) * u ** 3;
+    const hem = 1 - hemInset * Math.sin(Math.PI * t) * u ** 3;
     return [R * u * hem * ((1 - t) * Math.cos(a) + t * Math.cos(b)),
       SH + R * u * hem * ((1 - t) * Math.sin(a) + t * Math.sin(b)),
-      zH - depth * u ** power + 0.014 * Math.sin(Math.PI * t) * Math.sin(Math.PI * u)];
+      zH - depth * u ** power + billow * Math.sin(Math.PI * t) * Math.sin(Math.PI * u)];
   };
 }
 /** A small inlaid cloth mark, mapped onto the same curved panel. */
 function clothMark(P, map, poly, color, lift = 0.0012) {
-  const points = poly.map(([u, t]) => { const q = map(u, t); return [q[0], q[1], q[2] + lift]; });
-  const pos = points.flat(), ix = [];
-  for (let i = 1; i < points.length - 1; i++) ix.push(0, i, i + 1);
+  // Triangulate the concave ink marks in cloth coordinates, then subdivide before mapping.
+  // A single planar fan would cut through the domed cloth and lose the middle of the print.
+  const pos = [];
+  const emit = (a, b, c, depth) => {
+    if (depth) {
+      const mid = (x, y) => [(x[0] + y[0]) / 2, (x[1] + y[1]) / 2];
+      const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
+      emit(a, ab, ca, depth - 1); emit(ab, b, bc, depth - 1);
+      emit(ca, bc, c, depth - 1); emit(ab, bc, ca, depth - 1); return;
+    }
+    for (const [u, t] of [a, b, c]) { const q = map(u, t); pos.push(q[0], q[1], q[2] + lift); }
+    for (const [u, t] of [c, b, a]) { const q = map(u, t); pos.push(q[0], q[1], q[2] - .002 - lift); }
+  };
+  for (const ids of THREE.ShapeUtils.triangulateShape(poly.map(([u,t]) => new THREE.Vector2(u,t)), [])) {
+    let [a,b,c] = ids.map(i => poly[i]);
+    if ((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])<0) [b,c]=[c,b];
+    emit(a,b,c,1);
+  }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setIndex(ix); g.computeVertexNormals(); P.add(g, color, M.print);
+  // Pieces finalizes this triangle list into welded indexed vertices before merging.
+  P.add(g, color, M.print);
 }
-function radialRib(P, k, n, R, depth, zH, color, radius = 0.0032, power = 1.6) {
+function radialRib(P, k, n, R, depth, zH, color, radius = 0.0032, power = 1.6, segments = 8, radial = 5) {
   const a = k * TAU / n, c = Math.cos(a), s = Math.sin(a), q = u => [c * R * u, SH + s * R * u, zH - depth * u ** power - 0.004];
-  P.add(pipe([q(0), q(.25), q(.55), q(.8), q(1.015)], radius, 8, 5), color, M.satin);
+  P.add(pipe([q(0), q(.25), q(.55), q(.8), q(1.015)], radius, segments, radial), color, M.satin);
   return q;
 }
 
@@ -95,6 +111,13 @@ function makeAnimate(cfg) {
     for (const name of ['canopy', 'canopyInk']) {
       const g = w.parts[name]; if (!g) continue;
       g.visible = vis > 0.02; g.scale.set(Math.max(1e-3, sx), Math.max(1e-3, sx), Math.max(1e-3, sz));
+    }
+    // Recycled has no other ink shell. Reuse its native ink draw for the moving
+    // paper rather than paying for an additional canopyInk mesh on every actor.
+    if (cfg.bodyInk && w.ink) {
+      const g=w.ink,p=w.def.parts.canopy.pivot;
+      g.visible=vis>.02;g.scale.set(Math.max(1e-3,sx),Math.max(1e-3,sx),Math.max(1e-3,sz));
+      g.position.set(p.x*(1-g.scale.x),p.y*(1-g.scale.y),p.z*(1-g.scale.z));
     }
   };
 }
@@ -120,8 +143,8 @@ function splat(d) {
   body.add(zcyl(.008, zH+.010, zH+.016, 0, SH, 12), '#050609', M.rubber);
   for (let k = 0; k < n; k++) {
     const map = gore(k, R, depth, zH, n);
-    inkP.add(fabric(map, .02, 1, 0, 1, 8, 3), '#69cbb1', M.satin);
-    if (k % 2 === 0) canopy.add(fabric((u,t) => { const q=map(u,t); q[2]+=.001; return q; }, .67, 1, .02, .98, 3, 3), C.white, M.satin);
+    inkP.add(fabric(map, .02, k % 2 === 0 ? .67 : 1, 0, 1, 8, 3), '#69cbb1', M.satin);
+    if (k % 2 === 0) canopy.add(fabric(map, .67, 1, 0, 1, 3, 3), C.white, M.satin);
     // Distinct dark/red radial crest, cloth label and parallel print strokes, authored procedurally.
     if (k === 1 || k === 5) {
       clothMark(canopy, map, [[.17,.35],[.32,.42],[.37,.15],[.45,.4],[.62,.32],[.53,.58],[.64,.77],[.42,.7],[.34,.9],[.3,.63]], C.print);
@@ -171,9 +194,9 @@ function tenta(d) {
     for(const back of [false,true]){
       const offset=back?-.004:.002;
       const win=(r,t)=>{const p=shape(t*TAU);return point(cx+(p[0]-cx)*r,cy+(p[1]-cy)*r,offset);};
-      canopy.add(fabric(win,0,.89,0,1,3,20,.0005),back?'#6c7465':'#626d5a',M.rubber);
-      canopy.add(fabric(win,.89,1,0,1,1,20,.0005),C.edge,M.satin);
-      const edge=[];for(let j=0;j<=20;j++){const q=shape(j*TAU/20);edge.push(point(q[0],q[1],offset+.0006));}canopy.add(pipe(edge,.002,20,4),C.dark,M.satin);
+      canopy.add(fabric(win,0,.89,0,1,2,16,.0005),back?'#6c7465':'#626d5a',M.rubber);
+      canopy.add(fabric(win,.89,1,0,1,1,16,.0005),C.edge,M.satin);
+      const edge=[];for(let j=0;j<=16;j++){const q=shape(j*TAU/16);edge.push(point(q[0],q[1],offset+.0006));}canopy.add(pipe(edge,.002,16,4),C.dark,M.satin);
     }
     for(const y of [-.79,.79]){
       const c=point(side*.80,y,.005);canopy.add(box(.037,.035,.008,...c,.12,8,4),C.edge,M.satin);
@@ -182,8 +205,8 @@ function tenta(d) {
   // Curved external tent poles with eight black clips and two silver ferrules each.
   for(const [sx,sy] of corners){
     const q=u=>[sx*a*u,SH+sy*b*u,zH-depth*u**2+.03*Math.sin(Math.PI*u)];
-    canopy.add(pipe([q(0),q(.28),q(.58),q(.82),q(1.025)],.006,12,6),C.red,M.gloss);
-    for(const u of [.25,.5,.75,.97]){const p=q(u),q0=q(u-.026),q1=q(u+.026);canopy.add(cyl(.010,q0,q1,8),C.black,M.rubber);canopy.add(cyl(.0025,p,point(sx*u,sy*u,-.004),5),C.metal,M.metal);}
+    canopy.add(pipe([q(0),q(.28),q(.58),q(.82),q(1.025)],.006,10,5),C.red,M.gloss);
+    for(const u of [.25,.5,.75,.97]){const p=q(u),q0=q(u-.026),q1=q(u+.026);canopy.add(cyl(.010,q0,q1,6),C.black,M.rubber);canopy.add(cyl(.0025,p,point(sx*u,sy*u,-.004),5),C.metal,M.metal);}
     for(const u of [.37,.65])canopy.add(cyl(.0068,q(u-.03),q(u+.03),7),C.grey,M.metal);
     canopy.add(sphere(.009,.009,.011,...q(1.025),8,5),C.black,M.rubber);
     canopy.add(cyl(.003,[0,SH,zH-.17],point(sx*.35,sy*.35,-.009),6),C.black,M.metal);
@@ -228,7 +251,7 @@ function undercover(d) {
 function recycled(d) {
   // Wagasa: 24 individual paper gores, dark perimeter and pale registration ring, full
   // bamboo spokes with the smaller conical stretcher cage, and a red mechanical hub.
-  const C={red:'#bd4728',orange:'#e06938',black:'#242925',paper:'#bfc6bd',rim:'#42483e',bamboo:'#423d31',silver:'#b8b6a1'};
+  const C={red:'#bd4728',black:'#242925',paper:'#bfc6bd',rim:'#42483e',bamboo:'#423d31',silver:'#b8b6a1'};
   const zH=.6,R=.44,depth=.15,n=24,SZ=3;
   const body=new Pieces(),canopy=new Pieces(),inkP=new Pieces(),led=new Pieces();
   const trig=pistolGrip(body,{color:C.red,triggerColor:C.black,guard:false,base:false,mat:M.gloss});
@@ -249,23 +272,57 @@ function recycled(d) {
   // Reinforced square collar in the cloth, kept on the disappearing canopy channel.
   canopy.add(box(.096,.096,.008,0,SH,zH-.006,.12,8,4),C.rim,M.rubber);
   for(let k=0;k<n;k++){
-    const map=gore(k,R,depth,zH,n,1.7);
+    const map=gore(k,R,depth,zH,n,1.7,.0015,.004);
     inkP.add(fabric(map,.10,.865,0,1,6,2),'#9b8bc6',M.satin);
     canopy.add(fabric(map,.865,.898,0,1,1,2),C.paper,M.satin);
     canopy.add(fabric(map,.898,1,0,1,2,2),C.rim,M.satin);
-    const q=radialRib(canopy,k,n,R,depth,zH,C.bamboo,.003,1.7);
+    const q=radialRib(canopy,k,n,R,depth,zH,C.bamboo,.003,1.7,7,4);
     canopy.add(cyl(.0027,[Math.cos(k*TAU/n)*.021,SH+Math.sin(k*TAU/n)*.021,.353],q(.46),5),C.bamboo,M.satin);
     const end=q(1.014);canopy.add(sphere(.0045,.0045,.007,...end,6,4),C.black,M.rubber);
-    // Fine light seam along the near edge of each paper gore reads under grazing light.
-    if(k%2===0)canopy.add(pipe([map(.14,.05),map(.5,.05),map(.86,.05)],.0007,5,3),C.paper,M.print);
   }
   fold(canopy,zH,SZ);fold(inkP,zH,SZ);
-  return rebuild(d,{body,ink:new Pieces(),parts:{trigger:part(trig,TRIGGER_PIVOT),led:part(led,[0,SH,zH+.014],'lamp',{color:'#0a2a20',emissive:'#27e0a0',intensity:1.3}),canopy:part(canopy,[0,SH,zH],'body'),canopyInk:part(inkP,[0,SH,zH],'ink')},gripL:GRIP_L(.08),muzzle:[0,SH,zH+.022]});
+  return rebuild(d,{body,ink:inkP,parts:{trigger:part(trig,TRIGGER_PIVOT),led:part(led,[0,SH,zH+.014],'lamp',{color:'#0a2a20',emissive:'#27e0a0',intensity:1.3}),canopy:part(canopy,[0,SH,zH],'body')},gripL:GRIP_L(.08),muzzle:[0,SH,zH+.022]});
+}
+
+// An open shield is still being actively held after a single-shot firingPose expires.
+// Preserve the native firing/recoil pose; only the sustained guard is authored here.
+// The existing shield centre/direction are read, never resized or written. The render
+// surface is centred on that plane; capsule-vs-cloth outline differences remain gameplay policy.
+const guardStates = new WeakMap(), guardInv = new THREE.Matrix4(), guardCentre = V(), guardDir = V(), guardOffset = V();
+const guardEuler = new THREE.Euler(0,0,0,'YXZ'), guardQ = new THREE.Quaternion();
+const GUARD_PLANE = { 's3-shelter-normal': .5, 's3-shelter-wide': .74, 's3-shelter-focus': .525 };
+function guardPose(ch, dt, s, C) {
+  const plane = GUARD_PLANE[ch.weaponModel]; if (plane === undefined) return;
+  const r = ch._runner?.(s), canopy = r?.catalogState?.canopy;
+  let m = guardStates.get(ch);
+  const active = !!canopy?.open && !canopy.launched;
+  if (!m && !active) return;
+  if (!m || m.weapon !== ch.weapon) { m = { weapon:ch.weapon, w:0, p:[0,0,0], r:[0,0,0] }; guardStates.set(ch,m); }
+  if (!ch.kidForm || ch.dance || r?.a?.specialActive || s.subAim || (ch.wSub || 0) > .01 || s.firing) { m.w = 0; return; }
+  m.w = damp(m.w, active ? 1 : 0, active ? 22 : 14, Math.min(.1,Math.max(0,dt||0)));
+  if (m.w < .001) { m.w = 0; return; }
+  if (active) {
+    ch.kid.updateWorldMatrix(true,false); guardInv.copy(ch.kid.matrixWorld).invert();
+    guardCentre.copy(canopy.pos).applyMatrix4(guardInv); guardDir.copy(canopy.dir).transformDirection(guardInv);
+    guardEuler.set(-Math.atan2(guardDir.y,Math.hypot(guardDir.x,guardDir.z)),Math.atan2(guardDir.x,guardDir.z),0,'YXZ');
+    guardQ.setFromEuler(guardEuler); guardOffset.set(0,SH,plane).applyQuaternion(guardQ); guardCentre.sub(guardOffset);
+    m.p[0]=guardCentre.x;m.p[1]=guardCentre.y;m.p[2]=guardCentre.z;
+    m.r[0]=guardEuler.x;m.r[1]=guardEuler.y;m.r[2]=0;
+  }
+  const P=ch.P,k=m.w;
+  for(let i=0;i<3;i++){P[C.ANC+i]+=(m.p[i]-P[C.ANC+i])*k;P[C.ANCR+i]+=(m.r[i]-P[C.ANCR+i])*k;}
+  P[C.AFOLT]*=1-k;P[C.AFOLR]*=1-k;P[C.IKR]=Math.max(P[C.IKR],k);P[C.IKL]=Math.max(P[C.IKL],k);P[C.LTW]*=1-k;
+  // During a strafe, the native carry turns toward travel after firing expires.
+  // Turn the upper body toward the shield while the native feet keep walking.
+  const yaw=Math.max(-Math.PI/2,Math.min(Math.PI/2,m.r[1])),two=k*(1-ch.wTwo);
+  P[C.HIPS+1]+=.25*yaw*k;P[C.SPINE+1]+=.25*yaw*k;P[C.CHEST+1]+=.5*yaw*k;
+  P[C.CLAVL+1]-=.28*two;P[C.CLAVR+1]+=.1*two;P[C.CLAVL+2]+=.04*two;
+  ch.wTwo=Math.max(ch.wTwo,k);
 }
 
 export const MODELS = {
-  's3-shelter-normal': { sourceModel: 'Wmn_Shelter_Normal', build: splat, animate: makeAnimate({ sz: 2.15, openRate: 16, foldRate: 9 }) },
-  's3-shelter-wide': { sourceModel: 'Wmn_Shelter_Wide', build: tenta, animate: makeAnimate({ sz: 2.9, openRate: 10, foldRate: 7 }) },
+  's3-shelter-normal': { sourceModel: 'Wmn_Shelter_Normal', build: splat, pose: guardPose, animate: makeAnimate({ sz: 2.15, openRate: 16, foldRate: 9 }) },
+  's3-shelter-wide': { sourceModel: 'Wmn_Shelter_Wide', build: tenta, pose: guardPose, animate: makeAnimate({ sz: 2.9, openRate: 10, foldRate: 7 }) },
   's3-shelter-compact': { sourceModel: 'Wmn_Shelter_Compact', build: undercover, animate: makeAnimate({ sz: 2.3, openRate: 16, foldRate: 9 }) },
-  's3-shelter-focus': { sourceModel: 'Wmn_Shelter_Focus', build: recycled, animate: makeAnimate({ sz: 3.0, openRate: 16, foldRate: 9 }) },
+  's3-shelter-focus': { sourceModel: 'Wmn_Shelter_Focus', build: recycled, pose: guardPose, animate: makeAnimate({ sz: 3.0, openRate: 16, foldRate: 9, bodyInk: true }) },
 };

@@ -19,15 +19,17 @@ def sheet(name,columns):
  for n,i in enumerate(range(0,len(b64),6000)):print('BRELLA_IMAGE '+name+' %04d '%n+b64[i:i+6000])
 sheet('open-comparison',['reference','openFront','openPersp','openBack','openSide'])
 sheet('held-comparison',['idleSide','heldOpen','heldOpenRear','heldOpenSide','launched','folded'])
+sheet('material-guard-comparison',['reference','openReferenceInk','openReferenceBackInk','guardLeft','guardRight'])
 a=json.loads((root/'before'/'gallery.json').read_text());b=json.loads((root/'after'/'gallery.json').read_text())
 assert not a['errors'] and not b['errors']
 rows=[]
 for x,y in zip(a['rows'],b['rows']):
  assert x['id']==y['id'];assert x['muzzle']==y['muzzle'];assert not y['nonFinite'];assert y['maxGrip']<.008
  for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']:assert x[k] and y[k],(y['id'],k)
- # Focus adds exactly one team-ink channel; the other two keep their merged draw count.
- expected=1 if y['id']=='s3-shelter-focus' else 0
+ # Moving paper reuses the existing native ink draw; no new draw channel.
+ expected=0
  for state in ['closedRender','openRender']:assert y[state]['drawCalls']-x[state]['drawCalls']==expected,(y['id'],state,x[state],y[state])
- row={'id':x['id'],'before':{k:x[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'after':{k:y[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'maxGrip':y['maxGrip'],'lifecycle':{k:y[k]for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']}}
+ for case in y.get('guardCases',[]):assert case['angleDeg']<6 and case['centreOffset']<.05,(y['id'],'guard alignment',case)
+ row={'id':x['id'],'guardCases':y.get('guardCases'),'before':{k:x[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'after':{k:y[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'maxGrip':y['maxGrip'],'lifecycle':{k:y[k]for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']}}
  rows.append(row);print('BRELLA_AB '+json.dumps(row))
 (root/'comparison.json').write_text(json.dumps(rows,indent=2))

@@ -97,7 +97,7 @@ try {
       // Open reference views use the actual registered canopy animation on the real part geometries.
       // This state-controlled pass is separate from the real Actor/Runner sequence below.
       const openModel = new THREE.Group(), wp = { def:d, parts:{}, ps:{} };
-      openModel.add(new THREE.Mesh(d.bodyStatic,Mt.getPlasticMaterial()),new THREE.Mesh(d.inkStatic,Mt.getInkMaterial(color)));
+      wp.ink=new THREE.Mesh(d.inkStatic,Mt.getInkMaterial(color));openModel.add(new THREE.Mesh(d.bodyStatic,Mt.getPlasticMaterial()),wp.ink);
       for(const [name,p] of Object.entries(d.parts)){
         const mesh=new THREE.Mesh(p.geo,p.mat==='ink'?Mt.getInkMaterial(color):p.mat==='lamp'?new THREE.MeshStandardMaterial({color:p.lamp?.color||0xffffff,emissive:p.lamp?.emissive||0xffffff}):Mt.getPlasticMaterial());
         mesh.position.copy(p.pivot);openModel.add(mesh);wp.parts[name]=mesh;
@@ -110,6 +110,12 @@ try {
         const camera=new THREE.OrthographicCamera(-oh,oh,oh,-oh,.01,20);camera.position.copy(oc).add(new THREE.Vector3(...dir));camera.lookAt(oc);renderer.render(scene,camera);res.images[name]=snap();
       }
       res.openSize=os.toArray();res.openPartScales=Object.fromEntries(Object.entries(wp.parts).filter(([n])=>n.startsWith('canopy')).map(([n,m])=>[n,m.scale.toArray()]));
+      // Neutral ink variant makes fixed cloth/print regions comparable to the grey reference render.
+      const neutral=Mt.getInkMaterial(new THREE.Color('#c1c6c2'));wp.ink.material=neutral;
+      for(const [name,p]of Object.entries(d.parts))if(p.mat==='ink')wp.parts[name].material=neutral;
+      for(const [name,dir]of Object.entries({openReferenceInk:[-2,1.1,2],openReferenceBackInk:[2,.8,-2]})){
+        const camera=new THREE.OrthographicCamera(-oh,oh,oh,-oh,.01,20);camera.position.copy(oc).add(new THREE.Vector3(...dir));camera.lookAt(oc);renderer.render(scene,camera);res.images[name]=snap();
+      }
       scene.remove(openModel);
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
@@ -150,6 +156,18 @@ try {
         if(sawLaunched&&!ch.weapon.parts.canopy.visible&&!sawHidden){sawHidden=true;shots.launched=look(frame,'front');res.hiddenFrame=frame;}
         if(frame>firstEnd+10&&ch.weapon.parts.canopy.visible&&ch.weapon.ps.bo<.02&&!sawFolded){sawFolded=true;shots.folded=look(frame,'front');}
 
+      }
+      if(!crowd){
+        res.guardCases=[];
+        for(const [name,yaw,speed]of[['guardLeft',-.8,1.4],['guardRight',.8,1.4]]){
+          a.weaponRunner.reset();a.pos.set(0,0,0);a.yaw=a.aimYaw=yaw;a.aimPitch=0;a.aimDir.set(Math.sin(yaw),0,Math.cos(yaw));
+          const frames={'s3-shelter-normal':85,'s3-shelter-wide':100,'s3-shelter-focus':46}[id];
+          for(let j=0;j<frames;j++){a.ink=100;a.intent.fire=true;a.vel.set(speed*Math.cos(yaw),0,-speed*Math.sin(yaw));a.pos.addScaledVector(a.vel,1/60);G.time+=1/60;a.weaponRunner.update(1/60,{fire:true,firePressed:j===0});a._finishFrame(1/60);ch.root.updateMatrixWorld(true);}
+          const can=a.weaponRunner.catalogState.canopy,plane={'s3-shelter-normal':.5,'s3-shelter-wide':.74,'s3-shelter-focus':.525}[id];
+          if(!can?.open||can.launched)throw new Error('Guard case is not a live open canopy');
+          const dir=new THREE.Vector3(0,0,1).transformDirection(ch.weapon.off.matrixWorld),centre=new THREE.Vector3(0,.075,plane).applyMatrix4(ch.weapon.off.matrixWorld);
+          res.guardCases.push({name,yaw,speed,angleDeg:Math.acos(Math.max(-1,Math.min(1,dir.dot(can.dir))))*180/Math.PI,centreOffset:centre.distanceTo(can.pos)});shots[name]=look(0,'front');
+        }
       }
       if(crowd){
         const actors=[a], ids=['s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];
