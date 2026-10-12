@@ -1,0 +1,350 @@
+{
+  "version": 1,
+  "source_folder": "1D7So33YcZJaU_W5eC_H8OMFnUxGA8lYJ",
+  "missing": [
+    {
+      "name": "Sp_Blower_Inhale_00.mp3",
+      "id": "1JXUmio62Vy3a7Kt2IC8XTB1aUJbUPYWO"
+    },
+    {
+      "name": "Sp_Chariot_Attach_00.mp3",
+      "id": "19XA2hr8YUFae3VuiC3g8DnQ9DKzE1-rx"
+    },
+    {
+      "name": "Sp_Chariot_Idle_01.mp3",
+      "id": "1Y-21bfrZ7a_TgHR8nl2gXzmVqItScoFA"
+    },
+    {
+      "name": "Sp_EnergyStand_Bell_00.mp3",
+      "id": "1BrAV_ZQVKngQd6N8ULRJN15uuXrF61vX"
+    },
+    {
+      "name": "Sp_GreatBarrier_Open_00.mp3",
+      "id": "1AO6Bs-51EzWcHqXtECmzFjJsEg10OGjp"
+    },
+    {
+      "name": "Sp_JetPack_Attach_00.mp3",
+      "id": "1ajE9ENtTsJzQer_t8hCVOk-rjwuHFaKA"
+    },
+    {
+      "name": "Sp_MultiMissile_Explosion_00.mp3",
+      "id": "1Ku18w1fMZQ-WleCAIY3NoHirkJbXZ40g"
+    },
+    {
+      "name": "Sp_NiceBall_Charged_00.mp3",
+      "id": "1kmT8ZRBfsCs_ix0RzgBX2l4XpEMEU0uw"
+    },
+    {
+      "name": "Sp_NiceBall_FullCharge_00.mp3",
+      "id": "1xYNyJGbTFtbIFLB8IjSV74bD-yta00k9"
+    },
+    {
+      "name": "Sp_ShockSonar_Set_00.mp3",
+      "id": "1AhisuKUMMYV_4TnOMSEdB0ucsCDohZ0e"
+    },
+    {
+      "name": "Sp_Skewer_Attach_00.mp3",
+      "id": "1-EZIwnjkzVDxDC83UEidwmaAQ8PJHGLi"
+    },
+    {
+      "name": "Sp_Skewer_Explosion_00.mp3",
+      "id": "1nrtdkCVARem3_U6-L1C_wde-EC3UCOxl"
+    },
+    {
+      "name": "Sp_Skewer_Run_00.mp3",
+      "id": "1ixEJ4fwKQihUfyzooy-sXz6rL_jImD8k"
+    },
+    {
+      "name": "Sp_SuperHook_Return_00.mp3",
+      "id": "18X2FX6NMJx3CtYsILphvNHJUeG8wpcWF"
+    },
+    {
+      "name": "Sp_SuperLanding_Charge00.mp3",
+      "id": "1s0sGzXctGS9_Fksb1y_wURY8PlNHfiQA"
+    },
+    {
+      "name": "Sp_Tripletornado_Attach_00.mp3",
+      "id": "1XtcQVlUzaiVstLvBDlMTTveHboz00YXS"
+    },
+    {
+      "name": "Sp_Tripletornado_Launch_00.mp3",
+      "id": "1a_whHVJpd3UtAV-MyZvD_USxONMaTY8s"
+    },
+    {
+      "name": "Sp_UltraShot_Explosion_00.mp3",
+      "id": "1xwfVsypkuKD3cfJneqfLP36qjL3vyZ22"
+    },
+    {
+      "name": "Sp_UltraStamp_Explosion_00.mp3",
+      "id": "1z8YN04srQ7W3hzHJAW6HNYJgQmIffzUm"
+    },
+    {
+      "name": "Sp_UltraStamp_SwingReady_00.mp3",
+      "id": "1A8ZL1EMo8_t7quFERVHC3ICDh5ZBhLOe"
+    },
+    {
+      "name": "Wp_BlasterLightShort_Explosion_00.mp3",
+      "id": "1lK9ZkQaUSHNrJOT1EYG3RfYFcGZp-THm"
+    },
+    {
+      "name": "Wp_BombCurling_Explosion_00.mp3",
+      "id": "12pKVSqWinq-PLKgILnJOBd-xXv_JxHYR"
+    },
+    {
+      "name": "Wp_BombQuick_Explosion_00.mp3",
+      "id": "12UR4piDrSBNvVrFpZfLMovCfG04WfolE"
+    },
+    {
+      "name": "Wp_BombRobot_Walking_00.mp3",
+      "id": "13WgkyMTL5zWygdISDi2R5mbn8kICanXt"
+    },
+    {
+      "name": "Wp_BombTorpedo_Break_00.mp3",
+      "id": "1cx3pMpu2cpuPp-WwyEIFuml2Y6Il0NdW"
+    },
+    {
+      "name": "Wp_BombTorpedo_Transform_00.mp3",
+      "id": "1z5DMmgcw9w3aUkwn5faV_jKYtL_cRdcY"
+    },
+    {
+      "name": "Wp_BrushNormal_Swing_02.mp3",
+      "id": "10-BXgD6F8T46J-omgoKltFkjSx6fhKp6"
+    },
+    {
+      "name": "Wp_ManeuverDual_SlideJet_00.mp3",
+      "id": "1p4gCbzDSf5c5u7Naoi4VOiurDCYaEPCI"
+    },
+    {
+      "name": "Wp_ManeuverGallon_Shot_00.mp3",
+      "id": "13QYexUyWHyd4VXa5Nt0ruuh3eG7I3Moe"
+    },
+    {
+      "name": "Wp_ManeuverShort_Shot_00.mp3",
+      "id": "1nUPpaVeyL3-SewaAo2mCMWnih61Cn9O5"
+    },
+    {
+      "name": "Wp_ManeuverStepper_Shot_00.mp3",
+      "id": "1zwFmW0TfC2h7BZNJoFpImmaiIHuvq9Na"
+    },
+    {
+      "name": "Wp_PointSensor_MarkingStart_00.mp3",
+      "id": "1xIcN5H61TlHetSn8Ds4btpaIg75HRvc1"
+    },
+    {
+      "name": "Wp_RollerCompact_SwingHold_00.mp3",
+      "id": "10RAmXmG1Ubk6ccjAW9mptfSKrEmUyeuM"
+    },
+    {
+      "name": "Wp_RollerCompact_VerticalSwing_00.mp3",
+      "id": "1ZmWs_Q-P2Zjez5SQCXRLQXHbkc92g5Y3"
+    },
+    {
+      "name": "Wp_RollerHeavy_VerticalSwing_01.mp3",
+      "id": "1lc5cbcrg3mExjblTBm3AUWMTm2Xd1luH"
+    },
+    {
+      "name": "Wp_RollerHunter_SwingHold_00.mp3",
+      "id": "1mgA5HkeXR653um0pLGt1-9gJzrBDLmw7"
+    },
+    {
+      "name": "Wp_RollerNormal_SwingHold_00.mp3",
+      "id": "1s9VB02tGpPb_yQLrZC2i--YlwVGfEjPY"
+    },
+    {
+      "name": "Wp_Saber_Swing_02.mp3",
+      "id": "1WuiYHN6jIljFEap3Hej19YNuFXI5I7vU"
+    },
+    {
+      "name": "Wp_ShelterWide_FireCanopy_00.mp3",
+      "id": "1AKTW47SYip4a3FMhXpKN4WMqgCwWdDKV"
+    },
+    {
+      "name": "Wp_ShelterWide_Open_00.mp3",
+      "id": "14x-wB6Kz-oy--iBlWgnv20bM_kF5H8pj"
+    },
+    {
+      "name": "Wp_ShelterWide_Shot_01.mp3",
+      "id": "1jhUpSWxuvSMxSVG43zCtpTKVtTA5pAqw"
+    },
+    {
+      "name": "Wp_Shelter_Break_00.mp3",
+      "id": "1MABHbyYxiGO2qMSqnvLT9BQD2QrB6xOG"
+    },
+    {
+      "name": "Wp_Shield_Running_00.mp3",
+      "id": "10EErriVEn2c-iGrJbPs61Qi5jdUVYhm7"
+    },
+    {
+      "name": "Wp_Shield_Transform_00.mp3",
+      "id": "1bkIhrZVUWViCKkRNSJzAp-cgsTcAYVmP"
+    },
+    {
+      "name": "Wp_ShooterFirst_Shot_00.mp3",
+      "id": "1GDXiUKAzNqBx-itLITR-7zzCmQ7jFMiD"
+    },
+    {
+      "name": "Wp_ShooterFlash_Shot_00.mp3",
+      "id": "1MS3RNyT7C-ZNalTFCRN36H-7B-M4ez06"
+    },
+    {
+      "name": "Wp_ShooterFlash_Shot_02.mp3",
+      "id": "1pb4s62BNak59wAcH95eNO6028E1QL-HM"
+    },
+    {
+      "name": "Wp_ShooterFlash_SmallShot_00.mp3",
+      "id": "1UkZcLLepPwlmXM4E4LZl4h_gxUnhKEWE"
+    },
+    {
+      "name": "Wp_ShooterGravity_Shot_00.mp3",
+      "id": "1A3ZSgFSeCJcFq5JS1tKjZV7rP4PFKqBW"
+    },
+    {
+      "name": "Wp_ShooterLong_Shot_00.mp3",
+      "id": "1AVx5iT8AO__cIQO3oAIMT7Iebspb8OZc"
+    },
+    {
+      "name": "Wp_ShooterPrecision_Shot_00.mp3",
+      "id": "1_h73qEZwBpIo9P-cLonY58owLxpw3scy"
+    },
+    {
+      "name": "Wp_ShooterQuickMiddle_Shot_00.mp3",
+      "id": "1X9Fqy3LWlF7w6kZhngQqQ-Nxv4TqCJjw"
+    },
+    {
+      "name": "Wp_ShooterShort_Shot_00.mp3",
+      "id": "1wK9Sh3pwaJtC8yTykd3-Ubc6eJUB2XyJ"
+    },
+    {
+      "name": "Wp_ShooterTripleMiddle_Shot_00.mp3",
+      "id": "17mFJi_UdWOGvvvPcDhzZfD0NmzS8FOgN"
+    },
+    {
+      "name": "Wp_ShooterTripleQuick_Shot_00.mp3",
+      "id": "1a1kk6I-8hXUOx9QscSApDcDNdD0YPVQw"
+    },
+    {
+      "name": "Wp_SlosherBathTub_Shot_01.mp3",
+      "id": "1YWRvx7Xz0ZwmYmw0AF0aohoWGWVpfRa6"
+    },
+    {
+      "name": "Wp_SlosherDiffusion_Shot_00.mp3",
+      "id": "1WWiBrxvz_JU8qPXAtsfOCgcvPR9Gfq-R"
+    },
+    {
+      "name": "Wp_SlosherDiffusion_Shot_01.mp3",
+      "id": "1SPpMjVGbpDXICeUY5FIuAbfjokjVTRFK"
+    },
+    {
+      "name": "Wp_SlosherLauncher_Shot_00.mp3",
+      "id": "1o3c6lANdV7GW5s6vUd1lmkaJbcnscO5E"
+    },
+    {
+      "name": "Wp_SlosherLauncher_Shot_01.mp3",
+      "id": "1rNLoMX9Zd84XLFNrjck_6HscJkiJ9S99"
+    },
+    {
+      "name": "Wp_SlosherStrong_Shot_01.mp3",
+      "id": "1NpyzJzXpEcwj5bX6yffjTbZd3pymb0fD"
+    },
+    {
+      "name": "Wp_SlosherWashtub_Explosion_00.mp3",
+      "id": "1wRbslLsDLhu5poVpuOq-CH7VQ558by9r"
+    },
+    {
+      "name": "Wp_SlosherWashtub_Shot_01.mp3",
+      "id": "1TtC4CqPenNd_EkEfheD7WP8g7ZUYTvSc"
+    },
+    {
+      "name": "Wp_SpinnerDownPour_MotorFire_00.mp3",
+      "id": "1fcdA3RKJQM582ifjiGS95i1ii1JDUW9W"
+    },
+    {
+      "name": "Wp_SpinnerDownPour_Shot_00.mp3",
+      "id": "1DXYh2ZQSrA4HCQdd-r7cOIj2kM9P_pUj"
+    },
+    {
+      "name": "Wp_SpinnerHyper_MotorFire_00.mp3",
+      "id": "121SYKn8MrF3GEY3ZiUfmMh878Hr8TwQB"
+    },
+    {
+      "name": "Wp_SpinnerHyper_Motor_00.mp3",
+      "id": "1Voj1QCus-cyffBRbSdBVB4fZ1-BokunR"
+    },
+    {
+      "name": "Wp_SpinnerHyper_Motor_01.mp3",
+      "id": "1h3OkEZcgmQRpjssH1CX4--C_hw-1Mmyx"
+    },
+    {
+      "name": "Wp_SpinnerHyper_Shot_00.mp3",
+      "id": "170-X36mSbOjyExq2817jopy0U9CYJZrq"
+    },
+    {
+      "name": "Wp_SpinnerQuick_MotorFire_00.mp3",
+      "id": "1WBAXqC6IoG2OM9Y0cdCpDHNfPOtMIKIy"
+    },
+    {
+      "name": "Wp_SpinnerQuick_Motor_00.mp3",
+      "id": "1CQYA9JRggy2KcIRrbwMzImiOlI3hV9H3"
+    },
+    {
+      "name": "Wp_SpinnerQuick_Motor_01.mp3",
+      "id": "17nmuaMFvtKwULsXZ00VkJRB-JNuBbJAp"
+    },
+    {
+      "name": "Wp_SpinnerQuick_Shot_00.mp3",
+      "id": "1VPeeltuqtlkte2-Yzm-PAGWYxLkyzhui"
+    },
+    {
+      "name": "Wp_SpinnerSerein_MotorFire_00.mp3",
+      "id": "1IZgCBrEqiCqw5mvSsWj80WDKyXGv2dSE"
+    },
+    {
+      "name": "Wp_SpinnerSerein_Motor_00.mp3",
+      "id": "1ojggJCZLV5mgT4msTdgqy_SfCBDyd0FV"
+    },
+    {
+      "name": "Wp_SpinnerSerein_Shot_00.mp3",
+      "id": "1_SOMC0NtZ1V5TCUG4V1RAiF1BY01ncDt"
+    },
+    {
+      "name": "Wp_SpinnerStandard_MotorFire_00.mp3",
+      "id": "1DLfuJ63ZP8Cshzpy3SH0WHAyZamIv1mb"
+    },
+    {
+      "name": "Wp_SpinnerStandard_Motor_01.mp3",
+      "id": "1Xaw-nI2LRlqpTTPvXf-rcMu9elvPZJAF"
+    },
+    {
+      "name": "Wp_Sprinkler_Break_00.mp3",
+      "id": "1WQnyuy3_18j_zwiupK98Zx8s2ABln-gs"
+    },
+    {
+      "name": "Wp_Sprinkler_Loop_00.mp3",
+      "id": "1D5tD37aabqv27fmvbYQ_tpHrERlxOIkU"
+    },
+    {
+      "name": "Wp_StringerShort_Charge_01.mp3",
+      "id": "1aGNsWbsNnvrWH2f-kkIBgCIEvNi5gTBn"
+    },
+    {
+      "name": "Wp_StringerShort_Shot_00.mp3",
+      "id": "1VrK9zAuHEb5-SJkYVwB0pOpFBpmBmOzi"
+    },
+    {
+      "name": "Wp_StringerShort_Shot_Charge_00.mp3",
+      "id": "1NaL2PO2FkbZqNvTlJPI5Ud4az62hTHSx"
+    },
+    {
+      "name": "Wp_Stringer_Explosion_00.mp3",
+      "id": "1xcVUO99NVmQibnCpZiLHXSr5ZgI1Ndoe"
+    },
+    {
+      "name": "Wp_Stringer_Shot_Charge_00.mp3",
+      "id": "1yHPFYeRKFNXfZ7QO99W9G9z8whbqw_Vk"
+    },
+    {
+      "name": "Wp_Trap_Explosion_00.mp3",
+      "id": "1Oy5hP78ZqHjClJhSgZoDItu7Z58wNRaO"
+    }
+  ]
+}
