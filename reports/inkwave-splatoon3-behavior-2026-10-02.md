@@ -4041,3 +4041,20 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **設定なしの最終描画**: Chromium/SwiftShaderとWebKit/Mesa touchで通常起動から実ゲーム9操作・各45方向が成功、黒いRGB/透明欠損0。sourceとexact emitted new+packaging 27件すべて成功・skip0。既存起動snapshot 5,658,810byte、core revision 10,276,777byte、worker 69,493byteで従来上限を維持。追加素材transport/cacheは16.875MiB、GPU配置推定は37.69MiB。全起動105,208/27,793msは既存world/shader/softwareGPUを含むローカルサーバーの値であり、実機ネットワークや素材単独の比較値ではない。`reports/ink-volume/default-measurements.json`と元素材/通常起動の比較画像を参照。
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
+
+## 2026-10-12: ソイチューバー・バケットスロッシャーのモデル作り直し
+
+参照版 Ver.11.3.0（ソイチューバー、バケットスロッシャー。ギア・状態は既定、操作は待機・歩行・射撃の長押し）。記録は `patches/splatoon3/reference/weapon-models/{chargers,sloshers}.md`、実装は `patches/splatoon3/runtime/weapon-models/{chargers,sloshers}.mjs`。根拠は Inkipedia の本家3Dレンダー、"S3 Custom Goo Tuber model rotating.mp4"、"S3 Goo Tuber charge 10.0.0.mp4"、"S3 Slosher Deco model rotating.mp4"、"S3 Slosher promo image.jpg"、"S3 Slosher Weapon Class Signals.mp4"。寸法は画像からの推定で、実機計測ではない。
+
+| 差分 | 本家の根拠 | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|---|---|
+| ソイチューバーのホースを灰白色・送液管に掛かる約2¼巻きのコイル（左右軸まわり）に変更。旧版は常時インク色の縦2ループ | 回転動画・本家レンダーでホースは白〜灰色、チャージ映像で送液管に掛けたコイル | `chargers.mjs` `gooTuber` | 待機・構え | 見た目のみ | 画像から推定（巻き数・半径） |
+| ソイチューバーのホースと送液管がチャージに応じてインク色に満ちる（チャージコイル、ホース始端→コイル→送液管の順） | チャージ映像で空の灰色からインク色へ変化 | `gooTuber` の `glow`、`gooAnimate` | 長押しでチャージ | 見た目のみ（チャージ量・判定は既存） | 色の変化は映像で確認。満ちる順序・タイミングは未確認 |
+| ソイチューバーの全長 0.67 → 0.86 m、左手位置 z 0.165 m、構え位置 aim.p [-0.09, 0.06, 0.18] | チャージ映像の手・頭との比率 | `gooTuber`、`GOO_HOLD` | 構え | 見た目のみ。銃口は新しいノズル先端（z 0.574 m、高さ 0.075 m）へ移動し、弾の発生位置が変わる | 画像から推定。実機の発生位置は未比較（実機計測が必要） |
+| ソイチューバーのバルブがチャージで赤→白に変わる表現は未実装 | チャージ映像 | — | 長押しでチャージ | 見た目のみ | 未実装 |
+| バケットスロッシャーを横倒しの黒い丸バケツ（口は前上向きの斜め切り）・ラベンダーの枠・上部ハンドル・左右のコイルオーバーで作り直し。旧版は口が上向きの円錐バケツ | 回転動画の正面・側面・背面、本家レンダー | `sloshers.mjs` `bucketSlosher` | 待機・振り | 見た目のみ。インク量の表示（液面と溜まったインク）は既存の減少・回復を維持 | 画像から推定 |
+| バケットスロッシャーの待機・歩行は口を前に向けて右脇に下げる（`nativeCarry`） | Weapon Class Signals 映像の待機姿勢 | `sloshers.mjs` MODELS（slosher） | 待機・歩行 | 見た目のみ | 映像で確認（角度は推定） |
+| バケットスロッシャーの構え（aim）を 0.8 rad 上へ傾け、ネイティブの振り（+1.5〜1.95 rad）で放出時の口が前（約 −20°）を向くようにした | 本家は振り上げて前へ投げる | `sloshers.mjs` hold.aim.r | 長押しで連続の振り | 見た目のみ（放出 12F／29F・弾の発生位置は不変） | 振りの軌道・口の角度は未確認（実機計測が必要） |
+| バケットスロッシャーの右手は本家では上部ハンドル。INKWAVE はネイティブの縦グリップ（U字フレーム中央）を保持 | プロモ画像・映像 | `bucketSlosher` | 待機・振り | 見た目のみ | 差分として残す（未対応） |
+
+検証: `weapon-models-all.test.mjs`、チャージャー・スロッシャー関連とモーション関連のテスト 568件（`slosher-release-motion.test.mjs` の振り上げキー検査を、武器ごとの構えピッチを差し引いた比較へ更新）、`check-inkwave-patches.mjs` 全体。ロジック単独とブラウザ描画のみで、本家実機との比較ではない。
