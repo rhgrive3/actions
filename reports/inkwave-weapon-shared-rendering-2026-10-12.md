@@ -1,6 +1,6 @@
 # Ballpoint transparent shell and hypothesis checks
 
-Initial investigation: main b078c37907351f1bbc13d0e7d4b5cbeb0a330009. Final candidate baseline: main bca45e7cb55f3331a58459ea0219e42b44762712 (including camera, collision, paint and network updates). Procedural geometry only; no retail meshes/textures. This change does not merge or deploy. Mini/Nautilus and Quad/Explosher model work is independent and its functions are untouched.
+Initial investigation: main b078c37907351f1bbc13d0e7d4b5cbeb0a330009. Current candidate baseline: main 5ed08c6376696dd67391afed7c36463106959de8 (including camera, collision, paint, network and merged ink-volume updates). Historical bca45 and earlier measurements below remain pinned to their original heads. Procedural geometry only; no retail meshes/textures. This change does not merge or deploy. Mini/Nautilus and Quad/Explosher model work is independent and its functions are untouched.
 
 ## Findings against references and actual source
 
@@ -57,3 +57,44 @@ Revision 258ea4 passed the real GTAO positive/negative control: guarded Normal/D
 All four 258ea4 ABBA renders completed, but the final raw-draw budget assertion failed: actual production calls are game 247 to 251 and far 151 to 155. Inspection of the vendored Three r186 indexed renderer shows it still issues and counts gl.drawElements with count=0. The native draw-range gate suppresses geometry, not that zero-count API submission. The revised test directly observes indexed/array/instanced GL calls, separates positive-count draws from zero-count calls, and reconciles their sum with renderer.info.calls. For two Ballpoints, expected production deltas are +2 nonempty beauty draws, +2 zero-count AO calls, +4 raw calls. No runtime shader/shape or gate is altered to make this metric pass. Zero-count calls still carry CPU/driver cost.
 
 258ea4 full-post-stack render-complete medians in A/B/B2/A2 order: game 2.1/2.3/2.1/2.4 ms, far 1.9/1.8/1.8/2.3 ms. Studio far was .9/.9/.8/.8 ms on this runner, unlike the earlier a54 run's persistent increase. Keep both observations; do not pool runs or claim faster rendering from these distributions. This four-render result is not an overall CI pass, because raw-call accounting and single-Actor full-post images still require the corrected diagnostic to complete.
+
+
+## Completed f1ed production transparency checks
+
+Fixed revision f1ed1487b091c35b2ae994d5c09a072a03bd6200 passed review job 114758346077 in [run 38233480529](https://github.com/rhgrive3/actions/actions/runs/38233480529). Source, emitted shell contracts and emitted all-65-model Actor checks each passed 3/3. Visual artifact 11740660155 has ZIP SHA256 `76c1c2e94b886c5f98c2bf3401551182a9d3dffe7fd70238f5cfb4d693a125de`.
+
+The actual production high-quality Renderer includes GTAO, HDR/MSAA, bloom, grade and output. All eight single-Actor cases (2.6m / 8m, light/dark background, orange/blue ink) retain a transparent shell and restored geometry ranges. Images show readable internal tubes and a translucent rounded shoulder rather than an opaque black far-LOD shell. At 8m, fine highlights are naturally subpixel; no claim of identical detail at distance is made. With the shell shown versus hidden, game GL calls are nonempty 39 to 40 and zero-count 2 to 3, raw 41 to 43; far nonempty 31 to 32 and zero-count 4 to 5, raw 35 to 37. These are API submissions, including the native gate's non-free zero-count call.
+
+Real GTAOPass safe control changes Normal/Depth/AO by zero pixels and beauty by 2944. Deliberately disabling the gate changes Normal/Depth by 2944 pixels and AO by 1152, proving the control detects opaque shell occlusion. Two shells share geometry and restore their ranges. No shader or acceptance threshold was relaxed for this pass.
+
+### Latest-main integration
+
+The main update to 3165f4f merges PR1248 and changes 46 paths. Only the append-only common behavior report intersects this PR; both reports are retained. Runtime model/material code is unchanged from f1ed. The workflow pins its next baseline to 5ed08c6; the previous bca45 measurements are not relabeled as latest-main measurements. Source, production build, visual checks and full ABBA must complete on the integrated head before adoption. Main is not merged or deployed by this PR.
+
+The additional main merge 5ed08c6 changes only the Pages sparse checkout list for VTF test fixtures, leaving runtime code unchanged. It is also retained in the integrated head. The 3165 source all-65 plus shared contracts passed 6/6 (57.2 seconds); final emitted/browser checks follow the new immutable head.
+
+
+### Completed f1ed same-runner ABBA including production post stack
+
+Both fixed-head jobs in run 38233480529 passed. Crowd artifact 11741246511 has ZIP SHA256 `cd4931145a1327d79604f867051b899a5043c415c45787dfcab00e9f43d5ed58`. All four A/B/B2/A2 samples completed without a range leak or raw/nonempty/zero-count budget failure.
+
+At 600px with eight mixed Actors and two Ballpoints, full-post render-complete medians in A/B/B2/A2 order are game **4.5 / 5.4 / 8.1 / 5.0 ms** and far **5.1 / 5.2 / 5.0 / 4.7 ms**. Game p95 is 5.2 / 9.8 / 12.5 / 5.7 ms; far p95 is 7.9 / 13.1 / 7.6 / 5.1 ms. Both B game medians exceed both A medians in this run, so the quality change has an observed rendering cost; the raw draw contract passing does not mean performance-neutral. The wide spread and different results on earlier runners do not justify a real-device FPS claim or pooling separate CI runs.
+
+Production calls are game raw 247 to 251 (nonempty 207 to 209, zero-count 40 to 42), far raw 151 to 155 (nonempty 119 to 121, zero-count 32 to 34). Production triangles are game 622349 to 615697 and far 95855 to 95767. Studio medians in A/B/B2/A2 order are game 3.1 / 4.6 / 3.6 / 4.0 ms and far 2.1 / 2.1 / 2.2 / 2.3 ms. Studio draws and visible geometry bytes remain 114 to 116 / 2275386 to 2237456 in game, 66 to 68 / 625166 to 632482 in far. Studio numbers are kept separate from the full production post stack.
+
+Final 5ed integration also adds a source regression that switches Ballpoint to Dapple and back three times, requiring reuse of the same cached weapon instance, shell geometry and material. The strengthened three shared contracts passed locally in 19.7 seconds without runtime changes. The final integrated CI remains pending; f1ed's general CI is allowed to finish before publication.
+
+
+## Performance diagnosis and bounded clearcoat-only probe
+
+The 258ea4 and f1ed runtime/material trees are identical. Git comparison shows only the harness, workflow draw assertions and report changed. Both runs use the same Ubuntu runner image (20261004.327.1), pinned Playwright, 600px scene, eight Actor identities, camera, warm-up and sample counts. They are nevertheless different Azure machines: 258 ran in westus2; f1ed in canadaeast. The uninstrumented studio also slowed: game medians 1.7/1.9/1.7/1.7 to 3.1/4.6/3.6/4.0 ms; far .9/.9/.8/.8 to 2.1/2.1/2.2/2.3 ms. Actor animation game medians rose from 3.8/3.0/2.9/3.3 to 6.1/6.0/5.8/8.0 ms. This establishes broader execution-speed differences, but does not explain away f1ed's candidate-specific increase.
+
+Old artifacts retain p50/p95 only, not ordered per-frame samples. CPU model/system load and separate full-post submit/finish-wait intervals were not recorded and cannot be reconstructed. The f1ed post-stack timing additionally had GL-call wrappers active; studio timings did not. No causal claim that all of the difference is shell work, machine load or observer overhead is justified. Keep every run, including the unfavorable one.
+
+The next diagnostic leaves production clearcoat .65 unchanged. In the same built scene it temporarily changes only clearcoat to zero, with Fresnel alpha, roughness, geometry, LOD, AO gate, lights and all other material fields fixed. It captures all five authored camera angles plus actual post-stack near/far, dark/light and two ink colors, then restores .65. A lower-cost image that loses the shell edge or reference shoulder is rejected.
+
+Primary ABBA timing removes the GL wrappers from its measured interval and counts an extra unmeasured frame, while retaining ordered raw samples and separate full.render / gl.finish-wait intervals. The nested clearcoat control/zero/zero/control comparison has observer-off / observer-on / observer-off-repeat blocks, each with 24 warm-up and 120 measured frames. No-shell baselines receive the same observer control. Every block records raw samples, raw/nonempty/zero calls, restored shared geometry, CPU model/times/load snapshots and the actual browser/GL backend. This measurement-method revision is explicitly distinguished from old f1ed timing. No GTAOPass modification, MeshStandard replacement, opacity adjustment, extra pass or performance threshold relaxation is included.
+
+Timing intervals are wall time: full.render includes driver blocking, and the separate gl.finish wait is remaining synchronization, not GPU-only time or CPU-cycle profiling. The controlled studio lights do not enable shadow-map casting; the game Renderer enables shadows but this scene does not measure a populated world shadow workload. The shell castShadow=false contract and actual GTAO/depth behavior are tested separately. Full live-match and real-device performance remain unmeasured.
+
+Fixed f1ed finished all four workflows successfully before this integration was published: transparent shell review/crowd 38233480529, general Validate 38233480469 (10 jobs pass, one optional diagnostic skipped), numerical regressions 38233480416, reopened-six 38233480406. The prior UI lifecycle failure did not recur at this exact head. The next diagnostic helpers also received independent read-only review; per-observer-block host snapshots were added after its observation-granularity finding. Runtime material .65 remains unchanged pending the controlled visual/performance comparison.

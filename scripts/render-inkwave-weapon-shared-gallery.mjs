@@ -8,12 +8,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import os from 'node:os';
 import { chromium } from 'playwright';
 
 const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n < 0 ? fallback : process.argv[n + 1]; };
 const site = path.resolve(arg('--site', '_site')), out = path.resolve(arg('--out', '.ci-scratch/weapon-gallery'));
 const ids = (arg('--ids', '') || '').split(',').filter(Boolean), held = !process.argv.includes('--no-held');
 const size = Number(arg('--size', 400)), crowd = process.argv.includes('--crowd');
+const compareClearcoat = process.argv.includes('--compare-clearcoat');
+const hostSnapshot = () => {
+  const cpus = os.cpus(), times = { user: 0, nice: 0, sys: 0, idle: 0, irq: 0 };
+  for (const c of cpus) for (const k of Object.keys(times)) times[k] += c.times[k];
+  return { utc: new Date().toISOString(), cpuModel: cpus[0]?.model, logicalCpus: cpus.length,
+    cpuMHz: cpus.map(c => c.speed), cpuTimes: times, loadAverage: os.loadavg(), freeMemory: os.freemem(), totalMemory: os.totalmem() };
+};
 fs.mkdirSync(out, { recursive: true });
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
 const prefix = '/_versions/' + identity.build.revision + '/';
@@ -33,6 +41,7 @@ let browser; const errors = [];
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width: size, height: size } });
+  await page.exposeFunction('__weaponHostSnapshot', hostSnapshot);
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:' + server.address().port + '/review');
   await page.evaluate(async ({ prefix, size }) => {
@@ -68,7 +77,8 @@ try {
   const list = ids.length ? ids : all;
   const rows = [];
   for (const id of list) {
-    const row = await page.evaluate(async ({ id, held, crowd, prefix }) => {
+    const hostBefore = hostSnapshot();
+    const row = await page.evaluate(async ({ id, held, crowd, prefix, compareClearcoat }) => {
       const { THREE, api, W, Mt, R, Kit, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
       // r186 records zero-count drawElements calls for native override gates.
@@ -104,13 +114,23 @@ try {
       front.position.set(c.x, c.y, c.z + 3); front.lookAt(c); renderer.render(scene, front); const muzzleView = snap();
       const span = Math.max(frame.x, frame.y, frame.z), cam = new THREE.PerspectiveCamera(30, 1, .01, 50);
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
-      const persp = snap();
+      const persp = snap(), perspCamera = cam.clone();
       cam.position.copy(c).add(new THREE.Vector3(.9,.45,-1.1).normalize().multiplyScalar(span*2.5));cam.lookAt(c);renderer.render(scene,cam);const rear = snap();
+      const clearcoatImages = {};
+      if (compareClearcoat && d.glass) {
+        const material = Kit.getWeaponGlassMaterial(), original = material.clearcoat;
+        try {
+          material.clearcoat = 0;
+          for (const [name, camera] of [['side', ortho], ['above', top], ['front', front], ['persp', perspCamera], ['rear', cam]]) {
+            renderer.render(scene, camera); clearcoatImages['clearcoat-zero-' + name] = snap();
+          }
+        } finally { material.clearcoat = original; }
+      }
       scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow, d.glass]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
-        images: { side, above, front: muzzleView, persp, rear } };
+        images: { side, above, front: muzzleView, persp, rear, ...clearcoatImages } };
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;
@@ -145,7 +165,7 @@ try {
         const shell = ch.weapon.off.getObjectByName('weapon-glass');
         res.glass = shell ? { triangles: shell.geometry.index.count / 3, transparent: shell.material.transparent,
           depthWrite: shell.material.depthWrite, depthTest: shell.material.depthTest, side: shell.material.side,
-          opacity: shell.material.opacity, castShadow: shell.castShadow, transmission: shell.material.transmission } : null;
+          opacity: shell.material.opacity, castShadow: shell.castShadow, transmission: shell.material.transmission, clearcoat: shell.material.clearcoat } : null;
         for (const tier of ['game', 'far']) for (const background of ['#101321', '#eef3f8']) for (const inkColor of ['#ff8825', '#484ce8']) {
           ch.setLod(tier); ch.setColor(new THREE.Color(inkColor));
           for (let j = 0; j < 8; j++) a._finishFrame(1 / 60);
@@ -219,7 +239,8 @@ try {
         if (shells.length && new Set(shells.map(s=>s.material)).size !== 1) throw Error('Glass material is not shared');
         res.glassMaterials = new Set(shells.map(s=>s.material)).size;
         G.actors=actors;const camera=new THREE.PerspectiveCamera(40,1,.05,60);camera.position.set(-5,3.5,8);camera.lookAt(0,.8,0);
-        const quant=(arr)=>{arr.sort((a,b)=>a-b);return{p50:arr[Math.floor(arr.length*.5)],p95:arr[Math.floor(arr.length*.95)]};};
+        // Keep original sample order; old p50/p95-only artifacts cannot reconstruct it.
+        const quant=(arr)=>{const sorted=[...arr].sort((a,b)=>a-b);return{n:arr.length,p50:sorted[Math.floor(arr.length*.5)],p95:sorted[Math.floor(arr.length*.95)],samples:[...arr]};};
         res.crowd={};
         for(const tier of['game','far']){
           for(let k=0;k<actors.length;k++){const o=actors[k];o.pos.set((k%4-1.5)*1.15,0,Math.floor(k/4)*1.5);o.intent.fire=false;o.character.setLod(tier);for(let z=0;z<4;z++)o._finishFrame(1/60);}
@@ -233,16 +254,66 @@ try {
         const container=document.createElement('div');document.body.append(container);
         const full=new Renderer(container,{quality:'high',shadows:true,bloom:true});full.renderer.debug.checkShaderErrors=true;full.setScene(scene,camera);
         if(!full.gtao)throw Error('Crowd production GTAO is not active');res.productionCrowd={};
-        const draws=observeDraws(full.renderer),fullGL=full.renderer.getContext(),sharedRanges=new Map(shells.map(s=>[s.geometry,s.geometry.drawRange.count]));
+        const fullGL=full.renderer.getContext(),sharedRanges=new Map(shells.map(s=>[s.geometry,s.geometry.drawRange.count]));
+        const debugRenderer=fullGL.getExtension('WEBGL_debug_renderer_info');
+        res.timingNotes='Wall-time intervals: full.render includes driver blocking; finishWait is remaining synchronization, not an isolated GPU timer. Static posed Actors exclude animation from production timing.';
+        res.browser={userAgent:navigator.userAgent,hardwareConcurrency:navigator.hardwareConcurrency,
+          glVendor:fullGL.getParameter(fullGL.VENDOR),glRenderer:fullGL.getParameter(fullGL.RENDERER),
+          unmaskedVendor:debugRenderer?fullGL.getParameter(debugRenderer.UNMASKED_VENDOR_WEBGL):null,
+          unmaskedRenderer:debugRenderer?fullGL.getParameter(debugRenderer.UNMASKED_RENDERER_WEBGL):null};
+        const countFrame=()=>{
+          const counter=observeDraws(full.renderer);
+          try{full.renderer.info.reset();full.render();fullGL.finish();const result=counter.read();if(result.nonzero+result.zero!==full.renderer.info.render.calls)throw Error('Production GL call tally mismatch');return result;}
+          finally{counter.restore();}
+        };
+        const measureNative=(label,instrumented,measured=24,warm=12)=>{
+          const complete=[],submit=[],finishWait=[],startedAt=performance.timeOrigin+performance.now(),counter=instrumented?observeDraws(full.renderer):null;
+          try{
+            for(let j=0;j<warm+measured;j++){
+              full.renderer.info.reset();counter?.reset();const t=performance.now();full.render();const submitted=performance.now();fullGL.finish();const finished=performance.now();
+              if(j>=warm){submit.push(submitted-t);finishWait.push(finished-submitted);complete.push(finished-t);}
+              for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Production crowd leaked shared glass range');
+            }
+            const draws=counter?counter.read():countFrame();
+            if(draws.nonzero+draws.zero!==full.renderer.info.render.calls)throw Error('Production GL call tally mismatch');
+            return{label,instrumented,warmFrames:warm,measuredFrames:measured,startedAt,
+              glNonzeroDrawCalls:draws.nonzero,glZeroCountCalls:draws.zero,drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles,
+              renderCompleteMs:quant(complete),renderSubmitMs:quant(submit),finishWaitMs:quant(finishWait),allGlassRangesRestored:true};
+          }finally{counter?.restore();}
+        };
         for(const tier of ['game','far']){
           for(const o of actors){o.character.setLod(tier);for(let j=0;j<8;j++)o._finishFrame(1/60);}
-          const complete=[];
-          for(let j=0;j<36;j++){full.renderer.info.reset();draws.reset();const t=performance.now();full.render();fullGL.finish();if(j>=12)complete.push(performance.now()-t);for(const shell of shells)if(shell.geometry.drawRange.count!==sharedRanges.get(shell.geometry))throw Error('Production crowd leaked shared glass range');}
-          const measuredDraws=draws.read();if(measuredDraws.nonzero+measuredDraws.zero!==full.renderer.info.render.calls)throw Error('Production GL call tally mismatch');
-          res.productionCrowd[tier]={glNonzeroDrawCalls:measuredDraws.nonzero,glZeroCountCalls:measuredDraws.zero,actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled,allGlassRangesRestored:true,renderCompleteMs:quant(complete),drawCalls:full.renderer.info.render.calls,triangles:full.renderer.info.render.triangles};
+          // The GL observer is deliberately absent from primary timing. Count a
+          // separate frame, then measure observer overhead in the probe below.
+          res.productionCrowd[tier]={...measureNative('primary-uninstrumented',false),actors:actors.length,width:full.renderer.domElement.width,height:full.renderer.domElement.height,quality:'high',ao:!!full.gtao,bloom:!!full.bloom?.enabled};
           res.images['crowd-production-'+tier]=full.renderer.domElement.toDataURL('image/png').split(',')[1];
         }
-        draws.restore();full._disposeComposer();full.renderer.dispose();container.remove();
+        if(compareClearcoat){
+          const material=shells[0]?.material,original=material?.clearcoat;
+          const probe={onlyChangedProperty:material?'clearcoat':null,originalClearcoat:original??null,variantClearcoat:material?0:null,pose:'same static posed Actors; animation excluded',tiers:{}};
+          res[material?'clearcoatProbe':'observerProbe']=probe;
+          try{
+            for(const tier of ['game','far']){
+              for(const o of actors){o.character.setLod(tier);for(let j=0;j<8;j++)o._finishFrame(1/60);}
+              const rounds=[];
+              const settings=material?[['control-A',original],['zero-B',0],['zero-B2',0],['control-A2',original]]:[['no-shell-control',null]];
+              for(const [name,value]of settings){
+                if(material)material.clearcoat=value;const hostBefore=await window.__weaponHostSnapshot(),blocks=[];
+                for(const [label,on]of[['observer-off',false],['observer-on',true],['observer-off-repeat',false]]){
+                  const blockHostBefore=await window.__weaponHostSnapshot(),block=measureNative(label,on,120,24);
+                  block.hostBefore=blockHostBefore;block.hostAfter=await window.__weaponHostSnapshot();blocks.push(block);
+                }
+                const hostAfter=await window.__weaponHostSnapshot();rounds.push({name,clearcoat:value,hostBefore,hostAfter,blocks});
+                res.images['crowd-clearcoat-'+tier+'-'+name]=full.renderer.domElement.toDataURL('image/png').split(',')[1];
+              }
+              const expected=rounds[0].blocks[0];
+              for(const round of rounds)for(const block of round.blocks)for(const key of['glNonzeroDrawCalls','glZeroCountCalls','drawCalls','triangles'])if(block[key]!==expected[key])throw Error('Clearcoat-only probe changed '+key);
+              probe.tiers[tier]=rounds;
+            }
+          }finally{if(material)material.clearcoat=original;}
+          probe.materialRestored=!material||material.clearcoat===original;
+        }
+        full._disposeComposer();full.renderer.dispose();container.remove();
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
         G.actors=[a];
       }
@@ -269,6 +340,14 @@ try {
           if(shell&&(calls!==hiddenCalls+2||visibleDraws.nonzero!==hiddenDraws.nonzero+1||visibleDraws.zero!==hiddenDraws.zero+1||d.glass.drawRange.count!==originalRange))pipelineFailures.push({tier,background,inkColor,calls,hiddenCalls,visibleDraws,hiddenDraws,rangeRestored:d.glass.drawRange.count===originalRange});
           if(calls!==visibleDraws.nonzero+visibleDraws.zero)throw Error('Production GL call tally mismatch');
           res.images['production-'+tier+'-'+background.slice(1)+'-'+inkColor.slice(1)]=gameRenderer.renderer.domElement.toDataURL('image/png').split(',')[1];
+          if(compareClearcoat&&shell){
+            const material=shell.material,original=material.clearcoat;
+            try{
+              material.clearcoat=0;gameRenderer.renderer.info.reset();draws.reset();gameRenderer.render();const zeroDraws=draws.read();
+              if(zeroDraws.nonzero!==visibleDraws.nonzero||zeroDraws.zero!==visibleDraws.zero||d.glass.drawRange.count!==originalRange)throw Error('Clearcoat-only image changed draw/range contract');
+              res.images['production-clearcoat-zero-'+tier+'-'+background.slice(1)+'-'+inkColor.slice(1)]=gameRenderer.renderer.domElement.toDataURL('image/png').split(',')[1];
+            }finally{material.clearcoat=original;}
+          }
           pipelineRows.push({glNonzeroDrawCalls:visibleDraws.nonzero,glZeroCountCalls:visibleDraws.zero,withoutGlassGlDraws:hiddenDraws,tier,background,inkColor,distance,drawCalls:calls,withoutGlassDrawCalls:hiddenCalls,glassVisible:!!shell?.visible,rangeRestored:!shell||d.glass.drawRange.count===originalRange});
         }
         res.productionPipeline={quality:'high',ao:!!gameRenderer.gtao,bloom:!!gameRenderer.bloom?.enabled,rows:pipelineRows,failures:pipelineFailures};
@@ -279,12 +358,13 @@ try {
       Object.assign(res.images, shots); res.maxGrip = +maxGrip.toFixed(4); res.nonFinite = nonFinite; res.firingFrames = fired;
       res.weaponKind = ch.weaponKind; res.weaponModel = ch.weaponModel;
       return res;
-    }, { id, held, crowd, prefix });
+    }, { id, held, crowd, prefix, compareClearcoat });
+    row.hostBefore=hostBefore;row.hostAfter=hostSnapshot();
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);
     if(row.productionPipeline?.failures?.length)errors.push('Production shell draw/range contract: '+JSON.stringify(row.productionPipeline.failures));
     console.log(JSON.stringify(row));
   }
-  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, rows, errors }, null, 2));
+  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, compareClearcoat, rows, errors }, null, 2));
   if (errors.length) { console.error('page errors:', errors.slice(0, 10)); process.exitCode = 1; }
 } finally { await browser?.close(); await new Promise(r => server.close(r)); }

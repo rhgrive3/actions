@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: bca45e7cb55f3331a58459ea0219e42b44762712
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -49,7 +49,7 @@ jobs:
         run: |
           IDS=s3-spinner-downpour,s3-maneuver-short,s3-maneuver-gallon,s3-slosher-launcher
           node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
-          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500 --compare-clearcoat
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -71,7 +71,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: bca45e7cb55f3331a58459ea0219e42b44762712
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -90,7 +90,7 @@ jobs:
         run: |
           for pair in before-A after-B after-B2 before-A2; do
             version="${pair%%-*}"
-            node scripts/render-inkwave-weapon-shared-gallery.mjs --site ".model-${version}-site" --out ".model-crowd/${pair}" --ids s3-spinner-downpour --size 600 --crowd
+            node scripts/render-inkwave-weapon-shared-gallery.mjs --site ".model-${version}-site" --out ".model-crowd/${pair}" --ids s3-spinner-downpour --size 600 --crowd --compare-clearcoat
           done
           node --input-type=module - <<'JS'
           import fs from 'node:fs';

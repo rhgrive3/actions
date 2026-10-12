@@ -26,6 +26,11 @@ test('Ballpoint glass is independent, cached, transparent and retained at both L
  opaque.overrideMaterial.dispose();let geometryDisposed=0;d.glass.addEventListener('dispose',()=>geometryDisposed++);
  let disposed=0;m.addEventListener('dispose',()=>disposed++);
  for(const tier of ['game','far','hero','far','game']){a.character.setLod(tier);for(let n=0;n<8;n++)a._finishFrame(1/60);assert(shell.visible);assert.equal(shell.geometry,d.glass);assert.equal(shell.material,m);assert.equal(a.character.weapon.off.getObjectByName('weapon-glass'),shell);}
+ const cachedWeapon=a.character.weapon;
+ for(let i=0;i<3;i++){
+  a.character.setWeapon('s3-maneuver-short');assert.equal(a.character.weapon.off.getObjectByName('weapon-glass'),undefined);
+  a.character.setWeapon('s3-spinner-downpour');assert.equal(a.character.weapon,cachedWeapon);assert.equal(a.character.weapon.off.getObjectByName('weapon-glass'),shell);assert.equal(shell.geometry,d.glass);assert.equal(shell.material,m);
+ }
  b.character.dispose();a.character.setColor('#1144ee');assert.equal(shell.material,m);assert.equal(disposed,0);a.character.dispose();assert.equal(disposed,0,'shared material survives actor disposal');assert.equal(geometryDisposed,0,'shared geometry survives actor disposal');assert.equal(d.glass.drawRange.count,range);assert.equal(d.glass.drawRange.start,rangeStart);
 });
 
