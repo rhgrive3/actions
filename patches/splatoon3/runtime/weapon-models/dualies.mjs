@@ -93,20 +93,21 @@ function squelchers(d) {
 
 function darkTetra(d) {
   // Wmn_Maneuver_Stepper. Single pistol, reconstructed from side, rear, front and oblique turntable views.
-  // The frame has layered white cheeks around a black core, a deep heel and three rebound cushions.
+  // Dark target colours come from its official render; the stored Light rotation sheet is geometry-only.
   // Anchor frames and the existing muzzle remain native; these are merged static construction pieces.
   const C={white:'#e8e8e1',silver:'#9ba2a4',black:'#202328',rubber:'#15191d',purple:'#702891',grey:'#757c80'};
   const body=new Pieces(),ink=new Pieces();
   const trig=pistolGrip(body,{color:C.rubber,triggerColor:C.black,guard:false,base:false});
-  // Curved rear frame surrounds the existing grip; the pale side cheeks and kidney-shaped pads are separate.
+  // Dark variant: black rear cheeks on both sides, with separate grey kidney-shaped pads.
   const rear=[[-.050,.065],[-.041,.096],[-.022,.108],[.012,.100],[.019,.071],[.006,.032],[-.001,-.025],[-.022,-.065],[-.059,-.079],[-.064,-.064],[-.043,-.048],[-.043,.004]];
   body.add(shell(rear,.027,.003,36),C.black,M.satin);
+  body.add(ylathe([[0,-.078],[.023,-.078],[.035,-.064],[.043,-.044],[.039,-.025],[.020,-.004],[.013,.012],[0,.012]],0,0,0,18).scale(1,1,.48).translate(0,0,-.038),C.black,M.rubber);
   for(const sx of[-1,1]){
     const cheek=[[-.035,.088],[-.020,.099],[.015,.091],[.016,.060],[.002,.026],[-.007,-.034],[-.026,-.065],[-.055,-.077],[-.052,-.059],[-.031,-.043],[-.026,.005]];
-    body.add(shell(cheek,.003,.0015,30).translate(sx*.015,0,0),sx<0?C.black:C.white,M.satin);
+    body.add(shell(cheek,.003,.0015,30).translate(sx*.015,0,0),C.black,M.satin);
     const pad=[[-.019,.044],[-.034,.030],[-.038,.002],[-.029,-.030],[-.017,-.045],[-.006,-.033],[-.001,-.006],[-.005,.023]];
     body.add(shell(pad,.0035,.0012,28).translate(sx*.018,.022,0),C.black,M.rubber);
-    body.add(shell(pad.map(([z,y])=>[-.019+(z+.019)*.73,y*.80]),.0018,.0006,24).translate(sx*.020,.022,0),sx<0?C.grey:C.black,M.satin);
+    body.add(shell(pad.map(([z,y])=>[-.019+(z+.019)*.73,y*.80]),.0018,.0006,24).translate(sx*.020,.022,0),C.grey,M.satin);
     for(const y of[-.004,.047]){body.add(cyl(.004,[sx*.020,y,-.021],[sx*.022,y,-.021],10),C.silver,M.satin);body.add(box(.001,.0012,.005,sx*.023,y,-.021,.15,6,4),C.black,M.print);}
     // Fine grip ribs follow the curved grey pad, without changing its hand-contact thickness.
     if(sx<0)for(let i=0;i<8;i++)body.add(cyl(.0007,[sx*.022,.002+i*.006,-.031],[sx*.022,.005+i*.005,-.010],6),C.silver,M.satin);
@@ -115,7 +116,7 @@ function darkTetra(d) {
   body.add(box(.034,.037,.054,0,.069,-.002,.24,10,6),C.black,M.satin);
   body.add(box(.032,.012,.043,0,.092,-.006,.23,10,6),C.white,M.satin);
   for(const y of[.079,.052]){
-    ink.add(zcyl(.015,.006,.127,0,y,20));
+    body.add(zcyl(.015,.006,.127,0,y,20),C.white,M.satin);
     for(const sx of[-1,1]){
       body.add(box(.0045,.006,.110,sx*.0145,y,.067,.25,8,4),C.black,M.satin);
       body.add(box(.003,.007,.016,sx*.017,y,.018,.18,8,4),C.silver,M.satin);
@@ -147,18 +148,18 @@ function darkTetra(d) {
   const shoe=new THREE.BufferGeometry();shoe.setAttribute('position',new THREE.Float32BufferAttribute(p,3));shoe.setIndex(idx);shoe.computeVertexNormals();body.add(shoe,C.black,M.rubber);
   for(const sx of[-1,1])body.add(pipe(deck.map(([z,y,w])=>[sx*(w-.001),y+.004,z]),.0027,32,5),C.white,M.satin);
   ink.add(slab([[-.070,-.019],[-.020,0],[-.070,.019]],.001,0,.0004).rotateZ(Math.PI/2).translate(0,-.078,0));
-  // Three thick rebound cushions, visibly separated from the swept deck. Ink volumes carry team colour.
+  // Dark variant rebound cushions are pale rubber, not the ink-coloured cushions of the Light reference.
   for(const[x,z,y]of[[0,-.056,-.096],[-.032,.082,-.080],[.032,.082,-.080]]){
-    const spring=ylathe([[0,-.014],[.014,-.014],[.022,-.010],[.022,-.006],[.017,-.004],[.022,0],[.022,.005],[.017,.008],[.018,.013],[0,.013]],0,0,0,18).scale(1,1,.78).translate(x,y,z);ink.add(spring);
+    const spring=ylathe([[0,-.014],[.014,-.014],[.022,-.010],[.022,-.006],[.017,-.004],[.022,0],[.022,.005],[.017,.008],[.018,.013],[0,.013]],0,0,0,18).scale(1,1,.78).translate(x,y,z);body.add(spring,C.white,M.satin);
     for(const dy of[-.012,.004,.012])body.add(ylathe([[.014,dy],[.022,dy],[.022,dy+.0018],[.014,dy+.0018]],0,0,0,18).scale(1,1,.78).translate(x,y,z),C.white,M.satin);
   }
   // The two broad front rebound faces are the shoe's defining front-view silhouette.
   for(const sx of[-1,1]){
     const x=sx*.036,y=-.044,z=.153,foot=new Pieces(),col=new Pieces();
-    foot.add(zlathe([[0,-.010],[.021,-.010],[.025,-.004],[.026,.005],[.022,.011],[0,.011]],0,0,0,20),C.white,M.satin);
-    foot.add(zlathe([[0,.010],[.023,.010],[.023,.015],[.020,.017],[0,.017]],0,0,0,20),C.black,M.rubber);
-    col.add(zlathe([[0,.017],[.012,.017],[.013,.019],[0,.020]],0,0,0,18));
-    foot.add(ring(.008,.0012,0,0,.021,'z',4,16),C.grey,M.satin);
+    foot.add(zlathe([[0,-.004],[.024,-.004],[.026,0],[.025,.003],[0,.003]],0,0,0,20),C.white,M.satin);
+    foot.add(zlathe([[0,.002],[.024,.002],[.025,.005],[.023,.007],[0,.007]],0,0,0,20),C.black,M.rubber);
+    col.add(zlathe([[0,.007],[.012,.007],[.013,.0085],[0,.009]],0,0,0,18));
+    foot.add(ring(.008,.0012,0,0,.010,'z',4,16),C.grey,M.satin);
     body.merge(foot.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));ink.merge(col.transform(g=>g.scale(1,.88,1).rotateX(-.62).translate(x,y,z)));
   }
   return finish(d,body,ink,trig,[0,.065,.147]);

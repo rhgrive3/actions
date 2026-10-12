@@ -150,7 +150,7 @@ function explosher(d) {
   // Wmn_Slosher_Washtub. Rebuilt from all stored turntable quadrants, not a front-facing can decal.
   // The cast can has a sloped shoulder, real lower slots, a rear box and a separate rectangular-section cage.
   // Reference display tilt is handled by the review camera; gameplay hand and launch frames are unchanged.
-  const C={olive:'#59632f',ridge:'#69783a',darkOlive:'#435128',brass:'#ac8c48',brassEdge:'#d1b76e',silver:'#9ca8ae',steel:'#58646b',black:'#242b31',orange:'#f07931',panel:'#343943'};
+  const C={olive:'#59632f',ridge:'#69783a',darkOlive:'#435128',brass:'#ac8c48',brassEdge:'#d1b76e',silver:'#c2cbcf',steel:'#58646b',black:'#242b31',orange:'#f07931',panel:'#343943'};
   const body=new Pieces(),ink=new Pieces(),cy=BY-.004,cz=BZ+.010;
   const beam=(pts,r=.006,seg=24)=>{const g=sweep(pts.map(p=>V(...p)),{seg,radial:4,capSteps:1,radius:()=>r,flat:.75,outward:(_p,out)=>out.set(1,0,0),section:(c,s)=>[c-s,c+s]}).geo.toNonIndexed();g.computeVertexNormals();return g;};
   const outline=[[cz-.096,cy-.071],[cz-.094,cy+.066],[cz-.079,cy+.089],[cz+.042,cy+.091],[cz+.085,cy+.058],[cz+.111,cy+.014],[cz+.106,cy-.071],[cz+.086,cy-.080],[cz-.075,cy-.080]];
@@ -169,7 +169,7 @@ function explosher(d) {
   }
   // Pale stencilled side motif, traced as four coarse visible glyph silhouettes; no external texture.
   const glyphs=[[[0,0],[6,0],[6,2],[4,2],[4,4],[6,4],[6,7],[0,7],[0,5],[3,5],[3,4],[0,4]],[[0,0],[2,0],[2,3],[5,3],[5,0],[7,0],[7,7],[5,7],[5,5],[2,5],[2,7],[0,7]],[[0,0],[7,0],[7,2],[4,2],[4,4],[7,4],[7,7],[0,7],[0,5],[2,5],[2,3],[0,3]],[[0,0],[7,0],[7,2],[2,2],[2,4],[6,4],[6,6],[2,6],[2,7],[0,7]]];
-  for(const sx of[-1,1])for(let i=0;i<glyphs.length;i++)body.add(slab(glyphs[i].map(([z,y])=>[cz+.064+(z-3.5)*.0018,cy+.069-i*.015-y*.0018]),.0007,sx*.0775,0),'#b4baa0',M.print);
+  for(const sx of[-1,1])for(let i=0;i<glyphs.length;i++)body.add(slab(glyphs[i].map(([z,y])=>[cz-.005+i*.018+(z-3.5)*.0018,cy+.081-i*.003-y*.0018]),.0007,sx*.0775,0),'#b4baa0',M.print);
   // Rear electronics is shorter than the tank, with a bevelled perimeter, warning plate and ventilation slots.
   body.add(box(.119,.133,.032,0,cy-.001,cz-.103,.23,14,8),C.black,M.satin);
   body.add(box(.109,.124,.017,0,cy-.001,cz-.120,.2,12,8),C.panel,M.satin);
@@ -183,38 +183,38 @@ function explosher(d) {
   body.add(ylathe([[0,.090],[.017,.090],[.022,.096],[.023,.109],[.020,.116],[0,.116]],-.026,cy,cz-.004,20),C.olive,M.satin);
   for(let i=0;i<10;i++){const a=i*Math.PI/5;body.add(box(.004,.012,.004,-.026+Math.cos(a)*.021,cy+.106,cz-.004+Math.sin(a)*.021,.16,6,4),C.darkOlive,M.satin);}
   // Burner bolts onto the sloped shoulder. The silver yoke is open-sided; bronze remains visible within it.
-  const by=cy+.061,bz=cz+.091,tilt=-.61,burner=new Pieces();
-  burner.add(box(.141,.124,.011,0,0,-.018,.18,10,4),C.silver,M.satin);
+  const by=cy+.061,bz=cz+.091,tilt=-.48,burner=new Pieces();
+  burner.add(box(.141,.124,.011,0,0,-.018,.18,10,4),C.silver,M.metal);
   burner.add(box(.132,.113,.005,0,0,-.011,.14,10,4),C.steel,M.satin);
-  burner.add(zlathe([[.040,-.014],[.041,.012],[.051,.064],[.058,.076],[.054,.078],[.048,.055],[.038,-.014],[.040,-.014]],0,0,0,24),C.brass,M.satin);
+  burner.add(zlathe([[.040,-.014],[.041,.012],[.051,.064],[.058,.076],[.054,.078],[.048,.055],[.038,-.014],[.040,-.014]],0,0,0,24),C.brass,M.metal);
   burner.add(zlathe([[.045,-.012],[.052,-.012],[.057,.043],[.058,.062],[.054,.064],[.049,.045],[.041,-.008],[.045,-.012]],0,0,0,24),C.black,M.satin);
-  burner.add(ring(.056,.0021,0,0,.076,'z',5,30),C.brassEdge,M.satin);
+  burner.add(ring(.056,.0021,0,0,.076,'z',5,30),C.brassEdge,M.metal);
   // Dark burner body and the four machined silver retaining rails are separate volumes.
   for(const sx of[-1,1]){
     burner.add(box(.014,.076,.045,sx*.048,0,.015,.22,10,6),C.black,M.satin);
-    burner.add(box(.009,.010,.089,sx*.055,-.038,.023,.25,10,4),C.silver,M.satin);
-    burner.add(box(.009,.010,.078,sx*.052,.037,.017,.25,10,4),C.silver,M.satin);
+    burner.add(box(.009,.010,.089,sx*.055,-.038,.023,.25,10,4),C.silver,M.metal);
+    burner.add(box(.009,.010,.078,sx*.052,.037,.017,.25,10,4),C.silver,M.metal);
     for(const y of[-.034,.034])burner.add(zlathe([[0,.047],[.004,.047],[.004,.052],[0,.052]],sx*.050,y,0,10),C.steel,M.satin);
     // Orange spring wire, elbow and brass gas fitting are anchored to the yoke rather than floating rings.
     burner.add(pipe([[sx*.044,-.025,-.009],[sx*.052,-.025,.001],[sx*.053,-.018,.018],[sx*.054,.006,.040]],.0017,16,5),C.orange,M.gloss);
-    burner.add(box(.012,.010,.013,sx*.043,-.027,-.002,.12,8,4),C.brassEdge,M.satin);
+    burner.add(box(.012,.010,.013,sx*.043,-.027,-.002,.12,8,4),C.brassEdge,M.metal);
   }
-  for(const y of[-.033,0,.033]){const half=Math.sqrt(.054*.054-y*y);burner.add(box(half*2,.0035,.008,0,y,.078,.12,10,4),C.brassEdge,M.satin);}
+  for(const y of[-.033,0,.033]){const half=Math.sqrt(.054*.054-y*y);burner.add(box(half*2,.0035,.008,0,y,.078,.12,10,4),C.brassEdge,M.metal);}
   burner.add(zlathe([[0,.037],[.043,.037],[.043,.039],[0,.039]],0,0,0,24),'#453c26',M.satin);
-  ink.add(sphere(.027,.009,.0015,0,-.016,.041,18,8).rotateX(tilt).translate(0,by,bz));
-  body.merge(burner.transform(g=>g.rotateX(tilt).translate(0,by,bz)));
+  ink.add(sphere(.027,.009,.0015,0,-.016,.041,18,8).scale(1,1,.72).rotateX(tilt).translate(0,by,bz));
+  body.merge(burner.transform(g=>g.scale(1,1,.72).rotateX(tilt).translate(0,by,bz)));
   // Gauge has a bevelled body, pale dial, red needle and two short connector stems.
-  body.add(cyl(.004,[-.048,cy+.081,cz+.054],[-.062,cy+.096,cz+.066],10),C.silver,M.satin);
-  body.add(zlathe([[0,0],[.013,0],[.014,.004],[.014,.010],[.011,.012],[0,.012]],0,0,0,20).rotateX(-.65).translate(-.064,cy+.097,cz+.066),C.silver,M.satin);
+  body.add(cyl(.004,[-.048,cy+.081,cz+.054],[-.062,cy+.096,cz+.066],10),C.silver,M.metal);
+  body.add(zlathe([[0,0],[.013,0],[.014,.004],[.014,.010],[.011,.012],[0,.012]],0,0,0,20).rotateX(-.65).translate(-.064,cy+.097,cz+.066),C.silver,M.metal);
   body.add(zlathe([[0,.012],[.010,.012],[.010,.013],[0,.013]],0,0,0,18).rotateX(-.65).translate(-.064,cy+.097,cz+.066),'#e0e3d9',M.print);
   body.add(cyl(.001,[-.064,cy+.105,cz+.077],[-.068,cy+.109,cz+.076],6),'#b84032',M.print);
   // Brushed rectangular-section crash frame: U side loops, reinforced front bumper and upright carry hoop.
   for(const sx of[-1,1]){
     const x=sx*.088;
-    body.add(beam([[x,cy+.024,cz+.068],[x,cy+.030,cz-.065],[x,cy+.013,cz-.094],[x,cy-.041,cz-.094],[x,cy-.064,cz-.071],[x,cy-.064,cz+.070]],.0064,34),C.silver,M.satin);
+    body.add(beam([[x,cy+.024,cz+.068],[x,cy+.030,cz-.065],[x,cy+.013,cz-.094],[x,cy-.041,cz-.094],[x,cy-.064,cz-.071],[x,cy-.064,cz+.070]],.0064,34),C.silver,M.metal);
     body.add(cyl(.0077,[x,cy-.064,cz-.037],[x,cy-.064,cz+.064],12),C.black,M.rubber);
-    body.add(beam([[x,cy+.028,cz-.063],[sx*.079,cy+.125,cz-.071],[sx*.066,cy+.144,cz-.064]],.0056,20),C.silver,M.satin);
-    body.add(beam([[x,cy-.064,cz+.069],[sx*.098,cy-.047,cz+.139],[sx*.082,cy-.037,cz+.157]],.007,18),C.silver,M.satin);
+    body.add(beam([[x,cy+.028,cz-.063],[sx*.079,cy+.125,cz-.071],[sx*.066,cy+.144,cz-.064]],.0056,20),C.silver,M.metal);
+    body.add(beam([[x,cy-.064,cz+.069],[sx*.098,cy-.047,cz+.139],[sx*.082,cy-.037,cz+.157]],.007,18),C.silver,M.metal);
     for(const z of[cz-.064,cz+.061]){body.add(cyl(.006,[sx*.087,cy+.024,z],[sx*.099,cy+.024,z],12),C.steel,M.satin);body.add(cyl(.0025,[sx*.099,cy+.024,z],[sx*.101,cy+.024,z],8),C.black,M.satin);}
     // Diagonal external shock, measured from the side turntable view. Both orange anchors meet the frame.
     const low=[x,cy+.023,cz+.004],high=[x,cy+.063,cz+.072];body.add(cyl(.0047,low,high,10),C.black,M.rubber);
@@ -222,7 +222,7 @@ function explosher(d) {
     const pts=[];for(let i=0;i<=48;i++){const t=i/48,a=t*Math.PI*10;pts.push([x+Math.cos(a)*.0085,cy+.028+t*.031+Math.sin(a)*.0073,cz+.012+t*.052-Math.sin(a)*.0044]);}body.add(pipe(pts,.0017,56,5),C.steel,M.satin);
   }
   body.add(cyl(.009,[-.066,cy+.144,cz-.064],[.066,cy+.144,cz-.064],14),C.black,M.rubber);
-  body.add(beam([[-.082,cy-.037,cz+.157],[.082,cy-.037,cz+.157]],.007,6),C.silver,M.satin);
+  body.add(beam([[-.082,cy-.037,cz+.157],[.082,cy-.037,cz+.157]],.007,6),C.silver,M.metal);
   // The native hand grip is retained at the origin; it is not the high reference carry handle.
   wireHandle(body,cz-.107,C.black);
   return rebuild(d,{body,ink,parts:{surface:inkDisc(.035,BY-.004+.06,BZ+.02)}});

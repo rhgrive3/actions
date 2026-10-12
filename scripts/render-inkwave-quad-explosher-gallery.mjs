@@ -8,6 +8,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import os from 'node:os';
+const hostStart={at:new Date().toISOString(),load:os.loadavg(),cpuCount:os.cpus().length};
 import { chromium } from 'playwright';
 
 const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n < 0 ? fallback : process.argv[n + 1]; };
@@ -65,12 +67,46 @@ try {
   }, { prefix, size });
   const all = await page.evaluate(() => Object.keys(window.__gallery.WEAPONS).filter(id => window.__gallery.WEAPONS[id]?.class !== undefined || window.__gallery.WEAPONS[id]?.catalogRecord));
   const list = ids.length ? ids : all;
+  const references = {
+  "s3-maneuver-stepper": {
+    "target": "Dark Tetra Dualies (Splatoon 3)",
+    "official": {
+      "variant": "Dark Tetra Dualies",
+      "path": "reports/inkwave-weapon-model-workspace/refs/s3-maneuver-stepper.3d.png",
+      "gitBlob": "f8c10492e9a6c9dfc4fbb8a662e09619e2a90e3f",
+      "use": "target shape and palette"
+    },
+    "turntable": {
+      "variant": "Light Tetra Dualies",
+      "path": "reports/inkwave-weapon-model-workspace/rotsheets/s3-maneuver-stepper.rot.jpg",
+      "gitBlob": "674dbc64fb7e8d3e0a1ad5f241404717eabc3720",
+      "use": "shared visible geometry only; NOT target palette",
+      "sourceFile": "File:S3 Light Tetra Dualies model rotating.mp4"
+    }
+  },
+  "s3-slosher-washtub": {
+    "target": "Explosher (Splatoon 3, base kit)",
+    "official": {
+      "variant": "Explosher (base kit)",
+      "path": "reports/inkwave-weapon-model-workspace/refs/s3-slosher-washtub.3d.png",
+      "gitBlob": "b25b744f71a0a3bdf42d1c504a816ac86a80f668",
+      "use": "target shape and palette"
+    },
+    "turntable": {
+      "variant": "Explosher (base kit)",
+      "path": "reports/inkwave-weapon-model-workspace/rotsheets/s3-slosher-washtub.rot.jpg",
+      "gitBlob": "e087026509211d158e9161a39b321d180da046ff",
+      "use": "target multiview shape and palette",
+      "sourceFile": "File:S3 Explosher model rotating.mp4"
+    }
+  }
+};
   const rows = [];
   for (const id of list) {
     const row = await page.evaluate(async ({ id, held, crowd }) => {
       const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
-      const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
+      const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = new THREE.Color(id==='s3-maneuver-stepper'?'#58b22d':'#4b46ce'); // studio ink matches target render; real Actors below keep both game teams
       let bytes = 0; const geos = [d.body, d.ink, d.bodyStatic, d.inkStatic, d.drum, d.drumCaps, d.glow, ...Object.values(d.parts || {}).map(p => p.geo)];
       for (const geo of new Set(geos.filter(Boolean))) { for (const a of Object.values(geo.attributes)) bytes += a.array.byteLength; if (geo.index) bytes += geo.index.array.byteLength; }
       // whole weapon at rest, including the parts and drum/glow channels
@@ -97,16 +133,17 @@ try {
       // Reference-paired cameras are independent from authored geometry. Both revisions use these exact poses.
       const referenceImages={},referenceCameras={},isQuad=id==='s3-maneuver-stepper';
       const refCenter=new THREE.Vector3(0,isQuad?.036:.027,isQuad?.039:.153);
-      const refViews=isQuad?{refSide:[-3,.22,.45],refFront:[0,.12,3],refRear:[0,.12,-3],refOblique:[-.9,.53,1.1]}:{refSide:[-3,.35,.30],refFront:[-.20,.18,3],refRear:[-.30,.25,-3],refOblique:[-.9,1.02,1.1]};
+      const refViews=isQuad?{refSide:[-3,.22,.45],refFront:[0,.12,3],refRear:[0,.12,-3],refOblique:[-.9,.53,1.1]}:{refSide:[-3,.35,.30],refFront:[-.20,1.15,3],refRear:[-.30,.50,-3],refOblique:[-.9,1.02,1.1]};
       for(const [name,eye]of Object.entries(refViews)){
         const isPair=isQuad&&['refOblique','refSide'].includes(name),span=isQuad?(isPair?.36:.34):.40;
-        const camera=new THREE.PerspectiveCamera(25,1,.01,30),offset=new THREE.Vector3(...eye).normalize().multiplyScalar(span*(isQuad?(isPair?2.1:2.85):(name==='refSide'?2.2:2.05))),up=new THREE.Vector3(0,1,0);
+        const distance=isQuad?(isPair?1.31:1.10):(name==='refSide'||name==='refOblique'?1.30:name==='refRear'?1.08:1.18);
+        const camera=new THREE.PerspectiveCamera(18,1,.01,30),offset=new THREE.Vector3(...eye).normalize().multiplyScalar(distance),up=new THREE.Vector3(0,1,0);
         // The Explosher source turntable displays a tilted can. Align the camera basis, never deform the model.
-        if(!isQuad&&name!=='refOblique'){offset.applyAxisAngle(new THREE.Vector3(1,0,0),.18);up.applyAxisAngle(new THREE.Vector3(1,0,0),.18);}
+        if(!isQuad&&name==='refSide'){offset.applyAxisAngle(new THREE.Vector3(1,0,0),.18);up.applyAxisAngle(new THREE.Vector3(1,0,0),.18);}
         const roll=isQuad?0:({refFront:-.22,refRear:.22,refSide:0,refOblique:-.30}[name]||0);up.applyAxisAngle(offset.clone().normalize(),roll);
         camera.position.copy(refCenter).add(offset);camera.up.copy(up);camera.lookAt(refCenter);
         let second;if(isPair){second=g.clone(true);g.position.set(-.064,-.010,-.022);second.position.set(.064,.010,.022);scene.add(second);}
-        renderer.render(scene,camera);referenceImages[name]=snap();referenceCameras[name]={position:camera.position.toArray(),up:up.toArray(),target:refCenter.toArray(),fov:25,pair:isPair,roll};
+        renderer.render(scene,camera);referenceImages[name]=snap();referenceCameras[name]={position:camera.position.toArray(),up:up.toArray(),target:refCenter.toArray(),fov:18,pair:isPair,roll};
         if(second){scene.remove(second);g.position.set(0,0,0);}
       }
       scene.remove(g);
@@ -163,8 +200,23 @@ try {
           for(let k=0;k<actors.length;k++){const o=actors[k];o.pos.set((k%4-1.5)*1.15,0,Math.floor(k/4)*1.5);o.intent.fire=false;o.character.setLod(tier);for(let z=0;z<4;z++)o._finishFrame(1/60);}
           const cpu=[],done=[],anim=[];for(let k=0;k<80;k++){const t0=performance.now();for(const o of actors)o._finishFrame(1/60);const t1=performance.now();renderer.render(scene,camera);const t2=performance.now();gl.finish();const t3=performance.now();if(k>=20){anim.push(t1-t0);cpu.push(t2-t1);done.push(t3-t1);}}
           const geos=new Set();scene.traverseVisible(o=>{if(o.isMesh&&o.geometry)geos.add(o.geometry);});let geometryBytes=0;for(const g of geos){for(const a of Object.values(g.attributes))geometryBytes+=a.array.byteLength;if(g.index)geometryBytes+=g.index.array.byteLength;}
-          res.crowd[tier]={actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
+          res.crowd[tier]={actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),rawSamples:{animationMs:[...anim],renderSubmitMs:[...cpu],renderCompleteMs:[...done]},animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
           res.images['crowd-'+tier]=snap();
+        }
+        // Diagnostic phases are separate from the original, uninstrumented render/animation ABBA above.
+        // The no-render control distinguishes per-frame geometry/pose work from renderer/SwiftShader contention.
+        res.cpuDiagnostics={};
+        const geometryState=()=>actors.map(o=>{const c=o.character,meshes=[];c.root.traverseVisible(m=>{if(m.isMesh)meshes.push({id:m.id,geometry:m.geometry.uuid,vertices:m.geometry.attributes.position.count});});return{id:c.weaponModel,rootVisible:c.root.visible,parentVisible:c.root.parent?.visible!==false,kidScale:c.kidScale,sourceActive:c.sourceMotion?.active,lod:c.lodTier,farDec:c.weapon.farDec,leftFarDec:c.weapon.left?.farDec,meshes};});
+        for(const tier of['game','far']){
+          for(const o of actors){o.character.setLod(tier);for(let j=0;j<25;j++)o._finishFrame(1/60);}
+          const stateBefore=geometryState(),plain=[];
+          for(let j=0;j<260;j++){const t=performance.now();for(const o of actors)o._finishFrame(1/60);if(j>=60)plain.push(performance.now()-t);}
+          const stateAfter=geometryState();if(JSON.stringify(stateBefore)!==JSON.stringify(stateAfter))throw Error('CPU diagnostic changed visible mesh/geometry state');
+          const restore=[],byMethod={},counts={};let frameTotals={};
+          const wrap=(obj,key,label)=>{const fn=obj?.[key];if(typeof fn!=='function')return;const own=Object.hasOwn(obj,key);obj[key]=function(...args){const t=performance.now();try{return fn.apply(this,args);}finally{frameTotals[label]=(frameTotals[label]||0)+performance.now()-t;counts[label]=(counts[label]||0)+1;}};restore.push(()=>{if(own)obj[key]=fn;else delete obj[key];});};
+          for(const o of actors){const c=o.character,id=c.weaponModel;wrap(o,'_finishFrame',id+'/_finishFrame');for(const key of['update','_buildPose','_applyPose','_animWeapon','_updateMaterials','_updateLod'])wrap(c,key,id+'/'+key);for(const key of['advance','applyBody','applyForm'])wrap(c.sourceMotion,key,id+'/sourceMotion.'+key);}
+          try{for(let j=0;j<160;j++){frameTotals={};for(const o of actors)o._finishFrame(1/60);if(j>=40)for(const[k,v]of Object.entries(frameTotals))(byMethod[k]||=[]).push(v);}}finally{for(const fn of restore)fn();}
+          res.cpuDiagnostics[tier]={noRenderRawMs:plain,noRenderAnimationMs:quant([...plain]),inclusiveMethodMs:Object.fromEntries(Object.entries(byMethod).map(([k,v])=>[k,quant(v)])),methodCalls:counts,geometryStable:true,state:stateAfter,heap:performance.memory?{used:performance.memory.usedJSHeapSize,total:performance.memory.totalJSHeapSize}:null};
         }
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
         G.actors=[a];
@@ -178,6 +230,6 @@ try {
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
   }
-  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, rows, errors }, null, 2));
+  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, references, host:{start:hostStart,end:{at:new Date().toISOString(),load:os.loadavg()},timingClock:"performance.now; SwiftShader host; method diagnostics inclusive and separate from ABBA"}, rows, errors }, null, 2));
   if (errors.length) { console.error('page errors:', errors.slice(0, 10)); process.exitCode = 1; }
 } finally { await browser?.close(); await new Promise(r => server.close(r)); }

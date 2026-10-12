@@ -38,7 +38,20 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  const deck=f.getWeaponDef(IDS[0]).body,dp=deck.attributes.position,di=deck.index.array;let tops=0;
  for(let j=0;j<di.length;j+=3){const a=new f.THREE.Vector3().fromBufferAttribute(dp,di[j]),b=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+1]),c=new f.THREE.Vector3().fromBufferAttribute(dp,di[j+2]);const center=a.clone().add(b).add(c).multiplyScalar(1/3);if(Math.abs(center.x)<.020&&center.z>-.010&&center.z<.025&&center.y>-.085&&center.y<-.079){const n=b.clone().sub(a).cross(c.clone().sub(a));assert.ok(n.y>0,'quad swept deck top has outward winding');tops++;}}
  assert.ok(tops>=2,'quad swept deck top witnesses exist');
+ let heelWidth=0;for(let i=0;i<dp.count;i++)if(dp.getY(i)>-.060&&dp.getY(i)<-.020&&dp.getZ(i)>-.063&&dp.getZ(i)<-.012)heelWidth=Math.max(heelWidth,Math.abs(dp.getX(i)));assert.ok(heelWidth>.040,'quad rear heel has real transverse flare');
+ const ex=f.getWeaponDef(IDS[1]).body,ep=ex.attributes.position,em=ex.attributes.aMat;let cageMetal=0;for(let i=0;i<ep.count;i++)if(Math.abs(ep.getX(i))>.084&&ep.getZ(i)>.06&&ep.getZ(i)<.245&&Math.round(em.getX(i))===3)cageMetal++;assert.ok(cageMetal>50,'explosher exposed cage uses existing brushed-metal class');
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));
+});
+test('Dark Tetra target palette does not inherit Light Tetra colour volumes',async()=>{
+ const f=await production(),d=f.getWeaponDef(IDS[0]),p=d.body.attributes.position,c=d.body.attributes.color,ip=d.ink.attributes.position;
+ // The target render shows team colour only on the sole triangle and paired front circles.
+ for(let i=0;i<ip.count;i++){const x=ip.getX(i),y=ip.getY(i),z=ip.getZ(i);if(x===0&&y===0&&z===0)continue;/* native hidden-channel degenerate sentinel */assert.ok(y<-.02,'no team-coloured receiver chamber');assert.ok((z>-.073&&z<-.018&&y>-.082&&y<-.074)||(z>.140&&y>-.067),'no team-coloured rebound cushion');}
+ const expected=new f.THREE.Color('#e8e8e1');let whiteChamber=0,whiteCushion=0;const blackSides=[0,0],greyPads=[0,0];
+ for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),r=c.getX(i),g=c.getY(i),b=c.getZ(i),side=x<0?0:1;
+  if(Math.abs(r-expected.r)<1e-6&&Math.abs(g-expected.g)<1e-6&&Math.abs(b-expected.b)<1e-6){if(z>.010&&z<.125&&y>.035&&y<.096)whiteChamber++;if(y<-.085)whiteCushion++;}
+  if(z<.010&&z>-.065&&y>.005&&y<.10&&Math.abs(x)>.014){if(Math.max(r,g,b)<.025)blackSides[side]++;if(r>.10&&r<.25&&g>.10&&g<.25)greyPads[side]++;}
+ }
+ assert.ok(whiteChamber>20&&whiteCushion>100,'Dark pale chambers and cushions are static body colours');for(let i=0;i<2;i++){assert.ok(blackSides[i]>20,'both rear cheeks are black');assert.ok(greyPads[i]>20,'both rear pads are grey');}
 });
 test('real Actors carry and fire both rebuilds at 30, 60 and 120 Hz with finite pose and unchanged launch sockets',async()=>{
  const f=await production(),{G,THREE}=f;G.scene=new THREE.Scene();G.physics=new f.Physics(G.level);G.level.queryBlocks=(_a,_b,_c,_d,out)=>{out.length=0;return out;};G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};

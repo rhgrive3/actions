@@ -10,6 +10,8 @@ Both the stored 3D render and the twelve-view rotation sheet were opened and vis
 - `reports/inkwave-weapon-model-workspace/refs/s3-slosher-washtub.3d.png`
 - `reports/inkwave-weapon-model-workspace/rotsheets/s3-slosher-washtub.rot.jpg`
 
+**Variant correction:** the Quad turntable is Light Tetra Dualies, used only for corroborated geometry. The Dark target render controls its fixed palette and team-colour partition; see the audited source ledger below.
+
 The same `Pieces`, lathe, box, cylinder and pipe pipeline as the accepted Splatling is used. No imported retail mesh or Blender asset is introduced. The Quad is one pistol used in both hands. Its distinguishing elements are the vertically stacked front discs, open pull loop, thin receiver, wide swept shoe and separate rebound pods. The Explosher has a pressed jerrycan with X ribs, rear electrical box, separate protective rails and shocks, and a large open bronze burner with horizontal grille bars and recessed ink.
 
 ## Preserved contracts
@@ -65,3 +67,38 @@ Reference camera roll, pair offsets and framing are corrected before judging bod
 The next local refinement makes Quad's outer rear face black with a higher kidney pad and moves the two front rebound faces into the end of a shortened deck, instead of below an overlapping nose. Explosher now has a dark outer burner housing over the gold inner throat, a layered angular mount, four hand-authored pale glyph silhouettes and hard-faced rectangular cage rails. The source glyphs are coarse visual approximations, not a decoded alphabet or an imported texture. Flat rail faces distinguish brushed metal from the black rubber grips; the cross-section change also reduces rail tessellation rather than adding runtime work. All edits remain static geometry/material data in the two builders.
 
 The refined candidate also includes main `bca45e7` (the two-file saturated network-paint FIFO correction). Its review baseline is pinned to the same commit. Refined static totals are Quad 11,731 triangles / 303,786 bytes and Explosher 10,757 / 274,262; no budget was raised.
+
+## Calibration correction after b9a0360
+
+The b9a0360 reference-pair render exposed a cropped Quad pair and an incorrect below-target Explosher front camera after the display-tilt transform. The revised reference cameras use longer stand-off distances with an 18-degree field of view; the front view now looks down at the can without that side-view-only tilt. This diagnostic-camera correction does not change gameplay cameras or model transforms.
+
+With projection separated from form, the rear view identifies the Quad's missing flared heel volume; it is added below the kidney pad, while the forward black rebound faces are thinner and integrated into the shoe end. The Explosher's outer burner sleeve is shortened and its pitch reduced to match the side view. The pale hand-authored mark is moved above the shock/frame occluders. Cage, exposed alloy mount, bronze throat and brass bars use the existing brushed-metal surface class rather than satin plastic; rubber, painted can and printed marks retain separate existing classes. No shared material implementation is edited.
+
+These are still candidate changes pending actual shader images and the final same-runner ABBA. Static totals: Quad 11,903 triangles / 307,618 bytes; Explosher 10,757 / 274,262. Earlier b9a/4d metrics remain historical and are not a performance pass for this revision.
+
+## Reference variant audit and palette correction
+
+The shared filename `s3-maneuver-stepper.rot.jpg` is an ID lookup, not proof that the sheet depicts the Dark kit. The provenance files resolve the exact variants:
+
+| Image | Exact variant | Permitted reference use | Git blob SHA |
+| --- | --- | --- | --- |
+| `refs/s3-maneuver-stepper.3d.png` | Dark Tetra Dualies, Splatoon 3 | Target shape and palette | `f8c10492e9a6c9dfc4fbb8a662e09619e2a90e3f` |
+| `rotsheets/s3-maneuver-stepper.rot.jpg` | Light Tetra Dualies, Splatoon 3 | Corroborated shared visible geometry only; not target colours | `674dbc64fb7e8d3e0a1ad5f241404717eabc3720` |
+| `refs/s3-slosher-washtub.3d.png` | Explosher, Splatoon 3 base kit | Target shape and palette | `b25b744f71a0a3bdf42d1c504a816ac86a80f668` |
+| `rotsheets/s3-slosher-washtub.rot.jpg` | Explosher, Splatoon 3 base kit | Target multiview shape and palette | `e087026509211d158e9161a39b321d180da046ff` |
+
+All four paths are under `reports/inkwave-weapon-model-workspace/`. Identity evidence in that same directory: `alt-kits.json` (blob `9a45b00964d4b31afdf013fd3a5b05ee4e046c1a`) explicitly maps stepper to Light Tetra Dualies; `rot-variants.json` (blob `67db2bcf7a1b64b1cab16a9c4a9b85eabb2c8895`) names `File:S3 Light Tetra Dualies model rotating.mp4` and `File:S3 Explosher model rotating.mp4`; `BRIEF.md` (blob `e3427cfe0f7b73682c3acf54e1a059432491abe5`) identifies the per-weapon render as the colour authority when an alternate-kit turntable is used. Explosher has no alternate-kit override.
+
+The previous white rear cheek was an incorrect left/right inference from comparing different kits. Both Dark rear cheeks are now black with grey kidney pads. The Dark official render's chambers and rebound cushions are pale rather than the magenta seen in the Light turntable. Those volumes now use fixed body colour; only the visible sole triangle and paired forward circles retain team ink. A geometry-colour test guards this partition. Studio references use the target render's green/purple ink; actual gameplay Actors still exercise the native orange/blue teams.
+
+The Dark render and Light sheet visibly correspond in the two curved frame members, stacked twin muzzle discs, raised open pull tab, shoe profile, ankle covers and three rebound-cushion arrangement. No different large accessory, opening or additional mechanical assembly is visible in the supplied pair. That is a limited visual corroboration, not proof that unseen surfaces or every printed/embossed detail are identical. The hidden opposite pad detailing and chamber microprint are not resolved by the Dark image; fine ribs are authored only on the verified visible side. The chamber ribs, loop thickness and small fasteners remain procedural approximations. For Explosher both sources agree on the sloped can shoulder, X panels, filler cap, rectangular cage, shocks, dark burner housing, brass throat and rear electronics box. Its tiny warning print and self-authored side glyphs remain approximate.
+
+Every paired comparison labels the reference's exact variant and use. The Light rows explicitly say GEOMETRY ONLY and do not present its palette as a completed Dark target. `gallery.json` includes source paths, blob SHAs and source movie identities; the comparison script verifies image bytes against those blobs before producing a sheet.
+
+## Historical b9a0360 performance (not this revision's approval)
+
+Run `38229788022` completed successfully against main `bca45e7` using CI Node 22 and the production browser. All twelve contracts, ten unchanged byte comparisons, actual Actors and ABBA ran. Normal eight-Actor triangles were 295,572 -> 343,020 (+16.1%), visible geometry bytes 2,122,312 -> 2,492,372 (+17.4%), draws 112 unchanged. Far triangles were 82,438 -> 83,206 (+0.93%), bytes 607,886 -> 602,952 (-0.81%), draws 64 unchanged.
+
+In ABBA order, normal animation p50/p95 (ms) were old 6.6/13.7, new 6.7/15.3, new 6.4/17.0, old 6.4/12.9; GPU-completion-inclusive render p95 was 8.7, 8.5, 9.4, 9.0. Far animation p50/p95 was old 4.0/4.8, new 4.1/9.2, new 4.2/8.1, old 4.0/4.7; render-complete p95 was 3.0, 4.9, 3.7, 2.9. The repeated far-tail increase is a real concern, not a performance pass. SwiftShader timings are not physical-device FPS. The candidate still changes only static builder data, not cache generation or animation loops; the exact cause of that CPU tail is not isolated. The next exact head must be measured and reviewed independently.
+
+The original animation timer surrounds only eight `_finishFrame(1/60)` calls; renderer submission and `gl.finish()` are separate. Source inspection finds no per-frame vertex loop added by this candidate: `_animWeapon` uses the `farDec` transition guard before cached far-geometry selection, then animates existing transforms. To investigate rather than assume the cause, the next review preserves the original ABBA and adds separate no-render CPU phases, inclusive method timings by weapon (including untouched controls), visible/LOD/geometry identity snapshots, raw frame samples, heap snapshots and host load. These diagnostics are test-script-only and must not be confused with uninstrumented gameplay frame times.
