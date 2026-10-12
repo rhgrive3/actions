@@ -160,5 +160,25 @@
     "rearConeLength": 0.34,
     "remarks": "Setback 0.36 is rounded from two projected estimates; Y=0 is a symmetry/coplanarity construction assumption, not an exact reconstructed source ordinate."
   },
-  "scope": "reconstruct the offset generator/drive case, visible copper winding and radial teeth/ribs, twin axle support plates, rear cone and transverse shaft; retain gameplay sockets and drum motion"
+  "scope": "reconstruct the offset generator/drive case, visible copper winding and radial teeth/ribs, twin axle support plates, rear cone and transverse shaft; retain gameplay sockets and drum motion",
+  "forkRefinement": {
+    "scope": "Authored planar faces before bevel, per axial side; overlapping joints counted twice, not an exact union area.",
+    "beforePlanarFaceArea": 0.10433197916086906,
+    "afterComponentArea": 0.05193945164436058,
+    "bearingArea": 0.02935816727562756,
+    "oneStrapArea": 0.011290642184366512,
+    "reductionFraction": 0.5021713183042819,
+    "strapWidthRange": [
+      0.026,
+      0.038
+    ],
+    "strapToCaseDiameter": [
+      0.052,
+      0.076
+    ],
+    "caseRadialWaist": 0.229,
+    "caseRimRadius": 0.247,
+    "caseOuterDiameter": 0.5,
+    "sourceComparison": "9-11s show small bearing plates and narrow curved fork straps onto a separate stepped case; the prior candidate used an excessively broad filled figure-eight plate. Strap width ratio 5.2-7.6% of case diameter is a construction estimate, not exact retail topology."
+  }
 }

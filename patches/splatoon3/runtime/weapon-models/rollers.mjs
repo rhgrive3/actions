@@ -199,7 +199,7 @@ function dynamoRoller(d) {
   for (const [x,rr] of [[-0.30,0.037],[-0.12,0.153],[-0.025,0.207]]) frame.add(ring(rr,0.004,gx+x,0,gz,'x',4,24),C.steel,M.metal);
   // Open annular case: axial core 0.21, with front stator teeth and copper
   // windings visible through the aperture instead of a solid black disc.
-  frame.add(xlathe([[0.212,-0.025],[0.238,-0.025],[0.244,0.005],[0.244,0.145],[0.234,0.185],[0.212,0.185],[0.212,-0.025]],gx,0,gz,32),C.gun,M.metal);
+  frame.add(xlathe([[0.208,-0.025],[0.237,-0.025],[0.247,0],[0.247,0.025],[0.229,0.04],[0.229,0.115],[0.247,0.13],[0.247,0.165],[0.224,0.185],[0.208,0.185],[0.208,-0.025]],gx,0,gz,28),C.gun,M.metal);
   for (const x of [-0.015,0.155]) frame.add(ring(0.241,0.009,gx+x,0,gz,'x',5,32),C.steel,M.metal);
   frame.add(xcyl(0.185,gx+0.13,gx+0.155,0,gz,28),C.dark,M.metal);
   for(let k=0;k<24;k++){
@@ -214,18 +214,28 @@ function dynamoRoller(d) {
   // Vented case bands, retaining straps and bolts, distinct from team ink.
   for(let k=0;k<8;k++){
     const a=k/8*TAU,ca=Math.cos(a),sa=Math.sin(a);
-    frame.add(box(0.085,0.012,0.042,0,0,0,0.25,6,4).rotateX(a).translate(gx+0.064,ca*0.247,gz+sa*0.247),'#81a7a1',M.satin);
+    frame.add(box(0.085,0.012,0.042,0,0,0,0.25,6,4).rotateX(a).translate(gx+0.064,ca*0.232,gz+sa*0.232),'#81a7a1',M.satin);
   }
   for(let k=0;k<3;k++){
     const a=k/3*TAU+.25,ca=Math.cos(a),sa=Math.sin(a);
     frame.add(box(0.20,0.02,0.04,0,0,0,0.25,6,4).rotateX(a).translate(gx+0.085,ca*caseR,gz+sa*caseR),C.gun,M.metal);
     frame.add(xcyl(0.013,gx+0.17,gx+0.218,ca*0.226,gz+sa*0.226,8),C.steel,M.metal);
   }
-  // Two pierced side plates support both distinct axes. Their apertures
-  // leave the copper stator and the drum bearing exposed in opposite views.
-  const outline=[[dz+.13,-.08],[dz+.16,0],[dz+.13,.08],[dz-.01,.125],[gz+.14,.225],[gz+.04,.253],[gz-.12,.226],[gz-.23,.12],[gz-.25,-.06],[gz-.17,-.20],[gz+.02,-.256],[gz+.18,-.20],[dz-.01,-.125]];
-  const circle=(z,r,n=28)=>Array.from({length:n},(_,k)=>[z+Math.sin(k/n*TAU)*r,Math.cos(k/n*TAU)*r]);
-  for(const x of [gx-0.015,gx+0.165]) frame.add(slab(outline,0.022,x,0.003,[circle(gz,0.218),circle(dz,0.070,20)],4),C.gun,M.metal);
+  // Source 9-11s shows small bearing plates and bent fork straps, not a
+  // large filled figure-eight plate around the entire generator. Leave the
+  // case rim independent and the neck windows open on BOTH axial faces.
+  const circle=(z,r,n=20)=>Array.from({length:n},(_,k)=>[z+Math.sin(k/n*TAU)*r,Math.cos(k/n*TAU)*r]);
+  const bearingOutline=[[dz+.15,-.045],[dz+.17,0],[dz+.15,.045],[dz+.07,.10],[dz-.025,.11],[dz-.08,.08],[dz-.10,0],[dz-.08,-.08],[dz-.025,-.11],[dz+.07,-.10]];
+  const forkStrip=(side,x)=>{
+    const curve=new THREE.CatmullRomCurve3([[dz+.035,.095],[dz-.065,.11],[gz+.21,.145],[gz+.14,.218],[gz+.08,.238]].map(([z,y])=>V(z,side*y,0)));
+    const left=[],right=[];
+    for(let k=0;k<=8;k++){const t=k/8,q=curve.getPoint(t),n=curve.getTangent(t),half=(.026+.012*Math.abs(2*t-1))/2;left.push([q.x-n.y*half,q.y+n.x*half]);right.push([q.x+n.y*half,q.y-n.x*half]);}
+    return slab([...left,...right.reverse()],.018,x,.002,[],4);
+  };
+  for(const x of [gx-0.015,gx+0.165]){
+    frame.add(slab(bearingOutline,.022,x,.003,[circle(dz,.070)],4),C.gun,M.metal);
+    for(const side of [-1,1])frame.add(forkStrip(side,x),C.gun,M.metal);
+  }
   // The drum has its own narrow end collar, tapered bearing and axle nut.
   frame.add(xlathe([[0,0],[r*1.02,0],[r*1.04,.024],[r*.97,.045],[.092,.049],[.092,.105],[.061,.14],[.036,.21],[0,.215]],gx,0,dz,28),C.steel,M.metal);
   frame.add(xcyl(0.043,gx+.18,gx+.24,0,dz,8),C.gun,M.metal);
