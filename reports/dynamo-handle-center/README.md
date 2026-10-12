@@ -1,6 +1,6 @@
 # Measured Dynamo handle alignment
 
-Measurement base: immutable main `5ed08c6376696dd67391afed7c36463106959de8`. Frozen geometry/browser cost A/B base: main `80555b8cf12e3a9529c0f461bd2acc3ee17f1764`, including the independently verified LOD material preservation change. Final integration base: PR1304 `c1cc224557bd353860e6cd73eb014b4eb21fdd34` on main ed3a046, which adds verifier/test compatibility only. Target: Splatoon 3 standard Dynamo Roller (`Wmn_Roller_Heavy`), not Gold/Starz. Procedural code geometry only, no imported model and no Blender.
+Measurement base: immutable main `5ed08c6376696dd67391afed7c36463106959de8`. Frozen geometry/browser cost A/B base: main `80555b8cf12e3a9529c0f461bd2acc3ee17f1764`, including the independently verified LOD material preservation change. Final integration base: PR1304 `82bb2f6b5c8d99812ace4e19474ac9217a57da65` on main ed3a046. Its c1cc224 parent adds verifier/test compatibility only; 82bb changes only that PR's dedicated workflow VM flag and fail-closed pipeline checks. Target: Splatoon 3 standard Dynamo Roller (`Wmn_Roller_Heavy`), not Gold/Starz. Procedural code geometry only, no imported model and no Blender.
 
 ## Measurement before modification
 
@@ -73,3 +73,5 @@ The completed results above belong to064a against80555. The final composed-main 
 ## Final integration candidate
 
 The final tree uses canonical PR1304 c1cc224 on main ed3a046 plus only the ten Dynamo-owned files. PR1304 contributes fifteen verifier/test/workflow/report files, including the two legacy-map/host-roster compatibility fixtures, with zero production runtime changes. The Dynamo model blob is frozen at c7ce0970466812674b036c60b12b2ef5ac071be3. Local composed-source regression passes174/174 with zero skips (Dynamo/all65/LOD/holds/fold/attacks26 and compatibility148). The final dedicated workflow pins c1cc224 as its same-composition before side and repeats production source/emitted/browser/ABBA checks; the earlier performance-064a.json remains explicitly bound to80555, not relabelled as the final head. Final exact-head general and dedicated results remain required.
+
+The final integration follows PR1304 to82bb2f6 (canonical tree9d3c360808902e13753b6e0b4ecd3eb7209e8a68). Compared with c1cc224 this changes only the dedicated identity workflow: explicit VM modules, bash pipefail and a pipeline-failure negative control. Production, tests and Dynamo geometry are byte-identical. Its earlier displayed-success run had five VM setup errors and is not treated as valid proof. The Dynamo workflow already used the VM flag and does not pipe its source tests through tee. The immutable browser before side stays c1cc224 because its production tree is identical; 80555 performance remains separately labelled.
