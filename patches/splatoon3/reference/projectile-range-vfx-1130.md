@@ -23,9 +23,15 @@ Owner: projectile motion, world/player collision, finite reach, and visual effec
   compact smooth rod silhouette are INKWAVE presentation calibration.
   Hit radii, velocity, damage, lifetime, paint footprint and detached paint
   droplet count remain independent.
-- Reference context: Google's "Splatoon-Decomp-NTSC-thick-plus-Splatoon3-resources"
-  files and existing Leanny-derived profile; Source/GMod SplatoonSWEPs is useful
-  for broad VFX concepts but not an authoritative Splatoon 3 11.3.0 timing table.
+- Reference context: Google Drive's `Splatoon-Decomp-NTSC-thick-plus-Splatoon3-resources` folder
+  (Splatoon 1 disassembly and Spr3 resources), plus the Ver.11.3.0
+  Leanny-derived profile. Initial source hierarchy prioritizes 11.3.0.
+- Related Drive reference: `SplatoonSWEPs-Roller-VTF-20261011` folder
+  includes v6 roller splash/muzzle-ring previews and original VTF sprite
+  research packages. Original game/SWEPs VTF image data are **not copied**
+  into this public PR (licensing/provenance not established); they are visual
+  references, not exact S3 engine parameters.
+  https://drive.google.com/drive/folders/1vL03H7ZXjKWp-cZ3cw9vwdqW5-keSKSJ
   Do not present extracted source values as a recovered Nintendo animation mesh.
 
 ## Changes
