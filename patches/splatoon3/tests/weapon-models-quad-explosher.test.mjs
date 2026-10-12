@@ -31,6 +31,8 @@ test('rebuilds are bounded merged volumetric assemblies with open loop and reces
  const hit=(id,y,z)=>{const g=f.getWeaponDef(id).body,p=g.attributes.position,idx=g.index.array;let count=0;for(let j=0;j<idx.length;j+=3){const a=idx[j],b=idx[j+1],c=idx[j+2],ay=p.getY(a),az=p.getZ(a),uy=p.getY(b)-ay,uz=p.getZ(b)-az,vy=p.getY(c)-ay,vz=p.getZ(c)-az,det=uy*vz-uz*vy;if(Math.abs(det)<1e-14)continue;const u=((y-ay)*vz-(z-az)*vy)/det,v=(uy*(z-az)-uz*(y-ay))/det;if(u>=0&&v>=0&&u+v<=1)count++;}return count;};
  assert.equal(hit(IDS[0],.163,.156),0,'quad pull-loop aperture is not a filled silhouette');
  assert.ok(hit(IDS[0],.176,.157)>0,'quad loop crown exists');
+ assert.ok(hit(IDS[0],.047,.015)>0,'quad receiver connects to grip');
+ assert.ok(hit(IDS[0],-.068,-.022)>0,'quad heel connects to grip');
  assert.equal(hit(IDS[0],-.024,.060),0,'quad open space between grip and front stem');
  console.log('QUAD_EXPLOSHER_METRICS '+JSON.stringify(rows));
 });

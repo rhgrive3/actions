@@ -103,6 +103,8 @@ function darkTetra(d) {
     body.add(sphere(.0025, .037, .018, sx * .014, .001, -.005, 12, 8).rotateX(.12), C.grey, M.satin);
     for (const y of [-.018, .023]) body.add(cyl(.004, [sx * .015, y, -.003], [sx * .018, y, -.003], 8), C.black, M.satin);
   }
+  body.add(box(.029, .023, .039, 0, .046, .011, .3, 10, 6), C.black, M.satin); // receiver-to-grip web
+  body.add(shell([[-.026,-.041],[-.006,-.050],[.008,-.082],[-.055,-.086],[-.051,-.073]],.029,.002),C.black,M.rubber); // heel-to-grip web
   body.add(box(.034, .030, .079, 0, .071, .035, .26, 10, 6), C.black, M.satin);
   body.add(box(.031, .018, .069, 0, .099, .036, .2, 10, 6), C.white, M.satin);
   // Ink cylinders sit between the rear receiver and the front plate, rather than a solid C silhouette.
@@ -116,7 +118,7 @@ function darkTetra(d) {
   // White tapered front spine and its purple rear gasket, with a genuinely open pull loop.
   body.add(shell([[.128,.037],[.139,.036],[.132,-.018],[.111,-.062],[.096,-.065],[.111,-.011]], .027, .002), C.white, M.satin);
   body.add(box(.031, .076, .008, 0, .074, .133, .24, 10, 6), C.purple, M.gloss);
-  body.add(pipe([[0,.102,.130],[0,.131,.129],[0,.165,.142],[0,.178,.157],[0,.175,.169],[0,.161,.174],[0,.145,.159],[0,.117,.141]], .0042, 28, 6), C.white, M.satin);
+  body.add(pipe([[0,.102,.130],[0,.131,.129],[0,.165,.142],[0,.178,.157],[0,.175,.169],[0,.161,.174],[0,.145,.159],[0,.117,.141],[0,.104,.135]], .0042, 28, 6), C.white, M.satin);
   // The shoe is wider than the upper receiver: independent side rails around a thin black deck.
   const shoe=[[-.075,-.065],[-.052,-.080],[.035,-.082],[.105,-.064],[.164,-.039],[.169,-.048],[.113,-.079],[.038,-.097],[-.050,-.094],[-.083,-.077]];
   body.add(shell(shoe, .045, .0025), C.sole, M.rubber);

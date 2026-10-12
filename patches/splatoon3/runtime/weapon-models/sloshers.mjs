@@ -191,8 +191,9 @@ function explosher(d) {
     burner.add(pipe([[sx*.043,-.024,-.014],[sx*.050,-.025,.005],[sx*.055,-.017,.035]],.0018,10,5),C.orange,M.gloss);
     burner.add(box(.014,.010,.012,sx*.045,-.029,.005,.15,8,4),C.brass,M.metal);
   }
-  // Recessed team ink is at the burner throat, not a solid coloured cap across the grille.
-  ink.add(zlathe([[0,-.014],[.037,-.014],[.037,-.010],[0,-.010]],0,0,0,20).rotateX(tilt).translate(0,by,bz));
+  // Recessed throat clears the can's front wall. Ink is a small lower pool behind the grille.
+  burner.add(zlathe([[0,.039],[.044,.039],[.044,.040],[0,.040]],0,0,0,24),C.black,M.rubber);
+  ink.add(zlathe([[0,.041],[.027,.041],[.027,.042],[0,.042]],0,-.008,0,20).rotateX(tilt).translate(0,by,bz));
   body.merge(burner.transform(g=>g.rotateX(tilt).translate(0,by,bz)));
   // Pressure gauge sits outside the left side of the neck.
   body.add(zcylGauge(),C.silver,M.metal);

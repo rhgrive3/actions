@@ -27,3 +27,11 @@ No changes to kit, registry, hold profiles, motion, gameplay, projectile origin 
 ## Limitations
 
 Reference images have their original cameras; candidate and baseline use identical fixed cameras. The comparison is visual design evidence, not a pixel-matching or retail gameplay-parity claim. Retail physical sizes are not documented, so native hand and muzzle frames constrain the reconstruction.
+
+## Review iteration and deterministic validation
+
+A CPU-only geometry diagnostic exposed small gaps between the Quad's receiver, grip and heel. Those junctions are now continuous geometry, and the pull-loop return joins its front plate. The Explosher throat was moved forward within the burner so the intact can wall cannot obscure the recessed ink. This diagnostic is explicitly not the emitted-shader/Actor proof; CI images remain required.
+
+Refined static body + ink: Quad 5,279 triangles / 135,314 bytes; Explosher 9,729 triangles / 251,774 bytes. Four focused source tests pass after the revision, including exact same-runtime unchanged geometry and real Actor checks at 30/60/120 Hz. An additional 31 existing Dualie/Slosher motion and timing regressions pass.
+
+The first CI run (`38216994596`) reproduced the production hash and passed Actor/shape checks but rejected the precomputed unchanged Tri-Slosher binary geometry hash. The precomputed snapshot came from local Node 24.19.0, while CI uses Node 22. No model-builder, kit or geometry primitive in this path reads random, date or performance values. Local forward/reverse construction order produces identical hashes for all twelve models. The workflow now creates the immutable before build's geometry twice, in forward/reverse order on the same runner, and compares the ten untouched models byte-for-byte against that actual baseline. It also prints both hashes so the old mismatch can be diagnosed rather than hidden. The precise cross-environment cause remains unconfirmed until that control runs.
