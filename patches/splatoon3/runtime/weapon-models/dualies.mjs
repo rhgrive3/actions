@@ -318,6 +318,208 @@ function glooga(d) {
   return rebuild(d, { body, ink, parts: { trigger: part(trig, [0, Y(207), Z(230)]) }, muzzle: [0, AY, 0.1652] });   // trigger hinge at its top
 }
 
+// ------------------------------------------------------------------------------------------ Dualie Squelchers
+/** Closed 2D polygon [[a, b, r?], ...] with each corner rounded by a quadratic Bézier fillet of radius r (default rr):
+ *  always n + 1 points per corner (one point where r === 0), so lofted sections keep the same point count. */
+function squelchFillet(pts, rr = 0.003, n = 2) {
+  const out = [], L = pts.length;
+  for (let i = 0; i < L; i++) {
+    const p = pts[i], a = pts[(i - 1 + L) % L], b = pts[(i + 1) % L], r = p[2] ?? rr;
+    if (r === 0) { out.push([p[0], p[1]]); continue; }
+    const ux = a[0] - p[0], uy = a[1] - p[1], vx = b[0] - p[0], vy = b[1] - p[1], lu = Math.hypot(ux, uy) || 1e-9, lv = Math.hypot(vx, vy) || 1e-9;
+    const th = Math.acos(Math.max(-1, Math.min(1, (ux * vx + uy * vy) / (lu * lv))));
+    const t = Math.min(r / Math.max(Math.tan(th / 2), 1e-3), lu * 0.45, lv * 0.45);
+    const A = [p[0] + ux / lu * t, p[1] + uy / lu * t], B = [p[0] + vx / lv * t, p[1] + vy / lv * t];
+    for (let k = 0; k <= n; k++) { const s = k / n, q = 1 - s; out.push([q * q * A[0] + 2 * q * s * p[0] + s * s * B[0], q * q * A[1] + 2 * q * s * p[1] + s * s * B[1]]); }
+  }
+  return out;
+}
+/** Loft along +Z through sections [{ z, pts: [[x, y], ...] }] (equal counts, counter-clockwise seen from +Z): smooth
+ *  sides, flat end caps with their own vertices. */
+function squelchLoft(sections) {
+  const m = sections[0].pts.length, pos = [], idx = [];
+  for (const s of sections) for (const [x, y] of s.pts) pos.push(x, y, s.z);
+  for (let k = 0; k < sections.length - 1; k++) for (let i = 0; i < m; i++) {
+    const a = k * m + i, b = k * m + (i + 1) % m, c = (k + 1) * m + (i + 1) % m, d = (k + 1) * m + i;
+    idx.push(a, b, c, a, c, d);
+  }
+  for (const [s, dir] of [[sections[0], -1], [sections[sections.length - 1], 1]]) {
+    const o = pos.length / 3; for (const [x, y] of s.pts) pos.push(x, y, s.z);
+    const v2 = s.pts.map(([x, y]) => new DK.THREE.Vector2(x, y));
+    for (const [a, b, c] of DK.THREE.ShapeUtils.triangulateShape(v2, [])) {
+      const A = v2[a], B = v2[b], C = v2[c], up = (B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x) > 0;   // +Z facing?
+      if (up === (dir > 0)) idx.push(o + a, o + b, o + c); else idx.push(o + a, o + c, o + b);
+    }
+  }
+  const g = new DK.THREE.BufferGeometry();
+  g.setAttribute('position', new DK.THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+/** Symmetric section from its right half [[x, y, r], ...] listed bottom-centre → top-centre (x = 0 at both ends). */
+const squelchSym = half => squelchFillet([...half, ...half.slice(1, -1).reverse().map(([x, y, r]) => [-x, y, r])]);
+/** Linear keyframe table lookup: rows [{ z, ... }] sorted by z → interpolated row at z. */
+function squelchAt(rows, z) {
+  let i = 0; while (i < rows.length - 2 && z > rows[i + 1].z) i++;
+  const a = rows[i], b = rows[i + 1], t = Math.max(0, Math.min(1, (z - a.z) / (b.z - a.z))), o = {};
+  for (const k of Object.keys(a)) o[k] = a[k] + (b[k] - a[k]) * t;
+  return o;
+}
+
+/** Drop outline points closer than `eps` to their predecessor (filleted polygons can repeat points; repeated
+ *  points break the inset rings of dappleRoundSlab). */
+function squelchClean(pts, eps = 0.0005) {
+  const out = [];
+  for (const p of pts) { const q = out[out.length - 1]; if (!q || Math.hypot(p[0] - q[0], p[1] - q[1]) > eps) out.push(p); }
+  while (out.length > 3 && Math.hypot(out[0][0] - out[out.length - 1][0], out[0][1] - out[out.length - 1][1]) <= eps) out.pop();
+  return out;
+}
+/** Flat-shaded rectangular plate / slot (prints, grooves, labels): 12 triangles. */
+const squelchPlate = (w, h, d, x = 0, y = 0, z = 0) => new DK.THREE.BoxGeometry(w, h, d).translate(x, y, z);
+
+function squelchers(d) {
+  // Wmn_Maneuver_Dual_L, rebuilt from the official turntable (S3 Custom Dualie Squelchers model rotating.mp4: same
+  // shape, Custom colours), the Custom promo render, the Hoofz turntable and the main-kit 3d.png (colours). The pair
+  // is two DIFFERENT pistols: the left one has an open C-jaw rear with a coil spring and vented flanks, the right one
+  // (built here; INKWAVE holds one geometry in both hands) is a cordless-tool body: a red housing whose wide rear
+  // block is two side shells over a black wedge core (the shells rise as two prongs either side of a black top
+  // channel, white rating label on the top chamfers, four flank grooves), a steep step down to a tapering snout with
+  // a big knurled knob on each flank, a red collar, a ribbed rubber sleeve, a thin rod and a ribbed cone nozzle.
+  // A narrow raked grip (six grooves a side) stands on a red battery adaptor (release button at the back) over a
+  // black battery pack with "99-30" plates; a power cable runs from the adaptor to the collar on the −X flank (outer
+  // on the right hand, inner on the left). No part shows team colour (the Custom kit's yellow nozzle is kit colour;
+  // the main kit's is black). Scale: visible grip 0.09 m; side reference (t=10.35 frame levelled by +16°):
+  // z = (X − 313)·S, y = (372 − Y)·S.
+  const S = 0.000508, Z = x => (x - 313) * S, Y = y => (372 - y) * S;
+  const C = { red: '#b02a0c', redDark: '#7e1d08', core: '#272623', rubber: '#1d1c1a', nozzle: '#2c2b28', rod: '#151513', screw: '#3c3b38',
+    white: '#f2f1ec', print: '#18181a', groove: '#1a1917', silver: '#a9aaa6', logo: '#d8331a' };
+  const body = new Pieces(), side = new Pieces(), trig = new Pieces();
+  const AY = Y(237);                                                                    // barrel / nozzle axis
+  // ---- rear block: two side shells over the core, top channel between the shell prongs, big top chamfers
+  const REAR = [
+    { z: -0.1245, yT: 0.1595, yB: 0.0935, wM: 0.05, wB: 0.039, ch: 0.017, cd: 0.02 },
+    { z: -0.035, yT: 0.1494, yB: 0.080, wM: 0.05, wB: 0.039, ch: 0.017, cd: 0.016 },
+    { z: 0.0264, yT: 0.1367, yB: 0.062, wM: 0.046, wB: 0.036, ch: 0.015, cd: 0.01 },
+    { z: 0.0594, yT: 0.1185, yB: 0.058, wM: 0.039, wB: 0.032, ch: 0.012, cd: 0.003 }];
+  const CW = 0.0145;
+  const rearSec = (z, inset = 0) => {
+    const q = squelchAt(REAR, z), yT = q.yT - inset, yB = q.yB + inset, wM = q.wM - inset, wB = q.wB - inset, yM = yB + 0.016;
+    return { z, pts: squelchSym([[0, yB, 0], [wB, yB, 0.004], [wM, yM, 0.01], [wM, yT - q.ch, 0.004], [wM - q.ch * 1.05, yT, 0.003],
+      [CW + inset, yT, 0.0012], [CW + inset, yT - q.cd, 0.001], [0, yT - q.cd, 0]]) };
+  };
+  body.add(squelchLoft([rearSec(-0.1245, 0.0025), rearSec(-0.122), rearSec(-0.08), rearSec(-0.035), rearSec(0), rearSec(0.0264), rearSec(0.045), rearSec(0.0565), rearSec(0.0594, 0.002)]), C.red, M.satin);
+  // ---- snout: narrower housing tapering to the barrel collar
+  const SNOUT = [
+    { z: 0.0, yT: 0.128, yB: 0.036, wM: 0.036, wB: 0.031, ch: 0.008 },
+    { z: 0.0594, yT: 0.1179, yB: 0.036, wM: 0.035, wB: 0.030, ch: 0.008 },
+    { z: 0.105, yT: 0.108, yB: 0.035, wM: 0.032, wB: 0.028, ch: 0.008 },
+    { z: 0.146, yT: 0.099, yB: 0.042, wM: 0.029, wB: 0.026, ch: 0.007 },
+    { z: 0.1915, yT: 0.0899, yB: 0.054, wM: 0.026, wB: 0.023, ch: 0.006 },
+    { z: 0.203, yT: 0.0899, yB: 0.054, wM: 0.026, wB: 0.023, ch: 0.006 }];
+  const snoutSec = (z, inset = 0) => {
+    const q = squelchAt(SNOUT, z), yT = q.yT - inset, yB = q.yB + inset, wM = q.wM - inset, wB = q.wB - inset;
+    return { z, pts: squelchSym([[0, yB, 0], [wB, yB, 0.004], [wM, yB + 0.012, 0.006], [wM, yT - q.ch, 0.003], [wM - q.ch, yT, 0.003], [0, yT, 0]]) };
+  };
+  body.add(squelchLoft([0, 0.03, 0.0594, 0.08, 0.105, 0.125, 0.146, 0.17, 0.1915, 0.1995].map(z => snoutSec(z)).concat([snoutSec(0.203, 0.0035)])), C.red, M.satin);
+  // ---- black core: wedge under / behind the shells, slanted rear face, its top is the floor of the top channel
+  const coreTop = z => { const q = squelchAt(REAR, z); return q.yT - q.cd + 0.0005; };
+  const CORE = [[-0.153, 0.1335, 0.128], [-0.147, 0.1355, 0.107], [-0.1412, 0.1365, 0.0874], [-0.1245, coreTop(-0.1245), 0.066], [-0.1072, coreTop(-0.1072), 0.0467],
+    [-0.06, coreTop(-0.06), 0.0467], [-0.035, coreTop(-0.035), 0.0467], [0.0264, coreTop(0.0264), 0.0467], [0.05, coreTop(0.05), 0.05], [0.058, 0.11, 0.052]];
+  const coreSec = ([z, yT, yB]) => { const h = yT - yB;
+    return { z, pts: squelchSym([[0, yB, 0], [0.022, yB, 0.004], [0.034, yB + 0.45 * h, 0.006], [0.03, yB + 0.86 * h, 0.003], [0.0158, yT, 0.0015], [0, yT, 0]]) }; };
+  body.add(squelchLoft(CORE.map(coreSec)), C.core, M.rubber);
+  // ---- flank details (built on −X, mirrored to +X): grooves, labels, prints, screws, knob
+  const flank = (z, y) => { const q = squelchAt(REAR, z); return y >= q.yB + 0.016 ? q.wM : q.wB + (q.wM - q.wB) * (y - q.yB) / 0.016; };
+  const slope = Math.atan2(0.1494 - 0.1595, 0.0895), gs = 0.075;                       // rear block top line, groove fall
+  for (let k = 0; k < 4; k++) {                                                        // four grooves on the rear block
+    const y0 = Y(111 + k * 14), zc = Z(169);
+    side.add(squelchPlate(0.0016, 0.0034, Z(246) - Z(92), 0, 0, 0).rotateX(gs).translate(-flank(zc, y0) - 0.0002, y0 - (zc - Z(100)) * gs, zc), C.groove, M.print);
+  }
+  // rating label on the top chamfer (white plate, barcode, red name bar, round mark)
+  const chA = Math.PI / 4, lab = new Pieces(), lz = (Z(100) + Z(245)) / 2, lL = Z(245) - Z(100);
+  lab.add(squelchPlate(0.0006, 0.0142, lL, 0, 0, 0), C.white, M.print);
+  for (let k = 0; k < 9; k++) lab.add(squelchPlate(0.0008, 0.0045, 0.0008 + (k % 3) * 0.0005, 0, 0.002, -lL / 2 + 0.006 + k * 0.0019), C.print, M.print);
+  lab.add(squelchPlate(0.0008, 0.0026, 0.024, 0, 0.0035, 0.0), C.logo, M.print);
+  lab.add(squelchPlate(0.0008, 0.0012, 0.03, 0, -0.0035, -0.004), C.print, M.print);
+  lab.add(sphere(0.0001 + 0.0006, 0.0034, 0.0034, 0, 0, lL / 2 - 0.007, 10, 6), C.logo, M.print);
+  lab.transform(g => g.rotateZ(-chA).rotateX(-slope));
+  { const q = squelchAt(REAR, lz), cx = q.wM - q.ch * 0.52, cy = q.yT - q.ch * 0.48; side.merge(lab.transform(g => g.translate(-cx - 0.0004, cy, lz))); }
+  // main-kit print: katakana logotype (タイトロツシ as bar glyphs, readable from either side) and a small text line
+  const GLYPHS = [[[0.1, 0.85, 0.9, 1], [0.1, 0.3, 0.25, 1], [0.75, 0, 0.9, 1], [0.25, 0.45, 0.75, 0.6]], [[0.45, 0, 0.6, 0.85], [0.1, 0.6, 0.9, 0.75]],
+    [[0.2, 0, 0.35, 1], [0.35, 0.45, 0.85, 0.6]], [[0.1, 0, 0.25, 1], [0.75, 0, 0.9, 1], [0.1, 0.85, 0.9, 1], [0.1, 0, 0.9, 0.15]],
+    [[0.1, 0.6, 0.25, 1], [0.4, 0.6, 0.55, 1], [0.75, 0, 0.9, 1]], [[0.1, 0.75, 0.3, 0.95], [0.1, 0.4, 0.3, 0.6], [0.45, 0, 0.9, 0.18], [0.75, 0.18, 0.9, 0.7]]];
+  for (const sx of [-1, 1]) {
+    const GW = 0.0082, GH = 0.0088, GP = 0.0104, y0 = 0.0885, z0 = -0.029;
+    GLYPHS.forEach((gl, gi) => {
+      const zg = sx < 0 ? z0 + gi * GP : z0 + (GLYPHS.length - 1 - gi) * GP;          // reads rear → front on −X, front → rear on +X
+      for (const [u0, v0, u1, v1] of gl) {
+        const uu0 = sx < 0 ? u0 : 1 - u1, uu1 = sx < 0 ? u1 : 1 - u0, zc = zg + (uu0 + uu1) / 2 * GW, yc = y0 + (v0 + v1) / 2 * GH;
+        body.add(squelchPlate(0.0006, (v1 - v0) * GH + 0.0004, (uu1 - uu0) * GW + 0.0004, sx * (flank(zc, yc) + 0.0003), yc, zc), C.white, M.print);
+      }
+    });
+    for (let k = 0; k < 14; k++) body.add(squelchPlate(0.0006, 0.0018, 0.0034, sx * (flank(z0 + k * 0.0046, 0.0815) + 0.0003), 0.0815, z0 + 0.002 + k * 0.0046), C.white, M.print);
+  }
+  // screws
+  for (const [z, y] of [[-0.117, 0.153], [0.04, 0.123], [-0.03, 0.088]]) side.add(sphere(0.0012, 0.0026, 0.0026, -flank(z, y) - 0.0002, y, z, 10, 5), C.screw, M.metal);
+  side.add(DK.xcyl(0.0032, 0.0283, 0.0305, 0.069, -0.09, 12), C.rubber, M.satin);         // round socket on the core flank
+  // knob on each flank: octagonal red boss, knurled black wheel, domed cap
+  const KZ = Z(563), KY = Y(252);
+  side.add(DK.xlathe([[0, 0.026], [0.0225, 0.026], [0.0225, 0.0345], [0, 0.0345]], 0, KY, KZ, 8), C.red, M.satin);   // (built on +X)
+  side.add(DK.xlathe([[0, 0.034], [0.0172, 0.034], [0.018, 0.0355], [0.018, 0.0415], [0.0168, 0.0435], [0.0075, 0.0442], [0, 0.0445]], 0, KY, KZ, 22), C.rubber, M.rubber);
+  for (let k = 0; k < 18; k++) {
+    const a = (k / 18) * Math.PI * 2;
+    side.add(box(0.0062, 0.0026, 0.0026, 0.0386, KY + 0.0181 * Math.sin(a), KZ + 0.0181 * Math.cos(a), 0.4, 4, 2), C.rubber, M.rubber);
+  }
+  side.add(DK.xcyl(0.004, 0.0442, 0.0452, KY, KZ, 12), C.screw, M.metal);
+  // grip grooves (six slanted slots) and front-strap ticks
+  for (let k = 0; k < 6; k++) {
+    const y = Y(310 + k * 23), zc = Z(318 - k * 1.5);
+    side.add(squelchPlate(0.0012, 0.0042, 0.028, 0, 0, 0).rotateX(-0.26).translate(-0.0116, y, zc), C.groove, M.print);
+  }
+  // battery adaptor prints / labels / screws (local battery frame, placed after the battery transform)
+  const bat = new Pieces(), batSide = new Pieces();
+  const bz = u => (u - 340) * S, by = v => (560 - v) * S;
+  const bp = a => a.map(([u, v, r]) => [bz(u), by(v), r]);
+  bat.add(dappleRoundSlab(squelchClean(gloogaPoly(bp([[245, 470], [465, 470], [485, 494], [485, 548], [380, 552], [378, 604], [252, 604], [240, 590], [240, 482]]), 0.006)), 0.039, 0.0042, [], 0.002, 2), C.red, M.satin);
+  bat.add(dappleRoundSlab(squelchClean(gloogaPoly(bp([[230, 598], [380, 598], [381, 551], [482, 551], [482, 627], [470, 641], [243, 642], [229, 628]]), 0.006)), 0.032, 0.004, [], 0.002, 2), C.core, M.satin);
+  bat.add(zlathe([[0, bz(200)], [0.0105, bz(200)], [0.012, bz(203)], [0.012, bz(242)], [0, bz(242)]], 0, by(512), 0, 16), C.rubber, M.rubber);   // release button
+  bat.add(zlathe([[0.012, bz(240)], [0.0145, bz(240)], [0.0145, bz(244)], [0.012, bz(244)]], 0, by(512), 0, 16), C.redDark, M.satin);
+  for (const k of [-1, 0, 1]) bat.add(squelchPlate(0.012, 0.0028, 0.002, k * 0.016, by(590), bz(239.5)), C.groove, M.print);   // rear vent slots
+  batSide.add(squelchPlate(0.0006, by(512) - by(528), bz(380) - bz(290), -0.0393, by(520), (bz(290) + bz(380)) / 2), C.white, M.print);
+  batSide.add(squelchPlate(0.0006, 0.0018, bz(385) - bz(250), -0.0393, by(540), (bz(250) + bz(385)) / 2), C.white, M.print);
+  batSide.add(squelchPlate(0.0006, 0.006, 0.006, -0.0393, by(520), bz(268)), C.logo, M.print);
+  for (const u of [256, 360]) batSide.add(sphere(0.0022, 0.0022, 0.001, -0.0392, by(576), bz(u), 8, 4).rotateZ(Math.PI / 2), C.screw, M.metal);
+  batSide.add(squelchPlate(0.0006, by(580) - by(615), bz(470) - bz(410), -0.0322, by(597.5), bz(440)), C.white, M.print);    // "99-30" plate
+  batSide.add(squelchPlate(0.0006, by(584) - by(611), bz(466) - bz(414), -0.0326, by(597.5), bz(440)), C.print, M.print);
+  for (let k = 0; k < 5; k++) if (k !== 2) batSide.add(squelchPlate(0.0006, 0.009, 0.0042, -0.0329, by(597.5), bz(420 + k * 10)), C.white, M.print);
+  batSide.add(squelchPlate(0.0006, 0.0014, 0.0035, -0.0329, by(597.5), bz(440)), C.white, M.print);
+  batSide.mirrorX(); bat.merge(batSide);
+  const BR = -14 * Math.PI / 180, BO = [0, Y(560), Z(340)];
+  body.merge(bat.transform(g => g.rotateX(BR).translate(BO[0], BO[1], BO[2])));
+  // ---- grip: narrow raked handle flaring into the adaptor
+  body.add(dappleRoundSlab(squelchClean(gloogaPoly([[287, 262], [361, 262], [360, 300], [357, 350], [354, 400], [352, 440], [362, 478], [242, 482], [246, 460], [255, 420], [267, 360], [280, 300]]
+    .map(([x, y]) => [Z(x), Y(y)]), 0.0075)), 0.0115, 0.005, [], 0.002, 2), C.red, M.satin);
+  // ---- barrel: red collar, ribbed rubber sleeve, rod, ribbed cone nozzle with a bore
+  body.add(zlathe([[0, 0.2], [0.0158, 0.2], [0.0165, 0.2015], [0.0165, 0.2055], [0.015, 0.207], [0, 0.207]], 0, AY, 0, 8), C.red, M.satin);
+  body.add(zlathe([[0, 0.206], [0.0125, 0.206], [0.0137, 0.208], [0.0137, 0.2165], [0.0124, 0.2185], [0.0137, 0.2205], [0.0137, 0.2295], [0.0124, 0.2315],
+    [0.0135, 0.2335], [0.0133, 0.2405], [0.0106, 0.2435], [0, 0.2435]], 0, AY, 0, 18), C.rubber, M.rubber);
+  body.add(DK.zcyl(0.0058, 0.243, 0.281, 0, AY, 14), C.rod, M.satin);
+  body.add(zlathe([[0, Z(855)], [0.0098, Z(855)], [0.0108, Z(858)], [0.0108, Z(893)], [0, Z(893)]], 0, AY, 0, 6), C.nozzle, M.rubber);   // hex collar
+  const NZ0 = Z(890), NZ1 = Z(1016), nr = z => 0.0193 + (0.0136 - 0.0193) * (z - NZ0) / (NZ1 - 0.004 - NZ0);
+  body.add(zlathe([[0.0098, NZ0 - 0.001], [0.016, NZ0], [0.0185, NZ0 + 0.001], [nr(NZ0 + 0.004), NZ0 + 0.004], [nr(NZ1 - 0.004), NZ1 - 0.004], [0.0112, NZ1],
+    [0.0068, NZ1], [0.0055, NZ1 - 0.0008], [0.0055, NZ1 - 0.016], [0, NZ1 - 0.016]], 0, AY, 0, 20), C.nozzle, M.rubber);   // cone, chamfered lip, bore
+  for (const z of [NZ0 + 0.008, NZ0 + 0.0135, NZ0 + 0.019]) body.add(ring(nr(z) + 0.0004, 0.0012, 0, AY, z, 'z', 4, 20), C.nozzle, M.rubber);
+  // ---- top vent slots on the snout just ahead of the step
+  for (const z of [0.066, 0.074, 0.082]) { const q = squelchAt(SNOUT, z); body.add(squelchPlate(0.024, 0.0016, 0.0032, 0, q.yT + 0.0003, z), C.groove, M.print); }
+  // ---- power cable (−X only): adaptor top → under the knob → collar
+  const cable = [[-0.012, -0.048, 0.022], [-0.016, -0.034, 0.03], [-0.022, -0.012, 0.055], [-0.027, 0.006, 0.09], [-0.03, 0.018, 0.122], [-0.028, 0.027, 0.15],
+    [-0.022, 0.036, 0.176], [-0.016, 0.046, 0.194], [-0.012, 0.056, 0.2]];
+  body.add(pipe(cable, 0.0022, 40, 6), C.rod, M.rubber);
+  body.add(zlathe([[0, -0.003], [0.0045, -0.003], [0.0045, 0.006], [0, 0.006]], -0.012, -0.046, 0.019, 10), C.rubber, M.rubber);   // strain relief
+  // ---- trigger (part): small black switch under the body at the grip front
+  trig.add(box(0.011, 0.011, 0.012, 0, 0.0415, 0.031, 0.4, 8, 6), C.rubber, M.satin);
+  side.mirrorX(); body.merge(side);
+  return rebuild(d, { body, parts: { trigger: part(trig, [0, 0.047, 0.027]) }, muzzle: [0, AY, NZ1 + 0.001] });
+}
+
 function darkTetra(d) {
   // Wmn_Maneuver_Stepper: a white C-frame with a purple strip and a looped hook on top, a black body by the
   // grip, a long curved skid under it like a blade with oval cut-outs filled with ink, a black nozzle.
