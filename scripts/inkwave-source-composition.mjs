@@ -17,6 +17,6 @@ export function adaptBuildSource(rel, code) {
   code = adaptNetworkSource(rel, code);
   code = adaptRange(rel, code);
   code = adaptRanked(rel, code);
-  code = adaptCameraAimControls(rel, code);
-  return adaptNativeStages(rel, code);
+  code = adaptNativeStages(rel, code);
+  return adaptCameraAimControls(rel, code);
 }
