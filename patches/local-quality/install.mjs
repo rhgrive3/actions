@@ -1,6 +1,8 @@
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS } from '../../src/game/character.js';
 import { G } from '../../src/core/ctx.js';
 import { Projectiles } from '../../src/game/weapons.js';
+import { BotBrain } from '../../src/game/bots.js';
+import { installAttractBotBudget } from './attract-bot-budget.mjs';
 import { Menus } from '../../src/ui/menus.js';
 import { rollerDetailMotionSnapshot } from '../splatoon3/runtime/roller-detail-motion.mjs';
 import { installRollerMotionQuality } from './roller-motion.mjs';
@@ -19,4 +21,5 @@ export function installQuality(profile){
   // and muzzle transforms; substitute exact level ground queries and defer only
   // stable offscreen leg IK, pose tail, hair and material presentation work.
   installOfflineOffscreenBudget(api,G);
+  installAttractBotBudget({ BotBrain }, G);
 }

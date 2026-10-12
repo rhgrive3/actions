@@ -40,7 +40,11 @@ export function offlineBudgeted(ch, s, G) {
   if (s.form !== 'kid' || ch.form !== 'kid' || !(ch.kidScale > 0.001)) return false;
   if (s.isLocal || ch.isLocal) return false;
   if (G?.match?.local && s === G.match.local) return false;
-  if (!G?.match || G.match.attract || G.match?.opts?.range) return false;
+  if (!G?.match || G.match?.opts?.range) return false;
+  // Only the non-interactive menu demo may defer long-undrawn bot visuals.
+  // Boot, live rounds, menus with their own full-frame scene and all network
+  // matches retain the pre-existing budgets and gameplay-owned muzzle pose.
+  if (G.match.attract && (G.mode !== 'menu' || G.game?.showcase?.fullFrame)) return false;
   if (!ch.inWorld) return false;
   if (ch.lod && ch.lod.force >= 0) return false;
   const last = ch._camFrame;
