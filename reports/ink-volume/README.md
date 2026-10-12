@@ -4,11 +4,17 @@ Work began from latest main `bf38901475fa857016cf06bcc98cd764898795d0` on 2026-1
 
 ## Architecture and integration
 
-`patches/local-quality/ink-volume/` separates VTF decoding, alpha/distance analysis and mesh construction, pack reading, GPU batches and the first weapon recipe. `ink-volume-adapter.mjs` connects FX-owned registration/disposal/lighting/telemetry to the actual Projectiles `_draw()` pass. The firing, flight, collision, damage, paint and network packet logic retain their existing owners and values. Only horizontal Roller `drop` heads registered to the new renderer are drawn through it. Vertical flicks and other weapons retain their current presentation.
+`patches/local-quality/ink-volume/` separates VTF decoding, alpha/distance analysis and mesh construction, pack reading, GPU batches and weapon recipes. `ink-volume-adapter.mjs` connects FX-owned registration/disposal/lighting/telemetry to the actual Projectiles `_draw()` pass. The firing, flight, collision, damage, paint and network packet logic retain their existing owners and values. The 2026-10-12 extension adopts latest main `90b4fea706d6018fcf48dc205198f19194fd5886` and connects horizontal/vertical Rollers, Brushes, Shooter/Dualies/Splatling rods, and Slosher/Tri-Slosher sheets. Other projectile owners keep their current rendering unless their own compatible pack is explicitly registered.
+
+`recipes.mjs` classifies immutable weapon/family/mode at local and JSON-wire births. Catalogue packets are observed before the outer runtime restores its descriptor, so their received mode is used too; the current owner's weapon or swing never decides an already-fired round. Rod timing/width and sheet width/tail use existing S3 presentation helpers and explicit catalogue draw records. Source sparse fields retain the native fallback; they are not reconstructed official defaults. Roller vertical uses its sourced S3 draw radius with the unchanged Roller artwork: SplatoonSWEPs has no first-generation vertical-flick asset. This adaptation does not certify a Nintendo vertical-flick silhouette.
+
+Shooter packs contain `crosshair/line.vtf` and `crosshair/dot.vtf`, in that order. The original `RenderGeneral` beam uses U=0.3..0.7 and its tip is 0.75 of beam width. The offline tool clips a closed 3D beam to that same source UV window, while keeping **every original RGBA byte** in the pack. The two ends and beam form an atomic composite. They follow the round's world-space tail direction, never the camera. Slosher uses one continuous stretched sheet with its launch-plane orientation, without appended beads. Nonuniform instance transforms use inverse-transpose normals. The shared two sheet patterns remain 16 frames each; no new texture is drawn or randomized.
+
+`submitComposite(source, parts)` accepts 1–8 reused parts with `name`, positive `size`, `pattern`, optional world `position`, positive `stretch` vector and unit `rotation` quaternion. Reservation checks the entire visible effect against both instance and triangle budgets before writing any batch. A failed reservation emits no partial volume, allowing the existing renderer to draw the complete effect. Preflight matrices and recipe vectors are reused, and unregister/dispose clears cached batch references.
 
 Both local and replicated projectile births snapshot the shot's weapon identity and world direction. Replicated births are observed after the complete native metadata restore: current vertical and horizontal heads share nose/tail settings, so those visual settings cannot classify modern packets. The immutable received mode is used even if the owner's current weapon/mode changed. The existing projectile generation guards pooling; a WeakMap holds each rendering orientation without keeping dead rounds alive. A source is submitted at its actual `p.pos` and `p.age`; camera changes and gravity do not rotate the sheet toward the viewer. Visibility culling, triangle and instance caps only limit presentation. Over-budget heads keep the existing game renderer rather than affecting scoring or collision.
 
-The engine exposes `FX.registerInkVolume(name, decodedPack)` and `FX.loadInkVolume(name, manifestURL)`. Additional weapons can add a small recipe calling `engine.submit(name, source, worldSize, pattern)` in their existing render pass. Pack dimensions, frame count and FPS are independent of weapon physics. Gameplay does not run VTF decoding, contour analysis, simplification or mesh construction.
+The engine exposes `FX.registerInkVolume(name, decodedPack)` and `FX.loadInkVolume(name, manifestURL)`. Additional weapons can add a small recipe calling `engine.submit(name, source, worldSize, pattern)` or `submitComposite` in their existing render pass. Pack dimensions, frame count and FPS are independent of weapon physics. Gameplay does not run VTF decoding, contour analysis, simplification or mesh construction.
 
 ## Geometry and original pixels
 
@@ -54,6 +60,19 @@ node scripts/check-inkwave-volumes.mjs .built-site/volume \
 ```
 
 The verification server serves the pack only under its private `/local-ink/` route. To use an authorized pack in an actual deployment, set `globalThis.INKWAVE_INK_VOLUME_URL` before the game's module boot, or call `await window.__G.fx.loadInkVolume('roller', '/authorized-pack/manifest.json')` after boot. Registration completes before the new renderer is used; a failed/missing pack retains the existing renderer. FX exposes `inkVolumeReady` and `inkVolumeError` for deployment diagnostics. The automatic completion promise resolves to status rather than retaining the asset/buffer graph; disposal releases it and rejects late registration. Manifest and binary must share an origin and SHA-256 must match. There is no automatic public download of third-party assets.
+
+For both families, provide `globalThis.INKWAVE_INK_VOLUME_URLS = { roller: '/authorized/sheets/manifest.json', shooter: '/authorized/rods/manifest.json' }`. An explicit map entry overrides the backward-compatible single Roller URL. Weapon-specific registrations use `projectile:<weapon-id>:<recipe>` (recipes: `roller-horizontal`, `roller-vertical`, `brush`, `shooter`, `slosher`). The shared sheet fallback is restricted to Rollers/Brushes and the standard/Tri-Slosher. Machine vortices, Bloblobber bubbles, Explosher and Dread Wringer do not silently receive unrelated artwork; their own asset mapping remains required.
+
+```sh
+node scripts/bake-inkwave-projectile-volumes.mjs /path/to/SplatoonSWEPs .reference-data/shooter-volume
+node scripts/verify-inkwave-volume-pack.mjs .reference-data/shooter-volume \
+  /path/to/SplatoonSWEPs/materials/splatoonsweps/crosshair/line.vtf \
+  /path/to/SplatoonSWEPs/materials/splatoonsweps/crosshair/dot.vtf
+node scripts/check-inkwave-projectile-volumes.mjs .built-site/volume \
+  .reference-data/roller-volume .reference-data/shooter-volume .browser-evidence/projectiles
+```
+
+The rod tool uses documented independent art settings: full thickness 1, symmetric back/front, no upper bias, and the original beam UV window. Pixel alpha, colour and source SHA remain immutable. Independent Pillow DDS decoding of both original DXT5 images reported zero RGBA differences. CI generates labelled authored structural pixels for the rod pack, never replacement gameplay artwork.
 
 CI generates explicitly authored structural test data using `create-inkwave-volume-fixture.mjs`; it is not a replacement artwork or evidence of matching Splatoon. The exact emitted-game connection is exercised in both local original-asset runs and CI fixture runs. CI uploads fixture images and metrics only. Original-source images remain in the ignored local evidence directory.
 

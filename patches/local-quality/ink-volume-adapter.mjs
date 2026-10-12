@@ -7,7 +7,10 @@ export function adaptInkVolumes(rel, code, replaceOnce) {
     patch('    this._sq = new Float32Array(96 * 14); this._sqN = 0;\n  }', `    this._sq = new Float32Array(96 * 14); this._sqN = 0;
     // Deployment-owned, licensed external pack. No automatic asset request unless configured.
     const volumeURL = globalThis.INKWAVE_INK_VOLUME_URL;
-    if (typeof volumeURL === 'string' && volumeURL) this.inkVolumeReady = this.loadInkVolume('roller', volumeURL).then(() => true).catch(error => { this.inkVolumeError = String(error); return null; });
+    const volumeURLs = globalThis.INKWAVE_INK_VOLUME_URLS;
+    const entries = volumeURLs && typeof volumeURLs === 'object' ? Object.entries(volumeURLs) : [];
+    if (typeof volumeURL === 'string' && volumeURL && !entries.some(([name]) => name === 'roller')) entries.push(['roller',volumeURL]);
+    if (entries.length) this.inkVolumeReady = Promise.all(entries.map(([name,url]) => this.loadInkVolume(name,url).then(() => true))).then(() => true).catch(error => { this.inkVolumeError = String(error); return null; });
   }`, 'optional licensed deployment pack');
     patch('  setCollider(fn) { this.collider = fn; }', `  setCollider(fn) { this.collider = fn; }
   async loadInkVolume(name, url, options) {
@@ -24,8 +27,8 @@ export function adaptInkVolumes(rel, code, replaceOnce) {
     patch('return { drops: this.dN,', 'return { inkVolumes: this.inkVolumes?.metrics || null, drops: this.dN,', 'telemetry');
   }
   if (rel === 'src/game/weapons.js') {
-    code = "import { captureRollerVolume, submitRollerVolume } from '../../patches/local-quality/ink-volume/roller.mjs';\n" + code;
-    patch('  _push(p) {', '  _push(p) {\n    captureRollerVolume(p, WEAPONS[p.wid] || p.owner?.weapon);', 'snapshot local horizontal volley');
+    code = "import { captureInkVolume, submitInkVolume } from '../../patches/local-quality/ink-volume/recipes.mjs';\n" + code;
+    patch('  _push(p) {', '  _push(p) {\n    captureInkVolume(p, WEAPONS[p.wid] || p.owner?.weapon);', 'snapshot local projectile presentation');
     // Network composition finalizes immutable mode/identity after velocity.
     // Observe the completed native birth instead of classifying midway through
     // its metadata restore. Preserve its result and rejected-packet behavior.
@@ -34,12 +37,12 @@ Projectiles.prototype.ghostProjectile = function(a, e) {
   const before = this.list.length, result = _inkVolumeGhostBirth.call(this, a, e);
   if (this.list.length > before) {
     const p = this.list[this.list.length - 1];
-    captureRollerVolume(p, WEAPONS[p.wid] || p.owner?.weapon);
+    captureInkVolume(p, WEAPONS[p.wid] || p.owner?.weapon, e);
   }
   return result;
 };\n`;
     patch('  _draw() {\n    let n = 0;', '  _draw() {\n    const volumes = G.fx?.inkVolumes?.isInkVolumes === true ? G.fx.inkVolumes : null;\n    volumes?.begin(G.camera);\n    let n = 0;', 'begin existing projectile render pass');
-    patch('      if (p.delay > 0) continue;\n      const sp = p.vel.length();', '      if (p.delay > 0) continue;\n      if (submitRollerVolume(volumes, p)) continue;\n      const sp = p.vel.length();', 'replace only registered horizontal heads');
+    patch('      if (p.delay > 0) continue;\n      const sp = p.vel.length();', '      if (p.delay > 0) continue;\n      if (submitInkVolume(volumes, p)) continue;\n      const sp = p.vel.length();', 'replace only registered projectile recipes');
     patch('    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);', '    volumes?.end();\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);', 'flush shared frame batches');
   }
   return code;

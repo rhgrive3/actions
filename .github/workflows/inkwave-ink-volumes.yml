@@ -6,7 +6,9 @@ on:
       - 'patches/local-quality/ink-volume-adapter.mjs'
       - 'patches/local-quality/adapter.mjs'
       - 'patches/local-quality/tests/ink-volume.test.mjs'
+      - 'patches/local-quality/tests/ink-volume-recipes.test.mjs'
       - 'scripts/*inkwave-volume*.mjs'
+      - 'scripts/*inkwave-projectile*.mjs'
       - '.github/workflows/inkwave-ink-volumes.yml'
   workflow_dispatch:
 permissions:
@@ -17,7 +19,7 @@ concurrency:
 jobs:
   volume:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,17 +28,21 @@ jobs:
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 meshoptimizer@1.3.0
       - run: npx playwright install --with-deps chromium webkit
       - name: Geometry, pixels, animation, reuse and native gameplay invariants
-        run: node --experimental-vm-modules --test patches/local-quality/tests/ink-volume.test.mjs
+        run: node --experimental-vm-modules --test patches/local-quality/tests/ink-volume*.test.mjs
       - name: Bake and validate authored structural fixtures
         run: |
           node scripts/create-inkwave-volume-fixture.mjs .ci-scratch/fixture
           node scripts/verify-inkwave-volume-pack.mjs .ci-scratch/fixture .ci-scratch/fixture/authored-test-0.vtf .ci-scratch/fixture/authored-test-1.vtf
+          node scripts/create-inkwave-projectile-fixture.mjs .ci-scratch/rods
+          node scripts/verify-inkwave-volume-pack.mjs .ci-scratch/rods .ci-scratch/rods/authored-line.vtf .ci-scratch/rods/authored-dot.vtf
       - name: Render the emitted game and compare every fixture frame
         run: |
           node scripts/build-inkwave.mjs inkwave-public .ci-scratch/site
           node scripts/check-inkwave-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/evidence
       - name: WebKit touch viewport shader and all-frame comparison
         run: node scripts/check-inkwave-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/evidence-webkit --webkit --touch --shape-only
+      - name: Native vertical Roller, Shooter, Slosher and catalogue presentation
+        run: node scripts/check-inkwave-projectile-volumes.mjs .ci-scratch/site .ci-scratch/fixture .ci-scratch/rods .ci-scratch/projectile-evidence --quick
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -44,3 +50,4 @@ jobs:
           path: |
             .ci-scratch/evidence
             .ci-scratch/evidence-webkit
+            .ci-scratch/projectile-evidence

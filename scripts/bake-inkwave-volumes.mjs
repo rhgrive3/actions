@@ -14,10 +14,11 @@ export async function bakeVolumes(inputs, out, { fps = 30, thickness = .22 } = {
     const pad = (4 - bytes % 4) % 4; if (pad) { chunks.push(Buffer.alloc(pad)); bytes += pad; }
     const descriptor = { offset: bytes, length: a.length }; chunks.push(Buffer.from(a.buffer, a.byteOffset, a.byteLength)); bytes += a.byteLength; return descriptor;
   }
-  for (const input of inputs) {
+  for (const item of inputs) {
+    const input=typeof item==='string'?item:item.file,shape={thickness,interiorStep:8,...(typeof item==='object'?item.shape:{})};
     const source = fs.readFileSync(input), image = decodeVTF(source), started = performance.now();
     const frames = image.frames.map(rgba => {
-      const full = buildInkMesh(rgba, image.width, image.height, { thickness, interiorStep: 8 });
+      const full = buildInkMesh(rgba, image.width, image.height, shape);
       return { rgba: append(rgba), levels: [.003, .012].map(errorLimit => {
         // All outer/hole/island boundary vertices are locked. Never prune small
         // components. UVs stay a linear function of unchanged XY positions.
@@ -70,7 +71,8 @@ export async function bakeVolumes(inputs, out, { fps = 30, thickness = .22 } = {
         return { positions: append(new Float32Array(positions)), normals: append(Int16Array.from(normals,x=>Math.round(x*32767))), normalBytes:2, uvs: append(new Float32Array(uvs)), indices: append(new Index(indices)), opaqueIndices:append(new Index(opaque)), fringeIndices:append(new Index(fringe)), indexBytes: Index.BYTES_PER_ELEMENT, boundaryEdges: full.boundaryEdges, simplificationError: error };
       }) };
     });
-    patterns.push({ name: path.basename(input), sourceSHA256: crypto.createHash('sha256').update(source).digest('hex'), width: image.width, height: image.height, format: image.format, fps, frames });
+    const window=shape.uvWindow||[0,0,1,1];
+    patterns.push({ name: path.basename(input), sourceSHA256: crypto.createHash('sha256').update(source).digest('hex'), width: image.width, height: image.height, meshAspect:image.width/image.height*(window[2]-window[0])/(window[3]-window[1]), format: image.format, fps, artSettings:{...VOLUME_SHAPE,...shape}, frames });
     console.log(JSON.stringify({ source: path.basename(input), width: image.width, height: image.height, frames: frames.length, bakeMs: Math.round(performance.now() - started), vertices: frames.map(f => f.levels[0].positions.length / 3), triangles: frames.map(f => f.levels[0].indices.length / 3) }));
   }
   const binary = Buffer.concat(chunks), manifest = { schema: 'inkwave-volume-v1', binary: 'volumes.bin', byteLength: bytes, binarySHA256: crypto.createHash('sha256').update(binary).digest('hex'), artSettings: { ...VOLUME_SHAPE, thickness, simplificationErrors: [.003, .012], boundaryLocked: true }, patterns };

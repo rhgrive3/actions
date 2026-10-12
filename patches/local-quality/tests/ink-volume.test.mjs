@@ -58,6 +58,14 @@ test('all-transparent and edge-touching frames, invalid settings, and truncated 
   assert.throws(() => buildInkMesh(data, 4, 4, { interiorStep: 0 }));
   assert.throws(() => buildInkMesh(data, 5, 4));
 });
+test('source beam UV window clips and closes both ends without changing original RGBA or leaving tail gaps',()=>{
+  const w=128,h=8,rgba=new Uint8Array(w*h*4).fill(255),before=rgba.slice();
+  const mesh=buildInkMesh(rgba,w,h,{uvWindow:[.3,0,.7,1],interiorStep:8});assert.deepEqual(rgba,before);
+  for(let i=0;i<mesh.frontVertexCount;i++){assert(mesh.uvs[i*2]>=.3-1e-7&&mesh.uvs[i*2]<=.7+1e-7);assert(Math.abs(mesh.positions[i*3])<=3.2+1e-6);}
+  const xs=Array.from({length:mesh.frontVertexCount},(_,i)=>mesh.positions[i*3]);assert(Math.abs(Math.max(...xs)-3.2)<1e-6);assert(Math.abs(Math.min(...xs)+3.2)<1e-6);
+  for(const edge of edges(mesh).values()){assert.equal(edge.count,2);assert.equal(edge.winding,0);}
+  assert.throws(()=>buildInkMesh(rgba,w,h,{uvWindow:[.7,0,.3,1]}));
+});
 test('VTF DXT3 decoder preserves every authored alpha nibble and all 16 original frames without mutating the source', () => {
   const b = new Uint8Array(80 + 16 * 16), v = new DataView(b.buffer);
   v.setUint32(0, 0x00465456, true); v.setUint32(4, 7, true); v.setUint32(8, 2, true); v.setUint32(12, 80, true);
@@ -67,6 +75,12 @@ test('VTF DXT3 decoder preserves every authored alpha nibble and all 16 original
   for (const f of d.frames) for (let i = 0; i < 16; i++) assert.equal(f[i * 4 + 3], i * 17);
   assert.notDeepEqual(d.frames[0], d.frames[1]); assert.throws(() => decodeVTF(b.subarray(0, b.length - 1)));
   v.setUint32(20, 0x4000, true); assert.throws(() => decodeVTF(b));
+});
+test('DXT5 alpha retains both interpolation tables and packed indices across byte boundaries',()=>{
+  const b=new Uint8Array(80+32),v=new DataView(b.buffer);v.setUint32(0,0x00465456,true);v.setUint32(4,7,true);v.setUint32(8,2,true);v.setUint32(12,80,true);v.setUint16(16,4,true);v.setUint16(18,4,true);v.setUint16(24,2,true);v.setUint32(52,15,true);b[56]=1;v.setUint16(63,1,true);
+  for(let f=0;f<2;f++){const o=80+16*f;b[o]=f?0:255;b[o+1]=f?255:0;v.setUint16(o+8,0xf800,true);let codes=0n;for(let i=0;i<16;i++)codes|=BigInt(i%8)<<BigInt(i*3);for(let i=0;i<6;i++)b[o+2+i]=Number((codes>>BigInt(i*8))&255n);}
+  const before=b.slice(),d=decodeVTF(b),palettes=[[255,0,218,182,145,109,72,36],[0,255,51,102,153,204,0,255]];assert.deepEqual(b,before);
+  for(let f=0;f<2;f++)for(let i=0;i<16;i++){assert.equal(d.frames[f][i*4+3],palettes[f][i%8]);assert.equal(d.frames[f][i*4],255);}
 });
 test('pack reader rejects corrupt/unaligned ranges and wrong lengths', () => {
   assert.throws(() => unpackVolumes({ schema: 'inkwave-volume-v1', byteLength: 4, patterns: [{ width: 1, height: 1, frames: [{ rgba: { offset: 0, length: 5 }, levels: [] }] }] }, new ArrayBuffer(4)));
@@ -135,11 +149,11 @@ test('actual composed Roller shots retain gameplay data and use the existing _dr
   actor.intent.fire = true; f.tick(actor, 40); actor.intent.fire = false;
   const system = f.G.projectiles; assert(system.list.length > 0);
   const before = system.list.map(p => [p.damage,p.radius,p.life,p.grav,p.drag,p.pos.toArray(),p.vel.toArray(),p.seed,p.sats]);
-  const calls = []; f.G.fx = { inkVolumes: { isInkVolumes: true, begin: () => calls.push('begin'), submit: (name,p,size) => { calls.push([name,p,size]);return true; }, end: () => calls.push('end') } };
+  const calls = []; f.G.fx = { inkVolumes: { isInkVolumes: true, assets:new Map(), begin: () => calls.push('begin'), submit: (name,p,size) => { calls.push([name,p,size]);return true; }, end: () => calls.push('end') } };
   system._draw(); assert.equal(calls[0], 'begin'); assert.equal(calls.at(-1), 'end'); assert(calls.some(c=>Array.isArray(c)&&c[0]==='roller'));
   assert.deepEqual(system.list.map(p => [p.damage,p.radius,p.life,p.grav,p.drag,p.pos.toArray(),p.vel.toArray(),p.seed,p.sats]), before);
   assert.equal(system.blobs.count, 0);
-  for (const p of system.list) p._inkVolumeHorizontal=false;
+  for (const p of system.list) p._inkVolumeRecipe=null;
   system._draw(); assert(system.blobs.count > 0, 'other weapon/mode remains on existing renderer');
   // Replay actual JSON wire births: remote owner mode/weapon may already have
   // changed, and current vertical source-guided heads share nose/tail values
@@ -154,7 +168,7 @@ test('actual composed Roller shots retain gameplay data and use the existing _dr
     system.clear();peer.weaponRunner.s3FlickVertical=!vertical;
     for(const packet of packets)system.ghostProjectile(peer,packet);
     assert.equal(JSON.stringify(packets),snapshot,'renderer does not change network packets');assert.equal(system.list.length,packets.length);
-    for(const p of system.list){assert.equal(p._inkVolumeHorizontal,!vertical);assert.equal(p.s3Vertical,vertical);assert.equal(p.wid,'roller');assert.equal(p.damage,0);assert.equal(p.ghost,true);if(!vertical)assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());}
-    calls.length=0;system._draw();assert.equal(calls.filter(c=>Array.isArray(c)&&c[0]==='roller').length,vertical?0:packets.length);
+    for(const p of system.list){assert.equal(p._inkVolumeHorizontal,!vertical);assert.equal(p._inkVolumeRecipe,vertical?'roller-vertical':'roller-horizontal');assert.equal(p.s3Vertical,vertical);assert.equal(p.wid,'roller');assert.equal(p.damage,0);assert.equal(p.ghost,true);assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());}
+    calls.length=0;system._draw();assert.equal(calls.filter(c=>Array.isArray(c)&&c[0]==='roller').length,packets.length,'both flick modes now use their sourced radii and shared animation');
   }
 });

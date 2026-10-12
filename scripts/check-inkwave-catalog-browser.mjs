@@ -171,6 +171,33 @@ try {
         check(Math.abs(state.inkFuel-(150-gearCurve(ap,15,13.05,12)))<1e-8,'Zipcaster browser drain '+ap);
         uniqueGearChecks.push({ability:'specialPower',ap,zipcasterFuel:state.inkFuel});a.reset();
       }
+      const sprinklerPowerChecks=[];
+      {
+        const {sprinklerPhase}=await import('/patches/splatoon3/runtime/kit-sprinkler.mjs');
+        const id=Object.keys(api.WEAPONS).find(k=>api.WEAPONS[k].sub==='sprinkler');check(!!id,'standard Sprinkler kit');
+        let baseVelocity;
+        for(const ap of [0,10,57]){
+          G.projectiles.clear();const a=makeActor(id);G.actors=[a];const l=emptyLoadout();
+          if(ap===10)l[0].main='subPower';if(ap===57)for(const p of l){p.main='subPower';p.subs.fill('subPower');}
+          a.s3.loadout=l;a.s3RefreshGear();a.weaponRunner.reset();a.pos.set(0,0,0);a.aimDir.set(0,0,1);a.vel.set(0,0,0);
+          G.projectiles.throwBomb(a);const b=G.projectiles.bombs.at(-1),spec=b?.s3Resolved?.spec;
+          check(!!spec,'native Sprinkler release '+ap);check(Math.abs(spec.periodFirstFrames-gearCurve(ap,480,630,780))<1e-8,'Sprinkler first period '+ap);
+          check(Math.abs(spec.periodSecondFrames-gearCurve(ap,900,960,1020))<1e-8,'Sprinkler second period '+ap);
+          if(baseVelocity===undefined)baseVelocity=b.vel.z;check(Math.abs(b.vel.z-baseVelocity)<1e-8,'Sprinkler throw distance does not gain AP '+ap);
+          check(sprinklerPhase(600,spec)===(ap===57?0:1),'Sprinkler actual device stage '+ap);
+          sprinklerPowerChecks.push({ap,first:spec.periodFirstFrames,second:spec.periodSecondFrames,velocity:b.vel.z});a.reset();
+        }
+        G.projectiles.clear();
+      }
+      const accelerationChecks=[];
+      for(const id of ['s3-shooter-short','s3-shooter-first'])for(const squid of [false,true])for(const ready of [false,true]){
+        const a=makeActor(id);a.s3.loadout=emptyLoadout();a.s3RefreshGear();
+        a.form=squid?'squid':'kid';a.submerged=squid;a.grounded=true;a.intent.move.set(0,0,1);a.intent.sub=ready;
+        a._horizontal(1/60,squid,false);
+        const expected=ready?1.2:(squid&&id==='s3-shooter-short'?.9:.6);
+        check(Math.abs(a.vel.z-expected)<1e-8,id+' grounded acceleration '+squid+' '+ready);
+        accelerationChecks.push({id,squid,ready,delta:a.vel.z});
+      }
       const conditionalChecks=[];
       {
         const previous=G.match,a=makeActor('shooter'),e1=makeActor('shooter'),e2=makeActor('shooter');e1.team=e2.team=1;G.actors=[a,e1,e2];
@@ -292,6 +319,25 @@ try {
         }
         G.projectiles.clear();Object.assign(G,saved);
       }
+      const subMarkChecks=[];
+      {
+        const saved={match:G.match,netm:G.netm,time:G.time,level:G.level,physics:G.physics,paint:G.paint,actors:G.actors};
+        G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);G.paint={sample:()=>0,splat:()=>0};G.netm=null;
+        G.match={state:'playing',time:180,duration:180,playing:()=>true};
+        for(const sub of ['pointSensor','inkMine','angleShooter'])for(const ap of [0,10,57]){
+          G.projectiles.clear();G.time=10;
+          const owner=makeActor('shooter',101),victim=makeActor('shooter',102);owner.team=0;victim.team=1;owner.invuln=victim.invuln=0;victim.s3.loadout=emptyLoadout();
+          if(ap===10)victim.s3.loadout[0].main='subResistance';if(ap===57)for(const part of victim.s3.loadout){part.main='subResistance';part.subs.fill('subResistance');}victim.s3RefreshGear();
+          owner.weapon={...owner.weapon,sub};owner.pos.set(0,0,0);owner.aimDir.set(0,0,1);victim.pos.set(0,0,2);G.actors=[owner,victim];
+          const obj=G.projectiles.throwBomb(owner);check(!!obj,'sub mark birth '+sub);
+          if(sub==='pointSensor'){const sensor=G.projectiles._s3SupportSensors[0];sensor.pos.set(0,.7,2);sensor.activeAt=10;sensor.expires=13;}
+          else{obj.pos.set(0,.7,0);obj.prev.copy(obj.pos);obj.vel.set(0,0,60);if(sub==='inkMine'){obj.phase='deployed';obj.vel.set(0,0,0);obj.activeAt=0;obj.deployedAt=0;obj.expireAt=Infinity;}}
+          for(let i=0;i<20&&!victim.s3.revealedUntil?.[0];i++)G.projectiles.update(1/60);
+          const remaining=(victim.s3.revealedUntil?.[0]||0)-G.time,expected=(sub==='pointSensor'?8:5)*gearCurve(ap,1,sub==='inkMine'?.55:.43,.1);
+          check(Math.abs(remaining-expected)<1e-8,'victim mark resistance '+sub+' '+ap);subMarkChecks.push({sub,ap,remaining});
+        }
+        G.projectiles.clear();Object.assign(G,saved);
+      }
       const kitChecks=[];
       for(const record of records){
         G.projectiles.clear();const a=makeActor(record.id);G.actors=[a];
@@ -305,6 +351,27 @@ try {
         a._startSpecial();check(a.stats.specials===1,record.id+' special admitted');
         a.reset();check(a.weapon.sub===k.sub&&a.weapon.special===k.special,record.id+' kit after reset');
         kitChecks.push({id:record.id,sub:k.sub,special:k.special,points:k.specialCost,inkCost:cost});
+      }
+      const directSubChecks=[];
+      {
+        const saved={time:G.time,actors:G.actors,netm:G.netm,match:G.match,level:G.level,physics:G.physics};
+        G.netm=null;G.match={playing:()=>true,state:'playing',time:180};
+        G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);
+        const equipDirect=(a,ap)=>{a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout){if(ap>=10){p.main='subResistance';ap-=10;}}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]='subResistance';ap-=3;}a.s3RefreshGear();};
+        for(const source of ['angleShooter','sprinkler'])for(const ap of [0,10,57]){
+          G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');v.team=1;v.invuln=0;v.pos.set(0,0,2);equipDirect(v,ap);G.actors=[o,v];o.weapon={...o.weapon,sub:source};o.weaponRunner.reset();const hp=v.hp;
+          if(source==='angleShooter'){const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);}
+          else{G.projectiles.throwBomb(o);const b=G.projectiles.bombs.at(-1);kitBombContact(api.SUB,b,{hit:true,point:new THREE.Vector3(0,0,0),normal:new THREE.Vector3(0,1,0)});b.s3Sprinkler.nextFrame=Infinity;b.s3Sprinkler.drops.push({pos:new THREE.Vector3(0,.7,2),vel:new THREE.Vector3(),life:0,seed:.2});}
+          for(let i=0;i<10&&v.hp===hp;i++){G.time+=1/60;G.projectiles.update(1/60);}
+          const raw=source==='angleShooter'?40:20,expected=Math.floor(raw*gearCurve(ap,1,.75,.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8,'native direct resistance '+source+' '+ap);directSubChecks.push({source,ap,damage:hp-v.hp});
+        }
+        for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57]){
+          G.projectiles.clear();const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='direct-owner';v.owner='direct-victim';v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipDirect(v,ap);equipDirect(o,57);o.weapon={...o.weapon,sub:source};let packet,ack;
+          const tx=new NetMatch({myId:'direct-owner',hostId:'direct-owner',isHost:true,tr:{sendTo:(_id,p)=>{packet=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,40,source);check(packet.d===40,'raw direct hit on wire');
+          const rx=new NetMatch({myId:'direct-victim',hostId:'direct-owner',isHost:false,tr:{sendTo:(_id,p)=>{ack=JSON.parse(JSON.stringify(p));}}},{id:'direct-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;
+          rx.onMessage('foreign',packet);check(v.hp===hp,'foreign direct hit rejected');if(source==='angleShooter'){rx.onMessage('direct-owner',{...packet,d:40.1});check(v.hp===hp,'oversized direct hit rejected');}rx.onMessage('direct-owner',packet);const damage=hp-v.hp;check(damage===(ap===57?20:40)&&ack.d===damage,'direct victim and ACK agree');rx.onMessage('direct-owner',packet);check(hp-v.hp===damage,'duplicate direct hit rejected');directSubChecks.push({source,ap,wire:true,damage});tx.dispose();rx.dispose();G.netm=null;
+        }
+        G.projectiles.clear();Object.assign(G,saved);
       }
       let totalProjectiles = 0;
       const emissions = [];
@@ -355,7 +422,7 @@ try {
       check(ghost.catalog?.r?.id === shooter.id, 'ghost retained its catalog record');
 
       return {
-        kitChecks, weightChecks, uniqueGearChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks,
+        directSubChecks, accelerationChecks, kitChecks, weightChecks, uniqueGearChecks, sprinklerPowerChecks, conditionalChecks, objectGearChecks, gearAdoptionChecks, gearClockChecks, transientGearChecks, subMarkChecks,
         records: records.length,
         legacy: legacyCount,
         added: newRecords.length,

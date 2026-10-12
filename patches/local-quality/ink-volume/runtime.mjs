@@ -4,8 +4,11 @@ const VERT = `
 varying vec2 vUv; varying vec3 vNormal; varying vec3 vView; varying vec3 vColor;
 void main(){
   vUv=uv; vColor=instanceColor;
-  // Uniform instance scale; world-space orientation is captured at birth.
-  vNormal=normalize(normalMatrix*mat3(instanceMatrix)*normal);
+  // Inverse transpose for rotation * positive nonuniform scale (no shear).
+  // A long rod/film must retain its actual curved normals after stretching.
+  mat3 basis=mat3(instanceMatrix);
+  vec3 scale2=vec3(dot(basis[0],basis[0]),dot(basis[1],basis[1]),dot(basis[2],basis[2]));
+  vNormal=normalize(normalMatrix*basis*(normal/max(scale2,vec3(1e-12))));
   vec4 p=modelViewMatrix*instanceMatrix*vec4(position,1.0);
   vView=-p.xyz; gl_Position=projectionMatrix*p;
 }`;
@@ -42,6 +45,8 @@ export class InkVolumes {
     this.isInkVolumes = true; this.root = root; this.light = lighting; this.capacity = capacity; this.maxDistance = maxDistance; this.lodDistance = lodDistance; this.triangleBudget = triangleBudget;
     this.assets = new Map(); this.camera = null; this.disposed = false;
     this.bindings = new WeakMap(); this.matrix = new THREE.Matrix4(); this.scale = new THREE.Vector3();
+    this.singlePart = { name: '', size: 1, pattern: 0 }; this.singleParts = [this.singlePart];
+    this.plans = Array.from({ length: 8 }, () => ({ matrix: new THREE.Matrix4(), batch: null, culled: false }));
     this.dir = new THREE.Vector3(); this.q = new THREE.Quaternion(); this.z = new THREE.Vector3(0, 0, 1);
     this.clip = new THREE.Matrix4(); this.frustum = new THREE.Frustum(); this.sphere = new THREE.Sphere();
     this.metrics = { active: 0, culled: 0, overflow: 0, triangles: 0, bytes: 0, batches: 0 };
@@ -66,7 +71,8 @@ export class InkVolumes {
         const material = new THREE.ShaderMaterial({ uniforms, defines: { INK_OPAQUE_PASS: 1 }, vertexShader: VERT, fragmentShader: FRAG, transparent: false, depthWrite: true, side: THREE.FrontSide });
         const fringeMaterial = new THREE.ShaderMaterial({ uniforms, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, side: THREE.FrontSide });
         asset.resources.push(material,fringeMaterial);
-        const pattern = { fps: p.fps, frames: [], uniforms, radius: 0 };
+        const aspect=p.meshAspect??p.width/p.height;if(!(aspect>0)||!Number.isFinite(aspect))throw Error('Invalid ink mesh aspect');
+        const pattern = { fps: p.fps, frames: [], uniforms, radius: 0, aspect };
         for (let f = 0; f < p.frames.length; f++) {
           const levels = [];
           if (!Array.isArray(p.frames[f].levels) || p.frames[f].levels.length !== 2) throw Error('Expected two ink LODs');
@@ -109,9 +115,13 @@ export class InkVolumes {
     }
   }
   submit(name, source, size, patternIndex = 0) {
-    const asset = this.assets.get(name); if (!asset || this.disposed) return false;
-    if (!(size > 0) || !Number.isFinite(size) || !Number.isFinite(source.age)) return false;
-    const p = asset.patterns[Math.abs(patternIndex | 0) % asset.patterns.length];
+    this.singlePart.name=name; this.singlePart.size=size; this.singlePart.pattern=patternIndex;
+    return this.submitComposite(source, this.singleParts);
+  }
+  // Atomic presentation: either all visible components fit or the caller can
+  // draw its existing effect. Parts and scratch matrices are reused in flight.
+  submitComposite(source, parts) {
+    if (this.disposed || !Array.isArray(parts) || parts.length < 1 || parts.length > this.plans.length || !Number.isFinite(source.age)) return false;
     let binding = this.bindings.get(source);
     const generation = source.generation ?? source._qualityGeneration ?? 0;
     if (!binding || binding.generation !== generation || source.age < binding.age) {
@@ -120,16 +130,27 @@ export class InkVolumes {
       else { binding.generation = generation; binding.age = source.age; binding.q.copy(this.q); }
     }
     binding.age = source.age;
-    const distance = this.camera ? this.camera.position.distanceToSquared(source.pos) : 0;
-    this.sphere.center.copy(source.pos); this.sphere.radius = size * p.radius;
-    if (distance > this.maxDistance ** 2 || (this.camera && !this.frustum.intersectsSphere(this.sphere))) { this.metrics.culled++; return true; }
-    if (this.metrics.active >= this.capacity) { this.metrics.overflow++; return false; }
-    const batch = p.frames[animationFrame(source.age, p.frames.length, p.fps)][distance > this.lodDistance ** 2 ? 1 : 0];
-    const triangles = batch.triangles;
-    if (this.metrics.triangles + triangles > this.triangleBudget) { this.metrics.overflow++; return false; }
-    this.scale.setScalar(size); this.matrix.compose(source.pos, binding.q, this.scale);
-    batch.mesh.setMatrixAt(batch.n, this.matrix); batch.mesh.setColorAt(batch.n, source.owner.color); batch.n++;
-    this.metrics.active++; this.metrics.triangles += triangles; return true;
+    let active=0,triangles=0,culled=0;
+    for(let i=0;i<parts.length;i++) {
+      const part=parts[i],asset=this.assets.get(part.name),size=part.size;
+      if(!asset || !(size>0) || !Number.isFinite(size)) return false;
+      const p=asset.patterns[Math.abs((part.pattern||0)|0)%asset.patterns.length],pos=part.position||source.pos;
+      if(part.stretch)this.scale.copy(part.stretch).multiplyScalar(size);else this.scale.setScalar(size);
+      if(!finiteVector(this.scale)||!finiteVector(pos)||Math.min(this.scale.x,this.scale.y,this.scale.z)<=0)return false;
+      const q=part.rotation||binding.q;if(!Number.isFinite(q.x)||!Number.isFinite(q.y)||!Number.isFinite(q.z)||!Number.isFinite(q.w)||Math.abs(q.lengthSq()-1)>.001)return false;
+      const distance=this.camera?this.camera.position.distanceToSquared(pos):0,plan=this.plans[i];
+      this.sphere.center.copy(pos);this.sphere.radius=Math.max(this.scale.x,this.scale.y,this.scale.z)*p.radius;
+      plan.culled=distance>this.maxDistance**2||(this.camera&&!this.frustum.intersectsSphere(this.sphere));
+      if(plan.culled){culled++;continue;}
+      plan.batch=p.frames[animationFrame(source.age,p.frames.length,p.fps)][distance>this.lodDistance**2?1:0];
+      plan.matrix.compose(pos,q,this.scale);active++;triangles+=plan.batch.triangles;
+    }
+    if(this.metrics.active+active>this.capacity||this.metrics.triangles+triangles>this.triangleBudget){this.metrics.overflow++;return false;}
+    for(let i=0;i<parts.length;i++) {
+      const plan=this.plans[i];if(plan.culled)continue;const b=plan.batch;
+      b.mesh.setMatrixAt(b.n,plan.matrix);b.mesh.setColorAt(b.n,source.owner.color);b.n++;
+    }
+    this.metrics.active+=active;this.metrics.triangles+=triangles;this.metrics.culled+=culled;return true;
   }
   end() {
     for (const a of this.assets.values()) for (const p of a.patterns) for (const ls of p.frames) for (const b of ls) {
@@ -143,6 +164,8 @@ export class InkVolumes {
     const a = this.assets.get(name); if (!a) return;
     for (const p of a.patterns) for (const ls of p.frames) for (const b of ls) { this.root.remove(b.mesh,b.fringe); b.mesh.dispose(); b.fringe.dispose(); }
     for (const r of a.resources) r.dispose(); this.metrics.bytes -= a.bytes; this.assets.delete(name);
+    // Preflight scratch must not retain the disposed batch/buffer graph.
+    for(const plan of this.plans)plan.batch=null;
   }
   dispose() { for (const name of this.assets.keys()) this.unregister(name); this.bindings = new WeakMap(); this.disposed = true; }
 }
@@ -159,3 +182,4 @@ function validateMesh(d) {
 function upload(attribute, range, count) {
   range.count = count * attribute.itemSize; attribute.updateRanges.length = 0; attribute.updateRanges.push(range); attribute.needsUpdate = true;
 }
+function finiteVector(v) { return Number.isFinite(v.x)&&Number.isFinite(v.y)&&Number.isFinite(v.z); }

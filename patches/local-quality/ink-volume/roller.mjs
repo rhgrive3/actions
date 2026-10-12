@@ -1,4 +1,5 @@
-// The only weapon recipe. All shape/animation/rendering is in the common engine.
+// Backward-compatible horizontal recipe; expanded production recipes live in
+// recipes.mjs. Shape/animation/rendering remain in the common engine.
 // Five times the existing visual radius is an INKWAVE art setting; no physics changes.
 export const ROLLER_VOLUME = Object.freeze({ asset: 'roller', visualScale: 5 });
 export function captureRollerVolume(p, weapon = p.owner?.weapon) {

@@ -105,11 +105,10 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     else if (isSquid) vt = P.squidDrySpeed;
     else vt = this.weaponRunner.moveSpeed();
     if (!isSquid && this.hardLand > 0) vt *= 1 - (1 - P.hardLandSlow) * this.hardLand;
-    let accel = (this.weaponRunner.firingPose?.() || this.intent.sub || this.weaponRunner.aimingSub || this.specialActive)
-      ? (P.s3AttackGroundAccel ?? 72) : (P.s3GroundAccel ?? 36);
+    let accel = groundAcceleration(this, P, isSquid);
     if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed); // enemy ink limits target speed, not the selected S3 acceleration
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
-    return "import { attackAirRateScale, integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+    return "import { attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     replace('    if (this.rolling) return lerp(w.rollSpeed * 0.5, w.rollSpeed, smoothstep(0, 0.45, this.rollT));',

@@ -7,6 +7,10 @@ export const VOLUME_SHAPE = Object.freeze({ thickness: .22, backRatio: .72, uppe
 export function buildInkMesh(rgba, width, height, options = {}) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || rgba.length !== width * height * 4) throw Error('Invalid RGBA dimensions');
   const cfg = { ...VOLUME_SHAPE, ...options };
+  const window=cfg.uvWindow||[0,0,1,1];
+  if(!Array.isArray(window)||window.length!==4||window.some(x=>!Number.isFinite(x)||x<0||x>1)||window[2]<=window[0]||window[3]<=window[1])throw Error('Invalid source UV window');
+  const [u0,v0,u1,v1]=window,dv=v1-v0;
+  const x0=.5+width*u0,x1=.5+width*u1,y0=.5+height*(1-v1),y1=.5+height*(1-v0);
   if (!(cfg.thickness > 0 && cfg.thickness <= 1) || !(cfg.backRatio > 0 && cfg.backRatio <= 2) || !Number.isFinite(cfg.upperBias) || Math.abs(cfg.upperBias) > .8 || !Number.isInteger(cfg.interiorStep) || cfg.interiorStep < 1 || cfg.interiorStep > 32) throw Error('Invalid ink mesh settings');
   if (!(cfg.fringePixels >= 0 && cfg.fringePixels <= 4) || !(cfg.edgeTaper > 0 && cfg.edgeTaper <= 8) || !(cfg.edgeFloor > 0 && cfg.edgeFloor <= .1)) throw Error('Invalid ink bevel settings');
   const W = width + 2, H = height + 2, alpha = new Float32Array(W * H), distance = new Float32Array(W * H);
@@ -47,7 +51,7 @@ export function buildInkMesh(rgba, width, height, options = {}) {
     // Distance saturates smoothly, no noise, no lateral displacement.
     const radius = Math.max(0, sample(smoothDistance, x, y) - .45) / Math.min(width, height), rounded = Math.sqrt(1 - Math.exp(-radius * 18)) * ((1 - Math.exp(-d * cfg.edgeTaper)) ** 2);
     const h = cfg.thickness * (cfg.edgeFloor + rounded * (1 + cfg.upperBias * (v * 2 - 1)));
-    xy.push((u - .5) * width / height, v - .5); depths.push(h); uv.push(u, v); ids.set(key, id); return id;
+    xy.push((u-(u0+u1)*.5)*width/(height*dv),(v-(v0+v1)*.5)/dv); depths.push(h); uv.push(u, v); ids.set(key, id); return id;
   }
   function triangle(points) {
     let out = [];
@@ -59,7 +63,7 @@ export function buildInkMesh(rgba, width, height, options = {}) {
     // Edge-touching artwork ends at the original image rectangle. Padding is
     // only for contour analysis; extending into adjacent atlas frames would
     // change its silhouette/alpha. Clip polygons, never clamp individual verts.
-    for (const [axis, limit, sign] of [[0, .5, 1], [0, width + .5, -1], [1, .5, 1], [1, height + .5, -1]]) {
+    for (const [axis, limit, sign] of [[0,x0,1],[0,x1,-1],[1,y0,1],[1,y1,-1]]) {
       const clipped = [];
       for (let i = 0; i < out.length; i++) {
         const a = out[i], b = out[(i + 1) % out.length], insideA = sign * (a[axis] - limit) >= 0, insideB = sign * (b[axis] - limit) >= 0;
@@ -78,7 +82,8 @@ export function buildInkMesh(rgba, width, height, options = {}) {
   }
   const leaves = [], horizontal = new Map(), vertical = new Map();
   function tile(x, y, sx, sy) {
-    let full = true, empty = true;
+    if(x+sx<=x0||x>=x1||y+sy<=y0||y>=y1)return;
+    let full=x>=x0&&x+sx<=x1&&y>=y0&&y+sy<=y1,empty=true;
     for (let yy = y; yy <= y + sy; yy++) for (let xx = x; xx <= x + sx; xx++) { const on = alpha[yy * W + xx] > iso; full &&= on; empty &&= !on; }
     if (empty) return;
     if (full) {
@@ -97,9 +102,9 @@ export function buildInkMesh(rgba, width, height, options = {}) {
   // introduced where the neighbor is coarse. This greatly reduces interior cost.
   const add = (map, line, value) => { if (!map.has(line)) map.set(line, new Set()); map.get(line).add(value); };
   for (const [x, y, sx, sy] of leaves) for (const yy of [y, y + sy]) for (const xx of [x, x + sx]) { add(horizontal, yy, xx); add(vertical, xx, yy); }
-  for (let i = 0; i < xy.length; i += 2) {
-    const x = Math.round(((xy[i] * height / width + .5) * width + .5) * 1e7) / 1e7;
-    const y = Math.round(((.5 - xy[i + 1]) * height + .5) * 1e7) / 1e7;
+  for (let i = 0; i < uv.length; i += 2) {
+    const x = Math.round((uv[i]*width+.5)*1e7)/1e7;
+    const y = Math.round(((1-uv[i+1])*height+.5)*1e7)/1e7;
     if (Number.isInteger(y)) add(horizontal, y, x);
     if (Number.isInteger(x)) add(vertical, x, y);
   }
@@ -144,8 +149,8 @@ export function buildInkMesh(rgba, width, height, options = {}) {
   const normalized = (offset, nx, ny, nz) => { const length = Math.hypot(nx, ny, nz); normals.set([nx / length, ny / length, nz / length], offset); };
   for (let i = 0; i < N; i++) {
     const x = (uv[i * 2] * width + .5), y = ((1 - uv[i * 2 + 1]) * height + .5);
-    const dx = (fieldHeight(x + .75, y) - fieldHeight(x - .75, y)) / 1.5 * height * .5;
-    const dy = (fieldHeight(x, y + .75) - fieldHeight(x, y - .75)) / 1.5 * height * .5;
+    const dx = (fieldHeight(x + .75, y) - fieldHeight(x - .75, y)) / 1.5 * height * dv * .5;
+    const dy = (fieldHeight(x, y + .75) - fieldHeight(x, y - .75)) / 1.5 * height * dv * .5;
     if (boundary[i]) {
       const n = Math.hypot(outward[i*2],outward[i*2+1]) > 1e-8 ? outward : fallback;
       normalized(i*3,n[i*2],n[i*2+1],0); normalized((i+N)*3,n[i*2],n[i*2+1],0);
