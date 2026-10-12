@@ -1,7 +1,8 @@
 // Independent volumetric reconstructions from the PR1246 3D renders and twelve-view turntables.
 // Geometry remains cached/merged by the existing registry. Existing sockets and animation are retained.
-import { THREE, Pieces, M, V, box, sphere, zlathe, zcyl, xcyl, ycyl, ring, pipe, slab, part, rebuild, gripSpec,
+import { THREE, Pieces, M, V, box, sphere, zlathe, zcyl, xcyl, ycyl, ring, pipe, slab, part, gripSpec,
   pistolGrip, glowGeometry, clamp, damp, smooth } from './kit.mjs';
+import { rebuildSelected as rebuild } from './selected-zero-area.mjs';
 const YC=.085, GROUND_ROLL=1.25;
 const rb=(w,h,d,x,y,z,e=.3)=>box(w,h,d,x,y,z,e,8,4);
 const badge=(w,h,d,x,y,z)=>new THREE.BoxGeometry(w,h,d).translate(x,y,z);

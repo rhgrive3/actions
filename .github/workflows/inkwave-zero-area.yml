@@ -1,0 +1,79 @@
+name: INKWAVE selected-six zero-area parity
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/splatanas.mjs
+      - patches/splatoon3/runtime/weapon-models/stringers.mjs
+      - patches/splatoon3/runtime/weapon-models/selected-zero-area.mjs
+      - patches/splatoon3/tests/weapon-models-zero-area.test.mjs
+      - scripts/render-inkwave-circled-weapon-gallery.mjs
+      - scripts/compare-inkwave-zero-area.py
+      - .github/workflows/inkwave-zero-area.yml
+permissions:
+  contents: read
+concurrency:
+  group: selected-six-zero-area-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  parity:
+    if: github.head_ref == 'perf/inkwave-selected6-zero-area'
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [saber, stringer, crowd]
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: bac165e44ff97657639e57c85bcecf20590e13df
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build immutable reviewed six-model baseline and isolated candidate
+        run: |
+          git rev-parse HEAD
+          git -C .model-baseline rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Assert source and emitted geometry invariants including actual far LOD
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-zero-area.test.mjs
+          INKWAVE_BUILT_SITE=.model-after-site INKWAVE_ZERO_AREA_BASELINE_SITE=.model-before-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-zero-area.test.mjs patches/splatoon3/tests/weapon-models-circled-rebuild.test.mjs
+      - name: Seeded full-RGBA angle and real Actor comparison
+        if: matrix.family != 'crowd'
+        env:
+          FAMILY: ${{ matrix.family }}
+        run: |
+          if [ "$FAMILY" = saber ]; then IDS=s3-saber-normal,s3-saber-lite,s3-saber-heavy; else IDS=s3-stringer-normal,s3-stringer-short,s3-stringer-explosion; fi
+          node scripts/render-inkwave-circled-weapon-gallery.mjs --site .model-before-site --out .zero-area/before --ids "$IDS" --size 500 --parity
+          node scripts/render-inkwave-circled-weapon-gallery.mjs --site .model-after-site --out .zero-area/after --ids "$IDS" --size 500 --parity
+          python3 scripts/compare-inkwave-zero-area.py .zero-area
+      - name: Seeded eight-Actor near/far ABBA traversal, full RGBA and measured performance
+        if: matrix.family == 'crowd'
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node scripts/render-inkwave-circled-weapon-gallery.mjs --site ".model-${version}-site" --out ".zero-area/${pair}" --ids s3-saber-normal --size 600 --crowd --parity
+          done
+          python3 scripts/compare-inkwave-zero-area.py .zero-area --crowd
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selected-six-zero-area-${{ matrix.family }}-${{ github.event.pull_request.head.sha }}
+          path: .zero-area
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

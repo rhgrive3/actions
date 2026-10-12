@@ -1,7 +1,8 @@
 // Reconstructed from both the 3D references and the twelve-view turntables in PR1246.
 // Separate shells, open frames, cross sections and hardware; no imported meshes or textures.
 // The existing hand anchors, muzzle sockets and slash/charge state below are deliberately retained.
-import { THREE, Pieces, M, box, sphere, zlathe, zcyl, xcyl, ring, pipe, slab, rebuild, gripSpec, clamp, damp, smooth } from './kit.mjs';
+import { THREE, Pieces, M, box, sphere, zlathe, zcyl, xcyl, ring, pipe, slab, gripSpec, clamp, damp, smooth } from './kit.mjs';
+import { rebuildSelected as rebuild } from './selected-zero-area.mjs';
 const HANDLE_GRIP = () => gripSpec([0, 0, -0.01], [0, 0, 1], [-0.3, 1, 0]);
 const smallBox = (w,h,d,x,y,z,e=.25) => box(w,h,d,x,y,z,e,8,4);
 const badge=(w,h,d,x,y,z)=>new THREE.BoxGeometry(w,h,d).translate(x,y,z);

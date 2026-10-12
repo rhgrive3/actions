@@ -13,7 +13,7 @@ import { chromium } from 'playwright';
 const arg = (name, fallback) => { const n = process.argv.indexOf(name); return n < 0 ? fallback : process.argv[n + 1]; };
 const site = path.resolve(arg('--site', '_site')), out = path.resolve(arg('--out', '.ci-scratch/weapon-gallery'));
 const ids = (arg('--ids', '') || '').split(',').filter(Boolean), held = !process.argv.includes('--no-held');
-const size = Number(arg('--size', 400)), crowd = process.argv.includes('--crowd');
+const size = Number(arg('--size', 400)), crowd = process.argv.includes('--crowd'), parity = process.argv.includes('--parity');
 fs.mkdirSync(out, { recursive: true });
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
 const prefix = '/_versions/' + identity.build.revision + '/';
@@ -33,6 +33,10 @@ let browser; const errors = [];
 try {
   browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width: size * 2, height: size * 2 } });
+  if (parity) await page.addInitScript(() => {
+    let seed = 0x5e1ec7ed;
+    Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:' + server.address().port + '/review');
   await page.evaluate(async ({ prefix, size }) => {
@@ -67,7 +71,7 @@ try {
   const list = ids.length ? ids : all;
   const rows = [];
   for (const id of list) {
-    const row = await page.evaluate(async ({ id, held, crowd }) => {
+    const row = await page.evaluate(async ({ id, held, crowd, parity, prefix }) => {
       const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
       const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
@@ -94,11 +98,27 @@ try {
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap();
       cam.position.copy(c).add(new THREE.Vector3(.9,.45,-1.1).normalize().multiplyScalar(span*2.5));cam.lookAt(c);renderer.render(scene,cam);const rear = snap();
+      const turns = {};
+      if (parity) {
+        const { farGeometry } = await import(prefix + 'src/game/character-lod.js');
+        for (const tier of ['game','far']) {
+          g.children[0].geometry = tier === 'far' ? farGeometry(d.body,700) : d.body;
+          g.children[1].geometry = tier === 'far' ? farGeometry(d.ink,300) : d.ink;
+          for (const elevation of [-30,0,30]) for (let turn=0; turn<12; turn++) {
+            const a=turn*Math.PI/6,e=elevation*Math.PI/180;
+            cam.position.copy(c).add(new THREE.Vector3(Math.cos(a)*Math.cos(e),Math.sin(e),Math.sin(a)*Math.cos(e)).multiplyScalar(span*2.5));
+            cam.lookAt(c);renderer.render(scene,cam);turns[`turn-${tier}-${elevation}-${turn}`]=snap();
+          }
+          for (const elevation of [-90,90]) {
+            cam.position.copy(c).add(new THREE.Vector3(0,elevation/90*span*2.5,0));cam.up.set(0,0,1);cam.lookAt(c);renderer.render(scene,cam);turns[`pole-${tier}-${elevation}`]=snap();cam.up.set(0,1,0);
+          }
+        }
+      }
       scene.remove(g);
       let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
-        images: { side, above, front: muzzleView, persp, rear } };
+        images: { side, above, front: muzzleView, persp, rear, ...turns } };
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;
@@ -148,7 +168,8 @@ try {
           for(let k=0;k<actors.length;k++){const o=actors[k];o.pos.set((k%4-1.5)*1.15,0,Math.floor(k/4)*1.5);o.intent.fire=false;o.character.setLod(tier);for(let z=0;z<4;z++)o._finishFrame(1/60);}
           const cpu=[],done=[],anim=[];for(let k=0;k<80;k++){const t0=performance.now();for(const o of actors)o._finishFrame(1/60);const t1=performance.now();renderer.render(scene,camera);const t2=performance.now();gl.finish();const t3=performance.now();if(k>=20){anim.push(t1-t0);cpu.push(t2-t1);done.push(t3-t1);}}
           const geos=new Set();scene.traverseVisible(o=>{if(o.isMesh&&o.geometry)geos.add(o.geometry);});let geometryBytes=0;for(const g of geos){for(const a of Object.values(g.attributes))geometryBytes+=a.array.byteLength;if(g.index)geometryBytes+=g.index.array.byteLength;}
-          res.crowd[tier]={actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
+          let visited=0,visible=0,meshes=0;scene.traverse(()=>visited++);scene.traverseVisible(o=>{visible++;if(o.isMesh)meshes++;});
+          res.crowd[tier]={visited,visible,meshes,actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
           res.images['crowd-'+tier]=snap();
         }
         for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
@@ -158,7 +179,7 @@ try {
       Object.assign(res.images, shots); res.maxGrip = +maxGrip.toFixed(4); res.nonFinite = nonFinite; res.firingFrames = fired;
       res.weaponKind = ch.weaponKind; res.weaponModel = ch.weaponModel;
       return res;
-    }, { id, held, crowd });
+    }, { id, held, crowd, parity, prefix });
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
