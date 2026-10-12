@@ -2,12 +2,18 @@
 // original fixed simulation cadence so visible movement, muzzle transforms,
 // paint ownership, damage and the menu camera never lose gameplay ticks.
 //
-// At 60 Hz the eight non-interactive demo brains need only 30 decisions/s.
-// Half the bots start on the opposite tick, avoiding an eight-brain CPU spike.
-// Browser/touch configurations already budgeted to 20 Hz keep all decisions.
+// At 60 Hz desktop the demo brains make 30 decisions/s; the already
+// 20-Hz touch/LOW menu uses 10 decisions/s. Physics and rendered poses still
+// run at their prior rate. Half the bots start on the opposite tick.
 // Accumulate elapsed time and pass it to the native brain; do not lose timers.
 const INSTALLED = Symbol.for('inkwave.local-quality.attract-bot-budget.v1');
 export const ATTRACT_AI_STEP = 1 / 30;
+export const ATTRACT_AI_TOUCH_STEP = 1 / 10;
+export function attractAiStep(G) {
+  const touch = !!(G?.game?.mobile?.touch || G?.mobile?.touch);
+  const low = (G?.game?.settings || G?.settings)?.quality === 'low';
+  return touch || low ? ATTRACT_AI_TOUCH_STEP : ATTRACT_AI_STEP;
+}
 
 export function menuAttractAiEligible(brain, G) {
   const actor = brain?.a, match = G?.match;
@@ -29,19 +35,27 @@ export function installAttractBotBudget({ BotBrain }, G) {
       // very frame via native BotBrain.update, never wait for a menu budget.
       this._menuAttractPending = 0;
       this._menuAttractFirst = undefined;
+      this._menuAttractStep = undefined;
       return nativeUpdate.call(this, dt);
     }
-    const actor = this.a;
-    // Stagger 4+4 bots at fixed 60 Hz without advancing anyone's clock early.
+    const actor = this.a, step = attractAiStep(G);
+    if (this._menuAttractStep !== step) {
+      // Device/quality setting changed mid-demo: never carry stale cadence
+      // into the new tier or a real match.
+      this._menuAttractPending = 0;
+      this._menuAttractFirst = undefined;
+      this._menuAttractStep = step;
+    }
+    // Stagger 4+4 brains on alternate 60-Hz or 20-Hz simulation frames.
     const first = this._menuAttractFirst ??
-      (((actor.team + actor.slot) & 1) ? 1 / 60 : ATTRACT_AI_STEP);
+      (((actor.team + actor.slot) & 1) ? step / 2 : step);
     const accumulated = (this._menuAttractPending || 0) + dt;
     if (accumulated + 1e-10 < first) {
       this._menuAttractPending = accumulated;
       this._menuAttractFirst = first;
       return;
     }
-    this._menuAttractFirst = ATTRACT_AI_STEP;
+    this._menuAttractFirst = step;
     this._menuAttractPending = 0;
     return nativeUpdate.call(this, accumulated);
   };

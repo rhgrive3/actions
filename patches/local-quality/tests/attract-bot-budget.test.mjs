@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { installAttractBotBudget, menuAttractAiEligible, ATTRACT_AI_STEP } from '../attract-bot-budget.mjs';
+import { installAttractBotBudget, menuAttractAiEligible, attractAiStep, ATTRACT_AI_STEP, ATTRACT_AI_TOUCH_STEP } from '../attract-bot-budget.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { qualityIdentity } from '../adapter.mjs';
 
@@ -51,13 +51,23 @@ test('eight menu bots split thinking across alternating 60 Hz frames without los
   }
 });
 
-test('existing 20 Hz low/touch menu budget is not throttled again', () => {
-  const { brains } = brainFixture();
-  for (let i = 0; i < 20; i++) for (const b of brains) b.update(1 / 20);
-  for (const b of brains) {
-    assert.equal(b.calls.length, 20);
-    assert.equal(b._menuAttractPending, 0);
-    assert.ok(Math.abs(b.calls.reduce((a, t) => a + t, 0) - 1) < 1e-9);
+test('touch and LOW menu keep 20-Hz simulation but budget bot thinking to staggered 10 Hz', () => {
+  for (const tier of ['touch','low']) {
+    const f = brainFixture();
+    if (tier === 'touch') f.G.game.mobile = { touch: true };
+    else f.G.game.settings = { quality: 'low' };
+    assert.equal(attractAiStep(f.G), ATTRACT_AI_TOUCH_STEP);
+    const decisions = [];
+    for (let i = 0; i < 20; i++) {
+      let count = 0;
+      for (const b of f.brains) { const before = b.calls.length; b.update(1 / 20); count += b.calls.length - before; }
+      decisions.push(count);
+    }
+    assert.deepEqual(decisions, Array(20).fill(4), tier + ': no all-bot CPU spikes');
+    for (const b of f.brains) {
+      assert.equal(b.calls.length, 10, tier + ': half as many decisions');
+      assert.ok(Math.abs(b.calls.reduce((a, t) => a + t, 0) + (b._menuAttractPending || 0) - 1) < 1e-9);
+    }
   }
 });
 
