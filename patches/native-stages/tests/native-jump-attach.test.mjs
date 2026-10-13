@@ -2,12 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {nativeStageCatalog,nativeBrowserStageIntegrity} from '../../../scripts/lib/inkwave-native-stages.mjs';
+import {nativeStageCatalog,nativeBrowserStageIntegrity,NATIVE_RUNTIME_EXTERNALS} from '../../../scripts/lib/inkwave-native-stages.mjs';
+import {BASE_SOURCE_STAGES} from '../runtime/source-catalog.mjs';
 import {nativeFixture} from './fixture.mjs';
 
 test('normal-jump attachment is explicit and invalidates the source navigation cache',()=>{
  const dir=fs.mkdtempSync(path.resolve('.ci-scratch/jump-attach-catalog-')),base={id:'probe',internal:'Vss_Probe00',name:'Probe',tree:'b'.repeat(40),sourceSha256:'a'.repeat(64),bounds:{minX:-10,minZ:-10,maxX:10,maxZ:10},spawnPads:[[0,1,-8],[0,1,8]],spawnBarrier:2.5,placementStatus:'inferred source supports',version1130Verified:false},write=value=>fs.writeFileSync(path.join(dir,'probe.json'),JSON.stringify({...base,sourceNavigation:value}));
- try{for(const value of [{wallJumpAttach:true},{wallClimb:true,wallJumpAttach:true},{wallClimb:true,wallJumpAttach:true,wallSurge:true,highDrops:true}]){write(value);assert.deepEqual(nativeStageCatalog(dir).stages.at(-1).sourceNavigation,value);assert.notEqual(nativeBrowserStageIntegrity(base),nativeBrowserStageIntegrity({...base,sourceNavigation:value}));}for(const value of [{wallJumpAttach:false},{wallJumpAttach:1},{wallJumpAttach:true,fly:true}]){write(value);assert.throws(()=>nativeStageCatalog(dir),/source navigation/);}for(const s of nativeStageCatalog().stages)assert.equal(s.sourceNavigation?.wallJumpAttach,undefined);}finally{fs.rmSync(dir,{recursive:true});}
+ try{for(const value of [{wallJumpAttach:true},{wallClimb:true,wallJumpAttach:true},{wallClimb:true,wallJumpAttach:true,wallSurge:true,highDrops:true}]){write(value);assert.deepEqual(nativeStageCatalog(dir).stages.at(-1).sourceNavigation,value);assert.notEqual(nativeBrowserStageIntegrity(base),nativeBrowserStageIntegrity({...base,sourceNavigation:value}));}for(const value of [{wallJumpAttach:false},{wallJumpAttach:1},{wallJumpAttach:true,fly:true}]){write(value);assert.throws(()=>nativeStageCatalog(dir),/source navigation/);}for(const s of BASE_SOURCE_STAGES)assert.equal(s.sourceNavigation?.wallJumpAttach,undefined);}finally{fs.rmSync(dir,{recursive:true});}
+});
+
+test('compiled normal-jump forecast uses the installed fixed gameplay clock',async()=>{
+ const {build}=await import('esbuild'),result=await build({entryPoints:['patches/native-stages/runtime/engine.mjs'],bundle:true,format:'esm',minify:true,write:false,metafile:true,external:NATIVE_RUNTIME_EXTERNALS});
+ const imports=Object.values(result.metafile.outputs).flatMap(o=>o.imports);assert.ok(imports.some(i=>i.external&&i.path==='../../splatoon3/runtime/clock.mjs'));assert.ok(!Object.keys(result.metafile.inputs).some(i=>i.endsWith('/splatoon3/runtime/clock.mjs')),'a second uninstalled clock must never enter the native forecast');
 });
 
 test('legacy and unopted native brains keep their selected ordinary inputs',async()=>{
