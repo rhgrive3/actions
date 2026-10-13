@@ -692,6 +692,9 @@ export class RankedWorld {
     this.rainmakerCarrier.visible = !!carrier;
     if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
     else this.rainmakerCarrier.position.copy(this.rainmaker.position).add(new this.THREE.Vector3(0, 2.2, 0));
+    const charge = rainmaker?.charge?.value || 0;
+    this.rainmakerCore.material.emissive?.setHex(charge >= 1 ? 0xffdc5c : 0x000000);
+    this.rainmakerCore.material.emissiveIntensity = charge >= 1 ? 1.3 : 0;
     const checkpoints = rainmaker?.checkpoint?.passed;
     this.rainmakerCore.material.color.setHex(rainmaker?.dropped ? 0xffaf52 : 0xffde61);
     this.rainmaker.userData.checkpointsPassed = Array.isArray(checkpoints) ? checkpoints.slice() : [];
@@ -741,7 +744,10 @@ export class RankedWorld {
 
   _updateClams(engine) {
     if (this.mode !== 'clams' || !this.clamGeometry) return;
-    const clams = engine?.rule?.state?.clams || [];
+    const state = engine?.rule?.state;
+    const clams = [...(state?.clams || [])];
+    for (const basket of state?.baskets || []) if (basket.pendingBreak)
+      clams.push({ id: `drill-${basket.team}`, kind: 'power', team: basket.team, pos: basket.pendingBreak.pos, drilling: true });
     const present = new Set();
     for (const clam of clams) {
       if (!clam || clam.id === undefined || clam.carrier !== null && clam.carrier !== undefined) continue;
@@ -755,6 +761,7 @@ export class RankedWorld {
       const clock = finite(this.G.time) ? this.G.time : 0;
       if (velocity) marker.mesh.rotation.set(velocity[0] * 0.04, velocity[1] * 0.04 + clock * 1.4, velocity[2] * 0.04);
       else marker.mesh.rotation.y = clock * 1.4;
+      if (clam.drilling) marker.mesh.rotation.z = clock * 24;
     }
     for (const [key, marker] of this._clamMarkers) {
       if (!present.has(key)) marker.mesh.visible = false;
