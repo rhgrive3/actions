@@ -1,14 +1,16 @@
 # オヒョウ海運 / Shipshape Cargo Co.
 
 Stage owner branch: `codex/native-shipshape`. Initial accepted foundation:
-`79ad61c59889a5e424bc56ca934422dde184baaf`. The current tested runtime includes
+`79ad61c59889a5e424bc56ca934422dde184baaf`. The existing immutable runtime includes
 accepted current-main foundation `846f0532b6b3bcde3dfed893b81ee07d3dc58cd5`
 and accepted source jump attachment `e35ae3a560d228f13e85fd79a462b92989f1a403`.
 The branch also consumes accepted ordinary source-floor support
 `0e6dd2474930b4fde75e2b5e5012030b175b4952` and physical Tower rider guards
 `90b7ba7905986d301772f842e244c8ecb12b0b7a` and ordinary native jump input
 `fd23d46d87498dced990c5ee5655db2462169e2e`, plus source Clams goals and the
-eighth pickup `3249d6dc5c8da6c085247c8213d0b7b4c69a24f4`. The current immutable
+eighth pickup `3249d6dc5c8da6c085247c8213d0b7b4c69a24f4`. The branch now consumes
+accepted foundation `90040586c3728ca20d69ed43014528e0f68cbbdf`, including the
+source Drop recovery and main 18ce compatibility refresh. The immutable
 browser artifact predates that later accepted history. Stage verification is in progress; the
 complete opposite-bank bot route fails. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
 remains Draft.
@@ -60,12 +62,20 @@ candidate is unaccepted and is kept separate from the packaged runtime proof.
 The subsequent current production composition includes accepted grounded form
 selection and ordinary jump input, plus the guarded experimental combat helper.
 It still fails the first opposite-bank assertion at 71.43 seconds. All 4,286
-installed-dimension capsule samples pass. The ordinary stock jump advances its
+installed-dimension per-step endpoint capsule samples pass; they do not prove
+continuous flight clearance. The ordinary stock jump advances its
 serial while the protected-pad opponent is already targeted; the accepted hold
 helper deliberately excludes targets and does not arm. The flight subsequently
 loses upper support above original NoPaint `BeamA_low35` triangle 29815. Wahoo
 owns the conditional combat jump correction, and the stage owner remains its
 independent peer. Source buffers, mask and all earlier failures are retained.
+
+The full-bank countercase fixes the initial supported goal and reacquires that
+same goal after ordinary paint-mode path loss or replacement. The other seven
+real actors remain on supported source pads with their brains frozen. This is
+a controlled route replay with production perception, Actor, weapons and
+specials. The next strict paired continuation omits postsetup goal reacquisition
+and records ordinary goal changes separately from unsafe source departures.
 
 A separate navigation trial places the other seven real actors on genuine
 supported own-bank surfaces outside the intended route's 21-unit awareness

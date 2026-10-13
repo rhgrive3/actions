@@ -34422,6 +34422,8 @@
         "sha256": "d3bb5a99f8c26efd21206d873204bbf9ac7c1acb2579ddad22371c443fdbaff9"
       }
     ],
-    "priorFailuresPreserved": true
+    "priorFailuresPreserved": true,
+    "conditions": "Controlled original opposing-bank route replay: initial supported goal, same-goal reacquisition after paint path loss/replacement, other seven real actors source-supported with brains frozen; production perception/Actor/weapons/specials; actual fixed STEP 1/60 at render30.",
+    "nextPairedCondition": "Accepted900 plus qualified current combat/jump candidates; no postsetup goal reacquisition; ordinary goal changes distinguished from unsafe source departure."
   }
 }
