@@ -1653,9 +1653,16 @@ function activeStep(rt,actor,dt) {
       actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;actor.vel.y=0;
       actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false);
       state.dashHits||=new Set();
+      // 11.3.0 WeaponSpCastle BodyParam: CollisionDashFrontOffset=2.75,
+      // CollisionDashRadiusForPlayer=1.5. Offset BOTH ends of the true
+      // 3D travelled segment; never enlarge radius at the actor's feet.
+      const hitFrom=rt.v13.copy(before).addScaledVector(state.direction,2.75);
+      const hitTo=rt.v14.copy(actor.pos).addScaledVector(state.direction,2.75);
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===actor.team||state.dashHits.has(victim))continue;
-        if(krakenDashSweptContact(before,actor.pos,victim.pos,1.5)){rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);}
+        if(krakenDashSweptContact(hitFrom,hitTo,victim.pos,1.5)){
+          rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);
+        }
       }
       stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
       if(state.dashT>=35/60){state.phase='active';state.dashT=0;}

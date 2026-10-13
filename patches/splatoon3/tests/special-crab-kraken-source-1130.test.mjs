@@ -62,3 +62,29 @@ test('Kraken Royale actual dash cannot hit a target far above the owner',async()
     assert.equal(hits.some(h=>h.b===upper&&h.k==='krakenRoyale'),false);
   }finally{f.G.projectiles.applyHit=orig;}
 });
+
+test('Kraken Royale uses source 2.75 forward offset and 1.5 player radius',async()=>{
+ const f=await runtime();f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+ const owner=f.make(),front=f.make(),behind=f.make(),upper=f.make();
+ owner.weapon={...owner.weapon,special:'krakenRoyale',specialCost:100};
+ owner.special=100;owner._resolve=()=>{};owner.alive=true;
+ owner.aimDir.set(0,0,1);owner.aimPoint.set(0,1,25);
+ for(const v of [front,behind,upper]){v.team=1;v.alive=true;}
+ front.pos.set(0,0,2.75);behind.pos.set(0,0,-2.75);upper.pos.set(0,5,2.75);
+ f.G.actors=[owner,front,behind,upper];
+ const hits=[],old=f.G.projectiles.applyHit;
+ f.G.projectiles.applyHit=(a,v,d,k)=>{hits.push({a,v,d,k});return false;};
+ try{
+  owner._startSpecial();
+  for(let i=0;i<60;i++)owner._updateSpecial(1/60);
+  owner.intent.fire=true;owner._updateSpecial(1/60);
+  for(let i=0;i<35;i++)owner._updateSpecial(1/60);
+  owner.intent.fire=false;owner._updateSpecial(1/60);
+  owner._updateSpecial(1/60);
+  assert.ok(hits.some(h=>h.v===front&&h.k==='krakenRoyale'),
+    'source forward offset extends beyond the actor body');
+  assert.equal(hits.some(h=>h.v===behind&&h.k==='krakenRoyale'),false);
+  assert.equal(hits.some(h=>h.v===upper&&h.k==='krakenRoyale'),false,
+    'the 3D sweep must not hit through elevated floors');
+ }finally{f.G.projectiles.applyHit=old;}
+});
