@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PLAYER } from '../../../src/config.js';
+const terrainRadius=squid=>{const raw=squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw;return Number.isFinite(raw)&&Number.isFinite(PLAYER.s3TerrainDistanceScale)?raw*PLAYER.s3TerrainDistanceScale:PLAYER.radius;};
 
 /** Opt-in display-derived wall transitions. No collision or paint is changed.
  * Every rise needs an uninterrupted paintable wall, capsule corridor, supported
@@ -11,9 +12,9 @@ export function nativeClimbTransition(graph,lower,upper){
  const direction=new THREE.Vector3(dx/length,0,dz/length),origin=new THREE.Vector3(lower.x,lower.y+.3,lower.z);
  const first=physics.raycast(origin,direction,length+.25);
  if(!first.hit||first.face<0||Math.abs(first.normal.y)>.15||first.normal.dot(direction)>-.9)return null;
- const normal=first.normal.clone(),wall=first.point.clone(),spine=wall.clone().addScaledVector(normal,PLAYER.radius+.04),samples=[];
+ const humanRadius=terrainRadius(false),swimRadius=terrainRadius(true),normal=first.normal.clone(),wall=first.point.clone(),spine=wall.clone().addScaledVector(normal,swimRadius+.002),samples=[];
  for(let y=lower.y+.3;y<upper.y-.05;y+=.35){
-  origin.set(spine.x,y,spine.z);const hit=physics.raycast(origin,direction,PLAYER.radius+.25);
+  origin.set(spine.x,y,spine.z);const hit=physics.raycast(origin,direction,PLAYER.radius+.45);
   if(!hit.hit||hit.face<0||Math.abs(hit.normal.y)>.15||hit.normal.dot(normal)<.97)return null;
   const face=level.faces[hit.face];if(!face?.wall||!level.containsOnFace(face,hit.point))return null;
   const i=Math.max(0,Math.min(face.nu-1,Math.floor(hit.u/face.cu))),j=Math.max(0,Math.min(face.nv-1,Math.floor(hit.v/face.cv)));
@@ -21,16 +22,33 @@ export function nativeClimbTransition(graph,lower,upper){
   samples.push({point:hit.point.toArray(),face:hit.face,u:hit.u,v:hit.v});
  }
  if(samples.length<3)return null;
+ for(const sample of samples){const extent=new THREE.Vector3(...sample.point).sub(wall).dot(normal);if(extent>0)spine.addScaledVector(normal,Math.max(0,extent+swimRadius+.002-spine.clone().sub(wall).dot(normal)));}
+ // Attachment must reach every original wall plane with the live Actor ray.
+ // A recessed display wall behind a protruding lower seam is not climbable
+ // merely because a capsule fits alongside its bounding extent.
+ if(samples.some(sample=>spine.clone().sub(new THREE.Vector3(...sample.point)).dot(normal)>PLAYER.radius+.35-.001))return null;
  // Paint the whole rise from a supported human firing stance inside the normal
  // bot pitch range. This also prevents paths that require shooting through a
  // ceiling or hovering beside a wall to acquire its upper ink.
  const distance=Math.max(1.1,(rise-.65)/Math.tan(.9)),stance=wall.clone().addScaledVector(normal,distance).setY(lower.y),down=new THREE.Vector3(0,-1,0);
- for(let t=0;t<=1;t+=.2){origin.set(lower.x+(stance.x-lower.x)*t,lower.y+.35,lower.z+(stance.z-lower.z)*t);const ground=physics.raycast(origin,down,.7);if(!ground.hit||ground.normal.y<.68||Math.abs(ground.point.y-lower.y)>.16)return null;origin.y=lower.y+.01;if(!physics.bodyFits(origin,PLAYER.radius,.32,PLAYER.height,false,.015))return null;}
+ for(let t=0;t<=1;t+=.2){origin.set(lower.x+(stance.x-lower.x)*t,lower.y+.35,lower.z+(stance.z-lower.z)*t);const ground=physics.raycast(origin,down,.7);if(!ground.hit||ground.normal.y<.68||Math.abs(ground.point.y-lower.y)>.16)return null;origin.y=lower.y+.01;if(!physics.bodyFits(origin,humanRadius,PLAYER.stepUp,PLAYER.height,false,.015))return null;}
  for(const sample of samples){origin.copy(stance).setY(stance.y+1.05);const target=new THREE.Vector3(...sample.point),delta=target.sub(origin),length=delta.length();if(physics.raycast(origin,delta.multiplyScalar(1/length),length-.025).hit)return null;}
  // Human painting stance and entire vertical corridor also reject low ceilings.
- for(let y=lower.y;y<=upper.y+.4;y+=.25){origin.set(spine.x,y,spine.z);if(!physics.bodyFits(origin,PLAYER.radius,.32,PLAYER.height,false,.015))return null;}
- for(let t=0;t<=1;t+=.2){origin.set(spine.x+(upper.x-spine.x)*t,upper.y+.45,spine.z+(upper.z-spine.z)*t);if(!physics.bodyFits(origin,PLAYER.radius,.32,PLAYER.height,false,.015))return null;}
+ for(let y=lower.y;y<=upper.y+.4;y+=.25){origin.set(spine.x,y,spine.z);if(!physics.bodyFits(origin,swimRadius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015))return null;}
+ for(let t=0;t<=1;t+=.2){origin.set(spine.x+(upper.x-spine.x)*t,upper.y+.45,spine.z+(upper.z-spine.z)*t);if(!physics.bodyFits(origin,swimRadius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015))return null;}
  return {to:upper.id,type:'climb',cost:length+rise*1.8+distance*2+4,climb:{lower:[lower.x,lower.y,lower.z],upper:[upper.x,upper.y,upper.z],normal:normal.toArray(),spine:[spine.x,lower.y,spine.z],paintStance:stance.toArray(),samples,assurance:'Inferred source paintable wall, supported firing stance and live capsule corridor; retail navigation unverified'}};
+}
+
+/** Travel routes are sampled for the human body. Keep ordinary squid input only
+ * where the live, wider swim capsule also clears the next source support. */
+export function nativeClimbTravelForm(brain,G){
+ if(!G.level?.manifest.sourceNavigation?.wallClimb||!brain.a.intent.squid||brain.a.climbing)return;
+ const a=brain.a,N=G.nav,from=N.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N.nodes[brain.path?.[brain.pi]];
+ if(!to)return;
+ const edge=from?.nb.find(e=>e.to===to.id),p=a.pos.clone(),radius=terrainRadius(true);
+ const clear=point=>G.physics.bodyFits(point,radius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015);
+ p.set(to.x,to.y+.01,to.z);
+ if(edge?.type!=='walk'||!clear(a.pos)||!clear(p))a.intent.squid=false;
 }
 
 /** Existing BotBrain selects paths; this owns ordinary input for their current
@@ -63,7 +81,7 @@ export function updateNativeClimb(brain,G,dt){
   it.fire=a.ink>PLAYER.inkMax*.15;it.squid=!it.fire;state.phase=it.fire?'paint':'refill';
  }else{
   it.squid=true;it.move.copy(normal).negate();
-  if(a.pos.y>=upper.y-.3&&!a.climbing)it.move.copy(upper).sub(a.pos).setY(0).normalize();
+  if(!a.climbing&&(a.pos.y>=upper.y-.3||(a.climbExit>0&&a.pos.y>lower.y+.5)))it.move.copy(upper).sub(a.pos).setY(0).normalize();
   else if(!a.climbing&&a.pos.y<upper.y-.3){const delta=spine.clone().sub(a.pos).setY(0);if(delta.length()>.15)it.move.copy(delta).normalize();}
   state.phase='swim';
  }

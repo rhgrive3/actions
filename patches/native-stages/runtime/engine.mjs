@@ -6,7 +6,7 @@ export { buildNativeMinimap } from './native-minimap.mjs';
 export { nativeRankedStage } from './native-ranked.mjs';
 export { nativeInitialLanding,nativeArenaBasis,nativeSpawnYaw,nativeRetreatCoordinate } from './native-spawn.mjs';
 export { nativePaintGoalIds } from './native-bots.mjs';
-export { nativeClimbTransition,updateNativeClimb } from './native-climb.mjs';
+export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from './native-climb.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
 export { sweepNativeLevelSphere } from './native-projectile-sweep.mjs';

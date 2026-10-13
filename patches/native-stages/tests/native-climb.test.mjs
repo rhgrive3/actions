@@ -17,13 +17,14 @@ test('opted source walls have real supported routes, while NoPaint and disabled 
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(root,id)),P=G.physics=new f.NativePhysics(L);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});const started=performance.now(),N=G.nav=new f.NavGraph(L,P);
+ const navBuildMilliseconds=performance.now()-started;
  const edges=N.nodes.flatMap(n=>n.nb.filter(e=>e.type==='climb').map(e=>({lower:n,upper:N.nodes[e.to],edge:e})));assert.ok(edges.length>0);
  const center=N.nearest(new THREE.Vector3((L.bounds.minX+L.bounds.maxX)/2,(L.spawnPads[0].y+L.spawnPads[1].y)/2,(L.bounds.minZ+L.bounds.maxZ)/2),1.2),routes=[];
  for(let team=0;team<2;team++){const route=N.path(N.nearest(L.spawnPads[team],1.2),center,team,50000);assert.ok(route?.length);assert.ok(route.slice(1).some((to,i)=>N.edgeType(route[i],to)==='climb'),'actual opposing source-bank route needs a climb');routes.push(route);}
  const bankPaths=[];
  for(let team=0;team<2;team++){
   const actor=f.make('shooter');actor.team=team;actor.pos.copy(L.spawnPads[team]);const brain=new f.BotBrain(actor,'normal'),sign=team?-1:1,to=N.nearest(new THREE.Vector3(-15*sign,6,35*sign),1.2),node=N.nodes[to];
-  assert.ok(brain._pathTo(new THREE.Vector3(node.x,node.y,node.z),.6),'existing BotBrain accepts a long opposing-bank source route without the legacy 5000-pop cutoff');
+  assert.ok(brain._pathTo(new THREE.Vector3(node.x,node.y,node.z),.6),'existing BotBrain accepts a long opposing-bank source route without the legacy 6000-pop cutoff');
   bankPaths.push({team,waypoints:brain.path.length,climbs:brain.path.slice(1).filter((to,i)=>N.edgeType(brain.path[i],to)==='climb').length});
  }
  const first=edges[0];assert.ok(f.nativeClimbTransition(N,first.lower,first.upper));
@@ -41,7 +42,8 @@ test('opted source walls have real supported routes, while NoPaint and disabled 
  const point=new THREE.Vector3(...first.edge.climb.samples[0].point),normal=new THREE.Vector3(...first.edge.climb.normal),a=f.make();a.pos.copy(point).addScaledVector(normal,PLAYER.radius+.05);a.pos.y-=.3;a.form='squid';a.intent.move.copy(normal).negate();a.climbExit=0;
  G.paint.splat(point.clone().addScaledVector(normal,.005),2,0,{seed:.375,instant:true});a._updateClimb(1/60,true);assert.ok(a.climbing);
  G.paint.splat(point.clone().addScaledVector(normal,.005),3,1,{seed:.375,instant:true});a._updateClimb(1/60,true);assert.equal(a.climbing,false,'live enemy-wall ownership releases the actor');
- const human=[],bots=[];
+ const human=[],bots=[],bankTraversal=[];
+ G.camera=new THREE.PerspectiveCamera();
  for(let team=0;team<2;team++){
   const route=routes[team],at=route.slice(1).findIndex((to,i)=>N.edgeType(route[i],to)==='climb'),edge=N.nodes[route[at]].nb.find(e=>e.to===route[at+1]);
   for(const hz of [30,60,120]){
@@ -67,5 +69,22 @@ test('opted source walls have real supported routes, while NoPaint and disabled 
    bots.push({team,hz,seconds,start:edge.climb.lower,end:actor.pos.toArray(),wallSamples:edge.climb.samples.length,weapon:'shooter / Shooter_Normal_00',gearAP:0,initialWall:'unpainted',ordinaryFireSwimMove:true,grounded:true});
   }
  }
- console.log(JSON.stringify({id,climbEdges:edges.length,navNodes:N.nodes.length,validNodes:N.validIds.length,noPaintNegativeCases:noPaint,blockedSourceCorridors:blockedCorridors,navigationMilliseconds:performance.now()-started,enemyWallReleased:true,bankPaths,human,bots,sourceBuffersUnchanged:true}));
+ for(let team=0;team<2;team++)for(const hz of [30,60,120]){
+  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.list.length=0;
+  const actor=f.make('shooter');actor.team=team;actor.isBot=true;actor._integrate=f.Actor.prototype._integrate;actor.spawnAt(L.spawnPads[team],team?Math.PI:0);actor.invuln=0;G.actors=[actor];
+  const brain=actor.bot=new f.BotBrain(actor,'normal'),sign=team?-1:1,to=N.nearest(new THREE.Vector3(-15*sign,6,35*sign),1.2),node=N.nodes[to],goal=new THREE.Vector3(node.x,node.y,node.z);
+  assert.ok(brain._pathTo(goal,.6));const initialWaypoints=brain.path.length,initialClimbs=brain.path.slice(1).filter((to,i)=>N.edgeType(brain.path[i],to)==='climb').length;assert.ok(initialClimbs>=2);
+  brain.goalTimer=1000;brain.repath=1000;brain.bombCd=1000;
+  let climbed=false,fire=false,seconds=0,replans=0;
+  for(let frame=0;frame<hz*90;frame++){
+   // A requested traversal goal persists through ordinary refill and recovery,
+   // as an objective caller would request it again; no Actor pose is assigned.
+   if(brain.mode==='paint'&&(!brain.path||brain.goal!==to)){brain._pathTo(goal,.6);brain.goalTimer=1000;brain.repath=1000;replans++;}
+   G.time+=1/hz;brain.update(1/hz);fire ||=actor.intent.fire;actor.character.root.position.copy(actor.pos);actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);climbed ||=actor.climbing;seconds=(frame+1)/hz;
+   if(actor.grounded&&actor.pos.distanceTo(goal)<1.5)break;
+  }
+  assert.ok(actor.alive&&actor.grounded&&actor.pos.distanceTo(goal)<1.5&&climbed&&fire,'existing bot physically traverses opposing source bank, real walls and supports at '+hz+'Hz/team'+team);
+  bankTraversal.push({team,hz,seconds,replans,initialWaypoints,initialClimbs,start:L.spawnPads[team].toArray(),end:actor.pos.toArray(),distanceToGoal:actor.pos.distanceTo(goal),weapon:'shooter / Shooter_Normal_00',gearAP:0,initialPaint:'unpainted',actualBrainActorWeaponProjectilesPaintClock:true});
+ }
+ console.log(JSON.stringify({id,climbEdges:edges.length,navNodes:N.nodes.length,validNodes:N.validIds.length,noPaintNegativeCases:noPaint,blockedSourceCorridors:blockedCorridors,navBuildMilliseconds,verificationMilliseconds:performance.now()-started,enemyWallReleased:true,bankPaths,human,bots,bankTraversal,sourceBuffersUnchanged:true}));
 });
