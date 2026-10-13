@@ -48,7 +48,9 @@ test('actual Shooter/Dualies/Splatling births draw connected rods, preserve auth
     const p=f.G.projectiles.list[0];assert.equal(p._inkVolumeRecipe,'shooter');p.age=3/60;p.pos.addScaledVector(p.vel,3/60);
     const before=snapshot(p);e.begin();assert(f.submitInkVolume(e,p));e.end();assert.deepEqual(snapshot(p),before);assert.equal(e.metrics.active,3);
     const resources=[...e.assets.get('shooter').resources];e.begin();assert(f.submitInkVolume(e,p));e.end();assert.deepEqual([...e.assets.get('shooter').resources],resources);
-    const tip=e.assets.get('shooter').patterns[1].frames[0][0],m=new f.THREE.Matrix4();tip.mesh.getMatrixAt(0,m);assert.deepEqual(m.elements.slice(12,15).map(v=>Math.round(v*1e5)),p.pos.toArray().map(v=>Math.round(v*1e5)));
+    const tip=e.assets.get('shooter').patterns[1].frames[0][0],m=new f.THREE.Matrix4();tip.mesh.getMatrixAt(0,m);
+    // InstancedMesh stores the matrix in Float32Array; comparing rounded decimal bins can split equal positions at a bin boundary.
+    const expectedTip=p.pos.toArray();for(let axis=0;axis<3;axis++)assert(Math.abs(m.elements[12+axis]-expectedTip[axis])<1e-5,`tip axis ${axis} must follow authoritative projectile position within Float32 precision`);
     e.capacity=2;e.begin();assert.equal(f.submitInkVolume(e,p),false);e.end();assert.equal(e.metrics.active,0);assert(e.root.children.every(m=>m.count===0));e.capacity=128;
   }
   e.dispose();
