@@ -492,10 +492,20 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
 // Test against the whole travel segment, not just the centre of one frame.
 export function krakenDashSweptContact(from,to,target,radius=1.5){
   if(![from?.x,from?.z,to?.x,to?.z,target?.x,target?.z,radius].every(finite)||radius<0)return false;
-  const dx=to.x-from.x,dz=to.z-from.z,lengthSq=dx*dx+dz*dz;
-  const t=lengthSq>1e-12?clamp(((target.x-from.x)*dx+(target.z-from.z)*dz)/lengthSq,0,1):0;
+  // Test-only planar positions are supported when all three omit y. Actual
+  // Actor positions include y; a horizontal-only sweep incorrectly hits an
+  // opponent on an upper platform through the floor.
+  const missing=[from.y,to.y,target.y].filter(y=>y===undefined).length;
+  if(missing!==0&&missing!==3)return false;
+  if(missing===0&&![from.y,to.y,target.y].every(finite))return false;
+  const dy=missing===3?0:to.y-from.y,dx=to.x-from.x,dz=to.z-from.z;
+  const lengthSq=dx*dx+dy*dy+dz*dz;
+  const proj=(target.x-from.x)*dx+(target.z-from.z)*dz+
+    (missing===3?0:(target.y-from.y)*dy);
+  const t=lengthSq>1e-12?clamp(proj/lengthSq,0,1):0;
   const x=target.x-(from.x+t*dx),z=target.z-(from.z+t*dz);
-  return x*x+z*z<=radius*radius;
+  const y=missing===3?0:target.y-(from.y+t*dy);
+  return x*x+y*y+z*z<=radius*radius;
 }
 // 11.3.0 WeaponSpChariotParam: lateral X=.075/F, forward Z=.015/F.
 // Preserve the native mode's 60Hz unit bridge, with a camera-relative turn.

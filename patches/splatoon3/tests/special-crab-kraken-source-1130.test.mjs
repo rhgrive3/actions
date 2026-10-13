@@ -30,3 +30,35 @@ test('11.3.0 Crab Tank cannon cannot refire before 75F despite shooter re-arming
   for(let i=0;i<72;i++)actor._updateSpecial(1/60);assert.equal(events.length,1);
   for(let i=0;i<3;i++)actor._updateSpecial(1/60);assert.equal(events.length,2);
 });
+
+test('Kraken Royale 3D swept dash does not damage opponents on different floors',async()=>{
+  const f=await runtime(),touch=f.krakenDashSweptContact;
+  const start={x:0,y:0,z:0},end={x:0,y:0,z:1};
+  assert.equal(touch(start,end,{x:0,y:4,z:.5}),false,'an upper-floor opponent must not be hit');
+  assert.equal(touch(start,end,{x:0,y:-4,z:.5}),false,'a lower-floor opponent must not be hit');
+  assert.equal(touch(start,end,{x:0,y:1.49,z:.5}),true,'inside the 1.5-unit vertical radius');
+  assert.equal(touch(start,end,{x:0,y:1.51,z:.5}),false,'outside the vertical radius');
+  assert.equal(touch({x:0,y:0,z:0},{x:0,y:2,z:1},{x:0,y:1,z:.5}),true,
+    'the nearest point is on the 3D dash segment');
+  assert.equal(touch(start,end,{x:0,z:.5}),false,'reject malformed mixed-dimensional positions');
+});
+test('Kraken Royale actual dash cannot hit a target far above the owner',async()=>{
+  const f=await runtime();f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+  const owner=f.make(),upper=f.make();
+  owner.weapon={...owner.weapon,special:'krakenRoyale',specialCost:100};
+  owner.special=100;owner.alive=true;owner._resolve=()=>{};
+  owner.aimDir.set(0,0,1);owner.aimPoint.set(0,1,25);
+  upper.team=1;upper.pos.set(0,7,1);upper.alive=true;
+  f.G.actors=[owner,upper];
+  const hits=[],orig=f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit=(a,b,d,k)=>{hits.push({a,b,d,k});return false;};
+  try{
+    owner._startSpecial();
+    for(let i=0;i<60;i++)owner._updateSpecial(1/60);
+    owner.intent.fire=true;owner._updateSpecial(1/60);
+    for(let i=0;i<35;i++)owner._updateSpecial(1/60);
+    owner.intent.fire=false;owner._updateSpecial(1/60);
+    for(let i=0;i<20;i++)owner._updateSpecial(1/60);
+    assert.equal(hits.some(h=>h.b===upper&&h.k==='krakenRoyale'),false);
+  }finally{f.G.projectiles.applyHit=orig;}
+});
