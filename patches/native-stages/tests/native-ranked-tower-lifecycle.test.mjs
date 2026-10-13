@@ -32,11 +32,12 @@ test('installed Tower boarding releases early input ownership on defend and null
 
 test('native rider requires the actual current world, level and block identity',async()=>{
  const {fixture}=await import('../../splatoon3/tests/source-fixture.mjs'),{adaptBuildSource}=await import('../../../scripts/inkwave-source-composition.mjs');
- const f=await fixture({fullRuntime:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,extraExports:`export {nativeTowerRider} from './patches/native-stages/runtime/engine.mjs';`}),block={},level={native:true,blocks:[block]},match={mode:'tower',ranked:{stage:{tower:{boarding:{approaches:[{}]}}}}},G={level,match},world=match.rankedWorld={level,match,towerBlockId:0,towerBlock:block},a={alive:true,grounded:true,ground:{hit:true,block:0}};
+ const f=await fixture({fullRuntime:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,extraExports:`export {nativeTowerRider} from './patches/native-stages/runtime/engine.mjs';`}),block={},level={native:true,blocks:[block]},match={mode:'tower',ranked:{mode:'tower',stage:{tower:{boarding:{approaches:[{}]}}}}},G={level,match},world=match.rankedWorld={level,match,towerBlockId:0,towerBlock:block},a={alive:true,grounded:true,ground:{hit:true,block:0}};
  assert.equal(f.nativeTowerRider(G,a),true);
  assert.equal(f.nativeTowerRider({...G,level:{...level}},a),false,'stale level cannot own the rider');
  match.rankedWorld={...world,match:{}};assert.equal(f.nativeTowerRider(G,a),false,'stale Match cannot own the rider');match.rankedWorld=world;
  level.blocks[0]={};assert.equal(f.nativeTowerRider(G,a),false,'a reused block id cannot substitute for the actual vehicle');level.blocks[0]=block;
  for(const fields of [{alive:false},{grounded:false},{ground:{hit:false,block:0}},{ground:{hit:true,block:1}}])assert.equal(f.nativeTowerRider(G,{...a,...fields}),false);
+ match.ranked.mode='clams';assert.equal(f.nativeTowerRider(G,a),false,'a mismatched ranked engine cannot retain rider authority');match.ranked.mode='tower';
  match.mode='zones';assert.equal(f.nativeTowerRider(G,a),false,'other modes cannot retain rider authority');
 });

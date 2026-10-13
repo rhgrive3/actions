@@ -61,5 +61,5 @@ export function updateNativeTowerBoarding(brain,G,engine,dt){
 /** Static waypoint steering cannot own an actually supported moving rider. */
 export function nativeTowerRider(G,actor){
  const match=G.match,w=match?.rankedWorld;
- return !!(G.level?.native&&match?.mode==='tower'&&match.ranked?.stage?.tower?.boarding?.approaches?.length&&w?.level===G.level&&w.match===match&&w.towerBlockId>=0&&G.level.blocks[w.towerBlockId]===w.towerBlock&&actor?.alive&&actor.grounded&&actor.ground?.hit&&actor.ground.block===w.towerBlockId);
+ return !!(G.level?.native&&match?.mode==='tower'&&match.ranked?.mode==='tower'&&match.ranked?.stage?.tower?.boarding?.approaches?.length&&w?.level===G.level&&w.match===match&&w.towerBlockId>=0&&G.level.blocks[w.towerBlockId]===w.towerBlock&&actor?.alive&&actor.grounded&&actor.ground?.hit&&actor.ground.block===w.towerBlockId);
 }
