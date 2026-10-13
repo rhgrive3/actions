@@ -3939,13 +3939,13 @@
     "status": "merged after immutable Foot/Turf candidate browser completed; final four-mode artifacts pending"
   },
   "finalCpu": {
-    "foundation": "7ddb538afc33787810ec7c6bf218eec0879c3aff",
-    "tests": 85,
-    "passed": 75,
+    "foundation": "67e5565c1ed10cf6adc8c5ad102e5d8863840935",
+    "tests": 89,
+    "passed": 78,
     "failed": 0,
-    "skipped": 10,
-    "durationMilliseconds": 645389.536258,
-    "skippedScope": "optional fixtures for other stage sources; every unique Hump test, foot source negative and installed-ranked Drop fixture executed",
+    "skipped": 11,
+    "durationMilliseconds": 703084.87928,
+    "skippedScope": "Eleven optional fixtures skipped in broad run; authentic HumpDrop cache executed separately below. Ten remaining optional fixtures concern other source stages. All five dedicated Humpback tests, source foot-support and ranked Drop fixtures ran.",
     "sourceBanks": {
       "id": "humpback",
       "cases": [
@@ -4363,15 +4363,25 @@
       "noPaintObjects": 16,
       "limitations": "Elevated opponent home-deck return is unproved; both original pads and complete source remain. Paths qualify both opposing skate bowls, not retail placements or physical traversal of every graph edge."
     },
-    "log": ".ci-scratch/composed-all-cpu.log",
-    "optionalCharacterMotionImport": "Existing VM fixture warns ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING for optional source motion. Production Character type/physics/controller/weapon routes execute; CPU fixture alone does not validate optional animation import. Final real Chromium gameplay/banks have zero page/console errors."
+    "log": ".ci-scratch/current-all-cpu.log",
+    "optionalCharacterMotionImport": "Existing VM fixture warns ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING for optional source motion. Production Character type/physics/controller/weapon routes execute; CPU fixture alone does not validate optional animation import. Final real Chromium gameplay/banks have zero page/console errors.",
+    "humpbackDropCache": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "durationMilliseconds": 86910.866832,
+      "productionCharacterCases": 12,
+      "sourceBuffersUnchanged": true,
+      "log": ".ci-scratch/current-drop-cache.log"
+    }
   },
   "currentBuilds": {
     "private": {
-      "contentHash": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347"
+      "contentHash": "103bacfdcc9616d4a67c75d61937aa5629476ed0cf06207a0e8961e4bf15c9dc"
     },
     "public": {
-      "contentHash": "a465ac919cadbf9bb2a231255bb731e34239338066e28b221231c24b3e59713b"
+      "contentHash": "d53162fee125513816a178612af92fd97efc005f745b83c72d1b6dc5e7453176"
     }
   },
   "acceptedSourceFootprintSupport": {
@@ -4380,606 +4390,1146 @@
     "runtimeModuleSha256": "deb8bb81409eb871686c914b94b09b88e7151c9fa2c1a65fcaa3d64b40ffc330",
     "pullRequest": 1380,
     "behavior": "Original center source triangle retained; actor footprint ground probe derives expected feet, unchanged .16 tolerance; source swimmer step/grate policy and dynamic-support negatives",
-    "exactCurrentSourceInputs": 35,
-    "status": "accepted"
+    "status": "accepted",
+    "apiFoundation": "6116558f66912bfa164f8a67471a230ce07ca4d7",
+    "apiModuleSha256": "31c44d52212fabc40b2c5b738c9b409c58094dac1da0f3bf10fe1d9104abf86f",
+    "priorCombinedSourceInputs": 35
   },
   "finalBrowser": {
-    "status": "in-progress",
-    "privateBuildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
-    "publicBuildFingerprint": "a465ac919cadbf9bb2a231255bb731e34239338066e28b221231c24b3e59713b",
-    "gameplay": [
-      {
+    "status": "waiting-accepted-mask-v4-focused-requalification",
+    "foundation": "67e5565c1ed10cf6adc8c5ad102e5d8863840935",
+    "privateBuildFingerprint": "103bacfdcc9616d4a67c75d61937aa5629476ed0cf06207a0e8961e4bf15c9dc",
+    "sourceSupportModuleSha256": "31c44d52212fabc40b2c5b738c9b409c58094dac1da0f3bf10fe1d9104abf86f",
+    "stageSurgeOptIn": false,
+    "rootFootApiBehavior": "Accepted AST-equivalent physical probe, follower guards preserved",
+    "publicBuildFingerprint": "d53162fee125513816a178612af92fd97efc005f745b83c72d1b6dc5e7453176",
+    "earlierPhysicalRouteReceiptScope": "Root authorizes pinned 7ddb bank/Drop/ranked-Drop receipts under accepted Acorn-equivalent foot support and default-off Surge; new mask proof remains separate."
+  },
+  "screenshotSelfReview": {
+    "inspected": [
+      "composed-gameplay/humpback-game.png",
+      "composed-gameplay/humpback-overhead.png",
+      "composed-gameplay/humpback-source-only.png",
+      "humpback-banks-foot-candidate/humpback-banks.png"
+    ],
+    "sourceGeometry": "Actual source indoor roofs and bowl surfaces retained. Source overhead/source-only view naturally occluded by the original opaque roof; no roof edit for visibility.",
+    "towerMenuImageLimit": "composed-gameplay/humpback-tower-unavailable.png caught a UI transition after the assertions restored Turf. Do not treat it as a stable disabled-Tower image; actual menu/API guard assertions are the evidence.",
+    "rights": "All screenshots private/ignored; no asset publication"
+  },
+  "priorCombinedQualification": {
+    "foundation": "7ddb538afc33787810ec7c6bf218eec0879c3aff",
+    "cpu": {
+      "foundation": "7ddb538afc33787810ec7c6bf218eec0879c3aff",
+      "tests": 85,
+      "passed": 75,
+      "failed": 0,
+      "skipped": 10,
+      "durationMilliseconds": 645389.536258,
+      "skippedScope": "Optional fixtures include source fixtures for other stages and the shared Humpback Drop-cache fixture (not enabled in this broad run, previously passed independent acceptance review; explicitly rerun separately on latest foundation). All five dedicated Humpback tests ran.",
+      "sourceBanks": {
         "id": "humpback",
-        "native": true,
-        "actors": 8,
-        "alive": 8,
-        "bots": 7,
-        "moved": [
-          0,
-          5.065920373421111,
-          6.470215381537621,
-          3.5747731880862186,
-          6.743615992158885,
-          4.815248336997761,
-          4.262045023937049,
-          3.143350512728243
-        ],
-        "coverage": [
-          0.004412533744695573,
-          0.010535468323296441
-        ],
-        "turfTotal": 527237,
-        "counts": [
-          2174,
-          5119
-        ],
-        "metrics": {
-          "loadMilliseconds": 6520.100000008941,
-          "navMilliseconds": 3112.5,
-          "shaderWarmMilliseconds": 11.300000011920929,
-          "vertices": 254995,
-          "triangles": 174089,
-          "faces": 38087,
-          "gridBytes": 8934342,
-          "atlas": 2048,
-          "ppm": 1.3107200000000006,
-          "textureCount": 63,
-          "quality": "low",
-          "version1130Verified": false
-        },
-        "cpuFrame": {
-          "p50": 13.899999991059303,
-          "p95": 36.20000000298023,
-          "max": 104.70000000298023
-        },
-        "render": {
-          "frame": 401,
-          "calls": 152,
-          "triangles": 476924,
-          "points": 0,
-          "lines": 0
-        },
-        "memory": {
-          "geometries": 302,
-          "textures": 87
-        },
-        "navValid": 5798,
-        "local": {
-          "pos": [
-            0.0578233287456625,
-            5.454598914417419,
-            -49.000139314864825
-          ],
-          "alive": true,
-          "grounded": true
-        },
-        "profile": {
-          "physics.raycast": {
-            "milliseconds": 196.19999995827675,
-            "calls": 35565
-          },
-          "bot.update": {
-            "milliseconds": 136.60000003874302,
-            "calls": 1260
-          },
-          "physics.collideBody": {
-            "milliseconds": 51.30000001192093,
-            "calls": 1440
-          },
-          "physics.groundProbe": {
-            "milliseconds": 64.59999991953373,
-            "calls": 1470
-          },
-          "character.update": {
-            "milliseconds": 1642.6000000685453,
-            "calls": 1440
-          },
-          "actor.update": {
-            "milliseconds": 2003.5999999642372,
-            "calls": 1440
-          },
-          "projectiles.update": {
-            "milliseconds": 209.1999999731779,
-            "calls": 180
-          },
-          "paint._advanceSplatOwnership": {
-            "milliseconds": 86.69999991357327,
-            "calls": 12979
-          },
-          "paint.radius.2.1": {
-            "milliseconds": 36.800000086426735,
-            "calls": 3264,
-            "faceVisits": 130926
-          },
-          "paint._emitGrowth": {
-            "milliseconds": 102.30000013113022,
-            "calls": 13158
-          },
-          "paint.radius.2.3": {
-            "milliseconds": 5.299999982118607,
-            "calls": 937,
-            "faceVisits": 46282
-          },
-          "paint.radius.1.8": {
-            "milliseconds": 26.899999916553497,
-            "calls": 4002,
-            "faceVisits": 270158
-          },
-          "paint.radius.2.8": {
-            "milliseconds": 16.999999955296516,
-            "calls": 3989,
-            "faceVisits": 121496
-          },
-          "paint.radius.2.5": {
-            "milliseconds": 0.19999998807907104,
-            "calls": 312,
-            "faceVisits": 312
-          },
-          "paint.radius.2": {
-            "milliseconds": 0,
-            "calls": 6,
-            "faceVisits": 6
-          },
-          "paint.radius.1.9": {
-            "milliseconds": 0.19999998807907104,
-            "calls": 269,
-            "faceVisits": 269
-          },
-          "paint.radius.2.2": {
-            "milliseconds": 0.29999999701976776,
-            "calls": 200,
-            "faceVisits": 200
-          },
-          "paint._drawQuads": {
-            "milliseconds": 164.30000014603138,
-            "calls": 361
-          },
-          "paint.advanceSimulation": {
-            "milliseconds": 371.5000001043081,
-            "calls": 180
-          },
-          "fx.update": {
-            "milliseconds": 43.6999998241663,
-            "calls": 180
-          },
-          "environment.update": {
-            "milliseconds": 11.500000029802322,
-            "calls": 180
-          },
-          "paint.flush": {
-            "milliseconds": 1.0999999940395355,
-            "calls": 181
-          },
-          "minimap.update": {
-            "milliseconds": 20.100000023841858,
-            "calls": 180
-          },
-          "paint.coverage": {
-            "milliseconds": 55.30000005662441,
-            "calls": 181
-          },
-          "hud.update": {
-            "milliseconds": 234.9000000357628,
-            "calls": 180
-          },
-          "physics.bodyFits": {
-            "milliseconds": 4.499999985098839,
-            "calls": 255
-          },
-          "paint.splat": {
-            "milliseconds": 206.09999994933605,
-            "calls": 211
-          },
-          "paint._cpuSplat": {
-            "milliseconds": 32.80000004172325,
-            "calls": 7282
-          },
-          "nav.nearest": {
-            "milliseconds": 0,
-            "calls": 12
-          },
-          "nav.path": {
-            "milliseconds": 0.4999999850988388,
-            "calls": 4
-          }
-        },
-        "version1130Verified": false,
-        "rules": [
+        "cases": [
           {
-            "mode": "zones",
-            "towerProof": null,
-            "state": "playing",
-            "actors": 8,
-            "counts": [
-              98,
-              100
+            "team": 0,
+            "hz": 30,
+            "seconds": 38.8,
+            "start": [
+              0,
+              6,
+              -61
             ],
-            "snapshotBytes": 512,
-            "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
-          },
-          {
-            "mode": "tower",
-            "supported": false,
-            "status": "source-route-unverified",
-            "offlineApiPreserved": true,
-            "menuApiPreserved": true,
-            "directOnlinePreserved": true,
-            "actors": 8,
-            "setupRefreshVerified": true,
-            "genuineMenuFlow": {
-              "baseline": {
-                "mode": "menu",
-                "screen": "main",
-                "attract": true
-              },
-              "physicalStageClicks": true,
-              "physicalRuleClicks": true
+            "end": [
+              23.838843224256202,
+              0.0027000000700354576,
+              31.177051387816174
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8385797068039635,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "currentPathNodes": 96,
+            "pi": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.20976446154444,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
             }
           },
           {
-            "mode": "rainmaker",
-            "towerProof": null,
-            "state": "playing",
-            "actors": 8,
-            "counts": [
-              100,
-              100
+            "team": 0,
+            "hz": 60,
+            "seconds": 37.166666666666664,
+            "start": [
+              0,
+              6,
+              -61
             ],
-            "snapshotBytes": 993,
-            "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+            "end": [
+              23.833582842455346,
+              0.0027000000700354576,
+              31.169666251001967
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8468463881072944,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "currentPathNodes": 96,
+            "pi": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.20129751179483,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
           },
           {
-            "mode": "clams",
-            "towerProof": null,
-            "state": "playing",
-            "actors": 8,
-            "counts": [
-              100,
-              100
+            "team": 0,
+            "hz": 120,
+            "seconds": 36.28333333333333,
+            "start": [
+              0,
+              6,
+              -61
             ],
-            "snapshotBytes": 8275,
-            "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+            "end": [
+              23.83593298304528,
+              0.0027000000700354576,
+              31.173022149822827
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8430956948864576,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "currentPathNodes": 96,
+            "pi": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.20513491090675,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "seconds": 34.43333333333333,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.245799040361984,
+              0.0027000000700354576,
+              -31.746851952177284
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.7955520232111515,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "currentPathNodes": 97,
+            "pi": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.61561441555446,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "seconds": 34.21666666666667,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.21482533582996,
+              0.0027000000700354576,
+              -31.713674484462384
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.8357520889010184,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "currentPathNodes": 97,
+            "pi": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.57590466108049,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "seconds": 33.15,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.205836942888354,
+              0.0027000000700354576,
+              -31.701605679693962
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.8483714585438493,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "currentPathNodes": 97,
+            "pi": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.56201423062089,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
           }
         ],
-        "errors": []
+        "conditions": "Standalone original source production Actor/Character/BotBrain/Projectiles; ordinary bot inputs, fixed supported goal reselected after real refill completion; initially empty ink; zero AP Shooter; not a production-match or hardware-FPS claim"
+      },
+      "sourceRoutes": {
+        "id": "humpback",
+        "supports": [
+          {
+            "pad": [
+              0,
+              6.08,
+              -61
+            ],
+            "triangle": 95245,
+            "object": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "pad": [
+              0,
+              6.08,
+              61
+            ],
+            "triangle": 95325,
+            "object": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          }
+        ],
+        "bankSupports": [
+          {
+            "point": [
+              -24,
+              0.0027000000700354576,
+              -32
+            ],
+            "triangle": 91910,
+            "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "node": 5055
+          },
+          {
+            "point": [
+              24,
+              0.0027000000700354576,
+              32
+            ],
+            "triangle": 91859,
+            "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "node": 16349
+          }
+        ],
+        "nav": {
+          "candidate": 21584,
+          "valid": 5798,
+          "bankPaths": [
+            [
+              32,
+              96
+            ],
+            [
+              97,
+              30
+            ]
+          ],
+          "elevatedOpponentDeckReturns": [
+            false,
+            false
+          ]
+        },
+        "tower": {
+          "supported": false,
+          "status": "source-route-unverified",
+          "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。"
+        },
+        "sourceRoofs": 3,
+        "noPaintObjects": 16,
+        "limitations": "Elevated opponent home-deck return is unproved; both original pads and complete source remain. Paths qualify both opposing skate bowls, not retail placements or physical traversal of every graph edge."
+      },
+      "log": ".ci-scratch/composed-all-cpu.log",
+      "optionalCharacterMotionImport": "Existing VM fixture warns ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING for optional source motion. Production Character type/physics/controller/weapon routes execute; CPU fixture alone does not validate optional animation import. Final real Chromium gameplay/banks have zero page/console errors."
+    },
+    "builds": {
+      "private": {
+        "contentHash": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347"
+      },
+      "public": {
+        "contentHash": "a465ac919cadbf9bb2a231255bb731e34239338066e28b221231c24b3e59713b"
       }
-    ],
-    "originalBankRoutes": {
-      "status": "passed",
-      "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
-      "supportModuleSha256": "deb8bb81409eb871686c914b94b09b88e7151c9fa2c1a65fcaa3d64b40ffc330",
-      "cases": [
+    },
+    "browser": {
+      "status": "in-progress",
+      "privateBuildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+      "publicBuildFingerprint": "a465ac919cadbf9bb2a231255bb731e34239338066e28b221231c24b3e59713b",
+      "gameplay": [
         {
-          "team": 0,
-          "hz": 30,
-          "seconds": 39.56666666666667,
-          "start": [
-            0,
-            6,
-            -61
-          ],
-          "end": [
-            23.839970339328232,
-            0.0027000000700354576,
-            31.177724250533984
-          ],
-          "goal": [
-            24,
-            0.0027,
-            32
-          ],
-          "distance": 0.8377033487187568,
-          "alive": true,
-          "grounded": true,
-          "sourceTriangle": 91858,
-          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
-          "pathNodes": 96,
-          "initialPathFirst": 607,
-          "initialPathLast": 16349,
-          "pi": 95,
-          "currentPathNodes": 96,
-          "waypoints": 95,
-          "fired": true,
-          "jumped": true,
-          "climbed": false,
-          "departed": true,
-          "maxTravel": 95.21069810576715,
-          "gearAP": [],
-          "weapon": "shooter",
-          "sourceWeapon": "WeaponShooterNormal",
+          "id": "humpback",
+          "native": true,
           "actors": 8,
-          "aliveActors": 8,
+          "alive": 8,
           "bots": 7,
-          "counts": [
-            11426,
-            0
+          "moved": [
+            0,
+            5.065920373421111,
+            6.470215381537621,
+            3.5747731880862186,
+            6.743615992158885,
+            4.815248336997761,
+            4.262045023937049,
+            3.143350512728243
           ],
-          "refillGoalReplans": 0,
-          "currentGoalNode": 16349,
-          "currentWaypoint": {
-            "id": 16349,
-            "point": [
-              24.200000000000003,
-              0.002700000070042563,
-              31.599999999999994
-            ]
+          "coverage": [
+            0.004412533744695573,
+            0.010535468323296441
+          ],
+          "turfTotal": 527237,
+          "counts": [
+            2174,
+            5119
+          ],
+          "metrics": {
+            "loadMilliseconds": 6520.100000008941,
+            "navMilliseconds": 3112.5,
+            "shaderWarmMilliseconds": 11.300000011920929,
+            "vertices": 254995,
+            "triangles": 174089,
+            "faces": 38087,
+            "gridBytes": 8934342,
+            "atlas": 2048,
+            "ppm": 1.3107200000000006,
+            "textureCount": 63,
+            "quality": "low",
+            "version1130Verified": false
           },
-          "sourceGround": {
-            "y": 0.0027000000700354576,
-            "normal": [
+          "cpuFrame": {
+            "p50": 13.899999991059303,
+            "p95": 36.20000000298023,
+            "max": 104.70000000298023
+          },
+          "render": {
+            "frame": 401,
+            "calls": 152,
+            "triangles": 476924,
+            "points": 0,
+            "lines": 0
+          },
+          "memory": {
+            "geometries": 302,
+            "textures": 87
+          },
+          "navValid": 5798,
+          "local": {
+            "pos": [
+              0.0578233287456625,
+              5.454598914417419,
+              -49.000139314864825
+            ],
+            "alive": true,
+            "grounded": true
+          },
+          "profile": {
+            "physics.raycast": {
+              "milliseconds": 196.19999995827675,
+              "calls": 35565
+            },
+            "bot.update": {
+              "milliseconds": 136.60000003874302,
+              "calls": 1260
+            },
+            "physics.collideBody": {
+              "milliseconds": 51.30000001192093,
+              "calls": 1440
+            },
+            "physics.groundProbe": {
+              "milliseconds": 64.59999991953373,
+              "calls": 1470
+            },
+            "character.update": {
+              "milliseconds": 1642.6000000685453,
+              "calls": 1440
+            },
+            "actor.update": {
+              "milliseconds": 2003.5999999642372,
+              "calls": 1440
+            },
+            "projectiles.update": {
+              "milliseconds": 209.1999999731779,
+              "calls": 180
+            },
+            "paint._advanceSplatOwnership": {
+              "milliseconds": 86.69999991357327,
+              "calls": 12979
+            },
+            "paint.radius.2.1": {
+              "milliseconds": 36.800000086426735,
+              "calls": 3264,
+              "faceVisits": 130926
+            },
+            "paint._emitGrowth": {
+              "milliseconds": 102.30000013113022,
+              "calls": 13158
+            },
+            "paint.radius.2.3": {
+              "milliseconds": 5.299999982118607,
+              "calls": 937,
+              "faceVisits": 46282
+            },
+            "paint.radius.1.8": {
+              "milliseconds": 26.899999916553497,
+              "calls": 4002,
+              "faceVisits": 270158
+            },
+            "paint.radius.2.8": {
+              "milliseconds": 16.999999955296516,
+              "calls": 3989,
+              "faceVisits": 121496
+            },
+            "paint.radius.2.5": {
+              "milliseconds": 0.19999998807907104,
+              "calls": 312,
+              "faceVisits": 312
+            },
+            "paint.radius.2": {
+              "milliseconds": 0,
+              "calls": 6,
+              "faceVisits": 6
+            },
+            "paint.radius.1.9": {
+              "milliseconds": 0.19999998807907104,
+              "calls": 269,
+              "faceVisits": 269
+            },
+            "paint.radius.2.2": {
+              "milliseconds": 0.29999999701976776,
+              "calls": 200,
+              "faceVisits": 200
+            },
+            "paint._drawQuads": {
+              "milliseconds": 164.30000014603138,
+              "calls": 361
+            },
+            "paint.advanceSimulation": {
+              "milliseconds": 371.5000001043081,
+              "calls": 180
+            },
+            "fx.update": {
+              "milliseconds": 43.6999998241663,
+              "calls": 180
+            },
+            "environment.update": {
+              "milliseconds": 11.500000029802322,
+              "calls": 180
+            },
+            "paint.flush": {
+              "milliseconds": 1.0999999940395355,
+              "calls": 181
+            },
+            "minimap.update": {
+              "milliseconds": 20.100000023841858,
+              "calls": 180
+            },
+            "paint.coverage": {
+              "milliseconds": 55.30000005662441,
+              "calls": 181
+            },
+            "hud.update": {
+              "milliseconds": 234.9000000357628,
+              "calls": 180
+            },
+            "physics.bodyFits": {
+              "milliseconds": 4.499999985098839,
+              "calls": 255
+            },
+            "paint.splat": {
+              "milliseconds": 206.09999994933605,
+              "calls": 211
+            },
+            "paint._cpuSplat": {
+              "milliseconds": 32.80000004172325,
+              "calls": 7282
+            },
+            "nav.nearest": {
+              "milliseconds": 0,
+              "calls": 12
+            },
+            "nav.path": {
+              "milliseconds": 0.4999999850988388,
+              "calls": 4
+            }
+          },
+          "version1130Verified": false,
+          "rules": [
+            {
+              "mode": "zones",
+              "towerProof": null,
+              "state": "playing",
+              "actors": 8,
+              "counts": [
+                98,
+                100
+              ],
+              "snapshotBytes": 512,
+              "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+            },
+            {
+              "mode": "tower",
+              "supported": false,
+              "status": "source-route-unverified",
+              "offlineApiPreserved": true,
+              "menuApiPreserved": true,
+              "directOnlinePreserved": true,
+              "actors": 8,
+              "setupRefreshVerified": true,
+              "genuineMenuFlow": {
+                "baseline": {
+                  "mode": "menu",
+                  "screen": "main",
+                  "attract": true
+                },
+                "physicalStageClicks": true,
+                "physicalRuleClicks": true
+              }
+            },
+            {
+              "mode": "rainmaker",
+              "towerProof": null,
+              "state": "playing",
+              "actors": 8,
+              "counts": [
+                100,
+                100
+              ],
+              "snapshotBytes": 993,
+              "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+            },
+            {
+              "mode": "clams",
+              "towerProof": null,
+              "state": "playing",
+              "actors": 8,
+              "counts": [
+                100,
+                100
+              ],
+              "snapshotBytes": 8275,
+              "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+            }
+          ],
+          "errors": []
+        }
+      ],
+      "originalBankRoutes": {
+        "status": "passed",
+        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+        "supportModuleSha256": "deb8bb81409eb871686c914b94b09b88e7151c9fa2c1a65fcaa3d64b40ffc330",
+        "cases": [
+          {
+            "team": 0,
+            "hz": 30,
+            "seconds": 39.56666666666667,
+            "start": [
               0,
-              1,
+              6,
+              -61
+            ],
+            "end": [
+              23.839970339328232,
+              0.0027000000700354576,
+              31.177724250533984
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8377033487187568,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "initialPathFirst": 607,
+            "initialPathLast": 16349,
+            "pi": 95,
+            "currentPathNodes": 96,
+            "waypoints": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.21069810576715,
+            "gearAP": [],
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "actors": 8,
+            "aliveActors": 8,
+            "bots": 7,
+            "counts": [
+              11426,
               0
             ],
-            "center": true
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            },
+            "mode": "paint"
           },
-          "mode": "paint"
-        },
-        {
-          "team": 0,
-          "hz": 60,
-          "seconds": 37.63333333333333,
-          "start": [
-            0,
-            6,
-            -61
-          ],
-          "end": [
-            23.83304920406252,
-            0.0027000000700354576,
-            31.167944647237775
-          ],
-          "goal": [
-            24,
-            0.0027,
-            32
-          ],
-          "distance": 0.8486393099099461,
-          "alive": true,
-          "grounded": true,
-          "sourceTriangle": 91858,
-          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
-          "pathNodes": 96,
-          "initialPathFirst": 607,
-          "initialPathLast": 16349,
-          "pi": 95,
-          "currentPathNodes": 96,
-          "waypoints": 95,
-          "fired": true,
-          "jumped": true,
-          "climbed": false,
-          "departed": true,
-          "maxTravel": 95.19949713553927,
-          "gearAP": [],
-          "weapon": "shooter",
-          "sourceWeapon": "WeaponShooterNormal",
-          "actors": 8,
-          "aliveActors": 8,
-          "bots": 7,
-          "counts": [
-            10162,
-            0
-          ],
-          "refillGoalReplans": 0,
-          "currentGoalNode": 16349,
-          "currentWaypoint": {
-            "id": 16349,
-            "point": [
-              24.200000000000003,
-              0.002700000070042563,
-              31.599999999999994
-            ]
-          },
-          "sourceGround": {
-            "y": 0.0027000000700354576,
-            "normal": [
+          {
+            "team": 0,
+            "hz": 60,
+            "seconds": 37.63333333333333,
+            "start": [
               0,
-              1,
+              6,
+              -61
+            ],
+            "end": [
+              23.83304920406252,
+              0.0027000000700354576,
+              31.167944647237775
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8486393099099461,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "initialPathFirst": 607,
+            "initialPathLast": 16349,
+            "pi": 95,
+            "currentPathNodes": 96,
+            "waypoints": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.19949713553927,
+            "gearAP": [],
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "actors": 8,
+            "aliveActors": 8,
+            "bots": 7,
+            "counts": [
+              10162,
               0
             ],
-            "center": true
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            },
+            "mode": "paint"
           },
-          "mode": "paint"
-        },
-        {
-          "team": 0,
-          "hz": 120,
-          "seconds": 36.625,
-          "start": [
-            0,
-            6,
-            -61
-          ],
-          "end": [
-            23.837452081550996,
-            0.0027000000700354576,
-            31.174707523943887
-          ],
-          "goal": [
-            24,
-            0.0027,
-            32
-          ],
-          "distance": 0.8411477259238913,
-          "alive": true,
-          "grounded": true,
-          "sourceTriangle": 91858,
-          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
-          "pathNodes": 96,
-          "initialPathFirst": 607,
-          "initialPathLast": 16349,
-          "pi": 95,
-          "currentPathNodes": 96,
-          "waypoints": 95,
-          "fired": true,
-          "jumped": true,
-          "climbed": false,
-          "departed": true,
-          "maxTravel": 95.20714694215366,
-          "gearAP": [],
-          "weapon": "shooter",
-          "sourceWeapon": "WeaponShooterNormal",
-          "actors": 8,
-          "aliveActors": 8,
-          "bots": 7,
-          "counts": [
-            11525,
-            0
-          ],
-          "refillGoalReplans": 0,
-          "currentGoalNode": 16349,
-          "currentWaypoint": {
-            "id": 16349,
-            "point": [
-              24.200000000000003,
-              0.002700000070042563,
-              31.599999999999994
-            ]
-          },
-          "sourceGround": {
-            "y": 0.0027000000700354576,
-            "normal": [
+          {
+            "team": 0,
+            "hz": 120,
+            "seconds": 36.625,
+            "start": [
               0,
-              1,
+              6,
+              -61
+            ],
+            "end": [
+              23.837452081550996,
+              0.0027000000700354576,
+              31.174707523943887
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8411477259238913,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "initialPathFirst": 607,
+            "initialPathLast": 16349,
+            "pi": 95,
+            "currentPathNodes": 96,
+            "waypoints": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.20714694215366,
+            "gearAP": [],
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "actors": 8,
+            "aliveActors": 8,
+            "bots": 7,
+            "counts": [
+              11525,
               0
             ],
-            "center": true
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            },
+            "mode": "paint"
           },
-          "mode": "paint"
-        },
-        {
-          "team": 1,
-          "hz": 30,
-          "seconds": 37.86666666666667,
-          "start": [
-            0,
-            6,
-            61
-          ],
-          "end": [
-            -23.24546918918591,
-            0.0027000000700354576,
-            -31.74593134013755
-          ],
-          "goal": [
-            -24,
-            0.0027,
-            -32
-          ],
-          "distance": 0.7961580423459075,
-          "alive": true,
-          "grounded": true,
-          "sourceTriangle": 91910,
-          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
-          "pathNodes": 97,
-          "initialPathFirst": 20926,
-          "initialPathLast": 5055,
-          "pi": 96,
-          "currentPathNodes": 97,
-          "waypoints": 96,
-          "fired": true,
-          "jumped": true,
-          "climbed": false,
-          "departed": true,
-          "maxTravel": 95.61464123226578,
-          "gearAP": [],
-          "weapon": "shooter",
-          "sourceWeapon": "WeaponShooterNormal",
-          "actors": 8,
-          "aliveActors": 8,
-          "bots": 7,
-          "counts": [
-            0,
-            12404
-          ],
-          "refillGoalReplans": 0,
-          "currentGoalNode": 5055,
-          "currentWaypoint": {
-            "id": 5055,
-            "point": [
-              -23.799999999999997,
-              0.002700000070028352,
-              -32.400000000000006
-            ]
-          },
-          "sourceGround": {
-            "y": 0.0027000000700354576,
-            "normal": [
+          {
+            "team": 1,
+            "hz": 30,
+            "seconds": 37.86666666666667,
+            "start": [
               0,
-              1,
-              0
+              6,
+              61
             ],
-            "center": true
-          },
-          "mode": "paint"
-        },
-        {
-          "team": 1,
-          "hz": 60,
-          "seconds": 34.3,
-          "start": [
-            0,
-            6,
-            61
-          ],
-          "end": [
-            -23.215022028282178,
-            0.0027000000700354576,
-            -31.71421086335849
-          ],
-          "goal": [
-            -24,
-            0.0027,
-            -32
-          ],
-          "distance": 0.8353836524044068,
-          "alive": true,
-          "grounded": true,
-          "sourceTriangle": 91910,
-          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
-          "pathNodes": 97,
-          "initialPathFirst": 20926,
-          "initialPathLast": 5055,
-          "pi": 96,
-          "currentPathNodes": 97,
-          "waypoints": 96,
-          "fired": true,
-          "jumped": true,
-          "climbed": false,
-          "departed": true,
-          "maxTravel": 95.57647275239303,
-          "gearAP": [],
-          "weapon": "shooter",
-          "sourceWeapon": "WeaponShooterNormal",
-          "actors": 8,
-          "aliveActors": 8,
-          "bots": 7,
-          "counts": [
-            0,
-            11336
-          ],
-          "refillGoalReplans": 0,
-          "currentGoalNode": 5055,
-          "currentWaypoint": {
-            "id": 5055,
-            "point": [
-              -23.799999999999997,
-              0.002700000070028352,
-              -32.400000000000006
-            ]
-          },
-          "sourceGround": {
-            "y": 0.0027000000700354576,
-            "normal": [
+            "end": [
+              -23.24546918918591,
+              0.0027000000700354576,
+              -31.74593134013755
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.7961580423459075,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "initialPathFirst": 20926,
+            "initialPathLast": 5055,
+            "pi": 96,
+            "currentPathNodes": 97,
+            "waypoints": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.61464123226578,
+            "gearAP": [],
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "actors": 8,
+            "aliveActors": 8,
+            "bots": 7,
+            "counts": [
               0,
-              1,
-              0
+              12404
             ],
-            "center": true
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            },
+            "mode": "paint"
           },
-          "mode": "paint"
+          {
+            "team": 1,
+            "hz": 60,
+            "seconds": 34.3,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.215022028282178,
+              0.0027000000700354576,
+              -31.71421086335849
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.8353836524044068,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "initialPathFirst": 20926,
+            "initialPathLast": 5055,
+            "pi": 96,
+            "currentPathNodes": 97,
+            "waypoints": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.57647275239303,
+            "gearAP": [],
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "actors": 8,
+            "aliveActors": 8,
+            "bots": 7,
+            "counts": [
+              0,
+              11336
+            ],
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            },
+            "mode": "paint"
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "seconds": 34.516666666666666,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.20955329142775,
+              0.0027000000700354576,
+              -31.70808786390187
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.8426260702672794,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "initialPathFirst": 20926,
+            "initialPathLast": 5055,
+            "pi": 96,
+            "currentPathNodes": 97,
+            "waypoints": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.56920486939595,
+            "gearAP": [],
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "actors": 8,
+            "aliveActors": 8,
+            "bots": 7,
+            "counts": [
+              0,
+              11786
+            ],
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            },
+            "mode": "paint"
+          }
+        ],
+        "errors": [],
+        "conditions": "Original opposed ±61 source pads, production Actor/Character/BotBrain/Projectiles and ordinary inputs; full native turf match eight actors/seven bots; zero AP Shooter; initially empty ink; other actors retained on their original-team source supports; fixed source-supported goal reselected after ordinary refill completes; SwiftShader, not console hardware",
+        "source": {
+          "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+          "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+          "actors": 8,
+          "bots": 7,
+          "sourceNavigation": {
+            "wallClimb": true,
+            "highDrops": true
+          }
         },
-        {
+        "lastCase": {
           "team": 1,
           "hz": 120,
           "seconds": 34.516666666666666,
@@ -5044,1272 +5594,1260 @@
             "center": true
           },
           "mode": "paint"
+        },
+        "sourceBuffersUnchanged": true
+      },
+      "departures": [
+        {
+          "id": "humpback",
+          "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+          "actors": 8,
+          "alive": 8,
+          "teamCounts": [
+            4,
+            4
+          ],
+          "sourceNavigation": {
+            "wallClimb": true,
+            "highDrops": true
+          },
+          "proofScope": "isolated drop in pure-Drop native match",
+          "bots": 7,
+          "weapon": "shooter / Shooter_Normal_00",
+          "version1130Verified": false,
+          "navNodes": 21584,
+          "validNodes": 5798,
+          "dropEdges": 456,
+          "navBuildMilliseconds": 1848.300000011921,
+          "dropScreenMetrics": {
+            "queries": 79807,
+            "triangleTests": 202868,
+            "distanceTests": 76682
+          },
+          "productionActor": true,
+          "productionCharacter": true,
+          "installedController": {
+            "stepUp": 0.35,
+            "gravity": 25,
+            "fallGravityMul": 1.2,
+            "height": 1.45,
+            "squidHeight": 0.55,
+            "humanoidTerrainRadius": 0.35,
+            "swimTerrainRadius": 0.675,
+            "terrainDistanceScale": 1
+          },
+          "cases": [
+            {
+              "team": 1,
+              "bot": false,
+              "hz": 30,
+              "seconds": 0.7,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.200000000000003,
+                3,
+                38.936
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.7999999970197678,
+                "p95": 8.299999997019768,
+                "max": 24.799999997019768
+              }
+            },
+            {
+              "team": 1,
+              "bot": false,
+              "hz": 60,
+              "seconds": 0.7,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.200000000000003,
+                3,
+                38.982000000000106
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 0.9000000059604645,
+                "max": 1.5
+              }
+            },
+            {
+              "team": 1,
+              "bot": false,
+              "hz": 120,
+              "seconds": 0.7083333333333334,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.200000000000003,
+                3,
+                38.97199999999988
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 0.8999999910593033,
+                "max": 15.900000005960464
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 0.7,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.200000000000003,
+                3,
+                38.936
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 1,
+                "max": 1.800000011920929
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.7,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.200000000000003,
+                3,
+                38.982000000000106
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 0.9000000059604645,
+                "max": 2.4000000059604645
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.7083333333333334,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.200000000000003,
+                3,
+                38.97199999999988
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.4000000059604645,
+                "p95": 0.6000000089406967,
+                "max": 0.7999999970197678
+              }
+            },
+            {
+              "team": 1,
+              "bot": false,
+              "hz": 30,
+              "seconds": 0.8666666666666667,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799999999999997,
+                0,
+                41.976
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 1.2999999970197678,
+                "max": 1.300000011920929
+              }
+            },
+            {
+              "team": 1,
+              "bot": false,
+              "hz": 60,
+              "seconds": 0.8833333333333333,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799999999999997,
+                0,
+                41.93600000000014
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.3999999910593033,
+                "p95": 1,
+                "max": 1.4000000059604645
+              }
+            },
+            {
+              "team": 1,
+              "bot": false,
+              "hz": 120,
+              "seconds": 0.8833333333333333,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799999999999997,
+                0,
+                41.96399999999984
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 105901,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.3999999910593033,
+                "p95": 0.5999999940395355,
+                "max": 0.8999999910593033
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 0.9666666666666667,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799999999999997,
+                0,
+                41.888946761037765
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 1.5999999940395355,
+                "p95": 7.399999991059303,
+                "max": 13.400000005960464
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.9333333333333333,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799999999999997,
+                0,
+                41.97669572142504
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.7000000029802322,
+                "p95": 2,
+                "max": 2.2000000029802322
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.9333333333333333,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799999999999997,
+                0,
+                41.99368193916427
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 105901,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 1,
+                "max": 2.1000000089406967
+              }
+            }
+          ],
+          "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+          "sourceBuffersUnchanged": true,
+          "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+          "errors": [],
+          "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+          "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+          "otherTransitionHandlersExecuted": false,
+          "nativeMatchSetup": true
         }
       ],
-      "errors": [],
-      "conditions": "Original opposed ±61 source pads, production Actor/Character/BotBrain/Projectiles and ordinary inputs; full native turf match eight actors/seven bots; zero AP Shooter; initially empty ink; other actors retained on their original-team source supports; fixed source-supported goal reselected after ordinary refill completes; SwiftShader, not console hardware",
-      "source": {
-        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
-        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
-        "actors": 8,
-        "bots": 7,
-        "sourceNavigation": {
-          "wallClimb": true,
-          "highDrops": true
+      "rankedDepartures": [
+        {
+          "id": "humpback",
+          "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+          "actors": 8,
+          "alive": 8,
+          "teamCounts": [
+            4,
+            4
+          ],
+          "sourceNavigation": {
+            "wallClimb": true,
+            "highDrops": true
+          },
+          "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
+          "bots": 7,
+          "weapon": "shooter / Shooter_Normal_00",
+          "version1130Verified": false,
+          "navNodes": 21584,
+          "validNodes": 5798,
+          "dropEdges": 456,
+          "navBuildMilliseconds": 2541,
+          "dropScreenMetrics": {
+            "queries": 79807,
+            "triangleTests": 202868,
+            "distanceTests": 76682
+          },
+          "productionActor": true,
+          "productionCharacter": true,
+          "installedController": {
+            "stepUp": 0.35,
+            "gravity": 25,
+            "fallGravityMul": 1.2,
+            "height": 1.45,
+            "squidHeight": 0.55,
+            "humanoidTerrainRadius": 0.35,
+            "swimTerrainRadius": 0.675,
+            "terrainDistanceScale": 1
+          },
+          "cases": [
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 0.7333333333333333,
+              "handledFrames": 21,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.208891333908518,
+                3,
+                38.782999284369424
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 1.7999999970197678,
+                "p95": 24.599999994039536,
+                "max": 27.900000005960464
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.7333333333333333,
+              "handledFrames": 43,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.202559222038826,
+                3,
+                38.819666973805596
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 1.3999999910593033,
+                "max": 5.0999999940395355
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.725,
+              "handledFrames": 86,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.2007626333795525,
+                3,
+                38.898380838156584
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 0.9000000059604645,
+                "max": 6.9000000059604645
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 1,
+              "handledFrames": 20,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.786755663003976,
+                0,
+                41.774690469619934
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 1.4000000059604645,
+                "p95": 3.8999999910593033,
+                "max": 15.600000008940697
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.9666666666666667,
+              "handledFrames": 40,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.797435893136107,
+                0,
+                41.814361400707455
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.9000000059604645,
+                "p95": 3.0999999940395355,
+                "max": 3.800000011920929
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.9583333333333334,
+              "handledFrames": 82,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799232614799191,
+                0,
+                41.879561249979105
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 105901,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.7999999970197678,
+                "p95": 1.7999999970197678,
+                "max": 18.30000001192093
+              }
+            }
+          ],
+          "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+          "sourceBuffersUnchanged": true,
+          "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+          "mode": "zones",
+          "errors": [],
+          "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+          "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+          "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
+          "otherTransitionHandlersExecuted": false,
+          "nativeMatchSetup": true
+        },
+        {
+          "id": "humpback",
+          "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+          "actors": 8,
+          "alive": 8,
+          "teamCounts": [
+            4,
+            4
+          ],
+          "sourceNavigation": {
+            "wallClimb": true,
+            "highDrops": true
+          },
+          "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
+          "bots": 7,
+          "weapon": "shooter / Shooter_Normal_00",
+          "version1130Verified": false,
+          "navNodes": 21584,
+          "validNodes": 5798,
+          "dropEdges": 456,
+          "navBuildMilliseconds": 2208.2999999970198,
+          "dropScreenMetrics": {
+            "queries": 79807,
+            "triangleTests": 202868,
+            "distanceTests": 76682
+          },
+          "productionActor": true,
+          "productionCharacter": true,
+          "installedController": {
+            "stepUp": 0.35,
+            "gravity": 25,
+            "fallGravityMul": 1.2,
+            "height": 1.45,
+            "squidHeight": 0.55,
+            "humanoidTerrainRadius": 0.35,
+            "swimTerrainRadius": 0.675,
+            "terrainDistanceScale": 1
+          },
+          "cases": [
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 0.7333333333333333,
+              "handledFrames": 21,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.208891333908518,
+                3,
+                38.782999284369424
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.9000000059604645,
+                "p95": 22.900000005960464,
+                "max": 28.5
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.7333333333333333,
+              "handledFrames": 43,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.202559222038826,
+                3,
+                38.819666973805596
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.6000000089406967,
+                "p95": 3.2000000029802322,
+                "max": 15.5
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.725,
+              "handledFrames": 86,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.2007626333795525,
+                3,
+                38.898380838156584
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 0.7999999970197678,
+                "max": 8.5
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 1,
+              "handledFrames": 20,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.786755663003976,
+                0,
+                41.774690469619934
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 1.5,
+                "p95": 7.200000002980232,
+                "max": 19.200000002980232
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.9666666666666667,
+              "handledFrames": 40,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.797435893136107,
+                0,
+                41.814361400707455
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.9000000059604645,
+                "p95": 3.8999999910593033,
+                "max": 4.899999991059303
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.9583333333333334,
+              "handledFrames": 82,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799232614799191,
+                0,
+                41.879561249979105
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 105901,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.7999999970197678,
+                "p95": 4.9000000059604645,
+                "max": 28.900000005960464
+              }
+            }
+          ],
+          "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+          "sourceBuffersUnchanged": true,
+          "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+          "mode": "rainmaker",
+          "errors": [],
+          "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+          "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+          "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
+          "otherTransitionHandlersExecuted": false,
+          "nativeMatchSetup": true
+        },
+        {
+          "id": "humpback",
+          "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+          "actors": 8,
+          "alive": 8,
+          "teamCounts": [
+            4,
+            4
+          ],
+          "sourceNavigation": {
+            "wallClimb": true,
+            "highDrops": true
+          },
+          "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
+          "bots": 7,
+          "weapon": "shooter / Shooter_Normal_00",
+          "version1130Verified": false,
+          "navNodes": 21584,
+          "validNodes": 5798,
+          "dropEdges": 456,
+          "navBuildMilliseconds": 2236.199999988079,
+          "dropScreenMetrics": {
+            "queries": 79807,
+            "triangleTests": 202868,
+            "distanceTests": 76682
+          },
+          "productionActor": true,
+          "productionCharacter": true,
+          "installedController": {
+            "stepUp": 0.35,
+            "gravity": 25,
+            "fallGravityMul": 1.2,
+            "height": 1.45,
+            "squidHeight": 0.55,
+            "humanoidTerrainRadius": 0.35,
+            "swimTerrainRadius": 0.675,
+            "terrainDistanceScale": 1
+          },
+          "cases": [
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 0.7333333333333333,
+              "handledFrames": 21,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.191108666091488,
+                3,
+                38.782999284369424
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 1.3999999910593033,
+                "p95": 27.099999994039536,
+                "max": 40.3999999910593
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.7333333333333333,
+              "handledFrames": 43,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.197440777961179,
+                3,
+                38.819666973805596
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.6000000089406967,
+                "p95": 3.2999999970197678,
+                "max": 12.099999994039536
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.725,
+              "handledFrames": 86,
+              "upper": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "landing": [
+                6.199237366620453,
+                3,
+                38.898380838156584
+              ],
+              "sourceUpperTriangle": 95403,
+              "sourceLandingTriangle": 94500,
+              "firstSourceLandingTriangle": 94500,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.5,
+                "p95": 1.5,
+                "max": 5.9000000059604645
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 30,
+              "seconds": 1,
+              "handledFrames": 20,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.786755663003976,
+                0,
+                41.774690469619934
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 1.7000000029802322,
+                "p95": 5.5999999940395355,
+                "max": 7
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 60,
+              "seconds": 0.9666666666666667,
+              "handledFrames": 40,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.797435893136107,
+                0,
+                41.814361400707455
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 92193,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 1,
+                "p95": 3,
+                "max": 5.5
+              }
+            },
+            {
+              "team": 1,
+              "bot": true,
+              "hz": 120,
+              "seconds": 0.9583333333333334,
+              "handledFrames": 82,
+              "upper": [
+                -13.799999999999997,
+                3,
+                46.599999999999994
+              ],
+              "landing": [
+                -13.799232614799191,
+                0,
+                41.879561249979105
+              ],
+              "sourceUpperTriangle": 94244,
+              "sourceLandingTriangle": 92193,
+              "firstSourceLandingTriangle": 105901,
+              "humanFits": true,
+              "squidFits": true,
+              "screenedSwimShape": true,
+              "form": "kid",
+              "alive": true,
+              "grounded": true,
+              "jumpAdmitted": false,
+              "gearAP": [],
+              "cpuStep": {
+                "p50": 0.7999999970197678,
+                "p95": 2,
+                "max": 5.0999999940395355
+              }
+            }
+          ],
+          "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+          "sourceBuffersUnchanged": true,
+          "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+          "mode": "clams",
+          "errors": [],
+          "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+          "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+          "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
+          "otherTransitionHandlersExecuted": false,
+          "nativeMatchSetup": true
+        }
+      ]
+    },
+    "status": "Historical passing CPU/gameplay/banks/Drop/ranked Drop receipts; remainder was queued when accepted foundation changed source identity",
+    "packagingAndBudgets": {
+      "private": {
+        "packaging": {
+          "tests": 9,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "log": ".ci-scratch/composed-packaging-private.log"
+        },
+        "startupBudget": {
+          "status": "passed",
+          "revision": "58e46a124fdfdaef6b2dcf5127efea8fe5ccd872d18076375a17f69fa8dcf4b5",
+          "initialJSRequests": 146,
+          "modulePreloads": 145,
+          "coreModulePreloads": 131,
+          "practiceRangeModulePreloads": 14,
+          "practiceRangePreloadBytes": 74638,
+          "initialJSBytes": 2892599,
+          "criticalHTMLBytes": 15371,
+          "precacheCount": 365,
+          "precacheBytes": 5786782,
+          "workerBytes": 70517,
+          "declaredBytes": 10404822,
+          "measurementKind": "deterministic file and dependency gates; not native browser timings"
         }
       },
-      "lastCase": {
-        "team": 1,
-        "hz": 120,
-        "seconds": 34.516666666666666,
-        "start": [
-          0,
-          6,
-          61
-        ],
-        "end": [
-          -23.20955329142775,
-          0.0027000000700354576,
-          -31.70808786390187
-        ],
-        "goal": [
-          -24,
-          0.0027,
-          -32
-        ],
-        "distance": 0.8426260702672794,
-        "alive": true,
-        "grounded": true,
-        "sourceTriangle": 91910,
-        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
-        "pathNodes": 97,
-        "initialPathFirst": 20926,
-        "initialPathLast": 5055,
-        "pi": 96,
-        "currentPathNodes": 97,
-        "waypoints": 96,
-        "fired": true,
-        "jumped": true,
-        "climbed": false,
-        "departed": true,
-        "maxTravel": 95.56920486939595,
-        "gearAP": [],
-        "weapon": "shooter",
-        "sourceWeapon": "WeaponShooterNormal",
-        "actors": 8,
-        "aliveActors": 8,
-        "bots": 7,
-        "counts": [
-          0,
-          11786
-        ],
-        "refillGoalReplans": 0,
-        "currentGoalNode": 5055,
-        "currentWaypoint": {
-          "id": 5055,
-          "point": [
-            -23.799999999999997,
-            0.002700000070028352,
-            -32.400000000000006
-          ]
+      "public": {
+        "packaging": {
+          "tests": 9,
+          "passed": 9,
+          "failed": 0,
+          "skipped": 0,
+          "log": ".ci-scratch/composed-packaging-public.log"
         },
-        "sourceGround": {
-          "y": 0.0027000000700354576,
-          "normal": [
-            0,
-            1,
-            0
-          ],
-          "center": true
-        },
-        "mode": "paint"
-      },
-      "sourceBuffersUnchanged": true
-    },
-    "departures": [
-      {
-        "id": "humpback",
-        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
-        "actors": 8,
-        "alive": 8,
-        "teamCounts": [
-          4,
-          4
-        ],
-        "sourceNavigation": {
-          "wallClimb": true,
-          "highDrops": true
-        },
-        "proofScope": "isolated drop in pure-Drop native match",
-        "bots": 7,
-        "weapon": "shooter / Shooter_Normal_00",
-        "version1130Verified": false,
-        "navNodes": 21584,
-        "validNodes": 5798,
-        "dropEdges": 456,
-        "navBuildMilliseconds": 1848.300000011921,
-        "dropScreenMetrics": {
-          "queries": 79807,
-          "triangleTests": 202868,
-          "distanceTests": 76682
-        },
-        "productionActor": true,
-        "productionCharacter": true,
-        "installedController": {
-          "stepUp": 0.35,
-          "gravity": 25,
-          "fallGravityMul": 1.2,
-          "height": 1.45,
-          "squidHeight": 0.55,
-          "humanoidTerrainRadius": 0.35,
-          "swimTerrainRadius": 0.675,
-          "terrainDistanceScale": 1
-        },
-        "cases": [
-          {
-            "team": 1,
-            "bot": false,
-            "hz": 30,
-            "seconds": 0.7,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.200000000000003,
-              3,
-              38.936
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.7999999970197678,
-              "p95": 8.299999997019768,
-              "max": 24.799999997019768
-            }
-          },
-          {
-            "team": 1,
-            "bot": false,
-            "hz": 60,
-            "seconds": 0.7,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.200000000000003,
-              3,
-              38.982000000000106
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 0.9000000059604645,
-              "max": 1.5
-            }
-          },
-          {
-            "team": 1,
-            "bot": false,
-            "hz": 120,
-            "seconds": 0.7083333333333334,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.200000000000003,
-              3,
-              38.97199999999988
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 0.8999999910593033,
-              "max": 15.900000005960464
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 0.7,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.200000000000003,
-              3,
-              38.936
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 1,
-              "max": 1.800000011920929
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.7,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.200000000000003,
-              3,
-              38.982000000000106
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 0.9000000059604645,
-              "max": 2.4000000059604645
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.7083333333333334,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.200000000000003,
-              3,
-              38.97199999999988
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.4000000059604645,
-              "p95": 0.6000000089406967,
-              "max": 0.7999999970197678
-            }
-          },
-          {
-            "team": 1,
-            "bot": false,
-            "hz": 30,
-            "seconds": 0.8666666666666667,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799999999999997,
-              0,
-              41.976
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 1.2999999970197678,
-              "max": 1.300000011920929
-            }
-          },
-          {
-            "team": 1,
-            "bot": false,
-            "hz": 60,
-            "seconds": 0.8833333333333333,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799999999999997,
-              0,
-              41.93600000000014
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.3999999910593033,
-              "p95": 1,
-              "max": 1.4000000059604645
-            }
-          },
-          {
-            "team": 1,
-            "bot": false,
-            "hz": 120,
-            "seconds": 0.8833333333333333,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799999999999997,
-              0,
-              41.96399999999984
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 105901,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.3999999910593033,
-              "p95": 0.5999999940395355,
-              "max": 0.8999999910593033
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 0.9666666666666667,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799999999999997,
-              0,
-              41.888946761037765
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 1.5999999940395355,
-              "p95": 7.399999991059303,
-              "max": 13.400000005960464
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.9333333333333333,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799999999999997,
-              0,
-              41.97669572142504
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.7000000029802322,
-              "p95": 2,
-              "max": 2.2000000029802322
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.9333333333333333,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799999999999997,
-              0,
-              41.99368193916427
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 105901,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 1,
-              "max": 2.1000000089406967
-            }
-          }
-        ],
-        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
-        "sourceBuffersUnchanged": true,
-        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
-        "errors": [],
-        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
-        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
-        "otherTransitionHandlersExecuted": false,
-        "nativeMatchSetup": true
+        "startupBudget": {
+          "status": "passed",
+          "revision": "7582ebd4b560faf3d2c211fc7363eece60588162b38d86176c161c7bbdbe02eb",
+          "initialJSRequests": 146,
+          "modulePreloads": 145,
+          "coreModulePreloads": 131,
+          "practiceRangeModulePreloads": 14,
+          "practiceRangePreloadBytes": 74638,
+          "initialJSBytes": 2895450,
+          "criticalHTMLBytes": 15371,
+          "precacheCount": 365,
+          "precacheBytes": 5789633,
+          "workerBytes": 70517,
+          "declaredBytes": 10407673,
+          "measurementKind": "deterministic file and dependency gates; not native browser timings"
+        }
       }
-    ],
-    "rankedDepartures": [
-      {
-        "id": "humpback",
-        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
-        "actors": 8,
-        "alive": 8,
-        "teamCounts": [
-          4,
-          4
-        ],
-        "sourceNavigation": {
-          "wallClimb": true,
-          "highDrops": true
-        },
-        "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
-        "bots": 7,
-        "weapon": "shooter / Shooter_Normal_00",
-        "version1130Verified": false,
-        "navNodes": 21584,
-        "validNodes": 5798,
-        "dropEdges": 456,
-        "navBuildMilliseconds": 2541,
-        "dropScreenMetrics": {
-          "queries": 79807,
-          "triangleTests": 202868,
-          "distanceTests": 76682
-        },
-        "productionActor": true,
-        "productionCharacter": true,
-        "installedController": {
-          "stepUp": 0.35,
-          "gravity": 25,
-          "fallGravityMul": 1.2,
-          "height": 1.45,
-          "squidHeight": 0.55,
-          "humanoidTerrainRadius": 0.35,
-          "swimTerrainRadius": 0.675,
-          "terrainDistanceScale": 1
-        },
-        "cases": [
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 0.7333333333333333,
-            "handledFrames": 21,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.208891333908518,
-              3,
-              38.782999284369424
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 1.7999999970197678,
-              "p95": 24.599999994039536,
-              "max": 27.900000005960464
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.7333333333333333,
-            "handledFrames": 43,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.202559222038826,
-              3,
-              38.819666973805596
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 1.3999999910593033,
-              "max": 5.0999999940395355
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.725,
-            "handledFrames": 86,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.2007626333795525,
-              3,
-              38.898380838156584
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 0.9000000059604645,
-              "max": 6.9000000059604645
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 1,
-            "handledFrames": 20,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.786755663003976,
-              0,
-              41.774690469619934
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 1.4000000059604645,
-              "p95": 3.8999999910593033,
-              "max": 15.600000008940697
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.9666666666666667,
-            "handledFrames": 40,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.797435893136107,
-              0,
-              41.814361400707455
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.9000000059604645,
-              "p95": 3.0999999940395355,
-              "max": 3.800000011920929
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.9583333333333334,
-            "handledFrames": 82,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799232614799191,
-              0,
-              41.879561249979105
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 105901,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.7999999970197678,
-              "p95": 1.7999999970197678,
-              "max": 18.30000001192093
-            }
-          }
-        ],
-        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
-        "sourceBuffersUnchanged": true,
-        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
-        "mode": "zones",
-        "errors": [],
-        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
-        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
-        "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
-        "otherTransitionHandlersExecuted": false,
-        "nativeMatchSetup": true
-      },
-      {
-        "id": "humpback",
-        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
-        "actors": 8,
-        "alive": 8,
-        "teamCounts": [
-          4,
-          4
-        ],
-        "sourceNavigation": {
-          "wallClimb": true,
-          "highDrops": true
-        },
-        "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
-        "bots": 7,
-        "weapon": "shooter / Shooter_Normal_00",
-        "version1130Verified": false,
-        "navNodes": 21584,
-        "validNodes": 5798,
-        "dropEdges": 456,
-        "navBuildMilliseconds": 2208.2999999970198,
-        "dropScreenMetrics": {
-          "queries": 79807,
-          "triangleTests": 202868,
-          "distanceTests": 76682
-        },
-        "productionActor": true,
-        "productionCharacter": true,
-        "installedController": {
-          "stepUp": 0.35,
-          "gravity": 25,
-          "fallGravityMul": 1.2,
-          "height": 1.45,
-          "squidHeight": 0.55,
-          "humanoidTerrainRadius": 0.35,
-          "swimTerrainRadius": 0.675,
-          "terrainDistanceScale": 1
-        },
-        "cases": [
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 0.7333333333333333,
-            "handledFrames": 21,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.208891333908518,
-              3,
-              38.782999284369424
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.9000000059604645,
-              "p95": 22.900000005960464,
-              "max": 28.5
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.7333333333333333,
-            "handledFrames": 43,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.202559222038826,
-              3,
-              38.819666973805596
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.6000000089406967,
-              "p95": 3.2000000029802322,
-              "max": 15.5
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.725,
-            "handledFrames": 86,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.2007626333795525,
-              3,
-              38.898380838156584
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 0.7999999970197678,
-              "max": 8.5
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 1,
-            "handledFrames": 20,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.786755663003976,
-              0,
-              41.774690469619934
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 1.5,
-              "p95": 7.200000002980232,
-              "max": 19.200000002980232
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.9666666666666667,
-            "handledFrames": 40,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.797435893136107,
-              0,
-              41.814361400707455
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.9000000059604645,
-              "p95": 3.8999999910593033,
-              "max": 4.899999991059303
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.9583333333333334,
-            "handledFrames": 82,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799232614799191,
-              0,
-              41.879561249979105
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 105901,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.7999999970197678,
-              "p95": 4.9000000059604645,
-              "max": 28.900000005960464
-            }
-          }
-        ],
-        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
-        "sourceBuffersUnchanged": true,
-        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
-        "mode": "rainmaker",
-        "errors": [],
-        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
-        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
-        "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
-        "otherTransitionHandlersExecuted": false,
-        "nativeMatchSetup": true
-      },
-      {
-        "id": "humpback",
-        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
-        "actors": 8,
-        "alive": 8,
-        "teamCounts": [
-          4,
-          4
-        ],
-        "sourceNavigation": {
-          "wallClimb": true,
-          "highDrops": true
-        },
-        "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
-        "bots": 7,
-        "weapon": "shooter / Shooter_Normal_00",
-        "version1130Verified": false,
-        "navNodes": 21584,
-        "validNodes": 5798,
-        "dropEdges": 456,
-        "navBuildMilliseconds": 2236.199999988079,
-        "dropScreenMetrics": {
-          "queries": 79807,
-          "triangleTests": 202868,
-          "distanceTests": 76682
-        },
-        "productionActor": true,
-        "productionCharacter": true,
-        "installedController": {
-          "stepUp": 0.35,
-          "gravity": 25,
-          "fallGravityMul": 1.2,
-          "height": 1.45,
-          "squidHeight": 0.55,
-          "humanoidTerrainRadius": 0.35,
-          "swimTerrainRadius": 0.675,
-          "terrainDistanceScale": 1
-        },
-        "cases": [
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 0.7333333333333333,
-            "handledFrames": 21,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.191108666091488,
-              3,
-              38.782999284369424
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 1.3999999910593033,
-              "p95": 27.099999994039536,
-              "max": 40.3999999910593
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.7333333333333333,
-            "handledFrames": 43,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.197440777961179,
-              3,
-              38.819666973805596
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.6000000089406967,
-              "p95": 3.2999999970197678,
-              "max": 12.099999994039536
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.725,
-            "handledFrames": 86,
-            "upper": [
-              6.200000000000003,
-              6,
-              42.599999999999994
-            ],
-            "landing": [
-              6.199237366620453,
-              3,
-              38.898380838156584
-            ],
-            "sourceUpperTriangle": 95403,
-            "sourceLandingTriangle": 94500,
-            "firstSourceLandingTriangle": 94500,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.5,
-              "p95": 1.5,
-              "max": 5.9000000059604645
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 30,
-            "seconds": 1,
-            "handledFrames": 20,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.786755663003976,
-              0,
-              41.774690469619934
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 1.7000000029802322,
-              "p95": 5.5999999940395355,
-              "max": 7
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 60,
-            "seconds": 0.9666666666666667,
-            "handledFrames": 40,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.797435893136107,
-              0,
-              41.814361400707455
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 92193,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 1,
-              "p95": 3,
-              "max": 5.5
-            }
-          },
-          {
-            "team": 1,
-            "bot": true,
-            "hz": 120,
-            "seconds": 0.9583333333333334,
-            "handledFrames": 82,
-            "upper": [
-              -13.799999999999997,
-              3,
-              46.599999999999994
-            ],
-            "landing": [
-              -13.799232614799191,
-              0,
-              41.879561249979105
-            ],
-            "sourceUpperTriangle": 94244,
-            "sourceLandingTriangle": 92193,
-            "firstSourceLandingTriangle": 105901,
-            "humanFits": true,
-            "squidFits": true,
-            "screenedSwimShape": true,
-            "form": "kid",
-            "alive": true,
-            "grounded": true,
-            "jumpAdmitted": false,
-            "gearAP": [],
-            "cpuStep": {
-              "p50": 0.7999999970197678,
-              "p95": 2,
-              "max": 5.0999999940395355
-            }
-          }
-        ],
-        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
-        "sourceBuffersUnchanged": true,
-        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
-        "mode": "clams",
-        "errors": [],
-        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
-        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
-        "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
-        "otherTransitionHandlersExecuted": false,
-        "nativeMatchSetup": true
-      }
-    ]
+    }
+  },
+  "cpuSkipSelfReview": {
+    "corrected": true,
+    "earlierClaim": "All ten skips were other-stage fixtures",
+    "actual": "One skipped shared authentic Humpback Drop-cache fixture also needs NATIVE_DROP_CACHE_FIXTURE_ASSETS. Earlier independent acceptance review passed; latest-foundation dedicated rerun queued.",
+    "testImplementationChanged": false
+  },
+  "currentCpu": {
+    "status": "passed",
+    "foundation": "67e5565c1ed10cf6adc8c5ad102e5d8863840935",
+    "broadLog": ".ci-scratch/current-all-cpu.log",
+    "humpbackCacheLog": ".ci-scratch/current-drop-cache.log",
+    "cacheFixtureExplicitlyEnabled": true
   },
   "packagingAndBudgets": {
     "private": {
@@ -6318,22 +6856,22 @@
         "passed": 9,
         "failed": 0,
         "skipped": 0,
-        "log": ".ci-scratch/composed-packaging-private.log"
+        "log": ".ci-scratch/current-packaging-private.log"
       },
       "startupBudget": {
         "status": "passed",
-        "revision": "58e46a124fdfdaef6b2dcf5127efea8fe5ccd872d18076375a17f69fa8dcf4b5",
+        "revision": "d5ac18df38f4938c296470d2e88fc193797ba2efbe42c4828fd2baa29bf7bc8f",
         "initialJSRequests": 146,
         "modulePreloads": 145,
         "coreModulePreloads": 131,
         "practiceRangeModulePreloads": 14,
         "practiceRangePreloadBytes": 74638,
-        "initialJSBytes": 2892599,
+        "initialJSBytes": 2900705,
         "criticalHTMLBytes": 15371,
         "precacheCount": 365,
-        "precacheBytes": 5786782,
+        "precacheBytes": 5794888,
         "workerBytes": 70517,
-        "declaredBytes": 10404822,
+        "declaredBytes": 10412928,
         "measurementKind": "deterministic file and dependency gates; not native browser timings"
       }
     },
@@ -6343,35 +6881,24 @@
         "passed": 9,
         "failed": 0,
         "skipped": 0,
-        "log": ".ci-scratch/composed-packaging-public.log"
+        "log": ".ci-scratch/current-packaging-public.log"
       },
       "startupBudget": {
         "status": "passed",
-        "revision": "7582ebd4b560faf3d2c211fc7363eece60588162b38d86176c161c7bbdbe02eb",
+        "revision": "229171c3ef563a9cbd9579c5e3328d29bea50ab332244c679d8bf833231ddcaa",
         "initialJSRequests": 146,
         "modulePreloads": 145,
         "coreModulePreloads": 131,
         "practiceRangeModulePreloads": 14,
         "practiceRangePreloadBytes": 74638,
-        "initialJSBytes": 2895450,
+        "initialJSBytes": 2903556,
         "criticalHTMLBytes": 15371,
         "precacheCount": 365,
-        "precacheBytes": 5789633,
+        "precacheBytes": 5797739,
         "workerBytes": 70517,
-        "declaredBytes": 10407673,
+        "declaredBytes": 10415779,
         "measurementKind": "deterministic file and dependency gates; not native browser timings"
       }
     }
-  },
-  "screenshotSelfReview": {
-    "inspected": [
-      "composed-gameplay/humpback-game.png",
-      "composed-gameplay/humpback-overhead.png",
-      "composed-gameplay/humpback-source-only.png",
-      "humpback-banks-foot-candidate/humpback-banks.png"
-    ],
-    "sourceGeometry": "Actual source indoor roofs and bowl surfaces retained. Source overhead/source-only view naturally occluded by the original opaque roof; no roof edit for visibility.",
-    "towerMenuImageLimit": "composed-gameplay/humpback-tower-unavailable.png caught a UI transition after the assertions restored Turf. Do not treat it as a stable disabled-Tower image; actual menu/API guard assertions are the evidence.",
-    "rights": "All screenshots private/ignored; no asset publication"
   }
 }
