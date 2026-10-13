@@ -1,0 +1,5 @@
+# Native Python source-mask contracts in CI
+
+The unconditional synthetic Python/Worker coverage test imports the native converter, which requires NumPy, Pillow and Numba. The native GitHub workflow installed only Node/esbuild and silently relied on the runner image for Python packages. It now selects Python3.12 and installs the exact versions used for accepted local source conversion before running unchanged contracts. Serial Node execution also retains the local memory bound instead of starting every private-source fixture concurrently. No test is skipped or weakened, and no model payload is needed.
+
+Verified locally: all three exact dependency versions are installed; pip check passes; the coverage, exact polygon ownership/NoPaint/dynamic-face negatives and synthetic Python/Worker mask parity tests pass3/3 without skips. This is local dependency/runtime verification, not a fresh hosted-run result. Previous aggregate GitHub runs remain queued at their earlier immutable SHA and are not claimed as proof of this workflow. Extracted assets remain excluded.
