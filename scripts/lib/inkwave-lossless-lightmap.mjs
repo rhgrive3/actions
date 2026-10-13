@@ -20,19 +20,22 @@ const pngChunk = (kind, payload) => {
 
 export function decodeGrayLightmap(source) {
   if (!Buffer.isBuffer(source) || !source.subarray(0, 8).equals(SIGNATURE)) throw Error('lightmap: invalid PNG signature');
-  let ihdr = null, idats = [], ended = false;
+  let ihdr = null, idats = [], chunks = [], ended = false;
   for (let offset = 8; offset < source.length;) {
     if (offset + 12 > source.length) throw Error('lightmap: incomplete PNG chunk');
     const len = source.readUInt32BE(offset);
     const kind = source.toString('ascii', offset + 4, offset + 8);
     if (offset + 12 + len > source.length) throw Error('lightmap: truncated PNG chunk');
     const payload = source.subarray(offset + 8, offset + 8 + len);
+    const bytes = source.subarray(offset, offset + 12 + len);
     if (crc32(source.subarray(offset + 4, offset + 8 + len)) !== source.readUInt32BE(offset + 8 + len))
       throw Error('lightmap: chunk checksum mismatch');
     if (kind === 'IHDR') ihdr = Buffer.from(payload);
     else if (kind === 'IDAT') idats.push(payload);
-    else if (kind === 'IEND') { ended = true; break; }
-    else throw Error('lightmap: unexpected PNG ancillary chunk ' + kind);
+    else if (kind === 'IEND') { chunks.push({ kind, bytes }); ended = true; break; }
+    else if (!['PLTE'].includes(kind) && (kind.charCodeAt(0) & 0x20) === 0)
+      throw Error('lightmap: unsupported critical PNG chunk ' + kind);
+    chunks.push({ kind, bytes });
     offset += 12 + len;
   }
   if (!ended || !ihdr || ihdr.length !== 13 || ihdr[8] !== 8 || ihdr[9] !== 0 ||
@@ -56,11 +59,11 @@ export function decodeGrayLightmap(source) {
       pixels[row + x] = (packed[y * (width + 1) + 1 + x] + pred) & 255;
     }
   }
-  return { ihdr, pixels, width, height };
+  return { ihdr, pixels, width, height, chunks };
 }
 
 export function optimizeLightmapPng(source) {
-  const { ihdr, pixels, width, height } = decodeGrayLightmap(source);
+  const { ihdr, pixels, width, height, chunks } = decodeGrayLightmap(source);
   const filtered = Buffer.alloc((width + 1) * height);
   for (let y = 0; y < height; y++) {
     const row = y * width, out = y * (width + 1);
@@ -84,9 +87,16 @@ export function optimizeLightmapPng(source) {
     best.copy(filtered, out + 1);
   }
   const deflated = deflateSync(filtered, { level: 9 });
-  const result = Buffer.concat([
-    SIGNATURE, pngChunk('IHDR', ihdr), pngChunk('IDAT', deflated), pngChunk('IEND', Buffer.alloc(0))
-  ]);
-  if (!decodeGrayLightmap(result).pixels.equals(pixels)) throw Error('lightmap: lossless round-trip failed');
+  const encodedIdat = pngChunk('IDAT', deflated);
+  let insertedIdat = false;
+  const resultChunks = chunks.flatMap(chunk => {
+    if (chunk.kind !== 'IDAT') return [chunk.bytes];
+    if (insertedIdat) return [];
+    insertedIdat = true;
+    return [encodedIdat];
+  });
+  const result = Buffer.concat([SIGNATURE, ...resultChunks]);
+  const roundTrip = decodeGrayLightmap(result);
+  if (!roundTrip.pixels.equals(pixels) || !roundTrip.ihdr.equals(ihdr)) throw Error('lightmap: lossless round-trip failed');
   return result.length < source.length ? result : source;
 }
