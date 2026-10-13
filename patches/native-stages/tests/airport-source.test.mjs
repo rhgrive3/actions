@@ -61,6 +61,13 @@ test('airport source supports, clear capsules and real opening launches reach lo
  G.paint=new Paint(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
  G.nav=new f.NavGraph(L,P);G.match.mode='turf';G.match.opts={};
  const ranked=f.nativeRankedStage(G),zone=ranked.zones[0].center,target=G.nav.nearest(new THREE.Vector3(...zone),1.2);
+ const objectivePoints=[...ranked.zones.map(z=>z.center),ranked.rainmaker.center,...ranked.rainmaker.goals,
+  ...ranked.rainmaker.checkpoints.flat(),...ranked.clams.spawns,...ranked.clams.goals];
+ const objectives=[...new Map(objectivePoints.map(p=>[p.join('/'),p])).values()].map(p=>{
+  const pos=new THREE.Vector3(...p),support=P.raycast(pos.clone().add({x:0,y:.3,z:0}),new THREE.Vector3(0,-1,0),.6);
+  assert.ok(support.hit&&support.normal.y>.68,'local objective retains source support');
+  const node=G.nav.nearest(pos,1.2);assert.ok(node>=0);return node;
+ });
  assert.ok(target>=0);assert.ok(G.nav.validIds.length>100);
  const pads=L.spawnPads.map((p,team)=>{
   const h=P.raycast(p.clone().add(new THREE.Vector3(0,2,0)),new THREE.Vector3(0,-1,0),4);
@@ -68,7 +75,8 @@ test('airport source supports, clear capsules and real opening launches reach lo
   assert.match(L.manifest.objects[L.data.objectIds[h.triangle]].name,/__WoodDeckBright00$/);
   assert.ok(P.bodyFits(p.clone().add({x:0,y:.01,z:0}),PLAYER.radius+.04,.32,PLAYER.height,false,.01));
   const start=G.nav.nearest(p,1.2),route=G.nav.path(start,target,team,50000);assert.ok(route?.length>20);
-  return {team,sourceTriangle:h.triangle,sourceObject:L.manifest.objects[L.data.objectIds[h.triangle]].name,routeNodes:route.length};
+  for(const goal of objectives)assert.ok(G.nav.path(start,goal,team,50000),'opposing pad reaches every supported rule objective');
+  return {team,sourceTriangle:h.triangle,sourceObject:L.manifest.objects[L.data.objectIds[h.triangle]].name,routeNodes:route.length,objectiveRoutes:objectives.length};
  });
  const cases=[];
  const openings=[{slot:0,isBot:false},...[0,1,2,3].map(slot=>({slot,isBot:true}))];
@@ -84,10 +92,11 @@ test('airport source supports, clear capsules and real opening launches reach lo
   assert.ok(a.alive&&a.grounded&&a.ground.hit,'actual supported landing '+[hz,team,slot]);
   const landed=G.nav.nearest(a.pos,1.2),route=G.nav.path(landed,target,team,50000);
   assert.ok(route?.length,'post-launch directed objective route '+[hz,team,slot]);
+  for(const goal of objectives)assert.ok(G.nav.path(landed,goal,team,50000),'post-launch route to every supported rule objective '+[hz,team,slot]);
   const before=a.pos.clone();a.intent.move.set(Math.sin(a.aimYaw),0,Math.cos(a.aimYaw));
   for(let i=0;i<hz/2;i++){G.time+=1/hz;a.update(1/hz);}
   assert.ok(a.alive&&a.pos.distanceTo(before)>.1,'ordinary post-launch motion');
-  cases.push({hz,team,slot,isBot,frames,landing:before.toArray(),routeNodes:route.length,movementSeconds:.5,moved:a.pos.distanceTo(before)});
+  cases.push({hz,team,slot,isBot,frames,landing:before.toArray(),routeNodes:route.length,objectiveRoutes:objectives.length,movementSeconds:.5,moved:a.pos.distanceTo(before)});
  }
  console.log(JSON.stringify({id:'airport',pads,nodes:G.nav.nodes.length,valid:G.nav.validIds.length,towerSupported:ranked.tower.supported,towerRouteNodes:ranked.tower.path.length,cases,conditions:'Actual Actor integrator, ordinary shooter, default gear, source capsule and directed nav; display/audio stubs only'}));
 });
