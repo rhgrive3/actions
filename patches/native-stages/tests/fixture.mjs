@@ -3,14 +3,14 @@ import path from 'node:path';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import {prepareNativeStageBuild} from '../../../scripts/lib/inkwave-native-stages.mjs';
-export async function nativeFixture(){
+export async function nativeFixture(options={}){
  const prepared=prepareNativeStageBuild(process.env.INKWAVE_NATIVE_STAGE_ASSETS||null);
  // Use the builder's real sealed catalog, including independent definitions.
  // The checked-in placeholder intentionally contains no enabled native stages.
  const adaptRuntime=(rel,source)=>rel==='patches/native-stages/runtime/build-config.mjs'
   ? `export const nativeStageBuild = ${JSON.stringify(prepared.config)};`
   : adaptBuildSource(rel,source);
- return fixture({fullRuntime:true,realProjectiles:true,adaptNative:adaptBuildSource,adaptRuntime,extraExports:`
+ return fixture({fullRuntime:true,realProjectiles:true,includeCharacter:!!options.includeCharacter,adaptNative:adaptBuildSource,adaptRuntime,extraExports:`
  export {nativeStageBuild} from './patches/native-stages/runtime/build-config.mjs';
  export {nativeStageRuleStatus} from './patches/native-stages/runtime/rule-availability.mjs';
  export {NATIVE_MAPS,UNAVAILABLE_NATIVE_STAGES} from './patches/native-stages/runtime/registry.mjs';

@@ -1,6 +1,9 @@
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
-// Actual public modules plus the build adapter. No renderer, fake game model,
-// or second gameplay engine is used. Tests stub only display/audio/collisions.
+// Actual public modules plus the build adapter. Defaults stub physics, paint,
+// display and audio; make() also freezes integration/frame finishing and uses
+// a simplified fixed world-axis muzzle. Geometry-sensitive tests must retain
+// the production Actor methods and construct the exported production Character
+// with includeCharacter:true; importing it alone does not change make().
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
