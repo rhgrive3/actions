@@ -1,14 +1,24 @@
 import { SPRINKLER } from './kit-sprinkler.mjs';
-import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
+import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
+import { objectDamageRow, objectDamageScale } from './sub-resistance.mjs';
 const installed=Symbol.for('inkwave.native-sprinkler-damage.v1');
 const safe=n=>Number.isSafeInteger(n)&&n>=0;
 const life=a=>Math.max(safe(a?.netLife)?a.netLife:0,safe(a?.net?.lastLife)?a.net.lastLife:0);
 const epoch=nm=>typeof nm?.cfg?.id==='string'?nm.cfg.id:'';
 const spec=b=>b?.s3Resolved?.spec||b?.s3GhostResolved?.spec;
 const sprinkler=b=>spec(b)?.id==='sprinkler';
-const counters=new WeakMap(),seen=new WeakMap();
+const counters=new WeakMap(),seen=new WeakMap(),views=new WeakMap();
 const next=nm=>{const n=Math.max(counters.get(nm)||0,nm._eventSeq||0,nm.s?._inkwaveEventSeq||0)+1;counters.set(nm,n);return n;};
 function initialize(b){if(!Number.isFinite(b.s3DeviceHP))b.s3DeviceHP=SPRINKLER.hp;return b.s3DeviceHP;}
+function sourceActor(source){return source?.owner&&typeof source.owner==='object'?source.owner:source;}
+function localSource(api,source){const actor=sourceActor(source),nm=api.G.netm;return !!actor&&!actor.remote&&!source?.ghost&&(!nm||actor.owner===nm.myId);}
+function sprinklerView(b){
+ let view=views.get(b);if(view)return view;
+ view=Object.create(null);
+ Object.defineProperties(view,{id:{value:'sprinkler'},subId:{value:'sprinkler'},kind:{value:'sprinkler'},collisionRadius:{value:.72},
+  owner:{get:()=>b.owner},team:{get:()=>b.team},pos:{get:()=>b.pos},hp:{get:()=>initialize(b)},maxHp:{value:SPRINKLER.hp},dead:{get:()=>b.s3Destroyed===true}});
+ views.set(b,view);return view;
+}
 function birth(b,nm,seq){
  if(!sprinkler(b)||!safe(seq)||seq<1||!safe(b.owner?.nid)||!epoch(nm))return;
  b.s3DeviceBirth={match:epoch(nm),owner:b.owner.owner,nid:b.owner.nid,life:life(b.owner),seq};initialize(b);
@@ -20,17 +30,17 @@ function emitState(api,b){
  api.emit?.('all:sub',{v:1,phase:'nativeObjectState',subId:'sprinkler',actor:a,life:life(a),eventSeq:next(nm),
   match:p.match,targetOwnerId:p.nid,targetLife:p.life,targetSeq:p.seq,hp:b.s3DeviceHP,destroyed:b.s3Destroyed===true});
 }
-function damage(api,b,amount,attacker,identity){
+function damage(api,b,amount,attacker,cause='Default',identity){
  if(!sprinkler(b)||b.ghost||b.owner?.remote||b.s3Destroyed||!Number.isFinite(amount)||amount<=0||amount>2200)return false;
- const rate=identity===undefined?objectGearRate(attacker,'sprinkler'):withObjectHitGear(attacker,identity,()=>objectGearRate(attacker,'sprinkler'));
+ const rate=identity===undefined?objectDamageScale(attacker,'sprinkler',cause):withObjectHitGear(attacker,identity,()=>objectDamageScale(attacker,'sprinkler',cause));
  b.s3DeviceHP=Math.max(0,initialize(b)-amount*rate);if(b.s3DeviceHP===0)b.s3Destroyed=true;emitState(api,b);return true;
 }
-function proposal(api,b,p,point,amount=p.damage){
- const a=p.owner,nm=api.G.netm,proof=b.s3DeviceBirth;
- if(!proof||!a||a.remote||p.ghost||a.owner!==nm?.myId||proof.match!==epoch(nm)||!safe(a.nid))return false;
+function proposal(api,b,source,point,amount,cause='Default'){
+ const a=sourceActor(source),nm=api.G.netm,proof=b.s3DeviceBirth;
+ if(!proof||!a||a.remote||source?.ghost||a.owner!==nm?.myId||proof.match!==epoch(nm)||!safe(a.nid))return false;
  api.emit?.('all:sub',{v:1,phase:'nativeObjectHit',subId:'sprinkler',actor:a,life:life(a),eventSeq:next(nm),
   match:proof.match,targetOwnerId:proof.nid,targetLife:proof.life,targetSeq:proof.seq,
-  damage:amount,objectShredder:objectShredderEquipped(a),x:point.x,y:point.y,z:point.z});return true;
+  damage:amount,cause:objectDamageRow(source,cause),objectShredder:objectShredderEquipped(a),x:point.x,y:point.y,z:point.z});return true;
 }
 function admitOnce(nm,actor,event){
  if(!safe(event.eventSeq)||event.eventSeq<1||event.match!==epoch(nm))return false;
@@ -49,9 +59,10 @@ export function replayNativeSprinklerDamage(api,event){
  if(!nm||!a?.remote||nm.byNid?.get(a.nid)!==a||life(a)!==event.life||event.subId!=='sprinkler'||!safe(event.targetSeq)||event.targetSeq<1)return false;
  const b=(api.G.projectiles?.bombs||[]).find(b=>sprinkler(b)&&sameBirth(b,event,nm));if(!b)return false;
  if(event.phase==='nativeObjectHit'){
+  const cause=event.cause===undefined?'Default':event.cause;
   if(b.owner.remote||b.ghost||b.owner.owner!==nm.myId||a.team===b.team||!Number.isFinite(event.damage)||event.damage<=0||event.damage>2200
-    ||![event.x,event.y,event.z].every(Number.isFinite)||Math.hypot(event.x-b.pos.x,event.y-b.pos.y,event.z-b.pos.z)>1.5)return false;
-  if(!admitOnce(nm,a,event))return false;return damage(api,b,event.damage,a,event.objectShredder===true);
+    ||typeof cause!=='string'||cause.length>80||![event.x,event.y,event.z].every(Number.isFinite)||Math.hypot(event.x-b.pos.x,event.y-b.pos.y,event.z-b.pos.z)>1.5)return false;
+  if(!admitOnce(nm,a,event))return false;return damage(api,b,event.damage,a,cause,event.objectShredder===true);
  }
  if(event.phase==='nativeObjectState'){
   if(!b.ghost||b.owner!==a||!Number.isFinite(event.hp)||event.hp<0||event.hp>SPRINKLER.hp||event.destroyed!==(event.hp===0))return false;
@@ -95,10 +106,27 @@ export function installNativeSprinklerDamage(api){
    if(t<0||t>1||best&&best.distance<=t*length)continue;const point=start.clone().addScaledVector(d,t);
    let settled=false;best={distance:t*length,point,normal:point.clone().sub(b.pos).normalize(),kind:'native-sprinkler',onHit:(actualDamage)=>{
     const amount=Number.isFinite(actualDamage)?actualDamage:p.damage;
-    if(settled||p.ghost||!p.owner||p.owner.remote||!Number.isFinite(amount)||amount<=0||amount>2200)return false;settled=true;
-    return b.ghost||b.owner?.remote?proposal(api,b,p,point,amount):damage(api,b,amount,p.owner);
+    const attacker=sourceActor(p),cause=objectDamageRow(p);
+    if(settled||!localSource(api,p)||!attacker||!Number.isFinite(amount)||amount<=0||amount>2200)return false;settled=true;
+    return b.ghost||b.owner?.remote?proposal(api,b,p,point,amount,cause):damage(api,b,amount,attacker,cause);
    }};
   }
   return best;
+ };
+ Projectiles.prototype.nativeSprinklerAoE=function(source,center,radius,damageAt,cause=null,options={}){
+  const attacker=sourceActor(source),sourceTeam=source?.team??attacker?.team;
+  if(!localSource(api,source)||!attacker||!center||!(radius>0)||typeof damageAt!=='function')return false;
+  let applied=false;
+  for(const b of this.bombs||[]){
+   if(!sprinkler(b)||b.s3Mode!=='sprinkling'||b.s3Destroyed||b.dead||b===source||b.team===sourceTeam)continue;
+   const point=b.pos.clone().add(new api.THREE.Vector3(0,.45,0)),distance=point.distanceTo(center);
+   if(distance>radius||!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
+   const amount=damageAt(distance,sprinklerView(b));
+   if(!Number.isFinite(amount)||amount<=0||amount>2200)continue;
+   const row=objectDamageRow(source,cause),accepted=b.ghost||b.owner?.remote
+    ?proposal(api,b,source,point,amount,row):damage(api,b,amount,attacker,row);
+   applied=accepted||applied;
+  }
+  return applied;
  };
 }
