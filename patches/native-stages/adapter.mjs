@@ -144,6 +144,10 @@ export function adaptNativeStages(rel,code){
   once('      target: ownerReplicated ? null : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor)) };','      target: ownerReplicated ? null : (G.level?.native && actor.isBot ? initialBotTarget(actor) : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor) ?? nativeInitialLanding(G,actor,(x,z,y)=>supportedTarget(actor,x,z,y)))) };');
   once('          const target = targetFor(this);','          const target = G.level?.native && this.isBot ? initialBotTarget(this) : targetFor(this);');
  }
+ if(rel==='patches/splatoon3/runtime/ranked/install.mjs'){
+  code="import {nativeRankedBotGoalReachable} from '../../../native-stages/runtime/engine.mjs';\n"+code;
+  once('    floorAt: (x, z) => match.rankedWorld.floorAt(x, z), blocked: (a, b) => match.rankedWorld.blocked(a, b) };', '    floorAt: (x, z) => match.rankedWorld.floorAt(x, z), blocked: (a, b) => match.rankedWorld.blocked(a, b),\n    botGoalRoute: api.G.level?.native ? (actor,target) => nativeRankedBotGoalReachable(api.G,actor,target) : undefined };');
+ }
  if(rel==='patches/splatoon3/runtime/ranked/rainmaker.mjs'){
   code="import { nativeRetreatCoordinate } from '../../../native-stages/runtime/engine.mjs';\n"+code;
   once('const retreat = this._isRetreating(team, pos[2]);', 'const retreat = this._isRetreating(team, nativeRetreatCoordinate(this.config, pos));');
