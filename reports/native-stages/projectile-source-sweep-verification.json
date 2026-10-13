@@ -586,5 +586,34 @@
     "Retail collision masks, source extraction version and material shader equivalence are unverified",
     "Single-shot update timings are not whole-match FPS or physical device measurements",
     "Physical mouse admission, full eight-actor simulation and real WS remain distinct owner/aggregate checks"
-  ]
+  ],
+  "acceptedCameraComposition": {
+    "foundation": "33cecb0583de92b260478356d4340513a3188065",
+    "contracts": {
+      "passed": 52,
+      "failed": 0,
+      "skipped": 6
+    },
+    "emittedPackaging": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "publicStartupBudget": {
+      "status": "passed",
+      "revision": "7beff5a6180ed77b53c07a1ce7bf2b23c14233b23967660e1a8f841d40a20873",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2861407,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5752749,
+      "workerBytes": 70517,
+      "declaredBytes": 10370789,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  }
 }
