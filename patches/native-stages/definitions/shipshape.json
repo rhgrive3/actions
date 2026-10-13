@@ -32,6 +32,7 @@
   },
   "sourceNavigation": {
     "wallClimb": true,
-    "highDrops": true
+    "highDrops": true,
+    "wallJumpAttach": true
   }
 }
