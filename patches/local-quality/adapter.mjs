@@ -70,6 +70,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptPaintHotpath } from './paint-hotpath-adapter.mjs';
+import { adaptPerfReadout } from './perf-readout-adapter.mjs';
 import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
 import { adaptRuntimeFrameScratch } from './runtime-frame-scratch-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
@@ -146,7 +147,7 @@ export function adaptQualitySource(rel, code) {
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
   const broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
-  const painted = adaptPaintHotpath(rel, broadphased, replaceOnce);
+  const painted = adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, painted, replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
   return adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce);

@@ -67,6 +67,14 @@ function sdRay(px, py, ax, ay, bx, by, ra, rb) {
 
 function counts(kind, shapes) { return shapes[kind] || [0, 0, 0, 0]; }
 
+// Every piece shares one property layout (unused fields stay 0) so the
+// per-sample loops below read monomorphic objects: with four layouts, each
+// double field load went through a megamorphic IC that boxed a fresh number,
+// the largest allocation source of a busy fight. Values and order unchanged.
+const ancillaryPiece = (type, minX, maxX, minY, maxY) => ({ type,
+  ax: 0, ay: 0, bx: 0, by: 0, ra: 0, rb: 0, x: 0, y: 0, ux: 0, uy: 0, el: 0, radius: 0,
+  x0: 0, yTop: 0, len: 0, w: 0, h2: 0, k: 0, r: 0, minX, maxX, minY, maxY });
+
 function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   const R = g.R, r2 = R * R - dn * dn;
   if (r2 <= 0 || R <= 0) return null;
@@ -91,12 +99,14 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     const ax = ux * edge * 0.72, ay = uy * edge * 0.72;
     const tipX = ux * (edge + len) - uy * len * 0.18 * (h1 - 0.5);
     const tipY = uy * (edge + len) + ux * len * 0.18 * (h1 - 0.5);
-    pieces.push({ type: 0, ax, ay, bx: tipX, by: tipY, ra: wB, rb: tipR,
-      minX: Math.min(ax, tipX) - wB, maxX: Math.max(ax, tipX) + wB,
-      minY: Math.min(ay, tipY) - wB, maxY: Math.max(ay, tipY) + wB });
+    const ray = ancillaryPiece(0, Math.min(ax, tipX) - wB, Math.max(ax, tipX) + wB,
+      Math.min(ay, tipY) - wB, Math.max(ay, tipY) + wB);
+    ray.ax = ax; ray.ay = ay; ray.bx = tipX; ray.by = tipY; ray.ra = wB; ray.rb = tipR;
+    pieces.push(ray);
     const headR = tipR * (1.6 + 1.4 * h2);
-    pieces.push({ type: 1, x: tipX, y: tipY, radius: headR,
-      minX: tipX - headR, maxX: tipX + headR, minY: tipY - headR, maxY: tipY + headR });
+    const head = ancillaryPiece(1, tipX - headR, tipX + headR, tipY - headR, tipY + headR);
+    head.x = tipX; head.y = tipY; head.radius = headR;
+    pieces.push(head);
   }
 
   for (let k = 0; k < satelliteCount; k++) {
@@ -110,8 +120,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     const rad = r * (0.028 + 0.085 * h3) * fall * (1 - 0.4 * h2) * (big ? 0.8 : 1) * land;
     const el = 1 + (0.5 + 1.6 * sa) * h2;
     const extent = rad * el;
-    pieces.push({ type: 2, x: ux * dist, y: uy * dist, ux, uy, el, radius: rad,
-      minX: ux * dist - extent, maxX: ux * dist + extent, minY: uy * dist - extent, maxY: uy * dist + extent });
+    const sat = ancillaryPiece(2, ux * dist - extent, ux * dist + extent, uy * dist - extent, uy * dist + extent);
+    sat.x = ux * dist; sat.y = uy * dist; sat.ux = ux; sat.uy = uy; sat.el = el; sat.radius = rad;
+    pieces.push(sat);
   }
 
   for (let k = 0; k < spatterCount; k++) {
@@ -122,7 +133,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
     if (face.wall) { const nx = ux * 0.75, ny = uy * 0.75 - 0.25; const l = Math.hypot(nx, ny) || 1; ux = nx / l; uy = ny / l; }
     const rad = Math.max(r * (0.011 + 0.02 * h3) * fall, pixel * 0.9), dist = r * (1.3 + 1.2 * h2);
     const x = ux * dist, y = uy * dist;
-    pieces.push({ type: 1, x, y, radius: rad, minX: x - rad, maxX: x + rad, minY: y - rad, maxY: y + rad });
+    const bead = ancillaryPiece(1, x - rad, x + rad, y - rad, y + rad);
+    bead.x = x; bead.y = y; bead.radius = rad;
+    pieces.push(bead);
   }
 
   if (face.wall && fall > 0.3 && dripCount > 0) {
@@ -135,8 +148,9 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
       const yTop = -c * r * 0.7;
       const len = c * r * 0.25 + r * (0.3 + 2.3 * h2 * h2) * fall * dT;
       const w = r * (0.042 + 0.04 * h3) * (0.75 + 0.35 * fall);
-      pieces.push({ type: 3, x0, yTop, len, w, h2, k, r,
-        minX: x0 - w * 2, maxX: x0 + w * 2, minY: yTop - len - w * 2, maxY: yTop + w * 2 });
+      const drip = ancillaryPiece(3, x0 - w * 2, x0 + w * 2, yTop - len - w * 2, yTop + w * 2);
+      drip.x0 = x0; drip.yTop = yTop; drip.len = len; drip.w = w; drip.h2 = h2; drip.k = k; drip.r = r;
+      pieces.push(drip);
     }
   }
   return pieces.length ? { pieces, sa, sdu, sdv, margin: pixel * 1.5, seed, dT } : null;
