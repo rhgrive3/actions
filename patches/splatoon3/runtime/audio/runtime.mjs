@@ -1,10 +1,23 @@
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
+// Exactly one runtime owns each admitted shot. The old native/catalogue
+// family SFX never layer over real weapon audio or substitute missing MP3s.
+const LEGACY_SHOT_NAME=/^shoot_(?:shooter|dualies|splatling|blaster|charger)$/;
+function stopLegacyShotDoublePlay(audio){
+  if(!audio||typeof audio.play!=='function'||audio.__iwRealShotGuard)return;
+  const original=audio.play;
+  audio.play=function(name,...args){
+    if(typeof name==='string'&&LEGACY_SHOT_NAME.test(name))return null;
+    return original.call(this,name,...args);
+  };
+  Object.defineProperty(audio,'__iwRealShotGuard',{value:true,configurable:true});
+}
 const finite3=p=>!!p&&[p.x,p.y,p.z].every(Number.isFinite);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function installWeaponAudioRuntime(api){
   const {G,on,Actor,WeaponRunner}=api,R=WeaponRunner.prototype;
+  stopLegacyShotDoublePlay(G.audio);
   if(R[INSTALL])return R[INSTALL];
   const unsubs=[],active=new Set(),obstruction=new WeakMap();
   const stateFor=r=>r._mainAudioState||=( {id:null,engine:null,loops:{},wasReady:false,wasCharge:false,canopy:null,sBlastMode:null} );
