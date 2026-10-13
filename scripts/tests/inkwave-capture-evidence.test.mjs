@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {createCaptureEvaluator,withCaptureRestoration} from '../lib/inkwave-capture-evidence.mjs';
+import {createCaptureEvaluator,withCaptureRestoration,collectCaptureModes} from '../lib/inkwave-capture-evidence.mjs';
 import {collectVisibilityEvidence,visibilityVerdict} from '../lib/inkwave-visibility-sequence.mjs';
 
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nWQAAAAASUVORK5CYII=','base64');
@@ -50,4 +50,9 @@ test('restoration failure before capture cannot reattribute a consumed primary s
   assert.ok(error instanceof AggregateError);assert.match(error.message,/original mismatch/);assert.match(error.message,/early restore error/);return true;
  });
  assert.deepEqual(fs.readdirSync(f.out).sort(),['capture-failure-1.json','capture-failure-1.png','capture-failure-1.rgba']);
+});
+
+test('failed baseline preserves failure while later modes and paired composer still run',async()=>{
+ const visited=[],failures=[];const run=()=>collectCaptureModes({modes:['baseline','no-ink','fill-035'],onFailure:async failure=>failures.push(failure),runMode:mode=>withCaptureRestoration(async()=>{visited.push(mode);if(mode==='baseline')throw Error('baseline invalid');},async()=>{visited.push(mode+'-composer');})});
+ await assert.rejects(run(),/baseline invalid/);assert.deepEqual(visited,['baseline','baseline-composer','no-ink','no-ink-composer','fill-035','fill-035-composer']);assert.equal(failures.length,1);assert.equal(failures[0].mode,'baseline');assert.equal(visibilityVerdict({failures}),'failed');
 });

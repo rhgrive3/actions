@@ -1,13 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {verifySavedPngCapture} from './inkwave-png-evidence.mjs';
 
 // Retrieve only the immutable snapshot; never render or reread the live canvas.
 export function createCaptureEvaluator({page,out,onPersistenceError,writeFile=fs.writeFileSync}){
  let failureIndex=0;
  return async(fn,arg)=>{
-  try{return await page.evaluate(fn,arg);}catch(error){
+  let captured;
+  try{captured=await page.evaluate(fn,arg);captured.capture.exactPngValidation=verifySavedPngCapture(captured);return captured;}catch(error){
    try{
-    const evidence=await page.evaluate(()=>{const captured=globalThis.__nativeCanvasCaptureFailure;globalThis.__nativeCanvasCaptureFailure=null;return captured;});
+    const evidence=captured?{...captured.capture,mode:captured.mode,png:captured.png,rawRGBA:captured.rawRGBA,error:String(error?.stack||error),exactPngValidation:error.validation}:await page.evaluate(()=>{const captured=globalThis.__nativeCanvasCaptureFailure;globalThis.__nativeCanvasCaptureFailure=null;return captured;});
     if(evidence){
      const stem=`capture-failure-${++failureIndex}`,{png,rawRGBA,...metadata}=evidence;
      const files=[];
@@ -35,4 +37,11 @@ export async function withCaptureRestoration(measure,restore){
  }
  if(failed)throw primary;
  return result;
+}
+
+// Collect every requested mode without turning a partial matrix into a pass.
+export async function collectCaptureModes({modes,runMode,onFailure}){
+ const errors=[];
+ for(const mode of modes)try{await runMode(mode);}catch(error){errors.push(error);await onFailure({mode,error:String(error?.stack||error)});}
+ if(errors.length)throw new AggregateError(errors,'Capture mode failures: '+errors.map(e=>String(e?.stack||e)).join('\n'));
 }

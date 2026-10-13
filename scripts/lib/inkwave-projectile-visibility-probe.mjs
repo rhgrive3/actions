@@ -2,6 +2,7 @@
 // Never imported by the game. Restores temporary render visibility and camera.
 import fs from 'node:fs';
 import path from 'node:path';
+import {verifySavedPngCapture} from './inkwave-png-evidence.mjs';
 // Serialized directly into the page. Diagnostic only, never imported by runtime.
 // Original native evidence is persisted before isolate=true is called. Controls
 // keep the exact native camera; altered visibility is not acceptance evidence.
@@ -116,6 +117,13 @@ export async function probeProjectileVisibility(page, out) {
   const report={cases:[],physicalDevice:false,laneProbeScope:'Conservative 0.25 radius / 8-unit clearance control, not a weapon-profile radius. Native world traces retain each actual shot radius. Job success alone is not visibility proof; require visibilityEstablished=true.'};
   for (const scenario of ['original-stance','clear-lane']) for (const weapon of ['shooter','dualies','splatling']) {
     const label=scenario+'-'+weapon;
+    let caseRecord=null;
+    const recordFailure=(status,error)=>{
+      if(!caseRecord){caseRecord={scenario,weapon,status,rounds:[],traceComplete:false,views:[]};report.cases.push(caseRecord);}
+      if(caseRecord.status!==status)caseRecord.statusBeforeDiagnosticFailure??=caseRecord.status;
+      caseRecord.status=status;
+      const message=String(error?.stack||error);caseRecord.error=caseRecord.error?caseRecord.error+'\n'+message:message;
+    };
     try {
     const birth=await page.evaluate(async ({weapon,scenario})=>{
       const G=globalThis.NG||window.__G,g=G.game||window.__inkwave,a=G.local;
@@ -168,7 +176,7 @@ export async function probeProjectileVisibility(page, out) {
       globalThis.__projectileProbe={camera:G.camera.clone(),rounds:G.projectiles.list.filter(p=>p.owner===a)};
       return {weapon,scenario,trace,traceDropped,traceComplete:traceDropped===0,laneSearch,selectedLane,actualLane,clearLaneVerified,clearanceFailure,searchPosition,status:G.projectiles.list.some(p=>p.owner===a)?'live-rounds':'inconclusive-no-live-rounds',ticks,local:{position:a.pos.toArray(),alive:a.alive,form:a.form},rounds:__projectileProbe.rounds.map(p=>({type:p.type,wid:p.wid,recipe:p._inkVolumeRecipe,age:p.age,size:p.size,vis:p.vis,delay:p.delay,position:p.pos.toArray(),velocity:p.vel.toArray()})),volumeError:G.fx.inkVolumeError||null,assets:[...(G.fx.inkVolumes?.assets.keys()||[])]};
     },{weapon,scenario});
-    birth.views=[];report.cases.push(birth);fs.writeFileSync(path.join(out,'projectile-visibility.json'),JSON.stringify(report,null,2));
+    birth.views=[];caseRecord=birth;report.cases.push(birth);fs.writeFileSync(path.join(out,'projectile-visibility.json'),JSON.stringify(report,null,2));
     if(!birth.rounds.length){try{await page.evaluate(()=>{const G=globalThis.NG||window.__G;(G.game||window.__inkwave).R.render();});birth.noLiveImageMode='fresh composer render after native stepping; no projectile redraw';await page.screenshot({path:path.join(out,label+'-no-live-rounds.png'),timeout:60000});}finally{await page.evaluate(()=>{delete globalThis.__projectileProbe;});}continue;}
     try {
     birth.nativeReadback=await page.evaluate(inspectNativeProjectileOcclusion,{isolate:false});
@@ -182,8 +190,7 @@ export async function probeProjectileVisibility(page, out) {
         const meshes=[G.projectiles.blobs];for(const asset of G.fx.inkVolumes?.assets.values()||[])for(const pattern of asset.patterns)for(const levels of pattern.frames)for(const batch of levels)meshes.push(batch.mesh,batch.fringe);
         const before=JSON.stringify(__projectileProbe.rounds.map(p=>[p.pos.toArray(),p.vel.toArray(),p.age,p.damage,p.seed]));
         const visible=meshes.map(m=>m.visible),gl=G.renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
-        const cameraGeometry=state=>JSON.stringify(Object.fromEntries(Object.entries(state).filter(([key])=>!['matrixAutoUpdate','matrixWorldAutoUpdate','matrixWorldNeedsUpdate'].includes(key))));
-      const read=()=>{g.R.render();if(cameraGeometry(cameraState())!==cameraGeometry(camera))throw Error('Same-camera occlusion control changed camera geometry');const bytes=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,bytes);return bytes;};
+        const read=()=>{g.R.render();const bytes=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,bytes);return bytes;};
         const beforeRedrawMetrics=G.fx.inkVolumes?{...G.fx.inkVolumes.metrics}:null,beforeRedraw=read();
         const beforeRedrawPNG=view==='native'?G.renderer.domElement.toDataURL('image/png'):null;
         let nativeControl,nativeOff,nativeOffControl;
@@ -212,14 +219,26 @@ export async function probeProjectileVisibility(page, out) {
       if(view==='native'&&weapon==='dualies'){
         const isolation=await page.evaluate(inspectNativeProjectileOcclusion,{isolate:true});
         if(isolation.captureFailure){isolation.captureFailure=persistOcclusionCaptureFailure(isolation.captureFailure,out,label+'-occlusion');if(isolation.captureFailure.writeErrors.length)isolation.errors.push('Capture failure persistence had write errors');}
+        birth.occlusionDiagnostic=isolation;
         for(const control of isolation.controls)for(const key of ['onCapture','offCapture']){
           const capture=control[key];if(!capture?.png)continue;
+          try{capture.capture.exactPngValidation=verifySavedPngCapture(capture);}catch(error){
+            const rejected={...capture.capture,mode:capture.mode,png:capture.png,rawRGBA:capture.rawRGBA,error:String(error?.stack||error),exactPngValidation:error.validation};
+            isolation.captureFailure=persistOcclusionCaptureFailure(rejected,out,label+'-occlusion-'+control.mode+'-'+key.toLowerCase()+'-exact');
+            isolation.errors.push(String(error?.stack||error));
+            if(isolation.captureFailure.writeErrors.length)isolation.errors.push('Exact capture failure persistence had write errors');
+            throw error;
+          }
           if(!capture.png.startsWith('data:image/png;base64,'))throw Error('Unexpected occlusion PNG encoding');
           const filename=label+'-occlusion-'+control.mode+'-'+key+'.png';
           fs.writeFileSync(path.join(out,filename),Buffer.from(capture.png.slice('data:image/png;base64,'.length),'base64'));
           delete capture.png;capture.image=filename;
+          if(typeof capture.rawRGBA==='string'){
+            const raw=Buffer.from(capture.rawRGBA,'base64'),width=capture.capture?.width,height=capture.capture?.height;
+            if(!Number.isInteger(width)||!Number.isInteger(height)||raw.length!==width*height*4)throw Error('Occlusion raw capture dimensions disagree');
+            const rawFile=filename.replace(/\.png$/,'.rgba');fs.writeFileSync(path.join(out,rawFile),raw);delete capture.rawRGBA;capture.rawRGBAFile=rawFile;
+          }
         }
-        birth.occlusionDiagnostic=isolation;
         fs.writeFileSync(path.join(out,'projectile-visibility.json'),JSON.stringify(report,null,2));
       }
 
@@ -229,17 +248,18 @@ export async function probeProjectileVisibility(page, out) {
     }
     fs.writeFileSync(path.join(out,'projectile-visibility.json'),JSON.stringify(report,null,2));
     } catch(error) {
-      report.cases.push({scenario,weapon,status:'failed-diagnostic-case',error:String(error?.stack||error),rounds:[],traceComplete:false,views:[]});
+      recordFailure('failed-diagnostic-case',error);
     } finally {
       try {await page.evaluate(()=>{const G=globalThis.NG||window.__G,g=G.game||window.__inkwave,r=globalThis.__projectileCaseRestore;if(!r)return;G.projectiles._step=r.step;G.projectiles.inkFlight.world=r.world;g.debug.fire(r.fire);g.frozen=r.frozen;g._skipRender=r.skipRender;for(const [bot,update] of r.bots)bot.update=update;g.rig.yaw=r.yaw;g.rig.pitch=r.pitch;G.camera.copy(r.camera);G.camera.updateMatrixWorld();delete globalThis.__projectileProbe;delete globalThis.__projectileCaseRestore;});}
-      catch(error){report.cases.push({scenario,weapon,status:'failed-diagnostic-restore',error:String(error?.stack||error),rounds:[],traceComplete:false,views:[]});}
+      catch(error){recordFailure('failed-diagnostic-restore',error);}
       fs.writeFileSync(path.join(out,'projectile-visibility.json'),JSON.stringify(report,null,2));
     }
   }
   const distinguishable=v=>!!v&&v.glError===0&&v.changedPixels>Math.max(v.onRepeatChangedPixels,v.offRepeatChangedPixels)*4+50;
   const clearCases=report.cases.filter(c=>c.scenario==='clear-lane');
-  report.nativeBeforeRedrawVisibilityEstablished=clearCases.length===3&&clearCases.every(c=>c.clearLaneVerified&&c.traceComplete&&c.rounds.length>0&&distinguishable(c.views.find(v=>v.view==='native')?.nativeBeforeRedraw));
-  report.forcedOrAlternateVisibilityEstablished=clearCases.length===3&&clearCases.every(c=>c.clearLaneVerified&&c.traceComplete&&c.rounds.length>0&&c.views.some(distinguishable));
+  const successfulCase=c=>c.status==='live-rounds'&&!c.error&&!c.occlusionDiagnostic?.errors?.length;
+  report.nativeBeforeRedrawVisibilityEstablished=clearCases.length===3&&clearCases.every(c=>successfulCase(c)&&c.clearLaneVerified&&c.traceComplete&&c.rounds.length>0&&distinguishable(c.views.find(v=>v.view==='native')?.nativeBeforeRedraw));
+  report.forcedOrAlternateVisibilityEstablished=clearCases.length===3&&clearCases.every(c=>successfulCase(c)&&c.clearLaneVerified&&c.traceComplete&&c.rounds.length>0&&c.views.some(distinguishable));
   report.visibilityEstablished=report.nativeBeforeRedrawVisibilityEstablished;
   fs.writeFileSync(path.join(out,'projectile-visibility.json'),JSON.stringify(report,null,2));
   report.failures=report.cases.flatMap(c=>{
