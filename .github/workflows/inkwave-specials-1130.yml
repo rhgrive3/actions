@@ -33,6 +33,7 @@ jobs:
             patches/splatoon3/tests/special-inkjet-1130.test.mjs \
             patches/splatoon3/tests/special-crab-drive-1130.test.mjs \
             patches/splatoon3/tests/special-triple-inkstrike-1130.test.mjs \
+            patches/splatoon3/tests/special-booyah-1130.test.mjs \
             patches/splatoon3/tests/special-reefslider-1130.test.mjs \
             patches/splatoon3/tests/all-specials.test.mjs \
             patches/splatoon3/tests/large-special-slope-paint.test.mjs \

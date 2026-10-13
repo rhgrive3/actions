@@ -43,7 +43,7 @@ test('projectile mask seed preserves ordinary random selection and consumes exac
 test('Booyah native, immediate disk and delayed disk share one recorded mask seed',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});const {paint,V}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);f.G.actors=[];
  const a=f.make();a.pos.set(0,0,30);a.weapon={...a.weapon,special:'booyahBomb',specialCost:100};a.special=100;
- a._startSpecial();a._updateSpecial(1/60);a.intent.sub=true;a._updateSpecial(1/60);const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');
+ a._startSpecial();a._s3AllSpecialState.charge=1;a.intent.sub=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');
  const seeds=[],native=paint.splat;paint.splat=function(at,r,team,options){seeds.push(options.seed);return native.call(this,at,r,team,options);};
  f.G.projectiles._blastBurst(p,V(0,.08,30),null);f.G.projectiles.list.length=0;
  for(let i=0;i<300;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);}

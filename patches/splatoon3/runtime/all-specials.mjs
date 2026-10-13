@@ -28,7 +28,7 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const SPECIALS = Object.freeze({
   tentaMissiles: { name: 'Tenta Missiles', source: 'WeaponSpMultiMissile', duration: 10, radius: 4.25, paintRadius: 3, near: 150, far: 30, status: '11.3.0 table: 150/50/30 at 1.1/2.1/4.25, paint radius 3, launch counts 10/5/4 by target bucket; lock input window is calibrated' },
   inkjet: { name: 'Inkjet', source: 'WeaponSpJetpack', duration: [7.5, 8, 8.5], radius: 5, paintRadius: 3.2, near: 50, far: 30, direct: 120, status: '11.3.0 table: 50/30 at 2.55/5, paint 3.2, 450/480/510F; 120 direct is community-reported, flight tuning calibrated' },
-  booyahBomb: { name: 'Booyah Bomb', source: 'WeaponSpNiceBall', duration: 2.4, radius: 12.6, paintRadius: 13.5, near: 0, far: 0, status: '11.3.0 table: 4700 armor; auto charge .002/.006/.01 per frame, self cheer .077, ally charge .088/.044/.022/.011 per cheerer, gauge credit 6/3/2/1/.5 and max15, blast radius 12.6, paint radius 13.5, paint span 6F. 3.3 damage/frame is community-reported; blast growth and charge inputs calibrated' },
+  booyahBomb: { name: 'Booyah Bomb', source: 'WeaponSpNiceBall', duration: 600/FPS, radius: 12.6, paintRadius: 13.5, near: 0, far: 0, status: '11.3.0 table: 4700 armor; auto charge .002/.006/.01 per frame, self cheer .077, ally charge .088/.044/.022/.011 per cheerer, gauge credit 6/3/2/1/.5 and max15, blast radius 12.6, paint radius 13.5, paint span 6F. 3.3 damage/frame is community-reported; blast growth and charge inputs calibrated' },
   ultraStamp: { name: 'Ultra Stamp', source: 'WeaponSpUltraStamp', duration: [7.5, 9.5, 11], radius: 8, paintRadius: 5, near: 40, far: 40, status: '11.3.0 table: swing splash 40 at 4; throw 220/60 at 3.6/8, paint 5, 450/570/660F; 100 contact is community-reported and action hitboxes are calibrated' },
   zipcaster: { name: 'Zipcaster', source: 'WeaponSpSuperHook', duration: 9, radius: 6, paintRadius: 1.4, near: 45, far: 35, status: '11.3.0 table: 540F, hook blast 45/35 at 5.25/6, ink capacity/cost and tick drain; hook world reach and tether movement calibrated' },
   killerWail: { name: 'Killer Wail 5.1', source: 'WeaponSpMicroLaser', duration: [236/60, 276/60, 296/60], radius: 27, paintRadius: 0, near: 3.5, far: 3.5, status: '11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated' },
@@ -751,6 +751,7 @@ function stampSwing(rt,actor,state,jump=false) {
   emitAction(rt,actor,'ultraStamp',state.serial,jump?'jumpSwing':'swing',actor.pos,center,nextSeed(state),{index:state.swings++});
 }
 function addBooyahCall(rt,owner,state,cheerer,{network=false,callId=null}={}) {
+  if(state.t+1e-8<30/FPS)return false;
   // Every rising-edge call is a contribution. A player may call again during
   // the same activation; the five-call source cap bounds the total charge.
   if(!Number.isSafeInteger(callId)){
@@ -1023,19 +1024,27 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='booyahBomb'){
-    moveActor(rt,actor,dt,state,{squid:true});
-    const ap=state.specialPowerAP;
-    state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
-    if(edges.fire||edges.booyah)state.charge=Math.min(1,state.charge+.077);
+    // WeaponSpNiceBall: 30F startup before armor/charge; 600F to throw.
+    // A full charge enables manual ZR throw, but does NOT auto-launch.
+    actor.form='kid';dampForSpecial(actor,dt,0);
+    const ready=elapsed+1e-8>=30/FPS,ap=state.specialPowerAP;
+    if(ready){
+      state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
+      if(edges.booyah&&elapsed+1e-8>=state.nextSelfNiceAt){
+        state.charge=Math.min(1,state.charge+.077);
+        state.nextSelfNiceAt=elapsed+10/FPS;
+      }
+    }
     state.cheerHeld ||= new WeakMap();
     for(const ally of rt.api.G.actors||[])if(ally!==actor&&ally.alive&&ally.team===actor.team){
       const pressed=!!ally.intent?.booyah,wasPressed=state.cheerHeld.get(ally)===true;
       state.cheerHeld.set(ally,pressed);
-      if(pressed&&!wasPressed)addBooyahCall(rt,actor,state,ally,{network:ally.isLocal===true});
+      if(pressed&&!wasPressed&&ready)addBooyahCall(rt,actor,state,ally,{network:ally.isLocal===true});
     }
-    state.armor=true;state.armorHP=Math.max(0,state.armorHP);
-    if(edges.sub)throwBooyah(rt,actor,state,state.charge);
-    else if(state.charge>=1||elapsed>=5.5)throwBooyah(rt,actor,state,state.charge);
+    state.armor=ready&&state.armorHP>0;
+    s.armor=state.armor;s.armorHP=state.armor?state.armorHP:0;
+    if(ready&&state.charge>=1&&(edges.fire||edges.sub))throwBooyah(rt,actor,state,state.charge);
+    else if(elapsed+1e-8>=600/FPS)throwBooyah(rt,actor,state,state.charge);
     return;
   }
   if(state.id==='ultraStamp'){
@@ -1236,7 +1245,7 @@ function makeState(rt,actor,id) {
     phase:'active',origin:actor.pos.clone(),shots:0,beams:0,swings:0,strikes:0,zips:0,nextSwing:.05,nextBeam:.1,
     charge:0,travel:0,objectSerial:0,armor:false,hitIds:new Set(),nextBody:.2,
   };
-  if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;}
+  if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.armor=false;state.nextSelfNiceAt=30/FPS;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;if(actor.specialActive){actor.specialActive.armor=false;actor.specialActive.armorHP=0;}}
   if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.firstShot=false;}
   if(id==='reefslider'){state.paintRadius=gearCurve(ap,7.51,8.26,9.012);state.damageDistanceRate=gearCurve(ap,1,1.1,1.2);state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startup=38/60;}
   if(id==='tripleInkstrike'){state.nextMarker=(20+14)/FPS;state.markerQueued=false;}
@@ -1310,7 +1319,7 @@ function installRuntime(api) {
       api.emit?.('actor:armorhit',{actor:this,absorbed:0,broken:false,core:true,kind:'crabTank'});
       try{return damage.call(this,amount,attacker,source);}finally{if(this.specialActive)this.specialActive.armor=armor;}
     }
-    if((state.id==='booyahBomb'||state.id==='crabTank')&&state.armorHP>0){
+    if((state.id==='booyahBomb'&&state.t+1e-8>=30/FPS||state.id==='crabTank')&&state.armorHP>0){
       const rate=objectGearRate(attacker,state.id);
       const shield=state.armorHP,absorbed=Math.min(shield,amount*rate),left=Math.max(0,amount-absorbed/rate);
       state.armorHP=Math.max(0,shield-absorbed);

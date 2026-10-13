@@ -63,9 +63,9 @@ test('Wave Breaker pulse misses a jumping player above the source height limit',
 
 test('Booyah Bomb armor and delayed expanding damage are timed independently from impact',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'booyahBomb');victim.team=1;victim.pos.set(0,0,.2);f.G.actors=[a,victim];
- const stateEvents=eventFeed(f,'actor:armorhit');a._startSpecial();a._updateSpecial(1/60);
+ const stateEvents=eventFeed(f,'actor:armorhit');a._startSpecial();for(let i=0;i<30;i++)a._updateSpecial(1/60);
  const hp=a.hp;a.damage(100,null,'shooter');assert.equal(a.hp,hp);assert.equal(a._s3AllSpecialState.armorHP,370);assert.equal(stateEvents.at(-1).absorbed,100);
- a.intent.sub=true;a._updateSpecial(1/60);assert.equal(a.specialActive,null);
+ a._s3AllSpecialState.charge=1;a.intent.sub=true;a._updateSpecial(1/60);assert.equal(a.specialActive,null);
  const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');
  f.G.projectiles._blastBurst(p,new f.THREE.Vector3(0,.08,0),null);
  const blast=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind==='booyahBlast');assert.ok(blast);assert.equal(blast.startDelay,40/60);assert.equal(blast.expand,40/60);
@@ -195,7 +195,7 @@ test('Booyah cheer accepts distinct calls up to the source cap and rejects dupli
  const f=await setup(),owner=f.make(),ally=f.make(),ally2=f.make();equip(owner,'booyahBomb');
  Object.assign(ally,{team:owner.team,isLocal:true,nid:22,netLife:3});Object.assign(ally2,{team:owner.team,isLocal:true,nid:23,netLife:3});
  owner.nid=11;owner.netLife=4;f.G.actors=[owner,ally,ally2];
- const events=eventFeed(f,'all:special');owner._startSpecial();const state=owner._s3AllSpecialState,before=state.charge;
+ const events=eventFeed(f,'all:special');owner._startSpecial();for(let i=0;i<30;i++)owner._updateSpecial(1/60);const state=owner._s3AllSpecialState,before=state.charge;
  const allyGauge=ally.special;ally.intent.booyah=true;owner._updateSpecial(1/60);assert.ok(Math.abs(state.charge-Math.min(1,before+.09))<1e-9);assert.equal(ally.special,allyGauge+6);
  ally.intent.booyah=false;owner._updateSpecial(1/60);const secondBefore=state.charge;ally.intent.booyah=true;owner._updateSpecial(1/60);
  assert.ok(Math.abs(state.charge-secondBefore-.046)<1e-9,'a new rising edge from the same ally contributes the second capped amount plus one auto-charge frame');assert.equal(ally.special,allyGauge+9);
@@ -297,7 +297,7 @@ test('catalogue world damage uses the same 60 Hz samples at 30/60/120 rendering 
  const f=await setup(),totals=[];
  for(const hz of [30,60,120]){
   f.G.projectiles.clear();const a=f.make(),v=f.make();equip(a,'booyahBomb');v.team=1;v.hp=1000;v.invuln=0;v.pos.set(0,0,.2);f.G.actors=[a,v];f.G.netm=null;
-  a._startSpecial();a.intent.sub=true;a._updateSpecial(1/60);const p=f.G.projectiles.list.at(-1);f.G.projectiles._blastBurst(p,new f.THREE.Vector3(0,.08,0),null);f.G.projectiles.list.length=0;
+  a._startSpecial();a._s3AllSpecialState.charge=1;a.intent.sub=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);const p=f.G.projectiles.list.at(-1);f.G.projectiles._blastBurst(p,new f.THREE.Vector3(0,.08,0),null);f.G.projectiles.list.length=0;
   let sum=0;const hit=f.G.projectiles.applyHit;f.G.projectiles.applyHit=(owner,victim,damage,id)=>{if(victim===v&&id==='booyahBomb')sum+=damage;return hit.call(f.G.projectiles,owner,victim,damage,id);};
   for(let i=0;i<2*hz;i++){f.G.time+=1/hz;f.G.projectiles.update(1/hz);}
   f.G.projectiles.applyHit=hit;assert.ok(Math.abs((1000-v.hp)-sum)<1e-7,'actual victim HP');totals.push(sum);
@@ -306,7 +306,7 @@ test('catalogue world damage uses the same 60 Hz samples at 30/60/120 rendering 
 });
 
 test('recycling a special round cannot give a later main weapon special paint, blast or damage aging',async()=>{
- const f=await setup(),a=f.make();equip(a,'booyahBomb');f.G.actors=[a];a._startSpecial();a.intent.sub=true;a._updateSpecial(1/60);
+ const f=await setup(),a=f.make();equip(a,'booyahBomb');f.G.actors=[a];a._startSpecial();a._s3AllSpecialState.charge=1;a.intent.sub=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);
  const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');p.s3DamageReduce={max:32,min:16,start:0,end:1};p.s3TentaTarget=new f.THREE.Vector3(100,100,100);
  f.G.projectiles.clear();const recycled=f.G.projectiles._new();assert.equal(recycled,p);
  for(const key of ['s3AllSpecial','s3AllSpecialPaintRadius','s3AllSpecialActivation','s3AllSpecialSeed','s3DamageReduce','s3TentaTarget'])assert.equal(recycled[key],undefined,key);
