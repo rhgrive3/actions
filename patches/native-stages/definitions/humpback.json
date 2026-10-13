@@ -8,6 +8,14 @@
   "spawnPads": [[0, 6.08, -61], [0, 6.08, 61]],
   "spawnBarrier": 2.5,
   "sourceNavigation": { "wallClimb": true, "highDrops": true },
+  "ruleAvailability": {
+    "tower": {
+      "supported": false,
+      "status": "source-route-unverified",
+      "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。",
+      "evidence": "Pinned complete source retains both opposed spawn decks and skate bowls. Full swept deck/pole/live rider clearance plus source-floor boarding found no opposing-half route at halfSize 1.2 or 0.8 with lifts 3.3, 1.2 or 0.4. Retail Tower placement and compound human uphill routes remain unverified."
+    }
+  },
   "version1130Verified": false,
   "placementStatus": "Local inferred opposed plywood-floor supports and full skate-bowl extent from pinned Vss_Wave03 display geometry; retail spawn/ranked placements and units remain unverified."
 }

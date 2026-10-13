@@ -52,7 +52,7 @@ test('Humpback independent OBJ stream proves every float32 attribute bit and uin
  console.log(JSON.stringify({id:'humpback',attributeBits:vertex*8,indices:index,objects:objectIndex+1,pinnedMtlPngBlobs:evidence.source.blobs.length,derivedTextures:Object.keys(data.manifest.textureIntegrity).length}));
 });
 
-test('Humpback pads, source capsules and directed navigation retain both complete opposing approaches',{skip:!enabled},async()=>{
+test('Humpback pads, source capsules and directed navigation retain both opposing skate-bowl banks',{skip:!enabled},async()=>{
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(assets,'humpback');G.level=new f.NativeLevel(data);G.physics=new f.NativePhysics(G.level);
  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new CpuPaint(null,G.level,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(G.level,G.physics);
@@ -64,22 +64,34 @@ test('Humpback pads, source capsules and directed navigation retain both complet
   const object=data.manifest.objects[data.objectIds[hit.triangle]];assert.match(object.name,/GroundPlywood/);assert.equal(object.paintable,true);
   nodes.push(G.nav.nearest(pad,1.2));supports.push({pad:pad.toArray(),triangle:hit.triangle,object:object.name,normal:hit.normal.toArray()});
  }
- // The ordinary A* correctly forbids the opposing guarded spawn itself.
- // Use actual source-supported approaches outside that guard for bank routes.
- const approaches=pads.map((pad,team)=>{
+ // Record the real elevated return limitation outside the enemy spawn guard.
+ // Neither these home decks nor the original geometry is moved to seal a map.
+ const elevatedApproaches=pads.map((pad,team)=>{
   const p=pad.clone();p.z+=(team?-1:1)*8;
   const hit=G.physics.raycast(p.clone().add(new THREE.Vector3(0,.3,0)),new THREE.Vector3(0,-1,0),15);
   assert(hit.hit&&hit.normal.y>.68);p.y=hit.point.y;
   const id=G.nav.nearest(p,1.2);assert(id>=0&&G.nav.nodes[id].zone===-1);return id;
  });
- const opposedPaths=nodes.map((n,team)=>G.nav.path(n,approaches[1-team],team,50000));
- for(const team of [0,1])assert(opposedPaths[team]?.length>40,'actual full opposed source-bank path team '+team);
+ const elevatedReturns=nodes.map((n,team)=>G.nav.path(n,elevatedApproaches[1-team],team,50000));
+ assert(elevatedReturns.every(p=>!p),'unproved elevated opponent-deck returns stay explicit');
+ // The complete opposing bowls have source cement banks near x=±24,z=±32.
+ // Both original pad routes must reach both banks across the full bowl, rather
+ // than merely sharing a small center floor. These are literal source supports.
+ const bankSupports=[],approaches=[[-24,-32],[24,32]].map(([x,z])=>{
+  const p=new THREE.Vector3(x,1,z),hit=G.physics.raycast(p,new THREE.Vector3(0,-1,0),2);
+  assert(hit.hit&&hit.normal.y>.68);assert(Math.abs(hit.point.y-.0027)<.001);
+  const object=data.manifest.objects[data.objectIds[hit.triangle]];assert.match(object.name,/GroundCementGrey/);assert(object.paintable);
+  const id=G.nav.nearest(hit.point,1.2);assert(id>=0&&G.nav.nodes[id].zone===-1);bankSupports.push({point:hit.point.toArray(),triangle:hit.triangle,object:object.name,node:id});return id;
+ });
+ const bankPaths=nodes.map((n,team)=>approaches.map(target=>G.nav.path(n,target,team,50000)));
+ for(const team of [0,1]){assert(bankPaths[team].every(p=>p?.length>25));assert(bankPaths[team][1-team].length>80,'actual full opposed bowl-bank path team '+team);}
  const playable=G.nav.validIds.map(id=>G.nav.nodes[id]);assert(Math.min(...playable.map(n=>n.z))<-58);assert(Math.max(...playable.map(n=>n.z))>58);
  assert(Math.min(...playable.map(n=>n.x))<-25);assert(Math.max(...playable.map(n=>n.x))>25);
  assert.equal(data.manifest.geometry.vertices,254995);assert.equal(data.manifest.geometry.triangles,174089);assert.equal(data.manifest.geometry.collisionTriangles,149539);
  const roofs=data.manifest.objects.filter(o=>/CeilingWalls|CorrugatedRoof/.test(o.name));assert(roofs.length>=3);assert(roofs.every(o=>o.collidable));
  const noPaint=data.manifest.objects.filter(o=>/_np$/.test(o.material)&&o.collidable);assert(noPaint.length>10);assert(noPaint.every(o=>!o.paintable));
- const ranked=f.nativeRankedStage(G);const proof={id:'humpback',supports,nav:{candidate:G.nav.nodes.length,valid:G.nav.validIds.length,opposedPaths:opposedPaths.map(p=>p.length)},tower:ranked.tower.supported?{supported:true,nodes:ranked.tower.path.length,arenaSpan:ranked.tower.arenaSpan}:ranked.ruleAvailability.tower,sourceRoofs:roofs.length,noPaintObjects:noPaint.length};
+ const ranked=f.nativeRankedStage(G);assert.equal(ranked.tower.supported,false);assert.equal(ranked.tower.status,'source-route-unverified');
+ const proof={id:'humpback',supports,bankSupports,nav:{candidate:G.nav.nodes.length,valid:G.nav.validIds.length,bankPaths:bankPaths.map(paths=>paths.map(p=>p.length)),elevatedOpponentDeckReturns:elevatedReturns.map(p=>!!p)},tower:ranked.ruleAvailability.tower,sourceRoofs:roofs.length,noPaintObjects:noPaint.length,limitations:'Elevated opponent home-deck return is unproved; both original pads and complete source remain. Paths qualify both opposing skate bowls, not retail placements or physical traversal of every graph edge.'};
  if(process.env.HUMPBACK_ROUTE_EVIDENCE)fs.writeFileSync(process.env.HUMPBACK_ROUTE_EVIDENCE,JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof));
 });
 

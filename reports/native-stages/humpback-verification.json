@@ -2105,5 +2105,216 @@
     },
     "sourceBufferPolicy": "unchanged full render/collision source; no sourceSemantics exclusions",
     "status": "adopted accepted helper; final gameplay matrix pending"
+  },
+  "acceptedNavigationDiagnostic": {
+    "navMs": 61620.1739,
+    "nav": {
+      "count": 5798,
+      "minX": -28.799999999999997,
+      "maxX": 29.200000000000003,
+      "minZ": -64.4,
+      "maxZ": 64.6,
+      "minY": -3.042542214061676,
+      "maxY": 10.5
+    },
+    "teams": [
+      {
+        "count": 3986,
+        "minX": -28.799999999999997,
+        "maxX": 29.200000000000003,
+        "minZ": -64.4,
+        "maxZ": 33.599999999999994,
+        "minY": -3.042542214061676,
+        "maxY": 10
+      },
+      {
+        "count": 4267,
+        "minX": -28.799999999999997,
+        "maxX": 29.200000000000003,
+        "minZ": -33.400000000000006,
+        "maxZ": 64.6,
+        "minY": -3.042542214061676,
+        "maxY": 10.5
+      }
+    ],
+    "common": {
+      "count": 2455,
+      "minX": -28.799999999999997,
+      "maxX": 29.200000000000003,
+      "minZ": -33.400000000000006,
+      "maxZ": 33.599999999999994,
+      "minY": -3.042542214061676,
+      "maxY": 3.6912024632910345
+    },
+    "edges": {
+      "climb": 32,
+      "drop": 456
+    },
+    "ranked": {
+      "tower": {
+        "supported": false,
+        "status": "source-route-unverified",
+        "reason": "安全なヤグラ経路を確認できないため、このルールは利用できません。",
+        "evidence": "Native ranked source has no clear supported tower route spanning opposing arena halves: [{\"halfSize\":1.2,\"lift\":3.3,\"allowed\":34,\"component\":34,\"center\":12025,\"first\":9497,\"last\":12025},{\"halfSize\":1.2,\"lift\":1.2,\"allowed\":149,\"component\":149,\"center\":12362,\"first\":9324,\"last\":12362},{\"halfSize\":1.2,\"lift\":0.4,\"allowed\":137,\"component\":137,\"center\":12362,\"first\":9153,\"last\":12362},{\"halfSize\":0.8,\"lift\":3.3,\"allowed\":37,\"component\":37,\"center\":12185,\"first\":9497,\"last\":12185},{\"halfSize\":0.8,\"lift\":1.2,\"allowed\":211,\"component\":211,\"center\":12711,\"first\":9172,\"last\":12711},{\"halfSize\":0.8,\"lift\":0.4,\"allowed\":187,\"component\":187,\"center\":12711,\"first\":9155,\"last\":12711}]",
+        "path": [],
+        "speed": 1.2,
+        "checkpoints": [
+          [
+            {
+              "progress": 0.6,
+              "count": 5
+            }
+          ],
+          [
+            {
+              "progress": 0.6,
+              "count": 5
+            }
+          ]
+        ]
+      },
+      "zones": [
+        {
+          "center": [
+            0.20000000000000284,
+            3.0999999046325684,
+            -0.4000000000000057
+          ],
+          "size": [
+            6,
+            6
+          ]
+        }
+      ],
+      "rainmaker": {
+        "center": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goals": [
+          [
+            0.20000000000000284,
+            -2.1838951543621192,
+            26.599999999999994
+          ],
+          [
+            0.20000000000000284,
+            -2.241334900668157,
+            -26.400000000000006
+          ]
+        ],
+        "checkpoints": [
+          [
+            [
+              0.20000000000000284,
+              -7.105427357601002e-15,
+              13.599999999999994
+            ]
+          ],
+          [
+            [
+              0.20000000000000284,
+              -7.105427357601002e-15,
+              -13.400000000000006
+            ]
+          ]
+        ],
+        "retreatZ": [
+          -44.812000000000005,
+          44.812000000000005
+        ],
+        "nativeRetreatAxis": [
+          0,
+          1
+        ]
+      }
+    },
+    "stageSupportProbes": [
+      {
+        "x": 0,
+        "z": -53,
+        "y": 5.399949085990705,
+        "triangle": 97980,
+        "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+        "node": 1725,
+        "nodeY": 5.3399549446902554,
+        "zone": -1,
+        "teamReach": [
+          true,
+          false
+        ],
+        "path": [
+          8,
+          0
+        ]
+      },
+      {
+        "x": -24,
+        "z": -32,
+        "y": 0.0027000000700345694,
+        "triangle": 91910,
+        "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "node": 5055,
+        "nodeY": 0.002700000070028352,
+        "zone": -1,
+        "teamReach": [
+          true,
+          true
+        ],
+        "path": [
+          32,
+          97
+        ]
+      },
+      {
+        "x": 24,
+        "z": 32,
+        "y": 0.0027000000700345694,
+        "triangle": 91859,
+        "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "node": 16349,
+        "nodeY": 0.002700000070042563,
+        "zone": -1,
+        "teamReach": [
+          true,
+          true
+        ],
+        "path": [
+          96,
+          30
+        ]
+      },
+      {
+        "x": 0,
+        "z": 53,
+        "y": 5.399949085990705,
+        "triangle": 97988,
+        "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+        "node": 19732,
+        "nodeY": 5.459945602614297,
+        "zone": -1,
+        "teamReach": [
+          false,
+          true
+        ],
+        "path": [
+          0,
+          9
+        ]
+      }
+    ],
+    "conditions": "original source NativeLevel/NativePhysics/NavGraph; opposed ±61 pads, accepted wallClimb/highDrops; graph proof distinct from physical route traversal",
+    "initialSubset": {
+      "passed": 7,
+      "failed": 2,
+      "testCount": 9,
+      "durationMilliseconds": 260953.921361,
+      "failures": [
+        "unproved elevated opponent home-deck return at ±53",
+        "unsupported full swept opposing-half Tower route"
+      ],
+      "log": ".ci-scratch/routes-final-cpu.log"
+    }
   }
 }
