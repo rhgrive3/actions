@@ -48,6 +48,7 @@ test('Shipshape every source Float32 attribute bit and Uint32 index matches inde
 test('Shipshape every pinned MTL and PNG matches Git blob SHA1 and byte count',{skip:!source},()=>{
  const repository=process.env.INKWAVE_PINNED_SOURCE_REPOSITORY||'/workspace/actions/.codex-stage-sources/KiTrix';
  const before=execFileSync('git',['-C',repository,'rev-parse','HEAD'],{encoding:'utf8'}).trim();
+ const indexPath=path.resolve(repository,execFileSync('git',['-C',repository,'rev-parse','--git-path','index'],{encoding:'utf8'}).trim()),indexBefore=sha(fs.readFileSync(indexPath));
  assert.equal(before,SOURCE_COMMIT);
  const rows=execFileSync('git',['-C',repository,'ls-tree','-rz',SOURCE_COMMIT,'stages/'+spec.internal]).toString().split('\0').filter(Boolean);
  let verified=0,bytes=0;
@@ -56,6 +57,7 @@ test('Shipshape every pinned MTL and PNG matches Git blob SHA1 and byte count',{
   assert.equal(blob,meta.split(' ')[2],name);const size=Number(execFileSync('git',['-C',repository,'cat-file','-s',meta.split(' ')[2]],{encoding:'utf8'}));assert.equal(data.length,size,name+' bytes');verified++;bytes+=data.length;
  }
  assert.equal(verified,304);assert.equal(execFileSync('git',['-C',repository,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),before);
+ assert.equal(sha(fs.readFileSync(indexPath)),indexBefore,'pinned source Git index is immutable');
  console.log(JSON.stringify({id:spec.id,pinnedMtlPngBlobs:verified,sourceBytes:bytes,allGitBlobSha1AndBytesIdentical:true}));
 });
 
@@ -76,7 +78,7 @@ test('Shipshape only two malformed unplaced crane source roles change; hull and 
  assert.deepEqual(Buffer.from(original.vertices.buffer),Buffer.from(data.vertices.buffer));assert.deepEqual(Buffer.from(original.indices.buffer),Buffer.from(data.indices.buffer));
  for(let id=0;id<original.objects.length;id++){
   const a=original.objects[id],b=data.manifest.objects[id];
-  if(selected.some(s=>s.id===id)){assert.equal(a.active,true);assert.equal(a.collidable,true);assert.equal(b.active,false);assert.equal(b.collidable,false);}
+  if(selected.some(s=>s.id===id)){assert.equal(a.active,true);assert.equal(a.collidable,true);assert.equal(a.paintable,true);assert.equal(b.active,false);assert.equal(b.collidable,false);assert.equal(b.paintable,false);}
   else for(const key of ['active','collidable','paintable'])assert.equal(b[key],a[key],a.name+' '+key+' must remain source-identical');
  }
  const world=new f.NativeLevel(data).triangleWorld,TriangleWorld=world.constructor,cases=[];
