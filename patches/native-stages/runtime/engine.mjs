@@ -7,7 +7,7 @@ export { nativeRankedStage } from './native-ranked.mjs';
 export { nativeInitialLanding,nativeArenaBasis,nativeSpawnYaw,nativeRetreatCoordinate } from './native-spawn.mjs';
 export { nativePaintGoalIds } from './native-bots.mjs';
 export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from './native-climb.mjs';
-export { nativeSourceWaypointReached } from './native-bot-support.mjs';
+export { nativeSourceWaypointReached,nativeSourceTravelInput } from './native-bot-support.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
 

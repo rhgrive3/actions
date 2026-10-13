@@ -30,20 +30,22 @@ test('actual raised source curb is jumped and retained through its narrow suppor
  assert.equal(N.edgeType(ids[0],ids[1]),'jump');assert.ok(N.nodes[ids[1]].y-start.y>PLAYER.stepUp);
  for(let i=1;i<ids.length;i++)assert.ok(N.nodes[ids[i-1]].nb.some(e=>e.to===ids[i]),'every assigned edge is generated from the real source');
  const proofs=[];f.setRandom(()=>.5);
- try{for(const hz of [30,60,120]){
-  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();const a=f.make('shooter');a.team=1;a.isBot=true;a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;a.spawnAt(new THREE.Vector3(start.x,start.y,start.z),0);a.invuln=0;G.actors=[a];
-  const b=a.bot=new f.BotBrain(a,'normal');b.path=[...ids];b.pi=1;b.goal=ids.at(-1);b.goalTimer=b.repath=b.bombCd=1000;
-  let jumped=false,raised=false,seconds=0,wrongAdvance=false,minY=Infinity,maxXError=0;
+ try{for(const [approach,prefix]of [['direct',[]],['natural-painted-runway',[5895,5896,5897,5898,5900,5902,5903,5904,5905,5906,5908]]])for(const hz of [30,60,120]){
+  const route=[...prefix,...ids],first=N.nodes[route[0]];for(let i=1;i<route.length;i++)assert.ok(N.nodes[route[i-1]].nb.some(e=>e.to===route[i]));
+  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();const a=f.make('shooter');a.team=1;a.isBot=true;a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;a.spawnAt(new THREE.Vector3(first.x,first.y,first.z),Math.PI/2);a.invuln=0;G.actors=[a];
+  const b=a.bot=new f.BotBrain(a,'normal');b.path=[...route];b.pi=1;b.goal=ids.at(-1);b.goalTimer=b.repath=b.bombCd=1000;
+  let jumped=false,raised=false,seconds=0,wrongAdvance=false,minY=Infinity,maxXError=0,submerged=false;
   for(let frame=0;frame<hz*35;frame++){
    const beforePi=b.pi;G.time+=1/hz;b.update(1/hz);jumped ||=a.intent.jump;
-   if(b.pi>beforePi&&beforePi===1&&(!a.grounded||Math.abs(a.pos.y-3.5)>.16))wrongAdvance=true;
+   if(b.pi>beforePi&&beforePi===route.indexOf(5910)&&(!a.grounded||Math.abs(a.pos.y-3.5)>.16))wrongAdvance=true;
    a.character.root.position.copy(a.pos);a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);seconds=(frame+1)/hz;
-   raised ||=a.grounded&&Math.abs(a.pos.y-3.5)<.1;if(raised&&a.pos.z<8.5){minY=Math.min(minY,a.pos.y);maxXError=Math.max(maxXError,Math.abs(a.pos.x+6));}
+   submerged ||=a.submerged;raised ||=a.grounded&&Math.abs(a.pos.y-3.5)<.1;if(raised&&a.pos.z<8.5){minY=Math.min(minY,a.pos.y);maxXError=Math.max(maxXError,Math.abs(a.pos.x+6));}
    if(a.grounded&&a.pos.distanceTo(new THREE.Vector3(end.x,end.y,end.z))<.3)break;
    if(!a.alive||a.grounded&&a.pos.y<2.8)break;
   }
   assert.ok(a.alive&&a.grounded&&a.pos.distanceTo(new THREE.Vector3(end.x,end.y,end.z))<.3&&jumped&&raised&&!wrongAdvance,'ordinary bot input stays on the real curb at '+hz+'Hz '+JSON.stringify({pos:a.pos.toArray(),jumped,raised,wrongAdvance,seconds,pi:b.pi,minY,maxXError}));
-  assert.deepEqual(Object.keys(a.s3.abilityPoints),[]);proofs.push({hz,seconds,jumped,raised,wrongAdvance,minY,maxXError,end:a.pos.toArray(),weapon:'Shooter_Normal_00',gearAP:0,actualBrainActorWeaponProjectilesPaintClock:true});
+  if(prefix.length)assert.ok(submerged&&G.paint.grid.some(v=>v===a.team+1),'runway ink and swimming come from the real moving weapon');assert.ok(a.s3JumpSerial>0);
+  assert.deepEqual(Object.keys(a.s3.abilityPoints),[]);proofs.push({approach,submerged,hz,seconds,jumped,raised,wrongAdvance,minY,maxXError,end:a.pos.toArray(),weapon:'Shooter_Normal_00',gearAP:0,actualBrainActorWeaponProjectilesPaintClock:true});
  }}finally{f.restoreRandom();}
  console.log(JSON.stringify({sourceCurbCases:proofs,sourceNodes:ids,sourceGeometryUnchanged:true}));
 });
