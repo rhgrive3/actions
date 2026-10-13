@@ -4106,3 +4106,15 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+
+## 2026-10-13 Ink Vac の実 Actor.update 描画所有権
+
+- 基準は main `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`（#1252 の 17F 発動・12F 吸引開始・20F 反撃移行を含む）。既存の Splatoon 3 11.3.0 参照プロファイルを変更しない。本家のキューインキ構え・銃口・関節位置との実機比較は未確認。この修正は公開 INKWAVE の更新経路の不整合を直すもので、本家との一致を新たに証明しない。
+- 再現: Player00 の動的ソースモーションを読み込み、通常の `Actor.update` でキューインキを起動・保持する。従来の native wrapper はゲームロジックへの通常スペシャル混入を防ぐため `specialActive` を一時的に隠すが、同じ更新中の source 上半身判定と special presentation まで null を見ていた。main の実更新では sourceUpper=true / Vac presentation=null。更新後に手動で Character だけ再更新すると Vac が現れ、左右の手が約 0.58 / 0.39 m 動く。この手動再更新は修正にも合格判定にも使用しない。
+- 実装: `special-presentation-owner.mjs` の同期・入れ子可能な一時コンテキストを `kit-ink-vac.mjs` の委譲更新だけに置き、`source-weapon-owner.mjs` と `special-motion.mjs` が描画用トークンを読む。実際の `specialActive` / fire・sub 等のマスク、入力受理、移動・発動・吸引・反撃時計は維持。キャンセルで native state が消えた場合と死亡時はコンテキストを即座に無効化し、例外でも finally で元のスコープを復元する。
+- 検証: 新規 `kit-ink-vac-presentation-owner.test.mjs` は実 Actor / Character / Physics / Projectiles と読み込み完了した Player00 を使う。30/60/120 Hz の保持・解除・通常射撃復帰、17F+12F / 20F 境界、1発だけの反撃、通常弾の誤発射防止、入れ子・内外の例外・更新途中の破棄を確認。source と実 minified build で各6件、既存の Ink Vac / issue1090 / special-presentation 63件が合格。元の失敗プローブを変更せず source / minified の両方で合格。これは床・自インクを限定したモジュール実更新検証で、フル対戦や GPU 描画ではない。
+- 影響と限界: 正しい構えは Character のばね・ポーズ乱数の履歴を変える。既存 shooter・既定ギア、移動→Vac 保持/解除→通常射撃の22秒の比較（30/60/120 Hz、計4620更新）では、グローバル乱数を同値にしてポーズ乱数を通常のまま残すと、復帰後の通常弾発生位置は最大 **10.907 mm**、方向は最大 **0.033454度** 異なる。最後の21.93秒以降のバーストにも差があり、有限の収束時間は確認していない。actor の照準方向・照準点・yaw/pitch、入力受理時刻、Vac 状態/時計、spread 幅/bloom、ダメージ値は同じだったが、弾道・命中の完全同一性は主張しない。
+- 命中境界: 同じ60 Hzの復帰最初の通常弾を native InkFlight / Actor.damage で飛ばすと、z=8 m の右側命中境界が約 **1.486 mm** 動いた。共通の敵位置 x=2.80619385298707 m, z=8 m では基準は外れ（100 HP）、修正後は36ダメージ（64 HP）。中心の敵は両方36ダメージ。これは意図的な境界例であり、一般的な命中率や本家との精度比較ではない。
+- 乱数とオンライン: 同一 seed のグローバル Math.random を使う比較では、新たに表示する Three の物体/素材 UUID により通常弾の個別 spread サンプルもずれる。呼び出し元監査では差分は全て `Three.generateUUID`（各4回）で、追加のゲームプレイ乱数呼び出しはない。既存 spread の2回の抽選と分布式/幅は変更していない。グローバル乱数と Character 乱数を両方固定した対照では1890更新の source/minified トレースが一致するが、これは実運用のビット一致を意味しない。オンラインは `NetMatch.recProj` が発生位置・速度・inkMeta を送信し、受信側 `ghostProjectile` はそれを復元する。ghost は描画のみで、塗り・ダメージは所有者から別送される。この経路はグローバル乱数の lockstep 再現を要求しない。RNG 系統の再設計は行っていない。
+- ブラウザゲート `check-inkwave-special-presentation.mjs` の Vac 部分は手動 `_updateSpecial` / `_finishFrame` を廃し、実 `Actor.update` と native Physics で inhale・exhale・解除復帰を通す。モデル非表示差分の pixels、左右グリップ、反撃数を判定し、既存の他スペシャル用手動診断と区別する。変更後のブラウザ実行・画像確認・CI は未実行で、描画成功とは記載しない。
