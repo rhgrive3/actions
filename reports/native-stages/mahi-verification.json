@@ -1,0 +1,607 @@
+{
+  "schema": 1,
+  "id": "mahi",
+  "name": "マヒマヒリゾート＆スパ",
+  "availability": "placement-unavailable",
+  "sourceAudit": {
+    "id": "mahi",
+    "internal": "Vss_Hiagari04",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "sourceTree": "0aa56643280cbb4271142de95ecc1d95839f5839",
+    "objSha256": "fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561",
+    "objBytes": 29497521,
+    "vertices": 247052,
+    "triangles": 188912,
+    "objects": 98,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "indicesUint32Identical": true,
+    "maxPositionDifference": 0.0,
+    "rawMtlAndPngGitBlobsVerified": 225,
+    "pngFilesVerified": 224,
+    "floatPrototypeObjects": [
+      {
+        "name": "FldObj_Hiagari04FloatBallL_FldObj_Hiagari04FloatBallL__DVPoolFloat",
+        "material": "FldObj_Hiagari04FloatBallL_DVPoolFloat",
+        "vertices": 1258,
+        "triangles": 1200,
+        "bounds": [
+          [
+            -3.3467,
+            -3.3057,
+            -3.2046
+          ],
+          [
+            3.3308,
+            3.3271,
+            3.2027
+          ]
+        ]
+      },
+      {
+        "name": "FldObj_Hiagari04FloatBallM_FldObj_Hiagari04FloatBallM__DVPoolFloat",
+        "material": "FldObj_Hiagari04FloatBallM_DVPoolFloat",
+        "vertices": 483,
+        "triangles": 432,
+        "bounds": [
+          [
+            -1.8375,
+            -1.8798,
+            -1.9144
+          ],
+          [
+            1.8375,
+            1.8844,
+            1.9122
+          ]
+        ]
+      },
+      {
+        "name": "FldObj_Hiagari04FloatBallS_FldObj_Hiagari04FloatBallS__DVPoolFloat",
+        "material": "FldObj_Hiagari04FloatBallS_DVPoolFloat",
+        "vertices": 234,
+        "triangles": 192,
+        "bounds": [
+          [
+            -0.6804,
+            -0.7008,
+            -0.7015
+          ],
+          [
+            0.6749,
+            0.695,
+            0.6926
+          ]
+        ]
+      },
+      {
+        "name": "FldObj_Hiagari04FloatDonut_FldObj_Hiagari04FloatDonut__DVPoolFloat",
+        "material": "FldObj_Hiagari04FloatDonut_DVPoolFloat",
+        "vertices": 895,
+        "triangles": 772,
+        "bounds": [
+          [
+            -2.222,
+            -0.861,
+            -2.2147
+          ],
+          [
+            2.217,
+            0.9782,
+            2.2074
+          ]
+        ]
+      },
+      {
+        "name": "FldObj_Hiagari04FloatMattressA_FldObj_Hiagari04FloatMattressA__DVPoolFloat",
+        "material": "FldObj_Hiagari04FloatMattressA_DVPoolFloat",
+        "vertices": 1462,
+        "triangles": 1234,
+        "bounds": [
+          [
+            -2.7517,
+            -0.6236,
+            -4.8702
+          ],
+          [
+            2.7353,
+            1.084,
+            4.7736
+          ]
+        ]
+      },
+      {
+        "name": "FldObj_Hiagari04FloatMattressB_FldObj_Hiagari04FloatMattressB__DVPoolFloat",
+        "material": "FldObj_Hiagari04FloatMattressB_DVPoolFloat",
+        "vertices": 968,
+        "triangles": 806,
+        "bounds": [
+          [
+            -2.7532,
+            -0.4549,
+            -3.1809
+          ],
+          [
+            2.7532,
+            0.9291,
+            3.1695
+          ]
+        ]
+      },
+      {
+        "name": "FldObj_Hiagari04FloatSlide_floor__InflatableSlide",
+        "material": "FldObj_Hiagari04FloatSlide_InflatableSlide",
+        "vertices": 8188,
+        "triangles": 5563,
+        "bounds": [
+          [
+            -11.1914,
+            -0.4198,
+            -6.4896
+          ],
+          [
+            15.4961,
+            14.8999,
+            3.5507
+          ]
+        ]
+      }
+    ],
+    "waterNamedObjects": [
+      {
+        "name": "FldBG_Hiagari04_SeaShape1__SeaWater",
+        "material": "FldBG_Hiagari04_SeaWater",
+        "vertices": 21,
+        "triangles": 24,
+        "bounds": [
+          [
+            197.7275,
+            13.1,
+            -713.211
+          ],
+          [
+            822.3103,
+            13.1,
+            565.4312
+          ]
+        ]
+      },
+      {
+        "name": "FldObj_Hiagari04_NoTcl_Obj_WaterTank388_1__SteelFrameJoint",
+        "material": "FldObj_Hiagari04_NoTcl_SteelFrameJoint",
+        "vertices": 9487,
+        "triangles": 3232,
+        "bounds": [
+          [
+            -76.6397,
+            9.4325,
+            -36.0797
+          ],
+          [
+            76.6397,
+            20.7161,
+            36.0797
+          ]
+        ]
+      },
+      {
+        "name": "Fld_Hiagari04_Obj_WaterTank388_10__SteelFrameJoint",
+        "material": "Fld_Hiagari04_SteelFrameJoint",
+        "vertices": 11592,
+        "triangles": 9900,
+        "bounds": [
+          [
+            -68.9769,
+            8.7882,
+            -69.5871
+          ],
+          [
+            69.9811,
+            33.3333,
+            68.3713
+          ]
+        ]
+      }
+    ],
+    "waterSurfaceObjects": [
+      {
+        "name": "FldBG_Hiagari04_SeaShape1__SeaWater",
+        "material": "FldBG_Hiagari04_SeaWater",
+        "vertices": 21,
+        "triangles": 24,
+        "bounds": [
+          [
+            197.7275,
+            13.1,
+            -713.211
+          ],
+          [
+            822.3103,
+            13.1,
+            565.4312
+          ]
+        ]
+      }
+    ],
+    "explicitRuleLayerObjects": 0,
+    "placementTransformsAvailable": false,
+    "waterStateAvailable": false,
+    "version1130Verified": false
+  },
+  "placementDiagnostic": {
+    "id": "mahi",
+    "status": "placement-unavailable",
+    "measurement": "production NativePhysics/NavGraph CPU logic; not retail/hardware measurement",
+    "diagnosticBounds": {
+      "minX": -76.5,
+      "minZ": -36,
+      "maxX": 76.5,
+      "maxZ": 36
+    },
+    "navNodes": 4906,
+    "validNodes": 2253,
+    "componentCount": 95,
+    "largestComponents": [
+      {
+        "id": 0,
+        "nodes": 2253,
+        "bounds": {
+          "minX": -76,
+          "maxX": 7,
+          "minZ": -35.5,
+          "maxZ": 9.5,
+          "minY": 9.999999999999993,
+          "maxY": 23.991199493408203
+        }
+      },
+      {
+        "id": 43,
+        "nodes": 2250,
+        "bounds": {
+          "minX": -7,
+          "maxX": 76,
+          "minZ": -9.5,
+          "maxZ": 35.5,
+          "minY": 9.999999999999993,
+          "maxY": 23.991199493408203
+        }
+      },
+      {
+        "id": 10,
+        "nodes": 67,
+        "bounds": {
+          "minX": 61,
+          "maxX": 69,
+          "minZ": -30.5,
+          "maxZ": -21.5,
+          "minY": 33.33330154418945,
+          "maxY": 42.78076724813071
+        }
+      },
+      {
+        "id": 59,
+        "nodes": 62,
+        "bounds": {
+          "minX": -67,
+          "maxX": -59,
+          "minZ": 20.5,
+          "maxZ": 29.5,
+          "minY": 33.63330078125,
+          "maxY": 42.63330078125
+        }
+      },
+      {
+        "id": 5,
+        "nodes": 12,
+        "bounds": {
+          "minX": -67,
+          "maxX": -56,
+          "minZ": -32.5,
+          "maxZ": -32.5,
+          "minY": 15.699999809265137,
+          "maxY": 15.699999809265137
+        }
+      },
+      {
+        "id": 90,
+        "nodes": 12,
+        "bounds": {
+          "minX": 56,
+          "maxX": 67,
+          "minZ": 32.5,
+          "maxZ": 32.5,
+          "minY": 15.699999809265137,
+          "maxY": 15.699999809265137
+        }
+      },
+      {
+        "id": 7,
+        "nodes": 11,
+        "bounds": {
+          "minX": -76,
+          "maxX": -76,
+          "minZ": -31.5,
+          "maxZ": -21.5,
+          "minY": 15.699999809265137,
+          "maxY": 15.699999809265137
+        }
+      },
+      {
+        "id": 66,
+        "nodes": 11,
+        "bounds": {
+          "minX": 76,
+          "maxX": 76,
+          "minZ": 21.5,
+          "maxZ": 31.5,
+          "minY": 15.699999809265137,
+          "maxY": 15.699999809265137
+        }
+      }
+    ],
+    "opposingBankSamples": [
+      {
+        "trialPosition": [
+          -68,
+          19.58,
+          -26
+        ],
+        "supportPoint": [
+          -68,
+          19.5,
+          -26
+        ],
+        "supportNormal": [
+          0,
+          1,
+          0
+        ],
+        "sourceObject": "Fld_Hiagari04_R1134_group5_pCube540_WoodBoardWhite108_1__WoodBoardWhite",
+        "navNode": 587,
+        "navComponent": 0,
+        "prunedValid": true
+      },
+      {
+        "trialPosition": [
+          68,
+          19.58,
+          26
+        ],
+        "supportPoint": [
+          68,
+          19.5,
+          26
+        ],
+        "supportNormal": [
+          0,
+          1,
+          0
+        ],
+        "sourceObject": "Fld_Hiagari04_R1134_group5_pCube540_WoodBoardWhite108_1__WoodBoardWhite",
+        "navNode": 4243,
+        "navComponent": 43,
+        "prunedValid": false
+      }
+    ],
+    "directedRoutes": {
+      "bank0ToBank1": false,
+      "bank1ToBank0": false
+    },
+    "mutuallyReachableOpposingBanks": false,
+    "navigationMilliseconds": 14488.086008,
+    "retailPlacementVerified": false
+  },
+  "verification": {
+    "foundationCommit": "e6e981367bcc9d757a62a9e86d9584e029e654a8",
+    "guardCommit": "00526bb3e0ea960cb70acbed3322d1a0fdc9e0f7",
+    "reviewBaseCommit": "5512f464266dfb443d3c3ce4380415154eb2eafe",
+    "productionBuildRevision": "fbe916046c3f",
+    "publicBuildIncludesSourcePayload": false,
+    "nativeTests": {
+      "passed": 28,
+      "failed": 0,
+      "skipped": 16,
+      "skipScope": "Other stages source/prepared assets are not supplied to this source-only test invocation"
+    },
+    "negativeControls": {
+      "alteredIndexBufferRejected": true,
+      "sameBufferByteLength": true,
+      "validatorExitCode": 1
+    },
+    "preparedBuilderRejectsUnavailableMahi": true,
+    "browserStatus": "passed",
+    "browserErrors": [],
+    "unexpectedSourceDownloads": 0,
+    "unavailableURL": {
+      "mode": "menu",
+      "menu": "setup",
+      "attract": true,
+      "playingRequestedStage": false
+    },
+    "menu": {
+      "nameVisible": true,
+      "reasonVisible": true,
+      "disabled": true,
+      "ariaDisabled": "true",
+      "navigationMarker": null,
+      "selectableTicket": 0
+    },
+    "admission": {
+      "rules": [
+        {
+          "mode": "turf",
+          "rejected": true,
+          "apiRejected": true,
+          "message": "",
+          "levelRetained": true,
+          "matchRetained": true
+        },
+        {
+          "mode": "zones",
+          "rejected": true,
+          "apiRejected": true,
+          "message": "",
+          "levelRetained": true,
+          "matchRetained": true
+        },
+        {
+          "mode": "tower",
+          "rejected": true,
+          "apiRejected": true,
+          "message": "",
+          "levelRetained": true,
+          "matchRetained": true
+        },
+        {
+          "mode": "rainmaker",
+          "rejected": true,
+          "apiRejected": true,
+          "message": "",
+          "levelRetained": true,
+          "matchRetained": true
+        },
+        {
+          "mode": "clams",
+          "rejected": true,
+          "apiRejected": true,
+          "message": "",
+          "levelRetained": true,
+          "matchRetained": true
+        }
+      ],
+      "worldRejected": true,
+      "worldMessage": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。",
+      "onlineWorldRejected": true,
+      "staleSelectionRejected": true,
+      "authoritiesRetained": true
+    },
+    "originalBrowserParser": {
+      "vertices": 247052,
+      "triangles": 188912,
+      "objects": 98,
+      "rawGitBlobsVerified": 225,
+      "pngFilesVerified": 224,
+      "objSha256": "fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561",
+      "parserMilliseconds": 792.8999999985099,
+      "localOriginalSourceTransport": true,
+      "retailPlacementVerified": false,
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+    },
+    "onlineGuardCases": [
+      {
+        "mode": "turf",
+        "hostBlock": {
+          "settingsRejected": true,
+          "canStart": false,
+          "started": false,
+          "reason": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。"
+        },
+        "incoming": {
+          "state": "error",
+          "error": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。",
+          "startCfg": null,
+          "authoritiesRetained": true
+        },
+        "malformedStartPackets": 1,
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "zones",
+        "hostBlock": {
+          "settingsRejected": true,
+          "canStart": false,
+          "started": false,
+          "reason": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。"
+        },
+        "incoming": {
+          "state": "error",
+          "error": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。",
+          "startCfg": null,
+          "authoritiesRetained": true
+        },
+        "malformedStartPackets": 1,
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "tower",
+        "hostBlock": {
+          "settingsRejected": true,
+          "canStart": false,
+          "started": false,
+          "reason": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。"
+        },
+        "incoming": {
+          "state": "error",
+          "error": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。",
+          "startCfg": null,
+          "authoritiesRetained": true
+        },
+        "malformedStartPackets": 1,
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "rainmaker",
+        "hostBlock": {
+          "settingsRejected": true,
+          "canStart": false,
+          "started": false,
+          "reason": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。"
+        },
+        "incoming": {
+          "state": "error",
+          "error": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。",
+          "startCfg": null,
+          "authoritiesRetained": true
+        },
+        "malformedStartPackets": 1,
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "clams",
+        "hostBlock": {
+          "settingsRejected": true,
+          "canStart": false,
+          "started": false,
+          "reason": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。"
+        },
+        "incoming": {
+          "state": "error",
+          "error": "マヒマヒリゾート＆スパ：固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。",
+          "startCfg": null,
+          "authoritiesRetained": true
+        },
+        "malformedStartPackets": 1,
+        "transport": "real WebSocket + production RoomDurableObject"
+      }
+    ]
+  },
+  "performance": {
+    "scope": "CPU source parser and production navigation diagnostic only; no playable Mahi match and no hardware FPS measurement",
+    "browserParserMilliseconds": 792.8999999985099,
+    "navigationMilliseconds": 14488.086008,
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "mobileHardwareMeasured": false
+  },
+  "retail1130IdentityMetadata": {
+    "file": "SceneInfo.json",
+    "sha256": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e",
+    "rowId": "Vss_Hiagari04",
+    "label": "マヒマヒリゾート&スパ(改修後)",
+    "identityOnly": true
+  },
+  "blockedOrUnverified": [
+    "Float instance placement transforms",
+    "Playable water states and lowering trigger/timing",
+    "Mutually reachable opposing spawn placement",
+    "8 actors and 7 bots on a complete Mahi stage",
+    "All five playable rule layouts and objectives",
+    "Mahi walking, swimming, jumping, enemy ink, wall climbing, painting and respawn behavior",
+    "Mahi minimap/quality/cancellation/ink render comparisons",
+    "Online gameplay paint and state agreement",
+    "Retail units, native collision and paint masks",
+    "KiTrix extraction version equivalence to retail 11.3.0",
+    "Real hardware frame rate and retail behavior comparison"
+  ],
+  "version1130Verified": false
+}
