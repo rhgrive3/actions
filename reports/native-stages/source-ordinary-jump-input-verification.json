@@ -1,5 +1,5 @@
 {
-  "status": "pending-independent-peer",
+  "status": "qualified-independent-peer",
   "acceptedFoundation": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
   "runtimeCandidate": "5044128d5069ec37d5b9294d3ece8aa4d2202046",
   "reference": {
@@ -1015,5 +1015,13 @@
     "failed": 0,
     "durationMs": 94374.73132,
     "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-default.log"
-  }
+  },
+  "independentPeer": {
+    "reviewer": "Shipshape stage owner",
+    "status": "passed",
+    "reviewHead": "093268d080e7d4af1340e3f2edba8f74e77de2e1",
+    "runtimeCandidate": "5044128d5069ec37d5b9294d3ece8aa4d2202046",
+    "scope": "ordinary native jump-input only; original pad-to-centre, stock two supported presses, physical/source capsules/NP/legacy/lifecycle/Tower, defaults/public9/budgets; no source/flags/Actor/serial/recovery or special dispatch changes"
+  },
+  "pullRequest": "https://github.com/rhgrive3/actions/pull/1398"
 }
