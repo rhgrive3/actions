@@ -9,11 +9,10 @@ function cautiousSourceTurn(brain,G){
  const ax=to.x-from.x,az=to.z-from.z,bx=next.x-to.x,bz=next.z-to.z;
  return ax*bx+az*bz<.85*Math.hypot(ax,az)*Math.hypot(bx,bz);
 }
-/** Source-drop routes require the actual raised support before a bot turns
- * toward its next waypoint. Ordinary stage followers keep their old policy. */
+/** Native source routes require the actual support before a bot turns toward
+ * its next waypoint. Legacy stage followers keep their original policy. */
 export function nativeSourceWaypointReached(G,actor,node){
- if(!G.level?.manifest?.sourceNavigation?.highDrops)return true;
- if(!G.level.native)return false;
+ if(!G.level?.native)return !G.level?.manifest?.sourceNavigation?.highDrops;
  if(!actor.grounded||Math.hypot(node.x-actor.pos.x,node.z-actor.pos.z)>.18)return false;
  if(actor.bot&&!actor.bot.target&&cautiousSourceTurn(actor.bot,G)&&Math.hypot(actor.vel.x,actor.vel.z)>.65)return false;
  return nativeSourceFootSupported(G,actor,node);
@@ -38,7 +37,7 @@ export function nativeSourceFootSupported(G,actor,node){
 /** Slow and plant through ordinary humanoid input before a source jump or
  * corner. The Actor retains its acceleration, braking and heading physics. */
 export function nativeSourceTravelInput(brain,G){
- const a=brain.a;if(!G.level?.native||!G.level.manifest?.sourceNavigation?.highDrops||brain.target||a.climbing)return;
+ const a=brain.a;if(!G.level?.native||brain.target||a.climbing)return;
  const n=G.nav?.nodes[brain.path?.[brain.pi]];if(!n)return;
  const dx=n.x-a.pos.x,dz=n.z-a.pos.z,d=Math.hypot(dx,dz),speed=Math.hypot(a.vel.x,a.vel.z);
  const turning=speed>.5&&d>.01&&(a.vel.x*dx+a.vel.z*dz)<.95*speed*d;
