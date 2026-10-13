@@ -50,10 +50,12 @@ for line in (a.source / 'Vss_Kaisou04.obj').open():
         for j in range(1, len(face) - 1):
             indices.extend([face[0], face[j], face[j + 1]])
 buffer = np.fromfile(a.assets / 'vertices.bin', dtype='<f4').reshape(-1, 8)
-assert np.array_equal(buffer[:, :3], np.asarray(vertices, dtype='<f4'))
-assert np.array_equal(buffer[:, 3:6], np.asarray(normals, dtype='<f4'))
+def identical_float_bits(actual, expected):
+    return np.array_equal(np.ascontiguousarray(actual).view('<u4'), np.asarray(expected, dtype='<f4').view('<u4'))
+assert identical_float_bits(buffer[:, :3], vertices)
+assert identical_float_bits(buffer[:, 3:6], normals)
 mapped = np.concatenate([buffer[o['vo']:o['vo'] + o['vc'], 6:8] for o in m['objects'] if o['sourceHasUV']])
-assert np.array_equal(mapped, np.asarray(uv, dtype='<f4'))
+assert identical_float_bits(mapped, uv)
 assert np.array_equal(np.fromfile(a.assets / 'indices.bin', dtype='<u4'), np.asarray(indices, dtype='<u4'))
 for name, info in m['textureIntegrity'].items():
     assert sha(a.source / name) == info['sha256'] == sha(a.assets / name)

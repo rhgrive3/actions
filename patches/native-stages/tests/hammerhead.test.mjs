@@ -26,10 +26,14 @@ test('Hammerhead inferred support, directed landing routes and movement at three
   const paint = G.paint = new CpuPaint(null, level, { atlasSize: 2048, maxDensity: 4, cell: .25 });
   assert.equal(level.manifest.sourceSha256, definition.sourceSha256);
   assert.ok(level.manifest.chartMaxPlaneError < .005);
-  for (const object of data.manifest.objects.filter(o => definition.sourceSemantics.nonCollidableObjectPatterns.some(pattern => new RegExp(pattern).test(o.name)))) {
-    assert.equal(object.collidable, false, object.name + ' scenery collision');
-    assert.equal(object.paintable, false, object.name + ' scenery paint');
-    assert.equal(object.active, true, 'scenery source rendering retained');
+  for (const pattern of definition.sourceSemantics.nonCollidableObjectPatterns) {
+    const objects = data.manifest.objects.filter(o => new RegExp(pattern).test(o.name));
+    assert.ok(objects.length, pattern + ' matches actual source scenery');
+    for (const object of objects) {
+      assert.equal(object.collidable, false, object.name + ' scenery collision');
+      assert.equal(object.paintable, false, object.name + ' scenery paint');
+      assert.equal(object.active, true, 'scenery source rendering retained');
+    }
   }
   const supports = level.spawnPads.map(pad => {
     const hit = physics.raycast(pad.clone().add(new THREE.Vector3(0, 2, 0)), new THREE.Vector3(0, -1, 0), 4);
