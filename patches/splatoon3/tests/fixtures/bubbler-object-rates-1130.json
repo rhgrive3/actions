@@ -1,0 +1,470 @@
+{
+  "sourcePath": "data/parameter/1130/misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json",
+  "sourceSha256": "eb536e1c2cf4bb280c2898fdd9882fe3eb6c8f7a47c5302f0ff7fe755b6ef64a",
+  "columns": [
+    "GreatBarrier_Barrier",
+    "GreatBarrier_WeakPoint"
+  ],
+  "rows": {
+    "Blaster": [
+      2.1,
+      2.1
+    ],
+    "Blaster_BlasterLightShort": [
+      2.1,
+      2.1
+    ],
+    "Blaster_BlasterMiddle": [
+      1.9,
+      1.9
+    ],
+    "Blaster_BlasterShort": [
+      2.1,
+      2.1
+    ],
+    "Blaster_KillOneShot": [
+      1.9,
+      1.9
+    ],
+    "BlowerExhale": [
+      0.0,
+      0.0
+    ],
+    "BlowerExhale_BombCore": [
+      4.2,
+      2.1
+    ],
+    "BlowerInhale": [
+      1.0,
+      1.0
+    ],
+    "Bomb": [
+      2.0,
+      0.5
+    ],
+    "BombFlower": [
+      1.0,
+      1.0
+    ],
+    "Bomb_CurlingBullet": [
+      1.0,
+      1.0
+    ],
+    "Bomb_DirectHit": [
+      2.0,
+      1.5
+    ],
+    "Bomb_Fizzy": [
+      3.6,
+      0.9
+    ],
+    "Bomb_Suction": [
+      2.0,
+      0.5
+    ],
+    "Bomb_TorpedoBullet": [
+      4.0,
+      1.0
+    ],
+    "Bomb_TorpedoSplashBurst": [
+      1.0,
+      1.0
+    ],
+    "Bomb_Trap": [
+      2.0,
+      2.0
+    ],
+    "BrushCore": [
+      1.0,
+      1.0
+    ],
+    "BrushSplash": [
+      1.8,
+      1.8
+    ],
+    "BrushSplash_Heavy": [
+      1.8,
+      1.8
+    ],
+    "CannonMissile": [
+      1.0,
+      1.0
+    ],
+    "Castle": [
+      2.5,
+      2.5
+    ],
+    "Charger": [
+      2.0,
+      2.0
+    ],
+    "ChargerFull": [
+      2.0,
+      1.5
+    ],
+    "ChargerFull_Light": [
+      2.0,
+      2.0
+    ],
+    "ChargerFull_Long": [
+      2.3,
+      1.725
+    ],
+    "Charger_Light": [
+      2.0,
+      2.0
+    ],
+    "Charger_Long": [
+      2.0,
+      2.0
+    ],
+    "Chariot_Body": [
+      0.0,
+      1.0
+    ],
+    "Chariot_Cannon": [
+      3.0,
+      1.5
+    ],
+    "Chimney": [
+      1,
+      1
+    ],
+    "CoopEnemyRush": [
+      1,
+      1
+    ],
+    "CoopEnemySakeJaw": [
+      1,
+      1
+    ],
+    "CoopEnemySakeRopeBlast": [
+      1.0,
+      1.0
+    ],
+    "CoopEnemySakeSaucerFall": [
+      1,
+      1
+    ],
+    "CoopEnemySakeTamaireBombDamage": [
+      1,
+      1
+    ],
+    "CoopEnemySakelienBomberBlast": [
+      1,
+      1
+    ],
+    "CoopEnemySakerocketBlast": [
+      1,
+      1
+    ],
+    "Default": [
+      1.0,
+      1.0
+    ],
+    "EnemyFlyingHohei_BombCore": [
+      1.0,
+      1.0
+    ],
+    "GachihokoTimeUpBurst": [
+      1.0,
+      1.0
+    ],
+    "Gachihoko_BombCore": [
+      2.0,
+      1.5
+    ],
+    "Gachihoko_Bullet": [
+      1.0,
+      0.75
+    ],
+    "Geyser": [
+      1.0,
+      1.0
+    ],
+    "GeyserOnline": [
+      1,
+      1
+    ],
+    "GoldenIkuraAttack": [
+      1.0,
+      1.0
+    ],
+    "InkStorm": [
+      5.0,
+      5.0
+    ],
+    "InkStormRain": [
+      0.0,
+      0.0
+    ],
+    "Jetpack_BombCore": [
+      1.82,
+      1.365
+    ],
+    "Jetpack_Bullet": [
+      1.82,
+      1.365
+    ],
+    "Jetpack_Coop": [
+      1.0,
+      1.0
+    ],
+    "Jetpack_Jet": [
+      2.8,
+      2.8
+    ],
+    "Maneuver": [
+      1.0,
+      1.0
+    ],
+    "Maneuver_Short": [
+      1.0,
+      1.0
+    ],
+    "Maneuver_SideStep_BombCore": [
+      2.0,
+      0.5
+    ],
+    "MicroLaser": [
+      2.4,
+      2.4
+    ],
+    "MissionSalmonBuddy": [
+      1.0,
+      1.0
+    ],
+    "MovePainter_Burst": [
+      1.0,
+      1.0
+    ],
+    "MovePainter_Direct": [
+      1.0,
+      1.0
+    ],
+    "MultiMissile_BombCore": [
+      0.5,
+      0.375
+    ],
+    "MultiMissile_Bullet": [
+      0.5,
+      0.375
+    ],
+    "NiceBall": [
+      2.0,
+      2.0
+    ],
+    "ObjectEffect_Up": [
+      1.1,
+      1.1
+    ],
+    "Pogo": [
+      2.5,
+      2.5
+    ],
+    "RollerCore": [
+      1.0,
+      1.0
+    ],
+    "RollerSplash": [
+      1.8,
+      1.8
+    ],
+    "RollerSplash_Compact": [
+      1.8,
+      1.8
+    ],
+    "RollerSplash_Heavy": [
+      1.8,
+      1.35
+    ],
+    "RollerSplash_Hunter": [
+      1.8,
+      1.35
+    ],
+    "RollerSplash_Wide": [
+      3.6,
+      3.6
+    ],
+    "Saber_ChargeShot": [
+      4.8,
+      2.4
+    ],
+    "Saber_ChargeSlash": [
+      1.2,
+      0.9
+    ],
+    "Saber_ChargeSlash_Penetrate": [
+      1.2,
+      0.9
+    ],
+    "Saber_Shot": [
+      4.8,
+      3.6
+    ],
+    "Saber_Slash": [
+      2.4,
+      1.8
+    ],
+    "SakerocketBullet": [
+      0.0,
+      0.0
+    ],
+    "ShelterCanopy": [
+      2.4,
+      2.4
+    ],
+    "ShelterCanopy_Compact": [
+      2.4,
+      2.4
+    ],
+    "ShelterCanopy_Wide": [
+      2.4,
+      2.4
+    ],
+    "ShelterShot": [
+      2.4,
+      2.4
+    ],
+    "ShelterShot_Compact": [
+      2.4,
+      2.4
+    ],
+    "ShelterShot_Wide": [
+      2.4,
+      2.4
+    ],
+    "Shield": [
+      0.2,
+      0.2
+    ],
+    "ShockSonar_Wave": [
+      8.0,
+      8.0
+    ],
+    "Shooter": [
+      1.0,
+      1.0
+    ],
+    "Shooter_Blaze": [
+      1.0,
+      1.0
+    ],
+    "Shooter_Expert": [
+      1.0,
+      1.0
+    ],
+    "Shooter_First": [
+      1.0,
+      1.0
+    ],
+    "Shooter_Flash": [
+      1.1,
+      1.1
+    ],
+    "Shooter_FlashRepeat": [
+      1.1,
+      1.1
+    ],
+    "Shooter_Gravity": [
+      1.0,
+      1.0
+    ],
+    "Shooter_Heavy": [
+      1.0,
+      1.0
+    ],
+    "Shooter_Long": [
+      1.0,
+      1.0
+    ],
+    "Shooter_Precision": [
+      1.0,
+      1.0
+    ],
+    "Shooter_Short": [
+      1.1,
+      1.1
+    ],
+    "Shooter_TripleMiddle": [
+      1.2,
+      1.2
+    ],
+    "Shooter_TripleQuick": [
+      1.15,
+      1.15
+    ],
+    "Skewer": [
+      5.0,
+      5.0
+    ],
+    "Skewer_Body": [
+      5.0,
+      5.0
+    ],
+    "Slosher": [
+      2.4,
+      2.4
+    ],
+    "Slosher_Bathtub": [
+      2.0,
+      2.0
+    ],
+    "Slosher_Bear": [
+      2.4,
+      2.4
+    ],
+    "Slosher_Washtub": [
+      3.6,
+      0.9
+    ],
+    "Slosher_WashtubBombCore": [
+      3.2,
+      0.8
+    ],
+    "Spinner": [
+      1.0,
+      1.0
+    ],
+    "Sprinkler": [
+      0.6,
+      0.6
+    ],
+    "Stringer": [
+      2.0,
+      2.0
+    ],
+    "Stringer_Short": [
+      1.5556,
+      1.5556
+    ],
+    "SuperHook": [
+      2.0,
+      2.0
+    ],
+    "SuperLanding": [
+      2.0,
+      2.0
+    ],
+    "TripleTornado": [
+      1.0,
+      1.0
+    ],
+    "UltraShot": [
+      1.3,
+      0.975
+    ],
+    "UltraStamp_Swing": [
+      1.5,
+      1.5
+    ],
+    "UltraStamp_Throw": [
+      1.909,
+      1.4318
+    ],
+    "UltraStamp_Throw_BombCore": [
+      1.909,
+      1.4318
+    ]
+  }
+}

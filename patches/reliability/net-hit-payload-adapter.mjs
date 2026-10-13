@@ -10,7 +10,11 @@
 // not just the frozen raw snapshot. In particular, raw Slam is 180 while the
 // active S3 Slam, Trizooka direct hit and Ink Vac countershot can each be 220.
 // These are payload ceilings, not new damage tuning or sender authority.
+// Include the full selectable 14/19/65 catalogue IDs so source-installed hits
+// are admitted by the same victim-owned policy; phase multipliers stay off-wire.
 import fs from 'node:fs';
+import { SUB_NAMES, SPECIAL_NAMES } from '../splatoon3/runtime/catalogue.mjs';
+import { MAIN_WEAPON_CATALOG } from '../splatoon3/runtime/main-weapon-catalog-data.mjs';
 import { WEAPONS, SUB, SPECIALS } from '../../inkwave-public/src/config.js';
 import { ALL_SUB_SPECS } from '../splatoon3/runtime/all-subs.mjs';
 import { registerKitSubs } from '../splatoon3/runtime/kit-subs.mjs';
@@ -41,13 +45,20 @@ export function hitPayloadPolicy(tuning = profile) {
   }
   const causes = [...new Set([
     ...Object.keys(weapons), ...Object.keys(subs), ...Object.keys(specials),
-    'angleShooter', // registered catalogue direct sub, sourced descriptor above
+    ...MAIN_WEAPON_CATALOG.records.map(r=>r.id), ...Object.keys(SUB_NAMES), ...Object.keys(SPECIAL_NAMES).filter(id=>id!=='bubbler'), 'torpedo-splash',
     TRIZOOKA_ID, VAC_ID, // registered damaging specials; Big Bubbler authors no hit
     'shot', 'slosh', 'blast', 'drop', // authored projectile-type fallbacks
   ])];
   return { maxDamage, causes };
 }
 export const ANGLE_SHOOTER_HIT_MAX = ALL_SUB_SPECS.angleShooter.directDamage;
+export const CATALOGUE_SUB_HIT_MAX = Object.freeze({
+  burst:Math.max(ALL_SUB_SPECS.burst.directDamage,ALL_SUB_SPECS.burst.damageMax),
+  fizzy:Math.max(...ALL_SUB_SPECS.fizzy.bursts.map(s=>s.damageMax)),
+  torpedo:ALL_SUB_SPECS.torpedo.damageMax,
+  'torpedo-splash':ALL_SUB_SPECS.torpedo.splashDamage,
+  inkMine:ALL_SUB_SPECS.inkMine.damageMax,
+});
 const policy = hitPayloadPolicy();
 export const MAX_HIT_DAMAGE = policy.maxDamage;
 export const KNOWN_HIT_CAUSES = Object.freeze(policy.causes);
@@ -57,6 +68,7 @@ export function isHitPayloadValid(d) {
   if (!Number.isFinite(d?.d) || d.d <= 0 || d.d > MAX_HIT_DAMAGE) return false;
   if (typeof d?.w !== 'string' || !CAUSE_SET.has(d.w)) return false;
   if (d.w === 'angleShooter' && d.d > ANGLE_SHOOTER_HIT_MAX) return false;
+  if (Object.hasOwn(CATALOGUE_SUB_HIT_MAX,d.w) && d.d > CATALOGUE_SUB_HIT_MAX[d.w]) return false;
   return true;
 }
 
@@ -72,7 +84,8 @@ export function adaptNetHitPayload(rel, code) {
     '// #462 payload bounds derived from the production profile and kit definitions.\n' +
     `const IW_HIT_MAX_DAMAGE = ${MAX_HIT_DAMAGE};\n` +
     `const IW_HIT_CAUSES = new Set(${JSON.stringify(KNOWN_HIT_CAUSES)});\n` +
-    `const IW_ANGLE_SHOOTER_HIT_MAX = ${ANGLE_SHOOTER_HIT_MAX};`;
+    `const IW_ANGLE_SHOOTER_HIT_MAX = ${ANGLE_SHOOTER_HIT_MAX};\n` +
+    `const IW_CATALOGUE_SUB_HIT_MAX = ${JSON.stringify(CATALOGUE_SUB_HIT_MAX)};`;
   code = code.slice(0, topAt) + constants + code.slice(topAt + TOP.length);
 
   const at = code.indexOf(GUARD);
@@ -85,6 +98,7 @@ export function adaptNetHitPayload(rel, code) {
     // Blaster knockback geometry field; the network guard validates that field.
     '    if (!Number.isFinite(d.d) || d.d < 0 || d.d > IW_HIT_MAX_DAMAGE || (d.d === 0 && d.kb === undefined)) return;\n' +
     '    if (typeof d.w !== \'string\' || !IW_HIT_CAUSES.has(d.w)) return;\n' +
-    "    if (d.w === 'angleShooter' && d.d > IW_ANGLE_SHOOTER_HIT_MAX) return;";
+    "    if (d.w === 'angleShooter' && d.d > IW_ANGLE_SHOOTER_HIT_MAX) return;\n" +
+    "    if (Object.hasOwn(IW_CATALOGUE_SUB_HIT_MAX,d.w) && d.d > IW_CATALOGUE_SUB_HIT_MAX[d.w]) return;";
   return code.slice(0, at) + block + code.slice(at + GUARD.length);
 }

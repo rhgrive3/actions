@@ -81,9 +81,9 @@ test('#1118 native bomb step can be consumed by Ink Vac without a bomb explosion
 test('#1113 Splat/Suction Bomb first-contact lane includes Big Bubbler and stage-first arbitration', () => {
   const code = s3('src/game/weapons.js');
   const defense = readPatch('patches/splatoon3/runtime/kit-defense.mjs');
-  assert.ok(defense.includes("if (subId !== 'bomb' && subId !== 'suction') return null;"));
+  assert.ok(defense.includes("if (!['bomb', 'suction', 'curling'].includes(subId)) return null;"));
   assert.ok(defense.includes("consider(this.kitBarrierCandidate?.(probe, start, end), 'bubbler');"));
-  assert.ok(defense.includes('probe.damage = kitBombDamageMax(api.SUB, b, api.SUB.bomb.damageMax);'));
+  assert.ok(defense.includes(': kitBombDamageMax(api.SUB, b, api.SUB.bomb.damageMax);'));
   assert.ok(code.includes('const s3WorldDistance = hit.hit ? _v.distanceTo(hit.point) : Infinity;'));
   assert.ok(code.includes('s3BombDefense.distance < s3WorldDistance - 1e-10'));
   const contact = code.indexOf("if (s3BombDefense.kind === 'bubbler')");
