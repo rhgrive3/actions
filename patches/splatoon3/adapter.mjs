@@ -64,7 +64,17 @@ export function adaptSource(rel, code) {
   code = adaptWeaponCatalog(rel, code);
   if (rel === 'src/game/motion/source-controller.js') {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
-    return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" + code;
+    // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
+    code = replaceOnce(code, 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis).premultiply(this.retarget.aim);', 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis);sourceCarryWeapon(this,this.weaponQ);this.weaponQ.premultiply(this.retarget.aim);', 'source shooter carry posture');
+    return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
+      "import { sourceCarryWeapon } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+  }
+  if (rel === 'src/game/motion/retarget.js') {
+    // S3 posture: reduce the Wii U clips' torso/neck lean before the aim pitch; arms keep their solved directions.
+    code = replaceOnce(code, '   if(isUpper&&upper)this.q.premultiply(this.aim);', '   sourcePostureBone(this,target,this.q,dir,isUpper&&upper);\n   if(isUpper&&upper)this.q.premultiply(this.aim);', 'source torso/neck posture');
+    // S3 gait: lower the Wii U swing-ankle height before leg IK; contacts are solved later in ground().
+    code = replaceOnce(code, "   this.v3.add(c.rest['foot'+label]);\n", "   this.v3.add(c.rest['foot'+label]);\n   sourceFootLift(this,this.v3,label);\n", 'source swing foot lift');
+    return "import { sourcePostureBone, sourceFootLift } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);
@@ -1152,6 +1162,10 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    // The existing firing bit carries the held intake level for Ink Vac.
+    // Weapon firingT is deliberately masked while Vac owns the trigger.
+    code = replaceOnce(code, '  if (wr.firingT > 0) f |= F.firing;',
+      "  if (a.specialActive?.id === 'inkVac' ? !!a._s3InkVacSucking : wr.firingT > 0) f |= F.firing;", 'Ink Vac held intake wire level');
     // #904: replicate the owner-proven wall normal while showing the charge
     // pose, without enabling ordinary remote wall-climb movement.
     code = replaceOnce(code, '  if (a.climbing) f |= F.climb;',
@@ -1341,7 +1355,7 @@ export function adaptSource(rel, code) {
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, 'export function getWeaponDef(kind) {\n  if (!_cache.has(kind)) {', 'export function getWeaponDef(kind) {\n  kind = weaponModelKey(kind); // weapon ID → its own model, else the shared family model\n  if (!_cache.has(kind)) {', 'per-weapon model cache key');
     code = replaceOnce(code, 'const d = finishParts((BUILDERS[kind] || buildShooter)());', 'const d = finishParts(buildWeaponModel(kind, referenceWeaponModel((BUILDERS[weaponModelFamily(kind)] || buildShooter)())));', 'base weapon reference silhouettes and per-weapon models');
-    code = replaceOnce(code, 'export function animateWeapon(w, st) {', 'export function animateWeapon(w, st) {\n  animateNativeWeapon(w, st);\n  if (w.def.animate && st.near !== false) w.def.animate(w, st);\n}\nfunction animateNativeWeapon(w, st) {', 'per-weapon part animation after the native family channels');
+    code = replaceOnce(code, 'export function animateWeapon(w, st) {', 'export function animateWeapon(w, st) {\n  const pose = w.def.parts?.canopy ? { ...st, near: true } : st;\n  animateNativeWeapon(w, pose);\n  if (w.def.animate && pose.near !== false) w.def.animate(w, pose);\n}\nfunction animateNativeWeapon(w, st) {', 'per-weapon part animation after the native family channels');
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
     code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerFoldModel(rollerModel(buildRoller())),', 'roller drum proportions and articulated middle hinge');
     code = replaceOnce(code, 'blaster: buildBlaster,', 'blaster: () => blasterMechanism(buildBlaster()),', 'blaster S3 lever/spring-front mechanism channels');

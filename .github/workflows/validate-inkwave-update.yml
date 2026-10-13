@@ -74,7 +74,8 @@ jobs:
   validate:
     if: inputs.diagnostic_only != true
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Full source and network suites exceed45minutes; retain every validation step.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
@@ -406,6 +407,9 @@ jobs:
       - name: Verify seven weapon models and source-loaded attack grip ownership
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-weapon-models.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/weapon-models"
+      - name: Verify Flow response lifetime and late-error receipts
+        if: matrix.suite == 'active'
+        run: node --test scripts/tests/inkwave-flow-route-lifetime.test.mjs
       - name: Verify Flow geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/flow" --profile-dir "$CI_STORAGE/cache/flow" --exact-source
@@ -446,6 +450,9 @@ jobs:
         run: |
           node scripts/check-inkwave-runtime-performance.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/runtime-after" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --quality high
           node scripts/compare-inkwave-runtime-performance.mjs --before "$CI_STORAGE/evidence/runtime-before/runtime-result.json" --after "$CI_STORAGE/evidence/runtime-after/runtime-result.json" --out "$CI_STORAGE/evidence/runtime-comparison.json"
+      - name: Verify built Brella aperture and visible detached flight
+        if: matrix.suite == 'catalog'
+        run: node scripts/check-inkwave-brella-controls.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/brellas"
       - name: Verify the complete installed motion catalog
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
@@ -490,7 +497,7 @@ jobs:
           suite=os.environ['BROWSER_SUITE']
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json'],
-            'catalog':['catalog/motion-catalog-result.json'],
+            'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
             'responsive':['responsive/responsive-result.json'],
