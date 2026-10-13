@@ -1,3 +1,4 @@
+import { MIST_RESISTANCE_CURVE } from './toxic-mist.mjs';
 import { weightSpeedCurve } from './weapon-weight.mjs';
 import { installThermalTracking } from './private-tracking.mjs';
 import { installHaunt } from './haunt.mjs';
@@ -11,7 +12,7 @@ import { shooterMovementActive, shooterShotReady } from './shooter-movement.mjs'
 import { configureSwimStealth, updateSwimStealth, swimSpeedMultiplier } from './swim-stealth.mjs';
 import { refreshFlowEffects } from './flow-effects.mjs';
 import { HEAD_ABILITIES, conditionalPoints, conditionalKey, installConditionalGear } from './conditional-gear.mjs';
-import { installSubResistance, DIRECT_SUB_RESISTANCE_CURVES } from './sub-resistance.mjs';
+import { installSubResistance, DIRECT_SUB_RESISTANCE_CURVES, LOW_SUB_RESISTANCE_CURVE } from './sub-resistance.mjs';
 import { SUB_MARK_RESISTANCE_CURVES } from './sub-mark-resistance.mjs';
 // Gear uses three equipment pieces, each with one 10 AP main and three 3 AP subs.
 export const ABILITIES = Object.freeze({
@@ -172,6 +173,8 @@ export function installGear(api, tuning) {
     m.stealthJump = loadout[2].main === 'stealthJump';
     m.dropRoller = loadout[2].main === 'dropRoller';
     const ap = effectivePoints, extra = tuning.gearExtra;
+    m.subMistResistance = gearCurve(ap.subResistance || 0, ...MIST_RESISTANCE_CURVE);
+    m.subResistanceLow = gearCurve(ap.subResistance || 0, ...LOW_SUB_RESISTANCE_CURVE);
     m.subLineMarkerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.angleShooter);
     m.subSprinklerResistance = gearCurve(ap.subResistance || 0, ...DIRECT_SUB_RESISTANCE_CURVES.sprinkler);
     m.subMarkResistance = gearCurve(ap.subResistance || 0, ...SUB_MARK_RESISTANCE_CURVES.normal);

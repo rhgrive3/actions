@@ -4011,9 +4011,24 @@ Sub-mark follow-up: retain bounded per-owner accepted births independently of re
 
 2026-10-11: Independent native Sprinkler Sub Power candidate connects pinned period curves and constant throw-speed tiers at owner throw admission. Actual Actor and render-rate regressions cover AP0/10/57, frozen per-device values and native phase progression. Existing AP0 phase interpretation/deployment/paint calibration remains unchanged; broader and browser gates pending. See reports/inkwave-native-sprinkler-power-2026-10-11.md.
 
+## 2026-10-11 Toxic Mist resistance candidate
+
+Connect the hash-verified 11.3.0 MoveDownRt_PoisonMist curve to the victim's calibrated reduction difference and grounded squid target speed. Query current live cloud membership for exit/overlap/expiry instead of retaining an outside-volume lease. Preserve remote victim ownership and require a matching cloud for status replay. Base .72, lifetime/drain and squid airborne momentum remain unresolved calibrations; no inferred airborne cap is introduced. See `inkwave-toxic-mist-resistance-2026-10-11.md` for measured limits and tests.
+
 ## 2026-10-11: grounded Fast squid acceleration connection (candidate)
 
 Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinary grounded squid gets the measured 1.5x rate; humanoid and all attack/ready states retain existing rates. Baseline actual Actor delta0.6 becomes0.9 WU/s at60Hz, other ordinary forms remain0.6, attack remains1.2. Absolute36/72calibration and air behavior are unchanged. See `reports/inkwave-fast-swim-acceleration-2026-10-11.md` for source, real-Physics/FPS/snapshot checks and unverified retail boundaries.
+
+## 2026-10-11: catalogue sub damage-family and Burst contact candidate
+
+Prevent Burst direct victims from receiving its same-impact splash twice while preserving collateral Actors. Connect pinned BombL to Burst/Fizzy/Torpedo and existing BombH to Mine. Admit their five authentic raw network cause tags under descriptor ceilings and existing sender/life/sequence guards. Source/Actor/network tests and client-authority/calibration limits are recorded in `inkwave-catalogue-sub-resistance-2026-10-11.md`.
+
+## 2026-10-11: Splash Wall display-plane alignment candidate
+
+Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather than applying generic decorative age rotation. Actual native deployment and JSON ghost replay regressions compare rendered world normals with barrier contact at multiple angles/frame rates. Contact damage, HP decay, lifetime and knockback are untouched; see `inkwave-splash-wall-facing-2026-10-11.md`.
+
+## 2026-10-12 Mist live-query cost
+Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
 
 
 ## 2026-10-12 原典表示メッシュ5ステージ統合
