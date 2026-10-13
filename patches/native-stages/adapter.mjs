@@ -30,6 +30,9 @@ export function adaptNativeStages(rel,code){
   once('  async startNetMatch(cfg, nm) {', `  async startNetMatch(cfg, nm) {
     const unavailable = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === cfg.map);
     if (unavailable) throw new RangeError(unavailable.name + '：' + unavailable.reason);`);
+  once('  async _buildWorld(map, flow = null) {', `  async _buildWorld(map, flow = null) {
+    const unavailable = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === map.id || stage.id === map.layout);
+    if (unavailable) throw new RangeError(unavailable.name + '：' + unavailable.reason);`);
   once("    this.menus?.show(params.has('skipTitle') ? 'main' : 'title');", `    const unavailableRequestedStage = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === pm);
     this.menus?.show(unavailableRequestedStage ? 'setup' : params.has('skipTitle') ? 'main' : 'title');
     if (unavailableRequestedStage) this.menus?.toast?.(unavailableRequestedStage.name + '：' + unavailableRequestedStage.reason);`);

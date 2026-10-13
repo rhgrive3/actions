@@ -5,7 +5,7 @@
   "availability": "source-unavailable",
   "reason": "公開モデルが見つからないため、現在プレイできません。",
   "source": {
-    "repository": "https://github.com/kirakira-dev/KiTrix",
+    "repository": "kirakira-dev/KiTrix",
     "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
     "searchStatus": "exhausted-public-search-2026-10-13"
   },
