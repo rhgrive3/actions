@@ -1467,11 +1467,17 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='killerWail'){
-    moveActor(rt,actor,dt,state,{squid:true});
-    // Wail remains a simultaneous special layer: the ordinary runner stays
-    // live and owns main shots, ink and weapon cadence during laser ticks.
-    runSpecialMain(actor,dt,{fire:!!actor.intent.fire,firePressed:edges.fire,
-      sub:!!actor.intent.sub&&actor.form!=='squid',subReleased:edges.subUp&&actor.form!=='squid'});
+    // WeaponSpMicroLaser.PlayerParam: NoShot / NoBomb / NoSquid = 40F after
+    // firing. Keep ordinary movement, but do not enable the three prohibited
+    // actions before their earliest source-backed recovery point.
+    const controlsUnlocked=elapsed+1e-8>=40/FPS;
+    moveActor(rt,actor,dt,state,{squid:controlsUnlocked});
+    // Wail remains a simultaneous special layer. Once eligible, the native
+    // weapon runner keeps owning main/sub cadence and ammunition.
+    runSpecialMain(actor,dt,{fire:controlsUnlocked&&!!actor.intent.fire,
+      firePressed:controlsUnlocked&&edges.fire,
+      sub:controlsUnlocked&&!!actor.intent.sub&&actor.form!=='squid',
+      subReleased:controlsUnlocked&&edges.subUp&&actor.form!=='squid'});
     while(state.beams<3&&elapsed+1e-8>=state.nextLock){lockWailPair(rt,actor,state,state.beams++);state.nextLock+=36/FPS;state.phase='laser';}
     for(const pair of state.beamPairs){if(pair.target?.alive){pair.trace.push({t:elapsed,pos:pair.target.pos.clone()});while(pair.trace.length>20)pair.trace.shift();}}
     for(const pair of state.beamPairs)while(pair.nextTick< pair.until-1e-8&&elapsed+1e-8>=pair.nextTick){fireWailTick(rt,actor,state,pair);pair.nextTick+=5/FPS;}
