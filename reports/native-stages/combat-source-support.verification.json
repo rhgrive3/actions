@@ -305,7 +305,7 @@
   ],
   "sourceBuffersUnchanged": true,
   "errors": [],
-  "qualificationStatus": "candidate: named independent peer pending; public/private canonical9, startup budgets, default35/6 assetSkip/0fail and controlled actualGame12 passed",
+  "qualificationStatus": "candidate: new protected-target route behavior native actualGame peer pending; current3249 composition6 tests/default48-38pass10optionalSkip0fail/privatepublic9+budgets passed",
   "commonHead": "457c42024c904c949661534f762260c79075b121",
   "source": {
     "repository": "kirakira-dev/KiTrix",
@@ -365,5 +365,79 @@
     "skipped": 6,
     "skipScope": "Optional original5 source integration fixtures and Wahoo ordinary source fixture not enabled in this default invocation, not waived assertions.",
     "retainedSetupFailure": "Initial command omitted required --experimental-vm-modules; rerun proper invocation passed."
+  },
+  "candidateHead": "310ea90f22d12bc0e7c8d685a97c169101878560",
+  "protectedTarget": {
+    "implementation": "Only same live opposing target inside excluded opposing spawn zone can retain the same already successful source route goal; current nav/level/physics/path/goal/validity and grounded normal fight guards. No new nodes/zone or Actor/source/input changes.",
+    "tests": 6,
+    "passed": 6,
+    "sameAuthenticNaturalGameOverlay": "pending Shipshape named peer",
+    "previousWetOnlyNaturalOverlay": {
+      "baseArtifact": "173ee425",
+      "seconds": 90,
+      "unqualifiedDeparture": false,
+      "wholebankArrival": false,
+      "maxSupportedZ": 46.10300818954092,
+      "sourceCoordinates": "raw local units, not verified meters"
+    }
+  },
+  "currentDefaults": {
+    "tests": 48,
+    "passed": 38,
+    "failed": 0,
+    "skipped": 10,
+    "scope": "Optional original5 source integration, Wahoo ordinary floor and four ordinary jump source fixtures not configured in default invocation. Existing positive actual source proofs retain exact earlier artifact scope."
+  },
+  "currentPrivate": {
+    "head": "ec01157d220f431b66b05265f3f5773526eec5d3",
+    "inputHash": "7462552eaa8d0e0fb703b6dd9ba2986126c614956909fa9667bf9d3e51857678",
+    "revision": "4ac18b6125c4f3118da8db2764df628da582751108e5685fd2cf38ea735776e7",
+    "packagingPassed": 9,
+    "budget": "passed"
+  },
+  "currentPublic": {
+    "head": "310ea90f22d12bc0e7c8d685a97c169101878560",
+    "inputHash": "4076614aa282bb0b6f9d641c72d68e59697a83d69010a22be9aa9061ce4237a4",
+    "revision": "cba01efb01201f9d561f146d6f5f051b653554c93e00a93db1daa10ae4dc7fe0",
+    "packagingPassed": 9,
+    "budget": "passed"
+  },
+  "staticChromiumCost": {
+    "scope": "Actual Chromium static installed wet API at identical position/world/query;30 alternating warm pairs100calls; not whole Game performance or hardwareFPS",
+    "query": [
+      18.264241531878096,
+      47.057446130861415,
+      6.050000190734863
+    ],
+    "baseline": {
+      "millisecondsPerCallP50": 0.0029999999701976776,
+      "millisecondsPerCallP95": 0.004000000059604645,
+      "max": 0.019000000059604644
+    },
+    "candidate": {
+      "millisecondsPerCallP50": 0.08699999988079071,
+      "millisecondsPerCallP95": 0.10400000005960465,
+      "max": 0.13900000005960464
+    }
+  },
+  "staticVmCost": {
+    "scope": "Static source-supported wet API microbenchmark, identical source/position/query, 30 alternating warm pairs of 100 calls; f.make only supplies predicate state. No Actor movement, actual Game timing, hardware FPS or overall speedup claim. VM and Chromium used different supported source positions; not a direct cross-runtime speed comparison.",
+    "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+    "baseline": {
+      "millisecondsPerCall": {
+        "p50": 0.06651732000000266,
+        "p95": 0.08936487999999372,
+        "max": 0.09100264000000607
+      },
+      "groundProbeCallsPerWet": 0
+    },
+    "candidate": {
+      "millisecondsPerCall": {
+        "p50": 3.5094671400000017,
+        "p95": 4.1850611800000115,
+        "max": 4.481936019999994
+      },
+      "groundProbeCallsPerWet": 5
+    }
   }
 }

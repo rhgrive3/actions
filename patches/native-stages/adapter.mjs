@@ -95,7 +95,7 @@ export function adaptNativeStages(rel,code){
     return this.grid[k];`);
  }
  if(rel==='src/game/bots.js'){
-  code="import { nativeCombatPathGoal,nativeCombatWet,nativePaintGoalIds,updateNativeJumpAttach,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop,updateNativeSurge,nativeSourceWaypointReached,nativeSourceTravelInput,nativeOrdinaryJumpInput,nativeTowerRider } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeCombatPathGoal,nativeCombatWet,nativePaintGoalIds,updateNativeJumpAttach,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop,updateNativeSurge,nativeSourceWaypointReached,nativeSourceTravelInput,nativeOrdinaryJumpInput,nativeSourceGroundedForm,nativeTowerRider } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('  _wet(x, z, y) { const gy =', '  _wet(x, z, y) { const sourceWet=nativeCombatWet(this,G,x,z,y); if(sourceWet!==null)return sourceWet; const gy =');
   once('    const g = nav.nearest(pos, maxUp);','    const g = nativeCombatPathGoal(this,G,pos,nav.nearest(pos,maxUp));');
   once('    this.path = p; this.pi =', '    if (G.level.native) this._nativeCombatPath={nav,level:G.level,physics:G.physics,path:p,goal:g};\n    this.path = p; this.pi =');
@@ -109,8 +109,7 @@ export function adaptNativeStages(rel,code){
   once('this.noProg > 1.5 && this.path', 'this.noProg > 1.5 && !G.level.native && this.path');
   once("et === 'jump' && cur.y - a.pos.y > 0.4", "et === 'jump' && cur.y - a.pos.y > (G.level.manifest?.sourceNavigation?.highDrops ? PLAYER.stepUp : 0.4)");
   once('    it.move.set(Math.sin(this.mvYaw) * this.mvMag, 0, Math.cos(this.mvYaw) * this.mvMag);','    it.move.set(Math.sin(this.mvYaw) * this.mvMag, 0, Math.cos(this.mvYaw) * this.mvMag);\n    if (!nativeTowerRider(G,this.a)) nativeSourceTravelInput(this,G);');
-
-  once('    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }', '    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }\n    nativeOrdinaryJumpInput(this,G);');
+  once('    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }', '    if (this._needJump && this.jumpCd <= 0 && a.grounded) { it.jump = true; this.jumpCd = 0.6; this._needJump = false; }\n    nativeOrdinaryJumpInput(this,G);\n    if (!nativeTowerRider(G,a)) nativeSourceGroundedForm(this,G);');
 
   once('    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);', '    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);\n    const candidates = G.level.native ? nativePaintGoalIds(this, G) : nav.validIds;');
   once('      const id = nav.validIds[(Math.random() * nav.validIds.length) | 0];', '      if (!candidates.length) break;\n      const id = candidates[(Math.random() * candidates.length) | 0];');

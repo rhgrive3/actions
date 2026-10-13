@@ -19,3 +19,13 @@ Chromiumで実際にインストールされたGame._frameを使用し、旧判�
 公開共通ビルドのcanonical tracked-inputを含む9/9とstartup容量が通過。最初のprivate診断ビルドは担当の定義を一時追加したため、その定義が共通HEADに存在せずcanonical guardが8/9で失敗した。guardを変更せず、担当のtracked定義を含む独立ローカルcomposition branchでprivate封印を進めている。tracked担当composition76013309でprivate9/9・容量も通過し、全input/artifact SHAとbuild metadataが最初のR2診断ビルドと完全一致した。従ってR2は同一の封印artifactに紐付く。共通defaultは41件中35通過、元5原典とワフーの任意asset fixture6件は未指定skip、失敗0。初回のVM flag指定漏れと新worktreeのesbuild依存link漏れは失敗logを保存し、正しく準備した再実行を通過した。独立peer完了まで未採用。元のOBJ/MTL/PNG、生成geometry、スクリーンショットはコミットしない。
 
 証跡の要約は[verification JSON](combat-source-support.verification.json)。privateの詳細logと原典データは作業領域に保持する。
+
+## 到達できない敵スポーン先への経路保持候補
+
+同じ元の条件を再観測し、落下直前もfight・生存敵・typed traversalなしだったことを確認した。wetだけの正確な診断overlayは90秒間、船底への非許容降下を防いだが、対岸への到着assertは失敗した。敵は既存のenemy spawn zone内におり、A*は正しくその領域を拒否する。旧_pathToがそこでpathをnullにしたため、botが経路なしで戦闘strafeを続け、敵を見失うと元の経路へ戻る往復になっていた。
+
+新候補はnative・接地・通常fightだけ、同じ生存敵のposがenemy zone内で、同じNav/Level/Physicsに紐づく成功済みpath・goalを今も持つ場合に、同じ元のgoalへ通常のA*を再実行する。新しい座標・node・edge・通行許可を作らず、enemy zone、Actorの入力/速度/姿勢、通常mode、特殊移動、legacy、stale world/pathの扱いを維持する。味方targetも対象外。実NavGraph/A*のspawn拒否と正常な再計画、world/path/target負例を含む計6件が通過。採用済み3249のジャンプ保持・JumpAttach・ヤグラ・アサリも保持した。
+
+現在compositionのdefaultは48件中38通過/10任意原典fixture skip/0失敗。公開310とtracked担当compositionec011のprivateはcanonical9/9・容量通過。元の自然条件の診断overlayによる先への移動確認は独立peerが実行中で、ここでは未採用。以前の12ケースはwetだけの旧封印artifactに紐付き、新しいgoal候補を検証したとは扱わない。
+
+実Chromiumで同一位置・同一問い合わせのwarm交互30組×100回を比較すると、wet APIの中央値は旧0.003ms、新0.087ms、p95は新0.104msだった。実足場ringと連続支持を確認するため処理が増えており、速度向上は主張しない。VMの静的位置測定は別の支持位置で中央値約3.51msとなったが、Actor/Game/hardware測定でも同条件のruntime比較でもない。双方の条件と失敗した起動設定を保持する。
