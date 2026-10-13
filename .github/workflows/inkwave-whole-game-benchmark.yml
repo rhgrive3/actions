@@ -1,0 +1,80 @@
+name: Diagnostic whole-game A-B benchmark
+on:
+  push:
+    branches: [perf/inkwave-whole-game-20261013]
+    paths:
+      - scripts/measure-inkwave-whole-game.mjs
+      - .github/workflows/inkwave-whole-game-benchmark.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-whole-game-diagnostic
+  cancel-in-progress: false
+jobs:
+  whole-game:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: diagnostic
+          persist-credentials: false
+          sparse-checkout: |
+            scripts
+      - uses: actions/checkout@v4
+        with:
+          ref: 545c6b3fcfc0d25c43678e9b44b1af4e26400fec
+          path: before
+          persist-credentials: false
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
+      - uses: actions/checkout@v4
+        with:
+          ref: 7fd172f9c09a13d958fc3c01b721cac443d9ceb8
+          path: after
+          persist-credentials: false
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install existing pinned repository build and automation dependencies
+        run: |
+          cd diagnostic
+          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2 playwright@1.62.1
+          node --check scripts/measure-inkwave-whole-game.mjs
+          google-chrome --version
+      - name: Build exact unmodified production versions
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          node before/scripts/build-inkwave.mjs before/inkwave-public site-a | tee evidence/build-A.log
+          node after/scripts/build-inkwave.mjs after/inkwave-public site-b | tee evidence/build-B.log
+          cp site-a/inkwave-build.json evidence/build-A.json
+          cp site-b/inkwave-build.json evidence/build-B.json
+      - name: Calibrate completed full-game frames and verify identical workload
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode calibrate --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/calibration | tee evidence/calibration.log
+          node -e "const r=require('./evidence/calibration/whole-game-calibrate.json');if(!r.comparable||!r.withinFrameBudget)throw Error('Calibration not suitable for a long comparison');"
+      - name: Eight interleaved ABBA-BAAB trials of full-game completed frames
+        timeout-minutes: 50
+        run: |
+          set -euo pipefail
+          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode measure --samples 120 --warmup 30 --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/measurement | tee evidence/measurement.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: inkwave-whole-game-${{ github.sha }}
+          path: evidence
+          if-no-files-found: error
+          retention-days: 14
