@@ -173,6 +173,9 @@ function installTouchLayout(MobileInput, controls) {
         return;
       }
     } else this.layout = this._editBackup;
+    // Closing can happen between pad polls. Fence the first subsequent poll
+    // as well, so a held controller cannot act on the newly exposed screen.
+    this.owner._layoutPadEnded = true;
     this.editing = false; this._sel = null; this._editBackup = null;
     this.resetPointers(); this.pressed.clear(); this.lookDX = this.lookDY = 0;
     this.root.querySelectorAll('.is-sel').forEach(el => el.classList.remove('is-sel'));

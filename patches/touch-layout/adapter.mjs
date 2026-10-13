@@ -12,6 +12,45 @@ function connect(code, before, after, label) {
 }
 
 export function adaptTouchLayout(rel, code) {
+  if (rel === 'src/main.js') {
+    code = connect(code, '  _padMenus() {\n    const inp = this.input;', `  _padMenus() {
+    const inp = this.input;
+    // The layout dialog is modal for physical controllers too. Its controls
+    // remain native touch/keyboard UI; pad input cannot reach the screen below.
+    let layoutOwnsPad = false;
+    const editorOwnsPad = () => {
+      if (!layoutOwnsPad && !inp.mobile?.editing && !inp._layoutPadEnded) return false;
+      // Keep ownership latched for this entire poll, including an accept
+      // callback which opens and closes the editor before returning.
+      layoutOwnsPad = true; inp._layoutPadEnded = false;
+      const edges = new Set(inp.padMenuPressed || inp.padPressed || []);
+      for (let i = 0; i < (inp.pad?.buttons?.length || 0); i++) {
+        const button = inp.pad.buttons[i];
+        if (button.pressed || ((i === 6 || i === 7) && button.value > 0.3)) edges.add(i);
+      }
+      for (const i of edges) inp.consumePadMenuButton?.(i);
+      inp.padMenuPressed?.clear(); inp.padPressed?.clear();
+      this._layoutPadAxesBlocked = true; this._stickT = 0;
+      return true;
+    };
+    if (editorOwnsPad()) return;
+    if (this._layoutPadAxesBlocked && inp.padAxis(0) === 0 && inp.padAxis(1) === 0)
+      this._layoutPadAxesBlocked = false;`, 'modal controller ownership');
+    // Keep the original nav declaration as the downstream pause adapter's
+    // unique connection; only its actual dispatches use this modal wrapper.
+    code = connect(code, '      const nav = (d) => this.menus.nav?.(d);',
+      '      const nav = (d) => this.menus.nav?.(d);\n      const layoutNav = (d) => { if (!editorOwnsPad()) return nav(d); };',
+      'mid-dispatch editor admission');
+    if (code.split("nav('").length !== 14) throw new Error('INKWAVE touch layout conflict: expected 13 menu dispatches');
+    code = code.split("nav('").join("layoutNav('");
+    code = connect(code, '      // left stick as d-pad with repeat',
+      '      if (editorOwnsPad()) return;\n      // left stick as d-pad with repeat', 'editor before stick dispatch');
+    code = connect(code, "      if (pp.has(9) && this.menus.current === 'pause') this.resume();",
+      "      if (editorOwnsPad()) return;\n      if (pp.has(9) && this.menus.current === 'pause') this.resume();", 'editor before Start dispatch');
+    return connect(code, '      const ly = inp.padAxis(1), lx = inp.padAxis(0);',
+      '      const ly = this._layoutPadAxesBlocked ? 0 : inp.padAxis(1), lx = this._layoutPadAxesBlocked ? 0 : inp.padAxis(0);',
+      'editor-held stick rearm');
+  }
   if (rel === 'src/ui/menu-art.js') {
     // The upstream settings preview calls these helpers without importing them.
     return "import { t as tr } from '../i18n.js';\nimport { gyroTurnDeg, touchSensMul } from '../core/gyro.js';\n" + code;
