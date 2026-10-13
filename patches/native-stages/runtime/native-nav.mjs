@@ -64,9 +64,9 @@ export function buildNativeNav(graph){
      if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);}
      continue;
     }
+    if(type==='drop'&&drops&&dy< -1.25){drops[n.id].push(id);continue;}
     const lift=type==='walk'?.65:1.5;
     if(!graph.physics.los(a.set(n.x,n.y+lift,n.z),b.set(m.x,m.y+lift,m.z))){
-     if(type==='drop'&&drops)drops[n.id].push(id);
      continue;
     }
     n.nb.push({to:id,cost,type});

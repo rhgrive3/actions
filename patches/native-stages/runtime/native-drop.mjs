@@ -117,3 +117,30 @@ export function nativeDropTravelForm(brain,G){
   const input=brain.a.intent;input.squid=input.fire=input.jump=input.sub=input.special=false;
  }
 }
+
+/** Keep an ordinary departure committed until a real grounded touchdown.
+ * The stock follower may advance its waypoint while still 1.8 units above it,
+ * turning toward the next source support before gravity completes the drop. */
+export function updateNativeDrop(brain,G,dt){
+ const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.highDrops||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive)return false;
+ let index=brain.pi;
+ if(index===0&&brain.path.length>1){const first=N.nodes[brain.path[0]];if(Math.hypot(a.pos.x-first.x,a.pos.z-first.z)<.8&&Math.abs(a.pos.y-first.y)<.3)index=1;}
+ const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.drop);
+ if(!edge){brain._nativeDrop=null;return false;}
+ const d=edge.drop,start=new a.pos.constructor(...d.upper),goal=new a.pos.constructor(...d.landing);
+ const state=brain._nativeDrop?.edge===edge&&brain._nativeDrop.path===brain.path?brain._nativeDrop:(brain._nativeDrop={edge,path:brain.path,phase:'approach',seconds:0});state.seconds+=dt;
+ if(state.seconds>8){brain._nativeDrop=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
+ brain.pi=index;brain.noProg=0;
+ const input=a.intent;input.fire=input.squid=input.jump=input.sub=input.special=false;
+ if(state.phase==='approach'){
+  const delta=start.sub(a.pos).setY(0);
+  if(a.grounded&&delta.length()<.12&&Math.abs(a.pos.y-d.upper[1])<.16)state.phase='depart';
+  else {input.move.copy(delta);if(input.move.length()>1)input.move.normalize();return true;}
+ }
+ if(a.grounded&&Math.abs(a.pos.y-goal.y)<.16){
+  const delta=goal.sub(a.pos).setY(0);
+  if(delta.length()<.35){brain.pi=index+1;brain._nativeDrop=null;return false;}
+  input.move.copy(delta);if(input.move.length()>1)input.move.normalize();return true;
+ }
+ input.move.fromArray(d.direction);return true;
+}
