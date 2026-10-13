@@ -4106,3 +4106,9 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+## 2026-10-13: full-installed native bomb victim authority
+
+Independent full `installS3` execution exposed an existing blanket ghost-explosion return in `kit-defense.mjs`: an authenticated native bomb reached the receiver but could not reach its real local Actor.damage. The narrow correction admits only native bomb replicas to the existing victim/life authority guard, preserves native Bubbler occlusion, and never spends or proposes replica object HP. Other ghost blast authority is unchanged.
+
+The permanent eleven-case full-installer regression retains actual Actor.damage and the following fixed-tick lethal commit. It covers valid damage, range/team/remote-victim/recipient-life/invulnerability/LOS negatives, and both owned and replayed native Bubbler shielding; removing the shield admits the identical blast without an object-HP mutation or proposal. An independent source counterfactual restoring the blanket guard suppresses all five positive paths. Source and actual emitted ee9 composition passed the independent eleven-case probe. Browser execution remains separate. This is an INKWAVE network-authority consistency correction, not evidence of retail S3 numerical parity; no source coefficient is changed.
