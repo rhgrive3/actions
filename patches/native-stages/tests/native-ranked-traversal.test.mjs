@@ -6,7 +6,7 @@ import {nativeFixture,readStage} from './fixture.mjs';
 
 const root=process.env.NATIVE_RANKED_TRAVERSAL_FIXTURE_ASSETS;
 const stages=root?JSON.parse(fs.readFileSync(path.join(root,'catalog.json'))).stages.filter(s=>['manta','flounder'].includes(s.id)):[];
-for(const definition of stages)test(definition.id+' production ranked bot wrapper preserves physical source transitions and reaches actual rule objectives at 30/60/120Hz',async()=>{
+for(const definition of stages)test(definition.id+' production ranked bot wrapper preserves physical source transitions to rule-authored goals under a constructed CPU frame at 30/60/120Hz',async()=>{
  const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(root,definition.id)),P=G.physics=new f.NativePhysics(L);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};}_pushQuad(){}_drawQuads(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,P);G.camera=new THREE.PerspectiveCamera();f.setRandom(()=>.5);
