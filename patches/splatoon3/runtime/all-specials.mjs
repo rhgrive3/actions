@@ -26,7 +26,7 @@ const q3 = n => Math.round(n * 1000) / 1000;
 const finite = n => typeof n === 'number' && Number.isFinite(n);
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const SPECIALS = Object.freeze({
-  tentaMissiles: { name: 'Tenta Missiles', source: 'WeaponSpMultiMissile', duration: 1.5, radius: 4.25, paintRadius: 3, near: 150, far: 30, status: '11.3.0 table: 150/50/30 at 1.1/2.1/4.25, paint radius 3, launch counts 10/5/4 by target bucket; lock input window is calibrated' },
+  tentaMissiles: { name: 'Tenta Missiles', source: 'WeaponSpMultiMissile', duration: 10, radius: 4.25, paintRadius: 3, near: 150, far: 30, status: '11.3.0 table: 150/50/30 at 1.1/2.1/4.25, paint radius 3, launch counts 10/5/4 by target bucket; lock input window is calibrated' },
   inkjet: { name: 'Inkjet', source: 'WeaponSpJetpack', duration: [7.5, 8, 8.5], radius: 5, paintRadius: 3.2, near: 50, far: 30, direct: 120, status: '11.3.0 table: 50/30 at 2.55/5, paint 3.2, 450/480/510F; 120 direct is community-reported, flight tuning calibrated' },
   booyahBomb: { name: 'Booyah Bomb', source: 'WeaponSpNiceBall', duration: 2.4, radius: 12.6, paintRadius: 13.5, near: 0, far: 0, status: '11.3.0 table: 4700 armor; auto charge .002/.006/.01 per frame, self cheer .077, ally charge .088/.044/.022/.011 per cheerer, gauge credit 6/3/2/1/.5 and max15, blast radius 12.6, paint radius 13.5, paint span 6F. 3.3 damage/frame is community-reported; blast growth and charge inputs calibrated' },
   ultraStamp: { name: 'Ultra Stamp', source: 'WeaponSpUltraStamp', duration: [7.5, 9.5, 11], radius: 8, paintRadius: 5, near: 40, far: 40, status: '11.3.0 table: swing splash 40 at 4; throw 220/60 at 3.6/8, paint 5, 450/570/660F; 100 contact is community-reported and action hitboxes are calibrated' },
@@ -539,24 +539,40 @@ function selectTargets(rt, actor, max=4, range=32) {
   out.sort((a,b)=>b.dot-a.dot||a.d-b.d);
   return out.slice(0,max).map(x=>x.actor);
 }
+// 11.3.0 WeaponSpMultiMissileLaunchParam: 10/5/4 rockets per target at 4F intervals.
+// A lock-on can include up to five opponents; do not synthesize a target if none
+// is in the reticle (unlike the old arbitrary no-target fallback).
+export function tentaMissileCount(targetCount) {
+  return targetCount === 1 ? 10 : targetCount === 2 ? 5 : targetCount >= 3 && targetCount <= 5 ? 4 : 0;
+}
 function launchMissiles(rt, actor, state) {
-  const targets=selectTargets(rt,actor,3,35), origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone();
-  if(!targets.length)targets.push(null);
-  const counts=targets.length===1?[10]:targets.length===2?[5,5]:targets.map(()=>4);
-  let index=0;
+  const targets=selectTargets(rt,actor,5,Infinity);
+  if (!targets.length) return false;
+  const origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone(), plan=[];
   for(const target of targets) {
-    const dest=target?groundAt(rt,target.pos,rt.v2).clone():groundAt(rt,aimPoint(rt,actor,28,rt.v2),rt.v3).clone();
-    const count=counts[targets.indexOf(target)]||4;
-    for(let i=0;i<count&&index<12;i++,index++) {
-      const spread=(i-(count-1)/2)*.055;
-      const dir=rt.v4.copy(dest).sub(origin);dir.x+=Math.sin(spread);dir.normalize();
-      const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24,paintRadius:gearCurve(state.specialPowerAP,3.15,3.465,3.78)});
-      if(p){p.s3TentaTarget=dest.clone();p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();}
-    }
-    emitAction(rt,actor,'tentaMissiles',state.serial,'target',origin,dest,nextSeed(state),{index:index-1,count});
+    const dest=groundAt(rt,target.pos,rt.v2).clone(),count=tentaMissileCount(targets.length);
+    for(let i=0;i<count;i++) plan.push({dest,index:i,total:count});
+    emitAction(rt,actor,'tentaMissiles',state.serial,'target',origin,dest,nextSeed(state),{index:plan.length-1,count});
   }
-  emitAction(rt,actor,'tentaMissiles',state.serial,'launch',origin,null,nextSeed(state),{count:index});
-  endSpecial(rt,actor,'launched');
+  state.phase='volley'; state.volleyOrigin=origin; state.volleyPlan=plan;
+  state.volleyIndex=0; state.volleyNext=state.t;
+  if (actor.specialActive) actor.specialActive.phase='volley';
+  emitAction(rt,actor,'tentaMissiles',state.serial,'launch',origin,null,nextSeed(state),{count:plan.length});
+  return true;
+}
+function tickMissileVolley(rt,actor,state) {
+  const plan=state.volleyPlan;
+  if (!plan) return;
+  // 4 frames per rocket, 40/40/48/64/80 frames for 1..5 locked targets.
+  while(state.volleyIndex<plan.length && state.t+1e-8>=state.volleyNext){
+    const shot=plan[state.volleyIndex++],origin=state.volleyOrigin;
+    const spread=(shot.index-(shot.total-1)/2)*.055;
+    const dir=rt.v4.copy(shot.dest).sub(origin);dir.x+=Math.sin(spread);dir.normalize();
+    const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24,paintRadius:3});
+    if(p){p.s3TentaTarget=shot.dest.clone();p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();}
+    state.volleyNext+=4/FPS;
+  }
+  if(state.volleyIndex>=plan.length && state.t+1e-8>=state.volleyNext)endSpecial(rt,actor,'launched');
 }
 function launchInkjet(rt,actor,state) {
   const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
@@ -921,9 +937,14 @@ function activeStep(rt,actor,dt) {
   state.t+=dt;s.t=state.t;
   const spec=SPECIALS[state.id],elapsed=state.t;
   if(state.id==='tentaMissiles'){
-    moveActor(rt,actor,dt,state,{squid:true});
-    if(edges.fire||edges.sub)launchMissiles(rt,actor,state);
-    else if(elapsed>=1.5)launchMissiles(rt,actor,state);
+    if(state.phase==='volley'){
+      // Source firing locks out movement; preserve inertial slowdown and shot timing.
+      dampForSpecial(actor,dt);tickMissileVolley(rt,actor,state);
+    } else {
+      moveActor(rt,actor,dt,state,{squid:true});
+      if(elapsed>=10)endSpecial(rt,actor,'timeout');
+      else if(edges.fire||edges.sub){if(launchMissiles(rt,actor,state))tickMissileVolley(rt,actor,state);}
+    }
     return;
   }
   if(state.id==='inkjet'){
