@@ -4068,6 +4068,8 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
 
+2026-10-12継続: PR #1285をmainへマージし、Pages公開版で原典5択とユノハナの8人起動を確認した。続きの `codex/stage5-render-performance` は元三角形/塗り属性/CPU authorityを保持し、画面外インクのindexだけを除外する。地形15方向の画素差0、全原典Node23/関連27が成功。中央比較視点のインク三角形は約39〜53%減ったが、ソフトウェアGL時間のばらつきがあり実機FPS改善とは判定しない。詳細とシミュレーション/画素比較の条件は [描画領域の記録](inkwave-native-stage-render-2026-10-12.md)。本家11.3.0のscene/mask/スポーン/描画と実モバイルは未確認を維持する。
+
 ## 2026-10-12: プライムシューター・ジェットスイーパーのモデル作り直しと銃口・構え
 
 参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
@@ -4107,8 +4109,22 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
 
+
+## Ink Vac release contract fixture follow-up (2026-10-13)
+
+The old #1120 source-contract assertion still required immediate release through a pre-#1252 source string. Current main correctly buffers a fresh press/release edge until the sourced 20F inhale-to-exhale transition, then permits the 150F shot window. The regression now requires the existing edge queue, readiness guard and transition-plus-hold deadline while retaining the held-suction negative guard. Runtime behavior is unchanged. Clean-main source and emitted native controls distinguish held ZR, buffered early release, no projectile through transition frame19 and exactly one on frame20; fixture logic and browser evidence remain separately reported, with no new hardware parity claim.
+
+The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
+
 ## 2026-10-13 ネイティブ地形のボット水際判定の計算削減
 
 `BotBrain._wet` が必要とする「落下死の高さ以上に歩ける地面があるか」だけを、従来と同じ真下レイ・法線条件・距離・境界値で判定する。通常の最寄り地面、射撃、当たり判定、塗り、ボット数・更新頻度は変更しない。上下に重なる床、穴、天井、斜面、グレーチング、カスタム地面取得を固定旧実装と照合した。実際の Actor→ブキ→弾→ダメージと塗り命令、地形で遮られた標的、30/60/120 Hz の集団ボットと配信済み形式の圧縮コードも別々に検証。
 
 本家の参照条件は既存記録の Splatoon 3 11.3.0。今回、新しい本家フレーム値・地形形状・ボット挙動の一致は主張しない。INKWAVE の同一入力に対する既存結果の維持と計算量だけが対象。詳細・再現条件・全CPU試行・実機未確認の区別は `reports/inkwave-native-ground-support-2026-10-13.md` と同名の evidence JSON に記載。ネイティブ地形の支持判定の三角形検査は減ったが、共有環境の全体CPU時間はばらつきが大きく、iPadやブラウザのFPS改善、操作不能の解消は未確認を維持する。
+
+
+## 2026-10-13: native downward-slab predicate experiment
+
+A separate ee9-based CPU candidate changes only the ordered exact-down BVH interval rejection, retaining native divisions, fallback/coercion behavior and every nearest-hit field/counter. No bot, cadence, movement, damage, paint or visual behavior is intentionally changed. Source and actual emitted before/after replay match separately at 30/60/120 Hz; real damage and native-wall protection tests also pass. This preserves the existing INKWAVE comparison baseline rather than declaring new Splatoon 3 Ver.11.3.0 retail parity.
+
+Captured rays use 73.8% fewer Math min/max calls with identical triangle work. Normal-realm Node timing has one mixed short batch and a favorable longer batch; the same-harness VM CPU replay improves in all four pairs. None establishes browser, whole-game FPS or iPad mini6 performance. Source versus emitted trajectories differ even on baseline and are not compared as identical. Full evidence, all raw trial values, limitations and reproduction: [native vertical-slab report](inkwave-native-vertical-slab-2026-10-13.md). PR #1366 remains frozen and separate; no main merge is performed.
