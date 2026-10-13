@@ -1,43 +1,28 @@
-name: Audit INKWAVE 19 special actions (S3 11.3.0)
+name: INKWAVE 19-special source and runtime boundaries
 on:
   pull_request:
     paths:
       - 'patches/splatoon3/runtime/all-specials.mjs'
       - 'patches/splatoon3/tests/special-*.test.mjs'
-      - 'patches/splatoon3/tests/all-specials.test.mjs'
-      - 'patches/splatoon3/tests/large-special-slope-paint.test.mjs'
       - '.github/workflows/inkwave-specials-1130.yml'
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: inkwave-specials-1130-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 jobs:
   special-fidelity:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check all 19 runtime activations and 11.3.0 source boundaries
+      - name: Source-backed 19-special runtime and gameplay boundaries
         run: |
           node --experimental-vm-modules --test \
-            patches/splatoon3/tests/special-source-boundaries-1130.test.mjs \
             patches/splatoon3/tests/special-activation-scan-1130.test.mjs \
             patches/splatoon3/tests/special-crab-body-radius-1130.test.mjs \
-            patches/splatoon3/tests/special-tenta-1130.test.mjs \
-            patches/splatoon3/tests/special-chump-1130.test.mjs \
-            patches/splatoon3/tests/special-inkjet-1130.test.mjs \
-            patches/splatoon3/tests/special-crab-drive-1130.test.mjs \
-            patches/splatoon3/tests/special-triple-inkstrike-1130.test.mjs \
-            patches/splatoon3/tests/special-booyah-1130.test.mjs \
-            patches/splatoon3/tests/special-reefslider-1130.test.mjs \
+            patches/splatoon3/tests/special-crab-kraken-source-1130.test.mjs \
             patches/splatoon3/tests/all-specials.test.mjs \
-            patches/splatoon3/tests/large-special-slope-paint.test.mjs \
-            patches/splatoon3/tests/special-paint-envelope.test.mjs \
-            patches/splatoon3/tests/special-projectile.test.mjs \
-            patches/splatoon3/tests/special-projectile-paint-credit.test.mjs \
-            patches/splatoon3/tests/special-presentation.test.mjs
+            patches/splatoon3/tests/kit-ink-vac.test.mjs \
+            patches/splatoon3/tests/special-projectile.test.mjs

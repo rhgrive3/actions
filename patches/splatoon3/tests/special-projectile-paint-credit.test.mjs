@@ -1,3 +1,4 @@
+import {readySpecialEvidence,useSpecialEvidence} from './special-control-evidence.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {fixture} from './source-fixture.mjs';
@@ -45,7 +46,7 @@ for(const dead of [false,true])test(`Crab direct rounds retain no-gauge credit a
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  const {paint,V,face}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
  const a=f.make('shooter');a.weapon={...a.weapon,special:'crabTank',specialCost:100};a.special=100;a.pos.set(0,0,30);a._resolve=()=>{};
- a._startSpecial();a.intent.fire=true;for(let i=0;i<23;i++)a._updateSpecial(1/60);
+ readySpecialEvidence(a, {placeAtFixtureOrigin:true});a.intent.fire=true;for(let i=0;i<23;i++)a._updateSpecial(1/60);
  const p=f.G.projectiles.list.find(p=>p.s3AllSpecialMode==='shooter');assert.ok(p);assert.equal(p.type,'shot','exercise direct-only lane');assert.equal(p.s3SpecialWeapon.type,'shot');assert.equal(p.grav,4,'main gravity cannot replace Crab gravity');assert.equal(p.s3Weapon.id,'crabTank');assert.equal(p.s3PaintNoSpecial,true);
  a.intent.fire=false;if(dead)a.splat(null,'test');else for(let i=0;i<600&&a.specialActive;i++)a._updateSpecial(1/60);
  assert.equal(a.specialActive,null);a.special=0;
@@ -59,7 +60,7 @@ test('pooled special fields cannot resurrect Booyah paint, missile steering, or 
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  const {paint,V}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
  const a=f.make('blaster');a.pos.set(0,0,30);a.weapon={...a.weapon,special:'booyahBomb',specialCost:100};a.special=100;
- a._startSpecial();for(let i=0;i<30;i++)a._updateSpecial(1/60);a._s3AllSpecialState.charge=1;a.intent.sub=true;a._updateSpecial(1/60);
+ readySpecialEvidence(a, {placeAtFixtureOrigin:true});useSpecialEvidence(f,a);
  const old=f.G.projectiles.list.at(-1);assert.equal(old.s3AllSpecial,'booyahBomb');f.G.projectiles.clear();
  for(const kind of ['shooter','blaster','roller','brush','charger','splatling','dualies','slosher','shelter','stringer','saber']){
   // Pollute every module-owned field, including those set by other specials.
@@ -81,7 +82,7 @@ test('all four canonical Crab kits preserve direct-shot flight and real JSON gho
   const {paint}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
   const a=f.make(id);a.nid=7;a.pos.set(0,0,30);a._resolve=()=>{};a.special=a.specialCost();
   const nm=new f.NetMatch({myId:'owner'},{});f.G.netm=nm;
-  a._startSpecial();a.intent.fire=true;for(let i=0;i<23;i++)a._updateSpecial(1/60);
+  readySpecialEvidence(a, {placeAtFixtureOrigin:true});a.intent.fire=true;for(let i=0;i<23;i++)a._updateSpecial(1/60);
   const p=f.G.projectiles.list.find(p=>p.s3AllSpecialMode==='shooter');assert.ok(p,id);
   assert.equal(p.wid,'crabTank');assert.equal(p.grav,4);assert.equal(p.drag,.04);assert.equal(p.radius,.22);assert.equal(p.s3SpecialWeapon.splashRadius,0);
   const packet=JSON.parse(JSON.stringify(nm.out.find(e=>e[1]==='p'&&e[3]==='shot')));assert.ok(packet,id+' packet');
