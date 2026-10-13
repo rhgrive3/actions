@@ -23,7 +23,8 @@ export function nativeSourceWaypointReached(G,actor,node){
  // Derive that support with the same probe, retaining the arrival tolerance
  // and rejecting dynamic boxes or a missing source surface at the waypoint.
  const support=actor._nativeWaypointGround||(actor._nativeWaypointGround=new GroundHit());
- G.physics.groundProbe(actor.pos.x,node.y,actor.pos.z,PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,support,actor.form==='squid');
+ const isSquid=actor.form==='squid';
+ G.physics.groundProbe(actor.pos.x,node.y,actor.pos.z,isSquid?PLAYER.squidStepUp:PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,support,isSquid);
  return !!(support.hit&&support.normal.y>.68&&support.block>=0&&support.block<G.level.staticBlockCount&&Math.abs(actor.pos.y-support.y)<=.16);
 }
 

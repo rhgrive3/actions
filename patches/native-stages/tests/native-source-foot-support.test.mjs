@@ -32,6 +32,11 @@ test('source waypoint arrival uses the actual controller footprint on a real Hum
   a.grounded=false;assert.equal(f.nativeSourceWaypointReached(G,a,node),false,'airborne arrival remains rejected');a.grounded=true;
   const support=a._nativeWaypointGround;
   assert(Math.abs(support.y-a.pos.y)<1e-7);assert.equal(support.center,false);assert.equal(PLAYER.footRadius,.24);
+  const probe=P.groundProbe;let formProbe;
+  P.groundProbe=function(...args){formProbe={up:args[3],skipGrates:args[7]};return probe.apply(this,args);};
+  a.form='squid';f.nativeSourceWaypointReached(G,a,node);
+  assert.deepEqual(formProbe,{up:PLAYER.squidStepUp,skipGrates:true},'the swimmer retains its installed step and grate query policy');
+  a.form='kid';P.groundProbe=probe;
   cases.push({hz,node,feet:position,centreTriangle:centre.triangle,footprintY:support.y,footprintBlock:support.block,centreHeightDifference:a.pos.y-node.y,productionActor:true,productionCharacter:true,weapon:'Shooter_Normal_00',gearAP:0});
  }}finally{f.restoreRandom();}
  assert.equal(digest(),before,'original triangles, roles and masks remain unchanged');
