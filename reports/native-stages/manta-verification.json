@@ -6,7 +6,7 @@
   "verifiedAt": "2026-10-13T19:16:29Z",
   "testedStageCommit": "fbba987edd2f0b687442fbf6e0d862ceeff58861",
   "foundation": "90040586c3728ca20d69ed43014528e0f68cbbdf",
-  "mainCompatibilityCommit": "18ce",
+  "mainCompatibilityCommit": "18ce7b6c8b4c612f289787332b6be65862f34bea",
   "source": {
     "repository": "kirakira-dev/KiTrix",
     "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -5860,5 +5860,10 @@
     "All weapons/gears and contested full-bank autonomous combat parity",
     "Full Zones/Rainmaker scoring routes beyond opening and local contracts; complete Clams scoring match"
   ],
-  "publication": "Only unique definition, tests, browser checkers and numeric/text reports; no original/derived buffers, source images or screenshots published"
+  "publication": "Only unique definition, tests, browser checkers and numeric/text reports; no original/derived buffers, source images or screenshots published",
+  "browserEnvironment": {
+    "chromium": "154.0.8037.57 Debian GNU/Linux13",
+    "renderer": "ANGLE Vulkan1.3 SwiftShader Subzero",
+    "hardwarePerformanceVerified": false
+  }
 }
