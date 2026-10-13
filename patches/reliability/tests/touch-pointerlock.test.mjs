@@ -27,11 +27,11 @@ const read = rel => fs.readFileSync(path.join(RAW, rel), 'utf8');
 const classList = () => ({ add() {}, remove() {}, toggle() {}, contains() { return false; } });
 
 async function boot({exit='async',request='immediate'}={}) {
- const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0,resolvePendingLock,rejectPendingLock;
+ const f=await fixture(),listeners=new Map(),docListeners=new Map(),modules=new Map();let exits=0,requests=0,unlocks=0,resolvePendingLock,rejectPendingLock;const pendingLocks=[];
  const add=(map,name,fn)=>{if(!map.has(name))map.set(name,[]);map.get(name).push(fn);};
  const doc={hidden:false,documentElement:{classList:classList()},addEventListener:(n,fn)=>add(docListeners,n,fn),querySelector:()=>null,pointerLockElement:null};
  const fireDoc=()=>{for(const fn of docListeners.get('pointerlockchange')||[])fn();};
- const canvas={ownerDocument:doc,closest:()=>null,requestPointerLock(){requests++;if(request==='pending')return new Promise((resolve,reject)=>{resolvePendingLock=()=>{doc.pointerLockElement=canvas;fireDoc();resolve();};rejectPendingLock=reject;});}};
+ const canvas={ownerDocument:doc,closest:()=>null,requestPointerLock(){requests++;if(request==='pending')return new Promise((resolve,reject)=>{resolvePendingLock=()=>{doc.pointerLockElement=canvas;fireDoc();resolve();};rejectPendingLock=reject;pendingLocks.push({resolve:resolvePendingLock,reject});});}};
  const overlayTarget=(kind)=>({closest:(sel)=>{if(kind==='editor')return sel.includes('.iwm-edit')?{}:null;return (sel.includes('.iwm-look')||sel.includes('.iwm-movezone')||sel.includes('.iwm-b'))?{}:null;}});
  doc.exitPointerLock=()=>{exits++;if(exit==='throw')throw Error('fixture exit unavailable');if(exit==='sync'){doc.pointerLockElement=null;fireDoc();}};
  const context=vm.createContext({console,performance,AbortController,setTimeout,clearTimeout,
@@ -56,8 +56,8 @@ async function boot({exit='async',request='immediate'}={}) {
   release(e){continueCanvasTouch(mobile,{...e,type:'pointerup'},true);},
   mouse(target=canvas){event('pointerdown',{pointerType:'mouse',target});},move(){event('mousemove',{movementX:1,movementY:2});},
   overlay:(kind='look')=>overlayTarget(kind),
-  completePendingLock(){assert.equal(typeof resolvePendingLock,'function');resolvePendingLock();},
-  rejectPendingLock(){assert.equal(typeof rejectPendingLock,'function');rejectPendingLock(Error('unadjusted movement unavailable'));},
+  completePendingLock(index=null){const resolve=index===null?resolvePendingLock:pendingLocks[index]?.resolve;assert.equal(typeof resolve,'function');resolve();},
+  rejectPendingLock(index=null){const reject=index===null?rejectPendingLock:pendingLocks[index]?.reject;assert.equal(typeof reject,'function');reject(Error('unadjusted movement unavailable'));},
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
 for(const kind of ['fire','stick','look'])for(const exit of ['sync','async'])test(`#662 ${kind} touch survives ${exit} mouse unlock and delayed motion`,async()=>{
@@ -200,3 +200,57 @@ test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor 
    assert.equal(h.requests(),state==='playing'?2:1,state);assert.equal(h.unlocks(),1);
   }
  });
+
+
+for (const state of ['finish', 'judge', 'results', 'attract', 'menu', 'disabled', 'replaced', 'removed']) {
+ test(`#1396 pending live-play capture is retired after ${state}`, async () => {
+  const h = await boot({ request: 'pending' }); h.unlocked(); h.input.requestLock();
+  if (['finish', 'judge', 'results'].includes(state)) h.G.match.state = state;
+  else if (state === 'attract') h.G.match.attract = true;
+  else if (state === 'menu') h.G.mode = 'menu';
+  else if (state === 'disabled') h.input.enabled = false;
+  else if (state === 'replaced') h.G.match = { ...h.G.match };
+  else h.G.match = null;
+  h.completePendingLock();
+  assert.equal(h.input.locked, false);
+  assert.equal(h.exits(), 1);
+  h.move(); assert.equal(h.input.mouse.dx, 0);
+  h.unlocked(); assert.equal(h.unlocks(), 1, 'retirement does not pause again');
+ });
+}
+
+test('#1396 exit cancels pending capture during the real quit fade admission window', async () => {
+ const h = await boot({ request: 'pending' }); h.unlocked(); h.input.requestLock();
+ // quitToMenu exits before clearing the menu and awaiting its fade; its old
+ // playing match and null menu are still current during that asynchronous gap.
+ h.input.exitLock(); h.G.game.menus.current = null;
+ assert.equal(h.exits(), 0, 'no browser lock existed when quit cancelled');
+ h.completePendingLock(); assert.equal(h.input.locked, false); assert.equal(h.exits(), 1);
+ h.unlocked(); assert.equal(h.unlocks(), 1);
+ h.input.requestLock(); h.completePendingLock();
+ assert.equal(h.input.locked, true, 'a fresh explicit eligible request still works');
+});
+
+test('#1396 cancellation and supersession suppress obsolete plain-lock fallback', async () => {
+ for (const newer of [false, true]) {
+  const h = await boot({ request: 'pending' }); h.unlocked(); h.input.requestLock();
+  h.input.exitLock();
+  if (newer) h.input.requestLock();
+  const requests = h.requests();
+  h.rejectPendingLock(0); await Promise.resolve(); await Promise.resolve();
+  assert.equal(h.requests(), requests, 'obsolete request cannot add fallback');
+  if (newer) { h.completePendingLock(1); assert.equal(h.input.locked, true); }
+ }
+});
+
+test('#1396 initial-start and intro capture remain intentionally valid', async () => {
+ for (const state of ['menu', 'init', 'intro']) {
+  const h = await boot({ request: 'pending' }); h.unlocked();
+  h.input.exitLock();
+  if (state === 'menu') h.G.mode = 'menu'; else h.G.match.state = state;
+  h.input.requestLock();
+  h.G.mode = 'match'; h.G.match = { state: 'intro', paused: false, attract: false };
+  h.completePendingLock(); assert.equal(h.input.locked, true, state);
+  h.move(); assert.equal(h.input.mouse.dx, 1);
+ }
+});

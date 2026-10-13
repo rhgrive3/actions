@@ -6,7 +6,7 @@ export function adaptTouchPointerLock(rel, code) {
   code = "import { isMobilePointer } from '../../patches/local-quality/first-touch-adapter.mjs';\n" + code;
   code = replaceOnce(code,
     'if (p && p.catch) p.catch(() => { try { const q = this.canvas.requestPointerLock();',
-    "if (p && p.catch) p.catch(() => { if (!this.enabled || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.mode !== 'match' || G.match?.state !== 'playing' || G.match.paused || G.game?.menus?.current) return; try { const q = this.canvas.requestPointerLock();",
+    "if (p && p.catch) p.catch(() => { if (!this._pointerLockRequestCurrent(lockRequest) || !this.enabled || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.mode !== 'match' || G.match?.state !== 'playing' || G.match.paused || G.game?.menus?.current) return; try { const q = this.canvas.requestPointerLock();",
     'pointer-lock fallback needs current playing admission');
   code=replaceOnce(code,'    this._dev = v;','    this._dev = v;\n    if (v === \'touch\') this._releaseMouseForTouch();','touch releases mouse ownership');
   code=replaceOnce(code,"    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });",`    window.addEventListener('pointerdown', (e) => {
@@ -22,7 +22,7 @@ export function adaptTouchPointerLock(rel, code) {
         if (touchBoot) this._dev = 'kbm';
         if (!this._touchUnlockPending && !touchUiBlocked && !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' &&
           !G.match.paused && !G.match.attract && !G.game?.menus?.current) {
-          if (document.pointerLockElement === this.canvas) { this.locked = true; this._touchRelockWanted = false; }
+          if (document.pointerLockElement === this.canvas) { this._beginPointerLockRequest(); this.locked = true; this._touchRelockWanted = false; }
           else this.requestLock();
         }
       }
@@ -31,7 +31,7 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,`      this.locked = document.pointerLockElement === this.canvas;
       if (!this.locked) { this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0; this.onUnlock?.(); }`,`      const wasLocked = this.locked;
       const locked = document.pointerLockElement === this.canvas;
-      if (locked && (this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.match?.paused || G.game?.menus?.current)) {
+      if (locked && (!this.enabled || !this._pointerLockRequestCurrent(this._pointerLockRequest) || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.match?.paused || G.game?.menus?.current)) {
         this.locked = false;
         if (!this._touchUnlockPending) this._releaseMouseForTouch();
         return;
@@ -42,7 +42,30 @@ export function adaptTouchPointerLock(rel, code) {
       this._touchUnlockPending = false;
       this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0;
       if (!touchUnlock && wasLocked) this.onUnlock?.();`,'touch unlock is not Escape');
-  return replaceOnce(code,'  requestLock() {',`  _isTouchOverlayReacquireTarget(target, includeEditor = false) {
+  code = replaceOnce(code,
+    "    if (this._dev === 'touch' || this.locked) return;\n    try {",
+    "    if (this._dev === 'touch' || this.locked) return;\n    const lockRequest = this._beginPointerLockRequest();\n    try {",
+    'pointer-lock request identity');
+  code = replaceOnce(code,
+    '  exitLock() { if (document.pointerLockElement) document.exitPointerLock(); }',
+    '  exitLock() { this._pointerLockCanceled = true; this._pointerLockRequest = null; if (document.pointerLockElement) document.exitPointerLock(); }',
+    'exit cancels pending pointer-lock request');
+  return replaceOnce(code,'  requestLock() {',`  _beginPointerLockRequest() {
+    this._pointerLockCanceled = false;
+    // Initial/menu and intro capture keeps its existing admission. A live-play
+    // reacquisition belongs to this match and cannot survive its replacement/end.
+    return this._pointerLockRequest = {
+      match: G.mode === 'match' && G.match?.state === 'playing' ? G.match : null,
+    };
+  }
+
+  _pointerLockRequestCurrent(request) {
+    return !this._pointerLockCanceled && request === this._pointerLockRequest &&
+      (!request?.match || (G.mode === 'match' && G.match === request.match &&
+        G.match.state === 'playing' && !G.match.attract));
+  }
+
+  _isTouchOverlayReacquireTarget(target, includeEditor = false) {
     const mobile = this.mobile;
     // A physical mouse can acquire KBM even while map/editor prevent lock.
     // Pointer Lock admission stays in the separate playing-context guard.
