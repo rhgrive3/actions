@@ -4125,6 +4125,11 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 - **プレイへの影響**: 見た目だけ。発射位置の差は初弾 0.000 mm、射撃 1 秒後 0.010 mm。移動・接地・射撃のロジックは不変。
 - **確認状態**: 実ソースバンクを読み込む VM テスト（`patches/splatoon3/tests/source-posture.test.mjs`）と Chromium 描画で確認。Switch 実機比較ではない。停止中の持ち方は途中で片手持ちに変えたが、本家は支え手を添えていて判断が誤りだったため、修正前の両手持ちに戻した。射撃中にブキを体から離して構える差（発射位置に影響するため未変更）、シューター以外の持ち方、待機のしゃがみの深さ、歩幅・歩調・横歩き・後ろ歩き・坂は未確認のまま。詳細は `patches/splatoon3/reference/stance-carry-comparison-2026-10-12.md`。
 
+
+## 2026-10-14 — 全issue監査と入力寿命の修正
+
+全69件を確認し、#1396（取消済みPointer Lock）、#1400（editorへのpad入力透過）を修正。#1359/#1321の検証済み候補から#1357/#1360/#1340/#1311を集約した。公開ミラーとworkflowは不変。source監査455pass/4skip、配布版の入力/復活97passとnetwork32pass、梱包9pass、容量ゲート通過。修正前のbrowser反例を保ち、配布版の実Chromiumでeditor・neutral待ち・取消lock・fresh retry・小さいnative Canvas2D tankの5ケースが合格。controllerと非同期latencyは制御fixtureで、Switch/Android/iOS/Joy-Conの実機比較ではない。未公開の数値・曲線・原典単位を確定せず、残り63件を全解消済みとしない。全件表、正確なsource/build hash、失敗の保持、参照は `reports/inkwave-issue-resolution-2026-10-14.md` と同名JSON。
+
 ## 2026-10-13 ネイティブ地形のボット水際判定の計算削減
 
 `BotBrain._wet` が必要とする「落下死の高さ以上に歩ける地面があるか」だけを、従来と同じ真下レイ・法線条件・距離・境界値で判定する。通常の最寄り地面、射撃、当たり判定、塗り、ボット数・更新頻度は変更しない。上下に重なる床、穴、天井、斜面、グレーチング、カスタム地面取得を固定旧実装と照合した。実際の Actor→ブキ→弾→ダメージと塗り命令、地形で遮られた標的、30/60/120 Hz の集団ボットと配信済み形式の圧縮コードも別々に検証。
@@ -4137,3 +4142,15 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 A separate ee9-based CPU candidate changes only the ordered exact-down BVH interval rejection, retaining native divisions, fallback/coercion behavior and every nearest-hit field/counter. No bot, cadence, movement, damage, paint or visual behavior is intentionally changed. Source and actual emitted before/after replay match separately at 30/60/120 Hz; real damage and native-wall protection tests also pass. This preserves the existing INKWAVE comparison baseline rather than declaring new Splatoon 3 Ver.11.3.0 retail parity.
 
 Captured rays use 73.8% fewer Math min/max calls with identical triangle work. Normal-realm Node timing has one mixed short batch and a favorable longer batch; the same-harness VM CPU replay improves in all four pairs. None establishes browser, whole-game FPS or iPad mini6 performance. Source versus emitted trajectories differ even on baseline and are not compared as identical. Full evidence, all raw trial values, limitations and reproduction: [native vertical-slab report](inkwave-native-vertical-slab-2026-10-13.md). PR #1366 remains frozen and separate; no main merge is performed.
+
+## 2026-10-13 — 18ce7b6c 後の入力寿命の残差
+
+- 外部 main の #1396/#1400 修正を保持し、同じ pad poll の accept で editor が開閉した後の B/Start/肩/スティック透過と、Input 無効化後の Pointer Lock 遅延完了だけを限定修正する。単一 pending request と全入力 neutral 待ちの既存契約は保持。
+- source と実配布コード回帰は各 48/48、隣接 85/85、workflow 15/15、梱包 9/9。現 main 反例は新規 15 件が失敗。独立レビューでも source/配布各 48 件と native lifecycle 各 5 件を再確認。最終 CI と採用は別途確認し、この追記だけで解消済みとしない。詳細と限界は `reports/inkwave-input-followup-2026-10-13.md`。
+
+
+## 2026-10-13: 18ce composition の Curling / native Sprinkler 防御回帰を復元
+
+14f9 で通過していた Curling の 20 HP 接触・Bomb_CurlingBullet 行と、native Sprinkler の Bomb / Vac / Wail AoE・所有者側ダメージ提案が、18ce の旧ファイル取り込みで失われた。元の4ケースをそのまま比較し、14f9成功・18ce失敗を確認。対象2 runtime hunkと削除された3 AoE testだけを復元し、18ceのvictim-local ghost bomb authority、Bubbler遮蔽、FIFO/quota、producer reset、候補vector遅延構築を維持した。source34+追加1通過。実minifiedを指定した35ケースも通過（26はfull-installer/emitted、既存9はsource defenseの手動installを残す）。追加Curlingケースと復元AoE3件は18ce実minifiedで失敗し修正版で成功。runtime独立reviewとsource34件は通過、追加test/documentationの最終readbackは未完。本家の新規実機一致やstutter解消は主張しない。詳細は `reports/inkwave-bomb-defense-restoration-2026-10-13.md`。
+
+同日追補: さらに Curling trail の床投影欠落を、14f9実minified成功・18ce実minified失敗で確認。source PaintCheckHeight=2 の下向き接地探索と接地点の塗り、床なし時の非塗りだけを旧実装どおり復元し、18ceのghost Sprinkler置換は全byte維持。kit-subs source38件、新規実emitted1件、合成後の防御/authority source35件・emitted指定35件（うち既存9件はsource防御手動install）成功。最終buildは `b1cedb52073238d645239872a3767a69f70107e69965364b92293fd79d6a3c50`。GPU描画・実機・stutter改善を示す結果ではない。
