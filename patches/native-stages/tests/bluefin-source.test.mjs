@@ -27,7 +27,7 @@ test('Bluefin exact original Float32 attributes and every Uint32 triangulated fa
  finish();assert.equal(v,1024229);assert.equal(n,v);assert.equal(vertices.length,v*8);assert.equal(index,indices.length);assert.equal(index/3,774445);assert(uv>0);
 });
 
-test('Bluefin source deck capsules, opposing inward movement and both-team directed objective access',{skip:!available},async()=>{
+test('Bluefin source deck capsules, inward movement, real launch and both-team objective access',{skip:!available},async()=>{
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=new f.NativeLevel(readStage(ROOT,'bluefin')),P=new f.NativePhysics(L);G.level=L;G.physics=P;
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
@@ -44,8 +44,35 @@ test('Bluefin source deck capsules, opposing inward movement and both-team direc
    assert(a.alive&&a.grounded,'real controller inward source movement '+team+' '+hz);assert(a.pos.distanceTo(pad)>1);
   }
  }
- G.nav=new f.NavGraph(L,P);const N=G.nav,stage=f.nativeRankedStage(G);
- const goals=[...stage.zones.map(z=>z.center),stage.rainmaker.center,...stage.rainmaker.goals,...stage.rainmaker.checkpoints.flat(),...stage.clams.spawns,...stage.tower.path.map(p=>[p[0],p[1]-(stage.tower.localLift??3.3),p[2]])];
+ G.nav=new f.NavGraph(L,P);const N=G.nav;
+ G.match.mode='turf';G.match.opts={};
+ const launches=[];
+ for(const team of [0,1])for(const botSlot of [-1,0,1,2,3])for(const hz of [30,60,120]){
+  const a=f.make('shooter');a.team=team;a.slot=botSlot<0?0:botSlot;a.isBot=botSlot>=0;a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;
+  assert.equal(f.beginInitialSquidSpawn(a),true);const target={...a.s3.squidSpawn.target};
+  if(!a.isBot){a.intent.fire=true;a.update(1/hz);a.intent.fire=false;}
+  let frames=0;for(;frames<hz*3&&a.s3.squidSpawn;frames++){G.time+=1/hz;a.update(1/hz);}
+  assert(a.alive&&!a.s3.squidSpawn&&a.grounded&&a.ground.hit,'real initial integrator settles '+JSON.stringify({team,botSlot,hz,target,frames,phase:a.s3.squidSpawn?.phase,pos:a.pos.toArray()}));
+  launches.push({team,botSlot,hz,frames,target,position:a.pos.toArray()});
+ }
+ console.log(JSON.stringify({id:'bluefin',sourceInitialLaunches:launches,navNodes:N.nodes.length,validNodes:N.validIds.length}));
+ const stage=f.nativeRankedStage(G),goals=[...stage.zones.map(z=>z.center),stage.rainmaker.center,...stage.rainmaker.goals,...stage.rainmaker.checkpoints.flat(),...stage.clams.spawns,...stage.tower.path.map(p=>[p[0],p[1]-(stage.tower.localLift??3.3),p[2]])];
  for(const [team,pad] of L.spawnPads.entries())for(const p of goals){const start=N.nearest(pad,1.2),end=N.nearest(new THREE.Vector3(...p),1.2);assert(N.path(start,end,team,50000),'team '+team+' directed route to '+p);}
  assert.equal(stage.version1130Verified,false);
+});
+
+test('Bluefin opposing source ledges really walk or jump down to retained lower floors at 30/60/120Hz',{skip:!available},async()=>{
+ const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'bluefin')),P=G.physics=new f.NativePhysics(L);
+ class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
+ G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.match.mode='turf';G.match.opts={};
+ const cases=[];
+ for(const side of [-1,1])for(const jumping of [false,true])for(const hz of [30,60,120]){
+  const start=new THREE.Vector3(-25*side,9,22*side),h=P.raycast(start.clone().add(new THREE.Vector3(0,2,0)),new THREE.Vector3(0,-1,0),4);
+  assert(h.hit&&h.normal.y>.99&&h.point.distanceTo(start)<.12);assert(P.bodyFits(start.clone().add(new THREE.Vector3(0,.01,0)),PLAYER.radius+.04,.32,PLAYER.height));
+  const a=f.make('shooter');a.team=side<0?0:1;a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;a.spawnAt(start,side<0?0:Math.PI);a.intent.move.set(0,0,-side);a.intent.jump=jumping;
+  for(let i=0;i<hz*2;i++){G.time+=1/hz;a.update(1/hz);}
+  assert(a.alive&&a.grounded&&a.ground.hit&&Math.abs(a.pos.y-3)<.01,'actual controller source drop '+JSON.stringify({side,jumping,hz,start:start.toArray(),end:a.pos.toArray()}));
+  cases.push({team:a.team,jumping,hz,start:start.toArray(),sourceStart:h.point.toArray(),end:a.pos.toArray(),alive:a.alive,grounded:a.grounded});
+ }
+ console.log(JSON.stringify({id:'bluefin',actualSourceBankDrops:cases,conditions:'ordinary real Actor integrator; shooter/Shooter_Normal_00; kid; zero AP; no paint or fire; 2 seconds inward movement; all source collision retained'}));
 });

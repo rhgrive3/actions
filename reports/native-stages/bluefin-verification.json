@@ -103,5 +103,284 @@
     "retail frame/speed parity",
     "physical mobile/Switch FPS"
   ],
-  "browserStatus": "pending"
+  "browserStatus": "pending",
+  "diagnostics": {
+    "restrictedLowerPitOnly": {
+      "pads": [
+        [
+          -20,
+          3,
+          -10
+        ],
+        [
+          20,
+          3,
+          10
+        ]
+      ],
+      "nodes": 10854,
+      "validNodes": 1508,
+      "objectiveCount": 26,
+      "allBothTeamRoutes": true,
+      "fullStageQualification": false,
+      "status": "diagnostic only; rejected as full-stage substitute"
+    },
+    "halfUnitSampling": {
+      "status": "read-only-density-diagnostic",
+      "step": 0.5,
+      "sourceGeometryUnchanged": true,
+      "nodes": 40147,
+      "valid": 2938,
+      "spawnIds": [
+        1314,
+        38682
+      ],
+      "routes": [
+        [
+          {
+            "goal": [
+              -20,
+              3,
+              -10
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              20,
+              3,
+              10
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              -20,
+              9,
+              -40
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              20,
+              9,
+              40
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              -12,
+              15,
+              -70
+            ],
+            "node": {
+              "x": -11.75,
+              "y": 15,
+              "z": -69.75
+            },
+            "pathNodes": 2
+          },
+          {
+            "goal": [
+              12,
+              15,
+              70
+            ],
+            "node": {
+              "x": 12.25,
+              "y": 15,
+              "z": 70.25
+            },
+            "pathNodes": null
+          }
+        ],
+        [
+          {
+            "goal": [
+              -20,
+              3,
+              -10
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              20,
+              3,
+              10
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              -20,
+              9,
+              -40
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              20,
+              9,
+              40
+            ],
+            "node": null,
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              -12,
+              15,
+              -70
+            ],
+            "node": {
+              "x": -11.75,
+              "y": 15,
+              "z": -69.75
+            },
+            "pathNodes": null
+          },
+          {
+            "goal": [
+              12,
+              15,
+              70
+            ],
+            "node": {
+              "x": 12.25,
+              "y": 15,
+              "z": 70.25
+            },
+            "pathNodes": 2
+          }
+        ]
+      ],
+      "navMilliseconds": 45017.200044,
+      "rankedError": "Native ranked center component is too small"
+    },
+    "optedWallClimb": {
+      "status": "read-only provisional helper only; not adopted product",
+      "edges": 46,
+      "validNodes": 5114,
+      "bothUpperBankReachableComponent": false
+    },
+    "physicalDrops": {
+      "cases": 72,
+      "supportedPositiveCases": 12,
+      "supportBodyRejectedCandidates": 60,
+      "allPositiveAliveGroundedAt3": true,
+      "sourceTriangles": [
+        {
+          "x": 25,
+          "z": -22,
+          "hits": [
+            {
+              "triangle": 21545,
+              "point": [
+                25,
+                8.923700332641602,
+                -22
+              ],
+              "object": "FldObj_Ruins03PntStage_Fence_ami018_1__FenceIronNet_xl",
+              "normal": [
+                -0.0,
+                1.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "x": -25,
+          "z": 22,
+          "hits": [
+            {
+              "triangle": 21547,
+              "point": [
+                -25,
+                8.923700332641602,
+                22
+              ],
+              "object": "FldObj_Ruins03PntStage_Fence_ami018_1__FenceIronNet_xl",
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "x": 25,
+          "z": -11,
+          "hits": [
+            {
+              "triangle": 114965,
+              "point": [
+                25,
+                3.0,
+                -11
+              ],
+              "object": "Fld_Ruins03_Fld_Ruins03_Stage_RengaCenter_RengaBlock_Base_group222238126_Floor_FloorEarthBrown_FloorEarthBrown__FloorEarthBrown",
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "x": -25,
+          "z": 11,
+          "hits": [
+            {
+              "triangle": 114935,
+              "point": [
+                -25,
+                3.0,
+                11
+              ],
+              "object": "Fld_Ruins03_Fld_Ruins03_Stage_RengaCenter_RengaBlock_Base_group222238126_Floor_FloorEarthBrown_FloorEarthBrown__FloorEarthBrown",
+              "normal": [
+                0.0,
+                1.0,
+                0.0
+              ]
+            }
+          ]
+        }
+      ],
+      "conditions": "Real Actor integrator; shooter/Shooter_Normal_00; zero AP; kid; inward unit Z input for 2s; walk and jump at 30/60/120 Hz; no fire/paint; all source collision retained"
+    },
+    "realInitialLaunch": {
+      "cases": 30,
+      "teams": [
+        0,
+        1
+      ],
+      "actors": [
+        "human",
+        "bot slots 0,1,2,3"
+      ],
+      "ratesHz": [
+        30,
+        60,
+        120
+      ],
+      "maximumSeconds": 1,
+      "allAliveGroundedOnSource": true,
+      "allActualIntegrator": true
+    }
+  }
 }
