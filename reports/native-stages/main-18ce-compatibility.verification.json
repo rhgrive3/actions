@@ -1,5 +1,5 @@
 {
-  "status": "candidate",
+  "status": "accepted",
   "consumedMain": "18ce7b6c8b4c612f289787332b6be65862f34bea",
   "candidateHead": "c83bcbf0eece8fa730074c961e0c27566444ce9e",
   "baseFoundation": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
@@ -25,10 +25,7 @@
     "packagingPassed": 9,
     "startupBudget": "passed"
   },
-  "pending": [
-    "Scorch strict five-mode real two-browser WS full-grid settlement",
-    "Named Humpback independent compatibility review"
-  ],
+  "pending": [],
   "sourceUnchanged": true,
   "sourceAssetsCommitted": false,
   "unknowns": [
@@ -261,5 +258,272 @@
     "errors": [],
     "status": "passed",
     "caseCount": 3
+  },
+  "independentStrictRealWS": {
+    "peer": "/root/humpback",
+    "status": "passed",
+    "revision": "46ec6ba364777b8d90b4e30cc57559f510d3afd3f0550f486c70fb505f676021",
+    "transport": "real WebSocket + byte-identical production RoomDurableObject",
+    "packetCount": 2220,
+    "errors": [],
+    "cases": [
+      {
+        "stage": "scorch",
+        "mode": "turf",
+        "actorsPerPeer": [
+          8,
+          8
+        ],
+        "gridBytesPerPeer": [
+          1469898,
+          1469898
+        ],
+        "fullGridSHA256PerPeer": [
+          "91c85f432cece4f54157ab3bda457026bdec55cfbe516d97308ff064ab6e1f30",
+          "91c85f432cece4f54157ab3bda457026bdec55cfbe516d97308ff064ab6e1f30"
+        ],
+        "rankedCountsPerPeer": [
+          [
+            852,
+            128
+          ],
+          [
+            852,
+            128
+          ]
+        ],
+        "finalReplaySettlement": {
+          "phase": "final",
+          "settled": true,
+          "frames": 5,
+          "watermark": 222,
+          "state": [
+            {
+              "applied": 272,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            },
+            {
+              "applied": 272,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            }
+          ]
+        },
+        "ownedHostLunaRadius": 3.84
+      },
+      {
+        "stage": "scorch",
+        "mode": "zones",
+        "actorsPerPeer": [
+          8,
+          8
+        ],
+        "gridBytesPerPeer": [
+          1469898,
+          1469898
+        ],
+        "fullGridSHA256PerPeer": [
+          "2ee7a474cbd51c69b7b7ba419111bd00c2b0545f53ba07a8825581f7140817a8",
+          "2ee7a474cbd51c69b7b7ba419111bd00c2b0545f53ba07a8825581f7140817a8"
+        ],
+        "rankedCountsPerPeer": [
+          [
+            777,
+            1159
+          ],
+          [
+            777,
+            1159
+          ]
+        ],
+        "finalReplaySettlement": {
+          "phase": "final",
+          "settled": true,
+          "frames": 5,
+          "watermark": 436,
+          "state": [
+            {
+              "applied": 436,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            },
+            {
+              "applied": 436,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            }
+          ]
+        },
+        "ownedHostLunaRadius": 3.84
+      },
+      {
+        "stage": "scorch",
+        "mode": "tower",
+        "actorsPerPeer": [
+          8,
+          8
+        ],
+        "gridBytesPerPeer": [
+          1469998,
+          1469998
+        ],
+        "fullGridSHA256PerPeer": [
+          "260bbdf5fe118e345499354af68ac3adedb14df0038bf0f43ed6bf66ae2a04bd",
+          "260bbdf5fe118e345499354af68ac3adedb14df0038bf0f43ed6bf66ae2a04bd"
+        ],
+        "rankedCountsPerPeer": [
+          [
+            517,
+            0
+          ],
+          [
+            517,
+            0
+          ]
+        ],
+        "finalReplaySettlement": {
+          "phase": "final",
+          "settled": true,
+          "frames": 5,
+          "watermark": 448,
+          "state": [
+            {
+              "applied": 448,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            },
+            {
+              "applied": 448,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            }
+          ]
+        },
+        "ownedHostLunaRadius": 3.84
+      },
+      {
+        "stage": "scorch",
+        "mode": "rainmaker",
+        "actorsPerPeer": [
+          8,
+          8
+        ],
+        "gridBytesPerPeer": [
+          1469898,
+          1469898
+        ],
+        "fullGridSHA256PerPeer": [
+          "b82008df1a1b236f95cb3a6eb94d8340dd0611c1174f28386d2e2d11c49c1a16",
+          "b82008df1a1b236f95cb3a6eb94d8340dd0611c1174f28386d2e2d11c49c1a16"
+        ],
+        "rankedCountsPerPeer": [
+          [
+            758,
+            587
+          ],
+          [
+            758,
+            587
+          ]
+        ],
+        "finalReplaySettlement": {
+          "phase": "final",
+          "settled": true,
+          "frames": 5,
+          "watermark": 618,
+          "state": [
+            {
+              "applied": 957,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            },
+            {
+              "applied": 957,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            }
+          ]
+        },
+        "ownedHostLunaRadius": 3.84
+      },
+      {
+        "stage": "scorch",
+        "mode": "clams",
+        "actorsPerPeer": [
+          8,
+          8
+        ],
+        "gridBytesPerPeer": [
+          1469898,
+          1469898
+        ],
+        "fullGridSHA256PerPeer": [
+          "43ea930f4a5998667bfa36a035b903d517740af0577f3163a5b23b28895584c1",
+          "43ea930f4a5998667bfa36a035b903d517740af0577f3163a5b23b28895584c1"
+        ],
+        "rankedCountsPerPeer": [
+          [
+            882,
+            956
+          ],
+          [
+            882,
+            956
+          ]
+        ],
+        "finalReplaySettlement": {
+          "phase": "final",
+          "settled": true,
+          "frames": 5,
+          "watermark": 1131,
+          "state": [
+            {
+              "applied": 1171,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            },
+            {
+              "applied": 1171,
+              "growing": 0,
+              "queued": 0,
+              "out": 0
+            }
+          ]
+        },
+        "ownedHostLunaRadius": 3.84
+      }
+    ],
+    "receipt": "/workspace/stage-worktrees/humpback/.browser-evidence/main-18ce-peer-online/online.json"
+  },
+  "namedIndependentPeer": {
+    "peer": "/root/humpback",
+    "status": "CLOSED accepted",
+    "receipt": "/workspace/stage-worktrees/humpback/.ci-scratch/main-18ce-peer/named-review.json",
+    "sha256": "4b066eb0d171744e64d57b29703e85f7a11489984308612ed5f25bb6b4cf8d8e",
+    "runtimeCandidate": "c83bcbf0eece8fa730074c961e0c27566444ce9e",
+    "changedDefaults": {
+      "tests": 144,
+      "passed": 140,
+      "skipped": 4,
+      "failed": 0
+    },
+    "emittedMapCorrected": {
+      "tests": 15,
+      "passed": 15,
+      "skipped": 0,
+      "failed": 0
+    },
+    "privatePublicPackagingPassedEach": 9,
+    "budget": "passed"
   }
 }
