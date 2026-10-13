@@ -1,3 +1,4 @@
+import { BRELLA_APERTURE } from '../brella-aperture.mjs';
 // Brella family models (Splatoon 3 Ver.11.3.0): Splat Brella, Tenta Brella, Undercover Brella,
 // Recycled Brella 24 Mk I. The catalogue gives them the shooter model kind (pistol grip, trigger / led channels);
 // each model is the gun body (pistol or crook grip, shaft = shotgun barrel, hub with the nozzle) plus a separate
@@ -61,7 +62,7 @@ function makeAnimate(cfg) {
     ps.bv = damp(ps.bv === undefined ? 1 : ps.bv, hidden ? 0 : 1, 28, dt);
     // overshoot a little when the ribs snap open
     const e = smooth(ps.bo) + (want ? 0.05 * Math.sin(Math.PI * ps.bo) : 0), vis = ps.bv;
-    const sx = (1 + (1 / K_FOLD - 1) * e) * vis, sz = (1 + (1 / cfg.sz - 1) * e) * (vis > 0.5 ? 1 : 0.2 + vis * 1.6);
+    const sx = (1 + (BRELLA_APERTURE[w.def.modelId].scale / K_FOLD - 1) * e) * vis, sz = (1 + (1 / cfg.sz - 1) * e) * (vis > 0.5 ? 1 : 0.2 + vis * 1.6);
     for (const name of ['canopy', 'canopyInk']) {
       const g = w.parts[name]; if (!g) continue;
       g.visible = vis > 0.02; g.scale.set(Math.max(1e-3, sx), Math.max(1e-3, sx), Math.max(1e-3, sz));
