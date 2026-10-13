@@ -382,5 +382,124 @@
       "allAliveGroundedOnSource": true,
       "allActualIntegrator": true
     }
-  }
+  },
+  "browserBaseline": {
+    "status": "actual source shot passed; full-bank qualification pending",
+    "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+    "privateBuild": {
+      "contentHash": "09e606d89f50ebcc1ac356b77293ab91c5f6221ba3c136cd4fbc18a9115c2c59",
+      "inputHash": "f9b8d0b7cfcde03eb8b0946ed66e36a9ac1dd7ae2bfb337d566169f340a213e1"
+    },
+    "projectiles": {
+      "id": "bluefin",
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "hz": 30,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 228,
+              "triangle": 238,
+              "distanceToTarget": 0.06151867957349259,
+              "object": 12
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.3999999910593033,
+            "max": 12.5
+          }
+        },
+        {
+          "hz": 60,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 228,
+              "triangle": 238,
+              "distanceToTarget": 0.06151867957349259,
+              "object": 12
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.29999999701976776,
+            "max": 2.800000011920929
+          }
+        },
+        {
+          "hz": 120,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 228,
+              "triangle": 238,
+              "distanceToTarget": 0.06151867957349259,
+              "object": 12
+            }
+          ],
+          "naturalWallSplats": 5,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 2.7000000029802322
+          }
+        }
+      ],
+      "sourceObject": "FldObj_Ruins03GeneralBoxPnt_GeneralBoxHalfPaint_30x30x30_Blitz_2__FenceVinyl",
+      "face": 228,
+      "triangle": 238,
+      "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+      "errors": []
+    },
+    "screenshotInspected": true,
+    "hardwarePerformanceClaim": false
+  },
+  "latestConsumedFoundation": "a1cd234b9725367529c176cf25420d12ba29c875"
 }

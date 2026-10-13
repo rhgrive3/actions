@@ -74,5 +74,5 @@ test('Bluefin opposing source ledges really walk or jump down to retained lower 
   assert(a.alive&&a.grounded&&a.ground.hit&&Math.abs(a.pos.y-3)<.01,'actual controller source drop '+JSON.stringify({side,jumping,hz,start:start.toArray(),end:a.pos.toArray()}));
   cases.push({team:a.team,jumping,hz,start:start.toArray(),sourceStart:h.point.toArray(),end:a.pos.toArray(),alive:a.alive,grounded:a.grounded});
  }
- console.log(JSON.stringify({id:'bluefin',actualSourceBankDrops:cases,conditions:'ordinary real Actor integrator; shooter/Shooter_Normal_00; kid; zero AP; no paint or fire; 2 seconds inward movement; all source collision retained'}));
+ console.log(JSON.stringify({id:'bluefin',actualSourceBankDrops:cases,conditions:'ordinary real Actor integrator; shooter; kid; zero AP; no paint or fire; 2 seconds inward movement; all source collision retained'}));
 });
