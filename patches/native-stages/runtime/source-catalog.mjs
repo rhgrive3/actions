@@ -1,7 +1,7 @@
 // References and inferred support estimates only. No source geometry or pixels.
 import {nativeStageBuild} from './build-config.mjs';
 export const SOURCE_COMMIT = '0611f51b35c9736ee986fb2218461e2585b7875e';
-export const SOURCE_RECIPE = 'inkwave-browser-source-v3';
+export const SOURCE_RECIPE = 'inkwave-browser-source-v4';
 export const BASE_SOURCE_STAGES = [
  ['scorch','Vss_Yunohana','ユノハナ大渓谷','c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8','c5e8f6e5aa14b97a87210ad5df1c91c05b1ab451',[-36,-82.5,36,82.5],[7.5,13.5904,-70.95]],
  ['hagglefish','Vss_Yagara','ヤガラ市場','1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4','96fbd9ec8b6eb57996236fa56bb7511009ebc0c5',[-52.9357,-78,52.9357,78],[0,13.58,-67.08]],
