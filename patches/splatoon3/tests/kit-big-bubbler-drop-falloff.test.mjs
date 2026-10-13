@@ -23,7 +23,7 @@ import {
 import { installKitDefense } from '../runtime/kit-defense.mjs';
 import { fidelityDamage, installWeaponsFidelity } from '../runtime/weapons-fidelity.mjs';
 
-const RAW_PER_DAMAGE_UNIT = 100;   // BIG_BUBBLER_CALIBRATION.rawPerDamageUnit
+const RAW_PER_DAMAGE_UNIT = 10;   // Wiki-confirmed rawDamageToHP normalization
 const FALLOFF_RANGE = 7;           // the native constant in weapons.js
 const FAR_CASE_HP = 20000;         // pinned test budget, above one far contact
 // Pinned spl__DamageRateInfoConfig RollerSplash x GreatBarrier_Barrier (canopy).

@@ -77,19 +77,34 @@ try{
   for(const p of [guest,observer]){const births=await p.evaluate(()=>globalThis.births);assert.equal(births.length,9);assert.deepEqual(births.map(x=>x.index),[0,1,2,3,4,5,6,7,8]);assert(births.every(x=>x.delay===0));}
   for(const damage of [30.39,34.31,34.31])await host.evaluate(d=>hit(G.projectiles,volley,G.actors[1],d,G.actors[1].pos),damage);
   await guest.waitForFunction(()=>Math.abs(G.local.hp-65.7)<1e-8);
-  await Promise.all(pages.map(p=>p.evaluate(()=>{G.projectiles.clear();G.actors[0].pos.set(0,0,0);G.actors[1].pos.set(0,0,5);G.actors[0].aimDir.set(0,0,1);}))); 
-  await host.evaluate(()=>{G.local.setWeapon('charger');G.local.special=G.local.specialCost();G.local._startSpecial();});
+  await Promise.all(pages.map(p=>p.evaluate(()=>{G.projectiles.clear();G.actors[0].pos.set(0,0,0);G.actors[1].pos.set(0,0,30);G.actors[0].aimDir.set(0,0,1);}))); 
+  await host.evaluate(()=>{G.local.setWeapon('charger');G.local.special=G.local.specialCost();G.local._startSpecial();G.local.intent.fire=true;});
   await frames(25);await guest.waitForFunction(()=>vac.inkVacState(G.actors[0])?.phase==='inhale');
   await Promise.all(pages.map(p=>p.evaluate(()=>{G.actors[1].hp=100;G.actors[1].ink=100;})));
+  // The sourced Ink Vac cone starts at zero length and extends by 0.3334 per 60 Hz frame.
+  // Grow it with real Actor updates while the victim is outside the 15 m maximum reach.
+  for(let i=0;i<100;i++){
+   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>{ vac.advanceInkVacReplica(G.actors[0],1/60); G.local.update(1/60); });await frames(1);
+  }
+  assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).absorbedDamage ?? 0),0);
+  assert(await host.evaluate(()=>vac.inkVacState(G.local).length>5));
+  // This minimal fake Match never calls NetMatch.applyRemote; drive the same replica hook explicitly.
+  assert(await guest.evaluate(()=>vac.inkVacState(G.actors[0])?.length>5), 'remote owner cone did not advance in fixture');
+  await Promise.all(pages.map(p=>p.evaluate(()=>G.actors[1].pos.set(0,0,5))));
+  // From the first contact frame, count exactly 30 real 60 Hz suction updates.
   for(let i=0;i<30;i++){
-   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>G.local.update(1/60));await frames(1);
+   await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>{ vac.advanceInkVacReplica(G.actors[0],1/60); G.local.update(1/60); });await frames(1);
   }
   const owner=await host.evaluate(()=>({damage:vac.inkVacState(G.local).absorbedDamage,count:vac.inkVacState(G.local).absorbed,remoteInk:G.actors[1].ink}));
   const victim=await guest.evaluate(()=>({ink:G.local.ink,hp:G.local.hp,replicaDamage:vac.inkVacState(G.actors[0]).absorbedDamage||0}));
   assert(Math.abs(owner.damage-45)<1e-8);assert.equal(owner.count,0);assert.equal(owner.remoteInk,100);
-  assert(Math.abs(victim.ink-94)<1e-8);assert.equal(victim.hp,100);assert.equal(victim.replicaDamage,0);
+  assert(Math.abs(victim.ink-93.4)<1e-8);assert.equal(victim.hp,100);assert.equal(victim.replicaDamage,0);
   const slow=await guest.evaluate(()=>{const a=G.local;a.intent.move.set(1,0,0);a.vel.set(20,0,0);a._horizontal(1/60,false,false);const inside=a.vel.length();a.pos.z=-5;a.vel.set(20,0,0);a._horizontal(1/60,false,false);return{inside,outside:a.vel.length(),cap:a.weaponRunner.moveSpeed()*.6};});
   assert(slow.inside<=slow.cap+1e-8);assert(slow.outside>slow.cap);
+  await host.evaluate(()=>{G.local.intent.fire=false;G.local.update(1/60);});await frames(15);
+  await guest.evaluate(()=>vac.advanceInkVacReplica(G.actors[0],1/60));
+  assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).length),0,'owner stops on ZR release');
+  assert.equal(await guest.evaluate(()=>vac.inkVacState(G.actors[0]).length),0,'replica stops from the delivered held-input snapshot');
   await host.evaluate(()=>vac.disposeInkVac(G.local));await frames(25);
   assert.equal(await guest.evaluate(()=>vac.inkVacActorContact(G.actors[0],G.local)),false);
   assert.deepEqual(errors,[]);results.push({engine,clients:3,births:9,damage:34.3,contact:owner.damage,victimInk:victim.ink});
