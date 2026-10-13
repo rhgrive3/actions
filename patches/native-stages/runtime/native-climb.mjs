@@ -117,7 +117,17 @@ export function updateNativeClimb(brain,G,dt){
   // it admits another shot. Supply that normal input without changing the
   // weapon runner's cancellation state or the actor's ink.
   if(a.weaponRunner?.s3ShooterCancelMain){state.phase='release';}
-  else {it.fire=a.ink>PLAYER.inkMax*.15;it.squid=!it.fire;state.phase=it.fire?'paint':'refill';}
+  else {
+   it.fire=a.ink>PLAYER.inkMax*.15;it.squid=!it.fire;state.phase=it.fire?'paint':'refill';
+   // The installed resource controller gives dry squid form no recovery.
+   // At the already qualified source firing stance, release squid through
+   // ordinary input only when the actual human body and paintable support fit.
+   const ground=a.ground,face=ground?.face>=0?G.level.faces[ground.face]:null;
+   if(!it.fire&&G.level.native&&a.grounded&&!a.climbing&&!a.submerged&&delta.length()<=.2&&Math.abs(a.pos.y-lower.y)<.16&&ground?.hit&&ground.block>=0&&ground.block<G.level.staticBlockCount&&!ground.grate&&ground.normal.y>.68&&Math.abs(ground.y-a.pos.y)<.16&&face?.turf&&G.level.containsFaceUV(face,ground.u,ground.v)){
+    const i=Math.max(0,Math.min(face.nu-1,Math.floor(ground.u/face.cu))),j=Math.max(0,Math.min(face.nv-1,Math.floor(ground.v/face.cv))),owner=G.paint.sample(ground.face,ground.u,ground.v);
+    if(G.level.mask[face.grid+j*face.nu+i]&&owner===0&&G.physics.bodyFits(a.pos,terrainRadius(false),PLAYER.stepUp,PLAYER.height,false,.003))it.squid=false;
+   }
+  }
  }else{
   // The painted route is a source wall line, not the whole facade. Keep
   // ordinary sideways swim input aimed at that line after attachment too.

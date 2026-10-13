@@ -24,18 +24,25 @@ test('ordinary source-climb inputs recover from a naturally drained dry firing s
  assert(edge,'the recorded failure is a genuine plain source wall edge');
  const c=edge.climb,a=new f.Actor({team:1,name:'dry source stance',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
  G.actors=[a];G.camera=new THREE.PerspectiveCamera();a.isBot=true;
- a.spawnAt(new THREE.Vector3(...c.paintStance),Math.PI);a.invuln=0;
+ const firingStart=new THREE.Vector3(...c.paintStance).add(new THREE.Vector3(-2,0,0));
+ a.spawnAt(firingStart,-Math.PI/2);a.invuln=0;
  const tick=()=>{G.time+=1/60;a.update(1/60);G.projectiles.update(1/60);G.paint.advanceSimulation(1/60);};
  f.setRandom(()=>.5);
  try{
   for(let i=0;i<36;i++)tick();
-  const normal=new THREE.Vector3(...c.normal);
-  a.aimYaw=Math.atan2(normal.x,normal.z);a.aimPitch=.3;
-  a.aimPoint.copy(a.pos).add(new THREE.Vector3(0,8,0)).addScaledVector(normal,20);
+  a.aimYaw=-Math.PI/2;a.aimPitch=1;
+  a.aimPoint.copy(a.pos).add(new THREE.Vector3(-20*Math.cos(1),1.1+20*Math.sin(1),0));
   a.intent.fire=true;
   let preparation=0;
-  while(a.ink>8&&preparation++<1200)tick();
-  a.intent.fire=false;for(let i=0;i<12;i++)tick();
+  while(a.ink>3&&preparation++<1200)tick();
+  a.intent.fire=false;let approach=0;
+  for(;approach<180;approach++){
+   const dx=c.paintStance[0]-a.pos.x;
+   a.intent.move.set(dx>.2?1:dx<-.2?-1:0,0,0);tick();
+   if(Math.abs(c.paintStance[0]-a.pos.x)<.2&&Math.hypot(a.vel.x,a.vel.z)<.15)break;
+  }
+  a.intent.move.set(0,0,0);
+  assert(approach<180&&Math.hypot(a.pos.x-c.paintStance[0],a.pos.z-c.paintStance[2])<=.2,'ordinary grounded movement reaches the real dry stance without a pose write');
   assert(a.ink<PLAYER.inkMax*.15,'ordinary admitted Shooter shots create the low-ink condition');
   assert(a.grounded&&!a.submerged&&a.ground.hit&&a.ground.face===33518&&!a.ground.grate);
   assert.equal(G.paint.sample(a.ground.face,a.ground.u,a.ground.v),0,'the original Floor00 firing stance stays dry');
@@ -49,6 +56,6 @@ test('ordinary source-climb inputs recover from a naturally drained dry firing s
   const expected=process.env.NATIVE_SHIPSHAPE_EXPECT_DRY_RECOVERY!=='0';
   assert.equal(recovered,expected,JSON.stringify({initialInk,endInk:a.ink,kidRefillTicks,fireInputs,phase:brain._nativeClimb?.phase}));
   if(expected)assert(kidRefillTicks>0);else assert.equal(kidRefillTicks,0);
-  console.log(JSON.stringify({sourceSha256:L.manifest.sourceSha256,helperSha256,from:from.id,to:edge.to,sourceFloor:33518,preparationSteps:preparation,step:1/60,initialInk,endInk:a.ink,kidRefillTicks,fireInputs,recovered,expected,conditions:'Original source/production Character/Shooter/Actor/resources. Low ink comes from ordinary shots; controlled initial two-node source route, not a whole-map Game proof.'}));
+  console.log(JSON.stringify({sourceSha256:L.manifest.sourceSha256,helperSha256,from:from.id,to:edge.to,sourceFloor:33518,firingStart:firingStart.toArray(),preparationSteps:preparation,approachSteps:approach,step:1/60,initialInk,endInk:a.ink,kidRefillTicks,fireInputs,recovered,expected,conditions:'Original source/production Character/Shooter/Actor/resources. Low ink comes from ordinary shots away from the stance, followed by ordinary grounded movement; controlled initial two-node source route, not a whole-map Game proof.'}));
  }finally{f.restoreRandom();}
 });
