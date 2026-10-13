@@ -168,6 +168,64 @@ test('Ballpoint includes two transition shots at 30F/35F and reaches long mode a
   assert.ok(shots[11].catalog.descriptor.speed<shots[12].catalog.descriptor.speed);
 });
 
+// Kanamoji #12 describes a real Spinner brake/free threshold: changing pitch by
+// only 0.1 degree can move the impact by roughly one metre in the author's
+// model. This test probes the ACTUAL catalog projectile flight, not a copied
+// physics formula or a Nintendo-metres calibration. Distances here are INKWAVE
+// world units, and the default brake/free coefficients remain provisional.
+// https://note.com/kanamoji_1027/n/n20cb3c3fb251
+test('source-derived Ballpoint long mode retains a 0.1-degree brake/free threshold discontinuity',async()=>{
+  const f=await setup();
+  const record=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponSpinnerDownpour');
+  const actor=f.make(record.id);
+  actor.form='kid';actor.intent.fire=true;
+  f.tick(actor,100);
+  actor.intent.fire=false;f.tick(actor,50);
+  const source=f.G.projectiles.list.find(p=>p.catalog?.descriptor?.key==='variable' &&
+    p.catalog.descriptor.charge>=1-1e-9);
+  assert.ok(source,'native Ballpoint full long-mode projectile was emitted');
+  const descriptor=source.catalog.descriptor;
+  assert.equal(descriptor.m.GoStraightToBrakeStateFrame,8,'8F pinned long-mode straight window');
+  assert.equal(descriptor.m.GoStraightStateEndMaxSpeed,10,'long-mode speed cap');
+  assert.equal(descriptor.m.SpawnSpeedRandomRate,.03,'long-mode initial speed scatter remains separate');
+  assert.ok(Math.abs(descriptor.speed-2.21915*60)<1e-8,'full-speed source value');
+  f.G.actors.length=0;f.G.boss=null;
+
+  const trace=pitchDeg=>{
+    const p=f.G.projectiles._new();
+    Object.assign(p,source,{
+      pos:source.pos.clone(),prev:source.prev.clone(),start:source.start.clone(),vel:source.vel.clone(),
+      catalog:{...source.catalog,hit:new f.Hit(),seen:new Set(),lobes:null,
+        phase:0,travel:0,range:Infinity,carry:0,stuck:false,nextSplash:Infinity,dropCount:0}
+    });
+    p.age=0;p.life=1.2;
+    p.pos.set(0,1.05,0);p.prev.copy(p.pos);p.start.copy(p.pos);
+    const pitch=pitchDeg*Math.PI/180;
+    p.vel.set(0,Math.sin(pitch),Math.cos(pitch)).multiplyScalar(descriptor.speed);
+    let freeFrame=null;
+    for(let frame=1;frame<=100;frame++){
+      const phase=p.catalog.phase;
+      const finished=f.G.projectiles._step(p,1/60);
+      if(phase!==2&&p.catalog.phase===2)freeFrame=frame;
+      if(p.pos.y<=0){
+        const fraction=p.prev.y/(p.prev.y-p.pos.y);
+        return {distance:p.prev.z+(p.pos.z-p.prev.z)*fraction,freeFrame,frame};
+      }
+      assert.equal(finished,false,'projectile must not terminate before ground crossing');
+    }
+    assert.fail('Ballpoint long-mode trajectory did not reach the ground');
+  };
+  const lower=trace(11.7),upper=trace(11.8);
+  assert.equal(lower.freeFrame,14,'11.7-degree path enters free state at F14');
+  assert.equal(upper.freeFrame,15,'11.8-degree path enters free state at F15');
+  assert.ok(lower.distance-upper.distance>.5,
+    'source threshold creates a substantial range split over 0.1 degree');
+  const controlA=trace(2.0),controlB=trace(2.1);
+  assert.equal(controlA.freeFrame,controlB.freeFrame);
+  assert.ok(Math.abs(controlA.distance-controlB.distance)<.1,
+    'ordinary neighboring angles must not be forced into a discontinuity');
+});
+
 test('Blaster repeat cadence includes its windup rather than adding it again',async()=>{
   const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponBlasterLight');
   const a=f.make(r.id);a.form='kid';a.intent.fire=true;
@@ -261,4 +319,14 @@ test('added horizontal Rollers preserve full sourced fan width and the same samp
       }
     }
   } finally {f.restoreRandom();}
+});
+
+test('live catalogue projectile delivers its exact attack row at the actor armor boundary',async()=>{
+  const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponChargerLong');
+  const a=f.make(r.id);a.form='kid';a.intent.fire=true;f.tick(a,120);a.intent.fire=false;f.tick(a);
+  const p=f.G.projectiles.list[0];assert.ok(p);assert.equal(p.catalog.descriptor.charge,1);
+  const enemy=f.make('shooter');enemy.team=1;enemy.pos.copy(p.pos).addScaledVector(p.vel.clone().normalize(),2);enemy.pos.y=0;
+  const causes=[];f.G.projectiles.applyHit=(owner,victim)=>{if(victim===enemy)causes.push(owner._s3AllSpecialDamageCause);};
+  for(let i=0;i<20;i++)if(f.G.projectiles._step(p,1/60))break;
+  assert.deepEqual(causes,['ChargerFull_Long']);assert.equal(a._s3AllSpecialDamageCause,undefined);
 });
