@@ -99,6 +99,7 @@ export function adaptNativeStages(rel,code){
   once('    this.think -= dt; this.jumpCd -= dt;', '    if (updateNativeClimb(this,G,dt)) return;\n    this.think -= dt; this.jumpCd -= dt;');
   once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, G.level.manifest?.sourceNavigation?.wallClimb ? Math.max(6000, nav.nodes.length * 4) : undefined);');
   once('this.pi + 7', 'this.pi + (G.level.manifest?.sourceNavigation?.wallClimb ? 1 : 7)');
+  once("nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump'", "(nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump' && (!G.level.manifest?.sourceNavigation?.wallClimb || nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'climb'))");
   once('  _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {', '  _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {\n    nativeClimbTravelForm(this,G);');
   once('    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);', '    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);\n    const candidates = G.level.native ? nativePaintGoalIds(this, G) : nav.validIds;');
   once('      const id = nav.validIds[(Math.random() * nav.validIds.length) | 0];', '      if (!candidates.length) break;\n      const id = candidates[(Math.random() * candidates.length) | 0];');

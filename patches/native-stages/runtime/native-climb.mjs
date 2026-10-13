@@ -56,16 +56,16 @@ export function nativeClimbTravelForm(brain,G){
  * climb edge only. Painting goes through the actor weapon/projectile pipeline,
  * and the Actor alone decides attachment, enemy-ink release and ledge pop. */
 export function updateNativeClimb(brain,G,dt){
- const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.wallClimb||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState)return false;
+ const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.wallClimb||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive)return false;
  let index=brain.pi;
  if(index===0&&brain.path.length>1&&a.pos.distanceTo(new THREE.Vector3(...[N.nodes[brain.path[0]].x,N.nodes[brain.path[0]].y,N.nodes[brain.path[0]].z]))<.8)index=1;
  const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.type==='climb');
  if(!edge){brain._nativeClimb=null;return false;}
  const c=edge.climb,upper=new THREE.Vector3(...c.upper),lower=new THREE.Vector3(...c.lower),normal=new THREE.Vector3(...c.normal),spine=new THREE.Vector3(...c.spine);
- if(Math.hypot(a.pos.x-upper.x,a.pos.z-upper.z)<.65&&Math.abs(a.pos.y-upper.y)<.75&&a.grounded){brain.pi=index+1;brain._nativeClimb=null;brain.noProg=0;return false;}
+ if(Math.hypot(a.pos.x-upper.x,a.pos.z-upper.z)<.65&&Math.abs(a.pos.y-upper.y)<.16&&a.grounded){brain.pi=index+1;brain._nativeClimb=null;brain.noProg=0;return false;}
  if(Math.hypot(a.pos.x-lower.x,a.pos.z-lower.z)>Math.hypot(...[c.paintStance[0]-lower.x,c.paintStance[2]-lower.z])+2.5&&!a.climbing)return false;
  brain.pi=index;
- const state=brain._nativeClimb?.edge===edge?brain._nativeClimb:(brain._nativeClimb={edge,seconds:0,lastY:a.pos.y,stalled:0});state.seconds+=dt;
+ const state=brain._nativeClimb?.edge===edge&&brain._nativeClimb.path===brain.path?brain._nativeClimb:(brain._nativeClimb={edge,path:brain.path,seconds:0,lastY:a.pos.y,stalled:0});state.seconds+=dt;
  if(a.pos.y>state.lastY+.12){state.lastY=a.pos.y;state.stalled=0;}else state.stalled+=dt;
  const it=a.intent;it.fire=it.squid=it.jump=it.sub=it.special=false;it.move.set(0,0,0);brain.noProg=0;
  if(state.stalled>12||state.seconds>30){brain.path=null;brain.repath=0;brain.goalTimer=0;brain._nativeClimb=null;it.move.copy(normal);return true;}
@@ -88,7 +88,10 @@ export function updateNativeClimb(brain,G,dt){
   const cp=Math.cos(a.aimPitch);a.aimPoint.copy(a.pos).add(new THREE.Vector3(Math.sin(a.aimYaw)*cp*6,1.1+Math.sin(a.aimPitch)*6,Math.cos(a.aimYaw)*cp*6));
   it.fire=a.ink>PLAYER.inkMax*.15;it.squid=!it.fire;state.phase=it.fire?'paint':'refill';
  }else{
-  it.squid=true;it.move.copy(normal).negate();
+  // The painted route is a source wall line, not the whole facade. Keep
+  // ordinary sideways swim input aimed at that line after attachment too.
+  const side=spine.clone().sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));
+  it.squid=true;it.move.copy(normal).negate().addScaledVector(side,3).normalize();
   if(!a.climbing&&(a.pos.y>=upper.y-.3||(a.climbExit>0&&a.pos.y>lower.y+.5)))it.move.copy(upper).sub(a.pos).setY(0).normalize();
   else if(!a.climbing&&a.pos.y<upper.y-.3){const delta=spine.clone().sub(a.pos).setY(0);if(delta.length()>.15)it.move.copy(delta).normalize();}
   state.phase='swim';
