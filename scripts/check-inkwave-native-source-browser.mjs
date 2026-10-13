@@ -5,6 +5,11 @@ import fs from 'node:fs';import path from 'node:path';import http from 'node:htt
 import {chromium} from 'playwright';
 import {nativeStageCatalog} from './lib/inkwave-native-stages.mjs';
 const SOURCE_STAGES=nativeStageCatalog().stages;
+const requestedIds=process.env.NATIVE_STAGE_IDS===undefined?SOURCE_STAGES.map(s=>s.id):process.env.NATIVE_STAGE_IDS.split(',').map(id=>id.trim());
+assert(requestedIds.length&&requestedIds.every(Boolean),'Native stage selection contains an empty id');
+for(const id of requestedIds)assert(SOURCE_STAGES.some(s=>s.id===id),'Unknown playable native stage: '+id);
+const requestedSet=new Set(requestedIds),selectedStages=SOURCE_STAGES.filter(s=>requestedSet.has(s.id));
+assert.equal(selectedStages.length,requestedSet.size,'Native stage selection was not preserved');
 const site=path.resolve(process.argv[2]||'_site-native-public'),out=path.resolve(process.argv[3]||'.browser-evidence/native-source-public');fs.mkdirSync(out,{recursive:true});
 assert(!fs.existsSync(path.join(site,'_native-reference-assets')),'public build must not contain source payload');
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.html':'text/html','.woff2':'font/woff2','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};
@@ -24,7 +29,7 @@ try{
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
  await page.evaluate(()=>{NG.game._skipRender=true;NG.game.menus.show('setup');});
  result.menu=await page.locator('.iw-ticket__name').allTextContents();for(const s of SOURCE_STAGES)assert(result.menu.includes(s.name),s.name+' not selectable');console.log(SOURCE_STAGES.length+' source choices visible');save();
- for(const s of SOURCE_STAGES.filter(s=>!process.env.NATIVE_STAGE_IDS||process.env.NATIVE_STAGE_IDS.split(',').includes(s.id))){
+ for(const s of selectedStages){
   console.log('select '+s.id);await page.evaluate(()=>{NG.game.input.exitLock();NG.game.debug.unfreeze();NG.game._skipRender=true;NG.game.menus.show('setup');});
   await page.waitForFunction(()=>!document.pointerLockElement);
   await page.waitForFunction(name=>{const root=NG.game.menus._scr?.el,ticket=[...root.querySelectorAll('.iw-ticket')].find(e=>e.textContent.includes(name));if(!ticket)return false;let opacity=1;for(let e=ticket;e&&e!==root.parentElement;e=e.parentElement)opacity*=Number(getComputedStyle(e).opacity);return opacity>.7;},s.name);
@@ -35,6 +40,7 @@ try{
   assert.equal(proof.id,s.id);assert.equal(proof.sourceMode,'browser-direct');assert.equal(proof.sourceSha256,s.sourceSha256);assert.equal(proof.actors,8);assert.equal(proof.bots,7);assert.equal(proof.spawn.active,false);assert.equal(proof.spawn.grounded,true);assert(proof.coverage.some(n=>n>0));
   result.stages.push(proof);save();await page.screenshot({path:path.join(out,s.id+'.png'),timeout:60000});
  }
+ assert.equal(result.stages.length,selectedStages.length,'Native source proofs did not cover every requested stage');
  if(result.stages.length){
   const last=result.stages.at(-1).id,before=result.downloads;
   await page.evaluate(async()=>{const {MAPS}=await import(new URL('src/config.js',document.baseURI));await NG.game._buildWorld(MAPS.find(m=>m.id==='tidewater'));});
