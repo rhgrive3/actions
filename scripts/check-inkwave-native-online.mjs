@@ -38,7 +38,23 @@ try{
   await pages[0].evaluate(({id,mode})=>NG.net.setSettings({map:id,mode,bots:true}),{id,mode});
   await pages[1].waitForFunction(({id,mode})=>NG.net.lobby.map===id&&NG.net.lobby.mode===mode,{id,mode});
   await pages[0].evaluate(()=>{if(!NG.net.confirmTeams())throw Error('Teams not confirmed');});await pages[1].waitForFunction(()=>NG.net.lobby.teamsConfirmed);
-  await pages[1].evaluate(()=>NG.net.setMe({ready:true}));await pages[0].evaluate(()=>NG.net.setMe({ready:true}));await pages[0].waitForFunction(()=>NG.net.canStart());
+  await pages[1].evaluate(()=>NG.net.setMe({ready:true}));await pages[0].evaluate(()=>NG.net.setMe({ready:true}));
+  const capability=await pages[0].evaluate(async({id,mode})=>{const {nativeStageBuild}=await import(new URL('patches/native-stages/runtime/build-config.mjs',document.baseURI));return nativeStageBuild.stages.find(s=>s.id===id)?.ruleAvailability?.[mode]||null;},{id,mode});
+  if(capability?.supported===false){
+   assert.equal(capability.status,'source-route-unverified');assert.ok(capability.reason);
+   await Promise.all(pages.map(p=>p.waitForFunction(()=>NG.net.lobby.players.every(p=>p.ready)&&NG.net.lobby.teamsConfirmed)));
+   await Promise.all(pages.map(p=>p.evaluate(()=>{const G=NG;globalThis.nativeRefusalBefore={match:G.match,level:G.level,physics:G.physics,nav:G.nav,actors:[...G.actors],flow:G.game._matchFlow,transport:G.net.tr,state:G.net.state,start:G.net._startCfg,room:JSON.stringify({map:G.net.lobby.map,mode:G.net.lobby.mode,teamsConfirmed:G.net.lobby.teamsConfirmed,players:G.net.lobby.players.map(p=>({id:p.id,team:p.team,ready:p.ready}))})};globalThis.nativeRefusalErrors=[];G.net.on('error',e=>nativeRefusalErrors.push(e.message));})));
+   const host=await pages[0].evaluate(()=>{const net=NG.net;return{block:net.startBlock(),canStart:net.canStart(),started:net.start()};});assert.ok(host.block.includes(capability.reason));assert.equal(host.canStart,false);assert.equal(host.started,false);
+   // Send a malformed host begin over the real WebSocket/production relay.
+   // The guest's actual NetSession preflight must preserve its room and actors.
+   await pages[0].evaluate(async({id,mode})=>{const {nativeStageFingerprint}=await import(new URL('patches/native-stages/runtime/registry.mjs',document.baseURI));NG.net.tr.broadcast({k:'start',map:id,mode,host:NG.net.myId,id:'unsupported-rule-probe',roster:[],nativeStage:nativeStageFingerprint(id)});},{id,mode});
+   await pages[1].waitForFunction(()=>nativeRefusalErrors.length>0,null,{timeout:30000});
+   const refusals=await Promise.all(pages.map(p=>p.evaluate(()=>{const G=NG,b=nativeRefusalBefore,room=JSON.stringify({map:G.net.lobby.map,mode:G.net.lobby.mode,teamsConfirmed:G.net.lobby.teamsConfirmed,players:G.net.lobby.players.map(p=>({id:p.id,team:p.team,ready:p.ready}))});return{roomPreserved:room===b.room,statePreserved:G.net.state===b.state,startPreserved:G.net._startCfg===b.start,transportPreserved:G.net.tr===b.transport,worldPreserved:G.level===b.level&&G.physics===b.physics&&G.nav===b.nav,matchPreserved:G.match===b.match&&G.game._matchFlow===b.flow,actorsPreserved:b.actors.every((a,i)=>G.actors[i]===a),actors:G.actors.length,errors:nativeRefusalErrors};})));
+   for(const refusal of refusals)for(const key of ['roomPreserved','statePreserved','startPreserved','transportPreserved','worldPreserved','matchPreserved','actorsPreserved'])assert.equal(refusal[key],true,key);
+   assert.ok(refusals[1].errors.some(m=>m.includes(capability.reason)));
+   results.push({id,mode,supported:false,status:capability.status,host,refusals,transport:'real WebSocket + production RoomDurableObject',packets});fs.writeFileSync(path.join(out,'online.json'),JSON.stringify({status:'running',results,errors},null,2));await Promise.all(pages.map(p=>p.evaluate(()=>NG.net.leave())));continue;
+  }
+  await pages[0].waitForFunction(()=>NG.net.canStart());
   await pages[0].evaluate(()=>{if(!NG.net.start())throw Error('Native room start refused');});
   await Promise.all(pages.map(p=>p.waitForFunction(()=>NG.match&&NG.level?.native&&NG.net.active,null,{timeout:180000})));
   // Keep transport clocks real while advancing the paused render loop manually.
