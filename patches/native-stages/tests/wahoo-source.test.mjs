@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {nativeStageCatalog,nativeStageIdentity} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
 
 const SOURCE=process.env.INKWAVE_NATIVE_STAGE_SOURCE,ASSETS=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
+const REPOSITORY=process.env.INKWAVE_NATIVE_STAGE_REPOSITORY;
 const stage=nativeStageCatalog().stages.find(s=>s.id==='wahoo');
 test('Wahoo pins the Carousel03 export while retaining unverified moving-object semantics',()=>{
  assert.equal(stage.internal,'Vss_Carousel03');
@@ -15,6 +17,23 @@ test('Wahoo pins the Carousel03 export while retaining unverified moving-object 
  assert.equal(stage.version1130Verified,false);
  assert.match(stage.placementStatus,/moving-object.*UNVERIFIED/);
  assert.ok(nativeStageIdentity()['definitions/wahoo.json']);
+});
+
+test('Wahoo original MTL and every PNG match pinned Git blob hashes and sizes',{skip:!SOURCE||!ASSETS||!REPOSITORY},()=>{
+ const revision='0611f51b35c9736ee986fb2218461e2585b7875e',prefix='stages/'+stage.internal+'/',d=readStage(ASSETS,'wahoo');
+ const rows=execFileSync('git',['-C',REPOSITORY,'ls-tree','-lr','-z',revision,prefix]).toString().split('\0');let png=0,mtl=0;
+ for(const row of rows){if(!row)continue;const [meta,file]=row.split('\t'),relative=file.slice(prefix.length);
+  if(relative!==stage.internal+'.mtl'&&!relative.startsWith('textures/'))continue;
+  const [,type,oid,size]=meta.trim().split(/\s+/),raw=fs.readFileSync(path.join(SOURCE,stage.internal,relative));
+  assert.equal(type,'blob');assert.equal(raw.length,Number(size));assert.equal(crypto.createHash('sha1').update(Buffer.from('blob '+raw.length+'\0')).update(raw).digest('hex'),oid);
+  if(relative.endsWith('.png'))png++;else mtl++;
+ }
+ assert.equal(png,221);assert.equal(mtl,1);
+ for(const [name,pin] of Object.entries(d.manifest.textureIntegrity)){
+  const raw=fs.readFileSync(path.join(SOURCE,stage.internal,name)),copied=fs.readFileSync(path.join(ASSETS,'wahoo',name));
+  assert.deepEqual(copied,raw);assert.equal(raw.length,pin.bytes);assert.equal(crypto.createHash('sha256').update(raw).digest('hex'),pin.sha256);
+ }
+ assert.equal(Object.keys(d.manifest.textureIntegrity).length,196);
 });
 
 test('Wahoo independent original stream matches every float32 attribute and local uint32 face index',{skip:!SOURCE||!ASSETS||!fs.existsSync(path.join(ASSETS||'', 'wahoo','manifest.json'))},()=>{
