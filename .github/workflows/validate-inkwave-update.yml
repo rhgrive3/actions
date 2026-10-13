@@ -591,7 +591,7 @@ jobs:
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
           ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public "$DIAGNOSTIC_STORAGE/site"
-          node scripts/check-inkwave-runtime-performance.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --parity-only --quality high --verify-render
+          CHROMIUM_PATH="$(node --input-type=module -e 'import {chromium} from "playwright"; console.log(chromium.executablePath())')" node scripts/diagnose-inkwave-stage-visibility.mjs "$DIAGNOSTIC_STORAGE/site" "$DIAGNOSTIC_STORAGE/probe"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
