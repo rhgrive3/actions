@@ -42,7 +42,7 @@ export function nativeClimbTransition(graph,lower,upper){
 /** Travel routes are sampled for the human body. Keep ordinary squid input only
  * where the live, wider swim capsule also clears the next source support. */
 export function nativeClimbTravelForm(brain,G){
- if(!G.level?.manifest.sourceNavigation?.wallClimb||!brain.a.intent.squid||brain.a.climbing)return;
+ if(!G.level?.manifest?.sourceNavigation?.wallClimb||!brain.a.intent.squid||brain.a.climbing)return;
  const a=brain.a,N=G.nav,from=N.nodes[brain.path?.[Math.max(0,brain.pi-1)]],to=N.nodes[brain.path?.[brain.pi]];
  if(!to)return;
  const edge=from?.nb.find(e=>e.to===to.id),p=a.pos.clone(),radius=terrainRadius(true);
@@ -55,7 +55,7 @@ export function nativeClimbTravelForm(brain,G){
  * climb edge only. Painting goes through the actor weapon/projectile pipeline,
  * and the Actor alone decides attachment, enemy-ink release and ledge pop. */
 export function updateNativeClimb(brain,G,dt){
- const a=brain.a,N=G.nav;if(!G.level?.manifest.sourceNavigation?.wallClimb||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState)return false;
+ const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.wallClimb||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState)return false;
  let index=brain.pi;
  if(index===0&&brain.path.length>1&&a.pos.distanceTo(new THREE.Vector3(...[N.nodes[brain.path[0]].x,N.nodes[brain.path[0]].y,N.nodes[brain.path[0]].z]))<.8)index=1;
  const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.type==='climb');

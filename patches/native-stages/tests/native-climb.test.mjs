@@ -12,6 +12,11 @@ test('source wall traversal is an explicit validated opt-in',()=>{
  try{write({wallClimb:true});assert.equal(nativeStageCatalog(dir).stages.at(-1).sourceNavigation.wallClimb,true);for(const value of [{wallClimb:false},{wallClimb:1},{wallClimb:true,teleport:true}]){write(value);assert.throws(()=>nativeStageCatalog(dir),/source navigation/);}for(const s of nativeStageCatalog().stages.filter(s=>['scorch','hagglefish','inkblot','mako','brinewater'].includes(s.id)))assert.equal(s.sourceNavigation,undefined);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 
+test('ordinary blockout bots retain inputs without a native manifest',async()=>{
+ const f=await nativeFixture(),actor=f.make('shooter'),brain=new f.BotBrain(actor,'normal');actor.intent.squid=true;actor.intent.move.set(1,0,0);
+ assert.equal(f.G.level.manifest,undefined);assert.equal(f.updateNativeClimb(brain,f.G,1/60),false);f.nativeClimbTravelForm(brain,f.G);assert.equal(actor.intent.squid,true);assert.deepEqual(actor.intent.move.toArray(),[1,0,0]);
+});
+
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS,id=process.env.INKWAVE_NATIVE_CLIMB_STAGE||'flounder',available=root&&fs.existsSync(path.join(root,id,'manifest.json'));
 test('opted source walls have real supported routes, while NoPaint and disabled paths reject',{skip:!available},async()=>{
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(root,id)),P=G.physics=new f.NativePhysics(L);
@@ -55,7 +60,7 @@ test('opted source walls have real supported routes, while NoPaint and disabled 
    human.push({team,hz,start:edge.climb.lower,end:actor.pos.toArray(),grounded:actor.grounded,initialState:'source wall already friendly-inked; humanoid shooter; default fixture gear'});
   }
   for(const hz of [30,60,120]){
-   G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.list.length=0;
+   G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();
    const actor=f.make('shooter');actor.team=team;actor.isBot=true;actor._integrate=f.Actor.prototype._integrate;actor.pos.fromArray(edge.climb.lower);actor.vel.set(0,0,0);actor.invuln=0;G.actors=[actor];
    const brain=actor.bot=new f.BotBrain(actor,'normal');assert.ok(brain._pathTo(new THREE.Vector3(...edge.climb.upper),.6));brain.goalTimer=100;brain.repath=100;
    let climbed=false,fire=false,swim=false,seconds=0;
@@ -63,14 +68,14 @@ test('opted source walls have real supported routes, while NoPaint and disabled 
     G.time+=1/hz;brain.update(1/hz);fire ||=actor.intent.fire;swim ||=actor.intent.squid;actor.character.root.position.copy(actor.pos);actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);climbed ||=actor.climbing;seconds=(frame+1)/hz;
     if(climbed&&actor.grounded&&Math.abs(actor.pos.y-edge.climb.upper[1])<.15)break;
    }
-   assert.ok(fire&&swim&&climbed&&actor.grounded&&Math.abs(actor.pos.y-edge.climb.upper[1])<.15,'existing BotBrain paints an empty source wall with admitted weapon rounds then swims to its real upper support');
+   assert.ok(fire&&swim&&climbed&&actor.grounded&&Math.abs(actor.pos.y-edge.climb.upper[1])<.15,'existing BotBrain paints an empty source wall then swims to support '+JSON.stringify({team,hz,fire,swim,climbed,pos:actor.pos.toArray(),grounded:actor.grounded,phase:brain._nativeClimb?.phase,missing:edge.climb.samples.filter(s=>G.paint.sample(s.face,s.u,s.v)!==team+1),ink:actor.ink}));
    assert.ok(edge.climb.samples.every(s=>G.paint.sample(s.face,s.u,s.v)===team+1),'weapon paint owns every wall-chain sample');
    assert.deepEqual(Object.keys(actor.s3.abilityPoints),[],'test gear is zero AP');
    bots.push({team,hz,seconds,start:edge.climb.lower,end:actor.pos.toArray(),wallSamples:edge.climb.samples.length,weapon:'shooter / Shooter_Normal_00',gearAP:0,initialWall:'unpainted',ordinaryFireSwimMove:true,grounded:true});
   }
  }
  for(let team=0;team<2;team++)for(const hz of [30,60,120]){
-  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.list.length=0;
+  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();
   const actor=f.make('shooter');actor.team=team;actor.isBot=true;actor._integrate=f.Actor.prototype._integrate;actor.spawnAt(L.spawnPads[team],team?Math.PI:0);actor.invuln=0;G.actors=[actor];
   const brain=actor.bot=new f.BotBrain(actor,'normal'),sign=team?-1:1,to=N.nearest(new THREE.Vector3(-15*sign,6,35*sign),1.2),node=N.nodes[to],goal=new THREE.Vector3(node.x,node.y,node.z);
   assert.ok(brain._pathTo(goal,.6));const initialWaypoints=brain.path.length,initialClimbs=brain.path.slice(1).filter((to,i)=>N.edgeType(brain.path[i],to)==='climb').length;assert.ok(initialClimbs>=2);
@@ -83,7 +88,7 @@ test('opted source walls have real supported routes, while NoPaint and disabled 
    G.time+=1/hz;brain.update(1/hz);fire ||=actor.intent.fire;actor.character.root.position.copy(actor.pos);actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);climbed ||=actor.climbing;seconds=(frame+1)/hz;
    if(actor.grounded&&actor.pos.distanceTo(goal)<1.5)break;
   }
-  assert.ok(actor.alive&&actor.grounded&&actor.pos.distanceTo(goal)<1.5&&climbed&&fire,'existing bot physically traverses opposing source bank, real walls and supports at '+hz+'Hz/team'+team);
+  assert.ok(actor.alive&&actor.grounded&&actor.pos.distanceTo(goal)<1.5&&climbed&&fire,'existing bot physically traverses opposing source bank, real walls and supports at '+hz+'Hz/team'+team+' '+JSON.stringify({seconds,climbed,fire,pos:actor.pos.toArray(),distance:actor.pos.distanceTo(goal),alive:actor.alive,grounded:actor.grounded,ink:actor.ink,mode:brain.mode,goal:brain.goal,pi:brain.pi,path:brain.path?.slice(brain.pi,brain.pi+2),phase:brain._nativeClimb?.phase,climbSeconds:brain._nativeClimb?.seconds,climbStall:brain._nativeClimb?.stalled,specialActive:actor.specialActive,form:actor.form,squid:actor.intent.squid}));
   bankTraversal.push({team,hz,seconds,replans,initialWaypoints,initialClimbs,start:L.spawnPads[team].toArray(),end:actor.pos.toArray(),distanceToGoal:actor.pos.distanceTo(goal),weapon:'shooter / Shooter_Normal_00',gearAP:0,initialPaint:'unpainted',actualBrainActorWeaponProjectilesPaintClock:true});
  }
  console.log(JSON.stringify({id,climbEdges:edges.length,navNodes:N.nodes.length,validNodes:N.validIds.length,noPaintNegativeCases:noPaint,blockedSourceCorridors:blockedCorridors,navBuildMilliseconds,verificationMilliseconds:performance.now()-started,enemyWallReleased:true,bankPaths,human,bots,bankTraversal,sourceBuffersUnchanged:true}));
