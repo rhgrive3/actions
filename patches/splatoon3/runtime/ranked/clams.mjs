@@ -780,7 +780,8 @@ export class ClamsRule {
     const inv = this.state.inventories[actor.id] ?? freshInventory(actor.team);
     const target = this._goal(actor.team);
     const aimAt = point => vec(point);
-    const reachable = (point, from = position) => typeof frame?.blocked !== 'function' || frame.blocked(from, point) !== true;
+    const reachable = (point, from = position) => typeof frame?.blocked !== 'function' || frame.blocked(from, point) !== true
+      || (from === position && typeof frame.botGoalRoute === 'function' && frame.botGoalRoute(actor,point) === true);
     const ownDefense = this._goal(1 - actor.team);
     const enemyOpen = this.state.baskets[actor.team].barrierOpen && !this.state.baskets[actor.team].tucked;
     const ownGoalThreatened = this.state.baskets[1 - actor.team].barrierOpen;
