@@ -52,8 +52,15 @@ test('queued Charger fix blocks a poison before the playback clock, retires beam
     assert.equal(f.projectiles.beams.length, 1, 'valid network Charger shot still displays');
     const shot=f.projectiles.beams[0];
     assert.ok(Number.isFinite(shot.life) && Number.isFinite(shot.th));
+    // Remote beams age on the sender's confirmed simulation timeline, not on
+    // an arbitrary amount of local rendering time while that sender is stalled.
     f.projectiles._updateBeams(1);
-    assert.equal(f.projectiles.beams.length, 0, 'valid shot expires');
+    assert.equal(f.projectiles.beams.length, 1, 'stalled remote beam stays on owner time');
+    peer.sim += Math.ceil(shot.life / (1 / 60)) + 2;
+    peer.tr += 1;
+    f.clock.advance(1);
+    f.projectiles._updateBeams(1 / 60);
+    assert.equal(f.projectiles.beams.length, 0, 'valid shot expires after owner time advances');
     assert.ok(f.projectiles.beamPool.length > 0);
 
     const m=new f.THREE.Vector3(0,2,0), d=new f.THREE.Vector3(0,0,1);
