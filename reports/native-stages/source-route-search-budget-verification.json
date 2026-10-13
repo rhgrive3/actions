@@ -1,0 +1,423 @@
+{
+  "schema": 1,
+  "status": "verified-narrow-native-search-budget",
+  "runtimeChange": {
+    "file": "patches/native-stages/adapter.mjs",
+    "selection": "G.level.native",
+    "nativeBound": "Math.max(6000, nav.nodes.length * 4)",
+    "legacyBoundArgument": "undefined (existing NavGraph.path default6000)",
+    "unbounded": false,
+    "stageDefinitionsChanged": false,
+    "sourceNavigationFlagsChanged": false,
+    "graphGeometryMasksChanged": false,
+    "towerSurgeGoalPolicyChanged": false
+  },
+  "source": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "internal": "Vss_Carousel03",
+    "tree": "5513701317c1a0d67800ffa4abac093eacbc87ea",
+    "sha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+    "retailVersionVerified": false
+  },
+  "cpu": {
+    "productionSource": {
+      "id": "wahoo",
+      "cases": [
+        {
+          "hz": 30,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "sourceGoal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "start": 6224,
+          "end": 5426,
+          "routeNodes": 118,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "searchBound": 50580,
+          "oldBudget": 6000,
+          "oldMilliseconds": 6.157729999998992,
+          "searchMilliseconds": 8.070600000002742,
+          "enemySpawnRejected": true,
+          "productionActor": true,
+          "productionCharacter": true,
+          "ordinaryTraversalFlagsOff": true,
+          "gearAP": 0
+        },
+        {
+          "hz": 60,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "sourceGoal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "start": 6224,
+          "end": 5426,
+          "routeNodes": 118,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "searchBound": 50580,
+          "oldBudget": 6000,
+          "oldMilliseconds": 6.215367000000697,
+          "searchMilliseconds": 5.441632000001846,
+          "enemySpawnRejected": true,
+          "productionActor": true,
+          "productionCharacter": true,
+          "ordinaryTraversalFlagsOff": true,
+          "gearAP": 0
+        },
+        {
+          "hz": 120,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "sourceGoal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "start": 6224,
+          "end": 5426,
+          "routeNodes": 118,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "searchBound": 50580,
+          "oldBudget": 6000,
+          "oldMilliseconds": 7.798781000001327,
+          "searchMilliseconds": 4.80185899999924,
+          "enemySpawnRejected": true,
+          "productionActor": true,
+          "productionCharacter": true,
+          "ordinaryTraversalFlagsOff": true,
+          "gearAP": 0
+        }
+      ],
+      "sourceBuffersUnchanged": true,
+      "scope": "CPU production Actor/Character/BotBrain, naturally grounded original pad, route selection only; no later position/velocity/route/ink injection; optional source-animation bank unavailable in VM, actual browser movement checked separately"
+    },
+    "checks": 2,
+    "passed": 2,
+    "failed": 0,
+    "composition": "accepted67e5565c plus narrow native budget; wallClimb/highDrops/wallSurge all OFF; real Character VM optional motion-bank dynamic import unavailable",
+    "originalFive": {
+      "tests": 98,
+      "passed": 85,
+      "skippedFixtureSpecific": 13,
+      "failed": 0,
+      "durationMilliseconds": 380294.710873,
+      "composition": "accepted7ddb plus narrow native budget",
+      "assets": "/workspace/actions/.codex-stage-sources/generated (accepted immutable v3)",
+      "source": "/workspace/actions/.codex-stage-sources/KiTrix/stages"
+    }
+  },
+  "browser": {
+    "status": "passed",
+    "id": "wahoo",
+    "buildFingerprint": "eca4d736c31f4c9f531ee7ca0ed16995d030c771de17dd894b808434cc1cd7a8",
+    "errors": [],
+    "native": {
+      "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+      "actors": 8,
+      "bots": 7,
+      "sourceNavigation": null,
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "oldRejected": true,
+          "routeNodes": 118,
+          "searchBound": 50580,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "oldMilliseconds": 4.200000002980232,
+          "searchMilliseconds": 3.5,
+          "start": [
+            -85,
+            18,
+            0
+          ],
+          "goal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "end": [
+            -76.59627082539876,
+            16.383423852526427,
+            -0.38217488214719847
+          ],
+          "distance": 8.566331777439439,
+          "frames": 61,
+          "groundedSourceSamples": 61,
+          "grounded": true,
+          "alive": true,
+          "enemySpawnRejected": true,
+          "gearAP": []
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "oldRejected": true,
+          "routeNodes": 118,
+          "searchBound": 50580,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "oldMilliseconds": 7.699999988079071,
+          "searchMilliseconds": 3.7999999970197678,
+          "start": [
+            -85,
+            18,
+            0
+          ],
+          "goal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "end": [
+            -76.65604240677067,
+            16.401305055154793,
+            -0.34203315746704327
+          ],
+          "distance": 8.502613746671663,
+          "frames": 121,
+          "groundedSourceSamples": 121,
+          "grounded": true,
+          "alive": true,
+          "enemySpawnRejected": true,
+          "gearAP": []
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "oldRejected": true,
+          "routeNodes": 118,
+          "searchBound": 50580,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "oldMilliseconds": 2.199999988079071,
+          "searchMilliseconds": 2.1000000089406967,
+          "start": [
+            -85,
+            18,
+            0
+          ],
+          "goal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "end": [
+            -76.71581398814256,
+            16.419186257783153,
+            -0.3018914327868925
+          ],
+          "distance": 8.439066796976208,
+          "frames": 241,
+          "groundedSourceSamples": 241,
+          "grounded": true,
+          "alive": true,
+          "enemySpawnRejected": true,
+          "gearAP": []
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "oldRejected": false,
+          "routeNodes": 95,
+          "searchBound": 50580,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "oldMilliseconds": 2.2999999970197678,
+          "searchMilliseconds": 1.9000000059604645,
+          "start": [
+            85,
+            18,
+            0
+          ],
+          "goal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "end": [
+            77.67936123037843,
+            16.70744002462292,
+            -3.1140819309569774
+          ],
+          "distance": 8.059774783326512,
+          "frames": 61,
+          "groundedSourceSamples": 61,
+          "grounded": true,
+          "alive": true,
+          "enemySpawnRejected": true,
+          "gearAP": []
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "oldRejected": false,
+          "routeNodes": 95,
+          "searchBound": 50580,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "oldMilliseconds": 2.7999999970197678,
+          "searchMilliseconds": 1.8999999910593033,
+          "start": [
+            85,
+            18,
+            0
+          ],
+          "goal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "end": [
+            77.73048656750048,
+            16.72273462602947,
+            -3.0633847919434976
+          ],
+          "distance": 7.991342738510579,
+          "frames": 121,
+          "groundedSourceSamples": 121,
+          "grounded": true,
+          "alive": true,
+          "enemySpawnRejected": true,
+          "gearAP": []
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "oldRejected": false,
+          "routeNodes": 95,
+          "searchBound": 50580,
+          "sourceNodes": 12645,
+          "validNodes": 8369,
+          "oldMilliseconds": 2.1000000089406967,
+          "searchMilliseconds": 2.0999999940395355,
+          "start": [
+            85,
+            18,
+            0
+          ],
+          "goal": [
+            -0.40070343017578125,
+            13,
+            -5.185100555419922
+          ],
+          "end": [
+            77.73048656750048,
+            16.72273462602947,
+            -3.0633847919434976
+          ],
+          "distance": 7.991342738510579,
+          "frames": 241,
+          "groundedSourceSamples": 241,
+          "grounded": true,
+          "alive": true,
+          "enemySpawnRejected": true,
+          "gearAP": []
+        }
+      ],
+      "scope": "Actual production Match/Actor/Character/BotBrain/WeaponRunner/Projectiles with eight actors; source-supported initial pad setups, empty initial ink, controlled existing zone-center target; no later pose/velocity/route/ink writes. Initial route and ordinary bank movement only; no full 118-waypoint objective-arrival claim; SwiftShader"
+    },
+    "legacy": {
+      "id": "tidewater",
+      "native": false,
+      "defaultBudgetArgumentUndefined": true
+    }
+  },
+  "browserGroundedSourceSamples": 846,
+  "browserDistanceRange": [
+    7.991342738510579,
+    8.566331777439439
+  ],
+  "browserSearchMillisecondsRange": [
+    1.8999999910593033,
+    3.7999999970197678
+  ],
+  "builds": {
+    "private": {
+      "contentHash": "eca4d736c31f4c9f531ee7ca0ed16995d030c771de17dd894b808434cc1cd7a8",
+      "revision": "b190a0dd977fb1098fa2c3f1fb193f6c0aeca435824c452eaafc9e4c85902ef8",
+      "runtimeSha256": "51600752772413059c9f959626646459893b10736eb04a0d9d4150a6f736cb39",
+      "manifestSha256": "2b527249444fd5f10c4eb1804c23bdbd4e2fefd08fb393cb1ddd26d5b1ee7f56",
+      "composition": "accepted7ddb plus exact bounded budget condition, before accepted equivalent611 and optional67 Surge; Wahoo ordinary traversal opt-ins absent"
+    },
+    "public": {
+      "contentHash": "0562af923ea1bd4c1e9317c1ba0f68eeb1d7baf9e54da76c5fa5d8bd00c304da",
+      "revision": "a48bb90ec7dea14ee6772002304fa3c24a89220fe6b1db7c08dfbee21064968c",
+      "runtimeSha256": "51600752772413059c9f959626646459893b10736eb04a0d9d4150a6f736cb39",
+      "manifestSha256": "f859801a41a3d19e016072dd9289fc07d69c9db1c365538febe0f7222b43c774",
+      "composition": "accepted7ddb plus exact bounded budget condition, before accepted equivalent611 and optional67 Surge; Wahoo ordinary traversal opt-ins absent"
+    }
+  },
+  "publicGates": {
+    "packagingTests": 9,
+    "passed": 9,
+    "skipped": 0,
+    "startup": {
+      "status": "passed",
+      "revision": "a48bb90ec7dea14ee6772002304fa3c24a89220fe6b1db7c08dfbee21064968c",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2894955,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5789138,
+      "workerBytes": 70517,
+      "declaredBytes": 10407178,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "receiptHashes": {
+    "productionSourceCpu": {
+      "path": ".ci-scratch/native-search-final-source-tests.log",
+      "sha256": "1f4ef3f06f5d763e9aaeb912699a538472fdfe415e58f34606e4dfcf90eeb042"
+    },
+    "originalFiveCpu": {
+      "path": ".ci-scratch/native-search-original-five.log",
+      "sha256": "1963dd59ce56e100205317e69064d4a59dbbf76f94df1f3d40623565cc8a1355"
+    },
+    "browser": {
+      "path": ".browser-evidence/accepted-search-budget-r2/search-budget.json",
+      "sha256": "3d335619f2a9c3dbe4077fe6a963054961fd9e83c2884e9a25b2e3619f23de07"
+    },
+    "packaging": {
+      "path": ".ci-scratch/search-packaging.log",
+      "sha256": "cc1271c7c3142301b5390fa6fb4a2335c79d955a69db51633f73f6d9c14e472d"
+    },
+    "startup": {
+      "path": ".ci-scratch/search-startup-budget.json",
+      "sha256": "73c986bb0d8cd65a6e63853e4025feeef86b6ef6889fad93972bb78947b05059"
+    }
+  },
+  "limitations": [
+    "Route selection and initial ordinary source-bank movement; no complete118-waypoint objective-arrival assertion.",
+    "Browser is actual Chromium with SwiftShader, not physical console/mobile performance.",
+    "Pinned display-derived collision/navigation is inferred; console collision, masks, AI and source units unverified.",
+    "Retail reference11.3.0 supplies identity metadata only; no asserted retail pathfinding iteration budget."
+  ],
+  "verificationCode": {
+    "cpu": "patches/native-stages/tests/native-route-search-budget.test.mjs",
+    "browser": "scripts/check-inkwave-native-search-budget.mjs"
+  }
+}
