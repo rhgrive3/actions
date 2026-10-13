@@ -4154,3 +4154,14 @@ The permanent eleven-case full-installer regression retains actual Actor.damage 
 - **変更**: 既存の枠で正の液面領域・非負の角を維持できる場合は同じ数値を使う。成立しない小寸法だけ、外側の足の半径以内に枠を収める。極小キャンバスでもパディング、肩、足を利用可能な幅・高さに収める。例外を握り潰す、タンクを隠す、HUDやコントローラーを省略する処理は追加しない。
 - **確認状態**: 本番合成メソッドで旧式の−0.48例外、正常寸法の描画命令・色の完全一致、往復リサイズ、DPR 0.75〜3、小さい正寸法と非表示DOMの既存フォールバックを回帰検証。ブラウザゲートは実際の最小化ビルドを320×568から起動し、320×200を含む縦横サイズへ変更、通常フレームでインク量100/0/50のキャンバス画素変化をスモーク検証する（外枠・サブ消費線を含むため、インクだけの被覆率や視覚一致の測定ではない）。Chromium/WebKitの結果はPRのexact-head CI・artifactで確定し、未実行を成功扱いにしない。
 - **本家比較 / 未確認**: 既存S3映像参照のタンク形状・平らな液面・サブ消費線を保持する。参照版・ブキ・ギアによるゲーム数値の変更はない。今回の根拠はブラウザのroundRect仕様とINKWAVEの再現であり、本家Ver.11.3.0の実機タンク寸法・実機モバイル対応・完全な視覚一致を確認したものではない。射撃、移動、インク消費/回復の権威ロジックは未変更。
+
+ホコ攻撃種別の追補: ナイスダマ装甲への60＋180が、所持している通常シューターの倍率.7を誤って使い42＋126になる経路を再現・修正。11.3.0のGachihoko_Bullet／Gachihoko_BombCore／GachihokoTimeUpBurstを装甲・設置物・ネイティブ通信へ渡す。グレートバリアはネイティブの外膜/弱点・raw単位x10・DamgeRatio .64・対物ギアを再利用し、接触/近傍着弾の爆風と所持者側のHP提案へ接続。破壊前の遮蔽は同じ爆発まで維持するローカル整合性方針。実機の破壊フレーム・傘/バリア全形状・弾道一致は未確認を維持。操作条件・再現・確認範囲は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` の追補参照。最終CIはPR1355で確認する。
+
+
+## Ranked Rainmaker native wall ownership follow-up (2026-10-13)
+
+S3mix Splash Wall supplies Rainmaker direct x1 / weapon-blast x2. Dedicated ranked effects now share native object HP and the owner-authenticated proposal path; native Object Shredder is applied separately once. A guest locally owning a Rainmaker visual replay may submit native object hits while actor damage and paint remain ranked-host authority; host proxies do not submit/spend the same object hit. Wall planes are retained for this explosion's occlusion when its HP is removed. This ordering and existing wall/world geometry are local implementation choices; other defense blast rows and exact console behavior remain unmeasured. Five installed-runtime tests and the browser wall HP proof are added; validation is pending until CI reports success. See reports/inkwave-ranked-rule-corrections-2026-10-13.md.
+
+独立レビュー追補: ホコのチャージ/射撃待ち/射撃後硬直の専用速度が採用済みMist減速を迂回する経路と、取得時にInk Vac/Trizookaの独立状態が残る経路を修正。実際のMist配置と30/60/120Hz・サブ影響軽減0/57APで減速の1回適用と退出復帰を確認し、ネイティブ取得から吸引終了・終了通知・再発動と発射/展開済み攻撃の存続を回帰検査する。S3mixのホコ取得・ポイズンミストの記述と既存11.3.0耐性係数を根拠とし、速度の世界単位換算・ブラウザFPS・Switch実機比較は未確認のまま維持する。詳細は上記ルール修正記録の独立レビュー節。
+
+同修正の現行main追補: 外部統合ee9fbbabのMist係数0.5/0.75、キューインキ17F発動と保持吸引、反撃19F無弾/20F発射を維持して再合成。修正前は対象5件が失敗し、修正後はホコ6件・傘/スペシャル操作12件・練習場8件の26件がsource/実minify双方で通過。旧e57上のブラウザ証拠を新合成の証明には流用せず、新headのCIで再検証する。
