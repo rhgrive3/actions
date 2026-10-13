@@ -1,11 +1,39 @@
 import { ALL_SUB_SPECS, applySubObjectHit } from '../all-subs.mjs';
+import { bigBubblerDomes, bigBubblerRemoteDomes, kitBarrierCandidate } from '../kit-big-bubbler.mjs';
+
+export function rainmakerDomeBlast(api, at, from, owner, team, radius, nearRadius, nearDamage, farDamage, walls) {
+  if (!owner || owner.remote) return;
+  const plans = new Map();
+  for (const dome of [...bigBubblerDomes(), ...bigBubblerRemoteDomes()]) {
+    if (dome.dead || dome.team === team) continue;
+    const centers = [dome.pos.clone()];
+    if (dome.ignited) { const field = dome.pos.clone(); field.y += dome.emitterY; centers.push(field); }
+    for (const end of centers) {
+      const probe = { owner, team, prev: from, pos: end, damage: 0, size: 0, ghost: false, s3BubblerRow: 'Gachihoko_BombCore' };
+      const contact = kitBarrierCandidate(probe, from, end);
+      if (!contact || api.G.physics?.los && !api.G.physics.los(from, contact.point)
+          || rainmakerWallsBlockBlast(from, contact.point, walls)) continue;
+      const distance = contact.point.distanceTo(at);
+      if (distance > radius) continue;
+      const key = contact.domeId + ':' + contact.serial, old = plans.get(key);
+      if (!old || distance < old.distance) plans.set(key, { probe, distance, id: contact.domeId, serial: contact.serial });
+    }
+  }
+  // The native query reuses a record. Re-query and settle immediately, once per
+  // dome activation, preserving native raw units, barrier ratio and proposals.
+  for (const plan of plans.values()) {
+    plan.probe.damage = plan.distance <= nearRadius ? nearDamage : farDamage;
+    const contact = kitBarrierCandidate(plan.probe, plan.probe.prev, plan.probe.pos);
+    if (contact?.domeId === plan.id && contact.serial === plan.serial) contact.onHit();
+  }
+}
 
 // S3mix Splash Wall's damage-rate table: Rainmaker direct x1, blast x2.
 // The existing native wall rectangle supplies geometry. The shot's actor /
 // paint authority remains the ranked host; only its owning client proposes
 // native object HP, including the guest's visual-only projectile replay.
 export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nearDamage, farDamage, impactWall = null) {
-  const { G, THREE } = api, walls = [];
+  const { G, THREE } = api, walls = [], wallHits = [];
   const objects = new Set(G.projectiles?._s3SubObjects || []);
   if (impactWall?.subId === 'splashWall') objects.add(impactWall);
   const width = ALL_SUB_SPECS.splashWall.wallWidth, height = ALL_SUB_SPECS.splashWall.wallHeight;
@@ -21,11 +49,19 @@ export function rainmakerWallBlast(api, at, owner, team, radius, nearRadius, nea
     // Snapshot before HP can remove the wall: the same blast remains blocked
     // even when its direct contact or explosion destroys that shield.
     walls.push({ pos: object.pos.clone(), rx, rz, nx, nz, width, height });
-    if (owner && owner.remote !== true && !object.dead) {
-      const damage = distance <= nearRadius ? nearDamage : farDamage;
-      applySubObjectHit(api, G.projectiles, object,
-        { owner, team, pos: at, wid: 'rainmaker', type: 'rainmaker-blast', ghost: false }, point, damage, 'Gachihoko_BombCore');
+    if (!object.dead) wallHits.push({ object, point, distance });
+  }
+  if (owner && owner.remote !== true) {
+    const source = { owner, team, pos: at, wid: 'rainmaker', type: 'rainmaker-blast', ghost: false };
+    const damageAt = distance => distance <= nearRadius ? nearDamage : farDamage;
+    // Share native device geometry, source rates and ownership with ordinary
+    // blasts, including native Sprinkler and deployed special devices.
+    if (G.projectiles?.s3DamageSubObjects) {
+      G.projectiles.s3DamageSubObjects(source, at, radius, damageAt, 'Gachihoko_BombCore');
+    } else for (const { object, point, distance } of wallHits) {
+      applySubObjectHit(api, G.projectiles, object, source, point, damageAt(distance), 'Gachihoko_BombCore');
     }
+    G.projectiles?.s3DamageSpecialObjects?.(source, at, radius, damageAt, 'Gachihoko_BombCore');
   }
   return walls;
 }

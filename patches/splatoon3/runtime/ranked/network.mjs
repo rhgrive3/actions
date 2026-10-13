@@ -1,4 +1,7 @@
 import { validRankedSnapshot } from './engine.mjs';
+import { withObjectDamageCause } from '../sub-resistance.mjs';
+
+const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
 
 export const actorId = a => String(a.nid ?? `${a.team}:${a.slot}`);
 const finiteVector = v => Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) <= 2000);
@@ -83,11 +86,12 @@ export function installRankedNetwork(api) {
       return;
     }
     if (d.k === 'rkdamage') {
-      if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedDamageSeq || 0)) {
+      if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedDamageSeq || 0)
+          && (d.cause === undefined || damageCauses.has(d.cause))) {
         this.rankedDamageSeq = d.seq;
         const victim = m.actors.find(a => actorId(a) === d.victim), attacker = m.actors.find(a => actorId(a) === d.attacker);
         if (victim?.owner === this.myId && victim.alive && (victim.netLife ?? 0) === d.life && Number.isFinite(d.damage) && d.damage > 0 && d.damage <= 2000) {
-          const killed = victim.damage(d.damage, attacker || null, 'rainmaker');
+          const killed = withObjectDamageCause(attacker, () => victim.damage(d.damage, attacker || null, 'rainmaker'), d.cause || 'Gachihoko_Bullet');
           api.emit('hit', { attacker, victim, damage: d.damage, killed, weaponId: 'rainmaker' });
         }
       }
