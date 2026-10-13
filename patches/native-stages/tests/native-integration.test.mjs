@@ -24,7 +24,7 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
   assert.ok(area>0,'positive claimed ground area');assert.equal(G.paint.sample(h.face,h.u,h.v),1);
  }
  // Find a real exported wall triangle and exercise the existing squid climb.
- let wallProof=false;
+ let wallProof=false,cappedWallSamples=0;
  for(const face of level.faces){
   if(!face.wall||face.sv<1.5)continue;
   for(const tid of face.triangles.slice(0,4)){
@@ -37,6 +37,14 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
    const actor=f.make();actor.pos.copy(feet);actor.intent.move.copy(face.n).negate();actor.form='squid';actor.climbExit=0;
    actor._updateClimb(1/60,true);
    if(!actor.climbing)continue;
+   // A nearby unowned upper source chart correctly stops an attached squid at
+   // the paint line. That is not an upward lane; keep looking without changing
+   // source geometry or treating a capped attachment as a climb regression.
+   if(actor.vel.y<=0){
+    const upper=actor._ledgeHit;
+    assert.ok(upper.hit&&Math.abs(upper.normal.y)<.5&&!(upper.face>=0&&G.paint.sample(upper.face,upper.u,upper.v)===1),'attached zero-speed source sample must be stopped by an unowned upper wall');
+    assert.equal(actor.climbV,0);cappedWallSamples++;continue;
+   }
    assert.ok(actor.vel.y>0,'painted source wall grants upward swim velocity');
    G.paint.splat(hit.point.clone().addScaledVector(hit.normal,.03),3,1,{seed:.375,instant:true});actor._updateClimb(1/60,true);assert.equal(actor.climbing,false,'enemy wall ink releases squid');wallProof=true;break;
   }
@@ -74,5 +82,5 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
  assert.equal(spawned.s3.squidSpawn,undefined);assert.equal(spawned.grounded,true);assert.equal(spawned.ground.hit,true);
  const brain=new f.BotBrain(spawned,'normal');const candidates=f.nativePaintGoalIds(brain,G);assert.ok(candidates.length>0,'reachable native paint goals');
  const startNode=G.nav.nearest(spawned.pos,1.2);for(const target of candidates.slice(0,5))assert.ok(G.nav.path(startNode,target,spawned.team,50000),'directed path to sampled paint goal');
- console.log(JSON.stringify({id,tower:stage.tower.supported?{nodes:stage.tower.path.length,center:stage.tower.path[stage.tower.centerIndex],halfSize:stage.tower.halfSize,lift:stage.tower.localLift,arenaSpan:stage.tower.arenaSpan}:stage.ruleAvailability.tower,ppm:G.paint.ppm,atlas:2048,faces:level.faces.length,gridBytes:G.paint.grid.byteLength,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,landingFrames,navMilliseconds:performance.now()-start}));
+ console.log(JSON.stringify({id,cappedWallSamples,tower:stage.tower.supported?{nodes:stage.tower.path.length,center:stage.tower.path[stage.tower.centerIndex],halfSize:stage.tower.halfSize,lift:stage.tower.localLift,arenaSpan:stage.tower.arenaSpan}:stage.ruleAvailability.tower,ppm:G.paint.ppm,atlas:2048,faces:level.faces.length,gridBytes:G.paint.grid.byteLength,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,landingFrames,navMilliseconds:performance.now()-start}));
 });
