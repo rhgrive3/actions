@@ -1,0 +1,22 @@
+# 原典ステージの射撃と連続衝突
+
+比較対象は Splatoon 3 Ver.11.3.0 のステージ識別情報と、固定 KiTrix 表示用抽出メッシュ。元データの抽出バージョン、Nintendo の衝突メッシュ・塗れる面・単位、本家実機の弾と地形の接触位置は未確認。以下は INKWAVE の実装と表示用抽出メッシュに対する確認であり、本家実機との一致を示すものではない。
+
+既存の `InkFlightRuntime.world()` は `sweepLevelSphere()` を通じて `Level.blocks` の OBB に当てていた。原典ステージではこの配列に塗り用チャートの長方形とオブジェクト全体の外接箱が含まれるため、実際には空間が空いているのに弾が距離0で止まる場合があった。ヒラメの実データでは、大きなパイプオブジェクトの外接箱が、射手と別の実壁の間の空間まで塞いでいた。床への手動スタンプだけでは発見できない差分だった。
+
+`patches/native-stages/adapter.mjs` が原典ステージだけを `sweepNativeLevelSphere()` に渡し、BVH の元三角形に連続球衝突を行う。線分と三角形の最短距離から接触区間を絞り、最初の接触まで二分探索する。薄い壁、三角形の縁と角、静止重なり、接線接触を含む。塗りチャートと外接箱は静的な実体として扱わず、実際の接触三角形から塗り面とUVを取得する。ヤグラ等の実際に追加された動的 OBB は既存の解析的判定を使い、より手前の接触を採用する。元の表示・衝突・マスク用バッファ、ブキの弾道・威力・射程・塗り幅は変更しない。旧ステージの判定本体は維持する。
+
+ブキは既存 `shooter`（`WeaponShooterNormal`、`Shooter_Normal_00` 系）、ギア0AP、立ち射撃。入力は通常の `Actor` → `WeaponRunner` → `Projectiles` による射撃許可と実際の弾更新。ヒラメの原典で30/60/120Hzとも実壁に到達し、固定塗り時計を進めるとその壁を所有する。手動の `paint.splat()` 呼出しは使わない。別の回帰では壁の手前の敵にはダメージが入り、壁の向こうには入らない。
+
+確認コマンド:
+
+```sh
+INKWAVE_NATIVE_SWEEP_ASSETS=/path/to/private/generated node --experimental-vm-modules --test patches/native-stages/tests/native-projectile-sweep.test.mjs
+node scripts/check-inkwave-native-projectiles.mjs _site-native .browser-evidence/native-projectiles
+```
+
+ブラウザ確認は実際のゲームと8体のアクター・7体の既存ボットを作成し、元三角形の支持床とカプセル空間から射撃位置を選ぶ。射撃部分ではボットを停止し、`spawnAt()` で支持点に置いた既存アクターの通常射撃を検証する。この制御された再現は、物理マウス操作や通常スポーン射出の独立検証とは区別する。接触が照準チャートの隣の同一元オブジェクトの三角形になる場合も、実際の銃口・接触を記録する。自然発生した塗り呼出しと壁所有の両方を確認する。
+
+処理時間は Chromium / SwiftShader 上で `Projectiles.update()` を計測し、非活動フレームも含む一発射撃の分布を保存する。実機FPS、対戦全体のFPS、変更前より高速という主張は行わない。各ステージ担当の8体・全ルール・オンライン・移動描画検証とは測定条件が異なる。
+
+数値結果とビルド識別は [projectile-source-sweep-verification.json](projectile-source-sweep-verification.json) に記録する。OBJ/MTL/PNG、派生形状バッファ、原典の画像は公開コミットに含めない。
