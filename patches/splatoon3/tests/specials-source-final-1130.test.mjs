@@ -35,7 +35,7 @@ test('S3 11.3.0 Chariot attack mode has .075F lateral and .015F forward source v
   const f=await world(),target=f.crabAttackTargetVelocity;
   const right=target({x:1,z:0},0),forward=target({x:0,z:1},0);
   assert.equal(right.x,4.5);assert.equal(right.z,0);
-  assert.equal(forward.x,0);assert.equal(forward.z,.9);
+  assert.equal(forward.x,0);assert.ok(Math.abs(forward.z-.9)<1e-12);
   const rotated=target({x:0,z:1},Math.PI/2);
   assert.ok(Math.abs(rotated.x)<1e-10);
   assert.ok(Math.abs(rotated.z-4.5)<1e-10);
