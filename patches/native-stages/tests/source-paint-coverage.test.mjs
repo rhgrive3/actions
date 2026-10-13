@@ -38,7 +38,8 @@ test('owned partial cells accept only exact source polygon points and retain NoP
  const noPaint=convertSource(definition,obj+extra,'newmtl Concrete00\nKd 1 1 1\nnewmtl Concrete00_np\nKd 1 1 1\n',{});
  assert.equal(noPaint.manifest.objects[1].paintable,false);assert.equal(noPaint.triangleFace[1],-1);
  L._addBlock({kind:'box',min:[-.5,.5,-.5],max:[.5,1,.5],paint:true});
- const dynamic=L.blocks.at(-1),boxFace=L.faces[dynamic.faces.find(id=>id>=0)];
+ const dynamic=L.blocks.at(-1);L._buildFaces(dynamic);
+ const boxFace=L.faces[dynamic.faces.find(id=>id>=0)];
  assert(boxFace.block>=L.staticBlockCount);assert.equal(boxFace.triangles,undefined);
  assert.equal(L.containsFaceUV(boxFace,boxFace.su*.5,boxFace.sv*.5),true,'ranked dynamic box faces retain their original rectangular surface contract');
  assert.equal(L.containsFaceUV(boxFace,boxFace.su+.01,boxFace.sv*.5),false,'dynamic box bounds are still enforced');
