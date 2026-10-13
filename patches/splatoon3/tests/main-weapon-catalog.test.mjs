@@ -320,3 +320,13 @@ test('added horizontal Rollers preserve full sourced fan width and the same samp
     }
   } finally {f.restoreRandom();}
 });
+
+test('live catalogue projectile delivers its exact attack row at the actor armor boundary',async()=>{
+  const f=await setup(),r=f.MAIN_WEAPON_CATALOG.records.find(r=>r.sourceActor==='WeaponChargerLong');
+  const a=f.make(r.id);a.form='kid';a.intent.fire=true;f.tick(a,120);a.intent.fire=false;f.tick(a);
+  const p=f.G.projectiles.list[0];assert.ok(p);assert.equal(p.catalog.descriptor.charge,1);
+  const enemy=f.make('shooter');enemy.team=1;enemy.pos.copy(p.pos).addScaledVector(p.vel.clone().normalize(),2);enemy.pos.y=0;
+  const causes=[];f.G.projectiles.applyHit=(owner,victim)=>{if(victim===enemy)causes.push(owner._s3AllSpecialDamageCause);};
+  for(let i=0;i<20;i++)if(f.G.projectiles._step(p,1/60))break;
+  assert.deepEqual(causes,['ChargerFull_Long']);assert.equal(a._s3AllSpecialDamageCause,undefined);
+});

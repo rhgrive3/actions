@@ -206,7 +206,7 @@ try {
           if(ap===57)for(const p of victim.s3.loadout){p.main='subResistance';p.subs.fill('subResistance');}
           victim.s3RefreshGear();victim.grounded=true;victim.form=squid?'squid':'kid';victim.submerged=squid;victim.intent.move.set(0,0,1);victim.vel.set(0,0,0);
           for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
-          const expected=(squid?11.52:5.76)*(1-.28*gearCurve(ap,1,.75,.5));
+          const expected=(squid?11.52:5.76)*(1-.5*gearCurve(ap,1,.75,.5));
           check(Math.abs(victim.vel.z-expected)<1e-8,'Mist victim reduction '+ap+' '+squid);
           mistChecks.push({ap,squid,speed:victim.vel.z});
           victim.pos.x+=20;victim.vel.set(0,0,0);for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
@@ -254,7 +254,7 @@ try {
         const defender=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;attacker.pos.set(0,0,5);G.actors=[defender,attacker];
         attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
         defender.weapon={...defender.weapon,special:id,specialCost:100};defender.special=100;defender._startSpecial();defender._updateSpecial(1/60);defender.invuln=0;
-        const state=defender._s3AllSpecialState,rate=equipped?(id==='crabTank'?1.3:1.1):1,before=state.armorHP;
+        const state=defender._s3AllSpecialState,rate=(equipped?(id==='crabTank'?1.3:1.1):1)*(id==='booyahBomb'?.7:1),before=state.armorHP;
         defender.damage(100,attacker,'shooter');check(Math.abs(state.armorHP-(before-100*rate))<1e-8,id+' compiled target gear');
         state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;
         const bodyFactor=defender.specialActive.armor?.valueOf()===true?.25:1;
@@ -345,7 +345,7 @@ try {
           const sender=new NetMatch({myId:'buff-owner',hostId:'buff-owner',isHost:true,tr:transport},{id:'buff-browser'}),receiver=new NetMatch({myId:'buff-viewer',hostId:'buff-owner',isHost:false,tr:transport},{id:'buff-browser'});
           const match=actors=>({actors,state:'playing',time:180,duration:180,playing:()=>true,canRespawn:()=>false});sender.bind(match([owner]));receiver.bind(match([remote]));G.match=sender.match;G.netm=sender;G.actors=[owner];
           const step=(net,a,count)=>{for(let i=0;i<count;i++){G.time+=1/60;net.update(1/60);net.match.time-=1/60;if(a.remote)net.applyRemote(a,1/60);else a.update(1/60);}};
-          if(kind==='drink'){owner.special=owner.specialCost();owner._startSpecial();check(G.projectiles._s3SupportCoolers.length===1,'actual cooler stand');G.time+=1/60;G.projectiles.update(1/60);check(owner.s3.drink,'actual stand pickup');}
+          if(kind==='drink'){owner.special=owner.specialCost();owner._startSpecial();check(!(G.projectiles._s3SupportCoolers||[]).length,'holding does not install a stand');owner.aimDir.set(0,-1,0);owner.intent.sub=true;owner._updateSpecial(1/60);owner.intent.sub=false;for(let i=0;i<15&&owner.specialActive;i++)owner._updateSpecial(1/60);for(let i=0;i<20&&!(G.projectiles._s3SupportCoolers||[]).length;i++){G.time+=1/60;G.projectiles.update(1/60);}check(G.projectiles._s3SupportCoolers.length===1,'actual cooler stand after R release and ground contact');G.time+=1/60;G.projectiles.update(1/60);check(owner.s3.drink,'actual stand pickup');}
           else {owner.s3.jumpChargeTime=1/60;owner.s3.jumpFlightTime=.5;check(owner.superJump(new V(12,0,0)),'actual jump start');let frames=0;while(owner.superJumpState&&frames++<600){const jump=owner.superJumpState;if(jump.phase==='flight'&&jump.t+1/60+1e-10>=jump.dur)owner.intent.move.set(1,0,0);step(sender,owner,1);}check(frames<600&&owner.s3.dropRoller,'actual adapted landing');step(sender,owner,20);}
           const remaining=kind==='drink'?owner.s3.drinkUntil-G.time:owner.s3.dropRollerBuffRemaining,boost=owner.s3.modifiers.runSpeed;check(remaining>0&&boost>1,'earned transient boost '+kind);sender._sendTick();receiver.match.time=sender.match.time-.1;
           G.match=receiver.match;G.netm=receiver;G.actors=[remote];receiver.onMessage('buff-owner',packet);receiver._peer('buff-owner').tr=packet.ts;receiver._sample(remote,packet.ts,0);receiver.applyRemote(remote,1/60);check(!remote.s3.drink&&!(remote.s3.dropRollerBuffRemaining>0),'remote has no transient gameplay authority');
@@ -406,12 +406,12 @@ try {
         G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};G.physics=new api.Physics(G.level);
         const equipCatalogue=(a,ap)=>{a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout)if(ap>=10){p.main='subResistance';ap-=10;}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]='subResistance';ap-=3;}a.s3RefreshGear();};
         for(const ap of [0,10,57]){
-          G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');o.team=0;v.team=1;v.invuln=0;o.pos.set(0,0,-4);v.pos.set(0,0,2);o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub:'burst'};equipCatalogue(v,ap);G.actors=[o,v];const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);for(let i=0;i<10;i++){G.time+=1/60;G.projectiles.update(1/60);}const expected=Math.floor(60*gearCurve(ap,1,.75,.6)*10+1e-9)/10;check(hits.length===1&&hits[0][0]===60&&Math.abs(hp-v.hp-expected)<1e-8,'Burst direct is one source-family hit');catalogueSubChecks.push({source:'burst',ap,native:true,damage:hp-v.hp});
+          G.projectiles.clear();const o=makeActor('shooter'),v=makeActor('shooter');o.team=0;v.team=1;v.invuln=0;o.pos.set(0,0,-4);v.pos.set(0,0,2);o.aimDir.set(0,0,1);o.weapon={...o.weapon,sub:'burst'};equipCatalogue(v,ap);G.actors=[o,v];const hp=v.hp,hits=[],damage=v.damage;v.damage=function(n,a,w){hits.push([n,w]);return damage.call(this,n,a,w);};const p=G.projectiles.throwBomb(o);p.pos.set(0,.7,0);p.prev.copy(p.pos);p.vel.set(0,0,60);for(let i=0;i<10;i++){G.time+=1/60;G.projectiles.update(1/60);}const rate=gearCurve(ap,1,.75,.6),expected=[25,35].reduce((sum,n)=>sum+Math.floor(n*rate*10+1e-9)/10,0);check(hits.length===2&&hits[0][0]===25&&hits[1][0]===35&&Math.abs(hp-v.hp-expected)<1e-8,'Burst preserves the direct and one-frame blast phases');catalogueSubChecks.push({source:'burst',ap,native:true,damage:hp-v.hp});
         }
-        for(const [w,n]of [['burst',60],['fizzy',50],['torpedo',60],['torpedo-splash',12],['inkMine',45]]){
+        for(const [w,n]of [['burst',35],['fizzy',50],['torpedo',60],['torpedo-splash',12],['inkMine',45]]){
           const o=makeActor('shooter',1),v=makeActor('shooter',2);o.owner='catalogue-owner';v.owner='catalogue-victim';o.team=0;v.team=1;v.invuln=0;o.netLife=v.netLife=0;equipCatalogue(v,57);let packet,ack;
           const tx=new NetMatch({myId:o.owner,hostId:o.owner,isHost:true,tr:{sendTo:(_id,p)=>packet=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});tx.bind({actors:[o,v],state:'playing',time:180});tx.sendHit(o,v,n,w);
-          const rx=new NetMatch({myId:v.owner,hostId:o.owner,isHost:false,tr:{sendTo:(_id,p)=>ack=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;rx.onMessage(o.owner,{...packet,d:n+.1});check(v.hp===hp,'oversized catalogue hit rejected');rx.onMessage(o.owner,packet);const expected=Math.floor(n*(w==='inkMine'?.5:.6)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8&&ack.d===expected,'catalogue hit victim/ACK match');rx.onMessage(o.owner,packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});tx.dispose();rx.dispose();G.netm=null;
+          const rx=new NetMatch({myId:v.owner,hostId:o.owner,isHost:false,tr:{sendTo:(_id,p)=>ack=JSON.parse(JSON.stringify(p))}},{id:'catalogue-probe'});rx.bind({actors:[o,v],state:'playing',time:180});G.netm=rx;G.match=rx.match;const hp=v.hp;rx.onMessage(o.owner,{...packet,d:n+.1});check(v.hp===hp,'oversized catalogue hit rejected');rx.onMessage(o.owner,packet);const expected=Math.floor(n*(['burst','fizzy'].includes(w)?.6:.5)*10+1e-9)/10;check(Math.abs(hp-v.hp-expected)<1e-8&&ack.d===expected,'catalogue hit victim/ACK match');rx.onMessage(o.owner,packet);check(Math.abs(hp-v.hp-expected)<1e-8,'duplicate catalogue hit inert');catalogueSubChecks.push({source:w,ap:57,wire:true,damage:hp-v.hp});tx.dispose();rx.dispose();G.netm=null;
         }
         G.projectiles.clear();Object.assign(G,saved);
       }
