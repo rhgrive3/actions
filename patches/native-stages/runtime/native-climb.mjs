@@ -13,20 +13,21 @@ export function nativeClimbTransition(graph,lower,upper){
  const first=physics.raycast(origin,direction,length+.25);
  if(!first.hit||first.face<0||Math.abs(first.normal.y)>.15||first.normal.dot(direction)>-.9)return null;
  const humanRadius=terrainRadius(false),swimRadius=terrainRadius(true),normal=first.normal.clone(),wall=first.point.clone(),spine=wall.clone().addScaledVector(normal,swimRadius+.002),samples=[];
- for(let y=lower.y+.3;y<upper.y-.05;y+=.35){
+ const heights=[];for(let y=lower.y+.3;y<upper.y-.05;y+=.15)heights.push(y);heights.push(upper.y-.015);
+ for(const y of heights){
   origin.set(spine.x,y,spine.z);const hit=physics.raycast(origin,direction,PLAYER.radius+.45);
   if(!hit.hit||hit.face<0||Math.abs(hit.normal.y)>.15||hit.normal.dot(normal)<.97)return null;
   const face=level.faces[hit.face];if(!face?.wall||!level.containsOnFace(face,hit.point))return null;
   const i=Math.max(0,Math.min(face.nu-1,Math.floor(hit.u/face.cu))),j=Math.max(0,Math.min(face.nv-1,Math.floor(hit.v/face.cv)));
   if(!level.mask[face.grid+j*face.nu+i])return null;
-  samples.push({point:hit.point.toArray(),face:hit.face,u:hit.u,v:hit.v});
+  samples.push({point:hit.point.toArray(),face:hit.face,u:hit.u,v:hit.v,capOnly:y>upper.y-.05});
  }
  if(samples.length<3)return null;
  for(const sample of samples){const extent=new THREE.Vector3(...sample.point).sub(wall).dot(normal);if(extent>0)spine.addScaledVector(normal,Math.max(0,extent+swimRadius+.002-spine.clone().sub(wall).dot(normal)));}
  // Attachment must reach every original wall plane with the live Actor ray.
  // A recessed display wall behind a protruding lower seam is not climbable
  // merely because a capsule fits alongside its bounding extent.
- if(samples.some(sample=>spine.clone().sub(new THREE.Vector3(...sample.point)).dot(normal)>PLAYER.radius+.35-.001))return null;
+ if(samples.some(sample=>spine.clone().sub(new THREE.Vector3(...sample.point)).dot(normal)>PLAYER.radius+(sample.capOnly ? .45 : .35)-.001))return null;
  // Paint the whole rise from a supported human firing stance inside the normal
  // bot pitch range. This also prevents paths that require shooting through a
  // ceiling or hovering beside a wall to acquire its upper ink.
@@ -68,8 +69,15 @@ export function updateNativeClimb(brain,G,dt){
  if(a.pos.y>state.lastY+.12){state.lastY=a.pos.y;state.stalled=0;}else state.stalled+=dt;
  const it=a.intent;it.fire=it.squid=it.jump=it.sub=it.special=false;it.move.set(0,0,0);brain.noProg=0;
  if(state.stalled>12||state.seconds>30){brain.path=null;brain.repath=0;brain.goalTimer=0;brain._nativeClimb=null;it.move.copy(normal);return true;}
- const missing=c.samples.find(s=>s.point[1]>=a.pos.y+.15&&G.paint.sample(s.face,s.u,s.v)!==a.team+1);
- if(missing&&!a.climbing){
+ let missing=c.samples.find(s=>s.point[1]>=a.pos.y+.15&&G.paint.sample(s.face,s.u,s.v)!==a.team+1);
+ // Sample the exact live attachment and cap probes too. Weapon blot edges can
+ // own every coarse route sample while leaving a gap at the Actor's ink line.
+ // Pop out through ordinary input to repaint that contact, then reattach.
+ if(!missing)for(const lift of [.3,.85]){
+  const hit=G.physics.raycast(a.pos.clone().add(new THREE.Vector3(0,lift,0)),normal.clone().negate(),PLAYER.radius+.45);
+  if(hit.hit&&hit.face>=0&&Math.abs(hit.normal.y)<.15&&hit.point.y<=upper.y+.05&&G.paint.sample(hit.face,hit.u,hit.v)!==a.team+1){missing={point:hit.point.toArray(),face:hit.face,u:hit.u,v:hit.v};break;}
+ }
+ if(missing){
   // Use a normal firing stance on the source lower support; replenish through
   // ordinary squid input when necessary, without mutating ink or ownership.
   const delta=new THREE.Vector3(...c.paintStance).sub(a.pos);delta.y=0;if(delta.length()>.2)it.move.copy(delta).normalize();

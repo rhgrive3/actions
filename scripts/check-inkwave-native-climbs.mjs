@@ -8,7 +8,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'
 try{
  for(const id of (process.env.NATIVE_STAGE_IDS||'flounder').split(',')){
   const context=await browser.newContext({viewport:{width:800,height:600}}),page=await context.newPage(),errors=[];
-  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,800));});
+  page.on('console',m=>{if(m.text().startsWith('native-climb '))console.log(m.text());});page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,800));});
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
   await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'domcontentloaded'});
   await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
@@ -32,7 +32,7 @@ try{
      const times=[];for(let i=0;i<hz*8;i++){const t=performance.now();G.time+=1/hz;brain.update(1/hz);fire ||=actor.intent.fire;swim ||=actor.intent.squid;actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);times.push(performance.now()-t);climbed ||=actor.climbing;seconds=(i+1)/hz;if(climbed&&actor.grounded&&Math.abs(actor.pos.y-climb.upper[1])<.15)break;}
      const owned=climb.samples.filter(s=>G.paint.sample(s.face,s.u,s.v)===team+1).length;
      if(!(fire&&swim&&climbed&&actor.grounded&&Math.abs(actor.pos.y-climb.upper[1])<.15&&owned===climb.samples.length))throw Error('Source bot climb failed '+JSON.stringify({team,hz,fire,swim,climbed,grounded:actor.grounded,position:actor.pos.toArray(),owned,samples:climb.samples.length}));
-     times.sort((a,b)=>a-b);cases.push({team,hz,seconds,fire,swim,climbed,grounded:true,ownedWallSamples:owned,sourceWallSamples:climb.samples.length,end:actor.pos.toArray(),cpuStep:{p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],max:times.at(-1)}});
+     times.sort((a,b)=>a-b);cases.push({team,hz,seconds,fire,swim,climbed,grounded:true,ownedWallSamples:owned,sourceWallSamples:climb.samples.length,end:actor.pos.toArray(),cpuStep:{p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],max:times.at(-1)}});console.log('native-climb '+JSON.stringify(cases.at(-1)));
     }
     for(const hz of [30,60,120]){
      G.projectiles.clear();G.paint.clear();actor.spawnAt(L.spawnPads[team],team?Math.PI:0);actor.invuln=0;actor.bot=new BotBrain(actor,'normal');const brain=actor.bot,sign=team?-1:1,to=N.nearest(new V(-15*sign,6,35*sign),1.2),node=N.nodes[to],goal=new V(node.x,node.y,node.z);
@@ -40,8 +40,12 @@ try{
      let climbed=false,fire=false,seconds=0,replans=0;
      for(let i=0;i<hz*90;i++){if(brain.mode==='paint'&&(!brain.path||brain.goal!==to)){brain._pathTo(goal,.6);brain.goalTimer=brain.repath=1000;replans++;}G.time+=1/hz;brain.update(1/hz);fire ||=actor.intent.fire;actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);climbed ||=actor.climbing;seconds=(i+1)/hz;if(actor.grounded&&actor.pos.distanceTo(goal)<1.5)break;}
      if(!(actor.alive&&actor.grounded&&actor.pos.distanceTo(goal)<1.5&&climbed&&fire&&climbs>=2))throw Error('Source bot bank route failed '+JSON.stringify({team,hz,seconds,position:actor.pos.toArray(),distance:actor.pos.distanceTo(goal),climbed,fire,climbs,replans}));
-     banks.push({team,hz,seconds,replans,waypoints,sourceClimbs:climbs,end:actor.pos.toArray(),distanceToGoal:actor.pos.distanceTo(goal),alive:true,grounded:true,climbed,fire});
+     banks.push({team,hz,seconds,replans,waypoints,sourceClimbs:climbs,end:actor.pos.toArray(),distanceToGoal:actor.pos.distanceTo(goal),alive:true,grounded:true,climbed,fire});console.log('native-climb '+JSON.stringify(banks.at(-1)));
     }
+    // Restore the tested bot to its actual own-bank setup before the other
+    // team trial, so a prior opposing-bank endpoint cannot become a combat
+    // target or body obstacle in the next isolated navigation trace.
+    actor.spawnAt(L.spawnPads[team],team?Math.PI:0);actor.bot.update=()=>{};actor.intent.move.set(0,0,0);actor.intent.fire=actor.intent.squid=actor.intent.jump=actor.intent.sub=actor.intent.special=false;
    }}finally{Math.random=random;}
    G.paint.flush(1/60);G.game._skipRender=false;G.renderer.render(G.scene,G.camera);
    return {id:L.layout.id,sourceSha256:L.manifest.sourceSha256,version1130Verified:L.manifest.version1130Verified,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,weapon:'shooter / Shooter_Normal_00',gearAP:Object.keys(G.actors.find(a=>a.bot).s3.abilityPoints),cases,banks,conditions:'production Chromium Actor/BotBrain/WeaponRunner/Projectiles/fixed paint clock; eight actors retained; other bots frozen; source-supported setup poses; initial ownership cleared; goal reacquired after ordinary refill/recovery; 0.5 RNG; SwiftShader'};

@@ -32,9 +32,10 @@ export function nativeStageCatalog(definitions=path.join(NATIVE_ROOT,'definition
 }
 /** Keep the large third-party payload outside the revision/PWA snapshot. The
  * runtime verifies it with a pinned integrity manifest. Only opt-in builds get it. */
+export function nativeBrowserStageIntegrity(s){return hash(JSON.stringify([SOURCE_RECIPE,s.sourceSha256,s.tree,s.sourceSemantics||null,s.bounds,s.spawnPads,...(s.sourceNavigation?[s.sourceNavigation]:[])]));}
 export function prepareNativeStageBuild(assetPath){
  const available=nativeStageCatalog(),runtimeSha256=hash(JSON.stringify(nativeStageIdentity()));
- if(!assetPath)return {root:null,config:{schema:1,mode:'browser-direct',runtimeSha256,unavailableStages:available.unavailableStages,stages:available.stages.map(s=>({...s,integritySha256:hash(JSON.stringify([SOURCE_RECIPE,s.sourceSha256,s.tree,s.sourceSemantics||null,s.bounds,s.spawnPads]))}))}};
+ if(!assetPath)return {root:null,config:{schema:1,mode:'browser-direct',runtimeSha256,unavailableStages:available.unavailableStages,stages:available.stages.map(s=>({...s,integritySha256:nativeBrowserStageIntegrity(s)}))}};
  const root=fs.realpathSync(path.resolve(assetPath)),catalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json')));
  if(catalog.schema!==1||catalog.sourceCommit!==SOURCE_COMMIT||!Array.isArray(catalog.stages)||!catalog.stages.length||new Set(catalog.stages.map(s=>s.id)).size!==catalog.stages.length)throw Error('Native build requires unique pinned stage conversions');
  const stages=catalog.stages.map(s=>{

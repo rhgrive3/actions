@@ -2,19 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {nativeStageCatalog} from '../../../scripts/lib/inkwave-native-stages.mjs';
+import {nativeStageCatalog,nativeBrowserStageIntegrity} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
 
 test('source wall traversal is an explicit validated opt-in',()=>{
  const dir=fs.mkdtempSync(path.resolve('.ci-scratch/climb-catalog-'));
  const base={id:'probe',internal:'Vss_Probe00',name:'Probe',tree:'b'.repeat(40),sourceSha256:'a'.repeat(64),bounds:{minX:-10,minZ:-10,maxX:10,maxZ:10},spawnPads:[[0,1,-8],[0,1,8]],spawnBarrier:2.5,placementStatus:'inferred source supports',version1130Verified:false};
+ assert.notEqual(nativeBrowserStageIntegrity(base),nativeBrowserStageIntegrity({...base,sourceNavigation:{wallClimb:true}}),'derived public cache separates opted navigation metadata');
  const write=sourceNavigation=>fs.writeFileSync(path.join(dir,'probe.json'),JSON.stringify({...base,sourceNavigation}));
  try{write({wallClimb:true});assert.equal(nativeStageCatalog(dir).stages.at(-1).sourceNavigation.wallClimb,true);for(const value of [{wallClimb:false},{wallClimb:1},{wallClimb:true,teleport:true}]){write(value);assert.throws(()=>nativeStageCatalog(dir),/source navigation/);}for(const s of nativeStageCatalog().stages.filter(s=>['scorch','hagglefish','inkblot','mako','brinewater'].includes(s.id)))assert.equal(s.sourceNavigation,undefined);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 
 test('ordinary blockout bots retain inputs without a native manifest',async()=>{
  const f=await nativeFixture(),actor=f.make('shooter'),brain=new f.BotBrain(actor,'normal');actor.intent.squid=true;actor.intent.move.set(1,0,0);
- assert.equal(f.G.level.manifest,undefined);assert.equal(f.updateNativeClimb(brain,f.G,1/60),false);f.nativeClimbTravelForm(brain,f.G);assert.equal(actor.intent.squid,true);assert.deepEqual(actor.intent.move.toArray(),[1,0,0]);
+ assert.equal(f.G.level.manifest,undefined);assert.equal(f.updateNativeClimb(brain,f.G,1/60),false);f.nativeClimbTravelForm(brain,f.G);assert.equal(actor.intent.squid,true);assert.deepEqual(Array.from(actor.intent.move.toArray()),[1,0,0]);
 });
 
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS,id=process.env.INKWAVE_NATIVE_CLIMB_STAGE||'flounder',available=root&&fs.existsSync(path.join(root,id,'manifest.json'));
@@ -56,7 +57,7 @@ test('opted source walls have real supported routes, while NoPaint and disabled 
    for(const sample of edge.climb.samples)G.paint.splat(new THREE.Vector3(...sample.point).addScaledVector(new THREE.Vector3(...edge.climb.normal),.005),1.8,team,{instant:true,seed:.375});
    const actor=f.make('shooter');actor.team=team;actor._integrate=f.Actor.prototype._integrate;actor.pos.fromArray(edge.climb.lower);actor.vel.set(0,0,0);actor.intent.move.fromArray(edge.climb.normal).negate();actor.intent.squid=true;G.actors=[actor];let climbed=false;
    for(let frame=0;frame<hz*5;frame++){G.time+=1/hz;actor.update(1/hz);climbed ||=actor.climbing;if(actor.pos.y>edge.climb.upper[1]-.1&&actor.grounded)break;}
-   assert.ok(climbed&&actor.grounded&&Math.abs(actor.pos.y-edge.climb.upper[1])<.12,'ordinary swim input reaches actual source upper support');
+   assert.ok(climbed&&actor.grounded&&Math.abs(actor.pos.y-edge.climb.upper[1])<.12,'ordinary swim input reaches actual source upper support '+JSON.stringify({team,hz,lower:edge.climb.lower,upper:edge.climb.upper,pos:actor.pos.toArray(),climbed,grounded:actor.grounded,wallHit:{hit:actor.wallHit.hit,face:actor.wallHit.face,point:actor.wallHit.point.toArray()},ledgeHit:{hit:actor._ledgeHit.hit,face:actor._ledgeHit.face,point:actor._ledgeHit.point.toArray()}}));
    human.push({team,hz,start:edge.climb.lower,end:actor.pos.toArray(),grounded:actor.grounded,initialState:'source wall already friendly-inked; humanoid shooter; default fixture gear'});
   }
   for(const hz of [30,60,120]){
