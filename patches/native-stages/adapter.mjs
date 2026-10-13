@@ -106,7 +106,6 @@ export function adaptNativeStages(rel,code){
   once("et === 'jump' && cur.y - a.pos.y > 0.4", "et === 'jump' && cur.y - a.pos.y > (G.level.manifest?.sourceNavigation?.highDrops ? PLAYER.stepUp : 0.4)");
   once('    it.move.set(Math.sin(this.mvYaw) * this.mvMag, 0, Math.cos(this.mvYaw) * this.mvMag);','    it.move.set(Math.sin(this.mvYaw) * this.mvMag, 0, Math.cos(this.mvYaw) * this.mvMag);\n    nativeSourceTravelInput(this,G);');
 
-
   once('    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);', '    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);\n    const candidates = G.level.native ? nativePaintGoalIds(this, G) : nav.validIds;');
   once('      const id = nav.validIds[(Math.random() * nav.validIds.length) | 0];', '      if (!candidates.length) break;\n      const id = candidates[(Math.random() * candidates.length) | 0];');
  }
