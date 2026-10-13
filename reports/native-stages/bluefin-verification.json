@@ -897,7 +897,7 @@
       }
     ],
     "evidence": ".browser-evidence/safe-human-charge/cpu.tap",
-    "currentKeyboardRepeat": "Corrected probe is queued: exact source-hit 23-point walkway, every positive live STEP capsule screened, Space release must advance actual fixed clock and enter Surge burst before kid pop. No whole-stage ordinary-bot claim.",
+    "currentKeyboardRepeat": "Passed all six both-bank keyboard cases at30/60/120 input cadence on the immutable460da artifact; fixed60Hz actual simulation, positive208/204/204 clear capsules, release2/1/1 actualSTEPS observed burst. Current affected whole-bank bot matrix remains pending.",
     "safeKeyboardDevelopmentFailuresRetained": [
       {
         "evidence": ".browser-evidence/safe-human-charge/browser/browser.json",
@@ -5623,5 +5623,489 @@
     "foundation": "e0a291e9fb0f9a09ce6f792ff652a5d1eb5f70a2",
     "pr": 1383,
     "scope": "Finite native-only max(6000,nodes.length*4), legacy default unchanged; Bluefin already used this bound through opted wallClimb/highDrops. Graph, geometry and goals unchanged."
+  },
+  "safeOriginalBankKeyboardBrowser": {
+    "status": "passed",
+    "id": "bluefin",
+    "buildContentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "frameInputHz": 30,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "wallSamples": 39,
+        "naturalPaint": {
+          "fireFrames": 78,
+          "paintSeconds": 2.6000000000000005,
+          "refillSeconds": 0.8666666666666666,
+          "wallOwned": 39,
+          "floorOwned": 7,
+          "floorTargets": 8,
+          "unownedFloor": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ]
+        },
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "fullChargeHumanPop": true,
+        "releaseSimulationTicks": 2,
+        "continuousActualCapsuleSamples": 208,
+        "continuousActualCapsuleFailures": 0,
+        "seconds": 3.466666666666667,
+        "capEnd": [
+          32.716899999999974,
+          9.031200408935547,
+          18.50035776361281
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          19.936129797927467,
+          9,
+          40.22343479228836
+        ],
+        "distanceToGoal": 0.2838445293278866,
+        "bankWalkSeconds": 5.9,
+        "simulationTicks": 562,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "frameInputHz": 60,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "wallSamples": 39,
+        "naturalPaint": {
+          "fireFrames": 156,
+          "paintSeconds": 2.5999999999999956,
+          "refillSeconds": 0.850000000000001,
+          "wallOwned": 39,
+          "floorOwned": 7,
+          "floorTargets": 8,
+          "unownedFloor": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ]
+        },
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "fullChargeHumanPop": true,
+        "releaseSimulationTicks": 1,
+        "continuousActualCapsuleSamples": 204,
+        "continuousActualCapsuleFailures": 0,
+        "seconds": 3.4,
+        "capEnd": [
+          32.616,
+          9.031200408935547,
+          18.5
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          20.005801224656786,
+          9,
+          40.23545642536346
+        ],
+        "distanceToGoal": 0.2646071750519957,
+        "bankWalkSeconds": 5.8,
+        "simulationTicks": 552,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "frameInputHz": 120,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "wallSamples": 39,
+        "naturalPaint": {
+          "fireFrames": 313,
+          "paintSeconds": 2.6083333333333267,
+          "refillSeconds": 0.8416666666666661,
+          "wallOwned": 39,
+          "floorOwned": 7,
+          "floorTargets": 8,
+          "unownedFloor": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ]
+        },
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "fullChargeHumanPop": true,
+        "releaseSimulationTicks": 1,
+        "continuousActualCapsuleSamples": 204,
+        "continuousActualCapsuleFailures": 0,
+        "seconds": 3.4,
+        "capEnd": [
+          32.616,
+          9.031200408935547,
+          18.5
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          20.005801224656786,
+          9,
+          40.23545642536346
+        ],
+        "distanceToGoal": 0.2646071750519957,
+        "bankWalkSeconds": 5.8,
+        "simulationTicks": 552,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "frameInputHz": 30,
+        "start": [
+          -27,
+          3,
+          -17.5
+        ],
+        "sourceStartTriangle": 171854,
+        "wallSamples": 39,
+        "naturalPaint": null,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": false,
+        "fullChargeHumanPop": false,
+        "releaseSimulationTicks": 0,
+        "continuousActualCapsuleSamples": 0,
+        "continuousActualCapsuleFailures": 0,
+        "seconds": 1.2666666666666666,
+        "capEnd": [
+          -28.107352342100192,
+          9.011886226565222,
+          -17.499098039414825
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "bankEnd": [
+          -20.23110909800622,
+          9,
+          -39.30051162459903
+        ],
+        "distanceToGoal": 0.3052982592504668,
+        "bankWalkSeconds": 4.8,
+        "simulationTicks": 364,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "frameInputHz": 60,
+        "start": [
+          -27,
+          3,
+          -17.5
+        ],
+        "sourceStartTriangle": 171854,
+        "wallSamples": 39,
+        "naturalPaint": null,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": false,
+        "fullChargeHumanPop": false,
+        "releaseSimulationTicks": 0,
+        "continuousActualCapsuleSamples": 0,
+        "continuousActualCapsuleFailures": 0,
+        "seconds": 1.25,
+        "capEnd": [
+          -28.04901900876686,
+          9.011886226565222,
+          -17.499098039414825
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "bankEnd": [
+          -20.19368413547857,
+          9,
+          -39.306078305173024
+        ],
+        "distanceToGoal": 0.2740787625129824,
+        "bankWalkSeconds": 4.8,
+        "simulationTicks": 363,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "frameInputHz": 120,
+        "start": [
+          -27,
+          3,
+          -17.5
+        ],
+        "sourceStartTriangle": 171854,
+        "wallSamples": 39,
+        "naturalPaint": null,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": false,
+        "fullChargeHumanPop": false,
+        "releaseSimulationTicks": 0,
+        "continuousActualCapsuleSamples": 0,
+        "continuousActualCapsuleFailures": 0,
+        "seconds": 1.25,
+        "capEnd": [
+          -28.04901900876686,
+          9.011886226565222,
+          -17.499098039414825
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "bankEnd": [
+          -20.19368413547857,
+          9,
+          -39.306078305173024
+        ],
+        "distanceToGoal": 0.2740787625129824,
+        "bankWalkSeconds": 4.8,
+        "simulationTicks": 363,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      }
+    ],
+    "errors": [],
+    "conditions": "real Chromium PlayerController keyboard W/Shift/Space; 30/60/120 Hz frame/input cadence with the production fixed 60 Hz simulation; source-supported initial poses; positive bank starts with empty ownership and controlled real Actor/WeaponRunner/Projectiles aim/fire/refill paints wall/runway at 30/60/120 Hz; negative wall initially friendly-painted; real keyboard movement; positive approach holds existing full Surge charge at feet>=7.2, releases Space until an actual fixed STEP enters burst, then pops to kid/+X before the crest; every positive live production STEP capsule is continuously source-screened; later source walkway via keyboard W and camera yaw; eight actors/seven bots retained; bots frozen; no later Actor pose, velocity or ink assignment; positive natural projectile paint recorded separately from production fixed-clock keyboard movement; negative initial manual wall ownership is not weapon paint proof; SwiftShader, not hardware measurement",
+    "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "version1130Verified": false,
+    "simulationHz": 60,
+    "actors": 8,
+    "bots": 7,
+    "foundationAtBuild": "460da55901b7c70238f377759c588c7b46b0709a",
+    "checkerCommit": "d06cc1c0",
+    "checkerSHA256": "e38ec1604402838693888a3a6ab5e549955b8af3a1d8f4a835c0917ab1334062",
+    "evidence": ".browser-evidence/safe-human-charge/browser-fixed-release/browser.json",
+    "screenshotInspectedPrivately": true,
+    "positiveContinuousCapsuleSamples": 616,
+    "maxGoalDistance": 0.3052982592504668,
+    "scope": "Actual human keyboard sequence only. Positive natural weapon paint, every approach/ascent STEP capsule screened and23 literal source supports. Negative wall begins manually friendly-owned. No ordinary-bot admission, whole-bank bot or all-mode qualification; immutable build predates current ranked/foot/optionalSurge/search changes."
   }
 }
