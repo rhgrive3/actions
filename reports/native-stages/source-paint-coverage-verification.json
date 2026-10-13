@@ -185,19 +185,290 @@
       "skipped": 0,
       "includes": "original polygon ownership, thin1e-6 intersection,1e-13 roundoff neighbour,holes,NoPaint,compiled parity"
     },
-    "originalShipshapeAndRealWeaponBrowser": "pending",
+    "originalShipshapeAndRealWeaponBrowser": {
+      "partialSourceCellCases": 6,
+      "passed": 6,
+      "ordinaryWeapon": "Shooter, real Actor/Character/WeaponRunner/Projectiles",
+      "cadences": [
+        30,
+        60,
+        120
+      ],
+      "teams": 2,
+      "insideOwnsTeamAndSameOwnedCellOutsidePolygonOwnsZero": true,
+      "originalNoPaintActualContact": {
+        "triangle": 2117,
+        "object": "GlassWindows",
+        "face": -1,
+        "ownership": 0
+      },
+      "uncoveredOriginalCell": {
+        "cell": 5,
+        "ownership": 0
+      },
+      "enemyWeaponOverpaintAndSwimRelease": "passed; ordinary enemy Shooter ownership2 then alive swim release",
+      "completePeerRunner": "passed; exit0",
+      "sourceConversion": "3/3 exact corrected worker/Python;247 non-mask original outputs unchanged",
+      "correctedMaskSha256": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+    },
     "retailPaintMasks": "unverified",
     "hardwarePerformance": "unverified",
     "originalFiveBufferIdentity": {
       "unchangedBuffersPerStage": 9,
-      "stages": [
-        "scorch",
-        "hagglefish",
-        "inkblot",
-        "mako",
-        "brinewater"
-      ],
-      "beforeRoundoffCorrection": true
+      "afterMatchingNumericalMargin": true,
+      "removedOldLiveCells": 0,
+      "maps": [
+        {
+          "stage": "scorch",
+          "unchanged": {
+            "indices": {
+              "bytes": 3351588,
+              "sha256": "5b1b09b385449222d67469610144f7bd43e021282a8e7cee86753c385398b7e6"
+            },
+            "normals": {
+              "bytes": 1604844,
+              "sha256": "24c6df661c38edabbcfc4d4b9da1186c55c4bd4d0301767fcd944272c141e605"
+            },
+            "bvh": {
+              "bytes": 1048544,
+              "sha256": "0c586e85d0add72b61652bfebccc130958e816f027f353a70c5943599d024fa7"
+            },
+            "flags": {
+              "bytes": 534948,
+              "sha256": "829dda3305699baeb1302a6ebba7b7173e9d5cc645c8ffb4a697e8256b9ba1e3"
+            },
+            "triangleFace": {
+              "bytes": 534948,
+              "sha256": "6493204be44947184cdf7ad21373d45d9a6939550f7d6fb490e56662a289628c"
+            },
+            "objects": {
+              "bytes": 534948,
+              "sha256": "f5aa6694e6441d5d6114fedb5bff111c10f5b42c374cffb7e005f418b6de7865"
+            },
+            "collision": {
+              "bytes": 4814532,
+              "sha256": "a88b07b136a415da2a686098b6094b8ca79168ce2bd1b38fa47fc4f6a587e45f"
+            },
+            "vertices": {
+              "bytes": 10211616,
+              "sha256": "6b3a5553bca96325739458bda929d98162ffec171ca9027f628fc42a05c020f1"
+            },
+            "order": {
+              "bytes": 534948,
+              "sha256": "e9097bd32506321a9d3b51c9464c9eb5fbeb07563cc25fa8131e49b79c82d106"
+            }
+          },
+          "mask": {
+            "cells": 1469898,
+            "beforeLive": 432635,
+            "afterLive": 609529,
+            "newPartialCells": 176894,
+            "removedOldLiveCells": 0,
+            "sha256": "aaef5f98e15bdfa2290be3f4fe86e2c08676c78142a324135fc7ea3e42e3d390"
+          },
+          "afterMatchingNumericalMargin": true
+        },
+        {
+          "stage": "hagglefish",
+          "unchanged": {
+            "indices": {
+              "bytes": 2952756,
+              "sha256": "cb48b929d893d37021ca8a4e3f1646e48be69d123420bc73a99ff99df876d718"
+            },
+            "normals": {
+              "bytes": 1963500,
+              "sha256": "18c3b70045f86e87e1e9453773d0742fc884ae3bc226dbaea1e06ba3728d3cc1"
+            },
+            "bvh": {
+              "bytes": 1048544,
+              "sha256": "af466ed315e2c36612a969633040e50f1f3a545298cb6443c1c138bd276a930a"
+            },
+            "flags": {
+              "bytes": 654500,
+              "sha256": "45c538feb023d9ccbe892898c0316581fb43a89648d46f1db6290d3087262377"
+            },
+            "triangleFace": {
+              "bytes": 654500,
+              "sha256": "77fa5f23810cb2f9044956c3f706e2e09fe633a8407e7e2882008f6da3f360ba"
+            },
+            "objects": {
+              "bytes": 654500,
+              "sha256": "2d9b424f314322670d5aa538383c2f0eb689e7076d2f2f55b0e4746ca23cd892"
+            },
+            "collision": {
+              "bytes": 5890500,
+              "sha256": "7d546a835feeed1e14be93d1cba589fafafd516058374adfe2c6fa3d0048bb58"
+            },
+            "vertices": {
+              "bytes": 11406912,
+              "sha256": "407d902f37c8cc3aae7f2646a17cc6ccc14812fd1487ad74dabdc2131a986c7a"
+            },
+            "order": {
+              "bytes": 654500,
+              "sha256": "56bfefaff21dac4f757d6831dde1ff2e046b8da0005ae3f59a299fef5ec7beca"
+            }
+          },
+          "mask": {
+            "cells": 1401174,
+            "beforeLive": 691210,
+            "afterLive": 861089,
+            "newPartialCells": 169879,
+            "removedOldLiveCells": 0,
+            "sha256": "a67ffad743393644ef8f8e9df25c4e533620d17bc107bdd84a3ac8f2d2209e75"
+          },
+          "afterMatchingNumericalMargin": true
+        },
+        {
+          "stage": "inkblot",
+          "unchanged": {
+            "indices": {
+              "bytes": 2460900,
+              "sha256": "9e276391c7256c3ad116a1cecf1ba5a45caad26457f7ab429a67245a4e997aec"
+            },
+            "normals": {
+              "bytes": 1586916,
+              "sha256": "8ee91cef8ec655f1d683006eb020519ffad72ab6abe4482fc86f77bcdd817030"
+            },
+            "bvh": {
+              "bytes": 1048544,
+              "sha256": "52c8aaf24808bae976e55c8838144f8b209c05556bb1023609dc79b89a489a7b"
+            },
+            "flags": {
+              "bytes": 528972,
+              "sha256": "2b61e7dd47a3a435e9278000e42c5f29d0bb92ca2dac1d953dbece4a5c2fe1d0"
+            },
+            "triangleFace": {
+              "bytes": 528972,
+              "sha256": "c38e26f44100b1346bfb1e6bfdacba55c4b7c8bef4cbc96ca6045ddaca361f16"
+            },
+            "objects": {
+              "bytes": 528972,
+              "sha256": "f4ab65547dfff1e779d81d9dda6ce65d363a8c6189410dbbb4d2575c96fd8b36"
+            },
+            "collision": {
+              "bytes": 4760748,
+              "sha256": "2711edf9e63852cfcf8106075852f32bd7f6836bde941cb5b64c81a1bf1356a6"
+            },
+            "vertices": {
+              "bytes": 9598016,
+              "sha256": "3d8c8097f2cadb7fb2ecbd83b695feda0cee74273a936760e1a1a023117f72ec"
+            },
+            "order": {
+              "bytes": 528972,
+              "sha256": "05db7e481eed81b4f73cd66a3ee65a56de212910214b8f6cf1729acd798ce802"
+            }
+          },
+          "mask": {
+            "cells": 1911554,
+            "beforeLive": 897118,
+            "afterLive": 1011644,
+            "newPartialCells": 114526,
+            "removedOldLiveCells": 0,
+            "sha256": "aae76e60ac854181909a83ef3d4b872cb4509f10fca30fdf0eb7fb920d927a36"
+          },
+          "afterMatchingNumericalMargin": true
+        },
+        {
+          "stage": "mako",
+          "unchanged": {
+            "indices": {
+              "bytes": 4120788,
+              "sha256": "5d53dee901f04422ec070b2750d8ac03369fde40803eadddb9f6b6eb6bcb75d6"
+            },
+            "normals": {
+              "bytes": 1819440,
+              "sha256": "457913a4a0cb56b827e4f3df304c05662304ddd6395e1458d00752975de595aa"
+            },
+            "bvh": {
+              "bytes": 1048544,
+              "sha256": "2c0dbbb6eed6768ab0765e1e339df11cd0d708d9b069f02e73d541c728b29faa"
+            },
+            "flags": {
+              "bytes": 606480,
+              "sha256": "7ef8761f0868b267c604571a232ac30d219165d4ec4404a3c307e8e541da4473"
+            },
+            "triangleFace": {
+              "bytes": 606480,
+              "sha256": "9757df8b03ba665cc4913d631c89f686f517f8b91051bef316932c8e53f87e60"
+            },
+            "objects": {
+              "bytes": 606480,
+              "sha256": "400f43c5c30c1540d6c343282ad68d6dd344a44293c3911aa9440e1fed7985c1"
+            },
+            "collision": {
+              "bytes": 5458320,
+              "sha256": "f37d423fc7d61a5a6c382974c2d42db8806b6cae6e1e56e1ea308b21b906bb32"
+            },
+            "vertices": {
+              "bytes": 19271392,
+              "sha256": "72765c57df2b98f807476ffd91dc4929f44a65362ce39b7bcaed325c29200adc"
+            },
+            "order": {
+              "bytes": 606480,
+              "sha256": "705d43899dc3d37376ea80545c590e4bc782ba4e783471c840e15ccbe3c271b8"
+            }
+          },
+          "mask": {
+            "cells": 3190694,
+            "beforeLive": 1057581,
+            "afterLive": 1374245,
+            "newPartialCells": 316664,
+            "removedOldLiveCells": 0,
+            "sha256": "f225f48bcdf3a751a527aa6a2b224fa5750e62248f15cd389d0b36f9500c9640"
+          },
+          "afterMatchingNumericalMargin": true
+        },
+        {
+          "stage": "brinewater",
+          "unchanged": {
+            "indices": {
+              "bytes": 4871316,
+              "sha256": "24080f757871be5c784fba542df027dbdcbe5406f9dc73bf3b1984dcc70e74a4"
+            },
+            "normals": {
+              "bytes": 1893912,
+              "sha256": "d7833af49ab6cdb97b875187b52129b44225e1289fc46ec664d6ee15d9358614"
+            },
+            "bvh": {
+              "bytes": 1048544,
+              "sha256": "95c2a6cf8c3c5e1c71b466c0f2f5b3282b249f63e8f6e03a7ebed65db8ae34b3"
+            },
+            "flags": {
+              "bytes": 631304,
+              "sha256": "bd8631e8a3bada542de49b328123c4c8cef66d27ef27de7ee4faa61f7dca44a8"
+            },
+            "triangleFace": {
+              "bytes": 631304,
+              "sha256": "3c2dc9c44deb85820bb736696e76a31ea12c196db0c07d3a079118add4c5896a"
+            },
+            "objects": {
+              "bytes": 631304,
+              "sha256": "4de78245b46ed251d6f8b4338bb3ab615f714675d8cc701b0a4fca8ffed279d1"
+            },
+            "collision": {
+              "bytes": 5681736,
+              "sha256": "34b6bbe6f9ff9d24c6c60285166c56329b6bef23994cf4b799370f7f2c8c4640"
+            },
+            "vertices": {
+              "bytes": 16330944,
+              "sha256": "841281a5b07ef334001130e65bbb08e735b7b95c7a5d5ac638767e09415dd020"
+            },
+            "order": {
+              "bytes": 631304,
+              "sha256": "29f9fd69076b903c6d51f215dd600341a56591daeb0084a566fd3a6978d02b0d"
+            }
+          },
+          "mask": {
+            "cells": 4927794,
+            "beforeLive": 1625230,
+            "afterLive": 2001104,
+            "newPartialCells": 375874,
+            "removedOldLiveCells": 0,
+            "sha256": "3813784e1a4311658e20cb05192be54fc716082c5d188c97c4c3ac24b2a17d37"
+          },
+          "afterMatchingNumericalMargin": true
+        }
+      ]
     },
     "originalFivePhysicsPaintMovementNavRules": {
       "passed": 5,
@@ -217,23 +488,605 @@
     },
     "currentBuilds": {
       "private": {
-        "contentHash": "ebb6208f9a1fce5666c64659b6e9bfd8d906fab77e16204ed691afdc1a75063e",
-        "inputHash": "3cc1799fa3a40bfae7315e976aa781cb86b3236d675e3d4a90017765dd570814",
+        "contentHash": "8d9dd02377786e6528ae7d854cd970b8da1b5cdca250a5f0b0ea0833c4a9fb50",
+        "inputHash": "fba907ba4063fc81d34d54763070a0650c9a279fe334169b32eeb665db9ed9cd",
+        "revision": "349711cdb826bb74aaf2d15715dad4fb2d2843d75f83029d20d58690576e7933",
         "packagingTests": 9,
         "passed": 9,
-        "skipped": 0,
         "failed": 0,
-        "startupBudget": "passed"
+        "skipped": 0,
+        "startupBudget": "passed",
+        "scope": "private original-five current gameplay"
       },
       "public": {
-        "contentHash": "f0dd0bdc5db32b156ffe308ea731e8a99af2e82377d86055c0913bca8392f71b",
-        "inputHash": "3cc1799fa3a40bfae7315e976aa781cb86b3236d675e3d4a90017765dd570814",
+        "contentHash": "78b2eccd86db32636b381f35d67cd0763cd6c96020e46762668c69baab0288d6",
+        "inputHash": "354d38645f942e77def9c41e544abfd4be110c76e5152b61b3650b62dd6a1d4e",
+        "revision": "b3b2a8c69596a68956393f7ad0b1958915d331ea2cd8e864dc3eef191654a1bd",
         "packagingTests": 9,
         "passed": 9,
-        "skipped": 0,
         "failed": 0,
-        "startupBudget": "passed"
+        "skipped": 0,
+        "startupBudget": "passed",
+        "scope": "public packaging includes67e5565c; source-download/cache browser not claimed"
       }
+    },
+    "dynamicFaceRegression": {
+      "before": "Actual Tower face ownership threw because dynamic rectangles carry no triangles",
+      "fix": "bounds checked dynamic rectangle contract; exact original polygon membership only for static source faces",
+      "focusedTests": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    "originalFiveActualChromium": {
+      "passed": 5,
+      "failed": 0,
+      "actorsPerMap": 8,
+      "alivePerMap": 8,
+      "botsPerMap": 7,
+      "exceptions": 0,
+      "supportedTowerKeyboardCases": 12,
+      "hagglefishTower": "source-route-unverified; menu/API/direct-online negative preserves world",
+      "retailRankedPlacement": "unverified",
+      "framesPerMap": 120,
+      "backend": "Chromium SwiftShader, instrumented unseeded samples, not hardware FPS",
+      "maps": [
+        {
+          "id": "scorch",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 10.5,
+            "p95": 27,
+            "max": 45.5
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "hagglefish",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 21.799999997019768,
+            "p95": 43.69999998807907,
+            "max": 52
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "inkblot",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 13.899999991059303,
+            "p95": 39.400000005960464,
+            "max": 52.900000005960464
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "mako",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 33.8999999910593,
+            "p95": 177.09999999403954,
+            "max": 839.7000000029802
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "brinewater",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 31.700000002980232,
+            "p95": 60.1000000089407,
+            "max": 1002.2999999970198
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        }
+      ]
+    },
+    "performanceImprovement": "unverified; observed software-GL stalls retained",
+    "independentOriginalShipshapeBrowser": {
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "aliveActors": 8,
+      "bots": 7,
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "playerFields": {
+        "radius": 0.38,
+        "s3SwimTerrainRadiusRaw": 0.675,
+        "s3HumanoidTerrainRadiusRaw": 0.35,
+        "s3TerrainDistanceScale": 1,
+        "squidBodyLift": 0.16,
+        "squidHeight": 0.55,
+        "stepUp": 0.35
+      },
+      "enemyRelease": {
+        "hz": 60,
+        "receiver": "production bot Actor/Character with actual ordinary shooter ownership and swim attachment",
+        "ownAdmitted": 3,
+        "enemyWeapon": "shooter",
+        "enemyAdmitted": 1,
+        "enemyNaturalSplats": 1,
+        "enemySourceImpacts": [
+          {
+            "face": 14568,
+            "triangle": 42216,
+            "point": [
+              5.827000141143799,
+              6.354499816894531,
+              -40.596500396728516
+            ],
+            "u": 0,
+            "v": 4.771356756051237e-10,
+            "radius": 0.2,
+            "distanceToTarget": 0.13523148251131364
+          }
+        ],
+        "enemyPaintCalls": [
+          {
+            "radius": 1.56,
+            "point": [
+              5.817188750449498,
+              6.355823451248781,
+              -40.619456541978536
+            ]
+          }
+        ],
+        "released": true,
+        "enemyOwnedAtRelease": true,
+        "alive": true,
+        "trace": [
+          {
+            "frame": 0,
+            "owner": 1,
+            "wasClimbing": true,
+            "climbing": true,
+            "y": 6.01180316205886,
+            "feet": [
+              4.502966710496273,
+              6.01180316205886,
+              -41.240098626708985
+            ],
+            "wallFace": 14897,
+            "wallTriangle": 42700,
+            "wallUV": [
+              3.4969214490270524,
+              0.30299033817459087
+            ],
+            "alive": true
+          },
+          {
+            "frame": 1,
+            "owner": 1,
+            "wasClimbing": true,
+            "climbing": true,
+            "y": 6.0098163762831,
+            "feet": [
+              4.5036735982665235,
+              6.0098163762831,
+              -41.240098626708985
+            ],
+            "wallFace": 14897,
+            "wallTriangle": 42700,
+            "wallUV": [
+              3.496233156752262,
+              0.3020032047834693
+            ],
+            "alive": true
+          },
+          {
+            "frame": 2,
+            "owner": 2,
+            "wasClimbing": true,
+            "climbing": false,
+            "y": 6,
+            "feet": [
+              4.5036735982665235,
+              6,
+              -41.240098626708985
+            ],
+            "wallFace": 14897,
+            "wallTriangle": 42700,
+            "wallUV": [
+              3.4955262689820117,
+              0.3000164190077088
+            ],
+            "alive": true
+          }
+        ]
+      },
+      "negative": {
+        "uncoveredCell": 5,
+        "uncoveredOwnership": 0,
+        "noPaintTriangle": 2117,
+        "noPaintActualContact": true,
+        "noPaintObject": "FldObj_BlueCranes_glass01_low__GlassWindows",
+        "noPaintFace": -1,
+        "noPaintOwnership": 0
+      },
+      "cases": [
+        {
+          "sign": -1,
+          "hz": 30,
+          "admitted": 1,
+          "owned": 1,
+          "cellOwner": 1,
+          "sameCellOutside": 0,
+          "sourceFace": 35197,
+          "sourceTriangle": 83574,
+          "sourceCellIndex": 5817647,
+          "sourceApproachWaypoints": [
+            35,
+            124
+          ],
+          "actualImpactUV": [
+            1.5052422083741206,
+            0.9330553357532287
+          ],
+          "sameCellOutsideUV": [
+            1.625,
+            0.8381579298722117
+          ],
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 36589,
+              "triangle": 85981,
+              "u": 1.5024752192476853,
+              "v": 0.9300091637313814,
+              "centerUV": [
+                1.625,
+                0.8381579298722117
+              ],
+              "k": 5874858,
+              "inside": true,
+              "centerInside": false,
+              "distanceToTarget": 0.020143491381655634,
+              "object": 65
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.7999999970197678,
+            "max": 17.600000008940697
+          },
+          "beforeCoverageMask": 0
+        },
+        {
+          "sign": -1,
+          "hz": 60,
+          "admitted": 1,
+          "owned": 1,
+          "cellOwner": 1,
+          "sameCellOutside": 0,
+          "sourceFace": 35197,
+          "sourceTriangle": 83574,
+          "sourceCellIndex": 5817647,
+          "sourceApproachWaypoints": [
+            35,
+            124
+          ],
+          "actualImpactUV": [
+            1.504463718245617,
+            0.930568503351823
+          ],
+          "sameCellOutsideUV": [
+            1.625,
+            0.8381579298722117
+          ],
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 36589,
+              "triangle": 85981,
+              "u": 1.5024752192476853,
+              "v": 0.9300091637313814,
+              "centerUV": [
+                1.625,
+                0.8381579298722117
+              ],
+              "k": 5874858,
+              "inside": true,
+              "centerInside": false,
+              "distanceToTarget": 0.020143491381655634,
+              "object": 65
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 1.0999999940395355
+          },
+          "beforeCoverageMask": 0
+        },
+        {
+          "sign": -1,
+          "hz": 120,
+          "admitted": 1,
+          "owned": 1,
+          "cellOwner": 1,
+          "sameCellOutside": 0,
+          "sourceFace": 35197,
+          "sourceTriangle": 83574,
+          "sourceCellIndex": 5817647,
+          "sourceApproachWaypoints": [
+            35,
+            124
+          ],
+          "actualImpactUV": [
+            1.502871634371438,
+            0.930088346750094
+          ],
+          "sameCellOutsideUV": [
+            1.625,
+            0.8381579298722117
+          ],
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 36589,
+              "triangle": 85981,
+              "u": 1.5024752192476853,
+              "v": 0.9300091637313814,
+              "centerUV": [
+                1.625,
+                0.8381579298722117
+              ],
+              "k": 5874858,
+              "inside": true,
+              "centerInside": false,
+              "distanceToTarget": 0.020143491381655634,
+              "object": 65
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.20000000298023224,
+            "max": 2.199999988079071
+          },
+          "beforeCoverageMask": 0
+        },
+        {
+          "sign": 1,
+          "hz": 30,
+          "admitted": 1,
+          "owned": 1,
+          "cellOwner": 1,
+          "sameCellOutside": 0,
+          "sourceFace": 36589,
+          "sourceTriangle": 85981,
+          "sourceCellIndex": 5874858,
+          "sourceApproachWaypoints": [
+            126,
+            36
+          ],
+          "actualImpactUV": [
+            1.502575830494969,
+            0.9308422764462283
+          ],
+          "sameCellOutsideUV": [
+            1.625,
+            0.8381579298722117
+          ],
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 36589,
+              "triangle": 85981,
+              "u": 1.5024752192476853,
+              "v": 0.9300091637313814,
+              "centerUV": [
+                1.625,
+                0.8381579298722117
+              ],
+              "k": 5874858,
+              "inside": true,
+              "centerInside": false,
+              "distanceToTarget": 0.020143491381655634,
+              "object": 65
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.20000000298023224,
+            "max": 1.2999999970197678
+          },
+          "beforeCoverageMask": 0
+        },
+        {
+          "sign": 1,
+          "hz": 60,
+          "admitted": 1,
+          "owned": 1,
+          "cellOwner": 1,
+          "sameCellOutside": 0,
+          "sourceFace": 36589,
+          "sourceTriangle": 85981,
+          "sourceCellIndex": 5874858,
+          "sourceApproachWaypoints": [
+            126,
+            36
+          ],
+          "actualImpactUV": [
+            1.5024697202552915,
+            0.9301194367630523
+          ],
+          "sameCellOutsideUV": [
+            1.625,
+            0.8381579298722117
+          ],
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 36589,
+              "triangle": 85981,
+              "u": 1.5024752192476853,
+              "v": 0.9300091637313814,
+              "centerUV": [
+                1.625,
+                0.8381579298722117
+              ],
+              "k": 5874858,
+              "inside": true,
+              "centerInside": false,
+              "distanceToTarget": 0.020143491381655634,
+              "object": 65
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 18.900000005960464
+          },
+          "beforeCoverageMask": 0
+        },
+        {
+          "sign": 1,
+          "hz": 120,
+          "admitted": 1,
+          "owned": 1,
+          "cellOwner": 1,
+          "sameCellOutside": 0,
+          "sourceFace": 36589,
+          "sourceTriangle": 85981,
+          "sourceCellIndex": 5874858,
+          "sourceApproachWaypoints": [
+            126,
+            36
+          ],
+          "actualImpactUV": [
+            1.5024752192476853,
+            0.9300091637313814
+          ],
+          "sameCellOutsideUV": [
+            1.625,
+            0.8381579298722117
+          ],
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 36589,
+              "triangle": 85981,
+              "u": 1.5024752192476853,
+              "v": 0.9300091637313814,
+              "centerUV": [
+                1.625,
+                0.8381579298722117
+              ],
+              "k": 5874858,
+              "inside": true,
+              "centerInside": false,
+              "distanceToTarget": 0.020143491381655634,
+              "object": 65
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 1.2000000029802322
+          },
+          "beforeCoverageMask": 0
+        }
+      ],
+      "sourceObject": "Fld_Twist00_GapFill_01_1__Walls00",
+      "face": 36589,
+      "triangle": 85981,
+      "conditions": "controlled source-supported spawnAt stance inside interactive bounds and reachable from both original bank pads; ordinary Actor/WeaponRunner/Projectiles; mirrored original partial-cell source facades; exact same-owned-cell outside polygon samples0; genuine source stance/support; bots frozen; single shot; 0.5 RNG; SwiftShader",
+      "sourceRecipe": "inkwave-browser-source-v4",
+      "sealedSourceCatalogSha256": "86422426b73c5cb3701d1dbd2cd0a5bd83d8b13c1c8e576e1281de9ed59f88f8",
+      "buildContentHash": "ca0ffeba3e9de63e623359647e01305cf832837d0e3ecb5adfe26f34024cff71",
+      "errors": []
+    },
+    "independentOriginalShipshapeArtifact": {
+      "contentHash": "ca0ffeba3e9de63e623359647e01305cf832837d0e3ecb5adfe26f34024cff71",
+      "recipeMetadata": "source-catalog SHA256 equals immutable build input; module is intentionally bundled"
     }
   }
 }
