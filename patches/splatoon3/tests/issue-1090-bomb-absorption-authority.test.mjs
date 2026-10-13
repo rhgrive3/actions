@@ -24,12 +24,20 @@ async function setup(t, { sub = 'suction', legacy = false, shooterWeapon = 'shoo
   const ownerNet = new f.NetMatch(session('P'), {}), shooterNet = new f.NetMatch(session('Q'), {});
   t.after(() => { for (const net of [ownerNet, shooterNet]) net.unsubs.forEach(fn => fn()); });
   ownerNet.bind({ actors: [vac, remote] });
-  vac.special = vac.weapon.specialCost; vac._startSpecial();
+  vac.special = vac.weapon.specialCost; vac._startSpecial();vac.intent.fire=true;
   const activation = ownerNet.out.find(e => e[1] === 'ev' && e[2] === ACTIVATE);
   assert.ok(activation, 'native successful activation produced a wire event');
   shooterNet.bind({ actors: [proxy, shooter] });
-  shooterNet._play('P', json(activation));
+  shooterNet._play('P', json(activation));proxy.intent.fire=true;
   assert.ok(api.inkVacState(proxy)?.remote);
+  // LengthAddPerFrame is .3334 at 60 Hz, so let both owner and replica reach
+  // the authored 15-unit intake before probing a projectile at z=20. This
+  // keeps this test about proposal authority, not a zero-length activation.
+  f.G.actors = [vac];
+  for (let tick = 0; tick < 74; tick++) {
+    f.tick(vac);
+    api.advanceInkVacReplica(proxy, 1 / 60);
+  }
   f.G.actors = [proxy, shooter];
   proxy.pos.set(0, 0, 0); proxy.aimDir.set(0, 0, 1);
   shooter.pos.set(0, 0, 20); shooter.aimDir.set(0, 0, -1); shooter.aimYaw = Math.PI;

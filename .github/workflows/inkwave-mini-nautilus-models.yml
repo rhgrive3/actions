@@ -1,0 +1,137 @@
+name: INKWAVE Mini and Nautilus model review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/splatlings.mjs
+      - patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs
+      - patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs
+      - patches/splatoon3/tests/weapon-models-nautilus-strip-topology.test.mjs
+      - patches/splatoon3/tests/weapon-models-nautilus-neck-dial.test.mjs
+      - scripts/render-inkwave-mini-nautilus-gallery.mjs
+      - scripts/compare-inkwave-mini-nautilus-gallery.py
+      - .github/workflows/inkwave-mini-nautilus-models.yml
+permissions:
+  contents: read
+concurrency:
+  group: mini-nautilus-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  visual:
+    if: github.head_ref == 'feat/inkwave-mini-nautilus-rebuild'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 5ed08c6376696dd67391afed7c36463106959de8
+          path: .model-lod-before
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /inkwave-public/src/game/character-lod.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build exact before and after production compositions
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Verify rebuilt geometry and preserved motion
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/weapon-models-nautilus-strip-topology.test.mjs patches/splatoon3/tests/weapon-models-nautilus-neck-dial.test.mjs
+      - name: Preserve all65 authored LOD face corners and existing allocation budget
+        env:
+          WEAPON_LOD_BASELINE: .model-lod-before/inkwave-public/src/game/character-lod.js
+          WEAPON_LOD_REPORT: .model-evidence/all65-lod-structure.json
+        run: |
+          mkdir -p .model-evidence
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
+      - name: Render real production Actor and all model angles on the same runner
+        run: |
+          IDS=s3-spinner-quick,s3-spinner-serein
+          node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 640
+          node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 640
+          python3 scripts/compare-inkwave-mini-nautilus-gallery.py .model-evidence reports/inkwave-weapon-model-workspace/refs ${IDS//,/ }
+      - name: Native day Neutral and high-post images of the exact same heads
+        run: |
+          IDS=s3-spinner-quick,s3-spinner-serein
+          node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-before-site --out .model-evidence/native-day/before --ids "$IDS" --size 640 --native-day
+          node scripts/render-inkwave-mini-nautilus-gallery.mjs --site .model-after-site --out .model-evidence/native-day/after --ids "$IDS" --size 640 --native-day
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mini-nautilus-model-review-${{ github.event.pull_request.head.sha }}
+          path: .model-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+  crowd:
+    needs: visual
+    if: github.head_ref == 'feat/inkwave-mini-nautilus-rebuild'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable baseline and candidate
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Verify exact emitted runtime geometry and real Actor contracts
+        env:
+          INKWAVE_BUILT_SITE: .model-after-site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-nautilus-rim-candidate.test.mjs patches/splatoon3/tests/weapon-models-mini-nautilus-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/weapon-models-nautilus-strip-topology.test.mjs patches/splatoon3/tests/weapon-models-nautilus-neck-dial.test.mjs
+      - name: Eight mixed-weapon Actors, gameplay and far LOD, controlled ABBA
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node scripts/render-inkwave-mini-nautilus-gallery.mjs --site ".model-${version}-site" --out ".model-crowd/${pair}" --ids s3-spinner-quick --size 600 --crowd
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const all={};for(const name of ['before-A','after-B','after-B2','before-A2']){const data=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/gallery.json'));if(data.errors.length)throw Error(data.errors.join('\n'));all[name]=data.rows[0].crowd;}
+          for(const tier of['game','far'])for(const name of['after-B','after-B2']){
+            if(all[name][tier].actors!==8||new Set(all[name][tier].ids).size!==2)throw Error('Incomplete mixed-weapon crowd');
+            if(all[name][tier].drawCalls!==all['before-A'][tier].drawCalls)throw Error('Draw-call regression '+tier);
+          }
+          fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));console.log('MINI_NAUTILUS_CROWD_ABBA '+JSON.stringify(all));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mini-nautilus-model-crowd-${{ github.event.pull_request.head.sha }}
+          path: .model-crowd
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

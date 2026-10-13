@@ -21,7 +21,7 @@ test('combined runtime evidence recognizes declared loading/cache, practice-rang
 test('valid artifacts cannot forge their source SHA by changing a build input',()=>{
  const repo=path.join(root,'repo'),site=path.join(root,'site');fs.mkdirSync(repo,{recursive:true});fs.mkdirSync(site,{recursive:true});
  fs.mkdirSync(path.join(repo,'inkwave-public'),{recursive:true});fs.mkdirSync(path.join(repo,'scripts'),{recursive:true});
- const helpers=['inkwave-source-composition.mjs','lib/inkwave-build-only-modules.mjs','lib/inkwave-worker-compaction.mjs'];
+ const helpers=['inkwave-source-composition.mjs','lib/inkwave-build-only-modules.mjs','lib/inkwave-worker-compaction.mjs','lib/inkwave-source-compaction.mjs'];
  for(const file of helpers){const target=path.join(repo,'scripts',file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'// committed helper '+file);}
  const native='patches/native-stages/runtime/native-ink-chunks.mjs';fs.mkdirSync(path.dirname(path.join(repo,native)),{recursive:true});fs.writeFileSync(path.join(repo,native),'// committed source ink partition');
  fs.writeFileSync(path.join(repo,'inkwave-public/source.js'),'export const source=1;');fs.writeFileSync(path.join(repo,'scripts/build-inkwave.mjs'),'// builder');

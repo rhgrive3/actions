@@ -11,8 +11,8 @@ async function setup(){
   const f=await fixture();installKitInkVac(f,f.profile);
   f.G.paint.sample=()=>0;f.G.projectiles=new f.Projectiles(new f.THREE.Scene());
   const a=f.make('charger'),b=f.make('dualies');b.team=1;b.pos.set(0,0,5);
-  a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();
-  a.aimDir.set(0,0,1);a.aimYaw=0;a.aimPitch=0;
+  a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();a.intent.fire=true;
+  a.aimDir.set(0,0,1);a.aimYaw=0;a.aimPitch=0;b.pos.z=30;f.tick(a,74);b.pos.z=5;
   return {f,a,b};
 }
 function attemptDodge(b,ink){
@@ -39,7 +39,7 @@ for(const hz of [30,60,120])test(`#1149 ${hz}Hz dodge inside the hostile cone co
 
 test('#1149 dodge cost stays at rollInk outside the cone, for allies, behind occlusion, and after release',async()=>{
   const {f,a,b}=await setup();
-  f.tick(a,30);
+  f.tick(a,74);
   b.pos.set(20,0,5);assert.equal(inkVacSideStepScale(b),1);assert.equal(attemptDodge(b,10),true);close(b.ink,3);
   b.pos.set(0,0,5);b.team=0;assert.equal(inkVacSideStepScale(b),1);assert.equal(attemptDodge(b,10),true);close(b.ink,3);
   b.team=1;f.G.physics.los=()=>false;assert.equal(inkVacSideStepScale(b),1);assert.equal(attemptDodge(b,10),true);close(b.ink,3);
@@ -48,5 +48,5 @@ test('#1149 dodge cost stays at rollInk outside the cone, for allies, behind occ
 
 test('#1149 non-Dualies victims keep their own cost and are not scaled',async()=>{
   const {f,a}=await setup();const s=f.make('shooter');s.team=1;s.pos.set(0,0,5);
-  f.tick(a,30);assert.equal(inkVacSideStepScale(s),1);
+  f.tick(a,74);assert.equal(inkVacSideStepScale(s),1);
 });
