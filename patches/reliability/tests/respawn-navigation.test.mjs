@@ -188,6 +188,53 @@ function distinctHome(h, team) {
  h.G.level.homeSuperJumpPoints=[new h.THREE.Vector3(-20,0,-25),new h.THREE.Vector3(20,0,25)];
  return h.G.level.homeSuperJumpPoints[team];
 }
+
+async function lifeTarget() {
+ const h=await rig(),ally=h.allies[0];
+ ally.spawnAt(new h.THREE.Vector3(18,0,6),0);ally.grounded=true;
+ h.dead();h.frame([3]);h.frame([14]);h.frame([1]);
+ assert.equal(h.c.pendingRespawnJump?.actor,ally);
+ return {...h,ally};
+}
+function landQueued(h) { h.a.respawn();h.a.grounded=true;h.m.updateController(STEP); }
+
+for(const observeDeath of [false,true])test(`#1357 a queued teammate life cannot survive death/respawn (death observed=${observeDeath})`,async()=>{
+ const h=await lifeTarget(),life=h.ally.netLife;
+ h.ally.splat(null,'water');if(observeDeath)h.m.updateController(STEP);
+ h.ally.respawn();h.ally.grounded=true;assert.equal(h.ally.netLife,life+1);
+ landQueued(h);
+ assert.equal(h.a.superJumpState,null,'a new teammate life requires a new explicit confirmation');
+ assert.equal(h.c.pendingRespawnJump,null);
+});
+test('#1357 a target life change while the jumper descends also cancels the queued jump',async()=>{
+ const h=await lifeTarget();h.a.respawn();h.m.updateController(STEP);
+ assert.ok(h.c.pendingRespawnJump,'normal spawn descent preserves a same-life choice');
+ h.ally.splat(null,'water');h.ally.respawn();h.ally.grounded=true;h.a.grounded=true;h.m.updateController(STEP);
+ assert.equal(h.a.superJumpState,null);assert.equal(h.c.pendingRespawnJump,null);
+});
+for(const rendered of [false,true])test(`#1357 an accepted remote new life invalidates an old queue (rendered=${rendered})`,async()=>{
+ const h=await lifeTarget(),life=h.ally.netLife;
+ h.ally.remote=true;h.ally.net={lastLife:life+1};if(rendered)h.ally.netLife=life+1;
+ landQueued(h);
+ assert.equal(h.a.superJumpState,null);assert.equal(h.c.pendingRespawnJump,null);
+});
+test('#1357 a stale rendered target cannot acquire a new queue before its accepted life is rendered',async()=>{
+ const h=await lifeTarget();h.c.pendingRespawnJump=null;
+ h.ally.remote=true;h.ally.net={lastLife:h.ally.netLife+1};
+ assert.equal(h.c.requestMapJump(h.ally),false);assert.equal(h.c.pendingRespawnJump,null);
+});
+test('#1357 fresh confirmation after the target respawns restores normal navigation',async()=>{
+ const h=await lifeTarget();h.ally.splat(null,'water');h.ally.respawn();h.ally.grounded=true;
+ h.m.updateController(STEP);assert.equal(h.c.pendingRespawnJump,null);
+ assert.equal(h.c.requestMapJump(h.ally),true);landQueued(h);
+ assert.ok(h.a.superJumpState?.target.equals(h.ally.pos));
+});
+test('#1357 same-life movement and teleport counters do not invalidate a queued teammate',async()=>{
+ const h=await lifeTarget(),life=h.ally.netLife;
+ h.ally.pos.set(24,0,9);h.ally.netTp=(h.ally.netTp||0)+1;h.ally.net={lastLife:life};
+ h.G.actors=[h.a,...h.allies.slice().reverse()];landQueued(h);
+ assert.ok(h.a.superJumpState?.target.equals(h.ally.pos));assert.equal(h.ally.netLife,life);
+});
 function pickHome(h, mode) {
  if(mode==='keyboard'){h.input.keys.add('Tab');h.input.pressed.add('Tab');h.input.pressed.add('Digit4');h.m.updateController(STEP);}
  if(mode==='pad'){h.frame([3]);h.frame([13]);h.frame([1]);}
