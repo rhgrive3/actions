@@ -1,4 +1,5 @@
 import { actorId } from './network.mjs';
+import { toxicMistScale } from '../toxic-mist.mjs';
 
 export function sphereEntry(start, end, center, radius) {
   const d = end.map((v, i) => v - start[i]), o = start.map((v, i) => v - center[i]);
@@ -69,7 +70,10 @@ export function installRankedCombat(api) {
     if (!isCarrier(G.match, this.a)) return moveSpeed.call(this);
     const c = G.match.ranked.rule.state.charge;
     return this.a.intent.fire || c.firing || c.pending || c.recovery > 0
-      ? .6 * 60 * .02 * (this.a.s3?.modifiers?.runSpeedFiring ?? 1) : moveSpeed.call(this) * .8;
+      // The dedicated speed bypasses the ordinary runner's Mist wrapper.
+      // Apply current-volume resistance once; idle movement already has it.
+      ? .6 * 60 * .02 * (this.a.s3?.modifiers?.runSpeedFiring ?? 1) * toxicMistScale(this.a)
+      : moveSpeed.call(this) * .8;
   };
   const horizontal = Actor.prototype._horizontal;
   Actor.prototype._horizontal = function (...args) {

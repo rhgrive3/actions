@@ -18,6 +18,8 @@
 
 import { gearCurve } from './gear.mjs';
 import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
+import { disposeInkVac } from './kit-ink-vac.mjs';
+import { endTrizooka } from './kit-trizooka.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-specials.install.v1');
 const FPS = 60, MAX_STAMP_RADIUS = 3.74;
@@ -1235,9 +1237,14 @@ function installRuntime(api) {
 export function installAllSpecials(api) { installRuntime(api); return api; }
 // Cancel actor control when picking up an objective; deployed objects survive.
 export function interruptSpecialForObjective(api, actor) {
+  if (!actor) return;
+  // These kits own separate control tokens, outside actorStates. Native cleanup
+  // also retires the Vac cone/replicas without deleting already-fired rounds.
+  disposeInkVac(actor);
+  endTrizooka(actor, 'objective-pickup');
   const rt = runtimes.get(api?.Projectiles);
   if (rt && actorStates.has(actor)) endSpecial(rt, actor, 'objective-pickup');
-  if (actor) { actor.specialActive = null; actor.special = 0; }
+  actor.specialActive = null; actor.special = 0;
 }
 
 function replayLedger(actor) {
