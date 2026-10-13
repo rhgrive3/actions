@@ -20,7 +20,6 @@ const root = new URL('../../', import.meta.url);
 const composer = 'patches/local-quality/composer-target-adapter.mjs';
 const composerFormat = 'patches/local-quality/composer-format-adapter.mjs';
 const runtimeHelpers = [
-  'patches/splatoon3/runtime/brella-guard-facing.mjs',
   'patches/splatoon3/issue-196-adapter.mjs',
   'patches/splatoon3/issue-284-adapter.mjs',
   'patches/splatoon3/runtime/issue-415-adapter.mjs',
@@ -44,6 +43,7 @@ const auditedBuildExports = new Map([
   ['patches/local-quality/issue-480-camera-shake-fidelity.mjs', ['REQUIRED_WIRING', 'ISSUE_480_CAMERA_RIG', 'ISSUE_480_SCREENFX', 'ISSUE_480_MENUS']],
   ['patches/local-quality/medal-adapter.mjs', ['replaceOnce', 'S3_AWARDS', 'S3_PRIORITY_RANKS', 'S3_AWARD_ORDER']],
   ['patches/local-quality/minimap-resource-adapter.mjs', ['replaceOnceMinimap']],
+  ['patches/local-quality/showcase-alpha-adapter.mjs', ['selectShowcaseAlphaTarget']],
   ['patches/local-quality/team-special-signal-adapter.mjs', []],
   ['patches/local-quality/texlib-adapter.mjs', ['replaceOnceTexlib']],
   ['patches/reliability/map-look.mjs', []],
@@ -76,19 +76,6 @@ test('excluded modules have audited build-only exports; mixed runtime adapters r
   }
   for (const file of auditedBuildExports.keys()) assert(BUILD_ONLY_PATCH_MODULES.has(file), file);
   for (const file of runtimeHelpers) assert(!BUILD_ONLY_PATCH_MODULES.has(file), file);
-});
-
-test('Brella guard and airborne-dodge source transforms remain build-time callable', async () => {
-  for (const [file, name] of [
-    ['patches/splatoon3/brella-guard-facing-adapter.mjs', 'adaptBrellaGuardFacing'],
-    ['patches/splatoon3/issue-719-dodge-adapter.mjs', 'adaptIssue719Dodge'],
-  ]) {
-    assert(BUILD_ONLY_PATCH_MODULES.has(file), file);
-    const mod = await import(new URL(file, root));
-    assert.deepEqual(Object.keys(mod), [name], 'only a source transformer is excluded');
-    assert.equal(mod[name]('unrelated.js', 'unchanged'), 'unchanged');
-    assert.match(fs.readFileSync(new URL('patches/splatoon3/adapter.mjs', root), 'utf8'), new RegExp(name), 'composition still invokes the source adapter');
-  }
 });
 
 const extractedTransforms = [

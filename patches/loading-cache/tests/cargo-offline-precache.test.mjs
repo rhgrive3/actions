@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { coldOfflineLightmap } from '../adapter.mjs';
 
-test('PWA 10 MiB cold snapshot retains every offline-playable lightmap and lazy-caches online-only Cargo',()=>{
+test('PWA 24 MiB cold snapshot retains every offline-playable lightmap and lazy-caches online-only Cargo',()=>{
   for(const id of ['tidewater','kelpline','halyard']) {
     assert.equal(coldOfflineLightmap('assets/lightmaps/'+id+'.png'),true,id+' offline gameplay lightmap');
     assert.equal(coldOfflineLightmap('assets/lightmaps/'+id+'.json'),true,id+' lightmap metadata');

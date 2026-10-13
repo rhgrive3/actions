@@ -4011,9 +4011,24 @@ Sub-mark follow-up: retain bounded per-owner accepted births independently of re
 
 2026-10-11: Independent native Sprinkler Sub Power candidate connects pinned period curves and constant throw-speed tiers at owner throw admission. Actual Actor and render-rate regressions cover AP0/10/57, frozen per-device values and native phase progression. Existing AP0 phase interpretation/deployment/paint calibration remains unchanged; broader and browser gates pending. See reports/inkwave-native-sprinkler-power-2026-10-11.md.
 
+## 2026-10-11 Toxic Mist resistance candidate
+
+Connect the hash-verified 11.3.0 MoveDownRt_PoisonMist curve to the victim's calibrated reduction difference and grounded squid target speed. Query current live cloud membership for exit/overlap/expiry instead of retaining an outside-volume lease. Preserve remote victim ownership and require a matching cloud for status replay. Base .72, lifetime/drain and squid airborne momentum remain unresolved calibrations; no inferred airborne cap is introduced. See `inkwave-toxic-mist-resistance-2026-10-11.md` for measured limits and tests.
+
 ## 2026-10-11: grounded Fast squid acceleration connection (candidate)
 
 Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinary grounded squid gets the measured 1.5x rate; humanoid and all attack/ready states retain existing rates. Baseline actual Actor delta0.6 becomes0.9 WU/s at60Hz, other ordinary forms remain0.6, attack remains1.2. Absolute36/72calibration and air behavior are unchanged. See `reports/inkwave-fast-swim-acceleration-2026-10-11.md` for source, real-Physics/FPS/snapshot checks and unverified retail boundaries.
+
+## 2026-10-11: catalogue sub damage-family and Burst contact candidate
+
+Prevent Burst direct victims from receiving its same-impact splash twice while preserving collateral Actors. Connect pinned BombL to Burst/Fizzy/Torpedo and existing BombH to Mine. Admit their five authentic raw network cause tags under descriptor ceilings and existing sender/life/sequence guards. Source/Actor/network tests and client-authority/calibration limits are recorded in `inkwave-catalogue-sub-resistance-2026-10-11.md`.
+
+## 2026-10-11: Splash Wall display-plane alignment candidate
+
+Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather than applying generic decorative age rotation. Actual native deployment and JSON ghost replay regressions compare rendered world normals with barrier contact at multiple angles/frame rates. Contact damage, HP decay, lifetime and knockback are untouched; see `inkwave-splash-wall-facing-2026-10-11.md`.
+
+## 2026-10-12 Mist live-query cost
+Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
 
 
 ## 2026-10-12 原典表示メッシュ5ステージ統合
@@ -4041,3 +4056,19 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - **設定なしの最終描画**: Chromium/SwiftShaderとWebKit/Mesa touchで通常起動から実ゲーム9操作・各45方向が成功、黒いRGB/透明欠損0。sourceとexact emitted new+packaging 27件すべて成功・skip0。既存起動snapshot 5,658,810byte、core revision 10,276,777byte、worker 69,493byteで従来上限を維持。追加素材transport/cacheは16.875MiB、GPU配置推定は37.69MiB。全起動105,208/27,793msは既存world/shader/softwareGPUを含むローカルサーバーの値であり、実機ネットワークや素材単独の比較値ではない。`reports/ink-volume/default-measurements.json`と元素材/通常起動の比較画像を参照。
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
+
+## 2026-10-12: プライムシューター・ジェットスイーパーのモデル作り直しと銃口・構え
+
+参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
+
+- **本家の根拠**: 公式回転動画「S3 Splattershot Pro FRZ-N model rotating.mp4」「S3 Jet Squelcher COB-R model rotating.mp4」（同形状の別キット）の真横・正面・背面・斜めフレーム、「S3 Custom Jet Squelcher Promotional 3D Render.jpg」、本家3Dレンダー「S3 Weapon Main <名前>.png」、持ち方は S2 プロモ画像と S3 3D プロモ（Inkipedia）。本家のメッシュ寸法・ソケット位置・構えの数値は公開されておらず、すべて画像からの推定。
+- **INKWAVE の実装箇所**: `patches/splatoon3/runtime/weapon-models/shooters-b.mjs`（`expert` / `longJet`、`MODELS['s3-shooter-long'].hold`）。記録は `patches/splatoon3/reference/weapon-models/shooters-b.md` の「2026-10-12 作り直し」。
+
+| 差分 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|
+| 両ブキのモデルを立体で作り直し（プライム: 右側だけを回るホース・円錐タンク・くさび等、ジェット: 上下2本体を持ち手でつなぐ構造） | ブキを選び待機・射撃 | 見た目のみ | 回転動画の真横フレーム・3Dレンダーとの画像比較のみ。実機寸法は未確認 |
+| **ジェットの銃口（弾の発生位置）を竿先のノズルへ移動**。ブキ空間 (0, 0.155, 0.482)→(0, 0.063, 0.664) m。キャラ基準の長押し射撃中の発生位置: 前方 0.800→0.874 m、高さ 0.958→0.884 m、横 −0.045→−0.027 m | 立ち止まって長押し射撃 | 弾の発生位置が約 7 cm 前・7 cm 下へ。壁際・段差際の射撃、足元の塗りの始点に影響 | ロジック単独の計測（30/60/120 Hz で同値）。本家実機の発生位置とは未比較（実機計測が必要） |
+| プライムの銃口 (0, 0.137, 0.393)→(0, 0.130, 0.402) m。長押し射撃中: 前方 0.711→0.720 m、高さ 0.938→0.931 m | 同上 | ほぼ変化なし（1 cm 未満） | ロジック単独の計測（30/60/120 Hz で同値）。未確認 |
+| グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
+
+計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
