@@ -103,7 +103,7 @@
     "retail frame/speed parity",
     "physical mobile/Switch FPS"
   ],
-  "browserStatus": "partial accepted-Drop artifacts passed projectile/render; later checks queued; latest ranked/whole-bank matrix pending",
+  "browserStatus": "artifact-scoped standard460da matrix passed; current positive ordinary-bot/full-stage matrix pending",
   "diagnostics": {
     "restrictedLowerPitOnly": {
       "pads": [
@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "7ddb538afc33787810ec7c6bf218eec0879c3aff",
+  "latestConsumedFoundation": "6116558f66912bfa164f8a67471a230ce07ca4d7",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -703,7 +703,25 @@
     "durationMilliseconds": 15873.751659,
     "character": "production Character, constructed through actual Actor constructor",
     "actorIntegrationAndFrameFinishing": "production methods retained; no fixture make() call",
-    "optionalSourceMotion": "CPU VM dynamic import callback unavailable; production rig geometry/controller run, full optional source-motion playback remains browser-only"
+    "optionalSourceMotion": "CPU VM dynamic import callback unavailable; production rig geometry/controller run, full optional source-motion playback remains browser-only",
+    "continuousCapsuleQualifierStatus": {
+      "status": "stronger-screen-negative-at30Hz-pending-independent-alternative",
+      "owner": "Manta",
+      "reportedCase": {
+        "from": [
+          26.83,
+          8.25,
+          18.5
+        ],
+        "to": [
+          26.86,
+          8.4,
+          18.5
+        ],
+        "shape": "live .675 continuous SQ capsule"
+      },
+      "scope": "Existing human controller completes the bank at all three rates; original source test asserts initial/end/waypoint supports, not every continuous segment. A distinct strictly screened ordinary-bot approach remains required."
+    }
   },
   "privateDropCalibration": {
     "status": "diagnostic only; candidate not adopted",
@@ -1743,7 +1761,7 @@
       "textureIntegrityRecordsUnchanged": true,
       "source": ".codex-stage-sources/KiTrix/stages/Vss_Ruins03"
     },
-    "partialMatrixStatus": "Source four tests, independent source proof, both packaging/startup gates, actual shots three rates and static/moving render passed; remaining browsers queued.",
+    "partialMatrixStatus": "Standard accepted-Drop matrix passed at explicitly scoped460da artifacts; physical Tower/postlaunch checks queued. Current complete both-bank ordinary-bot matrix remains pending.",
     "stageReviewStatus": "Draft; positive ordinary bot still pending"
   },
   "acceptedOnlineSettlementChecker": {
@@ -1777,7 +1795,7 @@
         70
       ]
     ],
-    "status": "partial-running-not-whole-stage-qualified",
+    "status": "standard source/build/projectile/render/camera/lifecycle/public-cache/all-five-mode-WS/gameplay checkpoint passed; physical Tower/landing extra checks queued; not complete stage qualification",
     "sites": {
       "private": {
         "contentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
@@ -2027,11 +2045,8 @@
       "evidence": ".browser-evidence/accepted-drops-partial/render/render.json"
     },
     "remainingBrowserChecks": [
-      "lifecycle/touchscreen",
-      "public source/cache-corrupt rollback",
-      "all-five-mode real WebSocket",
-      "all-supported-mode gameplay/unsupported guards",
-      "unique minimap natural shooter/death respawn"
+      "physical full-rider Tower calibration",
+      "source initial-launch/post-launch directed motion"
     ],
     "artifactScope": "Ranked marker d92 is consumed in source but absent from these immutable artifacts. Current affected final ranked/bank/WS proofs require fresh builds; unchanged source/shots/render/camera evidence stays scoped to this checkpoint.",
     "camera": {
@@ -2283,6 +2298,1719 @@
       "reachableNodes": 6606,
       "sourceSupportAndOwnershipPreserved": true,
       "evidence": ".browser-evidence/accepted-drops-partial/minimap-source-cpu.json"
+    },
+    "lifecycle": {
+      "status": "passed",
+      "errors": [],
+      "quality": {
+        "cpuGridUnchanged": true,
+        "trianglePositionsUnchanged": true,
+        "authoritiesRetained": true,
+        "finalAtlas": 2048,
+        "textureCount": 85
+      },
+      "failureRollback": {
+        "rejected": true,
+        "levelRetained": true,
+        "paintRetained": true,
+        "displayRetained": true
+      },
+      "corruptionProbe": {
+        "requests": 1,
+        "error": "Native integrity mismatch: bluefin/vertices.bin"
+      },
+      "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+      "cancellation": {
+        "id": "tidewater",
+        "nativeGroups": 0,
+        "preparationCancelled": true
+      },
+      "switches": [
+        {
+          "id": "tidewater",
+          "native": false,
+          "nativeGroups": 0,
+          "memory": {
+            "geometries": 223,
+            "textures": 28
+          }
+        },
+        {
+          "id": "bluefin",
+          "native": true,
+          "nativeGroups": 1,
+          "memory": {
+            "geometries": 379,
+            "textures": 107
+          }
+        },
+        {
+          "id": "tidewater",
+          "native": false,
+          "nativeGroups": 0,
+          "memory": {
+            "geometries": 223,
+            "textures": 28
+          }
+        }
+      ],
+      "fingerprint": {
+        "same": true,
+        "changed": false,
+        "missing": false
+      },
+      "mobile": [
+        {
+          "id": "bluefin",
+          "viewport": [
+            844,
+            390
+          ],
+          "touch": true,
+          "actors": 8,
+          "native": true,
+          "atlas": 2048,
+          "textureCount": 85,
+          "cpuFrame": {
+            "p50": 27.399999991059303,
+            "p95": 78.5,
+            "max": 2479.800000011921
+          },
+          "gpuDrainRenderMs": 9.100000008940697,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "local": {
+            "grounded": true,
+            "spawn": false
+          },
+          "mobileHardwareMeasured": false
+        }
+      ],
+      "screenshotInspectedPrivately": true
+    },
+    "uniqueLayersInitialFailure": {
+      "status": "failed-checker-source-layer-query",
+      "reason": "Broad .3-unit downward ray hits retained FenceIron surface at16.6716995 above selected MetalCurb floor16.6018009; a .004-unit source query confirms the selected literal plane. Both initial general and floor-normal broad-query failures remain preserved; exact-plane browser retest pending.",
+      "browserErrors": 0,
+      "evidence": ".browser-evidence/accepted-drops-partial/layers/layers.json",
+      "retestStatus": "Passed exact-plane probe; 2227 retained-cover pixels, natural shooter selected-floor raster, six real death-timer/respawn cases. Both broad-query failures preserved."
+    },
+    "sourceBrowser": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "bluefin",
+          "sourceMode": "browser-direct",
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "geometry": {
+            "vertices": 1024229,
+            "triangles": 774445,
+            "collisionTriangles": 176506,
+            "bvhNodes": 32767,
+            "paintFaces": 54410
+          },
+          "actors": 8,
+          "bots": 7,
+          "coverage": [
+            0.004387754676201038,
+            0.00248682482074375
+          ],
+          "spawn": {
+            "grounded": true,
+            "active": false,
+            "landingFrames": 58,
+            "maximumLandingFrames": 180
+          },
+          "sourceMetrics": {
+            "cached": false,
+            "conversionMilliseconds": 14330.10000000894,
+            "recipe": "inkwave-browser-source-v3"
+          },
+          "gameMetrics": {
+            "loadMilliseconds": 115093.5,
+            "navMilliseconds": 2329.6000000089407,
+            "shaderWarmMilliseconds": 82.59999999403954,
+            "vertices": 1024229,
+            "triangles": 774445,
+            "faces": 54410,
+            "gridBytes": 2384253,
+            "atlas": 2048,
+            "ppm": 2.5600000000000005,
+            "textureCount": 85,
+            "quality": "low",
+            "version1130Verified": false
+          },
+          "render": {
+            "frame": 1343,
+            "calls": 265,
+            "triangles": 568864,
+            "points": 0,
+            "lines": 0
+          },
+          "version1130Verified": false
+        }
+      ],
+      "errors": [],
+      "downloads": 2,
+      "menu": [
+        "タイドウォーター広場",
+        "ケルプライン埠頭",
+        "ハリヤードマリーナ",
+        "ユノハナ大渓谷",
+        "ヤガラ市場",
+        "海女美術大学",
+        "ザトウマーケット",
+        "クサヤ温泉",
+        "ネギトロ炭鉱"
+      ],
+      "cache": {
+        "id": "bluefin",
+        "derivedCacheHit": true,
+        "objDownloads": 0
+      },
+      "failureRollback": {
+        "levelRetained": true,
+        "menu": "setup",
+        "loadingRemoved": true
+      },
+      "screenshotInspectedPrivately": true
+    },
+    "uniqueLayersSourcePlaneDiagnosis": {
+      "x": 29,
+      "z": 63.166666666666664,
+      "selectedMapHeight": 16.6018009185791,
+      "results": [
+        {
+          "label": "broad-floor",
+          "originY": 16.701800918579103,
+          "distance": 0.3,
+          "hit": {
+            "triangle": 22362,
+            "point": [
+              29,
+              16.67169952392578,
+              63.166666666666664
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "flags": 3,
+            "sourceObject": "FldObj_Ruins03PntStage_Fence_parts057_1__FenceIron_xl"
+          }
+        },
+        {
+          "label": "selected-plane",
+          "originY": 16.6038009185791,
+          "distance": 0.004,
+          "hit": {
+            "triangle": 89371,
+            "point": [
+              29,
+              16.6018009185791,
+              63.166666666666664
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "flags": 3,
+            "sourceObject": "FldObj_Ruins03PntStage_pCube194434_1__MetalCurbSet00"
+          }
+        },
+        {
+          "label": "broad-general",
+          "originY": 16.701800918579103,
+          "distance": 0.3,
+          "hit": {
+            "triangle": 22362,
+            "point": [
+              29,
+              16.67169952392578,
+              63.166666666666664
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "flags": 3,
+            "sourceObject": "FldObj_Ruins03PntStage_Fence_parts057_1__FenceIron_xl"
+          }
+        }
+      ]
+    },
+    "online": {
+      "status": "passed",
+      "results": [
+        {
+          "id": "bluefin",
+          "mode": "turf",
+          "identities": [
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "turf",
+              "native": true,
+              "gridBytes": 2384253
+            },
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "turf",
+              "native": true,
+              "gridBytes": 2384253
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "2950fa720146f81d59d52359b6873eebf53e5fdc8d784f55e3e6eede50f60243",
+              "coverage": [
+                0.006178744061025762,
+                0.0044037518313132335
+              ],
+              "stats": {
+                "in": 217,
+                "out": 217,
+                "extrap": 89,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 10.883333333333454,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1560,
+                  1120
+                ],
+                "applied": [
+                  [
+                    "p_v7z024x",
+                    291
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_kysch9m",
+                    "tr": 58.12769396853739,
+                    "lastTs": 58.702,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      58.633,
+                      648,
+                      58.702,
+                      651
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "2950fa720146f81d59d52359b6873eebf53e5fdc8d784f55e3e6eede50f60243",
+              "coverage": [
+                0.006178744061025762,
+                0.0044037518313132335
+              ],
+              "stats": {
+                "in": 217,
+                "out": 217,
+                "extrap": 739,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 10.883333333333454,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1560,
+                  1120
+                ],
+                "applied": [
+                  [
+                    "p_v7z024x",
+                    291
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_v7z024x",
+                    "tr": 89.91618565491396,
+                    "lastTs": 90.494,
+                    "lastEventSeq": 291,
+                    "lastPaintSeq": 291,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      90.426,
+                      648,
+                      90.494,
+                      651
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 5,
+            "phases": [
+              {
+                "phase": "initial",
+                "settled": true,
+                "frames": 280,
+                "watermark": 241,
+                "state": [
+                  {
+                    "applied": 291,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 291,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              },
+              {
+                "phase": "final",
+                "settled": true,
+                "frames": 5,
+                "watermark": 241,
+                "state": [
+                  {
+                    "applied": 291,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 291,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              }
+            ],
+            "probeRadius": 3.84
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 472
+        },
+        {
+          "id": "bluefin",
+          "mode": "zones",
+          "identities": [
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "zones",
+              "native": true,
+              "gridBytes": 2384253
+            },
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "zones",
+              "native": true,
+              "gridBytes": 2384253
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "ee26403d7799f42098db673b89e2fc071174a0ed4956d04c50142f9daaf195ea",
+              "coverage": [
+                0.006475250335578313,
+                0.010454090555814984
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 230,
+                "out": 230,
+                "extrap": 61,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 22.383333333333344,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1635,
+                  2623
+                ],
+                "applied": [
+                  [
+                    "p_xzrm5sk",
+                    860
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_l9ccihy",
+                    "tr": 79.50053061746551,
+                    "lastTs": 79.746,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      79.672,
+                      1337,
+                      79.746,
+                      1340
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "ee26403d7799f42098db673b89e2fc071174a0ed4956d04c50142f9daaf195ea",
+              "coverage": [
+                0.006475250335578313,
+                0.010454090555814984
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 230,
+                "out": 230,
+                "extrap": 500,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 22.383333333333344,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1635,
+                  2623
+                ],
+                "applied": [
+                  [
+                    "p_xzrm5sk",
+                    860
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_xzrm5sk",
+                    "tr": 111.29522496046341,
+                    "lastTs": 111.534,
+                    "lastEventSeq": 861,
+                    "lastPaintSeq": 860,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      111.463,
+                      1337,
+                      111.534,
+                      1340
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 5,
+            "phases": [
+              {
+                "phase": "initial",
+                "settled": true,
+                "frames": 300,
+                "watermark": 557,
+                "state": [
+                  {
+                    "applied": 860,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 860,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              },
+              {
+                "phase": "final",
+                "settled": true,
+                "frames": 5,
+                "watermark": 557,
+                "state": [
+                  {
+                    "applied": 860,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 860,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              }
+            ],
+            "probeRadius": 3.84
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 972
+        },
+        {
+          "id": "bluefin",
+          "mode": "tower",
+          "identities": [
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 2384353
+            },
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 2384353
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "bd338d61ec1ad81efcf084dca2dd298c64291677dc08cdd34d4d28497dcfe5da",
+              "coverage": [
+                0.0037060463660455317,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 135,
+                "out": 135,
+                "extrap": 2,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 29.13333333333296,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  920,
+                  0
+                ],
+                "applied": [
+                  [
+                    "p_3p7j7od",
+                    864
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_cer4zz8",
+                    "tr": 92.54372332550422,
+                    "lastTs": 93.04,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      92.951,
+                      1742,
+                      93.04,
+                      1745
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "bd338d61ec1ad81efcf084dca2dd298c64291677dc08cdd34d4d28497dcfe5da",
+              "coverage": [
+                0.0037060463660455317,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 135,
+                "out": 135,
+                "extrap": 35,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 29.13333333333296,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  920,
+                  0
+                ],
+                "applied": [
+                  [
+                    "p_3p7j7od",
+                    864
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_3p7j7od",
+                    "tr": 124.33972396863743,
+                    "lastTs": 124.832,
+                    "lastEventSeq": 864,
+                    "lastPaintSeq": 864,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      124.751,
+                      1742,
+                      124.832,
+                      1745
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 5,
+            "phases": [
+              {
+                "phase": "initial",
+                "settled": true,
+                "frames": 15,
+                "watermark": 864,
+                "state": [
+                  {
+                    "applied": 864,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 864,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              },
+              {
+                "phase": "final",
+                "settled": true,
+                "frames": 5,
+                "watermark": 864,
+                "state": [
+                  {
+                    "applied": 864,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 864,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              }
+            ],
+            "probeRadius": 3.84
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 1274
+        },
+        {
+          "id": "bluefin",
+          "mode": "rainmaker",
+          "identities": [
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "rainmaker",
+              "native": true,
+              "gridBytes": 2384253
+            },
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "rainmaker",
+              "native": true,
+              "gridBytes": 2384253
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "bb6cc3ffa17dc622de0e34ef468f1e08d86092da262b64f7dcc2a30e55ba415e",
+              "coverage": [
+                0.005851039833817141,
+                0.007060115103681335
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 199,
+                "out": 199,
+                "extrap": 180,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 39.049999999999066,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1479,
+                  1801
+                ],
+                "applied": [
+                  [
+                    "p_tas74co",
+                    1150
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_qibb6tj",
+                    "tr": 104.31582616951518,
+                    "lastTs": 104.316,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      104.285,
+                      2339,
+                      104.316,
+                      2342
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "bb6cc3ffa17dc622de0e34ef468f1e08d86092da262b64f7dcc2a30e55ba415e",
+              "coverage": [
+                0.005851039833817141,
+                0.007060115103681335
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 199,
+                "out": 199,
+                "extrap": 1253,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 39.049999999999066,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1479,
+                  1801
+                ],
+                "applied": [
+                  [
+                    "p_tas74co",
+                    1150
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_tas74co",
+                    "tr": 136.10728859229755,
+                    "lastTs": 136.109,
+                    "lastEventSeq": 1151,
+                    "lastPaintSeq": 1150,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      136.077,
+                      2339,
+                      136.109,
+                      2342
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 5,
+            "phases": [
+              {
+                "phase": "initial",
+                "settled": true,
+                "frames": 205,
+                "watermark": 1150,
+                "state": [
+                  {
+                    "applied": 1150,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 1150,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              },
+              {
+                "phase": "final",
+                "settled": true,
+                "frames": 5,
+                "watermark": 1150,
+                "state": [
+                  {
+                    "applied": 1150,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 1150,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              }
+            ],
+            "probeRadius": 3.84
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 1702
+        },
+        {
+          "id": "bluefin",
+          "mode": "clams",
+          "identities": [
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "clams",
+              "native": true,
+              "gridBytes": 2384253
+            },
+            {
+              "stage": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+              "fingerprint": "native-stage-v1:bluefin:500819057467d8dc6ca069333b65378e3ab560f08a6249077cc90637c2095075:50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+              "actors": 8,
+              "rule": "clams",
+              "native": true,
+              "gridBytes": 2384253
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "64ff95bd70bc37fc653dbc92e1b6347519f366031247346460e1996e1e52fa00",
+              "coverage": [
+                0.006354475243660186,
+                0.006707645184262458
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 199,
+                "out": 199,
+                "extrap": 65,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 48.96666666666517,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1600,
+                  1717
+                ],
+                "applied": [
+                  [
+                    "p_hlxcn4b",
+                    1409
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_29wq3bu",
+                    "tr": 118.32743059589815,
+                    "lastTs": 118.692,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      118.625,
+                      2934,
+                      118.692,
+                      2937
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "64ff95bd70bc37fc653dbc92e1b6347519f366031247346460e1996e1e52fa00",
+              "coverage": [
+                0.006354475243660186,
+                0.006707645184262458
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 199,
+                "out": 199,
+                "extrap": 441,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 48.96666666666517,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1600,
+                  1717
+                ],
+                "applied": [
+                  [
+                    "p_hlxcn4b",
+                    1409
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_hlxcn4b",
+                    "tr": 150.11604794397786,
+                    "lastTs": 150.485,
+                    "lastEventSeq": 1409,
+                    "lastPaintSeq": 1409,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      150.418,
+                      2934,
+                      150.485,
+                      2937
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 5,
+            "phases": [
+              {
+                "phase": "initial",
+                "settled": true,
+                "frames": 205,
+                "watermark": 1409,
+                "state": [
+                  {
+                    "applied": 1409,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 1409,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              },
+              {
+                "phase": "final",
+                "settled": true,
+                "frames": 5,
+                "watermark": 1409,
+                "state": [
+                  {
+                    "applied": 1409,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  },
+                  {
+                    "applied": 1409,
+                    "growing": 0,
+                    "queued": 0,
+                    "out": 0
+                  }
+                ]
+              }
+            ],
+            "probeRadius": 3.84
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 2134
+        }
+      ],
+      "errors": [],
+      "packets": 2134
+    },
+    "gameplay": {
+      "id": "bluefin",
+      "native": true,
+      "actors": 8,
+      "alive": 8,
+      "bots": 7,
+      "moved": [
+        1.026131993457317,
+        4.12276846225936,
+        2.8567878325827656,
+        1.0670762238513452,
+        3.7511866749600604,
+        7.866882422290541,
+        2.743812952950303,
+        6.992113609751267
+      ],
+      "coverage": [
+        0.0053184025521648,
+        0.013588961198448154
+      ],
+      "turfTotal": 273206,
+      "counts": [
+        1326,
+        3464
+      ],
+      "metrics": {
+        "loadMilliseconds": 4369.29999999702,
+        "navMilliseconds": 1992,
+        "shaderWarmMilliseconds": 11.5,
+        "vertices": 1024229,
+        "triangles": 774445,
+        "faces": 54410,
+        "gridBytes": 2384253,
+        "atlas": 2048,
+        "ppm": 2.5600000000000005,
+        "textureCount": 85,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "cpuFrame": {
+        "p50": 17.200000002980232,
+        "p95": 67.30000001192093,
+        "max": 1131.2999999970198
+      },
+      "render": {
+        "frame": 405,
+        "calls": 260,
+        "triangles": 568323,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 404,
+        "textures": 109
+      },
+      "navValid": 6606,
+      "local": {
+        "pos": [
+          -9.84873573634784,
+          12,
+          -57.10773609126438
+        ],
+        "alive": true,
+        "grounded": true
+      },
+      "profile": {
+        "physics.raycast": {
+          "milliseconds": 217.99999995529652,
+          "calls": 38672
+        },
+        "bot.update": {
+          "milliseconds": 186.7999999821186,
+          "calls": 1260
+        },
+        "physics.bodyFits": {
+          "milliseconds": 1.0999999791383743,
+          "calls": 369
+        },
+        "physics.collideBody": {
+          "milliseconds": 26.30000004172325,
+          "calls": 1440
+        },
+        "physics.groundProbe": {
+          "milliseconds": 71.39999994635582,
+          "calls": 1427
+        },
+        "character.update": {
+          "milliseconds": 1594.1999996751547,
+          "calls": 1440
+        },
+        "actor.update": {
+          "milliseconds": 2102.199999973178,
+          "calls": 1440
+        },
+        "projectiles.update": {
+          "milliseconds": 531.0999999195337,
+          "calls": 180
+        },
+        "paint._advanceSplatOwnership": {
+          "milliseconds": 421.60000014305115,
+          "calls": 14137
+        },
+        "paint.radius.2.6": {
+          "milliseconds": 134.9999997317791,
+          "calls": 5630,
+          "faceVisits": 865417
+        },
+        "paint._emitGrowth": {
+          "milliseconds": 347.8999997526407,
+          "calls": 14321
+        },
+        "paint.radius.1.9": {
+          "milliseconds": 198.00000023841858,
+          "calls": 6350,
+          "faceVisits": 647979
+        },
+        "paint.radius.2.2": {
+          "milliseconds": 1.4000000059604645,
+          "calls": 346,
+          "faceVisits": 5050
+        },
+        "paint.radius.2.5": {
+          "milliseconds": 5.300000116229057,
+          "calls": 652,
+          "faceVisits": 22825
+        },
+        "paint.radius.1.4": {
+          "milliseconds": 1.2999999970197678,
+          "calls": 590,
+          "faceVisits": 8348
+        },
+        "paint.radius.2": {
+          "milliseconds": 0.19999998807907104,
+          "calls": 232,
+          "faceVisits": 232
+        },
+        "paint._drawQuads": {
+          "milliseconds": 2455.900000154972,
+          "calls": 365
+        },
+        "paint.advanceSimulation": {
+          "milliseconds": 3233.600000113249,
+          "calls": 180
+        },
+        "fx.update": {
+          "milliseconds": 66.39999988675117,
+          "calls": 180
+        },
+        "environment.update": {
+          "milliseconds": 7.0999999940395355,
+          "calls": 180
+        },
+        "paint.flush": {
+          "milliseconds": 1.5000000149011612,
+          "calls": 181
+        },
+        "minimap.update": {
+          "milliseconds": 51.70000000298023,
+          "calls": 180
+        },
+        "paint.coverage": {
+          "milliseconds": 38.60000002384186,
+          "calls": 181
+        },
+        "hud.update": {
+          "milliseconds": 196.10000012815,
+          "calls": 180
+        },
+        "paint._cpuSplat": {
+          "milliseconds": 62.39999978244305,
+          "calls": 20153
+        },
+        "paint.splat": {
+          "milliseconds": 455.19999995827675,
+          "calls": 128
+        },
+        "paint.radius.1.2": {
+          "milliseconds": 0.6000000089406967,
+          "calls": 242,
+          "faceVisits": 3918
+        },
+        "nav.nearest": {
+          "milliseconds": 0,
+          "calls": 15
+        },
+        "nav.path": {
+          "milliseconds": 2.2000000029802322,
+          "calls": 5
+        },
+        "paint.radius.4.5": {
+          "milliseconds": 79.80000005662441,
+          "calls": 95,
+          "faceVisits": 36760
+        }
+      },
+      "version1130Verified": false,
+      "rules": [
+        {
+          "mode": "zones",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            98,
+            100
+          ],
+          "snapshotBytes": 511,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "tower",
+          "towerProof": {
+            "pathNodes": 46,
+            "segmentInteriorSamples": 3,
+            "actualCapsuleSupports": 362,
+            "halfSize": 1.2,
+            "localLift": 1.2,
+            "sourceClearance": {
+              "queries": 10041,
+              "triangleTests": 252149,
+              "radius": 2.097056274847714,
+              "height": 2.03,
+              "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+            },
+            "arenaSpan": {
+              "origin": [
+                0,
+                0
+              ],
+              "forward": [
+                0.1689638151108457,
+                0.9856222548132667
+              ],
+              "endpointProjection": [
+                -21.838573103076808,
+                22.1765007332985
+              ],
+              "minimumHalfDepth": 2.097056274847714,
+              "bothHalvesVerified": true
+            },
+            "liveGroundedHumanCounted": true,
+            "keyboardBoarding": [
+              {
+                "hz": 30,
+                "boarded": true,
+                "frames": 14,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 54574,
+                "towerBlock": 54574,
+                "position": [
+                  0.6303423019517461,
+                  1.9500000000000002,
+                  -0.16713414069051746
+                ],
+                "approach": {
+                  "sourceNode": 5494,
+                  "start": [
+                    2,
+                    0.7500000000000036,
+                    0.5
+                  ],
+                  "end": [
+                    0.8049844718999242,
+                    1.95,
+                    -0.09750776405003792
+                  ],
+                  "height": 1.1999999999999964,
+                  "jumping": true,
+                  "hz": 30
+                }
+              },
+              {
+                "hz": 60,
+                "boarded": true,
+                "frames": 27,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 54574,
+                "towerBlock": 54574,
+                "position": [
+                  0.6301,
+                  1.9500000000000002,
+                  -0.18343029661993138
+                ],
+                "approach": {
+                  "sourceNode": 5494,
+                  "start": [
+                    2,
+                    0.7500000000000036,
+                    0.5
+                  ],
+                  "end": [
+                    0.8049844718999242,
+                    1.95,
+                    -0.09750776405003792
+                  ],
+                  "height": 1.1999999999999964,
+                  "jumping": true,
+                  "hz": 60
+                }
+              },
+              {
+                "hz": 120,
+                "boarded": true,
+                "frames": 54,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 54574,
+                "towerBlock": 54574,
+                "position": [
+                  0.6301,
+                  1.9500000000000002,
+                  -0.1834302966199314
+                ],
+                "approach": {
+                  "sourceNode": 5494,
+                  "start": [
+                    2,
+                    0.7500000000000036,
+                    0.5
+                  ],
+                  "end": [
+                    0.8049844718999242,
+                    1.95,
+                    -0.09750776405003792
+                  ],
+                  "height": 1.1999999999999964,
+                  "jumping": true,
+                  "hz": 120
+                }
+              }
+            ]
+          },
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            96,
+            100
+          ],
+          "snapshotBytes": 772,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "rainmaker",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "snapshotBytes": 945,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "clams",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "snapshotBytes": 7931,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        }
+      ],
+      "errors": []
+    },
+    "uniqueLayers": {
+      "status": "passed",
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "errors": [],
+      "conditions": "Production Match/Actor/Character and source physics; controlled supported firing stance; ordinary WeaponRunner/Projectiles floor paint; source minimap; controlled Actor.splat with real death timer/respawn; direct Actor rates 30/60/120; 0AP; eight actors/seven bots; not whole-bank or retail proof; SwiftShader",
+      "minimap": {
+        "pads": [
+          {
+            "index": 90184,
+            "x": -12,
+            "z": -70.16666666666666,
+            "height": 15,
+            "cell": 1081717
+          },
+          {
+            "index": 3172,
+            "x": 12,
+            "z": 69.83333333333333,
+            "height": 15,
+            "cell": 1085193
+          }
+        ],
+        "beneath": {
+          "index": 23,
+          "x": 26.666666666666668,
+          "z": 74.83333333333333,
+          "height": 15,
+          "top": 17.914300918579094,
+          "cell": 1051573,
+          "triangle": 109297,
+          "sourceObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02"
+        },
+        "beneathCount": 2227,
+        "broaderRayDifferences": 40,
+        "firstBroaderRayDifference": {
+          "index": 7261,
+          "x": 29,
+          "z": 63.166666666666664,
+          "height": 16.6018009185791,
+          "physicalHit": true,
+          "physicalY": 16.67169952392578,
+          "physicalTriangle": 22362,
+          "physicalRawNormalY": 1,
+          "selectedFloorTriangle": 89371
+        },
+        "flipped": {
+          "index": 93126,
+          "x": 26.666666666666668,
+          "z": 74.83333333333333,
+          "height": 15,
+          "cell": 1051573
+        },
+        "naturalPaint": {
+          "target": {
+            "index": 3,
+            "cell": 1052908,
+            "x": 33.333333333333336,
+            "z": 74.83333333333333,
+            "height": 15,
+            "face": 33305,
+            "triangle": 109299,
+            "point": [
+              33.333333333333336,
+              15,
+              74.83333333333333
+            ],
+            "u": 4.333333333333336,
+            "v": 0.1666666666666714
+          },
+          "stance": [
+            33.333333333333336,
+            15,
+            72.33333333333333
+          ],
+          "frames": 3,
+          "naturalSplats": 1,
+          "owner": 1,
+          "inkPixel": [
+            150,
+            141,
+            11,
+            255
+          ],
+          "weapon": "shooter",
+          "gearAP": 0
+        },
+        "actors": 8,
+        "alive": 8,
+        "bots": 7,
+        "version1130Verified": false
+      },
+      "deathRespawns": [
+        {
+          "team": 0,
+          "hz": 30,
+          "bot": false,
+          "weapon": "shooter",
+          "deathFrames": 256,
+          "deathSeconds": 8.533333333333333,
+          "landingFrames": 31,
+          "landingSeconds": 1.0333333333333334,
+          "target": [
+            -11.092130823599353,
+            15,
+            -69.37889327926545
+          ],
+          "end": [
+            -11.092130823599353,
+            15,
+            -69.37889327926545
+          ],
+          "supportTriangle": 110326,
+          "supportObject": "FldObj_Ruins03PntStage_polySurface836252790_1__DeckFloor01",
+          "alive": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "bot": false,
+          "weapon": "shooter",
+          "deathFrames": 510,
+          "deathSeconds": 8.5,
+          "landingFrames": 61,
+          "landingSeconds": 1.0166666666666666,
+          "target": [
+            -11.092130823599353,
+            15,
+            -69.37889327926545
+          ],
+          "end": [
+            -11.092130823599353,
+            15,
+            -69.37889327926545
+          ],
+          "supportTriangle": 110326,
+          "supportObject": "FldObj_Ruins03PntStage_polySurface836252790_1__DeckFloor01",
+          "alive": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "bot": false,
+          "weapon": "shooter",
+          "deathFrames": 1020,
+          "deathSeconds": 8.5,
+          "landingFrames": 121,
+          "landingSeconds": 1.0083333333333333,
+          "target": [
+            -11.092130823599353,
+            15,
+            -69.37889327926545
+          ],
+          "end": [
+            -11.092130823599353,
+            15,
+            -69.37889327926545
+          ],
+          "supportTriangle": 110326,
+          "supportObject": "FldObj_Ruins03PntStage_polySurface836252790_1__DeckFloor01",
+          "alive": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "bot": true,
+          "weapon": "s3-brush-heavy",
+          "deathFrames": 256,
+          "deathSeconds": 8.533333333333333,
+          "landingFrames": 29,
+          "landingSeconds": 0.9666666666666667,
+          "target": [
+            14,
+            12,
+            62.5
+          ],
+          "end": [
+            14,
+            12,
+            62.5
+          ],
+          "supportTriangle": 109286,
+          "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+          "alive": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "bot": true,
+          "weapon": "s3-brush-heavy",
+          "deathFrames": 510,
+          "deathSeconds": 8.5,
+          "landingFrames": 59,
+          "landingSeconds": 0.9833333333333333,
+          "target": [
+            14,
+            12,
+            62.5
+          ],
+          "end": [
+            14,
+            12,
+            62.5
+          ],
+          "supportTriangle": 109286,
+          "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+          "alive": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "bot": true,
+          "weapon": "s3-brush-heavy",
+          "deathFrames": 1020,
+          "deathSeconds": 8.5,
+          "landingFrames": 119,
+          "landingSeconds": 0.9916666666666667,
+          "target": [
+            14,
+            12,
+            62.5
+          ],
+          "end": [
+            14,
+            12,
+            62.5
+          ],
+          "supportTriangle": 109286,
+          "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+          "alive": true,
+          "grounded": true,
+          "gearAP": 0
+        }
+      ],
+      "build": {
+        "contentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
+        "inputHash": "b2c5a7adcd46ec2cf2d9eda079c0873082f498e5ffd621cd8d69cf589d7c3ce3",
+        "revision": "fa2d60226343572b30b13753c801f54618c256298a2fdbab5952b27f3af1caa6",
+        "runtimeSha256": "50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51"
+      },
+      "sourceDisplayScreenshotInspectedPrivately": true
     }
   },
   "acceptedSourceFootSupport": {
@@ -2290,6 +4018,156 @@
     "pr": 1380,
     "runtimeCommit": "26c82fe8fcd3a87d504773d54c2b1263c6bea807",
     "scope": "Accepted source capsule-contact foot support for opted highDrops bot arrival/steering; original source geometry, projectile and camera proofs unchanged.",
-    "stageAffectedFullBankRetest": "pending accepted positive ordinary-bot approach"
+    "stageAffectedFullBankRetest": "pending accepted positive ordinary-bot approach",
+    "sharedPredicateFollowup": {
+      "foundation": "6116558f66912bfa164f8a67471a230ce07ca4d7",
+      "codeCommit": "a3ac1a94545a362d3381d722e5b4dc44066c6a65",
+      "scope": "Read-only nativeSourceFootSupported extraction/export; existing follower admission/turn gates and physical support body remain equivalent."
+    }
+  },
+  "acceptedProperNegativeBank": {
+    "status": "passed-partial-negative-bank-only",
+    "foundation": "7ddb538afc33787810ec7c6bf218eec0879c3aff",
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "testMilliseconds": 113579.771652,
+    "durationMilliseconds": 113852.429249,
+    "proof": {
+      "id": "bluefin",
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "version1130Verified": false,
+      "candidateNodes": 10854,
+      "validNodes": 6606,
+      "verificationMilliseconds": 110636.089895,
+      "banks": [
+        {
+          "team": 1,
+          "hz": 30,
+          "seconds": 79.73333333333333,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "end": [
+            -21.03099006423908,
+            9,
+            -38.4690099359635
+          ],
+          "sourceGoalTriangle": 172794,
+          "minimumY": 2.950000047683716,
+          "distanceToGoal": 1.4580401313755715,
+          "alive": true,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gearAP": 0,
+          "initialPaint": "unpainted",
+          "actualBrainActorWeaponProjectilesPaintClock": true
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 74.86666666666666,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "end": [
+            -21.053035639794672,
+            9,
+            -38.44696436088042
+          ],
+          "sourceGoalTriangle": 172794,
+          "minimumY": 2.950000047683716,
+          "distanceToGoal": 1.4892172829824908,
+          "alive": true,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gearAP": 0,
+          "initialPaint": "unpainted",
+          "actualBrainActorWeaponProjectilesPaintClock": true
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "seconds": 73.06666666666666,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "end": [
+            -21.049015231437696,
+            9,
+            -38.45098476613858
+          ],
+          "sourceGoalTriangle": 172794,
+          "minimumY": 2.950000047683716,
+          "distanceToGoal": 1.4835315691489714,
+          "alive": true,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gearAP": 0,
+          "initialPaint": "unpainted",
+          "actualBrainActorWeaponProjectilesPaintClock": true
+        }
+      ],
+      "conditions": "production Actor integration/frame finishing and Character muzzle; CPU VM optional source motion unavailable; source-supported initial poses only; no later Actor pose, velocity or ink assignment; goal reacquired after normal recovery; one isolated CPU actor; 0.5 RNG; no retail physics or hardware claim"
+    },
+    "scope": {
+      "foundation": "7ddb538afc33787810ec7c6bf218eec0879c3aff",
+      "ownerHead": "b2f65b5e39b244d416f56968783a61d03a7dce6a",
+      "originalTestSHA256": "bcfdb0b86ab116e511d59dd7457d17f6acb6d06d53d699f02c5ef4db600a23d7",
+      "privateTestSHA256": "49ccec420eab77257c4bb76e746edc0788fb356685fd9979adbf93133a907b12",
+      "changes": "Only absolute fixture import, title and team selection; every assertion/controller/input/deadline unchanged. Partial negative bank only; not complete stage qualification.",
+      "productionCharacter": true,
+      "simulationRates": [
+        30,
+        60,
+        120
+      ],
+      "sourceNavigation": {
+        "wallClimb": true,
+        "highDrops": true
+      }
+    },
+    "evidence": ".browser-evidence/accepted-foot-negative/cpu.tap",
+    "remaining": "Positive ordinary-bot approach and complete BOTH-bank current Chromium/CPU matrix remain pending."
   }
 }
