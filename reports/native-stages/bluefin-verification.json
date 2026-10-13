@@ -103,7 +103,7 @@
     "retail frame/speed parity",
     "physical mobile/Switch FPS"
   ],
-  "browserStatus": "artifact-scoped standard460da matrix passed; current positive ordinary-bot/full-stage matrix pending",
+  "browserStatus": "460da complete scoped checkpoint passed; latest positive ordinary-bot/two-bank CPU/Chromium/affected ranked matrix pending",
   "diagnostics": {
     "restrictedLowerPitOnly": {
       "pads": [
@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "6116558f66912bfa164f8a67471a230ce07ca4d7",
+  "latestConsumedFoundation": "e0a291e9fb0f9a09ce6f792ff652a5d1eb5f70a2",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -521,15 +521,221 @@
   },
   "sourcePositiveBankHumanAccess": {
     "status": "passed-accepted-foundation-production-character-cpu",
-    "foundation": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74",
+    "foundation": "67e5565c1ed10cf6adc8c5ad102e5d8863840935",
     "test": "patches/native-stages/tests/bluefin-source.test.mjs: admitted shooter paint and ordinary input physically traverse the original positive upper bank",
     "command": "INKWAVE_NATIVE_STAGE_ASSETS=\"$PWD/.codex-stage-sources/generated\" flock /workspace/actions/.ci-scratch/native-stage-cpu-heavy.lock node --experimental-vm-modules --test --test-concurrency=1 --test-name-pattern=\"Bluefin admitted shooter paint\" patches/native-stages/tests/bluefin-source.test.mjs",
     "tests": 1,
     "passed": 1,
     "failed": 0,
-    "testMilliseconds": 15675.25719,
+    "testMilliseconds": 21553.677233,
     "id": "bluefin",
     "positiveBankHumanAccess": [
+      {
+        "team": 0,
+        "hz": 30,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "capEnd": [
+          32.52356666666666,
+          9.031200408935547,
+          18.501003042722672
+        ],
+        "sourceCapTriangle": 171860,
+        "seconds": 3.533333333333333,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          19.983234802074858,
+          9,
+          40.26676672934317
+        ],
+        "bankWalkSeconds": 5.766666666666656,
+        "walkwaySourceSupports": 23,
+        "wallSamples": 39,
+        "floorTargets": 8,
+        "floorOwned": 7,
+        "unownedFloorSamples": [
+          {
+            "point": [
+              24,
+              3.049999952316284,
+              18.5
+            ],
+            "face": 53207,
+            "triangle": 173766
+          }
+        ],
+        "paintSeconds": 2.6000000000000005,
+        "refillSeconds": 0.8666666666666666,
+        "fireFrames": 78,
+        "noPaintSamples": 0,
+        "jumped": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "fullChargeHumanPop": true,
+        "continuousActualCapsuleSamples": 106,
+        "continuousActualCapsuleFailures": 0,
+        "grounded": true,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "capEnd": [
+          32.38555555555556,
+          9.031200408935547,
+          18.5
+        ],
+        "sourceCapTriangle": 171860,
+        "seconds": 3.4,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          19.987607931153324,
+          9,
+          40.1736072310186
+        ],
+        "bankWalkSeconds": 5.716666666666652,
+        "walkwaySourceSupports": 23,
+        "wallSamples": 39,
+        "floorTargets": 8,
+        "floorOwned": 7,
+        "unownedFloorSamples": [
+          {
+            "point": [
+              24,
+              3.049999952316284,
+              18.5
+            ],
+            "face": 53207,
+            "triangle": 173766
+          }
+        ],
+        "paintSeconds": 2.5999999999999956,
+        "refillSeconds": 0.850000000000001,
+        "fireFrames": 156,
+        "noPaintSamples": 0,
+        "jumped": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "fullChargeHumanPop": true,
+        "continuousActualCapsuleSamples": 204,
+        "continuousActualCapsuleFailures": 0,
+        "grounded": true,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "capEnd": [
+          32.33849999999978,
+          9.031200408935547,
+          18.5
+        ],
+        "sourceCapTriangle": 171860,
+        "seconds": 3.3583333333333334,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          20.001140545402777,
+          9,
+          40.18046466016357
+        ],
+        "bankWalkSeconds": 5.733333333333408,
+        "walkwaySourceSupports": 23,
+        "wallSamples": 39,
+        "floorTargets": 8,
+        "floorOwned": 7,
+        "unownedFloorSamples": [
+          {
+            "point": [
+              24,
+              3.049999952316284,
+              18.5
+            ],
+            "face": 53207,
+            "triangle": 173766
+          }
+        ],
+        "paintSeconds": 2.6083333333333267,
+        "refillSeconds": 0.8416666666666661,
+        "fireFrames": 313,
+        "noPaintSamples": 0,
+        "jumped": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "fullChargeHumanPop": true,
+        "continuousActualCapsuleSamples": 403,
+        "continuousActualCapsuleFailures": 0,
+        "grounded": true,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0
+      }
+    ],
+    "conditions": "production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then inward run, jump at x>23.7, hold squid/jump through attachment, stop at feet>=7.2 until full existing Surge charge, release jump for one squid tick then kid/+X; every live approach/climb capsule continuously source-screened; 23 separately supported bank walkway points; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG",
+    "previousCpuFixture": {
+      "foundation": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
+      "passed": 1,
+      "testMilliseconds": 4302.093593,
+      "character": "simplified fixed world-axis muzzle",
+      "actorIntegratorRestored": true,
+      "actorFrameFinishingFrozen": true,
+      "assurance": "Historical controller/pipeline proof; production Character rerun below supersedes the geometry-sensitive weapon qualification."
+    },
+    "durationMilliseconds": 21795.121502,
+    "character": "production Character, constructed through actual Actor constructor",
+    "actorIntegrationAndFrameFinishing": "production methods retained; no fixture make() call",
+    "optionalSourceMotion": "CPU VM dynamic import callback unavailable; production rig geometry/controller run, full optional source-motion playback remains browser-only",
+    "continuousCapsuleQualifierStatus": {
+      "status": "safer-human-input-independent-all-rate-pass-ordinary-bot-pending",
+      "owner": "Manta",
+      "reportedCase": {
+        "from": [
+          26.83,
+          8.25,
+          18.5
+        ],
+        "to": [
+          26.86,
+          8.4,
+          18.5
+        ],
+        "shape": "live .675 continuous SQ capsule"
+      },
+      "scope": "Every actual live approach/ascent capsule is continuously swept against retained source triangles; subsequent bank route has23 individually qualified supports. Human input proof only; no generic ordinary-bot admission or new stage flag.",
+      "prior30HzNegativeRetained": true,
+      "safeSequence": "Actual normal SQ run/jump, held jump through attachment, neutral movement at feet>=7.2 until existing charge>=1, release jump for one SQ tick, then kid/+X.",
+      "samples": 713,
+      "failures": 0
+    },
+    "priorHumanSequence": [
       {
         "team": 0,
         "hz": 30,
@@ -690,38 +896,34 @@
         "gearAP": 0
       }
     ],
-    "conditions": "production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG",
-    "previousCpuFixture": {
-      "foundation": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
-      "passed": 1,
-      "testMilliseconds": 4302.093593,
-      "character": "simplified fixed world-axis muzzle",
-      "actorIntegratorRestored": true,
-      "actorFrameFinishingFrozen": true,
-      "assurance": "Historical controller/pipeline proof; production Character rerun below supersedes the geometry-sensitive weapon qualification."
-    },
-    "durationMilliseconds": 15873.751659,
-    "character": "production Character, constructed through actual Actor constructor",
-    "actorIntegrationAndFrameFinishing": "production methods retained; no fixture make() call",
-    "optionalSourceMotion": "CPU VM dynamic import callback unavailable; production rig geometry/controller run, full optional source-motion playback remains browser-only",
-    "continuousCapsuleQualifierStatus": {
-      "status": "stronger-screen-negative-at30Hz-pending-independent-alternative",
-      "owner": "Manta",
-      "reportedCase": {
-        "from": [
-          26.83,
-          8.25,
-          18.5
-        ],
-        "to": [
-          26.86,
-          8.4,
-          18.5
-        ],
-        "shape": "live .675 continuous SQ capsule"
+    "evidence": ".browser-evidence/safe-human-charge/cpu.tap",
+    "currentKeyboardRepeat": "Corrected probe is queued: exact source-hit 23-point walkway, every positive live STEP capsule screened, Space release must advance actual fixed clock and enter Surge burst before kid pop. No whole-stage ordinary-bot claim.",
+    "safeKeyboardDevelopmentFailuresRetained": [
+      {
+        "evidence": ".browser-evidence/safe-human-charge/browser/browser.json",
+        "status": "failed",
+        "buildContentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
+        "completedCases": 0,
+        "browserErrors": 0,
+        "reason": "Nav-selected center-plane waypoint Y8.75 rejects actual capsule footprint grounded at Y9.0312."
       },
-      "scope": "Existing human controller completes the bank at all three rates; original source test asserts initial/end/waypoint supports, not every continuous segment. A distinct strictly screened ordinary-bot approach remains required."
-    }
+      {
+        "evidence": ".browser-evidence/safe-human-charge/browser-literal/browser.json",
+        "status": "failed",
+        "buildContentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
+        "completedCases": 0,
+        "browserErrors": 0,
+        "reason": "Nominal Y9 waypoint height differs from literal source height; corrected ray hits are now used."
+      },
+      {
+        "evidence": ".browser-evidence/safe-human-charge/browser-source-points/browser.json",
+        "status": "failed",
+        "buildContentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
+        "completedCases": 2,
+        "browserErrors": 0,
+        "reason": "At 120 Hz input cadence, one render frame can execute zero 60 Hz STEPs; human pop preceded the Space-release SQ step. Corrected checker waits for actual clock advancement and observed burst."
+      }
+    ]
   },
   "privateDropCalibration": {
     "status": "diagnostic only; candidate not adopted",
@@ -1761,13 +1963,13 @@
       "textureIntegrityRecordsUnchanged": true,
       "source": ".codex-stage-sources/KiTrix/stages/Vss_Ruins03"
     },
-    "partialMatrixStatus": "Standard accepted-Drop matrix passed at explicitly scoped460da artifacts; physical Tower/postlaunch checks queued. Current complete both-bank ordinary-bot matrix remains pending.",
+    "partialMatrixStatus": "complete artifact-scoped460da standard source/build/CPU/realChromium/WS/render/Tower/postlaunch checkpoint passed; not complete current whole-stage ordinary-bot qualification",
     "stageReviewStatus": "Draft; positive ordinary bot still pending"
   },
   "acceptedOnlineSettlementChecker": {
     "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
     "change": "consume independently reviewed final-paint-after-snapshot settlement checker before real five-mode WebSocket matrix",
-    "ownBluefinResult": "pending"
+    "ownBluefinResult": "Passed complete 460da artifact, all five modes through real WebSockets: 2,134 packets, zero errors; each mode passes actual Luna source paint, replay settlement and full-grid equality. See acceptedDropPartialMatrix; current affected final retest pending."
   },
   "foundationScope": "Historical first source checkpoint; see latestConsumedFoundation and artifact-scoped checkpoints.",
   "acceptedRankedInputOwnership": {
@@ -1795,7 +1997,7 @@
         70
       ]
     ],
-    "status": "standard source/build/projectile/render/camera/lifecycle/public-cache/all-five-mode-WS/gameplay checkpoint passed; physical Tower/landing extra checks queued; not complete stage qualification",
+    "status": "complete artifact-scoped460da standard source/build/CPU/realChromium/WS/render/Tower/postlaunch checkpoint passed; not complete current whole-stage ordinary-bot qualification",
     "sites": {
       "private": {
         "contentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
@@ -2044,10 +2246,7 @@
       "errors": [],
       "evidence": ".browser-evidence/accepted-drops-partial/render/render.json"
     },
-    "remainingBrowserChecks": [
-      "physical full-rider Tower calibration",
-      "source initial-launch/post-launch directed motion"
-    ],
+    "remainingBrowserChecks": [],
     "artifactScope": "Ranked marker d92 is consumed in source but absent from these immutable artifacts. Current affected final ranked/bank/WS proofs require fresh builds; unchanged source/shots/render/camera evidence stays scoped to this checkpoint.",
     "camera": {
       "status": "passed",
@@ -4011,6 +4210,1250 @@
         "runtimeSha256": "50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51"
       },
       "sourceDisplayScreenshotInspectedPrivately": true
+    },
+    "physicalTower": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "bluefin",
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "supported": true,
+          "actors": 8,
+          "bots": 7,
+          "centerIndex": 22,
+          "center": [
+            0,
+            1.95,
+            -0.5
+          ],
+          "pathNodes": 46,
+          "arcLengthsByTeam": [
+            23.82842712474619,
+            22.82854416252811
+          ],
+          "arenaSpan": {
+            "origin": [
+              0,
+              0
+            ],
+            "forward": [
+              0.1689638151108457,
+              0.9856222548132667
+            ],
+            "endpointProjection": [
+              -21.838573103076808,
+              22.1765007332985
+            ],
+            "minimumHalfDepth": 2.097056274847714,
+            "bothHalvesVerified": true
+          },
+          "actualSourceDeckSupports": 362,
+          "fullRiderSweeps": {
+            "queries": 46,
+            "triangleTests": 3559
+          },
+          "sourceApproaches": 46,
+          "gear": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "weapon": "shooter",
+          "version1130Verified": false,
+          "keyboardBoarding": [
+            {
+              "hz": 30,
+              "boarded": true,
+              "frames": 14,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 54574,
+              "towerBlock": 54574,
+              "position": [
+                0.6303423019517461,
+                1.9500000000000002,
+                -0.16713414069051746
+              ],
+              "approach": {
+                "sourceNode": 5494,
+                "start": [
+                  2,
+                  0.7500000000000036,
+                  0.5
+                ],
+                "end": [
+                  0.8049844718999242,
+                  1.95,
+                  -0.09750776405003792
+                ],
+                "height": 1.1999999999999964,
+                "jumping": true,
+                "hz": 30,
+                "sourceGround": 33778,
+                "startGrounded": true
+              }
+            },
+            {
+              "hz": 60,
+              "boarded": true,
+              "frames": 27,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 54574,
+              "towerBlock": 54574,
+              "position": [
+                0.6294969316934926,
+                1.9500000000000002,
+                -0.1782625619233963
+              ],
+              "approach": {
+                "sourceNode": 5494,
+                "start": [
+                  2,
+                  0.7500000000000036,
+                  0.5
+                ],
+                "end": [
+                  0.8049844718999242,
+                  1.95,
+                  -0.09750776405003792
+                ],
+                "height": 1.1999999999999964,
+                "jumping": true,
+                "hz": 60,
+                "sourceGround": 33778,
+                "startGrounded": true
+              }
+            },
+            {
+              "hz": 120,
+              "boarded": true,
+              "frames": 54,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 54574,
+              "towerBlock": 54574,
+              "position": [
+                0.6294969316934926,
+                1.9500000000000002,
+                -0.1782625619233963
+              ],
+              "approach": {
+                "sourceNode": 5494,
+                "start": [
+                  2,
+                  0.7500000000000036,
+                  0.5
+                ],
+                "end": [
+                  0.8049844718999242,
+                  1.95,
+                  -0.09750776405003792
+                ],
+                "height": 1.1999999999999964,
+                "jumping": true,
+                "hz": 120,
+                "sourceGround": 33778,
+                "startGrounded": true
+              }
+            }
+          ]
+        }
+      ],
+      "errors": [],
+      "conditions": "real Chromium SwiftShader, eight actors/seven bots, production controller W/Space from same source floor; normal human weapon/no gear bonuses; not console or mobile hardware",
+      "legacy": {
+        "nodes": 4158,
+        "valid": 4154,
+        "unchanged": true
+      }
+    },
+    "sourcePostLaunch": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "bluefin",
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "actors": 8,
+          "bots": 7,
+          "cases": [
+            {
+              "team": 0,
+              "hz": 30,
+              "role": "human",
+              "slot": 0,
+              "from": [
+                -11.092130823599353,
+                19.5,
+                -69.37889327926545
+              ],
+              "target": {
+                "x": -9.972434218669852,
+                "y": 12,
+                "z": -58.1725329422408
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -9.972434218669852,
+                12,
+                -58.1725329422408
+              ],
+              "supportTriangle": 114919,
+              "supportObject": "Fld_Ruins03_Fld_Ruins03_Stage_Deck_polySurface8362405001_DeckFloor00_1__DeckFloor00",
+              "landingNode": 1239,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 68,
+              "postLaunchMove": 4.580688371936694,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 30,
+              "role": "bot0",
+              "slot": 0,
+              "from": [
+                -11.092130823599353,
+                19.5,
+                -69.37889327926545
+              ],
+              "target": {
+                "x": -14,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -14,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109288,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 934,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 4.623999999999995,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 30,
+              "role": "bot1",
+              "slot": 1,
+              "from": [
+                -12.62110672073454,
+                19.5,
+                -69.09213082359935
+              ],
+              "target": {
+                "x": -12,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -12,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109288,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 938,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 4.623999999999995,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 30,
+              "role": "bot2",
+              "slot": 2,
+              "from": [
+                -12.907869176400647,
+                19.5,
+                -70.62110672073455
+              ],
+              "target": {
+                "x": -10,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -10,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109289,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 942,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 4.623999999999995,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 30,
+              "role": "bot3",
+              "slot": 3,
+              "from": [
+                -11.378893279265462,
+                19.5,
+                -70.90786917640065
+              ],
+              "target": {
+                "x": -8,
+                "y": 15.050000190734863,
+                "z": -63.5,
+                "nativeSourceY": 15.050000190734863
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.94825200024623,
+              "landed": [
+                -8,
+                15.050000190734863,
+                -63.5
+              ],
+              "supportTriangle": 29329,
+              "supportObject": "FldObj_Ruins03PntStage_Ironcelling_low13_1__Barricade00",
+              "landingNode": 867,
+              "landingHeight": 15.050000190734863,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 5.647895834509001,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 60,
+              "role": "human",
+              "slot": 0,
+              "from": [
+                -11.092130823599353,
+                19.5,
+                -69.37889327926545
+              ],
+              "target": {
+                "x": -9.972434218669852,
+                "y": 12,
+                "z": -58.1725329422408
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -9.972434218669852,
+                12,
+                -58.1725329422408
+              ],
+              "supportTriangle": 114919,
+              "supportObject": "Fld_Ruins03_Fld_Ruins03_Stage_Deck_polySurface8362405001_DeckFloor00_1__DeckFloor00",
+              "landingNode": 1239,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 68,
+              "postLaunchMove": 4.653436703829573,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 60,
+              "role": "bot0",
+              "slot": 0,
+              "from": [
+                -11.092130823599353,
+                19.5,
+                -69.37889327926545
+              ],
+              "target": {
+                "x": -14,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -14,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109288,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 934,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 4.865999999999843,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 60,
+              "role": "bot1",
+              "slot": 1,
+              "from": [
+                -12.62110672073454,
+                19.5,
+                -69.09213082359935
+              ],
+              "target": {
+                "x": -12,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -12,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109288,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 938,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 4.865999999999843,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 60,
+              "role": "bot2",
+              "slot": 2,
+              "from": [
+                -12.907869176400647,
+                19.5,
+                -70.62110672073455
+              ],
+              "target": {
+                "x": -10,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -10,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109289,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 942,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 4.865999999999843,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 60,
+              "role": "bot3",
+              "slot": 3,
+              "from": [
+                -11.378893279265462,
+                19.5,
+                -70.90786917640065
+              ],
+              "target": {
+                "x": -8,
+                "y": 15.050000190734863,
+                "z": -63.5,
+                "nativeSourceY": 15.050000190734863
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.94888783591355,
+              "landed": [
+                -8,
+                15.050000190734863,
+                -63.5
+              ],
+              "supportTriangle": 29329,
+              "supportObject": "FldObj_Ruins03PntStage_Ironcelling_low13_1__Barricade00",
+              "landingNode": 867,
+              "landingHeight": 15.050000190734863,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 5.848036884447041,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 120,
+              "role": "human",
+              "slot": 0,
+              "from": [
+                -11.092130823599353,
+                19.5,
+                -69.37889327926545
+              ],
+              "target": {
+                "x": -9.972434218669852,
+                "y": 12,
+                "z": -58.1725329422408
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -9.972434218669852,
+                12,
+                -58.1725329422408
+              ],
+              "supportTriangle": 114919,
+              "supportObject": "Fld_Ruins03_Fld_Ruins03_Stage_Deck_polySurface8362405001_DeckFloor00_1__DeckFloor00",
+              "landingNode": 1239,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 68,
+              "postLaunchMove": 4.824649187988558,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 120,
+              "role": "bot0",
+              "slot": 0,
+              "from": [
+                -11.092130823599353,
+                19.5,
+                -69.37889327926545
+              ],
+              "target": {
+                "x": -14,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -14,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109288,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 934,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 5.083000000000176,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 120,
+              "role": "bot1",
+              "slot": 1,
+              "from": [
+                -12.62110672073454,
+                19.5,
+                -69.09213082359935
+              ],
+              "target": {
+                "x": -12,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -12,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109288,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 938,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 5.083000000000176,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 120,
+              "role": "bot2",
+              "slot": 2,
+              "from": [
+                -12.907869176400647,
+                19.5,
+                -70.62110672073455
+              ],
+              "target": {
+                "x": -10,
+                "y": 12,
+                "z": -62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                -10,
+                12,
+                -62.5
+              ],
+              "supportTriangle": 109289,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 942,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 72,
+              "postLaunchMove": 5.083000000000176,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 0,
+              "hz": 120,
+              "role": "bot3",
+              "slot": 3,
+              "from": [
+                -11.378893279265462,
+                19.5,
+                -70.90786917640065
+              ],
+              "target": {
+                "x": -8,
+                "y": 15.050000190734863,
+                "z": -63.5,
+                "nativeSourceY": 15.050000190734863
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.949143176772157,
+              "landed": [
+                -8,
+                15.050000190734863,
+                -63.5
+              ],
+              "supportTriangle": 29329,
+              "supportObject": "FldObj_Ruins03PntStage_Ironcelling_low13_1__Barricade00",
+              "landingNode": 867,
+              "landingHeight": 15.050000190734863,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 5.9538293924514925,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 30,
+              "role": "human",
+              "slot": 0,
+              "from": [
+                12.907869176400647,
+                19.5,
+                70.62110672073455
+              ],
+              "target": {
+                "x": 9.972434218669852,
+                "y": 12,
+                "z": 58.1725329422408
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                9.972434218669852,
+                12,
+                58.1725329422408
+              ],
+              "supportTriangle": 114921,
+              "supportObject": "Fld_Ruins03_Fld_Ruins03_Stage_Deck_polySurface8362405001_DeckFloor00_1__DeckFloor00",
+              "landingNode": 9613,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 4.339889357994523,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 30,
+              "role": "bot0",
+              "slot": 0,
+              "from": [
+                12.907869176400647,
+                19.5,
+                70.62110672073455
+              ],
+              "target": {
+                "x": 14,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                14,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109286,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9918,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 75,
+              "postLaunchMove": 4.376119149217413,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 30,
+              "role": "bot1",
+              "slot": 1,
+              "from": [
+                11.37889327926546,
+                19.5,
+                70.90786917640065
+              ],
+              "target": {
+                "x": 12,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                12,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109286,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9914,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 73,
+              "postLaunchMove": 4.676601322877266,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 30,
+              "role": "bot2",
+              "slot": 2,
+              "from": [
+                11.092130823599353,
+                19.5,
+                69.37889327926545
+              ],
+              "target": {
+                "x": 10,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                10,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109287,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9910,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 4.815999999999971,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 30,
+              "role": "bot3",
+              "slot": 3,
+              "from": [
+                12.621106720734538,
+                19.5,
+                69.09213082359935
+              ],
+              "target": {
+                "x": 8,
+                "y": 15.050000190734863,
+                "z": 63.5,
+                "nativeSourceY": 15.050000190734863
+              },
+              "landingFrames": 30,
+              "landingSeconds": 1,
+              "maxY": 19.94825200024623,
+              "landed": [
+                8,
+                15.050000190734863,
+                63.5
+              ],
+              "supportTriangle": 35801,
+              "supportObject": "FldObj_Ruins03PntStage_Ironcelling_low13_1__Barricade00",
+              "landingNode": 9987,
+              "landingHeight": 15.050000190734863,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 70,
+              "postLaunchMove": 5.5286551972486375,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 60,
+              "role": "human",
+              "slot": 0,
+              "from": [
+                12.907869176400647,
+                19.5,
+                70.62110672073455
+              ],
+              "target": {
+                "x": 9.972434218669852,
+                "y": 12,
+                "z": 58.1725329422408
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                9.972434218669852,
+                12,
+                58.1725329422408
+              ],
+              "supportTriangle": 114921,
+              "supportObject": "Fld_Ruins03_Fld_Ruins03_Stage_Deck_polySurface8362405001_DeckFloor00_1__DeckFloor00",
+              "landingNode": 9613,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 4.5241058270144965,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 60,
+              "role": "bot0",
+              "slot": 0,
+              "from": [
+                12.907869176400647,
+                19.5,
+                70.62110672073455
+              ],
+              "target": {
+                "x": 14,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                14,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109286,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9918,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 75,
+              "postLaunchMove": 4.56004011652473,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 60,
+              "role": "bot1",
+              "slot": 1,
+              "from": [
+                11.37889327926546,
+                19.5,
+                70.90786917640065
+              ],
+              "target": {
+                "x": 12,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                12,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109286,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9914,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 73,
+              "postLaunchMove": 4.789811883542449,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 60,
+              "role": "bot2",
+              "slot": 2,
+              "from": [
+                11.092130823599353,
+                19.5,
+                69.37889327926545
+              ],
+              "target": {
+                "x": 10,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                10,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109287,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9910,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 5.058000000000057,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 60,
+              "role": "bot3",
+              "slot": 3,
+              "from": [
+                12.621106720734538,
+                19.5,
+                69.09213082359935
+              ],
+              "target": {
+                "x": 8,
+                "y": 15.050000190734863,
+                "z": 63.5,
+                "nativeSourceY": 15.050000190734863
+              },
+              "landingFrames": 60,
+              "landingSeconds": 1,
+              "maxY": 19.94888783591355,
+              "landed": [
+                8,
+                15.050000190734863,
+                63.5
+              ],
+              "supportTriangle": 35801,
+              "supportObject": "FldObj_Ruins03PntStage_Ironcelling_low13_1__Barricade00",
+              "landingNode": 9987,
+              "landingHeight": 15.050000190734863,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 70,
+              "postLaunchMove": 5.637385708251639,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 120,
+              "role": "human",
+              "slot": 0,
+              "from": [
+                12.907869176400647,
+                19.5,
+                70.62110672073455
+              ],
+              "target": {
+                "x": 9.972434218669852,
+                "y": 12,
+                "z": 58.1725329422408
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                9.972434218669852,
+                12,
+                58.1725329422408
+              ],
+              "supportTriangle": 114921,
+              "supportObject": "Fld_Ruins03_Fld_Ruins03_Stage_Deck_polySurface8362405001_DeckFloor00_1__DeckFloor00",
+              "landingNode": 9613,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 4.578584908541676,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 120,
+              "role": "bot0",
+              "slot": 0,
+              "from": [
+                12.907869176400647,
+                19.5,
+                70.62110672073455
+              ],
+              "target": {
+                "x": 14,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                14,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109286,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9918,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 75,
+              "postLaunchMove": 4.646418183761442,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 120,
+              "role": "bot1",
+              "slot": 1,
+              "from": [
+                11.37889327926546,
+                19.5,
+                70.90786917640065
+              ],
+              "target": {
+                "x": 12,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                12,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109286,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9914,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 73,
+              "postLaunchMove": 4.917275179140886,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 120,
+              "role": "bot2",
+              "slot": 2,
+              "from": [
+                11.092130823599353,
+                19.5,
+                69.37889327926545
+              ],
+              "target": {
+                "x": 10,
+                "y": 12,
+                "z": 62.5,
+                "nativeSourceY": 12
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.5,
+              "landed": [
+                10,
+                12,
+                62.5
+              ],
+              "supportTriangle": 109287,
+              "supportObject": "FldObj_Ruins03PntStage_polySurface8362405451_1__DeckFloor02",
+              "landingNode": 9910,
+              "landingHeight": 12,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 71,
+              "postLaunchMove": 5.178999999999871,
+              "alive": true,
+              "groundedAtLanding": true
+            },
+            {
+              "team": 1,
+              "hz": 120,
+              "role": "bot3",
+              "slot": 3,
+              "from": [
+                12.621106720734538,
+                19.5,
+                69.09213082359935
+              ],
+              "target": {
+                "x": 8,
+                "y": 15.050000190734863,
+                "z": 63.5,
+                "nativeSourceY": 15.050000190734863
+              },
+              "landingFrames": 120,
+              "landingSeconds": 1,
+              "maxY": 19.949143176772157,
+              "landed": [
+                8,
+                15.050000190734863,
+                63.5
+              ],
+              "supportTriangle": 35801,
+              "supportObject": "FldObj_Ruins03PntStage_Ironcelling_low13_1__Barricade00",
+              "landingNode": 9987,
+              "landingHeight": 15.050000190734863,
+              "landingWalkingReachable": true,
+              "goalNode": 5341,
+              "routeNodes": 70,
+              "postLaunchMove": 5.686748855938644,
+              "alive": true,
+              "groundedAtLanding": true
+            }
+          ],
+          "conditions": "production Actor integrator, real source support/nav; controlled neutral aim + fire; both human teams and all four bot slots; normal movement along a source route; SwiftShader",
+          "version1130Verified": false
+        }
+      ],
+      "errors": []
     }
   },
   "acceptedSourceFootSupport": {
@@ -4169,5 +5612,16 @@
     },
     "evidence": ".browser-evidence/accepted-foot-negative/cpu.tap",
     "remaining": "Positive ordinary-bot approach and complete BOTH-bank current Chromium/CPU matrix remain pending."
+  },
+  "acceptedOptionalSourceSurge": {
+    "foundation": "67e5565c1ed10cf6adc8c5ad102e5d8863840935",
+    "pr": 1384,
+    "bluefinFlagAdopted": false,
+    "scope": "Accepted shared optional wallSurge support; Bluefin definition remains wallClimb/highDrops only. Distinct running-jump ordinary-bot qualifier/executor remains pending."
+  },
+  "acceptedNativeSearchBound": {
+    "foundation": "e0a291e9fb0f9a09ce6f792ff652a5d1eb5f70a2",
+    "pr": 1383,
+    "scope": "Finite native-only max(6000,nodes.length*4), legacy default unchanged; Bluefin already used this bound through opted wallClimb/highDrops. Graph, geometry and goals unchanged."
   }
 }
