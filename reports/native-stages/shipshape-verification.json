@@ -33961,5 +33961,95 @@
     "url": "https://github.com/rhgrive3/actions/pull/1394",
     "status": "draft",
     "stageReady": false
+  },
+  "publicOriginalSourceBrowser": {
+    "status": "passed",
+    "scope": "Immutable current-main846 + accepted jump-attachment public build; predates accepted source-floor, TowerRider and ordinary jump-input composition.",
+    "artifact": "a1bbea52c233851ca1f8447d4bbe7125f6adfe1e86965410f0bbddeb480d98a2",
+    "revision": "54e4faf000ae6b0b7df33e5deeafedeb0cffda824eaf314971572c23da005e41",
+    "receipt": ".browser-evidence/current-v4-public-source-download/source-browser.json",
+    "receiptSha256": "9ce7719dfc1ce445a4bcda5ef7132048acfd0117130dcdd03b63ab8dc0a442f8",
+    "screenshotPrivatelyInspected": true,
+    "proof": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "shipshape",
+          "sourceMode": "browser-direct",
+          "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+          "geometry": {
+            "vertices": 388864,
+            "triangles": 339404,
+            "collisionTriangles": 310976,
+            "bvhNodes": 65535,
+            "paintFaces": 140825
+          },
+          "actors": 8,
+          "bots": 7,
+          "coverage": [
+            0.00020283470677794736,
+            0.0007148679649842942
+          ],
+          "spawn": {
+            "grounded": true,
+            "active": false,
+            "landingFrames": 58,
+            "maximumLandingFrames": 180
+          },
+          "sourceMetrics": {
+            "cached": false,
+            "conversionMilliseconds": 13402.29999999702,
+            "recipe": "inkwave-browser-source-v4"
+          },
+          "gameMetrics": {
+            "loadMilliseconds": 94883.39999999106,
+            "navMilliseconds": 3430.7999999970198,
+            "shaderWarmMilliseconds": 19.5,
+            "vertices": 388864,
+            "triangles": 339404,
+            "faces": 140825,
+            "gridBytes": 14114614,
+            "atlas": 2048,
+            "ppm": 0.3435973836800002,
+            "textureCount": 91,
+            "quality": "low",
+            "version1130Verified": false
+          },
+          "render": {
+            "frame": 1990,
+            "calls": 192,
+            "triangles": 783302,
+            "points": 0,
+            "lines": 0
+          },
+          "version1130Verified": false
+        }
+      ],
+      "errors": [],
+      "downloads": 2,
+      "menu": [
+        "タイドウォーター広場",
+        "ケルプライン埠頭",
+        "ハリヤードマリーナ",
+        "ユノハナ大渓谷",
+        "ヤガラ市場",
+        "海女美術大学",
+        "ザトウマーケット",
+        "クサヤ温泉",
+        "オヒョウ海運"
+      ],
+      "cache": {
+        "id": "shipshape",
+        "derivedCacheHit": true,
+        "objDownloads": 0
+      },
+      "failureRollback": {
+        "levelRetained": true,
+        "menu": "setup",
+        "loadingRemoved": true
+      }
+    },
+    "hardwareFpsVerified": false,
+    "stageReady": false
   }
 }

@@ -6,8 +6,9 @@ accepted current-main foundation `846f0532b6b3bcde3dfed893b81ee07d3dc58cd5`
 and accepted source jump attachment `e35ae3a560d228f13e85fd79a462b92989f1a403`.
 The branch also consumes accepted ordinary source-floor support
 `0e6dd2474930b4fde75e2b5e5012030b175b4952` and physical Tower rider guards
-`90b7ba7905986d301772f842e244c8ecb12b0b7a`. The current immutable browser
-artifact predates those two merges. Stage verification is in progress; the
+`90b7ba7905986d301772f842e244c8ecb12b0b7a` and ordinary native jump input
+`fd23d46d87498dced990c5ee5655db2462169e2e`. The current immutable browser
+artifact predates those three merges. Stage verification is in progress; the
 complete opposite-bank bot route fails. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
 remains Draft.
 Numeric receipts are in [shipshape-verification.json](shipshape-verification.json).
@@ -67,6 +68,16 @@ Both contain all nine packaged stages and pass the existing distribution
 budgets. Current original-source ownership proof also passes the six admitted
 Shooter contacts, same-cell outside-polygon ownership zero, original NoPaint
 glass, uncovered cells and actual enemy Shooter overpaint release.
+
+The same immutable public artifact passes actual Chromium menu selection,
+cross-origin pinned original download, v4 worker conversion and eight-actor
+gameplay. The initial squid launch reaches grounded support after 58 frames.
+Returning from the legacy world reuses the derived cache without another OBJ
+download. A corrupt four-byte OBJ leaves the previous complete world intact,
+returns to setup and removes the loading overlay, with zero browser errors.
+The first load takes 94.88 seconds including network transfers; conversion
+takes 13.40 seconds and Chromium navigation construction takes 3.43 seconds.
+These component results do not qualify the unfinished full-bank route.
 
 Three current source views have zero A/A, B/B and cross-draw pixel differences,
 and twelve moving-camera frames retain physics, navigation and CPU ink identity.
