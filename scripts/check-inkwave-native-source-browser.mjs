@@ -25,7 +25,7 @@ page.on('request',r=>{if(r.url().includes('media.githubusercontent.com/media/kir
 try{
  await page.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));});
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=tidewater',{waitUntil:'domcontentloaded'});
- await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
+ await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
  await page.evaluate(()=>{NG.game._skipRender=true;NG.game.menus.show('setup');});
  result.menu=await page.locator('.iw-ticket__name').allTextContents();for(const s of SOURCE_STAGES)assert(result.menu.includes(s.name),s.name+' not selectable');console.log(SOURCE_STAGES.length+' source choices visible');save();

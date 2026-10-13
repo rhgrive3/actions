@@ -14,7 +14,7 @@ try{
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
   console.log('boot '+id);
   await page.goto(address+'/?map='+id,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI).href)).G);
+  await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI).href)).G;});
   await page.waitForFunction(()=>NG?.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
   const bootError=await page.locator('#boot-error').textContent();assert.equal(bootError,'',bootError);assert.equal(errors.length,0,JSON.stringify(errors));
   await page.evaluate(async(id)=>{NG.game.debug.freeze();NG.game.menus.wipe.cancel();await NG.game.startMatch({mapId:id,mode:'turf',duration:180,difficulty:'normal'});},id);
