@@ -305,7 +305,7 @@
   ],
   "sourceBuffersUnchanged": true,
   "errors": [],
-  "qualificationStatus": "Draft current0c39+830; authenticated old173 roof/Trizooka departure fixed, later distinct ordinaryjump stillfails before acceptedfd23. Current packaged strongbank peer pending; no wholebank claim.",
+  "qualificationStatus": "Draft; current0c39+830 fixes old deck/SP failures but genuine current ordinaryjump combat input failure remains, Wahoo correction and Ship independent peer in progress; no wholebank claim.",
   "commonHead": "457c42024c904c949661534f762260c79075b121",
   "source": {
     "repository": "kirakira-dev/KiTrix",
@@ -464,7 +464,7 @@
     "revision": "4e72eb3157928cf43c7be980b30d31ea846d680a7e47beb2d46efd6b222b7431",
     "packagingPassed": 9,
     "budget": "passed",
-    "actualNaturalBank": "pending namedShip peer, no runtimeoverlay"
+    "actualNaturalBank": "Strong actual packaged peer FAILED on ordinaryjump combat input; source foot/path/groundedTrizooka improvements remain, fullbank unqualified."
   },
   "current0c39Defaults": {
     "tests": 15,
@@ -472,5 +472,37 @@
     "skipped": 5,
     "failed": 0,
     "scope": "Combat support, ordinaryjump, groundedform +catalog contracts; optional Wahoo4 and Bluefin1 fixtures notspecified in default run."
+  },
+  "currentPackagedNaturalFailure": {
+    "trackedComposition": "7a306f72bcbcd5227d79cbf44c6f08752149aedc",
+    "revision": "4e72eb3157928cf43c7be980b30d31ea846d680a7e47beb2d46efd6b222b7431",
+    "runtimeOverlay": false,
+    "renderHz": 30,
+    "simulationStep": 0.016666666666666666,
+    "seconds": 71.43333333333334,
+    "actors": 8,
+    "bots": 7,
+    "sourceCapsuleSamples": 4286,
+    "sourceCapsuleMisses": 0,
+    "protectedTargetReplans": 7,
+    "end": [
+      19.066336163143344,
+      4.720721574570206,
+      47.3501
+    ],
+    "mode": "fight",
+    "specialActive": null,
+    "jumpEdge": [
+      25597,
+      25882
+    ],
+    "jumpRiseRawUnits": 0.5,
+    "stockJumpSerialBefore": 10,
+    "stockJumpSerialAfter": 11,
+    "ordinaryJumpHoldEligibility": "false: live target was already present before perception/path/steer/tail, so pending hold never arms",
+    "receipt": "/workspace/stage-worktrees/shipshape/.ci-scratch/current-composed-natural-combat-outcome.json",
+    "correctionOwner": "/root/wahoo",
+    "namedPeer": "/root/shipshape",
+    "sourcePhysicsPoseOverride": false
   }
 }
