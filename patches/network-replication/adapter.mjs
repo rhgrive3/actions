@@ -945,7 +945,11 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         const kitOffset = packet.length === 35 || packet.length === 36 || packet.length === 37 ? 2 : 0;
         const birthId = packet[29 + inkMetaOffset + kitOffset];
         if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
-        const a = this.byNid.get(packet[2]), p = a && G.projectiles?.ghostProjectile(a, packet);
+        // #1311: cosmetic births cannot exhaust the active projectile pool.
+        // Only the copy is skipped: its event identity was already consumed.
+        const a = this.byNid.get(packet[2]), projectiles = G.projectiles;
+        const p = a && canAllocateNetworkGhost(projectiles, a)
+          ? projectiles.ghostProjectile(a, packet) : null;
         if (p) {
           p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0;
           const hardMaxSteps = Math.ceil((NETWORK_PROJECTILE_LIFE_MAX + NETWORK_PROJECTILE_DELAY_MAX) * 60) + 2;
@@ -2340,6 +2344,25 @@ ${bombHit}`;
   }
   if (rel === 'src/net/netmatch.js') {
     code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, allowGhostBombBirth, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    // #1311: count only active ghost rounds; do not keep lifecycle counters.
+    // The native 700-blob render budget reserves 60 for local effects.
+    patch('const TICK = 1 / 20;', `const TICK = 1 / 20;
+const NETWORK_GHOST_TOTAL_LIMIT = 640;
+const NETWORK_GHOST_PEER_LIMIT = 256;
+const NETWORK_GHOST_ACTOR_LIMIT = 128;
+function canAllocateNetworkGhost(projectiles, actor) {
+  const live = projectiles?.list;
+  if (!Array.isArray(live) || typeof projectiles.ghostProjectile !== 'function') return false;
+  let total = 0, byPeer = 0, byActor = 0;
+  for (const round of live) {
+    if (!round?.ghost) continue;
+    if (++total >= NETWORK_GHOST_TOTAL_LIMIT) return false;
+    if (round.owner === actor && ++byActor >= NETWORK_GHOST_ACTOR_LIMIT) return false;
+    if (round.owner?.owner === actor.owner && ++byPeer >= NETWORK_GHOST_PEER_LIMIT) return false;
+  }
+  return true;
+}
+`, 'live remote projectile resource budget');
     patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
       'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
       'validate host Boss snapshot before unpacking and buffering');
