@@ -37,7 +37,7 @@ function wallHeights(L,wall,normal,tangent,lo,hi){
 /** Conservative ordinary-input forecast; source collision resolution remains
  * active and every translated capsule segment is checked against original
  * triangles. No charged movement, unpaintable wall or suspended departure. */
-function jumpFlight(graph,start,normal,upper,hz,sweep){
+function jumpFlight(graph,start,normal,upper,sweep){
  const {physics:P,level:L}=graph,dt=STEP,dir=normal.clone().negate(),pos=start.clone(),velocity=new THREE.Vector3(),previous=pos.clone(),contacts=makeContacts(),hit=new Hit();
  let grounded=true,climbing=false,climbV=0,exit=0,attached=false;
  for(let frame=0;frame<Math.ceil(6/STEP);frame++){
@@ -102,10 +102,10 @@ export function nativeJumpAttachTransition(graph,lower,upper){
   for(const lift of [0,-.05,.05,-.1,.1]){const h=P.raycast(wall.clone().addScaledVector(normal,1).setY(s.point[1]+lift),direction,1.25);if(!paintableWall(L,h,normal)||h.point.distanceTo(new THREE.Vector3(...s.point))>.19)continue;const delta=h.point.clone().sub(eye),distance=delta.length();if(!P.raycast(eye,delta.multiplyScalar(1/distance),distance-.025).hit){visible=h.point.toArray();break;}}
   if(!visible)return null;s.paintPoint=visible;
  }
- const touchdowns=[];for(const hz of [30,60,120]){const flight=jumpFlight(graph,start,normal,upper,hz,sweep);if(!flight)return null;touchdowns.push(flight);}
+ const landing=jumpFlight(graph,start,normal,upper,sweep);if(!landing)return null;
  const goal=new THREE.Vector3(upper.x,upper.y,upper.z);if(!supported(P,L,goal)||!P.bodyFits(goal,human,PLAYER.stepUp,PLAYER.height,false,.003))return null;
- for(const landing of touchdowns){if(landing.point.distanceTo(goal)>graph.step*1.2||!sweep.clear(landing.point,goal,human,PLAYER.stepUp,PLAYER.height))return null;for(let t=0;t<=1.001;t+=.1)if(!supported(P,L,landing.point.clone().lerp(goal,Math.min(1,t))))return null;}
- const edge={to:upper.id,type:'climb',cost:rise*1.8+paintDistance*2+8,climb:{kind:'jump-attach',lower:[lower.x,lower.y,lower.z],upper:goal.toArray(),normal:normal.toArray(),spine:start.toArray(),paintStance:stance.toArray(),samples,jumpFrom:start.toArray(),screenedRates:touchdowns.map((p,i)=>({renderHz:[30,60,120][i],simulationStep:STEP,seconds:p.seconds,landing:p.point.toArray()})),assurance:'Original supported zero-AP Shooter normal jump, source paintable wall and continuous original capsule screening at the installed fixed STEP; render cadence validation remains separate; retail navigation unverified'}};cache.set(key,edge);return edge;
+ if(landing.point.distanceTo(goal)>graph.step*1.2||!sweep.clear(landing.point,goal,human,PLAYER.stepUp,PLAYER.height))return null;for(let t=0;t<=1.001;t+=.1)if(!supported(P,L,landing.point.clone().lerp(goal,Math.min(1,t))))return null;
+ const edge={to:upper.id,type:'climb',cost:rise*1.8+paintDistance*2+8,climb:{kind:'jump-attach',lower:[lower.x,lower.y,lower.z],upper:goal.toArray(),normal:normal.toArray(),spine:start.toArray(),paintStance:stance.toArray(),samples,jumpFrom:start.toArray(),fixedStepForecast:{simulationStep:STEP,seconds:landing.seconds,landing:landing.point.toArray()},assurance:'Original supported zero-AP Shooter normal jump, source paintable wall and continuous original capsule screening at the installed fixed STEP; render cadence validation remains separate; retail navigation unverified'}};cache.set(key,edge);return edge;
 }
 /** Own only this explicit edge kind, using existing ordinary actor inputs. */
 export function updateNativeJumpAttach(brain,G,dt){
