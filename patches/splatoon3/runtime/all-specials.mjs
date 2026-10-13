@@ -1233,6 +1233,12 @@ function installRuntime(api) {
 
 /** Installs the additional actor special state machines and world-device hooks. */
 export function installAllSpecials(api) { installRuntime(api); return api; }
+// Cancel actor control when picking up an objective; deployed objects survive.
+export function interruptSpecialForObjective(api, actor) {
+  const rt = runtimes.get(api?.Projectiles);
+  if (rt && actorStates.has(actor)) endSpecial(rt, actor, 'objective-pickup');
+  if (actor) { actor.specialActive = null; actor.special = 0; }
+}
 
 function replayLedger(actor) {
   let rows=replaySeen.get(actor);if(!rows){rows=new Set();replaySeen.set(actor,rows);}return rows;
