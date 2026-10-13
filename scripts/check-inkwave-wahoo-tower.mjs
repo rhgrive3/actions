@@ -21,12 +21,13 @@ try{
   for(const b of G.actors)if(b!==a){b.pos.copy(G.level.spawnPads[b.team]);b._rankedOnTower=false;b.intent.fire=false;b.intent.move.set(0,0,0);b.vel.set(0,0,0);}
   a.pos.fromArray(e.rule.state.position);a.pos.x+=.7;a._resolve(false,a.pos.y,false);m.advanceRanked(1);
   if(a.ground.block!==w.towerBlockId||e.rule.state.controllingTeam!==a.team)throw Error('Landed human boarding was not counted');
-  const {nativeTowerClearance}=await import(new URL('patches/native-stages/runtime/native-tower-clearance.mjs',document.baseURI));
-  const route=e.stage.tower,clearance=nativeTowerClearance(G.level,G.physics.actorBody,route.halfSize),snapshot=e.snapshot();
+  const route=e.stage.tower,body=G.physics.actorBody,world=G.level.triangleWorld,box=world._box.clone(),snapshot=e.snapshot();
+  const radius=Math.SQRT2*route.halfSize+body.radius+.02,height=Math.max(body.height,2.01)+.02;let queries=0,triangleTests=0;
+  const clear=(a,b)=>{box.min.set(Math.min(a[0],b[0])-radius,Math.min(a[1],b[1])-.25,Math.min(a[2],b[2])-radius);box.max.set(Math.max(a[0],b[0])+radius,Math.max(a[1],b[1])+height,Math.max(a[2],b[2])+radius);queries++;let fits=true;world.queryBox(box.min,box.max,id=>{if(!fits)return;triangleTests++;if(box.intersectsTriangle(world.triangle(id)))fits=false;});return fits;};
   const lengths=[0];for(let i=1;i<route.path.length;i++)lengths.push(lengths[i-1]+Math.hypot(...route.path[i].map((v,k)=>v-route.path[i-1][k])));
   let supportSamples=0;
   for(let i=0;i<route.path.length;i++){
-   const p=route.path[i];if(!clearance.clear(p,route.path[Math.max(0,i-1)]))throw Error('Swept source obstruction at '+i);
+   const p=route.path[i];if(!clear(p,route.path[Math.max(0,i-1)]))throw Error('Swept source obstruction at '+i);
    e.rule.state.progress=lengths[i]/lengths.at(-1);e.rule.state.position=p.slice();w.update(e,0);
    for(const [x,z] of [[.7,0],[-.7,0],[0,.7],[0,-.7],[.7,.7]]){
     a.pos.fromArray(p).addScaledVector(w.towerBlock.axes[0],x).addScaledVector(w.towerBlock.axes[2],z);a.vel.set(0,0,0);a._resolve(false,a.pos.y,false);
@@ -36,7 +37,7 @@ try{
    }
   }
   if(!e.restore(snapshot))throw Error('Original ranked state restore failed');w.update(e,0);G.renderer.render(G.scene,G.camera);
-  return {id:G.level.layout.id,actors:G.actors.length,bots:G.actors.filter(b=>b.bot).length,humanSpawnLanded:true,humanRiderCounted:true,nodes:route.path.length,halfSize:route.halfSize,localLift:route.localLift,sweptSegments:clearance.metrics.queries,sourceTriangleTests:clearance.metrics.triangleTests,liveCapsule:G.physics.actorBody,supportSamples,sourceClearance:route.sourceClearance,version1130Verified:false,assurance:'Production match and landed human; static route-pose inspection at five deck offsets, plus conservative full-segment source sweep. Retail tower behavior and native moving platforms unverified.'};
+  return {id:G.level.layout.id,actors:G.actors.length,bots:G.actors.filter(b=>b.bot).length,humanSpawnLanded:true,humanRiderCounted:true,nodes:route.path.length,halfSize:route.halfSize,localLift:route.localLift,sweptSegments:queries,sourceTriangleTests:triangleTests,liveCapsule:G.physics.actorBody,supportSamples,sourceClearance:route.sourceClearance,version1130Verified:false,assurance:'Production match and landed human; static route-pose inspection at five deck offsets, plus conservative full-segment source sweep. Retail tower behavior and native moving platforms unverified.'};
  });
  assert.equal(result.proof.actors,8);assert.equal(result.proof.bots,7);assert.equal(result.errors.length,0,JSON.stringify(result.errors));result.status='passed';await page.screenshot({path:path.join(out,'wahoo-tower.png'),timeout:60000});console.log(JSON.stringify(result.proof));
 }catch(error){result.status='failed';result.error=error.stack;throw error;}

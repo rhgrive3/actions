@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {nativeStageCatalog,nativeStageIdentity} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
 import {nativeTowerClearance} from '../runtime/native-tower-clearance.mjs';
+import {nativeArenaBasis,nativeSpawnYaw} from '../runtime/native-spawn.mjs';
 
 const SOURCE=process.env.INKWAVE_NATIVE_STAGE_SOURCE,ASSETS=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
 const REPOSITORY=process.env.INKWAVE_NATIVE_STAGE_REPOSITORY;
@@ -89,6 +90,16 @@ test('Wahoo pads have source floor/capsule support and both teams reach every lo
   movement.push({hz,team,start:start.toArray(),end:a.pos.toArray(),weapon:a.weapon?.id||'shooter',gear:a.s3?.gear||null,form:a.form,grounded:a.grounded});
  }
  console.log(JSON.stringify({id:'wahoo',movement,state:'human; neutral ink; no shooting; micro/full forward, 90-degree turn, reverse and stop',input:phasesForReport()}));
+ G.match.mode='turf';G.match.opts={};const basis=nativeArenaBasis(G.level);
+ assert.equal(basis.forward.x,1);assert.equal(basis.forward.z,0);
+ for(const team of [0,1])for(const hz of [30,60,120])for(const opening of [true,false]){
+  const a=f.make('shooter');a.team=team;a._integrate=f.Actor.prototype._integrate;a.spawnAt(G.level.spawnPads[team],0);a.aimPoint.copy(G.level.spawnPads[team]);a.intent.move.set(0,0,0);a.intent.fire=false;
+  if(opening)assert.equal(f.beginInitialSquidSpawn(a),true);else{a.alive=false;a.respawn();}
+  assert.equal(a.yaw,nativeSpawnYaw(G.level,team,0));assert.equal(a.aimYaw,a.yaw);
+  const target=a.s3.squidSpawn.target,pad=G.level.spawnPads[team];assert.ok(target&&(target.x-pad.x)*(team?-1:1)>0,'supported launch points toward opposing X side');
+  a.intent.fire=true;a.update(1/hz);a.intent.fire=false;for(let i=0;i<Math.ceil(hz*1.5);i++){G.time+=1/hz;a.update(1/hz);}
+  assert.equal(a.s3.squidSpawn,undefined);assert.ok(a.alive&&a.grounded&&a.ground.hit,'X-axis opening/respawn source landing '+team+' '+hz+' '+opening);
+ }
 });
 
 function phasesForReport(){return [[.1,.1,0],[.6,1,0],[.25,0,1],[.25,-1,0],[.2,0,0]];}
