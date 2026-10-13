@@ -77,7 +77,7 @@ test('Bluefin opposing source ledges really walk or jump down to retained lower 
  console.log(JSON.stringify({id:'bluefin',actualSourceBankDrops:cases,conditions:'ordinary real Actor integrator; shooter; kid; zero AP; no paint or fire; 2 seconds inward movement; all source collision retained'}));
 });
 
-test('Bluefin source running jump and existing wall input physically reach the original positive upper bank',{skip:!available},async()=>{
+test('Bluefin source running jump and existing wall input physically traverse the original positive upper bank',{skip:!available},async()=>{
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'bluefin')),P=G.physics=new f.NativePhysics(L);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
  G.match.mode='turf';G.match.opts={};G.camera=new THREE.PerspectiveCamera();const cases=[];
@@ -102,8 +102,23 @@ test('Bluefin source running jump and existing wall input physically reach the o
   assert(actor.alive&&actor.grounded&&actor.pos.y>8.9&&actor.pos.y<9.15&&actor.pos.x>27.5&&jumped&&climbed,'ordinary running jump and wall input reaches real positive bank '+JSON.stringify({hz,end:actor.pos.toArray(),alive:actor.alive,grounded:actor.grounded,jumped,climbed,burst,seconds}));
   const endSupport=P.raycast(actor.pos.clone().add(new THREE.Vector3(0,.2,0)),new THREE.Vector3(0,-1,0),.4);
   assert(endSupport.hit&&endSupport.normal.y>.68&&endSupport.point.distanceTo(actor.pos)<.01);
+  const capEnd=Array.from(actor.pos.toArray()),walkway=[[29,19.5],[30,20.5],[31,20.5],[31,21.5],[31,22.5],[31,23.5],[31,24.5],[31,25.5],[31,26.5],[30,27.5],[29,28.5],[28,29.5],[27,30.5],[27,31.5],[26,32.5],[25,33.5],[24,34.5],[23,35.5],[22,36.5],[21,37.5],[21,38.5],[20,39.5],[20,40.5]];
+  actor.intent.squid=actor.intent.jump=false;let bankWalkSeconds=0,goal;
+  for(const [x,z] of walkway){
+   const h=P.raycast(new THREE.Vector3(x,10,z),new THREE.Vector3(0,-1,0),2);
+   assert(h.hit&&h.normal.y>.68&&Math.abs(h.point.y-9)<.15,'walkway waypoint has original upper-bank source support');goal=h.point.clone();
+   assert(P.bodyFits(goal.clone().add(new THREE.Vector3(0,.01,0)),PLAYER.radius+.04,.32,PLAYER.height));
+   let reached=false;
+   for(let frame=0;frame<hz*3;frame++){
+    const delta=goal.clone().sub(actor.pos),height=delta.y;delta.y=0;
+    if(delta.length()<.35&&Math.abs(height)<.2&&actor.grounded){reached=true;break;}
+    actor.intent.move.copy(delta).normalize();G.time+=1/hz;actor.update(1/hz);bankWalkSeconds+=1/hz;if(!actor.alive)break;
+   }
+   assert(reached&&actor.alive,'ordinary input remains on supported walkway around the source cliff '+JSON.stringify({hz,goal:goal.toArray(),end:actor.pos.toArray(),grounded:actor.grounded,alive:actor.alive}));
+  }
+  assert(actor.grounded&&actor.pos.distanceTo(goal)<.35&&Math.abs(actor.pos.y-9)<.01);
   assert.deepEqual(Object.keys(actor.s3.abilityPoints),[]);
-  cases.push({team:0,hz,start:Array.from(start.toArray()),sourceStartTriangle:support.triangle,end:Array.from(actor.pos.toArray()),sourceEndTriangle:endSupport.triangle,seconds,wallSamples,noPaintSamples,jumped,climbed,existingSurgeBurst:burst,grounded:true,weapon:'shooter / Shooter_Normal_00',gearAP:0});
+  cases.push({team:0,hz,start:Array.from(start.toArray()),sourceStartTriangle:support.triangle,capEnd,sourceCapTriangle:endSupport.triangle,seconds,bankGoal:Array.from(goal.toArray()),bankEnd:Array.from(actor.pos.toArray()),bankWalkSeconds,walkwaySourceSupports:walkway.length,wallSamples,noPaintSamples,jumped,climbed,existingSurgeBurst:burst,grounded:true,weapon:'shooter / Shooter_Normal_00',gearAP:0});
  }
  console.log(JSON.stringify({id:'bluefin',positiveBankHumanAccess:cases,conditions:'real Actor integrator and source collision; source-supported initial pose only; initial friendly source wall/floor ownership; run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink assignment; initial manual ownership is not weapon paint proof'}));
 });

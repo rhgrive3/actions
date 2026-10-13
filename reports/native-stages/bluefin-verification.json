@@ -533,13 +533,25 @@
           18.5
         ],
         "sourceStartTriangle": 173307,
-        "end": [
+        "capEnd": [
           27.920349841391705,
           9.009785228113635,
           18.505319090374833
         ],
-        "sourceEndTriangle": 87660,
+        "sourceCapTriangle": 87660,
         "seconds": 2.033333333333333,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          19.980286585711447,
+          9,
+          40.26991698962484
+        ],
+        "bankWalkSeconds": 5.033333333333325,
+        "walkwaySourceSupports": 23,
         "wallSamples": 39,
         "noPaintSamples": 0,
         "jumped": true,
@@ -558,13 +570,25 @@
           18.5
         ],
         "sourceStartTriangle": 173307,
-        "end": [
+        "capEnd": [
           28.02947608987535,
           9.009790167526889,
           18.50294956387287
         ],
-        "sourceEndTriangle": 87661,
+        "sourceCapTriangle": 87661,
         "seconds": 2.1,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          20.005742403932228,
+          9,
+          40.2354920786485
+        ],
+        "bankWalkSeconds": 4.966666666666654,
+        "walkwaySourceSupports": 23,
         "wallSamples": 39,
         "noPaintSamples": 0,
         "jumped": true,
@@ -583,13 +607,25 @@
           18.5
         ],
         "sourceStartTriangle": 173307,
-        "end": [
+        "capEnd": [
           28.02202812287651,
           9.00979336965686,
           18.501415889035897
         ],
-        "sourceEndTriangle": 87661,
+        "sourceCapTriangle": 87661,
         "seconds": 2.1166666666666667,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          20.0012277678088,
+          9,
+          40.180413474744775
+        ],
+        "bankWalkSeconds": 4.975000000000037,
+        "walkwaySourceSupports": 23,
         "wallSamples": 39,
         "noPaintSamples": 0,
         "jumped": true,
@@ -602,7 +638,8 @@
     ],
     "conditions": "real Actor integrator and source collision; source-supported initial pose only; initial friendly source wall/floor ownership; run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink assignment; initial manual ownership is not weapon paint proof",
     "browserQualification": "pending",
-    "fullOrdinaryBotBankRoute": "pending shared navigation qualification"
+    "fullOrdinaryBotBankRoute": "pending shared navigation qualification",
+    "fullPositiveBankWalkwayVerified": true
   },
   "privateDropCalibration": {
     "status": "diagnostic only; candidate not adopted",
