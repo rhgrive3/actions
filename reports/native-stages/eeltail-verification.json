@@ -1,0 +1,777 @@
+{
+  "schema": 1,
+  "id": "eeltail",
+  "internal": "Vss_District00",
+  "verifiedAt": "2026-10-13",
+  "foundationCommit": "a84009dee41bdb8350401412e21a4e991a426adb",
+  "stageDefinitionCommit": "391b04cc",
+  "motionVerifierCommit": "505bedb8",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "sourceTree": "a9c61480637edfe4a2482a9d3e2e189294867f60",
+  "source": {
+    "id": "eeltail",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "objSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+    "mtlSha256": "d5313f2143a6e060c5823b9e5a13593e5406a66173b72720c2c03bdd2339bceb",
+    "vertices": 1056904,
+    "triangles": 763146,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "sourceTexturesIdentical": 280,
+    "maxPositionDifference": 0.0,
+    "version1130Verified": false,
+    "textureAndMtlGitTreeVerified": true,
+    "allTextureFilesGitBlobVerified": 349,
+    "mtlGitBlob": "5323d98774c08c76302e36d20b613969b9a27d2f"
+  },
+  "indices": {
+    "id": "eeltail",
+    "indices": 2289438,
+    "sourcePositionsTransformed": false,
+    "indicesSha256": "4427805aac3be3caead8a1e74050b517583a738d28cdd2ecdf968e2e90f9bba6",
+    "indicesUint32LocalStreamIdentical": true
+  },
+  "converted": {
+    "geometry": {
+      "vertices": 1056904,
+      "triangles": 763146,
+      "collisionTriangles": 211969,
+      "bvhNodes": 63489,
+      "paintFaces": 67563
+    },
+    "gridCells": 2430264,
+    "validCells": 1306737,
+    "chartMaxPlaneError": 0.004398109950204103,
+    "textureFiles": 280,
+    "bytes": 117215861,
+    "conversionSeconds": 20.23,
+    "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+    "collisionStatus": "inferred display triangles, not native collision",
+    "paintStatus": "inferred name/material flags and planar polygon masks, not native paint masks",
+    "ruleStatus": "Pnt display layer only; ranked objectives are local calibration"
+  },
+  "support": {
+    "ppm": 2.5600000000000005,
+    "turfTotal": 277528,
+    "navNodes": 12447,
+    "navValid": 8268,
+    "navMilliseconds": 12165.383662,
+    "supports": [
+      {
+        "team": 0,
+        "pad": [
+          -7.5,
+          15.08,
+          -93
+        ],
+        "hit": {
+          "point": [
+            -7.5,
+            15,
+            -93
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "face": 41601,
+          "triangle": 124498
+        },
+        "bodyFits": true,
+        "node": 229,
+        "reachable": 4648,
+        "centerDistance": 0.5,
+        "center": [
+          0,
+          6.000000000000001,
+          -0.5
+        ],
+        "pathNodes": 94
+      },
+      {
+        "team": 1,
+        "pad": [
+          7.5,
+          15.08,
+          93
+        ],
+        "hit": {
+          "point": [
+            7.5,
+            15,
+            93
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "face": 41606,
+          "triangle": 124519
+        },
+        "bodyFits": true,
+        "node": 12261,
+        "reachable": 4649,
+        "centerDistance": 0.5,
+        "center": [
+          0,
+          6,
+          0.5
+        ],
+        "pathNodes": 95
+      }
+    ],
+    "rankedError": null
+  },
+  "rankedCalibration": {
+    "zone": [
+      {
+        "center": [
+          0,
+          6.000000000000001,
+          -0.5
+        ],
+        "size": [
+          6,
+          6
+        ]
+      }
+    ],
+    "towerPathNodes": 86,
+    "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+  },
+  "node": {
+    "tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "skipped": 0,
+    "exactBrowserPythonBufferAndMaskParity": true
+  },
+  "motion": {
+    "id": "eeltail",
+    "measurement": "Composed Actor, main catalog, actual source triangles and fixed clock; logic-only, not retail measurement",
+    "weapon": "s3-shooter-first",
+    "gear": "0 AP",
+    "durationSeconds": 0.5,
+    "schedules": [
+      30,
+      60,
+      120
+    ],
+    "cases": [
+      {
+        "mode": "walk",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              7.630000000000001,
+              6,
+              -15,
+              6.239999999999999,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              7.630000000000001,
+              6,
+              -15,
+              6.239999999999999,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              7.630000000000001,
+              6,
+              -15,
+              6.239999999999999,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "micro",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              5.311599999999992,
+              6,
+              -15,
+              0.624,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              5.311599999999992,
+              6,
+              -15,
+              0.624,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              5.311599999999992,
+              6,
+              -15,
+              0.624,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "stop",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              6.559999999999999,
+              6,
+              -15,
+              0,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              6.559999999999999,
+              6,
+              -15,
+              0,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              6.559999999999999,
+              6,
+              -15,
+              0,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "turn90",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              6.783537879754125,
+              6,
+              -14.153537879754126,
+              0,
+              0,
+              6.239999999999999,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              6.783537879754125,
+              6,
+              -14.153537879754126,
+              0,
+              0,
+              6.239999999999999,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              6.783537879754125,
+              6,
+              -14.153537879754126,
+              0,
+              0,
+              6.239999999999999,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "reverse",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              6.429999999999999,
+              6,
+              -15,
+              -2.7600000000000002,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              6.429999999999999,
+              6,
+              -15,
+              -2.7600000000000002,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              6.429999999999999,
+              6,
+              -15,
+              -2.7600000000000002,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "shoot",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              7.13599999999999,
+              6,
+              -15,
+              4.56,
+              0,
+              0,
+              true,
+              "kid",
+              97.65454545454546,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 6
+          },
+          {
+            "hz": 60,
+            "end": [
+              7.13599999999999,
+              6,
+              -15,
+              4.56,
+              0,
+              0,
+              true,
+              "kid",
+              97.65454545454546,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 6
+          },
+          {
+            "hz": 120,
+            "end": [
+              7.13599999999999,
+              6,
+              -15,
+              4.56,
+              0,
+              0,
+              true,
+              "kid",
+              97.65454545454546,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 6
+          }
+        ]
+      },
+      {
+        "mode": "own-swim",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              9.115999999999996,
+              6,
+              -15,
+              12.096,
+              0,
+              0,
+              true,
+              "squid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              9.115999999999996,
+              6,
+              -15,
+              12.096,
+              0,
+              0,
+              true,
+              "squid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              9.115999999999996,
+              6,
+              -15,
+              12.096,
+              0,
+              0,
+              true,
+              "squid",
+              100,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "enemy-swim",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              5.702,
+              6,
+              -15,
+              1.44,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              91.00000000000009
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              5.702,
+              6,
+              -15,
+              1.44,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              91.00000000000009
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              5.702,
+              6,
+              -15,
+              1.44,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              91.00000000000009
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "jump",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              7.178666666666666,
+              6,
+              -15,
+              6.239999999999999,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6.7203333333333335,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              7.178666666666666,
+              6,
+              -15,
+              6.239999999999999,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6.7203333333333335,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              7.178666666666666,
+              6,
+              -15,
+              6.239999999999999,
+              0,
+              0,
+              true,
+              "kid",
+              100,
+              100
+            ],
+            "peakY": 6.7203333333333335,
+            "emittedProjectiles": 0
+          }
+        ]
+      },
+      {
+        "mode": "ink-refill",
+        "maximumScheduleDifference": 0,
+        "metrics": [
+          {
+            "hz": 30,
+            "end": [
+              5,
+              6,
+              -15,
+              0,
+              0,
+              0,
+              true,
+              "squid",
+              65.15151515151516,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 60,
+            "end": [
+              5,
+              6,
+              -15,
+              0,
+              0,
+              0,
+              true,
+              "squid",
+              65.15151515151516,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          },
+          {
+            "hz": 120,
+            "end": [
+              5,
+              6,
+              -15,
+              0,
+              0,
+              0,
+              true,
+              "squid",
+              65.15151515151516,
+              100
+            ],
+            "peakY": 6,
+            "emittedProjectiles": 0
+          }
+        ]
+      }
+    ],
+    "passed": true
+  },
+  "builds": {
+    "public": {
+      "contentHash": "045d2db745551881f00e3bef93c358a802757df9c88a91d8fbf90db6ac8cabdc",
+      "inputHash": "d1c61a552d5cac2055dba5e62ddef30632addf57bc63839bff44036579e51443",
+      "hasSourcePayload": false
+    },
+    "private": {
+      "contentHash": "35b3d5dd1a0e7401bed31b6693df2d723753448bbdd10bc34219a57be94f8c40",
+      "inputHash": "d1c61a552d5cac2055dba5e62ddef30632addf57bc63839bff44036579e51443",
+      "hasSourcePayload": true
+    }
+  },
+  "sourceSemantics": {
+    "nonCollidableObjectPatterns": [
+      "^Fld_District00_Shadow0__Shadow$"
+    ]
+  },
+  "shadowInference": {
+    "object": "Fld_District00_Shadow0__Shadow",
+    "triangles": 530,
+    "bounds": [
+      [
+        -121.5047,
+        -8.9225,
+        -113.3141
+      ],
+      [
+        131.4187,
+        96.6,
+        185.0925
+      ]
+    ],
+    "basis": "Exact source-name/bounds display-only inference, not recovered native collision flags",
+    "renderTrianglesPreserved": true
+  },
+  "browser": {
+    "status": "pending"
+  },
+  "version1130Verified": false,
+  "retailComparison": "UNVERIFIED: retail transform, native collision/paint semantics, spawning, ranked placements and device movement/render performance"
+}
