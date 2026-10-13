@@ -1,3 +1,4 @@
+import {readySpecialEvidence,useSpecialEvidence} from './special-control-evidence.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
@@ -5,9 +6,9 @@ async function setup(){return fixture({fullRuntime:true,productionComposition:tr
 function equip(actor,id){actor.weapon={...actor.weapon,special:id,specialCost:100};actor.special=100;actor.alive=true;actor.remote=false;actor.intent.fire=false;actor.intent.sub=false;actor.intent.jump=false;actor._prevIntent||={};}
 for(const [id,rate] of [['booyahBomb',1.1],['crabTank',1.3]])test(`Object Shredder applies target-specific ${id} armor multiplier on real Actor`,async()=>{
  const f=await setup(),defender=f.make(),attacker=f.make();equip(defender,id);attacker.team=1;attacker.pos.set(0,0,5);f.G.actors=[defender,attacker];
- attacker.s3.loadout[2].main='objectShredder';defender._startSpecial();defender._updateSpecial(1/60);
+ attacker.s3.loadout[2].main='objectShredder';readySpecialEvidence(defender, {placeAtFixtureOrigin:true});defender._updateSpecial(1/60);
  const state=defender._s3AllSpecialState,before=state.armorHP,hp=defender.hp;
- defender.damage(100,attacker,'shooter');assert.ok(Math.abs(state.armorHP-(before-100*rate))<1e-9);assert.equal(defender.hp,hp);
+ defender.damage(100,attacker,'shooter');assert.ok(Math.abs(state.armorHP-(before-100*rate*(id==='booyahBomb'?.7:1)))<1e-9);assert.equal(defender.hp,hp);
 });
 
 import {objectShredderEquipped,objectGearRate,receiveObjectGearSnapshot,withObjectHitGear,OBJECT_SHREDDER_FLAG} from '../runtime/object-gear.mjs';
@@ -21,11 +22,11 @@ test('fixed gear identity requires shoes main and accepted owner/life; numbers a
  assert.equal(withObjectHitGear(a,true,()=>objectGearRate(a,'sprinkler')),10);
  assert.throws(()=>withObjectHitGear(a,true,()=>{throw Error('test');}));assert.equal(a.s3.objectHitGear,undefined);
 });
-for(const id of ['booyahBomb','crabTank'])test(`${id}: no gear is identical, damage type is irrelevant, rear/body is not multiplied`,async()=>{
- const f=await setup(),a=f.make(),b=f.make();equip(a,id);b.team=1;b.pos.set(0,0,5);a._startSpecial();a._updateSpecial(1/60);
- const s=a._s3AllSpecialState,start=s.armorHP;a.damage(20,b,'shooter');assert.equal(s.armorHP,start-20);
+for(const id of ['booyahBomb','crabTank'])test(`${id}: no gear is identical, source attack rows and gear remain independent, rear/body is not multiplied`,async()=>{
+ const f=await setup(),a=f.make(),b=f.make();equip(a,id);b.team=1;b.pos.set(0,0,5);readySpecialEvidence(a, {placeAtFixtureOrigin:true});a._updateSpecial(1/60);
+ const s=a._s3AllSpecialState,start=s.armorHP;a.damage(20,b,'shooter');assert.equal(s.armorHP,start-20*(id==='booyahBomb'?.7:1));
  b.s3.loadout[2].main='objectShredder';const rate=id==='crabTank'?1.3:1.1;
- a.damage(20,b,'bomb');assert.ok(Math.abs(s.armorHP-(start-20-20*rate))<1e-9);
+ a.damage(20,b,'bomb');assert.ok(Math.abs(s.armorHP-(start-20*(id==='booyahBomb'?.7:1)-20*rate*(id==='booyahBomb'?1.5:1)))<1e-9);
  // Empty armor passes the original amount to the ordinary Actor damage chain.
  s.armorHP=0;a.specialActive.armor=false;a.hp=100;a._damageIFrames=0;
  a.damage(10,b,'shooter');assert.equal(a.hp,90);
@@ -34,11 +35,11 @@ function deploy(f,owner,id){owner.weapon={...owner.weapon,sub:id};const o=f.G.pr
 for(const [id,rate] of [['splashWall',1.5],['beakon',10],['torpedo',1.3],['inkMine',1]])test(`${id} direct object damage is target-specific, once-only and ghost-safe`,async()=>{
  const f=await setup(),a=f.make(),b=f.make();b.team=1;b.s3.loadout[2].main='objectShredder';const o=deploy(f,a,id);
  const p={owner:b,team:1,damage:10,size:.05,prev:new f.THREE.Vector3(0,1,-1),pos:new f.THREE.Vector3(0,1,1)};
- const ghost=f.G.projectiles.kitBarrierCandidate({...p,ghost:true},p.prev,p.pos);assert.ok(ghost);ghost.onHit();assert.equal(o.hp,1000);
+ const ghost=f.G.projectiles.kitBarrierCandidate({...p,ghost:true},p.prev,p.pos);if(id==='inkMine'){assert.equal(ghost,null,'Ink Mine is not a destroyable device');assert.equal(o.hp,1000);return;}assert.ok(ghost);ghost.onHit();assert.equal(o.hp,1000);
  const hit=f.G.projectiles.kitBarrierCandidate(p,p.prev,p.pos);assert.ok(hit);hit.onHit();assert.equal(o.hp,1000-10*rate);hit.onHit();assert.equal(o.hp,1000-10*rate);
 });
 for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2]])test(`${id} object candidate applies fixed rate once and rejects ghosts`,async()=>{
- const f=await setup(),a=f.make(),b=f.make();equip(a,id);b.team=1;b.s3.loadout[2].main='objectShredder';f.G.actors=[a,b];a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
+ const f=await setup(),a=f.make(),b=f.make();equip(a,id);b.team=1;b.s3.loadout[2].main='objectShredder';f.G.actors=[a,b];readySpecialEvidence(a, {placeAtFixtureOrigin:true});useSpecialEvidence(f,a);
  const o=f.G.projectiles._s3AllSpecialObjects.find(o=>o.kind===kind);assert.ok(o);o.hp=1000;
  const p={owner:b,team:1,damage:10,prev:o.pos.clone().add(new f.THREE.Vector3(0,0,-2)),pos:o.pos.clone().add(new f.THREE.Vector3(0,0,2))};
  const ghost=f.G.projectiles.kitDefenseCandidate({...p,ghost:true},p.prev,p.pos);assert.ok(ghost);ghost.onHit();assert.equal(o.hp,1000);
@@ -49,10 +50,10 @@ test('real NetMatch preserves shoes identity through JSON hit, rejects foreign s
  const f=await setup(),a=f.make(),v=f.make();a.team=1;a.nid=2;a.owner='attacker';v.nid=1;v.owner='victim';a.netLife=v.netLife=0;a.s3.loadout[2].main='objectShredder';
  let packet;const sender=new f.NetMatch({myId:'attacker',hostId:'attacker',isHost:true,tr:{sendTo:(_id,d)=>{packet=JSON.parse(JSON.stringify(d));}}},{id:'object-gear'});sender.bind({actors:[a,v],state:'playing',time:180});sender.sendHit(a,v,100,'shooter');assert.equal(packet.os,true);
  const receiver=new f.NetMatch({myId:'victim',hostId:'attacker',isHost:false,tr:{sendTo(){}}},{id:'object-gear'});receiver.bind({actors:[a,v],state:'playing',time:180});f.G.netm=receiver;
- equip(v,'booyahBomb');v._startSpecial();v._updateSpecial(1/60);v.invuln=0;const before=v._s3AllSpecialState.armorHP;
+ equip(v,'booyahBomb');readySpecialEvidence(v, {placeAtFixtureOrigin:true});v._updateSpecial(1/60);v.invuln=0;const before=v._s3AllSpecialState.armorHP;
  a.s3.loadout[2].main='runSpeed';receiver.onMessage('foreign',packet);assert.equal(v._s3AllSpecialState.armorHP,before);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-110))<1e-9);assert.equal(a.s3.objectHitGear,undefined);
- receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-110))<1e-9);
+ receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);assert.equal(a.s3.objectHitGear,undefined);
+ receiver.onMessage('attacker',packet);assert.ok(Math.abs(v._s3AllSpecialState.armorHP-(before-77))<1e-9);
 });
 
 test('real owner snapshot bit27 is independent from RP and special ready and rejects stale/foreign rows',async()=>{
@@ -68,7 +69,7 @@ test('real owner snapshot bit27 is independent from RP and special ready and rej
 for(const [id,kind,rate] of [['waveBreaker','wave',1.25],['superChump','decoy',2]])test(`${id}: real catalogue JSON proposals bind sender and target life and apply multiplier only once`,async()=>{
  const receiver=await setup(),owner=receiver.make(),remote=receiver.make();Object.assign(owner,{nid:101,owner:'defender',netLife:3});Object.assign(remote,{nid:102,owner:'attacker',netLife:7,team:1});
  const rx=new receiver.NetMatch({myId:'defender',hostId:'defender',isHost:true,tr:{broadcast(){}}},{id:'objects'});rx.bind({actors:[owner,remote],state:'playing',time:180});receiver.G.netm=rx;receiver.G.match=rx.match;
- const outbound=[];rx._rec=e=>outbound.push(JSON.parse(JSON.stringify(e)));equip(owner,id);owner._startSpecial();owner.intent.fire=true;owner._updateSpecial(1/60);
+ const outbound=[];rx._rec=e=>outbound.push(JSON.parse(JSON.stringify(e)));equip(owner,id);readySpecialEvidence(owner, {placeAtFixtureOrigin:true});useSpecialEvidence(receiver,owner);
  const object=receiver.G.projectiles._s3AllSpecialObjects.find(o=>o.kind===kind);assert.ok(object);object.hp=1000;
  const sender=await setup(),remoteOwner=sender.make(),attacker=sender.make();Object.assign(remoteOwner,{nid:101,owner:'defender',netLife:3});Object.assign(attacker,{nid:102,owner:'attacker',netLife:7,team:1});attacker.s3.loadout[2].main='objectShredder';
  const tx=new sender.NetMatch({myId:'attacker',hostId:'defender',isHost:false,tr:{broadcast(){},sendTo(){}}},{id:'objects'});tx.bind({actors:[remoteOwner,attacker],state:'playing',time:180});sender.G.netm=tx;sender.G.match=tx.match;
@@ -100,7 +101,7 @@ for(const id of ['booyahBomb','crabTank'])test(`${id}: actual native bomb explos
  const losses=[];
  for(const wear of [false,true]){
   const f=await setup(),target=f.make(),attacker=f.make();equip(target,id);attacker.team=1;attacker.pos.set(0,0,5);attacker.weapon={...attacker.weapon,sub:'bomb'};attacker.weaponRunner.reset();
-  attacker.s3.loadout[2].main=wear?'objectShredder':'runSpeed';f.G.actors=[target,attacker];f.G.physics.los=()=>true;target._startSpecial();target._updateSpecial(1/60);target.invuln=0;
+  attacker.s3.loadout[2].main=wear?'objectShredder':'runSpeed';f.G.actors=[target,attacker];f.G.physics.los=()=>true;readySpecialEvidence(target, {placeAtFixtureOrigin:true});target._updateSpecial(1/60);target.invuln=0;
   f.G.projectiles.throwBomb(attacker);const bomb=f.G.projectiles.bombs.at(-1);assert.ok(bomb);bomb.pos.set(0,.7,1);const state=target._s3AllSpecialState,before=state.armorHP;
   f.G.projectiles._explodeBomb(bomb);losses.push(before-state.armorHP);
  }
@@ -121,9 +122,9 @@ for(const [id,rate] of [['splashWall',1.5],['beakon',10],['torpedo',1.3]])test(`
 });
 
 for(const id of ['booyahBomb','crabTank'])for(const wear of [false,true])test(`${id} armor break boundary retains raw overflow with Object Shredder ${wear}`,async()=>{
- const f=await setup(),v=f.make(),a=f.make();equip(v,id);a.team=1;a.pos.set(0,0,5);a.s3.loadout[2].main=wear?'objectShredder':'runSpeed';v._startSpecial();v._updateSpecial(1/60);v.invuln=0;v.hp=100;
+ const f=await setup(),v=f.make(),a=f.make();equip(v,id);a.team=1;a.pos.set(0,0,5);a.s3.loadout[2].main=wear?'objectShredder':'runSpeed';readySpecialEvidence(v, {placeAtFixtureOrigin:true});v._updateSpecial(1/60);v.invuln=0;v.hp=100;
  const state=v._s3AllSpecialState;state.armorHP=50;v.specialActive.armorHP=50;
- const rate=wear?(id==='crabTank'?1.3:1.1):1,rawOverflow=100-50/rate;
+ const rate=(wear?(id==='crabTank'?1.3:1.1):1)*(id==='booyahBomb'?.7:1),rawOverflow=100-50/rate;
  const legacyBodyFactor=v.specialActive.armor===true?.25:1;
  const expectedDamage=Math.floor(rawOverflow*legacyBodyFactor*10+1e-9)/10; // existing final 0.1-HP quantizer
  v.damage(100,a,'shooter');assert.equal(state.armorHP,0);assert.equal(v.hp,100-expectedDamage);
