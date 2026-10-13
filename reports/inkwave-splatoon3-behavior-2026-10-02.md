@@ -4116,6 +4116,28 @@ The old #1120 source-contract assertion still required immediate release through
 
 The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
 
+## 2026-10-12: 立ち方・ブキの持ち方・足運び（P02 の一部）
+
+- **本家の根拠**: 参照版は Ver.11.3.0。任天堂公式ブキ紹介のシューター動画 `y7Zl26Zl12n`（側面の歩き、射撃後の待機）と `9LnjRgbl2Ng`（背後からの射撃しながらの走り）。どちらも過去の記録と SHA-256 が一致した。収録版・入力・ギアは不明。上体と頭は待機・歩き・走りで直立し、射撃していないシューターは右手で腰の高さに持つ（歩きは銃身がほぼ水平で前向き、立ち止まると銃口が下）。歩きで後ろのすねは水平まで上がらない。
+- **INKWAVE の実装箇所**: 試合中の体は初代（Wii U）`Player00` クリップをリターゲットした `src/game/motion/source-controller.js` / `retarget.js` が決める。射撃中の上半身だけが本体の手続き姿勢。初代の Hold 系クリップは上体 16〜31°・首 最大 25°前傾していて、そのまま出ていた。シューターの銃身は体の左へ 63〜72°横向き、遊脚の足首は弱い入力でも 0.25 m 上がり膝が 100°曲がる。
+- **再現操作**: シューターで止まる、弱い入力で歩く、最大入力で走る。正面と側面から見る。
+- **変更**: `patches/splatoon3/runtime/source-posture.mjs` を adapter で 3 箇所に接続。idle/move 状態だけ、上体の前傾を 20〜40%、首を 25% に縮める。射撃していないシューターは、移動中だけ銃身をほぼ水平・前向きにする（両手持ちのまま）。停止中の持ち方は変えない。遊脚の足首の高さを歩き 50%、走り 70% にする。補正後は待機の上体 4.7°・首 4.8°、歩きは上体 3°・首 2°・銃口ピッチ −8°、膝 93°。
+- **プレイへの影響**: 見た目だけ。発射位置の差は初弾 0.000 mm、射撃 1 秒後 0.010 mm。移動・接地・射撃のロジックは不変。
+- **確認状態**: 実ソースバンクを読み込む VM テスト（`patches/splatoon3/tests/source-posture.test.mjs`）と Chromium 描画で確認。Switch 実機比較ではない。停止中の持ち方は途中で片手持ちに変えたが、本家は支え手を添えていて判断が誤りだったため、修正前の両手持ちに戻した。射撃中にブキを体から離して構える差（発射位置に影響するため未変更）、シューター以外の持ち方、待機のしゃがみの深さ、歩幅・歩調・横歩き・後ろ歩き・坂は未確認のまま。詳細は `patches/splatoon3/reference/stance-carry-comparison-2026-10-12.md`。
+
+## 2026-10-13 ネイティブ地形のボット水際判定の計算削減
+
+`BotBrain._wet` が必要とする「落下死の高さ以上に歩ける地面があるか」だけを、従来と同じ真下レイ・法線条件・距離・境界値で判定する。通常の最寄り地面、射撃、当たり判定、塗り、ボット数・更新頻度は変更しない。上下に重なる床、穴、天井、斜面、グレーチング、カスタム地面取得を固定旧実装と照合した。実際の Actor→ブキ→弾→ダメージと塗り命令、地形で遮られた標的、30/60/120 Hz の集団ボットと配信済み形式の圧縮コードも別々に検証。
+
+本家の参照条件は既存記録の Splatoon 3 11.3.0。今回、新しい本家フレーム値・地形形状・ボット挙動の一致は主張しない。INKWAVE の同一入力に対する既存結果の維持と計算量だけが対象。詳細・再現条件・全CPU試行・実機未確認の区別は `reports/inkwave-native-ground-support-2026-10-13.md` と同名の evidence JSON に記載。ネイティブ地形の支持判定の三角形検査は減ったが、共有環境の全体CPU時間はばらつきが大きく、iPadやブラウザのFPS改善、操作不能の解消は未確認を維持する。
+
+
+## 2026-10-13: native downward-slab predicate experiment
+
+A separate ee9-based CPU candidate changes only the ordered exact-down BVH interval rejection, retaining native divisions, fallback/coercion behavior and every nearest-hit field/counter. No bot, cadence, movement, damage, paint or visual behavior is intentionally changed. Source and actual emitted before/after replay match separately at 30/60/120 Hz; real damage and native-wall protection tests also pass. This preserves the existing INKWAVE comparison baseline rather than declaring new Splatoon 3 Ver.11.3.0 retail parity.
+
+Captured rays use 73.8% fewer Math min/max calls with identical triangle work. Normal-realm Node timing has one mixed short batch and a favorable longer batch; the same-harness VM CPU replay improves in all four pairs. None establishes browser, whole-game FPS or iPad mini6 performance. Source versus emitted trajectories differ even on baseline and are not compared as identical. Full evidence, all raw trial values, limitations and reproduction: [native vertical-slab report](inkwave-native-vertical-slab-2026-10-13.md). PR #1366 remains frozen and separate; no main merge is performed.
+
 
 ## 2026-10-13 Ink Vac の実 Actor.update 描画所有権
 
