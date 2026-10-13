@@ -13,6 +13,7 @@ export const BASE_SOURCE_STAGES = [
  bounds:{minX:b[0],minZ:b[1],maxX:b[2],maxZ:b[3]},
  spawnPads:[pad,[-pad[0],pad[1],-pad[2]]],spawnBarrier:2.5,
  version1130Verified:false,placementStatus:'R6 inferred support; retail placement unverified',
+ ...(id==='hagglefish'?{ruleAvailability:{tower:{supported:false,status:'source-route-unverified',reason:'安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。',evidence:'Pinned unlayered OBJ has no Vlf layer. Current source-floor navigation cannot provide a route clearing the full swept deck/pole/capsule from opposing supports. Compound human jump/climb connectivity and retail tower placement remain unverified.'}}}:{}),
 }));
 // The builder discovers independent definitions/*.json. Its sealed build config
 // is the same catalog in the game and worker, including local single-stage builds.

@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "id": "lemuria",
+  "availability": "source-unavailable",
+  "status": "passed",
+  "version1130Verified": false,
+  "catalog": {
+    "unavailableCount": 1,
+    "playableMap": false,
+    "nativeId": false,
+    "hasLayout": false,
+    "fingerprint": null,
+    "urlRejected": true
+  },
+  "menu": {
+    "mode": "menu",
+    "screen": "setup",
+    "attract": true,
+    "map": "tidewater",
+    "disabled": true,
+    "reasonVisible": "リュウグウターミナル · 準備中公開モデルが見つからないため、現在プレイできません。",
+    "bootMs": 28280
+  },
+  "offline": {
+    "rules": [
+      {
+        "mode": "turf",
+        "core": false,
+        "api": false,
+        "sameWorld": true,
+        "sameFlow": true,
+        "attract": true
+      },
+      {
+        "mode": "zones",
+        "core": false,
+        "api": false,
+        "sameWorld": true,
+        "sameFlow": true,
+        "attract": true
+      },
+      {
+        "mode": "tower",
+        "core": false,
+        "api": false,
+        "sameWorld": true,
+        "sameFlow": true,
+        "attract": true
+      },
+      {
+        "mode": "rainmaker",
+        "core": false,
+        "api": false,
+        "sameWorld": true,
+        "sameFlow": true,
+        "attract": true
+      },
+      {
+        "mode": "clams",
+        "core": false,
+        "api": false,
+        "sameWorld": true,
+        "sameFlow": true,
+        "attract": true
+      }
+    ],
+    "onlineError": {
+      "name": "RangeError",
+      "message": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。"
+    },
+    "worldError": {
+      "name": "RangeError",
+      "message": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。"
+    },
+    "menuStarting": false,
+    "sameWorld": true
+  },
+  "online": [
+    {
+      "mode": "turf",
+      "hostBlock": {
+        "settingsRejected": true,
+        "canStart": false,
+        "started": false,
+        "reason": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。"
+      },
+      "incoming": {
+        "state": "error",
+        "error": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。",
+        "startCfg": null,
+        "sameWorld": true,
+        "attract": true
+      },
+      "wireStartCount": 1
+    },
+    {
+      "mode": "zones",
+      "hostBlock": {
+        "settingsRejected": true,
+        "canStart": false,
+        "started": false,
+        "reason": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。"
+      },
+      "incoming": {
+        "state": "error",
+        "error": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。",
+        "startCfg": null,
+        "sameWorld": true,
+        "attract": true
+      },
+      "wireStartCount": 1
+    },
+    {
+      "mode": "tower",
+      "hostBlock": {
+        "settingsRejected": true,
+        "canStart": false,
+        "started": false,
+        "reason": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。"
+      },
+      "incoming": {
+        "state": "error",
+        "error": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。",
+        "startCfg": null,
+        "sameWorld": true,
+        "attract": true
+      },
+      "wireStartCount": 1
+    },
+    {
+      "mode": "rainmaker",
+      "hostBlock": {
+        "settingsRejected": true,
+        "canStart": false,
+        "started": false,
+        "reason": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。"
+      },
+      "incoming": {
+        "state": "error",
+        "error": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。",
+        "startCfg": null,
+        "sameWorld": true,
+        "attract": true
+      },
+      "wireStartCount": 1
+    },
+    {
+      "mode": "clams",
+      "hostBlock": {
+        "settingsRejected": true,
+        "canStart": false,
+        "started": false,
+        "reason": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。"
+      },
+      "incoming": {
+        "state": "error",
+        "error": "リュウグウターミナル：公開モデルが見つからないため、現在プレイできません。",
+        "startCfg": null,
+        "sameWorld": true,
+        "attract": true
+      },
+      "wireStartCount": 1
+    }
+  ],
+  "sourceRequestCount": 0,
+  "browserErrors": [],
+  "transport": "real WebSocket + production RoomDurableObject",
+  "wireStarts": [
+    {
+      "map": "lemuria",
+      "mode": "turf",
+      "id": "lemuria-unavailable-turf"
+    },
+    {
+      "map": "lemuria",
+      "mode": "zones",
+      "id": "lemuria-unavailable-zones"
+    },
+    {
+      "map": "lemuria",
+      "mode": "tower",
+      "id": "lemuria-unavailable-tower"
+    },
+    {
+      "map": "lemuria",
+      "mode": "rainmaker",
+      "id": "lemuria-unavailable-rainmaker"
+    },
+    {
+      "map": "lemuria",
+      "mode": "clams",
+      "id": "lemuria-unavailable-clams"
+    }
+  ]
+}
