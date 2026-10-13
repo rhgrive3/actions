@@ -23,4 +23,4 @@ export {nativeSurgeTransition,updateNativeSurge} from './native-surge.mjs';
 
 export {nativeRankedTowerApproach,updateNativeTowerBoarding,nativeTowerRider} from './native-ranked-boarding.mjs';
 export {nativeJumpAttachTransition,updateNativeJumpAttach} from './native-jump-attach.mjs';
-export {nativeCombatWet} from './native-combat-support.mjs';
+export {nativeCombatWet,nativeCombatPathGoal} from './native-combat-support.mjs';
