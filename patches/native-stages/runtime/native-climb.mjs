@@ -12,7 +12,11 @@ export function nativeClimbTransition(graph,lower,upper){
  const direction=new THREE.Vector3(dx/length,0,dz/length),origin=new THREE.Vector3(lower.x,lower.y+.3,lower.z);
  const first=physics.raycast(origin,direction,length+.25);
  if(!first.hit||first.face<0||Math.abs(first.normal.y)>.15||first.normal.dot(direction)>-.9)return null;
- const humanRadius=terrainRadius(false),swimRadius=terrainRadius(true),normal=first.normal.clone(),wall=first.point.clone(),spine=wall.clone().addScaledVector(normal,swimRadius+.002),samples=[];
+ return sourceClimbAtLine(graph,lower,upper,first,direction,length,rise,0,false);
+}
+function sourceClimbAtLine(graph,lower,upper,first,direction,length,rise,offset,checkMargin){
+ const {level,physics}=graph,origin=new THREE.Vector3();
+ const humanRadius=terrainRadius(false),swimRadius=terrainRadius(true),normal=first.normal.clone(),tangent=new THREE.Vector3(normal.z,0,-normal.x),wall=first.point.clone().addScaledVector(tangent,offset),spine=wall.clone().addScaledVector(normal,swimRadius+.002),samples=[];
  const heights=[];for(let y=lower.y+.3;y<upper.y-.05;y+=.15)heights.push(y);heights.push(upper.y-.015);
  for(const y of heights){
   origin.set(spine.x,y,spine.z);const hit=physics.raycast(origin,direction,PLAYER.radius+.45);
@@ -20,6 +24,13 @@ export function nativeClimbTransition(graph,lower,upper){
   const face=level.faces[hit.face];if(!face?.wall||!level.containsOnFace(face,hit.point))return null;
   const i=Math.max(0,Math.min(face.nu-1,Math.floor(hit.u/face.cu))),j=Math.max(0,Math.min(face.nv-1,Math.floor(hit.v/face.cv)));
   if(!level.mask[face.grid+j*face.nu+i])return null;
+  if(checkMargin)for(const side of [-.05,.05]){
+   const margin=physics.raycast(origin.clone().addScaledVector(tangent,side),direction,PLAYER.radius+.45);
+   if(!margin.hit||margin.face<0||Math.abs(margin.normal.y)>.15||margin.normal.dot(normal)<.97)return null;
+   const chart=level.faces[margin.face];if(!chart?.wall||!level.containsOnFace(chart,margin.point))return null;
+   const mi=Math.max(0,Math.min(chart.nu-1,Math.floor(margin.u/chart.cu))),mj=Math.max(0,Math.min(chart.nv-1,Math.floor(margin.v/chart.cv)));
+   if(!level.mask[chart.grid+mj*chart.nu+mi])return null;
+  }
   samples.push({point:hit.point.toArray(),face:hit.face,u:hit.u,v:hit.v,capOnly:y>upper.y-.05});
  }
  if(samples.length<3)return null;
@@ -37,7 +48,7 @@ export function nativeClimbTransition(graph,lower,upper){
  // Human painting stance and entire vertical corridor also reject low ceilings.
  for(let y=lower.y;y<=upper.y+.4;y+=.25){origin.set(spine.x,y,spine.z);if(!physics.bodyFits(origin,swimRadius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015))return null;}
  for(let t=0;t<=1;t+=.2){origin.set(spine.x+(upper.x-spine.x)*t,upper.y+.45,spine.z+(upper.z-spine.z)*t);if(!physics.bodyFits(origin,swimRadius,PLAYER.squidBodyLift,PLAYER.squidHeight,true,.015))return null;}
- return {to:upper.id,type:'climb',cost:length+rise*1.8+distance*2+4,climb:{lower:[lower.x,lower.y,lower.z],upper:[upper.x,upper.y,upper.z],normal:normal.toArray(),spine:[spine.x,lower.y,spine.z],paintStance:stance.toArray(),samples,assurance:'Inferred source paintable wall, supported firing stance and live capsule corridor; retail navigation unverified'}};
+ return {to:upper.id,type:'climb',cost:length+rise*1.8+distance*2+4,climb:{lower:[lower.x,lower.y,lower.z],upper:[upper.x,upper.y,upper.z],normal:normal.toArray(),spine:[spine.x,lower.y,spine.z],paintStance:stance.toArray(),samples,...(checkMargin?{contactMargin:.05}:{}),assurance:'Inferred source paintable wall, supported firing stance and live capsule corridor; retail navigation unverified'}};
 }
 
 /** Travel routes are sampled for the human body. Keep ordinary squid input only
@@ -61,11 +72,24 @@ export function updateNativeClimb(brain,G,dt){
  if(index===0&&brain.path.length>1&&a.pos.distanceTo(new THREE.Vector3(...[N.nodes[brain.path[0]].x,N.nodes[brain.path[0]].y,N.nodes[brain.path[0]].z]))<.8)index=1;
  const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.type==='climb');
  if(!edge){brain._nativeClimb=null;return false;}
- const c=edge.climb,upper=new THREE.Vector3(...c.upper),lower=new THREE.Vector3(...c.lower),normal=new THREE.Vector3(...c.normal),spine=new THREE.Vector3(...c.spine);
+ let c=edge.climb;const upper=new THREE.Vector3(...c.upper),lower=new THREE.Vector3(...c.lower),normal=new THREE.Vector3(...c.normal),spine=new THREE.Vector3(...c.spine);
  if(Math.hypot(a.pos.x-upper.x,a.pos.z-upper.z)<.65&&Math.abs(a.pos.y-upper.y)<.16&&a.grounded){brain.pi=index+1;brain._nativeClimb=null;brain.noProg=0;return false;}
  if(Math.hypot(a.pos.x-lower.x,a.pos.z-lower.z)>Math.hypot(...[c.paintStance[0]-lower.x,c.paintStance[2]-lower.z])+2.5&&!a.climbing)return false;
  brain.pi=index;
  const state=brain._nativeClimb?.edge===edge&&brain._nativeClimb.path===brain.path?brain._nativeClimb:(brain._nativeClimb={edge,path:brain.path,seconds:0,lastY:a.pos.y,stalled:0});state.seconds+=dt;
+ if(!state.contactScreened){
+  state.contactScreened=true;
+  // Keep the human nav graph unchanged. An exact grid line may meet the edge
+  // of a real facade; a tiny lateral drift then loses the Actor's wall ray.
+  // The bot may use a nearby source line only after the same support, weapon
+  // LOS, full capsule corridor and paintable contact-margin checks succeed.
+  const direction=upper.clone().sub(lower).setY(0),length=direction.length();direction.normalize();
+  const first=G.physics.raycast(lower.clone().add(new THREE.Vector3(0,.3,0)),direction,length+.25);
+  if(first.hit&&first.face>=0&&Math.abs(first.normal.y)<=.15&&first.normal.dot(direction)<=-.9){
+   for(const offset of [0,-.1,.1,-.2,.2]){const candidate=sourceClimbAtLine(N,from,to,first,direction,length,upper.y-lower.y,offset,true);if(candidate){state.line=candidate.climb;break;}}
+  }
+ }
+ if(state.line){c=state.line;normal.fromArray(c.normal);spine.fromArray(c.spine);}
  if(a.pos.y>state.lastY+.12){state.lastY=a.pos.y;state.stalled=0;}else state.stalled+=dt;
  const it=a.intent;it.fire=it.squid=it.jump=it.sub=it.special=false;it.move.set(0,0,0);brain.noProg=0;
  if(state.stalled>12||state.seconds>30){brain.path=null;brain.repath=0;brain.goalTimer=0;brain._nativeClimb=null;it.move.copy(normal);return true;}
