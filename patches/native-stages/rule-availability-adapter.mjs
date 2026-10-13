@@ -14,6 +14,14 @@ export function adaptNativeRuleAvailability(rel,code){
  }
  if(rel==='src/ui/menus.js'){
   code="import { nativeStageEnabled } from '../../patches/native-stages/runtime/registry.mjs';\nimport { nativeStageRuleStatus } from '../../patches/native-stages/runtime/rule-availability.mjs';\n"+code;
+  once("    const matchPanel = this._panel('iw-ss__match iw-in iw-in--up', diffRow, dText, lenRow);", `    const nativeRuleReason = h('div', {class:'iw-setup__desc', 'data-native-rule-reason':'', 'aria-live':'polite'});
+    const matchPanel = this._panel('iw-ss__match iw-in iw-in--up', diffRow, dText, lenRow, nativeRuleReason);`);
+  once('    const updateStart = () => {', `    const updateStart = () => {
+      const nativeRule = nativeStageEnabled ? nativeStageRuleStatus(st.mapId, st.mode || 'turf') : null;
+      const unavailable = nativeRule?.supported === false;
+      start.disabled = unavailable;start.setAttribute('aria-disabled', String(unavailable));
+      start.dataset.nativeRuleSupported = String(!unavailable);
+      nativeRuleReason.hidden = !unavailable;nativeRuleReason.textContent = unavailable ? nativeRule.reason : '';`);
   once('  _startMatch() {',`  _startMatch() {\n    ${guard('this._setup?.mapId',"this._setup?.mode || 'turf'")}\n    if (nativeRule?.supported === false) { this.toast(nativeRule.name + '：' + nativeRule.reason); return; }`);
  }
  if(rel==='src/net/session.js'){

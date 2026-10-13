@@ -31,6 +31,9 @@ for(const pads of [[[0,.08,-28],[0,.08,28]],[[-28,.08,0],[28,.08,0]],[[-20,.08,-
  const spread=stage.clams.spawns.map(lateral);assert.ok(Math.max(...spread)-Math.min(...spread)>10);
  // Force the ordinary path attempt to fail; the safe graph fallback must use
  // exactly the same supported-pad axis as the normal ranked goals.
- const original=G.nav.path;let calls=0;G.nav.path=function(...args){if(++calls<=2)return null;return original.apply(this,args);};
- const fallback=f.nativeRankedStage(G);assert.ok(project(fallback.tower.path[0])< -10);assert.ok(project(fallback.tower.path.at(-1))>10);
+ const original=G.nav.path;let calls=0;
+ G.nav.path=function(...args){calls++;return original.apply(this,args);};
+ assert.equal(f.nativeRankedStage(G),stage);assert.equal(calls,0,'complete swept proof cached on the prepared source/nav/body');
+ G.nav=Object.assign(Object.create(Object.getPrototypeOf(G.nav)),G.nav,{path:function(...args){if(++calls<=2)return null;return original.apply(this,args);}});
+ calls=0;const fallback=f.nativeRankedStage(G);assert.ok(project(fallback.tower.path[0])< -10);assert.ok(project(fallback.tower.path.at(-1))>10);
 });

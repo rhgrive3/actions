@@ -3,6 +3,8 @@
 import {nativeTowerClearance} from './native-tower-clearance.mjs';
 import {nativeArenaBasis} from './native-spawn.mjs';
 import {nativeStageRuleStatus} from './rule-availability.mjs';
+const sourceStageCache=new WeakMap();
+function requireMode(stage,mode){if(mode==='tower'&&!stage.tower.supported){const error=new RangeError(stage.tower.reason);error.code='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED';throw error;}return stage;}
 // Kosaraju without recursion: source stages can contain thousands of ledges.
 // A tiny elevated floor near XZ center must not become the whole ranked arena.
 export function nativeRankedComponent(N,paintable,spawnIds=[]){
@@ -23,6 +25,10 @@ export function nativeRankedComponent(N,paintable,spawnIds=[]){
 }
 export function nativeRankedStage(G,requiredMode=null){
  const L=G.level,N=G.nav;if(!L?.native||!N?.validIds.length)throw Error('No reachable native ranked navigation');
+ const body=G.physics.actorBody,bodyKey=[body.radius,body.height].join('/'),cached=sourceStageCache.get(N);
+ // Navigation, original source masks and live capsule dimensions own this proof.
+ // Turf ownership and temporary ranked meshes do not alter source triangles.
+ if(cached?.level===L&&cached.mask===L.data.mask&&cached.bodyKey===bodyKey)return requireMode(cached.stage,requiredMode);
  const all=N.validIds;
  const nearest=(ids,x,z)=>{let best=null,score=Infinity;for(const id of ids){const n=N.nodes[id];if(n.zone>=0)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<score){score=d;best=n;}}return best;};
  const B=L.bounds,basis=nativeArenaBasis(L),mx=basis.origin.x,mz=basis.origin.z,axis=basis.forward,cross=basis.lateral;
@@ -47,14 +53,14 @@ export function nativeRankedStage(G,requiredMode=null){
   if(error.code!=='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED')throw error;
   tower={supported:false,status:'source-route-unverified',reason:'安全なヤグラ経路を確認できないため、このルールは利用できません。',evidence:error.message,path:[]};
  }
- if(requiredMode==='tower'&&!tower.supported){const error=new RangeError(tower.reason);error.code='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED';throw error;}
  const v=n=>[n.x,n.y,n.z],goals=[v(ends[1]),v(ends[0])],checkpoints=[[v(pick(dz*.5))],[v(pick(-dz*.5))]];
  const clams=[-1,1].flatMap(s=>[-1,0,1].map(t=>v(pick(s*dz*.6,t*6))));
  const projectedOrigin=mx*axis.x+mz*axis.z;
- return {id:L.layout.id,ruleAvailability:{tower:{supported:tower.supported,status:tower.status||'source-clear-local',reason:tower.reason||null}},zones:[{center:v(middle),size:[6,6]}],
+ const stage={id:L.layout.id,ruleAvailability:{tower:{supported:tower.supported,status:tower.status||'source-clear-local',reason:tower.reason||null}},zones:[{center:v(middle),size:[6,6]}],
   tower:{...tower,speed:1.2,checkpoints:[[{progress:.6,count:5}],[{progress:.6,count:5}]]},
   rainmaker:{center:v(middle),goals,checkpoints,retreatZ:[projectedOrigin-dz*1.7,projectedOrigin+dz*1.7],nativeRetreatAxis:[axis.x,axis.z]},clams:{spawns:clams,goals},
   calibration:'LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED.',version1130Verified:false};
+ sourceStageCache.set(N,{level:L,mask:L.data.mask,bodyKey,stage});return requireMode(stage,requiredMode);
 }
 
 /** Preserve the existing inferred route when its full swept volume is clear.
