@@ -1,3 +1,3 @@
-// Replaced only by an explicitly requested LOCAL reference-asset build.
-// Normal/public builds never contain third-party model data or enable these maps.
+// Source-fixture placeholder. The builder replaces this with a pinned catalogue.
+// Public builds fetch private browser data; optional prepared builds stay local.
 export const nativeStageBuild = null;
