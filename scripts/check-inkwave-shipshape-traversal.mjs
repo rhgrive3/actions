@@ -14,7 +14,9 @@ try{
   await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
   await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
   await page.evaluate(async id=>{const g=NG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();},id);
-  const report=await page.evaluate(async()=>{
+  const routeOnly=process.env.NATIVE_SHIPSHAPE_ROUTE_ONLY==='1',rates=(process.env.NATIVE_SHIPSHAPE_RENDER_HZ||'30,60,120').split(',').map(Number),teams=(process.env.NATIVE_SHIPSHAPE_TEAMS||'0,1').split(',').map(Number);
+  assert(rates.length&&rates.every(hz=>[30,60,120].includes(hz)));assert(teams.length&&teams.every(team=>[0,1].includes(team)));
+  const report=await page.evaluate(async({routeOnly,rates,teams})=>{
    const G=NG,N=G.nav,L=G.level,V=G.local.pos.constructor,vec=(p)=>new V(...p),cases=[],banks=[],drops=[];
    if(!L.manifest.sourceNavigation?.wallClimb)throw Error('Source wall navigation is not opted in');
    const {BotBrain}=await import(new URL('src/game/bots.js',document.baseURI));
@@ -35,14 +37,14 @@ try{
    const bankGoals=[-1,1].map(sign=>{const pad=L.spawnPads[sign<0?0:1],ids=N.validIds.filter(id=>{const n=N.nodes[id];return reachable.every(r=>r[id])&&n.nativePaintable&&n.zone<0&&n.z*sign>54&&G.physics.bodyFits(new V(n.x,n.y,n.z),PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale,PLAYER.stepUp,PLAYER.height,false,.003);});if(ids.length<5)return null;return ids.reduce((a,b)=>{const x=N.nodes[a],y=N.nodes[b];return Math.hypot(x.x-pad.x,x.z-pad.z)>Math.hypot(y.x-pad.x,y.z-pad.z)?a:b;});});
    for(const actor of G.actors){actor.intent.move.set(0,0,0);actor.intent.fire=actor.intent.squid=actor.intent.jump=actor.intent.sub=actor.intent.special=false;}
    const random=Math.random;Math.random=()=>.5;
-   try{for(let team=0;team<2;team++){
+   try{for(const team of teams){
     let actor=G.actors.find(a=>a.team===team&&a.bot);const center=N.nearest(vec(sourceStage.zones[0].center),1.2),route=N.path(N.nearest(L.spawnPads[team],1.2),center,team,50000);
     if(!route)throw Error('No opposing pad to central source route');
     const at=route.slice(1).findIndex((to,i)=>N.edgeType(route[i],to)==='climb'),edge=N.nodes[route[at]].nb.find(e=>e.to===route[at+1]),climb=edge.climb;
     actor.setWeapon('shooter');
     const sign=team?1:-1,upperId=N.nearest(new V(-sign*4.5,9,sign*40),.3),lowerId=N.nearest(new V(-sign*4.5,6,sign*41),.3),drop=nativeDropTransition(N,N.nodes[upperId],N.nodes[lowerId]);
     if(!drop)throw Error('Original source drop was not screened');
-    for(const bot of [false,true])for(const hz of [30,60,120]){
+    for(const bot of routeOnly?[]:[false,true])for(const hz of rates){
      G.projectiles.clear();G.paint.clear();setupOthers(actor);actor.spawnAt(vec(drop.drop.upper),Math.atan2(drop.drop.direction[0],drop.drop.direction[2]));actor.invuln=0;const goal=vec(drop.drop.landing);let brain;
      if(bot){brain=actor.bot=new BotBrain(actor,'normal');if(!brain._pathTo(goal,.6))throw Error('No ordinary bot source drop path');brain.goalTimer=brain.repath=brain.bombCd=1000;}
      else{actor.bot.update=()=>{};actor.intent.move.fromArray(drop.drop.direction);actor.intent.fire=actor.intent.squid=actor.intent.jump=false;}
@@ -55,7 +57,7 @@ try{
      if(!arrival)throw Error('Original source drop final support failed '+JSON.stringify({team,bot,hz,end:actor.pos.toArray(),goal:goal.toArray(),pi:brain?.pi,phase:brain?._nativeDrop?.phase,grounded:actor.grounded,mode:brain?.mode,actualGoal:brain?.goal,path:brain?.path,target:brain?.target?{team:brain.target.team,pos:brain.target.pos.toArray()}:null,actors:G.actors.map(a=>({team:a.team,slot:a.slot,pos:a.pos.toArray(),alive:a.alive})),squidSpawn:!!actor.s3.squidSpawn,superJump:!!actor.superJumpState}));
      drops.push({team,bot,hz,seconds,firstTouchdown,end:arrival.position,finalNode:goal.toArray(),verticalError:arrival.verticalError,sourceTriangle:arrival.sourceTriangle,sourceObject:arrival.sourceObject,sourceMask:1,alive:true,grounded:true,handlerCompleted:bot?true:null,arrivalSimulationTick:arrival.simulationTick,observation:'actual fixed-STEP supported arrival and handler release observed before ordinary AI selects its next goal'});console.log('native-climb '+JSON.stringify(drops.at(-1)));
     }
-    for(const hz of [30,60,120]){
+    for(const hz of routeOnly?[]:rates){
      G.projectiles.clear();G.paint.clear();setupOthers(actor);actor.spawnAt(vec(climb.lower),team?Math.PI:0);actor.invuln=0;actor.bot=new BotBrain(actor,'normal');const brain=actor.bot;
      if(!brain._pathTo(vec(climb.upper),.6))throw Error('Existing BotBrain rejected source upper support');brain.goalTimer=1000;brain.repath=1000;brain.bombCd=1000;
      let climbed=false,fire=false,swim=false,seconds=0;
@@ -64,7 +66,7 @@ try{
      if(!(fire&&swim&&climbed&&actor.grounded&&Math.abs(actor.pos.y-climb.upper[1])<.15&&owned===climb.samples.length))throw Error('Source bot climb failed '+JSON.stringify({team,hz,fire,swim,climbed,grounded:actor.grounded,position:actor.pos.toArray(),owned,samples:climb.samples.length}));
      times.sort((a,b)=>a-b);cases.push({team,hz,seconds,fire,swim,climbed,grounded:true,ownedWallSamples:owned,sourceWallSamples:climb.samples.length,end:actor.pos.toArray(),cpuStep:{p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],max:times.at(-1)}});console.log('native-climb '+JSON.stringify(cases.at(-1)));
     }
-    for(const hz of [30,60,120]){
+    for(const hz of rates){
      await G.game.startMatch({mapId:L.layout.id,mode:'turf',difficulty:'normal'});G.game._skipRender=true;for(let i=0;i<330;i++)G.game._frame(1/60);G.game.input.mouse.left=true;for(let i=0;i<3;i++)G.game._frame(1/60);G.game.input.mouse.left=false;for(let i=0;i<100;i++)G.game._frame(1/60);G.game.debug.freezeBots();actor=G.actors.find(a=>a.team===team&&a.bot);actor.setWeapon('shooter');if(G.level!==L||G.nav!==N)throw Error('Same-source route trial unexpectedly rebuilt its immutable world');
      G.projectiles.clear();G.paint.clear();actor.spawnAt(L.spawnPads[team],team?Math.PI:0);actor.invuln=0;actor.bot=new BotBrain(actor,'normal');const brain=actor.bot,to=bankGoals[1-team];if(to===null)throw Error('Whole opposing source bank remains unreachable');const node=N.nodes[to],goal=new V(node.x,node.y,node.z);
      if(!brain._pathTo(goal,.6))throw Error('No existing bot opposing-bank route');setupOthers(actor,brain.path);const waypoints=brain.path.length,climbs=brain.path.slice(1).filter((id,i)=>N.edgeType(brain.path[i],id)==='climb').length;brain.goalTimer=brain.repath=brain.bombCd=1000;
@@ -85,8 +87,8 @@ try{
     actor.spawnAt(L.spawnPads[team],team?Math.PI:0);actor.bot.update=()=>{};actor.intent.move.set(0,0,0);actor.intent.fire=actor.intent.squid=actor.intent.jump=actor.intent.sub=actor.intent.special=false;
    }}finally{Math.random=random;}
    G.paint.flush(1/60);G.game._skipRender=false;G.renderer.render(G.scene,G.camera);
-   return {id:L.layout.id,sourceSha256:L.manifest.sourceSha256,version1130Verified:L.manifest.version1130Verified,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,weapon:'shooter / Shooter_Normal_00',gearAP:Object.keys(G.actors.find(a=>a.bot).s3.abilityPoints),drops,cases,banks,conditions:'production Chromium Game._frame/Match/Actor/BotBrain/WeaponRunner/Projectiles; installed fixed STEP independent of 30/60/120 render cadence; eight actors retained; other bots frozen; source-supported setup poses; source-ranked common-component targets; actual opposing-bank targets beyond z ±54 selected away from frozen opponent spawners; initial ownership cleared; controlled same-original-goal reacquisition after ordinary refill/recovery; contact-free subdivision sweeps and observed source-collider corrections with strict .003 endpoint fits; resolved-pose chord diagnostics retained without treating them as internal solver trajectories; 0.5 RNG; SwiftShader'};
-  });
+   return {id:L.layout.id,sourceSha256:L.manifest.sourceSha256,version1130Verified:L.manifest.version1130Verified,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,weapon:'shooter / Shooter_Normal_00',gearAP:Object.keys(G.actors.find(a=>a.bot).s3.abilityPoints),routeOnly,rates,teams,drops,cases,banks,conditions:'production Chromium Game._frame/Match/Actor/BotBrain/WeaponRunner/Projectiles; installed fixed STEP independent of 30/60/120 render cadence; eight actors retained; other bots frozen; source-supported setup poses; source-ranked common-component targets; actual opposing-bank targets beyond z ±54 selected away from frozen opponent spawners; initial ownership cleared; controlled same-original-goal reacquisition after ordinary refill/recovery; contact-free subdivision sweeps and observed source-collider corrections with strict .003 endpoint fits; resolved-pose chord diagnostics retained without treating them as internal solver trajectories; 0.5 RNG; SwiftShader'};
+  },{routeOnly,rates,teams});
   assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(report.actors,8);assert.equal(report.bots,7);report.errors=errors;reports.push(report);console.log(JSON.stringify(report));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));await page.screenshot({path:path.join(evidence,id+'.png'),timeout:30000});await context.close();
  }
 }finally{await browser.close();await new Promise(r=>server.close(r));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));}
