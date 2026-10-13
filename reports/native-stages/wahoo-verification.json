@@ -2,7 +2,7 @@
   "id": "wahoo",
   "name": "スメーシーワールド",
   "dateUTC": "2026-10-13",
-  "status": "final-source-rules-network-render-lifecycle-qualified-shot-pending",
+  "status": "qualified-source-backed-frozen-arena-all-five-local-modes",
   "version1130Verified": false,
   "source": {
     "repository": "kirakira-dev/KiTrix",
@@ -166,10 +166,6 @@
     },
     "geometryPadsFlagsPreserved": true,
     "sourceNavigation": null,
-    "pending": [
-      "ordinary shot exact source stance/accepted fixed-game validation",
-      "final self-review/Ready1327/self-integration"
-    ],
     "gameplay": [
       {
         "id": "wahoo",
@@ -2168,7 +2164,8 @@
       "buildArchive": "/workspace/stage-worktrees/wahoo/.ci-scratch/identities-before-final-clams",
       "contentHash": "23f260e3de52868d780f2b77367fb1606aacae19d193f15f37c48ebab48b40fa",
       "revision": "aa68fb07ac8eb95384a1433031831c50acf27ade1ff094dbfb104f3b756f7d99",
-      "scope": "Before accepted Clams goal/policy delta; production eight-actor basic five-rule interactions, full opposed Tower swept geometry and genuine keyboard boarding. Later Clams ranked opening/natural Power, final WS/camera/lifecycle/source/shot proofs use final accepted3249 runtime. Geometry/Actor/Tower unchanged."
+      "scope": "Before accepted Clams goal/policy delta; production eight-actor basic five-rule interactions, full opposed Tower swept geometry and genuine keyboard boarding. Later Clams ranked opening/natural Power, final WS/camera/lifecycle/source/shot proofs use final accepted3249 runtime. Geometry/Actor/Tower unchanged.",
+      "nativeRuntimeSha256": "296e775a6dc1fea92d9f52bc7ba9797b4325905e036cfaf58272fbb02d6287b0"
     },
     "render": {
       "receipt": {
@@ -2591,7 +2588,8 @@
         "errors": []
       },
       "buildArchive": "/workspace/stage-worktrees/wahoo/.ci-scratch/identities-before-final-clams",
-      "scope": "Before accepted Clams goal/policy delta; exact source geometry/render/masks/shader unaffected. Original source single-mesh versus indexed culling; characters hidden only for pixel comparisons; eight actors retained for timings; SwiftShader, not hardware FPS."
+      "scope": "Before accepted Clams goal/policy delta; exact source geometry/render/masks/shader unaffected. Original source single-mesh versus indexed culling; characters hidden only for pixel comparisons; eight actors retained for timings; SwiftShader, not hardware FPS.",
+      "nativeRuntimeSha256": "296e775a6dc1fea92d9f52bc7ba9797b4325905e036cfaf58272fbb02d6287b0"
     },
     "defaultIntegration": {
       "tests": 9,
@@ -2614,9 +2612,157 @@
         ".browser-evidence/wahoo-final-gameplay/wahoo-overhead.png",
         ".browser-evidence/wahoo-final-gameplay/wahoo-source-only.png",
         ".browser-evidence/wahoo-final-lifecycle/wahoo-mobile.png",
-        ".browser-evidence/native-jump-final-whole-center-caps/wahoo-native-search.png"
+        ".browser-evidence/native-jump-final-whole-center-caps/wahoo-native-search.png",
+        ".browser-evidence/wahoo-final-exposed-source-shots/wahoo.png"
       ],
-      "scope": "Actual visible frozen arena and touch UI inspected; original placed attraction/ceiling surfaces retained; no overlapping unplaced Ferris prototype display; source arrays and inferred scene assembly distinguished."
+      "scope": "Actual visible frozen arena and touch UI inspected; original placed attraction/ceiling surfaces retained; no overlapping unplaced Ferris prototype display; source arrays and inferred scene assembly distinguished.",
+      "actualShotSourceContactVerified": true
+    },
+    "status": "passed",
+    "supportedModes": [
+      "turf",
+      "zones",
+      "tower",
+      "rainmaker",
+      "clams"
+    ],
+    "sourceShots": {
+      "status": "passed",
+      "receipt": {
+        "path": "/workspace/stage-worktrees/wahoo/.browser-evidence/wahoo-final-exposed-source-shots/browser.json",
+        "sha256": "de5bf4ca26a267e123dfce299ee2d05208e07b8ddb60bab00cde44d29d630dfa"
+      },
+      "results": [
+        {
+          "id": "wahoo",
+          "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+          "version1130Verified": false,
+          "actors": 8,
+          "bots": 7,
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gear": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "cases": [
+            {
+              "renderHz": 30,
+              "simulationStep": 0.016666666666666666,
+              "clockTicks": 64,
+              "actorTicks": 64,
+              "projectileTicks": 64,
+              "admitted": 1,
+              "owned": 1,
+              "sourceSweepHit": true,
+              "sourceContacts": [
+                {
+                  "face": 24560,
+                  "triangle": 58211,
+                  "distanceToTarget": 0.021559962080428558,
+                  "object": 56
+                }
+              ],
+              "naturalWallSplats": 4,
+              "alive": true,
+              "grounded": true,
+              "controlledGameFrameCpu": {
+                "p50": 12.600000008940697,
+                "p95": 20.299999997019768,
+                "max": 21.200000002980232
+              }
+            },
+            {
+              "renderHz": 60,
+              "simulationStep": 0.016666666666666666,
+              "clockTicks": 63,
+              "actorTicks": 63,
+              "projectileTicks": 63,
+              "admitted": 1,
+              "owned": 1,
+              "sourceSweepHit": true,
+              "sourceContacts": [
+                {
+                  "face": 24560,
+                  "triangle": 58211,
+                  "distanceToTarget": 0.024412425662030276,
+                  "object": 56
+                }
+              ],
+              "naturalWallSplats": 4,
+              "alive": true,
+              "grounded": true,
+              "controlledGameFrameCpu": {
+                "p50": 5.100000008940697,
+                "p95": 22.900000005960464,
+                "max": 27.69999998807907
+              }
+            },
+            {
+              "renderHz": 120,
+              "simulationStep": 0.016666666666666666,
+              "clockTicks": 63,
+              "actorTicks": 63,
+              "projectileTicks": 63,
+              "admitted": 1,
+              "owned": 1,
+              "sourceSweepHit": true,
+              "sourceContacts": [
+                {
+                  "face": 24560,
+                  "triangle": 58211,
+                  "distanceToTarget": 0.024188154494038723,
+                  "object": 56
+                }
+              ],
+              "naturalWallSplats": 4,
+              "alive": true,
+              "grounded": true,
+              "controlledGameFrameCpu": {
+                "p50": 3,
+                "p95": 8,
+                "max": 20.5
+              }
+            }
+          ],
+          "sourceObject": "Fld_Carousel03_M_SteelFrameBlue__SteelFrameBlue",
+          "face": 24560,
+          "triangle": 58211,
+          "conditions": "controlled source-supported spawnAt stance and controller-input/aim injection; actual Game._frame/Match/Actor/production Character/WeaponRunner/Projectiles fixed STEP1/60; render30/60/120; bots frozen; one ordinary admission per case; 0.5 RNG; SwiftShader; frame timings include presentation, not isolated projectile speed or retail controller proof",
+          "errors": []
+        }
+      ],
+      "build": {
+        "contentHash": "d835ad974dbab558efb69d7b1b2fdbcf32e761563ec124c1a5fdb69cebf86297",
+        "revision": "1a95f067be3f5f5e668e5775622603d74c8eec503635cd345114b3896ace1804",
+        "nativeRuntimeSha256": "d96d6495380caeec92a57085fe70cb7cf3eac3700446f747caec0ce69459a5a1"
+      },
+      "sourceIntegritySha256": "0d01cd00df860843ab2cb72710156869c01adcafcaab99736f3c73bd6f8e8157",
+      "fixture": "scripts/lib/wahoo-projectile-probe.mjs",
+      "checker": "scripts/check-inkwave-wahoo-source-shots.mjs",
+      "selection": "Original paintable wall at least3×3; upward source floor/body fit; centre and both shoulder/high-muzzle envelope solid rays reach the same original face. NoPaint obstructions are included; no source/runtime edits. All original fixed-clock contact/splat/owned-cell/one-admission assertions retained."
     }
   },
   "historicalQualification": {
