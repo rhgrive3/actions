@@ -67,7 +67,7 @@ export function installRanked(context) {
       if (e.kind === 'rainmaker-pickup') {
         const a = this.actors.find(a => actorId(a) === String(e.id));
         if (a?.specialActive) interruptSpecialForObjective(api, a);
-        if (a && !a.remote) a.ink = api.PLAYER.inkMax;
+        if (a && !a.remote) prepareCarrier(api, a);
       }
       if (e.kind === 'special-gain' && !visualOnly) {
         this.rankedGains[e.team] += e.points;
@@ -113,18 +113,29 @@ export function installRanked(context) {
   const actorUpdate = Actor.prototype.update;
   Actor.prototype.update = function (dt) {
     const m = G.match;
-    if (!m?.ranked) return actorUpdate.call(this, dt);
+    if (!m?.ranked) { this._rankedCarrierPrepared = false; return actorUpdate.call(this, dt); }
     const aim = this.aimDir?.toArray?.() || [Math.sin(this.yaw) * Math.cos(this.aimPitch), Math.sin(this.aimPitch), Math.cos(this.yaw) * Math.cos(this.aimPitch)];
     this._rankedInput = { fire: !!this.intent.fire, throw: !!this.intent.throw, aim };
     if (this.intent.throw) this._rankedThrowPending = true;
     if (isCarrier(m, this)) {
       if (this.specialActive) interruptSpecialForObjective(api, this);
+      prepareCarrier(api, this);
       this.intent.sub = this.intent.special = false;
       if (this._prevIntent) this._prevIntent.sub = false;
       this.fireBuffer = 0;
-    }
+    } else this._rankedCarrierPrepared = false;
     return actorUpdate.call(this, dt);
   };
+}
+
+function prepareCarrier(api, actor) {
+  if (actor._rankedCarrierPrepared) return;
+  // A suspended main-weapon charge/stream would retain its busy gate, block
+  // swimming, and resume firing when the holder reaches a checkpoint.
+  actor.weaponRunner?.reset?.();
+  actor.fireBuffer = 0;
+  actor.ink = api.PLAYER.inkMax;
+  actor._rankedCarrierPrepared = true;
 }
 
 export function buildFrame(match, api) {

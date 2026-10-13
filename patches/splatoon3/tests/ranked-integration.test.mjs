@@ -239,3 +239,15 @@ test('Rainmaker sweep reaches the real native Ultra Stamp guard and never detona
   assert.equal(removals.length, 1); assert.deepEqual(rings, []); assert.equal(guard.hp, 100);
   effects.dispose();
 });
+
+test('pickup interrupts a real main-weapon charge so the carrier can swim and no old charge resumes after loss', async () => {
+  const f = await bootRanked(), a = f.make('charger'); a.nid = 'charging-carrier'; a.kidT = 5;
+  a.intent.fire = true; f.tick(a, 24); assert.equal(a.weaponRunner.charging, true); assert.equal(a.weaponRunner.busy(), true);
+  const stage = { id: 'charging-pickup', rainmaker: { center: a.pos.toArray(), goals: [[0,0,10],[0,0,-10]], checkpoints: [[],[]] } }, e = new f.RankedEngine('rainmaker', stage);
+  const m = f.G.match = { mode: 'rainmaker', state: 'playing', playing: () => true, actors: [a], ranked: e, rankedGains: [0,0], rankedEffects: { event() {} } };
+  e.rule.state.barrier.active = false; e.update(1/60, { actors: [{ id: a.nid, team: 0, pos: a.pos.toArray(), alive: true, grounded: true }] });
+  const beforeShots = f.shots.length; f.Match.prototype.playRankedEvents.call(m, e.events);
+  assert.equal(a.weaponRunner.busy(), false); assert.equal(a.weaponRunner.charging, false); assert.equal(a.ink, f.PLAYER.inkMax);
+  a.intent.fire = false; a.intent.squid = true; f.tick(a, 1); assert.equal(a.form, 'squid', 'the ordinary main charge cannot lock Rainmaker form arbitration');
+  e.rule.state.carrier = null; a.intent.squid = false; f.tick(a, 30); assert.equal(f.shots.length, beforeShots, 'the pre-pickup charge cannot fire after possession ends');
+});
