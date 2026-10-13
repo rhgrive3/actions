@@ -284,7 +284,29 @@ The current private/public pair passes canonical packaging 9/9 each and existing
 budgets. Their gameplay modules match; private asset URLs and public original
 download metadata differ as intended. Accepted source running approach #1411
 is consumed in branch history without activating its flag for Shipshape.
-Root's current-main compatibility #1416 is still pending acceptance and final
-resealing. Ranked objectives, whole Tower travel, Clams, strict five-mode real
+Root's current-main compatibility #1416 is accepted at foundation `a84a691c`
+and consumed in own history. The final current-main pair is being resealed. Ranked objectives, whole Tower travel, Clams, strict five-mode real
 WebSocket equality and the affected final lifecycle/render checks remain
 unfinished.
+
+
+## Actual fixed-Game ranked countercase
+
+Zones team1 at render60 still fails the controlled source objective within
+90 installed Game seconds on the preserved `5e3e4631` / `fa20a5bb` artifact.
+The production goal remains `[-4.5,3.05,-5]`; an earlier diagnostic read the
+wrong goal field and was corrected only in the observer. At ticks3240 and3450,
+the bot remains grounded in squid form on original Floor00 face33518, with
+ownership0, `submerged:false` and ink4.604444 unchanged. The plain source-climb
+controller selects refill input, while the installed resource controller gives
+dry squid form no recovery. Later ordinary painting and climbing at tick5370
+are retained, so this is not asserted to be the sole cause of the90-second
+failure. The candidate releases squid only at a source-screened dry firing
+stance and leaves resources, paint, source buffers and path selection intact.
+Matched current-main baseline/candidate goal completion and negative controls
+remain pending; PR#1394 stays Draft.
+
+The completed six opposite-bank cases, two full bot Tower cases at render30,
+and three physical W/Space human boarding cases retain their original artifact
+scope. The old compiled pair has been retired after all readers closed; all
+file SHA/byte manifests, build receipts, source assets and evidence remain.

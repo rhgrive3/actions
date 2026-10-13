@@ -35045,5 +35045,87 @@
     "receiptSha256": "d6a6c08c7d92b54666546e98b471e881e0d210d2d17ab539c1ef684ce2816a32",
     "sourceOrInputOverridesAfterSetup": false,
     "currentMain1416Qualified": false
+  },
+  "currentFixedGameDryRefillCountercase": {
+    "status": "failed-preserved",
+    "artifactContentHash": "5e3e46316d100c02f5c7a54e0d69c1ce2297f3ae8078ac75f49cc313b3e7873c",
+    "artifactRevision": "fa20a5bb0024fa6b4344270a4bd10a62e0db9446c79072aeb32d829d571ca50b",
+    "mode": "zones",
+    "team": 1,
+    "renderHz": 60,
+    "installedActorStep": 0.016666666666666666,
+    "actualGoal": {
+      "x": -4.5,
+      "y": 3.049999952316284,
+      "z": -5
+    },
+    "timeoutSeconds": 90,
+    "exitCode": 1,
+    "initialAndLaterDryStance": [
+      {
+        "tick": 3240,
+        "position": [
+          24.496995536592873,
+          0,
+          17.83505952592542
+        ],
+        "form": "squid",
+        "grounded": true,
+        "ink": 4.604444444444275,
+        "submerged": false,
+        "groundTeam": 0,
+        "ground": {
+          "face": 33518,
+          "block": 33518,
+          "y": 0,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grate": false,
+          "u": 7.6969962995323264,
+          "v": 2.8661409593040723,
+          "owner": 0
+        },
+        "missingCount": 16
+      },
+      {
+        "tick": 3450,
+        "position": [
+          24.496995536592873,
+          0,
+          17.83505952592542
+        ],
+        "form": "squid",
+        "grounded": true,
+        "ink": 4.604444444444275,
+        "submerged": false,
+        "groundTeam": 0,
+        "ground": {
+          "face": 33518,
+          "block": 33518,
+          "y": 0,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "grate": false,
+          "u": 7.6969962995323264,
+          "v": 2.8661409593040723,
+          "owner": 0
+        },
+        "missingCount": 16
+      }
+    ],
+    "laterNaturalClimbingObservedAtTick": 5370,
+    "soleFailureCauseClaim": false,
+    "candidatePolicy": "Only release squid input while low-ink, grounded on the original qualified firing stance with exact static paintable non-grate non-enemy support and fitting ordinary human body. Resources/geometry/masks/path/aim unchanged. Candidate not yet qualified.",
+    "currentMain1416Consumed": "a84a691ce58b63076af965761221f06b9162965b",
+    "currentMainBaselineBuild": "queued under CPU heavy lock; no pass",
+    "receipt": ".ci-scratch/final-current/ranked-dry-refill-baseline-r2.json",
+    "receiptSha256": "429b82ddf7112b11f48be554ccd50de8ce5dbaf26d9a74cd19178cbd0fefee5f",
+    "oldArtifactArchive": ".ci-scratch/archived-pair-grounded-body/{private,public}-{all-files,build}.json"
   }
 }
