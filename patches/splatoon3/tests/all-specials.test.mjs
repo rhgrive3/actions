@@ -170,9 +170,17 @@ test('Reefslider fire can stop the dash early and cause its damage impact',async
  a._resolve=()=>{};
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  const events=eventFeed(f,'all:special');a._startSpecial();for(let i=0;i<38;i++)a._updateSpecial(1/60);
- assert.equal(a._s3AllSpecialState.phase,'dash');a.intent.fire=true;a._updateSpecial(1/60);
- assert.equal(a.specialActive,null);assert.ok(events.some(e=>e.action==='impact'));
+ assert.equal(a._s3AllSpecialState.phase,'dash');
+ for(let i=0;i<14;i++)a._updateSpecial(1/60);
+ a.intent.fire=true;a._updateSpecial(1/60);a.intent.fire=false;
+ assert.equal(a._s3AllSpecialState.phase,'brake','a release after 15F begins sourced braking, not an instant explosion');
+ assert.equal(events.some(e=>e.action==='impact'),false);
+ for(let i=0;i<38&&a._s3AllSpecialState?.phase==='brake';i++)a._updateSpecial(1/60);
+ assert.equal(a._s3AllSpecialState.phase,'recovery');
+ assert.ok(events.some(e=>e.action==='impact'));
  assert.ok(hits.some(h=>h[1]===victim&&h[2]===220&&h[3]==='reefslider'));
+ for(let i=0;i<28&&a.specialActive;i++)a._updateSpecial(1/60);
+ assert.equal(a.specialActive,null,'recovery ends after the full 28F window');
 });
 
 test('Killer Wail beams tick through terrain and the main weapon remains live during the special',async()=>{
@@ -253,7 +261,11 @@ test('Reefslider snapshots special-power paint and damage-distance curves withou
   a._startSpecial();const s=a._s3AllSpecialState,scale=gearCurve(ap,1,1.1,1.2);
   assert.equal(s.paintRadius,gearCurve(ap,7.51,8.26,9.012));assert.equal(s.damageDistanceRate,scale);
   a.s3.loadout=emptyLoadout();a.s3RefreshGear();assert.equal(s.damageDistanceRate,scale,'activation snapshot');
-  s.phase='dash';a.intent.fire=true;a._updateSpecial(1/60);
+  s.phase='dash';s.dashT=15/60;s.reefSpeedRaw=0;
+  a.intent.fire=true;a._updateSpecial(1/60);a.intent.fire=false;
+  assert.equal(s.phase,'brake');
+  for(let i=0;i<38&&s.phase==='brake';i++)a._updateSpecial(1/60);
+  assert.equal(s.phase,'recovery');
   const hit=hits.find(h=>h[1]===near);assert.ok(hit);assert.ok(hit[2]<=220);assert.equal(hits.some(h=>h[1]===far),16<=14.9*scale);
   f.G.projectiles.applyHit=old;
  }
