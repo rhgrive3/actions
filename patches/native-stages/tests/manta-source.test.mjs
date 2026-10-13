@@ -48,6 +48,6 @@ test('Manta independently compares every OBJ position, normal, UV and face index
   const raw=fs.readFileSync(path.join(src,name)),hash=crypto.createHash('sha1').update(Buffer.from('blob '+raw.length+'\0')).update(raw).digest('hex');
   assert.equal(hash,oid,name);bytes+=raw.length;name.endsWith('.png')?png++:mtl++;
  }
- assert(png>100);assert.equal(mtl,2);
+ assert.equal(png,321);assert.equal(mtl,2);
  console.log(JSON.stringify({id:'manta',positionsFloat32Identical:position,normalsFloat32Identical:normal,uvFloat32Identical:uv,indicesUint32Identical:index,allPNG:png,allMTL:mtl,verifiedPNGAndMTLBytes:bytes,maxDifference:0}));
 });
