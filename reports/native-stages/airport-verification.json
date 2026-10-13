@@ -2674,5 +2674,897 @@
     "retail spawns/ranked placements and mode-specific geometry",
     "retail shader and moving-object transforms/states",
     "console controller comparisons and physical hardware FPS"
-  ]
+  ],
+  "initialRealActorLaunch": {
+    "id": "airport",
+    "pads": [
+      {
+        "team": 0,
+        "sourceTriangle": 137311,
+        "sourceObject": "Fld_Propeller00_polySurface836253875_4__WoodDeckBright00",
+        "routeNodes": 84
+      },
+      {
+        "team": 1,
+        "sourceTriangle": 137293,
+        "sourceObject": "Fld_Propeller00_polySurface836253875_4__WoodDeckBright00",
+        "routeNodes": 79
+      }
+    ],
+    "nodes": 10502,
+    "valid": 6045,
+    "towerSupported": true,
+    "towerRouteNodes": 70,
+    "cases": [
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 0,
+        "isBot": false,
+        "frames": 30,
+        "landing": [
+          -38.19810768456644,
+          10.5,
+          -57.97927059264549
+        ],
+        "routeNodes": 70,
+        "moved": 1.167999999999992
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 0,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -43.80876069586094,
+          13.5,
+          -60.56579226535
+        ],
+        "routeNodes": 79,
+        "moved": 1.167999999999992
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 1,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -41.65607431719339,
+          13.5,
+          -61.190761327359056
+        ],
+        "routeNodes": 80,
+        "moved": 1.167999999999992
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 2,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -39.78422545637047,
+          13.5,
+          -62.423979400371806
+        ],
+        "routeNodes": 79,
+        "moved": 1.1681712281642351
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 3,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -38.360420797293365,
+          13.5,
+          -64.15528678675922
+        ],
+        "routeNodes": 78,
+        "moved": 1.167999999999986
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 0,
+        "isBot": false,
+        "frames": 30,
+        "landing": [
+          38.19810768456644,
+          10.5,
+          57.97927059264549
+        ],
+        "routeNodes": 65,
+        "moved": 1.167999999999992
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 0,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          43.80876069586095,
+          13.5,
+          60.56579226535
+        ],
+        "routeNodes": 78,
+        "moved": 1.167999999999992
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 1,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          41.65607431719339,
+          13.5,
+          61.190761327359056
+        ],
+        "routeNodes": 76,
+        "moved": 1.167999999999992
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 2,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          39.78422545637047,
+          13.5,
+          62.423979400371806
+        ],
+        "routeNodes": 74,
+        "moved": 1.1681712281642351
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 3,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          38.360420797293365,
+          13.5,
+          64.15528678675923
+        ],
+        "routeNodes": 73,
+        "moved": 1.167999999999986
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 0,
+        "isBot": false,
+        "frames": 60,
+        "landing": [
+          -38.19810768456644,
+          10.5,
+          -57.97927059264549
+        ],
+        "routeNodes": 70,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 0,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -43.80876069586094,
+          13.5,
+          -60.56579226535
+        ],
+        "routeNodes": 79,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 1,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -41.65607431719339,
+          13.5,
+          -61.190761327359056
+        ],
+        "routeNodes": 80,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 2,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -39.78422545637047,
+          13.5,
+          -62.423979400371806
+        ],
+        "routeNodes": 79,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 3,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -38.360420797293365,
+          13.5,
+          -64.15528678675922
+        ],
+        "routeNodes": 78,
+        "moved": 1.026000000000014
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 0,
+        "isBot": false,
+        "frames": 60,
+        "landing": [
+          38.19810768456644,
+          10.5,
+          57.97927059264549
+        ],
+        "routeNodes": 65,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 0,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          43.80876069586095,
+          13.5,
+          60.56579226535
+        ],
+        "routeNodes": 78,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 1,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          41.65607431719339,
+          13.5,
+          61.190761327359056
+        ],
+        "routeNodes": 76,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 2,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          39.78422545637047,
+          13.5,
+          62.423979400371806
+        ],
+        "routeNodes": 74,
+        "moved": 1.02600000000002
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 3,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          38.360420797293365,
+          13.5,
+          64.15528678675923
+        ],
+        "routeNodes": 73,
+        "moved": 1.026000000000014
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 0,
+        "isBot": false,
+        "frames": 120,
+        "landing": [
+          -38.19810768456644,
+          10.5,
+          -57.97927059264549
+        ],
+        "routeNodes": 70,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 0,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -43.80876069586094,
+          13.5,
+          -60.56579226535
+        ],
+        "routeNodes": 79,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 1,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -41.65607431719339,
+          13.5,
+          -61.190761327359056
+        ],
+        "routeNodes": 80,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 2,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -39.78422545637047,
+          13.5,
+          -62.423979400371806
+        ],
+        "routeNodes": 79,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 3,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -38.360420797293365,
+          13.5,
+          -64.15528678675922
+        ],
+        "routeNodes": 78,
+        "moved": 1.003000000000029
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 0,
+        "isBot": false,
+        "frames": 120,
+        "landing": [
+          38.19810768456644,
+          10.5,
+          57.97927059264549
+        ],
+        "routeNodes": 65,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 0,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          43.80876069586095,
+          13.5,
+          60.56579226535
+        ],
+        "routeNodes": 78,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 1,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          41.65607431719339,
+          13.5,
+          61.190761327359056
+        ],
+        "routeNodes": 76,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 2,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          39.78422545637047,
+          13.5,
+          62.423979400371806
+        ],
+        "routeNodes": 74,
+        "moved": 1.0030000000000232
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 3,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          38.360420797293365,
+          13.5,
+          64.15528678675923
+        ],
+        "routeNodes": 73,
+        "moved": 1.003000000000029
+      }
+    ],
+    "conditions": "Actual Actor integrator, ordinary shooter, default gear, source capsule and directed nav; display/audio stubs only"
+  },
+  "initialCPU": {
+    "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+    "passed": 60,
+    "skipped": 4,
+    "failed": 0,
+    "suite": "patches/native-stages/tests/*.test.mjs",
+    "sourceEnabled": true,
+    "assetsEnabled": true,
+    "durationMilliseconds": 74897.159675
+  },
+  "initialChromium": {
+    "foundation": "89cb600efe646ad1741a05de2ab21119a1438c66",
+    "status": "passed",
+    "report": {
+      "id": "airport",
+      "native": true,
+      "actors": 8,
+      "alive": 8,
+      "bots": 7,
+      "moved": [
+        0,
+        0.2837831643024133,
+        5.2779748094978345,
+        0.6977373702131807,
+        7.751050685022332,
+        5.13099286082026,
+        13.960415511216965,
+        5.516686411640963
+      ],
+      "coverage": [
+        0.013459717985379495,
+        0.023712908856258576
+      ],
+      "turfTotal": 284700,
+      "counts": [
+        3362,
+        6062
+      ],
+      "metrics": {
+        "loadMilliseconds": 3764.8999999910593,
+        "navMilliseconds": 777.3999999910593,
+        "shaderWarmMilliseconds": 11.599999994039536,
+        "vertices": 256788,
+        "triangles": 201941,
+        "faces": 54428,
+        "gridBytes": 2435961,
+        "atlas": 2048,
+        "ppm": 2.5600000000000005,
+        "textureCount": 89,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "cpuFrame": {
+        "p50": 19.69999998807907,
+        "p95": 47.6000000089407,
+        "max": 341.29999999701977
+      },
+      "render": {
+        "frame": 401,
+        "calls": 181,
+        "triangles": 467377,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 339,
+        "textures": 110
+      },
+      "navValid": 6982,
+      "local": {
+        "pos": [
+          -38.15436388346186,
+          10.5,
+          -58.00822735413961
+        ],
+        "alive": true,
+        "grounded": true
+      },
+      "profile": {
+        "physics.raycast": {
+          "milliseconds": 258.59999987483025,
+          "calls": 35860
+        },
+        "bot.update": {
+          "milliseconds": 168.8999999910593,
+          "calls": 1260
+        },
+        "physics.collideBody": {
+          "milliseconds": 32.500000044703484,
+          "calls": 1440
+        },
+        "physics.groundProbe": {
+          "milliseconds": 54.499999955296516,
+          "calls": 1324
+        },
+        "character.update": {
+          "milliseconds": 1743.0000004172325,
+          "calls": 1440
+        },
+        "actor.update": {
+          "milliseconds": 2194.600000038743,
+          "calls": 1440
+        },
+        "paint._cpuSplat": {
+          "milliseconds": 46.90000005066395,
+          "calls": 3812
+        },
+        "paint._emitGrowth": {
+          "milliseconds": 161.6999999433756,
+          "calls": 25198
+        },
+        "paint.splat": {
+          "milliseconds": 151.50000017881393,
+          "calls": 230
+        },
+        "projectiles.update": {
+          "milliseconds": 270.09999994933605,
+          "calls": 180
+        },
+        "paint._advanceSplatOwnership": {
+          "milliseconds": 462.3000001460314,
+          "calls": 24909
+        },
+        "paint.radius.1.9": {
+          "milliseconds": 33.30000002682209,
+          "calls": 4311,
+          "faceVisits": 101701
+        },
+        "paint.radius.1.8": {
+          "milliseconds": 16.899999991059303,
+          "calls": 7011,
+          "faceVisits": 133357
+        },
+        "paint.radius.2.6": {
+          "milliseconds": 8.100000008940697,
+          "calls": 3588,
+          "faceVisits": 55534
+        },
+        "paint.radius.1.4": {
+          "milliseconds": 4.400000020861626,
+          "calls": 2744,
+          "faceVisits": 23862
+        },
+        "paint.radius.1.6": {
+          "milliseconds": 3.1999999582767487,
+          "calls": 1417,
+          "faceVisits": 18376
+        },
+        "paint.radius.4.4": {
+          "milliseconds": 313.90000009536743,
+          "calls": 1159,
+          "faceVisits": 144418
+        },
+        "paint.radius.3.7": {
+          "milliseconds": 74.10000011324883,
+          "calls": 735,
+          "faceVisits": 225245
+        },
+        "paint.radius.1": {
+          "milliseconds": 3.9999999701976776,
+          "calls": 875,
+          "faceVisits": 3233
+        },
+        "paint.radius.1.2": {
+          "milliseconds": 0.7999999970197678,
+          "calls": 675,
+          "faceVisits": 4245
+        },
+        "paint.radius.2.1": {
+          "milliseconds": 1.2999999672174454,
+          "calls": 830,
+          "faceVisits": 10449
+        },
+        "paint.radius.0.7": {
+          "milliseconds": 0.3999999910593033,
+          "calls": 337,
+          "faceVisits": 1909
+        },
+        "paint.radius.0.6": {
+          "milliseconds": 0.4000000059604645,
+          "calls": 329,
+          "faceVisits": 1326
+        },
+        "paint.radius.2.5": {
+          "milliseconds": 1.0000000298023224,
+          "calls": 489,
+          "faceVisits": 7042
+        },
+        "paint.radius.2.2": {
+          "milliseconds": 0.09999999403953552,
+          "calls": 182,
+          "faceVisits": 182
+        },
+        "paint.radius.3.8": {
+          "milliseconds": 0.3999999761581421,
+          "calls": 127,
+          "faceVisits": 127
+        },
+        "paint._drawQuads": {
+          "milliseconds": 454.09999990463257,
+          "calls": 361
+        },
+        "paint.advanceSimulation": {
+          "milliseconds": 1137.2999999970198,
+          "calls": 180
+        },
+        "fx.update": {
+          "milliseconds": 81.19999994337559,
+          "calls": 180
+        },
+        "environment.update": {
+          "milliseconds": 18.099999994039536,
+          "calls": 180
+        },
+        "paint.flush": {
+          "milliseconds": 0.6999999731779099,
+          "calls": 181
+        },
+        "minimap.update": {
+          "milliseconds": 86.50000005960464,
+          "calls": 180
+        },
+        "paint.coverage": {
+          "milliseconds": 38.39999994635582,
+          "calls": 181
+        },
+        "hud.update": {
+          "milliseconds": 234.30000019073486,
+          "calls": 180
+        },
+        "physics.bodyFits": {
+          "milliseconds": 0.30000002682209015,
+          "calls": 19
+        },
+        "nav.nearest": {
+          "milliseconds": 0,
+          "calls": 12
+        },
+        "nav.path": {
+          "milliseconds": 0.10000000894069672,
+          "calls": 4
+        },
+        "paint.radius.1.5": {
+          "milliseconds": 0,
+          "calls": 100,
+          "faceVisits": 100
+        }
+      },
+      "version1130Verified": false,
+      "rules": [
+        {
+          "mode": "zones",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            98,
+            100
+          ],
+          "snapshotBytes": 511,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "tower",
+          "towerProof": {
+            "pathNodes": 70,
+            "segmentInteriorSamples": 3,
+            "actualCapsuleSupports": 554,
+            "halfSize": 1.2,
+            "localLift": 1.2,
+            "sourceClearance": {
+              "queries": 6875,
+              "triangleTests": 214545,
+              "radius": 2.097056274847714,
+              "height": 2.03,
+              "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+            },
+            "arenaSpan": {
+              "origin": [
+                0,
+                0
+              ],
+              "forward": [
+                0.5501576929527964,
+                0.8350607839462089
+              ],
+              "endpointProjection": [
+                -30.084597323806832,
+                30.049603364837218
+              ],
+              "minimumHalfDepth": 2.097056274847714,
+              "bothHalvesVerified": true
+            },
+            "liveGroundedHumanCounted": true,
+            "keyboardBoarding": [
+              {
+                "hz": 30,
+                "boarded": true,
+                "frames": 14,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 54539,
+                "towerBlock": 54539,
+                "position": [
+                  0.21563414069052195,
+                  5.699999999999999,
+                  3.869457698048247
+                ],
+                "approach": {
+                  "sourceNode": 5467,
+                  "start": [
+                    -0.5315000000000012,
+                    4.5,
+                    2.4997999999999934
+                  ],
+                  "end": [
+                    0.06600776405003672,
+                    5.7,
+                    3.694815528100069
+                  ],
+                  "height": 1.2000000000000002,
+                  "jumping": true,
+                  "hz": 30
+                }
+              },
+              {
+                "hz": 60,
+                "boarded": true,
+                "frames": 27,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 54539,
+                "towerBlock": 54539,
+                "position": [
+                  0.1812055440749149,
+                  5.699999999999999,
+                  3.8762224093205675
+                ],
+                "approach": {
+                  "sourceNode": 5467,
+                  "start": [
+                    -0.5315000000000012,
+                    4.5,
+                    2.4997999999999934
+                  ],
+                  "end": [
+                    0.06600776405003672,
+                    5.7,
+                    3.694815528100069
+                  ],
+                  "height": 1.2000000000000002,
+                  "jumping": true,
+                  "hz": 60
+                }
+              },
+              {
+                "hz": 120,
+                "boarded": true,
+                "frames": 54,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 54539,
+                "towerBlock": 54539,
+                "position": [
+                  0.17992787005175298,
+                  5.699999999999999,
+                  3.8810892269259307
+                ],
+                "approach": {
+                  "sourceNode": 5467,
+                  "start": [
+                    -0.5315000000000012,
+                    4.5,
+                    2.4997999999999934
+                  ],
+                  "end": [
+                    0.06600776405003672,
+                    5.7,
+                    3.694815528100069
+                  ],
+                  "height": 1.2000000000000002,
+                  "jumping": true,
+                  "hz": 120
+                }
+              }
+            ]
+          },
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            97,
+            100
+          ],
+          "snapshotBytes": 802,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "rainmaker",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "snapshotBytes": 989,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "clams",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "snapshotBytes": 8152,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        }
+      ],
+      "errors": []
+    },
+    "renderer": "Chromium SwiftShader",
+    "concurrentCPULoad": true,
+    "measurement": "diagnostic software renderer, no physical hardware FPS"
+  },
+  "initialBuilds": {
+    "local": {
+      "contentHash": "0dd900badd9b12dba409edd4b42f38f795665e64912afc5cfec73be94f04c6a6",
+      "revision": "b4e606a5028169fc3f9885c12f7e985f36911eda70b310b6d1600e97b23b6d74",
+      "nativeSourceMode": null,
+      "startupBudget": "pending"
+    },
+    "public": {
+      "contentHash": "045c0b7fa164fd5008c42dd8ef5db0218ce023891369cfe1865ba548d7306cfe",
+      "revision": "4dc75444d5a0d24e57706ffd5b26b2c7a2ae3c585f62a4009884c5cbfe2ed12b",
+      "nativeSourceMode": null,
+      "startupBudget": "passed"
+    }
+  },
+  "movementSelfReview": "Changed all settled/walk intervals from fractional hz/4 loops to exact hz/2: each movement observation now0.5seconds at30/60/120Hz. Final retest pending."
 }
