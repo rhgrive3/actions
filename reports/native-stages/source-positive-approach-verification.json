@@ -1,7 +1,7 @@
 {
   "status": "qualified-awaiting-named-final-review",
-  "foundation": "90040586c3728ca20d69ed43014528e0f68cbbdf",
-  "runtimeCommit": "2626e98dda4d0957c7d0410c8d226fe0f69a8416",
+  "foundation": "04a0f6f658eda7ed7b92d06b0c2b4500bdfce8ea",
+  "runtimeCommit": "b199e432665327c81831494f07b4f9b0c2c46797",
   "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
   "sourceBuffersUnchanged": [
     {
@@ -197,7 +197,6 @@
   "acceptedFoundation": "04a0f6f658eda7ed7b92d06b0c2b4500bdfce8ea",
   "acceptedRuntimeFoundation": "3f9d0e544bd22f10bf65ef2d14abea0fc9f55bcb",
   "commonHeadBeforeReport": "7a6acc60104af71d8fc97628e26c7216f27ec59a",
-  "commonRuntimeCommit": "bc420c0559d6494870569683beab4ba7963c9fb8",
   "nativeApproachSourceSha256": "5f35baf9cecb757838eb745bea7522422050d673f0324bff46c23a9005d17c63",
   "privateCalibrationHead": "db1178fe52f138f06d8269c1d726cf2193e2a7b6",
   "privateTrackedDefinitionSha256": "a319f311dd61e1465e26dc675672858c10968317a524fcba1a48dffbd207ead3",
@@ -1415,5 +1414,8 @@
       "milliseconds": 939986.834938
     }
   },
-  "nextStageScope": "GroundBody32495 and upcoming qualified9bed composition must be consumed and freshly validated in OWN Bluefin stage; current common physical proof is explicitly3f9/bc scope."
+  "nextStageScope": "GroundBody32495 and upcoming qualified9bed composition must be consumed and freshly validated in OWN Bluefin stage; current common physical proof is explicitly3f9/bc scope.",
+  "historicalInitialFoundation": "90040586c3728ca20d69ed43014528e0f68cbbdf",
+  "historicalInitialQualifierCommit": "2626e98dda4d0957c7d0410c8d226fe0f69a8416",
+  "approachRuntimeChangeCommit": "bc420c0559d6494870569683beab4ba7963c9fb8"
 }
