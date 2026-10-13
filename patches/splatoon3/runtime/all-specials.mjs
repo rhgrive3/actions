@@ -1451,8 +1451,12 @@ function activeStep(rt,actor,dt) {
     const normalInk=actor.ink;
     actor.ink=state.inkFuel;
     try{
-      runSpecialMain(actor,dt,{fire:!!actor.intent.fire&&actor.form!=='squid',firePressed:edges.fire,
-        sub:false,subReleased:false});
+      // WeaponSpSuperHook: ordinary shooting is allowed between hook uses,
+      // never during hook flight, player pull, or 12F post-hook wait. Preserve
+      // the native weapon's cadence and the single Zipcaster ink reserve.
+      const canFire=state.phase==='ready'&&actor.form!=='squid';
+      runSpecialMain(actor,dt,{fire:canFire&&!!actor.intent.fire,
+        firePressed:canFire&&edges.fire,sub:false,subReleased:false});
     }finally{
       state.inkFuel=clamp(Number(actor.ink)||0,0,150);
       actor.ink=normalInk;
