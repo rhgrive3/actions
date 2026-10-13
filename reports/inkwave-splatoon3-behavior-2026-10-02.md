@@ -4116,19 +4116,11 @@ The old #1120 source-contract assertion still required immediate release through
 
 The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
 
-## 2026-10-12: ソイチューバー・バケットスロッシャーのモデル作り直し
+## 2026-10-12: 立ち方・ブキの持ち方・足運び（P02 の一部）
 
-参照版 Ver.11.3.0（ソイチューバー、バケットスロッシャー。ギア・状態は既定、操作は待機・歩行・射撃の長押し）。記録は `patches/splatoon3/reference/weapon-models/{chargers,sloshers}.md`、実装は `patches/splatoon3/runtime/weapon-models/{chargers,sloshers}.mjs`。根拠は Inkipedia の本家3Dレンダー、"S3 Custom Goo Tuber model rotating.mp4"、"S3 Goo Tuber charge 10.0.0.mp4"、"S3 Slosher Deco model rotating.mp4"、"S3 Slosher promo image.jpg"、"S3 Slosher Weapon Class Signals.mp4"。寸法は画像からの推定で、実機計測ではない。
-
-| 差分 | 本家の根拠 | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
-|---|---|---|---|---|---|
-| ソイチューバーのホースを灰白色・送液管に掛かる約2¼巻きのコイル（左右軸まわり）に変更。旧版は常時インク色の縦2ループ | 回転動画・本家レンダーでホースは白〜灰色、チャージ映像で送液管に掛けたコイル | `chargers.mjs` `gooTuber` | 待機・構え | 見た目のみ | 画像から推定（巻き数・半径） |
-| ソイチューバーのホースと送液管がチャージに応じてインク色に満ちる（チャージコイル、ホース始端→コイル→送液管の順） | チャージ映像で空の灰色からインク色へ変化 | `gooTuber` の `glow`、`gooAnimate` | 長押しでチャージ | 見た目のみ（チャージ量・判定は既存） | 色の変化は映像で確認。満ちる順序・タイミングは未確認 |
-| ソイチューバーの全長 0.67 → 0.86 m、左手位置 z 0.165 m、構え位置 aim.p [-0.09, 0.06, 0.18] | チャージ映像の手・頭との比率 | `gooTuber`、`GOO_HOLD` | 構え | 見た目のみ。銃口は新しいノズル先端（z 0.574 m、高さ 0.075 m）へ移動し、弾の発生位置が変わる | 画像から推定。実機の発生位置は未比較（実機計測が必要） |
-| ソイチューバーのバルブがチャージで赤→白に変わる表現は未実装 | チャージ映像 | — | 長押しでチャージ | 見た目のみ | 未実装 |
-| バケットスロッシャーを横倒しの黒い丸バケツ（口は前上向きの斜め切り）・ラベンダーの枠・上部ハンドル・左右のコイルオーバーで作り直し。旧版は口が上向きの円錐バケツ | 回転動画の正面・側面・背面、本家レンダー | `sloshers.mjs` `bucketSlosher` | 待機・振り | 見た目のみ。インク量の表示（液面と溜まったインク）は既存の減少・回復を維持 | 画像から推定 |
-| バケットスロッシャーの待機・歩行は口を前に向けて右脇に下げる（`nativeCarry`） | Weapon Class Signals 映像の待機姿勢 | `sloshers.mjs` MODELS（slosher） | 待機・歩行 | 見た目のみ | 映像で確認（角度は推定） |
-| バケットスロッシャーの構え（aim）を 0.8 rad 上へ傾け、ネイティブの振り（+1.5〜1.95 rad）で放出時の口が前（約 −20°）を向くようにした | 本家は振り上げて前へ投げる | `sloshers.mjs` hold.aim.r | 長押しで連続の振り | 見た目のみ（放出 12F／29F・弾の発生位置は不変） | 振りの軌道・口の角度は未確認（実機計測が必要） |
-| バケットスロッシャーの右手は本家では上部ハンドル。INKWAVE はネイティブの縦グリップ（U字フレーム中央）を保持 | プロモ画像・映像 | `bucketSlosher` | 待機・振り | 見た目のみ | 差分として残す（未対応） |
-
-検証: `weapon-models-all.test.mjs`、チャージャー・スロッシャー関連とモーション関連のテスト 568件（`slosher-release-motion.test.mjs` の振り上げキー検査を、武器ごとの構えピッチを差し引いた比較へ更新）、`check-inkwave-patches.mjs` 全体。ロジック単独とブラウザ描画のみで、本家実機との比較ではない。
+- **本家の根拠**: 参照版は Ver.11.3.0。任天堂公式ブキ紹介のシューター動画 `y7Zl26Zl12n`（側面の歩き、射撃後の待機）と `9LnjRgbl2Ng`（背後からの射撃しながらの走り）。どちらも過去の記録と SHA-256 が一致した。収録版・入力・ギアは不明。上体と頭は待機・歩き・走りで直立し、射撃していないシューターは右手で腰の高さに持つ（歩きは銃身がほぼ水平で前向き、立ち止まると銃口が下）。歩きで後ろのすねは水平まで上がらない。
+- **INKWAVE の実装箇所**: 試合中の体は初代（Wii U）`Player00` クリップをリターゲットした `src/game/motion/source-controller.js` / `retarget.js` が決める。射撃中の上半身だけが本体の手続き姿勢。初代の Hold 系クリップは上体 16〜31°・首 最大 25°前傾していて、そのまま出ていた。シューターの銃身は体の左へ 63〜72°横向き、遊脚の足首は弱い入力でも 0.25 m 上がり膝が 100°曲がる。
+- **再現操作**: シューターで止まる、弱い入力で歩く、最大入力で走る。正面と側面から見る。
+- **変更**: `patches/splatoon3/runtime/source-posture.mjs` を adapter で 3 箇所に接続。idle/move 状態だけ、上体の前傾を 20〜40%、首を 25% に縮める。射撃していないシューターは、移動中だけ銃身をほぼ水平・前向きにする（両手持ちのまま）。停止中の持ち方は変えない。遊脚の足首の高さを歩き 50%、走り 70% にする。補正後は待機の上体 4.7°・首 4.8°、歩きは上体 3°・首 2°・銃口ピッチ −8°、膝 93°。
+- **プレイへの影響**: 見た目だけ。発射位置の差は初弾 0.000 mm、射撃 1 秒後 0.010 mm。移動・接地・射撃のロジックは不変。
+- **確認状態**: 実ソースバンクを読み込む VM テスト（`patches/splatoon3/tests/source-posture.test.mjs`）と Chromium 描画で確認。Switch 実機比較ではない。停止中の持ち方は途中で片手持ちに変えたが、本家は支え手を添えていて判断が誤りだったため、修正前の両手持ちに戻した。射撃中にブキを体から離して構える差（発射位置に影響するため未変更）、シューター以外の持ち方、待機のしゃがみの深さ、歩幅・歩調・横歩き・後ろ歩き・坂は未確認のまま。詳細は `patches/splatoon3/reference/stance-carry-comparison-2026-10-12.md`。

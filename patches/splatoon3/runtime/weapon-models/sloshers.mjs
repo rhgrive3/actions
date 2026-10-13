@@ -4,7 +4,7 @@
 // lying on the silhouette's top edge above the opening (kept level by animateWeapon), and the native pitcher
 // handle, its thumb lever and the native right-hand grip are kept at the origin. Scale is an estimate (see the
 // reference doc). Everything is procedural geometry.
-import { THREE, Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout } from './kit.mjs';
+import { Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = origin in the image, s = metres/pixel.
 // Returns [z, y], the layout slab() takes directly (muzzle toward +Z, up = +Y).
@@ -196,124 +196,7 @@ function dreadWringer(d) {
   ink.add(box(0.13, 0.08, 0.15, 0, cy - 0.005, cz + 0.06, 0.2));                                                  // ink in the tub
   return rebuild(d, { body, ink, parts: { surface: inkRect(0.12, 0.13, cy + 0.035, cz + 0.06) } });
 }
-// ------------------------------------------------------------------------------------- Slosher (Bucket)
-// Wmn_Slosher_StrongT (Splatoon 3): a black round pail lying on its side, its open mouth cut on a slant so it
-// faces forward and up; a glossy lavender frame — a side plate under each flank that rises along the lower
-// half of the mouth into an upright arm, a band round the lower lip, a rear U-frame behind the base — a black
-// top handle with chrome elbows over the mouth, and a gold coil-over shock on each flank between the arm
-// and the lower rail. Proportions from the official turntable (S3 Slosher Deco model rotating.mp4: front
-// t = 2 s, sides t = 5 / 11 s, back t = 8 s; Deco is the same shape) and colours from the base render
-// (refs/slosher.3d.png). Scale: pail Ø ≈ 0.19 m (image-derived). The native grips stay: the right fist on a
-// black upright grip in the rear U-frame (INKWAVE keeps the native pitcher-grip hold; the real kid holds the
-// top handle — recorded as a difference), the left hand on a rubber bar under the pail, the native muzzle
-// just inside the upper lip.
-const BUCKET = { yc: 0.03, R: 0.094, wall: 0.007, zb: 0.035, top: 0.235, bottom: 0.335, fill: 0.04 };
-/** Mouth plane: z of the slanted lip at height y (upper lip z = top, lower lip z = bottom). */
-const lipZ = (B, y) => B.top + ((B.yc + B.R - y) / (2 * B.R)) * (B.bottom - B.top);
-/** Lying pail shell with a slanted mouth: outer + inner wall, base, floor and the lip between them. */
-function pailShell(B, seg = 36, rows = 5) {
-  const pos = [], idx = [], Ri = B.R - B.wall, ring = (r, z0, lip) => {
-    const base = pos.length / 3;
-    for (let j = 0; j < seg; j++) {
-      const a = (j / seg) * Math.PI * 2, x = Math.cos(a) * r, y = B.yc + Math.sin(a) * r;
-      pos.push(x, y, lip ? lipZ(B, y) - (r < B.R ? 0.002 : 0) : z0);
-    }
-    return base;
-  };
-  const strip = (r, z0, inward) => {
-    const rs = [];
-    for (let i = 0; i <= rows; i++) {
-      const base = pos.length / 3;
-      for (let j = 0; j < seg; j++) {
-        const a = (j / seg) * Math.PI * 2, x = Math.cos(a) * r, y = B.yc + Math.sin(a) * r;
-        pos.push(x, y, z0 + (i / rows) * (lipZ(B, y) - z0));
-      }
-      rs.push(base);
-    }
-    for (let i = 0; i < rows; i++) for (let j = 0; j < seg; j++) {
-      const j1 = (j + 1) % seg, a = rs[i] + j, b = rs[i] + j1, c = rs[i + 1] + j, d = rs[i + 1] + j1;
-      if (inward) idx.push(a, c, b, b, c, d); else idx.push(a, b, c, b, d, c);
-    }
-    return rs;
-  };
-  const outer = strip(B.R, B.zb, false), inner = strip(Ri, B.zb + B.wall, true);
-  const o = outer[rows], n = inner[rows];
-  for (let j = 0; j < seg; j++) { const j1 = (j + 1) % seg; idx.push(o + j, o + j1, n + j, o + j1, n + j1, n + j); }
-  for (const [r0, z, face] of [[outer[0], B.zb, -1], [inner[0], B.zb + B.wall, 1]]) {
-    const c = pos.length / 3; pos.push(0, B.yc, z);
-    for (let j = 0; j < seg; j++) { const j1 = (j + 1) % seg; if (face < 0) idx.push(c, r0 + j1, r0 + j); else idx.push(c, r0 + j, r0 + j1); }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-  return g;
-}
-/** Ink pooled in the lower part of the lying pail up to y = B.fill, its front cut by the mouth plane. */
-function pailFill(B) {
-  const Ri = B.R - B.wall - 0.0015, h = B.fill - B.yc, a = Math.asin(Math.max(-1, Math.min(1, h / Ri))), sh = new THREE.Shape();
-  const n = 20, a0 = Math.PI - a, a1 = 2 * Math.PI + a;
-  for (let k = 0; k <= n; k++) { const t = a0 + (a1 - a0) * (k / n), x = Math.cos(t) * Ri, y = B.yc + Math.sin(t) * Ri; k ? sh.lineTo(x, y) : sh.moveTo(x, y); }
-  sh.closePath();
-  const g = new THREE.ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false, curveSegments: 4 }), p = g.attributes.position;
-  const z0 = B.zb + B.wall + 0.001;
-  for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setZ(i, z0 + p.getZ(i) * (lipZ(B, y) - 0.004 - z0)); }
-  g.computeVertexNormals(); return g;
-}
-/** Gold coil spring over a chrome damper rod between points a (upper) and b (lower), with black eyes. */
-function shock(p, a, b, C) {
-  const A = V(...a), Bv = V(...b), ax = Bv.clone().sub(A), L = ax.length(); ax.normalize();
-  const u = Math.abs(ax.x) < 0.9 ? V(1, 0, 0) : V(0, 1, 0), e1 = u.clone().cross(ax).normalize(), e2 = ax.clone().cross(e1);
-  const coil = [], turns = 7, r = 0.016;
-  for (let k = 0; k <= turns * 14; k++) {
-    const t = k / (turns * 14), w = t * turns * Math.PI * 2, s = 0.18 + 0.64 * t;
-    coil.push(A.clone().addScaledVector(ax, s * L).addScaledVector(e1, Math.cos(w) * r).addScaledVector(e2, Math.sin(w) * r));
-  }
-  p.add(pipe(coil, 0.0032, turns * 14, 5), C.gold, M.metal);
-  p.add(cyl(0.0065, a, b, 12), C.chrome, M.metal);
-  for (const [s, rr] of [[0.15, 0.013], [0.86, 0.011]]) { const c = A.clone().addScaledVector(ax, s * L); p.add(cyl(rr, c.clone().addScaledVector(ax, -0.008).toArray(), c.clone().addScaledVector(ax, 0.008).toArray(), 14), C.black, M.satin); }
-  for (const q of [A, Bv]) p.add(sphere(0.009, 0.009, 0.009, q.x, q.y, q.z, 12, 8), C.black, M.satin);
-}
-function bucketSlosher(d) {
-  const B = BUCKET, C = { pail: '#1d1e22', inner: '#2a2b30', frame: '#a07fd2', frameD: '#7653b0', black: '#18191d', chrome: '#c9ccd0', gold: '#c7ae63', white: '#eceaf0' };
-  const body = new Pieces(), ink = new Pieces();
-  body.add(pailShell(B), C.pail, M.gloss);
-  // rolled lip round the slanted mouth and the squid-wave logo on the inner upper wall
-  const lip = [];
-  for (let k = 0; k <= 40; k++) { const a = (k / 40) * Math.PI * 2, r = B.R - B.wall * 0.5, y = B.yc + Math.sin(a) * r; lip.push([Math.cos(a) * r, y, lipZ(B, y)]); }
-  body.add(pipe(lip, 0.0055, 72, 6), C.pail, M.gloss);
-  body.add(box(0.05, 0.0015, 0.04, 0, B.yc + B.R - B.wall - 0.0012, B.top - 0.05, 0.3), C.white, M.print);
-  // lavender side plates: lower rail under each flank rising along the lower lip into the upright arm
-  const X = B.R + 0.012, plate = [[0.03, -0.118], [0.33, -0.118], [0.357, -0.1], [0.352, -0.076], [0.322, -0.03], [0.302, 0.012], [0.292, 0.09],
-    [0.282, 0.17], [0.27, 0.222], [0.243, 0.232], [0.25, 0.19], [0.258, 0.1], [0.262, 0.03], [0.266, -0.012], [0.235, -0.055], [0.19, -0.07],
-    [0.17, -0.05], [0.14, -0.05], [0.125, -0.074], [0.05, -0.076], [0.03, -0.092]];
-  for (const sx of [-1, 1]) body.add(slab(plate, 0.016, sx * X, 0.004), C.frame, M.gloss);
-  // band round the lower half of the lip, joining the plates
-  const band = [];
-  for (let k = 0; k <= 20; k++) { const a = Math.PI + (k / 20) * Math.PI, r = B.R + 0.008, y = B.yc + Math.sin(a) * r; band.push([Math.cos(a) * (X - 0.002), y, lipZ(B, y) - 0.014]); }
-  body.add(pipe(band, 0.011, 40, 8), C.frame, M.gloss);
-  // rear U-frame behind the base: two uprights and a top bar, a lower cross rail joining the side rails
-  const UX = 0.066, UZ = 0.018, UT = 0.158;
-  body.add(pipe([[-UX, -0.1, UZ + 0.01], [-UX, UT - 0.012, UZ], [-UX + 0.012, UT, UZ], [UX - 0.012, UT, UZ], [UX, UT - 0.012, UZ], [UX, -0.1, UZ + 0.01]], 0.0105, 60, 8), C.frame, M.gloss);
-  body.add(box(2 * X, 0.026, 0.03, 0, -0.106, 0.04, 0.35), C.frameD, M.gloss);
-  // black right-hand grip upright in the U-frame (native pitcher grip at the origin)
-  body.add(cyl(0.0125, [0, -0.052, 0], [0, 0.052, 0], 16), C.black, M.rubber);
-  for (let k = -3; k <= 3; k++) body.add(ring(0.0128, 0.0014, 0, k * 0.013, 0, 'y', 4, 16), C.black, M.rubber);
-  body.add(pipe([[0, 0.05, 0], [0, 0.1, 0.006], [0, UT, UZ]], 0.008, 16, 6), C.frame, M.gloss);
-  body.add(pipe([[0, -0.05, 0], [0, -0.085, 0.01], [0, -0.1, 0.03]], 0.008, 16, 6), C.frame, M.gloss);
-  // left-hand rubber bar under the pail (native support grip) between the side rails
-  body.add(cyl(0.0115, [-X, -0.088, 0.2], [X, -0.088, 0.2], 16), C.black, M.rubber);
-  // top handle: black bar with chrome elbows down into the arms
-  const HY = 0.246, HZ = 0.252;
-  body.add(cyl(0.0125, [-X + 0.016, HY, HZ], [X - 0.016, HY, HZ], 16), C.black, M.rubber);
-  for (const sx of [-1, 1]) body.add(pipe([[sx * (X - 0.02), HY, HZ], [sx * (X - 0.004), HY - 0.004, HZ], [sx * X, HY - 0.018, HZ + 0.004], [sx * X, HY - 0.03, HZ + 0.008]], 0.0085, 14, 8), C.chrome, M.metal);
-  // coil-over shocks on the flanks, arm (upper, front) to the lower rail (rear)
-  for (const sx of [-1, 1]) shock(body, [sx * (X + 0.02), 0.1, 0.24], [sx * (X + 0.02), -0.062, 0.15], C);
-  ink.add(pailFill(B));
-  const zs = B.zb + B.wall + 0.003, ze = lipZ(B, B.fill) - 0.006, w = 2 * Math.sqrt((B.R - B.wall) ** 2 - (B.fill - B.yc) ** 2) - 0.006;
-  const surface = part(new Pieces().add(box(w, 0.003, ze - zs, 0, B.fill, (zs + ze) / 2, 0.22, 16, 4), '#ffffff', M.satin), [0, B.fill, (zs + ze) / 2], 'ink');
-  return rebuild(d, { body, ink, parts: { surface } });
-}
-
-const BUILD3D = { 'slosher': bucketSlosher, 's3-slosher-diffusion': triSlosher, 's3-slosher-launcher': slosherMachine, 's3-slosher-bathtub': bloblobber,
+const BUILD3D = { 's3-slosher-diffusion': triSlosher, 's3-slosher-launcher': slosherMachine, 's3-slosher-bathtub': bloblobber,
   's3-slosher-washtub': explosher, 's3-slosher-double': dreadWringer };
 
 /** Builds one slosher on the native slosher def `d`: silhouette body, pitcher handle, ink surface and lever. */
@@ -333,17 +216,13 @@ function model(d, c) {
   });
 }
 
-export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [id, {
+// The legacy Slosher keeps its reference model: its verified drawn-fill drain and indexed handle
+// regressions (weapon-detail-motion tests) depend on that bucket's inner fill and handles.
+export const MODELS = Object.fromEntries(Object.entries(CFG).filter(([id]) => id !== 'slosher').map(([id, c]) => [id, {
   sourceModel: id === 'slosher' ? 'Wmn_Slosher_StrongT'
     : id === 's3-slosher-diffusion' ? 'Wmn_Slosher_Diffusion'
     : id === 's3-slosher-launcher' ? 'Wmn_Slosher_Launcher'
     : id === 's3-slosher-bathtub' ? 'Wmn_Slosher_Bathtub'
     : id === 's3-slosher-washtub' ? 'Wmn_Slosher_Washtub' : 'Wmn_Slosher_Double',
   build: d => (BUILD3D[id] || (dd => model(dd, c)))(d),
-  // The Bucket's mouth faces forward (not up like the Wii U pitcher the source carry clips hold), so it keeps
-  // the native data carry: the pail hangs level at the right side with its mouth to the front.
-  // While sloshing, the native heave pitches the bucket ~1.5–1.95 rad down (tuned for an upward-facing pitcher
-  // mouth). The Bucket's mouth already faces forward, so its aim tilts the mouth up 0.8 rad first: the ink
-  // still leaves with the mouth to the front instead of pointing at the ground.
-  ...(id === 'slosher' ? { nativeCarry: true, hold: { aim: { r: [-0.8, 0.05, 0] } } } : {}),
 }]));
