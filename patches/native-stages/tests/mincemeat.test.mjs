@@ -89,8 +89,13 @@ test('Mincemeat supports, capsule movement, wall ink, and rules use actual sourc
   const actor=f.make();actor._integrate=f.Actor.prototype._integrate;actor.spawnAt(level.spawnPads[0],0);actor.intent.move.set(0,0,0);actor.intent.fire=false;
   for(let i=0;i<hz;i++){G.time+=1/hz;actor.update(1/hz);}
   assert.ok(actor.alive&&actor.grounded&&Number.isFinite(actor.pos.length()));
-  movement.push({hz,position:actor.pos.toArray(),grounded:actor.grounded});
+  const before=actor.pos.clone();actor.intent.move.set(0,0,1);
+  for(let i=0;i<hz;i++){G.time+=1/hz;actor.update(1/hz);}
+  assert.ok(actor.alive&&actor.grounded&&Number.isFinite(actor.pos.length()));
+  const walked=actor.pos.distanceTo(before);assert.ok(walked>1,'real capsule walks along source support');
+  movement.push({hz,position:actor.pos.toArray(),grounded:actor.grounded,walked});
  }
+ assert.ok(Math.max(...movement.map(m=>m.walked))-Math.min(...movement.map(m=>m.walked))<.25,'30/60/120 Hz source walking remains comparable');
  const start=performance.now();G.nav=new f.NavGraph(level,physics);const navMilliseconds=performance.now()-start;
  assert.ok(G.nav.validIds.length>1000);
  const ids=level.spawnPads.map(p=>G.nav.nearest(p,1.2));assert.ok(ids.every(id=>id>=0));
