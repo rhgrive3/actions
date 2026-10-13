@@ -4,10 +4,13 @@
 system. Local supports and gameplay semantics are inferred. This is not a
 recovered Nintendo 11.3.0 collision or placement asset.
 
-Verification is still in progress. The immutable checks below used accepted
-foundation `7ddb538a`; the branch also consumes the later accepted bounded route
-search. The PR remains a draft until both natural opposed-bank routes and the
-accepted ink-edge correction pass on the final composed artifacts.
+Verification is still in progress. The branch consumes accepted foundation
+`846f0532`, including the current-main refresh. The full historical matrix used
+`7ddb538a`; newer immutable source, wall-shot and human-route checks used accepted
+`4d0d88ef` with v4 polygon ownership and the ink-edge correction. A separate
+private floor-follower candidate completes all six opposing-bank cases without
+changing source bytes. It is not included in this branch. The PR remains a draft
+until the shared change qualifies and the affected final composition passes.
 
 ## Source and identity
 
@@ -28,7 +31,7 @@ accepted ink-edge correction pass on the final composed artifacts.
 The independent original text stream matches the signed Float32 bits of all
 867,672 positions and normals, aligned UV streams (including negative zero and
 explicit zero insertion only for objects without UVs), and all 1,759,113 uint32
-face indices, including
+face indices and every original normal/UV face-reference alignment, including
 inactive rule alternatives. The preserved source has 586,371 triangles in 545
 objects. Every one of the 202 source PNGs matches its pinned Git blob; all 151
 PNG files used by the conversion also match their copied bytes and SHA-256.
@@ -87,8 +90,8 @@ The numeric record is [robo-verification.json](robo-verification.json).
   geometry and all objective coordinates remain unverified.
 - The real controller/Character/Actor/WeaponRunner/Projectiles shooter test
   paints the same original tall duct wall at 30/60/120 Hz with zero AP. Each
-  1.5-second held-fire window emits 15 shots and produces 130 natural near-wall
-  splats, claiming 108/118/119 new live wall cells respectively. The retained
+  1.5-second held-fire window emits 15 shots, claiming 139/116/127 new live wall
+  cells respectively on the accepted v4/alpha build. The retained
   old-runtime control emitted 15 shots at 30 Hz with zero target-wall impacts or
   ownership. No fixed world-axis muzzle or direct paint invocation is used.
 - Actual Chromium source-menu selection downloads the pinned source across
@@ -100,9 +103,21 @@ The numeric record is [robo-verification.json](robo-verification.json).
   the same source attributes/order/camera. A/A, B/B and A/B produce zero changed
   pixels for gameplay, center and overhead views; twelve moving cameras exercise
   index rebuilding. Rendering preserves CPU paint, physics and navigation.
-  Both references use the same native material, so their equality does not prove
-  that the observed white ink fringes reproduce source colors correctly. The
-  shared renderer correction is tracked separately.
+  The historical references use the same native material, so their equality
+  alone does not prove correct fringe colors. The later accepted native alpha
+  correction removes the opaque white substrate around real source-wall ink;
+  actual newer shot/human screenshots were inspected privately.
+
+The physical human probe
+[check-inkwave-robo-human-route.mjs](../../scripts/check-inkwave-robo-human-route.mjs)
+passes source walking, a 90-degree mouse turn, gravity departure, source-foot
+arrival, release and natural Shooter painting at 30/60/120 render cadences.
+Real pointer lock, keyboard and mouse drive the existing human controller;
+the installed Game clock updates the Actor at 1/60. Every case emits 14 shots and
+37 natural splats. The first lower contact is the original Highroof tile slope.
+The final foot ring legitimately supports the 30 Hz case on a low curb and the
+60/120 Hz cases on the adjacent slope; their endpoints differ by 0.196 source
+units. No later pose, velocity or ink writes enforce the outcome.
 
 The independent full-bank probe is
 [check-inkwave-robo-banks.mjs](../../scripts/check-inkwave-robo-banks.mjs).
@@ -119,8 +134,28 @@ failures. Team 0 reaches `[33.5, 4.505000114440918, -12.5]` at raw 30/60/120 Hz
 in 68.4/59.97/58.68 seconds. Team 1 succeeds at raw 60/120 Hz in 68.47/53.66
 seconds. The raw team-1 30 Hz failure abandons its original goal and ends airborne
 near `[7.37, 4.47, 5.49]` after 90 seconds, 41.47 source units from
-`[-33.5, 4.505000114440918, 12.5]`. Production fixed-clock qualification is pending;
-the raw failure alone does not justify a shared runtime change.
+`[-33.5, 4.505000114440918, 12.5]`. The raw failure alone does not justify a
+shared runtime change.
+
+The matched production fixed-clock baseline reaches the team-0 opposite bank
+at all three render cadences in exactly 3,268 Actor ticks (54.4667 seconds).
+Team 1 loses its original 96-node path at tick 1,599/1,600. The waypoint remains
+on the source upper floor at `[42.5, 7.5, -29.5]`, while the grounded actor has
+already fallen to the original CableB floor at approximately
+`[41.58, 4.56, -28.74]`. The existing slipped-above-waypoint guard correctly
+clears this now-unreachable path. The repair must prevent the preceding corner
+departure; suppressing that legitimate recovery would conceal the defect.
+
+A separate unpushed worktree tests the sole shared follower owner's narrow
+candidate `4d358281`: ordinary native floor following uses one waypoint,
+source-foot arrival and planted corner input rather than skipping unsupported
+waypoints. All six matched actual Game bank cases arrive, retain their original
+95/96-node routes and goals, and require no refill replans. Team 0 takes
+29/28.9833/28.9833 seconds; team 1 takes 29.8667/29.85/29.85 seconds. Every one of
+the 163 copied source files (67,676,722 bytes) is SHA-256 identical to the
+baseline, including all geometry, NoPaint roles, masks and PNGs. This is a
+correctness counterproof, not a performance speedup or accepted final-runtime
+claim. No source-navigation flag is enabled.
 
 Contact tracing shows the failed actor is already humanoid, with radius/lift
 0.35/0.35 and height 1.45; its current foot center/ring have no support. Releasing

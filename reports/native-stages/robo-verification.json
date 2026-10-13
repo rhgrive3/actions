@@ -34,7 +34,8 @@
     "faceIndices": 1759113,
     "objects": 545,
     "rawVertices": 867672,
-    "rawTriangles": 586371
+    "rawTriangles": 586371,
+    "originalNormalAndUvFaceReferencesIdentical": true
   },
   "acceptedFoundationAtArtifact": "7ddb538a",
   "builds": {
@@ -341,15 +342,15 @@
       "errors": [],
       "downloads": 2,
       "menu": [
-        "\u30bf\u30a4\u30c9\u30a6\u30a9\u30fc\u30bf\u30fc\u5e83\u5834",
-        "\u30b1\u30eb\u30d7\u30e9\u30a4\u30f3\u57e0\u982d",
-        "\u30cf\u30ea\u30e4\u30fc\u30c9\u30de\u30ea\u30fc\u30ca",
-        "\u30e6\u30ce\u30cf\u30ca\u5927\u6e13\u8c37",
-        "\u30e4\u30ac\u30e9\u5e02\u5834",
-        "\u6d77\u5973\u7f8e\u8853\u5927\u5b66",
-        "\u30b6\u30c8\u30a6\u30de\u30fc\u30b1\u30c3\u30c8",
-        "\u30af\u30b5\u30e4\u6e29\u6cc9",
-        "\u30d0\u30a4\u30ac\u30a4\u4ead"
+        "タイドウォーター広場",
+        "ケルプライン埠頭",
+        "ハリヤードマリーナ",
+        "ユノハナ大渓谷",
+        "ヤガラ市場",
+        "海女美術大学",
+        "ザトウマーケット",
+        "クサヤ温泉",
+        "バイガイ亭"
       ],
       "cache": {
         "id": "robo",
@@ -1852,7 +1853,7 @@
         "shadows": false,
         "bloom": false
       },
-      "input": "KeyW + left fire frames 0\u201389; release frames 90\u2013179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
+      "input": "KeyW + left fire frames 0–89; release frames 90–179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
       "actors": [
         {
           "weapon": "s3-blaster-short",
@@ -2680,7 +2681,7 @@
         "shadows": false,
         "bloom": false
       },
-      "input": "KeyW + left fire frames 0\u201389; release frames 90\u2013179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
+      "input": "KeyW + left fire frames 0–89; release frames 90–179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
       "actors": [
         {
           "weapon": "shooter",
@@ -3262,12 +3263,12 @@
     }
   ],
   "pending": [
-    "production fixed-clock both-bank qualification; raw30 failure retained only as a stress diagnostic",
-    "accepted alpha-fringe correction source screenshot proof",
-    "final accepted update adoption/build and changed-behavior gates",
-    "final self-review",
-    "ready PR",
-    "aggregate self-integration"
+    "qualified shared ordinary-floor follower acceptance",
+    "final accepted-main/follower immutable private/public pair",
+    "affected actual source shots, human and bank routes, rule/UI/network and source/cache/render/lifecycle checks",
+    "full-fidelity fixed-loadout warmed performance with exact final producer states",
+    "final self-review and Ready PR1335",
+    "self-integrate and push aggregate PR1324 under full integration lock"
   ],
   "retailUnverified": [
     "extracted version/date",
@@ -3589,5 +3590,1446 @@
     ],
     "prototypes": "No highDrops definition adoption; private prototype failed; shared runtime owners have exact contacts and first touchdown mismatch.",
     "clock": "Direct Actor/BotBrain dt at raw30/60/120 Hz; production Game._frame instead uses fixed 1/60 ticks. This negative is not yet a production render-cadence failure."
+  },
+  "acceptedFoundationCurrentBranch": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+  "laterAcceptedProofs": {
+    "foundation": "4d0d88ef05cd2fc5389bddcdcf3a7539fc926dd2",
+    "polygonMaskVersion": 4,
+    "serialNativeCpu": {
+      "tests": 92,
+      "pass": 78,
+      "skip": 14,
+      "fail": 0,
+      "durationMilliseconds": 107019.568854,
+      "otherStageAssetSkips": true
+    },
+    "sourceReferenceCpu": {
+      "tests": 3,
+      "pass": 3,
+      "skip": 0,
+      "fail": 0,
+      "durationMilliseconds": 26064.742413
+    },
+    "sourceShot": {
+      "status": "passed",
+      "revision": "dda9a13529264ad179260f2255bcc641dae319e4f58b0edcfeb92e14db8b0b3a",
+      "contentHash": "aade943ca30bf12ac56b3b0fbf1566375d6cfa81fe5e953af7592ece6ac152f7",
+      "cases": [
+        {
+          "hz": 30,
+          "stage": "robo",
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "abilityPoints": {},
+          "actors": 8,
+          "bots": 7,
+          "state": "playing",
+          "input": "1.5 s actual controller left-fire, 0.5 s release; seven existing bots paused for wall isolation",
+          "target": {
+            "position": [
+              45.5,
+              7.833333333333336,
+              -37.5
+            ],
+            "point": [
+              52.5,
+              8.883333333333336,
+              -37.5
+            ],
+            "face": 6908,
+            "object": 43,
+            "sourceName": "Fld_Cross00_SFDuctA_low10_1__WallParts00",
+            "distance": 7,
+            "yaw": 1.5707963267948966
+          },
+          "fireCalls": 15,
+          "paintCalls": 142,
+          "claimedWallCells": 139,
+          "grounded": true,
+          "alive": true,
+          "version1130Verified": false,
+          "naturalNearWallSplats": 130
+        },
+        {
+          "hz": 60,
+          "stage": "robo",
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "abilityPoints": {},
+          "actors": 8,
+          "bots": 7,
+          "state": "playing",
+          "input": "1.5 s actual controller left-fire, 0.5 s release; seven existing bots paused for wall isolation",
+          "target": {
+            "position": [
+              45.5,
+              7.833333333333336,
+              -37.5
+            ],
+            "point": [
+              52.5,
+              8.883333333333336,
+              -37.5
+            ],
+            "face": 6908,
+            "object": 43,
+            "sourceName": "Fld_Cross00_SFDuctA_low10_1__WallParts00",
+            "distance": 7,
+            "yaw": 1.5707963267948966
+          },
+          "fireCalls": 15,
+          "paintCalls": 215,
+          "claimedWallCells": 116,
+          "grounded": true,
+          "alive": true,
+          "version1130Verified": false,
+          "naturalNearWallSplats": 130
+        },
+        {
+          "hz": 120,
+          "stage": "robo",
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "abilityPoints": {},
+          "actors": 8,
+          "bots": 7,
+          "state": "playing",
+          "input": "1.5 s actual controller left-fire, 0.5 s release; seven existing bots paused for wall isolation",
+          "target": {
+            "position": [
+              45.5,
+              7.833333333333336,
+              -37.5
+            ],
+            "point": [
+              52.5,
+              8.883333333333336,
+              -37.5
+            ],
+            "face": 6908,
+            "object": 43,
+            "sourceName": "Fld_Cross00_SFDuctA_low10_1__WallParts00",
+            "distance": 7,
+            "yaw": 1.5707963267948966
+          },
+          "fireCalls": 15,
+          "paintCalls": 216,
+          "claimedWallCells": 127,
+          "grounded": true,
+          "alive": true,
+          "version1130Verified": false,
+          "naturalNearWallSplats": 130
+        }
+      ],
+      "errors": [],
+      "privateEvidence": ".browser-evidence/robo-v4-alpha-source-shot/source-shot.json"
+    },
+    "humanRoute": {
+      "status": "passed",
+      "revision": "dda9a13529264ad179260f2255bcc641dae319e4f58b0edcfeb92e14db8b0b3a",
+      "contentHash": "aade943ca30bf12ac56b3b0fbf1566375d6cfa81fe5e953af7592ece6ac152f7",
+      "conditions": "Original supported Highroof walking/turn/departure and actual lower source-floor contact. Production human PlayerController/Actor/Character/WeaponRunner/Projectiles in eight-alive/seven-bot Match. Physical browser KeyW and pointer-lock mouse movement/fire only after initial source-supported setup; no later pose, velocity or ink writes. Installed Game._frame at three render cadences, fixed 1/60 gameplay clock. Zero-AP Shooter, empty initial ink; other bot brains frozen. Raw source units; Nintendo movement/material/placement and hardware FPS unverified.",
+      "cases": [
+        {
+          "renderHz": 30,
+          "before": {
+            "start": [
+              13.5,
+              7.5,
+              -15.5
+            ],
+            "sourceTriangle": 63210,
+            "sourceObject": "Fld_Cross00_Highroof_polySurface2505_1__FloorTileWhite00",
+            "actors": 8,
+            "bots": 7
+          },
+          "hz": 30,
+          "ticks": 196,
+          "steps": [
+            0.016666666666666666
+          ],
+          "airborne": true,
+          "touchdown": {
+            "position": [
+              14.656165767149377,
+              -0.2931754043554288,
+              -9.879526213066287
+            ],
+            "groundHeight": -0.2931754043554288,
+            "triangle": 63140,
+            "object": "Fld_Cross00_Highroof_polySurface2412_1__FloorTileYellow00"
+          },
+          "paintCalls": 37,
+          "fireCalls": 14,
+          "start": [
+            13.5,
+            7.5,
+            -15.5
+          ],
+          "initialTriangle": 63210,
+          "initialObject": "Fld_Cross00_Highroof_polySurface2505_1__FloorTileWhite00",
+          "turnPosition": [
+            14.651999680482385,
+            7.5,
+            -15.500858002612768
+          ],
+          "sourceEnd": {
+            "hit": true,
+            "triangle": 57212,
+            "point": [
+              14.656651947289458,
+              -0.06453317276527004,
+              -9.223519726558736
+            ],
+            "normal": [
+              0,
+              0.9486494064331055,
+              -0.31632933020591736
+            ],
+            "object": "Fld_Cross00_Highroof_Decal_low49_1__FloorDecalPaintable00"
+          },
+          "actualGround": {
+            "hit": true,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "block": 19810,
+            "staticBlockCount": 23848
+          },
+          "end": [
+            14.656651947289458,
+            0.07999999821186066,
+            -9.223519726558736
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "alive": true,
+          "grounded": true,
+          "aliveActors": 8,
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "abilityPoints": {},
+          "claimedLiveCells": 3258,
+          "controller": true,
+          "productionCharacter": true
+        },
+        {
+          "renderHz": 60,
+          "before": {
+            "start": [
+              13.5,
+              7.5,
+              -15.5
+            ],
+            "sourceTriangle": 63210,
+            "sourceObject": "Fld_Cross00_Highroof_polySurface2505_1__FloorTileWhite00",
+            "actors": 8,
+            "bots": 7
+          },
+          "hz": 60,
+          "ticks": 191,
+          "steps": [
+            0.016666666666666666
+          ],
+          "airborne": true,
+          "touchdown": {
+            "position": [
+              14.656165767149377,
+              -0.2931754043554288,
+              -9.879526213066287
+            ],
+            "groundHeight": -0.2931754043554288,
+            "triangle": 63140,
+            "object": "Fld_Cross00_Highroof_polySurface2412_1__FloorTileYellow00"
+          },
+          "paintCalls": 37,
+          "fireCalls": 14,
+          "start": [
+            13.5,
+            7.5,
+            -15.5
+          ],
+          "initialTriangle": 63210,
+          "initialObject": "Fld_Cross00_Highroof_polySurface2505_1__FloorTileWhite00",
+          "turnPosition": [
+            14.651999680482385,
+            7.5,
+            -15.500858002612768
+          ],
+          "sourceEnd": {
+            "hit": true,
+            "triangle": 63140,
+            "point": [
+              14.656594851348371,
+              -0.10018656846707974,
+              -9.30055970540124
+            ],
+            "normal": [
+              0,
+              0.9486833214759827,
+              -0.3162277638912201
+            ],
+            "object": "Fld_Cross00_Highroof_polySurface2412_1__FloorTileYellow00"
+          },
+          "actualGround": {
+            "hit": true,
+            "normal": [
+              0,
+              0.9486833214759827,
+              -0.3162277638912201
+            ],
+            "block": 15041,
+            "staticBlockCount": 23848
+          },
+          "end": [
+            14.656594851348371,
+            -0.10018656846707985,
+            -9.30055970540124
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "alive": true,
+          "grounded": true,
+          "aliveActors": 8,
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "abilityPoints": {},
+          "claimedLiveCells": 3260,
+          "controller": true,
+          "productionCharacter": true
+        },
+        {
+          "renderHz": 120,
+          "before": {
+            "start": [
+              13.5,
+              7.5,
+              -15.5
+            ],
+            "sourceTriangle": 63210,
+            "sourceObject": "Fld_Cross00_Highroof_polySurface2505_1__FloorTileWhite00",
+            "actors": 8,
+            "bots": 7
+          },
+          "hz": 120,
+          "ticks": 189,
+          "steps": [
+            0.016666666666666666
+          ],
+          "airborne": true,
+          "touchdown": {
+            "position": [
+              14.656165767149377,
+              -0.2931754043554288,
+              -9.879526213066287
+            ],
+            "groundHeight": -0.2931754043554288,
+            "triangle": 63140,
+            "object": "Fld_Cross00_Highroof_polySurface2412_1__FloorTileYellow00"
+          },
+          "paintCalls": 37,
+          "fireCalls": 14,
+          "start": [
+            13.5,
+            7.5,
+            -15.5
+          ],
+          "initialTriangle": 63210,
+          "initialObject": "Fld_Cross00_Highroof_polySurface2505_1__FloorTileWhite00",
+          "turnPosition": [
+            14.651999680482385,
+            7.5,
+            -15.500858002612768
+          ],
+          "sourceEnd": {
+            "hit": true,
+            "triangle": 63140,
+            "point": [
+              14.656594851348371,
+              -0.10018656846707974,
+              -9.30055970540124
+            ],
+            "normal": [
+              0,
+              0.9486833214759827,
+              -0.3162277638912201
+            ],
+            "object": "Fld_Cross00_Highroof_polySurface2412_1__FloorTileYellow00"
+          },
+          "actualGround": {
+            "hit": true,
+            "normal": [
+              0,
+              0.9486833214759827,
+              -0.3162277638912201
+            ],
+            "block": 15041,
+            "staticBlockCount": 23848
+          },
+          "end": [
+            14.656594851348371,
+            -0.10018656846707985,
+            -9.30055970540124
+          ],
+          "velocity": [
+            0,
+            0,
+            0
+          ],
+          "alive": true,
+          "grounded": true,
+          "aliveActors": 8,
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "abilityPoints": {},
+          "claimedLiveCells": 3274,
+          "controller": true,
+          "productionCharacter": true
+        }
+      ],
+      "errors": [],
+      "privateEvidence": ".browser-evidence/robo-v4-alpha-human-route/human-route.json"
+    },
+    "productionBankBaseline": {
+      "status": "failed",
+      "conditions": "Production Match with eight alive actors/seven bots; ordinary Actor/Character/BotBrain/WeaponRunner/Projectiles. Both original supported pads to actual opposed-bank Nav supports. Other bots frozen; empty initial ink; zero-AP Shooter; 0.5 RNG before Actor construction. Only initial spawnAt setup; no subsequent pose, velocity, ink, or geometry writes. Real refill completion can reselect the fixed goal. Default installed Game._frame uses fixed 1/60 gameplay ticks at 30/60/120 render cadences; ROBO_BANK_CLOCK=raw is a separate raw-dt stress diagnostic. Distances are raw source units. SwiftShader, no hardware FPS claim.",
+      "revision": "dda9a13529264ad179260f2255bcc641dae319e4f58b0edcfeb92e14db8b0b3a",
+      "contentHash": "aade943ca30bf12ac56b3b0fbf1566375d6cfa81fe5e953af7592ece6ac152f7",
+      "errors": [],
+      "error": "AssertionError [ERR_ASSERTION]: ordinary production source bot completes opposing-bank route\n    at file:///workspace/stage-worktrees/robo/scripts/check-inkwave-robo-banks.mjs:26:471",
+      "roster": [
+        {
+          "team": 0,
+          "slot": 0,
+          "weapon": "shooter",
+          "bot": false,
+          "abilityPoints": {},
+          "start": [
+            -59.009597262108386,
+            7.505000114440918,
+            22.677570968074043
+          ]
+        },
+        {
+          "team": 0,
+          "slot": 1,
+          "weapon": "shooter",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ]
+        },
+        {
+          "team": 0,
+          "slot": 2,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            -60.990402737891614,
+            7.510000228881836,
+            21.322429031925957
+          ]
+        },
+        {
+          "team": 0,
+          "slot": 3,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            -59.32242903192596,
+            7.505000114440918,
+            21.009597262108386
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 0,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            60.990402737891614,
+            7.510000228881836,
+            -21.322429031925957
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 1,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            59.32242903192596,
+            7.505000114440918,
+            -21.009597262108386
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 2,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            59.009597262108386,
+            7.505000114440918,
+            -22.677570968074043
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 3,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            60.67757096807404,
+            7.505000114440918,
+            -22.990402737891614
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 30,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 3268,
+          "matchState": "playing",
+          "matchTimeRemaining": 124.24999999995885,
+          "seconds": 54.46666666666667,
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ],
+          "goal": [
+            33.5,
+            4.505000114440918,
+            -12.5
+          ],
+          "end": [
+            32.94625876704874,
+            4.5,
+            -13.102580991070651
+          ],
+          "distance": 0.8183875640639295,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27460,
+          "sourceObject": "Fld_Cross00_polySurface836246875_1__FloorTileOrange00",
+          "pathNodes": 95,
+          "currentPathNodes": 95,
+          "pi": 92,
+          "currentWaypoint": {
+            "id": 2339,
+            "x": 32.5,
+            "y": 4.5,
+            "z": -14.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 2541,
+          "originalGoal": 2541,
+          "mode": "paint",
+          "fire": true,
+          "jump": true,
+          "climb": true,
+          "maxTravelSourceUnits": 99.35390385397977,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 60,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 3268,
+          "matchState": "playing",
+          "matchTimeRemaining": 124.24999999995885,
+          "seconds": 54.46666666666667,
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ],
+          "goal": [
+            33.5,
+            4.505000114440918,
+            -12.5
+          ],
+          "end": [
+            32.94625876704874,
+            4.5,
+            -13.102580991070651
+          ],
+          "distance": 0.8183875640639295,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27460,
+          "sourceObject": "Fld_Cross00_polySurface836246875_1__FloorTileOrange00",
+          "pathNodes": 95,
+          "currentPathNodes": 95,
+          "pi": 92,
+          "currentWaypoint": {
+            "id": 2339,
+            "x": 32.5,
+            "y": 4.5,
+            "z": -14.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 2541,
+          "originalGoal": 2541,
+          "mode": "paint",
+          "fire": true,
+          "jump": true,
+          "climb": true,
+          "maxTravelSourceUnits": 99.35390385397977,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 120,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 3268,
+          "matchState": "playing",
+          "matchTimeRemaining": 124.24999999995885,
+          "seconds": 54.46666666666667,
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ],
+          "goal": [
+            33.5,
+            4.505000114440918,
+            -12.5
+          ],
+          "end": [
+            32.94625876704874,
+            4.5,
+            -13.102580991070651
+          ],
+          "distance": 0.8183875640639295,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27460,
+          "sourceObject": "Fld_Cross00_polySurface836246875_1__FloorTileOrange00",
+          "pathNodes": 95,
+          "currentPathNodes": 95,
+          "pi": 92,
+          "currentWaypoint": {
+            "id": 2339,
+            "x": 32.5,
+            "y": 4.5,
+            "z": -14.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 2541,
+          "originalGoal": 2541,
+          "mode": "paint",
+          "fire": true,
+          "jump": true,
+          "climb": true,
+          "maxTravelSourceUnits": 99.35390385397977,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 30,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 5400,
+          "matchState": "playing",
+          "matchTimeRemaining": 88.71666666662753,
+          "seconds": 90,
+          "start": [
+            60,
+            7.505000114440918,
+            -22
+          ],
+          "goal": [
+            -33.5,
+            4.505000114440918,
+            12.5
+          ],
+          "end": [
+            -9.942110694339526,
+            6.652142627908055,
+            10.956427883724164
+          ],
+          "distance": 23.705842832285768,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 63192,
+          "sourceObject": "Fld_Cross00_Highroof_polySurface2505_1__FloorTileWhite00",
+          "pathNodes": 96,
+          "currentPathNodes": 23,
+          "pi": 10,
+          "currentWaypoint": {
+            "id": 5445,
+            "x": -10.5,
+            "y": 6.833333333333336,
+            "z": 11.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [
+            {
+              "tick": 1600,
+              "from": 5522,
+              "to": 2327,
+              "mode": "paint",
+              "position": [
+                41.579900305175784,
+                4.559999942779541,
+                -28.782629403950942
+              ],
+              "pathNodes": 27,
+              "pi": 1
+            },
+            {
+              "tick": 1931,
+              "from": 2327,
+              "to": 1379,
+              "mode": "paint",
+              "position": [
+                33.682426430797726,
+                5.602500114440918,
+                -23.08935344117193
+              ],
+              "pathNodes": 25,
+              "pi": 1
+            },
+            {
+              "tick": 2262,
+              "from": 1379,
+              "to": 1959,
+              "mode": "paint",
+              "position": [
+                9.37169620149308,
+                7.803500114440919,
+                -21.46051585537233
+              ],
+              "pathNodes": 21,
+              "pi": 1
+            },
+            {
+              "tick": 2451,
+              "from": 1959,
+              "to": 3635,
+              "mode": "paint",
+              "position": [
+                29.105234335839707,
+                5.299033941834919,
+                -17.794475148121112
+              ],
+              "pathNodes": 22,
+              "pi": 1
+            },
+            {
+              "tick": 2782,
+              "from": 3635,
+              "to": 1209,
+              "mode": "paint",
+              "position": [
+                21.938628159683077,
+                6.668166628519694,
+                -16.409527566462355
+              ],
+              "pathNodes": 20,
+              "pi": 2
+            },
+            {
+              "tick": 3113,
+              "from": 1209,
+              "to": 2421,
+              "mode": "paint",
+              "position": [
+                40.35753002558462,
+                4.510000228881836,
+                -23.427081223218888
+              ],
+              "pathNodes": 27,
+              "pi": 1
+            },
+            {
+              "tick": 3444,
+              "from": 2421,
+              "to": 2406,
+              "mode": "paint",
+              "position": [
+                30.923022147838008,
+                4.732325912573692,
+                -20.790175362903586
+              ],
+              "pathNodes": 23,
+              "pi": 1
+            },
+            {
+              "tick": 3775,
+              "from": 2406,
+              "to": 4235,
+              "mode": "paint",
+              "position": [
+                16.44985690859997,
+                7.505000114440918,
+                -17.21217175012592
+              ],
+              "pathNodes": 20,
+              "pi": 1
+            },
+            {
+              "tick": 4057,
+              "from": 4235,
+              "to": 732,
+              "mode": "paint",
+              "position": [
+                16.499861647954717,
+                5.551115123125783e-17,
+                0.9928940959805632
+              ],
+              "pathNodes": 35,
+              "pi": 1
+            },
+            {
+              "tick": 4388,
+              "from": 732,
+              "to": 3622,
+              "mode": "paint",
+              "position": [
+                14.573939601462207,
+                0.7410464774648722,
+                -9.45171600434146
+              ],
+              "pathNodes": 38,
+              "pi": 1
+            },
+            {
+              "tick": 4659,
+              "from": 3622,
+              "to": 5764,
+              "mode": "paint",
+              "position": [
+                13.91574391629235,
+                1.2169885760264085,
+                10.867954304105634
+              ],
+              "pathNodes": 24,
+              "pi": 1
+            },
+            {
+              "tick": 4990,
+              "from": 5764,
+              "to": 5774,
+              "mode": "paint",
+              "position": [
+                14.180583309841214,
+                0.5671903001868848,
+                8.268761200747539
+              ],
+              "pathNodes": 28,
+              "pi": 1
+            },
+            {
+              "tick": 5321,
+              "from": 5774,
+              "to": 5893,
+              "mode": "paint",
+              "position": [
+                -0.16321755387419346,
+                5.679266838697068,
+                8.037800516091204
+              ],
+              "pathNodes": 23,
+              "pi": 1
+            }
+          ],
+          "finalGoal": 5893,
+          "originalGoal": 5522,
+          "mode": "paint",
+          "fire": true,
+          "jump": true,
+          "climb": true,
+          "maxTravelSourceUnits": 77.31768870856368,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        }
+      ],
+      "privateEvidence": ".browser-evidence/robo-v4-alpha-banks/banks.json"
+    }
+  },
+  "privateFloorFollowerCounterproof": {
+    "status": "private-unaccepted-excluded-from-stage-branch",
+    "candidate": "4d358281fa2416305ea67a26593e4845b8a18187",
+    "scope": "ordinary source-floor correctness; no performance speedup claim",
+    "artifacts": {
+      "status": "private unaccepted follower candidate",
+      "candidateCommit": "4d358281fa2416305ea67a26593e4845b8a18187",
+      "oldRevision": "dda9a13529264ad179260f2255bcc641dae319e4f58b0edcfeb92e14db8b0b3a",
+      "oldContentHash": "aade943ca30bf12ac56b3b0fbf1566375d6cfa81fe5e953af7592ece6ac152f7",
+      "candidateRevision": "0a57c0b2e688173734373cc48c3d666ac52174d946184490f2179ef9df7d3f24",
+      "candidateContentHash": "a95ba21b9bd3fe19c3a8e0badeef8cf8e03aba58f8236342e9956c61837cc087",
+      "candidateRuntime": "221421c7434f09569730f63b349bb028469b1eade3cbe4cf14901922f0f0472c",
+      "sourceAssetFilesIdentical": 163,
+      "stageIntegrityIdentical": true,
+      "stageIntegrity": "02157bca59bca348e01ee884cf6917bda94d47b642f86d2f93f9f5b105294d92",
+      "sourceNavigationFlags": false,
+      "sourceAssetBytesIdentical": 67676722
+    },
+    "actualGameBanks": {
+      "status": "passed",
+      "conditions": "Production Match with eight alive actors/seven bots; ordinary Actor/Character/BotBrain/WeaponRunner/Projectiles. Both original supported pads to actual opposed-bank Nav supports. Other bots frozen; empty initial ink; zero-AP Shooter; 0.5 RNG before Actor construction. Only initial spawnAt setup; no subsequent pose, velocity, ink, or geometry writes. Real refill completion can reselect the fixed goal. Default installed Game._frame uses fixed 1/60 gameplay ticks at 30/60/120 render cadences; ROBO_BANK_CLOCK=raw is a separate raw-dt stress diagnostic. Distances are raw source units. SwiftShader, no hardware FPS claim.",
+      "revision": "0a57c0b2e688173734373cc48c3d666ac52174d946184490f2179ef9df7d3f24",
+      "contentHash": "a95ba21b9bd3fe19c3a8e0badeef8cf8e03aba58f8236342e9956c61837cc087",
+      "errors": [],
+      "roster": [
+        {
+          "team": 0,
+          "slot": 0,
+          "weapon": "shooter",
+          "bot": false,
+          "abilityPoints": {},
+          "start": [
+            -59.009597262108386,
+            7.505000114440918,
+            22.677570968074043
+          ]
+        },
+        {
+          "team": 0,
+          "slot": 1,
+          "weapon": "shooter",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ]
+        },
+        {
+          "team": 0,
+          "slot": 2,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            -60.990402737891614,
+            7.510000228881836,
+            21.322429031925957
+          ]
+        },
+        {
+          "team": 0,
+          "slot": 3,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            -59.32242903192596,
+            7.505000114440918,
+            21.009597262108386
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 0,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            60.990402737891614,
+            7.510000228881836,
+            -21.322429031925957
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 1,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            59.32242903192596,
+            7.505000114440918,
+            -21.009597262108386
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 2,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            59.009597262108386,
+            7.505000114440918,
+            -22.677570968074043
+          ]
+        },
+        {
+          "team": 1,
+          "slot": 3,
+          "weapon": "s3-brush-heavy",
+          "bot": true,
+          "abilityPoints": {},
+          "start": [
+            60.67757096807404,
+            7.505000114440918,
+            -22.990402737891614
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 30,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1740,
+          "matchState": "playing",
+          "matchTimeRemaining": 149.71666666664257,
+          "seconds": 29,
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ],
+          "goal": [
+            33.5,
+            4.505000114440918,
+            -12.5
+          ],
+          "end": [
+            33.410474588611876,
+            4.505000114440918,
+            -13.301847901770337
+          ],
+          "distance": 0.8068301288732993,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27214,
+          "sourceObject": "Fld_Cross00_polySurface836246534_1__FloorLinoleumStartOgangeLight00",
+          "pathNodes": 95,
+          "currentPathNodes": 95,
+          "pi": 94,
+          "currentWaypoint": {
+            "id": 2541,
+            "x": 33.5,
+            "y": 4.505000114440918,
+            "z": -12.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 2541,
+          "originalGoal": 2541,
+          "mode": "paint",
+          "fire": true,
+          "jump": false,
+          "climb": false,
+          "maxTravelSourceUnits": 99.93884625502805,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 60,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1739,
+          "matchState": "playing",
+          "matchTimeRemaining": 149.73333333330925,
+          "seconds": 28.983333333333334,
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ],
+          "goal": [
+            33.5,
+            4.505000114440918,
+            -12.5
+          ],
+          "end": [
+            33.40674635175632,
+            4.505000114440918,
+            -13.335240419644089
+          ],
+          "distance": 0.8404301288732992,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27214,
+          "sourceObject": "Fld_Cross00_polySurface836246534_1__FloorLinoleumStartOgangeLight00",
+          "pathNodes": 95,
+          "currentPathNodes": 95,
+          "pi": 94,
+          "currentWaypoint": {
+            "id": 2541,
+            "x": 33.5,
+            "y": 4.505000114440918,
+            "z": -12.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 2541,
+          "originalGoal": 2541,
+          "mode": "paint",
+          "fire": true,
+          "jump": false,
+          "climb": false,
+          "maxTravelSourceUnits": 99.93884625502805,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 120,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1739,
+          "matchState": "playing",
+          "matchTimeRemaining": 149.73333333330925,
+          "seconds": 28.983333333333334,
+          "start": [
+            -60,
+            7.505000114440918,
+            22
+          ],
+          "goal": [
+            33.5,
+            4.505000114440918,
+            -12.5
+          ],
+          "end": [
+            33.40674635175632,
+            4.505000114440918,
+            -13.335240419644089
+          ],
+          "distance": 0.8404301288732992,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27214,
+          "sourceObject": "Fld_Cross00_polySurface836246534_1__FloorLinoleumStartOgangeLight00",
+          "pathNodes": 95,
+          "currentPathNodes": 95,
+          "pi": 94,
+          "currentWaypoint": {
+            "id": 2541,
+            "x": 33.5,
+            "y": 4.505000114440918,
+            "z": -12.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 2541,
+          "originalGoal": 2541,
+          "mode": "paint",
+          "fire": true,
+          "jump": false,
+          "climb": false,
+          "maxTravelSourceUnits": 99.93884625502805,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 30,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1792,
+          "matchState": "playing",
+          "matchTimeRemaining": 148.8499999999752,
+          "seconds": 29.866666666666667,
+          "start": [
+            60,
+            7.505000114440918,
+            -22
+          ],
+          "goal": [
+            -33.5,
+            4.505000114440918,
+            12.5
+          ],
+          "end": [
+            -33.410286884862934,
+            4.505000114440918,
+            13.30206521844545
+          ],
+          "distance": 0.8070669474507955,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27178,
+          "sourceObject": "Fld_Cross00_polySurface836246534_1__FloorLinoleumStartOgangeLight00",
+          "pathNodes": 96,
+          "currentPathNodes": 96,
+          "pi": 95,
+          "currentWaypoint": {
+            "id": 5522,
+            "x": -33.5,
+            "y": 4.505000114440918,
+            "z": 12.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 5522,
+          "originalGoal": 5522,
+          "mode": "paint",
+          "fire": true,
+          "jump": false,
+          "climb": true,
+          "maxTravelSourceUnits": 99.93868585179834,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 60,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1791,
+          "matchState": "playing",
+          "matchTimeRemaining": 148.8666666666419,
+          "seconds": 29.85,
+          "start": [
+            60,
+            7.505000114440918,
+            -22
+          ],
+          "goal": [
+            -33.5,
+            4.505000114440918,
+            12.5
+          ],
+          "end": [
+            -33.406551927461784,
+            4.505000114440918,
+            13.335456985293158
+          ],
+          "distance": 0.8406669474507961,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27178,
+          "sourceObject": "Fld_Cross00_polySurface836246534_1__FloorLinoleumStartOgangeLight00",
+          "pathNodes": 96,
+          "currentPathNodes": 96,
+          "pi": 95,
+          "currentWaypoint": {
+            "id": 5522,
+            "x": -33.5,
+            "y": 4.505000114440918,
+            "z": 12.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 5522,
+          "originalGoal": 5522,
+          "mode": "paint",
+          "fire": true,
+          "jump": false,
+          "climb": true,
+          "maxTravelSourceUnits": 99.93868585179834,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 120,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1791,
+          "matchState": "playing",
+          "matchTimeRemaining": 148.8666666666419,
+          "seconds": 29.85,
+          "start": [
+            60,
+            7.505000114440918,
+            -22
+          ],
+          "goal": [
+            -33.5,
+            4.505000114440918,
+            12.5
+          ],
+          "end": [
+            -33.406551927461784,
+            4.505000114440918,
+            13.335456985293158
+          ],
+          "distance": 0.8406669474507961,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 27178,
+          "sourceObject": "Fld_Cross00_polySurface836246534_1__FloorLinoleumStartOgangeLight00",
+          "pathNodes": 96,
+          "currentPathNodes": 96,
+          "pi": 95,
+          "currentWaypoint": {
+            "id": 5522,
+            "x": -33.5,
+            "y": 4.505000114440918,
+            "z": 12.5
+          },
+          "refillGoalReplans": 0,
+          "goalTransitions": [],
+          "finalGoal": 5522,
+          "originalGoal": 5522,
+          "mode": "paint",
+          "fire": true,
+          "jump": false,
+          "climb": true,
+          "maxTravelSourceUnits": 99.93868585179834,
+          "opposingBankProjection": 35.75553969668168,
+          "minimumOpposingBankDepth": 31.953090617340916,
+          "abilityPoints": {},
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "productionCharacter": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        }
+      ],
+      "privateEvidence": ".browser-evidence/robo-follower-private-banks/banks.json"
+    },
+    "noSourceNavigationFlags": true,
+    "sourceBytesIdentical": true
+  },
+  "currentAcceptedSourceCpu": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "stageHead": "953ff5c450741a863d8acc3dc733ecb82aae4ad0",
+    "tests": 92,
+    "pass": 78,
+    "skip": 14,
+    "fail": 0,
+    "durationMilliseconds": 141826.312467,
+    "otherStageAssetSkips": true,
+    "log": ".ci-scratch/robo-current846-node.log",
+    "scope": "serial asset-enabled native source geometry, masks, physics, paint, Nav and local rules; optional Character source-motion import unavailable in one VM-only legacy control; actual browser Character remains separate"
   }
 }
