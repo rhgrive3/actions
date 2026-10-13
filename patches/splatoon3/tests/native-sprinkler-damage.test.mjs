@@ -84,3 +84,19 @@ test('empty native device collection adds no per-projectile vector allocation',a
  finally{f.THREE.Vector3.prototype.clone=clone;}
  assert.equal(clones,0,'no candidate geometry is allocated when no native device exists');
 });
+
+test('nonempty bombs without an eligible deployed enemy Sprinkler allocate no candidate geometry',async()=>{
+ const f=await setup(),owner=f.make(),attacker=f.make();attacker.team=1;
+ const b=deploy(f,owner),P=f.G.projectiles,start=b.pos.clone().add(new f.THREE.Vector3(0,0,-1)),end=b.pos.clone().add(new f.THREE.Vector3(0,0,1));
+ const p={owner:attacker,team:attacker.team,size:.01,damage:10};
+ for(const state of ['ordinary','flight','destroyed','friendly','same-owner']){
+  b.s3Resolved={...b.s3Resolved,spec:{...b.s3Resolved.spec,id:state==='ordinary'?'bomb':'sprinkler'}};b.s3Mode=state==='flight'?'flight':'sprinkling';b.s3Destroyed=state==='destroyed';b.team=state==='friendly'?attacker.team:owner.team;b.owner=state==='same-owner'?attacker:owner;
+  const clone=f.THREE.Vector3.prototype.clone;let clones=0;f.THREE.Vector3.prototype.clone=function(){clones++;return clone.call(this);};
+  try{for(let i=0;i<100;i++)assert.equal(P.nativeSprinklerCandidate(p,start,end),null);}
+  finally{f.THREE.Vector3.prototype.clone=clone;}
+  assert.equal(clones,0,state+' cannot need a segment or contact vector');
+ }
+ b.s3Resolved={...b.s3Resolved,spec:{...b.s3Resolved.spec,id:'sprinkler'}};b.s3Mode='sprinkling';b.s3Destroyed=false;b.team=owner.team;b.owner=owner;
+ const hit=P.nativeSprinklerCandidate(p,start,end);assert.ok(hit,'the same real deployed object remains hittable');hit.onHit();assert.equal(b.s3DeviceHP,110);hit.onHit();assert.equal(b.s3DeviceHP,110);
+ f.G.projectiles.clear();
+});

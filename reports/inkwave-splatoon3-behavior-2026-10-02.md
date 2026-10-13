@@ -4057,3 +4057,21 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 | グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
 
 計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
+
+## 2026-10-13: full-installed native bomb victim authority
+
+Independent full `installS3` execution exposed an existing blanket ghost-explosion return in `kit-defense.mjs`: an authenticated native bomb reached the receiver but could not reach its real local Actor.damage. The narrow correction admits only native bomb replicas to the existing victim/life authority guard, preserves native Bubbler occlusion, and never spends or proposes replica object HP. Other ghost blast authority is unchanged.
+
+The permanent eleven-case full-installer regression retains actual Actor.damage and the following fixed-tick lethal commit. It covers valid damage, range/team/remote-victim/recipient-life/invulnerability/LOS negatives, and both owned and replayed native Bubbler shielding; removing the shield admits the identical blast without an object-HP mutation or proposal. An independent source counterfactual restoring the blanket guard suppresses all five positive paths. Source and actual emitted ee9 composition passed the independent eleven-case probe. Browser execution remains separate. This is an INKWAVE network-authority consistency correction, not evidence of retail S3 numerical parity; no source coefficient is changed.
+
+## 2026-10-13: native remote bomb authority and bounded admission (#1321 correction)
+
+The live bomb cap cannot treat native replicas as cosmetic: they drive victim-local bomb/Storm consequences. The correction reserves locally bound roster shares, keeps quota-full attacks in the existing finite owner FIFO without spending event/Storm identity, and mirrors native same-owner Sprinkler replacement so persistent replicas cannot pin that FIFO. The hard actor/owner/global object limits and input/owner/life guards remain.
+
+A full `installS3` regression also exposed the existing `kit-defense` blanket ghost return, which suppressed even unsaturated victim-local bomb damage. Only native bomb replicas now reach the existing victim-authority lane; native Bubbler shielding stays read-only and neither replica object HP nor remote damage proposals are granted. The older partial-installer diagnostic is not adoption proof. Full-installed source and actual minified controls cover the correction; exact-head browser/CI acceptance remains pending.
+
+These are INKWAVE online consistency fixes, not a retail Splatoon 3 timing measurement. No source coefficients were inferred or changed. Controlled terminal geometry, constrained producer locomotion, finite backlog limits and remaining browser/retail limits are recorded in [the bounded authority report](network-replication/bomb-authority-budget-2026-10-13.md).
+
+- #1321 密集負荷の限定診断: native 161発の遅延burstは欠落113→0・live48→28だが、総CPU中央値425→799ms、追加FIFO待ちは合成owner clockで最大183ms。最後の試行は16.67ms超の連続処理frameが2→11となり、負荷無害・実機FPS改善とは扱わない。Sprinkler置換はlive48→7となったが、生成/破棄費用も記録した。詳細・再現用診断は `reports/network-replication/bomb-authority-budget-2026-10-13.md`。browserでのstall/実時間遅延は未確認。
+
+- #1321 重複処理削減: native bombの隣接Euler更新を1回のsetにまとめ、native Sprinklerの該当候補が無いstepでは一時Vector生成を避けた。600frameの全状態・順序・life判定を保持し、独立4536回転/630接触比較と実minified33+14caseで確認。161発burstのVector clone38182→2279、Quaternion更新71484→35742。実時間stall改善は未証明で、追加待ちとmain採用holdを維持する。
