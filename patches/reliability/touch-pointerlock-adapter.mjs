@@ -31,7 +31,7 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,`      this.locked = document.pointerLockElement === this.canvas;
       if (!this.locked) { this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0; this.onUnlock?.(); }`,`      const wasLocked = this.locked;
       const locked = document.pointerLockElement === this.canvas;
-      if (locked && (this._pointerLockCancelled || (this._pointerLockPending && !this._pointerLockRequestCurrent(this._pointerLockPending)) || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.match?.paused || G.game?.menus?.current)) {
+      if (locked && (!this.enabled || this._pointerLockCancelled || (this._pointerLockPending && !this._pointerLockRequestCurrent(this._pointerLockPending)) || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.match?.paused || G.game?.menus?.current)) {
         this._finishPointerLockRequest(this._pointerLockPending);
         this.locked = false;
         if (!this._touchUnlockPending) this._releaseMouseForTouch();
