@@ -3263,7 +3263,7 @@
     }
   ],
   "pending": [
-    "qualified shared ordinary-floor follower acceptance",
+    "qualified shared Tower and Clams ranked acceptance",
     "final accepted-main/follower immutable private/public pair",
     "affected actual source shots, human and bank routes, rule/UI/network and source/cache/render/lifecycle checks",
     "full-fidelity fixed-loadout warmed performance with exact final producer states",
@@ -3591,7 +3591,7 @@
     "prototypes": "No highDrops definition adoption; private prototype failed; shared runtime owners have exact contacts and first touchdown mismatch.",
     "clock": "Direct Actor/BotBrain dt at raw30/60/120 Hz; production Game._frame instead uses fixed 1/60 ticks. This negative is not yet a production render-cadence failure."
   },
-  "acceptedFoundationCurrentBranch": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+  "acceptedFoundationCurrentBranch": "0e6dd2474930b4fde75e2b5e5012030b175b4952",
   "laterAcceptedProofs": {
     "foundation": "4d0d88ef05cd2fc5389bddcdcf3a7539fc926dd2",
     "polygonMaskVersion": 4,
@@ -4842,7 +4842,7 @@
     }
   },
   "privateFloorFollowerCounterproof": {
-    "status": "private-unaccepted-excluded-from-stage-branch",
+    "status": "historical-private-artifact-counterproof-for-subsequently-accepted-shared-fix",
     "candidate": "4d358281fa2416305ea67a26593e4845b8a18187",
     "scope": "ordinary source-floor correctness; no performance speedup claim",
     "artifacts": {
@@ -5334,7 +5334,9 @@
       "privateEvidence": ".browser-evidence/robo-follower-private-banks/banks.json"
     },
     "noSourceNavigationFlags": true,
-    "sourceBytesIdentical": true
+    "sourceBytesIdentical": true,
+    "acceptedSharedPr": "https://github.com/rhgrive3/actions/pull/1390",
+    "acceptedSharedHead": "3962da6e"
   },
   "currentAcceptedSourceCpu": {
     "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",

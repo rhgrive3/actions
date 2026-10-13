@@ -5,12 +5,14 @@ system. Local supports and gameplay semantics are inferred. This is not a
 recovered Nintendo 11.3.0 collision or placement asset.
 
 Verification is still in progress. The branch consumes accepted foundation
-`846f0532`, including the current-main refresh. The full historical matrix used
+`0e6dd247`, including the current-main refresh and qualified ordinary floor
+follower. The full historical matrix used
 `7ddb538a`; newer immutable source, wall-shot and human-route checks used accepted
 `4d0d88ef` with v4 polygon ownership and the ink-edge correction. A separate
 private floor-follower candidate completes all six opposing-bank cases without
-changing source bytes. It is not included in this branch. The PR remains a draft
-until the shared change qualifies and the affected final composition passes.
+changing source bytes. That shared floor correction is now accepted through
+PR #1390. The PR remains a draft until the shared Tower/ranked changes qualify
+and the affected final composition passes.
 
 ## Source and identity
 
@@ -154,8 +156,10 @@ waypoints. All six matched actual Game bank cases arrive, retain their original
 29/28.9833/28.9833 seconds; team 1 takes 29.8667/29.85/29.85 seconds. Every one of
 the 163 copied source files (67,676,722 bytes) is SHA-256 identical to the
 baseline, including all geometry, NoPaint roles, masks and PNGs. This is a
-correctness counterproof, not a performance speedup or accepted final-runtime
-claim. No source-navigation flag is enabled.
+correctness counterproof, not a performance speedup or latest-main final-artifact
+claim. The shared correction was subsequently qualified through PR #1390;
+this older immutable receipt remains scoped to its actual build. No
+source-navigation flag is enabled.
 
 Contact tracing shows the failed actor is already humanoid, with radius/lift
 0.35/0.35 and height 1.45; its current foot center/ring have no support. Releasing
