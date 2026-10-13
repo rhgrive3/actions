@@ -27,6 +27,7 @@ try{
  await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
  assert.equal(await page.locator('#boot-error').textContent(),'');
+ const continuationSeconds=Number(process.env.HUMPBACK_CLAMS_CONTINUATION_SECONDS||0);
  const modes=(process.env.HUMPBACK_RANKED_MODES||'zones,rainmaker,clams').split(','),rates=(process.env.HUMPBACK_RENDER_RATES||'30,60,120').split(',').map(Number);
  for(const mode of modes)for(const team of [0,1])for(const hz of rates){
   await page.evaluate(async({mode,team,hz})=>{
@@ -44,8 +45,10 @@ try{
    }
    G.paint.clear();G.projectiles.clear();a.setWeapon('shooter');a.invuln=0;a.bot=new BotBrain(a,'normal');
    const id=String(a.nid??a.team+':'+a.slot),state=G.match.ranked.rule.state;
-   globalThis.humpRankedRun={mode,team,hz,a,id,start:a.pos.toArray(),frames:0,ticks:0,startClock:g.s3Clock.ticks,actorSteps:new Set(),brainSteps:new Set(),projectileSteps:new Set(),fire:false,jump:false,traversal:0,maxTravel:0,sawPower:false,firstPowerTick:null,inventoryMaximum:0,initialInventory:JSON.parse(JSON.stringify(state.inventories?.[id]||{small:0,power:false}))};
+   const sourceBuffersBefore={};for(const key of ['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'])sourceBuffersBefore[key]=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',G.level.data[key].buffer))).map(n=>n.toString(16).padStart(2,'0')).join('');
+   globalThis.humpRankedRun={mode,team,hz,a,id,sourceBuffersBefore,start:a.pos.toArray(),frames:0,ticks:0,startClock:g.s3Clock.ticks,actorSteps:new Set(),brainSteps:new Set(),projectileSteps:new Set(),fire:false,jump:false,traversal:0,maxTravel:0,sawPower:false,firstPowerTick:null,inventoryMaximum:0,events:{powerCreates:0,throws:0,scores:0},initialInventory:JSON.parse(JSON.stringify(state.inventories?.[id]||{small:0,power:false}))};
    const r=humpRankedRun,au=a.update.bind(a),bu=a.bot.update.bind(a.bot),pu=G.projectiles.update.bind(G.projectiles);
+   const ranked=G.match.ranked,event=ranked.event.bind(ranked);ranked.event=(kind,data={})=>{if(kind==='clam-power-create'&&data.actor===r.id)r.events.powerCreates++;if(kind==='clam-throw'&&data.actor===r.id)r.events.throws++;if(kind==='clam-score'&&data.team===r.team)r.events.scores++;return event(kind,data);};
    a.update=dt=>{r.ticks++;r.actorSteps.add(dt);au(dt);r.maxTravel=Math.max(r.maxTravel,Math.hypot(a.pos.x-r.start[0],a.pos.z-r.start[2]));};
    a.bot.update=dt=>{r.brainSteps.add(dt);bu(dt);r.fire ||=a.intent.fire;r.jump ||=a.intent.jump;r.traversal+=!!a.bot._nativeTraversalHandled;};
    G.projectiles.update=dt=>{r.projectileSteps.add(dt);pu(dt);};
@@ -68,6 +71,11 @@ try{
   assert(row.alive&&row.grounded&&(row.mode==='clams'?row.sawPower:row.approached),'Real fixed-clock ranked source approach failed '+JSON.stringify(row));
   assert(row.sourceFace>=0&&row.sourceTriangle>=0);assert(row.maxTravel>5);assert.equal(row.actors,8);assert.equal(row.aliveActors,8);assert.equal(row.bots,7);assert.deepEqual(row.gearAP,[]);
   assert.deepEqual(row.actorSteps,[1/60]);assert.deepEqual(row.brainSteps,[1/60]);assert.deepEqual(row.projectileSteps,[1/60]);assert.equal(row.actorTicks,row.gameClockTicks);
+  if(mode==='clams'&&continuationSeconds>0){
+   row.continuation=await page.evaluate(seconds=>{const G=NG,r=humpRankedRun,a=r.a,startTicks=r.ticks;for(let i=0;i<Math.ceil(r.hz*seconds);i++){if(!G.match.playing())break;G.game._frame(1/r.hz);r.frames++;}return{requestedSeconds:seconds,actualFixedTicks:r.ticks-startTicks,totalFixedTicks:r.ticks,actorSteps:[...r.actorSteps],brainSteps:[...r.brainSteps],projectileSteps:[...r.projectileSteps],end:a.pos.toArray(),alive:a.alive,grounded:a.grounded,goalAction:G.match.ranked.rule.botGoal(G.match.ranked.frame.actors.find(o=>o.id===r.id),G.match.ranked.frame)?.action??null,inventory:G.match.ranked.rule.state.inventories[r.id]??null,rankedCounts:[...G.match.ranked.counts],events:{...r.events},actors:G.actors.length,aliveActors:G.actors.filter(o=>o.alive).length,bots:G.actors.filter(o=>o.bot).length,scope:'Read-only natural gameplay observation after actual Power acquisition; no inventory, goal, pose, score, source or ink writes'};},continuationSeconds);
+   assert(row.continuation.alive);assert.equal(row.continuation.aliveActors,8);assert.equal(row.continuation.bots,7);assert.deepEqual(row.continuation.actorSteps,[1/60]);assert.deepEqual(row.continuation.brainSteps,[1/60]);assert.deepEqual(row.continuation.projectileSteps,[1/60]);
+  }
+  row.sourceBuffers=await page.evaluate(async()=>{const G=NG,r=humpRankedRun,after={};for(const key of Object.keys(r.sourceBuffersBefore))after[key]=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',G.level.data[key].buffer))).map(n=>n.toString(16).padStart(2,'0')).join('');return{before:r.sourceBuffersBefore,after};});assert.deepEqual(row.sourceBuffers.after,row.sourceBuffers.before,'Every live source buffer and derived mask remains exact');
   report.cases.push(row);save();console.log(JSON.stringify(row));
  }
  assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.status='passed';

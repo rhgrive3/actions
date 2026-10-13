@@ -4378,10 +4378,10 @@
   },
   "currentBuilds": {
     "private": {
-      "contentHash": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f"
+      "contentHash": "ae1777533b201d4a7a185fb525651dde51bda3d41a9bb1add3efc887f2b1819a"
     },
     "public": {
-      "contentHash": "cd6d841c507fe3aef81f9ddb31ff595f4b74c6ea561834a221c9ad00ca4bf0e2"
+      "contentHash": "efe8142737e1f3b5f53d162df71c1f981b51797e2f4a467106ebc07242dd2f16"
     }
   },
   "acceptedSourceFootprintSupport": {
@@ -7615,22 +7615,22 @@
         "passed": 9,
         "failed": 0,
         "skipped": 0,
-        "log": ".ci-scratch/current-main-packaging-private.log"
+        "log": ".ci-scratch/final-seal/private-packaging.log"
       },
       "startupBudget": {
         "status": "passed",
-        "revision": "81e4b71f8ef8a0047ca3b756af74fad805a97f7d4b3fc18878f459e3a8a425a7",
+        "revision": "7ca07396838b697ed9cac45837f5ef8d280c4c47b49a49c535e56afec4564c4b",
         "initialJSRequests": 146,
         "modulePreloads": 145,
         "coreModulePreloads": 131,
         "practiceRangeModulePreloads": 14,
         "practiceRangePreloadBytes": 74503,
-        "initialJSBytes": 2737757,
+        "initialJSBytes": 2753077,
         "criticalHTMLBytes": 15422,
         "precacheCount": 368,
-        "precacheBytes": 5838422,
+        "precacheBytes": 5854708,
         "workerBytes": 71147,
-        "declaredBytes": 10459114,
+        "declaredBytes": 10475400,
         "measurementKind": "deterministic file and dependency gates; not native browser timings"
       }
     },
@@ -7640,22 +7640,22 @@
         "passed": 9,
         "failed": 0,
         "skipped": 0,
-        "log": ".ci-scratch/current-main-packaging-public.log"
+        "log": ".ci-scratch/final-seal/public-packaging.log"
       },
       "startupBudget": {
         "status": "passed",
-        "revision": "9a1fd26da18c57e496551605db365839f053679f88f269ed45652bdfbbfb5087",
+        "revision": "3d6e8708f69c90410dba13f5881b3f8e1707302a56d4e26b5ed24397e26e6a7c",
         "initialJSRequests": 146,
         "modulePreloads": 145,
         "coreModulePreloads": 131,
         "practiceRangeModulePreloads": 14,
         "practiceRangePreloadBytes": 74503,
-        "initialJSBytes": 2740350,
+        "initialJSBytes": 2755670,
         "criticalHTMLBytes": 15422,
         "precacheCount": 368,
-        "precacheBytes": 5841015,
+        "precacheBytes": 5857301,
         "workerBytes": 71147,
-        "declaredBytes": 10461707,
+        "declaredBytes": 10477993,
         "measurementKind": "deterministic file and dependency gates; not native browser timings"
       }
     }
@@ -17253,5 +17253,858 @@
       ],
       "retest": "All six product Power cases passed after using the existing shorter owner temporary directory"
     }
+  },
+  "acceptedFinalFoundation": {
+    "foundation": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
+    "sourceCommit": "be9f6042df92fd8e8f36a0f5f61a3a992245492d",
+    "sourceHeadAtBuild": "be9f6042df92fd8e8f36a0f5f61a3a992245492d",
+    "clamsPR": 1397,
+    "ordinaryJumpPR": 1398,
+    "commonClamsAggregate": "7ac50248c0f212769afbc0ef5debfce0e256a82a",
+    "canonicalShooterZeroAPScope": true,
+    "stageWallJumpAttachOptIn": false,
+    "stageWallSurgeOptIn": false,
+    "goalCallbackSourceSha256": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+    "clamsRuleSourceSha256": "744b6d8ee045ba12d397aca51631aa274167bdf6d63b185b85c59d0bd026eaa8"
+  },
+  "priorCurrentMainBuilds": {
+    "private": {
+      "contentHash": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f"
+    },
+    "public": {
+      "contentHash": "cd6d841c507fe3aef81f9ddb31ff595f4b74c6ea561834a221c9ad00ca4bf0e2"
+    }
+  },
+  "priorCurrentMainPackagingAndBudgets": {
+    "private": {
+      "packaging": {
+        "tests": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".ci-scratch/current-main-packaging-private.log"
+      },
+      "startupBudget": {
+        "status": "passed",
+        "revision": "81e4b71f8ef8a0047ca3b756af74fad805a97f7d4b3fc18878f459e3a8a425a7",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74503,
+        "initialJSBytes": 2737757,
+        "criticalHTMLBytes": 15422,
+        "precacheCount": 368,
+        "precacheBytes": 5838422,
+        "workerBytes": 71147,
+        "declaredBytes": 10459114,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
+    },
+    "public": {
+      "packaging": {
+        "tests": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".ci-scratch/current-main-packaging-public.log"
+      },
+      "startupBudget": {
+        "status": "passed",
+        "revision": "9a1fd26da18c57e496551605db365839f053679f88f269ed45652bdfbbfb5087",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74503,
+        "initialJSBytes": 2740350,
+        "criticalHTMLBytes": 15422,
+        "precacheCount": 368,
+        "precacheBytes": 5841015,
+        "workerBytes": 71147,
+        "declaredBytes": 10461707,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
+    }
+  },
+  "acceptedFinalFixedGameClockBanks": {
+    "status": "passed",
+    "foundation": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
+    "evidence": ".browser-evidence/accepted-final-banks/banks.json",
+    "results": {
+      "status": "passed",
+      "buildFingerprint": "ae1777533b201d4a7a185fb525651dde51bda3d41a9bb1add3efc887f2b1819a",
+      "supportModuleSha256": "598b059926b03bd8c965546df97677ae6ec7dae792dd8d194d8bebc4dbfda91c",
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 30,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "brainStepIntervals": [
+            0.016666666666666666
+          ],
+          "projectileStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 2254,
+          "gameClockTicks": 2254,
+          "matchState": "playing",
+          "matchTimeRemaining": 139.43333333330105,
+          "seconds": 37.56666666666667,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.85294238179873,
+            0.0027000000700354576,
+            31.191903809821845
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.821368002573438,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.2276744877709,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            13337,
+            0
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 16349,
+          "currentWaypoint": {
+            "id": 16349,
+            "point": [
+              24.200000000000003,
+              0.002700000070042563,
+              31.599999999999994
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 60,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "brainStepIntervals": [
+            0.016666666666666666
+          ],
+          "projectileStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 2253,
+          "gameClockTicks": 2253,
+          "matchState": "playing",
+          "matchTimeRemaining": 139.44999999996773,
+          "seconds": 37.55,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.83372509116751,
+            0.0027000000700354576,
+            31.169306688534625
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8471710116738904,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.20098501153494,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            13337,
+            0
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 16349,
+          "currentWaypoint": {
+            "id": 16349,
+            "point": [
+              24.200000000000003,
+              0.002700000070042563,
+              31.599999999999994
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 120,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "brainStepIntervals": [
+            0.016666666666666666
+          ],
+          "projectileStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 2253,
+          "gameClockTicks": 2253,
+          "matchState": "playing",
+          "matchTimeRemaining": 139.44999999996773,
+          "seconds": 37.55,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.83372509116751,
+            0.0027000000700354576,
+            31.169306688534625
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8471710116738904,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.20098501153494,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            13337,
+            0
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 16349,
+          "currentWaypoint": {
+            "id": 16349,
+            "point": [
+              24.200000000000003,
+              0.002700000070042563,
+              31.599999999999994
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 30,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "brainStepIntervals": [
+            0.016666666666666666
+          ],
+          "projectileStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 2000,
+          "gameClockTicks": 2000,
+          "matchState": "playing",
+          "matchTimeRemaining": 143.66666666663775,
+          "seconds": 33.333333333333336,
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            -23.214485005117012,
+            0.0027000000700354576,
+            -31.712676886855142
+          ],
+          "goal": [
+            -24,
+            0.0027,
+            -32
+          ],
+          "distance": 0.8364139994842702,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91910,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 95,
+          "initialPathFirst": 20926,
+          "initialPathLast": 5055,
+          "pi": 94,
+          "currentPathNodes": 95,
+          "waypoints": 94,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.57485427443355,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            15581
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 5055,
+          "currentWaypoint": {
+            "id": 5055,
+            "point": [
+              -23.799999999999997,
+              0.002700000070028352,
+              -32.400000000000006
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 60,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "brainStepIntervals": [
+            0.016666666666666666
+          ],
+          "projectileStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 2000,
+          "gameClockTicks": 2000,
+          "matchState": "playing",
+          "matchTimeRemaining": 143.66666666663775,
+          "seconds": 33.333333333333336,
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            -23.214485005117012,
+            0.0027000000700354576,
+            -31.712676886855142
+          ],
+          "goal": [
+            -24,
+            0.0027,
+            -32
+          ],
+          "distance": 0.8364139994842702,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91910,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 95,
+          "initialPathFirst": 20926,
+          "initialPathLast": 5055,
+          "pi": 94,
+          "currentPathNodes": 95,
+          "waypoints": 94,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.57485427443355,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            15581
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 5055,
+          "currentWaypoint": {
+            "id": 5055,
+            "point": [
+              -23.799999999999997,
+              0.002700000070028352,
+              -32.400000000000006
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "clock": "production Game._frame fixed gameplay clock",
+          "renderCadence": 120,
+          "actorStepIntervals": [
+            0.016666666666666666
+          ],
+          "brainStepIntervals": [
+            0.016666666666666666
+          ],
+          "projectileStepIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 2000,
+          "gameClockTicks": 2000,
+          "matchState": "playing",
+          "matchTimeRemaining": 143.66666666663775,
+          "seconds": 33.333333333333336,
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            -23.214485005117012,
+            0.0027000000700354576,
+            -31.712676886855142
+          ],
+          "goal": [
+            -24,
+            0.0027,
+            -32
+          ],
+          "distance": 0.8364139994842702,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91910,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 95,
+          "initialPathFirst": 20926,
+          "initialPathLast": 5055,
+          "pi": 94,
+          "currentPathNodes": 95,
+          "waypoints": 94,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.57485427443355,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            15581
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 5055,
+          "currentWaypoint": {
+            "id": 5055,
+            "point": [
+              -23.799999999999997,
+              0.002700000070028352,
+              -32.400000000000006
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        }
+      ],
+      "errors": [],
+      "clock": "production Game._frame fixed STEP 1/60",
+      "conditions": "Original opposed ±61 source pads, production Actor/Character/BotBrain/Projectiles and ordinary inputs; full native turf match eight actors/seven bots; zero AP Shooter; initially empty ink; other actors retained on their original-team source supports; controlled original goal after ordinary refill; kernel mode manually steps Actor/BotBrain/Projectiles at dt=1/hz, game mode calls only installed Game._frame at render cadence 1/hz with observed fixed gameplay ticks; distances are raw source units; SwiftShader, not console hardware",
+      "source": {
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "actors": 8,
+        "bots": 7,
+        "sourceNavigation": {
+          "wallClimb": true,
+          "highDrops": true
+        }
+      },
+      "lastCase": {
+        "team": 1,
+        "hz": 120,
+        "clock": "production Game._frame fixed gameplay clock",
+        "renderCadence": 120,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "brainStepIntervals": [
+          0.016666666666666666
+        ],
+        "projectileStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 2000,
+        "gameClockTicks": 2000,
+        "matchState": "playing",
+        "matchTimeRemaining": 143.66666666663775,
+        "seconds": 33.333333333333336,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          -23.214485005117012,
+          0.0027000000700354576,
+          -31.712676886855142
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 0.8364139994842702,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91910,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 95,
+        "initialPathFirst": 20926,
+        "initialPathLast": 5055,
+        "pi": 94,
+        "currentPathNodes": 95,
+        "waypoints": 94,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.57485427443355,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          15581
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 5055,
+        "currentWaypoint": {
+          "id": 5055,
+          "point": [
+            -23.799999999999997,
+            0.002700000070028352,
+            -32.400000000000006
+          ]
+        },
+        "sourceGround": {
+          "y": 0.0027000000700354576,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      },
+      "sourceCollisionUnchanged": true
+    },
+    "scope": "Actual Game._frame at render30/60/120, observed Actor/BotBrain/Projectiles STEP1/60; controlled opposed-bowl goal after original-source-supported setup, no later pose/ink/source writes. Completion sampled after each render call, so30Hz can end one fixed tick later than60/120. All distances raw source units."
+  },
+  "finalEmittedSourceBufferBinding": {
+    "status": "passed",
+    "foundation": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+    "privateBuildFingerprint": "ae1777533b201d4a7a185fb525651dde51bda3d41a9bb1add3efc887f2b1819a",
+    "buffers": [
+      {
+        "path": "bvh.bin",
+        "bytes": 1048544,
+        "sourceGeneratedSha256": "8bc4a8c0ae0b5900b1449cb93958f16bbd9eed36daf7badb3dc4814bd9bae97d",
+        "finalPrivateSha256": "8bc4a8c0ae0b5900b1449cb93958f16bbd9eed36daf7badb3dc4814bd9bae97d",
+        "equal": true
+      },
+      {
+        "path": "collision.bin",
+        "bytes": 5383404,
+        "sourceGeneratedSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "finalPrivateSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "equal": true
+      },
+      {
+        "path": "flags.bin",
+        "bytes": 598156,
+        "sourceGeneratedSha256": "b478d95f7827baff48738896cd6124862790781197700d7ea53983ba5510ef4c",
+        "finalPrivateSha256": "b478d95f7827baff48738896cd6124862790781197700d7ea53983ba5510ef4c",
+        "equal": true
+      },
+      {
+        "path": "indices.bin",
+        "bytes": 2089068,
+        "sourceGeneratedSha256": "048bc3fe44f98026149fe156e6ad56778db119f4d51ac49a9212d1aa6a24d6df",
+        "finalPrivateSha256": "048bc3fe44f98026149fe156e6ad56778db119f4d51ac49a9212d1aa6a24d6df",
+        "equal": true
+      },
+      {
+        "path": "mask.bin",
+        "bytes": 8934342,
+        "sourceGeneratedSha256": "56c1d061e2ca97786cf612c578d5fa30ebd3d039c80715e778c4f96c8ab875ee",
+        "finalPrivateSha256": "56c1d061e2ca97786cf612c578d5fa30ebd3d039c80715e778c4f96c8ab875ee",
+        "equal": true
+      },
+      {
+        "path": "normals.bin",
+        "bytes": 1794468,
+        "sourceGeneratedSha256": "2ce62120827f24bab6f368834f1c89227c51934a6f6751385ab1f6bd218c8ad5",
+        "finalPrivateSha256": "2ce62120827f24bab6f368834f1c89227c51934a6f6751385ab1f6bd218c8ad5",
+        "equal": true
+      },
+      {
+        "path": "objects.bin",
+        "bytes": 598156,
+        "sourceGeneratedSha256": "c1e11255639d3f83865b81f5e4eebc99c733113d9c0c079db9ea5335dfe3cd85",
+        "finalPrivateSha256": "c1e11255639d3f83865b81f5e4eebc99c733113d9c0c079db9ea5335dfe3cd85",
+        "equal": true
+      },
+      {
+        "path": "order.bin",
+        "bytes": 598156,
+        "sourceGeneratedSha256": "bea299dd924a8583f0e38ecaa468c1efb3d82466c685ba71a15c4f0bc3f52182",
+        "finalPrivateSha256": "bea299dd924a8583f0e38ecaa468c1efb3d82466c685ba71a15c4f0bc3f52182",
+        "equal": true
+      },
+      {
+        "path": "triangleFace.bin",
+        "bytes": 598156,
+        "sourceGeneratedSha256": "2f95aa844904eccb20c4f3ac0a884e723b410244134e8c1dff26e1e19f4f40c6",
+        "finalPrivateSha256": "2f95aa844904eccb20c4f3ac0a884e723b410244134e8c1dff26e1e19f4f40c6",
+        "equal": true
+      },
+      {
+        "path": "vertices.bin",
+        "bytes": 8159840,
+        "sourceGeneratedSha256": "74c4bee43ee8a30c9b9ac3d28766adb58d67ef9c53afc3f228e80eda394f3321",
+        "finalPrivateSha256": "74c4bee43ee8a30c9b9ac3d28766adb58d67ef9c53afc3f228e80eda394f3321",
+        "equal": true
+      }
+    ],
+    "sourceOriginalAttributeAndBlobProofRetained": true
+  },
+  "unchangedQualificationReuseScope": {
+    "status": "passed",
+    "qualifiedFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "finalFoundation": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
+    "scope": "Unchanged source geometry/physics/paint/render/quality/loader/cache/worker/menu/guard implementations; new navigation/input/Clams callbacks receive focused current physical and online seals. Earlier source/render/lifecycle/download receipts retain exact846 artifact scope.",
+    "modules": [
+      {
+        "path": "patches/native-stages/runtime/native-level.mjs",
+        "sha256": "2dbd2c5a57e1981a3eb19e869d08650465b7af039a052bef3c3857536cff8030",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-physics.mjs",
+        "sha256": "2eb3e2b5fd60032cfa46648a8cbcd7ab7ee6615acefdaf69b56b42b7492c58e9",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-paint.mjs",
+        "sha256": "1d2dcdd536f6f57be45019a30871c816afe788aaefe0d30fa20a3ffbab96b2e5",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-render.mjs",
+        "sha256": "40776b7acb44fae88a0548c5b6e41a515081bd3bba706de3337f30e85f22a4da",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-ink-chunks.mjs",
+        "sha256": "6eb9657f873b5a03db98ad3a2131425a3e0abb7850b48a1a0297fc5ee207b6bf",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-quality.mjs",
+        "sha256": "375d525c45f45838148f9cde35786afbe5c359511f0965e15eded5777ef34612",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-minimap.mjs",
+        "sha256": "dd62a7dfd2f7ade1f4bff44fd07aad21991310f178576af9bf2c618ff23f987a",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-load.mjs",
+        "sha256": "e7f1030291d95e13d29148e3e9751ec810b0018605a24b82fba67f6891717e64",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-spawn.mjs",
+        "sha256": "17804b0e5b0a287b5baa607f8d370ca5894422dd76cba6d67245fcdbd9b09cd9",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/native-projectile-sweep.mjs",
+        "sha256": "80e5bb9e8648d851d0ee1f070ab29b8cc1999bc02de9025e54e597ab5480ed32",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/source-cache.mjs",
+        "sha256": "31a47aeb648147683589e6483831ab5f03c1d9e401cec42f84c5edf3a7633de1",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/source-catalog.mjs",
+        "sha256": "86422426b73c5cb3701d1dbd2cd0a5bd83d8b13c1c8e576e1281de9ed59f88f8",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/source-convert.mjs",
+        "sha256": "4a0392acaf9efd19743dbdfcef66c0d0d90f55878cc75a0c4f10718234d0a210",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/source-data.mjs",
+        "sha256": "b0a22a808b09bbf58e1f7bdcd82ce6b8361633674be7812b20063df3d37b9dd7",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/source-menu.mjs",
+        "sha256": "2e450c848f2b934e5088af5d903752c3de86bd0fcbab588bea820391efc146c8",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/source-worker.mjs",
+        "sha256": "ad146f2c13b6f4857a9c483d6fc909a2f0c8453e1c969b3f88f4c9f2eb5f1aff",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/triangle-world.mjs",
+        "sha256": "c9bcc78a5d9802983c3e735c1994253fed85e196b33b2d371d6c32620bd5feb5",
+        "equalToQualified846": true
+      },
+      {
+        "path": "patches/native-stages/runtime/rule-availability.mjs",
+        "sha256": "f43844b71837193f95ecf8f5b1a9eb753f0175e5ecd58258e92523134e6c07cd",
+        "equalToQualified846": true
+      }
+    ]
+  },
+  "bankBufferScopeSelfReview": {
+    "corrected": true,
+    "historicalField": "sourceBuffersUnchanged",
+    "actualHistoricalScope": "Only the full source collision buffer SHA was measured by that field",
+    "finalField": "sourceCollisionUnchanged",
+    "allTenFinalEmittedBuffers": "Independently matched against source-derived data; current natural Clams observation separately hashes all ten live buffers before/after",
+    "runtimeSourceGeometryEdited": false
   }
 }
