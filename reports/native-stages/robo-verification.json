@@ -341,15 +341,15 @@
       "errors": [],
       "downloads": 2,
       "menu": [
-        "タイドウォーター広場",
-        "ケルプライン埠頭",
-        "ハリヤードマリーナ",
-        "ユノハナ大渓谷",
-        "ヤガラ市場",
-        "海女美術大学",
-        "ザトウマーケット",
-        "クサヤ温泉",
-        "バイガイ亭"
+        "\u30bf\u30a4\u30c9\u30a6\u30a9\u30fc\u30bf\u30fc\u5e83\u5834",
+        "\u30b1\u30eb\u30d7\u30e9\u30a4\u30f3\u57e0\u982d",
+        "\u30cf\u30ea\u30e4\u30fc\u30c9\u30de\u30ea\u30fc\u30ca",
+        "\u30e6\u30ce\u30cf\u30ca\u5927\u6e13\u8c37",
+        "\u30e4\u30ac\u30e9\u5e02\u5834",
+        "\u6d77\u5973\u7f8e\u8853\u5927\u5b66",
+        "\u30b6\u30c8\u30a6\u30de\u30fc\u30b1\u30c3\u30c8",
+        "\u30af\u30b5\u30e4\u6e29\u6cc9",
+        "\u30d0\u30a4\u30ac\u30a4\u4ead"
       ],
       "cache": {
         "id": "robo",
@@ -1852,7 +1852,7 @@
         "shadows": false,
         "bloom": false
       },
-      "input": "KeyW + left fire frames 0–89; release frames 90–179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
+      "input": "KeyW + left fire frames 0\u201389; release frames 90\u2013179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
       "actors": [
         {
           "weapon": "s3-blaster-short",
@@ -2680,7 +2680,7 @@
         "shadows": false,
         "bloom": false
       },
-      "input": "KeyW + left fire frames 0–89; release frames 90–179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
+      "input": "KeyW + left fire frames 0\u201389; release frames 90\u2013179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
       "actors": [
         {
           "weapon": "shooter",
@@ -3262,7 +3262,7 @@
     }
   ],
   "pending": [
-    "opposing-bank navigation defect repair and all six actual routes",
+    "production fixed-clock both-bank qualification; raw30 failure retained only as a stress diagnostic",
     "accepted alpha-fringe correction source screenshot proof",
     "final accepted update adoption/build and changed-behavior gates",
     "final self-review",
@@ -3281,12 +3281,11 @@
     "physical device FPS"
   ],
   "bankFailure": {
-    "status": "unresolved",
+    "status": "raw-step-stress-failure; production-fixed-clock-check-pending",
     "conditions": "Actual eight-alive/seven-bot production Match, Actor/Character/BotBrain/WeaponRunner/Projectiles; zero-AP Shooter; initially empty ink; fixed supported opposing-bank goal; no later pose/velocity/ink writes",
     "cases": [
       {
         "team": 0,
-        "hz": 30,
         "seconds": 68.4,
         "start": [
           -60,
@@ -3322,7 +3321,6 @@
         "fire": true,
         "jump": true,
         "climb": true,
-        "maxTravel": 99.38431228921513,
         "opposingBankProjection": 35.75553969668168,
         "minimumOpposingBankDepth": 31.953090617340916,
         "abilityPoints": {},
@@ -3332,11 +3330,12 @@
         "actors": 8,
         "aliveActors": 8,
         "bots": 7,
-        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "rawActorStepHz": 30,
+        "maxTravelSourceUnits": 99.38431228921513
       },
       {
         "team": 0,
-        "hz": 60,
         "seconds": 59.96666666666667,
         "start": [
           -60,
@@ -3372,7 +3371,6 @@
         "fire": true,
         "jump": true,
         "climb": true,
-        "maxTravel": 99.35929223467315,
         "opposingBankProjection": 35.75553969668168,
         "minimumOpposingBankDepth": 31.953090617340916,
         "abilityPoints": {},
@@ -3382,11 +3380,12 @@
         "actors": 8,
         "aliveActors": 8,
         "bots": 7,
-        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "rawActorStepHz": 60,
+        "maxTravelSourceUnits": 99.35929223467315
       },
       {
         "team": 0,
-        "hz": 120,
         "seconds": 58.68333333333333,
         "start": [
           -60,
@@ -3422,7 +3421,6 @@
         "fire": true,
         "jump": true,
         "climb": true,
-        "maxTravel": 99.33678338489389,
         "opposingBankProjection": 35.75553969668168,
         "minimumOpposingBankDepth": 31.953090617340916,
         "abilityPoints": {},
@@ -3432,11 +3430,12 @@
         "actors": 8,
         "aliveActors": 8,
         "bots": 7,
-        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "rawActorStepHz": 120,
+        "maxTravelSourceUnits": 99.33678338489389
       },
       {
         "team": 1,
-        "hz": 30,
         "seconds": 90,
         "start": [
           60,
@@ -3472,7 +3471,6 @@
         "fire": true,
         "jump": true,
         "climb": true,
-        "maxTravel": 63.639764490639344,
         "opposingBankProjection": 35.75553969668168,
         "minimumOpposingBankDepth": 31.953090617340916,
         "abilityPoints": {},
@@ -3482,9 +3480,114 @@
         "actors": 8,
         "aliveActors": 8,
         "bots": 7,
-        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "rawActorStepHz": 30,
+        "maxTravelSourceUnits": 63.639764490639344
+      },
+      {
+        "team": 1,
+        "seconds": 68.46666666666667,
+        "start": [
+          60,
+          7.505000114440918,
+          -22
+        ],
+        "goal": [
+          -33.5,
+          4.505000114440918,
+          12.5
+        ],
+        "end": [
+          -32.9380333361329,
+          4.5,
+          13.134161267388686
+        ],
+        "distance": 0.8473441128009145,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 27446,
+        "sourceObject": "Fld_Cross00_polySurface836246875_1__FloorTileOrange00",
+        "pathNodes": 96,
+        "currentPathNodes": 96,
+        "pi": 94,
+        "currentWaypoint": {
+          "id": 5615,
+          "x": -33.5,
+          "y": 4.505000114440918,
+          "z": 13.5
+        },
+        "refillGoalReplans": 0,
+        "mode": "paint",
+        "fire": true,
+        "jump": true,
+        "climb": true,
+        "opposingBankProjection": 35.75553969668168,
+        "minimumOpposingBankDepth": 31.953090617340916,
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "completed": true,
+        "rawActorStepHz": 60,
+        "maxTravelSourceUnits": 99.35737178665217
+      },
+      {
+        "team": 1,
+        "seconds": 53.65833333333333,
+        "start": [
+          60,
+          7.505000114440918,
+          -22
+        ],
+        "goal": [
+          -33.5,
+          4.505000114440918,
+          12.5
+        ],
+        "end": [
+          -32.94038930040134,
+          4.5,
+          13.128699629552994
+        ],
+        "distance": 0.8416961212039609,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 27446,
+        "sourceObject": "Fld_Cross00_polySurface836246875_1__FloorTileOrange00",
+        "pathNodes": 96,
+        "currentPathNodes": 96,
+        "pi": 94,
+        "currentWaypoint": {
+          "id": 5615,
+          "x": -33.5,
+          "y": 4.505000114440918,
+          "z": 13.5
+        },
+        "refillGoalReplans": 0,
+        "mode": "paint",
+        "fire": true,
+        "jump": true,
+        "climb": true,
+        "opposingBankProjection": 35.75553969668168,
+        "minimumOpposingBankDepth": 31.953090617340916,
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "completed": true,
+        "rawActorStepHz": 120,
+        "maxTravelSourceUnits": 99.3576444012916
       }
     ],
-    "prototypes": "No highDrops definition adoption; private prototype failed; shared runtime owners have exact contacts and first touchdown mismatch."
+    "prototypes": "No highDrops definition adoption; private prototype failed; shared runtime owners have exact contacts and first touchdown mismatch.",
+    "clock": "Direct Actor/BotBrain dt at raw30/60/120 Hz; production Game._frame instead uses fixed 1/60 ticks. This negative is not yet a production render-cadence failure."
   }
 }

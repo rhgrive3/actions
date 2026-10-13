@@ -106,20 +106,27 @@ The numeric record is [robo-verification.json](robo-verification.json).
 
 The independent full-bank probe is
 [check-inkwave-robo-banks.mjs](../../scripts/check-inkwave-robo-banks.mjs).
-It constructs the real eight-alive/seven-bot turf match, uses a zero-AP Shooter,
-starts with empty ink and chooses genuine supported goals on the opposing banks.
-Only initial source-pad setup writes poses; the production Actor, Character,
-BotBrain, WeaponRunner and Projectiles then run without pose, velocity or ink
-overrides. Team 0 reaches `[33.5, 4.505000114440918, -12.5]` at all three rates
-in 68.4/59.97/58.68 seconds. The retained team-1 30 Hz failure abandons its
-original goal and ends airborne near `[7.37, 4.47, 5.49]` after 90 seconds,
-41.47 units from `[-33.5, 4.505000114440918, 12.5]`.
+Its default runs the installed `Game._frame` at 30/60/120 render cadences and
+records the actual fixed 1/60 Actor ticks. It constructs the real
+eight-alive/seven-bot turf match, uses a zero-AP Shooter, starts with empty ink and
+chooses genuine supported goals on the opposing banks. Only initial source-pad
+setup writes poses; production logic then runs without pose, velocity or ink
+overrides.
+
+The retained earlier probe used raw Actor/BotBrain step intervals, independently
+of `Game._frame`. Those are logic stress cases, not production render-cadence
+failures. Team 0 reaches `[33.5, 4.505000114440918, -12.5]` at raw 30/60/120 Hz
+in 68.4/59.97/58.68 seconds. Team 1 succeeds at raw 60/120 Hz in 68.47/53.66
+seconds. The raw team-1 30 Hz failure abandons its original goal and ends airborne
+near `[7.37, 4.47, 5.49]` after 90 seconds, 41.47 source units from
+`[-33.5, 4.505000114440918, 12.5]`. Production fixed-clock qualification is pending;
+the raw failure alone does not justify a shared runtime change.
 
 Contact tracing shows the failed actor is already humanoid, with radius/lift
 0.35/0.35 and height 1.45; its current foot center/ring have no support. Releasing
 transform/fire and holding its existing waypoint direction through ordinary
-input lands it on an original source slope. This is a controller/path-following
-failure, not missing source data. A private `highDrops` calibration exposed a
+input lands it on an original source slope. This is a raw-step path-following
+stress failure, not missing source data. A private `highDrops` calibration exposed a
 separate live drop: forecast Y=-0.1667, actual first source-foot touchdown Y=0.08.
 The original handler keeps moving outward because it compares center heights.
 Those diagnostics and the unsuccessful metadata prototypes remain private;
