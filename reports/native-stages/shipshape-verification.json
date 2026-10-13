@@ -33957,7 +33957,9 @@
     "sourceGeometryAndMaskChanged": false,
     "ordinaryJumpInput": "fd23d46d87498dced990c5ee5655db2462169e2e",
     "sourceClamsGoalAndEighthPickup": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
-    "groundedFormSelector": "0c39e684610d3ab57edeee68a7ce73d0e94ef067"
+    "groundedFormSelector": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
+    "dropRecovery": "7a28a075cd916ed9ad0cd89bdb967037d5d463a5",
+    "main18ceCompatibility": "90040586c3728ca20d69ed43014528e0f68cbbdf"
   },
   "ownPr": {
     "url": "https://github.com/rhgrive3/actions/pull/1394",

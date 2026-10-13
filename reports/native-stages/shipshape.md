@@ -76,9 +76,14 @@ original `WallCrane` slope: the node centre is y 5.179844, while the real suppor
 foot is y 5.340193. The old Drop approach gate rejects that 0.160349 difference.
 The accepted physical support helper admits the same real foot; a production
 Actor/Character regression passes 36 strict source capsule checks and preserves
-all geometry, flags and masks. Manta owns the pending Drop recovery correction;
-it has not been consumed or claimed as accepted. Complete bank execution remains
-unfinished. Source drop arrival is observed at every installed simulation step
+all geometry, flags and masks. Accepted Drop recovery
+`7a28a075cd916ed9ad0cd89bdb967037d5d463a5` now completes this authentic
+departure at 30/60/120 render cadences in production Game, with 190 actor and
+190 micro capsule samples clear. The branch consumes it through accepted
+foundation `90040586c3728ca20d69ed43014528e0f68cbbdf`, which also incorporates
+the independently qualified main 18ce compatibility refresh. Own complete
+bank execution remains unfinished and requires the final composed runtime.
+Source drop arrival is observed at every installed simulation step
 before ordinary AI selects its next goal.
 
 The current private artifact is
