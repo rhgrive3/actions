@@ -51,14 +51,14 @@ NATIVE_STAGE_IDS=eeltail node scripts/check-inkwave-native-source-browser.mjs _s
 NATIVE_STAGE_IDS=eeltail node scripts/check-inkwave-native-stages.mjs _site-native-eeltail-local .browser-evidence/eeltail-gameplay
 NATIVE_STAGE_IDS=eeltail node scripts/check-inkwave-native-online.mjs _site-native-eeltail-local .browser-evidence/eeltail-online
 NATIVE_STAGE_IDS=eeltail NATIVE_RENDER_MOVING=1 node scripts/check-inkwave-native-render.mjs _site-native-eeltail-local .browser-evidence/eeltail-render
-NATIVE_STAGE_IDS=eeltail NATIVE_MOBILE_STAGE_IDS=eeltail node scripts/check-inkwave-native-lifecycle.mjs _site-native-eeltail-local .browser-evidence/eeltail-lifecycle
+NATIVE_STAGE_IDS=eeltail NATIVE_MOBILE_STAGE_IDS=eeltail node scripts/check-inkwave-native-lifecycle.mjs _site-native-eeltail-local .browser-evidence/eeltail-lifecycle-final
 ```
 
 数値要約: [eeltail-verification.json](eeltail-verification.json)。11.3.0 の native collision / paint mask / spawn / ranked placement はこの検証でも未確認のまま。
 
 ## Chromium の検証状態
 
-2026-10-13 時点で原典の公開 direct download / worker conversion / 8 actors・7 bots / Squid Spawn landing / private cache hit（追加OBJ download=0）/ damaged OBJ reject と Tidewater retain は実 Chromium で確認した。shared source checker の same-map reuse と world-only Tidewater preparation による false timeout / stale actor error は checker 側で修正した。失敗 raw evidence も ignored 領域に残す。同じ immutable build で public source / Turf実ゲーム / ガチ4プローブ / online 5 modes / render A/B は positive。lifecycle は quality authority 保持が positive、single-stage同一map reuseにより damaged asset を読まない既知の checker failure を記録し、修正 checker の検証待ち。最終 foundation の変更挙動確認は進行中。
+2026-10-13 時点で原典の公開 direct download / worker conversion / 8 actors・7 bots / Squid Spawn landing / private cache hit（追加OBJ download=0）/ damaged OBJ reject と Tidewater retain は実 Chromium で確認した。shared source checker の same-map reuse と world-only Tidewater preparation による false timeout / stale actor error は checker 側で修正した。失敗 raw evidence も ignored 領域に残す。同じ immutable build で public source / Turf実ゲーム / ガチ4プローブ / online 5 modes / render A/B は positive。lifecycle は修正 checker (`60cbfb49`) で全て pass。high/low quality で CPU paint / triangles / physics / Nav 保持、実1回の damaged geometry fetch を integrity reject して live level / paint / display 保持、native preparation cancel → Tidewater の native groups=0、switch後の resource counts復元を確認した。touch viewport 844×390で8 actors / grounded / Squid Spawn終了、errors=0。先の same-map no-op による checker failure は失敗診断として保存し、game code を変えずに real production build seam で再検証した。最終 foundation の変更挙動確認は進行中。
 
 Chromium / SwiftShader の timing はソフトウェアGLの診断値。モバイル emulation は viewport / touch の動作確認であり、実機GPUのfpsではない。
 

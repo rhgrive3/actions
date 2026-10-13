@@ -4,8 +4,6 @@
   "internal": "Vss_District00",
   "verifiedAt": "2026-10-13",
   "foundationCommit": "a84009dee41bdb8350401412e21a4e991a426adb",
-  "stageDefinitionCommit": "391b04cc",
-  "motionVerifierCommit": "505bedb8",
   "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
   "sourceTree": "a9c61480637edfe4a2482a9d3e2e189294867f60",
   "source": {
@@ -770,7 +768,7 @@
     "renderTrianglesPreserved": true
   },
   "browser": {
-    "status": "incomplete",
+    "status": "passed",
     "source": {
       "status": "passed",
       "stages": [
@@ -1982,7 +1980,7 @@
       "errors": []
     },
     "lifecycle": {
-      "status": "failed",
+      "status": "passed",
       "errors": [],
       "quality": {
         "cpuGridUnchanged": true,
@@ -1992,15 +1990,89 @@
         "textureCount": 103
       },
       "failureRollback": {
-        "rejected": false,
+        "rejected": true,
         "levelRetained": true,
         "paintRetained": true,
         "displayRetained": true
       },
-      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(Object.values(result.failureRollback).every(Boolean))\n\n    at file:///workspace/stage-worktrees/eeltail/scripts/check-inkwave-native-lifecycle.mjs:27:15",
-      "knownCheckerFailure": "Single-stage _buildWorld reuse skipped corrupt asset; source/paint/display retained; retry awaits tested production-loader seam checker"
-    },
-    "measuredFoundationCommit": "a84009dee41bdb8350401412e21a4e991a426adb"
+      "corruptionProbe": {
+        "requests": 1,
+        "error": "Native integrity mismatch: eeltail/vertices.bin"
+      },
+      "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+      "cancellation": {
+        "id": "tidewater",
+        "nativeGroups": 0,
+        "preparationCancelled": true
+      },
+      "switches": [
+        {
+          "id": "tidewater",
+          "native": false,
+          "nativeGroups": 0,
+          "memory": {
+            "geometries": 210,
+            "textures": 28
+          }
+        },
+        {
+          "id": "eeltail",
+          "native": true,
+          "nativeGroups": 1,
+          "memory": {
+            "geometries": 370,
+            "textures": 121
+          }
+        },
+        {
+          "id": "tidewater",
+          "native": false,
+          "nativeGroups": 0,
+          "memory": {
+            "geometries": 210,
+            "textures": 28
+          }
+        }
+      ],
+      "fingerprint": {
+        "same": true,
+        "changed": false,
+        "missing": false
+      },
+      "mobile": [
+        {
+          "id": "eeltail",
+          "viewport": [
+            844,
+            390
+          ],
+          "touch": true,
+          "actors": 8,
+          "native": true,
+          "atlas": 2048,
+          "textureCount": 103,
+          "cpuFrame": {
+            "p50": 13.699999995529652,
+            "p95": 33.899999998509884,
+            "max": 159.30000000447035
+          },
+          "gpuDrainRenderMs": 10,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "local": {
+            "grounded": true,
+            "spawn": false
+          },
+          "mobileHardwareMeasured": false
+        }
+      ]
+    }
+  },
+  "stageDefinitionSha256": "bc3d9525aa1deb05b20a8a4ce1129f1b26923d1e48b51231aa98ad61d1ed29d9",
+  "movementVerifierSha256": "6c3da37554c6c75353e5dda8443ec24b5b525734a46225d3baa8ff3c66f87d92",
+  "sharedCheckerCliGuards": {
+    "passed": 11,
+    "failed": 0,
+    "conditions": "source-browser and lifecycle empty/unknown/duplicate requested-id guards"
   },
   "version1130Verified": false,
   "retailComparison": "UNVERIFIED: retail transform, native collision/paint semantics, spawning, ranked placements and device movement/render performance"
