@@ -6,7 +6,7 @@ import {nativeFixture,readStage} from './fixture.mjs';
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
 const available=!!ROOT&&fs.existsSync(path.join(ROOT,'umami/manifest.json'));
 test('Umami tower retains the entire source swept rider footprint and normal input boarding',{skip:!available},async()=>{
- const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'umami')),P=G.physics=new f.NativePhysics(L);
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'umami')),P=G.physics=new f.NativePhysics(L);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,P);G.match.mode='turf';G.match.opts={};
  const S=f.nativeRankedStage(G),T=S.tower;

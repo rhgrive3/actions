@@ -13,7 +13,7 @@ test('Umami pins the complete source identity and opposing source support defini
  assert.equal(s.version1130Verified,false);assert.ok(s.spawnPads[0][2]<0&&s.spawnPads[1][2]>0);
 });
 test('Umami opposing source floors have capsule clearance and directed routes to every local objective',{skip:!available},async()=>{
- const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'umami')),P=G.physics=new f.NativePhysics(L);
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'umami')),P=G.physics=new f.NativePhysics(L);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
  for(const p of L.spawnPads){
@@ -34,7 +34,7 @@ test('Umami opposing source floors have capsule clearance and directed routes to
  for(const o of L.manifest.objects.filter(o=>o.name.includes('GeneralBoxNoPaint_')&&o.active))assert.equal(o.paintable,false);
 });
 test('Umami opening, death respawn and inward grounded walk use actual source at 30/60/120 Hz',{skip:!available},async()=>{
- const f=await nativeFixture(),{G,THREE}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'umami'));G.physics=new f.NativePhysics(L);
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'umami'));G.physics=new f.NativePhysics(L);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,G.physics);G.match.mode='turf';G.match.opts={};
  const measurements=[];
