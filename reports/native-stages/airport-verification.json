@@ -1,5 +1,5 @@
 {
-  "status": "verification-in-progress",
+  "status": "draft-paused-for-accepted-shared-foundation",
   "id": "airport",
   "name": "カジキ空港",
   "internal": "Vss_Propeller00",
@@ -2663,10 +2663,16 @@
     }
   },
   "pending": [
-    "accepted remaining shared fixes",
-    "final CPU and browser matrix",
-    "self-review",
-    "stage PR and review aggregate integration"
+    "consume accepted remaining shared climb/drop/landing fixes",
+    "rebuild exact latest accepted foundation local and public",
+    "final CPU matrix including real source opening validator",
+    "final source-browser/public cache/altered OBJ rejection",
+    "final gameplay8actors7bots/all5supportedrules/towerkeyboard/fullroute",
+    "final realWS5modes/Luna3.84/settled fullgridSHA",
+    "final renderAA/BB/sourceindexedculling/12movingcameras",
+    "final lifecyclequalityauthority/corruptbinary/cancellation/nativelegacycleanup/touch844x390",
+    "self-review/fix/retest",
+    "mark stage PR Ready and self-integrate aggregate PR1324"
   ],
   "unverified": [
     "KiTrix extraction version/date",
@@ -4739,5 +4745,122 @@
       "errors": [],
       "packets": 1530
     }
-  }
+  },
+  "sourceAdmittedWeaponProofAt64b": {
+    "status": "passed",
+    "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+    "buildContentHash": "b48533f84ea080a3aadc9c8612fcf3f63fc2b65a47a222bda64db51ddaa5e014",
+    "report": {
+      "id": "airport",
+      "sourceSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "hz": 30,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 651,
+              "triangle": 984,
+              "distanceToTarget": 0.026202647390708517,
+              "object": 1
+            }
+          ],
+          "naturalWallSplats": 3,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 1.2000000029802322,
+            "max": 1.7999999970197678
+          }
+        },
+        {
+          "hz": 60,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 651,
+              "triangle": 984,
+              "distanceToTarget": 0.026202647390708517,
+              "object": 1
+            }
+          ],
+          "naturalWallSplats": 3,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.20000000298023224,
+            "max": 2.7999999970197678
+          }
+        },
+        {
+          "hz": 120,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 651,
+              "triangle": 984,
+              "distanceToTarget": 0.026202647390708517,
+              "object": 1
+            }
+          ],
+          "naturalWallSplats": 3,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.20000000298023224,
+            "max": 2.0999999940395355
+          }
+        }
+      ],
+      "sourceObject": "FldObj_Propeller00_Pnt_BoxBaseA_low_1__CargoBoxWood00Plus",
+      "face": 651,
+      "triangle": 984,
+      "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+      "errors": []
+    },
+    "screenshotInspectedPrivately": true
+  },
+  "gpuScheduling": "Five queued full-matrix jobs were released before any Chromium launch so remaining shared acceptance probes could run. No live job or another owner was stopped. Full matrix will use latest accepted foundation.",
+  "readyForReview": false,
+  "reviewAggregateIntegrated": false
 }

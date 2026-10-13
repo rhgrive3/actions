@@ -28,4 +28,8 @@
 
 ## 検証状態
 
-ソース照合、支持点・カプセル・一方向経路と初期 CPU 行列は成功。実ブラウザと最後の共有修正を含む行列は実行中で、最終結果・fingerprint・SwiftShader 計測値は `airport-verification.json` に追記する。ブラウザ・詳細ログ・OBJ/MTL/PNG・派生バッファは私有 ignored 領域だけに置く。SwiftShader の時間を実スマートフォン・Switch の FPS として扱わない。
+ソース照合、支持点・カプセル・一方向経路、受理済み `64b0497e` での CPU 60 件と専用回帰 3 件は成功。実 Actor の 30 着地ケースは全11目標への352経路を保持する。初回 Chromium は8 Actor・7ボット・全5ルール・エラーなし。ヤグラは70 waypoint、554回の実カプセル支持と30/60/120Hzの実キーボード搭乗に成功した。初回の実 WebSocket は全5ルールで成功し、Luna の塗り半径3.84、220 settling frames 後の全 CPU grid SHA-256 一致を確認した。受理済み `64b0497e` の通常射撃は元 `CargoBoxWood00Plus` の壁で3周波数とも元三角形への接触・自然発生の壁塗り・所有に成功し、0AP・立ち射撃を実記録した。
+
+個別 PR は Draft。未受理の共有 climb/drop/landing 修正を先に確定させるため一時停止しており、Ready 化・レビュー集約への統合は未完了。最終の公開取得・gameplay・実 WebSocket・移動描画・lifecycle と最新共有修正を含む行列は残っている。5つの待機中ブラウザジョブは Chromium 開始前に解除し、実行中のジョブや他担当のジョブは停止していない。既存の成功を新しいビルドの代用にはしない。最終結果・fingerprint・SwiftShader 計測値は `airport-verification.json` に追記する。
+
+ブラウザ・詳細ログ・OBJ/MTL/PNG・派生バッファは私有 ignored 領域だけに置く。SwiftShader の時間を実スマートフォン・Switch の FPS として扱わない。
