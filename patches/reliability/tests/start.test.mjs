@@ -12,7 +12,7 @@ import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mj
 import { isRankedMode } from '../../splatoon3/runtime/ranked/engine.mjs';
 import { adaptCompiledMain } from '../../loading-cache/adapter.mjs';
 import { nativeStageRuleStatus } from '../../native-stages/runtime/rule-availability.mjs';
-import { nativeStageEnabled,NATIVE_IDS } from '../../native-stages/runtime/registry.mjs';
+import { nativeStageEnabled,NATIVE_IDS,UNAVAILABLE_NATIVE_STAGES } from '../../native-stages/runtime/registry.mjs';
 
 const RAW = fs.readFileSync(new URL('../../../inkwave-public/src/main.js', import.meta.url), 'utf8');
 const BEFORE = adaptIntro('src/main.js', adaptResults('src/main.js', adaptTouchLayout('src/main.js', adaptSource('src/main.js', RAW))));
@@ -77,7 +77,7 @@ function boot(source, held = []) {
     env: { setTheme: () => record('theme'), getSkyColors: () => ({}), rebuildForArena: () => record('arena') },
   };
   const sandbox = {
-    nativeStageEnabled,NATIVE_IDS,nativeStageRuleStatus,
+    nativeStageEnabled,NATIVE_IDS,UNAVAILABLE_NATIVE_STAGES,nativeStageRuleStatus,
     releaseNativeWorld(game) { assert.equal(game.nativeWorld,undefined,'source worlds are exercised by the native stage fixture'); },
     isRankedMode,
     // These fixtures use legacy maps; composed main also imports native-world helpers.
