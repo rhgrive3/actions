@@ -29,6 +29,6 @@ try{
    }}finally{Math.random=random;}
    G.paint.flush(1/60);G.game._skipRender=false;G.renderer.render(G.scene,G.camera);return{id:G.level.layout.id,sourceSha256:G.level.manifest.sourceSha256,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,cases,conditions:'Actual production Match/RankedEngine/rule botGoal/installed ranked wrapper/Actor/WeaponRunner/Projectiles; eight real actors and seven bots, original source-supported pad setups, empty initial ink, zero AP, no later pose/velocity/ink writes; actual rule score and RankedWorld vehicle carry through whole opposing-half Tower ride; SwiftShader'};
   },id);
-  assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(report.actors,8);assert.equal(report.bots,7);report.errors=errors;reports.push(report);console.log(JSON.stringify(report));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));await page.screenshot({path:path.join(evidence,id+'.png'),timeout:30000});await context.close();
+  assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(report.actors,8);assert.equal(report.bots,7);report.errors=errors;reports.push(report);console.log(JSON.stringify(report));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));await page.screenshot({path:path.join(evidence,id+'.png'),timeout:60000,animations:'disabled'});await context.close();
  }
 }finally{await browser.close();await new Promise(r=>server.close(r));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));}

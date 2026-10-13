@@ -232,7 +232,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   // node in the static navigation mesh. If replanning fails, walk the final
   // short approach directly when the world adapter confirms a clear segment.
   const pathFinished = !brain.path || brain.pi >= brain.path.length;
-  const sourceBoarding = G.level?.native ? brain._nativeTowerBoarding : null;
+  const sourceBoarding = G.level?.native && engine.mode === 'tower' && action === 'ride' ? brain._nativeTowerBoarding : null;
   let approachDx = sourceBoarding ? sourceBoarding.proof.start[0] - a.pos.x : dx;
   let approachDz = sourceBoarding ? sourceBoarding.proof.start[2] - a.pos.z : dz;
   let approachHorizontal = Math.hypot(approachDx,approachDz);
@@ -371,7 +371,11 @@ export function installRankedBots(api = {}) {
   proto.update = function (dt) {
     const match = G?.match, engine = match?.ranked, actor = this.a;
     if (!engine || !RANKED_MODES.has(engine.mode) || !actor?.alive || actor.superJumpState
-      || (typeof match.playing === 'function' && !match.playing())) return update.call(this, dt);
+      || (typeof match.playing === 'function' && !match.playing())) {
+      if(this._nativeTowerBoarding)this._nativeTowerBoarding=null;
+      return update.call(this, dt);
+    }
+    if(engine.mode!=='tower'&&this._nativeTowerBoarding)this._nativeTowerBoarding=null;
 
     this._nativeTraversalHandled = false;
     if (api.nativeTower?.update?.(this,G,engine,dt)) return;

@@ -21,7 +21,7 @@ export function nativeRankedTowerApproach(brain,target,engine,G){
  if(!best){brain._nativeTowerBoarding=null;return false;}
  brain.path=best.path;brain.pi=Math.min(1,best.path.length-1);brain.goal=best.proof.sourceNode;brain.bestD=Infinity;brain.noProg=0;
  brain._rankedApproachGoal={...target};brain._rankedApproachNode=best.proof.sourceNode;
- brain._nativeTowerBoarding={proof:best.proof,target:{...target},phase:'approach',seconds:0};
+ brain._nativeTowerBoarding={proof:best.proof,target:{...target},phase:'approach',seconds:0,level:G.level,nav:G.nav,world:G.match?.rankedWorld,engine};
  return true;
 }
 
@@ -29,7 +29,8 @@ export function nativeRankedTowerApproach(brain,target,engine,G){
  * and carries the rider. This supplies ordinary human move/jump input only. */
 export function updateNativeTowerBoarding(brain,G,engine,dt){
  const state=brain._nativeTowerBoarding,a=brain.a,w=G.match?.rankedWorld;
- if(!state||!G.level?.native||engine?.mode!=='tower'||!w||!a.alive||a.specialActive||a.superJumpState||a.s3?.squidSpawn)return false;
+ if(!state)return false;
+ if(!G.level?.native||engine?.mode!=='tower'||!w||!a.alive||a.specialActive||a.superJumpState||a.s3?.squidSpawn||state.level!==G.level||state.nav!==G.nav||state.world!==w||state.engine!==engine){brain._nativeTowerBoarding=null;return false;}
  if(nativeTowerRider(G,a)){brain._nativeTowerBoarding=null;return false;}
  const deck=w.towerBlock?.center;
  if(!deck||Math.hypot(deck.x-state.target.x,deck.z-state.target.z)>.15||Math.abs(w._towerDeckTop-state.target.y)>.1){brain._nativeTowerBoarding=null;brain.repath=0;return false;}
