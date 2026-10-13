@@ -9,3 +9,4 @@ export { nativePaintGoalIds } from './native-bots.mjs';
 export { nativeClimbTransition,updateNativeClimb } from './native-climb.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
+export { sweepNativeLevelSphere } from './native-projectile-sweep.mjs';
