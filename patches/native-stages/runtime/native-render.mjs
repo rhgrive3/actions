@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { applyNativeShadeFill, NATIVE_SHADE_FILL } from './native-lighting.mjs';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
 
 export function nativeInkMaterial(paint, murals, texlib){
@@ -46,11 +47,14 @@ export function nativeDisplay(data,textures,quality){
    mat.alphaMap=textures.get(src.maps?.opacity)||null;
    if(quality==='high'){mat.normalMap=textures.get(src.maps?.normal)||null;mat.normalScale.set(.28,.28);mat.roughnessMap=textures.get(src.maps?.roughness)||null;mat.emissiveMap=textures.get(src.maps?.emissive)||null;if(mat.emissiveMap){mat.emissive.set(0xffffff);mat.emissiveIntensity=.13;}}
    const opacity=src.channels?.opacity||'g',rough=src.channels?.roughness||'g';
-   mat.onBeforeCompile=shader=>{
+   const shadeFill={value:glass?0:NATIVE_SHADE_FILL};mat.userData.nativeShadeFill=shadeFill;
+   const channelHook=shader=>{
     if(mat.alphaMap&&opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
     if(mat.roughnessMap&&rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
    };
-   mat.customProgramCacheKey=()=>`native-channels-${opacity}-${rough}`;mat.name=o.material;cache.set(o.material,mat);materials.push(mat);
+   mat.userData.nativeChannelHook=channelHook;
+   mat.onBeforeCompile=shader=>{applyNativeShadeFill(shader,shadeFill);channelHook(shader);};
+   mat.customProgramCacheKey=()=>`native-channels-${opacity}-${rough}-shade-fill-v1`;mat.name=o.material;cache.set(o.material,mat);materials.push(mat);
   }
   const vb=new Float32Array(vertices.buffer,vertices.byteOffset+o.vo*32,o.vc*8),ib=new Uint32Array(indices.buffer,indices.byteOffset+o.io*4,o.ic),inter=new THREE.InterleavedBuffer(vb,8),g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));g.computeBoundingSphere();
