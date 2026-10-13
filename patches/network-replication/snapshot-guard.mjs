@@ -21,6 +21,12 @@ export function validForwardedEventPayload(name, payload) {
   for (const key of EVENT_VECTOR_FIELDS) {
     if (Object.hasOwn(payload, key) && !validEventVector(payload[key])) return false;
   }
+  if (name === 'weapon:fire') {
+    // Charger ribbons turn these into a mesh width and lifetime. Keep the
+    // scalars numeric on all forwarded shots, before replay identity advances.
+    return (!Object.hasOwn(payload, 'charge') || bounded(payload.charge, 0, 1.25))
+      && (!Object.hasOwn(payload, 'len') || bounded(payload.len, Number.EPSILON, 128));
+  }
   if (name !== 'special:slam') return true;
   const actor = payload.actor;
   return !!actor && typeof actor === 'object' && !Array.isArray(actor)
@@ -28,6 +34,45 @@ export function validForwardedEventPayload(name, payload) {
     && validEventVector(payload.pos)
     && bounded(payload.radius, Number.MIN_VALUE, 64)
     && Math.fround(payload.radius) > 0;
+}
+
+// Receiver-side, active-object budgets, not the size of the pending event FIFO.
+// Remote bombs also own victim-local damage, so another actor must not borrow
+// their share of the live-object budget. Ordinary local bombs remain intact.
+// Count live objects rather than maintaining counters that could go stale on
+// explosion, recycling, disconnect, match reset, or ownership handoff.
+export const REMOTE_GHOST_BOMB_LIMITS = Object.freeze({ actor: 24, peer: 48, total: 96 });
+export const REMOTE_GHOST_STORM_RESERVE = 2;
+export function ghostBombActorAllowance(actor, ownerId, roster = null) {
+  if (!actor || actor.owner !== ownerId) return 0;
+  if (roster === null) return REMOTE_GHOST_BOMB_LIMITS.actor;
+  if (!Array.isArray(roster) || !roster.includes(actor) || !roster.length) return 0;
+  let owned = 0;
+  for (const entry of roster) if (entry?.owner === ownerId) owned++;
+  return Math.min(REMOTE_GHOST_BOMB_LIMITS.actor,
+    Math.floor(REMOTE_GHOST_BOMB_LIMITS.total / roster.length),
+    Math.floor(REMOTE_GHOST_BOMB_LIMITS.peer / owned));
+}
+export function allowGhostBombBirth(bombs, actor, ownerId, kind = 'bomb', roster = null) {
+  if (!Array.isArray(bombs) || !actor || typeof ownerId !== 'string' || !ownerId) return false;
+  const allowance = ghostBombActorAllowance(actor, ownerId, roster);
+  const stormAllowance = Math.min(REMOTE_GHOST_STORM_RESERVE, allowance);
+  const classAllowance = kind === 'storm' ? stormAllowance : allowance - stormAllowance;
+  if (classAllowance <= 0) return false;
+  let total = 0, byPeer = 0, byActor = 0, byClass = 0;
+  for (const b of bombs) {
+    if (!b?.ghost) continue;
+    total++;
+    if (b.owner?.owner === ownerId) byPeer++;
+    if (b.owner === actor) {
+      byActor++;
+      if ((b.kind === 'storm') === (kind === 'storm')) byClass++;
+    }
+    if (total >= REMOTE_GHOST_BOMB_LIMITS.total
+      || byPeer >= REMOTE_GHOST_BOMB_LIMITS.peer
+      || byActor >= allowance || byClass >= classAllowance) return false;
+  }
+  return true;
 }
 
 export function validSnapshotTimestamp(timestamp) {
