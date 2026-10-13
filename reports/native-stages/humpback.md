@@ -1,0 +1,11 @@
+# コンブトラック / Humpback Pump Track
+
+Status: source acquired; playable-route verification in progress. This report does not claim retail parity or a passed playable stage.
+
+The independent definition selects pinned KiTrix `Vss_Wave03` at commit `0611f51b35c9736ee986fb2218461e2585b7875e`, tree `70167a0b036081b63638e7eacce7654057f8131c`. The original OBJ is exactly 29,146,955 bytes with SHA-256 `fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d`. An isolated LFS smudge failed with “Resource not accessible by integration”; the pinned public media fallback matched the expected OID and byte count. All 177 source MTL/PNG blobs independently match their pinned Git SHA-1 and size. Source assets, derived buffers and images remain ignored and private.
+
+The source converter retains all 254,995 vertices, 174,089 indexed source triangles and 79 objects. Inferred collision contains 149,539 original display triangles. No geometry, roof, ceiling or NoPaint material is removed to create a route. The bounds retain the full skate-bowl floor extent. Preliminary local pads at `[0, 6.08, -61]` and `[0, 6.08, 61]` sit above actual plywood floors at y=6. These are inferred local supports, not recovered Nintendo placements.
+
+Initial accepted walking-only navigation retains both true pad seeds and 4,749 reachable union nodes from 21,584 candidates, but fails to find a common ranked component. The owner is inspecting real source paths and accepted opted physical wall transitions before qualifying this definition. An unproven route cannot be counted as a playable stage or replaced by a central-only map.
+
+Comparison reference is Splatoon 3 11.3.0 identity metadata, not an original-console timing measurement. `VersusSceneInfo-1130.json` identifies `Vss_Wave03` and the independently fetched scene table labels it コンブトラック. The extraction date, retail units, native collision/paint/grate/climb masks, spawn/ranked placements, BFRES shaders, moving-object states and hardware FPS remain unverified. Runtime comparisons use the actual INKWAVE public adapters, source triangles, Actor, weapons, bots, local ranked logic and production network relay; their conditions and numerical results will be recorded in [humpback-verification.json](humpback-verification.json).
