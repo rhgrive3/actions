@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {fixture,emitMainShot} from '../../splatoon3/tests/source-fixture.mjs';
+import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
 import {readStage} from './fixture.mjs';
 
@@ -62,8 +62,8 @@ test('actual dynamic game OBBs retain their analytic sweep and nearest-hit prior
 });
 
 const ASSETS=process.env.INKWAVE_NATIVE_SWEEP_ASSETS;
-test('original Flounder source shot bypasses the false Pipe object volume and paints its real wall',{skip:!ASSETS||!fs.existsSync(path.join(ASSETS,'flounder','manifest.json'))},()=>{
- const {G}=f,level=new f.NativeLevel(readStage(ASSETS,'flounder'));G.level=level;G.physics=new f.NativePhysics(level);
+for(const hz of [30,60,120])test('original Flounder admitted source shot paints its real wall at '+hz+' Hz',{skip:!ASSETS||!fs.existsSync(path.join(ASSETS,'flounder','manifest.json'))},()=>{
+ const {G}=f,level=new f.NativeLevel(readStage(ASSETS,'flounder'));G.actors.length=0;G.projectiles.clear();G.time=0;G.level=level;G.physics=new f.NativePhysics(level);
  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
  G.paint=new CpuPaint(null,level,{atlasSize:2048,maxDensity:4,cell:.25});
  const from=V(10.348,7.05,-10.7),to=V(8.255532108871513,7.912507995493927,-10.81141850073193);
@@ -73,7 +73,8 @@ test('original Flounder source shot bypasses the false Pipe object volume and pa
  assert.equal(hit.hit,true);assert.equal(hit.face,40740);assert.equal(hit.triangle,149775);close(hit.point.x,7,2e-4);
  const actor=f.make('shooter');actor.pos.set(10.348,6,-11);actor.character.root.position.copy(actor.pos);actor.aimYaw=actor.intent.aimYaw=Math.atan2(-125.54807346770923,-6.685110043915829);actor.aimPitch=actor.intent.aimPitch=Math.atan2(51.75047972963562,Math.hypot(125.54807346770923,6.685110043915829));
  actor.aimPoint.copy(hit.point);f.setRandom(()=>.5);
- try{emitMainShot(f,actor);}catch(error){console.log(JSON.stringify({weapon:actor.weapon,alive:actor.alive,form:actor.form,ink:actor.ink,aimPitch:actor.aimPitch,spawn:actor.s3?.squidSpawn,intent:actor.intent}));throw error;}
- for(let i=0;i<30;i++){G.time+=1/60;G.projectiles.update(1/60);G.paint.advanceSimulation(1/60);}
+ actor.intent.fire=true;for(let i=0;i<hz&&!G.projectiles.list.length;i++){G.time+=1/hz;actor.update(1/hz);}actor.intent.fire=false;
+ assert.equal(G.projectiles.list.length,1,'ordinary Actor→WeaponRunner→Projectiles admits one source round');
+ for(let i=0;i<hz/2;i++){G.time+=1/hz;G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);}
  const face=level.faces[40740];assert.equal(G.paint.sample(face.id,hit.u,hit.v),1,'the target source wall is owned, not a manual floor stamp');
 });
