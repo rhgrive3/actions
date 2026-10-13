@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "4d0d88ef05cd2fc5389bddcdcf3a7539fc926dd2",
+  "latestConsumedFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -923,7 +923,9 @@
         "browserErrors": 0,
         "reason": "At 120 Hz input cadence, one render frame can execute zero 60 Hz STEPs; human pop preceded the Space-release SQ step. Corrected checker waits for actual clock advancement and observed burst."
       }
-    ]
+    ],
+    "originalPadRouteProven": false,
+    "runwayOwnershipScope": "39 wall/7 of8 floor ownership are sampled weapon witnesses only; they do not establish all intermediate runway surfaces paintable. Manta literal ray finds retained upward NoPaint support at[23.2,3.0102999,18.5]/triangle172327 before actual departure; no role or mask waiver."
   },
   "privateDropCalibration": {
     "status": "diagnostic only; candidate not adopted",
@@ -6112,7 +6114,8 @@
     "screenshotInspectedPrivately": true,
     "positiveContinuousCapsuleSamples": 616,
     "maxGoalDistance": 0.3052982592504668,
-    "scope": "Actual human keyboard sequence only. Positive natural weapon paint, every approach/ascent STEP capsule screened and23 literal source supports. Negative wall begins manually friendly-owned. No ordinary-bot admission, whole-bank bot or all-mode qualification; immutable build predates current ranked/foot/optionalSurge/search changes."
+    "scope": "Actual human keyboard sequence only. Positive natural weapon paint, every approach/ascent STEP capsule screened and23 literal source supports. Negative wall begins manually friendly-owned. No ordinary-bot admission, whole-bank bot or all-mode qualification; immutable build predates current ranked/foot/optionalSurge/search changes.",
+    "originalPadRouteProven": false
   },
   "acceptedSourcePolygonCoverage": {
     "foundation": "18626f65c0b1bcf8341bb5fd17b2eecd70903167",
@@ -6344,5 +6347,1099 @@
     "pr": 1386,
     "scope": "Accepted existing gInk coverage multiplication into native source overlay alpha; source textures/geometry/masks/physics/nav/actors and legacy material unchanged. Bluefin current rendered artifact will be resealed after independently accepted ordinary-bot approach.",
     "stageRenderRetest": "Pending final current affected matrix; previous render results retain original artifact identity."
+  },
+  "acceptedCurrentMainRefresh": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "pr": 1387,
+    "upstreamMain": "14f9f913",
+    "scope": "Accepted current posture/muzzle/weapon/special/sub/ranked/build refresh, preserving native geometry/masks/flags. Previous physical, weapon, rule and network proofs retain exact earlier artifact scopes.",
+    "affectedFinalChecks": "Pending accepted approach, then current source Actor/weapon/rule/network/browser matrix; no interim final build."
+  },
+  "literalPositiveRunwayReachability": {
+    "status": "read-only-existing-graph-unreachable",
+    "foundation": "4d0d88ef05cd2fc5389bddcdcf3a7539fc926dd2",
+    "recipe": "inkwave-browser-source-v4",
+    "flags": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "target": {
+      "id": 6540,
+      "position": [
+        20,
+        3,
+        18.5
+      ],
+      "valid": false,
+      "nativePaintable": true,
+      "teamReach": [
+        false,
+        false
+      ],
+      "source": {
+        "triangle": 173307,
+        "face": 52907,
+        "point": [
+          20,
+          3,
+          18.5
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "object": "Fld_Ruins03_polySurface8362405283_1__BlueTarp00"
+      }
+    },
+    "incomingOrdinaryWalks": 8,
+    "allIncomingUnreachable": true,
+    "regionSourceNodes": 18,
+    "regionReachableNodes": 0,
+    "reverseAncestors": 358,
+    "reachableAncestors": 0,
+    "spawnSeeds": [
+      357,
+      10421
+    ],
+    "teamReachCounts": [
+      4133,
+      6606
+    ],
+    "frontierPairs": [
+      {
+        "from": {
+          "id": 4970,
+          "position": [
+            19,
+            2.9999999999999964,
+            -8.5
+          ],
+          "valid": true,
+          "nativePaintable": true,
+          "teamReach": [
+            true,
+            true
+          ],
+          "source": {
+            "triangle": 85631,
+            "face": 27709,
+            "point": [
+              19,
+              3,
+              -8.5
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "object": "FldObj_Ruins03PntStage_group222238301_pCube194286_FloorEarthBrown__FloorEarthBrown"
+          }
+        },
+        "to": {
+          "id": 5047,
+          "position": [
+            19,
+            3.090560786635457,
+            -6.5
+          ],
+          "valid": false,
+          "nativePaintable": false,
+          "teamReach": [
+            false,
+            false
+          ],
+          "source": {
+            "triangle": 50195,
+            "face": -1,
+            "point": [
+              19,
+              3.090560786635453,
+              -6.5
+            ],
+            "normal": [
+              -0.10353248566389084,
+              0.9922752380371094,
+              -0.06834468245506287
+            ],
+            "object": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet"
+          }
+        },
+        "horizontalDistance": 2,
+        "heightRise": 0.09056078663546074,
+        "ordinaryLiftLOS": true,
+        "diagonalSupports": null,
+        "blockingRay": null
+      },
+      {
+        "from": {
+          "id": 5008,
+          "position": [
+            20,
+            3.020161809463982,
+            -7.5
+          ],
+          "valid": true,
+          "nativePaintable": false,
+          "teamReach": [
+            true,
+            true
+          ],
+          "source": {
+            "triangle": 50139,
+            "face": -1,
+            "point": [
+              20,
+              3.02016180946398,
+              -7.5
+            ],
+            "normal": [
+              -0.09290546178817749,
+              0.9956732988357544,
+              -0.001817224663682282
+            ],
+            "object": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet"
+          }
+        },
+        "to": {
+          "id": 5047,
+          "position": [
+            19,
+            3.090560786635457,
+            -6.5
+          ],
+          "valid": false,
+          "nativePaintable": false,
+          "teamReach": [
+            false,
+            false
+          ],
+          "source": {
+            "triangle": 50195,
+            "face": -1,
+            "point": [
+              19,
+              3.090560786635453,
+              -6.5
+            ],
+            "normal": [
+              -0.10353248566389084,
+              0.9922752380371094,
+              -0.06834468245506287
+            ],
+            "object": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet"
+          }
+        },
+        "horizontalDistance": 1.4142135623730951,
+        "heightRise": 0.07039897717147525,
+        "ordinaryLiftLOS": true,
+        "diagonalSupports": [
+          false,
+          false
+        ],
+        "blockingRay": null
+      },
+      {
+        "from": {
+          "id": 4969,
+          "position": [
+            18,
+            2.9999999999999964,
+            -8.5
+          ],
+          "valid": true,
+          "nativePaintable": true,
+          "teamReach": [
+            true,
+            true
+          ],
+          "source": {
+            "triangle": 85631,
+            "face": 27709,
+            "point": [
+              18,
+              3,
+              -8.5
+            ],
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "object": "FldObj_Ruins03PntStage_group222238301_pCube194286_FloorEarthBrown__FloorEarthBrown"
+          }
+        },
+        "to": {
+          "id": 5046,
+          "position": [
+            18,
+            3.145288143466086,
+            -6.5
+          ],
+          "valid": false,
+          "nativePaintable": false,
+          "teamReach": [
+            false,
+            false
+          ],
+          "source": {
+            "triangle": 50188,
+            "face": -1,
+            "point": [
+              18,
+              3.1452881434660864,
+              -6.5
+            ],
+            "normal": [
+              0.08570533990859985,
+              0.9770227670669556,
+              -0.19514386355876923
+            ],
+            "object": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet"
+          }
+        },
+        "horizontalDistance": 2,
+        "heightRise": 0.14528814346608954,
+        "ordinaryLiftLOS": true,
+        "diagonalSupports": null,
+        "blockingRay": null
+      }
+    ],
+    "evidence": ".browser-evidence/accepted-coverage/runway-adjacency.json",
+    "scope": "Exact source support and old graph adjacency only. No graph/geometry/definition edits or new edge qualification. Standalone lower initial-pose human ascent does not prove access from the original upper pad."
+  },
+  "currentMainPositiveHumanCpu": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationMilliseconds": 21065.955895,
+    "evidence": ".browser-evidence/current-main-calibration/positive-human.tap",
+    "proof": {
+      "id": "bluefin",
+      "positiveBankHumanAccess": [
+        {
+          "team": 0,
+          "hz": 30,
+          "start": [
+            20,
+            3,
+            18.5
+          ],
+          "sourceStartTriangle": 173307,
+          "capEnd": [
+            32.52356666666666,
+            9.031200408935547,
+            18.501003042722672
+          ],
+          "sourceCapTriangle": 171860,
+          "seconds": 3.533333333333333,
+          "bankGoal": [
+            20,
+            9,
+            40.5
+          ],
+          "bankEnd": [
+            19.983234802074858,
+            9,
+            40.26676672934317
+          ],
+          "bankWalkSeconds": 5.766666666666656,
+          "walkwaySourceSupports": 23,
+          "wallSamples": 39,
+          "floorTargets": 8,
+          "floorOwned": 7,
+          "unownedFloorSamples": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ],
+          "paintSeconds": 2.6000000000000005,
+          "refillSeconds": 0.8666666666666666,
+          "fireFrames": 78,
+          "noPaintSamples": 0,
+          "jumped": true,
+          "climbed": true,
+          "existingSurgeBurst": true,
+          "fullChargeHumanPop": true,
+          "continuousActualCapsuleSamples": 106,
+          "continuousActualCapsuleFailures": 0,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "start": [
+            20,
+            3,
+            18.5
+          ],
+          "sourceStartTriangle": 173307,
+          "capEnd": [
+            32.38555555555556,
+            9.031200408935547,
+            18.5
+          ],
+          "sourceCapTriangle": 171860,
+          "seconds": 3.4,
+          "bankGoal": [
+            20,
+            9,
+            40.5
+          ],
+          "bankEnd": [
+            19.987607931153324,
+            9,
+            40.1736072310186
+          ],
+          "bankWalkSeconds": 5.716666666666652,
+          "walkwaySourceSupports": 23,
+          "wallSamples": 39,
+          "floorTargets": 8,
+          "floorOwned": 7,
+          "unownedFloorSamples": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ],
+          "paintSeconds": 2.5999999999999956,
+          "refillSeconds": 0.850000000000001,
+          "fireFrames": 156,
+          "noPaintSamples": 0,
+          "jumped": true,
+          "climbed": true,
+          "existingSurgeBurst": true,
+          "fullChargeHumanPop": true,
+          "continuousActualCapsuleSamples": 204,
+          "continuousActualCapsuleFailures": 0,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "start": [
+            20,
+            3,
+            18.5
+          ],
+          "sourceStartTriangle": 173307,
+          "capEnd": [
+            32.33849999999978,
+            9.031200408935547,
+            18.5
+          ],
+          "sourceCapTriangle": 171860,
+          "seconds": 3.3583333333333334,
+          "bankGoal": [
+            20,
+            9,
+            40.5
+          ],
+          "bankEnd": [
+            20.001140545402777,
+            9,
+            40.18046466016357
+          ],
+          "bankWalkSeconds": 5.733333333333408,
+          "walkwaySourceSupports": 23,
+          "wallSamples": 39,
+          "floorTargets": 8,
+          "floorOwned": 7,
+          "unownedFloorSamples": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ],
+          "paintSeconds": 2.6083333333333267,
+          "refillSeconds": 0.8416666666666661,
+          "fireFrames": 313,
+          "noPaintSamples": 0,
+          "jumped": true,
+          "climbed": true,
+          "existingSurgeBurst": true,
+          "fullChargeHumanPop": true,
+          "continuousActualCapsuleSamples": 403,
+          "continuousActualCapsuleFailures": 0,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0
+        }
+      ],
+      "conditions": "production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then inward run, jump at x>23.7, hold squid/jump through attachment, stop at feet>=7.2 until full existing Surge charge, release jump for one squid tick then kid/+X; every live approach/climb capsule continuously source-screened; 23 separately supported bank walkway points; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG"
+    },
+    "originalPadRouteProven": false,
+    "ownershipScope": "39 wall samples and7 of8 floor targets only; intermediate real NoPaint floor triangle172327 retained. wall noPaintSamples is a wall-only count.",
+    "optionalSourceMotion": "CPU VM optional motion unavailable; production Character and Actor integration/frame finishing retained."
+  },
+  "currentMainRunwayFrontierPhysical": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "recipe": "inkwave-browser-source-v4",
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "cases": [
+      {
+        "x": 18,
+        "jumping": false,
+        "hz": 30,
+        "start": [
+          18,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          18,
+          3.1452881434660864,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50188,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.7,
+        "reached": false,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          17.529943004401503,
+          -1.3662999868392944,
+          -5.652631939739808
+        ],
+        "capsules": 21,
+        "capsuleFailures": 2,
+        "footSupported": false,
+        "installedFoot": {
+          "hit": false,
+          "y": 0,
+          "block": -1,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "static": false
+        },
+        "firstFailures": [
+          {
+            "from": [
+              17.96119294005138,
+              2.44263227678939,
+              -7.0012229321868995
+            ],
+            "to": [
+              17.87393664228535,
+              2.2318544990116123,
+              -6.959405831982019
+            ],
+            "grounded": false,
+            "form": "kid"
+          },
+          {
+            "from": [
+              17.87393664228535,
+              2.2318544990116123,
+              -6.959405831982019
+            ],
+            "to": [
+              17.789328564696113,
+              1.986984638047682,
+              -6.917453986923526
+            ],
+            "grounded": false,
+            "form": "kid"
+          }
+        ],
+        "sourceEnd": {
+          "triangle": 109194,
+          "face": -1,
+          "point": [
+            17.529943004401503,
+            -1.3662999868392944,
+            -5.652631939739808
+          ]
+        },
+        "gearAP": 0
+      },
+      {
+        "x": 18,
+        "jumping": false,
+        "hz": 60,
+        "start": [
+          18,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          18,
+          3.1452881434660864,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50188,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.7,
+        "reached": false,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          17.41193397043467,
+          -1.3662999868392944,
+          -5.672127606918156
+        ],
+        "capsules": 42,
+        "capsuleFailures": 1,
+        "footSupported": false,
+        "installedFoot": {
+          "hit": false,
+          "y": 0,
+          "block": -1,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "static": false
+        },
+        "firstFailures": [
+          {
+            "from": [
+              17.978694792860892,
+              2.453221062394944,
+              -7.017279038509708
+            ],
+            "to": [
+              17.918741564329896,
+              2.362011797160849,
+              -6.993174555641165
+            ],
+            "grounded": false,
+            "form": "kid"
+          }
+        ],
+        "sourceEnd": {
+          "triangle": 109194,
+          "face": -1,
+          "point": [
+            17.41193397043467,
+            -1.3662999868392944,
+            -5.672127606918156
+          ]
+        },
+        "gearAP": 0
+      },
+      {
+        "x": 18,
+        "jumping": false,
+        "hz": 120,
+        "start": [
+          18,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          18,
+          3.1452881434660864,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50188,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.7,
+        "reached": false,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          17.365177516439687,
+          -1.3662999868392944,
+          -5.662490421151112
+        ],
+        "capsules": 84,
+        "capsuleFailures": 0,
+        "footSupported": false,
+        "installedFoot": {
+          "hit": false,
+          "y": 0,
+          "block": -1,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "static": false
+        },
+        "firstFailures": [],
+        "sourceEnd": {
+          "triangle": 109194,
+          "face": -1,
+          "point": [
+            17.365177516439687,
+            -1.3662999868392944,
+            -5.662490421151112
+          ]
+        },
+        "gearAP": 0
+      },
+      {
+        "x": 18,
+        "jumping": true,
+        "hz": 30,
+        "start": [
+          18,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          18,
+          3.1452881434660864,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50188,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.4666666666666667,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          18,
+          3.163397284968672,
+          -6.409333333333331
+        ],
+        "capsules": 14,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.1633972849686716,
+          "block": 54428,
+          "normal": [
+            0.08570533990859985,
+            0.9770227670669556,
+            -0.19514386355876923
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": {
+          "triangle": 50188,
+          "face": -1,
+          "point": [
+            18,
+            3.163397284968672,
+            -6.409333333333331
+          ]
+        },
+        "gearAP": 0
+      },
+      {
+        "x": 18,
+        "jumping": true,
+        "hz": 60,
+        "start": [
+          18,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          18,
+          3.1452881434660864,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50188,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.45,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          18,
+          3.169788746675467,
+          -6.617333333333329
+        ],
+        "capsules": 27,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.1218527838745063,
+          "block": 54428,
+          "normal": [
+            0.08570533990859985,
+            0.9770227670669556,
+            -0.19514386355876923
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": {
+          "triangle": 50188,
+          "face": -1,
+          "point": [
+            18,
+            3.1218527838745063,
+            -6.617333333333329
+          ]
+        },
+        "gearAP": 0
+      },
+      {
+        "x": 18,
+        "jumping": true,
+        "hz": 120,
+        "start": [
+          18,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          18,
+          3.1452881434660864,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50188,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.45,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          18,
+          3.1580377780166193,
+          -6.676166666666667
+        ],
+        "capsules": 54,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.1580377780166193,
+          "block": 54428,
+          "normal": [
+            0.08570533990859985,
+            0.9770227670669556,
+            -0.19514386355876923
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": null,
+        "gearAP": 0
+      },
+      {
+        "x": 19,
+        "jumping": false,
+        "hz": 30,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          19,
+          3.090560786635453,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50195,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.4,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          19,
+          3.1155482711556703,
+          -6.564
+        ],
+        "capsules": 12,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.1155482711556703,
+          "block": 54428,
+          "normal": [
+            -0.10353248566389084,
+            0.9922752380371094,
+            -0.06834468245506287
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": null,
+        "gearAP": 0
+      },
+      {
+        "x": 19,
+        "jumping": false,
+        "hz": 60,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          19,
+          3.090560786635453,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50195,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.4,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          19,
+          3.112379941093766,
+          -6.609999999999999
+        ],
+        "capsules": 24,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.112379941093766,
+          "block": 54428,
+          "normal": [
+            -0.10353248566389084,
+            0.9922752380371094,
+            -0.06834468245506287
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": null,
+        "gearAP": 0
+      },
+      {
+        "x": 19,
+        "jumping": false,
+        "hz": 120,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          19,
+          3.090560786635453,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50195,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.39166666666666666,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          19,
+          3.0946245143235482,
+          -6.680999999999999
+        ],
+        "capsules": 47,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.0946245143235482,
+          "block": 54428,
+          "normal": [
+            -0.10353248566389084,
+            0.9922752380371094,
+            -0.06834468245506287
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": null,
+        "gearAP": 0
+      },
+      {
+        "x": 19,
+        "jumping": true,
+        "hz": 30,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          19,
+          3.090560786635453,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50195,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.4666666666666667,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          19,
+          3.0968056111052946,
+          -6.409333333333331
+        ],
+        "capsules": 14,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.0968056111052946,
+          "block": 54428,
+          "normal": [
+            -0.10353248566389084,
+            0.9922752380371094,
+            -0.06834468245506287
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": {
+          "triangle": 50195,
+          "face": -1,
+          "point": [
+            19,
+            3.0968056111052946,
+            -6.409333333333331
+          ]
+        },
+        "gearAP": 0
+      },
+      {
+        "x": 19,
+        "jumping": true,
+        "hz": 60,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          19,
+          3.090560786635453,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50195,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.4666666666666667,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          19,
+          3.0890914161719616,
+          -6.521333333333329
+        ],
+        "capsules": 28,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.0890914161719616,
+          "block": 54428,
+          "normal": [
+            -0.10353248566389084,
+            0.9922752380371094,
+            -0.06834468245506287
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": {
+          "triangle": 50195,
+          "face": -1,
+          "point": [
+            19,
+            3.0890914161719616,
+            -6.521333333333329
+          ]
+        },
+        "gearAP": 0
+      },
+      {
+        "x": 19,
+        "jumping": true,
+        "hz": 120,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "sourceGoal": [
+          19,
+          3.090560786635453,
+          -6.5
+        ],
+        "sourceGoalTriangle": 50195,
+        "sourceGoalFace": -1,
+        "sourceGoalObject": "FldObj_Ruins03PntStage_Plant_C_10__PlantationSet",
+        "seconds": 0.4666666666666667,
+        "reached": true,
+        "alive": true,
+        "grounded": true,
+        "end": [
+          19,
+          3.1144347638513055,
+          -6.580166666666667
+        ],
+        "capsules": 56,
+        "capsuleFailures": 0,
+        "footSupported": true,
+        "installedFoot": {
+          "hit": true,
+          "y": 3.1144347638513055,
+          "block": 54428,
+          "normal": [
+            -0.10353248566389084,
+            0.9922752380371094,
+            -0.06834468245506287
+          ],
+          "static": true
+        },
+        "firstFailures": [],
+        "sourceEnd": null,
+        "gearAP": 0
+      }
+    ],
+    "conditions": "Read-only stage physical input diagnosis: production Actor integration/frame finishing and Character, zeroAP Shooter, initially empty paint, source-supported initial poses, normal kid/+Z walk or one ordinary jump, no later pose/velocity/ink/ownership writes. All geometry/NoPaint/masks retained. CPU VM optional source-motion playback unavailable. No graph or running-jump edge admission.",
+    "diagnosticOnly": true,
+    "graphOrEdgeAdmission": false,
+    "evidence": ".browser-evidence/current-main-calibration/runway-frontier-physical-foot.json",
+    "positiveCases": 9,
+    "positiveCapsuleSamples": 276,
+    "retainedNegativeCases": 3,
+    "scope": "Actual local human input and strict actual capsules/static source foot contacts; no ordinary bot, whole-pad access or generic bridge qualification. x18 walks fail all rates and remain negative. x19 walks and both single jumps are physical candidates only."
   }
 }
