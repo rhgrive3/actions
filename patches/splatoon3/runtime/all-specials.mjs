@@ -1489,7 +1489,7 @@ function activeStep(rt,actor,dt) {
     if(rolling){state.fireStart=null;}
     state.wasRolling=rolling;
     moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crab',squid:false,jump:true});
-    if(actor.intent.sub&&!rolling&&elapsed<state.duration-25/60&&elapsed>=state.nextCannon){
+    if(actor.intent.sub&&!rolling&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextCannon){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
       launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,arc:2.4,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,16),nextSeed(state));
