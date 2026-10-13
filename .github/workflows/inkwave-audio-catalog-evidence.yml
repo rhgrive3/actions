@@ -46,7 +46,7 @@ jobs:
       - name: Verify charge and catalog contracts without reducing assertions
         run: |
           node tools/audio/build-worker.mjs --check
-          node --test patches/splatoon3/tests/seven-charge-swim-falloff.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs scripts/tests/inkwave-catalog-audio.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/seven-charge-swim-falloff.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs scripts/tests/inkwave-catalog-audio.test.mjs
       - name: Build exact source with production minification
         run: |
           node scripts/build-inkwave.mjs inkwave-public .built-site/_site
