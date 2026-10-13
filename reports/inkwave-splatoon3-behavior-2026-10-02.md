@@ -4129,3 +4129,10 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 ## 2026-10-14 — 全issue監査と入力寿命の修正
 
 全69件を確認し、#1396（取消済みPointer Lock）、#1400（editorへのpad入力透過）を修正。#1359/#1321の検証済み候補から#1357/#1360/#1340/#1311を集約した。公開ミラーとworkflowは不変。source監査455pass/4skip、配布版の入力/復活97passとnetwork32pass、梱包9pass、容量ゲート通過。修正前のbrowser反例を保ち、配布版の実Chromiumでeditor・neutral待ち・取消lock・fresh retry・小さいnative Canvas2D tankの5ケースが合格。controllerと非同期latencyは制御fixtureで、Switch/Android/iOS/Joy-Conの実機比較ではない。未公開の数値・曲線・原典単位を確定せず、残り63件を全解消済みとしない。全件表、正確なsource/build hash、失敗の保持、参照は `reports/inkwave-issue-resolution-2026-10-14.md` と同名JSON。
+
+
+## 2026-10-13: 18ce composition の Curling / native Sprinkler 防御回帰を復元
+
+14f9 で通過していた Curling の 20 HP 接触・Bomb_CurlingBullet 行と、native Sprinkler の Bomb / Vac / Wail AoE・所有者側ダメージ提案が、18ce の旧ファイル取り込みで失われた。元の4ケースをそのまま比較し、14f9成功・18ce失敗を確認。対象2 runtime hunkと削除された3 AoE testだけを復元し、18ceのvictim-local ghost bomb authority、Bubbler遮蔽、FIFO/quota、producer reset、候補vector遅延構築を維持した。source34+追加1通過。実minifiedを指定した35ケースも通過（26はfull-installer/emitted、既存9はsource defenseの手動installを残す）。追加Curlingケースと復元AoE3件は18ce実minifiedで失敗し修正版で成功。runtime独立reviewとsource34件は通過、追加test/documentationの最終readbackは未完。本家の新規実機一致やstutter解消は主張しない。詳細は `reports/inkwave-bomb-defense-restoration-2026-10-13.md`。
+
+同日追補: さらに Curling trail の床投影欠落を、14f9実minified成功・18ce実minified失敗で確認。source PaintCheckHeight=2 の下向き接地探索と接地点の塗り、床なし時の非塗りだけを旧実装どおり復元し、18ceのghost Sprinkler置換は全byte維持。kit-subs source38件、新規実emitted1件、合成後の防御/authority source35件・emitted指定35件（うち既存9件はsource防御手動install）成功。最終buildは `b1cedb52073238d645239872a3767a69f70107e69965364b92293fd79d6a3c50`。GPU描画・実機・stutter改善を示す結果ではない。
