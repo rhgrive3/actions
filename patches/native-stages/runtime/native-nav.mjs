@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PLAYER } from '../../../src/config.js';
 import { nativeClimbTransition } from './native-climb.mjs';
 import {nativeDropTransition} from './native-drop.mjs';
+import {nativeSurgeTransition} from './native-surge.mjs';
 const down=new THREE.Vector3(0,-1,0),origin=new THREE.Vector3(),a=new THREE.Vector3(),b=new THREE.Vector3();
 /** Keep real routes out of both supported spawn layers. The legacy largest
  * undirected component can be a decorative floor far beneath a native deck. */
@@ -49,6 +50,7 @@ export function buildNativeNav(graph){
   }
  }
  const drops=L.manifest.sourceNavigation?.highDrops?Array.from({length:graph.nodes.length},()=>[]):null;
+ const surges=L.manifest.sourceNavigation?.wallSurge?Array.from({length:graph.nodes.length},()=>[]):null;
  for(const n of graph.nodes){
   for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
    if(!dx&&!dz)continue;const ix=n.ix+dx,iz=n.iz+dz;
@@ -61,7 +63,7 @@ export function buildNativeNav(graph){
     // Native high ledges can drop safely to verified support above fall death.
     else if(!(dx&&dz)&&dy<-.5&&m.y>PLAYER.fallDeathY){type='drop';cost=st+.8;}
     else {
-     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);}
+     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);else if(surges&&dy>1.25)surges[n.id].push(id);}
      continue;
     }
     if(type==='drop'&&drops&&dy< -1.25){drops[n.id].push(id);continue;}
@@ -73,21 +75,23 @@ export function buildNativeNav(graph){
    }
   }
  }
- // A source wall can exclude one centre sample between otherwise clear
- // supports. The opted drop screen still proves every capsule trajectory.
- if(drops)for(const n of graph.nodes)for(const [dx,dz]of [[2,0],[-2,0],[0,2],[0,-2]]){
+ // A source wall can consume a whole centre sample: the next valid upper
+ // support is then two cells away. Only the opted, fully swept Surge/drop screens
+ // may qualify that actual support pair; ordinary edges remain unchanged.
+ if(surges||drops)for(const n of graph.nodes)for(const [dx,dz]of [[2,0],[-2,0],[0,2],[0,-2]]){
   const ix=n.ix+dx,iz=n.iz+dz;if(ix<0||iz<0||ix>=graph.nx||iz>=graph.nz)continue;
-  for(const id of graph.cells[iz*graph.nx+ix])if(graph.nodes[id].y-n.y< -1.25)drops[n.id].push(id);
+  for(const id of graph.cells[iz*graph.nx+ix]){const dy=graph.nodes[id].y-n.y;if(surges&&dy>1.25)surges[n.id].push(id);if(drops&&dy< -1.25)drops[n.id].push(id);}
  }
  pruneNativeNav(graph);
- if(drops){
+ if(drops||surges){
   // Build ordinary/climb edges before selecting any supports. Only expensive
   // departure simulations need the directed spawn frontier; upper masts that
   // cannot be reached do not require speculative trajectories.
   const seen=graph.valid.slice(),queue=graph.validIds.slice();
   for(let i=0;i<queue.length;i++){
    const n=graph.nodes[queue[i]];
-   for(const id of drops[n.id]){const edge=nativeDropTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   for(const id of surges?.[n.id]||[]){const edge=nativeSurgeTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   for(const id of drops?.[n.id]||[]){const edge=nativeDropTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
    for(const edge of n.nb)if(!seen[edge.to]){seen[edge.to]=1;queue.push(edge.to);}
   }
   pruneNativeNav(graph);
