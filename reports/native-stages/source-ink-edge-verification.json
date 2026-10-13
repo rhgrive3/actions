@@ -861,5 +861,18 @@
   },
   "retailMaterialShaders": "unverified",
   "hardwarePerformance": "unverified",
-  "assetsCommitted": false
+  "assetsCommitted": false,
+  "currentComposedPublicBuild": {
+    "contentHash": "8edcf7e57acf0ea7d20df595d8c8e359437a9bead1fbd25bab7b53edb2114e31",
+    "inputHash": "b697ece363ef0125484dfa16ab71d90159df24d176e64cc7048abe7732adc82c",
+    "revision": "8f49cd6bf486e37cc972d5b6c7ab90bc5f9404c6134986ee2044b2baab57a8e9",
+    "acceptedBasis": "18626f65c0b1bcf8341bb5fd17b2eecd70903167",
+    "packaging": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "startupBudget": "passed",
+    "actualSourcePixels": "prior exact recorded private artifact; shader SHA unchanged"
+  }
 }
