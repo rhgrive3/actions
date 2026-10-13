@@ -21,6 +21,7 @@ jobs:
         run: |
           node --experimental-vm-modules --test \
             patches/splatoon3/tests/special-activation-scan-1130.test.mjs \
+            patches/splatoon3/tests/special-wavebreaker-expiry-1130.test.mjs \
             patches/splatoon3/tests/special-crab-body-radius-1130.test.mjs \
             patches/splatoon3/tests/special-crab-kraken-source-1130.test.mjs \
             patches/splatoon3/tests/special-killer-wail-input-1130.test.mjs \

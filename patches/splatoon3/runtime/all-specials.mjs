@@ -1291,6 +1291,9 @@ function updateWorld(rt,dt) {
       if(o.age>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='waveFront'){
       updateWaveFront(rt,o);
+      // Each emitted wave has its own source MaxFrame and must retire after
+      // its last hit frame, even if the device or another wave still exists.
+      if(o.age+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='decoy'){
       if(o.phase==='flight'){
         const k=clamp(o.age/Math.max(.05,o.flight||1.8),0,1);
