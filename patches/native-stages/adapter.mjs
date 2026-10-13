@@ -1,3 +1,4 @@
+import {adaptNativeRuleAvailability} from './rule-availability-adapter.mjs';
 export function adaptNativeStages(rel,code){
  const once=(a,b)=>{if(code.split(a).length!==2)throw Error('Native stage adapter conflict: '+rel+' / '+a.slice(0,70));code=code.replace(a,b);};
  if(rel==='src/config.js'){
@@ -113,7 +114,7 @@ export function adaptNativeStages(rel,code){
  }
  if(rel==='patches/splatoon3/runtime/ranked/stages.mjs'){
   code="import { nativeRankedStage } from '../../../native-stages/runtime/engine.mjs';\n"+code;
-  once('  const spec = SPECS[id];','  if (level?.native) return nativeRankedStage(G);\n  const spec = SPECS[id];');
+  once('  const spec = SPECS[id];','  if (level?.native) return nativeRankedStage(G,G.match?.mode);\n  const spec = SPECS[id];');
  }
- return code;
+ return adaptNativeRuleAvailability(rel,code);
 }
