@@ -92,7 +92,15 @@ test('Bluefin admitted shooter paint and ordinary input physically traverse the 
   assert(walls.length>30,'painting targets use the actual source wall chain');
   for(let x=20.5;x<=24.5;x+=.5){const floor=P.raycast(new THREE.Vector3(x,5,18.5),new THREE.Vector3(0,-1,0),3);if(floor.hit&&floor.face>=0)floors.push(floor);}
   const actor=new f.Actor({team:0,name:'source positive bank',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});actor.spawnAt(start,Math.PI/2);G.actors=[actor];
-  const tick=()=>{G.time+=1/hz;actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);};
+  const clearance=f.nativeDropClearance(L);let screenCapsules=false,capsuleSamples=0;
+  const tick=()=>{
+   const previous=actor.pos.clone();G.time+=1/hz;actor.update(1/hz);
+   if(screenCapsules){
+    const squid=actor.form==='squid',radius=(squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw)*PLAYER.s3TerrainDistanceScale;
+    assert(clearance.clear(previous,actor.pos,radius,squid?PLAYER.squidBodyLift:PLAYER.stepUp,squid?PLAYER.squidHeight:PLAYER.height,squid),'continuous actual source capsule '+JSON.stringify({hz,from:previous.toArray(),to:actor.pos.toArray(),form:actor.form,surge:actor.s3.surge?.phase}));capsuleSamples++;
+   }
+   G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);
+  };
   let paintSeconds=0,refillSeconds=0,fireFrames=0;
   for(const target of [...floors,...walls]){
    if(actor.ink<25){actor.intent.fire=false;actor.intent.squid=true;for(let frame=0;frame<hz*4&&actor.ink<95;frame++){tick();refillSeconds+=1/hz;}actor.intent.squid=false;}
@@ -105,17 +113,23 @@ test('Bluefin admitted shooter paint and ordinary input physically traverse the 
   assert(fireFrames>0&&floorOwned>=7,'ordinary fire paints the supported running approach');
   const unownedFloorSamples=floors.filter(h=>G.paint.sample(h.face,h.u,h.v)!==1).map(h=>({point:Array.from(h.point.toArray()),face:h.face,triangle:h.triangle}));
   actor.intent.fire=false;actor.intent.squid=true;for(let frame=0;frame<hz*4&&actor.ink<95;frame++){tick();refillSeconds+=1/hz;}
-  actor.intent.move.set(1,0,0);actor.intent.jump=false;
-  let jumped=false,climbed=false,burst=false,seconds=0;
-  for(let frame=0;frame<hz*8;frame++){
+  actor.intent.move.set(1,0,0);actor.intent.jump=false;screenCapsules=true;
+  let jumped=false,climbed=false,burst=false,seconds=0,phase='run',fullChargeHumanPop=false;
+  for(let frame=0;frame<hz*12;frame++){
    if(!jumped&&actor.pos.x>23.7){actor.intent.jump=true;jumped=true;}
-   if(actor.climbing)actor.intent.jump=false;
+   if(phase==='run'&&actor.climbing)phase='charge';
+   if(phase==='charge'){
+    actor.intent.jump=true;
+    if(actor.pos.y>=7.2){actor.intent.move.set(0,0,0);if(actor.s3.surge?.charge>=1){actor.intent.jump=false;phase='release';fullChargeHumanPop=true;}}
+   }else if(phase==='release'){actor.intent.squid=false;actor.intent.jump=false;actor.intent.move.set(1,0,0);phase='human';}
    tick();climbed ||=actor.climbing;burst ||=actor.s3.surge?.phase==='burst';seconds=(frame+1)/hz;
    if(climbed&&actor.grounded&&actor.pos.y>8.9||!actor.alive)break;
   }
   assert(actor.alive&&actor.grounded&&actor.pos.y>8.9&&actor.pos.y<9.15&&actor.pos.x>27.5&&jumped&&climbed,'ordinary running jump and wall input reaches real positive bank '+JSON.stringify({hz,end:actor.pos.toArray(),alive:actor.alive,grounded:actor.grounded,jumped,climbed,burst,seconds}));
   const endSupport=P.raycast(actor.pos.clone().add(new THREE.Vector3(0,.2,0)),new THREE.Vector3(0,-1,0),.4);
   assert(endSupport.hit&&endSupport.normal.y>.68&&endSupport.point.distanceTo(actor.pos)<.01);
+  assert(fullChargeHumanPop&&capsuleSamples>hz,'ordinary full-charge release and kid pop clear every actual approach/climb capsule');
+  screenCapsules=false;
   const capEnd=Array.from(actor.pos.toArray()),walkway=[[29,19.5],[30,20.5],[31,20.5],[31,21.5],[31,22.5],[31,23.5],[31,24.5],[31,25.5],[31,26.5],[30,27.5],[29,28.5],[28,29.5],[27,30.5],[27,31.5],[26,32.5],[25,33.5],[24,34.5],[23,35.5],[22,36.5],[21,37.5],[21,38.5],[20,39.5],[20,40.5]];
   actor.intent.squid=actor.intent.jump=false;let bankWalkSeconds=0,goal;
   for(const [x,z] of walkway){
@@ -132,7 +146,7 @@ test('Bluefin admitted shooter paint and ordinary input physically traverse the 
   }
   assert(actor.grounded&&actor.pos.distanceTo(goal)<.35&&Math.abs(actor.pos.y-9)<.01);
   assert.deepEqual(Object.keys(actor.s3.abilityPoints),[]);
-  cases.push({team:0,hz,start:Array.from(start.toArray()),sourceStartTriangle:support.triangle,capEnd,sourceCapTriangle:endSupport.triangle,seconds,bankGoal:Array.from(goal.toArray()),bankEnd:Array.from(actor.pos.toArray()),bankWalkSeconds,walkwaySourceSupports:walkway.length,wallSamples,floorTargets:floors.length,floorOwned,unownedFloorSamples,paintSeconds,refillSeconds,fireFrames,noPaintSamples,jumped,climbed,existingSurgeBurst:burst,grounded:true,weapon:'shooter / Shooter_Normal_00',gearAP:0});
+  cases.push({team:0,hz,start:Array.from(start.toArray()),sourceStartTriangle:support.triangle,capEnd,sourceCapTriangle:endSupport.triangle,seconds,bankGoal:Array.from(goal.toArray()),bankEnd:Array.from(actor.pos.toArray()),bankWalkSeconds,walkwaySourceSupports:walkway.length,wallSamples,floorTargets:floors.length,floorOwned,unownedFloorSamples,paintSeconds,refillSeconds,fireFrames,noPaintSamples,jumped,climbed,existingSurgeBurst:burst,fullChargeHumanPop,continuousActualCapsuleSamples:capsuleSamples,continuousActualCapsuleFailures:0,grounded:true,weapon:'shooter / Shooter_Normal_00',gearAP:0});
  }}finally{f.restoreRandom();}
- console.log(JSON.stringify({id:'bluefin',positiveBankHumanAccess:cases,conditions:'production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG'}));
+ console.log(JSON.stringify({id:'bluefin',positiveBankHumanAccess:cases,conditions:'production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then inward run, jump at x>23.7, hold squid/jump through attachment, stop at feet>=7.2 until full existing Surge charge, release jump for one squid tick then kid/+X; every live approach/climb capsule continuously source-screened; 23 separately supported bank walkway points; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG'}));
 });
