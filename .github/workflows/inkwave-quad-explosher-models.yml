@@ -149,7 +149,16 @@ jobs:
           const all={};for(const name of['before-A','after-B','after-B2','before-A2']){const data=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/gallery.json'));if(data.errors.length)throw Error(data.errors.join('\n'));all[name]=data.rows[0].crowd;}
           for(const tier of['game','far'])for(const name of['after-B','after-B2']){
             if(all[name][tier].actors!==8||new Set(all[name][tier].ids).size!==4)throw Error('Incomplete mixed-model crowd');
-            if(all[name][tier].drawCalls!==all['before-A'][tier].drawCalls)throw Error('Draw-call regression '+tier);
+            // Model reconstruction can batch six formerly separate material draws.
+            // Enforce a nonempty real 8-Actor render and reject *more* draws, not fewer.
+            const observed=all[name][tier], baseline=all['before-A'][tier], baseline2=all['before-A2'][tier];
+            if(!Number.isSafeInteger(observed.drawCalls)||observed.drawCalls<1
+              ||observed.drawCalls>Math.min(baseline.drawCalls,baseline2.drawCalls))throw Error('Draw-call increase '+tier);
+            if(!Number.isFinite(observed.triangles)||observed.triangles<=0)throw Error('Empty crowd geometry '+tier);
+            for(const key of ['animationMs','renderSubmitMs','renderCompleteMs']) {
+              if(!Array.isArray(observed.rawSamples?.[key])||observed.rawSamples[key].length<2
+                ||observed.rawSamples[key].some(v=>!Number.isFinite(v)))throw Error('Invalid crowd timings '+tier+':'+key);
+            }
           }
           fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));console.log('QUAD_EXPLOSHER_ABBA '+JSON.stringify(all));
           JS
