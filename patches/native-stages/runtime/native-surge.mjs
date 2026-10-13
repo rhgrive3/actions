@@ -116,7 +116,15 @@ export function updateNativeSurge(brain,G,dt){
  if(missing){
   state.phase='paint';const delta=new THREE.Vector3(...c.paintStance).sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();
   const aim=new THREE.Vector3(...missing.point).sub(a.pos).add(new THREE.Vector3(0,-1.05,0));a.aimYaw=brain.aimYaw=Math.atan2(aim.x,aim.z);a.aimPitch=brain.aimPitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z))));a.aimPoint.fromArray(missing.point);
-  input.fire=a.ink>15;input.squid=!input.fire;return true;
+  // Travel and earlier walls can consume the initial tank. Finish a normal
+  // refill before firing again instead of alternating single shots at 15%.
+  if(a.ink<=PLAYER.inkMax*.15)state.refilling=true;
+  if(state.refilling&&a.ink>=PLAYER.inkMax*.9)state.refilling=false;
+  input.squid=!!state.refilling;input.fire=!input.squid;
+  // A swim interruption cancels the held Shooter stream until the player
+  // releases fire. Supply that ordinary release edge before requesting shots.
+  if(input.fire&&a.weaponRunner?.s3ShooterCancelMain)input.fire=false;
+  return true;
  }
  const side=spine.clone().sub(a.pos).setY(0);side.addScaledVector(normal,-side.dot(normal));input.squid=true;input.move.copy(normal).negate().addScaledVector(side,3).normalize();if(a.climbing&&state.phase==='swim'&&a.pos.y>=c.holdY-.7)input.move.multiplyScalar(.25);
  if(!a.climbing&&a.pos.y<c.wallTop-1.8){const delta=spine.clone().sub(a.pos).setY(0);if(delta.length()>.15)input.move.copy(delta).normalize();}
