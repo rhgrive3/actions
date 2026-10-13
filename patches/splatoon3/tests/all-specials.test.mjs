@@ -345,7 +345,15 @@ test('direct Crab cannon and thrown Stamp hits retain their source rows on actor
   victim.damage=function(amount,source,kind){seen.push(source?._s3AllSpecialDamageCause);return damage.call(this,amount,source,kind);};
   ready(attacker);
   if(special==='crabTank'){for(let i=0;i<20;i++)attacker._updateSpecial(1/60);attacker.intent.sub=true;attacker._updateSpecial(1/60);}
-  else{deployInput(attacker);for(let i=0;i<26&&attacker.specialActive;i++)attacker._updateSpecial(1/60);}
+  else{
+   // Integration must use the real R-release edge and source 42F throw windup.
+   attacker.intent.sub=true;attacker._updateSpecial(1/60);
+   attacker.intent.sub=false;attacker._updateSpecial(1/60);
+   assert.ok(Number.isFinite(attacker._s3AllSpecialState?.throwAt),'Stamp throw must be scheduled by the release edge');
+   for(let i=0;i<41;i++)attacker._updateSpecial(1/60);
+   assert.equal(f.G.projectiles.list.some(p=>p.s3AllSpecial==='ultraStamp'),false,'Stamp cannot fly before frame 42');
+   attacker._updateSpecial(1/60);
+  }
   const p=f.G.projectiles.list.find(projectile=>projectile.s3AllSpecial===special);assert.ok(p,`${special} emits a projectile`);
   f.G.projectiles._blastBurst=()=>true;p.pos.set(victim.pos.x,victim.pos.y+.8,victim.pos.z);p.prev.copy(p.pos);p.vel.set(0,0,0);p.grav=0;p.drag=0;p.straight=10;p.age=0;
   f.G.projectiles._step(p,1/60);

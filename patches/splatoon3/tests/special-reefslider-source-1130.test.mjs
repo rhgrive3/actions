@@ -58,8 +58,10 @@ test('Reefslider runs straight and source 54F timeout starts the 38F preburst',a
  assert.ok(Math.abs(actor.pos.x)<1e-5,'sideways input cannot rotate the slide');
  assert.ok(state.travel>19.3&&state.travel<19.6,`unexpected travel ${state.travel}`);
  assert.equal(events.filter(e=>e.action==='impact').length,0);
+ const dashTravel=state.travel;
  for(let i=0;i<38;i++)actor._updateSpecial(1/60);
  assert.equal(state.phase,'recovery');
+ assert.equal(state.travel,dashTravel,'braking movement cannot inflate the source 54F dash distance');
 });
 
 test('Reefslider direct contact uses the .8 radius at forward 1.0/up .8, not 1.2 around the feet',async()=>{
