@@ -51,7 +51,7 @@ export function nativeWallApproachTransition(graph,lower,direction){
  for(let i=floors.length-1;i>=0;i--)if(!visible(floors[i]))floors.splice(i,1);
  if(!floors.length||samples.some(s=>!visible(s)))return null;
  for(let t=0;t<=1;t+=.025){const point=start.clone().lerp(takeoff,t),h=P.raycast(point.clone().setY(point.y+.4),down,.75);if(!runwaySupport(L,h,lower.y)||!P.bodyFits(h.point,human,PLAYER.stepUp,PLAYER.height,false,.003))return null;}
- const minSpeed=weightSpeedCurve('shooter','run')[0]*60,maxSpeed=weightSpeedCurve('shooter','swim')[0]*60,contacts=makeContacts(),touchdowns=[];
+ const minSpeed=weightSpeedCurve('shooter','run')[0]*60,maxSpeed=weightSpeedCurve('shooter','swim')[0]*60,contacts=makeContacts(),touchdowns=[];let paintMinY=Infinity;
  for(const hz of [30,60,120])for(const jumpVelocity of new Set([PLAYER.jumpVel,PLAYER.swimJumpVel]))for(const speed of [minSpeed,(minSpeed+maxSpeed)/2,maxSpeed])for(const slack of [-.05,.05]){
   const dt=1/hz,pos=takeoff.clone().addScaledVector(dir,slack),previous=pos.clone(),velocity=dir.clone().multiplyScalar(speed);velocity.y=jumpVelocity;
   let attached=false;
@@ -60,7 +60,7 @@ export function nativeWallApproachTransition(graph,lower,direction){
    contacts.ground=contacts.wall=contacts.ceiling=false;P.collideBody(pos,sq,PLAYER.squidBodyLift,PLAYER.squidHeight,contacts,false,true);
    if(!sweep.clear(previous,pos,sq,PLAYER.squidBodyLift,PLAYER.squidHeight,true))return null;
    const h=P.raycast(pos.clone().setY(pos.y+.3),dir,PLAYER.radius+.35);
-   if(sourceCell(L,h,true)&&h.normal.dot(normal)>.999){attached=true;break;}if(pos.y<lower.y-.3)return null;
+   if(sourceCell(L,h,true)&&h.normal.dot(normal)>.999){attached=true;paintMinY=Math.min(paintMinY,h.point.y-.15);break;}if(pos.y<lower.y-.3)return null;
   }
   if(!attached||pos.y>holdY)return null;
   const attach=spine.clone().setY(pos.y);if(!sweep.clear(pos,attach,sq,PLAYER.squidBodyLift,PLAYER.squidHeight,true))return null;
@@ -78,7 +78,7 @@ export function nativeWallApproachTransition(graph,lower,direction){
  for(const n of graph.nodes){if(!n.nativePaintable||Math.abs(n.y-wallTop)>.15)continue;const distance=Math.hypot(n.x-middle.x,n.z-middle.z);if(distance<.85&&distance<score){target=n;score=distance;}}
  if(!target)return null;const goal=new THREE.Vector3(target.x,target.y,target.z);
  for(const p of touchdowns){if(!sweep.clear(p,goal,human,PLAYER.stepUp,PLAYER.height))return null;for(let i=0,count=Math.max(1,Math.ceil(p.distanceTo(goal)/.1));i<=count;i++){const point=p.clone().lerp(goal,i/count),h=P.raycast(point.clone().setY(point.y+.2),down,.4);if(!sourceCell(L,h)||Math.abs(h.point.y-point.y)>.15)return null;}}
- return{to:target.id,type:'climb',cost:wallDistance*2+wallTop-lower.y+16,climb:{kind:'approach',lower:start.toArray(),upper:goal.toArray(),paintStance:start.toArray(),normal:normal.toArray(),spine:spine.toArray(),takeoff:takeoff.toArray(),holdY,wallTop,wallProbeMaxY,minSpeed,maxSpeed,samples,floors,assurance:'Supported human runway (preserved NoPaint floor allowed) and unsupported gap, ordinary dry and own-ink jump/attachment and charged human-pop capsule forecasts; local canonical zero-AP Shooter inference, retail navigation unverified'}};
+ return{to:target.id,type:'climb',cost:wallDistance*2+wallTop-lower.y+16,climb:{kind:'approach',lower:start.toArray(),upper:goal.toArray(),paintStance:start.toArray(),normal:normal.toArray(),spine:spine.toArray(),takeoff:takeoff.toArray(),holdY,wallTop,wallProbeMaxY,minSpeed,maxSpeed,samples:samples.filter(s=>s.point[1]>=paintMinY),paintMinY,sourceRoleIntervalSamples:samples.length,floors,assurance:'Supported human runway (preserved NoPaint floor allowed) and unsupported gap, ordinary dry and own-ink jump/attachment and charged human-pop capsule forecasts; local canonical zero-AP Shooter inference, retail navigation unverified'}};
 }
 
 
