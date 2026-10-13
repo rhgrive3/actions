@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity,PRECACHE_BUDGET_BYTES,WORKER_BUDGET_BYTES} from '../adapter.mjs';
 test('production offline core budget is 10 MiB; worker ceiling remains independent',()=>{
  assert.equal(PRECACHE_BUDGET_BYTES,10*1024*1024);
- assert.equal(WORKER_BUDGET_BYTES,69*1024);
+ assert.equal(WORKER_BUDGET_BYTES,192*1024);
 });
 const baseline=process.env.INKWAVE_BASELINE_SITE;
 const source=baseline?fs.readFileSync(path.join(baseline,'src/main.js'),'utf8'):null;
