@@ -104,21 +104,23 @@ try{
   trial.frames=[];trial.status='measuring';save();
   // One in-browser transaction per trial; no CDP round-trip is included in frame
   // intervals. All blocking work, GPU completion, and rAF waits remain observable.
-  trial.frames=await page.evaluate(async({samples,warmup})=>{
+  const measured=await page.evaluate(async({samples,warmup})=>{
    const rows=[];let prevStart=null;
    for(let i=0;i<samples;i++){
     await new Promise(requestAnimationFrame);const start=performance.now(),row=window.benchFrame(1000+warmup+i);
     row.startIntervalMs=prevStart===null?null:start-prevStart;prevStart=start;rows.push(row);
-   }return rows;
+   }return {rows,endState:window.benchState(),capture:window.benchCapture()};
   },{samples:result.samples,warmup});
-  trial.endState=await page.evaluate(()=>window.benchState());
-  const capture=await page.evaluate(()=>window.benchCapture());
+  trial.frames=measured.rows;trial.endState=measured.endState;
+  const capture=measured.capture;
   const pixels=Buffer.from(capture.rgba);trial.pixelSha256=hash(pixels);trial.pixelBytes=pixels.length;
+  const colors=new Set();let opaque=0;for(let i=0;i<pixels.length;i+=4){if(pixels[i+3]===255)opaque++;colors.add(pixels.readUInt32LE(i));}
+  trial.imageValidation={opaque,pixels:pixels.length/4,colors:colors.size};
   fs.writeFileSync(path.join(output,`trial-${ordinal}-${variant}.rgba`),pixels);
   fs.writeFileSync(path.join(output,`trial-${ordinal}-${variant}.png`),Buffer.from(capture.png,'base64'));
   trial.completed=stats(trial.frames.map(f=>f.completedMs));trial.pacing=stats(trial.frames.slice(1).map(f=>f.startIntervalMs));trial.submit=stats(trial.frames.map(f=>f.submitMs));
   trial.status=errors.length?'failed':'complete';
-  trial.invariants={allEightAlive:trial.frames.every(f=>f.alive===8),allEightBotUpdates:trial.frames.every(f=>f.botCalls===8),fixedScale:trial.frames.every(f=>f.scale===1),nonemptyRender:trial.frames.every(f=>f.calls>0&&f.triangles>1000),audioOn:trial.setup.audio.on&&trial.setup.audio.state==='running',stableDrawingBuffer:trial.pixelBytes===trial.setup.width*trial.setup.height*4};
+  trial.invariants={allEightAlive:trial.frames.every(f=>f.alive===8),allEightBotUpdates:trial.frames.every(f=>f.botCalls===8),fixedScale:trial.frames.every(f=>f.scale===1),nonemptyRender:trial.frames.every(f=>f.calls>0&&f.triangles>1000),audioOn:trial.setup.audio.on&&trial.setup.audio.state==='running',stableDrawingBuffer:trial.pixelBytes===trial.setup.width*trial.setup.height*4,nonblankImage:opaque===pixels.length/4&&colors.size>=32};
   save();console.log(JSON.stringify({phase:'trial-complete',ordinal,variant,completed:trial.completed,pacing:trial.pacing,invariants:trial.invariants,errors}));
   await context.close();
   if(errors.length||Object.values(trial.invariants).some(v=>!v))throw Error('Whole-game trial invariant failed');

@@ -10,7 +10,7 @@ permissions:
   contents: read
 concurrency:
   group: inkwave-whole-game-diagnostic
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   whole-game:
     runs-on: ubuntu-latest
