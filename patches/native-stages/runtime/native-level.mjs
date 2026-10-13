@@ -58,6 +58,12 @@ export class NativeLevel extends Level {
   for(const id of face.triangles)if(this.triangleWorld.triangle(id).containsPoint(projected))return true;
   return false;
  }
+ containsFaceUV(face,u,v){
+  if(u<0||v<0||u>face.su||v>face.sv)return false;
+  const p=this._sampleNative||(this._sampleNative=new THREE.Vector3());
+  p.copy(face.origin).addScaledVector(face.u,u).addScaledVector(face.v,v);
+  return this.containsOnFace(face,p,0);
+ }
  pointInBlock(b,p,pad=0){return b.nativeFace!==undefined?this.containsOnFace(this.faces[b.nativeFace],p,pad):super.pointInBlock(b,p,pad);}
  pointInside(p,pad=0,exclude=-1){
   for(let i=this.staticBlockCount;i<this.blocks.length;i++){

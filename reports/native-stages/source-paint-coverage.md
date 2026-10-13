@@ -1,0 +1,9 @@
+# Original polygon edges and paint ownership
+
+Authoritative NativePhysics probes on the pinned Shipshape display export found 134 of 1,638 contacts inside active, collidable, paintable source triangles whose derived paint cell was dead. The rasterizer only tested the cell centre; partial polygon cells discarded valid surface points. At mirrored GapFill faces 35192/36583, UV [1.5, 0.729999995] is inside the source polygon while its cell centre [1.597916736, 0.838055521] lies outside it.
+
+The candidate rasterizers use positive-area triangle/cell overlap in both the browser worker and private Python converter. Native paint sampling additionally tests the queried UV against the exact source triangles. Thus an owned partial cell can report colour at the real surface without extending swimming ownership to the outside portion. Degenerate and edge-only contacts do not create cells; entirely uncovered polygon holes and explicit NoPaint roles remain rejected. Original render/collision arrays, masks implied by source object roles, coordinates and material selection are not altered.
+
+The browser source recipe advances from v3 to v4, invalidating stale derived-mask cache identities. Private derivatives must be rebuilt and resealed; old generated masks are not current proof. Turf cells still use the existing approximate cell-area accounting; this change does not establish Nintendo's original paint masks or scoring model.
+
+Synthetic boundary/strip/hole/NoPaint and Python-worker parity checks are queued. Independent full original-source conversion, weapon-driven wall ownership, same-cell outside-polygon negatives, and actual Chromium checks are pending. These are implementation regressions, not Splatoon 3 Ver.11.3.0 retail mask measurements. Export version, native mask semantics, retail coordinates and hardware frame rate remain unverified. No third-party original or derived assets or screenshots are committed.
