@@ -29,3 +29,23 @@ for(const definition of stages)test(definition.id+' production ranked bot wrappe
  assert.ok(cases.some(c=>c.traversalFrames>0&&c.actualWeaponPaint),'the actual rule paths must exercise native physical ownership and real weapon painting');
  console.log(JSON.stringify({id:definition.id,sourceSha256:L.manifest.sourceSha256,cases,conditions:'Actual Match/RankedEngine/rule botGoal/installed wrapper/Actor/production Character muzzle/WeaponRunner/Projectiles; constructed CPU frame omits real RankedWorld blocked callback, so these are controller routes to rule-authored goals, not complete production objective-selection proof; empty initial ink; fixed RNG before Actor and Brain; 0AP; CPU paint GPU draw only is disabled; nearby Clam collection can legitimately require no wall painting'}));
 });
+
+const dropRoot=process.env.NATIVE_RANKED_DROP_FIXTURE_ASSETS;
+test('accepted source drops keep ordinary input through the production ranked wrapper',{skip:!dropRoot},async()=>{
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,data=readStage(dropRoot,'humpback');data.manifest.sourceNavigation={wallClimb:true,highDrops:true};
+ const L=G.level=new f.NativeLevel(data),P=G.physics=new f.NativePhysics(L);
+ class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};}_pushQuad(){}_drawQuads(){}}
+ G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});const N=G.nav=new f.NavGraph(L,P);G.camera=new THREE.PerspectiveCamera();f.setRandom(()=>.5);f.installRankedBots({G,BotBrain:f.BotBrain,PLAYER});
+ const from=N.nodes[18734],edge=from.nb.find(e=>e.drop&&e.drop.direction[2]<-.99&&Math.abs(e.drop.landing[1])<.01);assert.ok(edge);const stage=f.nativeRankedStage(G),cases=[];
+ for(const mode of ['zones','rainmaker','clams'])for(const hz of [30,60,120]){
+  G.projectiles.clear();G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.actors=[];const match=G.match=new f.Match({mode,difficulty:'normal'});match.state='playing';match.ranked=new f.RankedEngine(mode,stage);
+  const a=new f.Actor({team:1,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});a.isBot=true;a.spawnAt(new THREE.Vector3(...edge.drop.upper),Math.PI);G.actors=match.actors=[a];const b=a.bot=new f.BotBrain(a,'normal'),goal=new THREE.Vector3(...edge.drop.landing);assert.ok(b._pathTo(goal,.6));b.goalTimer=b.repath=b.bombCd=1000;let handled=0,airborne=false;
+  for(let i=0;i<hz*6;i++){
+   match.ranked.frame={actors:[{id:'1:0',team:1,slot:0,pos:a.pos.toArray(),alive:a.alive,grounded:a.grounded}],inputs:{}};G.time+=1/hz;b.update(1/hz);
+   if(b._nativeTraversalHandled){handled++;assert.equal(a.intent.squid,false);assert.equal(a.intent.jump,false);assert.equal(a.intent.fire,false);}
+   a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);airborne ||=!a.grounded;if(airborne&&a.grounded&&a.pos.distanceTo(goal)<.45)break;
+  }
+  assert.ok(handled>0&&airborne&&a.alive&&a.grounded&&a.pos.distanceTo(goal)<.45,JSON.stringify({mode,hz,handled,end:a.pos.toArray(),goal:goal.toArray()}));assert.deepEqual(Object.keys(a.s3.abilityPoints),[]);assert.equal(a.s3JumpSerial||0,0);cases.push({mode,hz,handledFrames:handled,end:a.pos.toArray(),grounded:true,ordinaryKidMoveGravity:true,productionCharacter:true,gearAP:0});
+ }
+ console.log(JSON.stringify({id:'humpback',cases,scope:'Actual source drop input preservation through installed ranked wrapper; controlled valid source path, constructed CPU frame omits live blocked callback; no whole objective selection or score claim'}));
+});
