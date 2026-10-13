@@ -64,13 +64,13 @@ jobs:
         timeout-minutes: 25
         run: |
           set -euo pipefail
-          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode calibrate --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/calibration | tee evidence/calibration.log
+          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode calibrate --scenario normal --width 320 --height 200 --samples 60 --warmup 12 --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/calibration | tee evidence/calibration.log
           node -e "const r=require('./evidence/calibration/whole-game-calibrate.json');if(!r.comparable||!r.withinFrameBudget)throw Error('Calibration not suitable for a long comparison');"
-      - name: Eight interleaved ABBA-BAAB trials of full-game completed frames
+      - name: Eight ABBA-BAAB trials plus full-length cloth control
         timeout-minutes: 50
         run: |
           set -euo pipefail
-          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode measure --samples 120 --warmup 30 --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/measurement | tee evidence/measurement.log
+          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode measure --scenario normal --width 320 --height 200 --samples 60 --warmup 12 --calibration evidence/calibration/whole-game-calibrate.json --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/measurement | tee evidence/measurement.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
