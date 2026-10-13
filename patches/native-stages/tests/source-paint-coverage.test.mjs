@@ -13,6 +13,8 @@ test('source cell coverage preserves thin triangle interiors and rejects empty o
  assert.equal(sourceTriangleCellOverlap(0,0,1,0,0,1,1,0,1.25,.25),false,'an edge touch has no paintable area');
  assert.equal(sourceTriangleCellOverlap(0,.01,1,.02,0,.03,0,0,.25,.25),true,'a strip missing the cell centre still has real area');
  assert.equal(sourceTriangleCellOverlap(0,0,.5,.5,1,1,0,0,.25,.25),false,'a degenerate triangle has no paintable area');
+ assert.equal(sourceTriangleCellOverlap(0,0,1,0,0,1,1-1e-13,0,1.25,.25),false,'chart projection roundoff cannot claim an edge-only neighbouring cell');
+ assert.equal(sourceTriangleCellOverlap(0,0,1,0,0,1,1-1e-6,0,1.25,.25),true,'a real thin intersection remains covered');
  assert.equal(SOURCE_RECIPE,'inkwave-browser-source-v4','old derived masks cannot share the worker cache identity');
 });
 

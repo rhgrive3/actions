@@ -6,12 +6,16 @@ const F=Math.fround;
  * sample alone drops paintable strips at the original polygon boundary. */
 export function sourceTriangleCellOverlap(ax,ay,bx,by,cx,cy,x0,y0,x1,y1){
  if(Math.abs((by-cy)*(ax-cx)+(cx-bx)*(ay-cy))<1e-12)return false;
- if(Math.max(ax,bx,cx)<=x0||Math.min(ax,bx,cx)>=x1||Math.max(ay,by,cy)<=y0||Math.min(ay,by,cy)>=y1)return false;
+ // Float64 chart projections differ by roundoff across JS and NumPy. Reject
+ // numerically zero-area contacts rather than claiming adjacent empty cells.
+ const epsilon=1e-9;
+ if(Math.max(ax,bx,cx)<=x0+epsilon||Math.min(ax,bx,cx)>=x1-epsilon||Math.max(ay,by,cy)<=y0+epsilon||Math.min(ay,by,cy)>=y1-epsilon)return false;
  const mx=(x0+x1)*.5,my=(y0+y1)*.5,hx=(x1-x0)*.5,hy=(y1-y0)*.5;
  for(let edge=0;edge<3;edge++){
   const ex=edge===0?bx-ax:edge===1?cx-bx:ax-cx,ey=edge===0?by-ay:edge===1?cy-by:ay-cy;
   const nx=-ey,ny=ex,a=ax*nx+ay*ny,b=bx*nx+by*ny,c=cx*nx+cy*ny,p=mx*nx+my*ny,r=Math.abs(nx)*hx+Math.abs(ny)*hy;
-  if(Math.max(a,b,c)<=p-r||Math.min(a,b,c)>=p+r)return false;
+  const margin=epsilon*(Math.abs(nx)+Math.abs(ny));
+  if(Math.max(a,b,c)<=p-r+margin||Math.min(a,b,c)>=p+r-margin)return false;
  }
  return true;
 }

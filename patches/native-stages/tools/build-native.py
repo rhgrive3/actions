@@ -30,13 +30,15 @@ def raster_mask(xy, nu, nv, cu, cv):
   for j in range(max(0,int(min(ay,by,cy)/cv)),min(nv,int(max(ay,by,cy)/cv)+1)):
    for i in range(max(0,int(min(ax,bx,cx)/cu)),min(nu,int(max(ax,bx,cx)/cu)+1)):
     x0=i*cu;y0=j*cv;x1=(i+1)*cu;y1=(j+1)*cv
-    if max(ax,bx,cx)<=x0 or min(ax,bx,cx)>=x1 or max(ay,by,cy)<=y0 or min(ay,by,cy)>=y1:continue
+    epsilon=1e-9
+    if max(ax,bx,cx)<=x0+epsilon or min(ax,bx,cx)>=x1-epsilon or max(ay,by,cy)<=y0+epsilon or min(ay,by,cy)>=y1-epsilon:continue
     mx=(x0+x1)*.5;my=(y0+y1)*.5;hx=(x1-x0)*.5;hy=(y1-y0)*.5;overlap=True
     for edge in range(3):
      ex=bx-ax if edge==0 else cx-bx if edge==1 else ax-cx
      ey=by-ay if edge==0 else cy-by if edge==1 else ay-cy
      nx=-ey;ny=ex;a=ax*nx+ay*ny;b=bx*nx+by*ny;c=cx*nx+cy*ny;p=mx*nx+my*ny;r=abs(nx)*hx+abs(ny)*hy
-     if max(a,b,c)<=p-r or min(a,b,c)>=p+r:overlap=False;break
+     margin=epsilon*(abs(nx)+abs(ny))
+     if max(a,b,c)<=p-r+margin or min(a,b,c)>=p+r-margin:overlap=False;break
     if overlap:out[j*nu+i]=1
  return out
 
