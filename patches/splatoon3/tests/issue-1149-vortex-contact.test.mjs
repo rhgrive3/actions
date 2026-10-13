@@ -6,7 +6,7 @@ async function setup(){
   const f=await fixture();installKitInkVac(f,f.profile);
   f.G.paint.sample=()=>0;f.G.projectiles=new f.Projectiles(new f.THREE.Scene());
   const a=f.make('charger'),b=f.make('shooter');b.team=1;b.pos.set(0,0,-5);
-  a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();
+  a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();a.intent.fire=true;
   a.aimDir.set(0,0,1);a.aimYaw=0;a.aimPitch=0;
   // Grow the source-defined 15-unit intake before measuring actor contact.
   // The target begins behind the owner so this calibration interval cannot
@@ -37,7 +37,7 @@ test('#1149 contact filters allies, dead actors, occlusion, elevation, and ends 
   inkVacAbsorbCandidate(a,p.pos,p.pos,p).onHit();f.tick(a,30);
   close(inkVacState(a).absorbedDamage,115);assert.equal(inkVacState(a).absorbed,1);
   disposeInkVac(a);assert.equal(inkVacActorContact(a,b),false);const ink=b.ink;f.tick(b);assert.ok(b.ink>=ink);
-  a.special=190;a._startSpecial();a.reset();assert.equal(inkVacActorContact(a,b),false);
+  a.special=190;a._startSpecial();a.intent.fire=true;a.reset();assert.equal(inkVacActorContact(a,b),false);
 });
 test('#1149 remote cone affects only a local victim; replica and duplicate actor rows never author duplicate charge',async()=>{
   const {f,a,b}=await setup();a.owner='A';a.nid=1;b.owner='B';b.nid=2;

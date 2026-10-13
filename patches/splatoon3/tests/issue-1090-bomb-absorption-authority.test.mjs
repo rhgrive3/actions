@@ -24,7 +24,7 @@ async function setup(t, { sub = 'suction', legacy = false, shooterWeapon = 'shoo
   const ownerNet = new f.NetMatch(session('P'), {}), shooterNet = new f.NetMatch(session('Q'), {});
   t.after(() => { for (const net of [ownerNet, shooterNet]) net.unsubs.forEach(fn => fn()); });
   ownerNet.bind({ actors: [vac, remote] });
-  vac.special = vac.weapon.specialCost; vac._startSpecial();
+  vac.special = vac.weapon.specialCost; vac._startSpecial();vac.intent.fire=true;
   const activation = ownerNet.out.find(e => e[1] === 'ev' && e[2] === ACTIVATE);
   assert.ok(activation, 'native successful activation produced a wire event');
   shooterNet.bind({ actors: [proxy, shooter] });

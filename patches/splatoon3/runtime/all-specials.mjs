@@ -1363,7 +1363,7 @@ function activeStep(rt,actor,dt) {
         state.cheerHeld.set(ally,pressed);
         if(pressed&&!wasPressed)addBooyahCall(rt,actor,state,ally,{network:ally.isLocal===true});
       }
-      state.armor=true;s.armor=true;s.armorHP=state.armorHP;
+      state.armor=true;s.armor=false;s.armorHP=state.armorHP;
     }
     state.phase=state.charge>=1?'ready':'charge';s.phase=state.phase;
     if(elapsed+1e-8>=state.duration)throwBooyah(rt,actor,state,1);
@@ -1441,7 +1441,7 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='crabTank'){
     const rolling=!!actor.intent.squid;
-    state.armor=true;s.armor=true;s.armorHP=state.armorHP;
+    state.armor=true;s.armor=false;s.armorHP=state.armorHP;
     if(state.phase==='finish'){
       crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});
       if(elapsed>=state.finishUntil)endSpecial(rt,actor,'duration');return;
@@ -1514,7 +1514,7 @@ function activeStep(rt,actor,dt) {
   if(state.id==='krakenRoyale'){
     const dir=aimDirection(rt,actor,rt.v0);
     if(elapsed+1e-8<1){dampForSpecial(actor,dt);state.phase='startup';s.phase=state.phase;return;}
-    if(elapsed+1e-8>=state.duration){state.phase='finish';s.phase=state.phase;dampForSpecial(actor,dt);if(elapsed+1e-8>=state.duration+1)endSpecial(rt,actor,'duration');return;}
+    if(elapsed+1e-8>=state.duration){state.phase='finish';state.armor=false;s.armor=false;s.phase=state.phase;dampForSpecial(actor,dt);if(elapsed+1e-8>=state.duration+1)endSpecial(rt,actor,'duration');return;}
     if(state.phase==='startup')state.phase='active';
     state.armor=true;s.armor=true;
     if(state.phase==='dash'){

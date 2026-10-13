@@ -223,10 +223,11 @@ test('Toxic Mist status and jump reduction use the extracted resistance curve at
     const f=await fixture({fullRuntime:true,realProjectiles:true});
     const owner=f.make('shooter'),victim=f.make('shooter');owner.team=0;victim.team=1;victim.pos.set(0,0,0);
     victim.s3={...victim.s3,abilityPoints:{...victim.s3.abilityPoints,subResistance:resistanceAP}};
+    victim.s3.modifiers.subMistResistance=resistanceAP===57?.5:1;
     const normalSpeed=victim.weaponRunner.moveSpeed();
     assert.equal(typeof victim._integrateMovementStep,'function','the production movement adapter exposes the actual jump integrator');
     victim.ink=100;
-    const mist=deployed(f,owner,'toxicMist',[0,1,0]);mist.expireAt=5;
+    const mist=deployed(f,owner,'toxicMist',[0,1,0]);mist.expireAt=6;
     const steps=Math.round(5/dt);
     for(let i=0;i<steps;i++){f.G.time+=dt;f.G.projectiles.update(dt);}
     const speed=victim.weaponRunner.moveSpeed();
@@ -527,7 +528,7 @@ test('the real Ink Vac defense consumes one custom sub object and charges only o
   const shooter=f.make('shooter'),vac=f.make('shooter');
   shooter.team=0;shooter.pos.set(30,0,30);equip(shooter,'burst');
   vac.team=1;vac.weapon={...vac.weapon,special:VAC_ID,specialCost:190};vac.special=190;
-  vac.intent.special=true;f.tick(vac);vac.intent.special=false;
+  vac.intent.special=true;f.tick(vac);vac.intent.special=false;vac.intent.fire=true;
   // 11.3.0 LengthAddPerFrame=.3334 takes about 45 frames to reach LengthMax=15;
   // this far projectile exercises the grown intake instead of an empty first frame.
   f.tick(vac,14);

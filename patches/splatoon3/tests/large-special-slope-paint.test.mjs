@@ -1,3 +1,4 @@
+import {readySpecialEvidence,useSpecialEvidence} from './special-control-evidence.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {fixture} from './source-fixture.mjs';
@@ -39,7 +40,7 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
   sender=new f.NetMatch({myId:'a',isHost:true,hostId:'a',_members:new Map([['a','A'],['b','B']]),tr:{broadcast(){},sendTo(){}}},{id:'slope-wire',map:'map',difficulty:'normal'});
   actor.nid=0;actor.owner='a';actor.remote=false;sender.byNid.set(0,actor);sender._setupActor(actor);f.G.netm=sender;
  }
- actor._startSpecial();actor._updateSpecial(1/60);actor.intent.sub=true;actor._updateSpecial(1/60);
+ readySpecialEvidence(actor, {placeAtFixtureOrigin:true});useSpecialEvidence(f,actor);
  const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');
  f.G.projectiles._blastBurst(p,V(0,.08,center),null);f.G.projectiles.list.length=0;
  const stamps=[],native=paint.splat;paint.splat=function(at,r,team,opts){stamps.push({x:at.x,z:at.z,r,seed:opts.seed,claimMode:opts.claimMode});return native.call(this,at,r,team,opts);};
@@ -90,13 +91,13 @@ test('slope disk actual NetMatch JSON splats reproduce identical ownership',asyn
 });
 
 
-test('targetless missiles preserve aim height when both ground probes miss',async()=>{
+test('locked missiles preserve aim height when both ground probes miss',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  f.G.physics.raycast=(_a,_b,_distance,hit)=>{hit.hit=false;return hit;};
  f.G.level.groundHeight=()=>-Infinity;
  const actor=f.make();actor.weapon={...actor.weapon,special:'tentaMissiles',specialCost:100};
- actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);f.G.actors=[actor];
- actor._startSpecial();actor.intent.fire=true;actor._updateSpecial(1/60);
+ actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);const enemy=f.make();enemy.team=1;enemy.pos.set(0,1.05,28);f.G.actors=[actor,enemy];
+ readySpecialEvidence(actor, {placeAtFixtureOrigin:true});useSpecialEvidence(f,actor);
  // 1130 launches ten missiles at a 4F interval; preserve the ground-height
  // regression while observing the complete volley rather than an instant burst.
  for(let i=0;i<36;i++)actor._updateSpecial(1/60);

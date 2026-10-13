@@ -11,7 +11,7 @@ async function setup(){
   const f=await fixture();installKitInkVac(f,f.profile);
   f.G.paint.sample=()=>0;f.G.projectiles=new f.Projectiles(new f.THREE.Scene());
   const a=f.make('charger'),b=f.make('dualies');b.team=1;b.pos.set(0,0,5);
-  a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();
+  a.weapon={...a.weapon,special:'inkVac',specialCost:190};a.special=190;a._startSpecial();a.intent.fire=true;
   a.aimDir.set(0,0,1);a.aimYaw=0;a.aimPitch=0;
   return {f,a,b};
 }

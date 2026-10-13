@@ -627,6 +627,8 @@ function blast(api, object, pos, burstIndex = 0) {
         targetPoint.copy(target.pos); targetPoint.y += target.form === 'squid' ? .45 : .7;
         const d = targetPoint.distanceTo(pos);
         if (d > outer || api.G.physics?.los && !api.G.physics.los(pos,targetPoint)) continue;
+        const shelter=api.G.projectiles?.kitBarrierCandidate?.(object,pos,targetPoint);
+        if(shelter?.object?.subId==='splashWall'&&shelter.distance<pos.distanceTo(targetPoint)-1e-6)continue;
         const amount = damageAt(d,spec);
         if (amount > 0) api.G.projectiles?.applyHit?.(object.owner,target,amount,object.subId);
       }
@@ -763,7 +765,8 @@ function customObjectCandidate(api, projectiles, p, start, end) {
         return 0;
       }
       if(object.subId==='splashWall'&&['burst','autobomb','fizzy','torpedo'].includes(subId)){
-        blast(api,p,hit.point);
+        const center=hit.point.clone();if(p.vel?.lengthSq()>0)center.addScaledVector(p.vel.clone().normalize(),-.001);
+        blast(api,p,center);
         removeObject(api,projectiles,p);
         return 0;
       }

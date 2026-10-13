@@ -53,7 +53,7 @@ export function hitPayloadPolicy(tuning = profile) {
 }
 export const ANGLE_SHOOTER_HIT_MAX = ALL_SUB_SPECS.angleShooter.directDamage;
 export const CATALOGUE_SUB_HIT_MAX = Object.freeze({
-  burst:ALL_SUB_SPECS.burst.directDamage,
+  burst:Math.max(ALL_SUB_SPECS.burst.directDamage,ALL_SUB_SPECS.burst.damageMax),
   fizzy:Math.max(...ALL_SUB_SPECS.fizzy.bursts.map(s=>s.damageMax)),
   torpedo:ALL_SUB_SPECS.torpedo.damageMax,
   'torpedo-splash':ALL_SUB_SPECS.torpedo.splashDamage,
