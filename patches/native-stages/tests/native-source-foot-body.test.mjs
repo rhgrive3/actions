@@ -97,7 +97,8 @@ test('a real refreshed source footprint cannot recommit a body beneath a dynamic
  const p=new V(-13.550256052754355,.009999999776482582,-21.346448012436802),g=new f.GroundHit(),c=contact(f);
  P.groundProbe(p.x,p.y,p.z,.35,.3,.24,g,false);assert(g.hit&&g.block===28955);
  assert.equal(P.reconcileSourceFootBody(p,.35,.35,1.45,c,g,.24,.35,.3,false),false);
- assert(c.ceiling,'the real installed dynamic collision reports the ceiling');assert.equal(c.ceilingBlock,L.staticBlockCount);
+ assert(c.ceiling,'the real installed dynamic collision reports the ceiling');
+ assert.equal(c.ceilingBlock,-1,'the inherited dynamic solver does not publish a ceiling block ID');
  assert(g.hit&&g.block===28955,'the refreshed source footprint remains a real observation');
  assert(p.y<g.y,'a blocked raised pose is not committed as grounded support');
  assert(P.bodyFits(p,.35,.35,1.45,false,.0001));
