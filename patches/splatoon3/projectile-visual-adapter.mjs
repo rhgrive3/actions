@@ -51,7 +51,7 @@ export function adaptProjectileVisuals(rel,code) {
         if (dead) { list[i] = list[list.length - 1]; list.pop(); this._recycle(p); }
       }`,
     'record final composed gameplay step without changing inputs');
-  code=once(code,'  _draw() {\n    let n = 0;',
+  code=once(code,'  _draw() {',
     `  // Explicit ownership: this disposes only the new visual backend. Clear
   // keeps its resources reusable across matches, as the native system does.
   disposeVisuals() { this.projectileVisuals.dispose(); }
@@ -61,8 +61,7 @@ export function adaptProjectileVisuals(rel,code) {
     // 120Hz may simulate zero times before the next single presentation draw.
     this._drawLegacy();
   }
-  _drawLegacy() {
-    let n = 0;`,
+  _drawLegacy() {`,
     'keep dedicated derivative and detached-droplet legacy stream');
   code=once(code,'    for (const p of this.list) {\n      if (n >= MAX_BLOBS - 5) break;',
     '    for (const p of this.list) {\n      this.projectileVisuals.ensureBirth(p);\n      if (this.projectileVisuals.handles(p) || p._s3SloshBirthPending) continue;\n      if (n >= MAX_BLOBS - 5) break;',
