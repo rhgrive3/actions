@@ -33956,7 +33956,8 @@
     "artifactResealPending": true,
     "sourceGeometryAndMaskChanged": false,
     "ordinaryJumpInput": "fd23d46d87498dced990c5ee5655db2462169e2e",
-    "sourceClamsGoalAndEighthPickup": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4"
+    "sourceClamsGoalAndEighthPickup": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
+    "groundedFormSelector": "0c39e684610d3ab57edeee68a7ce73d0e94ef067"
   },
   "ownPr": {
     "url": "https://github.com/rhgrive3/actions/pull/1394",
@@ -34261,5 +34262,164 @@
     "receiptSha256": "631a9e17687bffcca5f300017abd56bcd10970fc5a3739337fbf0fd26cf158ee",
     "firstDeviationReceipt": ".ci-scratch/current-source-natural-combat-path-deviation.json",
     "firstDeviationReceiptSha256": "f37e79dde1052c535ec3c409d94ba2e8b125ebe73d53dc9cc143d5c886bf92a4"
+  },
+  "currentComposedNaturalCombat": {
+    "status": "failed",
+    "stageReady": false,
+    "acceptedCombatCandidate": false,
+    "composition": "7a306f72",
+    "acceptedFoundation": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
+    "combatCandidate": "830f76a901c6260798034e5163f937297b923d5d",
+    "artifact": {
+      "revision": "4e72eb3157928cf43c7be980b30d31ea846d680a7e47beb2d46efd6b222b7431",
+      "inputHash": "782593699a8dfa1ab91b77fd3ab87f66b488a45139bdc97f3891eaef9beac941",
+      "contentHash": "280bcd336b03dd36fb95bed8be8c2c38791f7f4079be809147fc03707f699864",
+      "engineArtifact": [
+        "_versions/4e72eb3157928cf43c7be980b30d31ea846d680a7e47beb2d46efd6b222b7431/patches/native-stages/runtime/engine.mjs",
+        "a1f08f5f1a9990998f5440ea02ebbdcfbd53368bc30705bd7dd8ef8770eb30ab"
+      ],
+      "botsArtifact": [
+        "_versions/4e72eb3157928cf43c7be980b30d31ea846d680a7e47beb2d46efd6b222b7431/src/game/bots.js",
+        "1ddbd14a153daee465cf3c947d6efae8640c8ef489204f6d3b4ec51fc26ce7c7"
+      ],
+      "sourceHelperInputs": [
+        [
+          "native-stages/runtime/native-combat-support.mjs",
+          "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496"
+        ],
+        [
+          "native-stages/runtime/native-jump-input.mjs",
+          "6167c1e3ae2bb800e453b371f232b5e77fbac8f664d0bdc7ea25101e6378307e"
+        ]
+      ],
+      "sourceMaskSha256": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+    },
+    "runtimeOverlay": false,
+    "actorPoseVelocityInputOrSourceOverrides": false,
+    "actors": 8,
+    "bots": 7,
+    "renderHz": 30,
+    "actualActorStep": 0.016666666666666666,
+    "seconds": 71.43333333333334,
+    "capsuleSamples": 4286,
+    "capsuleMisses": 0,
+    "capsuleMargin": 0.01,
+    "continuousSegmentSweepVerified": false,
+    "protectedGoalReplans": 7,
+    "end": [
+      19.066336163143344,
+      4.720721574570206,
+      47.3501
+    ],
+    "firstJump": {
+      "tick": 4249,
+      "position": [
+        18.21652974199423,
+        6.183055746290419,
+        46.25984172250293
+      ],
+      "serial": 11,
+      "edge": {
+        "from": 25597,
+        "to": 25882,
+        "type": "jump",
+        "lower": [
+          18.5,
+          6,
+          46
+        ],
+        "upper": [
+          18.5,
+          6.5,
+          47
+        ]
+      },
+      "input": {
+        "move": [
+          0.8885933741834754,
+          0,
+          0.4586957764763326
+        ],
+        "squid": false,
+        "jump": true,
+        "fire": false,
+        "special": false
+      },
+      "mode": "fight",
+      "target": {
+        "team": 1,
+        "slot": 3,
+        "position": [
+          9.95,
+          6.050000190734863,
+          64.5
+        ],
+        "alive": true
+      },
+      "specialBefore": null,
+      "specialAfter": null,
+      "steerDirection": [
+        0.3737645113782983,
+        0,
+        0.9275236331404942
+      ],
+      "tailBefore": {
+        "needJump": true,
+        "jumpCd": -1.734723475976807e-16,
+        "jump": false
+      },
+      "tailAfter": {
+        "needJump": false,
+        "jumpCd": 0.6,
+        "jump": true,
+        "move": [
+          0.8885933741834754,
+          0,
+          0.4586957764763326
+        ]
+      },
+      "ordinaryJumpVisibleGuards": {
+        "native": true,
+        "alive": true,
+        "targetAbsent": false,
+        "kid": true,
+        "notClimbing": true,
+        "noSuperJump": true,
+        "noSpecial": true,
+        "notTowerRider": true,
+        "hasPath": true,
+        "positivePi": true,
+        "jumpEdge": true
+      },
+      "privateWeakMapExposed": false
+    },
+    "belowSource": {
+      "point": [
+        19.105790457338742,
+        -0.49480000138282776,
+        47.3501
+      ],
+      "face": -1,
+      "triangle": 29815,
+      "object": "Fld_Twist00_BeamA_low35_1__WallsTrim00_np",
+      "flags": 1
+    },
+    "jumpCorrectionOwner": "Wahoo",
+    "independentPeer": "Shipshape",
+    "receipts": [
+      {
+        "path": ".ci-scratch/current-composed-natural-combat-outcome.json",
+        "sha256": "79be4d788a92bf85911fd9c2170570d97f921d6ecc05a33794f358310d06a04d"
+      },
+      {
+        "path": ".ci-scratch/current-composed-natural-combat-deviation.json",
+        "sha256": "49c3cfddbe0268b1bafab41074436885b33f998ce9a159a1e098e08900d9d052"
+      },
+      {
+        "path": ".ci-scratch/current-composed-natural-combat-artifact.json",
+        "sha256": "d3bb5a99f8c26efd21206d873204bbf9ac7c1acb2579ddad22371c443fdbaff9"
+      }
+    ],
+    "priorFailuresPreserved": true
   }
 }

@@ -57,6 +57,16 @@ the bot departs the same roof with Trizooka charging at the final failure.
 The precise special state before departure remains to be observed. This
 candidate is unaccepted and is kept separate from the packaged runtime proof.
 
+The subsequent current production composition includes accepted grounded form
+selection and ordinary jump input, plus the guarded experimental combat helper.
+It still fails the first opposite-bank assertion at 71.43 seconds. All 4,286
+installed-dimension capsule samples pass. The ordinary stock jump advances its
+serial while the protected-pad opponent is already targeted; the accepted hold
+helper deliberately excludes targets and does not arm. The flight subsequently
+loses upper support above original NoPaint `BeamA_low35` triangle 29815. Wahoo
+owns the conditional combat jump correction, and the stage owner remains its
+independent peer. Source buffers, mask and all earlier failures are retained.
+
 A separate navigation trial places the other seven real actors on genuine
 supported own-bank surfaces outside the intended route's 21-unit awareness
 range. This isolates navigation without changing perception or authored pads.
