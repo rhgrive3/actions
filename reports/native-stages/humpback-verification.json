@@ -11053,5 +11053,1989 @@
     "aggregate": "13b310d627739c6a5af64cf9e1770c91cc6f8e52",
     "pr": 1387,
     "status": "Consumed; current affected actor/weapon/rule/network/build qualification in progress; earlier receipts retain exact original build scope"
+  },
+  "clamsIndependentPeerReview": {
+    "reviewer": "/root/humpback (dedicated Humpback owner)",
+    "scope": "Independent three-runtime-file diagnostic overlay over sealed accepted 846 artifact, not a newly packaged or accepted full build",
+    "candidate": {
+      "status": "compiled private diagnostic overlay; not accepted or a newly packaged full build",
+      "candidate": "528ef488",
+      "delta": [
+        "5fbff252",
+        "96af129d",
+        "528ef488"
+      ],
+      "baselineFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+      "baselineBuild": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+      "sourceFiles": {
+        "patches/native-stages/adapter.mjs": "c036e1c9ad7daa12f168b8425796f5135e23c5d127c104aebc0ca46bdf9518e4",
+        "patches/native-stages/runtime/engine.mjs": "ff34756b0aa7cf222e0c01e21988e2b82c73d63cb5c165e49728ac15632445ee",
+        "patches/native-stages/runtime/native-ranked-goals.mjs": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "7293007fbc778e09ddbd9e4e57c655fa6356765acbc8abd62221d09418d6677e",
+        "patches/splatoon3/runtime/ranked/install.mjs": "823bcbc52f0fa1f46e17c4e3b0c2566cedc9684e0ed181eb2f36818c8b80153d"
+      },
+      "emittedFiles": {
+        "patches/native-stages/runtime/engine.mjs": "6fc61cc0834793c23b313df4d3a3ffc90b713feff973c6d109aef9cc0cb606dd",
+        "patches/splatoon3/runtime/ranked/install.mjs": "b40fd5bfc06d0bd4564fa460ad9487757d738b6a80b845c1498cc261ee48f629",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "4deda7b65d9760a3990180094276b5194ec2ad60ab513512ad8a0f39dbdd6e5d"
+      },
+      "diagnosticCommit": "0562ae912a2f74838a36544f65138bd8c4d1b051"
+    },
+    "baselineCounterexample": {
+      "evidence": ".browser-evidence/current-main-ranked-game-clock/ranked.json",
+      "bank": 1,
+      "renderCadence": 30,
+      "seconds": 90,
+      "fixedTicks": 5400,
+      "sourceTriangle": 94566,
+      "inventorySmall": 0,
+      "power": false,
+      "ruleGoal": null
+    },
+    "qualification": {
+      "cases": 6,
+      "banks": 2,
+      "renderCadences": [
+        30,
+        60,
+        120
+      ],
+      "observedActorBrainProjectileStep": 0.016666666666666666,
+      "inventoryByBank": [
+        5,
+        2
+      ],
+      "simulatedSecondsByBank": [
+        14,
+        13
+      ],
+      "fixedTicksByBank": [
+        840,
+        780
+      ],
+      "actorsAlive": 8,
+      "bots": 7,
+      "gearAP": 0,
+      "actualSourceWeapon": "WeaponShooterNormal",
+      "errors": [],
+      "sourceBuffersExact": {
+        "vertices": true,
+        "indices": true,
+        "triangles": true,
+        "normals": true,
+        "flags": true,
+        "objectIds": true,
+        "nodes": true,
+        "order": true,
+        "triangleFace": true,
+        "mask": true
+      }
+    },
+    "staticReview": {
+      "originalBlockedCallbackPreserved": true,
+      "liveSourcePolygonAndMask": true,
+      "originalStaticFootSupportAndDynamicRejection": true,
+      "boundedDirectedExistingEdges": true,
+      "finalFullHumanCapsuleAndContinuousSourceSupportCorridor": true,
+      "endpointScreensBeforeMemo": true,
+      "canonicalShooterZeroAPAliveBotOnly": true,
+      "airborneDeadHumanOtherWeaponAbilitySpecialJumpLaunchAndNullInvalidGoalGuards": true,
+      "realNoPaintTargetGuard": true,
+      "mainClamsLifecyclePreserved": true
+    },
+    "decision": "Scoped independent physical/static review accepts the exact source-goal runtime delta; sole owner may promote after own current Manta/Wahoo full-Game, actual negative/default, public 9/9 budget and AGENTS receipts pass. No Root round trip required by root authorization. Accepted owner branch/build pair unchanged until that common promotion.",
+    "limits": [
+      "No all-loadout or ability-gear route claim",
+      "No retail units/collision/placements/shader/moving-state parity claim",
+      "No hardware FPS claim",
+      "Source Wave elevated enemy-home-deck return and Tower route remain unverified"
+    ]
+  },
+  "clamsCandidateNaturalPowerDiagnostic": {
+    "scope": "Separate two-bank render60 diagnostic overlay; actual natural Power acquisition, not accepted packaging",
+    "evidence": ".browser-evidence/clams-candidate-power-overlay/ranked.json",
+    "status": "passed private Power diagnostic overlay, awaiting common acceptance",
+    "diagnosticOverlay": {
+      "status": "compiled private diagnostic overlay; not accepted or a newly packaged full build",
+      "candidate": "528ef488",
+      "delta": [
+        "5fbff252",
+        "96af129d",
+        "528ef488"
+      ],
+      "baselineFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+      "baselineBuild": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+      "sourceFiles": {
+        "patches/native-stages/adapter.mjs": "c036e1c9ad7daa12f168b8425796f5135e23c5d127c104aebc0ca46bdf9518e4",
+        "patches/native-stages/runtime/engine.mjs": "ff34756b0aa7cf222e0c01e21988e2b82c73d63cb5c165e49728ac15632445ee",
+        "patches/native-stages/runtime/native-ranked-goals.mjs": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "7293007fbc778e09ddbd9e4e57c655fa6356765acbc8abd62221d09418d6677e",
+        "patches/splatoon3/runtime/ranked/install.mjs": "823bcbc52f0fa1f46e17c4e3b0c2566cedc9684e0ed181eb2f36818c8b80153d"
+      },
+      "emittedFiles": {
+        "patches/native-stages/runtime/engine.mjs": "6fc61cc0834793c23b313df4d3a3ffc90b713feff973c6d109aef9cc0cb606dd",
+        "patches/splatoon3/runtime/ranked/install.mjs": "b40fd5bfc06d0bd4564fa460ad9487757d738b6a80b845c1498cc261ee48f629",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "4deda7b65d9760a3990180094276b5194ec2ad60ab513512ad8a0f39dbdd6e5d"
+      },
+      "diagnosticCommit": "0562ae912a2f74838a36544f65138bd8c4d1b051"
+    },
+    "buildFingerprint": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+    "clock": "production Game._frame; observed fixed STEP 1/60",
+    "cases": [
+      {
+        "mode": "clams",
+        "team": 0,
+        "renderCadence": 60,
+        "seconds": 16,
+        "actorTicks": 960,
+        "gameClockTicks": 960,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          0.6156420986643958,
+          0,
+          -14.98342590225632
+        ],
+        "goal": [
+          0.20000000000000284,
+          -2.1838951543621192,
+          26.599999999999994
+        ],
+        "goalAction": "throw",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": -2.1838951543621192,
+          "z": 26.599999999999994
+        },
+        "inventory": {
+          "team": 0,
+          "small": 0,
+          "power": true
+        },
+        "initialInventory": {
+          "team": 0,
+          "small": 0,
+          "power": false
+        },
+        "collected": true,
+        "sawPower": true,
+        "firstPowerTick": 933,
+        "inventoryMaximum": 7,
+        "approached": false,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 92032,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "sourceFace": 12900,
+        "fire": true,
+        "jump": false,
+        "traversal": 97,
+        "maxTravel": 46.02069216001409,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          96,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "clams",
+        "team": 1,
+        "renderCadence": 60,
+        "seconds": 15,
+        "actorTicks": 900,
+        "gameClockTicks": 900,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          0.9710756792961429,
+          0,
+          15.588298151321498
+        ],
+        "goal": [
+          0.20000000000000284,
+          -2.241334900668157,
+          -26.400000000000006
+        ],
+        "goalAction": "throw",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": -2.241334900668157,
+          "z": -26.400000000000006
+        },
+        "inventory": {
+          "team": 1,
+          "small": 0,
+          "power": true
+        },
+        "initialInventory": {
+          "team": 1,
+          "small": 0,
+          "power": false
+        },
+        "collected": true,
+        "sawPower": true,
+        "firstPowerTick": 899,
+        "inventoryMaximum": 7,
+        "approached": false,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91986,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "sourceFace": 12907,
+        "fire": true,
+        "jump": false,
+        "traversal": 91,
+        "maxTravel": 45.44757392994931,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          0
+        ],
+        "matchState": "playing"
+      }
+    ],
+    "errors": [],
+    "lastCase": {
+      "mode": "clams",
+      "team": 1,
+      "renderCadence": 60,
+      "seconds": 15,
+      "actorTicks": 900,
+      "gameClockTicks": 900,
+      "actorSteps": [
+        0.016666666666666666
+      ],
+      "brainSteps": [
+        0.016666666666666666
+      ],
+      "projectileSteps": [
+        0.016666666666666666
+      ],
+      "start": [
+        0,
+        6,
+        61
+      ],
+      "end": [
+        0.9710756792961429,
+        0,
+        15.588298151321498
+      ],
+      "goal": [
+        0.20000000000000284,
+        -2.241334900668157,
+        -26.400000000000006
+      ],
+      "goalAction": "throw",
+      "botGoal": {
+        "x": 0.20000000000000284,
+        "y": -2.241334900668157,
+        "z": -26.400000000000006
+      },
+      "inventory": {
+        "team": 1,
+        "small": 0,
+        "power": true
+      },
+      "initialInventory": {
+        "team": 1,
+        "small": 0,
+        "power": false
+      },
+      "collected": true,
+      "sawPower": true,
+      "firstPowerTick": 899,
+      "inventoryMaximum": 7,
+      "approached": false,
+      "alive": true,
+      "grounded": true,
+      "sourceTriangle": 91986,
+      "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+      "sourceFace": 12907,
+      "fire": true,
+      "jump": false,
+      "traversal": 91,
+      "maxTravel": 45.44757392994931,
+      "gearAP": [],
+      "sourceWeapon": "WeaponShooterNormal",
+      "actors": 8,
+      "aliveActors": 8,
+      "bots": 7,
+      "counts": [
+        0,
+        0
+      ],
+      "matchState": "playing"
+    }
+  },
+  "currentMainFixedGameClockBanks": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "evidence": ".browser-evidence/current-main-banks/banks.json",
+    "status": "passed",
+    "buildFingerprint": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+    "supportModuleSha256": "31c44d52212fabc40b2c5b738c9b409c58094dac1da0f3bf10fe1d9104abf86f",
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "clock": "production Game._frame fixed gameplay clock",
+        "renderCadence": 30,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "brainStepIntervals": [
+          0.016666666666666666
+        ],
+        "projectileStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 2242,
+        "gameClockTicks": 2242,
+        "matchState": "playing",
+        "matchTimeRemaining": 139.6333333333012,
+        "seconds": 37.36666666666667,
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          23.844167057898225,
+          0.0027000000700354576,
+          31.18143728925631
+        ],
+        "goal": [
+          24,
+          0.0027,
+          32
+        ],
+        "distance": 0.8332639541370761,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91858,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 96,
+        "initialPathFirst": 607,
+        "initialPathLast": 16349,
+        "pi": 95,
+        "currentPathNodes": 96,
+        "waypoints": 95,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.21534373932624,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          13762,
+          0
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 16349,
+        "currentWaypoint": {
+          "id": 16349,
+          "point": [
+            24.200000000000003,
+            0.002700000070042563,
+            31.599999999999994
+          ]
+        },
+        "sourceGround": {
+          "y": 0.0027000000700354576,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "clock": "production Game._frame fixed gameplay clock",
+        "renderCadence": 60,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "brainStepIntervals": [
+          0.016666666666666666
+        ],
+        "projectileStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 2242,
+        "gameClockTicks": 2242,
+        "matchState": "playing",
+        "matchTimeRemaining": 139.6333333333012,
+        "seconds": 37.36666666666667,
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          23.844167057898225,
+          0.0027000000700354576,
+          31.18143728925631
+        ],
+        "goal": [
+          24,
+          0.0027,
+          32
+        ],
+        "distance": 0.8332639541370761,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91858,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 96,
+        "initialPathFirst": 607,
+        "initialPathLast": 16349,
+        "pi": 95,
+        "currentPathNodes": 96,
+        "waypoints": 95,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.21534373932624,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          13762,
+          0
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 16349,
+        "currentWaypoint": {
+          "id": 16349,
+          "point": [
+            24.200000000000003,
+            0.002700000070042563,
+            31.599999999999994
+          ]
+        },
+        "sourceGround": {
+          "y": 0.0027000000700354576,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "clock": "production Game._frame fixed gameplay clock",
+        "renderCadence": 120,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "brainStepIntervals": [
+          0.016666666666666666
+        ],
+        "projectileStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 2242,
+        "gameClockTicks": 2242,
+        "matchState": "playing",
+        "matchTimeRemaining": 139.6333333333012,
+        "seconds": 37.36666666666667,
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          23.844167057898225,
+          0.0027000000700354576,
+          31.18143728925631
+        ],
+        "goal": [
+          24,
+          0.0027,
+          32
+        ],
+        "distance": 0.8332639541370761,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91858,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 96,
+        "initialPathFirst": 607,
+        "initialPathLast": 16349,
+        "pi": 95,
+        "currentPathNodes": 96,
+        "waypoints": 95,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.21534373932624,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          13762,
+          0
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 16349,
+        "currentWaypoint": {
+          "id": 16349,
+          "point": [
+            24.200000000000003,
+            0.002700000070042563,
+            31.599999999999994
+          ]
+        },
+        "sourceGround": {
+          "y": 0.0027000000700354576,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "clock": "production Game._frame fixed gameplay clock",
+        "renderCadence": 30,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "brainStepIntervals": [
+          0.016666666666666666
+        ],
+        "projectileStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1994,
+        "gameClockTicks": 1994,
+        "matchState": "playing",
+        "matchTimeRemaining": 143.76666666663783,
+        "seconds": 33.233333333333334,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          -23.20683330980416,
+          0.0027000000700354576,
+          -31.703588233394502
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 0.8467427790175804,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91910,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 95,
+        "initialPathFirst": 20926,
+        "initialPathLast": 5055,
+        "pi": 94,
+        "currentPathNodes": 95,
+        "waypoints": 94,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.56417939592113,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          15865
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 5055,
+        "currentWaypoint": {
+          "id": 5055,
+          "point": [
+            -23.799999999999997,
+            0.002700000070028352,
+            -32.400000000000006
+          ]
+        },
+        "sourceGround": {
+          "y": 0.0027000000700354576,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "clock": "production Game._frame fixed gameplay clock",
+        "renderCadence": 60,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "brainStepIntervals": [
+          0.016666666666666666
+        ],
+        "projectileStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1994,
+        "gameClockTicks": 1994,
+        "matchState": "playing",
+        "matchTimeRemaining": 143.76666666663783,
+        "seconds": 33.233333333333334,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          -23.20683330980416,
+          0.0027000000700354576,
+          -31.703588233394502
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 0.8467427790175804,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91910,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 95,
+        "initialPathFirst": 20926,
+        "initialPathLast": 5055,
+        "pi": 94,
+        "currentPathNodes": 95,
+        "waypoints": 94,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.56417939592113,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          15865
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 5055,
+        "currentWaypoint": {
+          "id": 5055,
+          "point": [
+            -23.799999999999997,
+            0.002700000070028352,
+            -32.400000000000006
+          ]
+        },
+        "sourceGround": {
+          "y": 0.0027000000700354576,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "clock": "production Game._frame fixed gameplay clock",
+        "renderCadence": 120,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "brainStepIntervals": [
+          0.016666666666666666
+        ],
+        "projectileStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1994,
+        "gameClockTicks": 1994,
+        "matchState": "playing",
+        "matchTimeRemaining": 143.76666666663783,
+        "seconds": 33.233333333333334,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          -23.20683330980416,
+          0.0027000000700354576,
+          -31.703588233394502
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 0.8467427790175804,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91910,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 95,
+        "initialPathFirst": 20926,
+        "initialPathLast": 5055,
+        "pi": 94,
+        "currentPathNodes": 95,
+        "waypoints": 94,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.56417939592113,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          15865
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 5055,
+        "currentWaypoint": {
+          "id": 5055,
+          "point": [
+            -23.799999999999997,
+            0.002700000070028352,
+            -32.400000000000006
+          ]
+        },
+        "sourceGround": {
+          "y": 0.0027000000700354576,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      }
+    ],
+    "errors": [],
+    "clock": "production Game._frame fixed STEP 1/60",
+    "conditions": "Original opposed \u00b161 source pads, production Actor/Character/BotBrain/Projectiles and ordinary inputs; full native turf match eight actors/seven bots; zero AP Shooter; initially empty ink; other actors retained on their original-team source supports; controlled original goal after ordinary refill; kernel mode manually steps Actor/BotBrain/Projectiles at dt=1/hz, game mode calls only installed Game._frame at render cadence 1/hz with observed fixed gameplay ticks; distances are raw source units; SwiftShader, not console hardware",
+    "source": {
+      "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+      "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+      "actors": 8,
+      "bots": 7,
+      "sourceNavigation": {
+        "wallClimb": true,
+        "highDrops": true
+      }
+    },
+    "lastCase": {
+      "team": 1,
+      "hz": 120,
+      "clock": "production Game._frame fixed gameplay clock",
+      "renderCadence": 120,
+      "actorStepIntervals": [
+        0.016666666666666666
+      ],
+      "brainStepIntervals": [
+        0.016666666666666666
+      ],
+      "projectileStepIntervals": [
+        0.016666666666666666
+      ],
+      "actorTicks": 1994,
+      "gameClockTicks": 1994,
+      "matchState": "playing",
+      "matchTimeRemaining": 143.76666666663783,
+      "seconds": 33.233333333333334,
+      "start": [
+        0,
+        6,
+        61
+      ],
+      "end": [
+        -23.20683330980416,
+        0.0027000000700354576,
+        -31.703588233394502
+      ],
+      "goal": [
+        -24,
+        0.0027,
+        -32
+      ],
+      "distance": 0.8467427790175804,
+      "alive": true,
+      "grounded": true,
+      "sourceTriangle": 91910,
+      "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+      "pathNodes": 95,
+      "initialPathFirst": 20926,
+      "initialPathLast": 5055,
+      "pi": 94,
+      "currentPathNodes": 95,
+      "waypoints": 94,
+      "fired": true,
+      "jumped": true,
+      "climbed": false,
+      "departed": true,
+      "maxTravel": 95.56417939592113,
+      "gearAP": [],
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "actors": 8,
+      "aliveActors": 8,
+      "bots": 7,
+      "counts": [
+        0,
+        15865
+      ],
+      "refillGoalReplans": 0,
+      "currentGoalNode": 5055,
+      "currentWaypoint": {
+        "id": 5055,
+        "point": [
+          -23.799999999999997,
+          0.002700000070028352,
+          -32.400000000000006
+        ]
+      },
+      "sourceGround": {
+        "y": 0.0027000000700354576,
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "center": true
+      },
+      "mode": "paint"
+    },
+    "sourceBuffersUnchanged": true
+  },
+  "currentMainRankedGameClockBefore": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "evidence": ".browser-evidence/current-main-ranked-game-clock/ranked.json",
+    "status": "failed",
+    "buildFingerprint": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+    "clock": "production Game._frame; observed fixed STEP 1/60",
+    "cases": [
+      {
+        "mode": "zones",
+        "team": 0,
+        "renderCadence": 30,
+        "seconds": 25,
+        "actorTicks": 1500,
+        "gameClockTicks": 1500,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -0.4499020937493501,
+          3.0999999046325684,
+          -0.5487131943333012
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "paint",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 94449,
+        "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+        "sourceFace": 14137,
+        "fire": true,
+        "jump": true,
+        "traversal": 98,
+        "maxTravel": 60.45296095606015,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          10310,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "zones",
+        "team": 0,
+        "renderCadence": 60,
+        "seconds": 25,
+        "actorTicks": 1500,
+        "gameClockTicks": 1500,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -0.4499020937493501,
+          3.0999999046325684,
+          -0.5487131943333012
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "paint",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 94449,
+        "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+        "sourceFace": 14137,
+        "fire": true,
+        "jump": true,
+        "traversal": 98,
+        "maxTravel": 60.45296095606015,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          10310,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "zones",
+        "team": 0,
+        "renderCadence": 120,
+        "seconds": 25,
+        "actorTicks": 1500,
+        "gameClockTicks": 1500,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -0.4499020937493501,
+          3.0999999046325684,
+          -0.5487131943333012
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "paint",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 94449,
+        "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+        "sourceFace": 14137,
+        "fire": true,
+        "jump": true,
+        "traversal": 98,
+        "maxTravel": 60.45296095606015,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          10310,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "zones",
+        "team": 1,
+        "renderCadence": 30,
+        "seconds": 21.5,
+        "actorTicks": 1290,
+        "gameClockTicks": 1290,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          0.5216348114000607,
+          3.0999999046325684,
+          -0.34739033353732884
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "paint",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 95170,
+        "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+        "sourceFace": 14139,
+        "fire": true,
+        "jump": true,
+        "traversal": 88,
+        "maxTravel": 61.34960801514426,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          9610
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "zones",
+        "team": 1,
+        "renderCadence": 60,
+        "seconds": 21.5,
+        "actorTicks": 1290,
+        "gameClockTicks": 1290,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          0.5216348114000607,
+          3.0999999046325684,
+          -0.34739033353732884
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "paint",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 95170,
+        "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+        "sourceFace": 14139,
+        "fire": true,
+        "jump": true,
+        "traversal": 88,
+        "maxTravel": 61.34960801514426,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          9610
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "zones",
+        "team": 1,
+        "renderCadence": 120,
+        "seconds": 21.5,
+        "actorTicks": 1290,
+        "gameClockTicks": 1290,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          0.5216348114000607,
+          3.0999999046325684,
+          -0.34739033353732884
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "paint",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 95170,
+        "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+        "sourceFace": 14139,
+        "fire": true,
+        "jump": true,
+        "traversal": 88,
+        "maxTravel": 61.34960801514426,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          9610
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "rainmaker",
+        "team": 0,
+        "renderCadence": 30,
+        "seconds": 34.5,
+        "actorTicks": 2070,
+        "gameClockTicks": 2070,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -0.8586887728962272,
+          3.0999999046325684,
+          -0.3306343384236595
+        ],
+        "goal": [
+          -0.9900282268221758,
+          3.0999999046325684,
+          -0.17526853135575268
+        ],
+        "goalAction": "carry",
+        "botGoal": {
+          "x": -0.9900282268221758,
+          "y": 3.0999999046325684,
+          "z": -0.17526853135575268
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 105757,
+        "sourceObject": "Fld_Wave03_MidBowl_Woodlogo__GroundPlywood_Logo",
+        "sourceFace": 21857,
+        "fire": true,
+        "jump": true,
+        "traversal": 98,
+        "maxTravel": 61.208590249459085,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          13072,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "rainmaker",
+        "team": 0,
+        "renderCadence": 60,
+        "seconds": 34.5,
+        "actorTicks": 2070,
+        "gameClockTicks": 2070,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -0.8586887728962272,
+          3.0999999046325684,
+          -0.3306343384236595
+        ],
+        "goal": [
+          -0.9900282268221758,
+          3.0999999046325684,
+          -0.17526853135575268
+        ],
+        "goalAction": "carry",
+        "botGoal": {
+          "x": -0.9900282268221758,
+          "y": 3.0999999046325684,
+          "z": -0.17526853135575268
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 105757,
+        "sourceObject": "Fld_Wave03_MidBowl_Woodlogo__GroundPlywood_Logo",
+        "sourceFace": 21857,
+        "fire": true,
+        "jump": true,
+        "traversal": 98,
+        "maxTravel": 61.208590249459085,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          13072,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "rainmaker",
+        "team": 0,
+        "renderCadence": 120,
+        "seconds": 34.5,
+        "actorTicks": 2070,
+        "gameClockTicks": 2070,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -0.8586887728962272,
+          3.0999999046325684,
+          -0.3306343384236595
+        ],
+        "goal": [
+          -0.9900282268221758,
+          3.0999999046325684,
+          -0.17526853135575268
+        ],
+        "goalAction": "carry",
+        "botGoal": {
+          "x": -0.9900282268221758,
+          "y": 3.0999999046325684,
+          "z": -0.17526853135575268
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 105757,
+        "sourceObject": "Fld_Wave03_MidBowl_Woodlogo__GroundPlywood_Logo",
+        "sourceFace": 21857,
+        "fire": true,
+        "jump": true,
+        "traversal": 98,
+        "maxTravel": 61.208590249459085,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          13072,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "rainmaker",
+        "team": 1,
+        "renderCadence": 30,
+        "seconds": 31.5,
+        "actorTicks": 1890,
+        "gameClockTicks": 1890,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          0.3474101086561524,
+          3.0999999046325684,
+          -0.07025480824634449
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "carry",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 105822,
+        "sourceObject": "Fld_Wave03_MidBowl_Woodlogo__GroundPlywood_Logo",
+        "sourceFace": 21859,
+        "fire": true,
+        "jump": true,
+        "traversal": 88,
+        "maxTravel": 61.071242955483825,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          12585
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "rainmaker",
+        "team": 1,
+        "renderCadence": 60,
+        "seconds": 31.5,
+        "actorTicks": 1890,
+        "gameClockTicks": 1890,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          0.3474101086561524,
+          3.0999999046325684,
+          -0.07025480824634449
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "carry",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 105822,
+        "sourceObject": "Fld_Wave03_MidBowl_Woodlogo__GroundPlywood_Logo",
+        "sourceFace": 21859,
+        "fire": true,
+        "jump": true,
+        "traversal": 88,
+        "maxTravel": 61.071242955483825,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          12585
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "rainmaker",
+        "team": 1,
+        "renderCadence": 120,
+        "seconds": 31.5,
+        "actorTicks": 1890,
+        "gameClockTicks": 1890,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          0.3474101086561524,
+          3.0999999046325684,
+          -0.07025480824634449
+        ],
+        "goal": [
+          0.20000000000000284,
+          3.0999999046325684,
+          -0.4000000000000057
+        ],
+        "goalAction": "carry",
+        "botGoal": {
+          "x": 0.20000000000000284,
+          "y": 3.0999999046325684,
+          "z": -0.4000000000000057
+        },
+        "inventory": null,
+        "initialInventory": {
+          "small": 0,
+          "power": false
+        },
+        "collected": false,
+        "approached": true,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 105822,
+        "sourceObject": "Fld_Wave03_MidBowl_Woodlogo__GroundPlywood_Logo",
+        "sourceFace": 21859,
+        "fire": true,
+        "jump": true,
+        "traversal": 88,
+        "maxTravel": 61.071242955483825,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          12585
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "clams",
+        "team": 0,
+        "renderCadence": 30,
+        "seconds": 60,
+        "actorTicks": 3600,
+        "gameClockTicks": 3600,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -5.648337533158387,
+          0,
+          -15.302701980264281
+        ],
+        "goal": [
+          0.042810855593161334,
+          0,
+          -15.450165455052712
+        ],
+        "goalAction": "collect",
+        "botGoal": {
+          "x": 0.042810855593161334,
+          "y": 0,
+          "z": -15.450165455052712
+        },
+        "inventory": {
+          "team": 0,
+          "small": 5,
+          "power": false
+        },
+        "initialInventory": {
+          "team": 0,
+          "small": 0,
+          "power": false
+        },
+        "collected": true,
+        "approached": false,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 92023,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "sourceFace": 12900,
+        "fire": true,
+        "jump": true,
+        "traversal": 203,
+        "maxTravel": 46.04505145173613,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          19199,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "clams",
+        "team": 0,
+        "renderCadence": 60,
+        "seconds": 60,
+        "actorTicks": 3600,
+        "gameClockTicks": 3600,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -5.648337533158387,
+          0,
+          -15.302701980264281
+        ],
+        "goal": [
+          0.042810855593161334,
+          0,
+          -15.450165455052712
+        ],
+        "goalAction": "collect",
+        "botGoal": {
+          "x": 0.042810855593161334,
+          "y": 0,
+          "z": -15.450165455052712
+        },
+        "inventory": {
+          "team": 0,
+          "small": 5,
+          "power": false
+        },
+        "initialInventory": {
+          "team": 0,
+          "small": 0,
+          "power": false
+        },
+        "collected": true,
+        "approached": false,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 92023,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "sourceFace": 12900,
+        "fire": true,
+        "jump": true,
+        "traversal": 203,
+        "maxTravel": 46.04505145173613,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          19199,
+          0
+        ],
+        "matchState": "playing"
+      },
+      {
+        "mode": "clams",
+        "team": 0,
+        "renderCadence": 120,
+        "seconds": 60,
+        "actorTicks": 3600,
+        "gameClockTicks": 3600,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -5.648337533158387,
+          0,
+          -15.302701980264281
+        ],
+        "goal": [
+          0.042810855593161334,
+          0,
+          -15.450165455052712
+        ],
+        "goalAction": "collect",
+        "botGoal": {
+          "x": 0.042810855593161334,
+          "y": 0,
+          "z": -15.450165455052712
+        },
+        "inventory": {
+          "team": 0,
+          "small": 5,
+          "power": false
+        },
+        "initialInventory": {
+          "team": 0,
+          "small": 0,
+          "power": false
+        },
+        "collected": true,
+        "approached": false,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 92023,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "sourceFace": 12900,
+        "fire": true,
+        "jump": true,
+        "traversal": 203,
+        "maxTravel": 46.04505145173613,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          19199,
+          0
+        ],
+        "matchState": "playing"
+      }
+    ],
+    "errors": [],
+    "lastCase": {
+      "mode": "clams",
+      "team": 1,
+      "renderCadence": 30,
+      "seconds": 90,
+      "actorTicks": 5400,
+      "gameClockTicks": 5400,
+      "actorSteps": [
+        0.016666666666666666
+      ],
+      "brainSteps": [
+        0.016666666666666666
+      ],
+      "projectileSteps": [
+        0.016666666666666666
+      ],
+      "start": [
+        0,
+        6,
+        61
+      ],
+      "end": [
+        1.2650608863289556,
+        1.8476019949285076,
+        40.48937646908898
+      ],
+      "goal": null,
+      "goalAction": null,
+      "botGoal": null,
+      "inventory": {
+        "team": 1,
+        "small": 0,
+        "power": false
+      },
+      "initialInventory": {
+        "team": 1,
+        "small": 0,
+        "power": false
+      },
+      "collected": false,
+      "approached": false,
+      "alive": true,
+      "grounded": true,
+      "sourceTriangle": 94566,
+      "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+      "sourceFace": 13692,
+      "fire": true,
+      "jump": true,
+      "traversal": 50,
+      "maxTravel": 37.25557155621498,
+      "gearAP": [],
+      "sourceWeapon": "WeaponShooterNormal",
+      "actors": 8,
+      "aliveActors": 8,
+      "bots": 7,
+      "counts": [
+        0,
+        18901
+      ],
+      "matchState": "playing"
+    },
+    "error": "AssertionError [ERR_ASSERTION]: Real fixed-clock ranked source approach failed {\"mode\":\"clams\",\"team\":1,\"renderCadence\":30,\"seconds\":90,\"actorTicks\":5400,\"gameClockTicks\":5400,\"actorSteps\":[0.016666666666666666],\"brainSteps\":[0.016666666666666666],\"projectileSteps\":[0.016666666666666666],\"start\":[0,6,61],\"end\":[1.2650608863289556,1.8476019949285076,40.48937646908898],\"goal\":null,\"goalAction\":null,\"botGoal\":null,\"inventory\":{\"team\":1,\"small\":0,\"power\":false},\"initialInventory\":{\"team\":1,\"small\":0,\"power\":false},\"collected\":false,\"approached\":false,\"alive\":true,\"grounded\":true,\"sourceTriangle\":94566,\"sourceObject\":\"Fld_Wave03_GroundPlywood_02_1__GroundPlywood\",\"sourceFace\":13692,\"fire\":true,\"jump\":true,\"traversal\":50,\"maxTravel\":37.25557155621498,\"gearAP\":[],\"sourceWeapon\":\"WeaponShooterNormal\",\"actors\":8,\"aliveActors\":8,\"bots\":7,\"counts\":[0,18901],\"matchState\":\"playing\"}\n    at file:///workspace/stage-worktrees/humpback/scripts/check-inkwave-native-humpback-ranked.mjs:67:3"
   }
 }
