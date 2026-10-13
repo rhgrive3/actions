@@ -95,8 +95,8 @@ export function adaptNativeStages(rel,code){
     return this.grid[k];`);
  }
  if(rel==='src/game/bots.js'){
-  code="import { nativePaintGoalIds,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
-  once('    this.think -= dt; this.jumpCd -= dt;', '    if (updateNativeClimb(this,G,dt)) return;\n    this.think -= dt; this.jumpCd -= dt;');
+  code="import { nativePaintGoalIds,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('    this.think -= dt; this.jumpCd -= dt;', '    if (updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt)) return;\n    this.think -= dt; this.jumpCd -= dt;');
   once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, (G.level.manifest?.sourceNavigation?.wallClimb || G.level.manifest?.sourceNavigation?.highDrops) ? Math.max(6000, nav.nodes.length * 4) : undefined);');
   once('this.pi + 7', 'this.pi + (G.level.manifest?.sourceNavigation?.wallClimb || G.level.manifest?.sourceNavigation?.highDrops ? 1 : 7)');
   once("nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump'", "(nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump' && (!G.level.manifest?.sourceNavigation?.wallClimb || nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'climb'))");
