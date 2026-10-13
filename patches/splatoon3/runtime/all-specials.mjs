@@ -502,12 +502,16 @@ export function crabAttackTargetVelocity(move, yaw = 0) {
 
 // WeaponSpCastle BodyParam.CollisionDashRadiusForPlayer = 1.5.
 // A midpoint-only hit test loses targets near the start/end of each 60Hz step.
+// Preserve height in the swept source-radius check: 2D-only overlap must
+// not damage a player standing on a different floor. Source BodyParam has
+// CollisionUpperOffset=0; no speculative height offset is applied here.
 export function krakenDashSweptContact(from,to,target,radius=1.5){
-  if(![from?.x,from?.z,to?.x,to?.z,target?.x,target?.z,radius].every(finite)||radius<0)return false;
-  const dx=to.x-from.x,dz=to.z-from.z,lengthSq=dx*dx+dz*dz;
-  const t=lengthSq>1e-12?clamp(((target.x-from.x)*dx+(target.z-from.z)*dz)/lengthSq,0,1):0;
-  const x=target.x-(from.x+t*dx),z=target.z-(from.z+t*dz);
-  return x*x+z*z<=radius*radius;
+  const fy=from?.y??0,ty=to?.y??0,vy=target?.y??0;
+  if(![from?.x,fy,from?.z,to?.x,ty,to?.z,target?.x,vy,target?.z,radius].every(finite)||radius<0)return false;
+  const dx=to.x-from.x,dy=ty-fy,dz=to.z-from.z,lengthSq=dx*dx+dy*dy+dz*dz;
+  const t=lengthSq>1e-12?clamp(((target.x-from.x)*dx+(vy-fy)*dy+(target.z-from.z)*dz)/lengthSq,0,1):0;
+  const x=target.x-(from.x+t*dx),y=vy-(fy+t*dy),z=target.z-(from.z+t*dz);
+  return x*x+y*y+z*z<=radius*radius;
 }
 function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = true, flight = false } = {}) {
   const P = rt.api.PLAYER, move = actor.intent?.move;

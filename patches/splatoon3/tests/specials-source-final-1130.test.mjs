@@ -51,6 +51,12 @@ test('S3 11.3.0 Kraken dash sweeps the whole player collision capsule of radius 
   assert.equal(admit(a,b,{x:1.51,z:.35}),false,'outside');
   assert.equal(admit(a,a,{x:0,z:0}),true,'degenerate segment');
   assert.equal(admit(a,b,{x:Infinity,z:0}),false,'non-finite target');
+  // BodyParam.CollisionUpperOffset=0: nearby X/Z on an upper storey is not a dash hit.
+  const floorA={x:0,y:0,z:0},floorB={x:0,y:0,z:.35};
+  assert.equal(admit(floorA,floorB,{x:0,y:4,z:.2}),false,'upper storey remains separate');
+  assert.equal(admit(floorA,floorB,{x:0,y:1.2,z:.2}),true,'near-height target remains hittable');
+  assert.equal(admit(floorA,floorB,{x:0,y:Infinity,z:.2}),false,'reject invalid height');
+  assert.equal(admit({x:0,y:0,z:0},{x:0,y:1,z:.35},{x:0,y:1,z:.35}),true,'rising dash checks full 3D segment');
 });
 
 test('S3 Triple Inkstrike R-release creates the native 82-frame descending marker',async()=>{
