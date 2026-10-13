@@ -18,13 +18,17 @@
 // host must convert native DU/F projectile speeds into its world units/second.
 // Stage-provided retreatZ boundaries remain stage data, not game-wide values.
 
+import { canCollectRainmaker } from './clams.mjs';
 export const RAINMAKER_BARRIER_MAX = 1000;
+export const RAINMAKER_RESPAWN_SECONDS = 3;
 export const RAINMAKER_CARRY_SECONDS = 60;
 export const RAINMAKER_RETREAT_MULTIPLIER = 4;
 export const RAINMAKER_DROP_RETURN_SECONDS = 15;
 export const RAINMAKER_OVERTIME_GRACE_SECONDS = 15;
 export const RAINMAKER_FULL_CHARGE_SECONDS = 1;
 export const RAINMAKER_MIN_CHARGE_SECONDS = 20 / 60;
+export const RAINMAKER_SHOT_RECOVERY_SECONDS = 20 / 60;
+const emptyCharge = () => ({ seconds: 0, value: 0, firing: false, delay: 0, recovery: 0, pending: null, wasSwimming: false });
 
 // Leanny 11.3.0 DamageRateInfo rows for `Gachihoko_Barrier`. `damage` in a
 // barrier hit is ordinary weapon damage before this object multiplier; callers
@@ -128,7 +132,7 @@ function initialState(stage) {
     carrier: null,
     carrierTeam: null,
     barrier: { active: true, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null },
-    charge: { seconds: 0, value: 0, firing: false },
+    charge: emptyCharge(),
     checkpoint: {
       passed: [false, false],
       choice: [null, null],
@@ -146,6 +150,9 @@ function initialState(stage) {
     lastDropAge: null,
     lastCarrierTeam: null,
     shotSequence: 0,
+    respawnRemaining: 0,
+    pickupZ: null,
+    lastGroundedPos: center.slice(),
     tickSerial: 0,
     overtime: {
       active: false,
@@ -193,6 +200,13 @@ export class RainmakerRule {
     if (this.state.terminal || (this.engine?.winner !== null && this.engine?.winner !== undefined)) return;
     dt = finite(dt) && dt > 0 ? dt : 0;
     this.state.tickSerial++;
+    if (this.state.respawnRemaining > 0) {
+      this.state.respawnRemaining = Math.max(0, this.state.respawnRemaining - dt);
+      if (this.state.respawnRemaining <= 1e-9) {
+        this.state.respawnRemaining = 0;
+        this.state.barrier = { active: true, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
+      }
+    }
     this._ageUnclaimed(dt);
     this.state.lastDropAge = ageBy(this.state.lastDropAge, dt);
     this.state.checkpoint.sincePass = ageBy(this.state.checkpoint.sincePass, dt);
@@ -378,9 +392,9 @@ export class RainmakerRule {
   }
 
   _tryPickup(actors) {
-    if (this.state.carrier !== null || this.state.barrier.active || !Array.isArray(actors)) return;
+    if (this.state.carrier !== null || this.state.barrier.active || this.state.respawnRemaining > 0 || !Array.isArray(actors)) return;
     const candidates = actors.filter(actor => actor?.alive !== false && validTeam(actor?.team)
-      && validId(actor?.id) && distance(positionOf(actor), this.state.pos) <= PICKUP_RADIUS);
+      && canCollectRainmaker(actor) && validId(actor?.id) && distance(positionOf(actor), this.state.pos) <= PICKUP_RADIUS);
     candidates.sort((a, b) => distance(positionOf(a), this.state.pos) - distance(positionOf(b), this.state.pos)
       || String(a.id).localeCompare(String(b.id)));
     const actor = candidates[0];
@@ -388,11 +402,15 @@ export class RainmakerRule {
     this.state.carrier = actor.id;
     this.state.carrierTeam = actor.team;
     this.state.lastCarrierTeam = actor.team;
+    const pickupPosition = this.state.pos.slice();
     this.state.pos = positionOf(actor);
+    this.state.pickupZ = this.state.pos[2];
+    this.state.lastGroundedPos = actor.grounded === true ? this.state.pos.slice() : pickupPosition;
     this.state.holderTime = 0;
     this.state.holderRemaining = RAINMAKER_CARRY_SECONDS;
     this.state.retreatRate = 1;
-    this.state.charge = { seconds: 0, value: 0, firing: false };
+    this.state.charge = emptyCharge();
+    this.state.charge.wasSwimming = !!actor.swimming;
     this.state.dropped = false;
     this.state.dropTimer = 0;
     this.state.barrier = { active: false, max: RAINMAKER_BARRIER_MAX, health: 0, balance: 0, team: null };
@@ -406,6 +424,7 @@ export class RainmakerRule {
     const team = this.state.carrierTeam;
     const pos = positionOf(actor);
     this.state.pos = pos;
+    if (actor.grounded === true) this.state.lastGroundedPos = pos.slice();
 
     const retreat = this._isRetreating(team, pos[2]);
     const rate = retreat ? RAINMAKER_RETREAT_MULTIPLIER : 1;
@@ -419,11 +438,11 @@ export class RainmakerRule {
 
     this._updateShot(dt, actor, frame.inputs?.[actor.id]);
     if (this.state.carrier === null) return;
-    this._updateCount(team, pos);
+    if (actor.grounded === true || frame.countAllowed?.(actor) === true) this._updateCount(team, pos);
     if (this.state.carrier === null) return;
-    this._checkCheckpoint(actor);
+    if (actor.grounded === true) this._checkCheckpoint(actor);
     if (this.state.carrier === null) return;
-    if (this.state.checkpoint.goalOpen[team] && this._touchesGoal(team, pos)) {
+    if (actor.grounded === true && this.state.checkpoint.goalOpen[team] && this._touchesGoal(team, pos)) {
       this.state.pos = this.goals[team].slice();
       this._setCount(team, 0);
       this._finish(team, 'rainmaker-goal');
@@ -431,18 +450,40 @@ export class RainmakerRule {
   }
 
   _updateShot(dt, actor, input) {
-    const firing = input?.fire === true;
+    const c = this.state.charge;
+    c.wasSwimming ||= !!actor.swimming;
+    let remaining = dt;
+    // Recovery and both one-frame windups consume elapsed time, including
+    // overshoot at low frame rates. A release is latched, never fired twice.
+    if (c.pending) {
+      const used = Math.min(remaining, c.delay); c.delay -= used; remaining -= used;
+      if (c.delay > 1e-9) return;
+      this._event('rainmaker-shot', c.pending); c.pending = null;
+      c.recovery = RAINMAKER_SHOT_RECOVERY_SECONDS;
+    }
+    if (c.recovery > 0) {
+      const used = Math.min(remaining, c.recovery); c.recovery -= used; remaining -= used;
+      if (c.recovery > 1e-9) return;
+      c.recovery = 0;
+    }
+    const firing = input?.fire === true && !(actor.swimming && c.firing);
     if (firing) {
-      this.state.charge.seconds = Math.min(RAINMAKER_FULL_CHARGE_SECONDS, this.state.charge.seconds + dt);
+      if (!c.firing) c.delay = (c.wasSwimming || actor.swimming ? 6 : 1) / 60;
+      c.wasSwimming = false; c.firing = true;
+      const used = Math.min(remaining, c.delay); c.delay -= used; remaining -= used;
+      const previousCharge = c.value;
+      this.state.charge.seconds = Math.min(RAINMAKER_FULL_CHARGE_SECONDS, this.state.charge.seconds + remaining);
+      if (c.seconds >= RAINMAKER_FULL_CHARGE_SECONDS - 1e-9) c.seconds = RAINMAKER_FULL_CHARGE_SECONDS;
       this.state.charge.value = RAINMAKER_FULL_CHARGE_SECONDS > 0
         ? clamp(this.state.charge.seconds / RAINMAKER_FULL_CHARGE_SECONDS, 0, 1) : 1;
       this.state.charge.firing = true;
+      if (previousCharge < 1 && c.value >= 1) this._event('rainmaker-charged', { id: actor.id, team: actor.team, pos: positionOf(actor) });
       return;
     }
-    if (this.state.charge.firing && this.state.charge.seconds > 0) {
+    if (!actor.swimming && this.state.charge.firing && this.state.charge.seconds > 0) {
       const charge = clamp(this.state.charge.value, 0, 1);
-      if (this.state.charge.seconds < RAINMAKER_MIN_CHARGE_SECONDS) {
-        this.state.charge = { seconds: 0, value: 0, firing: false };
+      if (this.state.charge.seconds < RAINMAKER_MIN_CHARGE_SECONDS - 1e-9) {
+        this.state.charge = emptyCharge();
         return;
       }
       const fullCharge = charge >= 1;
@@ -461,8 +502,8 @@ export class RainmakerRule {
         + (PARTIAL_SHOT_MAX_RANGE - PARTIAL_SHOT_MIN_RANGE) * partialCharge;
       const nearRange = fullCharge ? FULL_SHOT_NEAR_RANGE : null;
       const effectiveRange = fullCharge ? FULL_SHOT_EFFECTIVE_RANGE : directRange;
-      const paintRadius = fullCharge ? 5
-        : PARTIAL_SHOT_MIN_PAINT_RADIUS + (PARTIAL_SHOT_MAX_PAINT_RADIUS - PARTIAL_SHOT_MIN_PAINT_RADIUS) * partialCharge;
+      const paintRadius = (fullCharge ? 5
+        : PARTIAL_SHOT_MIN_PAINT_RADIUS + (PARTIAL_SHOT_MAX_PAINT_RADIUS - PARTIAL_SHOT_MIN_PAINT_RADIUS) * partialCharge) * 10 * WORLD_UNITS_PER_DU;
       const speed = fullCharge ? FULL_SHOT_SPEED : PARTIAL_SHOT_SPEED;
       const inputAim = input?.aim;
       let aim = Array.isArray(inputAim) && inputAim.length >= 3 && inputAim.slice(0, 3).every(finite)
@@ -470,13 +511,20 @@ export class RainmakerRule {
       const length = Math.hypot(...aim);
       aim = length > 0 ? aim.map(value => value / length) : [0, 0, actor.team === 0 ? 1 : -1];
       const id = this.state.shotSequence++;
-      this._event('rainmaker-shot', {
+      c.pending = {
         id, actorId: String(actor.id), team: actor.team, pos: positionOf(actor), aim, charge,
         damage, blastDamage, outerDamage, radius, nearRadius,
         directRange, nearRange, effectiveRange, paintRadius, speed,
-      });
+        launchY: nativeSpeedToWorldPerSecond(fullCharge ? .28 : .14 + .07 * partialCharge),
+        recoil: nativeSpeedToWorldPerSecond(fullCharge ? .12 : .06 + .03 * partialCharge),
+        trailRadius: fullCharge ? .48 : paintRadius,
+      };
+      c.seconds = c.value = 0; c.firing = false; c.delay = 1 / 60;
+      this._updateShot(remaining, actor, input);
+      return;
     }
-    this.state.charge = { seconds: 0, value: 0, firing: false };
+    this.state.charge = emptyCharge();
+    this.state.charge.wasSwimming = !!actor.swimming;
   }
 
   _checkCheckpoint(actor) {
@@ -501,6 +549,7 @@ export class RainmakerRule {
   }
 
   _dropAtCheckpoint(team, pos) {
+    this.engine.resolveTie?.(team);
     this.state.lastDropTeam = team;
     this.state.lastDropReason = 'checkpoint';
     this.state.lastDropAge = 0;
@@ -509,7 +558,7 @@ export class RainmakerRule {
     this.state.holderTime = 0;
     this.state.holderRemaining = RAINMAKER_CARRY_SECONDS;
     this.state.retreatRate = 1;
-    this.state.charge = { seconds: 0, value: 0, firing: false };
+    this.state.charge = emptyCharge();
     this.state.pos = pos.slice();
     this.state.barrier = { active: true, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
     this.state.dropped = true;
@@ -527,7 +576,13 @@ export class RainmakerRule {
     const baseline = distance(this.center, goal);
     if (!(baseline > 0)) return;
     const remaining = distance(pos, goal);
-    const count = clamp(Math.ceil(100 * remaining / baseline), 1, 100);
+    let count = clamp(Math.ceil(100 * remaining / baseline), 1, 100);
+    if (!this.state.checkpoint.passed[team] && this.checkpoints[team].length) {
+      // Authored stage geometry supplies the local count scale. A checkpoint
+      // is a hard gate even when the holder physically walks around it.
+      const floor = Math.min(...this.checkpoints[team].map(p => clamp(Math.ceil(100 * distance(p, goal) / baseline), 1, 100)));
+      count = Math.max(floor, count);
+    }
     this._setCount(team, count);
   }
 
@@ -552,8 +607,10 @@ export class RainmakerRule {
 
   _isRetreating(team, z) {
     const line = this.retreatZ[team];
-    if (!finite(line)) return false;
-    return team === 0 ? z < line : z > line;
+    const pickup = this.state.pickupZ;
+    const behindPickup = finite(pickup) && (team === 0 ? z < pickup - 1e-9 : z > pickup + 1e-9);
+    const prohibited = finite(line) && (team === 0 ? z < line : z > line);
+    return behindPickup || prohibited;
   }
 
   _isFallen(actor, frame) {
@@ -568,7 +625,8 @@ export class RainmakerRule {
     if (this.state.carrier === null) return;
     const team = this.state.carrierTeam;
     const id = this.state.carrier;
-    const pos = actor ? positionOf(actor) : this.state.pos.slice();
+    const pos = actor?.grounded === true && reason !== 'fall' ? positionOf(actor) : copyPos(this.state.lastGroundedPos ?? this.state.pos);
+    this.engine.resolveTie?.(team);
     this.state.lastDropTeam = team;
     this.state.lastDropReason = reason;
     this.state.lastDropAge = 0;
@@ -577,14 +635,16 @@ export class RainmakerRule {
     this.state.holderTime = 0;
     this.state.holderRemaining = RAINMAKER_CARRY_SECONDS;
     this.state.retreatRate = 1;
-    this.state.charge = { seconds: 0, value: 0, firing: false };
+    this.state.charge = emptyCharge();
     this.state.pos = pos;
 
-    const resetToCenter = reason === 'fall' && this._isOwnHalf(team, pos[2]);
-    if (reason === 'timeout' || resetToCenter) {
+    const lostPos = actor ? positionOf(actor) : pos;
+    const resetToCenter = ['fall', 'timeout'].includes(reason) && this._isOwnHalf(team, lostPos[2]);
+    if (resetToCenter) {
       this._resetToCenter(reason);
     } else {
-      this.state.barrier = { active: true, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
+      this.state.barrier = { active: false, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
+      this.state.respawnRemaining = RAINMAKER_RESPAWN_SECONDS;
       this.state.dropped = true;
       this.state.dropTimer = 0;
       this._event('rainmaker-drop', { id, pos: pos.slice(), team, reason });
@@ -604,7 +664,8 @@ export class RainmakerRule {
   }
 
   _ageUnclaimed(dt) {
-    if (this.state.carrier !== null || !this.state.dropped) return;
+    if (this.state.carrier !== null || !this.state.dropped || this.state.barrier.active || this.state.respawnRemaining > 0
+      || distance(this.state.pos, this.center) < 1e-8) return;
     this.state.dropTimer += dt;
     if (this.state.dropTimer >= RAINMAKER_DROP_RETURN_SECONDS) this._resetToCenter('unclaimed');
   }
@@ -613,8 +674,9 @@ export class RainmakerRule {
     this.state.pos = this.center.slice();
     this.state.carrier = null;
     this.state.carrierTeam = null;
-    this.state.barrier = { active: true, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
-    this.state.charge = { seconds: 0, value: 0, firing: false };
+    this.state.barrier = { active: false, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
+    this.state.respawnRemaining = RAINMAKER_RESPAWN_SECONDS;
+    this.state.charge = emptyCharge();
     this.state.holderTime = 0;
     this.state.holderRemaining = RAINMAKER_CARRY_SECONDS;
     this.state.retreatRate = 1;
