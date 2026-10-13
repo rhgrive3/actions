@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PLAYER } from '../../../src/config.js';
 import { nativeClimbTransition } from './native-climb.mjs';
 import {nativeDropTransition} from './native-drop.mjs';
+import {nativeJumpAttachTransition} from './native-jump-attach.mjs';
 const down=new THREE.Vector3(0,-1,0),origin=new THREE.Vector3(),a=new THREE.Vector3(),b=new THREE.Vector3();
 /** Keep real routes out of both supported spawn layers. The legacy largest
  * undirected component can be a decorative floor far beneath a native deck. */
@@ -48,6 +49,7 @@ export function buildNativeNav(graph){
    graph.nodes.push(node);list.push(node.id);
   }
  }
+ const jumpAttachments=L.manifest.sourceNavigation?.wallJumpAttach?Array.from({length:graph.nodes.length},()=>[]):null;
  const drops=L.manifest.sourceNavigation?.highDrops?Array.from({length:graph.nodes.length},()=>[]):null;
  for(const n of graph.nodes){
   for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
@@ -61,7 +63,7 @@ export function buildNativeNav(graph){
     // Native high ledges can drop safely to verified support above fall death.
     else if(!(dx&&dz)&&dy<-.5&&m.y>PLAYER.fallDeathY){type='drop';cost=st+.8;}
     else {
-     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);}
+     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);else if(jumpAttachments)jumpAttachments[n.id].push(id);}
      continue;
     }
     if(type==='drop'&&drops&&dy< -1.25){drops[n.id].push(id);continue;}
@@ -80,14 +82,15 @@ export function buildNativeNav(graph){
   for(const id of graph.cells[iz*graph.nx+ix])if(graph.nodes[id].y-n.y< -1.25)drops[n.id].push(id);
  }
  pruneNativeNav(graph);
- if(drops){
+ if(drops||jumpAttachments){
   // Build ordinary/climb edges before selecting any supports. Only expensive
   // departure simulations need the directed spawn frontier; upper masts that
   // cannot be reached do not require speculative trajectories.
   const seen=graph.valid.slice(),queue=graph.validIds.slice();
   for(let i=0;i<queue.length;i++){
    const n=graph.nodes[queue[i]];
-   for(const id of drops[n.id]){const edge=nativeDropTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   for(const id of drops?.[n.id]||[]){const edge=nativeDropTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   for(const id of jumpAttachments?.[n.id]||[]){const edge=nativeJumpAttachTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
    for(const edge of n.nb)if(!seen[edge.to]){seen[edge.to]=1;queue.push(edge.to);}
   }
   pruneNativeNav(graph);
