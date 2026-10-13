@@ -106,5 +106,5 @@ test('airport source supports, clear capsules and real opening launches reach lo
   assert.ok(a.alive&&a.pos.distanceTo(before)>.1,'ordinary post-launch motion');
   cases.push({hz,team,slot,isBot,frames,landing:before.toArray(),routeNodes:route.length,objectiveRoutes:objectives.length,movementSeconds:.5,moved:a.pos.distanceTo(before)});
  }
- console.log(JSON.stringify({id:'airport',pads,nodes:G.nav.nodes.length,valid:G.nav.validIds.length,towerSupported:ranked.tower.supported,towerRouteNodes:ranked.tower.path.length,cases,conditions:'Actual Actor integrator, ordinary shooter, default gear, source capsule and directed nav; display/audio stubs only'}));
+ console.log(JSON.stringify({id:'airport',pads,nodes:G.nav.nodes.length,valid:G.nav.validIds.length,towerSupported:ranked.tower.supported,towerRouteNodes:ranked.tower.path.length,cases,conditions:'Production Actor integrator and spawn barrier; direct Actor.intent, ordinary shooter/default gear, source capsule/directed nav; simplified fixture Character and no-op _finishFrame retained; no production presentation/muzzle or physical-input claim'}));
 });

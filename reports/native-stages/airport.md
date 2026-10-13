@@ -20,7 +20,7 @@
 
 比較基準は Splatoon 3 Ver.11.3.0 の識別・既存ブキパラメータ資料。歩行・着地・壁登り・射撃の実機速度や接触位置の一致は未確認。CPU の歩行・着地・壁登りとブラウザでの通常ゲーム・入力・描画・WebSocket は別の検証として記録する。
 
-専用 `airport-source.test.mjs` は通常 `shooter` / `WeaponShooterNormal`、既定 0AP ギア、30/60/120Hz、両人間チームと各チーム4ボットスロットの 30 ケースを検査する。実 Actor の `_integrate` と `_spawnBarrier` を復元し、射出・着地・ground.hit・元支持・着地後の中央への一方向経路・一定0.5秒の歩行を観測する。表示・音声だけを CPU fixture で省略する。既存 `native-integration.test.mjs` の元支持床、塗り面の穴、塗った壁へのイカ接続・敵インクでの解除も確認する。
+専用 `airport-source.test.mjs` は通常 `shooter` / `WeaponShooterNormal`、既定 0AP ギア、30/60/120Hz、両人間チームと各チーム4ボットスロットの 30 ケースを検査する。実 Actor の `_integrate` と `_spawnBarrier` を復元し、射出・着地・ground.hit・元支持・着地後の中央への一方向経路・一定0.5秒の歩行を観測する。CPU fixture は簡略 Character と no-op `_finishFrame` を保持し、入力は Actor.intent に直接与える。実 `_integrate`・`_spawnBarrier`・元三角形 physics の移動/着地/経路回帰であり、CPUでproduction Character、銃口、物理入力や表示全体を検証したとは扱わない。生成済み engine export の回帰も同じ制御条件。production Character と銃口・実入力は実Chromeの30着地・通常射撃・カメラ確認で別に検証する。既存 `native-integration.test.mjs` の元支持床、塗り面の穴、塗った壁へのイカ接続・敵インクでの解除も確認する。
 
 壁の射撃確認は `check-inkwave-native-projectiles.mjs` による元支持床の制御された立ち射撃。既存 Actor→WeaponRunner→Projectiles が実際に許可した弾と、元壁への球 sweep 接触、自然に発生した壁塗りと所有を 30/60/120Hz で確認する。手動の塗りスタンプを射撃の証拠に数えない。通常の人間スポーン射出・マウス入力は別のゲーム検証で扱う。
 

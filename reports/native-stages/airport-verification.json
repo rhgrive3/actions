@@ -2550,7 +2550,8 @@
       "realActorOpeningCases": 30,
       "localObjectives": 11,
       "directedRoutesIncludingPads": 352,
-      "independentSourceOffsetsCountedFromOriginalText": true
+      "independentSourceOffsetsCountedFromOriginalText": true,
+      "conditions": "Production Actor integrator and spawn barrier; direct Actor.intent, simplified fixture Character and no-op _finishFrame retained. Source movement/landing/routes only; production Character/muzzle and physical input verified separately in current Chromium30opening, shot and camera cases."
     },
     "builds": {
       "local": {
@@ -5688,6 +5689,11 @@
         "finding": "Gameplay screenshots do not establish retail parity; source and timings have different inference limits.",
         "fix": "Retain version1130Verified:false and distinguish exact source buffers/internal render equality/software timings from native console collision/placements/shader/moving states/hardware measurements.",
         "retest": "All eight current artifact browsercases passed; no source/model/PNG edits or assertion weakening."
+      },
+      {
+        "finding": "CPU opening condition text overstated display/audio-only stubbing.",
+        "fix": "Explicitly record simplified fixture Character, no-op _finishFrame and direct Actor.intent; scope CPU to actual integration/ground/routes and keep production Character/muzzle/input proof in current Chromium cases.",
+        "retest": "Condition wording only; previous unchanged movement assertions and actual production Chromium evidence retained."
       }
     ],
     "acceptedFoundationAtLatestRead": "c961c1bad0dcc2062fdfc496da2da9435e0abd79",
