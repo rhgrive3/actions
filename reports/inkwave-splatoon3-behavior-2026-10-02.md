@@ -4106,3 +4106,7 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+## Ranked Rainmaker native wall ownership follow-up (2026-10-13)
+
+S3mix Splash Wall supplies Rainmaker direct x1 / weapon-blast x2. Dedicated ranked effects now share native object HP and the owner-authenticated proposal path; native Object Shredder is applied separately once. A guest locally owning a Rainmaker visual replay may submit native object hits while actor damage and paint remain ranked-host authority; host proxies do not submit/spend the same object hit. Wall planes are retained for this explosion's occlusion when its HP is removed. This ordering and existing wall/world geometry are local implementation choices; other defense blast rows and exact console behavior remain unmeasured. Five installed-runtime tests and the browser wall HP proof are added; validation is pending until CI reports success. See reports/inkwave-ranked-rule-corrections-2026-10-13.md.

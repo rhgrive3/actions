@@ -251,3 +251,76 @@ test('pickup interrupts a real main-weapon charge so the carrier can swim and no
   a.intent.fire = false; a.intent.squid = true; f.tick(a, 1); assert.equal(a.form, 'squid', 'the ordinary main charge cannot lock Rainmaker form arbitration');
   e.rule.state.carrier = null; a.intent.squid = false; f.tick(a, 30); assert.equal(f.shots.length, beforeShots, 'the pre-pickup charge cannot fire after possession ends');
 });
+
+
+async function rainmakerWallHarness() {
+  const f = await bootRanked({ realProjectiles: true });
+  const shooter = f.make('shooter'), owner = f.make('shooter'), rear = f.make('shooter'), front = f.make('shooter');
+  Object.assign(shooter, { nid: 301, owner: 'guest', team: 0, remote: false });
+  Object.assign(owner, { nid: 302, owner: 'host', team: 1, remote: false });
+  rear.nid = 303; rear.team = 1; front.nid = 304; front.team = 1;
+  shooter.pos.set(0, 0, 0); owner.pos.set(0, 0, 4); rear.pos.set(0, 0, 2.9); front.pos.set(1, 0, 1.8);
+  for (const actor of [shooter, owner, rear, front]) { actor.invuln = 0; actor.s3.spawnArmor = null; }
+  owner.weapon = { ...owner.weapon, sub: 'splashWall' }; owner.s3.abilityPoints = { ...owner.s3.abilityPoints, subPower: 0 }; shooter.s3.objectHitGear = false;
+  f.G.scene = { add() {}, remove() {} }; f.G.netm = null;
+  f.G.physics.segment = (_start, _end, hit) => { hit.hit = false; return hit; };
+  f.G.physics.los = () => true;
+  const proposals = [], emit = f.installedRuntime.emit;
+  f.installedRuntime.emit = (name, event) => { if (name === 'all:sub' && event.phase === 'objectHit') proposals.push(event); else emit(name, event); };
+  // Native creation and native HP/collision/owner callbacks; deployment position
+  // is the controlled world condition, as in the installed Stamp guard test.
+  const wall = f.G.projectiles.throwBomb(owner);
+  assert.equal(wall.subId, 'splashWall'); assert.equal(wall.hp, 800);
+  wall.phase = 'deployed'; wall.pos.set(0, 0, 2); wall.yaw = 0;
+  const m = f.G.match = { mode: 'rainmaker', state: 'playing', playing: () => true, actors: [shooter, owner, rear, front],
+    ranked: { revision: 0, rule: { state: { carrier: String(shooter.nid), charge: { value: 1 } } } } };
+  f.G.actors = m.actors;
+  const effects = f.createRankedEffects(f.installedRuntime, m);
+  const fire = visualOnly => {
+    effects.event({ kind: 'rainmaker-shot', id: 0, actorId: String(shooter.nid), team: 0, pos: [0, 0, 0], aim: [0, 0, 1],
+      charge: 1, damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92,
+      paintRadius: 1, speed: 18, directRange: 4.4 }, visualOnly);
+    effects.update(.1); effects.update(.1); effects.update(.3);
+  };
+  return { ...f, shooter, owner, rear, front, wall, proposals, effects, fire };
+}
+
+for (const gear of [false, true]) test('native Splash Wall receives Rainmaker direct x1 plus blast x2; Object Shredder once (' + gear + ')', async () => {
+  const f = await rainmakerWallHarness(); f.shooter.s3.objectHitGear = gear;
+  f.fire(false);
+  assert.equal(f.wall.hp, 800 - (60 + 180 * 2) * (gear ? 1.5 : 1));
+  assert.equal(f.rear.hp, 100, 'the virtual shield blocks the explosion behind it');
+  assert.equal(f.front.hp, 60, 'the same shield does not hide the attacker-side opponent from the far blast');
+  f.effects.dispose();
+});
+
+test('a shield destroyed by this Rainmaker blast still blocks the same explosion behind it', async () => {
+  const f = await rainmakerWallHarness(); f.wall.hp = 400; f.fire(false);
+  assert.equal(f.wall.dead, true); assert.equal(f.G.projectiles._s3SubObjects.includes(f.wall), false);
+  assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 60);
+  f.effects.dispose();
+});
+
+test('a guest-owned follower proposes native object damage and the wall owner accepts each hit only once', async () => {
+  const f = await rainmakerWallHarness(); f.owner.remote = true; f.wall.ghost = true;
+  f.fire(true);
+  assert.equal(f.wall.hp, 800, 'a remote wall presentation never spends local HP');
+  assert.deepEqual(f.proposals.map(p => p.damage), [60, 180]);
+  assert.ok(f.proposals.every(p => p.actor === f.shooter && p.targetOwnerId === f.owner.nid && p.targetSeq === f.wall.seq));
+  assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 100, 'a follower still cannot damage actors');
+  // Replay through the installed, life/target-validated native owner handler.
+  f.shooter.remote = true; f.owner.remote = false; f.wall.ghost = false;
+  f.G.netm = { byNid: new Map([[f.shooter.nid, f.shooter], [f.owner.nid, f.owner]]) };
+  for (const proposal of f.proposals) assert.equal(f.installedRuntime.replaySub(proposal), true);
+  assert.equal(f.wall.hp, 380);
+  for (const proposal of f.proposals) assert.equal(f.installedRuntime.replaySub(proposal), false);
+  assert.equal(f.wall.hp, 380, 'ordered proposal identities reject replayed hits');
+  f.effects.dispose();
+});
+
+test('the ranked host does not double-spend native object HP for a remote-owned carrier', async () => {
+  const f = await rainmakerWallHarness(); f.shooter.remote = true; f.fire(false);
+  assert.equal(f.wall.hp, 800); assert.deepEqual(f.proposals, []);
+  assert.equal(f.rear.hp, 100, 'the host still owns and occludes actor blast damage');
+  f.effects.dispose();
+});
