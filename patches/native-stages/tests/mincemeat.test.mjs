@@ -112,6 +112,9 @@ test('Mincemeat supports, capsule movement, wall ink, and rules use actual sourc
  const clearance=nativeTowerClearance(level,PLAYER,stage.tower.halfSize),path=stage.tower.path;
  assert.equal(stage.tower.boarding.approaches.length,path.length);
  assert.ok(stage.tower.centerIndex>=3&&path.length-stage.tower.centerIndex>=4,'supported tower has travel on both sides of center');
+ const span=stage.tower.arenaSpan;
+ assert.equal(span.bothHalvesVerified,true);
+ assert.ok(span.endpointProjection[0]<-span.minimumHalfDepth&&span.endpointProjection[1]>span.minimumHalfDepth,'the complete deck and rider envelope enters both opposing-pad arena halves');
  for(const approach of stage.tower.boarding.approaches){assert.ok(approach.height<=stage.tower.boarding.maxJumpHeight);assert.ok(reachable.every(set=>set.has(approach.sourceNode)),'both teams reach every source boarding approach');}
  assert.ok(stage.tower.sourceClearance.assurance.includes('retail trajectory/lift unverified'));
  for(let i=0;i<path.length;i++)assert.ok(clearance.clear(path[i],path[Math.max(0,i-1)]),'full tower swept deck/pole/capsule clears source triangles');
@@ -125,10 +128,12 @@ test('Mincemeat supports, capsule movement, wall ink, and rules use actual sourc
   assert.equal(rider.ground.block,deck.id);
  }
  G.match.mode='turf';G.match.opts={};
- const actor=f.make();assert.equal(f.beginInitialSquidSpawn(actor),true);assert.ok(actor.s3.squidSpawn.target);
+ const actor=f.make();actor._integrate=f.Actor.prototype._integrate;assert.equal(f.beginInitialSquidSpawn(actor),true);assert.ok(actor.s3.squidSpawn.target);
  actor.intent.fire=true;actor.update(1/60);assert.equal(actor.s3.squidSpawn.phase,'flight');actor.intent.fire=false;
- for(let i=0;i<75;i++)actor.update(1/60);assert.equal(actor.s3.squidSpawn,undefined);assert.equal(actor.grounded,true);
+ let landingFrames=0;
+ while(actor.s3.squidSpawn&&landingFrames<180){G.time+=1/60;actor.update(1/60);landingFrames++;}
+ assert.equal(actor.s3.squidSpawn,undefined);assert.equal(actor.grounded,true);assert.equal(actor.ground.hit,true);
  const brain=new f.BotBrain(actor,'normal'),goals=f.nativePaintGoalIds(brain,G),from=G.nav.nearest(actor.pos,1.2);assert.ok(goals.length>0);
  for(const target of goals.slice(0,5))assert.ok(G.nav.path(from,target,actor.team,50000));
- console.log(JSON.stringify({id:'mincemeat',spawnSupport,wallSwimming:true,maskedHolesUnpainted:true,movement,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds,spawnReachable:reachable.map(s=>s.size),rankedCenter:stage.zones[0].center,towerPathNodes:stage.tower.path.length,towerLift:stage.tower.localLift,towerCenter:stage.tower.path[stage.tower.centerIndex],towerSourceClearance:stage.tower.sourceClearance,towerEveryNodeAndSegmentSupportVerified:true,towerBoardingSamples:samples.length,paintGoals:goals.length,atlas:2048,ppm:G.paint.ppm}));
+ console.log(JSON.stringify({id:'mincemeat',spawnSupport,wallSwimming:true,maskedHolesUnpainted:true,movement,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds,spawnReachable:reachable.map(s=>s.size),rankedCenter:stage.zones[0].center,towerPathNodes:stage.tower.path.length,towerLift:stage.tower.localLift,towerCenter:stage.tower.path[stage.tower.centerIndex],towerArenaSpan:span,towerSourceClearance:stage.tower.sourceClearance,towerEveryNodeAndSegmentSupportVerified:true,towerBoardingSamples:samples.length,landingFrames,paintGoals:goals.length,atlas:2048,ppm:G.paint.ppm}));
 });
