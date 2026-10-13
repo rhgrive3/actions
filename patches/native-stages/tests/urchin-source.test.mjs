@@ -26,6 +26,7 @@ test('Urchin actual asphalt supports, source exclusions, both-team directed rank
  const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,L=new f.NativeLevel(readStage(ROOT,'urchin')),P=new f.NativePhysics(L);G.level=L;G.physics=P;G.camera=new THREE.PerspectiveCamera();
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
+ G.nav=new f.NavGraph(L,P);G.match.mode='turf';G.match.opts={};
  const excluded=L.manifest.objects.filter(o=>/^Fld_Crank02_(?:BakeDummy|Prop_Crank02WaterTower[AB]_)/.test(o.name));
  assert(excluded.length>=3);assert(excluded.every(o=>o.active&&!o.collidable),'scenery remains displayed without invented support');
  for(const [team,pad] of L.spawnPads.entries()){
@@ -36,9 +37,18 @@ test('Urchin actual asphalt supports, source exclusions, both-team directed rank
    const a=new f.Actor({team,name:'Urchin source controller',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});G.actors=[a];a.spawnAt(pad,0);a.intent.move.set(team===0?-1:1,0,0);a.intent.fire=false;
    for(let i=0;i<hz*.5;i++){G.time+=1/hz;a.update(1/hz);}
    assert(a.alive&&a.grounded,'source-supported inward movement '+team+' '+hz);assert(a.pos.distanceTo(pad)>1,'real controller moves on source floor');
+   for(const role of ['human','bot']){
+    a.isBot=role==='bot';if(a.isBot)a.bot=new f.BotBrain(a,'normal');
+    a.intent.move.set(0,0,0);a.aimPoint.copy(pad);a.alive=false;a.respawn();
+    const other=L.spawnPads[1-team],yaw=Math.atan2(other.x-pad.x,other.z-pad.z);
+    assert(Math.abs(a.yaw-yaw)<1e-12,'production '+role+' death reset follows supported pads');
+    a.intent.fire=true;G.time+=1/hz;a.update(1/hz);a.intent.fire=false;
+    for(let i=0;i<Math.ceil(hz*1.5);i++){G.time+=1/hz;a.update(1/hz);}
+    assert(!a.s3.squidSpawn&&a.alive&&a.grounded&&a.ground.hit,'production Character/Actor '+role+' death launch grounds '+team+' '+hz);
+   }
   }
  }
- G.nav=new f.NavGraph(L,P);const N=G.nav,stage=f.nativeRankedStage(G);
+ const N=G.nav,stage=f.nativeRankedStage(G);
  const goals=[...stage.zones.map(z=>z.center),stage.rainmaker.center,...stage.rainmaker.goals,...stage.rainmaker.checkpoints.flat(),...stage.clams.spawns,...stage.tower.path.map(p=>[p[0],p[1]-(stage.tower.localLift??3.3),p[2]])];
  for(const [team,pad] of L.spawnPads.entries())for(const p of goals){const start=N.nearest(pad,1.2),end=N.nearest(new THREE.Vector3(...p),1.2);assert(N.path(start,end,team,50000),'team '+team+' directed route to '+p);}
  for(const p of stage.tower.path)for(const [dx,dz] of [[0,0],[.7,0],[-.7,0],[0,.7],[0,-.7]])assert(P.bodyFits(new THREE.Vector3(p[0]+dx,p[1],p[2]+dz),PLAYER.radius,.3,PLAYER.height),'source capsule clearance across tower route');
