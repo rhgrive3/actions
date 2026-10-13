@@ -96,7 +96,7 @@ test('locked missiles preserve aim height when both ground probes miss',async()=
  f.G.physics.raycast=(_a,_b,_distance,hit)=>{hit.hit=false;return hit;};
  f.G.level.groundHeight=()=>-Infinity;
  const actor=f.make();actor.weapon={...actor.weapon,special:'tentaMissiles',specialCost:100};
- actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);const enemy=f.make();enemy.team=1;enemy.pos.set(0,1.05,28);f.G.actors=[actor,enemy];
+ actor._resolve=()=>{};actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);const enemy=f.make();enemy.team=1;enemy.pos.set(0,1.05,28);f.G.actors=[actor,enemy];
  readySpecialEvidence(actor, {placeAtFixtureOrigin:true});useSpecialEvidence(f,actor);
  // 1130 launches ten missiles at a 4F interval; preserve the ground-height
  // regression while observing the complete volley rather than an instant burst.

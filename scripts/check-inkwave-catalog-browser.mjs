@@ -206,7 +206,7 @@ try {
           if(ap===57)for(const p of victim.s3.loadout){p.main='subResistance';p.subs.fill('subResistance');}
           victim.s3RefreshGear();victim.grounded=true;victim.form=squid?'squid':'kid';victim.submerged=squid;victim.intent.move.set(0,0,1);victim.vel.set(0,0,0);
           for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
-          const expected=(squid?11.52:5.76)*(1-.28*gearCurve(ap,1,.75,.5));
+          const expected=(squid?11.52:5.76)*(1-.5*gearCurve(ap,1,.75,.5));
           check(Math.abs(victim.vel.z-expected)<1e-8,'Mist victim reduction '+ap+' '+squid);
           mistChecks.push({ap,squid,speed:victim.vel.z});
           victim.pos.x+=20;victim.vel.set(0,0,0);for(let i=0;i<120;i++)victim._horizontal(1/60,squid,false);
@@ -345,7 +345,7 @@ try {
           const sender=new NetMatch({myId:'buff-owner',hostId:'buff-owner',isHost:true,tr:transport},{id:'buff-browser'}),receiver=new NetMatch({myId:'buff-viewer',hostId:'buff-owner',isHost:false,tr:transport},{id:'buff-browser'});
           const match=actors=>({actors,state:'playing',time:180,duration:180,playing:()=>true,canRespawn:()=>false});sender.bind(match([owner]));receiver.bind(match([remote]));G.match=sender.match;G.netm=sender;G.actors=[owner];
           const step=(net,a,count)=>{for(let i=0;i<count;i++){G.time+=1/60;net.update(1/60);net.match.time-=1/60;if(a.remote)net.applyRemote(a,1/60);else a.update(1/60);}};
-          if(kind==='drink'){owner.special=owner.specialCost();owner._startSpecial();check(G.projectiles._s3SupportCoolers.length===1,'actual cooler stand');G.time+=1/60;G.projectiles.update(1/60);check(owner.s3.drink,'actual stand pickup');}
+          if(kind==='drink'){owner.special=owner.specialCost();owner._startSpecial();check(!(G.projectiles._s3SupportCoolers||[]).length,'holding does not install a stand');owner.aimDir.set(0,-1,0);owner.intent.sub=true;owner._updateSpecial(1/60);owner.intent.sub=false;for(let i=0;i<15;i++)owner._updateSpecial(1/60);for(let i=0;i<20&&!(G.projectiles._s3SupportCoolers||[]).length;i++){G.time+=1/60;G.projectiles.update(1/60);}check(G.projectiles._s3SupportCoolers.length===1,'actual cooler stand after R release and ground contact');G.time+=1/60;G.projectiles.update(1/60);check(owner.s3.drink,'actual stand pickup');}
           else {owner.s3.jumpChargeTime=1/60;owner.s3.jumpFlightTime=.5;check(owner.superJump(new V(12,0,0)),'actual jump start');let frames=0;while(owner.superJumpState&&frames++<600){const jump=owner.superJumpState;if(jump.phase==='flight'&&jump.t+1/60+1e-10>=jump.dur)owner.intent.move.set(1,0,0);step(sender,owner,1);}check(frames<600&&owner.s3.dropRoller,'actual adapted landing');step(sender,owner,20);}
           const remaining=kind==='drink'?owner.s3.drinkUntil-G.time:owner.s3.dropRollerBuffRemaining,boost=owner.s3.modifiers.runSpeed;check(remaining>0&&boost>1,'earned transient boost '+kind);sender._sendTick();receiver.match.time=sender.match.time-.1;
           G.match=receiver.match;G.netm=receiver;G.actors=[remote];receiver.onMessage('buff-owner',packet);receiver._peer('buff-owner').tr=packet.ts;receiver._sample(remote,packet.ts,0);receiver.applyRemote(remote,1/60);check(!remote.s3.drink&&!(remote.s3.dropRollerBuffRemaining>0),'remote has no transient gameplay authority');

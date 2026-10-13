@@ -323,7 +323,7 @@ export function inkVacAbsorbCandidate(actor, start, end, projectile) {
   // Line of sight at the first-contact point (an intervening wall blocks intake).
   const q = state._q.copy(start).lerp(end, start.distanceTo(end) > 0 ? distance / start.distanceTo(end) : 0);
   if (G.physics?.los && !G.physics.los(originOf(actor, state._org), q)) return null;
-  return { distance, onHit: () => absorb(state, projectile) };
+  return { distance, kind: 'ink-vac', onHit: () => absorb(state, projectile) };
 }
 
 // Credit the held local intake by its OWN calibration value. Only the owner may

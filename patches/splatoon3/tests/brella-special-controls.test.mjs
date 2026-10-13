@@ -71,8 +71,8 @@ test('Super Chump holds aim until fire, deploys twelve, and cancels unlaunched a
 
 test('Tenta ignores empty reticles and sub, admits far targets through walls',async()=>{
  const f=await boot(),a=actor(f,'shooter','tentaMissiles');a._startSpecial();a.intent.fire=true;step(f,a);assert.ok(a.specialActive);assert.equal(f.G.projectiles.list.length,0);
- a.intent.fire=false;a.intent.sub=true;step(f,a);assert.equal(f.G.projectiles.list.length,0);const victim=f.make();victim.team=1;victim.pos.set(0,0,200);f.G.actors.push(victim);
- a.intent.fire=true;step(f,a,40);assert.equal(f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles').length,10);a.character.dispose();
+ a.intent.fire=false;a.intent.sub=true;step(f,a);assert.equal(f.G.projectiles.list.length,0);const victim=f.make();victim.team=1;victim.pos.set(0,0,200);f.G.actors.push(victim);f.G.camera=new f.THREE.PerspectiveCamera(60,1,.1,50);f.G.camera.position.set(0,.7,-1);f.G.camera.lookAt(0,.7,200);f.G.camera.updateMatrixWorld(true);
+ a.intent.fire=true;step(f,a,40);assert.equal(f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles').length,10);a.character.dispose();f.G.camera=null;
 });
 
 test('Reefslider locks travel direction and only a fresh fire press cancels after fifteen frames',async()=>{
