@@ -364,6 +364,7 @@ export function installRankedBots(api = {}) {
     if (!engine || !RANKED_MODES.has(engine.mode) || !actor?.alive || actor.superJumpState
       || (typeof match.playing === 'function' && !match.playing())) return update.call(this, dt);
 
+    this._nativeTraversalHandled = false;
     let nativeTail = null;
     const hadOwnTail = Object.prototype.hasOwnProperty.call(this, '_tail');
     const oldTail = this._tail;
@@ -372,6 +373,9 @@ export function installRankedBots(api = {}) {
     try { result = update.call(this, dt); }
     finally { if (hadOwnTail) this._tail = oldTail; else delete this._tail; }
 
+    // A screened native wall/drop transition owns ordinary inputs until actual
+    // touchdown. Objective steering resumes after that physical transition.
+    if (G.level?.native && this._nativeTraversalHandled) return result;
     const frame = engine.frame || { actors: [], inputs: {} };
     const goal = engine.rule?.botGoal?.(frameActor(actor, frame), frame);
     if (!goal) {
