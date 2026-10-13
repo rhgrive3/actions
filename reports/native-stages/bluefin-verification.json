@@ -1,6 +1,6 @@
 {
   "stage": "bluefin",
-  "status": "draft-source-qualified-ranked-unresolved",
+  "status": "draft-source-and-human-qualified-positive-ordinary-bot-pending",
   "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
   "source": {
     "id": "bluefin",
@@ -103,7 +103,7 @@
     "retail frame/speed parity",
     "physical mobile/Switch FPS"
   ],
-  "browserStatus": "pending",
+  "browserStatus": "partial accepted-Drop artifacts passed projectile/render; later checks queued; latest ranked/whole-bank matrix pending",
   "diagnostics": {
     "restrictedLowerPitOnly": {
       "pads": [
@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "460da55901b7c70238f377759c588c7b46b0709a",
+  "latestConsumedFoundation": "d92fab242a6616c2de82a01798d0b135889ff97e",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -516,7 +516,8 @@
       "fail": 0,
       "skipped": 1
     },
-    "fullBankPhysicalQualification": "pending source-supported drop validation"
+    "fullBankPhysicalQualification": "Positive ordinary-bot running-jump transition pending; original opposed upper pads retained.",
+    "highDrops": true
   },
   "sourcePositiveBankHumanAccess": {
     "status": "passed-accepted-foundation-production-character-cpu",
@@ -1611,7 +1612,7 @@
   "selfReviewCheckpoint": {
     "playwrightBootstrap": "human NG assignment changed to a braced body returning no state; final accepted-foundation repetition pending",
     "controlledBrowserIsolation": "other actors now begin each bank trial on original supported own-team pads; eight alive actors/seven bots retained; no perception, health or movement-physics bypass",
-    "remaining": "positive running-jump bot edge; consume all accepted shared changes; complete final stage matrix and Ready/self-integration"
+    "remaining": "Accepted positive ordinary-bot approach; genuine both-bank production Character CPU/Chromium proofs; current affected ranked/WS/lifecycle/post-launch/Tower guards; Ready and aggregate self-integration."
   },
   "acceptedSourceWaypointSupport": {
     "foundation": "79ad61c59889a5e424bc56ca934422dde184baaf",
@@ -1687,10 +1688,13 @@
       "reason": "Native ranked center component is too small",
       "location": "production Match.setup / native ranked placement",
       "evidence": ".browser-evidence/accepted79ad-partial/projectiles.log",
-      "sameKnownOriginalBankTopologyBlocker": true
+      "sameKnownOriginalBankTopologyBlocker": true,
+      "resolvedForAcceptedDropArtifacts": true
     },
     "remainingStandardBrowserChecks": "Render, camera, lifecycle and public native menu entry also require production Match.setup; no known-failure repetitions or graph/placement waiver used. Retest after independently accepted genuine Drop and whole-bank approach support.",
-    "finalMatrixStatus": "pending; no complete Bluefin playability claim"
+    "finalMatrixStatus": "pending; no complete Bluefin playability claim",
+    "historical": true,
+    "sitesRetiredAfterPreservingFullReceipts": true
   },
   "acceptedPlainClimbRecovery": {
     "foundation": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74",
@@ -1720,9 +1724,9 @@
     "definitionOriginalPadsRetained": true,
     "pendingFlagsNotAdopted": [
       "Surge",
-      "ranked input marker",
       "Tower",
-      "positive running-jump approach"
+      "positive running-jump approach",
+      "unaccepted source coverage recipe"
     ],
     "reconversion": {
       "seconds": 17.69,
@@ -1739,12 +1743,296 @@
       "textureIntegrityRecordsUnchanged": true,
       "source": ".codex-stage-sources/KiTrix/stages/Vss_Ruins03"
     },
-    "partialMatrixStatus": "source CPU / independent source proof / build and standard match-dependent browsers active under shared locks; no complete whole-bank claim",
+    "partialMatrixStatus": "Source four tests, independent source proof, both packaging/startup gates, actual shots three rates and static/moving render passed; remaining browsers queued.",
     "stageReviewStatus": "Draft; positive ordinary bot still pending"
   },
   "acceptedOnlineSettlementChecker": {
     "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
     "change": "consume independently reviewed final-paint-after-snapshot settlement checker before real five-mode WebSocket matrix",
     "ownBluefinResult": "pending"
+  },
+  "foundationScope": "Historical first source checkpoint; see latestConsumedFoundation and artifact-scoped checkpoints.",
+  "acceptedRankedInputOwnership": {
+    "foundation": "d92fab242a6616c2de82a01798d0b135889ff97e",
+    "pr": 1379,
+    "scope": "Accepted native wall/drop input ownership through ranked wrapper; no stage flags, Surge, Tower or positive running-jump qualification.",
+    "stageAffectedBrowserRetest": "Fresh current ranked/WS/whole-bank artifacts pending positive ordinary-bot helper."
+  },
+  "acceptedDropPartialMatrix": {
+    "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
+    "ownerHeadAtBuild": "fa3c3f69",
+    "navigation": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "originalPads": [
+      [
+        -12,
+        15,
+        -70
+      ],
+      [
+        12,
+        15,
+        70
+      ]
+    ],
+    "status": "partial-running-not-whole-stage-qualified",
+    "sites": {
+      "private": {
+        "contentHash": "e762601acae6ef1e4d5438e341dadd3d606a410b40beb01a20a11b9eb44eb545",
+        "inputHash": "b2c5a7adcd46ec2cf2d9eda079c0873082f498e5ffd621cd8d69cf589d7c3ce3",
+        "revision": "fa2d60226343572b30b13753c801f54618c256298a2fdbab5952b27f3af1caa6",
+        "runtimeSha256": "50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+        "startup": {
+          "status": "passed",
+          "revision": "fa2d60226343572b30b13753c801f54618c256298a2fdbab5952b27f3af1caa6",
+          "initialJSRequests": 146,
+          "modulePreloads": 145,
+          "coreModulePreloads": 131,
+          "practiceRangeModulePreloads": 14,
+          "practiceRangePreloadBytes": 74638,
+          "initialJSBytes": 2892012,
+          "criticalHTMLBytes": 15371,
+          "precacheCount": 365,
+          "precacheBytes": 5786105,
+          "workerBytes": 70517,
+          "declaredBytes": 10404145,
+          "measurementKind": "deterministic file and dependency gates; not native browser timings"
+        },
+        "packaging": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        }
+      },
+      "public": {
+        "contentHash": "ecb8f09a1d066f735d16a3b7286ebdba992b2172c3213d78070d63198313744e",
+        "inputHash": "b2c5a7adcd46ec2cf2d9eda079c0873082f498e5ffd621cd8d69cf589d7c3ce3",
+        "revision": "d3706a16fd7a3c9489b19f6e63796e921f92f356dd4f60aa1e9feae4e9561aed",
+        "runtimeSha256": "50db1c8187f2876151980712c85db9da8ccc97e4c5c0f2e9abee85d75c640c51",
+        "startup": {
+          "status": "passed",
+          "revision": "d3706a16fd7a3c9489b19f6e63796e921f92f356dd4f60aa1e9feae4e9561aed",
+          "initialJSRequests": 146,
+          "modulePreloads": 145,
+          "coreModulePreloads": 131,
+          "practiceRangeModulePreloads": 14,
+          "practiceRangePreloadBytes": 74638,
+          "initialJSBytes": 2894863,
+          "criticalHTMLBytes": 15371,
+          "precacheCount": 365,
+          "precacheBytes": 5788956,
+          "workerBytes": 70517,
+          "declaredBytes": 10406996,
+          "measurementKind": "deterministic file and dependency gates; not native browser timings"
+        },
+        "packaging": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        }
+      }
+    },
+    "sourceCpu": {
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 77210.961412,
+      "productionCharacterNaturalPositiveBank": true,
+      "realInitialLaunchCases": 30,
+      "mirroredKidPhysicalDropCases": 12,
+      "navCandidates": 10854,
+      "validNodes": 6606,
+      "localDirectedRankedObjectivesDoNotQualifyWholeBanks": true,
+      "evidence": ".browser-evidence/accepted-drops-partial/cpu-source.log"
+    },
+    "independentSource": {
+      "passed": true,
+      "Float32PositionNormalUVExact": true,
+      "everyUint32IndexExactSeparateRegression": true,
+      "texturesExact": 216,
+      "pinnedMTLPNGFiles": 296,
+      "evidence": ".browser-evidence/accepted-drops-partial/source-independent.json"
+    },
+    "reconversion": {
+      "allBufferSHA256Unchanged": true,
+      "bufferFiles": 10,
+      "textureIntegrityRecordsUnchanged": true,
+      "geometryCountsUnchanged": true
+    },
+    "projectiles": {
+      "id": "bluefin",
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "hz": 30,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 228,
+              "triangle": 238,
+              "distanceToTarget": 0.061520151636570576,
+              "object": 12
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.4000000059604645,
+            "max": 2
+          }
+        },
+        {
+          "hz": 60,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 228,
+              "triangle": 238,
+              "distanceToTarget": 0.061520151636570576,
+              "object": 12
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.20000000298023224,
+            "max": 1.5
+          }
+        },
+        {
+          "hz": 120,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 228,
+              "triangle": 238,
+              "distanceToTarget": 0.061520151636570576,
+              "object": 12
+            }
+          ],
+          "naturalWallSplats": 5,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 0.800000011920929
+          }
+        }
+      ],
+      "sourceObject": "FldObj_Ruins03GeneralBoxPnt_GeneralBoxHalfPaint_30x30x30_Blitz_2__FenceVinyl",
+      "face": 228,
+      "triangle": 238,
+      "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+      "errors": [],
+      "screenshotInspectedPrivately": true
+    },
+    "render": {
+      "status": "passed",
+      "measurement": "Chromium SwiftShader; warm then freeze unrelated per-draw mesh hooks; timing retains eight actors; pixel comparison hides character roots to isolate stage rendering; alternating renders; not mobile hardware",
+      "actors": 8,
+      "chunks": 146,
+      "tileSize": 16,
+      "views": [
+        {
+          "name": "gameplay",
+          "changedPixels": 0,
+          "maxChannelError": 0,
+          "baselineSelfPixels": 0,
+          "chunkedSelfPixels": 0,
+          "baselineInkCalls": 1,
+          "chunkedInkCalls": 1,
+          "baselineInkTriangles": 111151,
+          "chunkedInkTriangles": 105378,
+          "baselineP50Ms": 6.799999997019768,
+          "chunkedP50Ms": 6.800000011920929
+        },
+        {
+          "name": "center",
+          "changedPixels": 0,
+          "maxChannelError": 0,
+          "baselineSelfPixels": 0,
+          "chunkedSelfPixels": 0,
+          "baselineInkCalls": 1,
+          "chunkedInkCalls": 1,
+          "baselineInkTriangles": 111151,
+          "chunkedInkTriangles": 57392,
+          "baselineP50Ms": 4.0999999940395355,
+          "chunkedP50Ms": 4.399999991059303
+        },
+        {
+          "name": "overhead",
+          "changedPixels": 0,
+          "maxChannelError": 0,
+          "baselineSelfPixels": 0,
+          "chunkedSelfPixels": 0,
+          "baselineInkCalls": 1,
+          "chunkedInkCalls": 1,
+          "baselineInkTriangles": 111151,
+          "chunkedInkTriangles": 111123,
+          "baselineP50Ms": 6.299999997019768,
+          "chunkedP50Ms": 6.200000002980232
+        }
+      ],
+      "movingCameraMeasurements": 12,
+      "movingOneIndexedInkDraw": true,
+      "authoritiesUnchanged": true,
+      "cpuPaintUnchanged": true,
+      "version1130Verified": false,
+      "errors": [],
+      "evidence": ".browser-evidence/accepted-drops-partial/render/render.json"
+    },
+    "remainingBrowserChecks": [
+      "camera",
+      "lifecycle/touchscreen",
+      "public source/cache-corrupt rollback",
+      "all-five-mode real WebSocket",
+      "all-supported-mode gameplay/unsupported guards"
+    ],
+    "artifactScope": "Ranked marker d92 is consumed in source but absent from these immutable artifacts. Current affected final ranked/bank/WS proofs require fresh builds; unchanged source/shots/render/camera evidence stays scoped to this checkpoint."
   }
 }
