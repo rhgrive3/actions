@@ -17,7 +17,7 @@ const stage=arg('--stage','scorch');
 const scenario=arg('--scenario','crowd');
 if(!['crowd','normal'].includes(scenario))throw Error('Invalid scenario');
 const samples=Number(arg('--samples','60'));
-const width=Number(arg('--width','320')),height=Number(arg('--height','200'));
+const width=Number(arg('--width','480')),height=Number(arg('--height','300'));
 const calibrationFile=arg('--calibration');
 const warmup=Number(arg('--warmup',mode==='calibrate'?'12':'30'));
 const order=mode==='calibrate'?['A','B','C','C','B','A']:['A','B','B','A','B','A','A','B','C'];
