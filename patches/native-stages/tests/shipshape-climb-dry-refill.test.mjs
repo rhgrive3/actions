@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
 
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
@@ -16,6 +17,8 @@ test('ordinary source-climb inputs recover from a naturally drained dry firing s
   _pushQuad(){} _drawQuads(){}
  }
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
+ const helperSha256=crypto.createHash('sha256').update(fs.readFileSync('patches/native-stages/runtime/native-climb.mjs')).digest('hex');
+ console.log('source-climb-refill-module-bound '+JSON.stringify({helperSha256,expectedRecovery:process.env.NATIVE_SHIPSHAPE_EXPECT_DRY_RECOVERY!=='0'}));
  const N=G.nav=new f.NavGraph(L,G.physics),from=N.nodes[16843];
  const edge=from.nb.find(e=>e.to===16578&&e.type==='climb'&&!e.climb.kind);
  assert(edge,'the recorded failure is a genuine plain source wall edge');
@@ -46,6 +49,6 @@ test('ordinary source-climb inputs recover from a naturally drained dry firing s
   const expected=process.env.NATIVE_SHIPSHAPE_EXPECT_DRY_RECOVERY!=='0';
   assert.equal(recovered,expected,JSON.stringify({initialInk,endInk:a.ink,kidRefillTicks,fireInputs,phase:brain._nativeClimb?.phase}));
   if(expected)assert(kidRefillTicks>0);else assert.equal(kidRefillTicks,0);
-  console.log(JSON.stringify({sourceSha256:L.manifest.sourceSha256,from:from.id,to:edge.to,sourceFloor:33518,preparationSteps:preparation,step:1/60,initialInk,endInk:a.ink,kidRefillTicks,fireInputs,recovered,expected,conditions:'Original source/production Character/Shooter/Actor/resources. Low ink comes from ordinary shots; controlled initial two-node source route, not a whole-map Game proof.'}));
+  console.log(JSON.stringify({sourceSha256:L.manifest.sourceSha256,helperSha256,from:from.id,to:edge.to,sourceFloor:33518,preparationSteps:preparation,step:1/60,initialInk,endInk:a.ink,kidRefillTicks,fireInputs,recovered,expected,conditions:'Original source/production Character/Shooter/Actor/resources. Low ink comes from ordinary shots; controlled initial two-node source route, not a whole-map Game proof.'}));
  }finally{f.restoreRandom();}
 });
