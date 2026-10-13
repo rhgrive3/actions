@@ -641,10 +641,13 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
 // motion produced by chaining several independent smoothsteps. These are
 // INKWAVE grip coordinates, NOT recovered Nintendo bone tracks.
 const HORIZONTAL_GRIPS = [
-  { a: READY_ANCHOR, r: READY_ROTATION },
+  // The native Character starts the actual flick facing forward (rx=0.8),
+  // not in the backwards-facing idle carry (-2.5). Starting at READY_ROTATION
+  // detached the support wrist by centimetres before the first coil frame.
+  { a: [-.11, .84, .18], r: [.8, .1, 0] },
   { a: [-.13, 1.06, -.02], r: [-2.3, .3, 0] },
-  { a: [-.07, 1.18 + DRUM_LIFT, .3], r: [-.1, .05, 0] },
-  { a: [-.06, .79, .3], r: [.75, .05, 0] },
+  { a: [-.07, .98 + DRUM_LIFT, .3], r: [-.1, .05, 0] },
+  { a: [-.06, .74, .3], r: [.75, .05, 0] },
   { a: READY_ANCHOR, r: READY_ROTATION },
 ];
 const VERTICAL_GRIPS = [
@@ -716,12 +719,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
     const contact = !!this._s3RollerContactPose;
     const flick = !contact && !!this.s3RollerFlick && this.kidForm && this.grounded && !this.dance;
-    // Catalogue rollers use independent grip sockets. Their neutral carry can
-    // require a few centimetres of support-arm reach adjustment even when no
-    // active swing record exists. Do not ground-snap an ordinary carried drum.
-    const carryReach = this.weaponKind === 'roller' && this.kidForm && !this.dance &&
-      this.P[C.IKL] > .99 && this.P[C.LTW] < .001;
-    if ((contact || flick || carryReach) && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
+    // A neutral carry belongs entirely to native arm IK. Do not rotate or
+    // project its weapon grip just to satisfy a flick-only drum constraint.
+    if ((contact || flick) && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
       const d = this.weapon.def;
       let bound = bounds.get(d);
       if (!bound) {
