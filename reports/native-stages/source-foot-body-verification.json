@@ -925,7 +925,8 @@
       "tests": 4,
       "pass": 4,
       "skip": 0,
-      "fail": 0
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-source-tests-final.log"
     },
     "independentRootSourceComponents": {
       "tests": 4,
@@ -937,25 +938,29 @@
       "tests": 13,
       "pass": 13,
       "skip": 0,
-      "fail": 0
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-small-contracts.log"
     },
     "defaults": {
       "tests": 152,
       "pass": 95,
       "skip": 57,
-      "fail": 0
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-defaults.log"
     },
     "privatePackaging": {
       "tests": 9,
       "pass": 9,
       "skip": 0,
-      "fail": 0
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-private-packaging-final.log"
     },
     "publicPackaging": {
       "tests": 9,
       "pass": 9,
       "skip": 0,
-      "fail": 0
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-public-packaging.log"
     },
     "privateStartupBudget": {
       "status": "passed",
@@ -993,13 +998,14 @@
   "originalFiveAffectedGame": "pending Wahoo-owned15 existing cases on stable public candidate; no extra build",
   "peers": {
     "root": "closed code/source component and actual matched Game; receipts /workspace/actions/.ci-scratch/grounded-body-root-peer/source-components-corrected.json and browser-pair-review.json",
-    "shipshape": "qualified code/component/Game/private-public binding; final linked report/original5 closure pending"
+    "shipshape": "closed code/component/matched Game/private-public binding at 7d9a1376; final linked report/original5 outcome pending"
   },
   "historicalFailures": [
     "8a3 dynamic ceiling block fixture expected an ID the inherited solver does not emit; fixed fixture only at f01c571b",
     "Initial spawnAt captured-contact fixture settled before replay; corrected actual _resolve initializes the captured pre-body state",
     "Held30-frame ordinary jump did not reproduce; unchanged baseline/candidate failed oracle logs retained",
-    "Old2451 straight collision-correction chord rejection is distinct from actual2456 committed body intrusion"
+    "Old2451 straight collision-correction chord rejection is distinct from actual2456 committed body intrusion",
+    "First packaging invocation used the wrong selection environment and retained explicit optional skips; final INKWAVE_BUILT_SITE private/public suites each9/9 with zero skips supersede only that fixture scope"
   ],
   "limits": [
     "No complete Shipshape bank claim",
