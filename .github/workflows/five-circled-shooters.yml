@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          ref: f63c0af9c2ee991810ea792fe6976a44ed17610e
           path: .baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -111,7 +111,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          ref: f63c0af9c2ee991810ea792fe6976a44ed17610e
           path: .origin-main
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -127,7 +127,7 @@ jobs:
           node .origin-main/scripts/build-inkwave.mjs .origin-main/inkwave-public .origin-main-site
       - name: Native origin versus single-field mouth candidate, real FX and projectiles
         run: |
-          node scripts/render-nova-origin-review.mjs --site .origin-main-site --out .origin-evidence/main --origin native --shape main-ed3
+          node scripts/render-nova-origin-review.mjs --site .origin-main-site --out .origin-evidence/main --origin native --shape main-f63
           for origin in native mouth; do
             node scripts/render-nova-origin-review.mjs --site .origin-site --out ".origin-evidence/$origin" --origin "$origin"
           done
@@ -161,7 +161,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          ref: f63c0af9c2ee991810ea792fe6976a44ed17610e
           path: .main
           persist-credentials: false
       - uses: actions/setup-node@v4
