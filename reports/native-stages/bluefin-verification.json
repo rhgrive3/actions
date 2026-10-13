@@ -7441,5 +7441,256 @@
     "positiveCapsuleSamples": 276,
     "retainedNegativeCases": 3,
     "scope": "Actual local human input and strict actual capsules/static source foot contacts; no ordinary bot, whole-pad access or generic bridge qualification. x18 walks fail all rates and remain negative. x19 walks and both single jumps are physical candidates only."
+  },
+  "currentMainRunwayLowerPrefix": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "recipe": "inkwave-browser-source-v4",
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "status": "physical-human-prefix-passed-no-bot-or-graph-admission",
+    "existingGraphStartValid": true,
+    "existingGraphGoalValid": false,
+    "originalPadRouteProven": false,
+    "rawExistingWaypointChain": [
+      5047,
+      5077,
+      5117,
+      5172,
+      5223,
+      5286,
+      5405,
+      5538,
+      5612,
+      5659,
+      5715,
+      5756,
+      5786,
+      5819,
+      5847,
+      5881,
+      5947,
+      6012,
+      6076,
+      6141,
+      6210,
+      6271,
+      6338,
+      6406,
+      6473,
+      6540
+    ],
+    "cases": [
+      {
+        "hz": 30,
+        "success": true,
+        "seconds": 17.533333333333363,
+        "capsuleSamples": 526,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "end": [
+          20.004017091577968,
+          3,
+          18.426219558740975
+        ],
+        "goal": [
+          20,
+          3,
+          18.5
+        ],
+        "alive": true,
+        "grounded": true,
+        "gearAP": 0,
+        "strictSourceFootWaypoints": 26
+      },
+      {
+        "hz": 60,
+        "success": true,
+        "seconds": 17.516666666666953,
+        "capsuleSamples": 1051,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "end": [
+          20.004574526321807,
+          3,
+          18.413095861564454
+        ],
+        "goal": [
+          20,
+          3,
+          18.5
+        ],
+        "alive": true,
+        "grounded": true,
+        "gearAP": 0,
+        "strictSourceFootWaypoints": 26
+      },
+      {
+        "hz": 120,
+        "success": true,
+        "seconds": 17.208333333332998,
+        "capsuleSamples": 2065,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "end": [
+          20.003715846051616,
+          3,
+          18.41674914937538
+        ],
+        "goal": [
+          20,
+          3,
+          18.5
+        ],
+        "alive": true,
+        "grounded": true,
+        "gearAP": 0,
+        "strictSourceFootWaypoints": 26
+      }
+    ],
+    "totalCapsuleSamples": 3642,
+    "continuousCapsuleFailures": 0,
+    "slowedWalkNegative": [
+      {
+        "hz": 30,
+        "success": false,
+        "seconds": 0.5333333333333333,
+        "capsuleSamples": 16,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "end": [
+          19.052406748392215,
+          2.214299266955358,
+          -6.9506943011688564
+        ],
+        "goal": [
+          20,
+          3,
+          18.5
+        ],
+        "reachedWaypoints": 0,
+        "failed": {
+          "reason": "actual capsule sweep",
+          "node": 5047,
+          "edgeType": "unqualified two-cell physical walk",
+          "from": [
+            19.02273890249463,
+            2.425077044733136,
+            -6.963702137290236
+          ],
+          "to": [
+            19.052406748392215,
+            2.214299266955358,
+            -6.9506943011688564
+          ],
+          "grounded": false,
+          "form": "kid"
+        },
+        "alive": true,
+        "grounded": false,
+        "gearAP": 0
+      },
+      {
+        "hz": 60,
+        "success": false,
+        "seconds": 5.999999999999984,
+        "capsuleSamples": 360,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "end": [
+          19.01748707064442,
+          -1.3662999868392944,
+          -6.5810130745727236
+        ],
+        "goal": [
+          20,
+          3,
+          18.5
+        ],
+        "reachedWaypoints": 0,
+        "failed": {
+          "reason": "source waypoint did not plant within6seconds",
+          "node": 5047,
+          "target": [
+            19,
+            3.090560786635457,
+            -6.5
+          ],
+          "position": [
+            19.01748707064442,
+            -1.3662999868392944,
+            -6.5810130745727236
+          ],
+          "grounded": true,
+          "footSupported": false
+        },
+        "alive": true,
+        "grounded": true,
+        "gearAP": 0
+      },
+      {
+        "hz": 120,
+        "success": false,
+        "seconds": 6.000000000000088,
+        "capsuleSamples": 720,
+        "start": [
+          19,
+          3,
+          -8.5
+        ],
+        "end": [
+          19.019004107988494,
+          -1.3662999868392944,
+          -6.583102985469601
+        ],
+        "goal": [
+          20,
+          3,
+          18.5
+        ],
+        "reachedWaypoints": 0,
+        "failed": {
+          "reason": "source waypoint did not plant within6seconds",
+          "node": 5047,
+          "target": [
+            19,
+            3.090560786635457,
+            -6.5
+          ],
+          "position": [
+            19.019004107988494,
+            -1.3662999868392944,
+            -6.583102985469601
+          ],
+          "grounded": true,
+          "footSupported": false
+        },
+        "alive": true,
+        "grounded": true,
+        "gearAP": 0
+      }
+    ],
+    "conditions": "Stage-only physical human prefix diagnosis. First two-cell crossing is a normal single jump with cardinal input held through actual sourced landing, an already measured human candidate, not a Nav edge. Subsequent targets follow the existing raw adjacency inside the unreachable lower island. Production Character/Actor and every actual capsule/static-foot contact; zeroAP, empty paint, ordinary kid inputs only, no later pose/velocity/ink/ownership writes, all source NoPaint/geometry retained. No whole-pad or ordinary-bot qualification.",
+    "jumpEvidence": ".browser-evidence/current-main-calibration/runway-prefix-jump-physical.json",
+    "slowWalkNegativeEvidence": ".browser-evidence/current-main-calibration/runway-prefix-physical.json",
+    "genericOwner": "Manta",
+    "namedIndependentPeer": "Bluefin",
+    "promotionConditions": "Pending exact separate shared PR/SHA, full original-pad→lower-island→upper-bank ordinary BotBrain current CPU/Chromium proof atallrates/opposed contexts, source/NoPaint/fullcapsule/default/guard/public9/budget review. No proposed flag adopted."
   }
 }
