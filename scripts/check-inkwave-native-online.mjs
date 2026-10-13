@@ -63,9 +63,10 @@ try{
   const identities=await Promise.all(pages.map(p=>p.evaluate(()=>({stage:NG.level.manifest.sourceSha256,fingerprint:NG.netm.cfg.nativeStage,actors:NG.actors.length,rule:NG.match.mode,native:NG.level.native,gridBytes:NG.paint.grid.length}))));
   assert.deepEqual(identities[0],identities[1]);assert.equal(identities[0].actors,8);assert.ok(identities[0].fingerprint);
   // Explicit ordered ground paint uses real NetMatch recording/playback, not a
-  // second networking implementation. Freeze bot producers for exact comparison.
+  // second networking implementation. Freeze bot producers for exact comparison
+  // in every supported mode, including ranked modes.
   await Promise.all(pages.map(p=>p.evaluate(()=>{NG.game.debug.freezeBots();for(const a of NG.actors){a.intent.fire=false;a.intent.move.set(0,0,0);}})));
-  if(mode==='turf'){
+  {
    await step(15);
    const stamp=await pages[0].evaluate(()=>{const G=NG,p=G.level.spawnPads[0],o=p.clone().add({x:0,y:2,z:0}),h=G.physics.raycast(o,p.clone().set(0,-1,0),5);if(!h.hit)throw Error('No source spawn floor');const radius=G.local.weaponId==='s3-blaster-short'?G.local.weapon.catalogRecord.parameters.BlasterBurstParam.SplashDropPaintRadius:1.5;G.paint.splat(h.point.clone().addScaledVector(h.normal,.03),radius,G.local.team,{seed:.3125,instant:true});return {peer:G.netm.myId,sequence:G.netm._paintClockState.applied.get(G.netm.myId),radius};});
    lastCase.probeRadius=stamp.radius;
@@ -79,14 +80,17 @@ try{
     lastCase.paintSettlingFrames=(batch+1)*5;
     if(state[1].applied>=stamp.sequence&&state.every(s=>s.growing===0&&s.queued===0&&s.out===0)){lastCase.paintPlaybackSettled=true;break;}
    }
-  }else{
+  }
+  if(mode!=='turf'){
    await pages[0].evaluate(()=>{const G=NG,e=G.match.ranked;e.setCount(0,65);e.revision++;G.netm._sendNow({k:'rkstate',rk:{match:G.netm.cfg.id,host:G.netm.s.hostId,state:e.snapshot(),gains:G.match.rankedGains}});});
    await step(20);await pages[1].waitForFunction(()=>NG.match.ranked.counts[0]===65,null,{timeout:30000});
   }
   const evidence=lastEvidence=await Promise.all(pages.map(p=>p.evaluate(async()=>{const G=NG,bytes=new Uint8Array(G.paint.grid),digest=await crypto.subtle.digest('SHA-256',bytes);return {gridSha256:Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''),coverage:G.paint.coverage(),ranked:G.match.ranked?.counts,stats:G.netm.stats,diagnostic:{time:G.time,out:G.netm.out.length,growing:G.paint.growing.length,counts:G.paint.counts,applied:[...G.netm._paintClockState.applied],peers:[...G.netm.peers].map(([id,p])=>({id,tr:p.tr,lastTs:p.lastTs,lastEventSeq:p._lastEventSeq,lastPaintSeq:p._lastPaintSeq,queued:p.events.length,paintQueued:p.events.filter(e=>e[1]==='s').length,physicsPoints:p.physicsPoints?.slice(-4)}))}};})));
-  if(mode==='turf'&&evidence[0].gridSha256!==evidence[1].gridSha256){const grids=await Promise.all(pages.map(p=>p.evaluate(()=>Array.from(NG.paint.grid))));for(let i=0;i<grids.length;i++)fs.writeFileSync(path.join(out,`${id}-peer-${i}-grid.bin`),Buffer.from(grids[i]));const differences=[];for(let i=0;i<grids[0].length;i++)if(grids[0][i]!==grids[1][i])differences.push([i,grids[0][i],grids[1][i]]);const ownership=await Promise.all(pages.map(p=>p.evaluate(indices=>({ppm:NG.paint.ppm,atlas:NG.paint.size,orders:indices.map(index=>({index,value:NG.paint.grid[index],order:NG.paint._paintOrderRecords[NG.paint._paintOwnershipOrder[index]],face:NG.level.faces.find(f=>index>=f.grid&&index<f.grid+f.nu*f.nv)?.id})),calls:nativePaintTrace}),differences.slice(0,40).map(d=>d[0]))));lastEvidence.push({differentCells:differences.length,firstDifferences:differences.slice(0,40),ownership});}
-  if(mode==='turf'){assert.equal(lastCase.paintPlaybackSettled,true,'real source paint playback did not settle');assert.equal(evidence[0].gridSha256,evidence[1].gridSha256,'source chart paint divergence');}else assert.deepEqual(evidence[0].ranked,evidence[1].ranked);
-  results.push({id,mode,identities,evidence,playback:mode==='turf'?{settled:lastCase.paintPlaybackSettled,frames:lastCase.paintSettlingFrames,probeRadius:lastCase.probeRadius}:undefined,transport:'real WebSocket + production RoomDurableObject',packets});fs.writeFileSync(path.join(out,'online.json'),JSON.stringify({status:'running',results,errors},null,2));
+  if(evidence[0].gridSha256!==evidence[1].gridSha256){const grids=await Promise.all(pages.map(p=>p.evaluate(()=>Array.from(NG.paint.grid))));for(let i=0;i<grids.length;i++)fs.writeFileSync(path.join(out,`${id}-peer-${i}-grid.bin`),Buffer.from(grids[i]));const differences=[];for(let i=0;i<grids[0].length;i++)if(grids[0][i]!==grids[1][i])differences.push([i,grids[0][i],grids[1][i]]);const ownership=await Promise.all(pages.map(p=>p.evaluate(indices=>({ppm:NG.paint.ppm,atlas:NG.paint.size,orders:indices.map(index=>({index,value:NG.paint.grid[index],order:NG.paint._paintOrderRecords[NG.paint._paintOwnershipOrder[index]],face:NG.level.faces.find(f=>index>=f.grid&&index<f.grid+f.nu*f.nv)?.id})),calls:nativePaintTrace}),differences.slice(0,40).map(d=>d[0]))));lastEvidence.push({differentCells:differences.length,firstDifferences:differences.slice(0,40),ownership});}
+  assert.equal(lastCase.paintPlaybackSettled,true,'real source paint playback did not settle');
+  for(const peer of evidence){assert.equal(peer.diagnostic.growing,0,'source paint growth did not settle');assert.equal(peer.diagnostic.out,0,'source outbound events did not settle');for(const replay of peer.diagnostic.peers)assert.equal(replay.paintQueued,0,'source paint replay did not settle');}
+  assert.equal(evidence[0].gridSha256,evidence[1].gridSha256,'source chart paint divergence');if(mode!=='turf')assert.deepEqual(evidence[0].ranked,evidence[1].ranked);
+  results.push({id,mode,identities,evidence,playback:{settled:lastCase.paintPlaybackSettled,frames:lastCase.paintSettlingFrames,probeRadius:lastCase.probeRadius},transport:'real WebSocket + production RoomDurableObject',packets});fs.writeFileSync(path.join(out,'online.json'),JSON.stringify({status:'running',results,errors},null,2));
   await Promise.all(pages.map(p=>p.evaluate(()=>NG.net.leave())));
  }
  assert.equal(errors.length,0,JSON.stringify(errors));fs.writeFileSync(path.join(out,'online.json'),JSON.stringify({status:'passed',results,errors,packets},null,2));
