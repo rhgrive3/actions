@@ -22,3 +22,5 @@ node scripts/check-inkwave-native-projectiles.mjs _site-native .browser-evidence
 処理時間は Chromium / SwiftShader 上で `Projectiles.update()` を計測し、非活動フレームも含む一発射撃の分布を保存する。実機FPS、対戦全体のFPS、変更前より高速という主張は行わない。各ステージ担当の8体・全ルール・オンライン・移動描画検証とは測定条件が異なる。
 
 数値結果とビルド識別は [projectile-source-sweep-verification.json](projectile-source-sweep-verification.json) に記録する。OBJ/MTL/PNG、派生形状バッファ、原典の画像は公開コミットに含めない。
+
+ブラウザ検証ツールの初期化も修正した。6スクリプトの7箇所で、ゲーム全体の `G` をPlaywrightの戻り値へ暗黙に送らず、ページ内の `NG` への代入だけを行う。巨大なシーン・形状の不要な転送を避ける修正であり、製品コードや検証条件は変えない。構文確認と、戻り値の変更以外の全AST一致を確認した。これをゲームのブラウザ検証完了や、利用者が報告した応答接続エラーの解消として扱わない。
