@@ -21,7 +21,16 @@ export function adaptNativeStages(rel,code){
     if (unavailable) { this.toast(unavailable.name + '：' + unavailable.reason); return; }`);
  }
  if(rel==='src/main.js'){
-  code="import { nativeStageEnabled, NATIVE_IDS, UNAVAILABLE_NATIVE_STAGES } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeStageEnabled, NATIVE_IDS, UNAVAILABLE_NATIVE_STAGES } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld, nativeSpawnYaw, nativeArenaBasis } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('this.rig.yaw = m.local.team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, m.local.team, m.local.team === 0 ? 0 : Math.PI);');
+  once('this.rig.yaw = team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, team, team === 0 ? 0 : Math.PI);');
+  once('    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});', `    const nativeBasis = nativeArenaBasis(L);
+    if (nativeBasis) {
+      const fx=nativeBasis.forward.x*sgn, fz=nativeBasis.forward.z*sgn;
+      to.set(pad.x-fx*(I?.toBack??5.2),pad.y+2.6,pad.z-fz*(I?.toBack??5.2));
+      lookTo.set(pad.x+fx*6,pad.y+1.6,pad.z+fz*6);
+    }
+    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});`);
   const unavailableGuard = `
     const unavailable = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === (o.mapId || this.mapDef?.id));
     if (unavailable) { this.menus?.toast?.(unavailable.name + '：' + unavailable.reason); return false; }`;
