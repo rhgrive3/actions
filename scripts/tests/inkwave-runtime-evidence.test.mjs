@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {hash,verifyRuntimeBuild,persistentDirectory,persistentBrowserTemp,invalidWindows,sampleStats,primeRuntimeMenuRows} from '../lib/inkwave-runtime-evidence.mjs';
-const root=persistentDirectory('/mnt/workspace/.dev-state/agent-work/scratch/inkwave-runtime-performance-ui-evidence-tests/'+process.pid);
+const root=persistentDirectory(path.join(process.env.INKWAVE_TEST_SCRATCH||path.resolve(import.meta.dirname,'../../.ci-scratch'),'inkwave-runtime-evidence-tests',String(process.pid)));
 test('benchmark rejects empty/undersampled live windows and incomplete fixed transactions',()=>{
  const scenarios=[{scenario:'battle',runs:[{repeat:0,frames:{n:0},counts:{frame:0}},{repeat:1,frames:{n:1},counts:{frame:29}},{repeat:2,frames:{n:30},counts:{frame:30}}]}];
  assert.equal(invalidWindows(scenarios,false).length,2);assert.equal(invalidWindows(scenarios,true).length,2);
@@ -21,17 +21,20 @@ test('combined runtime evidence recognizes declared loading/cache, practice-rang
 test('valid artifacts cannot forge their source SHA by changing a build input',()=>{
  const repo=path.join(root,'repo'),site=path.join(root,'site');fs.mkdirSync(repo,{recursive:true});fs.mkdirSync(site,{recursive:true});
  fs.mkdirSync(path.join(repo,'inkwave-public'),{recursive:true});fs.mkdirSync(path.join(repo,'scripts'),{recursive:true});
- const helpers=['inkwave-source-composition.mjs','lib/inkwave-build-only-modules.mjs','lib/inkwave-worker-compaction.mjs'];
+ const helpers=['inkwave-source-composition.mjs','lib/inkwave-build-only-modules.mjs','lib/inkwave-worker-compaction.mjs','lib/inkwave-source-compaction.mjs'];
  for(const file of helpers){const target=path.join(repo,'scripts',file);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,'// committed helper '+file);}
+ const native='patches/native-stages/runtime/native-ink-chunks.mjs';fs.mkdirSync(path.dirname(path.join(repo,native)),{recursive:true});fs.writeFileSync(path.join(repo,native),'// committed source ink partition');
  fs.writeFileSync(path.join(repo,'inkwave-public/source.js'),'export const source=1;');fs.writeFileSync(path.join(repo,'scripts/build-inkwave.mjs'),'// builder');
  const git=(...args)=>execFileSync('git',args,{cwd:repo,encoding:'utf8'}).trim();git('init','--quiet');git('add','.');git('-c','user.name=Runtime test','-c','user.email=runtime-test@example.invalid','commit','--quiet','-m','fixture');const sha=git('rev-parse','HEAD');
  fs.writeFileSync(path.join(site,'source.js'),'export const source=1;');
  const artifacts={'source.js':hash(fs.readFileSync(path.join(site,'source.js')))};
  const m={artifacts,contentHash:hash(JSON.stringify(artifacts)),files:{'upstream/source.js':artifacts['source.js']},build:{script:hash('// builder')}};
  for(const file of helpers)m.files['build-script/'+file]=hash(fs.readFileSync(path.join(repo,'scripts',file)));
+ m.files['native-stages/runtime/native-ink-chunks.mjs']=hash(fs.readFileSync(path.join(repo,native)));
  const good=structuredClone(m.files);
  const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(m));save();assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,m.contentHash);
  m.files['upstream/source.js']=hash('forged source');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA/);
+ fs.appendFileSync(path.join(repo,native),'\n// forged source geometry');m.files={...good,'native-stages/runtime/native-ink-chunks.mjs':hash(fs.readFileSync(path.join(repo,native)))};save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),error=>error.message==='Build differs from source SHA: '+native);
  for(const file of helpers){const target=path.join(repo,'scripts',file);fs.appendFileSync(target,'\n// uncommitted helper change');m.files={...good,['build-script/'+file]:hash(fs.readFileSync(target))};save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),error=>error.message==='Build differs from source SHA: scripts/'+file);}
 });
 test('comparison cannot pass empty scenarios despite superficially passing reports',()=>{
@@ -52,8 +55,8 @@ test('complete comparison rejects replay, different browser/seed, wrong windows,
 
 
 test('browser temporary storage is a short physical persistent task cache',()=>{
- const directory=persistentBrowserTemp('/mnt/workspace/.dev-state/agent-work/cache/iwrui');
- assert.equal(directory,fs.realpathSync(directory));assert(directory.startsWith('/mnt/workspace/'));assert(Buffer.byteLength(directory)+48<108);
+ const cache=path.resolve(import.meta.dirname,'../../.ci-scratch/rt');const directory=persistentBrowserTemp(cache);
+ assert.equal(directory,fs.realpathSync(cache));assert(Buffer.byteLength(directory)+48<108);
 });
 test('browser storage cannot fall back to OS temporary or an oversized Unix socket path',()=>{
  assert.throws(()=>persistentBrowserTemp('/tmp/forbidden-browser-tmp'),/Persistent workspace required/);

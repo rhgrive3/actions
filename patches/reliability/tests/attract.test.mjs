@@ -16,6 +16,7 @@ import { adaptAttract } from '../attract-adapter.mjs';
 import { adaptReliability } from '../adapter.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { isRankedMode } from '../../splatoon3/runtime/ranked/engine.mjs';
+import { parse } from '../../loading-cache/vendor/acorn.mjs';
 
 // Focused lifetime test for the menu-attract auto-reset in Game._updateAttract. It exercises the
 // actual composed methods (gameplay overlays + the reliability overlays in adapter.mjs order,
@@ -55,11 +56,21 @@ function section(source, start, end) {
 // defines before its own first test) into a vm and expose those two helpers. This is the same
 // fixture the independent review used to reproduce the race, reused rather than duplicated.
 const FIXTURE_URL = new URL('./start.test.mjs', import.meta.url);
-const fixtureCode = fs.readFileSync(FIXTURE_URL, 'utf8')
-  .split("test('negative proof:")[0]
+const fixturePrefix = fs.readFileSync(FIXTURE_URL, 'utf8').split("test('negative proof:")[0];
+const fixtureCode = fixturePrefix
   .replace(/^import .*;\n/gm, '')
   .replaceAll('import.meta.url', JSON.stringify(pathToFileURL(fileURLToPath(FIXTURE_URL)).href));
 const sandbox = { assert, fs, vm, URL, adaptSource, adaptTouchLayout, adaptStart, adaptResults, adaptIntro, adaptBuildSource, isRankedMode };
+// The reused fixture closes over its module imports. Bind their real exports
+// before evaluating the prefix, including later native startup dependencies.
+for (const declaration of parse(fixturePrefix, { ecmaVersion: 'latest', sourceType: 'module' }).body) {
+  if (declaration.type !== 'ImportDeclaration') continue;
+  const exports = await import(new URL(declaration.source.value, FIXTURE_URL).href);
+  for (const specifier of declaration.specifiers) {
+    sandbox[specifier.local.name] = specifier.type === 'ImportNamespaceSpecifier' ? exports
+      : exports[specifier.type === 'ImportDefaultSpecifier' ? 'default' : (specifier.imported.name ?? specifier.imported.value)];
+  }
+}
 vm.runInNewContext(`${fixtureCode}\nglobalThis.bootReview = boot; globalThis.deferredReview = deferred;`, sandbox);
 const { bootReview } = sandbox;
 

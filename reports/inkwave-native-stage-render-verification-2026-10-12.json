@@ -1,0 +1,3177 @@
+{
+  "schema": 1,
+  "baseMerge": "ed3a046574208471c5db5309e2469d263cacfdfd",
+  "runtimeCommit": "ad1be731",
+  "runtimeEngineSha256": "b10f9f320d85cfd826f95ac8521635101d0b2bd9da0ac69e9566b08a7af9baf5",
+  "engineBytesMatchMeasuredBuild": true,
+  "nativeSourceTests": {
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0
+  },
+  "relatedTests": {
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0
+  },
+  "ciRegressionTests": {
+    "passed": 219,
+    "failed": 0,
+    "skipped": 0
+  },
+  "packagingTests": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "budget": {
+    "status": "passed",
+    "revision": "99028ba751be8f82cc3fbdcb761a50a6a08eea02e774cfb7c6d70c8a3444aadd",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 74638,
+    "initialJSBytes": 2854838,
+    "criticalHTMLBytes": 15371,
+    "precacheCount": 365,
+    "precacheBytes": 5731640,
+    "workerBytes": 70515,
+    "declaredBytes": 10349670,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "render": {
+    "status": "passed",
+    "measurement": "Chromium SwiftShader; warm then freeze unrelated per-draw mesh hooks; timing retains eight actors; pixel comparison hides character roots to isolate stage rendering; alternating renders; not mobile hardware",
+    "stages": [
+      {
+        "id": "scorch",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "actors": 8,
+        "chunks": 107,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 3.900000002235174,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 9458236,
+              "calls": 2866,
+              "p50": 4.699999999254942,
+              "p95": 6.200000002980232,
+              "samples": [
+                6.200000002980232,
+                3.600000001490116,
+                4.699999999254942,
+                6.199999999254942,
+                3.699999999254942,
+                3.900000002235174
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.399999998509884,
+              "inkTriangles": 65152,
+              "inkCalls": 1,
+              "triangles": 8864614,
+              "calls": 2687,
+              "p50": 5,
+              "p95": 5.300000000745058,
+              "samples": [
+                5.299999997019768,
+                5.300000000745058,
+                4,
+                5,
+                3.699999999254942,
+                3.399999998509884
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 3.899999998509884,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 20156086,
+              "calls": 5830,
+              "p50": 3.899999998509884,
+              "p95": 6.200000002980232,
+              "samples": [
+                4.5,
+                2.899999998509884,
+                3.100000001490116,
+                6.200000002980232,
+                2.699999999254942,
+                3.899999998509884
+              ]
+            },
+            "chunked": {
+              "milliseconds": 2.100000001490116,
+              "inkTriangles": 35287,
+              "inkCalls": 1,
+              "triangles": 19594143,
+              "calls": 5675,
+              "p50": 3.2999999970197678,
+              "p95": 6.399999998509884,
+              "samples": [
+                3.699999999254942,
+                3.100000001490116,
+                2.399999998509884,
+                3.2999999970197678,
+                6.399999998509884,
+                2.100000001490116
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 10.099999997764826,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 31809182,
+              "calls": 9330,
+              "p50": 4.100000001490116,
+              "p95": 10.099999997764826,
+              "samples": [
+                2.199999999254942,
+                2.100000001490116,
+                2.2999999970197678,
+                5.699999999254942,
+                4.100000001490116,
+                10.099999997764826
+              ]
+            },
+            "chunked": {
+              "milliseconds": 10.899999998509884,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 31201070,
+              "calls": 9141,
+              "p50": 2.599999997764826,
+              "p95": 10.899999998509884,
+              "samples": [
+                2.199999999254942,
+                2,
+                2.2000000029802322,
+                2.599999997764826,
+                4.800000000745058,
+                10.899999998509884
+              ]
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      },
+      {
+        "id": "hagglefish",
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "actors": 8,
+        "chunks": 184,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 3.699999999254942,
+              "inkTriangles": 91151,
+              "inkCalls": 1,
+              "triangles": 9120746,
+              "calls": 3073,
+              "p50": 6.700000002980232,
+              "p95": 11.800000000745058,
+              "samples": [
+                11.800000000745058,
+                6.700000002980232,
+                8.300000000745058,
+                3,
+                3.899999998509884,
+                3.699999999254942
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.900000002235174,
+              "inkTriangles": 68989,
+              "inkCalls": 1,
+              "triangles": 8539630,
+              "calls": 2881,
+              "p50": 6,
+              "p95": 12.699999999254942,
+              "samples": [
+                12.699999999254942,
+                10,
+                6,
+                3.600000001490116,
+                3.699999999254942,
+                3.900000002235174
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 2.5,
+              "inkTriangles": 91151,
+              "inkCalls": 1,
+              "triangles": 19837394,
+              "calls": 6577,
+              "p50": 2.699999999254942,
+              "p95": 3.100000001490116,
+              "samples": [
+                2.7000000029802322,
+                2.399999998509884,
+                2.699999999254942,
+                2.300000000745058,
+                3.100000001490116,
+                2.5
+              ]
+            },
+            "chunked": {
+              "milliseconds": 2.600000001490116,
+              "inkTriangles": 55377,
+              "inkCalls": 1,
+              "triangles": 19272628,
+              "calls": 6394,
+              "p50": 2.600000001490116,
+              "p95": 4.199999999254942,
+              "samples": [
+                4.199999999254942,
+                2.300000000745058,
+                2.600000001490116,
+                2.399999998509884,
+                2.599999997764826,
+                2.600000001490116
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 2.800000000745058,
+              "inkTriangles": 91151,
+              "inkCalls": 1,
+              "triangles": 31505862,
+              "calls": 10593,
+              "p50": 3.699999999254942,
+              "p95": 9.100000001490116,
+              "samples": [
+                2.199999999254942,
+                2.5,
+                3.699999999254942,
+                6.899999998509884,
+                9.100000001490116,
+                2.800000000745058
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.099999997764826,
+              "inkTriangles": 91151,
+              "inkCalls": 1,
+              "triangles": 30898446,
+              "calls": 10379,
+              "p50": 3.099999997764826,
+              "p95": 8.100000001490116,
+              "samples": [
+                2,
+                1.9000000022351742,
+                5,
+                8.100000001490116,
+                3,
+                3.099999997764826
+              ]
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      },
+      {
+        "id": "inkblot",
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "actors": 8,
+        "chunks": 247,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 5.399999998509884,
+              "inkTriangles": 30861,
+              "inkCalls": 1,
+              "triangles": 7718874,
+              "calls": 2961,
+              "p50": 5.300000000745058,
+              "p95": 8.100000001490116,
+              "samples": [
+                8.100000001490116,
+                5.300000000745058,
+                5,
+                4.200000002980232,
+                3.800000000745058,
+                5.399999998509884
+              ]
+            },
+            "chunked": {
+              "milliseconds": 4.300000000745058,
+              "inkTriangles": 22806,
+              "inkCalls": 1,
+              "triangles": 7232417,
+              "calls": 2776,
+              "p50": 5.199999999254942,
+              "p95": 8.699999999254942,
+              "samples": [
+                8.699999999254942,
+                6.399999998509884,
+                4.699999999254942,
+                5.199999999254942,
+                4.199999999254942,
+                4.300000000745058
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 7.399999998509884,
+              "inkTriangles": 30861,
+              "inkCalls": 1,
+              "triangles": 17063308,
+              "calls": 6345,
+              "p50": 3.5,
+              "p95": 7.399999998509884,
+              "samples": [
+                3.600000001490116,
+                3.5,
+                3,
+                3,
+                2.199999999254942,
+                7.399999998509884
+              ]
+            },
+            "chunked": {
+              "milliseconds": 6.600000001490116,
+              "inkTriangles": 14426,
+              "inkCalls": 1,
+              "triangles": 16573180,
+              "calls": 6169,
+              "p50": 4.899999998509884,
+              "p95": 11,
+              "samples": [
+                3.600000001490116,
+                4.5,
+                2.199999999254942,
+                4.899999998509884,
+                11,
+                6.600000001490116
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 6.900000002235174,
+              "inkTriangles": 30861,
+              "inkCalls": 1,
+              "triangles": 27308878,
+              "calls": 10289,
+              "p50": 6.900000002235174,
+              "p95": 9.600000001490116,
+              "samples": [
+                2.300000000745058,
+                2.5,
+                2.2999999970197678,
+                9.600000001490116,
+                8.699999999254942,
+                6.900000002235174
+              ]
+            },
+            "chunked": {
+              "milliseconds": 2.5,
+              "inkTriangles": 30850,
+              "inkCalls": 1,
+              "triangles": 26769006,
+              "calls": 10076,
+              "p50": 3.199999999254942,
+              "p95": 7.199999999254942,
+              "samples": [
+                3.199999999254942,
+                2.2000000029802322,
+                2.2000000029802322,
+                4.199999999254942,
+                7.199999999254942,
+                2.5
+              ]
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      },
+      {
+        "id": "mako",
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "actors": 8,
+        "chunks": 343,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 3.5,
+              "inkTriangles": 87393,
+              "inkCalls": 1,
+              "triangles": 10120790,
+              "calls": 3265,
+              "p50": 5.699999999254942,
+              "p95": 8.699999999254942,
+              "samples": [
+                8.699999999254942,
+                6.5,
+                5.699999999254942,
+                4.600000001490116,
+                3.699999999254942,
+                3.5
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.5,
+              "inkTriangles": 71334,
+              "inkCalls": 1,
+              "triangles": 9480758,
+              "calls": 3061,
+              "p50": 5.5,
+              "p95": 10,
+              "samples": [
+                9.700000002980232,
+                10,
+                5.5,
+                5.5,
+                4.199999999254942,
+                3.5
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 2.2999999970197678,
+              "inkTriangles": 87393,
+              "inkCalls": 1,
+              "triangles": 22417472,
+              "calls": 7237,
+              "p50": 2.599999997764826,
+              "p95": 4.100000001490116,
+              "samples": [
+                4.100000001490116,
+                2.599999997764826,
+                2.300000000745058,
+                2.599999997764826,
+                2.300000000745058,
+                2.2999999970197678
+              ]
+            },
+            "chunked": {
+              "milliseconds": 2.300000000745058,
+              "inkTriangles": 51755,
+              "inkCalls": 1,
+              "triangles": 21767580,
+              "calls": 7030,
+              "p50": 2.600000001490116,
+              "p95": 4.099999997764826,
+              "samples": [
+                4.099999997764826,
+                3.2000000029802322,
+                2.399999998509884,
+                2.400000002235174,
+                2.600000001490116,
+                2.300000000745058
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 7.800000000745058,
+              "inkTriangles": 87393,
+              "inkCalls": 1,
+              "triangles": 35804332,
+              "calls": 11921,
+              "p50": 9.699999999254942,
+              "p95": 11.400000002235174,
+              "samples": [
+                4.099999997764826,
+                10,
+                4.5,
+                11.400000002235174,
+                9.699999999254942,
+                7.800000000745058
+              ]
+            },
+            "chunked": {
+              "milliseconds": 11,
+              "inkTriangles": 86399,
+              "inkCalls": 1,
+              "triangles": 35100308,
+              "calls": 11668,
+              "p50": 9.100000001490116,
+              "p95": 16.799999997019768,
+              "samples": [
+                5,
+                7.800000000745058,
+                9.100000001490116,
+                16.799999997019768,
+                7.899999998509884,
+                11
+              ]
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      },
+      {
+        "id": "brinewater",
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "actors": 8,
+        "chunks": 207,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 6.400000002235174,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 10862642,
+              "calls": 4481,
+              "p50": 9.600000001490116,
+              "p95": 12.100000001490116,
+              "samples": [
+                12.100000001490116,
+                10.900000002235174,
+                9.600000001490116,
+                7,
+                5.5,
+                6.400000002235174
+              ]
+            },
+            "chunked": {
+              "milliseconds": 5.099999997764826,
+              "inkTriangles": 91785,
+              "inkCalls": 1,
+              "triangles": 10173008,
+              "calls": 4201,
+              "p50": 8.300000000745058,
+              "p95": 10.300000000745058,
+              "samples": [
+                9.199999999254942,
+                8.300000000745058,
+                7.899999998509884,
+                8,
+                10.300000000745058,
+                5.099999997764826
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 2.2999999970197678,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 23338660,
+              "calls": 9065,
+              "p50": 2.100000001490116,
+              "p95": 3.199999999254942,
+              "samples": [
+                3.199999999254942,
+                1.8999999985098839,
+                2.100000001490116,
+                1.9000000022351742,
+                2,
+                2.2999999970197678
+              ]
+            },
+            "chunked": {
+              "milliseconds": 2,
+              "inkTriangles": 67741,
+              "inkCalls": 1,
+              "triangles": 22688072,
+              "calls": 8838,
+              "p50": 2,
+              "p95": 2.800000000745058,
+              "samples": [
+                2.800000000745058,
+                2.5,
+                2,
+                1.8999999985098839,
+                1.800000000745058,
+                2
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 4.5,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 37281734,
+              "calls": 14725,
+              "p50": 4.5,
+              "p95": 9.199999999254942,
+              "samples": [
+                5.099999997764826,
+                9.199999999254942,
+                4.5,
+                4.199999999254942,
+                3.800000000745058,
+                4.5
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.5,
+              "inkTriangles": 111285,
+              "inkCalls": 1,
+              "triangles": 36550083,
+              "calls": 14419,
+              "p50": 4.199999999254942,
+              "p95": 7.700000002980232,
+              "samples": [
+                4.199999999254942,
+                7.700000002980232,
+                4.399999998509884,
+                4.100000001490116,
+                3.5,
+                3.5
+              ]
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      }
+    ],
+    "errors": []
+  },
+  "moving": {
+    "status": "passed",
+    "measurement": "Chromium SwiftShader; warm then freeze unrelated per-draw mesh hooks; timing retains eight actors; pixel comparison hides character roots to isolate stage rendering; alternating renders; not mobile hardware",
+    "stages": [
+      {
+        "id": "scorch",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "actors": 8,
+        "chunks": 107,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 4.399999998509884,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 9458780,
+              "calls": 2866,
+              "p50": 4.200000002980232,
+              "p95": 6.199999999254942,
+              "samples": [
+                6.199999999254942,
+                3.400000002235174,
+                4.200000002980232,
+                3.900000002235174,
+                3.800000000745058,
+                4.399999998509884
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.699999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 65152,
+              "inkCalls": 1,
+              "triangles": 8865124,
+              "calls": 2687,
+              "p50": 3.899999998509884,
+              "p95": 7.199999999254942,
+              "samples": [
+                3.599999997764826,
+                7.199999999254942,
+                3.899999998509884,
+                3.899999998509884,
+                3.699999999254942,
+                3.699999999254942
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 7.100000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 20157310,
+              "calls": 5830,
+              "p50": 7.100000001490116,
+              "p95": 10.5,
+              "samples": [
+                3.100000001490116,
+                4.599999997764826,
+                3.400000002235174,
+                10.5,
+                7.699999999254942,
+                7.100000001490116
+              ]
+            },
+            "chunked": {
+              "milliseconds": 7.600000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 35287,
+              "inkCalls": 1,
+              "triangles": 19595333,
+              "calls": 5675,
+              "p50": 4.800000000745058,
+              "p95": 9,
+              "samples": [
+                3,
+                2.899999998509884,
+                4.800000000745058,
+                2.599999997764826,
+                9,
+                7.600000001490116
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 4,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 31811086,
+              "calls": 9330,
+              "p50": 3.600000001490116,
+              "p95": 4.600000001490116,
+              "samples": [
+                1.7000000029802322,
+                1.699999999254942,
+                1.800000000745058,
+                3.600000001490116,
+                4.600000001490116,
+                4
+              ]
+            },
+            "chunked": {
+              "milliseconds": 20.300000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 31202940,
+              "calls": 9141,
+              "p50": 2.2999999970197678,
+              "p95": 20.300000000745058,
+              "samples": [
+                2.2999999970197678,
+                1.800000000745058,
+                1.6000000014901161,
+                1.5999999977648258,
+                4.799999997019768,
+                20.300000000745058
+              ]
+            }
+          }
+        ],
+        "moving": [
+          {
+            "frame": 0,
+            "baseline": {
+              "milliseconds": 17.400000002235174,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 34392043,
+              "calls": 9990
+            },
+            "chunked": {
+              "milliseconds": 4.5,
+              "selectionMilliseconds": 0.4000000022351742,
+              "indexChanged": true,
+              "inkTriangles": 55725,
+              "inkCalls": 1,
+              "triangles": 34960698,
+              "calls": 10162
+            }
+          },
+          {
+            "frame": 1,
+            "baseline": {
+              "milliseconds": 2.7000000029802322,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 36142043,
+              "calls": 10522
+            },
+            "chunked": {
+              "milliseconds": 3.099999997764826,
+              "selectionMilliseconds": 0.10000000149011612,
+              "indexChanged": true,
+              "inkTriangles": 63332,
+              "inkCalls": 1,
+              "triangles": 35547947,
+              "calls": 10342
+            }
+          },
+          {
+            "frame": 2,
+            "baseline": {
+              "milliseconds": 2.199999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 36735699,
+              "calls": 10701
+            },
+            "chunked": {
+              "milliseconds": 2.600000001490116,
+              "selectionMilliseconds": 0.30000000074505806,
+              "indexChanged": true,
+              "inkTriangles": 67407,
+              "inkCalls": 1,
+              "triangles": 37326583,
+              "calls": 10880
+            }
+          },
+          {
+            "frame": 3,
+            "baseline": {
+              "milliseconds": 1.699999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 38511126,
+              "calls": 11238
+            },
+            "chunked": {
+              "milliseconds": 2.5,
+              "selectionMilliseconds": 0.19999999925494194,
+              "indexChanged": true,
+              "inkTriangles": 67410,
+              "inkCalls": 1,
+              "triangles": 37917470,
+              "calls": 11059
+            }
+          },
+          {
+            "frame": 4,
+            "baseline": {
+              "milliseconds": 1.7000000029802322,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 39104782,
+              "calls": 11417
+            },
+            "chunked": {
+              "milliseconds": 1.699999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 67410,
+              "inkCalls": 1,
+              "triangles": 39695669,
+              "calls": 11596
+            }
+          },
+          {
+            "frame": 5,
+            "baseline": {
+              "milliseconds": 1.699999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 40880227,
+              "calls": 11954
+            },
+            "chunked": {
+              "milliseconds": 1.9000000022351742,
+              "selectionMilliseconds": 0.30000000074505806,
+              "indexChanged": true,
+              "inkTriangles": 67425,
+              "inkCalls": 1,
+              "triangles": 40286571,
+              "calls": 11775
+            }
+          },
+          {
+            "frame": 6,
+            "baseline": {
+              "milliseconds": 1.6000000014901161,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 41467456,
+              "calls": 12125
+            },
+            "chunked": {
+              "milliseconds": 6.699999999254942,
+              "selectionMilliseconds": 0.5,
+              "indexChanged": true,
+              "inkTriangles": 66506,
+              "inkCalls": 1,
+              "triangles": 42051012,
+              "calls": 12296
+            }
+          },
+          {
+            "frame": 7,
+            "baseline": {
+              "milliseconds": 11.100000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 43218811,
+              "calls": 12640
+            },
+            "chunked": {
+              "milliseconds": 3.599999997764826,
+              "selectionMilliseconds": 0.30000000074505806,
+              "indexChanged": true,
+              "inkTriangles": 62944,
+              "inkCalls": 1,
+              "triangles": 42631294,
+              "calls": 12468
+            }
+          },
+          {
+            "frame": 8,
+            "baseline": {
+              "milliseconds": 6.399999998509884,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 43812467,
+              "calls": 12819
+            },
+            "chunked": {
+              "milliseconds": 3.7000000029802322,
+              "selectionMilliseconds": 0.3999999985098839,
+              "indexChanged": true,
+              "inkTriangles": 62818,
+              "inkCalls": 1,
+              "triangles": 44398762,
+              "calls": 12998
+            }
+          },
+          {
+            "frame": 9,
+            "baseline": {
+              "milliseconds": 7.5,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 45575957,
+              "calls": 13356
+            },
+            "chunked": {
+              "milliseconds": 8.199999999254942,
+              "selectionMilliseconds": 0.4000000022351742,
+              "indexChanged": true,
+              "inkTriangles": 60062,
+              "inkCalls": 1,
+              "triangles": 44982301,
+              "calls": 13177
+            }
+          },
+          {
+            "frame": 10,
+            "baseline": {
+              "milliseconds": 7.199999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 46144653,
+              "calls": 13524
+            },
+            "chunked": {
+              "milliseconds": 7,
+              "selectionMilliseconds": 0.19999999925494194,
+              "indexChanged": true,
+              "inkTriangles": 59776,
+              "inkCalls": 1,
+              "triangles": 46702946,
+              "calls": 13692
+            }
+          },
+          {
+            "frame": 11,
+            "baseline": {
+              "milliseconds": 13.099999997764826,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 47827303,
+              "calls": 14028
+            },
+            "chunked": {
+              "milliseconds": 2.199999999254942,
+              "selectionMilliseconds": 0.20000000298023224,
+              "indexChanged": true,
+              "inkTriangles": 57144,
+              "inkCalls": 1,
+              "triangles": 47258607,
+              "calls": 13860
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      },
+      {
+        "id": "brinewater",
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "actors": 8,
+        "chunks": 207,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 3,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 10862642,
+              "calls": 4481,
+              "p50": 6.599999997764826,
+              "p95": 11,
+              "samples": [
+                11,
+                6.599999997764826,
+                7.300000000745058,
+                4,
+                3,
+                3
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.5,
+              "selectionMilliseconds": 0.09999999776482582,
+              "indexChanged": false,
+              "inkTriangles": 91785,
+              "inkCalls": 1,
+              "triangles": 10173008,
+              "calls": 4201,
+              "p50": 4.100000001490116,
+              "p95": 8,
+              "samples": [
+                8,
+                6.400000002235174,
+                4.100000001490116,
+                3.699999999254942,
+                3.399999998509884,
+                3.5
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 2,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 23338660,
+              "calls": 9065,
+              "p50": 2.2999999970197678,
+              "p95": 2.300000000745058,
+              "samples": [
+                2.300000000745058,
+                2,
+                2.2000000029802322,
+                2.2999999970197678,
+                2.300000000745058,
+                2
+              ]
+            },
+            "chunked": {
+              "milliseconds": 1.800000000745058,
+              "selectionMilliseconds": 0.10000000149011612,
+              "indexChanged": false,
+              "inkTriangles": 67741,
+              "inkCalls": 1,
+              "triangles": 22688072,
+              "calls": 8838,
+              "p50": 2.5,
+              "p95": 3.099999997764826,
+              "samples": [
+                2.600000001490116,
+                3.099999997764826,
+                2,
+                2.5,
+                2.300000000745058,
+                1.800000000745058
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 4.300000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 37281734,
+              "calls": 14725,
+              "p50": 4,
+              "p95": 4.899999998509884,
+              "samples": [
+                4,
+                2.600000001490116,
+                2.399999998509884,
+                4.899999998509884,
+                3.800000000745058,
+                4.300000000745058
+              ]
+            },
+            "chunked": {
+              "milliseconds": 4.100000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 111285,
+              "inkCalls": 1,
+              "triangles": 36550083,
+              "calls": 14419,
+              "p50": 4.199999999254942,
+              "p95": 8.600000001490116,
+              "samples": [
+                3.599999997764826,
+                2.5,
+                8.600000001490116,
+                7,
+                4.199999999254942,
+                4.100000001490116
+              ]
+            }
+          }
+        ],
+        "moving": [
+          {
+            "frame": 0,
+            "baseline": {
+              "milliseconds": 7.900000002235174,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 40461740,
+              "calls": 15946
+            },
+            "chunked": {
+              "milliseconds": 5.199999999254942,
+              "selectionMilliseconds": 0.4000000022351742,
+              "indexChanged": true,
+              "inkTriangles": 72205,
+              "inkCalls": 1,
+              "triangles": 41087899,
+              "calls": 16207
+            }
+          },
+          {
+            "frame": 1,
+            "baseline": {
+              "milliseconds": 3.100000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 42440920,
+              "calls": 16765
+            },
+            "chunked": {
+              "milliseconds": 4,
+              "selectionMilliseconds": 0.30000000074505806,
+              "indexChanged": true,
+              "inkTriangles": 90491,
+              "inkCalls": 1,
+              "triangles": 41752444,
+              "calls": 16486
+            }
+          },
+          {
+            "frame": 2,
+            "baseline": {
+              "milliseconds": 4.599999997764826,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 43126471,
+              "calls": 17042
+            },
+            "chunked": {
+              "milliseconds": 3.699999999254942,
+              "selectionMilliseconds": 0.4000000022351742,
+              "indexChanged": true,
+              "inkTriangles": 89799,
+              "inkCalls": 1,
+              "triangles": 43787399,
+              "calls": 17319
+            }
+          },
+          {
+            "frame": 3,
+            "baseline": {
+              "milliseconds": 5.100000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 45141011,
+              "calls": 17871
+            },
+            "chunked": {
+              "milliseconds": 4.399999998509884,
+              "selectionMilliseconds": 0.6000000014901161,
+              "indexChanged": true,
+              "inkTriangles": 96028,
+              "inkCalls": 1,
+              "triangles": 44455008,
+              "calls": 17595
+            }
+          },
+          {
+            "frame": 4,
+            "baseline": {
+              "milliseconds": 6.100000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 45826282,
+              "calls": 18146
+            },
+            "chunked": {
+              "milliseconds": 4.699999999254942,
+              "selectionMilliseconds": 0.4000000022351742,
+              "indexChanged": true,
+              "inkTriangles": 96630,
+              "inkCalls": 1,
+              "triangles": 46493761,
+              "calls": 18421
+            }
+          },
+          {
+            "frame": 5,
+            "baseline": {
+              "milliseconds": 3.899999998509884,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 47858554,
+              "calls": 18979
+            },
+            "chunked": {
+              "milliseconds": 4.5,
+              "selectionMilliseconds": 0.3999999985098839,
+              "indexChanged": true,
+              "inkTriangles": 99463,
+              "inkCalls": 1,
+              "triangles": 47168678,
+              "calls": 18700
+            }
+          },
+          {
+            "frame": 6,
+            "baseline": {
+              "milliseconds": 4.200000002980232,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 48541761,
+              "calls": 19251
+            },
+            "chunked": {
+              "milliseconds": 6,
+              "selectionMilliseconds": 0.5,
+              "indexChanged": true,
+              "inkTriangles": 98764,
+              "inkCalls": 1,
+              "triangles": 49209310,
+              "calls": 19523
+            }
+          },
+          {
+            "frame": 7,
+            "baseline": {
+              "milliseconds": 9.300000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 50556529,
+              "calls": 20063
+            },
+            "chunked": {
+              "milliseconds": 7,
+              "selectionMilliseconds": 0.30000000074505806,
+              "indexChanged": true,
+              "inkTriangles": 98583,
+              "inkCalls": 1,
+              "triangles": 49875000,
+              "calls": 19793
+            }
+          },
+          {
+            "frame": 8,
+            "baseline": {
+              "milliseconds": 10.600000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 51244179,
+              "calls": 20339
+            },
+            "chunked": {
+              "milliseconds": 15,
+              "selectionMilliseconds": 0.5999999977648258,
+              "indexChanged": true,
+              "inkTriangles": 91250,
+              "inkCalls": 1,
+              "triangles": 51908657,
+              "calls": 20615
+            }
+          },
+          {
+            "frame": 9,
+            "baseline": {
+              "milliseconds": 10.099999997764826,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 53255385,
+              "calls": 21163
+            },
+            "chunked": {
+              "milliseconds": 11.400000002235174,
+              "selectionMilliseconds": 1.1000000014901161,
+              "indexChanged": true,
+              "inkTriangles": 89878,
+              "inkCalls": 1,
+              "triangles": 52569749,
+              "calls": 20889
+            }
+          },
+          {
+            "frame": 10,
+            "baseline": {
+              "milliseconds": 12.099999997764826,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 53904460,
+              "calls": 21413
+            },
+            "chunked": {
+              "milliseconds": 6.200000002980232,
+              "selectionMilliseconds": 0.5,
+              "indexChanged": true,
+              "inkTriangles": 84276,
+              "inkCalls": 1,
+              "triangles": 54523389,
+              "calls": 21663
+            }
+          },
+          {
+            "frame": 11,
+            "baseline": {
+              "milliseconds": 9.5,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 114422,
+              "inkCalls": 1,
+              "triangles": 55793353,
+              "calls": 22159
+            },
+            "chunked": {
+              "milliseconds": 8.5,
+              "selectionMilliseconds": 0.5999999977648258,
+              "indexChanged": true,
+              "inkTriangles": 83478,
+              "inkCalls": 1,
+              "triangles": 55142899,
+              "calls": 21911
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      }
+    ],
+    "errors": []
+  },
+  "ownedReferenceControl": {
+    "status": "passed",
+    "measurement": "Chromium SwiftShader; warm then freeze unrelated per-draw mesh hooks; timing retains eight actors; pixel comparison hides character roots to isolate stage rendering; alternating renders; not mobile hardware",
+    "stages": [
+      {
+        "id": "scorch",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "actors": 8,
+        "chunks": 107,
+        "tileSize": 16,
+        "views": [
+          {
+            "name": "gameplay",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 4.099999997764826,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 9458844,
+              "calls": 2866,
+              "p50": 5,
+              "p95": 5.900000002235174,
+              "samples": [
+                5.800000000745058,
+                5.900000002235174,
+                4.300000000745058,
+                5,
+                3.800000000745058,
+                4.099999997764826
+              ]
+            },
+            "chunked": {
+              "milliseconds": 3.7000000029802322,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 65152,
+              "inkCalls": 1,
+              "triangles": 8865184,
+              "calls": 2687,
+              "p50": 4.800000000745058,
+              "p95": 7.099999997764826,
+              "samples": [
+                6.800000000745058,
+                7.099999997764826,
+                4.299999997019768,
+                4.800000000745058,
+                4.799999997019768,
+                3.7000000029802322
+              ]
+            }
+          },
+          {
+            "name": "center",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 1.8999999985098839,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 20157454,
+              "calls": 5830,
+              "p50": 1.9000000022351742,
+              "p95": 3.699999999254942,
+              "samples": [
+                3.699999999254942,
+                2.100000001490116,
+                1.800000000745058,
+                1.5999999977648258,
+                1.9000000022351742,
+                1.8999999985098839
+              ]
+            },
+            "chunked": {
+              "milliseconds": 5.300000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 35287,
+              "inkCalls": 1,
+              "triangles": 19595473,
+              "calls": 5675,
+              "p50": 3,
+              "p95": 5.899999998509884,
+              "samples": [
+                3,
+                2,
+                1.8999999985098839,
+                1.9000000022351742,
+                5.899999998509884,
+                5.300000000745058
+              ]
+            }
+          },
+          {
+            "name": "overhead",
+            "changedPixels": 0,
+            "maxChannelError": 0,
+            "baselineSelfPixels": 0,
+            "chunkedSelfPixels": 0,
+            "differences": [],
+            "pixels": 153600,
+            "baseline": {
+              "milliseconds": 8.600000001490116,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 31811310,
+              "calls": 9330,
+              "p50": 5.300000000745058,
+              "p95": 8.600000001490116,
+              "samples": [
+                2.100000001490116,
+                2.199999999254942,
+                2,
+                5.300000000745058,
+                5.899999998509884,
+                8.600000001490116
+              ]
+            },
+            "chunked": {
+              "milliseconds": 13.800000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 31203160,
+              "calls": 9141,
+              "p50": 2.699999999254942,
+              "p95": 13.800000000745058,
+              "samples": [
+                2.699999999254942,
+                2.300000000745058,
+                1.8999999985098839,
+                1.9000000022351742,
+                12.699999999254942,
+                13.800000000745058
+              ]
+            }
+          }
+        ],
+        "moving": [
+          {
+            "frame": 0,
+            "baseline": {
+              "milliseconds": 5.299999997019768,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 34392287,
+              "calls": 9990
+            },
+            "chunked": {
+              "milliseconds": 4.800000000745058,
+              "selectionMilliseconds": 0.29999999701976776,
+              "indexChanged": true,
+              "inkTriangles": 55725,
+              "inkCalls": 1,
+              "triangles": 34960946,
+              "calls": 10162
+            }
+          },
+          {
+            "frame": 1,
+            "baseline": {
+              "milliseconds": 3.899999998509884,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 36142299,
+              "calls": 10522
+            },
+            "chunked": {
+              "milliseconds": 4.199999999254942,
+              "selectionMilliseconds": 0.3999999985098839,
+              "indexChanged": true,
+              "inkTriangles": 63332,
+              "inkCalls": 1,
+              "triangles": 35548199,
+              "calls": 10342
+            }
+          },
+          {
+            "frame": 2,
+            "baseline": {
+              "milliseconds": 2.699999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 36735959,
+              "calls": 10701
+            },
+            "chunked": {
+              "milliseconds": 3,
+              "selectionMilliseconds": 0.20000000298023224,
+              "indexChanged": true,
+              "inkTriangles": 67407,
+              "inkCalls": 1,
+              "triangles": 37326847,
+              "calls": 10880
+            }
+          },
+          {
+            "frame": 3,
+            "baseline": {
+              "milliseconds": 2.5,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 38511398,
+              "calls": 11238
+            },
+            "chunked": {
+              "milliseconds": 2.5,
+              "selectionMilliseconds": 0.10000000149011612,
+              "indexChanged": true,
+              "inkTriangles": 67410,
+              "inkCalls": 1,
+              "triangles": 37917738,
+              "calls": 11059
+            }
+          },
+          {
+            "frame": 4,
+            "baseline": {
+              "milliseconds": 2.199999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 39105058,
+              "calls": 11417
+            },
+            "chunked": {
+              "milliseconds": 3.399999998509884,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 67410,
+              "inkCalls": 1,
+              "triangles": 39695949,
+              "calls": 11596
+            }
+          },
+          {
+            "frame": 5,
+            "baseline": {
+              "milliseconds": 2.300000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 40880515,
+              "calls": 11954
+            },
+            "chunked": {
+              "milliseconds": 2.5,
+              "selectionMilliseconds": 0.19999999925494194,
+              "indexChanged": true,
+              "inkTriangles": 67425,
+              "inkCalls": 1,
+              "triangles": 40286855,
+              "calls": 11775
+            }
+          },
+          {
+            "frame": 6,
+            "baseline": {
+              "milliseconds": 5.800000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 41467748,
+              "calls": 12125
+            },
+            "chunked": {
+              "milliseconds": 2.5,
+              "selectionMilliseconds": 0.10000000149011612,
+              "indexChanged": true,
+              "inkTriangles": 66506,
+              "inkCalls": 1,
+              "triangles": 42051308,
+              "calls": 12296
+            }
+          },
+          {
+            "frame": 7,
+            "baseline": {
+              "milliseconds": 8.699999999254942,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 43219115,
+              "calls": 12640
+            },
+            "chunked": {
+              "milliseconds": 24.699999999254942,
+              "selectionMilliseconds": 4.5,
+              "indexChanged": true,
+              "inkTriangles": 62944,
+              "inkCalls": 1,
+              "triangles": 42631594,
+              "calls": 12468
+            }
+          },
+          {
+            "frame": 8,
+            "baseline": {
+              "milliseconds": 8,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 43812775,
+              "calls": 12819
+            },
+            "chunked": {
+              "milliseconds": 11.300000000745058,
+              "selectionMilliseconds": 0.4000000022351742,
+              "indexChanged": true,
+              "inkTriangles": 62818,
+              "inkCalls": 1,
+              "triangles": 44399074,
+              "calls": 12998
+            }
+          },
+          {
+            "frame": 9,
+            "baseline": {
+              "milliseconds": 5.899999998509884,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 45576277,
+              "calls": 13356
+            },
+            "chunked": {
+              "milliseconds": 8.699999999254942,
+              "selectionMilliseconds": 0.5,
+              "indexChanged": true,
+              "inkTriangles": 60062,
+              "inkCalls": 1,
+              "triangles": 44982617,
+              "calls": 13177
+            }
+          },
+          {
+            "frame": 10,
+            "baseline": {
+              "milliseconds": 3.300000000745058,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 46144977,
+              "calls": 13524
+            },
+            "chunked": {
+              "milliseconds": 12.699999999254942,
+              "selectionMilliseconds": 0.3999999985098839,
+              "indexChanged": true,
+              "inkTriangles": 59776,
+              "inkCalls": 1,
+              "triangles": 46703274,
+              "calls": 13692
+            }
+          },
+          {
+            "frame": 11,
+            "baseline": {
+              "milliseconds": 6.399999998509884,
+              "selectionMilliseconds": 0,
+              "indexChanged": false,
+              "inkTriangles": 70179,
+              "inkCalls": 1,
+              "triangles": 47827639,
+              "calls": 14028
+            },
+            "chunked": {
+              "milliseconds": 6,
+              "selectionMilliseconds": 1.300000000745058,
+              "indexChanged": true,
+              "inkTriangles": 57144,
+              "inkCalls": 1,
+              "triangles": 47258939,
+              "calls": 13860
+            }
+          }
+        ],
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "authoritiesUnchanged": true,
+        "cpuPaintUnchanged": true,
+        "version1130Verified": false
+      }
+    ],
+    "errors": []
+  },
+  "lifecycle": {
+    "status": "passed",
+    "errors": [],
+    "quality": {
+      "cpuGridUnchanged": true,
+      "trianglePositionsUnchanged": true,
+      "authoritiesRetained": true,
+      "finalAtlas": 2048,
+      "textureCount": 81
+    },
+    "failureRollback": {
+      "rejected": true,
+      "levelRetained": true,
+      "paintRetained": true,
+      "displayRetained": true
+    },
+    "cancellation": {
+      "id": "inkblot",
+      "nativeGroups": 1
+    },
+    "switches": [
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 232,
+          "textures": 28
+        }
+      },
+      {
+        "id": "brinewater",
+        "native": true,
+        "nativeGroups": 1,
+        "memory": {
+          "geometries": 417,
+          "textures": 174
+        }
+      },
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 232,
+          "textures": 28
+        }
+      }
+    ],
+    "fingerprint": {
+      "same": true,
+      "changed": false,
+      "missing": false
+    },
+    "mobile": [
+      {
+        "id": "scorch",
+        "viewport": [
+          844,
+          390
+        ],
+        "touch": true,
+        "actors": 8,
+        "native": true,
+        "atlas": 2048,
+        "textureCount": 81,
+        "cpuFrame": {
+          "p50": 20.299999997019768,
+          "p95": 71.30000000074506,
+          "max": 1893.800000000745
+        },
+        "gpuDrainRenderMs": 8.300000000745058,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "local": {
+          "grounded": true,
+          "spawn": false
+        },
+        "mobileHardwareMeasured": false
+      },
+      {
+        "id": "brinewater",
+        "viewport": [
+          844,
+          390
+        ],
+        "touch": true,
+        "actors": 8,
+        "native": true,
+        "atlas": 2048,
+        "textureCount": 170,
+        "cpuFrame": {
+          "p50": 17.599999997764826,
+          "p95": 51.600000001490116,
+          "max": 474.8999999985099
+        },
+        "gpuDrainRenderMs": 8.600000001490116,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "local": {
+          "grounded": true,
+          "spawn": false
+        },
+        "mobileHardwareMeasured": false
+      }
+    ]
+  },
+  "publicSelection": {
+    "status": "passed",
+    "stages": [
+      {
+        "id": "scorch",
+        "sourceMode": "browser-direct",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "geometry": {
+          "vertices": 319113,
+          "triangles": 279299,
+          "collisionTriangles": 133737,
+          "bvhNodes": 32767,
+          "paintFaces": 45171
+        },
+        "actors": 8,
+        "bots": 7,
+        "coverage": [
+          0.0030249112186947888,
+          0.008650609411543839
+        ],
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 5807.300000000745,
+          "recipe": "inkwave-browser-source-v2"
+        },
+        "gameMetrics": {
+          "loadMilliseconds": 51751.5,
+          "navMilliseconds": 391.30000000074506,
+          "shaderWarmMilliseconds": 75.60000000149012,
+          "vertices": 319113,
+          "triangles": 279299,
+          "faces": 45171,
+          "gridBytes": 1469898,
+          "atlas": 2048,
+          "ppm": 4,
+          "textureCount": 81,
+          "quality": "low",
+          "version1130Verified": false
+        },
+        "render": {
+          "frame": 1196,
+          "calls": 190,
+          "triangles": 614889,
+          "points": 0,
+          "lines": 0
+        },
+        "version1130Verified": false
+      }
+    ],
+    "errors": [],
+    "downloads": 1,
+    "menu": [
+      "タイドウォーター広場",
+      "ケルプライン埠頭",
+      "ハリヤードマリーナ",
+      "ユノハナ大渓谷",
+      "ヤガラ市場",
+      "海女美術大学",
+      "ザトウマーケット",
+      "クサヤ温泉"
+    ],
+    "cache": {
+      "id": "scorch",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    }
+  },
+  "online": {
+    "status": "passed",
+    "results": [
+      {
+        "id": "scorch",
+        "mode": "turf",
+        "identities": [
+          {
+            "stage": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+            "fingerprint": "native-stage-v1:scorch:8c2694e65af819616370c7361f549b157141dbbc002f8d0437fe00b945017f27:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 1469898
+          },
+          {
+            "stage": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+            "fingerprint": "native-stage-v1:scorch:8c2694e65af819616370c7361f549b157141dbbc002f8d0437fe00b945017f27:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 1469898
+          }
+        ],
+        "evidence": [
+          {
+            "gridSha256": "48f875f3369371261b3e1c6f57c758085d91a7168f2745d84a07a3e2015e8954",
+            "coverage": [
+              0.0052030129842543125,
+              0.008415666720561932
+            ],
+            "stats": {
+              "in": 187,
+              "out": 187,
+              "extrap": 45,
+              "snaps": 1
+            },
+            "diagnostic": {
+              "time": 9.383333333333379,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                801,
+                1204
+              ],
+              "applied": [
+                [
+                  "p_medwcz2",
+                  308
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_2apoqhb",
+                  "tr": 54.00409654995498,
+                  "lastTs": 54.362,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    54.327,
+                    558,
+                    54.362,
+                    561
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "gridSha256": "48f875f3369371261b3e1c6f57c758085d91a7168f2745d84a07a3e2015e8954",
+            "coverage": [
+              0.0052030129842543125,
+              0.008415666720561932
+            ],
+            "stats": {
+              "in": 187,
+              "out": 187,
+              "extrap": 329,
+              "snaps": 7
+            },
+            "diagnostic": {
+              "time": 9.383333333333379,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                801,
+                1204
+              ],
+              "applied": [
+                [
+                  "p_medwcz2",
+                  308
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_medwcz2",
+                  "tr": 87.11260257963394,
+                  "lastTs": 87.753,
+                  "lastEventSeq": 309,
+                  "lastPaintSeq": 308,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    87.718,
+                    558,
+                    87.753,
+                    561
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 195,
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject",
+        "packets": 410
+      },
+      {
+        "id": "hagglefish",
+        "mode": "turf",
+        "identities": [
+          {
+            "stage": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+            "fingerprint": "native-stage-v1:hagglefish:9f99d21d3e5cea41019ffe090f68c075f4229c12ba5acebc9c430bd6b74abaa4:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 1401174
+          },
+          {
+            "stage": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+            "fingerprint": "native-stage-v1:hagglefish:9f99d21d3e5cea41019ffe090f68c075f4229c12ba5acebc9c430bd6b74abaa4:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 1401174
+          }
+        ],
+        "evidence": [
+          {
+            "gridSha256": "4ed0b938bfba9c00f483b74ddf60ab9e0247124a241b3aea2ea3265e3f67e236",
+            "coverage": [
+              0.011021908318663072,
+              0.004154046886617108
+            ],
+            "stats": {
+              "in": 189,
+              "out": 189,
+              "extrap": 144,
+              "snaps": 1
+            },
+            "diagnostic": {
+              "time": 18.800000000000214,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                1907,
+                703
+              ],
+              "applied": [
+                [
+                  "p_wq1q2ew",
+                  684
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_s28o5av",
+                  "tr": 70.83210239896792,
+                  "lastTs": 71.199,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    71.156,
+                    1124,
+                    71.199,
+                    1127
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "gridSha256": "4ed0b938bfba9c00f483b74ddf60ab9e0247124a241b3aea2ea3265e3f67e236",
+            "coverage": [
+              0.011021908318663072,
+              0.004154046886617108
+            ],
+            "stats": {
+              "in": 189,
+              "out": 189,
+              "extrap": 966,
+              "snaps": 7
+            },
+            "diagnostic": {
+              "time": 18.800000000000214,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                1907,
+                703
+              ],
+              "applied": [
+                [
+                  "p_wq1q2ew",
+                  684
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_wq1q2ew",
+                  "tr": 104.22235487726918,
+                  "lastTs": 104.59,
+                  "lastEventSeq": 685,
+                  "lastPaintSeq": 684,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    104.547,
+                    1124,
+                    104.59,
+                    1127
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 200,
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject",
+        "packets": 822
+      },
+      {
+        "id": "inkblot",
+        "mode": "turf",
+        "identities": [
+          {
+            "stage": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+            "fingerprint": "native-stage-v1:inkblot:60b33ec22bc99918f81abbf6614541ebfbe694d50c8196180c5332034873e3d6:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 1911554
+          },
+          {
+            "stage": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+            "fingerprint": "native-stage-v1:inkblot:60b33ec22bc99918f81abbf6614541ebfbe694d50c8196180c5332034873e3d6:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 1911554
+          }
+        ],
+        "evidence": [
+          {
+            "gridSha256": "4afcae1ae6802e933f9d17a6d22f10136095b9addd29d7f9fe2dba69f274ed27",
+            "coverage": [
+              0.0026495350035553927,
+              0.001973225334386733
+            ],
+            "stats": {
+              "in": 194,
+              "out": 194,
+              "extrap": 133,
+              "snaps": 1
+            },
+            "diagnostic": {
+              "time": 28.46666666666633,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                1533,
+                1126
+              ],
+              "applied": [
+                [
+                  "p_jdr5uvz",
+                  1019
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_cmf5231",
+                  "tr": 85.37994726401224,
+                  "lastTs": 85.531,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    85.496,
+                    1704,
+                    85.531,
+                    1707
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "gridSha256": "4afcae1ae6802e933f9d17a6d22f10136095b9addd29d7f9fe2dba69f274ed27",
+            "coverage": [
+              0.0026495350035553927,
+              0.001973225334386733
+            ],
+            "stats": {
+              "in": 194,
+              "out": 194,
+              "extrap": 889,
+              "snaps": 7
+            },
+            "diagnostic": {
+              "time": 28.46666666666633,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                1533,
+                1126
+              ],
+              "applied": [
+                [
+                  "p_jdr5uvz",
+                  1019
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_jdr5uvz",
+                  "tr": 118.7632545282914,
+                  "lastTs": 118.922,
+                  "lastEventSeq": 1020,
+                  "lastPaintSeq": 1019,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    118.886,
+                    1704,
+                    118.922,
+                    1707
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 215,
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject",
+        "packets": 1242
+      },
+      {
+        "id": "mako",
+        "mode": "turf",
+        "identities": [
+          {
+            "stage": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+            "fingerprint": "native-stage-v1:mako:f430b7b5cc2433d0d7d9bf5546ea618e6fbde6a8e972a5a0757110a45747addd:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 3190694
+          },
+          {
+            "stage": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+            "fingerprint": "native-stage-v1:mako:f430b7b5cc2433d0d7d9bf5546ea618e6fbde6a8e972a5a0757110a45747addd:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 3190694
+          }
+        ],
+        "evidence": [
+          {
+            "gridSha256": "a293c3335cf263c2b53851212d1b7cb878479ee851f0a07f3c8f470fd867283c",
+            "coverage": [
+              0.0054481147201381344,
+              0.0051715896598417965
+            ],
+            "stats": {
+              "in": 192,
+              "out": 192,
+              "extrap": 121,
+              "snaps": 1
+            },
+            "diagnostic": {
+              "time": 38.04999999999912,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                1420,
+                1336
+              ],
+              "applied": [
+                [
+                  "p_ccy7wid",
+                  1331
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_jlwqr2t",
+                  "tr": 104.03104947021372,
+                  "lastTs": 104.37,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    104.305,
+                    2278,
+                    104.37,
+                    2281
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "gridSha256": "a293c3335cf263c2b53851212d1b7cb878479ee851f0a07f3c8f470fd867283c",
+            "coverage": [
+              0.0054481147201381344,
+              0.0051715896598417965
+            ],
+            "stats": {
+              "in": 192,
+              "out": 192,
+              "extrap": 847,
+              "snaps": 7
+            },
+            "diagnostic": {
+              "time": 38.04999999999912,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                1420,
+                1336
+              ],
+              "applied": [
+                [
+                  "p_ccy7wid",
+                  1331
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_ccy7wid",
+                  "tr": 137.42748885428657,
+                  "lastTs": 137.761,
+                  "lastEventSeq": 1339,
+                  "lastPaintSeq": 1331,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    137.696,
+                    2278,
+                    137.761,
+                    2281
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 210,
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject",
+        "packets": 1662
+      },
+      {
+        "id": "brinewater",
+        "mode": "turf",
+        "identities": [
+          {
+            "stage": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+            "fingerprint": "native-stage-v1:brinewater:903271e860859fbd32ab3b81eec9ddbde8c790ac4d8025e674c36af395bcba0d:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 4927794
+          },
+          {
+            "stage": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+            "fingerprint": "native-stage-v1:brinewater:903271e860859fbd32ab3b81eec9ddbde8c790ac4d8025e674c36af395bcba0d:bb4e8f6e9018d66709e3708a26a65cac6248fce87c4d1d92d506fb2f29b3e046",
+            "actors": 8,
+            "rule": "turf",
+            "native": true,
+            "gridBytes": 4927794
+          }
+        ],
+        "evidence": [
+          {
+            "gridSha256": "e552df6f71a3848ddd990f7e663ea3ad9bdaff61083643f861ed69de9ed15bdf",
+            "coverage": [
+              0.0030320456670675663,
+              0.0025341062531460128
+            ],
+            "stats": {
+              "in": 187,
+              "out": 187,
+              "extrap": 132,
+              "snaps": 1
+            },
+            "diagnostic": {
+              "time": 47.383333333331926,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                890,
+                935
+              ],
+              "applied": [
+                [
+                  "p_5e04z5z",
+                  1566
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_wmoipvj",
+                  "tr": 120.01712925241782,
+                  "lastTs": 120.29,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    120.256,
+                    2838,
+                    120.29,
+                    2841
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "gridSha256": "e552df6f71a3848ddd990f7e663ea3ad9bdaff61083643f861ed69de9ed15bdf",
+            "coverage": [
+              0.0030320456670675663,
+              0.0025341062531460128
+            ],
+            "stats": {
+              "in": 187,
+              "out": 187,
+              "extrap": 938,
+              "snaps": 7
+            },
+            "diagnostic": {
+              "time": 47.383333333331926,
+              "out": 0,
+              "growing": 0,
+              "counts": [
+                890,
+                935
+              ],
+              "applied": [
+                [
+                  "p_5e04z5z",
+                  1566
+                ]
+              ],
+              "peers": [
+                {
+                  "id": "p_5e04z5z",
+                  "tr": 153.40392740994955,
+                  "lastTs": 153.681,
+                  "lastEventSeq": 1567,
+                  "lastPaintSeq": 1566,
+                  "queued": 0,
+                  "paintQueued": 0,
+                  "physicsPoints": [
+                    153.646,
+                    2838,
+                    153.681,
+                    2841
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 195,
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject",
+        "packets": 2068
+      }
+    ],
+    "errors": [],
+    "packets": 2068
+  },
+  "retail1130VersionPlacementMasksVerified": false,
+  "mobileHardwareMeasured": false,
+  "ciBrowserVerification": {
+    "flow": {
+      "status": "passed",
+      "contentHash": "8558f01e7c3437632e3caee4b8c036ab433de391ce6726573ca46f468c59ce61",
+      "summary": {
+        "scenarios": 11,
+        "overridePixelEquality": true,
+        "nativeBuffers": 38,
+        "disposedViews": 4,
+        "components": [
+          "shell",
+          "glint",
+          "ribbon"
+        ]
+      },
+      "toolchain": {
+        "node": "v24.19.0",
+        "chromium": "154.0.8037.57"
+      }
+    },
+    "wall": {
+      "status": "passed",
+      "contentHash": "8558f01e7c3437632e3caee4b8c036ab433de391ce6726573ca46f468c59ce61",
+      "summary": {
+        "scenarios": 10,
+        "overridePixelEquality": true,
+        "nativeBuffers": 99,
+        "indexedReadyViews": 4,
+        "unsafeOverridesDetected": true,
+        "affineCounterexampleDetected": true
+      },
+      "toolchain": {
+        "node": "v24.19.0",
+        "chromium": "154.0.8037.57"
+      }
+    },
+    "catalog": {
+      "status": "passed",
+      "contentHash": "8558f01e7c3437632e3caee4b8c036ab433de391ce6726573ca46f468c59ce61",
+      "summary": [
+        {
+          "name": "carry-walk-fire-return",
+          "frames": 240,
+          "renderPairs": 12,
+          "visibleFrames": 240,
+          "heldHandSamples": 480,
+          "maximumHeldGrip": 1.336885555457667e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "ordinary-aimed-jump",
+          "frames": 180,
+          "renderPairs": 13,
+          "visibleFrames": 180,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 1.0011263372118013e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "hard-landing-recovery",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 240,
+          "maximumHeldGrip": 1.1247859265068955e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "swim-turn-brake",
+          "frames": 180,
+          "renderPairs": 11,
+          "visibleFrames": 180,
+          "heldHandSamples": 0,
+          "maximumHeldGrip": null,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "wall-surge-ready-crest",
+          "frames": 180,
+          "renderPairs": 18,
+          "visibleFrames": 180,
+          "heldHandSamples": 0,
+          "maximumHeldGrip": null,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "form-both-directions-interrupt",
+          "frames": 180,
+          "renderPairs": 15,
+          "visibleFrames": 180,
+          "heldHandSamples": 215,
+          "maximumHeldGrip": 0.00026214027035415313,
+          "nativeIKMaximum": 0.02357113330130628
+        },
+        {
+          "name": "dualies-roll-lock-interrupt",
+          "frames": 240,
+          "renderPairs": 22,
+          "visibleFrames": 237,
+          "heldHandSamples": 473,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 1.1102230246251565e-16
+        },
+        {
+          "name": "roller-horizontal-push",
+          "frames": 180,
+          "renderPairs": 13,
+          "visibleFrames": 180,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0.007960126221951162,
+          "nativeIKMaximum": 0.007960107751186829
+        },
+        {
+          "name": "roller-vertical-land",
+          "frames": 180,
+          "renderPairs": 11,
+          "visibleFrames": 180,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0.0009910201388404203,
+          "nativeIKMaximum": 0.000990389779273182
+        },
+        {
+          "name": "superjump-short",
+          "frames": 300,
+          "renderPairs": 17,
+          "visibleFrames": 300,
+          "heldHandSamples": 169,
+          "maximumHeldGrip": 9.639819490876587e-16,
+          "nativeIKMaximum": 0.042690138574407954
+        },
+        {
+          "name": "superjump-vertical",
+          "frames": 300,
+          "renderPairs": 17,
+          "visibleFrames": 300,
+          "heldHandSamples": 169,
+          "maximumHeldGrip": 1.0931786361305639e-15,
+          "nativeIKMaximum": 0.042690138574407954
+        },
+        {
+          "name": "superjump-long",
+          "frames": 300,
+          "renderPairs": 17,
+          "visibleFrames": 300,
+          "heldHandSamples": 169,
+          "maximumHeldGrip": 1.432833034877994e-14,
+          "nativeIKMaximum": 0.042690138574407954
+        },
+        {
+          "name": "squidroll-finish",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 159,
+          "maximumHeldGrip": 2.0263946393602667e-15,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "squidroll-interrupt",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 215,
+          "maximumHeldGrip": 1.8610729195778454e-15,
+          "nativeIKMaximum": 0.0055306207341888625
+        },
+        {
+          "name": "hit-spawn-reset",
+          "frames": 300,
+          "renderPairs": 16,
+          "visibleFrames": 300,
+          "heldHandSamples": 600,
+          "maximumHeldGrip": 1.807312143953211e-15,
+          "nativeIKMaximum": 0.0005808087005549911
+        },
+        {
+          "name": "quiet-idle-held-sub",
+          "frames": 180,
+          "renderPairs": 13,
+          "visibleFrames": 180,
+          "heldHandSamples": 269,
+          "maximumHeldGrip": 0.00012419806870635796,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "victory-fade-lobby-0",
+          "frames": 360,
+          "renderPairs": 17,
+          "visibleFrames": 360,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 0.32777411049038707
+        },
+        {
+          "name": "victory-fade-lobby-1",
+          "frames": 360,
+          "renderPairs": 17,
+          "visibleFrames": 360,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 0.08820733736826292
+        },
+        {
+          "name": "victory-fade-lobby-2",
+          "frames": 360,
+          "renderPairs": 17,
+          "visibleFrames": 360,
+          "heldHandSamples": 360,
+          "maximumHeldGrip": 0,
+          "nativeIKMaximum": 0.32777411049038707
+        },
+        {
+          "name": "native-slam-phases",
+          "frames": 180,
+          "renderPairs": 16,
+          "visibleFrames": 180,
+          "heldHandSamples": 222,
+          "maximumHeldGrip": 1.7903959895615594e-15,
+          "nativeIKMaximum": 3.885780586188048e-16
+        },
+        {
+          "name": "native-storm-deploy",
+          "frames": 120,
+          "renderPairs": 10,
+          "visibleFrames": 120,
+          "heldHandSamples": 198,
+          "maximumHeldGrip": 9.683779997520993e-05,
+          "nativeIKMaximum": 0.24746867781360238
+        },
+        {
+          "name": "gaze-face-actions",
+          "frames": 180,
+          "renderPairs": 11,
+          "visibleFrames": 180,
+          "heldHandSamples": 299,
+          "maximumHeldGrip": 0.00012776549936363517,
+          "nativeIKMaximum": 0.023022762174154998
+        },
+        {
+          "name": "lifecycle-interruptions",
+          "frames": 180,
+          "renderPairs": 18,
+          "visibleFrames": 155,
+          "heldHandSamples": 289,
+          "maximumHeldGrip": 1.0163999321966297e-15,
+          "nativeIKMaximum": 0.054668593170556945
+        },
+        {
+          "name": "nullable-preview",
+          "frames": 90,
+          "renderPairs": 9,
+          "visibleFrames": 90,
+          "heldHandSamples": 180,
+          "maximumHeldGrip": 7.4165058627159095e-16,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "cadence-30",
+          "frames": 60,
+          "renderPairs": 3,
+          "visibleFrames": 60,
+          "heldHandSamples": 120,
+          "maximumHeldGrip": 8.326961800248723e-16,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "cadence-60",
+          "frames": 60,
+          "renderPairs": 3,
+          "visibleFrames": 60,
+          "heldHandSamples": 120,
+          "maximumHeldGrip": 8.326961800248723e-16,
+          "nativeIKMaximum": 0
+        },
+        {
+          "name": "cadence-120",
+          "frames": 60,
+          "renderPairs": 3,
+          "visibleFrames": 60,
+          "heldHandSamples": 120,
+          "maximumHeldGrip": 8.326961800248723e-16,
+          "nativeIKMaximum": 0
+        }
+      ]
+    },
+    "paintMask": {
+      "status": "passed",
+      "engine": "chromium",
+      "sourceSha": "61c05a2bc5f29a4db360d778e8677f30d81e9d01",
+      "cases": 124,
+      "hashQueries": 1512,
+      "cells": 15295,
+      "negativeUnsupported": 4261,
+      "body": {
+        "cases": 99,
+        "cpuCells": 40016,
+        "gpuCells": 40007,
+        "cpuOnly": 0,
+        "gpuOnly": 0,
+        "ties": 9
+      }
+    }
+  },
+  "mainSync": {
+    "main": "ac1159b76b42a10ff02fe58add74a8285cc08d32",
+    "merge": "c22cdacdd3b995c7f786ddd9bdc009367687844b",
+    "sourceTestsPassed": 23,
+    "sourceTestsSkipped": 0,
+    "mainRegressionTestsPassed": 20,
+    "packagingTestsPassed": 9,
+    "budget": {
+      "status": "passed",
+      "revision": "f96dec49e3a157e8dc546223e032f3ed70554cebfbf3f59974eb5605896dd137",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2854847,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5743681,
+      "workerBytes": 70515,
+      "declaredBytes": 10361711,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "publicSelection": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "scorch",
+          "sourceMode": "browser-direct",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "geometry": {
+            "vertices": 319113,
+            "triangles": 279299,
+            "collisionTriangles": 133737,
+            "bvhNodes": 32767,
+            "paintFaces": 45171
+          },
+          "actors": 8,
+          "bots": 7,
+          "coverage": [
+            0.003989558479467145,
+            0.011657582381748539
+          ],
+          "spawn": {
+            "grounded": true,
+            "active": false
+          },
+          "sourceMetrics": {
+            "cached": false,
+            "conversionMilliseconds": 6000.60000000149,
+            "recipe": "inkwave-browser-source-v2"
+          },
+          "gameMetrics": {
+            "loadMilliseconds": 68371.40000000596,
+            "navMilliseconds": 273,
+            "shaderWarmMilliseconds": 73,
+            "vertices": 319113,
+            "triangles": 279299,
+            "faces": 45171,
+            "gridBytes": 1469898,
+            "atlas": 2048,
+            "ppm": 4,
+            "textureCount": 81,
+            "quality": "low",
+            "version1130Verified": false
+          },
+          "render": {
+            "frame": 1295,
+            "calls": 180,
+            "triangles": 593369,
+            "points": 0,
+            "lines": 0
+          },
+          "version1130Verified": false
+        }
+      ],
+      "errors": [],
+      "downloads": 1,
+      "menu": [
+        "タイドウォーター広場",
+        "ケルプライン埠頭",
+        "ハリヤードマリーナ",
+        "ユノハナ大渓谷",
+        "ヤガラ市場",
+        "海女美術大学",
+        "ザトウマーケット",
+        "クサヤ温泉"
+      ],
+      "cache": {
+        "id": "scorch",
+        "derivedCacheHit": true,
+        "objDownloads": 0
+      }
+    },
+    "engineBytesUnchanged": true
+  }
+}
