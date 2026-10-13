@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import {chromium} from 'playwright';
+const site=path.resolve(process.argv[2]||'_site-native-urchin'),out=path.resolve(process.argv[3]||'.browser-evidence/urchin-orientation');fs.mkdirSync(out,{recursive:true});
+const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.html':'text/html','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.webp':'image/webp'};
+const server=http.createServer((req,res)=>{try{const name=new URL(req.url,'http://local').pathname,file=path.resolve(site,'.'+(name==='/'?'/index.html':decodeURIComponent(name)));if(!file.startsWith(site+'/')||!fs.statSync(file).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),result={status:'running',errors:[],rates:[]};
+try{
+ const page=await browser.newPage({viewport:{width:960,height:640}});page.on('pageerror',e=>result.errors.push(e.message));await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
+ await page.goto('http://127.0.0.1:'+server.address().port+'/?map=urchin',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
+ for(const hz of [30,60,120]){
+  const proof=await page.evaluate(async hz=>{
+   const G=NG,g=G.game;g.debug.freeze();g.menus.wipe.cancel();g._skipRender=true;await g.startMatch({mapId:'urchin',mode:'turf',duration:180,difficulty:'normal'});
+   const dx=G.level.spawnPads[1].x-G.level.spawnPads[0].x,dz=G.level.spawnPads[1].z-G.level.spawnPads[0].z,span=Math.hypot(dx,dz),forward=[dx/span,dz/span];
+   const check=(a,label)=>{const sign=a.team===0?1:-1,expected=Math.atan2(forward[0]*sign,forward[1]*sign);if(Math.abs(Math.atan2(Math.sin(a.yaw-expected),Math.cos(a.yaw-expected)))>1e-8)throw Error(label+' native body faces wrong axis');if(label==='opening'&&a.bot&&Math.abs(Math.atan2(Math.sin(a.bot.aimYaw-expected),Math.cos(a.bot.aimYaw-expected)))>1e-8)throw Error(label+' native bot faces wrong axis');const s=a.s3?.squidSpawn,target=s?.target||s?.to,pad=G.level.spawnPads[a.team];if(!target||((target.x-pad.x)*forward[0]+(target.z-pad.z)*forward[1])*sign<=0)throw Error(label+' native launch does not go toward opponent');return {team:a.team,slot:a.slot,bot:!!a.bot,yaw:a.yaw,phase:s.phase};};
+   const initial=G.actors.map(a=>check(a,'opening'));
+   for(let i=0;i<330;i++)g._frame(1/60);if(G.match.state!=='playing')throw Error('real match did not start');
+   const local=G.local;g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/hz);g.input.mouse.left=false;for(let i=0;i<Math.ceil(hz*1.5);i++)g._frame(1/hz);if(local.s3?.squidSpawn||!local.grounded)throw Error('human opening did not land');
+   g.debug.freezeBots();const opponent=G.actors.find(a=>a.team===1);local.splat(opponent);local.respawn();const resetLocal=check(local,'human reset');g.input.mouse.left=false;g._frame(1/hz);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/hz);g.input.mouse.left=false;
+   opponent.splat(local);opponent.respawn();const resetOpponent=check(opponent,'opposing bot reset');
+   for(let i=0;i<Math.ceil(hz*1.5);i++)g._frame(1/hz);if(local.s3?.squidSpawn||opponent.s3?.squidSpawn||!local.grounded||!opponent.grounded)throw Error('actual source reset launch did not land');
+   g._skipRender=false;g.minimap.ensure();G.renderer.render(G.scene,G.camera);return {hz,forward,initial,resetLocal,resetOpponent,actors:G.actors.length,humanGrounded:local.grounded,opposingBotGrounded:opponent.grounded,native:true};
+  },hz);result.rates.push(proof);assert.equal(proof.actors,8);console.log(JSON.stringify({hz,initialActors:proof.initial.length,humanGrounded:proof.humanGrounded,opposingBotGrounded:proof.opposingBotGrounded}));
+ }
+ await page.screenshot({path:path.join(out,'urchin-oriented-game.png'),timeout:60000});
+ result.legacy=await page.evaluate(async()=>{const G=NG,g=G.game;g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:'tidewater',mode:'turf',difficulty:'normal'});return {id:G.level.layout.id,native:!!G.level.native,actors:G.actors.map(a=>({team:a.team,yaw:a.yaw,bot:!!a.bot,botAimYaw:a.bot?.aimYaw}))};});assert.equal(result.legacy.native,false);for(const a of result.legacy.actors){assert.equal(a.yaw,a.team?Math.PI:0);if(a.bot)assert.equal(a.botAimYaw,a.yaw);}
+ assert.equal(result.errors.length,0,JSON.stringify(result.errors));result.status='passed';
+}catch(error){result.status='failed';result.error=error.stack;throw error;}finally{fs.writeFileSync(path.join(out,'orientation.json'),JSON.stringify(result,null,2));await browser.close();await new Promise(r=>server.close(r));}
