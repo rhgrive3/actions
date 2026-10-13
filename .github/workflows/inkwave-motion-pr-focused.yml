@@ -1,0 +1,25 @@
+name: INKWAVE focused motion integrity
+on:
+  push:
+    branches:
+      - fix/motion-five-fidelity-20261012
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  motion-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check exact roller grip, clearance, and action regressions
+        run: |
+          node --experimental-vm-modules --test \
+            patches/splatoon3/tests/roller-detail-motion.test.mjs \
+            patches/splatoon3/tests/roller.test.mjs \
+            patches/splatoon3/tests/issue-263-roller-contact-phase.test.mjs \
+            patches/splatoon3/tests/weapon-models-all.test.mjs \
+            patches/splatoon3/tests/motion-five-regression.test.mjs
