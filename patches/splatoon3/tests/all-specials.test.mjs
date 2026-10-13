@@ -9,9 +9,11 @@ function tickWorld(f,frames){for(let i=0;i<frames;i++){f.G.time+=1/60;f.G.projec
 function eventFeed(f,name){const rows=[];f.on(name,e=>rows.push(e));return rows;}
 
 test('missing special inventory is source versioned and Tenta launch uses native rounds and a finite bus record',async()=>{
- const f=await setup(),a=f.make(),victim=f.make();equip(a,'tentaMissiles');victim.team=1;victim.pos.set(0,0,5);f.G.actors=[a,victim];
+ const f=await setup(),a=f.make(),victim=f.make();equip(a,'tentaMissiles');a._resolve=()=>{};victim.team=1;victim.pos.set(0,0,5);f.G.actors=[a,victim];
  const rows=eventFeed(f,'all:special'),before=f.G.projectiles.list.length;a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
- assert.equal(a.stats.specials,1);assert.equal(a.specialActive,null);assert.equal(f.G.projectiles.list.length-before,10);
+ assert.equal(a.stats.specials,1);assert.equal(a.specialActive?.phase,'volley');assert.equal(f.G.projectiles.list.length-before,1,'first rocket, not instantaneous volley');
+ a.intent.fire=false;for(let i=0;i<40&&a.specialActive;i++)a._updateSpecial(1/60);
+ assert.equal(a.specialActive,null);assert.equal(f.G.projectiles.list.length-before,10);
  assert.ok(rows.some(e=>e.action==='launch'&&e.count===10));
  for(const e of rows){assert.ok([e.pos,...(e.target?[e.target]:[])].flat().every(Number.isFinite));assert.ok(Number.isInteger(e.seed)&&e.seed>=0&&e.seed<=0xffffffff);}
  assert.deepEqual(Object.keys(f.ALL_SPECIALS).sort(),['booyahBomb','crabTank','inkjet','killerWail','krakenRoyale','reefslider','splattercolorScreen','superChump','tentaMissiles','tripleInkstrike','ultraStamp','waveBreaker','zipcaster'].sort());
@@ -19,8 +21,10 @@ test('missing special inventory is source versioned and Tenta launch uses native
 });
 
 test('Tenta Missiles rise, dive onto the locked ground coordinate, and apply impact damage',async()=>{
- const f=await setup(),a=f.make(),victim=f.make();equip(a,'tentaMissiles');victim.team=1;victim.pos.set(0,0,8);f.G.actors=[a,victim];
- a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');
+ const f=await setup(),a=f.make(),victim=f.make();equip(a,'tentaMissiles');a._resolve=()=>{};victim.team=1;victim.pos.set(0,0,8);f.G.actors=[a,victim];
+ a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);a.intent.fire=false;
+ for(let i=0;i<40&&a.specialActive;i++)a._updateSpecial(1/60);
+ const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');
  assert.equal(missiles.length,10);assert.ok(missiles.every(p=>p.s3TentaTarget instanceof f.THREE.Vector3));
  const target=missiles[0].s3TentaTarget.clone();tickWorld(f,120);
  assert.ok(missiles[0].s3TentaDescending);assert.ok(missiles[0].pos.distanceTo(target)<3.5);
@@ -313,7 +317,7 @@ test('Inkjet power snapshot survives the actual projectile packet and ghost with
 test('every catalogue-launched special projectile keeps a wire identity accepted by ghost reconstruction',async()=>{
  const f=await setup();
  for(const id of ['tentaMissiles','inkjet','booyahBomb','ultraStamp','crabTank']){
-  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];a._startSpecial();a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];if(id==='tentaMissiles'){const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors.push(target);}a._startSpecial();a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
   for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
   const p=f.G.projectiles.list.find(x=>x.s3AllSpecial===id);assert.ok(p,id+' emitted');
   const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));assert.equal(packet[4],id);
@@ -344,7 +348,7 @@ test('Super Chump activation power scales decoy paint and blast reach but never 
 test('Tenta Missiles retain the source paint-power curve in their launch and remote descriptor',async()=>{
  const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
  for(const ap of [0,10,57]){
-  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'tentaMissiles');f.G.actors=[a];a._resolve=()=>{};
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'tentaMissiles');const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors=[a,target];a._resolve=()=>{};
   a._startSpecial();a.s3.loadout=emptyLoadout();a.s3RefreshGear();a.intent.sub=true;a._updateSpecial(1/60);
   const p=f.G.projectiles.list.find(x=>x.s3AllSpecial==='tentaMissiles'),radius=gearCurve(ap,3.15,3.465,3.78);assert.ok(p);assert.equal(p.s3AllSpecialPaintRadius,radius);assert.equal(p.s3SpecialWeapon.paintRadius,Math.min(3.74,radius));assert.equal(p.s3SpecialWeapon.directDamage,150);
   const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1))),remote=f.make();remote.remote=true;remote.nid=7;
