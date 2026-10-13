@@ -4075,3 +4075,10 @@ These are INKWAVE online consistency fixes, not a retail Splatoon 3 timing measu
 - #1321 密集負荷の限定診断: native 161発の遅延burstは欠落113→0・live48→28だが、総CPU中央値425→799ms、追加FIFO待ちは合成owner clockで最大183ms。最後の試行は16.67ms超の連続処理frameが2→11となり、負荷無害・実機FPS改善とは扱わない。Sprinkler置換はlive48→7となったが、生成/破棄費用も記録した。詳細・再現用診断は `reports/network-replication/bomb-authority-budget-2026-10-13.md`。browserでのstall/実時間遅延は未確認。
 
 - #1321 重複処理削減: native bombの隣接Euler更新を1回のsetにまとめ、native Sprinklerの該当候補が無いstepでは一時Vector生成を避けた。600frameの全状態・順序・life判定を保持し、独立4536回転/630接触比較と実minified33+14caseで確認。161発burstのVector clone38182→2279、Quaternion更新71484→35742。実時間stall改善は未証明で、追加待ちとmain採用holdを維持する。
+
+
+## 2026-10-13: #1368 native producer test identity correction
+
+The old mixed-sub producer/lifecycle coverage claim is withdrawn: directly replacing the fixture weapon's sub did not reset the native runner's cached Suction spec. Wire labels could say Curling/Autobomb/Sprinkler while owner physics still resolved Suction. The correction resets the real runner and checks live/release/birth/resolved/wire/receiver subtype, exact ink debit and each intended native lifecycle; a no-reset negative must fail. Autobomb/Sprinkler use verified downward throws so the fixture actually reaches search/deployment before out-of-floor retirement or replacement. This is a test/report correction, with no production or retail coefficient change.
+
+The preceding density/duplicate-work counts retain their historical inputs and do not become corrected kit-specific performance evidence. The ordinary synthetic-floor scope, consecutive-stall and admission-wait limitations remain. Separate full-installer victim-local damage, Bubbler and recipient-life evidence is unaffected. Final bound verification is recorded in `reports/network-replication/bomb-authority-budget-2026-10-13.md`; browser and retail comparisons remain distinct.

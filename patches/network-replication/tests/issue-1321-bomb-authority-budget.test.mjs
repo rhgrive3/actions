@@ -95,7 +95,7 @@ test('eight-actor reservations stay within total/owner ceilings including host-o
 // Legal producer trace: native Actor -> WeaponRunner -> Projectiles -> NetMatch
 // recording. Only actor locomotion/rendering is constrained; cost, recovery,
 // throw cadence, ballistic gravity, landing fuse and packet encoding are native.
-async function nativeBombTrace(gear, sub = 'bomb') {
+async function nativeBombTrace(gear, sub = 'bomb', { resetRunner = true } = {}) {
   const { fixture: sourceFixture } = await import('../../splatoon3/tests/source-fixture.mjs');
   let seconds=1000;
   const f=await sourceFixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmPerformance:{now:()=>seconds*1000}});
@@ -104,26 +104,93 @@ async function nativeBombTrace(gear, sub = 'bomb') {
   f.G.level=new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
   f.G.physics=new f.Physics(f.G.level);
   const a=f.make('shooter'); Object.assign(a,{nid:37,owner:'p5',remote:false});
-  a.weapon={...a.weapon,sub}; a.pos.set(0,12,0); a.aimPitch=.9; a.aimYaw=0; a.aimDir.set(0,Math.sin(.9),Math.cos(.9));
+  a.weapon={...a.weapon,sub};
+  // A live weapon change resets the runner's cached sub. Merely changing the
+  // fixture field can serialize one id while simulating the previous kit.
+  if (resetRunner) a.weaponRunner.reset();
+  assert.equal(a.weaponRunner.s3Sub?.id,sub,'producer runner sub must match the requested kit');
+  // Preserve the elevated Splat/Suction/Curling lane. True Autobombs otherwise
+  // fly beyond this floor; repeated Sprinklers replace their airborne predecessor.
+  // Aim those two down so the named ground lifecycle is actually exercised.
+  const pitch=['autobomb','sprinkler'].includes(sub)?-1.05:.9;
+  a.pos.set(0,12,0); a.aimPitch=pitch; a.aimYaw=0; a.aimDir.set(0,Math.sin(pitch),Math.cos(pitch));
   a.s3.loadout=f.emptyLoadout(); for(const piece of a.s3.loadout){piece.main=gear;piece.subs.fill(gear);} a.s3RefreshGear();
   const session={myId:'p5',isHost:true,hostId:'p5',_members:new Map([['p5','P5']]),tr:{broadcast(){},sendTo(){}}};
   const sender=new f.NetMatch(session,{id:'native-bomb-producer',map:'map',difficulty:'normal'});
   f.G.netm=sender; sender.byNid.set(a.nid,a); sender._setupActor(a);
-  let peak=0,minInk=100;
+  let peak=0,minInk=100,frameDebit=null;
+  const births=[],modes=new Set(),explosions=[],retirements=[];
+  const recBomb=sender.recBomb;
+  sender.recBomb=function(b,...args){
+    assert.equal(a.weapon.sub,sub,'live weapon identity');
+    assert.equal(a.weaponRunner.s3Sub?.id,sub,'cached runner identity');
+    assert.equal(a.weaponRunner.s3Release?.id,sub,'release identity');
+    assert.equal(b.s3Sub?.id,sub,'birth identity before native recording');
+    assert.equal(b.s3Resolved?.spec?.id,sub,'resolved native physics identity');
+    assert.equal(b.s3Resolved?.spec?.mode,{bomb:'generic',suction:'stick',curling:'roll',autobomb:'chase',sprinkler:'sprinkler'}[sub]);
+    assert.ok(frameDebit,'birth must come from the real WeaponRunner update');
+    assert.equal(b.s3Resolved.inkCost,frameDebit.cost,'resolved cost belongs to this kit and gear');
+    const before=this.out.length,result=recBomb.call(this,b,...args);
+    const rows=this.out.slice(before).filter(e=>e[1]==='b');assert.equal(rows.length,1);
+    const e=rows[0];assert.equal(e[3],'bomb');assert.equal(e[11],sub==='bomb'?'':sub,'wire subtype');
+    assert.deepEqual(Array.from(e.slice(7,10)),[b.vel.x,b.vel.y,b.vel.z].map(v=>Math.round(v*100)/100),'wire keeps native launch velocity');
+    assert.ok([b.vel.x,b.vel.y,b.vel.z,b.s3Charge].every(Number.isFinite));
+    assert.equal(b.s3FuseTotal,b.s3Resolved.fuse,'native fuse descriptor belongs to the resolved kit');
+    if(['bomb','suction','curling'].includes(sub))assert.ok(Number.isFinite(b.s3FuseTotal)&&b.s3FuseTotal>0);
+    if(sub==='curling'){
+      assert.ok(b.s3Charge>0&&b.s3Charge<1,'held input produces a real partial Curling charge');
+      assert.equal(b.fuse,b.s3Resolved.fuse,'Curling fuse starts at release');
+      assert.ok(b.vel.y>0&&b.vel.y<30,'Curling uses its own slower native high-pitch launch');
+    }else assert.equal(b.fuse,-1,'contact-owned fuse is not armed at release');
+    births.push({sub:b.s3Sub.id,resolved:b.s3Resolved.spec.id,cost:b.s3Resolved.inkCost,wire:e[11]});
+    return result;
+  };
+  const update=a.weaponRunner.update;
+  a.weaponRunner.update=function(...args){
+    const selected=f.SUB[sub],cost=(selected.inkCost??selected.inkCostFallback)*(a.s3.modifiers.inkSaverSub??1);
+    assert.ok(Number.isFinite(cost)&&cost>0);
+    const before=a.ink,count=births.length;frameDebit={cost};
+    try{const result=update.apply(this,args);if(births.length>count){assert.equal(births.length,count+1);assert.equal(a.ink,before-cost,'actual native ink debit');}return result;}
+    finally{frameDebit=null;}
+  };
+  const retire=f.G.projectiles._releaseBomb;
+  f.G.projectiles._releaseBomb=function(b,...args){modes.add(b.s3Mode);retirements.push({mode:b.s3Mode,age:b.age,fuse:b.fuse,pos:b.pos.toArray()});return retire.call(this,b,...args);};
+  const explode=f.G.projectiles._explodeBomb;
+  f.G.projectiles._explodeBomb=function(b,...args){explosions.push(b.s3Resolved?.spec?.id);return explode.call(this,b,...args);};
   try {
     for(let i=0;i<3600;i++){
       seconds=1000+(i+1)/60;
       a.intent.sub=i%30<6; a.intent.squid=i%30>8;
       f.tick(a); f.G.projectiles.update(1/60);
+      for(const b of f.G.projectiles.bombs)modes.add(b.s3Mode);
       peak=Math.max(peak,f.G.projectiles.bombs.length); minInk=Math.min(minInk,a.ink);
     }
     const events=JSON.parse(JSON.stringify(sender.out.filter(e=>e[1]==='b')));
     assert.ok(minInk>=0,'no resource cheats or negative ink');
     assert.ok(events.length>12,'the legal delayed batch must exceed the eight-actor ordinary share');
-    assert.ok(peak<=4,'the native slow-airborne live occupancy remains below even an eight-bot host share');
-    assert.ok(events.every(e=>e[3]==='bomb'&&e[5]>12&&e[8]>60),'exercise elevated, high-pitch slow retirement');
-    return {events,peak};
+    assert.ok(peak<=4,'the native live occupancy remains below even an eight-bot host share');
+    assert.equal(births.length,events.length,'every recorded birth passed identity and debit checks');
+    assert.ok(events.every(e=>e[3]==='bomb'&&e[5]>12),'elevated native release for every kit');
+    if(sub==='bomb')assert.ok(events.every(e=>e[8]>60),'Splat high-pitch slow retirement');
+    if(['autobomb','sprinkler'].includes(sub))assert.ok(events.every(e=>e[8]===f.SUB_SPECIAL_FIDELITY.bomb.spawnSpeedYWorldMin),'native downward clamp gives the device a real floor contact');
+    if(sub==='suction')assert.ok(modes.has('stuck'),'native Suction reaches attached phase');
+    if(sub==='curling')assert.ok(modes.has('rolling'),'native Curling reaches rolling phase');
+    const phaseEvidence=JSON.stringify({modes:[...modes],retirements:retirements.slice(0,2)});
+    if(sub==='autobomb')assert.ok(modes.has('chasing'),'native Autobomb reaches its search/chase phase: '+phaseEvidence);
+    if(sub==='sprinkler')assert.ok(modes.has('sprinkling'),'native Sprinkler reaches deployed phase: '+phaseEvidence);
+    else assert.ok(explosions.length>0&&explosions.every(id=>id===sub),'the intended native kit actually explodes');
+    return {events,peak,births,modes:[...modes]};
   } finally {sender.dispose();f.G.projectiles.clear();}
+}
+
+test('native producer rejects the original stale-runner setup before recording a false kit trace',async()=>{
+  await assert.rejects(nativeBombTrace('inkSaverSub','curling',{resetRunner:false}),/producer runner sub must match the requested kit/);
+});
+
+function assertGhostSub(b,sub){
+  assert.equal(b.kind,'bomb');assert.equal(b.ghost,true);
+  assert.equal(b.s3GhostResolved?.spec?.id||'bomb',sub,'receiver decodes the recorded kit subtype');
+  assert.ok(!b.s3Resolved,'replica subtype does not grant owner authority');
 }
 
 test('delayed legal native producer bursts wait in the bounded FIFO and replay every bomb once',async()=>{
@@ -135,7 +202,7 @@ test('delayed legal native producer bursts wait in the bounded FIFO and replay e
       const a=f.makeActor({nid,owner,remote:true,roller:false}); nm.match.actors.push(a); nm.byNid.set(nid,a); nm._setupActor(a);
     }
     let born=0; const create=f.projectiles.ghostBomb;
-    f.projectiles.ghostBomb=function(...args){const b=create.apply(this,args);if(b)born++;return b;};
+    f.projectiles.ghostBomb=function(...args){const b=create.apply(this,args);if(b){assertGhostSub(b,'bomb');born++;}return b;};
     const seen=[];attacker.character._netTrig=name=>seen.push(name);
     try {
       const lastSeq=trace.events.at(-1).at(-1),events=[...trace.events,[1060,'tr',37,'jump',null,3600,lastSeq+1]];
@@ -222,6 +289,8 @@ test('invalid Storm, nonfinite bomb and foreign owner never hold the FIFO behind
 test('native deployed Sprinkler replacement cannot pin an owner FIFO under a legal delayed trace',async()=>{
   const trace=await nativeBombTrace('inkSaverSub','sprinkler'),w=await world(),{f,nm,attacker:a}=w;
   a.weapon={...a.weapon,sub:'sprinkler'};
+  let born=0;const create=f.projectiles.ghostBomb;
+  f.projectiles.ghostBomb=function(...args){const b=create.apply(this,args);if(b){assertGhostSub(b,'sprinkler');born++;}return b;};
   try{
     assert.equal(trace.peak,1,'native owner retains only the newest Sprinkler');
     f.clock.set(1060.2);
@@ -230,6 +299,7 @@ test('native deployed Sprinkler replacement cannot pin an owner FIFO under a leg
     for(let frame=0;frame<30;frame++){nm._playEvents();f.projectiles._updateBombs(1/60);}
     assert.equal(p.events.length,0,'legal Sprinkler replacements must not wait for owner death');
     assert.equal(p._lastEventSeq,trace.events.at(-1).at(-1));
+    assert.equal(born,trace.events.length,'every intended Sprinkler subtype was decoded once');
     assert.equal(f.projectiles.bombs.filter(b=>b.owner===a).length,1,'receiver matches the native one-Sprinkler lifecycle');
   }finally{nm.dispose();}
 });
@@ -277,7 +347,7 @@ test('native Suction, Curling and Autobomb lifecycles replay under the seven-act
     nm.s.hostId='p5';
     const ordinary=ghostBombActorAllowance(a,'p5',nm.match.actors)-REMOTE_GHOST_STORM_RESERVE;
     assert.equal(ordinary,4);assert.ok(trace.peak<=ordinary,sub+' live legal occupancy');
-    let born=0;const create=f.projectiles.ghostBomb;f.projectiles.ghostBomb=function(...args){const b=create.apply(this,args);if(b)born++;return b;};
+    let born=0;const create=f.projectiles.ghostBomb;f.projectiles.ghostBomb=function(...args){const b=create.apply(this,args);if(b){assertGhostSub(b,sub);born++;}return b;};
     try{
       f.clock.set(1060.2);nm.onMessage('p5',{k:'t',ts:1060,r:2,u:3600,l:{37:0},a:[f.packActor(a,{f:1})],e:trace.events});
       const p=nm._peer('p5');Object.assign(p,{tr:1060,sim:3600,lastTs:1060});
@@ -295,13 +365,13 @@ test('Sprinkler replacement retires only the authenticated same-actor replica',a
     const replaced=f.projectiles.ghostBomb(a,'bomb',...args);
     const other=f.projectiles.ghostBomb(fillers[0],'bomb',...args);
     const ordinary=f.projectiles.ghostBomb(a,'bomb',100,100,0,0,0,0);
-    f.projectiles.throwBomb(victim);const local=f.projectiles.bombs.at(-1);assert.equal(local.ghost,undefined);
+    f.projectiles.throwBomb(victim);const local=f.projectiles.bombs.at(-1);assert.equal(local.ghost,undefined);assert.equal(local.s3Resolved?.spec?.id,'sprinkler','the surviving local device is a real Sprinkler');
     const event=trace.events[0],ts=event[0],tick=event.at(-2),seq=event.at(-1);
     const deliver=(from)=>{f.clock.set(ts+.2);nm.onMessage(from,{k:'t',ts,r:2,u:tick,e:[JSON.parse(JSON.stringify(event))]});const p=nm._peer(from);Object.assign(p,{tr:ts,sim:tick});nm._playEvents();};
     deliver('p4');assert.ok(f.projectiles.bombs.includes(replaced),'foreign sender cannot retire the device');
     deliver('p5');assert.equal(f.projectiles.bombs.includes(replaced),false);
     for(const kept of [other,ordinary,local])assert.ok(f.projectiles.bombs.includes(kept),'unrelated native object survives');
-    const next=f.projectiles.bombs.find(b=>b!==ordinary&&b.owner===a);assert.ok(next);
+    const next=f.projectiles.bombs.find(b=>b!==ordinary&&b.owner===a);assert.ok(next);assertGhostSub(next,'sprinkler');
     const duplicate=Object.assign([...event],{_netTick:tick,_netSeq:seq});nm._play('p5',duplicate);
     assert.ok(f.projectiles.bombs.includes(next),'stale sequence cannot retire the new device');
   }finally{nm.dispose();f.projectiles.clear();}
