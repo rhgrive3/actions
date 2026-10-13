@@ -22,3 +22,4 @@ export {nativeDropClearance,nativeDropTransition,nativeDropTravelForm,updateNati
 export {nativeSurgeTransition,updateNativeSurge} from './native-surge.mjs';
 
 export {nativeRankedBotGoalReachable} from './native-ranked-goals.mjs';
+export {nativeJumpAttachTransition,updateNativeJumpAttach} from './native-jump-attach.mjs';
