@@ -1,0 +1,200 @@
+{
+  "status": "draft-final-qualification-pending",
+  "foundation": "90040586c3728ca20d69ed43014528e0f68cbbdf",
+  "runtimeCommit": "2626e98dda4d0957c7d0410c8d226fe0f69a8416",
+  "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+  "sourceBuffersUnchanged": [
+    {
+      "file": "bvh.bin",
+      "bytes": 1048544,
+      "sha256": "a14a8722856b54a92d386fd8a146349b2aed9b70a2e75f59a6a377f24608a8e1"
+    },
+    {
+      "file": "collision.bin",
+      "bytes": 6354216,
+      "sha256": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225"
+    },
+    {
+      "file": "flags.bin",
+      "bytes": 706024,
+      "sha256": "730b26cbfe13019cf7004fb53c31e4495b637ddfe09cc8c7bc6cec7254bfd003"
+    },
+    {
+      "file": "indices.bin",
+      "bytes": 9293340,
+      "sha256": "6c06c6c243873a694dc97c2d243de501336256362f209583804f7909ad490ca4"
+    },
+    {
+      "file": "mask.bin",
+      "bytes": 2384253,
+      "sha256": "e3e63939bce772ff63d81ba9bffe233572a61d3aca146b3c3ed95883a64eb4ad"
+    },
+    {
+      "file": "normals.bin",
+      "bytes": 2118072,
+      "sha256": "e06f5bf1caae78d95982132bb3e95a7457c0348a415e775b9a9d6a38ce45e3cf"
+    },
+    {
+      "file": "objects.bin",
+      "bytes": 706024,
+      "sha256": "eb5282df2a325b4740c403d46372c4679cc92317413f1d421fcb34d6836a53d7"
+    },
+    {
+      "file": "order.bin",
+      "bytes": 706024,
+      "sha256": "4477be14f155b93a41f1c3e09a1e560012aa24783c759c11362f978bf566be7a"
+    },
+    {
+      "file": "triangleFace.bin",
+      "bytes": 706024,
+      "sha256": "46ea9a16bcfa26a467a6309d15a38c1848052951f18d866a4c9ca30f06ee9db0"
+    },
+    {
+      "file": "vertices.bin",
+      "bytes": 32775328,
+      "sha256": "158163465d73766bb2183dbb34a08cdd9eb909fe70a93f2760426bbde311770f"
+    }
+  ],
+  "unchangedTextureCount": 216,
+  "productionCPUBanksAt335": [
+    {
+      "team": 0,
+      "hz": 60,
+      "seconds": 48,
+      "replans": 1,
+      "transientPathMisses": 0,
+      "waypoints": 104,
+      "sourceClimbs": 2,
+      "sourceDrops": 3,
+      "start": [
+        -12,
+        15,
+        -70
+      ],
+      "goal": [
+        20,
+        9,
+        40.5
+      ],
+      "end": [
+        21.042880868317617,
+        9,
+        39.45711912999121
+      ],
+      "sourceGoalTriangle": 172810,
+      "minimumY": 3,
+      "distanceToGoal": 1.4748562691100418,
+      "alive": true,
+      "grounded": true,
+      "sourceFootSupported": true,
+      "continuousActualCapsuleSamples": 2880,
+      "continuousActualCapsuleFailures": 0,
+      "approachSourceProbes": {
+        "count": 168,
+        "minY": 4.912222174538507,
+        "maxY": 8.08969439676073,
+        "bounds": [
+          {
+            "from": "21,3,19.5",
+            "paintMinY": 3.7345582752935713,
+            "wallProbeMaxY": 8.643700408935548,
+            "sourceRoleIntervalSamples": 126,
+            "requiredPaintSamples": 112
+          }
+        ]
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gearAP": 0,
+      "initialPaint": "unpainted",
+      "actualBrainActorWeaponProjectilesPaintClock": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "seconds": 74.46666666666667,
+      "replans": 2,
+      "transientPathMisses": 0,
+      "waypoints": 123,
+      "sourceClimbs": 1,
+      "sourceDrops": 4,
+      "start": [
+        12,
+        15,
+        70
+      ],
+      "goal": [
+        -20,
+        9,
+        -39.5
+      ],
+      "end": [
+        -21.004294836246984,
+        9,
+        -38.49570516376725
+      ],
+      "sourceGoalTriangle": 172794,
+      "minimumY": 2.950000047683716,
+      "distanceToGoal": 1.4202873780316883,
+      "alive": true,
+      "grounded": true,
+      "sourceFootSupported": true,
+      "continuousActualCapsuleSamples": 4468,
+      "continuousActualCapsuleFailures": 0,
+      "approachSourceProbes": null,
+      "weapon": "shooter / Shooter_Normal_00",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gearAP": 0,
+      "initialPaint": "unpainted",
+      "actualBrainActorWeaponProjectilesPaintClock": true
+    }
+  ],
+  "priorArtifacts": {
+    "335Private": {
+      "contentHash": "10b6b82ebe13ae2203924234902d1db352b1699f566782d7ea0114e4cdb4495d",
+      "gameBankCases": 6,
+      "continuousActualCapsules": 24280,
+      "ownedSQSourceProbes": 504,
+      "keyboardPrefixCases": 3,
+      "keyboardContinuousCapsules": 1664
+    },
+    "2feePrivate": {
+      "contentHash": "51411584941de9e4001ffc8878d5a4a05acad52411ad4a1ee3f5e2d14bd6815f",
+      "gameBankCases": 6
+    }
+  },
+  "preservedFailures": [
+    "first firing stance minimum-input settle",
+    "original-pad team0 deadline120s at lowerY3",
+    "lowestY3.275 ownership request",
+    "held-B failed launch and distant same-height support steering"
+  ],
+  "conditions": {
+    "weapon": "Shooter_Normal_00",
+    "gearAP": 0,
+    "originalPads": [
+      [
+        -12,
+        15,
+        -70
+      ],
+      [
+        12,
+        15,
+        70
+      ]
+    ],
+    "gameSTEP": 0.016666666666666666,
+    "sourceCoordinatesUnscaled": true,
+    "version1130Verified": false,
+    "hardwareOrRetailPhysics": false,
+    "allLoadouts": false
+  },
+  "pending": [
+    "current final source guards",
+    "current compiled Game6 and keyboard",
+    "current9+9 packaging and budget binding",
+    "named Hump peer review",
+    "Ready and selfpromotion"
+  ]
+}

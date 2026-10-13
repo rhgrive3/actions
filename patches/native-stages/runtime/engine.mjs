@@ -25,6 +25,6 @@ export {nativeSurgeTransition,updateNativeSurge} from './native-surge.mjs';
 export {nativeRankedBotGoalReachable} from './native-ranked-goals.mjs';
 export {nativeRankedTowerApproach,updateNativeTowerBoarding,nativeTowerRider} from './native-ranked-boarding.mjs';
 export {nativeJumpAttachTransition,updateNativeJumpAttach} from './native-jump-attach.mjs';
-export {nativeOrdinaryJumpInput} from './native-jump-input.mjs';
-
+export {nativeCombatWet,nativeCombatPathGoal} from './native-combat-support.mjs';
+export {nativeOrdinaryJumpInput,nativeOrdinaryJumpCommitted} from './native-jump-input.mjs';
 export {nativeWallApproachTransition,nativeApproachJumpTransition,updateNativeApproach,nativeApproachEdgeAllowed} from './native-approach.mjs';
