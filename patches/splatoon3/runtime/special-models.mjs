@@ -324,29 +324,76 @@ function booyahBall(THREE) {
 }
 
 // ---- Ultra Stamp ---------------------------------------------------------------
-// S2 Model render, S2 promo render, S3 screenshot: three stacked ribbed rubber
-// discs in team ink with a relief emblem on the face, a translucent box on a
-// blue base on the back, a blue coiled hose and a long yellow handle with a
-// bellows boot and a red end cap. Built with the face toward -Y (stamping
-// down) and the handle along +Z.
+// S2 Model render (black stamp), S2 promo render, S3 screenshot: a thick head
+// of three stacked bulging rubber rings (faceted, team ink) over a face plate
+// with a raised rim and a relief squid emblem; on the back a grey plate, a
+// dark blue chamfered base and a translucent jerry-can housing (team ink shows
+// through it) with a top ridge, slots and a screw cap; red and blue nipples on
+// the base side, a corrugated blue hose looping out over the rim to a fitting
+// beside the handle root; a yellow ribbed boot, a white label band, a tapered
+// octagonal yellow handle and a red rod-end tip. Built with the face toward -Y
+// (stamping down) and the handle along +Z rising 25 deg from the back edge
+// (the handle line is unchanged so the device grip/hands stay on it).
+registerFinish('stampNavy', 0x22309a, { roughness: 0.3, metalness: 0.2 });
+registerFinish('stampFrost', 0xf4f6f8, { roughness: 0.12, metalness: 0, transparent: true, opacity: 0.68, depthWrite: false });
+registerInkFinish('inkShade', { roughness: 0.4, metalness: 0.05, shade: 0.8 });
+// Corrugated tube: a Catmull-Rom tube whose rings swell and shrink along it.
+function ribTube(THREE, pts, r, seg, ribs, depth = 0.18, radial = 8) {
+  const curve = new THREE.CatmullRomCurve3(pts.map(q => new THREE.Vector3(...q)), false, 'catmullrom', 0.5);
+  const g = new THREE.TubeGeometry(curve, seg, r, radial, false), p = g.attributes.position, c = new THREE.Vector3(), v = new THREE.Vector3();
+  for (let i = 0; i <= seg; i++) {
+    curve.getPointAt(i / seg, c);
+    const f = 1 + depth * Math.cos(i / seg * ribs * TAU);
+    for (let j = 0; j <= radial; j++) { const k = i * (radial + 1) + j; v.fromBufferAttribute(p, k).sub(c).multiplyScalar(f).add(c); p.setXYZ(k, v.x, v.y, v.z); }
+  }
+  g.computeVertexNormals();
+  return g;
+}
+const flat = (g) => { const n = g.index ? g.toNonIndexed() : g; n.computeVertexNormals(); return n; };
 function ultraStamp(THREE) {
   const K = kit();
-  const prof = [];
-  for (let i = 0; i <= 3; i++) { const y = -0.12 + i * 0.08; prof.push([0.42, y], [0.45, y + 0.02], [0.45, y + 0.05], [0.42, y + 0.07]); }
-  K.add('body', 'ink', latheY(THREE, [[0, -0.13], [0.4, -0.13], ...prof, [0.38, 0.2], [0, 0.2]], 40));
-  K.add('body', 'inkDark', ...[[0, 0, 0.18, 0.06], [-0.12, 0.1, 0.07, 0.05], [0.13, -0.08, 0.06, 0.05]].map(([x, z, r, h]) => cylY(THREE, r, -0.15, -0.13, 18).translate(x, 0, z)));
-  K.add('body', 'blue', softBox(THREE, 0.5, 0.07, 0.44, 0.2).translate(0, 0.235, 0));
-  K.add('body', 'clear', softBox(THREE, 0.5, 0.26, 0.44, 0.3).translate(0, 0.39, -0.02));
-  K.add('body', 'white', softBox(THREE, 0.46, 0.22, 0.4, 0.3).translate(0, 0.38, -0.02));
-  K.add('body', 'blue', tube(THREE, [[0.15, 0.25, 0.12], [0.24, 0.4, 0.06], [0.2, 0.45, -0.1], [0.14, 0.3, -0.16]], 0.02, 24, 8));
-  K.add('body', 'red', cylY(THREE, 0.02, 0.24, 0.3, 10).translate(0.12, 0, -0.14));
-  const bellows = [];
-  for (let i = 0; i < 6; i++) bellows.push(cylZ(THREE, 0.06 - i * 0.004, 0.42 + i * 0.03, 0.44 + i * 0.03, 14));
-  // Handle leaves the back edge rising ~25 deg (S2 promo render, S3 screenshot).
+  // Head: face plate chamfer, three bulging rings, back edge.
+  const prof = [[0, -0.215], [0.385, -0.215], [0.41, -0.205]];
+  for (const c of [-0.135, 0, 0.135]) for (const t of [-90, -62, -32, 0, 32, 62, 90]) {
+    const a = t * Math.PI / 180;
+    prof.push([0.405 + 0.068 * Math.pow(Math.cos(a), 0.3), c + 0.066 * Math.sin(a)]);
+  }
+  prof.push([0.39, 0.207], [0, 0.207]);
+  // Flat-shaded 16-gon: the S2/S3 renders show faceted rings.
+  K.add('body', 'ink', flat(latheY(THREE, prof, 16)));
+  // Face: dark field, raised rim, relief squid emblem with eye holes.
+  K.add('body', 'inkShade', new THREE.CircleGeometry(0.372, 16).rotateX(Math.PI / 2).translate(0, -0.2165, 0));
+  const squid = new THREE.Shape([[0, 0.27], [0.215, 0.07], [0.125, 0.055], [0.135, -0.1], [0.105, -0.25], [0.05, -0.13], [0, -0.26], [-0.05, -0.13], [-0.105, -0.25], [-0.135, -0.1], [-0.125, 0.055], [-0.215, 0.07]].map(([x, y]) => new THREE.Vector2(x, y)));
+  for (const s of [-1, 1]) { const h = new THREE.Path(); h.absarc(s * 0.058, -0.035, 0.036, 0, TAU, false); squid.holes.push(h); }
+  const relief = new THREE.ExtrudeGeometry(squid, { depth: 0.013, bevelEnabled: false, curveSegments: 8 }).rotateX(Math.PI / 2).translate(0, -0.2155, 0);
+  K.add('body', 'inkGloss', latheY(THREE, [[0.372, -0.215], [0.372, -0.229], [0.408, -0.229], [0.408, -0.215]], 16), relief,
+    ...[0, 1, 2, 3].map(k => box(THREE, 0.06, 0.013, 0.022, 0, -0.222, 0.325).rotateY(k * Math.PI / 2 + Math.PI / 4)));
+  // Back: grey plate, navy base, translucent housing over an ink core.
+  K.add('body', 'mech', new THREE.CircleGeometry(0.37, 18).rotateX(-Math.PI / 2).translate(0, 0.208, 0),
+    ring(THREE, 0.3, 0.006, 0.21, 18));
+  K.add('body', 'stampNavy', softBox(THREE, 0.62, 0.09, 0.56, 0.14).translate(0, 0.25, 0.0));
+  K.add('body', 'ink', softBox(THREE, 0.48, 0.24, 0.42, 0.35).translate(0, 0.44, -0.05));
+  K.add('body', 'stampFrost', softBox(THREE, 0.56, 0.31, 0.5, 0.35).translate(0, 0.445, -0.05));
+  // Top ridge with a notch, a slotted rib along the back edge, a screw cap.
+  K.add('body', 'white', softBox(THREE, 0.1, 0.035, 0.46, 0.3).translate(0, 0.603, -0.05), softBox(THREE, 0.54, 0.035, 0.07, 0.3).translate(0, 0.597, -0.25),
+    cylZ(THREE, 0.052, 0.19, 0.225, 14).translate(-0.15, 0.43, 0), cylZ(THREE, 0.044, 0.225, 0.24, 14).translate(-0.15, 0.43, 0));
+  K.add('body', 'hole', ...[-0.2, -0.12, 0.12, 0.2].map(x => box(THREE, 0.055, 0.004, 0.026, x, 0.616, -0.25)), box(THREE, 0.03, 0.004, 0.46, 0, 0.6215, -0.05));
+  // Nipples on the base side, corrugated hose to a fitting by the handle root.
+  K.add('body', 'red', cylX(THREE, 0.018, 0.29, 0.34, 10).translate(0, 0.272, -0.13), cylX(THREE, 0.024, 0.29, 0.305, 10).translate(0, 0.272, -0.13));
+  K.add('body', 'blue', cylX(THREE, 0.02, 0.29, 0.33, 10).translate(0, 0.252, 0.0),
+    ribTube(THREE, [[0.33, 0.252, 0.0], [0.41, 0.31, 0.05], [0.43, 0.42, 0.15], [0.35, 0.44, 0.27], [0.22, 0.36, 0.33], [0.155, 0.26, 0.315]], 0.021, 64, 24));
+  K.add('body', 'steel', cylY(THREE, 0.026, 0.205, 0.245, 6).translate(0.155, 0, 0.315));
+  // Handle (same line as before: the grip and hands sit on it).
   const lift = new THREE.Matrix4().makeTranslation(0, 0.12, 0).multiply(new THREE.Matrix4().makeRotationX(-0.44));
-  K.add('body', 'yellow', ...[cylZ(THREE, 0.032, 0.42, 1.25, 14, 0.026), ...bellows, cylZ(THREE, 0.062, 0.38, 0.44, 16)].map(g => g.applyMatrix4(lift)));
-  K.add('body', 'darkMetal', cylZ(THREE, 0.034, 0.62, 0.66, 14).applyMatrix4(lift));
-  K.add('body', 'red', sphere(THREE, 0.035, 0, 0, 1.27).applyMatrix4(lift), cylZ(THREE, 0.02, 1.22, 1.27, 10).applyMatrix4(lift));
+  const boot = [[0.074, 0.33], [0.074, 0.38]];
+  for (let i = 0; i < 9; i++) { const z = 0.38 + i * 0.027, r = 0.07 - i * 0.0022; boot.push([r - 0.012, z + 0.004], [r, z + 0.0135], [r - 0.012, z + 0.023]); }
+  boot.push([0.046, 0.625], [0, 0.625]);
+  K.add('body', 'yellow', ...[latheZ(THREE, boot, 16), flat(cylZ(THREE, 0.043, 0.62, 1.22, 8, 0.029))].map(g => g.applyMatrix4(lift)));
+  K.add('body', 'white', cylZ(THREE, 0.0445, 0.625, 0.685, 16).applyMatrix4(lift));
+  K.add('body', 'decalRed', cylZ(THREE, 0.0452, 0.633, 0.64, 16).applyMatrix4(lift));
+  K.add('body', 'decalBlue', cylZ(THREE, 0.0452, 0.67, 0.677, 16).applyMatrix4(lift));
+  K.add('body', 'red', ...[cylZ(THREE, 0.031, 1.215, 1.25, 10), cylZ(THREE, 0.016, 1.245, 1.262, 8),
+    new THREE.TorusGeometry(0.025, 0.012, 8, 16).rotateY(Math.PI / 2).translate(0, 0, 1.285)].map(g => g.applyMatrix4(lift)));
   return K.finish(THREE);
 }
 
@@ -446,27 +493,85 @@ function reefShark(THREE) {
 }
 
 // ---- Triple Inkstrike ----------------------------------------------------------
-// S3 Promotional 3D Render, model turntable, promo image: a team-ink case with
-// a grey lid hinged open, a red latch and missile slots; the thrown marker is
-// a round beacon (ink base, red dome with an eye); the strike is a twisting
-// ink column.
+// S3 Promotional 3D Render, model turntable (8 angles), promo image: a hollow
+// team-ink crate with a moulded top lip, ribbed and recessed side panels, a
+// front slot over a forward tray (an oval holder and a marker ball in it), a
+// red latch block with a lens at the front top, and a light grey metal lid
+// hinged at the back with a step tab; red-nosed missiles (eye, cheeks, olive
+// body, team-ink fins) lie inside. The lid is built open as in the render; the
+// promo image shows the crate worn on the back with the lid shut, which the
+// presentation does by turning the 'lid' group by INKSTRIKE_LID_OPEN. The
+// thrown marker is a red dome on a ribbed ink band with a lens, on a cream
+// suction cup; the strike is a twisting ink column.
+registerFinish('strikeLid', 0xbdb9ae, { roughness: 0.42, metalness: 0.35 });
+registerFinish('strikeOlive', 0xd8d03c, { roughness: 0.35, metalness: 0.05 });
+export const INKSTRIKE_LID_OPEN = 0.72;
+function strikeMissile(THREE, K, x0, y0, z0, spin) {
+  const at = (g) => g.rotateX(spin).translate(x0, y0, z0);
+  const alongX = (prof, seg) => latheY(THREE, prof, seg).rotateZ(-Math.PI / 2);
+  K.add('body', 'strikeOlive', at(cylX(THREE, 0.03, -0.08, 0.055, 14)));
+  K.add('body', 'steel', at(cylX(THREE, 0.0315, -0.088, -0.076, 14)));
+  K.add('body', 'red', at(alongX([[0.03, 0.05], [0.036, 0.07], [0.038, 0.11], [0.033, 0.145], [0.02, 0.168], [0, 0.175]], 14)),
+    ...[-1, 1].map(s => at(sphere(THREE, 0.012, 0.072, 0, s * 0.034, 1, 1, 1, 8, 6))));
+  K.add('body', 'white', at(new THREE.CircleGeometry(0.013, 12).rotateX(-Math.PI / 2).translate(0.118, 0.0385, 0)));
+  K.add('body', 'black', at(new THREE.CircleGeometry(0.0065, 10).rotateX(-Math.PI / 2).translate(0.121, 0.0390, 0)));
+  K.add('body', 'ink', at(alongX([[0.012, -0.145], [0.026, -0.11], [0.03, -0.08]], 12)),
+    ...[0, 1, 2, 3].map(k => at(box(THREE, 0.05, 0.004, 0.05, -0.12, 0, 0.032).rotateX(k * Math.PI / 2 + Math.PI / 4))));
+}
 function inkstrikeCase(THREE) {
-  const K = kit();
-  K.add('body', 'ink', softBox(THREE, 0.42, 0.2, 0.3, 0.12).translate(0, 0.1, 0), box(THREE, 0.46, 0.03, 0.34, 0, 0.015, 0));
-  K.add('body', 'inkDark', ...[0, 1, 2, 3].map(k => box(THREE, 0.06, 0.01, 0.22, -0.13 + k * 0.085, 0.205, 0)));
-  K.add('body', 'red', box(THREE, 0.1, 0.07, 0.02, 0.12, 0.13, 0.155));
-  K.pivot('lid', [0, 0.2, -0.15]);
-  // Lid swung open about the back hinge (Promotional 3D Render).
-  const hinge = new THREE.Matrix4().makeTranslation(0, 0.2, -0.15).multiply(new THREE.Matrix4().makeRotationX(-1.15)).multiply(new THREE.Matrix4().makeTranslation(0, -0.2, 0.15));
-  K.add('lid', 'grey', softBox(THREE, 0.43, 0.025, 0.31, 0.1).translate(0, 0.21, 0.005).applyMatrix4(hinge));
+  const K = kit(), sb = (w, h, d, r) => softBox(THREE, w, h, d, r, 4);
+  // Crate: hollow walls, base skirt, moulded top lip, dark interior floor.
+  K.add('body', 'ink', sb(0.42, 0.2, 0.026, 0.1).translate(0, 0.1, 0.147), sb(0.42, 0.2, 0.026, 0.1).translate(0, 0.1, -0.147),
+    ...[-1, 1].map(s => sb(0.026, 0.2, 0.32, 0.1).translate(s * 0.197, 0.1, 0)),
+    sb(0.43, 0.03, 0.33, 0.1).translate(0, 0.015, 0),
+    sb(0.436, 0.024, 0.03, 0.15).translate(0, 0.192, 0.152), sb(0.436, 0.024, 0.03, 0.15).translate(0, 0.192, -0.152),
+    ...[-1, 1].map(s => sb(0.03, 0.024, 0.334, 0.15).translate(s * 0.203, 0.192, 0)));
+  K.add('body', 'inkDark', box(THREE, 0.37, 0.01, 0.27, 0, 0.05, 0),
+    ...[-0.085, 0, 0.085].map(z => box(THREE, 0.025, 0.03, 0.05, 0.0, 0.065, z)),
+    // Front slot, side and back recesses.
+    box(THREE, 0.32, 0.055, 0.004, 0, 0.068, 0.1605),
+    ...[-1, 1].map(s => box(THREE, 0.004, 0.11, 0.18, s * 0.2105, 0.1, 0)),
+    box(THREE, 0.16, 0.11, 0.004, 0, 0.1, -0.1605), ...[-1, 1].map(s => box(THREE, 0.075, 0.09, 0.004, s * 0.135, 0.1, -0.1605)));
+  K.add('body', 'ink', ...[0, 1, 2, 3, 4].flatMap(i => [box(THREE, 0.16, 0.011, 0.008, 0, 0.06 + i * 0.02, -0.162),
+    ...[-1, 1].map(s => box(THREE, 0.008, 0.011, 0.18, s * 0.212, 0.06 + i * 0.02, 0))]));
+  K.add('body', 'label', ...[-1, 1].map(s => box(THREE, 0.004, 0.03, 0.09, s * 0.2125, 0.165, 0)));
+  // Forward tray: plate, rails, oval holder, a marker ball resting in it.
+  K.add('body', 'ink', box(THREE, 0.4, 0.024, 0.12, 0, 0.012, 0.215), ...[-1, 1].map(s => sb(0.03, 0.04, 0.12, 0.2).translate(s * 0.185, 0.03, 0.215)),
+    sb(0.4, 0.03, 0.022, 0.2).translate(0, 0.025, 0.268),
+    new THREE.TorusGeometry(0.05, 0.008, 6, 20).rotateX(Math.PI / 2).scale(1.4, 1, 1).translate(0.06, 0.025, 0.215));
+  K.add('body', 'inkDark', new THREE.CircleGeometry(0.05, 20).rotateX(-Math.PI / 2).scale(1.4, 1, 1).translate(0.06, 0.0245, 0.215));
+  K.add('body', 'red', new THREE.SphereGeometry(0.042, 14, 8, 0, TAU, 0, 1.0).translate(-0.1, 0.065, 0.212));
+  K.add('body', 'ink', cylY(THREE, 0.043, 0.05, 0.06, 14).translate(-0.1, 0, 0.212));
+  K.add('body', 'cream', new THREE.SphereGeometry(0.042, 14, 6, 0, TAU, Math.PI / 2, Math.PI / 2).translate(-0.1, 0.064, 0.212).scale(1, 1, 1));
+  // Red latch block with a lens over the front lip.
+  K.add('body', 'red', sb(0.085, 0.085, 0.03, 0.15).translate(0.12, 0.165, 0.166));
+  K.add('body', 'hole', new THREE.CircleGeometry(0.016, 14).translate(0.12, 0.15, 0.1815));
+  K.add('body', 'darkMetal', new THREE.TorusGeometry(0.018, 0.004, 6, 14).translate(0.12, 0.15, 0.181));
+  K.add('body', 'darkMetal', cylX(THREE, 0.011, -0.18, -0.12, 10).translate(0, 0.206, -0.168), cylX(THREE, 0.011, 0.12, 0.18, 10).translate(0, 0.206, -0.168));
+  // Missiles inside.
+  for (const [z, spin] of [[-0.085, 0.3], [0, -0.2], [0.085, 0.5]]) strikeMissile(THREE, K, 0, 0.095, z, spin);
+  // Harness straps under the crate (it rides on the back).
+  K.add('body', 'black', ...[-1, 1].map(s => box(THREE, 0.04, 0.01, 0.3, s * 0.11, -0.004, 0)));
+  // Lid: plate, step tab, inner grid panel; opened about the back hinge.
+  K.pivot('lid', [0, 0.206, -0.168]);
+  const hinge = new THREE.Matrix4().makeTranslation(0, 0.206, -0.168).multiply(new THREE.Matrix4().makeRotationX(-INKSTRIKE_LID_OPEN)).multiply(new THREE.Matrix4().makeTranslation(0, -0.206, 0.168));
+  const lid = (g) => g.applyMatrix4(hinge);
+  K.add('lid', 'strikeLid', lid(sb(0.44, 0.022, 0.345, 0.12).translate(0, 0.216, 0.0)), lid(sb(0.4, 0.012, 0.3, 0.2).translate(0, 0.231, -0.01)));
+  K.add('lid', 'darkMetal', lid(sb(0.1, 0.014, 0.035, 0.3).translate(0.04, 0.235, 0.15)),
+    lid(cylX(THREE, 0.012, -0.12, 0.12, 10).translate(0, 0.206, -0.168)));
+  K.add('lid', 'grey', ...[0, 1, 2].flatMap(i => [0, 1, 2, 3].map(j => lid(box(THREE, 0.036, 0.003, 0.026, -0.04 + j * 0.044, 0.2045, -0.04 + i * 0.036)))));
   return K.finish(THREE);
 }
 function inkstrikeBeacon(THREE) {
   const K = kit();
-  K.add('body', 'ink', latheY(THREE, [[0, 0], [0.16, 0], [0.17, 0.04], [0.15, 0.07], [0, 0.07]], 24));
-  K.add('body', 'red', new THREE.SphereGeometry(0.14, 22, 10, 0, TAU, 0, Math.PI / 2).translate(0, 0.07, 0));
-  K.add('body', 'cream', new THREE.CircleGeometry(0.05, 16).rotateX(-0.6).translate(0, 0.15, 0.09));
-  K.add('body', 'black', new THREE.CircleGeometry(0.022, 12).rotateX(-0.6).translate(0, 0.152, 0.092));
+  K.add('body', 'cream', latheY(THREE, [[0, 0], [0.17, 0], [0.165, 0.012], [0.09, 0.04], [0.11, 0.05], [0, 0.05]], 24));
+  const band = [[0.13, 0.04]];
+  for (let i = 0; i < 6; i++) band.push([0.142, 0.046 + i * 0.012], [0.135, 0.052 + i * 0.012]);
+  band.push([0.13, 0.12], [0, 0.12]);
+  K.add('body', 'ink', latheY(THREE, band, 24));
+  K.add('body', 'red', new THREE.SphereGeometry(0.135, 22, 10, 0, TAU, 0, Math.PI / 2).scale(1, 0.75, 1).translate(0, 0.118, 0));
+  K.add('body', 'hole', new THREE.CylinderGeometry(0.028, 0.028, 0.02, 6).rotateX(Math.PI / 2).translate(0, 0.082, 0.137));
+  K.add('body', 'darkMetal', new THREE.TorusGeometry(0.03, 0.006, 6, 6).translate(0, 0.082, 0.143));
   return K.finish(THREE);
 }
 function inkstrikeTornado(THREE) {
@@ -489,44 +594,115 @@ function inkstrikeTornado(THREE) {
 }
 
 // ---- Super Chump ---------------------------------------------------------------
-// S3 Model render, Promotional 3D Render, model turntable: an ink balloon with
-// coloured confetti dots, a white band and a cute face, drips at the neck, a
-// pink tie, a valve with a blue knob and a white suction-cup base. The
-// launcher is a clear globe on an ink yoke under an orange multi-barrel cap,
-// on a spring and a black base.
+// S3 Model render, Promotional 3D Render, model turntable (8 angles). Decoy:
+// a glossy ink balloon (widest just above the middle, flattened underneath)
+// with a ring of ink drips round its underside, confetti dots, a white
+// zip-tie band with a buckle, an embossed face (ringed eyes, bean mouth), a
+// pink tie at the neck, an ink bulb, a grey valve with a light-blue knurled
+// knob and a white suction cup with a lift tab. Launcher: a dark metal cone
+// base, a copper spring round a blue core, a team-ink U yoke whose arms end
+// in black rings and light-blue pivot caps holding a clear globe (inside: a
+// light-blue disc, a grey shaft, an ink washer and a dark nut), a black
+// rubber collar, a ring of dark ink barrels and an orange toothed cap with
+// light-blue holes. The globe is a 'globe' group pivoting on the yoke axis.
+registerFinish('chumpSky', 0x52aef2, { roughness: 0.35, metalness: 0.05 });
+registerFinish('chumpCopper', 0xb7835a, { roughness: 0.3, metalness: 0.7 });
+registerFinish('chumpCup', 0xeef0f6, { roughness: 0.2, metalness: 0, transparent: true, opacity: 0.92 });
+registerFinish('chumpTie', 0xf2f0fa, { roughness: 0.3, metalness: 0, transparent: true, opacity: 0.85 });
+registerInkFinish('inkDeep', { roughness: 0.35, metalness: 0.05, shade: 0.3 });
+const CHUMP_PROFILE = [[0.05, 0.36], [0.075, 0.42], [0.17, 0.47], [0.3, 0.52], [0.385, 0.6], [0.43, 0.7], [0.445, 0.82], [0.43, 0.95], [0.38, 1.06], [0.28, 1.15], [0.14, 1.2], [0, 1.215]];
 function chumpDecoy(THREE) {
   const K = kit();
-  K.add('body', 'inkGloss', sphere(THREE, 0.42, 0, 0.78, 0, 1, 0.92, 1, 28, 18));
-  K.add('body', 'inkGloss', latheY(THREE, [[0.04, 0.3], [0.08, 0.36], [0.2, 0.42], [0.3, 0.5]], 20));
-  K.add('body', 'white', ring(THREE, 0.425, 0.02, 0.86).scale(1, 1, 1), box(THREE, 0.1, 0.03, 0.02, 0.42, 0.86, 0.06));
-  const dots = [], cols = ['pink', 'yellow', 'teal', 'orange'];
-  for (let k = 0; k < 28; k++) {
-    const j = Math.sin(k * 12.9898) * 43758.5453, n = j - Math.floor(j), a = k * 2.399963, el = 0.3 + 1.1 * n;
-    const lat = -0.35 + 1.15 * n, nrm = new THREE.Vector3(Math.cos(lat) * Math.sin(a), Math.sin(lat), Math.cos(lat) * Math.cos(a));
-    const g = new THREE.CircleGeometry(0.03, 10).applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm));
-    dots.push([cols[k % 4], g.translate(nrm.x * 0.423, 0.78 + nrm.y * 0.423 * 0.92, nrm.z * 0.423)]);
+  const prof = smooth(THREE, CHUMP_PROFILE, 30);
+  const rAt = (y) => {
+    for (let i = 1; i < prof.length; i++) if (prof[i][1] >= y) { const [r0, y0] = prof[i - 1], [r1, y1] = prof[i]; return r0 + (r1 - r0) * (y - y0) / ((y1 - y0) || 1); }
+    return 0;
+  };
+  // Place a flat decal (built facing +Z) on the balloon at azimuth a, height y.
+  const onSkin = (g, a, y, lift = 0.003) => {
+    const r = rAt(y), dr = (rAt(y + 0.01) - rAt(y - 0.01)) / 0.02, n = new THREE.Vector3(Math.sin(a), -dr, Math.cos(a)).normalize();
+    g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n));
+    return g.translate(Math.sin(a) * r + n.x * lift, y + n.y * lift, Math.cos(a) * r + n.z * lift);
+  };
+  K.add('body', 'inkGloss', latheY(THREE, prof, 28));
+  // Drips hanging round the underside.
+  const drips = [];
+  for (let k = 0; k < 12; k++) {
+    const a = k * TAU / 12 + 0.2, y = 0.545 + 0.02 * (k % 3), r = rAt(y) - 0.012, s = 0.03 + 0.009 * ((k * 7) % 3);
+    drips.push(sphere(THREE, s, Math.sin(a) * r, y - 0.025, Math.cos(a) * r, 1, 1.4, 1, 10, 8));
   }
-  for (const c of cols) K.add('body', c, ...dots.filter(d => d[0] === c).map(d => d[1]));
-  K.add('body', 'inkDark', new THREE.TorusGeometry(0.05, 0.012, 6, 20).translate(-0.12, 0.8, 0.4), new THREE.TorusGeometry(0.05, 0.012, 6, 20).translate(0.12, 0.8, 0.4),
-    tube(THREE, [[-0.06, 0.7, 0.41], [-0.03, 0.66, 0.415], [0, 0.69, 0.42], [0.03, 0.66, 0.415], [0.06, 0.7, 0.41]], 0.01, 16, 5));
-  K.add('body', 'pink', cylY(THREE, 0.045, 0.28, 0.31, 12));
-  K.add('body', 'grey', cylY(THREE, 0.03, 0.16, 0.28, 12));
-  K.add('body', 'blue', cylX(THREE, 0.025, 0.03, 0.12, 12).translate(0, 0.22, 0));
-  K.add('body', 'white', latheY(THREE, [[0, 0], [0.2, 0], [0.18, 0.04], [0.06, 0.13], [0.03, 0.16], [0, 0.16]], 24));
+  K.add('body', 'inkGloss', ...drips);
+  // Zip-tie band with teeth and a buckle (at 50 deg so it widens x and z alike).
+  const bandY = 0.925, bandR = rAt(bandY) + 0.006;
+  K.add('body', 'chumpTie', latheY(THREE, [[bandR - 0.01, bandY - 0.028], [bandR, bandY - 0.026], [bandR, bandY + 0.026], [bandR - 0.01, bandY + 0.028]], 40));
+  K.add('body', 'white', ...Array.from({ length: 40 }, (_, k) => box(THREE, 0.006, 0.046, 0.006, 0, bandY, bandR + 0.001).rotateY(k * TAU / 40)),
+    softBox(THREE, 0.05, 0.075, 0.06, 0.2).translate(0, bandY, bandR + 0.02).rotateY(0.87),
+    box(THREE, 0.1, 0.03, 0.008, 0.06, bandY, bandR + 0.035).rotateY(0.87));
+  // Face below the band: ringed eyes and a bean mouth, embossed.
+  const face = [];
+  for (const s of [-1, 1]) face.push(onSkin(new THREE.RingGeometry(0.068, 0.092, 24), s * 0.5, 0.8), onSkin(new THREE.CircleGeometry(0.045, 18), s * 0.5, 0.8, 0.004));
+  const bean = [];
+  for (let i = 0; i < 28; i++) {
+    const t = i / 28 * TAU, dent = Math.sin(t) > 0 ? 1 - 0.55 * Math.exp(-(Math.cos(t) ** 2) * 14) : 1;
+    bean.push(new THREE.Vector3(Math.cos(t) * 0.085, Math.sin(t) * 0.052 * dent, 0));
+  }
+  face.push(onSkin(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(bean, true), 40, 0.013, 5, true), 0, 0.79, 0.008));
+  K.add('body', 'inkDeep', ...face);
+  // Confetti dots off the face and band.
+  const cols = ['pink', 'yellow', 'teal', 'cream', 'decalRed'], dots = new Map(cols.map(c => [c, []]));
+  for (let k = 0; k < 40; k++) {
+    const j = Math.sin(k * 12.9898) * 43758.5453, n = j - Math.floor(j), a = k * 2.399963, y = 0.56 + 0.56 * n;
+    const az = a % TAU, nearFace = (az < 0.85 || az > TAU - 0.85) && y > 0.68 && y < 0.9;
+    if (nearFace || Math.abs(y - bandY) < 0.05 || rAt(y) < 0.15) continue;
+    dots.get(cols[k % cols.length]).push(onSkin(new THREE.CircleGeometry(0.026 + 0.006 * ((k * 5) % 3), 12), a, y));
+  }
+  for (const [c, list] of dots) if (list.length) K.add('body', c, ...list);
+  // Neck: pink tie, ink bulb, grey valve with a knurled knob, suction cup.
+  K.add('body', 'pink', cylY(THREE, 0.058, 0.33, 0.37, 16), box(THREE, 0.05, 0.036, 0.025, 0.07, 0.35, 0));
+  K.add('body', 'inkGloss', sphere(THREE, 0.05, 0, 0.3, 0, 1, 0.7, 1, 14, 8), cylY(THREE, 0.03, 0.24, 0.29, 12));
+  K.add('body', 'grey', sphere(THREE, 0.042, 0, 0.215, 0, 1, 0.85, 1, 14, 8), cylY(THREE, 0.022, 0.15, 0.2, 10));
+  K.add('body', 'steel', cylX(THREE, 0.01, -0.09, -0.03, 8).translate(0, 0.215, 0));
+  K.add('body', 'chumpSky', cylX(THREE, 0.032, -0.135, -0.09, 16).translate(0, 0.215, 0),
+    ...Array.from({ length: 12 }, (_, k) => box(THREE, 0.04, 0.008, 0.008, -0.1125, 0, 0.033).rotateX(k * TAU / 12).translate(0, 0.215, 0)));
+  K.add('body', 'chumpCup', latheY(THREE, [[0, 0], [0.22, 0], [0.222, 0.01], [0.2, 0.022], [0.12, 0.07], [0.06, 0.12], [0.035, 0.16], [0, 0.16]], 28),
+    box(THREE, 0.025, 0.05, 0.012).rotateX(-0.5).translate(0, 0.035, -0.205));
   return K.finish(THREE);
 }
 function chumpLauncher(THREE) {
   const K = kit();
-  K.add('body', 'black', latheY(THREE, [[0, 0], [0.13, 0], [0.13, 0.03], [0, 0.03]], 20));
+  // Base, spring, yoke.
+  K.add('body', 'darkMetal', latheY(THREE, [[0, 0], [0.14, 0], [0.145, 0.008], [0.13, 0.016], [0.05, 0.042], [0.036, 0.048], [0, 0.048]], 28));
+  K.add('body', 'steel', ring(THREE, 0.142, 0.005, 0.006, 28));
+  K.add('body', 'black', cylY(THREE, 0.04, 0.045, 0.06, 16), cylY(THREE, 0.04, 0.128, 0.142, 16));
+  K.add('body', 'blue', cylY(THREE, 0.019, 0.06, 0.13, 12));
   const helix = [];
-  for (let i = 0; i <= 30; i++) { const a = i / 30 * 4 * TAU; helix.push([Math.cos(a) * 0.04, 0.04 + i / 30 * 0.1, Math.sin(a) * 0.04]); }
-  K.add('body', 'steel', tube(THREE, helix, 0.007, 60, 5));
-  K.add('body', 'ink', box(THREE, 0.2, 0.04, 0.06, 0, 0.16, 0), box(THREE, 0.04, 0.24, 0.06, 0.12, 0.28, 0), box(THREE, 0.04, 0.24, 0.06, -0.12, 0.28, 0));
-  K.add('body', 'clear', sphere(THREE, 0.11, 0, 0.32, 0));
-  K.add('body', 'grey', cylY(THREE, 0.04, 0.24, 0.4, 12));
-  K.add('body', 'black', cylY(THREE, 0.1, 0.4, 0.45, 18));
-  K.add('body', 'orange', cylY(THREE, 0.12, 0.45, 0.48, 24));
-  K.add('body', 'blue', ...[0, 1, 2, 3, 4, 5].map(k => { const a = k * TAU / 6; return cylY(THREE, 0.02, 0.46, 0.485, 8).translate(Math.sin(a) * 0.07, 0, Math.cos(a) * 0.07); }));
+  for (let i = 0; i <= 40; i++) { const a = i / 40 * 4.5 * TAU; helix.push([Math.cos(a) * 0.032, 0.064 + i / 40 * 0.06, Math.sin(a) * 0.032]); }
+  K.add('body', 'chumpCopper', tube(THREE, helix, 0.0065, 90, 6));
+  K.add('body', 'ink', softBox(THREE, 0.15, 0.03, 0.075, 0.2).translate(0, 0.155, 0),
+    MODEL_KIT.strap(THREE, [[-0.135, 0.31, 0], [-0.137, 0.25, 0], [-0.125, 0.195, 0], [-0.085, 0.163, 0], [0, 0.158, 0], [0.085, 0.163, 0], [0.125, 0.195, 0], [0.137, 0.25, 0], [0.135, 0.31, 0]], 0.055, 0.03, 80));
+  // Pivot hardware: black rings against the globe, steel washers, sky caps.
+  for (const s of [-1, 1]) {
+    const x = (a, b) => (s > 0 ? [a, b] : [-b, -a]);
+    K.add('body', 'ink', softBox(THREE, 0.035, 0.07, 0.065, 0.3).translate(s * 0.137, 0.31, 0));
+    K.add('body', 'black', cylX(THREE, 0.04, ...x(0.105, 0.12), 18).translate(0, 0.31, 0));
+    K.add('body', 'steel', cylX(THREE, 0.034, ...x(0.155, 0.162), 16).translate(0, 0.31, 0));
+    K.add('body', 'chumpSky', cylX(THREE, 0.03, ...x(0.162, 0.185), 16).translate(0, 0.31, 0));
+  }
+  // Globe (pivots on the yoke axis).
+  K.pivot('globe', [0, 0.31, 0]);
+  K.add('globe', 'clear', sphere(THREE, 0.115, 0, 0.31, 0, 1, 1.06, 1, 24, 16));
+  K.add('globe', 'chumpSky', cylY(THREE, 0.075, 0.36, 0.375, 20));
+  K.add('globe', 'steel', cylY(THREE, 0.026, 0.24, 0.36, 12));
+  K.add('globe', 'ink', cylY(THREE, 0.05, 0.285, 0.293, 18));
+  K.add('globe', 'darkMetal', cylY(THREE, 0.04, 0.215, 0.25, 6), cylY(THREE, 0.018, 0.175, 0.2, 10));
+  K.add('globe', 'black', latheY(THREE, [[0.1, 0.37], [0.122, 0.39], [0.124, 0.41], [0.104, 0.432], [0.094, 0.436], [0.094, 0.468], [0.1, 0.472], [0, 0.472]], 24));
+  // Barrel drum: six dark ink tubes round a core, toothed orange cap.
+  K.add('globe', 'inkDark', cylY(THREE, 0.045, 0.47, 0.53, 18),
+    ...[0, 1, 2, 3, 4, 5].map(k => { const a = k * TAU / 6; return cylY(THREE, 0.026, 0.47, 0.53, 10).translate(Math.sin(a) * 0.058, 0, Math.cos(a) * 0.058); }));
+  K.add('globe', 'orange', cylY(THREE, 0.115, 0.53, 0.56, 32),
+    ...Array.from({ length: 40 }, (_, k) => box(THREE, 0.011, 0.03, 0.01, 0, 0.545, 0.118).rotateY(k * TAU / 40)));
+  K.add('globe', 'chumpSky', cylY(THREE, 0.022, 0.559, 0.563, 14),
+    ...[0, 1, 2, 3, 4, 5].map(k => { const a = k * TAU / 6 + TAU / 12; return cylY(THREE, 0.017, 0.559, 0.563, 10).translate(Math.sin(a) * 0.068, 0, Math.cos(a) * 0.068); }));
   return K.finish(THREE);
 }
 

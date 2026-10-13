@@ -11,7 +11,7 @@
 // re-derives the kid's visibility each frame.
 
 import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
-import { buildScreenSheet } from './special-models.mjs';
+import { buildScreenSheet, INKSTRIKE_LID_OPEN } from './special-models.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-models.install.v1');
 const OBJECTS = Symbol('inkwave.s3.special-models.objects'), ROUNDS = Symbol('inkwave.s3.special-models.rounds');
@@ -33,8 +33,12 @@ export const SPECIAL_DEVICES = Object.freeze({
   killerWail: [{ model: 'spKillerSpeaker', host: 'kid', speakers: true, scale: 1, hideWeapon: true }],
   crabTank: [{ model: 'spCrabTank', host: 'kid', pos: [0, -0.32, -0.05], rot: [0, 0, 0], scale: 0.9, hideWeapon: true, crab: true, hands: { R: [-0.12, 1.12, 0.1], L: [0.12, 1.12, 0.1] } }],
   reefslider: [{ model: 'spReefShark', host: 'kid', pos: [0, -0.1, 0.12], rot: [0, 0, 0], scale: 1, hideWeapon: true, hands: { R: [-0.09, 0.79, -0.02], L: [0.09, 0.79, -0.02] } }],
-  tripleInkstrike: [{ model: 'spInkstrikeCase', host: 'kid', pos: [0, 0.86, 0.3], rot: [0.35, 0, 0], scale: 0.85, hideWeapon: true, hands: { R: [-0.24, 0.09, 0], L: [0.24, 0.09, 0] } }],
-  superChump: [{ model: 'spChumpLauncher', host: 'kid', pos: [0.18, 0.86, 0.28], rot: [0.2, 0, 0], scale: 0.9, hideWeapon: true, hands: { R: [-0.1, 0.16, 0.04], L: [0.12, 0.3, 0.04] } }],
+  // Worn on the back with the lid shut, tray down and lid outward (S3 promo
+  // image); the free hand throws the markers.
+  tripleInkstrike: [{ model: 'spInkstrikeCase', host: 'chest', pos: [0, 0.05, -0.15], rot: [-Math.PI / 2, Math.PI, 0], scale: 0.85, hideWeapon: true, lidClosed: true }],
+  // Held in front in both hands by the yoke arms, the globe tipped forward on
+  // its pivots (the S3 Promotional 3D Render shows it turned in the yoke).
+  superChump: [{ model: 'spChumpLauncher', host: 'kid', pos: [0.1, 0.66, 0.34], rot: [0.2, 0, 0], scale: 0.78, tilt: 0.45, hideWeapon: true, hands: { R: [-0.13, 0.21, 0.03], L: [0.13, 0.21, 0.03] } }],
   krakenRoyale: [{ model: 'spKraken', host: 'model', pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, hideKid: true }],
   splattercolorScreen: [{ model: 'spScreenJar', host: 'kid', pos: [0.15, 0.85, 0.3], rot: [0, 0, 0], scale: 0.9, hideWeapon: true, hands: { R: [-0.1, 0.1, 0.02], L: [0.15, 0.12, 0] } }],
   waveBreaker: [{ model: 'spWaveBreaker', host: 'kid', pos: [0.2, 0.62, 0.32], rot: [0.25, 0, 0], scale: 0.55, hideWeapon: true, hands: { R: [0.13, 0.3, 0], L: [-0.2, 0.62, 0] } }],
@@ -199,6 +203,8 @@ export function installSpecialModels(api) {
       const holder = new THREE.Group();
       holder.add(m.root); holder.position.set(...spec.pos); holder.rotation.set(...spec.rot); holder.scale.setScalar(spec.scale);
       if (spec.grip) m.root.position.set(...spec.grip);
+      if (spec.lidClosed && m.groups.lid) m.groups.lid.rotation.x = INKSTRIKE_LID_OPEN;
+      if (spec.tilt && m.groups.globe) m.groups.globe.rotation.x = spec.tilt;
       hostOf(ch, spec.host)?.add(holder);
       s.devices.push({ spec, holder, model: m });
     }
