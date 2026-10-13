@@ -7,8 +7,7 @@
 // (BodyParam.PaintParam.WidthHalfMax, scaled so the Splat Roller drum is 1.5 m, inside the
 // roller.test proportion bands); other sizes are read off each render relative to that
 // drum. Internal model names: Leanny/splat3 ActorInfo (Fmdb).
-import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe,
-  part, rebuild, gripSpec, clamp, damp, smooth, slab } from './kit.mjs';
+import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe, part, rebuild, gripSpec, clamp, damp, smooth, slab} from './kit.mjs';
 
 const TAU = Math.PI * 2;
 // Native Roller grips (character-weapons.js buildRoller): every pose layer in

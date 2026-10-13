@@ -8,6 +8,28 @@ const bounded = (value, min, max) => finite(value) && value >= min && value <= m
 const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
 // The wire encodes performance.now() seconds with r3(), i.e. rounded milliseconds.
 // Keep that integer representable before it can poison the peer replay watermark.
+// #1283: owner-authenticated event rows must also have a safe, replayable
+// payload. The regular producer packs vectors as [x,y,z] and actor refs as
+// { n: nid }. Check the wire shape before any event sequence is committed.
+const EVENT_VECTOR_FIELDS = ['pos', 'to', 'muzzle', 'dir', 'normal'];
+const validEventVector = value => Array.isArray(value) && value.length === 3
+  && value.every(n => bounded(n, -1e6, 1e6));
+export function validForwardedEventPayload(name, payload) {
+  if (typeof name !== 'string' || !payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  // Also protect other forwarded vector events. Optional fields stay optional,
+  // but present fields must never become non-finite THREE.Vector3 components.
+  for (const key of EVENT_VECTOR_FIELDS) {
+    if (Object.hasOwn(payload, key) && !validEventVector(payload[key])) return false;
+  }
+  if (name !== 'special:slam') return true;
+  const actor = payload.actor;
+  return !!actor && typeof actor === 'object' && !Array.isArray(actor)
+    && integer(actor.n, 0, 0x7fffffff)
+    && validEventVector(payload.pos)
+    && bounded(payload.radius, Number.MIN_VALUE, 64)
+    && Math.fround(payload.radius) > 0;
+}
+
 export function validSnapshotTimestamp(timestamp) {
   return finite(timestamp) && timestamp >= 0 && Number.isSafeInteger(Math.round(timestamp * 1000));
 }
