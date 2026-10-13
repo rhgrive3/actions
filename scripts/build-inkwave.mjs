@@ -158,7 +158,7 @@ for (const [root, prefix] of [
 ]) {
   for (const file of walk(root)) {
     const rel = path.relative(root, file).split(path.sep).join('/');
-    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
+    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.startsWith('definitions/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     // One native runtime module avoids inflating the bounded worker manifest.
     if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);

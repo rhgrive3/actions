@@ -3,11 +3,12 @@ import fs from 'node:fs';import path from 'node:path';import http from 'node:htt
 const site=path.resolve(process.argv[2]||'_site-native'),out=path.resolve(process.argv[3]||'.browser-evidence/native-lifecycle');fs.mkdirSync(out,{recursive:true});
 const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.webp':'image/webp'};
 const server=http.createServer((req,res)=>{try{const p=decodeURIComponent(new URL(req.url,'http://local').pathname),file=path.resolve(site,'.'+(p==='/'?'/index.html':p));if(!file.startsWith(site+'/')||!fs.statSync(file).isFile())throw Error();res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const ids=(process.env.NATIVE_STAGE_IDS||'scorch,hagglefish,inkblot,mako,brinewater').split(',').filter(Boolean),primary=ids[0],failureId=ids[1]||primary,lastId=ids[2]||primary;
 const address='http://127.0.0.1:'+server.address().port,browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const errors=[],result={status:'running',errors};
 try{
  const c=await browser.newContext({viewport:{width:960,height:640}}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));
  await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0})));
- await p.goto(address+'/?map=scorch',{waitUntil:'domcontentloaded'});await p.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
+ await p.goto(address+'/?map='+primary,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
  await p.evaluate(()=>{NG.game.debug.freeze();NG.game._skipRender=true;});console.log('lifecycle boot');
  // Preserve all authorities across an actual production quality update.
  result.quality=await p.evaluate(async()=>{
@@ -18,28 +19,28 @@ try{
   return {cpuGridUnchanged:true,trianglePositionsUnchanged:true,authoritiesRetained:true,finalAtlas:paint.size,textureCount:g.nativeWorld.metrics.textureCount};
  });console.log('quality passed');
  // Reject a corrupt asset while retaining the current stage and its resources.
- await p.route('**/_native-reference-assets/hagglefish/vertices.bin',route=>route.fulfill({status:200,body:Buffer.alloc(4),contentType:'application/octet-stream'}));
- result.failureRollback=await p.evaluate(async()=>{
+ await p.route('**/_native-reference-assets/'+failureId+'/vertices.bin',route=>route.fulfill({status:200,body:Buffer.alloc(4),contentType:'application/octet-stream'}));
+ result.failureRollback=await p.evaluate(async failureId=>{
   const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI)),level=G.level,paint=G.paint,display=g.nativeWorld.display;let rejected=false;
-  try{await g._buildWorld(MAPS.find(m=>m.id==='hagglefish'));}catch(e){rejected=/integrity mismatch/.test(e.message);}
+  try{await g._buildWorld(MAPS.find(m=>m.id===failureId));}catch(e){rejected=/integrity mismatch/.test(e.message);}
   return {rejected,levelRetained:G.level===level,paintRetained:G.paint===paint,displayRetained:g.nativeWorld.display===display};
- });assert(Object.values(result.failureRollback).every(Boolean));await p.unroute('**/_native-reference-assets/hagglefish/vertices.bin');console.log('rollback passed');
- result.cancellation=await p.evaluate(async()=>{
+ },failureId);assert(Object.values(result.failureRollback).every(Boolean));await p.unroute('**/_native-reference-assets/'+failureId+'/vertices.bin');console.log('rollback passed');
+ result.cancellation=await p.evaluate(async({failureId,lastId})=>{
   const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI));
-  const first=g._buildWorld(MAPS.find(m=>m.id==='hagglefish'));const second=g._buildWorld(MAPS.find(m=>m.id==='inkblot'));await Promise.all([first,second]);
+  const first=g._buildWorld(MAPS.find(m=>m.id===failureId));const second=g._buildWorld(MAPS.find(m=>m.id===lastId));await Promise.all([first,second]);
   return {id:G.level.layout.id,nativeGroups:G.scene.children.filter(x=>x.name==='native-source-display').length};
- });assert.equal(result.cancellation.id,'inkblot');assert.equal(result.cancellation.nativeGroups,1);console.log('cancel passed');
+ },{failureId,lastId});assert.equal(result.cancellation.id,lastId);assert.equal(result.cancellation.nativeGroups,1);console.log('cancel passed');
  result.switches=[];
- for(const id of ['tidewater','brinewater','tidewater']){
-  const s=await p.evaluate(async id=>{const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI));await g._buildWorld(MAPS.find(m=>m.id===id));G.renderer.render(G.scene,G.camera);G.renderer.getContext().finish();return {id:G.level.layout.id,native:!!G.level.native,nativeGroups:G.scene.children.filter(x=>x.name==='native-source-display').length,memory:{...G.renderer.info.memory}};},id);result.switches.push(s);assert.equal(s.id,id);assert.equal(s.nativeGroups,id==='brinewater'?1:0);
+ for(const id of ['tidewater',primary,'tidewater']){
+  const s=await p.evaluate(async id=>{const G=NG,g=G.game,{MAPS}=await import(new URL('src/config.js',document.baseURI));await g._buildWorld(MAPS.find(m=>m.id===id));G.renderer.render(G.scene,G.camera);G.renderer.getContext().finish();return {id:G.level.layout.id,native:!!G.level.native,nativeGroups:G.scene.children.filter(x=>x.name==='native-source-display').length,memory:{...G.renderer.info.memory}};},id);result.switches.push(s);assert.equal(s.id,id);assert.equal(s.nativeGroups,id===primary?1:0);
  }
  // Explicitly verify mismatched geometry AND runtime fingerprints reject.
- result.fingerprint=await p.evaluate(async()=>{const registry=await import(new URL('patches/native-stages/runtime/registry.mjs',document.baseURI)),value=registry.nativeStageFingerprint('scorch');return {same:registry.nativeStageCompatible({map:'scorch',nativeStage:value}),changed:registry.nativeStageCompatible({map:'scorch',nativeStage:value+'-changed'}),missing:registry.nativeStageCompatible({map:'scorch'})};});assert.deepEqual(result.fingerprint,{same:true,changed:false,missing:false});
+ result.fingerprint=await p.evaluate(async primary=>{const registry=await import(new URL('patches/native-stages/runtime/registry.mjs',document.baseURI)),value=registry.nativeStageFingerprint(primary);return {same:registry.nativeStageCompatible({map:primary,nativeStage:value}),changed:registry.nativeStageCompatible({map:primary,nativeStage:value+'-changed'}),missing:registry.nativeStageCompatible({map:primary})};},primary);assert.deepEqual(result.fingerprint,{same:true,changed:false,missing:false});
  await c.close();
  // Mobile emulation tests a touch viewport, GL rendering and CPU frame costs.
  // SwiftShader is not a real mobile GPU; this must not be reported as device FPS.
  result.mobile=[];
- for(const id of (process.env.NATIVE_MOBILE_STAGE_IDS||'scorch,hagglefish,inkblot,mako,brinewater').split(',')){
+ for(const id of (process.env.NATIVE_MOBILE_STAGE_IDS||ids.join(',')).split(',')){
   console.log('mobile '+id);const c=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:1}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));
   await p.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));let s=0x12345678;Math.random=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};});
   await p.goto(address+'/?map='+id,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');

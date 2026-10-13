@@ -3,7 +3,8 @@
 // conversion. Source pixels/screenshots remain in ignored local evidence.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {SOURCE_STAGES} from '../patches/native-stages/runtime/source-catalog.mjs';
+import {nativeStageCatalog} from './lib/inkwave-native-stages.mjs';
+const SOURCE_STAGES=nativeStageCatalog().stages;
 const site=path.resolve(process.argv[2]||'_site-native-public'),out=path.resolve(process.argv[3]||'.browser-evidence/native-source-public');fs.mkdirSync(out,{recursive:true});
 assert(!fs.existsSync(path.join(site,'_native-reference-assets')),'public build must not contain source payload');
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.html':'text/html','.woff2':'font/woff2','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp'};
@@ -22,7 +23,7 @@ try{
  await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
  await page.evaluate(()=>{NG.game._skipRender=true;NG.game.menus.show('setup');});
- result.menu=await page.locator('.iw-ticket__name').allTextContents();for(const s of SOURCE_STAGES)assert(result.menu.includes(s.name),s.name+' not selectable');console.log('five source choices visible');save();
+ result.menu=await page.locator('.iw-ticket__name').allTextContents();for(const s of SOURCE_STAGES)assert(result.menu.includes(s.name),s.name+' not selectable');console.log(SOURCE_STAGES.length+' source choices visible');save();
  for(const s of SOURCE_STAGES.filter(s=>!process.env.NATIVE_STAGE_IDS||process.env.NATIVE_STAGE_IDS.split(',').includes(s.id))){
   console.log('select '+s.id);await page.evaluate(()=>{NG.game.input.exitLock();NG.game.debug.unfreeze();NG.game._skipRender=true;NG.game.menus.show('setup');});
   await page.waitForFunction(()=>!document.pointerLockElement);
@@ -40,12 +41,13 @@ try{
   await page.evaluate(async id=>{const {MAPS}=await import(new URL('src/config.js',document.baseURI));await NG.game._buildWorld(MAPS.find(m=>m.id===id));},last);
   result.cache={id:last,derivedCacheHit:await page.evaluate(()=>NG.level.data.sourceMetrics.cached),objDownloads:result.downloads-before};assert.equal(result.cache.derivedCacheHit,true);assert.equal(result.cache.objDownloads,0);
  }
- if(result.stages.length===5){
-  console.log('source failure rollback');const first=SOURCE_STAGES[0];
+ if(result.stages.length){
+  console.log('source failure rollback');const first=SOURCE_STAGES.find(s=>s.id===result.stages[0].id);
+  await page.evaluate(async()=>{for(const key of await caches.keys())if(key.startsWith('inkwave-native-source-'))await caches.delete(key);await new Promise((resolve,reject)=>{const q=indexedDB.deleteDatabase('inkwave-native-derived-v2');q.onsuccess=resolve;q.onerror=()=>reject(q.error);q.onblocked=()=>reject(Error('Derived cache still open'));});});
   await context.route('**/stages/'+first.internal+'/'+first.internal+'.obj',route=>route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},body:Buffer.alloc(4)}));
   await page.evaluate(()=>{globalThis.rollbackLevel=NG.level;NG.game.input.exitLock();NG.game.debug.unfreeze();NG.game._skipRender=true;NG.game.menus.show('setup');});
   await page.waitForFunction(()=>!document.pointerLockElement);
-  await page.waitForFunction(()=>{const e=[...NG.game.menus._scr.el.querySelectorAll('.iw-ticket')].find(e=>e.textContent.includes('ユノハナ大渓谷'));return Number(getComputedStyle(e).opacity)>.7;});
+  await page.waitForFunction(name=>{const e=[...NG.game.menus._scr.el.querySelectorAll('.iw-ticket')].find(e=>e.textContent.includes(name));return !!e&&Number(getComputedStyle(e).opacity)>.7;},first.name);
   await page.locator('.iw-ticket').filter({hasText:first.name}).click();await page.locator('.iw-btn--start').click();
   await page.waitForFunction(()=>NG.game.menus.current==='setup'&&document.body.textContent.includes('ステージを読み込めませんでした'),null,{timeout:180000});
   result.failureRollback=await page.evaluate(()=>({levelRetained:NG.level===rollbackLevel,menu:NG.game.menus.current,loadingRemoved:!document.getElementById('native-stage-loading')}));

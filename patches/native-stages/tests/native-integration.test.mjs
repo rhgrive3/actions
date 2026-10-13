@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { nativeFixture,readStage } from './fixture.mjs';
 import { prepareNativeStageBuild } from '../../../scripts/lib/inkwave-native-stages.mjs';
+import path from 'node:path';
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
-const IDS=['scorch','hagglefish','inkblot','mako','brinewater'];
+const IDS=ROOT?JSON.parse(fs.readFileSync(path.join(ROOT,'catalog.json'),'utf8')).stages.map(s=>s.id):['scorch','hagglefish','inkblot','mako','brinewater'];
 
 test('public builds offer five source choices without reference model payload',()=>{
- const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');assert.deepEqual(build.config.stages.map(s=>s.id),IDS);
+ const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');for(const id of ['scorch','hagglefish','inkblot','mako','brinewater'])assert(build.config.stages.some(s=>s.id===id));
 });
 for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async()=>{
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);

@@ -9,18 +9,20 @@ class BufferBuilder{
 }
 function lines(text,visit){let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}}
 const any=(s,words)=>words.some(w=>s.includes(w));
-function classify(name,material){
+function classify(name,material,semantics){
  const s=(name+' '+material).toLowerCase(),m=(material||'').toLowerCase();
  const alpha=any(s,['graffiti','warningtape','canola','leaf','grass','cloth','flag','stencil','notice','chainlink','net','grate','fence','vinyl','alpha','rope','fabric','dvpoolfloat','spotlight']);
  const decor=any(s,['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','groundgrass','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])||m.endsWith('_water')||name.toLowerCase().includes('_water_')||m.endsWith('_plant')||m.endsWith('_code00');
- const layer=name.match(/Pack(Pnt|Var|Vlf|Vgl|Vcl|Tcl)/)?.[1]||null;
- const active=(!layer||layer==='Pnt')&&!name.includes('TriColor');
+ const layer=name.match(/(?:Pack|_)(Pnt|Var|Vlf|Vgl|Vcl|Tcl)(?:Set)?(?:_|$)/)?.[1]||null;
+ const matches=key=>(semantics?.[key]||[]).some(pattern=>new RegExp(pattern).test(name));
+ const active=(!layer||layer==='Pnt')&&!name.includes('TriColor')&&!matches('inactiveObjectPatterns');
  const grate=any(m,['grate','coppernet','chainlink','meshfloor','waffledplate']),glass=any(m,['glass','window']);
- const collidable=active&&(name.startsWith('Fld_')||name.startsWith('FldObj_'))&&!decor;
- const paintable=collidable&&!grate&&!glass&&!['_np','_cp','_op'].some(x=>m.endsWith(x));
- return {background:name.startsWith('FldBG'),collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
+ const background=name.startsWith('FldBG')||name.startsWith('Fld_BG');
+ const collidable=active&&!background&&(name.startsWith('Fld_')||name.startsWith('FldObj_'))&&!decor&&!matches('nonCollidableObjectPatterns');
+ const paintable=collidable&&!grate&&!glass&&!['_np','_cp','_op'].some(x=>m.endsWith(x))&&!matches('nonPaintableObjectPatterns');
+ return {background,collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
 }
-export function parseSourceOBJ(text){
+export function parseSourceOBJ(text,semantics){
  const geometry=[],indexChunks=[],objects=[];
  let v=new BufferBuilder(Float32Array),n=new BufferBuilder(Float32Array),uv=new BufferBuilder(Float32Array),ix=new BufferBuilder(Uint32Array);
  let name=null,material=null,vo=0,io=0,uvOffset=0,normalOffset=0;
@@ -33,7 +35,7 @@ export function parseSourceOBJ(text){
    if(uv.length){g[i*8+6]=uv.array[i*2];g[i*8+7]=uv.array[i*2+1];}
   }
   geometry.push(g);indexChunks.push(ix.finish());
-  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material)});
+  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material,semantics)});
   vo+=count;io+=ix.length;uvOffset+=uv.length/2;normalOffset+=n.length/3;
   v=new BufferBuilder(Float32Array);n=new BufferBuilder(Float32Array);uv=new BufferBuilder(Float32Array);ix=new BufferBuilder(Uint32Array);
  }
@@ -160,7 +162,7 @@ export function parseSourceMaterials(text,objects,files){
  return materials;
 }
 export function convertSource(stage,obj,mtl,files,progress=()=>{}){
- progress('OBJ');const geometry=parseSourceOBJ(obj);
+ progress('OBJ');const geometry=parseSourceOBJ(obj,stage.sourceSemantics);
  progress('collision');const data=collision(geometry);
  progress('BVH');Object.assign(data,buildSourceBVH(data.triangles));
  progress('paint');const charts=paintCharts(data);

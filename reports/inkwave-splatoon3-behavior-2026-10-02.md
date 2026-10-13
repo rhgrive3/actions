@@ -4059,3 +4059,31 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 | グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
 
 計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
+
+
+## 2026-10-13：原典ステージ追加と比較記録の分割
+
+ユーザー指示の残り20ステージを専任担当・独立PRで追加する。以下の各記録を本比較記録のステージ別差分として参照する。リンク先の記録がない段階は担当中であり、検証済みを意味しない。参照対象はSplatoon 3 Ver.11.3.0の公開SceneInfo/VersusSceneInfoと固定KiTrix表示用抽出データ。OBJの抽出バージョン、Nintendoの衝突・塗り・移動物体・スポーン・ガチ配置、実機性能は引き続き未確認。各記録に参照ハッシュ、ブキ・ギア・状態・操作、30/60/120Hzロジックとブラウザ、オンライン、自己レビュー、未検証点を分けて保存する。
+
+共通変更：PntSet系の別ルール地形と背景を正しく分類し、必要な名前由来の除外をレビュー対象のステージ定義に記録する。描画頂点・法線・UV・インデックスは削除・変形しない。ガチのローカル配置は、両チームの支持点から到達できる十分大きな有向相互到達成分を選び、中央の孤立屋根を採用しない。本家配置の復元ではなくローカル検証用調整であり、その影響と比較根拠は各ステージ記録に残す。原典欠落または配置欠落は利用不能として扱い、架空の地形で補完しない。
+
+- [ゴンズイ地区](native-stages/eeltail.md)
+- [マテガイ放水路](native-stages/undertow.md)
+- [ナメロウ金属](native-stages/mincemeat.md)
+- [マサバ海峡大橋](native-stages/hammerhead.md)
+- [マヒマヒリゾート＆スパ](native-stages/mahi.md)
+- [リュウグウターミナル](native-stages/lemuria.md)
+- [スメーシーワールド](native-stages/wahoo.md)
+- [デカライン高架下](native-stages/urchin.md)
+- [バイガイ亭](native-stages/robo.md)
+- [ナンプラー遺跡](native-stages/umami.md)
+- [ヒラメが丘団地](native-stages/flounder.md)
+- [チョウザメ造船](native-stages/sturgeon.md)
+- [マンタマリア号](native-stages/manta.md)
+- [キンメダイ美術館](native-stages/museum.md)
+- [カジキ空港](native-stages/airport.md)
+- [ネギトロ炭鉱](native-stages/bluefin.md)
+- [タラポートショッピングパーク](native-stages/barnacle.md)
+- [タカアシ経済特区](native-stages/crableg.md)
+- [オヒョウ海運](native-stages/shipshape.md)
+- [コンブトラック](native-stages/humpback.md)
