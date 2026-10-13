@@ -78,6 +78,44 @@
     "defaultAndUnsupportedGuardsPassed": true,
     "browserWholeBank": "pending independent Humpback owner validation",
     "hardwareFPS": "unverified",
-    "retailFootprintAndNavigation": "unverified"
+    "retailFootprintAndNavigation": "unverified",
+    "dynamicFootRingSubstitutionRejected": true,
+    "finalSourceRegression": {
+      "tests": 4,
+      "passed": 3,
+      "explicitBluefinAssetSkip": 1,
+      "failures": 0
+    },
+    "publicBuild": {
+      "contentHash": "3b5dadf306647afcaf95748d36b7830ab29ab46e259fa4ede468fa841101d1e0",
+      "inputHash": "b9daca02b0e8e064c3809e3dccb034853ec862e740cc6bdf5c215efdf686b9bf",
+      "packaging": {
+        "tests": 9,
+        "passed": 9,
+        "skipped": 0,
+        "failed": 0
+      },
+      "startupBudget": "passed"
+    },
+    "independentHumpbackOwnerCPU": {
+      "passed": 5,
+      "skipped": 0,
+      "failed": 0,
+      "cases": 6,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "teams": [
+        0,
+        1
+      ],
+      "genuineOpposingBowlRoute": true,
+      "sourceActorCharacterBotBrain": true,
+      "ordinaryInputsOnly": true,
+      "noRefillGoalReselectionUsed": true,
+      "receipt": "Humpback private source-banks-foot-candidate.json; CPU 205.08 seconds, not browser timing"
+    }
   }
 }
