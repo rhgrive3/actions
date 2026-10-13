@@ -613,7 +613,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const ground=h.normal.y>.35;
       const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
       // Keep the established paint owner and footprint untouched (lane ③).
-      if(!p.ghost)paint(p.owner,at,finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index);
+      // The source's first-bounce footprint decays by 15% on each later contact.
+      // Retain the existing single paint owner and do not duplicate paint events.
+      const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);
+      if(!p.ghost)paint(p.owner,at,bounceRadius);
       const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
       p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
@@ -701,6 +704,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           return true;
         }
         if(boss){if(!p.ghost)G.boss.hit(p.owner,impactDamage(p,boss.target||G.boss),boss.target,p.wid,p.pos.clone());return true;}
+        // A rebound consumed only the travelled portion of this tick. Counting
+        // its unused tail shortened the Bloblobber's remaining sourced reach.
+        if(s.r.sourceActor==='WeaponSlosherBathtub'&&world.hit)
+          s.travel=travelBefore+len*Math.max(0,Math.min(1,stop));
         if(finishContact(this,p,world))return true;
       }
       if(!p.ghost&&!d.splashDropSpec&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){

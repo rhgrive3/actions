@@ -47,6 +47,44 @@ test('Bloblobber bubbles grow over five frames and shrink 25% each rebound',()=>
   assert.ok(catalogReboundSeparation(unit.CollisionParam.EndRadiusForField*.75)>.56);
 });
 
+test('actual Bloblobber projectile rebounding preserves swept travel, sourced paint taper and ghost safety',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
+    extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
+  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
+  const r=record('WeaponSlosherBathtub'),a=f.make(r.id);
+  a.form='kid';a.ink=100;a.intent.fire=true;f.tick(a,50);a.intent.fire=false;
+  const p=f.G.projectiles.list.find(x=>x.catalog?.r?.sourceActor==='WeaponSlosherBathtub'&&x.catalog.descriptor.unit===0);
+  assert.ok(p,'actual main-weapon firing creates the first Bloblobber bubble');
+  p.pos.set(0,5,0);p.prev.copy(p.pos);p.start.copy(p.pos);
+  p.vel.set(0,-12,0);p.age=0;p.catalog.travel=0;p.catalog.carry=0;p.catalog.phase=0;
+  let normalY=1;
+  f.G.physics.level=null;
+  f.G.physics.segment=(from,to,hit)=>{
+    hit.hit=true;hit.dist=from.distanceTo(to)*.5;
+    hit.point.copy(from).lerp(to,.5);hit.normal.set(normalY?0:1,normalY,0);
+    hit.face=-1;return hit;
+  };
+  const paints=[];f.G.paint.splat=(_point,radius)=>{paints.push(radius);return 0;};
+  const speed=p.vel.length();
+  assert.equal(f.G.projectiles._step(p,1/60),false,'first floor bounce continues');
+  assert.equal(p.catalog.groundBounces,1);
+  assert.ok(Math.abs(p.catalog.travel-speed/120)<1e-8,'unused half of collided sweep is not charged to reach');
+  assert.equal(f.G.projectiles._step(p,1/60),false,'second floor bounce continues');
+  assert.equal(p.catalog.groundBounces,2);
+  assert.deepEqual(paints.map(x=>Math.round(x*1000000)/1000000),[1.65,1.4025],
+    'existing paint owner applies the sourced 0.85 subsequent-bounce footprint');
+  normalY=0;p.ghost=true;
+  const wallSpeed=p.vel.length();
+  assert.equal(f.G.projectiles._step(p,1/60),false,'wall bounce remains valid after two floors');
+  assert.equal(p.catalog.groundBounces,2,'walls do not consume floor bounce allowance');
+  assert.equal(p.catalog.bounces,3);
+  assert.ok(Math.abs(p.vel.length()-wallSpeed*.8)<1e-7,'wall contact multiplies flight speed by 0.8');
+  assert.equal(paints.length,2,'ghost rebound never owns a turf splat');
+  normalY=1;
+  assert.equal(f.G.projectiles._step(p,1/60),true,'third floor hit terminates');
+  assert.equal(paints.length,2,'ghost terminal contact never adds paint');
+});
+
 test('long-range Shooter keeps a compact, non-collision-sized visual rod',()=>{
   for(const name of ['WeaponShooterLong','WeaponShooterExpert']){
     const r=record(name),v=catalogVisualSpec(r,{b:r.parameters,c:r.parameters.CollisionParam});
