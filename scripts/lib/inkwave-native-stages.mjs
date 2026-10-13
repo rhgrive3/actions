@@ -27,7 +27,7 @@ export function nativeStageCatalog(definitions=path.join(NATIVE_ROOT,'definition
     patterns.forEach(p=>new RegExp(p));
    }
   }
-  if(s.sourceNavigation!==undefined&&(!s.sourceNavigation||typeof s.sourceNavigation!=='object'||Array.isArray(s.sourceNavigation)||!Object.keys(s.sourceNavigation).length||Object.entries(s.sourceNavigation).some(([k,v])=>!['wallClimb','highDrops','wallSurge','wallJumpAttach'].includes(k)||v!==true)))throw Error('Invalid inferred source navigation: '+file);
+  if(s.sourceNavigation!==undefined&&(!s.sourceNavigation||typeof s.sourceNavigation!=='object'||Array.isArray(s.sourceNavigation)||!Object.keys(s.sourceNavigation).length||Object.entries(s.sourceNavigation).some(([k,v])=>!['wallClimb','highDrops','wallSurge','wallJumpAttach','wallApproach'].includes(k)||v!==true)))throw Error('Invalid inferred source navigation: '+file);
   stages.push(s);
  }
  return {stages,unavailableStages};
