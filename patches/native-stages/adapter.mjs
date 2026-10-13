@@ -13,7 +13,16 @@ export function adaptNativeStages(rel,code){
   once("const sc = f.closest('.iw-rows');", "const sc = f.closest('.iw-rows, .iw-ss__list');");
  }
  if(rel==='src/main.js'){
-  code="import { nativeStageEnabled, NATIVE_IDS } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeStageEnabled, NATIVE_IDS } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld, nativeSpawnYaw, nativeArenaBasis } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('this.rig.yaw = m.local.team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, m.local.team, m.local.team === 0 ? 0 : Math.PI);');
+  once('this.rig.yaw = team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, team, team === 0 ? 0 : Math.PI);');
+  once('    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});', `    const nativeBasis = nativeArenaBasis(L);
+    if (nativeBasis) {
+      const fx=nativeBasis.forward.x*sgn, fz=nativeBasis.forward.z*sgn;
+      to.set(pad.x-fx*(I?.toBack??5.2),pad.y+2.6,pad.z-fz*(I?.toBack??5.2));
+      lookTo.set(pad.x+fx*6,pad.y+1.6,pad.z+fz*6);
+    }
+    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});`);
   once('if (this._builtQuality !== this.settings?.quality) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });', 'if (this._builtQuality !== this.settings?.quality) await applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });');
   once('    this._builtQuality = this.settings?.quality;',`    if (nativeStageEnabled && NATIVE_IDS.includes(layoutId)) {
       await buildNativeWorld(this, map, worldCurrent); return;
