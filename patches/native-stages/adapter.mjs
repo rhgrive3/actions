@@ -95,12 +95,16 @@ export function adaptNativeStages(rel,code){
     return this.grid[k];`);
  }
  if(rel==='src/game/bots.js'){
-  code="import { nativePaintGoalIds,updateNativeJumpAttach,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop,updateNativeSurge,nativeSourceWaypointReached,nativeSourceTravelInput,nativeOrdinaryJumpInput,nativeSourceGroundedForm,nativeTowerRider } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
-  once('    this.think -= dt; this.jumpCd -= dt;', '    if (!nativeTowerRider(G,this.a) && (updateNativeJumpAttach(this,G,dt)||updateNativeSurge(this,G,dt)||updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt))) { this._nativeTraversalHandled=true; return; }\n    this.think -= dt; this.jumpCd -= dt;');
-  once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, G.level.native ? Math.max(6000, nav.nodes.length * 4) : undefined);');
+  code="import { nativeCombatPathGoal,nativeCombatWet,nativePaintGoalIds,nativeApproachEdgeAllowed,updateNativeApproach,updateNativeJumpAttach,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop,updateNativeSurge,nativeSourceWaypointReached,nativeSourceTravelInput,nativeOrdinaryJumpInput,nativeOrdinaryJumpCommitted,nativeSourceGroundedForm,nativeTowerRider } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('    this.think -= dt; this.jumpCd -= dt;', '    if (!nativeTowerRider(G,this.a) && (updateNativeApproach(this,G,dt)||updateNativeJumpAttach(this,G,dt)||updateNativeSurge(this,G,dt)||updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt))) { this._nativeTraversalHandled=true; return; }\n    this.think -= dt; this.jumpCd -= dt;');
+  once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, G.level.native ? Math.max(6000, nav.nodes.length * 4) : undefined, G.level.native && G.level.manifest?.sourceNavigation?.wallApproach ? edge=>nativeApproachEdgeAllowed(this.a,edge) : undefined);');
+  once('  _wet(x, z, y) { const gy =', '  _wet(x, z, y) { const sourceWet=nativeCombatWet(this,G,x,z,y); if(sourceWet!==null)return sourceWet; const gy =');
+  once('    const g = nav.nearest(pos, maxUp);','    const g = nativeCombatPathGoal(this,G,pos,nav.nearest(pos,maxUp));');
+  once('    this.path = p; this.pi =', '    if (G.level.native) this._nativeCombatPath={nav,level:G.level,physics:G.physics,path:p,goal:g};\n    this.path = p; this.pi =');
+  once('      if (this.repath <= 0) this._pathTo(this.target.pos, 0.6);','      if (this.repath <= 0 && !nativeOrdinaryJumpCommitted(this,G)) this._pathTo(this.target.pos, 0.6);');
 
   once('this.pi + 7', 'this.pi + (G.level.native ? 1 : 7)');
-  once("nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump'", "(nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump' && (!(G.level.manifest?.sourceNavigation?.wallClimb || G.level.manifest?.sourceNavigation?.wallSurge) || nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'climb'))");
+  once("nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump'", "(nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump' && (!(G.level.manifest?.sourceNavigation?.wallClimb || G.level.manifest?.sourceNavigation?.wallSurge || G.level.manifest?.sourceNavigation?.wallApproach) || nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'climb'))");
   once('  _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {', '  _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {\n    if (!nativeTowerRider(G,this.a)) { nativeClimbTravelForm(this,G); nativeDropTravelForm(this,G); }');
   once('dx * dx + dz * dz < 0.6 * 0.6 && dy < 0.9 && dy > -1.8', 'dx * dx + dz * dz < 0.6 * 0.6 && dy < 0.9 && dy > -1.8 && nativeSourceWaypointReached(G,a,n)');
   once('this.noProg > 1.5 && this.path', 'this.noProg > 1.5 && !G.level.native && this.path');
@@ -124,6 +128,8 @@ export function adaptNativeStages(rel,code){
  if(rel==='src/game/nav.js'){
   code="import { buildNativeNav } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('  _build() {','  _build() {\n    if (this.level.native) return buildNativeNav(this);');
+  once('  path(a, b, team, maxIter = 6000) {', '  path(a, b, team, maxIter = 6000, acceptEdge = null) {');
+  once('      for (const e of n.nb) {', '      for (const e of n.nb) {\n        if (acceptEdge && !acceptEdge(e)) continue;');
  }
  if(rel==='src/game/minimap.js'){
   code="import { buildNativeMinimap } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
