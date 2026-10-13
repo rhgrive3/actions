@@ -1,0 +1,1279 @@
+{
+  "schema": 1,
+  "status": "source-files-and-six-fixed-game-cases-passed-peer-pending",
+  "foundation": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
+  "commonHead": "053f3be0b798f2bd5e4a5cfe77e3bfa1df8b2fde",
+  "runtimeBase": "9e74722b",
+  "privateContextHead": "b0d311be",
+  "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+  "physicalKernel": {
+    "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "sourceUnchanged": true,
+    "cases": [
+      {
+        "hz": 30,
+        "seconds": 0.8333333333333334,
+        "start": [
+          -19,
+          3.1329336849707907,
+          -9.5
+        ],
+        "goal": [
+          -21,
+          3.0000000000000036,
+          -11.5
+        ],
+        "end": [
+          -20.830074086024148,
+          3,
+          -11.330074086024148
+        ],
+        "route": [
+          4878,
+          4817,
+          4755
+        ],
+        "sourcePaintTriangle": 114979,
+        "sourcePaintFace": 35111,
+        "paintedCells": 512,
+        "naturalLowInk": 7.9999999999998455,
+        "preparationFrames": 299,
+        "ordinaryAutomaticRefill": true,
+        "friendlyTerrain": true,
+        "forms": [
+          "kid",
+          "squid"
+        ],
+        "kidTicks": 23,
+        "continuousActualCapsuleSamples": 336,
+        "continuousActualCapsuleFailures": 0,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "weapon": "Shooter_Normal_00",
+        "gearAP": 0
+      },
+      {
+        "hz": 60,
+        "seconds": 0.9,
+        "start": [
+          -19,
+          3.1329336849707907,
+          -9.5
+        ],
+        "goal": [
+          -21,
+          3.0000000000000036,
+          -11.5
+        ],
+        "end": [
+          -20.8275581645133,
+          3,
+          -11.327558164513297
+        ],
+        "route": [
+          4878,
+          4817,
+          4755
+        ],
+        "sourcePaintTriangle": 114979,
+        "sourcePaintFace": 35111,
+        "paintedCells": 515,
+        "naturalLowInk": 7.9999999999998455,
+        "preparationFrames": 597,
+        "ordinaryAutomaticRefill": true,
+        "friendlyTerrain": true,
+        "forms": [
+          "kid",
+          "squid"
+        ],
+        "kidTicks": 51,
+        "continuousActualCapsuleSamples": 669,
+        "continuousActualCapsuleFailures": 0,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "weapon": "Shooter_Normal_00",
+        "gearAP": 0
+      },
+      {
+        "hz": 120,
+        "seconds": 0.8583333333333333,
+        "start": [
+          -19,
+          3.1329336849707907,
+          -9.5
+        ],
+        "goal": [
+          -21,
+          3.0000000000000036,
+          -11.5
+        ],
+        "end": [
+          -20.825045456456145,
+          3,
+          -11.325045456456142
+        ],
+        "route": [
+          4878,
+          4817,
+          4755
+        ],
+        "sourcePaintTriangle": 114979,
+        "sourcePaintFace": 35111,
+        "paintedCells": 515,
+        "naturalLowInk": 7.9999999999998455,
+        "preparationFrames": 1194,
+        "ordinaryAutomaticRefill": true,
+        "friendlyTerrain": true,
+        "forms": [
+          "kid",
+          "squid"
+        ],
+        "kidTicks": 96,
+        "continuousActualCapsuleSamples": 1327,
+        "continuousActualCapsuleFailures": 0,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "weapon": "Shooter_Normal_00",
+        "gearAP": 0
+      }
+    ],
+    "conditions": "Actual source-supported initial poses, production Character/Actor/ordinary BotBrain, natural Shooter through WeaponRunner/projectiles, initially empty paint, zeroAP, no later pose/velocity/ink/ownership assignments. Every initial/prepaint/moving capsule and final source-foot support verified. Controlled CPU kernel30/60/120; optional source-motion playback unavailable. No whole-bank or production variable-physics claim."
+  },
+  "sourceContracts": {
+    "tests": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "durationMilliseconds": 153789.278077,
+    "evidence": ".browser-evidence/grounded-form/source-current.tap"
+  },
+  "defaults": {
+    "tests": 20,
+    "passed": 13,
+    "failed": 0,
+    "optionalFixtureSkips": 7,
+    "durationMilliseconds": 39686.264147,
+    "evidence": ".browser-evidence/grounded-form/default-current.tap"
+  },
+  "buildBinding": {
+    "private": {
+      "site": "/workspace/stage-worktrees/bluefin-grounded-form/_site-native-grounded-form-source-tracked",
+      "contentHash": "6e27f7b17b418ff747178d66284f9da97a2c2c408bfc02a388d6c2213d77f096",
+      "inputHash": "6c883799f208affc1502b19bfd80128ffd2a67570f7744ab2f99ddb3a85a042b",
+      "revision": "5d42ad9848a708fc4acec821396acd9a49166182e43753a88208a753e838097f",
+      "emitted": {
+        "patches/native-stages/runtime/engine.mjs": "aeb7b80f18d9f0b5c19848e8093d573c730d47c87e0e43063f95c0363f1d220f",
+        "src/game/bots.js": "f152f8ce75806b1ec7dedaa5cf2f063dc244648b504e99bab2fe636cbb72ecfe",
+        "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
+        "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+        "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04"
+      }
+    },
+    "public": {
+      "site": "/workspace/stage-worktrees/bluefin-grounded-form/_site-native-grounded-form-public",
+      "contentHash": "10f35667ce8ee9f12210127964ec7a65a0f820c2d232021dd7bc7af5a9f97ff6",
+      "inputHash": "c44eb8cf10ee903ca7f390a6fe7b04376402d704cf1a94f2790f9f7cc2ee1880",
+      "revision": "27a81ac807aba6c2603c60390ab76e070eb1c0f03811da89142a698e6845ad02",
+      "emitted": {
+        "patches/native-stages/runtime/engine.mjs": "aeb7b80f18d9f0b5c19848e8093d573c730d47c87e0e43063f95c0363f1d220f",
+        "src/game/bots.js": "f152f8ce75806b1ec7dedaa5cf2f063dc244648b504e99bab2fe636cbb72ecfe",
+        "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
+        "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+        "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04"
+      }
+    },
+    "baseline": {
+      "site": "/workspace/stage-worktrees/bluefin/_site-native-bluefin-form-baseline",
+      "contentHash": "32d89d81d5789c94b3408a21d3a517503f360c333d7b4b25d4bbff9c36aca6e7",
+      "inputHash": "1ba332f1b999d15592762ba866b544c4769fcd80204d2f7a880021c7c5757019",
+      "revision": "766fd625c00d8a0353b9817c0bd080ba7c28ba2031da7647c7b41b892df2165b",
+      "emitted": {
+        "patches/native-stages/runtime/engine.mjs": "45ba69cfca49f25e0260574a44f5d8206abef806541d36b5af5f78534e0fda5a",
+        "src/game/bots.js": "28ecb6ef1270955e96812e25795c93d0512aec4181f075125c3f1dcefc690ff4",
+        "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
+        "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+        "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04"
+      }
+    },
+    "privatePublicRuntimeEqual": true
+  },
+  "privatePackaging": {
+    "tests": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": ".browser-evidence/grounded-form/packaging-private-tracked.tap"
+  },
+  "publicPackaging": {
+    "tests": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "evidence": ".browser-evidence/grounded-form/packaging-public.tap"
+  },
+  "budgets": {
+    "private-tracked": {
+      "status": "passed",
+      "revision": "5d42ad9848a708fc4acec821396acd9a49166182e43753a88208a753e838097f",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2754924,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5856555,
+      "workerBytes": 71147,
+      "declaredBytes": 10477247,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "public": {
+      "status": "passed",
+      "revision": "27a81ac807aba6c2603c60390ab76e070eb1c0f03811da89142a698e6845ad02",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2756635,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5858266,
+      "workerBytes": 71147,
+      "declaredBytes": 10478958,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "scope": "Ordinary grounded native walk input form only. Real static foot-support polyline and continuous exact source SQ/kid capsules. No source, geometry, physics, ground-snap, velocity, paint ownership, Nav or stage flag changes. Existing Actor owns form transition and movement. Active combat/jump/special/initial spawn/superjump/typed wall/drop/Tower and legacy guards retained. Other unsafe or unsupported paths are not admitted.",
+  "retainedNegatives": {
+    "originalRaw30OrdinaryContact": {
+      "source": "SlopeFramePlate",
+      "triangles": [
+        102721,
+        102542
+      ],
+      "maximumPenetration": 0.0573779166545717,
+      "baselineEvidence": "/workspace/stage-worktrees/bluefin/.browser-evidence/current-main-calibration/negative-continuous/current-trace.tap"
+    },
+    "initialStraightInterpolationPrototype": {
+      "status": "failed-original-contact-retained",
+      "evidence": ".browser-evidence/grounded-form/cpu-kernel.tap"
+    },
+    "raw30PlainClimbCrest": {
+      "status": "retained-kernel-stress-separate-from-production-fixed60",
+      "from": [
+        -26.8249,
+        8.010433192225129,
+        -18.500557595776147
+      ],
+      "to": [
+        -26.830954824596912,
+        8.265009996602076,
+        -18.50027720324985
+      ],
+      "owner": "Manta traversal",
+      "evidence": ".browser-evidence/grounded-form/source-kernel-v2.tap",
+      "sourceContact": {
+        "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+        "from": [
+          -26.8249,
+          8.010433192225129,
+          -18.500557595776147
+        ],
+        "to": [
+          -26.830954824596912,
+          8.265009996602076,
+          -18.50027720324985
+        ],
+        "rows": [
+          {
+            "form": "squid",
+            "radius": 0.675,
+            "lift": 0.16,
+            "height": 0.55,
+            "skipGrates": true,
+            "fromBodyFits": true,
+            "toBodyFits": true,
+            "sweepClear": false,
+            "sourceContacts": [
+              {
+                "triangle": 87678,
+                "face": 28143,
+                "object": "FldObj_Ruins03PntStage_pCube194326_1__WallBrokenPink",
+                "flags": 3,
+                "normal": [
+                  0,
+                  0.9999977946281433,
+                  -0.0020879460498690605
+                ],
+                "axisDistance": 0.6710010653135607,
+                "penetration": 0.003998934686439304,
+                "closestAxis": [
+                  -26.829188639508917,
+                  9.025750247464245,
+                  -18.500358993414174
+                ],
+                "closestSource": [
+                  -27.5,
+                  9.009795712738097,
+                  -18.500325681134267
+                ]
+              },
+              {
+                "triangle": 91052,
+                "face": 29054,
+                "object": "FldObj_Ruins03PntStage_pCube195185_1__WallConcreteBase",
+                "flags": 3,
+                "normal": [
+                  1,
+                  0,
+                  0
+                ],
+                "axisDistance": 0.6710010653135607,
+                "penetration": 0.003998934686439304,
+                "closestAxis": [
+                  -26.829188639508917,
+                  9.025750247464245,
+                  -18.500358993414174
+                ],
+                "closestSource": [
+                  -27.5,
+                  9.009795712738097,
+                  -18.500325681134267
+                ]
+              }
+            ]
+          },
+          {
+            "form": "kid",
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false,
+            "fromBodyFits": true,
+            "toBodyFits": true,
+            "sweepClear": true,
+            "sourceContacts": []
+          }
+        ],
+        "supports": [
+          {
+            "position": [
+              -26.8249,
+              8.010433192225129,
+              -18.500557595776147
+            ],
+            "hit": false,
+            "face": -1,
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              0
+            ],
+            "object": null
+          },
+          {
+            "position": [
+              -26.830954824596912,
+              8.265009996602076,
+              -18.50027720324985
+            ],
+            "hit": false,
+            "face": -1,
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              0
+            ],
+            "object": null
+          }
+        ],
+        "scope": "Read-only immutable source contact diagnosis of retained form-v2/90b raw30Hz plain-climb trajectory. Squid sweep is the actual degenerate vertical-axis capsule. Kid comparison contacts are an axis approximation; authoritative kid clear/bodyFits use installed helpers. No graph, source, ownership or actor state changes."
+      }
+    },
+    "firstPrivatePackaging": {
+      "status": "failed-untracked-private-calibration-definition",
+      "passed": 8,
+      "failed": 1,
+      "evidence": ".browser-evidence/grounded-form/packaging-private.tap",
+      "retiredReceipt": ".browser-evidence/grounded-form/retired-untracked-private/retirement.json"
+    },
+    "mirroredLocalLane": {
+      "status": "old-local-harness-stopped-outside-pruned-source-graph",
+      "evidence": ".browser-evidence/grounded-form/browser-baseline-unreachable-mirror/browser.json",
+      "candidateEvidence": ".browser-evidence/grounded-form/browser-candidate-unreachable-mirror/browser.json",
+      "scope": "Three canonical baseline and candidate cases already passed their respective expectations; mirror-coordinate lookup then stopped. No Nav, stage pads or geometry substituted. Final six local cases use both real team identities on the same original reachable contour."
+    }
+  },
+  "remaining": "Current whole negative-bank original-pad→opposing Y9 bank fixedGame3 is queued. Named independent common peer review pending. Bluefin positive approach and final BOTH-bank stage readiness remain separate.",
+  "unverified": [
+    "Nintendo11.3.0 collision units/body/controller parity",
+    "retail placements and source material semantics",
+    "other-loadout completeness",
+    "hardware or physical mobile FPS"
+  ],
+  "pr": "https://github.com/rhgrive3/actions/pull/1405",
+  "actualGame": {
+    "baseline": {
+      "status": "baseline-blocked",
+      "buildContentHash": "32d89d81d5789c94b3408a21d3a517503f360c333d7b4b25d4bbff9c36aca6e7",
+      "cases": [
+        {
+          "team": 1,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 634,
+          "seconds": 0.26666666666666666,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -19.487085386918718,
+            3,
+            -9.987085386918721
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 516,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 299,
+          "autoRefill": true,
+          "friendly": false,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 633,
+          "capsuleFailure": {
+            "from": [
+              -19.453421060407482,
+              3.2506836248697653,
+              -9.953421060407488
+            ],
+            "to": [
+              -19.487085386918718,
+              3,
+              -9.987085386918721
+            ],
+            "form": "squid",
+            "grounded": true,
+            "actorTick": 634
+          },
+          "arrived": false,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 4.799999997019768,
+            "p95": 19.400000005960464,
+            "max": 42.79999999701977
+          }
+        },
+        {
+          "team": 1,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 633,
+          "seconds": 0.2833333333333333,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -19.487085386918718,
+            3,
+            -9.987085386918721
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 516,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 597,
+          "autoRefill": true,
+          "friendly": false,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 632,
+          "capsuleFailure": {
+            "from": [
+              -19.453421060407482,
+              3.2506836248697653,
+              -9.953421060407488
+            ],
+            "to": [
+              -19.487085386918718,
+              3,
+              -9.987085386918721
+            ],
+            "form": "squid",
+            "grounded": true,
+            "actorTick": 633
+          },
+          "arrived": false,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 2,
+            "p95": 4.0999999940395355,
+            "max": 25.19999998807907
+          }
+        },
+        {
+          "team": 1,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 633,
+          "seconds": 0.2833333333333333,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -19.487085386918718,
+            3,
+            -9.987085386918721
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 516,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 1194,
+          "autoRefill": true,
+          "friendly": false,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 632,
+          "capsuleFailure": {
+            "from": [
+              -19.453421060407482,
+              3.2506836248697653,
+              -9.953421060407488
+            ],
+            "to": [
+              -19.487085386918718,
+              3,
+              -9.987085386918721
+            ],
+            "form": "squid",
+            "grounded": true,
+            "actorTick": 633
+          },
+          "arrived": false,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 1.5999999940395355,
+            "p95": 3.6000000089406967,
+            "max": 24.799999997019768
+          }
+        },
+        {
+          "team": 0,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 634,
+          "seconds": 0.26666666666666666,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -19.487085386918718,
+            3,
+            -9.987085386918721
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 513,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 299,
+          "autoRefill": true,
+          "friendly": false,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 633,
+          "capsuleFailure": {
+            "from": [
+              -19.453421060407482,
+              3.2506836248697653,
+              -9.953421060407488
+            ],
+            "to": [
+              -19.487085386918718,
+              3,
+              -9.987085386918721
+            ],
+            "form": "squid",
+            "grounded": true,
+            "actorTick": 634
+          },
+          "arrived": false,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 4,
+            "p95": 11.099999994039536,
+            "max": 29.599999994039536
+          }
+        },
+        {
+          "team": 0,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 633,
+          "seconds": 0.2833333333333333,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -19.487085386918718,
+            3,
+            -9.987085386918721
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 513,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 597,
+          "autoRefill": true,
+          "friendly": false,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 632,
+          "capsuleFailure": {
+            "from": [
+              -19.453421060407482,
+              3.2506836248697653,
+              -9.953421060407488
+            ],
+            "to": [
+              -19.487085386918718,
+              3,
+              -9.987085386918721
+            ],
+            "form": "squid",
+            "grounded": true,
+            "actorTick": 633
+          },
+          "arrived": false,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 1.7999999970197678,
+            "p95": 4,
+            "max": 26
+          }
+        },
+        {
+          "team": 0,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 633,
+          "seconds": 0.2833333333333333,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -19.487085386918718,
+            3,
+            -9.987085386918721
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 513,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 1194,
+          "autoRefill": true,
+          "friendly": false,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 632,
+          "capsuleFailure": {
+            "from": [
+              -19.453421060407482,
+              3.2506836248697653,
+              -9.953421060407488
+            ],
+            "to": [
+              -19.487085386918718,
+              3,
+              -9.987085386918721
+            ],
+            "form": "squid",
+            "grounded": true,
+            "actorTick": 633
+          },
+          "arrived": false,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 1.4000000059604645,
+            "p95": 4.199999988079071,
+            "max": 26.200000002980232
+          }
+        }
+      ],
+      "errors": [],
+      "conditions": "Matched original-source ordinary grounded form proof through actual Game._frame at render30/60/120; observed Actor/BotBrain fixed STEP1/60; fresh normal eight-actor/seven-bot match; both team identities on the same original canonical source contour (no mirrored-geometry or pad-route claim); source-supported initial setups, actual Shooter naturally drains ink into ordinary automatic refill, empty initial ownership, zeroAP and deterministic0.5 RNG; every preparation/travel capsule and final static source-foot support; no later pose/velocity/ink/ownership writes; SwiftShader only. Scalar metadata returns; screenshot is source display.",
+      "evidence": ".browser-evidence/grounded-form/browser-baseline/browser.json",
+      "screenshotInspected": true,
+      "screenshotScope": "Source display at original local bank, not an image measurement of contour traversal."
+    },
+    "candidate": {
+      "status": "passed",
+      "buildContentHash": "6e27f7b17b418ff747178d66284f9da97a2c2c408bfc02a388d6c2213d77f096",
+      "cases": [
+        {
+          "team": 1,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 670,
+          "seconds": 0.9,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -20.8275581645133,
+            3,
+            -11.327558164513297
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 516,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 299,
+          "autoRefill": true,
+          "friendly": true,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 670,
+          "capsuleFailure": null,
+          "arrived": true,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 5.699999988079071,
+            "p95": 20,
+            "max": 45.79999999701977
+          }
+        },
+        {
+          "team": 1,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 669,
+          "seconds": 0.9,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -20.8275581645133,
+            3,
+            -11.327558164513297
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 516,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 597,
+          "autoRefill": true,
+          "friendly": true,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 669,
+          "capsuleFailure": null,
+          "arrived": true,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 2.5,
+            "p95": 5.4000000059604645,
+            "max": 25.600000008940697
+          }
+        },
+        {
+          "team": 1,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 669,
+          "seconds": 0.9,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -20.8275581645133,
+            3,
+            -11.327558164513297
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 516,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 1194,
+          "autoRefill": true,
+          "friendly": true,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 669,
+          "capsuleFailure": null,
+          "arrived": true,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 1.699999988079071,
+            "p95": 3.7000000029802322,
+            "max": 26.100000008940697
+          }
+        },
+        {
+          "team": 0,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 670,
+          "seconds": 0.9,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -20.8275581645133,
+            3,
+            -11.327558164513297
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 513,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 299,
+          "autoRefill": true,
+          "friendly": true,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 670,
+          "capsuleFailure": null,
+          "arrived": true,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 4.200000002980232,
+            "p95": 12,
+            "max": 26.30000001192093
+          }
+        },
+        {
+          "team": 0,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 669,
+          "seconds": 0.9,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -20.8275581645133,
+            3,
+            -11.327558164513297
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 513,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 597,
+          "autoRefill": true,
+          "friendly": true,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 669,
+          "capsuleFailure": null,
+          "arrived": true,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 2.0999999940395355,
+            "p95": 4.5,
+            "max": 52.70000000298023
+          }
+        },
+        {
+          "team": 0,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "actorIntervals": [
+            0.016666666666666666
+          ],
+          "brainIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 669,
+          "seconds": 0.9,
+          "start": [
+            -19,
+            3.1329336849707907,
+            -9.5
+          ],
+          "goal": [
+            -21,
+            3.0000000000000036,
+            -11.5
+          ],
+          "end": [
+            -20.8275581645133,
+            3,
+            -11.327558164513297
+          ],
+          "route": [
+            4878,
+            4817,
+            4755
+          ],
+          "sourcePaintTriangle": 114979,
+          "sourcePaintFace": 35111,
+          "paintedCells": 513,
+          "naturalLowInk": 7.9999999999998455,
+          "preparationFrames": 1194,
+          "autoRefill": true,
+          "friendly": true,
+          "forms": [
+            "kid",
+            "squid"
+          ],
+          "capsuleSamples": 669,
+          "capsuleFailure": null,
+          "arrived": true,
+          "alive": true,
+          "grounded": true,
+          "gearAP": [],
+          "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+          "sourceCollisionDigest": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225",
+          "sourceUnchanged": true,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "verifiedFrameMilliseconds": {
+            "p50": 1.5,
+            "p95": 4.300000011920929,
+            "max": 28.900000005960464
+          }
+        }
+      ],
+      "errors": [],
+      "conditions": "Matched original-source ordinary grounded form proof through actual Game._frame at render30/60/120; observed Actor/BotBrain fixed STEP1/60; fresh normal eight-actor/seven-bot match; both team identities on the same original canonical source contour (no mirrored-geometry or pad-route claim); source-supported initial setups, actual Shooter naturally drains ink into ordinary automatic refill, empty initial ownership, zeroAP and deterministic0.5 RNG; every preparation/travel capsule and final static source-foot support; no later pose/velocity/ink/ownership writes; SwiftShader only. Scalar metadata returns; screenshot is source display.",
+      "evidence": ".browser-evidence/grounded-form/browser-candidate/browser.json",
+      "screenshotInspected": true,
+      "screenshotScope": "Source display at original local bank, not an image measurement of contour traversal."
+    },
+    "candidateTotalClearCapsules": 4016,
+    "canonicalSameSourceContour": true,
+    "mirroredGeometryOrOriginalPadRouteClaim": false
+  },
+  "sourceModuleSHA256": {
+    "patches/native-stages/runtime/native-bot-form.mjs": "eb406f8f37f09eb6028dae239b25693fa1cec0bc9c861a7583d160f54990792a",
+    "patches/native-stages/adapter.mjs": "d3b25ed9b054389d8de518ce68d2562a1104987e3fce97e1dc7ec2a366c9d409",
+    "patches/native-stages/runtime/engine.mjs": "2ba6798e51a6c79b76baf55af53f371d4070769aada41ae61e4bd1fd8fad1fcf",
+    "scripts/check-inkwave-native-grounded-form.mjs": "b6118b7f91dbb62c3b7453ccf583a0d8451352ba8629a45378291cd485c845ee"
+  }
+}
