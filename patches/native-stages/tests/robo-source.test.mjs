@@ -21,12 +21,12 @@ test('Robo signed Float32 attribute bits and uint32 faces preserve the independe
  const d=readStage(ROOT,'robo'),objects=d.manifest.objects,bits=new Uint32Array(d.vertices.buffer),scratch=new Float32Array(1),scratchBits=new Uint32Array(scratch.buffer),uvRows=[];
  for(const o of objects)if(o.sourceHasUV)for(let i=0;i<o.vc;i++)uvRows.push(o.vo+i);
  const sameBits=(value,index)=>{scratch[0]=Number(value);assert.equal(bits[index],scratchBits[0],`original Float32 bits at ${index}`);};
- let oi=-1,vertexOffset=0,indexOffset=0,positionCount=0,normalCount=0,uvCount=0;
+ let oi=-1,vertexOffset=0,normalOffset=0,uvOffset=0,indexOffset=0,positionCount=0,normalCount=0,uvCount=0;
  const lines=readline.createInterface({input:fs.createReadStream(path.join(SOURCE,'Vss_Cross00','Vss_Cross00.obj')),crlfDelay:Infinity});
  for await(const line of lines){
   if(line.startsWith('o ')){
    if(oi>=0){assert.equal(indexOffset,objects[oi].io+objects[oi].ic);vertexOffset+=objects[oi].vc;}
-   oi++;assert.equal(line.slice(2).trim(),objects[oi].name);assert.equal(vertexOffset,objects[oi].vo);
+   oi++;assert.equal(line.slice(2).trim(),objects[oi].name);assert.equal(vertexOffset,objects[oi].vo);normalOffset=normalCount;uvOffset=uvCount;
   }else if(line.startsWith('v ')){
    const values=line.trim().split(/\s+/);for(let k=0;k<3;k++)sameBits(values[k+1],positionCount*8+k);positionCount++;
   }else if(line.startsWith('vn ')){
@@ -34,7 +34,13 @@ test('Robo signed Float32 attribute bits and uint32 faces preserve the independe
   }else if(line.startsWith('vt ')){
    const values=line.trim().split(/\s+/);for(let k=0;k<2;k++)sameBits(values[k+1],uvRows[uvCount]*8+6+k);uvCount++;
   }else if(line.startsWith('f ')){
-   const face=line.slice(2).trim().split(/\s+/).map(t=>Number(t.split('/')[0])-1-vertexOffset);
+   const face=line.slice(2).trim().split(/\s+/).map(t=>{
+    const ref=t.split('/'),v=Number(ref[0])-1-vertexOffset;
+    assert.equal(Number(ref[2])-1-normalOffset,v,'original normal reference follows its preserved vertex row');
+    assert.equal(Boolean(ref[1]),!!objects[oi].sourceHasUV,'original face texture-reference availability');
+    if(ref[1])assert.equal(Number(ref[1])-1-uvOffset,v,'original UV reference follows its preserved vertex row');
+    return v;
+   });
    for(let j=1;j<face.length-1;j++)for(const k of [0,j,j+1])assert.equal(d.indices[indexOffset++],face[k]);
   }
  }
