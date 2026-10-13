@@ -141,6 +141,7 @@ export function updateNativeApproach(brain,G,dt){
  brain.pi=index;brain.noProg=0;input.fire=input.squid=input.jump=input.sub=input.special=input.throw=false;input.move.set(0,0,0);
  // Nearby supports can share a height; prove the requested jump before any landing steering.
  if((c.kind==='gap-jump'&&state.phase==='flight'||c.kind==='approach'&&state.phase==='attach')&&(a.s3JumpSerial||0)===state.jumpSerial&&a.grounded){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return true;}
+ if(c.kind==='gap-jump'&&state.phase==='flight'&&a.grounded&&(Math.hypot(a.pos.x-goal.x,a.pos.z-goal.z)>.25||Math.abs(a.pos.y-goal.y)>.16||!nativeSourceFootSupported(G,a,to))){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return true;}
  if(a.grounded&&nativeSourceFootSupported(G,a,to)){
   const delta=goal.clone().sub(a.pos).setY(0);if(delta.length()<.18&&Math.hypot(a.vel.x,a.vel.z)<.65){brain.pi=index+1;brain._nativeApproach=null;return false;}
   if(state.phase==='human'||state.phase==='flight'){const length=delta.length();if(length>1e-6)input.move.copy(delta).multiplyScalar(Math.min(.35,Math.max(.03,(length-.09)*.65))/length);return true;}
