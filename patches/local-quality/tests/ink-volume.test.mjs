@@ -151,31 +151,54 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   assert.equal(await ready,null);assert.match(late.inkVolumeError,/disposed/);assert.equal(late.inkVolumes,undefined);assert.equal(late.inkVolumeReady,null);
   f.FX.prototype.loadInkVolume=originalLoad;f.setInkVolumeTestURL(undefined);
 });
-test('actual composed Roller shots retain gameplay data and use the existing _draw pass', async () => {
-  const f = await api(), actor = f.make('roller'); f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
-  actor.intent.fire = true; f.tick(actor, 40); actor.intent.fire = false;
-  const system = f.G.projectiles; assert(system.list.length > 0);
-  const before = system.list.map(p => [p.damage,p.radius,p.life,p.grav,p.drag,p.pos.toArray(),p.vel.toArray(),p.seed,p.sats]);
-  const calls = []; f.G.fx = { inkVolumes: { isInkVolumes: true, assets:new Map(), begin: () => calls.push('begin'), submit: (name,p,size) => { calls.push([name,p,size]);return true; }, end: () => calls.push('end') } };
-  system._draw(); assert.equal(calls[0], 'begin'); assert.equal(calls.at(-1), 'end'); assert(calls.some(c=>Array.isArray(c)&&c[0]==='roller'));
-  assert.deepEqual(system.list.map(p => [p.damage,p.radius,p.life,p.grav,p.drag,p.pos.toArray(),p.vel.toArray(),p.seed,p.sats]), before);
-  assert.equal(system.blobs.count, 0);
-  for (const p of system.list) p._inkVolumeRecipe=null;
-  system._draw(); assert(system.blobs.count > 0, 'other weapon/mode remains on existing renderer');
-  // Replay actual JSON wire births: remote owner mode/weapon may already have
-  // changed, and current vertical source-guided heads share nose/tail values
-  // with horizontal ones. Classification must wait for immutable metadata.
+test('actual composed Roller shots retain gameplay data and use the live native VFX mesh', async () => {
+  const f=await api(),actor=f.make('roller');f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+  actor.intent.fire=true;f.tick(actor,40);actor.intent.fire=false;
+  const system=f.G.projectiles;assert.ok(system.list.length>0);
+  const gameplay=()=>system.list.map(p=>[p.damage,p.radius,p.life,p.grav,p.drag,p.pos.toArray(),p.vel.toArray(),p.seed,p.sats]);
+  const before=JSON.stringify(gameplay()),calls=[];
+  f.G.fx={inkVolumes:{isInkVolumes:true,assets:new Map(),begin:()=>calls.push('begin'),
+    submit:(name,p,size)=>{calls.push([name,p,size]);return true;},end:()=>calls.push('end')}};
+  system._draw();
+  assert.equal(calls[0],'begin');assert.equal(calls.at(-1),'end');
+  assert.equal(typeof system.syncVisuals,'function','native history draw replaces former volume requests');
+  system.syncVisuals(1);
+  const v=system.projectileVisuals;
+  assert.ok(v.mesh.visible&&v.geometry.drawRange.count>0&&v.stats.drawCalls===1,'one actual Roller mesh batch');
+  assert.ok(system.list.every(p=>v.handles(p)),'all live native Roller heads are represented');
+  assert.equal(system.blobs.count,0,'do not paint duplicate legacy blobby heads');
+  assert.equal(JSON.stringify(gameplay()),before,'rendering never modifies damage, range or physics');
+
+  // Clearing a legacy ink-volume recipe must not suppress the new history
+  // surface or mutate gameplay. The authored VFX is now its own draw owner.
+  for(const p of system.list)p._inkVolumeRecipe=null;
+  system._draw();system.syncVisuals(1);
+  assert.ok(v.mesh.visible&&v.stats.vertexCount>0,'draw history stays present without volume recipe');
+
+  // Replay actual JSON wire births; the recipient's selected weapon and mode
+  // can differ from the immutable projectile birth packet.
   f.G.netm=new f.NetMatch({myId:7},{});actor.nid=7;
   const peer=f.make('shooter');peer.remote=true;peer.nid=9;peer.team=1;
-  for(const vertical of [false,true]){
+  for(const vertical of[false,true]){
     system.clear();f.G.netm.out.length=0;actor.weaponRunner.s3FlickVertical=vertical;
     system.fireFlick(actor,actor.weapon);
     const packets=JSON.parse(JSON.stringify(f.G.netm.out.filter(e=>e[1]==='p')));
-    assert(packets.length>0);const snapshot=JSON.stringify(packets);
+    assert.ok(packets.length>0);
+    const snapshot=JSON.stringify(packets);
     system.clear();peer.weaponRunner.s3FlickVertical=!vertical;
     for(const packet of packets)system.ghostProjectile(peer,packet);
-    assert.equal(JSON.stringify(packets),snapshot,'renderer does not change network packets');assert.equal(system.list.length,packets.length);
-    for(const p of system.list){assert.equal(p._inkVolumeHorizontal,!vertical);assert.equal(p._inkVolumeRecipe,vertical?'roller-vertical':'roller-horizontal');assert.equal(p.s3Vertical,vertical);assert.equal(p.wid,'roller');assert.equal(p.damage,0);assert.equal(p.ghost,true);assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());}
-    calls.length=0;system._draw();assert.equal(calls.filter(c=>Array.isArray(c)&&c[0]==='roller').length,packets.length,'both flick modes now use their sourced radii and shared animation');
+    assert.equal(JSON.stringify(packets),snapshot,'renderer must not edit network packets');
+    assert.equal(system.list.length,packets.length);
+    for(const p of system.list){
+      assert.equal(p._inkVolumeHorizontal,!vertical);
+      assert.equal(p._inkVolumeRecipe,vertical?'roller-vertical':'roller-horizontal');
+      assert.equal(p.s3Vertical,vertical);assert.equal(p.wid,'roller');
+      assert.equal(p.damage,0);assert.equal(p.ghost,true);
+      assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());
+    }
+    calls.length=0;system._draw();system.syncVisuals(1);
+    assert.ok(v.mesh.visible&&v.stats.vertexCount>=packets.length*13*12,
+      'remote Roller source head uses actual geometry for either flick mode');
+    assert.ok(system.list.every(p=>v.handles(p)),'visual routing uses birth metadata, not remote equipped weapon');
   }
 });
