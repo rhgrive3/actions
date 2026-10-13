@@ -47,6 +47,16 @@ edge guard accepts the distant lower hull as ground. That native combat support
 correction is root-owned and unresolved; no hull, roof or NoPaint surface is
 removed to hide the failure.
 
+An experimental exact root combat helper overlay on that original immutable
+artifact confirms the opponent's actual nearest node 28973 lies in enemy spawn
+zone 1, where ordinary A* returns null. The candidate preserves the existing
+valid nonenemy goal 27627 and successfully replans its 43-node source path.
+The full-bank assertion still fails: a later .5-source-unit jump receives
+ordinary jump input without increasing the jump serial, the path clears, and
+the bot departs the same roof with Trizooka charging at the final failure.
+The precise special state before departure remains to be observed. This
+candidate is unaccepted and is kept separate from the packaged runtime proof.
+
 A separate navigation trial places the other seven real actors on genuine
 supported own-bank surfaces outside the intended route's 21-unit awareness
 range. This isolates navigation without changing perception or authored pads.

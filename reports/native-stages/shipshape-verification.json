@@ -34149,5 +34149,117 @@
       ]
     },
     "stageReady": false
+  },
+  "experimentalCombatProtectedGoalOverlay": {
+    "status": "failed",
+    "accepted": false,
+    "stageReady": false,
+    "artifact": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+    "helperCommit": "310ea90f22d12bc0e7c8d685a97c169101878560",
+    "helperSha256": "e3e8c2ef2e2aa1343c226d2e60e5f936286290d0c72c9f981e12e16f173c22d3",
+    "seams": "Exact helper _wet with original null fallback; original _pathTo existing-node-coordinate replan with matching nearest-ID assertion and actual-success metadata stamping only.",
+    "recipe": "inkwave-browser-source-v4",
+    "actors": 8,
+    "bots": 7,
+    "renderHz": 30,
+    "actualSimulationStep": 0.016666666666666666,
+    "seconds": 73.9,
+    "maxSupportedZ": 46.36694945652402,
+    "unqualifiedDeparture": true,
+    "end": [
+      17.12043010084601,
+      4.862500190734863,
+      46.27585673957844
+    ],
+    "pathGoalReplans": [
+      {
+        "tickTime": 95.26666666666254,
+        "team": 0,
+        "mode": "fight",
+        "position": [
+          18.500000000000046,
+          6,
+          45.36189082515704
+        ],
+        "target": {
+          "team": 1,
+          "slot": 3,
+          "alive": true,
+          "position": [
+            9.95,
+            6.050000190734863,
+            64.5
+          ]
+        },
+        "sourceId": 25305,
+        "targetId": 28973,
+        "targetZone": 1,
+        "originalDirectPlan": null,
+        "selectedId": 27627,
+        "selectedZone": -1,
+        "selectedValid": true,
+        "previousGoal": 27627,
+        "previousPathIdentity": true,
+        "previousWorldIdentity": true,
+        "success": true,
+        "actualGoal": 27627,
+        "actualPathNodes": 43,
+        "sameGoal": true
+      }
+    ],
+    "mode": "fight",
+    "target": {
+      "team": 1,
+      "slot": 3,
+      "position": [
+        9.95,
+        6.050000190734863,
+        64.5
+      ],
+      "alive": true
+    },
+    "lastGrounded": {
+      "tick": 4415,
+      "position": [
+        17.76619698797554,
+        6.050000190734863,
+        46.36694945652402
+      ],
+      "mode": "fight",
+      "edge": null,
+      "input": {
+        "move": [
+          -0.9240942688228105,
+          0,
+          0.38216460109334416
+        ],
+        "squid": true,
+        "jump": false,
+        "fire": false
+      },
+      "jumpSerial": 10
+    },
+    "belowSource": {
+      "point": [
+        17.15704211236705,
+        -14.864700317382814,
+        46.28930736243804
+      ],
+      "face": 102928,
+      "triangle": 232493,
+      "object": "Fld_Twist00_VesselFloor00_mesh1__VesselFloor00",
+      "flags": 3
+    },
+    "specialAtFinalFailure": {
+      "id": "trizooka",
+      "phase": "charge"
+    },
+    "specialBeforeDepartureVerified": false,
+    "sourceGeometryMaskOrActorPoseVelocityOverrides": false,
+    "priorFailuresPreserved": true,
+    "receipt": ".ci-scratch/current-source-natural-combat-path-overlay-outcome.json",
+    "receiptSha256": "631a9e17687bffcca5f300017abd56bcd10970fc5a3739337fbf0fd26cf158ee",
+    "firstDeviationReceipt": ".ci-scratch/current-source-natural-combat-path-deviation.json",
+    "firstDeviationReceiptSha256": "f37e79dde1052c535ec3c409d94ba2e8b125ebe73d53dc9cc143d5c886bf92a4"
   }
 }
