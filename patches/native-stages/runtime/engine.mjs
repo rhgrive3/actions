@@ -17,3 +17,4 @@ export { sweepNativeLevelSphere } from './native-projectile-sweep.mjs';
 import {nativePlayableComponent} from './native-ranked.mjs';
 import {nativeBotInitialLanding as selectBotLanding} from './native-spawn.mjs';
 export function nativeBotInitialLanding(G,actor,validate){return selectBotLanding(G,actor,validate,nativePlayableComponent);}
+export {nativeDropClearance,nativeDropTransition,nativeDropTravelForm} from './native-drop.mjs';
