@@ -24,7 +24,7 @@ export function nativeSurgeTransition(graph,lower,upper){
  const key=lower.id+':'+upper.id,cache=graph._nativeSurgeCache||(graph._nativeSurgeCache=new Map());if(cache.has(key))return cache.get(key);cache.set(key,null);
  const direction=new THREE.Vector3(dx/distance,0,dz/distance),tangent=new THREE.Vector3(-direction.z,0,direction.x),first=P.raycast(new THREE.Vector3(lower.x,lower.y+.3,lower.z),direction,distance+.25);
  if(!first.hit||first.face<0||Math.abs(first.normal.y)>.15)return null;
- const normal=first.normal.clone().setY(0).normalize(),human=radius(false),squid=radius(true),down=new THREE.Vector3(0,-1,0),sweep=graph._nativeSurgeClearance||(graph._nativeSurgeClearance=nativeDropClearance(L));
+ const normal=first.normal.clone().setY(0).normalize(),flightDirection=normal.clone().negate(),human=radius(false),squid=radius(true),down=new THREE.Vector3(0,-1,0),sweep=graph._nativeSurgeClearance||(graph._nativeSurgeClearance=nativeDropClearance(L));
  for(const offset of [0,-.2,.2]){
   const wall=first.point.clone().addScaledVector(tangent,offset),probe=wall.clone().addScaledVector(normal,.9).setY(upper.y-.015),cap=P.raycast(probe,direction,1.25);
   if(!cap.hit||cap.triangle<0||cap.face>=0||Math.abs(cap.normal.y)>.15||cap.normal.dot(normal)<.98)continue;
@@ -57,12 +57,12 @@ export function nativeSurgeTransition(graph,lower,upper){
    // Neutral charging removes wall-normal bias. The ordinary release tick
    // restores that 1.2-unit bias and the installed full-charge upward speed;
    // the next tick selects human form before the capsule meets the NP rim.
-   previous.copy(pos);pos.addScaledVector(direction,1.2*dt);pos.y+=cfg.velocity*dt;P.collideBody(pos,squid,PLAYER.squidBodyLift,PLAYER.squidHeight,contacts,false,true);
+   previous.copy(pos);pos.addScaledVector(flightDirection,1.2*dt);pos.y+=cfg.velocity*dt;P.collideBody(pos,squid,PLAYER.squidBodyLift,PLAYER.squidHeight,contacts,false,true);
    if(!sweep.clear(previous,pos,squid,PLAYER.squidBodyLift,PLAYER.squidHeight,true)){valid=false;}
    if(!valid)break;
-   const velocity=direction.clone().multiplyScalar(1.2);velocity.y=cfg.velocity;const hit=new Hit();let touchdown=null;
+   const velocity=flightDirection.clone().multiplyScalar(1.2);velocity.y=cfg.velocity;const hit=new Hit();let touchdown=null;
    for(let frame=0;frame<hz*3;frame++){
-    previous.copy(pos);stepGroundVelocity(velocity,direction.x,direction.z,Math.max(weightSpeedCurve('shooter','run')[0]*60,PLAYER.airMinSpeed),PLAYER.airAccel,dt);
+    previous.copy(pos);stepGroundVelocity(velocity,flightDirection.x,flightDirection.z,Math.max(weightSpeedCurve('shooter','run')[0]*60,PLAYER.airMinSpeed),PLAYER.airAccel,dt);
     let gravity=PLAYER.gravity;if(velocity.y<0)gravity*=PLAYER.fallGravityMul;if(Math.abs(velocity.y)<PLAYER.apexBand)gravity*=PLAYER.apexGravityMul;velocity.y=Math.max(-PLAYER.maxFall,velocity.y-gravity*dt);pos.addScaledVector(velocity,dt);
     if(!sweep.clear(previous,pos,human,PLAYER.stepUp,PLAYER.height)){valid=false;break;}
     if(velocity.y<=.5){P.groundProbe(pos.x,pos.y,pos.z,Math.max(previous.y,pos.y)-pos.y+PLAYER.ledgeAssist,.02,PLAYER.footRadius,hit,false);if(hit.hit&&hit.y>=pos.y-.02){pos.y=hit.y;touchdown=pos.clone();break;}}
@@ -77,7 +77,17 @@ export function nativeSurgeTransition(graph,lower,upper){
   for(const n of graph.nodes){if(!n.nativePaintable||Math.abs(n.y-upper.y)>.15)continue;const d=Math.hypot(n.x-middle.x,n.z-middle.z);if(d<score&&d<graph.step*.85){target=n;score=d;}}
   if(!target)continue;
   const goal=new THREE.Vector3(target.x,target.y,target.z);
-  for(const point of touchdowns)if(!sweep.clear(point,goal,human,PLAYER.stepUp,PLAYER.height)){valid=false;break;}
+  for(const point of touchdowns){
+   if(!sweep.clear(point,goal,human,PLAYER.stepUp,PLAYER.height)){valid=false;break;}
+   const count=Math.max(1,Math.ceil(point.distanceTo(goal)/.1));
+   for(let i=0;i<=count;i++){
+    const p=point.clone().lerp(goal,i/count),h=L.triangleWorld.ray(p.clone().setY(p.y+.2),down,.4,{minNormalY:.68});
+    if(!h||!(h.flags&2)||Math.abs(h.point.y-p.y)>.15||L.data.triangleFace[h.triangle]<0){valid=false;break;}
+    const f=L.faces[L.data.triangleFace[h.triangle]],rel=h.point.clone().sub(f.origin),u=rel.dot(f.u),v=rel.dot(f.v),iu=Math.max(0,Math.min(f.nu-1,Math.floor(u/f.cu))),iv=Math.max(0,Math.min(f.nv-1,Math.floor(v/f.cv)));
+    if(!f.turf||!L.containsOnFace(f,h.point)||!L.mask[f.grid+iv*f.nu+iu]){valid=false;break;}
+   }
+   if(!valid)break;
+  }
   if(!valid||!P.bodyFits(goal,human,PLAYER.stepUp,PLAYER.height,false,.003))continue;
   const edge={to:target.id,type:'climb',cost:rise*1.8+paintDistance*2+12,climb:{kind:'surge',lower:[lower.x,lower.y,lower.z],upper:goal.toArray(),wallTop:upper.y,normal:normal.toArray(),spine:spine.toArray(),paintStance:stance.toArray(),samples,capBase,holdY,popOutY:holdY,assurance:'Inferred source paintable wall below a preserved narrow NoPaint rim; existing full-charge Surge and ordinary human pop-out; six exact source capsule/ground screenings, retail navigation unverified'}};
   cache.set(key,edge);return edge;
