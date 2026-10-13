@@ -7,6 +7,7 @@ import { adaptNetworkSource } from '../patches/network-replication/adapter.mjs';
 import { adaptRange } from '../patches/practice-range/adapter.mjs';
 import { adaptRanked } from '../patches/splatoon3/ranked-adapter.mjs';
 import { adaptCameraAimControls } from '../patches/splatoon3/camera-aim-controls-adapter.mjs';
+import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-adapter.mjs';
 
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
@@ -18,5 +19,6 @@ export function adaptBuildSource(rel, code) {
   code = adaptRange(rel, code);
   code = adaptRanked(rel, code);
   code = adaptNativeStages(rel, code);
-  return adaptCameraAimControls(rel, code);
+  code = adaptCameraAimControls(rel, code);
+  return adaptProjectileVisuals(rel, code);
 }
