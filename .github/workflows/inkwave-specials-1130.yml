@@ -29,6 +29,7 @@ jobs:
             patches/splatoon3/tests/special-activation-scan-1130.test.mjs \
             patches/splatoon3/tests/special-crab-body-radius-1130.test.mjs \
             patches/splatoon3/tests/special-tenta-1130.test.mjs \
+            patches/splatoon3/tests/special-chump-1130.test.mjs \
             patches/splatoon3/tests/all-specials.test.mjs \
             patches/splatoon3/tests/large-special-slope-paint.test.mjs \
             patches/splatoon3/tests/special-paint-envelope.test.mjs \
