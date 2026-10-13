@@ -2318,7 +2318,7 @@
     }
   },
   "originalBankPhysicalCpu": {
-    "status": "failed-current-shared-arrival",
+    "status": "historical before source-foot-support correction",
     "foundation": "460da559",
     "cases": [
       {
@@ -2519,5 +2519,930 @@
   "selfReviewRoofAssertion": {
     "corrected": "Require the three colliding Fld_Wave03 gameplay roofs; FldBG distant CorrugatedRoof remains rendered and noncollidable under unchanged accepted converter semantics",
     "geometryAndFlagsChanged": false
+  },
+  "originalBankPhysicalBrowserBefore": {
+    "initial": {
+      "status": "failed",
+      "buildFingerprint": "bf5023b8fd851df84e86ee156a76503f38f1420600e83e7dbc34cdb24ab9ed08",
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "seconds": 39.266666666666666,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.839943595653242,
+            0.0027000000700354576,
+            31.177656044003747
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8377754081709369,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.21062537558815,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            11764,
+            0
+          ],
+          "mode": "paint"
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "seconds": 39.21666666666667,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.83524756358459,
+            0.0027000000700354576,
+            31.173346225886007
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8429115182281717,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.20527706432253,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            11339,
+            0
+          ],
+          "mode": "paint"
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "seconds": 37.6,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.836805116870558,
+            0.0027000000700354576,
+            31.17439792036376
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8415767129497571,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.20668521779983,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            11547,
+            0
+          ],
+          "mode": "paint"
+        }
+      ],
+      "errors": [],
+      "conditions": "Original opposed ±61 source pads, production Actor/Character/BotBrain/Projectiles and ordinary inputs; full native turf match eight actors/seven bots; zero AP Shooter; initially empty ink; other actors retained on their original-team source supports; fixed source-supported goal; SwiftShader, not console hardware",
+      "source": {
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "actors": 8,
+        "bots": 7,
+        "sourceNavigation": {
+          "wallClimb": true,
+          "highDrops": true
+        }
+      },
+      "lastCase": {
+        "team": 1,
+        "hz": 30,
+        "seconds": 90,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          -12.831153007315418,
+          0.08654539792514554,
+          -21.128027051129592
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 15.586852440365329,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 95575,
+        "sourceObject": "Fld_Wave03_GroundPlywood_Multi_01_1__GroundPlywood_Multi",
+        "pathNodes": 97,
+        "initialPathFirst": 20926,
+        "initialPathLast": 5055,
+        "pi": 16,
+        "currentPathNodes": 23,
+        "waypoints": 57,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 84.35519988679007,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          22620
+        ],
+        "mode": "paint"
+      },
+      "error": "AssertionError [ERR_ASSERTION]: Natural original-pad bot route failed {\"team\":1,\"hz\":30,\"seconds\":90,\"start\":[0,6,61],\"end\":[-12.831153007315418,0.08654539792514554,-21.128027051129592],\"goal\":[-24,0.0027,-32],\"distance\":15.586852440365329,\"alive\":true,\"grounded\":true,\"sourceTriangle\":95575,\"sourceObject\":\"Fld_Wave03_GroundPlywood_Multi_01_1__GroundPlywood_Multi\",\"pathNodes\":97,\"initialPathFirst\":20926,\"initialPathLast\":5055,\"pi\":16,\"currentPathNodes\":23,\"waypoints\":57,\"fired\":true,\"jumped\":true,\"climbed\":false,\"departed\":true,\"maxTravel\":84.35519988679007,\"gearAP\":[],\"weapon\":\"shooter\",\"sourceWeapon\":\"WeaponShooterNormal\",\"actors\":8,\"aliveActors\":8,\"bots\":7,\"counts\":[0,22620],\"mode\":\"paint\"}\n    at file:///workspace/stage-worktrees/humpback/scripts/check-inkwave-native-humpback-banks.mjs:19:3"
+    },
+    "waypointDiagnostic": {
+      "status": "failed",
+      "buildFingerprint": "bf5023b8fd851df84e86ee156a76503f38f1420600e83e7dbc34cdb24ab9ed08",
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "seconds": 39.266666666666666,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.839943595653242,
+            0.0027000000700354576,
+            31.177656044003747
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8377754081709369,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.21062537558815,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            11764,
+            0
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 16349,
+          "currentWaypoint": {
+            "id": 16349,
+            "point": [
+              24.200000000000003,
+              0.002700000070042563,
+              31.599999999999994
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "seconds": 39.21666666666667,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.83524756358459,
+            0.0027000000700354576,
+            31.173346225886007
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8429115182281717,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.20527706432253,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            11339,
+            0
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 16349,
+          "currentWaypoint": {
+            "id": 16349,
+            "point": [
+              24.200000000000003,
+              0.002700000070042563,
+              31.599999999999994
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "seconds": 37.6,
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            23.836805116870558,
+            0.0027000000700354576,
+            31.17439792036376
+          ],
+          "goal": [
+            24,
+            0.0027,
+            32
+          ],
+          "distance": 0.8415767129497571,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91858,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "pathNodes": 96,
+          "initialPathFirst": 607,
+          "initialPathLast": 16349,
+          "pi": 95,
+          "currentPathNodes": 96,
+          "waypoints": 95,
+          "fired": true,
+          "jumped": true,
+          "climbed": false,
+          "departed": true,
+          "maxTravel": 95.20668521779983,
+          "gearAP": [],
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            11547,
+            0
+          ],
+          "refillGoalReplans": 0,
+          "currentGoalNode": 16349,
+          "currentWaypoint": {
+            "id": 16349,
+            "point": [
+              24.200000000000003,
+              0.002700000070042563,
+              31.599999999999994
+            ]
+          },
+          "sourceGround": {
+            "y": 0.0027000000700354576,
+            "normal": [
+              0,
+              1,
+              0
+            ],
+            "center": true
+          },
+          "mode": "paint"
+        }
+      ],
+      "errors": [],
+      "conditions": "Original opposed ±61 source pads, production Actor/Character/BotBrain/Projectiles and ordinary inputs; full native turf match eight actors/seven bots; zero AP Shooter; initially empty ink; other actors retained on their original-team source supports; fixed source-supported goal reselected after ordinary refill completes; SwiftShader, not console hardware",
+      "source": {
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "actors": 8,
+        "bots": 7,
+        "sourceNavigation": {
+          "wallClimb": true,
+          "highDrops": true
+        }
+      },
+      "lastCase": {
+        "team": 1,
+        "hz": 30,
+        "seconds": 90,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          -12.831153007315418,
+          0.08654539792514554,
+          -21.128027051129592
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 15.586852440365329,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 95575,
+        "sourceObject": "Fld_Wave03_GroundPlywood_Multi_01_1__GroundPlywood_Multi",
+        "pathNodes": 97,
+        "initialPathFirst": 20926,
+        "initialPathLast": 5055,
+        "pi": 16,
+        "currentPathNodes": 23,
+        "waypoints": 57,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 84.35519988679007,
+        "gearAP": [],
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          0,
+          22620
+        ],
+        "refillGoalReplans": 0,
+        "currentGoalNode": 8357,
+        "currentWaypoint": {
+          "id": 7371,
+          "point": [
+            -12.799999999999997,
+            0.2915373557519203,
+            -20.400000000000006
+          ]
+        },
+        "sourceGround": {
+          "y": 0.08654539792514554,
+          "normal": [
+            -0.04579087346792221,
+            0.9699464440345764,
+            -0.23897115886211395
+          ],
+          "center": true
+        },
+        "mode": "paint"
+      },
+      "error": "AssertionError [ERR_ASSERTION]: Natural original-pad bot route failed {\"team\":1,\"hz\":30,\"seconds\":90,\"start\":[0,6,61],\"end\":[-12.831153007315418,0.08654539792514554,-21.128027051129592],\"goal\":[-24,0.0027,-32],\"distance\":15.586852440365329,\"alive\":true,\"grounded\":true,\"sourceTriangle\":95575,\"sourceObject\":\"Fld_Wave03_GroundPlywood_Multi_01_1__GroundPlywood_Multi\",\"pathNodes\":97,\"initialPathFirst\":20926,\"initialPathLast\":5055,\"pi\":16,\"currentPathNodes\":23,\"waypoints\":57,\"fired\":true,\"jumped\":true,\"climbed\":false,\"departed\":true,\"maxTravel\":84.35519988679007,\"gearAP\":[],\"weapon\":\"shooter\",\"sourceWeapon\":\"WeaponShooterNormal\",\"actors\":8,\"aliveActors\":8,\"bots\":7,\"counts\":[0,22620],\"refillGoalReplans\":0,\"currentGoalNode\":8357,\"currentWaypoint\":{\"id\":7371,\"point\":[-12.799999999999997,0.2915373557519203,-20.400000000000006]},\"sourceGround\":{\"y\":0.08654539792514554,\"normal\":[-0.04579087346792221,0.9699464440345764,-0.23897115886211395],\"center\":true},\"mode\":\"paint\"}\n    at file:///workspace/stage-worktrees/humpback/scripts/check-inkwave-native-humpback-banks.mjs:19:3"
+    },
+    "initialFailureScreenshot": "stale unrendered legacy frame; not a source-view proof",
+    "waypointDiagnosticScreenshot": "forced current native-scene render; privately inspected complete indoor source and roof",
+    "refillDiagnosisCorrection": "Goal-reselection callback count is zero; ordinary stuck recovery/paint goal selection replaced the initial goal. A refill transition was not measured."
+  },
+  "sourceFootCandidateValidation": {
+    "commit": "26c82fe8",
+    "status": "CPU independently passed; Chrome pending; not accepted or pushed",
+    "moduleSha256": "deb8bb81409eb871686c914b94b09b88e7151c9fa2c1a65fcaa3d64b40ffc330",
+    "privateBuildFingerprint": "b88ab1732a3e3b6be936392375ca7e2f3903a59bef7a972cd4e020434cccaef4",
+    "CPU": {
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "durationMilliseconds": 205083.177213,
+      "banks": {
+        "id": "humpback",
+        "cases": [
+          {
+            "team": 0,
+            "hz": 30,
+            "seconds": 38.8,
+            "start": [
+              0,
+              6,
+              -61
+            ],
+            "end": [
+              23.838843224256202,
+              0.0027000000700354576,
+              31.177051387816174
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8385797068039635,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "currentPathNodes": 96,
+            "pi": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.20976446154444,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "seconds": 37.166666666666664,
+            "start": [
+              0,
+              6,
+              -61
+            ],
+            "end": [
+              23.833582842455346,
+              0.0027000000700354576,
+              31.169666251001967
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8468463881072944,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "currentPathNodes": 96,
+            "pi": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.20129751179483,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "seconds": 36.28333333333333,
+            "start": [
+              0,
+              6,
+              -61
+            ],
+            "end": [
+              23.83593298304528,
+              0.0027000000700354576,
+              31.173022149822827
+            ],
+            "goal": [
+              24,
+              0.0027,
+              32
+            ],
+            "distance": 0.8430956948864576,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91858,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 96,
+            "currentPathNodes": 96,
+            "pi": 95,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.20513491090675,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 16349,
+            "currentWaypoint": {
+              "id": 16349,
+              "point": [
+                24.200000000000003,
+                0.002700000070042563,
+                31.599999999999994
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "seconds": 34.43333333333333,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.245799040361984,
+              0.0027000000700354576,
+              -31.746851952177284
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.7955520232111515,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "currentPathNodes": 97,
+            "pi": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.61561441555446,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "seconds": 34.21666666666667,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.21482533582996,
+              0.0027000000700354576,
+              -31.713674484462384
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.8357520889010184,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "currentPathNodes": 97,
+            "pi": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.57590466108049,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "seconds": 33.15,
+            "start": [
+              0,
+              6,
+              61
+            ],
+            "end": [
+              -23.205836942888354,
+              0.0027000000700354576,
+              -31.701605679693962
+            ],
+            "goal": [
+              -24,
+              0.0027,
+              -32
+            ],
+            "distance": 0.8483714585438493,
+            "alive": true,
+            "grounded": true,
+            "sourceTriangle": 91910,
+            "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "pathNodes": 97,
+            "currentPathNodes": 97,
+            "pi": 96,
+            "fired": true,
+            "jumped": true,
+            "climbed": false,
+            "departed": true,
+            "maxTravel": 95.56201423062089,
+            "gearAP": [],
+            "mode": "paint",
+            "productionCharacter": true,
+            "refillGoalReplans": 0,
+            "currentGoalNode": 5055,
+            "currentWaypoint": {
+              "id": 5055,
+              "point": [
+                -23.799999999999997,
+                0.002700000070028352,
+                -32.400000000000006
+              ]
+            },
+            "sourceGround": {
+              "y": 0.0027000000700354576,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "center": true
+            }
+          }
+        ],
+        "conditions": "Standalone original source production Actor/Character/BotBrain/Projectiles; ordinary bot inputs, fixed supported goal reselected after real refill completion; initially empty ink; zero AP Shooter; not a production-match or hardware-FPS claim"
+      },
+      "sourceRoutes": {
+        "id": "humpback",
+        "supports": [
+          {
+            "pad": [
+              0,
+              6.08,
+              -61
+            ],
+            "triangle": 95245,
+            "object": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          },
+          {
+            "pad": [
+              0,
+              6.08,
+              61
+            ],
+            "triangle": 95325,
+            "object": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+            "normal": [
+              0,
+              1,
+              0
+            ]
+          }
+        ],
+        "bankSupports": [
+          {
+            "point": [
+              -24,
+              0.0027000000700354576,
+              -32
+            ],
+            "triangle": 91910,
+            "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "node": 5055
+          },
+          {
+            "point": [
+              24,
+              0.0027000000700354576,
+              32
+            ],
+            "triangle": 91859,
+            "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+            "node": 16349
+          }
+        ],
+        "nav": {
+          "candidate": 21584,
+          "valid": 5798,
+          "bankPaths": [
+            [
+              32,
+              96
+            ],
+            [
+              97,
+              30
+            ]
+          ],
+          "elevatedOpponentDeckReturns": [
+            false,
+            false
+          ]
+        },
+        "tower": {
+          "supported": false,
+          "status": "source-route-unverified",
+          "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。"
+        },
+        "sourceRoofs": 3,
+        "noPaintObjects": 16,
+        "limitations": "Elevated opponent home-deck return is unproved; both original pads and complete source remain. Paths qualify both opposing skate bowls, not retail placements or physical traversal of every graph edge."
+      }
+    }
   }
 }
