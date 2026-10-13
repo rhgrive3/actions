@@ -4109,6 +4109,8 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
 
+ホコ攻撃種別の追補: ナイスダマ装甲への60＋180が、所持している通常シューターの倍率.7を誤って使い42＋126になる経路を再現・修正。11.3.0のGachihoko_Bullet／Gachihoko_BombCore／GachihokoTimeUpBurstを装甲・設置物・ネイティブ通信へ渡す。グレートバリアはネイティブの外膜/弱点・raw単位x10・DamgeRatio .64・対物ギアを再利用し、接触/近傍着弾の爆風と所持者側のHP提案へ接続。破壊前の遮蔽は同じ爆発まで維持するローカル整合性方針。実機の破壊フレーム・傘/バリア全形状・弾道一致は未確認を維持。操作条件・再現・確認範囲は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` の追補参照。最終CIはPR1355で確認する。
+
 
 ## Ink Vac release contract fixture follow-up (2026-10-13)
 
