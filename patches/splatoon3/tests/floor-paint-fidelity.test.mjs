@@ -74,3 +74,15 @@ test('stationary held roller makes the initial floor mark; fast steps subdivide 
   assert.ok(sorted.every((z, i) => i === 0 || z > sorted[i - 1]), 'forward coverage ordered');
   assert.ok(body.length <= 18, 'per-frame upper bound protects paint CPU/GPU cost');
 });
+
+test('Turf-point adapter composes after Storm and Tidal Slam lock transforms', () => {
+  const actorRaw = fs.readFileSync(ROOT + 'inkwave-public/src/game/actor.js', 'utf8');
+  const actor = adaptSource('src/game/actor.js', actorRaw);
+  const begin = actor.indexOf('  addTurf(area) {');
+  const end = actor.indexOf('  addTurfNoSpecial(', begin);
+  assert.ok(begin >= 0 && end > begin, 'both native Turf credit entry points exist');
+  const turf = actor.slice(begin, end);
+  assert.match(turf, /this\\.stats\\.turf \\+= points;/);
+  assert.match(turf, /this\\.special \\+ points/);
+  assert.match(turf, /!this\\.specialActive && !\\(this\\.stormGaugeLock > 0\\) && !this\\.s3TidalSlamGaugeFinish/);
+});

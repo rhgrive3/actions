@@ -62,3 +62,23 @@ test('no-special owner still scores physical points without recharging special',
  assert.ok(Math.abs(owner.stats.turf-inkPaintPoints(paint.counts[0]*face.cu*face.cv))<1e-7);
  assert.equal(owner.special,0);
 });
+
+test('physical Turf points respect active Storm and Tidal Slam gauge locks', async () => {
+  const f = await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const a = f.make('shooter'), area = INKWAVE_WORLD_SQUARES_PER_TURF_POINT;
+  a.special = 0;
+  a.specialActive = null;
+  a.stormGaugeLock = 1;
+  a.addTurf(area);
+  assert.ok(Math.abs(a.stats.turf - 1) < 1e-12, 'Storm-locked paint still counts Turf points');
+  assert.equal(a.special, 0, 'Storm lock blocks gauge charge');
+  a.stormGaugeLock = 0;
+  a.s3TidalSlamGaugeFinish = { pending: true };
+  a.addTurf(area);
+  assert.ok(Math.abs(a.stats.turf - 2) < 1e-12, 'Tidal Slam pending finish still counts Turf points');
+  assert.equal(a.special, 0, 'Tidal Slam pending finish blocks gauge charge');
+  a.s3TidalSlamGaugeFinish = null;
+  a.addTurf(area);
+  assert.ok(Math.abs(a.stats.turf - 3) < 1e-12, 'ordinary Turf remains measured in points');
+  assert.ok(Math.abs(a.special - 1) < 1e-12, 'ordinary gauge charges exactly once in points');
+});

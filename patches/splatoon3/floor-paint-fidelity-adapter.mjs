@@ -86,8 +86,8 @@ export function adaptFloorPaintFidelity(rel, code, replaceOnce) {
   }
   if (rel === 'src/game/actor.js') {
     code = replaceOnce(code,
-      "  addTurf(area) {\n    if (area <= 0) return;\n    this.stats.turf += area;\n    emit('turf', { actor: this, area });\n    if (!this.specialActive) {\n      const was = this.specialReady();\n      this.special = Math.min(this.specialCost(), this.special + area);",
-      "  addTurf(area) {\n    const points = inkPaintPoints(area);\n    if (points <= 0) return;\n    this.stats.turf += points;\n    emit('turf', { actor: this, area: points });\n    if (!this.specialActive) {\n      const was = this.specialReady();\n      this.special = Math.min(this.specialCost(), this.special + points);",
+      "  addTurf(area) {\n    if (area <= 0) return;\n    this.stats.turf += area;\n    emit('turf', { actor: this, area });\n    if (!this.specialActive && !(this.stormGaugeLock > 0) && !this.s3TidalSlamGaugeFinish) {\n      const was = this.specialReady();\n      this.special = Math.min(this.specialCost(), this.special + area);",
+      "  addTurf(area) {\n    const points = inkPaintPoints(area);\n    if (points <= 0) return;\n    this.stats.turf += points;\n    emit('turf', { actor: this, area: points });\n    if (!this.specialActive && !(this.stormGaugeLock > 0) && !this.s3TidalSlamGaugeFinish) {\n      const was = this.specialReady();\n      this.special = Math.min(this.specialCost(), this.special + points);",
       'floor: convert physical ink coverage to Turf and special gauge points');
     code = replaceOnce(code,
       "  addTurfNoSpecial(area) { if (area > 0) { this.stats.turf += area; emit('turf', { actor: this, area }); } }",
