@@ -60,6 +60,8 @@ for(const root of roots){const catalog=JSON.parse(fs.readFileSync(path.join(root
      G.actors=[];const actor=new f.Actor({team:start[2]<0?0:1,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});actor.spawnAt(new THREE.Vector3(...edge.drop.upper),0);actor.intent.move.fromArray(edge.drop.direction);actor.intent.fire=actor.intent.squid=actor.intent.jump=false;G.actors=[actor];let airborne=false;
      for(let frame=0;frame<hz*4;frame++){G.time+=1/hz;actor.update(1/hz);airborne ||=!actor.grounded;if(airborne&&actor.grounded&&actor.pos.y<upper.y-1.25)break;}
      assert.ok(actor.alive&&actor.grounded&&actor.pos.distanceTo(new THREE.Vector3(...edge.drop.landing))<.9,'ordinary actual human crosses the source-grid gap '+JSON.stringify({hz,start,end:actor.pos.toArray(),goal:edge.drop.landing}));
+     const support=P.raycast(actor.pos.clone().setY(actor.pos.y+.1),new THREE.Vector3(0,-1,0),.3);assert.ok(support.hit&&support.face>=0);
+     cases.push({bot:false,hz,start:edge.drop.upper,end:actor.pos.toArray(),sourceTriangle:support.triangle,screenedSourceTriangle:edge.drop.sourceTriangle,twoCellSourceGap:true,weapon:'shooter / Shooter_Normal_00',gearAP:0,productionCharacter:true,ordinaryMoveGravity:true,alive:true,grounded:true});
     }
    }
    const sourceNoPaint=N.nodes.find(n=>n.y<0&&!n.nativePaintable),upper=nearest([-14,15.4452,-25.1028]);assert.equal(f.nativeDropTransition(N,upper,sourceNoPaint),null,'real source lower hull and NoPaint water floor never become a playable drop');
