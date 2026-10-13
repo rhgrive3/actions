@@ -21,5 +21,6 @@ export function nativeBotInitialLanding(G,actor,validate){return selectBotLandin
 export {nativeDropClearance,nativeDropTransition,nativeDropTravelForm,updateNativeDrop} from './native-drop.mjs';
 export {nativeSurgeTransition,updateNativeSurge} from './native-surge.mjs';
 
+export {nativeRankedTowerApproach,updateNativeTowerBoarding,nativeTowerRider} from './native-ranked-boarding.mjs';
 export {nativeJumpAttachTransition,updateNativeJumpAttach} from './native-jump-attach.mjs';
 export {nativeOrdinaryJumpInput} from './native-jump-input.mjs';
