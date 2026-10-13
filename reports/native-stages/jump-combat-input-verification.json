@@ -1,5 +1,5 @@
 {
-  "status": "qualified-source-components-independent-final-review-pending",
+  "status": "qualified-independent-reviewed-narrow-common",
   "pr": "https://github.com/rhgrive3/actions/pull/1409",
   "acceptedFoundation": "90040586c3728ca20d69ed43014528e0f68cbbdf",
   "privateRootCombatCandidate": "df7ec808f7b5c2eb8986574125dd5381849f5b1e",
@@ -1464,5 +1464,19 @@
     "initialPaintTargetAcquisition": "Fresh initial Brain acquires target after paint jump; unchanged painter target cancellation remains, six non-arrivals preserved.",
     "farMirroredInitialTarget": "Farther slot3 exceeds awareness; production target replacement cancels flight ownership. Three non-arrivals preserved.",
     "contactChords": "Every strict corrected-pose chord failure preserved; witness/correction plus strict endpoint checking only, no continuous internal solver-path guarantee."
+  },
+  "independentReview": {
+    "reviewer": "Shipshape owner",
+    "status": "PASS",
+    "runtimeHelperSha256": "bf312aa1ab098eb6194d7536032e05c68b0bbbd7fb219ad79444f4909c03b4a9",
+    "scope": "source approach/launch/strict contact-free flight/supported onward, lifecycle/source-negative/default/private-public packaging; wholebank2456 separate"
+  },
+  "projectHeuristics": {
+    "movementInputMaximum": 0.35,
+    "movementInputMinimum": 0.03,
+    "distanceGain": 0.65,
+    "distanceReserve": 0.09,
+    "maximumFlightLifetimeSeconds": 2,
+    "measuredNintendoValues": false
   }
 }

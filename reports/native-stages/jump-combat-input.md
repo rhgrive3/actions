@@ -1,6 +1,6 @@
 # ネイティブソース上の戦闘ジャンプ入力
 
-PR: [1409](https://github.com/rhgrive3/actions/pull/1409)。現在は名前付き独立レビューの最終確認待ち。受理済み90040586と私的な未受理combat候補df7ec808の組み合わせで局所的な実入力を検証した。後者は本PRに含めない。[数値記録](jump-combat-input-verification.json)。
+PR: [1409](https://github.com/rhgrive3/actions/pull/1409)。名前付きShipshape独立コード・証拠レビューで狭いcommon挙動が確認された。受理済み90040586と私的な未受理combat候補df7ec808の組み合わせで局所的な実入力を検証した。後者は本PRに含めない。[数値記録](jump-combat-input-verification.json)。
 
 通常BotBrainが実際に要求し、Actorが受理した既存のsource jumpに限り、同じ経路・ノード・目標・敵・mode・Level/Nav/Physics/Matchのまま上昇中のジャンプ入力を保持し、着地まで元のノードへ通常移動入力を向ける。上昇中だけjumpを維持し、着地または所有者変更で解放する。実際の飛行中だけ戦闘repathを延期する。発射、位置、速度、serial、衝突、元の経路・geometry/flags/paint mask、回復判定は変更していない。従来のpaint中target取得キャンセルも維持した。
 
@@ -10,4 +10,4 @@ PR: [1409](https://github.com/rhgrive3/actions/pull/1409)。現在は名前付�
 
 元の全bank replayでは、戦闘前2451/2452の衝突補正済みpose同士の直線弦が拒否された。変更前900+df7でも同じ座標・接触で再現した。各弦失敗と実ソルバーのsource contact/correction、厳しい両端検査を保存する。接触補正の内部経路がその弦であるとは仮定しない。2456ではfoot pop後の実poseがproduction .01を満たすがstrict .003を満たさないため停止した。Mantaが別件のnative Actor couplingを担当しており、全bank完了を主張しない。ソース座標の値を実寸へ換算しない。
 
-本家比較は11.3.0のステージ識別情報と公開KiTrix固定sourceを参照。Shooter_Normal_00、0AP、kid、通常歩行/ジャンプ/戦闘という条件を記録した。Nintendoのjump hold/戦闘入力、実寸、native collision、実機性能は未計測。入力mag .35/.03や有限lifetimeはこの実装の選択で、本家の測定値ではない。GPUはSwiftShader。元の43node目標27627と対称座標を維持するonward6件も完了した。58STEPの最初の着地後、次の元のsource Drop waypoint25861/4087に155–156STEPで到着し、共有FootSupported=true、元のPntFloor78415/78407を確認した。932実区間の接触なしsweep/strict poseが成功した。59STEPの二度目は既存_needJump=true/cd≈0/noProg=.1から出た通常の要求で、前のnodeのFootSupported=falseなので本helperは再取得・holdしない。一回だけの発射を保証する変更ではない。default141件88成功/53資産optional skip、元の5source141件110成功/31optional skip、失敗0。private/publicの包装9件ずつと既存131/14budgetが成功し、7emitted gameplay modulesが完全一致した。独立reviewと追加の元の5ステージ実初期navigationは確認中。
+本家比較は11.3.0のステージ識別情報と公開KiTrix固定sourceを参照。Shooter_Normal_00、0AP、kid、通常歩行/ジャンプ/戦闘という条件を記録した。Nintendoのjump hold/戦闘入力、実寸、native collision、実機性能は未計測。入力mag .35/.03・distance gain .65や有限lifetimeはこの実装の選択で、本家の測定値ではない。GPUはSwiftShader。元の43node目標27627と対称座標を維持するonward6件も完了した。58STEPの最初の着地後、次の元のsource Drop waypoint25861/4087に155–156STEPで到着し、共有FootSupported=true、元のPntFloor78415/78407を確認した。932実区間の接触なしsweep/strict poseが成功した。59STEPの二度目は既存_needJump=true/cd≈0/noProg=.1から出た通常の要求で、前のnodeのFootSupported=falseなので本helperは再取得・holdしない。一回だけの発射を保証する変更ではない。default141件88成功/53資産optional skip、元の5source141件110成功/31optional skip、失敗0。private/publicの包装9件ずつと既存131/14budgetが成功し、7emitted gameplay modulesが完全一致した。追加の元の5ステージ実初期navigationは確認中。この限定commonの独立reviewはPASSで、全bankのphysical gateとは別の確認範囲とする。
