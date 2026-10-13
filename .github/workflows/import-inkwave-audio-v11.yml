@@ -41,6 +41,18 @@ jobs:
           mkdir -p /tmp/audio-v11-package
           unzip -q /tmp/inkwave-v11.zip -d /tmp/audio-v11-package
           python3 /tmp/audio-v11-package/import_audio_v11.py .
+      - name: Save verified v11 assets and audio code to integration branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "$AUDIO_BRANCH"
+          git merge --ff-only FETCH_HEAD
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add patches/splatoon3/audio-adapter.mjs patches/splatoon3/runtime/audio/ patches/splatoon3/tests/ patches/splatoon3/bootstrap.mjs patches/loading-cache/adapter.mjs scripts/inkwave-source-composition.mjs docs/audio-rebuild/README-v11.ja.md tools/audio/
+          git diff --cached --check
+          git commit -m 'stage(audio-v11): verified 381 MP3 and source modules'
+          git push origin "HEAD:${AUDIO_BRANCH}"
       - name: Build dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
       - name: Verify audio, game compatibility and production build
