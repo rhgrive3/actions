@@ -3997,6 +3997,10 @@ Not changed and still unverified: Dualies aerial slide descent (no sourced field
 
 2026-10-11: Separate conditional-gear adoption candidate preserves bounded owner-admitted Comeback and Opening clocks across host takeover. Active receiver simulation dt prevents host-clock rollback from refunding effect time; pause does not age clocks. Existing 20/30/15-second profile values are unchanged. Source/built actual JSON tests cover death/new life, stale identity, extension counts and new-match isolation. Remote earned-credit truth remains owner-authoritative, not server-attested.
 
+## 2026-10-11: alpha-derived 3D Roller presentation
+
+The first-generation SplatoonSWEPs VTF sheet is decoded unchanged and gains a distance-controlled closed volume in the existing FX/Projectiles render pass. Horizontal local and remote shots retain INKWAVE's current native origin, velocity, spread, gravity, damage, collision, paint and timing; source/built tests and native Practice Range input distinguish rendering from gameplay authority. Camera orientation is fixed from the world shot at birth. These thickness, lighting and LOD settings are original art choices, not Nintendo Ver.11.3.0 parameters. The supplied v6 prototype was inspected and rendered separately; its first-generation physics and baked RGB highlights were not transplanted. Exact retail imagery and physical mobile/iPad timing remain unavailable and unconfirmed. The user subsequently confirmed asset permission; the four required VTFs/VMTs and source-derived packs are now bundled and automatically loaded in ordinary game boot. Other inspected models/PCF are not required or bundled. See `reports/ink-volume/README.md` and its verification results.
+
 2026-10-11: An independent transient-gear takeover candidate preserves bounded Tacticooler/Drop Roller remainders only after native owner adoption, without granting remote presentation AP. Actual pickup/landing JSON regressions cover 30/60/120 Hz and replay/life boundaries; broader gates and browser publication remain pending. See `reports/inkwave-transient-gear-adoption-2026-10-11.md`.
 
 2026-10-11: Independent direct-sub resistance candidate connects pinned DamageRt_LineMarker and DamageRt_Sprinkler to victim-local AP, preserves raw hit damage and old bomb classification, and admits the missing catalogue Angle Shooter cause with its sourced 40-damage bound. Actual contact/JSON/object, full source, network and production-built gates pass; browser remains pending. Existing Crab spillover 0.25 flag behavior is recorded separately in reports/inkwave-direct-sub-resistance-2026-10-11.md.
@@ -4025,3 +4029,46 @@ Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather tha
 
 ## 2026-10-12 Mist live-query cost
 Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
+
+
+## 2026-10-12 原典表示メッシュ5ステージ統合
+
+固定 KiTrix 表示OBJから5ステージをローカルビルドする処理と、既存 Actor/Physics/PaintSystem/ナビ/ミニマップ/ランク world への接続を追加した。生/変換アセットの再配布権限は未確認のため公開ビルドには含めない。本家の参照版は11.3.0。詳細・再現手順・確認済み/未確認の区分は [原典ステージ統合記録](inkwave-native-stage5-2026-10-12.md)。30/60/120 Hz は INKWAVE ロジック検証であり実機比較の代用ではない。スポーン、表示由来の collision/paint/grate 属性、4ランクルールの配置、OBJの版、実モバイル性能は未確認を維持する。
+
+2026-10-12追加: 通常ビルドの選択画面から5ステージを利用できるようにし、固定原典はブラウザへ直接取得してWorker内で変換する。原典/変換モデルはGit/Pagesへ同梱しない。JS/Pythonの全5モデルとpolygon maskがバイト一致。実選択・8人の起動・取得失敗復帰を検証。ノヴァの原典SplashDropPaintRadius=3.84が受信上限で拒否される実同期差を再現し、所有者のcatalog半径検査へ該当キーを追加した。詳しい条件と未確認部分は [選択・続行記録](inkwave-native-stage-selection-2026-10-12.md)。ユーザー追加指示でPR #1285のmainマージが許可された。
+### 2026-10-12 — 汎用3Dインクを縦振り・シューター系・バケツへ拡張
+
+- **本家/原典の根拠**: 既存の固定11.3.0描画半径・Slosher TailLength・Splatling尾フレームと、上記「空中のインクの形」の映像比較記録を使用。SplatoonSWEPs `a7459272` の `RenderGeneral` は crosshair/line の U=0.3..0.7 と dot を使い、先端幅は線の0.75倍。`RenderSlosher` は線と16コマの飛沫の組合せ。初代には縦振りがなく、同OSSに本家S3の縦振り専用VTFは存在しない。
+- **INKWAVE実装**: `patches/local-quality/ink-volume/recipes.mjs` を `_push` と複製弾誕生、および実際の `_draw` へ接続。ローラー5種の両モード・フデ3種・シューター14種・マニューバー6種・スピナー6種・通常/ヒッセン系2種の計36定義を登録済み素材で描画できる。未登録素材は既存描画へ戻る。
+- **形状/規則**: 元RGBAを変えず原典のUV範囲を閉じた3D線へ変換。先端/線は一括予約し部分的な二重描画を防ぐ。Slosherは薄い連続膜で、丸い衛星を追加しない。非等方拡大の法線は逆転置で補正。膜は発射方向に固定し、棒は弾のワールド軌道方向を使い、視点には追従しない。射撃中のメッシュ再生成はない。
+- **確認済み**: 元line/dotのDXT5 RGBAは独立Pillowと0差分。閉じた形状・元UV・両DXT5アルファ補間・一括予約/破棄・全36定義の実Actor入力と描画によるゲーム状態不変・武器を切り替えた相手へのJSONパケット再生の回帰を追加。既存Splatoon3全体のローカルゲートは3980件（3970成功、既存skip10、失敗0）。Chromiumの実ゲーム9操作で描画・減速/落下・着弾まで通過。描画/性能の最終証拠とCI結果は `reports/ink-volume/` とPR #1248へ記録する。
+- **プレイへの影響**: 本体位置・速度・弾数・遅延・寿命・ダメージ・当たり判定・塗り・送信JSONは既存所有者のまま。描画のリソース/三角形上限でゲームロジックを削らない。新しい部分アルファは元画素由来で、意図的な透明度変更はない。
+- **未確認/制約**: S3の元エフェクト素材の正確な輪郭/立体形状と縦振りアニメーションの完全一致、曲がる尾の履歴メッシュ、全36種の実機視覚比較、スマホ/iPad性能、渦/泡/爆発型Slosherの専用素材。源データのない部分を完全一致や公式造形値としない。ローラーVTFの縦振り利用は独自の描画適用である。
+
+- **拡張の最終ローカル描画/負荷**: ChromiumとWebKit touchの実ゲーム9操作・各5方向45比較で不透明本体の黒いRGB/透明欠損0。停止同一場面off/on/off/onで縦3頭、Shooter1頭、Slosher発生済み4頭を測定し、描画コール+6/+6/+10、ソフトウェアGPU時間の組差は約-10%～+3%。高速化や実機FPSとは判定しない。GPUアップロード推定39,520,236byte、20reset安定・136geometry/4texture破棄。詳細は `reports/ink-volume/projectile-measurements.json` と `results.md`。
+
+- **最終ビルドの追加レビュー**: 自然落下の初期25F猶予をジャンプ扱いにしたテスト設定の誤りを修正。全5ローラーの縦検証は実Actorジャンプ入力とジャンプ成立/上向き速度の確認から始め、自然落下初期は横振りのままという負対照も追加。本番描画/物理の変更は不要だった。Source fixtureは既存#479 freefall adapterを適用し、本番ビルドと同じ規則で評価。ソース14・最終ビルド+packaging23がskip/失敗0で成功。
+
+- **CI と進行中mainの統合**: 最終393007dbで立体描画CIと他13ジョブは成功。既存validatorは4909件（4890pass/既存skip19）と品質927件（919pass/既存skip8）を通過後、新mainのworkflowが追加したowned-run-scanテストを旧headへ要求して停止。main b078c379のPR1262更新6ファイルを改変せずmergeし、検査を弱めず整合。本番ビルドの立体/packaging/厳密矩形/局所塗り/Map寿命33件がskip/失敗0で成功。3D描画と物理のコードは変更していない。計測の全シーン数値は90b4fea7ベース時点の証拠として保持する。
+
+- **通常起動への接続**: ユーザーの素材許可取得済みとの指示を受け、元4 VTF/VMTと不変画素・事前生成形状packを同梱。FXは両packを自動読み込みし、既存のウォームアップ内で完了してからshader/ゲームを開始する。URL指定や有効化操作は不要。gzipは元画素/形状を変えず45,557,516→17,694,762 byte。既存10MiB起動snapshotは維持し、manifestをprecache、binaryは別の2スロット上限付きcacheへ保存する。初回download負荷と未訪問状態の初回offline fallbackは制約として記録する。原典画素34フレーム、標準起動、圧縮/破損/上限、cache再利用/修復/世代削除をテストへ追加。
+
+- **設定なしの最終描画**: Chromium/SwiftShaderとWebKit/Mesa touchで通常起動から実ゲーム9操作・各45方向が成功、黒いRGB/透明欠損0。sourceとexact emitted new+packaging 27件すべて成功・skip0。既存起動snapshot 5,658,810byte、core revision 10,276,777byte、worker 69,493byteで従来上限を維持。追加素材transport/cacheは16.875MiB、GPU配置推定は37.69MiB。全起動105,208/27,793msは既存world/shader/softwareGPUを含むローカルサーバーの値であり、実機ネットワークや素材単独の比較値ではない。`reports/ink-volume/default-measurements.json`と元素材/通常起動の比較画像を参照。
+
+- **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
+
+## 2026-10-12: プライムシューター・ジェットスイーパーのモデル作り直しと銃口・構え
+
+参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
+
+- **本家の根拠**: 公式回転動画「S3 Splattershot Pro FRZ-N model rotating.mp4」「S3 Jet Squelcher COB-R model rotating.mp4」（同形状の別キット）の真横・正面・背面・斜めフレーム、「S3 Custom Jet Squelcher Promotional 3D Render.jpg」、本家3Dレンダー「S3 Weapon Main <名前>.png」、持ち方は S2 プロモ画像と S3 3D プロモ（Inkipedia）。本家のメッシュ寸法・ソケット位置・構えの数値は公開されておらず、すべて画像からの推定。
+- **INKWAVE の実装箇所**: `patches/splatoon3/runtime/weapon-models/shooters-b.mjs`（`expert` / `longJet`、`MODELS['s3-shooter-long'].hold`）。記録は `patches/splatoon3/reference/weapon-models/shooters-b.md` の「2026-10-12 作り直し」。
+
+| 差分 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|
+| 両ブキのモデルを立体で作り直し（プライム: 右側だけを回るホース・円錐タンク・くさび等、ジェット: 上下2本体を持ち手でつなぐ構造） | ブキを選び待機・射撃 | 見た目のみ | 回転動画の真横フレーム・3Dレンダーとの画像比較のみ。実機寸法は未確認 |
+| **ジェットの銃口（弾の発生位置）を竿先のノズルへ移動**。ブキ空間 (0, 0.155, 0.482)→(0, 0.063, 0.664) m。キャラ基準の長押し射撃中の発生位置: 前方 0.800→0.874 m、高さ 0.958→0.884 m、横 −0.045→−0.027 m | 立ち止まって長押し射撃 | 弾の発生位置が約 7 cm 前・7 cm 下へ。壁際・段差際の射撃、足元の塗りの始点に影響 | ロジック単独の計測（30/60/120 Hz で同値）。本家実機の発生位置とは未比較（実機計測が必要） |
+| プライムの銃口 (0, 0.137, 0.393)→(0, 0.130, 0.402) m。長押し射撃中: 前方 0.711→0.720 m、高さ 0.938→0.931 m | 同上 | ほぼ変化なし（1 cm 未満） | ロジック単独の計測（30/60/120 Hz で同値）。未確認 |
+| グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
+
+計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。

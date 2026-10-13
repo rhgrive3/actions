@@ -92,6 +92,7 @@ export function verifyWallBuild(site, exactSource = false) {
     if (!inside(site, physical) || hash(fs.readFileSync(physical)) !== digest) throw Error('Wall artifact mismatch: ' + file);
   }
   const files = Object.entries(manifest.files).map(([key, digest]) => {
+    if (key.split('/').some(p => !p || p === '.' || p === '..' || p.includes('\\'))) throw Error('Wall build input differs from source: ' + key);
     const file = key.startsWith('upstream/') ? 'inkwave-public/' + key.slice(9)
       : key.startsWith('patch/') ? 'patches/splatoon3/' + key.slice(6)
         : key.startsWith('touch-layout/') ? 'patches/touch-layout/' + key.slice(13)
@@ -100,7 +101,8 @@ export function verifyWallBuild(site, exactSource = false) {
               : key.startsWith('network-replication/') ? 'patches/network-replication/' + key.slice(20)
                 : key.startsWith('loading-cache/') ? 'patches/loading-cache/' + key.slice(14)
                   : key.startsWith('practice-range/') ? 'patches/practice-range/' + key.slice(15)
-                    : key.startsWith('build-script/') ? 'scripts/' + key.slice(13) : null;
+                    : key.startsWith('native-stages/') ? 'patches/native-stages/' + key.slice(14)
+                      : key.startsWith('build-script/') ? 'scripts/' + key.slice(13) : null;
     if (!file || !inside(ROOT.replace(/\/$/, ''), fs.realpathSync(path.resolve(ROOT, file)))
         || hash(fs.readFileSync(path.join(ROOT, file))) !== digest) throw Error('Wall build input differs from source: ' + key);
     return file;
