@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 110
     env:
       AUDIO_BRANCH: integrate/inkwave-audio-v11-real-assets-20261012
-      PACKAGE_SHA256: 3af3a69627ce70c8fc1f4972194903ce01a4a780614cffdf0b9aa8aec6229381
+      PACKAGE_SHA256: f40db78725b76e0bb407b11a9018dc423537d9be2786c3164d853ff677863bdf
       GH_API_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
