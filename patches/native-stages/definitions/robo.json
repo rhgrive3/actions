@@ -12,6 +12,6 @@
   "sourceSemantics": {
     "inactiveObjectPatterns": ["^Fld_Cross00_(?:HokoSet|HokoAsariSet|Tclobj)_"],
     "nonCollidableObjectPatterns": ["^Fld_Cross00JerryMannequin_"],
-    "nonPaintableObjectPatterns": ["^Fld_Cross00_.*__(?:.*(?:NoPaint|Nopaintable).*|MetalNetwork00|NetParts00)(?:_.*)?$"]
+    "nonPaintableObjectPatterns": ["^Fld_Cross00_.*__(?:.*(?:NoPaint|Nopaintable).*|MetalNetwork00|NetParts00)(?:_.*)?$", "^Fld_Cross00_GeneralCube_.*GeneralBoxNoPaint_"]
   }
 }

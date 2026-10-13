@@ -39,7 +39,7 @@ test('Robo source supports both teams, inward launch/respawn and a common direct
  for(const o of d.manifest.objects){
   if(/^Fld_Cross00_(?:HokoSet|HokoAsariSet|Tclobj)_/.test(o.name))assert.equal(o.active,false,o.name);
   if(/^Fld_Cross00JerryMannequin_/.test(o.name))assert.equal(o.collidable,false,o.name);
-  if(/__(?:.*(?:NoPaint|Nopaintable).*|MetalNetwork00|NetParts00)(?:_.*)?$/.test(o.name))assert.equal(o.paintable,false,o.name);
+  if(/__(?:.*(?:NoPaint|Nopaintable).*|MetalNetwork00|NetParts00)(?:_.*)?$/.test(o.name)||/^Fld_Cross00_GeneralCube_.*GeneralBoxNoPaint_/.test(o.name))assert.equal(o.paintable,false,o.name);
  }
  const basis=nativeArenaBasis(L),proof=[];
  for(const team of [0,1]){
