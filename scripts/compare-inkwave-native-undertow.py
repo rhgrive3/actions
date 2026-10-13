@@ -5,15 +5,17 @@ import hashlib
 import json
 from pathlib import Path
 import struct
+import subprocess
 
 PIN = "a32cff26b1a142d31e7658ebc48f213059b3ea42e86d32ed12cb80de5b03d046"
+TREE = "4f42953ce879e1e65a44342239eccfa728f8fa8f"
 
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def compare(source, prepared):
+def compare(source, prepared, repository=None):
     raw = source.read_bytes()
     assert digest(raw) == PIN, "Undertow source is not the pinned revised-stage OBJ"
     positions, normals, uvs, references = [], [], [], []
@@ -75,7 +77,7 @@ def compare(source, prepared):
     assert len(manifest["objects"]) == len(objects)
     for original, converted in zip(objects, manifest["objects"]):
         assert (original["name"], original["vertices"], original["triangles"]) == (converted["name"], converted["vc"], converted["ic"] // 3)
-    return {
+    result = {
         "id": "undertow", "internal": "Vss_Temple01", "sourceSha256": PIN,
         "sourceBytes": len(raw), "objects": len(objects), "vertices": vertex_count,
         "triangles": len(index_bytes) // 12, "vertexBytes": len(vertices), "indexBytes": len(indices),
@@ -83,6 +85,31 @@ def compare(source, prepared):
         "positionsNormalsUVsExact": True, "indicesExact": True, "objectRangesExact": True,
         "version1130ExtractionVerified": False,
     }
+    if repository:
+        entries = subprocess.check_output(["git", "-C", str(repository), "ls-tree", "-rz", TREE]).split(b"\0")
+        count, byte_count = 0, 0
+        for entry in entries:
+            if not entry:
+                continue
+            metadata, name_bytes = entry.split(b"\t", 1)
+            name = name_bytes.decode()
+            if name != "Vss_Temple01.mtl" and not name.startswith("textures/"):
+                continue
+            mode, kind, oid = metadata.split()
+            assert mode == b"100644" and kind == b"blob"
+            data = (source.parent / name).read_bytes()
+            actual = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
+            assert actual == oid.decode(), "MTL/PNG differs from pinned Git tree: " + name
+            count += 1
+            byte_count += len(data)
+        for name, integrity in manifest["textureIntegrity"].items():
+            data = (prepared / name).read_bytes()
+            assert data == (source.parent / name).read_bytes(), "Copied source texture changed: " + name
+            assert digest(data) == integrity["sha256"] and len(data) == integrity["bytes"]
+        result.update({"tree": TREE, "mtlAndPngGitBlobsVerified": count, "mtlAndPngBytes": byte_count,
+                       "copiedSourceTexturesExact": len(manifest["textureIntegrity"]),
+                       "mtlSha256": digest((source.parent / "Vss_Temple01.mtl").read_bytes())})
+    return result
 
 
 if __name__ == "__main__":
@@ -90,8 +117,9 @@ if __name__ == "__main__":
     parser.add_argument("source", type=Path)
     parser.add_argument("prepared", type=Path)
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--repository", type=Path, help="Read-only KiTrix clone for pinned MTL/PNG Git-blob validation")
     args = parser.parse_args()
-    result = compare(args.source, args.prepared)
+    result = compare(args.source, args.prepared, args.repository)
     text = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)
