@@ -12,6 +12,7 @@
 // These are payload ceilings, not new damage tuning or sender authority.
 import fs from 'node:fs';
 import { WEAPONS, SUB, SPECIALS } from '../../inkwave-public/src/config.js';
+import { ALL_SUB_SPECS } from '../splatoon3/runtime/all-subs.mjs';
 import { registerKitSubs } from '../splatoon3/runtime/kit-subs.mjs';
 import { trizookaSpecialWeapon, TRIZOOKA_ID } from '../splatoon3/runtime/kit-trizooka.mjs';
 import { inkVacBlastDescriptor, VAC_ID } from '../splatoon3/runtime/kit-ink-vac.mjs';
@@ -31,7 +32,7 @@ export function hitPayloadPolicy(tuning = profile) {
   Object.assign(subs.bomb, tuning.bomb);
   for (const [id, spec] of Object.entries(tuning.specials || {})) Object.assign(specials[id] ||= {}, spec);
   registerKitSubs(subs, tuning);
-  const descriptors = [trizookaSpecialWeapon(0), trizookaSpecialWeapon(57), inkVacBlastDescriptor(0), inkVacBlastDescriptor(1)];
+  const descriptors = [ALL_SUB_SPECS.angleShooter, trizookaSpecialWeapon(0), trizookaSpecialWeapon(57), inkVacBlastDescriptor(0), inkVacBlastDescriptor(1)];
   let maxDamage = 0;
   for (const def of [...Object.values(weapons), ...Object.values(subs), ...Object.values(specials), ...descriptors]) {
     for (const [key, value] of Object.entries(def || {})) {
@@ -40,11 +41,20 @@ export function hitPayloadPolicy(tuning = profile) {
   }
   const causes = [...new Set([
     ...Object.keys(weapons), ...Object.keys(subs), ...Object.keys(specials),
+    'angleShooter', 'burst', 'fizzy', 'torpedo', 'torpedo-splash', 'inkMine', // registered catalogue hits
     TRIZOOKA_ID, VAC_ID, // registered damaging specials; Big Bubbler authors no hit
     'shot', 'slosh', 'blast', 'drop', // authored projectile-type fallbacks
   ])];
   return { maxDamage, causes };
 }
+export const ANGLE_SHOOTER_HIT_MAX = ALL_SUB_SPECS.angleShooter.directDamage;
+export const CATALOGUE_SUB_HIT_MAX = Object.freeze({
+  burst:ALL_SUB_SPECS.burst.directDamage,
+  fizzy:Math.max(...ALL_SUB_SPECS.fizzy.bursts.map(s=>s.damageMax)),
+  torpedo:ALL_SUB_SPECS.torpedo.damageMax,
+  'torpedo-splash':ALL_SUB_SPECS.torpedo.splashDamage,
+  inkMine:ALL_SUB_SPECS.inkMine.damageMax,
+});
 const policy = hitPayloadPolicy();
 export const MAX_HIT_DAMAGE = policy.maxDamage;
 export const KNOWN_HIT_CAUSES = Object.freeze(policy.causes);
@@ -53,6 +63,8 @@ const CAUSE_SET = new Set(KNOWN_HIT_CAUSES);
 export function isHitPayloadValid(d) {
   if (!Number.isFinite(d?.d) || d.d <= 0 || d.d > MAX_HIT_DAMAGE) return false;
   if (typeof d?.w !== 'string' || !CAUSE_SET.has(d.w)) return false;
+  if (d.w === 'angleShooter' && d.d > ANGLE_SHOOTER_HIT_MAX) return false;
+  if (Object.hasOwn(CATALOGUE_SUB_HIT_MAX,d.w) && d.d > CATALOGUE_SUB_HIT_MAX[d.w]) return false;
   return true;
 }
 
@@ -67,7 +79,9 @@ export function adaptNetHitPayload(rel, code) {
   const constants = TOP + '\n' +
     '// #462 payload bounds derived from the production profile and kit definitions.\n' +
     `const IW_HIT_MAX_DAMAGE = ${MAX_HIT_DAMAGE};\n` +
-    `const IW_HIT_CAUSES = new Set(${JSON.stringify(KNOWN_HIT_CAUSES)});`;
+    `const IW_HIT_CAUSES = new Set(${JSON.stringify(KNOWN_HIT_CAUSES)});\n` +
+    `const IW_ANGLE_SHOOTER_HIT_MAX = ${ANGLE_SHOOTER_HIT_MAX};\n` +
+    `const IW_CATALOGUE_SUB_HIT_MAX = ${JSON.stringify(CATALOGUE_SUB_HIT_MAX)};`;
   code = code.slice(0, topAt) + constants + code.slice(topAt + TOP.length);
 
   const at = code.indexOf(GUARD);
@@ -79,6 +93,8 @@ export function adaptNetHitPayload(rel, code) {
     // #574: a zero-damage packet is admissible only when it carries the
     // Blaster knockback geometry field; the network guard validates that field.
     '    if (!Number.isFinite(d.d) || d.d < 0 || d.d > IW_HIT_MAX_DAMAGE || (d.d === 0 && d.kb === undefined)) return;\n' +
-    '    if (typeof d.w !== \'string\' || !IW_HIT_CAUSES.has(d.w)) return;';
+    '    if (typeof d.w !== \'string\' || !IW_HIT_CAUSES.has(d.w)) return;\n' +
+    "    if (d.w === 'angleShooter' && d.d > IW_ANGLE_SHOOTER_HIT_MAX) return;\n" +
+    "    if (Object.hasOwn(IW_CATALOGUE_SUB_HIT_MAX,d.w) && d.d > IW_CATALOGUE_SUB_HIT_MAX[d.w]) return;";
   return code.slice(0, at) + block + code.slice(at + GUARD.length);
 }

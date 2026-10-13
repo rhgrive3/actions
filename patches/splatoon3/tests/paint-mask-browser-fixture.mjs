@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+import { catalogPaintEllipse } from '/ASSET/patches/splatoon3/runtime/catalog-splash-paint.mjs';
 // Tests the emitted shader, emitted CPU mask, and native seed attribute packing.
 // Only raster derivatives/AA are replaced: points query exact gameplay samples,
 // with tx fixed to the actual atlas density instead of unrelated neighbor points.
@@ -7,7 +9,8 @@ import { paintShapeSeed, paintShapeHash } from '/ASSET/patches/splatoon3/runtime
 const check = (condition, message) => { if (!condition) throw Error(message); };
 export function createPaintMaskProbe() {
   const paint = Object.create(PaintSystem.prototype);
-  Object.assign(paint, { size: 1024, usedHeight: 1024, grid: new Uint8Array(128 * 128), dead: new Uint8Array(128 * 128),
+  // This probe models a complete rectangular legacy atlas, not a masked native stage.
+  Object.assign(paint, { level: { native: false }, size: 1024, usedHeight: 1024, grid: new Uint8Array(128 * 128), dead: new Uint8Array(128 * 128),
     counts: [0, 0], version: 0, clock: 0, growing: [],
     renderer: { capabilities: { getMaxAnisotropy: () => 1 }, getRenderTarget: () => null,
       getClearColor: c => c, getClearAlpha: () => 0, setRenderTarget() {}, setClearColor() {}, clear() {}, render() {} } });
@@ -193,7 +196,7 @@ void main() { float h = paintShapeHash(vLocal.x, vLocal.y, vLocal.z) * 65536.0;
   const body = bodyMaskRows(paint, nativeShader, program, query, tx, tail);
   return { renderer: gl.getParameter(gl.RENDERER), hashQueries: hashExpected.length, activeFamilies, rows,
     cells: rows.reduce((sum, row) => sum + row.cells, 0), negativeUnsupported: rows.reduce((sum, row) => sum + row.negativeUnsupported, 0),
-    body };
+    body, hidden: hiddenPresentationRows(), ownedRunScan: ownedRunScanRows(), localOrderMap: localOrderMapRows() };
 }
 
 // PR1188: bidirectional CPU-grid / GPU-body agreement. The GPU program is the
@@ -210,10 +213,14 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
   const cases = [];
   for (const [kind, sa] of [[0, 0.7], [2, 0], [3, 0], [4, 0], [4, 0.32], [5, 0], [5, 0.32], [5, 0.2743], [5, 3.2]])
     for (const R of [1.62, 2.43, 3.2]) for (const seed of [0.11, 0.5, 0.93]) cases.push({ kind, sa, R, seed });
-  for (const { kind, sa, R, seed } of cases) {
+  for(const depth of [.25,.5,.8,1,1.25,2.62]) for(const seed of [.11,.5,.93]) {
+    const shape=catalogPaintEllipse(2,depth);
+    cases.push({kind:0,sa:shape.stretchAmt,R:shape.radius,seed,rotate:shape.rotate,depth});
+  }
+  for (const { kind, sa, R, seed, rotate=false, depth=null } of cases) {
     paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
     paint._paintOwnershipOrder = new Uint32Array(n * n);
-    const sdu = sa ? 0.6 : 0, sdv = sa ? 0.8 : 0, lu = 16, lv = 16;
+    const sdu = sa ? (rotate ? -.8 : .6) : 0, sdv = sa ? (rotate ? .6 : .8) : 0, lu = 16, lv = 16;
     paint._cpuSplat(face, lu, lv, R, 0, seed, sdu, sdv, sa, kind);
     const points = [], index = [];
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
@@ -228,12 +235,168 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
       if (owned) cpu++; if (visible) gpuCells++;
       if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
     }
-    rows.push({ kind, sa, R, seed, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
+    rows.push({ kind, sa, R, seed, depth, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
   }
   const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 81 && result.cpuCells > 0, 'all body kinds, smears, radii and seeds exercised');
+  check(rows.length === 99 && result.cpuCells > 0, 'all body kinds and catalog depth envelopes exercised');
   return result;
+}
+
+
+// Exercise the real atlas framebuffer, including the composed mip path and
+// snapshot replay. This is independent of the scalar mask shader probe above.
+function hiddenPresentationRows() {
+  const rows = [];
+  const descriptor = Object.getOwnPropertyDescriptor(document, 'hidden');
+  const renderer = new THREE.WebGLRenderer({ antialias: false });
+  const originalRender = renderer.render.bind(renderer);
+  let drawCalls = 0;
+  renderer.render = (...args) => { drawCalls++; return originalRender(...args); };
+  try {
+    for (const wall of [false, true]) for (const rate of [30, 60, 120]) {
+      const results = [];
+      for (const hidden of [false, true]) {
+        Object.defineProperty(document, 'hidden', { configurable: true, value: hidden });
+        const V = (x=0,y=0,z=0) => new THREE.Vector3(x,y,z);
+        const face = { origin: wall ? V(-6,0,0) : V(-6,0,-6), u:V(1,0,0),
+          v:wall?V(0,1,0):V(0,0,1), n:wall?V(0,0,-1):V(0,1,0),
+          su:12,sv:12,wall,turf:!wall,paintable:true };
+        const level = { faces:[face], blocks:[{faces:[0,-1,-1,-1,-1,-1], aabbMin:wall?V(-6,0,-.01):V(-6,-.01,-6), aabbMax:wall?V(6,12,.01):V(6,.01,6)}],
+          pointInside:()=>false,queryBlocks:(_x0,_z0,_x1,_z1,out=[])=>{out.length=0;out.push(0);return out;} };
+        const paint = new PaintSystem(renderer,level,{atlasSize:512,maxDensity:32,cell:.25});
+        drawCalls=0;
+        const point=wall?V(0,7,0):V(0,0,0);
+        for(let tick=0;tick<rate*5;tick++) {
+          if(tick===0||tick===rate/2||tick===rate) {
+            const team=tick===rate/2?1:0, seq=tick===0?1:tick===rate/2?2:3;
+            const p=point.clone();p.x+=seq===2?.75:seq===3?-.75:0;
+            paint.splat(p,1.6,team,{seed:team?.72:.37,
+              __netOrder:{clock:seq,seq,peer:'paint-probe-'+team,epoch:'visibility'}});
+          }
+          paint.advanceSimulation(1/rate);paint.flush(1/rate);
+        }
+        if(hidden)check(drawCalls===0,'hidden paint must not render atlas or regenerate mipmaps');
+        Object.defineProperty(document,'hidden',{configurable:true,value:false});
+        paint.flush(0);
+        check(drawCalls>0,'restored paint must actually draw');
+        const pixels=new Uint8Array(512*512*4);renderer.readRenderTargetPixels(paint.rt,0,0,512,512,pixels);
+        const samples=[];
+        for(let j=0;j<face.nv;j++)for(let i=0;i<face.nu;i++){
+          const x=Math.floor(face.atlas.x+face.atlas.pad+(i+.5)*face.cu*face.atlas.ppm);
+          const y=Math.floor(face.atlas.y+face.atlas.pad+(j+.5)*face.cv*face.atlas.ppm);
+          const at=(y*512+x)*4,owner=paint.grid[face.grid+j*face.nu+i];
+          samples.push({owner,red:pixels[at],alpha:pixels[at+3]});
+        }
+        results.push({samples,counts:Array.from(paint.counts),clock:paint.clock});paint.dispose();
+      }
+      check(JSON.stringify(results[0].counts)===JSON.stringify(results[1].counts),'hidden floor counts equal visible');
+      let compared=0,mismatches=0;
+      for(let i=0;i<results[0].samples.length;i++){
+        const a=results[0].samples[i],b=results[1].samples[i];
+        check(a.owner===b.owner,'hidden CPU owner parity');
+        // Fully opaque samples exclude fractional raster/AA accumulation.
+        if(a.owner&&a.alpha>250&&b.alpha>250){compared++;if((a.red>127)!==(b.red>127))mismatches++;}
+      }
+      check(compared>20&&mismatches===0,'restored solid GPU ownership must equal visible atlas');
+      rows.push({wall,rate,compared,mismatches,counts:results[1].counts});
+    }
+  } finally {
+    if(descriptor)Object.defineProperty(document,'hidden',descriptor);else delete document.hidden;
+    renderer.dispose();
+  }
+  return rows;
+}
+
+function unmergedOwnerRuns(face, orderId, u0, u1, v0, v1) {
+    const padM = (face.atlas.pad - 0.5) / face.atlas.ppm;
+    const i0 = Math.max(0, Math.floor(Math.max(0, u0) / face.cu));
+    const i1 = Math.min(face.nu - 1, Math.floor(Math.min(face.su, u1) / face.cu));
+    const j0 = Math.max(0, Math.floor(Math.max(0, v0) / face.cv));
+    const j1 = Math.min(face.nv - 1, Math.floor(Math.min(face.sv, v1) / face.cv));
+    let scratch = this._paintOrderRunScratch, runCount = 0;
+    for (let j = j0; j <= j1; j++) {
+      let start = -1;
+      for (let i = i0; i <= i1 + 1; i++) {
+        const owns = i <= i1 && this._paintOwnershipOrder[face.grid + j * face.nu + i] === orderId;
+        if (owns && start < 0) start = i;
+        if ((!owns || i === i1 + 1) && start >= 0) {
+          const end = owns ? i : i - 1;
+          let x0 = Math.max(u0, start * face.cu), x1 = Math.min(u1, (end + 1) * face.cu);
+          let y0 = Math.max(v0, j * face.cv), y1 = Math.min(v1, (j + 1) * face.cv);
+          if (start === 0) x0 = Math.max(u0, -padM);
+          if (end === face.nu - 1) x1 = Math.min(u1, face.su + padM);
+          if (j === 0) y0 = Math.max(v0, -padM);
+          if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
+          if (x1 > x0 && y1 > y0) {
+            const offset = runCount * 4;
+            if (offset + 4 > scratch.length) {
+              const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
+              grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
+            }
+            scratch[offset] = x0; scratch[offset + 1] = x1;
+            scratch[offset + 2] = y0; scratch[offset + 3] = y1;
+            runCount++;
+          }
+          start = -1;
+        }
+      }
+    }
+    return runCount;
+  };
+
+function ownedRunScanRows() {
+  const rows=[],renderer=new THREE.WebGLRenderer({antialias:false});renderer.setSize(32,32);
+  try {
+    for(const wall of [false,true])for(const seed of [.03,.37,.92]){
+      const results=[];
+      for(const legacy of [true,false]){
+        const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
+        const face={origin:wall?V(-6,0,0):V(-6,0,-6),u:V(1,0,0),v:wall?V(0,1,0):V(0,0,1),n:wall?V(0,0,-1):V(0,1,0),su:12,sv:12,wall,turf:!wall,paintable:true};
+        const level={faces:[face],blocks:[{faces:[0,-1,-1,-1,-1,-1],aabbMin:wall?V(-6,0,-.01):V(-6,-.01,-6),aabbMax:wall?V(6,12,.01):V(6,.01,6)}],pointInside:()=>false,queryBlocks:(_a,_b,_c,_d,out=[])=>{out.length=0;out.push(0);return out;}};
+        const paint=new PaintSystem(renderer,level,{atlasSize:512,maxDensity:32,cell:.25});if(legacy)paint._paintOrderRuns=unmergedOwnerRuns;
+        let quads=0,tickIndex=0;const drawRectangles=[];const push=paint._pushQuad;paint._pushQuad=function(...args){quads++;drawRectangles.push({tick:tickIndex,values:args.slice(1)});return push.apply(this,args)};
+        for(let tick=0;tick<90;tick++){tickIndex=tick;
+          if([0,9,18].includes(tick)){
+            const seq=tick/9+1,team=seq===2?1:0,pos=wall?V((seq-2)*.65,7,0):V((seq-2)*.65,0,0);
+            paint.splat(pos,1.6,team,{seed,kind:seed===.03?'line':seed===.92?'roll':'shot',stretch:wall?V(.6,.8,0):V(.6,0,.8),stretchAmt:1.2,__netOrder:{clock:seq,seq,peer:'run-merge-'+team,epoch:'run-merge'}});
+          }
+          paint.advanceSimulation(1/60);paint.flush(1/60);
+        }
+        const pixels=new Uint8Array(512*512*4);renderer.readRenderTargetPixels(paint.rt,0,0,512,512,pixels);
+        results.push({pixels,quads,drawRectangles,grid:Array.from(paint.grid),owners:Array.from(paint._paintOwnershipOrder),counts:Array.from(paint.counts)});paint.dispose();
+      }
+      const [before,after]=results;check(JSON.stringify(before.grid)===JSON.stringify(after.grid),'run scan changed gameplay grid');check(JSON.stringify(before.owners)===JSON.stringify(after.owners),'run scan changed event ownership');check(JSON.stringify(before.counts)===JSON.stringify(after.counts),'run scan changed turf counts');
+      let mismatch=0,maxDifference=0,alphaMismatch=0,solidAlphaChanges=0;const channelMismatches=[0,0,0,0],examples=[];
+      for(let i=0;i<before.pixels.length;i++)if(before.pixels[i]!==after.pixels[i]){mismatch++;channelMismatches[i%4]++;const d=Math.abs(before.pixels[i]-after.pixels[i]);maxDifference=Math.max(maxDifference,d);if(i%4===3){alphaMismatch++;if((before.pixels[i]>127)!==(after.pixels[i]>127))solidAlphaChanges++;}if(examples.length<16)examples.push({x:Math.floor(i/4)%512,y:Math.floor(i/2048),channel:i%4,before:before.pixels[i],after:after.pixels[i]});}
+      if(mismatch){
+        const encode=bytes=>{let raw='';for(let i=0;i<bytes.length;i+=8192)raw+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(raw);};
+        globalThis.paintMaskDiagnostic={wall,seed,mismatch,maxDifference,alphaMismatch,solidAlphaChanges,channelMismatches,examples,beforeQuads:before.quads,afterQuads:after.quads,beforeDrawRectangles:before.drawRectangles,afterDrawRectangles:after.drawRectangles,pixels:{width:512,height:512,format:'RGBA8',before:encode(before.pixels),after:encode(after.pixels)}};
+      }
+      check(mismatch===0,'run scan changed actual GPU atlas bytes: '+JSON.stringify({wall,seed,mismatch}));check(after.quads===before.quads,'run scan changed native submissions');check(JSON.stringify(after.drawRectangles)===JSON.stringify(before.drawRectangles),'run scan changed exact ordered quad inputs');
+      rows.push({wall,seed,beforeQuads:before.quads,afterQuads:after.quads,mismatch});
+    }
+  } finally {renderer.dispose();}
+  return rows;
+}
+
+
+function localOrderMapRows() {
+  const p=Object.create(PaintSystem.prototype);p.grid=new Uint8Array(64);
+  const network={clock:9,peer:'order-map-browser',seq:1,epoch:'probe'};
+  const first=p._paintOrderId(network), local=[];
+  for(let n=0;n<10000;n++)local.push(p._paintOrderId());
+  check(p._paintOrderId(network)===first,'network duplicate identity survives local allocations');
+  check(p._paintOrderIds.size===1,'only network dedupe key is retained');
+  check(p._paintOrderRecords.length===10002,'local order records remain available');
+  check(new Set(local).size===10000,'local IDs remain distinct');
+  check(p._paintOrderComesAfter(local[9999],local[0]),'local chronology remains intact');
+  const result={localIds:local.length,networkKeys:p._paintOrderIds.size,records:p._paintOrderRecords.length};
+  p._clearPaintOwnership();
+  check(p._paintOrderIds.size===0&&p._paintOrderRecords.length===1,'clear releases both order stores');
+  check(p._paintOrderId(network)===1,'new match restarts network identity');
+  check(p._paintOrderId()===2&&p._paintOrderIds.size===1,'new local identity remains outside dedupe map');
+  return {...result,clear:true};
 }

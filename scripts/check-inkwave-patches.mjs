@@ -55,7 +55,7 @@ try {
   fs.mkdirSync(logDir, { recursive: true });
   const log = path.join(logDir, 'patch-tests.log');
   const concurrency = Number(process.env.INKWAVE_TEST_CONCURRENCY || 4);
-  if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error('INKWAVE_TEST_CONCURRENCY must be a positive integer');
+  if (!Number.isInteger(concurrency) || concurrency < 1) throw Error('INKWAVE_TEST_CONCURRENCY must be a positive integer');
   const result = await runLoggedTestProcess(process.execPath, ['--experimental-vm-modules', '--test', `--test-concurrency=${concurrency}`, ...files], { cwd: ROOT, env: { ...process.env, INKWAVE_UPSTREAM_SOURCE: SRC }, logFile: log });
   result.stdout = fs.readFileSync(log, 'utf8');
   result.stderr = '';

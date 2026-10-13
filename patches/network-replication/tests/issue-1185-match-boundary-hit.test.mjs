@@ -1,3 +1,4 @@
+import { objectShredderEquipped, withObjectHitGear, OBJECT_SHREDDER_FLAG } from '../../splatoon3/runtime/object-gear.mjs';
 // #1185: a hit or hit_ack created in one match must not touch a reused actor in the next match.
 // Executes the composed production NetMatch owner methods; transport and damage are bounded sinks.
 import test from 'node:test';
@@ -24,7 +25,7 @@ assert.ok(hitStateStart >= 0 && hitStateEnd > hitStateStart, 'production hit-aut
 const hitAuthoritySource = source.slice(hitStateStart, hitStateEnd);
 const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
 assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
-const hitLimits = source.slice(limitsStart, limitsEnd);
+const hitLimits = source.match(/^const IW_CATALOGUE_SUB_HIT_MAX = [^\n]+;/m)[0] + '\n' + source.slice(limitsStart, limitsEnd);
 const dropStart = source.indexOf('function clearRemoteDropRoll('), dropEnd = source.indexOf('function syncRemoteDropRoll(', dropStart);
 assert.ok(dropStart >= 0 && dropEnd > dropStart, 'production Drop Roller cleanup helper is composed');
 const dropCleanup = source.slice(dropStart, dropEnd);
@@ -47,12 +48,12 @@ function matchWorld({ myId, cfgId }) {
     v.hp -= damage;
     emit('damage', { victim: v, attacker: a, amount: damage });
   } } };
-  const Klass = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'now', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
+  const Klass = new Function('G', 'PLAYER', 'on', 'emit', 'r2', 'now', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'clearRemoteDodgeClock',
     source.slice(source.indexOf('function clearRemoteSquidroll('), source.indexOf('function syncRemoteSquidroll(')) + dropCleanup + hitLimits + hitAuthoritySource
       + 'return class {' + METHODS.map(method).join('\n') + '}');
   const NetMatchClass = Klass(G, { hp: 100, spawnInvuln: 3 }, on, emit, x => Math.round(x * 100) / 100, () => 1, 1000, new Set(['shooter']), rearmTeamWipe,
-    respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge, { slosher: { kind: 'slosher' } }, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
+    respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge, { slosher: { kind: 'slosher' } }, validDamageGroup, clearRemoteRollerPresentation, clearRemoteDodgeClock);
   const n = new NetMatchClass();
   Object.assign(n, { myId, cfg: { id: cfgId }, hitNextSeq: 0, byNid: new Map(), hitPending: new Map(),
     s: { tr: { sendTo(to, data) { sent.push({ to, data }); return true; } } }, peers: new Map(),

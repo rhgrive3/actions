@@ -2,6 +2,9 @@ const PAINT_RADIUS_KEYS = new Set([
   'PaintRadius',
   'PaintRadiusGround',
   'PaintRadiusShock',
+  // Added Blaster terrain bursts spawn these source-sized ground drops through
+  // the ordinary shot splat path (main-weapon-catalog + blaster-flight-paint).
+  'SplashDropPaintRadius',
   'CanopyPaintRadius',
   'PaintWidthHalf',
   'WidthHalf',

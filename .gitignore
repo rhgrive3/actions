@@ -9,3 +9,11 @@ _site/
 .browser-evidence/
 .built-site/
 **/.wrangler/
+
+# Third-party extracted stage references and generated derivatives stay local.
+.codex-stage-sources/
+inkwave-public/assets/native-stages/
+_site-native*/
+
+# Python import/build caches.
+**/__pycache__/

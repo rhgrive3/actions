@@ -10,6 +10,7 @@ import { networkIdentity } from '../../patches/network-replication/adapter.mjs';
 import { qualityIdentity } from '../../patches/local-quality/adapter.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
+import { staticEsModuleImports } from '../lib/inkwave-module-imports.mjs';
 import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
 import { inflateSync } from 'node:zlib';
 import { compactLightmapPng } from '../lib/inkwave-lightmap-compaction.mjs';
@@ -31,6 +32,8 @@ const runtimeHelpers = [
 // Never infer this from '*-adapter' names: the emitted graph audit below must
 // still reject every static/dynamic runtime reference to an excluded module.
 const auditedBuildExports = new Map([
+  ['patches/local-quality/ink-volume/vtf.mjs', ['decodeVTF']],
+  ['patches/local-quality/ink-volume/mesh.mjs', ['VOLUME_SHAPE', 'buildInkMesh']],
   ['patches/local-quality/audio-listener-adapter.mjs', ['AUDIO_LISTENER_SOURCE']],
   ['patches/local-quality/finish-tape-adapter.mjs', ['replaceOnceFinish']],
   ['patches/local-quality/hud-authority-adapter.mjs', ['SPECIAL_SEGMENTS', 'TOOTH_PITCH_DEG', 'GAUGE_GEN', 'specialGaugeSVG', 'touchRingSVG']],
@@ -40,6 +43,7 @@ const auditedBuildExports = new Map([
   ['patches/local-quality/issue-480-camera-shake-fidelity.mjs', ['REQUIRED_WIRING', 'ISSUE_480_CAMERA_RIG', 'ISSUE_480_SCREENFX', 'ISSUE_480_MENUS']],
   ['patches/local-quality/medal-adapter.mjs', ['replaceOnce', 'S3_AWARDS', 'S3_PRIORITY_RANKS', 'S3_AWARD_ORDER']],
   ['patches/local-quality/minimap-resource-adapter.mjs', ['replaceOnceMinimap']],
+  ['patches/local-quality/showcase-alpha-adapter.mjs', ['selectShowcaseAlphaTarget']],
   ['patches/local-quality/team-special-signal-adapter.mjs', []],
   ['patches/local-quality/texlib-adapter.mjs', ['replaceOnceTexlib']],
   ['patches/reliability/map-look.mjs', []],
@@ -102,6 +106,12 @@ test('runtime helper URLs retain their exports without carrying build-time sourc
   }
 });
 
+test('minified static ESM imports are found without whitespace and with re-exports', () => {
+  const compact = 'import{Pieces as P}from"./kit.mjs";export{THING}from"../catalog.mjs";export*from"../../common.mjs";';
+  assert.deepEqual(staticEsModuleImports(compact), ['./kit.mjs', '../catalog.mjs', '../../common.mjs']);
+  assert.deepEqual(staticEsModuleImports('const a = { name: "import fake from \\"nothing\\"" };'), []);
+});
+
 const site = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);
 test('lightmap compaction preserves every pixel and non-image PNG chunk', () => {
   function decode(bytes) {
@@ -139,7 +149,7 @@ test('lightmap compaction preserves every pixel and non-image PNG chunk', () => 
 
 test('ESM minification preserves the emitted module export interface', {skip:!site}, () => {
   const identity=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
-  const roots={upstream:'inkwave-public',patch:'patches/splatoon3','touch-layout':'patches/touch-layout',reliability:'patches/reliability','local-quality':'patches/local-quality','network-replication':'patches/network-replication','practice-range':'patches/practice-range','loading-cache':'patches/loading-cache'};
+  const roots={upstream:'inkwave-public',patch:'patches/splatoon3','touch-layout':'patches/touch-layout',reliability:'patches/reliability','local-quality':'patches/local-quality','network-replication':'patches/network-replication','practice-range':'patches/practice-range','native-stages':'patches/native-stages','loading-cache':'patches/loading-cache'};
   const exports=source=>parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.flatMap(n=>{
     if(n.type==='ExportDefaultDeclaration')return['default'];
     if(n.type==='ExportAllDeclaration')return['*:'+n.source.value];
@@ -173,7 +183,7 @@ test('emitted identity binds every input to one canonical tracked path including
   const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3',
     'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability',
     'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication',
-    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
+    'practice-range': 'patches/practice-range', 'native-stages': 'patches/native-stages', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
   const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8' })
     .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const mapped = [];
@@ -224,6 +234,18 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   assert.equal(profileEmitted, JSON.stringify(JSON.parse(profileSource)), 'compact only emitted JSON whitespace');
   assert.equal(identity.files['patch/profile.json'], hash(Buffer.from(profileSource)), 'identity retains raw profile input');
   assert(config.precache.includes('patches/splatoon3/profile.json'), 'all tuning data remains available offline');
+  // The model-family bundle still has a static import of its separate kit.mjs.
+  for (const file of ['patches/splatoon3/runtime/weapon-models/registry.mjs',
+    'patches/splatoon3/runtime/weapon-models/kit.mjs']) {
+    assert(config.precache.includes(file), 'weapon model dependency not offline-ready: ' + file);
+  }
+  const weaponRegistry = 'patches/splatoon3/runtime/weapon-models/registry.mjs';
+  const emittedImports = staticEsModuleImports(fs.readFileSync(path.join(site, weaponRegistry), 'utf8'));
+  assert(emittedImports.includes('./kit.mjs'), 'minified weapon registry retains its shared modelling-kit import');
+  for (const spec of emittedImports.filter(spec => spec.startsWith('.'))) {
+    const dependency = path.posix.normalize(path.posix.join(path.posix.dirname(weaponRegistry), spec));
+    assert(config.precache.includes(dependency), 'weapon bundle static import not precached: ' + dependency);
+  }
   assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= PRECACHE_BUDGET_BYTES,
     'precache ceiling includes the complete runtime dependency graph');
   for (const file of BUILD_ONLY_PATCH_MODULES) {

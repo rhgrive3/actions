@@ -1,3 +1,4 @@
+import { installNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
 import { installTurfCombatGate } from './turf-combat.mjs';
 import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
@@ -55,6 +56,7 @@ import { installWeaponMotion } from './weapon-motion.mjs';
 import { installFlowMotion } from './flow-motion.mjs';
 import { installBombMotion } from './bomb-motion.mjs';
 import { installWeaponDetailMotion } from './weapon-detail-motion.mjs';
+import { installWeaponFamilyMotion } from './weapon-family-motion.mjs';
 import { installJumpMotion } from './jump-motion.mjs';
 import { installLandingMotion } from './landing-motion.mjs';
 import { installSwimMotion } from './swim-motion.mjs';
@@ -197,7 +199,10 @@ export function install(profile) {
   installCatalogueBeakonJumps(api);
   installCatalogueControls(api);
   installCatalogueNetwork(api, { replaySub, replaySpecial, replaySplashdown });
+  installNativeSprinklerDamage(api);
   installBotPaintDeviceProfile({ G, Actor });
   installSpecialPresentation(api, profile);
+  // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
+  installWeaponFamilyMotion(api);
   return api;
 }

@@ -109,6 +109,13 @@ test('kept projectile, weapon:fire packet and replay use one origin; ordinary an
   assert.ok(Math.abs(kept.z - 2.0176 * .686 / 1.717447) < 1e-10);
   assert.ok(events[0].muzzle.distanceTo(kept) < 1e-12,
     'network event publishes the authoritative flight origin');
+  // Cosmetic per-weapon model nozzles must not affect a source-calibrated CK shot.
+  actor.character.weapon.def.muzzle.set(0.07, 0.23, 1.1);
+  system.fireCharger(actor, weapon, 1);
+  assert.ok(system._fidelityChargerFlights.at(-1).origin.distanceTo(kept) < 1e-12,
+    'visible nozzle replacement must not shift stored-flight origin');
+  assert.ok(events.at(-1).muzzle.distanceTo(kept) < 1e-12,
+    'the network packet retains calibrated origin under model replacement');
   system.ghostFire(actor, { weapon: weapon.id, muzzle: events[0].muzzle,
     dir: events[0].dir, charge: 1, len: events[0].len });
   assert.ok(system._fidelityChargerFlights.at(-1).origin.distanceTo(kept) < 1e-12,

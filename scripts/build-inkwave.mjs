@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { NATIVE_ROOT, nativeStageIdentity, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
@@ -17,8 +18,9 @@ import { touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
 import { reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
 import { qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
 import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
-import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
+import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity, INITIAL_JS_BUDGET_BYTES } from '../patches/loading-cache/adapter.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
+import { staticEsModuleImports } from './lib/inkwave-module-imports.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
@@ -30,6 +32,8 @@ const SRC = physicalLocation(path.resolve(process.argv[2] || 'inkwave-public'));
 const OUT = physicalLocation(path.resolve(process.argv[3] || '_site'));
 if (fs.existsSync(OUT) && !fs.statSync(OUT).isDirectory()) throw new Error('Build output must be a directory');
 const projectRoot = path.resolve(PATCH_ROOT, '../..');
+// Inlined into weapon-models/registry.mjs by the production build (see the patch copy loop).
+const WEAPON_MODEL_FAMILY = /^runtime\/weapon-models\/(shooters|shooters-b|blasters|dualies|rollers|brushes|chargers|stringers|sloshers|splatlings|brellas|splatanas)\.mjs$/;
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
 if (contains(OUT, projectRoot) || contains(OUT, SRC) || contains(SRC, OUT) || contains(PATCH_ROOT, OUT) || contains(RELIABILITY_ROOT, OUT) || contains(QUALITY_ROOT, OUT) || contains(NETWORK_ROOT, OUT) || contains(LOADING_ROOT, OUT) || contains(RANGE_ROOT, OUT)) throw new Error('Build output must be separate from upstream source and patch files');
 checkCompatibility(SRC);
@@ -50,13 +54,14 @@ const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;
 const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
 
 // Build as a transaction: only a fully patched, validated tree replaces OUT.
+const nativePrepared = prepareNativeStageBuild(process.env.INKWAVE_NATIVE_STAGE_ASSETS);
 const BUILD = OUT + '.building';
 fs.rmSync(BUILD, { recursive: true, force: true });
 let rawJs = 0, minJs = 0, gzRaw = 0, gzMin = 0, rawCss = 0, minCss = 0;
 let losslessLightmapSavings = 0;
 for (const file of walk(SRC)) {
   const rel = path.relative(SRC, file);
-  if (SKIP.has(rel)) continue;
+  if (SKIP.has(rel) || rel.startsWith('assets/native-stages' + path.sep) || rel.startsWith('_native-reference-assets' + path.sep)) continue;
   const dst = path.join(BUILD, rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   const ext = path.extname(file);
@@ -72,7 +77,7 @@ for (const file of walk(SRC)) {
   else if (!unminified && rel.startsWith('assets/lightmaps/') && ext === '.png') {
     // Pack the same grayscale pixels with better PNG row filters + DEFLATE.
     // Do not touch source assets, offline availability, module imports or the
-    // 5 MiB cache ceiling. The helper validates decoded pixels before use.
+    // production cache ceiling. The helper validates decoded pixels before use.
     const original = fs.readFileSync(file), compact = optimizeLightmapPng(original);
     fs.writeFileSync(dst, compact);
     losslessLightmapSavings += original.length - compact.length;
@@ -85,13 +90,31 @@ for (const file of walk(PATCH_ROOT)) {
   if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
   // Pinned source/audit tables are input evidence for tests and profile generation,
   // never fetched by the browser. Keep them in Git, but exclude their JSON from
-  // the deployed PWA asset/hash manifest and the 64 KiB service worker.
+  // the deployed PWA asset/hash manifest and the bounded Service Worker.
   if (rel.startsWith('reference/') && rel.endsWith('.json')) continue;
   // Scorch menu artwork belongs at the shared stage asset URLs, not under the
   // patch source namespace. Merge only its stage manifest entry below.
   if (rel.startsWith('assets/stages/')) continue;
   const dst = path.join(BUILD, 'patches/splatoon3', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
+  const relPosix = rel.split(path.sep).join('/');
+  // Per-main-weapon model families ship inlined in registry.mjs: one module and
+  // one worker manifest entry instead of thirteen. kit.mjs stays its own module.
+  if (!unminified && WEAPON_MODEL_FAMILY.test(relPosix)) continue;
+  if (!unminified && relPosix === 'runtime/weapon-models/registry.mjs') {
+    const res = await esbuild.build({
+      entryPoints: [file], bundle: true, format: 'esm', minify: true, charset: 'utf8', legalComments: 'inline', write: false, logLevel: 'warning',
+      plugins: [{ name: 'weapon-model-families', setup(b) {
+        b.onResolve({ filter: /.*/ }, args => args.kind === 'entry-point' ||
+          (args.importer.startsWith(path.dirname(file)) && WEAPON_MODEL_FAMILY.test('runtime/weapon-models/' + args.path.replace(/^\.\//, '')))
+          ? undefined : { path: args.path, external: true });
+        b.onLoad({ filter: /\.mjs$/ }, args => ({ loader: 'js',
+          contents: adaptBuildSource('patches/splatoon3/' + path.relative(PATCH_ROOT, args.path).split(path.sep).join('/'), fs.readFileSync(args.path, 'utf8')) }));
+      } }],
+    });
+    fs.writeFileSync(dst, res.outputFiles[0].text);
+    continue;
+  }
   if (/\.(m?js|css)$/.test(rel)) {
     const patchRel = 'patches/splatoon3/' + rel.split(path.sep).join('/');
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
@@ -131,15 +154,25 @@ overlayScorchStageAssets(BUILD);
 for (const [root, prefix] of [
   [RELIABILITY_ROOT, 'patches/reliability'],
   [NETWORK_ROOT, 'patches/network-replication'],
+  [NATIVE_ROOT, 'patches/native-stages'],
 ]) {
   for (const file of walk(root)) {
     const rel = path.relative(root, file).split(path.sep).join('/');
-    if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
+    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
+    // One native runtime module avoids inflating the bounded worker manifest.
+    if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
+    if (prefix === 'patches/native-stages' && ['runtime/engine.mjs','runtime/registry.mjs','runtime/source-worker.mjs'].includes(rel) && !unminified) {
+      const bundled = await esbuild.build({ entryPoints:[file], bundle:true, format:'esm', minify:true, charset:'utf8', write:false,
+        external:['three','../../../src/*','./registry.mjs','./build-config.mjs'], legalComments:'inline' });
+      fs.writeFileSync(dst,bundled.outputFiles[0].contents); continue;
+    }
     if (/\.(?:m?js|css)$/.test(rel)) {
       const sourcefile = prefix + '/' + rel;
-      const result = await transform(adaptBuildSource(sourcefile, fs.readFileSync(file, 'utf8')), {
+      const nativeConfig = prefix === 'patches/native-stages' && rel === 'runtime/build-config.mjs';
+      const source = nativeConfig ? `export const nativeStageBuild = ${JSON.stringify(nativePrepared?.config || null)};` : fs.readFileSync(file, 'utf8');
+      const result = await transform(adaptBuildSource(sourcefile, source), {
         loader: rel.endsWith('.css') ? 'css' : 'js',
         format: rel.endsWith('.mjs') ? 'esm' : undefined,
         minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
@@ -185,7 +218,7 @@ if (fs.existsSync(pwaWorker)) fs.copyFileSync(pwaWorker, path.join(BUILD, 'sw.js
 // access in the sources is static (verified: no computed THREE[...] lookups), so the namespace keeps what it needs.
 const THREE_DIR = path.join(SRC, 'vendor/three/build');
 if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && process.env.INKWAVE_NO_THREE_SHAKE !== '1') {
-  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RELIABILITY_ROOT), ...walk(NETWORK_ROOT), ...walk(RANGE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
+  const srcFiles = [...walk(path.join(SRC, 'src')), ...walk(path.join(SRC, 'vendor/three/jsm')), ...walk(PATCH_ROOT), ...walk(QUALITY_ROOT), ...walk(RELIABILITY_ROOT), ...walk(NETWORK_ROOT), ...walk(RANGE_ROOT), ...walk(NATIVE_ROOT)].filter((f) => /\.m?js$/.test(f) && !f.includes('/tests/'));
   const used = new Set();
   for (const f of srcFiles) {
     const s = fs.readFileSync(f, 'utf8');
@@ -227,15 +260,28 @@ const visit = (rel) => {
   if (!fs.existsSync(abs)) return;
   seen.add(rel);
   const original = rel.startsWith('patches/splatoon3/') ? path.join(PATCH_ROOT, rel.slice('patches/splatoon3/'.length)) : rel.startsWith('patches/local-quality/') ? path.join(QUALITY_ROOT, rel.slice('patches/local-quality/'.length)) : rel.startsWith('patches/reliability/') ? path.join(RELIABILITY_ROOT, rel.slice('patches/reliability/'.length)) : rel.startsWith('patches/network-replication/') ? path.join(NETWORK_ROOT, rel.slice('patches/network-replication/'.length)) : rel.startsWith('patches/practice-range/') ? path.join(RANGE_ROOT, rel.slice('patches/practice-range/'.length)) : path.join(SRC, rel);
-  const s = fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
-  const specs = [];
-  for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
-  for (const m of s.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
+  // The registry is a bundle of weapon families. Discover dependencies from
+  // its emitted imports, not its pre-bundle source imports: the family files
+  // do not ship separately and would hide their shared kit.mjs dependency.
+  const emittedRegistry = !unminified && (rel === 'patches/splatoon3/runtime/weapon-models/registry.mjs' || rel.startsWith('patches/native-stages/runtime/'));
+  const s = emittedRegistry ? fs.readFileSync(abs, 'utf8')
+    : fs.existsSync(original) ? adaptBuildSource(rel, fs.readFileSync(original, 'utf8')) : fs.readFileSync(abs, 'utf8');
+  // esbuild emits import{...}from"./kit.mjs" without spaces. Parse the
+  // emitted weapon-family bundle rather than regex-scanning its source graph:
+  // otherwise kit.mjs is a live static import absent from the offline precache.
+  const specs = emittedRegistry ? staticEsModuleImports(s) : [];
+  if (!emittedRegistry) {
+    for (const m of s.matchAll(/(?:^|[;\n}])\s*(?:import|export)\s+(?:[\w*{}\s,$]+\s+from\s+)?['"]([^'"]+)['"]/g)) specs.push(m[1]);
+    for (const m of s.matchAll(/(?:loadModule|import)\(\s*['"]([^'"]+\.js)['"]/g)) specs.push(m[1]);
+  }
   for (const sp of specs) visit(resolve(rel, sp));
   order.push(rel);
 };
 visit('src/main.js');
 visit('patches/splatoon3/bootstrap.mjs');
+// Worker modules have no main-thread static importer, but must retain their
+// own immutable offline dependencies. The source payload stays outside it.
+visit('patches/native-stages/runtime/source-worker.mjs');
 // #61's accepted startup baseline preloaded 145 modules (131 core + 14 range).
 // Later workstreams add these runtime dependencies to the static graph. Keep
 // them in the immutable revision + Service Worker precache, but let their
@@ -243,6 +289,7 @@ visit('patches/splatoon3/bootstrap.mjs');
 // requests to the critical HTML. Browser startup/offline CI validates the
 // resulting dependency fetch path and timing.
 const deferredIntegrationPreloads = new Set([
+  'patches/native-stages/runtime/source-worker.mjs',
   // ContactPolish: lazily import source animation at runtime, never a new eager HTML hint.
   'src/game/motion/source-bank.js',
   'src/game/motion/source-controller.js',
@@ -300,6 +347,10 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/muzzle-feedback.mjs',
   'patches/splatoon3/runtime/superjump-target-notification.mjs',
 
+  // Per-main-weapon models (families inlined into registry.mjs): full precache retained, no extra eager hints.
+  'patches/splatoon3/runtime/weapon-models/registry.mjs',
+  'patches/splatoon3/runtime/weapon-family-motion.mjs',
+  'patches/splatoon3/runtime/weapon-models/kit.mjs',
   // C42: retain the new static runtime dependencies and full precache; defer their extra eager hints.
   'patches/local-quality/portrait-work.mjs',
   'patches/local-quality/runtime/audio-listener.mjs',
@@ -422,7 +473,7 @@ const preloadOrder = order.filter((file) => {
   if (deferredIntegrationPreloads.has(file)) return false;
   if (isRange(file)) return true;
   const size = bytes(file);
-  if (corePreloadCount >= 131 || initialHintBytes + size > 3.2 * 1024 * 1024) return false;
+  if (corePreloadCount >= 131 || initialHintBytes + size > INITIAL_JS_BUDGET_BYTES) return false;
   corePreloadCount++; initialHintBytes += size;
   return true;
 });
@@ -454,11 +505,15 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lightmap-compaction.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lightmap-compaction.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
+for (const [file, hash] of Object.entries(nativeStageIdentity())) identity.files['native-stages/' + file] = hash;
+identity.build.nativeStages = nativePrepared?.config || null;
+identity.files['build-script/lib/inkwave-native-stages.mjs'] = sha256(fs.readFileSync(new URL('lib/inkwave-native-stages.mjs', import.meta.url)));
 identity.inputHash = sha256(JSON.stringify(identity.files));
 fs.writeFileSync(path.join(BUILD, 'inkwave-build.json'), JSON.stringify(identity, null, 2) + '\n');
+copyLocalNativeAssets(BUILD, nativePrepared);
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.renameSync(BUILD, OUT);
 console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slice(0, 12)}`);

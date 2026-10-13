@@ -36,11 +36,17 @@ export function adaptIssueBatch1171(rel, code, replaceOnce) {
       return;
     }`, '#1166 defer hidden atlas batch overflow');
     patch('  flush(dt = 1 / 60) {', `  flush(dt = 1 / 60) {
-    if (globalThis.document?.hidden) return;
-    const pending = this._hiddenQuads;
-    this._hiddenQuads = null;
-    if (pending) for (const args of pending) this._pushQuad(...args);`,
+    // Hidden online simulation still owns growth, floor credit and wall ink.
+    // Only rendering is suspended; no wall-clock catch-up is introduced.
+    if (!globalThis.document?.hidden) {
+      this._resumePaintPresentation?.();
+      const pending = this._hiddenQuads;
+      this._hiddenQuads = null;
+      if (pending) for (const args of pending) this._pushQuad(...args);
+    }`,
       '#1166 replay hidden paint before visible growth');
+    patch('  _drawQuads() {', '  _drawQuads() {\n    if (globalThis.document?.hidden) return;',
+      '#1166 suspend atlas draws without suspending paint simulation');
     patch('    this.grid.fill(0);', '    this._hiddenQuads = null;\n    this.grid.fill(0);', '#1166 discard old-stage deferred paint');
     // Shader roller band: q.x along drum, q.y across; the seed-dependent
     // width wobble is part of the *main body*, not a cosmetic satellite.

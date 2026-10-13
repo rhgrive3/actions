@@ -9,6 +9,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { turfExperience } from '../../splatoon3/runtime/results-scoring.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
+import { isRankedMode } from '../../splatoon3/runtime/ranked/engine.mjs';
 import { adaptCompiledMain } from '../../loading-cache/adapter.mjs';
 
 const RAW = fs.readFileSync(new URL('../../../inkwave-public/src/main.js', import.meta.url), 'utf8');
@@ -74,6 +75,11 @@ function boot(source, held = []) {
     env: { setTheme: () => record('theme'), getSkyColors: () => ({}), rebuildForArena: () => record('arena') },
   };
   const sandbox = {
+    isRankedMode,
+    // These fixtures use legacy maps; composed main also imports native-world helpers.
+    nativeStageEnabled: false, NATIVE_IDS: [],
+    buildNativeWorld() { throw new Error('Legacy fixture must not enter native world loading'); },
+    releaseNativeWorld() { record('releaseNativeWorld'); },
     console: { warn() {}, error(...args) { record('error', ...args); } }, Promise, G, Match, Level, PropKit,
     MAPS: maps, OFFLINE_MAPS: maps, MAP_LAYOUTS: Object.fromEntries(maps.map(m => [m.id, m])),
     mapOfflineOk: () => true, mapBossOk: () => true, mapNoBots: () => false, isRangeMap: () => false,

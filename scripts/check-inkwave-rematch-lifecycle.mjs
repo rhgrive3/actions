@@ -18,6 +18,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { boundedDiagnostic, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
+import { installCursorTimelineDiagnostics } from './lib/inkwave-cursor-timeline-diagnostics.mjs';
 
 const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) { if (fallback !== undefined) return fallback; throw new Error('Required ' + name); } return process.argv[i + 1]; };
 const site = path.resolve(option('--site')), evidence = path.resolve(option('--evidence-dir')), profile = path.resolve(option('--profile-dir'));
@@ -50,6 +51,7 @@ const ctx = await pw.chromium.launchPersistentContext(path.join(profile, 'rematc
   args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
 const page = await ctx.newPage();
+const browserVersion=ctx.browser()?.version?.() ?? null;
 const errors = [], missing = [], failures = [], rounds = [];
 const operationTrace = createOperationTrace();
 let activeRound = null, failureDiagnostics = null;
@@ -85,7 +87,23 @@ await page.addInitScript(() => {
   window.setInterval = (f, ms, ...a) => { const id = si(f, ms, ...a); intervals.add(id); return id; };
   window.clearInterval = (id) => { intervals.delete(id); return ci(id); };
   window.__lifecycleIntervals = () => intervals.size;
+
+  // Retain the cursor's class transitions for opacity failures. This observer
+  // only records native class mutations; it does not alter menu or cursor state.
+  const cursorClassChanges = (window.__lifecycleCursorClassChanges = []);
+  const cursorObserver = new MutationObserver((records) => {
+    for (const record of records) {
+      const cursor = record.target;
+      if (record.attributeName !== 'class' || !cursor.matches?.('.iw-cursor')) continue;
+      cursorClassChanges.push({ at: Math.round(performance.now() * 1000) / 1000,
+        previous: record.oldValue, current: String(cursor.className) });
+      if (cursorClassChanges.length > 32) cursorClassChanges.shift();
+    }
+  });
+  cursorObserver.observe(document, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
 });
+
+await page.addInitScript(installCursorTimelineDiagnostics);
 
 // Diagnose the single trusted gesture without changing or redispatching it.
 await page.addInitScript(() => {
@@ -166,6 +184,17 @@ const snap = () => page.evaluate(() => {
   };
   const spring = (s) => s ? { target: n(s.target), position: n(s.x), velocity: n(s.v), stiffness: n(s.k), damping: n(s.c) } : null;
   const ringStyle = ring ? getComputedStyle(ring) : null;
+  let ringAnimations = [];
+  try {
+    ringAnimations = ring?.getAnimations?.({ subtree: true }).map((animation) => {
+      const timing = animation.effect?.getComputedTiming?.(), target = animation.effect?.target;
+      return { type: animation.constructor?.name ?? null, name: animation.animationName ?? null,
+        property: animation.transitionProperty ?? null, playState: animation.playState,
+        currentTime: n(animation.currentTime), startTime: n(animation.startTime), progress: n(timing?.progress),
+        pending: !!animation.pending, playbackRate: n(animation.playbackRate), timelineTime: n(animation.timeline?.currentTime),
+        target: target === ring ? 'cursor' : String(target?.className ?? target?.tagName ?? '').slice(0, 80) };
+    }) ?? [];
+  } catch {}
   let connectedPads = [];
   try {
     connectedPads = Array.from(navigator.getGamepads?.() || []).slice(0, 4).filter((pad) => pad?.connected).map((pad) => ({
@@ -190,9 +219,14 @@ const snap = () => page.evaluate(() => {
       menuInputOwner: menus?._input ?? null, inputLastDevice: g.input?.lastDevice ?? null,
       focus: f ? { connected: f.isConnected, id: f.id || null, menuId: f.dataset.id ?? null, nav: f.dataset.nav ?? null, cur: f.dataset.cur ?? null, type: f.type ?? null, tagName: f.tagName || null, rect: rect(f) } : null,
       screenNoCursor: menus?._scr?.noCursor ?? null,
-      ring: ring ? { className: String(ring.className), display: ringStyle.display, visibility: ringStyle.visibility, opacity: ringStyle.opacity, rect: rect(ring) } : null,
+      ring: ring ? { className: String(ring.className), display: ringStyle.display, visibility: ringStyle.visibility, opacity: ringStyle.opacity,
+        inlineOpacity: ring.style.opacity || null, inlineVisibility: ring.style.visibility || null,
+        transitionProperty: ringStyle.transitionProperty, transitionDuration: ringStyle.transitionDuration,
+        transitionDelay: ringStyle.transitionDelay, animationName: ringStyle.animationName, animations: ringAnimations, rect: rect(ring) } : null,
+      cursorClassChanges: window.__lifecycleCursorClassChanges?.slice(-32) ?? [],
+      cursorTimelineEvents: window.__lifecycleCursorTimelineEvents?.slice(-48) ?? [],
       cursorAnimation: C ? { on: !!C.on, snapNext: !!C.snapNext, radius: C.r ?? null, axes: { x: spring(C.x), y: spring(C.y), w: spring(C.w), h: spring(C.h) } } : null,
-      document: { visibilityState: document.visibilityState, hidden: document.hidden }, connectedPads,
+      document: { visibilityState: document.visibilityState, hidden: document.hidden, timelineTime: n(document.timeline?.currentTime), performanceNow: n(performance.now()) }, connectedPads,
       inputEvents: window.__lifecycleInputEvents ?? [],
       frameDriver: {
         platform: g.platform?.driver?.snapshot?.() ?? null,
@@ -219,14 +253,28 @@ const snap = () => page.evaluate(() => {
 // Read alignment and focused-element geometry in the same browser snapshot. A
 // previous separate predicate could succeed on one animation frame, then the
 // focus CSS transition advanced before snap() and generated a false failure.
-// Preserve the strict live-alignment requirement; persistent drift still fails.
+// Sample after a browser-owned frame instead of a fixed host timer: under a
+// slow SwiftShader cadence, a 200 ms timer can inspect the cursor before the
+// browser advances its 180 ms CSS opacity transition. Preserve the strict
+// live-alignment and visible-opacity requirements; persistent invisibility or
+// drift still fails. Bound each frame wait so a suspended page cannot bypass
+// the existing 30-second diagnostic budget.
+const waitForFocusFrame = async () => {
+  let timer;
+  try {
+    await Promise.race([
+      page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve()))),
+      new Promise((resolve) => { timer = setTimeout(() => resolve(false), 1000); }),
+    ]);
+  } finally { clearTimeout(timer); }
+};
 const alignedFocusSnapshot = async (phase) => operationTrace.run('aligned focus: ' + phase, async () => {
   const start = Date.now();
   let last = null;
   do {
+    await waitForFocusFrame();
     last = await snap();
     if (last.ringOn && last.ringVisible && last.ringOnFocus === true) return last;
-    await page.waitForTimeout(200);
   } while (Date.now() - start < 30000);
   return last;
 });
@@ -234,7 +282,7 @@ const check = (round, phase, cond, message, detail) => { if (!cond) failures.pus
 
 let status = 'failed';
 const writeResult = () => {
-  const result = { status, contentHash: manifest.contentHash, cycles, failures, errors, missing, rounds,
+  const result = { status, contentHash: manifest.contentHash, browserVersion, cycles, failures, errors, missing, rounds,
     activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics };
   fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
 };

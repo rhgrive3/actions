@@ -3,11 +3,12 @@
 // Physics ejection and PNG paint shapes are calibrated, NOT retail binary code.
 // Source: Leanny/splat3@7280ff9c/WeaponSprinkler.game__GameParameterTable.json
 // S3 verification: https://wikiwiki.jp/splatoon3mix/ブキ/サブウェポン/スプリンクラー
+import {gearCurve} from './gear.mjs';
 const FRAME=1/60, EPS=1e-9;
 export const SPRINKLER=Object.freeze({
   id:'sprinkler', name:'Sprinkler', mode:'sprinkler', chargeable:false,
   inkCost:60, inkCostStatus:'extracted', inkRecoverStop:60*FRAME,
-  throwSpeed:1.12*60, throwSpeedStatus:'extracted',
+  throwSpeed:1.12*60, throwSpeedTiers:Object.freeze({low:1.12*60,mid:1.12*60,high:1.12*60}), throwSpeedStatus:'extracted',
   spawnSpeedY:.24*60, hitPaintRadius:2.9,
   deploymentPaintRadius:.3, dropletPaintRadius:1.4, dropletDamage:20,
   hp:120, deployFrames:30, periodFirstFrames:480, periodSecondFrames:900,
@@ -15,6 +16,11 @@ export const SPRINKLER=Object.freeze({
   maxDrops:96, dropletSpeed:10, dropletLift:5, dropletGravity:24, dropletDrag:.015,
   status:'extracted+community-verified+calibrated-droplet-dynamics',
 });
+export function resolveSprinklerPower(spec,ap){
+  const points=Number.isFinite(ap)?Math.max(0,Math.min(57,ap)):0;
+  return {...spec,periodFirstFrames:gearCurve(points,480,630,780),
+    periodSecondFrames:gearCurve(points,900,960,1020),throwSpeed:SPRINKLER.throwSpeed};
+}
 export function sprinklerPhase(f,spec=SPRINKLER){
   if(!Number.isFinite(f)||f<spec.deployFrames)return -1;
   return f<spec.periodFirstFrames?0:f<spec.periodSecondFrames?1:2;
@@ -38,7 +44,7 @@ export function beginSprinkler(b,n,spec=SPRINKLER){
   bitangent.copy(n).cross(tangent).normalize();
   b.s3Sprinkler={sourceAge:b.age,nextFrame:spec.deployFrames,drops:[],spraySequence:0,
     phase:-1,normal:n.clone(),tangent,bitangent,p0:b.pos.clone(),p1:b.pos.clone(),
-    hit:null,previousAge:b.age,baseSeed:Math.floor(b.age*1e7)>>>0};
+    hit:{point:b.pos.clone(),normal:n.clone()},previousAge:b.age,baseSeed:Math.floor(b.age*1e7)>>>0};
 }
 function unit(seed){let n=Math.imul(seed^0x9e3779b9,0x85ebca6b)>>>0;
   n^=n>>>13;n=Math.imul(n,0xc2b2ae35)>>>0;n^=n>>>16;return(n>>>0)/4294967296;}
@@ -77,7 +83,7 @@ export function stepSprinkler(b,paint,projectiles,G,physics,player){
     d.vel.multiplyScalar(1-spec.dropletDrag*Math.min(1,dt/FRAME));
     d.vel.y-=spec.dropletGravity*dt;
     st.p0.copy(d.pos);st.p1.copy(d.pos).addScaledVector(d.vel,dt);
-    const hit=G.physics.segment?.(st.p0,st.p1,st.hit||{});
+    const hit=G.physics.segment?.(st.p0,st.p1,st.hit);
     if(hit?.hit){
       st.hit=hit;const at=hit.point.clone().addScaledVector(hit.normal,.035);
       area+=paint.splat(at,spec.dropletPaintRadius,b.team,

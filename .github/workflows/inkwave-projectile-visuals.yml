@@ -32,11 +32,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Check out the unchanged latest-main baseline
+      - name: Check out immutable current-main baseline
         uses: actions/checkout@v4
         with:
-          ref: d675364691c806af16c001d9cb745da5fdf559c2
+          ref: f63c0af9c2ee991810ea792fe6976a44ed17610e
           path: .ci-baseline
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22

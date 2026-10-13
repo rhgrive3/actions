@@ -101,7 +101,7 @@ export function catalogStoragePath(dir, workspaceRoots = [process.cwd(), process
   return resolved;
 }
 export function catalogInputPath(key) {
-  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3', 'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability', 'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication', 'loading-cache': 'patches/loading-cache', 'practice-range': 'patches/practice-range', 'build-script': 'scripts' };
+  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3', 'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability', 'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication', 'loading-cache': 'patches/loading-cache', 'practice-range': 'patches/practice-range', 'native-stages': 'patches/native-stages', 'build-script': 'scripts' };
   const [namespace, ...parts] = key.split('/');
   if (!Object.hasOwn(roots, namespace) || !parts.length || parts.some(part => !part || part === '.' || part === '..' || part.includes('\\'))) fail('input namespace/path ' + key);
   return roots[namespace] + '/' + parts.join('/');
@@ -409,6 +409,11 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   installDisconnectFidelity(api);
   installSlosherIntermediatePaint(api, profile);
   installIssueEightFollowup(api);
+  // Ranked bootstrap ships a separate module graph, but this isolated Turf
+  // motion fixture never enters the ranked bootstrap path. Load and verify its
+  // immutable emitted graph without changing the Turf fixture's behaviour.
+  const { installRanked } = await import(prefix + 'patches/splatoon3/runtime/ranked/install.mjs');
+  if (typeof installRanked !== 'function') throw Error('Ranked runtime installer missing');
   // Exercise the real Match dependency entry, including its deadline helper.
   const { Match } = await import(prefix + 'src/game/match.js');
   const turfFinish = globalThis.catalogTurfFinishProbe(Match, G);

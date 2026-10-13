@@ -1,3 +1,4 @@
+import { weightSpeedCurve } from './weapon-weight.mjs';
 import { conditionalPoints } from './conditional-gear.mjs';
 import { drinkGearPoints } from './support-cooler.mjs';
 // Flow grants temporary ability points, not a second set of speed multipliers.
@@ -27,6 +28,8 @@ export function refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve)
   const ap = flowAbilityPoints(basePoints, active, tuning.flow.abilityPoints);
   const extra = tuning.gearExtra, base = api.WEAPONS[actor.weaponId];
   for (const id of FLOW_ABILITIES) m[id] = gearCurve(ap[id] || 0, ...tuning.gear[id]);
+  m.runSpeed = gearCurve(ap.runSpeed || 0, ...weightSpeedCurve(actor.weaponId, 'run')) * 60 / tuning.player.runSpeed;
+  m.swimSpeed = gearCurve(ap.swimSpeed || 0, ...weightSpeedCurve(actor.weaponId, 'swim')) * 60 / tuning.player.swimSpeed;
   m.enemyMoveSpeed = m.inkResistance * 60;
   for (const [name, scale] of [['enemyShotSpeed', 60], ['enemyDamageCap', 100], ['enemyDamageRate', 6000], ['enemyJumpVelocity', 60]]) {
     m[name] = gearCurve(ap.inkResistance || 0, ...extra[name]) * scale;

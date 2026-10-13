@@ -33,5 +33,52 @@ export function adaptPaintHotpath(rel, code, replaceOnce) {
   change('if (fid < 0 || (Number.isInteger(opts.face) && opts.face >= 0 && fid !== opts.face)) continue;',
     'if (fid < 0 || (faceOnly >= 0 && fid !== faceOnly)) continue;',
     'reuse stable per-splat face gate');
+  // Each quad has two distinct U/V coordinates, shared by four vertices.
+  // Unroll contiguous position + local XY writes to avoid adding per-vertex
+  // branches; preserve the native arithmetic, Float32 rounding and attributes.
+  change(
+    `    const q = this.quads++;
+    const flags = (f.wall ? 1 : 0) + 2 * kind;
+    for (let c = 0; c < 4; c++) {
+      const cu = c === 1 || c === 2 ? u1 : u0, cv = c >= 2 ? v1 : v0;
+      const vi = q * 4 + c;
+      const px = a.x + a.pad + cu * a.ppm, py = a.y + a.pad + cv * a.ppm;
+      this.aPos[vi * 2] = (px / S) * 2 - 1;
+      this.aPos[vi * 2 + 1] = (py / S) * 2 - 1;
+      this.aLocal[vi * 3] = cu - lu; this.aLocal[vi * 3 + 1] = cv - lv; this.aLocal[vi * 3 + 2] = dn;`,
+    `    const q = this.quads++;
+    const flags = (f.wall ? 1 : 0) + 2 * kind;
+    const x0 = ((a.x + a.pad + u0 * a.ppm) / S) * 2 - 1;
+    const x1 = ((a.x + a.pad + u1 * a.ppm) / S) * 2 - 1;
+    const y0 = ((a.y + a.pad + v0 * a.ppm) / S) * 2 - 1;
+    const y1 = ((a.y + a.pad + v1 * a.ppm) / S) * 2 - 1;
+    const xy = q * 8;
+    this.aPos[xy] = x0; this.aPos[xy + 1] = y0;
+    this.aPos[xy + 2] = x1; this.aPos[xy + 3] = y0;
+    this.aPos[xy + 4] = x1; this.aPos[xy + 5] = y1;
+    this.aPos[xy + 6] = x0; this.aPos[xy + 7] = y1;
+    const du0 = u0 - lu, du1 = u1 - lu, dv0 = v0 - lv, dv1 = v1 - lv;
+    const local = q * 12;
+    this.aLocal[local] = du0; this.aLocal[local + 1] = dv0;
+    this.aLocal[local + 3] = du1; this.aLocal[local + 4] = dv0;
+    this.aLocal[local + 6] = du1; this.aLocal[local + 7] = dv1;
+    this.aLocal[local + 9] = du0; this.aLocal[local + 10] = dv1;
+    for (let c = 0; c < 4; c++) {
+      const vi = q * 4 + c;
+      this.aLocal[vi * 3 + 2] = dn;`,
+    'reuse identical paint quad positions and local coordinates');
+  // Exact inner-disc admission: all five sine terms sum to no less
+  // than -(0.12+0.08+0.05+0.03+0.018) = -0.298, and the two cos^even
+  // spikes are nonnegative. Hence blobWobble >= 0.702 for any seed/angle.
+  // With the historical CPU cutoff 0.97, d < 0.68*r guarantees
+  // d/(r*blobWobble) < 0.96867 < 0.97; the canonical cutoff 1 is also safe.
+  // Do not alter the body boundary, GPU shader, roll band, or claim order.
+  const bodyRatio = code.match(/          if \(d \/ \(r \* blobWobble\(Math\.atan2\(py, px\), seed\)\) > (?:0\.97|1)\) continue;/g);
+  if (!bodyRatio || bodyRatio.length !== 1) {
+    throw new Error('paint hotpath: expected one native/canonical blob wobble cut');
+  }
+  change(bodyRatio[0],
+    bodyRatio[0].replace('if (d /', 'if (d >= r * 0.68 && d /'),
+    'skip guaranteed-inside ink body trigonometry');
   return code;
 }

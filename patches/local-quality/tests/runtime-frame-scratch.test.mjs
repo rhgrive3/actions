@@ -133,3 +133,58 @@ test('renderer exception still restores all hidden actors and releases scratch r
   assert.equal(after.env._iwReflHide.length,0);
   assert.equal(after.env._iwReflVis.length,0);
 });
+
+
+test('animated marina boats and gulls preserve all transforms while reducing repeated trig', () => {
+  const build = source => {
+    const counters = { sin: 0, cos: 0 };
+    const trig = Object.create(Math);
+    trig.sin = x => { counters.sin++; return Math.sin(x); };
+    trig.cos = x => { counters.cos++; return Math.cos(x); };
+    const vec = { value: null, set(...a) { this.value = a; return this; } };
+    const angles = { value: null, set(...a) { this.value = a; return this; } };
+    const quat = { setFromEuler(e) { return e.value.slice(); } };
+    const scale = { setScalar(s) { return s; } };
+    const matrix = { value: null, compose(v, q, s) {
+      this.value = [v.value.slice(), q.slice(), s]; return this;
+    } };
+    const animate = new Function('_e','_m4','_v','_q','_s','Math','return function ' + method(source, '_animate'))(
+      angles,matrix,vec,quat,scale,trig);
+    const matrices = { sail: [], buoy: [], gull: [] };
+    const inst = kind => ({
+      instanceMatrix: { needsUpdate: false },
+      setMatrixAt(i, m) { matrices[kind].push([i, structuredClone(m.value)]); },
+    });
+    const env = {
+      time: 0, moored: [
+        { spec: {x: 7.2,z:-8.1},mesh:{position:{y:0},rotation:{x:0,z:0}},phase:.13,roll:.04 },
+      ],
+      sailboats: Array.from({length:3}, (_,i)=>({ a:i*.5,w:i%2?-.3:.24,d:30+i,phase:i*.2,s:.8+i*.15 })),
+      buoys: Array.from({length:4}, (_,i)=>({ x:i*3,z:-i*4,phase:i*.3,s:.7+i*.12 })),
+      gulls: Array.from({length:5},(_,i)=>({ a0:i*.4,w:i%2?-.45:.35,cx:i*10,cz:-i*2,r:3+i,h:7+i,s:.22+i*.08 })),
+      sailInst:inst('sail'),buoyInst:inst('buoy'),gullInst:inst('gull'),
+      ferris:{rotation:{z:0}},lhBeam:{rotation:{y:0}},
+      waterHeightAt(x,z,t){return .08*Math.sin(x*.17 + z*.1 + t*.2);},
+    };
+    return { animate,env, matrices,counters };
+  };
+  const before = build(ENV), after = build(patchedEnv);
+  for (let f = 0; f < 600; f++) {
+    const t = (f + 1) / 60;
+    before.env.time = after.env.time = t;
+    for (const side of [before, after]) {
+      side.matrices.sail.length = side.matrices.buoy.length = side.matrices.gull.length = 0;
+      side.animate.call(side.env);
+    }
+    assert.deepEqual(after.matrices,before.matrices,'identical instance transforms at frame ' + f);
+    assert.deepEqual(after.env.moored,before.env.moored);
+    assert.deepEqual(after.env.ferris,before.env.ferris);
+    assert.deepEqual(after.env.lhBeam,before.env.lhBeam);
+    for (const k of ['sailInst','buoyInst','gullInst']) {
+      assert.equal(after.env[k].instanceMatrix.needsUpdate,before.env[k].instanceMatrix.needsUpdate);
+    }
+  }
+  const entities = before.env.sailboats.length + before.env.gulls.length;
+  assert.equal(before.counters.sin - after.counters.sin,600*entities);
+  assert.equal(before.counters.cos - after.counters.cos,600*entities);
+});

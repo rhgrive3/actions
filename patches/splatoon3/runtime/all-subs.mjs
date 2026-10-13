@@ -1,3 +1,6 @@
+import { configureToxicMist, toxicMistContains, toxicMistScale } from './toxic-mist.mjs';
+import { replayNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
+import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // Runtime overlay for the ten Splatoon 3 sub weapons that are not represented
 // by the published INKWAVE bomb/support lanes.  The upstream release path still
 // owns input admission, ink payment, throw pose and the hold clock: this module
@@ -12,11 +15,31 @@
 
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
 import { gearCurve } from './gear.mjs';
+import { subMarkSeconds } from './sub-mark-resistance.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
 const MAX_OBJECTS = 96;
 const MAX_REPLAY_EVENTS = 256;
+// A rendered ghost may retire before its owner's delayed marking event.
+// Retain only bounded, accepted birth facts, independently of visual lifetime.
+const markBirths = new WeakMap();
+const markBirthKey = o => JSON.stringify([o.sourceLife,o.seq,o.subId]);
+function markBirthState(api,projectiles,owner,create=false) {
+  let state=markBirths.get(projectiles);
+  if(!state||state.match!==api.G.match||state.net!==api.G.netm){
+    markBirths.delete(projectiles);
+    if(!create)return null;
+    state={match:api.G.match,net:api.G.netm,owners:new WeakMap()};markBirths.set(projectiles,state);
+  }
+  let record=state.owners.get(owner);
+  if(!record||record.ownerId!==owner.owner||record.net!==owner.net){
+    state.owners.delete(owner);
+    if(!create)return null;
+    record={ownerId:owner.owner,net:owner.net,life:-1,seq:0,entries:new Map()};state.owners.set(owner,record);
+  }
+  return record;
+}
 // S3 community testing describes these as queued bonuses, capped at 2.5 bonus
 // frames per 60 Hz frame. The source parameter table gives charge stages, not
 // acceleration values, so these are conservative calibration values.
@@ -175,7 +198,7 @@ function emitEvent(api, object, phase, extra = {}) {
     life: ownerLife(object.owner), sourceLife: object.sourceLife, subPowerAP: object.subPowerAP, x: p?.x || 0, y: p?.y || 0, z: p?.z || 0,
     vx: object.vel?.x || 0, vy: object.vel?.y || 0, vz: object.vel?.z || 0,
     seed: object.seed >>> 0, charge: clamp(object.charge || 0, 0, 1), ...extra,
-    actor: object.owner,
+    actor: object.owner, paintSource: object,
   };
   api.emit?.('all:sub', payload);
   return payload;
@@ -281,8 +304,9 @@ function createObject(api, projectiles, owner, id, record = {}) {
     reservations: id === 'beakon' ? new Map() : null,
     expireAt: Infinity, activeAt: Infinity,
   };
+  const heldSeconds = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
   if (id === 'fizzy') {
-    const hold = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
+    const hold = heldSeconds;
     object.popLimit = hold >= frameSeconds(spec.chargeFrames[0] + spec.chargeFrames[1]) ? 3 : hold >= frameSeconds(spec.chargeFrames[0]) ? 2 : 1;
     object.pops = object.popLimit;
     object.fuse = frameSeconds(spec.burstWaitFrames[0]);
@@ -290,8 +314,19 @@ function createObject(api, projectiles, owner, id, record = {}) {
   const list = entityList(projectiles);
   while (list.length >= MAX_OBJECTS) removeObject(api, projectiles, list[0], true);
   list.push(object);
+  if(object.ghost&&['inkMine','angleShooter'].includes(id)){
+    const births=markBirthState(api,projectiles,owner,true);
+    if(object.sourceLife>births.life||object.sourceLife===births.life&&seq>births.seq){
+      births.life=object.sourceLife;births.seq=seq;
+      births.entries.set(markBirthKey(object),Object.freeze({frames:Math.round(markSeconds(spec,owner,ap)*60)}));
+      // The source itself can retain at most MAX_OBJECTS live catalogue objects.
+      // A later same-owner ordered birth beyond this bound proves the oldest
+      // can no longer emit a new mark. Other owners cannot evict this history.
+      while(births.entries.size>MAX_OBJECTS)births.entries.delete(births.entries.keys().next().value);
+    }
+  }
   object.mesh = buildVisual(api, object, projectiles);
-  if (!object.ghost) emitEvent(api,object,'spawn',{ hold: Number.isFinite(record.hold) ? record.hold : 0 });
+  if (!object.ghost) emitEvent(api,object,'spawn',{ hold: heldSeconds });
   return object;
 }
 function nextSeq(owner) {
@@ -390,12 +425,12 @@ function deploy(api, projectiles, object, pos, normal = null) {
   }
 }
 
-function surfacePaint(api, owner, team, point, radius, seed) {
-  return surfacePaintWithCredit(api,owner,team,point,radius,seed,true);
+function surfacePaint(api, owner, team, point, radius, seed, proof = null) {
+  return surfacePaintWithCredit(api,owner,team,point,radius,seed,true,proof);
 }
-function surfacePaintWithCredit(api, owner, team, point, radius, seed, credit) {
+function surfacePaintWithCredit(api, owner, team, point, radius, seed, credit, proof = null) {
   if (!api.G.paint?.splat || !point?.isVector3 || !(radius > 0)) return 0;
-  const area = api.G.paint.splat(point,radius,team,{seed:((seed>>>0)/0x100000000),claimOwner:owner});
+  const area = api.G.paint.splat(point,radius,team,{seed:((seed>>>0)/0x100000000),claimOwner:owner,kitPaint:proof});
   if (credit && area > 0) owner?.addTurf?.(area);
   return area;
 }
@@ -409,11 +444,11 @@ function damageAt(distance, spec) {
 function hostileActors(api, owner) {
   return (api.G.actors || []).filter(a => a && a.alive && a.team !== owner.team && a.pos && a !== owner);
 }
-function applyMark(api, target, team, seconds) {
-  if (!target?.alive || target.remote || target.team === team || !(seconds > 0)) return false;
+function applyMark(api, target, team, seconds, subId) {
+  if (!target?.alive || target.team === team || !(seconds > 0)) return false;
   target.s3 ||= {};
   target.s3.revealedUntil ||= {};
-  const until = (api.G.time || 0) + seconds;
+  const until = (api.G.time || 0) + subMarkSeconds(target, seconds, subId);
   target.s3.revealedUntil[team] = Math.max(target.s3.revealedUntil[team] || 0,until);
   return true;
 }
@@ -429,8 +464,8 @@ function detonateInkMine(api,projectiles,mine){
   for(const target of hostileActors(api,mine.owner)){
     const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y,dz=target.pos.z-mine.pos.z;
     if(dx*dx+dy*dy+dz*dz>mine.spec.markRadius**2||api.G.physics?.los&&!api.G.physics.los(mine.pos,target.pos))continue;
-    applyMark(api,target,mine.team,duration);
-    if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:mine.subId,seq:mine.seq,sourceLife:mine.sourceLife,eventSeq:nextSeq(mine.owner),
+    applyMark(api,target,mine.team,duration,mine.subId);
+    if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:mine.subId,seq:mine.seq,life:ownerLife(mine.owner),sourceLife:mine.sourceLife,eventSeq:nextSeq(mine.owner),
       targetId:target.nid,targetLife:ownerLife(target),frames:Math.round(duration*60),sourceTeam:mine.team,actor:mine.owner});
   }
   blast(api,mine,mine.pos);
@@ -456,7 +491,8 @@ function blast(api, object, pos, burstIndex = 0) {
     if (Number.isFinite(spec.paintRadius)) {
       const center = pos.clone();
       if (object.subId === 'splashWall') center.y += .3;
-      const area = surfacePaint(api,object.owner,object.team,center,spec.paintRadius,object.seed ^ ((burstIndex+1)*0x9e3779b9));
+      const area = surfacePaint(api,object.owner,object.team,center,spec.paintRadius,object.seed ^ ((burstIndex+1)*0x9e3779b9),
+        object.s3PaintBirth ? [...object.s3PaintBirth,burstIndex] : null);
       if (spec.splashPaintRadius > 0) surfacePaint(api,object.owner,object.team,center,spec.splashPaintRadius,object.seed ^ 0x27d4eb2d);
       if (spec.crossPaintRadius > 0) {
         for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]) {
@@ -556,7 +592,7 @@ function customObjectCandidate(api, projectiles, p, start, end) {
       if(p.ghost)return 0;
       if(object.ghost){if(!p.ghost)emitObjectHit(api,object,p,hit.point,amount);return 0;}
       if(localOwner(object.owner)){
-        object.hp-=amount;
+        object.hp-=amount*objectGearRate(p.owner,object.subId);
         if(object.hp<=0)removeObject(api,projectiles,object);
         return amount;
       }
@@ -573,7 +609,7 @@ function emitObjectHit(api, object, projectile, point, damage) {
   const event={v:1,phase:'objectHit',subId:projectile.wid||projectile.type||'projectile',
     seq:projectile.s3SubSeq||0,eventSeq:nextSeq(shooter),targetOwnerId:object.owner.nid,
     life:ownerLife(shooter),targetLife:object.sourceLife,targetOwnerLife:ownerLife(object.owner),targetSeq:object.seq,targetSubId:object.subId,
-    damage:clamp(damage,0,2200),x:point.x,y:point.y,z:point.z,actor:shooter};
+    damage:clamp(damage,0,2200),objectShredder:objectShredderEquipped(shooter),x:point.x,y:point.y,z:point.z,actor:shooter};
   api.emit?.('all:sub',event);
 }
 function objectHitKey(event) { return `${event.actor?.nid??event.actorId}:${event.life??ownerLife(event.actor)}:${event.eventSeq}`; }
@@ -694,7 +730,7 @@ function applyRemoteObjectHit(api,event) {
   if(!target||target.ghost)return false;
   const reach=target.subId==='splashWall'?ALL_SUB_SPECS.splashWall.wallWidth/2+1:target.subId==='torpedo'?1:1.5;
   if(target.pos.distanceTo(new api.THREE.Vector3(event.x,event.y,event.z))>reach)return false;
-  target.hp-=clamp(event.damage,0,2200);
+  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear(shooter,event.objectShredder,()=>objectGearRate(shooter,target.subId));
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return true;
 }
@@ -722,15 +758,16 @@ function replayStatus(api,event) {
   const owner=event.actor||api.G.netm?.byNid?.get(event.actorId);
   const target=api.G.netm?.byNid?.get(event.targetId);
   if(!owner?.remote||ownerLife(owner)!==event.life||owner.team!==event.sourceTeam||!target||target.remote||target.team===event.sourceTeam||ownerLife(target)!==event.targetLife||
-     event.status!=='toxicMist'||!Number.isFinite(event.until)||event.until<(api.G.time||0)||event.until>(api.G.time||0)+1)return false;
-  target.s3 ||= {};target.s3.toxicMistSlowUntil=Math.max(target.s3.toxicMistSlowUntil||0,event.until);
-  target.s3.toxicMistScale=Math.min(target.s3.toxicMistScale||1,ALL_SUB_SPECS.toxicMist.slowScale);
+     event.subId!=='toxicMist'||event.status!=='toxicMist'||!Number.isFinite(event.until)||event.until<(api.G.time||0)||event.until>(api.G.time||0)+1)return false;
+  const cloud=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife&&o.subId==='toxicMist');
+  if(!toxicMistContains(target,cloud))return false;
+  armToxicStatus(api,cloud,target,false);
   return true;
 }
 function updateStatuses(api, dt) {
   for(const actor of api.G.actors||[]){
     const s=actor?.s3;if(!s)continue;
-    if(s.toxicMistSlowUntil>(api.G.time||0)&&!actor.remote) actor.ink=Math.max(0,(actor.ink??100)-ALL_SUB_SPECS.toxicMist.inkDrainPerSecond*dt);
+    if(toxicMistScale(actor)<1&&!actor.remote) actor.ink=Math.max(0,(actor.ink??100)-ALL_SUB_SPECS.toxicMist.inkDrainPerSecond*dt);
     if((s.toxicMistSlowUntil||0)<=(api.G.time||0)){delete s.toxicMistSlowUntil;delete s.toxicMistScale;}
   }
 }
@@ -806,11 +843,12 @@ function updateFlight(api, projectiles, object, dt) {
     if(object.ghost){object.phase='ghostWait';return;}
     if(!object.ghost){
       const amount=object.subId==='angleShooter'||object.subId==='burst'?spec.directDamage:0;
+      if(object.subId==='burst'&&amount>0)object.directTarget=actor.actor;
       if(amount>0)api.G.projectiles?.applyHit?.(object.owner,actor.actor,amount,object.subId);
       if(object.subId==='angleShooter'){
         const duration=markSeconds(spec,object.owner,object.subPowerAP);
-        applyMark(api,actor.actor,object.team,duration);
-        if(Number.isInteger(actor.actor.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:object.subId,seq:object.seq,sourceLife:object.sourceLife,eventSeq:nextSeq(object.owner),
+        applyMark(api,actor.actor,object.team,duration,object.subId);
+        if(Number.isInteger(actor.actor.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:object.subId,seq:object.seq,life:ownerLife(object.owner),sourceLife:object.sourceLife,eventSeq:nextSeq(object.owner),
           targetId:actor.actor.nid,targetLife:ownerLife(actor.actor),frames:Math.round(duration*60),sourceTeam:object.team,actor:object.owner});
       }
     }
@@ -910,7 +948,8 @@ function updateDeployed(api,projectiles,object,dt){
       }
     }
   }
-  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+object.age*2;}
+  // A deployed wall's rendered plane must retain the yaw used by barrier contact.
+  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+(object.subId==='splashWall'?0:object.age*2);}
 }
 
 function tickObjects(api,projectiles,dt){
@@ -924,6 +963,9 @@ function tickObjects(api,projectiles,dt){
 }
 
 function replaySpawn(api,event,owner){
+  // Sprinkler uses native bomb birth/ghost packets. Do not revive the retired
+  // catalogue authority alongside that device, including for old peers.
+  if(event.subId==='sprinkler')return false;
   if(!owner?.remote||!api.G.projectiles||event.life!==ownerLife(owner)||event.sourceLife!==event.life||!ALL_SUB_SPECS[event.subId])return false;
   const list=entityList(api.G.projectiles);
   const old=list.find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife);
@@ -944,30 +986,28 @@ function replayDeploy(api,event,owner){
 }
 function replayMark(api,event,owner){
   const target=api.G.netm?.byNid?.get(event.targetId);
+  const birth=owner&&api.G.projectiles&&markBirthState(api,api.G.projectiles,owner)?.entries.get(markBirthKey(event));
   if(!owner?.remote||!target||target.team===owner.team||ownerLife(target)!==event.targetLife||
-    !Number.isSafeInteger(event.frames)||event.frames<1||event.frames>1200)return false;
-  return applyMark(api,target,owner.team,event.frames/60);
+    !['inkMine','angleShooter'].includes(event.subId)||!birth||
+    !Number.isSafeInteger(event.frames)||event.frames!==birth.frames)return false;
+  return applyMark(api,target,owner.team,event.frames/60,event.subId);
 }
 function replayExpire(api,event,owner){
+  // Owner retirement is ordered after its marks. Local visual retirement is not.
+  markBirthState(api,api.G.projectiles,owner)?.entries.delete(markBirthKey(event));
   const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life));
   if(!object)return false;removeObject(api,api.G.projectiles,object,true);return true;
-}
-function replaySprinklerDrop(api,event,owner){
-  if(!owner?.remote||ownerLife(owner)!==event.life||!Number.isInteger(event.seed)||event.seed<0||event.seed>0xffffffff||
-     !finite3({x:event.x,y:event.y,z:event.z})||!Number.isFinite(event.radius)||event.radius<=0||event.radius>.6)return false;
-  const object=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===(event.sourceLife??event.life)&&o.subId==='sprinkler'&&o.phase==='deployed');
-  if(!object||object.pos.distanceTo(new api.THREE.Vector3(event.x,event.y,event.z))>object.spec.hitPaintRadius+1)return false;
-  surfacePaintWithCredit(api,owner,object.team,new api.THREE.Vector3(event.x,event.y,event.z),event.radius,event.seed,false);
-  return true;
 }
 
 /**
  * Replays one parent-validated `all:sub` event. Ghost sub objects are
- * presentation-only: they move and render, but never paint, damage, mark, drain
- * ink, spend object HP or emit another packet.
+ * presentation-only for attack consequences: they never paint, damage, spend
+ * object HP or emit another packet. A replayed Mist volume is also sampled by
+ * the local victim's movement/ink authority; remote victims are never mutated.
  */
 export function replaySub(api,event){
   if(!api?.G||!event||event.v!==1||typeof event.phase!=='string')return false;
+  if(event.phase==='nativeObjectHit'||event.phase==='nativeObjectState')return replayNativeSprinklerDamage(api,event);
   if(event.phase==='objectHit')return applyRemoteObjectHit(api,event);
   if(event.phase==='status')return replayStatus(api,event);
   if(event.phase==='beakonUseProposal')return applyBeaconProposal(api,event);
@@ -976,7 +1016,9 @@ export function replaySub(api,event){
   if(event.phase==='spawn')return replaySpawn(api,event,owner);
   if(event.phase==='deploy')return replayDeploy(api,event,owner);
   if(event.phase==='mark')return replayMark(api,event,owner);
-  if(event.phase==='sprinklerDrop')return replaySprinklerDrop(api,event,owner);
+  // Only ordered native paint rows may change ownership. A stale legacy drop
+  // must never repaint over a newer enemy stroke or invent an expanded radius.
+  if(event.phase==='sprinklerDrop')return false;
   if(event.phase==='beakonUses')return replayBeaconUses(api,event,owner);
   if(event.phase==='expire'||event.phase==='destroy')return replayExpire(api,event,owner);
   if(event.phase==='burst'){
@@ -1017,6 +1059,7 @@ export function installAllSubs(api,profile={}){
   const {SUB,Projectiles,WeaponRunner,G}=api;
   if(!SUB||!Projectiles||!WeaponRunner||!G||!api.THREE)throw new Error('all subs require the composed Projectiles, WeaponRunner and game context');
   if(Projectiles.prototype[INSTALL])return api;
+  configureToxicMist(api);
   registerSpecs(api,profile);
   const nativeThrow=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...args){
@@ -1107,6 +1150,7 @@ export function installAllSubs(api,profile={}){
   Projectiles.prototype.clear=function(...args){
     for(const object of [...this._s3SubObjects||[]])removeObject(api,this,object,true);
     this._s3SubObjects=[];this._s3SubAccumulator=0;
+    markBirths.delete(this);
     api.G.s3Beakons=[];
     for(const actor of api.G.actors||[])if(actor?.s3){delete actor.s3.toxicMistSlowUntil;delete actor.s3.toxicMistScale;}
     objectHitSeen.clear();beaconResultSeen.clear();
@@ -1126,8 +1170,7 @@ export function installAllSubs(api,profile={}){
 
   const nativeMove=WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed=function(...args){
-    const speed=nativeMove.apply(this,args),s=this.a?.s3;
-    return s?.toxicMistSlowUntil>(G.time||0)?speed*(s.toxicMistScale||ALL_SUB_SPECS.toxicMist.slowScale):speed;
+    return nativeMove.apply(this,args)*toxicMistScale(this.a);
   };
 
   api.replaySub=event=>replaySub(api,event);

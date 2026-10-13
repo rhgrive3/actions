@@ -1,3 +1,4 @@
+import { objectShredderEquipped, withObjectHitGear, OBJECT_SHREDDER_FLAG } from '../../splatoon3/runtime/object-gear.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
@@ -32,10 +33,10 @@ function sourceFunction(name) {
 const productionPackActor = new Function(
   'PLAYER', 'F', 'SPAWN_ARMOR_FLAG', 'RESPAWN_PUNISHER_FLAG', 'chargerSightVisible', 'slamProtected',
   'spawnProtectionRemaining', 'respawnPunisherEquipped', 'swimTrailVisible', 'swimSplashVisible', 'r2', 'r3',
-  'packAdoptionState', 'packC1088SurgePresentation',
+  'packAdoptionState', 'packC1088SurgePresentation', 'objectShredderEquipped', 'OBJECT_SHREDDER_FLAG',
   `${hitAuthoritySource}\n${sourceFunction('packActor')}\nreturn packActor;`,
 )({ hp: 100 }, {}, 0, 0, () => false, () => false, () => 0, () => false, () => true, () => true,
-  (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null);
+  (x) => Math.round(x * 100) / 100, (x) => Math.round(x * 1000) / 1000, () => null, () => null, objectShredderEquipped, OBJECT_SHREDDER_FLAG);
 const productionUnpackActor = new Function('PLAYER',
   `${hitAuthoritySource}\n${sourceFunction('unpackActor')}\nreturn unpackActor;`,
 )({ hp: 100 });
@@ -101,11 +102,11 @@ function makeWorld(id) {
   const forwardList = source.slice(forwardStart, forwardEnd + 1);
   const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
   assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
-  const hitLimits = source.slice(limitsStart, limitsEnd);
+  const hitLimits = source.match(/^const IW_CATALOGUE_SUB_HIT_MAX = [^\n]+;/m)[0] + '\n' + source.slice(limitsStart, limitsEnd);
   const methods = methodNames.map((name) => method(name, name.startsWith('_retire') || name.startsWith('_retry'))).join('\n');
   const NetMatchHarness = new Function(
     'G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'mapNoBots', 'now',
-    'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'clearRemoteC1088Surge',
+    'rearmTeamWipe', 'respawnPunisherEquipped', 'withHitPunisher', 'objectShredderEquipped', 'withObjectHitGear', 'clearRemoteC1088Surge',
     'WEAPONS', 'validDamageGroup', 'clearRemoteRollerPresentation', 'C1088_SURGE_TAG',
     'retireDisconnectedMainProjectiles', 'clearRemoteDodgeClock', 'KIT_FORWARD',
     `${helpers}\n${ghostHelper}\n${dropCleanup}\n${hitLimits}\n${hitAuthoritySource}\n${forwardList}\nreturn class NetMatchHarness {
@@ -122,7 +123,7 @@ ${methods}
   )(
     G, { hp: 100, spawnInvuln: 3 }, on, emit, (x) => Math.round(x * 100) / 100,
     180, new Set(['shooter']), mapNoBots, () => 1,
-    () => {}, respawnPunisherEquipped, withHitPunisher, clearRemoteC1088Surge,
+    () => {}, respawnPunisherEquipped, withHitPunisher, objectShredderEquipped, withObjectHitGear, clearRemoteC1088Surge,
     WEAPONS, validDamageGroup, clearRemoteRollerPresentation, C1088_SURGE_TAG,
     retireDisconnectedMainProjectiles, clearRemoteDodgeClock, KIT_FORWARD,
   );

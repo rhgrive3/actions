@@ -1,10 +1,12 @@
 export function adaptKitPaintAdmission(code,once){
  const patch=(a,b,label)=>{code=once(code,a,b,'kit paint: '+label);};
- code="import { kitBombBirthMetadata, recordKitBombBirth, acceptPendingKitBirths, prepareKitPaintEvents, kitPaintPlayback, kitPaintRadiusAllowed, consumeKitPaint, retireSlosherPaintProjectile } from '../../patches/network-replication/kit-paint-admission.mjs';\n"+code;
+ code="import { kitBombBirthMetadata, recordKitBombBirth, recordBubblerPaintBirth, acceptPendingKitBirths, prepareKitPaintEvents, kitPaintPlayback, kitPaintRadiusAllowed, consumeKitPaint, retireSlosherPaintProjectile } from '../../patches/network-replication/kit-paint-admission.mjs';\n"+code;
  code="import { recordSlosherPaintBirth, slosherBirthInkMeta } from '../../patches/network-replication/slosher-paint-admission.mjs';\n"+code;
  patch("    this._rec(['p', o.nid","    const projectileBirth = this._rec(['p', o.nid",'capture projectile birth identity');
  patch('\n  }\n\n  recBomb(b) {','\n    recordSlosherPaintBirth(this,p,projectileBirth);\n  }\n\n  recBomb(b) {','record slosher terrain impact permit');
  patch('p.inkMeta || null, kitVolleyPacketIndex','slosherBirthInkMeta(this,p), kitVolleyPacketIndex','epoch and life in existing projectile metadata slot');
+ patch("    this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]);",
+   "    const recordedKitEvent=this._rec(['ev',name,packEvent(e,name === 'weapon:fire' && (WEAPONS[e.weapon] || a.weapon)?.kind === 'charger')]); recordBubblerPaintBirth(this,e.paintSource,recordedKitEvent);", 'record bubbler deployment paint permit');
  const birth="const s3kit = kitBombPacket(b); if (!s3kit) return; this._rec(['b', o.nid, b.kind, r2(b.pos.x), r2(b.pos.y), r2(b.pos.z), r2(b.vel.x), r2(b.vel.y), r2(b.vel.z), b.kind === 'storm' ? { stormDuration: b.s3StormDuration } : null, s3kit[0], s3kit[1]]);";
  if(code.includes(birth))patch(birth,birth.replace("this._rec(","const birth = this._rec(").replace('s3kit[1]]);','s3kit[1], ...(kitBombBirthMetadata(this,b) ? [kitBombBirthMetadata(this,b)] : [])]); recordKitBombBirth(this,b,birth);'),'birth action metadata');
  patch('  _tick(from, d) {', '  _tick(from, d) {\n    if (!Number.isFinite(d?.ts) || Math.abs(d.ts) > 1e12) return;\n    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };\n    else if (d?.e != null) d = { ...d, e: [] };\n    acceptPendingKitBirths(this, from, d);', 'awaited birth in reordered envelope');

@@ -16,7 +16,7 @@ const arg = (name) => { const i = process.argv.indexOf(name); return i >= 0 ? pr
 const source = path.resolve(arg('--source') || path.join(repo, 'inkwave-public'));
 const manifestPath = path.join(source, 'inkwave-build.json');
 const touchCameraReset = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).build?.reliability?.['navigation-adapter.mjs'];
-const hostTeamConfirmation = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).files?.['patch/lobby-host-team-adapter.mjs'];
+const hostTeamAdapterPresent = fs.existsSync(manifestPath) && !!JSON.parse(fs.readFileSync(manifestPath, 'utf8')).files?.['patch/lobby-host-team-adapter.mjs'];
 const evidence = path.resolve(arg('--evidence-dir') || '/mnt/workspace/.dev-state/agent-work/evidence/inkwave-responsive-ui-20261002');
 const cache = path.resolve(arg('--profile-dir') || '/mnt/workspace/.dev-state/agent-work/cache/inkwave-responsive-ui-20261002');
 const baseline = arg('--baseline');
@@ -219,6 +219,11 @@ try {
         entry.screens.emotes = await geometry(page, '.iw-emowheel button', 'emotes');
         await tap(page, '.iw-emowheel .iw-touch-close');
         await page.waitForFunction(() => !menus._modal);
+        // The real Session has confirmTeams; the offline MockNet intentionally
+        // does not. Match the production menu's capability gate, not merely
+        // the presence of an adapter in the build manifest.
+        const hostTeamConfirmation = hostTeamAdapterPresent && await page.evaluate(() => typeof G.net.confirmTeams === 'function');
+        entry.hostTeamConfirmationSupported = hostTeamConfirmation;
         if (hostTeamConfirmation) {
           await tap(page, '.iw-btn--ready');
           assert.equal(await page.evaluate(() => G.net.lobby.players.find((p) => p.you).ready), false,
@@ -250,8 +255,14 @@ try {
         await page.evaluate(() => G.net.create('Host Squidkid'));
         await show(page, 'lobby');
         entry.screens.host = await geometry(page, '.iw-lob__modearrows i, .iw-lstage__arrows i, .iw-lset .iw-seg__opt, .iw-btn--lobstart', 'host');
-        await tap(page, '.iw-lob__modearrows .is-r');
-        await page.waitForFunction(() => G.net.lobby.mode === 'boss');
+        const visitedModes = [];
+        for (const mode of ['zones', 'tower', 'rainmaker', 'clams', 'boss']) {
+          await tap(page, '.iw-lob__modearrows .is-r');
+          await page.waitForFunction(mode => G.net.lobby.mode === mode, mode);
+          visitedModes.push(await page.evaluate(() => G.net.lobby.mode));
+        }
+        assert.deepEqual(visitedModes, ['zones', 'tower', 'rainmaker', 'clams', 'boss']);
+        entry.hostModes = visitedModes;
         assert.equal(await page.locator('.iw-lobby').evaluate((el) => el.classList.contains('is-bossmode')), true);
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-boss-lobby.png`) });
         await page.evaluate(() => G.net.leave());
