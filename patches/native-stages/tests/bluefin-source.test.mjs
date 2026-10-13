@@ -78,7 +78,7 @@ test('Bluefin opposing source ledges really walk or jump down to retained lower 
 });
 
 test('Bluefin admitted shooter paint and ordinary input physically traverse the original positive upper bank',{skip:!available},async()=>{
- const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'bluefin')),P=G.physics=new f.NativePhysics(L);
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'bluefin')),P=G.physics=new f.NativePhysics(L);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
  G.match.mode='turf';G.match.opts={};G.camera=new THREE.PerspectiveCamera();const cases=[];f.setRandom(()=>.5);
  try{for(const hz of [30,60,120]){
@@ -91,8 +91,8 @@ test('Bluefin admitted shooter paint and ordinary input physically traverse the 
   for(let y=3.25;y<9.2;y+=.15){const wall=P.raycast(new THREE.Vector3(26,y,18.5),new THREE.Vector3(1,0,0),5);if(!wall.hit)continue;if(wall.face<0){noPaintSamples++;continue;}walls.push(wall);}
   assert(walls.length>30,'painting targets use the actual source wall chain');
   for(let x=20.5;x<=24.5;x+=.5){const floor=P.raycast(new THREE.Vector3(x,5,18.5),new THREE.Vector3(0,-1,0),3);if(floor.hit&&floor.face>=0)floors.push(floor);}
-  const actor=f.make('shooter');actor.team=0;actor._integrate=f.Actor.prototype._integrate;actor._spawnBarrier=f.Actor.prototype._spawnBarrier;actor.spawnAt(start,Math.PI/2);G.actors=[actor];
-  const tick=()=>{G.time+=1/hz;actor.character.root.position.copy(actor.pos);actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);};
+  const actor=new f.Actor({team:0,name:'source positive bank',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});actor.spawnAt(start,Math.PI/2);G.actors=[actor];
+  const tick=()=>{G.time+=1/hz;actor.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);};
   let paintSeconds=0,refillSeconds=0,fireFrames=0;
   for(const target of [...floors,...walls]){
    if(actor.ink<25){actor.intent.fire=false;actor.intent.squid=true;for(let frame=0;frame<hz*4&&actor.ink<95;frame++){tick();refillSeconds+=1/hz;}actor.intent.squid=false;}
@@ -134,5 +134,5 @@ test('Bluefin admitted shooter paint and ordinary input physically traverse the 
   assert.deepEqual(Object.keys(actor.s3.abilityPoints),[]);
   cases.push({team:0,hz,start:Array.from(start.toArray()),sourceStartTriangle:support.triangle,capEnd,sourceCapTriangle:endSupport.triangle,seconds,bankGoal:Array.from(goal.toArray()),bankEnd:Array.from(actor.pos.toArray()),bankWalkSeconds,walkwaySourceSupports:walkway.length,wallSamples,floorTargets:floors.length,floorOwned,unownedFloorSamples,paintSeconds,refillSeconds,fireFrames,noPaintSamples,jumped,climbed,existingSurgeBurst:burst,grounded:true,weapon:'shooter / Shooter_Normal_00',gearAP:0});
  }}finally{f.restoreRandom();}
- console.log(JSON.stringify({id:'bluefin',positiveBankHumanAccess:cases,conditions:'real Actor integrator, WeaponRunner/projectiles and source collision; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG'}));
+ console.log(JSON.stringify({id:'bluefin',positiveBankHumanAccess:cases,conditions:'production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG'}));
 });

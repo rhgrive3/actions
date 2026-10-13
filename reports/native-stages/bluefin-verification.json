@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "79ad61c59889a5e424bc56ca934422dde184baaf",
+  "latestConsumedFoundation": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -519,14 +519,14 @@
     "fullBankPhysicalQualification": "pending source-supported drop validation"
   },
   "sourcePositiveBankHumanAccess": {
-    "status": "passed-accepted-foundation-cpu",
-    "foundation": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
+    "status": "passed-accepted-foundation-production-character-cpu",
+    "foundation": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74",
     "test": "patches/native-stages/tests/bluefin-source.test.mjs: admitted shooter paint and ordinary input physically traverse the original positive upper bank",
-    "command": "INKWAVE_NATIVE_STAGE_ASSETS=\"$PWD/.codex-stage-sources/generated\" flock /workspace/actions/.ci-scratch/native-stage-cpu-heavy.lock node --experimental-vm-modules --test --test-name-pattern=\"admitted shooter paint\" patches/native-stages/tests/bluefin-source.test.mjs",
+    "command": "INKWAVE_NATIVE_STAGE_ASSETS=\"$PWD/.codex-stage-sources/generated\" flock /workspace/actions/.ci-scratch/native-stage-cpu-heavy.lock node --experimental-vm-modules --test --test-concurrency=1 --test-name-pattern=\"Bluefin admitted shooter paint\" patches/native-stages/tests/bluefin-source.test.mjs",
     "tests": 1,
     "passed": 1,
     "failed": 0,
-    "testMilliseconds": 4302.093593,
+    "testMilliseconds": 15675.25719,
     "id": "bluefin",
     "positiveBankHumanAccess": [
       {
@@ -689,7 +689,20 @@
         "gearAP": 0
       }
     ],
-    "conditions": "real Actor integrator, WeaponRunner/projectiles and source collision; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG"
+    "conditions": "production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG",
+    "previousCpuFixture": {
+      "foundation": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
+      "passed": 1,
+      "testMilliseconds": 4302.093593,
+      "character": "simplified fixed world-axis muzzle",
+      "actorIntegratorRestored": true,
+      "actorFrameFinishingFrozen": true,
+      "assurance": "Historical controller/pipeline proof; production Character rerun below supersedes the geometry-sensitive weapon qualification."
+    },
+    "durationMilliseconds": 15873.751659,
+    "character": "production Character, constructed through actual Actor constructor",
+    "actorIntegrationAndFrameFinishing": "production methods retained; no fixture make() call",
+    "optionalSourceMotion": "CPU VM dynamic import callback unavailable; production rig geometry/controller run, full optional source-motion playback remains browser-only"
   },
   "privateDropCalibration": {
     "status": "diagnostic only; candidate not adopted",
@@ -1324,7 +1337,14 @@
           "initialPaint": "unpainted",
           "actualBrainActorWeaponProjectilesPaintClock": true
         }
-      ]
+      ],
+      "fixtureLimits": {
+        "character": "simplified fixed world-axis muzzle",
+        "actorIntegratorRestored": true,
+        "actorFrameFinishingFrozen": true,
+        "currentPreparedRegression": "upgraded to production Character/Actor integration and frame finishing; both-bank retest pending accepted helper",
+        "actualChromiumProof": "uses production Character and Actor, separate archived all-rate evidence"
+      }
     },
     "realChromium": {
       "status": "passed-negative-bank-only",
@@ -1671,5 +1691,12 @@
     },
     "remainingStandardBrowserChecks": "Render, camera, lifecycle and public native menu entry also require production Match.setup; no known-failure repetitions or graph/placement waiver used. Retest after independently accepted genuine Drop and whole-bank approach support.",
     "finalMatrixStatus": "pending; no complete Bluefin playability claim"
+  },
+  "acceptedPlainClimbRecovery": {
+    "foundation": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74",
+    "pr": 1372,
+    "runtimeCommit": "ffef6dc449adfc99394e801947cd62c160d5414b",
+    "review": "independently read-only reviewed by Bluefin; source/rig/NoPaint/ceiling/enemy/both-Flounder-banks/Manta-seam/default/legacy evidence accepted",
+    "scope": "plain opted wallClimb controller only; no highDrops, Surge, ranked-wrapper or positive running-jump activation"
   }
 }
