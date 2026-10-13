@@ -113,8 +113,9 @@ browser errors; every final browser check reported zero errors.
   seven small clams precede the eighth-to-Power conversion. Source-qualified
   collection and local rules pass; autonomous basket scoring is not claimed.
 - All five modes use two real browsers and production RoomDurableObject WS.
-  Every mode settles to SHA-equal complete 1,181,405-byte ink grids and equal
-  ranked counts. The host uses Luna radius 3.84. Deliberate ordered ground
+  Each complete ink grid settles SHA-equal: 1,181,405 bytes in four modes and
+  1,181,505 in Tower, including its 100 dynamic deck cells. Ranked counts also
+  agree. The host uses Luna radius 3.84. Deliberate ordered ground
   paint and controlled rule actions are integration controls, not autonomous
   scoring proof.
 - Actual public source-menu download/conversion/cache works without a second
