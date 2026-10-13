@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "source-files-and-six-fixed-game-cases-passed-peer-pending",
+  "status": "named independent peer accepted; Ready and shared integration authorized",
   "foundation": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
   "commonHead": "053f3be0b798f2bd5e4a5cfe77e3bfa1df8b2fde",
   "runtimeBase": "9e74722b",
@@ -419,7 +419,7 @@
       "scope": "Three canonical baseline and candidate cases already passed their respective expectations; mirror-coordinate lookup then stopped. No Nav, stage pads or geometry substituted. Final six local cases use both real team identities on the same original reachable contour."
     }
   },
-  "remaining": "Named independent peer review and shared promotion remain pending. Bluefin positive-bank approach and whole-stage readiness are separate, incomplete work.",
+  "remaining": "Shared integration proceeds under the authorized named-peer workflow. Bluefin positive-bank approach and whole-stage readiness remain separate, incomplete work.",
   "unverified": [
     "Nintendo11.3.0 collision units/body/controller parity",
     "retail placements and source material semantics",
@@ -1528,5 +1528,26 @@
     "aliveActors": 8,
     "bots": 7,
     "positiveBankOrWholeStageClaim": false
+  },
+  "independentPeerReview": {
+    "reviewer": "/root/manta",
+    "acceptedRuntimeHead": "5d42a1fc39b48eae02894b05b8d165929c444a05",
+    "acceptedReportHead": "f5d9786f502dde714f2596ec0b24ed50f542634c",
+    "helperSHA256": "eb406f8f37f09eb6028dae239b25693fa1cec0bc9c861a7583d160f54990792a",
+    "sourceApi": {
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 60.71
+    },
+    "defaults": {
+      "passed": 9,
+      "failed": 0,
+      "explicitUnrelatedAssetSkips": 6,
+      "seconds": 33.953
+    },
+    "receipt": "/workspace/stage-worktrees/manta/.ci-scratch/bluefin-grounded-form-independent-review.md",
+    "receiptSHA256": "85cb40f3134eb10b6719f747aaf1e4cfc8ecca4fce168a9c7a3cbc94c456fcf9",
+    "scope": "Read-only runtime/tail/guards/static support/continuous per-form sweeps, immutable compiled bindings, actual Game matched6 baseline/candidate and original-pad negative-bank3 evidence; screenshot inspected. Positive approach/whole stage and retail/hardware remain unqualified."
   }
 }
