@@ -91,12 +91,12 @@ try{
     keyboardBoarding=[];
     for(const hz of [30,60,120]){
      await page.keyboard.up('w');await page.keyboard.up('Space');
-     await page.evaluate(hz=>{const G=NG,g=G.game,a=G.local,e=G.match.ranked,w=G.match.rankedWorld,approach=e.stage.tower.boarding.approaches[e.stage.tower.centerIndex];
+     const shouldJump=await page.evaluate(hz=>{const G=NG,g=G.game,a=G.local,e=G.match.ranked,w=G.match.rankedWorld,approach=e.stage.tower.boarding.approaches[e.stage.tower.centerIndex];
       if(!approach)throw Error('No source-supported center approach');e.rule.state.position=[...e.stage.tower.path[e.stage.tower.centerIndex]];e.rule.state.progress=w._centerProgress();w._syncTower(e,false);
       a.pos.fromArray(approach.start);a.vel.set(0,0,0);a._rankedOnTower=false;a.grounded=false;a._resolve(false,a.pos.y,false);if(!a.grounded||!a.ground.hit||a.ground.block===w.towerBlockId)throw Error('Boarding starts on an actual source floor');
-      g.rig.yaw=Math.atan2(approach.end[0]-a.pos.x,approach.end[2]-a.pos.z);g.rig.pitch=0;globalThis.nativeBoardingApproach={...approach,hz};
+      g.rig.yaw=Math.atan2(approach.end[0]-a.pos.x,approach.end[2]-a.pos.z);g.rig.pitch=0;globalThis.nativeBoardingApproach={...approach,hz};return approach.jumping;
      },hz);
-     await page.keyboard.down('w');await page.keyboard.down('Space');
+     await page.keyboard.down('w');if(shouldJump)await page.keyboard.down('Space');
      let proof,totalFrames=0,walking=true;
      while(totalFrames<Math.ceil(hz*1.3)){
       proof=await page.evaluate(({hz,walking})=>{const G=NG,g=G.game,a=G.local,m=G.match,w=m.rankedWorld,e=m.ranked,p=nativeBoardingApproach,dx=p.end[0]-p.start[0],dz=p.end[2]-p.start[2],length=Math.hypot(dx,dz);let boarded=false,frames=0,reachedEnd=false;
@@ -105,7 +105,7 @@ try{
       totalFrames+=proof.frames;if(proof.boarded)break;if(proof.reachedEnd&&walking){await page.keyboard.up('w');walking=false;}else break;
      }
      proof.frames=totalFrames;
-     await page.keyboard.up('Space');await page.keyboard.up('w');assert.equal(proof.boarded,true,'actual keyboard jump from source floor onto tower '+JSON.stringify(proof));keyboardBoarding.push(proof);
+     await page.keyboard.up('Space');await page.keyboard.up('w');assert.equal(proof.boarded,true,'actual keyboard source-floor approach onto tower '+JSON.stringify(proof));keyboardBoarding.push(proof);
     }
    }
    const rule=await page.evaluate(async mode=>{

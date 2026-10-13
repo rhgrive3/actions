@@ -16,6 +16,8 @@ float object 衝突を外す私的比較でも、元の対向高床スポーン�
 
 画面は理由を表示し、map/rule の変更で START 状態を更新する。offline/public API/menu/direct online/host/incoming start は live world・actors・match flow・authoritative room を変更する前に拒否する。incoming refusal は接続を閉じない。未宣言の runtime failure を skip しない。一般 checker は、この厳密な catalog 状態のみ明示的な負の証拠として扱い、その他のステージに5モードの成功を要求する。
 
+検証の数値と、直接配置による支持検証・通常入力による搭乗検証の区別は [source-tower-clearance-verification.json](source-tower-clearance-verification.json)。全ての原典対応ステージの現行支持ルールが実対戦を通り、Hagglefish の負の検証は通常 quit→main→PLAY→ルール・ステージの物理クリックで行った。
+
 ## 比較範囲と検証
 
 本家参照版はスプラトゥーン3 11.3.0。ブキ・ギアは既存 INKWAVE profile のままで、移動、泳ぎ、塗り、跳躍値を変更していない。変更は推定する動的目標物の配置・経路と availability の制御である。本家の歩行微入力、加速、停止、反転、射撃中速度、ジャンプ、壁登り、カメラ、搭乗時間、通信や実機 FPS は未計測。Node、SwiftShader ブラウザ、本家実機の証拠を区別する。
