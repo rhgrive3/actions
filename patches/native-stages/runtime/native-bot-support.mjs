@@ -12,7 +12,7 @@ function cautiousSourceTurn(brain,G){
 /** Native source routes require the actual support before a bot turns toward
  * its next waypoint. Legacy stage followers keep their original policy. */
 export function nativeSourceWaypointReached(G,actor,node){
- if(!G.level?.native)return true;
+ if(!G.level?.native)return !G.level?.manifest?.sourceNavigation?.highDrops;
  if(!actor.grounded||Math.hypot(node.x-actor.pos.x,node.z-actor.pos.z)>.18)return false;
  if(actor.bot&&!actor.bot.target&&cautiousSourceTurn(actor.bot,G)&&Math.hypot(actor.vel.x,actor.vel.z)>.65)return false;
  return nativeSourceFootSupported(G,actor,node);
