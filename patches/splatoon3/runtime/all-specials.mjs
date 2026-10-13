@@ -1021,7 +1021,7 @@ function activeStep(rt,actor,dt) {
       emitAction(rt,actor,state.id,state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state),{damage:32});
       state.nextShot=elapsed+(state.firstShot?6/60:12/60);state.firstShot=true;
     }
-    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();damageBandRadius(rt,actor,c,[[1.15,40]],1.15,'crabTank');paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v0),.9,nextSeed(state));}
+    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;damageBandRadius(rt,actor,c,[[1.45,40]],1.45,'crabTank');paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v0),.9,nextSeed(state));}
     if(elapsed>=state.duration-25/60)endSpecial(rt,actor,'duration');return;
   }
   if(state.id==='reefslider'){
