@@ -24,3 +24,38 @@ test('opted source approach releases special, launch and missing-path ownership 
 test('source approach profile filter rejects unqualified weapon and gear without changing ordinary edges',async()=>{
  const f=await nativeFixture(),a=f.make('shooter'),edge={climb:{kind:'approach'}};assert(f.nativeApproachEdgeAllowed(a,edge));assert(f.nativeApproachEdgeAllowed(a,{type:'walk'}));assert(!f.nativeApproachEdgeAllowed(f.make('roller'),edge));assert(!f.nativeApproachEdgeAllowed({...a,s3:{abilityPoints:{runSpeedUp:3}}},edge));assert(f.nativeApproachEdgeAllowed(f.make('roller'),{type:'climb',climb:{kind:'straight'}}));
 });
+
+// Synthetic typed-edge lifecycle controls; source flight is covered separately.
+test('ordinary approach releases stale actor and match lifetimes and boarding ownership',async()=>{
+const f=await nativeFixture(),baseLevel=f.G.level,baseMatch=f.G.match,rows=[];
+f.G.physics.raycast=()=>({hit:false});
+function rig(){
+ f.G.level=baseLevel;f.G.match=baseMatch;f.G.level.native=true;f.G.level.manifest={sourceNavigation:{wallApproach:true}};
+ const a=f.make('shooter'),brain=new f.BotBrain(a,'normal'),v=a.pos.toArray(),start=[v[0]+1,v[1],v[2]],goal=[v[0]+3,v[1],v[2]],edge={to:1,type:'climb',climb:{kind:'gap-jump',lower:start,upper:goal}};
+ f.G.nav={nodes:[{id:0,x:start[0],y:start[1],z:start[2],nb:[edge]},{id:1,x:goal[0],y:goal[1],z:goal[2],nb:[]}]};brain.path=[0,1];brain.pi=1;assert.equal(f.updateNativeApproach(brain,f.G,1/60),true);assert.equal(brain._nativeApproach.phase,'plant');
+ a.intent.move.set(.7,0,.2);a.intent.fire=a.intent.jump=a.intent.squid=true;
+ return {a,brain};
+}
+const snapshot=a=>JSON.stringify({intent:a.intent,pos:a.pos,vel:a.vel,serial:a.s3JumpSerial});
+for(const name of ['legacy','opt-off','dead','spawn','special','super-jump','no-path','life','actor','match','mode','nav','level','boarding']){
+ const h=rig(),{a,brain}=h;
+ if(name==='legacy')f.G.level.native=false;
+ if(name==='opt-off')f.G.level.manifest.sourceNavigation={};
+ if(name==='dead')a.alive=false;
+ if(name==='spawn')a.s3.squidSpawn={};
+ if(name==='special')a.specialActive={};
+ if(name==='super-jump')a.superJumpState={};
+ if(name==='no-path')brain.path=null;
+ if(name==='life')a.netLife=(a.netLife||0)+1;
+ if(name==='actor')brain.a=f.make('shooter');
+ if(name==='match')f.G.match={...baseMatch};
+ if(name==='mode')brain.mode='peer-different-mode';
+ if(name==='nav')f.G.nav={nodes:f.G.nav.nodes};
+ if(name==='boarding')brain._nativeTowerBoarding={};
+ if(name==='level')f.G.level={...baseLevel};
+ const before=snapshot(a),handled=f.updateNativeApproach(brain,f.G,1/60),unchanged=snapshot(a)===before,cleared=brain._nativeApproach===null;
+ assert.equal(handled,false,name+' ownership must release');assert(unchanged,name+' must preserve current input/physical state');assert(cleared,name+' must clear traversal phase');
+ rows.push({name,handled,inputAndPhysicalStateUnchanged:unchanged,traversalCleared:cleared,pathAborted:brain.path===null});
+}
+assert.equal(rows.length,14);
+});

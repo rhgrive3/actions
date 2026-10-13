@@ -144,7 +144,7 @@ export function updateNativeApproach(brain,G,dt){
   if(state.phase==='human'||state.phase==='flight'){const length=delta.length();if(length>1e-6)input.move.copy(delta).multiplyScalar(Math.min(.35,Math.max(.03,(length-.09)*.65))/length);return true;}
  }
  if(c.kind==='gap-jump'){
-  if(state.phase==='flight'&&(a.s3JumpSerial||0)===state.jumpSerial&&a.grounded){state.phase='plant';return true;}
+  if(state.phase==='flight'&&(a.s3JumpSerial||0)===state.jumpSerial&&a.grounded){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return true;}
   const delta=(state.phase==='plant'?start:goal).clone().sub(a.pos).setY(0),d=delta.length();
   if(state.phase==='plant'){
    if(d>.025||Math.hypot(a.vel.x,a.vel.z)>.08||!nativeSourceFootSupported(G,a,from)){if(d>.015)input.move.copy(delta).multiplyScalar(Math.min(.25,Math.max(.03,(d-.015)*.65))/d);return true;}
@@ -169,7 +169,7 @@ export function updateNativeApproach(brain,G,dt){
   if(a.pos.clone().sub(takeoff).dot(direction)>=0){input.jump=true;state.phase='attach';return true;}
  }
  if(state.phase==='attach'){
-  if((a.s3JumpSerial||0)===state.jumpSerial&&a.grounded){state.phase='paint';input.squid=input.jump=false;input.move.set(0,0,0);return true;}
+  if((a.s3JumpSerial||0)===state.jumpSerial&&a.grounded){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;input.squid=input.jump=false;input.move.set(0,0,0);return true;}
   input.jump=true;
   if(a.climbing&&a.pos.y>=c.holdY)state.phase='charge';
   else if((a.s3JumpSerial||0)>state.jumpSerial&&a.grounded&&a.pos.y<c.wallTop-1.8){state.phase='paint';}
