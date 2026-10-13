@@ -10,7 +10,9 @@ The branch also consumes accepted ordinary source-floor support
 `fd23d46d87498dced990c5ee5655db2462169e2e`, plus source Clams goals and the
 eighth pickup `3249d6dc5c8da6c085247c8213d0b7b4c69a24f4`. The branch now consumes
 accepted foundation `90040586c3728ca20d69ed43014528e0f68cbbdf`, including the
-source Drop recovery and main 18ce compatibility refresh. The immutable
+source Drop recovery and main 18ce compatibility refresh, followed by accepted
+native combat support #1399 and combat jump input #1409 through foundation
+`3f9d0e544bd22f10bf65ef2d14abea0fc9f55bcb`. The immutable
 browser artifact predates that later accepted history. Stage verification is in progress; the
 complete opposite-bank bot route fails. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
 remains Draft.
@@ -134,6 +136,11 @@ default .01 fit accepts it. Independent original triangle reads reproduce the
 distances. Manta solely owns this native foot/body coupling investigation and
 correction; no geometry, body dimensions or tolerance is changed by this owner.
 The narrow combat jump proof and full-bank route remain separate requirements.
+The final bank checker now retains the original controlled-goal scope and uses
+the reviewed contact classification: strict contact-free subdivision sweeps,
+actual source-collider contact/correction plus strict committed endpoint fits,
+and retained straight-chord diagnostics. It awaits the qualified coupling
+runtime; the refined full-bank check has not passed yet.
 
 The current private artifact is
 `173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5`,
