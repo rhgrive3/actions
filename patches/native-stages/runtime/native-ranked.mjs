@@ -3,8 +3,10 @@
 import {nativeTowerClearance} from './native-tower-clearance.mjs';
 import {nativeArenaBasis} from './native-spawn.mjs';
 import {nativeTowerBoarding} from './native-tower-boarding.mjs';
+import {nativeTowerStartIndex} from './native-tower-calibration.mjs';
 import {nativeStageRuleStatus} from './rule-availability.mjs';
 const sourceStageCache=new WeakMap();
+const playableSourceCache=new WeakMap();
 function requireMode(stage,mode){if(mode==='tower'&&!stage.tower.supported){const error=new RangeError(stage.tower.reason);error.code='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED';throw error;}return stage;}
 // Kosaraju without recursion: source stages can contain thousands of ledges.
 // A tiny elevated floor near XZ center must not become the whole ranked arena.
@@ -24,21 +26,14 @@ export function nativeRankedComponent(N,paintable,spawnIds=[],acceptComponent=nu
  if(best<0||groups[best].length<10)throw Error('Native ranked center component is too small');
  return {common:groups[best],paintable:paintable.filter(id=>component[id]===best&&(!reachable||reachable[id])),reachable:N.validIds.filter(id=>!reachable||reachable[id]),reachablePaintable:paintable.filter(id=>!reachable||reachable[id])};
 }
-export function nativeRankedStage(G,requiredMode=null){
- const L=G.level,N=G.nav;if(!L?.native||!N?.validIds.length)throw Error('No reachable native ranked navigation');
- const body=G.physics.actorBody,bodyKey=[body.radius,body.height,body.jumpVel,body.gravity,body.runSpeed,body.ledgeAssist].join('/'),cached=sourceStageCache.get(N);
- // Navigation, original source masks and live capsule dimensions own this proof.
- // Turf ownership and temporary ranked meshes do not alter source triangles.
- if(cached?.level===L&&cached.mask===L.data.mask&&cached.bodyKey===bodyKey)return requireMode(cached.stage,requiredMode);
- const all=N.validIds;
- const nearest=(ids,x,z)=>{let best=null,score=Infinity;for(const id of ids){const n=N.nodes[id];if(n.zone>=0)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<score){score=d;best=n;}}return best;};
- const B=L.bounds,basis=nativeArenaBasis(L),mx=basis.origin.x,mz=basis.origin.z,axis=basis.forward,cross=basis.lateral;
- const dz=((B.maxX-B.minX)*Math.abs(axis.x)+(B.maxZ-B.minZ)*Math.abs(axis.z))*.2;
- const point=(along,lateral=0)=>[mx+axis.x*along+cross.x*lateral,mz+axis.z*along+cross.z*lateral];
- // Drop edges are directed. Use the center's mutually reachable component,
- // rather than treating the original undirected prune as a playable uphill route.
+/** One exact source/live-mask component owns both local objectives and native
+ * bot launch qualification. Ownership changes never alter this static mask. */
+export function nativePlayableComponent(G){
+ const L=G.level,N=G.nav;if(!L?.native||N?.level!==L||!N?.validIds.length)throw Error('No reachable native source navigation');
+ const cached=playableSourceCache.get(N);
+ if(cached?.level===L&&cached.mask===L.data.mask&&cached.dead===G.paint.dead)return cached.playable;
  const probe=L.spawnPads[0].clone(),down=probe.clone().set(0,-1,0);
- const paintable=all.filter(id=>{
+ const paintable=N.validIds.filter(id=>{
   const n=N.nodes[id],h=L.triangleWorld.ray(probe.set(n.x,n.y+.1,n.z),down,.3,{minNormalY:.7});
   if(!h)return false;const fid=L.data.triangleFace[h.triangle],f=L.faces[fid];
   if(!f?.turf)return false;
@@ -46,7 +41,23 @@ export function nativeRankedStage(G,requiredMode=null){
   return !G.paint.dead[f.grid+j*f.nu+i];
  });
  if(!paintable.length)throw Error('Native ranked stage has no live paint floor');
- const playable=nativeRankedComponent(N,paintable,L.spawnPads.map(p=>N.nearest(p,1.2))),common=playable.common,middle=nearest(playable.paintable,mx,mz);
+ const spawnIds=N.nativeSpawnNodeIds||L.spawnPads.map(p=>N.nearest(p,1.2));
+ const playable=nativeRankedComponent(N,paintable,spawnIds);
+ playableSourceCache.set(N,{level:L,mask:L.data.mask,dead:G.paint.dead,playable});return playable;
+}
+export function nativeRankedStage(G,requiredMode=null){
+ const L=G.level,N=G.nav;if(!L?.native||!N?.validIds.length)throw Error('No reachable native ranked navigation');
+ const body=G.physics.actorBody,bodyKey=[body.radius,body.height,body.jumpVel,body.gravity,body.runSpeed,body.ledgeAssist].join('/'),cached=sourceStageCache.get(N);
+ // Navigation, original source masks and live capsule dimensions own this proof.
+ // Turf ownership and temporary ranked meshes do not alter source triangles.
+ if(cached?.level===L&&cached.mask===L.data.mask&&cached.bodyKey===bodyKey)return requireMode(cached.stage,requiredMode);
+ const nearest=(ids,x,z)=>{let best=null,score=Infinity;for(const id of ids){const n=N.nodes[id];if(n.zone>=0)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<score){score=d;best=n;}}return best;};
+ const B=L.bounds,basis=nativeArenaBasis(L),mx=basis.origin.x,mz=basis.origin.z,axis=basis.forward,cross=basis.lateral;
+ const dz=((B.maxX-B.minX)*Math.abs(axis.x)+(B.maxZ-B.minZ)*Math.abs(axis.z))*.2;
+ const point=(along,lateral=0)=>[mx+axis.x*along+cross.x*lateral,mz+axis.z*along+cross.z*lateral];
+ // Drop edges are directed. Use the center's mutually reachable component,
+ // rather than treating the original undirected prune as a playable uphill route.
+ const playable=nativePlayableComponent(G),common=playable.common,middle=nearest(playable.paintable,mx,mz);
  const pick=(along,lateral=0)=>nearest(common,...point(along,lateral)),ends=[pick(-dz),pick(dz)];
  const configured=nativeStageRuleStatus(L.layout.id,'tower');let tower;
  if(configured?.supported===false)tower={...configured,path:[]};
@@ -81,7 +92,7 @@ export function nativeTowerRoute(G,common,paintable,middle,ends,mx,mz,dz){
   if(!(projected(first)<-clearance.radius&&projected(last)>clearance.radius))return null;
   if(path.length<3||path.some((p,i)=>!clearance.clear(p,path[Math.max(0,i-1)])))return null;
   const approaches=ids.map((id,i)=>boarding.find(id,path[i]));if(approaches.some(p=>!p))return null;
-  return {path,arenaSpan:{origin:[mx,mz],forward:[basis.forward.x,basis.forward.z],endpointProjection:[projected(first),projected(last)],minimumHalfDepth:clearance.radius,bothHalvesVerified:true},centerIndex:a.length-1,halfSize:clearance.halfSize,localLift:lift,boarding:{maxJumpHeight:boarding.maxJumpHeight,metrics:{...boarding.metrics},approaches,assurance:boarding.assurance},sourceClearance:{...clearance.metrics,radius:clearance.radius,height:clearance.height,assurance:clearance.assurance}};
+  return {path,arenaSpan:{origin:[mx,mz],forward:[basis.forward.x,basis.forward.z],endpointProjection:[projected(first),projected(last)],minimumHalfDepth:clearance.radius,bothHalvesVerified:true},centerIndex:nativeTowerStartIndex(path),halfSize:clearance.halfSize,localLift:lift,boarding:{maxJumpHeight:boarding.maxJumpHeight,metrics:{...boarding.metrics},approaches,assurance:boarding.assurance},sourceClearance:{...clearance.metrics,radius:clearance.radius,height:clearance.height,assurance:clearance.assurance}};
  };
  const original=route(N,middle.id,ends[0].id,ends[1].id,3.3);if(original)return original;
  const attempts=[];
