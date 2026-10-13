@@ -4363,7 +4363,8 @@
       "noPaintObjects": 16,
       "limitations": "Elevated opponent home-deck return is unproved; both original pads and complete source remain. Paths qualify both opposing skate bowls, not retail placements or physical traversal of every graph edge."
     },
-    "log": ".ci-scratch/composed-all-cpu.log"
+    "log": ".ci-scratch/composed-all-cpu.log",
+    "optionalCharacterMotionImport": "Existing VM fixture warns ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING for optional source motion. Production Character type/physics/controller/weapon routes execute; CPU fixture alone does not validate optional animation import. Final real Chromium gameplay/banks have zero page/console errors."
   },
   "currentBuilds": {
     "private": {
@@ -5124,6 +5125,1253 @@
         "mode": "paint"
       },
       "sourceBuffersUnchanged": true
+    },
+    "departures": [
+      {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "actors": 8,
+        "alive": 8,
+        "teamCounts": [
+          4,
+          4
+        ],
+        "sourceNavigation": {
+          "wallClimb": true,
+          "highDrops": true
+        },
+        "proofScope": "isolated drop in pure-Drop native match",
+        "bots": 7,
+        "weapon": "shooter / Shooter_Normal_00",
+        "version1130Verified": false,
+        "navNodes": 21584,
+        "validNodes": 5798,
+        "dropEdges": 456,
+        "navBuildMilliseconds": 1848.300000011921,
+        "dropScreenMetrics": {
+          "queries": 79807,
+          "triangleTests": 202868,
+          "distanceTests": 76682
+        },
+        "productionActor": true,
+        "productionCharacter": true,
+        "installedController": {
+          "stepUp": 0.35,
+          "gravity": 25,
+          "fallGravityMul": 1.2,
+          "height": 1.45,
+          "squidHeight": 0.55,
+          "humanoidTerrainRadius": 0.35,
+          "swimTerrainRadius": 0.675,
+          "terrainDistanceScale": 1
+        },
+        "cases": [
+          {
+            "team": 1,
+            "bot": false,
+            "hz": 30,
+            "seconds": 0.7,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.200000000000003,
+              3,
+              38.936
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.7999999970197678,
+              "p95": 8.299999997019768,
+              "max": 24.799999997019768
+            }
+          },
+          {
+            "team": 1,
+            "bot": false,
+            "hz": 60,
+            "seconds": 0.7,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.200000000000003,
+              3,
+              38.982000000000106
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 0.9000000059604645,
+              "max": 1.5
+            }
+          },
+          {
+            "team": 1,
+            "bot": false,
+            "hz": 120,
+            "seconds": 0.7083333333333334,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.200000000000003,
+              3,
+              38.97199999999988
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 0.8999999910593033,
+              "max": 15.900000005960464
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 0.7,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.200000000000003,
+              3,
+              38.936
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 1,
+              "max": 1.800000011920929
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.7,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.200000000000003,
+              3,
+              38.982000000000106
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 0.9000000059604645,
+              "max": 2.4000000059604645
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.7083333333333334,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.200000000000003,
+              3,
+              38.97199999999988
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.4000000059604645,
+              "p95": 0.6000000089406967,
+              "max": 0.7999999970197678
+            }
+          },
+          {
+            "team": 1,
+            "bot": false,
+            "hz": 30,
+            "seconds": 0.8666666666666667,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799999999999997,
+              0,
+              41.976
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 1.2999999970197678,
+              "max": 1.300000011920929
+            }
+          },
+          {
+            "team": 1,
+            "bot": false,
+            "hz": 60,
+            "seconds": 0.8833333333333333,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799999999999997,
+              0,
+              41.93600000000014
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.3999999910593033,
+              "p95": 1,
+              "max": 1.4000000059604645
+            }
+          },
+          {
+            "team": 1,
+            "bot": false,
+            "hz": 120,
+            "seconds": 0.8833333333333333,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799999999999997,
+              0,
+              41.96399999999984
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 105901,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.3999999910593033,
+              "p95": 0.5999999940395355,
+              "max": 0.8999999910593033
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 0.9666666666666667,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799999999999997,
+              0,
+              41.888946761037765
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 1.5999999940395355,
+              "p95": 7.399999991059303,
+              "max": 13.400000005960464
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.9333333333333333,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799999999999997,
+              0,
+              41.97669572142504
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.7000000029802322,
+              "p95": 2,
+              "max": 2.2000000029802322
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.9333333333333333,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799999999999997,
+              0,
+              41.99368193916427
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 105901,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 1,
+              "max": 2.1000000089406967
+            }
+          }
+        ],
+        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "sourceBuffersUnchanged": true,
+        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+        "errors": [],
+        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "otherTransitionHandlersExecuted": false,
+        "nativeMatchSetup": true
+      }
+    ],
+    "rankedDepartures": [
+      {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "actors": 8,
+        "alive": 8,
+        "teamCounts": [
+          4,
+          4
+        ],
+        "sourceNavigation": {
+          "wallClimb": true,
+          "highDrops": true
+        },
+        "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
+        "bots": 7,
+        "weapon": "shooter / Shooter_Normal_00",
+        "version1130Verified": false,
+        "navNodes": 21584,
+        "validNodes": 5798,
+        "dropEdges": 456,
+        "navBuildMilliseconds": 2541,
+        "dropScreenMetrics": {
+          "queries": 79807,
+          "triangleTests": 202868,
+          "distanceTests": 76682
+        },
+        "productionActor": true,
+        "productionCharacter": true,
+        "installedController": {
+          "stepUp": 0.35,
+          "gravity": 25,
+          "fallGravityMul": 1.2,
+          "height": 1.45,
+          "squidHeight": 0.55,
+          "humanoidTerrainRadius": 0.35,
+          "swimTerrainRadius": 0.675,
+          "terrainDistanceScale": 1
+        },
+        "cases": [
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 0.7333333333333333,
+            "handledFrames": 21,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.208891333908518,
+              3,
+              38.782999284369424
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 1.7999999970197678,
+              "p95": 24.599999994039536,
+              "max": 27.900000005960464
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.7333333333333333,
+            "handledFrames": 43,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.202559222038826,
+              3,
+              38.819666973805596
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 1.3999999910593033,
+              "max": 5.0999999940395355
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.725,
+            "handledFrames": 86,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.2007626333795525,
+              3,
+              38.898380838156584
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 0.9000000059604645,
+              "max": 6.9000000059604645
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 1,
+            "handledFrames": 20,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.786755663003976,
+              0,
+              41.774690469619934
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 1.4000000059604645,
+              "p95": 3.8999999910593033,
+              "max": 15.600000008940697
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.9666666666666667,
+            "handledFrames": 40,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.797435893136107,
+              0,
+              41.814361400707455
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.9000000059604645,
+              "p95": 3.0999999940395355,
+              "max": 3.800000011920929
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.9583333333333334,
+            "handledFrames": 82,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799232614799191,
+              0,
+              41.879561249979105
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 105901,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.7999999970197678,
+              "p95": 1.7999999970197678,
+              "max": 18.30000001192093
+            }
+          }
+        ],
+        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "sourceBuffersUnchanged": true,
+        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+        "mode": "zones",
+        "errors": [],
+        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
+        "otherTransitionHandlersExecuted": false,
+        "nativeMatchSetup": true
+      },
+      {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "actors": 8,
+        "alive": 8,
+        "teamCounts": [
+          4,
+          4
+        ],
+        "sourceNavigation": {
+          "wallClimb": true,
+          "highDrops": true
+        },
+        "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
+        "bots": 7,
+        "weapon": "shooter / Shooter_Normal_00",
+        "version1130Verified": false,
+        "navNodes": 21584,
+        "validNodes": 5798,
+        "dropEdges": 456,
+        "navBuildMilliseconds": 2208.2999999970198,
+        "dropScreenMetrics": {
+          "queries": 79807,
+          "triangleTests": 202868,
+          "distanceTests": 76682
+        },
+        "productionActor": true,
+        "productionCharacter": true,
+        "installedController": {
+          "stepUp": 0.35,
+          "gravity": 25,
+          "fallGravityMul": 1.2,
+          "height": 1.45,
+          "squidHeight": 0.55,
+          "humanoidTerrainRadius": 0.35,
+          "swimTerrainRadius": 0.675,
+          "terrainDistanceScale": 1
+        },
+        "cases": [
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 0.7333333333333333,
+            "handledFrames": 21,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.208891333908518,
+              3,
+              38.782999284369424
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.9000000059604645,
+              "p95": 22.900000005960464,
+              "max": 28.5
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.7333333333333333,
+            "handledFrames": 43,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.202559222038826,
+              3,
+              38.819666973805596
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.6000000089406967,
+              "p95": 3.2000000029802322,
+              "max": 15.5
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.725,
+            "handledFrames": 86,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.2007626333795525,
+              3,
+              38.898380838156584
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 0.7999999970197678,
+              "max": 8.5
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 1,
+            "handledFrames": 20,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.786755663003976,
+              0,
+              41.774690469619934
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 1.5,
+              "p95": 7.200000002980232,
+              "max": 19.200000002980232
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.9666666666666667,
+            "handledFrames": 40,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.797435893136107,
+              0,
+              41.814361400707455
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.9000000059604645,
+              "p95": 3.8999999910593033,
+              "max": 4.899999991059303
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.9583333333333334,
+            "handledFrames": 82,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799232614799191,
+              0,
+              41.879561249979105
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 105901,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.7999999970197678,
+              "p95": 4.9000000059604645,
+              "max": 28.900000005960464
+            }
+          }
+        ],
+        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "sourceBuffersUnchanged": true,
+        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+        "mode": "rainmaker",
+        "errors": [],
+        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
+        "otherTransitionHandlersExecuted": false,
+        "nativeMatchSetup": true
+      },
+      {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "actors": 8,
+        "alive": 8,
+        "teamCounts": [
+          4,
+          4
+        ],
+        "sourceNavigation": {
+          "wallClimb": true,
+          "highDrops": true
+        },
+        "proofScope": "Actual source Drop handler ordinary-input ownership through installed ranked wrapper; controlled source-supported path; no whole rule-objective, score or Tower boarding claim",
+        "bots": 7,
+        "weapon": "shooter / Shooter_Normal_00",
+        "version1130Verified": false,
+        "navNodes": 21584,
+        "validNodes": 5798,
+        "dropEdges": 456,
+        "navBuildMilliseconds": 2236.199999988079,
+        "dropScreenMetrics": {
+          "queries": 79807,
+          "triangleTests": 202868,
+          "distanceTests": 76682
+        },
+        "productionActor": true,
+        "productionCharacter": true,
+        "installedController": {
+          "stepUp": 0.35,
+          "gravity": 25,
+          "fallGravityMul": 1.2,
+          "height": 1.45,
+          "squidHeight": 0.55,
+          "humanoidTerrainRadius": 0.35,
+          "swimTerrainRadius": 0.675,
+          "terrainDistanceScale": 1
+        },
+        "cases": [
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 0.7333333333333333,
+            "handledFrames": 21,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.191108666091488,
+              3,
+              38.782999284369424
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 1.3999999910593033,
+              "p95": 27.099999994039536,
+              "max": 40.3999999910593
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.7333333333333333,
+            "handledFrames": 43,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.197440777961179,
+              3,
+              38.819666973805596
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.6000000089406967,
+              "p95": 3.2999999970197678,
+              "max": 12.099999994039536
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.725,
+            "handledFrames": 86,
+            "upper": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "landing": [
+              6.199237366620453,
+              3,
+              38.898380838156584
+            ],
+            "sourceUpperTriangle": 95403,
+            "sourceLandingTriangle": 94500,
+            "firstSourceLandingTriangle": 94500,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.5,
+              "p95": 1.5,
+              "max": 5.9000000059604645
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 30,
+            "seconds": 1,
+            "handledFrames": 20,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.786755663003976,
+              0,
+              41.774690469619934
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 1.7000000029802322,
+              "p95": 5.5999999940395355,
+              "max": 7
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 60,
+            "seconds": 0.9666666666666667,
+            "handledFrames": 40,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.797435893136107,
+              0,
+              41.814361400707455
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 92193,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 1,
+              "p95": 3,
+              "max": 5.5
+            }
+          },
+          {
+            "team": 1,
+            "bot": true,
+            "hz": 120,
+            "seconds": 0.9583333333333334,
+            "handledFrames": 82,
+            "upper": [
+              -13.799999999999997,
+              3,
+              46.599999999999994
+            ],
+            "landing": [
+              -13.799232614799191,
+              0,
+              41.879561249979105
+            ],
+            "sourceUpperTriangle": 94244,
+            "sourceLandingTriangle": 92193,
+            "firstSourceLandingTriangle": 105901,
+            "humanFits": true,
+            "squidFits": true,
+            "screenedSwimShape": true,
+            "form": "kid",
+            "alive": true,
+            "grounded": true,
+            "jumpAdmitted": false,
+            "gearAP": [],
+            "cpuStep": {
+              "p50": 0.7999999970197678,
+              "p95": 2,
+              "max": 5.0999999940395355
+            }
+          }
+        ],
+        "collisionSha256": "8a67aa1c707e058a37cd150d1ed6339ef6ddbbf17e6d1cb3277cc64dbafdbe24",
+        "sourceBuffersUnchanged": true,
+        "conditions": "Actual Chromium Actor/BotBrain/ordinary movement/gravity; eight actors and seven bots retained; source-supported initial stances; zero AP; friendly ink initially empty; 0.5 RNG before Actor construction; production Character muzzle and ordinary Actor/BotBrain; SwiftShader",
+        "mode": "clams",
+        "errors": [],
+        "buildFingerprint": "3e8337a50c5275cd4a2c6d75a233e79a9bc70e78a24ec525662d3a92d725e347",
+        "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "rankedModuleSha256": "a64da0d371302a5176d8a53874bf07723f4b1ab679f30360add44d5f8e861577",
+        "otherTransitionHandlersExecuted": false,
+        "nativeMatchSetup": true
+      }
+    ]
+  },
+  "packagingAndBudgets": {
+    "private": {
+      "packaging": {
+        "tests": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".ci-scratch/composed-packaging-private.log"
+      },
+      "startupBudget": {
+        "status": "passed",
+        "revision": "58e46a124fdfdaef6b2dcf5127efea8fe5ccd872d18076375a17f69fa8dcf4b5",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74638,
+        "initialJSBytes": 2892599,
+        "criticalHTMLBytes": 15371,
+        "precacheCount": 365,
+        "precacheBytes": 5786782,
+        "workerBytes": 70517,
+        "declaredBytes": 10404822,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
+    },
+    "public": {
+      "packaging": {
+        "tests": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "log": ".ci-scratch/composed-packaging-public.log"
+      },
+      "startupBudget": {
+        "status": "passed",
+        "revision": "7582ebd4b560faf3d2c211fc7363eece60588162b38d86176c161c7bbdbe02eb",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74638,
+        "initialJSBytes": 2895450,
+        "criticalHTMLBytes": 15371,
+        "precacheCount": 365,
+        "precacheBytes": 5789633,
+        "workerBytes": 70517,
+        "declaredBytes": 10407673,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
     }
+  },
+  "screenshotSelfReview": {
+    "inspected": [
+      "composed-gameplay/humpback-game.png",
+      "composed-gameplay/humpback-overhead.png",
+      "composed-gameplay/humpback-source-only.png",
+      "humpback-banks-foot-candidate/humpback-banks.png"
+    ],
+    "sourceGeometry": "Actual source indoor roofs and bowl surfaces retained. Source overhead/source-only view naturally occluded by the original opaque roof; no roof edit for visibility.",
+    "towerMenuImageLimit": "composed-gameplay/humpback-tower-unavailable.png caught a UI transition after the assertions restored Turf. Do not treat it as a stable disabled-Tower image; actual menu/API guard assertions are the evidence.",
+    "rights": "All screenshots private/ignored; no asset publication"
   }
 }
