@@ -30,6 +30,12 @@
 
 ソース照合、支持点・カプセル・一方向経路、受理済み `64b0497e` での CPU 60 件と専用回帰 3 件は成功。実 Actor の 30 着地ケースは全11目標への352経路を保持する。初回 Chromium は8 Actor・7ボット・全5ルール・エラーなし。ヤグラは70 waypoint、554回の実カプセル支持と30/60/120Hzの実キーボード搭乗に成功した。初回の実 WebSocket は全5ルールで成功し、Luna の塗り半径3.84、220 settling frames 後の全 CPU grid SHA-256 一致を確認した。受理済み `64b0497e` の通常射撃は元 `CargoBoxWood00Plus` の壁で3周波数とも元三角形への接触・自然発生の壁塗り・所有に成功し、0AP・立ち射撃を実記録した。
 
-個別 PR は Draft。未受理の共有 climb/drop/landing 修正を先に確定させるため一時停止しており、Ready 化・レビュー集約への統合は未完了。最終の公開取得・gameplay・実 WebSocket・移動描画・lifecycle と最新共有修正を含む行列は残っている。5つの待機中ブラウザジョブは Chromium 開始前に解除し、実行中のジョブや他担当のジョブは停止していない。既存の成功を新しいビルドの代用にはしない。最終結果・fingerprint・SwiftShader 計測値は `airport-verification.json` に追記する。
+現在の検証は受理済み製品修正 `29c01b4f` と runner 修正 `c961c1ba` に基づく。後者はブラウザの初期化 callback がゲーム全体を返さない修正で、製品 runtime・catalog・build は前者と同一。最終私有 build は `caca515442762136ede45b18325f08c50fed30a6e95cabff5df4eec3234af4f3`、公開 build は `83ee538ae872480bfed37343a902bf70f80dfa250dc0c096b5dccff0751db044`。双方の全 artifact 識別・起動・配布サイズ検査に成功した。ソース付き CPU は69件成功・他ステージ/opted条件9件skipで、Airportの元属性・実支持・塗り・移動・経路は実データで検査した。生成済み engine の実 export を使う専用回帰3件も成功し、元テキストから独立に数えた vertex offset で全 index を照合した。
+
+現在のブラウザ行列は8ケースすべて成功した。公開メニューから固定元データを取得・変換し、派生 cache 再利用では OBJ の再ダウンロード0件、改変 OBJ の拒否では以前の level とメニューを保持した。8 Actor・7ボット・全5ルール、70点のヤグラ経路・554回の実乗員支持・3周波数の実キーボード搭乗も再確認した。実 WebSocket は全5ルールで半径3.84の塗りを再生し、205/205/15/225/200 settling frames後に全CPU grid SHA-256が一致した。元壁への通常射撃と0AP、実Chromeの30着地ケース、ポインターロックと実マウスによるオフライン3周波数・オンライン両チーム3周波数、legacyカメラ復帰も成功した。
+
+描画のゲーム/中央/俯瞰は A/A・B/B・元single meshとindexed cullingの差分がすべて0画素。12移動カメラを含め、物理・ナビ・CPU塗りauthorityは保持した。描画三角形は86,792を基準に、ゲーム視点84,588・中央51,744・俯瞰85,292。SwiftShaderのrender drain p50は基準/分割がゲーム3.0/3.8ms・中央3.6/3.5ms・俯瞰6.6/8.4msで、一部視点は分割の方が遅かった。ゲームの180 CPU samplesはp50 14.3ms / p95 41.1ms / max1253.8ms。タッチ844×390はp50 9.8ms / p95 31.4ms / max1166.8ms、render drain4.8ms。並行CPU・cgroupメモリ負荷とソフトウェア描画の診断値であり、実機FPSを意味しない。
+
+品質high→lowでsource位置・CPU grid・authorityが一致し、壊れたbinaryの拒否、準備キャンセル、native→legacy→nativeの掃除、互換fingerprintの改変/欠落拒否と844×390タッチ表示に成功した。実画像は私有領域で確認した。個別[PR #1342](https://github.com/rhgrive3/actions/pull/1342)をレビュー可能とし、[集約PR #1324](https://github.com/rhgrive3/actions/pull/1324)へレビュー枝だけを統合する。
 
 ブラウザ・詳細ログ・OBJ/MTL/PNG・派生バッファは私有 ignored 領域だけに置く。SwiftShader の時間を実スマートフォン・Switch の FPS として扱わない。
