@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 export const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export const physicalLocation=name=>fs.existsSync(name)?fs.realpathSync(name):path.join(physicalLocation(path.dirname(name)),path.basename(name));
 export function persistentDirectory(name){
  const resolved=physicalLocation(path.resolve(name));
- if(!resolved.startsWith('/mnt/workspace/'))throw Error('Persistent workspace required: '+resolved);
+ const roots=['/mnt/workspace',fileURLToPath(new URL('../../',import.meta.url)).replace(/\/$/,'')];
+ if(['/tmp','/var/tmp','/dev/shm'].some(p=>resolved===p||resolved.startsWith(p+'/'))||!roots.some(p=>resolved.startsWith(physicalLocation(p)+'/')))throw Error('Persistent workspace required: '+resolved);
  fs.mkdirSync(resolved,{recursive:true});return resolved;
 }
 // Chromium appends its singleton directory/socket name to TMPDIR (44 bytes).
