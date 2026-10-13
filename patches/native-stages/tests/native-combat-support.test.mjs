@@ -57,6 +57,16 @@ test('legacy, normal navigation, airborne, spawn and special owners retain exist
  L.native=false;assert.equal(f.nativeCombatWet(brain,G,3,0,6),null);assert.equal(brain._wet(3,0,6),false,'original legacy lower-floor policy remains');
 });
 
+test('genuine grounded Trizooka move intent keeps cliff guard; other special owners delegate',()=>{
+ const {G,a,brain}=setup();a.form='kid';a.specialActive={id:'trizooka',phase:'charge'};a.s3Trizooka={active:true};
+ assert.equal(brain._wet(3,0,6),true,'ordinary special move input cannot authorize lower hull');
+ assert.equal(brain._wet(1.2,0,6),false);
+ a.s3Trizooka.active=false;assert.equal(f.nativeCombatWet(brain,G,3,0,6),null);
+ a.s3Trizooka.active=true;
+ for(const id of ['inkjet','zipcaster','slam','crabTank']){a.specialActive.id=id;assert.equal(f.nativeCombatWet(brain,G,3,0,6),null);}
+ a.specialActive.id='trizooka';a.grounded=false;assert.equal(f.nativeCombatWet(brain,G,3,0,6),null);
+});
+
 test('an actual opposing spawn-zone A* refusal retains the same qualified source route goal',()=>{
  const {G,L,a,brain}=setup();L.spawnPads[1].set(1.5,6,1.5);
  const N=G.nav=new f.NavGraph(L,G.physics);a.pos.set(.5,6,-2.5);
