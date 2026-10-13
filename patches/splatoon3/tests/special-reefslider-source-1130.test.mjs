@@ -20,7 +20,7 @@ test('11.3.0 Reefslider 0.031/F acceleration and brake never exceeds source 0.40
    travel+=speed;
  }
  assert.equal(speed,.405);
- assert.ok(travel>19.3&&travel<19.6,\`54F travelled \${travel}\`);
+ assert.ok(travel>19.3&&travel<19.6,`54F travelled ${travel}`);
  for(let i=0;i<38;i++)speed=f.reefsliderRawSpeed(speed,true);
  assert.equal(speed,0);
  assert.equal(f.reefsliderRawSpeed(NaN),0);
@@ -56,7 +56,7 @@ test('Reefslider runs straight and source 54F timeout starts the 38F preburst',a
  for(let i=0;i<54;i++)actor._updateSpecial(1/60);
  assert.equal(state.phase,'brake');
  assert.ok(Math.abs(actor.pos.x)<1e-5,'sideways input cannot rotate the slide');
- assert.ok(state.travel>19.3&&state.travel<19.6,\`unexpected travel \${state.travel}\`);
+ assert.ok(state.travel>19.3&&state.travel<19.6,`unexpected travel ${state.travel}`);
  assert.equal(events.filter(e=>e.action==='impact').length,0);
  for(let i=0;i<38;i++)actor._updateSpecial(1/60);
  assert.equal(state.phase,'recovery');
