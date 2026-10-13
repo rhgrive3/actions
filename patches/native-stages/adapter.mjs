@@ -98,11 +98,11 @@ export function adaptNativeStages(rel,code){
   code="import { nativePaintGoalIds,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop,updateNativeSurge,nativeSourceWaypointReached,nativeSourceTravelInput } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('    this.think -= dt; this.jumpCd -= dt;', '    if (updateNativeSurge(this,G,dt)||updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt)) { this._nativeTraversalHandled=true; return; }\n    this.think -= dt; this.jumpCd -= dt;');
   once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, G.level.native ? Math.max(6000, nav.nodes.length * 4) : undefined);');
-  once('this.pi + 7', 'this.pi + (G.level.manifest?.sourceNavigation?.wallClimb || G.level.manifest?.sourceNavigation?.highDrops || G.level.manifest?.sourceNavigation?.wallSurge ? 1 : 7)');
+  once('this.pi + 7', 'this.pi + (G.level.native ? 1 : 7)');
   once("nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump'", "(nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'jump' && (!(G.level.manifest?.sourceNavigation?.wallClimb || G.level.manifest?.sourceNavigation?.wallSurge) || nav.edgeType(this.path[Math.max(0, this.pi - 1)], this.path[this.pi]) !== 'climb'))");
   once('  _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {', '  _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {\n    nativeClimbTravelForm(this,G);\n    nativeDropTravelForm(this,G);');
   once('dx * dx + dz * dz < 0.6 * 0.6 && dy < 0.9 && dy > -1.8', 'dx * dx + dz * dz < 0.6 * 0.6 && dy < 0.9 && dy > -1.8 && nativeSourceWaypointReached(G,a,n)');
-  once('this.noProg > 1.5 && this.path', 'this.noProg > 1.5 && !G.level.manifest?.sourceNavigation?.highDrops && this.path');
+  once('this.noProg > 1.5 && this.path', 'this.noProg > 1.5 && !G.level.native && this.path');
   once("et === 'jump' && cur.y - a.pos.y > 0.4", "et === 'jump' && cur.y - a.pos.y > (G.level.manifest?.sourceNavigation?.highDrops ? PLAYER.stepUp : 0.4)");
   once('    it.move.set(Math.sin(this.mvYaw) * this.mvMag, 0, Math.cos(this.mvYaw) * this.mvMag);','    it.move.set(Math.sin(this.mvYaw) * this.mvMag, 0, Math.cos(this.mvYaw) * this.mvMag);\n    nativeSourceTravelInput(this,G);');
 
