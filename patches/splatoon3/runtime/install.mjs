@@ -1,5 +1,6 @@
 import { installNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
 import { installTurfCombatGate } from './turf-combat.mjs';
+import { installObjectDamageCause } from './sub-resistance.mjs';
 import { installSplatGhostReturn } from '../issue-284-adapter.mjs';
 import { installIssue196SpecialChargeCancel } from '../issue-196-adapter.mjs';
 import * as THREE from 'three';
@@ -190,6 +191,7 @@ export function install(profile) {
   installSupportGameplay(api);
   installAllSubs(api);
   installAllSpecials(api);
+  installObjectDamageCause(api);
   installCatalogueSplashdown(api);
   completeBaseKits(api);
   for (const [id, name] of Object.entries(SUB_NAMES)) if (SUB[id]) { Object.assign(SUB[id], {id, name}); SUB_ICONS[id] ||= SUB_ICONS.bomb; }

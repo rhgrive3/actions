@@ -32,18 +32,24 @@ export function installKitDefense(api) {
   Projectiles.prototype.kitBombDefenseCandidate = function (b, start, end) {
     if (!b || b.kind !== 'bomb' || !start || !end) return null;
     const subId = b.s3Sub?.id || b.s3Resolved?.spec?.id || 'bomb';
-    // Curling owns distinct rolling/contact rules; only generic Splat Bomb and
-    // verified Suction Bomb use this airborne contact lane.
-    if (subId !== 'bomb' && subId !== 'suction') return null;
+    if (!['bomb', 'suction', 'curling'].includes(subId)) return null;
     const length = start.distanceTo(end);
     if (!(length > 0)) return null;
     const probe = this._s3BombDefenseProbe || (this._s3BombDefenseProbe = {
       owner: null, team: -1, prev: null, pos: null, vel: null, damage: 0,
-      type: 'bomb', size: .2, ghost: false, s3InkVacBomb: null,
+      type: 'bomb', size: .2, ghost: false, s3InkVacBomb: null, s3Sub: null, s3Resolved: null,
     });
+    // Source DamageRateInfoConfig has a separate Bomb_CurlingBullet row for
+    // the rolling weapon's direct contact. Preserve its native identity and its
+    // own 20 HP direct-hit amount through the shared object-contact candidate.
+    const directDamage = subId === 'curling'
+      ? b.s3Resolved?.spec?.damageDirectHit ?? api.SUB?.curling?.damageDirectHit
+      : null;
     probe.owner = b.owner; probe.team = b.team; probe.prev = start; probe.pos = end;
-    probe.vel = b.vel; probe.damage = kitBombDamageMax(api.SUB, b, api.SUB.bomb.damageMax);
+    probe.vel = b.vel; probe.damage = Number.isFinite(directDamage) ? directDamage
+      : kitBombDamageMax(api.SUB, b, api.SUB.bomb.damageMax);
     probe.ghost = !!b.ghost; probe.s3InkVacBomb = b; probe.s3InkVacAbsorbed = !!b.s3InkVacAbsorbed;
+    probe.s3Sub = b.s3Sub || { id: subId }; probe.s3Resolved = b.s3Resolved || null;
     let best = null;
     const consider = (candidate, kind) => {
       if (!candidate || typeof candidate.onHit !== 'function' || !Number.isFinite(candidate.distance)
