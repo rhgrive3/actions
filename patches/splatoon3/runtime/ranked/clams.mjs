@@ -871,11 +871,17 @@ export class ClamsRule {
       return { pos: [...target], action: 'throw', aim: aimAt(target) };
     }
 
-    const canCollect = !inv.power && inv.small < MAX_SMALL_CLAMS;
+    // Seven carried small clams still need the eighth pickup to form Power.
+    // Only an explicitly source-qualified native route extends the legacy
+    // seven-small goal policy; pickup, throw and direct rays remain unchanged.
+    const sourceFinalClam = !inv.power && inv.small === MAX_SMALL_CLAMS && inv.small < CLAMS_PER_POWER
+      && typeof frame.botGoalRoute === 'function';
+    const canCollect = !inv.power && (inv.small < MAX_SMALL_CLAMS || sourceFinalClam);
     if (canCollect) {
       const candidates = this.state.clams.filter(clam => clam.grounded && (clam.kind === 'small' || clam.team === actor.team));
       candidates.sort((a, b) => this._distanceSq(position, a.pos) - this._distanceSq(position, b.pos));
-      const clam = candidates.find(item => reachable(item.pos));
+      const clam = candidates.find(item => reachable(item.pos)
+        && (!sourceFinalClam || frame.botGoalRoute(actor,item.pos) === true));
       if (clam) return { pos: [...clam.pos], action: 'collect', aim: aimAt(clam.pos) };
     }
 
