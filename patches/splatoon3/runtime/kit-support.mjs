@@ -5,6 +5,7 @@
 // Cross-version S3 lobby-line <-> INKWAVE world geometry remains uncalibrated.
 import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorThrowSpeed, pointSensorContact, pointSensorMark, clearPointSensorMarks } from './support-recon.mjs';
 import { gearCurve } from './gear.mjs';
+import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
 import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
 import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
 
@@ -32,19 +33,39 @@ function releaseVisual(record, G) {
   if(m.userData?.specialKind){disposeSpecialModel(m);record.mesh=null;return;}
   m.traverse?.(o => {
     if (!o.isMesh) return;
-    o.geometry?.dispose?.();
+    if (!isSharedGeometry(o.geometry)) o.geometry?.dispose?.();
     const materials = Array.isArray(o.material) ? o.material : [o.material];
     materials.forEach(a => a?.dispose?.());
   });
   record.mesh = null;
 }
+// S3 Point Sensor model (sub-models.mjs); presentation only.
 function sensorVisual(owner, pos, THREE, G) {
   if (!G.scene?.add) return null;
-  const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.13, 9, 7),
-    new THREE.MeshStandardMaterial({ color: owner.color || G.teamColors?.[owner.team] || 0xffcc33, emissive: owner.color || 0xffcc33, emissiveIntensity: .4 }));
-  sphere.position.copy(pos);
-  G.scene.add(sphere);
-  return sphere;
+  const color = owner.color || G.teamColors?.[owner.team] || 0xffcc33;
+  const ink = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .12, roughness: .4, metalness: .1 });
+  const model = buildSubModel(THREE, 'pointSensor', ink);
+  const group = new THREE.Group();
+  if (model) group.add(model.root);
+  else group.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 9, 7), ink));
+  group.userData.s3SubModel = model;
+  group.rotation.y = owner.aimYaw || owner.yaw || 0;
+  group.position.copy(pos);
+  G.scene.add(group);
+  return group;
+}
+function poseSensorVisual(sensor, dt) {
+  const m = sensor.mesh;
+  if (!m) return;
+  m.position.copy(sensor.pos);
+  // Tumbles in flight; settles upright where it lands.
+  const model = m.userData?.s3SubModel;
+  if (sensor.activeAt === null) { m.rotation.x += dt * 8; m.rotation.z += dt * 3; }
+  else {
+    m.rotation.set(0, m.rotation.y, 0);
+    if (model) model.root.position.y = 0.07;   // box bottom on the surface (pos is 0.03 off it)
+  }
+  poseSubModel(model, { dt });
 }
 function coolerVisual(owner, pos, THREE, G) {
   if (!G.scene?.add) return null;
@@ -147,7 +168,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
         sensor.activeAt=G.time;sensor.expires=G.time+POINT_SENSOR.areaSeconds;
       }
     }
-    sensor.mesh?.position?.copy(sensor.pos);
+    poseSensorVisual(sensor, dt);
     if(sensor.activeAt!==null && playing) {
       if(!sensor.ghost) for(const actor of G.actors || []) {
         if(sensor.seen.has(actor) || actor.team===sensor.team ||
