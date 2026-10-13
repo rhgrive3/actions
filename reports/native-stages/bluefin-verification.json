@@ -1,6 +1,6 @@
 {
   "stage": "bluefin",
-  "status": "draft-source-and-human-qualified-positive-ordinary-bot-pending",
+  "status": "draft-source-human-qualified-positive-approach-and-continuous-bot-capsule-pending",
   "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
   "source": {
     "id": "bluefin",
@@ -103,7 +103,7 @@
     "retail frame/speed parity",
     "physical mobile/Switch FPS"
   ],
-  "browserStatus": "460da complete scoped checkpoint passed; latest positive ordinary-bot/two-bank CPU/Chromium/affected ranked matrix pending",
+  "browserStatus": "460da complete scoped checkpoint passed; current positive ordinary-bot/two-bank fixed-clock Chromium/affected ranked and retained wide-SQ execution contact pending",
   "diagnostics": {
     "restrictedLowerPitOnly": {
       "pads": [
@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+  "latestConsumedFoundation": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -516,7 +516,7 @@
       "fail": 0,
       "skipped": 1
     },
-    "fullBankPhysicalQualification": "Positive ordinary-bot running-jump transition pending; original opposed upper pads retained.",
+    "fullBankPhysicalQualification": "Pending current both-bank ordinary bots with every actual capsule clear; positive approach and retained wide-SQ ground-snap contact are separate blockers.",
     "highDrops": true
   },
   "sourcePositiveBankHumanAccess": {
@@ -8213,5 +8213,332 @@
     "ignoredTest": ".ci-scratch/positive-human-takeoff-witness.test.mjs",
     "ignoredTestSHA256": "f15cd4464702f64c785a7b1e822608017317b8c359ffd0289b6a4a9a6aab4563",
     "scope": "Read-only nine actual running-history snapshots; every original input/assertion retained. No hypothetical takeoff, Actor state, graph, role or geometry changes. GroundHit fields can remain stale after airborne: actual grounded state and literal centre ray are separately recorded. No bot/admission claim."
+  },
+  "acceptedCurrentNativeFollowerAndTower": {
+    "foundation": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
+    "ownerMerge": "7995a63589531f8d81697b5f9a5c500bb32cdf4a",
+    "sourceFloorFollower": {
+      "foundation": "0e6dd2474930b4fde75e2b5e5012030b175b4952",
+      "pr": 1390,
+      "scope": "Ordinary native floor support/waypoint policy; existing highDrops Bluefin was already opted into precise source support."
+    },
+    "sourceWallJumpAttach": {
+      "foundation": "e35ae3a5",
+      "bluefinFlagAdopted": false,
+      "scope": "Accepted source Shipshape ordinary wall attachment; distinct from pending Bluefin supported running approach."
+    },
+    "rankedTower": {
+      "pr": 1395,
+      "runtime": "900d139ffaf420a2b14e636569fe455ee2fa5c29",
+      "scope": "Accepted source boarding/current world vehicle ownership; final owned source Tower checks pending."
+    },
+    "definitionFlags": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "finalArtifacts": "Pending independently accepted positive approach; existing artifacts retain exact earlier identities."
+  },
+  "currentMainNegativeBankContinuousCapsule": {
+    "status": "retained-negative",
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "tests": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "durationMilliseconds": 63800.0683,
+    "team": 1,
+    "physicsKernelHz": 30,
+    "frame": 1161,
+    "elapsedSeconds": 38.733333333333334,
+    "from": [
+      -19.238425606074273,
+      3.242939895330204,
+      -9.822992963660472
+    ],
+    "to": [
+      -19.468021961368496,
+      3,
+      -10.027094295443508
+    ],
+    "form": "squid",
+    "radius": 0.675,
+    "lift": 0.16,
+    "height": 0.55,
+    "sourceContact": {
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "from": [
+        -19.238425606074273,
+        3.242939895330204,
+        -9.822992963660472
+      ],
+      "to": [
+        -19.468021961368496,
+        3,
+        -10.027094295443508
+      ],
+      "rows": [
+        {
+          "form": "squid",
+          "radius": 0.675,
+          "lift": 0.16,
+          "height": 0.55,
+          "skipGrates": true,
+          "fromBodyFits": true,
+          "toBodyFits": false,
+          "sweepClear": false,
+          "sourceContacts": [
+            {
+              "triangle": 102721,
+              "face": 31638,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                -0.8402153849601746,
+                0.5343641042709351,
+                0.09215805679559708
+              ],
+              "axisDistance": 0.6176220833454283,
+              "penetration": 0.0573779166545717,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.21430015563965,
+                3.2800913952558868,
+                -10.122795515470118
+              ]
+            },
+            {
+              "triangle": 102542,
+              "face": 31915,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                0.21557419002056122,
+                0.9622814655303955,
+                0.1659579873085022
+              ],
+              "axisDistance": 0.6176220833454283,
+              "penetration": 0.0573779166545717,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.21430015563965,
+                3.2800913952558868,
+                -10.122795515470118
+              ]
+            },
+            {
+              "triangle": 102541,
+              "face": 31850,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                0,
+                0.9759694337844849,
+                0.21790744364261627
+              ],
+              "axisDistance": 0.6339224725912495,
+              "penetration": 0.04107752740875059,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.1978438945991,
+                3.2914000536613623,
+                -10.209743171250574
+              ]
+            },
+            {
+              "triangle": 102724,
+              "face": 31660,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                -0.799413800239563,
+                0.539393424987793,
+                0.26456061005592346
+              ],
+              "axisDistance": 0.6384713949022506,
+              "penetration": 0.03652860509774947,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.21430015563965,
+                3.3089728869965183,
+                -10.28509903142977
+              ]
+            },
+            {
+              "triangle": 102540,
+              "face": 31846,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                0,
+                0.8978206515312195,
+                0.44036129117012024
+              ],
+              "axisDistance": 0.6384713949022506,
+              "penetration": 0.03652860509774947,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.21430015563965,
+                3.3089728869965183,
+                -10.28509903142977
+              ]
+            },
+            {
+              "triangle": 102722,
+              "face": 31643,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                -0.8289304375648499,
+                0.5012531280517578,
+                0.24823284149169922
+              ],
+              "axisDistance": 0.6384790062884184,
+              "penetration": 0.036520993711581684,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.21430015563965,
+                3.3076000213623047,
+                -10.282299995422363
+              ]
+            },
+            {
+              "triangle": 102720,
+              "face": 31569,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                -0.9641436338424683,
+                0.2595405578613281,
+                0.05537033826112747
+              ],
+              "axisDistance": 0.6395148238479975,
+              "penetration": 0.03548517615200253,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.235200849656636,
+                3.2459615109436153,
+                -10.115452646903684
+              ]
+            },
+            {
+              "triangle": 102719,
+              "face": 31568,
+              "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate",
+              "flags": 3,
+              "normal": [
+                -1,
+                0,
+                0
+              ],
+              "axisDistance": 0.6484753182898698,
+              "penetration": 0.026524681710130227,
+              "closestAxis": [
+                -19.468021961368496,
+                3.835,
+                -10.027094295443508
+              ],
+              "closestSource": [
+                -19.238500595092773,
+                3.2418497995298807,
+                -10.153636859572464
+              ]
+            }
+          ]
+        },
+        {
+          "form": "kid",
+          "radius": 0.35,
+          "lift": 0.35,
+          "height": 1.45,
+          "skipGrates": false,
+          "fromBodyFits": true,
+          "toBodyFits": true,
+          "sweepClear": true,
+          "sourceContacts": []
+        }
+      ],
+      "supports": [
+        {
+          "position": [
+            -19.238425606074273,
+            3.242939895330204,
+            -9.822992963660472
+          ],
+          "hit": true,
+          "triangle": 102720,
+          "face": 31569,
+          "point": [
+            -19.238425606074273,
+            3.171588856219645,
+            -9.822992963660472
+          ],
+          "normal": [
+            -0.9641436338424683,
+            0.2595405578613281,
+            0.05537033826112747
+          ],
+          "object": "FldObj_Ruins03PntStage_polySurface3687_1__SlopeFramePlate"
+        },
+        {
+          "position": [
+            -19.468021961368496,
+            3,
+            -10.027094295443508
+          ],
+          "hit": true,
+          "triangle": 114946,
+          "face": 35098,
+          "point": [
+            -19.468021961368496,
+            3,
+            -10.027094295443508
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "object": "Fld_Ruins03_Fld_Ruins03_Stage_RengaCenter_RengaBlock_Base_group222238126_Floor_FloorEarthBrown_FloorEarthBrown__FloorEarthBrown"
+        }
+      ],
+      "scope": "Read-only immutable source contact diagnosis of retained846 raw30Hz trajectory. Squid sweep is the actual degenerate vertical-axis capsule. Kid comparison contacts are an axis approximation; authoritative kid clear/bodyFits use installed helpers. No graph, source, ownership or actor state changes."
+    },
+    "evidence": ".browser-evidence/current-main-calibration/negative-continuous/cpu.tap",
+    "contactEvidence": ".browser-evidence/current-main-calibration/negative-continuous/contact.json",
+    "scope": "Proper production Character/Actor raw-kernel30Hz ordinary negative-bank route, empty source ink/0.5 RNG/zeroAP. Stronger every-actual-capsule assertion finds a wide SQ contact after actual ground snap; prior grounded endpoint-only arrival does not establish continuous whole-route clearance. Production fixed60 browser route is separately pending. No source/role/mask/graph/Actor state changes."
+  },
+  "preparedFinalBankChecks": {
+    "status": "prepared-syntax-only-not-browser-passed",
+    "cpu": "patches/native-stages/tests/bluefin-banks.test.mjs",
+    "browser": "scripts/check-inkwave-native-bluefin-banks.mjs",
+    "conditions": "Both original pads to opposing genuine Y9 banks. Every actual capsule and final static source-foot support. CPU raw-kernel30/60/120; Chromium fresh normal eight-actor/seven-bot Match through actual Game._frame at render30/60/120 with observed/asserted Actor/BotBrain STEP1/60. Ordinary actual weapons/projectiles; empty initial ink, zeroAP, deterministic0.5 RNG. No later source/pose/velocity/ownership writes. Whole-bank results pending approach and retained SQ contact assessment."
   }
 }
