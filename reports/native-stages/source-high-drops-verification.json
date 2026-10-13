@@ -1,0 +1,792 @@
+{
+  "status": "pending-final-chromium",
+  "scope": "Opt-in source highDrops geometry and ordinary-input execution; no stage flags or full-bank/ranked/Tower qualification",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "candidateRuntimeCommit": "bfd85bd689db3ece71653b9faa8d339cb15f1da4",
+  "dropModuleSha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+  "cpu": [
+    {
+      "suite": "sourceCpu",
+      "id": "manta",
+      "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+      "navNodes": 9877,
+      "validNodes": 3029,
+      "common": 0,
+      "newDrops": 223,
+      "navBuildMilliseconds": 13396.817635000001,
+      "cases": [
+        {
+          "bot": false,
+          "hz": 30,
+          "seconds": 0.7,
+          "start": [
+            -2,
+            10.999999999999972,
+            40.89720153808594
+          ],
+          "end": [
+            -5.664000000000003,
+            8,
+            40.89720153808594
+          ],
+          "sourceTriangle": 10838,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": false,
+          "hz": 60,
+          "seconds": 0.7,
+          "start": [
+            -2,
+            10.999999999999972,
+            40.89720153808594
+          ],
+          "end": [
+            -5.618000000000002,
+            8,
+            40.89720153808594
+          ],
+          "sourceTriangle": 10838,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": false,
+          "hz": 120,
+          "seconds": 0.6833333333333333,
+          "start": [
+            -2,
+            10.999999999999972,
+            40.89720153808594
+          ],
+          "end": [
+            -5.499000000000002,
+            8,
+            40.89720153808594
+          ],
+          "sourceTriangle": 10838,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 30,
+          "seconds": 0.7,
+          "start": [
+            -2,
+            10.999999999999972,
+            40.89720153808594
+          ],
+          "end": [
+            -5.664000000000003,
+            8,
+            40.89720153808594
+          ],
+          "sourceTriangle": 10838,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 60,
+          "seconds": 0.7,
+          "start": [
+            -2,
+            10.999999999999972,
+            40.89720153808594
+          ],
+          "end": [
+            -5.618000000000002,
+            8,
+            40.89720153808594
+          ],
+          "sourceTriangle": 10838,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 120,
+          "seconds": 0.6833333333333333,
+          "start": [
+            -2,
+            10.999999999999972,
+            40.89720153808594
+          ],
+          "end": [
+            -5.499000000000002,
+            8,
+            40.89720153808594
+          ],
+          "sourceTriangle": 10838,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        }
+      ],
+      "sourceBuffersUnchanged": true,
+      "metrics": {
+        "queries": 22443,
+        "triangleTests": 2810,
+        "distanceTests": 1363
+      }
+    },
+    {
+      "suite": "sourceCpu",
+      "id": "bluefin",
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "navNodes": 10854,
+      "validNodes": 6606,
+      "common": 3720,
+      "newDrops": 754,
+      "navBuildMilliseconds": 45540.881101,
+      "cases": [
+        {
+          "bot": false,
+          "hz": 30,
+          "seconds": 0.8666666666666667,
+          "start": [
+            25,
+            8.923700332641602,
+            -21.5
+          ],
+          "end": [
+            25,
+            3,
+            -16.875999999999998
+          ],
+          "sourceTriangle": 171842,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": false,
+          "hz": 60,
+          "seconds": 0.8666666666666667,
+          "start": [
+            25,
+            8.923700332641602,
+            -21.5
+          ],
+          "end": [
+            25,
+            3,
+            -16.921999999999997
+          ],
+          "sourceTriangle": 171842,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": false,
+          "hz": 120,
+          "seconds": 0.8583333333333333,
+          "start": [
+            25,
+            8.923700332641602,
+            -21.5
+          ],
+          "end": [
+            25,
+            3,
+            -16.993000000000144
+          ],
+          "sourceTriangle": 171842,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 30,
+          "seconds": 0.8666666666666667,
+          "start": [
+            25,
+            8.923700332641602,
+            -21.5
+          ],
+          "end": [
+            25,
+            3,
+            -16.875999999999998
+          ],
+          "sourceTriangle": 171842,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 60,
+          "seconds": 0.8666666666666667,
+          "start": [
+            25,
+            8.923700332641602,
+            -21.5
+          ],
+          "end": [
+            25,
+            3,
+            -16.921999999999997
+          ],
+          "sourceTriangle": 171842,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 120,
+          "seconds": 0.8583333333333333,
+          "start": [
+            25,
+            8.923700332641602,
+            -21.5
+          ],
+          "end": [
+            25,
+            3,
+            -16.993000000000144
+          ],
+          "sourceTriangle": 171842,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": false,
+          "hz": 30,
+          "seconds": 0.8666666666666667,
+          "start": [
+            -25,
+            8.923700332641602,
+            21.5
+          ],
+          "end": [
+            -25,
+            3,
+            16.875999999999998
+          ],
+          "sourceTriangle": 171839,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": false,
+          "hz": 60,
+          "seconds": 0.8666666666666667,
+          "start": [
+            -25,
+            8.923700332641602,
+            21.5
+          ],
+          "end": [
+            -25,
+            3,
+            16.921999999999997
+          ],
+          "sourceTriangle": 171839,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": false,
+          "hz": 120,
+          "seconds": 0.8583333333333333,
+          "start": [
+            -25,
+            8.923700332641602,
+            21.5
+          ],
+          "end": [
+            -25,
+            3,
+            16.993000000000144
+          ],
+          "sourceTriangle": 171839,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 30,
+          "seconds": 0.8666666666666667,
+          "start": [
+            -25,
+            8.923700332641602,
+            21.5
+          ],
+          "end": [
+            -25,
+            3,
+            16.875999999999998
+          ],
+          "sourceTriangle": 171839,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 60,
+          "seconds": 0.8666666666666667,
+          "start": [
+            -25,
+            8.923700332641602,
+            21.5
+          ],
+          "end": [
+            -25,
+            3,
+            16.921999999999997
+          ],
+          "sourceTriangle": 171839,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "bot": true,
+          "hz": 120,
+          "seconds": 0.8583333333333333,
+          "start": [
+            -25,
+            8.923700332641602,
+            21.5
+          ],
+          "end": [
+            -25,
+            3,
+            16.993000000000144
+          ],
+          "sourceTriangle": 171839,
+          "weapon": "shooter / Shooter_Normal_00",
+          "gearAP": 0,
+          "form": "kid",
+          "ordinaryMoveGravity": true,
+          "productionCharacter": true,
+          "alive": true,
+          "grounded": true
+        }
+      ],
+      "sourceBuffersUnchanged": true,
+      "metrics": {
+        "queries": 105909,
+        "triangleTests": 87644,
+        "distanceTests": 45349
+      }
+    },
+    {
+      "suite": "cacheAfter",
+      "id": "humpback",
+      "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+      "upper": 18734,
+      "interior": 18584,
+      "lower": 18450,
+      "orderedAndFreshIdentical": true,
+      "originalColumnPlayableNodes": 0,
+      "nav": 21584,
+      "valid": 5798,
+      "cases": [
+        {
+          "bot": false,
+          "hz": 30,
+          "seconds": 0.8666666666666667,
+          "start": [
+            -13.799999999999997,
+            3,
+            46.599999999999994
+          ],
+          "end": [
+            -13.799999999999997,
+            0,
+            41.976
+          ],
+          "firstSourceTriangle": 92193,
+          "screenedSourceTriangle": 92193,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": false,
+          "hz": 60,
+          "seconds": 0.8666666666666667,
+          "start": [
+            -13.799999999999997,
+            3,
+            46.599999999999994
+          ],
+          "end": [
+            -13.799999999999997,
+            0,
+            42.02200000000014
+          ],
+          "firstSourceTriangle": 92193,
+          "screenedSourceTriangle": 92193,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": false,
+          "hz": 120,
+          "seconds": 0.8583333333333333,
+          "start": [
+            -13.799999999999997,
+            3,
+            46.599999999999994
+          ],
+          "end": [
+            -13.799999999999997,
+            -5.551115123125783e-17,
+            42.09299999999984
+          ],
+          "firstSourceTriangle": 105901,
+          "screenedSourceTriangle": 92193,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": true,
+          "hz": 30,
+          "seconds": 0.9666666666666667,
+          "start": [
+            -13.799999999999997,
+            3,
+            46.599999999999994
+          ],
+          "end": [
+            -13.799999999999997,
+            0,
+            41.888946761037765
+          ],
+          "firstSourceTriangle": 92193,
+          "screenedSourceTriangle": 92193,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": true,
+          "hz": 60,
+          "seconds": 0.9333333333333333,
+          "start": [
+            -13.799999999999997,
+            3,
+            46.599999999999994
+          ],
+          "end": [
+            -13.799999999999997,
+            0,
+            41.97669572142504
+          ],
+          "firstSourceTriangle": 92193,
+          "screenedSourceTriangle": 92193,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": true,
+          "hz": 120,
+          "seconds": 0.9333333333333333,
+          "start": [
+            -13.799999999999997,
+            3,
+            46.599999999999994
+          ],
+          "end": [
+            -13.799999999999997,
+            0,
+            41.99368193916427
+          ],
+          "firstSourceTriangle": 105901,
+          "screenedSourceTriangle": 92193,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": false,
+          "hz": 30,
+          "seconds": 0.7,
+          "start": [
+            6.200000000000003,
+            6,
+            42.599999999999994
+          ],
+          "end": [
+            6.200000000000003,
+            3,
+            38.936
+          ],
+          "firstSourceTriangle": 94500,
+          "screenedSourceTriangle": 94500,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": false,
+          "hz": 60,
+          "seconds": 0.7,
+          "start": [
+            6.200000000000003,
+            6,
+            42.599999999999994
+          ],
+          "end": [
+            6.200000000000003,
+            3,
+            38.982000000000106
+          ],
+          "firstSourceTriangle": 94500,
+          "screenedSourceTriangle": 94500,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": false,
+          "hz": 120,
+          "seconds": 0.6833333333333333,
+          "start": [
+            6.200000000000003,
+            6,
+            42.599999999999994
+          ],
+          "end": [
+            6.200000000000003,
+            3,
+            39.10099999999988
+          ],
+          "firstSourceTriangle": 94500,
+          "screenedSourceTriangle": 94500,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": true,
+          "hz": 30,
+          "seconds": 0.7,
+          "start": [
+            6.200000000000003,
+            6,
+            42.599999999999994
+          ],
+          "end": [
+            6.200000000000003,
+            3,
+            38.936
+          ],
+          "firstSourceTriangle": 94500,
+          "screenedSourceTriangle": 94500,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": true,
+          "hz": 60,
+          "seconds": 0.7,
+          "start": [
+            6.200000000000003,
+            6,
+            42.599999999999994
+          ],
+          "end": [
+            6.200000000000003,
+            3,
+            38.982000000000106
+          ],
+          "firstSourceTriangle": 94500,
+          "screenedSourceTriangle": 94500,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "bot": true,
+          "hz": 120,
+          "seconds": 0.7083333333333334,
+          "start": [
+            6.200000000000003,
+            6,
+            42.599999999999994
+          ],
+          "end": [
+            6.200000000000003,
+            3,
+            38.97199999999988
+          ],
+          "firstSourceTriangle": 94500,
+          "screenedSourceTriangle": 94500,
+          "ordinaryWalkGravity": true,
+          "heldDirectionUntilTouchdownOrBotGoal": true,
+          "productionCharacter": true,
+          "grounded": true,
+          "gearAP": 0
+        }
+      ],
+      "sourceBuffersUnchanged": true
+    }
+  ],
+  "cacheBefore": {
+    "status": "expected-failure",
+    "sourceStage": "humpback",
+    "upper": 18734,
+    "interior": 18584,
+    "farther": 18450,
+    "reason": "Near intact-upper-floor query cached null and suppressed the genuine farther departure",
+    "milliseconds": 47016.393052
+  },
+  "cacheAfter": {
+    "status": "passed",
+    "milliseconds": 91823.417077,
+    "sourceArraysUnchanged": true,
+    "productionCharacterHumanBotCases": 12
+  },
+  "defaults": {
+    "tests": 12,
+    "passed": 9,
+    "assetSkipped": 3,
+    "failed": 0,
+    "legacyGraphsExact": 4
+  },
+  "publicPackaging": {
+    "tests": 9,
+    "passed": 9,
+    "skipped": 0,
+    "failed": 0,
+    "buildFingerprint": "d85cf8e7f63c11df0571b6974632dcd0671d0064985ce1e01fff8128e70324b8"
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "1580b04f8d764298993d4fbce7a818af6b1377a614d78782cf72dc07c2958d57",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 74638,
+    "initialJSBytes": 2893886,
+    "criticalHTMLBytes": 15371,
+    "precacheCount": 365,
+    "precacheBytes": 5787979,
+    "workerBytes": 70517,
+    "declaredBytes": 10406019,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "privatePureDropFingerprint": "96ab747afa45cf331ace9863a33971d0cd31cf29eed0ed170adc5a92ee6ac6bf",
+  "browser": [],
+  "conditions": [
+    "Production Character/Actor integration and finishFrame in geometry-sensitive CPU cases; optional source-motion VM dynamic import is unavailable and warned",
+    "Existing Shooter_Normal_00, zero AP, initial empty ink, ordinary move/gravity without jump for drop cases",
+    "Continuous held direction differs from the independent Humpback two-unit movement then release probe; first physical landing and final supported nav waypoint are recorded separately",
+    "Bluefin and Humpback Chromium use the pure-Drop native-match artifact; Manta local drop uses exact module bytes in a composed native world and excludes other transition execution",
+    "No retail collision, masks, placement, navigation or hardware FPS equivalence claim; extracted 11.3.0 semantics remain unverified"
+  ]
+}
