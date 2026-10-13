@@ -43,6 +43,7 @@ relay.on('connection',(socket,request)=>{
  }:callback)},url.searchParams.get('name')||'Player');
 });
 const address='http://127.0.0.1:'+server.address().port+'/?map=tidewater&relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port);
+const requestedAddress=address.replace('?map=tidewater','?map=mahi&autostart=90');
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const result={id:'mahi',status:'running',measurement:'Chromium SwiftShader; unavailable-stage admission and source parsing only; no playable match or hardware FPS claim',errors:[],unexpectedSourceDownloads:0};
 const save=()=>fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify(result,null,2)+'\n');
@@ -53,10 +54,12 @@ try{
  page.on('console',message=>{if(message.type()==='error')result.errors.push(message.text());});
  page.on('request',request=>{if(request.url().includes('/stages/Vss_Hiagari04/'))result.unexpectedSourceDownloads++;});
  await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0,audioVolume:0})));
- await page.goto(address,{waitUntil:'domcontentloaded'});
+ await page.goto(requestedAddress,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
  assert.equal(await page.locator('#boot-error').textContent(),'');
+ result.unavailableURL=await page.evaluate(()=>({mode:NG.mode,menu:NG.game.menus.current,attract:NG.match?.attract,playingRequestedStage:NG.level?.layout.id==='mahi'}));
+ assert.equal(result.unavailableURL.mode,'menu');assert.equal(result.unavailableURL.menu,'setup');assert.equal(result.unavailableURL.attract,true);assert.equal(result.unavailableURL.playingRequestedStage,false);
  await page.evaluate(()=>{NG.game.debug.freeze();NG.game._skipRender=true;NG.game.menus.wipe.cancel();NG.game.menus.show('setup');});
  result.registry=await page.evaluate(async()=>{
   const registry=await import(new URL('patches/native-stages/runtime/registry.mjs',document.baseURI));
@@ -68,7 +71,9 @@ try{
  assert.equal(result.registry.mapPresent,false);assert.equal(result.registry.nativeIdPresent,false);assert.equal(result.registry.fingerprint,null);assert.equal(result.registry.sourceURLRejected,true);
  assert.equal(result.registry.unavailable?.availability,'placement-unavailable');assert.equal(result.registry.unavailable?.reason,definition.reason);
  await page.waitForFunction(({name,reason})=>document.body.textContent.includes(name)&&document.body.textContent.includes(reason),{name:definition.name,reason:definition.reason},{timeout:15000});
- result.menu={nameVisible:true,reasonVisible:true,selectableTicket:await page.locator('.iw-ticket').filter({hasText:definition.name}).count()};
+ const row=page.locator('button[data-native-stage="mahi"]');await row.scrollIntoViewIfNeeded();
+ result.menu={nameVisible:await row.isVisible(),reasonVisible:(await row.innerText()).includes(definition.reason),disabled:await row.isDisabled(),ariaDisabled:await row.getAttribute('aria-disabled'),navigationMarker:await row.getAttribute('data-nav'),selectableTicket:await page.locator('.iw-ticket').filter({hasText:definition.name}).count()};
+ assert.equal(result.menu.disabled,true);assert.equal(result.menu.ariaDisabled,'true');assert.equal(result.menu.navigationMarker,null);assert.equal(result.menu.nameVisible,true);assert.equal(result.menu.reasonVisible,true);
  assert.equal(result.menu.selectableTicket,0);
  await page.screenshot({path:path.join(out,'unavailable-menu.png'),timeout:30000});
  result.admission=await page.evaluate(async()=>{
