@@ -17,12 +17,10 @@
 // PHYSICAL SCALE LIMITATION of copying the raw Splatoon number into INKWAVE's HP
 // pool, not a claim about the hardware. (rawToHp = 100/3000 is NOT used here.)
 //
-// Intake geometry INTERPRETATION (labelled calibration, not a source claim):
-// RadiusMin/RadiusMax are read as the NEAR (muzzle-end) and FAR (LengthMax-end)
-// radius of a frustum that widens away from the player, and Low/High as the ends
-// of the charge range. The shape is therefore a widening frustum along the full 3D
-// aim vector (not a cylinder, and not a cone of revolution about horizontal only).
-// Nintendo's actual field meaning of RadiusMin/RadiusMax is UNCONFIRMED.
+// The radius fields' spatial meaning remains an interpretation: this runtime reads
+// RadiusMin/RadiusMax as the near/far ends of a widening frustum. Their Low/Mid/High
+// values are Special Power Up tiers (not charge tiers); the source controls are
+// evenly spaced, so the normalized profile gear curve resolves them exactly.
 //
 // REMOTE REPLAY: this module owns an explicit replay API (replayInkVac) that the
 // parent wires into the native NetMatch transport. No native source, adapter,
@@ -30,6 +28,7 @@
 
 import { kitSubFor } from './kit-subs.mjs';
 import { createVacVortex } from './special-motion.mjs';
+import { bigBubblerDomes, bigBubblerRemoteDomes, damageBigBubblerFromInkVac } from './kit-big-bubbler.mjs';
 
 let api = null;
 const INSTALL = Symbol.for('inkwave.s3.kit-ink-vac.install.v1');
@@ -44,8 +43,11 @@ const MAX_ACCEPTED_DAMAGE_HP = 220;
 const INHALE_LENGTH = 15;         // pinned LengthMax
 const OWNER_MOVE_SPEED_MIN_CHARGE = 0.09;   // pinned WeaponParam.MoveSpeedMinCharge (per 60 Hz frame)
 const OWNER_MOVE_SPEED_FULL_CHARGE = 0.07;  // pinned WeaponParam.MoveSpeedFullCharge (per 60 Hz frame)
-const NEAR_LOW = 0.8, NEAR_HIGH = 1.4;   // pinned RadiusMin.Low/.High
-const FAR_LOW = 3.3, FAR_HIGH = 4.3;     // pinned RadiusMax.Low/.High
+const INHALE_LENGTH_ADD_PER_FRAME = 0.3334; // pinned LengthAddPerFrame
+const OBJECT_DAMAGE_PER_FRAME = 20 / RAW_TO_HP; // pinned DamagePerFrameByObject, raw -> HP
+const INHALE_OBJECT_CAUSE = 'BlowerInhale'; // object-rate table row; exhale uses BlowerExhale_BombCore
+const NEAR_LOW = 0.8, NEAR_MID = 1.1, NEAR_HIGH = 1.4; // pinned RadiusMin Low/Mid/High
+const FAR_LOW = 3.3, FAR_MID = 3.8, FAR_HIGH = 4.3;    // pinned RadiusMax Low/Mid/High
 const SPEED_LOW = 0.55, SPEED_HIGH = 0.7;// pinned SpawnSpeedZ (per frame)
 const FLY_GRAVITY = 0.003;        // pinned per frame^2
 const FLY_AIR_RESIST = 0.01;      // pinned per frame
@@ -66,15 +68,17 @@ const KEY_PATTERN = /^[A-Za-z0-9#._:-]{1,64}$/;
 export const INK_VAC_CALIBRATION = Object.freeze({
   // #1149: ReceiveDamageForPlayer 15 raw /10 *60 = 90 HP-equivalent/s.
   actorContactDamagePerSecond: 90,
+  objectContactDamagePerSecond: OBJECT_DAMAGE_PER_FRAME * 60,
+  objectContactDamagePerSourceFrame: OBJECT_DAMAGE_PER_FRAME,
   // Pinned 11.3.0 PoisonMistForPlayer.SideStepInkConsumeRate. This multiplier
   // is explicit even though ordinary drain/speed defaults are absent.
   actorDodgeInkCostScale: 3.5,
-  actorInkFractionPerSecond: .12,
+  actorInkFractionPerSecond: .0022 * 60,
   actorMoveSpeedScale: .6,
   // #1149: PoisonMistForPlayer.SideStepInkConsumeRate 3.5 (Leanny/splat3 @7280ff9c,
   // WeaponSpBlower). Applied to the Dualies dodge-roll admission cost only.
   sideStepInkConsumeRate: 3.5,
-  actorSuppressionStatus: 'engineering calibration: 12% tank/s and 60% movement cap; sparse S3 PoisonMistForPlayer data omits drain/speed defaults; retail magnitudes unverified',
+  actorSuppressionStatus: 'Wiki 11.3.0 measurement: .22% tank/source frame; 60% movement cap remains engineering calibration; sparse PoisonMistForPlayer data omits these defaults',
   rawToHp: RAW_TO_HP,
   framesPerSecond: 60,
   breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
@@ -82,18 +86,25 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   absorbCapacityDamage: ABSORB_CAPACITY_HP,
   absorbDamageLimit: MAX_ACCEPTED_DAMAGE_HP,
   absorbStatus: 'damage-proportional, 1100 approximate S3 capacity; remote source damage requires separate authoritative hit attestation',
-  geometry: 'frustum: near radius at the muzzle growing linearly to far radius at LengthMax; RadiusMin/RadiusMax read as near/far and Low/High as charge ends',
-  geometryStatus: 'interpretation / calibration; Nintendo field meaning unconfirmed',
+  activationFrames: 17, inhaleStartHumanFrames: 12, inhaleStartSquidFrames: 18,
+  inputTimingStatus: 'S3mix 11.3.0 measured startup 17F; human intake starts on13th held frame, squid on19th; retail input sampling unmeasured',
+  inhaleLengthAddPerFrame: INHALE_LENGTH_ADD_PER_FRAME,
+  inhaleLengthStatus: 'pinned LengthAddPerFrame .3334 and LengthMax 15; reach grows to maximum in about 45 gameplay frames',
+  intakeRadiusTiers: Object.freeze({ near: Object.freeze([NEAR_LOW, NEAR_MID, NEAR_HIGH]), far: Object.freeze([FAR_LOW, FAR_MID, FAR_HIGH]) }),
+  geometry: 'frustum grows from zero to LengthMax at LengthAddPerFrame; RadiusMin/RadiusMax are interpreted as near/far, with Low/Mid/High as Special Power Up tiers',
+  geometryStatus: 'reach and Special Power Up control points pinned; near/far interpretation of RadiusMin/RadiusMax remains calibrated',
   speedStatus: 'pinned per-frame values multiplied by 60 to per-second',
   damageStatus: 'pinned raw 2200 with repository /10 conversion; exceeds the 100 HP pool (instakill) — physical scale limitation',
+  objectDamageStatus: 'pinned InhaleParam.DamagePerFrameByObject 20 raw /10 = 2 HP per 60 Hz source frame (120 HP/s); Big Bubbler uses its own owner damage API and applies BarrierParam.DamgeRatio once',
   // #1042: S3 suction lasts up to 360F / 6 s. ExhaleWaitFrame is a
   // separate 150F / 2.5 s return-shot hold and must never cap suction.
   inhaleDurationSeconds: 6,
   inhaleDurationStatus: 'community-verified S3 suction cap: 360F / 6.0 s',
   exhaleHoldSeconds: EXHALE_WAIT / 60,
   exhaleHoldStatus: 'pinned ExhaleWaitFrame 150: post-suction return-shot hold / automatic-fire deadline',
-  minInhaleSeconds: INHALE_TO_EXHALE_WAIT / 60,
-  minInhaleStatus: 'pinned InhaleToExhaleWaitFrame 20: earliest inhale-to-exhale transition after charge completion',
+  minInhaleSeconds: 0, // no artificial minimum;20F is the post-suction transition
+  inhaleToExhaleSeconds: INHALE_TO_EXHALE_WAIT / 60,
+  minInhaleStatus: 'no minimum inhale; pinned InhaleToExhaleWaitFrame 20 is the post-completion transition, before the150F shot window',
   burstLifetimeSeconds: SPAWN_BLAST_WAIT / 60,
   burstLifetimeStatus: 'pinned SpawnBlastWaitFrame 50 used as the native projectile lifetime; delay stays 0 so the native integrator runs immediately and bursts on the age>life deadline',
   proposalMemory: PROPOSAL_MEMORY,
@@ -187,14 +198,15 @@ function remoteStateOf(actor) {
   return s && s.remote ? s : null;
 }
 
-// Charge-scaled frustum radii (pinned Low/High ends).
+// The pinned Low/Mid/High radii use normalized Special Power Up gear progress.
+// The middle values are exact midpoints, so lerp matches the canonical gear curve.
+export function intakeNearRadius(specialPower) { return lerp(NEAR_LOW, NEAR_HIGH, specialPower); }
+export function intakeFarRadius(specialPower) { return lerp(FAR_LOW, FAR_HIGH, specialPower); }
 // Owner walking target while the Vac is held (inhale and the pre-release hold).
-// Endpoints are pinned; the linear charge interpolation between them is INKWAVE's.
+// Source endpoints are pinned; interpolation between them is INKWAVE's.
 export function inkVacOwnerMoveSpeed(charge) {
   return lerp(OWNER_MOVE_SPEED_MIN_CHARGE, OWNER_MOVE_SPEED_FULL_CHARGE, Math.max(0, Math.min(1, Number.isFinite(charge) ? charge : 0))) * 60;
 }
-export function intakeNearRadius(charge) { return lerp(NEAR_LOW, NEAR_HIGH, charge); }
-export function intakeFarRadius(charge) { return lerp(FAR_LOW, FAR_HIGH, charge); }
 export function blastRadius(charge) { return lerp(BLAST_MIN, BLAST_MAX, charge); }
 export function exhaleDamage() { return 2200 / RAW_TO_HP; }
 // Pinned per-frame spawn speed -> INKWAVE units/second.
@@ -239,12 +251,14 @@ function originOf(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATIO
 // The allowed t interval comes from the truncation, then the first F(t) <= 0 inside
 // it is found from the quadratic roots. No sampling, no per-projectile allocation.
 function firstEntry(state, start, end) {
+  if(state.sucking===false)return Infinity;
   const { _org: o, _fwd: f, _m: m, _e: e } = state;
   originOf(state.actor, o); forwardOf(state.actor, f);
   m.copy(start).sub(o);
   e.copy(end).sub(start);
   const segLen = e.length();
-  const L = INHALE_LENGTH, near = state.nearR, far = state.farR;
+  const L = state.length, near = state.nearR, far = state.farR;
+  if (!(L > 0)) return Infinity;
   const k = (far - near) / L;
   const a0 = m.dot(f), a1 = e.dot(f);
 
@@ -429,19 +443,21 @@ function makeState(actor, opts = {}) {
   // #1010: suction geometry is selected by Special Power Up, not absorbed charge.
   const specialPower = clamp01(Number.isFinite(opts.specialPower)
     ? opts.specialPower : actor?.s3?.modifiers?.specialPower || 0);
-  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower,
-    fireHeld: false, exhaleArmed: false,
+  return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower, length: 0,
+    fireHeld: false, exhaleArmed: false, sucking:false, inhaleAge:0, activationAge:0, intakeHeld:false, intakeWarmup:0, intakeStep:0,
+    _move:new api.THREE.Vector3(),
     nearR: intakeNearRadius(specialPower), farR: intakeFarRadius(specialPower), baseFar: FAR_HIGH,
     mesh: null, geo: null, mat: null,
     _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
-    _m: new api.THREE.Vector3(), _e: new api.THREE.Vector3(), _up: new api.THREE.Vector3(0, 1, 0) };
+    _m: new api.THREE.Vector3(), _e: new api.THREE.Vector3(), _axis: new api.THREE.Vector3(),
+    _radial: new api.THREE.Vector3(), _contact: new api.THREE.Vector3(), _up: new api.THREE.Vector3(0, 1, 0) };
 }
 
 function createVisual(state) {
   const { THREE, G } = api;
   const scene = G.scene;
   if (!scene || typeof scene.add !== 'function' || typeof THREE?.Mesh !== 'function') return;
-  const mesh=createVacVortex(state.actor.color || 0xffffff, INHALE_LENGTH, state.nearR, state.farR, api.THREE);
+  const mesh=createVacVortex(state.actor.color || 0xffffff, state.length, state.nearR, state.farR, api.THREE);
   const geo=mesh.geometry,mat=mesh.material;
   mesh.position.copy(originOf(state.actor, state._org));
   mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), forwardOf(state.actor, state._fwd));
@@ -459,18 +475,22 @@ function disposeVisual(state) {
 
 // Presentation advance, shared by the held local intake and by a replica cone.
 function updateVisual(state) {
+  state.length = Math.min(INHALE_LENGTH, (state.inhaleAge ?? state.t) * INK_VAC_CALIBRATION.framesPerSecond * INHALE_LENGTH_ADD_PER_FRAME);
   if (!state.mesh) return;
+  state.mesh.visible=state.sucking!==false;
   const a = state.actor;
   state.mesh.position.copy(originOf(a, state._org));
   state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
   state.mat.uniforms.near.value=state.nearR;
   state.mat.uniforms.far.value=state.farR;
+  state.mat.uniforms.extent.value=state.length;
   state.mat.uniforms.age.value=state.t;
 }
 
 export function disposeInkVac(actor) {
   const state = states.get(actor);
   if (!state) return;
+  actor._s3InkVacSucking=false;
   disposeVisual(state);
   if (actor.specialActive && actor.specialActive.id === VAC_ID) actor.specialActive = null;
   states.delete(actor);
@@ -488,7 +508,7 @@ export function disposeInkVac(actor) {
 // A replica NEVER reaches here: it only ever hides its presentation.
 function beginExhale(state) {
   if (!state || state.phase !== 'inhale') return false;
-  state.phase = 'exhale';
+  state.phase = 'exhale';state.sucking=false;state.actor._s3InkVacSucking=false;
   state.t = 0;
   // #1120: a ZR hold carried out of suction arms a later RELEASE edge; the
   // held level itself never authors the return shot.
@@ -542,12 +562,73 @@ function suppressMovement(actor) {
   if (speed > cap && cap >= 0) { actor.vel.x *= cap / speed; actor.vel.z *= cap / speed; }
 }
 
+// Test a deployed object's representative contact point against the same
+// aim-aligned frustum used for projectile absorption. The shared object APIs
+// retain their own team/HP/network checks; the callback supplies this geometric
+// test so a large query radius cannot turn suction into radial damage.
+function inkVacObjectContact(state, object) {
+  const point = object?.pos;
+  if (!point?.isVector3 || !Number.isFinite(firstEntry(state, point, point))) return false;
+  return !api.G.physics?.los || !!api.G.physics.los(state._org, point);
+}
+
+// Big Bubbler is managed by kit-big-bubbler.mjs rather than the generic special
+// object array. Find where its damageable shell meets the frustum: use the
+// nearest point in the finite frustum and require the dome sphere to reach it.
+function bubblerConeContact(state, dome) {
+  const center = dome?.pos;
+  const domeRadius = dome?.radius;
+  if (!center?.isVector3 || !(domeRadius >= 0) || !(state.length > 0)) return null;
+  originOf(state.actor, state._org); forwardOf(state.actor, state._fwd);
+  state._m.copy(center).sub(state._org);
+  const along = state._m.dot(state._fwd);
+  state._axis.copy(state._org).addScaledVector(state._fwd, along);
+  state._radial.copy(center).sub(state._axis);
+  const radialDistance = state._radial.length();
+  const axisAlong = Math.max(0, Math.min(state.length, along));
+  const radius = state.nearR + (state.farR - state.nearR) * axisAlong / state.length;
+  const radialOutside = Math.max(0, radialDistance - radius);
+  if (Math.hypot(along - axisAlong, radialOutside) > domeRadius) return null;
+  state._contact.copy(state._org).addScaledVector(state._fwd, axisAlong);
+  if (radialDistance > radius && radialDistance > 1e-12)
+    state._contact.addScaledVector(state._radial, radius / radialDistance);
+  else state._contact.add(state._radial);
+  if (!Number.isFinite(firstEntry(state, state._contact, state._contact))) return null;
+  if (api.G.physics?.los && !api.G.physics.los(state._org, state._contact)) return null;
+  return state._contact;
+}
+
+function damageInhaleObjects(state, eligible, seen) {
+  const actor = state.actor, projectiles = api.G.projectiles;
+  if (!projectiles || actor.remote || state.remote || !actor.alive || !(eligible > 0)) return;
+  const amount = OBJECT_DAMAGE_PER_FRAME * INK_VAC_CALIBRATION.framesPerSecond * eligible;
+  const center = originOf(actor, state._org);
+  const radius = Math.hypot(state.length, state.farR);
+  const damageAtContact = (_distance, object) => {
+    if (!object || seen.has(object) || object.team === actor.team || object.owner?.team === actor.team) return 0;
+    if (!inkVacObjectContact(state, object)) return 0;
+    seen.add(object);
+    return amount;
+  };
+  projectiles.s3DamageSubObjects?.(actor, center, radius, damageAtContact, INHALE_OBJECT_CAUSE);
+  projectiles.s3DamageSpecialObjects?.(actor, center, radius, damageAtContact, INHALE_OBJECT_CAUSE);
+
+  for (const dome of [...bigBubblerDomes(), ...bigBubblerRemoteDomes()]) {
+    if (!dome || seen.has(dome) || dome.team === actor.team || dome.owner?.team === actor.team) continue;
+    const contact = bubblerConeContact(state, dome);
+    if (!contact) continue;
+    seen.add(dome);
+    damageBigBubblerFromInkVac(dome, actor, amount, contact);
+  }
+}
+
 // Per-frame advance of a LOCALLY owned inhale. dt <= 0 is a strict no-op.
 function inkVacUpdate(a, dt) {
   const state = states.get(a);
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
-  const eligible = Math.min(dt, Math.max(0, INK_VAC_CALIBRATION.inhaleDurationSeconds - state.t));
-  if (!a.remote && !state.remote) {
+  const eligible = Math.min(state.intakeStep??dt, Math.max(0, INK_VAC_CALIBRATION.inhaleDurationSeconds - state.t));
+  if (state.sucking)state.inhaleAge+=eligible;else state.inhaleAge=0;
+  if (!a.remote && !state.remote && state.sucking) {
     const seen = new Set(); let count = 0;
     for (const victim of api.G.actors || []) {
       const identity = victim.nid === undefined ? victim : `${victim.owner}:${victim.nid}`;
@@ -556,6 +637,7 @@ function inkVacUpdate(a, dt) {
     }
     const amount = count * eligible * INK_VAC_CALIBRATION.actorContactDamagePerSecond;
     if (amount > 0) creditCharge(state, amount, false);
+    damageInhaleObjects(state, eligible, new Set());
   }
   state.t += dt;
   updateVisual(state);
@@ -574,10 +656,15 @@ export function advanceInkVacReplica(actor, dt) {
   if (!state || !state.remote || !(dt > 0)) return false;
   state.t += dt;
   if (state.phase === 'inhale') {
+    // Native samples carry the physical intake level in their existing firing
+    // bit. Direct replay fixtures fall back to the explicit owner input.
+    const flags=actor.net?.cur?.f;
+    state.sucking=Number.isInteger(flags)?!!(flags&4096)&&!(flags&2):!!actor.intent?.fire&&!actor.intent?.squid;
+    if(state.sucking)state.inhaleAge+=dt;else state.inhaleAge=0;
     updateVisual(state);
     if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
         state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) beginExhale(state);
-  } else if (state.phase === 'exhale' && state.t >= INK_VAC_CALIBRATION.exhaleHoldSeconds + 5) {
+  } else if (state.phase === 'exhale' && state.t >= INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds + 5) {
     state.phase = 'done';
     states.delete(actor);
   }
@@ -729,6 +816,8 @@ export function installKitInkVac(context, _profile) {
   if (!Actor?.prototype || !THREE?.Vector3) throw new Error('Ink Vac requires the actual Actor and THREE');
   const proto = Actor.prototype;
   if (api.WeaponRunner?.prototype) {
+    const move=api.WeaponRunner.prototype.moveSpeed;
+    api.WeaponRunner.prototype.moveSpeed=function(...args){const s=states.get(this.a);return s&&!s.remote&&this.a.form==='kid'?inkVacOwnerMoveSpeed(s.charge):move.apply(this,args);};
     // Sample current contact once at dodge admission. The composed native
     // method uses this same cost for its availability check and payment.
     // No weapon registry mutation, post-debit correction or persistent debuff.
@@ -749,14 +838,29 @@ export function installKitInkVac(context, _profile) {
       if (!(dt > 0)) return undefined;
 
       const it = this.intent;
-      const fire = it.fire, sub = it.sub, squid = it.squid;
-      it.fire = false; it.sub = false; it.squid = false;
+      const fire = it.fire, sub = it.sub, squid = it.squid, jump=it.jump;
+      const startupRemaining=Math.max(0,INK_VAC_CALIBRATION.activationFrames/60-state.activationAge);
+      const activeDt=Math.max(0,dt-startupRemaining),startup=activeDt<=1e-10;
+      state.activationAge+=dt;state.intakeStep=0;
+      const held=state.phase==='inhale'&&!!fire&&!squid;
+      if(!held){state.intakeHeld=false;state.intakeWarmup=0;}
+      else if(activeDt>0){
+        if(!state.intakeHeld){state.intakeHeld=true;state.intakeWarmup=(this.form==='squid'?INK_VAC_CALIBRATION.inhaleStartSquidFrames:INK_VAC_CALIBRATION.inhaleStartHumanFrames)/60;}
+        const warm=Math.min(activeDt,state.intakeWarmup);state.intakeWarmup=Math.max(0,state.intakeWarmup-warm);state.intakeStep=activeDt-warm;
+      }
+      state.sucking=held&&state.intakeStep>1e-10;this._s3InkVacSucking=state.sucking;
+      if(!state.sucking){state.inhaleAge=0;state.length=0;}
+      this.fireBuffer=0; // Vac owns ZR; buffered main shots cannot escape the masked update
+      if(this._prevIntent)this._prevIntent.sub=false; // no ordinary sub-release event while Vac owns R
+      it.fire = false; it.sub = false; it.squid = !startup&&!!squid;
+      if(startup){state._move.copy(it.move);it.move.set(0,0,0);it.jump=false;}
       this.form = 'kid';
       this.specialActive = null;
       let result;
       try { result = update.call(this, dt); }
       finally {
-        it.fire = fire; it.sub = sub; it.squid = squid;
+        it.fire = fire; it.sub = sub; it.squid = squid;it.jump=jump;
+        if(startup)it.move.copy(state._move);
         if (this.alive && states.get(this) === state && !this.specialActive) this.specialActive = s;
       }
 
@@ -769,13 +873,15 @@ export function installKitInkVac(context, _profile) {
       } else if (state.phase === 'exhale') {
         state.t += dt;
         // A held suction ZR is not a NEW shot request. It waits until release.
-        // A fresh press after suction, however, authors the return shot at once.
+        // A fresh press or release requests the countershot; the20F source
+        // inhale→exhale transition must finish before it can be authored.
         const freshPressEdge = !state.exhaleArmed && !state.fireHeld && !!fire;
         const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;
         if (fire && !freshPressEdge) state.exhaleArmed = true;
         state.fireHeld = !!fire;
-        if (freshPressEdge) { release(state); return result; }
-        if (releaseEdge || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);
+        if(freshPressEdge||releaseEdge)state.exhaleFireRequested=true;
+        const ready=state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds;
+        if(ready&&(state.exhaleFireRequested||state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds))release(state);
       }
       return result;
     };
@@ -824,7 +930,7 @@ export function installKitInkVac(context, _profile) {
       api.G.audio?.play('special_activate', { pos: this.isLocal ? undefined : this.pos, volume: this.isLocal ? 1 : 0.7 });
       const state = makeState(this, { remote: false, serial: ++activationSeq,
         specialPower: this.s3?.modifiers?.specialPower || 0 });
-      states.set(this, state);
+      states.set(this, state);this._s3InkVacSucking=false;
       this.specialActive = { id: VAC_ID, t: 0, phase: 'inhale', armor: false };
       this.ink = api.PLAYER.inkMax;                 // tank refill, once per activation
       createVisual(state);

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
+import {readySpecialEvidence} from './special-control-evidence.mjs';
 import {emptyLoadout,gearCurve} from '../runtime/gear.mjs';
 function equip(a,ap,ability='subResistance'){a.s3.loadout=emptyLoadout();for(const p of a.s3.loadout){if(ap>=10){p.main=ability;ap-=10;}}for(const p of a.s3.loadout)for(let i=0;i<3&&ap>=3;i++){p.subs[i]=ability;ap-=3;}a.s3RefreshGear();}
 for(const [source,raw] of [['angleShooter',40],['sprinkler',20]])for(const ap of [0,10,57])test(`${source} actual victim applies only its own ${ap}AP direct Sub Resistance`,async()=>{
@@ -16,8 +17,8 @@ for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])for(cons
  for(let i=0;i<10&&v.hp===hp;i++){f.G.time+=1/fps;f.G.projectiles.update(1/fps);}assert.equal(hp-v.hp,(source==='angleShooter'?40:20)*(ap===57?.5:1));
 });
 for(const source of ['angleShooter','sprinkler'])for(const armor of ['booyahBomb','crabTank'])test(`${source} does not reduce ${armor} object armor but reduces body spillover`,async()=>{
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();o.team=1;o.pos.set(0,0,5);v.invuln=0;equip(v,57);v.weapon={...v.weapon,special:armor,specialCost:100};v.special=100;v._startSpecial();v._updateSpecial(1/60);const state=v._s3AllSpecialState;
- state.armorHP=10;v.specialActive.armorHP=10;const hp=v.hp;v.damage(40,o,source);assert.equal(state.armorHP,0);assert.ok(Math.abs((hp-v.hp)-(armor==='crabTank'?3.7:15))<1e-8,'object armor loss remains raw; inherited Crab native 0.25 body flag is retained');
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();o.team=1;o.pos.set(0,0,5);v.invuln=0;equip(v,57);v.weapon={...v.weapon,special:armor,specialCost:100};v.special=100;readySpecialEvidence(v);const state=v._s3AllSpecialState;
+ state.armorHP=10;v.specialActive.armorHP=10;const hp=v.hp;v.damage(40,o,source);assert.equal(state.armorHP,0);assert.ok(Math.abs((hp-v.hp)-15)<1e-8,'source object rows consume raw armor; victim resistance reduces only the body spillover');
 });
 for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])test(`${source} JSON hit retains raw damage and applies victim ${ap}AP once`,async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();Object.assign(o,{team:0,nid:1,owner:'attacker',netLife:0});Object.assign(v,{team:1,nid:2,owner:'victim',netLife:0,invuln:0});equip(v,ap);equip(o,57);o.weapon={...o.weapon,sub:source};
