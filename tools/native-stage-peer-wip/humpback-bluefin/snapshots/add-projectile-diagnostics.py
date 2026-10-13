@@ -1,0 +1,16 @@
+from pathlib import Path
+import hashlib
+b=Path('.ci-scratch/bluefin-stage-peer');s=(b/'bluefin-source-aim-natural-strict-online.mjs').read_text()
+s=s.replace('runnerUpdate=R.update;', 'runnerUpdate=R.update,systemUpdate=P.update;')
+s=s.replace('globalThis.nativeShotTrace=[];', 'globalThis.nativeTrackedLuna=new WeakSet();globalThis.nativeLunaStepTrace=[];globalThis.nativeLunaUpdateTrace=[];globalThis.nativeLunaRayTrace=[];globalThis.nativeShotTrace=[];')
+s=s.replace('projectiles:P.list.filter(', 'projectileSystemSame:G.projectiles===P,matchPaused:G.match.paused,stepTrace:nativeLunaStepTrace,systemUpdateTrace:nativeLunaUpdateTrace,rayTrace:nativeLunaRayTrace,projectiles:P.list.filter(')
+s=s.replace("nativeShotTrace.push({weapon:projectile.wid", "nativeTrackedLuna.add(projectile);nativeShotTrace.push({queuedAfterPush:P.list.includes(projectile),weapon:projectile.wid")
+a="   P._step=function(projectile,...rest){"
+pos=s.index(a);end=s.index('\n   G.physics.raycast=function',pos)
+s=s[:pos]+'''   const state=p=>({type:p.type,wid:p.wid,catalogId:p.catalog?.r?.id,catalogFamily:p.catalog?.r?.family,ownerLocal:p.owner===a,ownerRemote:!!p.owner?.remote,ghost:!!p.ghost,age:p.age,life:p.life,delay:p.delay,inkProfile:!!p.inkProfile,inkKey:p.inkKey,position:p.pos.toArray(),velocity:p.vel.toArray(),travel:p.catalog?.travel,range:p.catalog?.range,worldHit:p.catalog?.hit?.hit,worldFace:p.catalog?.hit?.face,worldTriangle:p.catalog?.hit?.triangle});
+   P.update=function(dt,...rest){const tracked=P.list.filter(p=>nativeTrackedLuna.has(p)),before=tracked.map(state),result=systemUpdate.call(this,dt,...rest);if((tracked.length||nativeShotTrace.length)&&nativeLunaUpdateTrace.length<32)nativeLunaUpdateTrace.push({dt,before,after:P.list.filter(p=>nativeTrackedLuna.has(p)).map(state)});return result;};
+   P._step=function(projectile,...rest){const previous=nativeLunaContext,tracked=nativeTrackedLuna.has(projectile),before=tracked?state(projectile):null;if(projectile.owner===a&&!projectile.ghost&&projectile.wid==='s3-blaster-short'&&projectile.catalog?.r?.family==='blaster')nativeLunaContext=projectile;else nativeLunaContext=null;let ended;try{ended=projectileStep.call(this,projectile,...rest);return ended;}finally{if(tracked&&nativeLunaStepTrace.length<32)nativeLunaStepTrace.push({dt:rest[0],before,after:state(projectile),ended});nativeLunaContext=previous;nativeLunaLastContact=null;}};''' +s[end:]
+s=s.replace("p=nativeLunaContext;if(p&&h.hit", "p=nativeLunaContext;if(p&&nativeLunaRayTrace.length<32)nativeLunaRayTrace.push({origin:from.toArray(),direction:dir.toArray(),maxDistance:rest[0],hit:h.hit,triangle:h.triangle,block:h.block,face:h.face,point:h.point.toArray(),normal:h.normal.toArray(),projectileAge:p.age});if(p&&h.hit")
+s=s.replace('P._push=push;P._step=projectileStep;', 'P._push=push;P._step=projectileStep;P.update=systemUpdate;')
+p=b/'bluefin-source-aim-natural-diagnostic.mjs';p.write_text(s);newsha=hashlib.sha256(p.read_bytes()).hexdigest()
+r=(b/'run-final-source-aim-online.py').read_text().replace('bluefin-source-aim-natural-strict-online.mjs','bluefin-source-aim-natural-diagnostic.mjs').replace('e374770de5b33b423701881f44fe88e7094d0e85132bb3ce24c3ae43e6e8bdc8',newsha);(b/'run-final-source-aim-diagnostic.py').write_text(r);print(newsha)
