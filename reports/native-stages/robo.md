@@ -1,226 +1,179 @@
-# バイガイ亭 / Robo ROM-en — native source comparison
+# バイガイ亭 / Robo ROM-en — local inferred source stage
 
-`robo` uses the original `Vss_Cross00` display export in its original coordinate
-system. Local supports and gameplay semantics are inferred. This is not a
-recovered Nintendo 11.3.0 collision or placement asset.
+The pinned source is reviewable as a local playable stage in all five modes.
+The final immutable pair consumes accepted foundation `3249d6dc`, including the
+current-main `14f9f913` refresh, source-triangle projectiles, v4 polygon ownership,
+ink-edge alpha, ordinary floor/jump following, moving Tower rider guards and
+source-qualified Clams collection. All 17 final browser checks passed. This is
+an INKWAVE implementation check; complete Nintendo retail parity is unverified.
 
-Verification is still in progress. The branch consumes accepted foundation
-`90b7ba79`, including the current-main refresh, qualified ordinary floor
-follower and current-world Tower rider/boarding guards. The full historical matrix used
-`7ddb538a`; newer immutable source, wall-shot and human-route checks used accepted
-`4d0d88ef` with v4 polygon ownership and the ink-edge correction. A separate
-private floor-follower candidate completes all six opposing-bank cases without
-changing source bytes. That shared floor correction is now accepted through
-PR #1390. The PR remains a draft until source Clams collection qualifies and the affected
-final composition passes. The accepted Tower common was independently peer
-reviewed for mode, world, nav, action and death invalidation; its Manta source
-ride proof remains separately scoped.
+The implementation is [robo.json](../../patches/native-stages/definitions/robo.json),
+the source regressions are [robo-source.test.mjs](../../patches/native-stages/tests/robo-source.test.mjs),
+and the exact numeric receipts are [robo-verification.json](robo-verification.json).
+No reference model, texture, derived geometry or screenshot is committed.
 
 ## Source and identity
 
-- KiTrix repository: `kirakira-dev/KiTrix`, commit
-  `0611f51b35c9736ee986fb2218461e2585b7875e`.
-- Stage tree: `53a94ccb7abc115382c208b540ac45728ba914d9`.
+- KiTrix commit `0611f51b35c9736ee986fb2218461e2585b7875e`, stage tree
+  `53a94ccb7abc115382c208b540ac45728ba914d9`, internal `Vss_Cross00`.
 - OBJ: 99,915,303 bytes, SHA-256
   `8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e`.
 - MTL: 47,113 bytes, Git blob `275cbdbb21299ce909b82e9b407e4592916afc3b`,
   SHA-256 `3d6b76dbaebfca234b040320cbcc12d70195871efccf3f0b53203d1b91ba4b87`.
-- An isolated LFS smudge returned `Resource not accessible by integration`.
-  The pinned public media URL succeeded with TLS/proxy preserved and its complete
-  content matched the LFS OID. The shared source checkout was not edited.
-- `VersusSceneInfo-1130.json` identifies `Vss_Cross00` as ID/display order 21,
-  season 6. The 1130 `SceneInfo.json` row supplies the name バイガイ亭 and preload
-  resource `Model/Fld_Cross00.bfres`. These establish identity only.
+- Isolated LFS access returned `Resource not accessible by integration`; pinned
+  public media succeeded with the complete LFS digest. The shared source checkout
+  was not changed.
+- `VersusSceneInfo-1130.json` row 21/season 6 and `SceneInfo.json` name/preload
+  `Model/Fld_Cross00.bfres` establish identity only. `version1130Verified:false`.
 
-The independent original text stream matches the signed Float32 bits of all
-867,672 positions and normals, aligned UV streams (including negative zero and
-explicit zero insertion only for objects without UVs), and all 1,759,113 uint32
-face indices and every original normal/UV face-reference alignment, including
-inactive rule alternatives. The preserved source has 586,371 triangles in 545
-objects. Every one of the 202 source PNGs matches its pinned Git blob; all 151
-PNG files used by the conversion also match their copied bytes and SHA-256.
-No OBJ, MTL, PNG, derived geometry or screenshots are committed.
+Independent streaming comparison verifies every signed Float32 position, normal
+and UV bit, including negative zero and positive-zero insertion only where UVs
+are absent. All 1,759,113 uint32 indices and original normal/UV face references
+match, including inactive alternatives. The original has 867,672 vertices,
+586,371 triangles and 545 objects. All 202 original PNG blobs match pinned Git
+hashes; all 151 used PNG copies also match. Python and worker conversion agree.
+All 163 final copied source files, totaling 67,676,722 bytes, are SHA-256 equal
+to the preserved v4 calibration. No source fidelity was reduced.
 
-## Local playable supports and selection
+## Supported pads and source semantics
 
-The source arena extends primarily along X. Bounds `[-75, -39]–[75, 39]` follow
-the common floor and side-floor subobjects. Both inferred pads lie on the actual
-`Lowroof` floor at approximately Y=7.505: `[-60, 7.505000114440918, 22]` and
-`[60, 7.505000114440918, -22]`. Downward source-triangle rays, upward normals,
-capsule clearance and directed paths verify their support. An earlier candidate
-at X=-69 had no floor at the proposed height and was rejected.
+Source bounds `[-75,-39]–[75,39]` and opposing pads
+`[-60,7.505000114440918,22]` / `[60,7.505000114440918,-22]` remain unchanged.
+Original Lowroof triangles, upward normals, actual body clearance, foot support
+and directed routes qualify these local inferred pads. An unsupported earlier
+X=-69 candidate was rejected. Coordinates are raw source units, not verified
+meters or retail placements.
 
-| Selection | Source evidence | Effect |
+| Selection | Original source evidence | Result |
 | --- | --- | --- |
-| `^Fld_Cross00_(?:HokoSet|HokoAsariSet|Tclobj)_` | 89 objects explicitly named for ranked alternatives; their floor/wall extents overlap the common arena | Inactive for the local common display selection; original attributes and indices stay intact |
-| `^Fld_Cross00JerryMannequin_` | 50 mannequin subobjects include distant/deep scenery poses; some source bounds extend well outside the common floor | Visible source scenery, excluded from inferred collision and paint |
-| Source material suffixes containing `NoPaint`/`Nopaintable`, `MetalNetwork00`/`NetParts00`, and `GeneralCube` models named `GeneralBoxNoPaint` | Explicit original source names; the two Pnt GeneralCube models use `FenceVinyl` materials whose suffix alone does not expose their NoPaint name | Keep display/collision; omit inferred ink charts |
+| `^Fld_Cross00_(?:HokoSet|HokoAsariSet|Tclobj)_` | 89 overlapping rule-alternative objects | Inactive local common selection; all original render attributes/indices retained |
+| `^Fld_Cross00JerryMannequin_` | 50 distant/deep scenery subobjects | Visible, excluded from inferred collision/paint |
+| Explicit NoPaint/Nopaintable, MetalNetwork00/NetParts00 and `^Fld_Cross00_GeneralCube_.*GeneralBoxNoPaint_` | Original names; FenceVinyl suffix alone misses the named NoPaint models | Display and collision preserved; corresponding inferred charts omitted |
 
-The two active GeneralBoxNoPaint source bounds are `[-6, 7.5, -19.5]–[6, 9, 19.5]`
-and `[-52.5, 6, -31.5]–[52.5, 12, 31.5]`. Respecting their names removes 520
-inferred charts and 3,584 chart-grid cells, preserving every display and collision
-triangle. Other matching rule variants were already inactive.
+Exactly two active Pnt GeneralBoxNoPaint models occupy
+`[-6,7.5,-19.5]–[6,9,19.5]` and `[-52.5,6,-31.5]–[52.5,12,31.5]`.
+Six other matching alternatives were already inactive. This narrow classifier
+removes 520 charts/3,584 chart-grid cells without changing display or collision;
+`_nb` is not classified as NoPaint. Final conversion has 107,020 collision
+triangles, 32,767 BVH nodes, 23,685 charts, 1,181,405 grid cells and 584,771 valid
+cells. Directed navigation retains 5,984 valid/5,551 paintable nodes from 8,064
+candidates; decorative lower-hull supports remain excluded.
 
-The `Lowroof`, `Highroof` and extension subobjects retain their source positions.
-Their retail visibility and moving states are not reconstructed. Source display
-selection, static collision and ink chart semantics are inferences; no simplified
-floor strips, relocated props or guessed retail pads are added.
+## Final behavioral verification
 
-## Behavioral checks
+The asset-enabled serial CPU matrix passed 121 tests, with 22 named optional
+fixtures unavailable and zero failures. Both private and public packages passed
+9/9 checks with zero skips and existing startup budgets unchanged. Exact skips,
+software environment, scripts, source pins and artifact hashes are recorded
+numerically. Optional VM source-motion warning tokens are distinct from actual
+browser errors; every final browser check reported zero errors.
 
-The implementation is [robo.json](../../patches/native-stages/definitions/robo.json)
-and the dedicated regressions are
-[robo-source.test.mjs](../../patches/native-stages/tests/robo-source.test.mjs).
-The numeric record is [robo-verification.json](robo-verification.json).
+- The actual `Game._frame` clock updates Actor at fixed 1/60 while render
+  cadence varies across 30/60/120. All six opposing-bank bot routes arrive on
+  the original 95/96-node paths without goal replacement or refill replans.
+  Team 0 takes 29/28.9833/28.9833 seconds; team 1 takes
+  29.8667/29.85/29.85 seconds. Each fresh match has eight real actors/seven bots,
+  zero-AP Shooter and initially empty ink. Other brains are frozen in isolation
+  probes while every actor keeps normal physics; no later pose/velocity/ink
+  writes enforce arrival.
+- Physical pointer-lock mouse and keyboard drive human walking, a 90-degree
+  turn, gravity departure, source-foot arrival, release and painting at all
+  three cadences. Each produces 14 shots/37 natural splats. The 30 Hz endpoint
+  uses an original curb and 60/120 Hz use the adjacent slope, differing by
+  0.196 source units. Both original pads, native axis, minimap and source Nav
+  are verified. Camera menu/physical launch and real WS both-team cases give
+  nine supported landings, minimum axis alignment 0.9990373 and 1,207 packets;
+  legacy Tidewater camera behavior is preserved.
+- Real Character/Actor/WeaponRunner/Projectiles Shooter fire reaches the original
+  duct wall at `[52.5,8.883333,-37.5]` from supported stance
+  `[45.5,7.833333,-37.5]`. Each cadence admits 15 shots and claims
+  136/120/119 new live wall cells. The retained old-runtime negative emits
+  15 shots with zero target-wall cells. No fixed world-Z muzzle or manual splat
+  substitutes for these shots.
+- Three genuine partial-polygon wall impacts claim v4 cell 18,044 on face 906,
+  which the old mask omitted; the same-cell outside-polygon sample stays zero.
+  Original GeneralBoxNoPaint triangle 47,638 produces no chart/ownership, and
+  uncovered cell 217 stays zero. Separate actual 1/60 Actor/Character weapon
+  interactions paint an own wall, climb through ordinary squid input, then
+  admit one enemy Shooter overwrite and release on frame 5.
+- Physical menu selection starts all five modes and launches the human. Seven
+  normal bots remain active for ten simulated seconds with production rules.
+  The Zones observation has one naturally dead HeavyBrush bot; its preceding
+  grounded position is recorded, without forcing survival or inventing cause.
+  Controlled ranked-rule integration remains separate from natural objectives.
+- Six genuine Tower cases walk from the original opposing pads, board, ride
+  and progress beyond 0.99, with actual current-world rider/deck support and
+  19,652 continuous source/rider capsules. The walking map has zero special
+  traversal dispatches. Physical KeyW/conditional Space boarding, all 43 route
+  nodes/three segment interiors, 338 capsule checks, swept deck/pole/rider
+  clearance and both source-axis halves also pass. Retail Tower placement is
+  unverified.
+- Six fresh Clams cases naturally form a Power Clam in approximately 16 seconds
+  from original banks, with no inventory/goal/pose overrides. The observed
+  seven small clams precede the eighth-to-Power conversion. Source-qualified
+  collection and local rules pass; autonomous basket scoring is not claimed.
+- All five modes use two real browsers and production RoomDurableObject WS.
+  Every mode settles to SHA-equal complete 1,181,405-byte ink grids and equal
+  ranked counts. The host uses Luna radius 3.84. Deliberate ordered ground
+  paint and controlled rule actions are integration controls, not autonomous
+  scoring proof.
+- Actual public source-menu download/conversion/cache works without a second
+  OBJ fetch. Altered-source and corrupt-binary failures preserve the prior
+  complete world. Quality changes, cancellation, native/legacy cleanup,
+  fingerprints and 844×390 touch HUD pass. Touch p50/p95 19.4/62.2 ms is a
+  SwiftShader diagnostic; mobile hardware was not measured.
+- Three static source views give A/A, B/B and A/B zero changed pixels. Twelve
+  moving cameras exercise index rebuilding; they are not per-frame pixel
+  comparisons. The native alpha check restores 9,756 source pixels and removes
+  9,756 old opaque fringe pixels. Its isolated 269 opaque centers have zero RGB
+  differences; the complete source comparison retains 14 differing pixels.
+  Actual human, camera, ink-edge and touch screenshots were inspected privately.
 
-- Existing Actor, NativePhysics, PaintSystem, NavGraph, BotBrain, ranked rules,
-  renderer, controller, minimap and network paths are exercised on the converted
-  source. The shared source tests compare Python/worker positions, indices,
-  collision flags, normals, object mapping and polygon masks exactly.
-- The source wall test paints an exported wall, grants squid climbing velocity,
-  then overwrites it with enemy ink and verifies release. Polygon ownership holes
-  stay zero. These are local logic checks, not measured Nintendo movement curves.
-- Both teams complete opening/death launch and landing at 30/60/120 Hz, with
-  default fixture Shooter and no added gear abilities. Existing bot slots 0 and 3
-  include retained combat aim on death. Human and bot targets point into the
-  supported arena; actual source body/ground queries validate their landing.
-- Both teams walk for 0.5 seconds at full opposing-pad input and stop for 0.5
-  seconds at 30/60/120 Hz. They remain alive and grounded; endpoints stay within
-  0.25 source units of the 60 Hz run. Retail acceleration, stop distance, micro
-  input and foot placement remain unverified.
-- Spawn-seeded directed navigation has 5,984 valid nodes and 5,551 paintable
-  nodes from 8,064 candidates; both original pad heights stay exact. Directed team-aware paths reach all local
-  calibrated zone/rainmaker/checkpoint/clam targets from both pads. Retail ranked
-  geometry and all objective coordinates remain unverified.
-- The real controller/Character/Actor/WeaponRunner/Projectiles shooter test
-  paints the same original tall duct wall at 30/60/120 Hz with zero AP. Each
-  1.5-second held-fire window emits 15 shots, claiming 139/116/127 new live wall
-  cells respectively on the accepted v4/alpha build. The retained
-  old-runtime control emitted 15 shots at 30 Hz with zero target-wall impacts or
-  ownership. No fixed world-axis muzzle or direct paint invocation is used.
-- Actual Chromium source-menu selection downloads the pinned source across
-  origins, converts it, launches eight actors/seven bots, verifies explicit ordered floor
-  painting,
-  lands the human, uses derived cache without another OBJ download and rolls back
-  an altered OBJ while retaining the previous complete world.
-- Actual indexed ink rendering is compared with the original single mesh using
-  the same source attributes/order/camera. A/A, B/B and A/B produce zero changed
-  pixels for gameplay, center and overhead views; twelve moving cameras exercise
-  index rebuilding. Rendering preserves CPU paint, physics and navigation.
-  The historical references use the same native material, so their equality
-  alone does not prove correct fringe colors. The later accepted native alpha
-  correction removes the opaque white substrate around real source-wall ink;
-  actual newer shot/human screenshots were inspected privately.
+## Performance and retained limits
 
-The physical human probe
-[check-inkwave-robo-human-route.mjs](../../scripts/check-inkwave-robo-human-route.mjs)
-passes source walking, a 90-degree mouse turn, gravity departure, source-foot
-arrival, release and natural Shooter painting at 30/60/120 render cadences.
-Real pointer lock, keyboard and mouse drive the existing human controller;
-the installed Game clock updates the Actor at 1/60. Every case emits 14 shots and
-37 natural splats. The first lower contact is the original Highroof tile slope.
-The final foot ring legitimately supports the 30 Hz case on a low curb and the
-60/120 Hz cases on the adjacent slope; their endpoints differ by 0.196 source
-units. No later pose, velocity or ink writes enforce the outcome.
+The fixed-seed window in
+[check-inkwave-robo-performance.mjs](../../scripts/check-inkwave-robo-performance.mjs)
+records seed `0x53a94ccb`, all eight real loadouts/zero AP and active mixed bots,
+120 warmed frames and 180 measured 60 Hz frames. KeyW/fire are held for 90
+frames and released for 90. Low quality uses atlas 2048/4 pixels per source unit,
+minimap on, shadows/bloom off and opposing-axis camera/pitch 0.2. Final scene
+render is excluded from frame samples, but paint GL/FBO work and driver stalls
+remain included. This is instrumented software runtime cost, not pure CPU logic
+or physical-device FPS.
 
-The independent full-bank probe is
-[check-inkwave-robo-banks.mjs](../../scripts/check-inkwave-robo-banks.mjs).
-Its default runs the installed `Game._frame` at 30/60/120 render cadences and
-records the actual fixed 1/60 Actor ticks. It constructs the real
-eight-alive/seven-bot turf match, uses a zero-AP Shooter, starts with empty ink and
-chooses genuine supported goals on the opposing banks. Only initial source-pad
-setup writes poses; production logic then runs without pose, velocity or ink
-overrides.
+| Human weapon | Frame p50 / p95 / max ms | Separate render drain ms | Character inclusive ms | Paint simulation inclusive ms | Ownership inclusive ms |
+| --- | --- | --- | --- | --- | --- |
+| s3-blaster-short | 21.9 / 63.4 / 1089.4 | 2996.8 | 1967.0 | 3054.3 | 365.4 |
+| shooter | 23.3 / 52.0 / 63.4 | 3244.4 | 2154.1 | 456.8 | 174.7 |
 
-The retained earlier probe used raw Actor/BotBrain step intervals, independently
-of `Game._frame`. Those are logic stress cases, not production render-cadence
-failures. Team 0 reaches `[33.5, 4.505000114440918, -12.5]` at raw 30/60/120 Hz
-in 68.4/59.97/58.68 seconds. Team 1 succeeds at raw 60/120 Hz in 68.47/53.66
-seconds. The raw team-1 30 Hz failure abandons its original goal and ends airborne
-near `[7.37, 4.47, 5.49]` after 90 seconds, 41.47 source units from
-`[-33.5, 4.505000114440918, 12.5]`. The raw failure alone does not justify a
-shared runtime change.
+Nested method times overlap. Queues, actors, grid/owner/order hashes, turf/special
+gains, radii and object groups are frozen before the separate flush/render drain.
+Observer grouping cost and system/load/cgroup snapshots are recorded separately;
+other CPU activity between boundaries is not excluded. Both mixed-bot windows
+retain large software-driver tails. Different human loadouts are not a matched
+before/after optimization comparison.
 
-The matched production fixed-clock baseline reaches the team-0 opposite bank
-at all three render cadences in exactly 3,268 Actor ticks (54.4667 seconds).
-Team 1 loses its original 96-node path at tick 1,599/1,600. The waypoint remains
-on the source upper floor at `[42.5, 7.5, -29.5]`, while the grounded actor has
-already fallen to the original CableB floor at approximately
-`[41.58, 4.56, -28.74]`. The existing slipped-above-waypoint guard correctly
-clears this now-unreachable path. The repair must prevent the preceding corner
-departure; suppressing that legitimate recovery would conceal the defect.
+Historical unseeded 47.8/86.8 ms and earlier seeded windows retain their exact
+older artifact/loadout scope. The unseeded diagnostic cannot serve as a causal
+control. A private ancillary prefilter had no proven matched-state benefit and
+was discarded; no paint optimization, lower fidelity or physical FPS claim is
+promoted. The preserved old Game-clock floor-corner failure and six matched
+source-equal repair positives support the accepted floor correctness change;
+older raw Actor-dt failures remain logic stress, not production cadence failures.
+Private highDrops/Drop prototypes remain unadopted, with original pads and all
+source-navigation flags unchanged.
 
-A preserved private calibration tested the sole shared follower owner's narrow
-candidate `4d358281`: ordinary native floor following uses one waypoint,
-source-foot arrival and planted corner input rather than skipping unsupported
-waypoints. All six matched actual Game bank cases arrive, retain their original
-95/96-node routes and goals, and require no refill replans. Team 0 takes
-29/28.9833/28.9833 seconds; team 1 takes 29.8667/29.85/29.85 seconds. Every one of
-the 163 copied source files (67,676,722 bytes) is SHA-256 identical to the
-baseline, including all geometry, NoPaint roles, masks and PNGs. This is a
-correctness counterproof, not a performance speedup or latest-main final-artifact
-claim. The shared correction was subsequently qualified through PR #1390;
-this older immutable receipt remains scoped to its actual build. No
-source-navigation flag is enabled.
+The exact artifact code head is `888eb844d1b36657d5f559c5e8ece163ff40b882`;
+later own commits correct harness waits/assertions and reports only. Private
+revision is `4589e03e375bb98581764d5e9d9537fd3dc6ae9b45e6fa0c77bdecbb9c53f310`,
+public revision `b2196a3519aff05d017793b3842cfe2914c17115eeca04e64dc3f3df256eb1e7`,
+shared native runtime `2a60e63893bd660bb16b89729e0ae751102e33d961483b911f93a85cfd9c4778`.
+Later grounded-form `0c39e684` and forthcoming main `18ce7b6c` compatibility
+require affected aggregate checks; these 3249/14f receipts are not relabeled.
 
-Contact tracing shows the failed actor is already humanoid, with radius/lift
-0.35/0.35 and height 1.45; its current foot center/ring have no support. Releasing
-transform/fire and holding its existing waypoint direction through ordinary
-input lands it on an original source slope. This is a raw-step path-following
-stress failure, not missing source data. A private `highDrops` calibration exposed a
-separate live drop: forecast Y=-0.1667, actual first source-foot touchdown Y=0.08.
-The original handler keeps moving outward because it compares center heights.
-Those diagnostics and the unsuccessful metadata prototypes remain private;
-neither navigation flag nor a geometry/pad change has been adopted.
-
-## Performance and limits
-
-GPU browser work holds the shared `native-stage-browser.lock`. Original and
-derived assets, screenshots and full logs stay in ignored private directories.
-The reproducible production window is
-[check-inkwave-robo-performance.mjs](../../scripts/check-inkwave-robo-performance.mjs).
-It records seed `0x53a94ccb`, all eight actual loadouts, default gear state,
-seven normal bots, 120 warmed frames, 180 measured 60 Hz steps and specified
-camera aim. The human holds KeyW/fire for 90 frames then releases for 90 frames.
-Low quality uses a 2048 atlas at 4 pixels/source-unit; shadows/bloom are off and
-the minimap is on. Scene render drain is recorded separately from simulation.
-Paint atlas/FBO work still occurs inside the measured window, so its software
-driver stalls are included; this is not a measurement of CPU logic alone.
-
-With the accepted source projectile sweep, the fixed Luna window measured
-p50/p95 41.5/578.6 ms (maximum 1,865 ms), with a separate 4,044.6 ms render drain.
-Its inclusive paint simulation time was 12,014.1 ms over 180 steps, including
-10,007.3 ms drawing paint quads; ancillary ownership was 596.6 ms and measured
-observer grouping was 322.7 ms. The fixed Shooter window measured 28.2/61.3 ms
-(maximum 140.5 ms), with a separate 3,362.1 ms render drain. Character updates
-dominated that case at 2,762.5 ms; paint simulation was 783.1 ms, ownership
-199.8 ms and observer grouping 60.3 ms. Nested method times overlap. The actual
-eight loadouts, producer queues, ownership hashes and software renderer are in
-the numeric record. These are different loadout windows, not a causal A/B
-optimization result. The large Luna tail remains an explicit performance limit.
-
-The first unseeded gameplay diagnostic measured CPU p50/p95 47.8/86.8 ms and
-about 4.85 seconds of ancillary ownership over 180 frames, particularly 4.4-radius
-paint. Warmed fixed mixed-bot windows measured 14.3/45.9 ms with Luna and
-18.9/45.3 ms with the legacy Shooter; ownership was about 192/182 ms respectively.
-These different loadouts are not a before/after comparison. Character updates
-dominated the warmed cases. These historical diagnostics used the old generic
-projectile collision, which blocked real source-wall shots. Final runtime windows,
-exact loadouts, queues and build fingerprints are recorded numerically; they do
-not establish a matched-state speedup. SwiftShader measurements establish no physical mobile,
-Switch or other hardware FPS claim.
-
-A native ancillary-chart prefilter prototype passed differential CPU ownership,
-replay/order and owner-credit controls and a real WebSocket turf comparison, but
-its browser windows did not have identical producer states at measurement start.
-No matched-state runtime benefit was proved. The prototype was discarded;
-shared paint runtime, fidelity, source display and ownership remain unchanged.
-Its private diagnostics are retained. The unseeded high-load window cannot serve
-as an immutable before/after control.
-
-Unverified Nintendo details remain: actual extraction/version date, source-unit
-equivalence, native collision, paintability/grates/climb masks, spawns, ranked
-placements, material shader semantics, moving-object transforms/states, restaurant
-environment lighting and physical-device performance. The stock surrounding
-environment and source-export mannequin poses visibly differ from a complete
-retail scene. `version1130Verified` remains false throughout.
+Retail extraction/version date, metric units, native collision, paintability,
+grates/climb masks, spawn/ranked placements, native material shaders, moving
+objects, restaurant lighting and hardware performance remain unverified.
+Original floating bowls/mannequin poses and the stock surrounding environment
+visibly differ from a complete retail scene. No transforms, geometry or
+half-arena pads are invented to conceal those differences.
