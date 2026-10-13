@@ -66,9 +66,8 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
     // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
     code = replaceOnce(code, 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis).premultiply(this.retarget.aim);', 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis);sourceCarryWeapon(this,this.weaponQ);this.weaponQ.premultiply(this.retarget.aim);', 'source shooter carry posture');
-    code = replaceOnce(code, '  this.fitR.copy(this.handP);\n', '  this.fitR.copy(this.handP);\n  sourceCarryHand(this,this.handP,this.fitR,this.wristQ,leftWeight,explicitLeft);\n', 'source standing shooter grip');
     return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
-      "import { sourceCarryWeapon, sourceCarryHand } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+      "import { sourceCarryWeapon } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   if (rel === 'src/game/motion/retarget.js') {
     // S3 posture: reduce the Wii U clips' torso/neck lean before the aim pitch; arms keep their solved directions.
