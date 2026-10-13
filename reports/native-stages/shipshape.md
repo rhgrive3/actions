@@ -7,8 +7,9 @@ and accepted source jump attachment `e35ae3a560d228f13e85fd79a462b92989f1a403`.
 The branch also consumes accepted ordinary source-floor support
 `0e6dd2474930b4fde75e2b5e5012030b175b4952` and physical Tower rider guards
 `90b7ba7905986d301772f842e244c8ecb12b0b7a` and ordinary native jump input
-`fd23d46d87498dced990c5ee5655db2462169e2e`. The current immutable browser
-artifact predates those three merges. Stage verification is in progress; the
+`fd23d46d87498dced990c5ee5655db2462169e2e`, plus source Clams goals and the
+eighth pickup `3249d6dc5c8da6c085247c8213d0b7b4c69a24f4`. The current immutable
+browser artifact predates those four merges. Stage verification is in progress; the
 complete opposite-bank bot route fails. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
 remains Draft.
 Numeric receipts are in [shipshape-verification.json](shipshape-verification.json).

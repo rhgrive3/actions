@@ -33955,7 +33955,8 @@
     "towerRider": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
     "artifactResealPending": true,
     "sourceGeometryAndMaskChanged": false,
-    "ordinaryJumpInput": "fd23d46d87498dced990c5ee5655db2462169e2e"
+    "ordinaryJumpInput": "fd23d46d87498dced990c5ee5655db2462169e2e",
+    "sourceClamsGoalAndEighthPickup": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4"
   },
   "ownPr": {
     "url": "https://github.com/rhgrive3/actions/pull/1394",
