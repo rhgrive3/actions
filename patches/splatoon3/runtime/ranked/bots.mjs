@@ -1,3 +1,4 @@
+import {nativeRankedTowerApproach,updateNativeTowerBoarding} from '../../../native-stages/runtime/engine.mjs';
 const RANKED_MODES = new Set(['zones', 'tower', 'rainmaker', 'clams']);
 const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
 const point = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(Number.isFinite)
@@ -60,6 +61,8 @@ function clamThrowAim(actor, goal, engine) {
 }
 
 function towerApproachPath(brain, target, engine, G, frame, jumpHeight) {
+  const source = nativeRankedTowerApproach(brain, target, engine, G);
+  if (source !== null) return source;
   const nav = G?.nav, actor = brain.a;
   if (!nav?.nodes?.length || typeof nav.nearest !== 'function' || typeof nav.path !== 'function') return false;
   const start = nav.nearest(actor.pos, 1.2);
@@ -230,9 +233,12 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
   // node in the static navigation mesh. If replanning fails, walk the final
   // short approach directly when the world adapter confirms a clear segment.
   const pathFinished = !brain.path || brain.pi >= brain.path.length;
-  let approachDx = dx, approachDz = dz, approachHorizontal = horizontal;
+  const sourceBoarding = G.level?.native ? brain._nativeTowerBoarding : null;
+  let approachDx = sourceBoarding ? sourceBoarding.proof.start[0] - a.pos.x : dx;
+  let approachDz = sourceBoarding ? sourceBoarding.proof.start[2] - a.pos.z : dz;
+  let approachHorizontal = Math.hypot(approachDx,approachDz);
   if (engine.mode === 'tower' && action === 'ride' && pathFinished
-    && Number.isInteger(brain._rankedApproachNode) && horizontal > 0.1) {
+    && !sourceBoarding && Number.isInteger(brain._rankedApproachNode) && horizontal > 0.1) {
     const halfSize = Math.max(0.8, finite(engine.stage?.tower?.halfSize, 1.4));
     const ux = dx / horizontal, uz = dz / horizontal;
     const edgeX = target.x - ux * (halfSize + 0.45);
@@ -253,6 +259,10 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
       catch { clear = false; }
     }
     if (clear) move.set(approachDx / approachHorizontal, 0, approachDz / approachHorizontal);
+  }
+  if(sourceBoarding&&pathFinished&&approachHorizontal>1e-6){
+    const mag=Math.min(.35,Math.max(.03,(approachHorizontal-.09)*.65));
+    move.set(approachDx/approachHorizontal*mag,0,approachDz/approachHorizontal*mag);
   }
   const towerRide = engine.mode === 'tower' && action === 'ride';
   const towerPlatformAction = engine.mode === 'tower' && (action === 'ride' || action === 'defend');
@@ -287,7 +297,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
 
   // Hop onto the moving tower deck when the route reaches its side. The
   // normal path graph remains authoritative for safe approach and edge checks.
-  if (towerRide && !alreadyRiding && a.grounded && dy > 0.25
+  if (towerRide && !sourceBoarding && !alreadyRiding && a.grounded && dy > 0.25
     && horizontal <= finite(engine.stage?.tower?.halfSize, 1.4) + 1.35 && brain.jumpCd <= 0) {
     it.jump = true; brain.jumpCd = 0.65;
   }
@@ -365,6 +375,7 @@ export function installRankedBots(api = {}) {
       || (typeof match.playing === 'function' && !match.playing())) return update.call(this, dt);
 
     this._nativeTraversalHandled = false;
+    if (updateNativeTowerBoarding(this,G,engine,dt)) return;
     let nativeTail = null;
     const hadOwnTail = Object.prototype.hasOwnProperty.call(this, '_tail');
     const oldTail = this._tail;

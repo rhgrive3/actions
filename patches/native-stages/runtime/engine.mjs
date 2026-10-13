@@ -20,3 +20,5 @@ import {nativeBotInitialLanding as selectBotLanding} from './native-spawn.mjs';
 export function nativeBotInitialLanding(G,actor,validate){return selectBotLanding(G,actor,validate,nativePlayableComponent);}
 export {nativeDropClearance,nativeDropTransition,nativeDropTravelForm,updateNativeDrop} from './native-drop.mjs';
 export {nativeSurgeTransition,updateNativeSurge} from './native-surge.mjs';
+
+export {nativeRankedTowerApproach,updateNativeTowerBoarding,nativeTowerRider} from './native-ranked-boarding.mjs';
