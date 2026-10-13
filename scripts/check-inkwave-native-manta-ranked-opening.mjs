@@ -42,9 +42,8 @@ try{
    const proof=await page.evaluate(async({team,hz})=>{
     const G=NG,g=G.game,L=G.level,N=G.nav,V=G.local.pos.constructor;
     const {BotBrain}=await import(new URL('src/game/bots.js',document.baseURI));
-    const {GroundHit}=await import(new URL('src/game/physics.js',document.baseURI));
-    const {nativeSourceFootSupported}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI));
-    const a=G.actors.find(a=>a.team===team&&a.bot),support=new GroundHit();
+        const {nativeSourceFootSupported,nativeDropClearance}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI));
+    const a=G.actors.find(a=>a.team===team&&a.bot);
     for(const other of G.actors){
      if(other===a)continue;
      const p=L.spawnPads[other.team].clone(),angle=other.slot/4*Math.PI*2+.6;
@@ -57,17 +56,17 @@ try{
     G.projectiles.clear();G.paint.clear();a.setWeapon('shooter');a.spawnAt(L.spawnPads[team],team?Math.PI:0);a.invuln=0;a.bot=new BotBrain(a,'normal');
     const start=a.pos.clone(),path=N.path,calls=[];
     N.path=function(...args){const result=path.apply(this,args);calls.push({limit:args[3]??6000,nodes:result?.length||0,start:args[0],end:args[1]});return result;};
-    let inputFrames=0,groundedSourceSamples=0,traversalFrames=0,initialRoute=null,initialGoal=null,ticks=0;const actorDts=[],brainDts=[],actorUpdate=a.update,brainUpdate=a.bot.update,clockStart=g.s3Clock.ticks;a.update=function(dt){ticks++;if(!actorDts.includes(dt))actorDts.push(dt);return actorUpdate.call(this,dt);};a.bot.update=function(dt){if(!brainDts.includes(dt))brainDts.push(dt);return brainUpdate.call(this,dt);};
+    let inputFrames=0,groundedSourceSamples=0,traversalFrames=0,initialRoute=null,initialGoal=null,ticks=0,capsules=0,profile=null;const clearance=nativeDropClearance(L),collideBody=G.physics.collideBody;G.physics.collideBody=function(pos,radius,lift,height,contacts,horizontal,skipGrates,...rest){const result=collideBody.call(this,pos,radius,lift,height,contacts,horizontal,skipGrates,...rest);if(pos===a.pos)profile={radius,lift,height,skipGrates};return result;};const actorDts=[],brainDts=[],actorUpdate=a.update,brainUpdate=a.bot.update,clockStart=g.s3Clock.ticks;a.update=function(dt){ticks++;if(!actorDts.includes(dt))actorDts.push(dt);const previous=this.pos.clone();actorUpdate.call(this,dt);if(!profile||!clearance.clear(previous,this.pos,profile.radius,profile.lift,profile.height,profile.skipGrates))throw Error('Ranked opening actual source capsule '+JSON.stringify({team,hz,ticks,from:previous.toArray(),to:this.pos.toArray(),profile}));capsules++;};a.bot.update=function(dt){if(!brainDts.includes(dt))brainDts.push(dt);return brainUpdate.call(this,dt);};
     try{
-     for(let i=0;i<hz*2;i++){
+     for(let i=0;i<hz*6;i++){
       g._frame(1/hz);
       if(!a.alive)throw Error('Ranked opening bank movement died');
       inputFrames+=a.intent.move.lengthSq()>0;
       traversalFrames+=!!a.bot._nativeTraversalHandled;
       if(!initialRoute&&a.bot.path?.length>1){initialRoute={nodes:a.bot.path.length,start:a.bot.path[0],end:a.bot.path.at(-1)};initialGoal={...a.bot._rankedGoalPos};}
-      if(a.grounded){const node=N.nodes[N.nearest(a.pos,1.2)];if(!node||!nativeSourceFootSupported(G,a,node))throw Error('Ranked movement lacks static source-foot support');groundedSourceSamples++;}
+      if(a.grounded){const node=N.nodes[N.nearest(a.pos,1.2)];if(!node||!nativeSourceFootSupported(G,a,node))throw Error('Ranked movement lacks static source-foot support');groundedSourceSamples++;if(i+1>=hz*2)break;}
      }
-    }finally{N.path=path;a.update=actorUpdate;a.bot.update=brainUpdate;}
+    }finally{N.path=path;a.update=actorUpdate;a.bot.update=brainUpdate;G.physics.collideBody=collideBody;}
     if(ticks!==g.s3Clock.ticks-clockStart||actorDts.length!==1||actorDts[0]!==1/60||brainDts.length!==1||brainDts[0]!==1/60)throw Error('Installed Game must own actual fixed Actor/Brain cadence');const distance=a.pos.distanceTo(start);
     if(!initialRoute||!initialGoal||!Object.keys(initialGoal).length||!inputFrames||distance<1||!a.grounded||!groundedSourceSamples){
      const e=G.match.ranked,frame=e.frame,actor=frame.actors.find(o=>o.id===String(a.nid??`${a.team}:${a.slot}`)),sourceStart=N.nearest(start,1.2),limit=Math.max(6000,N.nodes.length*4);
@@ -79,7 +78,7 @@ try{
      throw Error('Actual ordinary ranked opening failed '+JSON.stringify({mode:G.match.mode,team,hz,initialRoute,initialGoal,inputFrames,distance,grounded:a.grounded,groundedSourceSamples,traversalFrames}));
     }
     if(!calls.some(c=>c.limit===Math.max(6000,N.nodes.length*4)&&c.nodes>1))throw Error('Ranked wrapper did not select its installed bounded native route');
-    return {mode:G.match.mode,team,hz,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,start:start.toArray(),end:a.pos.toArray(),ticks,actorDts,brainDts,renderHz:hz,physicsHz:60,initialRoute,initialGoal,distance,inputFrames,groundedSourceSamples,traversalFrames,grounded:true,alive:true,gearAP:Object.keys(a.s3.abilityPoints),searchCalls:calls,sourceSha256:L.manifest.sourceSha256};
+    return {mode:G.match.mode,team,hz,capsules,continuousCapsuleFailures:0,seconds:ticks/60,actualSourceLanding:true,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,start:start.toArray(),end:a.pos.toArray(),ticks,actorDts,brainDts,renderHz:hz,physicsHz:60,initialRoute,initialGoal,distance,inputFrames,groundedSourceSamples,traversalFrames,grounded:true,alive:true,gearAP:Object.keys(a.s3.abilityPoints),searchCalls:calls,sourceSha256:L.manifest.sourceSha256};
    },{team,hz});
    report.cases.push(proof);console.log('manta-ranked '+JSON.stringify(proof));
    fs.writeFileSync(path.join(out,'ranked-opening.json'),JSON.stringify(report,null,2));
