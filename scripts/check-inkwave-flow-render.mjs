@@ -109,6 +109,21 @@ export function verifyFlowBuild(site, exactSource = false) {
     verifierSha256: hash(fs.readFileSync(fileURLToPath(import.meta.url))) } };
 }
 
+// Route.fetch responses belong to the browser context. Finish their byte
+// checks and fulfill/abort callbacks before closing that owner. A hung route
+// must fail within a finite budget rather than prevent receipt publication.
+export async function drainFlowRoutes(page, timeoutMs = 10000) {
+  if (!page) return { status: 'not-started' };
+  let timer;
+  try {
+    await Promise.race([
+      page.unrouteAll({ behavior: 'wait' }),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Flow route drain timed out after ' + timeoutMs + 'ms')), timeoutMs); }),
+    ]);
+    return { status: 'drained' };
+  } finally { clearTimeout(timer); }
+}
+
 async function main() {
   const option = name => {
     const i = process.argv.indexOf(name);
@@ -128,7 +143,7 @@ async function main() {
     const file = path.join(output, 'flow-render-result.json');
     fs.writeFileSync(file + '.writing', JSON.stringify(value, null, 2) + '\n'); fs.renameSync(file + '.writing', file);
   };
-  const errors = [], loaded = new Map(); let browser, server, page, identity, result, failure;
+  const errors = [], loaded = new Map(); let browser, server, page, identity, result, failure, routeDrain = { status: 'not-started' };
   const recordError = error => { if (errors.length < 20) errors.push(String(error).slice(0, 1800)); };
   publish({ status: 'running', gate: 'flow-render', startedAt: new Date().toISOString() });
   try {
@@ -164,7 +179,10 @@ async function main() {
           loaded.set(key, { path: key, sha256: hash(body), bytes: body.length });
         }
         await route.fulfill({ response, body });
-      } catch (error) { recordError(error.message); await route.abort(); }
+      } catch (error) {
+        recordError(error.message);
+        try { await route.abort(); } catch (abortError) { recordError('Flow route abort: ' + abortError.message); }
+      }
     });
     await page.goto(address + '/flow-render');
     await page.addScriptTag({ content: 'globalThis.flowPixelDifference = ' + flowPixelDifference.toString() + ';' });
@@ -466,12 +484,16 @@ async function main() {
     try { if (page) result = { ...(result || {}), progress: await page.evaluate(() => globalThis.flowProbeProgress || null) }; } catch {}
     try { await page?.screenshot({ path: path.join(output, 'flow-render-failed.png'), timeout: 10000 }); } catch {}
   } finally {
-    try { await browser?.close(); } catch (error) { failure ||= error; }
-    try { if (server?.listening) await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve())); } catch (error) { failure ||= error; }
+    try { routeDrain = await drainFlowRoutes(page); }
+    catch (error) { routeDrain = { status: 'failed', message: String(error.message || error) }; failure ||= error; }
+    try { await browser?.close(); } catch (error) { recordError('Flow browser close: ' + error.message); failure ||= error; }
+    try { if (server?.listening) await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve())); } catch (error) { recordError('Flow server close: ' + error.message); failure ||= error; }
   }
+  // Route and browser errors may arrive during teardown, after the earlier render check.
+  if (errors.length) failure ||= Error('Flow browser/shader errors: ' + errors.join('; '));
   const receipt = { ...result, status: failure ? 'failed' : 'passed', gate: 'flow-render', finishedAt: new Date().toISOString(),
     contentHash: identity?.manifest.contentHash || null, build: identity?.manifest.build || null, source: identity?.source || null,
-    command: process.argv, loaded: [...loaded.values()], errors, ...(failure ? { message: String(failure.message || failure).slice(0, 2500) } : {}) };
+    command: process.argv, loaded: [...loaded.values()], errors: [...errors], routeDrain, ...(failure ? { message: String(failure.message || failure).slice(0, 2500) } : {}) };
   publish(receipt);
   console.log(JSON.stringify({ status: receipt.status, sourceSha: receipt.source?.sourceSha, contentHash: receipt.contentHash,
     summary: receipt.summary, message: receipt.message, evidence: path.join(output, 'flow-render-result.json') }));

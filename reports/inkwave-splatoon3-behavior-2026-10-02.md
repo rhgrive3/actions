@@ -4031,6 +4031,17 @@ Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather tha
 Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
 
 
+## 2026-10-11 サブ14種・スペシャル19種の性能再照合
+
+Driveのpart02アーカイブとS3 11.3.0パラメータ、条件を記録したWiki値を再照合。数値の保管だけでなく、インク節約・軽減・時間・SPU・設置物・装甲・native通信の実際の消費箇所を修正した。根拠、実装箇所、再現、プレイ影響、確認状態は `reports/inkwave-source-parity-corrections-20261011.md`、個別のsource葉監査は `reports/source-parity-coverage-20261011.json`、設置物・装甲・通信の監査は `reports/interaction-parity-20261011.md` に記録。
+
+本節は全挙動の実機一致認定ではない。ロジック単独、配信ビルド、ブラウザ動作、本家実機比較を区別する。世界距離、標的選択、飛行/接地/壁の反応、塗り形状、未公開フィールドの意味について未確認を残す。モデリングと本格的なアニメーションは依頼の範囲外。既存の未確認項目を本変更だけで解消済みにしない。
+
+### 2026-10-11 最終ソース消費・main統合追記
+
+NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、Reef rut／Inkjet・Reef周辺塗りの値を実処理へ追加。実Actorの発射からProjectilesの30/60/120Hz進行を測定した。最新main PR1237の靴メイン対物ギアとnative Sprinkler修正も保ち、rawダメージ・攻撃行・ギアを送るowner判定で2重倍率を防止。具体的な根拠・再現・影響・未検証は`reports/inkwave-source-parity-corrections-20261011.md`と各parity報告に記載。実機完全一致は認定していない。
+
+
 ## 2026-10-12 原典表示メッシュ5ステージ統合
 
 固定 KiTrix 表示OBJから5ステージをローカルビルドする処理と、既存 Actor/Physics/PaintSystem/ナビ/ミニマップ/ランク world への接続を追加した。生/変換アセットの再配布権限は未確認のため公開ビルドには含めない。本家の参照版は11.3.0。詳細・再現手順・確認済み/未確認の区分は [原典ステージ統合記録](inkwave-native-stage5-2026-10-12.md)。30/60/120 Hz は INKWAVE ロジック検証であり実機比較の代用ではない。スポーン、表示由来の collision/paint/grate 属性、4ランクルールの配置、OBJの版、実モバイル性能は未確認を維持する。
@@ -4057,6 +4068,8 @@ Independent review found single-cloud LOS4x and96-overlap LOS4x in the first liv
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
 
+2026-10-12継続: PR #1285をmainへマージし、Pages公開版で原典5択とユノハナの8人起動を確認した。続きの `codex/stage5-render-performance` は元三角形/塗り属性/CPU authorityを保持し、画面外インクのindexだけを除外する。地形15方向の画素差0、全原典Node23/関連27が成功。中央比較視点のインク三角形は約39〜53%減ったが、ソフトウェアGL時間のばらつきがあり実機FPS改善とは判定しない。詳細とシミュレーション/画素比較の条件は [描画領域の記録](inkwave-native-stage-render-2026-10-12.md)。本家11.3.0のscene/mask/スポーン/描画と実モバイルは未確認を維持する。
+
 ## 2026-10-12: プライムシューター・ジェットスイーパーのモデル作り直しと銃口・構え
 
 参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
@@ -4072,6 +4085,36 @@ Independent review found single-cloud LOS4x and96-overlap LOS4x in the first liv
 | グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
 
 計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
+
+## 2026-10-13 ガチ4ルールのWiki監査後の修正
+
+参照はSplatoon 3 11.3.0、S3mixの各ルール詳細、Nintendoのガチキング基本ルール、Inkipediaの延長・同点注記。詳細な根拠・再現操作・実装・影響・未確認値は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` に記録した。アサリの攻撃ゴール／防衛ゴールを取り違えた延長判定、ホコの未突破カンモンより先のカウント・通常空中カウント・拾得位置からの後退・中央放置バリア・敵陣側の時間切れ復帰、ヤグラのカンモン上での進捗消去、同点時の1カウント補正、占有済み地点へのアサリ重複生成を修正。スペシャル別の取得／投擲、全所持アサリのイベント単位の散乱、ガチアサリの着弾塗り・反撃用アサリの塗り、ゴール破壊までの回転待ちも接続した。
+
+確認は単独ロジック・実ゲームクラスの接続・ブラウザ・CIで区別する。1/60・0.05・0.2秒の入力間隔と、通常終了・延長突入・20秒期限・バリア破壊・スナップショット復元の順序を回帰テストする。公開URLのブラウザ検証はmain公開後のCIにも追加した。Wiki間のホコ後退倍率・延長猶予・アサリペナルティ端数、地形／カウント写像／投擲慣性／塗り半径／回転待ちの厳密時間、ヤグラ上の設置物追従・寿命、本家Switch実機との比較は未確認を維持する。実装のCI成功だけで本家と完全一致とは判定しない。
+
+### 2026-10-13 ホコショットの再点検
+
+専用弾の存在に加え、S3mix のチャージ前隙（ヒト1F/イカ6F）、射撃前隙1F、射撃後隙20F、チャージキープ不可、部分チャージの非爆発、満チャージ音・発光、チャージ中速度を実装境界で補完した。専用弾は native kitDefenseCandidate の先着判定、飛行中の下向き塗り、反動、フル弾の着弾待ち、水・ハンコ・キューインキの消去に接続した。60Fちょうどの丸め誤差と爆風の足元基準も修正。Wiki/11.3.0 パラメータとロジック試験・ネイティブ試験・ブラウザ試験は区別して記録する。完全な本家弾道、反動の単位変換、着弾後0.2秒の待ち時間、防御物への全爆風補正は実機未確認。詳細と再現条件は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` のホコ追補に記載。
+
+同追補: 通常チャージャーを溜めたままホコを取得すると元の WeaponRunner が busy のまま凍り、泳ぎを禁止し、ホコを失った後に古い射撃が再開し得る経路も修正した。所持開始時に一度だけ通常ブキ状態を初期化し、実際のチャージ→取得→イカ変身→所持解除で古い弾が出ないことをネイティブ試験で確認。既に発射済みの傘の存続などは本家比較未確認として残す。
+## 2026-10-13 傘とスペシャルの入力差分
+
+`reports/inkwave-brella-special-controls-20261013.md` に19種の操作条件、Wiki/11.3.0の根拠、実行箇所、反例、未確認項目を追記。パージの布描画欠落、開口サイズ、飛行のRunner依存を修正。ナイスダマの早投げ/自動投げ/移動、R投擲系のZR代用、ジェットパックの連射/任意終了、ミサイルの空撃ち/距離制限、デコイ8→12、サメの操舵、メガホン2→6、カタログメインのスペシャル中抑止、キューインキの無操作吸引、スタンド即設置を是正。形状・弾道・追跡・通信相手の傘表示、ギア/ゲージの全実機条件は未確認を保持し、完了に読み替えない。
+
+傘/スペシャル追補: 環境復旧後に現行mainを統合。装甲/Burst/シールドの追補を含む関連272件は旧fixture4件を修正後に通過（任意1件skip）。実PerspectiveCameraのfar clippingによるマルチミサイルの距離制限も除去し、far=50に対する距離200の10発を検証。06c1ba6のCIでは傘の実WebGL表示・飛行・clearが通過。残るブラウザfixtureを50% Mist、ZR保持、R離し/接地の操作へ更新。未確認の実機比較は維持する。
+
+傘/スペシャル最終追補: キューインキのZR保持をnative snapshot既存firing bitで通信し、相手側の離し/イカ/再開も判定・描画に反映。スタンドは実床への接触で0.03浮かせず、ServeAreaHeightDown=0の本家値と同じ床の飲料受け取りを両立。関連318件全通過、配信ビルド/容量通過。全体ゲートを修正後のコードで再実行中。詳細は20261013の傘/スペシャル照合記録。実機完全一致の未確認項目は維持。
+
+傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
+
+公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+
+## Ink Vac release contract fixture follow-up (2026-10-13)
+
+The old #1120 source-contract assertion still required immediate release through a pre-#1252 source string. Current main correctly buffers a fresh press/release edge until the sourced 20F inhale-to-exhale transition, then permits the 150F shot window. The regression now requires the existing edge queue, readiness guard and transition-plus-hold deadline while retaining the held-suction negative guard. Runtime behavior is unchanged. Clean-main source and emitted native controls distinguish held ZR, buffered early release, no projectile through transition frame19 and exactly one on frame20; fixture logic and browser evidence remain separately reported, with no new hardware parity claim.
+
+The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
 
 ## 2026-10-12: ソイチューバー・バケットスロッシャーのモデル作り直し
 
