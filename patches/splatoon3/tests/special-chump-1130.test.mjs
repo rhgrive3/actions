@@ -14,11 +14,11 @@ async function setup(){
   actor._startSpecial();actor.intent.fire=true;actor._updateSpecial(1/60);
   return {f,actor,events,objects:f.G.projectiles._s3AllSpecialObjects.filter(o=>o.kind==='decoy')};
 }
-test('S3 Super Chump schedules 12 decoys at 4F separation after 80F preparation',async()=>{
+test('S3 Super Chump schedules 12 decoys after the documented 13F pre-throw',async()=>{
   const {f,objects}=await setup();
   assert.equal(f.SUPER_CHUMP_DECOY_COUNT,12);
   assert.equal(objects.length,12);
-  assert.deepEqual(objects.map(o=>Math.round(o.startDelay*60)),Array.from({length:12},(_,i)=>80+4*i));
+  assert.deepEqual(objects.map(o=>Math.round(o.startDelay*60)),Array(12).fill(13));
   for(const [i,obj] of objects.entries()){
     assert.equal(obj.phase,'queued');
     assert.equal(obj.mesh.visible,false);
@@ -30,14 +30,12 @@ test('S3 Super Chump schedules 12 decoys at 4F separation after 80F preparation'
 });
 test('scheduled decoys stay hidden until their own launch, then travel before exploding',async()=>{
   const {f,objects}=await setup();
-  for(let i=0;i<79;i++)f.G.projectiles.update(1/60);
+  for(let i=0;i<12;i++)f.G.projectiles.update(1/60);
   assert.equal(objects[0].phase,'queued');
   f.G.projectiles.update(1/60);
   assert.equal(objects[0].phase,'flight');
   assert.equal(objects[0].mesh.visible,true);
-  assert.equal(objects[11].phase,'queued');
-  for(let i=80;i<124;i++)f.G.projectiles.update(1/60);
-  assert.equal(objects[11].phase,'flight');
+  assert.equal(objects[11].phase,'flight','twelve balloons launch together, not at fabricated 4F offsets');
   assert.equal(objects[11].mesh.visible,true);
 });
 test('remote decoy replay preserves source launch delay and does not reveal queued meshes',async()=>{

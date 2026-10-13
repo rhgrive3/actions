@@ -35,7 +35,7 @@ const SPECIALS = Object.freeze({
   crabTank: { name: 'Crab Tank', source: 'WeaponSpChariot', duration: [8, 9.5, 11], radius: 4.8, paintRadius: 4.5, near: 30, far: 30, direct: 50, status: '11.3.0 table: 50 cannon direct / 30 at 4.8, 32-to-16 shooter over 9–25F, 500 armor and 480/570/660F; steering calibrated' },
   reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 158/60, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: Skewer 38F pre-move, 54F move, 38F pre-burst, 28F recovery (158F total), 15F cancel lock and .031/.405 acceleration; 220 at9/70 at14.9; paint 7.51 base; collision/world scale calibrated' },
   tripleInkstrike: { name: 'Triple Inkstrike', source: 'WeaponSpTripleTornado', duration: 6, radius: 7.7, paintRadius: 7, near: 37.5, far: 37.5, status: '11.3.0 table: 360F, 7.7 damage radius, 7 paint and 50F spread; 37.5 per 5F from public mechanics, marker flight calibrated' },
-  superChump: { name: 'Super Chump', source: 'WeaponSpFirework', duration: 10.583, radius: 6, paintRadius: 3.5, near: 70, far: 35, status: '11.3.0 table: 70/35 at 3.6/6, paint 3.5, decoy HP 60, 108F flight, 210F burst and 635F special; count and spread calibrated' },
+  superChump: { name: 'Super Chump', source: 'WeaponSpFirework', duration: 635/FPS, radius: 6, paintRadius: 3.5, near: 70, far: 35, status: '11.3.0 table: 70/35 at 3.6/6, paint 3.5, decoy HP 60, 108F flight, 210F burst and 635F special; count and spread calibrated' },
   krakenRoyale: { name: 'Kraken Royale', source: 'WeaponSpCastle', duration: [8, 9, 10], radius: 2.65, paintRadius: 1.2, near: 60, far: 60, status: '11.3.0 table: 480/540/600F, 35F charge/dash and 60 jump attack; remaining contact/charge values require game comparison' },
   splattercolorScreen: { name: 'Splattercolor Screen', source: 'WeaponSpChimney', duration: 11.333, radius: 15, paintRadius: 0, near: 40, far: 40, status: '11.3.0 table: 60F startup, 560F running, 60F closing; touch 400 raw, mark 120F, saturation 360F; moving-wall scale calibrated' },
   waveBreaker: { name: 'Wave Breaker', source: 'WeaponSpShockSonar', duration: 10.1, radius: [20, 24, 27], paintRadius: 0, near: 45, far: 45, status: '11.3.0 table: 45 damage at 90/240/390F, 480 device HP, 30 contact damage/0.5s, 45F generator mark, radii 20/24/27, wave 160/192/216F; 8s wave marks, world mapping calibrated' },
@@ -623,13 +623,13 @@ function deployInkstrike(rt,actor,state,index) {
   marker.phase='flight';marker.origin=launchAt.clone();marker.flight=1.1;marker.age=0;
   emitAction(rt,actor,'tripleInkstrike',state.serial,'marker',launchAt,target,marker.seed,{index});
 }
-// Source-bound Super Chump: 12 decoys, 80F launcher prep, one new decoy
-// every 4F over a 48F launch window. 108F flight + 210F fuse are pinned
-// to WeaponSpFirework.IceParam; the 80F/48F release window is documented
-// by the public S3 weapon timing reference.
+// WeaponSpFirework (S3 11.3.0): 12 decoys, 108F flight, 210F fuse,
+// 635F to choose the target. S3 verification Wiki lists 13F throw startup.
+// There is NO source evidence for per-decoy 80F startup or 4F spacing;
+// all 12 use one launcher activation until the authored timeline is verified.
 export const SUPER_CHUMP_DECOY_COUNT = 12;
 export function superChumpReleaseFrame(index) {
-  return Number.isInteger(index) && index >= 0 && index < SUPER_CHUMP_DECOY_COUNT ? 80 + index * 4 : null;
+  return Number.isInteger(index) && index >= 0 && index < SUPER_CHUMP_DECOY_COUNT ? 13 : null;
 }
 function throwChumps(rt,actor,state) {
   const target=groundAt(rt,aimPoint(rt,actor,26,rt.v0),rt.v1).clone(), origin=rt.v2.set(actor.pos.x,actor.pos.y+1.2,actor.pos.z).clone();
@@ -639,11 +639,11 @@ function throwChumps(rt,actor,state) {
   groundAt(rt,target,target);
   const count=SUPER_CHUMP_DECOY_COUNT;
   for(let i=0;i<count;i++) {
-    // Stable per-decoy jitter, not twelve balloons placed on one circular rim.
-    // Their positions stay deterministic across local generation and wire replay.
+    // Spread markers across a wider-than-deep ellipse (measured 3.5:2 ratio).
+    // Stage-edge eligibility and exact native RNG layout remain unverified.
     const angle=(i/count)*Math.PI*2+(seedUnit(state.seed,17+i*2)-.5)*.65;
-    const radius=Math.sqrt(seedUnit(state.seed,61+i))*9.5;
-    const pos=target.clone();pos.x+=Math.cos(angle)*radius;pos.z+=Math.sin(angle)*radius;
+    const radius=Math.sqrt(seedUnit(state.seed,61+i));
+    const pos=target.clone();pos.x+=Math.cos(angle)*radius*7.0;pos.z+=Math.sin(angle)*radius*4.0;
     groundAt(rt,pos,pos);
     const releaseFrame=superChumpReleaseFrame(i);
     const obj=deployObject(rt,actor,'superChump','decoy',origin,state,{
@@ -979,7 +979,15 @@ function activeStep(rt,actor,dt) {
     actor.vel.z+=(move.z*5.2-actor.vel.z)*(1-Math.exp(-4*dt));
     actor.form=it.squid?'squid':'kid';actor.grounded=false;
     { const py=actor.pos.y;actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false); }
-    if(edges.fire)launchInkjet(rt,actor,state);
+    // The real Jetpack uses a held-fire auto launcher at 60F/round. A quick
+    // release does not reset cooldown; SPU can extend the 450F base duration.
+    const maxShots=Math.max(1,Math.floor(state.duration));
+    if(it.fire&&actor.form!=='squid'&&state.inkjetShots<maxShots
+      &&elapsed+1e-8>=state.nextInkjetShot){
+      launchInkjet(rt,actor,state);
+      state.inkjetShots++;
+      state.nextInkjetShot=elapsed+60/FPS;
+    }
     if(edges.sub)returnToOrigin(rt,actor,state,'return');
     else if(elapsed>=state.duration)returnToOrigin(rt,actor,state,'duration');
     return;
@@ -1123,8 +1131,10 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='superChump'){
     moveActor(rt,actor,dt,state,{squid:true});
+    if(elapsed>=635/FPS){endSpecial(rt,actor,'timeout');return;}
+    // 11.3.0: no decoy spawns unless the player explicitly places the launcher.
     if(edges.fire||edges.sub){throwChumps(rt,actor,state);return;}
-    if(elapsed>=108/60)throwChumps(rt,actor,state);return;
+    return;
   }
   if(state.id==='krakenRoyale'){
     const dir=aimDirection(rt,actor,rt.v0);state.armor=true;s.armor=true;
@@ -1182,7 +1192,7 @@ function makeState(rt,actor,id) {
   if(id==='zipcaster')state.phase='ready';
   if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='active';state.direction=new rt.api.THREE.Vector3();}
   if(id==='killerWail')state.phase='charge';
-  if(id==='inkjet')actor.vel.y=Math.max(actor.vel.y,7.4);
+  if(id==='inkjet'){actor.vel.y=Math.max(actor.vel.y,7.4);state.inkjetShots=0;state.nextInkjetShot=0;}
   if(id==='zipcaster'){state.inkFuel=150;state.hookInkCost=gearCurve(ap,4,2.5,1.5);state.inkDrainPerSecond=gearCurve(ap,15,13.05,12);}
   actorStates.set(actor,state);actor._s3AllSpecialState=state;
   actor.specialActive={id,t:0,phase:state.phase,armor:false,armorHP:state.armorHP,activation:serial};
