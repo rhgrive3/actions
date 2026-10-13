@@ -34051,5 +34051,102 @@
     },
     "hardwareFpsVerified": false,
     "stageReady": false
+  },
+  "currentImmutableLifecycle": {
+    "status": "passed",
+    "scope": "Immutable current-main846 + accepted jump-attachment private build; predates accepted source-floor, TowerRider and ordinary jump-input composition.",
+    "artifact": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+    "revision": "a5c4ecd173cf7bb00e65781466d455f2090cee02f96a800637e16d4a1fecea73",
+    "receipt": ".browser-evidence/current-v4-lifecycle/lifecycle.json",
+    "receiptSha256": "666467b7b1065c0f985775c7fb5b29a472b47245cbede8258cc8ab79c6cb486f",
+    "screenshotPrivatelyInspected": true,
+    "proof": {
+      "status": "passed",
+      "errors": [],
+      "quality": {
+        "cpuGridUnchanged": true,
+        "trianglePositionsUnchanged": true,
+        "authoritiesRetained": true,
+        "finalAtlas": 2048,
+        "textureCount": 91
+      },
+      "failureRollback": {
+        "rejected": true,
+        "levelRetained": true,
+        "paintRetained": true,
+        "displayRetained": true
+      },
+      "corruptionProbe": {
+        "requests": 1,
+        "error": "Native integrity mismatch: shipshape/vertices.bin"
+      },
+      "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+      "cancellation": {
+        "id": "tidewater",
+        "nativeGroups": 0,
+        "preparationCancelled": true
+      },
+      "switches": [
+        {
+          "id": "tidewater",
+          "native": false,
+          "nativeGroups": 0,
+          "memory": {
+            "geometries": 220,
+            "textures": 28
+          }
+        },
+        {
+          "id": "shipshape",
+          "native": true,
+          "nativeGroups": 1,
+          "memory": {
+            "geometries": 313,
+            "textures": 111
+          }
+        },
+        {
+          "id": "tidewater",
+          "native": false,
+          "nativeGroups": 0,
+          "memory": {
+            "geometries": 220,
+            "textures": 28
+          }
+        }
+      ],
+      "fingerprint": {
+        "same": true,
+        "changed": false,
+        "missing": false
+      },
+      "mobile": [
+        {
+          "id": "shipshape",
+          "viewport": [
+            844,
+            390
+          ],
+          "touch": true,
+          "actors": 8,
+          "native": true,
+          "atlas": 2048,
+          "textureCount": 91,
+          "cpuFrame": {
+            "p50": 13.5,
+            "p95": 39.1000000089407,
+            "max": 371.8999999910593
+          },
+          "gpuDrainRenderMs": 7.799999997019768,
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "local": {
+            "grounded": true,
+            "spawn": false
+          },
+          "mobileHardwareMeasured": false
+        }
+      ]
+    },
+    "stageReady": false
   }
 }

@@ -79,6 +79,16 @@ The first load takes 94.88 seconds including network transfers; conversion
 takes 13.40 seconds and Chromium navigation construction takes 3.43 seconds.
 These component results do not qualify the unfinished full-bank route.
 
+The same immutable private artifact also passes production quality changes
+without replacing physics/navigation/paint authorities, CPU ink or source
+triangles; corrupt binary rollback; cancellation; native → legacy → native
+cleanup; and runtime/source fingerprint rejection. An 844 × 390 touch viewport
+retains eight actors and grounded initial landing, with no browser errors.
+Its 180 simulated-frame CPU timings are p50 13.5 ms, p95 39.1 ms and maximum
+371.9 ms; the median GPU-drained render is 7.8 ms. The high tail remains recorded
+as a software-runtime observation. SwiftShader touch emulation does not measure
+physical mobile or Switch performance.
+
 Three current source views have zero A/A, B/B and cross-draw pixel differences,
 and twelve moving-camera frames retain physics, navigation and CPU ink identity.
 The initial six-sample gameplay-view medians were 5.1 ms for the single mesh and
