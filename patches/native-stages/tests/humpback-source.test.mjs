@@ -116,3 +116,20 @@ test('Humpback genuine two-cell plywood departure uses ordinary Actor walking an
  const proof={id:'humpback',sourceSha256:data.manifest.sourceSha256,cases,conditions:'standalone real Actor integrator + original source capsules; neutral dry human 0AP Shooter; no shot/muzzle evidence or production-match claim',version1130Verified:false};
  if(process.env.HUMPBACK_DEPARTURE_EVIDENCE)fs.writeFileSync(process.env.HUMPBACK_DEPARTURE_EVIDENCE,JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof));
 });
+
+test('Humpback production Character bots naturally travel from both original pads into the opposing bowl banks',{skip:!enabled},async()=>{
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE}=f,data=readStage(assets,'humpback');G.level=new f.NativeLevel(data);G.physics=new f.NativePhysics(G.level);G.camera=new THREE.PerspectiveCamera();G.match.mode='turf';G.match.opts={};
+ class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};}_pushQuad(){}_drawQuads(){}}
+ G.paint=new Cpu(null,G.level,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(G.level,G.physics);const before=digest(Buffer.from(data.triangles.buffer)),cases=[];f.setRandom(()=>.5);
+ const save=()=>{if(process.env.HUMPBACK_BANK_EVIDENCE)fs.writeFileSync(process.env.HUMPBACK_BANK_EVIDENCE,JSON.stringify({id:'humpback',cases,conditions:'Standalone original source production Actor/Character/BotBrain/Projectiles; ordinary bot inputs, fixed supported goal; initially empty ink; zero AP Shooter; not a production-match or hardware-FPS claim'},null,2)+'\n');};
+ try{for(const team of [0,1])for(const hz of [30,60,120]){
+  G.projectiles.clear();G.actors=[];G.paint=new Cpu(null,G.level,{atlasSize:2048,maxDensity:4,cell:.25});
+  const a=new f.Actor({team,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});a.isBot=true;a.spawnAt(G.level.spawnPads[team],team?Math.PI:0);a.invuln=0;G.actors=[a];
+  assert(a.character instanceof f.Character);const start=a.pos.clone(),goal=new THREE.Vector3(...(team?[-24,.0027,-32]:[24,.0027,32])),brain=a.bot=new f.BotBrain(a,'normal');assert(brain._pathTo(goal,.6));brain.goalTimer=brain.repath=brain.bombCd=1000;const pathNodes=brain.path.length;assert(pathNodes>80);
+  let fired=false,jumped=false,climbed=false,departed=false,seconds=0,maxTravel=0;
+  for(let i=0;i<hz*90;i++){G.time+=1/hz;brain.update(1/hz);fired ||=a.intent.fire;jumped ||=a.intent.jump;a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);climbed ||=a.climbing;departed ||=!a.grounded;seconds=(i+1)/hz;maxTravel=Math.max(maxTravel,Math.hypot(a.pos.x-start.x,a.pos.z-start.z));if(!a.alive||a.grounded&&a.pos.distanceTo(goal)<.85)break;}
+  const hit=G.physics.raycast(a.pos.clone().add(new THREE.Vector3(0,.1,0)),new THREE.Vector3(0,-1,0),.3),row={team,hz,seconds,start:start.toArray(),end:a.pos.toArray(),goal:goal.toArray(),distance:a.pos.distanceTo(goal),alive:a.alive,grounded:a.grounded,sourceTriangle:hit.hit?hit.triangle:null,sourceObject:hit.hit?data.manifest.objects[data.objectIds[hit.triangle]].name:null,pathNodes,currentPathNodes:brain.path?.length||0,pi:brain.pi,fired,jumped,climbed,departed,maxTravel,gearAP:Object.keys(a.s3.abilityPoints),phase:brain._nativeClimb?.phase,mode:brain.mode,productionCharacter:true};cases.push(row);save();console.log(JSON.stringify(row));
+  assert(a.alive&&a.grounded&&a.pos.distanceTo(goal)<.85,'genuine original pad → opposed bowl bank '+JSON.stringify(row));assert(hit.hit&&hit.face>=0&&maxTravel>85);assert.deepEqual(row.gearAP,[]);
+ }}finally{f.restoreRandom();}
+ assert.equal(digest(Buffer.from(data.triangles.buffer)),before,'ordinary full bank travel cannot alter source collision');
+});
