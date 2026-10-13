@@ -34,3 +34,23 @@ source crane 部分は原文座標のまま保持する。吊り材 object は X
 水底補正の実比較は `[−20,−2,−46]`、同じ Actor / 1/60 s / no fire・no move。補正前は groundHeight −8.05 が残り alive、補正後は below-water support がなくなり splat。
 
 保存された OBJ / MTL / PNG / derived buffers / detailed logs / screenshots は ignored private directories に限る。公開 build に source payload を含めず、ブラウザで固定原本を検証して取得する。公開 commit は stage 定義、stage 専用回帰検査、本文と数値要約だけ。
+
+## 検証結果と証拠の適用範囲
+
+共有 foundation `460da55901b7c70238f377759c588c7b46b0709a` の実 build で source suite 83 件中 73 pass / 0 fail / 10 skip。他 private stage と opt-in 条件が skip で、Umami 専用の production Actor + Character 支持・初期発射・復活・Tower 回帰 4 件は全 pass / skip なし。full source buffers、Worker/Python の inferred masks、塗れる元壁の climb と enemy ink release、ownership hole を検査した。actual nav は 6,766 valid nodes。全 5 モードは 8 actors / 7 bots、全 bot の実移動、error 0 で通過した。
+
+Tower は local 60-node route、halfSize 1.2 / localLift 1.2。各 waypoint と全 segment sweep で deck・pole・既存 rider capsule の原文 clearance を検査し、双方の対向 spawn から全 approach へ directed route がある。3 interior samples / segment の live deck support と、原文 floor から通常 keyboard W + 必要な Space 入力で 30/60/120 Hz の boarding を検査した。経路は nativeArenaBasis の両側に達する。これは INKWAVE のローカル校正で、本家 Tower route の復元ではない。
+
+同じ `460da559` build で 2 peers の実 WebSocket と production RoomDurableObject、各 peer 8 actors、owned Luna (`s3-blaster-short`, radius 3.84) による塗り replay / growth の実 settlement 後、turf / zones / tower / rainmaker / clams 全 5 モードの **3,682,116-byte CPU grid** が SHA256 で一致した。2,218 packets、error 0。模擬 hash や settlement bypass は使わない。別の controlled source-supported stance では、既存 Actor / WeaponRunner / Projectiles、shooter / `WeaponShooterNormal`、gear 0 AP、single shot / RNG 0.5 / bots frozen の条件で 30/60/120 Hz の元 Generator00 wall contact と通常の wall splats を検証した。この stance は物理 controller launch の検査とは区別する。
+
+`d92fab242a6616c2de82a01798d0b135889ff97e` build は offline の実 menu / pointer lock / mouse fire launch と online 双方 team を 30/60/120 Hz で検査し、source arena の内向き camera / aim、元支持面での landing、8 actors を確認した。source render は 3 views の A/A・B/B・A/B が changedPixels 0、CPU paint grid / authorities 保持、12 moving camera frames と single indexed ink draw が通過した。quality high→low、corrupt binary 拒否、取消、native→legacy→native の cleanup、fingerprint の一致／変更／欠落、touchscreen 844×390 の source-supported launch も pass。source-only、gameplay、camera、public source、mobile screenshots は私的に目視した。
+
+公開 build は original payload を含まない。実 menu から固定 cross-origin OBJ を取得して actual Worker で変換し、recipe `inkwave-browser-source-v3`、cached reload の追加 OBJ request 0、altered OBJ の拒否と旧 world / setup menu の保持を確認した。原本 request と意図的な corrupt request は合計 2、error 0。変換 11,233.1 ms、cold source world load 105,123.6 ms はこの proxy / software GL 環境の診断値で、本家の loading time と比較しない。
+
+最終 branch は accepted foundation `7ddb538afc33787810ec7c6bf218eec0879c3aff` を取り込む。この差分は `sourceNavigation.highDrops=true` の waypoint 到達判定に限定され、Umami は opt-in していない。source / nav / paint grid / renderer / projectile / camera の変更はなく、上記の immutable build 証拠は各 scope で保持する。新 build の default support contracts、public packaging 9 件と startup budget は別の current-head 証拠として数値 JSON に記録する。root の未承認 partial-cell coverage candidate はこの v3 証拠に混ぜない。
+
+## 性能と残る差
+
+SwiftShader gameplay simulation は p50 50.1 / p95 231.5 / max 1,026.7 ms。profile では paint growth と draw emission が大きい。render skip を使った診断 loop であり、通常 GPU gameplay FPS ではない。render p50 の baseline→indexed は gameplay 11.3→11.7、center 2.5→2.4、overhead 10.2→11.6 ms。moving median は 4.35→6.55 ms。画素の一致と ink triangle reduction は確認したが、全 view の高速化を主張しない。touchscreen software GL simulation は p50 18.1 / p95 56.3 / max 3,591.9 ms、render drain 9.4 ms。実スマホ / Switch の FPS と入力遅延は未計測。
+
+11.3.0 の native collision、paint / grate / climb masks、本家 spawn / ranked placements、moving states、shader は未回収。微入力・加速・停止・90度旋回・反転・射撃中移動・泳ぎ・敵 ink・ink 回復・被弾の本家実機 frame 計測もない。既存 INKWAVE の挙動を元 source に接続した範囲だけが検証済みで、速度・ギア・score・network の本家同等性は未確認のまま残す。

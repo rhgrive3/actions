@@ -1,17 +1,17 @@
 {
-  "schema": 1,
+  "schema": 3,
   "id": "umami",
   "internal": "Vss_Factory00",
   "name": "ナンプラー遺跡",
-  "status": "local-source-review",
-  "acceptance": {
-    "finalAffectedRuntimeChecks": "pending accepted shared foundation promotion",
-    "tower": "pending full swept source clearance and legal input boarding",
-    "online": "pending real WS all supported modes"
-  },
+  "status": "verified-local-inference-ready-for-review",
   "version1130Verified": false,
-  "referenceVersion": "Splatoon 3 11.3.0 identity only; KiTrix extraction version/date/units unverified",
-  "verifiedAtUtc": "2026-10-13T02:53:28.026313+00:00",
+  "verifiedAtUtc": "2026-10-13T12:11:59.960806+00:00",
+  "code": {
+    "headBeforeReportCommit": "33463bfcaeb2a19b2fe0e78a6e4bba97cd28a0eb",
+    "acceptedFoundation": "7ddb538afc33787810ec7c6bf218eec0879c3aff",
+    "sourceNavigationHighDrops": false,
+    "acceptedSupportFixImpact": "highDrops gate is OFF; real Umami source/default behavior unchanged. No provisional v4 paint coverage adopted."
+  },
   "source": {
     "repository": "kirakira-dev/KiTrix",
     "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -19,10 +19,9 @@
     "objSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
     "objBytes": 59818484,
     "mtlAndPngFilesVerified": 379,
+    "pngFiles": 378,
     "mtlAndPngBytes": 62182267,
-    "fileVerification": "all local MTL/PNG Git blob SHA1 preimages and byte lengths matched fixed tree",
-    "mtlAndPngManifestSha256": "be88f485c84ec56f2382aedf71577e8c4d0cb768182079099a469259250a46f1",
-    "retrieval": "isolated authenticated LFS denied Resource not accessible by integration; public media/raw original files verified",
+    "verification": "all pinned Git SHA1 and explicit blob sizes; independent original text-to-float32/uint32 streaming comparison",
     "originalComparison": {
       "status": "pass",
       "reader": "independent original OBJ streaming text to float32/uint32; no converter imports",
@@ -42,160 +41,21 @@
     "bvhNodes": 65535,
     "paintFaces": 114928
   },
-  "gridCells": 3682116,
-  "validCells": 1185933,
-  "chartMaxPlaneError": 0.0010530024661926187,
-  "spawnSupports": [
-    {
-      "pad": [
-        -18,
-        13.5,
-        -73
-      ],
-      "support": [
-        -18,
-        13.5,
-        -73
-      ],
-      "normal": [
-        0,
-        1,
-        0
-      ],
-      "bodyFits": true,
-      "object": "Fld_Factory00_floorA_20_1__FloorRubber00"
-    },
-    {
-      "pad": [
-        18,
-        13.5,
-        73
-      ],
-      "support": [
-        18,
-        13.5,
-        73
-      ],
-      "normal": [
-        0,
-        1,
-        0
-      ],
-      "bodyFits": true,
-      "object": "Fld_Factory00_floorA_20_1__FloorRubber00"
-    }
-  ],
-  "navigation": {
-    "navNodes": 9092,
-    "validNodes": 7917,
-    "spawnIds": [
-      307,
-      8807
+  "grid": {
+    "conversionRecipe": "inkwave-browser-source-v3",
+    "cells": 3682116,
+    "liveCells": 1185933,
+    "maxPlaneError": 0.0010530024661926187
+  },
+  "inferredSourceSemantics": {
+    "nonPaintableObjectPatterns": [
+      "^FldObj_Factory00_PackPnt_.*GeneralBoxNoPaint_",
+      "^Fld_Factory00_floorA_np_"
     ],
-    "navMilliseconds": 9242.146090000002
-  },
-  "directedRoutes": {
-    "teams": 2,
-    "goalsPerTeam": 83,
-    "allRoutesExist": true
-  },
-  "movement": {
-    "weapon": "fixture shooter; native existing Actor movement",
-    "gear": "fixture default; console gear equivalence unverified",
-    "state": "dry source FloorRubber00; opening or death respawn, fire launch, 0.2 s full inward walk",
-    "measurements": [
-      {
-        "team": 0,
-        "hz": 30,
-        "opening": true,
-        "grounded": true,
-        "distance": 0.7839999999999887
-      },
-      {
-        "team": 0,
-        "hz": 30,
-        "opening": false,
-        "grounded": true,
-        "distance": 0.7839999999999887
-      },
-      {
-        "team": 0,
-        "hz": 60,
-        "opening": true,
-        "grounded": true,
-        "distance": 0.7379999999999871
-      },
-      {
-        "team": 0,
-        "hz": 60,
-        "opening": false,
-        "grounded": true,
-        "distance": 0.7379999999999871
-      },
-      {
-        "team": 0,
-        "hz": 120,
-        "opening": true,
-        "grounded": true,
-        "distance": 0.7149999999999874
-      },
-      {
-        "team": 0,
-        "hz": 120,
-        "opening": false,
-        "grounded": true,
-        "distance": 0.7149999999999874
-      },
-      {
-        "team": 1,
-        "hz": 30,
-        "opening": true,
-        "grounded": true,
-        "distance": 0.7839999999999887
-      },
-      {
-        "team": 1,
-        "hz": 30,
-        "opening": false,
-        "grounded": true,
-        "distance": 0.7839999999999887
-      },
-      {
-        "team": 1,
-        "hz": 60,
-        "opening": true,
-        "grounded": true,
-        "distance": 0.7379999999999871
-      },
-      {
-        "team": 1,
-        "hz": 60,
-        "opening": false,
-        "grounded": true,
-        "distance": 0.7379999999999871
-      },
-      {
-        "team": 1,
-        "hz": 120,
-        "opening": true,
-        "grounded": true,
-        "distance": 0.7149999999999874
-      },
-      {
-        "team": 1,
-        "hz": 120,
-        "opening": false,
-        "grounded": true,
-        "distance": 0.7149999999999874
-      }
+    "nonCollidableObjectPatterns": [
+      "^Fld_Factory00_pPlane590_1__GroundWater00_va$",
+      "^Fld_Factory00_pPlane644_1__GroundWater00$"
     ]
-  },
-  "nativeTests": {
-    "tests": 25,
-    "passed": 24,
-    "failed": 0,
-    "skipped": 1,
-    "durationMilliseconds": 45895.985265
   },
   "waterBeforeAfter": [
     {
@@ -229,138 +89,1170 @@
       ]
     }
   ],
-  "builds": {
-    "_site-native-umami": {
-      "contentHash": "44185d7d51c45eba9d8aa1e3e22631be2196c9479052ede06d55817b9e045ea8",
-      "inputHash": "5bbc6e55db0223701f1a0c0b4a83aefa501f0f99d7859b16ded1a15766ba939d"
+  "tests": {
+    "sourceMatrix": {
+      "path": ".ci-scratch/native-tests-460da559.log",
+      "sha256": "190d600e8777a5428d19b3b43c26710935b8484da93c9dafae6128aa71830fc8",
+      "tests": 83,
+      "passed": 73,
+      "failed": 0,
+      "skipped": 10,
+      "durationMs": 163037.027121
     },
-    "_site-native-umami-public": {
-      "contentHash": "c49960bc62357d8130e13b91b74d3e599dc488cc3fefa54d1c2f9952b481ef79",
-      "inputHash": "5bbc6e55db0223701f1a0c0b4a83aefa501f0f99d7859b16ded1a15766ba939d"
+    "productionCharacterSupportAndTower": {
+      "path": ".ci-scratch/umami-character-tests.log",
+      "sha256": "45f1f1e4fcacf6f3163e94e6858bef93f49b411ef6fa59f9ffcad9b393860a85",
+      "tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 47412.115342
     },
-    "_site-native-umami-water": {
-      "contentHash": "7d2b9924fa7d026fc789b6cbb91d4154a610189d8082866e8242658ddb469a38",
-      "inputHash": "b98b304cb03e04a43d09525791f68f92cb0c1e03125c774f39101917c1a1e34e"
+    "acceptedDefaultSupport": {
+      "path": ".ci-scratch/default-7ddb.log",
+      "sha256": "4bc348d7108a665863775ed63bafb5a81186799b0283f29aa83fa345564d182e",
+      "tests": 4,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 2,
+      "durationMs": 2169.312521
+    },
+    "builtPublicPackaging": {
+      "path": ".ci-scratch/packaging-7ddb.log",
+      "sha256": "f43ff82c4c432b4cd30ea611e7b835e3e3a3dda77b1df75ce07b557e84e0a3b2",
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "durationMs": 5646.101108
+    },
+    "startupBudget": {
+      "path": ".ci-scratch/budget-7ddb.log",
+      "sha256": "71c881c222be218402ffe913f6bc12c9c69ecb9083c98c1871e18887acb7fe16",
+      "status": "passed"
+    },
+    "conditions": "CPU heavy lock; Node tests serial; sourceMatrix ten skips are other private stages/opt-ins, own four Character cases have no skips"
+  },
+  "movement": [
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": true,
+      "grounded": true,
+      "distance": 0.7839999999999887
+    },
+    {
+      "team": 0,
+      "hz": 30,
+      "opening": false,
+      "grounded": true,
+      "distance": 0.7839999999999887
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": true,
+      "grounded": true,
+      "distance": 0.7379999999999871
+    },
+    {
+      "team": 0,
+      "hz": 60,
+      "opening": false,
+      "grounded": true,
+      "distance": 0.7379999999999871
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": true,
+      "grounded": true,
+      "distance": 0.7149999999999874
+    },
+    {
+      "team": 0,
+      "hz": 120,
+      "opening": false,
+      "grounded": true,
+      "distance": 0.7149999999999874
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": true,
+      "grounded": true,
+      "distance": 0.7839999999999887
+    },
+    {
+      "team": 1,
+      "hz": 30,
+      "opening": false,
+      "grounded": true,
+      "distance": 0.7839999999999887
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": true,
+      "grounded": true,
+      "distance": 0.7379999999999871
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "opening": false,
+      "grounded": true,
+      "distance": 0.7379999999999871
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": true,
+      "grounded": true,
+      "distance": 0.7149999999999874
+    },
+    {
+      "team": 1,
+      "hz": 120,
+      "opening": false,
+      "grounded": true,
+      "distance": 0.7149999999999874
+    }
+  ],
+  "towerSource": {
+    "pathNodes": 60,
+    "allSweptSegmentsClear": true,
+    "bothTeamsReachAllApproaches": true,
+    "halfSize": 1.2,
+    "localLift": 1.2,
+    "inputBoarding": [
+      {
+        "hz": 30,
+        "boarded": true
+      },
+      {
+        "hz": 60,
+        "boarded": true
+      },
+      {
+        "hz": 120,
+        "boarded": true
+      }
+    ],
+    "sourceClearance": {
+      "queries": 21125,
+      "triangleTests": 293826,
+      "radius": 2.097056274847714,
+      "height": 2.03,
+      "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+    }
+  },
+  "currentBuilds": {
+    "_site-native-umami-final": {
+      "inputHash": "a1a5a9664cc1dadea61f033dd46c879f6f682fe01f6e4f04624f37bbd63b249c",
+      "contentHash": "3638ef7cc4578a8d350ecd9b91c0488d3f7bee085720b43d1a6925725bf6a09f",
+      "nativeRuntimeSha256": "a4f53c2c9fab94bdac39135bbf1207764b61661c0600c1be05b02b77f7f1bd90"
+    },
+    "_site-native-umami-public-final": {
+      "inputHash": "a1a5a9664cc1dadea61f033dd46c879f6f682fe01f6e4f04624f37bbd63b249c",
+      "contentHash": "8482dfb7518ec893f036cc5cd3e63427a6cc2c6a7d2e8ef01bee0c49e9c5d64d",
+      "nativeRuntimeSha256": "a4f53c2c9fab94bdac39135bbf1207764b61661c0600c1be05b02b77f7f1bd90"
+    }
+  },
+  "proofCohorts": {
+    "final-460": {
+      "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
+      "builds": {
+        "_site-native-umami-final": {
+          "inputHash": "ad4aa37c164e64ba72697a726dde766458248f950e554bef8874ae94982d4d57",
+          "contentHash": "603c88836004ca7843bd6d39bc301e43121ecbf89ae0f021e2f60336f0c2849b",
+          "nativeRuntimeSha256": "56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb"
+        },
+        "_site-native-umami-public-final": {
+          "inputHash": "ad4aa37c164e64ba72697a726dde766458248f950e554bef8874ae94982d4d57",
+          "contentHash": "20b0d8070243a6795d206c5d567671422081200a8b08308919c33e7b5dba8829",
+          "nativeRuntimeSha256": "56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb"
+        }
+      }
+    },
+    "final-d92": {
+      "foundation": "d92fab242a6616c2de82a01798d0b135889ff97e",
+      "builds": {
+        "_site-native-umami-final": {
+          "inputHash": "977804a78e9c66ddc7dedcd8b19f9ce6354f0a1c8a669105e2dd14fc908deab7",
+          "contentHash": "d42ec7dafb1d08dc11d00b80bccbbe539dad6840471bba78984102cb55f2831d",
+          "nativeRuntimeSha256": "4e975409e4a53dc65e902a32e27c190837198eca8a54905450e846a299a999f8"
+        },
+        "_site-native-umami-public-final": {
+          "inputHash": "977804a78e9c66ddc7dedcd8b19f9ce6354f0a1c8a669105e2dd14fc908deab7",
+          "contentHash": "0dd4c3a614535671722e860a07ed1c69a541eee595e6f142589abea24311ea66",
+          "nativeRuntimeSha256": "4e975409e4a53dc65e902a32e27c190837198eca8a54905450e846a299a999f8"
+        }
+      }
     }
   },
   "evidence": {
     "gameplay": {
-      "path": ".browser-evidence/gameplay/browser.json",
-      "sha256": "96ed3913ef32e0ac50197d30bb948bb80cb209f066c427dd8cc196bd3598eed5",
-      "status": "recorded"
+      "path": ".browser-evidence/final-460/gameplay/browser.json",
+      "sha256": "7a8c03e0870197df77b241b222b1466d215888da52664cc690f331f23d264aa2",
+      "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
+      "cohort": "final-460",
+      "scope": "8 actors, 7 bots, all five local rules, legal controller Tower boarding; unchanged for current default-OFF navigation"
     },
-    "sourceBrowser": {
-      "path": ".browser-evidence/source-browser/source-browser.json",
-      "sha256": "b080132ddc08c284285faf942ba096e5c411247505cc5ef0e5a42e7e1068554b",
-      "status": "passed"
+    "online": {
+      "path": ".browser-evidence/final-460/online/online.json",
+      "sha256": "f2bee3273be836d05e0b9e92acd9b81354007ec9003fe518992b3926012eaea5",
+      "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
+      "cohort": "final-460",
+      "scope": "all five modes, real WebSocket + production RoomDurableObject, full-grid settlement equality; unchanged v3 mask"
+    },
+    "projectiles": {
+      "path": ".browser-evidence/final-460/projectiles/browser.json",
+      "sha256": "12983d0f6034f145c266953dc43a5e804ea1fbad4cd1a9e6947dfd49b997b993",
+      "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
+      "cohort": "final-460",
+      "scope": "ordinary Actor/WeaponRunner/Projectiles source wall contact at 30/60/120 Hz; unchanged geometry and projectile handlers"
+    },
+    "camera": {
+      "path": ".browser-evidence/final-d92/camera/camera-basis.json",
+      "sha256": "33a307ba8a1b6738223c8e599d1a379a6916f9701b06b530cb52f448f1d7586f",
+      "foundation": "d92fab242a6616c2de82a01798d0b135889ff97e",
+      "cohort": "final-d92",
+      "scope": "actual offline and both-team online controller launch at 30/60/120 Hz; unchanged orientation paths"
     },
     "render": {
-      "path": ".browser-evidence/render/render.json",
-      "sha256": "bb7e8458c33796113f0281c17cb206d364273a44a59536f7e8c9dd7fe6bfcb2c",
-      "status": "passed"
+      "path": ".browser-evidence/final-d92/render/render.json",
+      "sha256": "b0ea25da22dd99ff850ee7f634f4dcc97b6330bcece473b0ea94ffb5ea5424a3",
+      "foundation": "d92fab242a6616c2de82a01798d0b135889ff97e",
+      "cohort": "final-d92",
+      "scope": "source attributes, identical pixels, one indexed ink draw, twelve moving views; unchanged renderer/geometry"
     },
     "lifecycle": {
-      "path": ".browser-evidence/lifecycle/lifecycle.json",
-      "sha256": "c5874b9a9581259091c0191f4baf1fc6c834e696c8265b762d9766ea2489df22",
-      "status": "passed"
+      "path": ".browser-evidence/final-d92/lifecycle/lifecycle.json",
+      "sha256": "57724c605d0b47bf46727a3a581cc4147473a42470d32a5679675baf57196bfd",
+      "foundation": "d92fab242a6616c2de82a01798d0b135889ff97e",
+      "cohort": "final-d92",
+      "scope": "quality authority/grid retention, corrupt source rollback, cancellation, cleanup, fingerprint, touchscreen 844x390; unchanged lifecycle"
+    },
+    "source-browser": {
+      "path": ".browser-evidence/final-d92/source-browser/source-browser.json",
+      "sha256": "c50a83c640687335f9c1a7c8e643e576c05372f8c40e89c31dfd0a2ec05d6b3a",
+      "foundation": "d92fab242a6616c2de82a01798d0b135889ff97e",
+      "cohort": "final-d92",
+      "scope": "actual public menu, pinned cross-origin original download, Worker conversion, derived cache, altered-source rollback; unchanged v3 conversion"
     }
   },
-  "unverified": [
-    "retail extraction version/date and scale",
-    "11.3.0 native collision and paint/grate/climb masks",
-    "retail spawn/landing/ranked placements and mode geometry",
-    "moving object transforms/states",
-    "native material shader",
-    "console weapon/gear/frame measurement in this stage",
-    "physical Switch/mobile hardware FPS"
-  ],
   "gameplay": {
-    "id": "umami",
     "actors": 8,
-    "alive": 8,
     "bots": 7,
+    "alive": 8,
     "coverage": [
-      0.016178142299090675,
-      0.00796424967123096
+      0.019726254418552365,
+      0.016397937248303702
     ],
-    "turfTotal": 321577,
+    "turfTotal": 315925,
     "counts": [
-      4825,
-      2460
+      5905,
+      4964
     ],
     "cpuFrame": {
-      "p50": 20.399999991059303,
-      "p95": 49.8999999910593,
-      "max": 101.40000000596046
+      "p50": 50.099999994039536,
+      "p95": 231.5,
+      "max": 1026.7000000029802
     },
-    "navValid": 7917,
-    "version1130Verified": false,
+    "navValid": 6766,
+    "errors": [],
     "movingBots": 7,
-    "browserErrors": 0,
-    "rules": [
+    "modes": [
+      "zones",
+      "tower",
+      "rainmaker",
+      "clams"
+    ],
+    "profile": {
+      "physics.raycast": {
+        "milliseconds": 247.99999989569187,
+        "calls": 38087
+      },
+      "bot.update": {
+        "milliseconds": 342.3000000566244,
+        "calls": 1260
+      },
+      "physics.collideBody": {
+        "milliseconds": 41.000000074505806,
+        "calls": 1440
+      },
+      "physics.groundProbe": {
+        "milliseconds": 105.2999999821186,
+        "calls": 1323
+      },
+      "character.update": {
+        "milliseconds": 2588.4999996572733,
+        "calls": 1440
+      },
+      "actor.update": {
+        "milliseconds": 3293.7999999523163,
+        "calls": 1440
+      },
+      "projectiles.update": {
+        "milliseconds": 1647.1000001430511,
+        "calls": 180
+      },
+      "paint._advanceSplatOwnership": {
+        "milliseconds": 1561.7000003010035,
+        "calls": 25041
+      },
+      "paint.radius.2.1": {
+        "milliseconds": 324.599999666214,
+        "calls": 4412,
+        "faceVisits": 1855024
+      },
+      "paint._emitGrowth": {
+        "milliseconds": 4923.899999812245,
+        "calls": 25297
+      },
+      "paint.radius.1.8": {
+        "milliseconds": 449.799999833107,
+        "calls": 8811,
+        "faceVisits": 3255861
+      },
+      "paint.radius.1.9": {
+        "milliseconds": 145.8000001013279,
+        "calls": 2408,
+        "faceVisits": 417137
+      },
+      "paint.radius.3.7": {
+        "milliseconds": 104.20000033080578,
+        "calls": 891,
+        "faceVisits": 257683
+      },
+      "paint.radius.3.8": {
+        "milliseconds": 466.5000002980232,
+        "calls": 5436,
+        "faceVisits": 3616240
+      },
+      "paint.radius.2": {
+        "milliseconds": 60.79999998211861,
+        "calls": 2791,
+        "faceVisits": 896401
+      },
+      "paint.radius.2.2": {
+        "milliseconds": 10.000000089406967,
+        "calls": 250,
+        "faceVisits": 45345
+      },
+      "paint._drawQuads": {
+        "milliseconds": 6524.199999883771,
+        "calls": 529
+      },
+      "paint.advanceSimulation": {
+        "milliseconds": 9390.599999949336,
+        "calls": 180
+      },
+      "fx.update": {
+        "milliseconds": 82.79999987781048,
+        "calls": 180
+      },
+      "environment.update": {
+        "milliseconds": 25.599999889731407,
+        "calls": 180
+      },
+      "paint.flush": {
+        "milliseconds": 3.2000000029802322,
+        "calls": 181
+      },
+      "minimap.update": {
+        "milliseconds": 95.90000000596046,
+        "calls": 180
+      },
+      "paint.coverage": {
+        "milliseconds": 82.89999996125698,
+        "calls": 181
+      },
+      "hud.update": {
+        "milliseconds": 514.9000000357628,
+        "calls": 180
+      },
+      "physics.bodyFits": {
+        "milliseconds": 6.299999997019768,
+        "calls": 26
+      },
+      "paint._cpuSplat": {
+        "milliseconds": 150.19999992847443,
+        "calls": 52662
+      },
+      "paint.splat": {
+        "milliseconds": 1460.8999999165535,
+        "calls": 186
+      },
+      "nav.nearest": {
+        "milliseconds": 0,
+        "calls": 12
+      },
+      "nav.path": {
+        "milliseconds": 0.10000000894069672,
+        "calls": 4
+      },
+      "paint.radius.1.5": {
+        "milliseconds": 0,
+        "calls": 42,
+        "faceVisits": 42
+      }
+    }
+  },
+  "towerBrowser": {
+    "pathNodes": 60,
+    "segmentInteriorSamples": 3,
+    "actualCapsuleSupports": 474,
+    "halfSize": 1.2,
+    "localLift": 1.2,
+    "sourceClearance": {
+      "queries": 21125,
+      "triangleTests": 293826,
+      "radius": 2.097056274847714,
+      "height": 2.03,
+      "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+    },
+    "arenaSpan": {
+      "origin": [
+        0,
+        0
+      ],
+      "forward": [
+        0.23940488750066796,
+        0.9709198215304867
+      ],
+      "endpointProjection": [
+        -10.148107175722759,
+        16.731741581991127
+      ],
+      "minimumHalfDepth": 2.097056274847714,
+      "bothHalvesVerified": true
+    },
+    "liveGroundedHumanCounted": true,
+    "keyboardBoarding": [
       {
-        "mode": "zones",
-        "state": "playing",
-        "actors": 8,
-        "counts": [
-          98,
-          100
-        ],
-        "supported": true
+        "hz": 30,
+        "boarded": true,
+        "frames": 16,
+        "controller": 0,
+        "grounded": true,
+        "groundHit": true
       },
       {
-        "mode": "tower",
-        "state": "playing",
-        "actors": 8,
-        "counts": [
-          98,
-          100
-        ],
-        "supported": true
+        "hz": 60,
+        "boarded": true,
+        "frames": 31,
+        "controller": 0,
+        "grounded": true,
+        "groundHit": true
       },
       {
-        "mode": "rainmaker",
-        "state": "playing",
-        "actors": 8,
-        "counts": [
-          100,
-          100
-        ],
-        "supported": true
-      },
-      {
-        "mode": "clams",
-        "state": "playing",
-        "actors": 8,
-        "counts": [
-          100,
-          100
-        ],
-        "supported": true
+        "hz": 120,
+        "boarded": true,
+        "frames": 62,
+        "controller": 0,
+        "grounded": true,
+        "groundHit": true
       }
     ]
   },
-  "sourceBrowser": {
+  "online": {
     "status": "passed",
-    "objDownloads": 2,
-    "cache": {
-      "id": "umami",
-      "derivedCacheHit": true,
-      "objDownloads": 0
+    "packets": 2218,
+    "errors": [],
+    "weapon": "s3-blaster-short / owned Luna 3.84 radius",
+    "modes": [
+      {
+        "mode": "turf",
+        "actors": [
+          8,
+          8
+        ],
+        "fingerprints": [
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb",
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb"
+        ],
+        "gridBytes": [
+          3682116,
+          3682116
+        ],
+        "gridSha256": [
+          "d30adead8f00944cf8208d3a1e903a15bfc69be9600f179e66fd401bdf2ed4a8",
+          "d30adead8f00944cf8208d3a1e903a15bfc69be9600f179e66fd401bdf2ed4a8"
+        ],
+        "fullGridEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 5,
+          "phases": [
+            {
+              "phase": "initial",
+              "settled": true,
+              "frames": 215,
+              "watermark": 880,
+              "state": [
+                {
+                  "applied": 1106,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 1106,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            },
+            {
+              "phase": "final",
+              "settled": true,
+              "frames": 5,
+              "watermark": 880,
+              "state": [
+                {
+                  "applied": 1106,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 1106,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            }
+          ],
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "zones",
+        "actors": [
+          8,
+          8
+        ],
+        "fingerprints": [
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb",
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb"
+        ],
+        "gridBytes": [
+          3682116,
+          3682116
+        ],
+        "gridSha256": [
+          "99d27aaa92c6f8c5b783715c5b9c3f100a2d528d738ab954c17ed8de9f4d86bd",
+          "99d27aaa92c6f8c5b783715c5b9c3f100a2d528d738ab954c17ed8de9f4d86bd"
+        ],
+        "fullGridEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 5,
+          "phases": [
+            {
+              "phase": "initial",
+              "settled": true,
+              "frames": 370,
+              "watermark": 1411,
+              "state": [
+                {
+                  "applied": 1653,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 1653,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            },
+            {
+              "phase": "final",
+              "settled": true,
+              "frames": 5,
+              "watermark": 1411,
+              "state": [
+                {
+                  "applied": 1653,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 1653,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            }
+          ],
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "tower",
+        "actors": [
+          8,
+          8
+        ],
+        "fingerprints": [
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb",
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb"
+        ],
+        "gridBytes": [
+          3682216,
+          3682216
+        ],
+        "gridSha256": [
+          "147f8e76c17c73f97c64f9c3817daed1974eea6c278c52bd98be4dbfa26b4183",
+          "147f8e76c17c73f97c64f9c3817daed1974eea6c278c52bd98be4dbfa26b4183"
+        ],
+        "fullGridEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 5,
+          "phases": [
+            {
+              "phase": "initial",
+              "settled": true,
+              "frames": 15,
+              "watermark": 1655,
+              "state": [
+                {
+                  "applied": 1655,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 1655,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            },
+            {
+              "phase": "final",
+              "settled": true,
+              "frames": 5,
+              "watermark": 1655,
+              "state": [
+                {
+                  "applied": 1655,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 1655,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            }
+          ],
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "rainmaker",
+        "actors": [
+          8,
+          8
+        ],
+        "fingerprints": [
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb",
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb"
+        ],
+        "gridBytes": [
+          3682116,
+          3682116
+        ],
+        "gridSha256": [
+          "be6251fed04a59891b5af6e876da578559a4094de05b21a27c29963e2eb7be71",
+          "be6251fed04a59891b5af6e876da578559a4094de05b21a27c29963e2eb7be71"
+        ],
+        "fullGridEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 5,
+          "phases": [
+            {
+              "phase": "initial",
+              "settled": true,
+              "frames": 255,
+              "watermark": 2426,
+              "state": [
+                {
+                  "applied": 2952,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 2952,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            },
+            {
+              "phase": "final",
+              "settled": true,
+              "frames": 5,
+              "watermark": 2426,
+              "state": [
+                {
+                  "applied": 2952,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 2952,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            }
+          ],
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "mode": "clams",
+        "actors": [
+          8,
+          8
+        ],
+        "fingerprints": [
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb",
+          "native-stage-v1:umami:cdd8226ce016cda45f6648d1d0ab52d8d006cb9688a611b9fd08c77634509842:56ab3ba0c0205ad58a0719ce4c5d1357ebe463e0f47d21cd42307a390b3f4ebb"
+        ],
+        "gridBytes": [
+          3682116,
+          3682116
+        ],
+        "gridSha256": [
+          "d2fbb475fa5d9c793b007b1d713568acc6d4b55c9a45f5dd643960b4d340d693",
+          "d2fbb475fa5d9c793b007b1d713568acc6d4b55c9a45f5dd643960b4d340d693"
+        ],
+        "fullGridEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 5,
+          "phases": [
+            {
+              "phase": "initial",
+              "settled": true,
+              "frames": 290,
+              "watermark": 3247,
+              "state": [
+                {
+                  "applied": 3332,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 3332,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            },
+            {
+              "phase": "final",
+              "settled": true,
+              "frames": 5,
+              "watermark": 3247,
+              "state": [
+                {
+                  "applied": 3332,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                },
+                {
+                  "applied": 3332,
+                  "growing": 0,
+                  "queued": 0,
+                  "out": 0
+                }
+              ]
+            }
+          ],
+          "probeRadius": 3.84
+        },
+        "transport": "real WebSocket + production RoomDurableObject"
+      }
+    ]
+  },
+  "projectiles": {
+    "id": "umami",
+    "sourceSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+    "version1130Verified": false,
+    "actors": 8,
+    "bots": 7,
+    "weapon": "shooter",
+    "sourceWeapon": "WeaponShooterNormal",
+    "gear": [
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      }
+    ],
+    "cases": [
+      {
+        "hz": 30,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 6439,
+            "triangle": 6588,
+            "distanceToTarget": 0.04652272020331673,
+            "object": 27
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 1.7999999970197678,
+          "max": 11.299999997019768
+        }
+      },
+      {
+        "hz": 60,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 6439,
+            "triangle": 6588,
+            "distanceToTarget": 0.04652272020331673,
+            "object": 27
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 1.6000000089406967,
+          "max": 3.1000000089406967
+        }
+      },
+      {
+        "hz": 120,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 6439,
+            "triangle": 6588,
+            "distanceToTarget": 0.04652272020331673,
+            "object": 27
+          }
+        ],
+        "naturalWallSplats": 5,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.3999999910593033,
+          "max": 6.799999997019768
+        }
+      }
+    ],
+    "sourceObject": "FldObj_Factory00Generator_Body1__Generator00",
+    "face": 6439,
+    "triangle": 6588,
+    "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+    "errors": []
+  },
+  "camera": {
+    "status": "passed",
+    "id": "umami",
+    "offline": [
+      {
+        "hz": 30,
+        "team": 0,
+        "rigYaw": 0.24175286786424297,
+        "aimYaw": 0.24175286786424297,
+        "expectedYaw": 0.24175286786424297,
+        "alignment": 0.9997954824998758,
+        "actors": 8,
+        "mode": "turf",
+        "native": true,
+        "landing": {
+          "alive": true,
+          "grounded": true,
+          "spawnActive": false,
+          "input": "browser canvas pointer lock + physical mouse fire",
+          "inputAlignment": 0.9997954824998758
+        }
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "rigYaw": 0.24175286786424297,
+        "aimYaw": 0.24175286786424297,
+        "expectedYaw": 0.24175286786424297,
+        "alignment": 0.9998125976749113,
+        "actors": 8,
+        "mode": "turf",
+        "native": true,
+        "landing": {
+          "alive": true,
+          "grounded": true,
+          "spawnActive": false,
+          "input": "browser canvas pointer lock + physical mouse fire",
+          "inputAlignment": 0.9998125976749113
+        }
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "rigYaw": 0.24175286786424297,
+        "aimYaw": 0.24175286786424297,
+        "expectedYaw": 0.24175286786424297,
+        "alignment": 0.9998040324172806,
+        "actors": 8,
+        "mode": "turf",
+        "native": true,
+        "landing": {
+          "alive": true,
+          "grounded": true,
+          "spawnActive": false,
+          "input": "browser canvas pointer lock + physical mouse fire",
+          "inputAlignment": 0.9998040324172806
+        }
+      }
+    ],
+    "online": [
+      {
+        "hz": 30,
+        "peers": [
+          {
+            "hz": 30,
+            "team": 0,
+            "rigYaw": 0.24175286786424297,
+            "aimYaw": 0.24175286786424297,
+            "expectedYaw": 0.24175286786424297,
+            "alignment": 0.9998125976749113,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998125976749113
+            }
+          },
+          {
+            "hz": 30,
+            "team": 1,
+            "rigYaw": -2.8998397857255505,
+            "aimYaw": -2.8998397857255505,
+            "expectedYaw": -2.8998397857255505,
+            "alignment": 0.9998125976749113,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998125976749113
+            }
+          }
+        ],
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "hz": 60,
+        "peers": [
+          {
+            "hz": 60,
+            "team": 0,
+            "rigYaw": 0.24175286786424297,
+            "aimYaw": 0.24175286786424297,
+            "expectedYaw": 0.24175286786424297,
+            "alignment": 0.9998125976749113,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998125976749113
+            }
+          },
+          {
+            "hz": 60,
+            "team": 1,
+            "rigYaw": -2.8998397857255505,
+            "aimYaw": -2.8998397857255505,
+            "expectedYaw": -2.8998397857255505,
+            "alignment": 0.9998125976749113,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998125976749113
+            }
+          }
+        ],
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "hz": 120,
+        "peers": [
+          {
+            "hz": 120,
+            "team": 0,
+            "rigYaw": 0.24175286786424297,
+            "aimYaw": 0.24175286786424297,
+            "expectedYaw": 0.24175286786424297,
+            "alignment": 0.9998125976749113,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998125976749113
+            }
+          },
+          {
+            "hz": 120,
+            "team": 1,
+            "rigYaw": -2.8998397857255505,
+            "aimYaw": -2.8998397857255505,
+            "expectedYaw": -2.8998397857255505,
+            "alignment": 0.9998125976749113,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998125976749113
+            }
+          }
+        ],
+        "transport": "real WebSocket + production RoomDurableObject"
+      }
+    ],
+    "errors": [],
+    "resources": [
+      {
+        "phase": "menu",
+        "gridBytes": 3682116,
+        "paintGrowing": 0,
+        "paintOrderRecords": 1,
+        "renderer": {
+          "geometries": 199,
+          "textures": 16
+        },
+        "jsHeapBytes": 533459719
+      },
+      {
+        "phase": "menu",
+        "gridBytes": 3682116,
+        "paintGrowing": 0,
+        "paintOrderRecords": 1,
+        "renderer": {
+          "geometries": 199,
+          "textures": 16
+        },
+        "jsHeapBytes": 542976404
+      },
+      {
+        "phase": "menu",
+        "gridBytes": 3682116,
+        "paintGrowing": 0,
+        "paintOrderRecords": 1,
+        "renderer": {
+          "geometries": 199,
+          "textures": 16
+        },
+        "jsHeapBytes": 573620441
+      }
+    ],
+    "pointerLockEnvironment": {
+      "locked": true,
+      "error": null,
+      "focused": true
     },
-    "failureRollback": {
-      "levelRetained": true,
-      "menu": "setup",
-      "loadingRemoved": true
+    "legacy": {
+      "id": "tidewater",
+      "native": false,
+      "rigYaw": 0,
+      "aimYaw": 0
     },
-    "conversionMilliseconds": 11313.90000000596,
-    "scope": "immutable original baseline before underwater collision correction; original download/conversion/cache paths unchanged"
+    "packets": 1231
   },
   "render": {
     "status": "passed",
     "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "actors": 8,
-    "chunks": 192,
     "authoritiesUnchanged": true,
     "cpuPaintUnchanged": true,
     "views": [
@@ -369,43 +1261,41 @@
         "changedPixels": 0,
         "maxChannelError": 0,
         "baselineSelfPixels": 0,
-        "chunkedSelfPixels": 0,
+        "indexedSelfPixels": 0,
         "baselineInkTriangles": 176127,
-        "indexedInkTriangles": 164793,
-        "baselineP50Milliseconds": 7.899999991059303,
-        "indexedP50Milliseconds": 5.199999988079071
+        "indexedInkTriangles": 159332,
+        "baselineP50Ms": 11.299999997019768,
+        "indexedP50Ms": 11.700000002980232
       },
       {
         "name": "center",
         "changedPixels": 0,
         "maxChannelError": 0,
         "baselineSelfPixels": 0,
-        "chunkedSelfPixels": 0,
+        "indexedSelfPixels": 0,
         "baselineInkTriangles": 176127,
         "indexedInkTriangles": 81365,
-        "baselineP50Milliseconds": 3.5,
-        "indexedP50Milliseconds": 3.7999999970197678
+        "baselineP50Ms": 2.5,
+        "indexedP50Ms": 2.3999999910593033
       },
       {
         "name": "overhead",
         "changedPixels": 0,
         "maxChannelError": 0,
         "baselineSelfPixels": 0,
-        "chunkedSelfPixels": 0,
+        "indexedSelfPixels": 0,
         "baselineInkTriangles": 176127,
         "indexedInkTriangles": 176115,
-        "baselineP50Milliseconds": 5.9000000059604645,
-        "indexedP50Milliseconds": 4.5999999940395355
+        "baselineP50Ms": 10.200000002980232,
+        "indexedP50Ms": 11.600000008940697
       }
     ],
     "moving": {
       "frames": 12,
-      "allSingleInkDraw": true,
-      "allIndexRebuilt": true,
-      "baselineMedianMilliseconds": 4.950000002980232,
-      "indexedMedianMilliseconds": 5.549999997019768
-    },
-    "measurementLimit": "SwiftShader diagnostic; culling timings vary by view; no physical mobile/Switch FPS measurement"
+      "singleIndexedDraw": true,
+      "baselineMedianMs": 4.350000001490116,
+      "indexedMedianMs": 6.550000004470348
+    }
   },
   "lifecycle": {
     "status": "passed",
@@ -439,7 +1329,7 @@
         "native": false,
         "nativeGroups": 0,
         "memory": {
-          "geometries": 229,
+          "geometries": 222,
           "textures": 28
         }
       },
@@ -448,7 +1338,7 @@
         "native": true,
         "nativeGroups": 1,
         "memory": {
-          "geometries": 353,
+          "geometries": 347,
           "textures": 119
         }
       },
@@ -457,7 +1347,7 @@
         "native": false,
         "nativeGroups": 0,
         "memory": {
-          "geometries": 229,
+          "geometries": 222,
           "textures": 28
         }
       }
@@ -480,11 +1370,11 @@
         "atlas": 2048,
         "textureCount": 99,
         "cpuFrame": {
-          "p50": 20.5,
-          "p95": 52.099999994039536,
-          "max": 819.2999999970198
+          "p50": 18.099999994039536,
+          "p95": 56.29999999701977,
+          "max": 3591.8999999910593
         },
-        "gpuDrainRenderMs": 4.9000000059604645,
+        "gpuDrainRenderMs": 9.399999991059303,
         "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
         "local": {
           "grounded": true,
@@ -494,11 +1384,122 @@
       }
     ]
   },
-  "toolVersions": {
+  "sourceBrowser": {
+    "status": "passed",
+    "stages": [
+      {
+        "id": "umami",
+        "sourceMode": "browser-direct",
+        "sourceSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+        "geometry": {
+          "vertices": 486036,
+          "triangles": 390222,
+          "collisionTriangles": 228919,
+          "bvhNodes": 65535,
+          "paintFaces": 114928
+        },
+        "actors": 8,
+        "bots": 7,
+        "coverage": [
+          0.0072014782384469175,
+          0.010028355354169132
+        ],
+        "spawn": {
+          "grounded": true,
+          "active": false,
+          "landingFrames": 58,
+          "maximumLandingFrames": 180
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 11233.09999999404,
+          "recipe": "inkwave-browser-source-v3"
+        },
+        "gameMetrics": {
+          "loadMilliseconds": 105123.59999999404,
+          "navMilliseconds": 396.20000000298023,
+          "shaderWarmMilliseconds": 35.79999999701977,
+          "vertices": 486036,
+          "triangles": 390222,
+          "faces": 114928,
+          "gridBytes": 3682116,
+          "atlas": 2048,
+          "ppm": 1.0485760000000004,
+          "textureCount": 99,
+          "quality": "low",
+          "version1130Verified": false
+        },
+        "render": {
+          "frame": 1610,
+          "calls": 227,
+          "triangles": 714054,
+          "points": 0,
+          "lines": 0
+        },
+        "version1130Verified": false
+      }
+    ],
+    "errors": [],
+    "downloads": 2,
+    "menu": [
+      "タイドウォーター広場",
+      "ケルプライン埠頭",
+      "ハリヤードマリーナ",
+      "ユノハナ大渓谷",
+      "ヤガラ市場",
+      "海女美術大学",
+      "ザトウマーケット",
+      "クサヤ温泉",
+      "ナンプラー遺跡"
+    ],
+    "cache": {
+      "id": "umami",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    },
+    "failureRollback": {
+      "levelRetained": true,
+      "menu": "setup",
+      "loadingRemoved": true
+    }
+  },
+  "measurementConditions": {
     "node": "v24.19.0",
-    "chromium": "154.0.8037.57 Debian 13",
-    "gpu": "SwiftShader Vulkan 1.3.0",
-    "browserLock": "/workspace/actions/.ci-scratch/native-stage-browser.lock",
-    "cpuLoad": "other stage owners may perform independent CPU work; GPU jobs serialized"
+    "chromium": "154.0.8037.57",
+    "gpu": "Chromium ANGLE SwiftShader software GL; no hardware FPS",
+    "locks": [
+      "native-stage-cpu-heavy.lock",
+      "native-stage-browser.lock"
+    ],
+    "perfLimits": "view-dependent culling; simulation profile wrappers, warm state, shared CPU load; no general speedup claim"
+  },
+  "unverified": [
+    "public export extraction version/date and units versus console",
+    "11.3.0 native collision and paint/grate/climb masks",
+    "retail spawn/landing/ranked placement and mode-specific geometry",
+    "moving object transforms/states",
+    "native material shader",
+    "console weapon/gear/frame measurements on this stage",
+    "physical Switch/mobile hardware FPS"
+  ],
+  "selfReview": {
+    "status": "passed",
+    "paths": [
+      "patches/native-stages/definitions/umami.json",
+      "patches/native-stages/tests/umami-original.test.mjs",
+      "patches/native-stages/tests/umami-support.test.mjs",
+      "patches/native-stages/tests/umami-tower.test.mjs",
+      "reports/native-stages/umami.md",
+      "reports/native-stages/umami-verification.json"
+    ],
+    "checks": [
+      "exact original attributes and indices remain intact",
+      "opposing original supports retained; no invented moving placements",
+      "NoPaint keeps collision and display; underwater bottoms retain display",
+      "real input and WS receipts scoped to immutable builds",
+      "performance limits and console unknowns retained",
+      "public changes contain no original assets, derived model geometry or screenshots"
+    ],
+    "whitespace": "git diff --check passed"
   }
 }
