@@ -38,7 +38,21 @@ test('Museum opposed pads reach source paint and all local non-moving objectives
   const seen=new Set([start]),queue=[start];for(let i=0;i<queue.length;i++)for(const e of G.nav.nodes[queue[i]].nb)if(G.nav.valid[e.to]&&!seen.has(e.to)){seen.add(e.to);queue.push(e.to);}
   reachable.push({team,spawnNode:start,reachableNodes:seen.size,objectives:checked});
  }
- const result={id:'museum',supports,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,reachable,paintFaces:G.level.faces.length,gridCells:G.paint.grid.length,sourceGeometryUnchanged:true,version1130Verified:false};
+ G.match.mode='turf';G.match.opts={};const launches=[];
+ for(const team of [0,1])for(const hz of [30,60,120])for(const role of ['human','bot0','bot1','bot2','bot3']){
+  const actor=f.make('shooter');actor.team=team;actor.isBot=role!=='human';actor.slot=actor.isBot?Number(role.at(-1)):0;actor._integrate=f.Actor.prototype._integrate;
+  assert.equal(f.beginInitialSquidSpawn(actor),true);const target={...actor.s3.squidSpawn.target};
+  if(!actor.isBot){actor.intent.fire=true;actor.update(1/hz);actor.intent.fire=false;}let frames=0;
+  while(actor.s3.squidSpawn&&frames<hz*3){G.time+=1/hz;actor.update(1/hz);frames++;}
+  assert.equal(actor.s3.squidSpawn,undefined,'actual source launch lands with full integration');
+  assert.ok(actor.alive&&actor.grounded&&actor.ground.hit);
+  const hit=G.physics.raycast(actor.pos.clone().add(new THREE.Vector3(0,.1,0)),new THREE.Vector3(0,-1,0),.3);
+  assert.ok(hit.hit&&hit.triangle>=0,'touchdown uses real source triangle');
+  const landed=actor.pos.toArray(),landingNode=G.nav.nearest(actor.pos,1.2);assert.ok(G.nav.valid[landingNode]);
+  for(const target of targets){const end=G.nav.nearest(new THREE.Vector3(...target),1.2);assert.ok(G.nav.path(landingNode,end,team,50000),role+' team '+team+' post-launch directed objective route');}
+  launches.push({team,hz,role,frames,seconds:frames/hz,target,landed,landingNode,reachableObjectives:targets.length,supportTriangle:hit.triangle,supportObject:data.manifest.objects[data.objectIds[hit.triangle]].name,grounded:actor.grounded,weapon:actor.weaponId});
+ }
+ const result={id:'museum',supports,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,reachable,launches,paintFaces:G.level.faces.length,gridCells:G.paint.grid.length,sourceGeometryUnchanged:true,version1130Verified:false};
  if(process.env.MUSEUM_CPU_EVIDENCE)fs.writeFileSync(process.env.MUSEUM_CPU_EVIDENCE,JSON.stringify(result,null,2)+'\n');
  console.log(JSON.stringify(result));
 });
