@@ -1,0 +1,21 @@
+{
+  "id": "humpback",
+  "internal": "Vss_Wave03",
+  "name": "コンブトラック",
+  "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+  "tree": "70167a0b036081b63638e7eacce7654057f8131c",
+  "bounds": { "minX": -39.3, "minZ": -65.9, "maxX": 39.3, "maxZ": 65.9 },
+  "spawnPads": [[0, 6.08, -61], [0, 6.08, 61]],
+  "spawnBarrier": 2.5,
+  "sourceNavigation": { "wallClimb": true, "highDrops": true },
+  "ruleAvailability": {
+    "tower": {
+      "supported": false,
+      "status": "source-route-unverified",
+      "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。",
+      "evidence": "Pinned complete source retains both opposed spawn decks and skate bowls. Full swept deck/pole/live rider clearance plus source-floor boarding found no opposing-half route at halfSize 1.2 or 0.8 with lifts 3.3, 1.2 or 0.4. Retail Tower placement and compound human uphill routes remain unverified."
+    }
+  },
+  "version1130Verified": false,
+  "placementStatus": "Local inferred opposed plywood-floor supports and full skate-bowl extent from pinned Vss_Wave03 display geometry; retail spawn/ranked placements and units remain unverified."
+}
