@@ -48,7 +48,7 @@ try{
    if(!a.grounded||!a.ground.hit||a.ground.block===w.towerBlockId)throw Error('Setup must contact original source floor outside the tower');
    const position=e.rule.state.position,distance=Math.hypot(a.pos.x-position[0],a.pos.z-position[2]);
    if(distance<=Math.SQRT2*t.halfSize)throw Error('Setup overlaps the live deck footprint');
-   g.rig.follow(a,true);g.rig.yaw=Math.atan2(approach.end[0]-a.pos.x,approach.end[2]-a.pos.z);g.rig.pitch=-.12;
+   g.menus.show(null);g.rig.follow(a,true);g.rig.yaw=Math.atan2(approach.end[0]-a.pos.x,approach.end[2]-a.pos.z);g.rig.pitch=-.12;
    g._frame(1/hz);
    globalThis.urchinBoardingEnd=approach.end;
    return {hz,team:a.team,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,start:approach.start,end:approach.end,sourceNode:approach.sourceNode,height:approach.height,jumping:approach.jumping,deckBlock:w.towerBlockId,sourceGround:true,outsideDeck:true,zeroInitialVelocity:true,localLift:t.localLift,halfSize:t.halfSize,routePoints:t.path.length,legalApproaches:t.boarding.approaches.length,initialCount:e.counts[a.team]};
