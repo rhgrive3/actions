@@ -31,7 +31,7 @@ try{
    if(!h.hit||h.normal.y<.68||h.point.distanceTo(goal)>.01||!route)throw Error('No supported original upper-pad to opposing-bank source route');
    const edges=route.slice(1).map((to,i)=>N.nodes[route[i]].nb.find(e=>e.to===to)),climbs=edges.filter(e=>e.type==='climb'),drops=edges.filter(e=>e.type==='drop');
    if(!climbs.length||!drops.length)throw Error('Opposing-bank route does not prove whole original foredeck access through a genuine NP-rim Surge');
-   globalThis.mantaProbe={team,id,goal,node:n};
+   globalThis.mantaProbe={team,id,goal,node:n,surgeSamples:climbs.filter(e=>e.climb?.kind==='surge').flatMap(e=>e.climb.samples)};
    return{team,start:G.level.spawnPads[team].toArray(),goal:goal.toArray(),sourceGoalTriangle:h.triangle,sourceGoalObject:G.level.manifest.objects[G.level.triangleWorld.objectIds[h.triangle]].name,waypoints:route.length,sourceClimbs:climbs.length,sourceDrops:drops.length};
   },team);
    const row=await page.evaluate(async hz=>{
@@ -41,7 +41,8 @@ try{
     a.setWeapon('shooter');a.spawnAt(G.level.spawnPads[a.team],a.team?Math.PI:0);a.invuln=0;a.bot=new MantaBrain(a,'normal');const b=a.bot;
     if(!a.s3?.abilityPoints||Object.keys(a.s3.abilityPoints).length)throw Error('Source bank proof requires zero AP gear');
     if(!b._pathTo(goal,.6))throw Error('Existing bot rejected genuine opposing-bank goal');b.goalTimer=b.repath=b.bombCd=1000;
-    let fire=false,climbed=false,surged=false,seconds=0,replans=0,transientPathMisses=0,minimumY=a.pos.y,capsuleSamples=0,microCapsuleSamples=0,actorTicks=0,microPrevious=null,profile=null;const times=[],clearance=MantaClearance(G.level),PLAYER=MantaPlayer,actorIntervals=new Set(),brainIntervals=new Set(),profiles=new Set(),tickStart=g.s3Clock.ticks,actorUpdate=a.update,brainUpdate=b.update,collideBody=G.physics.collideBody;
+    let fire=false,climbed=false,surged=false,seconds=0,replans=0,transientPathMisses=0,minimumY=a.pos.y,capsuleSamples=0,microCapsuleSamples=0,actorTicks=0,admittedShots=0,microPrevious=null,profile=null;const times=[],clearance=MantaClearance(G.level),PLAYER=MantaPlayer,actorIntervals=new Set(),brainIntervals=new Set(),profiles=new Set(),tickStart=g.s3Clock.ticks,actorUpdate=a.update,brainUpdate=b.update,collideBody=G.physics.collideBody,configure=G.projectiles.inkFlight.configure;
+    G.projectiles.inkFlight.configure=function(...args){const admitted=configure.apply(this,args);if(admitted&&args[0].owner===a)admittedShots++;return admitted;};
     G.physics.collideBody=function(pos,radius,lift,height,contacts,horizontal,skipGrates,...rest){const result=collideBody.call(this,pos,radius,lift,height,contacts,horizontal,skipGrates,...rest);if(pos===a.pos&&microPrevious){profile={radius,lift,height,skipGrates};profiles.add(JSON.stringify(profile));if(!clearance.clear(microPrevious,pos,radius,lift,height,skipGrates))throw Error('Actual movement source capsule '+JSON.stringify({team:a.team,renderHz:hz,actorTick:actorTicks,from:microPrevious.toArray(),to:pos.toArray(),profile,pi:b.pi,path:b.path?.slice(b.pi,b.pi+2),drop:b._nativeDrop?.phase,climb:b._nativeClimb?.phase,surge:b._nativeSurge?.phase}));microCapsuleSamples++;microPrevious.copy(pos);}return result;};
     b.update=function(dt){brainIntervals.add(dt);return brainUpdate.call(this,dt);};
     a.update=function(dt){
@@ -55,12 +56,14 @@ try{
      if(b.mode==='paint'&&(!b.path||b.goal!==mantaProbe.id)){if(!b._pathTo(goal,.6))transientPathMisses++;b.goalTimer=b.repath=1000;replans++;}
      const t=performance.now();g._frame(1/hz);times.push(performance.now()-t);seconds=(g.s3Clock.ticks-tickStart)/60;
      if(!a.alive||a.grounded&&a.pos.distanceTo(goal)<1.5&&MantaFootSupported(G,a,mantaProbe.node))break;
-    }}finally{a.update=actorUpdate;b.update=brainUpdate;G.physics.collideBody=collideBody;}
+    }}finally{a.update=actorUpdate;b.update=brainUpdate;G.physics.collideBody=collideBody;G.projectiles.inkFlight.configure=configure;}
     if(actorIntervals.size!==1||!actorIntervals.has(1/60)||brainIntervals.size!==1||!brainIntervals.has(1/60)||actorTicks!==g.s3Clock.ticks-tickStart)throw Error('Actual Match did not own every fixed Actor/BotBrain tick');
     if(!(a.alive&&a.grounded&&a.pos.distanceTo(goal)<1.5&&MantaFootSupported(G,a,mantaProbe.node)&&climbed&&surged&&fire))throw Error('Existing bot failed genuine opposing source bank '+JSON.stringify({team:a.team,hz,seconds,pos:a.pos.toArray(),goal:goal.toArray(),distance:a.pos.distanceTo(goal),alive:a.alive,grounded:a.grounded,climbed,surged,fire,form:a.form,ink:a.ink,mode:b.mode,pi:b.pi,path:b.path?.slice(b.pi,b.pi+2),phase:b._nativeClimb?.phase,replans}));
+    const ownedSourceWallSamples=mantaProbe.surgeSamples.filter(s=>G.paint.sample(s.face,s.u,s.v)===a.team+1).length;
+    if(!admittedShots||!mantaProbe.surgeSamples.length||ownedSourceWallSamples!==mantaProbe.surgeSamples.length)throw Error('Ordinary admitted shots did not own the actual qualified source wall');
     if(JSON.stringify(await raw())!==JSON.stringify(sourceBuffers))throw Error('Original source buffers changed during bank traversal');
     times.sort((a,b)=>a-b);const result={team:a.team,renderHz:hz,physicsHz:60,actorIntervals:[...actorIntervals],brainIntervals:[...brainIntervals],actorTicks,seconds,replans,transientPathMisses,minimumY,end:a.pos.toArray(),distanceToGoal:a.pos.distanceTo(goal),alive:true,grounded:true,sourceFootSupported:true,sourceBuffers,sourceBuffersUnchanged:true,continuousActualCapsuleSamples:capsuleSamples,continuousActualMovementCapsuleSamples:microCapsuleSamples,continuousActualCapsuleFailures:0,liveColliderProfiles:[...profiles].map(JSON.parse),climbed,surged,fire,weapon:a.weaponId,sourceWeapon:a.weapon.sourceMainActor,gear:a.s3.loadout,gearAP:0,verifiedRenderFrameMilliseconds:{p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],max:times.at(-1)}};
-    a.spawnAt(G.level.spawnPads[a.team],a.team?Math.PI:0);a.bot.update=()=>{};a.intent.move.set(0,0,0);a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;return result;
+    Object.assign(result,{admittedShots,ownedSourceWallSamples,sourceWallSampleCount:mantaProbe.surgeSamples.length});a.spawnAt(G.level.spawnPads[a.team],a.team?Math.PI:0);a.bot.update=()=>{};a.intent.move.set(0,0,0);a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;return result;
    },hz);
    report.banks.push({...topology,...row});save();console.log(JSON.stringify({bank:report.banks.at(-1)}));
  }
