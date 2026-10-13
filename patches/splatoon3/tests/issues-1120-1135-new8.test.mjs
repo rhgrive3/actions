@@ -43,6 +43,7 @@ test('#1120 Ink Vac firing phase consumes a real ZR release edge, not the held s
   assert.ok(code.includes('const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;'));
   // #1252 buffers a real edge until the 20F transition has completed. Keep
   // guarding against the old held-level trigger without requiring immediate fire.
+  assert.ok(code.includes('const freshPressEdge = !state.exhaleArmed && !state.fireHeld && !!fire;'));
   assert.ok(code.includes('if(freshPressEdge||releaseEdge)state.exhaleFireRequested=true;'));
   assert.ok(code.includes('const ready=state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds;'));
   assert.ok(code.includes('if(ready&&(state.exhaleFireRequested||state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds))release(state);'));

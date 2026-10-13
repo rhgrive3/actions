@@ -22,6 +22,11 @@ export const TACTICOOLER = Object.freeze({
     inkResistance: 57,
   }),
 });
+// WeaponSpEnergyStand.FridgeParam.PutFrameOnYagura is 450F; ordinary stands
+// last 900F. Stand lifetime is independent of the drink buff duration.
+export function tacticoolerStandFrames(onTower = false) {
+  return onTower === true ? TACTICOOLER_SOURCE.putFrameOnYagura : TACTICOOLER_SOURCE.putFrame;
+}
 export function tacticoolerDrinkFrames(ap, gearCurve) {
   return typeof gearCurve === 'function'
     ? Math.round(gearCurve(ap || 0, ...TACTICOOLER_SOURCE.powerUpFrames))
