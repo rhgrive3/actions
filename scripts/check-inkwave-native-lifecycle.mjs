@@ -17,7 +17,7 @@ const address='http://127.0.0.1:'+server.address().port,browser=await chromium.l
 try{
  const c=await browser.newContext({viewport:{width:960,height:640}}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));
  await p.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0})));
- await p.goto(address+'/?map='+primary,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
+ await p.goto(address+'/?map='+primary,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
  await p.evaluate(()=>{NG.game.debug.freeze();NG.game._skipRender=true;});console.log('lifecycle boot');
  // Preserve all authorities across an actual production quality update.
  result.quality=await p.evaluate(async()=>{
@@ -55,7 +55,7 @@ try{
  for(const id of mobileIds){
   console.log('mobile '+id);const c=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:1}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));
   await p.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));let s=0x12345678;Math.random=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};});
-  await p.goto(address+'/?map='+id,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
+  await p.goto(address+'/?map='+id,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');
   await p.evaluate(async id=>{const g=NG.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);},id);
   const metrics=await p.evaluate(()=>{
    const G=NG,g=G.game,times=[];for(let i=0;i<180;i++){const start=performance.now();g._frame(1/60);times.push(performance.now()-start);}times.sort((a,b)=>a-b);
