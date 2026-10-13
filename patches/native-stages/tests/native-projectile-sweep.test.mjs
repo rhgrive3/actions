@@ -60,6 +60,20 @@ test('actual dynamic game OBBs retain their analytic sweep and nearest-hit prior
  const hit=sweep(level,[-5,1,1],[5,1,1]);assert.equal(hit.hit,true);assert.equal(hit.block,id);assert.equal(hit.triangle,-1);close(hit.dist,2.3);close(hit.point.x,-2.5);
  const source=sweep(level,[5,.6,.6],[-5,.6,.6]);assert.equal(source.triangle,0);close(source.dist,4.8);
 });
+test('admitted ink damages the near enemy but cannot damage through a source wall',async()=>{
+ for(const x of [-2,2]){
+  const fresh=await fixture({fullRuntime:true,realProjectiles:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,
+   extraExports:"export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs';"}),{G}=fresh;
+  const level=new fresh.NativeLevel(triangleStage().data);G.level=level;G.physics=new fresh.NativePhysics(level);
+  const actor=fresh.make('shooter'),enemy=fresh.make('shooter');enemy.team=1;enemy.pos.set(x,0,.5);
+  actor.pos.set(-5,0,.5);actor.character.root.position.copy(actor.pos);actor.aimYaw=actor.intent.aimYaw=Math.PI/2;actor.aimPoint.set(5,1.05,.5);actor.intent.fire=true;fresh.setRandom(()=>.5);
+  for(let i=0;i<60&&!G.projectiles.list.length;i++){G.time+=1/60;actor.update(1/60);}actor.intent.fire=false;
+  assert.equal(G.projectiles.list.length,1,'the ordinary source weapon admits its head');const hp=enemy.hp;
+  for(let i=0;i<60;i++){G.time+=1/60;G.projectiles.update(1/60);}
+  if(x<0)assert.ok(enemy.hp<hp,'enemy capsule in front of source wall receives damage');
+  else assert.equal(enemy.hp,hp,'source wall wins before the enemy capsule');
+ }
+});
 
 const ASSETS=process.env.INKWAVE_NATIVE_SWEEP_ASSETS;
 for(const hz of [30,60,120])test('original Flounder admitted source shot paints its real wall at '+hz+' Hz',{skip:!ASSETS||!fs.existsSync(path.join(ASSETS,'flounder','manifest.json'))},()=>{
