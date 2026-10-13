@@ -37,6 +37,11 @@ test('owned partial cells accept only exact source polygon points and retain NoP
  const extra=obj.replace('Fld_Test','Fld_NoPaint').replaceAll('Concrete00','Concrete00_np').replace('f 1//1 2//2 3//3','f 4//4 5//5 6//6');
  const noPaint=convertSource(definition,obj+extra,'newmtl Concrete00\nKd 1 1 1\nnewmtl Concrete00_np\nKd 1 1 1\n',{});
  assert.equal(noPaint.manifest.objects[1].paintable,false);assert.equal(noPaint.triangleFace[1],-1);
+ L._addBlock({kind:'box',min:[-.5,.5,-.5],max:[.5,1,.5],paint:true});
+ const dynamic=L.blocks.at(-1),boxFace=L.faces[dynamic.faces.find(id=>id>=0)];
+ assert(boxFace.block>=L.staticBlockCount);assert.equal(boxFace.triangles,undefined);
+ assert.equal(L.containsFaceUV(boxFace,boxFace.su*.5,boxFace.sv*.5),true,'ranked dynamic box faces retain their original rectangular surface contract');
+ assert.equal(L.containsFaceUV(boxFace,boxFace.su+.01,boxFace.sv*.5),false,'dynamic box bounds are still enforced');
 });
 
 test('Python and worker masks agree for partial polygons and thin strips',()=>{
