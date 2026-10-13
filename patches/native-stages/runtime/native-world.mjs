@@ -49,6 +49,9 @@ export async function buildNativeWorld(game,map,current){
   inkMesh=new NativeInkMesh(inkGeometry,inkMat);
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   const navStart=performance.now(),nav=new NavGraph(level,physics);
+  // Minimap preparation must use this detached world's navigation, not G.nav
+  // which still belongs to the current world until publication below.
+  level.nativeNav=nav;
   if(!current()){display.dispose();paint.dispose();inkMesh.dispose();inkMat.dispose();return;}
   releaseCurrent(game);
   G.level=level;G.physics=physics;G.paint=paint;G.nav=nav;game.layoutId=map.id;game.mapDef=map;game._builtQuality=game.settings.quality;
