@@ -95,8 +95,7 @@ export function adaptNativeStages(rel,code){
     return this.grid[k];`);
  }
  if(rel==='src/game/bots.js'){
-  code="import { nativeSourceWaypointReached } from '../../patches/native-stages/runtime/native-bot-support.mjs';\n"+code;
-  code="import { nativePaintGoalIds,updateNativeClimb,nativeClimbTravelForm } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativePaintGoalIds,updateNativeClimb,nativeClimbTravelForm,nativeSourceWaypointReached } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('    this.think -= dt; this.jumpCd -= dt;', '    if (updateNativeClimb(this,G,dt)) return;\n    this.think -= dt; this.jumpCd -= dt;');
   once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, G.level.manifest?.sourceNavigation?.wallClimb ? Math.max(6000, nav.nodes.length * 4) : undefined);');
   once('this.pi + 7', 'this.pi + (G.level.manifest?.sourceNavigation?.wallClimb ? 1 : 7)');
