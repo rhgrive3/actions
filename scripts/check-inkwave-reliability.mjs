@@ -408,6 +408,43 @@ try {
       });
       assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaDownDeferred:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true,heldAxesPreserve:true,freshPadCancels:true});
       entry.checks.push('actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission');
+      const queuedTargetLives = await page.evaluate(() => {
+        const old={match:G.match,actors:G.actors,device:input.lastDevice};
+        const rows=[];
+        try {
+          input.lastDevice='kbm';input.keys.clear();input.pressed.clear();input.keys.add('Tab');
+          for(const mode of ['same-life-teleport','recycled-target','accepted-new-life','stale-selection','fresh-selection']) {
+            // Use the emitted Match/PlayerController. Actor lifecycle itself is
+            // exercised by the source/emitted Node regression with real Actors.
+            const a={alive:false,grounded:false,team:0,intent:{move:new THREE.Vector3()},pos:new THREE.Vector3(),
+              canSuperJump(){return this.alive&&!this.superJumpState;},superJump(target){if(!this.canSuperJump())return false;this.superJumpState={target};return true;}};
+            const ally={alive:true,team:0,netLife:1,netTp:1,pos:new THREE.Vector3(18,0,6)};
+            const c=new controller.constructor(a,{yaw:0,pitch:0},input);c.computeAim=()=>{};
+            const match={state:'playing',paused:false,local:a,controller:c};G.match=match;G.actors=[a,ally];
+            input.pressed.add('Tab');
+            Match.prototype.updateController.call(match,1/60);
+            if(mode==='stale-selection')ally.net={lastLife:2};
+            const queued=c.requestMapJump(ally);
+            if(mode==='same-life-teleport'){ally.netTp++;ally.pos.set(24,0,9);}
+            if(mode==='recycled-target'||mode==='fresh-selection')ally.netLife=2;
+            if(mode==='accepted-new-life')ally.net={lastLife:2};
+            let fresh=false;
+            if(mode==='fresh-selection') { Match.prototype.updateController.call(match,1/60);fresh=!c.pendingRespawnJump&&c.requestMapJump(ally); }
+            a.alive=true;a.grounded=true;Match.prototype.updateController.call(match,1/60);
+            rows.push({mode,queued,fresh,jumped:a.superJumpState?.target===ally,pending:!!c.pendingRespawnJump});
+          }
+          return rows;
+        } finally { input.keys.clear();input.pressed.clear();input.lastDevice=old.device;G.match=old.match;G.actors=old.actors; }
+      });
+      assert.deepEqual(queuedTargetLives,[
+        {mode:'same-life-teleport',queued:true,fresh:false,jumped:true,pending:false},
+        {mode:'recycled-target',queued:true,fresh:false,jumped:false,pending:false},
+        {mode:'accepted-new-life',queued:true,fresh:false,jumped:false,pending:false},
+        {mode:'stale-selection',queued:false,fresh:false,jumped:false,pending:false},
+        {mode:'fresh-selection',queued:true,fresh:true,jumped:true,pending:false},
+      ]);
+      entry.queuedTargetLives=queuedTargetLives;
+      entry.checks.push('actual-built-controller-queued-superjump-target-combat-life-fence');
       const mapGyro = await page.evaluate(() => {
         const old={match:G.match,actors:G.actors,rig:G.rig,camera:G.camera,level:G.level,device:input.lastDevice,active:mobile.active,enabled:mobile.gyro.enabled};
         const a={alive:true,grounded:true,team:0,yaw:0,weapon:{kind:'shooter',range:12},pos:new THREE.Vector3(),intent:{move:new THREE.Vector3()},canSuperJump(){return true;}};
