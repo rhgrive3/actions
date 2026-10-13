@@ -309,8 +309,10 @@ test('Reefslider waits for grounded 38F startup, gates cancel to15F, and deals d
 test('Killer Wail beams tick through terrain and the main weapon remains live during the special',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'killerWail');victim.team=1;victim.pos.set(0,1,5);f.G.actors=[a,victim];
  f.G.physics.los=()=>false;const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
- ready(a);a.intent.fire=true;for(let i=0;i<40;i++)a._updateSpecial(1/60);
- assert.ok(f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'main fire still uses the native weapon runner');
+ ready(a);a.intent.fire=true;for(let i=0;i<39;i++)a._updateSpecial(1/60);
+ assert.equal(f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),false,'MicroLaser source forbids main shots for the first 39F');
+ for(let i=0;i<14;i++)a._updateSpecial(1/60);
+ assert.ok(f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'native main fire resumes after the 40F gate while beams remain active');
  const beam=hits.find(h=>h[1]===victim&&h[3]==='killerWail');assert.ok(beam);assert.equal(beam[2],3.5,'Wail damage is a 3.5 tick, not a one-hit burst');
 });
 
@@ -343,7 +345,7 @@ test('direct Crab cannon and thrown Stamp hits retain their source rows on actor
   victim.damage=function(amount,source,kind){seen.push(source?._s3AllSpecialDamageCause);return damage.call(this,amount,source,kind);};
   ready(attacker);
   if(special==='crabTank'){for(let i=0;i<20;i++)attacker._updateSpecial(1/60);attacker.intent.sub=true;attacker._updateSpecial(1/60);}
-  else{deployInput(attacker);}
+  else{deployInput(attacker);for(let i=0;i<26&&attacker.specialActive;i++)attacker._updateSpecial(1/60);}
   const p=f.G.projectiles.list.find(projectile=>projectile.s3AllSpecial===special);assert.ok(p,`${special} emits a projectile`);
   f.G.projectiles._blastBurst=()=>true;p.pos.set(victim.pos.x,victim.pos.y+.8,victim.pos.z);p.prev.copy(p.pos);p.vel.set(0,0,0);p.grav=0;p.drag=0;p.straight=10;p.age=0;
   f.G.projectiles._step(p,1/60);

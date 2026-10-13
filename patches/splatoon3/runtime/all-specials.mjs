@@ -1589,7 +1589,8 @@ function activeStep(rt,actor,dt) {
           }
         }
       }
-      state.travel+=from.distanceTo(actor.pos);
+      // The 11.3.0 dash acceleration is horizontal: gravity must not inflate travel.
+      state.travel+=Math.hypot(actor.pos.x-from.x,actor.pos.z-from.z);
       actor.invuln=Math.max(actor.invuln,dt+.025);
       // Complete the 54th source movement step before starting the 38F fuse.
       if(!isBrake&&(actor.contacts?.wall||state.dashT+1e-8>=54/FPS)){

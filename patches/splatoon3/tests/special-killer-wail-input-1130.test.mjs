@@ -37,8 +37,10 @@ test('MicroLaser 40F source player control embargo preserves the live native sho
  assert.equal(f.G.projectiles.list.some(p=>p.owner===actor&&!p.s3AllSpecial),false,
    'AfterShot_NoShotFrm=40 must suppress early native main shots');
  actor._updateSpecial(1/60);
+ // The input gate unlocks at 40F; allow the native weapon runner its own shot clock.
+ for(let i=0;i<12;i++)actor._updateSpecial(1/60);
  assert.equal(f.G.projectiles.list.some(p=>p.owner===actor&&!p.s3AllSpecial),true,
-   'native main shots resume without waiting for the lasers to disappear');
+   'native main shots resume after the 40F embargo without waiting for the lasers to disappear');
 });
 test('MicroLaser respects the sourced 40F squid-form hold while permitting movement',async()=>{
  const {actor}=await setup();
