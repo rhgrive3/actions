@@ -23,6 +23,7 @@ jobs:
             patches/splatoon3/tests/special-activation-scan-1130.test.mjs \
             patches/splatoon3/tests/special-crab-body-radius-1130.test.mjs \
             patches/splatoon3/tests/special-crab-kraken-source-1130.test.mjs \
+            patches/splatoon3/tests/special-reefslider-source-1130.test.mjs \
             patches/splatoon3/tests/all-specials.test.mjs \
             patches/splatoon3/tests/kit-ink-vac.test.mjs \
             patches/splatoon3/tests/special-projectile.test.mjs

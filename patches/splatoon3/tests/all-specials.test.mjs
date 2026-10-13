@@ -293,7 +293,12 @@ test('Reefslider waits for grounded 38F startup, gates cancel to15F, and deals d
  assert.equal(a._s3AllSpecialState.phase,'startup','airborne activation waits for the grounded startup');
  a.grounded=true;for(let i=0;i<38;i++)a._updateSpecial(1/60);assert.equal(a._s3AllSpecialState.phase,'dash');
  a.intent.fire=true;for(let i=0;i<14;i++)a._updateSpecial(1/60);assert.ok(a.specialActive,'early cancel remains locked until movement frame15');
- a.intent.fire=false;a._updateSpecial(1/60);a.intent.fire=true;a._updateSpecial(1/60);assert.ok(a.specialActive,'burst recovery remains active for28F');assert.ok(events.some(e=>e.action==='impact'));
+ a.intent.fire=false;a._updateSpecial(1/60);a.intent.fire=true;a._updateSpecial(1/60);
+ assert.equal(a._s3AllSpecialState.phase,'brake','15F cancel starts 38F preburst, not instant impact');
+ assert.equal(events.some(e=>e.action==='impact'),false);
+ a.intent.fire=false;for(let i=0;i<38;i++)a._updateSpecial(1/60);
+ assert.equal(a._s3AllSpecialState.phase,'recovery');
+ assert.ok(events.some(e=>e.action==='impact'));
  assert.ok(hits.some(h=>h[1]===victim&&h[2]===220&&h[3]==='reefslider'),'the dash capsule applies the sourced220 contact hit');
  for(let i=0;i<28;i++)a._updateSpecial(1/60);assert.equal(a.specialActive,null);
 });
@@ -485,7 +490,10 @@ test('Reefslider snapshots special-power paint and damage-distance curves withou
   assert.equal(s.paintRadius,gearCurve(ap,7.51,8.26,9.012));assert.equal(s.damageDistanceRate,scale);
   a.s3.loadout=emptyLoadout();a.s3RefreshGear();assert.equal(s.damageDistanceRate,scale,'activation snapshot');
   // The source Impact input is accepted after the 15F dash-cancel window.
-  s.phase='dash';s.dashT=15/60;deployInput(a);
+  s.phase='dash';s.dashT=15/60;s.reefSpeedRaw=0;deployInput(a);
+  assert.equal(s.phase,'brake');
+  for(let i=0;i<38;i++)a._updateSpecial(1/60);
+  assert.equal(s.phase,'recovery');
   const hit=hits.find(h=>h[1]===near);assert.ok(hit);assert.ok(hit[2]<=220);assert.equal(hits.some(h=>h[1]===far),16<=14.9*scale);
   f.G.projectiles.applyHit=old;
  }

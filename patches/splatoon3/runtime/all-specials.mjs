@@ -34,7 +34,7 @@ const SPECIALS = Object.freeze({
   zipcaster: { name: 'Zipcaster', source: 'WeaponSpSuperHook', duration: 9, radius: 6, paintRadius: 1.4, near: 45, far: 35, status: '11.3.0 table: 540F, 1.5× ink capacity, hook/per-second ink costs vary with Special Power Up; hook blast 45/35 at 5.25/6; direct hit and hook flight mapping still need game comparison' },
   killerWail: { name: 'Killer Wail 5.1', source: 'WeaponSpMicroLaser', duration: [308/60, 348/60, 368/60], radius: 27, paintRadius: 0, near: 3.5, far: 3.5, status: '11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated' },
   crabTank: { name: 'Crab Tank', source: 'WeaponSpChariot', duration: [8, 9.5, 11], radius: 4.8, paintRadius: 4.5, near: 30, far: 30, direct: 50, status: '11.3.0 table: 20F shooter/cannon start, shooter repeat 12F→4F over90F (bias.2; interpolation calibrated), cannon lock32F, 500 armor, 480/570/660F; 25F finish lock and steering need retail comparison' },
-  reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 1.533, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: 38F grounded startup, invulnerability from25F, movement54F/cancel after15F, recovery28F and player collision radius.8; blast/contact220/70, SPU damage×1/1.1/1.2 and paint7.51/8.26/9.012; trajectory calibrated' },
+  reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 158/FPS, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: 38F grounded startup, invulnerability from25F, movement54F/cancel after15F, recovery28F and player collision radius.8; blast/contact220/70, SPU damage×1/1.1/1.2 and paint7.51/8.26/9.012; trajectory calibrated' },
   tripleInkstrike: { name: 'Triple Inkstrike', source: 'WeaponSpTripleTornado', duration: 6, radius: 7.7, paintRadius: 7, near: 37.5, far: 37.5, status: '11.3.0 table: 360F, 7.7 damage radius, 7 paint and 50F spread; 37.5 per 5F from public mechanics, marker flight calibrated' },
   superChump: { name: 'Super Chump', source: 'WeaponSpFirework', duration: 10.583, radius: 6, paintRadius: 3.5, near: 70, far: 35, status: '11.3.0 table: 70/35 at 3.6/6, paint radius 3.5/3.8/4.1 and damage radii ×1/1.1/1.2 by Special Power Up; decoy HP 60, 108F flight, 210F burst and 635F special; count/spread calibrated' },
   krakenRoyale: { name: 'Kraken Royale', source: 'WeaponSpCastle', duration: [8, 9, 10], radius: 2.65, paintRadius: 1.2, near: 60, far: 60, status: '11.3.0 table: charge cancellable through34F, charge35F, dash35F, jump60, and 480/540/600F; charge-release direction/hitbox calibration remains' },
@@ -938,6 +938,12 @@ function crabBomb(rt,actor,state) {
   launch(rt,actor,'crabTank',origin,dir,{speed:14,grav:23,drag:.18,life:1.4,arc:2.5,seed:nextSeed(state),size:.2,damage:50,paintRadius:4.5});
   emitAction(rt,actor,'crabTank',state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,10),nextSeed(state));
 }
+// WeaponSpSkewer 11.3.0 per-frame MoveAcc=MoveBrk=.031; top speed=.405.
+// A change of frame rate must not change the distance travelled in source ticks.
+export function reefsliderRawSpeed(speed, braking = false, sourceFrames = 1) {
+  if(!finite(speed)||!finite(sourceFrames)||sourceFrames<0)return 0;
+  return clamp(speed+(braking?-.031:.031)*sourceFrames,0,.405);
+}
 function reefImpact(rt,actor,state,center) {
   if(state.impacted)return;state.impacted=true;
   const seed=nextSeed(state),ap=state.specialPowerAP||0,point=groundAt(rt,center,rt.v1).clone(),desc=specialDescription('reefslider',ap);
@@ -1504,23 +1510,48 @@ function activeStep(rt,actor,dt) {
       moveActor(rt,actor,dt,state,{squid:false,jump:true});
       if(actor.grounded){state.startupT+=dt;const aim=aimDirection(rt,actor,rt.v0);aim.y=0;if(aim.lengthSq()>.01)state.direction.copy(aim.normalize());
         if(state.startupT+1e-8>=25/FPS)actor.invuln=Math.max(actor.invuln,1/FPS);
-        if(state.startupT+1e-8>=38/FPS){state.phase='dash';state.dashT=0;state.travel=0;actor.character?.trigger?.('special_dash');}}
+        if(state.startupT+1e-8>=38/FPS){
+          state.phase='dash';s.phase='dash';state.dashT=0;state.travel=0;state.reefSpeedRaw=0;
+          actor.character?.trigger?.('special_dash');
+        }}
       return;
     }
-    if(state.phase==='dash'){
-      state.dashT+=dt;
-      if(state.dashT+1e-8>=15/60&&edges.fire){reefImpact(rt,actor,state,actor.pos.clone());return;}
-      actor.vel.x=state.direction.x*24.3;actor.vel.z=state.direction.z*24.3;actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
-      const before=actor.pos.clone(),py=actor.pos.y;actor.pos.addScaledVector(actor.vel,dt);actor.grounded=false;actor._resolve?.(false,py,false);
-      paintReefRut(rt,actor,state,before,actor.pos,dt);
-      for(const victim of rt.api.G.actors||[]){
-        if(!victim?.alive||victim.team===actor.team||state.footHits.has(victim))continue;
-        const point=rt.v12.set(victim.pos.x,victim.pos.y+.75,victim.pos.z);
-        if(segmentDistance(rt,point,before,actor.pos)<=1.2){state.footHits.add(victim);rt.api.G.projectiles.applyHit(actor,victim,220,'reefslider');}
+    if(state.phase==='dash'||state.phase==='brake'){
+      const braking=state.phase==='brake';
+      if(braking)state.brakeT+=dt;else state.dashT+=dt;
+      // MoveCancelableFrame=15 forbids instant explosions. Cancel, wall contact
+      // or 54F maximum dash all enter PreBurstFrame=38 braking/arming phase.
+      if(!braking&&state.dashT+1e-8>=15/FPS&&edges.fire){
+        state.phase='brake';s.phase='brake';state.brakeT=0;
       }
-      state.travel+=before.distanceTo(actor.pos);
-      if(actor.contacts?.wall||state.dashT>=54/60){reefImpact(rt,actor,state,actor.pos.clone());return;}
-      actor.invuln=Math.max(actor.invuln,.18);
+      const isBrake=state.phase==='brake';
+      const frames=clamp(dt*FPS,0,6);
+      state.reefSpeedRaw=reefsliderRawSpeed(state.reefSpeedRaw||0,isBrake,frames);
+      const speed=state.reefSpeedRaw*FPS;
+      actor.vel.x=state.direction.x*speed;actor.vel.z=state.direction.z*speed;
+      actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
+      const from=actor.pos.clone(),py=actor.pos.y;
+      if(actor.contacts?.wall){state.reefSpeedRaw=0;actor.vel.x=actor.vel.z=0;}
+      actor.pos.addScaledVector(actor.vel,dt);actor.grounded=false;
+      actor._resolve?.(false,py,false);
+      paintReefRut(rt,actor,state,from,actor.pos,dt);
+      if(!isBrake){
+        for(const victim of rt.api.G.actors||[]){
+          if(!victim?.alive||victim.team===actor.team||state.footHits.has(victim))continue;
+          const point=rt.v12.set(victim.pos.x,victim.pos.y+.75,victim.pos.z);
+          if(segmentDistance(rt,point,from,actor.pos)<=1.2){
+            state.footHits.add(victim);rt.api.G.projectiles.applyHit(actor,victim,220,'reefslider');
+          }
+        }
+      }
+      state.travel+=from.distanceTo(actor.pos);
+      actor.invuln=Math.max(actor.invuln,dt+.025);
+      // Complete the 54th source movement step before starting the 38F fuse.
+      if(!isBrake&&(actor.contacts?.wall||state.dashT+1e-8>=54/FPS)){
+        state.phase='brake';s.phase='brake';state.brakeT=0;
+      } else if(isBrake&&state.brakeT+1e-8>=38/FPS){
+        reefImpact(rt,actor,state,actor.pos.clone());
+      }
     }
     return;
   }
