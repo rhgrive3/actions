@@ -3,6 +3,7 @@ import {PLAYER} from '../../../src/config.js';
 import {Hit} from '../../../src/game/physics.js';
 import {stepGroundVelocity} from '../../splatoon3/runtime/movement-physics.mjs';
 import {weightSpeedCurve} from '../../splatoon3/runtime/weapon-weight.mjs';
+import {nativeSourceFootSupported} from './native-bot-support.mjs';
 
 const terrainRadius=squid=>{
  const raw=squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw;
@@ -118,6 +119,19 @@ export function nativeDropTravelForm(brain,G){
  }
 }
 
+/** A changed first contact needs its own physical walk to the source goal. */
+function supportedDropTouchdown(G,actor,node){
+ if(!nativeSourceFootSupported(G,actor,node))return false;
+ const from=actor.pos,to=from.clone().set(node.x,node.y,node.z),L=G.level,down=new THREE.Vector3(0,-1,0);
+ const count=Math.max(1,Math.ceil(from.distanceTo(to)/.1));
+ for(let i=0;i<=count;i++){
+  const p=from.clone().lerp(to,i/count),h=L.triangleWorld.ray(p.clone().setY(p.y+.25),down,.5,{minNormalY:.68});
+  if(!h||!(h.flags&2)||Math.abs(h.point.y-p.y)>.16||L.data.triangleFace[h.triangle]<0)return false;
+ }
+ const sweep=G.physics._nativeLiveDropClearance||(G.physics._nativeLiveDropClearance=nativeDropClearance(L));
+ return sweep.clear(from,to,terrainRadius(false),PLAYER.stepUp,PLAYER.height);
+}
+
 /** Keep an ordinary departure committed until a real grounded touchdown.
  * The stock follower may advance its waypoint while still 1.8 units above it,
  * turning toward the next source support before gravity completes the drop. */
@@ -134,10 +148,20 @@ export function updateNativeDrop(brain,G,dt){
  const input=a.intent;input.fire=input.squid=input.jump=input.sub=input.special=false;
  if(state.phase==='approach'){
   const delta=start.sub(a.pos).setY(0);
-  if(a.grounded&&delta.length()<.12&&Math.abs(a.pos.y-d.upper[1])<.16)state.phase='depart';
-  else {input.move.copy(delta);if(input.move.length()>1)input.move.normalize();return true;}
+  if(nativeSourceFootSupported(G,a,from)&&delta.length()<.12&&Math.hypot(a.vel.x,a.vel.z)<.65)state.phase='depart';
+  else {if(delta.length()>.12){input.move.copy(delta);if(input.move.length()>1)input.move.normalize();}else input.move.set(0,0,0);return true;}
  }
- if(a.grounded&&Math.abs(a.pos.y-goal.y)<.16){
+ if(!a.grounded)state.airborne=true;
+ if(state.airborne&&a.grounded&&!state.touchdownScreened){
+  state.touchdownScreened=supportedDropTouchdown(G,a,to);
+  if(!state.touchdownScreened){
+  // Actual first contact can differ from the forecast when the incoming
+  // velocity or source foot ring selects another intact surface. Stop through
+  // ordinary input and let real navigation plan from that genuine touchdown.
+  input.move.set(0,0,0);brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeDrop=null;return true;
+  }
+ }
+ if(a.grounded&&nativeSourceFootSupported(G,a,to)){ 
   const delta=goal.sub(a.pos).setY(0);
   if(delta.length()<.35){brain.pi=index+1;brain._nativeDrop=null;return false;}
   input.move.copy(delta);if(input.move.length()>1)input.move.normalize();return true;
