@@ -79,8 +79,8 @@ export function registerSupportKit({ WEAPONS, SUB, SPECIALS, SUB_ICONS, SPECIAL_
     ...SUB.bomb, id:'pointSensor', name:'Point Sensor', inkCost:POINT_SENSOR.inkCost,
     inkCostFallback:POINT_SENSOR.inkCost, throwSpeed:POINT_SENSOR.launchSpeedWorld,
     inkRecoverStop:POINT_SENSOR_SOURCE.inkRecoverStopFrames/60, damageMax:0, damageMin:0, paintRadius:0,
-    radius:POINT_SENSOR.radiusWorld,
-    status:'S3 11.3.0 timing/cost; INKWAVE world radius/throw calibration pending',
+    radius:POINT_SENSOR.radiusWorld, inkSaverCurve:[1,.85,.7],
+    status:'S3 11.3.0 timing/cost; source radius agrees with Wiki line conversion; collision/throw calibration pending',
   };
   SPECIALS.tacticooler = { id:'tacticooler', name:'Tacticooler', duration:TACTICOOLER.standSeconds,
     cost:TACTICOOLER.specialCost, status:'S3 11.3.0 timing/AP; world positioning calibrated' };
@@ -136,7 +136,14 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
   if (!remote) emitNet(G,owner,['c',owner.nid,stand.seq,pos.x,pos.y,pos.z,stand.sourceLife,drinkFrames]);
   return stand;
 }
-function stepSupport(projectile, G, THREE, dt) {
+function throwCooler(owner,projectile,G,THREE,Hit) {
+  const pos=owner.pos.clone();pos.y+=1.1;
+  const dir=owner.aimDir.clone().normalize(),vel=dir.multiplyScalar(TACTICOOLER_SOURCE.spawnSpeedZ*60);vel.y+=TACTICOOLER_SOURCE.spawnSpeedY*60;
+  const device={owner,pos,prev:pos.clone(),vel,age:0,hit:new Hit(),mesh:coolerVisual(owner,pos,THREE,G)};
+  if(device.mesh)device.mesh.scale.setScalar(.35);
+  (projectile._s3SupportCoolerThrows ||= []).push(device);
+}
+function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   if (!(dt>0) || !Number.isFinite(G.time)) return;
   const playing = aliveInMatch(G);
   for(const sensor of projectile._s3SupportSensors || []) {
@@ -146,20 +153,30 @@ function stepSupport(projectile, G, THREE, dt) {
       sensor.vel.y-=24*dt;
       sensor.pos.addScaledVector(sensor.vel,dt);
       const hit = G.physics?.segment?.(sensor.prev,sensor.pos,sensor.hit);
-      if(hit?.hit || sensor.age>=POINT_SENSOR.maxFlightSeconds) {
-        if(hit?.hit && vec3(hit.point)) sensor.pos.copy(hit.point).addScaledVector(hit.normal, .03);
+      const delta=sensor.pos.clone().sub(sensor.prev),length=delta.length();
+      let body=null,best=hit?.hit&&vec3(hit.point)?sensor.prev.distanceTo(hit.point):Infinity;
+      for(const actor of G.actors||[]){
+        if(!actor.alive||actor.team===sensor.team||!Physics?.segmentCapsuleDist)continue;
+        const base=actor.pos.clone();base.y+=actor.smoothY||0;
+        const result={t:0,dist:Infinity};
+        Physics.segmentCapsuleDist(sensor.prev,sensor.pos,base,PLAYER.radius,actor.form==='squid'?PLAYER.squidHeight:PLAYER.height,result);
+        if(result.dist<=PLAYER.radius+.2&&length*result.t<best){body=sensor.prev.clone().addScaledVector(delta,result.t);best=length*result.t;}
+      }
+      if(body || hit?.hit || sensor.age>=POINT_SENSOR.maxFlightSeconds) {
+        if(body)sensor.pos.copy(body);
+        else if(hit?.hit && vec3(hit.point)) sensor.pos.copy(hit.point).addScaledVector(hit.normal, .03);
         sensor.activeAt=G.time;sensor.expires=G.time+POINT_SENSOR.areaSeconds;
       }
     }
     poseSensorVisual(sensor, dt);
     if(sensor.activeAt!==null && playing) {
-      if(!sensor.ghost && life(sensor.owner)===sensor.sourceLife) for(const actor of G.actors || []) {
+      if(!sensor.ghost) for(const actor of G.actors || []) {
         if(sensor.seen.has(actor) || actor.team===sensor.team ||
            !pointSensorContact(actor,sensor.pos)) continue;
         sensor.seen.add(actor);
         const frames=pointSensorMarkFrames(sensor.owner.s3?.abilityPoints?.subPower,gearCurve);
-        if(pointSensorMark(actor,sensor.team,G.time,frames/60)) {
-          emitNet(G,sensor.owner,['m',sensor.owner.nid,sensor.seq,actor.nid,life(actor),frames]);
+        if(pointSensorMark(actor,sensor.team,G.time,Math.max(0,frames/60-(G.time-sensor.activeAt)))) {
+          emitNet(G,sensor.owner,['m',sensor.owner.nid,sensor.seq,actor.nid,life(actor),frames,sensor.sourceLife,'l']);
         }
       }
       sensor.pulses+=dt;
@@ -174,13 +191,23 @@ function stepSupport(projectile, G, THREE, dt) {
     sensors[i].age>POINT_SENSOR.maxFlightSeconds+POINT_SENSOR.areaSeconds+.25) {
     releaseVisual(sensors[i],G);sensors.splice(i,1);
   }
+  const throws=projectile._s3SupportCoolerThrows||[];
+  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=24*dt;d.pos.addScaledVector(d.vel,dt);
+    const hit=G.physics?.segment?.(d.prev,d.pos,d.hit);let landed=hit?.hit&&hit.normal.y>.4;
+    if(hit?.hit){d.pos.copy(hit.point);if(!landed){d.pos.addScaledVector(hit.normal,.03);d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}}
+    const floor=G.level?.groundHeight?.(d.pos.x,d.pos.z);
+    if(!landed&&Number.isFinite(floor)&&d.pos.y<=floor){d.pos.y=floor;landed=true;}
+    if(landed){releaseVisual(d,G);throws.splice(i,1);deployCooler(d.owner,projectile,G,THREE,false,d.pos.toArray());}
+    else if(d.age>5||!playing){releaseVisual(d,G);throws.splice(i,1);}
+    else d.mesh?.position.copy(d.pos);
+  }
   const coolers=projectile._s3SupportCoolers || [];
   for(let i=coolers.length-1;i>=0;i--) {
     const stand=coolers[i];
     if(G.time>=stand.expires||!playing) {releaseVisual(stand,G);coolers.splice(i,1);continue;}
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
-    for(const a of G.actors || [])if(drinkEligible(a,stand,G.time)) {
+    for(const a of G.actors || [])if(drinkEligible(a,stand,G.time,PLAYER)) {
       stand.taken.add(a); giveDrink(a,G.time,stand.drinkSeconds);
       G.fx?.burst?.(a.pos,new THREE.Vector3(0,1,0),G.teamColors?.[a.team],{count:6,speed:2,size:.08});
     }
@@ -189,7 +216,7 @@ function stepSupport(projectile, G, THREE, dt) {
   }
   for(const a of G.actors || []) if(!a.remote) retireDrink(a,G.time);
 }
-export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE, Hit }) {
+export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE, Hit, Physics, PLAYER }) {
   if (Actor.prototype[INSTALL]) return;
   Object.defineProperty(Actor.prototype,INSTALL,{value:true});
   const throwBomb=Projectiles.prototype.throwBomb;
@@ -201,12 +228,12 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
   const update=Projectiles.prototype.update,clear=Projectiles.prototype.clear;
   Projectiles.prototype.update=function(dt,...args) {
     const result=update.call(this,dt,...args);
-    stepSupport(this,G,THREE,dt);
+    stepSupport(this,G,THREE,dt,Physics,PLAYER);
     return result;
   };
   Projectiles.prototype.clear=function(...args) {
-    for(const record of [...this._s3SupportSensors||[],...this._s3SupportCoolers||[]])releaseVisual(record,G);
-    this._s3SupportSensors=[];this._s3SupportCoolers=[];
+    for(const record of [...this._s3SupportSensors||[],...this._s3SupportCoolers||[],...this._s3SupportCoolerThrows||[]])releaseVisual(record,G);
+    this._s3SupportSensors=[];this._s3SupportCoolers=[];this._s3SupportCoolerThrows=[];
     return clear.call(this,...args);
   };
   const start=Actor.prototype._startSpecial, advance=Actor.prototype._updateSpecial;
@@ -217,14 +244,18 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     const before=this.stats?.specials;
     const result=start.apply(this,args);
     if(this.special!==0 || this.stats?.specials!==before+1)return result;
-    deployCooler(this,G.projectiles,G,THREE);
-    this.specialActive={id:'tacticooler',t:0,phase:'placed',armor:false};
+    this.specialActive={id:'tacticooler',t:0,phase:'hold',armor:false,subHeld:!!this.intent.sub};
     return result;
   };
   Actor.prototype._updateSpecial=function(dt,...args) {
     if(this.specialActive?.id!=='tacticooler')return advance.call(this,dt,...args);
-    this.specialActive.t+=dt;
-    if(this.specialActive.t>=TACTICOOLER.windupSeconds) this.specialActive=null;
+    if(!(dt>0))return;
+    const state=this.specialActive;state.t+=dt;
+    if(state.phase==='hold'){
+      const released=state.subHeld&&!this.intent.sub;state.subHeld=!!this.intent.sub;
+      this.form=this.intent.squid?'squid':'kid';this._horizontal?.(dt,this.form==='squid',false);this._integrate?.(dt,this.form==='squid',false);
+      if(released){state.phase='throw';state.t=0;this.character?.trigger?.('throw');}
+    }else if(state.t+1e-9>=13/60){throwCooler(this,G.projectiles,G,THREE,Hit);this.specialActive=null;}
     return undefined;
   };
   const reset=Actor.prototype.reset,splat=Actor.prototype.splat;
@@ -254,7 +285,7 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     // sequence to every _rec event (r=2). A legacy fixture has no trailer.
     // Reject malformed/truncated/spoofed envelope lengths before using fields.
     const baseLength=kind==='p'?12:
-      kind==='m'?([8,10].includes(e.length)?8:7):
+      kind==='m'?(e[9]==='l'?10:[8,10].includes(e.length)?8:7):
       kind==='c'?([10,12].includes(e.length)?10:9):0;
     if(!baseLength || e.length!==baseLength && e.length!==baseLength+2)return;
     if(e.length===baseLength+2) {
@@ -273,16 +304,17 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
       record.p=e[4];last.set(owner,record);
       spawnPointSensor(owner,G.projectiles,G,THREE,Hit,true,[...e.slice(5,11),e[4]]);
     } else if(kind==='m') {
-      const frames = baseLength===8 ? e[7] : POINT_SENSOR_SOURCE.markingFrames[0];
+      const frames = baseLength>=8 ? e[7] : POINT_SENSOR_SOURCE.markingFrames[0];
       if(owner.weapon?.sub!=='pointSensor' || !Number.isSafeInteger(e[5]) ||
          !Number.isSafeInteger(frames) || frames < POINT_SENSOR_SOURCE.markingFrames[0] ||
          frames > POINT_SENSOR_SOURCE.markingFrames[2])return;
       const target=this.byNid?.get(e[5]);
       const sensor=G.projectiles?._s3SupportSensors?.find(s=>s.owner===owner&&s.seq===e[4]);
-      if(!sensor || sensor.seen.has(target) || !target || target.team===owner.team ||
+      if(!sensor || baseLength===10&&e[8]!==sensor.sourceLife || sensor.seen.has(target) || !target || target.team===owner.team ||
          e[6]!==life(target) || target.alive===false ||
          !pointSensorContact(target,sensor.pos,POINT_SENSOR.radiusWorld+3))return;
-      sensor.seen.add(target);pointSensorMark(target,owner.team,G.time,frames/60);
+      sensor.seen.add(target);pointSensorMark(target,owner.team,G.time,
+        Math.max(0,frames/60-(sensor.activeAt===null?0:G.time-sensor.activeAt)));
     } else if(kind==='c') {
       const frames = baseLength===10 ? e[9] : TACTICOOLER_SOURCE.powerUpFrames[0];
       if(!Number.isSafeInteger(frames) || frames < TACTICOOLER_SOURCE.powerUpFrames[0] ||

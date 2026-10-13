@@ -302,12 +302,14 @@ export function fidelityThrowVelocity(actor, kind, out, forwardSpeed, override) 
   vy = Math.max(p.spawnSpeedYWorldMin, vy);
   const fx = Math.sin(yaw), fz = Math.cos(yaw);
   const forward = (av.x || 0) * fx + (av.z || 0) * fz;
-  const zRate = Number.isFinite(p.inheritZ) ? p.inheritZ : p.inheritX;
+  const xRate = Number.isFinite(p.inheritXRate) ? p.inheritXRate : p.inheritX;
+  const zRate = Number.isFinite(p.inheritZRate) ? p.inheritZRate
+    : Number.isFinite(p.inheritZ) ? p.inheritZ : p.inheritX;
   const lx = (av.x || 0) - forward * fx, lz = (av.z || 0) - forward * fz;
   return out.set(
-    fx * horizontal + lx * p.inheritX + fx * forward * zRate,
+    fx * horizontal + lx * xRate + fx * forward * zRate,
     vy,
-    fz * horizontal + lz * p.inheritX + fz * forward * zRate,
+    fz * horizontal + lz * xRate + fz * forward * zRate,
   );
 }
 

@@ -4011,9 +4011,35 @@ Sub-mark follow-up: retain bounded per-owner accepted births independently of re
 
 2026-10-11: Independent native Sprinkler Sub Power candidate connects pinned period curves and constant throw-speed tiers at owner throw admission. Actual Actor and render-rate regressions cover AP0/10/57, frozen per-device values and native phase progression. Existing AP0 phase interpretation/deployment/paint calibration remains unchanged; broader and browser gates pending. See reports/inkwave-native-sprinkler-power-2026-10-11.md.
 
+## 2026-10-11 Toxic Mist resistance candidate
+
+Connect the hash-verified 11.3.0 MoveDownRt_PoisonMist curve to the victim's calibrated reduction difference and grounded squid target speed. Query current live cloud membership for exit/overlap/expiry instead of retaining an outside-volume lease. Preserve remote victim ownership and require a matching cloud for status replay. Base .72, lifetime/drain and squid airborne momentum remain unresolved calibrations; no inferred airborne cap is introduced. See `inkwave-toxic-mist-resistance-2026-10-11.md` for measured limits and tests.
+
 ## 2026-10-11: grounded Fast squid acceleration connection (candidate)
 
 Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinary grounded squid gets the measured 1.5x rate; humanoid and all attack/ready states retain existing rates. Baseline actual Actor delta0.6 becomes0.9 WU/s at60Hz, other ordinary forms remain0.6, attack remains1.2. Absolute36/72calibration and air behavior are unchanged. See `reports/inkwave-fast-swim-acceleration-2026-10-11.md` for source, real-Physics/FPS/snapshot checks and unverified retail boundaries.
+
+## 2026-10-11: catalogue sub damage-family and Burst contact candidate
+
+Prevent Burst direct victims from receiving its same-impact splash twice while preserving collateral Actors. Connect pinned BombL to Burst/Fizzy/Torpedo and existing BombH to Mine. Admit their five authentic raw network cause tags under descriptor ceilings and existing sender/life/sequence guards. Source/Actor/network tests and client-authority/calibration limits are recorded in `inkwave-catalogue-sub-resistance-2026-10-11.md`.
+
+## 2026-10-11: Splash Wall display-plane alignment candidate
+
+Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather than applying generic decorative age rotation. Actual native deployment and JSON ghost replay regressions compare rendered world normals with barrier contact at multiple angles/frame rates. Contact damage, HP decay, lifetime and knockback are untouched; see `inkwave-splash-wall-facing-2026-10-11.md`.
+
+## 2026-10-12 Mist live-query cost
+Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
+
+
+## 2026-10-11 サブ14種・スペシャル19種の性能再照合
+
+Driveのpart02アーカイブとS3 11.3.0パラメータ、条件を記録したWiki値を再照合。数値の保管だけでなく、インク節約・軽減・時間・SPU・設置物・装甲・native通信の実際の消費箇所を修正した。根拠、実装箇所、再現、プレイ影響、確認状態は `reports/inkwave-source-parity-corrections-20261011.md`、個別のsource葉監査は `reports/source-parity-coverage-20261011.json`、設置物・装甲・通信の監査は `reports/interaction-parity-20261011.md` に記録。
+
+本節は全挙動の実機一致認定ではない。ロジック単独、配信ビルド、ブラウザ動作、本家実機比較を区別する。世界距離、標的選択、飛行/接地/壁の反応、塗り形状、未公開フィールドの意味について未確認を残す。モデリングと本格的なアニメーションは依頼の範囲外。既存の未確認項目を本変更だけで解消済みにしない。
+
+### 2026-10-11 最終ソース消費・main統合追記
+
+NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、Reef rut／Inkjet・Reef周辺塗りの値を実処理へ追加。実Actorの発射からProjectilesの30/60/120Hz進行を測定した。最新main PR1237の靴メイン対物ギアとnative Sprinkler修正も保ち、rawダメージ・攻撃行・ギアを送るowner判定で2重倍率を防止。具体的な根拠・再現・影響・未検証は`reports/inkwave-source-parity-corrections-20261011.md`と各parity報告に記載。実機完全一致は認定していない。
 
 
 ## 2026-10-12 原典表示メッシュ5ステージ統合
@@ -4108,3 +4134,26 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 
 ユーザーの指摘による修正（同日）: テイオウイカは初版で四角錐の頭・棒状の脚で、回転画像の 1 コマに 2 体並ぶことに気付かず横幅を約 1.3 倍に測っていたため、測り直して作り直した。ウルトラハンコは初版で手と離れて浮いていたため、両手で柄を持つ形にした。
 未確認・未対応: 体の姿勢（乗る・飛ぶ・掲げる）、メガホンレーザーのスピーカーが標的へ飛ぶ動き、テイオウイカの跳ねる動き、模様・文字、相手側の段階表示。
+
+## 2026-10-13 ガチ4ルールのWiki監査後の修正
+
+参照はSplatoon 3 11.3.0、S3mixの各ルール詳細、Nintendoのガチキング基本ルール、Inkipediaの延長・同点注記。詳細な根拠・再現操作・実装・影響・未確認値は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` に記録した。アサリの攻撃ゴール／防衛ゴールを取り違えた延長判定、ホコの未突破カンモンより先のカウント・通常空中カウント・拾得位置からの後退・中央放置バリア・敵陣側の時間切れ復帰、ヤグラのカンモン上での進捗消去、同点時の1カウント補正、占有済み地点へのアサリ重複生成を修正。スペシャル別の取得／投擲、全所持アサリのイベント単位の散乱、ガチアサリの着弾塗り・反撃用アサリの塗り、ゴール破壊までの回転待ちも接続した。
+
+確認は単独ロジック・実ゲームクラスの接続・ブラウザ・CIで区別する。1/60・0.05・0.2秒の入力間隔と、通常終了・延長突入・20秒期限・バリア破壊・スナップショット復元の順序を回帰テストする。公開URLのブラウザ検証はmain公開後のCIにも追加した。Wiki間のホコ後退倍率・延長猶予・アサリペナルティ端数、地形／カウント写像／投擲慣性／塗り半径／回転待ちの厳密時間、ヤグラ上の設置物追従・寿命、本家Switch実機との比較は未確認を維持する。実装のCI成功だけで本家と完全一致とは判定しない。
+
+### 2026-10-13 ホコショットの再点検
+
+専用弾の存在に加え、S3mix のチャージ前隙（ヒト1F/イカ6F）、射撃前隙1F、射撃後隙20F、チャージキープ不可、部分チャージの非爆発、満チャージ音・発光、チャージ中速度を実装境界で補完した。専用弾は native kitDefenseCandidate の先着判定、飛行中の下向き塗り、反動、フル弾の着弾待ち、水・ハンコ・キューインキの消去に接続した。60Fちょうどの丸め誤差と爆風の足元基準も修正。Wiki/11.3.0 パラメータとロジック試験・ネイティブ試験・ブラウザ試験は区別して記録する。完全な本家弾道、反動の単位変換、着弾後0.2秒の待ち時間、防御物への全爆風補正は実機未確認。詳細と再現条件は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` のホコ追補に記載。
+
+同追補: 通常チャージャーを溜めたままホコを取得すると元の WeaponRunner が busy のまま凍り、泳ぎを禁止し、ホコを失った後に古い射撃が再開し得る経路も修正した。所持開始時に一度だけ通常ブキ状態を初期化し、実際のチャージ→取得→イカ変身→所持解除で古い弾が出ないことをネイティブ試験で確認。既に発射済みの傘の存続などは本家比較未確認として残す。
+## 2026-10-13 傘とスペシャルの入力差分
+
+`reports/inkwave-brella-special-controls-20261013.md` に19種の操作条件、Wiki/11.3.0の根拠、実行箇所、反例、未確認項目を追記。パージの布描画欠落、開口サイズ、飛行のRunner依存を修正。ナイスダマの早投げ/自動投げ/移動、R投擲系のZR代用、ジェットパックの連射/任意終了、ミサイルの空撃ち/距離制限、デコイ8→12、サメの操舵、メガホン2→6、カタログメインのスペシャル中抑止、キューインキの無操作吸引、スタンド即設置を是正。形状・弾道・追跡・通信相手の傘表示、ギア/ゲージの全実機条件は未確認を保持し、完了に読み替えない。
+
+傘/スペシャル追補: 環境復旧後に現行mainを統合。装甲/Burst/シールドの追補を含む関連272件は旧fixture4件を修正後に通過（任意1件skip）。実PerspectiveCameraのfar clippingによるマルチミサイルの距離制限も除去し、far=50に対する距離200の10発を検証。06c1ba6のCIでは傘の実WebGL表示・飛行・clearが通過。残るブラウザfixtureを50% Mist、ZR保持、R離し/接地の操作へ更新。未確認の実機比較は維持する。
+
+傘/スペシャル最終追補: キューインキのZR保持をnative snapshot既存firing bitで通信し、相手側の離し/イカ/再開も判定・描画に反映。スタンドは実床への接触で0.03浮かせず、ServeAreaHeightDown=0の本家値と同じ床の飲料受け取りを両立。関連318件全通過、配信ビルド/容量通過。全体ゲートを修正後のコードで再実行中。詳細は20261013の傘/スペシャル照合記録。実機完全一致の未確認項目は維持。
+
+傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
+
+公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。

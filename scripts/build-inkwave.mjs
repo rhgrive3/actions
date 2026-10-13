@@ -22,9 +22,9 @@ import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity, I
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { staticEsModuleImports } from './lib/inkwave-module-imports.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
+import { compactModuleStrings } from './lib/inkwave-source-compaction.mjs';
 import { adaptRange, rangeIdentity, RANGE_ROOT } from '../patches/practice-range/adapter.mjs';
 import { overlayScorchStageAssets } from './lib/inkwave-stage-assets.mjs';
-import { compactLightmapPng } from './lib/inkwave-lightmap-compaction.mjs';
 import { optimizeLightmapPng } from './lib/inkwave-lossless-lightmap.mjs';
 
 const physicalLocation = name => fs.existsSync(name) ? fs.realpathSync(name) : path.join(physicalLocation(path.dirname(name)),path.basename(name));
@@ -52,6 +52,14 @@ const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).filter(d => d
 });
 const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;
 const kb = (n) => `${(n / 1024).toFixed(0)} KB`;
+let compactedLiteralBytes = 0;
+const compactedLiteralBytesByFile = new Map();
+const compactEsm = (code, file) => {
+  const compacted = compactModuleStrings(code);
+  compactedLiteralBytes += compacted.bytesSaved;
+  if (file) compactedLiteralBytesByFile.set(file, (compactedLiteralBytesByFile.get(file) || 0) + compacted.bytesSaved);
+  return compacted.code;
+};
 
 // Build as a transaction: only a fully patched, validated tree replaces OUT.
 const nativePrepared = prepareNativeStageBuild(process.env.INKWAVE_NATIVE_STAGE_ASSETS);
@@ -67,21 +75,16 @@ for (const file of walk(SRC)) {
   const ext = path.extname(file);
   if (ext === '.js' || ext === '.mjs' || ext === '.css') {
     const code = adaptBuildSource(rel, fs.readFileSync(file, 'utf8'));
+    const esm = ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/')));
     const res = await transform(code, {
-      loader: ext === '.css' ? 'css' : 'js', format: ext === '.mjs' || (ext === '.js' && (rel.startsWith('src/') || rel.startsWith('vendor/three/jsm/'))) ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
+      loader: ext === '.css' ? 'css' : 'js', format: esm ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: rel,
     });
-    fs.writeFileSync(dst, res.code);
-    if (ext === '.css') { rawCss += code.length; minCss += res.code.length; }
-    else { rawJs += Buffer.byteLength(code); minJs += Buffer.byteLength(res.code); gzRaw += gz(Buffer.from(code)); gzMin += gz(Buffer.from(res.code)); }
+    const output = esm && !unminified ? compactEsm(res.code, rel.split(path.sep).join('/')) : res.code;
+    fs.writeFileSync(dst, output);
+    if (ext === '.css') { rawCss += code.length; minCss += output.length; }
+    else { rawJs += Buffer.byteLength(code); minJs += Buffer.byteLength(output); gzRaw += gz(Buffer.from(code)); gzMin += gz(Buffer.from(output)); }
   } else if (rel === 'index.html') fs.writeFileSync(dst, adaptBuildSource(rel, fs.readFileSync(file, 'utf8')));
-  else if (!unminified && rel.startsWith('assets/lightmaps/') && ext === '.png') {
-    // Pack the same grayscale pixels with better PNG row filters + DEFLATE.
-    // Do not touch source assets, offline availability, module imports or the
-    // production cache ceiling. The helper validates decoded pixels before use.
-    const original = fs.readFileSync(file), compact = optimizeLightmapPng(original);
-    fs.writeFileSync(dst, compact);
-    losslessLightmapSavings += original.length - compact.length;
-  } else fs.copyFileSync(file, dst);
+  else fs.copyFileSync(file, dst);
 }
 // .mjs files have private module scope. ESM output lets esbuild shorten those
 // bindings while preserving every exported name, import, and numeric value.
@@ -112,14 +115,14 @@ for (const file of walk(PATCH_ROOT)) {
           contents: adaptBuildSource('patches/splatoon3/' + path.relative(PATCH_ROOT, args.path).split(path.sep).join('/'), fs.readFileSync(args.path, 'utf8')) }));
       } }],
     });
-    fs.writeFileSync(dst, res.outputFiles[0].text);
+    fs.writeFileSync(dst, compactEsm(res.outputFiles[0].text, 'patches/splatoon3/' + relPosix));
     continue;
   }
   if (/\.(m?js|css)$/.test(rel)) {
     const patchRel = 'patches/splatoon3/' + rel.split(path.sep).join('/');
     const code = adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8'));
     const res = await transform(code, { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
-    fs.writeFileSync(dst, res.code);
+    fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
   } else if (rel === 'profile.json') {
     // Retain main's compact profile in all emitted builds while keeping the
     // PR's explicit parsed-value check and the production precache budget.
@@ -135,8 +138,9 @@ for (const file of walk(QUALITY_ROOT)) {
   const dst = path.join(BUILD, 'patches/local-quality', rel);
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
-    const res = await transform(adaptBuildSource('patches/local-quality/' + rel.split(path.sep).join('/'), fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/local-quality/' + rel.split(path.sep).join('/') });
-    fs.writeFileSync(dst, res.code);
+    const patchRel = 'patches/local-quality/' + rel.split(path.sep).join('/');
+    const res = await transform(adaptBuildSource(patchRel, fs.readFileSync(file, 'utf8')), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: patchRel });
+    fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
   } else fs.copyFileSync(file, dst);
 }
 
@@ -177,7 +181,7 @@ for (const [root, prefix] of [
         format: rel.endsWith('.mjs') ? 'esm' : undefined,
         minify: true, charset: 'utf8', legalComments: 'inline', sourcefile,
       });
-      fs.writeFileSync(dst, result.code);
+      fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(result.code, prefix + '/' + rel) : result.code);
     } else fs.copyFileSync(file, dst);
   }
 }
@@ -199,14 +203,18 @@ for (const file of walk(RANGE_ROOT)) {
   fs.mkdirSync(path.dirname(dst), { recursive: true });
   if (/\.(m?js|css)$/.test(rel)) {
     const res = await transform(fs.readFileSync(file, 'utf8'), { loader: rel.endsWith('.css') ? 'css' : 'js', format: rel.endsWith('.mjs') ? 'esm' : undefined, minify: true, charset: 'utf8', legalComments: 'inline', sourcefile: 'patches/practice-range/' + rel });
-    fs.writeFileSync(dst, res.code);
+    const patchRel = 'patches/practice-range/' + rel;
+    fs.writeFileSync(dst, rel.endsWith('.mjs') && !unminified ? compactEsm(res.code, patchRel) : res.code);
   } else fs.copyFileSync(file, dst);
 }
 
-// Lossless PNG filters reduce the offline snapshot; source assets stay frozen.
-for(const file of walk(path.join(BUILD,'assets/lightmaps')).filter(f=>f.endsWith('.png'))){
-  const original=fs.readFileSync(file),compact=compactLightmapPng(original);
-  fs.writeFileSync(file,compact);
+// Re-encode every final lightmap once after upstream, Scorch, and Range assets
+// have been overlaid. Keep all five assets offline and verify exact pixels.
+if (!unminified) for (const file of walk(path.join(BUILD, 'assets/lightmaps')).filter(file => file.endsWith('.png'))) {
+  const original = fs.readFileSync(file);
+  const compact = optimizeLightmapPng(original);
+  fs.writeFileSync(file, compact);
+  losslessLightmapSavings += original.length - compact.length;
   console.log(`lightmap ${path.basename(file)}: ${original.length} -> ${compact.length} bytes (same pixels)`);
 }
 // Service workers only control ancestor paths when served from the site root.
@@ -236,7 +244,7 @@ if (!unminified && fs.existsSync(path.join(THREE_DIR, 'three.module.js')) && pro
   });
   const out = res.outputFiles[0].contents;
   const before = fs.statSync(path.join(BUILD, 'vendor/three/build/three.module.js')).size + fs.statSync(path.join(BUILD, 'vendor/three/build/three.core.js')).size;
-  fs.writeFileSync(path.join(BUILD, 'vendor/three/build/three.module.js'), out);
+  fs.writeFileSync(path.join(BUILD, 'vendor/three/build/three.module.js'), compactEsm(Buffer.from(out).toString('utf8'), 'vendor/three/build/three.module.js'));
   fs.rmSync(path.join(BUILD, 'vendor/three/build/three.core.js'));
   console.log(`three.js: ${keep.length} of ${exported.size} exports kept · ${kb(before)} → ${kb(out.length)} (gzip ${kb(gz(Buffer.from(out)))})`);
 }
@@ -460,9 +468,12 @@ const loadingPlan = prepareLoading(BUILD, order, {
   diagnosticUnminified: unminified,
   // main's production compaction reduces startup JS and the complete immutable
   // precache; diagnostic builds keep the unminified startup runtime.
-  compactRuntime: source => unminified ? source
-    : esbuild.transformSync(source, { loader: 'js', minify: true, charset: 'utf8',
-      legalComments: 'inline', sourcefile: 'patches/loading-cache/runtime/startup.mjs' }).code,
+  compactRuntime: source => {
+    if (unminified) return source;
+    const compiled = esbuild.transformSync(source, { loader: 'js', format: 'esm', minify: true, charset: 'utf8',
+      legalComments: 'inline', sourcefile: 'patches/loading-cache/runtime/startup.mjs' }).code;
+    return compactEsm(compiled, 'patches/loading-cache/runtime/startup.mjs');
+  },
 });
 const loadingHTML0 = fs.readFileSync(path.join(BUILD, 'index.html'), 'utf8');
 const isRange = file => file.startsWith('patches/practice-range/');
@@ -508,7 +519,7 @@ for (const [file, hash] of Object.entries(identity.build.range)) identity.files[
 for (const [file, hash] of Object.entries(identity.build.loadingCache.source)) identity.files['loading-cache/' + file] = hash;
 // Direct script helpers also control composition, packaging and worker output.
 // Include them in the same input hash and committed-source checks as overlays.
-for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lightmap-compaction.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
+for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-module-imports.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
   identity.files['build-script/' + file] = sha256(fs.readFileSync(new URL(file, import.meta.url)));
 }
 for (const [file, hash] of Object.entries(nativeStageIdentity())) identity.files['native-stages/' + file] = hash;
@@ -523,5 +534,7 @@ console.log(`patch: splatoon3+quality+range · build ${identity.contentHash.slic
 
 console.log(`JS : ${kb(rawJs)} → ${kb(minJs)}  (gzip ${kb(gzRaw)} → ${kb(gzMin)})`);
 console.log(`CSS: ${kb(rawCss)} → ${kb(minCss)}`);
+const cachedLiteralBytesSaved = loadingPlan.precache.reduce((sum, file) => sum + (compactedLiteralBytesByFile.get(file) || 0), 0);
+console.log(`repeated module strings: saved ${compactedLiteralBytes} bytes total, ${cachedLiteralBytesSaved} in the offline precache`);
 console.log(`modulepreload: ${preloadOrder.length} modules (${order.length - preloadOrder.length} deferred, all precached)`);
 console.log(`lossless lightmaps: ${losslessLightmapSavings} bytes saved with identical decoded pixels`);
