@@ -31,7 +31,7 @@ function method(name) {
 }
 const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
 assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
-const hitLimits = source.slice(limitsStart, limitsEnd);
+const hitLimits = source.match(/^const IW_CATALOGUE_SUB_HIT_MAX = [^\n]+;/m)[0] + '\n' + source.slice(limitsStart, limitsEnd);
 const dropStart = source.indexOf('function clearRemoteDropRoll('), dropEnd = source.indexOf('function syncRemoteDropRoll(', dropStart);
 assert.ok(dropStart >= 0 && dropEnd > dropStart, 'production Drop Roller cleanup helper is composed');
 const dropCleanup = source.slice(dropStart, dropEnd);

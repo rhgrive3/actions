@@ -71,6 +71,17 @@ export function stormRainContains(c, a, baseRadius, scale = stormRainScale(c)) {
   const dx = point.x - p.x, dz = point.z - p.z;
   return dx * dx + dz * dz <= radius * radius;
 }
+// Deployed-device point contact for the continuous cloud damage tick. Match
+// the actor cylinder's horizontal growth/fade radius and finite vertical trace;
+// unlike stormRainContains this accepts world objects without an `alive` flag.
+export function stormRainObjectContains(c, object, baseRadius, scale = stormRainScale(c)) {
+  const p = c.group?.position, point = object?.pos;
+  if (!p || !point || ![p.x,p.y,p.z,point.x,point.y,point.z,baseRadius,scale].every(Number.isFinite) ||
+      baseRadius < 0 || point.y > p.y || point.y + 1.2 < p.y - 0.8 - STORM_RAIN_REACH) return false;
+  const radius = baseRadius * scale;
+  const dx = point.x - p.x, dz = point.z - p.z;
+  return dx * dx + dz * dz <= radius * radius;
+}
 // Recovery follows the same live rain area as native contact until expiry. The
 // native damage loop keeps its separate dur-0.3 window (#563 scope).
 export function cloudCoversActor(c, a, G, SPECIALS) {

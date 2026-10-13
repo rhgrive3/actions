@@ -45,6 +45,21 @@ test('candidate queries are inert, choose earliest intake and reject invalid dis
   system.kitBarrierCandidate = () => ({ distance: 11, onHit() { throw new Error('outside step'); } });
   assert.equal(system.kitDefenseCandidate(p), null);
 });
+test('Curling direct-contact defense preserves the source bullet and 20 HP amount', async () => {
+  const { f, system } = await setup();
+  const owner=f.make('roller'); owner.team=0;
+  const start=new f.THREE.Vector3(0,1,0), end=new f.THREE.Vector3(4,1,0);
+  const bomb={kind:'bomb',owner,team:0,vel:new f.THREE.Vector3(0,0,4),ghost:false,
+    s3Sub:{id:'curling'},s3Resolved:{spec:{id:'curling',damageDirectHit:20}}};
+  let received;
+  system.kitBarrierCandidate=(p,a,b)=>{received={p,a,b};return {distance:2,onHit(){}};};
+  const candidate=system.kitBombDefenseCandidate(bomb,start,end);
+  assert.equal(candidate.distance,2);
+  assert.equal(received.p.damage,20,'Curling uses source direct-contact damage, not 180 HP blast damage');
+  assert.equal(received.p.s3Sub.id,'curling','object-rate lookup selects Bomb_CurlingBullet');
+  assert.equal(received.p.s3Resolved,bomb.s3Resolved);
+  assert.equal(received.a,start);assert.equal(received.b,end);
+});
 test('partial and piercing charger beams stop at defense; piercing hits before it remain', async () => {
   for (const charge of [.5, 1]) {
     const f = await fixture(); installKitDefense(f);
@@ -92,7 +107,7 @@ test('actual Bubbler mechanics participate in the native sweep and preserve ghos
       size: .15, radius: .3, age: 0, life: 1, straight: 1, grav: 0, drag: 0, trailEvery: 0, ghost: mode === 'ghost' });
     p.pos.copy(dome.pos).add(new f.THREE.Vector3(0, 1, 20)); p.prev.copy(p.pos); p.start.copy(p.pos); p.vel.set(0, 0, -1800);
     assert.equal(system._step(p, 1 / 60), true); assert.equal(hits, 0, mode);
-    assert.equal(dome.hp, mode === 'owned' ? hp - 3600 * .64 : hp, mode);
+    assert.equal(dome.hp, mode === 'owned' ? hp - 360 * .64 : hp, mode);
     assert.equal(impacts, mode === 'nearer-wall' ? 1 : 0, mode); assert.equal(p.age, 1 / 60);
     system.clear();
   }
@@ -116,8 +131,9 @@ test('native blast shielding consumes durability once for protected actors and p
       s3SpecialWeapon: { burstRadius: 3.2, impactRadius: 3.2, splashRadius: 20, splashBands: [[20, 53]], splashDamageMax: 53, splashDamageMin: 53 } });
     system._blastBurst(p, origin, null);
     assert.equal(hits, mode === 'inside' ? 2 : 0, mode);
-    // Pinned spl__DamageRateInfoConfig: SpBlower ExtraBombCore row BlowerExhale_BombCore x GreatBarrier_Barrier = 4.2.
-    assert.ok(Math.abs(dome.hp - (mode === 'outside' ? hp - 5300 * 4.2 * .64 : hp)) < 1e-6, `${mode}: ${dome.hp}`);
+    // The normalized 53 damage is ×10 once at the Bubbler boundary, then the
+    // pinned BlowerExhale_BombCore × GreatBarrier_Barrier rate 4.2 and DamgeRatio .64 apply.
+    assert.ok(Math.abs(dome.hp - (mode === 'outside' ? hp - 530 * 4.2 * .64 : hp)) < 1e-7, mode);
     assert.equal(system.s3ExplosionDefense, undefined, 'context restored, no pooled state');
     system.clear();
   }

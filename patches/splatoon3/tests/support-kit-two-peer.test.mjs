@@ -4,6 +4,9 @@ import { fixture } from './source-fixture.mjs';
 
 // Two independent runtime/module/actor realms, with the actual NetMatch._rec
 // wire rows replayed through the receiving peer's real NetMatch._play owner.
+function throwAndLandCooler(f,a){a.aimDir.set(0,-1,0);a.intent.sub=true;a._updateSpecial(1/60);a.intent.sub=false;a._updateSpecial(1/60);
+ for(let i=0;i<14&&a.specialActive;i++)a._updateSpecial(1/60);
+ for(let i=0;i<10&&!(f.G.projectiles._s3SupportCoolers||[]).length;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}}
 async function peer(id, remoteOwner) {
   const f=await fixture({fullRuntime:true,realProjectiles:true});
   f.G.scene ||= new f.THREE.Scene();
@@ -52,7 +55,7 @@ test('#710/#835 Point Sensor mark and Tacticooler drink cross separate owner/net
   B.net._play('A',mark);B.net._play('forged-other-peer',mark);
   assert.equal(B.victim.s3.revealedUntil[0],until,'duplicate/spoof cannot renew a mark');
   A.owner.special=A.owner.specialCost();
-  A.owner._startSpecial();
+  A.owner._startSpecial();throwAndLandCooler(A.f,A.owner);
   records=replay();
   const stand=records.find(e=>e[1]==='ks'&&e[2]==='c');
   assert.ok(stand,'real special action emits stand birth');
