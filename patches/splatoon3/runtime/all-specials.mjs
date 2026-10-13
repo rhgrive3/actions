@@ -967,8 +967,8 @@ function paintReefRut(rt,actor,state,from,to,dt) {
 function deployInkstrike(rt,actor,state,index) {
   const target=aimPoint(rt,actor,28,rt.v0).clone();groundAt(rt,target,rt.v1);target.copy(rt.v1);
   const launchAt=rt.v2.set(actor.pos.x,actor.pos.y+1.1,actor.pos.z).clone();
-  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{dur:1.1,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,target,scale:[.36,.36,.36]});
-  marker.phase='flight';marker.origin=launchAt.clone();marker.flight=1.1;marker.age=0;
+  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{dur:82/FPS+51/FPS,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,target,scale:[.36,.36,.36]});
+  marker.phase='flight';marker.origin=launchAt.clone();marker.flight=82/FPS;marker.age=0;
   emitAction(rt,actor,'tripleInkstrike',state.serial,'marker',launchAt,target,marker.seed,{index});
 }
 function throwChumps(rt,actor,state) {
@@ -1190,11 +1190,21 @@ function updateWorld(rt,dt) {
     const o=list[i];if(!o||o.dead){list.splice(i,1);continue;}
     o.age+=dt;
     if(o.kind==='marker'){
-      const k=clamp(o.age/Math.max(.05,o.flight||1.1),0,1);
+      const k=clamp(o.age/Math.max(.05,o.flight||82/FPS),0,1);
       o.pos.copy(o.origin).lerp(o.target,k);o.pos.y+=Math.sin(k*Math.PI)*4;
       o.mesh?.position.copy(o.pos);
-      if(k>=1){o.kind='strike';o.phase='active';o.dur=3.1;o.activeAt=o.age;o.maxRadius=7.7;o.currentRadius=.5;o.nextDamage=o.age;
-        o.paintT=0;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);fxBurst(rt,o.owner,o.target,1.6,'deploy');emitObject(rt,o,'active');}
+      if(k>=1){
+        // 82F from marker throw to the first damage frame, then 51F of tornado
+        // with damage every five source frames (0,5,...50: eleven ticks).
+        o.kind='strike';o.phase='active';o.dur=51/FPS;o.activeAt=o.age;
+        o.maxRadius=7.7;o.currentRadius=.5;o.nextDamage=o.age+5/FPS;
+        o.paintT=0;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);
+        if(!o.owner.remote){
+          const hitCenter=rt.v0.copy(o.pos);hitCenter.y+=.8;
+          damageBandRadius(rt,o.owner,hitCenter,descriptions.tripleInkstrike.splashBands,o.currentRadius,'tripleInkstrike');
+        }
+        fxBurst(rt,o.owner,o.target,1.6,'deploy');emitObject(rt,o,'active');
+      }
     }else if(o.kind==='strike'){
       const elapsed=o.age-(o.activeAt||0),spread=50/FPS;
       o.currentRadius=.5+(o.maxRadius-.5)*clamp(elapsed/spread,0,1);
@@ -1213,7 +1223,7 @@ function updateWorld(rt,dt) {
           if(!o.owner.remote&&(o.pulse||0)%4===0)emitObject(rt,o,'pulse');
         }
       }
-      if(elapsed>=o.dur)removeWorld(rt,o,'expire');
+      if(elapsed+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='booyahBlast'){
       // DamageRadiusStart/End and PaintSpanFrame are 60 Hz source frames.
       // Accumulate those frames here so the per-frame 3.3 damage is invariant
@@ -1557,8 +1567,20 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='tripleInkstrike'){
     moveActor(rt,actor,dt,state,{squid:false});
-    if(edges.subUp&&state.shots<3){queueSubThrow(state,13,(r,a,st,index)=>{deployInkstrike(r,a,st,index);st.shots++;if(st.shots>=3)endSpecial(r,a,'deployed');},state.shots);}
-    else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'deployed');return;
+    if(edges.subUp&&state.shots<3)state.markerQueued=true;
+    // 20F activation +14F throw. The 19F post-throw recovery and next 14F
+    // throw yield a 33F spacing; this keeps the actual sub-release input path.
+    if(state.markerQueued&&state.shots<3&&elapsed+14/FPS<=state.duration+1e-8
+       &&elapsed+1e-8>=state.nextMarkerStart){
+      state.markerQueued=false;
+      queueSubThrow(state,14,(r,a,st,index)=>{
+        deployInkstrike(r,a,st,index);
+        st.shots++;
+        st.nextMarkerStart=st.t+19/FPS;
+        if(st.shots>=3)endSpecial(r,a,'deployed');
+      },state.shots);
+    } else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'timeout');
+    return;
   }
   if(state.id==='superChump'){
     moveActor(rt,actor,dt,state,{squid:false});
@@ -1623,7 +1645,7 @@ function makeState(rt,actor,id) {
   if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;}
   if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.fireStart=null;state.wasRolling=false;}
   if(id==='reefslider'){state.paintRadius=gearCurve(ap,7.51,8.26,9.012);state.damageDistanceRate=gearCurve(ap,1,1.1,1.2);state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startupT=0;state.footHits=new Set();}
-  if(id==='tripleInkstrike')state.nextMarker=0;
+  if(id==='tripleInkstrike'){state.nextMarkerStart=20/FPS;state.markerQueued=false;}
   if(id==='waveBreaker')state.phase='ready';
   if(id==='zipcaster')state.phase='ready';
   if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='startup';state.direction=new rt.api.THREE.Vector3();}
@@ -1865,7 +1887,7 @@ function replayObjectEvent(rt,actor,event) {
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);
-    if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=finite(event.duration)?event.duration:1.1;}
+    if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=82/FPS;}
     if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
     if(kind==='wave'){
       object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
@@ -1881,7 +1903,7 @@ function replayObjectEvent(rt,actor,event) {
     object.pos.copy(point);if(object.mesh){object.mesh.position.copy(point);if(object.kind==='screen')object.mesh.position.y+=object.height/2;}
     if(object.kind==='screen'&&target){const normal=target.clone().sub(point).setY(0).normalize();object.normal.copy(normal);object.direction.copy(normal);object.tangent.set(normal.z,0,-normal.x);object.target=target;}
   }else if(event.action==='active'){
-    if(object.kind==='marker'){object.kind='strike';object.phase='active';object.activeAt=object.age;object.dur=3.1;object.maxRadius=7.7;object.currentRadius=.5;object.nextDamage=object.age;object.once=new Set();}
+    if(object.kind==='marker'){object.kind='strike';object.phase='active';object.activeAt=object.age;object.dur=51/FPS;object.maxRadius=7.7;object.currentRadius=.5;object.nextDamage=object.age+5/FPS;object.once=new Set();}
     if(object.kind==='decoy')object.phase='active';
   }else if(event.action==='hit')object.hp=finite(event.hp)?event.hp:object.hp;
   else if(event.action==='destroy'||event.action==='expire')removeWorld(rt,object,event.action);
