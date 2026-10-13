@@ -85,13 +85,15 @@ test('slope disk actual NetMatch JSON splats reproduce identical ownership',asyn
 });
 
 
-test('targetless missiles preserve aim height when both ground probes miss',async()=>{
+test('locked Tenta Missiles preserve target height when both ground probes miss',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  f.G.physics.raycast=(_a,_b,_distance,hit)=>{hit.hit=false;return hit;};
  f.G.level.groundHeight=()=>-Infinity;
  const actor=f.make();actor.weapon={...actor.weapon,special:'tentaMissiles',specialCost:100};
- actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);f.G.actors=[actor];
- actor._startSpecial();actor.intent.fire=true;actor._updateSpecial(1/60);
+ actor.special=100;actor.alive=true;actor.remote=false;actor.pos.set(0,0,0);actor.aimDir.set(0,0,1);actor._resolve=()=>{};
+ const locked=f.make();locked.team=1;locked.pos.set(0,1.05,28);f.G.actors=[actor,locked];
+ actor._startSpecial();actor.intent.fire=true;actor._updateSpecial(1/60);actor.intent.fire=false;
+ for(let i=0;i<40&&actor.specialActive;i++)actor._updateSpecial(1/60);
  const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');assert.equal(missiles.length,10);
- for(const p of missiles){assert.equal(p.s3TentaTarget.y,1.05,'ray probe offset must not mutate its output');assert.equal(p.s3TentaTarget.z,28);}
+ for(const p of missiles){assert.equal(p.s3TentaTarget.y,1.05,'ray probe offset must not mutate the locked target');assert.equal(p.s3TentaTarget.z,28);}
 });
