@@ -598,7 +598,7 @@ async function twoActorSetup() {
   p1.weapon = { ...p1.weapon, special: VAC_ID, specialCost: 190 }; p1.special = 190;
   const p2 = f.make('shooter'); p2.nid = 2; p2.remote = true; p2.team = 1;
   const q1 = f.make('charger'); q1.nid = 1; q1.remote = true; q1.team = 0;
-  q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;
+  q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;q1.intent.fire=true;
   const q2 = f.make('shooter'); q2.nid = 2; q2.remote = false; q2.team = 1;
   const viewP = new Map([[1, p1], [2, p2]]);       // machine P resolves nids its own way
   const viewQ = new Map([[1, q1], [2, q2]]);       // machine Q likewise

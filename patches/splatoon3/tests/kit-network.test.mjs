@@ -129,3 +129,21 @@ test('actual native Bubbler proposal packet is shooter-bound and adjudicated by 
   receiver._play('peer-A', packet); assert.equal(dome.hp, hp - 3600);
   sender.unsubs.forEach(fn => fn()); f.G.projectiles.clear();
 });
+
+test('native snapshots stop and restart the remote Ink Vac intake with the held ZR level',async()=>{
+ const {f,sender,receiver,make}=await setup(),owner=make(1,'peer-A',false),proxy=make(1,'peer-A',true),victim=make(2,'peer-B',false,1);
+ owner.weapon={...owner.weapon,special:'inkVac',specialCost:190};proxy.weapon=owner.weapon;owner.special=190;owner.pos.set(0,0,0);owner.aimDir.set(0,0,1);victim.pos.set(0,0,5);
+ sender.bind({actors:[owner],state:'playing',time:180});receiver.bind({actors:[proxy,victim],state:'playing',time:180});
+ let clock=0;f.context.performance={now:()=>clock};let packet;sender.s.tr={broadcast:p=>{packet=JSON.parse(JSON.stringify(p));}};
+ f.G.netm=sender;owner._startSpecial();f.G.netm=receiver;receiver._play('peer-A',JSON.parse(JSON.stringify(sender.out.find(e=>e[1]==='ev'&&e[2]===EV.activation))));
+ const sample=()=>{clock+=100;sender._sendTick();receiver.onMessage('peer-A',packet);receiver._peer('peer-A').tr=packet.ts;receiver._sample(proxy,packet.ts,0);receiver.applyRemote(proxy,1/60);};
+ owner.intent.fire=false;owner.weaponRunner.firingT=1;sample();
+ let state=f.inkVacState(proxy);assert.ok(state?.remote);assert.equal(state.sucking,false,'stale main firing pose does not represent suction');assert.equal(state.length,0);
+ owner.intent.fire=true;sample();for(let i=0;i<44;i++)f.advanceInkVacReplica(proxy,1/60);
+ assert.equal(state.sucking,true);assert.equal(state.length,15);
+ const point=victim.pos.clone().setY(1);const shot={pos:point,vel:new f.THREE.Vector3(0,0,-1),team:1,damage:30};assert.ok(f.inkVacAbsorbCandidate(proxy,point,point,shot));
+ owner.intent.fire=false;sample();assert.equal(state.sucking,false);assert.equal(state.length,0);assert.equal(f.inkVacAbsorbCandidate(proxy,point,point,shot),null);
+ owner.intent.fire=true;sample();assert.ok(state.length>0&&state.length<1,'restarting uses the small cone instead of the elapsed special clock');
+ owner.intent.squid=true;sample();assert.equal(state.sucking,false);assert.equal(state.length,0);
+ assert.equal(state.charge,0,'snapshot presentation never authors charge');sender.dispose();receiver.dispose();
+});

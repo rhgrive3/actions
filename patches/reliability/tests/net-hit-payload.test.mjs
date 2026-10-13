@@ -10,7 +10,7 @@ import { MAIN_WEAPON_CATALOG } from '../../splatoon3/runtime/main-weapon-catalog
 import { exhaleDamage } from '../../splatoon3/runtime/kit-ink-vac.mjs';
 import { adaptCombatLife } from '../combat-life-adapter.mjs';
 import {
-  adaptNetHitPayload, isHitPayloadValid, MAX_HIT_DAMAGE, KNOWN_HIT_CAUSES, hitPayloadPolicy,
+  adaptNetHitPayload, isHitPayloadValid, MAX_HIT_DAMAGE, CATALOGUE_SUB_HIT_MAX, KNOWN_HIT_CAUSES, hitPayloadPolicy,
 } from '../net-hit-payload-adapter.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -112,7 +112,7 @@ test('all authored catalogue hit IDs survive native owner admission; non-damagin
   const {nm,calls}=await harness({adapt:true});
   const causes=[...Object.keys(SUB_NAMES),...Object.keys(SPECIAL_NAMES).filter(id=>id!=='bubbler'),...MAIN_WEAPON_CATALOG.records.map(r=>r.id),'torpedo-splash'];
   let h=0;
-  for(const w of causes)nm.onMessage('A',{k:'hit',v:1,a:2,l:0,h:++h,d:w==='angleShooter'?40:Math.min(100,MAX_HIT_DAMAGE),w});
+  for(const w of causes)nm.onMessage('A',{k:'hit',v:1,a:2,l:0,h:++h,d:CATALOGUE_SUB_HIT_MAX[w]??(w==='angleShooter'?40:Math.min(100,MAX_HIT_DAMAGE)),w});
   assert.equal(calls.length,causes.length);
   assert.deepEqual(calls.map(c=>c.w),causes);
 });

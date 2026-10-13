@@ -67,3 +67,15 @@ Wiki URL共通: `https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェ�
 CI 38339795179では傘描画、6件再開回帰、メイン数値、ネイティブステージ、通信、練習場、起動が通過。一方、古い操作を使うブラウザfixtureでMistの旧28%減速、キューインキの無操作吸引、スタンド即設置が失敗。Wikiの50%減速、ZR保持、R離しと接地に修正し、ゲートを残して再実行する。responsive shardは13ケース後のブラウザTarget crashedで失敗し、論理不一致とは未判定。
 
 公開ビルドと容量ゲート通過（初期JS 2,689,762 bytes、worker 71,025 bytes、宣言総量10,403,048 bytes）。ブラウザ再検証とmain公開はこの記録時点で未完了。全19種の実機完全一致は未認定。
+
+### 通信停止・実地接地・総合再検証
+
+キューインキの相手側は発動後の経過時間で吸引判定を伸ばし続けていた。既存のnative firing flagをVacの物理ZRレベルに割り当て、snapshotの押下/離し/イカをreplicaに反映。離すと表示・吸引候補・敵への減速を止め、再開時はinhaleAgeをゼロから伸ばす。実NetMatchのpack→JSON→受信→sample→applyRemoteで、無入力（残存firingTを含む）、保持、離し、再押下、イカ化を検証。charge/damage所有者は変更しない。遅延中の既存提案のserial/peer/attack/dedup条件を保持。
+
+実Physicsの接地でスタンドをnormal方向へ0.03上げると、ServeAreaHeightDown=0の受け取り判定に対して同じ床のActorが下側になる。地面接触のpositionは面上に置き、壁に触れる飛行だけオフセットする。配信browser probeの実床/実throw→実drinkと、JSON takeoverの本来の残存時間で再確認した。
+
+Source parityの古いfixtureにも、二段階Burst 25→35、TorpedoのBombH軽減（Burst/FizzyのBombLと区別）、400FシールドHP自然減衰、30F後のNice armor、50% Mist/60F初回drain/ジャンプ低下、投擲接地スタンドを反映。反例（過大hit、重複JSON、raw装甲、退出/死/装備変更、再送、期限切れ）を維持した。ブキ別の塗り試験は各戦場をclearし、Runner resetをまたいで存続する前ブキの傘を持ち越さない。
+
+関連318件（傘/全スペシャル/サブ/Burst/防御/通信/全65メイン塗り/歩行Mist/スタンド/hidden-host）すべて通過。最終ビルドと容量ゲート通過: 初期JS2,689,762、worker71,025、宣言総量10,403,245 bytes。
+
+一周目の総合診断は5,147件（5,080通過、46失敗、21skip）。この調査中にもfixtureを更新しており、一つのimmutable headの通過証明には扱わない。失敗は未展開serverの3ファイルと上記旧fixtureを含み、修正後に318件のまとまった検証で再確認。修正後の全体ゲートをさらに実行中。CI/公開は待ち、本家実機・未公開物理・全遠隔表示の完全一致は未認定。

@@ -28,7 +28,7 @@ async function setup(t, { sub = 'suction', legacy = false, shooterWeapon = 'shoo
   const activation = ownerNet.out.find(e => e[1] === 'ev' && e[2] === ACTIVATE);
   assert.ok(activation, 'native successful activation produced a wire event');
   shooterNet.bind({ actors: [proxy, shooter] });
-  shooterNet._play('P', json(activation));
+  shooterNet._play('P', json(activation));proxy.intent.fire=true;
   assert.ok(api.inkVacState(proxy)?.remote);
   // LengthAddPerFrame is .3334 at 60 Hz, so let both owner and replica reach
   // the authored 15-unit intake before probing a projectile at z=20. This

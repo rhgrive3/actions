@@ -173,7 +173,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   const throws=projectile._s3SupportCoolerThrows||[];
   for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=24*dt;d.pos.addScaledVector(d.vel,dt);
     const hit=G.physics?.segment?.(d.prev,d.pos,d.hit);let landed=hit?.hit&&hit.normal.y>.4;
-    if(hit?.hit){d.pos.copy(hit.point).addScaledVector(hit.normal,.03);if(!landed)d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}
+    if(hit?.hit){d.pos.copy(hit.point);if(!landed){d.pos.addScaledVector(hit.normal,.03);d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}}
     const floor=G.level?.groundHeight?.(d.pos.x,d.pos.z);
     if(!landed&&Number.isFinite(floor)&&d.pos.y<=floor){d.pos.y=floor;landed=true;}
     if(landed){releaseVisual(d,G);throws.splice(i,1);deployCooler(d.owner,projectile,G,THREE,false,d.pos.toArray());}

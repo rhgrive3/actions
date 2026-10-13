@@ -248,7 +248,7 @@ function originOf(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATIO
 // The allowed t interval comes from the truncation, then the first F(t) <= 0 inside
 // it is found from the quadratic roots. No sampling, no per-projectile allocation.
 function firstEntry(state, start, end) {
-  if(!state.remote&&state.sucking===false)return Infinity;
+  if(state.sucking===false)return Infinity;
   const { _org: o, _fwd: f, _m: m, _e: e } = state;
   originOf(state.actor, o); forwardOf(state.actor, f);
   m.copy(start).sub(o);
@@ -471,9 +471,9 @@ function disposeVisual(state) {
 
 // Presentation advance, shared by the held local intake and by a replica cone.
 function updateVisual(state) {
-  state.length = Math.min(INHALE_LENGTH, (state.remote ? state.t : (state.inhaleAge ?? state.t)) * INK_VAC_CALIBRATION.framesPerSecond * INHALE_LENGTH_ADD_PER_FRAME);
+  state.length = Math.min(INHALE_LENGTH, (state.inhaleAge ?? state.t) * INK_VAC_CALIBRATION.framesPerSecond * INHALE_LENGTH_ADD_PER_FRAME);
   if (!state.mesh) return;
-  state.mesh.visible=state.remote||state.sucking!==false;
+  state.mesh.visible=state.sucking!==false;
   const a = state.actor;
   state.mesh.position.copy(originOf(a, state._org));
   state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
@@ -651,6 +651,11 @@ export function advanceInkVacReplica(actor, dt) {
   if (!state || !state.remote || !(dt > 0)) return false;
   state.t += dt;
   if (state.phase === 'inhale') {
+    // Native samples carry the physical intake level in their existing firing
+    // bit. Direct replay fixtures fall back to the explicit owner input.
+    const flags=actor.net?.cur?.f;
+    state.sucking=Number.isInteger(flags)?!!(flags&4096)&&!(flags&2):!!actor.intent?.fire&&!actor.intent?.squid;
+    if(state.sucking)state.inhaleAge+=dt;else state.inhaleAge=0;
     updateVisual(state);
     if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
         state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) beginExhale(state);

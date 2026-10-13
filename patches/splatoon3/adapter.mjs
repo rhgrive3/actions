@@ -1152,6 +1152,10 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    // The existing firing bit carries the held intake level for Ink Vac.
+    // Weapon firingT is deliberately masked while Vac owns the trigger.
+    code = replaceOnce(code, '  if (wr.firingT > 0) f |= F.firing;',
+      "  if (a.specialActive?.id === 'inkVac' ? !!a.intent.fire && !a.intent.squid : wr.firingT > 0) f |= F.firing;", 'Ink Vac held intake wire level');
     // #904: replicate the owner-proven wall normal while showing the charge
     // pose, without enabling ordinary remote wall-climb movement.
     code = replaceOnce(code, '  if (a.climbing) f |= F.climb;',

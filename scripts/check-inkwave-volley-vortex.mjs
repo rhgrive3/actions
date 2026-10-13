@@ -101,6 +101,10 @@ try{
   assert(Math.abs(victim.ink-94)<1e-8);assert.equal(victim.hp,100);assert.equal(victim.replicaDamage,0);
   const slow=await guest.evaluate(()=>{const a=G.local;a.intent.move.set(1,0,0);a.vel.set(20,0,0);a._horizontal(1/60,false,false);const inside=a.vel.length();a.pos.z=-5;a.vel.set(20,0,0);a._horizontal(1/60,false,false);return{inside,outside:a.vel.length(),cap:a.weaponRunner.moveSpeed()*.6};});
   assert(slow.inside<=slow.cap+1e-8);assert(slow.outside>slow.cap);
+  await host.evaluate(()=>{G.local.intent.fire=false;G.local.update(1/60);});await frames(15);
+  await guest.evaluate(()=>vac.advanceInkVacReplica(G.actors[0],1/60));
+  assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).length),0,'owner stops on ZR release');
+  assert.equal(await guest.evaluate(()=>vac.inkVacState(G.actors[0]).length),0,'replica stops from the delivered held-input snapshot');
   await host.evaluate(()=>vac.disposeInkVac(G.local));await frames(25);
   assert.equal(await guest.evaluate(()=>vac.inkVacActorContact(G.actors[0],G.local)),false);
   assert.deepEqual(errors,[]);results.push({engine,clients:3,births:9,damage:34.3,contact:owner.damage,victimInk:victim.ink});
