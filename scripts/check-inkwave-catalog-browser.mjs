@@ -254,8 +254,8 @@ try {
         const defender=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;attacker.pos.set(0,0,5);G.actors=[defender,attacker];
         attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
         defender.weapon={...defender.weapon,special:id,specialCost:100};defender.special=100;defender._startSpecial();
-        // Nice Ball gains sourced armor after its 30F ascent, unlike Crab's
-        // immediate armor. Verify the actual active armor frames, not startup.
+        // Nice Ball gains its sourced armor after the 30F ascent, while Crab
+        // armor is active on the first frame. Exercise active armor, not ascent.
         for(let frame=0;frame<(id==='booyahBomb'?30:1);frame++)defender._updateSpecial(1/60);
         defender.invuln=0;
         const state=defender._s3AllSpecialState,rate=(equipped?(id==='crabTank'?1.3:1.1):1)*(id==='booyahBomb'?.7:1),before=state.armorHP;
