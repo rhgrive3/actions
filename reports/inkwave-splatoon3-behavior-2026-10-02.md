@@ -4115,3 +4115,20 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 The old #1120 source-contract assertion still required immediate release through a pre-#1252 source string. Current main correctly buffers a fresh press/release edge until the sourced 20F inhale-to-exhale transition, then permits the 150F shot window. The regression now requires the existing edge queue, readiness guard and transition-plus-hold deadline while retaining the held-suction negative guard. Runtime behavior is unchanged. Clean-main source and emitted native controls distinguish held ZR, buffered early release, no projectile through transition frame19 and exactly one on frame20; fixture logic and browser evidence remain separately reported, with no new hardware parity claim.
 
 The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
+
+## 2026-10-12: ソイチューバー・バケットスロッシャーのモデル作り直し
+
+参照版 Ver.11.3.0（ソイチューバー、バケットスロッシャー。ギア・状態は既定、操作は待機・歩行・射撃の長押し）。記録は `patches/splatoon3/reference/weapon-models/{chargers,sloshers}.md`、実装は `patches/splatoon3/runtime/weapon-models/{chargers,sloshers}.mjs`。根拠は Inkipedia の本家3Dレンダー、"S3 Custom Goo Tuber model rotating.mp4"、"S3 Goo Tuber charge 10.0.0.mp4"、"S3 Slosher Deco model rotating.mp4"、"S3 Slosher promo image.jpg"、"S3 Slosher Weapon Class Signals.mp4"。寸法は画像からの推定で、実機計測ではない。
+
+| 差分 | 本家の根拠 | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|---|---|
+| ソイチューバーのホースを灰白色・送液管に掛かる約2¼巻きのコイル（左右軸まわり）に変更。旧版は常時インク色の縦2ループ | 回転動画・本家レンダーでホースは白〜灰色、チャージ映像で送液管に掛けたコイル | `chargers.mjs` `gooTuber` | 待機・構え | 見た目のみ | 画像から推定（巻き数・半径） |
+| ソイチューバーのホースと送液管がチャージに応じてインク色に満ちる（チャージコイル、ホース始端→コイル→送液管の順） | チャージ映像で空の灰色からインク色へ変化 | `gooTuber` の `glow`、`gooAnimate` | 長押しでチャージ | 見た目のみ（チャージ量・判定は既存） | 色の変化は映像で確認。満ちる順序・タイミングは未確認 |
+| ソイチューバーの全長 0.67 → 0.86 m、左手位置 z 0.165 m、構え位置 aim.p [-0.09, 0.06, 0.18] | チャージ映像の手・頭との比率 | `gooTuber`、`GOO_HOLD` | 構え | 見た目のみ。銃口は新しいノズル先端（z 0.574 m、高さ 0.075 m）へ移動し、弾の発生位置が変わる | 画像から推定。実機の発生位置は未比較（実機計測が必要） |
+| ソイチューバーのバルブがチャージで赤→白に変わる表現は未実装 | チャージ映像 | — | 長押しでチャージ | 見た目のみ | 未実装 |
+| バケットスロッシャーを横倒しの黒い丸バケツ（口は前上向きの斜め切り）・ラベンダーの枠・上部ハンドル・左右のコイルオーバーで作り直し。旧版は口が上向きの円錐バケツ | 回転動画の正面・側面・背面、本家レンダー | `sloshers.mjs` `bucketSlosher` | 待機・振り | 見た目のみ。インク量の表示（液面と溜まったインク）は既存の減少・回復を維持 | 画像から推定 |
+| バケットスロッシャーの待機・歩行は口を前に向けて右脇に下げる（`nativeCarry`） | Weapon Class Signals 映像の待機姿勢 | `sloshers.mjs` MODELS（slosher） | 待機・歩行 | 見た目のみ | 映像で確認（角度は推定） |
+| バケットスロッシャーの構え（aim）を 0.8 rad 上へ傾け、ネイティブの振り（+1.5〜1.95 rad）で放出時の口が前（約 −20°）を向くようにした | 本家は振り上げて前へ投げる | `sloshers.mjs` hold.aim.r | 長押しで連続の振り | 見た目のみ（放出 12F／29F・弾の発生位置は不変） | 振りの軌道・口の角度は未確認（実機計測が必要） |
+| バケットスロッシャーの右手は本家では上部ハンドル。INKWAVE はネイティブの縦グリップ（U字フレーム中央）を保持 | プロモ画像・映像 | `bucketSlosher` | 待機・振り | 見た目のみ | 差分として残す（未対応） |
+
+検証: `weapon-models-all.test.mjs`、チャージャー・スロッシャー関連とモーション関連のテスト 568件（`slosher-release-motion.test.mjs` の振り上げキー検査を、武器ごとの構えピッチを差し引いた比較へ更新）、`check-inkwave-patches.mjs` 全体。ロジック単独とブラウザ描画のみで、本家実機との比較ではない。
