@@ -257,7 +257,7 @@ test('Zipcaster repeats hooks, fires the equipped main from its special ink tank
 });
 
 test('Kraken Royale charges while held, starts its 35F dash on release, and supports the 34F cancel',async()=>{
- const f=await setup(),a=f.make(),victim=f.make();equip(a,'krakenRoyale');victim.team=1;victim.pos.set(0,0,1);f.G.actors=[a,victim];a._resolve=()=>{};a.aimPoint=new f.THREE.Vector3(0,1,20);
+ const f=await setup(),a=f.make(),victim=f.make();equip(a,'krakenRoyale');victim.team=1;victim.pos.set(0,0,2.75);f.G.actors=[a,victim];a._resolve=()=>{};a.aimPoint=new f.THREE.Vector3(0,1,20);
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  ready(a);const state=a._s3AllSpecialState;assert.ok(state.direction instanceof f.THREE.Vector3);
  deployInput(a);assert.equal(state.phase,'charge');assert.ok(state.direction.z>.99);
