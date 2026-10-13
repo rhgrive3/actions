@@ -4089,3 +4089,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - [コンブトラック](native-stages/humpback.md)
 
 原典ステージ共通の射撃差分は [連続球衝突と実ブキの壁塗り](native-stages/projectile-source-sweep.md) に記録する。チャートや元オブジェクトの外接箱への誤衝突を修正し、実際の元三角形と動的なゲーム物体への接触を検証する。本家実機の衝突形状との一致は未確認。
+
+原典ステージ共通の追加差分： [ヤグラ全体の支持・経路と利用不能ルールの拒否](native-stages/source-tower-clearance.md)、[実際の支持層からの有向経路](native-stages/spawn-nav.md)、[自然な射出着地とボットの目標到達可能性](native-stages/spawn-landing.md)。表示用メッシュに対する実装検証と、本家のスポーン・配置・動作・実機性能の未確認事項を区別する。幾何的に支持できる経路でも、ゴールまでの実際の距離と所要時間に偏りがある場合はステージ別に再評価する。

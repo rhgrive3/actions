@@ -35,6 +35,37 @@ export function nativeInitialLanding(G,actor,validate){
   candidates.push({node,score:Math.abs(d-7.5)+Math.abs(cross)*.25+Math.max(0,node.y-pad.y)*2});
  }
  candidates.sort((a,b)=>a.score-b.score||a.node.id-b.node.id);
- for(const {node} of candidates.slice(0,64)){const target=validate(node.x,node.z);if(target)return target;}
+ for(const {node} of candidates.slice(0,64)){const target=validate(node.x,node.z,node.y);if(target)return {...target,nativeSourceY:node.y};}
+ return null;
+}
+const botLandingCache=new WeakMap();
+
+/** Local native AI policy. A safe roof can still be a directed dead end.
+ * Select a real source layer that can reach the same common paint component
+ * as local objectives; never move/erase geometry or change human free aim. */
+export function nativeBotInitialLanding(G,actor,validate,getPlayable){
+ const L=G.level,N=G.nav;if(!L?.native||N?.level!==L||!N?.validIds?.length||typeof validate!=='function'||typeof getPlayable!=='function')return null;
+ let cache=botLandingCache.get(N);
+ if(!cache||cache.level!==L||cache.dead!==G.paint.dead){
+  const common=getPlayable(G).common,reverse=Array.from({length:N.nodes.length},()=>[]),teams=[];
+  for(const id of N.validIds)for(const edge of N.nodes[id].nb)if(N.valid[edge.to])reverse[edge.to].push(id);
+  for(const team of [0,1]){
+   const reachable=new Uint8Array(N.nodes.length),queue=common.filter(id=>N.nodes[id].zone!==1-team);
+   for(const id of queue)reachable[id]=1;
+   for(let i=0;i<queue.length;i++)for(const id of reverse[queue[i]])if(!reachable[id]&&N.nodes[id].zone!==1-team){reachable[id]=1;queue.push(id);}
+   teams.push(reachable);
+  }
+  cache={level:L,dead:G.paint.dead,teams};botLandingCache.set(N,cache);
+ }
+ const pad=L.spawnPads[actor.team],basis=nativeArenaBasis(L),sign=actor.team===0?1:-1,slot=Number.isSafeInteger(actor.slot)?((actor.slot%4)+4)%4:0;
+ const angle=nativeSpawnYaw(L,actor.team,actor.team===0?0:Math.PI)+(slot-1.5)*.3;
+ const preferred={x:pad.x+Math.sin(angle)*7.5,z:pad.z+Math.cos(angle)*7.5},candidates=[];
+ for(const id of N.validIds){
+  if(!cache.teams[actor.team][id])continue;const node=N.nodes[id],dx=node.x-pad.x,dz=node.z-pad.z,d=Math.hypot(dx,dz);
+  if(d<2.5||d>12||(dx*basis.forward.x+dz*basis.forward.z)*sign<0)continue;
+  candidates.push({node,score:Math.hypot(node.x-preferred.x,node.z-preferred.z)+Math.max(0,node.y-pad.y)*2});
+ }
+ candidates.sort((a,b)=>a.score-b.score||a.node.id-b.node.id);
+ for(const {node} of candidates){const target=validate(node.x,node.z,node.y);if(target&&Math.abs(target.y-node.y)<=.5)return {...target,nativeSourceY:node.y};}
  return null;
 }
