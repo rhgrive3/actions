@@ -207,7 +207,33 @@
     "fullSourceWorkerPythonParity": {
       "firstScorchRun": "failed in152 mask cells at numerically zero-area projected boundaries; all other buffers match",
       "correctedMatchingNumericalMargin": 1e-09,
-      "allFiveRebuildAndParity": "in progress"
+      "allFiveRebuildAndParity": {
+        "tests": 15,
+        "passed": 15,
+        "skipped": 0,
+        "failures": 0,
+        "compared": "exact byte lengths and SHA-256 of original arrays and corrected masks, complete BVH visitation, unchanged geometry counts"
+      }
+    },
+    "currentBuilds": {
+      "private": {
+        "contentHash": "ebb6208f9a1fce5666c64659b6e9bfd8d906fab77e16204ed691afdc1a75063e",
+        "inputHash": "3cc1799fa3a40bfae7315e976aa781cb86b3236d675e3d4a90017765dd570814",
+        "packagingTests": 9,
+        "passed": 9,
+        "skipped": 0,
+        "failed": 0,
+        "startupBudget": "passed"
+      },
+      "public": {
+        "contentHash": "f0dd0bdc5db32b156ffe308ea731e8a99af2e82377d86055c0913bca8392f71b",
+        "inputHash": "3cc1799fa3a40bfae7315e976aa781cb86b3236d675e3d4a90017765dd570814",
+        "packagingTests": 9,
+        "passed": 9,
+        "skipped": 0,
+        "failed": 0,
+        "startupBudget": "passed"
+      }
     }
   }
 }
