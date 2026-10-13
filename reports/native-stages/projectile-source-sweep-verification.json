@@ -768,6 +768,19 @@
     "syntaxPassed": true,
     "allOtherAstNodesUnchanged": true,
     "verificationKind": "Exact Acorn AST comparison with only the callback return removed; no browser-matrix completion inferred.",
-    "productRuntimeChanged": false
+    "productRuntimeChanged": false,
+    "followup": {
+      "scripts": 2,
+      "initializers": 2,
+      "files": [
+        "native-tower-calibration",
+        "lemuria-unavailable"
+      ],
+      "syntaxPassed": true,
+      "allOtherAstNodesUnchanged": true,
+      "totalCorrectedScripts": 8,
+      "totalCorrectedInitializers": 9,
+      "browserMatrixClaim": false
+    }
   }
 }
