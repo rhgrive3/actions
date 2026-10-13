@@ -1201,6 +1201,356 @@
     "screenshotInspectedPrivately": true
   },
   "privateStrictBankBotCandidate": {
+    "status": "passed-negative-bank-only; positive running-jump bot approach and accepted-foundation repetition pending",
+    "candidate": "c538be08597a437c8919472e1672fdfc51a6b7c0",
+    "accepted": false,
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "originalPadsRetained": true,
+    "sourceBuffersUnchanged": true,
+    "testedTeams": [
+      1
+    ],
+    "cpu": {
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "testMilliseconds": 75800.637246,
+      "banks": [
+        {
+          "team": 1,
+          "hz": 30,
+          "seconds": 79.86666666666666,
+          "replans": 3,
+          "transientPathMisses": 0,
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "end": [
+            -21.03121829722077,
+            9,
+            -38.468781701928286
+          ],
+          "sourceGoalTriangle": 172794,
+          "minimumY": 3,
+          "distanceToGoal": 1.4583629022986115,
+          "alive": true,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gearAP": 0,
+          "initialPaint": "unpainted",
+          "actualBrainActorWeaponProjectilesPaintClock": true
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 73.21666666666667,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "end": [
+            -21.019258084112025,
+            9,
+            -38.48074191536808
+          ],
+          "sourceGoalTriangle": 172794,
+          "minimumY": 2.950000047683716,
+          "distanceToGoal": 1.441448606477265,
+          "alive": true,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gearAP": 0,
+          "initialPaint": "unpainted",
+          "actualBrainActorWeaponProjectilesPaintClock": true
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "seconds": 74.91666666666667,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "end": [
+            -21.052314529130324,
+            9,
+            -38.447685470815784
+          ],
+          "sourceGoalTriangle": 172794,
+          "minimumY": 2.950000047683716,
+          "distanceToGoal": 1.488197479016469,
+          "alive": true,
+          "grounded": true,
+          "weapon": "shooter / Shooter_Normal_00",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gearAP": 0,
+          "initialPaint": "unpainted",
+          "actualBrainActorWeaponProjectilesPaintClock": true
+        }
+      ]
+    },
+    "realChromium": {
+      "status": "passed-negative-bank-only",
+      "fingerprint": {
+        "contentHash": "a872386efc32a8e866a007ef0123f278caedd77488dca555b513a459cef7a327",
+        "inputHash": "a8c3ab55e6c114a703933f9adf7546cda9ddf31cebb1f3f935d78ca57500fd20",
+        "revision": "13a7d4df61fe0b71ea368650b57dda733da4a90d5a7fa8fa470b76242f0714bb",
+        "nativeRuntimeSha256": "f4bab06d15cc9a948d86223e34d3ca044477523d45904e14625070e4f08cd76b"
+      },
+      "actors": 8,
+      "aliveActors": 8,
+      "bots": 7,
+      "candidateNodes": 10854,
+      "validNodes": 6606,
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "version1130Verified": false,
+      "banks": [
+        {
+          "team": 1,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "sourceGoalTriangle": 172794,
+          "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "hz": 30,
+          "seconds": 78.96666666666667,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "minimumY": 2.950000047683716,
+          "end": [
+            -21.04268177155276,
+            9,
+            -38.45731820804999
+          ],
+          "distanceToGoal": 1.4745747169921528,
+          "alive": true,
+          "grounded": true,
+          "climbed": true,
+          "fire": true,
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gear": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "gearAP": 0,
+          "cpuStep": {
+            "p50": 0.9000000059604645,
+            "p95": 5.700000002980232,
+            "max": 1061.2999999970198
+          }
+        },
+        {
+          "team": 1,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "sourceGoalTriangle": 172794,
+          "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "hz": 60,
+          "seconds": 72.85,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "minimumY": 2.950000047683716,
+          "end": [
+            -21.03189007529759,
+            9,
+            -38.468109909458
+          ],
+          "distanceToGoal": 1.4593129501434707,
+          "alive": true,
+          "grounded": true,
+          "climbed": true,
+          "fire": true,
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gear": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "gearAP": 0,
+          "cpuStep": {
+            "p50": 0.5999999940395355,
+            "p95": 3.2999999970197678,
+            "max": 5955.20000000298
+          }
+        },
+        {
+          "team": 1,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "sourceGoalTriangle": 172794,
+          "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "hz": 120,
+          "seconds": 74.36666666666666,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "minimumY": 2.950000047683716,
+          "end": [
+            -21.055509676814655,
+            9,
+            -38.44449030746633
+          ],
+          "distanceToGoal": 1.4927161112823484,
+          "alive": true,
+          "grounded": true,
+          "climbed": true,
+          "fire": true,
+          "weapon": "shooter",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gear": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "gearAP": 0,
+          "cpuStep": {
+            "p50": 0.4000000059604645,
+            "p95": 1.2999999970197678,
+            "max": 5294.5
+          }
+        }
+      ],
+      "errors": [],
+      "conditions": "real Chromium SwiftShader; eight actors/seven bots retained; each trial sets other actors on their original supported own-team pads and freezes their input; source-supported initial poses only; ordinary BotBrain/Actor/weapon/projectiles/paint clock for bot; no later pose or ink assignment; 0.5 RNG before source Match Actor/Brain construction; not console or mobile hardware",
+      "screenshotInspectedPrivately": true
+    },
+    "earlierRealBrowserSetupFailure": "921f: 30 Hz reached the original goal; the 60 Hz bot reached/climbed Y9 then correctly fought an actor left near the bank after setup play. Corrected the controlled test to initialize all other actors at their original supported own-team pads, preserving BotBrain perception and combat inputs."
+  },
+  "priorPrivateBotControlFailure": {
     "status": "failed-private-diagnostic-not-adopted",
     "candidate": "7a5b5b2c694c8dac8f634679fcbf1fbf552f5aaf",
     "components": [
@@ -1237,5 +1587,10 @@
     "replans": 2899,
     "remainingRates": "not executed after strict first case failure",
     "genericOwnerInvestigating": "Flounder; no shared edits in Bluefin branch"
+  },
+  "selfReviewCheckpoint": {
+    "playwrightBootstrap": "human NG assignment changed to a braced body returning no state; final accepted-foundation repetition pending",
+    "controlledBrowserIsolation": "other actors now begin each bank trial on original supported own-team pads; eight alive actors/seven bots retained; no perception, health or movement-physics bypass",
+    "remaining": "positive running-jump bot edge; consume all accepted shared changes; complete final stage matrix and Ready/self-integration"
   }
 }
