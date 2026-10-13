@@ -127,3 +127,6 @@ export function updateNativeJumpAttach(brain,G,dt){
  if(state.phase==='flight'&&a.grounded&&Math.abs(a.pos.y-c.lower[1])<.2&&(a.s3JumpSerial||0)>state.jumpSerial){state.phase='approach';}
  return true;
 }
+
+// Reuse the unchanged original-triangle interval screen for opted approaches.
+export {wallHeights as nativeSourceWallHeights};
