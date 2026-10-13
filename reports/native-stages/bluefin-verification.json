@@ -8824,5 +8824,71 @@
     "runtimeHead": "5d42a1fc39b48eae02894b05b8d165929c444a05",
     "ownerMerge": "55fa72a3527f646ac5323d88504f6a321df6795f",
     "scope": "Grounded ordinary static source walk only; choose human input from source SQ-blocked/human-clear polyline. No physics/source/Nav/stage flags/Foot/wet changes; specialized traversal and legacy guarded."
+  },
+  "acceptedGroundedFormNegativeBankProductionCpu": {
+    "foundation": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
+    "ownerHeadAtRun": "d100108e",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationMilliseconds": 82754.738956,
+    "proof": {
+      "id": "bluefin",
+      "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "version1130Verified": false,
+      "candidateNodes": 10854,
+      "validNodes": 6606,
+      "verificationMilliseconds": 79499.926686,
+      "banks": [
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 74.48333333333333,
+          "replans": 2,
+          "transientPathMisses": 0,
+          "waypoints": 123,
+          "sourceClimbs": 1,
+          "sourceDrops": 4,
+          "start": [
+            12,
+            15,
+            70
+          ],
+          "goal": [
+            -20,
+            9,
+            -39.5
+          ],
+          "end": [
+            -21.015651853417438,
+            9,
+            -38.484348147656114
+          ],
+          "sourceGoalTriangle": 172794,
+          "minimumY": 2.950000047683716,
+          "distanceToGoal": 1.4363486249931958,
+          "alive": true,
+          "grounded": true,
+          "sourceFootSupported": true,
+          "continuousActualCapsuleSamples": 4469,
+          "continuousActualCapsuleFailures": 0,
+          "weapon": "shooter / Shooter_Normal_00",
+          "sourceWeapon": "WeaponShooterNormal",
+          "gearAP": 0,
+          "initialPaint": "unpainted",
+          "actualBrainActorWeaponProjectilesPaintClock": true
+        }
+      ],
+      "conditions": "production 1/60 Actor/Brain kernel and Character muzzle; render cadence is independently checked in real Game Chromium; CPU VM optional source motion unavailable; source-supported initial poses only; no later Actor pose, velocity or ink assignment; goal reacquired after normal recovery; one isolated CPU actor; 0.5 RNG; no retail physics or hardware claim"
+    },
+    "evidence": ".browser-evidence/grounded-form-negative-bank-production.tap",
+    "isolatedChecker": ".ci-scratch/bluefin-negative-bank-production.test.mjs",
+    "isolatedCheckerSha256": "c4d64906d58de4b3b5b35457c01fc4bc9403b8da4bae2049ee73d3ff47e09a49",
+    "copyChangesOnly": [
+      "fixture import path",
+      "team selector restricted to negative bank",
+      "test title"
+    ],
+    "scope": "Production 1/60 CPU kernel, one bank. Optional source motion unavailable in VM. Real Game render3 proved independently. Positive-bank approach and final whole-stage pair remain pending."
   }
 }
