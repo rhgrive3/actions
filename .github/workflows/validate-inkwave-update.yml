@@ -55,6 +55,11 @@ on:
         description: Run isolated render repeatability diagnosis (never full acceptance)
         type: boolean
         default: false
+      diagnostic_target:
+        description: Isolated diagnostic target (never full acceptance)
+        type: choice
+        options: [render, rematch]
+        default: render
       deep_lifecycle:
         description: Run the full 10-cycle rematch lifecycle instead of the fast 3-cycle gate
         type: boolean
@@ -583,12 +588,20 @@ jobs:
           echo "TMP=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
           echo "TEMP=$GITHUB_WORKSPACE/.ci-scratch" >> "$GITHUB_ENV"
           echo "PLAYWRIGHT_BROWSERS_PATH=$GITHUB_WORKSPACE/.playwright" >> "$GITHUB_ENV"
-      - name: Build and diagnose (not an acceptance benchmark)
+      - name: Build exact diagnostic site
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
           ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public "$DIAGNOSTIC_STORAGE/site"
+      - name: Diagnose render repeatability
+        if: inputs.diagnostic_target != 'rematch'
+        run: |
           node scripts/check-inkwave-runtime-performance.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --parity-only --quality high --verify-render
+      - name: Diagnose native rematch compositor timing
+        if: inputs.diagnostic_target == 'rematch'
+        run: |
+          node --experimental-vm-modules --test scripts/tests/inkwave-rematch-compositor-trace.test.mjs scripts/tests/inkwave-rematch-diagnostics.test.mjs scripts/tests/inkwave-rematch-start-boundary.test.mjs
+          node scripts/check-inkwave-rematch-lifecycle.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --profile-dir "$DIAGNOSTIC_STORAGE/profile" --cycles 3 --trace-focus
       - uses: actions/upload-artifact@v4
         if: always()
         with:

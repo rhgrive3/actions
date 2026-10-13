@@ -18,11 +18,13 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { boundedDiagnostic, captureRecordedFocusFailure, createFocusHistory, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
+import { createRematchCompositorTrace } from './lib/inkwave-rematch-compositor-trace.mjs';
 import { installCursorTimelineDiagnostics } from './lib/inkwave-cursor-timeline-diagnostics.mjs';
 
 const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) { if (fallback !== undefined) return fallback; throw new Error('Required ' + name); } return process.argv[i + 1]; };
 const site = path.resolve(option('--site')), evidence = path.resolve(option('--evidence-dir')), profile = path.resolve(option('--profile-dir'));
 const cycles = Math.max(1, Math.floor(+option('--cycles', '10')));
+const traceFocus = process.argv.includes('--trace-focus');
 const physical = (p) => (fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p)));
 for (const d of [evidence, profile]) {
   const r = physical(d);
@@ -51,6 +53,11 @@ const ctx = await pw.chromium.launchPersistentContext(path.join(profile, 'rematc
   args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
 const page = await ctx.newPage();
+const compositorTrace = traceFocus ? createRematchCompositorTrace(await ctx.newCDPSession(page), (round, body) => {
+  const filename = `rematch-compositor-${round}.trace.json`;
+  fs.writeFileSync(path.join(evidence, filename), body);
+  return { filename, sha256: hash(body) };
+}) : null;
 const browserVersion=ctx.browser()?.version?.() ?? null;
 const errors = [], missing = [], failures = [], rounds = [], focusFailureDiagnostics = [];
 const operationTrace = createOperationTrace();
@@ -170,7 +177,7 @@ const menuIs = (name) => until((n) => window.__inkwave?.menus?.current === n, na
 // Native touch rows/tabs own their highlight; ordinary main-menu buttons use
 // the selection ring for every input owner. Wait for its real frame-owned
 // placement and CSS entrance, including after a previous keyboard handoff.
-const snap = () => page.evaluate(() => {
+const snap = () => page.evaluate((traceEnabled) => {
   const g = window.__inkwave, G = window.__G, m = g.match, menus = g.menus, mob = g.input?.mobile, hud = g.hud;
   const ids = {};
   for (const e of document.querySelectorAll('[id]')) ids[e.id] = (ids[e.id] || 0) + 1;
@@ -195,6 +202,28 @@ const snap = () => page.evaluate(() => {
         target: target === ring ? 'cursor' : String(target?.className ?? target?.tagName ?? '').slice(0, 80) };
     }) ?? [];
   } catch {}
+  // Extra lifecycle/style reads are opt-in and their timing cost is declared
+  // in the receipt. They cannot alter the original acceptance predicate.
+  let compositorState = null;
+  if (traceEnabled) {
+    const ancestors = (element) => {
+      const rows = [];
+      for (let el = element; el && rows.length < 8; el = el.parentElement) {
+        const style = getComputedStyle(el);
+        rows.push({ tag: el.tagName, className: String(el.className).slice(0, 160),
+          connected: el.isConnected, inert: !!el.inert, opacity: style.opacity,
+          display: style.display, visibility: style.visibility, contentVisibility: style.contentVisibility,
+          animations: el.getAnimations().slice(0, 16).map(animation => ({
+            type: animation.constructor?.name, property: animation.transitionProperty ?? null,
+            name: animation.animationName ?? null, pending: animation.pending,
+            playState: animation.playState, currentTime: n(animation.currentTime), startTime: n(animation.startTime),
+          })) });
+      }
+      return rows;
+    };
+    compositorState = { hasFocus: document.hasFocus(), platform: g.platform?.owner?.snapshot?.() ?? null,
+      ringAncestors: ancestors(ring), focusAncestors: ancestors(f) };
+  }
   let connectedPads = [];
   try {
     connectedPads = Array.from(navigator.getGamepads?.() || []).slice(0, 4).filter((pad) => pad?.connected).map((pad) => ({
@@ -227,7 +256,7 @@ const snap = () => page.evaluate(() => {
       cursorTimelineEvents: window.__lifecycleCursorTimelineEvents?.slice(-48) ?? [],
       cursorAnimation: C ? { on: !!C.on, snapNext: !!C.snapNext, radius: C.r ?? null, axes: { x: spring(C.x), y: spring(C.y), w: spring(C.w), h: spring(C.h) } } : null,
       document: { visibilityState: document.visibilityState, hidden: document.hidden, timelineTime: n(document.timeline?.currentTime), performanceNow: n(performance.now()) }, connectedPads,
-      inputEvents: window.__lifecycleInputEvents ?? [],
+      inputEvents: window.__lifecycleInputEvents ?? [], compositorState,
       frameDriver: {
         platform: g.platform?.driver?.snapshot?.() ?? null,
         menuRaf: menus?._raf ?? null, menuLastT: n(menus?._lastT), menuExternalTick: n(menus?._extTick),
@@ -249,7 +278,7 @@ const snap = () => page.evaluate(() => {
         limit: performance.memory.jsHeapSizeLimit } : null,
     },
   };
-});
+}, traceFocus);
 // Read alignment and focused-element geometry in the same browser snapshot. A
 // previous separate predicate could succeed on one animation frame, then the
 // focus CSS transition advanced before snap() and generated a false failure.
@@ -286,6 +315,7 @@ let status = 'failed';
 const writeResult = () => {
   const result = { status, contentHash: manifest.contentHash, browserVersion, cycles, failures, errors, missing, rounds,
     activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics, focusFailureDiagnostics,
+    compositorTraces: compositorTrace?.entries ?? [], traceFocus,
     diagnosticSourceHash: hash(fs.readFileSync(new URL(import.meta.url))), ciCommit: process.env.GITHUB_SHA ?? null };
   fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
 };
@@ -334,6 +364,7 @@ try {
     check(i + 1, 'results', results.state === 'results' && results.hudHidden && !results.touchVisible, 'results own the screen', results);
     // every third round an impatient player taps MAIN MENU again at the same spot while the screen changes
     const impatient = i % 3 === 1;
+    if (compositorTrace) await compositorTrace.start(i + 1);
     await tap('home');
     if (impatient) {
       // the button's live position each time; force = no actionability wait, the tap goes to whatever is on top
@@ -360,10 +391,13 @@ try {
     if (failures.length > beforeTouchFocusCheck) await diagnoseFocusFailure(failures.at(-1), 'touch');
     await page.keyboard.press('ArrowDown');
     const keyboardMenu = await alignedFocusSnapshot('keyboard handoff');
+    round.keyboardMenu = keyboardMenu;
     const beforeKeyboardFocusCheck = failures.length;
     check(i + 1, 'menu', keyboardMenu.ringOn && keyboardMenu.ringVisible && keyboardMenu.ringOnFocus === true,
       'keyboard handoff restores the selection ring on the focused item (no pixel readback)', keyboardMenu);
     if (failures.length > beforeKeyboardFocusCheck) await diagnoseFocusFailure(failures.at(-1), 'keyboard');
+    // Both strict results are stored before ending/reading the trace.
+    if (compositorTrace) { writeResult(); await compositorTrace.stop(); writeResult(); }
     check(i + 1, 'menu', menu.fade < 0.05, 'fade cleared', menu.fade);
     if (!baseline) baseline = menu;
     else {
@@ -417,6 +451,7 @@ try {
   failureDiagnostics = { snapshot, screenshot };
 } finally {
   writeResult();
+  if (compositorTrace) { await compositorTrace.stop(); writeResult(); }
   await ctx.close().catch(() => {}); server.close();
   console.log(JSON.stringify({ status, failures: failures.slice(0, 20), errors: errors.slice(0, 10) }, null, 1));
   process.exitCode = status === 'passed' ? 0 : 1;

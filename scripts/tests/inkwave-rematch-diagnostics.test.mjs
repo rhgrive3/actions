@@ -58,7 +58,7 @@ test('focus history bounds existing observations and retains animation and frame
   assert.deepEqual(trace.history.samples.map(s => s.elapsedMs), [2000, 3000]);
   assert.deepEqual(trace.history.samples.at(-1), { elapsedMs: 3000, frameWait: 'timeout',
     ringOn: true, ringVisible: false, ringOnFocus: true, focusConnected: true, focus: 'play',
-    menuInputOwner: 'touch', ring, document, frameDriver });
+    menuInputOwner: 'touch', ring, document, frameDriver, compositorState: null });
   assert.equal(snapshot.focusHistory, undefined, 'recording does not mutate the input snapshot');
 });
 

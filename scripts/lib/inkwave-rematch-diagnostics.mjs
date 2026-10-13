@@ -50,6 +50,7 @@ export function createFocusHistory(limit = 32) {
         focusConnected: snapshot.focusConnected, focus: ui?.focus?.menuId ?? null,
         menuInputOwner: ui?.menuInputOwner ?? null, ring: ui?.ring ?? null,
         document: ui?.document ?? null, frameDriver: ui?.frameDriver ?? null,
+        compositorState: ui?.compositorState ?? null,
       });
       if (history.samples.length > limit) history.samples.shift();
     },
