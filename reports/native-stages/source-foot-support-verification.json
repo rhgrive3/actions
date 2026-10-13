@@ -1,0 +1,83 @@
+{
+  "cases": [
+    {
+      "hz": 30,
+      "node": {
+        "x": 10.2,
+        "y": 2.204948592,
+        "z": -1.4
+      },
+      "feet": [
+        10.2,
+        2.3654926717066083,
+        -1.4
+      ],
+      "centreTriangle": 95004,
+      "footprintY": 2.3654926717066083,
+      "footprintBlock": 14774,
+      "centreHeightDifference": 0.16054407970660822,
+      "productionActor": true,
+      "productionCharacter": true,
+      "weapon": "Shooter_Normal_00",
+      "gearAP": 0
+    },
+    {
+      "hz": 60,
+      "node": {
+        "x": 10.2,
+        "y": 2.204948592,
+        "z": -1.4
+      },
+      "feet": [
+        10.2,
+        2.3654926717066083,
+        -1.4
+      ],
+      "centreTriangle": 95004,
+      "footprintY": 2.3654926717066083,
+      "footprintBlock": 14774,
+      "centreHeightDifference": 0.16054407970660822,
+      "productionActor": true,
+      "productionCharacter": true,
+      "weapon": "Shooter_Normal_00",
+      "gearAP": 0
+    },
+    {
+      "hz": 120,
+      "node": {
+        "x": 10.2,
+        "y": 2.204948592,
+        "z": -1.4
+      },
+      "feet": [
+        10.2,
+        2.3654926717066083,
+        -1.4
+      ],
+      "centreTriangle": 95004,
+      "footprintY": 2.3654926717066083,
+      "footprintBlock": 14774,
+      "centreHeightDifference": 0.16054407970660822,
+      "productionActor": true,
+      "productionCharacter": true,
+      "weapon": "Shooter_Normal_00",
+      "gearAP": 0
+    }
+  ],
+  "sourceBuffersUnchanged": true,
+  "scope": "Standalone production Actor/Character on pinned source; natural neutral settling, no production-match or retail measurement claim",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+  "referenceVersion": "Splatoon 3 11.3.0 identity only; extracted export version unverified",
+  "validation": {
+    "standaloneProductionCharacterRates": [
+      30,
+      60,
+      120
+    ],
+    "defaultAndUnsupportedGuardsPassed": true,
+    "browserWholeBank": "pending independent Humpback owner validation",
+    "hardwareFPS": "unverified",
+    "retailFootprintAndNavigation": "unverified"
+  }
+}

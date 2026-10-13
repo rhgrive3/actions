@@ -1,0 +1,11 @@
+# Source waypoint foot support
+
+On the pinned `Vss_Wave03` export, a bot stopped at node 10572 despite standing at the correct X/Z on a real source ramp. The graph centre height is 2.204948592; the production controller foot ring naturally rests about 0.1605 above it. The former fixed 0.16 comparison against the centre height rejected arrival indefinitely.
+
+Opted `highDrops` followers now validate the original source triangle at the waypoint and compare the actor feet with the installed controller ground probe at the actor X/Z. The arrival tolerance remains 0.16. The probe preserves humanoid/squid step settings and grate policy, and rejects dynamic-box support. Airborne, unsupported higher/lower targets and ordinary/default followers retain their guards. No actor position, velocity, paint mask or source geometry is changed.
+
+Standalone CPU regression uses the production Actor and Character with their ordinary integration on the original source at 30, 60 and 120 Hz, zero AP, Shooter_Normal_00, neutral input, initially empty paint. The same source triangle and natural raised footprint reproduce at every rate; arrival succeeds without changing actor position or velocity. Higher/lower unsupported and airborne cases fail as required. A controlled form-policy assertion separately checks squid probe parameters; it is not a natural swimming route measurement. Source bytes remain unchanged.
+
+Independent complete opposing-bowl routes and Chromium validation remain pending. The pinned third-party display export does not establish its retail extraction version, Nintendo collision/navigation/footprint parameters, native units, or hardware frame rate. These checks concern the installed INKWAVE controller, not a measured retail parity claim.
+
+See `source-foot-support-verification.json` for scalar receipts. No original or derived geometry, textures or screenshots are committed.
