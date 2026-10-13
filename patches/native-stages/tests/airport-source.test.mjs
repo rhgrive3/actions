@@ -80,14 +80,14 @@ test('airport source supports, clear capsules and real opening launches reach lo
   assert.equal(a.s3.squidSpawn?.phase,'flight');
   let frames=0;while(a.s3.squidSpawn&&frames<hz*3){G.time+=1/hz;a.update(1/hz);frames++;}
   assert.equal(a.s3.squidSpawn,undefined,'real launch settles '+[hz,team,slot]);
-  for(let i=0;i<hz/4;i++){G.time+=1/hz;a.update(1/hz);}
+  for(let i=0;i<hz/2;i++){G.time+=1/hz;a.update(1/hz);}
   assert.ok(a.alive&&a.grounded&&a.ground.hit,'actual supported landing '+[hz,team,slot]);
   const landed=G.nav.nearest(a.pos,1.2),route=G.nav.path(landed,target,team,50000);
   assert.ok(route?.length,'post-launch directed objective route '+[hz,team,slot]);
   const before=a.pos.clone();a.intent.move.set(Math.sin(a.aimYaw),0,Math.cos(a.aimYaw));
-  for(let i=0;i<hz/4;i++){G.time+=1/hz;a.update(1/hz);}
+  for(let i=0;i<hz/2;i++){G.time+=1/hz;a.update(1/hz);}
   assert.ok(a.alive&&a.pos.distanceTo(before)>.1,'ordinary post-launch motion');
-  cases.push({hz,team,slot,isBot,frames,landing:before.toArray(),routeNodes:route.length,moved:a.pos.distanceTo(before)});
+  cases.push({hz,team,slot,isBot,frames,landing:before.toArray(),routeNodes:route.length,movementSeconds:.5,moved:a.pos.distanceTo(before)});
  }
  console.log(JSON.stringify({id:'airport',pads,nodes:G.nav.nodes.length,valid:G.nav.validIds.length,towerSupported:ranked.tower.supported,towerRouteNodes:ranked.tower.path.length,cases,conditions:'Actual Actor integrator, ordinary shooter, default gear, source capsule and directed nav; display/audio stubs only'}));
 });

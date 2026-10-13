@@ -1,0 +1,2678 @@
+{
+  "status": "verification-in-progress",
+  "id": "airport",
+  "name": "カジキ空港",
+  "internal": "Vss_Propeller00",
+  "source": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "tree": "084a4ee4442823e237d9ef39b18b689484317cf9",
+    "objBytes": 30982635,
+    "objSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+    "isolatedLfsAttempt": "Resource not accessible by integration",
+    "fallback": "fixed-commit public media.githubusercontent.com download",
+    "sharedSourceHeadBefore": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "sharedSourceIndexSha256Before": "9287ccf1e5cee864d4547ee9aafe822f30054113f46861137b449dcb1410f3eb"
+  },
+  "version1130Verified": false,
+  "fileIntegrity": [
+    {
+      "file": "Vss_Propeller00.mtl",
+      "gitBlobSha1": "ddd334f7f1977ac3392e4baa974364bc6ab5db28",
+      "bytes": 22465,
+      "sha256": "3ffd950d1db04895d0b38b86ef2c3f6d6cc3c6b70a05e65b6a18d2df785b65b1"
+    },
+    {
+      "file": "Vss_Propeller00_parts/Vss_Propeller00.mtl",
+      "gitBlobSha1": "ddd334f7f1977ac3392e4baa974364bc6ab5db28",
+      "bytes": 22465,
+      "sha256": "3ffd950d1db04895d0b38b86ef2c3f6d6cc3c6b70a05e65b6a18d2df785b65b1"
+    },
+    {
+      "file": "textures/Advertisement00_Alb.png",
+      "gitBlobSha1": "2a52e5c2d2f363e34044be3465e6aded5ecc8c7c",
+      "bytes": 302300,
+      "sha256": "0b01623dc0fd5b65eb657e7e97185e394f55bf612c025ee6dad1e81150acdf97"
+    },
+    {
+      "file": "textures/Advertisement00_Mtl.png",
+      "gitBlobSha1": "11b23b53ffd12d05cce887d382faa51b7ff357ee",
+      "bytes": 5083,
+      "sha256": "ddaa524649ceaacad82f8ae7197b8e326fbbc4c84e747cfd56b68f244e50ac1e"
+    },
+    {
+      "file": "textures/Advertisement00_Nrm.png",
+      "gitBlobSha1": "45cf4f3e33a8f00713fc07b63ecaafb61508463c",
+      "bytes": 156605,
+      "sha256": "2f3ca0b344ce209a2707f5b0373cdfbbb211ee9f02f55098b17d9fcfb008b4ab"
+    },
+    {
+      "file": "textures/Advertisement00_Rgh.png",
+      "gitBlobSha1": "c1f8654b5826315d53af98603ccca143ec558dcc",
+      "bytes": 122454,
+      "sha256": "aeaee73190e8b1e24a1f7a1b495b99b33f3ffd7f41b83fd3864211b06b640b75"
+    },
+    {
+      "file": "textures/Advertisement01_Alb.png",
+      "gitBlobSha1": "6b27a6451a93ef7e7f846523e70fb9902c0db320",
+      "bytes": 357692,
+      "sha256": "6aa8e948a2cf5723ad9eb245b1daf313dbd7fa6fa8ea8177660074fe0162f2f5"
+    },
+    {
+      "file": "textures/Advertisement01_Mtl.png",
+      "gitBlobSha1": "11b23b53ffd12d05cce887d382faa51b7ff357ee",
+      "bytes": 5083,
+      "sha256": "ddaa524649ceaacad82f8ae7197b8e326fbbc4c84e747cfd56b68f244e50ac1e"
+    },
+    {
+      "file": "textures/Advertisement01_Nrm.png",
+      "gitBlobSha1": "2e35656519c260406a45be13de36711bb7d38951",
+      "bytes": 90847,
+      "sha256": "88c63715926fee8dea81ae7110f46de9019cf6b8ee5f40f2b7719a01e1766b8a"
+    },
+    {
+      "file": "textures/Advertisement01_Rgh.png",
+      "gitBlobSha1": "d84bd66247c25a88b68353be90b2d6eb6d70dad9",
+      "bytes": 121998,
+      "sha256": "fa50686ac41bce6f6ac8d2b74eea3dc2d2d0a0d6cd2ed9c3c7159b89d201a98d"
+    },
+    {
+      "file": "textures/AirPortWallOutsideA00_Alb.png",
+      "gitBlobSha1": "9cce19b033dc10ac69815050aa97bfd5dd366e03",
+      "bytes": 230889,
+      "sha256": "56250e8ebf555a38657047774c60c30a8dca743c6d3e116978827bac4bd0d272"
+    },
+    {
+      "file": "textures/AirPortWallOutsideA00_Emm.png",
+      "gitBlobSha1": "5b3ce2a948ab080a97c1f9a57a7eb562fab55e9e",
+      "bytes": 2360,
+      "sha256": "733e8f425fb02890b3a11834fc34e7a747040d2627f32b8fbdb0ee00dbba8b4c"
+    },
+    {
+      "file": "textures/AirPortWallOutsideA00_Mtl.png",
+      "gitBlobSha1": "1e1c8a587e95e335d71681ceb98a0748c546b797",
+      "bytes": 2996,
+      "sha256": "a39295bc8c325b78540682ec319fcfdd356db264e374f226d53c0ae9c622e845"
+    },
+    {
+      "file": "textures/AirPortWallOutsideA00_Nrm.png",
+      "gitBlobSha1": "e3067155470eb9634a8a30efddbaed66a5226337",
+      "bytes": 51231,
+      "sha256": "ceea77875e3d9255d02a7030706d2accb802386bd47fd42f58d06f53eea45e96"
+    },
+    {
+      "file": "textures/AirPortWallOutsideA00_Rgh.png",
+      "gitBlobSha1": "cd3634742b11d463fe819329f2557c4fbd80c044",
+      "bytes": 104753,
+      "sha256": "9a6ec6b802a90c43cde1f4cec90b22538b3c0b11e1b2d896574cf03da0024602"
+    },
+    {
+      "file": "textures/AirPortWallOutsideB00_Alb.png",
+      "gitBlobSha1": "1b0dd212fd0985326cfa4067b486bbb5f4580d95",
+      "bytes": 48706,
+      "sha256": "42a479e95815e8f03c6b12991aa77c0cc90adc96d7ee218117d2f723e7fbdbea"
+    },
+    {
+      "file": "textures/AirPortWallOutsideB00_Mtl.png",
+      "gitBlobSha1": "46006cb67ceed332befb1646495bf03fdb75169d",
+      "bytes": 17763,
+      "sha256": "366d6157cc511dd8313e18d048db4cf62d4410e48a2624f02603819c5b889aff"
+    },
+    {
+      "file": "textures/AirPortWallOutsideB00_Nrm.png",
+      "gitBlobSha1": "1abb249917fc316d5a63d556d35bfdc8538836a1",
+      "bytes": 38056,
+      "sha256": "6e0ead512cefba47d059edf3ab63cc2911aab52fa7e64600bf3e6a3243ac80f0"
+    },
+    {
+      "file": "textures/AirPortWallOutsideB00_Rgh.png",
+      "gitBlobSha1": "be6bc039265bc5dfbe357a53c570da110d10596e",
+      "bytes": 20129,
+      "sha256": "46f493c9e5eae79dd7b4a5e6362801737acdf18cc7410b19a21ceebc7c869364"
+    },
+    {
+      "file": "textures/AirportFloorTile_Alb.png",
+      "gitBlobSha1": "95a65ba24935a3564e04b622a6f9d3b6fdb10069",
+      "bytes": 48946,
+      "sha256": "7738c6e1379953bc5e5f14501f1c9d54d9281921edd12ade080aa85573e7d68e"
+    },
+    {
+      "file": "textures/AirportFloorTile_Mtl.png",
+      "gitBlobSha1": "e417847e02cf5349b5b6a50a1c0ae152a59b14eb",
+      "bytes": 406,
+      "sha256": "9a39718a01cebafd6958ec81976591af5469418e86e71fb5da382325eee12d65"
+    },
+    {
+      "file": "textures/AirportFloorTile_Nrm.png",
+      "gitBlobSha1": "5731dc2de1a18db42c0ccbfe18d1e56a8d198aa8",
+      "bytes": 2033,
+      "sha256": "20cced868265037e6b56390457ca5bac3f473344f207ce5f9cf4a7ea514d6e9b"
+    },
+    {
+      "file": "textures/AirportFloorTile_Rgh.png",
+      "gitBlobSha1": "62fac61129f107c7485ff13813d5bbb191af0405",
+      "bytes": 1978,
+      "sha256": "553f27bdd0cd400a74e4a6554852427d39f221b97eca011ae8720c9b387f3e78"
+    },
+    {
+      "file": "textures/AirportGlass_Alb.png",
+      "gitBlobSha1": "5c61c11c2101e2f59a452ff944c0f22cbda6bb7a",
+      "bytes": 8226,
+      "sha256": "8ced76a1c7bb1cb1cf4291617ccb5856279c9278c4a579fe0bf495364065d16d"
+    },
+    {
+      "file": "textures/AirportGlass_Mtl.png",
+      "gitBlobSha1": "5771abc59b35ee1b6f56a56feaeebeab124cb59e",
+      "bytes": 872,
+      "sha256": "b483fae990c12d472334f83347b68610420256737e4a9bea37bed410ea6510e4"
+    },
+    {
+      "file": "textures/AirportGlass_Nrm.png",
+      "gitBlobSha1": "4b44eff5571eb5eb66d1d4091e3dc0184948e795",
+      "bytes": 6967,
+      "sha256": "09bd620760abeb0ca5f34c48f77016ac6ae8ea9ac076f5c4a1843cf9204ec53a"
+    },
+    {
+      "file": "textures/AirportGlass_Rgh.png",
+      "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+      "bytes": 870,
+      "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+    },
+    {
+      "file": "textures/AirportInterior_Alb.png",
+      "gitBlobSha1": "057347c5d04afe17767dec5f31f452dc685b9356",
+      "bytes": 91897,
+      "sha256": "5fd96dcf126c5ca50b36eb8cc8e9467d02beab5bca04fa23d62e9c243c3a2f7c"
+    },
+    {
+      "file": "textures/AirportInterior_Mtl.png",
+      "gitBlobSha1": "e50a37121bab55e11a2d4a6d2b1163f6a7f6a7d3",
+      "bytes": 6121,
+      "sha256": "1758b5c5a8144d00b0fcbd5aa4d9aab90de2295ff2e2d488b3dada7b2c5373ec"
+    },
+    {
+      "file": "textures/AirportInterior_Nrm.png",
+      "gitBlobSha1": "861b498f06da30b1e53fb5923f4ba13358cc5655",
+      "bytes": 38316,
+      "sha256": "5df9979a3e538cf0c40603a68c13a4362d62177b24999d2e4c40c145decbd831"
+    },
+    {
+      "file": "textures/AirportInterior_Rgh.png",
+      "gitBlobSha1": "a39479397146e32c44f488c86237b1762d90fc99",
+      "bytes": 34199,
+      "sha256": "0aba18b2022fbc74773892ba57aa582ee82f916a967893166b7927ba419b7a04"
+    },
+    {
+      "file": "textures/AirportPillarLight_Alb.png",
+      "gitBlobSha1": "d965cfa706c87b0011b5f5027cf77ab492e6db84",
+      "bytes": 7155,
+      "sha256": "d617a3b2535f507cefe2e832078b6a93044d5bd05686f073935a89ae9dbd21ca"
+    },
+    {
+      "file": "textures/AirportPillarLight_Emm.png",
+      "gitBlobSha1": "c5d90324d4ec2dd6368b192a308d656beaa59be3",
+      "bytes": 6400,
+      "sha256": "82e24a6ed8a6fe603378538107884503d0e2ffdc1fd332e13704bb05999e3b93"
+    },
+    {
+      "file": "textures/AirportPillarLight_Mtl.png",
+      "gitBlobSha1": "0303bfdc02ceddd2e7353e347becd5b9dde002a0",
+      "bytes": 223,
+      "sha256": "a696a5626629823b4467548ee7d0e0da22f97063f35195212fd342aa799a4bdf"
+    },
+    {
+      "file": "textures/AirportPillarLight_Nrm.png",
+      "gitBlobSha1": "3a3b9706df64982447a5b3d2cd8769ed24ee3396",
+      "bytes": 875,
+      "sha256": "017a289775ae00fbc8729edb9c19288cdec450970131ec5a1f240f6675c7a0f1"
+    },
+    {
+      "file": "textures/AirportPillarLight_Rgh.png",
+      "gitBlobSha1": "34dd94243e6cb0d9f607ffda6a10b80742f52527",
+      "bytes": 224,
+      "sha256": "dab14b4c179cc8c1082a2e63af5585ee8168292c0bcf2e2a79f4c6d1a36d473a"
+    },
+    {
+      "file": "textures/AirportPillarsMetal_Alb.png",
+      "gitBlobSha1": "c8b7de54807d234e637c10b6c55c2c3ecf4c5d7c",
+      "bytes": 85686,
+      "sha256": "80cc696acc9a8c3cf2f212f10e0f0780a2ce5fbc35e82f1ffc168977e1c994a2"
+    },
+    {
+      "file": "textures/AirportPillarsMetal_Mtl.png",
+      "gitBlobSha1": "187df8a2f73bd84ec7b16a549893033cd25e10ba",
+      "bytes": 13730,
+      "sha256": "dc36715f276c911b7797801da20750d0ef7796a26fd637864fd70113a417ee42"
+    },
+    {
+      "file": "textures/AirportPillarsMetal_Nrm.png",
+      "gitBlobSha1": "084bc4c5e70a23d8eb70e7646ff8a010e65abb1a",
+      "bytes": 10976,
+      "sha256": "048d2bdbed33a533f46c9164ffad4f5c1bbd747dd8378bb0c2456a118a726e4e"
+    },
+    {
+      "file": "textures/AirportPillarsMetal_Rgh.png",
+      "gitBlobSha1": "a69ea90ae3a3cac8f017c218b56c80f1f010e32d",
+      "bytes": 31241,
+      "sha256": "69078f9e5e8031673427d5c0344b20cf37e487065369e4cead760cebc2018b9d"
+    },
+    {
+      "file": "textures/AirportSurveillanceCamera00_Alb.png",
+      "gitBlobSha1": "9b6c94076a72b164b8be540ffe5d5e4771755559",
+      "bytes": 26975,
+      "sha256": "1bb85d48802227d0620d4ec52aef671e82d172aa415f66b2f9a77d5c3264b532"
+    },
+    {
+      "file": "textures/AirportSurveillanceCamera00_Mtl.png",
+      "gitBlobSha1": "93c7afb335f2ee8a47eb41dc5835a8a85eba0c97",
+      "bytes": 8253,
+      "sha256": "d4e57aba45adc9a5b785cbfa71ccf15e39ed77b275eee5be724990ae8dde51a0"
+    },
+    {
+      "file": "textures/AirportSurveillanceCamera00_Nrm.png",
+      "gitBlobSha1": "b411ba4bff84e71bd5cb50bdfa24b0b06134021b",
+      "bytes": 44952,
+      "sha256": "daa4bedc0aae175f61ed69cf88e407887cb3e15187c7858effccd8f9602c58b7"
+    },
+    {
+      "file": "textures/AirportSurveillanceCamera00_Rgh.png",
+      "gitBlobSha1": "22e7d7d0db1b28b134630dade4837944093342e8",
+      "bytes": 28085,
+      "sha256": "cb5ab60c2535cfdfc8ff64a104b76fb54a635be633e994aed39af51570613010"
+    },
+    {
+      "file": "textures/AirportWallWhiteTile_Alb.png",
+      "gitBlobSha1": "268c2510d1a0918072ddf135ae839758963b5f4d",
+      "bytes": 27559,
+      "sha256": "55d000c1cd23d3e0c26216a301b8993c480c6072d06741e52badbd804637eee5"
+    },
+    {
+      "file": "textures/AirportWallWhiteTile_Mtl.png",
+      "gitBlobSha1": "e417847e02cf5349b5b6a50a1c0ae152a59b14eb",
+      "bytes": 406,
+      "sha256": "9a39718a01cebafd6958ec81976591af5469418e86e71fb5da382325eee12d65"
+    },
+    {
+      "file": "textures/AirportWallWhiteTile_Nrm.png",
+      "gitBlobSha1": "753081e9da41782a16fcfb8fe3d983a70489110d",
+      "bytes": 854,
+      "sha256": "b0864c3db908db115956cf460d277956f7b059b0294909d987d80411c2dae496"
+    },
+    {
+      "file": "textures/AirportWallWhiteTile_Rgh.png",
+      "gitBlobSha1": "6dc1b8a07375522539fa27b6f200b17a46e499ca",
+      "bytes": 5612,
+      "sha256": "888fa3bbc3d69bd4c164629909c119aab227072b32f5c768f405e68eb0e318a2"
+    },
+    {
+      "file": "textures/BakeDummy00.png",
+      "gitBlobSha1": "d14c5096c2fc261728b47355e3b4505cfc3df5c3",
+      "bytes": 95,
+      "sha256": "dd108633634f33fbbf19c460cbc1d01d66bb0a18667cc45417c1248dcb96c674"
+    },
+    {
+      "file": "textures/BaseHeliport_Alb.png",
+      "gitBlobSha1": "25ff1e29f2eed61b16215d1e85605a9b0c0a2177",
+      "bytes": 103293,
+      "sha256": "782de91eff5f9d9dcd4d38c3c340ef1d3a8a3c0273dc52c135c01817c5167191"
+    },
+    {
+      "file": "textures/BaseHeliport_Mtl.png",
+      "gitBlobSha1": "0674eb551099af3bd61d3a506c0cf8e5fc746caf",
+      "bytes": 40982,
+      "sha256": "77e5f94e24661f4f5c5b9c02624ab81d53b53b97fa3be57542d4f21338b43676"
+    },
+    {
+      "file": "textures/BaseHeliport_Nrm.png",
+      "gitBlobSha1": "3fc51a90a0bf022e22a2520e367d2c38305bd9bb",
+      "bytes": 57211,
+      "sha256": "fc0328332281224de5c0a53bddebdbcd2d52eacd8f3d40479fca42aef160616f"
+    },
+    {
+      "file": "textures/BaseHeliport_Rgh.png",
+      "gitBlobSha1": "e277c67daa3bc662dfd29f820436d00c7fc49b6b",
+      "bytes": 45335,
+      "sha256": "76b0dc490cde46a86ad6a0d3a7ac89eaf7bc5d07f71f0fa19f6254cb227a75ca"
+    },
+    {
+      "file": "textures/BattleVinlyBlue_Alb.png",
+      "gitBlobSha1": "aac764248b0535988f0a8165541ec13736cd65f3",
+      "bytes": 83635,
+      "sha256": "5b7b12e588e6fa592861ffcab5c7d912bc779c77fc23d2ec15d8ea9cdbbec244"
+    },
+    {
+      "file": "textures/BattleVinlyBlue_Mtl.png",
+      "gitBlobSha1": "7ad81c6cabee4c668931e2ab324433664575e667",
+      "bytes": 2826,
+      "sha256": "5036588435b984a6bed2be5547870cb703b054e6d9e87271c270824f14e1803c"
+    },
+    {
+      "file": "textures/BattleVinlyBlue_Nrm.png",
+      "gitBlobSha1": "71c3d4e2ceac88a82266a91133778aaa1f1d2891",
+      "bytes": 66576,
+      "sha256": "6f3878d1bd38896d08480ba2a17524efc0a697026eb73e7101a92b604c842117"
+    },
+    {
+      "file": "textures/BattleVinlyBlue_Rgh.png",
+      "gitBlobSha1": "f59417c31fbd83ad0d3a1e3f0d7f493a329a3ba1",
+      "bytes": 35003,
+      "sha256": "eb58854d168c1445ee3b08d521741437b628189a1e1a8c1d4d0a4dd96105dc2c"
+    },
+    {
+      "file": "textures/BattleVinlyRed_Alb.png",
+      "gitBlobSha1": "62434d7d134f0ef9f3e13ec985c431834ccf5714",
+      "bytes": 105938,
+      "sha256": "84ac69cf7ebb3d5d780bbfbe9a783652042d451d481e22214f2ff003f6ce0356"
+    },
+    {
+      "file": "textures/BattleVinlyRed_Mtl.png",
+      "gitBlobSha1": "7ad81c6cabee4c668931e2ab324433664575e667",
+      "bytes": 2826,
+      "sha256": "5036588435b984a6bed2be5547870cb703b054e6d9e87271c270824f14e1803c"
+    },
+    {
+      "file": "textures/BattleVinlyRed_Nrm.png",
+      "gitBlobSha1": "71c3d4e2ceac88a82266a91133778aaa1f1d2891",
+      "bytes": 66576,
+      "sha256": "6f3878d1bd38896d08480ba2a17524efc0a697026eb73e7101a92b604c842117"
+    },
+    {
+      "file": "textures/BattleVinlyRed_Rgh.png",
+      "gitBlobSha1": "6203362767d38cd32cd1622872251c9484c25051",
+      "bytes": 38490,
+      "sha256": "41dbf02cd9e13cf98e23feb1b150ce7760e834d80d66aa56a496e65c5e5b0559"
+    },
+    {
+      "file": "textures/CanolaAV_Alb.png",
+      "gitBlobSha1": "d7a5664e6b21195e79b3097074ce7853b97ec1ad",
+      "bytes": 1397,
+      "sha256": "c4f944f6369f7eddc80f997c8d4d1b7acc86323567f92fa2ed4d2cdb2cf999f3"
+    },
+    {
+      "file": "textures/CanolaA_Alb.png",
+      "gitBlobSha1": "f6458841cc78e7f6f1dcb1c21bcb1064b7b6c503",
+      "bytes": 1355,
+      "sha256": "313fbb9f643280a93400704dcf85099e70482995bdb310107c4d31a1074c6694"
+    },
+    {
+      "file": "textures/CanolaBV_Alb.png",
+      "gitBlobSha1": "d62fcd0a3fa226d0a3755c3fb86fe51fe9651579",
+      "bytes": 1458,
+      "sha256": "d79d6c7a9dc2104bcbf9387429815d7467e249d6b9f42ea71e4f9c8104c2cea4"
+    },
+    {
+      "file": "textures/CanolaB_Alb.png",
+      "gitBlobSha1": "f51aea54047866d1f822ea3fc1ea31778ae0a9a8",
+      "bytes": 1034,
+      "sha256": "7e494e9aadf6f0ab6d6e92eb85870cfaca14812d90df79b6da98c1ce2bf6ee24"
+    },
+    {
+      "file": "textures/Canola_Fxm.png",
+      "gitBlobSha1": "9a8549503f082fe8f62f62bfc17e095e7f9fa880",
+      "bytes": 42581,
+      "sha256": "4e039578043533e9f0ebae94d3b92275f7ec7bc5f34c34305cd7098d4569b063"
+    },
+    {
+      "file": "textures/Canola_Opa.png",
+      "gitBlobSha1": "43c11cc548f9f4ed6bec09dd51437708cd1a866e",
+      "bytes": 142467,
+      "sha256": "290372da28f277eca2d9f47a8a5ba18f92fbeda9ca5d94c334d99f9377badb7d"
+    },
+    {
+      "file": "textures/CargoBoxWood00Debris_Alb.png",
+      "gitBlobSha1": "adc44f5d30171bfbd577e1913bfebf216bc4f8a6",
+      "bytes": 233758,
+      "sha256": "40912ae050835af65821226fbbf506244c02bbd2e700288e5d72d177f9c46bc0"
+    },
+    {
+      "file": "textures/CargoBoxWood00Debris_Mtl.png",
+      "gitBlobSha1": "5d1a20b0b8455c51a88c947cb34e113a7f8cd2ff",
+      "bytes": 1186,
+      "sha256": "4b0d40ac24eb01b47397baffe0cbf765c95544d976050836df31137219d37749"
+    },
+    {
+      "file": "textures/CargoBoxWood00Debris_Nrm.png",
+      "gitBlobSha1": "138de9ac81d0edd7066777976447e32baededc51",
+      "bytes": 46914,
+      "sha256": "a08b0c4ec11af73e2590375f551c53f966d65b00fb50b6a4e69c74c23e9be750"
+    },
+    {
+      "file": "textures/CargoBoxWood00Debris_Rgh.png",
+      "gitBlobSha1": "d73a3ba1c15ada67967a16fc9a41c60a9cdd6064",
+      "bytes": 49534,
+      "sha256": "ae81262ed42dbf111fe2c8036604d24d7c3828a4473d1c0e1d5e67b18879b6b0"
+    },
+    {
+      "file": "textures/CargoBoxWood00Plus_Alb.png",
+      "gitBlobSha1": "adc44f5d30171bfbd577e1913bfebf216bc4f8a6",
+      "bytes": 233758,
+      "sha256": "40912ae050835af65821226fbbf506244c02bbd2e700288e5d72d177f9c46bc0"
+    },
+    {
+      "file": "textures/CargoBoxWood00Plus_Mtl.png",
+      "gitBlobSha1": "5d1a20b0b8455c51a88c947cb34e113a7f8cd2ff",
+      "bytes": 1186,
+      "sha256": "4b0d40ac24eb01b47397baffe0cbf765c95544d976050836df31137219d37749"
+    },
+    {
+      "file": "textures/CargoBoxWood00Plus_Nrm.png",
+      "gitBlobSha1": "138de9ac81d0edd7066777976447e32baededc51",
+      "bytes": 46914,
+      "sha256": "a08b0c4ec11af73e2590375f551c53f966d65b00fb50b6a4e69c74c23e9be750"
+    },
+    {
+      "file": "textures/CargoBoxWood00Plus_Rgh.png",
+      "gitBlobSha1": "d73a3ba1c15ada67967a16fc9a41c60a9cdd6064",
+      "bytes": 49534,
+      "sha256": "ae81262ed42dbf111fe2c8036604d24d7c3828a4473d1c0e1d5e67b18879b6b0"
+    },
+    {
+      "file": "textures/CargoBoxWood00_Alb.png",
+      "gitBlobSha1": "adc44f5d30171bfbd577e1913bfebf216bc4f8a6",
+      "bytes": 233758,
+      "sha256": "40912ae050835af65821226fbbf506244c02bbd2e700288e5d72d177f9c46bc0"
+    },
+    {
+      "file": "textures/CargoBoxWood00_Mtl.png",
+      "gitBlobSha1": "5d1a20b0b8455c51a88c947cb34e113a7f8cd2ff",
+      "bytes": 1186,
+      "sha256": "4b0d40ac24eb01b47397baffe0cbf765c95544d976050836df31137219d37749"
+    },
+    {
+      "file": "textures/CargoBoxWood00_Nrm.png",
+      "gitBlobSha1": "138de9ac81d0edd7066777976447e32baededc51",
+      "bytes": 46914,
+      "sha256": "a08b0c4ec11af73e2590375f551c53f966d65b00fb50b6a4e69c74c23e9be750"
+    },
+    {
+      "file": "textures/CargoBoxWood00_Rgh.png",
+      "gitBlobSha1": "d73a3ba1c15ada67967a16fc9a41c60a9cdd6064",
+      "bytes": 49534,
+      "sha256": "ae81262ed42dbf111fe2c8036604d24d7c3828a4473d1c0e1d5e67b18879b6b0"
+    },
+    {
+      "file": "textures/CeilingMetalTrass_Alb.png",
+      "gitBlobSha1": "4f591c54b34c3fdb8f26d75037f2016fd4304937",
+      "bytes": 37042,
+      "sha256": "2a78b53b23fe79e0f8cbf03330b3fa51b810198ec716af13b808047533f3ca42"
+    },
+    {
+      "file": "textures/CeilingMetalTrass_Mtl.png",
+      "gitBlobSha1": "10701f7200a5957daf7af412e24ae3f0fdcc4dc9",
+      "bytes": 15754,
+      "sha256": "de9d97b16f9e796df734ba78e62f5cbb1d2422d9f813e4c5b08f1b6dd4e61762"
+    },
+    {
+      "file": "textures/CeilingMetalTrass_Nrm.png",
+      "gitBlobSha1": "9a351c0b641d588c2c7dbc1218217bbbfb3187e5",
+      "bytes": 8950,
+      "sha256": "372ba5427e76188799901386f4ecdf686900ddab94562772f24e6fd1e393c5de"
+    },
+    {
+      "file": "textures/CeilingMetalTrass_Rgh.png",
+      "gitBlobSha1": "0241ca90816e0fafa983a44d4af870e858079f82",
+      "bytes": 14000,
+      "sha256": "e9c7f8d3aba67503ce15004bd99e39c90b1868a291cf0788d64cc1cbb2a04dbb"
+    },
+    {
+      "file": "textures/ConstructionObject_Alb.png",
+      "gitBlobSha1": "8225890d6b9665c4da57a9c5a1d185f48ef66a88",
+      "bytes": 230201,
+      "sha256": "fabaf97adcd618c287ee2b913c11260da9f8ce1b89ee107a18c9d6b0b52d087a"
+    },
+    {
+      "file": "textures/ConstructionObject_Mtl.png",
+      "gitBlobSha1": "34ee0d07a5df3819b9c64b024dd3722997c75811",
+      "bytes": 53040,
+      "sha256": "ce5191f558c2cec8e4ccbd2c8a3ae80944b4bcf26abc48f0e5d3a4a46f9963f2"
+    },
+    {
+      "file": "textures/ConstructionObject_Nrm.png",
+      "gitBlobSha1": "459f07da6c06578724927e0fd3e133734c236737",
+      "bytes": 88725,
+      "sha256": "672c312ef3a9d24dd8293234109f6fc2837905c4eab706b0f260fc714c72e428"
+    },
+    {
+      "file": "textures/ConstructionObject_Rgh.png",
+      "gitBlobSha1": "1d60b6835df04035758e6e3339c37a8980493216",
+      "bytes": 53132,
+      "sha256": "eaaad3bada21eb20afe8b261580dee3c81c0f92ced6ef7720fd2e3780dca3a53"
+    },
+    {
+      "file": "textures/DVLightingTower_Alb.png",
+      "gitBlobSha1": "d26bad3b5dd0a564f53aca3bac2d51792414873d",
+      "bytes": 40064,
+      "sha256": "524b852d8f9365f8632a275f8527c14c6547ad21169f86a35f5c9beac99da5b7"
+    },
+    {
+      "file": "textures/DVLightingTower_Emm.png",
+      "gitBlobSha1": "397d9aaaf11c341b78d37a5456e0a48ffb91b70f",
+      "bytes": 1693,
+      "sha256": "1b45f32d16d5254ed696c28486e3c18dcff29f752a7fafff5936d73f31d5427d"
+    },
+    {
+      "file": "textures/DVLightingTower_Mtl.png",
+      "gitBlobSha1": "164031e4a0f9b13f786a2240ba51f237cc8892c3",
+      "bytes": 3474,
+      "sha256": "d7ace674a5daeb62e5dbeaa4f9c3997e8e5444bf55b4ecef8867d9d781874f65"
+    },
+    {
+      "file": "textures/DVLightingTower_Nrm.png",
+      "gitBlobSha1": "d9610e7f80f47dfe25d2d04e899d0af819140329",
+      "bytes": 31009,
+      "sha256": "e64122d2706a2a09f8f1082c373713f837202d8fadc8d712eae767c42cb482f8"
+    },
+    {
+      "file": "textures/DVLightingTower_Opa.png",
+      "gitBlobSha1": "858bb84ab9cb93b5d4898d61890919f947075177",
+      "bytes": 3007,
+      "sha256": "0550ff731111dcadde0756fa5ffcddc78a222661daa4a7cd373f9c84ac841c16"
+    },
+    {
+      "file": "textures/DVLightingTower_Rgh.png",
+      "gitBlobSha1": "6042b786f5b914acc4c57dfcb58f414e07177e8f",
+      "bytes": 43794,
+      "sha256": "ad9ff720d86cee55136cf3899e6cdfaca437ed9483b86626bd66917775cfbd68"
+    },
+    {
+      "file": "textures/DistributionBox00_Alb.png",
+      "gitBlobSha1": "ac1443fd6e7fc92cdc45ecba8390901bf88c1cff",
+      "bytes": 99155,
+      "sha256": "4b460de7862be75feff5de63eaacca8611fc11afd240145fae4acf265f82a8cd"
+    },
+    {
+      "file": "textures/DistributionBox00_Mtl.png",
+      "gitBlobSha1": "123b1a26dfab4ec6750d585851f448eecd19f5d5",
+      "bytes": 4161,
+      "sha256": "9194679da60d554ca96f0efd4aad5ff32c41e8dfee48b42ad228c507528a3449"
+    },
+    {
+      "file": "textures/DistributionBox00_Nrm.png",
+      "gitBlobSha1": "dbffdc8d641d90b172a092855394a5a96838fd87",
+      "bytes": 47573,
+      "sha256": "68ce1b812bcb2b437f299d8ca6a856c21739487174fdd686e5283ed9e4e2ad26"
+    },
+    {
+      "file": "textures/DistributionBox00_Rgh.png",
+      "gitBlobSha1": "49651ff7ebc9ed3a5362b5d13ce4359d262ef79b",
+      "bytes": 14939,
+      "sha256": "328fde6e490d666d85e58bea3880ede5ce4aac612a5041b27080aaba10c2b9a6"
+    },
+    {
+      "file": "textures/Edge01_Alb.png",
+      "gitBlobSha1": "abafd31b116aa44f82388bcd5a32f9e1a78fdd28",
+      "bytes": 125362,
+      "sha256": "5721e5feafddad968bd8a2ee0509bf8c3ffcec1a86a7845f25925567fa72a384"
+    },
+    {
+      "file": "textures/Edge01_Mtl.png",
+      "gitBlobSha1": "deb181b1246ccc05a5f493218896df8428ff1426",
+      "bytes": 17495,
+      "sha256": "c559aa14dffa9cb9ebe1cadf3843928f84c387162c968add09124fa86bbc1b44"
+    },
+    {
+      "file": "textures/Edge01_Nrm.png",
+      "gitBlobSha1": "851855969745cff3e0f765cd19c02ecad938d161",
+      "bytes": 68600,
+      "sha256": "3133b701565fd597ef5edd557989c31d7f37739f407b8dc4f588a28aa1f6c469"
+    },
+    {
+      "file": "textures/Edge01_Rgh.png",
+      "gitBlobSha1": "472f9320eb906d8bedad43feba366d08605098fe",
+      "bytes": 52905,
+      "sha256": "f9bb2b22c4f45a9fc1be6c9e6c2d73bbe176d94b37568b6fe2aa82bafaaea895"
+    },
+    {
+      "file": "textures/EdgeRepeatNoPaint00_Alb.png",
+      "gitBlobSha1": "da5f03730e302310c489f9793d8d7f677be875be",
+      "bytes": 97508,
+      "sha256": "f04d5970adfd9d867a339ed744ed94eb650c535df326b5b7369c718a8ede76a0"
+    },
+    {
+      "file": "textures/EdgeRepeatNoPaint00_Emm.png",
+      "gitBlobSha1": "aed26c80cc0568c65a400169a8a1c5c784e8ca22",
+      "bytes": 2214,
+      "sha256": "059a2ac6fa9c6f1e7226dec0abd31f5562edc7c8ee2f49fb6dfc2a4dc15f72c7"
+    },
+    {
+      "file": "textures/EdgeRepeatNoPaint00_Mtl.png",
+      "gitBlobSha1": "81ad65dba0b0b446c0b96d15ab9d5e3699cbbf11",
+      "bytes": 1601,
+      "sha256": "2129935a0eab3d58cd9bd7b3e56cbda25ca6016079bfce3e192ebcf445b74285"
+    },
+    {
+      "file": "textures/EdgeRepeatNoPaint00_Nrm.png",
+      "gitBlobSha1": "58745f49cf86ca7d3f2a203c40cf859fdbfa8c8c",
+      "bytes": 42040,
+      "sha256": "30d7925b9f2c791d429f6211a8af455c34473ea00e793c63d04504ae683ae6e3"
+    },
+    {
+      "file": "textures/EdgeRepeatNoPaint00_Rgh.png",
+      "gitBlobSha1": "0f4485da9a073a30d9780e860f33b7621b163f0f",
+      "bytes": 17356,
+      "sha256": "26850fea86ffef8d91641857010c066a471f9c34b5643257bb02f7c2800b3b55"
+    },
+    {
+      "file": "textures/EntranceBoard_Alb.png",
+      "gitBlobSha1": "718e4ef8caa70ddcc93d07e6d35c3056356dea3d",
+      "bytes": 80274,
+      "sha256": "09118306612d0a3ccff8ed1598301d75b1cc6ba6ba6c9f5f4f87bb21bc4eacf8"
+    },
+    {
+      "file": "textures/EntranceBoard_Mtl.png",
+      "gitBlobSha1": "f8926f90a157aa10dc508687e63d7e39c317756a",
+      "bytes": 24814,
+      "sha256": "ce5d61fcfcbe0ad1c8b5829da7cd61bf5adeb5cf71b953a25d9d1fb705e417fc"
+    },
+    {
+      "file": "textures/EntranceBoard_Nrm.png",
+      "gitBlobSha1": "59864bab077f891559507aa77f445553a7c9c840",
+      "bytes": 48923,
+      "sha256": "62c44364db62c45cec453e3ab79d17921aa84b8e07a04de73eb1e984320bdabb"
+    },
+    {
+      "file": "textures/EntranceBoard_Rgh.png",
+      "gitBlobSha1": "a2fd681558d3bbf5606ac1b5c01e543ab1034e8c",
+      "bytes": 40773,
+      "sha256": "ef53dc03dee313e226056fe10e610b85fe31c9ed2fad5d91f9a86f67e5ec86eb"
+    },
+    {
+      "file": "textures/FenceNet00_Alb.png",
+      "gitBlobSha1": "11500af823d3321eea256805543f0e10952847b5",
+      "bytes": 7706,
+      "sha256": "d9532f61057225d6660c99a266e40c73b626ccc2121ffeb5116e72e7c869cacf"
+    },
+    {
+      "file": "textures/FenceNet00_Mtl.png",
+      "gitBlobSha1": "4b528bfb417715ee195611da7b8d3eb17fde709a",
+      "bytes": 230,
+      "sha256": "94ac212404185ef94fd6834c9f64f9487fe0dba0ae3d4c5c4eaa628bb72a2b61"
+    },
+    {
+      "file": "textures/FenceNet00_Nrm.png",
+      "gitBlobSha1": "41d7c0d66799b60a7f123889fd50a8dc96529a25",
+      "bytes": 106142,
+      "sha256": "d257ff3297a177939b4e44cf75f525e6fe567c4c0a1d136987a1f2d63a961853"
+    },
+    {
+      "file": "textures/FenceNet00_Opa.png",
+      "gitBlobSha1": "8b07c9ee048303d7e82d354c1938166fe4735b25",
+      "bytes": 53217,
+      "sha256": "e90ce52dcc9815d62ee04e36cefe8237f4f85dfafc74d97df37ea4eabdca0365"
+    },
+    {
+      "file": "textures/FenceNet00_Rgh.png",
+      "gitBlobSha1": "1821d766083087ae0f6422f43ace469ccc5d5186",
+      "bytes": 13448,
+      "sha256": "1108916551279eac93aebfb99aa526ad182e9ac13f999cb9751b17785d15c29d"
+    },
+    {
+      "file": "textures/FireproofMortar_Alb.png",
+      "gitBlobSha1": "0dae94efc74f2f450707774a5d6d214f0d4ffaec",
+      "bytes": 46871,
+      "sha256": "48f107d36058ad5bdf18fe6f8943e6a47531ff6fc5d0e1648b0f7d1536cdd255"
+    },
+    {
+      "file": "textures/FireproofMortar_Mtl.png",
+      "gitBlobSha1": "e417847e02cf5349b5b6a50a1c0ae152a59b14eb",
+      "bytes": 406,
+      "sha256": "9a39718a01cebafd6958ec81976591af5469418e86e71fb5da382325eee12d65"
+    },
+    {
+      "file": "textures/FireproofMortar_Nrm.png",
+      "gitBlobSha1": "ba86a02b712e7b843acd6bc04086760dedf32d0a",
+      "bytes": 24788,
+      "sha256": "82f5d693ad97c5db1031014d6047505b0c87f9e0dbb2a72aead4f696ba3e7ba6"
+    },
+    {
+      "file": "textures/FireproofMortar_Rgh.png",
+      "gitBlobSha1": "8c3427f2ab7542b22c13244584d6f2516126f4e0",
+      "bytes": 12170,
+      "sha256": "fbc7c452bbd7c9f076959b6696b6c9cc8b0f0e3b94db2ad8978f27f61770156c"
+    },
+    {
+      "file": "textures/FloorFence00_Alb.png",
+      "gitBlobSha1": "817a279abca3b629f2c37668e37f6238f93902d2",
+      "bytes": 402372,
+      "sha256": "112f557b300a150d4ea2df3025122e75a86f4af63ea020ae283fa93f871eae1d"
+    },
+    {
+      "file": "textures/FloorFence00_Mtl.png",
+      "gitBlobSha1": "bf59aa69c1996e12d5a1b66e36e8fac6119b9a9a",
+      "bytes": 58720,
+      "sha256": "a9c46c5ed2c4435655f11ff71d7b4d4bfdbc56536588294542b96922c0612779"
+    },
+    {
+      "file": "textures/FloorFence00_Nrm.png",
+      "gitBlobSha1": "8a1ad71c1b3e3e51fa033877dbce7cd24c9764d7",
+      "bytes": 114593,
+      "sha256": "f63899dfc2d67e4705e25a301b5f8256160a9fbecc91c9b5daef499660597c72"
+    },
+    {
+      "file": "textures/FloorFence00_Opa.png",
+      "gitBlobSha1": "2232e7fc9fae127643c9c622c4f4abed50c5e443",
+      "bytes": 75955,
+      "sha256": "8fb166191830198d4ba8f7e207f4f08b85bdbb291c44cb0aa2f6d1eb39468eb8"
+    },
+    {
+      "file": "textures/FloorFence00_Rgh.png",
+      "gitBlobSha1": "a320d6c5fa2364f142bb073d813338ca007db819",
+      "bytes": 70667,
+      "sha256": "f18c5f0859bfca338a8703bfc34cd5bdca0cb1c94c3ca5f581ed21f47d78a7c3"
+    },
+    {
+      "file": "textures/FloorIron00_Alb.png",
+      "gitBlobSha1": "a755fa6acb1d3053ecca41b06c4956edab872cd0",
+      "bytes": 288059,
+      "sha256": "d1d59c4343676776ef260f439f5de1e810851302b72afff225ea3b2079d6c104"
+    },
+    {
+      "file": "textures/FloorIron00_Mtl.png",
+      "gitBlobSha1": "4876f52b74223700ffcd70a001e5ab29161b3358",
+      "bytes": 59216,
+      "sha256": "e5e5352c595180e08d6721f2e81d85646f21c037091ec7df2d00e7a0724e4731"
+    },
+    {
+      "file": "textures/FloorIron00_Nrm.png",
+      "gitBlobSha1": "3452450cbc24cabe85b7e3cc95e059611dafc078",
+      "bytes": 127437,
+      "sha256": "5039ab53834ebe9666968710ac9750f14e885b7a060f6efc065d173a43f5dc9b"
+    },
+    {
+      "file": "textures/FloorIron00_Rgh.png",
+      "gitBlobSha1": "3d0c9dc59c0f388b8ae2b1ba478e6fe63e534444",
+      "bytes": 72222,
+      "sha256": "7c1edac009ef0c754dd0254428f142ed64b5829360d703a1dfc8c5847532d3af"
+    },
+    {
+      "file": "textures/FloorLine00_Alb.png",
+      "gitBlobSha1": "43dc542d4218e7aa5292ab6fa05e2173368fc27c",
+      "bytes": 98030,
+      "sha256": "7feeb8325e13ed3bb02640f71d34dd8430e0b3a1575ef165dc238f1cca51c3cb"
+    },
+    {
+      "file": "textures/FloorLine00_Mtl.png",
+      "gitBlobSha1": "8d027e418ec920172eecb5bc61906dbe006ea652",
+      "bytes": 10115,
+      "sha256": "b2b9893a76880806c931d1126dd7a4ed59b3219992ac4b6fe2a0fb78890230ed"
+    },
+    {
+      "file": "textures/FloorLine00_Nrm.png",
+      "gitBlobSha1": "73884b16eac9ea8aed358b394e6fc905d76c0841",
+      "bytes": 53495,
+      "sha256": "9f353411d7dc91d8579c09fabfe696cb7525c2aa9ba1e127cad1a537bf76c108"
+    },
+    {
+      "file": "textures/FloorLine00_Rgh.png",
+      "gitBlobSha1": "004effa14f2116f314ef432d17eb6dbf76ecde4e",
+      "bytes": 24078,
+      "sha256": "943298a0a216db0ef0d2046651efbff4678c9167f0bc38691ddc974f1dfab11e"
+    },
+    {
+      "file": "textures/FloorLine04_Alb.png",
+      "gitBlobSha1": "0c0f0a658c33d5516d49a0eba48723ac5dd2c5a8",
+      "bytes": 35258,
+      "sha256": "f7fdf672726bd9c94f266058b54803b2ef637463661a1d1022495f5d7652920b"
+    },
+    {
+      "file": "textures/FloorLine04_Mtl.png",
+      "gitBlobSha1": "50b401c2401650b008f901372e9c72d8d1f4c17c",
+      "bytes": 880,
+      "sha256": "394d8df43e78274894471aff424e08e9ca1453e00d7816a9439be1ddf1e4dc12"
+    },
+    {
+      "file": "textures/FloorLine04_Nrm.png",
+      "gitBlobSha1": "e81a95c34da31d5096da1d6c997e7c2050253d7b",
+      "bytes": 18152,
+      "sha256": "6cbfbdf95616dbc1c1135c9fc38c1caf27467ac075c833e1b68fae1e002e1b58"
+    },
+    {
+      "file": "textures/FloorLine04_Opa.png",
+      "gitBlobSha1": "abd1cf23962890080da4631f3f5fa8ce0812409c",
+      "bytes": 2589,
+      "sha256": "3650413fe0580e6fc9464ee6dc2246d2db13201e03476764975f2e1ee7270217"
+    },
+    {
+      "file": "textures/FloorLine04_Rgh.png",
+      "gitBlobSha1": "a4ab8356073290901450f591d8e927b7fef32efe",
+      "bytes": 4469,
+      "sha256": "fb97565591a30b98e0ab18bcb8d36da470919e1d5781d6d1f22dbb033dfe8517"
+    },
+    {
+      "file": "textures/FloorWireNetN_Mtl.png",
+      "gitBlobSha1": "032d75bac2d9669200d0f23b25ad93f10a560c8b",
+      "bytes": 817,
+      "sha256": "eb6fe1bab58f1364f16c95207c0ab6559ddb495e23afa45831ad78fb739c0bd4"
+    },
+    {
+      "file": "textures/FloorWireNetN_Rgh.png",
+      "gitBlobSha1": "3dd2900e4de9b708fa5e5a0c0da5291acbb2a110",
+      "bytes": 749,
+      "sha256": "3086df0825dc87b9cbaeb76323d1c19566e4334ed6a211b0f8d3feef22d9ea1f"
+    },
+    {
+      "file": "textures/FloorWireNetN_Yellow_Alb.png",
+      "gitBlobSha1": "c743c7744ad36639ffe87e471f4ce5676aaceb43",
+      "bytes": 3335,
+      "sha256": "8868e2e10df24223901eeb2b4423eb038eb6610438619e9e66249e0b63717fd9"
+    },
+    {
+      "file": "textures/FloorWireNetN_Yellow_Opa.png",
+      "gitBlobSha1": "613d53682997df7f6ab7d67159c2fbb058a46c22",
+      "bytes": 1626,
+      "sha256": "8c269f2b15b5844d1a28874d945c37c6701a21f7257017c1f600be127979dc17"
+    },
+    {
+      "file": "textures/GraffitiCloth00_Alb.png",
+      "gitBlobSha1": "7f5e78f680ccc6c8a3751e6a69b096d61793ec67",
+      "bytes": 867200,
+      "sha256": "b89f4b5e86c115892f4101fcfe0b4e4545e79ba7dba973da284e55261658bb00"
+    },
+    {
+      "file": "textures/GraffitiCloth00_Emm.png",
+      "gitBlobSha1": "6a7dbe2e3f6f76f14f477ebee55de2a9ff60ae1c",
+      "bytes": 263213,
+      "sha256": "32e7d272f65d721f0101acbe8f552bdf3b2f3cd364a34f30470a342a2354e7c6"
+    },
+    {
+      "file": "textures/GraffitiCloth00_Mtl.png",
+      "gitBlobSha1": "263ec7561fe9e49ee5661b432d317d832a3ad6fb",
+      "bytes": 7334,
+      "sha256": "4177f2fe0607970e26139f5fb8379f7fe2a4b66c25627fca400f4ceadba9d895"
+    },
+    {
+      "file": "textures/GraffitiCloth00_Nrm.png",
+      "gitBlobSha1": "eb54bc3bed25a820963a862aaeb790efc44e6ac4",
+      "bytes": 191491,
+      "sha256": "766cccbc5f865c8d8ac592bc34b4ffa7a07f5dd9c5357f49f892c05d6fd8150d"
+    },
+    {
+      "file": "textures/GraffitiCloth00_Opa.png",
+      "gitBlobSha1": "8421a30c035acf5c56019f3e42f24a86a4f02a0b",
+      "bytes": 42382,
+      "sha256": "f347006bac42a6982833184cec1f8e2d97484d467dbf6b82cdb1ea084ed26545"
+    },
+    {
+      "file": "textures/GraffitiCloth00_Rgh.png",
+      "gitBlobSha1": "dc44960b6baf847d41de389d1a76cad2fd8644de",
+      "bytes": 164896,
+      "sha256": "6c6622561b82bb1b7b70d97c4137f3d35e75990416add1e3a47d4a9f6e742267"
+    },
+    {
+      "file": "textures/GraffitiSetGround00_Alb.png",
+      "gitBlobSha1": "e12b01ba078ec9c695cdd0230819de550f5834d5",
+      "bytes": 496445,
+      "sha256": "991b6d45333298d662f5de6446288124b40cea9bc17d3bffd55d6dedd76e82e5"
+    },
+    {
+      "file": "textures/GraffitiSetGround00_Mtl.png",
+      "gitBlobSha1": "aed26c80cc0568c65a400169a8a1c5c784e8ca22",
+      "bytes": 2214,
+      "sha256": "059a2ac6fa9c6f1e7226dec0abd31f5562edc7c8ee2f49fb6dfc2a4dc15f72c7"
+    },
+    {
+      "file": "textures/GraffitiSetGround00_Nrm.png",
+      "gitBlobSha1": "2dbfef4ce95807c253804c372d7287eaf4e2048d",
+      "bytes": 545470,
+      "sha256": "e08062bd032307b2887868fe7b423f513053d411385ffe4fbfc6a1e6cc2a5d9f"
+    },
+    {
+      "file": "textures/GraffitiSetGround00_Opa.png",
+      "gitBlobSha1": "9a81ce7d150f8ba29b0885073b1e3db4a1574e4b",
+      "bytes": 488614,
+      "sha256": "52562f854a9425d0880166e27450ccaff629f879caf3ae776b8e21b85572ae62"
+    },
+    {
+      "file": "textures/GraffitiSetGround00_Rgh.png",
+      "gitBlobSha1": "52fd8e99210e76053d87310422839dda6dc3ec8e",
+      "bytes": 227152,
+      "sha256": "38a04482a015ec38bac689e1210dd5a3d5f99b7827361aa1485845481afb5c07"
+    },
+    {
+      "file": "textures/GraffitiSetGround01_Alb.png",
+      "gitBlobSha1": "0a9aa7e2acf7595f71d945517077e06ed16cf864",
+      "bytes": 490315,
+      "sha256": "7f8dd0b0dc961307f0a798b580a55dd386fa1599e4ea7718a728c0af18602b39"
+    },
+    {
+      "file": "textures/GraffitiSetGround01_Mtl.png",
+      "gitBlobSha1": "aed26c80cc0568c65a400169a8a1c5c784e8ca22",
+      "bytes": 2214,
+      "sha256": "059a2ac6fa9c6f1e7226dec0abd31f5562edc7c8ee2f49fb6dfc2a4dc15f72c7"
+    },
+    {
+      "file": "textures/GraffitiSetGround01_Nrm.png",
+      "gitBlobSha1": "c59be1b751fb21e66c5ebaf8ff8b857e999c1f81",
+      "bytes": 539306,
+      "sha256": "f752275f31405592466a12f2bd58e3a7513eae02044c2467097bb45b4c5367c1"
+    },
+    {
+      "file": "textures/GraffitiSetGround01_Opa.png",
+      "gitBlobSha1": "c73e703a49fb8098cfb2851e34be78e5a618dad2",
+      "bytes": 415957,
+      "sha256": "04459628d33aff76b32e8e60b0d7d482459443d46d57688a4574778e3d23c2e3"
+    },
+    {
+      "file": "textures/GraffitiSetGround01_Rgh.png",
+      "gitBlobSha1": "a0830716d61d7b536ba513b80f43ddfc12c74a21",
+      "bytes": 216846,
+      "sha256": "a1649800d6112c27cd1e65b4a4206991506efbc7c4484d05612e2c438c8788ad"
+    },
+    {
+      "file": "textures/GraffitiSetGroundDirt00_Alb.png",
+      "gitBlobSha1": "7e77a236bf179c3d73114ad369c2f050c852ff94",
+      "bytes": 2670981,
+      "sha256": "88bd7b22d5eb161414ab6ce3ece2acc94afa5982b8230220ca099ae70dc4ca19"
+    },
+    {
+      "file": "textures/GraffitiSetGroundDirt01_Nrm.png",
+      "gitBlobSha1": "541bb1cf259543090a42e5719b6d7e9e08164990",
+      "bytes": 323934,
+      "sha256": "be672f9e695d7aa87257a4a63b9a7fc5b689eef27bca2c2a0ae0eb2d6ddef5df"
+    },
+    {
+      "file": "textures/GroundGrassBaldSpot_Alb.png",
+      "gitBlobSha1": "1b6317060f6df7c6f9074b2cdd010ed6f45ec3a2",
+      "bytes": 248587,
+      "sha256": "96622312b440177bad99310ab36caa229cb279ad864f43fc0c156c96e8571c09"
+    },
+    {
+      "file": "textures/GroundGrassBaldSpot_Nrm.png",
+      "gitBlobSha1": "fa796984f5fac28da97ed657957f497cff05eac2",
+      "bytes": 571547,
+      "sha256": "ac51322dbfd164b3ed4471127ebea6b244cbd4b874eac13c0d169cb47649ff5c"
+    },
+    {
+      "file": "textures/GroundGrassBaldSpot_Rgh.png",
+      "gitBlobSha1": "6986f0b265600af5f85635d43177c0bfb9981268",
+      "bytes": 64679,
+      "sha256": "f1e78fe2301b2aee604cb03716358621122d19d940110bee99035ee67ca6b064"
+    },
+    {
+      "file": "textures/GroundGrassFlowerBed_Alb.png",
+      "gitBlobSha1": "42a7cfe42fd50b2e186c992b0a0baea2997119e8",
+      "bytes": 1034092,
+      "sha256": "967c0bd28f40a5bdb02c8ee6138a88a595f83af86fc96e83f222a319e043af1d"
+    },
+    {
+      "file": "textures/GroundGrassFlowerBed_Mtl.png",
+      "gitBlobSha1": "aed26c80cc0568c65a400169a8a1c5c784e8ca22",
+      "bytes": 2214,
+      "sha256": "059a2ac6fa9c6f1e7226dec0abd31f5562edc7c8ee2f49fb6dfc2a4dc15f72c7"
+    },
+    {
+      "file": "textures/GroundGrassFlowerBed_Nrm.png",
+      "gitBlobSha1": "3632f62df692a8497e47f3f4c1dfd2bb06ed3893",
+      "bytes": 412165,
+      "sha256": "5a6e8f450d5524b11f8aa09eb3d99cef8fb5b617d61bf41bc385e8660205b833"
+    },
+    {
+      "file": "textures/GroundGrassFlowerBed_Rgh.png",
+      "gitBlobSha1": "bcb2e473c1a178baeaa1520a588611659fc971f3",
+      "bytes": 163839,
+      "sha256": "1cf3213f7617b01d6bd80d3460e864901ae3ce7db9da20b7327c722a2f87e888"
+    },
+    {
+      "file": "textures/LightBakeDummy00.png",
+      "gitBlobSha1": "37ab1a8d9f17303856f8e51a3232f1855509c438",
+      "bytes": 94,
+      "sha256": "79fbff0bbf92e29686427b7ac6c9d36cebf4262d1916f73c10a713e08b0f3e30"
+    },
+    {
+      "file": "textures/LightingTower_Alb.png",
+      "gitBlobSha1": "ea8b7885203091145631dbfaf4e22007c8736158",
+      "bytes": 1682458,
+      "sha256": "fc26a949030888719e847a1d4a4d334b3069bb5467295f501499a73d46b8107e"
+    },
+    {
+      "file": "textures/LightingTower_Emm.png",
+      "gitBlobSha1": "cca26832bb63bd5c118f62b4530944839293943e",
+      "bytes": 53097,
+      "sha256": "458ad71f3e2cf6878c18818f2040a32c4c0d59d508eddd0607a8a561825b5443"
+    },
+    {
+      "file": "textures/LightingTower_Mtl.png",
+      "gitBlobSha1": "bb2ce0cc6a14194393def9f1172643d4e824fdcb",
+      "bytes": 14716,
+      "sha256": "5c75b09754ad7b5338053b8252d45e6395cf2898b0f797bea00f59e10d924dcb"
+    },
+    {
+      "file": "textures/LightingTower_Nrm.png",
+      "gitBlobSha1": "186239b8667d9edefa3d8de73fc4e15c93a21b9c",
+      "bytes": 159529,
+      "sha256": "4d8e23a97b8ec7b61512855d545ed36789fe7e7c392b5b580644814135f53b7a"
+    },
+    {
+      "file": "textures/LightingTower_Rgh.png",
+      "gitBlobSha1": "90853790deb4667df8b83bcf1faa1ad395f8cc03",
+      "bytes": 532241,
+      "sha256": "a2ae2de2040d1817807f52f9528ffab7aae69d4cbe84604a6f048b812bff433b"
+    },
+    {
+      "file": "textures/LivingWall00_Alb.png",
+      "gitBlobSha1": "95623ca57cd6593c692be35c01714727e2f83999",
+      "bytes": 56715,
+      "sha256": "6cfea36fd1946c1921e74ea334f2f692bd88a71c85db3e2e71ff14d45f102100"
+    },
+    {
+      "file": "textures/LivingWall00_Mtl.png",
+      "gitBlobSha1": "a8d0f71ee7844572d615cfa8a436fd82030d6cd0",
+      "bytes": 6320,
+      "sha256": "fedb652d6182524a1c133482a95ee9704e01165aafdeb21e5b441e8a6c46d6ae"
+    },
+    {
+      "file": "textures/LivingWall00_Nrm.png",
+      "gitBlobSha1": "420b58f99e489aa8a478520aeaa3d2a3d36a599a",
+      "bytes": 22350,
+      "sha256": "683b8b005e6e07572aa49760e2a3677650296a63c780720180fb58b42130894e"
+    },
+    {
+      "file": "textures/LivingWall00_Rgh.png",
+      "gitBlobSha1": "41ee1545a206c195694b3d904c071a9976da05c6",
+      "bytes": 18945,
+      "sha256": "7f1b5a5bc1592d4582819cde7793e4ee0349764d214c62036bdae92eae8c28af"
+    },
+    {
+      "file": "textures/M_FenceVinyl_Alb.png",
+      "gitBlobSha1": "15c2a59f0f46ddcdd0436d09474c712ff294af7d",
+      "bytes": 132777,
+      "sha256": "de1777cac2da61b29f3cb5e5ef829a85f9470a4934a991c14b5ae51c5a74de77"
+    },
+    {
+      "file": "textures/M_FenceVinyl_Mtl.png",
+      "gitBlobSha1": "eef0edd02eb695098692bbec76884c7ae2b6bf12",
+      "bytes": 3083,
+      "sha256": "d4720cc6951f92768a697c7949f6dfcd0eafe8f1b3d83ea7ee12007581e8699b"
+    },
+    {
+      "file": "textures/M_FenceVinyl_Nrm.png",
+      "gitBlobSha1": "88e9df938bfdca01edcd5cf25c1dff5822571334",
+      "bytes": 66722,
+      "sha256": "5b240357fe19d96c147c6ef877ab0c226f872a3a3095010ad6959766ed612804"
+    },
+    {
+      "file": "textures/ParBody_Alb.png",
+      "gitBlobSha1": "e349e5b37a42e712ad281bff8345a2d4ece8777c",
+      "bytes": 674799,
+      "sha256": "26faac39b6b529fe712ad0b0a758a3c4c52d2e3233d08eeb99ddf0708ac1e9c9"
+    },
+    {
+      "file": "textures/ParBody_Mtl.png",
+      "gitBlobSha1": "c39092554877b3eda348a3bf6fb638aedb30fb82",
+      "bytes": 11224,
+      "sha256": "dfc9fee689ec804d31bca85f155bf88fd3340dbb4db34ee3296a53af128ad0c1"
+    },
+    {
+      "file": "textures/ParBody_Nrm.png",
+      "gitBlobSha1": "1752a84d3ca0aace0d671eea7e3f46b9ebd99515",
+      "bytes": 255286,
+      "sha256": "34a31912c22fb3cb95ae33f8c8bf9c09e6915d7398ccf874ed1b9f8a559ea3cc"
+    },
+    {
+      "file": "textures/ParBody_Rgh.png",
+      "gitBlobSha1": "1d1d7563a3f50afc478cabd1ddb0108cd06b9acb",
+      "bytes": 135465,
+      "sha256": "436aad3a72f685b2f889ec43a8aac124c2ae133041ca08c08f59131a7ad01968"
+    },
+    {
+      "file": "textures/ParLamp_Alb.png",
+      "gitBlobSha1": "11e5e266eef44cd4da3b7a718ae91bdc9febb562",
+      "bytes": 13645,
+      "sha256": "2d019cc6ecf84afc08116af419daa19bed0b2d79acc74f7ee74248c6d02774b7"
+    },
+    {
+      "file": "textures/ParLamp_Emm.png",
+      "gitBlobSha1": "a64a2420fff74655c0b63bbdf1e58044630c7693",
+      "bytes": 1176,
+      "sha256": "87bb01c7bba5c921679e5b766d52d351f2772b4f584db29d97599190cf6f289e"
+    },
+    {
+      "file": "textures/ParLamp_Mtl.png",
+      "gitBlobSha1": "23c5a60382d39bb960eb7e74d2fb1770fd1e9ffa",
+      "bytes": 1206,
+      "sha256": "f668cb102273f25589b0e499c5045a3f0269473213f040ce8f74380d21941628"
+    },
+    {
+      "file": "textures/ParLamp_Nrm.png",
+      "gitBlobSha1": "c4f35d3eaeb39bf28bec109867d48e4b61bde49b",
+      "bytes": 7535,
+      "sha256": "c9504af766e657522569cb0249b1a69288a89a467135c9d89f3244f0f81c8f30"
+    },
+    {
+      "file": "textures/ParLamp_Rgh.png",
+      "gitBlobSha1": "aec4b945a313ed99b4f296e69c80223f737d66b8",
+      "bytes": 2937,
+      "sha256": "7577c70dea3958bf2a2755d7bfd6ad8f1494ca83e7735d9ac34134efd4d31ebb"
+    },
+    {
+      "file": "textures/PlantBase00_Alb.png",
+      "gitBlobSha1": "ba35ef01c8448de51a32cf699c0480753d8b37e9",
+      "bytes": 22775,
+      "sha256": "b7843a735d92b17e36007d030dc684dc1ee2f70dbf5ea9ce1bd61a49122b62b8"
+    },
+    {
+      "file": "textures/PlantBase00_Mtl.png",
+      "gitBlobSha1": "e417847e02cf5349b5b6a50a1c0ae152a59b14eb",
+      "bytes": 406,
+      "sha256": "9a39718a01cebafd6958ec81976591af5469418e86e71fb5da382325eee12d65"
+    },
+    {
+      "file": "textures/PlantBase00_Nrm.png",
+      "gitBlobSha1": "4705f9a073d3786d853e0518734f6a869ba70312",
+      "bytes": 37707,
+      "sha256": "5a9b561ff0931ba89b5ae4e6d44a247a6038796b37e7e4bae6c62f31638b2550"
+    },
+    {
+      "file": "textures/PlantBase00_Rgh.png",
+      "gitBlobSha1": "a24b8f691ae5bcd444803051017692eb28c08507",
+      "bytes": 15779,
+      "sha256": "37d1540cb7402f02b4879ded8249686a26ffadf92e74139a6e91aca8e861e610"
+    },
+    {
+      "file": "textures/PlantShelf00_Alb.png",
+      "gitBlobSha1": "b2c1a69162f0815143df95dbb9adfaaf4cd7f160",
+      "bytes": 37501,
+      "sha256": "c76ebc5d2b3c618721e375c5e936c84a0985dc980ef7caf1a4a4034d08749ecc"
+    },
+    {
+      "file": "textures/PlantShelf00_Mtl.png",
+      "gitBlobSha1": "5d765dff91fe2ba271b946779f672ed3a1795d97",
+      "bytes": 1436,
+      "sha256": "02c8a129b27331810b7be8742e82b68168da973341825d420357a1f7d76739e2"
+    },
+    {
+      "file": "textures/PlantShelf00_Nrm.png",
+      "gitBlobSha1": "852bbac3fd6b80167dde77f440619d63ffb32198",
+      "bytes": 58103,
+      "sha256": "a3a1daa3fb2e7946d3f817749eaf8985a3baf26eea5f9d378aaa8155e5035566"
+    },
+    {
+      "file": "textures/PlantShelf00_Rgh.png",
+      "gitBlobSha1": "51e311a8d8b5afbf399c51e266b0a7da5e72fae6",
+      "bytes": 29083,
+      "sha256": "a07fa372a64d3e468545c109349d0a8ed70461295a29dd05e6c9e601b13c191c"
+    },
+    {
+      "file": "textures/PlantationSet_Alb.png",
+      "gitBlobSha1": "ba221281b688fb4dcb3a7011dc9277c0a6d7f0db",
+      "bytes": 27627,
+      "sha256": "422ca2df9fde4134591a031fd46b550cd8c437439852b6ecb25e36a47592d3cb"
+    },
+    {
+      "file": "textures/PlantationSet_Nrm.png",
+      "gitBlobSha1": "568cceab49b3c1eb352477f839f23da5f96ad7d9",
+      "bytes": 19932,
+      "sha256": "64e7df5159fcd44af665d47e02257fcc322a400facfc82794057928fbb6dde41"
+    },
+    {
+      "file": "textures/PlantationSet_Opa.png",
+      "gitBlobSha1": "53dd566e81253283137019af83d17f3e3cd58f64",
+      "bytes": 18161,
+      "sha256": "67ee23c615e29ea740bb66aa2cc79c444813f8ca6f085fdcd3aad38da3ee0822"
+    },
+    {
+      "file": "textures/PlantationSet_Rgh.png",
+      "gitBlobSha1": "0d17b7b4eec2af399beea56c16ab2f08a0927955",
+      "bytes": 128271,
+      "sha256": "686d0262e51f1c29783f8269295ab3b74e388ca01892a9375e118fd0ee714561"
+    },
+    {
+      "file": "textures/PlazaOBJIron_Alb.png",
+      "gitBlobSha1": "ab0bacb5d2ff6abd8d780b08f9ef961fa57e7486",
+      "bytes": 162619,
+      "sha256": "96035cef265b2bacfb2404c190fa0094dbe26b76a8ae05737b6805ed8ab57b62"
+    },
+    {
+      "file": "textures/PlazaOBJIron_Mtl.png",
+      "gitBlobSha1": "82f4d74a6b69d16472244585cf84d4675aae92c9",
+      "bytes": 47298,
+      "sha256": "fef258801de5e265c2f0188f3069808dc8c4c867874e037b29fb54c63eddc682"
+    },
+    {
+      "file": "textures/PlazaOBJIron_Nrm.png",
+      "gitBlobSha1": "a76dcc0600073445bf48029119d94e858d91c9f7",
+      "bytes": 74000,
+      "sha256": "3f1aa19d212ef55818931b096f4f7ffdb6f06585d585985d9007e63587889272"
+    },
+    {
+      "file": "textures/PlazaOBJIron_Opa.png",
+      "gitBlobSha1": "6acc89a597fbc1d61f68815c1be40d4c127d54f3",
+      "bytes": 3083,
+      "sha256": "e844e7c3c2ca5a814513681beded9e5847d36439b15f71deac058c1ab508a6ff"
+    },
+    {
+      "file": "textures/PlazaOBJIron_Rgh.png",
+      "gitBlobSha1": "a0927cb38f391ec37ad53b42c772908c964bf2f4",
+      "bytes": 59286,
+      "sha256": "efb28be7ca817716e90a7acb4629cb996b5a4a3448aaf5e14a4e42c63fe6e6d1"
+    },
+    {
+      "file": "textures/Poster00_Alb.png",
+      "gitBlobSha1": "32164d067ff6e789c952ffe2ddf3d3814a024fa5",
+      "bytes": 340299,
+      "sha256": "2fe133a2679f7833f55935a254ea7c59026db6bc26c442e1450ef732ca8c741b"
+    },
+    {
+      "file": "textures/Poster00_Nrm.png",
+      "gitBlobSha1": "aed26c80cc0568c65a400169a8a1c5c784e8ca22",
+      "bytes": 2214,
+      "sha256": "059a2ac6fa9c6f1e7226dec0abd31f5562edc7c8ee2f49fb6dfc2a4dc15f72c7"
+    },
+    {
+      "file": "textures/PropellerObject00_Alb.png",
+      "gitBlobSha1": "1a3f7f2193ffdcaf6675b2a204836c1073146a0f",
+      "bytes": 872489,
+      "sha256": "bc0035d1885dbed884ee3135efe6f388b1d03e5a987588de7a2394c8cfdea253"
+    },
+    {
+      "file": "textures/PropellerObject00_Emm.png",
+      "gitBlobSha1": "7999cb1614bdf93ceb481b29a14e3f1159cf3ce6",
+      "bytes": 24723,
+      "sha256": "8700244e5b296a9151ca6d7201322a46c957c8d39d77341517f4ce90f05bcdc6"
+    },
+    {
+      "file": "textures/PropellerObject00_Mtl.png",
+      "gitBlobSha1": "7b7ad3b02a7c485c230eea36b8c66292466c84bb",
+      "bytes": 6929,
+      "sha256": "9ea6c4b5e8a265589b3d642a0140de89753ee840aa18b346e8b2cfabaccc8f11"
+    },
+    {
+      "file": "textures/PropellerObject00_Nrm.png",
+      "gitBlobSha1": "6fcd5ba96228a4799963b7f7e68114df4a3fc0c4",
+      "bytes": 319339,
+      "sha256": "68b4f2de8998e64f20b6e03c3ad0cc8c97ea7005091ac3c11b68711f25756de2"
+    },
+    {
+      "file": "textures/PropellerObject00_Rgh.png",
+      "gitBlobSha1": "a7fd1dee014e203821bcdc478d113a667a232d67",
+      "bytes": 170954,
+      "sha256": "f3b3602a297e398ef448889b0de2ab9527d3b797f27c04f71ab0ca4edc8d0429"
+    },
+    {
+      "file": "textures/Props03_Alb.png",
+      "gitBlobSha1": "62955b97bcc526756d13e8ec2fa59892e144afff",
+      "bytes": 716736,
+      "sha256": "d9f2bd487c8859fc15ea18a9f5db4a5bfcd6388235258384a0aaf142c7ab1afe"
+    },
+    {
+      "file": "textures/Props03_Mtl.png",
+      "gitBlobSha1": "87ea06673faecb2a74252be8ec83cfd975cc71b6",
+      "bytes": 5043,
+      "sha256": "0c7d69abba00fdc5c37d4cfc4f2a3c19ca6a718c15ea0e12c0354b54d1baee54"
+    },
+    {
+      "file": "textures/Props03_Nrm.png",
+      "gitBlobSha1": "56abcf3526ab879c72e4a6fa50ba0c98e0d1fbd0",
+      "bytes": 367288,
+      "sha256": "af6d2b85a11df7b065acbd89d60db5610a439cdd5e33911212ef1a98f9d0b8b0"
+    },
+    {
+      "file": "textures/Props03_Rgh.png",
+      "gitBlobSha1": "f4d2a71227e16ca4988a351ddeec7d84a17237b7",
+      "bytes": 155847,
+      "sha256": "70334deb97611ecca6e930a47e6ba2dd637717d3a53db6acded3d2a9b916f82e"
+    },
+    {
+      "file": "textures/RepeatNoPaint00_Alb.png",
+      "gitBlobSha1": "72bc47525b51d18849262b077cf150d9873fa622",
+      "bytes": 26831,
+      "sha256": "8217af6a9fddb64487f0e953aacc5c742c6bd3bd0adc1447032efe92ad263495"
+    },
+    {
+      "file": "textures/RepeatNoPaint00_Mtl.png",
+      "gitBlobSha1": "4383bfebffda72f7acbed250ac8b1e5322bf0fbe",
+      "bytes": 1059,
+      "sha256": "e3477ae97b0f9860185f937d34986b1cd0322e5eb49b7a9aa978be6dee1b67c7"
+    },
+    {
+      "file": "textures/RepeatNoPaint00_Nrm.png",
+      "gitBlobSha1": "f51faaf8a950f888141b389e2a1a1ce055217117",
+      "bytes": 47667,
+      "sha256": "40fff03505e973f9d340ec667ddb589379703e3db2b344fb5a399263765e0e03"
+    },
+    {
+      "file": "textures/RepeatNoPaint00_Rgh.png",
+      "gitBlobSha1": "3acdb8cfc925d6ff4a5979d2b697a75307589f08",
+      "bytes": 41028,
+      "sha256": "69fc370f24fc53160117da5083865bfc10a577fb0920e0cca413ddded910f542"
+    },
+    {
+      "file": "textures/RepeatPaint00_Alb.png",
+      "gitBlobSha1": "923f9190fbdc16692a85cd29a1a589790d5eee11",
+      "bytes": 22467,
+      "sha256": "482151a5100fbbfbe1e2fcd173a887e15dc011bfe8ece8407b5597a01fa77a91"
+    },
+    {
+      "file": "textures/RepeatPaint00_Mtl.png",
+      "gitBlobSha1": "e417847e02cf5349b5b6a50a1c0ae152a59b14eb",
+      "bytes": 406,
+      "sha256": "9a39718a01cebafd6958ec81976591af5469418e86e71fb5da382325eee12d65"
+    },
+    {
+      "file": "textures/RepeatPaint00_Nrm.png",
+      "gitBlobSha1": "cd88ffd637f655a3577ccdabbcd5acabe358b681",
+      "bytes": 4694,
+      "sha256": "1ef6193fa07adf019ea75b363682efbac5a6953052c20ae558eb563e7e1cc044"
+    },
+    {
+      "file": "textures/RepeatPaint00_Rgh.png",
+      "gitBlobSha1": "23e9d8016e7b68723eb6039bc0ed14974c832d07",
+      "bytes": 4173,
+      "sha256": "1ada499c7dc1dfd8b969d4a98910bad60060d73bd4c58decb24de98b0ff86db7"
+    },
+    {
+      "file": "textures/RepeatWallNoPaint_Alb.png",
+      "gitBlobSha1": "8c7f7fb951c6044e490c34a90e599b4db71e1698",
+      "bytes": 17754,
+      "sha256": "e5fb66b534c906e1c8267e3cf7cd6a865a08e4c8d848f07958db22804bb61f8d"
+    },
+    {
+      "file": "textures/RepeatWallNoPaint_Mtl.png",
+      "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+      "bytes": 870,
+      "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+    },
+    {
+      "file": "textures/RepeatWallNoPaint_Nrm.png",
+      "gitBlobSha1": "52efc4e87849c0df41c73e839c90b6b6904cee05",
+      "bytes": 35166,
+      "sha256": "be4b3e9ff8f02bb479516f6f38ab289d3e252cc6e0f0edbaae27b117536ed0e0"
+    },
+    {
+      "file": "textures/RepeatWallNoPaint_Rgh.png",
+      "gitBlobSha1": "ff63796d73d35b64a7dc29327797e8332c7ad94a",
+      "bytes": 28263,
+      "sha256": "2a0e40c468849f99bc46a3bfa963d7c3ff8a292ca7f4b837fcd37e3555d40e85"
+    },
+    {
+      "file": "textures/RoadLight00_Alb.png",
+      "gitBlobSha1": "7f6e3cf3d3f79bf824dbb1c841fac457ae7d7056",
+      "bytes": 34205,
+      "sha256": "da1133e8ba84f5e2dd5900b47414be046b60eec30c1a4a4024899177dba67a2f"
+    },
+    {
+      "file": "textures/RoadLight00_Emm.png",
+      "gitBlobSha1": "66571e211dc653b34d518597c1b2b19067fcfa12",
+      "bytes": 2874,
+      "sha256": "405a78afae72a864d8f1769e043e9cd7187b546a2f6dc75a06a7b9d897736bd0"
+    },
+    {
+      "file": "textures/RoadLight00_Mtl.png",
+      "gitBlobSha1": "d6713c9fc56884a67933ff143997fa1a99eaa326",
+      "bytes": 4699,
+      "sha256": "b94d83ae84eefae2bcba2bcd73c604a0d4127f4d1a0f5a0cc92d465b3c8bf1cc"
+    },
+    {
+      "file": "textures/RoadLight00_Nrm.png",
+      "gitBlobSha1": "bf84f6928e502e7fd8bd24da5d234e6fd3b2e745",
+      "bytes": 30186,
+      "sha256": "ee82cb1047aee8b4839ff5f91307f1618a9991d6fb2394c2d67a5d5a42f651b7"
+    },
+    {
+      "file": "textures/RoadLight00_Rgh.png",
+      "gitBlobSha1": "0c80da013e5e2cd5135aedbc8fc1002c29b98c00",
+      "bytes": 14995,
+      "sha256": "5c951d1988d835e8230f7ad6abdcfc234d068c2245fa03fcb65d0bb197a6de7b"
+    },
+    {
+      "file": "textures/RopeSingle_Alb.png",
+      "gitBlobSha1": "f335e9c1921f43ec7a37aae4f7c2b95d8d4b5813",
+      "bytes": 28579,
+      "sha256": "d33a068fa0a7a4592c7769dd01f7ca08ca8a2f90ec15a19959b6aaf4a404d157"
+    },
+    {
+      "file": "textures/RopeSingle_Nrm.png",
+      "gitBlobSha1": "2c6773e4aac73420f6befccf73bf8e45b7b7c47c",
+      "bytes": 32283,
+      "sha256": "1768399938d9e8107970b688ca4d3b65bff9de7589eb08667bb3cb7c6674d3cf"
+    },
+    {
+      "file": "textures/RopeSingle_Rgh.png",
+      "gitBlobSha1": "ef29b201b5fa30ada23a0c5390bc5848cff0762b",
+      "bytes": 660,
+      "sha256": "5ee260ed8f905df90ee56adbc83157e0f839633b132d025c6c2dc0a0fd06057a"
+    },
+    {
+      "file": "textures/RunwayMain00_Alb.png",
+      "gitBlobSha1": "271d3bc84b28ea702af275ca5ae64bdc4c1d6a2e",
+      "bytes": 23741,
+      "sha256": "cf80a8edc91de7273b1c3cc860e76175e26fbe2ec35adfe56730b477b74693f2"
+    },
+    {
+      "file": "textures/RunwayMain00_Mtl.png",
+      "gitBlobSha1": "04e959bf0c079c92474c6d1fa73d2985c0093c99",
+      "bytes": 17578,
+      "sha256": "5a31ad0ef440a7eab672c2346f879c380db69f0a7e85437bfa1d2e85b3f05529"
+    },
+    {
+      "file": "textures/RunwayMain00_Nrm.png",
+      "gitBlobSha1": "4992a6c05ca2b844ac7bb90e1945fe609fdef431",
+      "bytes": 36547,
+      "sha256": "e7c889e1dfd56dd8bd0669ea2b08f80b89353a4ac8675b479b67c793852c3f16"
+    },
+    {
+      "file": "textures/RunwayMain00_Rgh.png",
+      "gitBlobSha1": "c583a63edb0a56c18454d26c3ffeb67dcf976d2d",
+      "bytes": 15487,
+      "sha256": "976cdcd5d965164c83dda989a945da00bea8156c480e9e744936278d68a79cc0"
+    },
+    {
+      "file": "textures/SandbagRubberMat_Alb.png",
+      "gitBlobSha1": "af5a27e479a8de4baf90f738d0f2952933e7620c",
+      "bytes": 210350,
+      "sha256": "b481e1b8a09909750f8e22032703bcaf1455ec9aa3ead157856481b28e67c51b"
+    },
+    {
+      "file": "textures/SandbagRubberMat_Nrm.png",
+      "gitBlobSha1": "6a8239a9e94d51a220e8df11a0224b9f2af27b98",
+      "bytes": 85708,
+      "sha256": "0e1100a5242f8345f7bfba4be6cd6575534dcfb9d3302c2217cf312a5c978e8c"
+    },
+    {
+      "file": "textures/SandbagRubberMat_Rgh.png",
+      "gitBlobSha1": "7a77dc30ac98583bf9ec7e3e0b33d765e3f82e95",
+      "bytes": 44520,
+      "sha256": "af40f361a9c59fa9c1816e43fb7696536c61ddc8122497ab4ce318eeb1f5540d"
+    },
+    {
+      "file": "textures/ScaffoldSet_Alb.png",
+      "gitBlobSha1": "191dd749ff540626c71f3cdef3cba3b464d35aa1",
+      "bytes": 553591,
+      "sha256": "21b0f03f36cdb235a1fa77056b7406b51ee710c809b9b21fcefba9dba77fa5ab"
+    },
+    {
+      "file": "textures/ScaffoldSet_Nrm.png",
+      "gitBlobSha1": "12606a7d7013086b2874173479e85266e9302873",
+      "bytes": 9452,
+      "sha256": "c131e3e04df5b741f41831f5882b3c911ffd096dcab2b4c8c7e039f747cd1779"
+    },
+    {
+      "file": "textures/ScissorLift_Alb.png",
+      "gitBlobSha1": "a7d74b08c1c2675b4a7a607ad03fdbed1660555a",
+      "bytes": 138710,
+      "sha256": "d2632f1e9a082d9d49fe952cf253e952db5ad97576970f0161a9597d39227918"
+    },
+    {
+      "file": "textures/ScissorLift_Emi.png",
+      "gitBlobSha1": "75d085679225535490a985aec93263f55718a0cc",
+      "bytes": 1574,
+      "sha256": "885caca14320d3682549440b5a0fc0aa82d9241c4c33bd589e32ac33d1ea74e7"
+    },
+    {
+      "file": "textures/ScissorLift_Mtl.png",
+      "gitBlobSha1": "3b032125aabc7bff3c14eaae7ad9816d8793536f",
+      "bytes": 28488,
+      "sha256": "cfc3cd6b3a88fb6f848af4e55f93c53db626cbb40ffed8e73117026a3c5ad96b"
+    },
+    {
+      "file": "textures/ScissorLift_Nrm.png",
+      "gitBlobSha1": "5469ed1a8a3319a9e0602d356bf910011d5abc4c",
+      "bytes": 43324,
+      "sha256": "5cf891e9672219cb6f09deb1fd1b3353d208889732e2eadb87e57f2457bdfdd7"
+    },
+    {
+      "file": "textures/ScissorLift_Rgh.png",
+      "gitBlobSha1": "4aaa8dd400b15da7161af8b6257fb67dfc8f6205",
+      "bytes": 44870,
+      "sha256": "cddc00446ceef1acd50f4e108b0421b89c7aa9acb2b171779aedb6729961f598"
+    },
+    {
+      "file": "textures/SheetVinyl_Alb.png",
+      "gitBlobSha1": "fb863523056876a314b0bf844c7cd17248a52616",
+      "bytes": 23606,
+      "sha256": "912ac33ddcce4870ec7c9d40b96a8c73e367278192e3bfd59eeb12bc3d78ec11"
+    },
+    {
+      "file": "textures/SheetVinyl_Mtl.png",
+      "gitBlobSha1": "06924ece27d8d9c1d8bd009cb321b1b47711c831",
+      "bytes": 12129,
+      "sha256": "0d401900ddc6239004f5445974bbc35d41f98086902bc6ad244b6cc8bf8a2d26"
+    },
+    {
+      "file": "textures/SheetVinyl_Nrm.png",
+      "gitBlobSha1": "5f63a95d0c8f17a4c5951ab92734abd18ba2a3fa",
+      "bytes": 31803,
+      "sha256": "a04849a7e6460ccf825e341e2645f6699497ec097d0750a174433de2e9cd3451"
+    },
+    {
+      "file": "textures/SheetVinyl_Rgh.png",
+      "gitBlobSha1": "5b58433405ee92a99624a2ad374d548bf104d001",
+      "bytes": 14231,
+      "sha256": "73472c066600608eaa4235d246442e2265a8e935d193c6d2e8333201f7b386c0"
+    },
+    {
+      "file": "textures/SideFloorParts00_Alb.png",
+      "gitBlobSha1": "11f16aa1f252f989cf976ae8a4d8791fbd395587",
+      "bytes": 20402,
+      "sha256": "da80daecfc301fb97def31ebfe89e7b7a9806396e32dab3a25ae0d982f80eaae"
+    },
+    {
+      "file": "textures/SideFloorParts00_Mtl.png",
+      "gitBlobSha1": "0c299925b90bb10a046405a49aef030ce72997b5",
+      "bytes": 4850,
+      "sha256": "f4014ad0102e5bff69e621eae47908fece628655323702cf041d54d55312f1d6"
+    },
+    {
+      "file": "textures/SideFloorParts00_Nrm.png",
+      "gitBlobSha1": "051b40d7a2d7bbbdd05b309f5c7877770c3bdeb3",
+      "bytes": 53713,
+      "sha256": "757a883daaa218946c5a051af671f4e964497a4fcf8d8bd806c924dc954b42d0"
+    },
+    {
+      "file": "textures/SideFloorParts00_Rgh.png",
+      "gitBlobSha1": "6d165f8cbbf33b200c2a3f4dfe2c84535b57f2d5",
+      "bytes": 71913,
+      "sha256": "d0e5116377ae79ae64bb9de12581d14ed0820d4ba7d9415f4559b43f7288f8ac"
+    },
+    {
+      "file": "textures/SignBoardIronSurface00_Alb.png",
+      "gitBlobSha1": "68bb6ccf89d2262af42d0d19581c0192da112410",
+      "bytes": 7686,
+      "sha256": "4b08c486327a3322b91a170087e3ccb7b67e2a3a535fde08a083364b742cb8df"
+    },
+    {
+      "file": "textures/SignBoardIronSurface00_Mtl.png",
+      "gitBlobSha1": "54d3f2e12675ae09f3fa94b556c2e79263e8cc1f",
+      "bytes": 872,
+      "sha256": "f7e5eb592a394d941cc68f98da3b08432fbde5086d21114004d49a204d389d2c"
+    },
+    {
+      "file": "textures/SignBoardIronSurface00_Nrm.png",
+      "gitBlobSha1": "e1aa637a88f67725b641d0ea03defe107542e375",
+      "bytes": 39737,
+      "sha256": "2ecb3ba8777ce5ef697cb1c9168bee9304622580b21205ab74d16ca0e2240f96"
+    },
+    {
+      "file": "textures/SignBoardIronSurface00_Rgh.png",
+      "gitBlobSha1": "83e0a13e1ae6bd047f57f258cdf84e8164f17cca",
+      "bytes": 16041,
+      "sha256": "5e5aed3a4e65738a3189fb853093babec14e4b907c5b1c48c0cc06c211efbd88"
+    },
+    {
+      "file": "textures/SlopeRubber00_Alb.png",
+      "gitBlobSha1": "be4967fa6ab4bd38c125e525cbb6fa20958eef6b",
+      "bytes": 89397,
+      "sha256": "fe92304309fb099ca2ec56a6d0293a4428b859b48cb064f2fffba1bc7b2b4b3b"
+    },
+    {
+      "file": "textures/SlopeRubber00_Mtl.png",
+      "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+      "bytes": 870,
+      "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+    },
+    {
+      "file": "textures/SlopeRubber00_Nrm.png",
+      "gitBlobSha1": "0276596e98497c1ba86d88d361721596f368a48e",
+      "bytes": 92315,
+      "sha256": "8aa856b998b7d1fe2df18110dda4fd598ad467fbeefbeed9cfecca79dbca36ee"
+    },
+    {
+      "file": "textures/SlopeRubber00_Rgh.png",
+      "gitBlobSha1": "9c9dd16678717c507bc1d783b19dd09ba5c5fecf",
+      "bytes": 43581,
+      "sha256": "1d2babc158c33ab9c21cced2137b82bd31312eb9d4e4eff92defaba9d17dea8d"
+    },
+    {
+      "file": "textures/SmallPrant00_Alb.png",
+      "gitBlobSha1": "f30092837ba13944d098f25414c71d79fe3eff3e",
+      "bytes": 42251,
+      "sha256": "8376f168ac018e208c1b30b440df519559aade4f15b1c8a1fdd28cb209e5cf91"
+    },
+    {
+      "file": "textures/SmallPrant00_Mtl.png",
+      "gitBlobSha1": "e417847e02cf5349b5b6a50a1c0ae152a59b14eb",
+      "bytes": 406,
+      "sha256": "9a39718a01cebafd6958ec81976591af5469418e86e71fb5da382325eee12d65"
+    },
+    {
+      "file": "textures/SmallPrant00_Nrm.png",
+      "gitBlobSha1": "b824216ea181c550e1b4fbd221f9fc9068144304",
+      "bytes": 51487,
+      "sha256": "589049449f0025404068439ef2292ae7a79a7d826f00f4d12a22c0de3429878b"
+    },
+    {
+      "file": "textures/SmallPrant00_Opa.png",
+      "gitBlobSha1": "1583d6a3e51c8223d6087a13c8adac0a9e0b66bc",
+      "bytes": 20003,
+      "sha256": "5c69cfef8c201259d6bf8c57aa5f5d10722aaa678e8c2f07ecd05fdf035848bd"
+    },
+    {
+      "file": "textures/SmallPrant00_Rgh.png",
+      "gitBlobSha1": "70734296bbff1e686182c69025afa1b04c010c8a",
+      "bytes": 26955,
+      "sha256": "150f9938971b986f771348a2d4e9a81968ca6a5527b82fcdea739983fdaab504"
+    },
+    {
+      "file": "textures/SteelFrameBlack_Alb.png",
+      "gitBlobSha1": "c503db41bf325df31b71b447989993a77a2ba4e8",
+      "bytes": 56112,
+      "sha256": "e983690da3709cabc785b827d99eae89de08ac0e49b0c0ad17dc39d4f65d966a"
+    },
+    {
+      "file": "textures/SteelFrameBlack_Nrm.png",
+      "gitBlobSha1": "f243d35b72d02331820b1dfb1946afff9eace30e",
+      "bytes": 211190,
+      "sha256": "3768222cf15b6f638d637bb8739c1d086f3a15df85a86b50daf1c5a388ac3100"
+    },
+    {
+      "file": "textures/SteelFrameBlack_Rgh.png",
+      "gitBlobSha1": "5dfe541e12bd1c943abeaf90658599a716610362",
+      "bytes": 49214,
+      "sha256": "1e573879b0dbc9a46f2a27133ed5ea18fd338c6fe6e9ce2cfd6aecbd956c4912"
+    },
+    {
+      "file": "textures/SteelFrameWall00_Alb.png",
+      "gitBlobSha1": "edf34adc08ed6c5627d89c53d316944aea4afb2a",
+      "bytes": 194478,
+      "sha256": "c49d78f876b3d55c1c13c96393f684129802013668ee132d5e1ee9df70049af0"
+    },
+    {
+      "file": "textures/SteelFrameWall00_Mtl.png",
+      "gitBlobSha1": "879d5d467e8b80a442a1cb21624fba2fee39744e",
+      "bytes": 22854,
+      "sha256": "ff471762f93a17d9e3342db29cddf09aab3678a412c02158929fa1fecd5056a7"
+    },
+    {
+      "file": "textures/SteelFrameWall00_Nrm.png",
+      "gitBlobSha1": "2a4461f44525f436dcb387bfec360ed819b7b951",
+      "bytes": 60563,
+      "sha256": "898f13c2dd0b4ef66bd22b421fabb6eb2146c418dd9f6e7951313572b2fec8be"
+    },
+    {
+      "file": "textures/SteelFrameWall00_Rgh.png",
+      "gitBlobSha1": "6799f32760d810a1e5ea7854bbc704300e271604",
+      "bytes": 37515,
+      "sha256": "6f6186556aed6de33ab262c8838dfba14886958ee53a8151be60bcd1ea1ea724"
+    },
+    {
+      "file": "textures/StoneTile00_Alb.png",
+      "gitBlobSha1": "e69da0ff4d8257be3debccde66163bfba1a4eb03",
+      "bytes": 303712,
+      "sha256": "e398153bfb5551d43ffb5ddc5d0091250bebed5cdb8547455ff63ffabe2fd78e"
+    },
+    {
+      "file": "textures/StoneTile00_Mtl.png",
+      "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+      "bytes": 870,
+      "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+    },
+    {
+      "file": "textures/StoneTile00_Nrm.png",
+      "gitBlobSha1": "8fe35f9bf0cf28290daf3ad47b98800967ff30f7",
+      "bytes": 73109,
+      "sha256": "7b815c33701131fd29a7fe3c78601b5027d4ea818f77a82e92942a605e1322f8"
+    },
+    {
+      "file": "textures/StoneTile00_Rgh.png",
+      "gitBlobSha1": "4da9c070a7c85c56c1dcda6a0491797083c09dbc",
+      "bytes": 54390,
+      "sha256": "dd46435f005e22f1d9593de9450e3df305465d77ec49ceda95e2c98a961d6f0b"
+    },
+    {
+      "file": "textures/Switchboard01_Alb.png",
+      "gitBlobSha1": "ec05fa5f3c112b68fecc74fb5c4c1ef2d3cb07b9",
+      "bytes": 78236,
+      "sha256": "8fcca7988aa2a70270928215e5d45b3fcac0f1d771fd350acb844d571adf8b7d"
+    },
+    {
+      "file": "textures/Switchboard01_Mtl.png",
+      "gitBlobSha1": "b12d3854201902c46b141fff06fcb0e609f65fdd",
+      "bytes": 7351,
+      "sha256": "50982f99d2231c398234b1d09c3ecaa7d2731f60212c5f0c7f012a8756684432"
+    },
+    {
+      "file": "textures/Switchboard01_Nrm.png",
+      "gitBlobSha1": "433096177830c8c8a851d9c1a3f764c68436c70a",
+      "bytes": 249056,
+      "sha256": "2924448e0e1adce50f479aa69b1ff4f417055228b3c7ce3a00478dfae0ee62dd"
+    },
+    {
+      "file": "textures/Switchboard01_Rgh.png",
+      "gitBlobSha1": "5b795655df05a898567455949e7f421ae4a52088",
+      "bytes": 57876,
+      "sha256": "d8bd1589d526c4db90cb2e3d8d308d5ce1cf30a9764ca7e44e8ad98cfceb678d"
+    },
+    {
+      "file": "textures/SwitchboardSet00_Alb.png",
+      "gitBlobSha1": "0d25acee989800b5d1cbcb98bd91aa660f90c277",
+      "bytes": 5541,
+      "sha256": "10a7fc9cad30544e5bead86a673b06b3bcb1f615dfb50ed402550552b766da73"
+    },
+    {
+      "file": "textures/SwitchboardSet00_Mtl.png",
+      "gitBlobSha1": "4416bd38b507570611d0d8725e4263e965651357",
+      "bytes": 2619,
+      "sha256": "8a8e04e37523ddf4666c67de04f02bd010df99a823fa6039051812c31391f196"
+    },
+    {
+      "file": "textures/SwitchboardSet00_Nrm.png",
+      "gitBlobSha1": "f21780812651b00f74bfdae4546e8c813f5c9ac6",
+      "bytes": 5925,
+      "sha256": "59be461309efa6a8c49f6360859539915fd5bf5b9947a6906e57f1095db1c8fc"
+    },
+    {
+      "file": "textures/SwitchboardSet00_Rgh.png",
+      "gitBlobSha1": "a453342c99fbecec1db5a9bbb0d413602bb471d1",
+      "bytes": 4365,
+      "sha256": "afab30f3c22545a27752224ff24bea6bafa9d0b0026445e43260ad58f596a5fd"
+    },
+    {
+      "file": "textures/Telescope00_Alb.png",
+      "gitBlobSha1": "ae991f8797d911504ba484905d3c9cac3e5f367b",
+      "bytes": 152912,
+      "sha256": "2315255ab3cdc09f25ca9fc26f98f4590476a330beeb81dfccad2ad7cdcca44e"
+    },
+    {
+      "file": "textures/Telescope00_Mtl.png",
+      "gitBlobSha1": "a5e265779ad658d1ac7ab7a511bcdc8044b39776",
+      "bytes": 36370,
+      "sha256": "e9bc60545a30b9b7c24131b3fd312f5ddc989112b539d2551730239d5cf45994"
+    },
+    {
+      "file": "textures/Telescope00_Nrm.png",
+      "gitBlobSha1": "927713e3d01797667aedb663b0ccd42d6e61dfd4",
+      "bytes": 48225,
+      "sha256": "36338ea46d5bdd84d34ac3c54770b19b85a3902a15bbadae1037d11f54dc0498"
+    },
+    {
+      "file": "textures/Telescope00_Rgh.png",
+      "gitBlobSha1": "3b735b338b084cd0a34b421c74ee9b9eb7855a4b",
+      "bytes": 54702,
+      "sha256": "42c0267e4a02694da08fff04fb760b2dc777f38f1b89caa1e242c97431711af7"
+    },
+    {
+      "file": "textures/TestNoPaintWall00_Alb.png",
+      "gitBlobSha1": "bca7cef68de2bb239f7e096bd1b1cbf8b93646e4",
+      "bytes": 26971,
+      "sha256": "de8d49d86f3f4e5758fedc73e8c33b347ed32ee3fa2fd72580bddd68a92da807"
+    },
+    {
+      "file": "textures/TestNoPaintWall00_Mtl.png",
+      "gitBlobSha1": "a3cb745e93ebec37566e8feed3ef96486c3170fc",
+      "bytes": 801,
+      "sha256": "8d8a110816ddc890a4ff014a0e65500984170c07378587caea8911821238baef"
+    },
+    {
+      "file": "textures/TestNoPaintWall00_Nrm.png",
+      "gitBlobSha1": "5da6f586e82b1615fe3a810932f43d561ef9ae95",
+      "bytes": 710,
+      "sha256": "4d755851cba0be614e38e0b7a42a818d93707c1a732a89826f6776669a5aa604"
+    },
+    {
+      "file": "textures/TransparentNoPaint00_Alb.png",
+      "gitBlobSha1": "23a7b2b80441394ecd11482d33224d4ec9ca6096",
+      "bytes": 12684,
+      "sha256": "dcae19620c2681f527f76ba8f8cef72a184e130ba18403ec48769b8b83964617"
+    },
+    {
+      "file": "textures/TransparentNoPaint00_Mtl.png",
+      "gitBlobSha1": "8130dea68d546fe2d3a352569deea5eba424f107",
+      "bytes": 493,
+      "sha256": "9643329e0bb94d1447b4d0ea8acf9987d9a840d57456ac33610d759494eeccab"
+    },
+    {
+      "file": "textures/TransparentNoPaint00_Nrm.png",
+      "gitBlobSha1": "d9d8e391f3f3119f30d714a248e35203ddc88cb3",
+      "bytes": 26088,
+      "sha256": "83835dcf46d0ca539aa8f97ce59898875c512e2a6b5f229a1afb3de42abe4f44"
+    },
+    {
+      "file": "textures/TransparentNoPaint00_Rgh.png",
+      "gitBlobSha1": "f95d7eda3901bc4389dba98271f427d250c9751a",
+      "bytes": 10260,
+      "sha256": "aea27fa955b74b371dbe5059a72d00dbef556e307e8278ac032e232e8cd19826"
+    },
+    {
+      "file": "textures/TrussLight00_Alb.png",
+      "gitBlobSha1": "4173ddd4b472ca87291a55f96f5de40e545fb6c6",
+      "bytes": 38443,
+      "sha256": "b0bd1b021e65ba1df58d5c5fa79194a04265e4a3de9f68ccab5e16ab5e97173c"
+    },
+    {
+      "file": "textures/TrussLight00_Mtl.png",
+      "gitBlobSha1": "7eec073739d49faeefda05e6d3b111781fe3b420",
+      "bytes": 3966,
+      "sha256": "b94b00196d365f87e280719167b4128cf49dc1f2f3362d953c4978dbad5ceca3"
+    },
+    {
+      "file": "textures/TrussLight00_Nrm.png",
+      "gitBlobSha1": "937d959cef264d8e0ecbdab054968c38bd9ed668",
+      "bytes": 13458,
+      "sha256": "2a1c552af244342691353a1a175e812efbb36aeac302523c7fb27082cd7755c0"
+    },
+    {
+      "file": "textures/TrussLight00_Rgh.png",
+      "gitBlobSha1": "70b374fbef074823f02c2d2ff86fce8b1c31d225",
+      "bytes": 11488,
+      "sha256": "a69af1fc6b823b3674bfa3af7273c10231cb75ca7217bc37466639a903c83069"
+    },
+    {
+      "file": "textures/VinylClear_Nrm.png",
+      "gitBlobSha1": "5576070dc785c11c84b2ec00c10533f49544c897",
+      "bytes": 109564,
+      "sha256": "5c17c7b9417387e77c04605fc1df03c29e323fcd05b4509979c27abce51856ee"
+    },
+    {
+      "file": "textures/VinylWhite_Alb.png",
+      "gitBlobSha1": "291ce6a7273fe14c08aa1a37ebcb59e744e0b54e",
+      "bytes": 34330,
+      "sha256": "89e2e13b964e5051bed87a2b34948c31a8cf0935d58ae38b70dc66e43a21afc3"
+    },
+    {
+      "file": "textures/VinylWhite_Nrm.png",
+      "gitBlobSha1": "45c69cd845ce32ff2bc0e808dde42baefd7661df",
+      "bytes": 80448,
+      "sha256": "bac4f498202feb744d9be500cbf6cefcb24fd5de5bc9e2e14783758e41a4ce0e"
+    },
+    {
+      "file": "textures/VinylWhite_Rgh.png",
+      "gitBlobSha1": "2ff65ab6093ccb61f045050d4d8a894036ff8d21",
+      "bytes": 9577,
+      "sha256": "b9ba1103b6ca2f1f61931a57a2c76ee84c2df449dda349685986b6bbe393c816"
+    },
+    {
+      "file": "textures/Vinyl_Alb.png",
+      "gitBlobSha1": "8641b38c11fff2be2cff9a087839cfec10269ca0",
+      "bytes": 59226,
+      "sha256": "b666801a90e20381de409426770e79996f3b65e9e8669e923288f233f5622cd3"
+    },
+    {
+      "file": "textures/Vinyl_Mtl.png",
+      "gitBlobSha1": "ea80d598482c85dcdc72029447a42b13f27b5872",
+      "bytes": 13208,
+      "sha256": "a68ee79f0a2d4ff58ae17aff44b2c20e62a51b99384410c6e9785a3a31fa6613"
+    },
+    {
+      "file": "textures/Vinyl_Nrm.png",
+      "gitBlobSha1": "3b7341aad44220edfc688934ea93c62d7c15fb00",
+      "bytes": 112634,
+      "sha256": "18d0365057bc1569b5b9f404b59a0d1a994ae2411b35a299343481bc8d12354b"
+    },
+    {
+      "file": "textures/Vinyl_Rgh.png",
+      "gitBlobSha1": "a998a35202e44331b1943ad86e532f8200789487",
+      "bytes": 53718,
+      "sha256": "f3bdf557d2feae9a2ee1b518094b344a1db414631d8b0010823a1f43bb232625"
+    },
+    {
+      "file": "textures/WallFence00_Alb.png",
+      "gitBlobSha1": "287c2b744668667e626cf0f4324b7458b60ee33a",
+      "bytes": 227940,
+      "sha256": "c3ec7bc83add05a55ea64eadfadf7ccb8ecc4361e52644d464e779350df78e4b"
+    },
+    {
+      "file": "textures/WallFence00_Mtl.png",
+      "gitBlobSha1": "b385e9311e592318264d0699808aac34ade7e5c3",
+      "bytes": 13360,
+      "sha256": "bbc29f66de6875d8ca2bcbc202920b8038974ddfb2e33c41a2ed5c8b42412809"
+    },
+    {
+      "file": "textures/WallFence00_Nrm.png",
+      "gitBlobSha1": "38e7e174f68bf9caf8612318860b057ea906d0b9",
+      "bytes": 70771,
+      "sha256": "b5ecb6f22246d7e7740ea0e6c95b87d0407e11eb947a78b81d9d5fb9d51bcd01"
+    },
+    {
+      "file": "textures/WallFence00_Opa.png",
+      "gitBlobSha1": "742411bac3bcc77fe468a40cf0b6f987456f68ad",
+      "bytes": 8326,
+      "sha256": "7b6ae71221187de4e3f47afc09219b23f59c3408f39104dd6220913e2d8eddc4"
+    },
+    {
+      "file": "textures/WallFence00_Rgh.png",
+      "gitBlobSha1": "c7420e3b83b369abb6cf96900077befde19d5234",
+      "bytes": 58296,
+      "sha256": "091ac449a6f9feebcfcfaa7088acd93364afdb3a22d7a4a337d9e50cc538f650"
+    },
+    {
+      "file": "textures/WallPanelNoPaint00_Alb.png",
+      "gitBlobSha1": "399bb001b75826d51891b533016f9ce93146e18c",
+      "bytes": 12878,
+      "sha256": "be52c0ef156577773371e69979727b38c91d901420df88b8266acb226e9688ac"
+    },
+    {
+      "file": "textures/WallPanelNoPaint00_Mtl.png",
+      "gitBlobSha1": "e417847e02cf5349b5b6a50a1c0ae152a59b14eb",
+      "bytes": 406,
+      "sha256": "9a39718a01cebafd6958ec81976591af5469418e86e71fb5da382325eee12d65"
+    },
+    {
+      "file": "textures/WallPanelNoPaint00_Nrm.png",
+      "gitBlobSha1": "8f11e9ff668d13bfb2d431843cd8b8a98564cc42",
+      "bytes": 7449,
+      "sha256": "98bed79a4c8ef2c1b0a3716aeb8349c6bc7e55e20d095d04c76386a8ac3ffb6d"
+    },
+    {
+      "file": "textures/WallPanelNoPaint00_Rgh.png",
+      "gitBlobSha1": "2cd2d89ca8363592336285e0d2e4176c802e2183",
+      "bytes": 8650,
+      "sha256": "b64ef0e89a5aef5a6b827d755e15e06e49bacefa5ac2140121f33b0855e2582f"
+    },
+    {
+      "file": "textures/WaterTank00_Alb.png",
+      "gitBlobSha1": "e9878790c970b05dc0e71203fb798d86ca175e93",
+      "bytes": 182677,
+      "sha256": "036eea598e6845b245d6d698fce6fb9c6550a21aed88165f4261513ad0935f22"
+    },
+    {
+      "file": "textures/WaterTank00_Mtl.png",
+      "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+      "bytes": 870,
+      "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+    },
+    {
+      "file": "textures/WaterTank00_Nrm.png",
+      "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+      "bytes": 870,
+      "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+    },
+    {
+      "file": "textures/WaterTank00_Rgh.png",
+      "gitBlobSha1": "bcad3adc7d816842897eeaa4ff82472d44ad79c3",
+      "bytes": 870,
+      "sha256": "7e0c3ab4a81d05c2b02241cd0255788575c16903063441937e8eb1fd293756a6"
+    },
+    {
+      "file": "textures/Wire_Alb.png",
+      "gitBlobSha1": "8be571396aceefc661edeea3e0fcb7de6b2921c6",
+      "bytes": 1583,
+      "sha256": "d665a96ac2d03b28edc4b309a6065427276453d2c0d4b5f12e9bb14dbc522e86"
+    },
+    {
+      "file": "textures/Wire_Nrm.png",
+      "gitBlobSha1": "8b0e43a99938cab2adf79e03839881eb785a07f0",
+      "bytes": 164,
+      "sha256": "c4bc2e6cdd8f4017cde9f17517dbbfb895c39568966f1088dea28be5057a6da7"
+    },
+    {
+      "file": "textures/Wire_Rgh.png",
+      "gitBlobSha1": "ac0972bf5ccbf7189c75e4157895ec956790bc4f",
+      "bytes": 678,
+      "sha256": "0bc1c2b0c81675b7fd79e999db4d43d671cacebbf7419d39a9e92a8011cdd7cc"
+    },
+    {
+      "file": "textures/WoodDeckBright00_Alb.png",
+      "gitBlobSha1": "d30c02a0e06e82397c064283452e161b3ebf48f3",
+      "bytes": 40652,
+      "sha256": "967f4f3b4032938cc40c55b532426e7da4832fb0b2f1366bfd15894289170fdc"
+    },
+    {
+      "file": "textures/WoodDeckBright00_Mtl.png",
+      "gitBlobSha1": "484df078ad23f1fd42874919a88236c60d30492e",
+      "bytes": 1654,
+      "sha256": "f0f03773c0c9225d47d362b1b27f5ef6d0d52ec6a85975ad7747b90b3cfa2fef"
+    },
+    {
+      "file": "textures/WoodDeckBright00_Nrm.png",
+      "gitBlobSha1": "1625cec296f9835bc90987164700d6870f18b69e",
+      "bytes": 14963,
+      "sha256": "2ff270e1e6e5876bf610fd85ec02426c1566e73c40760669b6c8f5666e71785e"
+    },
+    {
+      "file": "textures/WoodDeckBright00_Rgh.png",
+      "gitBlobSha1": "6c2d09a227bc47fd867a97ace522bfc372c36d79",
+      "bytes": 13550,
+      "sha256": "e877db2917f9a3407b901e20c56f011c305cda1422c69df4d775b3a7f55145c6"
+    },
+    {
+      "file": "textures/WoodPlate00_Alb.png",
+      "gitBlobSha1": "07ddd3ba16cc89df3c8f260521ce229bac4ed48c",
+      "bytes": 56225,
+      "sha256": "30c62ad0cef1a0e825142323b9ee9c45ca30bae29b483099bf33106cb4866630"
+    },
+    {
+      "file": "textures/WoodPlate00_Nrm.png",
+      "gitBlobSha1": "7f03f12afac841fdd34ebe0f82eb69345cae4bf3",
+      "bytes": 104204,
+      "sha256": "71be91a49cbab06666a653e01033f061dd1fc75d42366fc978b4237b6c0e11c7"
+    },
+    {
+      "file": "textures/WoodPlate00_Rgh.png",
+      "gitBlobSha1": "897017e71deeac44f57a6b56c07df51cb00879d3",
+      "bytes": 68229,
+      "sha256": "fc9d727213d234d18821b23d39d8f574e880a5a1ee03062a7617c936c23d32c5"
+    },
+    {
+      "file": "textures/luggage00_Alb.png",
+      "gitBlobSha1": "d7631c2d99e3a365d11ac7ce855d3e3c3edcdfb6",
+      "bytes": 201238,
+      "sha256": "143cd0a46a328d3548b1f80daf5e9e1d02aa50ce439821f21e2c9bfb95d986e5"
+    },
+    {
+      "file": "textures/luggage00_Mtl.png",
+      "gitBlobSha1": "fbf70e1007f6471b3c18d4069554df2949083498",
+      "bytes": 8588,
+      "sha256": "997bf64ac07630e2249e7e368b8587a476c22c3e80de8056ec4495a589ff4a09"
+    },
+    {
+      "file": "textures/luggage00_Nrm.png",
+      "gitBlobSha1": "ceab0e53ca70e92d2a1255960ef3a445fb10a753",
+      "bytes": 296199,
+      "sha256": "6f6a0880a973a8b629e8d171c35258fb84bec9f9d3224765e591aaab117eaf5e"
+    },
+    {
+      "file": "textures/luggage00_Rgh.png",
+      "gitBlobSha1": "831c0bd6ad52e492b9b3c60b41d462c6413e0f6f",
+      "bytes": 128272,
+      "sha256": "47f0ba021b05a2d47c3b3f82ec99305804bbb77018968fe56a4538828ac41117"
+    },
+    {
+      "file": "textures/plywood_Alb.png",
+      "gitBlobSha1": "5c865546f018e9174840d0776c20e7ef73dec463",
+      "bytes": 551365,
+      "sha256": "5d46bcd8fb9e0d14a05f2eef2882a29ae6b6e2677b6ba72be0ff9269ee37a81b"
+    },
+    {
+      "file": "textures/plywood_Mtl.png",
+      "gitBlobSha1": "b5886c24cddbcdbeb3f2663c7d3afcf05e5fc233",
+      "bytes": 3519,
+      "sha256": "88053b00207f09eb2e86f8779c02372c538a5d9785b61b4c803e73d1b5aff40b"
+    },
+    {
+      "file": "textures/plywood_Nrm.png",
+      "gitBlobSha1": "3ccd03b48eefe77e5acfb910de687436930012d8",
+      "bytes": 101849,
+      "sha256": "18c6c7476066b9c184f5ee9625e07a4f0ad80d29749397368e5654aea879dacc"
+    },
+    {
+      "file": "textures/plywood_Rgh.png",
+      "gitBlobSha1": "123cdc737d41161218906e07b27917fb57d0efea",
+      "bytes": 14728,
+      "sha256": "58155f2f8ee3c1ae8d51e7e0e36322a0fb21a4c43b15f0535b7c0b1a51a0de09"
+    }
+  ],
+  "independentSourceProof": {
+    "id": "airport",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "objSha256": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+    "mtlSha256": "3ffd950d1db04895d0b38b86ef2c3f6d6cc3c6b70a05e65b6a18d2df785b65b1",
+    "vertices": 256788,
+    "triangles": 201941,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "sourceTexturesIdentical": 247,
+    "maxPositionDifference": 0.0,
+    "version1130Verified": false,
+    "textureAndMtlGitTreeVerified": true,
+    "uint32IndicesIdentical": true,
+    "sourceUV": 256676,
+    "sourceIndexCount": 605823
+  },
+  "conversion": {
+    "geometry": {
+      "vertices": 256788,
+      "triangles": 201941,
+      "collisionTriangles": 157304,
+      "bvhNodes": 32767,
+      "paintFaces": 54428
+    },
+    "gridCells": 2435961,
+    "chartMaxPlaneError": 0.0012060188028033786,
+    "bounds": {
+      "minX": -54.0315,
+      "minZ": -75.0002,
+      "maxX": 54.0315,
+      "maxZ": 75.0002
+    },
+    "spawnPads": [
+      [
+        -44.8,
+        13.5,
+        -68
+      ],
+      [
+        44.8,
+        13.5,
+        68
+      ]
+    ],
+    "sourceSemantics": {
+      "nonPaintableObjectPatterns": [
+        "^Fld(?:Obj)?_Propeller00_.*(?:NoPaint|FenceNet00|RopeSingle|SmallPrant00|PlantationSet|PlantBase00|PlantShelf00).*$"
+      ]
+    }
+  },
+  "inferredNonPaintableObjects": [
+    {
+      "name": "FldObj_Propeller00_Pnt_Obj_GeneralBoxNoPaint_15x15x15_Blitz1__M_FenceVinyl",
+      "bounds": [
+        [
+          -18.0,
+          7.5,
+          -38.96860122680664
+        ],
+        [
+          18.0,
+          12.0,
+          38.96860122680664
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "FldObj_Propeller00_Pnt_pCube190950_1__EdgeRepeatNoPaint00",
+      "bounds": [
+        [
+          -30.075899124145508,
+          4.5,
+          -43.5
+        ],
+        [
+          30.075899124145508,
+          11.008899688720703,
+          43.5
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "FldObj_Propeller00_Pnt_pCube191806__FenceNet00",
+      "bounds": [
+        [
+          -17.436500549316406,
+          10.373200416564941,
+          -19.21489906311035
+        ],
+        [
+          17.436500549316406,
+          10.44950008392334,
+          19.21489906311035
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "FldObj_Propeller00_Pnt_pipe143__RopeSingle",
+      "bounds": [
+        [
+          -15.538900375366211,
+          3.8759000301361084,
+          -38.07389831542969
+        ],
+        [
+          15.538900375366211,
+          4.47790002822876,
+          38.07389831542969
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "FldObj_Propeller00_Pnt_polySurface8362406967__EdgeRepeatNoPaint00",
+      "bounds": [
+        [
+          -29.99679946899414,
+          5.5,
+          -42.00080108642578
+        ],
+        [
+          29.99679946899414,
+          10.5,
+          42.00080108642578
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "FldObj_Propeller00_Pnt_polySurface836253277_1__WallPanelNoPaint00",
+      "bounds": [
+        [
+          -7.782100200653076,
+          -9.428500175476074,
+          -52.327701568603516
+        ],
+        [
+          7.782100200653076,
+          10.5,
+          52.327701568603516
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "FldObj_Propeller00_Pnt_polySurface836253512_1__RepeatNoPaint00",
+      "bounds": [
+        [
+          -30.097400665283203,
+          10.458200454711914,
+          -61.53110122680664
+        ],
+        [
+          30.097400665283203,
+          10.520000457763672,
+          61.53110122680664
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_Line054_1__RepeatNoPaint00",
+      "bounds": [
+        [
+          -54.599998474121094,
+          -9.428500175476074,
+          -76.09970092773438
+        ],
+        [
+          54.599998474121094,
+          22.69230079650879,
+          76.09970092773438
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_Obj_GeneralBoxNoPaint_15x15x15_Blitz_1__M_FenceVinyl",
+      "bounds": [
+        [
+          -27.5,
+          8.997400283813477,
+          -47.0
+        ],
+        [
+          27.5,
+          13.5,
+          47.0
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_Pillar_low1__PlantShelf00",
+      "bounds": [
+        [
+          -44.37070083618164,
+          13.619999885559082,
+          -49.381099700927734
+        ],
+        [
+          -43.720699310302734,
+          15.899999618530273,
+          -46.57099914550781
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_SmallPlant02__SmallPrant00",
+      "bounds": [
+        [
+          -54.48139953613281,
+          10.554400444030762,
+          -75.84600067138672
+        ],
+        [
+          54.48139953613281,
+          19.380199432373047,
+          75.84600067138672
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_TestField1158_pCube231_1__RepeatWallNoPaint",
+      "bounds": [
+        [
+          -33.89339828491211,
+          -7.371600151062012,
+          -64.51499938964844
+        ],
+        [
+          33.89339828491211,
+          22.588300704956055,
+          64.51499938964844
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_WoodShelf_low__PlantBase00",
+      "bounds": [
+        [
+          -43.60060119628906,
+          13.739999771118164,
+          -49.401100158691406
+        ],
+        [
+          -43.5004997253418,
+          16.360000610351562,
+          -46.60110092163086
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_WoodShelf_low__PlantShelf00",
+      "bounds": [
+        [
+          -44.5010986328125,
+          13.5,
+          -49.5010986328125
+        ],
+        [
+          -43.60049819946289,
+          16.5,
+          -46.500999450683594
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_pCube190950_1__EdgeRepeatNoPaint00",
+      "bounds": [
+        [
+          -54.5078010559082,
+          4.5,
+          -75.0
+        ],
+        [
+          54.5078010559082,
+          18.0,
+          75.0
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_pCube190955_1__WallPanelNoPaint00",
+      "bounds": [
+        [
+          -54.400001525878906,
+          -14.825499534606934,
+          -75.99970245361328
+        ],
+        [
+          54.400001525878906,
+          14.779000282287598,
+          75.99970245361328
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_pCube191024_1__TransparentNoPaint00",
+      "bounds": [
+        [
+          -54.5181999206543,
+          10.652099609375,
+          -74.89019775390625
+        ],
+        [
+          54.5181999206543,
+          17.04199981689453,
+          74.89019775390625
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_pCube194912__FenceNet00",
+      "bounds": [
+        [
+          -30.74839973449707,
+          8.856399536132812,
+          -12.278900146484375
+        ],
+        [
+          30.777700424194336,
+          8.938699722290039,
+          12.2677001953125
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_pPlane1000_10__PlantationSet",
+      "bounds": [
+        [
+          -40.49480056762695,
+          10.516500473022461,
+          -52.062198638916016
+        ],
+        [
+          40.49480056762695,
+          11.317899703979492,
+          52.062198638916016
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_pipe140_10__RopeSingle",
+      "bounds": [
+        [
+          -35.067100524902344,
+          0.7515000104904175,
+          -16.09510040283203
+        ],
+        [
+          35.067100524902344,
+          1.467900037765503,
+          16.09510040283203
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    },
+    {
+      "name": "Fld_Propeller00_polySurface836253876_4__EdgeRepeatNoPaint00",
+      "bounds": [
+        [
+          -21.006200790405273,
+          5.980000019073486,
+          -52.0005989074707
+        ],
+        [
+          21.006200790405273,
+          6.0019001960754395,
+          52.0005989074707
+        ]
+      ],
+      "paintableAfterInference": false,
+      "displayPreserved": true,
+      "collisionPreserved": true
+    }
+  ],
+  "initialCpuProbe": {
+    "pads": [
+      {
+        "pad": [
+          -44.8,
+          13.5,
+          -68
+        ],
+        "hit": true,
+        "point": [
+          -44.8,
+          13.5,
+          -68
+        ],
+        "face": 46055,
+        "clear": true,
+        "object": "Fld_Propeller00_polySurface836253875_4__WoodDeckBright00"
+      },
+      {
+        "pad": [
+          44.8,
+          13.5,
+          68
+        ],
+        "hit": true,
+        "point": [
+          44.8,
+          13.5,
+          68
+        ],
+        "face": 46066,
+        "clear": true,
+        "object": "Fld_Propeller00_polySurface836253875_4__WoodDeckBright00"
+      }
+    ],
+    "spawnNode": [
+      205,
+      10347
+    ],
+    "nodes": 10502,
+    "valid": 6982,
+    "navMs": 17471.713136,
+    "stage": {
+      "tower": true,
+      "towerPath": 70,
+      "zones": [
+        {
+          "center": [
+            0.4684999999999988,
+            4.499999999999986,
+            2.4997999999999934
+          ],
+          "size": [
+            6,
+            6
+          ]
+        }
+      ],
+      "rainmaker": {
+        "center": [
+          0.4684999999999988,
+          4.499999999999986,
+          2.4997999999999934
+        ],
+        "goals": [
+          [
+            20.4685,
+            4.522299766540527,
+            24.499799999999993
+          ],
+          [
+            -20.5315,
+            4.522299766540527,
+            -24.500200000000007
+          ]
+        ],
+        "checkpoints": [
+          [
+            [
+              10.468499999999999,
+              4.499999999999999,
+              11.499799999999993
+            ]
+          ],
+          [
+            [
+              -10.531500000000001,
+              4.500000000000001,
+              -11.500200000000007
+            ]
+          ]
+        ],
+        "retreatZ": [
+          -62.801788412533,
+          62.801788412533
+        ],
+        "nativeRetreatAxis": [
+          0.5501576929527964,
+          0.8350607839462089
+        ]
+      },
+      "clams": {
+        "spawns": [
+          [
+            -17.5315,
+            4.5,
+            -15.500200000000007
+          ],
+          [
+            -15.531500000000001,
+            4.500000000000001,
+            -18.500200000000007
+          ],
+          [
+            -0.5315000000000012,
+            3,
+            -21.500200000000007
+          ],
+          [
+            1.4684999999999988,
+            3,
+            21.499799999999993
+          ],
+          [
+            15.468499999999999,
+            4.5,
+            18.499799999999993
+          ],
+          [
+            17.4685,
+            4.500000000000001,
+            15.499799999999993
+          ]
+        ],
+        "goals": [
+          [
+            20.4685,
+            4.522299766540527,
+            24.499799999999993
+          ],
+          [
+            -20.5315,
+            4.522299766540527,
+            -24.500200000000007
+          ]
+        ]
+      }
+    }
+  },
+  "pending": [
+    "accepted remaining shared fixes",
+    "final CPU and browser matrix",
+    "self-review",
+    "stage PR and review aggregate integration"
+  ],
+  "unverified": [
+    "KiTrix extraction version/date",
+    "retail units/native collision/paint/grate/climb masks",
+    "retail spawns/ranked placements and mode-specific geometry",
+    "retail shader and moving-object transforms/states",
+    "console controller comparisons and physical hardware FPS"
+  ]
+}
