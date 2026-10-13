@@ -25,6 +25,7 @@ export function nativeStageCatalog(definitions=path.join(NATIVE_ROOT,'definition
     patterns.forEach(p=>new RegExp(p));
    }
   }
+  if(s.sourceNavigation!==undefined&&(!s.sourceNavigation||typeof s.sourceNavigation!=='object'||Object.keys(s.sourceNavigation).some(k=>k!=='wallClimb')||s.sourceNavigation.wallClimb!==true))throw Error('Invalid inferred source navigation: '+file);
   stages.push(s);
  }
  return {stages,unavailableStages};
@@ -45,6 +46,7 @@ export function prepareNativeStageBuild(assetPath){
    const bytes=fs.readFileSync(path.join(root,s.id,rel));
    if(bytes.length!==expected.bytes||hash(bytes)!==expected.sha256)throw Error('Native build integrity mismatch: '+s.id+'/'+rel);
   }
+  if(JSON.stringify(s.sourceNavigation||null)!==JSON.stringify(definition.sourceNavigation||null))throw Error('Native navigation differs from reviewed definition: '+s.id);
   return {...definition,integritySha256:hash(fs.readFileSync(file)),version1130Verified:false};
  });
  return {root,config:{schema:1,mode:'local-prepared',baseURL:'../../_native-reference-assets/',runtimeSha256,unavailableStages:available.unavailableStages,stages}};
