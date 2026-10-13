@@ -16,7 +16,7 @@ for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])for(cons
  for(let i=0;i<10&&v.hp===hp;i++){f.G.time+=1/fps;f.G.projectiles.update(1/fps);}assert.equal(hp-v.hp,(source==='angleShooter'?40:20)*(ap===57?.5:1));
 });
 for(const source of ['angleShooter','sprinkler'])for(const armor of ['booyahBomb','crabTank'])test(`${source} does not reduce ${armor} object armor but reduces body spillover`,async()=>{
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();o.team=1;o.pos.set(0,0,5);v.invuln=0;equip(v,57);v.weapon={...v.weapon,special:armor,specialCost:100};v.special=100;v._startSpecial();v._updateSpecial(1/60);const state=v._s3AllSpecialState;
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),o=f.make(),v=f.make();o.team=1;o.pos.set(0,0,5);v.invuln=0;equip(v,57);v.weapon={...v.weapon,special:armor,specialCost:100};v.special=100;v._startSpecial();for(let t=0;t<(armor==='booyahBomb'?30:1);t++)v._updateSpecial(1/60);const state=v._s3AllSpecialState;
  state.armorHP=10;v.specialActive.armorHP=10;const hp=v.hp;v.damage(40,o,source);assert.equal(state.armorHP,0);assert.ok(Math.abs((hp-v.hp)-(armor==='crabTank'?3.7:15))<1e-8,'object armor loss remains raw; inherited Crab native 0.25 body flag is retained');
 });
 for(const source of ['angleShooter','sprinkler'])for(const ap of [0,57])test(`${source} JSON hit retains raw damage and applies victim ${ap}AP once`,async()=>{

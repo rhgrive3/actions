@@ -34,7 +34,7 @@ async function bomb({old=false,oldGround=false,rate=60,wall=false,center=30,slop
   sender=new f.NetMatch({myId:'a',isHost:true,hostId:'a',_members:new Map([['a','A'],['b','B']]),tr:{broadcast(){},sendTo(){}}},{id:'slope-wire',map:'map',difficulty:'normal'});
   actor.nid=0;actor.owner='a';actor.remote=false;sender.byNid.set(0,actor);sender._setupActor(actor);f.G.netm=sender;
  }
- actor._startSpecial();actor._updateSpecial(1/60);actor.intent.sub=true;actor._updateSpecial(1/60);
+ actor._startSpecial();for(let t=0;t<30;t++)actor._updateSpecial(1/60);actor._s3AllSpecialState.charge=1;actor.intent.sub=true;actor._updateSpecial(1/60);
  const p=f.G.projectiles.list.at(-1);assert.equal(p.s3AllSpecial,'booyahBomb');
  f.G.projectiles._blastBurst(p,V(0,.08,center),null);f.G.projectiles.list.length=0;
  const stamps=[],native=paint.splat;paint.splat=function(at,r,team,opts){stamps.push({x:at.x,z:at.z,r,seed:opts.seed,claimMode:opts.claimMode});return native.call(this,at,r,team,opts);};

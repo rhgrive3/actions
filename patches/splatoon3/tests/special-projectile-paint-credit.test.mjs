@@ -59,7 +59,7 @@ test('pooled special fields cannot resurrect Booyah paint, missile steering, or 
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  const {paint,V}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
  const a=f.make('blaster');a.pos.set(0,0,30);a.weapon={...a.weapon,special:'booyahBomb',specialCost:100};a.special=100;
- a._startSpecial();a._s3AllSpecialState.charge=1;a.intent.sub=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);
+ a._startSpecial();for(let i=0;i<30;i++)a._updateSpecial(1/60);a._s3AllSpecialState.charge=1;a.intent.sub=true;a._updateSpecial(1/60);
  const old=f.G.projectiles.list.at(-1);assert.equal(old.s3AllSpecial,'booyahBomb');f.G.projectiles.clear();
  for(const kind of ['shooter','blaster','roller','brush','charger','splatling','dualies','slosher','shelter','stringer','saber']){
   // Pollute every module-owned field, including those set by other specials.
