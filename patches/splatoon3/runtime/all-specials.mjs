@@ -331,13 +331,15 @@ function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = tr
   } else actor._integrate?.(dt, useSquid, jumped);
   state._jumpHeld = !!actor.intent?.jump;
 }
-function dampForSpecial(actor, dt, gravity = 25) {
+function dampForSpecial(rt, actor, dt, gravity = 25) {
   actor.vel.x *= Math.exp(-6*dt); actor.vel.z *= Math.exp(-6*dt);
   const py = actor.pos.y;
   if (!actor.grounded) actor.vel.y = Math.max(-36, actor.vel.y - gravity * dt);
   else actor.vel.y = 0;
   actor.pos.addScaledVector(actor.vel,dt);
-  actor._resolve?.(false,py,actor.grounded);
+  // Collision belongs to the live physics solver. Headless source fixtures
+  // intentionally omit collideBody; their clock and audio checks still run.
+  if (typeof rt.api.G.physics?.collideBody === 'function') actor._resolve?.(false,py,actor.grounded);
 }
 function colorOf(rt, owner) { return owner?.color || rt.api.G.teamColors?.[owner?.team] || 0xffffff; }
 function fxBurst(rt, owner, point, radius, action = 'hit') {
@@ -873,7 +875,7 @@ function updateWorld(rt,dt) {
           if(!o.owner.remote&&(o.pulse||0)%4===0)emitObject(rt,o,'pulse');
         }
       }
-      if(elapsed>=o.dur)removeWorld(rt,o,'expire');
+      if(elapsed+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='booyahBlast'){
       const elapsed=o.age-o.startDelay,started=elapsed>=0;
       const radius=started?o.maxRadius*clamp(elapsed/Math.max(1/FPS,o.expand),0,1):0,center=rt.v0.copy(o.pos);center.y+=.2;
@@ -992,7 +994,7 @@ function activeStep(rt,actor,dt) {
   if(state.id==='tentaMissiles'){
     if(state.phase==='volley'){
       // Source firing locks out movement; preserve inertial slowdown and shot timing.
-      dampForSpecial(actor,dt);tickMissileVolley(rt,actor,state);
+      dampForSpecial(rt,actor,dt);tickMissileVolley(rt,actor,state);
     } else {
       moveActor(rt,actor,dt,state,{squid:true});
       if(elapsed>=10)endSpecial(rt,actor,'timeout');
@@ -1026,7 +1028,7 @@ function activeStep(rt,actor,dt) {
   if(state.id==='booyahBomb'){
     // WeaponSpNiceBall: 30F startup before armor/charge; 600F to throw.
     // A full charge enables manual ZR throw, but does NOT auto-launch.
-    actor.form='kid';dampForSpecial(actor,dt,0);
+    actor.form='kid';dampForSpecial(rt,actor,dt,0);
     const ready=elapsed+1e-8>=30/FPS,ap=state.specialPowerAP;
     if(ready){
       state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
@@ -1135,8 +1137,8 @@ function activeStep(rt,actor,dt) {
     // MoveCancelableFrame=15; PreBurstFrame=38; UnrelaxFrame=28.
     // Keep the heading chosen at activation: the riding path is NOT steerable.
     if(state.phase==='startup'){
-      if(elapsed>=25/FPS)actor.invuln=Math.max(actor.invuln,dt+.025);
-      if(elapsed>=38/FPS){
+      if(elapsed+1e-8>=25/FPS)actor.invuln=Math.max(actor.invuln,dt+.025);
+      if(elapsed+1e-8>=38/FPS){
         state.phase='dash';s.phase='dash';state.dashT=0;state.travel=0;state.reefSpeedRaw=0;
         actor.character?.trigger?.('special_dash');
       }
