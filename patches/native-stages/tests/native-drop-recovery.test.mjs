@@ -17,7 +17,22 @@ test('real Robo source incoming walk plants before an opted drop and completes i
    if(touchdown&&(released||completed))break;
   }
   assert(activation&&departure&&touchdown&&a.alive&&a.grounded&&(released||completed),JSON.stringify({hz,activation,departure,touchdown,end:a.pos.toArray(),phase:b._nativeDrop?.phase,path:b.path?.length,pi:b.pi}));assert(Math.hypot(...[departure.velocity[0],departure.velocity[2]])<.65,'ordinary plant removes incoming speed before the screened departure');assert(a.pos.z< -8,'source touchdown cannot continue blindly outward');assert.deepEqual(Object.keys(a.s3.abilityPoints),[]);cases.push({hz,activation,departure,touchdown,released,completed,seconds,end:a.pos.toArray(),gearAP:0});
- }assert.equal(hash(),before);console.log(JSON.stringify({id:'robo',cases,sourceUnchanged:true}));
+ }
+ // Controlled grounded-contact states exercise the actual handler. These
+ // source negatives are separate from the ordinary incoming-drop replay.
+ const negativeActor=(position)=>{const a=new f.Actor({team:1,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});a.spawnAt(position,0);G.actors=[a];for(let i=0;i<60;i++){G.time+=1/60;a.update(1/60);}assert(a.alive&&a.grounded);return a;};
+ const contact=(a,target=G.nav.nodes[edge.to])=>{const contactEdge={...edge,to:target.id,drop:{...edge.drop,landing:[target.x,target.y,target.z]}},nodes=G.nav.nodes,old=from.nb;from.nb=[contactEdge];const b=new f.BotBrain(a,'normal');b.path=[from.id,target.id];b.pi=1;b._nativeDrop={edge:contactEdge,path:b.path,phase:'depart',seconds:0,airborne:true,level:L,nav:G.nav,match:G.match,mode:G.match.mode};const position=a.pos.toArray(),velocity=a.vel.toArray();try{assert.equal(f.updateNativeDrop(b,G,1/60),true);assert.equal(b._nativeDrop,null);assert.equal(b.path,null);assert.equal(b.repath,0);assert.equal(b.goalTimer,0);assert.deepEqual(Array.from(a.intent.move.toArray()),[0,0,0]);assert.deepEqual(a.pos.toArray(),position);assert.deepEqual(a.vel.toArray(),velocity);}finally{from.nb=old;}return{position,footSupportedGoal:f.nativeSourceFootSupported(G,a,target),ordinaryStop:true,normalReplan:true};};
+ const goalNode=G.nav.nodes[edge.to],negativeCases=[];
+ const unsupported=negativeActor(new THREE.Vector3(goalNode.x,goalNode.y,goalNode.z));
+ const higher={...goalNode,y:goalNode.y+1};G.nav.nodes.push(higher);higher.id=G.nav.nodes.length-1;negativeCases.push({kind:'unsupported goal height',...contact(unsupported,higher)});G.nav.nodes.pop();
+ const noPaint=negativeActor(new THREE.Vector3(13.5,0,-10.5)),np=P.raycast(noPaint.pos.clone().setY(noPaint.pos.y+.1),new THREE.Vector3(0,-1,0),.3);
+ assert(np.hit&&np.face===-1&&data.flags[np.triangle]===1,'the negative is an original real NoPaint slope');negativeCases.push({kind:'original NoPaint contact',sourceTriangle:np.triangle,...contact(noPaint)});
+ const hole=negativeActor(new THREE.Vector3(goalNode.x,goalNode.y,goalNode.z)),h=P.raycast(hole.pos.clone().setY(hole.pos.y+.1),new THREE.Vector3(0,-1,0),.3),face=L.faces[h.face],local=h.point.clone().sub(face.origin),u=local.dot(face.u),v=local.dot(face.v),cell=face.grid+Math.max(0,Math.min(face.nv-1,Math.floor(v/face.cv)))*face.nu+Math.max(0,Math.min(face.nu-1,Math.floor(u/face.cu))),oldCell=L.mask[cell];
+ assert.equal(oldCell,1);L.mask[cell]=0;try{negativeCases.push({kind:'masked source cell',sourceTriangle:h.triangle,...contact(hole)});}finally{L.mask[cell]=oldCell;}
+ const dynamic=negativeActor(new THREE.Vector3(goalNode.x,goalNode.y,goalNode.z)),blockCount=L.blocks.length,faceCount=L.faces.length;
+ L._addBlock({kind:'box',min:[goalNode.x+.12,goalNode.y+.2,goalNode.z-.08],max:[goalNode.x+.3,goalNode.y+.3,goalNode.z+.08],paint:false,hidden:true});
+ try{for(let i=0;i<60;i++){G.time+=1/60;dynamic.update(1/60);}assert(dynamic.grounded);assert.equal(f.nativeSourceFootSupported(G,dynamic,goalNode),false);assert(dynamic._nativeWaypointGround.block>=L.staticBlockCount);assert(Math.abs(dynamic.pos.y-dynamic._nativeWaypointGround.y)<=.16);negativeCases.push({kind:'actual dynamic foot ring',supportBlock:dynamic._nativeWaypointGround.block,...contact(dynamic)});}finally{L.blocks.length=blockCount;L.faces.length=faceCount;}
+ assert.equal(hash(),before);console.log(JSON.stringify({id:'robo',cases,negativeCases,sourceUnchanged:true}));
 });
 
 const slopeRoot=process.env.NATIVE_DROP_SLOPE_FIXTURE_ASSETS;
