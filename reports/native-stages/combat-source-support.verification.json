@@ -305,7 +305,7 @@
   ],
   "sourceBuffersUnchanged": true,
   "errors": [],
-  "qualificationStatus": "candidate: new protected-target route behavior native actualGame peer pending; current3249 composition6 tests/default48-38pass10optionalSkip0fail/privatepublic9+budgets passed",
+  "qualificationStatus": "Draft; current0c39+830 fixes old deck/SP failures but genuine current ordinaryjump combat input failure remains, Wahoo correction and Ship independent peer in progress; no wholebank claim.",
   "commonHead": "457c42024c904c949661534f762260c79075b121",
   "source": {
     "repository": "kirakira-dev/KiTrix",
@@ -333,6 +333,10 @@
     {
       "receipt": "/workspace/stage-combat-validation/.ci-scratch/native-combat/private-build-setup-failed.log",
       "scope": "New validation worktree initially lacked shared esbuild/node_modules link. Added ignored read-only dependency symlink, full tracked private build9/budget passed."
+    },
+    {
+      "receipt": "/workspace/stage-combat-validation/.ci-scratch/native-combat-current/packaging.log",
+      "scope": "Nonexistent script path setup failed after successful build; corrected actual packaging test9/9 and budget passed with same sealed bytes."
     }
   ],
   "unverified": [
@@ -366,7 +370,7 @@
     "skipScope": "Optional original5 source integration fixtures and Wahoo ordinary source fixture not enabled in this default invocation, not waived assertions.",
     "retainedSetupFailure": "Initial command omitted required --experimental-vm-modules; rerun proper invocation passed."
   },
-  "candidateHead": "310ea90f22d12bc0e7c8d685a97c169101878560",
+  "candidateHead": "b7ea5801",
   "protectedTarget": {
     "implementation": "Only same live opposing target inside excluded opposing spawn zone can retain the same already successful source route goal; current nav/level/physics/path/goal/validity and grounded normal fight guards. No new nodes/zone or Actor/source/input changes.",
     "tests": 6,
@@ -439,5 +443,66 @@
       },
       "groundProbeCallsPerWet": 5
     }
+  },
+  "current310ControlledGame": {
+    "receipt": ".browser-evidence/native-combat-source-final/browser.json",
+    "status": "passed",
+    "caseCount": 12,
+    "privateRevision": "4ac18b6125c4f3118da8db2764df628da582751108e5685fd2cf38ea735776e7",
+    "scope": "Same controlled Brain._tail/input/initial ink; actual fixedGame12 on310 composition, not authentic full AI or groundedSP proof."
+  },
+  "groundedTrizookaCandidate": {
+    "implementation": "Installed genuine active kid Trizooka charge consumes ordinary move +actual ground resolve; only this grounded active token joins foot/path guard. Flying and kinematic specials remain delegated. Jump/shot/special duration/gauge/source/physics untouched.",
+    "runtimeCommit": "830f76a901c6260798034e5163f937297b923d5d",
+    "moduleSHA256": "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496",
+    "sourceGuardsPassed": 7,
+    "old173AuthenticPeer": "Charge-phase hull departure prevented, eight protected-target route replans. Later new ordinaryjump paint-to-fight serial13-to14 departure failed; old sealed173 predates accepted fd23.",
+    "receipt": "/workspace/stage-worktrees/shipshape/.ci-scratch/current-source-natural-combat-trizooka-outcome.json"
+  },
+  "current0c39Private": {
+    "trackedCompositionHead": "7a306f72bcbcd5227d79cbf44c6f08752149aedc",
+    "revision": "4e72eb3157928cf43c7be980b30d31ea846d680a7e47beb2d46efd6b222b7431",
+    "packagingPassed": 9,
+    "budget": "passed",
+    "actualNaturalBank": "Strong actual packaged peer FAILED on ordinaryjump combat input; source foot/path/groundedTrizooka improvements remain, fullbank unqualified."
+  },
+  "current0c39Defaults": {
+    "tests": 15,
+    "passed": 10,
+    "skipped": 5,
+    "failed": 0,
+    "scope": "Combat support, ordinaryjump, groundedform +catalog contracts; optional Wahoo4 and Bluefin1 fixtures notspecified in default run."
+  },
+  "currentPackagedNaturalFailure": {
+    "trackedComposition": "7a306f72bcbcd5227d79cbf44c6f08752149aedc",
+    "revision": "4e72eb3157928cf43c7be980b30d31ea846d680a7e47beb2d46efd6b222b7431",
+    "runtimeOverlay": false,
+    "renderHz": 30,
+    "simulationStep": 0.016666666666666666,
+    "seconds": 71.43333333333334,
+    "actors": 8,
+    "bots": 7,
+    "sourceCapsuleSamples": 4286,
+    "sourceCapsuleMisses": 0,
+    "protectedTargetReplans": 7,
+    "end": [
+      19.066336163143344,
+      4.720721574570206,
+      47.3501
+    ],
+    "mode": "fight",
+    "specialActive": null,
+    "jumpEdge": [
+      25597,
+      25882
+    ],
+    "jumpRiseRawUnits": 0.5,
+    "stockJumpSerialBefore": 10,
+    "stockJumpSerialAfter": 11,
+    "ordinaryJumpHoldEligibility": "false: live target was already present before perception/path/steer/tail, so pending hold never arms",
+    "receipt": "/workspace/stage-worktrees/shipshape/.ci-scratch/current-composed-natural-combat-outcome.json",
+    "correctionOwner": "/root/wahoo",
+    "namedPeer": "/root/shipshape",
+    "sourcePhysicsPoseOverride": false
   }
 }
