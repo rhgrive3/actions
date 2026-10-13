@@ -24,17 +24,21 @@ export class RealS3SampleLoader {
     this.bank.authorized.fetcher=this.assetFetcher;
     this.bank.authorized.maxBytes=Math.max(this.bank.authorized.maxBytes,AUDIO_CACHE_BYTES);
   }
+  _current(){return !this.bank.disposed && this.bank.ctx?.state!=='closed';}
   getManifest(){
+    if(!this._current())return Promise.resolve(null);
     if(!this.manifestPromise)this.manifestPromise=(async()=>{
       try{
         const r=await this.fetcher(this.manifestURL);
+        if(!this._current())return null;
         if(!r?.ok)throw new Error('Real-S3 pack manifest unavailable ('+(r?.status||'fetch failed')+')');
         const data=await r.json();
+        if(!this._current())return null;
         const clips=validateAuthorizedManifest(data);
         // Never fetch arbitrary sourceDrive URLs: only same-origin local assets.
         for(const c of clips)if(!/^s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/i.test(c.file))throw new Error('Unsafe real-S3 asset path');
         this.status='ready';return {...data,clips};
-      }catch(error){this.status='unavailable';this.manifestRetryAt=Date.now()+4000;
+      }catch(error){if(!this._current())return null;this.status='unavailable';this.manifestRetryAt=Date.now()+4000;
         this.errors.push(String(error?.message||error));return null;}
     })();
     return this.manifestPromise;
@@ -43,6 +47,7 @@ export class RealS3SampleLoader {
   // after a 40 MiB LRU eviction, permanently skipping future real-file loads.
   // Re-check the actual decoded resident events instead of that stale bit.
   ensure(id,event=null){
+    if(!this._current())return Promise.resolve({loaded:0,cancelled:true});
     if(!id)return Promise.resolve({loaded:0,unavailable:false});
     // A 503 at startup must not permanently disable audio for the entire
     // session: make a bounded manifest retry after network/storage recovery.
@@ -54,7 +59,10 @@ export class RealS3SampleLoader {
     if(this.notMapped.has(key))return Promise.resolve({loaded:0,missing:true});
     if(this.inFlight.has(key))return this.inFlight.get(key);
     const job=this.queue.catch(()=>{}).then(async()=>{
-      const data=await this.getManifest();if(!data)return {loaded:0,unavailable:true};
+      if(!this._current())return {loaded:0,cancelled:true};
+      const data=await this.getManifest();
+      if(!this._current())return {loaded:0,cancelled:true};
+      if(!data)return {loaded:0,unavailable:true};
       const selected=data.clips.filter(c=>c.id===id&&(!event||c.event===event));
       if(!selected.length){this.notMapped.add(key);return {loaded:0,missing:true};}
       const missing=selected.filter(c=>!this.bank.authorized.loaded.has(this.bank.authorized.key(c.id,c.event,c.variant)));
@@ -64,6 +72,7 @@ export class RealS3SampleLoader {
       // load ONLY the missing clips to avoid fetching intact LRU entries again.
       const result=await this.bank.authorized.load({...data,clips:missing},
         {baseURL:'./',replace:false,concurrency:2});
+      if(!this._current())return {...result,loaded:0,cancelled:true};
       if(result?.errors?.length){this.errors.push(...result.errors.map(e=>id+': '+e.error));
         this.retryAfter.set(key,Date.now()+4000);}
       if(result?.loaded>0)this.loaded.add(id);
