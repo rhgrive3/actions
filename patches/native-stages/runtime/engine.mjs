@@ -8,3 +8,5 @@ export { nativeInitialLanding,nativeArenaBasis,nativeSpawnYaw,nativeRetreatCoord
 export { nativePaintGoalIds } from './native-bots.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
+
+export {nativeStageRuleStatus} from './rule-availability.mjs';
