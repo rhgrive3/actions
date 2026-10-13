@@ -18,6 +18,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { boundedDiagnostic, captureRecordedFocusFailure, createFocusHistory, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
+import { installRematchRenderObserver } from './lib/inkwave-rematch-render-observer.mjs';
 import { createRematchCompositorTrace } from './lib/inkwave-rematch-compositor-trace.mjs';
 import { installCursorTimelineDiagnostics } from './lib/inkwave-cursor-timeline-diagnostics.mjs';
 
@@ -25,6 +26,7 @@ const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i
 const site = path.resolve(option('--site')), evidence = path.resolve(option('--evidence-dir')), profile = path.resolve(option('--profile-dir'));
 const cycles = Math.max(1, Math.floor(+option('--cycles', '10')));
 const traceFocus = process.argv.includes('--trace-focus');
+const profileRenderCalls = process.argv.includes('--profile-render-calls');
 const physical = (p) => (fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p)));
 for (const d of [evidence, profile]) {
   const r = physical(d);
@@ -61,6 +63,7 @@ const compositorTrace = traceFocus ? createRematchCompositorTrace(await ctx.newC
 const browserVersion=ctx.browser()?.version?.() ?? null;
 const errors = [], missing = [], failures = [], rounds = [], focusFailureDiagnostics = [];
 const operationTrace = createOperationTrace();
+const renderObservations = [];
 let activeRound = null, failureDiagnostics = null;
 page.on('pageerror', (e) => errors.push(String(e.message).slice(0, 400)));
 page.on('response', (r) => { if (r.status() >= 400) missing.push(r.status() + ' ' + r.url()); });
@@ -315,7 +318,7 @@ let status = 'failed';
 const writeResult = () => {
   const result = { status, contentHash: manifest.contentHash, browserVersion, cycles, failures, errors, missing, rounds,
     activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics, focusFailureDiagnostics,
-    compositorTraces: compositorTrace?.entries ?? [], traceFocus,
+    compositorTraces: compositorTrace?.entries ?? [], traceFocus, profileRenderCalls, renderObservations,
     diagnosticSourceHash: hash(fs.readFileSync(new URL(import.meta.url))), ciCommit: process.env.GITHUB_SHA ?? null };
   fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
 };
@@ -338,6 +341,7 @@ try {
   await until(() => window.__inkwave?.menus?.current === 'main' || document.getElementById('boot-error')?.textContent, null, 420000, 'boot');
   const bootError = await page.evaluate(() => document.getElementById('boot-error')?.textContent || '');
   if (bootError) throw new Error('boot error: ' + bootError);
+  if (profileRenderCalls) await page.evaluate('window.__rematchRenderObserver = (' + installRematchRenderObserver.toString() + ')(window.__inkwave)');
   let baseline = null, previousMatch = null;
   for (let i = 0; i < cycles; i++) {
     const round = { round: i + 1 };
@@ -364,6 +368,7 @@ try {
     check(i + 1, 'results', results.state === 'results' && results.hudHidden && !results.touchVisible, 'results own the screen', results);
     // every third round an impatient player taps MAIN MENU again at the same spot while the screen changes
     const impatient = i % 3 === 1;
+    if (profileRenderCalls) await page.evaluate(round => window.__rematchRenderObserver.start(round), i + 1);
     if (compositorTrace) await compositorTrace.start(i + 1);
     await tap('home');
     if (impatient) {
@@ -396,6 +401,18 @@ try {
     check(i + 1, 'menu', keyboardMenu.ringOn && keyboardMenu.ringVisible && keyboardMenu.ringOnFocus === true,
       'keyboard handoff restores the selection ring on the focused item (no pixel readback)', keyboardMenu);
     if (failures.length > beforeKeyboardFocusCheck) await diagnoseFocusFailure(failures.at(-1), 'keyboard');
+    // Both strict results are stored before reading observational call data.
+    if (profileRenderCalls) {
+      writeResult();
+      const readback = await boundedDiagnostic(() => page.evaluate(() => window.__rematchRenderObserver.stop()));
+      renderObservations.push(readback.status === 'captured' ? readback.value : { unavailable: readback });
+      if (readback.status !== 'captured') throw new Error('Render observation readback ' + readback.status);
+      const observed = renderObservations.at(-1);
+      check(i + 1, 'render observation', observed?.dropped === 0 && observed?.observerErrors?.length === 0 &&
+        observed?.installedLabels?.includes('gl.getProgramParameter') && observed?.events?.some(event => event.label === 'Game._frame'),
+        'render-boundary observation is complete for this window', { dropped: observed?.dropped, observerErrors: observed?.observerErrors, observed: observed?.observed });
+      writeResult();
+    }
     // Both strict results are stored before ending/reading the trace.
     if (compositorTrace) { writeResult(); await compositorTrace.stop(); writeResult(); }
     check(i + 1, 'menu', menu.fade < 0.05, 'fade cleared', menu.fade);
@@ -451,6 +468,11 @@ try {
   failureDiagnostics = { snapshot, screenshot };
 } finally {
   writeResult();
+  if (profileRenderCalls) {
+    const pending = await boundedDiagnostic(() => page.evaluate(() => window.__rematchRenderObserver?.stop() ?? null));
+    if (pending?.value || pending?.status !== 'captured') renderObservations.push({ finalReadback: pending });
+    writeResult();
+  }
   if (compositorTrace) { await compositorTrace.stop(); writeResult(); }
   await ctx.close().catch(() => {}); server.close();
   console.log(JSON.stringify({ status, failures: failures.slice(0, 20), errors: errors.slice(0, 10) }, null, 1));

@@ -600,8 +600,8 @@ jobs:
       - name: Diagnose native rematch compositor timing
         if: inputs.diagnostic_target == 'rematch'
         run: |
-          node --experimental-vm-modules --test scripts/tests/inkwave-rematch-compositor-trace.test.mjs scripts/tests/inkwave-rematch-diagnostics.test.mjs scripts/tests/inkwave-rematch-start-boundary.test.mjs
-          node scripts/check-inkwave-rematch-lifecycle.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --profile-dir "$DIAGNOSTIC_STORAGE/profile" --cycles 3 --trace-focus
+          node --experimental-vm-modules --test scripts/tests/inkwave-rematch-render-observer.test.mjs scripts/tests/inkwave-rematch-compositor-trace.test.mjs scripts/tests/inkwave-rematch-diagnostics.test.mjs scripts/tests/inkwave-rematch-start-boundary.test.mjs
+          node scripts/check-inkwave-rematch-lifecycle.mjs --site "$DIAGNOSTIC_STORAGE/site" --evidence-dir "$DIAGNOSTIC_STORAGE/probe" --profile-dir "$DIAGNOSTIC_STORAGE/profile" --cycles 3 --profile-render-calls
       - uses: actions/upload-artifact@v4
         if: always()
         with:

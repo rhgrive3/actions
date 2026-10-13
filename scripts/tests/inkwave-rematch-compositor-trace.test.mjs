@@ -132,5 +132,8 @@ test('diagnostic source preserves strict gates and records them before trace rea
   const job = workflow.slice(workflow.indexOf('  render-diagnostic:'), workflow.indexOf('  seven_claims:'));
   assert.match(job, /if: inputs\.diagnostic_only == true/);
   assert.match(job, /if: inputs\.diagnostic_target == 'rematch'/);
-  assert.match(job, /--cycles 3 --trace-focus/);
+  // The second diagnostic uses bounded native-call records instead of the
+  // first run's high-volume CDP trace, which overflowed in every window.
+  assert.match(job, /--cycles 3 --profile-render-calls/);
+  assert.doesNotMatch(job, /--trace-focus/);
 });
