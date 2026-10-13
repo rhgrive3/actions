@@ -252,6 +252,13 @@ test('scope guards keep local, remote, non-bot, attract, Practice Range and unkn
   G2.match.opts.range = false;
   G2.match.attract = true;
   assert.equal(offlineBudgeted(ch, state, G2), false, 'menu attract scene');
+  G2.mode = 'menu';
+  assert.equal(offlineBudgeted(ch, state, G2), true, 'long-undrawn menu demo bot may budget only visuals');
+  G2.game = { showcase: { fullFrame: true } };
+  assert.equal(offlineBudgeted(ch, state, G2), false, 'full-frame lobby owns its own scene');
+  G2.game.showcase.fullFrame = false;
+  G2.mode = 'match';
+  assert.equal(offlineBudgeted(ch, state, G2), false, 'attract outside the menu keeps native pose');
   G2.match.attract = false;
   assert.equal(offlineBudgeted(ch, state, { ...G2, match: null }), false, 'no active match');
   assert.equal(offlineBudgeted(null, state, G2), false, 'missing Character');
@@ -433,4 +440,31 @@ test('movement input and body/ground collision match a fully rendered offline bo
   assert.ok(budgeted.actor.pos.z > 0, 'movement input was applied through native Actor.update');
   budgeted.ch.dispose();
   rendered.ch.dispose();
+});
+
+test('non-interactive menu backdrop defers only undrawn bot decoration; next visible pose catches up', () => {
+  resetWorld();
+  G.mode = 'menu';
+  G.match.attract = true;
+  G.game = { showcase: { fullFrame: false } };
+  const { actor, ch } = makeBot({ name: 'menu-demo-offscreen' });
+  actor._finishFrame(DT);
+  submit(ch, 1200);
+  renderer.info.render.frame = 1200 + GRACE_FRAMES;
+  const oldClock = ch.t, rays = counters.raycast;
+  for (let i = 0; i < 12; i++) actor._finishFrame(DT);
+  assert.equal(ch._oobBudgetTicks, 12, 'menu demo undrawn visuals are budgeted');
+  assert.equal(counters.raycast, rays, 'foot-IK rays skip while unseen');
+  assert.ok(ch.t > oldClock, 'character time continues; motion and muzzle are not frozen');
+  const clock = ch.t;
+  submit(ch, 1200 + GRACE_FRAMES + 1);
+  assert.equal(ch._oobWasBudgeted, false);
+  assert.equal(ch._oobCatchUps, 1, 'first reappearance repairs the rig before the draw');
+  assert.equal(ch.t, clock, 'no duplicated simulation time on reappearance');
+  G.game.showcase.fullFrame = true;
+  actor._finishFrame(DT);
+  assert.equal(ch._oobWasBudgeted, false, 'full-screen menu set does not use attract budget');
+  ch.dispose();
+  G.mode = null;
+  G.game = null;
 });

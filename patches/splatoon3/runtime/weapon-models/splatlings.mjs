@@ -4,8 +4,7 @@
 // splatling channels are kept: `trigger` (pistol trigger) and `barrels` (the spun cluster, rotating about its
 // local Z through a pivot on the barrel axis). The native charge coil is kept for readability although none of the six references
 // shows a charge meter. Everything is procedural geometry.
-import { THREE, Pieces, M, zlathe, xlathe, ylathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle,
-  slab, part, rebuild, TRIGGER_PIVOT } from './kit.mjs';
+import { Pieces, M, zlathe, xlathe, ylathe, zcyl, ring, pipe, box, sphere, cyl, lathe, torus, at, pistolGrip, supportHandle, part, rebuild, TRIGGER_PIVOT, THREE, slab } from './kit.mjs';
 
 /** Barrels on a ring of radius R about the spin axis (ay): n tubes from z0 to z1, each with a nozzle tip. */
 function barrelRing(B, o) {
