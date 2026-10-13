@@ -1,5 +1,5 @@
 {
-  "status": "pending-public-and-peer",
+  "status": "pending-independent-peer",
   "acceptedFoundation": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
   "runtimeCandidate": "5044128d5069ec37d5b9294d3ece8aa4d2202046",
   "reference": {
@@ -964,6 +964,10 @@
     {
       "receipt": "/workspace/stage-worktrees/wahoo/.browser-evidence/native-jump-final-lifecycle/jump-lifecycle.json",
       "reason": "Checker expected instant squid transformation before the real fire buffer expired. Corrected actual input waits up to18 fixed ticks; runtime unchanged."
+    },
+    {
+      "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-public-packaging.log",
+      "reason": "Initial emitted-test run omitted INKWAVE_BUILT_SITE, producing4pass5skip. Corrected R2 supplies the real immutable site and passes9/9."
     }
   ],
   "unverified": [
@@ -972,5 +976,44 @@
     "moving-platform transforms and trajectories",
     "Switch/mobile hardware performance",
     "Wahoo complete five-mode final qualification (separate stage PR1327)"
-  ]
+  ],
+  "publicBuild": {
+    "contentHash": "20eda714c60cf050b33171e2e6af5dc6550c4027bbe19cb16d8db668e074a598",
+    "revision": "bf7a1e99ce120a8f18d7efc4492f59b036f22c2c2e50299c8b3621b73c4c6487",
+    "nativeRuntimeSha256": "4b9fcb2d4edc480424ff7932cd0be7d4ea2172f5304b358d237bcdc4712cb3a0",
+    "helperSha256": "6167c1e3ae2bb800e453b371f232b5e77fbac8f664d0bdc7ea25101e6378307e"
+  },
+  "publicPackaging": {
+    "tests": 9,
+    "passed": 9,
+    "skipped": 0,
+    "failed": 0,
+    "durationMs": 2897.919487,
+    "siteVariable": "INKWAVE_BUILT_SITE",
+    "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-public-packaging-r2.log"
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "bf7a1e99ce120a8f18d7efc4492f59b036f22c2c2e50299c8b3621b73c4c6487",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 74503,
+    "initialJSBytes": 2752364,
+    "criticalHTMLBytes": 15422,
+    "precacheCount": 368,
+    "precacheBytes": 5853850,
+    "workerBytes": 71147,
+    "declaredBytes": 10474542,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "defaultCpu": {
+    "tests": 125,
+    "passed": 82,
+    "optionalSourceSkipped": 43,
+    "failed": 0,
+    "durationMs": 94374.73132,
+    "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-default.log"
+  }
 }
