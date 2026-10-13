@@ -1410,13 +1410,38 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='ultraStamp'){
+    // 11.1.0 published frame timings retained in 11.3.0:
+    // activation 17F, first grounded swing windup 30F, first->second 20F,
+    // continuous intervals 13F; airborne jump swing startup 8F and
+    // a 40F delay before further grounded stomps. No 5F damage spam.
     const throwing=!!actor.intent.sub;
+    const jumpStarted=edges.jump&&actor.intent.fire&&actor.grounded&&!throwing;
     moveActor(rt,actor,dt,state,{speed:actor.intent.fire&&!throwing?2.6:null,squid:!actor.intent.fire&&!throwing,jump:true});
-    if(elapsed+1e-8>=17/FPS&&!throwing&&actor.intent.fire&&actor.form!=='squid'&&elapsed+1e-8>=state.nextSwing){
-      state.nextSwing=elapsed+(actor.grounded?12:30)/FPS;stampSwing(rt,actor,state,!actor.grounded);
+    if(throwing){
+      state.stampHolding=false;state.stampCount=0;
+      state.jumpStampAt=null;
+    } else if(actor.intent.fire){
+      if(!state.stampHolding){
+        state.stampHolding=true;state.stampCount=0;
+        state.nextSwing=Math.max(47/FPS,elapsed+30/FPS);
+      }
+      if(jumpStarted){
+        state.jumpStampAt=elapsed+8/FPS;
+        state.nextSwing=Math.max(state.nextSwing,elapsed+48/FPS);
+      }
+      if(state.jumpStampAt!==null&&elapsed+1e-8>=state.jumpStampAt){
+        stampSwing(rt,actor,state,true);
+        state.jumpStampAt=null;state.nextSwing=elapsed+40/FPS;
+      }else if(state.jumpStampAt===null&&elapsed+1e-8>=state.nextSwing&&actor.form!=='squid'){
+        stampSwing(rt,actor,state,false);
+        state.stampCount++;
+        state.nextSwing=elapsed+(state.stampCount===1?20:13)/FPS;
+      }
+    }else{
+      state.stampHolding=false;state.stampCount=0;state.jumpStampAt=null;
     }
     state.phase=throwing?'aimThrow':'active';s.phase=state.phase;
-    if(edges.subUp)queueSubThrow(state,13,throwStamp);
+    if(edges.subUp)queueSubThrow(state,42,throwStamp);
     else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
     return;
   }
@@ -1653,6 +1678,7 @@ function makeState(rt,actor,id) {
     charge:0,travel:0,objectSerial:0,armor:false,hitIds:new Set(),nextBody:.2,
   };
   if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;}
+  if(id==='ultraStamp'){state.stampHolding=false;state.stampCount=0;state.jumpStampAt=null;state.nextSwing=47/FPS;}
   if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.fireStart=null;state.wasRolling=false;}
   if(id==='reefslider'){state.paintRadius=gearCurve(ap,7.51,8.26,9.012);state.damageDistanceRate=gearCurve(ap,1,1.1,1.2);state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startupT=0;state.footHits=new Set();}
   if(id==='tripleInkstrike'){state.nextMarkerStart=20/FPS;state.markerQueued=false;}

@@ -262,9 +262,12 @@ test('Inkjet exhaust stops during squid descent and return',async()=>{
 test('Ultra Stamp uses jump swings and blocks a projectile through its forward guard',async()=>{
  const f=await setup(),a=f.make(),victim=f.make(),shooter=f.make();equip(a,'ultraStamp');victim.team=1;victim.pos.set(0,0,2);shooter.team=1;f.G.actors=[a,victim,shooter];
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
- const events=eventFeed(f,'all:special');a._resolve=()=>{};ready(a);for(let i=0;i<17;i++)a._updateSpecial(1/60);a.intent.fire=true;a._updateSpecial(1/60);
+ const events=eventFeed(f,'all:special');a._resolve=()=>{};ready(a);for(let i=0;i<17;i++)a._updateSpecial(1/60);a.intent.fire=true;
+ for(let i=0;i<30;i++)a._updateSpecial(1/60);
+ assert.equal(hits.some(h=>h[1]===victim&&h[2]===100&&h[3]==='ultraStamp'),false,'the sourced 30F first-swing windup must not damage early');
+ a._updateSpecial(1/60);
  assert.ok(hits.some(h=>h[1]===victim&&h[2]===100&&h[3]==='ultraStamp'));
- a.intent.jump=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.ok(events.some(e=>e.action==='jumpSwing'));
+ a.grounded=true;a.intent.jump=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.ok(events.some(e=>e.action==='jumpSwing'));
  const incoming={owner:shooter,team:shooter.team,prev:new f.THREE.Vector3(0,.78,3),pos:new f.THREE.Vector3(0,.78,.2),damage:20,size:.15,ghost:false};
  const guard=f.G.projectiles.kitDefenseCandidate(incoming);assert.equal(guard?.kind,'ultra-stamp-guard');assert.equal(guard.onHit(),true);
  assert.ok(events.some(e=>e.action==='block'));
@@ -558,7 +561,7 @@ test('every catalogue-launched special projectile keeps a wire identity accepted
  const f=await setup();
  for(const id of ['tentaMissiles','inkjet','booyahBomb','ultraStamp','crabTank']){
   f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];ready(a);const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors.push(target);a.intent.fire=id==='inkjet'||id==='tentaMissiles';a.intent.sub=id==='booyahBomb'||id==='ultraStamp';if(id==='ultraStamp'||id==='booyahBomb'){a._updateSpecial(1/60);a.intent.sub=false;}
-  for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
+  for(let i=0;i<50&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
   const p=f.G.projectiles.list.find(x=>x.s3AllSpecial===id);assert.ok(p,id+' emitted');
   const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));assert.equal(packet[4],id);
   const remote=f.make();remote.remote=true;remote.nid=7;const before=f.G.projectiles.list.length;f.G.projectiles.ghostProjectile(remote,packet);assert.equal(f.G.projectiles.list.length,before+1,id+' accepted');const ghost=f.G.projectiles.list.at(-1);assert.equal(ghost.s3SpecialWeapon.id,id);assert.equal(ghost.damage,0);
