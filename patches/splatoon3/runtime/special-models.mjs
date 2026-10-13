@@ -362,8 +362,8 @@ function kraken(THREE) {
   // Mantle widths measured at quarter heights from the tip: 0.26, 0.46 and
   // 0.70 of the fin span (nearly straight, slight flare at the fins).
   const prof = smooth(THREE, [[0, 0.85], [0.22, 0.87], [0.32, 0.93], [0.36, 1.02], [0.37, 1.1], [0.45, 1.15], [0.6, 1.19], [0.69, 1.24],
-    [0.66, 1.3], [0.6, 1.39], [0.48, 1.595], [0.32, 1.93], [0.19, 2.25], [0.1, 2.46], [0.04, 2.56], [0, 2.585]], 48);
-  const body = latheY(THREE, prof, 48), p = body.attributes.position;
+    [0.66, 1.3], [0.6, 1.39], [0.48, 1.595], [0.32, 1.93], [0.19, 2.25], [0.1, 2.46], [0.04, 2.56], [0, 2.585]], 36);
+  const body = latheY(THREE, prof, 36), p = body.attributes.position;
   for (let i = 0; i < p.count; i++) {   // round head, flat mantle
     const y = p.getY(i), k = Math.min(1, Math.max(0, (y - 1.1) / 0.16));
     p.setZ(i, p.getZ(i) * (0.65 + (0.36 - 0.65) * k) - 0.02 * k);
@@ -388,7 +388,7 @@ function kraken(THREE) {
   for (const [name, s] of [['legL', 1], ['legR', -1]]) {
     K.pivot(name, [s * 0.17, 0.9, 0]);
     K.add(name, 'inkGloss', tube(THREE, [[s * 0.17, 0.92, 0], [s * 0.21, 0.78, 0.02], [s * 0.25, 0.6, 0.0]], 0.085, 16, 12));
-    const pad = latheY(THREE, smooth(THREE, [[0, 0.0], [0.07, 0.06], [0.17, 0.2], [0.2, 0.33], [0.15, 0.48], [0.095, 0.6], [0.08, 0.66]], 18), 20);
+    const pad = latheY(THREE, smooth(THREE, [[0, 0.0], [0.07, 0.06], [0.17, 0.2], [0.2, 0.33], [0.15, 0.48], [0.095, 0.6], [0.08, 0.66]], 12), 16);
     K.add(name, 'inkGloss', pad.clone().scale(1, 1, 0.36).translate(s * 0.25, 0, 0));
     K.add(name, 'white', pad.clone().scale(0.96, 0.96, 0.34).translate(s * 0.25, 0.01, -0.013),
       new THREE.TorusGeometry(0.065, 0.015, 6, 18).translate(s * 0.25, 0.26, -0.07));
