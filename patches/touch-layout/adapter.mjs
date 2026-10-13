@@ -12,6 +12,24 @@ function connect(code, before, after, label) {
 }
 
 export function adaptTouchLayout(rel, code) {
+  if (rel === 'src/main.js') {
+    return connect(code, '  _padMenus() {\n    const inp = this.input;', `  _padMenus() {
+    const inp = this.input;
+    // #1400: a modal layout session owns navigation. Polling continues so
+    // physical releases are observed, but none of its edges reach the menu.
+    if (inp.mobile?.editing) {
+      this._layoutPadAwaitNeutral = true;
+      inp.padPressed?.clear(); this._stickT = 0;
+      return;
+    }
+    if (this._layoutPadAwaitNeutral || inp._layoutPadAwaitNeutral) {
+      const held = inp.pad && (inp.pad.buttons?.some(b => b.pressed || b.value > .3) ||
+        inp.pad.axes?.slice(0, 4).some(value => Math.abs(value) > .3));
+      inp.padPressed?.clear(); this._stickT = 0;
+      if (!held) this._layoutPadAwaitNeutral = inp._layoutPadAwaitNeutral = false;
+      return;
+    }`, 'editor pad navigation ownership');
+  }
   if (rel === 'src/ui/menu-art.js') {
     // The upstream settings preview calls these helpers without importing them.
     return "import { t as tr } from '../i18n.js';\nimport { gyroTurnDeg, touchSensMul } from '../core/gyro.js';\n" + code;
