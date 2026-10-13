@@ -4,6 +4,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
+import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
+import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {prepareNativeStageBuild} from '../../../scripts/lib/inkwave-native-stages.mjs';
 
 const definition=JSON.parse(fs.readFileSync(new URL('../definitions/sturgeon.json',import.meta.url)));
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
@@ -98,4 +101,62 @@ test('sturgeon opposed pads support full capsules and both teams reach the same 
  assert.equal(camera.length,1);assert.equal(distant.length,4);
  for(const o of [...camera,...distant]){assert.equal(o.active,true);assert.equal(o.collidable,false);assert.ok(o.ic>0);}
  console.log(JSON.stringify({id:'sturgeon',opposedPadDistance:level.spawnPads[0].distanceTo(level.spawnPads[1]),navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,rankedCenter:stage.zones[0].center,movement}));
+});
+
+test('sturgeon opt-off ranked frames retain exact pre-marker production inputs and source movement',{skip:!available},async()=>{
+ // Compare only the accepted d92 marker delta. Keep both complete production
+ // Actor/Character implementations; fixture.make() is unsuitable here.
+ const prepared=prepareNativeStageBuild(root);
+ const withoutMarker=(rel,raw)=>{
+  let code=adaptBuildSource(rel,raw);
+  if(rel==='src/game/bots.js'){
+   const marked='if (updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt)) { this._nativeTraversalHandled=true; return; }';
+   assert.ok(code.includes(marked));code=code.replace(marked,'if (updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt)) return;');
+  }
+  if(rel==='patches/splatoon3/runtime/ranked/bots.mjs'){
+   assert.ok(code.includes('    this._nativeTraversalHandled = false;\n'));
+   assert.ok(code.includes('    if (G.level?.native && this._nativeTraversalHandled) return result;\n'));
+   code=code.replace('    this._nativeTraversalHandled = false;\n','').replace('    if (G.level?.native && this._nativeTraversalHandled) return result;\n','');
+  }
+  return code;
+ };
+ const baseline=await fixture({fullRuntime:true,realProjectiles:true,includeCharacter:true,vmMathRandom:()=>.5,adaptNative:withoutMarker,
+  adaptRuntime:(rel,raw)=>rel==='patches/native-stages/runtime/build-config.mjs'?`export const nativeStageBuild = ${JSON.stringify(prepared.config)};`:withoutMarker(rel,raw),
+  extraExports:`export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs';
+   export {Match} from './inkwave-public/src/game/match.js';
+   export {installRankedBots} from './patches/splatoon3/runtime/ranked/bots.mjs';
+   export {RankedEngine} from './patches/splatoon3/runtime/ranked/engine.mjs';
+   export {BotBrain} from './inkwave-public/src/game/bots.js';
+   export {NavGraph} from './inkwave-public/src/game/nav.js';
+   export {nativeRankedStage} from './patches/native-stages/runtime/native-ranked.mjs';`});
+ const latest=await nativeFixture({includeCharacter:true});latest.setRandom(()=>.5);
+ const run=f=>{
+  const {G,THREE}=f,L=G.level=new f.NativeLevel(readStage(root,'sturgeon')),P=G.physics=new f.NativePhysics(L);
+  assert.equal(!!L.manifest.sourceNavigation?.wallClimb,false);assert.equal(!!L.manifest.sourceNavigation?.highDrops,false);
+  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};}_pushQuad(){}_drawQuads(){}}
+  G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera();G.paint=new CpuPaint(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,P);
+  f.installRankedBots({G,BotBrain:f.BotBrain,PLAYER:f.PLAYER});const stage=f.nativeRankedStage(G),cases=[];
+  for(const mode of ['zones','tower','rainmaker','clams'])for(const team of [0,1])for(const hz of [30,60,120]){
+   G.time=0;G.projectiles.clear();G.paint=new CpuPaint(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.actors=[];
+   const match=G.match=new f.Match({mode,difficulty:'normal',duration:300});match.state='playing';match.ranked=new f.RankedEngine(mode,stage);
+   const a=new f.Actor({team,slot:0,name:'sturgeon opt-off',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
+   a.isBot=true;a.spawnAt(L.spawnPads[team],team?Math.PI:0);a.invuln=0;G.actors=match.actors=[a];const brain=a.bot=new f.BotBrain(a,'normal'),frames=[];
+   G.scene.add(a.character.root);
+   for(let i=0;i<hz;i++){
+    match.ranked.frame={actors:[{id:team+':0',team,slot:0,pos:a.pos.toArray(),alive:a.alive,grounded:a.grounded}],inputs:{}};
+    // A stale true marker must never suppress opt-off objective steering.
+    brain._nativeTraversalHandled=true;G.time+=1/hz;brain.update(1/hz);
+    if(f===latest)assert.equal(brain._nativeTraversalHandled,false);
+    const it=a.intent,input={move:Array.from(it.move.toArray()),fire:!!it.fire,jump:!!it.jump,squid:!!it.squid,aim:Array.from(a.aimPoint.toArray())};
+    a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);
+    frames.push({input,pos:Array.from(a.pos.toArray()),grounded:a.grounded,alive:a.alive,goal:brain._rankedGoalPos?{...brain._rankedGoalPos}:null});
+   }
+   assert.ok(a.alive&&a.grounded);assert.ok(frames.some(frame=>Math.hypot(...frame.input.move)>0),'ordinary rule movement remains active');
+   cases.push({mode,team,hz,frames});a.character.root.removeFromParent();a.character.dispose();
+  }
+  return cases;
+ };
+ const before=run(baseline),after=run(latest);
+ assert.deepEqual(after,before,'every input, source-supported Actor position, alive/grounded state and rule goal remains bit-identical');
+ console.log(JSON.stringify({id:'sturgeon',comparison:'460 marker-free versus accepted d92 marker only',cases:after.map(c=>({mode:c.mode,team:c.team,hz:c.hz,frames:c.frames.length,end:c.frames.at(-1).pos})),identical:true,staleMarkerResetEveryRankedTick:true,wallClimb:false,highDrops:false,scope:'Constructed CPU frame with actual Match/RankedEngine/rule botGoal/BotBrain/Actor/Character/WeaponRunner/Projectiles/native source physics; GPU paint drawing and live RankedWorld blocked callback omitted; not a whole-game objective score or hardware equivalence proof'}));
 });
