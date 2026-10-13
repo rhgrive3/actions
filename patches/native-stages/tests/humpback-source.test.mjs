@@ -88,7 +88,7 @@ test('Humpback pads, source capsules and directed navigation retain both opposin
  const playable=G.nav.validIds.map(id=>G.nav.nodes[id]);assert(Math.min(...playable.map(n=>n.z))<-58);assert(Math.max(...playable.map(n=>n.z))>58);
  assert(Math.min(...playable.map(n=>n.x))<-25);assert(Math.max(...playable.map(n=>n.x))>25);
  assert.equal(data.manifest.geometry.vertices,254995);assert.equal(data.manifest.geometry.triangles,174089);assert.equal(data.manifest.geometry.collisionTriangles,149539);
- const roofs=data.manifest.objects.filter(o=>/CeilingWalls|CorrugatedRoof/.test(o.name));assert(roofs.length>=3);assert(roofs.every(o=>o.collidable));
+ const roofs=data.manifest.objects.filter(o=>/^Fld_Wave03_/.test(o.name)&&/CeilingWalls|CorrugatedRoof/.test(o.name));assert(roofs.length>=3);assert(roofs.every(o=>o.collidable));
  const noPaint=data.manifest.objects.filter(o=>/_np$/.test(o.material)&&o.collidable);assert(noPaint.length>10);assert(noPaint.every(o=>!o.paintable));
  const ranked=f.nativeRankedStage(G);assert.equal(ranked.tower.supported,false);assert.equal(ranked.tower.status,'source-route-unverified');
  const proof={id:'humpback',supports,bankSupports,nav:{candidate:G.nav.nodes.length,valid:G.nav.validIds.length,bankPaths:bankPaths.map(paths=>paths.map(p=>p.length)),elevatedOpponentDeckReturns:elevatedReturns.map(p=>!!p)},tower:ranked.ruleAvailability.tower,sourceRoofs:roofs.length,noPaintObjects:noPaint.length,limitations:'Elevated opponent home-deck return is unproved; both original pads and complete source remain. Paths qualify both opposing skate bowls, not retail placements or physical traversal of every graph edge.'};

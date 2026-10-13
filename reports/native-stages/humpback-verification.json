@@ -2316,5 +2316,208 @@
       ],
       "log": ".ci-scratch/routes-final-cpu.log"
     }
+  },
+  "originalBankPhysicalCpu": {
+    "status": "failed-current-shared-arrival",
+    "foundation": "460da559",
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 40.93333333333333,
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          23.840662262642496,
+          0.0027000000700354576,
+          31.176767366537653
+        ],
+        "goal": [
+          24,
+          0.0027,
+          32
+        ],
+        "distance": 0.8385108725255499,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91858,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 96,
+        "currentPathNodes": 96,
+        "pi": 95,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.20994495989474,
+        "gearAP": [],
+        "mode": "paint",
+        "productionCharacter": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 38.7,
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          23.84249009238191,
+          0.0027000000700354576,
+          31.179650986825752
+        ],
+        "goal": [
+          24,
+          0.0027,
+          32
+        ],
+        "distance": 0.8353333911761344,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91858,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 96,
+        "currentPathNodes": 96,
+        "pi": 95,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.21319441053502,
+        "gearAP": [],
+        "mode": "paint",
+        "productionCharacter": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 36.86666666666667,
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          23.837460327898242,
+          0.0027000000700354576,
+          31.174987793220573
+        ],
+        "goal": [
+          24,
+          0.0027,
+          32
+        ],
+        "distance": 0.8408711472883382,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91858,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 96,
+        "currentPathNodes": 96,
+        "pi": 95,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.20742034927993,
+        "gearAP": [],
+        "mode": "paint",
+        "productionCharacter": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 41.766666666666666,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          -23.222361759037113,
+          0.0027000000700354576,
+          -31.723961311220208
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 0.82517791506506,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 91910,
+        "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+        "pathNodes": 97,
+        "currentPathNodes": 97,
+        "pi": 96,
+        "fired": true,
+        "jumped": true,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 95.58771410025584,
+        "gearAP": [],
+        "mode": "paint",
+        "productionCharacter": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 90,
+        "start": [
+          0,
+          6,
+          61
+        ],
+        "end": [
+          10.199999996786921,
+          2.365753924034298,
+          -1.398124464215724
+        ],
+        "goal": [
+          -24,
+          0.0027,
+          -32
+        ],
+        "distance": 45.953224151693114,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 95004,
+        "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+        "pathNodes": 97,
+        "currentPathNodes": 97,
+        "pi": 57,
+        "fired": true,
+        "jumped": false,
+        "climbed": false,
+        "departed": true,
+        "maxTravel": 63.23057073279473,
+        "gearAP": [],
+        "mode": "paint",
+        "productionCharacter": true
+      }
+    ],
+    "passed": 4,
+    "unrun": [
+      "team1 120Hz"
+    ],
+    "rawSourceRampNode": {
+      "id": 10572,
+      "point": [
+        10.200000000000003,
+        2.204948591746266,
+        -1.4000000000000057
+      ]
+    },
+    "diagnosis": "Live capsule feet on source ramp are .160805 above center support; fixed .16 follower arrival rejects forever at 60Hz while ordinary collision grounds the actor. No source geometry, ownership or movement edit was made. Sent to shared movement owner for correction."
+  },
+  "selfReviewRoofAssertion": {
+    "corrected": "Require the three colliding Fld_Wave03 gameplay roofs; FldBG distant CorrugatedRoof remains rendered and noncollidable under unchanged accepted converter semantics",
+    "geometryAndFlagsChanged": false
   }
 }
