@@ -1,0 +1,369 @@
+{
+  "status": "passed",
+  "scope": "Actual installed Game fixed clock, production Actor/Character/Brain._tail/weapon/physics; controlled combat direction and initial own ink, other bots neutral. Not natural enemy perception, complete AI traversal, retail or hardware performance proof.",
+  "cases": [
+    {
+      "policy": "baseline",
+      "requestedForm": "kid",
+      "renderHz": 30,
+      "low": 3,
+      "end": [
+        -0.7276234803910604,
+        3,
+        54.60635467860132
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 15.299999997019768,
+        "p95": 40.29999999701977,
+        "max": 87.69999998807907
+      }
+    },
+    {
+      "policy": "baseline",
+      "requestedForm": "kid",
+      "renderHz": 60,
+      "low": 3,
+      "end": [
+        -0.7276234803910604,
+        3,
+        54.60635467860132
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 6.700000002980232,
+        "p95": 26.799999997019768,
+        "max": 36.400000005960464
+      }
+    },
+    {
+      "policy": "baseline",
+      "requestedForm": "kid",
+      "renderHz": 120,
+      "low": 3,
+      "end": [
+        -0.7276234803910604,
+        3,
+        54.60635467860132
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 4,
+        "p95": 19.5,
+        "max": 38.3999999910593
+      }
+    },
+    {
+      "policy": "baseline",
+      "requestedForm": "squid",
+      "renderHz": 30,
+      "low": 6,
+      "end": [
+        17.830068028706677,
+        6.050000190734863,
+        45.97140966008054
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 10.699999988079071,
+        "p95": 31.299999997019768,
+        "max": 36.5
+      }
+    },
+    {
+      "policy": "baseline",
+      "requestedForm": "squid",
+      "renderHz": 60,
+      "low": 6,
+      "end": [
+        17.830068028706677,
+        6.050000190734863,
+        45.97140966008054
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 4.200000002980232,
+        "p95": 22.299999997019768,
+        "max": 28.900000005960464
+      }
+    },
+    {
+      "policy": "baseline",
+      "requestedForm": "squid",
+      "renderHz": 120,
+      "low": 6,
+      "end": [
+        17.830068028706677,
+        6.050000190734863,
+        45.97140966008054
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 3,
+        "p95": 7.5999999940395355,
+        "max": 28.30000001192093
+      }
+    },
+    {
+      "policy": "candidate",
+      "requestedForm": "kid",
+      "renderHz": 30,
+      "low": 6,
+      "end": [
+        17.964241531878095,
+        6.050000190734863,
+        46.25744613086142
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 11.400000005960464,
+        "p95": 34,
+        "max": 118.59999999403954
+      }
+    },
+    {
+      "policy": "candidate",
+      "requestedForm": "kid",
+      "renderHz": 60,
+      "low": 6,
+      "end": [
+        17.964241531878095,
+        6.050000190734863,
+        46.25744613086142
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 5.100000008940697,
+        "p95": 22.900000005960464,
+        "max": 28.19999998807907
+      }
+    },
+    {
+      "policy": "candidate",
+      "requestedForm": "kid",
+      "renderHz": 120,
+      "low": 6,
+      "end": [
+        17.964241531878095,
+        6.050000190734863,
+        46.25744613086142
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 3.699999988079071,
+        "p95": 18.600000008940697,
+        "max": 43.20000000298023
+      }
+    },
+    {
+      "policy": "candidate",
+      "requestedForm": "squid",
+      "renderHz": 30,
+      "low": 6,
+      "end": [
+        18.038855875195058,
+        6.050000190734863,
+        45.94544121256924
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 10.5,
+        "p95": 31.5,
+        "max": 37.20000000298023
+      }
+    },
+    {
+      "policy": "candidate",
+      "requestedForm": "squid",
+      "renderHz": 60,
+      "low": 6,
+      "end": [
+        18.038855875195058,
+        6.050000190734863,
+        45.94544121256924
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 7.700000002980232,
+        "p95": 29.5,
+        "max": 55.79999999701977
+      }
+    },
+    {
+      "policy": "candidate",
+      "requestedForm": "squid",
+      "renderHz": 120,
+      "low": 6,
+      "end": [
+        18.038855875195058,
+        6.050000190734863,
+        45.94544121256924
+      ],
+      "ticks": 240,
+      "clockTicks": 240,
+      "actualStep": [
+        0.016666666666666666
+      ],
+      "brainStep": [
+        0.016666666666666666
+      ],
+      "softwareInclusiveFrame": {
+        "p50": 3.5999999940395355,
+        "p95": 17.900000005960464,
+        "max": 36.900000005960464
+      }
+    }
+  ],
+  "sourceBufferNames": [
+    "flags",
+    "objectIds",
+    "order",
+    "normals",
+    "nodes",
+    "indices",
+    "triangles",
+    "triangleFace",
+    "vertices",
+    "mask"
+  ],
+  "sourceBuffersUnchanged": true,
+  "errors": [],
+  "qualificationStatus": "candidate: named independent peer pending; public/private canonical9, startup budgets, default35/6 assetSkip/0fail and controlled actualGame12 passed",
+  "commonHead": "457c42024c904c949661534f762260c79075b121",
+  "source": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "stage": "Vss_Twist00",
+    "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+    "version1130Verified": false,
+    "coordinates": "source raw units; not verified meters or retail spawn placement"
+  },
+  "public": {
+    "inputHash": "8bdb54c9db461c31870df7cf068595534a4351b87facad6269537ff4b44b4204",
+    "revision": "d88082d00237ae49b7a56d6d78fe66b27d6f7d287ead80191b3c7a762a8ae949",
+    "packagingPass": 9,
+    "startupBudget": "passed"
+  },
+  "preservedFailures": [
+    {
+      "receipt": ".browser-evidence/native-combat-source-r1/browser.json",
+      "scope": "Attempted natural perception/navigation later left the roof in paint mode. Stay-roof assertion failed, including candidate. Typed edge and goal not recorded at departure; allowed source drop versus separate navigation defect is unclassified. Does not prove genuine original fullbank combat case fixed."
+    },
+    {
+      "receipt": ".ci-scratch/native-combat/private-packaging.log",
+      "scope": "Diagnostic temporary Shipshape catalog absent from common HEAD; canonical tracked-input guard correctly failed, 8 pass/1 fail. Isolated tracked owner composition is being sealed; guard unchanged."
+    },
+    {
+      "receipt": "/workspace/stage-combat-validation/.ci-scratch/native-combat/private-build-setup-failed.log",
+      "scope": "New validation worktree initially lacked shared esbuild/node_modules link. Added ignored read-only dependency symlink, full tracked private build9/budget passed."
+    }
+  ],
+  "unverified": [
+    "Complete natural AI opposing-bank combat",
+    "Ordinary paint/ranked navigation departure",
+    "Retail 11.3.0 collision/paint/climb masks and moving states",
+    "Switch hardware timing and source coordinates units"
+  ],
+  "private": {
+    "same": {
+      "files": true,
+      "inputHash": true,
+      "artifacts": true,
+      "contentHash": true,
+      "build": true
+    },
+    "commonDiagnostic": "/workspace/stage-physics/_site-native-combat-source",
+    "trackedComposition": "/workspace/stage-combat-validation/_site-native-combat-tracked",
+    "trackedCompositionHead": "76013309a0fce9386ef8f2261e952a7ddb99a271",
+    "inputHash": "6ef7852093d8237b6c9a289043dff141501918f5f629a3f49b5b50bfa37a12e5",
+    "revision": "f9ab1be58055d7ec795299cea90c09a47269c07fe492894be17ba943111d6e03",
+    "scope": "All recorded inputs and emitted artifacts byteSHA-identical, entire build metadata equal; no browser repeat required to transfer exact R2 artifact receipt to properly tracked composition. Initial tracked-input guard failure remains preserved.",
+    "packagingPass": 9,
+    "startupBudget": "passed"
+  },
+  "default": {
+    "tests": 41,
+    "passed": 35,
+    "failed": 0,
+    "skipped": 6,
+    "skipScope": "Optional original5 source integration fixtures and Wahoo ordinary source fixture not enabled in this default invocation, not waived assertions.",
+    "retainedSetupFailure": "Initial command omitted required --experimental-vm-modules; rerun proper invocation passed."
+  }
+}

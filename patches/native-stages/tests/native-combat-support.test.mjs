@@ -56,3 +56,33 @@ test('legacy, normal navigation, airborne, spawn and special owners retain exist
  a.s3.squidSpawn={};assert.equal(f.nativeCombatWet(brain,G,3,0,6),null);a.s3.squidSpawn=null;
  L.native=false;assert.equal(f.nativeCombatWet(brain,G,3,0,6),null);assert.equal(brain._wet(3,0,6),false,'original legacy lower-floor policy remains');
 });
+
+test('an actual opposing spawn-zone A* refusal retains the same qualified source route goal',()=>{
+ const {G,L,a,brain}=setup();L.spawnPads[1].set(1.5,6,1.5);
+ const N=G.nav=new f.NavGraph(L,G.physics);a.pos.set(.5,6,-2.5);
+ const goal=new f.THREE.Vector3(1.5,6,-1.5);brain.mode='paint';
+ assert(brain._pathTo(goal,.6));const previous=brain.goal,oldPos=a.pos.toArray(),oldVel=a.vel.toArray();
+ const enemy={team:1,alive:true,pos:L.spawnPads[1]};brain.target=enemy;brain.mode='fight';
+ const blocked=N.nearest(enemy.pos,.8);assert.equal(N.nodes[blocked].zone,1);
+ assert.equal(N.path(N.nearest(a.pos,1.2),blocked,a.team),null,'real A* forbids the opposing spawn zone');
+ assert(brain._pathTo(enemy.pos,.8),'normal replanning remains on the prior valid source route');
+ assert.equal(brain.goal,previous);assert.equal(brain.path.at(-1),previous);
+ assert.deepEqual(a.pos.toArray(),oldPos);assert.deepEqual(a.vel.toArray(),oldVel);
+});
+
+test('protected-target route fallback delegates legacy, normal goals and stale world/path state',()=>{
+ const {G,L,a,brain}=setup();L.spawnPads[1].set(1.5,6,1.5);
+ const N=G.nav=new f.NavGraph(L,G.physics);a.pos.set(.5,6,-2.5);brain.mode='paint';
+ assert(brain._pathTo(new f.THREE.Vector3(1.5,6,-1.5),.6));
+ const enemy={team:1,alive:true,pos:L.spawnPads[1]},blocked=N.nearest(enemy.pos,.8);brain.target=enemy;brain.mode='fight';
+ const resolve=()=>f.nativeCombatPathGoal(brain,G,enemy.pos,blocked),record=brain._nativeCombatPath;
+ assert.equal(resolve(),brain.goal);
+ brain.mode='paint';assert.equal(resolve(),blocked);brain.mode='fight';
+ assert.equal(f.nativeCombatPathGoal(brain,G,enemy.pos.clone(),blocked),blocked);
+ enemy.alive=false;assert.equal(resolve(),blocked);enemy.alive=true;
+ enemy.team=0;assert.equal(resolve(),blocked,'teammate target retains original policy');enemy.team=1;
+ assert.equal(f.nativeCombatPathGoal(brain,G,enemy.pos,brain.goal),brain.goal);
+ for(const key of ['nav','level','physics','path']){record[key]={};assert.equal(resolve(),blocked);record[key]=key==='nav'?N:key==='level'?L:key==='physics'?G.physics:brain.path;}
+ const path=brain.path;brain.path=path.slice();assert.equal(resolve(),blocked);brain.path=path;
+ L.native=false;assert.equal(resolve(),blocked);
+});
