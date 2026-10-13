@@ -1,0 +1,161 @@
+{
+  "status": "WIP archive only",
+  "codeFiles": [
+    {
+      "originalPath": ".ci-scratch/accepted-climb-diagnostic.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/accepted-climb-diagnostic.mjs",
+      "bytes": 2045,
+      "sha256": "30e7ed4853343e287d8fecc3deea77454d3e21b5ce445ca57733fb3548a49c66",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/accepted-drops-partial.sh",
+      "archivePath": "reports/native-stages/bluefin-wip-code/accepted-drops-partial.sh",
+      "bytes": 4082,
+      "sha256": "0364aad1c636f66a8c226c2251f8a0cfd677251c4e8f878b58589c2c29af25ba",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/accepted79ad-partial.sh",
+      "archivePath": "reports/native-stages/bluefin-wip-code/accepted79ad-partial.sh",
+      "bytes": 2792,
+      "sha256": "43d51565c47bb47532acb1bed49dd4cc6c3ef41ec2dbacbd70e5a91a106117a5",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/approach-runway-adjacency.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/approach-runway-adjacency.mjs",
+      "bytes": 4347,
+      "sha256": "bfb134b958b534c783e74210b91f284a306a414ce48085d7543d69ecbaa3936b",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/bluefin-natural-human-browser.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/bluefin-natural-human-browser.mjs",
+      "bytes": 10624,
+      "sha256": "880d8999d2a09daab116ef3ad018ef7d294dfa0721d3d8d92b92114d98e9d78c",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/bluefin-negative-bank-production.test.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/bluefin-negative-bank-production.test.mjs",
+      "bytes": 5934,
+      "sha256": "c4d64906d58de4b3b5b35457c01fc4bc9403b8da4bae2049ee73d3ff47e09a49",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/check-human-shape-diagnostic.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/check-human-shape-diagnostic.mjs",
+      "bytes": 17398,
+      "sha256": "6397cf61be4251c8783756c545309220e940aee4d0919cc78529a1853a161716",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/climb-diagnostic.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/climb-diagnostic.mjs",
+      "bytes": 2159,
+      "sha256": "11264de2db5517689ef2d74a2117a97f9c9757b2a0f95e032054953066db9f19",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/current-negative-contact-trace.test.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/current-negative-contact-trace.test.mjs",
+      "bytes": 6628,
+      "sha256": "ea61c39ed5b7a2f410231a507d4bca1479a62c59d4837993c7ca10ae5833d052",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/current-negative-continuous.test.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/current-negative-continuous.test.mjs",
+      "bytes": 5911,
+      "sha256": "499e5c072e485a287a3906c6316aba780544e7bd2880ff87bbf7b04a63198449",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/final-matrix.sh",
+      "archivePath": "reports/native-stages/bluefin-wip-code/final-matrix.sh",
+      "bytes": 5721,
+      "sha256": "45ed5bebd6896660ccfe777feff372c9490729c56e9f9404eb49a4a1808215bd",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/independent-native-climb.test.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/independent-native-climb.test.mjs",
+      "bytes": 12330,
+      "sha256": "73ccf0e9fa3820d7ac8a3e67ddae4f00d288d5ca93dadcc1b093f21744e611e8",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/minimap-plane-query.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/minimap-plane-query.mjs",
+      "bytes": 760,
+      "sha256": "42025c8531c82f32298ab404853cde7b1cd75989102a4f9bf8a00f8a20f11807",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/nav-grid-diagnostic.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/nav-grid-diagnostic.mjs",
+      "bytes": 1362,
+      "sha256": "3f8c8688d9e4d49c2b591db314258f5e7021ce06b6d23010ce8c23a8da3fd0a5",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/negative-capsule-contact.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/negative-capsule-contact.mjs",
+      "bytes": 2575,
+      "sha256": "87401601e38f811489ccc82afc34091e4facb8d95552cc0643e317712791ce10",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/physical-drop-diagnostic.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/physical-drop-diagnostic.mjs",
+      "bytes": 1609,
+      "sha256": "dc46e74ce38333582489814f4ead42594e947881ca7578740616064a3554e6c5",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/positive-human-takeoff-witness.test.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/positive-human-takeoff-witness.test.mjs",
+      "bytes": 16682,
+      "sha256": "f15cd4464702f64c785a7b1e822608017317b8c359ffd0289b6a4a9a6aab4563",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/proper-negative-foot.test.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/proper-negative-foot.test.mjs",
+      "bytes": 5066,
+      "sha256": "49ccec420eab77257c4bb76e746edc0788fb356685fd9979adbf93133a907b12",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/runway-frontier-physical.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/runway-frontier-physical.mjs",
+      "bytes": 3795,
+      "sha256": "0a42d57e9420ebeb3bc8e9b1eeb56501b12c977830816c2b8b26033e96a7a3ee",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/runway-prefix-jump-physical.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/runway-prefix-jump-physical.mjs",
+      "bytes": 4307,
+      "sha256": "feaa7354ebfaa551e900e915f7435dc54544d0acc345b00783ef1248a5b2773d",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/runway-prefix-physical.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/runway-prefix-physical.mjs",
+      "bytes": 4177,
+      "sha256": "68aeaad193df2b3a3eb117f5cf94f6201a3765ae63532ad3db9b16527f8dfcf9",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    },
+    {
+      "originalPath": ".ci-scratch/support-probe.mjs",
+      "archivePath": "reports/native-stages/bluefin-wip-code/support-probe.mjs",
+      "bytes": 1976,
+      "sha256": "4252de9075e80e721dec3209b2a1b98288f856cac32bb39536a7f9d2b910a6ad",
+      "scope": "WIP/historical diagnostic, not a newly qualified gate; restore original relative path to reproduce"
+    }
+  ],
+  "noOriginalOrGeneratedAssets": true,
+  "noEvidenceOrLogs": true
+}

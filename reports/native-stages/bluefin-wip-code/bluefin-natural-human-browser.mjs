@@ -1,0 +1,53 @@
+#!/usr/bin/env node
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+const site=path.resolve(process.argv[2]||'_site-native-bluefin-final'),out=path.resolve(process.argv[3]||'.browser-evidence/bluefin-human');fs.mkdirSync(out,{recursive:true});
+const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.webp':'image/webp'};
+const server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://local'),file=path.resolve(site,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!file.startsWith(site+'/')||!fs.statSync(file).isFile())throw Error('Missing');res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end('Missing');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const report={status:'running',id:'bluefin',buildContentHash:JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))).contentHash,cases:[],errors:[],conditions:'real Chromium PlayerController keyboard W/Shift/Space; 30/60/120 Hz frame/input cadence with the production fixed 60 Hz simulation; source-supported initial poses; empty initial ownership; controlled real Actor/WeaponRunner/Projectiles aim/fire/refill paints wall/runway at 30/60/120 Hz before real keyboard movement and existing Surge; later source walkway via keyboard W and camera yaw; eight actors/seven bots retained; bots frozen; no later Actor pose, velocity or ink assignment; no manual ownership stamps; natural projectile paint phase recorded separately from production fixed-clock keyboard movement; SwiftShader, not hardware measurement'},save=()=>fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify(report,null,2));let page;
+try{
+ const context=await browser.newContext({viewport:{width:960,height:640}});page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')report.errors.push(m.text().slice(0,800));});
+ await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
+ await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
+ await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
+ await page.evaluate(async()=>{const g=NG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:'bluefin',mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();g.menus.show(null);for(const a of NG.actors){a.intent.move.set(0,0,0);a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;}});
+ for(const team of [0])for(const hz of [30,60,120]){
+  const setup=await page.evaluate(({team,hz})=>{
+   const G=NG,a=G.local,V=a.pos.constructor,positive=team===0,start=positive?new V(20,3,18.5):new V(-27,3,-17.5),direction=positive?1:-1,z=start.z,origin=positive?26:-26;
+   G.paint.clear();G.projectiles.clear();const support=G.physics.raycast(start.clone().add(new V(0,.3,0)),new V(0,-1,0),.6);if(!support.hit||support.normal.y<.68||support.point.distanceTo(start)>.01)throw Error('Human initial stance lacks exact source support');
+   const walls=[],floors=[];for(let y=3.25;y<9.2;y+=.15){const h=G.physics.raycast(new V(origin,y,z),new V(direction,0,0),5);if(h.hit&&h.face>=0)walls.push(h);}let wallSamples=walls.length;
+   if(wallSamples<30)throw Error('Human friendly source wall chain incomplete');
+   for(let x=20.5;x<=24.5;x+=.5){const h=G.physics.raycast(new V(x,5,18.5),new V(0,-1,0),3);if(h.hit&&h.face>=0)floors.push(h);}
+   a.team=team;a.setWeapon('shooter');a.spawnAt(start,Math.atan2(direction,0));
+   const oldRandom=Math.random;Math.random=()=>.5;let fireFrames=0,paintSeconds=0,refillSeconds=0;
+   const tick=()=>{G.time+=1/hz;a.character.root.position.copy(a.pos);a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);};
+   try{for(const target of [...floors,...walls]){
+    if(a.ink<25){a.intent.fire=false;a.intent.squid=true;for(let i=0;i<hz*4&&a.ink<95;i++){tick();refillSeconds+=1/hz;}a.intent.squid=false;}
+    a.intent.move.set(0,0,0);a.intent.squid=false;a.intent.fire=true;const d=target.point.clone().sub(a.pos);d.y-=1.1;a.aimYaw=Math.atan2(d.x,d.z);a.aimPitch=Math.max(-1.1,Math.min(1,Math.atan2(d.y,Math.hypot(d.x,d.z))));a.aimPoint.copy(target.point);
+    for(let i=0;i<hz*2&&G.paint.sample(target.face,target.u,target.v)!==team+1;i++){tick();fireFrames++;paintSeconds+=1/hz;}
+   }
+   a.intent.fire=false;a.intent.squid=true;for(let i=0;i<hz*4&&a.ink<95;i++){tick();refillSeconds+=1/hz;}}finally{Math.random=oldRandom;}
+   const naturalPaint={fireFrames,paintSeconds,refillSeconds,wallOwned:walls.filter(h=>G.paint.sample(h.face,h.u,h.v)===team+1).length,floorOwned:floors.filter(h=>G.paint.sample(h.face,h.u,h.v)===team+1).length,floorTargets:floors.length,unownedFloor:floors.filter(h=>G.paint.sample(h.face,h.u,h.v)!==team+1).map(h=>({point:h.point.toArray(),face:h.face,triangle:h.triangle}))};
+   if(naturalPaint.wallOwned!==walls.length||naturalPaint.floorOwned<7||fireFrames===0)throw Error('Natural projectile paint phase incomplete '+JSON.stringify(naturalPaint));
+   a.intent.squid=false;a.aimYaw=Math.atan2(direction,0);G.game.rig.yaw=a.aimYaw;G.game.rig.pitch=0;globalThis.bluefinHuman={team,hz,positive,start:start.toArray(),sourceStartTriangle:support.triangle,wallSamples,frames:0,climbed:false,surge:false,startTicks:G.game.s3Clock.ticks};return{team,hz,frameInputHz:hz,start:start.toArray(),sourceStartTriangle:support.triangle,wallSamples,naturalPaint};
+  },{team,hz});
+  await page.keyboard.down('w');await page.keyboard.down('Shift');
+  if(team===0){
+   const approach=await page.evaluate(()=>{const G=NG,a=G.local,p=bluefinHuman;for(let i=0;i<p.hz*2&&a.pos.x<=23.7;i++){G.game._frame(1/p.hz);p.frames++;if(!a.alive)break;}return{alive:a.alive,position:a.pos.toArray()};});assert(approach.alive&&approach.position[0]>23.7,'actual friendly source runway reaches takeoff');
+   await page.keyboard.down('Space');const attached=await page.evaluate(()=>{const G=NG,a=G.local,p=bluefinHuman;for(let i=0;i<p.hz*3&&!a.climbing;i++){G.game._frame(1/p.hz);p.frames++;p.surge ||=a.s3.surge?.phase==='burst';if(!a.alive)break;}p.climbed ||=a.climbing;return{alive:a.alive,climbing:a.climbing,position:a.pos.toArray()};});await page.keyboard.up('Space');assert(attached.alive&&attached.climbing,'actual keyboard running jump attaches to source wall');
+  }
+  const ascent=await page.evaluate(()=>{const G=NG,a=G.local,p=bluefinHuman;for(let i=0;i<p.hz*8;i++){G.game._frame(1/p.hz);p.frames++;p.climbed ||=a.climbing;p.surge ||=a.s3.surge?.phase==='burst';if(p.climbed&&a.grounded&&a.pos.y>8.9||!a.alive)break;}return{alive:a.alive,grounded:a.grounded,climbed:p.climbed,existingSurgeBurst:p.surge,seconds:p.frames/p.hz,capEnd:a.pos.toArray()};});await page.keyboard.up('Shift');await page.keyboard.up('w');assert(ascent.alive&&ascent.grounded&&ascent.climbed&&ascent.capEnd[1]>8.9,'actual keyboard reaches upper source cap '+JSON.stringify({setup,ascent}));
+  await page.keyboard.down('w');
+  const walkway=await page.evaluate(()=>{
+   const G=NG,a=G.local,p=bluefinHuman,N=G.nav,V=a.pos.constructor,sign=p.team?-1:1,id=N.nearest(new V(20*sign,9,40*sign),1.2),goalNode=N.nodes[id],goal=new V(goalNode.x,goalNode.y,goalNode.z),route=N.path(N.nearest(a.pos,1.2),id,p.team,50000);if(!route)throw Error('Human upper cap lacks a source-supported own-bank walkway');let frames=0;
+   for(const nodeId of route.slice(1)){
+    const node=N.nodes[nodeId],target=new V(node.x,node.y,node.z),h=G.physics.raycast(target.clone().add(new V(0,.2,0)),new V(0,-1,0),.4);if(!h.hit||h.normal.y<.68||h.point.distanceTo(target)>.01)throw Error('Human walkway node lacks original source support');let reached=false;
+    for(let i=0;i<p.hz*3;i++){const dx=target.x-a.pos.x,dz=target.z-a.pos.z;if(Math.hypot(dx,dz)<.35&&Math.abs(target.y-a.pos.y)<.2&&a.grounded){reached=true;break;}G.game.rig.yaw=Math.atan2(dx,dz);G.game._frame(1/p.hz);frames++;if(!a.alive)break;}
+    if(!reached||!a.alive)throw Error('Keyboard source bank walkway failed '+JSON.stringify({team:p.team,hz:p.hz,target:target.toArray(),position:a.pos.toArray(),alive:a.alive,grounded:a.grounded}));
+   }
+   return{walkwaySourceSupports:route.length,bankGoal:goal.toArray(),bankEnd:a.pos.toArray(),distanceToGoal:a.pos.distanceTo(goal),bankWalkSeconds:frames/p.hz,simulationTicks:G.game.s3Clock.ticks-p.startTicks,alive:a.alive,grounded:a.grounded,weapon:a.weaponId,gear:a.s3.loadout};
+  });await page.keyboard.up('w');assert(walkway.alive&&walkway.grounded&&walkway.distanceToGoal<.35);report.cases.push({...setup,...ascent,...walkway});save();console.log(JSON.stringify(report.cases.at(-1)));
+ }
+ const identity=await page.evaluate(async()=>{const G=NG,{STEP}=await import(new URL('patches/splatoon3/runtime/clock.mjs',document.baseURI));G.local.team=0;G.paint.flush(1/60);G.game._skipRender=false;G.renderer.render(G.scene,G.camera);return{sourceSha256:G.level.manifest.sourceSha256,version1130Verified:G.level.manifest.version1130Verified,simulationHz:1/STEP,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length};});assert.equal(identity.simulationHz,60);assert.equal(identity.actors,8);assert.equal(identity.bots,7);assert.equal(report.errors.length,0,JSON.stringify(report.errors));Object.assign(report,identity,{status:'passed'});save();await page.screenshot({path:path.join(out,'bluefin.png'),timeout:60000});
+}catch(error){report.status='failed';report.error=error.stack;save();if(page)await page.screenshot({path:path.join(out,'failure.png'),timeout:15000}).catch(()=>{});throw error;}finally{save();await browser.close();await new Promise(r=>server.close(r));}
