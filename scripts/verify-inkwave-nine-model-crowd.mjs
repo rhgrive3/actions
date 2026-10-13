@@ -35,11 +35,18 @@ if (process.argv[2] === '--roster') {
           for (const percentile of ['p50','p95']) assert.ok(Number.isFinite(row[metric][percentile]));
         assert.equal(row.frames.length,15);assert.equal(row.frames.filter(f=>f.phase==='measured').length,12);
         for(const [index,frame] of row.frames.entries()){assert.equal(frame.index,index);assert.equal(frame.phase,index<3?'warmup':'measured');for(const key of ['animationMs','submitMs','readbackWaitMs','renderThroughReadbackMs'])assert.ok(Number.isFinite(frame[key])&&frame[key]>=0,key+' valid raw timing');assert.equal(frame.glError,0);assert.equal(frame.contextLost,false);assert.equal(frame.defaultReadFramebuffer,true);assert.equal(frame.pixel.length,4);assert.equal(frame.pixel[3],255);assert.ok(frame.pixel.slice(0,3).some(x=>x!==0));assert.ok(frame.renderThroughReadbackMs>=frame.submitMs);assert.equal(frame.width,600);assert.equal(frame.height,600);}
-        assert.equal(row.drawCalls,tier==='far'?59:scenario==='A'?118:119,'approved logical-pass draw budget');
+        // Immutable baseline keeps its exact approved draw count; a candidate
+        // may batch previously separate model groups but must never add draws.
+        const approved=tier==='far'?59:scenario==='A'?118:119;
+        assert.ok(Number.isSafeInteger(row.drawCalls)&&row.drawCalls>0,'nonempty measured draw count');
+        if(pair.startsWith('before')) assert.equal(row.drawCalls,approved,'immutable baseline draw budget');
+        else assert.ok(row.drawCalls<=approved,'candidate must not exceed baseline draw budget');
       }
     }
     for (const tier of ['game','far']) for (const pair of ['after-B','after-B2','before-A2']) {
-      assert.equal(all[pair][tier].drawCalls,all['before-A'][tier].drawCalls,`${scenario}/${pair}/${tier}: draw-call difference`);
+      const recorded=all[pair][tier].drawCalls,base=all['before-A'][tier].drawCalls;
+      if(pair.startsWith('after')) assert.ok(recorded>0&&recorded<=base,`${scenario}/${pair}/${tier}: draw increase or empty render`);
+      else assert.equal(recorded,base,`${scenario}/${pair}/${tier}: baseline drift`);
       assert.deepEqual(all[pair][tier].weaponNear,all['before-A'][tier].weaponNear,`${scenario}/${pair}/${tier}: LOD mismatch`);
     }
     for(const tier of ['game','far']){
@@ -49,6 +56,8 @@ if (process.argv[2] === '--roster') {
       for(const pair of ['after-B','after-B2']){
         assert.ok(all[pair][tier].visibleGeometryBytes-base.visibleGeometryBytes<=cap,`${scenario}/${pair}/${tier}: approved absolute model-complexity memory increase`);
         assert.equal(all[pair][tier].triangles,all['after-B'][tier].triangles,'stable candidate triangles');
+        assert.ok(all[pair][tier].triangles>0,'candidate retains visible rendered triangles');
+        assert.equal(all[pair][tier].drawCalls,all['after-B'][tier].drawCalls,'candidate draw batching stable across B/B2');
       }
     }
     comparison[scenario]=all;
