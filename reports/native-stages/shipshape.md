@@ -97,13 +97,20 @@ Source drop arrival is observed at every installed simulation step
 before ordinary AI selects its next goal.
 
 The final-pair human Tower boarding check is prepared in
-`scripts/check-inkwave-shipshape-tower-human.mjs`. It uses physical W/Space from
+`scripts/check-inkwave-shipshape-tower-human.mjs` uses physical W/Space from
 the original supported inferred approach at 30/60/120 render cadences, captures
 the installed collider arguments, and requires exact source capsule sweeps for
 movement without contact. Observed source-collider corrections require both
 committed endpoints to fit at the unchanged .003 margin. Strict straight-chord
-diagnostics remain recorded separately. It has not run yet. Centre
-boarding does not replace full opposed-half Tower travel and scoring proof.
+diagnostics remain recorded separately. The current experimental joint
+composition `f9361156` passes all three cadences: each ordinary jump advances
+its serial once, boards actual Tower block 140943 after 26 fixed steps from
+source floor triangle 78502, and clears 26 contact-free source sweeps and 26
+endpoint fits. All 78 sweeps and 78 fits pass, with eight actors, seven bots,
+zero AP and no browser errors. Private screenshots are inspected. Binding
+revision `f16b1587` and exact runtime hashes are recorded separately; the helper
+candidates remain unaccepted. Centre boarding does not replace full opposed-half
+Tower travel and scoring proof or qualify the unfinished bank replay.
 
 The strict paired combat checker initially stopped earlier at paint movement
 tick 2451. Wahoo's matched accepted900/root combat baseline reproduces the same

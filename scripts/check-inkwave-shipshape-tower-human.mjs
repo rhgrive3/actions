@@ -21,7 +21,7 @@ const server=http.createServer((req,res)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const result={status:'running',buildContentHash:build.contentHash,revision:build.revision,cases:[],errors:[]};
+const result={status:'running',buildContentHash:build.contentHash,revision:build.build.revision,cases:[],errors:[]};
 try{
  const context=await browser.newContext({viewport:{width:800,height:600}}),page=await context.newPage();
  page.on('pageerror',e=>result.errors.push(e.message));
@@ -116,17 +116,19 @@ try{
    const G=NG,a=G.local,m=shipshapeTowerHuman;
    const {nativeTowerRider}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI));
    a.update=m.originalUpdate;a._integrateMovementStep=m.originalIntegrate;G.physics.collideBody=m.originalCollide;G.physics._nativeContacts=m.originalNativeContacts;
-   return {rider:nativeTowerRider(G,a),sourceSha256:m.sourceSha256,position:a.pos.toArray(),grounded:a.grounded,groundBlock:a.ground.block,towerBlock:G.match.rankedWorld.towerBlockId,serialDelta:(a.s3JumpSerial||0)-m.serial,actorSteps:m.actorSteps,movementCapsules:m.movementCapsules,contactFrames:m.contactFrames,contactFreeMovementCapsules:m.movementCapsules-m.contactFrames,strictChordFailures:m.strictChordFailures,firstChordFailure:m.firstChordFailure,continuousSolverTrajectoryClaim:false,actorCapsules:m.actorCapsules,firstFailure:m.firstFailure,bodyProfiles:m.profiles,movementIntervals:m.intervals,sourceDataIdentity:G.level.data.triangles===m.sourceData,alive:a.alive,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,gearAP:Object.keys(a.s3.abilityPoints)};
+   return {rider:nativeTowerRider(G,a),sourceSha256:m.sourceSha256,position:a.pos.toArray(),grounded:a.grounded,groundBlock:a.ground.block,towerBlock:G.match.rankedWorld.towerBlockId,serialDelta:(a.s3JumpSerial||0)-m.serial,actorSteps:m.actorSteps,movementCapsules:m.movementCapsules,contactFrames:m.contactFrames,contactFreeMovementCapsules:m.movementCapsules-m.contactFrames,strictChordFailures:m.strictChordFailures,firstChordFailure:m.firstChordFailure,continuousSolverTrajectoryClaim:false,actorCapsules:m.actorCapsules,firstFailure:m.firstFailure,bodyProfiles:m.profiles,movementIntervals:m.intervals,sourceDataIdentity:G.level.data.triangles===m.sourceData,alive:a.alive,aliveActors:G.actors.filter(other=>other.alive).length,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,gearAP:Object.keys(a.s3.abilityPoints)};
   });
   result.cases.push({renderHz:hz,physicsHz:60,setup,...receipt});
   fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(result,null,2));
   assert.equal(receipt.rider,true,'Actual W/Space must board current Tower');
   assert.equal(receipt.grounded,true);assert.equal(receipt.alive,true);assert.equal(receipt.sourceDataIdentity,true);
   assert.equal(receipt.groundBlock,receipt.towerBlock);assert.equal(receipt.firstFailure,null);
-  assert.equal(receipt.actors,8);assert.equal(receipt.bots,7);assert.equal(receipt.gearAP.length,0);
+  assert.equal(receipt.actors,8);assert.equal(receipt.aliveActors,8);assert.equal(receipt.bots,7);assert.equal(receipt.gearAP.length,0);
   assert(receipt.actorCapsules>0&&receipt.movementCapsules>0);
   if(setup.jumping)assert(receipt.serialDelta>=1,'Ordinary jump must be physically admitted');
   console.log(JSON.stringify({renderHz:hz,rider:true,actorSteps:receipt.actorSteps,movementCapsules:receipt.movementCapsules,actorCapsules:receipt.actorCapsules}));
+  await page.evaluate(()=>{NG.game._skipRender=false;NG.paint.flush(1/60);NG.renderer.render(NG.scene,NG.camera);});
+  await page.screenshot({path:path.join(evidence,'shipshape-tower-human-'+hz+'.png'),timeout:30000});
  }
  assert.equal(result.errors.length,0,JSON.stringify(result.errors));
  result.status='passed';
