@@ -6,9 +6,10 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { probeProjectileVisibility } from './lib/inkwave-projectile-visibility-probe.mjs';
 const site=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]);
 fs.mkdirSync(out,{recursive:true});
-const result={status:'running',sourceSha:process.env.SOURCE_SHA||null,measurement:'Stage-only experiment pinned to 14f9; production composition with native fill candidate; Chromium diagnostic, not current-main acceptance or mobile/retail equivalence',stages:[],errors:[]};
+const result={status:'running',sourceSha:process.env.SOURCE_SHA||null,measurement:'Experiment pinned to 14f9: native stage fill candidate plus native projectile investigation; no projectile production fix; job success alone does not establish projectile visibility; not current-main acceptance or mobile/retail equivalence',stages:[],errors:[]};
 const buildPath=path.join(site,'inkwave-build.json');result.build=JSON.parse(fs.readFileSync(buildPath,'utf8'));fs.copyFileSync(buildPath,path.join(out,'inkwave-build.json'));
 const save=()=>fs.writeFileSync(path.join(out,'stage-visibility.json'),JSON.stringify(result,null,2));
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.html':'text/html','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'};
@@ -40,6 +41,7 @@ r.shadowMap.enabled=stageIdentity.shadowEnabled;r.render(G.scene,G.camera);const
   await page.evaluate(()=>{const G=NG,g=G.game;for(const [mesh,orig] of stageMaterials){mesh.receiveShadow=stageReceivers.get(mesh);if(orig.userData.nativeShadeFill)orig.userData.nativeShadeFill.value=stageFills.get(mesh);if(mesh.material!==orig)mesh.material.dispose();mesh.material=orig;}g.levelMesh.visible=stageIdentity.inkVisible;G.renderer.shadowMap.enabled=stageIdentity.shadowEnabled;if(G.level!==stageIdentity.level||G.physics!==stageIdentity.physics||G.nav!==stageIdentity.nav||G.paint.grid.some((v,i)=>v!==stageIdentity.paint[i]))throw Error('Render diagnostic mutated gameplay authority');g.R.render();});
   }
   await page.screenshot({path:path.join(out,`${quality}-${time}-composer.png`),timeout:60000});
+  if(time==='day'){row.projectiles=await probeProjectileVisibility(page,path.join(out,quality+'-projectiles'));for(const c of row.projectiles.cases)for(const v of c.views||[])assert.equal(v.glError,0,'Projectile GPU error');}
   save();
  }
  result.status='rendered';
