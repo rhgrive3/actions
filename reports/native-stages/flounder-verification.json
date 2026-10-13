@@ -1,0 +1,2335 @@
+{
+  "id": "flounder",
+  "internal": "Vss_Jyoheki03",
+  "name": "ヒラメが丘団地",
+  "verificationStatus": "passed-local-source-validation",
+  "sourceTree": "dd181a9d2772d8858f7c73245716639bee97f932",
+  "source": {
+    "id": "flounder",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "objSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+    "mtlSha256": "17c06c140a1d675d819f99fea2d96821e667d58a614cb4f16bde10f265c146d2",
+    "vertices": 855868,
+    "triangles": 633427,
+    "indicesUint32Identical": true,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "sourceTexturesIdentical": 312,
+    "maxPositionDifference": 0.0,
+    "version1130Verified": false,
+    "textureAndMtlGitTreeVerified": true
+  },
+  "sourceObjBytes": 102761497,
+  "acquiredSourcePngs": 376,
+  "sourceObjects": 790,
+  "collisionTriangles": 154160,
+  "paintCharts": 42139,
+  "paintGridCells": 1205511,
+  "validPaintMaskCells": 460098,
+  "chartMaxPlaneError": 0.0011639945363348804,
+  "version1130Verified": false,
+  "builds": {
+    "currentPrivate": {
+      "revision": "9516d2df76efa2efbd8b6db30efced0a6ebfbdee0eca3e6dd0e5be9b68a9ca4d",
+      "inputHash": "fa988c5a69da8608839936cbdde8e32d4bf9c5776f30d3a537e7a8f425660858",
+      "contentHash": "2087c9516e61368cd0501b32e61b7bc8e85a5a13c497d96c7cd7041c11e69607"
+    },
+    "currentPublic": {
+      "revision": "56e1181edbf680a1d602b08b961ef61ba48fadca0d5e6b9ea1ce1418aab00144",
+      "inputHash": "fa988c5a69da8608839936cbdde8e32d4bf9c5776f30d3a537e7a8f425660858",
+      "contentHash": "dea5f517de424b6e79108b5cdfd3818ef6112ff61909b1712b11368d5bb3eecd"
+    },
+    "readyPrivate": {
+      "revision": "600944686c10251b48197fd267a87806cfefbb1a89b3b70b52d5d0ffce4166d1",
+      "inputHash": "eaf17d95407357efa26f61747d95b00b67d15640b5f55f12df85e82aa42a303b",
+      "contentHash": "aa6cb1da847ebfb789372a807e456a196aea43b9c872ca338ade5d9a4b7adcf7"
+    },
+    "readyPublic": {
+      "revision": "9ffc062c603e1ad3baeced0d254727ddc701cfd16d8977c8d28a7cb144763ac7",
+      "inputHash": "eaf17d95407357efa26f61747d95b00b67d15640b5f55f12df85e82aa42a303b",
+      "contentHash": "5c8bf3a7e88473498f568bd8e5257fbcd2440aaaf1438352ec5f567262420d96"
+    },
+    "gameplay": {
+      "revision": "9516d2df76efa2efbd8b6db30efced0a6ebfbdee0eca3e6dd0e5be9b68a9ca4d",
+      "inputHash": "fa988c5a69da8608839936cbdde8e32d4bf9c5776f30d3a537e7a8f425660858",
+      "contentHash": "2087c9516e61368cd0501b32e61b7bc8e85a5a13c497d96c7cd7041c11e69607"
+    },
+    "render": {
+      "revision": "cc0d50dccb1736619b1cd4a77da27bca010eea1b9c1ea6d95ac7a7c2f715adbd",
+      "inputHash": "413b6c09ad0c91b9086805b35a9d53b54836cc8ab0d755456dc4e56de03ca8ae",
+      "contentHash": "929e5ff828893b2198f95aeb8de80ab5684314ff9747746f6c961e1139caf117"
+    }
+  },
+  "sharedClimbReview": {
+    "pr": 1347,
+    "accepted": true,
+    "independentReviewer": "/root/museum",
+    "acceptedHead": "a322af55fc22f4fe3604c8b1cd1013a15b1fc82b",
+    "commits": [
+      "64a43507",
+      "8d114d89"
+    ],
+    "stageOptIn": true,
+    "retailNavigationVerified": false
+  },
+  "sharedFoundations": {
+    "sourceClimbs": "0a9acd48c9c88dbf8d2f3495b1863eb4e98f8135",
+    "sourceSphere": "4716dacdbfec7940cca4cde770ae0098ce5f7e5d",
+    "camera": "33cecb0583de92b260478356d4340513a3188065",
+    "tower": "89cb600efe646ad1741a05de2ab21119a1438c66",
+    "spawnDirectedPrune": "64b0497e50c648df1afef4ef053e0d5026eed275",
+    "sourceLaunch": "64c82c024f275d9a64632ca958b63ab035d0e40a",
+    "allModePaintChecker": "2b2406385d70c2d3f0ca0c61be8b17b7193e237b"
+  },
+  "postAcceptanceBuildReceipts": [
+    {
+      "site": "_site-native-flounder-reviewed",
+      "currentAcceptedSourceAndSerializedDefinitionMatch": true,
+      "runtimeSha256": "f297ed0f1dc054c85ad5db3144819792ed57695943b8950afe0a605c503bb345"
+    },
+    {
+      "site": "_site-native-flounder-public-reviewed",
+      "currentAcceptedSourceAndSerializedDefinitionMatch": true,
+      "runtimeSha256": "f297ed0f1dc054c85ad5db3144819792ed57695943b8950afe0a605c503bb345"
+    }
+  ],
+  "startupBudget": {
+    "currentPrivate": {
+      "status": "passed",
+      "revision": "9516d2df76efa2efbd8b6db30efced0a6ebfbdee0eca3e6dd0e5be9b68a9ca4d",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2879085,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5773178,
+      "workerBytes": 70517,
+      "declaredBytes": 10391218,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "currentPublic": {
+      "status": "passed",
+      "revision": "56e1181edbf680a1d602b08b961ef61ba48fadca0d5e6b9ea1ce1418aab00144",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2881936,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5776029,
+      "workerBytes": 70517,
+      "declaredBytes": 10394069,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "tests": {
+    "nativeSource": {
+      "tests": 69,
+      "pass": 68,
+      "fail": 0,
+      "skipped": 1
+    },
+    "climbLatest": {
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "skipped": 0
+    },
+    "packaging": {
+      "tests": 23,
+      "pass": 19,
+      "fail": 0,
+      "skipped": 4
+    },
+    "emittedPrivate": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emittedPublic": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0
+    }
+  },
+  "navigation": {
+    "optIn": true,
+    "currentFoundationCpuRepeat": true,
+    "nodes": 9973,
+    "validNodes": 7774,
+    "sourceClimbEdges": 116,
+    "noPaintNegativeCases": 26,
+    "sourceCapsuleCeilingProtrusionNegatives": 8,
+    "enemyWallReleased": true,
+    "human": [
+      {
+        "team": 0,
+        "hz": 30,
+        "start": [
+          20.5,
+          13.125,
+          -7
+        ],
+        "end": [
+          20.49792307742833,
+          15.050000190734863,
+          -5.500463763256463
+        ],
+        "grounded": true,
+        "initialState": "source wall already friendly-inked; humanoid shooter; default fixture gear"
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "start": [
+          20.5,
+          13.125,
+          -7
+        ],
+        "end": [
+          20.499042720557824,
+          15.050000190734863,
+          -5.502762511370396
+        ],
+        "grounded": true,
+        "initialState": "source wall already friendly-inked; humanoid shooter; default fixture gear"
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "start": [
+          20.5,
+          13.125,
+          -7
+        ],
+        "end": [
+          20.499433282407885,
+          15.050000190734863,
+          -5.484787969191222
+        ],
+        "grounded": true,
+        "initialState": "source wall already friendly-inked; humanoid shooter; default fixture gear"
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "start": [
+          -20.5,
+          13.125,
+          7
+        ],
+        "end": [
+          -20.497837019785145,
+          15.050000190734863,
+          5.50337311801762
+        ],
+        "grounded": true,
+        "initialState": "source wall already friendly-inked; humanoid shooter; default fixture gear"
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "start": [
+          -20.5,
+          13.125,
+          7
+        ],
+        "end": [
+          -20.499012173469893,
+          15.050000190734863,
+          5.503444580528172
+        ],
+        "grounded": true,
+        "initialState": "source wall already friendly-inked; humanoid shooter; default fixture gear"
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "start": [
+          -20.5,
+          13.125,
+          7
+        ],
+        "end": [
+          -20.49941573829135,
+          15.050000190734863,
+          5.485113124226982
+        ],
+        "grounded": true,
+        "initialState": "source wall already friendly-inked; humanoid shooter; default fixture gear"
+      }
+    ],
+    "botSourceWall": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 0.8333333333333334,
+        "start": [
+          20.5,
+          13.125,
+          -7
+        ],
+        "end": [
+          20.500006417072303,
+          15.050000190734863,
+          -5.833797508586291
+        ],
+        "wallSamples": 12,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialWall": "unpainted",
+        "ordinaryFireSwimMove": true,
+        "grounded": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 0.8166666666666667,
+        "start": [
+          20.5,
+          13.125,
+          -7
+        ],
+        "end": [
+          20.500006713215267,
+          15.050000190734863,
+          -5.808317554581071
+        ],
+        "wallSamples": 12,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialWall": "unpainted",
+        "ordinaryFireSwimMove": true,
+        "grounded": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 0.8416666666666667,
+        "start": [
+          20.5,
+          13.125,
+          -7
+        ],
+        "end": [
+          20.500001227180995,
+          15.050000190734863,
+          -5.9555385878969895
+        ],
+        "wallSamples": 12,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialWall": "unpainted",
+        "ordinaryFireSwimMove": true,
+        "grounded": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 1.1333333333333333,
+        "start": [
+          -20.5,
+          13.125,
+          7
+        ],
+        "end": [
+          -20.500007392525887,
+          15.050000190734863,
+          5.836706648972693
+        ],
+        "wallSamples": 12,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialWall": "unpainted",
+        "ordinaryFireSwimMove": true,
+        "grounded": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 1.1166666666666667,
+        "start": [
+          -20.5,
+          13.125,
+          7
+        ],
+        "end": [
+          -20.500007608230312,
+          15.050000190734863,
+          5.808999587772009
+        ],
+        "wallSamples": 12,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialWall": "unpainted",
+        "ordinaryFireSwimMove": true,
+        "grounded": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "seconds": 1.1333333333333333,
+        "start": [
+          -20.5,
+          13.125,
+          7
+        ],
+        "end": [
+          -20.50000135766965,
+          15.050000190734863,
+          5.9559127937595795
+        ],
+        "wallSamples": 12,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialWall": "unpainted",
+        "ordinaryFireSwimMove": true,
+        "grounded": true
+      }
+    ],
+    "fullOpposingBank": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 32.1,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          10,
+          12.08,
+          -70
+        ],
+        "end": [
+          -14.499976433452412,
+          6,
+          33.57879413115924
+        ],
+        "distanceToGoal": 1.421205869036149,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 32.2,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          10,
+          12.08,
+          -70
+        ],
+        "end": [
+          -14.50001000261479,
+          6,
+          33.541972588673715
+        ],
+        "distanceToGoal": 1.4580274113605955,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 33.375,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          10,
+          12.08,
+          -70
+        ],
+        "end": [
+          -14.499985097710535,
+          6,
+          33.51741358079732
+        ],
+        "distanceToGoal": 1.4825864192775784,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 31.9,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          -10,
+          12.08,
+          70
+        ],
+        "end": [
+          14.764598618388248,
+          6,
+          -33.89665927964754
+        ],
+        "distanceToGoal": 1.3259622684165508,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 33.15,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          -10,
+          12.08,
+          70
+        ],
+        "end": [
+          14.697345122630102,
+          6,
+          -33.80982344933013
+        ],
+        "distanceToGoal": 1.4355399938455604,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "seconds": 33.958333333333336,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          -10,
+          12.08,
+          70
+        ],
+        "end": [
+          14.667895378670854,
+          6,
+          -33.76612637477876
+        ],
+        "distanceToGoal": 1.4882345997368602,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      }
+    ]
+  },
+  "gameplay": {
+    "actors": 8,
+    "alive": 8,
+    "bots": 7,
+    "botMotion": [
+      8.28060570372687,
+      7.346320682404929,
+      13.956392774183572,
+      9.787113861716074,
+      12.907744145381534,
+      13.140535687328043,
+      10.188042300397681
+    ],
+    "sourceMetrics": {
+      "loadMilliseconds": 2380.5,
+      "navMilliseconds": 518.3999999910593,
+      "shaderWarmMilliseconds": 11.399999991059303,
+      "vertices": 855868,
+      "triangles": 633427,
+      "faces": 42139,
+      "gridBytes": 1205511,
+      "atlas": 2048,
+      "ppm": 4,
+      "textureCount": 116,
+      "quality": "low",
+      "version1130Verified": false
+    },
+    "cpuFrameSwiftShader": {
+      "p50": 16.599999994039536,
+      "p95": 46.20000000298023,
+      "max": 80.8999999910593
+    },
+    "rules": [
+      {
+        "mode": "zones",
+        "towerProof": null,
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          98,
+          100
+        ],
+        "snapshotBytes": 512,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      },
+      {
+        "mode": "tower",
+        "towerProof": {
+          "pathNodes": 27,
+          "segmentInteriorSamples": 3,
+          "actualCapsuleSupports": 210,
+          "halfSize": 1.2,
+          "localLift": 1.2,
+          "sourceClearance": {
+            "queries": 14440,
+            "triangleTests": 261776,
+            "radius": 2.097056274847714,
+            "height": 2.03,
+            "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+          },
+          "arenaSpan": {
+            "origin": [
+              0,
+              0
+            ],
+            "forward": [
+              -0.1414213562373095,
+              0.9899494936611665
+            ],
+            "endpointProjection": [
+              -11.525840533340725,
+              11.525840533340725
+            ],
+            "minimumHalfDepth": 2.097056274847714,
+            "bothHalvesVerified": true
+          },
+          "liveGroundedHumanCounted": true,
+          "keyboardBoarding": [
+            {
+              "hz": 30,
+              "boarded": true,
+              "frames": 14,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 42340,
+              "towerBlock": 42340,
+              "position": [
+                -0.7928658593094842,
+                12.2,
+                -0.590342301951747
+              ],
+              "approach": {
+                "sourceNode": 4776,
+                "start": [
+                  -1.5,
+                  11,
+                  -2
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  12.2,
+                  -0.8049844718999242
+                ],
+                "height": 1.1999999999999993,
+                "jumping": true,
+                "hz": 30
+              }
+            },
+            {
+              "hz": 60,
+              "boarded": true,
+              "frames": 27,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 42340,
+              "towerBlock": 42340,
+              "position": [
+                -0.7868407131787913,
+                12.2,
+                -0.5700688939250578
+              ],
+              "approach": {
+                "sourceNode": 4776,
+                "start": [
+                  -1.5,
+                  11,
+                  -2
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  12.2,
+                  -0.8049844718999242
+                ],
+                "height": 1.1999999999999993,
+                "jumping": true,
+                "hz": 60
+              }
+            },
+            {
+              "hz": 120,
+              "boarded": true,
+              "frames": 54,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 42340,
+              "towerBlock": 42340,
+              "position": [
+                -0.7783585577620694,
+                12.2,
+                -0.5501000000000017
+              ],
+              "approach": {
+                "sourceNode": 4776,
+                "start": [
+                  -1.5,
+                  11,
+                  -2
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  12.2,
+                  -0.8049844718999242
+                ],
+                "height": 1.1999999999999993,
+                "jumping": true,
+                "hz": 120
+              }
+            }
+          ]
+        },
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          92,
+          100
+        ],
+        "snapshotBytes": 775,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      },
+      {
+        "mode": "rainmaker",
+        "towerProof": null,
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          100,
+          100
+        ],
+        "snapshotBytes": 944,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      },
+      {
+        "mode": "clams",
+        "towerProof": null,
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          100,
+          100
+        ],
+        "snapshotBytes": 8244,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      }
+    ],
+    "errors": []
+  },
+  "rendering": {
+    "status": "passed",
+    "pixelChanged": [
+      0,
+      0,
+      0
+    ],
+    "movingCameraSamples": 12,
+    "cpuPaintUnchanged": true,
+    "authoritiesUnchanged": true,
+    "errors": []
+  },
+  "browserClimbs": {
+    "id": "flounder",
+    "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+    "version1130Verified": false,
+    "actors": 8,
+    "bots": 7,
+    "weapon": "shooter / Shooter_Normal_00",
+    "gearAP": [],
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 0.8333333333333334,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "grounded": true,
+        "ownedWallSamples": 12,
+        "sourceWallSamples": 12,
+        "end": [
+          20.49999637848154,
+          15.050000190734863,
+          -6.0937975083924965
+        ],
+        "cpuStep": {
+          "p50": 1.5999999940395355,
+          "p95": 35.70000000298023,
+          "max": 53.29999999701977
+        }
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 1.1166666666666667,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "grounded": true,
+        "ownedWallSamples": 12,
+        "sourceWallSamples": 12,
+        "end": [
+          20.499998350771275,
+          15.050000190734863,
+          -6.048317553952296
+        ],
+        "cpuStep": {
+          "p50": 0.5999999940395355,
+          "p95": 4,
+          "max": 23.80000001192093
+        }
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 0.8416666666666667,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "grounded": true,
+        "ownedWallSamples": 12,
+        "sourceWallSamples": 12,
+        "end": [
+          20.500001240457937,
+          15.050000190734863,
+          -5.953871921205191
+        ],
+        "cpuStep": {
+          "p50": 0.5,
+          "p95": 1.699999988079071,
+          "max": 23.5
+        }
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 0.8333333333333334,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "grounded": true,
+        "ownedWallSamples": 12,
+        "sourceWallSamples": 12,
+        "end": [
+          -20.499998941857214,
+          15.050000190734863,
+          6.023373315448072
+        ],
+        "cpuStep": {
+          "p50": 0.3999999910593033,
+          "p95": 1.3999999910593033,
+          "max": 1.6000000089406967
+        }
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 1.1166666666666667,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "grounded": true,
+        "ownedWallSamples": 12,
+        "sourceWallSamples": 12,
+        "end": [
+          -20.49999874477687,
+          15.050000190734863,
+          6.032332920302927
+        ],
+        "cpuStep": {
+          "p50": 0.29999999701976776,
+          "p95": 0.7000000029802322,
+          "max": 1.1000000089406967
+        }
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "seconds": 0.8416666666666667,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "grounded": true,
+        "ownedWallSamples": 12,
+        "sourceWallSamples": 12,
+        "end": [
+          -20.500001372788834,
+          15.050000190734863,
+          5.95424612706163
+        ],
+        "cpuStep": {
+          "p50": 0.29999999701976776,
+          "p95": 0.7000000029802322,
+          "max": 9
+        }
+      }
+    ],
+    "banks": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 28.733333333333334,
+        "replans": 0,
+        "waypoints": 123,
+        "sourceClimbs": 2,
+        "end": [
+          -14.500000855095607,
+          6,
+          33.58699252447151
+        ],
+        "distanceToGoal": 1.4130074755287467,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 28.433333333333334,
+        "replans": 0,
+        "waypoints": 123,
+        "sourceClimbs": 2,
+        "end": [
+          -14.49998037573948,
+          6,
+          33.57227615198887
+        ],
+        "distanceToGoal": 1.4277238481459955,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 29.116666666666667,
+        "replans": 0,
+        "waypoints": 123,
+        "sourceClimbs": 2,
+        "end": [
+          -14.49997263522005,
+          6,
+          33.50054043122662
+        ],
+        "distanceToGoal": 1.4994595690230823,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 43.333333333333336,
+        "replans": 1,
+        "waypoints": 123,
+        "sourceClimbs": 2,
+        "end": [
+          14.711977589369278,
+          6,
+          -33.824669477590156
+        ],
+        "distanceToGoal": 1.4150551779222078,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 29.233333333333334,
+        "replans": 0,
+        "waypoints": 123,
+        "sourceClimbs": 2,
+        "end": [
+          14.647357501388276,
+          6,
+          -33.81822556514142
+        ],
+        "distanceToGoal": 1.457254283000796,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "seconds": 31.241666666666667,
+        "replans": 0,
+        "waypoints": 123,
+        "sourceClimbs": 2,
+        "end": [
+          14.653178471647811,
+          6,
+          -33.77182744758669
+        ],
+        "distanceToGoal": 1.491815846336996,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      }
+    ],
+    "conditions": "production Chromium Actor/BotBrain/WeaponRunner/Projectiles/fixed paint clock; eight actors retained; other bots frozen; source-supported setup poses; initial ownership cleared; goal reacquired after ordinary refill/recovery; 0.5 RNG; SwiftShader",
+    "errors": []
+  },
+  "browserSourceLaunch": {
+    "status": "passed",
+    "stages": [
+      {
+        "id": "flounder",
+        "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+        "actors": 8,
+        "bots": 7,
+        "cases": [
+          {
+            "team": 0,
+            "hz": 30,
+            "role": "human",
+            "slot": 0,
+            "from": [
+              10.907869176400647,
+              16.58,
+              -69.37889327926545
+            ],
+            "target": {
+              "x": 8.302943725152286,
+              "y": 12,
+              "z": -58.120606076066004
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              8.302943725152286,
+              12,
+              -58.120606076066004
+            ],
+            "supportTriangle": 126476,
+            "supportObject": "Fld_Jyoheki03_Floor_Conc_001_1__mJyohekiRoad",
+            "landingNode": 1019,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 82,
+            "postLaunchMove": 4.738382849687641,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 30,
+            "role": "bot0",
+            "slot": 0,
+            "from": [
+              10.907869176400647,
+              16.58,
+              -69.37889327926545
+            ],
+            "target": {
+              "x": 6.5,
+              "y": 12,
+              "z": -64,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              6.5,
+              12,
+              -64
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 716,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 87,
+            "postLaunchMove": 4.6328969768997545,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 30,
+            "role": "bot1",
+            "slot": 1,
+            "from": [
+              9.37889327926546,
+              16.58,
+              -69.09213082359935
+            ],
+            "target": {
+              "x": 7.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              7.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 775,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.632940148208008,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 30,
+            "role": "bot2",
+            "slot": 2,
+            "from": [
+              9.092130823599353,
+              16.58,
+              -70.62110672073455
+            ],
+            "target": {
+              "x": 10.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              10.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 780,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.623999999999995,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 30,
+            "role": "bot3",
+            "slot": 3,
+            "from": [
+              10.621106720734538,
+              16.58,
+              -70.90786917640065
+            ],
+            "target": {
+              "x": 12.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              12.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 784,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.623999999999995,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "role": "human",
+            "slot": 0,
+            "from": [
+              10.907869176400647,
+              16.58,
+              -69.37889327926545
+            ],
+            "target": {
+              "x": 8.302943725152286,
+              "y": 12,
+              "z": -58.120606076066004
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              8.302943725152286,
+              12,
+              -58.120606076066004
+            ],
+            "supportTriangle": 126476,
+            "supportObject": "Fld_Jyoheki03_Floor_Conc_001_1__mJyohekiRoad",
+            "landingNode": 1019,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 82,
+            "postLaunchMove": 4.915609961170924,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "role": "bot0",
+            "slot": 0,
+            "from": [
+              10.907869176400647,
+              16.58,
+              -69.37889327926545
+            ],
+            "target": {
+              "x": 6.5,
+              "y": 12,
+              "z": -64,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              6.5,
+              12,
+              -64
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 716,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 87,
+            "postLaunchMove": 4.718431663415575,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "role": "bot1",
+            "slot": 1,
+            "from": [
+              9.37889327926546,
+              16.58,
+              -69.09213082359935
+            ],
+            "target": {
+              "x": 7.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              7.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 775,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.718474052130988,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "role": "bot2",
+            "slot": 2,
+            "from": [
+              9.092130823599353,
+              16.58,
+              -70.62110672073455
+            ],
+            "target": {
+              "x": 10.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              10.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 780,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.865999999999843,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "role": "bot3",
+            "slot": 3,
+            "from": [
+              10.621106720734538,
+              16.58,
+              -70.90786917640065
+            ],
+            "target": {
+              "x": 12.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              12.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 784,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.865999999999843,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "role": "human",
+            "slot": 0,
+            "from": [
+              10.907869176400647,
+              16.58,
+              -69.37889327926545
+            ],
+            "target": {
+              "x": 8.302943725152286,
+              "y": 12,
+              "z": -58.120606076066004
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              8.302943725152286,
+              12,
+              -58.120606076066004
+            ],
+            "supportTriangle": 126476,
+            "supportObject": "Fld_Jyoheki03_Floor_Conc_001_1__mJyohekiRoad",
+            "landingNode": 1019,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 82,
+            "postLaunchMove": 4.9729175902583735,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "role": "bot0",
+            "slot": 0,
+            "from": [
+              10.907869176400647,
+              16.58,
+              -69.37889327926545
+            ],
+            "target": {
+              "x": 6.5,
+              "y": 12,
+              "z": -64,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              6.5,
+              12,
+              -64
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 716,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 87,
+            "postLaunchMove": 4.898067267945207,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "role": "bot1",
+            "slot": 1,
+            "from": [
+              9.37889327926546,
+              16.58,
+              -69.09213082359935
+            ],
+            "target": {
+              "x": 7.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              7.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 775,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.904307339919518,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "role": "bot2",
+            "slot": 2,
+            "from": [
+              9.092130823599353,
+              16.58,
+              -70.62110672073455
+            ],
+            "target": {
+              "x": 10.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              10.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 780,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 5.083000000000176,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "role": "bot3",
+            "slot": 3,
+            "from": [
+              10.621106720734538,
+              16.58,
+              -70.90786917640065
+            ],
+            "target": {
+              "x": 12.5,
+              "y": 12,
+              "z": -63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              12.5,
+              12,
+              -63
+            ],
+            "supportTriangle": 22568,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 784,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 5.083000000000176,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "role": "human",
+            "slot": 0,
+            "from": [
+              -9.092130823599353,
+              16.58,
+              70.62110672073455
+            ],
+            "target": {
+              "x": -8.302943725152286,
+              "y": 12,
+              "z": 58.120606076066004
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -8.302943725152286,
+              12,
+              58.120606076066004
+            ],
+            "supportTriangle": 126482,
+            "supportObject": "Fld_Jyoheki03_Floor_Conc_001_1__mJyohekiRoad",
+            "landingNode": 8953,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 82,
+            "postLaunchMove": 4.738382849687641,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "role": "bot0",
+            "slot": 0,
+            "from": [
+              -9.092130823599353,
+              16.58,
+              70.62110672073455
+            ],
+            "target": {
+              "x": -6.5,
+              "y": 12,
+              "z": 64,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -6.5,
+              12,
+              64
+            ],
+            "supportTriangle": 22570,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 9256,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 87,
+            "postLaunchMove": 4.676532886853766,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "role": "bot1",
+            "slot": 1,
+            "from": [
+              -10.62110672073454,
+              16.58,
+              70.90786917640065
+            ],
+            "target": {
+              "x": -7.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -7.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28104,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9197,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.754779598541759,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "role": "bot2",
+            "slot": 2,
+            "from": [
+              -10.907869176400647,
+              16.58,
+              69.37889327926545
+            ],
+            "target": {
+              "x": -10.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -10.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28104,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9191,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.623999999999995,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "role": "bot3",
+            "slot": 3,
+            "from": [
+              -9.378893279265462,
+              16.58,
+              69.09213082359935
+            ],
+            "target": {
+              "x": -12.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 30,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -12.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28100,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9187,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.623999999999995,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "role": "human",
+            "slot": 0,
+            "from": [
+              -9.092130823599353,
+              16.58,
+              70.62110672073455
+            ],
+            "target": {
+              "x": -8.302943725152286,
+              "y": 12,
+              "z": 58.120606076066004
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -8.302943725152286,
+              12,
+              58.120606076066004
+            ],
+            "supportTriangle": 126482,
+            "supportObject": "Fld_Jyoheki03_Floor_Conc_001_1__mJyohekiRoad",
+            "landingNode": 8953,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 82,
+            "postLaunchMove": 4.915609961170924,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "role": "bot0",
+            "slot": 0,
+            "from": [
+              -9.092130823599353,
+              16.58,
+              70.62110672073455
+            ],
+            "target": {
+              "x": -6.5,
+              "y": 12,
+              "z": 64,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -6.5,
+              12,
+              64
+            ],
+            "supportTriangle": 22570,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 9256,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 87,
+            "postLaunchMove": 4.789811883542451,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "role": "bot1",
+            "slot": 1,
+            "from": [
+              -10.62110672073454,
+              16.58,
+              70.90786917640065
+            ],
+            "target": {
+              "x": -7.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -7.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28104,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9197,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 5.027928226140134,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "role": "bot2",
+            "slot": 2,
+            "from": [
+              -10.907869176400647,
+              16.58,
+              69.37889327926545
+            ],
+            "target": {
+              "x": -10.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -10.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28104,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9191,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.865999999999843,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "role": "bot3",
+            "slot": 3,
+            "from": [
+              -9.378893279265462,
+              16.58,
+              69.09213082359935
+            ],
+            "target": {
+              "x": -12.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 60,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -12.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28100,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9187,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 4.865999999999843,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "role": "human",
+            "slot": 0,
+            "from": [
+              -9.092130823599353,
+              16.58,
+              70.62110672073455
+            ],
+            "target": {
+              "x": -8.302943725152286,
+              "y": 12,
+              "z": 58.120606076066004
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -8.302943725152286,
+              12,
+              58.120606076066004
+            ],
+            "supportTriangle": 126482,
+            "supportObject": "Fld_Jyoheki03_Floor_Conc_001_1__mJyohekiRoad",
+            "landingNode": 8953,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 82,
+            "postLaunchMove": 4.9729175902583735,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "role": "bot0",
+            "slot": 0,
+            "from": [
+              -9.092130823599353,
+              16.58,
+              70.62110672073455
+            ],
+            "target": {
+              "x": -6.5,
+              "y": 12,
+              "z": 64,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -6.5,
+              12,
+              64
+            ],
+            "supportTriangle": 22570,
+            "supportObject": "FldObj_Joheki03_PackPnt_Floor_Grass_001_1__Grass",
+            "landingNode": 9256,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 87,
+            "postLaunchMove": 4.917275179140868,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "role": "bot1",
+            "slot": 1,
+            "from": [
+              -10.62110672073454,
+              16.58,
+              70.90786917640065
+            ],
+            "target": {
+              "x": -7.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -7.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28104,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9197,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 5.207604296948262,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "role": "bot2",
+            "slot": 2,
+            "from": [
+              -10.907869176400647,
+              16.58,
+              69.37889327926545
+            ],
+            "target": {
+              "x": -10.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -10.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28104,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9191,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 5.083000000000176,
+            "alive": true,
+            "groundedAtLanding": true
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "role": "bot3",
+            "slot": 3,
+            "from": [
+              -9.378893279265462,
+              16.58,
+              69.09213082359935
+            ],
+            "target": {
+              "x": -12.5,
+              "y": 12,
+              "z": 63,
+              "nativeSourceY": 12
+            },
+            "landingFrames": 120,
+            "landingSeconds": 1,
+            "maxY": 16.993585282716932,
+            "landed": [
+              -12.5,
+              12,
+              63
+            ],
+            "supportTriangle": 28100,
+            "supportObject": "FldObj_Joheki03_PackPnt_GrassEdge1_1__mJyohekiRoadEdge",
+            "landingNode": 9187,
+            "landingHeight": 12,
+            "landingWalkingReachable": true,
+            "goalNode": 4968,
+            "routeNodes": 86,
+            "postLaunchMove": 5.083000000000176,
+            "alive": true,
+            "groundedAtLanding": true
+          }
+        ],
+        "conditions": "production Actor integrator, real source support/nav; controlled neutral aim + fire; both human teams and all four bot slots; normal movement along a source route; SwiftShader",
+        "version1130Verified": false
+      }
+    ],
+    "errors": []
+  },
+  "publicSource": {
+    "status": "passed",
+    "stages": [
+      {
+        "id": "flounder",
+        "sourceMode": "browser-direct",
+        "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+        "geometry": {
+          "vertices": 855868,
+          "triangles": 633427,
+          "collisionTriangles": 154160,
+          "bvhNodes": 32767,
+          "paintFaces": 42139
+        },
+        "actors": 8,
+        "bots": 7,
+        "coverage": [
+          0.003309752877559894,
+          0.005543633234305126
+        ],
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 10803.59999999404,
+          "recipe": "inkwave-browser-source-v3"
+        },
+        "gameMetrics": {
+          "loadMilliseconds": 79235,
+          "navMilliseconds": 362.79999999701977,
+          "shaderWarmMilliseconds": 25.19999998807907,
+          "vertices": 855868,
+          "triangles": 633427,
+          "faces": 42139,
+          "gridBytes": 1205511,
+          "atlas": 2048,
+          "ppm": 4,
+          "textureCount": 116,
+          "quality": "low",
+          "version1130Verified": false
+        },
+        "render": {
+          "frame": 1828,
+          "calls": 391,
+          "triangles": 595859,
+          "points": 0,
+          "lines": 0
+        },
+        "version1130Verified": false
+      }
+    ],
+    "errors": [],
+    "downloads": 2,
+    "menu": [
+      "タイドウォーター広場",
+      "ケルプライン埠頭",
+      "ハリヤードマリーナ",
+      "ユノハナ大渓谷",
+      "ヤガラ市場",
+      "海女美術大学",
+      "ザトウマーケット",
+      "クサヤ温泉",
+      "ヒラメが丘団地"
+    ],
+    "cache": {
+      "id": "flounder",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    },
+    "failureRollback": {
+      "levelRetained": true,
+      "menu": "setup",
+      "loadingRemoved": true
+    }
+  },
+  "lifecycle": {
+    "status": "passed",
+    "errors": [],
+    "quality": {
+      "cpuGridUnchanged": true,
+      "trianglePositionsUnchanged": true,
+      "authoritiesRetained": true,
+      "finalAtlas": 2048,
+      "textureCount": 116
+    },
+    "failureRollback": {
+      "rejected": true,
+      "levelRetained": true,
+      "paintRetained": true,
+      "displayRetained": true
+    },
+    "corruptionProbe": {
+      "requests": 1,
+      "error": "Native integrity mismatch: flounder/vertices.bin"
+    },
+    "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+    "cancellation": {
+      "id": "tidewater",
+      "nativeGroups": 0,
+      "preparationCancelled": true
+    },
+    "switches": [
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 220,
+          "textures": 28
+        }
+      },
+      {
+        "id": "flounder",
+        "native": true,
+        "nativeGroups": 1,
+        "memory": {
+          "geometries": 481,
+          "textures": 138
+        }
+      },
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 220,
+          "textures": 28
+        }
+      }
+    ],
+    "fingerprint": {
+      "same": true,
+      "changed": false,
+      "missing": false
+    },
+    "mobile": [
+      {
+        "id": "flounder",
+        "viewport": [
+          844,
+          390
+        ],
+        "touch": true,
+        "actors": 8,
+        "native": true,
+        "atlas": 2048,
+        "textureCount": 116,
+        "cpuFrame": {
+          "p50": 8.700000002980232,
+          "p95": 29.600000008940697,
+          "max": 45
+        },
+        "gpuDrainRenderMs": 19.900000005960464,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "local": {
+          "grounded": true,
+          "spawn": false
+        },
+        "mobileHardwareMeasured": false
+      }
+    ]
+  },
+  "online": {
+    "status": "passed",
+    "transport": "real WebSocket + production RoomDurableObject",
+    "packets": 2040,
+    "modes": [
+      {
+        "mode": "turf",
+        "actors": 8,
+        "gridBytes": 1205511,
+        "gridSha256": "68aee1e934eb191b1afec8f2c46a427a87df9a35253ac2b4c4836e398d24dc28",
+        "hostGuestGridEqual": true,
+        "ranked": null,
+        "playback": {
+          "settled": true,
+          "frames": 205,
+          "probeRadius": 3.84
+        },
+        "queuesSettled": true
+      },
+      {
+        "mode": "zones",
+        "actors": 8,
+        "gridBytes": 1205511,
+        "gridSha256": "9a5bc555b8e0a47280738f3eef36639f98fa18d14cb05fb0a719fc8fd48c0e43",
+        "hostGuestGridEqual": true,
+        "ranked": [
+          65,
+          100
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 315,
+          "probeRadius": 3.84
+        },
+        "queuesSettled": true
+      },
+      {
+        "mode": "tower",
+        "actors": 8,
+        "gridBytes": 1205611,
+        "gridSha256": "323bc1e67fb8283ce1cf8ffbdb64879ffa065dd3e6bb3229d62e482171d7f15e",
+        "hostGuestGridEqual": true,
+        "ranked": [
+          65,
+          100
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 15,
+          "probeRadius": 3.84
+        },
+        "queuesSettled": true
+      },
+      {
+        "mode": "rainmaker",
+        "actors": 8,
+        "gridBytes": 1205511,
+        "gridSha256": "6676c708ad2de27e3e77a3e8b16fcf8035d8ce9531d114e6f51c20e0e69c2738",
+        "hostGuestGridEqual": true,
+        "ranked": [
+          65,
+          100
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 190,
+          "probeRadius": 3.84
+        },
+        "queuesSettled": true
+      },
+      {
+        "mode": "clams",
+        "actors": 8,
+        "gridBytes": 1205511,
+        "gridSha256": "90de06bb5391451ea30673ffc3de980d11fb27107e9138450a8abf53b0f64fc9",
+        "hostGuestGridEqual": true,
+        "ranked": [
+          65,
+          100
+        ],
+        "playback": {
+          "settled": true,
+          "frames": 190,
+          "probeRadius": 3.84
+        },
+        "queuesSettled": true
+      }
+    ]
+  },
+  "unverified": [
+    "Nintendo 11.3.0 source display version/date",
+    "native units and gameplay collision/paint/grate/climb masks",
+    "retail spawn and ranked placement",
+    "source moving object transforms and states",
+    "original background assembly",
+    "native material shaders",
+    "physical Switch/mobile FPS",
+    "Nintendo frame/speed equivalence"
+  ]
+}
