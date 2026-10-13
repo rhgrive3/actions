@@ -14,7 +14,7 @@ source Drop recovery and main 18ce compatibility refresh, followed by accepted
 native combat support #1399 and combat jump input #1409 through foundation
 `04a0f6f658eda7ed7b92d06b0c2b4500bdfce8ea`. The immutable
 browser artifact predates that later accepted history. Stage verification is in progress; the
-complete opposite-bank bot route fails. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
+controlled opposite-bank bot route now passes all six cases on the qualified body-coupling artifact; final composed rule/network verification remains unfinished. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
 remains Draft.
 Numeric receipts are in [shipshape-verification.json](shipshape-verification.json).
 
@@ -255,3 +255,36 @@ placements, native material shaders, crane transforms/states, extraction date,
 and physical hardware FPS remain unverified. `version1130Verified:false`
 remains explicit. Software Chromium/SwiftShader measurements do not substitute
 for physical mobile, Switch, or retail frame measurements.
+
+## Current controlled complete-bank proof
+
+The qualified body-coupling private artifact `5e3e4631` / revision `fa20a5bb`
+now completes both original opposing-pad → opposite-bank routes at 30/60/120
+render cadences. The actual installed Actor steps remain 1/60. Six cases exit
+successfully, with 33,180 observed movement subdivisions, eight live actors,
+seven bots, zero AP and zero browser errors. Each final supported foot is on
+an original paintable pipe platform, flags 3, with the original goal retained.
+This is a controlled route replay: the same original goal may be reacquired
+after ordinary path loss, while the other seven real brains remain frozen on
+verified original supports. It is not an unrestricted AI completion claim.
+
+The earlier tick2520/2535 chord failures came from testing a previous committed
+humanoid pose with the next tick's larger squid capsule. Actual prior body,
+post-Actor and next-entry positions are identical and clear under the recorded
+humanoid profile. The ordinary form change and source contact correction clear
+the new squid body. The checker authenticates both observed profiles and
+rejects arbitrary substitutions, unchanged-profile waivers and contact-free
+waivers. Original failed current-shape chords remain diagnostic records.
+Source corrections require strict .003 fits under each actual committed
+profile; movement without contact retains strict source sweeps. No continuous
+shape interpolation or internal correction trajectory is claimed. The source
+geometry, masks, body dimensions and thresholds remain unchanged.
+
+The current private/public pair passes canonical packaging 9/9 each and existing
+budgets. Their gameplay modules match; private asset URLs and public original
+download metadata differ as intended. Accepted source running approach #1411
+is consumed in branch history without activating its flag for Shipshape.
+Root's current-main compatibility #1416 is still pending acceptance and final
+resealing. Ranked objectives, whole Tower travel, Clams, strict five-mode real
+WebSocket equality and the affected final lifecycle/render checks remain
+unfinished.

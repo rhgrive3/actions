@@ -34642,5 +34642,408 @@
         "sourceAndEvidenceRetained": true
       }
     }
+  },
+  "currentStrongBankExecution": {
+    "status": "passed",
+    "exitCode": 0,
+    "artifact": "5e3e46316d100c02f5c7a54e0d69c1ce2297f3ae8078ac75f49cc313b3e7873c",
+    "revision": "fa20a5bb0024fa6b4344270a4bd10a62e0db9446c79072aeb32d829d571ca50b",
+    "actors": 8,
+    "bots": 7,
+    "errors": [],
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 92.76666666666667,
+        "replans": 1,
+        "aliveActors": 8,
+        "finalSourceFoot": {
+          "triangle": 106429,
+          "face": 43094,
+          "block": 43094,
+          "flags": 3,
+          "object": "Fld_Twist00_GrateBigPipe_01_1__PlatformPipe00",
+          "position": [
+            -18.49613883378027,
+            1.1794999837875366,
+            57.395730721544986
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "sourceFootSupported": true,
+          "targetNativePaintable": true
+        },
+        "postSetupOriginalGoalReacquisition": true,
+        "movementIntervals": [
+          0.016666666666666666
+        ],
+        "bodyProfiles": [
+          {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          {
+            "radius": 0.675,
+            "lift": 0.16,
+            "height": 0.55,
+            "skipGrates": true
+          }
+        ],
+        "microCapsules": 5566,
+        "resolvedContactChords": 2,
+        "continuousFailure": null,
+        "waypoints": 166,
+        "sourceClimbs": 3,
+        "target": [
+          -18.5,
+          1.1794999837875366,
+          56
+        ],
+        "end": [
+          -18.49613883378027,
+          1.1794999837875366,
+          57.395730721544986
+        ],
+        "distanceToGoal": 1.3957360623230537,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 90.56666666666666,
+        "replans": 1,
+        "aliveActors": 8,
+        "finalSourceFoot": {
+          "triangle": 106429,
+          "face": 43094,
+          "block": 43094,
+          "flags": 3,
+          "object": "Fld_Twist00_GrateBigPipe_01_1__PlatformPipe00",
+          "position": [
+            -18.49756541215671,
+            1.1794999837875366,
+            57.490989832660226
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "sourceFootSupported": true,
+          "targetNativePaintable": true
+        },
+        "postSetupOriginalGoalReacquisition": true,
+        "movementIntervals": [
+          0.016666666666666666
+        ],
+        "bodyProfiles": [
+          {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          {
+            "radius": 0.675,
+            "lift": 0.16,
+            "height": 0.55,
+            "skipGrates": true
+          }
+        ],
+        "microCapsules": 5434,
+        "resolvedContactChords": 2,
+        "continuousFailure": null,
+        "waypoints": 166,
+        "sourceClimbs": 3,
+        "target": [
+          -18.5,
+          1.1794999837875366,
+          56
+        ],
+        "end": [
+          -18.49756541215671,
+          1.1794999837875366,
+          57.490989832660226
+        ],
+        "distanceToGoal": 1.4909918203377694,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 90.56666666666666,
+        "replans": 1,
+        "aliveActors": 8,
+        "finalSourceFoot": {
+          "triangle": 106429,
+          "face": 43094,
+          "block": 43094,
+          "flags": 3,
+          "object": "Fld_Twist00_GrateBigPipe_01_1__PlatformPipe00",
+          "position": [
+            -18.49756541215671,
+            1.1794999837875366,
+            57.490989832660226
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "sourceFootSupported": true,
+          "targetNativePaintable": true
+        },
+        "postSetupOriginalGoalReacquisition": true,
+        "movementIntervals": [
+          0.016666666666666666
+        ],
+        "bodyProfiles": [
+          {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          {
+            "radius": 0.675,
+            "lift": 0.16,
+            "height": 0.55,
+            "skipGrates": true
+          }
+        ],
+        "microCapsules": 5434,
+        "resolvedContactChords": 2,
+        "continuousFailure": null,
+        "waypoints": 166,
+        "sourceClimbs": 3,
+        "target": [
+          -18.5,
+          1.1794999837875366,
+          56
+        ],
+        "end": [
+          -18.49756541215671,
+          1.1794999837875366,
+          57.490989832660226
+        ],
+        "distanceToGoal": 1.4909918203377694,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 93.03333333333333,
+        "replans": 1,
+        "aliveActors": 8,
+        "finalSourceFoot": {
+          "triangle": 91162,
+          "face": 43105,
+          "block": 43105,
+          "flags": 3,
+          "object": "Fld_Twist00_GrateBigPipe_01_1__PlatformPipe00",
+          "position": [
+            18.497731980168265,
+            1.1794999837875366,
+            -57.48591017698883
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "sourceFootSupported": true,
+          "targetNativePaintable": true
+        },
+        "postSetupOriginalGoalReacquisition": true,
+        "movementIntervals": [
+          0.016666666666666666
+        ],
+        "bodyProfiles": [
+          {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          {
+            "radius": 0.675,
+            "lift": 0.16,
+            "height": 0.55,
+            "skipGrates": true
+          }
+        ],
+        "microCapsules": 5582,
+        "resolvedContactChords": 6,
+        "continuousFailure": null,
+        "waypoints": 159,
+        "sourceClimbs": 3,
+        "target": [
+          18.5,
+          1.1794999837875366,
+          -56
+        ],
+        "end": [
+          18.497731980168265,
+          1.1794999837875366,
+          -57.48591017698883
+        ],
+        "distanceToGoal": 1.4859119078844938,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 93.03333333333333,
+        "replans": 1,
+        "aliveActors": 8,
+        "finalSourceFoot": {
+          "triangle": 91162,
+          "face": 43105,
+          "block": 43105,
+          "flags": 3,
+          "object": "Fld_Twist00_GrateBigPipe_01_1__PlatformPipe00",
+          "position": [
+            18.497731980168265,
+            1.1794999837875366,
+            -57.48591017698883
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "sourceFootSupported": true,
+          "targetNativePaintable": true
+        },
+        "postSetupOriginalGoalReacquisition": true,
+        "movementIntervals": [
+          0.016666666666666666
+        ],
+        "bodyProfiles": [
+          {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          {
+            "radius": 0.675,
+            "lift": 0.16,
+            "height": 0.55,
+            "skipGrates": true
+          }
+        ],
+        "microCapsules": 5582,
+        "resolvedContactChords": 6,
+        "continuousFailure": null,
+        "waypoints": 159,
+        "sourceClimbs": 3,
+        "target": [
+          18.5,
+          1.1794999837875366,
+          -56
+        ],
+        "end": [
+          18.497731980168265,
+          1.1794999837875366,
+          -57.48591017698883
+        ],
+        "distanceToGoal": 1.4859119078844938,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "seconds": 93.03333333333333,
+        "replans": 1,
+        "aliveActors": 8,
+        "finalSourceFoot": {
+          "triangle": 91162,
+          "face": 43105,
+          "block": 43105,
+          "flags": 3,
+          "object": "Fld_Twist00_GrateBigPipe_01_1__PlatformPipe00",
+          "position": [
+            18.497731980168265,
+            1.1794999837875366,
+            -57.48591017698883
+          ],
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "sourceFootSupported": true,
+          "targetNativePaintable": true
+        },
+        "postSetupOriginalGoalReacquisition": true,
+        "movementIntervals": [
+          0.016666666666666666
+        ],
+        "bodyProfiles": [
+          {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          {
+            "radius": 0.675,
+            "lift": 0.16,
+            "height": 0.55,
+            "skipGrates": true
+          }
+        ],
+        "microCapsules": 5582,
+        "resolvedContactChords": 6,
+        "continuousFailure": null,
+        "waypoints": 159,
+        "sourceClimbs": 3,
+        "target": [
+          18.5,
+          1.1794999837875366,
+          -56
+        ],
+        "end": [
+          18.497731980168265,
+          1.1794999837875366,
+          -57.48591017698883
+        ],
+        "distanceToGoal": 1.4859119078844938,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "fire": true
+      }
+    ],
+    "totalMovementSubdivisions": 33180,
+    "scope": "production Chromium Game._frame/Match/Actor/BotBrain/WeaponRunner/Projectiles; installed fixed STEP independent of 30/60/120 render cadence; eight actors retained; other bots frozen; source-supported setup poses; source-ranked common-component targets; actual opposing-bank targets beyond z ±54 selected away from frozen opponent spawners; initial ownership cleared; controlled same-original-goal reacquisition after ordinary refill/recovery; contact-free subdivision sweeps and observed source-collider corrections with strict .003 endpoint fits; resolved-pose chord diagnostics retained without treating them as internal solver trajectories; 0.5 RNG; SwiftShader",
+    "unrestrictedAIClaim": false,
+    "continuousInternalSolverOrShapeInterpolationClaim": false,
+    "receipt": ".browser-evidence/current-source-whole-bank/browser.json",
+    "receiptSha256": "d6a6c08c7d92b54666546e98b471e881e0d210d2d17ab539c1ef684ce2816a32",
+    "sourceOrInputOverridesAfterSetup": false,
+    "currentMain1416Qualified": false
   }
 }
