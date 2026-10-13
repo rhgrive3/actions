@@ -1,0 +1,30 @@
+name: Diagnose INKWAVE v11 legacy-shot caller
+on:
+  push:
+    branches: [integrate/inkwave-audio-v11-real-assets-20261012]
+    paths: ['.github/workflows/diagnose-audio-v11.yml']
+permissions:
+  contents: read
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instrument only the disposable test checkout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('patches/splatoon3/tests/weapon-audio.test.mjs')
+          old='play(name,o){calls.push({legacy:true,name,o});}'
+          new="play(name,o){if(/^shoot_/.test(name)&&!globalThis.__audioLegacyTrace){globalThis.__audioLegacyTrace=true;console.error('AUDIO_LEGACY_SOURCE',name,new Error().stack)}calls.push({legacy:true,name,o});}"
+          s=p.read_text()
+          assert s.count(old)==1
+          p.write_text(s.replace(old,new))
+          PY
+      - name: Print first real legacy shot stack
+        run: |
+          node --experimental-vm-modules --test --test-name-pattern='all 65 actual Actor admission paths' patches/splatoon3/tests/weapon-audio.test.mjs
