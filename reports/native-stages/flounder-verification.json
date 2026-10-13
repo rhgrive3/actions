@@ -63,6 +63,9 @@
   },
   "sharedClimbReview": {
     "pr": 1347,
+    "accepted": true,
+    "independentReviewer": "/root/museum",
+    "acceptedHead": "a322af55fc22f4fe3604c8b1cd1013a15b1fc82b",
     "commits": [
       "64a43507",
       "8d114d89"
@@ -71,6 +74,7 @@
     "retailNavigationVerified": false
   },
   "sharedFoundations": {
+    "sourceClimbs": "0a9acd48c9c88dbf8d2f3495b1863eb4e98f8135",
     "sourceSphere": "4716dacdbfec7940cca4cde770ae0098ce5f7e5d",
     "camera": "33cecb0583de92b260478356d4340513a3188065",
     "tower": "89cb600efe646ad1741a05de2ab21119a1438c66",
