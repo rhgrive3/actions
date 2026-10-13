@@ -175,7 +175,7 @@
     "tests": 1,
     "passed": 1,
     "skipped": 0,
-    "durationMilliseconds": 93428.582008,
+    "durationMilliseconds": 93428.578421,
     "productionCharacter": true,
     "constructedFrameOmitsLiveBlockedCallback": true,
     "controllerRoutesToRuleAuthoredGoals": {
