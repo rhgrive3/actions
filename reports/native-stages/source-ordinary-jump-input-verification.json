@@ -1,0 +1,1027 @@
+{
+  "status": "qualified-independent-peer",
+  "acceptedFoundation": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
+  "runtimeCandidate": "5044128d5069ec37d5b9294d3ece8aa4d2202046",
+  "reference": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "stage": "Vss_Carousel03",
+    "tree": "5513701317c1a0d67800ffa4abac093eacbc87ea",
+    "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+    "version1130Verified": false
+  },
+  "privateBuild": {
+    "contentHash": "23f260e3de52868d780f2b77367fb1606aacae19d193f15f37c48ebab48b40fa",
+    "revision": "aa68fb07ac8eb95384a1433031831c50acf27ade1ff094dbfb104f3b756f7d99",
+    "nativeRuntimeSha256": "296e775a6dc1fea92d9f52bc7ba9797b4325905e036cfaf58272fbb02d6287b0",
+    "helperSha256": "6167c1e3ae2bb800e453b371f232b5e77fbac8f664d0bdc7ea25101e6378307e"
+  },
+  "conditions": {
+    "actors": 8,
+    "bots": 7,
+    "weapon": "shooter / Shooter_Normal_00",
+    "gearAP": 0,
+    "renderHz": [
+      30,
+      60,
+      120
+    ],
+    "installedActorAndBrainDt": 0.016666666666666666,
+    "gpu": "Chromium SwiftShader; no hardware FPS claim",
+    "sourceNavigation": null
+  },
+  "cpu": {
+    "tests": 125,
+    "passed": 108,
+    "unrelatedOptionalSkipped": 17,
+    "failed": 0,
+    "durationMs": 527925.954882,
+    "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-original-five.log",
+    "dedicatedSourceCasesPassed": 5,
+    "optionalCharacterClipDynamicImportWarning": "Node vm fixture logs optional clip fallback ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING; browser uses actual installed Character and has zero errors."
+  },
+  "physicalInput": {
+    "status": "passed",
+    "receipt": {
+      "path": "/workspace/stage-worktrees/wahoo/.browser-evidence/native-jump-final-physical-bot-caps-r2/jump-input.json",
+      "sha256": "f87a58d438d9c314f21ad360022836028f809d7ee634b0a66019e23deb34df7b"
+    },
+    "capsuleChecks": 696,
+    "clearanceMisses": 0,
+    "cases": [
+      {
+        "hz": 30,
+        "kind": "edge",
+        "input": "tap",
+        "serialDelta": 1,
+        "landed": true,
+        "ticks": 16,
+        "peak": 12.025199890136719,
+        "clearanceChecks": 16,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 30,
+        "kind": "edge",
+        "input": "held",
+        "serialDelta": 1,
+        "landed": true,
+        "ticks": 28,
+        "peak": 12.221805924424636,
+        "clearanceChecks": 28,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 21290,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 30,
+        "kind": "np",
+        "input": "held",
+        "serialDelta": 1,
+        "landed": false,
+        "ticks": 120,
+        "peak": 12.268200565038374,
+        "clearanceChecks": 120,
+        "clearanceMisses": 0,
+        "npContacts": 113,
+        "finalFoot": {
+          "hit": true,
+          "block": 24179,
+          "staticBlocks": 44195,
+          "height": 10.919033898371708,
+          "normal": [
+            -0.24367648363113403,
+            0.9698565602302551,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 30,
+        "kind": "bot",
+        "input": "ordinary",
+        "serialDelta": 2,
+        "landed": true,
+        "ticks": 68,
+        "peak": 12.221805924424636,
+        "clearanceChecks": 68,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 60,
+        "kind": "edge",
+        "input": "tap",
+        "serialDelta": 1,
+        "landed": true,
+        "ticks": 16,
+        "peak": 12.025199890136719,
+        "clearanceChecks": 16,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 60,
+        "kind": "edge",
+        "input": "held",
+        "serialDelta": 1,
+        "landed": true,
+        "ticks": 28,
+        "peak": 12.221805924424636,
+        "clearanceChecks": 28,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 21290,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 60,
+        "kind": "np",
+        "input": "held",
+        "serialDelta": 1,
+        "landed": false,
+        "ticks": 120,
+        "peak": 12.268200565038374,
+        "clearanceChecks": 120,
+        "clearanceMisses": 0,
+        "npContacts": 113,
+        "finalFoot": {
+          "hit": true,
+          "block": 24179,
+          "staticBlocks": 44195,
+          "height": 10.919033898371708,
+          "normal": [
+            -0.24367648363113403,
+            0.9698565602302551,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 60,
+        "kind": "bot",
+        "input": "ordinary",
+        "serialDelta": 2,
+        "landed": true,
+        "ticks": 68,
+        "peak": 12.221805924424636,
+        "clearanceChecks": 68,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 120,
+        "kind": "edge",
+        "input": "tap",
+        "serialDelta": 1,
+        "landed": true,
+        "ticks": 16,
+        "peak": 12.025199890136719,
+        "clearanceChecks": 16,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 120,
+        "kind": "edge",
+        "input": "held",
+        "serialDelta": 1,
+        "landed": true,
+        "ticks": 28,
+        "peak": 12.221805924424636,
+        "clearanceChecks": 28,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 21290,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 120,
+        "kind": "np",
+        "input": "held",
+        "serialDelta": 1,
+        "landed": false,
+        "ticks": 120,
+        "peak": 12.268200565038374,
+        "clearanceChecks": 120,
+        "clearanceMisses": 0,
+        "npContacts": 113,
+        "finalFoot": {
+          "hit": true,
+          "block": 24179,
+          "staticBlocks": 44195,
+          "height": 10.919033898371708,
+          "normal": [
+            -0.24367648363113403,
+            0.9698565602302551,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      },
+      {
+        "hz": 120,
+        "kind": "bot",
+        "input": "ordinary",
+        "serialDelta": 2,
+        "landed": true,
+        "ticks": 68,
+        "peak": 12.221805924424636,
+        "clearanceChecks": 68,
+        "clearanceMisses": 0,
+        "npContacts": 0,
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        }
+      }
+    ]
+  },
+  "stockBotPresses": {
+    "receipt": {
+      "path": "/workspace/stage-worktrees/wahoo/.browser-evidence/native-jump-final-bot-presses/jump-input.json",
+      "sha256": "99f51a982b291e82b4888ca4e2a1fefad48917c0914ff3430bf8db1fd37ef4c1"
+    },
+    "cases": [
+      {
+        "hz": 30,
+        "serialDelta": 2,
+        "ticks": 68,
+        "presses": [
+          {
+            "tick": 0,
+            "noProg": 0,
+            "jumpCd": -0.016666666666666666,
+            "needJump": true,
+            "grounded": true,
+            "sourceFoot": true,
+            "previousNode": 2230,
+            "position": [
+              12.599296569824219,
+              10.872639257757971,
+              -24.185100555419922
+            ],
+            "serial": 0,
+            "afterNeedJump": false,
+            "afterJumpCd": 0.6
+          },
+          {
+            "tick": 40,
+            "noProg": 0.19999999999999998,
+            "jumpCd": -0.06666666666666683,
+            "needJump": true,
+            "grounded": true,
+            "sourceFoot": true,
+            "previousNode": 2230,
+            "position": [
+              12.673040053801678,
+              10.862191855746534,
+              -23.548368958601618
+            ],
+            "serial": 1,
+            "afterNeedJump": false,
+            "afterJumpCd": 0.6
+          }
+        ],
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        }
+      },
+      {
+        "hz": 60,
+        "serialDelta": 2,
+        "ticks": 68,
+        "presses": [
+          {
+            "tick": 0,
+            "noProg": 0,
+            "jumpCd": -0.016666666666666666,
+            "needJump": true,
+            "grounded": true,
+            "sourceFoot": true,
+            "previousNode": 2230,
+            "position": [
+              12.599296569824219,
+              10.872639257757971,
+              -24.185100555419922
+            ],
+            "serial": 0,
+            "afterNeedJump": false,
+            "afterJumpCd": 0.6
+          },
+          {
+            "tick": 40,
+            "noProg": 0.19999999999999998,
+            "jumpCd": -0.06666666666666683,
+            "needJump": true,
+            "grounded": true,
+            "sourceFoot": true,
+            "previousNode": 2230,
+            "position": [
+              12.673040053801678,
+              10.862191855746534,
+              -23.548368958601618
+            ],
+            "serial": 1,
+            "afterNeedJump": false,
+            "afterJumpCd": 0.6
+          }
+        ],
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        }
+      },
+      {
+        "hz": 120,
+        "serialDelta": 2,
+        "ticks": 68,
+        "presses": [
+          {
+            "tick": 0,
+            "noProg": 0,
+            "jumpCd": -0.016666666666666666,
+            "needJump": true,
+            "grounded": true,
+            "sourceFoot": true,
+            "previousNode": 2230,
+            "position": [
+              12.599296569824219,
+              10.872639257757971,
+              -24.185100555419922
+            ],
+            "serial": 0,
+            "afterNeedJump": false,
+            "afterJumpCd": 0.6
+          },
+          {
+            "tick": 40,
+            "noProg": 0.19999999999999998,
+            "jumpCd": -0.06666666666666683,
+            "needJump": true,
+            "grounded": true,
+            "sourceFoot": true,
+            "previousNode": 2230,
+            "position": [
+              12.673040053801678,
+              10.862191855746534,
+              -23.548368958601618
+            ],
+            "serial": 1,
+            "afterNeedJump": false,
+            "afterJumpCd": 0.6
+          }
+        ],
+        "finalFoot": {
+          "hit": true,
+          "block": 14821,
+          "staticBlocks": 44195,
+          "height": 12.025199890136719,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    ]
+  },
+  "lifecycle": {
+    "status": "passed",
+    "receipt": {
+      "path": "/workspace/stage-worktrees/wahoo/.browser-evidence/native-jump-final-lifecycle-r2/jump-lifecycle.json",
+      "sha256": "f609e1f69a6ae9572b07fff1afb7aecd55ed26de45419adba754eb8c903e2021"
+    },
+    "cases": [
+      {
+        "change": "refill",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "retreat",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "defend",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "target",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "reset",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "death-respawn",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": {
+          "ticks": 510,
+          "alive": true,
+          "sourcePad": [
+            85,
+            18,
+            0
+          ],
+          "position": [
+            85.90786917640065,
+            22.5,
+            0.621106720734539
+          ],
+          "initialSquidSpawn": true
+        },
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "world",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "match",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "nav",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "change": "squid",
+        "cancelled": true,
+        "pendingHeldBeforeChange": true,
+        "helperPreservedPoseVelocitySerial": true,
+        "serialDelta": 1,
+        "respawn": null,
+        "actors": 8,
+        "bots": 7
+      }
+    ],
+    "tower": {
+      "actualRider": true,
+      "grounded": true,
+      "groundBlock": 44195,
+      "towerBlock": 44195,
+      "inputReleased": true,
+      "helperPreservedPoseVelocitySerial": true
+    }
+  },
+  "wholeSourceRoute": {
+    "status": "passed",
+    "receipt": {
+      "path": "/workspace/stage-worktrees/wahoo/.browser-evidence/native-jump-final-whole-center-caps/installed-clock-banks.json",
+      "sha256": "1f3b34656d0fa068813988ee861709be973cffffe59f7fad0cd505b9bc30c1b2"
+    },
+    "capsuleChecks": 15174,
+    "clearanceMisses": 0,
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "start": [
+          -85,
+          18,
+          0
+        ],
+        "goal": [
+          -0.40070343017578125,
+          13,
+          -5.185100555419922
+        ],
+        "routeNodes": 118,
+        "originalRouteNodes": 118,
+        "ticks": 3060,
+        "seconds": 51,
+        "arrived": true,
+        "serialDelta": 2,
+        "clearanceChecks": 3060,
+        "clearanceMisses": 0,
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        },
+        "finalFoot": {
+          "hit": true,
+          "block": 21294,
+          "staticBlocks": 44195,
+          "height": 13,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "firstPathLoss": null,
+        "routeChanges": [],
+        "controllerStates": [],
+        "skippedUnsupported": [],
+        "enemySpawnRejected": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "start": [
+          -85,
+          18,
+          0
+        ],
+        "goal": [
+          -0.40070343017578125,
+          13,
+          -5.185100555419922
+        ],
+        "routeNodes": 118,
+        "originalRouteNodes": 118,
+        "ticks": 3060,
+        "seconds": 51,
+        "arrived": true,
+        "serialDelta": 2,
+        "clearanceChecks": 3060,
+        "clearanceMisses": 0,
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        },
+        "finalFoot": {
+          "hit": true,
+          "block": 21294,
+          "staticBlocks": 44195,
+          "height": 13,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "firstPathLoss": null,
+        "routeChanges": [],
+        "controllerStates": [],
+        "skippedUnsupported": [],
+        "enemySpawnRejected": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "start": [
+          -85,
+          18,
+          0
+        ],
+        "goal": [
+          -0.40070343017578125,
+          13,
+          -5.185100555419922
+        ],
+        "routeNodes": 118,
+        "originalRouteNodes": 118,
+        "ticks": 3060,
+        "seconds": 51,
+        "arrived": true,
+        "serialDelta": 2,
+        "clearanceChecks": 3060,
+        "clearanceMisses": 0,
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        },
+        "finalFoot": {
+          "hit": true,
+          "block": 21294,
+          "staticBlocks": 44195,
+          "height": 13,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "firstPathLoss": null,
+        "routeChanges": [],
+        "controllerStates": [],
+        "skippedUnsupported": [],
+        "enemySpawnRejected": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "start": [
+          85,
+          18,
+          0
+        ],
+        "goal": [
+          -0.40070343017578125,
+          13,
+          -5.185100555419922
+        ],
+        "routeNodes": 95,
+        "originalRouteNodes": 95,
+        "ticks": 1998,
+        "seconds": 33.3,
+        "arrived": true,
+        "serialDelta": 2,
+        "clearanceChecks": 1998,
+        "clearanceMisses": 0,
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        },
+        "finalFoot": {
+          "hit": true,
+          "block": 21296,
+          "staticBlocks": 44195,
+          "height": 13,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "firstPathLoss": null,
+        "routeChanges": [],
+        "controllerStates": [],
+        "skippedUnsupported": [],
+        "enemySpawnRejected": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "start": [
+          85,
+          18,
+          0
+        ],
+        "goal": [
+          -0.40070343017578125,
+          13,
+          -5.185100555419922
+        ],
+        "routeNodes": 95,
+        "originalRouteNodes": 95,
+        "ticks": 1998,
+        "seconds": 33.3,
+        "arrived": true,
+        "serialDelta": 2,
+        "clearanceChecks": 1998,
+        "clearanceMisses": 0,
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        },
+        "finalFoot": {
+          "hit": true,
+          "block": 21296,
+          "staticBlocks": 44195,
+          "height": 13,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "firstPathLoss": null,
+        "routeChanges": [],
+        "controllerStates": [],
+        "skippedUnsupported": [],
+        "enemySpawnRejected": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "start": [
+          85,
+          18,
+          0
+        ],
+        "goal": [
+          -0.40070343017578125,
+          13,
+          -5.185100555419922
+        ],
+        "routeNodes": 95,
+        "originalRouteNodes": 95,
+        "ticks": 1998,
+        "seconds": 33.3,
+        "arrived": true,
+        "serialDelta": 2,
+        "clearanceChecks": 1998,
+        "clearanceMisses": 0,
+        "rawHashes": {
+          "triangles": "ee4b4b67308eafe6fd2e41c7986d43da9ce74fc0cf2793292a59c31cd58ec56f",
+          "flags": "9af213e5bb2ebf5f1efe8a23b6affb98e5ff80e0c30425f56bb6664827630fb8",
+          "mask": "a1493e9c6c1eab09399b628e7dfffce2d9d8ea6863eda3e60cd83892bd615082"
+        },
+        "finalFoot": {
+          "hit": true,
+          "block": 21296,
+          "staticBlocks": 44195,
+          "height": 13,
+          "normal": [
+            0,
+            1,
+            0
+          ]
+        },
+        "firstPathLoss": null,
+        "routeChanges": [],
+        "controllerStates": [],
+        "skippedUnsupported": [],
+        "enemySpawnRejected": true
+      }
+    ],
+    "legacy": {
+      "id": "tidewater",
+      "native": false,
+      "defaultBudgetArgumentUndefined": true
+    }
+  },
+  "preservedFailures": [
+    {
+      "receipt": "/workspace/stage-worktrees/wahoo/.browser-evidence/native-jump-final-physical-bot-caps/jump-input.json",
+      "reason": "Checker asserted exactly one bot press; actual supported stock two-press arrival is preserved."
+    },
+    {
+      "receipt": "/workspace/stage-worktrees/wahoo/.browser-evidence/native-jump-final-lifecycle/jump-lifecycle.json",
+      "reason": "Checker expected instant squid transformation before the real fire buffer expired. Corrected actual input waits up to18 fixed ticks; runtime unchanged."
+    },
+    {
+      "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-public-packaging.log",
+      "reason": "Initial emitted-test run omitted INKWAVE_BUILT_SITE, producing4pass5skip. Corrected R2 supplies the real immutable site and passes9/9."
+    }
+  ],
+  "unverified": [
+    "Nintendo source collision and units",
+    "retail normal-jump profile and AI/input parity",
+    "moving-platform transforms and trajectories",
+    "Switch/mobile hardware performance",
+    "Wahoo complete five-mode final qualification (separate stage PR1327)"
+  ],
+  "publicBuild": {
+    "contentHash": "20eda714c60cf050b33171e2e6af5dc6550c4027bbe19cb16d8db668e074a598",
+    "revision": "bf7a1e99ce120a8f18d7efc4492f59b036f22c2c2e50299c8b3621b73c4c6487",
+    "nativeRuntimeSha256": "4b9fcb2d4edc480424ff7932cd0be7d4ea2172f5304b358d237bcdc4712cb3a0",
+    "helperSha256": "6167c1e3ae2bb800e453b371f232b5e77fbac8f664d0bdc7ea25101e6378307e"
+  },
+  "publicPackaging": {
+    "tests": 9,
+    "passed": 9,
+    "skipped": 0,
+    "failed": 0,
+    "durationMs": 2897.919487,
+    "siteVariable": "INKWAVE_BUILT_SITE",
+    "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-public-packaging-r2.log"
+  },
+  "startupBudget": {
+    "status": "passed",
+    "revision": "bf7a1e99ce120a8f18d7efc4492f59b036f22c2c2e50299c8b3621b73c4c6487",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 74503,
+    "initialJSBytes": 2752364,
+    "criticalHTMLBytes": 15422,
+    "precacheCount": 368,
+    "precacheBytes": 5853850,
+    "workerBytes": 71147,
+    "declaredBytes": 10474542,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "defaultCpu": {
+    "tests": 125,
+    "passed": 82,
+    "optionalSourceSkipped": 43,
+    "failed": 0,
+    "durationMs": 94374.73132,
+    "log": "/workspace/stage-worktrees/wahoo-jump/.ci-scratch/native-jump-final-default.log"
+  },
+  "independentPeer": {
+    "reviewer": "Shipshape stage owner",
+    "status": "passed",
+    "reviewHead": "093268d080e7d4af1340e3f2edba8f74e77de2e1",
+    "runtimeCandidate": "5044128d5069ec37d5b9294d3ece8aa4d2202046",
+    "scope": "ordinary native jump-input only; original pad-to-centre, stock two supported presses, physical/source capsules/NP/legacy/lifecycle/Tower, defaults/public9/budgets; no source/flags/Actor/serial/recovery or special dispatch changes"
+  },
+  "pullRequest": "https://github.com/rhgrive3/actions/pull/1398"
+}

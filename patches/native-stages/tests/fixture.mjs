@@ -23,8 +23,10 @@ export async function nativeFixture(options={}){
  export { NavGraph } from './inkwave-public/src/game/nav.js';
  export { nativeRankedStage } from './patches/native-stages/runtime/native-ranked.mjs';
  export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from './patches/native-stages/runtime/engine.mjs';
+ export {nativeJumpAttachTransition,updateNativeJumpAttach} from './patches/native-stages/runtime/engine.mjs';
  export { nativeDropClearance,nativeDropTransition,nativeDropTravelForm } from './patches/native-stages/runtime/engine.mjs';
  export {nativeSurgeTransition,updateNativeSurge} from './patches/native-stages/runtime/engine.mjs';
+ export {nativeOrdinaryJumpInput} from './patches/native-stages/runtime/native-jump-input.mjs';
  export { nativeSourceWaypointReached,nativeSourceTravelInput,nativeSourceFootSupported } from './patches/native-stages/runtime/native-bot-support.mjs';
 
  export { NativeInkMesh,partitionNativeInk } from './patches/native-stages/runtime/native-ink-chunks.mjs';

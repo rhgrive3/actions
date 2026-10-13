@@ -4165,3 +4165,17 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 ## 2026-10-13: 原典ステージと最新mainの互換統合
 
 main14f9f913のキャラクター姿勢・ブキ・対戦ルール・ビルド更新を、原典ステージ用作業ブランチへ取り込んだ。本体の変更は維持し、共有照合記録の競合では双方の記録を残した。mainへのマージではない。default契約85通過/36任意fixture skip/0失敗、公開ビルド9/9・容量通過。公開版でユノハナのみ原典取得・v4変換・自然着地58固定tick・8人7bot・キャッシュ・破損データ時の既存world保持を確認。直接splatによる塗り確認を通常射撃の証明に読み替えない。追加ステージの旧証跡は旧artifactの範囲を維持し、各担当が変更に関係するキャラクター・射撃・ルール・通信を最終再検証する。原典抽出版、実機の移動状態・単位・ハードウェア性能は未確認。詳細: `reports/native-stages/current-main-integration.md` と同verification JSON。
+
+
+原典マスク比較CI追補: 無条件のPython/Worker合成比較はNumPy/Pillow/Numbaをimportするため、専用workflowでPython3.12と検証済み固定依存を明示した。比較3/3・pip check通過。実行を直列にしてメモリ上限を維持し、比較や負例をskipへ変えていない。ゲーム動作は不変。hosted CIは未確認。詳細: `reports/native-stages/python-contract-ci.md`。
+
+
+原典5ステージ通常射撃追補: 最新main14f9f913・原典マスクv4で実Game._frame/Match/Character/WeaponRunner/Projectilesを使った15/15ケースが通過。描画30/60/120HzでもActor/弾の観測dtは1/60、固定clockとtick数一致。通常Shooter1発から原典の壁への衝突・自然な塗り・接地生存、8人7bot・例外0を確認。射撃中botを固定し、source支持spawnAt姿勢と照準inputを制御した試験であり、マウス照準・本家配置・全ルール/全ブキ・性能向上の証明へ読み替えない。旧raw Actor dt試験は維持。詳細: `reports/native-stages/fixed-game-source-shots.md` と同verification JSON。
+
+原典壁への通常ジャンプ接続追補: オヒョウ原典表示メッシュの連続した塗れる壁には0.15単位の凹凸があり、接地したイカの直線接続は実カプセルのため拒否される。明示的な`wallJumpAttach`指定では、通常Shooterで自然に塗り、原典支持上から通常人型ジャンプ→イカ変身→壁泳ぎ→原典支持への着地を既存inputだけで実行する。直線接続範囲、NoPaint・穴・屋根・衝突・原典配列は変更せず、共有変更でステージ指定を自動有効化しない。参照ブキはLeanny11.3.0のShooter_Normal_00・ゼロAP、原典は固定KiTrix表示抽出。最新main14f9f913の実Game固定1/60で描画30/60/120Hz・全5modeの30ケースと通常ジャンプなし6負例、自然射撃の部分セル6件・同セル外/NoPaint/穴/敵塗り解除、8人生存7bot・例外0を確認。独立VMや旧raw Actor dtを実機同等としない。本家の移動状態・単位・collision/paint/climb masks・抽出版・hardware FPSと、別途失敗中のオヒョウ全対岸ルートは未確認のまま。詳細: [source-jump-attach.md](native-stages/source-jump-attach.md) と同verification JSON。
+
+
+追加12ステージ原典マスクv4再封印: 旧検証artifactを保持し、原典ポリゴンの部分セル修正を含む独立したprivate候補を作成。元5マップの完全Python変換と同一マスクの負例付き対照、追加12マップのworker独立変換が14/14・skip0・失敗0。元の塗れるセルを除去せず部分セル2944658を追加し、全頂点/衝突/role/chart参照/PNGバイトと旧ownerデータは不変。serialized originからの再投影は厳密対照で失敗し、元converterと同じfirst-vertex/min式へ修正。原典ディレクトリ指定誤りも負例を保存して正しいSHA固定sourceで再検証。全12マップの最新mainでのルール/通信/描画完了には読み替えない。詳細: `reports/native-stages/reviewed-v4-mask-reseal.md` と同verification JSON。
+
+
+原典ステージの通常ジャンプ入力保持追補: スメーシーの変更していない1.15256高の原典段差で、botの1固定tickだけのジャンプ入力が既存の早離し小ジャンプを起こし、両padから中央への全経路が通常2.4秒回復で失敗した。`native-jump-input.mjs` は既存botが要求し、原典足元支持と実Actorのserialで成立した通常ジャンプだけを同じ経路・mode・Level/Nav/Matchの上昇中に保持する。参照はKiTrix固定表示抽出と11.3.0のShooter_Normal_00・ゼロAP。最新main14f9f913を含む採用90b上の実Game固定1/60・描画30/60/120Hzで元の両padから118/95ノードの中央経路6/6、実カプセル15,174件・違反0。短い段差のbotはstock `_needJump` の2回の支持付き入力（tick0/40、noProg0/.2、既存.6秒cooldown）で着地し、1回保証に読み替えない。物理W/Space・bot・NoPaint壁12件、死亡/自然復活・mode/world変更など10負例と実キーボードTower乗車が通過。source125件108通過/17任意skip/default82通過/43任意skip/失敗0、公開9/9・容量通過。原典配列・flags・Actor物理・jump成立条件・通常回復・特殊移動dispatchは不変。本家のジャンプ保持時間・AI/入力・単位・collision/masks・moving-platform・hardware FPSは未確認を維持。詳細: [source-ordinary-jump-input.md](native-stages/source-ordinary-jump-input.md) と同verification JSON。Wahoo全5ルールの最終stage検証は別PR1327。
