@@ -4,7 +4,7 @@
 
 `nativeTowerClearance` は BVH から候補を得て三角形 SAT を行い、deck の全回転、人体半径、足元から頭上、pole と segment 間の移動体積を保守的に検査する。中心点だけの ray に代え、狭い roof と途中にある ceiling を検出する。source の ceiling や OBJ 属性を削除して通過させない。
 
-`nativeTowerBoarding` は両チームから到達できる実 source 床を選び、live Actor のジャンプ初速・重力・走行・ledge assist を使って通常の入力による局所 approach を推定する。経路の各 node に `tower.boarding.approaches` を保存する。既存 lift3.3 を満たせなければ、支持床と全 sweep が確認できる局所 lift1.2/.4、deck half-size1.2/.8 を順に検討する。これは RankedWorld の既存サイズ範囲内のローカル調整であり、本家数値の再現ではない。vehicle が通る経路から human-only `type:'climb'` を除く。中央の両側に移動区間を要求する。
+`nativeTowerBoarding` は両チームから到達できる実 source 床を選び、live Actor のジャンプ初速・重力・走行・ledge assist を使って通常の入力による局所 approach を推定する。経路の各 node に `tower.boarding.approaches` を保存する。既存 lift3.3 を満たせなければ、支持床と全 sweep が確認できる局所 lift1.2/.4、deck half-size1.2/.8 を順に検討する。これは RankedWorld の既存サイズ範囲内のローカル調整であり、本家数値の再現ではない。vehicle が通る経路から human-only `type:'climb'` を除く。中央の両側に移動区間を要求し、対向padの中点で分ける双方の半面へ、deck・人体の全回転sweep envelopeが入り切る経路だけを採用する。安全だが片岸だけの成分は不採用。最大成分がこの条件を満たさない場合、他の適格成分と既存サイズ/lift候補を調べる。
 
 物理による deck 支持と、床からの入力搭乗を区別する。単体検証は通常 Actor の移動・ジャンプを30/60/120Hzで実行し、初期速度0の source 床から deck に着地する。実ブラウザ checker は通常 Playwright キーボード W・Space を使い、接地・ground hit・deck block・controlling team を確認する。再現のため床上に置くが、deck 上への直接配置や上昇速度の注入を搭乗証拠にしない。全 waypoint と各 segment の3中間地点での直接 capsule 支持は別の補助検証である。
 

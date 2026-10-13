@@ -127,7 +127,23 @@
               "hz": 120
             }
           }
-        ]
+        ],
+        "arenaSpan": {
+          "origin": [
+            0,
+            0
+          ],
+          "forward": [
+            -0.1051225449740849,
+            0.9944592754548431
+          ],
+          "endpointProjection": [
+            -32.926483536782875,
+            32.926483536782875
+          ],
+          "minimumHalfDepth": 2.097056274847714,
+          "bothHalvesVerified": true
+        }
       }
     },
     {
@@ -253,7 +269,23 @@
               "hz": 120
             }
           }
-        ]
+        ],
+        "arenaSpan": {
+          "origin": [
+            0,
+            0
+          ],
+          "forward": [
+            -0.28604054394169437,
+            0.9582175156098638
+          ],
+          "endpointProjection": [
+            -13.997292271105838,
+            14.24875377826617
+          ],
+          "minimumHalfDepth": 2.097056274847714,
+          "bothHalvesVerified": true
+        }
       }
     },
     {
@@ -379,7 +411,23 @@
               "hz": 120
             }
           }
-        ]
+        ],
+        "arenaSpan": {
+          "origin": [
+            0,
+            0
+          ],
+          "forward": [
+            0.12813396243322492,
+            0.9917568692331609
+          ],
+          "endpointProjection": [
+            -19.48405032759618,
+            19.48405032759618
+          ],
+          "minimumHalfDepth": 2.097056274847714,
+          "bothHalvesVerified": true
+        }
       }
     },
     {
@@ -505,7 +553,23 @@
               "hz": 120
             }
           }
-        ]
+        ],
+        "arenaSpan": {
+          "origin": [
+            0,
+            0
+          ],
+          "forward": [
+            0.20612682916723396,
+            0.9785252834226931
+          ],
+          "endpointProjection": [
+            -20.4199131060862,
+            20.4199131060862
+          ],
+          "minimumHalfDepth": 2.097056274847714,
+          "bothHalvesVerified": true
+        }
       }
     },
     {
@@ -538,132 +602,6 @@
           "physicalRuleClicks": true
         }
       }
-    },
-    {
-      "id": "mincemeat",
-      "actors": 8,
-      "bots": 7,
-      "browserErrors": [],
-      "supportedModes": [
-        "turf",
-        "zones",
-        "tower",
-        "rainmaker",
-        "clams"
-      ],
-      "tower": {
-        "pathNodes": 74,
-        "segmentInteriorSamples": 3,
-        "actualCapsuleSupports": 586,
-        "halfSize": 0.8,
-        "localLift": 1.2,
-        "sourceClearance": {
-          "queries": 20263,
-          "triangleTests": 520435,
-          "radius": 1.5313708498984764,
-          "height": 2.03,
-          "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
-        },
-        "liveGroundedHumanCounted": true,
-        "keyboardBoarding": [
-          {
-            "hz": 30,
-            "boarded": true,
-            "frames": 14,
-            "reachedEnd": false,
-            "controller": 0,
-            "grounded": true,
-            "groundHit": true,
-            "groundBlock": 80691,
-            "towerBlock": 80691,
-            "position": [
-              -4.5,
-              2.700000000000001,
-              7.1701
-            ],
-            "approach": {
-              "sourceNode": 10009,
-              "start": [
-                -4.5,
-                1.5,
-                8.5
-              ],
-              "end": [
-                -4.5,
-                2.700000000000001,
-                7.32
-              ],
-              "height": 1.200000000000001,
-              "jumping": true,
-              "hz": 30
-            }
-          },
-          {
-            "hz": 60,
-            "boarded": true,
-            "frames": 27,
-            "reachedEnd": false,
-            "controller": 0,
-            "grounded": true,
-            "groundHit": true,
-            "groundBlock": 80691,
-            "towerBlock": 80691,
-            "position": [
-              -4.5,
-              2.700000000000001,
-              7.190099999999999
-            ],
-            "approach": {
-              "sourceNode": 10009,
-              "start": [
-                -4.5,
-                1.5,
-                8.5
-              ],
-              "end": [
-                -4.5,
-                2.700000000000001,
-                7.32
-              ],
-              "height": 1.200000000000001,
-              "jumping": true,
-              "hz": 60
-            }
-          },
-          {
-            "hz": 120,
-            "boarded": true,
-            "frames": 54,
-            "reachedEnd": false,
-            "controller": 0,
-            "grounded": true,
-            "groundHit": true,
-            "groundBlock": 80691,
-            "towerBlock": 80691,
-            "position": [
-              -4.5,
-              2.700000000000001,
-              7.210099999999999
-            ],
-            "approach": {
-              "sourceNode": 10009,
-              "start": [
-                -4.5,
-                1.5,
-                8.5
-              ],
-              "end": [
-                -4.5,
-                2.700000000000001,
-                7.32
-              ],
-              "height": 1.200000000000001,
-              "jumping": true,
-              "hz": 120
-            }
-          }
-        ]
-      }
     }
   ],
   "cpu": {
@@ -676,7 +614,8 @@
     "sourceEnabledOriginalFive": {
       "passed": 6,
       "failed": 0,
-      "skipped": 0
+      "skipped": 0,
+      "scope": "final whole swept envelope on each opposing half, current source route centers/counts unchanged"
     },
     "nativeWithMincemeatSource": {
       "passed": 48,
@@ -688,6 +627,12 @@
       "passed": 9,
       "failed": 0,
       "skipped": 0
+    },
+    "finalCameraProjectileCombinedContracts": {
+      "passed": 182,
+      "failed": 0,
+      "skipped": 3,
+      "skipReason": "real-source projectile fixtures absent in metadata-only contract command; independently accepted source projectile browser and CPU proofs retained"
     }
   },
   "realWebSocket": {
@@ -739,5 +684,6 @@
     "Dedicated native collision, paint mask, unit and retail transforms unverified",
     "Missing Vlf selection is not proof of human compound jump/climb impossibility",
     "Local tower trajectory/lift/checkpoints and Nintendo hardware FPS unverified"
-  ]
+  ],
+  "opposingHalfCriterion": "The complete conservative deck/rider horizontal envelope must enter each pad-derived half; a center barely crossing the half boundary does not qualify."
 }

@@ -114,13 +114,14 @@ try{
     if(mode==='zones'){w.captureZone(0,0);m.advanceRanked(1.2);if(e.counts[0]>98)throw Error('Native zone paint did not score: '+JSON.stringify({cells:w._zoneCells.map(a=>a.length),coverage:w.zoneCoverage(),counts:e.counts,zone:e.stage.zones}));}
     let towerProof=null;
     if(mode==='tower'){
+     const span=e.stage.tower.arenaSpan;if(!span?.bothHalvesVerified||!(span.endpointProjection[0]<-span.minimumHalfDepth&&span.endpointProjection[1]>span.minimumHalfDepth))throw Error('Tower vehicle does not enter both source arena halves');
      if(a.s3?.squidSpawn||!a.grounded)throw Error('Actual human keyboard boarding did not land');
      for(const b of G.actors)if(b!==a){b.pos.copy(G.level.spawnPads[b.team]);b._rankedOnTower=false;b.vel.set(0,0,0);}
      const {nativeTowerClearance}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI)),path=e.stage.tower.path,check=nativeTowerClearance(G.level,G.physics.actorBody,e.stage.tower.halfSize),saved=[...e.rule.state.position],samples=path.flatMap((p,i)=>i?[p,...[.25,.5,.75].map(t=>p.map((v,k)=>path[i-1][k]+(v-path[i-1][k])*t))]:[p]);let boarding=0;
      for(let i=0;i<path.length;i++)if(!check.clear(path[i],path[Math.max(0,i-1)]))throw Error('Source swept clearance failed at segment '+i);
      for(const point of samples){e.rule.state.position=[...point];w._syncTower(e,false);for(const sign of [-1,1]){a.pos.fromArray(point).addScaledVector(w.towerBlock.axes[0],sign*.7);a.vel.set(0,0,0);a.grounded=false;a._resolve(false,a.pos.y,false);if(!a.grounded||!a.ground.hit||a.ground.block!==w.towerBlockId)throw Error('Actual capsule deck support failed at '+JSON.stringify(point));boarding++;}}
      e.rule.state.position=saved;w._syncTower(e,false);a.pos.fromArray(saved).addScaledVector(w.towerBlock.axes[0],.7);a.vel.set(0,0,0);a.grounded=false;a._resolve(false,a.pos.y,false);m.advanceRanked(1);if(e.rule.state.controllingTeam!==a.team)throw Error('Native tower rider not counted');
-     towerProof={pathNodes:path.length,segmentInteriorSamples:3,actualCapsuleSupports:boarding,halfSize:e.stage.tower.halfSize,localLift:e.stage.tower.localLift,sourceClearance:e.stage.tower.sourceClearance,liveGroundedHumanCounted:true};
+     towerProof={pathNodes:path.length,segmentInteriorSamples:3,actualCapsuleSupports:boarding,halfSize:e.stage.tower.halfSize,localLift:e.stage.tower.localLift,sourceClearance:e.stage.tower.sourceClearance,arenaSpan:e.stage.tower.arenaSpan,liveGroundedHumanCounted:true};
     }
     if(mode==='rainmaker'){m.rankedBarrierHits.push({id:String(a.nid??`${a.team}:${a.slot}`),team:a.team,damage:2000,kind:'main'});m.advanceRanked(1/60);if(e.rule.state.barrier.active)throw Error('Barrier did not pop');a.pos.fromArray(e.rule.state.pos);m.advanceRanked(1/60);if(e.rule.state.carrier===null)throw Error('Holder pickup failed');}
     if(mode==='clams'){const c=e.rule.state.clams[0];a.pos.fromArray(c.pos);a.grounded=true;m.advanceRanked(1/60);const id=String(a.nid??`${a.team}:${a.slot}`);if(!(e.rule.state.inventories[id]?.small||e.rule.state.inventories[id]?.power))throw Error('Clam pickup failed');}
