@@ -1,17 +1,18 @@
 {
-  "status": "pending actual fixed-clock source recovery and named peer closure",
+  "status": "all source/current Game/default/public checks passed; named final peer report closure pending",
   "binding": {
-    "base": "3249d6dc",
-    "commonHead": "4d1d98407bb71516b2e56282f97c4aa757f824cb",
+    "base": "0c39e684",
+    "commonHead": "85b660286279043158ee4fb8587f9ac8abea855b",
     "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
+    "rawSixCaseAstIdentical": true,
     "unchangedFunctions": {
       "nativeDropClearance": "491b3cfe4841097da5c45a3460c01605213d8d236678698d90ba26e195245428",
       "nativeDropTransition": "d0026d52e73acb9ddf5207c8bc32db0c616908151f3d4d58ac05272bafcc1524",
       "nativeDropTravelForm": "ff6226ecd72eaeac41731db8cb4dea49eeb740bd229243d8df5ab9f109fb0116"
     },
     "emittedIdentical": {
-      "patches/native-stages/runtime/engine.mjs": "0c93cebadd0f88e6daafef8ba383e4839a7a4643d0caa0bda680d6929ce52580",
-      "src/game/bots.js": "28ecb6ef1270955e96812e25795c93d0512aec4181f075125c3f1dcefc690ff4",
+      "patches/native-stages/runtime/engine.mjs": "16ca28124bad0a2c7c3c5f9086cd67aceac86d6eb81b57c10c664044ad09879e",
+      "src/game/bots.js": "f152f8ce75806b1ec7dedaa5cf2f063dc244648b504e99bab2fe636cbb72ecfe",
       "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
       "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
       "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04",
@@ -20,13 +21,13 @@
     },
     "builders": [
       {
-        "path": "_site-native-drop-recovery-public",
-        "contentHash": "45e6cfc4877f126ca603d27f29c3b5b8a1fbcb4a50659d5aff5d4251bde2d0c8",
+        "path": "_site-native-drop-recovery-public-current",
+        "contentHash": "646716868413ebc8925d9b22d0f3a65d03649d6579293b419cb35923fb4a44ba",
         "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
         "config": {
           "schema": 1,
           "mode": "browser-direct",
-          "runtimeSha256": "bcd3b9a2808587533c19bbc82aec7d0b12f7fe514ecfdc4dff7314b1120bfcb9",
+          "runtimeSha256": "0ebd55e3e6cc84f7141f83ca1fb3875c3b245ef1dd1fa113d5250be534c09137",
           "unavailableStages": [
             {
               "id": "lemuria",
@@ -201,14 +202,14 @@
         }
       },
       {
-        "path": "/workspace/stage-worktrees/manta-drop-calibration/_site-native-drop-recovery",
-        "contentHash": "69e1e84a03667bfe9864601d737a05ef4ed50eb98c4ebac665ac71b126a193ce",
+        "path": "/workspace/stage-worktrees/manta-drop-calibration/_site-native-drop-recovery-current",
+        "contentHash": "a57b1190d323d82a0c7ddfc708f77b6b9fd118155a7930f5115de8290efe963a",
         "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
         "config": {
           "schema": 1,
           "mode": "local-prepared",
           "baseURL": "../../_native-reference-assets/",
-          "runtimeSha256": "22b147646558e124dc3995ffb5390e345c6ed6848f7f822595fe8b3ef8979303",
+          "runtimeSha256": "0908d421887c26291cc5821e9b7eb6c700a272436df7ca5e04a4c75526e675ac",
           "unavailableStages": [
             {
               "id": "lemuria",
@@ -1464,38 +1465,38 @@
   "budgets": {
     "private": {
       "status": "passed",
-      "revision": "7045a593c8bd7da6e6aee5dcf8da930919d90f59662452835a40c3bb66a57002",
+      "revision": "0f40a5921bf1e767818efd5826c5c47681463a70f43bfb56e9172273cca29964",
       "initialJSRequests": 146,
       "modulePreloads": 145,
       "coreModulePreloads": 131,
       "practiceRangeModulePreloads": 14,
       "practiceRangePreloadBytes": 74503,
-      "initialJSBytes": 2755172,
+      "initialJSBytes": 2757196,
       "criticalHTMLBytes": 15422,
       "precacheCount": 368,
-      "precacheBytes": 5856803,
+      "precacheBytes": 5858827,
       "workerBytes": 71147,
-      "declaredBytes": 10477495,
+      "declaredBytes": 10479519,
       "measurementKind": "deterministic file and dependency gates; not native browser timings"
     },
     "public": {
       "status": "passed",
-      "revision": "4e60dab13817fcaf28103b0e186449ce81d45b88124b5e7e85c126e7118b831e",
+      "revision": "1f880c934f91005ff7db693332b45a89271ad5ebc5c82f1279c8704425e593ee",
       "initialJSRequests": 146,
       "modulePreloads": 145,
       "coreModulePreloads": 131,
       "practiceRangeModulePreloads": 14,
       "practiceRangePreloadBytes": 74503,
-      "initialJSBytes": 2756123,
+      "initialJSBytes": 2758147,
       "criticalHTMLBytes": 15422,
       "precacheCount": 368,
-      "precacheBytes": 5857754,
+      "precacheBytes": 5859778,
       "workerBytes": 71147,
-      "declaredBytes": 10478446,
+      "declaredBytes": 10480470,
       "measurementKind": "deterministic file and dependency gates; not native browser timings"
     }
   },
-  "browserPending": true,
+  "browserPending": false,
   "firstFailedBrowserReceipt": "/workspace/stage-worktrees/manta-drop-calibration/.ci-scratch/drop-final/browser.log",
   "scope": {
     "rawIntervals": [
@@ -1503,7 +1504,7 @@
       60,
       120
     ],
-    "actualGameFixedStep": "pending",
+    "actualGameFixedStep": 0.016666666666666666,
     "weapon": "shooter / Shooter_Normal_00",
     "gearAP": 0,
     "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -1513,7 +1514,1702 @@
     "NoPaintRetained": true,
     "retailPlacementsVerified": false,
     "hardwarePerformanceVerified": false,
-    "wholeBankQualified": false
+    "wholeBankQualified": false,
+    "renderCadences": [
+      30,
+      60,
+      120
+    ],
+    "sustainedOrdinaryRoamQualified": false
   },
-  "instructions": "AGENTS.md and reports/inkwave-splatoon3-behavior-2026-10-02.md"
+  "instructions": "AGENTS.md and reports/inkwave-splatoon3-behavior-2026-10-02.md",
+  "runtimeHead": "85b660286279043158ee4fb8587f9ac8abea855b",
+  "runtimeBase": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
+  "historicalBinding": {
+    "base": "3249d6dc",
+    "commonHead": "4d1d98407bb71516b2e56282f97c4aa757f824cb",
+    "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
+    "unchangedFunctions": {
+      "nativeDropClearance": "491b3cfe4841097da5c45a3460c01605213d8d236678698d90ba26e195245428",
+      "nativeDropTransition": "d0026d52e73acb9ddf5207c8bc32db0c616908151f3d4d58ac05272bafcc1524",
+      "nativeDropTravelForm": "ff6226ecd72eaeac41731db8cb4dea49eeb740bd229243d8df5ab9f109fb0116"
+    },
+    "emittedIdentical": {
+      "patches/native-stages/runtime/engine.mjs": "0c93cebadd0f88e6daafef8ba383e4839a7a4643d0caa0bda680d6929ce52580",
+      "src/game/bots.js": "28ecb6ef1270955e96812e25795c93d0512aec4181f075125c3f1dcefc690ff4",
+      "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
+      "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+      "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04",
+      "patches/splatoon3/runtime/install.mjs": "6e00d427e473e158e38ad7d67c6af6b96bf1fa1b469086741a24bf00c25bcc94",
+      "patches/splatoon3/runtime/ranked/clams.mjs": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905"
+    },
+    "builders": [
+      {
+        "path": "_site-native-drop-recovery-public",
+        "contentHash": "45e6cfc4877f126ca603d27f29c3b5b8a1fbcb4a50659d5aff5d4251bde2d0c8",
+        "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
+        "config": {
+          "schema": 1,
+          "mode": "browser-direct",
+          "runtimeSha256": "bcd3b9a2808587533c19bbc82aec7d0b12f7fe514ecfdc4dff7314b1120bfcb9",
+          "unavailableStages": [
+            {
+              "id": "lemuria",
+              "internal": "Vss_AutoWalk00",
+              "name": "リュウグウターミナル",
+              "availability": "source-unavailable",
+              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "source": {
+                "repository": "kirakira-dev/KiTrix",
+                "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+                "searchStatus": "exhausted-public-search-2026-10-13"
+              },
+              "version1130Verified": false,
+              "placementStatus": "blocked-source-unavailable"
+            }
+          ],
+          "stages": [
+            {
+              "id": "scorch",
+              "internal": "Vss_Yunohana",
+              "name": "ユノハナ大渓谷",
+              "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+              "tree": "c5e8f6e5aa14b97a87210ad5df1c91c05b1ab451",
+              "bounds": {
+                "minX": -36,
+                "minZ": -82.5,
+                "maxX": 36,
+                "maxZ": 82.5
+              },
+              "spawnPads": [
+                [
+                  7.5,
+                  13.5904,
+                  -70.95
+                ],
+                [
+                  -7.5,
+                  13.5904,
+                  70.95
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "1395d40e8a9132030158bb165197dc645f6b02f8c4c50dde0f4b81861038b8e0"
+            },
+            {
+              "id": "hagglefish",
+              "internal": "Vss_Yagara",
+              "name": "ヤガラ市場",
+              "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+              "tree": "96fbd9ec8b6eb57996236fa56bb7511009ebc0c5",
+              "bounds": {
+                "minX": -52.9357,
+                "minZ": -78,
+                "maxX": 52.9357,
+                "maxZ": 78
+              },
+              "spawnPads": [
+                [
+                  0,
+                  13.58,
+                  -67.08
+                ],
+                [
+                  0,
+                  13.58,
+                  67.08
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "ruleAvailability": {
+                "tower": {
+                  "supported": false,
+                  "status": "source-route-unverified",
+                  "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。",
+                  "evidence": "Pinned unlayered OBJ has no Vlf layer. Current source-floor navigation cannot provide a route clearing the full swept deck/pole/capsule from opposing supports. Compound human jump/climb connectivity and retail tower placement remain unverified."
+                }
+              },
+              "integritySha256": "4e05aa60dfa38e5f7b8d462a9c2cc5c9c6884dc93a767a4956f246df0df08b04"
+            },
+            {
+              "id": "inkblot",
+              "internal": "Vss_Upland03",
+              "name": "海女美術大学",
+              "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+              "tree": "ffa36b9ffb6e80907594776996b94d00b0cbacde",
+              "bounds": {
+                "minX": -46,
+                "minZ": -68.1673,
+                "maxX": 46,
+                "maxZ": 68.1673
+              },
+              "spawnPads": [
+                [
+                  17.5,
+                  15.64415,
+                  -58.62388
+                ],
+                [
+                  -17.5,
+                  15.64415,
+                  58.62388
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "668a4b55ce7e85a7b2b8622ab9e98dd34a7674a8b76e1a10a72b1978040f2be7"
+            },
+            {
+              "id": "mako",
+              "internal": "Vss_Line03",
+              "name": "ザトウマーケット",
+              "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+              "tree": "eac91de4a0c7d5d55c52dbf7d09a9c4f7d94a011",
+              "bounds": {
+                "minX": -33.5,
+                "minZ": -67.5,
+                "maxX": 33.5,
+                "maxZ": 67.5
+              },
+              "spawnPads": [
+                [
+                  -7.5,
+                  14.08,
+                  -58.05
+                ],
+                [
+                  7.5,
+                  14.08,
+                  58.05
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "6fc2ff130a672f65057ad69a815b5b830e5fb89778466b67b622e10996737212"
+            },
+            {
+              "id": "brinewater",
+              "internal": "Vss_BigSlope00",
+              "name": "クサヤ温泉",
+              "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+              "tree": "1b814a810bc1012c7cf16f469f81ee532e860bfd",
+              "bounds": {
+                "minX": -47.5,
+                "minZ": -69,
+                "maxX": 47.5,
+                "maxZ": 69
+              },
+              "spawnPads": [
+                [
+                  -12.5,
+                  18.08,
+                  -59.34
+                ],
+                [
+                  12.5,
+                  18.08,
+                  59.34
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "ff913c3655dcccf47884be075436141e8a63286e90946a85e800e5d90178a6db"
+            }
+          ]
+        }
+      },
+      {
+        "path": "/workspace/stage-worktrees/manta-drop-calibration/_site-native-drop-recovery",
+        "contentHash": "69e1e84a03667bfe9864601d737a05ef4ed50eb98c4ebac665ac71b126a193ce",
+        "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
+        "config": {
+          "schema": 1,
+          "mode": "local-prepared",
+          "baseURL": "../../_native-reference-assets/",
+          "runtimeSha256": "22b147646558e124dc3995ffb5390e345c6ed6848f7f822595fe8b3ef8979303",
+          "unavailableStages": [
+            {
+              "id": "lemuria",
+              "internal": "Vss_AutoWalk00",
+              "name": "リュウグウターミナル",
+              "availability": "source-unavailable",
+              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "source": {
+                "repository": "kirakira-dev/KiTrix",
+                "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+                "searchStatus": "exhausted-public-search-2026-10-13"
+              },
+              "version1130Verified": false,
+              "placementStatus": "blocked-source-unavailable"
+            }
+          ],
+          "stages": [
+            {
+              "id": "robo",
+              "internal": "Vss_Cross00",
+              "name": "バイガイ亭",
+              "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+              "tree": "53a94ccb7abc115382c208b540ac45728ba914d9",
+              "bounds": {
+                "minX": -75,
+                "minZ": -39,
+                "maxX": 75,
+                "maxZ": 39
+              },
+              "spawnPads": [
+                [
+                  -60,
+                  7.505000114440918,
+                  22
+                ],
+                [
+                  60,
+                  7.505000114440918,
+                  -22
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "Local inferred supports on the pinned display floor; retail spawn, ranked and moving-object placements unverified.",
+              "sourceSemantics": {
+                "inactiveObjectPatterns": [
+                  "^Fld_Cross00_(?:HokoSet|HokoAsariSet|Tclobj)_"
+                ],
+                "nonCollidableObjectPatterns": [
+                  "^Fld_Cross00JerryMannequin_"
+                ],
+                "nonPaintableObjectPatterns": [
+                  "^Fld_Cross00_.*__(?:.*(?:NoPaint|Nopaintable).*|MetalNetwork00|NetParts00)(?:_.*)?$",
+                  "^Fld_Cross00_GeneralCube_.*GeneralBoxNoPaint_"
+                ]
+              },
+              "sourceNavigation": {
+                "highDrops": true
+              },
+              "integritySha256": "ad9d7e752653a965af0ad6a1bbbf435279bfa89a2577152eefa9bcbec9032e10"
+            },
+            {
+              "id": "shipshape",
+              "internal": "Vss_Twist00",
+              "name": "オヒョウ海運",
+              "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+              "tree": "d1b59d640b885fee46b3cb93c6dab4b38ba32019",
+              "bounds": {
+                "minX": -32,
+                "minZ": -72.5,
+                "maxX": 32,
+                "maxZ": 72.5
+              },
+              "spawnPads": [
+                [
+                  -8,
+                  6.08,
+                  -66
+                ],
+                [
+                  8,
+                  6.08,
+                  66
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "Inferred opposing source Floor00 bank supports and interactive Walls00_cp extent; two malformed unplaced crane-winch prototypes excluded by exact source object name. Retail spawn/ranked placement, crane states and 11.3.0 extraction provenance unverified",
+              "sourceSemantics": {
+                "inactiveObjectPatterns": [
+                  "^FldObj_BlueCranes_Hoisting_winch_[12]__VesselCraneSet01$"
+                ]
+              },
+              "sourceNavigation": {
+                "wallClimb": true,
+                "highDrops": true,
+                "wallJumpAttach": true
+              },
+              "integritySha256": "83617abfc1e524af4f61c8d6527dcc227b2965733eec3ef311ca6e54cac665e8"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "currentDefaults": {
+    "tests": 23,
+    "pass": 21,
+    "fail": 0,
+    "skip": 2,
+    "receipt": ".ci-scratch/drop-current/defaults.log"
+  },
+  "finalBrowser": [
+    {
+      "id": "robo",
+      "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+      "sourceNavigation": {
+        "highDrops": true
+      },
+      "actors": 8,
+      "alive": 8,
+      "bots": 7,
+      "sourceBuffers": {
+        "vertices": "4ed1879b2afbe8de194556fea81b907e35f717f1f0b71dfa122e84cf81a4faa8",
+        "indices": "824107952bf753efce1d3d78b11ce0b7cdba2bfd540eb71f57beb1d97a12898f",
+        "triangles": "4d61e64d5e79666838a11c153afc34546e33dc03f0f4f8fa95a8e1ee4c85139c",
+        "normals": "0bdb422bb975e25ce46bb2b22b708e236242d96cdccb6a4e56329904bd5ef34d",
+        "flags": "b6d65004d981c3737d9c9d2e5cc8083621abefae7ce8506c45a0324d4143cf2c",
+        "objectIds": "4c1f6f648fb090b308fc2c1f898a8718cfcad994b4503229eb07aae3b9db620b",
+        "nodes": "74ad54f0d02670d98be4e5a362e10abad7320e227619f0faf647984e84bc7ce3",
+        "order": "f843f435711be995fc441f631ea6d1d83b62b24c44d2815a7617394b25a5fc96",
+        "triangleFace": "abdf5f496d648366dc384953aa54a215a68d3ef919f9af64afb2e3ac349686b8",
+        "mask": "daac3e5b7d82d97778560804fc5c2032482e8574adf9b98973ed10be88205934"
+      },
+      "sourceBuffersUnchanged": true,
+      "cases": [
+        {
+          "team": 1,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "actorTicks": 86,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "movementMicroIntervals": [
+            0.016666666666666666
+          ],
+          "observedColliderProfiles": [
+            {
+              "radius": 0.35,
+              "lift": 0.35,
+              "height": 1.45,
+              "skipGrates": false
+            }
+          ],
+          "seconds": 1.4333333333333333,
+          "plantedSetup": [
+            14.5,
+            7.5,
+            -14.3
+          ],
+          "upper": [
+            14.5,
+            7.539999961853027,
+            -13.5
+          ],
+          "upperNode": 2418,
+          "goal": [
+            14.5,
+            -0.1666666666666714,
+            -9.5
+          ],
+          "goalNode": 2847,
+          "activation": {
+            "position": [
+              14.503556426313034,
+              7.539999961853027,
+              -13.610960638861345
+            ],
+            "velocity": [
+              -0.04953176720101468,
+              0,
+              2.9120958676989717
+            ],
+            "phase": "approach"
+          },
+          "departure": {
+            "position": [
+              14.502925758343416,
+              7.539999961853027,
+              -13.57388209933005
+            ],
+            "velocity": [
+              -0.00871612971775728,
+              0,
+              0.5124429586854964
+            ],
+            "footSupported": true
+          },
+          "touchdown": {
+            "position": [
+              14.50267688018753,
+              0.07999999821186077,
+              -9.115719511305251
+            ],
+            "velocity": [
+              0,
+              0,
+              5.76
+            ],
+            "centreSourceTriangle": 57213,
+            "centreSourceHeight": -0.02858694033546813,
+            "footSupportedGoal": true
+          },
+          "end": [
+            14.500636171106333,
+            0.07999999821186066,
+            -9.204856627354355
+          ],
+          "handlerCompleted": true,
+          "normalReplanRecovery": false,
+          "continuousSourceCapsules": 86,
+          "continuousMicroStepCapsules": 86,
+          "ordinaryNoJump": true,
+          "gearAP": 0,
+          "brainMilliseconds": {
+            "p50": 0,
+            "p95": 0.20000000298023224,
+            "max": 12.599999994039536
+          },
+          "trace": [
+            {
+              "ticks": 2,
+              "position": [
+                14.5,
+                7.5,
+                -14.260000000000002
+              ],
+              "velocity": [
+                0,
+                0,
+                1.7999999999999998
+              ],
+              "grounded": true,
+              "phase": null,
+              "path": 3,
+              "pi": 1
+            },
+            {
+              "ticks": 16,
+              "position": [
+                14.502925758343416,
+                7.539999961853027,
+                -13.57388209933005
+              ],
+              "velocity": [
+                -0.00871612971775728,
+                0,
+                0.5124429586854964
+              ],
+              "grounded": true,
+              "phase": "approach",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 30,
+              "position": [
+                14.50267688018753,
+                7.2277499618530285,
+                -12.379719511305254
+              ],
+              "velocity": [
+                0,
+                -3.9816666666666665,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 44,
+              "position": [
+                14.50267688018753,
+                5.423694406297473,
+                -11.035719511305253
+              ],
+              "velocity": [
+                0,
+                -10.981666666666666,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 58,
+              "position": [
+                14.50267688018753,
+                1.9863055174085833,
+                -9.691719511305251
+              ],
+              "velocity": [
+                0,
+                -17.981666666666666,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 72,
+              "position": [
+                14.502160089558442,
+                0.07999999821186066,
+                -8.70771913806981
+              ],
+              "velocity": [
+                -0.006551425467967988,
+                0,
+                0.9600045175930039
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "event": "owner-release",
+              "position": [
+                14.500658555687522,
+                0.07999999821186068,
+                -9.159285173874384
+              ],
+              "input": [
+                -0.00023317272072796293,
+                0,
+                -0.47470264041636234
+              ],
+              "completed": true,
+              "recovered": false
+            },
+            {
+              "ticks": 86,
+              "position": [
+                14.500636171106333,
+                0.07999999821186066,
+                -9.204856627354355
+              ],
+              "velocity": [
+                -0.0013430748713930663,
+                0,
+                -2.7342872087982473
+              ],
+              "grounded": true,
+              "phase": null,
+              "path": 39,
+              "pi": 1
+            }
+          ]
+        },
+        {
+          "team": 1,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "actorTicks": 86,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "movementMicroIntervals": [
+            0.016666666666666666
+          ],
+          "observedColliderProfiles": [
+            {
+              "radius": 0.35,
+              "lift": 0.35,
+              "height": 1.45,
+              "skipGrates": false
+            }
+          ],
+          "seconds": 1.4333333333333333,
+          "plantedSetup": [
+            14.5,
+            7.5,
+            -14.3
+          ],
+          "upper": [
+            14.5,
+            7.539999961853027,
+            -13.5
+          ],
+          "upperNode": 2418,
+          "goal": [
+            14.5,
+            -0.1666666666666714,
+            -9.5
+          ],
+          "goalNode": 2847,
+          "activation": {
+            "position": [
+              14.503556426313034,
+              7.539999961853027,
+              -13.610960638861345
+            ],
+            "velocity": [
+              -0.04953176720101468,
+              0,
+              2.9120958676989717
+            ],
+            "phase": "approach"
+          },
+          "departure": {
+            "position": [
+              14.502925758343416,
+              7.539999961853027,
+              -13.57388209933005
+            ],
+            "velocity": [
+              -0.00871612971775728,
+              0,
+              0.5124429586854964
+            ],
+            "footSupported": true
+          },
+          "touchdown": {
+            "position": [
+              14.50267688018753,
+              0.07999999821186077,
+              -9.115719511305251
+            ],
+            "velocity": [
+              0,
+              0,
+              5.76
+            ],
+            "centreSourceTriangle": 57213,
+            "centreSourceHeight": -0.02858694033546813,
+            "footSupportedGoal": true
+          },
+          "end": [
+            14.500636171106333,
+            0.07999999821186066,
+            -9.204856627354355
+          ],
+          "handlerCompleted": true,
+          "normalReplanRecovery": false,
+          "continuousSourceCapsules": 86,
+          "continuousMicroStepCapsules": 86,
+          "ordinaryNoJump": true,
+          "gearAP": 0,
+          "brainMilliseconds": {
+            "p50": 0,
+            "p95": 0.4000000059604645,
+            "max": 6.600000008940697
+          },
+          "trace": [
+            {
+              "ticks": 1,
+              "position": [
+                14.5,
+                7.5,
+                -14.290000000000001
+              ],
+              "velocity": [
+                0,
+                0,
+                0.6
+              ],
+              "grounded": true,
+              "phase": null,
+              "path": 3,
+              "pi": 1
+            },
+            {
+              "ticks": 16,
+              "position": [
+                14.502925758343416,
+                7.539999961853027,
+                -13.57388209933005
+              ],
+              "velocity": [
+                -0.00871612971775728,
+                0,
+                0.5124429586854964
+              ],
+              "grounded": true,
+              "phase": "approach",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 31,
+              "position": [
+                14.50267688018753,
+                7.153055517408584,
+                -12.283719511305254
+              ],
+              "velocity": [
+                0,
+                -4.4816666666666665,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 46,
+              "position": [
+                14.50267688018753,
+                5.032638850741917,
+                -10.843719511305252
+              ],
+              "velocity": [
+                0,
+                -11.981666666666666,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 61,
+              "position": [
+                14.50267688018753,
+                1.03722218407525,
+                -9.403719511305251
+              ],
+              "velocity": [
+                0,
+                -19.481666666666666,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 76,
+              "position": [
+                14.501633233311814,
+                0.07999999821186066,
+                -8.74371879511137
+              ],
+              "velocity": [
+                -0.008519614233990235,
+                0,
+                -1.4399946356612792
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "event": "owner-release",
+              "position": [
+                14.500658555687522,
+                0.07999999821186068,
+                -9.159285173874384
+              ],
+              "input": [
+                -0.00023317272072796293,
+                0,
+                -0.47470264041636234
+              ],
+              "completed": true,
+              "recovered": false
+            }
+          ]
+        },
+        {
+          "team": 1,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "actorTicks": 86,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "movementMicroIntervals": [
+            0.016666666666666666
+          ],
+          "observedColliderProfiles": [
+            {
+              "radius": 0.35,
+              "lift": 0.35,
+              "height": 1.45,
+              "skipGrates": false
+            }
+          ],
+          "seconds": 1.4333333333333333,
+          "plantedSetup": [
+            14.5,
+            7.5,
+            -14.3
+          ],
+          "upper": [
+            14.5,
+            7.539999961853027,
+            -13.5
+          ],
+          "upperNode": 2418,
+          "goal": [
+            14.5,
+            -0.1666666666666714,
+            -9.5
+          ],
+          "goalNode": 2847,
+          "activation": {
+            "position": [
+              14.503556426313034,
+              7.539999961853027,
+              -13.610960638861345
+            ],
+            "velocity": [
+              -0.04953176720101468,
+              0,
+              2.9120958676989717
+            ],
+            "phase": "approach"
+          },
+          "departure": {
+            "position": [
+              14.502925758343416,
+              7.539999961853027,
+              -13.57388209933005
+            ],
+            "velocity": [
+              -0.00871612971775728,
+              0,
+              0.5124429586854964
+            ],
+            "footSupported": true
+          },
+          "touchdown": {
+            "position": [
+              14.50267688018753,
+              0.07999999821186077,
+              -9.115719511305251
+            ],
+            "velocity": [
+              0,
+              0,
+              5.76
+            ],
+            "centreSourceTriangle": 57213,
+            "centreSourceHeight": -0.02858694033546813,
+            "footSupportedGoal": true
+          },
+          "end": [
+            14.500636171106333,
+            0.07999999821186066,
+            -9.204856627354355
+          ],
+          "handlerCompleted": true,
+          "normalReplanRecovery": false,
+          "continuousSourceCapsules": 86,
+          "continuousMicroStepCapsules": 86,
+          "ordinaryNoJump": true,
+          "gearAP": 0,
+          "brainMilliseconds": {
+            "p50": 0,
+            "p95": 0.4000000059604645,
+            "max": 6.5
+          },
+          "trace": [
+            {
+              "ticks": 0,
+              "position": [
+                14.5,
+                7.5,
+                -14.3
+              ],
+              "velocity": [
+                0,
+                0,
+                0
+              ],
+              "grounded": true,
+              "phase": null,
+              "path": 3,
+              "pi": 1
+            },
+            {
+              "ticks": 15,
+              "position": [
+                14.503071027172044,
+                7.539999961853027,
+                -13.58242281530814
+              ],
+              "velocity": [
+                -0.02912394845938598,
+                0,
+                1.712269413192234
+              ],
+              "grounded": true,
+              "phase": "approach",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 30,
+              "position": [
+                14.50267688018753,
+                7.2277499618530285,
+                -12.379719511305254
+              ],
+              "velocity": [
+                0,
+                -3.9816666666666665,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 45,
+              "position": [
+                14.50267688018753,
+                5.232333295186362,
+                -10.939719511305253
+              ],
+              "velocity": [
+                0,
+                -11.481666666666666,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 60,
+              "position": [
+                14.50267688018753,
+                1.3619166285196944,
+                -9.499719511305251
+              ],
+              "velocity": [
+                0,
+                -18.981666666666666,
+                5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "ticks": 75,
+              "position": [
+                14.501775226882382,
+                0.07999999821186071,
+                -8.719718884517015
+              ],
+              "velocity": [
+                -0.008184554265885918,
+                0,
+                -0.8399947292156049
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 3,
+              "pi": 2
+            },
+            {
+              "event": "owner-release",
+              "position": [
+                14.500658555687522,
+                0.07999999821186068,
+                -9.159285173874384
+              ],
+              "input": [
+                -0.00023317272072796293,
+                0,
+                -0.47470264041636234
+              ],
+              "completed": true,
+              "recovered": false
+            }
+          ]
+        }
+      ],
+      "unexpectedContactRecovery": {
+        "kind": "controlled actual grounded NoPaint contact, separate from incoming fall replay",
+        "sourceTriangle": 83272,
+        "start": [
+          13.5,
+          1.1102230246251565e-16,
+          -10.5
+        ],
+        "end": [
+          12.504621940788104,
+          -1.4199999570846558,
+          -15.240170261933654
+        ],
+        "ordinaryStop": true,
+        "normalReplan": true,
+        "ordinaryGoal": 3165,
+        "finalSourceTriangle": 79893,
+        "finalSourceFace": 19798,
+        "finalSourceNode": 2184,
+        "sourceFootSupported": true,
+        "alive": true,
+        "grounded": true,
+        "fixedActorSteps": 277,
+        "continuousSourceCapsules": 277,
+        "seconds": 4.616666666666666
+      },
+      "otherNativeHandlersExecuted": false,
+      "conditions": "Actual native Turf Match/Game._frame at render30/60/120, installed fixed1/60 Actor/Brain/Projectiles; eight real actors/seven bots with controlled original source-supported own-team pad setups and a real source edge goal; ordinary incoming movement/braking/gravity, production Character, empty initial paint, zero-AP Shooter; no later pose/velocity/ink/source writes. Isolated edge completion, not whole-bank or ranked-objective qualification. Robo highDrops is private calibration only; Shipshape retains its owner definition. SwiftShader timings are software diagnostics.",
+      "errors": [],
+      "buildFingerprint": "a57b1190d323d82a0c7ddfc708f77b6b9fd118155a7930f5115de8290efe963a",
+      "moduleSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066"
+    },
+    {
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "sourceNavigation": {
+        "wallClimb": true,
+        "highDrops": true,
+        "wallJumpAttach": true
+      },
+      "actors": 8,
+      "alive": 8,
+      "bots": 7,
+      "sourceBuffers": {
+        "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+        "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+        "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+        "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "cases": [
+        {
+          "team": 0,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "actorTicks": 64,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "movementMicroIntervals": [
+            0.016666666666666666
+          ],
+          "observedColliderProfiles": [
+            {
+              "radius": 0.35,
+              "lift": 0.35,
+              "height": 1.45,
+              "skipGrates": false
+            }
+          ],
+          "seconds": 1.0666666666666667,
+          "plantedSetup": [
+            -18.5,
+            5.340192766656487,
+            63
+          ],
+          "upper": [
+            -18.5,
+            5.1798441621614515,
+            63
+          ],
+          "upperNode": 28642,
+          "goal": [
+            -18.5,
+            1.1794999837875224,
+            60
+          ],
+          "goalNode": 28230,
+          "activation": {
+            "position": [
+              -18.5,
+              5.340192766656487,
+              63
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "phase": "depart"
+          },
+          "departure": {
+            "position": [
+              -18.5,
+              5.340192766656487,
+              63
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "footSupported": true
+          },
+          "touchdown": {
+            "position": [
+              -18.5,
+              1.1794999837875366,
+              59.574000000000105
+            ],
+            "velocity": [
+              0,
+              0,
+              -5.76
+            ],
+            "centreSourceTriangle": 106429,
+            "centreSourceHeight": 1.1794999837875366,
+            "footSupportedGoal": true
+          },
+          "end": [
+            -18.5,
+            1.1794999837875366,
+            59.73210470489839
+          ],
+          "handlerCompleted": true,
+          "normalReplanRecovery": false,
+          "continuousSourceCapsules": 64,
+          "continuousMicroStepCapsules": 64,
+          "ordinaryNoJump": true,
+          "gearAP": 0,
+          "brainMilliseconds": {
+            "p50": 0,
+            "p95": 0.4000000059604645,
+            "max": 3.7000000029802322
+          },
+          "trace": [
+            {
+              "ticks": 2,
+              "position": [
+                -18.5,
+                5.340192766656487,
+                62.97
+              ],
+              "velocity": [
+                0,
+                0,
+                -1.2
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 16,
+              "position": [
+                -18.5,
+                4.933955273272572,
+                61.87800000000002
+              ],
+              "velocity": [
+                0,
+                -3.4816666666666665,
+                -5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 30,
+              "position": [
+                -18.5,
+                3.246566384383682,
+                60.53400000000007
+              ],
+              "velocity": [
+                0,
+                -10.481666666666666,
+                -5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 44,
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.290000000000106
+              ],
+              "velocity": [
+                0,
+                0,
+                -3.3600000000000003
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 58,
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.507983666176074
+              ],
+              "velocity": [
+                0,
+                0,
+                3.134971330559524
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "event": "owner-release",
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.67141083218377
+              ],
+              "input": [
+                0,
+                0,
+                0.20811043366321835
+              ],
+              "completed": true,
+              "recovered": false
+            }
+          ]
+        },
+        {
+          "team": 0,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "actorTicks": 63,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "movementMicroIntervals": [
+            0.016666666666666666
+          ],
+          "observedColliderProfiles": [
+            {
+              "radius": 0.35,
+              "lift": 0.35,
+              "height": 1.45,
+              "skipGrates": false
+            }
+          ],
+          "seconds": 1.05,
+          "plantedSetup": [
+            -18.5,
+            5.340192766656487,
+            63
+          ],
+          "upper": [
+            -18.5,
+            5.1798441621614515,
+            63
+          ],
+          "upperNode": 28642,
+          "goal": [
+            -18.5,
+            1.1794999837875224,
+            60
+          ],
+          "goalNode": 28230,
+          "activation": {
+            "position": [
+              -18.5,
+              5.340192766656487,
+              63
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "phase": "depart"
+          },
+          "departure": {
+            "position": [
+              -18.5,
+              5.340192766656487,
+              63
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "footSupported": true
+          },
+          "touchdown": {
+            "position": [
+              -18.5,
+              1.1794999837875366,
+              59.574000000000105
+            ],
+            "velocity": [
+              0,
+              0,
+              -5.76
+            ],
+            "centreSourceTriangle": 106429,
+            "centreSourceHeight": 1.1794999837875366,
+            "footSupportedGoal": true
+          },
+          "end": [
+            -18.5,
+            1.1794999837875366,
+            59.6963052570846
+          ],
+          "handlerCompleted": true,
+          "normalReplanRecovery": false,
+          "continuousSourceCapsules": 63,
+          "continuousMicroStepCapsules": 63,
+          "ordinaryNoJump": true,
+          "gearAP": 0,
+          "brainMilliseconds": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 3
+          },
+          "trace": [
+            {
+              "ticks": 1,
+              "position": [
+                -18.5,
+                5.340192766656487,
+                62.99
+              ],
+              "velocity": [
+                0,
+                0,
+                -0.6
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 16,
+              "position": [
+                -18.5,
+                4.933955273272572,
+                61.87800000000002
+              ],
+              "velocity": [
+                0,
+                -3.4816666666666665,
+                -5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 31,
+              "position": [
+                -18.5,
+                3.063538606605904,
+                60.43800000000007
+              ],
+              "velocity": [
+                0,
+                -10.981666666666666,
+                -5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 46,
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.208000000000105
+              ],
+              "velocity": [
+                0,
+                0,
+                -2.16
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 61,
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.636516407282926
+              ],
+              "velocity": [
+                0,
+                0,
+                2.316001652710579
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "event": "owner-release",
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.67141083218377
+              ],
+              "input": [
+                0,
+                0,
+                0.20811043366321835
+              ],
+              "completed": true,
+              "recovered": false
+            }
+          ]
+        },
+        {
+          "team": 0,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "actorTicks": 63,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "movementMicroIntervals": [
+            0.016666666666666666
+          ],
+          "observedColliderProfiles": [
+            {
+              "radius": 0.35,
+              "lift": 0.35,
+              "height": 1.45,
+              "skipGrates": false
+            }
+          ],
+          "seconds": 1.05,
+          "plantedSetup": [
+            -18.5,
+            5.340192766656487,
+            63
+          ],
+          "upper": [
+            -18.5,
+            5.1798441621614515,
+            63
+          ],
+          "upperNode": 28642,
+          "goal": [
+            -18.5,
+            1.1794999837875224,
+            60
+          ],
+          "goalNode": 28230,
+          "activation": {
+            "position": [
+              -18.5,
+              5.340192766656487,
+              63
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "phase": "depart"
+          },
+          "departure": {
+            "position": [
+              -18.5,
+              5.340192766656487,
+              63
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "footSupported": true
+          },
+          "touchdown": {
+            "position": [
+              -18.5,
+              1.1794999837875366,
+              59.574000000000105
+            ],
+            "velocity": [
+              0,
+              0,
+              -5.76
+            ],
+            "centreSourceTriangle": 106429,
+            "centreSourceHeight": 1.1794999837875366,
+            "footSupportedGoal": true
+          },
+          "end": [
+            -18.5,
+            1.1794999837875366,
+            59.6963052570846
+          ],
+          "handlerCompleted": true,
+          "normalReplanRecovery": false,
+          "continuousSourceCapsules": 63,
+          "continuousMicroStepCapsules": 63,
+          "ordinaryNoJump": true,
+          "gearAP": 0,
+          "brainMilliseconds": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 3.2000000029802322
+          },
+          "trace": [
+            {
+              "ticks": 0,
+              "position": [
+                -18.5,
+                5.340192766656487,
+                63
+              ],
+              "velocity": [
+                0,
+                0,
+                0
+              ],
+              "grounded": true,
+              "phase": null,
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 15,
+              "position": [
+                -18.5,
+                4.991983051050349,
+                61.97400000000002
+              ],
+              "velocity": [
+                0,
+                -2.9816666666666665,
+                -5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 30,
+              "position": [
+                -18.5,
+                3.246566384383682,
+                60.53400000000007
+              ],
+              "velocity": [
+                0,
+                -10.481666666666666,
+                -5.76
+              ],
+              "grounded": false,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 45,
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.244000000000106
+              ],
+              "velocity": [
+                0,
+                0,
+                -2.7600000000000002
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "ticks": 60,
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.59791637973775
+              ],
+              "velocity": [
+                0,
+                0,
+                2.561948730874533
+              ],
+              "grounded": true,
+              "phase": "depart",
+              "path": 2,
+              "pi": 1
+            },
+            {
+              "event": "owner-release",
+              "position": [
+                -18.5,
+                1.1794999837875366,
+                59.67141083218377
+              ],
+              "input": [
+                0,
+                0,
+                0.20811043366321835
+              ],
+              "completed": true,
+              "recovered": false
+            }
+          ]
+        }
+      ],
+      "unexpectedContactRecovery": null,
+      "otherNativeHandlersExecuted": false,
+      "conditions": "Actual native Turf Match/Game._frame at render30/60/120, installed fixed1/60 Actor/Brain/Projectiles; eight real actors/seven bots with controlled original source-supported own-team pad setups and a real source edge goal; ordinary incoming movement/braking/gravity, production Character, empty initial paint, zero-AP Shooter; no later pose/velocity/ink/source writes. Isolated edge completion, not whole-bank or ranked-objective qualification. Robo highDrops is private calibration only; Shipshape retains its owner definition. SwiftShader timings are software diagnostics.",
+      "errors": [],
+      "buildFingerprint": "a57b1190d323d82a0c7ddfc708f77b6b9fd118155a7930f5115de8290efe963a",
+      "moduleSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066"
+    }
+  ],
+  "browserReceipt": "/workspace/stage-worktrees/manta-drop-calibration/.browser-evidence/drop-current-game-clock/browser.json",
+  "browserProcessExit": 0,
+  "screenshots": {
+    "inspected": true,
+    "scope": "Initial human source-bank camera/stock inferred source display; selected edge movement measured numerically"
+  },
+  "pr": "https://github.com/rhgrive3/actions/pull/1404",
+  "historicalFirstPairReceipt": "/workspace/stage-worktrees/manta-drop-calibration/.browser-evidence/drop-final-game-clock/browser.json",
+  "historicalFailureScopes": [
+    "Original incoming Robo first-contact mismatch",
+    "Original Ship higher-foot approach deadlock",
+    "Controlled contact followed by six seconds ordinary roam: later source capsule failure retained",
+    "Initial floating obstruction endpoints lacked actual source-foot support; corrected original supported source endpoints now pass"
+  ],
+  "peer": {
+    "name": "Wahoo",
+    "codeAndSourceReview": "positive",
+    "independentCurrentContext": {
+      "pass": 2,
+      "skip": 1,
+      "fail": 0,
+      "receipt": "/workspace/stage-worktrees/wahoo/.ci-scratch/manta-drop-independent-context-review.log"
+    },
+    "finalReportHeadClosure": "pending"
+  }
 }
