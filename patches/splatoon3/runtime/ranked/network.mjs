@@ -32,7 +32,8 @@ export function installRankedNetwork(api) {
         if (a && !this.isHost) {
           const cmd = a._rankedInput || {};
           d.rki = { match: this.cfg.id, id: actorId(a), seq: this.rankedInputSeq = (this.rankedInputSeq || 0) + 1,
-            fire: !!cmd.fire, throw: !!a._rankedThrowPending, aim: cmd.aim || [0, 0, 1] };
+            fire: !!cmd.fire, throw: !!a._rankedThrowPending, aim: cmd.aim || [0, 0, 1], special: a.specialActive?.id ?? null,
+            specialDeployed: a.specialActive?.id === 'storm' && a.specialActive?.t > 0, clamDrop: a._rankedClamDrop || 0 };
           a._rankedThrowPending = false;
         }
       }
@@ -53,7 +54,10 @@ export function installRankedNetwork(api) {
       if (cmd.match === this.cfg.id && a?.owner === from && a.alive && Number.isSafeInteger(cmd.seq) && cmd.seq > 0 && finiteVector(cmd.aim)) {
         this.rankedInputs ||= new Map();
         const old = this.rankedInputs.get(cmd.id);
-        if (!old || cmd.seq > old.seq) this.rankedInputs.set(cmd.id, { seq: cmd.seq, fire: !!cmd.fire, throw: !!cmd.throw || !!old?.throw, aim: cmd.aim, at: G.time });
+        const specialOk = cmd.special == null || cmd.special === a.weapon?.special;
+        const dropOk = cmd.clamDrop === undefined || Number.isSafeInteger(cmd.clamDrop) && cmd.clamDrop >= 0 && cmd.clamDrop <= 100000;
+        if ((!old || cmd.seq > old.seq) && specialOk && dropOk) this.rankedInputs.set(cmd.id, { seq: cmd.seq, fire: !!cmd.fire, throw: !!cmd.throw || !!old?.throw, aim: cmd.aim, at: G.time,
+          special: cmd.special ?? null, specialDeployed: cmd.special === 'storm' && cmd.specialDeployed === true, clamDrop: Math.max(old?.clamDrop || 0, cmd.clamDrop || 0) });
       }
     }
     if (d.k === 'rkhit') {
@@ -122,8 +126,9 @@ function validEvent(e) {
   if (e.kind.startsWith('rainmaker-')) {
     if (!finiteVector(e.pos)) return false;
     if (e.kind === 'rainmaker-shot' && (!finiteVector(e.aim) || !Number.isFinite(e.speed) || e.speed < 0 || e.speed > 300)) return false;
-    for (const key of ['damage', 'blastDamage', 'radius', 'paintRadius', 'nearRadius']) if (e[key] !== undefined && (!Number.isFinite(e[key]) || e[key] < 0 || e[key] > 2000)) return false;
+    for (const key of ['damage', 'blastDamage', 'outerDamage', 'radius', 'paintRadius', 'nearRadius', 'directRange', 'effectiveRange', 'launchY', 'recoil', 'trailRadius']) if (e[key] !== undefined && (!Number.isFinite(e[key]) || e[key] < 0 || e[key] > 2000)) return false;
   }
+  if (e.kind === 'clam-paint' && (!finiteVector(e.pos) || !Number.isFinite(e.radius) || e.radius <= 0 || e.radius > 1)) return false;
   return true;
 }
 export function acceptState(nm, packet) {
