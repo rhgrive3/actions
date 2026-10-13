@@ -770,7 +770,1237 @@
     "renderTrianglesPreserved": true
   },
   "browser": {
-    "status": "pending"
+    "status": "incomplete",
+    "source": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "eeltail",
+          "sourceMode": "browser-direct",
+          "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+          "geometry": {
+            "vertices": 1056904,
+            "triangles": 763146,
+            "collisionTriangles": 211969,
+            "bvhNodes": 63489,
+            "paintFaces": 67563
+          },
+          "actors": 8,
+          "bots": 7,
+          "coverage": [
+            0.0024979307624035498,
+            0.007073307357643329
+          ],
+          "spawn": {
+            "grounded": true,
+            "active": false
+          },
+          "sourceMetrics": {
+            "cached": false,
+            "conversionMilliseconds": 13186.89999999851,
+            "recipe": "inkwave-browser-source-v3"
+          },
+          "gameMetrics": {
+            "loadMilliseconds": 91912.79999999702,
+            "navMilliseconds": 586.7000000029802,
+            "shaderWarmMilliseconds": 107.79999999701977,
+            "vertices": 1056904,
+            "triangles": 763146,
+            "faces": 67563,
+            "gridBytes": 2430264,
+            "atlas": 2048,
+            "ppm": 2.5600000000000005,
+            "textureCount": 103,
+            "quality": "low",
+            "version1130Verified": false
+          },
+          "render": {
+            "frame": 1676,
+            "calls": 249,
+            "triangles": 783979,
+            "points": 0,
+            "lines": 0
+          },
+          "version1130Verified": false
+        }
+      ],
+      "errors": [],
+      "downloads": 2,
+      "menu": [
+        "タイドウォーター広場",
+        "ケルプライン埠頭",
+        "ハリヤードマリーナ",
+        "ユノハナ大渓谷",
+        "ヤガラ市場",
+        "海女美術大学",
+        "ザトウマーケット",
+        "クサヤ温泉",
+        "ゴンズイ地区"
+      ],
+      "cache": {
+        "id": "eeltail",
+        "derivedCacheHit": true,
+        "objDownloads": 0
+      },
+      "failureRollback": {
+        "levelRetained": true,
+        "menu": "setup",
+        "loadingRemoved": true
+      }
+    },
+    "gameplay": [
+      {
+        "id": "eeltail",
+        "native": true,
+        "actors": 8,
+        "alive": 8,
+        "bots": 7,
+        "moved": [
+          0,
+          0.9670892843823982,
+          0.957508512553098,
+          8.276974552692849,
+          7.633597313348365,
+          5.617554599690522,
+          0.08863012261162663,
+          8.268915977380766
+        ],
+        "coverage": [
+          0.004064234763271363,
+          0.013365377340003877
+        ],
+        "turfTotal": 277528,
+        "counts": [
+          1040,
+          3344
+        ],
+        "metrics": {
+          "loadMilliseconds": 3215.2999999970198,
+          "navMilliseconds": 490.70000000298023,
+          "shaderWarmMilliseconds": 11.099999994039536,
+          "vertices": 1056904,
+          "triangles": 763146,
+          "faces": 67563,
+          "gridBytes": 2430264,
+          "atlas": 2048,
+          "ppm": 2.5600000000000005,
+          "textureCount": 103,
+          "quality": "low",
+          "version1130Verified": false
+        },
+        "cpuFrame": {
+          "p50": 10.200000002980232,
+          "p95": 28.899999998509884,
+          "max": 46.79999999701977
+        },
+        "render": {
+          "frame": 393,
+          "calls": 257,
+          "triangles": 791556,
+          "points": 0,
+          "lines": 0
+        },
+        "memory": {
+          "geometries": 406,
+          "textures": 122
+        },
+        "navValid": 8268,
+        "local": {
+          "pos": [
+            -7.439059691972125,
+            12,
+            -81.00015473937862
+          ],
+          "alive": true,
+          "grounded": true
+        },
+        "version1130Verified": false,
+        "rules": [
+          {
+            "mode": "zones",
+            "state": "playing",
+            "actors": 8,
+            "counts": [
+              98,
+              100
+            ],
+            "snapshotBytes": 511,
+            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+          },
+          {
+            "mode": "tower",
+            "state": "playing",
+            "actors": 8,
+            "counts": [
+              98,
+              100
+            ],
+            "snapshotBytes": 774,
+            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+          },
+          {
+            "mode": "rainmaker",
+            "state": "playing",
+            "actors": 8,
+            "counts": [
+              100,
+              100
+            ],
+            "snapshotBytes": 958,
+            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+          },
+          {
+            "mode": "clams",
+            "state": "playing",
+            "actors": 8,
+            "counts": [
+              100,
+              100
+            ],
+            "snapshotBytes": 7882,
+            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+          }
+        ],
+        "errors": []
+      }
+    ],
+    "online": {
+      "status": "passed",
+      "results": [
+        {
+          "id": "eeltail",
+          "mode": "turf",
+          "identities": [
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "turf",
+              "native": true,
+              "gridBytes": 2430264
+            },
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "turf",
+              "native": true,
+              "gridBytes": 2430264
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "5c5a46401a4432f1f75b592fbd420a6d8effbd48c017b99d00cdde1439051e96",
+              "coverage": [
+                0.004543802080905319,
+                0.0017358466023995778
+              ],
+              "stats": {
+                "in": 190,
+                "out": 190,
+                "extrap": 129,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 9.550000000000054,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1269,
+                  437
+                ],
+                "applied": [
+                  [
+                    "p_m73ft6a",
+                    244
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_j0y0tvz",
+                    "tr": 48.811101586597424,
+                    "lastTs": 48.964,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      48.897,
+                      567,
+                      48.964,
+                      570
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "5c5a46401a4432f1f75b592fbd420a6d8effbd48c017b99d00cdde1439051e96",
+              "coverage": [
+                0.004543802080905319,
+                0.0017358466023995778
+              ],
+              "stats": {
+                "in": 190,
+                "out": 190,
+                "extrap": 882,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 9.550000000000054,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  1269,
+                  437
+                ],
+                "applied": [
+                  [
+                    "p_m73ft6a",
+                    244
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_m73ft6a",
+                    "tr": 76.76313758467037,
+                    "lastTs": 76.918,
+                    "lastEventSeq": 252,
+                    "lastPaintSeq": 244,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      76.85,
+                      567,
+                      76.918,
+                      570
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 205,
+            "probeRadius": 1.5
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 413
+        },
+        {
+          "id": "eeltail",
+          "mode": "zones",
+          "identities": [
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "zones",
+              "native": true,
+              "gridBytes": 2430264
+            },
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "zones",
+              "native": true,
+              "gridBytes": 2430264
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "01bbdbbe778ca3fe7cfec2275c7e84a8468873c658cbf7c92cfa421cf7e6cac1",
+              "coverage": [
+                0.003196693266216456,
+                0.0048887221027273916
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 125,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 15.716666666667027,
+                "out": 0,
+                "growing": 53,
+                "counts": [
+                  751,
+                  1251
+                ],
+                "applied": [
+                  [
+                    "p_svvnl8g",
+                    494
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_6e9rh37",
+                    "tr": 56.791516256857484,
+                    "lastTs": 57.23,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      57.155,
+                      939,
+                      57.23,
+                      942
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "3f2faca4fdbc631d4bf69ed953ab4229f0e998cfce32b6611c8558e7eb1379e9",
+              "coverage": [
+                0.003196693266216456,
+                0.004850412862519742
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 875,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 15.716666666667027,
+                "out": 0,
+                "growing": 55,
+                "counts": [
+                  751,
+                  1242
+                ],
+                "applied": [
+                  [
+                    "p_svvnl8g",
+                    489
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_svvnl8g",
+                    "tr": 84.74653931007842,
+                    "lastTs": 85.183,
+                    "lastEventSeq": 489,
+                    "lastPaintSeq": 494,
+                    "queued": 26,
+                    "paintQueued": 2,
+                    "physicsPoints": [
+                      85.108,
+                      939,
+                      85.183,
+                      942
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 688
+        },
+        {
+          "id": "eeltail",
+          "mode": "tower",
+          "identities": [
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 2430364
+            },
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 2430364
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "7a57c4507c1376a031a1c8f37aa3da174e812ba97bb176bcda95bf1ee133a430",
+              "coverage": [
+                0,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 213,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 21.883333333333372,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  0,
+                  0
+                ],
+                "applied": [],
+                "peers": [
+                  {
+                    "id": "p_l31edeb",
+                    "tr": 63.537537406386235,
+                    "lastTs": 63.532,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      63.506,
+                      1309,
+                      63.532,
+                      1312
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "7a57c4507c1376a031a1c8f37aa3da174e812ba97bb176bcda95bf1ee133a430",
+              "coverage": [
+                0,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 1526,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 21.883333333333372,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  0,
+                  0
+                ],
+                "applied": [],
+                "peers": [
+                  {
+                    "id": "p_wvsbkym",
+                    "tr": 91.49088124887544,
+                    "lastTs": 91.486,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      91.46,
+                      1309,
+                      91.486,
+                      1312
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 961
+        },
+        {
+          "id": "eeltail",
+          "mode": "rainmaker",
+          "identities": [
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "rainmaker",
+              "native": true,
+              "gridBytes": 2430264
+            },
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "rainmaker",
+              "native": true,
+              "gridBytes": 2430264
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "c9002a4df2fb792d13fc50276a11b3907332603edc8cf92f10125d9f9f463fe9",
+              "coverage": [
+                0.0033953063690507195,
+                0.004015416727660217
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 110,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 28.049999999999688,
+                "out": 1,
+                "growing": 58,
+                "counts": [
+                  931,
+                  1001
+                ],
+                "applied": [
+                  [
+                    "p_nj6w4v8",
+                    950
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_9ox9xav",
+                    "tr": 70.59745523863337,
+                    "lastTs": 70.806,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      70.761,
+                      1679,
+                      70.806,
+                      1682
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "c9002a4df2fb792d13fc50276a11b3907332603edc8cf92f10125d9f9f463fe9",
+              "coverage": [
+                0.0033953063690507195,
+                0.004015416727660217
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 742,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 28.049999999999688,
+                "out": 0,
+                "growing": 71,
+                "counts": [
+                  931,
+                  1001
+                ],
+                "applied": [
+                  [
+                    "p_nj6w4v8",
+                    927
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_nj6w4v8",
+                    "tr": 98.55496375353445,
+                    "lastTs": 98.758,
+                    "lastEventSeq": 927,
+                    "lastPaintSeq": 949,
+                    "queued": 22,
+                    "paintQueued": 13,
+                    "physicsPoints": [
+                      98.714,
+                      1679,
+                      98.758,
+                      1682
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 1234
+        },
+        {
+          "id": "eeltail",
+          "mode": "clams",
+          "identities": [
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "clams",
+              "native": true,
+              "gridBytes": 2430264
+            },
+            {
+              "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "actors": 8,
+              "rule": "clams",
+              "native": true,
+              "gridBytes": 2430264
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "f22c74f8baef805939b5e7a711b605c5296c5aa52cab12a5061d09dda87d1d38",
+              "coverage": [
+                0.0012397680468535747,
+                0.001579192013004401
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 173,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 34.21666666666601,
+                "out": 0,
+                "growing": 14,
+                "counts": [
+                  299,
+                  371
+                ],
+                "applied": [
+                  [
+                    "p_qxgxkoe",
+                    1073
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_mxjwlpv",
+                    "tr": 77.82503126282717,
+                    "lastTs": 77.96,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      77.93,
+                      2049,
+                      77.96,
+                      2052
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "f22c74f8baef805939b5e7a711b605c5296c5aa52cab12a5061d09dda87d1d38",
+              "coverage": [
+                0.0012397680468535747,
+                0.001579192013004401
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 1218,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 34.21666666666601,
+                "out": 0,
+                "growing": 14,
+                "counts": [
+                  299,
+                  371
+                ],
+                "applied": [
+                  [
+                    "p_qxgxkoe",
+                    1073
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_qxgxkoe",
+                    "tr": 105.78002417325236,
+                    "lastTs": 105.913,
+                    "lastEventSeq": 1073,
+                    "lastPaintSeq": 1073,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      105.883,
+                      2049,
+                      105.913,
+                      2052
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 1507
+        }
+      ],
+      "errors": [],
+      "packets": 1507
+    },
+    "render": {
+      "status": "passed",
+      "measurement": "Chromium SwiftShader; warm then freeze unrelated per-draw mesh hooks; timing retains eight actors; pixel comparison hides character roots to isolate stage rendering; alternating renders; not mobile hardware",
+      "stages": [
+        {
+          "id": "eeltail",
+          "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+          "actors": 8,
+          "chunks": 192,
+          "tileSize": 16,
+          "views": [
+            {
+              "name": "gameplay",
+              "changedPixels": 0,
+              "maxChannelError": 0,
+              "baselineSelfPixels": 0,
+              "chunkedSelfPixels": 0,
+              "differences": [],
+              "pixels": 153600,
+              "baseline": {
+                "milliseconds": 9,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 12531132,
+                "calls": 3938,
+                "p50": 9,
+                "p95": 18.700000002980232,
+                "samples": [
+                  18.5,
+                  18.700000002980232,
+                  8.100000001490116,
+                  7.799999997019768,
+                  5.600000001490116,
+                  9
+                ]
+              },
+              "chunked": {
+                "milliseconds": 7.800000004470348,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 129135,
+                "inkCalls": 1,
+                "triangles": 11745086,
+                "calls": 3692,
+                "p50": 9.699999995529652,
+                "p95": 14.700000002980232,
+                "samples": [
+                  14.700000002980232,
+                  9.699999995529652,
+                  9.900000005960464,
+                  8.800000004470348,
+                  8.799999997019768,
+                  7.800000004470348
+                ]
+              }
+            },
+            {
+              "name": "center",
+              "changedPixels": 0,
+              "maxChannelError": 0,
+              "baselineSelfPixels": 0,
+              "chunkedSelfPixels": 0,
+              "differences": [],
+              "pixels": 153600,
+              "baseline": {
+                "milliseconds": 2.2999999970197678,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 27325750,
+                "calls": 8482,
+                "p50": 2.399999998509884,
+                "p95": 3.100000001490116,
+                "samples": [
+                  3.100000001490116,
+                  2.6999999955296516,
+                  2.399999998509884,
+                  2.2000000029802322,
+                  2.1999999955296516,
+                  2.2999999970197678
+                ]
+              },
+              "chunked": {
+                "milliseconds": 2.3000000044703484,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 80737,
+                "inkCalls": 1,
+                "triangles": 26553455,
+                "calls": 8251,
+                "p50": 2.600000001490116,
+                "p95": 3.7000000029802322,
+                "samples": [
+                  3.399999998509884,
+                  3.7000000029802322,
+                  2.600000001490116,
+                  2.100000001490116,
+                  2.399999998509884,
+                  2.3000000044703484
+                ]
+              }
+            },
+            {
+              "name": "overhead",
+              "changedPixels": 0,
+              "maxChannelError": 0,
+              "baselineSelfPixels": 0,
+              "chunkedSelfPixels": 0,
+              "differences": [],
+              "pixels": 153600,
+              "baseline": {
+                "milliseconds": 2.5999999940395355,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 42668052,
+                "calls": 13234,
+                "p50": 2.5999999940395355,
+                "p95": 6.799999997019768,
+                "samples": [
+                  6.799999997019768,
+                  2.0999999940395355,
+                  2.2000000029802322,
+                  2.5,
+                  3,
+                  2.5999999940395355
+                ]
+              },
+              "chunked": {
+                "milliseconds": 2.4000000059604645,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 130383,
+                "inkCalls": 1,
+                "triangles": 41878398,
+                "calls": 12987,
+                "p50": 2.600000001490116,
+                "p95": 5.699999995529652,
+                "samples": [
+                  2.8000000044703484,
+                  2.100000001490116,
+                  2,
+                  2.600000001490116,
+                  5.699999995529652,
+                  2.4000000059604645
+                ]
+              }
+            }
+          ],
+          "moving": [
+            {
+              "frame": 0,
+              "baseline": {
+                "milliseconds": 4.799999997019768,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 46315967,
+                "calls": 14321
+              },
+              "chunked": {
+                "milliseconds": 4.299999997019768,
+                "selectionMilliseconds": 0.7999999970197678,
+                "indexChanged": true,
+                "inkTriangles": 120056,
+                "inkCalls": 1,
+                "triangles": 47072190,
+                "calls": 14560
+              }
+            },
+            {
+              "frame": 1,
+              "baseline": {
+                "milliseconds": 2.7000000029802322,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 48616180,
+                "calls": 15044
+              },
+              "chunked": {
+                "milliseconds": 3.899999998509884,
+                "selectionMilliseconds": 0.5,
+                "indexChanged": true,
+                "inkTriangles": 125040,
+                "inkCalls": 1,
+                "triangles": 47839080,
+                "calls": 14802
+              }
+            },
+            {
+              "frame": 2,
+              "baseline": {
+                "milliseconds": 2.399999998509884,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 49389766,
+                "calls": 15289
+              },
+              "chunked": {
+                "milliseconds": 3.600000001490116,
+                "selectionMilliseconds": 0.3999999985098839,
+                "indexChanged": true,
+                "inkTriangles": 127985,
+                "inkCalls": 1,
+                "triangles": 50156087,
+                "calls": 15534
+              }
+            },
+            {
+              "frame": 3,
+              "baseline": {
+                "milliseconds": 2.5,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 51696607,
+                "calls": 16024
+              },
+              "chunked": {
+                "milliseconds": 3.899999998509884,
+                "selectionMilliseconds": 0.6000000014901161,
+                "indexChanged": true,
+                "inkTriangles": 128598,
+                "inkCalls": 1,
+                "triangles": 50923021,
+                "calls": 15779
+              }
+            },
+            {
+              "frame": 4,
+              "baseline": {
+                "milliseconds": 4.5,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 52482653,
+                "calls": 16270
+              },
+              "chunked": {
+                "milliseconds": 9.200000002980232,
+                "selectionMilliseconds": 0.3999999985098839,
+                "indexChanged": true,
+                "inkTriangles": 129091,
+                "inkCalls": 1,
+                "triangles": 53262540,
+                "calls": 16516
+              }
+            },
+            {
+              "frame": 5,
+              "baseline": {
+                "milliseconds": 6.399999998509884,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 54784479,
+                "calls": 16998
+              },
+              "chunked": {
+                "milliseconds": 11,
+                "selectionMilliseconds": 0.3999999985098839,
+                "indexChanged": true,
+                "inkTriangles": 128429,
+                "inkCalls": 1,
+                "triangles": 54020099,
+                "calls": 16757
+              }
+            },
+            {
+              "frame": 6,
+              "baseline": {
+                "milliseconds": 2.5999999940395355,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 55548859,
+                "calls": 17239
+              },
+              "chunked": {
+                "milliseconds": 10.200000002980232,
+                "selectionMilliseconds": 0.5,
+                "indexChanged": true,
+                "inkTriangles": 128452,
+                "inkCalls": 1,
+                "triangles": 56306441,
+                "calls": 17480
+              }
+            },
+            {
+              "frame": 7,
+              "baseline": {
+                "milliseconds": 3.5,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 57828447,
+                "calls": 17962
+              },
+              "chunked": {
+                "milliseconds": 5.600000001490116,
+                "selectionMilliseconds": 0.4000000059604645,
+                "indexChanged": true,
+                "inkTriangles": 128496,
+                "inkCalls": 1,
+                "triangles": 57064067,
+                "calls": 17721
+              }
+            },
+            {
+              "frame": 8,
+              "baseline": {
+                "milliseconds": 2.1999999955296516,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 58592387,
+                "calls": 18202
+              },
+              "chunked": {
+                "milliseconds": 3.8000000044703484,
+                "selectionMilliseconds": 0.3999999985098839,
+                "indexChanged": true,
+                "inkTriangles": 130165,
+                "inkCalls": 1,
+                "triangles": 59351242,
+                "calls": 18442
+              }
+            },
+            {
+              "frame": 9,
+              "baseline": {
+                "milliseconds": 2.1999999955296516,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 60917681,
+                "calls": 18932
+              },
+              "chunked": {
+                "milliseconds": 4,
+                "selectionMilliseconds": 0.3999999985098839,
+                "indexChanged": true,
+                "inkTriangles": 130477,
+                "inkCalls": 1,
+                "triangles": 60132075,
+                "calls": 18687
+              }
+            },
+            {
+              "frame": 10,
+              "baseline": {
+                "milliseconds": 2.2999999970197678,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 61681621,
+                "calls": 19172
+              },
+              "chunked": {
+                "milliseconds": 3.600000001490116,
+                "selectionMilliseconds": 0.29999999701976776,
+                "indexChanged": true,
+                "inkTriangles": 130427,
+                "inkCalls": 1,
+                "triangles": 62440738,
+                "calls": 19412
+              }
+            },
+            {
+              "frame": 11,
+              "baseline": {
+                "milliseconds": 2.2000000029802322,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 63981750,
+                "calls": 19898
+              },
+              "chunked": {
+                "milliseconds": 4,
+                "selectionMilliseconds": 0.3999999985098839,
+                "indexChanged": true,
+                "inkTriangles": 129974,
+                "inkCalls": 1,
+                "triangles": 63208606,
+                "calls": 19655
+              }
+            }
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "authoritiesUnchanged": true,
+          "cpuPaintUnchanged": true,
+          "version1130Verified": false
+        }
+      ],
+      "errors": []
+    },
+    "lifecycle": {
+      "status": "failed",
+      "errors": [],
+      "quality": {
+        "cpuGridUnchanged": true,
+        "trianglePositionsUnchanged": true,
+        "authoritiesRetained": true,
+        "finalAtlas": 2048,
+        "textureCount": 103
+      },
+      "failureRollback": {
+        "rejected": false,
+        "levelRetained": true,
+        "paintRetained": true,
+        "displayRetained": true
+      },
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert(Object.values(result.failureRollback).every(Boolean))\n\n    at file:///workspace/stage-worktrees/eeltail/scripts/check-inkwave-native-lifecycle.mjs:27:15",
+      "knownCheckerFailure": "Single-stage _buildWorld reuse skipped corrupt asset; source/paint/display retained; retry awaits tested production-loader seam checker"
+    },
+    "measuredFoundationCommit": "a84009dee41bdb8350401412e21a4e991a426adb"
   },
   "version1130Verified": false,
   "retailComparison": "UNVERIFIED: retail transform, native collision/paint semantics, spawning, ranked placements and device movement/render performance"

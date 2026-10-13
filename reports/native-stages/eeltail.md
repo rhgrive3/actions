@@ -58,6 +58,11 @@ NATIVE_STAGE_IDS=eeltail NATIVE_MOBILE_STAGE_IDS=eeltail node scripts/check-inkw
 
 ## Chromium の検証状態
 
-2026-10-13 時点で原典の公開 direct download / worker conversion / 8 actors・7 bots / Squid Spawn landing / private cache hit（追加OBJ download=0）/ damaged OBJ reject と Tidewater retain は実 Chromium で確認した。shared source checker の same-map reuse と world-only Tidewater preparation による false timeout / stale actor error は checker 側で修正した。失敗 raw evidence も ignored 領域に残す。完全な positive browser matrix と最終 foundation の変更挙動確認は進行中。
+2026-10-13 時点で原典の公開 direct download / worker conversion / 8 actors・7 bots / Squid Spawn landing / private cache hit（追加OBJ download=0）/ damaged OBJ reject と Tidewater retain は実 Chromium で確認した。shared source checker の same-map reuse と world-only Tidewater preparation による false timeout / stale actor error は checker 側で修正した。失敗 raw evidence も ignored 領域に残す。同じ immutable build で public source / Turf実ゲーム / ガチ4プローブ / online 5 modes / render A/B は positive。lifecycle は quality authority 保持が positive、single-stage同一map reuseにより damaged asset を読まない既知の checker failure を記録し、修正 checker の検証待ち。最終 foundation の変更挙動確認は進行中。
 
 Chromium / SwiftShader の timing はソフトウェアGLの診断値。モバイル emulation は viewport / touch の動作確認であり、実機GPUのfpsではない。
+
+
+実ゲーム（immutable `a84009de` foundation + Eeltail Shadow 分類）では8 actors全員alive / 7 bots、localは `[-7.43906,12,-81.00015]` のsource支持に着地・grounded。CPU 180 framesの p50=10.2ms、p95=28.9ms。zones capture、tower dynamic floor/rider、rainmaker barrier/pop/pickup、clam pickupとsnapshotを確認した。Online は2 peers / actual WebSocket / production RoomDurableObject、Turf CPU grid SHA-256が205 settling frames後に一致、ガチ4のhost count snapshotも一致。全 browser errors=0。
+
+render A/Bはsame scene / actual camera / actors / paintの条件で、gameplay・center・overhead各480×320のstage pixelsでchangedPixels=0、self variation=0。Renderとmoving frustum12 framesでsource positions / CPU paint / physics / navのauthorityは不変。Ink trianglesは135,250 → 129,135（gameplay）、80,737（center）、130,383（overhead）。Render p50はgameplay baseline9.0ms / chunked9.7msなので、このsoftware GL測定から速度向上を主張しない。Pnt geometryとretail ranked layoutの一致も主張しない。
