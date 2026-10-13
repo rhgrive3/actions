@@ -48,9 +48,11 @@ test('Museum opposed pads reach source paint and all local non-moving objectives
   assert.ok(actor.alive&&actor.grounded&&actor.ground.hit);
   const hit=G.physics.raycast(actor.pos.clone().add(new THREE.Vector3(0,.1,0)),new THREE.Vector3(0,-1,0),.3);
   assert.ok(hit.hit&&hit.triangle>=0,'touchdown uses real source triangle');
-  const landed=actor.pos.toArray(),landingNode=G.nav.nearest(actor.pos,1.2);assert.ok(G.nav.valid[landingNode]);
+  const landed=actor.pos.toArray();let landingNode=-1,best=Infinity;
+  for(const n of G.nav.nodes){if(actor.isBot&&!G.nav.valid[n.id]||Math.abs(n.y-actor.pos.y)>.7||Math.hypot(n.x-actor.pos.x,n.z-actor.pos.z)>G.nav.step*1.6)continue;const d=(n.x-actor.pos.x)**2+(n.z-actor.pos.z)**2+(n.y-actor.pos.y)**2*6;if(d<best){best=d;landingNode=n.id;}}
+  assert.ok(landingNode>=0,'actual source landing layer, without downward projection');
   for(const target of targets){const end=G.nav.nearest(new THREE.Vector3(...target),1.2);assert.ok(G.nav.path(landingNode,end,team,50000),role+' team '+team+' post-launch directed objective route');}
-  launches.push({team,hz,role,frames,seconds:frames/hz,target,landed,landingNode,reachableObjectives:targets.length,supportTriangle:hit.triangle,supportObject:data.manifest.objects[data.objectIds[hit.triangle]].name,grounded:actor.grounded,weapon:actor.weaponId});
+  launches.push({team,hz,role,frames,seconds:frames/hz,target,landed,landingNode,landingHeight:G.nav.nodes[landingNode].y,landingWalkingReachable:!!G.nav.valid[landingNode],reachableObjectives:targets.length,supportTriangle:hit.triangle,supportObject:data.manifest.objects[data.objectIds[hit.triangle]].name,grounded:actor.grounded,weapon:actor.weaponId});
  }
  const result={id:'museum',supports,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,reachable,launches,paintFaces:G.level.faces.length,gridCells:G.paint.grid.length,sourceGeometryUnchanged:true,version1130Verified:false};
  if(process.env.MUSEUM_CPU_EVIDENCE)fs.writeFileSync(process.env.MUSEUM_CPU_EVIDENCE,JSON.stringify(result,null,2)+'\n');
