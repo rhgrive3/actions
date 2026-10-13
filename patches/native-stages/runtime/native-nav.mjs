@@ -73,6 +73,12 @@ export function buildNativeNav(graph){
    }
   }
  }
+ // A source wall can exclude one centre sample between otherwise clear
+ // supports. The opted drop screen still proves every capsule trajectory.
+ if(drops)for(const n of graph.nodes)for(const [dx,dz]of [[2,0],[-2,0],[0,2],[0,-2]]){
+  const ix=n.ix+dx,iz=n.iz+dz;if(ix<0||iz<0||ix>=graph.nx||iz>=graph.nz)continue;
+  for(const id of graph.cells[iz*graph.nx+ix])if(graph.nodes[id].y-n.y< -1.25)drops[n.id].push(id);
+ }
  pruneNativeNav(graph);
  if(drops){
   // Build ordinary/climb edges before selecting any supports. Only expensive

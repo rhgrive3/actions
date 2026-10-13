@@ -56,7 +56,7 @@ export function nativeDropClearance(level){
 export function nativeDropTransition(graph,upper,lower){
  const L=graph.level,P=graph.physics;if(!L.manifest.sourceNavigation?.highDrops)return null;
  const dx=lower.x-upper.x,dz=lower.z-upper.z,length=Math.hypot(dx,dz),fall=upper.y-lower.y;
- if(fall<=1.25||lower.y<=PLAYER.fallDeathY+.5||length<.1||length>graph.step*1.01||!lower.nativePaintable)return null;
+ if(fall<=1.25||lower.y<=PLAYER.fallDeathY+.5||length<.1||length>graph.step*2.01||!lower.nativePaintable)return null;
  const key=upper.id+':'+Math.sign(dx)+':'+Math.sign(dz),cache=graph._nativeDropCache||(graph._nativeDropCache=new Map());
  if(cache.has(key))return cache.get(key);
  cache.set(key,null);
