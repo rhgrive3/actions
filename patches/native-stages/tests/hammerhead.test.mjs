@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import vm from 'node:vm';
 import { nativeFixture, readStage } from './fixture.mjs';
 const definition = JSON.parse(fs.readFileSync(new URL('../definitions/hammerhead.json', import.meta.url)));
 const ROOT = process.env.INKWAVE_NATIVE_STAGE_ASSETS;
@@ -25,7 +26,7 @@ test('Hammerhead inferred support, directed landing routes and movement at three
   const paint = G.paint = new CpuPaint(null, level, { atlasSize: 2048, maxDensity: 4, cell: .25 });
   assert.equal(level.manifest.sourceSha256, definition.sourceSha256);
   assert.ok(level.manifest.chartMaxPlaneError < .005);
-  for (const object of data.manifest.objects.filter(o => /^FldObj_Kaisou04(?:Ships|Fest|Cars)_/.test(o.name))) {
+  for (const object of data.manifest.objects.filter(o => definition.sourceSemantics.nonCollidableObjectPatterns.some(pattern => new RegExp(pattern).test(o.name)))) {
     assert.equal(object.collidable, false, object.name + ' scenery collision');
     assert.equal(object.paintable, false, object.name + ' scenery paint');
     assert.equal(object.active, true, 'scenery source rendering retained');
@@ -44,6 +45,20 @@ test('Hammerhead inferred support, directed landing routes and movement at three
   const ranked = f.nativeRankedStage(G);
   assert.equal(ranked.version1130Verified, false);
   const center = G.nav.nearest(new THREE.Vector3(...ranked.zones[0].center), 1.2);
+  // Use the production helper in the same VM/THREE world as triangle physics.
+  level.nativeNav = G.nav;
+  const minimapModule = new vm.SourceTextModule(fs.readFileSync(new URL('../runtime/native-minimap.mjs', import.meta.url), 'utf8'), { context: f.context });
+  const threeModule = new vm.SyntheticModule(['Vector3'], function () { this.setExport('Vector3', THREE.Vector3); }, { context: f.context });
+  await minimapModule.link(() => threeModule); await minimapModule.evaluate();
+  const centerNode = G.nav.nodes[center];
+  const roof = level.triangleWorld.ray(new THREE.Vector3(centerNode.x, 50, centerNode.z), new THREE.Vector3(0, -1, 0), 100);
+  const collision = data.triangles, collisionBefore = collision.slice(), grid = paint.grid, gridBefore = grid.slice();
+  const mapped = minimapModule.namespace.nativeMinimapSupport(level, centerNode.x, centerNode.z);
+  assert.ok(roof.point.y > 40, 'source overhead highway remains collidable');
+  assert.ok(Math.abs(mapped.point.y - centerNode.y) < .15, 'minimap projects the reachable floor beneath highway');
+  assert.equal(data.triangles, collision); assert.deepEqual(collision, collisionBefore);
+  assert.equal(paint.grid, grid); assert.deepEqual(grid, gridBefore);
+  const minimap = { topmostY: roof.point.y, reachableY: mapped.point.y, centerY: centerNode.y, collisionAndPaintRetained: true };
   const landings = [];
   for (const team of [0, 1]) {
     G.match.mode = 'turf'; G.match.opts = {};
@@ -71,5 +86,5 @@ test('Hammerhead inferred support, directed landing routes and movement at three
   }
   assert.ok(Math.max(...rates.map(r => r.moved)) - Math.min(...rates.map(r => r.moved)) < .5);
   for (let i = 0; i < paint.grid.length; i++) if (paint.dead[i]) assert.equal(paint.grid[i], 0);
-  console.log(JSON.stringify({ id: 'hammerhead', supports, landings, rates, navNodes: G.nav.nodes.length, validNodes: G.nav.validIds.length, maskedCells: paint.dead.reduce((a, b) => a + b, 0), atlas: paint.size, version1130Verified: false }));
+  console.log(JSON.stringify({ id: 'hammerhead', supports, landings, rates, minimap, navNodes: G.nav.nodes.length, validNodes: G.nav.validIds.length, maskedCells: paint.dead.reduce((a, b) => a + b, 0), atlas: paint.size, version1130Verified: false }));
 });
