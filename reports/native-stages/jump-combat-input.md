@@ -1,6 +1,6 @@
 # ネイティブソース上の戦闘ジャンプ入力
 
-PR: [1409](https://github.com/rhgrive3/actions/pull/1409)。名前付きShipshape独立コード・証拠レビューで狭いcommon挙動が確認された。受理済み90040586と私的な未受理combat候補df7ec808の組み合わせで局所的な実入力を検証した。後者は本PRに含めない。[数値記録](jump-combat-input-verification.json)。
+PR: [1409](https://github.com/rhgrive3/actions/pull/1409)。名前付きShipshape独立コード・証拠レビューで狭いcommon挙動が確認された。実入力artifactは90040586とcombat helper df7ec808の組み合わせを検証した。同じhelperはレビュー済み#1399として48eed5eaに昇格したため、現在のbranchはこの受理済みfoundationを消費している。本PRの差分はjump入力だけとする。[数値記録](jump-combat-input-verification.json)。
 
 通常BotBrainが実際に要求し、Actorが受理した既存のsource jumpに限り、同じ経路・ノード・目標・敵・mode・Level/Nav/Physics/Matchのまま上昇中のジャンプ入力を保持し、着地まで元のノードへ通常移動入力を向ける。上昇中だけjumpを維持し、着地または所有者変更で解放する。実際の飛行中だけ戦闘repathを延期する。発射、位置、速度、serial、衝突、元の経路・geometry/flags/paint mask、回復判定は変更していない。従来のpaint中target取得キャンセルも維持した。
 

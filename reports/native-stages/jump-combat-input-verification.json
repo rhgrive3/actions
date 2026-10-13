@@ -1,7 +1,7 @@
 {
   "status": "qualified-independent-reviewed-narrow-common",
   "pr": "https://github.com/rhgrive3/actions/pull/1409",
-  "acceptedFoundation": "90040586c3728ca20d69ed43014528e0f68cbbdf",
+  "acceptedFoundation": "48eed5ea148ce1f9398ed1985f42cbad3e9d56d8",
   "privateRootCombatCandidate": "df7ec808f7b5c2eb8986574125dd5381849f5b1e",
   "runtimeHelperSha256": "bf312aa1ab098eb6194d7536032e05c68b0bbbd7fb219ad79444f4909c03b4a9",
   "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
@@ -1478,5 +1478,11 @@
     "distanceReserve": 0.09,
     "maximumFlightLifetimeSeconds": 2,
     "measuredNintendoValues": false
+  },
+  "artifactFoundationScope": "90040586 + then-private df7ec808 combat helper; exact helper now accepted1399/48eed5ea, runtime composition unchanged",
+  "acceptedCombatSupport": {
+    "pr": 1399,
+    "foundation": "48eed5ea148ce1f9398ed1985f42cbad3e9d56d8",
+    "sourceHelperSha256": "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496"
   }
 }
