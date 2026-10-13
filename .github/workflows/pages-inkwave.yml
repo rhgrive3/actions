@@ -1,22 +1,6 @@
 name: Publish INKWAVE to Pages
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "inkwave-public/**"
-      - "scripts/build-inkwave.mjs"
-      - "scripts/check-inkwave-patches.mjs"
-      - "patches/splatoon3/**"
-      - "patches/touch-layout/**"
-      - "patches/reliability/**"
-      - "patches/local-quality/**"
-      - "patches/loading-cache/**"
-      - "patches/practice-range/**"
-      - "patches/native-stages/**"
-      - "scripts/lib/inkwave-native-stages.mjs"
-      - "scripts/inkwave-source-composition.mjs"
-      - ".github/workflows/pages-inkwave.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -37,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: main
+          ref: 14f9f913a8438353d0e462a0e74e17d8af876230
           filter: blob:none
           sparse-checkout: |
             inkwave-public
@@ -77,6 +61,20 @@ jobs:
           python3 patches/loading-cache/tests/harness.test.py
           node scripts/build-inkwave.mjs inkwave-public _site
           node scripts/check-inkwave-startup-budget.mjs _site
+
+      - name: Verify exact previously published build
+        run: |
+          python3 - <<'PYVERIFY'
+          import hashlib, json, pathlib
+          p = pathlib.Path('_site/inkwave-build.json')
+          b = p.read_bytes()
+          m = json.loads(b)
+          assert hashlib.sha256(b).hexdigest() == 'dc719417be7ea4d8e1d5f65a30f8bfcdf3d5f082b5ef7cbbc060fb487aeaee00'
+          assert m['contentHash'] == 'bbb2d5efa3e1e9726fef85a241fa7ac00f02eda09b92ae83df0d3bcd5397d6fa'
+          assert m['inputHash'] == '5002a74b9893b88cc8dbded872b47b3824be570d6d6e134ee35a400526b51454'
+          for path, expected in m['artifacts'].items():
+              assert hashlib.sha256((pathlib.Path('_site') / path).read_bytes()).hexdigest() == expected, path
+          PYVERIFY
 
       - name: Upload INKWAVE site
         uses: actions/upload-pages-artifact@v4
