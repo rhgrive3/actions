@@ -54,7 +54,24 @@ for(const root of roots){const catalog=JSON.parse(fs.readFileSync(path.join(root
   if(definition.id==='manta'){
    const sweep=f.nativeDropClearance(L),from=new THREE.Vector3(-11,8,-23.102798461914062),to=new THREE.Vector3(-15,8,-23.102798461914062);
    assert.ok(P.bodyFits(from,.35,PLAYER.stepUp,PLAYER.height)&&P.bodyFits(to,.35,PLAYER.stepUp,PLAYER.height));assert.equal(sweep.clear(from,to,.35,PLAYER.stepUp,PLAYER.height),false,'both fitting endpoints still cross an actual source wall');
+   for(const [start,low]of [[[-18,11.0094,-17.1028],[-18,8,-15.1028]],[[18,11.0094,17.8972],[18,8,15.8972]]]){
+    const upper=nearest(start),lower=nearest(low),edge=f.nativeDropTransition(N,upper,lower);assert.ok(edge,'a real source wall excludes the intervening grid centre but ordinary gravity still has a clear two-cell departure');
+    for(const hz of [30,60,120]){
+     G.actors=[];const actor=f.make('shooter');actor._integrate=f.Actor.prototype._integrate;actor._spawnBarrier=f.Actor.prototype._spawnBarrier;actor.team=start[2]<0?0:1;actor.spawnAt(new THREE.Vector3(...edge.drop.upper),0);actor.intent.move.fromArray(edge.drop.direction);actor.intent.fire=actor.intent.squid=actor.intent.jump=false;G.actors=[actor];let airborne=false;
+     for(let frame=0;frame<hz*4;frame++){G.time+=1/hz;actor.update(1/hz);airborne ||=!actor.grounded;if(airborne&&actor.grounded)break;}
+     assert.ok(actor.alive&&actor.grounded&&actor.pos.distanceTo(new THREE.Vector3(...edge.drop.landing))<.9,'ordinary actual human crosses the source-grid gap '+JSON.stringify({hz,start,end:actor.pos.toArray(),goal:edge.drop.landing}));
+    }
+   }
    const sourceNoPaint=N.nodes.find(n=>n.y<0&&!n.nativePaintable),upper=nearest([-14,15.4452,-25.1028]);assert.equal(f.nativeDropTransition(N,upper,sourceNoPaint),null,'real source lower hull and NoPaint water floor never become a playable drop');
+  }else{
+   const from=nearest([-7,3.054013256,9.5]),to=nearest([-6,3.5,9.5]);
+   assert.ok(to.y-from.y>PLAYER.stepUp&&to.y-from.y<.5);assert.equal(N.edgeType(from.id,to.id),'jump','actual BlockCurbYellow rise exceeds the live human step limit');
+   for(const hz of [30,60,120]){
+    G.actors=[];const a=f.make('shooter');a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;a.spawnAt(new THREE.Vector3(from.x,from.y,from.z),Math.PI/2);G.actors=[a];const brain=a.bot=new f.BotBrain(a,'normal'),goal=new THREE.Vector3(to.x,to.y,to.z);
+    assert.ok(brain._pathTo(goal,.6));brain.goalTimer=brain.repath=brain.bombCd=1000;
+    for(let frame=0;frame<hz*4;frame++){G.time+=1/hz;brain.update(1/hz);a.update(1/hz);if(a.grounded&&Math.abs(a.pos.y-to.y)<.12&&Math.hypot(a.pos.x-to.x,a.pos.z-to.z)<.6)break;}
+    assert.ok(a.grounded&&Math.abs(a.pos.y-to.y)<.12&&a.s3JumpSerial>0,'ordinary BotBrain jump reaches the real source curb '+JSON.stringify({hz,pos:a.pos.toArray(),jump:a.s3JumpSerial,grounded:a.grounded}));
+   }
   }
   assert.equal(hash(),before,'source collision, flags and chart IDs are immutable');console.log(JSON.stringify({id:definition.id,sourceSha256:L.manifest.sourceSha256,navNodes:N.nodes.length,validNodes:N.validIds.length,common:common.length,newDrops:N.nodes.flatMap(n=>n.nb.filter(e=>e.drop)).length,navBuildMilliseconds,cases,sourceBuffersUnchanged:true,metrics:N._nativeDropClearance?.metrics}));
  });

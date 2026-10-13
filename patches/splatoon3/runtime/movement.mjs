@@ -1,6 +1,9 @@
 import { slamProtected } from './tidal-slam-gauge.mjs';
 import { absorbSpawnDamage, spawnProtectionRemaining } from './respawn-lifecycle.mjs';
 let api, config;
+// Read the installed local controller calibration; native route screening must
+// not duplicate a different Surge impulse or charging duration.
+export function squidSurgeParameters(){return config?.surge?{...config.surge}:null;}
 const EPSILON = 1e-10;
 // Scheduling metadata is private: absolute world time is not actor/adoption state.
 const armorBirthTimes = new WeakMap();
