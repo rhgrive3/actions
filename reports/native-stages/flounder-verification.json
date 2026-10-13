@@ -31,14 +31,14 @@
   "version1130Verified": false,
   "builds": {
     "currentPrivate": {
-      "revision": "9516d2df76efa2efbd8b6db30efced0a6ebfbdee0eca3e6dd0e5be9b68a9ca4d",
-      "inputHash": "fa988c5a69da8608839936cbdde8e32d4bf9c5776f30d3a537e7a8f425660858",
-      "contentHash": "2087c9516e61368cd0501b32e61b7bc8e85a5a13c497d96c7cd7041c11e69607"
+      "revision": "f9d35a6d5c2b33abcf5bce83d828ca18f7a9af397147ea2fdabf00f8abcb36cb",
+      "inputHash": "c392d420bb236fab85d2ec854f9e31cb209fa0abd4877dca98cbe051b263ed0e",
+      "contentHash": "d9c2c22018ff0b1c5a6ee41557b91194e9acca7b94333fdbfe0f65bf00776e5b"
     },
     "currentPublic": {
-      "revision": "56e1181edbf680a1d602b08b961ef61ba48fadca0d5e6b9ea1ce1418aab00144",
-      "inputHash": "fa988c5a69da8608839936cbdde8e32d4bf9c5776f30d3a537e7a8f425660858",
-      "contentHash": "dea5f517de424b6e79108b5cdfd3818ef6112ff61909b1712b11368d5bb3eecd"
+      "revision": "a032003957e59203bdb5a2facbcb6cccc0d0377ed5008c6b7cf22603109e5a02",
+      "inputHash": "c392d420bb236fab85d2ec854f9e31cb209fa0abd4877dca98cbe051b263ed0e",
+      "contentHash": "f425e1c9f5046234c8367c71f9d958466842422ecc36e529d6bfa42dca464caf"
     },
     "readyPrivate": {
       "revision": "600944686c10251b48197fd267a87806cfefbb1a89b3b70b52d5d0ffce4166d1",
@@ -74,6 +74,7 @@
     "retailNavigationVerified": false
   },
   "sharedFoundations": {
+    "towerArcCalibration": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
     "sourceClimbs": "0a9acd48c9c88dbf8d2f3495b1863eb4e98f8135",
     "sourceSphere": "4716dacdbfec7940cca4cde770ae0098ce5f7e5d",
     "camera": "33cecb0583de92b260478356d4340513a3188065",
@@ -81,6 +82,388 @@
     "spawnDirectedPrune": "64b0497e50c648df1afef4ef053e0d5026eed275",
     "sourceLaunch": "64c82c024f275d9a64632ca958b63ab035d0e40a",
     "allModePaintChecker": "2b2406385d70c2d3f0ca0c61be8b17b7193e237b"
+  },
+  "latestTowerReverification": {
+    "cpu": {
+      "tests": 5,
+      "pass": 5,
+      "fail": 0,
+      "skipped": 0
+    },
+    "browser": {
+      "status": "passed",
+      "stages": [
+        {
+          "id": "flounder",
+          "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+          "supported": true,
+          "actors": 8,
+          "bots": 7,
+          "centerIndex": 13,
+          "center": [
+            -0.5,
+            12.2,
+            0
+          ],
+          "pathNodes": 27,
+          "arcLengthsByTeam": [
+            13.82842712474619,
+            14.242640687119286
+          ],
+          "arenaSpan": {
+            "origin": [
+              0,
+              0
+            ],
+            "forward": [
+              -0.1414213562373095,
+              0.9899494936611665
+            ],
+            "endpointProjection": [
+              -11.525840533340725,
+              11.525840533340725
+            ],
+            "minimumHalfDepth": 2.097056274847714,
+            "bothHalvesVerified": true
+          },
+          "actualSourceDeckSupports": 210,
+          "fullRiderSweeps": {
+            "queries": 27,
+            "triangleTests": 570
+          },
+          "sourceApproaches": 27,
+          "gear": [
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            },
+            {
+              "main": "none",
+              "subs": [
+                "none",
+                "none",
+                "none"
+              ]
+            }
+          ],
+          "weapon": "shooter",
+          "version1130Verified": false,
+          "keyboardBoarding": [
+            {
+              "hz": 30,
+              "boarded": true,
+              "frames": 14,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 42340,
+              "towerBlock": 42340,
+              "position": [
+                -0.7928658593094842,
+                12.2,
+                -0.590342301951747
+              ],
+              "approach": {
+                "sourceNode": 4776,
+                "start": [
+                  -1.5,
+                  11,
+                  -2
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  12.2,
+                  -0.8049844718999242
+                ],
+                "height": 1.1999999999999993,
+                "jumping": true,
+                "hz": 30,
+                "sourceGround": 33724,
+                "startGrounded": true
+              }
+            },
+            {
+              "hz": 60,
+              "boarded": true,
+              "frames": 27,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 42340,
+              "towerBlock": 42340,
+              "position": [
+                -0.8017374380766048,
+                12.2,
+                -0.6094969316934931
+              ],
+              "approach": {
+                "sourceNode": 4776,
+                "start": [
+                  -1.5,
+                  11,
+                  -2
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  12.2,
+                  -0.8049844718999242
+                ],
+                "height": 1.1999999999999993,
+                "jumping": true,
+                "hz": 60,
+                "sourceGround": 33724,
+                "startGrounded": true
+              }
+            },
+            {
+              "hz": 120,
+              "boarded": true,
+              "frames": 54,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 42340,
+              "towerBlock": 42340,
+              "position": [
+                -0.8017374380766048,
+                12.2,
+                -0.6094969316934931
+              ],
+              "approach": {
+                "sourceNode": 4776,
+                "start": [
+                  -1.5,
+                  11,
+                  -2
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  12.2,
+                  -0.8049844718999242
+                ],
+                "height": 1.1999999999999993,
+                "jumping": true,
+                "hz": 120,
+                "sourceGround": 33724,
+                "startGrounded": true
+              }
+            }
+          ]
+        }
+      ],
+      "errors": [],
+      "conditions": "real Chromium SwiftShader, eight actors/seven bots, production controller W/Space from same source floor; normal human weapon/no gear bonuses; not console or mobile hardware",
+      "legacy": {
+        "nodes": 4158,
+        "valid": 4154,
+        "unchanged": true
+      }
+    },
+    "online": {
+      "status": "passed",
+      "results": [
+        {
+          "id": "flounder",
+          "mode": "tower",
+          "identities": [
+            {
+              "stage": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+              "fingerprint": "native-stage-v1:flounder:bed887ce0f954f57fe74a6f553736c46875bfbcef94e36c78f340e0ce84d332d:9ba0bb21aaf8b10ad81de749c810d7860c4f71d21c696f0b2522cbd4ee42d1e9",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 1205611
+            },
+            {
+              "stage": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+              "fingerprint": "native-stage-v1:flounder:bed887ce0f954f57fe74a6f553736c46875bfbcef94e36c78f340e0ce84d332d:9ba0bb21aaf8b10ad81de749c810d7860c4f71d21c696f0b2522cbd4ee42d1e9",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 1205611
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "323bc1e67fb8283ce1cf8ffbdb64879ffa065dd3e6bb3229d62e482171d7f15e",
+              "coverage": [
+                0.005072374124738966,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 134,
+                "out": 134,
+                "extrap": 89,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 6.716666666666648,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  910,
+                  0
+                ],
+                "applied": [
+                  [
+                    "p_168p6ud",
+                    1
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_yf44pov",
+                    "tr": 46.42857487967424,
+                    "lastTs": 46.791,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      46.716,
+                      399,
+                      46.791,
+                      402
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "323bc1e67fb8283ce1cf8ffbdb64879ffa065dd3e6bb3229d62e482171d7f15e",
+              "coverage": [
+                0.005072374124738966,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 134,
+                "out": 134,
+                "extrap": 623,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 6.716666666666648,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  910,
+                  0
+                ],
+                "applied": [
+                  [
+                    "p_168p6ud",
+                    1
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_168p6ud",
+                    "tr": 74.40600647577891,
+                    "lastTs": 74.768,
+                    "lastEventSeq": 1,
+                    "lastPaintSeq": 1,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      74.693,
+                      399,
+                      74.768,
+                      402
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 15,
+            "probeRadius": 3.84
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 300
+        }
+      ],
+      "errors": [],
+      "packets": 300
+    },
+    "emittedPrivate": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0
+    },
+    "emittedPublic": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0
+    },
+    "privateBudget": {
+      "status": "passed",
+      "revision": "f9d35a6d5c2b33abcf5bce83d828ca18f7a9af397147ea2fdabf00f8abcb36cb",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2879613,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5773706,
+      "workerBytes": 70517,
+      "declaredBytes": 10391746,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "publicBudget": {
+      "status": "passed",
+      "revision": "a032003957e59203bdb5a2facbcb6cccc0d0377ed5008c6b7cf22603109e5a02",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2882464,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5776557,
+      "workerBytes": 70517,
+      "declaredBytes": 10394597,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "buildReceipts": [
+      {
+        "site": "_site-native-flounder-arc",
+        "currentAcceptedSourceAndSerializedDefinitionMatch": true,
+        "runtimeSha256": "9ba0bb21aaf8b10ad81de749c810d7860c4f71d21c696f0b2522cbd4ee42d1e9"
+      },
+      {
+        "site": "_site-native-flounder-public-arc",
+        "currentAcceptedSourceAndSerializedDefinitionMatch": true,
+        "runtimeSha256": "9ba0bb21aaf8b10ad81de749c810d7860c4f71d21c696f0b2522cbd4ee42d1e9"
+      }
+    ]
   },
   "postAcceptanceBuildReceipts": [
     {
