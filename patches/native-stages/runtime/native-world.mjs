@@ -20,6 +20,12 @@ function releaseCurrent(game){
  G.paint?.dispose();
 }
 
+// Keep the existing Game._applyNight lifecycle, including same-theme rebuilds.
+export function createNativeDecor(game,display){
+ display.setLighting(game.theme);
+ return {group:display.group,setTeamColors(){},update(){},setNight(){display.setLighting(game.theme);},dispose(){}};
+}
+
 /** Prepare detached, publish atomically through the existing worldCurrent guard. */
 export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
@@ -54,7 +60,7 @@ export async function buildNativeWorld(game,map,current){
   G.level=level;G.physics=physics;G.paint=paint;G.nav=nav;game.layoutId=map.id;game.mapDef=map;game._builtQuality=game.settings.quality;
   game.levelMat=inkMat;game.levelMesh=inkMesh;G.scene.add(display.group,inkMesh);
   // Preserve palette and lifecycle hooks expected by the live game.
-  game.decor={group:display.group,setTeamColors(){},update(){},setNight(){},dispose(){}};
+  game.decor=createNativeDecor(game,display);
   (game.swimWake||(game.swimWake=new SwimWake())).reset();
   game.minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)));
   game.nativeWorld={display,level,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,quality,version1130Verified:false},

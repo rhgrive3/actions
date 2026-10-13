@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { applyNativeShadeFill, NATIVE_SHADE_FILL } from './native-lighting.mjs';
+import { applyNativeShadeFill, nativeShadeFillFor, NATIVE_SHADE_FILL_CONFIG } from './native-lighting.mjs';
 import { createLevelMaterial } from '../../../src/world/levelMaterial.js';
 
 export function nativeInkMaterial(paint, murals, texlib){
@@ -35,8 +35,8 @@ export function nativeInkGeometry(level,paint){
 
 // Display geometry keeps exporter positions/indices/UVs. Background is culled per
 // source object. Only GPU texture representations have an explicit quality cap.
-export function nativeDisplay(data,textures,quality){
- let liveTextures=textures;
+export function nativeDisplay(data,textures,quality,lightingConfig=NATIVE_SHADE_FILL_CONFIG){
+ let liveTextures=textures;const shadeFills=[];
  const {manifest:m,vertices,indices}=data,group=new THREE.Group(),geometries=[],materials=[],cache=new Map();group.name='native-source-display';
  for(const o of m.objects){
   if(!o.active)continue;const src=m.materials[o.material]||{},glass=o.glass||/_Water$/.test(o.material),alpha=src.hasAlpha||!!src.maps?.opacity;
@@ -47,7 +47,7 @@ export function nativeDisplay(data,textures,quality){
    mat.alphaMap=textures.get(src.maps?.opacity)||null;
    if(quality==='high'){mat.normalMap=textures.get(src.maps?.normal)||null;mat.normalScale.set(.28,.28);mat.roughnessMap=textures.get(src.maps?.roughness)||null;mat.emissiveMap=textures.get(src.maps?.emissive)||null;if(mat.emissiveMap){mat.emissive.set(0xffffff);mat.emissiveIntensity=.13;}}
    const opacity=src.channels?.opacity||'g',rough=src.channels?.roughness||'g';
-   const shadeFill={value:glass?0:NATIVE_SHADE_FILL};mat.userData.nativeShadeFill=shadeFill;
+   const shadeFill={value:0};shadeFills.push({uniform:shadeFill,glass});mat.userData.nativeShadeFill=shadeFill;
    const channelHook=shader=>{
     if(mat.alphaMap&&opacity==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <alphamap_fragment>',THREE.ShaderChunk.alphamap_fragment.replace('.g;','.r;'));
     if(mat.roughnessMap&&rough==='r')shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',THREE.ShaderChunk.roughnessmap_fragment.replace('texelRoughness.g','max(texelRoughness.r, 0.55)'));
@@ -60,7 +60,10 @@ export function nativeDisplay(data,textures,quality){
   g.setAttribute('position',new THREE.InterleavedBufferAttribute(inter,3,0));g.setAttribute('normal',new THREE.InterleavedBufferAttribute(inter,3,3));g.setAttribute('uv',new THREE.InterleavedBufferAttribute(inter,2,6));g.setIndex(new THREE.BufferAttribute(ib,1));g.computeBoundingSphere();
   const mesh=new THREE.Mesh(g,mat);mesh.name=o.name;mesh.castShadow=o.collidable&&!glass&&!alpha;mesh.receiveShadow=!glass;mesh.userData.nativeObject=o;group.add(mesh);geometries.push(g);
  }
- return {group,updateTextures(next,quality){
+ return {group,setLighting(theme){
+  const value=nativeShadeFillFor(m.id,theme,lightingConfig);
+  for(const {uniform,glass} of shadeFills)uniform.value=glass?0:value;
+ },updateTextures(next,quality){
   for(const [name,mat] of cache){const src=m.materials[name]||{};mat.map=next.get(src.albedo)||null;mat.alphaMap=next.get(src.maps?.opacity)||null;
    mat.normalMap=quality==='high'?(next.get(src.maps?.normal)||null):null;mat.normalScale.set(.28,.28);
    mat.roughnessMap=quality==='high'?(next.get(src.maps?.roughness)||null):null;mat.emissiveMap=quality==='high'?(next.get(src.maps?.emissive)||null):null;

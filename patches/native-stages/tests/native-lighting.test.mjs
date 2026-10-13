@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {applyNativeShadeFill,NATIVE_SHADE_FILL} from '../runtime/native-lighting.mjs';
+import {applyNativeShadeFill,nativeShadeFillFor,NATIVE_SHADE_FILL_CONFIG} from '../runtime/native-lighting.mjs';
+const NATIVE_SHADE_FILL=.35;
 const weight=d=>{const x=Math.max(0,Math.min(1,(d-.05)/.30));return 1-x*x*(3-2*x);};
 test('native shade fill is bounded and vanishes in directly lit materials',()=>{
  assert.equal(NATIVE_SHADE_FILL,.35);
@@ -36,8 +37,8 @@ test('real native material combines shade fill and source channels, excludes gla
  const f=await fixture({extraExports:"export {nativeDisplay} from './patches/native-stages/runtime/native-render.mjs';"}),{THREE}=f;
  const tex=new THREE.Texture(),textures=new Map([['a',tex],['n',tex],['r',tex],['o',tex]]);
  const source={albedo:'a',maps:{normal:'n',roughness:'r',opacity:'o'},channels:{roughness:'r',opacity:'r'}};
- const data={manifest:{materials:{floor:source,glass:source},objects:['floor','glass'].map((material,i)=>({active:true,material,name:material,glass:!!i,vo:0,vc:3,io:0,ic:3,collidable:true}))},vertices:new Float32Array([0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,1]),indices:new Uint32Array([0,1,2])};
- const d=f.nativeDisplay(data,textures,'high');
+ const data={manifest:{id:'inkblot',materials:{floor:source,glass:source},objects:['floor','glass'].map((material,i)=>({active:true,material,name:material,glass:!!i,vo:0,vc:3,io:0,ic:3,collidable:true}))},vertices:new Float32Array([0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,1]),indices:new Uint32Array([0,1,2])};
+ const d=f.nativeDisplay(data,textures,'high',{inkblot:{day:.35,sunset:.2}});d.setLighting('day');
  for(const [i,m] of d.group.children.entries()){
   const mat=m.material,shader={uniforms:{},fragmentShader:THREE.ShaderLib.standard.fragmentShader};mat.onBeforeCompile(shader);
   assert.equal(shader.uniforms.uNativeShadeFill.value,i?0:.35);assert.equal(shader.uniforms.uNativeShadeFill,mat.userData.nativeShadeFill);
@@ -46,4 +47,28 @@ test('real native material combines shade fill and source channels, excludes gla
   const basic={uniforms:{},fragmentShader:THREE.ShaderLib.basic.fragmentShader};mat.userData.nativeChannelHook(basic);assert.match(basic.fragmentShader,/texture2D\( alphaMap, vAlphaMapUv \)\.r/);
  }
  d.dispose();
+});
+test('scoped configuration defaults off and rejects every unverified stage/theme',()=>{
+ const cfg={inkblot:{day:.35,sunset:.2,night:.5,dusk:.5},scorch:{day:.5}};
+ for(const stage of ['inkblot','scorch','mako',undefined,''])for(const theme of ['day','sunset','dusk','night','unknown',undefined]){
+  assert.equal(nativeShadeFillFor(stage,theme),0,'production coefficients remain disabled');
+  const expected=stage==='inkblot'&&theme==='day'?.35:stage==='inkblot'&&theme==='sunset'?.2:0;
+  assert.equal(nativeShadeFillFor(stage,theme,cfg),expected);
+ }
+ for(const v of [NaN,Infinity,-1,2,undefined,'0.35'])assert.equal(nativeShadeFillFor('inkblot','day',{inkblot:{day:v}}),Number.isFinite(v)?Math.max(0,Math.min(.5,v)):0);
+ assert.ok(Object.isFrozen(NATIVE_SHADE_FILL_CONFIG));assert.ok(Object.isFrozen(NATIVE_SHADE_FILL_CONFIG.inkblot));
+});
+test('real native decor initializes new worlds and resets live theme without stale uniform state',async()=>{
+ const {fixture}=await import('../../splatoon3/tests/source-fixture.mjs');
+ const f=await fixture({extraExports:"export {nativeDisplay} from './patches/native-stages/runtime/native-render.mjs'; export {createNativeDecor} from './patches/native-stages/runtime/native-world.mjs';"}),{THREE}=f;
+ const cfg={inkblot:{day:.35,sunset:.2}},make=(id='inkblot')=>f.nativeDisplay({manifest:{id,materials:{floor:{albedo:'a',maps:{},channels:{}}},objects:[{active:true,material:'floor',name:'floor',vo:0,vc:3,io:0,ic:3,collidable:true}]},vertices:new Float32Array([0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,1]),indices:new Uint32Array([0,1,2])},new Map([['a',new THREE.Texture()]]),'high',cfg);
+ const game={theme:'day',mapDef:{id:'scorch'}},first=make(),mat=first.group.children[0].material,u=mat.userData.nativeShadeFill;
+ assert.equal(u.value,0,'detached display starts disabled');game.decor=f.createNativeDecor(game,first);assert.equal(u.value,.35,'manifest id, not previous mapDef, selects scope');
+ for(const [theme,value] of [['sunset',.2],['night',0],['day',.35],['unknown',0],[undefined,0],['sunset',.2]]){game.theme=theme;game.decor.setNight(1);assert.equal(u.value,value);}
+ game.theme='day';game.decor.setNight(0);game.decor.setTeamColors(new THREE.Color('red'),new THREE.Color('blue'));assert.equal(u.value,.35);
+ for(const q of ['low','high','balanced']){first.updateTextures(new Map([['a',new THREE.Texture()]]),q);assert.equal(first.group.children[0].material,mat);assert.equal(mat.userData.nativeShadeFill,u);assert.equal(u.value,.35);}
+ const rebuilt=make();game.decor=f.createNativeDecor(game,rebuilt);assert.equal(rebuilt.group.children[0].material.userData.nativeShadeFill.value,.35,'same-theme new world initialized');
+ const other=make('scorch');game.decor=f.createNativeDecor(game,other);assert.equal(other.group.children[0].material.userData.nativeShadeFill.value,0);game.theme='sunset';game.decor.setNight(1);assert.equal(other.group.children[0].material.userData.nativeShadeFill.value,0);
+ game.decor=f.createNativeDecor(game,rebuilt);assert.equal(rebuilt.group.children[0].material.userData.nativeShadeFill.value,.2,'return to verified stage reads current theme');
+ first.dispose();rebuilt.dispose();other.dispose();
 });

@@ -57,6 +57,43 @@ export class TriangleWorld {
    const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack.push(left,right);continue;}const start=-left-1;for(let k=start;k<start+right;k++)fn(this.order[k]);
   }
  }
+ /** Continuous sphere contact with source triangles, including edges/corners.
+  * Distance to a convex triangle along a segment is convex. The exact closest
+  * segment/triangle pair brackets its first radius entry; bisection finds that
+  * entry without sampling over thin walls or substituting chart rectangles. */
+ sweepSphere(from,to,radius,{ignoreGrates=false}={}){
+  if(!(radius>=0)||!Number.isFinite(radius)||!Number.isFinite(from.x+from.y+from.z+to.x+to.y+to.z)||this.nodes.length<8)return null;
+  const scratch=this._sphereSweep||(this._sphereSweep={box:new THREE.Box3(),delta:V(),probe:V(),normal:V()}),{box,delta,probe,normal}=scratch;
+  delta.subVectors(to,from);const lengthSquared=delta.lengthSq(),length=Math.sqrt(lengthSquared);
+  box.min.copy(from).min(to).addScalar(-radius-1e-9);box.max.copy(from).max(to).addScalar(radius+1e-9);
+  let best=Infinity,result=null;this.queryCount++;
+  this.queryBox(box.min,box.max,id=>{
+   if(ignoreGrates&&(this.flags[id]&4))return;
+   const tri=this.triangle(id);this.triangleTests++;
+   const minimum=this._capsuleDistance(from,to,tri);
+   if(minimum>radius+1e-10)return;
+   const closest=lengthSquared?clamp(probe.copy(this._bests).sub(from).dot(delta)/lengthSquared,0,1):0;
+   const initial=this._capsuleDistance(from,from,tri);let time=0;
+   if(initial>radius+1e-10){
+    if(!lengthSquared||!closest)return;
+    let lo=0,hi=closest;
+    // Keep the outside endpoint outside, including tangent contacts. At most
+    // 2^-36 of the submitted segment is left unresolved.
+    for(let i=0;i<36;i++){
+     const mid=(lo+hi)*.5;probe.copy(from).addScaledVector(delta,mid);
+     if(this._capsuleDistance(probe,probe,tri)<=radius+1e-10)hi=mid;else lo=mid;
+    }
+    time=hi;
+   }
+   if(time>best||time===best&&result&&id>result.triangle)return;
+   probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,tri);
+   normal.subVectors(probe,this._bestp);
+   if(normal.lengthSq()<1e-20){normal.fromArray(this.normals,id*3);if(normal.dot(delta)>0)normal.negate();}
+   else normal.normalize();
+   best=time;result={triangle:id,time,distance:time*length,point:this._bestp.clone(),normal:normal.clone(),flags:this.flags[id],object:this.objectIds[id]};
+  });
+  return result;
+ }
  triangle(id,out=this._triangle){const i=id*9,a=this.triangles;out.a.fromArray(a,i);out.b.fromArray(a,i+3);out.c.fromArray(a,i+6);return out;}
  ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(new THREE.Vector3(x,y+up,z),new THREE.Vector3(0,-1,0),up+down,{ignoreGrates:squid,minNormalY:.62});}
  // Closest pair of points on two finite segments (degenerates included).
