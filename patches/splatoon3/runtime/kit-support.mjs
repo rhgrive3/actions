@@ -6,7 +6,7 @@
 import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorThrowSpeed, pointSensorContact, pointSensorMark, clearPointSensorMarks } from './support-recon.mjs';
 import { gearCurve } from './gear.mjs';
 import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
-import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
+import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -95,6 +95,24 @@ function spawnPointSensor(owner, projectile, G, THREE, Hit, remote = false, reco
   if (!remote) emitNet(G,owner,['p',owner.nid,sensor.seq,pos.x,pos.y,pos.z,vel.x,vel.y,vel.z,sensor.sourceLife]);
   return sensor;
 }
+// A stand follows a physical Tower platform, not the caster who threw it.
+// Use the existing RankedWorld footprint so off-tower throws keep 900F.
+function supportTowerBinding(G, pos) {
+  const world=G.match?.mode==='tower'&&G.match.rankedWorld;
+  if (!world || world._inTowerVolume?.({pos},false)!==true) return {onTower:false,local:null};
+  const block=world.towerBlock,axes=block?.axes;
+  if (!vec3(block?.center)||!Array.isArray(axes)||axes.length!==3||!axes.every(vec3))
+    return {onTower:true,local:null};
+  const relative=pos.clone().sub(block.center);
+  return {onTower:true,local:axes.map(axis=>relative.dot(axis))};
+}
+function advanceTowerStand(stand,G) {
+  const offset=stand.towerLocal,block=G.match?.rankedWorld?.towerBlock;
+  if (!offset||!vec3(block?.center)||!Array.isArray(block?.axes)||block.axes.length!==3)return;
+  stand.pos.copy(block.center);
+  for(let i=0;i<3;i++)stand.pos.addScaledVector(block.axes[i],offset[i]);
+  stand.mesh?.position?.copy?.(stand.pos);
+}
 function deployCooler(owner, projectile, G, THREE, remote = false, position = null, incomingSeq = null, incomingFrames = null) {
   const pos = position ? new THREE.Vector3(...position) :
     owner.pos.clone().add(new THREE.Vector3(Math.sin(owner.yaw || 0)*1.6,0,Math.cos(owner.yaw || 0)*1.6));
@@ -108,7 +126,9 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
     && incomingFrames >= TACTICOOLER_SOURCE.powerUpFrames[0]
     && incomingFrames <= TACTICOOLER_SOURCE.powerUpFrames[2]
     ? incomingFrames : tacticoolerDrinkFrames(owner.s3?.abilityPoints?.specialPower, gearCurve);
-  const stand={ owner, team:owner.team, pos, expires:G.time+TACTICOOLER.standSeconds,
+  const tower=supportTowerBinding(G,pos);
+  const stand={ owner, team:owner.team, pos, onTower:tower.onTower,towerLocal:tower.local,
+    expires:G.time+tacticoolerStandFrames(tower.onTower)/60,
     drinkSeconds:drinkFrames/60, sourceLife:life(owner), seq:remote?incomingSeq:serial(owner),
     taken:new Set(), mesh:coolerVisual(owner,pos,THREE,G) };
   stands.push(stand);
@@ -183,6 +203,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   const coolers=projectile._s3SupportCoolers || [];
   for(let i=coolers.length-1;i>=0;i--) {
     const stand=coolers[i];
+    advanceTowerStand(stand,G);
     if(G.time>=stand.expires||!playing) {releaseVisual(stand,G);coolers.splice(i,1);continue;}
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
