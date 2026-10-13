@@ -19299,6 +19299,14 @@
     "retailParityClaimed": false,
     "hardwareFpsClaimed": false,
     "reviewedHarnessHead": "4560a17bb3c81044875af37579685c433f77c0fb",
-    "afterArtifactOwnChanges": "Two unique test harness wait/assertion corrections and final documentation only; source/runtime build inputs unchanged"
+    "afterArtifactOwnChanges": "Two unique test harness wait/assertion corrections and final documentation only; source/runtime build inputs unchanged",
+    "completeSettledWsGridBytesByMode": {
+      "turf": 1181405,
+      "zones": 1181405,
+      "tower": 1181505,
+      "rainmaker": 1181405,
+      "clams": 1181405
+    },
+    "documentationCorrection": "Tower complete grid includes100 actual dynamic deck cells; all raw evidence already compared the full1181505 bytes. Four other modes1181405. Prose count corrected only, no runtime/source/evidence changes."
   }
 }
