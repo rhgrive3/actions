@@ -99,9 +99,24 @@ before ordinary AI selects its next goal.
 The final-pair human Tower boarding check is prepared in
 `scripts/check-inkwave-shipshape-tower-human.mjs`. It uses physical W/Space from
 the original supported inferred approach at 30/60/120 render cadences, captures
-the installed collider arguments, and checks actual movement-subdivision source
-capsule sweeps separately from endpoint fits. It has not run yet. Centre
+the installed collider arguments, and requires exact source capsule sweeps for
+movement without contact. Observed source-collider corrections require both
+committed endpoints to fit at the unchanged .003 margin. Strict straight-chord
+diagnostics remain recorded separately. It has not run yet. Centre
 boarding does not replace full opposed-half Tower travel and scoring proof.
+
+The strict paired combat checker initially stopped earlier at paint movement
+tick 2451. Wahoo's matched accepted900/root combat baseline reproduces the same
+event without the new jump helper. Independent reads of the original binary
+source identify triangles 78569/78576, paintable-solid flags 3, as a sloping
+beam top and vertical side sharing a ridge. Both collision-resolved endpoints
+clear that ridge by .3501; the straight chord between them approaches to
+.346877764 for radius .35. Its .003122236 penetration is in source raw units,
+whose retail scale is unverified. The installed solver advances a proposed
+position, projects source contacts, then resolves feet. A straight line between
+those separately corrected states is not the observed solver trajectory.
+The failed chord remains a diagnostic; no source, physics or tolerance changes
+are made. Full bank gameplay remains pending the refined current paired check.
 
 The current private artifact is
 `173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5`,

@@ -59,17 +59,32 @@ try{
    if(!a.grounded||a.ground.triangle<0||a.ground.block===G.match.rankedWorld.towerBlockId)throw Error('Human boarding must begin on original supported floor');
    const from=a.pos.clone();g.rig.yaw=Math.atan2(approach.end[0]-from.x,approach.end[2]-from.z);g.rig.pitch=0;
    const probe=G.physics.raycast(from.clone().add(new V(0,.1,0)),new V(0,-1,0),.3);
-   const monitor=globalThis.shipshapeTowerHuman={approach,sourceSha256:L.manifest.sourceSha256,serial:a.s3JumpSerial||0,actorSteps:0,movementCapsules:0,actorCapsules:0,firstFailure:null,profiles:[],intervals:[],sweep:nativeDropClearance(L),originalUpdate:a.update,originalIntegrate:a._integrateMovementStep,originalCollide:G.physics.collideBody,body:null,sourceData:L.data.triangles};
+   const monitor=globalThis.shipshapeTowerHuman={approach,sourceSha256:L.manifest.sourceSha256,serial:a.s3JumpSerial||0,actorSteps:0,movementCapsules:0,contactFrames:0,strictChordFailures:0,firstChordFailure:null,actorCapsules:0,firstFailure:null,profiles:[],intervals:[],sweep:nativeDropClearance(L),originalUpdate:a.update,originalIntegrate:a._integrateMovementStep,originalCollide:G.physics.collideBody,originalNativeContacts:G.physics._nativeContacts,body:null,sourceCorrections:[],sourceData:L.data.triangles};
    G.physics.collideBody=function(pos,radius,lift,height,...rest){
     if(pos===a.pos){monitor.body={radius,lift,height,skipGrates:!!rest[2]};if(!monitor.profiles.some(p=>JSON.stringify(p)===JSON.stringify(monitor.body)))monitor.profiles.push({...monitor.body});}
     return monitor.originalCollide.call(this,pos,radius,lift,height,...rest);
    };
+   G.physics._nativeContacts=function(pos,radius,lift,height,contacts,...rest){
+    const before=pos.clone(),out=monitor.originalNativeContacts.call(this,pos,radius,lift,height,contacts,...rest);
+    if(pos===a.pos&&pos.distanceToSquared(before)>1e-20){
+     const blocks=[out.wall?out.wallBlock:-1,out.ground?out.groundBlock:-1,out.ceiling?out.ceilingBlock:-1];
+     monitor.sourceCorrections.push({before:before.toArray(),after:pos.toArray(),staticContact:blocks.some(id=>id>=0&&id<L.staticBlockCount&&L.blocks[id]?.solid)});
+    }
+    return out;
+   };
    a._integrateMovementStep=function(dt,...args){
-    const previous=this.pos.clone(),out=monitor.originalIntegrate.call(this,dt,...args),b=monitor.body;
+    const previous=this.pos.clone();monitor.sourceCorrections=[];
+    const out=monitor.originalIntegrate.call(this,dt,...args),b=monitor.body;
     if(!b)throw Error('Installed source collider profile missing');
     if(!monitor.intervals.includes(dt))monitor.intervals.push(dt);
     monitor.movementCapsules++;
-    if(!monitor.sweep.clear(previous,this.pos,b.radius,b.lift,b.height,b.skipGrates))monitor.firstFailure||={kind:'source-movement-sweep',previous:previous.toArray(),position:this.pos.toArray(),body:{...b}};
+    const clear=monitor.sweep.clear(previous,this.pos,b.radius,b.lift,b.height,b.skipGrates);
+    if(!clear){monitor.strictChordFailures++;monitor.firstChordFailure||={previous:previous.toArray(),position:this.pos.toArray(),body:{...b}};}
+    if(monitor.sourceCorrections.length){
+     monitor.contactFrames++;
+     const supported=monitor.sourceCorrections.every(c=>c.staticContact)&&G.physics.bodyFits(previous,b.radius,b.lift,b.height,b.skipGrates,.003)&&G.physics.bodyFits(this.pos,b.radius,b.lift,b.height,b.skipGrates,.003);
+     if(!supported)monitor.firstFailure||={kind:'source-contact-correction',previous:previous.toArray(),position:this.pos.toArray(),body:{...b},corrections:monitor.sourceCorrections};
+    }else if(!clear)monitor.firstFailure||={kind:'contact-free-source-sweep',previous:previous.toArray(),position:this.pos.toArray(),body:{...b}};
     return out;
    };
    a.update=function(dt){
@@ -100,8 +115,8 @@ try{
   const receipt=await page.evaluate(async()=>{
    const G=NG,a=G.local,m=shipshapeTowerHuman;
    const {nativeTowerRider}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI));
-   a.update=m.originalUpdate;a._integrateMovementStep=m.originalIntegrate;G.physics.collideBody=m.originalCollide;
-   return {rider:nativeTowerRider(G,a),sourceSha256:m.sourceSha256,position:a.pos.toArray(),grounded:a.grounded,groundBlock:a.ground.block,towerBlock:G.match.rankedWorld.towerBlockId,serialDelta:(a.s3JumpSerial||0)-m.serial,actorSteps:m.actorSteps,movementCapsules:m.movementCapsules,actorCapsules:m.actorCapsules,firstFailure:m.firstFailure,bodyProfiles:m.profiles,movementIntervals:m.intervals,sourceDataIdentity:G.level.data.triangles===m.sourceData,alive:a.alive,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,gearAP:Object.keys(a.s3.abilityPoints)};
+   a.update=m.originalUpdate;a._integrateMovementStep=m.originalIntegrate;G.physics.collideBody=m.originalCollide;G.physics._nativeContacts=m.originalNativeContacts;
+   return {rider:nativeTowerRider(G,a),sourceSha256:m.sourceSha256,position:a.pos.toArray(),grounded:a.grounded,groundBlock:a.ground.block,towerBlock:G.match.rankedWorld.towerBlockId,serialDelta:(a.s3JumpSerial||0)-m.serial,actorSteps:m.actorSteps,movementCapsules:m.movementCapsules,contactFrames:m.contactFrames,contactFreeMovementCapsules:m.movementCapsules-m.contactFrames,strictChordFailures:m.strictChordFailures,firstChordFailure:m.firstChordFailure,continuousSolverTrajectoryClaim:false,actorCapsules:m.actorCapsules,firstFailure:m.firstFailure,bodyProfiles:m.profiles,movementIntervals:m.intervals,sourceDataIdentity:G.level.data.triangles===m.sourceData,alive:a.alive,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,gearAP:Object.keys(a.s3.abilityPoints)};
   });
   result.cases.push({renderHz:hz,physicsHz:60,setup,...receipt});
   fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(result,null,2));
@@ -115,7 +130,7 @@ try{
  }
  assert.equal(result.errors.length,0,JSON.stringify(result.errors));
  result.status='passed';
- result.conditions='Physical keyboard W/Space from original source-supported inferred Tower approach; actual Game fixed STEP and production controller/Actor; eight actors/seven bots with other brains frozen; no postsetup actor pose/velocity/ink writes; actual movement-subdivision source capsule sweeps and endpoint fits; centre boarding only, full ride/scoring proven separately; Chromium SwiftShader, retail placement and hardware FPS unverified.';
+ result.conditions='Physical keyboard W/Space from original source-supported inferred Tower approach; actual Game fixed STEP and production controller/Actor; eight actors/seven bots with other brains frozen; no postsetup actor pose/velocity/ink writes; actual contact-free movement source capsule sweeps, observed source-contact corrections with strict .003 committed endpoint fits, and per-Actor .01 endpoint fits; resolved-pose chord diagnostics retained without claiming the chord is the solver trajectory; centre boarding only, full ride/scoring proven separately; Chromium SwiftShader, retail placement and hardware FPS unverified.';
  await context.close();
 }catch(e){result.status='failed';result.error=e.message;throw e;}
 finally{await browser.close();await new Promise(r=>server.close(r));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(result,null,2));}

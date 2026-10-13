@@ -34425,5 +34425,51 @@
     "priorFailuresPreserved": true,
     "conditions": "Controlled original opposing-bank route replay: initial supported goal, same-goal reacquisition after paint path loss/replacement, other seven real actors source-supported with brains frozen; production perception/Actor/weapons/specials; actual fixed STEP 1/60 at render30.",
     "nextPairedCondition": "Accepted900 plus qualified current combat/jump candidates; no postsetup goal reacquisition; ordinary goal changes distinguished from unsafe source departure."
+  },
+  "independentSourceContactClassification": {
+    "scope": "Independent bounded binary source reads and segment-distance calculation; no nav/Actor/runtime edits or second GPU run",
+    "sourceTriangles": [
+      78569,
+      78576
+    ],
+    "faces": [
+      33836,
+      33955
+    ],
+    "sourceFlags": [
+      3,
+      3
+    ],
+    "sharedRidgeVertexCount": 2,
+    "normalDot": -5.165222205505415e-07,
+    "radius": 0.35,
+    "lift": 0.35,
+    "height": 1.45,
+    "startDistance": 0.350100000000001,
+    "endDistance": 0.35009999999999936,
+    "chordMinimumDistance": 0.3468777638939764,
+    "chordParameter": 0.5000000000000724,
+    "chordPenetrationSourceRawUnits": 0.0031222361060235793,
+    "actualSolverTrajectoryVerified": false,
+    "retailUnitsVerified": false,
+    "interpretation": "Resolved endpoint chord crosses the radius-dilated original ridge. Installed solver separately advances, resolves source contacts, then resolves feet; chord is not the observed solver path.",
+    "sourceBinaryFieldsMatchRecordedValues": true,
+    "sourceFieldBytesSha256": [
+      {
+        "triangle": 78569,
+        "bytes": 56,
+        "sha256": "ea1362b76382c41b1eb98a78df4a19011c29886f69a7f4f62b591a834a641be3"
+      },
+      {
+        "triangle": 78576,
+        "bytes": 56,
+        "sha256": "4aebc3bbe6f34d6ed84a15ef17a93bd26589a9ec23fd2b40a1b060b8d5e81f41"
+      }
+    ],
+    "receipt": ".ci-scratch/shipshape-independent-source-ridge.json",
+    "receiptSha256": "a42dcc60bd8a5f5790c77a1bc2f7dbd17f9c3cae86bd37f39c6d2c7ca8765218",
+    "matchedBaselineOwner": "Wahoo",
+    "productionToleranceChanged": false,
+    "sourceGeometryChanged": false
   }
 }
