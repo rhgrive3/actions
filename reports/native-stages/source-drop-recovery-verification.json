@@ -1,5 +1,5 @@
 {
-  "status": "all source/current Game/default/public checks passed; named final peer report closure pending",
+  "status": "qualified current source Drop recovery; named Wahoo peer accepted",
   "binding": {
     "base": "0c39e684",
     "commonHead": "85b660286279043158ee4fb8587f9ac8abea855b",
@@ -32,9 +32,9 @@
             {
               "id": "lemuria",
               "internal": "Vss_AutoWalk00",
-              "name": "リュウグウターミナル",
+              "name": "\u30ea\u30e5\u30a6\u30b0\u30a6\u30bf\u30fc\u30df\u30ca\u30eb",
               "availability": "source-unavailable",
-              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "reason": "\u516c\u958b\u30e2\u30c7\u30eb\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u305f\u3081\u3001\u73fe\u5728\u30d7\u30ec\u30a4\u3067\u304d\u307e\u305b\u3093\u3002",
               "source": {
                 "repository": "kirakira-dev/KiTrix",
                 "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -48,7 +48,7 @@
             {
               "id": "scorch",
               "internal": "Vss_Yunohana",
-              "name": "ユノハナ大渓谷",
+              "name": "\u30e6\u30ce\u30cf\u30ca\u5927\u6e13\u8c37",
               "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
               "tree": "c5e8f6e5aa14b97a87210ad5df1c91c05b1ab451",
               "bounds": {
@@ -77,7 +77,7 @@
             {
               "id": "hagglefish",
               "internal": "Vss_Yagara",
-              "name": "ヤガラ市場",
+              "name": "\u30e4\u30ac\u30e9\u5e02\u5834",
               "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
               "tree": "96fbd9ec8b6eb57996236fa56bb7511009ebc0c5",
               "bounds": {
@@ -105,7 +105,7 @@
                 "tower": {
                   "supported": false,
                   "status": "source-route-unverified",
-                  "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。",
+                  "reason": "\u5b89\u5168\u306a\u30e4\u30b0\u30e9\u7d4c\u8def\u3092\u78ba\u8a8d\u3067\u304d\u306a\u3044\u305f\u3081\u3001\u3053\u306e\u30b9\u30c6\u30fc\u30b8\u3067\u306f\u30ac\u30c1\u30e4\u30b0\u30e9\u3092\u5229\u7528\u3067\u304d\u307e\u305b\u3093\u3002",
                   "evidence": "Pinned unlayered OBJ has no Vlf layer. Current source-floor navigation cannot provide a route clearing the full swept deck/pole/capsule from opposing supports. Compound human jump/climb connectivity and retail tower placement remain unverified."
                 }
               },
@@ -114,7 +114,7 @@
             {
               "id": "inkblot",
               "internal": "Vss_Upland03",
-              "name": "海女美術大学",
+              "name": "\u6d77\u5973\u7f8e\u8853\u5927\u5b66",
               "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
               "tree": "ffa36b9ffb6e80907594776996b94d00b0cbacde",
               "bounds": {
@@ -143,7 +143,7 @@
             {
               "id": "mako",
               "internal": "Vss_Line03",
-              "name": "ザトウマーケット",
+              "name": "\u30b6\u30c8\u30a6\u30de\u30fc\u30b1\u30c3\u30c8",
               "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
               "tree": "eac91de4a0c7d5d55c52dbf7d09a9c4f7d94a011",
               "bounds": {
@@ -172,7 +172,7 @@
             {
               "id": "brinewater",
               "internal": "Vss_BigSlope00",
-              "name": "クサヤ温泉",
+              "name": "\u30af\u30b5\u30e4\u6e29\u6cc9",
               "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
               "tree": "1b814a810bc1012c7cf16f469f81ee532e860bfd",
               "bounds": {
@@ -214,9 +214,9 @@
             {
               "id": "lemuria",
               "internal": "Vss_AutoWalk00",
-              "name": "リュウグウターミナル",
+              "name": "\u30ea\u30e5\u30a6\u30b0\u30a6\u30bf\u30fc\u30df\u30ca\u30eb",
               "availability": "source-unavailable",
-              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "reason": "\u516c\u958b\u30e2\u30c7\u30eb\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u305f\u3081\u3001\u73fe\u5728\u30d7\u30ec\u30a4\u3067\u304d\u307e\u305b\u3093\u3002",
               "source": {
                 "repository": "kirakira-dev/KiTrix",
                 "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -230,7 +230,7 @@
             {
               "id": "robo",
               "internal": "Vss_Cross00",
-              "name": "バイガイ亭",
+              "name": "\u30d0\u30a4\u30ac\u30a4\u4ead",
               "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
               "tree": "53a94ccb7abc115382c208b540ac45728ba914d9",
               "bounds": {
@@ -274,7 +274,7 @@
             {
               "id": "shipshape",
               "internal": "Vss_Twist00",
-              "name": "オヒョウ海運",
+              "name": "\u30aa\u30d2\u30e7\u30a6\u6d77\u904b",
               "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
               "tree": "d1b59d640b885fee46b3cb93c6dab4b38ba32019",
               "bounds": {
@@ -1556,9 +1556,9 @@
             {
               "id": "lemuria",
               "internal": "Vss_AutoWalk00",
-              "name": "リュウグウターミナル",
+              "name": "\u30ea\u30e5\u30a6\u30b0\u30a6\u30bf\u30fc\u30df\u30ca\u30eb",
               "availability": "source-unavailable",
-              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "reason": "\u516c\u958b\u30e2\u30c7\u30eb\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u305f\u3081\u3001\u73fe\u5728\u30d7\u30ec\u30a4\u3067\u304d\u307e\u305b\u3093\u3002",
               "source": {
                 "repository": "kirakira-dev/KiTrix",
                 "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -1572,7 +1572,7 @@
             {
               "id": "scorch",
               "internal": "Vss_Yunohana",
-              "name": "ユノハナ大渓谷",
+              "name": "\u30e6\u30ce\u30cf\u30ca\u5927\u6e13\u8c37",
               "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
               "tree": "c5e8f6e5aa14b97a87210ad5df1c91c05b1ab451",
               "bounds": {
@@ -1601,7 +1601,7 @@
             {
               "id": "hagglefish",
               "internal": "Vss_Yagara",
-              "name": "ヤガラ市場",
+              "name": "\u30e4\u30ac\u30e9\u5e02\u5834",
               "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
               "tree": "96fbd9ec8b6eb57996236fa56bb7511009ebc0c5",
               "bounds": {
@@ -1629,7 +1629,7 @@
                 "tower": {
                   "supported": false,
                   "status": "source-route-unverified",
-                  "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。",
+                  "reason": "\u5b89\u5168\u306a\u30e4\u30b0\u30e9\u7d4c\u8def\u3092\u78ba\u8a8d\u3067\u304d\u306a\u3044\u305f\u3081\u3001\u3053\u306e\u30b9\u30c6\u30fc\u30b8\u3067\u306f\u30ac\u30c1\u30e4\u30b0\u30e9\u3092\u5229\u7528\u3067\u304d\u307e\u305b\u3093\u3002",
                   "evidence": "Pinned unlayered OBJ has no Vlf layer. Current source-floor navigation cannot provide a route clearing the full swept deck/pole/capsule from opposing supports. Compound human jump/climb connectivity and retail tower placement remain unverified."
                 }
               },
@@ -1638,7 +1638,7 @@
             {
               "id": "inkblot",
               "internal": "Vss_Upland03",
-              "name": "海女美術大学",
+              "name": "\u6d77\u5973\u7f8e\u8853\u5927\u5b66",
               "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
               "tree": "ffa36b9ffb6e80907594776996b94d00b0cbacde",
               "bounds": {
@@ -1667,7 +1667,7 @@
             {
               "id": "mako",
               "internal": "Vss_Line03",
-              "name": "ザトウマーケット",
+              "name": "\u30b6\u30c8\u30a6\u30de\u30fc\u30b1\u30c3\u30c8",
               "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
               "tree": "eac91de4a0c7d5d55c52dbf7d09a9c4f7d94a011",
               "bounds": {
@@ -1696,7 +1696,7 @@
             {
               "id": "brinewater",
               "internal": "Vss_BigSlope00",
-              "name": "クサヤ温泉",
+              "name": "\u30af\u30b5\u30e4\u6e29\u6cc9",
               "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
               "tree": "1b814a810bc1012c7cf16f469f81ee532e860bfd",
               "bounds": {
@@ -1738,9 +1738,9 @@
             {
               "id": "lemuria",
               "internal": "Vss_AutoWalk00",
-              "name": "リュウグウターミナル",
+              "name": "\u30ea\u30e5\u30a6\u30b0\u30a6\u30bf\u30fc\u30df\u30ca\u30eb",
               "availability": "source-unavailable",
-              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "reason": "\u516c\u958b\u30e2\u30c7\u30eb\u304c\u898b\u3064\u304b\u3089\u306a\u3044\u305f\u3081\u3001\u73fe\u5728\u30d7\u30ec\u30a4\u3067\u304d\u307e\u305b\u3093\u3002",
               "source": {
                 "repository": "kirakira-dev/KiTrix",
                 "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -1754,7 +1754,7 @@
             {
               "id": "robo",
               "internal": "Vss_Cross00",
-              "name": "バイガイ亭",
+              "name": "\u30d0\u30a4\u30ac\u30a4\u4ead",
               "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
               "tree": "53a94ccb7abc115382c208b540ac45728ba914d9",
               "bounds": {
@@ -1798,7 +1798,7 @@
             {
               "id": "shipshape",
               "internal": "Vss_Twist00",
-              "name": "オヒョウ海運",
+              "name": "\u30aa\u30d2\u30e7\u30a6\u6d77\u904b",
               "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
               "tree": "d1b59d640b885fee46b3cb93c6dab4b38ba32019",
               "bounds": {
@@ -3210,6 +3210,9 @@
       "fail": 0,
       "receipt": "/workspace/stage-worktrees/wahoo/.ci-scratch/manta-drop-independent-context-review.log"
     },
-    "finalReportHeadClosure": "pending"
+    "finalReportHeadClosure": "PASS",
+    "acceptedReportHead": "57b15c6a1b20318534c701d2c5c73dcfd07b7e08",
+    "runtimeHead": "85b660286279043158ee4fb8587f9ac8abea855b",
+    "scope": "Narrow source plant/actual supported touchdown/ordinary stop and replan only; no whole-bank or sustained-roam claim"
   }
 }
