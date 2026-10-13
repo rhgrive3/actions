@@ -19,8 +19,10 @@ export function nativeOrdinaryJumpCommitted(brain,G){
 }
 
 function combatSourceReady(brain,G){
- const a=brain.a,N=G.nav,L=G.level,P=G.physics,from=N.nodes[brain.path[brain.pi-1]],to=N.nodes[brain.path[brain.pi]],edge=from?.nb.find(e=>e.to===to?.id);
- if(brain.mode!=='fight'||!brain.target?.alive||brain.target.team===a.team||N.level!==L||N.physics!==P||P.level!==L||!N.valid[from?.id]||!N.valid[to?.id]||edge?.type!=='jump'||edge.climb||edge.drop||!Number.isFinite(G.time))return false;
+ const a=brain.a,N=G.nav,L=G.level,P=G.physics;
+ if(!N?.nodes||!P?.raycast||!P.groundProbe||!P.bodyFits||N.level!==L||N.physics!==P||P.level!==L||a.s3?.squidSpawn)return false;
+ const from=N.nodes[brain.path[brain.pi-1]],to=N.nodes[brain.path[brain.pi]],edge=from?.nb.find(e=>e.to===to?.id);
+ if(brain.mode!=='fight'||!brain.target?.alive||brain.target.team===a.team||!N.valid?.[from?.id]||!N.valid?.[to?.id]||to.zone===1-a.team||edge?.type!=='jump'||edge.climb||edge.drop||!Number.isFinite(G.time))return false;
  const r=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale,goal=a.pos.clone().set(to.x,to.y,to.z),probe={pos:goal,grounded:true,form:'kid'};
  if(!nativeSourceFootSupported(G,probe,to))return false;
  goal.y=probe._nativeWaypointGround.y;
@@ -53,9 +55,9 @@ export function nativeOrdinaryJumpInput(brain,G){
  }
  // Observe a press the normal BotBrain already requested. Never create a
  // launch, extend an unrelated airborne impulse or hold a failed admission.
- if(it.jump&&a.grounded&&nativeSourceFootSupported(G,a,N.nodes[path[brain.pi-1]])){
+ if(it.jump&&a.grounded){
   if(brain.target){
-   if(!it.sub&&!it.special&&!it.throw&&combatSourceReady(brain,G))pending.set(brain,{path,node,serial,mode:brain.mode,target:brain.target,goal:brain.goal,level:G.level,nav:N,physics:G.physics,match:G.match,matchMode:G.match?.mode,combat:true,started:G.time,maxFlight:Math.min(2,2*PLAYER.jumpVel/(PLAYER.gravity*Math.min(1,PLAYER.apexGravityMul||1))+.1)});
-  }else pending.set(brain,{path,node,serial,mode:brain.mode,level:G.level,nav:N,match:G.match});
+   if(!it.sub&&!it.special&&!it.throw&&combatSourceReady(brain,G)&&nativeSourceFootSupported(G,a,N.nodes[path[brain.pi-1]]))pending.set(brain,{path,node,serial,mode:brain.mode,target:brain.target,goal:brain.goal,level:G.level,nav:N,physics:G.physics,match:G.match,matchMode:G.match?.mode,combat:true,started:G.time,maxFlight:Math.min(2,2*PLAYER.jumpVel/(PLAYER.gravity*Math.min(1,PLAYER.apexGravityMul||1))+.1)});
+  }else if(nativeSourceFootSupported(G,a,N.nodes[path[brain.pi-1]]))pending.set(brain,{path,node,serial,mode:brain.mode,level:G.level,nav:N,match:G.match});
  }
 }
