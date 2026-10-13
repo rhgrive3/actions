@@ -3,12 +3,24 @@ import {nativeTowerRider} from './native-ranked-boarding.mjs';
 import {PLAYER} from '../../../src/config.js';
 const pending=new WeakMap();
 
+function staticDestination(G,node){
+ const P=G.physics,L=G.level;if(!node||!P?.raycast||!P.groundProbe||!P.bodyFits||P.level!==L)return null;
+ const goal=L.spawnPads[0].clone().set(node.x,node.y,node.z),probe={pos:goal,grounded:true,form:'kid'};
+ if(!nativeSourceFootSupported(G,probe,node))return null;
+ const support=probe._nativeWaypointGround;
+ const hit=P.raycast(goal.clone().setY(node.y+.1),goal.clone().set(0,-1,0),.3);
+ if(!hit.hit||hit.triangle<0||hit.block<0||hit.block>=L.staticBlockCount)return null;
+ goal.y=support.y;
+ const radius=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale;
+ return P.bodyFits(goal,radius,PLAYER.stepUp,PLAYER.height,false,.01)?{goal,block:support.block,triangle:hit.triangle}:null;
+}
+
 function combatContext(brain,G,state){
  const a=brain.a,N=G.nav,path=brain.path;
- return !!(state.combat&&G.level?.native&&a.alive&&!a.grounded&&a.form==='kid'&&!a.climbing&&!a.superJumpState&&!a.specialActive&&!a.s3?.squidSpawn&&!nativeTowerRider(G,a)&&!brain._nativeTowerBoarding&&!brain._nativeClimb&&!brain._nativeDrop&&!brain._nativeSurge&&!brain._nativeJumpAttach&&
+ return !!(state.combat&&G.level?.native&&a.alive&&!a.grounded&&a.form==='kid'&&!a.climbing&&!a.superJumpState&&!a.specialActive&&!a.s3?.squidSpawn&&!a.intent.sub&&!a.intent.special&&!a.intent.throw&&!nativeTowerRider(G,a)&&!brain._nativeTowerBoarding&&!brain._nativeClimb&&!brain._nativeDrop&&!brain._nativeSurge&&!brain._nativeJumpAttach&&
   state.path===path&&state.node===path?.[brain.pi]&&state.mode===brain.mode&&brain.mode==='fight'&&state.target===brain.target&&brain.target?.alive&&brain.target.team!==a.team&&state.goal===brain.goal&&
   state.level===G.level&&state.nav===N&&state.physics===G.physics&&state.match===G.match&&state.matchMode===G.match?.mode&&N.level===G.level&&N.physics===G.physics&&G.physics.level===G.level&&
-  (a.s3JumpSerial||0)===state.serial+1&&N.edgeType(path[brain.pi-1],state.node)==='jump'&&Number.isFinite(G.time)&&G.time>=state.started&&G.time-state.started<state.maxFlight);
+  (a.s3JumpSerial||0)===state.serial+1&&N.valid[state.node]&&N.nodes[state.node].zone!==1-a.team&&N.edgeType(path[brain.pi-1],state.node)==='jump'&&Number.isFinite(G.time)&&G.time>=state.started&&G.time-state.started<state.maxFlight&&staticDestination(G,N.nodes[state.node]));
 }
 
 /** An actually admitted source jump keeps its current route until touchdown;
@@ -23,11 +35,9 @@ function combatSourceReady(brain,G){
  if(!N?.nodes||!P?.raycast||!P.groundProbe||!P.bodyFits||N.level!==L||N.physics!==P||P.level!==L||a.s3?.squidSpawn)return false;
  const from=N.nodes[brain.path[brain.pi-1]],to=N.nodes[brain.path[brain.pi]],edge=from?.nb.find(e=>e.to===to?.id);
  if(brain.mode!=='fight'||!brain.target?.alive||brain.target.team===a.team||!N.valid?.[from?.id]||!N.valid?.[to?.id]||to.zone===1-a.team||edge?.type!=='jump'||edge.climb||edge.drop||!Number.isFinite(G.time))return false;
- const r=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale,goal=a.pos.clone().set(to.x,to.y,to.z),probe={pos:goal,grounded:true,form:'kid'};
- if(!nativeSourceFootSupported(G,probe,to))return false;
- goal.y=probe._nativeWaypointGround.y;
- const rise=goal.y-a.pos.y,peak=PLAYER.jumpVel**2/(2*PLAYER.gravity)+Math.min(PLAYER.ledgeAssist,.22);
- return rise>0&&rise<=peak&&P.bodyFits(a.pos,r,PLAYER.stepUp,PLAYER.height,false,.01)&&P.bodyFits(goal,r,PLAYER.stepUp,PLAYER.height,false,.01);
+ const destination=staticDestination(G,to);if(!destination)return false;
+ const r=PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale,rise=destination.goal.y-a.pos.y,peak=PLAYER.jumpVel**2/(2*PLAYER.gravity)+Math.min(PLAYER.ledgeAssist,.22);
+ return rise>0&&rise<=peak&&P.bodyFits(a.pos,r,PLAYER.stepUp,PLAYER.height,false,.01);
 }
 
 function combatMove(brain,G,state){
