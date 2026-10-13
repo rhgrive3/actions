@@ -24,7 +24,7 @@ try{
   g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
   if(!G.level.native||G.actors.length!==8||G.actors.filter(a=>a.bot).length!==7||G.local.s3?.squidSpawn||!G.local.grounded)throw Error('Real native match/initial source landing required');
   const L=G.level,N=G.nav,V=G.local.pos.constructor,stage=nativeRankedStage(G),goal=new V(...stage.zones[0].center),cases=[];
-  if(L.manifest.sourceNavigation?.wallClimb||L.manifest.sourceNavigation?.highDrops)throw Error('Ordinary source proof must keep both traversal opt-ins OFF');
+  if(L.manifest.sourceNavigation?.wallClimb||L.manifest.sourceNavigation?.highDrops||L.manifest.sourceNavigation?.wallSurge)throw Error('Ordinary source proof must keep traversal opt-ins OFF');
   for(const team of [0,1])for(const hz of [30,60,120]){
    const a=G.actors.find(a=>a.team===team&&a.bot);
    for(const other of G.actors){if(other===a)continue;const p=L.spawnPads[other.team].clone(),angle=other.slot/4*Math.PI*2+.6;p.x+=Math.cos(angle)*1.8;p.z+=Math.sin(angle)*1.8;const h=G.physics.raycast(p.clone().setY(p.y+.1),new V(0,-1,0),.3);if(!h.hit||Math.abs(h.point.y-p.y)>.1)throw Error('Other actor setup lacks original source pad support');other.spawnAt(p,0);other.intent.move.set(0,0,0);other.intent.fire=other.intent.squid=other.intent.jump=false;if(other.bot)other.bot.update=()=>{};}
