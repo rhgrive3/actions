@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PLAYER } from '../../../src/config.js';
+import { nativeClimbTransition } from './native-climb.mjs';
 const down=new THREE.Vector3(0,-1,0),origin=new THREE.Vector3(),a=new THREE.Vector3(),b=new THREE.Vector3();
 /** Keep real routes out of both supported spawn layers. The legacy largest
  * undirected component can be a decorative floor far beneath a native deck. */
@@ -57,7 +58,10 @@ export function buildNativeNav(graph){
     // The stock 3.4-unit drop cap is an AI policy for the small blockouts.
     // Native high ledges can drop safely to verified support above fall death.
     else if(!(dx&&dz)&&dy<-.5&&m.y>PLAYER.fallDeathY){type='drop';cost=st+.8;}
-    else continue;
+    else {
+     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);}
+     continue;
+    }
     const lift=type==='walk'?.65:1.5;
     if(!graph.physics.los(a.set(n.x,n.y+lift,n.z),b.set(m.x,m.y+lift,m.z)))continue;
     n.nb.push({to:id,cost,type});
