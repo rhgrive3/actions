@@ -3,6 +3,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {BASE_SOURCE_STAGES,SOURCE_RECIPE,SOURCE_COMMIT} from '../../patches/native-stages/runtime/source-catalog.mjs';
 export const NATIVE_ROOT=path.resolve(import.meta.dirname,'../../patches/native-stages');
+// Stateful ordinary movement stays the already-installed browser singleton.
+export const NATIVE_RUNTIME_EXTERNALS=['three','../../../src/*','./registry.mjs','./build-config.mjs','../../splatoon3/runtime/movement.mjs'];
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 export function nativeStageIdentity(){
  const files={};const walk=dir=>{for(const d of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name,'en'))){const file=path.join(dir,d.name);if(d.isDirectory())walk(file);else if(!file.includes('/tests/')&&!file.includes('/tools/')&&(file.endsWith('.mjs')||file.includes('/definitions/')&&file.endsWith('.json')))files[path.relative(NATIVE_ROOT,file)]=hash(fs.readFileSync(file));}};walk(NATIVE_ROOT);return files;

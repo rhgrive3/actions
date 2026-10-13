@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {nativeStageCatalog,nativeBrowserStageIntegrity} from '../../../scripts/lib/inkwave-native-stages.mjs';
+import {nativeStageCatalog,nativeBrowserStageIntegrity,NATIVE_RUNTIME_EXTERNALS} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
 
 test('source Surge is explicit and participates in source-cache identity',()=>{
@@ -14,6 +14,11 @@ test('source Surge is explicit and participates in source-cache identity',()=>{
   for(const value of [{wallSurge:true},{wallClimb:true,highDrops:true,wallSurge:true}]){write(value);assert.deepEqual(nativeStageCatalog(dir).stages.at(-1).sourceNavigation,value);assert.notEqual(nativeBrowserStageIntegrity(base),nativeBrowserStageIntegrity({...base,sourceNavigation:value}));}
   for(const value of [{wallSurge:false},{wallSurge:1},{wallSurge:true,hover:true}]){write(value);assert.throws(()=>nativeStageCatalog(dir),/source navigation/);}
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('production native bundle reads the installed ordinary movement singleton',async()=>{
+ const {build}=await import('esbuild'),result=await build({entryPoints:['patches/native-stages/runtime/engine.mjs'],bundle:true,format:'esm',minify:true,write:false,metafile:true,external:NATIVE_RUNTIME_EXTERNALS});
+ const imports=Object.values(result.metafile.outputs).flatMap(o=>o.imports);assert.ok(imports.some(i=>i.external&&i.path==='../../splatoon3/runtime/movement.mjs'));assert.ok(!Object.keys(result.metafile.inputs).some(i=>i.endsWith('/splatoon3/runtime/movement.mjs')),'there must be no uninstalled second movement configuration');assert.ok(Object.keys(result.metafile.inputs).some(i=>i.endsWith('/native-surge.mjs')));
 });
 
 test('ordinary actors keep their selected inputs without a source Surge opt-in',async()=>{
