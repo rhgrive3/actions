@@ -4122,3 +4122,5 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 - **変更 / 影響**: 予約時の既存`netLife`を保存し、待機中と着地後の実行直前に照合する。受信済み`net.lastLife`が描画中のライフより新しい場合も古い対象で予約・実行しない。`netTp`は同一ライフのテレポートにも変わるため使わない。通常の味方移動、同一ライフのジャンプ・テレポート、新ライフへの新しい明示確認、ホーム座標とグレートバリアのID/serial経路を維持する。通信形式・射撃・移動係数は変更しない。
 - **確認状態**: 未変更mainでは新規8件のうち6件失敗、死亡観測と同一ライフ移動の2対照は成功。修正後は実Actorを含む復帰ナビゲーション49件が通過。最小化後コードの回帰、近傍の入力/ジャンプ回帰、Chromium/WebKitの既存入力ブラウザゲートへ同じライフ境界の確認を接続する。exact-head CI結果はPRに記録し、未実行を成功扱いにしない。ブラウザゲートのActorは状態fixture、実Actorの死亡/再出現はsource/emitted Nodeで別に検証する。
 - **本家比較 / 未確認**: S3 Ver.11.3.0比較の既存#409復帰時マップ選択と#362確定済み着地点の範囲を維持する。今回の根拠はINKWAVE内部の選択取消と戦闘ライフの一貫性であり、本家の未公開ライフ識別子や全復帰予約タイミングを同定したものではない。実機・実ネットワークの遅延分布と完全な本家一致は未確認。
+
+- #1359 pad-map証拠の修正: classだけで成功とした旧PNGは、WebKitでmap不可視・Chromiumで入口アニメーション途中だった。verifierをnative D-pad選択・HUD spring/CSS完了観測・保存PNGの選択行/ビーコン/案内画素確認へ強化。positive判定に固定sleepやstyle強制変更は使わず、text/iconだけを隠す別の負例PNGは必ず拒否し、5つのlife-token caseを保持。gameplay/本家係数の変更ではなく、新しい両engine描画証拠は最終CI待ち。詳細は `reports/reliability/pad-map-rendered-evidence-2026-10-13.md`。
