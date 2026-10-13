@@ -283,13 +283,35 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
   }
   return applied;
 }
+// 11.3.0 WeaponSpChariotParam MoveSpeedX=.075F, MoveSpeedZ=.015F:
+ // attack-mode lateral movement is five times faster than fore/aft movement.
+ // World-space input is projected into the tank's camera-facing local axes.
+export function crabTankAttackTargetVelocity(move, yaw = 0) {
+  if (![move?.x,move?.z,yaw].every(finite)) return {x:0,z:0};
+  const length=Math.hypot(move.x,move.z),scale=length>1?1/length:1;
+  const mx=move.x*scale,mz=move.z*scale;
+  const fx=Math.sin(yaw),fz=Math.cos(yaw),rx=fz,rz=-fx;
+  const lateral=mx*rx+mz*rz,fore=mx*fx+mz*fz;
+  return {x:(rx*lateral*.075+fx*fore*.015)*FPS,z:(rz*lateral*.075+fz*fore*.015)*FPS};
+}
+export function crabShooterRepeatFrames(ageSeconds) {
+  // Wiki confirms 12F startup cadence reaching 4F; source Term=90F and
+  // Bias=.2. The easing curve itself is unverified. Use bounded linear
+  // interpolation rather than a constant 6F rate.
+  return clamp(Math.round(12-8*clamp(ageSeconds/(90/FPS),0,1)),4,12);
+}
 function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = true, flight = false } = {}) {
   const P = rt.api.PLAYER, move = actor.intent?.move;
   const useSquid = squid && !!actor.intent?.squid;
   actor.form = useSquid ? 'squid' : 'kid';
   const enemyInk = actor.grounded && actor.groundTeam === 2;
   if (speed == null) actor._horizontal?.(dt, useSquid, enemyInk);
-  else {
+  else if(speed==='crab'){
+    const target=crabTankAttackTargetVelocity(move,actor.aimYaw??actor.yaw??0);
+    const gain=1-Math.exp(-8*dt);
+    actor.vel.x+=(target.x-actor.vel.x)*gain;
+    actor.vel.z+=(target.z-actor.vel.z)*gain;
+  } else {
     const cap = speed * (move ? Math.min(1, Math.hypot(move.x,move.z)) : 0);
     const yaw = Math.atan2(move?.x || 0, move?.z || 0);
     if (cap > .01) { actor.vel.x += (Math.sin(yaw)*cap-actor.vel.x) * (1-Math.exp(-8*dt)); actor.vel.z += (Math.cos(yaw)*cap-actor.vel.z) * (1-Math.exp(-8*dt)); }
@@ -1055,22 +1077,36 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='crabTank'){
-    const rolling=!!actor.intent.squid;
+    const rolling=!!actor.intent.squid,wasRolling=state.ballMode===true;
     state.armor=true;s.armor=true;s.armorHP=state.armorHP;
-    moveActor(rt,actor,dt,state,{speed:rolling?8.5:4.2,squid:false,jump:true});
-    if(edges.sub&&!rolling&&elapsed>=state.nextCannon){
+    moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crab',squid:false,jump:true});
+    if(wasRolling&&!rolling){
+      // 11.3.0 Chariot: 20F armament delay on return from ball form.
+      state.ballRecoverUntil=elapsed+20/FPS;
+      state.shooterStart=undefined;state.firstShot=false;
+      state.nextShot=Math.max(state.nextShot, state.ballRecoverUntil);
+      state.nextCannon=Math.max(state.nextCannon, state.ballRecoverUntil);
+    }
+    if(edges.sub&&!rolling&&elapsed>=state.nextCannon
+      &&elapsed+1e-8>=(state.ballRecoverUntil||0)){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
       launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,arc:2.4,damage:50,radius:4.5,size:.28,paintRadius:4.5,seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,16),nextSeed(state));
-      state.nextCannon=elapsed+32/60;state.cannonT=elapsed+.22;
+      state.nextCannon=elapsed+75/FPS;state.cannonT=elapsed+.22;
+      // Shooter spin-up resets when the 75F cannon cycle interrupts it.
+      state.shooterStart=undefined;state.firstShot=false;
+      state.nextShot=Math.max(state.nextShot,elapsed+32/FPS);
     }
     crabBall(rt,actor,state,rolling);
-    if(!rolling&&actor.intent.fire&&elapsed>=state.nextShot){
+    if(!rolling&&actor.intent.fire&&elapsed+1e-8>=state.nextShot
+      &&elapsed+1e-8>=(state.ballRecoverUntil||0)){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
       const p=launch(rt,actor,'crabTank',origin,dir,{type:'shot',directOnly:true,damage:32,radius:.22,size:.13,speed:24,grav:4,drag:.04,life:1.25,seed:nextSeed(state),damageReduce:{max:32,min:16,start:9/60,end:25/60}});
       if(p)p.s3AllSpecialMode='shooter';
       emitAction(rt,actor,state.id,state.serial,'shot',origin,rt.v2.copy(origin).addScaledVector(dir,20),nextSeed(state),{damage:32});
-      state.nextShot=elapsed+(state.firstShot?6/60:12/60);state.firstShot=true;
+      if(!state.firstShot)state.shooterStart=elapsed;
+      state.nextShot=elapsed+crabShooterRepeatFrames(elapsed-state.shooterStart)/FPS;
+      state.firstShot=true;
     }
     if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;damageBandRadius(rt,actor,c,[[1.45,40]],1.45,'crabTank');paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v0),.9,nextSeed(state));}
     if(elapsed>=state.duration-25/60)endSpecial(rt,actor,'duration');return;
