@@ -4011,9 +4011,24 @@ Sub-mark follow-up: retain bounded per-owner accepted births independently of re
 
 2026-10-11: Independent native Sprinkler Sub Power candidate connects pinned period curves and constant throw-speed tiers at owner throw admission. Actual Actor and render-rate regressions cover AP0/10/57, frozen per-device values and native phase progression. Existing AP0 phase interpretation/deployment/paint calibration remains unchanged; broader and browser gates pending. See reports/inkwave-native-sprinkler-power-2026-10-11.md.
 
+## 2026-10-11 Toxic Mist resistance candidate
+
+Connect the hash-verified 11.3.0 MoveDownRt_PoisonMist curve to the victim's calibrated reduction difference and grounded squid target speed. Query current live cloud membership for exit/overlap/expiry instead of retaining an outside-volume lease. Preserve remote victim ownership and require a matching cloud for status replay. Base .72, lifetime/drain and squid airborne momentum remain unresolved calibrations; no inferred airborne cap is introduced. See `inkwave-toxic-mist-resistance-2026-10-11.md` for measured limits and tests.
+
 ## 2026-10-11: grounded Fast squid acceleration connection (candidate)
 
 Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinary grounded squid gets the measured 1.5x rate; humanoid and all attack/ready states retain existing rates. Baseline actual Actor delta0.6 becomes0.9 WU/s at60Hz, other ordinary forms remain0.6, attack remains1.2. Absolute36/72calibration and air behavior are unchanged. See `reports/inkwave-fast-swim-acceleration-2026-10-11.md` for source, real-Physics/FPS/snapshot checks and unverified retail boundaries.
+
+## 2026-10-11: catalogue sub damage-family and Burst contact candidate
+
+Prevent Burst direct victims from receiving its same-impact splash twice while preserving collateral Actors. Connect pinned BombL to Burst/Fizzy/Torpedo and existing BombH to Mine. Admit their five authentic raw network cause tags under descriptor ceilings and existing sender/life/sequence guards. Source/Actor/network tests and client-authority/calibration limits are recorded in `inkwave-catalogue-sub-resistance-2026-10-11.md`.
+
+## 2026-10-11: Splash Wall display-plane alignment candidate
+
+Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather than applying generic decorative age rotation. Actual native deployment and JSON ghost replay regressions compare rendered world normals with barrier contact at multiple angles/frame rates. Contact damage, HP decay, lifetime and knockback are untouched; see `inkwave-splash-wall-facing-2026-10-11.md`.
+
+## 2026-10-12 Mist live-query cost
+Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
 
 
 ## 2026-10-11 サブ14種・スペシャル19種の性能再照合
@@ -4068,3 +4083,7 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 | グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
 
 計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
+
+## 2026-10-13 傘とスペシャルの入力差分
+
+`reports/inkwave-brella-special-controls-20261013.md` に19種の操作条件、Wiki/11.3.0の根拠、実行箇所、反例、未確認項目を追記。パージの布描画欠落、開口サイズ、飛行のRunner依存を修正。ナイスダマの早投げ/自動投げ/移動、R投擲系のZR代用、ジェットパックの連射/任意終了、ミサイルの空撃ち/距離制限、デコイ8→12、サメの操舵、メガホン2→6、カタログメインのスペシャル中抑止、キューインキの無操作吸引、スタンド即設置を是正。形状・弾道・追跡・通信相手の傘表示、ギア/ゲージの全実機条件は未確認を保持し、完了に読み替えない。

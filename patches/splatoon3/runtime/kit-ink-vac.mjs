@@ -248,6 +248,7 @@ function originOf(a, out) { return out.set(a.pos.x, a.pos.y + INK_VAC_CALIBRATIO
 // The allowed t interval comes from the truncation, then the first F(t) <= 0 inside
 // it is found from the quadratic roots. No sampling, no per-projectile allocation.
 function firstEntry(state, start, end) {
+  if(!state.remote&&state.sucking===false)return Infinity;
   const { _org: o, _fwd: f, _m: m, _e: e } = state;
   originOf(state.actor, o); forwardOf(state.actor, f);
   m.copy(start).sub(o);
@@ -440,7 +441,7 @@ function makeState(actor, opts = {}) {
   const specialPower = clamp01(Number.isFinite(opts.specialPower)
     ? opts.specialPower : actor?.s3?.modifiers?.specialPower || 0);
   return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower, length: 0,
-    fireHeld: false, exhaleArmed: false,
+    fireHeld: false, exhaleArmed: false, sucking:false, inhaleAge:0,
     nearR: intakeNearRadius(specialPower), farR: intakeFarRadius(specialPower), baseFar: FAR_HIGH,
     mesh: null, geo: null, mat: null,
     _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
@@ -470,8 +471,9 @@ function disposeVisual(state) {
 
 // Presentation advance, shared by the held local intake and by a replica cone.
 function updateVisual(state) {
-  state.length = Math.min(INHALE_LENGTH, state.t * INK_VAC_CALIBRATION.framesPerSecond * INHALE_LENGTH_ADD_PER_FRAME);
+  state.length = Math.min(INHALE_LENGTH, (state.remote ? state.t : (state.inhaleAge ?? state.t)) * INK_VAC_CALIBRATION.framesPerSecond * INHALE_LENGTH_ADD_PER_FRAME);
   if (!state.mesh) return;
+  state.mesh.visible=state.remote||state.sucking!==false;
   const a = state.actor;
   state.mesh.position.copy(originOf(a, state._org));
   state.mesh.quaternion.setFromUnitVectors(state._up, forwardOf(a, state._fwd));
@@ -620,7 +622,8 @@ function inkVacUpdate(a, dt) {
   const state = states.get(a);
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
   const eligible = Math.min(dt, Math.max(0, INK_VAC_CALIBRATION.inhaleDurationSeconds - state.t));
-  if (!a.remote && !state.remote) {
+  if (state.sucking)state.inhaleAge+=dt;else state.inhaleAge=0;
+  if (!a.remote && !state.remote && state.sucking) {
     const seen = new Set(); let count = 0;
     for (const victim of api.G.actors || []) {
       const identity = victim.nid === undefined ? victim : `${victim.owner}:${victim.nid}`;
@@ -803,6 +806,8 @@ export function installKitInkVac(context, _profile) {
   if (!Actor?.prototype || !THREE?.Vector3) throw new Error('Ink Vac requires the actual Actor and THREE');
   const proto = Actor.prototype;
   if (api.WeaponRunner?.prototype) {
+    const move=api.WeaponRunner.prototype.moveSpeed;
+    api.WeaponRunner.prototype.moveSpeed=function(...args){const s=states.get(this.a);return s&&!s.remote&&this.a.form==='kid'?inkVacOwnerMoveSpeed(s.charge):move.apply(this,args);};
     // Sample current contact once at dodge admission. The composed native
     // method uses this same cost for its availability check and payment.
     // No weapon registry mutation, post-debit correction or persistent debuff.
@@ -824,7 +829,11 @@ export function installKitInkVac(context, _profile) {
 
       const it = this.intent;
       const fire = it.fire, sub = it.sub, squid = it.squid;
-      it.fire = false; it.sub = false; it.squid = false;
+      state.sucking=state.phase==='inhale'&&!!fire&&!squid;
+      if(!state.sucking){state.inhaleAge=0;state.length=0;}
+      this.fireBuffer=0; // Vac owns ZR; buffered main shots cannot escape the masked update
+      if(this._prevIntent)this._prevIntent.sub=false; // no ordinary sub-release event while Vac owns R
+      it.fire = false; it.sub = false; it.squid = !!squid;
       this.form = 'kid';
       this.specialActive = null;
       let result;

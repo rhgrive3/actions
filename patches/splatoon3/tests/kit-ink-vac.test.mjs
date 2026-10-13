@@ -20,7 +20,7 @@ async function setup() {
   a.special = 190;
   return { f, system, a };
 }
-const activate = (f, a) => { a.intent.special = true; f.tick(a); a.intent.special = false; };
+const activate = (f, a) => { a.intent.fire=true; a.intent.special = true; f.tick(a); a.intent.special = false; };
 const expandIntake = (f, a, frames = 45) => f.tick(a, frames);
 const activateExpanded = (f, a) => { activate(f, a); expandIntake(f, a); };
 const expandReplica = (f, a, frames = 45) => { for (let i = 0; i < frames; i++) f.advanceInkVacReplica(a, 1 / 60); };
@@ -393,7 +393,7 @@ test('the release frame does not also fire the replaced main weapon or sub', asy
 
 test('a fresh ZR press after suction releases the countershot immediately', async () => {
   const { f, a, system } = await setup();
-  activate(f, a); shoot(f, a); enterExhale(f, a, 30);
+  activate(f, a); shoot(f, a); enterExhale(f, a, 30);f.inkVacState(a).fireHeld=false;f.inkVacState(a).exhaleArmed=false;a.intent.fire=false;f.tick(a);
   const before = system.list.length;
   a.intent.fire = true; f.tick(a); a.intent.fire = false;
   assert.equal(a.specialActive, null);

@@ -21,6 +21,7 @@ fs.mkdirSync(checkout, { recursive: true }); fs.mkdirSync(evidence, { recursive:
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));
 const sourcePath = key => {
+  if (key.split('/').some(p => !p || p === '.' || p === '..' || p.includes('\\'))) throw new Error('Unknown input ' + key);
   if (key.startsWith('upstream/')) return ['inkwave-public/' + key.slice(9), path.join(source, key.slice(9))];
   if (key.startsWith('patch/')) return ['patches/splatoon3/' + key.slice(6), path.join(repo, 'patches/splatoon3', key.slice(6))];
   if (key.startsWith('touch-layout/')) return ['patches/touch-layout/' + key.slice(13), path.join(repo, 'patches/touch-layout', key.slice(13))];
@@ -29,6 +30,7 @@ const sourcePath = key => {
   if (key.startsWith('network-replication/')) return ['patches/network-replication/' + key.slice(20), path.join(repo, 'patches/network-replication', key.slice(20))];
   if (key.startsWith('loading-cache/')) return ['patches/loading-cache/' + key.slice(14), path.join(repo, 'patches/loading-cache', key.slice(14))];
   if (key.startsWith('practice-range/')) return ['patches/practice-range/' + key.slice(15), path.join(repo, 'patches/practice-range', key.slice(15))];
+  if (key.startsWith('native-stages/')) return ['patches/native-stages/' + key.slice(14), path.join(repo, 'patches/native-stages', key.slice(14))];
   if (key.startsWith('build-script/')) return ['scripts/' + key.slice(13), path.join(repo, 'scripts', key.slice(13))];
   throw new Error('Unknown input ' + key);
 };

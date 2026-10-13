@@ -188,7 +188,7 @@ export function part(pieces, pivot, mat = 'body', lamp = null) {
   return { src: pieces instanceof Pieces ? pieces.build() : pieces, pivot: Array.isArray(pivot) ? V(...pivot) : pivot.clone(), mat, lamp };
 }
 /** Invisible stand-in for a native part channel that this weapon does not show. */
-export function hiddenPart(p) { return { ...p, src: emptyGeometry() }; }
+export function hiddenPart(p) { return { ...p, src: emptyGeometry(), hidden: true }; }
 
 /**
  * Replace the visible weapon while keeping every native channel the family runtime animates.

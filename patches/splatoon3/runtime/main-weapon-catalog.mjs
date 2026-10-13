@@ -1,3 +1,4 @@
+import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
@@ -896,15 +897,27 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(this.weapon.catalogRecord&&motion){this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
     return nativeHorizontal.call(this,dt,...args);
   };
+  const launchedCanopies = new Set();
+  const worldUpdate = P.update;
+  P.update = function(dt,...args){
+    if(Number.isFinite(dt)&&dt>0)for(const c of launchedCanopies){
+      c.pos.addScaledVector(c.dir,c.speed*dt);c.remaining-=dt;
+      if(c.remaining<=EPS||c.hp<=0){retireDetachedCanopy(c);launchedCanopies.delete(c);continue;}
+      floorPaint(c.owner,c.pos,c.paintRadius);showDetachedCanopy(api,c.owner,c,c.weaponId);
+      c.contacts ||= new Map();
+      for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==c.owner.team&&enemy.pos.distanceTo(c.pos)<c.radius+PLAYER.radius&&G.time-(c.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(c.pos,enemy.pos)){
+        withObjectDamageCause({owner:c.owner,type:'canopy',catalog:{r:c.record}},()=>G.projectiles.applyHit(c.owner,enemy,finite(c.record.parameters.spl__BulletShelterCanopyParam.CanopyDamage,300)/10,c.weaponId));c.contacts.set(enemy,G.time);
+      }
+    }
+    return worldUpdate.call(this,dt,...args);
+  };
   function brella(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,measure=BRELLA_MEASURED[r.sourceActor],t=weaponParam(r),c=p.spl__BulletShelterCanopyParam||{};
     s.naked=Math.max(0,s.naked-dt);
     const canopy=s.canopy;
     if(canopy){
       canopy.age+=dt;
-      if(canopy.launched){canopy.pos.addScaledVector(canopy.dir,finite(c.CanopyInitSpeed,7.92)*dt);floorPaint(a,canopy.pos,finite(c.CanopyPaintRadius,1));
-        canopy.remaining-=dt;if(canopy.remaining<=EPS||canopy.hp<=0)s.canopy=null;}
-      else {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
+      {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
         canopy.open=!!input.fire&&canopy.age*HZ>=measure.open;
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
@@ -913,6 +926,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(canopy.open&&canopy.age*HZ>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
           s.naked=finite(c.CanopyNakedFrame,330)/HZ;
+          canopy.owner=a;canopy.weaponId=r.id;canopy.speed=finite(c.CanopyInitSpeed,7.92);canopy.paintRadius=finite(c.CanopyPaintRadius,1);
+          canopy.record=r;canopy.visualSource=a.character?.weapon?.def;launchedCanopies.add(canopy);showDetachedCanopy(api,a,canopy,r.id);s.canopy=null;
         }}
       if(canopy.open||canopy.launched){
         canopy.contacts ||= new Map();
@@ -934,14 +949,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   const nativeDefense=P.kitDefenseCandidate;
   function hurtCanopy(a,s,c,damage){
-    const raw=a.weapon.catalogRecord.parameters.spl__BulletShelterCanopyParam;
+    const raw=(c.record||a.weapon.catalogRecord).parameters.spl__BulletShelterCanopyParam;
     c.hp=Math.max(0,c.hp-damage*(c.launched?finite(raw.CanopyAttackedDamageRate,.5):1));
-    if(c.hp<=0){s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}
+    if(c.hp<=0){if(c.launched){retireDetachedCanopy(c);launchedCanopies.delete(c);}else{s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}}
   }
   P.kitDefenseCandidate=function(p){
     let best=nativeDefense?.call(this,p)||null;
     const len=p.prev.distanceTo(p.pos);
-    for(const a of G.actors||[]){const s=a.weaponRunner?.catalogState,c=s?.canopy;
+    const guards=[...(G.actors||[]).map(a=>({a,s:a.weaponRunner?.catalogState,c:a.weaponRunner?.catalogState?.canopy})),...Array.from(launchedCanopies,c=>({a:c.owner,s:c.owner.weaponRunner?.catalogState,c}))];
+    for(const {a,s,c} of guards){
       if(!a.alive||a.team===p.team||!c||!c.open&&!c.launched||c.hp<=0)continue;
       const t=capsuleEntry(p.prev,p.pos,c.pos,c.radius,c.radius*2,.1);
       if(t==null||t*len>=(best?.distance??Infinity))continue;
@@ -963,7 +979,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return nativeApplyHit.call(this,attacker,victim,damage,wid,...args);
   };
-  P.clear=function(...args){for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
+  P.clear=function(...args){for(const c of launchedCanopies)retireDetachedCanopy(c);launchedCanopies.clear();for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
   const startSpecial=Actor.prototype._startSpecial;
   Actor.prototype._startSpecial=function(...args){const before=this.stats?.specials;const result=startSpecial.apply(this,args);
     if(this.stats?.specials>before&&this.weapon.catalogRecord)cancel(this.weaponRunner);return result;};

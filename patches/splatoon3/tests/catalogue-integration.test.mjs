@@ -126,6 +126,8 @@ test('Practice Range keeps Point Sensor and Tacticooler on the composed support-
  for(let i=0;i<90;i++){f.tick(a);f.G.projectiles.update(1/60);}
  const specials=a.stats.specials;a._startSpecial();
  assert.equal(a.stats.specials,specials+1);assert.equal(a.specialActive?.id,'tacticooler');
+ assert.equal((f.G.projectiles._s3SupportCoolers||[]).length,0,'activation holds the device instead of deploying it');
+ a.aimDir.set(0,-1,0);release();for(let i=0;i<120&&!(f.G.projectiles._s3SupportCoolers||[]).length;i++){f.tick(a);f.G.projectiles.update(1/60);}
  assert.equal(f.G.projectiles._s3SupportCoolers.at(-1)?.owner,a);
 });
 

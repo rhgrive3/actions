@@ -1,3 +1,4 @@
+import { configureToxicMist, toxicMistContains, toxicMistScale } from './toxic-mist.mjs';
 import { replayNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // Runtime overlay for the ten Splatoon 3 sub weapons that are not represented
@@ -956,15 +957,10 @@ function replayStatus(api,event) {
   const owner=event.actor||api.G.netm?.byNid?.get(event.actorId);
   const target=api.G.netm?.byNid?.get(event.targetId);
   if(!owner?.remote||ownerLife(owner)!==event.life||owner.team!==event.sourceTeam||!target||target.remote||target.team===event.sourceTeam||ownerLife(target)!==event.targetLife||
-     event.status!=='toxicMist'||!Number.isFinite(event.until)||event.until<(api.G.time||0)||event.until>(api.G.time||0)+1||
-     !Number.isFinite(event.speedScale)||event.speedScale<.5||event.speedScale>1||!Number.isFinite(event.jumpScale)||event.jumpScale<.5||event.jumpScale>1||
-     !Number.isFinite(event.inkLoss)||event.inkLoss<0||event.inkLoss>6)return false;
-  const key=`${owner.nid}:${event.life}:${event.eventSeq}`;if(statusEventSeen.has(key))return false;statusEventSeen.add(key);
-  while(statusEventSeen.size>MAX_REPLAY_EVENTS)statusEventSeen.delete(statusEventSeen.values().next().value);
-  target.s3 ||= {};target.s3.toxicMistSlowUntil=Math.max(target.s3.toxicMistSlowUntil||0,event.until);
-  target.s3.toxicMistScale=Math.min(target.s3.toxicMistScale??1,event.speedScale);
-  target.s3.toxicMistJumpScale=Math.min(target.s3.toxicMistJumpScale??1,event.jumpScale);
-  if(event.inkLoss>0)target.ink=Math.max(0,(target.ink??100)-event.inkLoss);
+     event.subId!=='toxicMist'||event.status!=='toxicMist'||!Number.isFinite(event.until)||event.until<(api.G.time||0)||event.until>(api.G.time||0)+1)return false;
+  const cloud=entityList(api.G.projectiles).find(o=>o.owner===owner&&o.seq===event.seq&&o.sourceLife===event.sourceLife&&o.subId==='toxicMist');
+  if(!toxicMistContains(target,cloud))return false;
+  armToxicStatus(api,cloud,target,false);
   return true;
 }
 function updateStatuses(api, dt) {
@@ -1067,6 +1063,7 @@ function updateFlight(api, projectiles, object, dt) {
     if(object.ghost){object.phase='ghostWait';return;}
     if(!object.ghost){
       const amount=object.subId==='angleShooter'||object.subId==='burst'?spec.directDamage:0;
+      if(object.subId==='burst'&&amount>0)object.directTarget=actor.actor;
       if(amount>0)api.G.projectiles?.applyHit?.(object.owner,actor.actor,amount,object.subId);
       if(object.subId==='burst'){
         object.phase='burstWait';object.fuse=frameSeconds(spec.contactBurstDelayFrames);object.vel.set(0,0,0);
@@ -1203,7 +1200,8 @@ function updateDeployed(api,projectiles,object,dt){
     }
   }
   if(expired){removeObject(api,projectiles,object);return;}
-  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+object.age*2;}
+  // A deployed wall's rendered plane must retain the yaw used by barrier contact.
+  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+(object.subId==='splashWall'?0:object.age*2);}
 }
 
 function tickObjects(api,projectiles,dt){
@@ -1255,8 +1253,9 @@ function replayExpire(api,event,owner){
 
 /**
  * Replays one parent-validated `all:sub` event. Ghost sub objects are
- * presentation-only: they move and render, but never paint, damage, mark, drain
- * ink, spend object HP or emit another packet.
+ * presentation-only for attack consequences: they never paint, damage, spend
+ * object HP or emit another packet. A replayed Mist volume is also sampled by
+ * the local victim's movement/ink authority; remote victims are never mutated.
  */
 export function replaySub(api,event){
   if(!api?.G||!event||event.v!==1||typeof event.phase!=='string')return false;
@@ -1312,6 +1311,7 @@ export function installAllSubs(api,profile={}){
   const {SUB,Projectiles,WeaponRunner,Actor,G}=api;
   if(!SUB||!Projectiles||!WeaponRunner||!G||!api.THREE)throw new Error('all subs require the composed Projectiles, WeaponRunner and game context');
   if(Projectiles.prototype[INSTALL])return api;
+  configureToxicMist(api);
   registerSpecs(api,profile);
   // Specials and native attack AoEs use this boundary to hit deployed custom
   // sub devices. Keep this entry point sub-only: the all-subs blast path below
@@ -1437,8 +1437,7 @@ export function installAllSubs(api,profile={}){
 
   const nativeMove=WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed=function(...args){
-    const speed=nativeMove.apply(this,args),s=this.a?.s3;
-    return s?.toxicMistSlowUntil>(G.time||0)?speed*(s.toxicMistScale||ALL_SUB_SPECS.toxicMist.slowScale):speed;
+    return nativeMove.apply(this,args)*toxicMistScale(this.a);
   };
 
   const nativeMovementStep=Actor?.prototype?._integrateMovementStep;

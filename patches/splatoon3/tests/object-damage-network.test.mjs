@@ -15,7 +15,7 @@ test('native hit JSON and retained retry message carry exact blast phase to vict
   for(const a of [victim,ghost])Object.assign(a,{nid:2,owner:'B',team:0,netLife:1,weapon:{...a.weapon,special:'booyahBomb'},invuln:0});
   proxy.remote=true;ghost.remote=true;victim.remote=false;shooter.remote=false;
   sender.byNid.set(1,shooter);sender.byNid.set(2,ghost);receiver.byNid.set(1,proxy);receiver.byNid.set(2,victim);
-  victim.special=victim.specialCost();victim._startSpecial();victim._updateSpecial(1/60);
+  victim.special=victim.specialCost();victim._startSpecial();for(let i=0;i<30;i++)victim._updateSpecial(1/60);
   assert.equal(victim._s3AllSpecialState.armorHP,470);
   shooter._s3AllSpecialDamageCause='Jetpack_BombCore';
   const originalTransport=sender.s.tr.sendTo;

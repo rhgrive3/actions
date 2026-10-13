@@ -8,6 +8,9 @@ import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorTh
 import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, giveDrink, retireDrink, drinkEligible, drinkGearPoints } from '../runtime/support-cooler.mjs';
 
 const tick = (f, n = 1) => { for(let i=0;i<n;i++) { f.G.time+=1/60; f.G.projectiles.update(1/60); } };
+function throwAndLandCooler(f,a){a.aimDir.set(0,-1,0);a.intent.sub=true;a._updateSpecial(1/60);a.intent.sub=false;a._updateSpecial(1/60);
+ for(let i=0;i<14&&a.specialActive;i++)a._updateSpecial(1/60);
+ for(let i=0;i<10&&!(f.G.projectiles._s3SupportCoolers||[]).length;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}}
 async function setup() {
   const f=await fixture({fullRuntime:true,realProjectiles:true});
   f.G.scene ||= new f.THREE.Scene();
@@ -147,7 +150,7 @@ test('#835 standalone cooler gives distinct one-per-player drinks and expires cl
   ally.pos.set(0,0,1);enemy.pos.set(0,0,1);
   const normal=ally.s3.modifiers.runSpeed;
   actor.special=actor.specialCost();
-  actor._startSpecial();
+  actor._startSpecial();throwAndLandCooler(f,actor);
   assert.equal(actor.special,0,'original game consumes special gauge');
   assert.equal(f.G.projectiles._s3SupportCoolers.length,1);
   tick(f,1);
@@ -166,8 +169,8 @@ test('#835 standalone cooler gives distinct one-per-player drinks and expires cl
 });
 test('#835 a swimmer cannot take a drink and a respawn cannot re-take the same stand',async()=>{
   const {f,actor,ally}=await setup();
-  actor.special=actor.specialCost();actor._startSpecial();
   ally.pos.set(0,0,1);ally.form='squid';
+  actor.special=actor.specialCost();actor._startSpecial();throwAndLandCooler(f,actor);
   tick(f,1);assert.notEqual(ally.s3.drink,true);
   ally.form='kid';tick(f,1);assert.equal(ally.s3.drink,true);
   ally.s3.drink=false;ally.s3.drinkUntil=0;

@@ -5,6 +5,10 @@ export const DIRECT_SUB_RESISTANCE_CURVES = Object.freeze({
   angleShooter:Object.freeze([1,.75,.5]),
   sprinkler:Object.freeze([1,.75,.5]),
 });
+export const LOW_SUB_RESISTANCE_CURVE = Object.freeze([1,.75,.6]);
+const LOW_SUB_CAUSES = new Set(['burst','fizzy','torpedo','torpedo-splash']);
+const HIGH_SUB_CAUSES = new Set(['bomb','splat-bomb-far','inkMine']);
+export function subResistanceBand(source) { return LOW_SUB_CAUSES.has(source)?'low':HIGH_SUB_CAUSES.has(source)?'high':null; }
 // The bomb band is classified before networking/armor, but only the victim's
 // authoritative Actor applies equipment. A near hit is never inferred from
 // its already armor-reduced amount. Native damage events retain cause 'bomb'.

@@ -11,10 +11,11 @@ test('benchmark rejects empty/undersampled live windows and incomplete fixed tra
  assert.equal(invalidWindows(scenarios,false).length,2);assert.equal(invalidWindows(scenarios,true).length,2);
 });
 test('physical persistent destination is verified before creation',()=>{assert.throws(()=>persistentDirectory('/tmp/inkwave-forbidden'),/Persistent workspace required/);});
-test('combined runtime evidence recognizes loading/cache and practice-range source namespaces',()=>{
+test('combined runtime evidence recognizes declared loading/cache, practice-range and native-stage namespaces',()=>{
  const source=fs.readFileSync(new URL('../lib/inkwave-runtime-evidence.mjs',import.meta.url),'utf8');
  assert(source.includes("'loading-cache/':'patches/loading-cache/'"));
  assert(source.includes("'practice-range/':'patches/practice-range/'"));
+ assert(source.includes("'native-stages/':'patches/native-stages/'"));
  assert(source.includes("'build-script/':'scripts/'"));
 });
 test('valid artifacts cannot forge their source SHA by changing a build input',()=>{

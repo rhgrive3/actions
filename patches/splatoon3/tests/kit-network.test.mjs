@@ -32,7 +32,7 @@ test('actual NetMatch bind forwards activation and native JSON playback binds re
 test('native packed absorption proposal credits only the real owner once and rejects a foreign peer', async () => {
   const { f, sender, receiver, make } = await setup();
   const vac = make(2, 'peer-B', false), shooter = make(3, 'peer-A', false, 1), shooterProxy = make(3, 'peer-A', true, 1);
-  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();
+  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();vac.intent.fire=true;
   const state = f.inkVacState(vac); receiver.byNid.set(2, vac); receiver.byNid.set(3, shooterProxy);
   f.G.netm = sender;
   sender._onLocalEvent(EV.absorb, { actor: shooter, target: vac, kit: 'inkVac', serial: state.serial, key: '3#p1', damage: 40 });
@@ -48,7 +48,7 @@ test('real native projectile step absorbs before the actor and ghost absorption 
   const { installKitDefense } = await import('../runtime/kit-defense.mjs'); installKitDefense(f);
   const vac = make(1, 'peer-A', false), shooter = make(2, 'peer-B', false, 1);
   vac.pos.set(0, 0, 0); vac.aimDir.set(0, 0, 1);
-  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();
+  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();vac.intent.fire=true;
   // The cone grows at .3334 units per 60 Hz frame; reach full source length
   // before checking first-contact ordering at z=20.
   f.tick(vac, 45);

@@ -13,6 +13,7 @@ on:
       - "patches/network-replication/**"
       - "patches/loading-cache/**"
       - "patches/practice-range/**"
+      - "patches/native-stages/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
@@ -28,6 +29,7 @@ on:
       - "patches/network-replication/**"
       - "patches/loading-cache/**"
       - "patches/practice-range/**"
+      - "patches/native-stages/**"
       - "scripts/*inkwave*.mjs"
       - "scripts/tests/inkwave-*.mjs"
       - "scripts/lib/inkwave-*.mjs"
@@ -445,6 +447,9 @@ jobs:
         run: |
           node scripts/check-inkwave-runtime-performance.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/runtime-after" --playwright "$GITHUB_WORKSPACE/node_modules/playwright/index.mjs" --source-sha "$SOURCE_SHA" --fixed-only --quality high
           node scripts/compare-inkwave-runtime-performance.mjs --before "$CI_STORAGE/evidence/runtime-before/runtime-result.json" --after "$CI_STORAGE/evidence/runtime-after/runtime-result.json" --out "$CI_STORAGE/evidence/runtime-comparison.json"
+      - name: Verify built Brella aperture and visible detached flight
+        if: matrix.suite == 'catalog'
+        run: node scripts/check-inkwave-brella-controls.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/brellas"
       - name: Verify the complete installed motion catalog
         if: matrix.suite == 'catalog'
         run: node scripts/check-inkwave-motion-catalog.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/catalog" --profile-dir "$CI_STORAGE/cache/catalog"
@@ -489,7 +494,7 @@ jobs:
           suite=os.environ['BROWSER_SUITE']
           checks={
             'active':['game/browser-result.json','motion/motion-result.json','motion-detail/motion-detail-result.json','weapon-models/weapon-models-result.json','flow/flow-render-result.json','wall/wall-render-result.json','resources/resource-render-result.json','idle-resources/idle-resources-result.json'],
-            'catalog':['catalog/motion-catalog-result.json'],
+            'catalog':['catalog/motion-catalog-result.json','brellas/brella-controls-result.json'],
             'network':['paint-mask/paint-mask-result.json','network/network-browser-result.json','network-delay/network-browser-result.json'],
             'ui':['identity-network/network-identity-result.json','layout/touch-layout-result.json','reliability/reliability-browser-result.json','rematch/rematch-lifecycle-result.json','identity-touch/touch-layout-identity-result.json','identity-reliability/reliability-identity-result.json'],
             'responsive':['responsive/responsive-result.json'],

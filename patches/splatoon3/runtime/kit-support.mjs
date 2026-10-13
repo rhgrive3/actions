@@ -115,6 +115,13 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
   if (!remote) emitNet(G,owner,['c',owner.nid,stand.seq,pos.x,pos.y,pos.z,stand.sourceLife,drinkFrames]);
   return stand;
 }
+function throwCooler(owner,projectile,G,THREE,Hit) {
+  const pos=owner.pos.clone();pos.y+=1.1;
+  const dir=owner.aimDir.clone().normalize(),vel=dir.multiplyScalar(TACTICOOLER_SOURCE.spawnSpeedZ*60);vel.y+=TACTICOOLER_SOURCE.spawnSpeedY*60;
+  const device={owner,pos,prev:pos.clone(),vel,age:0,hit:new Hit(),mesh:coolerVisual(owner,pos,THREE,G)};
+  if(device.mesh)device.mesh.scale.setScalar(.35);
+  (projectile._s3SupportCoolerThrows ||= []).push(device);
+}
 function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   if (!(dt>0) || !Number.isFinite(G.time)) return;
   const playing = aliveInMatch(G);
@@ -163,6 +170,16 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     sensors[i].age>POINT_SENSOR.maxFlightSeconds+POINT_SENSOR.areaSeconds+.25) {
     releaseVisual(sensors[i],G);sensors.splice(i,1);
   }
+  const throws=projectile._s3SupportCoolerThrows||[];
+  for(let i=throws.length-1;i>=0;i--){const d=throws[i];d.age+=dt;d.prev.copy(d.pos);d.vel.y-=24*dt;d.pos.addScaledVector(d.vel,dt);
+    const hit=G.physics?.segment?.(d.prev,d.pos,d.hit);let landed=hit?.hit&&hit.normal.y>.4;
+    if(hit?.hit){d.pos.copy(hit.point).addScaledVector(hit.normal,.03);if(!landed)d.vel.addScaledVector(hit.normal,-d.vel.dot(hit.normal));}
+    const floor=G.level?.groundHeight?.(d.pos.x,d.pos.z);
+    if(!landed&&Number.isFinite(floor)&&d.pos.y<=floor){d.pos.y=floor;landed=true;}
+    if(landed){releaseVisual(d,G);throws.splice(i,1);deployCooler(d.owner,projectile,G,THREE,false,d.pos.toArray());}
+    else if(d.age>5||!playing){releaseVisual(d,G);throws.splice(i,1);}
+    else d.mesh?.position.copy(d.pos);
+  }
   const coolers=projectile._s3SupportCoolers || [];
   for(let i=coolers.length-1;i>=0;i--) {
     const stand=coolers[i];
@@ -194,8 +211,8 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     return result;
   };
   Projectiles.prototype.clear=function(...args) {
-    for(const record of [...this._s3SupportSensors||[],...this._s3SupportCoolers||[]])releaseVisual(record,G);
-    this._s3SupportSensors=[];this._s3SupportCoolers=[];
+    for(const record of [...this._s3SupportSensors||[],...this._s3SupportCoolers||[],...this._s3SupportCoolerThrows||[]])releaseVisual(record,G);
+    this._s3SupportSensors=[];this._s3SupportCoolers=[];this._s3SupportCoolerThrows=[];
     return clear.call(this,...args);
   };
   const start=Actor.prototype._startSpecial, advance=Actor.prototype._updateSpecial;
@@ -206,14 +223,18 @@ export function installSupportGameplay({ Actor, Projectiles, NetMatch, G, THREE,
     const before=this.stats?.specials;
     const result=start.apply(this,args);
     if(this.special!==0 || this.stats?.specials!==before+1)return result;
-    deployCooler(this,G.projectiles,G,THREE);
-    this.specialActive={id:'tacticooler',t:0,phase:'placed',armor:false};
+    this.specialActive={id:'tacticooler',t:0,phase:'hold',armor:false,subHeld:!!this.intent.sub};
     return result;
   };
   Actor.prototype._updateSpecial=function(dt,...args) {
     if(this.specialActive?.id!=='tacticooler')return advance.call(this,dt,...args);
-    this.specialActive.t+=dt;
-    if(this.specialActive.t>=TACTICOOLER.windupSeconds) this.specialActive=null;
+    if(!(dt>0))return;
+    const state=this.specialActive;state.t+=dt;
+    if(state.phase==='hold'){
+      const released=state.subHeld&&!this.intent.sub;state.subHeld=!!this.intent.sub;
+      this.form=this.intent.squid?'squid':'kid';this._horizontal?.(dt,this.form==='squid',false);this._integrate?.(dt,this.form==='squid',false);
+      if(released){state.phase='throw';state.t=0;this.character?.trigger?.('throw');}
+    }else if(state.t+1e-9>=13/60){throwCooler(this,G.projectiles,G,THREE,Hit);this.specialActive=null;}
     return undefined;
   };
   const reset=Actor.prototype.reset,splat=Actor.prototype.splat;

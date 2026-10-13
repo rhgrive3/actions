@@ -29,10 +29,10 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const SPECIALS = Object.freeze({
   tentaMissiles: { name: 'Tenta Missiles', source: 'WeaponSpMultiMissile', duration: 10, radius: 4.25, paintRadius: 3.15, near: 150, far: 30, status: '11.3.0 table: 150/50/30 at 1.1/2.1/4.25; paint radius 3.15/3.465/3.78; source launch counts 10/5/4 by target bucket and 4F missile interval; up to5-target selection and 600F aim window from gameplay reference, reticle geometry calibrated' },
   inkjet: { name: 'Inkjet', source: 'WeaponSpJetpack', duration: [7.5, 8, 8.5], radius: 5, paintRadius: 3.2, near: 50, far: 30, direct: 120, status: '11.3.0 table: 50/30 at 2.55/5, paint radius 3.2/3.6/4 and damage radii ×1/1.15/1.3 by Special Power Up; 450/480/510F; 120 direct is community-reported, flight tuning calibrated' },
-  booyahBomb: { name: 'Booyah Bomb', source: 'WeaponSpNiceBall', duration: 2.4, radius: 12.6, paintRadius: 13.5, near: 0, far: 0, status: '11.3.0 table: 4700 armor; auto charge .002/.006/.01 per frame, self cheer .077, ally charge .088/.044/.022/.011 per cheerer, gauge credit 6/3/2/1/.5 and max15, blast radius 12.6, paint radius 13.5, paint span 6F. 3.3 damage/frame is community-reported; blast growth and charge inputs calibrated' },
+  booyahBomb: { name: 'Booyah Bomb', source: 'WeaponSpNiceBall', duration: 10, radius: 12.6, paintRadius: 13.5, near: 0, far: 0, status: '11.3.0 table: 4700 armor; auto charge .002/.006/.01 per frame, self cheer .077, ally charge .088/.044/.022/.011 per cheerer, gauge credit 6/3/2/1/.5 and max15, blast radius 12.6, paint radius 13.5, paint span 6F. 3.3 damage/frame is community-reported; blast growth and charge inputs calibrated' },
   ultraStamp: { name: 'Ultra Stamp', source: 'WeaponSpUltraStamp', duration: [7.5, 9.5, 11], radius: 8, paintRadius: 5, near: 40, far: 40, status: '11.3.0 table: swing splash 40 at 4; throw 220/60 at 3.6/8, paint 5, 450/570/660F; 100 contact is community-reported and action hitboxes are calibrated' },
   zipcaster: { name: 'Zipcaster', source: 'WeaponSpSuperHook', duration: 9, radius: 6, paintRadius: 1.4, near: 45, far: 35, status: '11.3.0 table: 540F, 1.5× ink capacity, hook/per-second ink costs vary with Special Power Up; hook blast 45/35 at 5.25/6; direct hit and hook flight mapping still need game comparison' },
-  killerWail: { name: 'Killer Wail 5.1', source: 'WeaponSpMicroLaser', duration: [236/60, 276/60, 296/60], radius: 27, paintRadius: 0, near: 3.5, far: 3.5, status: '11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated' },
+  killerWail: { name: 'Killer Wail 5.1', source: 'WeaponSpMicroLaser', duration: [308/60, 348/60, 368/60], radius: 27, paintRadius: 0, near: 3.5, far: 3.5, status: '11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated' },
   crabTank: { name: 'Crab Tank', source: 'WeaponSpChariot', duration: [8, 9.5, 11], radius: 4.8, paintRadius: 4.5, near: 30, far: 30, direct: 50, status: '11.3.0 table: 20F shooter/cannon start, shooter repeat 12F→4F over90F (bias.2; interpolation calibrated), cannon lock32F, 500 armor, 480/570/660F; 25F finish lock and steering need retail comparison' },
   reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 1.533, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: 38F grounded startup, invulnerability from25F, movement54F/cancel after15F, recovery28F and player collision radius.8; blast/contact220/70, SPU damage×1/1.1/1.2 and paint7.51/8.26/9.012; trajectory calibrated' },
   tripleInkstrike: { name: 'Triple Inkstrike', source: 'WeaponSpTripleTornado', duration: 6, radius: 7.7, paintRadius: 7, near: 37.5, far: 37.5, status: '11.3.0 table: 360F, 7.7 damage radius, 7 paint and 50F spread; 37.5 per 5F from public mechanics, marker flight calibrated' },
@@ -61,6 +61,7 @@ const descriptions = Object.freeze({
 });
 
 const actorStates = new WeakMap();
+const booyahAfterArmor = new WeakMap();
 const runtimes = new WeakMap();
 const replaySeen = new WeakMap();
 const SEEN_LIMIT = 384;
@@ -757,17 +758,22 @@ function screenDamageObjects(rt,screen,from,to) {
   const center=rt.v12.copy(from).lerp(to,.5),radius=screen.width/2+3;
   rt.system?.s3DamageSubObjects?.(screen.owner,center,radius,(_distance,object)=>canHit(object)?40:0,'Chimney',{pierceLOS:true});
 }
-function fireWailTick(rt, actor, state) {
-  const targets=selectTargets(rt,actor,2,10),fallback=aimDirection(rt,actor,rt.v0);
+function lockWailPair(rt,actor,state,index) {
+  const target=selectTargets(rt,actor,1,Infinity)[0]||null,direction=aimDirection(rt,actor,rt.v0).clone();
+  const origins=[-.65,.65].map(side=>new rt.api.THREE.Vector3(actor.pos.x+side,actor.pos.y+1.7,actor.pos.z-.6));
+  state.beamPairs.push({index,target,direction,origins,start:state.nextLock,until:state.nextLock+gearCurve(state.specialPowerAP,180,220,240)/FPS,nextTick:state.nextLock,tick:0,trace:[]});
+  emitAction(rt,actor,'killerWail',state.serial,'target',actor.pos,target?.pos||actor.pos.clone().add(direction),nextSeed(state),{index});
+}
+function fireWailTick(rt, actor, state, pair) {
   for(let i=0;i<2;i++){
-    const side=i===0?-.65:.65,origin=rt.v1.set(actor.pos.x+side,actor.pos.y+1.7,actor.pos.z-.6).clone();
-    const target=targets[i];let dir;
-    if(target){dir=rt.v2.copy(target.pos).add(rt.v3.set(0,.75,0)).sub(origin).normalize();}
-    else {dir=rt.v2.copy(fallback);dir.x+=side*.025;dir.normalize();}
-    const end=hitBeam(rt,actor,state,origin,dir,27,3.5);
-    emitAction(rt,actor,'killerWail',state.serial,'laser',origin,end,nextSeed(state),{index:i,tick:state.wailTick||0});
+    const origin=pair.origins[i],target=pair.target;
+    // A delayed trace keeps the laser dodgeable; .2 s is calibration, not a recovered follow constant.
+    const sample=pair.trace.findLast(p=>p.t<=pair.nextTick-.2)||pair.trace[0];
+    const dir=target?.alive&&sample?rt.v2.copy(sample.pos).add(rt.v3.set(0,.75,0)).sub(origin).normalize():rt.v2.copy(pair.direction);
+    const end=hitBeam(rt,actor,state,origin,dir,1000,3.5);
+    emitAction(rt,actor,'killerWail',state.serial,'laser',origin,end,nextSeed(state),{index:pair.index*2+i,tick:pair.tick});
   }
-  state.wailTick=(state.wailTick||0)+1;
+  pair.tick++;
 }
 function inkjetExhaustFrame(rt,actor) {
   if(!actor?.alive||actor.remote||actor.intent?.squid||actor.form==='squid'||actor.specialActive?.id!=='inkjet')return;
@@ -837,26 +843,34 @@ function selectTargets(rt, actor, max=4, range=32) {
     if(!target.alive||target.team===actor.team||target===actor)continue;
     const offset=rt.v1.copy(target.pos).sub(actor.pos);const d=offset.length();
     if(d>range||d<.1)continue;
-    const dot=offset.normalize().dot(dir);if(dot<.25)continue;
+    const dot=offset.normalize().dot(dir);if(dot<=0)continue;
+    if(actor.specialActive?.id==='tentaMissiles'){
+      const ap=actorStates.get(actor)?.specialPowerAP||0,camera=rt.api.G.camera;
+      if(camera?.isPerspectiveCamera){const projected=target.pos.clone();projected.y+=.7;projected.project(camera);
+        const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
+        if(projected.z< -1||projected.z>1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
+      }else if(dot<.94)continue;
+    }else if(dot<.94)continue;
     out.push({actor:target,d,dot});
   }
   out.sort((a,b)=>b.dot-a.dot||a.d-b.d);
   return out.slice(0,max).map(x=>x.actor);
 }
 function prepareMissiles(rt, actor, state) {
-  const targets=selectTargets(rt,actor,5,35),origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone();
-  if(!targets.length)targets.push(null);
+  const targets=selectTargets(rt,actor,5,Infinity),origin=rt.v0.set(actor.pos.x,actor.pos.y+2.4,actor.pos.z).clone();
+  if(!targets.length)return false;
   const counts=targets.length===1?[10]:targets.length===2?[5,5]:targets.map(()=>4),missiles=[];
   for(let group=0;group<targets.length;group++){
     const target=targets[group],dest=target?groundAt(rt,target.pos,rt.v2).clone():groundAt(rt,aimPoint(rt,actor,28,rt.v3),rt.v4).clone();
     const count=counts[group];
     emitAction(rt,actor,'tentaMissiles',state.serial,'target',origin,dest,nextSeed(state),{index:group,count});
-    for(let i=0;i<count;i++)missiles.push({dest:dest.clone(),index:i,count});  }
-  state.pendingMissiles=missiles;state.missileIndex=0;state.missileOrigin=origin;state.nextMissileAt=state.t;state.phase='launching';
+    for(let i=0;i<count;i++)missiles.push({target,dest:dest.clone(),index:i,count});  }
+  state.pendingMissiles=missiles;state.missileIndex=0;state.missileOrigin=origin;state.nextMissileAt=state.t;state.phase='launching';return true;
 }
 function launchMissileStep(rt, actor, state) {
   const row=state.pendingMissiles?.[state.missileIndex];
   if(!row)return false;
+  if(row.target?.alive)row.dest.copy(groundAt(rt,row.target.pos,rt.v2));
   const origin=state.missileOrigin,spread=(row.index-(row.count-1)/2)*.055;
   const dir=rt.v4.copy(row.dest).sub(origin);dir.x+=Math.sin(spread);dir.normalize();
   const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24});
@@ -879,7 +893,8 @@ function throwBooyah(rt,actor,state,charge) {
   launch(rt,actor,'booyahBomb',origin,dir,{speed:13+charge*4,grav:19,drag:.16,life:2.1,arc:4.2,
     radius:3.7,damage:0,paintRadius:13.5,seed:nextSeed(state),size:.48});
   emitAction(rt,actor,'booyahBomb',state.serial,'throw',origin,rt.v2.copy(origin).addScaledVector(dir,12),nextSeed(state),{charge:q3(charge)});
-  endSpecial(rt,actor,'thrown');
+  const armor={id:'booyahBomb',t:state.t,armorHP:state.armorHP,until:(rt.api.G.time||0)+65/FPS};
+  endSpecial(rt,actor,'thrown');booyahAfterArmor.set(actor,armor);
 }
 function throwStamp(rt,actor,state) {
   const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.1,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
@@ -933,10 +948,11 @@ function throwChumps(rt,actor,state) {
   if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
   else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
   groundAt(rt,target,target);
-  const count=8,desc=specialDescription('superChump',state.specialPowerAP||0);
+  const count=12,desc=specialDescription('superChump',state.specialPowerAP||0);
   for(let i=0;i<count;i++) {
     const angle=(i/count)*Math.PI*2+seedUnit(state.seed,17)*Math.PI*2, radius=6.5;
-    const pos=target.clone();pos.x+=Math.cos(angle)*radius;pos.z+=Math.sin(angle)*radius;
+    const pos=target.clone();const direction=rt.v4.copy(target).sub(actor.pos).setY(0).normalize(),side=rt.v5.set(direction.z,0,-direction.x);
+    pos.addScaledVector(side,Math.cos(angle)*17.5).addScaledVector(direction,Math.sin(angle)*10);
     const obj=deployObject(rt,actor,'superChump','decoy',origin,state,{dur:(108+210)/FPS,maxRadius:desc.radius,damage:70,hp:60,seed:nextSeed(state),index:i,target:pos,scale:[.72,.72,.72]});
     obj.paintRadius=desc.paintRadius;obj.splashBands=desc.splashBands;
     obj.phase='flight';obj.armAt=1.8;obj.flight=1.8;obj.origin=origin.clone();
@@ -1280,6 +1296,16 @@ function targetWaveOrigin(rt,actor) {
   emitAction(rt,actor,'killerWail',actorStates.get(actor).serial,'laser',origin,end,nextSeed(actorStates.get(actor)));
 }
 
+function queueSubThrow(state,frames,thrower,arg=null) {
+  if(state.throwAt!==undefined)return;
+  state.throwAt=state.t+frames/FPS;state.thrower=thrower;state.throwArg=arg;
+}
+function runSpecialMain(actor,dt,input) {
+  const special=actor.specialActive;actor.specialActive=null;
+  try { actor.weaponRunner?.update?.(dt,input); }
+  finally { if(actor.alive&&!actor.specialActive)actor.specialActive=special; }
+}
+
 function activeStep(rt,actor,dt) {
   const state=actorStates.get(actor),s=actor.specialActive;
   if(!state||!s||state.id!==s.id)return;
@@ -1288,53 +1314,71 @@ function activeStep(rt,actor,dt) {
   const edges=inputEdges(actor,state);
   state.t+=dt;s.t=state.t;
   const spec=SPECIALS[state.id],elapsed=state.t;
+  if(state.throwAt!==undefined){
+    if(elapsed+1e-8>=state.throwAt){const thrower=state.thrower,arg=state.throwArg;delete state.throwAt;delete state.thrower;thrower(rt,actor,state,arg);}
+    return;
+  }
   if(state.id==='tentaMissiles'){
-    moveActor(rt,actor,dt,state,{squid:true});
+    if(state.phase==='launching')dampForSpecial(actor,dt);else moveActor(rt,actor,dt,state,{squid:true});
     if(state.phase==='launching'){
       if(elapsed+1e-8>=state.nextMissileAt)launchMissileStep(rt,actor,state);
-    }else if(edges.fire||edges.sub||elapsed>=state.duration){
-      prepareMissiles(rt,actor,state);launchMissileStep(rt,actor,state);
-    }
+    }else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
+    else if(edges.fire&&prepareMissiles(rt,actor,state))launchMissileStep(rt,actor,state);
     return;
   }
   if(state.id==='inkjet'){
     const it=actor.intent;
-    if(it.jump)actor.vel.y=Math.min(8.5,actor.vel.y+28*dt);
-    else if(it.squid)actor.vel.y=Math.max(-12,actor.vel.y-38*dt);
-    else actor.vel.y=Math.max(-2.5,actor.vel.y-12*dt);
-    const move=it.move||rt.zero;
-    actor.vel.x+=(move.x*5.2-actor.vel.x)*(1-Math.exp(-4*dt));
-    actor.vel.z+=(move.z*5.2-actor.vel.z)*(1-Math.exp(-4*dt));
-    actor.form=it.squid?'squid':'kid';actor.grounded=false;
-    { const py=actor.pos.y;actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false); }
-    if(edges.fire)launchInkjet(rt,actor,state);
-    if(edges.sub)returnToOrigin(rt,actor,state,'return');
-    else if(elapsed>=state.duration)returnToOrigin(rt,actor,state,'duration');
+    if(it.squid)moveActor(rt,actor,dt,state,{squid:true});
+    else {
+      // Wiki hover height ~one lobby line; exact retail servo remains calibrated.
+      const probe=rt.v3.copy(actor.pos);probe.y+=20;
+      const hit=rt.api.G.physics?.raycast?.(probe,rt.down,80,rt.hit,true);
+      const floor=hit?.hit&&hit.normal?.y>.4?hit.point.y:rt.api.G.level?.groundHeight?.(actor.pos.x,actor.pos.z);
+      if(edges.jump)state.boostUntil=elapsed+.75;
+      if(Number.isFinite(floor)){const boost=elapsed<(state.boostUntil||0)?2.5:0;
+        actor.vel.y=clamp((floor+5+boost-actor.pos.y)*6,-12,12);
+      }else actor.vel.y=Math.max(-12,actor.vel.y-24*dt);
+      const move=it.move||rt.zero;
+      actor.vel.x+=(move.x*5.2-actor.vel.x)*(1-Math.exp(-4*dt));
+      actor.vel.z+=(move.z*5.2-actor.vel.z)*(1-Math.exp(-4*dt));
+      actor.form='kid';actor.grounded=false;
+      const py=actor.pos.y;actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false);
+    }
+    if(it.fire&&!it.squid&&elapsed+1e-8>=(state.nextShot||0)){launchInkjet(rt,actor,state);state.nextShot=elapsed+1;}
+    if(elapsed+1e-8>=state.duration)returnToOrigin(rt,actor,state,'duration');
     else inkjetExhaustAdvance(rt,actor,state,dt);
     return;
   }
   if(state.id==='booyahBomb'){
-    moveActor(rt,actor,dt,state,{squid:true});
-    const ap=state.specialPowerAP;
-    state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
-    if(edges.fire||edges.booyah)state.charge=Math.min(1,state.charge+.077);
-    state.cheerHeld ||= new WeakMap();
-    for(const ally of rt.api.G.actors||[])if(ally!==actor&&ally.alive&&ally.team===actor.team){
-      const pressed=!!ally.intent?.booyah,wasPressed=state.cheerHeld.get(ally)===true;
-      state.cheerHeld.set(ally,pressed);
-      if(pressed&&!wasPressed)addBooyahCall(rt,actor,state,ally,{network:ally.isLocal===true});
+    // The user hovers at the activation point; only aim and Nice are live.
+    actor.form='kid';actor.vel.set(0,0,0);actor.pos.x=state.origin.x;actor.pos.z=state.origin.z;
+    actor.pos.y=state.origin.y+3.75*Math.min(1,elapsed/.5);actor.grounded=false;
+    if(elapsed+1e-8>=.5){
+      const ap=state.specialPowerAP,chargeDt=Math.max(0,elapsed-Math.max(.5,elapsed-dt));
+      state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01)*chargeDt*FPS);
+      if(edges.booyah&&elapsed+1e-8>=(state.nextCheer||0)){state.charge=Math.min(1,state.charge+.077);state.nextCheer=elapsed+10/FPS;}
+      state.cheerHeld ||= new WeakMap();
+      for(const ally of rt.api.G.actors||[])if(ally!==actor&&ally.alive&&ally.team===actor.team){
+        const pressed=!!ally.intent?.booyah,wasPressed=state.cheerHeld.get(ally)===true;
+        state.cheerHeld.set(ally,pressed);
+        if(pressed&&!wasPressed)addBooyahCall(rt,actor,state,ally,{network:ally.isLocal===true});
+      }
+      state.armor=true;s.armor=true;s.armorHP=state.armorHP;
     }
-    state.armor=true;state.armorHP=Math.max(0,state.armorHP);
-    if(edges.sub)throwBooyah(rt,actor,state,state.charge);
-    else if(state.charge>=1||elapsed>=5.5)throwBooyah(rt,actor,state,state.charge);
+    state.phase=state.charge>=1?'ready':'charge';s.phase=state.phase;
+    if(elapsed+1e-8>=state.duration)throwBooyah(rt,actor,state,1);
+    else if(state.charge>=1&&edges.subUp)queueSubThrow(state,13,throwBooyah,1);
     return;
   }
   if(state.id==='ultraStamp'){
-    moveActor(rt,actor,dt,state,{speed:actor.intent.fire?2.6:8.4,squid:false,jump:false});
-    if(edges.jump&&actor.intent.fire&&actor.grounded){actor.vel.y=rt.api.PLAYER.jumpVel||7.8;actor.grounded=false;actor.character?.trigger?.('jump');stampSwing(rt,actor,state,true);state.nextSwing=elapsed+5/60;}
-    else if(actor.intent.fire&&elapsed>=state.nextSwing){state.nextSwing=elapsed+5/60;stampSwing(rt,actor,state,false);}
-    if(edges.sub)throwStamp(rt,actor,state);
-    else if(elapsed>=state.duration)endSpecial(rt,actor,'duration');
+    const throwing=!!actor.intent.sub;
+    moveActor(rt,actor,dt,state,{speed:actor.intent.fire&&!throwing?2.6:null,squid:!actor.intent.fire&&!throwing,jump:true});
+    if(elapsed+1e-8>=17/FPS&&!throwing&&actor.intent.fire&&actor.form!=='squid'&&elapsed+1e-8>=state.nextSwing){
+      state.nextSwing=elapsed+(actor.grounded?12:30)/FPS;stampSwing(rt,actor,state,!actor.grounded);
+    }
+    state.phase=throwing?'aimThrow':'active';s.phase=state.phase;
+    if(edges.subUp)queueSubThrow(state,13,throwStamp);
+    else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
     return;
   }
   if(state.id==='zipcaster'){
@@ -1368,7 +1412,7 @@ function activeStep(rt,actor,dt) {
     const normalInk=actor.ink;
     actor.ink=state.inkFuel;
     try{
-      actor.weaponRunner?.update?.(dt,{fire:!!actor.intent.fire&&actor.form!=='squid',firePressed:edges.fire,
+      runSpecialMain(actor,dt,{fire:!!actor.intent.fire&&actor.form!=='squid',firePressed:edges.fire,
         sub:false,subReleased:false});
     }finally{
       state.inkFuel=clamp(Number(actor.ink)||0,0,150);
@@ -1380,18 +1424,19 @@ function activeStep(rt,actor,dt) {
       if(origin.distanceTo(target)<3){state.nextHookAt=elapsed+20/FPS;state.failedHooks=(state.failedHooks||0)+1;}
       else {state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target);}
     }
-    if(state.inkFuel<=0||elapsed>=state.duration)returnToOrigin(rt,actor,state,state.inkFuel<=0?'ink':'duration');
+    if(state.inkFuel<=0||elapsed+1e-8>=state.duration)returnToOrigin(rt,actor,state,state.inkFuel<=0?'ink':'duration');
     return;
   }
   if(state.id==='killerWail'){
     moveActor(rt,actor,dt,state,{squid:true});
     // Wail remains a simultaneous special layer: the ordinary runner stays
     // live and owns main shots, ink and weapon cadence during laser ticks.
-    actor.weaponRunner?.update?.(dt,{fire:!!actor.intent.fire,firePressed:edges.fire,
+    runSpecialMain(actor,dt,{fire:!!actor.intent.fire,firePressed:edges.fire,
       sub:!!actor.intent.sub&&actor.form!=='squid',subReleased:edges.subUp&&actor.form!=='squid'});
-    if(state.phase==='charge'&&elapsed>=36/60){state.phase='laser';state.nextBeam=elapsed;}
-    if(state.phase==='laser'&&elapsed+1e-8>=state.nextBeam){fireWailTick(rt,actor,state);state.nextBeam+=5/60;}
-    if(elapsed>=state.duration)endSpecial(rt,actor,'duration');
+    while(state.beams<3&&elapsed+1e-8>=state.nextLock){lockWailPair(rt,actor,state,state.beams++);state.nextLock+=36/FPS;state.phase='laser';}
+    for(const pair of state.beamPairs){if(pair.target?.alive){pair.trace.push({t:elapsed,pos:pair.target.pos.clone()});while(pair.trace.length>20)pair.trace.shift();}}
+    for(const pair of state.beamPairs)while(pair.nextTick< pair.until-1e-8&&elapsed+1e-8>=pair.nextTick){fireWailTick(rt,actor,state,pair);pair.nextTick+=5/FPS;}
+    if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
     return;
   }
   if(state.id==='crabTank'){
@@ -1405,7 +1450,7 @@ function activeStep(rt,actor,dt) {
     if(rolling){state.fireStart=null;}
     state.wasRolling=rolling;
     moveActor(rt,actor,dt,state,{speed:rolling?8.5:4.2,squid:false,jump:true});
-    if(edges.sub&&!rolling&&elapsed<state.duration-25/60&&elapsed>=state.nextCannon){
+    if(actor.intent.sub&&!rolling&&elapsed<state.duration-25/60&&elapsed>=state.nextCannon){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
       launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,arc:2.4,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,16),nextSeed(state));
@@ -1423,7 +1468,7 @@ function activeStep(rt,actor,dt) {
       state.nextShot=elapsed+interval/60;
     }
     if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,[[1.15,40]],1.15,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v0),.9,nextSeed(state));}
-    if(elapsed>=state.duration){state.phase='finish';state.finishUntil=state.duration+25/60;crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});}return;
+    if(elapsed+1e-8>=state.duration){state.phase='finish';state.finishUntil=state.duration+25/60;crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});}return;
   }
   if(state.id==='reefslider'){
     if(state.phase==='recovery'){
@@ -1441,9 +1486,7 @@ function activeStep(rt,actor,dt) {
     }
     if(state.phase==='dash'){
       state.dashT+=dt;
-      if(state.dashT+1e-8>=15/60&&(actor.intent.fire||actor.intent.sub)){reefImpact(rt,actor,state,actor.pos.clone());return;}
-      const steer=actor.intent.move||rt.zero;
-      if(Math.hypot(steer.x,steer.z)>.1){const move=rt.v0.set(steer.x,0,steer.z).normalize();state.direction.lerp(move,.035).normalize();}
+      if(state.dashT+1e-8>=15/60&&edges.fire){reefImpact(rt,actor,state,actor.pos.clone());return;}
       actor.vel.x=state.direction.x*24.3;actor.vel.z=state.direction.z*24.3;actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
       const before=actor.pos.clone(),py=actor.pos.y;actor.pos.addScaledVector(actor.vel,dt);actor.grounded=false;actor._resolve?.(false,py,false);
       paintReefRut(rt,actor,state,before,actor.pos,dt);
@@ -1459,17 +1502,21 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='tripleInkstrike'){
-    moveActor(rt,actor,dt,state,{squid:true});
-    if(edges.fire&&state.shots<3&&elapsed>=state.nextMarker){deployInkstrike(rt,actor,state,state.shots++);state.nextMarker=elapsed+50/60;if(state.shots>=3)endSpecial(rt,actor,'deployed');}
-    else if(elapsed>=state.duration)endSpecial(rt,actor,'deployed');return;
+    moveActor(rt,actor,dt,state,{squid:false});
+    if(edges.subUp&&state.shots<3){queueSubThrow(state,13,(r,a,st,index)=>{deployInkstrike(r,a,st,index);st.shots++;if(st.shots>=3)endSpecial(r,a,'deployed');},state.shots);}
+    else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'deployed');return;
   }
   if(state.id==='superChump'){
-    moveActor(rt,actor,dt,state,{squid:true});
-    if(edges.fire||edges.sub){throwChumps(rt,actor,state);return;}
-    if(elapsed>=108/60)throwChumps(rt,actor,state);return;
+    moveActor(rt,actor,dt,state,{squid:false});
+    if(edges.fire){throwChumps(rt,actor,state);return;}
+    if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');return;
   }
   if(state.id==='krakenRoyale'){
-    const dir=aimDirection(rt,actor,rt.v0);state.armor=true;s.armor=true;
+    const dir=aimDirection(rt,actor,rt.v0);
+    if(elapsed+1e-8<1){dampForSpecial(actor,dt);state.phase='startup';s.phase=state.phase;return;}
+    if(elapsed+1e-8>=state.duration){state.phase='finish';s.phase=state.phase;dampForSpecial(actor,dt);if(elapsed+1e-8>=state.duration+1)endSpecial(rt,actor,'duration');return;}
+    if(state.phase==='startup')state.phase='active';
+    state.armor=true;s.armor=true;
     if(state.phase==='dash'){
       state.dashT+=dt;const before=actor.pos.clone(),py=actor.pos.y;
       actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;actor.vel.y=0;
@@ -1481,8 +1528,8 @@ function activeStep(rt,actor,dt) {
       }
       stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
       if(state.dashT>=35/60){state.phase='active';state.dashT=0;}
-    }else moveActor(rt,actor,dt,state,{speed:actor.intent.jump?10:5.5,squid:false,jump:false});
-    if(edges.jump){
+    }else {const jumped=edges.jump&&actor.grounded;moveActor(rt,actor,dt,state,{speed:state.phase==='charge'?1.9:5.5,squid:false,jump:true});state.jumpAttack=jumped;}
+    if(state.jumpAttack){state.jumpAttack=false;
       const center=rt.v0.copy(actor.pos);center.y+=.65;
       damageBandRadius(rt,actor,center,[[2.65,60]],2.65,'krakenRoyale',null,3);
       paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v1),1.2,nextSeed(state));fxBurst(rt,actor,center,2.65,'hit');
@@ -1498,15 +1545,15 @@ function activeStep(rt,actor,dt) {
         else {state.phase='active';state.chargeT=0;}
       }
     }
-    if(elapsed>=state.duration)endSpecial(rt,actor,'duration');return;
+    if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');return;
   }
   if(state.id==='splattercolorScreen'){
     moveActor(rt,actor,dt,state,{squid:true});
-    if(edges.fire||edges.sub||elapsed>=.2){deployScreen(rt,actor,state);return;}return;
+    if(edges.subUp){queueSubThrow(state,13,deployScreen);return;}return;
   }
   if(state.id==='waveBreaker'){
     moveActor(rt,actor,dt,state,{squid:true});
-    if(edges.fire||edges.sub)deployWave(rt,actor,state);
+    if(edges.subUp)queueSubThrow(state,actor.weapon.sub==='inkMine'?16:5,deployWave);
     return;
   }
 }
@@ -1525,9 +1572,9 @@ function makeState(rt,actor,id) {
   if(id==='tripleInkstrike')state.nextMarker=0;
   if(id==='waveBreaker')state.phase='ready';
   if(id==='zipcaster')state.phase='ready';
-  if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='active';state.direction=new rt.api.THREE.Vector3();}
-  if(id==='killerWail')state.phase='charge';
-  if(id==='inkjet')actor.vel.y=Math.max(actor.vel.y,7.4);
+  if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='startup';state.direction=new rt.api.THREE.Vector3();}
+  if(id==='killerWail'){state.phase='charge';state.beamPairs=[];state.nextLock=36/FPS;}
+  if(id==='inkjet'){actor.vel.y=Math.max(actor.vel.y,7.4);state.nextShot=1;}
   if(id==='zipcaster'){state.inkFuel=150;state.abilityPoints=ap;
     state.hookInkCost=gearCurve(ap,4,2.5,1.5);state.inkDrainPerSecond=gearCurve(ap,15,13.05,12);
     state.hookInk=gearCurve(ap,.04,.025,.015);state.inkPerSecond=gearCurve(ap,.15,.1305,.12);}
@@ -1564,8 +1611,7 @@ function installRuntime(api) {
     const result=start.apply(this,args);
     if(this.alive&&this.stats?.specials===before+1&&this.special===0){
       const state=makeState(rt,this,id);rt.system=api.G.projectiles||rt.system;
-      if(id==='tripleInkstrike'&&this.intent?.fire&&state.held.fire===false)state.held.fire=true;
-      if(id==='splattercolorScreen'&&this.intent?.fire){deployScreen(rt,this,state);}
+      // Held main input at activation cannot stand in for a special throw.
     }
     return result;
   };
@@ -1579,23 +1625,25 @@ function installRuntime(api) {
   };
   proto.reset=function(...args){
     const state=actorStates.get(this);if(state)endSpecial(rt,this,'reset');
-    this._s3AllSpecialState=null;return reset.apply(this,args);
+    booyahAfterArmor.delete(this);this._s3AllSpecialState=null;return reset.apply(this,args);
   };
   proto.splat=function(...args){
     const state=actorStates.get(this);if(state)endSpecial(rt,this,'splat');
-    return splat.apply(this,args);
+    booyahAfterArmor.delete(this);return splat.apply(this,args);
   };
   proto.damage=function(amount,attacker,source){
-    const state=actorStates.get(this);
+    const tail=booyahAfterArmor.get(this);
+    if(tail&&(api.G.time||0)>=tail.until)booyahAfterArmor.delete(this);
+    const state=actorStates.get(this)||((api.G.time||0)<tail?.until?tail:null);
     if(!state||!(amount>0)||source==='ink')return damage.call(this,amount,attacker,source);
-    if(state.id==='krakenRoyale'&&state.t>=1&&state.t<state.duration-1)return false;
+    if(state.id==='krakenRoyale'&&state.t>=1&&state.t<state.duration)return false;
     if(state.id==='crabTank'&&crabRearCoreHit(this,attacker)){
       const armor=this.specialActive?.armor;
       if(this.specialActive)this.specialActive.armor=false;
       api.emit?.('actor:armorhit',{actor:this,absorbed:0,broken:false,core:true,kind:'crabTank'});
       try{return damage.call(this,amount,attacker,source);}finally{if(this.specialActive)this.specialActive.armor=armor;}
     }
-    if((state.id==='booyahBomb'||state.id==='crabTank')&&state.armorHP>0){
+    if((state.id==='booyahBomb'&&state.t+1e-8>=.5||state.id==='crabTank')&&state.armorHP>0){
       const shield=state.armorHP,cause=attacker?._s3AllSpecialDamageCause||source,scale=objectDamageScale(attacker,state.id,cause),scaled=amount*scale;
       const absorbed=Math.min(shield,scaled),left=scale>0?Math.max(0,amount-absorbed/scale):0;
       state.armorHP=Math.max(0,shield-absorbed);
