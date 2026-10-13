@@ -32,7 +32,10 @@ for n,chunk in enumerate([base64.b64encode((root/'comparison.jpg').read_bytes())
 for wid in ids:
  x,y=beforeById[wid],afterById[wid]
  assert x['muzzle']==y['muzzle'];assert not y['nonFinite'];assert y['maxGrip']<.008
- assert x['drawCalls']==y['drawCalls'],(x['id'],'draw-call regression',x['drawCalls'],y['drawCalls'])
+ # A model rebuild may merge material batches. Never accept an increase in draw calls.
+ # Keep actual geometry, grip, muzzle and reference-image inspections separately enforced.
+ assert y['drawCalls']<=x['drawCalls'],(x['id'],'draw-call increase',x['drawCalls'],y['drawCalls'])
+ assert y['renderTriangles']>0 and y['tris']>0,(x['id'],'empty rebuilt render geometry')
  print('QUAD_EXPLOSHER_AB '+json.dumps({'id':x['id'],'before':{k:x[k] for k in ['tris','geometryKB','buildMs','renderMs','drawCalls','renderTriangles']},'after':{k:y[k] for k in ['tris','geometryKB','buildMs','renderMs','drawCalls','renderTriangles']}}))
 
 # Each source view has its own paired current/baseline camera, recorded in gallery.json.
