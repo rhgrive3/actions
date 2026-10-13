@@ -374,10 +374,19 @@ test('Super Chump expiry paints sourced cross and satellite channels',async()=>{
  const cross=calls.filter(call=>call.radius===2.5),satellites=calls.filter(call=>call.radius===1.116);
  assert.equal(cross.length,48,'each of twelve decoys emits four radius-2.5 cross stamps at expiry');
  assert.equal(satellites.length,12,'each decoy emits one sourced radius-1.116 satellite stamp');
+ // Nearby decoys can share a cross-arm coordinate. Check the full multiset
+ // rather than independently counting every stamp near each decoy (which
+ // counts a neighboring decoy's stamp again when crosses overlap).
+ const unmatched=[...cross];
  for(const decoy of decoys){
-  const stamps=cross.filter(call=>Math.abs(Math.abs(call.at.x-decoy.pos.x)+Math.abs(call.at.z-decoy.pos.z)-2.5)<1e-9);
-  assert.equal(stamps.length,4,'the calibrated cross places four stamps at the sourced check length');
+  for(const [dx,dz] of [[2.5,0],[-2.5,0],[0,2.5],[0,-2.5]]){
+   const index=unmatched.findIndex(call=>
+    Math.abs(call.at.x-decoy.pos.x-dx)<1e-9&&Math.abs(call.at.z-decoy.pos.z-dz)<1e-9);
+   assert.notEqual(index,-1,'each decoy contributes its four sourced cross-arm locations');
+   unmatched.splice(index,1);
+  }
  }
+ assert.equal(unmatched.length,0,'no duplicate or unexpected cross-arm stamps remain');
 });
 
 test('Zipcaster hook movement paints sourced cross marks and a two-frame calibrated trail',async()=>{
