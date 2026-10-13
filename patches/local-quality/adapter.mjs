@@ -1,3 +1,4 @@
+import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
@@ -78,6 +79,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'material-handoff-adapter.mjs', 'material-handoff.mjs',
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
@@ -139,6 +141,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptMaterialHandoff(rel, code);
   code = adaptMuralAtlas(rel, code, replaceOnce);
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
