@@ -42,6 +42,16 @@ jobs:
             patches
             scripts
             reports/ink-volume/source
+      - uses: actions/checkout@v4
+        with:
+          ref: ab5cda557c17218e4bb96c94685050691a22546d
+          path: cloth-baseline
+          persist-credentials: false
+          sparse-checkout: |
+            inkwave-public
+            patches
+            scripts
+            reports/ink-volume/source
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -58,19 +68,21 @@ jobs:
           export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
           node before/scripts/build-inkwave.mjs before/inkwave-public site-a | tee evidence/build-A.log
           node after/scripts/build-inkwave.mjs after/inkwave-public site-b | tee evidence/build-B.log
+          node cloth-baseline/scripts/build-inkwave.mjs cloth-baseline/inkwave-public site-c | tee evidence/build-C.log
+          cp site-c/inkwave-build.json evidence/build-C.json
           cp site-a/inkwave-build.json evidence/build-A.json
           cp site-b/inkwave-build.json evidence/build-B.json
       - name: Calibrate completed full-game frames and verify identical workload
         timeout-minutes: 25
         run: |
           set -euo pipefail
-          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode calibrate --scenario normal --width 480 --height 300 --samples 60 --warmup 12 --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/calibration | tee evidence/calibration.log
+          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode calibrate --scenario normal --width 480 --height 300 --samples 60 --warmup 12 --root-A before --root-B after --root-C cloth-baseline --sha-C ab5cda557c17218e4bb96c94685050691a22546d --site-A site-a --site-B site-b --site-C site-c --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/calibration | tee evidence/calibration.log
           node -e "const r=require('./evidence/calibration/whole-game-calibrate.json');if(!r.comparable||!r.withinFrameBudget)throw Error('Calibration not suitable for a long comparison');"
       - name: Eight CBBC-BCCB whole-game trials
         timeout-minutes: 50
         run: |
           set -euo pipefail
-          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode measure --scenario normal --width 480 --height 300 --samples 60 --warmup 12 --calibration evidence/calibration/whole-game-calibrate.json --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/measurement | tee evidence/measurement.log
+          node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode measure --scenario normal --width 480 --height 300 --samples 60 --warmup 12 --calibration evidence/calibration/whole-game-calibrate.json --root-A before --root-B after --root-C cloth-baseline --sha-C ab5cda557c17218e4bb96c94685050691a22546d --site-A site-a --site-B site-b --site-C site-c --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/measurement | tee evidence/measurement.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:

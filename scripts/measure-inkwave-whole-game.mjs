@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import os from 'node:os';
+import {execFileSync} from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { verifyRuntimeBuild, hash } from './lib/inkwave-runtime-evidence.mjs';
 const arg=(name,def)=>{const i=process.argv.indexOf(name);return i<0?def:process.argv[i+1];};
@@ -25,29 +26,35 @@ const variants=Object.fromEntries([['A','545c6b3fcfc0d25c43678e9b44b1af4e26400fe
  const root=path.resolve(arg('--root-'+name)),site=path.resolve(arg('--site-'+name));
  return [name,{root,site,sha,manifest:verifyRuntimeBuild(site,root,sha),receipts:new Set()}];
 }));
-// C is the derived performance baseline, never a claimed production SHA:
-// exact A bytes everywhere except character-mats.js, supplied from exact B.
-// A/B on disk remain unchanged. Comparison C -> B excludes the cloth shader fix.
-// Prior A/A images are nondeterministic; strict C/B pixel equality is required.
+// Coherent derived C source/build: exact A plus the cloth transformer and its
+// two build-time wiring files. The source tree is fixed; generated index/SW
+// revisions are produced by the unchanged production builder, never rewritten.
 const clothPath='src/game/character-mats.js';
-const clothBytes=fs.readFileSync(path.join(variants.B.site,clothPath));
-if(hash(clothBytes)!==variants.B.manifest.artifacts[clothPath])throw Error('Control artifact hash mismatch');
-const controlArtifacts={...variants.A.manifest.artifacts};
-for(const rel of Object.keys(controlArtifacts))if(rel===clothPath||rel.endsWith('/'+clothPath))controlArtifacts[rel]=hash(clothBytes);
-variants.C={...variants.A,receipts:new Set(),control:true,servedContentHash:hash(JSON.stringify(controlArtifacts))};
+const clothTree='29604d1438d8c665b591877a72d87d038380943c';
+const rootC=path.resolve(arg('--root-C')),siteC=path.resolve(arg('--site-C')),shaC=arg('--sha-C');
+if(!/^[a-f0-9]{40}$/.test(shaC||''))throw Error('Full derived source SHA required');
+if(execFileSync('git',['rev-parse',shaC+'^{tree}'],{cwd:rootC,encoding:'utf8'}).trim()!==clothTree)throw Error('Unexpected derived cloth source tree');
+variants.C={root:rootC,site:siteC,sha:shaC,manifest:verifyRuntimeBuild(siteC,rootC,shaC),receipts:new Set(),derived:true};
+const clothHash=variants.B.manifest.artifacts[clothPath];
+if(variants.C.manifest.artifacts[clothPath]!==clothHash)throw Error('Derived cloth artifact does not equal B');
+const roots=m=>Object.fromEntries(Object.entries(m.artifacts).filter(([p])=>!p.startsWith('_versions/')));
+const artifactsA=roots(variants.A.manifest),artifactsC=roots(variants.C.manifest);
+if(JSON.stringify(Object.keys(artifactsA).sort())!==JSON.stringify(Object.keys(artifactsC).sort()))throw Error('Unexpected derived runtime artifact set');
+const derivedArtifactChanges=Object.keys(artifactsA).filter(p=>artifactsA[p]!==artifactsC[p]).sort();
+if(JSON.stringify(derivedArtifactChanges)!==JSON.stringify(['index.html',clothPath,'sw.js'].sort()))throw Error('Unexpected derived runtime delta');
 const settings={quality:'medium',shadows:true,bloom:true,frameRate:'display',music:.6,sfx:.85,master:.8};
 const result={schema:1,status:'running',mode,comparison:'cloth-fixed baseline C versus B; three non-cloth optimizations together',stage,scenario,order,settings,samples:mode==='calibrate'?6:samples,warmup,viewport:[width,height],deviceScaleFactor:1,hardwareClaim:false,
  scope:'Full production Game._frame with input polling, BotBrain, actors, collision, projectiles, paint, FX, environment, decor, props, camera, audio owners, HUD, menus and all render/post passes. Primary timing is successive rAF starts, including intervening browser/UI/audio scheduling contention. Secondary completedMs is only synchronous Game._frame JavaScript plus GPU readback; it excludes deferred DOM/compositing/audio completion. Fixed 60 Hz simulation and diagnostic crowd input/camera; readback serializes CPU/GPU.',
- limitations:['Software-rendered GitHub Actions is not a hardware-PC measurement.','C is baseline 545c6b3 plus only the verified B cloth shader artifact, not an exact production SHA. This comparison excludes the cloth fix. The earlier exact-A measurement is retained separately as a non-comparable diagnostic.','C retains the original A service-worker manifest. Background state must match B and no service worker may be active in any trial.','Completed-frame throughput includes a 1-pixel synchronous readback, prevents CPU/GPU overlap, and excludes display scanout. It is not ordinary gameplay FPS or input-to-photon latency.',scenario==='crowd'?'The built-in autopilot scene has eight bot actors and no PlayerController; this is automated crowd gameplay, not coverage of the normal human input path.':'Normal-match scene: one unchanged PlayerController and seven unchanged BotBrains execute, then diagnostic input overrides make all eight actors stationary and outward-firing.','The native game scheduler is frozen; the diagnostic schedules one complete fixed-step frame per rAF. Dynamic resolution is held at 1 for workload comparability.','BotBrain still executes; its output intent is replaced by the same stationary, outward-firing input after its update. This avoids deaths and measures eight live actors throughout.','Eight CBBC/BCCB timing trials must pass strict C/B workload and pixel checks before reporting a comparative effect; improvement requires a positive lower confidence bound. Full image parity is verified at the endpoint, not on every measured frame.'],
+ limitations:['Software-rendered GitHub Actions is not a hardware-PC measurement.','C is baseline 545c6b3 plus only the verified B cloth shader artifact, not an exact production SHA. This comparison excludes the cloth fix. The earlier exact-A measurement is retained separately as a non-comparable diagnostic.','C is built from the fixed cloth-only source tree with the unchanged production builder. Both variants must naturally install and activate their service worker and report a complete offline snapshot before setup/warmup; this is the steady-state, enabled-PWA path.','Completed-frame throughput includes a 1-pixel synchronous readback, prevents CPU/GPU overlap, and excludes display scanout. It is not ordinary gameplay FPS or input-to-photon latency.',scenario==='crowd'?'The built-in autopilot scene has eight bot actors and no PlayerController; this is automated crowd gameplay, not coverage of the normal human input path.':'Normal-match scene: one unchanged PlayerController and seven unchanged BotBrains execute, then diagnostic input overrides make all eight actors stationary and outward-firing.','The native game scheduler is frozen; the diagnostic schedules one complete fixed-step frame per rAF. Dynamic resolution is held at 1 for workload comparability.','BotBrain still executes; its output intent is replaced by the same stationary, outward-firing input after its update. This avoids deaths and measures eight live actors throughout.','Eight CBBC/BCCB timing trials must pass strict C/B workload and pixel checks before reporting a comparative effect; improvement requires a positive lower confidence bound. Full image parity is verified at the endpoint, not on every measured frame.'],
  environment:{cpu:os.cpus()[0]?.model,logicalCpus:os.cpus().length,memBytes:os.totalmem(),node:process.version,os:os.release(),platform:os.platform()},
- provenance:Object.fromEntries(Object.entries(variants).map(([k,v])=>[k,{sourceSha:v.sha,contentHash:v.manifest.contentHash,revision:v.manifest.build.revision,...(v.control?{derivedControl:true,baseContentHash:v.manifest.contentHash,servedContentHash:v.servedContentHash,override:{artifact:clothPath,fromSourceSha:variants.B.sha,sha256:hash(clothBytes)}}:{})}])),trials:[]};
-const calibrationScope={sourceA:variants.A.sha,sourceB:variants.B.sha,contentA:variants.A.manifest.contentHash,contentB:variants.B.manifest.contentHash,baseline:'C',candidate:'B',contentC:variants.C.servedContentHash,stage,scenario,settings,viewport:[width,height],warmup};
+ provenance:Object.fromEntries(Object.entries(variants).map(([k,v])=>[k,{sourceSha:v.sha,contentHash:v.manifest.contentHash,revision:v.manifest.build.revision,...(v.derived?{derivedBaseline:true,baseSourceSha:variants.A.sha,sourceTree:clothTree,sourceChanges:['patches/local-quality/adapter.mjs','patches/local-quality/cloth-derivative-adapter.mjs','scripts/lib/inkwave-build-only-modules.mjs'],runtimeArtifactChanges:derivedArtifactChanges,cloth:{artifact:clothPath,equalToSourceSha:variants.B.sha,sha256:clothHash}}:{})}])),trials:[]};
+const calibrationScope={sourceA:variants.A.sha,sourceB:variants.B.sha,contentA:variants.A.manifest.contentHash,contentB:variants.B.manifest.contentHash,baseline:'C',candidate:'B',sourceC:shaC,contentC:variants.C.manifest.contentHash,sourceTreeC:clothTree,stage,scenario,settings,viewport:[width,height],warmup};
 result.calibrationScope=calibrationScope;
 let acceptedCalibration=null;
 if(mode==='measure'){if(!calibrationFile)throw Error('Verified calibration required');acceptedCalibration=JSON.parse(fs.readFileSync(calibrationFile));if(acceptedCalibration.status!=='passed'||JSON.stringify(acceptedCalibration.calibrationScope)!==JSON.stringify(calibrationScope))throw Error('Calibration scope mismatch');result.calibrationEvidenceSha256=hash(fs.readFileSync(calibrationFile));}
 const save=()=>fs.writeFileSync(path.join(output,'whole-game-'+mode+'.json'),JSON.stringify(result,null,2));
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.woff2':'font/woff2'};
-const server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://localhost'),m=url.pathname.match(/^\/(A|B|C)\/(.*)$/);if(!m)throw Error('No variant');const v=variants[m[1]],rel=decodeURIComponent(m[2]||'index.html'),file=path.resolve(v.site,rel);if(!file.startsWith(v.site+'/'))throw Error('Traversal');let bytes=fs.readFileSync(file);if(rel!=='inkwave-build.json'&&(!v.manifest.artifacts[rel]||hash(bytes)!==v.manifest.artifacts[rel]))throw Error('Unverified served bytes');if(v.control&&(rel===clothPath||rel.endsWith('/'+clothPath)))bytes=clothBytes;v.receipts.add(rel);res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});res.end(bytes);}catch(e){res.writeHead(404);res.end(String(e));}});
+const server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://localhost'),m=url.pathname.match(/^\/(A|B|C)\/(.*)$/);if(!m)throw Error('No variant');const v=variants[m[1]],rel=decodeURIComponent(m[2]||'index.html'),file=path.resolve(v.site,rel);if(!file.startsWith(v.site+'/'))throw Error('Traversal');let bytes=fs.readFileSync(file);if(rel!=='inkwave-build.json'&&(!v.manifest.artifacts[rel]||hash(bytes)!==v.manifest.artifacts[rel]))throw Error('Unverified served bytes');v.receipts.add(rel);res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});res.end(bytes);}catch(e){res.writeHead(404);res.end(String(e));}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const {chromium}=await import(pathToFileURL(path.resolve(arg('--playwright'))).href);
 let browser;
@@ -77,6 +84,19 @@ try{
   await page.evaluate(async()=>{window.BG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
   await page.waitForFunction(()=>{const g=BG.game;if(g)g.frozen=true;return !!(g?.debug&&BG.s3?.installed&&BG.mode!=='boot')||!!document.querySelector('#boot-error')?.textContent;},null,{timeout:900000});
   const bootError=await page.locator('#boot-error').textContent();if(bootError)throw Error(bootError);
+  // Let the unchanged production menu initiate registration and finish its
+  // integrity-checked install. Never register, bypass, block or disable the SW.
+  await page.waitForFunction(()=>globalThis.__inkwaveStartup?.report?.cache?.offlineReady===true&&navigator.serviceWorker?.controller?.state==='activated',null,{timeout:300000});
+  await page.evaluate(()=>{
+   window.benchPwaStatus=async()=>{
+    const registrations=await navigator.serviceWorker.getRegistrations();
+    const controller=navigator.serviceWorker.controller;
+    const status=await new Promise((resolve,reject)=>{const channel=new MessageChannel(),timer=setTimeout(()=>{channel.port1.close();channel.port2.close();reject(Error('PWA cache status timed out'));},10000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();channel.port2.close();resolve(e.data);};if(!controller){clearTimeout(timer);reject(Error('PWA not controlled'));return;}controller.postMessage({type:'INKWAVE_CACHE_STATUS'},[channel.port2]);});
+    return {controller:controller?.scriptURL||null,controllerState:controller?.state||null,registrations:registrations.map(r=>({scope:r.scope,active:r.active?.state||null,waiting:r.waiting?.state||null,installing:r.installing?.state||null})),status};
+   };
+  });
+  trial.pwaReady=await page.evaluate(()=>window.benchPwaStatus());
+  if(trial.pwaReady.status?.revision!==variants[variant].manifest.build.revision||!trial.pwaReady.status?.offlineReady)throw Error('Wrong or incomplete PWA revision');
   // A real keyboard gesture enables audio through the unchanged production path.
   await page.keyboard.press('Shift');
   trial.setup=await page.evaluate(async({stage,warmup,scenario})=>{
@@ -138,7 +158,7 @@ try{
    }return {rows,endState:window.benchState(),capture:window.benchCapture()};
   },{samples:result.samples,warmup});
   trial.frames=measured.rows;trial.endState=measured.endState;
-  trial.background=await page.evaluate(async()=>({serviceWorkerController:navigator.serviceWorker?.controller?.scriptURL||null,serviceWorkers:await navigator.serviceWorker?.getRegistrations().then(rs=>rs.map(r=>({scope:r.scope,active:r.active?.state,waiting:r.waiting?.state,installing:r.installing?.state})))||[],audioState:BG.audio.ctx?.state,musicWorker:!!BG.music.worker}));
+  trial.background=await page.evaluate(async()=>({pwa:await window.benchPwaStatus(),audioState:BG.audio.ctx?.state,musicWorker:!!BG.music.worker}));
   const capture=measured.capture;
   const pixels=Buffer.from(capture.rgba);trial.pixelSha256=hash(pixels);trial.pixelBytes=pixels.length;
   const colors=new Set();let opaque=0;for(let i=0;i<pixels.length;i+=4){if(pixels[i+3]===255)opaque++;colors.add(pixels.readUInt32LE(i));}
@@ -164,7 +184,8 @@ try{
  result.visualValidation.accepted=result.visualValidation.CRepeatExact&&result.visualValidation.BRepeatExact&&result.visualValidation.CBExact;
  result.visualValidation.allowedChange='none; the same cloth shader artifact is used in both C and B';
  if(mode==='measure'){result.visualValidation.calibrationProof=acceptedCalibration.visualValidation;result.visualValidation.accepted&&=acceptedCalibration.visualValidation.accepted;}
- result.backgroundComparable=result.trials.every(t=>t.background.serviceWorkerController===null&&t.background.serviceWorkers.length===0&&t.background.audioState==='running'&&t.background.musicWorker===true);
+ const readyPwa=(p,variant)=>p?.controllerState==='activated'&&p.controller===`http://127.0.0.1:${server.address().port}/${variant}/sw.js`&&p.registrations.length===1&&p.registrations.every(r=>r.active==='activated'&&!r.waiting&&!r.installing)&&p.status?.type==='INKWAVE_CACHE_STATUS'&&p.status.offlineReady===true&&p.status.revision===variants[variant].manifest.build.revision;
+ result.backgroundComparable=result.trials.every(t=>readyPwa(t.pwaReady,t.variant)&&readyPwa(t.background.pwa,t.variant)&&t.background.audioState==='running'&&t.background.musicWorker===true);
  result.comparable=result.gameplayComparable&&result.visualValidation.accepted&&result.backgroundComparable&&result.controlReceipt.length>0;
  result.summary=Object.fromEntries(['C','B'].map(v=>[v,{completed:stats(result.trials.filter(t=>t.variant===v).flatMap(t=>t.frames.map(f=>f.completedMs))),pacing:stats(result.trials.filter(t=>t.variant===v).flatMap(t=>t.frames.slice(1).map(f=>f.startIntervalMs))),trialPacingFps:result.trials.filter(t=>t.variant===v).map(t=>t.pacing.fps),trialSynchronousFps:result.trials.filter(t=>t.variant===v).map(t=>t.completed.fps)}]));
  result.comparisonValid=result.comparable;
