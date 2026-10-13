@@ -20,11 +20,11 @@ try{
  await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
  result.native=await page.evaluate(async id=>{
-  const G=NG,g=G.game,{BotBrain}=await import(new URL('src/game/bots.js',document.baseURI)),{nativeRankedStage}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI));
+  const G=NG,g=G.game,{BotBrain}=await import(new URL('src/game/bots.js',document.baseURI)),{GroundHit}=await import(new URL('src/game/physics.js',document.baseURI)),{PLAYER}=await import(new URL('src/config.js',document.baseURI)),{nativeRankedStage}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI)),support=new GroundHit();
   g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();
   if(!G.level.native||G.actors.length!==8||G.actors.filter(a=>a.bot).length!==7||G.local.s3?.squidSpawn||!G.local.grounded)throw Error('Real native match/initial source landing required');
   const L=G.level,N=G.nav,V=G.local.pos.constructor,stage=nativeRankedStage(G),goal=new V(...stage.zones[0].center),cases=[];
-  if(L.manifest.sourceNavigation?.wallClimb||L.manifest.sourceNavigation?.highDrops)throw Error('Ordinary source proof must keep both traversal opt-ins OFF');
+  if(L.manifest.sourceNavigation?.wallClimb||L.manifest.sourceNavigation?.highDrops||L.manifest.sourceNavigation?.wallSurge)throw Error('Ordinary source proof must keep traversal opt-ins OFF');
   for(const team of [0,1])for(const hz of [30,60,120]){
    const a=G.actors.find(a=>a.team===team&&a.bot);
    for(const other of G.actors){if(other===a)continue;const p=L.spawnPads[other.team].clone(),angle=other.slot/4*Math.PI*2+.6;p.x+=Math.cos(angle)*1.8;p.z+=Math.sin(angle)*1.8;const h=G.physics.raycast(p.clone().setY(p.y+.1),new V(0,-1,0),.3);if(!h.hit||Math.abs(h.point.y-p.y)>.1)throw Error('Other actor setup lacks original source pad support');other.spawnAt(p,0);other.intent.move.set(0,0,0);other.intent.fire=other.intent.squid=other.intent.jump=false;if(other.bot)other.bot.update=()=>{};}
@@ -34,7 +34,7 @@ try{
    if(!selected||bounds[0]!==Math.max(6000,N.nodes.length*4))throw Error('Installed finite native search did not select the exact route');if(team===0&&(old!==null||a.bot.path.length!==118))throw Error('Exact Wahoo former6000 failure/118-node route not reproduced');
    const routeNodes=a.bot.path.length,enemyRejected=!a.bot._pathTo(L.spawnPads[1-team],.6);if(!enemyRejected)throw Error('Forbidden opposing spawn became reachable');if(!a.bot._pathTo(goal,.6))throw Error('Real source route retry failed');a.bot.goalTimer=a.bot.repath=a.bot.bombCd=1000;
    const before=a.pos.clone();let frames=0,groundedSourceSamples=0;
-   for(;frames<hz*3;frames++){g._frame(1/hz);if(!a.alive)throw Error('Ordinary bank movement died');if(a.grounded){const h=G.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,.35,.35,.24,{},false);if(!h.hit)throw Error('Grounded movement lacks real source support');groundedSourceSamples++;}if(frames>=hz*2&&a.grounded)break;}
+   for(;frames<hz*3;frames++){g._frame(1/hz);if(!a.alive)throw Error('Ordinary bank movement died');if(a.grounded){const h=G.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,support,false);if(!h.hit||h.block<0||h.block>=L.staticBlockCount)throw Error('Grounded movement lacks real source support');groundedSourceSamples++;}if(frames>=hz*2&&a.grounded)break;}
    const distance=a.pos.distanceTo(before);if(distance<1||!a.grounded||!groundedSourceSamples)throw Error('Ordinary production bank movement failed '+JSON.stringify({team,hz,distance,end:a.pos.toArray(),grounded:a.grounded}));
    cases.push({team,hz,oldRejected:old===null,routeNodes,searchBound:bounds[0],sourceNodes:N.nodes.length,validNodes:N.validIds.length,oldMilliseconds,searchMilliseconds,start:before.toArray(),goal:goal.toArray(),end:a.pos.toArray(),distance,frames:frames+1,groundedSourceSamples,grounded:true,alive:true,enemySpawnRejected:true,gearAP:Object.keys(a.s3.abilityPoints)});console.log('native-search '+JSON.stringify(cases.at(-1)));
   }

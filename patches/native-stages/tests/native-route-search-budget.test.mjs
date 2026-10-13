@@ -14,7 +14,7 @@ function actor(f,p){const {G}=f,a=new f.Actor({team:0,slot:0,name:'source search
 test('ordinary Wahoo source search finds the exact route rejected by 6000 without enabling traversal flags',{skip:!sourceReady},async()=>{
  const f=await nativeFixture({includeCharacter:true}),{G,THREE}=f,d=readStage(root,'wahoo');
  const L=G.level=new f.NativeLevel(d);G.physics=new f.NativePhysics(L);G.paint=paint(f,L);G.nav=new f.NavGraph(L,G.physics);G.camera=new THREE.PerspectiveCamera();G.match.mode='turf';G.match.opts={};f.setRandom(()=>.5);
- assert.equal(L.native,true);assert.ok(!L.manifest.sourceNavigation?.wallClimb&&!L.manifest.sourceNavigation?.highDrops);
+ assert.equal(L.native,true);assert.ok(!L.manifest.sourceNavigation?.wallClimb&&!L.manifest.sourceNavigation?.highDrops&&!L.manifest.sourceNavigation?.wallSurge);
  assert.equal(L.manifest.sourceSha256,'0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db');
  assert.deepEqual(Array.from(L.spawnPads[0].toArray()),[-85,18,0]);
  const digest=()=>crypto.createHash('sha256').update(Buffer.from(d.triangles.buffer)).update(Buffer.from(d.flags.buffer)).update(Buffer.from(d.mask.buffer)).digest('hex'),before=digest();
