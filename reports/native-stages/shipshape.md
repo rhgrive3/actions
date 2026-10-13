@@ -12,7 +12,7 @@ eighth pickup `3249d6dc5c8da6c085247c8213d0b7b4c69a24f4`. The branch now consume
 accepted foundation `90040586c3728ca20d69ed43014528e0f68cbbdf`, including the
 source Drop recovery and main 18ce compatibility refresh, followed by accepted
 native combat support #1399 and combat jump input #1409 through foundation
-`3f9d0e544bd22f10bf65ef2d14abea0fc9f55bcb`. The immutable
+`04a0f6f658eda7ed7b92d06b0c2b4500bdfce8ea`. The immutable
 browser artifact predates that later accepted history. Stage verification is in progress; the
 complete opposite-bank bot route fails. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
 remains Draft.
@@ -48,7 +48,7 @@ vessel hull, at y -14.8647. The fixed-step trace shows the bot perceives an
 opponent on its supported pad, switches into combat and clears its navigation
 path. It then leaves the roof at `[17.8042,6.05,45.8828]`. The existing combat
 edge guard accepts the distant lower hull as ground. That native combat support
-correction is root-owned and unresolved; no hull, roof or NoPaint surface is
+correction was root-owned and is now accepted in #1399; no hull, roof or NoPaint surface is
 removed to hide the failure.
 
 An experimental exact root combat helper overlay on that original immutable
@@ -59,7 +59,8 @@ The full-bank assertion still fails: a later .5-source-unit jump receives
 ordinary jump input without increasing the jump serial, the path clears, and
 the bot departs the same roof with Trizooka charging at the final failure.
 The precise special state before departure remains to be observed. This
-candidate is unaccepted and is kept separate from the packaged runtime proof.
+overlay was unaccepted when recorded and remains separate from the later
+accepted packaged runtime proof.
 
 The subsequent current production composition includes accepted grounded form
 selection and ordinary jump input, plus the guarded experimental combat helper.
@@ -111,7 +112,8 @@ source floor triangle 78502, and clears 26 contact-free source sweeps and 26
 endpoint fits. All 78 sweeps and 78 fits pass, with eight actors, seven bots,
 zero AP and no browser errors. Private screenshots are inspected. Binding
 revision `f16b1587` and exact runtime hashes are recorded separately; the helper
-candidates remain unaccepted. Centre boarding does not replace full opposed-half
+candidates were unaccepted at this measurement; their later acceptance does
+not relabel this historical artifact. Centre boarding does not replace full opposed-half
 Tower travel and scoring proof or qualify the unfinished bank replay.
 
 The strict paired combat checker initially stopped earlier at paint movement
@@ -142,14 +144,30 @@ actual source-collider contact/correction plus strict committed endpoint fits,
 and retained straight-chord diagnostics. It awaits the qualified coupling
 runtime; the refined full-bank check has not passed yet.
 
-The current private artifact is
+Accepted #1399 retains source-supported combat movement, the same previously
+planned nonenemy goal and genuine grounded Trizooka ownership. Accepted #1409
+qualifies the original ordinary source jump while a live opponent is already
+targeted. Its matched controlled incoming approach changes baseline 0/3 to
+candidate 6/6, then reaches the original onward source Drop waypoint in all six
+cases. All 932 contact-free sweeps and strict committed poses pass. These are
+controlled source-local approach and onward proofs, with the actual production
+input, Actor and fixed Game clock; they do not close Shipshape's whole-bank
+route. Both common changes pass current private/public packaging and budgets,
+and the extra original-five initial-source browser check passes 15/15. Manta's
+post-foot body correction remains a separate unaccepted gate.
+
+The archived component private artifact is
 `173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5`,
 and the public artifact is
 `a1bbea52c233851ca1f8447d4bbe7125f6adfe1e86965410f0bbddeb480d98a2`.
-Both contain all nine packaged stages and pass the existing distribution
+Both contained all nine packaged stages and passed the existing distribution
 budgets. Current original-source ownership proof also passes the six admitted
 Shooter contacts, same-cell outside-polygon ownership zero, original NoPaint
 glass, uncovered cells and actual enemy Shooter overpaint release.
+Their superseded output directories are retired after recording all 1,177
+private and 927 public file byte counts and SHA-256 identities. Original
+generated data, source files and verification evidence remain intact. The
+final current build pair has not been sealed.
 
 The same immutable public artifact passes actual Chromium menu selection,
 cross-origin pinned original download, v4 worker conversion and eight-actor

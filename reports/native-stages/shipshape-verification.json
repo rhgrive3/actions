@@ -34601,5 +34601,46 @@
     "independentPeer": "Shipshape",
     "status": "confirmed-contract-mismatch-unresolved",
     "sourceOrToleranceChanges": false
+  },
+  "acceptedCombatCommonComposition": {
+    "foundation": "04a0f6f658eda7ed7b92d06b0c2b4500bdfce8ea",
+    "combatSupportPr": 1399,
+    "combatJumpInputPr": 1409,
+    "combatHelperSha256": "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496",
+    "jumpHelperSha256": "bf312aa1ab098eb6194d7536032e05c68b0bbbd7fb219ad79444f4909c03b4a9",
+    "namedShipshapeReviews": "closed-pass",
+    "controlledSourceLocalApproach": {
+      "baselinePass": 0,
+      "baselineCases": 3,
+      "candidatePass": 6,
+      "onwardPass": 6,
+      "strictContactFreeSweeps": 932,
+      "strictCommittedPoses": 932
+    },
+    "originalFiveInitialSourceBrowser": {
+      "pass": 15,
+      "scope": "six-second initial launch/routes, not whole bank"
+    },
+    "ownWholeBankPassed": false,
+    "remainingBodyCouplingOwner": "Manta",
+    "remainingBodyCouplingAccepted": false,
+    "retiredOldPair": {
+      "private": {
+        "contentHash": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+        "files": 1177,
+        "receipt": ".ci-scratch/archived-pair-846-jump-attach/private-all-files.json",
+        "receiptSha256": "59e1d8b3e4c5cd531e3c0284ff5ce95497f8bacd2a7c24bea3b1d37992f485e4",
+        "outputsRetired": true,
+        "sourceAndEvidenceRetained": true
+      },
+      "public": {
+        "contentHash": "a1bbea52c233851ca1f8447d4bbe7125f6adfe1e86965410f0bbddeb480d98a2",
+        "files": 927,
+        "receipt": ".ci-scratch/archived-pair-846-jump-attach/public-all-files.json",
+        "receiptSha256": "98b7a27857f5feab5bcc7483539b8cbe0cf9450e08501a3dd7d1165ba11ddbc1",
+        "outputsRetired": true,
+        "sourceAndEvidenceRetained": true
+      }
+    }
   }
 }
