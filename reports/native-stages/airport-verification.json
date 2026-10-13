@@ -3566,5 +3566,1178 @@
       "startupBudget": "passed"
     }
   },
-  "movementSelfReview": "Changed all settled/walk intervals from fractional hz/4 loops to exact hz/2: each movement observation now0.5seconds at30/60/120Hz. Final retest pending."
+  "movementSelfReview": "All settled/walk intervals use integer hz/2 loops:0.5seconds at30/60/120Hz. Final dedicated regression passed all30human/bot cases and352directed localobjective routes. Reported movement is source-world3Ddistance; console matching remains unverified.",
+  "finalRealActorLaunch": {
+    "id": "airport",
+    "pads": [
+      {
+        "team": 0,
+        "sourceTriangle": 137311,
+        "sourceObject": "Fld_Propeller00_polySurface836253875_4__WoodDeckBright00",
+        "routeNodes": 84,
+        "objectiveRoutes": 11
+      },
+      {
+        "team": 1,
+        "sourceTriangle": 137293,
+        "sourceObject": "Fld_Propeller00_polySurface836253875_4__WoodDeckBright00",
+        "routeNodes": 79,
+        "objectiveRoutes": 11
+      }
+    ],
+    "nodes": 10502,
+    "valid": 6045,
+    "towerSupported": true,
+    "towerRouteNodes": 70,
+    "cases": [
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 0,
+        "isBot": false,
+        "frames": 30,
+        "landing": [
+          -38.19810768456644,
+          10.5,
+          -57.97927059264549
+        ],
+        "routeNodes": 70,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5119999999999756
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 0,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -43.80876069586094,
+          13.5,
+          -60.56579226535
+        ],
+        "routeNodes": 79,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5119999999999756
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 1,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -41.65607431719339,
+          13.5,
+          -61.190761327359056
+        ],
+        "routeNodes": 80,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5125567030709504
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 2,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -39.78422545637047,
+          13.5,
+          -62.423979400371806
+        ],
+        "routeNodes": 79,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5413657367274856
+      },
+      {
+        "hz": 30,
+        "team": 0,
+        "slot": 3,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          -38.360420797293365,
+          13.5,
+          -64.15528678675922
+        ],
+        "routeNodes": 78,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5235447979295857
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 0,
+        "isBot": false,
+        "frames": 30,
+        "landing": [
+          38.19810768456644,
+          10.5,
+          57.97927059264549
+        ],
+        "routeNodes": 65,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5119999999999756
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 0,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          43.80876069586095,
+          13.5,
+          60.56579226535
+        ],
+        "routeNodes": 78,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5119999999999756
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 1,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          41.65607431719339,
+          13.5,
+          61.190761327359056
+        ],
+        "routeNodes": 76,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5125567030709504
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 2,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          39.78422545637047,
+          13.5,
+          62.423979400371806
+        ],
+        "routeNodes": 74,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.5413657367274856
+      },
+      {
+        "hz": 30,
+        "team": 1,
+        "slot": 3,
+        "isBot": true,
+        "frames": 30,
+        "landing": [
+          38.360420797293365,
+          13.5,
+          64.15528678675923
+        ],
+        "routeNodes": 73,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.523544797929586
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 0,
+        "isBot": false,
+        "frames": 60,
+        "landing": [
+          -38.19810768456644,
+          10.5,
+          -57.97927059264549
+        ],
+        "routeNodes": 70,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4660000000000766
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 0,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -43.80876069586094,
+          13.5,
+          -60.56579226535
+        ],
+        "routeNodes": 79,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4660000000000766
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 1,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -41.65607431719339,
+          13.5,
+          -61.190761327359056
+        ],
+        "routeNodes": 80,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.467195781255958
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 2,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -39.78422545637047,
+          13.5,
+          -62.423979400371806
+        ],
+        "routeNodes": 79,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.483257094007328
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "slot": 3,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          -38.360420797293365,
+          13.5,
+          -64.15528678675922
+        ],
+        "routeNodes": 78,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4717065357648296
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 0,
+        "isBot": false,
+        "frames": 60,
+        "landing": [
+          38.19810768456644,
+          10.5,
+          57.97927059264549
+        ],
+        "routeNodes": 65,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4660000000000766
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 0,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          43.80876069586095,
+          13.5,
+          60.56579226535
+        ],
+        "routeNodes": 78,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4660000000000766
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 1,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          41.65607431719339,
+          13.5,
+          61.190761327359056
+        ],
+        "routeNodes": 76,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.467195781255958
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 2,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          39.78422545637047,
+          13.5,
+          62.423979400371806
+        ],
+        "routeNodes": 74,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.483257094007328
+      },
+      {
+        "hz": 60,
+        "team": 1,
+        "slot": 3,
+        "isBot": true,
+        "frames": 60,
+        "landing": [
+          38.360420797293365,
+          13.5,
+          64.15528678675923
+        ],
+        "routeNodes": 73,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.47170653576483
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 0,
+        "isBot": false,
+        "frames": 120,
+        "landing": [
+          -38.19810768456644,
+          10.5,
+          -57.97927059264549
+        ],
+        "routeNodes": 70,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4430000000000796
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 0,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -43.80876069586094,
+          13.5,
+          -60.56579226535
+        ],
+        "routeNodes": 79,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4430000000000796
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 1,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -41.65607431719339,
+          13.5,
+          -61.190761327359056
+        ],
+        "routeNodes": 80,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4436120135137958
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 2,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -39.78422545637047,
+          13.5,
+          -62.423979400371806
+        ],
+        "routeNodes": 79,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4643813035475937
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "slot": 3,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          -38.360420797293365,
+          13.5,
+          -64.15528678675922
+        ],
+        "routeNodes": 78,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.448449294541996
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 0,
+        "isBot": false,
+        "frames": 120,
+        "landing": [
+          38.19810768456644,
+          10.5,
+          57.97927059264549
+        ],
+        "routeNodes": 65,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4430000000000796
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 0,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          43.80876069586095,
+          13.5,
+          60.56579226535
+        ],
+        "routeNodes": 78,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4430000000000796
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 1,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          41.65607431719339,
+          13.5,
+          61.190761327359056
+        ],
+        "routeNodes": 76,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4436120135137958
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 2,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          39.78422545637047,
+          13.5,
+          62.423979400371806
+        ],
+        "routeNodes": 74,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.4643813035475937
+      },
+      {
+        "hz": 120,
+        "team": 1,
+        "slot": 3,
+        "isBot": true,
+        "frames": 120,
+        "landing": [
+          38.360420797293365,
+          13.5,
+          64.15528678675923
+        ],
+        "routeNodes": 73,
+        "objectiveRoutes": 11,
+        "movementSeconds": 0.5,
+        "moved": 2.448449294541996
+      }
+    ],
+    "conditions": "Actual Actor integrator, ordinary shooter, default gear, source capsule and directed nav; display/audio stubs only"
+  },
+  "finalCpuAt64b": {
+    "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+    "nativeSuite": {
+      "passed": 60,
+      "skipped": 4,
+      "failed": 0,
+      "durationMilliseconds": 46198.903779
+    },
+    "airportAllObjectives": {
+      "passed": 3,
+      "skipped": 0,
+      "failed": 0,
+      "durationMilliseconds": 19229.890033
+    },
+    "sourceAndAssetsEnabled": true,
+    "sourceSweepAssetsEnabled": true,
+    "heavyCpuLock": true
+  },
+  "finalBuildsAt64b": {
+    "local": {
+      "contentHash": "b48533f84ea080a3aadc9c8612fcf3f63fc2b65a47a222bda64db51ddaa5e014",
+      "revision": "e502854c8ad24e9cc01159a3afb11e1197be093d096b87e64a70e25350183a2f",
+      "artifactIdentityVerified": true,
+      "startupBudget": {
+        "status": "passed",
+        "revision": "e502854c8ad24e9cc01159a3afb11e1197be093d096b87e64a70e25350183a2f",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74638,
+        "initialJSBytes": 2870920,
+        "criticalHTMLBytes": 15371,
+        "precacheCount": 365,
+        "precacheBytes": 5764705,
+        "workerBytes": 70517,
+        "declaredBytes": 10382745,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
+    },
+    "public": {
+      "contentHash": "94687f4983c57b8f21f82f4b5f558af37e0c832d48d7f966c805af7bd09d6f05",
+      "revision": "4c6c4e3becbb98a4325c5ee4232d574df78384949d7cb615a4347db3ede7b53b",
+      "artifactIdentityVerified": true,
+      "startupBudget": {
+        "status": "passed",
+        "revision": "4c6c4e3becbb98a4325c5ee4232d574df78384949d7cb615a4347db3ede7b53b",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74638,
+        "initialJSBytes": 2873771,
+        "criticalHTMLBytes": 15371,
+        "precacheCount": 365,
+        "precacheBytes": 5767556,
+        "workerBytes": 70517,
+        "declaredBytes": 10385596,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
+    }
+  },
+  "initialWebSocket": {
+    "foundation": "89cb600efe646ad1741a05de2ab21119a1438c66",
+    "report": {
+      "status": "passed",
+      "results": [
+        {
+          "id": "airport",
+          "mode": "turf",
+          "identities": [
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "turf",
+              "native": true,
+              "gridBytes": 2435961
+            },
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "turf",
+              "native": true,
+              "gridBytes": 2435961
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "557489340b82f1cb1397ed796af9639f3527f79ab87c00015f2b5e6342b40ba2",
+              "coverage": [
+                0.009054771739315676,
+                0.007215364869691866
+              ],
+              "stats": {
+                "in": 195,
+                "out": 195,
+                "extrap": 78,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 9.800000000000066,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  2313,
+                  1822
+                ],
+                "applied": [
+                  [
+                    "p_sdij8fe",
+                    320
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_jijp2md",
+                    "tr": 71.62039932705541,
+                    "lastTs": 71.961,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      71.888,
+                      582,
+                      71.961,
+                      585
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "557489340b82f1cb1397ed796af9639f3527f79ab87c00015f2b5e6342b40ba2",
+              "coverage": [
+                0.009054771739315676,
+                0.007215364869691866
+              ],
+              "stats": {
+                "in": 195,
+                "out": 195,
+                "extrap": 497,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 9.800000000000066,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  2313,
+                  1822
+                ],
+                "applied": [
+                  [
+                    "p_sdij8fe",
+                    320
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_sdij8fe",
+                    "tr": 106.79226312784861,
+                    "lastTs": 107.102,
+                    "lastEventSeq": 321,
+                    "lastPaintSeq": 320,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      107.028,
+                      582,
+                      107.102,
+                      585
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "playback": {
+            "settled": true,
+            "frames": 220,
+            "probeRadius": 3.84
+          },
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 428
+        },
+        {
+          "id": "airport",
+          "mode": "zones",
+          "identities": [
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "zones",
+              "native": true,
+              "gridBytes": 2435961
+            },
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "zones",
+              "native": true,
+              "gridBytes": 2435961
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "3e7f8f00066bfd501e15ed068b17232b6e879435a7532db4caceecf3f98bd1ad",
+              "coverage": [
+                0.011539203565389154,
+                0.004796286835981411
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 14,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 15.96666666666704,
+                "out": 0,
+                "growing": 40,
+                "counts": [
+                  2910,
+                  1192
+                ],
+                "applied": [
+                  [
+                    "p_fnddxiw",
+                    703
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_5cd3xn3",
+                    "tr": 82.38650190534185,
+                    "lastTs": 82.926,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      82.87,
+                      954,
+                      82.926,
+                      957
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "4a0ffb7e907e4ed7a3cb98c13cabc4c1107e6389c4c3f271743d327b36749544",
+              "coverage": [
+                0.009724619005176917,
+                0.00474377182743417
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 84,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 15.96666666666704,
+                "out": 0,
+                "growing": 36,
+                "counts": [
+                  2444,
+                  1179
+                ],
+                "applied": [
+                  [
+                    "p_fnddxiw",
+                    671
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_fnddxiw",
+                    "tr": 117.52718580207873,
+                    "lastTs": 118.065,
+                    "lastEventSeq": 671,
+                    "lastPaintSeq": 703,
+                    "queued": 32,
+                    "paintQueued": 18,
+                    "physicsPoints": [
+                      118.009,
+                      954,
+                      118.065,
+                      957
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 706
+        },
+        {
+          "id": "airport",
+          "mode": "tower",
+          "identities": [
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 2436061
+            },
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "tower",
+              "native": true,
+              "gridBytes": 2436061
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "9ccb15c770b4bdae3304ae73dda252cfddd4fa01754a5c88f4ccedbf396a08b8",
+              "coverage": [
+                0,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 90,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 22.133333333333358,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  0,
+                  0
+                ],
+                "applied": [],
+                "peers": [
+                  {
+                    "id": "p_8gvaw2s",
+                    "tr": 90.81238544519817,
+                    "lastTs": 91.427,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      91.351,
+                      1324,
+                      91.427,
+                      1327
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "9ccb15c770b4bdae3304ae73dda252cfddd4fa01754a5c88f4ccedbf396a08b8",
+              "coverage": [
+                0,
+                0
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 588,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 22.133333333333358,
+                "out": 0,
+                "growing": 0,
+                "counts": [
+                  0,
+                  0
+                ],
+                "applied": [],
+                "peers": [
+                  {
+                    "id": "p_cymgalz",
+                    "tr": 125.94542947913382,
+                    "lastTs": 126.564,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      126.485,
+                      1324,
+                      126.564,
+                      1327
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 982
+        },
+        {
+          "id": "airport",
+          "mode": "rainmaker",
+          "identities": [
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "rainmaker",
+              "native": true,
+              "gridBytes": 2435961
+            },
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "rainmaker",
+              "native": true,
+              "gridBytes": 2435961
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "fc8c27de97fb9115068b2984df065d9e16935525b41af8d2f5f9a51a7c7317de",
+              "coverage": [
+                0.008228967957787691,
+                0.00520444870018454
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 123,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 28.299999999999674,
+                "out": 5,
+                "growing": 41,
+                "counts": [
+                  2045,
+                  1294
+                ],
+                "applied": [
+                  [
+                    "p_76wvq4w",
+                    1036
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_kftbond",
+                    "tr": 98.99219013799328,
+                    "lastTs": 99.342,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      99.258,
+                      1694,
+                      99.342,
+                      1697
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "e958742b0f72b3262065151acd7024188f15d8ebca57a4fa00f8fbf27cd307e8",
+              "coverage": [
+                0.00784578969898398,
+                0.00520444870018454
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 868,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 28.299999999999674,
+                "out": 0,
+                "growing": 44,
+                "counts": [
+                  1950,
+                  1294
+                ],
+                "applied": [
+                  [
+                    "p_76wvq4w",
+                    984
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_76wvq4w",
+                    "tr": 134.1194249413889,
+                    "lastTs": 134.474,
+                    "lastEventSeq": 984,
+                    "lastPaintSeq": 1031,
+                    "queued": 47,
+                    "paintQueued": 16,
+                    "physicsPoints": [
+                      134.392,
+                      1694,
+                      134.474,
+                      1697
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 1256
+        },
+        {
+          "id": "airport",
+          "mode": "clams",
+          "identities": [
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "clams",
+              "native": true,
+              "gridBytes": 2435961
+            },
+            {
+              "stage": "da8165322d2e1fecdc326ef1a721153f26428623958337a01460fcc45f211118",
+              "fingerprint": "native-stage-v1:airport:48ebb3b70864e72025feee293ea1b3e45704ec0ce9f50f2274ded155c52ec890:e6f31d4f3945e3d4d5c760ce30ba9c0a04de2c236771dc392f7763292b8782bb",
+              "actors": 8,
+              "rule": "clams",
+              "native": true,
+              "gridBytes": 2435961
+            }
+          ],
+          "evidence": [
+            {
+              "gridSha256": "327f23ad3dc2b72414bf63f382fd74572954262171af1c65d2c63ecf073469b3",
+              "coverage": [
+                0.006684572719475415,
+                0.0030567645680047925
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 181,
+                "snaps": 1
+              },
+              "diagnostic": {
+                "time": 34.46666666666599,
+                "out": 0,
+                "growing": 15,
+                "counts": [
+                  1664,
+                  763
+                ],
+                "applied": [
+                  [
+                    "p_60pwowy",
+                    1384
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_o18lyhz",
+                    "tr": 106.73808718816151,
+                    "lastTs": 106.989,
+                    "queued": 0,
+                    "paintQueued": 0,
+                    "physicsPoints": [
+                      106.929,
+                      2064,
+                      106.989,
+                      2067
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "gridSha256": "327f23ad3dc2b72414bf63f382fd74572954262171af1c65d2c63ecf073469b3",
+              "coverage": [
+                0.006684572719475415,
+                0.0030567645680047925
+              ],
+              "ranked": [
+                65,
+                100
+              ],
+              "stats": {
+                "in": 124,
+                "out": 124,
+                "extrap": 1253,
+                "snaps": 7
+              },
+              "diagnostic": {
+                "time": 34.46666666666599,
+                "out": 0,
+                "growing": 31,
+                "counts": [
+                  1664,
+                  763
+                ],
+                "applied": [
+                  [
+                    "p_60pwowy",
+                    1372
+                  ]
+                ],
+                "peers": [
+                  {
+                    "id": "p_60pwowy",
+                    "tr": 141.88126987418624,
+                    "lastTs": 142.124,
+                    "lastEventSeq": 1373,
+                    "lastPaintSeq": 1384,
+                    "queued": 12,
+                    "paintQueued": 4,
+                    "physicsPoints": [
+                      142.066,
+                      2064,
+                      142.124,
+                      2067
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject",
+          "packets": 1530
+        }
+      ],
+      "errors": [],
+      "packets": 1530
+    }
+  }
 }
