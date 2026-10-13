@@ -407,6 +407,9 @@ jobs:
       - name: Verify seven weapon models and source-loaded attack grip ownership
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-weapon-models.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/weapon-models"
+      - name: Verify Flow response lifetime and late-error receipts
+        if: matrix.suite == 'active'
+        run: node --test scripts/tests/inkwave-flow-route-lifetime.test.mjs
       - name: Verify Flow geometry through actual GTAO and GPU disposal
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-flow-render.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/flow" --profile-dir "$CI_STORAGE/cache/flow" --exact-source

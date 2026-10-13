@@ -15,7 +15,10 @@ const input = network ? 'network-replication/adapter.mjs' : reliability ? 'relia
 const relativeInput = network ? 'patches/network-replication/adapter.mjs' : reliability ? 'patches/reliability/input-adapter.mjs' : 'patches/touch-layout/mobile.js';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const physical = p => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
-for (const dir of [checkout, evidence]) assert(physical(dir).startsWith('/mnt/workspace/'), 'Persistent workspace required');
+for (const dir of [checkout, evidence]) {
+ const resolved=physical(dir);
+ assert(!['/tmp','/var/tmp','/dev/shm'].some(p=>resolved===p||resolved.startsWith(p+'/'))&&['/mnt/workspace',repo.replace(/\/$/,'')].some(p=>resolved.startsWith(physical(p)+'/')), 'Persistent workspace required');
+}
 assert(!fs.existsSync(checkout), 'Use a new isolated checkout; existing work is retained');
 fs.mkdirSync(checkout, { recursive: true }); fs.mkdirSync(evidence, { recursive: true });
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
