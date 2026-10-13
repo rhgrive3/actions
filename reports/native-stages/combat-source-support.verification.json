@@ -305,7 +305,7 @@
   ],
   "sourceBuffersUnchanged": true,
   "errors": [],
-  "qualificationStatus": "candidate: tracked private seal, broader defaults and named independent peer pending",
+  "qualificationStatus": "candidate: named independent peer pending; public/private canonical9, startup budgets, default35/6 assetSkip/0fail and controlled actualGame12 passed",
   "commonHead": "457c42024c904c949661534f762260c79075b121",
   "source": {
     "repository": "kirakira-dev/KiTrix",
@@ -329,6 +329,10 @@
     {
       "receipt": ".ci-scratch/native-combat/private-packaging.log",
       "scope": "Diagnostic temporary Shipshape catalog absent from common HEAD; canonical tracked-input guard correctly failed, 8 pass/1 fail. Isolated tracked owner composition is being sealed; guard unchanged."
+    },
+    {
+      "receipt": "/workspace/stage-combat-validation/.ci-scratch/native-combat/private-build-setup-failed.log",
+      "scope": "New validation worktree initially lacked shared esbuild/node_modules link. Added ignored read-only dependency symlink, full tracked private build9/budget passed."
     }
   ],
   "unverified": [
@@ -336,5 +340,30 @@
     "Ordinary paint/ranked navigation departure",
     "Retail 11.3.0 collision/paint/climb masks and moving states",
     "Switch hardware timing and source coordinates units"
-  ]
+  ],
+  "private": {
+    "same": {
+      "files": true,
+      "inputHash": true,
+      "artifacts": true,
+      "contentHash": true,
+      "build": true
+    },
+    "commonDiagnostic": "/workspace/stage-physics/_site-native-combat-source",
+    "trackedComposition": "/workspace/stage-combat-validation/_site-native-combat-tracked",
+    "trackedCompositionHead": "76013309a0fce9386ef8f2261e952a7ddb99a271",
+    "inputHash": "6ef7852093d8237b6c9a289043dff141501918f5f629a3f49b5b50bfa37a12e5",
+    "revision": "f9ab1be58055d7ec795299cea90c09a47269c07fe492894be17ba943111d6e03",
+    "scope": "All recorded inputs and emitted artifacts byteSHA-identical, entire build metadata equal; no browser repeat required to transfer exact R2 artifact receipt to properly tracked composition. Initial tracked-input guard failure remains preserved.",
+    "packagingPass": 9,
+    "startupBudget": "passed"
+  },
+  "default": {
+    "tests": 41,
+    "passed": 35,
+    "failed": 0,
+    "skipped": 6,
+    "skipScope": "Optional original5 source integration fixtures and Wahoo ordinary source fixture not enabled in this default invocation, not waived assertions.",
+    "retainedSetupFailure": "Initial command omitted required --experimental-vm-modules; rerun proper invocation passed."
+  }
 }
