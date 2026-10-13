@@ -19,5 +19,8 @@ export function adaptBuildSource(rel, code) {
   code = adaptRange(rel, code);
   code = adaptRanked(rel, code);
   code = adaptNativeStages(rel, code);
-  return adaptWeaponAudio(rel, adaptCameraAimControls(rel, code));
+  // Audio patches are applied before the verified final camera pass.
+  // The camera adapter must retain the terminal fail-closed position.
+  code = adaptWeaponAudio(rel, code);
+  return adaptCameraAimControls(rel, code);
 }
