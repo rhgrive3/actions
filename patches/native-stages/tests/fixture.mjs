@@ -26,6 +26,7 @@ export async function nativeFixture(options={}){
  export {nativeJumpAttachTransition,updateNativeJumpAttach} from './patches/native-stages/runtime/engine.mjs';
  export { nativeDropClearance,nativeDropTransition,nativeDropTravelForm } from './patches/native-stages/runtime/engine.mjs';
  export {nativeSurgeTransition,updateNativeSurge} from './patches/native-stages/runtime/engine.mjs';
+ export {nativeOrdinaryJumpInput} from './patches/native-stages/runtime/native-jump-input.mjs';
  export { nativeSourceWaypointReached,nativeSourceTravelInput,nativeSourceFootSupported } from './patches/native-stages/runtime/native-bot-support.mjs';
  export {nativeSourceGroundedForm} from './patches/native-stages/runtime/native-bot-form.mjs';
 
