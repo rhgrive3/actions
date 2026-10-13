@@ -4,7 +4,7 @@ import {fixture} from './source-fixture.mjs';
 
 const EXTRA=`export {replaySpecial as replayAllSpecials,ALL_SPECIALS,ALL_SPECIALS_STATUS} from './patches/splatoon3/runtime/all-specials.mjs';`;
 async function setup(){const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:EXTRA});f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;}
-function equip(actor,id){actor.weapon={...actor.weapon,special:id,specialCost:100};actor.special=100;actor.alive=true;actor.remote=false;actor.intent.fire=false;actor.intent.sub=false;actor.intent.jump=false;actor._prevIntent ||= {};Object.assign(actor._prevIntent,{fire:false,sub:false,jump:false,squid:false,booyah:false});}
+function equip(actor,id){actor.weapon={...actor.weapon,special:id,specialCost:100};actor.special=100;actor.alive=true;actor.remote=false;if(id==='booyahBomb')actor._resolve=()=>{};actor.intent.fire=false;actor.intent.sub=false;actor.intent.jump=false;actor._prevIntent ||= {};Object.assign(actor._prevIntent,{fire:false,sub:false,jump:false,squid:false,booyah:false});}
 function tickWorld(f,frames){for(let i=0;i<frames;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}}
 function eventFeed(f,name){const rows=[];f.on(name,e=>rows.push(e));return rows;}
 
@@ -329,8 +329,8 @@ test('Inkjet power snapshot survives the actual projectile packet and ghost with
 test('every catalogue-launched special projectile keeps a wire identity accepted by ghost reconstruction',async()=>{
  const f=await setup();
  for(const id of ['tentaMissiles','inkjet','booyahBomb','ultraStamp','crabTank']){
-  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];if(id==='tentaMissiles'){const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors.push(target);}a._startSpecial();if(id==='booyahBomb'){a._s3AllSpecialState.charge=1;for(let k=0;k<30;k++)a._updateSpecial(1/60);}a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
-  for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];if(id==='tentaMissiles'){const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors.push(target);}a._startSpecial();a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
+  for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;if(id==='booyahBomb'&&i===29){a._s3AllSpecialState.charge=1;a.intent.sub=true;}a._updateSpecial(1/60);}
   const p=f.G.projectiles.list.find(x=>x.s3AllSpecial===id);assert.ok(p,id+' emitted');
   const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));assert.equal(packet[4],id);
   const remote=f.make();remote.remote=true;remote.nid=7;const before=f.G.projectiles.list.length;f.G.projectiles.ghostProjectile(remote,packet);assert.equal(f.G.projectiles.list.length,before+1,id+' accepted');const ghost=f.G.projectiles.list.at(-1);assert.equal(ghost.s3SpecialWeapon.id,id);assert.equal(ghost.damage,0);

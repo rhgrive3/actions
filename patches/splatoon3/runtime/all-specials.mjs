@@ -873,7 +873,7 @@ function updateWorld(rt,dt) {
           if(!o.owner.remote&&(o.pulse||0)%4===0)emitObject(rt,o,'pulse');
         }
       }
-      if(elapsed+1e-8>=o.dur)removeWorld(rt,o,'expire');
+      if(elapsed>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='booyahBlast'){
       const elapsed=o.age-o.startDelay,started=elapsed>=0;
       const radius=started?o.maxRadius*clamp(elapsed/Math.max(1/FPS,o.expand),0,1):0,center=rt.v0.copy(o.pos);center.y+=.2;
@@ -1026,7 +1026,7 @@ function activeStep(rt,actor,dt) {
   if(state.id==='booyahBomb'){
     // WeaponSpNiceBall: 30F startup before armor/charge; 600F to throw.
     // A full charge enables manual ZR throw, but does NOT auto-launch.
-    actor.form='kid';actor.vel.set(0,0,0);
+    actor.form='kid';dampForSpecial(actor,dt,0);
     const ready=elapsed+1e-8>=30/FPS,ap=state.specialPowerAP;
     if(ready){
       state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
@@ -1135,7 +1135,7 @@ function activeStep(rt,actor,dt) {
     // MoveCancelableFrame=15; PreBurstFrame=38; UnrelaxFrame=28.
     // Keep the heading chosen at activation: the riding path is NOT steerable.
     if(state.phase==='startup'){
-      if(elapsed+1e-8>=25/FPS)actor.invuln=Math.max(actor.invuln,dt+.025);
+      if(elapsed>=25/FPS)actor.invuln=Math.max(actor.invuln,dt+.025);
       if(elapsed>=38/FPS){
         state.phase='dash';s.phase='dash';state.dashT=0;state.travel=0;state.reefSpeedRaw=0;
         actor.character?.trigger?.('special_dash');
