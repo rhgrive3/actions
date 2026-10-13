@@ -109,7 +109,10 @@ export function updateNativeClimb(brain,G,dt){
   const yaw=Math.atan2(aim.x,aim.z),pitch=Math.max(-1.1,Math.min(1,Math.atan2(aim.y,Math.hypot(aim.x,aim.z))));
   const turn=(target,current)=>{let d=target-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;return current+Math.max(-6*dt,Math.min(6*dt,d));};
   brain.aimYaw=turn(yaw,brain.aimYaw);brain.aimPitch=turn(pitch,brain.aimPitch);a.aimYaw=brain.aimYaw;a.aimPitch=brain.aimPitch;
-  const cp=Math.cos(a.aimPitch);a.aimPoint.copy(a.pos).add(new THREE.Vector3(Math.sin(a.aimYaw)*cp*6,1.1+Math.sin(a.aimPitch)*6,Math.cos(a.aimYaw)*cp*6));
+  // Retain the ordinary aim turn rate, but converge on the actual wall point.
+  // A fixed six-unit eye ray can end below/behind a nearby low wall target;
+  // the lower production muzzle then aims into the foreground source floor.
+  const cp=Math.cos(a.aimPitch),distance=aim.length();a.aimPoint.copy(a.pos).add(new THREE.Vector3(Math.sin(a.aimYaw)*cp*distance,1.1+Math.sin(a.aimPitch)*distance,Math.cos(a.aimYaw)*cp*distance));
   // An interrupted shooter stream can require a released trigger frame before
   // it admits another shot. Supply that normal input without changing the
   // weapon runner's cancellation state or the actor's ink.
