@@ -32,7 +32,7 @@ export function pruneNativeNav(graph){
 }
 /** Populate the existing NavGraph/A* contract from triangle support, not chart boxes. */
 export function buildNativeNav(graph){
- const L=graph.level,w=L.triangleWorld,B=L.bounds,st=graph.step;
+ const L=graph.level,w=L.triangleWorld,B=L.bounds,st=graph.step,walkRise=L.manifest.sourceNavigation?.highDrops?Math.min(.5,PLAYER.stepUp):.5;
  graph.x0=B.minX+st*.5;graph.z0=B.minZ+st*.5;
  graph.nx=Math.floor((B.maxX-B.minX)/st);graph.nz=Math.floor((B.maxZ-B.minZ)/st);
  graph.cells=Array.from({length:graph.nx*graph.nz},()=>[]);
@@ -55,8 +55,8 @@ export function buildNativeNav(graph){
    if(ix<0||iz<0||ix>=graph.nx||iz>=graph.nz)continue;
    for(const id of graph.cells[iz*graph.nx+ix]){
     const m=graph.nodes[id],dy=m.y-n.y;let type,cost;
-    if(Math.abs(dy)<=.5){if(dx&&dz&&(!graph._has(n.ix+dx,n.iz,n.y)||!graph._has(n.ix,n.iz+dz,n.y)))continue;type='walk';cost=Math.hypot(dx,dz)*st;}
-    else if(!(dx&&dz)&&dy>.5&&dy<=1.25){type='jump';cost=st+2.5;}
+    if(dy>=-.5&&dy<=walkRise){if(dx&&dz&&(!graph._has(n.ix+dx,n.iz,n.y)||!graph._has(n.ix,n.iz+dz,n.y)))continue;type='walk';cost=Math.hypot(dx,dz)*st;}
+    else if(!(dx&&dz)&&dy>walkRise&&dy<=1.25){type='jump';cost=st+2.5;}
     // The stock 3.4-unit drop cap is an AI policy for the small blockouts.
     // Native high ledges can drop safely to verified support above fall death.
     else if(!(dx&&dz)&&dy<-.5&&m.y>PLAYER.fallDeathY){type='drop';cost=st+.8;}
