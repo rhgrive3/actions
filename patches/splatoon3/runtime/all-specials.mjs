@@ -488,13 +488,39 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
   },objectCause);
   return applied;
 }
+// WeaponSpChariotParam (11.3.0): local horizontal .075/F vs forward .015/F.
+// Preserve the engine's camera-facing velocity blend; only its target differs.
+export function crabAttackTargetVelocity(move, yaw = 0) {
+  if (![move?.x, move?.z, yaw].every(finite)) return {x:0,z:0};
+  const scale=1/Math.max(1,Math.hypot(move.x,move.z));
+  const mx=move.x*scale,mz=move.z*scale;
+  const fx=Math.sin(yaw),fz=Math.cos(yaw),rx=fz,rz=-fx;
+  const right=mx*rx+mz*rz,forward=mx*fx+mz*fz;
+  return {x:(right*rx*.075+forward*fx*.015)*FPS,
+    z:(right*rz*.075+forward*fz*.015)*FPS};
+}
+
+// WeaponSpCastle BodyParam.CollisionDashRadiusForPlayer = 1.5.
+// A midpoint-only hit test loses targets near the start/end of each 60Hz step.
+export function krakenDashSweptContact(from,to,target,radius=1.5){
+  if(![from?.x,from?.z,to?.x,to?.z,target?.x,target?.z,radius].every(finite)||radius<0)return false;
+  const dx=to.x-from.x,dz=to.z-from.z,lengthSq=dx*dx+dz*dz;
+  const t=lengthSq>1e-12?clamp(((target.x-from.x)*dx+(target.z-from.z)*dz)/lengthSq,0,1):0;
+  const x=target.x-(from.x+t*dx),z=target.z-(from.z+t*dz);
+  return x*x+z*z<=radius*radius;
+}
 function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = true, flight = false } = {}) {
   const P = rt.api.PLAYER, move = actor.intent?.move;
   const useSquid = squid && !!actor.intent?.squid;
   actor.form = useSquid ? 'squid' : 'kid';
   const enemyInk = actor.grounded && actor.groundTeam === 2;
   if (speed == null) actor._horizontal?.(dt, useSquid, enemyInk);
-  else {
+  else if(speed==='crabAttack'){
+    const target=crabAttackTargetVelocity(move,actor.aimYaw??actor.yaw??0);
+    const alpha=1-Math.exp(-8*dt);
+    actor.vel.x+=(target.x-actor.vel.x)*alpha;
+    actor.vel.z+=(target.z-actor.vel.z)*alpha;
+  }else{
     const cap = speed * (move ? Math.min(1, Math.hypot(move.x,move.z)) : 0);
     const yaw = Math.atan2(move?.x || 0, move?.z || 0);
     if (cap > .01) { actor.vel.x += (Math.sin(yaw)*cap-actor.vel.x) * (1-Math.exp(-8*dt)); actor.vel.z += (Math.cos(yaw)*cap-actor.vel.z) * (1-Math.exp(-8*dt)); }
@@ -938,8 +964,8 @@ function paintReefRut(rt,actor,state,from,to,dt) {
 function deployInkstrike(rt,actor,state,index) {
   const target=aimPoint(rt,actor,28,rt.v0).clone();groundAt(rt,target,rt.v1);target.copy(rt.v1);
   const launchAt=rt.v2.set(actor.pos.x,actor.pos.y+1.1,actor.pos.z).clone();
-  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{dur:1.1,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,target,scale:[.36,.36,.36]});
-  marker.phase='flight';marker.origin=launchAt.clone();marker.flight=1.1;marker.age=0;
+  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{dur:133/FPS,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,target,scale:[.36,.36,.36]});
+  marker.phase='flight';marker.origin=launchAt.clone();marker.flight=82/FPS;marker.age=0;
   emitAction(rt,actor,'tripleInkstrike',state.serial,'marker',launchAt,target,marker.seed,{index});
 }
 function throwChumps(rt,actor,state) {
@@ -1164,8 +1190,18 @@ function updateWorld(rt,dt) {
       const k=clamp(o.age/Math.max(.05,o.flight||1.1),0,1);
       o.pos.copy(o.origin).lerp(o.target,k);o.pos.y+=Math.sin(k*Math.PI)*4;
       o.mesh?.position.copy(o.pos);
-      if(k>=1){o.kind='strike';o.phase='active';o.dur=3.1;o.activeAt=o.age;o.maxRadius=7.7;o.currentRadius=.5;o.nextDamage=o.age;
-        o.paintT=0;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);fxBurst(rt,o.owner,o.target,1.6,'deploy');emitObject(rt,o,'active');}
+      if(k>=1){
+        // Wiki: first damage 82F after marker; tornado remains harmful 51F.
+        // Deal the first hit at transition and ten more at 5F intervals.
+        o.kind='strike';o.phase='active';o.dur=51/FPS;
+        o.activeAt=o.age;o.maxRadius=7.7;o.currentRadius=.5;o.nextDamage=o.age+5/FPS;
+        o.paintT=0;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);
+        if(!o.owner.remote){
+          const center=rt.v0.copy(o.pos);center.y+=.8;
+          damageBandRadius(rt,o.owner,center,descriptions.tripleInkstrike.splashBands,o.currentRadius,'tripleInkstrike');
+        }
+        fxBurst(rt,o.owner,o.target,1.6,'deploy');emitObject(rt,o,'active');
+      }
     }else if(o.kind==='strike'){
       const elapsed=o.age-(o.activeAt||0),spread=50/FPS;
       o.currentRadius=.5+(o.maxRadius-.5)*clamp(elapsed/spread,0,1);
@@ -1184,7 +1220,7 @@ function updateWorld(rt,dt) {
           if(!o.owner.remote&&(o.pulse||0)%4===0)emitObject(rt,o,'pulse');
         }
       }
-      if(elapsed>=o.dur)removeWorld(rt,o,'expire');
+      if(elapsed+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='booyahBlast'){
       // DamageRadiusStart/End and PaintSpanFrame are 60 Hz source frames.
       // Accumulate those frames here so the per-frame 3.3 damage is invariant
@@ -1449,7 +1485,7 @@ function activeStep(rt,actor,dt) {
     if(state.wasRolling&&!rolling){state.nextShot=Math.max(state.nextShot,elapsed+20/60);state.fireStart=null;}
     if(rolling){state.fireStart=null;}
     state.wasRolling=rolling;
-    moveActor(rt,actor,dt,state,{speed:rolling?8.5:4.2,squid:false,jump:true});
+    moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crabAttack',squid:false,jump:true});
     if(actor.intent.sub&&!rolling&&elapsed<state.duration-25/60&&elapsed>=state.nextCannon){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
       launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,arc:2.4,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
@@ -1521,10 +1557,10 @@ function activeStep(rt,actor,dt) {
       state.dashT+=dt;const before=actor.pos.clone(),py=actor.pos.y;
       actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;actor.vel.y=0;
       actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false);
-      const swept=rt.v1.copy(before).lerp(actor.pos,.5);state.dashHits||=new Set();
+      state.dashHits||=new Set();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===actor.team||state.dashHits.has(victim))continue;
-        if(Math.hypot(victim.pos.x-swept.x,victim.pos.z-swept.z)<=1.5){rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);}
+        if(krakenDashSweptContact(before,actor.pos,victim.pos,1.5)){rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);}
       }
       stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
       if(state.dashT>=35/60){state.phase='active';state.dashT=0;}
@@ -1811,7 +1847,7 @@ function replayObjectEvent(rt,actor,event) {
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);
-    if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=finite(event.duration)?event.duration:1.1;}
+    if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=82/FPS;}
     if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
     if(kind==='wave'){
       object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
@@ -1827,7 +1863,7 @@ function replayObjectEvent(rt,actor,event) {
     object.pos.copy(point);if(object.mesh){object.mesh.position.copy(point);if(object.kind==='screen')object.mesh.position.y+=object.height/2;}
     if(object.kind==='screen'&&target){const normal=target.clone().sub(point).setY(0).normalize();object.normal.copy(normal);object.direction.copy(normal);object.tangent.set(normal.z,0,-normal.x);object.target=target;}
   }else if(event.action==='active'){
-    if(object.kind==='marker'){object.kind='strike';object.phase='active';object.activeAt=object.age;object.dur=3.1;object.maxRadius=7.7;object.currentRadius=.5;object.nextDamage=object.age;object.once=new Set();}
+    if(object.kind==='marker'){object.kind='strike';object.phase='active';object.activeAt=object.age;object.dur=51/FPS;object.maxRadius=7.7;object.currentRadius=.5;object.nextDamage=object.age+5/FPS;object.once=new Set();}
     if(object.kind==='decoy')object.phase='active';
   }else if(event.action==='hit')object.hp=finite(event.hp)?event.hp:object.hp;
   else if(event.action==='destroy'||event.action==='expire')removeWorld(rt,object,event.action);
