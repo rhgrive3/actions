@@ -52,9 +52,13 @@ test('Manta opposite source pads fit capsules and reach a common deck in both di
  const paintable=G.nav.validIds.filter(id=>G.nav.nodes[id].nativePaintable);
  const common=nativeRankedComponent(G.nav,paintable,seeds);
  assert(common.paintable.length>100);
+ const field=common.paintable.filter(id=>G.nav.nodes[id].zone<0);
  for(let team=0;team<2;team++){
-  assert(G.nav.path(seeds[team],seeds[1-team],team,50000),'opposing deck pad has a directed route');
-  for(const target of common.paintable.filter((_,i)=>i%Math.max(1,Math.floor(common.paintable.length/20))===0))assert(G.nav.path(seeds[team],target,team,50000));
+  const opposing=level.spawnPads[1-team],bank=[...field].sort((i,j)=>{
+   const a=G.nav.nodes[i],b=G.nav.nodes[j];return Math.hypot(a.x-opposing.x,a.z-opposing.z)-Math.hypot(b.x-opposing.x,b.z-opposing.z);
+  })[0];
+  assert(bank!==undefined&&G.nav.path(seeds[team],bank,team,50000),'opposing playable bank has a directed route outside the protected enemy spawn');
+  for(const target of field.filter((_,i)=>i%Math.max(1,Math.floor(field.length/20))===0))assert(G.nav.path(seeds[team],target,team,50000));
  }
  const motion=[];
  for(const hz of [30,60,120]){

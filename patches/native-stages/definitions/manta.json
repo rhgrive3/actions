@@ -4,12 +4,35 @@
   "name": "マンタマリア号",
   "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
   "tree": "5e08b4fb4825f7bfdd138ad13139a3d1af6d29dc",
-  "bounds": {"minX": -34.5, "minZ": -49.60279846191406, "maxX": 34.5, "maxZ": 49.60279846191406},
-  "spawnPads": [[-12, 8, -42], [12, 8, 42]],
+  "bounds": {
+    "minX": -34.5,
+    "minZ": -49.60279846191406,
+    "maxX": 34.5,
+    "maxZ": 49.60279846191406
+  },
+  "spawnPads": [
+    [
+      -12,
+      8,
+      -42
+    ],
+    [
+      12,
+      8,
+      42
+    ]
+  ],
   "spawnBarrier": 2.5,
   "version1130Verified": false,
   "placementStatus": "Inferred opposing main-deck GroundRoof supports from pinned display triangles; native 11.3.0 placements and retail collision unverified.",
+  "sourceNavigation": {
+    "wallClimb": true,
+    "highDrops": true,
+    "wallSurge": true
+  },
   "sourceSemantics": {
-    "nonCollidableObjectPatterns": ["^FldObj_Pillar03_Streetlight_"]
+    "nonCollidableObjectPatterns": [
+      "^FldObj_Pillar03_Streetlight_"
+    ]
   }
 }
