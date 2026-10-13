@@ -35,6 +35,8 @@ registerFinish('hazard', 0xf6f2e6, { roughness: 0.5, metalness: 0 });
 registerInkFinish('inkCore', { basic: true, transparent: false, shade: 1 });
 registerInkFinish('inkAura', { basic: true, transparent: true, opacity: 0.32, depthWrite: false, double: true });
 registerInkFinish('inkSwirl', { basic: true, transparent: true, opacity: 0.55, depthWrite: false, double: true });
+// Kraken irises read brighter than the glossy ink body in the S3 render.
+registerInkFinish('inkIris', { roughness: 0.15, metalness: 0, emissive: 0.9 });
 
 export const SPECIAL_MODEL_IDS = Object.freeze([
   'spTentaLauncher', 'spTentaMissile', 'spInkjetPack', 'spInkjetCannon', 'spBooyahBall', 'spUltraStamp',
@@ -370,18 +372,61 @@ function kraken(THREE) {
   }
   body.computeVertexNormals();
   K.add('body', 'inkGloss', body);
-  // Eyes under the mantle's overhang: dark sockets, white sclera, black pupils, angry brows.
+  // Eyes (S3 model render / icon): one cream goggle mask joining both eyes
+  // with a dip at the bottom centre and pointed outer corners, a black rim
+  // along its lower edge, large team-ink irises with a darker ring and black
+  // pupil, and angry ink lids slanting down to the centre that hide the upper
+  // part of each iris under the mantle. Bands are laid on the head surface.
+  const rAt = (y) => {
+    for (let i = 1; i < prof.length; i++) if (prof[i][1] >= y) {
+      const a = prof[i - 1], b = prof[i], t = (y - a[1]) / Math.max(1e-6, b[1] - a[1]);
+      return a[0] + (b[0] - a[0]) * t;
+    }
+    return 0;
+  };
+  const headZ = (x, y) => {
+    const k = Math.min(1, Math.max(0, (y - 1.1) / 0.16)), r = rAt(y);
+    return Math.sqrt(Math.max(0, r * r - x * x)) * (0.65 + (0.36 - 0.65) * k) - 0.02 * k;
+  };
+  const band = (halfW, yBot, yTop, off, nu = 32, nv = 4) => {
+    const pos = [], idx = [];
+    for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) {
+      const u = i / nu * 2 - 1, y0 = yBot(u), y = y0 + (yTop(u) - y0) * j / nv, x = u * halfW;
+      // Push out along the head's horizontal (elliptical) normal so stacked
+      // bands stay apart where the face curves away at the outer corners.
+      const z = headZ(x, y), c = headZ(0, y) / Math.max(1e-6, rAt(y)), nx = x, nz = z / Math.max(1e-6, c * c), n = Math.hypot(nx, nz) || 1;
+      pos.push(x + nx / n * off, y, z + nz / n * off);
+    }
+    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
+      const a = j * (nu + 1) + i, b = a + 1, c = a + nu + 1, d = c + 1;
+      idx.push(a, b, c, b, d, c);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  };
+  const maskBot = (u) => 0.915 + 0.08 * Math.exp(-((u / 0.22) ** 2)) + 0.15 * Math.max(0, (Math.abs(u) - 0.7) / 0.3) ** 2;
+  const lid = (u) => 1.025 + 0.085 * Math.min(1, Math.abs(u) / 0.7);
+  K.add('body', 'black', band(0.325, (u) => maskBot(u) - 0.022, (u) => lid(u) + 0.02, 0.002));
+  K.add('body', 'cream', band(0.305, maskBot, (u) => lid(u) + 0.02, 0.01));
   for (const s of [-1, 1]) {
-    K.add('body', 'inkDark', sphere(THREE, 0.12, s * 0.15, 1.08, 0.19, 1.3, 0.75, 0.4));
-    K.add('body', 'cream', sphere(THREE, 0.1, s * 0.15, 1.07, 0.215, 1.3, 0.55, 0.35));
-    K.add('body', 'black', sphere(THREE, 0.035, s * 0.12, 1.065, 0.245, 1, 1, 0.5));
-    K.add('body', 'inkDark', box(THREE, 0.17, 0.04, 0.05, 0, 0, 0).rotateZ(s * -0.32).translate(s * 0.14, 1.145, 0.215));
+    const x = s * 0.15, y = 1.045, z = headZ(x, y);
+    // Offsets are in the eye's own frame, turned to follow the head surface.
+    const g = (r, sz, dx, dy, dz) => sphere(THREE, r, dx, dy, dz, 1, 1.12, sz, 22, 12)
+      .rotateY(Math.atan2(x, z) * 0.8).translate(x, y, z);
+    K.add('body', 'inkDark', g(0.077, 0.28, 0, 0, 0.006));
+    K.add('body', 'inkIris', g(0.07, 0.3, 0, 0, 0.01));
+    K.add('body', 'black', g(0.03, 0.3, -s * 0.018, 0.004, 0.022));
   }
+  K.add('body', 'black', band(0.3, (u) => lid(u) - 0.01, lid, 0.04));
+  K.add('body', 'inkGloss', band(0.32, lid, () => 1.19, 0.041));
   // Fringe of short tentacles under the eyes.
   const fringe = [];
   for (let k = 0; k < 7; k++) {
     const u = (k - 3) / 3, x = u * 0.3, z = 0.2 - Math.abs(u) * 0.14;
-    fringe.push(tube(THREE, [[x, 0.96, z * 0.9], [x * 1.08, 0.82, z + 0.03], [x * 1.14, 0.66 + Math.abs(u) * 0.06, z]], 0.055 - Math.abs(u) * 0.012, 10, 8));
+    fringe.push(tube(THREE, [[x, 0.9, z * 0.85], [x * 1.08, 0.78, z + 0.03], [x * 1.14, 0.63 + Math.abs(u) * 0.06, z]], 0.055 - Math.abs(u) * 0.012, 10, 8));
   }
   K.add('body', 'inkGloss', ...fringe);
   // Two thick arms with teardrop pads (animated about the arm root).
