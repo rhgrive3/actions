@@ -5,9 +5,9 @@ const pending=new WeakMap();
 
 function combatContext(brain,G,state){
  const a=brain.a,N=G.nav,path=brain.path;
- return !!(state.combat&&G.level?.native&&a.alive&&!a.grounded&&a.form==='kid'&&!a.climbing&&!a.superJumpState&&!a.specialActive&&!nativeTowerRider(G,a)&&!brain._nativeTowerBoarding&&!brain._nativeClimb&&!brain._nativeDrop&&!brain._nativeSurge&&!brain._nativeJumpAttach&&
+ return !!(state.combat&&G.level?.native&&a.alive&&!a.grounded&&a.form==='kid'&&!a.climbing&&!a.superJumpState&&!a.specialActive&&!a.s3?.squidSpawn&&!nativeTowerRider(G,a)&&!brain._nativeTowerBoarding&&!brain._nativeClimb&&!brain._nativeDrop&&!brain._nativeSurge&&!brain._nativeJumpAttach&&
   state.path===path&&state.node===path?.[brain.pi]&&state.mode===brain.mode&&brain.mode==='fight'&&state.target===brain.target&&brain.target?.alive&&brain.target.team!==a.team&&state.goal===brain.goal&&
-  state.level===G.level&&state.nav===N&&state.physics===G.physics&&state.match===G.match&&N.level===G.level&&N.physics===G.physics&&G.physics.level===G.level&&
+  state.level===G.level&&state.nav===N&&state.physics===G.physics&&state.match===G.match&&state.matchMode===G.match?.mode&&N.level===G.level&&N.physics===G.physics&&G.physics.level===G.level&&
   (a.s3JumpSerial||0)===state.serial+1&&N.edgeType(path[brain.pi-1],state.node)==='jump'&&Number.isFinite(G.time)&&G.time>=state.started&&G.time-state.started<state.maxFlight);
 }
 
@@ -47,7 +47,7 @@ export function nativeOrdinaryJumpInput(brain,G){
    if(!it.sub&&!it.special&&!it.throw&&combatContext(brain,G,state)){combatMove(brain,G,state);if(a.vel.y>0)it.jump=true;return;}
    pending.delete(brain);
   }else{
-  if(state.path!==path||state.node!==node||state.mode!==brain.mode||state.level!==G.level||state.nav!==N||state.match!==G.match||serial!==state.serial+1||a.grounded||!(a.vel.y>0))pending.delete(brain);
+  if(brain.target||state.path!==path||state.node!==node||state.mode!==brain.mode||state.level!==G.level||state.nav!==N||state.match!==G.match||serial!==state.serial+1||a.grounded||!(a.vel.y>0))pending.delete(brain);
   else {it.jump=true;return;}
   }
  }
@@ -55,7 +55,7 @@ export function nativeOrdinaryJumpInput(brain,G){
  // launch, extend an unrelated airborne impulse or hold a failed admission.
  if(it.jump&&a.grounded&&nativeSourceFootSupported(G,a,N.nodes[path[brain.pi-1]])){
   if(brain.target){
-   if(!it.sub&&!it.special&&!it.throw&&combatSourceReady(brain,G))pending.set(brain,{path,node,serial,mode:brain.mode,target:brain.target,goal:brain.goal,level:G.level,nav:N,physics:G.physics,match:G.match,combat:true,started:G.time,maxFlight:Math.min(2,2*PLAYER.jumpVel/(PLAYER.gravity*Math.min(1,PLAYER.apexGravityMul||1))+.1)});
+   if(!it.sub&&!it.special&&!it.throw&&combatSourceReady(brain,G))pending.set(brain,{path,node,serial,mode:brain.mode,target:brain.target,goal:brain.goal,level:G.level,nav:N,physics:G.physics,match:G.match,matchMode:G.match?.mode,combat:true,started:G.time,maxFlight:Math.min(2,2*PLAYER.jumpVel/(PLAYER.gravity*Math.min(1,PLAYER.apexGravityMul||1))+.1)});
   }else pending.set(brain,{path,node,serial,mode:brain.mode,level:G.level,nav:N,match:G.match});
  }
 }
