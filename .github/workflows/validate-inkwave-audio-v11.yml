@@ -23,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install MP3 validation fallback
+        run: python3 -m pip install --quiet mutagen==1.47.0
       - name: Verify 381 audio sources
         run: python3 tools/audio/verify-s3-real-files.py
       - name: Verify real-only event behavior

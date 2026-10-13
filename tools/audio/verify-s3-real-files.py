@@ -40,6 +40,20 @@ def audit(root: Path, manifest_path: Path) -> dict:
                     raise ValueError("Unexpected audio format or duration")
                 rec["duration_seconds"] = float(info["duration"])
                 rec["status"] = "verified"
+            except FileNotFoundError:
+                # Minimal GitHub runner images do not always ship ffprobe.
+                # Mutagen validates the real MPEG frames and duration; hashes
+                # are still checked below, so no sample is silently trusted.
+                try:
+                    from mutagen.mp3 import MP3
+                    track = MP3(str(path))
+                    if not track.info or track.info.length <= 0:
+                        raise ValueError("Invalid MP3 frame duration")
+                    rec["duration_seconds"] = float(track.info.length)
+                    rec["status"] = "verified"
+                except (ImportError, OSError, ValueError, TypeError) as exc:
+                    rec["status"] = "invalid"
+                    rec["error"] = str(exc)
             except (OSError, subprocess.CalledProcessError, ValueError, KeyError) as exc:
                 rec["status"] = "invalid"
                 rec["error"] = str(exc)
