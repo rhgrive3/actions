@@ -15,6 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Diagnose native roller reach geometry
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/roller-reach-diagnostic.test.mjs
       - name: Check exact roller grip, clearance, and action regressions
         run: |
           node --experimental-vm-modules --test \
