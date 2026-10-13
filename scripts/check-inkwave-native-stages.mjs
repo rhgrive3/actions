@@ -58,16 +58,45 @@ try{
   report.rules=[];reports.push(report);fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));
   for(const mode of ['zones','tower','rainmaker','clams']){
    console.log('rule '+id+' '+mode);
+   const capability=await page.evaluate(async({id,mode})=>{const {nativeStageBuild}=await import(new URL('patches/native-stages/runtime/build-config.mjs',document.baseURI));return nativeStageBuild.stages.find(s=>s.id===id)?.ruleAvailability?.[mode]||null;},{id,mode});
+   if(capability?.supported===false){
+    assert.equal(capability.status,'source-route-unverified');assert.ok(capability.reason);assert.equal(mode,'tower');
+    const rejected=await page.evaluate(async({id,mode})=>{
+     const G=NG,g=G.game,{nativeStageRuleStatus}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI)),status=nativeStageRuleStatus(id,mode);
+     if(status?.supported!==false)throw Error('Expected qualified unsupported Tower status');
+     const match=G.match,level=G.level,physics=G.physics,nav=G.nav,actors=[...G.actors],flow=g._matchFlow;
+     const before=()=>G.match===match&&G.level===level&&G.physics===physics&&G.nav===nav&&actors.every((a,i)=>G.actors[i]===a)&&g._matchFlow===flow;
+     const api=await g.startMatch({mapId:id,mode});if(api!==false||!before())throw Error('Unsupported offline/API request changed live state');
+     const menu=await g._startMenuMatch({mapId:id,mode});if(menu!==false||!before())throw Error('Unsupported menu request changed live state');
+     let networkRejected=false;try{await g.startNetMatch({map:id,mode},{});}catch(e){networkRejected=e.name==='RangeError'&&e.message.includes('ガチヤグラ');}if(!networkRejected||!before())throw Error('Unsupported direct online request changed live state');
+     g.menus._setup={...g.menus._setup,mapId:id,mode};g.menus.wipe.cancel();g.menus.show('setup',{force:true,wipe:false,light:false});
+     const unsupportedButton=document.querySelector('[data-native-rule-supported="false"]'),reason=document.querySelector('[data-native-rule-reason]');if(!unsupportedButton?.disabled||!reason?.textContent.includes('ガチヤグラ'))throw Error('Setup does not show/disable unsupported rule');
+     const ticket=[...document.querySelectorAll('.iw-ticket')].find(t=>t._mid==='tidewater');ticket.click();if(document.querySelector('[data-native-rule-supported="true"]')?.disabled!==false)throw Error('Changing map did not restore START');
+     for(const mode of ['turf','zones','rainmaker','clams']){g.menus._setup={...g.menus._setup,mapId:id,mode};g.menus.wipe.cancel();g.menus.show('setup',{force:true,wipe:false,light:false});if(document.querySelector('[data-native-rule-supported="true"]')?.disabled!==false||document.querySelector('[data-native-rule-reason]')?.textContent)throw Error('Other Hagglefish rule remains disabled: '+mode);}
+     g.menus.show(null);return {mode:'tower',supported:false,status:status.status,offlineApiPreserved:true,menuApiPreserved:true,directOnlinePreserved:true,setupRefreshVerified:true,actors:actors.length};
+    },{id,mode});report.rules.push(rejected);
+    await page.evaluate(({id,mode})=>{NG.game.menus._setup={...NG.game.menus._setup,mapId:id,mode};NG.game.menus.show('setup',{force:true,wipe:false,light:false});},{id,mode});
+    await page.screenshot({path:path.join(evidence,id+'-tower-unavailable.png'),timeout:60000});await page.evaluate(()=>NG.game.menus.show(null));continue;
+   }
    await page.evaluate(async({id,mode})=>{const g=NG.game;g.menus.wipe.cancel();await g.startMatch({mapId:id,mode,difficulty:'easy'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.debug.freezeBots();}, {id,mode});
-   const rule=await page.evaluate(mode=>{
+   const rule=await page.evaluate(async mode=>{
     const G=NG,m=G.match,e=m.ranked,w=m.rankedWorld,a=m.local;
     if(!e||!w)throw Error('Native ranked systems missing');
     if(mode==='zones'){w.captureZone(0,0);m.advanceRanked(1.2);if(e.counts[0]>98)throw Error('Native zone paint did not score: '+JSON.stringify({cells:w._zoneCells.map(a=>a.length),coverage:w.zoneCoverage(),counts:e.counts,zone:e.stage.zones}));}
-    if(mode==='tower'){a.pos.fromArray(e.rule.state.position);a.pos.x+=.7;a._resolve(false,a.pos.y,false);if(a.ground.block!==w.towerBlockId)throw Error('Native triangle + dynamic tower support failed');m.advanceRanked(1);if(e.rule.state.controllingTeam!==a.team)throw Error('Native tower rider not counted');}
+    let towerProof=null;
+    if(mode==='tower'){
+     const g=G.game;g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<80;i++)g._frame(1/60);if(a.s3?.squidSpawn||!a.grounded)throw Error('Actual human initial spawn did not land');
+     for(const b of G.actors)if(b!==a){b.pos.copy(G.level.spawnPads[b.team]);b._rankedOnTower=false;b.vel.set(0,0,0);}
+     const {nativeTowerClearance}=await import(new URL('patches/native-stages/runtime/engine.mjs',document.baseURI)),path=e.stage.tower.path,check=nativeTowerClearance(G.level,G.physics.actorBody,e.stage.tower.halfSize),saved=[...e.rule.state.position],samples=path.flatMap((p,i)=>i?[p,...[.25,.5,.75].map(t=>p.map((v,k)=>path[i-1][k]+(v-path[i-1][k])*t))]:[p]);let boarding=0;
+     for(let i=0;i<path.length;i++)if(!check.clear(path[i],path[Math.max(0,i-1)]))throw Error('Source swept clearance failed at segment '+i);
+     for(const point of samples){e.rule.state.position=[...point];w._syncTower(e,false);for(const sign of [-1,1]){a.pos.fromArray(point).addScaledVector(w.towerBlock.axes[0],sign*.7);a.vel.set(0,0,0);a.grounded=false;a._resolve(false,a.pos.y,false);if(!a.grounded||!a.ground.hit||a.ground.block!==w.towerBlockId)throw Error('Actual capsule boarding failed at '+JSON.stringify(point));boarding++;}}
+     e.rule.state.position=saved;w._syncTower(e,false);a.pos.fromArray(saved).addScaledVector(w.towerBlock.axes[0],.7);a.vel.set(0,0,0);a.grounded=false;a._resolve(false,a.pos.y,false);m.advanceRanked(1);if(e.rule.state.controllingTeam!==a.team)throw Error('Native tower rider not counted');
+     towerProof={pathNodes:path.length,segmentInteriorSamples:3,actualCapsuleBoardings:boarding,halfSize:e.stage.tower.halfSize,localLift:e.stage.tower.localLift,sourceClearance:e.stage.tower.sourceClearance,liveGroundedHumanCounted:true};
+    }
     if(mode==='rainmaker'){m.rankedBarrierHits.push({id:String(a.nid??`${a.team}:${a.slot}`),team:a.team,damage:2000,kind:'main'});m.advanceRanked(1/60);if(e.rule.state.barrier.active)throw Error('Barrier did not pop');a.pos.fromArray(e.rule.state.pos);m.advanceRanked(1/60);if(e.rule.state.carrier===null)throw Error('Holder pickup failed');}
     if(mode==='clams'){const c=e.rule.state.clams[0];a.pos.fromArray(c.pos);a.grounded=true;m.advanceRanked(1/60);const id=String(a.nid??`${a.team}:${a.slot}`);if(!(e.rule.state.inventories[id]?.small||e.rule.state.inventories[id]?.power))throw Error('Clam pickup failed');}
     const snap=e.snapshot();if(!e.restore(snap))throw Error('Own rule snapshot rejected');
-    return {mode,state:m.state,actors:m.actors.length,counts:[...e.counts],snapshotBytes:JSON.stringify(snap).length,calibration:e.stage.calibration};
+    return {mode,towerProof,state:m.state,actors:m.actors.length,counts:[...e.counts],snapshotBytes:JSON.stringify(snap).length,calibration:e.stage.calibration};
    },mode);report.rules.push(rule);
   }
   report.errors=errors;fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(report));

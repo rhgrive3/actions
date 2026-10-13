@@ -10,3 +10,4 @@ export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
 
 export {nativeStageRuleStatus} from './rule-availability.mjs';
+export {nativeTowerClearance} from './native-tower-clearance.mjs';
