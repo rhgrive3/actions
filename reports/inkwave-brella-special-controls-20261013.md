@@ -95,3 +95,7 @@ InhaleToExhaleWaitFrame20を最低吸引時間と解釈していた処理を、�
 - https://wikiwiki.jp/splatoon3mix/ブキ/スペシャルウェポン/エナジースタンド
 
 総合再実行は5,174件中5,152通過、21任意skip、追加capsule試験の呼び出しミス1件失敗。修正後の同試験は通過。この実行中の追加変更を含め、全体件数を最終headのimmutable証明には読み替えない。最終差分はVac54件全通過、関連100件は99通過後に最後の旧14F吸引fixtureを74Fへ修正し、該当1件通過（合計154の対象）。quick構文/接続、ビルド/容量も通過（初期JS2,689,900、worker71,025、宣言総量10,404,489 bytes）。最終ブラウザCIと公開結果は別に追跡。未確認の本家実機一致は維持。
+
+### 公開ゲート追補
+
+PR1252をmain1cc77ff8へ統合。Pages38359679102のlocal-qualityゲートは930件中922通過・8任意skip。練習場ゲートは、fixtureのprepareが実Actorのintent.move Vector3をfalseへ置換していたため、新しい17F抑止がset/copyを呼ぶと失敗。runtimeの入力契約は維持し、fixtureのvectorを原位置でゼロ化。旧即時反撃の想定も、19F無発射・20F発射の予約確認へ変更。ローカルで練習場全43件通過。公開ゲートは外さず再実行する。ゲームruntimeへの追加変更はない。
