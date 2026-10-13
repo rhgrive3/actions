@@ -1,0 +1,36 @@
+name: Verify INKWAVE audio v11 integration
+on:
+  push:
+    branches: [integrate/inkwave-audio-v11-clean-20261013]
+    paths: ['.github/workflows/validate-inkwave-audio-v11.yml']
+  pull_request:
+    paths:
+      - 'patches/splatoon3/audio-adapter.mjs'
+      - 'patches/splatoon3/runtime/audio/**'
+      - 'patches/splatoon3/tests/audio*.test.mjs'
+      - 'patches/splatoon3/tests/weapon-audio.test.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'patches/splatoon3/bootstrap.mjs'
+      - '.github/workflows/validate-inkwave-audio-v11.yml'
+permissions:
+  contents: read
+jobs:
+  audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify 381 audio sources
+        run: python3 tools/audio/verify-s3-real-files.py
+      - name: Verify real-only event behavior
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/audio-v11-real-only.test.mjs patches/splatoon3/tests/real-s3-loader-v7.test.mjs patches/splatoon3/tests/weapon-audio.test.mjs patches/splatoon3/tests/audio-refinement.test.mjs
+      - name: Build production site and check startup
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+          node scripts/check-inkwave-patches.mjs --quick
+          node scripts/build-inkwave.mjs inkwave-public /tmp/inkwave-audio-v11-site
+          node scripts/check-inkwave-startup-budget.mjs /tmp/inkwave-audio-v11-site
