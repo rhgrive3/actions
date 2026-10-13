@@ -1,0 +1,43 @@
+{
+  "id": "bluefin",
+  "internal": "Vss_Ruins03",
+  "name": "ネギトロ炭鉱",
+  "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+  "tree": "e5d7d0f5097921f536b1dc3830ad4ae81e7da7d0",
+  "bounds": {
+    "minX": -34.5,
+    "minZ": -75,
+    "maxX": 34.5,
+    "maxZ": 75
+  },
+  "spawnPads": [
+    [
+      -12,
+      15,
+      -70
+    ],
+    [
+      12,
+      15,
+      70
+    ]
+  ],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Local supports and interactive extent inferred from pinned Pnt DeckFloor display triangles; retail spawn, collision, moving elevator states and ranked placements unverified",
+  "sourceNavigation": {
+    "wallClimb": true,
+    "highDrops": true,
+    "wallApproach": true
+  },
+  "sourceSemantics": {
+    "inactiveObjectPatterns": [
+      "^FldObj_Ruins03(?:Tcl|Var|Vcl|Vgl|Vlf)(?:Stage|Center)_",
+      "^FldObj_Ruins03GeneralBox(?:Tcl|Var|Vcl|Vgl|Vlf)_",
+      "^FldObj_Ruins03(?:Block|BlockSide|Elevator)_"
+    ],
+    "nonPaintableObjectPatterns": [
+      "^Fld(?:Obj)?_Ruins03.*__(?:.*_np(?:_xl|_ol)?|WallPlantIvyBundle|WallPlantIvySpiral|PlantationSet|FloorLight00)$"
+    ]
+  }
+}
