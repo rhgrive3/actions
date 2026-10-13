@@ -4171,3 +4171,5 @@ main14f9f913のキャラクター姿勢・ブキ・対戦ルール・ビルド�
 
 
 原典5ステージ通常射撃追補: 最新main14f9f913・原典マスクv4で実Game._frame/Match/Character/WeaponRunner/Projectilesを使った15/15ケースが通過。描画30/60/120HzでもActor/弾の観測dtは1/60、固定clockとtick数一致。通常Shooter1発から原典の壁への衝突・自然な塗り・接地生存、8人7bot・例外0を確認。射撃中botを固定し、source支持spawnAt姿勢と照準inputを制御した試験であり、マウス照準・本家配置・全ルール/全ブキ・性能向上の証明へ読み替えない。旧raw Actor dt試験は維持。詳細: `reports/native-stages/fixed-game-source-shots.md` と同verification JSON。
+
+原典壁への通常ジャンプ接続追補: オヒョウ原典表示メッシュの連続した塗れる壁には0.15単位の凹凸があり、接地したイカの直線接続は実カプセルのため拒否される。明示的な`wallJumpAttach`指定では、通常Shooterで自然に塗り、原典支持上から通常人型ジャンプ→イカ変身→壁泳ぎ→原典支持への着地を既存inputだけで実行する。直線接続範囲、NoPaint・穴・屋根・衝突・原典配列は変更せず、共有変更でステージ指定を自動有効化しない。参照ブキはLeanny11.3.0のShooter_Normal_00・ゼロAP、原典は固定KiTrix表示抽出。最新main14f9f913の実Game固定1/60で描画30/60/120Hz・全5modeの30ケースと通常ジャンプなし6負例、自然射撃の部分セル6件・同セル外/NoPaint/穴/敵塗り解除、8人生存7bot・例外0を確認。独立VMや旧raw Actor dtを実機同等としない。本家の移動状態・単位・collision/paint/climb masks・抽出版・hardware FPSと、別途失敗中のオヒョウ全対岸ルートは未確認のまま。詳細: [source-jump-attach.md](native-stages/source-jump-attach.md) と同verification JSON。
