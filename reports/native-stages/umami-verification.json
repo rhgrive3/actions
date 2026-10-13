@@ -1,0 +1,504 @@
+{
+  "schema": 1,
+  "id": "umami",
+  "internal": "Vss_Factory00",
+  "name": "ナンプラー遺跡",
+  "status": "local-source-review",
+  "acceptance": {
+    "finalAffectedRuntimeChecks": "pending accepted shared foundation promotion",
+    "tower": "pending full swept source clearance and legal input boarding",
+    "online": "pending real WS all supported modes"
+  },
+  "version1130Verified": false,
+  "referenceVersion": "Splatoon 3 11.3.0 identity only; KiTrix extraction version/date/units unverified",
+  "verifiedAtUtc": "2026-10-13T02:53:28.026313+00:00",
+  "source": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "tree": "232d0e5ba4b69b74a7fa044da5b7c15c8ee273f5",
+    "objSha256": "9d7c261d324d514148499d2ab804b49b05e0394bdc74e46b6e6afb0fff664d3b",
+    "objBytes": 59818484,
+    "mtlAndPngFilesVerified": 379,
+    "mtlAndPngBytes": 62182267,
+    "fileVerification": "all local MTL/PNG Git blob SHA1 preimages and byte lengths matched fixed tree",
+    "mtlAndPngManifestSha256": "be88f485c84ec56f2382aedf71577e8c4d0cb768182079099a469259250a46f1",
+    "retrieval": "isolated authenticated LFS denied Resource not accessible by integration; public media/raw original files verified",
+    "originalComparison": {
+      "status": "pass",
+      "reader": "independent original OBJ streaming text to float32/uint32; no converter imports",
+      "positions": 486036,
+      "normals": 486036,
+      "uvs": 486036,
+      "indices": 1170666,
+      "triangles": 390222,
+      "verticesSha256": "68389fa1b3c35b41bed0e869babaed2e52ec31b1d37a9ba06fed249ddfd47254",
+      "indicesSha256": "c215c544c3b9571c1f07374ee2c2dee55a73da935d97c620251c5568bbf04cc7"
+    }
+  },
+  "geometry": {
+    "vertices": 486036,
+    "triangles": 390222,
+    "collisionTriangles": 228919,
+    "bvhNodes": 65535,
+    "paintFaces": 114928
+  },
+  "gridCells": 3682116,
+  "validCells": 1185933,
+  "chartMaxPlaneError": 0.0010530024661926187,
+  "spawnSupports": [
+    {
+      "pad": [
+        -18,
+        13.5,
+        -73
+      ],
+      "support": [
+        -18,
+        13.5,
+        -73
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "bodyFits": true,
+      "object": "Fld_Factory00_floorA_20_1__FloorRubber00"
+    },
+    {
+      "pad": [
+        18,
+        13.5,
+        73
+      ],
+      "support": [
+        18,
+        13.5,
+        73
+      ],
+      "normal": [
+        0,
+        1,
+        0
+      ],
+      "bodyFits": true,
+      "object": "Fld_Factory00_floorA_20_1__FloorRubber00"
+    }
+  ],
+  "navigation": {
+    "navNodes": 9092,
+    "validNodes": 7917,
+    "spawnIds": [
+      307,
+      8807
+    ],
+    "navMilliseconds": 9242.146090000002
+  },
+  "directedRoutes": {
+    "teams": 2,
+    "goalsPerTeam": 83,
+    "allRoutesExist": true
+  },
+  "movement": {
+    "weapon": "fixture shooter; native existing Actor movement",
+    "gear": "fixture default; console gear equivalence unverified",
+    "state": "dry source FloorRubber00; opening or death respawn, fire launch, 0.2 s full inward walk",
+    "measurements": [
+      {
+        "team": 0,
+        "hz": 30,
+        "opening": true,
+        "grounded": true,
+        "distance": 0.7839999999999887
+      },
+      {
+        "team": 0,
+        "hz": 30,
+        "opening": false,
+        "grounded": true,
+        "distance": 0.7839999999999887
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "opening": true,
+        "grounded": true,
+        "distance": 0.7379999999999871
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "opening": false,
+        "grounded": true,
+        "distance": 0.7379999999999871
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "opening": true,
+        "grounded": true,
+        "distance": 0.7149999999999874
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "opening": false,
+        "grounded": true,
+        "distance": 0.7149999999999874
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "opening": true,
+        "grounded": true,
+        "distance": 0.7839999999999887
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "opening": false,
+        "grounded": true,
+        "distance": 0.7839999999999887
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "opening": true,
+        "grounded": true,
+        "distance": 0.7379999999999871
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "opening": false,
+        "grounded": true,
+        "distance": 0.7379999999999871
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "opening": true,
+        "grounded": true,
+        "distance": 0.7149999999999874
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "opening": false,
+        "grounded": true,
+        "distance": 0.7149999999999874
+      }
+    ]
+  },
+  "nativeTests": {
+    "tests": 25,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 1,
+    "durationMilliseconds": 45895.985265
+  },
+  "waterBeforeAfter": [
+    {
+      "label": "before",
+      "point": [
+        -20,
+        -2,
+        -46
+      ],
+      "supportBelowWater": -8.050000190734862,
+      "alive": true,
+      "after": [
+        -20,
+        -2,
+        -46
+      ]
+    },
+    {
+      "label": "after",
+      "point": [
+        -20,
+        -2,
+        -46
+      ],
+      "supportBelowWater": null,
+      "alive": false,
+      "after": [
+        -20,
+        -2,
+        -46
+      ]
+    }
+  ],
+  "builds": {
+    "_site-native-umami": {
+      "contentHash": "44185d7d51c45eba9d8aa1e3e22631be2196c9479052ede06d55817b9e045ea8",
+      "inputHash": "5bbc6e55db0223701f1a0c0b4a83aefa501f0f99d7859b16ded1a15766ba939d"
+    },
+    "_site-native-umami-public": {
+      "contentHash": "c49960bc62357d8130e13b91b74d3e599dc488cc3fefa54d1c2f9952b481ef79",
+      "inputHash": "5bbc6e55db0223701f1a0c0b4a83aefa501f0f99d7859b16ded1a15766ba939d"
+    },
+    "_site-native-umami-water": {
+      "contentHash": "7d2b9924fa7d026fc789b6cbb91d4154a610189d8082866e8242658ddb469a38",
+      "inputHash": "b98b304cb03e04a43d09525791f68f92cb0c1e03125c774f39101917c1a1e34e"
+    }
+  },
+  "evidence": {
+    "gameplay": {
+      "path": ".browser-evidence/gameplay/browser.json",
+      "sha256": "96ed3913ef32e0ac50197d30bb948bb80cb209f066c427dd8cc196bd3598eed5",
+      "status": "recorded"
+    },
+    "sourceBrowser": {
+      "path": ".browser-evidence/source-browser/source-browser.json",
+      "sha256": "b080132ddc08c284285faf942ba096e5c411247505cc5ef0e5a42e7e1068554b",
+      "status": "passed"
+    },
+    "render": {
+      "path": ".browser-evidence/render/render.json",
+      "sha256": "bb7e8458c33796113f0281c17cb206d364273a44a59536f7e8c9dd7fe6bfcb2c",
+      "status": "passed"
+    },
+    "lifecycle": {
+      "path": ".browser-evidence/lifecycle/lifecycle.json",
+      "sha256": "c5874b9a9581259091c0191f4baf1fc6c834e696c8265b762d9766ea2489df22",
+      "status": "passed"
+    }
+  },
+  "unverified": [
+    "retail extraction version/date and scale",
+    "11.3.0 native collision and paint/grate/climb masks",
+    "retail spawn/landing/ranked placements and mode geometry",
+    "moving object transforms/states",
+    "native material shader",
+    "console weapon/gear/frame measurement in this stage",
+    "physical Switch/mobile hardware FPS"
+  ],
+  "gameplay": {
+    "id": "umami",
+    "actors": 8,
+    "alive": 8,
+    "bots": 7,
+    "coverage": [
+      0.016178142299090675,
+      0.00796424967123096
+    ],
+    "turfTotal": 321577,
+    "counts": [
+      4825,
+      2460
+    ],
+    "cpuFrame": {
+      "p50": 20.399999991059303,
+      "p95": 49.8999999910593,
+      "max": 101.40000000596046
+    },
+    "navValid": 7917,
+    "version1130Verified": false,
+    "movingBots": 7,
+    "browserErrors": 0,
+    "rules": [
+      {
+        "mode": "zones",
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          98,
+          100
+        ],
+        "supported": true
+      },
+      {
+        "mode": "tower",
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          98,
+          100
+        ],
+        "supported": true
+      },
+      {
+        "mode": "rainmaker",
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          100,
+          100
+        ],
+        "supported": true
+      },
+      {
+        "mode": "clams",
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          100,
+          100
+        ],
+        "supported": true
+      }
+    ]
+  },
+  "sourceBrowser": {
+    "status": "passed",
+    "objDownloads": 2,
+    "cache": {
+      "id": "umami",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    },
+    "failureRollback": {
+      "levelRetained": true,
+      "menu": "setup",
+      "loadingRemoved": true
+    },
+    "conversionMilliseconds": 11313.90000000596,
+    "scope": "immutable original baseline before underwater collision correction; original download/conversion/cache paths unchanged"
+  },
+  "render": {
+    "status": "passed",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "actors": 8,
+    "chunks": 192,
+    "authoritiesUnchanged": true,
+    "cpuPaintUnchanged": true,
+    "views": [
+      {
+        "name": "gameplay",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 176127,
+        "indexedInkTriangles": 164793,
+        "baselineP50Milliseconds": 7.899999991059303,
+        "indexedP50Milliseconds": 5.199999988079071
+      },
+      {
+        "name": "center",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 176127,
+        "indexedInkTriangles": 81365,
+        "baselineP50Milliseconds": 3.5,
+        "indexedP50Milliseconds": 3.7999999970197678
+      },
+      {
+        "name": "overhead",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 176127,
+        "indexedInkTriangles": 176115,
+        "baselineP50Milliseconds": 5.9000000059604645,
+        "indexedP50Milliseconds": 4.5999999940395355
+      }
+    ],
+    "moving": {
+      "frames": 12,
+      "allSingleInkDraw": true,
+      "allIndexRebuilt": true,
+      "baselineMedianMilliseconds": 4.950000002980232,
+      "indexedMedianMilliseconds": 5.549999997019768
+    },
+    "measurementLimit": "SwiftShader diagnostic; culling timings vary by view; no physical mobile/Switch FPS measurement"
+  },
+  "lifecycle": {
+    "status": "passed",
+    "errors": [],
+    "quality": {
+      "cpuGridUnchanged": true,
+      "trianglePositionsUnchanged": true,
+      "authoritiesRetained": true,
+      "finalAtlas": 2048,
+      "textureCount": 99
+    },
+    "failureRollback": {
+      "rejected": true,
+      "levelRetained": true,
+      "paintRetained": true,
+      "displayRetained": true
+    },
+    "corruptionProbe": {
+      "requests": 1,
+      "error": "Native integrity mismatch: umami/vertices.bin"
+    },
+    "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+    "cancellation": {
+      "id": "tidewater",
+      "nativeGroups": 0,
+      "preparationCancelled": true
+    },
+    "switches": [
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 229,
+          "textures": 28
+        }
+      },
+      {
+        "id": "umami",
+        "native": true,
+        "nativeGroups": 1,
+        "memory": {
+          "geometries": 353,
+          "textures": 119
+        }
+      },
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 229,
+          "textures": 28
+        }
+      }
+    ],
+    "fingerprint": {
+      "same": true,
+      "changed": false,
+      "missing": false
+    },
+    "mobile": [
+      {
+        "id": "umami",
+        "viewport": [
+          844,
+          390
+        ],
+        "touch": true,
+        "actors": 8,
+        "native": true,
+        "atlas": 2048,
+        "textureCount": 99,
+        "cpuFrame": {
+          "p50": 20.5,
+          "p95": 52.099999994039536,
+          "max": 819.2999999970198
+        },
+        "gpuDrainRenderMs": 4.9000000059604645,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "local": {
+          "grounded": true,
+          "spawn": false
+        },
+        "mobileHardwareMeasured": false
+      }
+    ]
+  },
+  "toolVersions": {
+    "node": "v24.19.0",
+    "chromium": "154.0.8037.57 Debian 13",
+    "gpu": "SwiftShader Vulkan 1.3.0",
+    "browserLock": "/workspace/actions/.ci-scratch/native-stage-browser.lock",
+    "cpuLoad": "other stage owners may perform independent CPU work; GPU jobs serialized"
+  }
+}
