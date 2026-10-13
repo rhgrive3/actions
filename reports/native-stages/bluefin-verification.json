@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "e0a291e9fb0f9a09ce6f792ff652a5d1eb5f70a2",
+  "latestConsumedFoundation": "18626f65c0b1bcf8341bb5fd17b2eecd70903167",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -6107,5 +6107,230 @@
     "positiveContinuousCapsuleSamples": 616,
     "maxGoalDistance": 0.3052982592504668,
     "scope": "Actual human keyboard sequence only. Positive natural weapon paint, every approach/ascent STEP capsule screened and23 literal source supports. Negative wall begins manually friendly-owned. No ordinary-bot admission, whole-bank bot or all-mode qualification; immutable build predates current ranked/foot/optionalSurge/search changes."
+  },
+  "acceptedSourcePolygonCoverage": {
+    "foundation": "18626f65c0b1bcf8341bb5fd17b2eecd70903167",
+    "pr": 1381,
+    "recipe": "inkwave-browser-source-v4",
+    "scope": "Accepted positive-area partial cells and exact original triangle ownership; NoPaint roles, all original geometry and dynamic rectangular faces retained. Earlier browser/CPU checkpoints retain their original mask/build scope.",
+    "reconversion": {
+      "foundation": "18626f65c0b1bcf8341bb5fd17b2eecd70903167",
+      "files": 226,
+      "changedFiles": [
+        "mask.bin"
+      ],
+      "allNineNonMaskBuffersUnchanged": true,
+      "all216TexturesUnchanged": true,
+      "geometryUnchanged": true,
+      "sourceSemanticsUnchanged": true,
+      "sourceNavigationUnchanged": true,
+      "oldMask": {
+        "sha256": "ef1626ee8c60967ac3e08b260b1f7da27f83b2b2dd9c5e3c07224c4deed31e2c",
+        "bytes": 2384253
+      },
+      "newMask": {
+        "sha256": "e3e63939bce772ff63d81ba9bffe233572a61d3aca146b3c3ed95883a64eb4ad",
+        "bytes": 2384253
+      },
+      "gridCells": 2384253,
+      "conversionSeconds": 24.44,
+      "validCells": 1035218
+    },
+    "affectedTests": "CPU source/physical/worker-Python parity and coverage guards passed; current v4 browser artifacts pending.",
+    "cpu": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "durationMilliseconds": 76289.590769,
+      "evidence": ".browser-evidence/accepted-coverage/cpu.tap",
+      "sourceTests": 4,
+      "workerPythonSourceParityTests": 3,
+      "coverageGuardsTests": 3,
+      "positiveHuman": {
+        "id": "bluefin",
+        "positiveBankHumanAccess": [
+          {
+            "team": 0,
+            "hz": 30,
+            "start": [
+              20,
+              3,
+              18.5
+            ],
+            "sourceStartTriangle": 173307,
+            "capEnd": [
+              32.52356666666666,
+              9.031200408935547,
+              18.501003042722672
+            ],
+            "sourceCapTriangle": 171860,
+            "seconds": 3.533333333333333,
+            "bankGoal": [
+              20,
+              9,
+              40.5
+            ],
+            "bankEnd": [
+              19.983234802074858,
+              9,
+              40.26676672934317
+            ],
+            "bankWalkSeconds": 5.766666666666656,
+            "walkwaySourceSupports": 23,
+            "wallSamples": 39,
+            "floorTargets": 8,
+            "floorOwned": 7,
+            "unownedFloorSamples": [
+              {
+                "point": [
+                  24,
+                  3.049999952316284,
+                  18.5
+                ],
+                "face": 53207,
+                "triangle": 173766
+              }
+            ],
+            "paintSeconds": 2.6000000000000005,
+            "refillSeconds": 0.8666666666666666,
+            "fireFrames": 78,
+            "noPaintSamples": 0,
+            "jumped": true,
+            "climbed": true,
+            "existingSurgeBurst": true,
+            "fullChargeHumanPop": true,
+            "continuousActualCapsuleSamples": 106,
+            "continuousActualCapsuleFailures": 0,
+            "grounded": true,
+            "weapon": "shooter / Shooter_Normal_00",
+            "gearAP": 0
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "start": [
+              20,
+              3,
+              18.5
+            ],
+            "sourceStartTriangle": 173307,
+            "capEnd": [
+              32.38555555555556,
+              9.031200408935547,
+              18.5
+            ],
+            "sourceCapTriangle": 171860,
+            "seconds": 3.4,
+            "bankGoal": [
+              20,
+              9,
+              40.5
+            ],
+            "bankEnd": [
+              19.987607931153324,
+              9,
+              40.1736072310186
+            ],
+            "bankWalkSeconds": 5.716666666666652,
+            "walkwaySourceSupports": 23,
+            "wallSamples": 39,
+            "floorTargets": 8,
+            "floorOwned": 7,
+            "unownedFloorSamples": [
+              {
+                "point": [
+                  24,
+                  3.049999952316284,
+                  18.5
+                ],
+                "face": 53207,
+                "triangle": 173766
+              }
+            ],
+            "paintSeconds": 2.5999999999999956,
+            "refillSeconds": 0.850000000000001,
+            "fireFrames": 156,
+            "noPaintSamples": 0,
+            "jumped": true,
+            "climbed": true,
+            "existingSurgeBurst": true,
+            "fullChargeHumanPop": true,
+            "continuousActualCapsuleSamples": 204,
+            "continuousActualCapsuleFailures": 0,
+            "grounded": true,
+            "weapon": "shooter / Shooter_Normal_00",
+            "gearAP": 0
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "start": [
+              20,
+              3,
+              18.5
+            ],
+            "sourceStartTriangle": 173307,
+            "capEnd": [
+              32.33849999999978,
+              9.031200408935547,
+              18.5
+            ],
+            "sourceCapTriangle": 171860,
+            "seconds": 3.3583333333333334,
+            "bankGoal": [
+              20,
+              9,
+              40.5
+            ],
+            "bankEnd": [
+              20.001140545402777,
+              9,
+              40.18046466016357
+            ],
+            "bankWalkSeconds": 5.733333333333408,
+            "walkwaySourceSupports": 23,
+            "wallSamples": 39,
+            "floorTargets": 8,
+            "floorOwned": 7,
+            "unownedFloorSamples": [
+              {
+                "point": [
+                  24,
+                  3.049999952316284,
+                  18.5
+                ],
+                "face": 53207,
+                "triangle": 173766
+              }
+            ],
+            "paintSeconds": 2.6083333333333267,
+            "refillSeconds": 0.8416666666666661,
+            "fireFrames": 313,
+            "noPaintSamples": 0,
+            "jumped": true,
+            "climbed": true,
+            "existingSurgeBurst": true,
+            "fullChargeHumanPop": true,
+            "continuousActualCapsuleSamples": 403,
+            "continuousActualCapsuleFailures": 0,
+            "grounded": true,
+            "weapon": "shooter / Shooter_Normal_00",
+            "gearAP": 0
+          }
+        ],
+        "conditions": "production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then inward run, jump at x>23.7, hold squid/jump through attachment, stop at feet>=7.2 until full existing Surge charge, release jump for one squid tick then kid/+X; every live approach/climb capsule continuously source-screened; 23 separately supported bank walkway points; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG"
+      },
+      "navCandidates": 10854,
+      "validNodes": 6606,
+      "sourceOriginalNoPaintAndDeadHoleNegativesRetained": true
+    },
+    "sourceGuard": {
+      "checkedAt": "2026-10-13T13:57:30.849808+00:00",
+      "sharedSourceHEAD": "0611f51b35c9736ee986fb2218461e2585b7875e",
+      "sharedSourceIndexSHA256": "0c8ac8d7ce7b8aac8e2f138143811abb37152e4df73670e50022b6cf12228a87",
+      "ownOBJ_SHA256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+      "unchanged": true
+    }
   }
 }
