@@ -161,6 +161,9 @@ function validRuleState(mode, r) {
     && matrix(r.checkpointProgress, number) && matrix(r.checkpointLossSeconds, number)
     && matrix(r.checkpointCleared, x => typeof x === 'boolean') && matrix(r.riderIds, x => typeof x === 'string');
   if (mode === 'rainmaker') return vec(r.pos) && team(r.carrierTeam) && (r.carrier === null || typeof r.carrier === 'string')
+    && (r.goalHold == null || r.carrier !== null && [0, 1].includes(r.carrierTeam)
+      && typeof r.goalHold === 'object' && !Array.isArray(r.goalHold)
+      && number(r.goalHold.remaining) && r.goalHold.remaining >= 0 && r.goalHold.remaining <= .5)
     && vec(r.lastGroundedPos) && (r.pickupZ === null || number(r.pickupZ)) && number(r.respawnRemaining) && r.respawnRemaining >= 0 && r.respawnRemaining <= 3
     && r.barrier && typeof r.barrier.active === 'boolean' && number(r.barrier.max) && number(r.barrier.balance)
     && r.charge && number(r.charge.value) && r.charge.value >= 0 && r.charge.value <= 1
