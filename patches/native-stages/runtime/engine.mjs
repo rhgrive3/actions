@@ -4,7 +4,7 @@ export { buildNativeWorld,releaseNativeWorld } from './native-world.mjs';
 export { buildNativeNav } from './native-nav.mjs';
 export { buildNativeMinimap } from './native-minimap.mjs';
 export { nativeRankedStage } from './native-ranked.mjs';
-export { nativeInitialLanding } from './native-spawn.mjs';
+export { nativeInitialLanding,nativeArenaBasis,nativeSpawnYaw,nativeRetreatCoordinate } from './native-spawn.mjs';
 export { nativePaintGoalIds } from './native-bots.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
