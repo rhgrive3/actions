@@ -16741,5 +16741,517 @@
         "measurementKind": "deterministic file and dependency gates; not native browser timings"
       }
     }
+  },
+  "clamsEighthCandidateIndependentPeerReview": {
+    "reviewer": "/root/humpback (dedicated Humpback owner)",
+    "candidate": "904b2bb3d35862287b0e072524b36e39819a700d",
+    "pullRequest": 1397,
+    "callbackSourceSha256": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+    "ruleSourceSha256": "744b6d8ee045ba12d397aca51631aa274167bdf6d63b185b85c59d0bd026eaa8",
+    "diagnosticCommit": "a38b0c59",
+    "overlay": {
+      "status": "compiled private diagnostic overlay; not accepted or a newly packaged full build",
+      "candidate": "904b2bb3",
+      "delta": [
+        "5fbff252",
+        "96af129d",
+        "528ef488",
+        "904b2bb3"
+      ],
+      "baselineFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+      "baselineBuild": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+      "sourceFiles": {
+        "patches/native-stages/adapter.mjs": "c036e1c9ad7daa12f168b8425796f5135e23c5d127c104aebc0ca46bdf9518e4",
+        "patches/native-stages/runtime/engine.mjs": "ff34756b0aa7cf222e0c01e21988e2b82c73d63cb5c165e49728ac15632445ee",
+        "patches/native-stages/runtime/native-ranked-goals.mjs": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "744b6d8ee045ba12d397aca51631aa274167bdf6d63b185b85c59d0bd026eaa8",
+        "patches/splatoon3/runtime/ranked/install.mjs": "823bcbc52f0fa1f46e17c4e3b0c2566cedc9684e0ed181eb2f36818c8b80153d"
+      },
+      "emittedFiles": {
+        "patches/native-stages/runtime/engine.mjs": "6fc61cc0834793c23b313df4d3a3ffc90b713feff973c6d109aef9cc0cb606dd",
+        "patches/splatoon3/runtime/ranked/install.mjs": "b40fd5bfc06d0bd4564fa460ad9487757d738b6a80b845c1498cc261ee48f629",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905"
+      }
+    },
+    "staticReview": {
+      "sevenSmallOnlyBelowPowerThreshold": true,
+      "perActualCandidateTrueSourceRouteRequired": true,
+      "directLosOrHookPresenceCannotExtend": true,
+      "originalReachableAndBlockedRetained": true,
+      "legacyCarryPolicyRetained": true,
+      "invalidEightSmallAndPowerInventoryExcluded": true,
+      "pickupThrowInventoryGeometryUnchanged": true,
+      "originalMainClamsLifecyclePreserved": true
+    },
+    "independentPolicyTests": {
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "New native eighth-candidate policy plus complete existing ranked-clams suite; pure logic, distinct from production physical collection"
+    },
+    "dynamicNegativeFixtureReview": {
+      "scope": "Static peer review of sole owner corrected source fixture, not a new independent source CPU execution",
+      "neutralProductionActorLanding": true,
+      "actualDynamicGroundProbeIndexRequired": true,
+      "feetProbeHeightDifferenceWithinOriginalPoint16Required": true,
+      "originalFailedMispositionedBoxLogsRetained": true
+    },
+    "actualFixedGameNaturalPower": {
+      "status": "passed private Power diagnostic overlay, awaiting common acceptance",
+      "evidence": ".browser-evidence/clams-eighth-power-overlay/ranked.json",
+      "scope": "Six actual Game-clock natural Power collections in private three-runtime-file overlay over unchanged accepted846, not full packaged acceptance",
+      "buildFingerprint": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+      "cases": [
+        {
+          "mode": "clams",
+          "team": 0,
+          "renderCadence": 30,
+          "seconds": 16,
+          "actorTicks": 960,
+          "gameClockTicks": 960,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            0.6349985102797823,
+            0,
+            -14.97952412351896
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.1838951543621192,
+            26.599999999999994
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.1838951543621192,
+            "z": 26.599999999999994
+          },
+          "inventory": {
+            "team": 0,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 0,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 935,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 92032,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12900,
+          "fire": false,
+          "jump": false,
+          "traversal": 97,
+          "maxTravel": 46.02485657778666,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 0,
+          "renderCadence": 60,
+          "seconds": 16,
+          "actorTicks": 960,
+          "gameClockTicks": 960,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            0.6349985102797823,
+            0,
+            -14.97952412351896
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.1838951543621192,
+            26.599999999999994
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.1838951543621192,
+            "z": 26.599999999999994
+          },
+          "inventory": {
+            "team": 0,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 0,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 935,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 92032,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12900,
+          "fire": false,
+          "jump": false,
+          "traversal": 97,
+          "maxTravel": 46.02485657778666,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 0,
+          "renderCadence": 120,
+          "seconds": 16,
+          "actorTicks": 960,
+          "gameClockTicks": 960,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            0.6349985102797823,
+            0,
+            -14.97952412351896
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.1838951543621192,
+            26.599999999999994
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.1838951543621192,
+            "z": 26.599999999999994
+          },
+          "inventory": {
+            "team": 0,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 0,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 935,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 92032,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12900,
+          "fire": false,
+          "jump": false,
+          "traversal": 97,
+          "maxTravel": 46.02485657778666,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 1,
+          "renderCadence": 30,
+          "seconds": 15,
+          "actorTicks": 900,
+          "gameClockTicks": 900,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            0.9619615199993827,
+            0,
+            15.595886917827467
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.241334900668157,
+            -26.400000000000006
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.241334900668157,
+            "z": -26.400000000000006
+          },
+          "inventory": {
+            "team": 1,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 1,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 899,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91986,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12907,
+          "fire": false,
+          "jump": false,
+          "traversal": 91,
+          "maxTravel": 45.44757392994931,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 1,
+          "renderCadence": 60,
+          "seconds": 15,
+          "actorTicks": 900,
+          "gameClockTicks": 900,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            0.9619615199993827,
+            0,
+            15.595886917827467
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.241334900668157,
+            -26.400000000000006
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.241334900668157,
+            "z": -26.400000000000006
+          },
+          "inventory": {
+            "team": 1,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 1,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 899,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91986,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12907,
+          "fire": false,
+          "jump": false,
+          "traversal": 91,
+          "maxTravel": 45.44757392994931,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 1,
+          "renderCadence": 120,
+          "seconds": 15,
+          "actorTicks": 900,
+          "gameClockTicks": 900,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            0.9619615199993827,
+            0,
+            15.595886917827467
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.241334900668157,
+            -26.400000000000006
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.241334900668157,
+            "z": -26.400000000000006
+          },
+          "inventory": {
+            "team": 1,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 1,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 899,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91986,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12907,
+          "fire": false,
+          "jump": false,
+          "traversal": 91,
+          "maxTravel": 45.44757392994931,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        }
+      ],
+      "errors": []
+    },
+    "decision": "Exact goal-policy delta passes independent static and pure policy review. Common promotion still requires sole owner current Manta/Wahoo natural Power12, physical guards/defaults/public9+budgets and named concrete PR; final Hump accepted six-Power and all5WS seals follow accepted composition.",
+    "limits": [
+      "No all-loadout/gear source-route claim",
+      "No retail physics/units/placements/shaders/moving-state claim",
+      "No hardware FPS claim",
+      "Tower and elevated enemy home-deck returns remain source-route-unverified"
+    ],
+    "diagnosticLaunchFailures": {
+      "scope": "Two Chromium startup failures before product execution; corrected local temporary path, no runtime/source change",
+      "logs": [
+        ".ci-scratch/clams-eighth-power-overlay-bootstrap-failure.log",
+        ".ci-scratch/clams-eighth-power-overlay-socket-path-failure.log"
+      ],
+      "retest": "All six product Power cases passed after using the existing shorter owner temporary directory"
+    }
   }
 }
