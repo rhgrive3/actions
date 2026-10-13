@@ -9,7 +9,10 @@ for(const seed of [.13,.37,.79])test(`powered special disk area has bounded tran
  const measured=new Map();
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});f.G.settings={};f.setRandom(()=>seed);f.G.actors=[];
  for(const id of['inkjet','superChump','tentaMissiles'])for(const ap of(id==='inkjet'?[0,25,26,57]:id==='tentaMissiles'?[0,44,45,57]:[0,13,15,54,57])){
-  f.G.projectiles.clear();const {paint,V,face}=makePaintWorld(f);const a=f.make('shooter');a.pos.set(0,0,30);a.aimDir.set(0,0,1);a._resolve=()=>{};a.s3.loadout=loadout(ap);a.s3RefreshGear();a.weapon={...a.weapon,special:id,specialCost:100};a.special=a.specialCost();a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
+  f.G.projectiles.clear();const {paint,V,face}=makePaintWorld(f);const a=f.make('shooter');a.pos.set(0,0,30);a.aimDir.set(0,0,1);a._resolve=()=>{};a.s3.loadout=loadout(ap);a.s3RefreshGear();a.weapon={...a.weapon,special:id,specialCost:100};a.special=a.specialCost();
+  if(id==='tentaMissiles'){const locked=f.make('shooter');locked.team=1;locked.pos.set(0,0,35);f.G.actors=[a,locked];}else f.G.actors=[a];
+  a._startSpecial();a.intent.fire=true;a._updateSpecial(1/60);
+  if(id==='tentaMissiles'){a.intent.fire=false;for(let i=0;i<40&&a.specialActive;i++)a._updateSpecial(1/60);}
   if(id!=='superChump'){const p=f.G.projectiles.list.find(p=>p.s3AllSpecial===id);p.pos.set(0,.08,30);f.G.projectiles._blastBurst(p,p.pos.clone(),null);f.G.projectiles.list.length=0;}
   else f.G.projectiles._s3AllSpecialObjects=f.G.projectiles._s3AllSpecialObjects.slice(0,1);
   for(let i=0;i<600;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);}
