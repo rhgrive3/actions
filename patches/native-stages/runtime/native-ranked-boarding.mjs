@@ -30,7 +30,7 @@ export function nativeRankedTowerApproach(brain,target,engine,G){
 export function updateNativeTowerBoarding(brain,G,engine,dt){
  const state=brain._nativeTowerBoarding,a=brain.a,w=G.match?.rankedWorld;
  if(!state)return false;
- if(!G.level?.native||engine?.mode!=='tower'||!w||!a.alive||a.specialActive||a.superJumpState||a.s3?.squidSpawn||state.level!==G.level||state.nav!==G.nav||state.world!==w||state.engine!==engine){brain._nativeTowerBoarding=null;return false;}
+ if(!G.level?.native||engine?.mode!=='tower'||G.match?.mode!=='tower'||!w||w.level!==G.level||w.match!==G.match||G.level.blocks[w.towerBlockId]!==w.towerBlock||!a.alive||a.specialActive||a.superJumpState||a.s3?.squidSpawn||state.level!==G.level||state.nav!==G.nav||state.world!==w||state.engine!==engine){brain._nativeTowerBoarding=null;return false;}
  if(nativeTowerRider(G,a)){brain._nativeTowerBoarding=null;return false;}
  const deck=w.towerBlock?.center;
  if(!deck||Math.hypot(deck.x-state.target.x,deck.z-state.target.z)>.15||Math.abs(w._towerDeckTop-state.target.y)>.1){brain._nativeTowerBoarding=null;brain.repath=0;return false;}
@@ -61,5 +61,5 @@ export function updateNativeTowerBoarding(brain,G,engine,dt){
 /** Static waypoint steering cannot own an actually supported moving rider. */
 export function nativeTowerRider(G,actor){
  const match=G.match,w=match?.rankedWorld;
- return !!(G.level?.native&&match?.mode==='tower'&&match.ranked?.stage?.tower?.boarding?.approaches?.length&&w?.towerBlockId>=0&&actor?.grounded&&actor.ground?.hit&&actor.ground.block===w.towerBlockId);
+ return !!(G.level?.native&&match?.mode==='tower'&&match.ranked?.mode==='tower'&&match.ranked?.stage?.tower?.boarding?.approaches?.length&&w?.level===G.level&&w.match===match&&w.towerBlockId>=0&&G.level.blocks[w.towerBlockId]===w.towerBlock&&actor?.alive&&actor.grounded&&actor.ground?.hit&&actor.ground.block===w.towerBlockId);
 }
