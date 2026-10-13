@@ -1,11 +1,12 @@
 import {nativeSourceFootSupported} from './native-bot-support.mjs';
+import {nativeTowerRider} from './native-ranked-boarding.mjs';
 const pending=new WeakMap();
 
 /** Keep an admitted ordinary source jump held through ascent. The existing
  * Actor owns launch, the hold/release profile, collision and landing. */
 export function nativeOrdinaryJumpInput(brain,G){
  const a=brain.a,it=a.intent,N=G.nav,path=brain.path,node=path?.[brain.pi];
- if(!G.level?.native||!a.alive||brain.target||a.form!=='kid'||a.climbing||a.superJumpState||a.specialActive||!path||brain.pi<=0||N?.edgeType(path[brain.pi-1],node)!=='jump'){
+ if(!G.level?.native||!a.alive||brain.target||a.form!=='kid'||a.climbing||a.superJumpState||a.specialActive||nativeTowerRider(G,a)||!path||brain.pi<=0||N?.edgeType(path[brain.pi-1],node)!=='jump'){
   pending.delete(brain);return;
  }
  const serial=a.s3JumpSerial||0,state=pending.get(brain);
