@@ -1,0 +1,619 @@
+{
+  "status": "passed",
+  "sourceExtraction1130Verified": false,
+  "originalAssetsPublished": false,
+  "browser": {
+    "renderer": "Chromium SwiftShader",
+    "conditions": "controlled source-supported Actor spawnAt; standard WeaponRunner/Projectiles; seven bots frozen; 0AP; RNG0.5; one shot at 30/60/120Hz; projectile update clock timed, including idle steps",
+    "revision": "68059d84cb2c49022fd13d3df604004bd93b8d4c5bfa8e00dc04392cb5794750",
+    "stages": [
+      {
+        "id": "scorch",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "version1130Verified": false,
+        "actors": 8,
+        "bots": 7,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "cases": [
+          {
+            "hz": 30,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 250,
+                "triangle": 874,
+                "distanceToTarget": 0.060346488324379235,
+                "object": 29
+              }
+            ],
+            "naturalWallSplats": 4,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 2.7999999970197678,
+              "max": 11.5
+            }
+          },
+          {
+            "hz": 60,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 250,
+                "triangle": 874,
+                "distanceToTarget": 0.060346488324379235,
+                "object": 29
+              }
+            ],
+            "naturalWallSplats": 5,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.5,
+              "max": 5.700000002980232
+            }
+          },
+          {
+            "hz": 120,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 250,
+                "triangle": 874,
+                "distanceToTarget": 0.060346488324379235,
+                "object": 29
+              }
+            ],
+            "naturalWallSplats": 5,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.20000000298023224,
+              "max": 3.2000000029802322
+            }
+          }
+        ],
+        "sourceObject": "Fld_Yunohana_AmmoCrate_grp05_1__AmmoCrate00",
+        "face": 268,
+        "triangle": 911,
+        "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+        "errors": []
+      },
+      {
+        "id": "hagglefish",
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "version1130Verified": false,
+        "actors": 8,
+        "bots": 7,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "cases": [
+          {
+            "hz": 30,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 120,
+                "triangle": 207,
+                "distanceToTarget": 0.05564086018446129,
+                "object": 36
+              }
+            ],
+            "naturalWallSplats": 4,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.8999999910593033,
+              "max": 11.899999991059303
+            }
+          },
+          {
+            "hz": 60,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 120,
+                "triangle": 207,
+                "distanceToTarget": 0.05564086018446129,
+                "object": 36
+              }
+            ],
+            "naturalWallSplats": 4,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.5999999940395355,
+              "max": 3.4000000059604645
+            }
+          },
+          {
+            "hz": 120,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 120,
+                "triangle": 207,
+                "distanceToTarget": 0.05564086018446129,
+                "object": 36
+              }
+            ],
+            "naturalWallSplats": 5,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.19999998807907104,
+              "max": 1.5
+            }
+          }
+        ],
+        "sourceObject": "FldObj_YagaraFloatBoatB_BoatB_01__Boats",
+        "face": 120,
+        "triangle": 207,
+        "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+        "errors": []
+      },
+      {
+        "id": "inkblot",
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "version1130Verified": false,
+        "actors": 8,
+        "bots": 7,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "cases": [
+          {
+            "hz": 30,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 16999,
+                "triangle": 107633,
+                "distanceToTarget": 0.02346430377176891,
+                "object": 103
+              }
+            ],
+            "naturalWallSplats": 4,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0.09999999403953552,
+              "p95": 2,
+              "max": 8.300000011920929
+            }
+          },
+          {
+            "hz": 60,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 16999,
+                "triangle": 107633,
+                "distanceToTarget": 0.02346430377176891,
+                "object": 103
+              }
+            ],
+            "naturalWallSplats": 4,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.29999999701976776,
+              "max": 1.5
+            }
+          },
+          {
+            "hz": 120,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 16999,
+                "triangle": 107633,
+                "distanceToTarget": 0.02346430377176891,
+                "object": 103
+              }
+            ],
+            "naturalWallSplats": 5,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.19999998807907104,
+              "max": 0.7999999970197678
+            }
+          }
+        ],
+        "sourceObject": "Fld_Upland03_bottomConcrete1_1__WallConcreteBackStreet",
+        "face": 16999,
+        "triangle": 107633,
+        "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+        "errors": []
+      },
+      {
+        "id": "mako",
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "version1130Verified": false,
+        "actors": 8,
+        "bots": 7,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "cases": [
+          {
+            "hz": 30,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 13063,
+                "triangle": 41200,
+                "distanceToTarget": 0.020886154053654054,
+                "object": 76
+              }
+            ],
+            "naturalWallSplats": 4,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.7000000029802322,
+              "max": 3.800000011920929
+            }
+          },
+          {
+            "hz": 60,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 13063,
+                "triangle": 41200,
+                "distanceToTarget": 0.020886154053654054,
+                "object": 76
+              }
+            ],
+            "naturalWallSplats": 5,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.4000000059604645,
+              "max": 5.4000000059604645
+            }
+          },
+          {
+            "hz": 120,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 13063,
+                "triangle": 41200,
+                "distanceToTarget": 0.020886154053654054,
+                "object": 76
+              }
+            ],
+            "naturalWallSplats": 5,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.20000000298023224,
+              "max": 0.8999999910593033
+            }
+          }
+        ],
+        "sourceObject": "FldObj_LineExceptTri_Vinyl1_1__Vinyl",
+        "face": 13063,
+        "triangle": 41200,
+        "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+        "errors": []
+      },
+      {
+        "id": "brinewater",
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "version1130Verified": false,
+        "actors": 8,
+        "bots": 7,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "cases": [
+          {
+            "hz": 30,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 61657,
+                "triangle": 156605,
+                "distanceToTarget": 0.024362125973955498,
+                "object": 381
+              }
+            ],
+            "naturalWallSplats": 3,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 1.5999999940395355,
+              "max": 10.799999997019768
+            }
+          },
+          {
+            "hz": 60,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 61657,
+                "triangle": 156605,
+                "distanceToTarget": 0.024362125973955498,
+                "object": 381
+              }
+            ],
+            "naturalWallSplats": 3,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 1.0999999940395355,
+              "max": 3.8999999910593033
+            }
+          },
+          {
+            "hz": 120,
+            "admitted": 1,
+            "owned": 1,
+            "sourceSweepHit": true,
+            "sourceContacts": [
+              {
+                "face": 61657,
+                "triangle": 156605,
+                "distanceToTarget": 0.024362125973955498,
+                "object": 381
+              }
+            ],
+            "naturalWallSplats": 3,
+            "alive": true,
+            "grounded": true,
+            "projectileCpu": {
+              "p50": 0,
+              "p95": 0.20000000298023224,
+              "max": 2.2000000029802322
+            }
+          }
+        ],
+        "sourceObject": "Fld_BigSlope00_pPlane195__Container02",
+        "face": 61657,
+        "triangle": 156605,
+        "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+        "errors": []
+      }
+    ]
+  },
+  "tests": {
+    "sourceSweepAndDamage": {
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0
+    },
+    "earlierSourcePlusRetainedFlightBlasterPhysics": {
+      "passed": 30,
+      "failed": 0,
+      "skipped": 0
+    },
+    "emittedPackaging": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  },
+  "publicStartupBudget": {
+    "status": "passed",
+    "revision": "a215c0b8c42b70551c53b0f5e790f3ff060b7c5a1ebd244ecb5dc3390c546531",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 74638,
+    "initialJSBytes": 2861407,
+    "criticalHTMLBytes": 15371,
+    "precacheCount": 365,
+    "precacheBytes": 5752522,
+    "workerBytes": 70517,
+    "declaredBytes": 10370562,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "limits": [
+    "Retail collision masks, source extraction version and material shader equivalence are unverified",
+    "Single-shot update timings are not whole-match FPS or physical device measurements",
+    "Physical mouse admission, full eight-actor simulation and real WS remain distinct owner/aggregate checks"
+  ],
+  "acceptedCameraComposition": {
+    "foundation": "33cecb0583de92b260478356d4340513a3188065",
+    "contracts": {
+      "passed": 52,
+      "failed": 0,
+      "skipped": 6
+    },
+    "emittedPackaging": {
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    },
+    "publicStartupBudget": {
+      "status": "passed",
+      "revision": "7beff5a6180ed77b53c07a1ce7bf2b23c14233b23967660e1a8f841d40a20873",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2861407,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5752749,
+      "workerBytes": 70517,
+      "declaredBytes": 10370789,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  }
+}

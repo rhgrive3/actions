@@ -4087,3 +4087,5 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 - [タカアシ経済特区](native-stages/crableg.md)
 - [オヒョウ海運](native-stages/shipshape.md)
 - [コンブトラック](native-stages/humpback.md)
+
+原典ステージ共通の射撃差分は [連続球衝突と実ブキの壁塗り](native-stages/projectile-source-sweep.md) に記録する。チャートや元オブジェクトの外接箱への誤衝突を修正し、実際の元三角形と動的なゲーム物体への接触を検証する。本家実機の衝突形状との一致は未確認。

@@ -12,3 +12,4 @@ export { nativeStageArt } from './source-menu.mjs';
 export {nativeStageRuleStatus} from './rule-availability.mjs';
 export {nativeTowerClearance} from './native-tower-clearance.mjs';
 export {nativeTowerBoarding} from './native-tower-boarding.mjs';
+export { sweepNativeLevelSphere } from './native-projectile-sweep.mjs';
