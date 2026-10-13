@@ -24,7 +24,7 @@ test('Shipshape original bank departures admit ordinary human and bot gravity at
   for(const bot of [false,true])for(const hz of [30,60,120]){
    G.actors=[];G.projectiles.clear();G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
    const a=new f.Actor({team:sign<0?0:1,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),goal=new THREE.Vector3(...edge.drop.landing);
-   a.spawnAt(new THREE.Vector3(...edge.drop.upper),Math.atan2(edge.drop.direction[0],edge.drop.direction[2]));a.invuln=0;G.actors=[a];
+   a.isBot=bot;a.spawnAt(new THREE.Vector3(...edge.drop.upper),Math.atan2(edge.drop.direction[0],edge.drop.direction[2]));a.invuln=0;G.actors=[a];
    let brain;if(bot){brain=a.bot=new f.BotBrain(a,'normal');assert.ok(brain._pathTo(goal,.6));brain.goalTimer=brain.repath=brain.bombCd=1000;assert.ok(brain.path.slice(1).some((id,i)=>N.nodes[brain.path[i]].nb.find(e=>e.to===id)?.drop));}
    else{a.intent.move.fromArray(edge.drop.direction);a.intent.fire=a.intent.squid=a.intent.jump=false;}
    let airborne=false,seconds=0,firstTouchdown=null,completedDrop=false;
