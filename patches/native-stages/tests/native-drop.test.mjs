@@ -55,6 +55,15 @@ for(const root of roots){const catalog=JSON.parse(fs.readFileSync(path.join(root
    const sweep=f.nativeDropClearance(L),from=new THREE.Vector3(-11,8,-23.102798461914062),to=new THREE.Vector3(-15,8,-23.102798461914062);
    assert.ok(P.bodyFits(from,.35,PLAYER.stepUp,PLAYER.height)&&P.bodyFits(to,.35,PLAYER.stepUp,PLAYER.height));assert.equal(sweep.clear(from,to,.35,PLAYER.stepUp,PLAYER.height),false,'both fitting endpoints still cross an actual source wall');
    const sourceNoPaint=N.nodes.find(n=>n.y<0&&!n.nativePaintable),upper=nearest([-14,15.4452,-25.1028]);assert.equal(f.nativeDropTransition(N,upper,sourceNoPaint),null,'real source lower hull and NoPaint water floor never become a playable drop');
+  }else{
+   const from=nearest([-7,3.054013256,9.5]),to=nearest([-6,3.5,9.5]);
+   assert.ok(to.y-from.y>PLAYER.stepUp&&to.y-from.y<.5);assert.equal(N.edgeType(from.id,to.id),'jump','actual BlockCurbYellow rise exceeds the live human step limit');
+   for(const hz of [30,60,120]){
+    G.actors=[];const a=f.make('shooter');a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;a.spawnAt(new THREE.Vector3(from.x,from.y,from.z),Math.PI/2);G.actors=[a];const brain=a.bot=new f.BotBrain(a,'normal'),goal=new THREE.Vector3(to.x,to.y,to.z);
+    assert.ok(brain._pathTo(goal,.6));brain.goalTimer=brain.repath=brain.bombCd=1000;
+    for(let frame=0;frame<hz*4;frame++){G.time+=1/hz;brain.update(1/hz);a.update(1/hz);if(a.grounded&&Math.abs(a.pos.y-to.y)<.12&&Math.hypot(a.pos.x-to.x,a.pos.z-to.z)<.6)break;}
+    assert.ok(a.grounded&&Math.abs(a.pos.y-to.y)<.12&&a.s3JumpSerial>0,'ordinary BotBrain jump reaches the real source curb '+JSON.stringify({hz,pos:a.pos.toArray(),jump:a.s3JumpSerial,grounded:a.grounded}));
+   }
   }
   assert.equal(hash(),before,'source collision, flags and chart IDs are immutable');console.log(JSON.stringify({id:definition.id,sourceSha256:L.manifest.sourceSha256,navNodes:N.nodes.length,validNodes:N.validIds.length,common:common.length,newDrops:N.nodes.flatMap(n=>n.nb.filter(e=>e.drop)).length,navBuildMilliseconds,cases,sourceBuffersUnchanged:true,metrics:N._nativeDropClearance?.metrics}));
  });
