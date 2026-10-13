@@ -63,66 +63,246 @@ function softBox(THREE, w, h, d, round = 0.25, seg = 6) {
 const sphere = (THREE, r, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1, ws = 18, hs = 12) => new THREE.SphereGeometry(r, ws, hs).scale(sx, sy, sz).translate(x, y, z);
 
 // ---- Tenta Missiles ------------------------------------------------------------
-// S2 Model render, S2 promo render, S3 promo image: a 2x2 launch box and a
-// single-tube box above it, frames with recessed windows, pink missile tubes
-// out of the back with white ribbed caps and an L-shaped grip underneath.
-// Frames take the team ink (single-colour S3 icon), tubes stay pink.
+// S3 Model render, S2 promo render, S3 promo image: a 2x2 launch crate and a
+// single-tube crate below it, aligned to one side. Each crate is an open cage:
+// a bevelled front plate with round launch holes (raised rings), proud rims at
+// both ends, rounded corner posts and side/top/bottom panels with windows in
+// the rear half. Long missile tubes run out of the back through a square plate
+// with side gussets and end in white ribbed caps. A pistol grip with a red
+// trigger sits under the small crate. White script and dark print decals.
+// Colours: the crates stay a translucent lime-yellow and the tubes take the
+// team ink (lime crates with pink tubes in the S2/S3 renders, yellow crates
+// with teal tubes for a teal-ink player in the S3 promo image).
+registerFinish('tentaFrame', 0xd2ea1e, { roughness: 0.16, metalness: 0.05, transparent: true, opacity: 0.86 });
+registerFinish('tentaPrint', 0x2c2c34, { roughness: 0.6, metalness: 0 });
+// Rounded rectangle centred on the origin, optional holes ({ r } circles or { w, h } rectangles).
+function tmShape(THREE, w, h, rad, holes = []) {
+  const s = new THREE.Shape(), W = w / 2, H = h / 2, r = Math.min(rad, W, H);
+  s.moveTo(-W + r, -H); s.lineTo(W - r, -H); s.quadraticCurveTo(W, -H, W, -H + r); s.lineTo(W, H - r);
+  s.quadraticCurveTo(W, H, W - r, H); s.lineTo(-W + r, H); s.quadraticCurveTo(-W, H, -W, H - r); s.lineTo(-W, -H + r);
+  s.quadraticCurveTo(-W, -H, -W + r, -H);
+  for (const o of holes) {
+    const p = new THREE.Path();
+    if (o.r) p.absarc(o.x, o.y, o.r, 0, TAU, true);
+    else { const a = o.w / 2, b = o.h / 2; p.moveTo(o.x - a, o.y - b); p.lineTo(o.x - a, o.y + b); p.lineTo(o.x + a, o.y + b); p.lineTo(o.x + a, o.y - b); p.lineTo(o.x - a, o.y - b); }
+    s.holes.push(p);
+  }
+  return s;
+}
+// Extruded plate, centred on its thickness, in the XY plane.
+function tmPlate(THREE, shape, depth, bevel = 0) {
+  return new THREE.ExtrudeGeometry(shape, { depth, curveSegments: 7, bevelEnabled: bevel > 0, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 1 }).translate(0, 0, -depth / 2);
+}
+// Place a plate built in XY (thickness along +Z) onto axes u, v, n (n = u x v) at p.
+function tmPlace(THREE, g, u, v, p) {
+  const U = new THREE.Vector3(...u), V = new THREE.Vector3(...v), N = U.clone().cross(V);
+  return g.applyMatrix4(new THREE.Matrix4().makeBasis(U, V, N)).translate(...p);
+}
+// One crate: W x H cross-section, L long, centred at c, launch holes at hs.
+function tmCrate(THREE, K, W, H, L, c, hs, rh, tail) {
+  const [cx, cy, cz] = c, F = 'tentaFrame', zf = cz + L / 2, zb = cz - L / 2, rim = 0.034, bev = 0.006;
+  // Front plate with the launch holes and a raised ring round each hole.
+  K.add('body', F, tmPlate(THREE, tmShape(THREE, W - 2 * bev, H - 2 * bev, 0.018, hs.map(([x, y]) => ({ x, y, r: rh + bev }))), rim - 2 * bev, bev).translate(cx, cy, zf - rim / 2));
+  K.add('body', F, ...hs.map(([x, y]) => new THREE.TorusGeometry(rh + 0.011, 0.0055, 5, 18).translate(cx + x, cy + y, zf + 0.001)));
+  // Back rim (open square ring) and the corner posts.
+  K.add('body', F, tmPlate(THREE, tmShape(THREE, W - 2 * bev, H - 2 * bev, 0.018, [{ x: 0, y: 0, w: W - 0.06, h: H - 0.06 }]), rim - 2 * bev, bev).translate(cx, cy, zb + rim / 2));
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) K.add('body', F, cylZ(THREE, 0.014, zb + 0.01, zf - 0.01, 8).translate(cx + sx * (W / 2 - 0.016), cy + sy * (H / 2 - 0.016), 0));
+  // Four panels between the rims, each with a window in the rear half.
+  const faces = [[[1, 0, 0], [0, 0, -1], [0, 1, 0], W, H], [[1, 0, 0], [0, 0, 1], [0, -1, 0], W, H], [[0, 1, 0], [0, 0, 1], [1, 0, 0], H, W], [[0, 1, 0], [0, 0, -1], [-1, 0, 0], H, W]];
+  const pl = L - 2 * rim + 0.004, t = 0.012;
+  for (const [u, v, n, fw, fd] of faces) {
+    const vz = v[2], win = { x: 0, y: -0.17 * L * vz, w: fw * 0.42, h: L * 0.32 };
+    const off = fd / 2 - 0.009 - t / 2;
+    K.add('body', F, tmPlace(THREE, tmPlate(THREE, tmShape(THREE, fw - 0.03, pl, 0, [win]), t, 0.002), u, v, [cx + n[0] * off, cy + n[1] * off, cz + n[2] * off]));
+  }
+  // Missile tubes (team ink) from just inside the front plate to the tail plate.
+  const zt = zb - tail;
+  const nose = (x, y) => latheZ(THREE, [[0, zf - 0.05], [rh * 0.5, zf - 0.046], [rh * 0.78, zf - 0.03], [rh - 0.002, zf - 0.028], [rh - 0.002, zf - 0.04]], 18).translate(x, y, 0);
+  K.add('body', 'inkGloss', ...hs.map(([x, y]) => cylZ(THREE, rh - 0.003, zt - 0.006, zf - 0.04, 18).translate(cx + x, cy + y, 0)), ...hs.map(([x, y]) => nose(cx + x, cy + y)));
+  K.add('body', 'inkDark', ...hs.map(([x, y]) => new THREE.CircleGeometry(rh * 0.42, 14).translate(cx + x, cy + y, zf - 0.045)));
+  // Tail plate with tube holes and two side gussets, then the ribbed caps.
+  const pw = W - 0.03, ph = H - 0.03;
+  K.add('body', F, tmPlate(THREE, tmShape(THREE, pw, ph, 0.02, hs.map(([x, y]) => ({ x, y, r: rh + 0.002 }))), 0.012, 0.003).translate(cx, cy, zt));
+  const gus = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(0.06, 0), new THREE.Vector2(0, 0.03)]);
+  for (const sy of [-1, 1]) K.add('body', F, tmPlace(THREE, tmPlate(THREE, gus, 0.01, 0.002), [0, 0, 1], [0, sy, 0], [cx, cy + sy * (ph / 2 - 0.004), zt + 0.006]));
+  const cap = [[0, zt - 0.072], [rh * 0.8, zt - 0.072], [rh + 0.006, zt - 0.066]];
+  for (let i = 0; i < 5; i++) cap.push([rh + 0.009, zt - 0.06 + i * 0.0115], [rh + 0.005, zt - 0.054 + i * 0.0115]);
+  cap.push([rh + 0.004, zt - 0.004], [rh - 0.004, zt - 0.004]);
+  K.add('body', 'white', ...hs.map(([x, y]) => latheZ(THREE, cap, 14).translate(cx + x, cy + y, 0)));
+}
+// Flattened stroke lying on a face: pts are [u, v] on axes u, v at p (n out of the face).
+function tmStroke(THREE, pts, w, u, v, p) {
+  const g = tube(THREE, pts.map(([a, b]) => [a, b, 0]), w, Math.max(6, pts.length * 3), 4).scale(1, 1, 0.25);
+  return tmPlace(THREE, g, u, v, p);
+}
 function tentaLauncher(THREE) {
   const K = kit();
-  const frame = (w, h, d, x, y, z) => {
-    K.add('body', 'ink', softBox(THREE, w, h, d, 0.12).translate(x, y, z));
-    // Side and top windows show the pink tubes inside (S2 Model render).
-    K.add('body', 'pink', box(THREE, w * 1.005, h * 0.5, d * 0.62, x, y, z - d * 0.05), box(THREE, w * 0.6, h * 1.005, d * 0.62, x, y, z - d * 0.05));
-  };
-  frame(0.32, 0.3, 0.3, 0, 0, 0);
-  frame(0.18, 0.16, 0.3, -0.05, 0.25, 0.02);
-  const holes = [], tubes = [], caps = [];
-  for (const [x, y] of [[-0.075, 0.07], [0.075, 0.07], [-0.075, -0.075], [0.075, -0.075], [-0.05, 0.25]]) {
-    holes.push(new THREE.CircleGeometry(0.048, 16).translate(x, y, 0.152 + (y > 0.2 ? 0.02 : 0)));
-    tubes.push(cylZ(THREE, 0.045, -0.36 + (y > 0.2 ? 0.02 : 0), -0.14 + (y > 0.2 ? 0.02 : 0), 14).translate(x, y, 0));
-    caps.push(cylZ(THREE, 0.05, -0.4, -0.36, 14).translate(x, y, y > 0.2 ? 0.02 : 0));
-  }
-  K.add('body', 'pink', ...holes, ...tubes);
-  K.add('body', 'white', ...caps);
-  K.add('body', 'lime', box(THREE, 0.04, 0.12, 0.05, 0, -0.2, 0.04), box(THREE, 0.04, 0.04, 0.1, 0, -0.27, 0.07));
+  // Big 2x2 crate on top, single crate under its +X side (S2 promo render).
+  tmCrate(THREE, K, 0.3, 0.3, 0.32, [0, 0.05, 0], [[-0.07, 0.07], [0.07, 0.07], [-0.07, -0.07], [0.07, -0.07]], 0.05, 0.3);
+  tmCrate(THREE, K, 0.17, 0.17, 0.3, [0.065, -0.186, 0.04], [[0, 0]], 0.05, 0.26);
+  // Pistol grip and red trigger under the small crate.
+  const grip = new THREE.Shape([[0.13, -0.268], [0.05, -0.268], [0.035, -0.31], [0.022, -0.39], [0.03, -0.405], [0.075, -0.405], [0.085, -0.36], [0.1, -0.31], [0.12, -0.29]].map(([z, y]) => new THREE.Vector2(z, y)));
+  K.add('body', 'tentaFrame', tmPlace(THREE, tmPlate(THREE, grip, 0.034, 0.008), [0, 0, 1], [0, 1, 0], [0.065, 0, 0]));
+  K.add('body', 'red', box(THREE, 0.014, 0.034, 0.012, 0.065, -0.29, 0.122));
+  // Decals: white script on the big crate's +X side and top (front half),
+  // dark print rows on the small crate's +X side and on the tubes.
+  const script = [
+    [[-0.05, 0.06], [-0.035, 0.085], [-0.03, 0.05], [-0.04, -0.02], [-0.03, -0.06], [-0.012, -0.05]],
+    [[-0.012, 0.02], [-0.004, -0.05], [0.01, -0.04], [0.016, 0.0], [0.024, -0.05], [0.04, -0.045]],
+    [[0.034, 0.03], [0.04, -0.03], [0.055, -0.06], [0.07, -0.04]],
+    [[0.026, 0.04], [0.06, 0.035]], [[-0.002, 0.045], [0.003, 0.05]], [[0.012, 0.045], [0.017, 0.05]],
+  ];
+  K.add('body', 'mark', ...script.map(s => tmStroke(THREE, s.map(([a, b]) => [b * 1.1, a * 1.15]), 0.0065, [0, 0, -1], [0, 1, 0], [0.1425, 0.05, 0.06])));
+  K.add('body', 'mark', ...script.map(s => tmStroke(THREE, s.map(([a, b]) => [a * 0.9, -b * 0.7]), 0.0055, [1, 0, 0], [0, 0, -1], [0, 0.1925, 0.07])));
+  const print = [];
+  for (let row = 0; row < 2; row++) for (let i = 0; i < (row ? 7 : 10); i++) print.push(box(THREE, 0.0025, 0.009, 0.006, 0.1425, -0.16 - row * 0.016, 0.165 - i * 0.0105));
+  K.add('body', 'tentaPrint', ...print);
+  const tubePrint = [];
+  for (const [x, y, n] of [[0.07, 0.12, 6], [0.07, -0.02, 4], [0.065, -0.186, 5]]) for (let i = 0; i < n; i++) tubePrint.push(box(THREE, 0.003, 0.005 + (i % 2) * 0.004, 0.05 - (i % 3) * 0.012, x + 0.047, y - 0.012 + i * 0.006, -0.3 + (y < -0.1 ? 0.05 : 0)));
+  K.add('body', 'inkDark', ...tubePrint);
   return K.finish(THREE);
 }
-// Missile: white body, ink nose cone and fins (the S3 missiles trail team ink).
+// Missile (S3 promo image): silver body with a rounded nose, a team-ink band
+// and ink fins, ink exhaust glow.
 function tentaMissile(THREE) {
   const K = kit();
-  K.add('body', 'white', cylZ(THREE, 0.045, -0.16, 0.08, 14));
-  K.add('body', 'ink', latheZ(THREE, [[0.045, 0.08], [0.042, 0.12], [0.028, 0.16], [0, 0.185]], 14),
-    ...[0, 1, 2, 3].map(k => box(THREE, 0.005, 0.06, 0.07, 0, 0.065, -0.13).rotateZ(k * Math.PI / 2)));
-  K.add('body', 'inkGlow', cylZ(THREE, 0.03, -0.19, -0.16, 12));
+  K.add('body', 'steel', latheZ(THREE, smooth(THREE, [[0, -0.17], [0.03, -0.166], [0.043, -0.145], [0.045, -0.06], [0.045, 0.06], [0.041, 0.11], [0.03, 0.15], [0.014, 0.176], [0, 0.182]], 20), 16));
+  K.add('body', 'ink', cylZ(THREE, 0.0465, -0.035, 0.035, 16),
+    ...[0, 1, 2, 3].map(k => new THREE.ExtrudeGeometry(new THREE.Shape([new THREE.Vector2(0.04, -0.165), new THREE.Vector2(0.075, -0.17), new THREE.Vector2(0.075, -0.145), new THREE.Vector2(0.04, -0.1)]), { depth: 0.006, bevelEnabled: false }).translate(0, 0, -0.003).rotateX(Math.PI / 2).rotateZ(Math.PI / 4 + k * Math.PI / 2)));
+  K.add('body', 'inkGlow', cylZ(THREE, 0.028, -0.19, -0.168, 12));
   return K.finish(THREE);
 }
 
 // ---- Inkjet --------------------------------------------------------------------
-// S2 promo render and S3 screenshot: a back pack of two ink tanks, a grey motor
-// block with a red guard frame, black hoses and two down-pointing nozzles; the
-// hand cannon is a perforated black barrel with a grey canister.
+// S2 promo render and S3 screenshot. Back unit: two engine columns, each a
+// team-ink tank in a red wire cage with a silver label band, a grey motor
+// housing with black knobs and a chrome plate, a clear sight cylinder on top,
+// a chrome collar and a black flared thruster nozzle underneath. Chunky
+// black corrugated hoses loop from each housing down below the pack and back
+// up into the tank; a corrugated cross hose joins the housings, a team-ink
+// U manifold joins the tanks, a centre block carries a round gauge and a big
+// black elbow that feeds the hose running round the right side to the
+// cannon. A chrome crank lever stands on the left housing. Black back frame.
+// Hand cannon: team-ink body, chrome rings, a black perforated muzzle block
+// with a ribbed tip, a black knob and small sight canister on top, a wire
+// carry loop, a black pistol grip and a corrugated hose hanging from the rear.
+// Corrugated hose along a smooth path (radius r, rib pitch ~1.1 r).
+function ijHose(THREE, pts, r, amp = 0.13, radial = 10, pitch = 1.1) {
+  const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)), false, 'catmullrom', 0.5);
+  const ribs = Math.max(3, Math.round(curve.getLength() / (r * pitch))), seg = ribs * 4;
+  const fr = curve.computeFrenetFrames(seg, false), P = new THREE.Vector3(), pos = [], idx = [];
+  for (let i = 0; i <= seg; i++) {
+    curve.getPointAt(i / seg, P);
+    const rr = r * (1 + amp * Math.cos(i * Math.PI / 2)), N = fr.normals[i], B = fr.binormals[i];
+    for (let j = 0; j <= radial; j++) {
+      const a = j / radial * TAU, c = Math.cos(a), s = Math.sin(a);
+      pos.push(P.x + rr * (c * N.x + s * B.x), P.y + rr * (c * N.y + s * B.y), P.z + rr * (c * N.z + s * B.z));
+    }
+  }
+  for (let i = 0; i < seg; i++) for (let j = 0; j < radial; j++) {
+    const a = i * (radial + 1) + j, b = a + radial + 1;
+    idx.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+// Chrome hose clamp ring at p facing d.
+const ijClamp = (THREE, r, p, d) => orient(THREE, new THREE.CylinderGeometry(r, r, r * 0.7, 14, 1, true), d, p);
 function inkjetPack(THREE) {
   const K = kit();
   for (const s of [-1, 1]) {
-    K.add('body', 'ink', cylY(THREE, 0.07, -0.14, 0.16, 18).translate(s * 0.09, 0, 0), sphere(THREE, 0.07, s * 0.09, 0.16, 0, 1, 0.5, 1), sphere(THREE, 0.07, s * 0.09, -0.14, 0, 1, 0.5, 1));
-    K.add('body', 'black', cylY(THREE, 0.05, -0.3, -0.18, 14, 0.06).translate(s * 0.09, 0, 0), ring(THREE, 0.072, 0.008, 0.08).translate(s * 0.09, 0, 0));
-    K.add('body', 'darkMetal', cylY(THREE, 0.055, -0.33, -0.3, 14).translate(s * 0.09, 0, 0));
+    const X = s * 0.105, Z = -0.05;
+    // Tank, label band, cage.
+    K.add('body', 'inkGloss', latheY(THREE, smooth(THREE, [[0, -0.14], [0.03, -0.136], [0.05, -0.12], [0.058, -0.095], [0.058, 0.05], [0.056, 0.075], [0.05, 0.09]], 12), 18).translate(X, 0, Z));
+    K.add('body', 'steel', cylY(THREE, 0.0595, -0.04, 0.012, 20).translate(X, 0, Z));
+    K.add('body', 'black', ...[0, 1, 2].map(i => box(THREE, 0.004, 0.006, 0.03 - i * 0.006, X + s * 0.0, -0.026 + i * 0.011, Z - 0.06)));
+    // Two red wire brackets standing off the tank's outer-back face.
+    for (const a of [0.45, 1.15]) {
+      const ox = Math.cos(a) * s, oz = -Math.sin(a), at = (k, y) => [X + ox * k, y, Z + oz * k];
+      K.add('body', 'red', tube(THREE, [at(0.04, 0.088), at(0.068, 0.088), at(0.076, 0.078), at(0.076, 0.0), at(0.076, -0.11), at(0.066, -0.122), at(0.035, -0.128)], 0.0045, 16, 5));
+    }
+    // Motor housing, knobs, chrome plate with a blue window, sight cylinder.
+    K.add('body', 'grey', softBox(THREE, 0.125, 0.11, 0.125, 0.2, 4).translate(X, 0.14, Z));
+    K.add('body', 'chrome', box(THREE, 0.08, 0.05, 0.008, X, 0.15, Z - 0.064), cylY(THREE, 0.052, 0.195, 0.205, 20).translate(X, 0, Z),
+      new THREE.TorusGeometry(0.046, 0.005, 5, 16).rotateX(Math.PI / 2).translate(X, 0.262, Z));
+    K.add('body', 'blueBand', box(THREE, 0.03, 0.014, 0.004, X - s * 0.015, 0.162, Z - 0.069));
+    K.add('body', 'black', ...[0.115, 0.165].map(y => cylX(THREE, 0.02, 0, 0.022, 14).translate(X + s * 0.062 + (s < 0 ? -0.022 : 0), y, Z - 0.02)),
+      cylY(THREE, 0.04, 0.262, 0.272, 18).translate(X, 0, Z));
+    K.add('body', 'glass', cylY(THREE, 0.045, 0.205, 0.262, 20).translate(X, 0, Z));
+    K.add('body', 'darkMetal', cylY(THREE, 0.028, 0.205, 0.255, 14).translate(X, 0, Z));
+    // Collar and thruster nozzle.
+    K.add('body', 'chrome', cylY(THREE, 0.042, -0.165, -0.13, 18).translate(X, 0, Z), new THREE.TorusGeometry(0.043, 0.006, 5, 16).rotateX(Math.PI / 2).translate(X, -0.148, Z));
+    K.add('body', 'black', latheY(THREE, [[0.036, -0.27], [0.05, -0.268], [0.052, -0.258], [0.044, -0.235], [0.037, -0.2], [0.036, -0.165]], 20).translate(X, 0, Z),
+      ...[-0.18, -0.2, -0.22].map(y => new THREE.TorusGeometry(0.0375 + (y + 0.18) * -0.08, 0.004, 4, 16).rotateX(Math.PI / 2).translate(X, y, Z)));
+    K.add('body', 'hole', new THREE.CircleGeometry(0.036, 16).rotateX(Math.PI / 2).translate(X, -0.262, Z));
+    // Big corrugated loop hose: housing side -> below the pack -> back of the tank.
+    const loop = [[X + s * 0.064, 0.15, Z], [X + s * 0.13, 0.13, Z - 0.01], [X + s * 0.15, 0.0, Z - 0.03], [X + s * 0.155, -0.2, Z - 0.05], [X + s * 0.13, -0.35, Z - 0.08], [X + s * 0.085, -0.37, Z - 0.1], [X + s * 0.07, -0.25, Z - 0.1], [X + s * 0.05, -0.1, Z - 0.07]];
+    K.add('body', 'rubber', ijHose(THREE, loop, 0.034, 0.05, 10, 2.2));
+    K.add('body', 'chrome', ijClamp(THREE, 0.04, [X + s * 0.068, 0.15, Z], [1, 0, 0]), ijClamp(THREE, 0.039, [X + s * 0.05, -0.1, Z - 0.068], [-s * 0.12, 1, 0.2]));
   }
-  K.add('body', 'mech', box(THREE, 0.12, 0.14, 0.12, 0, 0.06, -0.06));
-  K.add('body', 'red', tube(THREE, [[-0.07, -0.02, -0.12], [-0.07, 0.15, -0.12], [0.07, 0.15, -0.12], [0.07, -0.02, -0.12]], 0.008, 16, 6));
-  K.add('body', 'black', tube(THREE, [[0.1, -0.12, 0.02], [0.2, -0.2, 0.12], [0.15, -0.05, 0.3]], 0.022, 16, 8), box(THREE, 0.26, 0.04, 0.03, 0, 0.12, 0.08), box(THREE, 0.26, 0.04, 0.03, 0, -0.08, 0.08));
-  K.pivot('flame', [0, -0.33, 0]);
-  K.add('flame', 'inkGlow', ...[-1, 1].map(s => new THREE.ConeGeometry(0.045, 0.28, 12, 1, true).rotateX(Math.PI).translate(s * 0.09, -0.47, 0)));
+  // Cross hose between the housings, chrome clamps.
+  K.add('body', 'rubber', ijHose(THREE, [[-0.07, 0.21, -0.09], [-0.03, 0.27, -0.12], [0.03, 0.27, -0.12], [0.07, 0.21, -0.09]], 0.019, 0.13, 8, 1.6));
+  // Team-ink U manifold between the tank bottoms.
+  K.add('body', 'inkGloss', tube(THREE, [[-0.06, -0.1, -0.05], [-0.03, -0.16, -0.07], [0.03, -0.16, -0.07], [0.06, -0.1, -0.05]], 0.02, 16, 10));
+  // Centre block with the gauge facing out.
+  K.add('body', 'grey', softBox(THREE, 0.07, 0.09, 0.06, 0.25, 4).translate(0, 0.06, -0.05));
+  K.add('body', 'chrome', cylZ(THREE, 0.033, -0.095, -0.08, 22).translate(0, 0.07, 0));
+  K.add('body', 'label', new THREE.CircleGeometry(0.027, 22).rotateY(Math.PI).translate(0, 0.07, -0.0955));
+  K.add('body', 'red', box(THREE, 0.004, 0.022, 0.002, 0.006, 0.078, -0.097));
+  K.add('body', 'black', ...[0, 1, 2, 3, 4, 5, 6].map(k => { const a = -2.2 + k * 0.73; return box(THREE, 0.003, 0.007, 0.002, Math.sin(a) * 0.021, 0.07 + Math.cos(a) * 0.021, -0.097); }),
+    cylZ(THREE, 0.006, -0.1, -0.096, 8).translate(0, 0.07, 0));
+  // Big black elbow out of the centre block, feeding the cannon hose.
+  K.add('body', 'black', tube(THREE, [[0, 0.02, -0.07], [0, -0.04, -0.11], [-0.03, -0.1, -0.13], [-0.08, -0.15, -0.12]], 0.027, 16, 12));
+  K.add('body', 'chrome', ijClamp(THREE, 0.031, [0, 0.0, -0.085], [0, -0.7, -0.7]), ijClamp(THREE, 0.031, [-0.075, -0.145, -0.12], [-1, -0.7, 0.2]));
+  K.add('body', 'rubber', ijHose(THREE, [[-0.08, -0.15, -0.12], [-0.17, -0.22, -0.1], [-0.25, -0.27, 0.02], [-0.29, -0.27, 0.18], [-0.29, -0.22, 0.3]], 0.027, 0.1, 10, 1.5));
+  K.add('body', 'chrome', ijClamp(THREE, 0.032, [-0.29, -0.222, 0.3], [0, 0.35, 1]));
+  // Crank lever on the +X housing (chrome rod, chrome grip sleeve).
+  K.add('body', 'chrome', rod(THREE, [0.125, 0.19, -0.11], [0.125, 0.3, -0.11], 0.007, 8), rod(THREE, [0.125, 0.3, -0.11], [0.125, 0.33, -0.16], 0.007, 8),
+    rod(THREE, [0.125, 0.33, -0.16], [0.125, 0.4, -0.16], 0.011, 10));
+  // Back frame: rails, cross bars and a pad against the back.
+  K.add('body', 'black', ...[-0.05, 0.05].map(x => rod(THREE, [x, -0.2, 0.02], [x, 0.24, 0.02], 0.012, 8)),
+    rod(THREE, [-0.12, 0.2, 0.02], [0.12, 0.2, 0.02], 0.011, 8), rod(THREE, [-0.12, -0.11, 0.02], [0.12, -0.11, 0.02], 0.011, 8),
+    softBox(THREE, 0.15, 0.3, 0.025, 0.3, 4).translate(0, 0.02, 0.035));
+  // Jet flames out of both nozzles (pose code may scale this group).
+  K.pivot('flame', [0, -0.27, -0.05]);
+  K.add('flame', 'inkGlow', ...[-1, 1].map(s => new THREE.ConeGeometry(0.046, 0.3, 14, 1, true).rotateX(Math.PI).translate(s * 0.105, -0.42, -0.05)));
   return K.finish(THREE);
 }
 function inkjetCannon(THREE) {
   const K = kit();
-  K.add('body', 'black', cylZ(THREE, 0.05, 0.0, 0.32, 18), cylZ(THREE, 0.056, 0.3, 0.36, 18), cylZ(THREE, 0.04, -0.12, 0.0, 14));
+  // Rear cap, team-ink body, chrome rings.
+  K.add('body', 'inkGloss', cylZ(THREE, 0.042, -0.14, 0.18, 20));
+  K.add('body', 'black', latheZ(THREE, [[0, -0.17], [0.03, -0.168], [0.04, -0.158], [0.044, -0.14]], 18), cylZ(THREE, 0.046, -0.15, -0.135, 18));
+  K.add('body', 'chrome', cylZ(THREE, 0.05, 0.17, 0.205, 22), new THREE.TorusGeometry(0.05, 0.005, 6, 22).translate(0, 0, 0.188), cylZ(THREE, 0.045, -0.135, -0.125, 18));
+  // Perforated muzzle block (rounded) with dark holes, ribbed tip, bore.
+  K.add('body', 'darkMetal', latheZ(THREE, [[0.05, 0.2], [0.064, 0.206], [0.069, 0.22], [0.069, 0.345], [0.064, 0.358], [0.054, 0.364]], 26));
   const holes = [];
-  for (let i = 0; i < 4; i++) for (let k = 0; k < 6; k++) { const a = k * TAU / 6 + i * 0.5; holes.push(new THREE.CircleGeometry(0.009, 8).rotateY(a).translate(Math.sin(a) * 0.0505, Math.cos(a) * 0.0505, 0.08 + i * 0.05).applyMatrix4(new THREE.Matrix4())); }
-  K.add('body', 'darkMetal', ...holes);
-  K.add('body', 'mech', cylY(THREE, 0.045, 0.05, 0.16, 16).translate(0, 0, 0.12), ring(THREE, 0.047, 0.008, 0.16).translate(0, 0, 0.12));
-  K.add('body', 'black', box(THREE, 0.04, 0.12, 0.05, 0, -0.08, 0.02));
+  for (let i = 0; i < 3; i++) for (let k = 0; k < 9; k++) {
+    const a = (k + (i % 2) * 0.5) * TAU / 9;
+    holes.push(new THREE.CircleGeometry(0.0115, 10).translate(0, 0, 0.0702).applyMatrix4(new THREE.Matrix4().makeRotationY(Math.PI / 2)).applyMatrix4(new THREE.Matrix4().makeRotationZ(a)).translate(0, 0, 0.243 + i * 0.04));
+  }
+  K.add('body', 'hole', ...holes);
+  const tip = [[0.05, 0.362]];
+  for (let i = 0; i < 6; i++) tip.push([0.058, 0.368 + i * 0.014], [0.05, 0.375 + i * 0.014]);
+  tip.push([0.05, 0.452], [0.034, 0.454], [0.032, 0.43]);
+  K.add('body', 'black', latheZ(THREE, tip, 22));
+  K.add('body', 'hole', new THREE.CircleGeometry(0.032, 18).translate(0, 0, 0.432));
+  // Black knob and the small sight canister on top of the front ring.
+  K.add('body', 'black', cylY(THREE, 0.018, 0.045, 0.07, 6).translate(0, 0, 0.19), cylY(THREE, 0.026, 0.07, 0.086, 6).translate(0, 0, 0.19));
+  K.add('body', 'glass', cylY(THREE, 0.024, 0.04, 0.085, 16).translate(0, 0, 0.11));
+  K.add('body', 'chrome', cylY(THREE, 0.026, 0.083, 0.093, 16).translate(0, 0, 0.11), cylY(THREE, 0.026, 0.034, 0.044, 16).translate(0, 0, 0.11),
+    new THREE.TorusGeometry(0.025, 0.004, 5, 16).rotateX(Math.PI / 2).translate(0, 0.062, 0.11));
+  // Wire carry loop on top of the body.
+  K.add('body', 'chrome', tube(THREE, [[0, 0.035, -0.08], [0, 0.075, -0.07], [0, 0.08, -0.0], [0, 0.075, 0.06], [0, 0.035, 0.07]], 0.005, 24, 6));
+  // Pistol grip with trigger guard (right hand), black.
+  const grip = new THREE.Shape([[0.045, -0.035], [-0.02, -0.035], [-0.035, -0.09], [-0.045, -0.155], [-0.035, -0.165], [0.0, -0.165], [0.01, -0.12], [0.025, -0.08], [0.045, -0.06]].map(([z, y]) => new THREE.Vector2(z, y)));
+  K.add('body', 'black', tmPlace(THREE, tmPlate(THREE, grip, 0.026, 0.007), [0, 0, 1], [0, 1, 0], [0, 0, 0]),
+    tube(THREE, [[0, -0.04, 0.05], [0, -0.075, 0.06], [0, -0.09, 0.04], [0, -0.085, 0.018]], 0.005, 16, 6));
+  K.add('body', 'red', box(THREE, 0.01, 0.026, 0.01, 0, -0.058, 0.045));
+  // Hose from the rear underside, hanging down and back.
+  K.add('body', 'rubber', ijHose(THREE, [[0, -0.035, -0.09], [0, -0.09, -0.12], [0.02, -0.18, -0.13], [0.05, -0.27, -0.08], [0.06, -0.34, 0.0]], 0.026, 0.1));
+  K.add('body', 'chrome', ijClamp(THREE, 0.031, [0, -0.045, -0.095], [0, -1, -0.4]));
   return K.finish(THREE);
 }
 

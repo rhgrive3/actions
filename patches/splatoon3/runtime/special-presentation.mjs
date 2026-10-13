@@ -21,9 +21,11 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
 //  host: 'kid' (kid space, feet at origin, +Z forward), 'chest' (chest bone),
 //  'model' (the character model root, kid and squid both hidden).
 export const SPECIAL_DEVICES = Object.freeze({
-  tentaMissiles: [{ model: 'spTentaLauncher', host: 'kid', pos: [-0.24, 1.2, -0.02], rot: [-0.55, 0, 0.12], scale: 0.9, hideWeapon: true, hands: { R: [0, -0.24, 0.06], L: [0.16, -0.06, 0.13] } }],
+  // Grip under the small crate (S2 promo render); pos keeps the right hand where
+  // it was before the grip moved there; the left hand steadies the small crate.
+  tentaMissiles: [{ model: 'spTentaLauncher', host: 'kid', pos: [-0.31, 1.27, -0.07], rot: [-0.55, 0, 0.12], scale: 0.9, hideWeapon: true, hands: { R: [0.065, -0.34, 0.07], L: [0.16, -0.15, 0.15] } }],
   inkjet: [{ model: 'spInkjetPack', host: 'chest', pos: [0, -0.02, -0.21], rot: [0, 0, 0], scale: 0.62 },
-    { model: 'spInkjetCannon', host: 'kid', pos: [-0.12, 0.98, 0.32], rot: [0, 0, 0], scale: 0.9, aim: true, hideWeapon: true, hands: { R: [0, -0.11, 0.02], L: [0, -0.05, 0.24] } }],
+    { model: 'spInkjetCannon', host: 'kid', pos: [-0.12, 0.98, 0.32], rot: [0, 0, 0], scale: 0.9, aim: true, hideWeapon: true, hands: { R: [0, -0.11, 0.02], L: [0, -0.085, 0.25] } }],
   booyahBomb: [{ model: 'spBooyahBall', host: 'kid', pos: [0, 1.95, 0.05], rot: [0, 0, 0], scale: 1, charge: true, hideWeapon: true, hands: { R: [0.05, -0.36, 0.02] } }],
   // Held by the handle end at the hands, head up in front (S3 screenshot);
   // the swing pivots about the grip.
