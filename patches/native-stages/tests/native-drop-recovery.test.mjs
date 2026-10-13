@@ -57,3 +57,17 @@ test('authentic Shipshape crane-slope drop plants on its real higher foot suppor
  }
  assert.equal(digest(),before);console.log(JSON.stringify({id:'shipshape',cases,sourceUnchanged:true,scope:'Production Character/Actor/Brain isolated source kernel; raw30/60/120 distinct from Game FixedClock'}));
 });
+
+const obstructionRoot=process.env.NATIVE_DROP_OBSTRUCTION_FIXTURE_ASSETS;
+test('a controlled Drop contact cannot walk between fitting original Manta floor endpoints through the retained source wall',{skip:!obstructionRoot},async()=>{
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,data=readStage(obstructionRoot,'manta'),L=G.level=new f.NativeLevel(data),P=G.physics=new f.NativePhysics(L);
+ class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};}_pushQuad(){}_drawQuads(){}}
+ G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.camera=new THREE.PerspectiveCamera();G.match.mode='turf';G.match.opts={};
+ const start=new THREE.Vector3(-20,11.009400367736816,-18),goal=new THREE.Vector3(-17,11.009400367736816,-19);
+ assert(P.bodyFits(start,.35,PLAYER.stepUp,PLAYER.height,false,.003)&&P.bodyFits(goal,.35,PLAYER.stepUp,PLAYER.height,false,.003));assert.equal(f.nativeDropClearance(L).clear(start,goal,.35,PLAYER.stepUp,PLAYER.height),false);
+ const a=new f.Actor({team:0,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});a.spawnAt(start,0);G.actors=[a];G.camera.position.copy(start).add(new THREE.Vector3(0,2,6));for(let i=0;i<60;i++){G.time+=1/60;a.update(1/60);}assert(a.grounded);
+ const target={id:1,x:goal.x,y:goal.y,z:goal.z,nb:[]},edge={to:1,drop:{upper:[-18,11.0094,-17.1028],landing:goal.toArray(),direction:[0,0,1]}},nav=G.nav={nodes:[{id:0,x:-18,y:11.0094,z:-17.1028,nb:[edge]},target]};assert(f.nativeSourceFootSupported(G,a,target));
+ const b={a,path:[0,1],pi:1},position=a.pos.toArray(),velocity=a.vel.toArray();b._nativeDrop={edge,path:b.path,phase:'depart',seconds:0,airborne:true,level:L,nav,match:G.match,mode:G.match.mode};
+ assert.equal(f.updateNativeDrop(b,G,1/60),true);assert.equal(b.path,null);assert.equal(b._nativeDrop,null);assert.deepEqual(Array.from(a.intent.move.toArray()),[0,0,0]);assert.deepEqual(a.pos.toArray(),position);assert.deepEqual(a.vel.toArray(),velocity);
+ console.log(JSON.stringify({kind:'actual source obstruction with individually fitting endpoints',start:start.toArray(),goal:goal.toArray(),ordinaryStop:true,normalReplan:true,scope:'Controlled handler contact fixture with original source geometry, not a navigation admission or fall replay'}));
+});

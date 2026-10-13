@@ -1,0 +1,1519 @@
+{
+  "status": "pending actual fixed-clock source recovery and named peer closure",
+  "binding": {
+    "base": "3249d6dc",
+    "commonHead": "4d1d98407bb71516b2e56282f97c4aa757f824cb",
+    "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
+    "unchangedFunctions": {
+      "nativeDropClearance": "491b3cfe4841097da5c45a3460c01605213d8d236678698d90ba26e195245428",
+      "nativeDropTransition": "d0026d52e73acb9ddf5207c8bc32db0c616908151f3d4d58ac05272bafcc1524",
+      "nativeDropTravelForm": "ff6226ecd72eaeac41731db8cb4dea49eeb740bd229243d8df5ab9f109fb0116"
+    },
+    "emittedIdentical": {
+      "patches/native-stages/runtime/engine.mjs": "0c93cebadd0f88e6daafef8ba383e4839a7a4643d0caa0bda680d6929ce52580",
+      "src/game/bots.js": "28ecb6ef1270955e96812e25795c93d0512aec4181f075125c3f1dcefc690ff4",
+      "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
+      "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+      "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04",
+      "patches/splatoon3/runtime/install.mjs": "6e00d427e473e158e38ad7d67c6af6b96bf1fa1b469086741a24bf00c25bcc94",
+      "patches/splatoon3/runtime/ranked/clams.mjs": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905"
+    },
+    "builders": [
+      {
+        "path": "_site-native-drop-recovery-public",
+        "contentHash": "45e6cfc4877f126ca603d27f29c3b5b8a1fbcb4a50659d5aff5d4251bde2d0c8",
+        "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
+        "config": {
+          "schema": 1,
+          "mode": "browser-direct",
+          "runtimeSha256": "bcd3b9a2808587533c19bbc82aec7d0b12f7fe514ecfdc4dff7314b1120bfcb9",
+          "unavailableStages": [
+            {
+              "id": "lemuria",
+              "internal": "Vss_AutoWalk00",
+              "name": "リュウグウターミナル",
+              "availability": "source-unavailable",
+              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "source": {
+                "repository": "kirakira-dev/KiTrix",
+                "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+                "searchStatus": "exhausted-public-search-2026-10-13"
+              },
+              "version1130Verified": false,
+              "placementStatus": "blocked-source-unavailable"
+            }
+          ],
+          "stages": [
+            {
+              "id": "scorch",
+              "internal": "Vss_Yunohana",
+              "name": "ユノハナ大渓谷",
+              "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+              "tree": "c5e8f6e5aa14b97a87210ad5df1c91c05b1ab451",
+              "bounds": {
+                "minX": -36,
+                "minZ": -82.5,
+                "maxX": 36,
+                "maxZ": 82.5
+              },
+              "spawnPads": [
+                [
+                  7.5,
+                  13.5904,
+                  -70.95
+                ],
+                [
+                  -7.5,
+                  13.5904,
+                  70.95
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "1395d40e8a9132030158bb165197dc645f6b02f8c4c50dde0f4b81861038b8e0"
+            },
+            {
+              "id": "hagglefish",
+              "internal": "Vss_Yagara",
+              "name": "ヤガラ市場",
+              "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+              "tree": "96fbd9ec8b6eb57996236fa56bb7511009ebc0c5",
+              "bounds": {
+                "minX": -52.9357,
+                "minZ": -78,
+                "maxX": 52.9357,
+                "maxZ": 78
+              },
+              "spawnPads": [
+                [
+                  0,
+                  13.58,
+                  -67.08
+                ],
+                [
+                  0,
+                  13.58,
+                  67.08
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "ruleAvailability": {
+                "tower": {
+                  "supported": false,
+                  "status": "source-route-unverified",
+                  "reason": "安全なヤグラ経路を確認できないため、このステージではガチヤグラを利用できません。",
+                  "evidence": "Pinned unlayered OBJ has no Vlf layer. Current source-floor navigation cannot provide a route clearing the full swept deck/pole/capsule from opposing supports. Compound human jump/climb connectivity and retail tower placement remain unverified."
+                }
+              },
+              "integritySha256": "4e05aa60dfa38e5f7b8d462a9c2cc5c9c6884dc93a767a4956f246df0df08b04"
+            },
+            {
+              "id": "inkblot",
+              "internal": "Vss_Upland03",
+              "name": "海女美術大学",
+              "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+              "tree": "ffa36b9ffb6e80907594776996b94d00b0cbacde",
+              "bounds": {
+                "minX": -46,
+                "minZ": -68.1673,
+                "maxX": 46,
+                "maxZ": 68.1673
+              },
+              "spawnPads": [
+                [
+                  17.5,
+                  15.64415,
+                  -58.62388
+                ],
+                [
+                  -17.5,
+                  15.64415,
+                  58.62388
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "668a4b55ce7e85a7b2b8622ab9e98dd34a7674a8b76e1a10a72b1978040f2be7"
+            },
+            {
+              "id": "mako",
+              "internal": "Vss_Line03",
+              "name": "ザトウマーケット",
+              "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+              "tree": "eac91de4a0c7d5d55c52dbf7d09a9c4f7d94a011",
+              "bounds": {
+                "minX": -33.5,
+                "minZ": -67.5,
+                "maxX": 33.5,
+                "maxZ": 67.5
+              },
+              "spawnPads": [
+                [
+                  -7.5,
+                  14.08,
+                  -58.05
+                ],
+                [
+                  7.5,
+                  14.08,
+                  58.05
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "6fc2ff130a672f65057ad69a815b5b830e5fb89778466b67b622e10996737212"
+            },
+            {
+              "id": "brinewater",
+              "internal": "Vss_BigSlope00",
+              "name": "クサヤ温泉",
+              "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+              "tree": "1b814a810bc1012c7cf16f469f81ee532e860bfd",
+              "bounds": {
+                "minX": -47.5,
+                "minZ": -69,
+                "maxX": 47.5,
+                "maxZ": 69
+              },
+              "spawnPads": [
+                [
+                  -12.5,
+                  18.08,
+                  -59.34
+                ],
+                [
+                  12.5,
+                  18.08,
+                  59.34
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "R6 inferred support; retail placement unverified",
+              "integritySha256": "ff913c3655dcccf47884be075436141e8a63286e90946a85e800e5d90178a6db"
+            }
+          ]
+        }
+      },
+      {
+        "path": "/workspace/stage-worktrees/manta-drop-calibration/_site-native-drop-recovery",
+        "contentHash": "69e1e84a03667bfe9864601d737a05ef4ed50eb98c4ebac665ac71b126a193ce",
+        "sourceDropSha256": "b662a74631e5148e477167a3f020bac0807ccca2166afce53b56bbc411a35066",
+        "config": {
+          "schema": 1,
+          "mode": "local-prepared",
+          "baseURL": "../../_native-reference-assets/",
+          "runtimeSha256": "22b147646558e124dc3995ffb5390e345c6ed6848f7f822595fe8b3ef8979303",
+          "unavailableStages": [
+            {
+              "id": "lemuria",
+              "internal": "Vss_AutoWalk00",
+              "name": "リュウグウターミナル",
+              "availability": "source-unavailable",
+              "reason": "公開モデルが見つからないため、現在プレイできません。",
+              "source": {
+                "repository": "kirakira-dev/KiTrix",
+                "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+                "searchStatus": "exhausted-public-search-2026-10-13"
+              },
+              "version1130Verified": false,
+              "placementStatus": "blocked-source-unavailable"
+            }
+          ],
+          "stages": [
+            {
+              "id": "robo",
+              "internal": "Vss_Cross00",
+              "name": "バイガイ亭",
+              "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+              "tree": "53a94ccb7abc115382c208b540ac45728ba914d9",
+              "bounds": {
+                "minX": -75,
+                "minZ": -39,
+                "maxX": 75,
+                "maxZ": 39
+              },
+              "spawnPads": [
+                [
+                  -60,
+                  7.505000114440918,
+                  22
+                ],
+                [
+                  60,
+                  7.505000114440918,
+                  -22
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "Local inferred supports on the pinned display floor; retail spawn, ranked and moving-object placements unverified.",
+              "sourceSemantics": {
+                "inactiveObjectPatterns": [
+                  "^Fld_Cross00_(?:HokoSet|HokoAsariSet|Tclobj)_"
+                ],
+                "nonCollidableObjectPatterns": [
+                  "^Fld_Cross00JerryMannequin_"
+                ],
+                "nonPaintableObjectPatterns": [
+                  "^Fld_Cross00_.*__(?:.*(?:NoPaint|Nopaintable).*|MetalNetwork00|NetParts00)(?:_.*)?$",
+                  "^Fld_Cross00_GeneralCube_.*GeneralBoxNoPaint_"
+                ]
+              },
+              "sourceNavigation": {
+                "highDrops": true
+              },
+              "integritySha256": "ad9d7e752653a965af0ad6a1bbbf435279bfa89a2577152eefa9bcbec9032e10"
+            },
+            {
+              "id": "shipshape",
+              "internal": "Vss_Twist00",
+              "name": "オヒョウ海運",
+              "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+              "tree": "d1b59d640b885fee46b3cb93c6dab4b38ba32019",
+              "bounds": {
+                "minX": -32,
+                "minZ": -72.5,
+                "maxX": 32,
+                "maxZ": 72.5
+              },
+              "spawnPads": [
+                [
+                  -8,
+                  6.08,
+                  -66
+                ],
+                [
+                  8,
+                  6.08,
+                  66
+                ]
+              ],
+              "spawnBarrier": 2.5,
+              "version1130Verified": false,
+              "placementStatus": "Inferred opposing source Floor00 bank supports and interactive Walls00_cp extent; two malformed unplaced crane-winch prototypes excluded by exact source object name. Retail spawn/ranked placement, crane states and 11.3.0 extraction provenance unverified",
+              "sourceSemantics": {
+                "inactiveObjectPatterns": [
+                  "^FldObj_BlueCranes_Hoisting_winch_[12]__VesselCraneSet01$"
+                ]
+              },
+              "sourceNavigation": {
+                "wallClimb": true,
+                "highDrops": true,
+                "wallJumpAttach": true
+              },
+              "integritySha256": "83617abfc1e524af4f61c8d6527dcc227b2965733eec3ef311ca6e54cac665e8"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "properCharacterRawKernel": [
+    {
+      "id": "robo",
+      "cases": [
+        {
+          "hz": 30,
+          "activation": {
+            "position": [
+              14.51106859754249,
+              7.539999961853027,
+              -13.558306976095094
+            ],
+            "velocity": [
+              -0.005498403591253939,
+              0,
+              2.0159925018605467
+            ],
+            "phase": "approach"
+          },
+          "departure": {
+            "position": [
+              14.51106859754249,
+              7.539999961853027,
+              -13.558306976095094
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ]
+          },
+          "touchdown": {
+            "position": [
+              14.511541564078236,
+              0.07999999821186066,
+              -8.937626595327615
+            ],
+            "velocity": [
+              0,
+              0,
+              5.76
+            ],
+            "triangle": 79922,
+            "sourceHeight": 0.07999999821186067
+          },
+          "released": false,
+          "completed": true,
+          "seconds": 1.5,
+          "end": [
+            14.50242025690404,
+            0.07999999821186066,
+            -9.152688719903713
+          ],
+          "gearAP": 0
+        },
+        {
+          "hz": 60,
+          "activation": {
+            "position": [
+              14.503556426313034,
+              7.539999961853027,
+              -13.610960638861345
+            ],
+            "velocity": [
+              -0.04953176720101468,
+              0,
+              2.9120958676989717
+            ],
+            "phase": "approach"
+          },
+          "departure": {
+            "position": [
+              14.502925758343416,
+              7.539999961853027,
+              -13.57388209933005
+            ],
+            "velocity": [
+              -0.00871612971775728,
+              0,
+              0.5124429586854964
+            ]
+          },
+          "touchdown": {
+            "position": [
+              14.50267688018753,
+              0.07999999821186077,
+              -9.115719511305251
+            ],
+            "velocity": [
+              0,
+              0,
+              5.76
+            ],
+            "triangle": 57213,
+            "sourceHeight": -0.02858694033546813
+          },
+          "released": false,
+          "completed": true,
+          "seconds": 1.4166666666666667,
+          "end": [
+            14.500658555687522,
+            0.07999999821186068,
+            -9.159285173874384
+          ],
+          "gearAP": 0
+        },
+        {
+          "hz": 120,
+          "activation": {
+            "position": [
+              14.5,
+              7.539999961853027,
+              -13.636335270209088
+            ],
+            "velocity": [
+              0,
+              0,
+              3.4862285299174096
+            ],
+            "phase": "approach"
+          },
+          "departure": {
+            "position": [
+              14.5,
+              7.539999961853027,
+              -13.566075748129196
+            ],
+            "velocity": [
+              0,
+              0,
+              0.4862285299174093
+            ]
+          },
+          "touchdown": {
+            "position": [
+              14.5,
+              0.07999999821186066,
+              -9.129660512801365
+            ],
+            "velocity": [
+              0,
+              0,
+              5.76
+            ],
+            "triangle": 57213,
+            "sourceHeight": -0.033235599699507234
+          },
+          "released": false,
+          "completed": true,
+          "seconds": 1.4166666666666667,
+          "end": [
+            14.5,
+            0.07999999821186066,
+            -9.157334515178196
+          ],
+          "gearAP": 0
+        }
+      ],
+      "sourceUnchanged": true
+    },
+    {
+      "id": "shipshape",
+      "cases": [
+        {
+          "hz": 30,
+          "planted": [
+            -18.5,
+            5.340192766656487,
+            63
+          ],
+          "centreHeight": 5.1798441621614515,
+          "heightDifference": 0.1603486044950353,
+          "goal": [
+            -18.5,
+            1.1794999837875224,
+            60
+          ],
+          "end": [
+            -18.5,
+            1.1794999837875366,
+            59.705529900145784
+          ],
+          "departed": true,
+          "airborne": true,
+          "handlerCompleted": true,
+          "continuousHumanCapsules": 31,
+          "seconds": 1.0333333333333334,
+          "gearAP": 0
+        },
+        {
+          "hz": 60,
+          "planted": [
+            -18.5,
+            5.340192766656487,
+            63
+          ],
+          "centreHeight": 5.1798441621614515,
+          "heightDifference": 0.1603486044950353,
+          "goal": [
+            -18.5,
+            1.1794999837875224,
+            60
+          ],
+          "end": [
+            -18.5,
+            1.1794999837875366,
+            59.676015685386396
+          ],
+          "departed": true,
+          "airborne": true,
+          "handlerCompleted": true,
+          "continuousHumanCapsules": 62,
+          "seconds": 1.0333333333333334,
+          "gearAP": 0
+        },
+        {
+          "hz": 120,
+          "planted": [
+            -18.5,
+            5.340192766656487,
+            63
+          ],
+          "centreHeight": 5.1798441621614515,
+          "heightDifference": 0.1603486044950353,
+          "goal": [
+            -18.5,
+            1.1794999837875224,
+            60
+          ],
+          "end": [
+            -18.5,
+            1.1794999837875366,
+            59.65516666666656
+          ],
+          "departed": true,
+          "airborne": true,
+          "handlerCompleted": true,
+          "continuousHumanCapsules": 79,
+          "seconds": 0.6583333333333333,
+          "gearAP": 0
+        }
+      ],
+      "sourceUnchanged": true,
+      "scope": "Production Character/Actor/Brain isolated source kernel; raw30/60/120 distinct from Game FixedClock"
+    }
+  ],
+  "actualContactGuards": [
+    {
+      "kind": "unsupported goal height",
+      "position": [
+        14.5,
+        -0.16666666666666669,
+        -9.5
+      ],
+      "footSupportedGoal": false,
+      "ordinaryStop": true,
+      "normalReplan": true
+    },
+    {
+      "kind": "original NoPaint contact",
+      "sourceTriangle": 83272,
+      "position": [
+        13.5,
+        1.1102230246251565e-16,
+        -10.5
+      ],
+      "footSupportedGoal": true,
+      "ordinaryStop": true,
+      "normalReplan": true
+    },
+    {
+      "kind": "masked source cell",
+      "sourceTriangle": 63140,
+      "position": [
+        14.5,
+        -0.16666666666666669,
+        -9.5
+      ],
+      "footSupportedGoal": true,
+      "ordinaryStop": true,
+      "normalReplan": true
+    },
+    {
+      "kind": "actual dynamic foot ring",
+      "supportBlock": 23848,
+      "position": [
+        14.5,
+        0.13333333333332859,
+        -9.5
+      ],
+      "footSupportedGoal": false,
+      "ordinaryStop": true,
+      "normalReplan": true
+    }
+  ],
+  "sourceObstruction": [
+    {
+      "kind": "actual source obstruction with individually fitting endpoints",
+      "start": [
+        -20,
+        11.009400367736816,
+        -18
+      ],
+      "goal": [
+        -17,
+        11.009400367736816,
+        -19
+      ],
+      "ordinaryStop": true,
+      "normalReplan": true,
+      "scope": "Controlled handler contact fixture with original source geometry, not a navigation admission or fall replay"
+    }
+  ],
+  "privateCalibrationEquality": {
+    "onlyNavigationMetadataChanged": true,
+    "same": [
+      {
+        "file": "bvh.bin",
+        "sha256": "74ad54f0d02670d98be4e5a362e10abad7320e227619f0faf647984e84bc7ce3",
+        "bytes": 1048544
+      },
+      {
+        "file": "collision.bin",
+        "sha256": "4d61e64d5e79666838a11c153afc34546e33dc03f0f4f8fa95a8e1ee4c85139c",
+        "bytes": 3852720
+      },
+      {
+        "file": "flags.bin",
+        "sha256": "b6d65004d981c3737d9c9d2e5cc8083621abefae7ce8506c45a0324d4143cf2c",
+        "bytes": 428080
+      },
+      {
+        "file": "indices.bin",
+        "sha256": "824107952bf753efce1d3d78b11ce0b7cdba2bfd540eb71f57beb1d97a12898f",
+        "bytes": 7036452
+      },
+      {
+        "file": "mask.bin",
+        "sha256": "daac3e5b7d82d97778560804fc5c2032482e8574adf9b98973ed10be88205934",
+        "bytes": 1181405
+      },
+      {
+        "file": "normals.bin",
+        "sha256": "0bdb422bb975e25ce46bb2b22b708e236242d96cdccb6a4e56329904bd5ef34d",
+        "bytes": 1284240
+      },
+      {
+        "file": "objects.bin",
+        "sha256": "4c1f6f648fb090b308fc2c1f898a8718cfcad994b4503229eb07aae3b9db620b",
+        "bytes": 428080
+      },
+      {
+        "file": "order.bin",
+        "sha256": "f843f435711be995fc441f631ea6d1d83b62b24c44d2815a7617394b25a5fc96",
+        "bytes": 428080
+      },
+      {
+        "file": "textures/CenterHandrail00_Alb.png",
+        "sha256": "4207a3fd38dcb7c6b1daa7b721ce2d3126889da6c144cf07467fc653e2881d78",
+        "bytes": 87259
+      },
+      {
+        "file": "textures/CenterHandrail00_Nrm.png",
+        "sha256": "b8e4e484dfc8b100bda7c94a69a081001d7c988e29d1d34e571e5c2574021b76",
+        "bytes": 51687
+      },
+      {
+        "file": "textures/CenterHandrail00_Rgh.png",
+        "sha256": "9733c69432fc0674a7dfd17f59fce2b1f67da12157ba291310c55c52643454b3",
+        "bytes": 17029
+      },
+      {
+        "file": "textures/CrossCanolaAV_Alb.png",
+        "sha256": "c4f944f6369f7eddc80f997c8d4d1b7acc86323567f92fa2ed4d2cdb2cf999f3",
+        "bytes": 1397
+      },
+      {
+        "file": "textures/CrossCanolaA_Alb.png",
+        "sha256": "313fbb9f643280a93400704dcf85099e70482995bdb310107c4d31a1074c6694",
+        "bytes": 1355
+      },
+      {
+        "file": "textures/CrossCanolaBV_Alb.png",
+        "sha256": "d79d6c7a9dc2104bcbf9387429815d7467e249d6b9f42ea71e4f9c8104c2cea4",
+        "bytes": 1458
+      },
+      {
+        "file": "textures/CrossCanolaB_Alb.png",
+        "sha256": "7e494e9aadf6f0ab6d6e92eb85870cfaca14812d90df79b6da98c1ce2bf6ee24",
+        "bytes": 1034
+      },
+      {
+        "file": "textures/CrossNoPaintSetA00_Alb.png",
+        "sha256": "63058ca938824290cd8af30e5b5e8a1dec45355eac03c913d71f21bf08f0f0c9",
+        "bytes": 463948
+      },
+      {
+        "file": "textures/CrossNoPaintSetA00_Nrm.png",
+        "sha256": "2347ab9d35f79787606984cdfd81b5ad13034b67c93690a025edeadc0271b613",
+        "bytes": 251121
+      },
+      {
+        "file": "textures/CrossNoPaintSetA00_Rgh.png",
+        "sha256": "757ce84040ab0bf13867aceb80405d5d69dcdac3eacaf29ba8f2ab92b68b0534",
+        "bytes": 26149
+      },
+      {
+        "file": "textures/CrossNoPaintSetB00_Alb.png",
+        "sha256": "428c3e0d0d00a6454257550b78b51610db72f02385b0e2d4fd853f648813cd29",
+        "bytes": 637802
+      },
+      {
+        "file": "textures/CrossNoPaintSetB00_Nrm.png",
+        "sha256": "d547655fb1b6aeee268fcbdf99178c54287ddc6601ada95ce39d245adeb635d4",
+        "bytes": 343246
+      },
+      {
+        "file": "textures/CrossNoPaintSetB00_Rgh.png",
+        "sha256": "831c50e582b7c0a66d3b14738b785998eeafa6dc357d1954be9f7525ddc6ab59",
+        "bytes": 71070
+      },
+      {
+        "file": "textures/DVCarSet_Alb.png",
+        "sha256": "6ed8d521fa60334695bfb63cce94143f334d9d50355029733722863c9fe47a04",
+        "bytes": 404503
+      },
+      {
+        "file": "textures/DVCarSet_Emi.png",
+        "sha256": "8cad9053711b3b20e220581832ac5342be7fc385c1959925eb886c3ac4fcb6fc",
+        "bytes": 9131
+      },
+      {
+        "file": "textures/DVCarSet_Nrm.png",
+        "sha256": "b6859c98ad59f031a80ccffe06b2a732ad54f4d8bdaae6b288b29d44bba2e0f5",
+        "bytes": 230545
+      },
+      {
+        "file": "textures/DVCarSet_Rgh.png",
+        "sha256": "2df85b26071589c716c591a9adb4056b324b36030c09af0bc60c3d64d9473ce9",
+        "bytes": 46566
+      },
+      {
+        "file": "textures/DeliveryRobot00_Alb.png",
+        "sha256": "cde41de013dfd0957a0ba7aa989a5ce69a9018a91b78925b22dd98f9c2d559ce",
+        "bytes": 103713
+      },
+      {
+        "file": "textures/DeliveryRobot00_Emm.png",
+        "sha256": "ab609a894ae1b58782322480db1a2a24116bee534ebea4f3889d0ee696e529ad",
+        "bytes": 3071
+      },
+      {
+        "file": "textures/DeliveryRobot00_Nrm.png",
+        "sha256": "27ef008590ba8518fa22e33c8fd719381f62baf7841d2d5b1e764fdd688c993d",
+        "bytes": 67711
+      },
+      {
+        "file": "textures/DeliveryRobot00_Rgh.png",
+        "sha256": "335ea05c4258e1f6b85670ebaed23054da6b1cfced8033d6c8077b175a44c2fb",
+        "bytes": 19229
+      },
+      {
+        "file": "textures/EatAreaStools00_Alb.png",
+        "sha256": "2ffb04daabc7203c56a6c8a51f756d8ec69544f7241889ff6ec5b721a2e4786d",
+        "bytes": 152545
+      },
+      {
+        "file": "textures/EatAreaStools00_Nrm.png",
+        "sha256": "fc6a5d11b48f6e7f7b78f1077ee642fcbe08466985dff2c4b08e69c8c2c7ffe3",
+        "bytes": 145623
+      },
+      {
+        "file": "textures/EatAreaStools00_Rgh.png",
+        "sha256": "ed89b4509274b8d766162c486380040f3b1b71032cc01e98235c5395bf9fe02c",
+        "bytes": 46962
+      },
+      {
+        "file": "textures/EntranceCarpet00_Alb.png",
+        "sha256": "a2e5b89a7922515ddda95d04200a9772ab2bfe50f634aff4b8fe1dfae491711a",
+        "bytes": 166027
+      },
+      {
+        "file": "textures/EntranceCarpet00_Nrm.png",
+        "sha256": "f9ad00c7b545d2da9c884563fd9d8aaf4ec56ecb4a04bff609e2ea7c387e8188",
+        "bytes": 141546
+      },
+      {
+        "file": "textures/EntranceCarpet00_Rgh.png",
+        "sha256": "382e7ccfbede509882dce102f6e8e1a434230df6f410230b8dcd67a652c317c2",
+        "bytes": 36738
+      },
+      {
+        "file": "textures/EquipmentPaintableParts00_Alb.png",
+        "sha256": "b7c0ee75ac29a20246fe5ada3ec0e1825a4f77009b6fe5234704f47f07ef1431",
+        "bytes": 112803
+      },
+      {
+        "file": "textures/EquipmentPaintableParts00_Nrm.png",
+        "sha256": "4a0596f1c42283fd7436be4f01d26b4f185cefcfb7bdd19913e77151a3e991e6",
+        "bytes": 17195
+      },
+      {
+        "file": "textures/EquipmentPaintableParts00_Rgh.png",
+        "sha256": "9534dc169b9e84659462763ecdc5b19418f5893960619f02dd1e2bf92986a671",
+        "bytes": 34023
+      },
+      {
+        "file": "textures/EtcNoPaintable00_Alb.png",
+        "sha256": "62fb56e73abc2695b1b6869efa7a7b6a617ff3b2611912550f6ee60624f17d8e",
+        "bytes": 72598
+      },
+      {
+        "file": "textures/EtcNoPaintable00_Nrm.png",
+        "sha256": "2842a8958cbf73ed361078d1dd7292beb1edfa6819c70cd9feea11e6b88e3f64",
+        "bytes": 33001
+      },
+      {
+        "file": "textures/EtcNoPaintable00_Rgh.png",
+        "sha256": "53e1aeef31fbf152120ef40b5ef38329a65b9d80b162920e10c4f0f49e0f4ee7",
+        "bytes": 25706
+      },
+      {
+        "file": "textures/EtcPaintable00_Alb.png",
+        "sha256": "2641e0210abd460745d421d2cc4f9edb22e8dbcd25a75d6c873f28e7d94341d7",
+        "bytes": 119475
+      },
+      {
+        "file": "textures/EtcPaintable00_Nrm.png",
+        "sha256": "8b1997f740f7d817821847e590f585327c5495ce746453e29a1696dc6a25e6be",
+        "bytes": 79775
+      },
+      {
+        "file": "textures/EtcPaintable00_Rgh.png",
+        "sha256": "ded5a37394c2ee8c6f1095f06088a1ffc83c6bfa9549873ce4f475ff1422b38a",
+        "bytes": 28375
+      },
+      {
+        "file": "textures/FloorBaseStructure00_Alb.png",
+        "sha256": "b77002319f3d15462c08069a988c0947ab76784c55cf009f13ebf572227b68b6",
+        "bytes": 88591
+      },
+      {
+        "file": "textures/FloorBaseStructure00_Nrm.png",
+        "sha256": "5068744798c099aac01f03e75abbcff07133e061d2f3f15ea45e641e1981381a",
+        "bytes": 51739
+      },
+      {
+        "file": "textures/FloorBaseStructure00_Rgh.png",
+        "sha256": "78c1fb0fb20c4171306baca2a238aa2c7a92be8f1db310ac7f64655d2e38dfe1",
+        "bytes": 14761
+      },
+      {
+        "file": "textures/FloorDecalPaintable00_Alb.png",
+        "sha256": "c1a449239359410eec42d17f45bd8c1b4dfe4ed93d7bda9aa3696d505d96b887",
+        "bytes": 89609
+      },
+      {
+        "file": "textures/FloorDecalPaintable00_Nrm.png",
+        "sha256": "a4c744d2739e0c8c34ed883a829e451e3bd0524c67c70e2ac367c0eadba2f6e0",
+        "bytes": 43299
+      },
+      {
+        "file": "textures/FloorDecalPaintable00_Opa.png",
+        "sha256": "fb1eb25d6e1ffac5e69070d1d6be167eefeac80d778cafc5765e9b403af93fee",
+        "bytes": 97364
+      },
+      {
+        "file": "textures/FloorDecalPaintable00_Rgh.png",
+        "sha256": "c20537f98170980075c26ea13eb34ec1742be3662ad4a637ac11101d304c54cd",
+        "bytes": 22495
+      },
+      {
+        "file": "textures/FloorLinoleumBlack00_Alb.png",
+        "sha256": "7cef2fec9a03a3d7c5c440a849ebc456283ab18129bf2b64887f56bcb8d82946",
+        "bytes": 130717
+      },
+      {
+        "file": "textures/FloorLinoleumBlack00_Nrm.png",
+        "sha256": "d46bc87a9279cc65b0be2f39bb058bbc72c9208f843f210da63ad4fe0bcf9362",
+        "bytes": 47938
+      },
+      {
+        "file": "textures/FloorLinoleumBlack00_Rgh.png",
+        "sha256": "6ea4ec163509ad0b07b568e77d6f99661c5d75ea4efa7a2056bf7143a2d0b06e",
+        "bytes": 43177
+      },
+      {
+        "file": "textures/FloorLinoleumStartOgangeLight00_Alb.png",
+        "sha256": "779d050fb6260283e1d55ef883417f58dec4620eccbd137510af15df879d62c9",
+        "bytes": 127984
+      },
+      {
+        "file": "textures/FloorLinoleumStartOgangeLight00_Nrm.png",
+        "sha256": "d46bc87a9279cc65b0be2f39bb058bbc72c9208f843f210da63ad4fe0bcf9362",
+        "bytes": 47938
+      },
+      {
+        "file": "textures/FloorLinoleumStartOgangeLight00_Rgh.png",
+        "sha256": "6ea4ec163509ad0b07b568e77d6f99661c5d75ea4efa7a2056bf7143a2d0b06e",
+        "bytes": 43177
+      },
+      {
+        "file": "textures/FloorLinoleumWhite00_Alb.png",
+        "sha256": "6371ce285c05c7e76b0c22fdabdbc4e5712e7ad49036a0b4377e390875d47cf5",
+        "bytes": 62442
+      },
+      {
+        "file": "textures/FloorLinoleumWhite00_Nrm.png",
+        "sha256": "d46bc87a9279cc65b0be2f39bb058bbc72c9208f843f210da63ad4fe0bcf9362",
+        "bytes": 47938
+      },
+      {
+        "file": "textures/FloorLinoleumWhite00_Rgh.png",
+        "sha256": "6ea4ec163509ad0b07b568e77d6f99661c5d75ea4efa7a2056bf7143a2d0b06e",
+        "bytes": 43177
+      },
+      {
+        "file": "textures/FloorStaffCleat00_Alb.png",
+        "sha256": "36b48c6c4a6b961a8474b05e28c24409a74e7635d1347c87558f695c54eedbf6",
+        "bytes": 221269
+      },
+      {
+        "file": "textures/FloorStaffCleat00_Nrm.png",
+        "sha256": "a8e48865af60996cb0598b71a16391ee1a776c2eae5471a3e36c5719b62cffd4",
+        "bytes": 16205
+      },
+      {
+        "file": "textures/FloorStaffCleat00_Rgh.png",
+        "sha256": "c7447b9d11bbb811523bec74bc70381d4882dff0bf4b22c98dcc7d14f637a52c",
+        "bytes": 50761
+      },
+      {
+        "file": "textures/FloorStaffSlope00_Alb.png",
+        "sha256": "a18995482e4e5cd9082182ce2bbe9d33026ae5ee8a35a655b295d9e64c10be10",
+        "bytes": 126084
+      },
+      {
+        "file": "textures/FloorStaffSlope00_Nrm.png",
+        "sha256": "aa2de2054839df84ccd37d1b453f3150dd8525215dd1883321945ef078caf641",
+        "bytes": 17141
+      },
+      {
+        "file": "textures/FloorStaffSlope00_Rgh.png",
+        "sha256": "a165a11a662c5fc805b7eeafaabc102e853c332e9dc415e27c5793dcc57a9867",
+        "bytes": 38146
+      },
+      {
+        "file": "textures/FloorTileGray00_Alb.png",
+        "sha256": "524760d14706b2ea526efc8d0418cab858794403be510c9dfeaab5d289510140",
+        "bytes": 69758
+      },
+      {
+        "file": "textures/FloorTileGray00_Nrm.png",
+        "sha256": "be5555d402f4aa1a554eb13787a056cb8b99d35505a8de50ac1ab6122efdbf70",
+        "bytes": 22554
+      },
+      {
+        "file": "textures/FloorTileGray00_Rgh.png",
+        "sha256": "d4adfb78459fddb9aea87b2ad39a79506dbdb16b60975e190ee107f5f6fd7893",
+        "bytes": 45584
+      },
+      {
+        "file": "textures/FloorTileOrange00_Alb.png",
+        "sha256": "32fdc3323f4279258d9864d16752e76f0a43efdac60b601563a933a53cdcaa13",
+        "bytes": 152066
+      },
+      {
+        "file": "textures/FloorTileOrange00_Nrm.png",
+        "sha256": "0a47120e3674b07715621de194583e0199851cc666f86f978f9788ac1a1d55f6",
+        "bytes": 94725
+      },
+      {
+        "file": "textures/FloorTileOrange00_Rgh.png",
+        "sha256": "30427e2e98c9c26ba80f717d36d66f1e8755e950bd518f25248339b7b11d6013",
+        "bytes": 61171
+      },
+      {
+        "file": "textures/FloorTileWhite00_Alb.png",
+        "sha256": "64dd65f992e0a0c3bbad25336e8daf8734c1e5362c9b94fee336f40021d7e9f1",
+        "bytes": 260273
+      },
+      {
+        "file": "textures/FloorTileWhite00_Nrm.png",
+        "sha256": "38e146b4c2127da99c00930e22e25b0cf99a0b8790d56e4c27c758f0fa368d30",
+        "bytes": 124121
+      },
+      {
+        "file": "textures/FloorTileWhite00_Rgh.png",
+        "sha256": "48b702c420a7178dcaf73480c95cf6327f7be14b646b6dc51c44ff08ff069656",
+        "bytes": 63491
+      },
+      {
+        "file": "textures/FloorTileYellow00_Alb.png",
+        "sha256": "602c482b5187c05fe48ae0f96ea0d2703620081670c046146b8dc56fc0f84270",
+        "bytes": 181526
+      },
+      {
+        "file": "textures/FloorTileYellow00_Nrm.png",
+        "sha256": "c882d658d125485cdd6f3efa1bef957753c5effe8e4a8c9f00bcf6b37a0c9d4d",
+        "bytes": 32310
+      },
+      {
+        "file": "textures/FloorTileYellow00_Rgh.png",
+        "sha256": "6f975e150be667b14436170ffdda5ebc83c2b33ba1bafa5141eacf9691bfab7a",
+        "bytes": 59323
+      },
+      {
+        "file": "textures/FloorWood00_Alb.png",
+        "sha256": "3ad46493cbc87063dcdf0317f9d122664a07bec8e89a9e68e01cf84c355ad4bb",
+        "bytes": 78294
+      },
+      {
+        "file": "textures/FloorWood00_Nrm.png",
+        "sha256": "c076a1388eac29527c0b99561fe013b729e2e140e47ded45829a85be1aeadeeb",
+        "bytes": 31800
+      },
+      {
+        "file": "textures/FloorWood00_Rgh.png",
+        "sha256": "3c6fba47f72f5623a7c6814320a0b8886f8d45490e5f2eb763040c236dce7c99",
+        "bytes": 56628
+      },
+      {
+        "file": "textures/GroundSealNukiSet_Alb.png",
+        "sha256": "fd48e7370486366c5171bd06b13f5ab344fe3c134f53b1374bc192d70ba71c3b",
+        "bytes": 85570
+      },
+      {
+        "file": "textures/GroundSealNukiSet_Emm.png",
+        "sha256": "9325fe00a496892d6dce88f59b0f0e3e727e08fb335d3583a0e0322c2247febe",
+        "bytes": 2504
+      },
+      {
+        "file": "textures/GroundSealNukiSet_Nrm.png",
+        "sha256": "afce0c3ca6d4dd795c23dc149e5c628aad697c57099aeb1f7e23ee1c06006fdc",
+        "bytes": 6242
+      },
+      {
+        "file": "textures/GroundSealNukiSet_Opa.png",
+        "sha256": "9ef24c54e79d9e3b035b53dc5944c3137ad292a47cbd26975953b50174648fa5",
+        "bytes": 41148
+      },
+      {
+        "file": "textures/GroundSealNukiSet_Rgh.png",
+        "sha256": "1d690b467b6a8c6a102b43757818ed477d4600c95a5c7a4c94697f9f9add7d83",
+        "bytes": 1395
+      },
+      {
+        "file": "textures/JerryTshirt_UDIM00_UDIM_Alb.png",
+        "sha256": "ab9b71071c5981c4a3703b1119b43e627fe9921c006946f04c5d800fb4a842d8",
+        "bytes": 86197
+      },
+      {
+        "file": "textures/Jerrybody00_Alb.png",
+        "sha256": "1ede903ce4abc7b6a2992c896895dc3bfe0dcbba0886ae3bbb620818c0dac9bf",
+        "bytes": 16881
+      },
+      {
+        "file": "textures/Jerrybody00_Emm.png",
+        "sha256": "80c5a7cf366d87471bf828adc2c560b752c6f0ebef7ef4afbbcf5b6fb40460df",
+        "bytes": 14500
+      },
+      {
+        "file": "textures/M_Can_Alb.png",
+        "sha256": "ef21e4c7bc45f8c8631cbdf244a884c5cba595097e8319792ae08a889e3ffa09",
+        "bytes": 29114
+      },
+      {
+        "file": "textures/M_Can_Nrm.png",
+        "sha256": "bf41c5197e5f9c9986c5688026b15f71248e4f80f45e897c9dbca3ffe9ade778",
+        "bytes": 4519
+      },
+      {
+        "file": "textures/M_FenceVinyl_Alb.png",
+        "sha256": "de1777cac2da61b29f3cb5e5ef829a85f9470a4934a991c14b5ae51c5a74de77",
+        "bytes": 132777
+      },
+      {
+        "file": "textures/M_FenceVinyl_Nrm.png",
+        "sha256": "5b240357fe19d96c147c6ef877ab0c226f872a3a3095010ad6959766ed612804",
+        "bytes": 66722
+      },
+      {
+        "file": "textures/M_FenceVinyl_Rgh.png",
+        "sha256": "c3eaf0bce2a897d6f3202a20d1bf2eff296d266395ddf742c3f9a3f9aa956223",
+        "bytes": 37754
+      },
+      {
+        "file": "textures/MapBoard00_Alb.png",
+        "sha256": "b5259aad5a11f701bf1844997ef34276768d60e6a9706d04343b11d466b36f0c",
+        "bytes": 85248
+      },
+      {
+        "file": "textures/MapBoard00_Emm.png",
+        "sha256": "bfa4b810e0bb73863dd8a816a70d1788004c2224d9b66d772a55d73b0345e083",
+        "bytes": 4586
+      },
+      {
+        "file": "textures/MapBoard00_Nrm.png",
+        "sha256": "876ac649637da9a6d1a2846a8eb8ff25daff3ea27bdfe119cdfea97abec6d1f8",
+        "bytes": 57339
+      },
+      {
+        "file": "textures/MapBoard00_Rgh.png",
+        "sha256": "1857b7c07fb67b97f4109b4e9b2f28452daf920874097b7dcbb11d795662058b",
+        "bytes": 2909
+      },
+      {
+        "file": "textures/MetalNetwork00_Alb.png",
+        "sha256": "217b8ab102e20bef05be39e1d864115abb50372ae4890a7f557657c272548261",
+        "bytes": 68579
+      },
+      {
+        "file": "textures/MetalNetwork00_Nrm.png",
+        "sha256": "e16a45a48616347e9f965c23434d6b78c032de229c3288e29087668c6f3813cc",
+        "bytes": 35400
+      },
+      {
+        "file": "textures/MetalNetwork00_Opa.png",
+        "sha256": "bc75f4180a7b3a0baeebdbd2aaa79963a30e430b8b127fbfb087518ae43db2e1",
+        "bytes": 2784
+      },
+      {
+        "file": "textures/MetalNetwork00_Rgh.png",
+        "sha256": "d0ec92f263cb86e263a4161ba03ed75c4211d501232b8c86e1fed5f60334c00d",
+        "bytes": 19084
+      },
+      {
+        "file": "textures/Monitor00_Alb.00.png",
+        "sha256": "0d4594b11a60c635f037277e1a92fd2cd1c20ba7ee5d865574cc12712638d38d",
+        "bytes": 14971
+      },
+      {
+        "file": "textures/NetParts00_Alb.png",
+        "sha256": "7d97a42e265f15236d1d4c5e7df07ced7dd79466932cd4ea0552968724585a25",
+        "bytes": 18034
+      },
+      {
+        "file": "textures/NetParts00_Nrm.png",
+        "sha256": "3b1dc753cdb96cc3a0be2aac44ebe3f32d509c439f9e8ee4a2a9980974b07683",
+        "bytes": 7918
+      },
+      {
+        "file": "textures/NetParts00_Rgh.png",
+        "sha256": "e52e5eb2b3f2f51927bdcf96937916200743679832ade580562894197bc912c7",
+        "bytes": 5406
+      },
+      {
+        "file": "textures/RamenChopstick00_Alb.png",
+        "sha256": "7b52b2ed719b904f1f5d8f5f33f40caa47de80c36ffa92f6b638eff61aac0cbb",
+        "bytes": 152498
+      },
+      {
+        "file": "textures/RamenChopstick00_Nrm.png",
+        "sha256": "39555bfdd607fed56396a9c815f91a79ca348cd9b5b8c5642f901da4d4e3acd8",
+        "bytes": 93970
+      },
+      {
+        "file": "textures/RamenChopstick00_Rgh.png",
+        "sha256": "fc1e28e0a1d4b0cbc180a9aa779200c73f2b6e98d46995764e919d2f7c50c0b3",
+        "bytes": 1560
+      },
+      {
+        "file": "textures/RamenSignBoard00_Alb.png",
+        "sha256": "9129a8eb3220789bd879cd138f96890d547bfce0e5f89e07f86538b26b785367",
+        "bytes": 70674
+      },
+      {
+        "file": "textures/RamenSignBoard00_Emm.png",
+        "sha256": "9d8acf16a9c083db596002f7a4131bc03e4eab71a1374f75992182a3ce035a1a",
+        "bytes": 11744
+      },
+      {
+        "file": "textures/RamenSignBoard00_Nrm.png",
+        "sha256": "52fe4c4d8c14c0cfc61d4bac4db6f23087051e7475c59985f4cadeb91c8a0103",
+        "bytes": 80427
+      },
+      {
+        "file": "textures/RamenSignBoard00_Rgh.png",
+        "sha256": "caea32c097fdc30c7a1f96a4dca9df67c30546bd8c2c78afdc0828bbcc55bae7",
+        "bytes": 10665
+      },
+      {
+        "file": "textures/RamenVarietyPack00_Alb.png",
+        "sha256": "7e3aa3e0288261538b85f034c16c576aa14a6108b71209851ad773e32f1397fa",
+        "bytes": 707472
+      },
+      {
+        "file": "textures/RamenVarietyPack00_Nrm.png",
+        "sha256": "9acca13159dcdd53606d12a740219dfc93e963aab8843389cbe0e1f5224128f7",
+        "bytes": 78762
+      },
+      {
+        "file": "textures/RoofGraffiti00_Alb.png",
+        "sha256": "e38cbeed0bcce4a94e6e507d7aeb91e4d8a4b067e9ab263226633e66da1277ab",
+        "bytes": 169247
+      },
+      {
+        "file": "textures/RoofGraffiti00_Nrm.png",
+        "sha256": "e20f122eb82cd23be6888e968056113bce27bab8cbb179aecebfc01dbd9907cf",
+        "bytes": 274393
+      },
+      {
+        "file": "textures/RoofGraffiti00_Opa.png",
+        "sha256": "02627f159ca1b399a605a0848be3bf16719c44a6ee6727339a412b45276b6098",
+        "bytes": 71191
+      },
+      {
+        "file": "textures/RoofGraffiti00_Rgh.png",
+        "sha256": "7e85d3da66f98fb162d12c11d64e8110fef161215ce7236133de8f4fbfb1cb7b",
+        "bytes": 71566
+      },
+      {
+        "file": "textures/ShowcaseRefrigerator00_Alb.png",
+        "sha256": "8020355627af69d0db7cd9a65404c97b42a897c7beb9accc5352383c2f35d033",
+        "bytes": 112574
+      },
+      {
+        "file": "textures/ShowcaseRefrigerator00_Emm.png",
+        "sha256": "26999d30e4f279625d36e46f04e999a5eca0672f2d1b1404519f1d513a97de38",
+        "bytes": 26042
+      },
+      {
+        "file": "textures/ShowcaseRefrigerator00_Nrm.png",
+        "sha256": "c351c394423c87fddedb9dd14ec3e11663248be220666921d7695d7ef8560fb4",
+        "bytes": 55242
+      },
+      {
+        "file": "textures/ShowcaseRefrigerator00_Rgh.png",
+        "sha256": "d1c13e5e1c2914ea34f75c3cf196c494da5193922e97b8dc82ab1c80b4dcf67e",
+        "bytes": 16741
+      },
+      {
+        "file": "textures/SideFloorParts00_Alb.png",
+        "sha256": "1ef720832b78dbfdfecbb537743d108f311465bde0b9626f6639bedd963fa439",
+        "bytes": 18336
+      },
+      {
+        "file": "textures/SideFloorParts00_Nrm.png",
+        "sha256": "2769ecaf56684566123cee5c45d71971075117335f1170469ca66ec2793ad368",
+        "bytes": 53114
+      },
+      {
+        "file": "textures/SideFloorParts00_Rgh.png",
+        "sha256": "48b165b892daaade64bf1a2cb162c383699899211d762d9d8a7d9aa8a3543943",
+        "bytes": 20202
+      },
+      {
+        "file": "textures/SidefloorPartsNopaintable00_Alb.png",
+        "sha256": "73e1efb347ca24cf5bf6493ad7a3829008bba7db4c17f7af034f682400b35aca",
+        "bytes": 32853
+      },
+      {
+        "file": "textures/SidefloorPartsNopaintable00_Nrm.png",
+        "sha256": "bcce1e8a6f0fb1805661aa4eefffd738c8927fb0ff2770183cccca1873bee37a",
+        "bytes": 16723
+      },
+      {
+        "file": "textures/SidefloorPartsNopaintable00_Rgh.png",
+        "sha256": "ec77788d0ef939aa63925a8a54c9d7cf6c5d5ff7028a1bc595f940319cd32db9",
+        "bytes": 6351
+      },
+      {
+        "file": "textures/StrainerRobot00_Alb.png",
+        "sha256": "5a0e81f023ef61ce7665411fe23fce868c5a3b1985ed9ee54cc44d01b2d1de8f",
+        "bytes": 175440
+      },
+      {
+        "file": "textures/StrainerRobot00_Emm.png",
+        "sha256": "f4b5d06981984845b20d3967f90b61651196ee62ee1009da9fc3b150aa1c487b",
+        "bytes": 2886
+      },
+      {
+        "file": "textures/StrainerRobot00_Nrm.png",
+        "sha256": "af603ec3d597e646161f358001c76b2e041bc8e2cd4b2d0fbc991b76ff5835e1",
+        "bytes": 101014
+      },
+      {
+        "file": "textures/StrainerRobot00_Rgh.png",
+        "sha256": "13d31804ba3682544cfd280f73d57a0912dbb9ae5953e4d20d0924453c5560dd",
+        "bytes": 27290
+      },
+      {
+        "file": "textures/Tape00_Alb.png",
+        "sha256": "8b66133dba25ee6acbaacd202a1ee142ad758d03b8688a273e18a3910edb524a",
+        "bytes": 168774
+      },
+      {
+        "file": "textures/Tape00_Nrm.png",
+        "sha256": "8040754116e2dfd3c5693dfb3da8c56629402e7e2d51dd3aaddf27158bbbd54f",
+        "bytes": 68200
+      },
+      {
+        "file": "textures/Tape00_Rgh.png",
+        "sha256": "35e0338f9d8d15690fb13bc0ddce0bd1e5af7a2df290545394d782a7a355686e",
+        "bytes": 306
+      },
+      {
+        "file": "textures/TicketVendingMachine00_Alb.png",
+        "sha256": "a1d8107e466ea13dc26840025553d3142312d2af3f8d47fb48263c43d2b31f42",
+        "bytes": 63929
+      },
+      {
+        "file": "textures/TicketVendingMachine00_Emi.png",
+        "sha256": "b4e48fa863c14096e8fedd68da5fdad94ba6a746ccafe8fa8bd155ca1e52a859",
+        "bytes": 8612
+      },
+      {
+        "file": "textures/TicketVendingMachine00_Nrm.png",
+        "sha256": "279afae4b6302825d6fa64a4992b82594871b4eb7cca061dfb2c74001a514213",
+        "bytes": 37172
+      },
+      {
+        "file": "textures/TicketVendingMachine00_Rgh.png",
+        "sha256": "e72b3f76f23081313d864a4e893ebeec368b9115fac2e1d30f035d01b296522f",
+        "bytes": 7799
+      },
+      {
+        "file": "textures/ToiletAndPoster00_Alb.png",
+        "sha256": "4cf03dc72d97e0f8735e723a5f473b9fefe2f763c3348560e5eb3d62fab31241",
+        "bytes": 140445
+      },
+      {
+        "file": "textures/ToiletAndPoster00_Nrm.png",
+        "sha256": "f50624c0dca9caf4a7c576ac5800bd53fa98ab753f2d0f9ca24f4e7b376fea15",
+        "bytes": 22939
+      },
+      {
+        "file": "textures/ToiletAndPoster00_Rgh.png",
+        "sha256": "b961b313ed28ab0eeb111f595987658b901b06e84ff12d06507dd176e9f839d2",
+        "bytes": 3582
+      },
+      {
+        "file": "textures/VinylClear_Nrm.png",
+        "sha256": "5c17c7b9417387e77c04605fc1df03c29e323fcd05b4509979c27abce51856ee",
+        "bytes": 109564
+      },
+      {
+        "file": "textures/VinylSheetG_Nrm.png",
+        "sha256": "de3f8b0bfb2068dcd4f7d5831735ad2f698d976844b2634d5af7487b9b4d2baf",
+        "bytes": 7663
+      },
+      {
+        "file": "textures/WallAluminum00_Alb.png",
+        "sha256": "4163579efb007ea8a95687a8da45a7c838b391f6eb8e8b8a4cf9b42c95fe3442",
+        "bytes": 13951
+      },
+      {
+        "file": "textures/WallAluminum00_Nrm.png",
+        "sha256": "0e3d10913a8514cfd26464b935b7f13af9e8fcdc330c27901b5c638205af5a07",
+        "bytes": 6304
+      },
+      {
+        "file": "textures/WallBlackNoPaintable00_Alb.png",
+        "sha256": "903e281b9062a7075bcb7786c0b81b4bf90a9e2169235bf1950c50f416339714",
+        "bytes": 353857
+      },
+      {
+        "file": "textures/WallBlackNoPaintable00_Nrm.png",
+        "sha256": "703f303b78b70194ed8eca6eada92f3b2eb80d5cc274ef572f7b398a8c131b5d",
+        "bytes": 81647
+      },
+      {
+        "file": "textures/WallParts00_Alb.png",
+        "sha256": "40dea1a657c8b6bb119913b90934416826ffbd4e13221a1972bf7a178f787ba9",
+        "bytes": 72060
+      },
+      {
+        "file": "textures/WallParts00_Emm.png",
+        "sha256": "9eeab5d2c925d1b560f91e0969e9447baef5ff14bae7c1018cdd09f4b357c178",
+        "bytes": 2296
+      },
+      {
+        "file": "textures/WallParts00_Nrm.png",
+        "sha256": "7aee5328c963d2f715579481764697594a0af9729d4b6ffa2d8a582ae4b806d0",
+        "bytes": 54322
+      },
+      {
+        "file": "textures/WallParts00_Rgh.png",
+        "sha256": "ff522849afa972b5ec624dac481121584a499f01a220f1ee339391dd0d1b9d8b",
+        "bytes": 1335
+      },
+      {
+        "file": "textures/WallWhiteNopaintable00_Alb.png",
+        "sha256": "f79508ed70299663006e8ff90334ec7b65437f8326c82a16f3e20b2a0e65fa7b",
+        "bytes": 117507
+      },
+      {
+        "file": "textures/WallWhiteNopaintable00_Nrm.png",
+        "sha256": "c4fc57c33a60bb5f656e7afd98139302c990661db664db8bc23bf07fb898d65b",
+        "bytes": 51055
+      },
+      {
+        "file": "textures/WallWoodPaintable00_Alb.png",
+        "sha256": "ab50bc7db2a4f868cabd7d8cd3ba6013031ad3fae630cdeb87fe5726ca859571",
+        "bytes": 142616
+      },
+      {
+        "file": "textures/WallWoodPaintable00_Nrm.png",
+        "sha256": "cf95ab0caca0b594e2bf5ba3761e71f8d1d15610612ab90792cbc3e8cefeb8d8",
+        "bytes": 1295
+      },
+      {
+        "file": "textures/WallWoodPaintable00_Rgh.png",
+        "sha256": "474c19a13c0bc61cfc4d4a9eb9217635cfc3d47a826ea6536696ce01f619badc",
+        "bytes": 46522
+      },
+      {
+        "file": "textures/Water_Nrm.png",
+        "sha256": "d2b3215632d4ac8dbd7b6203d792bde18e1aedae1a2d6db2f89ab8236ba03124",
+        "bytes": 27206
+      },
+      {
+        "file": "triangleFace.bin",
+        "sha256": "abdf5f496d648366dc384953aa54a215a68d3ef919f9af64afb2e3ac349686b8",
+        "bytes": 428080
+      },
+      {
+        "file": "vertices.bin",
+        "sha256": "4ed1879b2afbe8de194556fea81b907e35f717f1f0b71dfa122e84cf81a4faa8",
+        "bytes": 27765504
+      }
+    ]
+  },
+  "defaults": {
+    "tests": 25,
+    "pass": 23,
+    "fail": 0,
+    "skip": 2,
+    "receipt": ".ci-scratch/drop-final/defaults.log"
+  },
+  "legacyGeometry": {
+    "tests": 6,
+    "pass": 4,
+    "fail": 0,
+    "skip": 2,
+    "receipt": ".ci-scratch/drop-final/legacy-geometry.log"
+  },
+  "packaging": {
+    "private": {
+      "pass": 9,
+      "skip": 0
+    },
+    "public": {
+      "pass": 9,
+      "skip": 0
+    }
+  },
+  "budgets": {
+    "private": {
+      "status": "passed",
+      "revision": "7045a593c8bd7da6e6aee5dcf8da930919d90f59662452835a40c3bb66a57002",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2755172,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5856803,
+      "workerBytes": 71147,
+      "declaredBytes": 10477495,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "public": {
+      "status": "passed",
+      "revision": "4e60dab13817fcaf28103b0e186449ce81d45b88124b5e7e85c126e7118b831e",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2756123,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5857754,
+      "workerBytes": 71147,
+      "declaredBytes": 10478446,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "browserPending": true,
+  "firstFailedBrowserReceipt": "/workspace/stage-worktrees/manta-drop-calibration/.ci-scratch/drop-final/browser.log",
+  "scope": {
+    "rawIntervals": [
+      30,
+      60,
+      120
+    ],
+    "actualGameFixedStep": "pending",
+    "weapon": "shooter / Shooter_Normal_00",
+    "gearAP": 0,
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "referenceVersion1130Verified": false,
+    "sourceGeometryChanged": false,
+    "stageDefinitionsIncluded": false,
+    "NoPaintRetained": true,
+    "retailPlacementsVerified": false,
+    "hardwarePerformanceVerified": false,
+    "wholeBankQualified": false
+  },
+  "instructions": "AGENTS.md and reports/inkwave-splatoon3-behavior-2026-10-02.md"
+}

@@ -8,6 +8,7 @@ export { nativeInitialLanding,nativeArenaBasis,nativeSpawnYaw,nativeRetreatCoord
 export { nativePaintGoalIds } from './native-bots.mjs';
 export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from './native-climb.mjs';
 export { nativeSourceWaypointReached,nativeSourceTravelInput,nativeSourceFootSupported } from './native-bot-support.mjs';
+export {nativeSourceGroundedForm} from './native-bot-form.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
 
