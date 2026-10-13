@@ -771,6 +771,7 @@ export function tintSubModel(model, color) {
 
 export function isSharedGeometry(g) { return !!g?.userData?.[SHARED_FLAG]; }
 
+const CRAB_LEGS = [['legL0', 'legR0'], ['legL1', 'legR1'], ['legL2', 'legR2']];
 const smoothstep = (x) => { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); };
 
 /**
@@ -836,6 +837,19 @@ export function poseSubModel(model, s = {}) {
     case 'toxicMistCloud':
       if (g.body) { g.body.rotation.y += dt * 0.35; g.body.scale.y = 1 + 0.04 * Math.sin(st.t * 1.7); }
       break;
+    case 'spCrabTank': {
+      // Crab Tank walk: the three legs a side swing about their hips in
+      // alternating pairs with the ground speed (presentation only).
+      const v = Number.isFinite(s.speed) ? s.speed : 0;
+      st.stride = (st.stride || 0) + dt * v * 6;
+      const k = Math.min(1, v / 2);
+      for (let i = 0; i < 3; i++) {
+        const [l, r] = CRAB_LEGS[i];
+        if (g[l]) g[l].rotation.y = Math.sin(st.stride + i * 2.1) * 0.22 * k;
+        if (g[r]) g[r].rotation.y = Math.sin(st.stride + i * 2.1 + Math.PI) * 0.22 * k;
+      }
+      break;
+    }
     case 'pointSensor': {
       const m = model.materials.get('inkGlow');
       if (m) m.emissiveIntensity = 1 + 0.8 * (0.5 + 0.5 * Math.sin(st.t * 9));

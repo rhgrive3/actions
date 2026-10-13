@@ -11,7 +11,7 @@
 // re-derives the kid's visibility each frame.
 
 import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
-import { buildScreenSheet, INKSTRIKE_LID_OPEN } from './special-models.mjs';
+import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special-models.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-models.install.v1');
 const OBJECTS = Symbol('inkwave.s3.special-models.objects'), ROUNDS = Symbol('inkwave.s3.special-models.rounds');
@@ -31,7 +31,10 @@ export const SPECIAL_DEVICES = Object.freeze({
   // the swing pivots about the grip.
   ultraStamp: [{ model: 'spUltraStamp', host: 'kid', pos: [0, 0.88, 0.33], rot: [2.88, 0, 0], scale: 0.85, swing: true, grip: [0, -0.66, -1.15], hideWeapon: true, hands: { R: [0, 0.63, 1.085], L: [0, 0.48, 0.77] } }],
   killerWail: [{ model: 'spKillerSpeaker', host: 'kid', speakers: true, scale: 1, hideWeapon: true }],
-  crabTank: [{ model: 'spCrabTank', host: 'kid', pos: [0, -0.32, -0.05], rot: [0, 0, 0], scale: 0.9, hideWeapon: true, crab: true, hands: { R: [-0.12, 1.12, 0.1], L: [0.12, 1.12, 0.1] } }],
+  // The tank stands on the ground round the standing kid (no riding pose):
+  // the cockpit rim is between the kid's waist and chest, the hands take
+  // the handlebars (CRAB_TANK_GRIPS).
+  crabTank: [{ model: 'spCrabTank', host: 'kid', pos: [0, 0, -0.05], rot: [0, 0, 0], scale: 0.9, hideWeapon: true, crab: true, hands: CRAB_TANK_GRIPS }],
   reefslider: [{ model: 'spReefShark', host: 'kid', pos: [0, -0.1, 0.12], rot: [0, 0, 0], scale: 1, hideWeapon: true, hands: { R: [-0.215, 0.54, 0.18], L: [0.215, 0.54, 0.18] } }],
   // Worn on the back with the lid shut, tray down and lid outward (S3 promo
   // image); the free hand throws the markers.

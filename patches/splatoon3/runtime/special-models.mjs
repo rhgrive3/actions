@@ -413,42 +413,337 @@ function killerSpeaker(THREE) {
 }
 
 // ---- Crab Tank -----------------------------------------------------------------
-// S3 Model render (ink shell, ball form), S3 promo screenshots 00-02: a dome
-// shell (yellow with a team-ink cap), hazard-striped skirts, two big front
-// claws on grey arms, four grey legs, two black handle posts, a centre cannon,
-// crash-test decals. The rider sits on the back.
+// S3 Crab Tank Model.png (fully inked tank, yellow ball form), S3 promo
+// screenshots 00-02 (yellow base plates with team ink over the top in a
+// blocky jagged edge) and the S3 icon (front view). Read from the views:
+//  - a faceted dome shell over the top and back, a cockpit on its rear top
+//    with handlebar grips; the kid rides with the shell round the waist;
+//  - two yellow eye stalks with black rounded tips on the dome's front edge,
+//    over a notch that shows the core (a grey plate with a diamond of four
+//    squares in the icon) between yellow brackets and a hazard-striped plate;
+//  - two claw pods low at the front corners: the right one closed (a rounded
+//    box with a crash-test circle, a tan band and a chamfered band of
+//    diagonal tan/white stripes), the left one open: a crescent shell (ink
+//    outside, grey inside, striped hook tip) round a three-barrel bronze gun
+//    with red muzzle rings on a grey arm;
+//  - three crab legs per side: grey hip and knee joints and long curved
+//    yellow blades with white diagonal stripes, tips on the ground;
+//  - crash-test-dummy circles on the dome sides, pods and claw.
+// The kid stands in INKWAVE (no riding pose), so the tank sits on the ground
+// and the cockpit rim is between the kid's waist and chest; the real rider
+// sits on top, higher.
+registerFinish('crabTan', 0xc9b08c, { roughness: 0.55, metalness: 0 });
+registerFinish('crabGrey', 0xc3c7c2, { roughness: 0.45, metalness: 0.25 });
+registerFinish('crabMark', 0x3a2c1c, { roughness: 0.6, metalness: 0 });
+registerFinish('crabBronze', 0x6e5442, { roughness: 0.35, metalness: 0.5 });
+
+const V3 = (THREE, a) => new THREE.Vector3(...a);
+// Triangle soup: quads/tris with winding fixed against an outward vector.
+function crabSoup() {
+  const pos = [], nor = [];
+  return {
+    pos, nor,
+    tri(a, b, c, o, n = null) {
+      const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+      const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      if (nx * nx + ny * ny + nz * nz < 1e-14) return;
+      const flip = nx * o[0] + ny * o[1] + nz * o[2] < 0, list = flip ? [a, c, b] : [a, b, c];
+      for (const p of list) pos.push(p[0], p[1], p[2]);
+      if (n) for (const p of list) { const m = n(p); nor.push(m[0], m[1], m[2]); }
+    },
+    quad(a, b, c, d, o, n) { this.tri(a, b, c, o, n); this.tri(a, c, d, o, n); },
+    geo(THREE) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      if (nor.length === pos.length) g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+      else g.computeVertexNormals();
+      return g;
+    },
+  };
+}
+// Split a geometry's triangles by a centroid test (keeps its normals).
+function crabSplit(THREE, geo, pred) {
+  if (!geo.attributes.normal) geo.computeVertexNormals();
+  const g = geo.index ? geo.toNonIndexed() : geo, P = g.attributes.position.array, N = g.attributes.normal.array;
+  const out = [[[], []], [[], []]];
+  for (let i = 0; i < P.length; i += 9) {
+    const k = pred((P[i] + P[i + 3] + P[i + 6]) / 3, (P[i + 1] + P[i + 4] + P[i + 7]) / 3, (P[i + 2] + P[i + 5] + P[i + 8]) / 3) ? 0 : 1;
+    for (let j = 0; j < 9; j++) { out[k][0].push(P[i + j]); out[k][1].push(N[i + j]); }
+  }
+  return out.map(([p, n]) => {
+    const o = new THREE.BufferGeometry();
+    o.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
+    o.setAttribute('normal', new THREE.Float32BufferAttribute(n, 3));
+    return o;
+  });
+}
+// Blocky jagged edge of the ink over the yellow plates (promo screenshots).
+const CRAB_JAG = [0.6, -0.4, 0.9, 0.1, -0.8, 0.5, -0.2, 1, -0.6, 0.3, -1, 0.7, 0, -0.5, 0.8, -0.3, 0.4, -0.9];
+const crabJag = (a, bins = 18) => CRAB_JAG[((Math.floor((a / TAU + 1) * bins) % bins) + bins) % bins];
+// Diagonal stripes on a parametric strip f(u, v) (u along, v across, 0..1):
+// n stripes along, each sheared by `skew` stripe widths across. Returns the
+// two alternating stripe sets.
+function crabStripes(THREE, f, n, skew, out, normal = null, nv = 2, nu = 2) {
+  const A = crabSoup(), B = crabSoup(), cl = (x) => Math.max(0, Math.min(1, x));
+  for (let k = Math.floor(-Math.abs(skew)) - 1; k <= n + Math.abs(skew) + 1; k++) {
+    const S = ((k % 2) + 2) % 2 ? B : A;
+    for (let j = 0; j < nv; j++) {
+      const v0 = j / nv, v1 = (j + 1) / nv;
+      for (let i = 0; i < nu; i++) {
+        const ua = (v, t) => cl((k + t + v * skew) / n);
+        const t0 = i / nu, t1 = (i + 1) / nu;
+        if (ua(v0, t1) - ua(v0, t0) < 1e-6 && ua(v1, t1) - ua(v1, t0) < 1e-6) continue;
+        const p = [f(ua(v0, t0), v0), f(ua(v0, t1), v0), f(ua(v1, t1), v1), f(ua(v1, t0), v1)];
+        const m = p.reduce((s, q) => [s[0] + q[0] / 4, s[1] + q[1] / 4, s[2] + q[2] / 4], [0, 0, 0]);
+        S.quad(p[0], p[1], p[2], p[3], out(m), normal);
+      }
+    }
+  }
+  return [A.geo(THREE), B.geo(THREE)];
+}
+// Crash-test-dummy circle: ring and two opposite quarters, on a surface.
+function crabMark(THREE, r, p, n, lift = 0.005, spin = 0) {
+  const N = V3(THREE, n).normalize(), q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), N);
+  const at = V3(THREE, p).addScaledVector(N, lift);
+  return [new THREE.RingGeometry(r * 0.76, r, 24), new THREE.CircleGeometry(r * 0.76, 8, spin, Math.PI / 2), new THREE.CircleGeometry(r * 0.76, 8, spin + Math.PI, Math.PI / 2)]
+    .map(g => g.applyQuaternion(q).translate(at.x, at.y, at.z));
+}
+// Flat tapered blade swept along a curve; `W` is the fixed width axis.
+// Returns the closed blade and a face sampler for stripe overlays.
+function crabBlade(THREE, pts, W, wFn, t, steps = 18) {
+  const curve = new THREE.CatmullRomCurve3(pts.map(p => V3(THREE, p)), false, 'catmullrom', 0.5), Wv = V3(THREE, W).normalize();
+  const frame = (u) => {
+    const c = curve.getPointAt(u), T = curve.getTangentAt(u), N = new THREE.Vector3().crossVectors(T, Wv).normalize();
+    return { c, N, w: wFn(u) };
+  };
+  const S = crabSoup(), ring = [];
+  for (let i = 0; i <= steps; i++) {
+    const { c, N, w } = frame(i / steps), pt = (a, b) => c.clone().addScaledVector(Wv, a * w / 2).addScaledVector(N, b * t / 2).toArray();
+    ring.push({ c: c.toArray(), N: N.toArray(), q: [pt(-1, -1), pt(1, -1), pt(1, 1), pt(-1, 1)] });
+  }
+  for (let i = 0; i < steps; i++) {
+    const a = ring[i], b = ring[i + 1];
+    for (let k = 0; k < 4; k++) {
+      const k2 = (k + 1) % 4, m = [0, 1, 2].map(j => (a.q[k][j] + a.q[k2][j] + b.q[k][j] + b.q[k2][j]) / 4);
+      S.quad(a.q[k], a.q[k2], b.q[k2], b.q[k], [m[0] - (a.c[0] + b.c[0]) / 2, m[1] - (a.c[1] + b.c[1]) / 2, m[2] - (a.c[2] + b.c[2]) / 2]);
+    }
+  }
+  for (const [r, s] of [[ring[0], -1], [ring[steps], 1]]) {
+    const T = curve.getTangentAt(s < 0 ? 0 : 1).multiplyScalar(s).toArray();
+    S.quad(r.q[0], r.q[1], r.q[2], r.q[3], T);
+  }
+  const face = (side, lift = 0.004) => (u, v) => {
+    const { c, N, w } = frame(Math.min(1, Math.max(0, u)));
+    return c.addScaledVector(Wv, (v - 0.5) * w * 0.92).addScaledVector(N, side * (t / 2 + lift)).toArray();
+  };
+  return { geo: S.geo(THREE), face, normalAt: (u) => frame(u).N.toArray() };
+}
+
+// Dome: ellipsoid over the top and back (centre DOME_C, radii DOME_R).
+const DOME_C = [0, 0.6, 0], DOME_R = [0.62, 0.52, 0.62];
+const domeY = (x, z) => { const u = (x / DOME_R[0]) ** 2 + ((z - DOME_C[2]) / DOME_R[2]) ** 2; return DOME_C[1] + DOME_R[1] * Math.sqrt(Math.max(0, 1 - u)); };
+const domeAt = (az, el) => {
+  const p = [DOME_C[0] + DOME_R[0] * Math.cos(el) * Math.sin(az), DOME_C[1] + DOME_R[1] * Math.sin(el), DOME_C[2] + DOME_R[2] * Math.cos(el) * Math.cos(az)];
+  const n = [0, 1, 2].map(i => (p[i] - DOME_C[i]) / DOME_R[i] ** 2);
+  return [p, n];
+};
+// Point at arclength fraction u round a closed [x, z] polygon.
+function crabLoop(pts, u) {
+  const L = pts.map((p, i) => Math.hypot(pts[(i + 1) % pts.length][0] - p[0], pts[(i + 1) % pts.length][1] - p[1]));
+  let s = (((u % 1) + 1) % 1) * L.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pts.length; i++) {
+    if (s <= L[i] || i === pts.length - 1) { const a = pts[i], b = pts[(i + 1) % pts.length], t = Math.min(1, s / L[i]); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; }
+    s -= L[i];
+  }
+  return pts[0];
+}
+// Control grips (model space) the kid's hands reach (special-presentation.mjs).
+export const CRAB_TANK_GRIPS = Object.freeze({ R: [-0.2, 1.13, 0.34], L: [0.2, 1.13, 0.34] });
+
 function crabTank(THREE) {
   const K = kit();
-  K.add('body', 'yellow', sphere(THREE, 0.62, 0, 0.55, 0, 1, 0.82, 0.92, 28, 16));
-  K.add('body', 'ink', new THREE.SphereGeometry(0.625, 28, 10, 0, TAU, 0, Math.PI * 0.3).scale(1, 0.82, 0.92).translate(0, 0.55, 0));
-  K.add('body', 'hazard', new THREE.CylinderGeometry(0.62, 0.66, 0.16, 28, 1, true).translate(0, 0.42, 0));
-  const stripes = [];
-  for (let k = 0; k < 18; k++) { const a = k * TAU / 18; stripes.push(box(THREE, 0.06, 0.17, 0.01, Math.sin(a) * 0.645, 0.42, Math.cos(a) * 0.645 * 0.98).rotateY(0)); }
-  K.add('body', 'ink', ...stripes.map((g, k) => g.rotateY(0)));
-  K.add('body', 'black', ...[[1, 1], [-1, 1]].map(([s]) => box(THREE, 0.05, 0.3, 0.05, s * 0.12, 1.12, 0.1)), ...[-1, 1].map(s => sphere(THREE, 0.06, s * 0.3, 0.6, 0.55)));
-  K.add('body', 'yellow', ...[-1, 1].map(s => box(THREE, 0.06, 0.08, 0.06, s * 0.12, 1.3, 0.1)));
-  K.add('body', 'mech', cylZ(THREE, 0.07, 0.3, 0.7, 16).translate(0, 0.62, 0), cylZ(THREE, 0.09, 0.62, 0.72, 16).translate(0, 0.62, 0));
-  // Claws: grey arm + yellow/ink pincer shells.
+  // Dome shell, cut for the cockpit (top, round the kid) and the front core
+  // notch; the ink covers the top with a blocky edge, the yellow shows below.
+  let dome = new THREE.SphereGeometry(1, 36, 18, 0, TAU, 0, Math.PI * 0.62).scale(...DOME_R).translate(...DOME_C);
+  [dome] = crabSplit(THREE, dome, (x, y, z) => !(x * x + (z - 0.04) ** 2 < 0.27 ** 2 && y > 0.85) && !(Math.abs(x) < 0.25 && z > 0.3 && y < 0.95));
+  const [domeInk, domeYellow] = crabSplit(THREE, dome, (x, y, z) => y > 0.8 + 0.07 * crabJag(Math.atan2(x, z)));
+  K.add('body', 'ink', domeInk);
+  K.add('body', 'yellow', domeYellow);
+  // Grey chassis under the shell, cockpit tub (faces inward) and its rim.
+  K.add('body', 'grey', sphere(THREE, 1, 0, 0.42, -0.06, 0.5, 0.18, 0.46, 24, 10));
+  K.add('body', 'darkMetal',
+    latheY(THREE, [[0.27, 1.1], [0.27, 0.62], [0.001, 0.6]], 24).translate(0, 0, 0.04));
+  const rim = [];
+  for (let i = 0; i < 32; i++) { const a = i / 32 * TAU, x = Math.sin(a) * 0.275, z = 0.04 + Math.cos(a) * 0.275; rim.push([x, domeY(x, z) - 0.005, z]); }
+  K.add('body', 'black', tube(THREE, rim, 0.026, 48, 6, true));
+  // Handlebar grips in front of the kid (screenshots 00 and 02).
   for (const s of [-1, 1]) {
-    K.add('body', 'mech', rod(THREE, [s * 0.45, 0.55, 0.3], [s * 0.75, 0.55, 0.65], 0.06, 10), sphere(THREE, 0.1, s * 0.45, 0.55, 0.3));
-    K.add('body', 'yellow', sphere(THREE, 0.24, s * 0.8, 0.55, 0.85, 1, 0.75, 1.1).translate(0, 0.1, 0));
-    K.add('body', 'ink', sphere(THREE, 0.2, s * 0.8, 0.4, 0.95, 1, 0.5, 0.9));
-    K.add('body', 'hazard', box(THREE, 0.2, 0.06, 0.12, s * 0.8, 0.32, 1.05));
+    const [gx, gy, gz] = s < 0 ? CRAB_TANK_GRIPS.R : CRAB_TANK_GRIPS.L;
+    K.add('body', 'crabGrey', rod(THREE, [gx, domeY(gx, gz - 0.02) - 0.03, gz - 0.02], [gx, gy, gz], 0.022, 8), box(THREE, 0.08, 0.035, 0.06, gx - s * 0.02, gy, gz));
+    K.add('body', 'black', rod(THREE, [gx - s * 0.04, gy, gz], [gx + s * 0.09, gy, gz], 0.03, 10), sphere(THREE, 0.031, gx + s * 0.09, gy, gz, 1, 1, 1, 10, 6));
   }
-  // Legs.
-  for (const [s, z] of [[-1, -0.25], [1, -0.25], [-1, 0.15], [1, 0.15]]) {
-    K.add('body', 'mech', rod(THREE, [s * 0.5, 0.45, z], [s * 0.9, 0.35, z * 1.6], 0.05, 8), rod(THREE, [s * 0.9, 0.35, z * 1.6], [s * 0.95, 0.0, z * 1.8], 0.04, 8));
+  // Rear step loops over the back (black frames behind the dome, Model.png).
+  for (const s of [-1, 1]) {
+    const x = s * 0.3, z = -0.34, y = domeY(x, z), top = [x + s * 0.03, y + 0.15];
+    K.add('body', 'black', rod(THREE, [x, y - 0.03, z - 0.09], [top[0], top[1], z - 0.08], 0.02, 6), rod(THREE, [x, y - 0.03, z + 0.09], [top[0], top[1], z + 0.08], 0.02, 6),
+      rod(THREE, [top[0], top[1], z - 0.08], [top[0], top[1], z + 0.08], 0.02, 6));
   }
-  K.add('body', 'black', ...[-1, 1].map(s => sphere(THREE, 0.1, s * 0.55, 0.62, 0.0, 0.3, 1, 1)));
-  K.add('body', 'white', ...[-1, 1].map(s => new THREE.CircleGeometry(0.07, 16).rotateY(s * Math.PI / 2).translate(s * 0.63, 0.62, 0)));
+  // Crash-test circles on the dome sides and back (screenshot 02).
+  for (const [az, el] of [[1.7, 0.2], [-1.7, 0.2], [Math.PI, 0.25]]) { const [p, n] = domeAt(az, el); K.add('body', 'crabMark', ...crabMark(THREE, 0.085, p, n, 0.012, 0.4)); }
+  // Side sockets on the lower shell (screenshot 02).
+  for (const s of [-1, 1]) {
+    const [p, n] = domeAt(s * 1.15, -0.2), N = V3(THREE, n).normalize();
+    const g = (r0, r1, d) => new THREE.CylinderGeometry(r0, r1, d, 14).rotateX(Math.PI / 2).applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), N)).translate(...V3(THREE, p).addScaledVector(N, d / 2 - 0.01).toArray());
+    K.add('body', 'crabGrey', g(0.055, 0.065, 0.03));
+    K.add('body', 'crabBronze', g(0.032, 0.032, 0.045));
+  }
+
+  // Core in the front notch: dark block, grey face with the icon's diamond
+  // of four squares, yellow brackets above and hazard-striped corner plates.
+  K.add('body', 'darkMetal', box(THREE, 0.46, 0.62, 0.3, 0, 0.62, 0.3));
+  K.add('body', 'grey', box(THREE, 0.3, 0.26, 0.03, 0, 0.68, 0.455));
+  K.add('body', 'yellow', ...[[0, 1], [0, -1], [1, 0], [-1, 0]].map(([dx, dy]) => box(THREE, 0.055, 0.055, 0.02).rotateZ(Math.PI / 4).translate(dx * 0.06, 0.68 + dy * 0.06, 0.475)),
+    box(THREE, 0.5, 0.06, 0.16, 0, 0.93, 0.46), box(THREE, 0.1, 0.1, 0.12, -0.13, 0.99, 0.48), box(THREE, 0.1, 0.1, 0.12, 0.13, 0.99, 0.48));
+  for (const s of [-1, 1]) {
+    const a = [s * 0.24, 0.62, 0.46], b = [s * 0.165, 0.62, 0.505], hgt = 0.2;
+    const [w, y] = crabStripes(THREE, (u, v) => [a[0] + (b[0] - a[0]) * u, a[1] + hgt * v, a[2] + (b[2] - a[2]) * u + 0.006], 3, 1.2, () => [s * 0.6, 0, 1]);
+    K.add('body', 'hazard', w); K.add('body', 'yellow', y);
+  }
+  // Eye stalks: yellow, slightly splayed, a side spur, black rounded tips.
+  for (const s of [-1, 1]) {
+    const a = [s * 0.13, 1.0, 0.48], b = [s * 0.16, 1.27, 0.46], d = V3(THREE, b).sub(V3(THREE, a)).normalize();
+    K.add('body', 'yellow', rod(THREE, a, b, 0.036, 6), rod(THREE, [s * 0.135, 1.06, 0.48], [s * 0.22, 1.02, 0.5], 0.022, 6));
+    K.add('body', 'black', orient(THREE, new THREE.CapsuleGeometry(0.04, 0.12, 4, 10), d.toArray(), V3(THREE, b).addScaledVector(d, 0.065).toArray()));
+  }
+
+  // Right claw, closed: a tall faceted pod (two front facets) leaning back
+  // toward a rounded top, ink over the top, a tan band and a chamfered band of
+  // diagonal tan/white stripes; crash-test circles on the front and outside.
+  {
+    const cx = -0.46, cz = 0.52;
+    const plan = [[0.22, -0.4], [-0.22, -0.4], [-0.3, -0.12], [-0.28, 0.2], [-0.14, 0.38], [0.22, 0.4]];
+    const shape = new THREE.Shape(plan.map(([x, z]) => new THREE.Vector2(x, z)));
+    const pod = new THREE.ExtrudeGeometry(shape, { depth: 0.46, steps: 6, bevelEnabled: true, bevelSize: 0.08, bevelThickness: 0.16, bevelSegments: 4 })
+      .rotateX(Math.PI / 2).translate(cx, 0.72, cz);
+    const pp = pod.attributes.position;
+    for (let i = 0; i < pp.count; i++) {
+      const y = pp.getY(i), t = Math.min(1, Math.max(0, (y - 0.4) / 0.48)) ** 2;
+      pp.setX(i, cx + 0.2 + (pp.getX(i) - cx - 0.2) * (1 - 0.2 * t));
+      pp.setZ(i, cz - 0.4 + (pp.getZ(i) - cz + 0.4) * (1 - 0.4 * t));
+    }
+    pod.computeVertexNormals();
+    const hit = (from, dir) => {
+      const h = new THREE.Raycaster(V3(THREE, from), V3(THREE, dir).normalize()).intersectObject(new THREE.Mesh(pod, new THREE.MeshBasicMaterial()))[0];
+      return [h.point.toArray(), h.face.normal.toArray()];
+    };
+    const marks = [hit([cx + 0.06, 0.56, 2], [0, 0, -1]), hit([cx - 2, 0.56, cz + 0.06], [1, 0, 0.12])];
+    const [pi, py] = crabSplit(THREE, pod, (x, y, z) => y > 0.74 + 0.06 * crabJag(Math.atan2(x - cx, z - cz) * 1.3));
+    K.add('clawR', 'ink', pi); K.add('clawR', 'yellow', py);
+    const scaled = (k) => plan.map(([x, z]) => [x * k, z * k]);
+    const prism = (k, y0, y1) => new THREE.ExtrudeGeometry(new THREE.Shape(scaled(k).map(([x, z]) => new THREE.Vector2(x, z))), { depth: y1 - y0, bevelEnabled: false })
+      .rotateX(Math.PI / 2).translate(cx, y1, cz);
+    K.add('clawR', 'crabTan', prism(1.15, 0.13, 0.26));
+    const band = (u, v) => { const k = 0.92 + 0.22 * v, [x, z] = crabLoop(plan, u); return [cx + x * k, 0.02 + 0.11 * v, cz + z * k]; };
+    const [st, sw] = crabStripes(THREE, band, 26, 0.9, (m) => [m[0] - cx, -0.5, m[2] - cz], null, 2, 3);
+    K.add('clawR', 'crabTan', st); K.add('clawR', 'hazard', sw);
+    K.add('clawR', 'darkMetal', prism(0.92, 0.015, 0.03), box(THREE, 0.14, 0.16, 0.24, -0.2, 0.6, 0.2));
+    K.add('clawR', 'crabMark', ...marks.flatMap(([p, n], i) => crabMark(THREE, i ? 0.085 : 0.1, p, n, 0.004, 0.3)));
+  }
+  // Left claw, open: crescent shell (ink outside, grey inside, striped hook)
+  // round a three-barrel bronze gun with red muzzle rings, on a grey arm.
+  {
+    const G = [0.48, 0.5, 0.6];
+    K.pivot('clawL', [0.3, 0.55, 0.3]);
+    const barrels = [], rims = [], holes = [];
+    for (const a of [Math.PI / 2, Math.PI * 7 / 6, Math.PI * 11 / 6]) {
+      const x = G[0] + Math.cos(a) * 0.085, y = G[1] + Math.sin(a) * 0.085;
+      barrels.push(cylZ(THREE, 0.066, 0.5, 0.9, 12).translate(x, y, 0));
+      rims.push(new THREE.TorusGeometry(0.066, 0.015, 6, 16).translate(x, y, 0.895));
+      holes.push(new THREE.CircleGeometry(0.042, 12).translate(x, y, 0.907));
+    }
+    K.add('clawL', 'crabBronze', ...barrels, cylZ(THREE, 0.035, 0.45, 0.93, 8).translate(G[0], G[1], 0));
+    K.add('clawL', 'red', ...rims);
+    K.add('clawL', 'hole', ...holes);
+    K.add('clawL', 'crabGrey', cylZ(THREE, 0.19, 0.36, 0.5, 16).translate(G[0], G[1], 0), rod(THREE, [0.24, 0.54, 0.22], [0.46, 0.5, 0.36], 0.085, 8),
+      sphere(THREE, 0.1, 0.24, 0.54, 0.22, 1, 1, 1, 12, 8), box(THREE, 0.38, 0.1, 0.14, 0.65, G[1], 0.4),
+      rod(THREE, [0.46, 0.67, 0.38], [0.34, 0.83, 0.24], 0.04, 8), box(THREE, 0.12, 0.06, 0.32, G[0] - 0.04, 0.19, 0.64));
+    K.add('clawL', 'chrome', rod(THREE, [0.34, 0.83, 0.24], [0.31, 0.87, 0.2], 0.045, 8));
+    K.add('clawL', 'darkMetal', ring(THREE, 0.19, 0.016, 0).rotateX(Math.PI / 2).translate(G[0], G[1], 0.5),
+      ...[0, 1, 2, 3, 4].map(i => box(THREE, 0.065, 0.065, 0.065).rotateX(Math.PI / 4).translate(G[0] - 0.04, 0.23, 0.51 + i * 0.065)));
+    // Crescent in the plate's (u = z, v = y) plane about the gun, mouth forward.
+    const cres = (s) => {
+      const p = [], R0 = 0.47 * s, R1 = 0.33 * s, d = Math.PI / 180;
+      for (let a = 68; a <= 300; a += 8) p.push([Math.cos(a * d) * R0, Math.sin(a * d) * R0]);
+      p.push([Math.cos(326 * d) * 0.43 * s, Math.sin(326 * d) * 0.43 * s]);
+      for (let a = 302; a >= 84; a -= 10) p.push([Math.cos(a * d) * R1, Math.sin(a * d) * R1]);
+      return new THREE.Shape(p.map(([u, v]) => new THREE.Vector2(u, v)));
+    };
+    const plate = (s, depth, x) => new THREE.ExtrudeGeometry(cres(s), { depth, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 1 })
+      .rotateY(-Math.PI / 2).translate(x, G[1], G[2]);
+    K.add('clawL', 'ink', plate(1, 0.08, 0.88));
+    K.add('clawL', 'crabGrey', plate(0.96, 0.03, 0.795));
+    // White stripes across the hook tip on the outer face (Model.png).
+    const tipS = crabSoup();
+    for (const [a0, a1] of [[262, 271], [282, 291], [302, 311]]) {
+      const P = (a, r) => [0.895, G[1] + Math.sin(a * Math.PI / 180) * r, G[2] + Math.cos(a * Math.PI / 180) * r];
+      tipS.quad(P(a0, 0.33), P(a1, 0.33), P(a1 + 5, 0.47), P(a0 + 5, 0.47), [1, 0, 0]);
+    }
+    K.add('clawL', 'hazard', tipS.geo(THREE));
+    K.add('clawL', 'crabMark', ...crabMark(THREE, 0.085, [0.893, G[1] + 0.27, G[2] - 0.24], [1, 0, 0], 0.004, 0.3));
+  }
+
+  // Legs: three a side splayed back from the body centre; grey hip and knee,
+  // long curved yellow blades with white diagonal stripes, tips on the ground.
+  [-0.3, -0.75, -1.2].forEach((phi, i) => {
+    for (const s of [-1, 1]) {
+      const name = `leg${s < 0 ? 'R' : 'L'}${i}`, dir = [s * Math.cos(phi), 0, Math.sin(phi)], W = [-Math.sin(phi), 0, s * Math.cos(phi)];
+      const P = (r, y) => [dir[0] * r, y, -0.04 + dir[2] * r];
+      K.pivot(name, P(0.46, 0.48));
+      K.add(name, 'darkMetal', rod(THREE, P(0.4, 0.48), P(0.56, 0.5), 0.065, 10));
+      K.add(name, 'crabGrey', rod(THREE, P(0.5, 0.49), P(0.76, 0.7), 0.05, 8), sphere(THREE, 0.075, ...P(0.77, 0.72), 1, 1, 1, 10, 8), box(THREE, 0.12, 0.08, 0.08, ...P(0.56, 0.53)));
+      const b = crabBlade(THREE, [P(0.76, 0.8), P(0.92, 0.74), P(1.01, 0.5), P(0.99, 0.24), P(0.9, 0.04)], W, (u) => 0.16 * (1 - 0.75 * u * u) + 0.02, 0.05);
+      K.add(name, 'yellow', b.geo);
+      for (const side of [-1, 1]) {
+        const [w] = crabStripes(THREE, (u, v) => b.face(side)(0.2 + 0.68 * u, v), 4, 0.8, () => b.normalAt(0.5).map(c => c * side), null, 2, 3);
+        K.add(name, 'hazard', w);
+      }
+    }
+  });
   return K.finish(THREE);
 }
+
+// Ball form (Model.png, screenshot 01): a faceted yellow ball with a visor
+// slot near the top (the folded yellow eye tips inside), crash-test circles
+// either side, a tan "smile" band dipping to a V and diagonal white/yellow
+// stripes below it; team ink splashed over the back with a blocky edge.
 function crabBall(THREE) {
-  const K = kit();
-  K.add('body', 'yellow', sphere(THREE, 0.75, 0, 0, 0, 1, 1, 1, 32, 20));
-  K.add('body', 'ink', new THREE.SphereGeometry(0.755, 32, 8, 0, TAU, 0, Math.PI * 0.28), new THREE.SphereGeometry(0.755, 32, 6, 0, TAU, Math.PI * 0.78, Math.PI * 0.22));
-  K.add('body', 'hazard', new THREE.SphereGeometry(0.757, 32, 4, 0, TAU, Math.PI * 0.55, Math.PI * 0.1));
-  K.add('body', 'black', ...[0, Math.PI / 2, Math.PI, Math.PI * 1.5].map(a => new THREE.CircleGeometry(0.09, 16).translate(0, 0, 0.76).rotateY(a)), box(THREE, 0.5, 0.03, 0.02, 0, 0.35, 0.67));
+  const K = kit(), R = 0.75;
+  const shell = new THREE.IcosahedronGeometry(R, 2);
+  shell.computeVertexNormals();
+  const [ink, yellow] = crabSplit(THREE, shell, (x, y, z) => (-z * 0.9 - y * 0.35) / R > 0.42 + 0.14 * crabJag(Math.atan2(x, y), 12));
+  K.add('body', 'ink', ink); K.add('body', 'yellow', yellow);
+  const onS = (az, el, r = R * 1.006) => [r * Math.cos(el) * Math.sin(az), r * Math.sin(el), r * Math.cos(el) * Math.cos(az)];
+  const radial = (p) => { const l = Math.hypot(...p); return [p[0] / l, p[1] / l, p[2] / l]; };
+  // Visor slot: a wide dark band on the sphere with a yellow lip, the folded
+  // yellow eye tips and a grey block inside.
+  const el = 0.55, patch = (r, hw, hh) => new THREE.SphereGeometry(r, 16, 3, Math.PI / 2 - hw, 2 * hw, Math.PI / 2 - el - hh, 2 * hh);
+  K.add('body', 'yellow', patch(R * 1.012, 0.6, 0.14));
+  K.add('body', 'black', patch(R * 1.018, 0.53, 0.085));
+  const rot = (g) => g.rotateX(-el), at = (d) => onS(0, el, d);
+  K.add('body', 'yellow', ...[-1, 1].map(s => rot(box(THREE, 0.07, 0.08, 0.05, s * 0.1, 0, 0)).translate(...at(R * 1.01))));
+  K.add('body', 'darkMetal', rot(box(THREE, 0.08, 0.07, 0.04)).translate(...at(R * 1.01)));
+  // Crash-test circles either side of the slot.
+  for (const s of [-1, 1]) { const p = onS(s * 0.6, 0.2, R); K.add('body', 'crabMark', ...crabMark(THREE, 0.08, p, radial(p), 0.025, 0.35)); }
+  // Smile band dipping to a V, and stripes below it to the bottom.
+  const top = (u) => { const a = (u - 0.5) * 3.2; return [a, -0.04 - 0.46 * Math.max(0, 1 - Math.abs(a) / 1.1)]; };
+  const strip = (v0, v1) => (u, v) => { const [a, e] = top(u); return onS(a, e - v0 - (v1 - v0) * (1 - v)); };
+  const [tan] = crabStripes(THREE, strip(0, 0.15), 1, 0, (m) => m, radial, 2, 24);
+  K.add('body', 'crabTan', tan);
+  // Stripes slant toward the V from both sides (Model.png).
+  for (const h of [0, 1]) {
+    const f = strip(0.15, 0.7), [w, y] = crabStripes(THREE, (u, v) => f(h * 0.5 + u * 0.5, v), 8, h ? -1.6 : 1.6, (m) => m, radial, 4, 3);
+    K.add('body', 'hazard', w); K.add('body', 'yellow', y);
+  }
   return K.finish(THREE);
 }
 
