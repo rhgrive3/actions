@@ -35,6 +35,7 @@ try{
     const clockTicks=g.s3Clock.ticks-ticksBefore;if(!actorDt.length||actorDt.some(dt=>Math.abs(dt-1/60)>1e-12)||projectileDt.some(dt=>Math.abs(dt-1/60)>1e-12)||actorDt.length!==clockTicks||projectileDt.length!==clockTicks)throw Error('Installed simulation clock mismatch');
     times.sort((a,b)=>a-b);const owned=G.paint.sample(probe.face,probe.u,probe.v),hit=trace.some(h=>h.triangle>=0&&h.object===G.level.triangleWorld.objectIds[probe.triangle]&&h.distanceToTarget<2);
     if(!owned||!hit||!naturalPaint.length)throw Error('Source wall not painted by actual admitted shot '+JSON.stringify({hz,owned,hit,face:probe.face,trace,naturalPaint}));
+    if(admitted!==1)throw Error('Controlled trigger admitted more than one shot');
     if(!a.alive||!a.grounded)throw Error('Source-supported shooter lost ground');
     cases.push({renderHz:hz,simulationStep:1/60,clockTicks,actorTicks:actorDt.length,projectileTicks:projectileDt.length,admitted,owned,sourceSweepHit:hit,sourceContacts:trace.map(h=>({...h})),naturalWallSplats:naturalPaint.length,alive:a.alive,grounded:a.grounded,controlledGameFrameCpu:{p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],max:times.at(-1)}});
    }}finally{Math.random=random;controller.update=controllerUpdate;controller.computeAim=computeAim;a.update=actorUpdate;G.projectiles.update=projectileUpdate;G.projectiles.inkFlight.configure=configure;G.projectiles.inkFlight.world=world;G.paint.splat=splat;}
