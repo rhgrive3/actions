@@ -26,7 +26,7 @@ try{
    for(const actor of G.actors){actor.intent.move.set(0,0,0);actor.intent.fire=actor.intent.squid=actor.intent.jump=actor.intent.sub=actor.intent.special=false;}
    const random=Math.random;Math.random=()=>.5;
    try{for(let team=0;team<2;team++){
-    const actor=G.actors.find(a=>a.team===team&&a.bot),center=N.nearest(vec(sourceStage.zones[0].center),1.2),route=N.path(N.nearest(L.spawnPads[team],1.2),center,team,50000);
+    let actor=G.actors.find(a=>a.team===team&&a.bot);const center=N.nearest(vec(sourceStage.zones[0].center),1.2),route=N.path(N.nearest(L.spawnPads[team],1.2),center,team,50000);
     if(!route)throw Error('No opposing pad to central source route');
     const at=route.slice(1).findIndex((to,i)=>N.edgeType(route[i],to)==='climb'),edge=N.nodes[route[at]].nb.find(e=>e.to===route[at+1]),climb=edge.climb;
     actor.setWeapon('shooter');
@@ -53,6 +53,7 @@ try{
      times.sort((a,b)=>a-b);cases.push({team,hz,seconds,fire,swim,climbed,grounded:true,ownedWallSamples:owned,sourceWallSamples:climb.samples.length,end:actor.pos.toArray(),cpuStep:{p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],max:times.at(-1)}});console.log('native-climb '+JSON.stringify(cases.at(-1)));
     }
     for(const hz of [30,60,120]){
+     await G.game.startMatch({mapId:L.layout.id,mode:'turf',difficulty:'normal'});G.game._skipRender=true;for(let i=0;i<330;i++)G.game._frame(1/60);G.game.input.mouse.left=true;for(let i=0;i<3;i++)G.game._frame(1/60);G.game.input.mouse.left=false;for(let i=0;i<100;i++)G.game._frame(1/60);G.game.debug.freezeBots();actor=G.actors.find(a=>a.team===team&&a.bot);actor.setWeapon('shooter');if(G.level!==L||G.nav!==N)throw Error('Same-source route trial unexpectedly rebuilt its immutable world');
      G.projectiles.clear();G.paint.clear();setupOthers(actor);actor.spawnAt(L.spawnPads[team],team?Math.PI:0);actor.invuln=0;actor.bot=new BotBrain(actor,'normal');const brain=actor.bot,to=bankGoals[1-team];if(to===null)throw Error('Whole opposing source bank remains unreachable');const node=N.nodes[to],goal=new V(node.x,node.y,node.z);
      if(!brain._pathTo(goal,.6))throw Error('No existing bot opposing-bank route');const waypoints=brain.path.length,climbs=brain.path.slice(1).filter((id,i)=>N.edgeType(brain.path[i],id)==='climb').length;brain.goalTimer=brain.repath=brain.bombCd=1000;
      let climbed=false,fire=false,seconds=0,replans=0;
