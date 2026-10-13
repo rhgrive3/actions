@@ -23,7 +23,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const identity=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'))),errors=[];
 const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 assert.match(sourceCommit,/^[0-9a-f]{40}$/);
-const result={sourceCommit,buildIdentity:{contentHash:identity.contentHash,inputHash:identity.inputHash},environment:useWebkit?'WebKit Linux emulated touch':'Chromium Linux SwiftShader',physicalDevice:false,cases:[]};
+const result={sourceCommit,buildIdentity:{contentHash:identity.contentHash,inputHash:identity.inputHash},environment:useWebkit?'WebKit Linux emulated touch':'Chromium Linux SwiftShader',physicalDevice:false,startups:[],cases:[]};
 let browser,page;
 const save=()=>fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({...result,errors},null,2));
 try {
@@ -31,18 +31,24 @@ try {
  for(const dpr of [1,2]) {
   page=await browser.newPage({viewport:{width:320,height:568},deviceScaleFactor:dpr,hasTouch:useWebkit,isMobile:useWebkit});
   page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+  const bootStarted=Date.now();
   await page.goto('http://127.0.0.1:'+server.address().port+'/?range&skipTitle');
   await page.waitForFunction(()=>window.__G?.match?.range&&window.__G.match.state==='playing',null,{timeout:240000});
   await page.evaluate(()=>{window.__inkwave.debug.freeze();window.__inkwave.debug.freezeBots();});
+  result.startups.push({dpr,elapsedMs:Date.now()-bootStarted});save();console.log('startup',JSON.stringify(result.startups.at(-1)));
   for(const [width,height] of [[320,568],[360,800],[390,844],[960,640],[320,200],[844,390],[960,640]]) {
    await page.setViewportSize({width,height});
-   const row=await page.evaluate(()=>{
+   const caseStarted=Date.now();
+   const row=await page.evaluate(async()=>{
     const G=window.__G,g=window.__inkwave,h=G.hud,cv=h.tankCanvas,a=G.local;
     const snapshots=[];
     for(const ink of [100,0,50]) {
      // Let real input, actor, HUD interpolation/throttle and renderer execute.
      // No tank visibility, dimensions, method or controller replacement.
-     for(let i=0;i<24;i++){a.ink=ink;g._frame(1/60);}
+     // Six 30Hz frames settle the HUD exponential within 6.1% of the target.
+     // Yield each real render to the browser instead of queuing 72 GPU frames
+     // synchronously before asking its compositor for a screenshot.
+     for(let i=0;i<6;i++){a.ink=ink;g._frame(1/30);await new Promise(resolve=>requestAnimationFrame(resolve));}
      const pixels=h.tankCtx.getImageData(0,0,cv.width,cv.height).data;
      let opaque=0,coloured=0,checksum=0;
      for(let i=0;i<pixels.length;i+=4){if(pixels[i+3])opaque++;if(pixels[i+3]&&Math.max(pixels[i],pixels[i+1],pixels[i+2])-Math.min(pixels[i],pixels[i+1],pixels[i+2])>20)coloured++;for(let j=0;j<4;j++)checksum=(Math.imul(checksum,31)+pixels[i+j])>>>0;}
@@ -51,7 +57,8 @@ try {
     const c=h._tankCache,style=getComputedStyle(h.tank),canvasStyle=getComputedStyle(cv);
     return {viewport:[innerWidth,innerHeight],dpr:devicePixelRatio,canvas:[cv.clientWidth,cv.clientHeight,cv.width,cv.height],well:{x:c.wx,y:c.wy,width:c.ww,height:c.wh},form:a.form,hudVisible:getComputedStyle(h.el).display!=='none',tankDisplay:style.display,tankVisibility:style.visibility,tankOpacity:style.opacity,canvasDisplay:canvasStyle.display,snapshots};
    });
-   result.cases.push(row);save();
+   row.elapsedMs=Date.now()-caseStarted;row.framesPerInkState=6;row.frameDt=1/30;
+   result.cases.push(row);save();console.log(JSON.stringify(row));
    assert.deepEqual(row.viewport,[width,height]);assert.equal(row.dpr,dpr);assert.equal(row.form,'kid');
    assert(row.hudVisible&&row.tankDisplay!=='none'&&row.tankVisibility!=='hidden'&&Number(row.tankOpacity)>0&&row.canvasDisplay!=='none','tank remains visible');
    const u=Math.min(width*.01,height*.017778),cw=Math.round(u*1.7),ch=Math.round(u*5.2),scale=Math.min(2,dpr);
@@ -63,8 +70,7 @@ try {
    assert(row.snapshots[0].level>.9&&row.snapshots[1].level<.1&&row.snapshots[2].level>.4&&row.snapshots[2].level<.6);
    assert.notEqual(row.snapshots[0].checksum,row.snapshots[1].checksum,'full/empty states change the visible canvas');
    assert.deepEqual(errors,[]);
-   await page.screenshot({path:path.join(out,`${width}x${height}-dpr${dpr}-${result.cases.length}.png`)});
-   console.log(JSON.stringify(row));
+   await page.screenshot({path:path.join(out,`${width}x${height}-dpr${dpr}-${result.cases.length}.png`),timeout:120000});
   }
   await page.close();page=null;
  }
