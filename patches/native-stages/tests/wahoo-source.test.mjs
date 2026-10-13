@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {nativeStageCatalog,nativeStageIdentity} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
 import {nativeTowerClearance} from '../runtime/native-tower-clearance.mjs';
+import {nativeTowerStartIndex} from '../runtime/native-tower-calibration.mjs';
 import {nativeArenaBasis,nativeSpawnYaw} from '../runtime/native-spawn.mjs';
 
 const SOURCE=process.env.INKWAVE_NATIVE_STAGE_SOURCE,ASSETS=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
@@ -18,6 +19,7 @@ test('Wahoo pins the Carousel03 export while retaining unverified moving-object 
  assert.equal(stage.sourceSha256,'0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db');
  assert.equal(stage.version1130Verified,false);
  assert.match(stage.placementStatus,/moving-object.*UNVERIFIED/);
+ assert.deepEqual(stage.sourceSemantics,{inactiveObjectPatterns:['^FldObj_Carousel03_FerrisWheel_']});
  assert.ok(nativeStageIdentity()['definitions/wahoo.json']);
 });
 
@@ -58,6 +60,12 @@ test('Wahoo independent original stream matches every float32 attribute and loca
  const wheels=d.manifest.objects.filter(o=>o.name.startsWith('FldObj_Carousel03_FerrisWheel_'));
  assert.equal(wheels.length,2);assert.ok(wheels.every(o=>!o.active&&!o.collidable&&!o.paintable));
  assert.ok(wheels.every(o=>o.bounds[0][1]<-64&&o.bounds[1][1]>96),'wheel remains in its unplaced original export pose');
+ assert.ok(d.manifest.objects.filter(o=>!wheels.includes(o)).every(o=>o.active),'every other original object remains in display assembly');
+ const np=d.manifest.objects.filter(o=>/_np(?:__|$)/.test(o.name));
+ assert.ok(np.length>=3&&np.every(o=>!o.paintable),'original NP objects remain unpaintable');
+ for(const name of ['Fld_Carousel03_M_EdgePartsSet_np__EdgePartsSet_np','Fld_Carousel03_M_GroundBoardNeji_np__GroundBoardNeji_np','Fld_Carousel03_polySurface1__GroundWoodDeckDark_cp']){
+  const original=d.manifest.objects.find(o=>o.name===name);assert.ok(original?.active&&original.collidable&&!original.paintable,'original physical unpaintable surface remains '+name);
+ }
  assert.ok(d.manifest.objects.some(o=>o.name.includes('RotationAttractions')&&o.collidable),'central static export triangles remain available');
 });
 
@@ -70,8 +78,18 @@ test('Wahoo pads have source floor/capsule support and both teams reach every lo
   assert.equal(h.hit,true);assert.ok(Math.abs(h.point.y-pad.y)<.001);assert.ok(h.normal.y>.99);
   assert.equal(G.physics.bodyFits(pad.clone().setY(pad.y+.01),PLAYER.radius+.04,.32,PLAYER.height,false,.01),true);
  }
- const s=f.nativeRankedStage(G),targets=[s.zones[0].center,s.rainmaker.center,...s.rainmaker.goals,...s.rainmaker.checkpoints.flat(),...s.clams.spawns,...s.tower.path.map(p=>[p[0],p[1]-s.tower.localLift,p[2]])];
- assert.equal(s.tower.localLift,3.3);assert.equal(s.tower.halfSize,1.2);
+ const s=f.nativeRankedStage(G),targets=[s.zones[0].center,s.rainmaker.center,...s.rainmaker.goals,...s.rainmaker.checkpoints.flat(),...s.clams.spawns,...s.tower.path.map(p=>[p[0],p[1]-s.tower.localLift,p[2]]),...s.tower.boarding.approaches.map(a=>a.start)];
+ assert.equal(s.tower.supported,true);assert.equal(s.tower.localLift,1.2);assert.equal(s.tower.halfSize,1.2);
+ assert.equal(s.tower.centerIndex,nativeTowerStartIndex(s.tower.path));
+ const span=s.tower.arenaSpan;assert.equal(span.bothHalvesVerified,true);
+ assert.ok(span.endpointProjection[0]<-span.minimumHalfDepth&&span.endpointProjection[1]>span.minimumHalfDepth,'full rotated deck and live rider enter both opposing source halves');
+ assert.equal(s.tower.boarding.approaches.length,s.tower.path.length);
+ for(const approach of s.tower.boarding.approaches){
+  const feet=new THREE.Vector3(...approach.start),hit=G.physics.raycast(feet.clone().setY(feet.y+.1),new THREE.Vector3(0,-1,0),.3);
+  assert.ok(hit.hit&&Math.abs(hit.point.y-feet.y)<.001,'each normal boarding approach starts on the exact source floor');
+  assert.ok(G.physics.bodyFits(feet.clone().setY(feet.y+.01),PLAYER.radius+.02,.32,PLAYER.height,false,.01),'normal human capsule fits on the source approach');
+  assert.ok(approach.height<=s.tower.boarding.maxJumpHeight,'approach uses the live normal jump/ledge height');
+ }
  const clearance=nativeTowerClearance(G.level,G.physics.actorBody,s.tower.halfSize);
  for(let i=0;i<s.tower.path.length;i++)assert.equal(clearance.clear(s.tower.path[i],s.tower.path[Math.max(0,i-1)]),true,'rotating deck, pole and live human capsule clear segment '+i);
  for(let team=0;team<2;team++){
