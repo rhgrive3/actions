@@ -57,7 +57,7 @@ try{
     G.projectiles.clear();G.paint.clear();a.setWeapon('shooter');a.spawnAt(L.spawnPads[team],team?-Math.PI/2:Math.PI/2);a.invuln=0;a.bot=new BotBrain(a,'normal');
     const start=a.pos.clone(),path=N.path,calls=[];
     N.path=function(...args){const result=path.apply(this,args);calls.push({limit:args[3]??6000,nodes:result?.length||0,start:args[0],end:args[1]});return result;};
-    let inputFrames=0,groundedSourceSamples=0,traversalFrames=0,initialRoute=null,initialGoal=null;
+    let inputFrames=0,groundedSourceSamples=0,traversalFrames=0,initialRoute=null,initialGoal=null,ticks=0;const actorDts=[],brainDts=[],actorUpdate=a.update,brainUpdate=a.bot.update,clockStart=g.s3Clock.ticks;a.update=function(dt){ticks++;if(!actorDts.includes(dt))actorDts.push(dt);return actorUpdate.call(this,dt);};a.bot.update=function(dt){if(!brainDts.includes(dt))brainDts.push(dt);return brainUpdate.call(this,dt);};
     try{
      for(let i=0;i<hz*2;i++){
       g._frame(1/hz);
@@ -67,8 +67,8 @@ try{
       if(!initialRoute&&a.bot.path?.length>1){initialRoute={nodes:a.bot.path.length,start:a.bot.path[0],end:a.bot.path.at(-1)};initialGoal={...a.bot._rankedGoalPos};}
       if(a.grounded){const h=G.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,support,false);if(!h.hit||h.block<0||h.block>=L.staticBlockCount)throw Error('Ranked movement lacks static source support');groundedSourceSamples++;}
      }
-    }finally{N.path=path;}
-    const distance=a.pos.distanceTo(start);
+    }finally{N.path=path;a.update=actorUpdate;a.bot.update=brainUpdate;}
+    if(ticks!==g.s3Clock.ticks-clockStart||actorDts.length!==1||actorDts[0]!==1/60||brainDts.length!==1||brainDts[0]!==1/60)throw Error('Installed Game must own actual fixed Actor/Brain cadence');const distance=a.pos.distanceTo(start);
     if(!initialRoute||!initialGoal||!Object.keys(initialGoal).length||!inputFrames||distance<1||!a.grounded||!groundedSourceSamples||traversalFrames){
      const e=G.match.ranked,frame=e.frame,actor=frame.actors.find(o=>o.id===String(a.nid??`${a.team}:${a.slot}`)),sourceStart=N.nearest(start,1.2),limit=Math.max(6000,N.nodes.length*4);
      const candidates=e.mode==='clams'?e.rule.state.clams.filter(c=>c.grounded&&(c.kind==='small'||c.team===team)).map(c=>{
@@ -79,7 +79,7 @@ try{
      throw Error('Actual ordinary ranked opening failed '+JSON.stringify({mode:G.match.mode,team,hz,initialRoute,initialGoal,inputFrames,distance,grounded:a.grounded,groundedSourceSamples,traversalFrames}));
     }
     if(!calls.some(c=>c.limit===Math.max(6000,N.nodes.length*4)&&c.nodes>1))throw Error('Ranked wrapper did not select its installed bounded native route');
-    return {mode:G.match.mode,team,hz,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,start:start.toArray(),end:a.pos.toArray(),initialRoute,initialGoal,distance,inputFrames,groundedSourceSamples,traversalFrames,grounded:true,alive:true,gearAP:Object.keys(a.s3.abilityPoints),searchCalls:calls,sourceSha256:L.manifest.sourceSha256};
+    return {mode:G.match.mode,team,hz,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,start:start.toArray(),end:a.pos.toArray(),ticks,actorDts,brainDts,renderHz:hz,physicsHz:60,initialRoute,initialGoal,distance,inputFrames,groundedSourceSamples,traversalFrames,grounded:true,alive:true,gearAP:Object.keys(a.s3.abilityPoints),searchCalls:calls,sourceSha256:L.manifest.sourceSha256};
    },{team,hz});
    report.cases.push(proof);console.log('wahoo-ranked '+JSON.stringify(proof));
    fs.writeFileSync(path.join(out,'ranked-opening.json'),JSON.stringify(report,null,2));
