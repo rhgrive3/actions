@@ -36,6 +36,7 @@ if (process.argv.includes('--exact-source')) {
     'reliability/': 'patches/reliability/', 'local-quality/': 'patches/local-quality/', 'network-replication/': 'patches/network-replication/',
     'loading-cache/': 'patches/loading-cache/', 'practice-range/': 'patches/practice-range/', 'native-stages/': 'patches/native-stages/', 'build-script/': 'scripts/' };
   const files = Object.entries(build.files).map(([key, expected]) => {
+    assert(!key.split('/').some(p => !p || p === '.' || p === '..' || p.includes('\\')), key);
     const prefix = Object.keys(roots).find(p => key.startsWith(p)); assert(prefix, key);
     const file = roots[prefix] + key.slice(prefix.length); assert.equal(hash(fs.readFileSync(path.join(ROOT, file))), expected, file); return file;
   });
