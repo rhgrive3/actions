@@ -446,6 +446,9 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/trizooka-collision.mjs',
   'patches/splatoon3/runtime/kit-subs.mjs',
   'patches/splatoon3/runtime/bomb-models.mjs', // Per-sub bomb models; presentation only.
+  'patches/splatoon3/runtime/sub-models.mjs', // Other S3 sub models (bomb-models, all-subs, kit-support); presentation only.
+  'patches/splatoon3/runtime/special-models.mjs', // S3 special models; presentation only.
+  'patches/splatoon3/runtime/special-presentation.mjs', // Special devices, deployed objects and rounds; presentation only.
   'patches/splatoon3/runtime/kit-composition.mjs',
   'patches/splatoon3/runtime/kit-ink-vac.mjs',
   'patches/splatoon3/runtime/kit-network.mjs',
