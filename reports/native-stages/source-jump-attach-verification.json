@@ -1,0 +1,3118 @@
+{
+  "schema": 1,
+  "id": "source-jump-attach",
+  "status": "ready-for-root-review",
+  "acceptedFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+  "version1130Verified": false,
+  "source": {
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9"
+  },
+  "moduleSha256": {
+    "patches/native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+    "patches/native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+    "patches/native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+    "patches/native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32",
+    "scripts/lib/inkwave-native-stages.mjs": "23afc2615d27e15ac25e1b73d7ef5f5d1bd9ec8b3eb779f81bd0e17ee5464921"
+  },
+  "cpuProduction": {
+    "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+    "version1130Verified": false,
+    "navMilliseconds": 99543.10550800001,
+    "bankCounts": [
+      783,
+      783
+    ],
+    "noPaintGuard": {
+      "lower": 1856,
+      "upper": 1859,
+      "triangle": 27045,
+      "object": "Fld_Twist00_BeamA_low35_1__WallsTrim00_np",
+      "face": -1
+    },
+    "simulationStep": 0.016666666666666666,
+    "cases": [
+      {
+        "sign": -1,
+        "renderHz": 30,
+        "simulationStep": 0.016666666666666666,
+        "ticks": 210,
+        "seconds": 3.5,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "handlerCompleted": true,
+        "jumpSerial": 1,
+        "end": [
+          -25.36370336419751,
+          6.050000190734863,
+          -38.97908866096204
+        ],
+        "goal": [
+          -25.5,
+          6.050000190734863,
+          -39
+        ],
+        "alive": true,
+        "grounded": true,
+        "owned": 108,
+        "samples": 108
+      },
+      {
+        "sign": -1,
+        "renderHz": 60,
+        "simulationStep": 0.016666666666666666,
+        "ticks": 209,
+        "seconds": 3.4833333333333334,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "handlerCompleted": true,
+        "jumpSerial": 1,
+        "end": [
+          -25.397658337886494,
+          6.050000190734863,
+          -38.992976100305086
+        ],
+        "goal": [
+          -25.5,
+          6.050000190734863,
+          -39
+        ],
+        "alive": true,
+        "grounded": true,
+        "owned": 108,
+        "samples": 108
+      },
+      {
+        "sign": -1,
+        "renderHz": 120,
+        "simulationStep": 0.016666666666666666,
+        "ticks": 209,
+        "seconds": 3.4833333333333334,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "handlerCompleted": true,
+        "jumpSerial": 1,
+        "end": [
+          -25.397658337886494,
+          6.050000190734863,
+          -38.992976100305086
+        ],
+        "goal": [
+          -25.5,
+          6.050000190734863,
+          -39
+        ],
+        "alive": true,
+        "grounded": true,
+        "owned": 108,
+        "samples": 108
+      },
+      {
+        "kind": "no-jump-control",
+        "sign": -1,
+        "seconds": 3,
+        "maximumY": 1.5,
+        "jumpSerial": 0,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "sign": 1,
+        "renderHz": 30,
+        "simulationStep": 0.016666666666666666,
+        "ticks": 214,
+        "seconds": 3.566666666666667,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "handlerCompleted": true,
+        "jumpSerial": 1,
+        "end": [
+          25.363885508694345,
+          6.050000190734863,
+          38.97915371588228
+        ],
+        "goal": [
+          25.5,
+          6.050000190734863,
+          39
+        ],
+        "alive": true,
+        "grounded": true,
+        "owned": 108,
+        "samples": 108
+      },
+      {
+        "sign": 1,
+        "renderHz": 60,
+        "simulationStep": 0.016666666666666666,
+        "ticks": 213,
+        "seconds": 3.55,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "handlerCompleted": true,
+        "jumpSerial": 1,
+        "end": [
+          25.397836297481778,
+          6.050000190734863,
+          38.99305184328728
+        ],
+        "goal": [
+          25.5,
+          6.050000190734863,
+          39
+        ],
+        "alive": true,
+        "grounded": true,
+        "owned": 108,
+        "samples": 108
+      },
+      {
+        "sign": 1,
+        "renderHz": 120,
+        "simulationStep": 0.016666666666666666,
+        "ticks": 213,
+        "seconds": 3.55,
+        "fire": true,
+        "swim": true,
+        "climbed": true,
+        "handlerCompleted": true,
+        "jumpSerial": 1,
+        "end": [
+          25.397836297481778,
+          6.050000190734863,
+          38.99305184328728
+        ],
+        "goal": [
+          25.5,
+          6.050000190734863,
+          39
+        ],
+        "alive": true,
+        "grounded": true,
+        "owned": 108,
+        "samples": 108
+      },
+      {
+        "kind": "no-jump-control",
+        "sign": 1,
+        "seconds": 3,
+        "maximumY": 1.5,
+        "jumpSerial": 0,
+        "alive": true,
+        "grounded": true
+      }
+    ],
+    "continuousSourceCapsules": true,
+    "manualPaint": false,
+    "productionCharacter": true
+  },
+  "enabledCurrentGuardSuite": {
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "skip": 0
+  },
+  "defaultControls": {
+    "tests": 16,
+    "pass": 14,
+    "fail": 0,
+    "skip": 2,
+    "assetCases": "two explicit independent source fixtures unavailable in default-only suite"
+  },
+  "builds": {
+    "private": {
+      "contentHash": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+      "revision": "a5c4ecd173cf7bb00e65781466d455f2090cee02f96a800637e16d4a1fecea73",
+      "packaging": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skip": 0
+      },
+      "budget": {
+        "status": "passed",
+        "revision": "a5c4ecd173cf7bb00e65781466d455f2090cee02f96a800637e16d4a1fecea73",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74503,
+        "initialJSBytes": 2746910,
+        "criticalHTMLBytes": 15422,
+        "precacheCount": 368,
+        "precacheBytes": 5847575,
+        "workerBytes": 71147,
+        "declaredBytes": 10468267,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
+    },
+    "public": {
+      "contentHash": "a1bbea52c233851ca1f8447d4bbe7125f6adfe1e86965410f0bbddeb480d98a2",
+      "revision": "54e4faf000ae6b0b7df33e5deeafedeb0cffda824eaf314971572c23da005e41",
+      "packaging": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skip": 0
+      },
+      "budget": {
+        "status": "passed",
+        "revision": "54e4faf000ae6b0b7df33e5deeafedeb0cffda824eaf314971572c23da005e41",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74503,
+        "initialJSBytes": 2749598,
+        "criticalHTMLBytes": 15422,
+        "precacheCount": 368,
+        "precacheBytes": 5850263,
+        "workerBytes": 71147,
+        "declaredBytes": 10470955,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      }
+    }
+  },
+  "browser": [
+    {
+      "mode": "turf",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 8.599999994039536,
+            "p95": 32.5,
+            "max": 97.09999999403954
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.7666666666666666,
+          "ticks": 226,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 226,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.25420716181386,
+            6.050000190734863,
+            -39.006887258212736
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 4.9000000059604645,
+            "p95": 27.900000005960464,
+            "max": 60.5
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.7666666666666666,
+          "ticks": 226,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 226,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.25420716181386,
+            6.050000190734863,
+            -39.006887258212736
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.5999999940395355,
+            "p95": 7.700000002980232,
+            "max": 31.299999997019768
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 212,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            25.27252567471719,
+            6.050000190734863,
+            38.97921862257281
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 9.200000002980232,
+            "p95": 29.19999998807907,
+            "max": 37.900000005960464
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.783333333333333,
+          "ticks": 227,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 227,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.306440756942337,
+            6.050000190734863,
+            38.993083295272314
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2.800000011920929,
+            "p95": 11.5,
+            "max": 42
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.783333333333333,
+          "ticks": 227,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 227,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.306440756942337,
+            6.050000190734863,
+            38.993083295272314
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2,
+            "p95": 7.9000000059604645,
+            "max": 36
+          }
+        }
+      ],
+      "controls": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 1,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 2,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 3,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 1,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 2,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 3,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        }
+      ],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 8216,
+        "navMilliseconds": 2942.6000000089407,
+        "shaderWarmMilliseconds": 10.799999997019768,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "zones",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 9,
+            "p95": 25.900000005960464,
+            "max": 55.3999999910593
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.5,
+            "p95": 18.299999997019768,
+            "max": 27.200000002980232
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2.0999999940395355,
+            "p95": 7.899999991059303,
+            "max": 31.599999994039536
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.276464896206324,
+            6.050000190734863,
+            38.98431174108385
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 9.700000002980232,
+            "p95": 34.099999994039536,
+            "max": 75.09999999403954
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2.5,
+            "p95": 7,
+            "max": 26.399999991059303
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 4,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.9000000059604645,
+            "p95": 9.599999994039536,
+            "max": 33.29999999701977
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 6838.70000000298,
+        "navMilliseconds": 2689.7000000029802,
+        "shaderWarmMilliseconds": 10.600000008940697,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "tower",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.255572164393136,
+            6.050000190734863,
+            -38.9948348984209
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 12.599999994039536,
+            "p95": 36.400000005960464,
+            "max": 102.5
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.255572164393136,
+            6.050000190734863,
+            -38.9948348984209
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 4.100000008940697,
+            "p95": 23.900000005960464,
+            "max": 35.29999999701977
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.255572164393136,
+            6.050000190734863,
+            -38.9948348984209
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.5999999940395355,
+            "p95": 4.800000011920929,
+            "max": 31.299999997019768
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            25.276464896206324,
+            6.050000190734863,
+            38.98431174108385
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 9.900000005960464,
+            "p95": 32.099999994039536,
+            "max": 75.79999999701977
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 4.200000002980232,
+            "p95": 17.399999991059303,
+            "max": 41.70000000298023
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.9000000059604645,
+            "p95": 10,
+            "max": 27.200000002980232
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 7730.300000011921,
+        "navMilliseconds": 3146.4000000059605,
+        "shaderWarmMilliseconds": 11.200000002980232,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "rainmaker",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 10.200000002980232,
+            "p95": 29.30000001192093,
+            "max": 51.6000000089407
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3,
+            "p95": 20.400000005960464,
+            "max": 33.400000005960464
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7000000029802322,
+            "p95": 4.299999997019768,
+            "max": 23.69999998807907
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.276464896206324,
+            6.050000190734863,
+            38.98431174108385
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 6.9000000059604645,
+            "p95": 28.700000002980232,
+            "max": 51.099999994039536
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.4000000059604645,
+            "p95": 17.5,
+            "max": 29.599999994039536
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 4,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2,
+            "p95": 6.299999997019768,
+            "max": 28.100000008940697
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 7660.79999999702,
+        "navMilliseconds": 2836.6000000089407,
+        "shaderWarmMilliseconds": 10.599999994039536,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "clams",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 9.399999991059303,
+            "p95": 32.400000005960464,
+            "max": 43.5
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 4.0999999940395355,
+            "p95": 13.799999997019768,
+            "max": 25.900000005960464
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7999999970197678,
+            "p95": 4.600000008940697,
+            "max": 27.400000005960464
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            25.27252567471719,
+            6.050000190734863,
+            38.97921862257281
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 7.0999999940395355,
+            "p95": 28.400000005960464,
+            "max": 47.400000005960464
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.30644076224985,
+            6.050000190734863,
+            38.993083295280954
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.6000000089406967,
+            "p95": 10,
+            "max": 28.599999994039536
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.30644076224985,
+            6.050000190734863,
+            38.993083295280954
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7999999970197678,
+            "p95": 4,
+            "max": 24.200000002980232
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 6906.29999999702,
+        "navMilliseconds": 2722.7000000029802,
+        "shaderWarmMilliseconds": 10.799999997019768,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    }
+  ],
+  "actualSourceOwnership": {
+    "id": "shipshape",
+    "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+    "version1130Verified": false,
+    "actors": 8,
+    "aliveActors": 8,
+    "bots": 7,
+    "weapon": "shooter",
+    "sourceWeapon": "WeaponShooterNormal",
+    "gear": [
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      }
+    ],
+    "playerFields": {
+      "radius": 0.38,
+      "s3SwimTerrainRadiusRaw": 0.675,
+      "s3HumanoidTerrainRadiusRaw": 0.35,
+      "s3TerrainDistanceScale": 1,
+      "squidBodyLift": 0.16,
+      "squidHeight": 0.55,
+      "stepUp": 0.35
+    },
+    "enemyRelease": {
+      "hz": 60,
+      "receiver": "production bot Actor/Character with actual ordinary shooter ownership and swim attachment",
+      "ownAdmitted": 3,
+      "enemyWeapon": "shooter",
+      "enemyAdmitted": 1,
+      "enemyNaturalSplats": 1,
+      "enemySourceImpacts": [
+        {
+          "face": 14407,
+          "triangle": 42218,
+          "point": [
+            5.827000141143799,
+            6.354499816894531,
+            -40.596500396728516
+          ],
+          "u": 0,
+          "v": 0.08003570425319459,
+          "radius": 0.2,
+          "distanceToTarget": 0.13723075425473102
+        }
+      ],
+      "enemyPaintCalls": [
+        {
+          "radius": 1.56,
+          "point": [
+            5.817307389967178,
+            6.3548669534316335,
+            -40.619542006598294
+          ]
+        }
+      ],
+      "released": true,
+      "enemyOwnedAtRelease": true,
+      "alive": true,
+      "trace": [
+        {
+          "frame": 0,
+          "owner": 1,
+          "wasClimbing": true,
+          "climbing": true,
+          "y": 6.011791665282326,
+          "feet": [
+            4.500742904535764,
+            6.011791665282326,
+            -41.240098626708985
+          ],
+          "wallFace": 14897,
+          "wallTriangle": 42700,
+          "wallUV": [
+            3.4990830272151916,
+            0.3029800046544775
+          ],
+          "alive": true
+        },
+        {
+          "frame": 1,
+          "owner": 1,
+          "wasClimbing": true,
+          "climbing": true,
+          "y": 6.009803686875987,
+          "feet": [
+            4.501385993179036,
+            6.009803686875987,
+            -41.240098626708985
+          ],
+          "wallFace": 14897,
+          "wallTriangle": 42700,
+          "wallUV": [
+            3.498456962712771,
+            0.301991708006935
+          ],
+          "alive": true
+        },
+        {
+          "frame": 2,
+          "owner": 2,
+          "wasClimbing": true,
+          "climbing": false,
+          "y": 6,
+          "feet": [
+            4.501385993179036,
+            6,
+            -41.240098626708985
+          ],
+          "wallFace": 14897,
+          "wallTriangle": 42700,
+          "wallUV": [
+            3.4978138740694993,
+            0.3000037296005962
+          ],
+          "alive": true
+        }
+      ]
+    },
+    "negative": {
+      "uncoveredCell": 5,
+      "uncoveredOwnership": 0,
+      "noPaintTriangle": 2117,
+      "noPaintActualContact": true,
+      "noPaintObject": "FldObj_BlueCranes_glass01_low__GlassWindows",
+      "noPaintFace": -1,
+      "noPaintOwnership": 0
+    },
+    "cases": [
+      {
+        "sign": -1,
+        "hz": 30,
+        "admitted": 1,
+        "owned": 1,
+        "cellOwner": 1,
+        "sameCellOutside": 0,
+        "sourceFace": 35197,
+        "sourceTriangle": 83574,
+        "sourceCellIndex": 5817647,
+        "sourceApproachWaypoints": [
+          35,
+          124
+        ],
+        "actualImpactUV": [
+          1.5052422083741206,
+          0.9330553357532287
+        ],
+        "sameCellOutsideUV": [
+          1.625,
+          0.8381579298722117
+        ],
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 35197,
+            "triangle": 83574,
+            "u": 1.5052422083741206,
+            "v": 0.9330553357532287,
+            "centerUV": [
+              1.625,
+              0.8381579298722117
+            ],
+            "k": 5817647,
+            "inside": true,
+            "centerInside": false,
+            "distanceToTarget": 0.017737034562561867,
+            "object": 65
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 2.2999999970197678,
+          "max": 3.5
+        },
+        "beforeCoverageMask": 0
+      },
+      {
+        "sign": -1,
+        "hz": 60,
+        "admitted": 1,
+        "owned": 1,
+        "cellOwner": 1,
+        "sameCellOutside": 0,
+        "sourceFace": 35197,
+        "sourceTriangle": 83574,
+        "sourceCellIndex": 5817647,
+        "sourceApproachWaypoints": [
+          35,
+          124
+        ],
+        "actualImpactUV": [
+          1.504463718245617,
+          0.930568503351823
+        ],
+        "sameCellOutsideUV": [
+          1.625,
+          0.8381579298722117
+        ],
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 35197,
+            "triangle": 83574,
+            "u": 1.504463718245617,
+            "v": 0.930568503351823,
+            "centerUV": [
+              1.625,
+              0.8381579298722117
+            ],
+            "k": 5817647,
+            "inside": true,
+            "centerInside": false,
+            "distanceToTarget": 0.019937598716103642,
+            "object": 65
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.4000000059604645,
+          "max": 3.300000011920929
+        },
+        "beforeCoverageMask": 0
+      },
+      {
+        "sign": -1,
+        "hz": 120,
+        "admitted": 1,
+        "owned": 1,
+        "cellOwner": 1,
+        "sameCellOutside": 0,
+        "sourceFace": 35197,
+        "sourceTriangle": 83574,
+        "sourceCellIndex": 5817647,
+        "sourceApproachWaypoints": [
+          35,
+          124
+        ],
+        "actualImpactUV": [
+          1.502871634371438,
+          0.930088346750094
+        ],
+        "sameCellOutsideUV": [
+          1.625,
+          0.8381579298722117
+        ],
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 35197,
+            "triangle": 83574,
+            "u": 1.502871634371438,
+            "v": 0.930088346750094,
+            "centerUV": [
+              1.625,
+              0.8381579298722117
+            ],
+            "k": 5817647,
+            "inside": true,
+            "centerInside": false,
+            "distanceToTarget": 0.020117659384424492,
+            "object": 65
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.10000000894069672,
+          "max": 2.9000000059604645
+        },
+        "beforeCoverageMask": 0
+      },
+      {
+        "sign": 1,
+        "hz": 30,
+        "admitted": 1,
+        "owned": 1,
+        "cellOwner": 1,
+        "sameCellOutside": 0,
+        "sourceFace": 36589,
+        "sourceTriangle": 85981,
+        "sourceCellIndex": 5874858,
+        "sourceApproachWaypoints": [
+          126,
+          36
+        ],
+        "actualImpactUV": [
+          1.502575830494969,
+          0.9308422764462283
+        ],
+        "sameCellOutsideUV": [
+          1.625,
+          0.8381579298722117
+        ],
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 36589,
+            "triangle": 85981,
+            "u": 1.502575830494969,
+            "v": 0.9308422764462283,
+            "centerUV": [
+              1.625,
+              0.8381579298722117
+            ],
+            "k": 5874858,
+            "inside": true,
+            "centerInside": false,
+            "distanceToTarget": 0.019330113152838967,
+            "object": 65
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.20000000298023224,
+          "max": 1.7999999970197678
+        },
+        "beforeCoverageMask": 0
+      },
+      {
+        "sign": 1,
+        "hz": 60,
+        "admitted": 1,
+        "owned": 1,
+        "cellOwner": 1,
+        "sameCellOutside": 0,
+        "sourceFace": 36589,
+        "sourceTriangle": 85981,
+        "sourceCellIndex": 5874858,
+        "sourceApproachWaypoints": [
+          126,
+          36
+        ],
+        "actualImpactUV": [
+          1.5024697202552915,
+          0.9301194367630523
+        ],
+        "sameCellOutsideUV": [
+          1.625,
+          0.8381579298722117
+        ],
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 36589,
+            "triangle": 85981,
+            "u": 1.5024697202552915,
+            "v": 0.9301194367630523,
+            "centerUV": [
+              1.625,
+              0.8381579298722117
+            ],
+            "k": 5874858,
+            "inside": true,
+            "centerInside": false,
+            "distanceToTarget": 0.0200333799633931,
+            "object": 65
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.29999999701976776,
+          "max": 4.5999999940395355
+        },
+        "beforeCoverageMask": 0
+      },
+      {
+        "sign": 1,
+        "hz": 120,
+        "admitted": 1,
+        "owned": 1,
+        "cellOwner": 1,
+        "sameCellOutside": 0,
+        "sourceFace": 36589,
+        "sourceTriangle": 85981,
+        "sourceCellIndex": 5874858,
+        "sourceApproachWaypoints": [
+          126,
+          36
+        ],
+        "actualImpactUV": [
+          1.5024752192476853,
+          0.9300091637313814
+        ],
+        "sameCellOutsideUV": [
+          1.625,
+          0.8381579298722117
+        ],
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 36589,
+            "triangle": 85981,
+            "u": 1.5024752192476853,
+            "v": 0.9300091637313814,
+            "centerUV": [
+              1.625,
+              0.8381579298722117
+            ],
+            "k": 5874858,
+            "inside": true,
+            "centerInside": false,
+            "distanceToTarget": 0.020143491381655634,
+            "object": 65
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.10000000894069672,
+          "max": 3.3999999910593033
+        },
+        "beforeCoverageMask": 0
+      }
+    ],
+    "sourceObject": "Fld_Twist00_GapFill_01_1__Walls00",
+    "face": 36589,
+    "triangle": 85981,
+    "conditions": "controlled source-supported spawnAt stance inside interactive bounds and reachable from both original bank pads; ordinary Actor/WeaponRunner/Projectiles; mirrored original partial-cell source facades; exact same-owned-cell outside polygon samples0; genuine source stance/support; bots frozen; single shot; 0.5 RNG; SwiftShader",
+    "sourceRecipe": "inkwave-browser-source-v4",
+    "sealedSourceCatalogSha256": "86422426b73c5cb3701d1dbd2cd0a5bd83d8b13c1c8e576e1281de9ed59f88f8",
+    "buildContentHash": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+    "errors": []
+  },
+  "sourceReseal": {
+    "changed": [
+      "manifest.json",
+      "mask.bin"
+    ],
+    "unchangedDataFiles": 246,
+    "mask": {
+      "bytes": 14114614,
+      "sha256": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+    },
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true,
+      "wallJumpAttach": true
+    },
+    "oldCorrectedComparison": {
+      "allNonMaskSourceFilesUnchanged": true,
+      "verifiedFiles": 247,
+      "changedOnly": [
+        "mask.bin"
+      ],
+      "maskBytes": 14114614,
+      "oldMaskSha256": "be6de6ef9aca70f407e7e40d6fd75aedcb9afb1fc51a49c56a0b46fe88cdbaeb",
+      "newMaskSha256": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097",
+      "previousLiveCellsLost": 0,
+      "newPartialCells": 914231,
+      "correctedNumericalPolicyCommit": "5971f909",
+      "sourceRecipe": "inkwave-browser-source-v4"
+    }
+  },
+  "priorQualified4dBrowser": [
+    {
+      "mode": "turf",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 11.700000002980232,
+            "p95": 38.8999999910593,
+            "max": 115.29999999701977
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.7666666666666666,
+          "ticks": 226,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 226,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.25420716181386,
+            6.050000190734863,
+            -39.006887258212736
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 4.800000011920929,
+            "p95": 25.80000001192093,
+            "max": 38.400000005960464
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.7666666666666666,
+          "ticks": 226,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 226,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.25420716181386,
+            6.050000190734863,
+            -39.006887258212736
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2.199999988079071,
+            "p95": 6.299999997019768,
+            "max": 24
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 212,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            25.27252567471719,
+            6.050000190734863,
+            38.97921862257281
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 8.799999997019768,
+            "p95": 32,
+            "max": 43.79999999701977
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.783333333333333,
+          "ticks": 227,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 227,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.306440756942337,
+            6.050000190734863,
+            38.993083295272314
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.7000000029802322,
+            "p95": 17.900000005960464,
+            "max": 33.599999994039536
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.783333333333333,
+          "ticks": 227,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 227,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.306440756942337,
+            6.050000190734863,
+            38.993083295272314
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2.2999999970197678,
+            "p95": 8,
+            "max": 46.099999994039536
+          }
+        }
+      ],
+      "controls": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 1,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 2,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 3,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 1,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 2,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "seconds": 3,
+          "maximumY": 1.5,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 3,
+          "normalJumps": 0,
+          "alive": true,
+          "grounded": true
+        }
+      ],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 8140.800000011921,
+        "navMilliseconds": 2696.4000000059605,
+        "shaderWarmMilliseconds": 10.799999997019768,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "a970ce1d1c78a65b4825da925139d62b59a6b5e7cb55d051e240d369a82016a1",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "zones",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 9.699999988079071,
+            "p95": 33.400000005960464,
+            "max": 58.5
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.6000000089406967,
+            "p95": 11.5,
+            "max": 26.599999994039536
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7999999970197678,
+            "p95": 4.799999997019768,
+            "max": 24.299999997019768
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.276464896206324,
+            6.050000190734863,
+            38.98431174108385
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 6.799999997019768,
+            "p95": 29,
+            "max": 41.5
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.2000000029802322,
+            "p95": 12.099999994039536,
+            "max": 36.599999994039536
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 4,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.800000011920929,
+            "p95": 8.299999997019768,
+            "max": 42.69999998807907
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 8914.70000000298,
+        "navMilliseconds": 3339,
+        "shaderWarmMilliseconds": 11.200000002980232,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "a970ce1d1c78a65b4825da925139d62b59a6b5e7cb55d051e240d369a82016a1",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "tower",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.255572164393136,
+            6.050000190734863,
+            -38.9948348984209
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 8.5,
+            "p95": 35.79999999701977,
+            "max": 207.20000000298023
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.255572164393136,
+            6.050000190734863,
+            -38.9948348984209
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 4.200000002980232,
+            "p95": 21.5,
+            "max": 35.79999999701977
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.255572164393136,
+            6.050000190734863,
+            -38.9948348984209
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7000000029802322,
+            "p95": 5.5,
+            "max": 37.29999999701977
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            25.276464896206324,
+            6.050000190734863,
+            38.98431174108385
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 7.700000002980232,
+            "p95": 24,
+            "max": 52.599999994039536
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 2.800000011920929,
+            "p95": 6.299999997019768,
+            "max": 30.200000002980232
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7999999970197678,
+            "p95": 4.299999997019768,
+            "max": 28
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 7581.899999991059,
+        "navMilliseconds": 2653.199999988079,
+        "shaderWarmMilliseconds": 11,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "a970ce1d1c78a65b4825da925139d62b59a6b5e7cb55d051e240d369a82016a1",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "rainmaker",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 8.700000002980232,
+            "p95": 45.5,
+            "max": 60.5
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.5999999940395355,
+            "p95": 11.799999997019768,
+            "max": 33.900000005960464
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.254205336792605,
+            6.050000190734863,
+            -38.99304342706604
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.9000000059604645,
+            "p95": 5.0999999940395355,
+            "max": 27.5
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.276464896206324,
+            6.050000190734863,
+            38.98431174108385
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 8.200000002980232,
+            "p95": 31.700000002980232,
+            "max": 54.79999999701977
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.7000000029802322,
+            "p95": 18,
+            "max": 32.80000001192093
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 3,
+          "jumpSerial": 4,
+          "normalJumps": 1,
+          "end": [
+            25.307729624651227,
+            6.050000190734863,
+            38.99473874394751
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7999999970197678,
+            "p95": 4.700000002980232,
+            "max": 28.099999994039536
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 8021.5,
+        "navMilliseconds": 3094.300000011921,
+        "shaderWarmMilliseconds": 10.700000002980232,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "a970ce1d1c78a65b4825da925139d62b59a6b5e7cb55d051e240d369a82016a1",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    },
+    {
+      "mode": "clams",
+      "id": "shipshape",
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "alive": 8,
+      "cases": [
+        {
+          "sign": -1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 9.400000005960464,
+            "p95": 33.1000000089407,
+            "max": 52.5
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 4.200000002980232,
+            "p95": 20.400000005960464,
+            "max": 31
+          }
+        },
+        {
+          "sign": -1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5,
+          "ticks": 210,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 209,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            -25.254207169299626,
+            6.050000190734863,
+            -39.00688725820533
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7999999970197678,
+            "p95": 7.0999999940395355,
+            "max": 27.5
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 30,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.533333333333333,
+          "ticks": 212,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 0,
+          "jumpSerial": 1,
+          "normalJumps": 1,
+          "end": [
+            25.27252567471719,
+            6.050000190734863,
+            38.97921862257281
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 6.9000000059604645,
+            "p95": 25.600000008940697,
+            "max": 40.79999999701977
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 60,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 1,
+          "jumpSerial": 2,
+          "normalJumps": 1,
+          "end": [
+            25.30644076224985,
+            6.050000190734863,
+            38.993083295280954
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 3.4000000059604645,
+            "p95": 13.299999997019768,
+            "max": 34.20000000298023
+          }
+        },
+        {
+          "sign": 1,
+          "renderHz": 120,
+          "simulationStep": 0.016666666666666666,
+          "seconds": 3.5166666666666666,
+          "ticks": 211,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "handlerCompleted": true,
+          "handledFrames": 210,
+          "owned": 108,
+          "samples": 108,
+          "jumpSerialBefore": 2,
+          "jumpSerial": 3,
+          "normalJumps": 1,
+          "end": [
+            25.30644076224985,
+            6.050000190734863,
+            38.993083295280954
+          ],
+          "sourceSupport": true,
+          "continuousSourceCapsules": true,
+          "cpuFrame": {
+            "p50": 1.7999999970197678,
+            "p95": 6.5999999940395355,
+            "max": 26.5
+          }
+        }
+      ],
+      "controls": [],
+      "sourceBuffers": {
+        "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+        "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+        "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+        "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+      },
+      "sourceBuffersUnchanged": true,
+      "navMetrics": {
+        "loadMilliseconds": 6984.9000000059605,
+        "navMilliseconds": 2720.4000000059605,
+        "shaderWarmMilliseconds": 10.799999997019768,
+        "vertices": 388864,
+        "triangles": 339404,
+        "faces": 140825,
+        "gridBytes": 14114614,
+        "atlas": 2048,
+        "ppm": 0.3435973836800002,
+        "textureCount": 91,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "gearAP": 0,
+      "conditions": "Sealed source opt-in; production Game._frame with installed fixed STEP, Match, ranked input wrapper, Actor, BotBrain, WeaponRunner and Projectiles; other seven actors retained on genuine own-bank supports; ordinary inputs only after source-supported setup; no paint/pose/velocity/jump-serial writes; SwiftShader, hardware FPS unverified",
+      "errors": [],
+      "buildFingerprint": "a970ce1d1c78a65b4825da925139d62b59a6b5e7cb55d051e240d369a82016a1",
+      "moduleOwners": {
+        "native-stages/adapter.mjs": "986de9e1b3d397cf7e063d35a3ade35ecd7a8db3c1640bbb553065ab30afbcc9",
+        "native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+        "native-stages/runtime/native-climb.mjs": "49511540d0265f1c687fba6c17bbdb9790d6db95af70c807d18197c3983d4580",
+        "native-stages/runtime/native-drop.mjs": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+        "native-stages/runtime/native-nav.mjs": "669f625ed4f26efb7c0c141646913fbd4880638c4e5984d2234b1ec6718b6f32"
+      }
+    }
+  ],
+  "vmNavigationPriorMilliseconds": [
+    111530.354,
+    74471.838524,
+    103954.773287
+  ],
+  "limitations": [
+    "Raw Actor.dt transition/30Hz chord failures retained separately; not fixed-step gameplay passes",
+    "Optional VM motion dynamic-import warning; final production Chromium zero errors",
+    "Retail source masks/collision/units/extraction provenance and hardware FPS unverified",
+    "Complete Shipshape opposite-bank execution remains unfinished; current whole-route failure on intact lower hull is preserved"
+  ],
+  "selfReview": {
+    "redundantForecastRemoved": true,
+    "installedStepSingleForecast": true,
+    "serialAssumptionFailedRunRetained": true,
+    "finalNormalJumpCounterDeltas": true,
+    "shotContactTraceSnapshots": true,
+    "noStageActivationInSharedBranch": true,
+    "noSourceGeometryMaskRoleControllerWrites": true
+  }
+}
