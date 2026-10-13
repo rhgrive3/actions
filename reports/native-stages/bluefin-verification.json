@@ -1598,5 +1598,78 @@
     "pr": 1356,
     "supportBranch": "54d22d07",
     "status": "independently accepted source waypoint/ordinary input fix consumed; drop/Surge flags are separate and not adopted"
+  },
+  "acceptedPartialMatrix": {
+    "foundation": "79ad61c59889a5e424bc56ca934422dde184baaf",
+    "ownerHeadAtBuild": "cbf6148c1d2f9f6c9530d3431ce8090f1c31c35a",
+    "definitionNavigation": {
+      "wallClimb": true
+    },
+    "status": "build/limits/packaging passed; match-dependent browser matrix blocked",
+    "sites": {
+      "private": {
+        "contentHash": "36f85efd73b8de1f99f51cde3b609914ffd061bdf7e4e81d9d6e2e7a490d93b2",
+        "inputHash": "6e5f5e88cf603a35e6c523f4fa4c619f09890bd35cf62984f61f496a3ea00847",
+        "revision": "5cf112c3aca8a1a82d5fd6816a2c179279f83dfa74513bbd7891a5b2c1ed609a",
+        "runtimeSha256": "32f18221660bc4e7d8436f73792a76139fff7a03a76d92a78efa69b043f49ff8",
+        "startup": {
+          "status": "passed",
+          "revision": "5cf112c3aca8a1a82d5fd6816a2c179279f83dfa74513bbd7891a5b2c1ed609a",
+          "initialJSRequests": 146,
+          "modulePreloads": 145,
+          "coreModulePreloads": 131,
+          "practiceRangeModulePreloads": 14,
+          "practiceRangePreloadBytes": 74638,
+          "initialJSBytes": 2880966,
+          "criticalHTMLBytes": 15371,
+          "precacheCount": 365,
+          "precacheBytes": 5775059,
+          "workerBytes": 70517,
+          "declaredBytes": 10393099,
+          "measurementKind": "deterministic file and dependency gates; not native browser timings"
+        },
+        "packaging": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        }
+      },
+      "public": {
+        "contentHash": "812607010287cd91c47edbe2e4b44c98a0174855fa85e6d1a215bc8e78566498",
+        "inputHash": "6e5f5e88cf603a35e6c523f4fa4c619f09890bd35cf62984f61f496a3ea00847",
+        "revision": "e7a0278e80f05afd38a3923da3a14fc5d3d72de5c6676e15a0846de6a864828e",
+        "runtimeSha256": "32f18221660bc4e7d8436f73792a76139fff7a03a76d92a78efa69b043f49ff8",
+        "startup": {
+          "status": "passed",
+          "revision": "e7a0278e80f05afd38a3923da3a14fc5d3d72de5c6676e15a0846de6a864828e",
+          "initialJSRequests": 146,
+          "modulePreloads": 145,
+          "coreModulePreloads": 131,
+          "practiceRangeModulePreloads": 14,
+          "practiceRangePreloadBytes": 74638,
+          "initialJSBytes": 2883817,
+          "criticalHTMLBytes": 15371,
+          "precacheCount": 365,
+          "precacheBytes": 5777910,
+          "workerBytes": 70517,
+          "declaredBytes": 10395950,
+          "measurementKind": "deterministic file and dependency gates; not native browser timings"
+        },
+        "packaging": {
+          "pass": 9,
+          "fail": 0,
+          "skip": 0
+        }
+      }
+    },
+    "projectileBrowser": {
+      "status": "failed-before-weapon-trial",
+      "reason": "Native ranked center component is too small",
+      "location": "production Match.setup / native ranked placement",
+      "evidence": ".browser-evidence/accepted79ad-partial/projectiles.log",
+      "sameKnownOriginalBankTopologyBlocker": true
+    },
+    "remainingStandardBrowserChecks": "Render, camera, lifecycle and public native menu entry also require production Match.setup; no known-failure repetitions or graph/placement waiver used. Retest after independently accepted genuine Drop and whole-bank approach support.",
+    "finalMatrixStatus": "pending; no complete Bluefin playability claim"
   }
 }
