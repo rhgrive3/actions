@@ -82,6 +82,18 @@
     "sourceLaunch": "64c82c024f275d9a64632ca958b63ab035d0e40a",
     "allModePaintChecker": "2b2406385d70c2d3f0ca0c61be8b17b7193e237b"
   },
+  "postAcceptanceBuildReceipts": [
+    {
+      "site": "_site-native-flounder-reviewed",
+      "currentAcceptedSourceAndSerializedDefinitionMatch": true,
+      "runtimeSha256": "f297ed0f1dc054c85ad5db3144819792ed57695943b8950afe0a605c503bb345"
+    },
+    {
+      "site": "_site-native-flounder-public-reviewed",
+      "currentAcceptedSourceAndSerializedDefinitionMatch": true,
+      "runtimeSha256": "f297ed0f1dc054c85ad5db3144819792ed57695943b8950afe0a605c503bb345"
+    }
+  ],
   "startupBudget": {
     "currentPrivate": {
       "status": "passed",
