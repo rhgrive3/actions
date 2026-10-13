@@ -1,0 +1,461 @@
+{
+  "status": "verified-shared-nav-repair",
+  "testedBase": "4716dacdbfec7940cca4cde770ae0098ce5f7e5d",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "version1130Verified": false,
+  "conditions": {
+    "physics": "actual pinned display triangles; conservative live humanoid capsule; directed existing walk/jump/drop edges",
+    "legacy": "all four original map source graphs unchanged, plus real Chromium Tidewater before/after native transition",
+    "browser": "real /usr/bin/chromium, shared GPU flock, SwiftShader, eight actors/seven bots, source-supported opening launch, live minimap; no hardware FPS claim",
+    "sourceGeometry": "vertex/index/collision SHA retained by all fixture checks",
+    "scope": "validity selection only; no physical edge, source geometry, native placement or initial velocity changes"
+  },
+  "cpu": {
+    "sourceFixtures": [
+      {
+        "id": "scorch",
+        "candidateNodes": 6922,
+        "validNodes": 6382,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              7.5,
+              13.5904,
+              -70.95
+            ],
+            "node": 301,
+            "height": 13.51039981842041,
+            "sourceHeight": 13.51039981842041
+          },
+          {
+            "team": 1,
+            "pad": [
+              -7.5,
+              13.5904,
+              70.95
+            ],
+            "node": 6620,
+            "height": 13.51039981842041,
+            "sourceHeight": 13.51039981842041
+          }
+        ],
+        "paintableNodes": 5756,
+        "sourceCollisionTriangles": 133737
+      },
+      {
+        "id": "hagglefish",
+        "candidateNodes": 8709,
+        "validNodes": 4981,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              0,
+              13.58,
+              -67.08
+            ],
+            "node": 355,
+            "height": 13.5,
+            "sourceHeight": 13.5
+          },
+          {
+            "team": 1,
+            "pad": [
+              0,
+              13.58,
+              67.08
+            ],
+            "node": 8350,
+            "height": 13.5,
+            "sourceHeight": 13.5
+          }
+        ],
+        "paintableNodes": 4911,
+        "sourceCollisionTriangles": 163625
+      },
+      {
+        "id": "inkblot",
+        "candidateNodes": 14954,
+        "validNodes": 6785,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              17.5,
+              15.64415,
+              -58.62388
+            ],
+            "node": 1191,
+            "height": 15.56400511980815,
+            "sourceHeight": 15.564154416146389
+          },
+          {
+            "team": 1,
+            "pad": [
+              -17.5,
+              15.64415,
+              58.62388
+            ],
+            "node": 13816,
+            "height": 15.56515561623312,
+            "sourceHeight": 15.564154416146389
+          }
+        ],
+        "paintableNodes": 6491,
+        "sourceCollisionTriangles": 132243
+      },
+      {
+        "id": "mako",
+        "candidateNodes": 8524,
+        "validNodes": 7199,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              -7.5,
+              14.08,
+              -58.05
+            ],
+            "node": 409,
+            "height": 14,
+            "sourceHeight": 14
+          },
+          {
+            "team": 1,
+            "pad": [
+              7.5,
+              14.08,
+              58.05
+            ],
+            "node": 8111,
+            "height": 14,
+            "sourceHeight": 14
+          }
+        ],
+        "paintableNodes": 6709,
+        "sourceCollisionTriangles": 151620
+      },
+      {
+        "id": "brinewater",
+        "candidateNodes": 8147,
+        "validNodes": 6478,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              -12.5,
+              18.08,
+              -59.34
+            ],
+            "node": 397,
+            "height": 18,
+            "sourceHeight": 18
+          },
+          {
+            "team": 1,
+            "pad": [
+              12.5,
+              18.08,
+              59.34
+            ],
+            "node": 7750,
+            "height": 18,
+            "sourceHeight": 18
+          }
+        ],
+        "paintableNodes": 6462,
+        "sourceCollisionTriangles": 157826
+      },
+      {
+        "id": "undertow",
+        "candidateNodes": 7530,
+        "validNodes": 5148,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              0,
+              7.58,
+              -58
+            ],
+            "node": 182,
+            "height": 7.5,
+            "sourceHeight": 7.5
+          },
+          {
+            "team": 1,
+            "pad": [
+              0,
+              7.58,
+              58
+            ],
+            "node": 7348,
+            "height": 7.5,
+            "sourceHeight": 7.5
+          }
+        ],
+        "paintableNodes": 5148,
+        "sourceCollisionTriangles": 70322
+      },
+      {
+        "id": "sturgeon",
+        "candidateNodes": 10712,
+        "validNodes": 4374,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              -15,
+              11.08,
+              -63
+            ],
+            "node": 785,
+            "height": 11,
+            "sourceHeight": 11
+          },
+          {
+            "team": 1,
+            "pad": [
+              15,
+              11.08,
+              63
+            ],
+            "node": 9927,
+            "height": 11,
+            "sourceHeight": 11
+          }
+        ],
+        "paintableNodes": 4322,
+        "sourceCollisionTriangles": 127210
+      },
+      {
+        "id": "museum",
+        "candidateNodes": 21141,
+        "validNodes": 7088,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              -42,
+              16.5,
+              -51
+            ],
+            "node": 1126,
+            "height": 16.5,
+            "sourceHeight": 16.5
+          },
+          {
+            "team": 1,
+            "pad": [
+              42,
+              16.5,
+              51
+            ],
+            "node": 20275,
+            "height": 16.5,
+            "sourceHeight": 16.5
+          }
+        ],
+        "paintableNodes": 5977,
+        "sourceCollisionTriangles": 126989
+      },
+      {
+        "id": "manta",
+        "candidateNodes": 9877,
+        "validNodes": 737,
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              -12,
+              8,
+              -42
+            ],
+            "node": 566,
+            "height": 8,
+            "sourceHeight": 8
+          },
+          {
+            "team": 1,
+            "pad": [
+              12,
+              8,
+              42
+            ],
+            "node": 9030,
+            "height": 8,
+            "sourceHeight": 8
+          }
+        ],
+        "paintableNodes": 712,
+        "sourceCollisionTriangles": 130605
+      }
+    ],
+    "fixtureTestPassed": 2,
+    "originalFiveIntegratedTestsPassed": 6,
+    "legacyMapsUnchanged": 4
+  },
+  "browser": {
+    "status": "passed",
+    "stages": [
+      {
+        "id": "manta",
+        "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              -12,
+              8,
+              -42
+            ],
+            "node": 566,
+            "nodeHeight": 8,
+            "sourceHeight": 8,
+            "sourceTriangle": 17766
+          },
+          {
+            "team": 1,
+            "pad": [
+              12,
+              8,
+              42
+            ],
+            "node": 9030,
+            "nodeHeight": 8,
+            "sourceHeight": 8,
+            "sourceTriangle": 17768
+          }
+        ],
+        "nodes": 9877,
+        "validNodes": 737,
+        "lowerHullCandidates": 5379,
+        "lowerHullValid": 0,
+        "actors": 8,
+        "bots": 7,
+        "positions": [
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              -8.561982170943962,
+              8,
+              -30.50304242822942
+            ],
+            "launch": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              -7.162401646858824,
+              8,
+              -28.90897551530032
+            ],
+            "launch": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": false,
+            "pos": [
+              -4.02545070982414,
+              8.436166666666667,
+              -38.09577935745734
+            ],
+            "launch": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              0.8813196382490539,
+              8,
+              -32.16486348899034
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              13.28143450407057,
+              8,
+              34.61028244032443
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              11.040390279758935,
+              8,
+              34.5616433814438
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              8.885065133797625,
+              8,
+              35.17745056600417
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              7.00798784237563,
+              8,
+              36.40269577223727
+            ],
+            "launch": false
+          }
+        ],
+        "sourceCollisionTriangles": 130605,
+        "minimap": {
+          "built": true,
+          "width": 207,
+          "height": 298,
+          "livePaintPixels": 33901
+        },
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      }
+    ],
+    "errors": [],
+    "legacy": {
+      "nodes": 4158,
+      "valid": 4154,
+      "unchanged": true
+    }
+  },
+  "privateBuild": {
+    "revision": "3a57885839266a680494221efa8d26510b019e3db17006207d9538d4e853a5c4",
+    "contentHash": "f22bc2a6340357313374b95aec55b7a438d1689b22673c56b6a7e3ba1cff5e60"
+  },
+  "before": {
+    "manta": {
+      "largestUnrelatedValidHullNodes": 5487,
+      "actualPadHeight": 8,
+      "oldNearestHeight": -4.079999923706054,
+      "rankedWrongHullPaintCells": 47
+    }
+  },
+  "remaining": {
+    "manta": "Two actual upper-deck source components remain directed-separated without verified wall-climb transitions; source availability is not complete playability proof.",
+    "brinewater": "Strict full-slot bot opening route qualification is assigned separately to Museum; this validity-only repair does not invent missing physical routes.",
+    "retail": "Native 11.3.0 collision, spawns, traversal masks, paint flags and placements unverified."
+  }
+}
