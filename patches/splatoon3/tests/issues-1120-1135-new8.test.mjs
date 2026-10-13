@@ -9,6 +9,8 @@ import { deathGearPenalty } from '../runtime/clothing-gear.mjs';
 import { rollerContactCandidate } from '../runtime/roller.mjs';
 import { chargerActorBeforeStop } from '../runtime/weapons-charger-flight.mjs';
 import { resolveSubAtCharge, SUCTION, CURLING } from '../runtime/kit-subs.mjs';
+import { fixture as kitFixture } from './kit-composed-fixture.mjs';
+import { installKitInkVac, VAC_ID } from '../runtime/kit-ink-vac.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const readPublic = rel => fs.readFileSync(path.join(ROOT, 'inkwave-public', rel), 'utf8');
@@ -35,12 +37,23 @@ test('#1130 water/fall keeps Respawn Punisher wearer Special loss without enemy-
   }
 });
 
-test('#1120 Ink Vac firing phase consumes a real ZR release edge, not the held suction level', () => {
-  const code = readPatch('patches/splatoon3/runtime/kit-ink-vac.mjs');
-  assert.ok(code.includes('state.exhaleArmed = !!state.fireHeld;'));
-  assert.ok(code.includes('const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;'));
-  assert.ok(code.includes('if (releaseEdge || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);'));
-  assert.ok(!code.includes('if (fire || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);'));
+test('#1120 Ink Vac firing phase consumes a real ZR release edge, not the held suction level', async () => {
+  const f = await kitFixture(); installKitInkVac(f, f.profile);
+  const system = f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
+  const actor = f.make('charger');
+  actor.weapon = { ...actor.weapon, special: VAC_ID, specialCost: 190 };
+  actor.special = 190; actor.intent.fire = true; actor.intent.special = true;
+  f.tick(actor); actor.intent.special = false; f.tick(actor, 29);
+  for (let frame = 0; frame < 400 && f.inkVacState(actor)?.phase === 'inhale'; frame++) f.tick(actor);
+  assert.equal(f.inkVacState(actor)?.phase, 'exhale', 'the actual suction lifecycle reaches countershot');
+  for (let frame = 0; frame < 20; frame++) {
+    f.tick(actor);
+    assert.equal(system.list.length, 0, 'continuing to hold suction ZR cannot auto-fire');
+  }
+  actor.intent.fire = false; f.tick(actor);
+  assert.equal(f.inkVacState(actor), null, 'a genuine release fires after the 20F transition');
+  assert.equal(system.list.length, 1, 'the release authors exactly one native countershot');
+  f.tick(actor, 3); assert.equal(system.list.length, 1, 'the release is not replayed on following frames');
 });
 
 test('#1122 Roller body capsule follows aim pitch and no longer uses the fixed dy slab', () => {
