@@ -5462,6 +5462,18 @@
         }
       ],
       "errors": []
+    },
+    "sitesRetiredAfterPreservingFullReceipts": {
+      "status": "superseded own ignored generated sites retired",
+      "archive": ".browser-evidence/retired-builds",
+      "privateFiles": 1148,
+      "privateBytes": 175397879,
+      "publicFiles": 919,
+      "publicBytes": 78532251,
+      "everyEmittedFileSha256AndSizeArchived": true,
+      "fullBuildAndAllManifestReceiptsArchived": true,
+      "originalCurrentSourceAndAllBrowserEvidenceRetained": true,
+      "currentGroundedFormPairRetained": true
     }
   },
   "acceptedSourceFootSupport": {
