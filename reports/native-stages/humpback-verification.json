@@ -1224,5 +1224,640 @@
         "error": "Native ranked center component is too small"
       }
     }
+  },
+  "sourceDepartureDiagnostics": {
+    "cpu": {
+      "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+      "candidatePairs": 1918,
+      "conditions": "accepted79ad physical Actor ordinary horizontal departure then gravity; source-supported stance, original collision, default shooter/zero gear, 30/60/120Hz",
+      "results": [
+        {
+          "from": {
+            "id": 18201,
+            "p": [
+              6.200000000000003,
+              6,
+              42.599999999999994
+            ],
+            "hit": true,
+            "triangle": 95403,
+            "object": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+          },
+          "to": {
+            "id": 17934,
+            "p": [
+              6.200000000000003,
+              3.0000998973846436,
+              40.599999999999994
+            ],
+            "hit": true,
+            "triangle": 94558,
+            "object": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+          },
+          "distance": 2,
+          "fall": 2.9999001026153564,
+          "oldSlantedLOS": true,
+          "cases": [
+            {
+              "hz": 30,
+              "jumping": false,
+              "departed": true,
+              "lower": true,
+              "alive": true,
+              "grounded": true,
+              "start": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "end": [
+                6.200000000000003,
+                3.0000998973846436,
+                39.73600000000001
+              ],
+              "minY": 3.0000998973846436,
+              "supportTriangle": 94558,
+              "supportObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+            },
+            {
+              "hz": 60,
+              "jumping": false,
+              "departed": true,
+              "lower": true,
+              "alive": true,
+              "grounded": true,
+              "start": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "end": [
+                6.200000000000003,
+                3.0000998973846436,
+                39.83200000000005
+              ],
+              "minY": 3.0000998973846436,
+              "supportTriangle": 94558,
+              "supportObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+            },
+            {
+              "hz": 120,
+              "jumping": false,
+              "departed": true,
+              "lower": true,
+              "alive": true,
+              "grounded": true,
+              "start": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "end": [
+                6.200000000000003,
+                3.0000998973846436,
+                39.83433333333327
+              ],
+              "minY": 3.0000998973846436,
+              "supportTriangle": 94558,
+              "supportObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+            },
+            {
+              "hz": 30,
+              "jumping": true,
+              "departed": true,
+              "lower": true,
+              "alive": true,
+              "grounded": true,
+              "start": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "end": [
+                6.200000000000003,
+                3.0000998973846436,
+                39.77333333333333
+              ],
+              "minY": 3.0000998973846436,
+              "supportTriangle": 94558,
+              "supportObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+            },
+            {
+              "hz": 60,
+              "jumping": true,
+              "departed": true,
+              "lower": true,
+              "alive": true,
+              "grounded": true,
+              "start": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "end": [
+                6.200000000000003,
+                3.0000998973846436,
+                39.83933333333337
+              ],
+              "minY": 3.0000998973846436,
+              "supportTriangle": 94558,
+              "supportObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+            },
+            {
+              "hz": 120,
+              "jumping": true,
+              "departed": true,
+              "lower": true,
+              "alive": true,
+              "grounded": true,
+              "start": [
+                6.200000000000003,
+                6,
+                42.599999999999994
+              ],
+              "end": [
+                6.200000000000003,
+                3.0000998973846436,
+                39.82655555555551
+              ],
+              "minY": 3.0000998973846436,
+              "supportTriangle": 94558,
+              "supportObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood"
+            }
+          ]
+        }
+      ]
+    },
+    "chromium": {
+      "status": "passed",
+      "conditions": "source-world inspection and controlled real Actor source stance; not production native match qualification",
+      "errors": [],
+      "departure": {
+        "actors": 8,
+        "bots": 8,
+        "cases": [
+          {
+            "hz": 30,
+            "frames": 20,
+            "departed": true,
+            "lower": true,
+            "alive": true,
+            "grounded": true,
+            "start": [
+              6.2,
+              6,
+              42.6
+            ],
+            "end": [
+              6.2,
+              3.0000998973846436,
+              40.104000000000006
+            ],
+            "sourceTriangle": 94558,
+            "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          },
+          {
+            "hz": 60,
+            "frames": 41,
+            "departed": true,
+            "lower": true,
+            "alive": true,
+            "grounded": true,
+            "start": [
+              6.2,
+              6,
+              42.6
+            ],
+            "end": [
+              6.2,
+              3.0000998973846436,
+              40.20000000000005
+            ],
+            "sourceTriangle": 94558,
+            "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          },
+          {
+            "hz": 120,
+            "frames": 81,
+            "departed": true,
+            "lower": true,
+            "alive": true,
+            "grounded": true,
+            "start": [
+              6.2,
+              6,
+              42.6
+            ],
+            "end": [
+              6.2,
+              3.0000998973846436,
+              40.19999999999994
+            ],
+            "sourceTriangle": 94558,
+            "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "world": {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "objects": 79,
+        "collisionTriangles": 149539,
+        "gridCells": 8934342,
+        "topmostSupports": [
+          {
+            "z": -61,
+            "y": 5.999999999999993
+          },
+          {
+            "z": -53,
+            "y": 5.3999490859907056
+          },
+          {
+            "z": -42,
+            "y": 7.500000000000007
+          },
+          {
+            "z": -30,
+            "y": 2.0194881511170806
+          },
+          {
+            "z": 0,
+            "y": 20.86039924621582
+          },
+          {
+            "z": 30,
+            "y": 2.0194853671324466
+          },
+          {
+            "z": 42,
+            "y": 7.500000000000007
+          },
+          {
+            "z": 53,
+            "y": 5.3999490859907056
+          },
+          {
+            "z": 61,
+            "y": 5.999999999999993
+          }
+        ],
+        "actors": 8
+      },
+      "initializationNote": "Preliminary private probe had an implicit G initialization return; corrected to block-body assignment for subsequent evidence. Physical case results remain recorded, final scalar-init rerun pending."
+    }
+  },
+  "pendingSharedDropReview": {
+    "candidate": "5bfc2d70",
+    "status": "unaccepted candidate evaluated privately; no production adoption",
+    "testedSourceNearFarTriples": 544,
+    "cacheOrderFalseNegative": {
+      "upper": {
+        "id": 18734,
+        "position": [
+          -13.799999999999997,
+          3,
+          46.599999999999994
+        ]
+      },
+      "near": {
+        "id": 18584,
+        "position": [
+          -13.799999999999997,
+          0,
+          45.599999999999994
+        ]
+      },
+      "far": {
+        "id": 18450,
+        "position": [
+          -13.799999999999997,
+          -7.105427357601002e-15,
+          44.599999999999994
+        ]
+      },
+      "nearUpperSupport": {
+        "hit": true,
+        "y": 3
+      },
+      "nearThenFar": {
+        "near": null,
+        "far": null
+      },
+      "freshFar": {
+        "to": 18033,
+        "type": "drop",
+        "cost": 6.866666666666668,
+        "drop": {
+          "upper": [
+            -13.799999999999997,
+            3,
+            46.599999999999994
+          ],
+          "landing": [
+            -13.799999999999997,
+            0,
+            41.599999999999994
+          ],
+          "direction": [
+            0,
+            0,
+            -1
+          ],
+          "seconds": 0.8666666666666677,
+          "sourceTriangle": 92193,
+          "form": "kid",
+          "squidClearance": true,
+          "assurance": "Local 0AP Shooter human walk/gravity screening with continuous exact source capsule sweeps; swim-shape result recorded separately and retail navigation unverified"
+        }
+      },
+      "cacheOrderFalseNegative": true
+    },
+    "naturalActorCounterexample": [
+      {
+        "hz": 30,
+        "departed": true,
+        "alive": true,
+        "grounded": true,
+        "start": [
+          -13.799999999999997,
+          3,
+          46.599999999999994
+        ],
+        "end": [
+          -13.799999999999997,
+          1.1102230246251565e-16,
+          43.73600000000001
+        ],
+        "supportTriangle": 105901,
+        "supportObject": "Fld_Wave03_ShipVinylSheet_01_1__ShipVinylSheet",
+        "lower": true
+      },
+      {
+        "hz": 60,
+        "departed": true,
+        "alive": true,
+        "grounded": true,
+        "start": [
+          -13.799999999999997,
+          3,
+          46.599999999999994
+        ],
+        "end": [
+          -13.799999999999997,
+          -5.551115123125783e-17,
+          43.83200000000005
+        ],
+        "supportTriangle": 105901,
+        "supportObject": "Fld_Wave03_ShipVinylSheet_01_1__ShipVinylSheet",
+        "lower": true
+      },
+      {
+        "hz": 120,
+        "departed": true,
+        "alive": true,
+        "grounded": true,
+        "start": [
+          -13.799999999999997,
+          3,
+          46.599999999999994
+        ],
+        "end": [
+          -13.799999999999997,
+          -5.551115123125783e-17,
+          43.831388888888824
+        ],
+        "supportTriangle": 105901,
+        "supportObject": "Fld_Wave03_ShipVinylSheet_01_1__ShipVinylSheet",
+        "lower": true
+      }
+    ],
+    "exactTwoCellFreshAdmission": {
+      "upper": {
+        "id": 18201,
+        "position": [
+          6.200000000000003,
+          6,
+          42.599999999999994
+        ]
+      },
+      "far": {
+        "id": 17934,
+        "position": [
+          6.200000000000003,
+          3.0000998973846436,
+          40.599999999999994
+        ]
+      },
+      "nearCandidates": [
+        {
+          "id": 18069,
+          "position": [
+            6.200000000000003,
+            -20.000000000000004,
+            41.599999999999994
+          ]
+        }
+      ],
+      "fresh": {
+        "to": 17646,
+        "type": "drop",
+        "cost": 5.7,
+        "drop": {
+          "upper": [
+            6.200000000000003,
+            6,
+            42.599999999999994
+          ],
+          "landing": [
+            6.200000000000003,
+            3.000000000000007,
+            38.599999999999994
+          ],
+          "direction": [
+            0,
+            0,
+            -1
+          ],
+          "seconds": 0.7000000000000005,
+          "sourceTriangle": 94500,
+          "form": "kid",
+          "squidClearance": true,
+          "assurance": "Local 0AP Shooter human walk/gravity screening with continuous exact source capsule sweeps; swim-shape result recorded separately and retail navigation unverified"
+        }
+      }
+    },
+    "privateImportChanges": "relative import paths rebased into ignored fixture only; helper body unmodified"
+  },
+  "sourceDepartureRegression": {
+    "status": "passed",
+    "passed": 3,
+    "failed": 0,
+    "sourceRouteTestStillPending": true,
+    "command": "node --experimental-vm-modules --test --test-concurrency=1 --test-name-pattern=\"Humpback (genuine|independent|identity)\" patches/native-stages/tests/humpback-source.test.mjs",
+    "evidence": {
+      "id": "humpback",
+      "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+      "cases": [
+        {
+          "hz": 30,
+          "frames": 20,
+          "ordinaryWalk": true,
+          "jump": false,
+          "fire": false,
+          "departed": true,
+          "alive": true,
+          "grounded": true,
+          "start": [
+            6.2,
+            6,
+            42.6
+          ],
+          "end": [
+            6.2,
+            3.0000998973846436,
+            39.73600000000002
+          ],
+          "sourceTriangle": 94558,
+          "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+          "weapon": "shooter",
+          "gearAP": 0
+        },
+        {
+          "hz": 60,
+          "frames": 41,
+          "ordinaryWalk": true,
+          "jump": false,
+          "fire": false,
+          "departed": true,
+          "alive": true,
+          "grounded": true,
+          "start": [
+            6.2,
+            6,
+            42.6
+          ],
+          "end": [
+            6.2,
+            3.0000998973846436,
+            39.83200000000006
+          ],
+          "sourceTriangle": 94558,
+          "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+          "weapon": "shooter",
+          "gearAP": 0
+        },
+        {
+          "hz": 120,
+          "frames": 81,
+          "ordinaryWalk": true,
+          "jump": false,
+          "fire": false,
+          "departed": true,
+          "alive": true,
+          "grounded": true,
+          "start": [
+            6.2,
+            6,
+            42.6
+          ],
+          "end": [
+            6.2,
+            3.0000998973846436,
+            39.83433333333328
+          ],
+          "sourceTriangle": 94558,
+          "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+          "weapon": "shooter",
+          "gearAP": 0
+        }
+      ],
+      "conditions": "standalone real Actor integrator + original source capsules; neutral dry human 0AP Shooter; no shot/muzzle evidence or production-match claim",
+      "version1130Verified": false
+    }
   }
 }

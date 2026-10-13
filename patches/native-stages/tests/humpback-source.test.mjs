@@ -82,3 +82,25 @@ test('Humpback pads, source capsules and directed navigation retain both complet
  const ranked=f.nativeRankedStage(G);const proof={id:'humpback',supports,nav:{candidate:G.nav.nodes.length,valid:G.nav.validIds.length,opposedPaths:opposedPaths.map(p=>p.length)},tower:ranked.tower.supported?{supported:true,nodes:ranked.tower.path.length,arenaSpan:ranked.tower.arenaSpan}:ranked.ruleAvailability.tower,sourceRoofs:roofs.length,noPaintObjects:noPaint.length};
  if(process.env.HUMPBACK_ROUTE_EVIDENCE)fs.writeFileSync(process.env.HUMPBACK_ROUTE_EVIDENCE,JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof));
 });
+
+test('Humpback genuine two-cell plywood departure uses ordinary Actor walking and gravity at three rates',{skip:!enabled},async()=>{
+ const f=await nativeFixture(),{G,THREE}=f,data=readStage(assets,'humpback');G.level=new f.NativeLevel(data);G.physics=new f.NativePhysics(G.level);
+ class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
+ G.paint=new CpuPaint(null,G.level,{atlasSize:2048,maxDensity:4,cell:.25});G.camera=new THREE.PerspectiveCamera();G.match.mode='turf';G.match.opts={};
+ const start=new THREE.Vector3(6.2,6,42.6),lower=new THREE.Vector3(6.2,3.0000998973846436,40.6),direction=new THREE.Vector3(0,0,-1),cases=[];
+ const before=G.physics.raycast(start.clone().setY(6.15),new THREE.Vector3(0,-1,0),.4);assert(before.hit&&before.triangle===95403);
+ for(const hz of [30,60,120]){
+  const a=f.make('shooter');a.team=1;a.isBot=false;a._integrate=f.Actor.prototype._integrate;a.spawnAt(start,Math.PI);G.actors=[a];a._resolve(false,a.pos.y,false);assert(a.grounded&&a.ground.hit);
+  let walking=true,departed=false,frames=0;
+  for(;frames<hz*4;frames++){
+   a.intent.move.copy(walking?direction:new THREE.Vector3());a.intent.fire=a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;G.time+=1/hz;a.update(1/hz);departed ||=!a.grounded;
+   if(walking&&start.z-a.pos.z>=1.95)walking=false;
+   if(!walking&&a.grounded&&frames>hz*.5)break;
+  }
+  const hit=G.physics.raycast(a.pos.clone().setY(a.pos.y+.15),new THREE.Vector3(0,-1,0),.4);
+  assert(departed&&a.alive&&a.grounded&&hit.hit);assert(Math.abs(a.pos.y-lower.y)<.001);assert(Math.hypot(a.pos.x-lower.x,a.pos.z-lower.z)<1.8);assert.equal(hit.triangle,94558);
+  assert.deepEqual(Object.keys(a.s3.abilityPoints),[]);cases.push({hz,frames,ordinaryWalk:true,jump:false,fire:false,departed,alive:a.alive,grounded:a.grounded,start:start.toArray(),end:a.pos.toArray(),sourceTriangle:hit.triangle,sourceObject:data.manifest.objects[data.objectIds[hit.triangle]].name,weapon:'shooter',gearAP:0});
+ }
+ const proof={id:'humpback',sourceSha256:data.manifest.sourceSha256,cases,conditions:'standalone real Actor integrator + original source capsules; neutral dry human 0AP Shooter; no shot/muzzle evidence or production-match claim',version1130Verified:false};
+ if(process.env.HUMPBACK_DEPARTURE_EVIDENCE)fs.writeFileSync(process.env.HUMPBACK_DEPARTURE_EVIDENCE,JSON.stringify(proof,null,2)+'\n');console.log(JSON.stringify(proof));
+});
