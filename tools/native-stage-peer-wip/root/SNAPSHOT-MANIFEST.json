@@ -1,0 +1,93 @@
+[
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/audit-native-support.mjs",
+    "originalPath": "/workspace/actions/.ci-scratch/audit-native-support.mjs",
+    "bytes": 742,
+    "sha256": "18511b58010f5836038d4db93cc56525fffa9c6306bcaedcd82cb6b20a09d8f6",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/migrate-original-five-masks-v4.py",
+    "originalPath": "/workspace/actions/.ci-scratch/migrate-original-five-masks-v4.py",
+    "bytes": 1784,
+    "sha256": "cbb41c57bc91b23832fca2f70596277bcb6b2f275968acffea3755ec6fd929e6",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/cleanup-completed-stage-builds.py",
+    "originalPath": "/workspace/actions/.ci-scratch/cleanup-completed-stage-builds.py",
+    "bytes": 2057,
+    "sha256": "4dd368239df4b489452eafdddd71fdce580e2935991a00e3428a88b10735fc8e",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/audit-native-bots.mjs",
+    "originalPath": "/workspace/actions/.ci-scratch/audit-native-bots.mjs",
+    "bytes": 957,
+    "sha256": "02cb95c9f82b1e10671cc7ac21f3dff5ebc0161708826c9d14a8fa0ed478aeac",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/probe-native-cors.mjs",
+    "originalPath": "/workspace/actions/.ci-scratch/probe-native-cors.mjs",
+    "bytes": 891,
+    "sha256": "3a8170b93cea0e8cde776a31b5148231a84d4dec20c309690823526a854caf28",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/playwright-system.mjs",
+    "originalPath": "/workspace/actions/.ci-scratch/playwright-system.mjs",
+    "bytes": 213,
+    "sha256": "4393d1eed779338d807ba37e3451f9ca9daae635879008ab5a35828ef0e823cd",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/hagglefish-no-boat-proof.mjs",
+    "originalPath": "/workspace/actions/.ci-scratch/hagglefish-no-boat-proof.mjs",
+    "bytes": 2056,
+    "sha256": "380e50cb86efeaad24231847a9e321fef30d3aacede1967c2a92b52e245e7e85",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/reviewed-v4-mask-refresh/refresh.py",
+    "originalPath": "/workspace/actions/.ci-scratch/reviewed-v4-mask-refresh/refresh.py",
+    "bytes": 3691,
+    "sha256": "7476858eec4e984c1e37c3550fefdbd4b7b08837fd9e4c77e9490b30a9a0d008",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/actions/main-18ce/promote.py",
+    "originalPath": "/workspace/actions/.ci-scratch/main-18ce/promote.py",
+    "bytes": 1785,
+    "sha256": "e79e4e721609ca54cf9aa723dcd5e44db28d77b58c7a3db7af48578d182ee04d",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/stage-physics/native-combat-source-probe.mjs",
+    "originalPath": "/workspace/stage-physics/.ci-scratch/native-combat-source-probe.mjs",
+    "bytes": 3246,
+    "sha256": "9c961c99a1ee489433c778bbb68108a17fca02c3621ebd48fbf8098d2d4ce745",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/stage-physics/native-combat/browser-static-cost.mjs",
+    "originalPath": "/workspace/stage-physics/.ci-scratch/native-combat/browser-static-cost.mjs",
+    "bytes": 8336,
+    "sha256": "39ca933bcdc0efab1930c21970cb91074ede20df0da859ebe86f3fe09172ae9c",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/stage-paint-coverage/source-paint-coverage/diagnose-parity.mjs",
+    "originalPath": "/workspace/stage-paint-coverage/.ci-scratch/source-paint-coverage/diagnose-parity.mjs",
+    "bytes": 1461,
+    "sha256": "79a464a9cfc88c619b429fd22e934e253d051d88313500daf56dd6044360c950",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  },
+  {
+    "path": "tools/native-stage-peer-wip/root/snapshots/stage-paint-coverage/main-9bed/build-current-pair.py",
+    "originalPath": "/workspace/stage-paint-coverage/.ci-scratch/main-9bed/build-current-pair.py",
+    "bytes": 4038,
+    "sha256": "f39cad37b26326711c20ee6f8c7cd19ed1133c0c4421b472c25c58fbf982e172",
+    "qualification": "Historical WIP diagnostic, not current-ready gameplay proof"
+  }
+]
