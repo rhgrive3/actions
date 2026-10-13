@@ -188,12 +188,12 @@ export function part(pieces, pivot, mat = 'body', lamp = null) {
   return { src: pieces instanceof Pieces ? pieces.build() : pieces, pivot: Array.isArray(pivot) ? V(...pivot) : pivot.clone(), mat, lamp };
 }
 /** Invisible stand-in for a native part channel that this weapon does not show. */
-export function hiddenPart(p) { return { ...p, src: emptyGeometry() }; }
+export function hiddenPart(p) { return { ...p, src: emptyGeometry(), hidden: true }; }
 
 /**
  * Replace the visible weapon while keeping every native channel the family runtime animates.
  *   d      — the family base def (pre-finishParts: parts carry `src` + `pivot`).
- *   spec   — { body: Pieces, ink: Pieces, glass: Pieces (optional static shell), parts: { name: part(...) }, keepParts: [names to keep as-is],
+ *   spec   — { body: Pieces, ink: Pieces, parts: { name: part(...) }, keepParts: [names to keep as-is],
  *              gripR, gripL, muzzle: [x,y,z], drop: ['glow' | 'drum'], glow: geometry (with aSeg),
  *              drum: { geo, caps, at: [x,y,z], r } }
  * Native parts not listed in `parts`/`keepParts` become invisible channels (the runtime may still move

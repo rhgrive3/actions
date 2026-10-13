@@ -4042,13 +4042,18 @@ Connect pinned WeaponAccType independently of speed weight: only Sploosh ordinar
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
 
-## 2026-10-12: Ballpoint shell / dual-hand / standard Sloshing Machine audit
+## 2026-10-12: プライムシューター・ジェットスイーパーのモデル作り直しと銃口・構え
 
-Current main b078c379 did not contain a transparent Ballpoint shell: opaque ribs/rings and a large ink cylinder hid the internal barrel cluster. The revised candidate, now integrated with main 3165f4f, adds one 256-triangle, non-transmission alpha shell retained across weapon LODs, with a clear front shoulder and grazing-angle silhouette reflection, and exposes the animated ink tubes. The initial flat-shell browser visuals were too weak; its timed-out ABBA remains incomplete. Exact revised-head visuals and complete ABBA are required before acceptance. Grip/muzzle/part pivots, shot timing and gameplay are unchanged. Dapple/Glooga left-only reversal was not reproduced by actual Actor idle/walk/fire coordinate checks; no mirror is enabled. Standard Sloshing Machine frame is already neutral body material and is preserved; the prior rotation sheet is the Neo variant. See `inkwave-weapon-shared-rendering-2026-10-12.md` for references, checks, costs and limitations. Retail gameplay comparison remains unmeasured; images/SwiftShader checks are not retail parity or real-device FPS claims.
+参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
 
-The refined a54 studio production-shader images and emitted all-65-model contracts passed. Production review additionally found that GTAO material overrides ignore alpha; the next candidate adds the existing transparent draw-range gate with explicit restoration for shared geometry. Real GTAOPass counterexamples and the actual game post stack near/far verification are required before adoption.
+- **本家の根拠**: 公式回転動画「S3 Splattershot Pro FRZ-N model rotating.mp4」「S3 Jet Squelcher COB-R model rotating.mp4」（同形状の別キット）の真横・正面・背面・斜めフレーム、「S3 Custom Jet Squelcher Promotional 3D Render.jpg」、本家3Dレンダー「S3 Weapon Main <名前>.png」、持ち方は S2 プロモ画像と S3 3D プロモ（Inkipedia）。本家のメッシュ寸法・ソケット位置・構えの数値は公開されておらず、すべて画像からの推定。
+- **INKWAVE の実装箇所**: `patches/splatoon3/runtime/weapon-models/shooters-b.mjs`（`expert` / `longJet`、`MODELS['s3-shooter-long'].hold`）。記録は `patches/splatoon3/reference/weapon-models/shooters-b.md` の「2026-10-12 作り直し」。
 
+| 差分 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|
+| 両ブキのモデルを立体で作り直し（プライム: 右側だけを回るホース・円錐タンク・くさび等、ジェット: 上下2本体を持ち手でつなぐ構造） | ブキを選び待機・射撃 | 見た目のみ | 回転動画の真横フレーム・3Dレンダーとの画像比較のみ。実機寸法は未確認 |
+| **ジェットの銃口（弾の発生位置）を竿先のノズルへ移動**。ブキ空間 (0, 0.155, 0.482)→(0, 0.063, 0.664) m。キャラ基準の長押し射撃中の発生位置: 前方 0.800→0.874 m、高さ 0.958→0.884 m、横 −0.045→−0.027 m | 立ち止まって長押し射撃 | 弾の発生位置が約 7 cm 前・7 cm 下へ。壁際・段差際の射撃、足元の塗りの始点に影響 | ロジック単独の計測（30/60/120 Hz で同値）。本家実機の発生位置とは未比較（実機計測が必要） |
+| プライムの銃口 (0, 0.137, 0.393)→(0, 0.130, 0.402) m。長押し射撃中: 前方 0.711→0.720 m、高さ 0.938→0.931 m | 同上 | ほぼ変化なし（1 cm 未満） | ロジック単独の計測（30/60/120 Hz で同値）。未確認 |
+| グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
 
-Fixed f1ed completed the actual high-quality production Renderer near/far, dark/light and two-ink-color images plus source/emitted all-65-model contracts. The real GTAO safe control changes zero Normal/Depth/AO pixels, while a deliberately disabled gate changes 2944/2944/1152. Shared draw ranges restore correctly. Each shell costs one nonempty beauty draw and one zero-count AO API call (two raw calls); zero-count submission has CPU/driver cost. Main 3165 integration preserves PR1248's ink-volume report and will be revalidated against its own pinned baseline; prior SwiftShader runs are not real-device FPS.
-
-- Ballpoint final transparency verification: latest main ed3a composition preserves the native gray Screw and existing dualie hands; .65 clearcoat retained after valid same-GL completed-output ABBA showed no stable gain at zero (PR1299). Old gl.finish timings are submission/queue measures, not completed GPU timing. The final actual-adoption baseline/candidate comparison and images remain pending; see the dedicated rendering report.
+計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
