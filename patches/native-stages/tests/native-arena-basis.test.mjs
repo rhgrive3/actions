@@ -18,7 +18,7 @@ test('native opening and death respawn use actual Urchin support and opposing-pa
  const basis=nativeArenaBasis(L),proof=[];
  for(const team of [0,1])for(const hz of [30,60,120])for(const opening of [true,false])for(const slot of [-1,0,1,2,3]){
   const a=f.make('shooter');a.team=team;a.slot=Math.max(0,slot);a.isBot=slot>=0;a._integrate=f.Actor.prototype._integrate;a.spawnAt(L.spawnPads[team],0);a.aimPoint.copy(L.spawnPads[team]);a.intent.move.set(0,0,0);a.intent.fire=false;
-  if(opening)assert.equal(f.beginInitialSquidSpawn(a),true);else{a.alive=false;a.respawn();}
+  if(opening)assert.equal(f.beginInitialSquidSpawn(a),true);else{if(a.isBot){const sign=team?-1:1;a.aimPoint.set(L.spawnPads[team].x-basis.forward.x*sign*7.5,L.spawnPads[team].y,L.spawnPads[team].z-basis.forward.z*sign*7.5);}a.alive=false;a.respawn();}
   const expected=nativeSpawnYaw(L,team,0);assert(Math.abs(a.yaw-expected)<1e-12);assert(Math.abs(a.aimYaw-expected)<1e-12);
   if(a.isBot){a.bot=new f.BotBrain(a,'normal');assert(Math.abs(a.bot.aimYaw-expected)<1e-12);}
   const target=a.s3.squidSpawn.target;assert(target);const pad=L.spawnPads[team],sign=team?-1:1;assert(((target.x-pad.x)*basis.forward.x+(target.z-pad.z)*basis.forward.z)*sign>0,'actual supported target lies toward opponent');
