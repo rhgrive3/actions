@@ -27,3 +27,4 @@ export {nativeRankedTowerApproach,updateNativeTowerBoarding,nativeTowerRider} fr
 export {nativeJumpAttachTransition,updateNativeJumpAttach} from './native-jump-attach.mjs';
 export {nativeCombatWet,nativeCombatPathGoal} from './native-combat-support.mjs';
 export {nativeOrdinaryJumpInput,nativeOrdinaryJumpCommitted} from './native-jump-input.mjs';
+export {nativeWallApproachTransition,nativeApproachJumpTransition,updateNativeApproach,nativeApproachEdgeAllowed} from './native-approach.mjs';
