@@ -66,8 +66,8 @@ try {
       const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromEquirectangular(sky).texture;
       scene.add(new THREE.HemisphereLight(0xffffff,0x60718d,2.1));const key=new THREE.DirectionalLight(0xffffff,3);key.position.set(-3,4,2);scene.add(key);
     }
-    const render=(scene,camera)=>{if(post){renderer.info.reset();post.setScene(scene,camera);post.render();}else renderer.render(scene,camera);};
-    const environmentMeta={mode:nativeDay?'nativeDay':'studio1024',pmremSize:[scene.environment.image.width,scene.environment.image.height],toneMapping:renderer.toneMapping,exposure:renderer.toneMappingExposure,postStack:post?post.composer.passes.map(p=>({name:p.constructor.name,enabled:p.enabled})):[],scope:'Isolated actual-runtime scene, no stage/fog/network or projectile drawing; not full-match FPS.'};
+    const render=(scene,camera)=>{if(post){renderer.info.reset();if(post.scene!==scene||post.camera!==camera||!post.composer)post.setScene(scene,camera);post.render();if(!environmentMeta.postStack.length)environmentMeta.postStack=post.composer.passes.map(p=>({name:p.constructor.name,enabled:p.enabled}));}else renderer.render(scene,camera);};
+    const environmentMeta={mode:nativeDay?'nativeDay':'studio1024',pmremSize:[scene.environment.image.width,scene.environment.image.height],toneMapping:renderer.toneMapping,exposure:renderer.toneMappingExposure,postStack:[],scope:'Isolated actual-runtime scene, no stage/fog/network or projectile drawing; not full-match FPS.'};
     G.scene = scene; G.teamColors = [new THREE.Color('#ff8825'), new THREE.Color('#484ce8')];
     G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, o) => { o.length = 0; return o; } };
     G.physics = new Physics(G.level); G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true }; G.time = 0;
