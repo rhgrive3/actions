@@ -378,7 +378,12 @@ export function installRankedBots(api = {}) {
     if(engine.mode!=='tower'&&this._nativeTowerBoarding)this._nativeTowerBoarding=null;
 
     this._nativeTraversalHandled = false;
-    if (api.nativeTower?.update?.(this,G,engine,dt)) return;
+    if(this._nativeTowerBoarding){
+      const boardingFrame=engine.frame||{actors:[],inputs:{}};
+      const boardingGoal=engine.rule?.botGoal?.(frameActor(actor,boardingFrame),boardingFrame);
+      if(boardingGoal?.action!=='ride')this._nativeTowerBoarding=null;
+      else if(api.nativeTower?.update?.(this,G,engine,dt))return;
+    }
     let nativeTail = null;
     const hadOwnTail = Object.prototype.hasOwnProperty.call(this, '_tail');
     const oldTail = this._tail;
