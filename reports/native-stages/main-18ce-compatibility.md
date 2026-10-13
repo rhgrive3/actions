@@ -1,0 +1,7 @@
+# Current main compatibility candidate
+
+The reviewed native foundation did not contain main18ce7b6c fixes for bounded network bomb/snapshot playback, native Sprinkler damage and respawn/editor/touch/HUD handling. This candidate merges that exact main commit FROM main into the review branch. Runtime code merged automatically; the central behavior record preserves both histories. It changes no native source geometry, source flags/masks/pads or Character/Actor movement. No changes were merged INTO main.
+
+Affected defaults pass145 of149, with four optional emitted-map fixtures absent from that invocation and zero failures. The correctly configured emitted-map rerun passes15/15 with zero skips. Public canonical packaging passes9/9 and startup budgets remain within131 core and14 range preloads. These are CPU/build checks; the controlled real-browser input fixture, actual source Scorch loading/shots, strict five-mode two-browser full-grid synchronization and named independent peer are still pending. Exact scope and immutable hashes are in the accompanying verification JSON.
+
+Earlier stage source, geometry and browser receipts retain their original build scope. Changed network/damage/respawn/input behavior receives current affected verification; unchanged original geometry is not re-labeled as a new proof. KiTrix is pinned0611f51b; source extraction version/retail placements and masks, native units, retail movement/SP/controller behavior and hardware FPS remain unverified. No extracted OBJ/MTL/PNG or generated reference geometry/screenshots are committed.

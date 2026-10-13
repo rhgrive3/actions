@@ -4188,3 +4188,5 @@ Ordinary native walking now has a narrowly scoped candidate that chooses human i
 ## 2026-10-14 — 全issue監査と入力寿命の修正
 
 全69件を確認し、#1396（取消済みPointer Lock）、#1400（editorへのpad入力透過）を修正。#1359/#1321の検証済み候補から#1357/#1360/#1340/#1311を集約した。公開ミラーとworkflowは不変。source監査455pass/4skip、配布版の入力/復活97passとnetwork32pass、梱包9pass、容量ゲート通過。修正前のbrowser反例を保ち、配布版の実Chromiumでeditor・neutral待ち・取消lock・fresh retry・小さいnative Canvas2D tankの5ケースが合格。controllerと非同期latencyは制御fixtureで、Switch/Android/iOS/Joy-Conの実機比較ではない。未公開の数値・曲線・原典単位を確定せず、残り63件を全解消済みとしない。全件表、正確なsource/build hash、失敗の保持、参照は `reports/inkwave-issue-resolution-2026-10-14.md` と同名JSON。
+
+2026-10-13 最新main18ce互換候補: 通信bomb/snapshotと原典Sprinkler被害、復活/editor/touch/HUD修正を作業ブランチへmainから取り込み、共有記録の双方を保持。mainへのマージではない。関連default145通過/4任意emitted skip/0失敗、正しいemitted再実行15/15・skip0、公開canonical9/9と容量通過。実ブラウザ入力・Scorch読込/通常射撃・全5ルール実WS・独立peerは進行中で完成扱いしない。原典/物理/単位/実機性能は不変・未確認を維持。詳細: [main-18ce-compatibility.md](native-stages/main-18ce-compatibility.md)。

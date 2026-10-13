@@ -1,0 +1,44 @@
+{
+  "status": "candidate",
+  "consumedMain": "18ce7b6c8b4c612f289787332b6be65862f34bea",
+  "candidateHead": "c83bcbf0eece8fa730074c961e0c27566444ce9e",
+  "baseFoundation": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
+  "scope": "Merge FROM main into review candidate. Network/bomb/snapshot/native Sprinkler and respawn/editor/touch/HUD fixes. No merge INTO main; no native source geometry/Actor physics/Character movement changes.",
+  "default": {
+    "tests": 149,
+    "passed": 145,
+    "skipped": 4,
+    "failed": 0,
+    "skipScope": "Optional emitted map-gyro without INKWAVE_CONTROLS_SITE; correctly configured emitted rerun15/15no skips follows."
+  },
+  "emittedMapGyro": {
+    "tests": 15,
+    "passed": 15,
+    "skipped": 0,
+    "failed": 0,
+    "scope": "Installed emitted Game/Match/Minimap source exports in Node VM, not physical controller or real browser gameplay."
+  },
+  "public": {
+    "contentHash": "6eabb186254e495fd1b83c45eb0d781d9ae091b778315c83739fca4eaca1925f",
+    "inputHash": "51690c0a9068d29c0436e84c83ec83b69acb38a2a40e73c3ca1b1b33135ef3f1",
+    "revision": "792365c4201cd6eb969bb5c5e4d9748da3a8f473a63c07a0126fc9ff5848dd62",
+    "packagingPassed": 9,
+    "startupBudget": "passed"
+  },
+  "pending": [
+    "Current real browser controlled Input/HUD/pointer lock fixture",
+    "Current public pinned Scorch conversion/cache/corrupt rollback",
+    "Scorch private actualGame fixed-clock source shots",
+    "Scorch strict five-mode real two-browser WS full-grid settlement",
+    "Named Humpback independent compatibility review"
+  ],
+  "sourceUnchanged": true,
+  "sourceAssetsCommitted": false,
+  "unknowns": [
+    "Nintendo Ver11.3.0 exact extraction version and placement/collision/paint/climb/moving-platform states",
+    "Retail coordinate units",
+    "All loadout and autonomous basket scoring completeness",
+    "Hardware FPS",
+    "Previous stage evidence retains prior immutable artifact scopes; current affected proofs do not relabel old receipts"
+  ]
+}
