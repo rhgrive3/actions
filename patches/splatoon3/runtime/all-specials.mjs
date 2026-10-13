@@ -758,6 +758,26 @@ function stampLine(rt,actor,from,to,width,seed) {
     paintStamp(rt,actor,p,Math.min(MAX_STAMP_RADIUS,width),seedUnit(seed,index++));
   }
 }
+// 11.3.0 WeaponSpShockSonar.GeneratorParam.MarkingGroundFrameRadiusRatio:
+// (4F, 0.19), (10F, 0.40), (18F, 0.615). Interpolate the source keyframes
+// separately; one 4F-to-18F ramp leaves players unmarked at frame 10.
+export function waveBreakerGroundMarkRatio(frame) {
+  if (!finite(frame) || frame < 4) return 0;
+  if (frame < 10) return .19 + (.4 - .19) * (frame - 4) / 6;
+  if (frame < 18) return .4 + (.615 - .4) * (frame - 10) / 8;
+  return .615;
+}
+
+// 11.3.0 WeaponSpCastle.BodyParam.CollisionDashRadiusForPlayer = 1.5.
+// A dash collision covers the entire travelled segment, not its midpoint.
+export function krakenDashSweptContact(from, to, target, radius = 1.5) {
+  if (![from?.x, from?.z, to?.x, to?.z, target?.x, target?.z, radius].every(finite) || radius < 0) return false;
+  const x = to.x - from.x, z = to.z - from.z, lengthSq = x*x + z*z;
+  const t = lengthSq > 1e-12 ? clamp(((target.x-from.x)*x + (target.z-from.z)*z)/lengthSq, 0, 1) : 0;
+  const dx = target.x - (from.x+t*x), dz = target.z - (from.z+t*z);
+  return dx*dx + dz*dz <= radius*radius;
+}
+
 function updateWorld(rt,dt) {
   const list=rt.system._s3AllSpecialObjects;if(!Array.isArray(list)||!(dt>0))return;
   for(let i=list.length-1;i>=0;i--){
@@ -799,7 +819,7 @@ function updateWorld(rt,dt) {
       if(elapsed>=o.expand)removeWorld(rt,o,'expire');
     }else if(o.kind==='wave'){
       if(o.mesh)o.mesh.material.emissiveIntensity=.18+.4*Math.sin(o.age*9);
-      const frame=o.age*FPS,markRatio=frame<4?0:frame<18?.19+.425*(frame-4)/14:.615;
+      const frame=o.age*FPS,markRatio=waveBreakerGroundMarkRatio(frame);
       o.contactTimes ||= new Map();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===o.team)continue;
@@ -1036,10 +1056,10 @@ function activeStep(rt,actor,dt) {
       state.dashT+=dt;const before=actor.pos.clone(),py=actor.pos.y;
       actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;actor.vel.y=0;
       actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false);
-      const swept=rt.v1.copy(before).lerp(actor.pos,.5);state.dashHits||=new Set();
+      state.dashHits||=new Set();
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===actor.team||state.dashHits.has(victim))continue;
-        if(Math.hypot(victim.pos.x-swept.x,victim.pos.z-swept.z)<=1.5){rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);}
+        if(krakenDashSweptContact(before,actor.pos,victim.pos,1.5)){rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);}
       }
       stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
       if(state.dashT>=35/60){state.phase='active';state.dashT=0;}
