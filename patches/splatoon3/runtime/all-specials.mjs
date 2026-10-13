@@ -1593,8 +1593,15 @@ function activeStep(rt,actor,dt) {
       if(!isBrake){
         for(const victim of rt.api.G.actors||[]){
           if(!victim?.alive||victim.team===actor.team||state.footHits.has(victim))continue;
+          // WeaponSpSkewer BulletParam.CollisionRadiusForPlayer=.8 and
+          // WeaponParam.OffsetLocal_DetectPlayer={X:0,Y:.8,Z:1}.
+          // Sweep the rider's actual forward/upward detector, not the foot
+          // position with an inflated horizontal radius (which hits upper floors).
           const point=rt.v12.set(victim.pos.x,victim.pos.y+.75,victim.pos.z);
-          if(segmentDistance(rt,point,from,actor.pos)<=1.2){
+          const detectFrom=rt.v13.copy(from).addScaledVector(state.direction,1);
+          const detectTo=rt.v14.copy(actor.pos).addScaledVector(state.direction,1);
+          detectFrom.y+=.8;detectTo.y+=.8;
+          if(segmentDistance(rt,point,detectFrom,detectTo)<=.8){
             state.footHits.add(victim);rt.api.G.projectiles.applyHit(actor,victim,220,'reefslider');
           }
         }

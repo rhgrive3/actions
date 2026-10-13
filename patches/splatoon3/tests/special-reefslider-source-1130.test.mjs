@@ -61,3 +61,28 @@ test('Reefslider runs straight and source 54F timeout starts the 38F preburst',a
  for(let i=0;i<38;i++)actor._updateSpecial(1/60);
  assert.equal(state.phase,'recovery');
 });
+
+test('Reefslider direct contact uses the .8 radius at forward 1.0/up .8, not 1.2 around the feet',async()=>{
+ const {f,actor,state}=await setUp();
+ actor.aimDir.set(0,0,1);
+ state.direction.set(0,0,1);
+ const inside=f.make(),outside=f.make(),upper=f.make();
+ for(const victim of [inside,outside,upper]){victim.team=1;victim.alive=true;}
+ inside.pos.set(.7,0,1.02);
+ outside.pos.set(1.05,0,1.02);
+ upper.pos.set(0,4,1.02);
+ f.G.actors=[actor,inside,outside,upper];
+ const hits=[],original=f.G.projectiles.applyHit;
+ f.G.projectiles.applyHit=(a,b,damage,id)=>{hits.push({a,b,damage,id});return false;};
+ try{
+  for(let i=0;i<38;i++)actor._updateSpecial(1/60);
+  assert.equal(state.phase,'dash');
+  actor._updateSpecial(1/60);
+  assert.equal(hits.filter(h=>h.b===inside&&h.id==='reefslider').length,1,
+    'within the source radius of the forward collision detector');
+  assert.equal(hits.some(h=>h.b===outside&&h.id==='reefslider'),false,
+    '1.05-unit lateral separation is beyond the .8-unit source radius');
+  assert.equal(hits.some(h=>h.b===upper&&h.id==='reefslider'),false,
+    'a player on an upper storey cannot be hit through the floor');
+ }finally{f.G.projectiles.applyHit=original;}
+});
