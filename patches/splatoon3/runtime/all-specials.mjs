@@ -610,7 +610,11 @@ function reefImpact(rt,actor,state,center) {
   damageBandRadius(rt,actor,center,descriptions.reefslider.splashBands.map(([r,d])=>[r*scale,d]),radius,'reefslider',null,5);
   fxBurst(rt,actor,point,radius,'impact');
   emitAction(rt,actor,'reefslider',state.serial,'impact',point,null,seed,{radius});
-  actor.invuln=Math.max(actor.invuln,.35);endSpecial(rt,actor,'impact');
+  // WeaponSpSkewer: 28F of post-impact invulnerability and recovery.
+  actor.invuln=Math.max(actor.invuln,28/FPS);
+  actor.vel.x=0;actor.vel.z=0;
+  state.phase='recovery';state.recoveryT=0;
+  if(actor.specialActive?.id===state.id)actor.specialActive.phase='recovery';
 }
 function deployInkstrike(rt,actor,state,index) {
   const target=aimPoint(rt,actor,28,rt.v0).clone();groundAt(rt,target,rt.v1);target.copy(rt.v1);
@@ -1065,17 +1069,50 @@ function activeStep(rt,actor,dt) {
   }
   if(state.id==='reefslider'){
     actor.form='kid';
-    if(state.phase==='startup'&&elapsed>=38/60){state.phase='dash';state.dashT=0;state.travel=0;actor.character?.trigger?.('special_dash');}
+    // WeaponSpSkewer (11.3.0): PreMoveFrame=38, immunity after 25F;
+    // MoveFrame=54, MoveAcc=MoveBrk=.031 and MoveSpeed=.405/frame;
+    // MoveCancelableFrame=15; PreBurstFrame=38; UnrelaxFrame=28.
+    // Keep the heading chosen at activation: the riding path is NOT steerable.
+    if(state.phase==='startup'){
+      if(elapsed>=25/FPS)actor.invuln=Math.max(actor.invuln,dt+.025);
+      if(elapsed>=38/FPS){
+        state.phase='dash';s.phase='dash';state.dashT=0;state.travel=0;state.reefSpeedRaw=0;
+        actor.character?.trigger?.('special_dash');
+      }
+    }
     if(state.phase==='dash'){
       state.dashT+=dt;
-      if(edges.fire||edges.sub){reefImpact(rt,actor,state,actor.pos.clone());return;}
-      const steer=actor.intent.move||rt.zero;
-      if(Math.hypot(steer.x,steer.z)>.1){const move=rt.v0.set(steer.x,0,steer.z).normalize();state.direction.lerp(move,.035).normalize();}
-      actor.vel.x=state.direction.x*24.3;actor.vel.z=state.direction.z*24.3;actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
-      const before=actor.pos.clone(),py=actor.pos.y;actor.pos.addScaledVector(actor.vel,dt);actor.grounded=false;actor._resolve?.(false,py,false);
-      state.travel+=before.distanceTo(actor.pos);
-      if(actor.contacts?.wall||state.dashT>=54/60||state.travel>=28){reefImpact(rt,actor,state,actor.pos.clone());return;}
-      actor.invuln=Math.max(actor.invuln,.18);
+      actor.invuln=Math.max(actor.invuln,dt+.025);
+      if((edges.fire||edges.sub)&&state.dashT>=15/FPS){
+        state.phase='brake';s.phase='brake';state.brakeT=0;
+      }else{
+        const frames=clamp(dt*FPS,0,6);
+        state.reefSpeedRaw=Math.min(.405,(state.reefSpeedRaw||0)+.031*frames);
+        const speed=state.reefSpeedRaw*FPS;
+        actor.vel.x=state.direction.x*speed;actor.vel.z=state.direction.z*speed;
+        actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
+        const before=actor.pos.clone(),py=actor.pos.y;
+        actor.pos.addScaledVector(actor.vel,dt);actor.grounded=false;actor._resolve?.(false,py,false);
+        state.travel+=Math.hypot(actor.pos.x-before.x,actor.pos.z-before.z);
+        if(actor.contacts?.wall||state.dashT+1e-8>=54/FPS){
+          state.phase='brake';s.phase='brake';state.brakeT=0;
+        }
+      }
+    }
+    if(state.phase==='brake'){
+      actor.invuln=Math.max(actor.invuln,dt+.025);
+      state.brakeT+=dt;
+      state.reefSpeedRaw=Math.max(0,(state.reefSpeedRaw||0)-.031*clamp(dt*FPS,0,6));
+      const speed=state.reefSpeedRaw*FPS;
+      const py=actor.pos.y;actor.vel.x=state.direction.x*speed;actor.vel.z=state.direction.z*speed;
+      actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
+      actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false);
+      if(state.brakeT+1e-8>=38/FPS)reefImpact(rt,actor,state,actor.pos.clone());
+    }
+    if(state.phase==='recovery'){
+      state.recoveryT+=dt;
+      actor.vel.x=0;actor.vel.z=0;
+      if(state.recoveryT+1e-8>=28/FPS)endSpecial(rt,actor,'recovery');
     }
     return;
   }
