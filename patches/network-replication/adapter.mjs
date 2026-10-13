@@ -210,7 +210,7 @@ function finiteRemoteSample(s) {
 }
 function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded remote samples');
     code = "import { syncRemoteInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
-    patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
+    patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst BOMB_BUDGET_WAIT = Symbol("bomb-budget-wait");\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
@@ -818,6 +818,15 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
   }
 
   _playEvents() {`, 'authoritative pre-deadline paint commit');
+    patch('      const due = p.events.splice(0, i);\n      for (const e of due) this._play(id, e);', `      let consumed = 0;
+      while (consumed < i) {
+        // Keep a quota-full native attack in the existing bounded owner FIFO.
+        // Normal owner-time physics can retire older bombs before the next pass.
+        // Never consume its sequence/Storm token just because allocation waits.
+        if (this._play(id, p.events[consumed]) === BOMB_BUDGET_WAIT) break;
+        consumed++;
+      }
+      if (consumed) p.events.splice(0, consumed);`, 'bounded gameplay bomb backpressure');
     patch(`      case 's': {
         this.applying = true;
         const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
@@ -832,6 +841,12 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (!e._finishPaintApplied) this._applyRemoteSplatEvent(e);
         break;
       }`, 'deadline paint is never double-applied');
+    // The kit column follows the optional Storm metadata column. Derive it
+    // from the same composed native replay call used below, not packet length
+    // (which also carries event sequence/tick and optional paint metadata).
+    const bombKitIndex = code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12])') ? 11
+      : code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11])') ? 10 : -1;
+    code = "import { retireReplacedGhostSprinklers } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n" + code;
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 's') e._netPeer = from;
     if (e[1] === 's') {
@@ -866,6 +881,20 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
     }
+    if (eventKind === 'b') {
+      const a = this.byNid.get(e[2]);
+      // Validate the existing Storm authority before allowing it to wait. An
+      // invalid/replayed special must never hold the owner's FIFO head hostage.
+      if (e[3] === 'storm') {
+        const auth = a?.net?._stormBirthAuth;
+        if (!stormSnapshotAllows(a, e._stormSnapshot, from) || a.weapon?.special !== 'storm'
+          || !auth || auth.used || auth.owner !== from || auth.life !== e._stormSnapshot.life
+          || !Number.isSafeInteger(e._netTick) || e._netTick !== auth.tick
+          || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) return;
+      }
+      ${bombKitIndex < 0 ? '' : `if (e[3] === 'bomb' && e[${bombKitIndex}] === 'sprinkler') retireReplacedGhostSprinklers(G.projectiles, a);`}
+      if (!allowGhostBombBirth(G.projectiles?.bombs, a, from, e[3], this.match?.actors)) return BOMB_BUDGET_WAIT;
+    }
     if (e._netSeq !== undefined && eventPeer) eventPeer._lastEventSeq = e._netSeq;
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
@@ -886,9 +915,9 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
             || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
           auth.used = true;
         }
-        // Drop only excess cosmetic births before creating Group/Mesh/materials.
-        // Later paint, hits and events retain their independent wire identity.
-        const b = a && allowGhostBombBirth(G.projectiles?.bombs, a, from)
+        // These native replicas own victim-local bomb/Storm damage. Reserve
+        // each bound actor's share; ordinary bombs cannot consume Storm slots.
+        const b = a && allowGhostBombBirth(G.projectiles?.bombs, a, from, e[3], this.match?.actors)
           ? G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]${bombReplayArgs}) : null;
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;

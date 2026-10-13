@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './robustness-fixture.mjs';
 import {
-  validForwardedEventPayload, REMOTE_GHOST_BOMB_LIMITS, allowGhostBombBirth,
+  validForwardedEventPayload, REMOTE_GHOST_BOMB_LIMITS, REMOTE_GHOST_STORM_RESERVE, allowGhostBombBirth,
 } from '../snapshot-guard.mjs';
 
 const fire = (changes = {}) => ({
@@ -79,7 +79,7 @@ test('queued Charger fix blocks a poison before the playback clock, retires beam
   } finally { net.dispose(); }
 });
 
-test('queued remote bomb fix caps live scene allocation across ten fully replayed 256-birth owner ticks', async () => {
+test('remote bomb floods bound live scene allocation and pending native attacks separately', async () => {
   const f=await fixture();
   const net=f.makeNetMatch(f.makeSession('me','me',[['me','Me'],['p2','P2'],['p3','P3']]));
   const a=f.makeActor({nid:17,owner:'p2',remote:true,team:0,roller:false});
@@ -96,15 +96,15 @@ test('queued remote bomb fix caps live scene allocation across ten fully replaye
       const peer=net._peer('p2');
       peer.tr=ts; peer.sim=tick;
       net._playEvents();
-      assert.equal(peer.events.length,0, 'each admitted packet drains');
+      assert.equal(peer.events.length,Math.min(512,(batch+1)*256-22), 'pending attacks stay in the existing bounded FIFO');
       assert.ok(f.projectiles.bombs.filter(item=>item.ghost && item.owner===a).length
         <= REMOTE_GHOST_BOMB_LIMITS.actor, 'no over-budget replay');
     }
     const ghosts=f.projectiles.bombs.filter(item=>item.ghost);
-    assert.equal(ghosts.length,REMOTE_GHOST_BOMB_LIMITS.actor);
+    assert.equal(ghosts.length,REMOTE_GHOST_BOMB_LIMITS.actor-REMOTE_GHOST_STORM_RESERVE);
     assert.equal(f.projectiles.scene.children.length-sceneBefore,ghosts.length,
       'no excess remote Group/Mesh allocations');
-    assert.equal(net._peer('p2')._lastEventSeq,2560, 'excess visuals do not stall later events');
+    assert.equal(net._peer('p2')._lastEventSeq,22, 'unallocated gameplay attacks do not consume identity');
 
     // An independent owner still has fair space despite the flooded actor.
     const event=[1000.6,'b',18,'bomb',1,2,0,0,0,0,136,1];
@@ -118,18 +118,18 @@ test('queued remote bomb fix caps live scene allocation across ten fully replaye
     f.projectiles.clear();
     assert.equal(f.projectiles.bombs.length,0);
     assert.equal(allowGhostBombBirth(f.projectiles.bombs,a,'p2'),true);
-    const next=[1000.7,'b',17,'bomb',0,2,0,0,0,0,142,2561];
-    next._netTick=142; next._netSeq=2561;
-    net._play('p2',next);
-    assert.equal(f.projectiles.bombs.filter(item=>item.ghost && item.owner===a).length,1,
-      'a later legitimate bomb survives after cleanup');
+    net._playEvents();
+    assert.equal(f.projectiles.bombs.filter(item=>item.ghost && item.owner===a).length,22,
+      'capacity released by clear replays the waiting native attacks');
+    assert.equal(net._peer('p2')._lastEventSeq,44);
+    assert.equal(net._peer('p2').events.length,490);
   } finally { net.dispose(); }
 });
 
 test('remote bomb budgets count ghost-only records, reserve peer fairness, and free after removal', () => {
   const p2a={owner:'p2'}, p2b={owner:'p2'}, p3={owner:'p3'};
   const ghosts=[];
-  for(let i=0;i<REMOTE_GHOST_BOMB_LIMITS.actor;i++) ghosts.push({ghost:true,owner:p2a});
+  for(let i=0;i<REMOTE_GHOST_BOMB_LIMITS.actor-REMOTE_GHOST_STORM_RESERVE;i++) ghosts.push({ghost:true,owner:p2a});
   assert.equal(allowGhostBombBirth(ghosts,p2a,'p2'),false);
   assert.equal(allowGhostBombBirth(ghosts,p2b,'p2'),true);
   ghosts.pop();

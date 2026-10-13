@@ -839,6 +839,21 @@ const PACKET_SUB_IDS = Object.freeze(['suction', 'curling', 'sprinkler', 'autobo
 
 const packetSubId = (raw) => (typeof raw === 'string' && raw.length <= 16 && PACKET_SUB_IDS.includes(raw) ? raw : null);
 
+// Match the native owner's one-Sprinkler lifecycle for authenticated replicas.
+// Network admission can call this before allocating the replacement, so an old
+// persistent Sprinkler cannot pin a finite bomb budget. Never retire local
+// authority, another actor's device, or that actor's other deployed attacks.
+export function retireReplacedGhostSprinklers(projectiles, actor, except = null) {
+  if (!Array.isArray(projectiles?.bombs) || !actor) return;
+  for (let i = projectiles.bombs.length - 1; i >= 0; i--) {
+    const b = projectiles.bombs[i];
+    if (b === except || b?.ghost !== true || b.owner !== actor
+      || b.s3GhostResolved?.spec?.mode !== 'sprinkler') continue;
+    projectiles._releaseBomb(b);
+    projectiles.bombs.splice(i, 1);
+  }
+}
+
 // Recording side. Returns `null` while a ghost is being replayed: `ghostBomb`
 // builds its record through the native `throwBomb`, whose `!a.remote` guard is the
 // only thing standing between a peer's packet and a new packet of our own. Once a
@@ -869,6 +884,7 @@ export function kitGhostBombAttach(SUB, projectiles, b, rawId, rawCharge) {
   // the whole life of the record.
   const resolved = resolveSubAtCharge(spec, charge);
   if (!resolved) return null;
+  if (spec.mode === 'sprinkler') retireReplacedGhostSprinklers(projectiles, b.owner, b);
   b.s3GhostResolved = resolved;
   b.s3Charge = resolved.charge;
   b.s3Mode = 'flight';
