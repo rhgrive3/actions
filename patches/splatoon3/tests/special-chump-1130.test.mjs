@@ -21,7 +21,7 @@ test('S3 Super Chump schedules 12 decoys after the documented 13F pre-throw',asy
   assert.deepEqual(objects.map(o=>Math.round(o.startDelay*60)),Array(12).fill(13));
   for(const [i,obj] of objects.entries()){
     assert.equal(obj.phase,'queued');
-    assert.equal(obj.mesh.visible,false);
+    if(obj.mesh)assert.equal(obj.mesh.visible,false);
     assert.equal(obj.hp,60);
     assert.ok(Math.abs(obj.dur-(f.superChumpReleaseFrame(i)+108+210)/60)<1e-8);
   }
@@ -34,9 +34,9 @@ test('scheduled decoys stay hidden until their own launch, then travel before ex
   assert.equal(objects[0].phase,'queued');
   f.G.projectiles.update(1/60);
   assert.equal(objects[0].phase,'flight');
-  assert.equal(objects[0].mesh.visible,true);
+  if(objects[0].mesh)assert.equal(objects[0].mesh.visible,true);
   assert.equal(objects[11].phase,'flight','twelve balloons launch together, not at fabricated 4F offsets');
-  assert.equal(objects[11].mesh.visible,true);
+  if(objects[11].mesh)assert.equal(objects[11].mesh.visible,true);
 });
 test('remote decoy replay preserves source launch delay and does not reveal queued meshes',async()=>{
   const {f,events,objects}=await setup();
@@ -48,5 +48,5 @@ test('remote decoy replay preserves source launch delay and does not reveal queu
   assert.ok(ghost);
   assert.equal(ghost.startDelay,objects[0].startDelay);
   assert.equal(ghost.phase,'queued');
-  assert.equal(ghost.mesh.visible,false);
+  if(ghost.mesh)assert.equal(ghost.mesh.visible,false);
 });

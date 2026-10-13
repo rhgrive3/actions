@@ -590,7 +590,7 @@ function tickMissileVolley(rt,actor,state) {
     const shot=plan[state.volleyIndex++],origin=state.volleyOrigin;
     const spread=(shot.index-(shot.total-1)/2)*.055;
     const dir=rt.v4.copy(shot.dest).sub(origin);dir.x+=Math.sin(spread);dir.normalize();
-    const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24,paintRadius:3});
+    const p=launch(rt,actor,'tentaMissiles',origin,dir,{speed:6,grav:11,drag:.08,life:2.8,arc:3.5,seed:nextSeed(state),size:.24,paintRadius:gearCurve(state.specialPowerAP,3.15,3.465,3.78)});
     if(p){p.s3TentaTarget=shot.dest.clone();p.s3TentaAge=0;p.s3TentaDescending=false;p.s3TentaDirection=dir.clone();}
     state.volleyNext+=4/FPS;
   }
@@ -671,7 +671,7 @@ function throwChumps(rt,actor,state) {
     const obj=deployObject(rt,actor,'superChump','decoy',origin,state,{
       dur:(releaseFrame+108+210)/FPS,startDelay:releaseFrame/FPS,maxRadius:6,
       damage:70,hp:60,seed:nextSeed(state),index:i,target:pos,scale:[.72,.72,.72]});
-    obj.phase='queued';obj.mesh.visible=false;obj.flight=108/FPS;obj.origin=origin.clone();
+    obj.phase='queued';if(obj.mesh)obj.mesh.visible=false;obj.flight=108/FPS;obj.origin=origin.clone();
     emitAction(rt,actor,'superChump',state.serial,'balloon',origin,pos,obj.seed,{index:i});
   }
   endSpecial(rt,actor,'deployed');
@@ -873,7 +873,7 @@ function updateWorld(rt,dt) {
           if(!o.owner.remote&&(o.pulse||0)%4===0)emitObject(rt,o,'pulse');
         }
       }
-      if(elapsed>=o.dur)removeWorld(rt,o,'expire');
+      if(elapsed+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='booyahBlast'){
       const elapsed=o.age-o.startDelay,started=elapsed>=0;
       const radius=started?o.maxRadius*clamp(elapsed/Math.max(1/FPS,o.expand),0,1):0,center=rt.v0.copy(o.pos);center.y+=.2;
@@ -1026,7 +1026,7 @@ function activeStep(rt,actor,dt) {
   if(state.id==='booyahBomb'){
     // WeaponSpNiceBall: 30F startup before armor/charge; 600F to throw.
     // A full charge enables manual ZR throw, but does NOT auto-launch.
-    actor.form='kid';dampForSpecial(actor,dt,0);
+    actor.form='kid';actor.vel.set(0,0,0);
     const ready=elapsed+1e-8>=30/FPS,ap=state.specialPowerAP;
     if(ready){
       state.charge=Math.min(1,state.charge+gearCurve(ap,.002,.006,.01));
@@ -1135,7 +1135,7 @@ function activeStep(rt,actor,dt) {
     // MoveCancelableFrame=15; PreBurstFrame=38; UnrelaxFrame=28.
     // Keep the heading chosen at activation: the riding path is NOT steerable.
     if(state.phase==='startup'){
-      if(elapsed>=25/FPS)actor.invuln=Math.max(actor.invuln,dt+.025);
+      if(elapsed+1e-8>=25/FPS)actor.invuln=Math.max(actor.invuln,dt+.025);
       if(elapsed>=38/FPS){
         state.phase='dash';s.phase='dash';state.dashT=0;state.travel=0;state.reefSpeedRaw=0;
         actor.character?.trigger?.('special_dash');

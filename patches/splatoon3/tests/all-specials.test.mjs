@@ -329,7 +329,7 @@ test('Inkjet power snapshot survives the actual projectile packet and ghost with
 test('every catalogue-launched special projectile keeps a wire identity accepted by ghost reconstruction',async()=>{
  const f=await setup();
  for(const id of ['tentaMissiles','inkjet','booyahBomb','ultraStamp','crabTank']){
-  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];if(id==='tentaMissiles'){const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors.push(target);}a._startSpecial();a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
+  f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];if(id==='tentaMissiles'){const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors.push(target);}a._startSpecial();if(id==='booyahBomb'){a._s3AllSpecialState.charge=1;for(let k=0;k<30;k++)a._updateSpecial(1/60);}a.intent.fire=id==='inkjet';a.intent.sub=id!=='inkjet'&&id!=='crabTank';
   for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
   const p=f.G.projectiles.list.find(x=>x.s3AllSpecial===id);assert.ok(p,id+' emitted');
   const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));assert.equal(packet[4],id);

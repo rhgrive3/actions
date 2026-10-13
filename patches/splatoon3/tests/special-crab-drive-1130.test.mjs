@@ -16,13 +16,13 @@ async function setup(){
 test('Chariot 11.3.0 preserves exact X/Z 5:1 speed ratio in camera-local axes',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:EXTRA});
  const velocity=f.crabTankAttackTargetVelocity;
- assert.deepEqual(velocity({x:1,z:0},0),{x:4.5,z:0});
- assert.deepEqual(velocity({x:0,z:1},0),{x:0,z:.9});
+ const right=velocity({x:1,z:0},0);assert.equal(right.x,4.5);assert.equal(right.z,0);
+ const front=velocity({x:0,z:1},0);assert.equal(front.x,0);assert.equal(front.z,.9);
  const side=velocity({x:0,z:1},Math.PI/2);
  const forward=velocity({x:1,z:0},Math.PI/2);
  assert.ok(Math.abs(side.x)<1e-12 && Math.abs(side.z-4.5)<1e-12);
  assert.ok(Math.abs(forward.x-.9)<1e-12 && Math.abs(forward.z)<1e-12);
- assert.deepEqual(velocity({x:Infinity,z:1},0),{x:0,z:0});
+ const bad=velocity({x:Infinity,z:1},0);assert.equal(bad.x,0);assert.equal(bad.z,0);
 });
 test('Chariot shooter spin-up stays within 12F..4F and reaches 4F after 90F',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:EXTRA});
