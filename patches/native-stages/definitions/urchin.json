@@ -1,0 +1,16 @@
+{
+  "id": "urchin",
+  "internal": "Vss_Crank02",
+  "name": "デカライン高架下",
+  "sourceSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+  "tree": "3ea9e36f296ab6f6b9c636abc1cc401ce1768f07",
+  "bounds": {"minX": -103.5, "minZ": -37.808, "maxX": 103.5, "maxZ": 37.808},
+  "spawnPads": [[90, 12, -20], [-90, 12, 20]],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Local supports on pinned source AsphaltBace, inferred Pnt/base interactive extent; retail spawn, collision and ranked placements unverified",
+  "sourceSemantics": {
+    "nonCollidableObjectPatterns": ["^Fld_Crank02_BakeDummy", "^Fld_Crank02_Prop_Crank02WaterTower[AB]_"],
+    "nonPaintableObjectPatterns": ["^Fld(?:Obj)?_Crank02_.*(?:_np_xl|__Ivy00|__CmnPlantationSet)$"]
+  }
+}
