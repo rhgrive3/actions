@@ -25,3 +25,5 @@ export {nativeRankedBotGoalReachable} from './native-ranked-goals.mjs';
 export {nativeRankedTowerApproach,updateNativeTowerBoarding,nativeTowerRider} from './native-ranked-boarding.mjs';
 export {nativeJumpAttachTransition,updateNativeJumpAttach} from './native-jump-attach.mjs';
 export {nativeOrdinaryJumpInput} from './native-jump-input.mjs';
+
+export {nativeWallApproachTransition} from './native-approach.mjs';
