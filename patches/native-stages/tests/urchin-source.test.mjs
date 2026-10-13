@@ -39,7 +39,7 @@ test('Urchin actual asphalt supports, source exclusions, both-team directed rank
   }
  }
  G.nav=new f.NavGraph(L,P);const N=G.nav,stage=f.nativeRankedStage(G);
- const goals=[...stage.zones.map(z=>z.center),stage.rainmaker.center,...stage.rainmaker.goals,...stage.rainmaker.checkpoints.flat(),...stage.clams.spawns,...stage.tower.path.map(p=>[p[0],p[1]-3.3,p[2]])];
+ const goals=[...stage.zones.map(z=>z.center),stage.rainmaker.center,...stage.rainmaker.goals,...stage.rainmaker.checkpoints.flat(),...stage.clams.spawns,...stage.tower.path.map(p=>[p[0],p[1]-(stage.tower.localLift??3.3),p[2]])];
  for(const [team,pad] of L.spawnPads.entries())for(const p of goals){const start=N.nearest(pad,1.2),end=N.nearest(new THREE.Vector3(...p),1.2);assert(N.path(start,end,team,50000),'team '+team+' directed route to '+p);}
  for(const p of stage.tower.path)for(const [dx,dz] of [[0,0],[.7,0],[-.7,0],[0,.7],[0,-.7]])assert(P.bodyFits(new THREE.Vector3(p[0]+dx,p[1],p[2]+dz),PLAYER.radius,.3,PLAYER.height),'source capsule clearance across tower route');
  assert.equal(stage.version1130Verified,false);
