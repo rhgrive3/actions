@@ -1,0 +1,21 @@
+# 原典の上層での戦闘歩行支持
+
+候補の修正は、native原典上で接地しているbotのfight/retreatだけに適用する。従来のwet判定は落下死亡閾値より上の船底を安全な床とみなし、上層からそこまで通常歩行できるかを調べていなかった。既存groundProbeで現在formのstepUp/stepDown/footRadiusに従った連続支持を確認し、既存edgeGuardの旋回・停止へ結果を渡す。連続した下り坂、NoPaint、人型の金網、実dynamic足場は支持として維持する。イカが通過する金網、崖、source worldとphysicsの不一致は安全な支持として新たに許可しない。
+
+地形・衝突・NoPaint・インク・速度・接地物理・スポーン・通常navigation/ranked/特殊移動の入力所有者は変更しない。原典はKiTrix固定0611f51b、オヒョウVss_Twist00のSHA8413aae6…3771d9。参照ブキはLeanny11.3.0のShooter_Normal_00、ゼロAP。抽出版、原典座標の単位、Nintendoのcollision/paint/climb mask、実機の停止距離とAI判断は未確認。
+
+## 検証済みの範囲
+
+合成4件で、保持した下層船底が旧判定で安全になる負例、既存の崖回避、連続下り坂、NoPaint、金網のform差、現在dynamic支持、legacy・通常navigation・airborne・死亡・スポーン・specialへの不適用を確認した。production Actor/Character/Brain._tailとsource Physicsを使用したCPU比較では、制御した人型移動が修正前に高さ3へ落下し、修正後に高さ6の上層へ留まった。制御したイカ移動は旧版・新版とも落下しない対照だった。
+
+Chromiumで実際にインストールされたGame._frameを使用し、旧判定/候補×人型/イカ×描画30/60/120Hzの12ケースを実行した。Actorとproduction Brain._tailの観測dtは1/60、各240更新と固定clockが一致、8人7bot、例外0。旧人型3ケースは高さ3へ落下、新しい人型3ケースは上層へ留まり、イカ6ケースも上層で生存接地した。実行前後の元データ10typed配列は長さとSHAがすべて一致した。
+
+これは初期のsource支持spawnAt、直接splatで用意した自陣インク、制御した戦闘方向、他botのneutral inputを用いる回帰比較であり、自然な敵認識・通常射撃からの塗り・全ルール・全対岸移動の完了ではない。測定したframe時間はsoftware Chromiumのinclusive値であり、render頻度を変えると一frameあたりの固定更新数も異なる。実機FPS、性能向上、遅延の改善を主張しない。
+
+## 保持した失敗と残る検証
+
+自然な敵認識を使った最初のGame比較では、戦闘後にpaint modeへ戻ってから候補も屋根を離れた。この失敗は保持し、fight/retreat候補の成功として扱わない。オヒョウ担当の元の全対岸失敗記録は最終modeを含んでいないため、落下直前の入力所有者も独立再確認が必要。通常移動の失敗を隠すために候補の適用範囲を広げていない。
+
+公開共通ビルドのcanonical tracked-inputを含む9/9とstartup容量が通過。最初のprivate診断ビルドは担当の定義を一時追加したため、その定義が共通HEADに存在せずcanonical guardが8/9で失敗した。guardを変更せず、担当のtracked定義を含む独立ローカルcomposition branchでprivate封印を進めている。共通default検証と独立peer完了まで未採用。元のOBJ/MTL/PNG、生成geometry、スクリーンショットはコミットしない。
+
+証跡の要約は[verification JSON](combat-source-support.verification.json)。privateの詳細logと原典データは作業領域に保持する。
