@@ -128,13 +128,16 @@ export function adaptNativeStages(rel,code){
   updatePaintQuality(game, q.paintAtlas, G, THREE_LIB);`);
  }
  if(rel==='patches/splatoon3/runtime/respawn-lifecycle.mjs'){
-  code="import { nativeInitialLanding, nativeSpawnYaw } from '../../native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeInitialLanding, nativeBotInitialLanding, nativeSpawnYaw } from '../../native-stages/runtime/engine.mjs';\n"+code;
+  once('const supportedTarget = (actor, x, z) => {\n    const y = G.level.groundHeight?.(x, z);','const supportedTarget = (actor, x, z, sourceY = null) => {\n    const y = G.level?.native && Number.isFinite(sourceY) ? sourceY : G.level.groundHeight?.(x, z);');
+  once('    const target = s.target && supportedTarget(actor, s.target.x, s.target.z);','    const sourceY = G.level?.native && Number.isFinite(s.target?.nativeSourceY) ? s.target.nativeSourceY : null;\n    const target = s.target && supportedTarget(actor,s.target.x,s.target.z,sourceY);\n    if(target&&sourceY!==null)target.nativeSourceY=sourceY;');
   once('(actor.team === 0 ? 0 : Math.PI); dx', 'nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI); dx');
   once('const angle = (actor.team === 0 ? 0 : Math.PI) +', 'const angle = nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI) +');
   once('p = slotPoint(actor), yaw = actor.team === 0 ? 0 : Math.PI;', 'p = slotPoint(actor), yaw = nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI);');
-  once('initial && actor.isBot ? initialBotTarget(actor)', '(initial || G.level?.native) && actor.isBot ? initialBotTarget(actor)');
-  once('    return slotTarget(actor);', '    return slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z) => supportedTarget(actor,x,z));');
-  once('?? slotTarget(actor))', '?? slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z) => supportedTarget(actor,x,z)))');
+  once('  const initialBotTarget = actor => {', '  const initialBotTarget = actor => {\n    if (G.level?.native) return nativeBotInitialLanding(G,actor,(x,z,y)=>supportedTarget(actor,x,z,y));');
+  once('    return slotTarget(actor);', '    return slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z,y) => supportedTarget(actor,x,z,y));');
+  once('      target: ownerReplicated ? null : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor)) };','      target: ownerReplicated ? null : (G.level?.native && actor.isBot ? initialBotTarget(actor) : ((initial && actor.isBot ? initialBotTarget(actor) : null) ?? targetFor(actor) ?? slotTarget(actor) ?? nativeInitialLanding(G,actor,(x,z,y)=>supportedTarget(actor,x,z,y)))) };');
+  once('          const target = targetFor(this);','          const target = G.level?.native && this.isBot ? initialBotTarget(this) : targetFor(this);');
  }
  if(rel==='patches/splatoon3/runtime/ranked/rainmaker.mjs'){
   code="import { nativeRetreatCoordinate } from '../../../native-stages/runtime/engine.mjs';\n"+code;
