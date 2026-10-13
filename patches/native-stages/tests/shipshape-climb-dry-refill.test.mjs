@@ -5,7 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
 
-const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
+const root=process.env.NATIVE_SHIPSHAPE_CLIMB_REFILL_ASSETS||process.env.INKWAVE_NATIVE_STAGE_ASSETS;
 const ready=root&&fs.existsSync(path.join(root,'shipshape','manifest.json'));
 
 test('ordinary source-climb inputs recover from a naturally drained dry firing stance',{skip:!ready},async()=>{
@@ -46,6 +46,53 @@ test('ordinary source-climb inputs recover from a naturally drained dry firing s
   assert(a.ink<PLAYER.inkMax*.15,'ordinary admitted Shooter shots create the low-ink condition');
   assert(a.grounded&&!a.submerged&&a.ground.hit&&a.ground.face===33518&&!a.ground.grate);
   assert.equal(G.paint.sample(a.ground.face,a.ground.u,a.ground.v),0,'the original Floor00 firing stance stays dry');
+  // These are controller contract probes of an observed low-ink actor, not
+  // physical trajectories. They reject stale/unsupported contact declarations
+  // without changing any original source triangle, role, chart or mask.
+  const snapshot={...a,pos:a.pos.clone(),vel:a.vel.clone(),aimPoint:a.aimPoint.clone(),ground:{...a.ground,normal:a.ground.normal.clone()},intent:{...a.intent,move:a.intent.move.clone()},weaponRunner:{...a.weaponRunner}};
+  const probeActor=()=>({...snapshot,pos:snapshot.pos.clone(),vel:snapshot.vel.clone(),aimPoint:snapshot.aimPoint.clone(),ground:{...snapshot.ground,normal:snapshot.ground.normal.clone()},intent:{...snapshot.intent,move:snapshot.intent.move.clone()},s3:{...snapshot.s3}});
+  const controls=[
+   ['airborne',q=>{q.grounded=false;},true],
+   ['climbing',q=>{q.grounded=false;q.climbing=true;},true],
+   ['missing-support',q=>{q.ground.hit=false;},true],
+   ['NoPaint-contact-marker',q=>{q.ground.face=-1;},true],
+   ['grate-contact-marker',q=>{q.ground.grate=true;},true],
+   ['dynamic-or-invalid-support',q=>{q.ground.block=L.staticBlockCount;},true],
+   ['outside-original-polygon-UV',q=>{q.ground.u=-.001;},true],
+   ['unsupported-height',q=>{q.pos.y+=.17;},true],
+   ['off-original-stance',q=>{q.pos.x+=.21;},true],
+   ['death',q=>{q.alive=false;},false],
+   ['source-spawn',q=>{q.s3.squidSpawn={phase:'flight'};},false],
+   ['superjump',q=>{q.superJumpState={phase:'flight'};},false],
+   ['special-owner',q=>{q.specialActive={id:'trizooka',phase:'charge'};},false],
+  ],negativeResults=[];
+  for(const [name,change,handled] of controls){
+   const q=probeActor(),b=new f.BotBrain(q,'normal');b.path=[from.id,edge.to];b.pi=1;b.goal=edge.to;q.intent.squid=true;q.intent.fire=false;change(q);
+   assert.equal(f.updateNativeClimb(b,G,1/60),handled,name);
+   assert.equal(q.intent.squid,true,name+' retains the existing squid request');
+   negativeResults.push({name,handled,squidRetained:true,scope:'Seeded controller/contact metadata contract, not an actual Game trajectory'});
+  }
+  {
+   const q=probeActor(),b=new f.BotBrain(q,'normal');b.path=[from.id,edge.to];b.pi=1;b.goal=edge.to;q.weaponRunner={...snapshot.weaponRunner,s3ShooterCancelMain:true};
+   assert(f.updateNativeClimb(b,G,1/60));assert.equal(b._nativeClimb.phase,'release');assert.equal(q.intent.fire,false);assert.equal(q.intent.squid,false);
+   negativeResults.push({name:'shooter-cancellation-release',scope:'Seeded existing runner cancellation contract',fire:false,squid:false});
+  }
+  {
+   const q=probeActor(),b=new f.BotBrain(q,'normal');b.path=[from.id,edge.to];b.pi=1;b.goal=edge.to;
+   f.updateNativeClimb(b,G,1/60); // Finish the unchanged source line screening.
+   const original=G.physics.bodyFits;let calls=0;
+   G.physics.bodyFits=function(p,r,l,h,skip,margin){calls++;assert.equal(r,PLAYER.s3HumanoidTerrainRadiusRaw*PLAYER.s3TerrainDistanceScale);assert.equal(l,PLAYER.stepUp);assert.equal(h,PLAYER.height);assert.equal(skip,false);assert.equal(margin,.003);return false;};
+   try{assert(f.updateNativeClimb(b,G,1/60));assert.equal(q.intent.squid,true);assert.equal(calls,1);}finally{G.physics.bodyFits=original;}
+   negativeResults.push({name:'human-body-query-refusal',scope:'Negative interface fault injection after authentic source line screening; no positive physical claim',calls,squidRetained:true});
+  }
+  {
+   G.paint.splat(snapshot.pos.clone(),1,a.enemyTeam,{instant:true,seed:.375});
+   const q=probeActor(),b=new f.BotBrain(q,'normal');b.path=[from.id,edge.to];b.pi=1;b.goal=edge.to;
+   assert.equal(G.paint.sample(q.ground.face,q.ground.u,q.ground.v),a.enemyTeam+1);
+   assert(f.updateNativeClimb(b,G,1/60));assert.equal(q.intent.squid,true);
+   negativeResults.push({name:'enemy-source-floor',scope:'Seeded CPU ownership fixture on original source Floor00, not a weapon proof',owner:a.enemyTeam+1,squidRetained:true});
+   G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
+  }
   const brain=a.bot=new f.BotBrain(a,'normal');brain.path=[from.id,edge.to];brain.pi=1;brain.goal=edge.to;brain.goalTimer=brain.repath=brain.bombCd=1000;
   const initialInk=a.ink;let recovered=false,kidRefillTicks=0,fireInputs=0;
   for(let i=0;i<180;i++){
@@ -56,6 +103,6 @@ test('ordinary source-climb inputs recover from a naturally drained dry firing s
   const expected=process.env.NATIVE_SHIPSHAPE_EXPECT_DRY_RECOVERY!=='0';
   assert.equal(recovered,expected,JSON.stringify({initialInk,endInk:a.ink,kidRefillTicks,fireInputs,phase:brain._nativeClimb?.phase}));
   if(expected)assert(kidRefillTicks>0);else assert.equal(kidRefillTicks,0);
-  console.log(JSON.stringify({sourceSha256:L.manifest.sourceSha256,helperSha256,from:from.id,to:edge.to,sourceFloor:33518,firingStart:firingStart.toArray(),preparationSteps:preparation,approachSteps:approach,step:1/60,initialInk,endInk:a.ink,kidRefillTicks,fireInputs,recovered,expected,conditions:'Original source/production Character/Shooter/Actor/resources. Low ink comes from ordinary shots away from the stance, followed by ordinary grounded movement; controlled initial two-node source route, not a whole-map Game proof.'}));
+  console.log(JSON.stringify({sourceSha256:L.manifest.sourceSha256,helperSha256,from:from.id,to:edge.to,sourceFloor:33518,firingStart:firingStart.toArray(),preparationSteps:preparation,approachSteps:approach,step:1/60,initialInk,endInk:a.ink,kidRefillTicks,fireInputs,recovered,expected,negativeResults,conditions:'Original source/production Character/Shooter/Actor/resources. Low ink comes from ordinary shots away from the stance, followed by ordinary grounded movement; controlled initial two-node source route, not a whole-map Game proof. Contact/lifecycle and physics-refusal negatives are separately scoped seeded unit contracts.'}));
  }finally{f.restoreRandom();}
 });
