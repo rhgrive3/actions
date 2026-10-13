@@ -1160,7 +1160,11 @@
     "bytes": 75149789,
     "textureFiles": 153,
     "validCells": 2260762,
-    "conversionSeconds": 11.62
+    "conversionSeconds": 11.62,
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true
+    }
   },
   "unverified": [
     "11.3.0 source extraction date",
@@ -1593,7 +1597,7 @@
   },
   "pendingSharedDropReview": {
     "candidate": "5bfc2d70",
-    "status": "unaccepted candidate evaluated privately; no production adoption",
+    "status": "historical unaccepted 5bfc counterexample; corrected helper independently reviewed and accepted at bba86820",
     "testedSourceNearFarTriples": 544,
     "cacheOrderFalseNegative": {
       "upper": {
@@ -1859,5 +1863,247 @@
       "conditions": "standalone real Actor integrator + original source capsules; neutral dry human 0AP Shooter; no shot/muzzle evidence or production-match claim",
       "version1130Verified": false
     }
+  },
+  "acceptedSourceNavigation": {
+    "foundation": "bba8682085ccc53e9dcc37749adb8357864a39be",
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "independentReview": {
+      "candidate": "bfd85bd689db3ece71653b9faa8d339cb15f1da4",
+      "files": {
+        "patches/native-stages/runtime/native-drop.mjs": {
+          "gitBlobSha1": "49132584e9be633408620985f39d56fd982de9d1",
+          "sha256": "253357ac0b5324050a3ddd7c2fba4d7498f196f5544e0c18d25256724f876a04",
+          "bytes": 10373
+        },
+        "patches/native-stages/runtime/native-nav.mjs": {
+          "gitBlobSha1": "c4d52903b0788e53e7f01d9da02b24d71c1c6ad5",
+          "sha256": "6708f35ddca09e912f7e6f223a614c097f67ac41ed1ac36a333c8b6172b9712b",
+          "bytes": 5638
+        },
+        "patches/native-stages/tests/native-drop-cache.test.mjs": {
+          "gitBlobSha1": "ec0712906eda2ebae674ea348e547dc07730dec0",
+          "sha256": "eff957658ee5ec541091bc9e0dc2706731fe80756deced99f833cf271a057bc7",
+          "bytes": 5250
+        },
+        "patches/native-stages/tests/native-drop.test.mjs": {
+          "gitBlobSha1": "5a29e4e98bdfaa24a27e36cc127602c43eafddb0",
+          "sha256": "3658ffd9155ead0164b8852ae0fe1f8011dabd4f17b42f946ba6180b68745c5b",
+          "bytes": 9828
+        }
+      },
+      "sourceOrderedFreshRegressionPassed": true,
+      "sourceActorCases": 12,
+      "sourceBuffersUnchanged": true,
+      "sourceRegressionMilliseconds": 92545.957744,
+      "unitRetestPassed": 2,
+      "initialUnitFailure": "missing nested scratch directory in ignored archive snapshot; environment corrected and unit-only retest passed",
+      "cpuCharacterOptionalMotionImport": "caught VM dynamic-import callback warning; CPU movement/prototype checks pass, browser motion remains separate"
+    },
+    "counterexampleProductionBrowser": {
+      "status": "passed",
+      "conditions": "scalar-only browser initialization; real source Actor walking counterexample; source-world inspection, not production native match qualification",
+      "errors": [],
+      "departure": {
+        "actors": 8,
+        "bots": 8,
+        "cases": [
+          {
+            "hz": 30,
+            "frames": 25,
+            "departed": true,
+            "lower": true,
+            "alive": true,
+            "grounded": true,
+            "start": [
+              -13.8,
+              3,
+              46.6
+            ],
+            "end": [
+              -13.8,
+              1.1102230246251565e-16,
+              44.104000000000006
+            ],
+            "sourceTriangle": 105901,
+            "sourceObject": "Fld_Wave03_ShipVinylSheet_01_1__ShipVinylSheet",
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          },
+          {
+            "hz": 60,
+            "frames": 51,
+            "departed": true,
+            "lower": true,
+            "alive": true,
+            "grounded": true,
+            "start": [
+              -13.8,
+              3,
+              46.6
+            ],
+            "end": [
+              -13.8,
+              -5.551115123125783e-17,
+              44.20000000000005
+            ],
+            "sourceTriangle": 105901,
+            "sourceObject": "Fld_Wave03_ShipVinylSheet_01_1__ShipVinylSheet",
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          },
+          {
+            "hz": 120,
+            "frames": 102,
+            "departed": true,
+            "lower": true,
+            "alive": true,
+            "grounded": true,
+            "start": [
+              -13.8,
+              3,
+              46.6
+            ],
+            "end": [
+              -13.8,
+              -5.551115123125783e-17,
+              44.19999999999994
+            ],
+            "sourceTriangle": 105901,
+            "sourceObject": "Fld_Wave03_ShipVinylSheet_01_1__ShipVinylSheet",
+            "weapon": "shooter",
+            "sourceWeapon": "WeaponShooterNormal",
+            "gear": [
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "main": "none",
+                "subs": [
+                  "none",
+                  "none",
+                  "none"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "world": {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "objects": 79,
+        "collisionTriangles": 149539,
+        "gridCells": 8934342,
+        "topmostSupports": [
+          {
+            "z": -61,
+            "y": 5.999999999999993
+          },
+          {
+            "z": -53,
+            "y": 5.3999490859907056
+          },
+          {
+            "z": -42,
+            "y": 7.500000000000007
+          },
+          {
+            "z": -30,
+            "y": 2.0194881511170806
+          },
+          {
+            "z": 0,
+            "y": 20.86039924621582
+          },
+          {
+            "z": 30,
+            "y": 2.0194853671324466
+          },
+          {
+            "z": 42,
+            "y": 7.500000000000007
+          },
+          {
+            "z": 53,
+            "y": 5.3999490859907056
+          },
+          {
+            "z": 61,
+            "y": 5.999999999999993
+          }
+        ],
+        "actors": 8
+      }
+    },
+    "sourceBufferPolicy": "unchanged full render/collision source; no sourceSemantics exclusions",
+    "status": "adopted accepted helper; final gameplay matrix pending"
   }
 }

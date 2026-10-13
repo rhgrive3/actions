@@ -7,6 +7,7 @@
   "bounds": { "minX": -39.3, "minZ": -65.9, "maxX": 39.3, "maxZ": 65.9 },
   "spawnPads": [[0, 6.08, -61], [0, 6.08, 61]],
   "spawnBarrier": 2.5,
+  "sourceNavigation": { "wallClimb": true, "highDrops": true },
   "version1130Verified": false,
   "placementStatus": "Local inferred opposed plywood-floor supports and full skate-bowl extent from pinned Vss_Wave03 display geometry; retail spawn/ranked placements and units remain unverified."
 }
