@@ -96,6 +96,13 @@ bank execution remains unfinished and requires the final composed runtime.
 Source drop arrival is observed at every installed simulation step
 before ordinary AI selects its next goal.
 
+The final-pair human Tower boarding check is prepared in
+`scripts/check-inkwave-shipshape-tower-human.mjs`. It uses physical W/Space from
+the original supported inferred approach at 30/60/120 render cadences, captures
+the installed collider arguments, and checks actual movement-subdivision source
+capsule sweeps separately from endpoint fits. It has not run yet. Centre
+boarding does not replace full opposed-half Tower travel and scoring proof.
+
 The current private artifact is
 `173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5`,
 and the public artifact is
