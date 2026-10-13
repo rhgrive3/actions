@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "candidate-peer-physical-qualified-original-five-pending",
+  "status": "qualified-ready",
   "runtimeCommit": "8a3e8f4da6ac859f0b8f769bc29d5110c99a10d3",
   "composedCommit": "8fcace3f5966fbfb8793899fae497244d9ce6876",
   "acceptedFoundation": "3f9d0e544bd22f10bf65ef2d14abea0fc9f55bcb",
@@ -995,10 +995,27 @@
       "measurementKind": "deterministic file and dependency gates; not native browser timings"
     }
   },
-  "originalFiveAffectedGame": "pending Wahoo-owned15 existing cases on stable public candidate; no extra build",
+  "originalFiveAffectedGame": {
+    "receipt": "/workspace/stage-worktrees/wahoo-combat-jump/.browser-evidence/ground-body-original-five-initial/initial-floor.json",
+    "sha256": "2161a0a2542d15079c134f1b0bcb8ac7da6d070e860e6d27cad1b466d8f2de1c",
+    "comparisonReceipt": "/workspace/stage-worktrees/wahoo-combat-jump/.ci-scratch/ground-body-original-five/before-after-summary.json",
+    "comparisonSha256": "a1c14253ce6fd4b7be80c8bff373dccdef287bad9b330cab1e11a5bb8fd4724e",
+    "cases": 15,
+    "sourceActorLandings": 120,
+    "directedInitialRoutes": 30,
+    "actors": 8,
+    "bots": 7,
+    "gearAP": 0,
+    "physicsStep": 0.016666666666666666,
+    "errors": 0,
+    "scalarCasesExactlyEqualHistorical1733": true,
+    "historicalScope": "old1733 remains separately bound; new ea625 receipt is actual independently rerun validation",
+    "scope": "initial natural source launch/landing and six-second ordinary navigation; no whole-bank/internal correction path guarantee"
+  },
   "peers": {
     "root": "closed code/source component and actual matched Game; receipts /workspace/actions/.ci-scratch/grounded-body-root-peer/source-components-corrected.json and browser-pair-review.json",
-    "shipshape": "closed code/component/matched Game/private-public binding at 7d9a1376; final linked report/original5 outcome pending"
+    "shipshape": "CLOSED PASS code/component/actual Game/private-public/default/original-five review at 7d9a1376 with precision-only doc descendant; no further approval required",
+    "wahoo": "CLOSED PASS affected original-five actual Game15/120source actor landings/30 initial directed routes; stable candidate before/after hashes unchanged"
   },
   "historicalFailures": [
     "8a3 dynamic ceiling block fixture expected an ID the inherited solver does not emit; fixed fixture only at f01c571b",
@@ -1032,5 +1049,6 @@
     ".ci-scratch/grounded-body-source-tests-final.log": "9d50c2e6b4f63c0e4239a79f8104011ef32f19a8a441fc50215e3388d52161cb",
     ".browser-evidence/grounded-body-baseline-short-jump/browser.json": "1672094e8fec591fd0c3bd5dbc0b03d2677e7eaef08b11b1b2072065697c75f2",
     ".browser-evidence/grounded-body-candidate-short-jump/browser.json": "d4ec54fba4e56e1f38bfce8e8bf7739c96240d80c1843c82d760c6ef7d3b309a"
-  }
+  },
+  "pr": "https://github.com/rhgrive3/actions/pull/1415"
 }
