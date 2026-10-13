@@ -4106,3 +4106,11 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+### Issue #1360: emitted map/gyro verification follows the explicit Turf Map contract
+
+- Scope: test-only repair to `patches/reliability/tests/map-gyro.test.mjs` and an unconditional post-build invocation in the existing Validate workflow. Runtime and frozen source are unchanged. The earlier #523 corner-map default remains OFF; merged #907 intentionally supplies live raster/actor data to an explicitly opened Turf Map.
+- Baseline: clean main `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`, optimized build, emitted Node suite = 11 pass / 2 fail. The obsolete fixture lacks `toCanvas` and also assumes all map transport stays hidden while Tab is open. Source-only runs skip these emitted cases.
+- Verification: use the actual emitted `Minimap.prototype.toCanvas` with logical dimensions and nonzero bounds, then check normalized coordinates, orientation, actor metadata and canvas identity. Both alive/dead paths and both map orientations retain gyro ownership, hover and A-confirmation assertions. Closed → open → closed HUD calls require hidden-only work and null transport when closed, update/projection work and expanded transport when open, with the corner setting unchanged throughout. Repaired emitted suite = 15/15 pass.
+- Negative controls: separately disabling explicit-map transport, suppressing actor-marker generation, or corrupting native projection each rejects all 4 emitted alive/dead × orientation cases. Counts represent behavioral assertions on deliberately mutated emitted copies, not a browser result.
+- Limits / S3 comparison: this corrects the INKWAVE verifier to its already-merged explicit-map behavior; it introduces no Nintendo numerical claims or gameplay changes. Node executes emitted Game/Match/controller/Minimap projection, but canvas raster scheduling is counted rather than drawn. Browser rendering, physical gyro and retail S3 parity remain separate evidence; existing full browser gates are retained.
