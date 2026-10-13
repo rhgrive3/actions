@@ -886,7 +886,10 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
             || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
           auth.used = true;
         }
-        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]${bombReplayArgs});
+        // Drop only excess cosmetic births before creating Group/Mesh/materials.
+        // Later paint, hits and events retain their independent wire identity.
+        const b = a && allowGhostBombBirth(G.projectiles?.bombs, a, from)
+          ? G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]${bombReplayArgs}) : null;
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
           b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
@@ -2039,6 +2042,9 @@ function firstSplatStateFor(session,cfg) {
   }
   if (rel === 'src/game/weapons.js') {
     // Source-guided heads return before the generic fidelity branch below.
+    patch("      case 'charger': this._ghostBeam(a, m, dir, e.len || 20, e.charge || 0.5, near); break;", "      case 'charger': this._ghostBeam(a, m, dir, e.len ?? 20, e.charge ?? 0.5, near); break;", "preserve zero charge and reject malformed beam scalars");
+    patch("  _ghostBeam(a, m, dir, len, charge, near) {\n    const mesh = this._beamMesh();", "  _ghostBeam(a, m, dir, len, charge, near) {\n    // Defense in depth: callers must not create nonfinite or unbounded beam\n    // meshes even when called directly, outside the forwarded-event guard.\n    const finiteVector = v => v && [v.x, v.y, v.z].every(n =>\n      typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1e6);\n    if (!finiteVector(m) || !finiteVector(dir) || dir.lengthSq() < 1e-8\n      || dir.lengthSq() > 4 || !Number.isFinite(len) || len <= 0 || len > 128\n      || !Number.isFinite(charge) || charge < 0 || charge > 1.25\n      || this.beams.length >= 96) return;\n    const mesh = this._beamMesh();", "reject bad and excessive charger ribbons before scene allocation");
+    patch("      b.t += dt;\n      const k = b.t / b.life;\n      const u = b.mesh.material.uniforms;", "      b.t += dt;\n      // Heal existing poisoned records too, so a bad pre-fix beam cannot\n      // live forever or leave a nonfinite ribbon in the active list.\n      if (!Number.isFinite(b.t) || b.t < 0 || !Number.isFinite(b.life)\n        || b.life <= 0 || b.life > 2 || !Number.isFinite(b.th)\n        || b.th <= 0 || b.th > 1 || !Number.isFinite(b.t / b.life)) {\n        b.mesh.visible = false; this.beamPool.push(b.mesh); this.beams.splice(i, 1);\n        continue;\n      }\n      const k = b.t / b.life;\n      const u = b.mesh.material.uniforms;", "retire nonfinite charger ribbons safely");
     // Preserve the same owner terminal publication and receiver-only impact FX.
     patch('    if (p.inkProfile) return this.inkFlight.stepHead(p, dt);', `    if (p.inkProfile) {
       const dead = this.inkFlight.stepHead(p, dt);
@@ -2333,7 +2339,7 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, allowGhostBombBirth, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
       'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
       'validate host Boss snapshot before unpacking and buffering');
