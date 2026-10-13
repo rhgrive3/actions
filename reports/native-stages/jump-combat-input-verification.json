@@ -1484,5 +1484,3495 @@
     "pr": 1399,
     "foundation": "48eed5ea148ce1f9398ed1985f42cbad3e9d56d8",
     "sourceHelperSha256": "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496"
+  },
+  "additionalOriginalFiveInitial": {
+    "status": "passed",
+    "fingerprint": "5d8049f36b3d0ec073f3314b3d54a3bfdc27b04d026fb266f1df0507a10508cc",
+    "revision": "d30207330b3a893a69a870129f089ba990687ce309b6c7ffdab5d4245b7cc9ac",
+    "cases": 15,
+    "actorLandings": 120,
+    "directedInitialRoutes": 30,
+    "errors": [],
+    "scope": "Installed Game._frame at render30/60/120, observed fixed Actor STEP1/60; fresh normal Match, all eight actual actors/seven brains, actual initial source launch/landing. Existing source zone-center targets through production BotBrain._pathTo. Brains paused through initial launch; the actual Actor owns automatic bot launch. Selected production brains resume for initial navigation; no subsequent pose, velocity, route or paint writes. Six seconds of ordinary input is an initial navigation check, not whole-route arrival. SwiftShader only.",
+    "results": [
+      {
+        "id": "scorch",
+        "hz": 30,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              8.486010431881189,
+              7.510000228881836,
+              -64.16013880106699
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59899,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              8.554311673074093,
+              7.510000228881836,
+              -63.51775967589907
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59899,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              8.49034753534585,
+              7.5,
+              -62.87493420262916
+            ],
+            "foot": {
+              "block": 16135,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59688,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              10.5,
+              7.510000228881836,
+              -64
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59900,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              65
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59906,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              64
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59905,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -8.5,
+              7.5,
+              63
+            ],
+            "foot": {
+              "block": 16128,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59691,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -10.5,
+              7.510000228881836,
+              64
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59906,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 67,
+            "position": [
+              8.554311673074093,
+              7.510000228881836,
+              -63.51775967589907
+            ],
+            "gearAP": [],
+            "moved": 18.07864384437064,
+            "end": [
+              8.496587290261107,
+              3.0399999618530273,
+              -46.00053590156794
+            ],
+            "groundedSamples": 160,
+            "finalWaypoint": 19,
+            "finalGoal": 3452,
+            "finalRouteNodes": 67
+          },
+          {
+            "team": 1,
+            "routeNodes": 68,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              65
+            ],
+            "gearAP": [],
+            "moved": 19.518211036505594,
+            "end": [
+              -8.496587982328302,
+              3.0399999618530273,
+              46.000535585536454
+            ],
+            "groundedSamples": 160,
+            "finalWaypoint": 20,
+            "finalGoal": 3452,
+            "finalRouteNodes": 68
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 27688,
+            "nodes": 6922
+          },
+          {
+            "team": 1,
+            "bound": 27688,
+            "nodes": 6922
+          }
+        ]
+      },
+      {
+        "id": "scorch",
+        "hz": 60,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              8.486010431881189,
+              7.510000228881836,
+              -64.16013880106699
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59899,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              8.554311673074093,
+              7.510000228881836,
+              -63.51775967589907
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59899,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              8.49034753534585,
+              7.5,
+              -62.87493420262916
+            ],
+            "foot": {
+              "block": 16135,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59688,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              10.5,
+              7.510000228881836,
+              -64
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59900,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              65
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59906,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              64
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59905,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -8.5,
+              7.5,
+              63
+            ],
+            "foot": {
+              "block": 16128,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59691,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -10.5,
+              7.510000228881836,
+              64
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59906,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 67,
+            "position": [
+              8.554311673074093,
+              7.510000228881836,
+              -63.51775967589907
+            ],
+            "gearAP": [],
+            "moved": 18.07864384437064,
+            "end": [
+              8.496587290261107,
+              3.0399999618530273,
+              -46.00053590156794
+            ],
+            "groundedSamples": 321,
+            "finalWaypoint": 19,
+            "finalGoal": 3452,
+            "finalRouteNodes": 67
+          },
+          {
+            "team": 1,
+            "routeNodes": 68,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              65
+            ],
+            "gearAP": [],
+            "moved": 19.518211036505594,
+            "end": [
+              -8.496587982328302,
+              3.0399999618530273,
+              46.000535585536454
+            ],
+            "groundedSamples": 321,
+            "finalWaypoint": 20,
+            "finalGoal": 3452,
+            "finalRouteNodes": 68
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 27688,
+            "nodes": 6922
+          },
+          {
+            "team": 1,
+            "bound": 27688,
+            "nodes": 6922
+          }
+        ]
+      },
+      {
+        "id": "scorch",
+        "hz": 120,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              8.486010431881189,
+              7.510000228881836,
+              -64.16013880106699
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59899,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              8.554311673074093,
+              7.510000228881836,
+              -63.51775967589907
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59899,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              8.49034753534585,
+              7.5,
+              -62.87493420262916
+            ],
+            "foot": {
+              "block": 16135,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59688,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              10.5,
+              7.510000228881836,
+              -64
+            ],
+            "foot": {
+              "block": 16138,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59900,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              65
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59906,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              64
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59905,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -8.5,
+              7.5,
+              63
+            ],
+            "foot": {
+              "block": 16128,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59691,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -10.5,
+              7.510000228881836,
+              64
+            ],
+            "foot": {
+              "block": 16137,
+              "height": 7.510000228881836,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 59906,
+            "object": "Fld_Yunohana_Rec1_1__WoodenPlankRec"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 67,
+            "position": [
+              8.554311673074093,
+              7.510000228881836,
+              -63.51775967589907
+            ],
+            "gearAP": [],
+            "moved": 18.07864384437064,
+            "end": [
+              8.496587290261107,
+              3.0399999618530273,
+              -46.00053590156794
+            ],
+            "groundedSamples": 642,
+            "finalWaypoint": 19,
+            "finalGoal": 3452,
+            "finalRouteNodes": 67
+          },
+          {
+            "team": 1,
+            "routeNodes": 68,
+            "position": [
+              -8.5,
+              7.510000228881836,
+              65
+            ],
+            "gearAP": [],
+            "moved": 19.518211036505594,
+            "end": [
+              -8.496587982328302,
+              3.0399999618530273,
+              46.000535585536454
+            ],
+            "groundedSamples": 642,
+            "finalWaypoint": 20,
+            "finalGoal": 3452,
+            "finalRouteNodes": 68
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 27688,
+            "nodes": 6922
+          },
+          {
+            "team": 1,
+            "bound": 27688,
+            "nodes": 6922
+          }
+        ]
+      },
+      {
+        "id": "hagglefish",
+        "hz": 30,
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              0.06770182338861219,
+              7.5,
+              -55.08019098222351
+            ],
+            "foot": {
+              "block": 45996,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 119233,
+            "object": "Fld_Yagara_PA_FloorPatchD11_1__FloorCrack"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -1.435699999999997,
+              7.5,
+              -59.5
+            ],
+            "foot": {
+              "block": 64667,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160295,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              1.564300000000003,
+              10.5,
+              -59.5
+            ],
+            "foot": {
+              "block": 64525,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159951,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              3.564300000000003,
+              10.5,
+              -60.5
+            ],
+            "foot": {
+              "block": 64525,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159952,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              3.564300000000003,
+              7.5,
+              60.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              1.564300000000003,
+              7.5,
+              59.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -0.4356999999999971,
+              7.5,
+              59.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -3.435699999999997,
+              10.5,
+              60.5
+            ],
+            "foot": {
+              "block": 64524,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159946,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 60,
+            "position": [
+              -1.435699999999997,
+              7.5,
+              -59.5
+            ],
+            "gearAP": [],
+            "moved": 31.08373616294154,
+            "end": [
+              4.093211679212291,
+              4.5,
+              -29.059405566072964
+            ],
+            "groundedSamples": 167,
+            "finalWaypoint": 31,
+            "finalGoal": 4315,
+            "finalRouteNodes": 60
+          },
+          {
+            "team": 1,
+            "routeNodes": 64,
+            "position": [
+              3.564300000000003,
+              7.5,
+              60.5
+            ],
+            "gearAP": [],
+            "moved": 38.70608781741709,
+            "end": [
+              3.564299999999814,
+              4.5,
+              21.910348095252225
+            ],
+            "groundedSamples": 166,
+            "finalWaypoint": 40,
+            "finalGoal": 4315,
+            "finalRouteNodes": 64
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 34836,
+            "nodes": 8709
+          },
+          {
+            "team": 1,
+            "bound": 34836,
+            "nodes": 8709
+          }
+        ]
+      },
+      {
+        "id": "hagglefish",
+        "hz": 60,
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              0.06770182338861219,
+              7.5,
+              -55.08019098222351
+            ],
+            "foot": {
+              "block": 45996,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 119233,
+            "object": "Fld_Yagara_PA_FloorPatchD11_1__FloorCrack"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -1.435699999999997,
+              7.5,
+              -59.5
+            ],
+            "foot": {
+              "block": 64667,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160295,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              1.564300000000003,
+              10.5,
+              -59.5
+            ],
+            "foot": {
+              "block": 64525,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159951,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              3.564300000000003,
+              10.5,
+              -60.5
+            ],
+            "foot": {
+              "block": 64525,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159952,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              3.564300000000003,
+              7.5,
+              60.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              1.564300000000003,
+              7.5,
+              59.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -0.4356999999999971,
+              7.5,
+              59.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -3.435699999999997,
+              10.5,
+              60.5
+            ],
+            "foot": {
+              "block": 64524,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159946,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 60,
+            "position": [
+              -1.435699999999997,
+              7.5,
+              -59.5
+            ],
+            "gearAP": [],
+            "moved": 31.08373616294154,
+            "end": [
+              4.093211679212291,
+              4.5,
+              -29.059405566072964
+            ],
+            "groundedSamples": 335,
+            "finalWaypoint": 31,
+            "finalGoal": 4315,
+            "finalRouteNodes": 60
+          },
+          {
+            "team": 1,
+            "routeNodes": 64,
+            "position": [
+              3.564300000000003,
+              7.5,
+              60.5
+            ],
+            "gearAP": [],
+            "moved": 38.70608781741709,
+            "end": [
+              3.564299999999814,
+              4.5,
+              21.910348095252225
+            ],
+            "groundedSamples": 332,
+            "finalWaypoint": 40,
+            "finalGoal": 4315,
+            "finalRouteNodes": 64
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 34836,
+            "nodes": 8709
+          },
+          {
+            "team": 1,
+            "bound": 34836,
+            "nodes": 8709
+          }
+        ]
+      },
+      {
+        "id": "hagglefish",
+        "hz": 120,
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              0.06770182338861218,
+              7.5,
+              -55.08019098222351
+            ],
+            "foot": {
+              "block": 45996,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 119233,
+            "object": "Fld_Yagara_PA_FloorPatchD11_1__FloorCrack"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -1.435699999999997,
+              7.5,
+              -59.5
+            ],
+            "foot": {
+              "block": 64667,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160295,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              1.564300000000003,
+              10.5,
+              -59.5
+            ],
+            "foot": {
+              "block": 64525,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159951,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              3.564300000000003,
+              10.5,
+              -60.5
+            ],
+            "foot": {
+              "block": 64525,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159952,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              3.564300000000003,
+              7.5,
+              60.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              1.564300000000003,
+              7.5,
+              59.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -0.4356999999999971,
+              7.5,
+              59.5
+            ],
+            "foot": {
+              "block": 64676,
+              "height": 7.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 160293,
+            "object": "Fld_Yagara_floor_concrete2_1__FloorTile"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -3.435699999999997,
+              10.5,
+              60.5
+            ],
+            "foot": {
+              "block": 64524,
+              "height": 10.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 159946,
+            "object": "Fld_Yagara_concrete_1__ConcreteB"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 60,
+            "position": [
+              -1.435699999999997,
+              7.5,
+              -59.5
+            ],
+            "gearAP": [],
+            "moved": 31.08373616294154,
+            "end": [
+              4.093211679212291,
+              4.5,
+              -29.059405566072964
+            ],
+            "groundedSamples": 670,
+            "finalWaypoint": 31,
+            "finalGoal": 4315,
+            "finalRouteNodes": 60
+          },
+          {
+            "team": 1,
+            "routeNodes": 64,
+            "position": [
+              3.564300000000003,
+              7.5,
+              60.5
+            ],
+            "gearAP": [],
+            "moved": 38.70608781741709,
+            "end": [
+              3.564299999999814,
+              4.5,
+              21.910348095252225
+            ],
+            "groundedSamples": 664,
+            "finalWaypoint": 40,
+            "finalGoal": 4315,
+            "finalRouteNodes": 64
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 34836,
+            "nodes": 8709
+          },
+          {
+            "team": 1,
+            "bound": 34836,
+            "nodes": 8709
+          }
+        ]
+      },
+      {
+        "id": "inkblot",
+        "hz": 30,
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              13.599077018459235,
+              15.449637031932673,
+              -47.27562903819593
+            ],
+            "foot": {
+              "block": 22359,
+              "height": 15.449637031932673,
+              "normal": [
+                0.020220676437020302,
+                0.766014039516449,
+                -0.6425057053565979
+              ]
+            },
+            "triangle": 118748,
+            "object": "Fld_Upland03_grass3_1__GroundSealNukiSet_cp"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              14.5,
+              15,
+              -51.6673
+            ],
+            "foot": {
+              "block": 13431,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98016,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              16.5,
+              15,
+              -51.6673
+            ],
+            "foot": {
+              "block": 13432,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98014,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              18.5,
+              14.489400367426704,
+              -51.6673
+            ],
+            "foot": {
+              "block": 14590,
+              "height": 14.489400367426704,
+              "normal": [
+                0,
+                0.9338985681533813,
+                0.3575381338596344
+              ]
+            },
+            "triangle": 103200,
+            "object": "Fld_Upland03_TestFieldRuins_pCube387_1__SheetVinyl"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              -12.5,
+              15,
+              53.3327
+            ],
+            "foot": {
+              "block": 14724,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 103348,
+            "object": "Fld_Upland03_TestFieldRuins_pCube408_1__GroundAsphaltCrackHi"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              -14.5,
+              15,
+              52.3327
+            ],
+            "foot": {
+              "block": 13512,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98600,
+            "object": "Fld_Upland03_FlatField18__GroundRepeatColor"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -16.5,
+              15,
+              51.3327
+            ],
+            "foot": {
+              "block": 13425,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98024,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -18.5,
+              14.361300529820888,
+              51.3327
+            ],
+            "foot": {
+              "block": 14589,
+              "height": 14.361300529820888,
+              "normal": [
+                0,
+                0.9338985681533813,
+                -0.3575381338596344
+              ]
+            },
+            "triangle": 103210,
+            "object": "Fld_Upland03_TestFieldRuins_pCube387_1__SheetVinyl"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 70,
+            "position": [
+              14.5,
+              15,
+              -51.6673
+            ],
+            "gearAP": [],
+            "moved": 31.097570343838957,
+            "end": [
+              -13.449695279024024,
+              10,
+              -38.98371158426708
+            ],
+            "groundedSamples": 172,
+            "finalWaypoint": 29,
+            "finalGoal": 7560,
+            "finalRouteNodes": 70
+          },
+          {
+            "team": 1,
+            "routeNodes": 54,
+            "position": [
+              -12.5,
+              15,
+              53.3327
+            ],
+            "gearAP": [],
+            "moved": 30.432673223333445,
+            "end": [
+              6.708060987799702,
+              7,
+              31.124638567106683
+            ],
+            "groundedSamples": 153,
+            "finalWaypoint": 23,
+            "finalGoal": 7560,
+            "finalRouteNodes": 54
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 59816,
+            "nodes": 14954
+          },
+          {
+            "team": 1,
+            "bound": 59816,
+            "nodes": 14954
+          }
+        ]
+      },
+      {
+        "id": "inkblot",
+        "hz": 60,
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              13.635727574073874,
+              15.390269930813623,
+              -47.263096637122814
+            ],
+            "foot": {
+              "block": 22359,
+              "height": 15.390269930813623,
+              "normal": [
+                -0.46712127327919006,
+                0.7660388946533203,
+                -0.44156789779663086
+              ]
+            },
+            "triangle": 118748,
+            "object": "Fld_Upland03_grass3_1__GroundSealNukiSet_cp"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              14.5,
+              15,
+              -51.6673
+            ],
+            "foot": {
+              "block": 13431,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98016,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              16.5,
+              15,
+              -51.6673
+            ],
+            "foot": {
+              "block": 13432,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98014,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              18.5,
+              14.489400367426704,
+              -51.6673
+            ],
+            "foot": {
+              "block": 14590,
+              "height": 14.489400367426704,
+              "normal": [
+                0,
+                0.9338985681533813,
+                0.3575381338596344
+              ]
+            },
+            "triangle": 103200,
+            "object": "Fld_Upland03_TestFieldRuins_pCube387_1__SheetVinyl"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              -12.5,
+              15,
+              53.3327
+            ],
+            "foot": {
+              "block": 14724,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 103348,
+            "object": "Fld_Upland03_TestFieldRuins_pCube408_1__GroundAsphaltCrackHi"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              -14.5,
+              15,
+              52.3327
+            ],
+            "foot": {
+              "block": 13512,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98600,
+            "object": "Fld_Upland03_FlatField18__GroundRepeatColor"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -16.5,
+              15,
+              51.3327
+            ],
+            "foot": {
+              "block": 13425,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98024,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -18.5,
+              14.361300529820888,
+              51.3327
+            ],
+            "foot": {
+              "block": 14589,
+              "height": 14.361300529820888,
+              "normal": [
+                0,
+                0.9338985681533813,
+                -0.3575381338596344
+              ]
+            },
+            "triangle": 103210,
+            "object": "Fld_Upland03_TestFieldRuins_pCube387_1__SheetVinyl"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 70,
+            "position": [
+              14.5,
+              15,
+              -51.6673
+            ],
+            "gearAP": [],
+            "moved": 31.097570343838957,
+            "end": [
+              -13.449695279024024,
+              10,
+              -38.98371158426708
+            ],
+            "groundedSamples": 344,
+            "finalWaypoint": 29,
+            "finalGoal": 7560,
+            "finalRouteNodes": 70
+          },
+          {
+            "team": 1,
+            "routeNodes": 54,
+            "position": [
+              -12.5,
+              15,
+              53.3327
+            ],
+            "gearAP": [],
+            "moved": 30.432673223333445,
+            "end": [
+              6.708060987799702,
+              7,
+              31.124638567106683
+            ],
+            "groundedSamples": 305,
+            "finalWaypoint": 23,
+            "finalGoal": 7560,
+            "finalRouteNodes": 54
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 59816,
+            "nodes": 14954
+          },
+          {
+            "team": 1,
+            "bound": 59816,
+            "nodes": 14954
+          }
+        ]
+      },
+      {
+        "id": "inkblot",
+        "hz": 120,
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              13.617659335455002,
+              15.391049398640474,
+              -47.26925843147468
+            ],
+            "foot": {
+              "block": 22359,
+              "height": 15.391049398640474,
+              "normal": [
+                0.020222069695591927,
+                0.7660123109817505,
+                -0.6425078511238098
+              ]
+            },
+            "triangle": 118748,
+            "object": "Fld_Upland03_grass3_1__GroundSealNukiSet_cp"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              14.5,
+              15,
+              -51.6673
+            ],
+            "foot": {
+              "block": 13431,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98016,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              16.5,
+              15,
+              -51.6673
+            ],
+            "foot": {
+              "block": 13432,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98014,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              18.5,
+              14.489400367426704,
+              -51.6673
+            ],
+            "foot": {
+              "block": 14590,
+              "height": 14.489400367426704,
+              "normal": [
+                0,
+                0.9338985681533813,
+                0.3575381338596344
+              ]
+            },
+            "triangle": 103200,
+            "object": "Fld_Upland03_TestFieldRuins_pCube387_1__SheetVinyl"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              -12.5,
+              15,
+              53.3327
+            ],
+            "foot": {
+              "block": 14724,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 103348,
+            "object": "Fld_Upland03_TestFieldRuins_pCube408_1__GroundAsphaltCrackHi"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              -14.5,
+              15,
+              52.3327
+            ],
+            "foot": {
+              "block": 13512,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98600,
+            "object": "Fld_Upland03_FlatField18__GroundRepeatColor"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              -16.5,
+              15,
+              51.3327
+            ],
+            "foot": {
+              "block": 13425,
+              "height": 15,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 98024,
+            "object": "Fld_Upland03_FlatField13__GroundSoilLittleGrass"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              -18.5,
+              14.361300529820888,
+              51.3327
+            ],
+            "foot": {
+              "block": 14589,
+              "height": 14.361300529820888,
+              "normal": [
+                0,
+                0.9338985681533813,
+                -0.3575381338596344
+              ]
+            },
+            "triangle": 103210,
+            "object": "Fld_Upland03_TestFieldRuins_pCube387_1__SheetVinyl"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 70,
+            "position": [
+              14.5,
+              15,
+              -51.6673
+            ],
+            "gearAP": [],
+            "moved": 31.097570343838957,
+            "end": [
+              -13.449695279024024,
+              10,
+              -38.98371158426708
+            ],
+            "groundedSamples": 688,
+            "finalWaypoint": 29,
+            "finalGoal": 7560,
+            "finalRouteNodes": 70
+          },
+          {
+            "team": 1,
+            "routeNodes": 54,
+            "position": [
+              -12.5,
+              15,
+              53.3327
+            ],
+            "gearAP": [],
+            "moved": 30.432673223333445,
+            "end": [
+              6.708060987799702,
+              7,
+              31.124638567106683
+            ],
+            "groundedSamples": 610,
+            "finalWaypoint": 23,
+            "finalGoal": 7560,
+            "finalRouteNodes": 54
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 59816,
+            "nodes": 14954
+          },
+          {
+            "team": 1,
+            "bound": 59816,
+            "nodes": 14954
+          }
+        ]
+      },
+      {
+        "id": "mako",
+        "hz": 30,
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              -5.889252767109523,
+              9.23825691891502,
+              -46.15859582085716
+            ],
+            "foot": {
+              "block": 40587,
+              "height": 9.23825691891502,
+              "normal": [
+                0.393912136554718,
+                0.9191480875015259,
+                0
+              ]
+            },
+            "triangle": 124707,
+            "object": "Fld_Line03_MetalSlope_Floor_1__MetalSlope"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -8,
+              14.01641457657778,
+              -51
+            ],
+            "foot": {
+              "block": 40444,
+              "height": 14.01641457657778,
+              "normal": [
+                -0.00022680369147565216,
+                0.9999998807907104,
+                -0.00016856785805430263
+              ]
+            },
+            "triangle": 124608,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              -5,
+              14.062700271606445,
+              -51
+            ],
+            "foot": {
+              "block": 40858,
+              "height": 14.062700271606445,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 124931,
+            "object": "Fld_Line03_SloopWall03_1__WoodPlane"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              -3,
+              14.085200400982211,
+              -52
+            ],
+            "foot": {
+              "block": 38764,
+              "height": 14.085200400982211,
+              "normal": [
+                0.001164740533567965,
+                0.9999660849571228,
+                0.008149761706590652
+              ]
+            },
+            "triangle": 121030,
+            "object": "Fld_Line03_GrafittiSet_01_1__GrafittiSet"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              10,
+              14.015937576070593,
+              51
+            ],
+            "foot": {
+              "block": 40540,
+              "height": 14.015937576070593,
+              "normal": [
+                0.00024201904307119548,
+                0.9999999403953552,
+                0.0001525220286566764
+              ]
+            },
+            "triangle": 124617,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              8,
+              14.01641457657778,
+              51
+            ],
+            "foot": {
+              "block": 40541,
+              "height": 14.01641457657778,
+              "normal": [
+                0.00022680369147565216,
+                0.9999998807907104,
+                0.00016856785805430263
+              ]
+            },
+            "triangle": 124616,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              5,
+              14.062700271606445,
+              51
+            ],
+            "foot": {
+              "block": 40861,
+              "height": 14.062700271606445,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 124933,
+            "object": "Fld_Line03_SloopWall03_1__WoodPlane"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              3,
+              14.085200400982211,
+              52
+            ],
+            "foot": {
+              "block": 38701,
+              "height": 14.085200400982211,
+              "normal": [
+                -0.001164740533567965,
+                0.9999660849571228,
+                -0.008149761706590652
+              ]
+            },
+            "triangle": 121033,
+            "object": "Fld_Line03_GrafittiSet_01_1__GrafittiSet"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 52,
+            "position": [
+              -8,
+              14.01641457657778,
+              -51
+            ],
+            "gearAP": [],
+            "moved": 22.885261206997757,
+            "end": [
+              -3.9999852477004,
+              8.023098021760593,
+              -29.278692047492715
+            ],
+            "groundedSamples": 151,
+            "finalWaypoint": 22,
+            "finalGoal": 4248,
+            "finalRouteNodes": 52
+          },
+          {
+            "team": 1,
+            "routeNodes": 52,
+            "position": [
+              10,
+              14.015937576070593,
+              51
+            ],
+            "gearAP": [],
+            "moved": 30.793016156254804,
+            "end": [
+              3.7074802950791566,
+              8.191907453486118,
+              21.42476182862121
+            ],
+            "groundedSamples": 152,
+            "finalWaypoint": 30,
+            "finalGoal": 4248,
+            "finalRouteNodes": 52
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 34096,
+            "nodes": 8524
+          },
+          {
+            "team": 1,
+            "bound": 34096,
+            "nodes": 8524
+          }
+        ]
+      },
+      {
+        "id": "mako",
+        "hz": 60,
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              -5.889252767109523,
+              9.23825691891502,
+              -46.15859582085716
+            ],
+            "foot": {
+              "block": 40587,
+              "height": 9.23825691891502,
+              "normal": [
+                0.393912136554718,
+                0.9191480875015259,
+                0
+              ]
+            },
+            "triangle": 124707,
+            "object": "Fld_Line03_MetalSlope_Floor_1__MetalSlope"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -8,
+              14.01641457657778,
+              -51
+            ],
+            "foot": {
+              "block": 40444,
+              "height": 14.01641457657778,
+              "normal": [
+                -0.00022680369147565216,
+                0.9999998807907104,
+                -0.00016856785805430263
+              ]
+            },
+            "triangle": 124608,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              -5,
+              14.062700271606445,
+              -51
+            ],
+            "foot": {
+              "block": 40858,
+              "height": 14.062700271606445,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 124931,
+            "object": "Fld_Line03_SloopWall03_1__WoodPlane"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              -3,
+              14.085200400982211,
+              -52
+            ],
+            "foot": {
+              "block": 38764,
+              "height": 14.085200400982211,
+              "normal": [
+                0.001164740533567965,
+                0.9999660849571228,
+                0.008149761706590652
+              ]
+            },
+            "triangle": 121030,
+            "object": "Fld_Line03_GrafittiSet_01_1__GrafittiSet"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              10,
+              14.015937576070593,
+              51
+            ],
+            "foot": {
+              "block": 40540,
+              "height": 14.015937576070593,
+              "normal": [
+                0.00024201904307119548,
+                0.9999999403953552,
+                0.0001525220286566764
+              ]
+            },
+            "triangle": 124617,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              8,
+              14.01641457657778,
+              51
+            ],
+            "foot": {
+              "block": 40541,
+              "height": 14.01641457657778,
+              "normal": [
+                0.00022680369147565216,
+                0.9999998807907104,
+                0.00016856785805430263
+              ]
+            },
+            "triangle": 124616,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              5,
+              14.062700271606445,
+              51
+            ],
+            "foot": {
+              "block": 40861,
+              "height": 14.062700271606445,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 124933,
+            "object": "Fld_Line03_SloopWall03_1__WoodPlane"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              3,
+              14.085200400982211,
+              52
+            ],
+            "foot": {
+              "block": 38701,
+              "height": 14.085200400982211,
+              "normal": [
+                -0.001164740533567965,
+                0.9999660849571228,
+                -0.008149761706590652
+              ]
+            },
+            "triangle": 121033,
+            "object": "Fld_Line03_GrafittiSet_01_1__GrafittiSet"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 52,
+            "position": [
+              -8,
+              14.01641457657778,
+              -51
+            ],
+            "gearAP": [],
+            "moved": 22.885261206997757,
+            "end": [
+              -3.9999852477004,
+              8.023098021760593,
+              -29.278692047492715
+            ],
+            "groundedSamples": 301,
+            "finalWaypoint": 22,
+            "finalGoal": 4248,
+            "finalRouteNodes": 52
+          },
+          {
+            "team": 1,
+            "routeNodes": 52,
+            "position": [
+              10,
+              14.015937576070593,
+              51
+            ],
+            "gearAP": [],
+            "moved": 30.793016156254804,
+            "end": [
+              3.7074802950791566,
+              8.191907453486118,
+              21.42476182862121
+            ],
+            "groundedSamples": 304,
+            "finalWaypoint": 30,
+            "finalGoal": 4248,
+            "finalRouteNodes": 52
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 34096,
+            "nodes": 8524
+          },
+          {
+            "team": 1,
+            "bound": 34096,
+            "nodes": 8524
+          }
+        ]
+      },
+      {
+        "id": "mako",
+        "hz": 120,
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              -5.889252767109523,
+              9.23825691891502,
+              -46.15859582085716
+            ],
+            "foot": {
+              "block": 40587,
+              "height": 9.23825691891502,
+              "normal": [
+                0.393912136554718,
+                0.9191480875015259,
+                0
+              ]
+            },
+            "triangle": 124707,
+            "object": "Fld_Line03_MetalSlope_Floor_1__MetalSlope"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -8,
+              14.01641457657778,
+              -51
+            ],
+            "foot": {
+              "block": 40444,
+              "height": 14.01641457657778,
+              "normal": [
+                -0.00022680369147565216,
+                0.9999998807907104,
+                -0.00016856785805430263
+              ]
+            },
+            "triangle": 124608,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              -5,
+              14.062700271606445,
+              -51
+            ],
+            "foot": {
+              "block": 40858,
+              "height": 14.062700271606445,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 124931,
+            "object": "Fld_Line03_SloopWall03_1__WoodPlane"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              -3,
+              14.085200400982211,
+              -52
+            ],
+            "foot": {
+              "block": 38764,
+              "height": 14.085200400982211,
+              "normal": [
+                0.001164740533567965,
+                0.9999660849571228,
+                0.008149761706590652
+              ]
+            },
+            "triangle": 121030,
+            "object": "Fld_Line03_GrafittiSet_01_1__GrafittiSet"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              10,
+              14.015937576070593,
+              51
+            ],
+            "foot": {
+              "block": 40540,
+              "height": 14.015937576070593,
+              "normal": [
+                0.00024201904307119548,
+                0.9999999403953552,
+                0.0001525220286566764
+              ]
+            },
+            "triangle": 124617,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              8,
+              14.01641457657778,
+              51
+            ],
+            "foot": {
+              "block": 40541,
+              "height": 14.01641457657778,
+              "normal": [
+                0.00022680369147565216,
+                0.9999998807907104,
+                0.00016856785805430263
+              ]
+            },
+            "triangle": 124616,
+            "object": "Fld_Line03_KomonoSetA_mesh1_1__KomonoSetA"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              5,
+              14.062700271606445,
+              51
+            ],
+            "foot": {
+              "block": 40861,
+              "height": 14.062700271606445,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 124933,
+            "object": "Fld_Line03_SloopWall03_1__WoodPlane"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              3,
+              14.085200400982211,
+              52
+            ],
+            "foot": {
+              "block": 38701,
+              "height": 14.085200400982211,
+              "normal": [
+                -0.001164740533567965,
+                0.9999660849571228,
+                -0.008149761706590652
+              ]
+            },
+            "triangle": 121033,
+            "object": "Fld_Line03_GrafittiSet_01_1__GrafittiSet"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 52,
+            "position": [
+              -8,
+              14.01641457657778,
+              -51
+            ],
+            "gearAP": [],
+            "moved": 22.885261206997757,
+            "end": [
+              -3.9999852477004,
+              8.023098021760593,
+              -29.278692047492715
+            ],
+            "groundedSamples": 602,
+            "finalWaypoint": 22,
+            "finalGoal": 4248,
+            "finalRouteNodes": 52
+          },
+          {
+            "team": 1,
+            "routeNodes": 52,
+            "position": [
+              10,
+              14.015937576070593,
+              51
+            ],
+            "gearAP": [],
+            "moved": 30.793016156254804,
+            "end": [
+              3.7074802950791566,
+              8.191907453486118,
+              21.42476182862121
+            ],
+            "groundedSamples": 608,
+            "finalWaypoint": 30,
+            "finalGoal": 4248,
+            "finalRouteNodes": 52
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 34096,
+            "nodes": 8524
+          },
+          {
+            "team": 1,
+            "bound": 34096,
+            "nodes": 8524
+          }
+        ]
+      },
+      {
+        "id": "brinewater",
+        "hz": 30,
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              -12.103642935106752,
+              15.024999618530273,
+              -47.34654757473441
+            ],
+            "foot": {
+              "block": 49638,
+              "height": 15.024999618530273,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 130703,
+            "object": "Fld_BigSlope00_pCube192134_10__Accessories00"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -14,
+              13.5,
+              -51.5
+            ],
+            "foot": {
+              "block": 33920,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84655,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              -12,
+              18,
+              -54.5
+            ],
+            "foot": {
+              "block": 33219,
+              "height": 18,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 81982,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_B_SmallSlopeA_VinylWall_pCube1186__BlueSheet00"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              -12,
+              18,
+              -54.5
+            ],
+            "foot": {
+              "block": 33219,
+              "height": 18,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 81982,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_B_SmallSlopeA_VinylWall_pCube1186__BlueSheet00"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              14,
+              13.5,
+              52.5
+            ],
+            "foot": {
+              "block": 33921,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84667,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              14,
+              13.5,
+              51.5
+            ],
+            "foot": {
+              "block": 33921,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84667,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              12,
+              18.030000686645508,
+              54.5
+            ],
+            "foot": {
+              "block": 62290,
+              "height": 18.030000686645508,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 127341,
+            "object": "Fld_BigSlope00_WoodEdge_090Shape1_1__mJyohekiWoodFence_np"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              12,
+              18.030000686645508,
+              54.5
+            ],
+            "foot": {
+              "block": 62290,
+              "height": 18.030000686645508,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 127341,
+            "object": "Fld_BigSlope00_WoodEdge_090Shape1_1__mJyohekiWoodFence_np"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 55,
+            "position": [
+              -14,
+              13.5,
+              -51.5
+            ],
+            "gearAP": [],
+            "moved": 33.25380244076751,
+            "end": [
+              -17.00000000001441,
+              9.229910857608962,
+              -18.658232150422496
+            ],
+            "groundedSamples": 166,
+            "finalWaypoint": 34,
+            "finalGoal": 3990,
+            "finalRouteNodes": 55
+          },
+          {
+            "team": 1,
+            "routeNodes": 65,
+            "position": [
+              14,
+              13.5,
+              52.5
+            ],
+            "gearAP": [],
+            "moved": 25.40032076639758,
+            "end": [
+              18.115486948894898,
+              10.5,
+              27.61548549379828
+            ],
+            "groundedSamples": 166,
+            "finalWaypoint": 25,
+            "finalGoal": 3990,
+            "finalRouteNodes": 65
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 32588,
+            "nodes": 8147
+          },
+          {
+            "team": 1,
+            "bound": 32588,
+            "nodes": 8147
+          }
+        ]
+      },
+      {
+        "id": "brinewater",
+        "hz": 60,
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              -12.020839588348215,
+              15.024999618530273,
+              -47.34957026208378
+            ],
+            "foot": {
+              "block": 49638,
+              "height": 15.024999618530273,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 130703,
+            "object": "Fld_BigSlope00_pCube192134_10__Accessories00"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -14,
+              13.5,
+              -51.5
+            ],
+            "foot": {
+              "block": 33920,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84655,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              -12,
+              18,
+              -54.5
+            ],
+            "foot": {
+              "block": 33219,
+              "height": 18,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 81982,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_B_SmallSlopeA_VinylWall_pCube1186__BlueSheet00"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              -12,
+              18,
+              -54.5
+            ],
+            "foot": {
+              "block": 33219,
+              "height": 18,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 81982,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_B_SmallSlopeA_VinylWall_pCube1186__BlueSheet00"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              14,
+              13.5,
+              52.5
+            ],
+            "foot": {
+              "block": 33921,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84667,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              14,
+              13.5,
+              51.5
+            ],
+            "foot": {
+              "block": 33921,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84667,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              12,
+              18.030000686645508,
+              54.5
+            ],
+            "foot": {
+              "block": 62290,
+              "height": 18.030000686645508,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 127341,
+            "object": "Fld_BigSlope00_WoodEdge_090Shape1_1__mJyohekiWoodFence_np"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              12,
+              18.030000686645508,
+              54.5
+            ],
+            "foot": {
+              "block": 62290,
+              "height": 18.030000686645508,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 127341,
+            "object": "Fld_BigSlope00_WoodEdge_090Shape1_1__mJyohekiWoodFence_np"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 55,
+            "position": [
+              -14,
+              13.5,
+              -51.5
+            ],
+            "gearAP": [],
+            "moved": 33.25380244076751,
+            "end": [
+              -17.00000000001441,
+              9.229910857608962,
+              -18.658232150422496
+            ],
+            "groundedSamples": 332,
+            "finalWaypoint": 34,
+            "finalGoal": 3990,
+            "finalRouteNodes": 55
+          },
+          {
+            "team": 1,
+            "routeNodes": 65,
+            "position": [
+              14,
+              13.5,
+              52.5
+            ],
+            "gearAP": [],
+            "moved": 25.40032076639758,
+            "end": [
+              18.115486948894898,
+              10.5,
+              27.61548549379828
+            ],
+            "groundedSamples": 332,
+            "finalWaypoint": 25,
+            "finalGoal": 3990,
+            "finalRouteNodes": 65
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 32588,
+            "nodes": 8147
+          },
+          {
+            "team": 1,
+            "bound": 32588,
+            "nodes": 8147
+          }
+        ]
+      },
+      {
+        "id": "brinewater",
+        "hz": 120,
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "sourceNavigation": null,
+        "actors": 8,
+        "bots": 7,
+        "alive": 8,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "landed": [
+          {
+            "team": 0,
+            "slot": 0,
+            "position": [
+              -12.063712263640031,
+              15.024999618530273,
+              -47.34793374721846
+            ],
+            "foot": {
+              "block": 49638,
+              "height": 15.024999618530273,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 130703,
+            "object": "Fld_BigSlope00_pCube192134_10__Accessories00"
+          },
+          {
+            "team": 0,
+            "slot": 1,
+            "position": [
+              -14,
+              13.5,
+              -51.5
+            ],
+            "foot": {
+              "block": 33920,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84655,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 0,
+            "slot": 2,
+            "position": [
+              -12,
+              18,
+              -54.5
+            ],
+            "foot": {
+              "block": 33219,
+              "height": 18,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 81982,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_B_SmallSlopeA_VinylWall_pCube1186__BlueSheet00"
+          },
+          {
+            "team": 0,
+            "slot": 3,
+            "position": [
+              -12,
+              18,
+              -54.5
+            ],
+            "foot": {
+              "block": 33219,
+              "height": 18,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 81982,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_B_SmallSlopeA_VinylWall_pCube1186__BlueSheet00"
+          },
+          {
+            "team": 1,
+            "slot": 0,
+            "position": [
+              14,
+              13.5,
+              52.5
+            ],
+            "foot": {
+              "block": 33921,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84667,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 1,
+            "slot": 1,
+            "position": [
+              14,
+              13.5,
+              51.5
+            ],
+            "foot": {
+              "block": 33921,
+              "height": 13.5,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 84667,
+            "object": "Fld_BigSlope00_Fld_BigSlope00_group154_group26_pCube1661_pCubeShape1662_1__Wood00"
+          },
+          {
+            "team": 1,
+            "slot": 2,
+            "position": [
+              12,
+              18.030000686645508,
+              54.5
+            ],
+            "foot": {
+              "block": 62290,
+              "height": 18.030000686645508,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 127341,
+            "object": "Fld_BigSlope00_WoodEdge_090Shape1_1__mJyohekiWoodFence_np"
+          },
+          {
+            "team": 1,
+            "slot": 3,
+            "position": [
+              12,
+              18.030000686645508,
+              54.5
+            ],
+            "foot": {
+              "block": 62290,
+              "height": 18.030000686645508,
+              "normal": [
+                0,
+                1,
+                0
+              ]
+            },
+            "triangle": 127341,
+            "object": "Fld_BigSlope00_WoodEdge_090Shape1_1__mJyohekiWoodFence_np"
+          }
+        ],
+        "banks": [
+          {
+            "team": 0,
+            "routeNodes": 55,
+            "position": [
+              -14,
+              13.5,
+              -51.5
+            ],
+            "gearAP": [],
+            "moved": 33.25380244076751,
+            "end": [
+              -17.00000000001441,
+              9.229910857608962,
+              -18.658232150422496
+            ],
+            "groundedSamples": 664,
+            "finalWaypoint": 34,
+            "finalGoal": 3990,
+            "finalRouteNodes": 55
+          },
+          {
+            "team": 1,
+            "routeNodes": 65,
+            "position": [
+              14,
+              13.5,
+              52.5
+            ],
+            "gearAP": [],
+            "moved": 25.40032076639758,
+            "end": [
+              18.115486948894898,
+              10.5,
+              27.61548549379828
+            ],
+            "groundedSamples": 664,
+            "finalWaypoint": 25,
+            "finalGoal": 3990,
+            "finalRouteNodes": 65
+          }
+        ],
+        "calls": [
+          {
+            "team": 0,
+            "bound": 32588,
+            "nodes": 8147
+          },
+          {
+            "team": 1,
+            "bound": 32588,
+            "nodes": 8147
+          }
+        ]
+      }
+    ]
+  },
+  "selfPromotion": {
+    "testedPrHead": "0aafb5b5",
+    "foundation": "3f9d0e544bd22f10bf65ef2d14abea0fc9f55bcb",
+    "aggregate": "92494729b6b1626493b2d5fe73de7e04eac3d8b3",
+    "integrationChecks": {
+      "tests": 20,
+      "pass": 16,
+      "sourceOptionalSkip": 4,
+      "fail": 0,
+      "bothBranches": true
+    },
+    "mainMerged": false
   }
 }
