@@ -66,17 +66,20 @@ test('Hammerhead inferred support, directed landing routes and movement at three
   const landings = [];
   for (const team of [0, 1]) {
     G.match.mode = 'turf'; G.match.opts = {};
-    const actor = f.make(); actor.team = team; actor.spawnAt(level.spawnPads[team], team);
+    const actor = f.make(); actor._integrate = f.Actor.prototype._integrate;
+    actor.team = team; actor.spawnAt(level.spawnPads[team], team);
     assert.equal(f.beginInitialSquidSpawn(actor), true);
     assert.ok(actor.s3.squidSpawn.target);
     actor.intent.fire = true; actor.update(1 / 60); actor.intent.fire = false;
-    for (let i = 0; i < 90; i++) actor.update(1 / 60);
+    let landingFrames = 0;
+    while (actor.s3.squidSpawn && landingFrames < 180) { G.time += 1 / 60; actor.update(1 / 60); landingFrames++; }
     assert.equal(actor.s3.squidSpawn, undefined); assert.equal(actor.grounded, true);
+    assert.equal(actor.ground.hit, true, 'actual source support after production integration');
     const node = G.nav.nearest(actor.pos, 1.2);
     assert.ok(node >= 0);
     assert.ok(G.nav.path(node, center, team, 50000), 'team ' + team + ' reaches center');
     const returnPath = G.nav.path(center, node, team, 50000);
-    landings.push({ team, position: actor.pos.toArray(), node, centerPath: true, returnPath: !!returnPath });
+    landings.push({ team, position: actor.pos.toArray(), node, landingFrames, centerPath: true, returnPath: !!returnPath });
   }
   const rates = [];
   for (const hz of [30, 60, 120]) {
