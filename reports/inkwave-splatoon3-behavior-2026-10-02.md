@@ -4108,3 +4108,16 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+
+## Ink Vac release contract fixture follow-up (2026-10-13)
+
+The old #1120 source-contract assertion still required immediate release through a pre-#1252 source string. Current main correctly buffers a fresh press/release edge until the sourced 20F inhale-to-exhale transition, then permits the 150F shot window. The regression now requires the existing edge queue, readiness guard and transition-plus-hold deadline while retaining the held-suction negative guard. Runtime behavior is unchanged. Clean-main source and emitted native controls distinguish held ZR, buffered early release, no projectile through transition frame19 and exactly one on frame20; fixture logic and browser evidence remain separately reported, with no new hardware parity claim.
+
+The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
+
+## Ballpoint shared glass current-main reconciliation (2026-10-13)
+
+PR1278's Ballpoint-only shell/material correction is privately composed onto ee9 with current Mini/Nautilus and all newer special/ranked paths preserved. Source and emitted-mode model contracts10/10 each, the real source-loaded dualies2100-frame probe, and the optimized build pass; current-main rendered/GTAO/completed-output ABBA and final exact-head CI remain pending. Historical c4ef software-renderer medians and all adverse timing limits are preserved in reports/inkwave-weapon-shared-rendering-2026-10-12.md. The gallery's dualies-excluded grip metric is not treated as dual-hand closure; separate real source-loaded module evidence is explicitly distinguished from rendered hands, hardware performance and retail S3 parity.
+
+Current-base follow-up (2026-10-13): the final reconciliation preserves external model head5902e346 and its two f6399281 baseline pins, then includes shared verification head68681bf. The old ee9 probes and software-rendered ABBA figures remain historical. Fresh emitted/visual/ABBA and all final-head gates are required; native-stage rendering changes prohibit carrying the old timing result forward.
