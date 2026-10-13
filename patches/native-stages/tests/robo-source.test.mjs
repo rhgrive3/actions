@@ -56,8 +56,20 @@ test('Robo source supports both teams, inward launch/respawn and a common direct
    proof.push({team,hz,opening,slot,landing:a.pos.toArray()});
   }
  }
+ const movement=[];
+ for(const team of [0,1]){
+  const endpoints=[];
+  for(const hz of [30,60,120]){
+   const a=f.make('shooter');a.team=team;a._integrate=f.Actor.prototype._integrate;a.spawnAt(L.spawnPads[team],nativeSpawnYaw(L,team,0));a.intent.fire=false;
+   const sign=team?-1:1;a.intent.move.set(basis.forward.x*sign,0,basis.forward.z*sign);
+   for(let i=0;i<hz/2;i++){G.time+=1/hz;a.update(1/hz);assert(a.alive&&a.grounded,'source-supported full-input walking');}
+   a.intent.move.set(0,0,0);for(let i=0;i<hz/2;i++){G.time+=1/hz;a.update(1/hz);assert(a.alive&&a.grounded,'source-supported stop');}
+   assert(a.pos.distanceTo(L.spawnPads[team])>1);endpoints.push(a.pos.clone());movement.push({team,hz,weapon:'shooter',gear:'fixture default without added abilities',input:'0.5 s opposing-pad full walk, then 0.5 s release',endpoint:a.pos.toArray()});
+  }
+  assert(endpoints.every(p=>p.distanceTo(endpoints[1])<.25),'30/60/120 Hz source movement remains stable');
+ }
  const ranked=f.nativeRankedStage(G),targets=[...ranked.zones.map(z=>z.center),ranked.rainmaker.center,...ranked.rainmaker.goals,...ranked.rainmaker.checkpoints.flat(),...ranked.clams.spawns,...ranked.clams.goals];
  for(const [team,pad] of L.spawnPads.entries()){const start=G.nav.nearest(pad,1.2);assert(start>=0);for(const p of targets){const goal=G.nav.nearest(new THREE.Vector3(...p),1.2);assert(goal>=0);assert(G.nav.path(start,goal,team,50000),`team ${team} reaches calibrated objective ${p}`);}}
  assert.equal(ranked.version1130Verified,false);assert.match(ranked.calibration,/UNVERIFIED/);assert(ranked.tower.path.length>2);
- console.log(JSON.stringify({id:'robo',validNodes:G.nav.validIds.length,objectives:targets.length,launchCases:proof}));
+ console.log(JSON.stringify({id:'robo',validNodes:G.nav.validIds.length,objectives:targets.length,launchCases:proof,movement}));
 });
