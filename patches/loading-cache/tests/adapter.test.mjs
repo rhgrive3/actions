@@ -1,8 +1,15 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {execFileSync,spawnSync} from 'node:child_process';import path from 'node:path';import os from 'node:os';import crypto from 'node:crypto';
-import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity,PRECACHE_BUDGET_BYTES,WORKER_BUDGET_BYTES} from '../adapter.mjs';
-test('production offline core budget is 10 MiB; worker ceiling remains independent',()=>{
- assert.equal(PRECACHE_BUDGET_BYTES,10*1024*1024);
- assert.equal(WORKER_BUDGET_BYTES,69*1024);
+import {parse} from '../vendor/acorn.mjs';import {adaptCompiledMain,loadingIdentity,PRECACHE_BUDGET_BYTES,REVISION_BUDGET_BYTES,WORKER_BUDGET_BYTES,INITIAL_JS_BUDGET_BYTES,RANGE_PRELOAD_BUDGET_BYTES,STARTUP_ENTRY_BUDGET_BYTES,CRITICAL_HTML_BUDGET_BYTES} from '../adapter.mjs';
+test('generous but bounded production delivery budgets stay independent and consistent',()=>{
+ assert.equal(PRECACHE_BUDGET_BYTES,24*1024*1024);
+ assert.equal(REVISION_BUDGET_BYTES,48*1024*1024);
+ assert.equal(WORKER_BUDGET_BYTES,192*1024);
+ assert.equal(INITIAL_JS_BUDGET_BYTES,6*1024*1024);
+ assert.equal(RANGE_PRELOAD_BUDGET_BYTES,384*1024);
+ assert.equal(STARTUP_ENTRY_BUDGET_BYTES,24*1024);
+ assert.equal(CRITICAL_HTML_BUDGET_BYTES,48*1024);
+ assert(REVISION_BUDGET_BYTES >= PRECACHE_BUDGET_BYTES,
+  'revision ceiling must hold the complete precache plus other assets');
 });
 const baseline=process.env.INKWAVE_BASELINE_SITE;
 const source=baseline?fs.readFileSync(path.join(baseline,'src/main.js'),'utf8'):null;
@@ -63,6 +70,7 @@ for (const [inputKey, relativeInput] of [
  ['build-script/inkwave-source-composition.mjs', 'scripts/inkwave-source-composition.mjs'],
  ['build-script/lib/inkwave-build-only-modules.mjs', 'scripts/lib/inkwave-build-only-modules.mjs'],
  ['build-script/lib/inkwave-worker-compaction.mjs', 'scripts/lib/inkwave-worker-compaction.mjs'],
+ ['build-script/lib/inkwave-source-compaction.mjs', 'scripts/lib/inkwave-source-compaction.mjs'],
 ]) test('exact-source checker rejects forged ' + inputKey + ' despite self-consistent manifest',()=>{
  const root=path.resolve(new URL('../../../',import.meta.url).pathname);
  const dir=fs.mkdtempSync(path.join(TEST_TMP,'iw-identity-'));

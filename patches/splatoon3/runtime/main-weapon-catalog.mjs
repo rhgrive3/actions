@@ -1,12 +1,17 @@
+import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
+
+import { catalogueAttackRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { ShooterAccuracy } from './shooter-accuracy.mjs';
+import { withShotBias } from './weapon-accuracy.mjs';
+import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
 
@@ -159,11 +164,82 @@ export function registerMainWeaponCatalog(api) {
   return MAIN_WEAPON_CATALOG;
 }
 
-function initialState(r) {
+// The 2024 S3 shot-accuracy study models DegBias as the median angular
+// fraction, not as a probability of choosing between two arbitrary cones.
+// Reuse the same horizontal / independent Spinner pitch kernel as the seven
+// legacy main weapons. Source parameters are read per added main weapon.
+const ANGULAR_FAMILIES = new Set(['shooter', 'dualies', 'blaster', 'splatling']);
+export function catalogAngularLaunch(projectiles, direction, actor, family, param, accuracy, maximumDegrees, jumpAgeSeconds = actor.weaponRunner?.s3JumpSpreadAge) {
+  if (!ANGULAR_FAMILIES.has(family)) {
+    // Other source families have no verified common angular law here.
+    const chance = accuracy.shot(!!actor.grounded, jumpAgeSeconds);
+    return projectiles._spread(direction, Math.random() < chance ? maximumDegrees : maximumDegrees * .45);
+  }
+  const spinner = family === 'splatling';
+  // Splatlings have no Shooter-style first-shot buildup: each round reads
+  // the fixed standing/jumping median and independent vertical median.
+  // Sparse unextracted defaults remain neutral (0.5), not invented values.
+  const median = spinner
+    ? actor.grounded ? finite(param.Stand_DegBiasMax, .5) : finite(param.Jump_DegBiasMax, .5)
+    : accuracy.shot(!!actor.grounded, jumpAgeSeconds);
+  return withShotBias(actor, median, spinner ? finite(param.PitchDegBias, .5) : null,
+    () => spreadWeaponRound(projectiles, direction, actor,
+      {kind:family, spreadPitchGround:spinner ? finite(param.PitchDegSwerve, 0) : null},
+      maximumDegrees));
+}
+
+// A ledge fall is not a newly admitted jump: source recovery begins only
+// after the Actor's native jump serial advances. Recovery keeps running
+// across landing, and rendered frame rate does not affect the fixed clock.
+export function advanceCatalogJumpClock(state, actor, family, dt) {
+  const serial = actor.s3JumpSerial || 0;
+  if (state.jumpSerial !== serial) {
+    state.jumpSerial = serial;
+    state.jumpAge = 0;
+  } else if (state.jumpAge != null && Number.isFinite(dt) && dt > 0) state.jumpAge += dt;
+  if (state.jumpAge != null && state.jumpAge * HZ + EPS >= state.accuracy.jumpEnd &&
+    (actor.grounded || family === 'dualies')) state.jumpAge = null;
+  return state.jumpAge;
+}
+
+// #10 S3 Spinner studies: an independent signed biased draw also changes
+// launch speed. The extracted 11.3.0 fields are relative amplitude and bias,
+// not an extra fixed world-units-per-frame acceleration.
+export function catalogSpinnerLaunchSpeed(baseSpeed, move, random = Math.random) {
+  const rate = move?.SpawnSpeedRandomRate;
+  if (!Number.isFinite(rate) || rate <= 0) return baseSpeed;
+  const bias = finite(move.SpawnSpeedRandomBias, .5);
+  return baseSpeed * (1 + rate * signedBiasSample(random(), bias));
+}
+
+// Source-grounded launch envelope through an admitted jump. Shooter and
+// Spinner maximum angles recover after 25F and reach ground by 70F. The
+// established Splatling jump clock is owned by splatling-jump-spread.mjs;
+// this catalog only reads it, not advancing a duplicate clock.
+export function catalogAngularEnvelope(family, grounded, ground, jump, jumpAge, actionReduction = 0, param = {}) {
+  const airborne = lerp(ground, jump, 1 - clamp(actionReduction));
+  if (Number.isFinite(jumpAge)) {
+    if (family === 'shooter' || family === 'splatling') {
+      const frames = jumpAge * HZ;
+      const hold = finite(param.Jump_DegBiasDecreaseStartFrame, 25);
+      const end = Math.max(hold + EPS, finite(param.Jump_DegBiasEndFrame, 70));
+      return frames <= hold ? airborne
+        : frames >= end ? ground : lerp(airborne, ground, (frames - hold) / (end - hold));
+    }
+    if (family === 'dualies' || family === 'blaster') return airborne;
+  }
+  // The native Blaster's jump-serial owner rejects edge falls, whereas
+  // Shooter and Dualies retain their ordinary airborne envelope.
+  if (family === 'blaster') return ground;
+  return grounded ? ground : airborne;
+}
+
+function initialState(r,actor) {
   return { id:r.id, pressed:false, frame:0, pending:null, chargeF:0, paid:0, reserved:0,
     stream:0, streamF:0, streamCharge:0, streamTime:0, rounds:0, burst:0, burstWait:0,
     turret:0, rolls:0, roll:null, lunge:null, melee:null, stored:null, swingCount:0, canopy:null, naked:0,
-    accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0 };
+    accuracy:new ShooterAccuracy(weaponParam(r)), shotSerial:0, stop:0,
+    jumpSerial:actor?.s3JumpSerial || 0, jumpAge:null };
 }
 
 export function installMainWeaponCatalogRuntime(api, profile) {
@@ -180,7 +256,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
 
   function state(runner) {
     const r = runner.a.weapon.catalogRecord;
-    if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r);
+    if (!runner.catalogState || runner.catalogState.id !== r.id) runner.catalogState = initialState(r,runner.a);
     return runner.catalogState;
   }
   function cancel(runner, keep = false) {
@@ -351,14 +427,26 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
-    const airFactor=1-(a.s3?.modifiers?.actionAirSpread??0);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
-    const spread=a.grounded?ground:lerp(ground,jump,airFactor);
+    const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
+      ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
+    const spread=key==='turret'&&r.family==='dualies'
+      ? finite(t.LapOver_DegSwerve,0)
+      : catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,jumpAge,
+        a.s3?.modifiers?.actionAirSpread??0,{...weaponParam(r),...t});
     const aim=dir.clone();
-    const chance=s.accuracy.shot(a.grounded,runner.s3JumpSpreadAge);
-    G.projectiles._spread(aim, Math.random()<chance?spread:spread*.45);
+    if (key==='turret'&&r.family==='dualies') {
+      // Post-roll turret has its own sourced cone and must not advance normal
+      // Dualies bias; the common S3 Splat Dualies turret cone is exactly zero.
+      G.projectiles._spread(aim,spread);
+    } else {
+      // Variable-charge modes may omit fields present in the base WeaponParam.
+      catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,s.jumpAge);
+    }
     runner.spread=spread;
-    spawn(a,r,desc,aim,muzzle,{volley});notify(a,r,muzzle,aim,charge);
+    spawn(a,r,desc,aim,muzzle,{volley,
+      speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
+    notify(a,r,muzzle,aim,charge);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
@@ -431,8 +519,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
       if(distance>radius||!G.physics.los(p.pos,base))continue;
-      const damage=damageBands(bands,distance);if(damage>0)system.applyHit(p.owner,a,damage,p.wid);
+      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>system.applyHit(p.owner,a,damage,p.wid));
     }
+    const area={...p,type:'area'},cause=catalogueAttackRow(area);
+    system.s3DamageSubObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
+    system.s3DamageSpecialObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
     G.boss?.splash(p.owner,p.pos,radius,bands[0]?.Damage/10||0,0,p.wid);
     G.fx?.explosion(p.pos,p.owner.color,radius);
     emit('weapon:impact',{pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
@@ -593,7 +684,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)this.applyHit(p.owner,target,amount,p.wid);}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>this.applyHit(p.owner,target,amount,p.wid));}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
@@ -637,7 +728,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(runner);s.contactTimes ||= new Map();
     for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
-      G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id);s.contactTimes.set(enemy,G.time);
+      withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }
   }
   function beginPending(s,frames,fire){s.pending={remaining:frames/HZ,fire};}
@@ -744,7 +835,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const x=dx*cy-dz*sy-center.X,z=dx*sy+dz*cy-center.Z;
       if(Math.abs(x)<ext.X+PLAYER.radius&&Math.abs(z)<ext.Z+PLAYER.radius&&
         Math.abs(enemy.pos.y-a.pos.y)<ext.Y+PLAYER.height&&G.physics.los(a.pos,enemy.pos))
-        G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id);
+        withObjectDamageCause({owner:a,type:'saber-melee',catalog:{r,descriptor:{key}}},()=>G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id));
     }
   }
   function swing(runner,r,input,s,dt) {
@@ -806,15 +897,27 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(this.weapon.catalogRecord&&motion){this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
     return nativeHorizontal.call(this,dt,...args);
   };
+  const launchedCanopies = new Set();
+  const worldUpdate = P.update;
+  P.update = function(dt,...args){
+    if(Number.isFinite(dt)&&dt>0)for(const c of launchedCanopies){
+      c.pos.addScaledVector(c.dir,c.speed*dt);c.remaining-=dt;
+      if(c.remaining<=EPS||c.hp<=0){retireDetachedCanopy(c);launchedCanopies.delete(c);continue;}
+      floorPaint(c.owner,c.pos,c.paintRadius);showDetachedCanopy(api,c.owner,c,c.weaponId);
+      c.contacts ||= new Map();
+      for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==c.owner.team&&enemy.pos.distanceTo(c.pos)<c.radius+PLAYER.radius&&G.time-(c.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(c.pos,enemy.pos)){
+        withObjectDamageCause({owner:c.owner,type:'canopy',catalog:{r:c.record}},()=>G.projectiles.applyHit(c.owner,enemy,finite(c.record.parameters.spl__BulletShelterCanopyParam.CanopyDamage,300)/10,c.weaponId));c.contacts.set(enemy,G.time);
+      }
+    }
+    return worldUpdate.call(this,dt,...args);
+  };
   function brella(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,measure=BRELLA_MEASURED[r.sourceActor],t=weaponParam(r),c=p.spl__BulletShelterCanopyParam||{};
     s.naked=Math.max(0,s.naked-dt);
     const canopy=s.canopy;
     if(canopy){
       canopy.age+=dt;
-      if(canopy.launched){canopy.pos.addScaledVector(canopy.dir,finite(c.CanopyInitSpeed,7.92)*dt);floorPaint(a,canopy.pos,finite(c.CanopyPaintRadius,1));
-        canopy.remaining-=dt;if(canopy.remaining<=EPS||canopy.hp<=0)s.canopy=null;}
-      else {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
+      {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
         canopy.open=!!input.fire&&canopy.age*HZ>=measure.open;
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
@@ -823,12 +926,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(canopy.open&&canopy.age*HZ>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
           s.naked=finite(c.CanopyNakedFrame,330)/HZ;
+          canopy.owner=a;canopy.weaponId=r.id;canopy.speed=finite(c.CanopyInitSpeed,7.92);canopy.paintRadius=finite(c.CanopyPaintRadius,1);
+          canopy.record=r;canopy.visualSource=a.character?.weapon?.def;launchedCanopies.add(canopy);showDetachedCanopy(api,a,canopy,r.id);s.canopy=null;
         }}
       if(canopy.open||canopy.launched){
         canopy.contacts ||= new Map();
         for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(canopy.pos)<canopy.radius+PLAYER.radius&&
           G.time-(canopy.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(canopy.pos,enemy.pos)){
-          G.projectiles.applyHit(a,enemy,finite(c.CanopyDamage,300)/10,r.id);canopy.contacts.set(enemy,G.time);
+          withObjectDamageCause({owner:a,type:'canopy',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(c.CanopyDamage,300)/10,r.id));canopy.contacts.set(enemy,G.time);
         }
       }
     }
@@ -844,14 +949,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   const nativeDefense=P.kitDefenseCandidate;
   function hurtCanopy(a,s,c,damage){
-    const raw=a.weapon.catalogRecord.parameters.spl__BulletShelterCanopyParam;
+    const raw=(c.record||a.weapon.catalogRecord).parameters.spl__BulletShelterCanopyParam;
     c.hp=Math.max(0,c.hp-damage*(c.launched?finite(raw.CanopyAttackedDamageRate,.5):1));
-    if(c.hp<=0){s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}
+    if(c.hp<=0){if(c.launched){retireDetachedCanopy(c);launchedCanopies.delete(c);}else{s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}}
   }
   P.kitDefenseCandidate=function(p){
     let best=nativeDefense?.call(this,p)||null;
     const len=p.prev.distanceTo(p.pos);
-    for(const a of G.actors||[]){const s=a.weaponRunner?.catalogState,c=s?.canopy;
+    const guards=[...(G.actors||[]).map(a=>({a,s:a.weaponRunner?.catalogState,c:a.weaponRunner?.catalogState?.canopy})),...Array.from(launchedCanopies,c=>({a:c.owner,s:c.owner.weaponRunner?.catalogState,c}))];
+    for(const {a,s,c} of guards){
       if(!a.alive||a.team===p.team||!c||!c.open&&!c.launched||c.hp<=0)continue;
       const t=capsuleEntry(p.prev,p.pos,c.pos,c.radius,c.radius*2,.1);
       if(t==null||t*len>=(best?.distance??Infinity))continue;
@@ -873,7 +979,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return nativeApplyHit.call(this,attacker,victim,damage,wid,...args);
   };
-  P.clear=function(...args){for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
+  P.clear=function(...args){for(const c of launchedCanopies)retireDetachedCanopy(c);launchedCanopies.clear();for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
   const startSpecial=Actor.prototype._startSpecial;
   Actor.prototype._startSpecial=function(...args){const before=this.stats?.specials;const result=startSpecial.apply(this,args);
     if(this.stats?.specials>before&&this.weapon.catalogRecord)cancel(this.weaponRunner);return result;};
@@ -900,7 +1006,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     legacyUpdate.call(this,dt,{...input,fire:false,firePressed:false});
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
-    s.stop=Math.max(0,s.stop-dt);s.accuracy.advance(dt);
+    s.stop=Math.max(0,s.stop-dt);
+    if(r.family!=='splatling') {
+      s.accuracy.advance(dt);
+      if(ANGULAR_FAMILIES.has(r.family))advanceCatalogJumpClock(s,a,r.family,dt);
+    }
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}

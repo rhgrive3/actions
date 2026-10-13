@@ -92,6 +92,7 @@ export function verifyWallBuild(site, exactSource = false) {
     if (!inside(site, physical) || hash(fs.readFileSync(physical)) !== digest) throw Error('Wall artifact mismatch: ' + file);
   }
   const files = Object.entries(manifest.files).map(([key, digest]) => {
+    if (key.split('/').some(p => !p || p === '.' || p === '..' || p.includes('\\'))) throw Error('Wall build input differs from source: ' + key);
     const file = key.startsWith('upstream/') ? 'inkwave-public/' + key.slice(9)
       : key.startsWith('patch/') ? 'patches/splatoon3/' + key.slice(6)
         : key.startsWith('touch-layout/') ? 'patches/touch-layout/' + key.slice(13)

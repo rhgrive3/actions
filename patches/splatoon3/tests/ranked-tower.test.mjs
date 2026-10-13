@@ -122,9 +122,9 @@ test('checkpoint progress accelerates with extra riders, is remembered briefly, 
   rule.update(0.1, { actors: [rider(0, [2, 2, 0])] });
   assert.equal(rule.state.checkpointProgress[0][0], 2.1);
   rule.update(3, { actors: [] });
-  assert.equal(rule.state.checkpointProgress[0][0], 0);
+  assert.equal(rule.state.checkpointProgress[0][0], 2.1, 'progress pauses while the tower stays on its marker');
 
-  rule.update(5, { actors: [rider(0, [2, 2, 0])] });
+  rule.update(2.9, { actors: [rider(0, [2, 2, 0])] });
   assert.equal(rule.state.checkpointCleared[0][0], true);
   assert.equal(rule.state.checkpointIndex[0], 1);
   assert.equal(rule.state.checkpointCountBudget[0], 5 / 0.6);

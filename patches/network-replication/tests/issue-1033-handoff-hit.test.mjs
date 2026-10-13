@@ -102,7 +102,7 @@ function makeWorld(id) {
   const forwardList = source.slice(forwardStart, forwardEnd + 1);
   const limitsStart = source.indexOf('const HIT_DELIVERY_LIMIT = '), limitsEnd = source.indexOf('const TICK = 1 / 20;', limitsStart);
   assert.ok(limitsStart >= 0 && limitsEnd > limitsStart, 'production bounded hit limits are composed');
-  const hitLimits = source.slice(limitsStart, limitsEnd);
+  const hitLimits = source.match(/^const IW_CATALOGUE_SUB_HIT_MAX = [^\n]+;/m)[0] + '\n' + source.slice(limitsStart, limitsEnd);
   const methods = methodNames.map((name) => method(name, name.startsWith('_retire') || name.startsWith('_retry'))).join('\n');
   const NetMatchHarness = new Function(
     'G', 'PLAYER', 'on', 'emit', 'r2', 'IW_HIT_MAX_DAMAGE', 'IW_HIT_CAUSES', 'mapNoBots', 'now',

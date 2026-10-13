@@ -353,6 +353,9 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, 'this.growing.push(g);', 'this.growing.push(g);', 'paint deferred growth record');
   }
   if (rel === 'src/game/character.js') {
+    // Preserve animated native channels but never submit their authored invisible placeholders.
+    code = replaceOnce(code, 'const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate;',
+      'const m = new THREE.Mesh(pd.geo, mat); m.onBeforeRender = partGate; m.visible = pd.hidden !== true;', 'skip hidden weapon part draws');
     code = replaceOnce(code, 'const PN = _k;', 'const PN = _k;\nexport const CHARACTER_CHANNELS = Object.freeze({ HIPS_P,HIPS,SPINE,CHEST,NECK,HEAD,CLAVL,CLAVR,UARML,UARMR,FARML,FARMR,HANDL,HANDR,FOOTL,FOOTLR,FOOTR,FOOTRR,ANC,ANCR,ANL,ANLR,POLER,POLEL,IKR,IKL,LTGT,LTGTR,LTW,LTROT,KNEEL,KNEER,STAB,WPL,WPR,TIPTOE,AFOLT,AFOLR,MODEL,MODELR,SQY,SQXZ,HLP });', 'character pose channels');
     code = replaceOnce(code, 'const BALL_Z = 0.11, HEEL_Z = 0.065;', 'const BALL_Z = 0.11, HEEL_Z = 0.065;\nexport const CHARACTER_FOOT_METRICS = Object.freeze({ ANKLE_H, BALL_Z, HEEL_Z });', 'character foot metrics');
     code = replaceOnce(code, 'const TN = _tk;', 'const TN = _tk;\nexport const CHARACTER_TIMERS = Object.freeze({ T_FLICK,T_LEAP,T_SLAM,T_DODGE,T_SPAWN,T_LAND,T_SHOOT,T_SHOOTL,T_THROW,T_SLOSH,T_REL,T_HIT });', 'character timers');
@@ -1149,6 +1152,10 @@ export function adaptSource(rel, code) {
     return `import { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\n` + code;
   }
   if (rel === 'src/net/netmatch.js') {
+    // The existing firing bit carries the held intake level for Ink Vac.
+    // Weapon firingT is deliberately masked while Vac owns the trigger.
+    code = replaceOnce(code, '  if (wr.firingT > 0) f |= F.firing;',
+      "  if (a.specialActive?.id === 'inkVac' ? !!a._s3InkVacSucking : wr.firingT > 0) f |= F.firing;", 'Ink Vac held intake wire level');
     // #904: replicate the owner-proven wall normal while showing the charge
     // pose, without enabling ordinary remote wall-climb movement.
     code = replaceOnce(code, '  if (a.climbing) f |= F.climb;',
@@ -1338,7 +1345,7 @@ export function adaptSource(rel, code) {
   if (rel === 'src/game/character-weapons.js') {
     code = replaceOnce(code, 'export function getWeaponDef(kind) {\n  if (!_cache.has(kind)) {', 'export function getWeaponDef(kind) {\n  kind = weaponModelKey(kind); // weapon ID → its own model, else the shared family model\n  if (!_cache.has(kind)) {', 'per-weapon model cache key');
     code = replaceOnce(code, 'const d = finishParts((BUILDERS[kind] || buildShooter)());', 'const d = finishParts(buildWeaponModel(kind, referenceWeaponModel((BUILDERS[weaponModelFamily(kind)] || buildShooter)())));', 'base weapon reference silhouettes and per-weapon models');
-    code = replaceOnce(code, 'export function animateWeapon(w, st) {', 'export function animateWeapon(w, st) {\n  animateNativeWeapon(w, st);\n  if (w.def.animate && st.near !== false) w.def.animate(w, st);\n}\nfunction animateNativeWeapon(w, st) {', 'per-weapon part animation after the native family channels');
+    code = replaceOnce(code, 'export function animateWeapon(w, st) {', 'export function animateWeapon(w, st) {\n  const pose = w.def.parts?.canopy ? { ...st, near: true } : st;\n  animateNativeWeapon(w, pose);\n  if (w.def.animate && pose.near !== false) w.def.animate(w, pose);\n}\nfunction animateNativeWeapon(w, st) {', 'per-weapon part animation after the native family channels');
     code = replaceOnce(code, '    if (ft >= 0.15 && ft - dt < 0.15) w.drumW += 34;', '    const release = st.flickReleaseTime ?? 0.15;\n    if (ft >= release && ft - dt < release) w.drumW += 34;', 'roller drum release impulse');
     code = replaceOnce(code, 'const BUILDERS = { shooter: buildShooter, roller: buildRoller,', 'const BUILDERS = { shooter: buildShooter, roller: () => rollerFoldModel(rollerModel(buildRoller())),', 'roller drum proportions and articulated middle hinge');
     code = replaceOnce(code, 'blaster: buildBlaster,', 'blaster: () => blasterMechanism(buildBlaster()),', 'blaster S3 lever/spring-front mechanism channels');
