@@ -4,6 +4,7 @@ on:
     paths:
       - 'patches/splatoon3/runtime/all-specials.mjs'
       - 'patches/splatoon3/tests/specials-source-final-1130.test.mjs'
+      - 'patches/splatoon3/tests/kraken-dash-occlusion.test.mjs'
       - '.github/workflows/inkwave-specials-source-final.yml'
   workflow_dispatch:
 permissions:
@@ -20,4 +21,5 @@ jobs:
       - name: Verify source-bound movement, Kraken capsule and tornado lifecycle
         run: |
           node --experimental-vm-modules --test patches/splatoon3/tests/specials-source-final-1130.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/kraken-dash-occlusion.test.mjs
           node --experimental-vm-modules --test patches/splatoon3/tests/all-specials.test.mjs

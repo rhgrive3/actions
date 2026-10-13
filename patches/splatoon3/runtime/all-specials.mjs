@@ -1569,7 +1569,17 @@ function activeStep(rt,actor,dt) {
       const hitTo=actor.pos.clone().addScaledVector(state.direction,2.75);
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===actor.team||state.dashHits.has(victim))continue;
-        if(krakenDashSweptContact(hitFrom,hitTo,victim.pos,1.5)){rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);}
+        if(!krakenDashSweptContact(hitFrom,hitTo,victim.pos,1.5))continue;
+        // The forward attack capsule may extend beyond a wall even when the
+        // native body resolver stopped correctly. Test visibility from the
+        // corresponding BODY sweep point, never from the shifted hit capsule.
+        const sweep=rt.v2.copy(hitTo).sub(hitFrom),lengthSq=sweep.lengthSq();
+        const t=lengthSq>1e-12?clamp(rt.v3.copy(victim.pos).sub(hitFrom).dot(sweep)/lengthSq,0,1):0;
+        const from=rt.v3.copy(before).lerp(actor.pos,t),to=rt.v4.copy(victim.pos);
+        // Keep the occlusion ray just above coplanar feet/floor surfaces.
+        from.y+=.05;to.y+=.05;
+        if(rt.api.G.physics?.los&&!rt.api.G.physics.los(from,to))continue;
+        rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);
       }
       stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
       if(state.dashT>=35/60){state.phase='active';state.dashT=0;}
