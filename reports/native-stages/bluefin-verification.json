@@ -1,7 +1,6 @@
 {
   "stage": "bluefin",
-  "status": "draft-source-human-qualified-positive-approach-and-continuous-bot-capsule-pending",
-  "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+  "status": "draft-final-owner-GroundBody-latest-main-matrix-pending",
   "source": {
     "id": "bluefin",
     "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
@@ -30,7 +29,7 @@
     "schema": 1,
     "id": "bluefin",
     "internal": "Vss_Ruins03",
-    "name": "ネギトロ炭鉱",
+    "name": "\u30cd\u30ae\u30c8\u30ed\u70ad\u9271",
     "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
     "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
     "version1130Verified": false,
@@ -2659,15 +2658,15 @@
       "errors": [],
       "downloads": 2,
       "menu": [
-        "タイドウォーター広場",
-        "ケルプライン埠頭",
-        "ハリヤードマリーナ",
-        "ユノハナ大渓谷",
-        "ヤガラ市場",
-        "海女美術大学",
-        "ザトウマーケット",
-        "クサヤ温泉",
-        "ネギトロ炭鉱"
+        "\u30bf\u30a4\u30c9\u30a6\u30a9\u30fc\u30bf\u30fc\u5e83\u5834",
+        "\u30b1\u30eb\u30d7\u30e9\u30a4\u30f3\u57e0\u982d",
+        "\u30cf\u30ea\u30e4\u30fc\u30c9\u30de\u30ea\u30fc\u30ca",
+        "\u30e6\u30ce\u30cf\u30ca\u5927\u6e13\u8c37",
+        "\u30e4\u30ac\u30e9\u5e02\u5834",
+        "\u6d77\u5973\u7f8e\u8853\u5927\u5b66",
+        "\u30b6\u30c8\u30a6\u30de\u30fc\u30b1\u30c3\u30c8",
+        "\u30af\u30b5\u30e4\u6e29\u6cc9",
+        "\u30cd\u30ae\u30c8\u30ed\u70ad\u9271"
       ],
       "cache": {
         "id": "bluefin",
@@ -7703,7 +7702,7 @@
     "slowWalkNegativeEvidence": ".browser-evidence/current-main-calibration/runway-prefix-physical.json",
     "genericOwner": "Manta",
     "namedIndependentPeer": "Bluefin",
-    "promotionConditions": "Pending exact separate shared PR/SHA, full original-pad→lower-island→upper-bank ordinary BotBrain current CPU/Chromium proof atallrates/opposed contexts, source/NoPaint/fullcapsule/default/guard/public9/budget review. No proposed flag adopted."
+    "promotionConditions": "Pending exact separate shared PR/SHA, full original-pad\u2192lower-island\u2192upper-bank ordinary BotBrain current CPU/Chromium proof atallrates/opposed contexts, source/NoPaint/fullcapsule/default/guard/public9/budget review. No proposed flag adopted."
   },
   "currentMainPositiveHumanTakeoffWitness": {
     "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
@@ -8890,5 +8889,26 @@
       "test title"
     ],
     "scope": "Production 1/60 CPU kernel, one bank. Optional source motion unavailable in VM. Real Game render3 proved independently. Positive-bank approach and final whole-stage pair remain pending."
+  },
+  "historicalFoundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+  "foundation": "cc878885c19b42a1a4d43db31cc2d2cc8159ca26",
+  "acceptedRunningSourceApproach": {
+    "PR": 1411,
+    "foundation": "cc878885c19b42a1a4d43db31cc2d2cc8159ca26",
+    "aggregate": "9c472054066249ecce007937e22198a54f477100",
+    "namedPeer": "Humpback",
+    "receiptSHA256": "003e30df75a7487c000174fa5789852429a98e976319d1f49bf2fd2a80203197",
+    "scope": "Earlier common b199/bc immutable pair; fresh own GroundBody/current-main matrix pending",
+    "ownerFlagAdopted": true
+  },
+  "ownerApproachSourceReseal": {
+    "buffersByteIdentical": 10,
+    "sourcePNGsByteIdentical": 216,
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true,
+      "wallApproach": true
+    },
+    "privateReceipt": ".browser-evidence/final/source-after-approach.json"
   }
 }
