@@ -39,10 +39,12 @@ test('owned partial cells accept only exact source polygon points and retain NoP
 
 test('Python and worker masks agree for partial polygons and thin strips',()=>{
  const tool=fileURLToPath(new URL('../tools/build-native.py',import.meta.url));
- const source=`import sys,json,importlib.util,pathlib,numpy as np
+ const source=`import sys,json,importlib,pathlib,tempfile,os,numpy as np
 sys.path.insert(0,str(pathlib.Path(sys.argv[1]).parent))
-spec=importlib.util.spec_from_file_location('coverage_build',sys.argv[1]);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-p=json.load(sys.stdin);print(json.dumps(module.raster_mask(np.array(p['triangles'],dtype=np.float64),p['nu'],p['nv'],p['cu'],p['cv']).tolist()))
+with tempfile.TemporaryDirectory(prefix='inkwave-paint-parity-') as cache:
+ os.environ['NUMBA_CACHE_DIR']=cache
+ module=importlib.import_module(pathlib.Path(sys.argv[1]).stem)
+ p=json.load(sys.stdin);print(json.dumps(module.raster_mask(np.array(p['triangles'],dtype=np.float64),p['nu'],p['nv'],p['cu'],p['cv']).tolist()))
 `;
  const cases=[[[[0,0],[1,0],[0,1]]],[[[0,.01],[1,.02],[0,.03]]],[[[.5,.9],[.7,.2],[.1,.1]],[[.7,.2],[1,.8],[.5,.9]]]];
  for(const triangles of cases){
