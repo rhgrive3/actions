@@ -519,9 +519,14 @@
     "fullBankPhysicalQualification": "pending source-supported drop validation"
   },
   "sourcePositiveBankHumanAccess": {
+    "status": "passed-accepted-foundation-cpu",
     "foundation": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
-    "testPass": 1,
-    "testFail": 0,
+    "test": "patches/native-stages/tests/bluefin-source.test.mjs: admitted shooter paint and ordinary input physically traverse the original positive upper bank",
+    "command": "INKWAVE_NATIVE_STAGE_ASSETS=\"$PWD/.codex-stage-sources/generated\" flock /workspace/actions/.ci-scratch/native-stage-cpu-heavy.lock node --experimental-vm-modules --test --test-name-pattern=\"admitted shooter paint\" patches/native-stages/tests/bluefin-source.test.mjs",
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "testMilliseconds": 4302.093593,
     "id": "bluefin",
     "positiveBankHumanAccess": [
       {
@@ -534,25 +539,41 @@
         ],
         "sourceStartTriangle": 173307,
         "capEnd": [
-          27.920349841391705,
-          9.009785228113635,
-          18.505319090374833
+          27.949732836247435,
+          9.00978418285272,
+          18.505817743179033
         ],
         "sourceCapTriangle": 87660,
-        "seconds": 2.033333333333333,
+        "seconds": 2.2333333333333334,
         "bankGoal": [
           20,
           9,
           40.5
         ],
         "bankEnd": [
-          19.980286585711447,
+          19.987274775132356,
           9,
-          40.26991698962484
+          40.261621360473185
         ],
-        "bankWalkSeconds": 5.033333333333325,
+        "bankWalkSeconds": 4.933333333333326,
         "walkwaySourceSupports": 23,
         "wallSamples": 39,
+        "floorTargets": 8,
+        "floorOwned": 7,
+        "unownedFloorSamples": [
+          {
+            "point": [
+              24,
+              3.049999952316284,
+              18.5
+            ],
+            "face": 53207,
+            "triangle": 173766
+          }
+        ],
+        "paintSeconds": 2.6000000000000005,
+        "refillSeconds": 0.8666666666666666,
+        "fireFrames": 78,
         "noPaintSamples": 0,
         "jumped": true,
         "climbed": true,
@@ -571,25 +592,41 @@
         ],
         "sourceStartTriangle": 173307,
         "capEnd": [
-          28.02947608987535,
-          9.009790167526889,
-          18.50294956387287
+          28.018038734132805,
+          9.009790861682722,
+          18.502617094752928
         ],
         "sourceCapTriangle": 87661,
-        "seconds": 2.1,
+        "seconds": 2.216666666666667,
         "bankGoal": [
           20,
           9,
           40.5
         ],
         "bankEnd": [
-          20.005742403932228,
+          19.98755057155688,
           9,
-          40.2354920786485
+          40.17360728674265
         ],
-        "bankWalkSeconds": 4.966666666666654,
+        "bankWalkSeconds": 4.983333333333321,
         "walkwaySourceSupports": 23,
         "wallSamples": 39,
+        "floorTargets": 8,
+        "floorOwned": 7,
+        "unownedFloorSamples": [
+          {
+            "point": [
+              24,
+              3.049999952316284,
+              18.5
+            ],
+            "face": 53207,
+            "triangle": 173766
+          }
+        ],
+        "paintSeconds": 2.5999999999999956,
+        "refillSeconds": 0.850000000000001,
+        "fireFrames": 156,
         "noPaintSamples": 0,
         "jumped": true,
         "climbed": true,
@@ -608,25 +645,41 @@
         ],
         "sourceStartTriangle": 173307,
         "capEnd": [
-          28.02202812287651,
-          9.00979336965686,
-          18.501415889035897
+          28.04473903308598,
+          9.009793374740404,
+          18.501413454249224
         ],
         "sourceCapTriangle": 87661,
-        "seconds": 2.1166666666666667,
+        "seconds": 2.2333333333333334,
         "bankGoal": [
           20,
           9,
           40.5
         ],
         "bankEnd": [
-          20.0012277678088,
+          20.00159589155347,
           9,
-          40.180413474744775
+          40.18019343687517
         ],
         "bankWalkSeconds": 4.975000000000037,
         "walkwaySourceSupports": 23,
         "wallSamples": 39,
+        "floorTargets": 8,
+        "floorOwned": 7,
+        "unownedFloorSamples": [
+          {
+            "point": [
+              24,
+              3.049999952316284,
+              18.5
+            ],
+            "face": 53207,
+            "triangle": 173766
+          }
+        ],
+        "paintSeconds": 2.6083333333333267,
+        "refillSeconds": 0.8416666666666661,
+        "fireFrames": 313,
         "noPaintSamples": 0,
         "jumped": true,
         "climbed": true,
@@ -636,10 +689,7 @@
         "gearAP": 0
       }
     ],
-    "conditions": "real Actor integrator and source collision; source-supported initial pose only; initial friendly source wall/floor ownership; run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink assignment; initial manual ownership is not weapon paint proof",
-    "browserQualification": "pending",
-    "fullOrdinaryBotBankRoute": "pending shared navigation qualification",
-    "fullPositiveBankWalkwayVerified": true
+    "conditions": "real Actor integrator, WeaponRunner/projectiles and source collision; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG"
   },
   "privateDropCalibration": {
     "status": "diagnostic only; candidate not adopted",
@@ -1077,5 +1127,43 @@
     "simulationClockBasis": "production clock source inspection; final runner also reads STEP/tick count",
     "weaponPaintClaim": false,
     "screenshotInspectedPrivately": true
+  },
+  "privateStrictBankBotCandidate": {
+    "status": "failed-private-diagnostic-not-adopted",
+    "candidate": "7a5b5b2c694c8dac8f634679fcbf1fbf552f5aaf",
+    "components": [
+      "175b942d",
+      "030c9788",
+      "f37136c9 exact support bytes",
+      "becdc29c exact constructor"
+    ],
+    "team": 1,
+    "simulationHz": 30,
+    "initialRng": 0.5,
+    "rngSetBeforeActorAndBrainConstruction": true,
+    "initialPaint": "empty",
+    "originalPadsRetained": true,
+    "sourceNavigation": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "goal": [
+      -20,
+      9,
+      -39.5
+    ],
+    "seconds": 120,
+    "end": [
+      -7.540529377782416,
+      0.7652999758720398,
+      7.040529377782416
+    ],
+    "alive": true,
+    "grounded": true,
+    "climbed": false,
+    "fire": true,
+    "replans": 2899,
+    "remainingRates": "not executed after strict first case failure",
+    "genericOwnerInvestigating": "Flounder; no shared edits in Bluefin branch"
   }
 }
