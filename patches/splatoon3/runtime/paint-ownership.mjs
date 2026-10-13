@@ -142,8 +142,6 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   return pieces.length ? { pieces, sa, sdu, sdv, margin: pixel * 1.5, seed, dT } : null;
 }
 
-// The sole caller enumerates one piece at a time; do not re-enter a generic
-// piece-index loop for each of the five samples of every candidate cell.
 function pointInsideAncillary(mask, x, y, seed, p) {
   let px = x, py = y;
   if (mask.sa > 0) {

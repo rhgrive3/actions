@@ -128,3 +128,13 @@ test('#71 map and setting ownership produces identical camera traces at 30/60/12
   }
   assert.deepEqual(traces[0], traces[1]); assert.deepEqual(traces[1], traces[2]);
 });
+
+test('camera rebuild: gyro mode retains vertical-axis ownership between HID reports', async () => {
+  const h = await world();
+  h.input.setControllerMotionReader(() => null);
+  h.p.axes[3] = .9; h.input.pollPad(); h.input.lastDevice = 'pad';
+  h.controller.update(STEP); near(h.rig.pitch, 0);
+  h.input.setControllerMotionReader(null);
+  h.controller.update(STEP);
+  assert.notEqual(h.rig.pitch, 0, 'no motion-capable reader: ordinary pad must retain usable pitch');
+});

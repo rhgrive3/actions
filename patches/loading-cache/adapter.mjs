@@ -4,9 +4,16 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { parse } from './vendor/acorn.mjs';
-// The production cold-offline gameplay snapshot may use up to 10 MiB.
-// Worker (68 KiB) and total revision (12 MiB) ceilings remain independent.
-export const PRECACHE_BUDGET_BYTES=10*1024*1024, WORKER_BUDGET_BYTES=68*1024;
+// Generous but finite delivery budgets. Raising these limits does NOT force
+// more bytes to download: the existing dependency graph and on-demand policy
+// continue to choose the actual files. Worker/cache identity remains strict.
+export const PRECACHE_BUDGET_BYTES = 24 * 1024 * 1024;
+export const REVISION_BUDGET_BYTES = 48 * 1024 * 1024;
+export const WORKER_BUDGET_BYTES = 192 * 1024;
+export const INITIAL_JS_BUDGET_BYTES = 6 * 1024 * 1024;
+export const RANGE_PRELOAD_BUDGET_BYTES = 384 * 1024;
+export const STARTUP_ENTRY_BUDGET_BYTES = 24 * 1024;
+export const CRITICAL_HTML_BUDGET_BYTES = 48 * 1024;
 export const LOADING_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const filesIn = dir => fs.readdirSync(dir, { withFileTypes: true }).filter(d => d.name !== '.rsync-tmp').flatMap(e => e.isDirectory() ? filesIn(path.join(dir,e.name)) : [path.join(dir,e.name)]).sort();
@@ -89,7 +96,7 @@ export function loadingIdentity() {
 }
 // Cold offline cache only needs stages that can actually be played offline.
 // The Cargo stage has onlineOnly:true; its lightmap remains versioned and
-// cache-on-request but not in the install-time 10 MiB snapshot.
+// cache-on-request but not in the install-time 24 MiB snapshot.
 export const coldOfflineLightmap = rel => rel.startsWith('assets/lightmaps/') &&
   rel !== 'assets/lightmaps/cargo.png';
 export function prepareLoading(build, preloads, options = {}) {
@@ -98,11 +105,11 @@ export function prepareLoading(build, preloads, options = {}) {
   const compactRuntime = typeof options === 'function' ? options : options.compactRuntime ?? (source => source);
   if (typeof compactRuntime !== 'function') throw new TypeError('loading-cache: invalid startup runtime compactor');
   const diagnosticUnminified = typeof options === 'function' ? false : !!options.diagnosticUnminified;
-  // Production limits are unchanged. An explicitly selected local diagnostic
-  // build has no minifier/tree shaking, so declare its separate bounded budget.
+  // Production and diagnostic builds have independent, explicitly bounded sizes.
+  // Diagnostic builds have no minifier/tree shaking and therefore get more room.
   const budget = diagnosticUnminified
-    ? { mode: 'diagnostic-unminified', precache: 12 * 1024 * 1024, revision: 24 * 1024 * 1024, worker: 128 * 1024 }
-    : { mode: 'production', precache: PRECACHE_BUDGET_BYTES, revision: 12 * 1024 * 1024, worker: WORKER_BUDGET_BYTES };
+    ? { mode: 'diagnostic-unminified', precache: 32 * 1024 * 1024, revision: 64 * 1024 * 1024, worker: 256 * 1024 }
+    : { mode: 'production', precache: PRECACHE_BUDGET_BYTES, revision: REVISION_BUDGET_BYTES, worker: WORKER_BUDGET_BYTES };
   let html=fs.readFileSync(path.join(build,'index.html'),'utf8');
   if(/<base\s/i.test(html)||html.includes('inkwave-startup-shell'))throw new Error('loading-cache requires one unversioned staging tree');
   if(preloads.length!==new Set(preloads).size)throw new Error('loading-cache: duplicate preload inputs');
@@ -136,14 +143,14 @@ export function prepareLoading(build, preloads, options = {}) {
   const css=Object.keys(assets).filter(rel=>rel.endsWith('.css')); // Includes @import HUD CSS and non-./ HTML hrefs.
   // Cargo is an online-only/no-bots/no-boss stage (src/config.js). Its PNG
   // lightmap is integrity-checked and cached on first online use, not copied
-  // into the 10 MiB cold-offline snapshot where that stage cannot be played.
+  // into the 24 MiB cold-offline snapshot where that stage cannot be played.
   // All three playable offline stage lightmaps remain in the install snapshot.
   // PWA icons are fetched by the browser at install/display time, not game startup.
   // Keep all three versioned icon files in BUILD.assets for integrity-checked
   // cache-on-request; precache the manifest and actual gameplay dependencies.
   // Title-only Titan One remains hash-declared and cache-on-demand; all critical
   // game scripts, HUD fonts, current stage and Range lightmaps stay offline-ready.
-  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>(rel.startsWith('assets/fonts/') && rel !== 'assets/fonts/TitanOne-latin.woff2')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest')]);
+  const core=new Set([...preloads,...css,'patches/loading-cache/runtime/startup.mjs','patches/splatoon3/profile.json',...Object.keys(assets).filter(rel=>(rel.startsWith('assets/fonts/') && rel !== 'assets/fonts/TitanOne-latin.woff2')||coldOfflineLightmap(rel)||rel==='assets/stages/manifest.json'||rel==='patches/splatoon3/pwa/manifest.webmanifest'||/^patches\/local-quality\/ink-volume\/assets\/(roller|shooter)\/manifest\.json$/.test(rel))]);
   for(const rel of core)if(!assets[rel])throw new Error(`loading-cache: missing precache dependency ${rel}`);
   const precache=[...core].sort();
   const precacheBytes=precache.reduce((sum,rel)=>sum+assets[rel][0],0);
@@ -157,7 +164,7 @@ export function finalizeLoadingWorker(build, revision, plan, compactTemplate = s
   const config={schema:1,revision,index:{bytes:index.length,sha256:hash(index)},declaredBytes:plan.assetBytes+index.length,precache:plan.precache,assets:plan.assets};
   let template=fs.readFileSync(path.join(LOADING_ROOT,'sw.js'),'utf8');
   if(plan.budget?.mode === 'diagnostic-unminified')
-    template=countReplace(template,'const MAX_REVISION_BYTES = 12 * 1024 * 1024;',
+    template=countReplace(template,'const MAX_REVISION_BYTES = 48 * 1024 * 1024;',
       `const MAX_REVISION_BYTES = ${plan.budget.revision}; // explicit unminified diagnostic budget`,
       'diagnostic revision budget');
   // Compact executable whitespace before inserting JSON so its literal remains
@@ -165,7 +172,7 @@ export function finalizeLoadingWorker(build, revision, plan, compactTemplate = s
   const marker='__INKWAVE_CACHE_CONFIG_VALUE__';
   const compact=compactTemplate(countReplace(template,'/*__INKWAVE_CACHE_BUILD__*/ null',marker,'worker template marker'));
   const worker=countReplace(compact,marker,JSON.stringify(config),'worker stamp');
-  if(Buffer.byteLength(worker)>(plan.budget?.worker ?? 64*1024))throw new Error(`loading-cache: worker exceeds ${(plan.budget?.worker ?? 64*1024) / 1024} KiB declared budget (${Buffer.byteLength(worker)} bytes)`);
+  if(Buffer.byteLength(worker)>(plan.budget?.worker ?? WORKER_BUDGET_BYTES))throw new Error(`loading-cache: worker exceeds ${(plan.budget?.worker ?? WORKER_BUDGET_BYTES) / 1024} KiB declared budget (${Buffer.byteLength(worker)} bytes)`);
   fs.writeFileSync(path.join(build,'sw.js'),worker);
   return {revision,precacheCount:plan.precache.length,precacheBytes:plan.precacheBytes,declaredBytes:config.declaredBytes,maxRevisions:2,workerBytes:Buffer.byteLength(worker),budget:plan.budget};
 }

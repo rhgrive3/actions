@@ -63,7 +63,7 @@ const _farCache = new WeakMap();
 
 /**
  * Decimate an (indexed or not) skinned geometry by vertex clustering. Cluster key = grid cell + dominant bone + discrete
- * material ids (aEx, aCloth.xy, aTint gear class), so material borders survive; opposite-facing members split off (thin
+ * material ids (aEx, aCloth.xy, aTint gear class), so clothing material borders survive; opposite-facing members split off (thin
  * shells keep both faces). Each cluster keeps its most central vertex (attributes incl. skin
  * weights copied from it — the surface never shrinks) with the members' averaged normal.
  */
@@ -119,15 +119,50 @@ export function clusterDecimate(src, cell) {
   }
   // triangles: remap, drop collapsed ones and exact duplicates (orientation kept: both faces of a sheet survive)
   const src3 = src.index ? src.index.array : null, nt = (src3 ? src3.length : n) / 3;
-  const tris = [], seen = new Set();
+  const tris = [], sourceCorners = [], seen = new Set();
   for (let t = 0; t < nt; t++) {
     const a = vc[src3 ? src3[t * 3] : t * 3], b = vc[src3 ? src3[t * 3 + 1] : t * 3 + 1], c = vc[src3 ? src3[t * 3 + 2] : t * 3 + 2];
     if (a === b || b === c || a === c) continue;
     const m = Math.min(a, b, c), key = m === a ? `${a},${b},${c}` : m === b ? `${b},${c},${a}` : `${c},${a},${b}`;
     if (seen.has(key)) continue;
     seen.add(key); tris.push(a, b, c);
+    if (A.aMat && A.color) sourceCorners.push(src3 ? src3[t * 3] : t * 3, src3 ? src3[t * 3 + 1] : t * 3 + 1, src3 ? src3[t * 3 + 2] : t * 3 + 2);
   }
   out.setIndex(nc > 65535 ? new THREE.Uint32BufferAttribute(tris, 1) : new THREE.Uint16BufferAttribute(tris, 1));
+  // Keep the established spatial decimation and triangle budget, but do not let a
+  // neighbouring metal/print representative repaint the surviving weapon surface.
+  // Split only attribute conflicts at surviving corners. Positions/normals remain
+  // the existing cluster result; nonweapon geometries take the original path.
+  if (A.aMat && A.color) {
+    const attributes = out.attributes, extras = [], splits = new Map(), remapped = [];
+    for (let i = 0; i < tris.length; i++) {
+      const cluster = tris[i], original = sourceCorners[i];
+      const same = ['aMat', 'color'].every(name => {
+        const a = A[name], b = attributes[name];
+        for (let k = 0; k < a.itemSize; k++) if (a.getComponent(original, k) !== b.getComponent(cluster, k)) return false;
+        return true;
+      });
+      if (same) { remapped.push(cluster); continue; }
+      const values = [cluster];
+      for (const name of ['aMat', 'color']) for (let k = 0; k < A[name].itemSize; k++) values.push(A[name].getComponent(original, k));
+      const key = values.join(':');
+      let index = splits.get(key);
+      if (index === undefined) { index = nc + extras.length; splits.set(key, index); extras.push({ cluster, original }); }
+      remapped.push(index);
+    }
+    if (extras.length) {
+      for (const name in attributes) {
+        const old = attributes[name], size = old.itemSize, arr = new old.array.constructor((nc + extras.length) * size);
+        arr.set(old.array);
+        for (let i = 0; i < extras.length; i++) {
+          const e = extras[i], authored = name === 'color' || name === 'aMat', from = authored ? A[name] : old, index = authored ? e.original : e.cluster;
+          for (let k = 0; k < size; k++) arr[(nc + i) * size + k] = from.array[index * size + k];
+        }
+        out.setAttribute(name, new THREE.BufferAttribute(arr, size, old.normalized));
+      }
+      out.setIndex(nc + extras.length > 65535 ? new THREE.Uint32BufferAttribute(remapped, 1) : new THREE.Uint16BufferAttribute(remapped, 1));
+    }
+  }
   out.userData = { ...src.userData, iwLod: 'far', cell };
   out.computeBoundingSphere();
   return out;
