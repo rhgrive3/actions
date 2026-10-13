@@ -4124,3 +4124,12 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 - **変更**: `patches/splatoon3/runtime/source-posture.mjs` を adapter で 3 箇所に接続。idle/move 状態だけ、上体の前傾を 20〜40%、首を 25% に縮める。射撃していないシューターは、移動中だけ銃身をほぼ水平・前向きにする（両手持ちのまま）。停止中の持ち方は変えない。遊脚の足首の高さを歩き 50%、走り 70% にする。補正後は待機の上体 4.7°・首 4.8°、歩きは上体 3°・首 2°・銃口ピッチ −8°、膝 93°。
 - **プレイへの影響**: 見た目だけ。発射位置の差は初弾 0.000 mm、射撃 1 秒後 0.010 mm。移動・接地・射撃のロジックは不変。
 - **確認状態**: 実ソースバンクを読み込む VM テスト（`patches/splatoon3/tests/source-posture.test.mjs`）と Chromium 描画で確認。Switch 実機比較ではない。停止中の持ち方は途中で片手持ちに変えたが、本家は支え手を添えていて判断が誤りだったため、修正前の両手持ちに戻した。射撃中にブキを体から離して構える差（発射位置に影響するため未変更）、シューター以外の持ち方、待機のしゃがみの深さ、歩幅・歩調・横歩き・後ろ歩き・坂は未確認のまま。詳細は `patches/splatoon3/reference/stance-carry-comparison-2026-10-12.md`。
+
+
+## 2026-10-13 — PR #1374 Kraken dash wall occlusion follow-up
+
+A legal source-fixture dash on parent `05fd0f99` damaged a victim beyond a solid wall after actual body resolution stopped correctly. The unchanged shifted capsule is now followed by native LOS from the corresponding unshifted body sweep point. Radius/front offset, movement, damage, multi-target order and generic network authority/life rules are unchanged; blocked contacts do not consume the per-dash hit set.
+
+The exact-parent source composition and actual minified production output each pass the new 30-case suite; the identical parent-runtime source control gives 21 positives and 9 substantive wall failures. All 926 emitted artifacts verify against content `11bba48b` / input `606616bc`. A separate manually positioned Scorch source-triangle pair rejects the wall contact and preserves the clear contact through actual source/emitted NativePhysics; unchanged parent runtime damages through that wall. Existing source-final boundaries pass 5/5; adjacent catalogue tests pass 45/45 in nine disjoint shards after an explicitly retained 768 MiB single-process heap exhaustion. Independent native sender/receiver/owner controls pass 9/9. The existing specials source job invokes the new regression, with one emitted invocation after the existing Validate build.
+
+These are actual Actor/ordinary Level/Physics/Projectiles/NetMatch source controls, with render, paint, transport and ordinary frame helpers abstracted. The native-triangle pair does not validate a full stage or normal traversal; no browser transport, rendered-gameplay or retail-calibration claim follows. This is a dependent correction for #1374, not aggregate adoption or a new-main regression claim. See [bounded report](inkwave-kraken-dash-occlusion-2026-10-13.md).
