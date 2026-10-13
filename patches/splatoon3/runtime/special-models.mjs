@@ -453,42 +453,336 @@ function crabBall(THREE) {
 }
 
 // ---- Reefslider ----------------------------------------------------------------
-// S3 Model render, Promotional 3D Render and model turntable: an inflatable
-// team-ink shark with a white belly, dorsal, pectoral and tail fins, a red and
-// white eye, a toothy grin, a blue muzzle cage, grey rope reins, an orange
-// saddle grip and two rear ink thrusters with knobbed ends. Nose +Z.
+// S3 Model render, Promotional 3D Render and the model turntable (24 frames,
+// pure side, front and back read off). An inflatable team-ink shark, about
+// 3.4x as long as it is tall: a fat rounded body (widest behind the head, a
+// slightly flat belly), a pale belly and lower jaw, a thick swept-back dorsal
+// over the gills, a fat crescent tail, broad drooping pectorals and small
+// pelvic fins with black tips, a black snout tip. Face: angry red/white eyes
+// with a pointed black lid, three gill slashes, a wide grin of red gums and
+// white teeth. A periwinkle muzzle cage (tilted rear hoop, front ring with a
+// cross, top/side/lower bars, side arms to lilac straps) covers the snout;
+// the straps run up to two black grab handles on the upper flanks. An orange
+// saddle with an upturned rear sits on two teal cords; two pale ink bottles a
+// side with flower caps (cap forward-up-out, hex nozzle back-down) are
+// strapped to the rear flanks with pale-blue harness bands. Nose +Z.
+registerFinish('sharkBelly', 0xe4eef2, { roughness: 0.3, metalness: 0 });
+registerFinish('cageBlue', 0x5a62d6, { roughness: 0.42, metalness: 0.05 });
+registerFinish('lilac', 0xcac6e8, { roughness: 0.6, metalness: 0 });
+registerFinish('harnessBlue', 0x9fc0f2, { roughness: 0.45, metalness: 0 });
+registerInkFinish('inkPale', { roughness: 0.3, metalness: 0, emissive: 0.32 });
 function reefShark(THREE) {
   const K = kit();
-  const prof = smooth(THREE, [[0, -0.85], [0.1, -0.75], [0.22, -0.5], [0.3, -0.15], [0.32, 0.15], [0.3, 0.4], [0.24, 0.6], [0.14, 0.75], [0, 0.82]], 30);
-  const body = latheZ(THREE, prof, 28).scale(1, 0.9, 1);
-  K.add('body', 'inkGloss', body.clone().translate(0, 0.42, 0));
-  K.add('body', 'white', new THREE.SphereGeometry(0.31, 24, 10, 0, TAU, Math.PI * 0.62, Math.PI * 0.38).scale(1.02, 0.82, 2.4).translate(0, 0.42, 0.05));
-  const fin = (pts, depth) => new THREE.ExtrudeGeometry(new THREE.Shape(pts.map(([a, b]) => new THREE.Vector2(a, b))), { depth, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2 });
-  K.add('body', 'inkGloss', fin([[0, 0], [0.32, 0], [0.12, 0.3], [-0.02, 0.26]], 0.05).rotateY(-Math.PI / 2).translate(0.025, 0.66, -0.15),
-    fin([[0, 0], [0.3, 0.05], [0.18, 0.35]], 0.04).rotateY(-Math.PI / 2).rotateZ(0).translate(0.02, 0.42, -0.95).rotateX(0.2),
-    fin([[0, 0], [0.26, 0.02], [0.12, -0.28]], 0.04).rotateY(-Math.PI / 2).translate(0.02, 0.42, -0.95));
-  for (const s of [-1, 1]) K.add('body', 'inkGloss', fin([[0, 0], [0.3, 0.02], [0.5, -0.18], [0.1, -0.08]], 0.05).rotateX(Math.PI / 2).rotateY(s > 0 ? 0 : Math.PI).translate(s * 0.22, 0.3, 0.1));
-  for (const s of [-1, 1]) {
-    K.add('body', 'white', new THREE.CircleGeometry(0.075, 18).rotateY(s * Math.PI / 2 * 0.8).translate(s * 0.23, 0.55, 0.52));
-    K.add('body', 'red', new THREE.CircleGeometry(0.05, 16).rotateY(s * Math.PI / 2 * 0.8).translate(s * 0.235, 0.55, 0.525));
-    K.add('body', 'black', new THREE.CircleGeometry(0.02, 10).rotateY(s * Math.PI / 2 * 0.8).translate(s * 0.24, 0.55, 0.53));
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const geo = (pos, idx) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    if (idx) g.setIndex(idx);
+    g.computeVertexNormals();
+    return g;
+  };
+  // Grid surface: f(i, j) -> [x, y, z]; quads go to pick(i, j) (finish name).
+  // Each triangle is wound to face away from ref(p) (the body axis, or the
+  // mid-plane of a fin), so mapped decals and both fin skins face outward.
+  const axisRef = (p) => { const z = Math.max(-0.66, Math.min(0.74, p[2])); return [0, sec(z).cy, z]; };
+  const grid = (nu, nv, f, pick = () => 'a', ref = axisRef) => {
+    const P = [], W = nu + 1;
+    for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) P.push(V(...f(i, j)));
+    const at = (i, j) => P[j * W + i];
+    let wrap = true;
+    for (let j = 0; j <= nv; j++) if (at(0, j).distanceTo(at(nu, j)) > 1e-6) { wrap = false; break; }
+    // Smooth normals from grid differences, turned away from ref.
+    const Nn = P.map((p, q) => {
+      const i = q % W, j = Math.floor(q / W);
+      const iu = wrap && (i === 0 || i === nu) ? [nu - 1, 1] : [Math.max(0, i - 1), Math.min(nu, i + 1)];
+      const du = at(iu[1], j).clone().sub(at(iu[0], j)), dv = at(i, Math.min(nv, j + 1)).clone().sub(at(i, Math.max(0, j - 1)));
+      let n = du.cross(dv);
+      const r = V(...ref(p.toArray())), away = p.clone().sub(r);
+      if (n.lengthSq() < 1e-14) n = away.clone();
+      n.normalize();
+      return n.dot(away) < 0 ? n.negate() : n;
+    });
+    const out = {};
+    const put = (L, a, b, c) => {
+      const n = at(...b).clone().sub(at(...a)).cross(at(...c).clone().sub(at(...a))), m = at(...a).clone().add(at(...b)).add(at(...c)).divideScalar(3);
+      const r = V(...ref(m.toArray())), tri = n.dot(m.sub(r)) < 0 ? [a, c, b] : [a, b, c];
+      for (const t of tri) { L.p.push(...at(...t).toArray()); L.n.push(...Nn[t[1] * W + t[0]].toArray()); }
+    };
+    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
+      const k = pick(i, j), L = out[k] || (out[k] = { p: [], n: [] });
+      put(L, [i, j], [i + 1, j], [i, j + 1]); put(L, [i + 1, j], [i + 1, j + 1], [i, j + 1]);
+    }
+    for (const k in out) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(out[k].p, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(out[k].n, 3));
+      out[k] = g;
+    }
+    return out;
+  };
+
+  // Body: superellipse sections (z, top, bottom, half width), flatter below,
+  // rounded caps at the snout and the tail stalk.
+  const ST = [[0.80, 0.375, 0.065, 0.17], [0.72, 0.435, 0.038, 0.232], [0.62, 0.497, 0.024, 0.278], [0.48, 0.54, 0.018, 0.306],
+    [0.30, 0.56, 0.016, 0.318], [0.10, 0.556, 0.02, 0.312], [-0.10, 0.535, 0.026, 0.292], [-0.30, 0.5, 0.042, 0.252],
+    [-0.48, 0.462, 0.075, 0.195], [-0.62, 0.43, 0.115, 0.14], [-0.70, 0.41, 0.14, 0.11]];
+  const NOSE = 0.1, TAILC = 0.07;
+  const cr = (z, k) => {   // Catmull-Rom through the stations (z descending)
+    let i = 0;
+    while (i < ST.length - 2 && z < ST[i + 1][0]) i++;
+    const p0 = ST[Math.max(0, i - 1)][k], p1 = ST[i][k], p2 = ST[i + 1][k], p3 = ST[Math.min(ST.length - 1, i + 2)][k];
+    const t = (ST[i][0] - z) / (ST[i][0] - ST[i + 1][0]);
+    return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
+  };
+  const sec = (z) => {
+    let zz = z, f = 1, tipCy = null;
+    if (z > ST[0][0]) { f = Math.cos(Math.asin(Math.min(1, (z - ST[0][0]) / NOSE))); zz = ST[0][0]; tipCy = 0.215; }
+    const zl = ST[ST.length - 1][0];
+    if (z < zl) { f = Math.cos(Math.asin(Math.min(1, (zl - z) / TAILC))); zz = zl; tipCy = 0.28; }
+    const top = cr(zz, 1), bot = cr(zz, 2), hw = cr(zz, 3);
+    let cy = (top + bot) / 2;
+    if (tipCy != null) cy = tipCy + (cy - tipCy) * f;
+    return { cy, hh: (top - bot) / 2 * f, hw: hw * f };
+  };
+  const pexp = (c) => (c >= 0 ? 2.15 : 2.15 + 0.9 * -c);
+  const surf = (z, th) => {
+    const s = sec(z), c = Math.cos(th), sn = Math.sin(th), p = pexp(c);
+    return [s.hw * Math.sign(sn) * Math.abs(sn) ** (2 / p), s.cy + s.hh * Math.sign(c) * Math.abs(c) ** (2 / p), z];
+  };
+  const nrm = (z, th) => {
+    const e = 1e-3, a = V(...surf(z, th)), dz = V(...surf(z - e, th)).sub(a), dt = V(...surf(z, th + e)).sub(a);
+    const n = dt.cross(dz).normalize();
+    return n.lengthSq() ? n : V(0, 0, 1);
+  };
+  const on = (z, th, off) => { const n = nrm(z, th); return V(...surf(z, th)).addScaledVector(n, off); };
+  // Angle of the surface point at height y on the +x side of section z.
+  const thAt = (z, y) => {
+    const s = sec(z), v = Math.max(-0.999, Math.min(0.999, (y - s.cy) / Math.max(1e-6, s.hh)));
+    let th = Math.PI / 2;
+    for (let k = 0; k < 6; k++) { const p = pexp(Math.cos(th)); th = Math.acos(Math.sign(v) * Math.abs(v) ** (p / 2)); }
+    return th;
+  };
+  // Side decal point: (z, y) on the body, side s, raised by off.
+  const dp = (z, y, s, off) => { const p = on(z, thAt(z, y), off); return [p.x * s, p.y, p.z]; };
+  const decal = (nu, nv, f, s, off, fin) => {   // f(u, w) -> [z, y]
+    const g = grid(nu, nv, (i, j) => { const [z, y] = f(i / nu, j / nv); return dp(z, y, s, off); }, () => fin);
+    K.add('body', fin, g[fin]);
+  };
+  const tri = (pts, s, off) => geo(s > 0 ? pts.flatMap(([z, y]) => dp(z, y, s, off)) : [pts[0], pts[2], pts[1]].flatMap(([z, y]) => dp(z, y, s, off)));
+
+  // Rows: dense in the caps, belly split at a waterline.
+  const zs = [];
+  for (let k = 6; k >= 1; k--) zs.push(ST[0][0] + NOSE * Math.sin(k / 6 * Math.PI / 2) * 0.999);
+  for (let k = 0; k <= 22; k++) zs.push(ST[0][0] + (ST[ST.length - 1][0] - ST[0][0]) * k / 22);
+  for (let k = 1; k <= 4; k++) zs.push(ST[ST.length - 1][0] - TAILC * Math.sin(k / 4 * Math.PI / 2) * 0.999);
+  const belly = (z) => 0.085 + 0.09 * Math.max(0, z - 0.3) ** 1.3 + 0.2 * Math.max(0, -0.2 - z) ** 1.4;
+  const NA = 32, ang = (j, i) => {
+    const z = zs[j], tb = thAt(z, belly(z)), u = i / NA;
+    return u <= 0.5 ? -tb + (2 * tb) * (u / 0.5) : tb + (2 * Math.PI - 2 * tb) * ((u - 0.5) / 0.5);
+  };
+  const bodyG = grid(NA, zs.length - 1, (i, j) => surf(zs[j], ang(j, i)), (i) => (i < NA / 2 ? 'inkGloss' : 'sharkBelly'));
+  K.add('body', 'inkGloss', bodyG.inkGloss);
+  K.add('body', 'sharkBelly', bodyG.sharkBelly);
+  // Black snout tip (seen through the cage's top window).
+  K.add('body', 'inkDark', grid(16, 4, (i, j) => { const th = -1.1 + 2.2 * i / 16, z = 0.84 + 0.059 * j / 4; return on(z, th, 0.002).toArray(); }, () => 'b').b);
+
+  // Inflated fin ("pillow"): outline [[u, v]] round centre c in the plane
+  // O + uU + vV, thickness tc at the centre to tEdge(u, v) toward the rim.
+  const pillow = (outline, c, tc, tEdge, O, U, Vv, pick) => {
+    const N = U.clone().cross(Vv).normalize(), R = 4, n = outline.length, C = O.clone().addScaledVector(U, c[0]).addScaledVector(Vv, c[1]);
+    const out = {};
+    for (const side of [1, -1]) {
+      const g = grid(n, R, (i, k) => {
+        const [pu, pv] = outline[i % n], t = Math.sin(k / R * Math.PI / 2);
+        const u = c[0] + (pu - c[0]) * t, v = c[1] + (pv - c[1]) * t;
+        const th = (tc + (tEdge(pu, pv) - tc) * t) * Math.sqrt(Math.max(0, 1 - t * t)) * side / 2;
+        return O.clone().addScaledVector(U, u).addScaledVector(Vv, v).addScaledVector(N, th).toArray();
+      }, (i, k) => pick(outline[i % n], outline[(i + 1) % n], k, side), () => C.clone().addScaledVector(N, -0.02 * side).toArray());
+      for (const f in g) (out[f] || (out[f] = [])).push(g[f]);
+    }
+    for (const f in out) K.add('body', f, ...out[f]);
+  };
+  const ring2 = (pts, n = 40) => {   // smooth closed outline
+    const c3 = new THREE.CatmullRomCurve3(pts.map(([a, b]) => V(a, b, 0)), true, 'centripetal');
+    return c3.getSpacedPoints(n).slice(0, n).map(p => [p.x, p.y]);
+  };
+  const Y = V(0, 1, 0), Z = V(0, 0, 1);
+  // Dorsal: long sloped leading edge, tip over the rear, concave trailing edge.
+  pillow(ring2([[0.5, 0.5], [0.44, 0.6], [0.36, 0.69], [0.29, 0.75], [0.235, 0.77], [0.2, 0.735], [0.185, 0.65], [0.165, 0.56], [0.15, 0.49], [0.33, 0.47]], 28),
+    [0.31, 0.57], 0.17, (u, v) => 0.17 - 0.1 * Math.min(1, Math.max(0, (v - 0.55) / 0.2)), V(0, 0, 0), Z, Y,
+    (a) => (a[1] > 0.69 ? 'inkDark' : 'inkGloss'));
+  // Tail: two fat lobes off a thick stalk.
+  const tailT = (u, v) => 0.2 - 0.12 * Math.min(1, Math.max(0, (-0.66 - u) / 0.3));
+  pillow(ring2([[-0.6, 0.41], [-0.72, 0.43], [-0.84, 0.47], [-0.93, 0.515], [-0.975, 0.51], [-0.96, 0.46], [-0.9, 0.39], [-0.84, 0.31], [-0.75, 0.26], [-0.62, 0.29]], 24),
+    [-0.73, 0.35], 0.21, tailT, V(0, 0, 0), Z, Y, (a) => (a[0] < -0.88 ? 'inkDark' : 'inkGloss'));
+  pillow(ring2([[-0.64, 0.3], [-0.76, 0.27], [-0.83, 0.22], [-0.9, 0.13], [-0.945, 0.06], [-0.92, 0.035], [-0.85, 0.06], [-0.76, 0.12], [-0.64, 0.17]], 22),
+    [-0.73, 0.2], 0.2, tailT, V(0, 0, 0), Z, Y, (a) => (a[0] < -0.87 ? 'inkDark' : 'inkGloss'));
+  // Pectorals: broad, drooping ~14 deg, rounded black tips, pale underside.
+  const pecO = [[-0.02, -0.2], [0.14, -0.17], [0.3, -0.13], [0.42, -0.09], [0.48, -0.03], [0.47, 0.04], [0.41, 0.08], [0.28, 0.11], [0.12, 0.16], [-0.02, 0.2]];
+  for (const s of [1, -1]) {
+    const U = V(s * Math.cos(0.25), -Math.sin(0.25), -0.12).normalize(), Vv = Z.clone().sub(U.clone().multiplyScalar(U.dot(Z))).normalize();
+    const up = U.clone().cross(Vv).y > 0 ? 1 : -1;
+    pillow(ring2(pecO, 28), [0.16, 0.0], 0.11, (u) => 0.11 - 0.065 * Math.min(1, u / 0.48), V(s * 0.2, 0.16, 0.34), U, Vv,
+      (a, b, k, side) => ((a[0] + b[0]) / 2 > 0.38 ? 'black' : side === up ? 'inkGloss' : 'sharkBelly'));
   }
-  const teeth = [];
-  for (let k = -5; k <= 5; k++) { const a = k * 0.14; teeth.push(new THREE.ConeGeometry(0.018, 0.04, 4).rotateX(Math.PI).translate(Math.sin(a) * 0.22, 0.36, 0.55 + Math.cos(a) * 0.08)); }
-  K.add('body', 'white', ...teeth);
-  K.add('body', 'black', tube(THREE, Array.from({ length: 9 }, (_, i) => { const a = (i - 4) * 0.16; return [Math.sin(a) * 0.235, 0.38, 0.55 + Math.cos(a) * 0.085]; }), 0.012, 20, 5));
-  // Muzzle cage.
+  // Pelvics: small, out-back-down, black tips.
+  for (const s of [1, -1]) {
+    const U = V(s * 0.75, -0.3, -0.6).normalize(), Vv = Z.clone().sub(U.clone().multiplyScalar(U.dot(Z))).normalize();
+    pillow(ring2([[-0.02, -0.08], [0.1, -0.07], [0.19, -0.05], [0.21, 0.0], [0.15, 0.03], [0.06, 0.07], [-0.02, 0.08]], 14), [0.07, 0], 0.07,
+      (u) => 0.07 - 0.04 * Math.min(1, u / 0.2), V(s * 0.13, 0.1, -0.42), U, Vv, (a, b) => ((a[0] + b[0]) / 2 > 0.13 ? 'black' : 'inkGloss'));
+  }
+
+  // Face decals, both sides.
+  for (const s of [1, -1]) {
+    // Eye: pointed black lid toward the front-top, white ring, red iris, pupil.
+    const ez = 0.615, ey = 0.36;
+    decal(20, 1, (u, w) => { const a = u * TAU, r = 0.062 * w, pt = Math.max(0, Math.cos(a - 0.75)) ** 6 * 0.035 * w; return [ez + Math.sin(a) * (r + pt), ey + Math.cos(a) * (r + pt) * 0.95]; }, s, 0.004, 'black');
+    decal(20, 1, (u, w) => { const a = u * TAU, r = 0.05 * w; return [ez + Math.sin(a) * r, ey - 0.003 + Math.cos(a) * r * 0.95]; }, s, 0.007, 'white');
+    decal(18, 1, (u, w) => { const a = u * TAU, r = 0.032 * w; return [ez + Math.sin(a) * r, ey - 0.003 + Math.cos(a) * r * 0.95]; }, s, 0.01, 'red');
+    decal(10, 1, (u, w) => { const a = u * TAU, r = 0.01 * w; return [ez + Math.sin(a) * r, ey - 0.003 + Math.cos(a) * r]; }, s, 0.013, 'black');
+    // Three gill slashes bowing to the rear.
+    for (let k = 0; k < 3; k++) {
+      const z0 = 0.47 - k * 0.045, y0 = 0.425 - k * 0.012;
+      decal(10, 1, (u, w) => { const a = u, z = z0 - 0.09 * a + 0.028 * Math.sin(a * Math.PI) - 0.02 * a, y = y0 - 0.1 * a, h = 0.017 * Math.sin(Math.min(1, a * 1.15) * Math.PI) + 0.003; return [z + (w - 0.5) * h * 1.6, y + (w - 0.5) * h * 0.4]; }, s, 0.004, 'black');
+    }
+    // Grin: black lips, red gums, white teeth, a dark centre line.
+    const U = [[0.42, 0.322], [0.5, 0.29], [0.6, 0.256], [0.7, 0.234], [0.8, 0.22]];
+    const L = [[0.42, 0.322], [0.5, 0.222], [0.6, 0.152], [0.7, 0.112], [0.8, 0.096]];
+    const at = (P, u) => { const x = u * (P.length - 1), i = Math.min(P.length - 2, Math.floor(x)), t = x - i; return [P[i][0] + (P[i + 1][0] - P[i][0]) * t, P[i][1] + (P[i + 1][1] - P[i][1]) * t]; };
+    decal(20, 3, (u, w) => { const a = at(U, u), b = at(L, u), g = 0.012 * Math.min(1, u * 6 + 0.3); return [b[0] + (a[0] - b[0]) * w, b[1] - g + (a[1] - b[1] + 2 * g) * w]; }, s, 0.004, 'black');
+    decal(20, 3, (u, w) => { const a = at(U, u), b = at(L, u); return [b[0] + (a[0] - b[0]) * w, b[1] + (a[1] - b[1]) * w]; }, s, 0.007, 'red');
+    decal(20, 1, (u, w) => { const a = at(U, u), b = at(L, u), m = 0.45 + 0.1 * w; return [b[0] + (a[0] - b[0]) * m, b[1] + (a[1] - b[1]) * m]; }, s, 0.0095, 'black');
+    const teeth = [];
+    for (let k = 0; k < 6; k++) {   // upper saw, pointing down
+      const u0 = 0.1 + k * 0.15, u1 = u0 + 0.15, a = at(U, u0), b = at(U, u1), m = at(L, (u0 + u1) / 2), h = 0.62;
+      teeth.push(tri([a, b, [(a[0] + b[0]) / 2 + (m[0] - (a[0] + b[0]) / 2) * h, (a[1] + b[1]) / 2 + (m[1] - (a[1] + b[1]) / 2) * h]], s, 0.011));
+    }
+    for (let k = 0; k < 5; k++) {   // lower saw, pointing up
+      const u0 = 0.175 + k * 0.15, u1 = u0 + 0.15, a = at(L, u0), b = at(L, u1), m = at(U, (u0 + u1) / 2), h = 0.5;
+      teeth.push(tri([b, a, [(a[0] + b[0]) / 2 + (m[0] - (a[0] + b[0]) / 2) * h, (a[1] + b[1]) / 2 + (m[1] - (a[1] + b[1]) / 2) * h]], s, 0.011));
+    }
+    K.add('body', 'white', ...teeth);
+  }
+
+  // Ribbon (rectangular section) along points with outward normals.
+  const ribbon = (pts, nrms, w, t, closed = false) => {
+    const n = pts.length, P = [], idx = [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[closed ? (i - 1 + n) % n : Math.max(0, i - 1)], b = pts[closed ? (i + 1) % n : Math.min(n - 1, i + 1)];
+      const T = b.clone().sub(a).normalize(), B = nrms[i].clone().cross(T).normalize(), Nn = T.clone().cross(B).normalize();
+      for (const [sb, sn] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) P.push(pts[i].clone().addScaledVector(B, sb * w / 2).addScaledVector(Nn, sn * t / 2));
+    }
+    const pos = [], q = (a, b, c, d) => pos.push(...P[a].toArray(), ...P[b].toArray(), ...P[c].toArray(), ...P[a].toArray(), ...P[c].toArray(), ...P[d].toArray());
+    const segs = closed ? n : n - 1;
+    for (let i = 0; i < segs; i++) {
+      const a = i * 4, b = ((i + 1) % n) * 4;
+      for (let k = 0; k < 4; k++) { const k1 = (k + 1) % 4; q(a + k, a + k1, b + k1, b + k); }
+    }
+    if (!closed) { q(3, 2, 1, 0); const e = (n - 1) * 4; q(e, e + 1, e + 2, e + 3); }
+    return geo(pos);
+  };
+
+  // Muzzle cage: shell between a tilted rear hoop hugging the head and a
+  // front ring round the snout tip, bulging outward on top.
+  const rear = (ph) => on(0.665 + 0.07 * Math.cos(ph), ph, 0.022 - 0.008 * Math.max(0, -Math.cos(ph)));
+  const front = (ph) => V(0.138 * Math.sin(ph), 0.205 + 0.138 * Math.cos(ph), 0.885 - 0.03 * Math.cos(ph));
+  const shell = (sv, ph) => {
+    const a = rear(ph), b = front(ph), p = a.clone().lerp(b, sv), out = V(p.x, p.y - 0.2, 0).normalize();
+    return p.addScaledVector(out, 0.022 * Math.sin(Math.PI * sv) * (0.55 + 0.45 * Math.cos(ph)));
+  };
+  const shellN = (sv, ph) => {
+    const e = 1e-3, s0 = Math.min(sv, 1 - e), p = shell(s0, ph), n = shell(s0, ph + e).sub(p).cross(shell(s0 + e, ph).sub(p)).normalize();
+    return n.dot(V(p.x, p.y - 0.2, 0.3)) < 0 ? n.negate() : n;
+  };
   const cage = [];
-  for (let k = 0; k < 4; k++) cage.push(ring(THREE, 0.2 - k * 0.035, 0.014, 0).rotateX(Math.PI / 2).scale(1, 0.8, 1).translate(0, 0.44, 0.58 + k * 0.07));
-  for (let k = 0; k < 6; k++) { const a = k * TAU / 6; cage.push(rod(THREE, [Math.sin(a) * 0.2, 0.44 + Math.cos(a) * 0.16, 0.58], [Math.sin(a) * 0.08, 0.44 + Math.cos(a) * 0.06, 0.82], 0.012, 6)); }
-  K.add('body', 'blue', ...cage);
-  K.add('body', 'grey', tube(THREE, [[0.2, 0.52, 0.6], [0.24, 0.72, 0.3], [0.1, 0.78, 0.02]], 0.01, 16, 5), tube(THREE, [[-0.2, 0.52, 0.6], [-0.24, 0.72, 0.3], [-0.1, 0.78, 0.02]], 0.01, 16, 5));
-  K.add('body', 'orange', softBox(THREE, 0.24, 0.06, 0.16, 0.3).translate(0, 0.76, -0.05));
-  K.add('body', 'teal', ring(THREE, 0.31, 0.012, 0).rotateX(Math.PI / 2).scale(1, 0.9, 1).translate(0, 0.42, -0.2));
-  for (const s of [-1, 1]) {
-    K.add('body', 'ink', cylZ(THREE, 0.06, -0.85, -0.6, 14).translate(s * 0.14, 0.55, 0), sphere(THREE, 0.07, s * 0.14, 0.55, -0.88));
-    K.add('body', 'inkDark', ...[0, 1, 2, 3, 4].map(k => { const a = k * TAU / 5; return sphere(THREE, 0.02, s * 0.14 + Math.sin(a) * 0.05, 0.55 + Math.cos(a) * 0.05, -0.93); }));
+  const loop = (sv, w, t, n = 36) => { const ph = Array.from({ length: n }, (_, i) => i / n * TAU); cage.push(ribbon(ph.map(p => shell(sv, p)), ph.map(p => shellN(sv, p)), w, t, true)); };
+  loop(0, 0.078, 0.032);
+  // Front ring: a short thick band round the snout tip (width along +Z).
+  { const ph = Array.from({ length: 36 }, (_, i) => i / 36 * TAU); cage.push(ribbon(ph.map(p => front(p).add(V(0, 0, -0.012))), ph.map(p => V(Math.sin(p), Math.cos(p), 0)), 0.085, 0.036, true)); }
+  for (const ph of [0, 1.62, -1.62, 2.55, -2.55]) {
+    const sv = Array.from({ length: 12 }, (_, i) => i / 11);
+    cage.push(ribbon(sv.map(v => shell(v, ph)), sv.map(v => shellN(v, ph)), ph ? 0.066 : 0.06, 0.03));
   }
+  // Front cross inside the ring.
+  const fc = (a, b) => { const P = [], Nn = []; for (let i = 0; i <= 8; i++) { const t = i / 8, p = a.clone().lerp(b, t); p.z += 0.018 * Math.sin(Math.PI * t); P.push(p); Nn.push(V(0, 0, 1)); } cage.push(ribbon(P, Nn, 0.05, 0.028)); };
+  fc(front(Math.PI / 2), front(-Math.PI / 2)); fc(front(0), front(Math.PI));
+  // Side arms back to the strap buckles; lilac straps up to the grab handles.
+  const lilac = [];
+  for (const s of [1, -1]) {
+    const P = [], Nn = [];
+    for (let i = 0; i <= 6; i++) { const z = 0.66 - 0.15 * i / 6, th = s * thAt(z, 0.262), p = on(z, th, 0.028); P.push(p); Nn.push(nrm(z, th)); }
+    P.unshift(shell(0.06, s * 1.62)); Nn.unshift(shellN(0.06, s * 1.62));
+    cage.push(ribbon(P, Nn, 0.07, 0.03));
+    const bz = 0.51, bth = s * thAt(bz, 0.262);
+    lilac.push(ribbon([on(bz + 0.025, bth, 0.04), on(bz - 0.025, bth, 0.04)], [nrm(bz, bth), nrm(bz, bth)], 0.04, 0.012));
+    const SP = [], SN = [];
+    for (let i = 0; i <= 10; i++) { const t = i / 10, z = 0.515 - 0.195 * t, y = 0.262 + (0.47 - 0.262) * t, th = s * thAt(z, y); SP.push(on(z, th, 0.018)); SN.push(nrm(z, th)); }
+    lilac.push(ribbon(SP, SN, 0.034, 0.008));
+    // Black grab handle with a slot, on the upper flank.
+    const hz = 0.245, hth = s * thAt(hz, 0.47), hp = on(hz, hth, 0.02), hn = nrm(hz, hth);
+    const hb = new THREE.Matrix4().makeBasis(Z.clone().cross(hn).normalize(), hn, Z.clone().sub(hn.clone().multiplyScalar(hn.z)).normalize());
+    hb.setPosition(hp);
+    K.add('body', 'black', softBox(THREE, 0.075, 0.045, 0.19, 0.4, 4).applyMatrix4(hb));
+    K.add('body', 'hole', box(THREE, 0.03, 0.01, 0.11, 0, 0.022, -0.01).applyMatrix4(hb));
+  }
+  K.add('body', 'cageBlue', ...cage);
+  K.add('body', 'lilac', ...lilac);
+
+  // Teal cords round the body under the saddle, with zip-tie knobs.
+  const cords = [], knobs = [];
+  for (const [z0, dz] of [[-0.02, -0.1], [-0.25, -0.01]]) {
+    const P = [];
+    for (let i = 0; i < 36; i++) { const th = i / 36 * TAU; P.push(on(z0 + dz * Math.cos(th), th, 0.012).toArray()); }
+    cords.push(tube(THREE, P, 0.011, 44, 4, true));
+    for (const s of [1, -1]) { const th = s * 1.05, p = on(z0 + dz * Math.cos(th), th, 0.018); knobs.push(box(THREE, 0.022, 0.03, 0.022, p.x, p.y, p.z)); }
+  }
+  K.add('body', 'teal', ...cords, ...knobs);
+  // Orange saddle on the back, rear end turned up.
+  {
+    const P = [], Nn = [];
+    for (let i = 0; i <= 14; i++) {
+      const t = i / 14, z = -0.09 - 0.43 * t, top = surf(z, 0)[1], lift = 0.004 + 0.09 * Math.max(0, (t - 0.72) / 0.28) ** 1.7;
+      P.push(V(0, top + lift, z)); Nn.push(V(0, 1, 0.9 * Math.max(0, (t - 0.72) / 0.28)).normalize());
+    }
+    K.add('body', 'orange', ribbon(P, Nn, 0.2, 0.028));
+    K.add('body', 'orange', ...[0, 1, 2].map(k => box(THREE, 0.02, 0.03, 0.03, (k - 1) * 0.07, surf(-0.12, 0)[1] + 0.01, -0.1)));
+  }
+  // Bottles: pale ink bodies, team-ink flower caps forward-up-out, white hex
+  // nozzles back-down, pale-blue harness bands round each pair.
+  const harness = [], nozzles = [], holes = [], caps = [], bottles = [];
+  // Five-lobed flower cap (extruded along +Y, bevelled).
+  const fl = new THREE.Shape();
+  for (let i = 0; i <= 30; i++) { const a = i / 30 * TAU, r = 0.058 + 0.014 * Math.cos(5 * a); fl[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, Math.sin(a) * r); }
+  const flower = new THREE.ExtrudeGeometry(fl, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.014, bevelSize: 0.012, bevelSegments: 1, curveSegments: 4 }).rotateX(-Math.PI / 2);
+  for (const s of [1, -1]) {
+    const pair = [[V(s * 0.42, 0.235, -0.13), V(s * 0.29, 0.06, -0.45)], [V(s * 0.35, 0.26, -0.23), V(s * 0.22, 0.075, -0.53)]];
+    for (const [cap, base] of pair) {
+      const d = cap.clone().sub(base).normalize(), len = cap.distanceTo(base);
+      bottles.push(orient(THREE, latheY(THREE, [[0.03, 0], [0.058, 0.01], [0.064, 0.04], [0.064, len - 0.07], [0.058, len - 0.04]], 16), d.toArray(), base.toArray()));
+      caps.push(orient(THREE, flower.clone(), d.toArray(), base.clone().addScaledVector(d, len - 0.055).toArray()));
+      nozzles.push(orient(THREE, new THREE.CylinderGeometry(0.03, 0.03, 0.045, 6).translate(0, -0.02, 0), d.toArray(), base.toArray()));
+      holes.push(orient(THREE, new THREE.CylinderGeometry(0.014, 0.014, 0.004, 8).translate(0, -0.043, 0), d.toArray(), base.toArray()));
+    }
+    // Bands: stadium loop round both bottle axes at two heights.
+    for (const t of [0.3, 0.68]) {
+      const [[c1, b1], [c2, b2]] = pair, d = c1.clone().sub(b1).normalize();
+      const A = b1.clone().lerp(c1, t), B = b2.clone().lerp(c2, t), ax = B.clone().sub(A), ex = ax.clone().sub(d.clone().multiplyScalar(ax.dot(d))).normalize(), ey = d.clone().cross(ex).normalize();
+      const P = [], Nn = [], r = 0.072;
+      for (let i = 0; i < 20; i++) {
+        const a = i / 20 * TAU, cen = Math.cos(a) >= 0 ? B : A, dir = ex.clone().multiplyScalar(Math.cos(a)).addScaledVector(ey, Math.sin(a));
+        P.push(cen.clone().addScaledVector(dir, r)); Nn.push(dir);
+      }
+      harness.push(ribbon(P, Nn, 0.045, 0.01, true));
+    }
+    // Strap from the pair up to the saddle cord.
+    const Pz = [V(s * 0.37, 0.23, -0.21), V(s * 0.3, 0.37, -0.24), on(-0.25, s * 0.55, 0.012)];
+    harness.push(ribbon(Pz, Pz.map(p => V(p.x, p.y - 0.25, 0).normalize()), 0.045, 0.01));
+  }
+  K.add('body', 'inkPale', ...bottles);
+  K.add('body', 'inkGloss', ...caps);
+  K.add('body', 'white', ...nozzles);
+  K.add('body', 'hole', ...holes);
+  K.add('body', 'harnessBlue', ...harness);
   return K.finish(THREE);
 }
 
