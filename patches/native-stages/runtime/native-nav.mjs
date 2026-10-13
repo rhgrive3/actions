@@ -4,6 +4,7 @@ import { nativeClimbTransition } from './native-climb.mjs';
 import {nativeDropTransition} from './native-drop.mjs';
 import {nativeSurgeTransition} from './native-surge.mjs';
 import {nativeJumpAttachTransition} from './native-jump-attach.mjs';
+import {nativeWallApproachTransition,nativeApproachJumpTransition} from './native-approach.mjs';
 const down=new THREE.Vector3(0,-1,0),origin=new THREE.Vector3(),a=new THREE.Vector3(),b=new THREE.Vector3();
 /** Keep real routes out of both supported spawn layers. The legacy largest
  * undirected component can be a decorative floor far beneath a native deck. */
@@ -85,13 +86,17 @@ export function buildNativeNav(graph){
   for(const id of graph.cells[iz*graph.nx+ix]){const dy=graph.nodes[id].y-n.y;if(surges&&dy>1.25)surges[n.id].push(id);if(drops&&dy< -1.25)drops[n.id].push(id);}
  }
  pruneNativeNav(graph);
- if(drops||surges||jumpAttachments){
+ if(drops||surges||jumpAttachments||L.manifest.sourceNavigation?.wallApproach){
   // Build ordinary/climb edges before selecting any supports. Only expensive
   // departure simulations need the directed spawn frontier; upper masts that
   // cannot be reached do not require speculative trajectories.
   const seen=graph.valid.slice(),queue=graph.validIds.slice();
   for(let i=0;i<queue.length;i++){
    const n=graph.nodes[queue[i]];
+   if(L.manifest.sourceNavigation?.wallApproach){
+    for(const [dx,dz]of [[2,0],[-2,0],[0,2],[0,-2]]){const ix=n.ix+dx,iz=n.iz+dz;if(ix<0||iz<0||ix>=graph.nx||iz>=graph.nz)continue;for(const id of graph.cells[iz*graph.nx+ix]){const edge=nativeApproachJumpTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}}
+    if(n.nativePaintable)for(const direction of [[1,0,0],[-1,0,0],[0,0,1],[0,0,-1]]){const edge=nativeWallApproachTransition(graph,n,direction);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
+   }
    for(const id of jumpAttachments?.[n.id]||[]){const edge=nativeJumpAttachTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
    for(const id of surges?.[n.id]||[]){const edge=nativeSurgeTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
    for(const id of drops?.[n.id]||[]){const edge=nativeDropTransition(graph,n,graph.nodes[id]);if(edge&&!n.nb.some(e=>e.to===edge.to))n.nb.push(edge);}
