@@ -95,6 +95,20 @@ const METHODS = `  canRequestMapJump() {
     return !!(target?.isVector3 && [target.x, target.y, target.z].every(Number.isFinite));
   }
 
+  mapJumpTargetLife(target) {
+    // Combat lives, unlike teleport counters, survive same-life Super Jumps.
+    // A newer accepted remote life invalidates the still-interpolated old body.
+    const life = target?.netLife ?? 0, accepted = target?.net?.lastLife ?? life;
+    return Number.isSafeInteger(life) && life >= 0 && Number.isSafeInteger(accepted) && accepted >= 0 && accepted <= life ? life : null;
+  }
+
+  validPendingMapJump() {
+    const pending = this.pendingRespawnJump;
+    if (!pending) return false;
+    return (!pending.actor || pending.life === this.mapJumpTargetLife(pending.actor)) &&
+      this.validMapJumpTarget(pending.bubbler || pending.actor || pending.point);
+  }
+
   requestMapJump(target) {
     if (!this.canRequestMapJump()) return false;
     if (!this.validMapJumpTarget(target)) {
@@ -102,9 +116,12 @@ const METHODS = `  canRequestMapJump() {
       return false;
     }
     if (!this.a.alive || (this._respawnNavigationActive && !this.a.grounded)) {
+      const actor = target.pos?.isVector3 ? target : null;
+      const life = actor ? this.mapJumpTargetLife(actor) : null;
+      if (actor && life === null) { this.pendingRespawnJump = null; return false; }
       // A fresh explicit choice belongs to the device that made that choice.
       this._respawnNavigationOwner = this.input.navigationDevice ?? this.input.lastDevice;
-      this.pendingRespawnJump = target.pos?.isVector3 ? { actor: target } : { point: target.clone() };
+      this.pendingRespawnJump = actor ? { actor, life } : { point: target.clone() };
       return true;
     }
     return this.a.superJump(target);
@@ -159,7 +176,7 @@ const METHODS = `  canRequestMapJump() {
       if (this._respawnNavigationActive) {
         if (!this.respawnMapOpen() || (inp.navigationDevice ?? inp.lastDevice) !== this._respawnNavigationOwner) this.clearRespawnNavigation();
         else if (a.grounded) {
-          const pending = this.pendingRespawnJump;
+          const pending = this.validPendingMapJump() ? this.pendingRespawnJump : null;
           this.clearRespawnNavigation();
           const target = pending?.actor || pending?.point;
           const started = pending?.bubbler ? this.requestMapBubblerJump(pending.bubbler)
@@ -191,8 +208,7 @@ const METHODS = `  canRequestMapJump() {
     if (touch) for (const id of ['fire','jump','sub','special','squid']) touch.pressed.delete(id);
     this.mapHeld = this.respawnMapOpen();
     if (!this.mapHeld) { this.pendingRespawnJump = null; this.padJumpTarget = null; this.padJumpIndex = -1; return true; }
-    const pendingTarget = this.pendingRespawnJump?.bubbler || this.pendingRespawnJump?.actor || this.pendingRespawnJump?.point;
-    if (this.pendingRespawnJump && !this.validMapJumpTarget(pendingTarget)) this.pendingRespawnJump = null;
+    if (this.pendingRespawnJump && !this.validPendingMapJump()) this.pendingRespawnJump = null;
     this.updatePadMapSelection(standard);
     const allies = G.actors.filter(o => o.team === a.team && o !== a);
     // Mobile's normal consume method closes the map. A deferred choice stays visible/cancellable.
