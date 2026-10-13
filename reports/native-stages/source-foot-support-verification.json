@@ -208,6 +208,29 @@
       "ordinaryInputsOnly": true,
       "noRefillGoalReselectionUsed": true,
       "receipt": "Humpback private source-banks-foot-candidate.json; CPU 205.08 seconds, not browser timing"
+    },
+    "sharedPredicateRefactor": {
+      "acceptedProbeBodyAndFollowerGuardsIdentical": {
+        "acceptedBase": "7ddb538a",
+        "followerGuardsIdentical": true,
+        "physicalProbeBodyIdentical": true,
+        "additionalExportOnly": true
+      },
+      "sourceSha256": "31c44d52212fabc40b2c5b738c9b409c58094dac1da0f3bf10fe1d9104abf86f",
+      "productionSourceContracts": {
+        "passed": 3,
+        "failed": 0,
+        "unrelatedBluefinFixtureSkip": 1
+      },
+      "publicBuild": {
+        "contentHash": "22d1bd7b67a971a7b43f054fcd81b260dff2011d2c2f0c01ca62f5b5d25de57f",
+        "inputHash": "87c8c05fe0c6d7a4f4bc17b4079ee7afbbcfa298a44b39ecaa0f4e428b078cec",
+        "packagingPassed": 9,
+        "skipped": 0,
+        "failed": 0,
+        "startupBudget": "passed"
+      },
+      "scope": "physical predicate exported independently; existing high-drop follower semantics unchanged; downstream Surge composition is separately verified"
     }
   }
 }
