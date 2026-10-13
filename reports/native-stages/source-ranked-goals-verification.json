@@ -1,0 +1,1825 @@
+{
+  "schema": 1,
+  "status": "passed",
+  "scope": "Canonical zero-AP Shooter native Clams objective route eligibility and a source-qualified eighth pickup; no stage activation or source/pickup/throw/physics changes",
+  "testedRuntimeHead": "904b2bb3d35862287b0e072524b36e39819a700d",
+  "foundation": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
+  "currentMain": "14f9f913",
+  "buildBinding": {
+    "commonHead": "904b2bb3d35862287b0e072524b36e39819a700d",
+    "privateHead": "0ae7f10eca5f5a679d933e666dfa6f9904170c21",
+    "source": {
+      "patches/native-stages/adapter.mjs": "bd7f07398d3fe717ac51a8fdc4ca4bd58f6d65e364e7607701cf1769b613a805",
+      "patches/native-stages/runtime/engine.mjs": "10465ac46bf09f98c07c8ac0c555aae691fc0b4dd56cf30a723ca8c267a5dee5",
+      "patches/native-stages/runtime/native-ranked-goals.mjs": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+      "patches/native-stages/runtime/native-ranked-boarding.mjs": "809718190fec32461ac2dc81d7121be5ea894ea63ff15de47b698e809d1020e7",
+      "patches/native-stages/runtime/native-jump-attach.mjs": "289b18900fd8f5bfa6e15a685202cc920af2b382445bc0d1c1ca894c18345dcd",
+      "patches/native-stages/runtime/native-bot-support.mjs": "598b059926b03bd8c965546df97677ae6ec7dae792dd8d194d8bebc4dbfda91c",
+      "patches/splatoon3/runtime/ranked/bots.mjs": "fe99b9972b9de22279bb989c4c9345d9ffe425a69673fdd0320948a523befc83",
+      "patches/splatoon3/runtime/ranked/clams.mjs": "744b6d8ee045ba12d397aca51631aa274167bdf6d63b185b85c59d0bd026eaa8"
+    },
+    "artifacts": {
+      "private": {
+        "site": "/workspace/stage-worktrees/manta-goals-calibration/_site-native-source-goals-eighth",
+        "contentHash": "a007d9508de17ee3682f17617fa73f2a54596c3dd07db125166785c5b0892f5a",
+        "inputHash": "73b56c85eecf32db2fdc77d1cdb61a49e5a44384734a85c5749ff5d273268a1f",
+        "nativeRuntimeSha256": "82d31592bcee1236918a84fbcbcb1a969afd0bd53f58dab81d1b93425f3a7553",
+        "emitted": {
+          "patches/native-stages/runtime/engine.mjs": "fbc01db63b9480b91de7ae83cafcfc16d169965a8e574c1d31c77adda344afd1",
+          "patches/splatoon3/runtime/ranked/clams.mjs": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905",
+          "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04",
+          "src/game/bots.js": "ecfd124247a5cd405364377deecac528443c509fc140287005f0288256fc3179",
+          "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
+          "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+          "patches/splatoon3/runtime/ranked/install.mjs": "b40fd5bfc06d0bd4564fa460ad9487757d738b6a80b845c1498cc261ee48f629"
+        }
+      },
+      "public": {
+        "site": "/workspace/stage-worktrees/manta-goals/_site-native-source-goals-public-eighth",
+        "contentHash": "8987e57ebdd52d25d93319d3445eedbf3b3c2873e6212d64b3b92508b483064e",
+        "inputHash": "f144f2ad73e921d12cad2c23b44aa50897973427d1488c67cb108b8e227e446f",
+        "nativeRuntimeSha256": "520453fb3ff9b6de33fe7adf35885841e93a0391e809a77efb3ba0cb96a0aadc",
+        "emitted": {
+          "patches/native-stages/runtime/engine.mjs": "fbc01db63b9480b91de7ae83cafcfc16d169965a8e574c1d31c77adda344afd1",
+          "patches/splatoon3/runtime/ranked/clams.mjs": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905",
+          "patches/splatoon3/runtime/ranked/bots.mjs": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04",
+          "src/game/bots.js": "ecfd124247a5cd405364377deecac528443c509fc140287005f0288256fc3179",
+          "src/game/actor.js": "ce57fcc926eb9f8a5221797f6ab03de18011d26c9f96f10c0dc5353f512cce46",
+          "patches/splatoon3/runtime/movement.mjs": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+          "patches/splatoon3/runtime/ranked/install.mjs": "b40fd5bfc06d0bd4564fa460ad9487757d738b6a80b845c1498cc261ee48f629"
+        }
+      }
+    }
+  },
+  "privateDefinitionContext": "Only owned Manta/Wahoo source definitions are added to the private calibration branch; no definitions or stage flags are promoted. Pure public catalog remains original-five. Seven emitted gameplay modules match exactly across the pair; definition config fingerprints intentionally differ.",
+  "actualGame": [
+    {
+      "id": "manta",
+      "sourceSha256": "8b7a26e0f71ed69c055e42ead154bd34bc08532ba89a95bea3a813766716ac1a",
+      "actors": 8,
+      "bots": 7,
+      "cases": [
+        {
+          "team": 0,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1270,
+          "seconds": 21.166666666666668,
+          "sourcePad": [
+            -12,
+            8,
+            -42
+          ],
+          "initialBlocked": 25,
+          "sourceRouteEligible": 24,
+          "actualRuleGoal": {
+            "x": -5.157189144406842,
+            "y": 5.5,
+            "z": -13.152963916966769
+          },
+          "end": [
+            -5.792249068634441,
+            5.5,
+            -12.925883327194283
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 6578,
+            "total": 86.60000003874302,
+            "p50": 0,
+            "p95": 0.09999999403953552,
+            "max": 18.900000005960464
+          },
+          "handledFrames": 285,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 0,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1270,
+          "seconds": 21.166666666666668,
+          "sourcePad": [
+            -12,
+            8,
+            -42
+          ],
+          "initialBlocked": 25,
+          "sourceRouteEligible": 24,
+          "actualRuleGoal": {
+            "x": -5.157189144406842,
+            "y": 5.5,
+            "z": -13.152963916966769
+          },
+          "end": [
+            -5.792249068634441,
+            5.5,
+            -12.925883327194283
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 6578,
+            "total": 89.20000018179417,
+            "p50": 0,
+            "p95": 0,
+            "max": 19.200000002980232
+          },
+          "handledFrames": 285,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 0,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1270,
+          "seconds": 21.166666666666668,
+          "sourcePad": [
+            -12,
+            8,
+            -42
+          ],
+          "initialBlocked": 25,
+          "sourceRouteEligible": 24,
+          "actualRuleGoal": {
+            "x": -5.157189144406842,
+            "y": 5.5,
+            "z": -13.152963916966769
+          },
+          "end": [
+            -5.792249068634441,
+            5.5,
+            -12.925883327194283
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 6578,
+            "total": 46.50000001490116,
+            "p50": 0,
+            "p95": 0,
+            "max": 1.5
+          },
+          "handledFrames": 285,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 1,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 928,
+          "seconds": 15.466666666666667,
+          "sourcePad": [
+            12,
+            8,
+            42
+          ],
+          "initialBlocked": 29,
+          "sourceRouteEligible": 28,
+          "actualRuleGoal": {
+            "x": 5.1529213062808115,
+            "y": 5.5,
+            "z": 13.02610101087528
+          },
+          "end": [
+            5.789623188759525,
+            5.5,
+            12.777147141473083
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 409,
+            "total": 35.69999994337559,
+            "p50": 0,
+            "p95": 0.29999999701976776,
+            "max": 6.200000002980232
+          },
+          "handledFrames": 318,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 1,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 928,
+          "seconds": 15.466666666666667,
+          "sourcePad": [
+            12,
+            8,
+            42
+          ],
+          "initialBlocked": 29,
+          "sourceRouteEligible": 28,
+          "actualRuleGoal": {
+            "x": 5.1529213062808115,
+            "y": 5.5,
+            "z": 13.02610101087528
+          },
+          "end": [
+            5.789623188759525,
+            5.5,
+            12.777147141473083
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 409,
+            "total": 30.400000229477882,
+            "p50": 0,
+            "p95": 0.20000000298023224,
+            "max": 1.800000011920929
+          },
+          "handledFrames": 318,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 1,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 928,
+          "seconds": 15.466666666666667,
+          "sourcePad": [
+            12,
+            8,
+            42
+          ],
+          "initialBlocked": 29,
+          "sourceRouteEligible": 28,
+          "actualRuleGoal": {
+            "x": 5.1529213062808115,
+            "y": 5.5,
+            "z": 13.02610101087528
+          },
+          "end": [
+            5.789623188759525,
+            5.5,
+            12.777147141473083
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 409,
+            "total": 45.09999993443489,
+            "p50": 0,
+            "p95": 0.29999999701976776,
+            "max": 17
+          },
+          "handledFrames": 318,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        }
+      ],
+      "conditions": "Actual Game._frame at render30/60/120 and installed60Hz FixedClock; real Match/Clams rule/world/blocked callback/qualified source-route callback/installed BotBrain/Actor/Character muzzle/WeaponRunner/Projectiles; eight actors/seven bots, original source-supported pad setups, empty initial ink, canonical zero-AP Shooter; no forced goals/launch/pose/velocity/ink writes; controlled other actors retain actual source support and normal physics; SwiftShader",
+      "errors": []
+    },
+    {
+      "id": "wahoo",
+      "sourceSha256": "0d9fc1e01e59c34301d65e8d2a8bf2aa90e0f4920f63daf4ac567df0c4ba33db",
+      "actors": 8,
+      "bots": 7,
+      "cases": [
+        {
+          "team": 0,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1408,
+          "seconds": 23.466666666666665,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "actualRuleGoal": {
+            "x": 47.59929656982422,
+            "y": 11.691967691051666,
+            "z": -0.18510055541992188
+          },
+          "end": [
+            -28.40078787858546,
+            8.241474168518995,
+            -5.248925024921646
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 5413,
+            "total": 200.6000000834465,
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 23.200000002980232
+          },
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 0,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1407,
+          "seconds": 23.45,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "actualRuleGoal": {
+            "x": -28.40070343017578,
+            "y": 8.379144035418335,
+            "z": -5.965100555419922
+          },
+          "end": [
+            -28.400678253509078,
+            8.226871684920582,
+            -5.172925100174324
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 5412,
+            "total": 162.29999993741512,
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 19
+          },
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 0,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1407,
+          "seconds": 23.45,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "actualRuleGoal": {
+            "x": -28.40070343017578,
+            "y": 8.379144035418335,
+            "z": -5.965100555419922
+          },
+          "end": [
+            -28.400678253509078,
+            8.226871684920582,
+            -5.172925100174324
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 5412,
+            "total": 171.19999958574772,
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 4.0999999940395355
+          },
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 1,
+          "renderHz": 30,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1598,
+          "seconds": 26.633333333333333,
+          "sourcePad": [
+            85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "actualRuleGoal": {
+            "x": -48.40070343017578,
+            "y": 11.705203198160405,
+            "z": -0.18510055541992188
+          },
+          "end": [
+            28.61407946170478,
+            8.195166471096357,
+            5.07279623913509
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 8673,
+            "total": 226.1999999731779,
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 19
+          },
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 1,
+          "renderHz": 60,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1597,
+          "seconds": 26.616666666666667,
+          "sourcePad": [
+            85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "actualRuleGoal": {
+            "x": 28.37929656982422,
+            "y": 8.351521743493116,
+            "z": 5.814899444580078
+          },
+          "end": [
+            28.61474864982087,
+            8.186815622161612,
+            5.039202903676025
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 8672,
+            "total": 231.8000002503395,
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 19.099999994039536
+          },
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        },
+        {
+          "team": 1,
+          "renderHz": 120,
+          "physicsHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "actorTicks": 1597,
+          "seconds": 26.616666666666667,
+          "sourcePad": [
+            85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "actualRuleGoal": {
+            "x": 28.37929656982422,
+            "y": 8.351521743493116,
+            "z": 5.814899444580078
+          },
+          "end": [
+            28.61474864982087,
+            8.186815622161612,
+            5.039202903676025
+          ],
+          "actualPickup": 7,
+          "naturalPowerObserved": true,
+          "powerRequired": true,
+          "sourceRouteCallbackTimingMs": {
+            "calls": 8672,
+            "total": 247.99999983608723,
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 19.399999991059303
+          },
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "gearAP": 0,
+          "alive": true,
+          "grounded": true,
+          "sourceBuffersUnchanged": true
+        }
+      ],
+      "conditions": "Actual Game._frame at render30/60/120 and installed60Hz FixedClock; real Match/Clams rule/world/blocked callback/qualified source-route callback/installed BotBrain/Actor/Character muzzle/WeaponRunner/Projectiles; eight actors/seven bots, original source-supported pad setups, empty initial ink, canonical zero-AP Shooter; no forced goals/launch/pose/velocity/ink writes; controlled other actors retain actual source support and normal physics; SwiftShader",
+      "errors": []
+    }
+  ],
+  "browserExitCode": 0,
+  "screenshotInspection": {
+    "status": "both inspected privately",
+    "scope": "Initial source-bank human cameras; source/export rendering only; not selected-bot or console comparisons"
+  },
+  "sourceCpuFirstPickups": [
+    {
+      "id": "manta",
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "seconds": 18.8,
+          "sourcePad": [
+            -12,
+            8,
+            -42
+          ],
+          "initialBlocked": 25,
+          "sourceRouteEligible": 24,
+          "ruleSelected": [
+            -5.076045437977717,
+            5.5,
+            -13.249229644941371
+          ],
+          "goal": {
+            "x": -10.173037286103149,
+            "y": 5.5,
+            "z": -11.20308852930888
+          },
+          "end": [
+            -10.686272577814302,
+            5.5,
+            -11.788683715570333
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 144,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "seconds": 19.783333333333335,
+          "sourcePad": [
+            -12,
+            8,
+            -42
+          ],
+          "initialBlocked": 25,
+          "sourceRouteEligible": 24,
+          "ruleSelected": [
+            -5.076045437977717,
+            5.5,
+            -13.249229644941371
+          ],
+          "goal": {
+            "x": -10.173037286103149,
+            "y": 5.5,
+            "z": -11.20308852930888
+          },
+          "end": [
+            -10.694288856028084,
+            5.5,
+            -11.796892688617342
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 270,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "seconds": 22.433333333333334,
+          "sourcePad": [
+            -12,
+            8,
+            -42
+          ],
+          "initialBlocked": 25,
+          "sourceRouteEligible": 24,
+          "ruleSelected": [
+            -5.076045437977717,
+            5.5,
+            -13.249229644941371
+          ],
+          "goal": {
+            "x": -10.173037286103149,
+            "y": 5.5,
+            "z": -11.20308852930888
+          },
+          "end": [
+            -10.712439877962389,
+            5.5,
+            -11.814390199232331
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 548,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "seconds": 21.666666666666668,
+          "sourcePad": [
+            12,
+            8,
+            42
+          ],
+          "initialBlocked": 29,
+          "sourceRouteEligible": 28,
+          "ruleSelected": [
+            5.1529213062808115,
+            5.5,
+            13.02610101087528
+          ],
+          "goal": {
+            "x": 10.146047088699142,
+            "y": 5.5,
+            "z": 11.97398205568321
+          },
+          "end": [
+            10.951810942627315,
+            5.5,
+            12.02887624879494
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 384,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 13.483333333333333,
+          "sourcePad": [
+            12,
+            8,
+            42
+          ],
+          "initialBlocked": 29,
+          "sourceRouteEligible": 28,
+          "ruleSelected": [
+            5.1529213062808115,
+            5.5,
+            13.02610101087528
+          ],
+          "goal": {
+            "x": 10.146047088699142,
+            "y": 5.5,
+            "z": 11.97398205568321
+          },
+          "end": [
+            10.9533988311278,
+            5.5,
+            12.040728728778726
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 305,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "seconds": 13.658333333333333,
+          "sourcePad": [
+            12,
+            8,
+            42
+          ],
+          "initialBlocked": 29,
+          "sourceRouteEligible": 28,
+          "ruleSelected": [
+            5.1529213062808115,
+            5.5,
+            13.02610101087528
+          ],
+          "goal": {
+            "x": 10.146047088699142,
+            "y": 5.5,
+            "z": 11.97398205568321
+          },
+          "end": [
+            10.956905924132498,
+            5.5,
+            12.043464999133938
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 633,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        }
+      ],
+      "sourceBuffersUnchanged": true,
+      "conditions": "Real production Character, Actor, BotBrain, installed ranked rule/world/wrapper and blocked callback; ordinary grounded ranked spawn, no forced goal/launch/pose/velocity/ink writes; canonical zero-AP Shooter; optional motion unavailable in CPU VM"
+    },
+    {
+      "id": "wahoo",
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "seconds": 17.533333333333335,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "ruleSelected": [
+            -28.515738748637155,
+            8.459938499512926,
+            -6.021494701287222
+          ],
+          "goal": {
+            "x": -28.483987398025143,
+            "y": 8.459938499512926,
+            "z": -6.2849192946389
+          },
+          "end": [
+            -29.276706886510645,
+            8.395810197381001,
+            -6.320634708230817
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "seconds": 18.15,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "ruleSelected": [
+            -28.515738748637155,
+            8.459938499512926,
+            -6.021494701287222
+          ],
+          "goal": {
+            "x": -28.483987398025143,
+            "y": 8.459938499512926,
+            "z": -6.2849192946389
+          },
+          "end": [
+            -29.28689887485325,
+            8.396602287359295,
+            -6.330351771199302
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "seconds": 17.35,
+          "sourcePad": [
+            -85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "ruleSelected": [
+            -28.515738748637155,
+            8.459938499512926,
+            -6.021494701287222
+          ],
+          "goal": {
+            "x": -28.483987398025143,
+            "y": 8.459938499512926,
+            "z": -6.2849192946389
+          },
+          "end": [
+            -29.28953729621967,
+            8.388932360240725,
+            -6.277865964538001
+          ],
+          "actualPickup": 2,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "seconds": 14.9,
+          "sourcePad": [
+            85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "ruleSelected": [
+            28.72813409385449,
+            8.338678300972663,
+            5.832245694945768
+          ],
+          "goal": {
+            "x": 28.72813409385449,
+            "y": 8.338678300972663,
+            "z": 5.832245694945768
+          },
+          "end": [
+            29.482989959274033,
+            8.320597574461365,
+            5.943021806665951
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 14.716666666666667,
+          "sourcePad": [
+            85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "ruleSelected": [
+            28.72813409385449,
+            8.338678300972663,
+            5.832245694945768
+          ],
+          "goal": {
+            "x": 28.72813409385449,
+            "y": 8.338678300972663,
+            "z": 5.832245694945768
+          },
+          "end": [
+            29.50408413002284,
+            8.323327159268455,
+            5.961134192918246
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "seconds": 14.683333333333334,
+          "sourcePad": [
+            85,
+            18,
+            0
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 10,
+          "ruleSelected": [
+            28.72813409385449,
+            8.338678300972663,
+            5.832245694945768
+          ],
+          "goal": {
+            "x": 28.72813409385449,
+            "y": 8.338678300972663,
+            "z": 5.832245694945768
+          },
+          "end": [
+            29.524213834928474,
+            8.323615825984458,
+            5.96666442490638
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 0,
+          "actualWeaponFire": true,
+          "grounded": true,
+          "gearAP": 0
+        }
+      ],
+      "sourceBuffersUnchanged": true,
+      "conditions": "Real production Character, Actor, BotBrain, installed ranked rule/world/wrapper and blocked callback; ordinary grounded ranked spawn, no forced goal/launch/pose/velocity/ink writes; canonical zero-AP Shooter; optional motion unavailable in CPU VM"
+    },
+    {
+      "id": "humpback",
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "seconds": 13.9,
+          "sourcePad": [
+            0,
+            6.08,
+            -61
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 30,
+          "ruleSelected": [
+            0.12395456202228633,
+            0,
+            -15.546431183027314
+          ],
+          "goal": {
+            "x": -5.973037286103146,
+            "y": -7.105427357601002e-15,
+            "z": -15.500290067394824
+          },
+          "end": [
+            -5.901844217023507,
+            3.36631370481677e-05,
+            -16.282389559700384
+          ],
+          "actualPickup": 2,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 59,
+          "actualWeaponFire": false,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "seconds": 13.316666666666666,
+          "sourcePad": [
+            0,
+            6.08,
+            -61
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 30,
+          "ruleSelected": [
+            0.12395456202228633,
+            0,
+            -15.546431183027314
+          ],
+          "goal": {
+            "x": -5.973037286103146,
+            "y": -7.105427357601002e-15,
+            "z": -15.500290067394824
+          },
+          "end": [
+            -5.896144718034142,
+            3.125306235096659e-05,
+            -16.28495640272939
+          ],
+          "actualPickup": 2,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 96,
+          "actualWeaponFire": false,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "seconds": 12.966666666666667,
+          "sourcePad": [
+            0,
+            6.08,
+            -61
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 30,
+          "ruleSelected": [
+            0.12395456202228633,
+            0,
+            -15.546431183027314
+          ],
+          "goal": {
+            "x": -5.973037286103146,
+            "y": -7.105427357601002e-15,
+            "z": -15.500290067394824
+          },
+          "end": [
+            -5.899262308416677,
+            3.393415614055817e-05,
+            -16.310551891221536
+          ],
+          "actualPickup": 1,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 152,
+          "actualWeaponFire": false,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "seconds": 21.433333333333334,
+          "sourcePad": [
+            0,
+            6.08,
+            61
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 30,
+          "ruleSelected": [
+            0.3529213062808141,
+            0,
+            15.728899472789337
+          ],
+          "goal": {
+            "x": 6.3460470886991445,
+            "y": 0.00014166938090198755,
+            "z": 15.676780517597267
+          },
+          "end": [
+            6.830666796606167,
+            0.0004496278118850672,
+            16.323821525823806
+          ],
+          "actualPickup": 2,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 259,
+          "actualWeaponFire": false,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 12.25,
+          "sourcePad": [
+            0,
+            6.08,
+            61
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 30,
+          "ruleSelected": [
+            0.3529213062808141,
+            0,
+            15.728899472789337
+          ],
+          "goal": {
+            "x": 6.249374705818294,
+            "y": 0.00014166938090198755,
+            "z": 15.757439316644081
+          },
+          "end": [
+            6.793883533560738,
+            0.0004352065904445479,
+            16.362831176785036
+          ],
+          "actualPickup": 2,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 90,
+          "actualWeaponFire": false,
+          "grounded": true,
+          "gearAP": 0
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "seconds": 12.925,
+          "sourcePad": [
+            0,
+            6.08,
+            61
+          ],
+          "initialBlocked": 30,
+          "sourceRouteEligible": 30,
+          "ruleSelected": [
+            0.3529213062808141,
+            0,
+            15.728899472789337
+          ],
+          "goal": {
+            "x": 6.249374705818294,
+            "y": 0.00014166938090198755,
+            "z": 15.757439316644081
+          },
+          "end": [
+            6.810543723745495,
+            0.0004417690134259078,
+            16.34576962654103
+          ],
+          "actualPickup": 2,
+          "actualLiveBlockedCallback": true,
+          "handledFrames": 183,
+          "actualWeaponFire": false,
+          "grounded": true,
+          "gearAP": 0
+        }
+      ],
+      "sourceBuffersUnchanged": true,
+      "conditions": "Real production Character, Actor, BotBrain, installed ranked rule/world/wrapper and blocked callback; ordinary grounded ranked spawn, no forced goal/launch/pose/velocity/ink writes; canonical zero-AP Shooter; optional motion unavailable in CPU VM"
+    }
+  ],
+  "sourceCpuScope": "18 production Character/Actor/BotBrain/ranked-rule cases with the real blocked callback and unchanged five checked source streams at manually advanced30/60/120 kernel intervals; not production variable-physics. Source callback bytes remain exact bbc79. Optional source motion unavailable in CPU VM. Eighth policy is separately checked by actual fixed Game cases and logic/default controls.",
+  "sourceNegativeControls": [
+    "actual unsupported/null/nonfinite goal",
+    "missing actor row",
+    "legacy level",
+    "real valid non-paintable source goal",
+    "other weapon",
+    "nonzero ability gear",
+    "airborne/dead/nonbot/special/superjump/source-launch flight",
+    "real neutral production Actor settled on a dynamic foot-ring box with matching feet/probe height, rejected by dynamic support index"
+  ],
+  "dynamicFixtureHistory": {
+    "failed": "First box used spawnPad.y instead of source-node.y and lay outside the actual Hump probe interval. Explicit kid form alone did not fix it. Both failed logs retained.",
+    "final": "Actual Actor neutral settling selects dynamic block >=staticBlockCount, with |feet-probeY|<=.16; source callback rejects and original source hashes remain unchanged.",
+    "receipt": ".ci-scratch/clams-final/humpback-source-physical-dynamic.log"
+  },
+  "defaultTests": {
+    "tests": 42,
+    "pass": 40,
+    "fail": 0,
+    "skip": 2,
+    "skipScope": "Unconfigured ordinary-floor and ranked-drop asset fixtures, not passed source coverage",
+    "includes": "Source Tower lifecycle, legacy follower, ranked bot/rule defaults and four seven-count policy boundary controls"
+  },
+  "policyFocused": {
+    "tests": 21,
+    "pass": 21,
+    "fail": 0,
+    "skip": 0,
+    "scope": "New isolated eighth-pickup logic plus existing legacy Clams rules; isolated inventory seed is not a physical movement claim"
+  },
+  "packaging": {
+    "private": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skip": 0
+    },
+    "public": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skip": 0
+    }
+  },
+  "startupBudgets": {
+    "private": {
+      "status": "passed",
+      "revision": "141a2704104548667be93bef73eaa908835febd7b17b50668c0c41da9dab2051",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2752704,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5854335,
+      "workerBytes": 71147,
+      "declaredBytes": 10475027,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "public": {
+      "status": "passed",
+      "revision": "63379c98fa6a37d0d5851d46942a4a3a076dcbe9a9a9ca8f0c4de477cd66314e",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2753934,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5855565,
+      "workerBytes": 71147,
+      "declaredBytes": 10476257,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "independentHumpReview": {
+    "reviewer": "/root/humpback (dedicated Humpback owner)",
+    "candidate": "904b2bb3d35862287b0e072524b36e39819a700d",
+    "pullRequest": 1397,
+    "callbackSourceSha256": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+    "ruleSourceSha256": "744b6d8ee045ba12d397aca51631aa274167bdf6d63b185b85c59d0bd026eaa8",
+    "diagnosticCommit": "a38b0c59",
+    "overlay": {
+      "status": "compiled private diagnostic overlay; not accepted or a newly packaged full build",
+      "candidate": "904b2bb3",
+      "delta": [
+        "5fbff252",
+        "96af129d",
+        "528ef488",
+        "904b2bb3"
+      ],
+      "baselineFoundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+      "baselineBuild": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+      "sourceFiles": {
+        "patches/native-stages/adapter.mjs": "c036e1c9ad7daa12f168b8425796f5135e23c5d127c104aebc0ca46bdf9518e4",
+        "patches/native-stages/runtime/engine.mjs": "ff34756b0aa7cf222e0c01e21988e2b82c73d63cb5c165e49728ac15632445ee",
+        "patches/native-stages/runtime/native-ranked-goals.mjs": "bbc79eb83e18bdf9a53d8d5daf64d1644feedbb3f16b59ff995ffc0ae6b34c1a",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "744b6d8ee045ba12d397aca51631aa274167bdf6d63b185b85c59d0bd026eaa8",
+        "patches/splatoon3/runtime/ranked/install.mjs": "823bcbc52f0fa1f46e17c4e3b0c2566cedc9684e0ed181eb2f36818c8b80153d"
+      },
+      "emittedFiles": {
+        "patches/native-stages/runtime/engine.mjs": "6fc61cc0834793c23b313df4d3a3ffc90b713feff973c6d109aef9cc0cb606dd",
+        "patches/splatoon3/runtime/ranked/install.mjs": "b40fd5bfc06d0bd4564fa460ad9487757d738b6a80b845c1498cc261ee48f629",
+        "patches/splatoon3/runtime/ranked/clams.mjs": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905"
+      }
+    },
+    "staticReview": {
+      "sevenSmallOnlyBelowPowerThreshold": true,
+      "perActualCandidateTrueSourceRouteRequired": true,
+      "directLosOrHookPresenceCannotExtend": true,
+      "originalReachableAndBlockedRetained": true,
+      "legacyCarryPolicyRetained": true,
+      "invalidEightSmallAndPowerInventoryExcluded": true,
+      "pickupThrowInventoryGeometryUnchanged": true,
+      "originalMainClamsLifecyclePreserved": true
+    },
+    "independentPolicyTests": {
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "New native eighth-candidate policy plus complete existing ranked-clams suite; pure logic, distinct from production physical collection"
+    },
+    "dynamicNegativeFixtureReview": {
+      "scope": "Static peer review of sole owner corrected source fixture, not a new independent source CPU execution",
+      "neutralProductionActorLanding": true,
+      "actualDynamicGroundProbeIndexRequired": true,
+      "feetProbeHeightDifferenceWithinOriginalPoint16Required": true,
+      "originalFailedMispositionedBoxLogsRetained": true
+    },
+    "actualFixedGameNaturalPower": {
+      "status": "passed private Power diagnostic overlay, awaiting common acceptance",
+      "evidence": ".browser-evidence/clams-eighth-power-overlay/ranked.json",
+      "scope": "Six actual Game-clock natural Power collections in private three-runtime-file overlay over unchanged accepted846, not full packaged acceptance",
+      "buildFingerprint": "249614168dea8c7be19d4a244ed2cba62407779cef54abb0eb44b2d54053394f",
+      "cases": [
+        {
+          "mode": "clams",
+          "team": 0,
+          "renderCadence": 30,
+          "seconds": 16,
+          "actorTicks": 960,
+          "gameClockTicks": 960,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            0.6349985102797823,
+            0,
+            -14.97952412351896
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.1838951543621192,
+            26.599999999999994
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.1838951543621192,
+            "z": 26.599999999999994
+          },
+          "inventory": {
+            "team": 0,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 0,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 935,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 92032,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12900,
+          "fire": false,
+          "jump": false,
+          "traversal": 97,
+          "maxTravel": 46.02485657778666,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 0,
+          "renderCadence": 60,
+          "seconds": 16,
+          "actorTicks": 960,
+          "gameClockTicks": 960,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            0.6349985102797823,
+            0,
+            -14.97952412351896
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.1838951543621192,
+            26.599999999999994
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.1838951543621192,
+            "z": 26.599999999999994
+          },
+          "inventory": {
+            "team": 0,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 0,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 935,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 92032,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12900,
+          "fire": false,
+          "jump": false,
+          "traversal": 97,
+          "maxTravel": 46.02485657778666,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 0,
+          "renderCadence": 120,
+          "seconds": 16,
+          "actorTicks": 960,
+          "gameClockTicks": 960,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            -61
+          ],
+          "end": [
+            0.6349985102797823,
+            0,
+            -14.97952412351896
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.1838951543621192,
+            26.599999999999994
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.1838951543621192,
+            "z": 26.599999999999994
+          },
+          "inventory": {
+            "team": 0,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 0,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 935,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 92032,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12900,
+          "fire": false,
+          "jump": false,
+          "traversal": 97,
+          "maxTravel": 46.02485657778666,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 1,
+          "renderCadence": 30,
+          "seconds": 15,
+          "actorTicks": 900,
+          "gameClockTicks": 900,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            0.9619615199993827,
+            0,
+            15.595886917827467
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.241334900668157,
+            -26.400000000000006
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.241334900668157,
+            "z": -26.400000000000006
+          },
+          "inventory": {
+            "team": 1,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 1,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 899,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91986,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12907,
+          "fire": false,
+          "jump": false,
+          "traversal": 91,
+          "maxTravel": 45.44757392994931,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 1,
+          "renderCadence": 60,
+          "seconds": 15,
+          "actorTicks": 900,
+          "gameClockTicks": 900,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            0.9619615199993827,
+            0,
+            15.595886917827467
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.241334900668157,
+            -26.400000000000006
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.241334900668157,
+            "z": -26.400000000000006
+          },
+          "inventory": {
+            "team": 1,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 1,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 899,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91986,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12907,
+          "fire": false,
+          "jump": false,
+          "traversal": 91,
+          "maxTravel": 45.44757392994931,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        },
+        {
+          "mode": "clams",
+          "team": 1,
+          "renderCadence": 120,
+          "seconds": 15,
+          "actorTicks": 900,
+          "gameClockTicks": 900,
+          "actorSteps": [
+            0.016666666666666666
+          ],
+          "brainSteps": [
+            0.016666666666666666
+          ],
+          "projectileSteps": [
+            0.016666666666666666
+          ],
+          "start": [
+            0,
+            6,
+            61
+          ],
+          "end": [
+            0.9619615199993827,
+            0,
+            15.595886917827467
+          ],
+          "goal": [
+            0.20000000000000284,
+            -2.241334900668157,
+            -26.400000000000006
+          ],
+          "goalAction": "throw",
+          "botGoal": {
+            "x": 0.20000000000000284,
+            "y": -2.241334900668157,
+            "z": -26.400000000000006
+          },
+          "inventory": {
+            "team": 1,
+            "small": 0,
+            "power": true
+          },
+          "initialInventory": {
+            "team": 1,
+            "small": 0,
+            "power": false
+          },
+          "collected": true,
+          "sawPower": true,
+          "firstPowerTick": 899,
+          "inventoryMaximum": 7,
+          "approached": false,
+          "alive": true,
+          "grounded": true,
+          "sourceTriangle": 91986,
+          "sourceObject": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "sourceFace": 12907,
+          "fire": false,
+          "jump": false,
+          "traversal": 91,
+          "maxTravel": 45.44757392994931,
+          "gearAP": [],
+          "sourceWeapon": "WeaponShooterNormal",
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "counts": [
+            0,
+            0
+          ],
+          "matchState": "playing"
+        }
+      ],
+      "errors": []
+    },
+    "decision": "Exact goal-policy delta passes independent static and pure policy review. Common promotion still requires sole owner current Manta/Wahoo natural Power12, physical guards/defaults/public9+budgets and named concrete PR; final Hump accepted six-Power and all5WS seals follow accepted composition.",
+    "limits": [
+      "No all-loadout/gear source-route claim",
+      "No retail physics/units/placements/shaders/moving-state claim",
+      "No hardware FPS claim",
+      "Tower and elevated enemy home-deck returns remain source-route-unverified"
+    ]
+  },
+  "independentReviewScope": "Exact904 source callback/policy/default guards and six original-Hump-bank natural Power Game cases on a diagnostic846 overlay. Callback source bbc79 and emitted Clams module match final common pair. Final common proof adds actual current Manta/Wahoo twelve Power cases and packaging.",
+  "historicalFailures": [
+    "Manta actual direct-LOS rejects all path-reachable grounded candidate goals before source callback",
+    "Wahoo unopted original pad: all30 direct rays blocked while genuine bounded paths exist",
+    "Hump current846 positive bank:90s/5400fixed ticks with zero inventory and null goal, retained",
+    "Manta original callback without eighth policy: team1 carries seven small clams at basket after120s/7200fixed ticks; team0 multi-pickup frame hides boundary",
+    "Misplaced dynamic negative fixtures retained as test-setup failures"
+  ],
+  "performanceScope": "Actual callback calls/total/p50/p95/max from browser performance.now are retained per case. Timing observer delegates unchanged results; this is software browser work, not physical-device speed/FPS. Full-route continuous capsule equality is not claimed by this objective test; final short endpoint corridor is screened against original source.",
+  "comparison": {
+    "referenceVersion": "Splatoon3 11.3.0 identity metadata only; existing Clams rule references Nintendo/wiki parameter sources",
+    "weapon": "Shooter_Normal_00 / shooter",
+    "gearAP": 0,
+    "input": "Production BotBrain owns normal move/jump/swim/fire and actual pickup; no forced goals, inventory, launch, pose, velocity or ink writes after source setup",
+    "implementation": [
+      "patches/native-stages/runtime/native-ranked-goals.mjs",
+      "patches/native-stages/adapter.mjs",
+      "patches/splatoon3/runtime/ranked/clams.mjs"
+    ],
+    "impact": "Bots can follow a real directed source route around a blocked direct ray, and explicitly qualified seven-small bots still seek the eighth natural pickup. Original blocked callback and source collision remain active.",
+    "unverified": [
+      "other loadouts retain original direct-LOS/seven-small policy; no all-loadout parity claim",
+      "retail placements, collision, source units and timing parity",
+      "physical-device performance",
+      "every full-route capsule at all manual kernel intervals"
+    ]
+  }
+}
