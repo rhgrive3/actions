@@ -708,6 +708,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // geometry, not a new height constant or a gameplay collision volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
   let center, axisX, axisY, axisZ, lift, weaponQ, inverseHandQ;
+  let turnQ, testQ, chosenQ, leftShoulder, leftQuat, leftSocket, axes;
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
     // The existing solved drum bound owns *all* grounded visual roller poses.
     // The roll state pins the drum to contact; a flick only lifts the grip if
@@ -736,19 +737,67 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
       }
       const kid = this.kid;
-      weaponQ.copy(orientation).multiply(inverseHandQ.copy(d.handR.quat).invert());
-      center.copy(d.drumAt); center.x += bound.centerX;
-      center.sub(d.handR.pos).applyQuaternion(weaponQ).add(target).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
-      axisX.set(1, 0, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      axisY.set(0, 1, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      axisZ.set(0, 0, 1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      const bottom = center.y - bound.halfWidth * Math.abs(axisX.y) - bound.radius * Math.hypot(axisY.y, axisZ.y);
-      // A margin under one centimetre keeps the existing indexed mesh above
-      // the floor during a backswing without retiming the 60 Hz release.
-      const correction = onGround ? -bottom : Math.max(0, .006 - bottom);
-      if (Number.isFinite(correction) && correction !== 0) {
-        lift.set(0, correction, 0).applyQuaternion(inverseHandQ.copy(kid.quaternion).invert()).divide(kid.scale);
-        target.add(lift);
+      // Geometric clearance is measured in the original grip frame, not from
+      // an approximate pose image. The actual wrist owns the roller mesh.
+      const bottomFor = q => {
+        weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
+        center.copy(d.drumAt); center.x += bound.centerX;
+        center.sub(d.handR.pos).applyQuaternion(weaponQ).add(target).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
+        axisX.set(1, 0, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+        axisY.set(0, 1, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+        axisZ.set(0, 0, 1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+        return center.y - bound.halfWidth * Math.abs(axisX.y) - bound.radius * Math.hypot(axisY.y, axisZ.y);
+      };
+      const bottom = bottomFor(orientation);
+      if (onGround) {
+        // During an admitted push, the roller reaches its physical ground
+        // contact target. The native arm solver still owns the wrist and grip.
+        if (Number.isFinite(bottom) && bottom !== 0) {
+          lift.set(0, -bottom, 0).applyQuaternion(inverseHandQ.copy(kid.quaternion).invert()).divide(kid.scale);
+          target.add(lift);
+        }
+      } else if (flickClearance && Number.isFinite(bottom) && bottom < .006) {
+        // Translating the attacking wrist upward can put BOTH hands beyond
+        // their finite arm lengths (and detach the left support grip). Instead
+        // choose the smallest wrist rotation that clears the actual drum.
+        // The grip origin stays unchanged and native two-arm IK remains the
+        // only owner of the hands. Never change the Runner's release clock.
+        if (!turnQ) {
+          turnQ = orientation.clone(); testQ = orientation.clone(); chosenQ = orientation.clone();
+          leftShoulder = target.clone(); leftQuat = orientation.clone(); leftSocket = target.clone();
+          axes = [target.clone().set(1, 0, 0), target.clone().set(0, 1, 0), target.clone().set(0, 0, 1)];
+        }
+        const armL = this.limbs.armL;
+        this._kidXform(armL.up.parent, leftShoulder, leftQuat);
+        leftShoulder.add(leftSocket.copy(armL.up.position).applyQuaternion(leftQuat));
+        const leftReach = (armL.a + armL.b) * .9995 + .001;
+        const leftFits = () => {
+          leftSocket.copy(d.handL.pos).sub(d.handR.pos).applyQuaternion(weaponQ).add(target);
+          return leftSocket.distanceToSquared(leftShoulder) <= leftReach * leftReach;
+        };
+        let bestAngle = Infinity;
+        // Scan only while a flick is colliding, and refine at the crossing to
+        // avoid a visible angle jump or a snapped grip at the contact boundary.
+        for (const axis of axes) for (const sign of [-1, 1]) {
+          let lo = 0;
+          for (let a = .08; a <= 1.28 && a < bestAngle + .08; a += .08) {
+            testQ.copy(turnQ.setFromAxisAngle(axis, sign * a)).multiply(orientation);
+            if (bottomFor(testQ) < .006 || !leftFits()) { lo = a; continue; }
+            let hi = a;
+            for (let k = 0; k < 7; k++) {
+              const mid = (lo + hi) * .5;
+              testQ.copy(turnQ.setFromAxisAngle(axis, sign * mid)).multiply(orientation);
+              if (bottomFor(testQ) >= .006 && leftFits()) hi = mid;
+              else lo = mid;
+            }
+            if (hi < bestAngle) {
+              bestAngle = hi;
+              chosenQ.copy(turnQ.setFromAxisAngle(axis, sign * hi)).multiply(orientation);
+            }
+            break;
+          }
+        }
+        if (Number.isFinite(bestAngle)) orientation.copy(chosenQ);
       }
     }
     return solve.call(this, limb, target, pole, orientation, weight, index);
