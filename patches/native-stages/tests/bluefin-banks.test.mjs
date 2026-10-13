@@ -13,6 +13,8 @@ test('Bluefin ordinary source bots traverse both original upper banks at the pro
  const reset=()=>{G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();};
  reset();G.match.mode='turf';G.match.opts={};G.camera=new THREE.PerspectiveCamera();
  assert.equal(L.manifest.sourceNavigation?.wallClimb,true);
+ assert.equal(L.manifest.sourceNavigation?.highDrops,true);
+ assert.equal(L.manifest.sourceNavigation?.wallApproach,true);
  assert.deepEqual(Array.from(L.spawnPads,p=>Array.from(p.toArray())),[[-12,15,-70],[12,15,70]]);
  const started=performance.now(),N=G.nav=new f.NavGraph(L,P),banks=[],clearance=f.nativeDropClearance(L);
  f.setRandom(()=>.5);
