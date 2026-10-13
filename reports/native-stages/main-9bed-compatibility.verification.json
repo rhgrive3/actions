@@ -2124,7 +2124,46 @@
     },
     "emittedExactlyEqual": true,
     "selectedGameplayPresentationModules": 10,
-    "docHeadRecheck": "pending; no code/build/source mutation"
+    "docHeadRecheck": {
+      "status": "passed",
+      "docHead": "67515d39a3464654b19baa9c27247e18bccf790f",
+      "testedCode": "9ee0d652f7942f694059b6291c432ad2227158d3",
+      "docOnlyChangedFiles": [
+        "reports/inkwave-splatoon3-behavior-2026-10-02.md",
+        "reports/native-stages/main-9bed-compatibility.md",
+        "reports/native-stages/main-9bed-compatibility.verification.json"
+      ],
+      "rebuilt": false,
+      "selectedEmittedInputsExactlyMatchSeal": true,
+      "results": {
+        "public": {
+          "exitCode": 0,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "contentHash": "084723298b7334f3761bfc823d9cea72e4485b89f36631f3ae029b2acbf750fd",
+          "revision": "945c18cd2654778edbdcd7212f07e00162ebd9d4ac13bf039fa81f097b1f4b25",
+          "logSHA256": "576f88a472be32c41b93b4c469b9f331596e7bd6b8b4d311de16b6f4827c037c"
+        },
+        "private": {
+          "exitCode": 0,
+          "counts": {
+            "tests": 9,
+            "pass": 9,
+            "fail": 0,
+            "cancelled": 0,
+            "skipped": 0
+          },
+          "contentHash": "ea801774077870ac78a4be98d91997af282e3ebb0ae8533b00fdabf35c96153b",
+          "revision": "e628995489eaa9252ced2e5804447d05a343ccc6dad5c1427cf688accd944f6f",
+          "logSHA256": "409daeadaaf164a2dd182f37538a3649405d94dff2a2888c1b74ea4b1ae37c6e"
+        }
+      }
+    }
   },
   "retailComparison": {
     "reference": "Splatoon3 11.3.0 identifiers and pinned public KiTrix source only",
@@ -2136,5 +2175,10 @@
       "New-model Math.random consumption/distribution parity",
       "Whole-bank/autonomous all-weapon gameplay"
     ]
+  },
+  "rootFinalReportReview": {
+    "status": "accepted",
+    "reviewedReportHead": "67515d39a3464654b19baa9c27247e18bccf790f",
+    "scope": "Root independently read leaf/central/numeric scopes and code-only preservation, including current195+3, retained47, actualShooter3/catalogueWS5, all historical failures and retail/RNG/wholebank limits. Follow-up records the completed unchanged-artifact doc-head canonical9+9 results only."
   }
 }
