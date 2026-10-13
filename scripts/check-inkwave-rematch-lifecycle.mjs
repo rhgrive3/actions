@@ -17,7 +17,7 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { boundedDiagnostic, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
+import { boundedDiagnostic, captureRecordedFocusFailure, createFocusHistory, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
 import { installCursorTimelineDiagnostics } from './lib/inkwave-cursor-timeline-diagnostics.mjs';
 
 const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) { if (fallback !== undefined) return fallback; throw new Error('Required ' + name); } return process.argv[i + 1]; };
@@ -52,7 +52,7 @@ const ctx = await pw.chromium.launchPersistentContext(path.join(profile, 'rematc
 });
 const page = await ctx.newPage();
 const browserVersion=ctx.browser()?.version?.() ?? null;
-const errors = [], missing = [], failures = [], rounds = [];
+const errors = [], missing = [], failures = [], rounds = [], focusFailureDiagnostics = [];
 const operationTrace = createOperationTrace();
 let activeRound = null, failureDiagnostics = null;
 page.on('pageerror', (e) => errors.push(String(e.message).slice(0, 400)));
@@ -262,18 +262,20 @@ const snap = () => page.evaluate(() => {
 const waitForFocusFrame = async () => {
   let timer;
   try {
-    await Promise.race([
-      page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve()))),
-      new Promise((resolve) => { timer = setTimeout(() => resolve(false), 1000); }),
+    return await Promise.race([
+      page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve('frame')))),
+      new Promise((resolve) => { timer = setTimeout(() => resolve('timeout'), 1000); }),
     ]);
   } finally { clearTimeout(timer); }
 };
 const alignedFocusSnapshot = async (phase) => operationTrace.run('aligned focus: ' + phase, async () => {
-  const start = Date.now();
+  const start = Date.now(), observation = createFocusHistory();
   let last = null;
   do {
-    await waitForFocusFrame();
+    const frameWait = await waitForFocusFrame();
     last = await snap();
+    observation.record(last, Date.now() - start, frameWait);
+    last.focusHistory = observation.history;
     if (last.ringOn && last.ringVisible && last.ringOnFocus === true) return last;
   } while (Date.now() - start < 30000);
   return last;
@@ -283,8 +285,23 @@ const check = (round, phase, cond, message, detail) => { if (!cond) failures.pus
 let status = 'failed';
 const writeResult = () => {
   const result = { status, contentHash: manifest.contentHash, browserVersion, cycles, failures, errors, missing, rounds,
-    activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics };
+    activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics, focusFailureDiagnostics,
+    diagnosticSourceHash: hash(fs.readFileSync(new URL(import.meta.url))), ciCommit: process.env.GITHUB_SHA ?? null };
   fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
+};
+const diagnoseFocusFailure = async (failure, phase) => {
+  const diagnostic = { round: failure.round, phase, originalFailure: failure,
+    note: 'Post-assertion readback only; the original failed gate remains failed.' };
+  focusFailureDiagnostics.push(diagnostic);
+  await captureRecordedFocusFailure(diagnostic, {
+    persist: writeResult,
+    screenshot: async () => {
+      const filename = `rematch-focus-${failure.round}-${phase}.png`;
+      await page.screenshot({ path: path.join(evidence, filename), timeout: 8000 });
+      return filename;
+    },
+    snapshot: snap,
+  });
 };
 try {
   await page.goto(base + '?skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -337,12 +354,16 @@ try {
     check(i + 1, 'menu', menu.menu === 'main' && menu.screen === 'main' && menu.screens === 1 && !menu.starting && !menu.modal, 'one live main menu screen', menu);
     check(i + 1, 'menu', menu.huds === 1 && menu.hudOverlays === 1 && menu.menuLayers === 1 && menu.mobileRoots === 1 && menu.duplicateIds.length === 0, 'no duplicated UI roots or ids', menu);
     check(i + 1, 'menu', menu.hudHidden && !menu.touchVisible && menu.touchDown.length === 0 && menu.judges === 0, 'HUD and touch controls retired in the menus', menu);
+    const beforeTouchFocusCheck = failures.length;
     check(i + 1, 'menu', menu.focusConnected === true && menu.ringOn && menu.ringVisible && menu.ringOnFocus === true,
       'touch-owned main-menu button has its native visible focus-aligned selection ring', menu);
+    if (failures.length > beforeTouchFocusCheck) await diagnoseFocusFailure(failures.at(-1), 'touch');
     await page.keyboard.press('ArrowDown');
     const keyboardMenu = await alignedFocusSnapshot('keyboard handoff');
+    const beforeKeyboardFocusCheck = failures.length;
     check(i + 1, 'menu', keyboardMenu.ringOn && keyboardMenu.ringVisible && keyboardMenu.ringOnFocus === true,
       'keyboard handoff restores the selection ring on the focused item (no pixel readback)', keyboardMenu);
+    if (failures.length > beforeKeyboardFocusCheck) await diagnoseFocusFailure(failures.at(-1), 'keyboard');
     check(i + 1, 'menu', menu.fade < 0.05, 'fade cleared', menu.fade);
     if (!baseline) baseline = menu;
     else {

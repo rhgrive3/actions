@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { boundedDiagnostic, createOperationTrace } from '../lib/inkwave-rematch-diagnostics.mjs';
+import { boundedDiagnostic, captureRecordedFocusFailure, createFocusHistory, createOperationTrace } from '../lib/inkwave-rematch-diagnostics.mjs';
 
 test('operation trace preserves returned values and the exact original input error without retry', async () => {
   let now = 0, calls = 0;
@@ -43,4 +43,63 @@ test('lifecycle diagnostics keep real tap timeout and original assertions and sa
   assert.match(catchBlock, /failures\.push\(\{ round: 'fatal', message: String\(e\?\.stack \|\| e\)\.slice\(0, 2000\) \}\)/);
   assert.match(source, /activeRound = rangeRound;[\s\S]+rangeRound\.start = await snap/);
   assert.doesNotMatch(catchBlock, /page\.tap|\.click\(/);
+});
+
+
+test('focus history bounds existing observations and retains animation and frame evidence', () => {
+  const trace = createFocusHistory(2);
+  const ring = { opacity: '0', animations: [{ pending: true, startTime: null, currentTime: 0 }] };
+  const document = { timelineTime: 100, visibilityState: 'visible' };
+  const frameDriver = { main: { frameN: 7 } };
+  const snapshot = { ringOn: true, ringVisible: false, ringOnFocus: true, focusConnected: true,
+    uiDiagnostics: { focus: { menuId: 'play' }, menuInputOwner: 'touch', ring, document, frameDriver } };
+  for (let i = 1; i <= 3; i++) trace.record(snapshot, i * 1000, i === 3 ? 'timeout' : 'frame');
+  assert.equal(trace.history.sampleCount, 3);
+  assert.deepEqual(trace.history.samples.map(s => s.elapsedMs), [2000, 3000]);
+  assert.deepEqual(trace.history.samples.at(-1), { elapsedMs: 3000, frameWait: 'timeout',
+    ringOn: true, ringVisible: false, ringOnFocus: true, focusConnected: true, focus: 'play',
+    menuInputOwner: 'touch', ring, document, frameDriver });
+  assert.equal(snapshot.focusHistory, undefined, 'recording does not mutate the input snapshot');
+});
+
+test('post-assertion screenshot recovery never replaces or clears the persisted original failure', async () => {
+  const failure = Object.freeze({ round: 3, message: 'strict visibility failed', detail: Object.freeze({ ringVisible: false }) });
+  const failures = [failure], diagnostic = { originalFailure: failure }, saved = [];
+  let reads = 0;
+  await captureRecordedFocusFailure(diagnostic, {
+    persist: () => saved.push(JSON.parse(JSON.stringify({ failures, diagnostic }))),
+    screenshot: () => { assert.equal(saved.length, 1); assert.equal(saved[0].failures[0].detail.ringVisible, false); return 'failure.png'; },
+    snapshot: () => { reads++; return { ringVisible: true }; },
+  });
+  assert.equal(reads, 1);
+  assert.equal(failures.length, 1);
+  assert.equal(failures[0], failure);
+  assert.equal(saved.length, 2);
+  assert.equal(saved[1].failures[0].detail.ringVisible, false);
+  assert.equal(diagnostic.afterReadback.value.ringVisible, true, 'recovery is labeled separately');
+  assert.deepEqual(diagnostic.screenshot, { status: 'captured', value: 'failure.png' });
+});
+
+test('failed or stalled post-assertion diagnostics remain bounded and preserve failure', async () => {
+  const failure = Object.freeze({ message: 'original' }), diagnostic = { originalFailure: failure };
+  let saved = 0;
+  await captureRecordedFocusFailure(diagnostic, {
+    persist: () => { saved++; }, screenshot: () => new Promise(() => {}),
+    snapshot: () => { throw new Error('renderer closed'); }, timeoutMs: 5,
+  });
+  assert.equal(saved, 2);
+  assert.equal(diagnostic.originalFailure, failure);
+  assert.deepEqual(diagnostic.screenshot, { status: 'timed-out', timeoutMs: 5 });
+  assert.deepEqual(diagnostic.afterReadback, { status: 'unavailable', error: 'renderer closed' });
+});
+
+test('readback is called only after the unchanged failed touch or keyboard assertion is recorded', () => {
+  const source = fs.readFileSync(new URL('../check-inkwave-rematch-lifecycle.mjs', import.meta.url), 'utf8');
+  assert.match(source, /menu\.focusConnected === true && menu\.ringOn && menu\.ringVisible && menu\.ringOnFocus === true/);
+  assert.match(source, /keyboardMenu\.ringOn && keyboardMenu\.ringVisible && keyboardMenu\.ringOnFocus === true/);
+  assert.match(source, /'touch-owned main-menu button has its native visible focus-aligned selection ring', menu\);\s+if \(failures\.length > beforeTouchFocusCheck\) await diagnoseFocusFailure\(failures\.at\(-1\), 'touch'\)/);
+  assert.match(source, /'keyboard handoff restores the selection ring on the focused item \(no pixel readback\)', keyboardMenu\);\s+if \(failures\.length > beforeKeyboardFocusCheck\) await diagnoseFocusFailure\(failures\.at\(-1\), 'keyboard'\)/);
+  const poll = source.slice(source.indexOf('const waitForFocusFrame ='), source.indexOf('const check ='));
+  assert.doesNotMatch(poll, /screenshot|diagnoseFocusFailure|\.style|cancel\(|finish\(/);
+  assert.match(source, /status = failures\.length \|\| errors\.length \? 'failed' : 'passed'/);
 });

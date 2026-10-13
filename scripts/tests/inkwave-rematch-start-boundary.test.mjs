@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { createFocusHistory } from '../lib/inkwave-rematch-diagnostics.mjs';
 import { fixture } from '../../patches/splatoon3/tests/source-fixture.mjs';
 const source=fs.readFileSync(new URL('../check-inkwave-rematch-lifecycle.mjs',import.meta.url),'utf8');
 const callback=source.match(/await until\((\(\) => \{ const m = window\.__G\.match;[^\n]+?\}), null, 300000, 'battle playing[^']*'/)?.[1];
@@ -37,6 +38,7 @@ assert.ok(alignmentSource.startsWith('const waitForFocusFrame ='),'actual lifecy
 function ringRig(snapshots,{stalledFrames=false}={}){
  let clock=0, reads=0, frames=0, waits=0, cleared=0, maxWait=0;
  const read=vm.runInNewContext(alignmentSource+'\nalignedFocusSnapshot;',{
+  createFocusHistory,
   operationTrace:{run:(_name,action)=>action()},
   snap:async()=>snapshots[Math.min(reads++,snapshots.length-1)],
   page:{evaluate:async action=>stalledFrames?new Promise(()=>{}):action()},
@@ -53,6 +55,7 @@ test('rematch samples the native cursor after a browser frame and waits through 
  const {read,counts}=ringRig([entering,visible]);
  assert.equal(await read('touch'),visible);
  assert.deepEqual(counts(),{reads:2,frames:2,waits:2,cleared:2,maxWait:1000});
+ assert.deepEqual(visible.focusHistory.samples.map(s=>[s.frameWait,s.ringVisible]),[['frame',false],['frame',true]]);
  assert.match(source,/ringStyle\.visibility === 'visible' && ringStyle\.display !== 'none' && \+ringStyle\.opacity > 0\.6/);
  assert.match(source,/if \(C\?\.on && f\?\.isConnected\)/);
 });
@@ -71,6 +74,9 @@ test('a suspended browser frame falls back within one second and preserves the 3
  const observed=await read('touch');
  assert.equal(observed.ringVisible,false,'a missing browser frame cannot satisfy visible-ring acceptance');
  assert.deepEqual(counts(),{reads:30,frames:0,waits:30,cleared:30,maxWait:1000});
+ assert.equal(observed.focusHistory.sampleCount,30);
+ assert.equal(observed.focusHistory.samples.at(-1).frameWait,'timeout');
+ assert.equal(observed.focusHistory.samples.at(-1).elapsedMs,30000);
 });
 test('touch return and keyboard handoff retain the same strict atomic ring acceptance',()=>{
  assert.match(source,/alignedFocusSnapshot\('touch-owned menu'\)/);

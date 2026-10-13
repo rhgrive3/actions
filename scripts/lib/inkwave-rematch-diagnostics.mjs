@@ -35,3 +35,33 @@ export async function boundedDiagnostic(read, timeoutMs = 10000) {
     ]);
   } finally { clearTimeout(timer); }
 }
+
+// Summarize snapshots already read by the strict focus poll. No extra browser
+// evaluation, frame request, style mutation or animation seek is introduced.
+export function createFocusHistory(limit = 32) {
+  const history = { sampleCount: 0, samples: [] };
+  return {
+    history,
+    record(snapshot, elapsedMs, frameWait) {
+      const ui = snapshot.uiDiagnostics;
+      history.sampleCount++;
+      history.samples.push({ elapsedMs, frameWait,
+        ringOn: snapshot.ringOn, ringVisible: snapshot.ringVisible, ringOnFocus: snapshot.ringOnFocus,
+        focusConnected: snapshot.focusConnected, focus: ui?.focus?.menuId ?? null,
+        menuInputOwner: ui?.menuInputOwner ?? null, ring: ui?.ring ?? null,
+        document: ui?.document ?? null, frameDriver: ui?.frameDriver ?? null,
+      });
+      if (history.samples.length > limit) history.samples.shift();
+    },
+  };
+}
+
+// The caller has already recorded the failed assertion. Persist it before any
+// screenshot readback, which may itself advance browser compositing. A later
+// visible ring is evidence about recovery only and cannot replace that failure.
+export async function captureRecordedFocusFailure(diagnostic, { persist, screenshot, snapshot, timeoutMs = 10000 }) {
+  persist();
+  diagnostic.screenshot = await boundedDiagnostic(screenshot, timeoutMs);
+  diagnostic.afterReadback = await boundedDiagnostic(snapshot, timeoutMs);
+  persist();
+}
