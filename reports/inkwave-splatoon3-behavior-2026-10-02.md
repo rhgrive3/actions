@@ -4121,3 +4121,7 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 ## Ranked Rainmaker native wall ownership follow-up (2026-10-13)
 
 S3mix Splash Wall supplies Rainmaker direct x1 / weapon-blast x2. Dedicated ranked effects now share native object HP and the owner-authenticated proposal path; native Object Shredder is applied separately once. A guest locally owning a Rainmaker visual replay may submit native object hits while actor damage and paint remain ranked-host authority; host proxies do not submit/spend the same object hit. Wall planes are retained for this explosion's occlusion when its HP is removed. This ordering and existing wall/world geometry are local implementation choices; other defense blast rows and exact console behavior remain unmeasured. Five installed-runtime tests and the browser wall HP proof are added; validation is pending until CI reports success. See reports/inkwave-ranked-rule-corrections-2026-10-13.md.
+
+独立レビュー追補: ホコのチャージ/射撃待ち/射撃後硬直の専用速度が採用済みMist減速を迂回する経路と、取得時にInk Vac/Trizookaの独立状態が残る経路を修正。実際のMist配置と30/60/120Hz・サブ影響軽減0/57APで減速の1回適用と退出復帰を確認し、ネイティブ取得から吸引終了・終了通知・再発動と発射/展開済み攻撃の存続を回帰検査する。S3mixのホコ取得・ポイズンミストの記述と既存11.3.0耐性係数を根拠とし、速度の世界単位換算・ブラウザFPS・Switch実機比較は未確認のまま維持する。詳細は上記ルール修正記録の独立レビュー節。
+
+同修正の現行main追補: 外部統合ee9fbbabのMist係数0.5/0.75、キューインキ17F発動と保持吸引、反撃19F無弾/20F発射を維持して再合成。修正前は対象5件が失敗し、修正後はホコ6件・傘/スペシャル操作12件・練習場8件の26件がsource/実minify双方で通過。旧e57上のブラウザ証拠を新合成の証明には流用せず、新headのCIで再検証する。
