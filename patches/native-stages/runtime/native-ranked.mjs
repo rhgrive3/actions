@@ -2,6 +2,7 @@
  * The Pnt display mesh is shared by all rules until original placement data exists. */
 import {nativeTowerClearance} from './native-tower-clearance.mjs';
 import {nativeArenaBasis} from './native-spawn.mjs';
+import {nativeTowerBoarding} from './native-tower-boarding.mjs';
 import {nativeStageRuleStatus} from './rule-availability.mjs';
 const sourceStageCache=new WeakMap();
 function requireMode(stage,mode){if(mode==='tower'&&!stage.tower.supported){const error=new RangeError(stage.tower.reason);error.code='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED';throw error;}return stage;}
@@ -25,7 +26,7 @@ export function nativeRankedComponent(N,paintable,spawnIds=[]){
 }
 export function nativeRankedStage(G,requiredMode=null){
  const L=G.level,N=G.nav;if(!L?.native||!N?.validIds.length)throw Error('No reachable native ranked navigation');
- const body=G.physics.actorBody,bodyKey=[body.radius,body.height].join('/'),cached=sourceStageCache.get(N);
+ const body=G.physics.actorBody,bodyKey=[body.radius,body.height,body.jumpVel,body.gravity,body.runSpeed,body.ledgeAssist].join('/'),cached=sourceStageCache.get(N);
  // Navigation, original source masks and live capsule dimensions own this proof.
  // Turf ownership and temporary ranked meshes do not alter source triangles.
  if(cached?.level===L&&cached.mask===L.data.mask&&cached.bodyKey===bodyKey)return requireMode(cached.stage,requiredMode);
@@ -69,22 +70,24 @@ export function nativeRankedStage(G,requiredMode=null){
 export function nativeTowerRoute(G,common,paintable,middle,ends,mx,mz,dz){
  const basis=nativeArenaBasis(G.level),point=s=>[mx+basis.forward.x*s,mz+basis.forward.z*s];
  const N=G.nav,nearest=(ids,x,z)=>{let best=-1,score=Infinity;for(const id of ids){const n=N.nodes[id];if(n.zone>=0)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<score){score=d;best=id;}}return best;};
- let clearance=nativeTowerClearance(G.level,G.physics.actorBody);
+ let clearance=nativeTowerClearance(G.level,G.physics.actorBody),boarding=nativeTowerBoarding(G,common,G.physics.actorBody);
  const position=(id,lift)=>{const n=N.nodes[id];return[n.x,n.y+lift,n.z];};
  const route=(graph,center,first,last,lift)=>{
-  const a=graph.path(first,center,0,50000),b=graph.path(center,last,0,50000);if(!a||!b)return null;
+  const a=graph.path(first,center,0,50000),b=graph.path(center,last,0,50000);if(!a||!b||a.length<4||b.length<4)return null;
   const ids=[...a,...b.slice(1)],path=ids.map(id=>position(id,lift));
+  if(ids.some((id,i)=>i&&graph.nodes[ids[i-1]].nb.find(e=>e.to===id)?.type==='climb'))return null;
   if(path.length<3||path.some((p,i)=>!clearance.clear(p,path[Math.max(0,i-1)])))return null;
-  return {path,centerIndex:a.length-1,halfSize:clearance.halfSize,localLift:lift,sourceClearance:{...clearance.metrics,radius:clearance.radius,height:clearance.height,assurance:clearance.assurance}};
+  const approaches=ids.map((id,i)=>boarding.find(id,path[i]));if(approaches.some(p=>!p))return null;
+  return {path,centerIndex:a.length-1,halfSize:clearance.halfSize,localLift:lift,boarding:{maxJumpHeight:boarding.maxJumpHeight,metrics:{...boarding.metrics},approaches,assurance:boarding.assurance},sourceClearance:{...clearance.metrics,radius:clearance.radius,height:clearance.height,assurance:clearance.assurance}};
  };
  const original=route(N,middle.id,ends[0].id,ends[1].id,3.3);if(original)return original;
  const attempts=[];
  for(const [halfSize,lift] of [[1.2,3.3],[1.2,1.2],[1.2,.4],[.8,3.3],[.8,1.2],[.8,.4]]){
-  clearance=nativeTowerClearance(G.level,G.physics.actorBody,halfSize);
+  clearance=nativeTowerClearance(G.level,G.physics.actorBody,halfSize);boarding=nativeTowerBoarding(G,common,G.physics.actorBody,halfSize);
   const allowed=new Uint8Array(N.nodes.length),edgeCache=new Map();
-  for(const id of common)if(N.nodes[id].zone<0&&clearance.clear(position(id,lift)))allowed[id]=1;
+  for(const id of common)if(N.nodes[id].zone<0&&clearance.clear(position(id,lift))&&boarding.find(id,position(id,lift)))allowed[id]=1;
   const nodes=N.nodes.map(n=>({...n,nb:allowed[n.id]?n.nb.filter(e=>{
-   if(!allowed[e.to])return false;const key=Math.min(n.id,e.to)*N.nodes.length+Math.max(n.id,e.to);
+   if(e.type==='climb'||!allowed[e.to])return false;const key=Math.min(n.id,e.to)*N.nodes.length+Math.max(n.id,e.to);
    if(!edgeCache.has(key))edgeCache.set(key,clearance.clear(position(n.id,lift),position(e.to,lift)));
    return edgeCache.get(key);
   }):[]}));
