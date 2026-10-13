@@ -294,6 +294,8 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify emitted explicit Turf Map and gyro transport
+        run: INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/reliability/tests/map-gyro.test.mjs
       - name: Verify exact owned rectangle scans against production build
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site

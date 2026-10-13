@@ -4124,3 +4124,24 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 - **本家比較 / 未確認**: S3 Ver.11.3.0比較の既存#409復帰時マップ選択と#362確定済み着地点の範囲を維持する。今回の根拠はINKWAVE内部の選択取消と戦闘ライフの一貫性であり、本家の未公開ライフ識別子や全復帰予約タイミングを同定したものではない。実機・実ネットワークの遅延分布と完全な本家一致は未確認。
 
 - #1359 pad-map証拠の修正: classだけで成功とした旧PNGは、WebKitでmap不可視・Chromiumで入口アニメーション途中だった。verifierをnative D-pad選択・HUD spring/CSS完了観測・保存PNGの選択行/ビーコン/案内画素確認へ強化。positive判定に固定sleepやstyle強制変更は使わず、text/iconだけを隠す別の負例PNGは必ず拒否し、5つのlife-token caseを保持。gameplay/本家係数の変更ではなく、新しい両engine描画証拠は最終CI待ち。詳細は `reports/reliability/pad-map-rendered-evidence-2026-10-13.md`。
+
+### Issue #1360: emitted map/gyro verification follows the explicit Turf Map contract
+
+- Scope: test-only repair to `patches/reliability/tests/map-gyro.test.mjs` and an unconditional post-build invocation in the existing Validate workflow. Runtime and frozen source are unchanged. The earlier #523 corner-map default remains OFF; merged #907 intentionally supplies live raster/actor data to an explicitly opened Turf Map.
+- Baseline: clean main `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`, optimized build, emitted Node suite = 11 pass / 2 fail. The obsolete fixture lacks `toCanvas` and also assumes all map transport stays hidden while Tab is open. Source-only runs skip these emitted cases.
+- Verification: use the actual emitted `Minimap.prototype.toCanvas` with logical dimensions and nonzero bounds, then check normalized coordinates, orientation, actor metadata and canvas identity. Both alive/dead paths and both map orientations retain gyro ownership, hover and A-confirmation assertions. Closed → open → closed HUD calls require hidden-only work and null transport when closed, update/projection work and expanded transport when open, with the corner setting unchanged throughout. Repaired emitted suite = 15/15 pass.
+- Negative controls: separately disabling explicit-map transport, suppressing actor-marker generation, or corrupting native projection each rejects all 4 emitted alive/dead × orientation cases. Counts represent behavioral assertions on deliberately mutated emitted copies, not a browser result.
+- Limits / S3 comparison: this corrects the INKWAVE verifier to its already-merged explicit-map behavior; it introduces no Nintendo numerical claims or gameplay changes. Node executes emitted Game/Match/controller/Minimap projection, but canvas raster scheduling is counted rather than drawn. Browser rendering, physical gyro and retail S3 parity remain separate evidence; existing full browser gates are retained.
+
+## 2026-10-13: full-installed native bomb victim authority
+
+Independent full `installS3` execution exposed an existing blanket ghost-explosion return in `kit-defense.mjs`: an authenticated native bomb reached the receiver but could not reach its real local Actor.damage. The narrow correction admits only native bomb replicas to the existing victim/life authority guard, preserves native Bubbler occlusion, and never spends or proposes replica object HP. Other ghost blast authority is unchanged.
+
+The permanent eleven-case full-installer regression retains actual Actor.damage and the following fixed-tick lethal commit. It covers valid damage, range/team/remote-victim/recipient-life/invulnerability/LOS negatives, and both owned and replayed native Bubbler shielding; removing the shield admits the identical blast without an object-HP mutation or proposal. An independent source counterfactual restoring the blanket guard suppresses all five positive paths. Source and actual emitted ee9 composition passed the independent eleven-case probe. Browser execution remains separate. This is an INKWAVE network-authority consistency correction, not evidence of retail S3 numerical parity; no source coefficient is changed.
+
+## 2026-10-13: 小さい画面のインク残量タンクの負半径を修正（#1340）
+
+- **再現条件 / 実装箇所**: `s3-hud-look-adapter.mjs` が置換する本番 `_drawTank`。320×200 CSS px、DPR 1では幅5 pxのタンクの枠最小値2.4 pxが内側を超え、`Path2D.roundRect` の下角半径が−0.48になる。実ゲームの通常PlayerController更新でRangeErrorとなり、フレームを中断した（診断run 38342113690）。320/360 px幅の縦画面も同じCSS寸法域になる。
+- **変更**: 既存の枠で正の液面領域・非負の角を維持できる場合は同じ数値を使う。成立しない小寸法だけ、外側の足の半径以内に枠を収める。極小キャンバスでもパディング、肩、足を利用可能な幅・高さに収める。例外を握り潰す、タンクを隠す、HUDやコントローラーを省略する処理は追加しない。
+- **確認状態**: 本番合成メソッドで旧式の−0.48例外、正常寸法の描画命令・色の完全一致、往復リサイズ、DPR 0.75〜3、小さい正寸法と非表示DOMの既存フォールバックを回帰検証。ブラウザゲートは実際の最小化ビルドを320×568から起動し、320×200を含む縦横サイズへ変更、通常フレームでインク量100/0/50のキャンバス画素変化をスモーク検証する（外枠・サブ消費線を含むため、インクだけの被覆率や視覚一致の測定ではない）。Chromium/WebKitの結果はPRのexact-head CI・artifactで確定し、未実行を成功扱いにしない。
+- **本家比較 / 未確認**: 既存S3映像参照のタンク形状・平らな液面・サブ消費線を保持する。参照版・ブキ・ギアによるゲーム数値の変更はない。今回の根拠はブラウザのroundRect仕様とINKWAVEの再現であり、本家Ver.11.3.0の実機タンク寸法・実機モバイル対応・完全な視覚一致を確認したものではない。射撃、移動、インク消費/回復の権威ロジックは未変更。

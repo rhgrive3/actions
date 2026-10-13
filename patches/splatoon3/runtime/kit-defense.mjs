@@ -96,11 +96,15 @@ export function installKitDefense(api) {
     const context = this.s3ExplosionDefense;
     if (context && context.projectile.owner === attacker) {
       const p = context.projectile;
-      if (p.ghost) return;
+      // Native bomb replicas own victim-local blast geometry. Other ghost
+      // rounds keep shooter authority, while bombs retain read-only shielding
+      // here and let the existing NetMatch victim/life guard admit actor damage.
+      if (p.ghost && p.kind !== 'bomb') return;
       const end = victim.pos.clone(); end.y += .7;
-      const probe = { owner: attacker, team: p.team, damage: 0, size: 0, ghost: false, s3BubblerRow: explosionBubblerRow(p) };
+      const probe = { owner: attacker, team: p.team, damage: 0, size: 0, ghost: !!p.ghost, s3BubblerRow: explosionBubblerRow(p) };
       const candidate = this.kitBarrierCandidate?.(probe, context.origin, end);
       if (candidate) {
+        if (p.ghost) return; // shield actor damage without spending/proposing dome HP
         const damage = distanceDamage(context.bands, candidate.distance, context.linear);
         const old = context.spent.get(candidate.domeId) || 0;
         if (damage > old) {
