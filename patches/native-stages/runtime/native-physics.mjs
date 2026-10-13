@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { Physics, Hit } from '../../../src/game/physics.js';
+import { PLAYER } from '../../../src/config.js';
 const min = new THREE.Vector3(), max = new THREE.Vector3();
 /** Preserve the live controller's ground, lifted-body, step and camera APIs. */
 export class NativePhysics extends Physics {
  constructor(level){
-  super(level);this.world=level.triangleWorld;
+  super(level);this.world=level.triangleWorld;this.actorBody=PLAYER;
   this.dynamic=new Physics({blocks:level.blocks,faces:level.faces,
    queryBlocks:(...a)=>level.queryDynamicBlocks(...a)});
   this.dynamicHit=new Hit();
