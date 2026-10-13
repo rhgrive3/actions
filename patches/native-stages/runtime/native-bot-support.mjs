@@ -16,6 +16,13 @@ export function nativeSourceWaypointReached(G,actor,node){
  if(!G.level.native)return false;
  if(!actor.grounded||Math.hypot(node.x-actor.pos.x,node.z-actor.pos.z)>.18)return false;
  if(actor.bot&&!actor.bot.target&&cautiousSourceTurn(actor.bot,G)&&Math.hypot(actor.vel.x,actor.vel.z)>.65)return false;
+ return nativeSourceFootSupported(G,actor,node);
+}
+
+/** Physical source support, independent of a follower's distance/turn policy.
+ * Other opted traversals can reuse the installed foot probe at touchdown. */
+export function nativeSourceFootSupported(G,actor,node){
+ if(!G.level?.native||!actor.grounded)return false;
  const down=actor.pos.clone().set(0,-1,0),origin=actor.pos.clone().set(node.x,node.y+.1,node.z),hit=G.physics.raycast(origin,down,.3);
  if(!hit.hit||hit.triangle<0||hit.normal.y<=.68||Math.abs(hit.point.y-node.y)>=.16)return false;
  // Graph heights describe the centre triangle. The installed controller can

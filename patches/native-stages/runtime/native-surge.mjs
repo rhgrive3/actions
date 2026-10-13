@@ -5,6 +5,7 @@ import {squidSurgeParameters} from '../../splatoon3/runtime/movement.mjs';
 import {stepGroundVelocity} from '../../splatoon3/runtime/movement-physics.mjs';
 import {weightSpeedCurve} from '../../splatoon3/runtime/weapon-weight.mjs';
 import {nativeDropClearance} from './native-drop.mjs';
+import {nativeSourceFootSupported} from './native-bot-support.mjs';
 
 const radius=squid=>(squid?PLAYER.s3SwimTerrainRadiusRaw:PLAYER.s3HumanoidTerrainRadiusRaw)*PLAYER.s3TerrainDistanceScale;
 const ownedCell=(L,h)=>{
@@ -106,7 +107,7 @@ export function updateNativeSurge(brain,G,dt){
  const state=brain._nativeSurge?.edge===edge&&brain._nativeSurge.path===brain.path?brain._nativeSurge:(brain._nativeSurge={edge,path:brain.path,phase:'paint',seconds:0});state.seconds+=dt;
  if(state.seconds>35){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeSurge=null;return false;}
  brain.pi=index;brain.noProg=0;input.fire=input.squid=input.jump=input.sub=input.special=false;input.move.set(0,0,0);
- if(a.grounded&&Math.abs(a.pos.y-goal.y)<.15){
+ if(a.grounded&&nativeSourceFootSupported(G,a,to)){
   const delta=goal.sub(a.pos).setY(0);if(delta.length()<.5){brain.pi=index+1;brain._nativeSurge=null;return false;}input.move.copy(delta);if(input.move.length()>1)input.move.normalize();return true;
  }
  if(state.phase==='human'){
