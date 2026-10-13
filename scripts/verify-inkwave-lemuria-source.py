@@ -63,6 +63,7 @@ def audit(args):
         assert commits[0]["sha"] == COMMIT, "Public HEAD changed; review new source before claiming unavailable"
         branches = request("branches?per_page=100")
         assert len(branches) < 100, "Branch pagination required"
+        assert len(branches) == 1 and branches[0]["name"] == "main" and branches[0]["commit"]["sha"] == COMMIT, "New branch history requires an additional source review"
         history = []
         trees = {commit["sha"] for commit in commits} | {branch["commit"]["sha"] for branch in branches}
         for sha in sorted(trees):

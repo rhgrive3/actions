@@ -12,6 +12,7 @@ import {RoomDurableObject} from '../server/src/index.js';
 const site=path.resolve(process.argv[2]||'_site-native-lemuria');
 const evidence=path.resolve(process.argv[3]||'.browser-evidence/lemuria');
 fs.mkdirSync(evidence,{recursive:true});
+console.log('Lemuria unavailable browser proof started');
 const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.webp':'image/webp'};
 const server=http.createServer((req,res)=>{try{
  const rel=decodeURIComponent(new URL(req.url,'http://local').pathname);
@@ -40,6 +41,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'
 const pages=[],errors=[],sourceRequests=[],report={schema:1,id:'lemuria',availability:'source-unavailable',status:'running',version1130Verified:false};
 try{
  for(let peer=0;peer<2;peer++){
+  console.log('Lemuria menu boot peer '+peer);
   const context=await browser.newContext({viewport:{width:1100,height:760}});
   await context.grantPermissions(['local-network-access']);
   const page=await context.newPage();pages.push(page);
@@ -50,6 +52,8 @@ try{
   await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI).href)).G);
   await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
   assert.equal(await page.locator('#boot-error').textContent(),'');
+  await page.waitForFunction(()=>NG.game?.debug?.freeze);
+  await page.evaluate(()=>{NG.game.debug.freeze();NG.game._skipRender=true;});
  }
  const host=pages[0],guest=pages[1];
  const row=host.locator('button[data-native-stage="lemuria"]');
@@ -59,6 +63,12 @@ try{
  assert.equal(await row.getAttribute('data-nav'),null);
  assert.match(await row.innerText(),/リュウグウターミナル/);
  assert.match(await row.innerText(),/公開モデルが見つからない/);
+ report.catalog=await host.evaluate(async()=>{
+  const registry=await import(new URL('patches/native-stages/runtime/registry.mjs',document.baseURI).href);
+  let urlRejected=false;try{registry.nativeStageURL('lemuria','Vss_AutoWalk00.obj');}catch(error){urlRejected=error.name==='RangeError';}
+  return {unavailableCount:registry.UNAVAILABLE_NATIVE_STAGES.filter(stage=>stage.id==='lemuria').length,playableMap:registry.NATIVE_MAPS.some(stage=>stage.id==='lemuria'),nativeId:registry.NATIVE_IDS.includes('lemuria'),hasLayout:!!registry.NATIVE_LAYOUTS.lemuria,fingerprint:registry.nativeStageFingerprint('lemuria'),urlRejected};
+ });
+ assert.equal(report.catalog.unavailableCount,1);assert.equal(report.catalog.playableMap,false);assert.equal(report.catalog.nativeId,false);assert.equal(report.catalog.hasLayout,false);assert.equal(report.catalog.fingerprint,null);assert.equal(report.catalog.urlRejected,true);
  await row.scrollIntoViewIfNeeded();
  await host.screenshot({path:path.join(evidence,'lemuria-unavailable-menu.png')});
  report.menu=await host.evaluate(()=>({mode:NG.mode,screen:NG.game.menus.current,attract:NG.match.attract,map:NG.game.mapDef.id,disabled:document.querySelector('[data-native-stage="lemuria"]').disabled,reasonVisible:document.querySelector('[data-native-stage="lemuria"]').textContent,bootMs:NG.game.bootMs}));
@@ -74,13 +84,16 @@ try{
    rows.push({mode,core,api,sameWorld:G.level===world.level&&G.paint===world.paint&&G.physics===world.physics&&G.nav===world.nav&&G.match===world.match,sameFlow:game._matchFlow===world.flow,attract:G.match.attract});
   }
   let onlineError;try{await game.startNetMatch({map:'lemuria',mode:'turf'},{});}catch(error){onlineError={name:error.name,message:error.message};}
+  let worldError;try{await game._buildWorld({id:'lemuria'});}catch(error){worldError={name:error.name,message:error.message};}
   game.menus._setup.mapId='lemuria';game.menus._startMatch();
-  return {rules:rows,onlineError,menuStarting:!!game.menus._starting,sameWorld:G.level===world.level&&G.match===world.match};
+  return {rules:rows,onlineError,worldError,menuStarting:!!game.menus._starting,sameWorld:G.level===world.level&&G.paint===world.paint&&G.physics===world.physics&&G.nav===world.nav&&G.match===world.match};
  });
  assert.ok(report.offline.rules.every(row=>row.core===false&&row.api===false&&row.sameWorld&&row.sameFlow&&row.attract));
  assert.equal(report.offline.onlineError.name,'RangeError');assert.equal(report.offline.menuStarting,false);assert.equal(report.offline.sameWorld,true);
+ assert.equal(report.offline.worldError.name,'RangeError');
  report.online=[];
  for(const mode of ['turf','zones','tower','rainmaker','clams']){
+  console.log('Lemuria real WebSocket blocked '+mode);
   const code=await host.evaluate(()=>NG.net.create('Lemuria Host'));
   await guest.evaluate(code=>NG.net.join(code,'Lemuria Guest'),code);
   await Promise.all(pages.map(page=>page.waitForFunction(()=>NG.net.state==='lobby'&&NG.net.lobby.players.length===2)));
