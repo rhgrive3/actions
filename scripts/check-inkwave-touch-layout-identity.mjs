@@ -24,6 +24,7 @@ fs.mkdirSync(checkout, { recursive: true }); fs.mkdirSync(evidence, { recursive:
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'), 'utf8'));
 const sourcePath = key => {
+  if (key.split('/').some(p => !p || p === '.' || p === '..' || p.includes('\\'))) throw new Error('Unknown input ' + key);
   if (key.startsWith('upstream/')) return ['inkwave-public/' + key.slice(9), path.join(source, key.slice(9))];
   if (key.startsWith('patch/')) return ['patches/splatoon3/' + key.slice(6), path.join(repo, 'patches/splatoon3', key.slice(6))];
   if (key.startsWith('touch-layout/')) return ['patches/touch-layout/' + key.slice(13), path.join(repo, 'patches/touch-layout', key.slice(13))];

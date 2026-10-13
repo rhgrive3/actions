@@ -79,6 +79,10 @@ function boot(source, held = []) {
     nativeStageEnabled,NATIVE_IDS,
     releaseNativeWorld(game) { assert.equal(game.nativeWorld,undefined,'source worlds are exercised by the native stage fixture'); },
     isRankedMode,
+    // These fixtures use legacy maps; composed main also imports native-world helpers.
+    nativeStageEnabled: false, NATIVE_IDS: [],
+    buildNativeWorld() { throw new Error('Legacy fixture must not enter native world loading'); },
+    releaseNativeWorld() { record('releaseNativeWorld'); },
     console: { warn() {}, error(...args) { record('error', ...args); } }, Promise, G, Match, Level, PropKit,
     MAPS: maps, OFFLINE_MAPS: maps, MAP_LAYOUTS: Object.fromEntries(maps.map(m => [m.id, m])),
     mapOfflineOk: () => true, mapBossOk: () => true, mapNoBots: () => false, isRangeMap: () => false,
