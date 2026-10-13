@@ -688,5 +688,394 @@
       "actualAdjacentSourceSupport": false
     },
     "limitations": "Lower/common topology and isolated drops do not establish whole-bank bot play; source rendering, masks and collision retained; no moving elevator state invented"
+  },
+  "privateOriginalBankKeyboardBrowser": {
+    "status": "private diagnostic passed; final accepted-foundation repeat pending",
+    "id": "bluefin",
+    "buildContentHash": "c73a524d9bbdb91886f4817eeda905b9f3213b042de8ffae4903763bb8a66b52",
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "wallSamples": 39,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "seconds": 2.1,
+        "capEnd": [
+          28.02006547474377,
+          9.009790886131848,
+          18.50260538473232
+        ],
+        "walkwaySourceSupports": 24,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          19.899410714388164,
+          9,
+          40.187488852657
+        ],
+        "distanceToGoal": 0.3283008096145047,
+        "bankWalkSeconds": 5.066666666666666,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "wallSamples": 39,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "seconds": 2.1,
+        "capEnd": [
+          28.03058720098646,
+          9.009790167526889,
+          18.50294956387287
+        ],
+        "walkwaySourceSupports": 24,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          20.005756945382263,
+          9,
+          40.23548328663101
+        ],
+        "distanceToGoal": 0.2645793530713749,
+        "bankWalkSeconds": 4.966666666666667,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "wallSamples": 39,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "seconds": 2.1,
+        "capEnd": [
+          28.03058720098646,
+          9.009790167526889,
+          18.50294956387287
+        ],
+        "walkwaySourceSupports": 24,
+        "bankGoal": [
+          20,
+          9,
+          40.5
+        ],
+        "bankEnd": [
+          20.005756945382263,
+          9,
+          40.23548328663101
+        ],
+        "distanceToGoal": 0.2645793530713749,
+        "bankWalkSeconds": 4.966666666666667,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "start": [
+          -27,
+          3,
+          -17.5
+        ],
+        "sourceStartTriangle": 171854,
+        "wallSamples": 39,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": false,
+        "seconds": 1.2666666666666666,
+        "capEnd": [
+          -28.107352342100192,
+          9.011886226565222,
+          -17.499098039414825
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "bankEnd": [
+          -19.96137187670137,
+          9,
+          -39.16465686036708
+        ],
+        "distanceToGoal": 0.33756059190675264,
+        "bankWalkSeconds": 4.8,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "start": [
+          -27,
+          3,
+          -17.5
+        ],
+        "sourceStartTriangle": 171854,
+        "wallSamples": 39,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": false,
+        "seconds": 1.25,
+        "capEnd": [
+          -28.04901900876686,
+          9.011886226565222,
+          -17.499098039414825
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "bankEnd": [
+          -20.00560206741323,
+          9,
+          -39.23557634339258
+        ],
+        "distanceToGoal": 0.2644829925211469,
+        "bankWalkSeconds": 4.8,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "start": [
+          -27,
+          3,
+          -17.5
+        ],
+        "sourceStartTriangle": 171854,
+        "wallSamples": 39,
+        "alive": true,
+        "grounded": true,
+        "climbed": true,
+        "existingSurgeBurst": false,
+        "seconds": 1.25,
+        "capEnd": [
+          -28.04901900876686,
+          9.011886226565222,
+          -17.499098039414825
+        ],
+        "walkwaySourceSupports": 23,
+        "bankGoal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "bankEnd": [
+          -20.00560206741323,
+          9,
+          -39.23557634339258
+        ],
+        "distanceToGoal": 0.2644829925211469,
+        "bankWalkSeconds": 4.8,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      }
+    ],
+    "errors": [],
+    "conditions": "real Chromium PlayerController keyboard W/Shift/Space; source-supported initial poses; friendly wall/runway initially painted; existing Actor movement and Surge; later source walkway via keyboard W and camera yaw; eight actors/seven bots retained; bots frozen; no later Actor pose, velocity or ink assignment; manual initial ownership is not weapon paint proof; SwiftShader, not hardware measurement",
+    "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "version1130Verified": false,
+    "actors": 8,
+    "bots": 7,
+    "candidateBuildSource": "175b942d",
+    "frameInputHz": [
+      30,
+      60,
+      120
+    ],
+    "simulationHz": 60,
+    "simulationClockBasis": "production clock source inspection; final runner also reads STEP/tick count",
+    "weaponPaintClaim": false,
+    "screenshotInspectedPrivately": true
   }
 }
