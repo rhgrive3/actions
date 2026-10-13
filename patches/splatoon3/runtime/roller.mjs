@@ -716,7 +716,12 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
     const contact = !!this._s3RollerContactPose;
     const flick = !contact && !!this.s3RollerFlick && this.kidForm && this.grounded && !this.dance;
-    if ((contact || flick) && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
+    // Catalogue rollers use independent grip sockets. Their neutral carry can
+    // require a few centimetres of support-arm reach adjustment even when no
+    // active swing record exists. Do not ground-snap an ordinary carried drum.
+    const carryReach = this.weaponKind === 'roller' && this.kidForm && !this.dance &&
+      this.P[C.IKL] > .99 && this.P[C.LTW] < .001;
+    if ((contact || flick || carryReach) && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
       const d = this.weapon.def;
       let bound = bounds.get(d);
       if (!bound) {
@@ -772,14 +777,14 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         for (let k = 0; k < 16; k++) {
           project(position, rightShoulder, reachR);
           project(position, leftCenter, reachL);
-          const ground = bottomFor(quat, position);
-          const shift = contact ? .002 - ground : Math.max(0, .004 - ground);
+          const ground = contact || flick ? bottomFor(quat, position) : 0;
+          const shift = contact ? .002 - ground : flick ? Math.max(0, .004 - ground) : 0;
           if (Math.abs(shift) > .000001) position.addScaledVector(localUp, shift);
         }
-        const bottom = bottomFor(quat, position);
+        const bottom = contact || flick ? bottomFor(quat, position) : 0;
         const excessR = Math.max(0, position.distanceTo(rightShoulder) - reachR);
         const excessL = Math.max(0, position.distanceTo(leftCenter) - reachL);
-        const floorError = contact ? Math.abs(bottom - .002) : Math.max(0, .004 - bottom);
+        const floorError = contact ? Math.abs(bottom - .002) : flick ? Math.max(0, .004 - bottom) : 0;
         return excessR + excessL + floorError;
       };
       trial.copy(target);
