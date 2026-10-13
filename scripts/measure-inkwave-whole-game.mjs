@@ -20,14 +20,15 @@ const samples=Number(arg('--samples','60'));
 const width=Number(arg('--width','480')),height=Number(arg('--height','300'));
 const calibrationFile=arg('--calibration');
 const warmup=Number(arg('--warmup',mode==='calibrate'?'12':'30'));
-const order=mode==='calibrate'?['A','B','C','C','B','A']:['A','B','B','A','B','A','A','B','C'];
+const order=mode==='calibrate'?['C','B','B','C']:['C','B','B','C','B','C','C','B'];
 const variants=Object.fromEntries([['A','545c6b3fcfc0d25c43678e9b44b1af4e26400fec'],['B','7fd172f9c09a13d958fc3c01b721cac443d9ceb8']].map(([name,sha])=>{
  const root=path.resolve(arg('--root-'+name)),site=path.resolve(arg('--site-'+name));
  return [name,{root,site,sha,manifest:verifyRuntimeBuild(site,root,sha),receipts:new Set()}];
 }));
-// C is a diagnostic single-artifact control, never a claimed production SHA:
+// C is the derived performance baseline, never a claimed production SHA:
 // exact A bytes everywhere except character-mats.js, supplied from exact B.
-// A/B remain unchanged. No pixel tolerance is introduced.
+// A/B on disk remain unchanged. Comparison C -> B excludes the cloth shader fix.
+// Prior A/A images are nondeterministic; strict C/B pixel equality is required.
 const clothPath='src/game/character-mats.js';
 const clothBytes=fs.readFileSync(path.join(variants.B.site,clothPath));
 if(hash(clothBytes)!==variants.B.manifest.artifacts[clothPath])throw Error('Control artifact hash mismatch');
@@ -35,12 +36,12 @@ const controlArtifacts={...variants.A.manifest.artifacts};
 for(const rel of Object.keys(controlArtifacts))if(rel===clothPath||rel.endsWith('/'+clothPath))controlArtifacts[rel]=hash(clothBytes);
 variants.C={...variants.A,receipts:new Set(),control:true,servedContentHash:hash(JSON.stringify(controlArtifacts))};
 const settings={quality:'medium',shadows:true,bloom:true,frameRate:'display',music:.6,sfx:.85,master:.8};
-const result={schema:1,status:'running',mode,stage,scenario,order,settings,samples:mode==='calibrate'?6:samples,warmup,viewport:[width,height],deviceScaleFactor:1,hardwareClaim:false,
+const result={schema:1,status:'running',mode,comparison:'cloth-fixed baseline C versus B; three non-cloth optimizations together',stage,scenario,order,settings,samples:mode==='calibrate'?6:samples,warmup,viewport:[width,height],deviceScaleFactor:1,hardwareClaim:false,
  scope:'Full production Game._frame with input polling, BotBrain, actors, collision, projectiles, paint, FX, environment, decor, props, camera, audio owners, HUD, menus and all render/post passes. Primary timing is successive rAF starts, including intervening browser/UI/audio scheduling contention. Secondary completedMs is only synchronous Game._frame JavaScript plus GPU readback; it excludes deferred DOM/compositing/audio completion. Fixed 60 Hz simulation and diagnostic crowd input/camera; readback serializes CPU/GPU.',
- limitations:['Software-rendered GitHub Actions is not a hardware-PC measurement.','C is a visual-only derived control, not a performance comparator; its unchanged A service-worker manifest may reject the substituted B shader artifact. Background worker state is recorded.','Completed-frame throughput includes a 1-pixel synchronous readback, prevents CPU/GPU overlap, and excludes display scanout. It is not ordinary gameplay FPS or input-to-photon latency.',scenario==='crowd'?'The built-in autopilot scene has eight bot actors and no PlayerController; this is automated crowd gameplay, not coverage of the normal human input path.':'Normal-match scene: one unchanged PlayerController and seven unchanged BotBrains execute, then diagnostic input overrides make all eight actors stationary and outward-firing.','The native game scheduler is frozen; the diagnostic schedules one complete fixed-step frame per rAF. Dynamic resolution is held at 1 for workload comparability.','BotBrain still executes; its output intent is replaced by the same stationary, outward-firing input after its update. This avoids deaths and measures eight live actors throughout.','Eight ABBA/BAAB timing trials plus one full-length C visual-control trial must pass workload checks before reporting a comparative effect; improvement requires a positive lower confidence bound. Full image parity is verified at the endpoint, not on every measured frame.'],
+ limitations:['Software-rendered GitHub Actions is not a hardware-PC measurement.','C is baseline 545c6b3 plus only the verified B cloth shader artifact, not an exact production SHA. This comparison excludes the cloth fix. The earlier exact-A measurement is retained separately as a non-comparable diagnostic.','C retains the original A service-worker manifest. Background state must match B and no service worker may be active in any trial.','Completed-frame throughput includes a 1-pixel synchronous readback, prevents CPU/GPU overlap, and excludes display scanout. It is not ordinary gameplay FPS or input-to-photon latency.',scenario==='crowd'?'The built-in autopilot scene has eight bot actors and no PlayerController; this is automated crowd gameplay, not coverage of the normal human input path.':'Normal-match scene: one unchanged PlayerController and seven unchanged BotBrains execute, then diagnostic input overrides make all eight actors stationary and outward-firing.','The native game scheduler is frozen; the diagnostic schedules one complete fixed-step frame per rAF. Dynamic resolution is held at 1 for workload comparability.','BotBrain still executes; its output intent is replaced by the same stationary, outward-firing input after its update. This avoids deaths and measures eight live actors throughout.','Eight CBBC/BCCB timing trials must pass strict C/B workload and pixel checks before reporting a comparative effect; improvement requires a positive lower confidence bound. Full image parity is verified at the endpoint, not on every measured frame.'],
  environment:{cpu:os.cpus()[0]?.model,logicalCpus:os.cpus().length,memBytes:os.totalmem(),node:process.version,os:os.release(),platform:os.platform()},
  provenance:Object.fromEntries(Object.entries(variants).map(([k,v])=>[k,{sourceSha:v.sha,contentHash:v.manifest.contentHash,revision:v.manifest.build.revision,...(v.control?{derivedControl:true,baseContentHash:v.manifest.contentHash,servedContentHash:v.servedContentHash,override:{artifact:clothPath,fromSourceSha:variants.B.sha,sha256:hash(clothBytes)}}:{})}])),trials:[]};
-const calibrationScope={sourceA:variants.A.sha,sourceB:variants.B.sha,contentA:variants.A.manifest.contentHash,contentB:variants.B.manifest.contentHash,stage,scenario,settings,viewport:[width,height],warmup};
+const calibrationScope={sourceA:variants.A.sha,sourceB:variants.B.sha,contentA:variants.A.manifest.contentHash,contentB:variants.B.manifest.contentHash,baseline:'C',candidate:'B',contentC:variants.C.servedContentHash,stage,scenario,settings,viewport:[width,height],warmup};
 result.calibrationScope=calibrationScope;
 let acceptedCalibration=null;
 if(mode==='measure'){if(!calibrationFile)throw Error('Verified calibration required');acceptedCalibration=JSON.parse(fs.readFileSync(calibrationFile));if(acceptedCalibration.status!=='passed'||JSON.stringify(acceptedCalibration.calibrationScope)!==JSON.stringify(calibrationScope))throw Error('Calibration scope mismatch');result.calibrationEvidenceSha256=hash(fs.readFileSync(calibrationFile));}
@@ -157,36 +158,30 @@ try{
  const differences=(a,b,p='',out=[])=>{if(out.length>=30||JSON.stringify(a)===JSON.stringify(b))return out;if(a&&b&&typeof a==='object'&&typeof b==='object'){for(const k of new Set([...Object.keys(a),...Object.keys(b)])){differences(a[k],b[k],p+'/'+k,out);if(out.length>=30)break;}}else out.push({path:p,a,b});return out;};
  result.stateDifferences=result.trials.map(t=>({ordinal:t.ordinal,variant:t.variant,start:differences(first.startState,t.startState),end:differences(first.endState,t.endState)}));
  result.gameplayComparable=result.comparability.every(t=>t.startStateEqual&&t.endStateEqual&&t.inputNodesEqual&&t.frameWorkEqual);
- const byVariant=Object.fromEntries(['A','B','C'].map(v=>[v,result.trials.filter(t=>t.variant===v)]));
+ const byVariant=Object.fromEntries(['C','B'].map(v=>[v,result.trials.filter(t=>t.variant===v)]));
  const stable=v=>byVariant[v].length>=2&&byVariant[v].every(t=>t.pixelSha256===byVariant[v][0].pixelSha256);
- result.visualValidation={ARepeatExact:stable('A'),BRepeatExact:stable('B'),ABExact:byVariant.A[0].pixelSha256===byVariant.B[0].pixelSha256};
- if(mode==='calibrate'){
-  Object.assign(result.visualValidation,{CRepeatExact:stable('C'),CBExact:byVariant.C[0].pixelSha256===byVariant.B[0].pixelSha256,control:'A plus the verified B character-mats.js artifact only'});
-  result.visualValidation.accepted=result.visualValidation.ARepeatExact&&result.visualValidation.BRepeatExact&&result.visualValidation.CRepeatExact&&result.visualValidation.CBExact;
-  result.visualValidation.allowedChange=result.visualValidation.ABExact?'none':'The exact C-vs-B control isolates A-vs-B image differences to the intentional cloth shader artifact change. No pixel tolerance or masking.';
- }else{
-  result.visualValidation.calibrationProof=acceptedCalibration.visualValidation;
-  result.visualValidation.CBExact=byVariant.C.length===1&&byVariant.C[0].pixelSha256===byVariant.B[0].pixelSha256;
-  result.visualValidation.accepted=result.visualValidation.ARepeatExact&&result.visualValidation.BRepeatExact&&result.visualValidation.CBExact&&acceptedCalibration.visualValidation.accepted;
-  result.visualValidation.allowedChange='The full-length C endpoint matches every B endpoint exactly; A/B endpoint images are separately repeat-stable. C differs from exact A only by the verified B cloth shader artifact.';
- }
- result.comparable=result.gameplayComparable&&result.visualValidation.accepted&&result.controlReceipt.length>0;
- result.summary=Object.fromEntries(['A','B'].map(v=>[v,{completed:stats(result.trials.filter(t=>t.variant===v).flatMap(t=>t.frames.map(f=>f.completedMs))),pacing:stats(result.trials.filter(t=>t.variant===v).flatMap(t=>t.frames.slice(1).map(f=>f.startIntervalMs))),trialPacingFps:result.trials.filter(t=>t.variant===v).map(t=>t.pacing.fps),trialSynchronousFps:result.trials.filter(t=>t.variant===v).map(t=>t.completed.fps)}]));
+ result.visualValidation={CRepeatExact:stable('C'),BRepeatExact:stable('B'),CBExact:byVariant.C[0].pixelSha256===byVariant.B[0].pixelSha256};
+ result.visualValidation.accepted=result.visualValidation.CRepeatExact&&result.visualValidation.BRepeatExact&&result.visualValidation.CBExact;
+ result.visualValidation.allowedChange='none; the same cloth shader artifact is used in both C and B';
+ if(mode==='measure'){result.visualValidation.calibrationProof=acceptedCalibration.visualValidation;result.visualValidation.accepted&&=acceptedCalibration.visualValidation.accepted;}
+ result.backgroundComparable=result.trials.every(t=>t.background.serviceWorkerController===null&&t.background.serviceWorkers.length===0&&t.background.audioState==='running'&&t.background.musicWorker===true);
+ result.comparable=result.gameplayComparable&&result.visualValidation.accepted&&result.backgroundComparable&&result.controlReceipt.length>0;
+ result.summary=Object.fromEntries(['C','B'].map(v=>[v,{completed:stats(result.trials.filter(t=>t.variant===v).flatMap(t=>t.frames.map(f=>f.completedMs))),pacing:stats(result.trials.filter(t=>t.variant===v).flatMap(t=>t.frames.slice(1).map(f=>f.startIntervalMs))),trialPacingFps:result.trials.filter(t=>t.variant===v).map(t=>t.pacing.fps),trialSynchronousFps:result.trials.filter(t=>t.variant===v).map(t=>t.completed.fps)}]));
  result.comparisonValid=result.comparable;
- result.rawObservedPacingChangePercent=100*(result.summary.A.pacing.mean-result.summary.B.pacing.mean)/result.summary.A.pacing.mean;
- result.rawObservedSynchronousChangePercent=100*(result.summary.A.completed.mean-result.summary.B.completed.mean)/result.summary.A.completed.mean;
+ result.rawObservedPacingChangePercent=100*(result.summary.C.pacing.mean-result.summary.B.pacing.mean)/result.summary.C.pacing.mean;
+ result.rawObservedSynchronousChangePercent=100*(result.summary.C.completed.mean-result.summary.B.completed.mean)/result.summary.C.completed.mean;
  if(mode==='measure'){
-  const pairs=[[0,1],[3,2],[5,4],[6,7]].map(([a,b])=>({A:a,B:b,improvementPercent:100*(1-result.trials[b].pacing.mean/result.trials[a].pacing.mean)}));
+  const pairs=[[0,1],[3,2],[5,4],[6,7]].map(([a,b])=>({C:a,B:b,improvementPercent:100*(1-result.trials[b].pacing.mean/result.trials[a].pacing.mean)}));
   const values=pairs.map(p=>p.improvementPercent),mean=values.reduce((a,b)=>a+b,0)/values.length;
   const sd=Math.sqrt(values.reduce((a,b)=>a+(b-mean)**2,0)/(values.length-1)),margin=3.182446305*sd/Math.sqrt(values.length);
-  result.pairedEffect={metric:'rAF start-to-start pacing',pairs,meanImprovementPercent:mean,ci95:[mean-margin,mean+margin],method:'Paired-trial mean relative effect, two-sided Student t interval, df=3; four adjacent A/B pairs; interval assumes independent, approximately normal pair effects. Small sample; not a hardware-PC inference.'};
+  result.pairedEffect={metric:'rAF start-to-start pacing',pairs,meanImprovementPercent:mean,ci95:[mean-margin,mean+margin],method:'Paired-trial mean relative effect, two-sided Student t interval, df=3; four adjacent C/B pairs; interval assumes independent, approximately normal pair effects. Small sample; not a hardware-PC inference.'};
  }
  result.improvementClaimAllowed=result.comparable&&mode==='measure'&&result.pairedEffect.ci95[0]>0;
  result.status=result.comparable?'passed':'inconclusive-workload-mismatch';
- if(mode==='calibrate'){result.projectedMeasurementMs=9*(Math.max(...result.trials.map(t=>t.completed.p50))*(warmup+samples)+Math.max(...result.trials.map(t=>t.setupElapsedMs)));result.withinFrameBudget=result.projectedMeasurementMs<45*60*1000;}
+ if(mode==='calibrate'){result.projectedMeasurementMs=8*(Math.max(...result.trials.map(t=>t.completed.p50))*(warmup+samples)+Math.max(...result.trials.map(t=>t.setupElapsedMs)));result.withinFrameBudget=result.projectedMeasurementMs<45*60*1000;}
  if(!result.comparable)process.exitCode=2;
 }catch(e){result.status='failed';result.error=e.stack;process.exitCode=1;}finally{
  result.receipts=Object.fromEntries(Object.entries(variants).map(([k,v])=>[k,[...v.receipts].sort()]));save();
- console.log(JSON.stringify({status:result.status,error:result.error,comparable:result.comparable,withinFrameBudget:result.withinFrameBudget,projectedMeasurementMs:result.projectedMeasurementMs,visualValidation:result.visualValidation,summary:result.summary,comparability:result.comparability}));
+ console.log(JSON.stringify({status:result.status,error:result.error,comparable:result.comparable,withinFrameBudget:result.withinFrameBudget,projectedMeasurementMs:result.projectedMeasurementMs,visualValidation:result.visualValidation,backgroundComparable:result.backgroundComparable,summary:result.summary,comparability:result.comparability}));
  await browser?.close();await new Promise(r=>server.close(r));
 }

@@ -1,4 +1,4 @@
-name: Diagnostic whole-game A-B benchmark
+name: Diagnostic whole-game cloth-fixed comparison
 on:
   push:
     branches: [perf/inkwave-whole-game-20261013]
@@ -66,7 +66,7 @@ jobs:
           set -euo pipefail
           node diagnostic/scripts/measure-inkwave-whole-game.mjs --mode calibrate --scenario normal --width 480 --height 300 --samples 60 --warmup 12 --root-A before --root-B after --site-A site-a --site-B site-b --playwright diagnostic/node_modules/playwright/index.mjs --out evidence/calibration | tee evidence/calibration.log
           node -e "const r=require('./evidence/calibration/whole-game-calibrate.json');if(!r.comparable||!r.withinFrameBudget)throw Error('Calibration not suitable for a long comparison');"
-      - name: Eight ABBA-BAAB trials plus full-length cloth control
+      - name: Eight CBBC-BCCB whole-game trials
         timeout-minutes: 50
         run: |
           set -euo pipefail
