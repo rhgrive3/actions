@@ -14,7 +14,7 @@ const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless
 const result={status:'running',id,buildFingerprint:build.contentHash,errors:[]};
 try{
  const context=await browser.newContext({viewport:{width:960,height:640}}),page=await context.newPage();
- page.on('pageerror',e=>result.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
+ page.on('pageerror',e=>result.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());else if(m.text().startsWith('native-search '))console.log(m.text());});
  await page.addInitScript(()=>{Math.random=()=>.5;localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0}));});
  await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
@@ -36,7 +36,7 @@ try{
    const before=a.pos.clone();let frames=0,groundedSourceSamples=0;
    for(;frames<hz*3;frames++){g._frame(1/hz);if(!a.alive)throw Error('Ordinary bank movement died');if(a.grounded){const h=G.physics.groundProbe(a.pos.x,a.pos.y,a.pos.z,.35,.35,.24,{},false);if(!h.hit)throw Error('Grounded movement lacks real source support');groundedSourceSamples++;}if(frames>=hz*2&&a.grounded)break;}
    const distance=a.pos.distanceTo(before);if(distance<1||!a.grounded||!groundedSourceSamples)throw Error('Ordinary production bank movement failed '+JSON.stringify({team,hz,distance,end:a.pos.toArray(),grounded:a.grounded}));
-   cases.push({team,hz,oldRejected:old===null,routeNodes,searchBound:bounds[0],sourceNodes:N.nodes.length,validNodes:N.validIds.length,oldMilliseconds,searchMilliseconds,start:before.toArray(),goal:goal.toArray(),end:a.pos.toArray(),distance,frames:frames+1,groundedSourceSamples,grounded:true,alive:true,enemySpawnRejected:true,gearAP:Object.keys(a.s3.abilityPoints)});
+   cases.push({team,hz,oldRejected:old===null,routeNodes,searchBound:bounds[0],sourceNodes:N.nodes.length,validNodes:N.validIds.length,oldMilliseconds,searchMilliseconds,start:before.toArray(),goal:goal.toArray(),end:a.pos.toArray(),distance,frames:frames+1,groundedSourceSamples,grounded:true,alive:true,enemySpawnRejected:true,gearAP:Object.keys(a.s3.abilityPoints)});console.log('native-search '+JSON.stringify(cases.at(-1)));
   }
   g._skipRender=false;G.renderer.render(G.scene,G.camera);
   return {sourceSha256:L.manifest.sourceSha256,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,sourceNavigation:L.manifest.sourceNavigation||null,cases,scope:'Actual production Match/Actor/Character/BotBrain/WeaponRunner/Projectiles with eight actors; source-supported initial pad setups, empty initial ink, controlled existing zone-center target; no later pose/velocity/route/ink writes. Initial route and ordinary bank movement only; no full 118-waypoint objective-arrival claim; SwiftShader'};
