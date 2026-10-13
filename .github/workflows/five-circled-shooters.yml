@@ -1,0 +1,265 @@
+name: Five circled shooters model review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/shooters-b.mjs
+      - patches/splatoon3/tests/five-circled-shooters.test.mjs
+      - scripts/render-five-circled-shooters.mjs
+      - scripts/render-nova-origin-review.mjs
+      - scripts/compare-five-refinement-images.mjs
+      - patches/splatoon3/tests/five-shooter-compact-stripes.test.mjs
+      - scripts/check-five-shooter-network.mjs
+      - scripts/fixtures/five-shooter-network.mjs
+      - .github/workflows/five-circled-shooters.yml
+permissions:
+  contents: read
+concurrency:
+  group: five-circled-shooters-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  measured-visual:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify source geometry, preserved sockets, real emission and all 65 models
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-circled-shooters.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Build exact production compositions
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .baseline/scripts/build-inkwave.mjs .baseline/inkwave-public .before-site
+          node scripts/build-inkwave.mjs inkwave-public .after-site
+      - name: Verify emitted candidate with real Actor
+        env:
+          INKWAVE_BUILT_SITE: .after-site
+          WEAPON_IDS: s3-shooter-quicklong,s3-shooter-heavy,s3-shooter-triplequick,s3-shooter-triplemiddle,s3-shooter-flash
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-circled-shooters.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Real browser views, supported PMREM and native Environment
+        run: |
+          for environment in studio1024 productionDay; do
+            for version in before after; do
+              node scripts/render-five-circled-shooters.mjs --site ".${version}-site" --out ".evidence/${environment}/${version}" --ids s3-shooter-quicklong,s3-shooter-heavy,s3-shooter-triplequick,s3-shooter-triplemiddle,s3-shooter-flash --size 640 --environment "$environment"
+            done
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-circled-shooters-${{ github.event.pull_request.head.sha }}
+          path: .evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  network-crowd:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Build exact production composition
+        run: node scripts/build-inkwave.mjs inkwave-public .after-site
+      - name: Real owner and remote Actor firing, two independent browsers
+        run: node scripts/check-five-shooter-network.mjs --site .after-site --evidence-dir .network-evidence --profile-dir .network-profiles --exact-source
+      - name: Eight actual characters, near-far-near and both teams
+        if: always()
+        run: node scripts/render-five-circled-shooters.mjs --site .after-site --out .crowd-evidence --environment productionDay --size 640 --crowd-only
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-shooter-network-crowd-${{ github.event.pull_request.head.sha }}
+          path: |
+            .network-evidence
+            .crowd-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  nova-origin-diagnosis:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .origin-main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8
+          npx playwright install --with-deps chromium
+      - name: Build unchanged production origin
+        run: |
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node scripts/build-inkwave.mjs inkwave-public .origin-site
+          node .origin-main/scripts/build-inkwave.mjs .origin-main/inkwave-public .origin-main-site
+      - name: Native origin versus single-field mouth candidate, real FX and projectiles
+        run: |
+          node scripts/render-nova-origin-review.mjs --site .origin-main-site --out .origin-evidence/main --origin native --shape main-ed3
+          for origin in native mouth; do
+            node scripts/render-nova-origin-review.mjs --site .origin-site --out ".origin-evidence/$origin" --origin "$origin"
+          done
+      - name: Candidate origin through both native network owners and remote replay
+        if: always()
+        run: node scripts/check-five-shooter-network.mjs --site .origin-site --evidence-dir .origin-network --profile-dir .origin-profiles --exact-source --nova-mouth --ids s3-shooter-quicklong
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nova-origin-diagnosis-${{ github.event.pull_request.head.sha }}
+          path: |
+            .origin-evidence
+            .origin-network
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  refinement-audit:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f7be4ee248df60206ca590564b42e93a80e5e256
+          path: .f7
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1 ws@8 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Exact indexed stripe data and bounds
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-shooter-compact-stripes.test.mjs
+      - name: Build pinned pre-compaction, current and main sites
+        run: |
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .f7/scripts/build-inkwave.mjs .f7/inkwave-public .f7-site
+          node scripts/build-inkwave.mjs inkwave-public .refinement-site
+          node .main/scripts/build-inkwave.mjs .main/inkwave-public .main-site
+      - name: Repeated near/far RGBA, including 8m and 16m cameras
+        run: |
+          for repeat in A B; do
+            node scripts/render-five-circled-shooters.mjs --site .f7-site --out ".refinement-evidence/before$repeat" --ids s3-shooter-flash --size 640 --environment productionDay --no-held
+            node scripts/render-five-circled-shooters.mjs --site .refinement-site --out ".refinement-evidence/after$repeat" --ids s3-shooter-flash --size 640 --environment productionDay --no-held
+          done
+          node scripts/compare-five-refinement-images.mjs .refinement-evidence
+      - name: Nova old-main/current ordered network flight ages and image sequence
+        if: always()
+        run: |
+          node scripts/check-five-shooter-network.mjs --site .main-site --evidence-dir .refinement-network/before --profile-dir .refinement-profiles/before --baseline --ids s3-shooter-quicklong --trace-flight
+          node scripts/check-five-shooter-network.mjs --site .refinement-site --evidence-dir .refinement-network/after --profile-dir .refinement-profiles/after --exact-source --ids s3-shooter-quicklong --trace-flight
+      - name: Main baseline eight-Actor geometry and rendering costs
+        if: always()
+        run: node scripts/render-five-circled-shooters.mjs --site .main-site --out .refinement-crowd-before --environment productionDay --size 640 --crowd-only
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-shooter-refinement-${{ github.event.pull_request.head.sha }}
+          path: |
+            .refinement-evidence
+            .refinement-network
+            .refinement-crowd-before
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  refinement-candidates:
+    if: github.head_ref == 'feat/inkwave-five-circled-shooters'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - candidate: gal-hidden-grains
+            ids: s3-shooter-heavy
+          - candidate: nova-cheek
+            ids: s3-shooter-quicklong
+          - candidate: nozzlenose-braid
+            ids: s3-shooter-triplequick,s3-shooter-triplemiddle
+          - candidate: squeezer-smooth
+            ids: s3-shooter-flash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build original and isolated unadopted shape candidate
+        env:
+          CANDIDATE: ${{ matrix.candidate }}
+        run: |
+          mkdir -p .candidate-evidence
+          git rev-parse HEAD > .candidate-evidence/exact-head.txt
+          node scripts/build-inkwave.mjs inkwave-public .candidate-before-site
+          cp "reports/five-circled-shooters/candidates/$CANDIDATE.mjs.txt" patches/splatoon3/runtime/weapon-models/shooters-b.mjs
+          sha256sum patches/splatoon3/runtime/weapon-models/shooters-b.mjs > .candidate-evidence/source-sha256.txt
+          node scripts/build-inkwave.mjs inkwave-public .candidate-after-site
+      - name: Source assembly and unchanged LOD attributes and budget guards
+        env:
+          WEAPON_LOD_BASELINE: reports/five-circled-shooters/candidates/lod-before.mjs.txt
+          WEAPON_LOD_REPORT: .candidate-evidence/lod.json
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/five-circled-shooters.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
+      - name: Same-view native-lighting before and unadopted candidate
+        if: always()
+        env:
+          IDS: ${{ matrix.ids }}
+        run: |
+          for version in before after; do
+            node scripts/render-five-circled-shooters.mjs --site ".candidate-$version-site" --out ".candidate-evidence/$version" --ids "$IDS" --size 640 --environment productionDay
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: five-unadopted-${{ matrix.candidate }}-${{ github.event.pull_request.head.sha }}
+          path: .candidate-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,22 @@
+{
+  "gal-hidden-grains": {
+    "file": "gal-hidden-grains.mjs.txt",
+    "sha256": "071e47f411d416623d083aba1e6d060be5747b9f542b8f434e60b0e922808d3e",
+    "adopted": false
+  },
+  "nova-cheek": {
+    "file": "nova-cheek.mjs.txt",
+    "sha256": "bfe2e1e880309333aeac09371c83e8b03b123b8389fe6d1d92eec2e1a9a828d1",
+    "adopted": false
+  },
+  "nozzlenose-braid": {
+    "file": "nozzlenose-braid.mjs.txt",
+    "sha256": "a866325644c5144711ff05a4eeb983ea9f1a2cd46117e39dc56c0fe083551092",
+    "adopted": false
+  },
+  "squeezer-smooth": {
+    "file": "squeezer-smooth.mjs.txt",
+    "sha256": "5104f490c1de1d85273bd451867941638402dae8f167e2fba3f471ea474d2b86",
+    "adopted": false
+  }
+}
