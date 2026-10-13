@@ -125,6 +125,16 @@ those separately corrected states is not the observed solver trajectory.
 The failed chord remains a diagnostic; no source, physics or tolerance changes
 are made. Full bank gameplay remains pending the refined current paired check.
 
+That refined replay next exposes a genuine post-foot body overlap at tick 2456,
+before combat. Original painted-solid wall triangle 34778 is .3501 from the
+body after source collision resolution, then .346232618 after the foot snaps
+up by .091415702 source raw units. This crosses the native corrector's own
+contact threshold .3499 for radius .35, while the raised-landing predictor's
+default .01 fit accepts it. Independent original triangle reads reproduce the
+distances. Manta solely owns this native foot/body coupling investigation and
+correction; no geometry, body dimensions or tolerance is changed by this owner.
+The narrow combat jump proof and full-bank route remain separate requirements.
+
 The current private artifact is
 `173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5`,
 and the public artifact is

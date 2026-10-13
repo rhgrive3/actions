@@ -34560,5 +34560,43 @@
     "stageReady": false,
     "allEightAliveMeasured": false,
     "bindingReceipt": ".ci-scratch/current-joint-tower-human-binding.json"
+  },
+  "independentNativeFootBodyOverlap": {
+    "sourceTriangle": 34778,
+    "sourceRole": "Fld_Twist00_BoltedWalls_02_1__Walls01",
+    "sourceFlags": 3,
+    "sourceFace": 13396,
+    "sourceFieldBytes": 36,
+    "sourceTriangleBytesSha256": "53a59a9517d14271f45dd403489e8670c6a550d8fabf4f8c55f62980ccd259d6",
+    "tick": 2456,
+    "body": {
+      "radius": 0.35,
+      "lift": 0.35,
+      "height": 1.45,
+      "skipGrates": false
+    },
+    "distancesToOriginalTriangle": {
+      "committedBefore": 0.3501000000000004,
+      "proposedBeforeBody": 0.3427759310184174,
+      "resolvedBody": 0.3501,
+      "committedAfterFeet": 0.3462326177942392
+    },
+    "nativeContactThreshold": 0.3499,
+    "defaultFitThreshold": 0.33999999999999997,
+    "strictFitThreshold": 0.347,
+    "footRaiseSourceRawUnits": 0.09141570172553266,
+    "nativeBodyResolvedBeforeFeet": true,
+    "afterFeetWithinNativeContactThreshold": true,
+    "defaultFitAfterFeet": true,
+    "strictFitAfterFeet": false,
+    "candidateJumpRegressionClaim": false,
+    "retailUnitsVerified": false,
+    "scope": "Independent exact original triangle read and capsule-axis distance calculation; same current baseline post-foot pose, no second GPU and no runtime/physics/source changes",
+    "receipt": ".ci-scratch/shipshape-independent-foot-pop.json",
+    "receiptSha256": "bb3db482804e7292907d3c0d8ef8f2be46fb801c3c0e3d2a55e4513f1d057000",
+    "sharedCorrectionOwner": "Manta",
+    "independentPeer": "Shipshape",
+    "status": "confirmed-contract-mismatch-unresolved",
+    "sourceOrToleranceChanges": false
   }
 }

@@ -56,9 +56,10 @@ try{
    if(!approach)throw Error('No source-qualified centre boarding approach');
    a.spawnAt(new V(...approach.start),0);
    for(let i=0;i<15;i++)g._frame(1/60);
-   if(!a.grounded||a.ground.triangle<0||a.ground.block===G.match.rankedWorld.towerBlockId)throw Error('Human boarding must begin on original supported floor');
+   if(!a.grounded||a.ground.block<0||a.ground.block>=L.staticBlockCount)throw Error('Human boarding must begin on original supported floor');
    const from=a.pos.clone();g.rig.yaw=Math.atan2(approach.end[0]-from.x,approach.end[2]-from.z);g.rig.pitch=0;
    const probe=G.physics.raycast(from.clone().add(new V(0,.1,0)),new V(0,-1,0),.3);
+   if(!probe.hit||probe.triangle<0||probe.normal.y<=.68)throw Error('Human boarding source floor ray is missing');
    const monitor=globalThis.shipshapeTowerHuman={approach,sourceSha256:L.manifest.sourceSha256,serial:a.s3JumpSerial||0,actorSteps:0,movementCapsules:0,contactFrames:0,strictChordFailures:0,firstChordFailure:null,actorCapsules:0,firstFailure:null,profiles:[],intervals:[],sweep:nativeDropClearance(L),originalUpdate:a.update,originalIntegrate:a._integrateMovementStep,originalCollide:G.physics.collideBody,originalNativeContacts:G.physics._nativeContacts,body:null,sourceCorrections:[],sourceData:L.data.triangles};
    G.physics.collideBody=function(pos,radius,lift,height,...rest){
     if(pos===a.pos){monitor.body={radius,lift,height,skipGrates:!!rest[2]};if(!monitor.profiles.some(p=>JSON.stringify(p)===JSON.stringify(monitor.body)))monitor.profiles.push({...monitor.body});}
