@@ -115,9 +115,9 @@ test('Mincemeat supports, capsule movement, wall ink, and rules use actual sourc
  assert.ok(stage.zones[0].center[1]<11,'ranked center stays on shared lower gameplay floor');
  assert.equal(stage.tower.supported,false);assert.equal(stage.tower.status,'source-route-unverified');
  assert.equal(stage.tower.reason,definition.ruleAvailability.tower.reason);
- assert.deepEqual(stage.tower.path,[],'the asymmetric local prototype cannot enter production Tower');
+ assert.equal(stage.tower.path.length,0,'the asymmetric local prototype cannot enter production Tower');
  const before={level:G.level,physics:G.physics,paint:G.paint,nav:G.nav};
- assert.throws(()=>f.nativeRankedStage(G,'tower'),error=>error instanceof Error&&error.name==='RangeError'&&error.code==='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED'&&error.message===stage.tower.reason);
+ assert.throws(()=>f.nativeRankedStage(G,'tower'),error=>error.name==='RangeError'&&error.code==='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED'&&error.message===stage.tower.reason);
  for(const key of Object.keys(before))assert.equal(G[key],before[key],'unsupported Tower preserves '+key);
  G.match.mode='turf';G.match.opts={};
  const actor=f.make();actor._integrate=f.Actor.prototype._integrate;assert.equal(f.beginInitialSquidSpawn(actor),true);assert.ok(actor.s3.squidSpawn.target);
