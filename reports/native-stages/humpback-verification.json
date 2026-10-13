@@ -9069,5 +9069,1989 @@
       "mode": "paint"
     },
     "sourceBuffersUnchanged": true
+  },
+  "clamsFixedGameClockBefore": {
+    "foundation": "4d0d88ef05cd2fc5389bddcdcf3a7539fc926dd2",
+    "evidence": ".browser-evidence/final-clams-game-clock-before/ranked.json",
+    "status": "failed",
+    "buildFingerprint": "19f3dea2c6b8719a4ecbd44a62e326928e92075c47a48011c5228305e0af22fd",
+    "clock": "production Game._frame; observed fixed STEP 1/60",
+    "cases": [
+      {
+        "mode": "clams",
+        "team": 0,
+        "renderCadence": 60,
+        "seconds": 60,
+        "actorTicks": 3600,
+        "gameClockTicks": 3600,
+        "actorSteps": [
+          0.016666666666666666
+        ],
+        "brainSteps": [
+          0.016666666666666666
+        ],
+        "projectileSteps": [
+          0.016666666666666666
+        ],
+        "start": [
+          0,
+          6,
+          -61
+        ],
+        "end": [
+          -5.771600253604553,
+          0,
+          -15.421882272436276
+        ],
+        "goal": null,
+        "goalAction": null,
+        "botGoal": {
+          "x": -5.707845379096778,
+          "y": -7.105427357601002e-15,
+          "z": -15.491692561564093
+        },
+        "inventory": {
+          "team": 0,
+          "small": 0,
+          "power": true
+        },
+        "initialInventory": {
+          "team": 0,
+          "small": 0,
+          "power": false
+        },
+        "collected": true,
+        "approached": false,
+        "alive": true,
+        "grounded": true,
+        "sourceTriangle": 69359,
+        "sourceObject": "Fld_Wave03_Center_MetalTrim_01__WallMetalFenceSet",
+        "sourceFace": 3339,
+        "fire": true,
+        "jump": true,
+        "traversal": 203,
+        "maxTravel": 45.94209600219679,
+        "gearAP": [],
+        "sourceWeapon": "WeaponShooterNormal",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "counts": [
+          19266,
+          0
+        ],
+        "matchState": "playing"
+      }
+    ],
+    "errors": [],
+    "lastCase": {
+      "mode": "clams",
+      "team": 1,
+      "renderCadence": 60,
+      "seconds": 90,
+      "actorTicks": 5400,
+      "gameClockTicks": 5400,
+      "actorSteps": [
+        0.016666666666666666
+      ],
+      "brainSteps": [
+        0.016666666666666666
+      ],
+      "projectileSteps": [
+        0.016666666666666666
+      ],
+      "start": [
+        0,
+        6,
+        61
+      ],
+      "end": [
+        1.2650608863289556,
+        1.8476019949285076,
+        40.48937646908898
+      ],
+      "goal": null,
+      "goalAction": null,
+      "botGoal": null,
+      "inventory": {
+        "team": 1,
+        "small": 0,
+        "power": false
+      },
+      "initialInventory": {
+        "team": 1,
+        "small": 0,
+        "power": false
+      },
+      "collected": false,
+      "approached": false,
+      "alive": true,
+      "grounded": true,
+      "sourceTriangle": 94566,
+      "sourceObject": "Fld_Wave03_GroundPlywood_02_1__GroundPlywood",
+      "sourceFace": 13692,
+      "fire": true,
+      "jump": true,
+      "traversal": 50,
+      "maxTravel": 37.25557155621498,
+      "gearAP": [],
+      "sourceWeapon": "WeaponShooterNormal",
+      "actors": 8,
+      "aliveActors": 8,
+      "bots": 7,
+      "counts": [
+        0,
+        18901
+      ],
+      "matchState": "playing"
+    },
+    "error": "AssertionError [ERR_ASSERTION]: Real fixed-clock ranked source approach failed {\"mode\":\"clams\",\"team\":1,\"renderCadence\":60,\"seconds\":90,\"actorTicks\":5400,\"gameClockTicks\":5400,\"actorSteps\":[0.016666666666666666],\"brainSteps\":[0.016666666666666666],\"projectileSteps\":[0.016666666666666666],\"start\":[0,6,61],\"end\":[1.2650608863289556,1.8476019949285076,40.48937646908898],\"goal\":null,\"goalAction\":null,\"botGoal\":null,\"inventory\":{\"team\":1,\"small\":0,\"power\":false},\"initialInventory\":{\"team\":1,\"small\":0,\"power\":false},\"collected\":false,\"approached\":false,\"alive\":true,\"grounded\":true,\"sourceTriangle\":94566,\"sourceObject\":\"Fld_Wave03_GroundPlywood_02_1__GroundPlywood\",\"sourceFace\":13692,\"fire\":true,\"jump\":true,\"traversal\":50,\"maxTravel\":37.25557155621498,\"gearAP\":[],\"sourceWeapon\":\"WeaponShooterNormal\",\"actors\":8,\"aliveActors\":8,\"bots\":7,\"counts\":[0,18901],\"matchState\":\"playing\"}\n    at file:///workspace/stage-worktrees/humpback/scripts/check-inkwave-native-humpback-ranked.mjs:67:3"
+  },
+  "clamsSourceEligibilityBefore": {
+    "foundation": "4d0d88ef05cd2fc5389bddcdcf3a7539fc926dd2",
+    "evidence": ".browser-evidence/final-clams-eligibility-diagnostic/browser.json",
+    "id": "humpback",
+    "status": "diagnostic failure retained",
+    "mode": "clams",
+    "team": 0,
+    "hz": 60,
+    "seconds": 90,
+    "goal": null,
+    "end": [
+      16.199999999029608,
+      4.497599667857563,
+      -36.39999999999997
+    ],
+    "grounded": true,
+    "alive": true,
+    "form": "kid",
+    "fire": true,
+    "traversal": 4067,
+    "modeBrain": "paint",
+    "actorId": "0:1",
+    "inventory": {
+      "team": 0,
+      "small": 0,
+      "power": false
+    },
+    "source": {
+      "point": [
+        16.199999999029608,
+        4.249607575311966,
+        -36.39999999999997
+      ],
+      "triangle": 138258,
+      "face": 34996,
+      "object": "Fld_Wave03__pCube19660_1__FoamBlock",
+      "normal": [
+        0.4308282732963562,
+        0.6573665738105774,
+        -0.6182687282562256
+      ],
+      "mask": 1,
+      "dead": 0,
+      "ownership": 1
+    },
+    "startNode": 4349,
+    "startPoint": [
+      16.200000000000003,
+      4.099999904632568,
+      -36.400000000000006
+    ],
+    "actualFootSupported": true,
+    "actualRuleGoal": null,
+    "blockedType": "function",
+    "candidates": [
+      {
+        "id": "clam-27",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.349792945980109,
+          -2.9241461247406164,
+          -15.469188679237298
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8230,
+        "navPoint": [
+          6.200000000000003,
+          -2.9241461247406164,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 48,
+            "first": 607,
+            "last": 8230
+          },
+          {
+            "nodes": 79,
+            "first": 20926,
+            "last": 8230
+          }
+        ],
+        "path": {
+          "nodes": 47,
+          "first": 4349,
+          "last": 8230,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            6.349792945980109,
+            -2.884798555422945,
+            -15.469188679237298
+          ],
+          "triangle": 96188,
+          "face": 16196,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            0.048315126448869705,
+            0.9987483024597168,
+            -0.01294302474707365
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-21",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.116716032150641,
+          -2.9241461247406164,
+          -15.499818739218984
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8230,
+        "navPoint": [
+          6.200000000000003,
+          -2.9241461247406164,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 48,
+            "first": 607,
+            "last": 8230
+          },
+          {
+            "nodes": 79,
+            "first": 20926,
+            "last": 8230
+          }
+        ],
+        "path": {
+          "nodes": 47,
+          "first": 4349,
+          "last": 8230,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            6.116716032150641,
+            -2.851242586531127,
+            -15.499818739218984
+          ],
+          "triangle": 96241,
+          "face": 16254,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            0.17698641121387482,
+            0.9811862111091614,
+            0.07713337987661362
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-9",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.354986149086744,
+          -2.9241461247406164,
+          -15.343393519882776
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8230,
+        "navPoint": [
+          6.200000000000003,
+          -2.9241461247406164,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 48,
+            "first": 607,
+            "last": 8230
+          },
+          {
+            "nodes": 79,
+            "first": 20926,
+            "last": 8230
+          }
+        ],
+        "path": {
+          "nodes": 47,
+          "first": 4349,
+          "last": 8230,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            6.354986149086744,
+            -2.885101021556749,
+            -15.343393519882776
+          ],
+          "triangle": 96834,
+          "face": 16206,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            0.0681808665394783,
+            0.9973194003105164,
+            0.026559123769402504
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-3",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.200000000000003,
+          -2.9241461247406164,
+          -15.400000000000006
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8230,
+        "navPoint": [
+          6.200000000000003,
+          -2.9241461247406164,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 48,
+            "first": 607,
+            "last": 8230
+          },
+          {
+            "nodes": 79,
+            "first": 20926,
+            "last": 8230
+          }
+        ],
+        "path": {
+          "nodes": 47,
+          "first": 4349,
+          "last": 8230,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            6.200000000000003,
+            -2.924146124740624,
+            -15.400000000000006
+          ],
+          "triangle": 92278,
+          "face": 13089,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0.17087365686893463,
+            0.9825987815856934,
+            0.07281368225812912
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-15",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.0849646815386285,
+          -2.9241461247406164,
+          -15.236394145867306
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8230,
+        "navPoint": [
+          6.200000000000003,
+          -2.9241461247406164,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 48,
+            "first": 607,
+            "last": 8230
+          },
+          {
+            "nodes": 79,
+            "first": 20926,
+            "last": 8230
+          }
+        ],
+        "path": {
+          "nodes": 47,
+          "first": 4349,
+          "last": 8230,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            6.0849646815386285,
+            -2.9162652250896177,
+            -15.236394145867306
+          ],
+          "triangle": 92278,
+          "face": 13089,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0.17087365686893463,
+            0.9825987815856934,
+            0.07281368225812912
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-14",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.3953374534615993,
+          0,
+          -15.442933428411195
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8218,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 43,
+            "first": 607,
+            "last": 8218
+          },
+          {
+            "nodes": 72,
+            "first": 20926,
+            "last": 8218
+          }
+        ],
+        "path": {
+          "nodes": 42,
+          "first": 4349,
+          "last": 8218,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            0.3953374534615993,
+            0,
+            -15.442933428411195
+          ],
+          "triangle": 92031,
+          "face": 12900,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-8",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.12395456202228633,
+          0,
+          -15.546431183027314
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8218,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 43,
+            "first": 607,
+            "last": 8218
+          },
+          {
+            "nodes": 72,
+            "first": 20926,
+            "last": 8218
+          }
+        ],
+        "path": {
+          "nodes": 42,
+          "first": 4349,
+          "last": 8218,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            0.12395456202228633,
+            0,
+            -15.546431183027314
+          ],
+          "triangle": 92030,
+          "face": 12900,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-2",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.20000000000000284,
+          0,
+          -15.400000000000006
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8218,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 43,
+            "first": 607,
+            "last": 8218
+          },
+          {
+            "nodes": 72,
+            "first": 20926,
+            "last": 8218
+          }
+        ],
+        "path": {
+          "nodes": 42,
+          "first": 4349,
+          "last": 8218,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            0.20000000000000284,
+            0,
+            -15.400000000000006
+          ],
+          "triangle": 92030,
+          "face": 12900,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-26",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.042810855593161334,
+          0,
+          -15.450165455052712
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8218,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 43,
+            "first": 607,
+            "last": 8218
+          },
+          {
+            "nodes": 72,
+            "first": 20926,
+            "last": 8218
+          }
+        ],
+        "path": {
+          "nodes": 42,
+          "first": 4349,
+          "last": 8218,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            0.042810855593161334,
+            0,
+            -15.450165455052712
+          ],
+          "triangle": 92030,
+          "face": 12900,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-20",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.19398495118721823,
+          0,
+          -15.270139231529386
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8218,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 43,
+            "first": 607,
+            "last": 8218
+          },
+          {
+            "nodes": 72,
+            "first": 20926,
+            "last": 8218
+          }
+        ],
+        "path": {
+          "nodes": 42,
+          "first": 4349,
+          "last": 8218,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            0.19398495118721823,
+            0,
+            -15.270139231529386
+          ],
+          "triangle": 92031,
+          "face": 12900,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-19",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.707845379096778,
+          -7.105427357601002e-15,
+          -15.491692561564093
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8206,
+        "navPoint": [
+          -5.799999999999997,
+          -7.105427357601002e-15,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 42,
+            "first": 607,
+            "last": 8206
+          },
+          {
+            "nodes": 75,
+            "first": 20926,
+            "last": 8206
+          }
+        ],
+        "path": {
+          "nodes": 41,
+          "first": 4349,
+          "last": 8206,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.707845379096778,
+            0,
+            -15.491692561564093
+          ],
+          "triangle": 69360,
+          "face": 3339,
+          "object": "Fld_Wave03_Center_MetalTrim_01__WallMetalFenceSet",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-1",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.799999999999997,
+          -7.105427357601002e-15,
+          -15.400000000000006
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8206,
+        "navPoint": [
+          -5.799999999999997,
+          -7.105427357601002e-15,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 42,
+            "first": 607,
+            "last": 8206
+          },
+          {
+            "nodes": 75,
+            "first": 20926,
+            "last": 8206
+          }
+        ],
+        "path": {
+          "nodes": 41,
+          "first": 4349,
+          "last": 8206,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.799999999999997,
+            0,
+            -15.400000000000006
+          ],
+          "triangle": 69359,
+          "face": 3339,
+          "object": "Fld_Wave03_Center_MetalTrim_01__WallMetalFenceSet",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-25",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.717979305348967,
+          -7.105427357601002e-15,
+          -15.256830151047922
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8206,
+        "navPoint": [
+          -5.799999999999997,
+          -7.105427357601002e-15,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 42,
+            "first": 607,
+            "last": 8206
+          },
+          {
+            "nodes": 75,
+            "first": 20926,
+            "last": 8206
+          }
+        ],
+        "path": {
+          "nodes": 41,
+          "first": 4349,
+          "last": 8206,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.717979305348967,
+            0,
+            -15.256830151047922
+          ],
+          "triangle": 69360,
+          "face": 3339,
+          "object": "Fld_Wave03_Center_MetalTrim_01__WallMetalFenceSet",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-13",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.973037286103146,
+          -7.105427357601002e-15,
+          -15.500290067394824
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8206,
+        "navPoint": [
+          -5.799999999999997,
+          -7.105427357601002e-15,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 42,
+            "first": 607,
+            "last": 8206
+          },
+          {
+            "nodes": 75,
+            "first": 20926,
+            "last": 8206
+          }
+        ],
+        "path": {
+          "nodes": 41,
+          "first": 4349,
+          "last": 8206,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.973037286103146,
+            2.259587597783219e-05,
+            -15.500290067394824
+          ],
+          "triangle": 96112,
+          "face": 16127,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            0.0004872872668784112,
+            0.9999998807907104,
+            8.502111450070515e-05
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-7",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.842838647441349,
+          -7.105427357601002e-15,
+          -15.240658071163319
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 8206,
+        "navPoint": [
+          -5.799999999999997,
+          -7.105427357601002e-15,
+          -15.400000000000006
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 42,
+            "first": 607,
+            "last": 8206
+          },
+          {
+            "nodes": 75,
+            "first": 20926,
+            "last": 8206
+          }
+        ],
+        "path": {
+          "nodes": 41,
+          "first": 4349,
+          "last": 8206,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.842838647441349,
+            0,
+            -15.240658071163319
+          ],
+          "triangle": 69360,
+          "face": 3339,
+          "object": "Fld_Wave03_Center_MetalTrim_01__WallMetalFenceSet",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-24",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.22854459076927,
+          0.00014166938090198755,
+          15.473172533188523
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13463,
+        "navPoint": [
+          6.200000000000003,
+          0.00014166938090198755,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 76,
+            "first": 607,
+            "last": 13463
+          },
+          {
+            "nodes": 41,
+            "first": 20926,
+            "last": 13463
+          }
+        ],
+        "path": {
+          "nodes": 75,
+          "first": 4349,
+          "last": 13463,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            6.22854459076927,
+            0.0001447957839326719,
+            15.473172533188523
+          ],
+          "triangle": 96960,
+          "face": 16058,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.0004872872668784112,
+            0.9999998807907104,
+            -8.502111450070515e-05
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-6",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.200000000000003,
+          0.00014166938090198755,
+          15.599999999999994
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13463,
+        "navPoint": [
+          6.200000000000003,
+          0.00014166938090198755,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 76,
+            "first": 607,
+            "last": 13463
+          },
+          {
+            "nodes": 41,
+            "first": 20926,
+            "last": 13463
+          }
+        ],
+        "path": {
+          "nodes": 75,
+          "first": 4349,
+          "last": 13463,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            6.200000000000003,
+            0.00014166938089782422,
+            15.599999999999994
+          ],
+          "triangle": 96960,
+          "face": 16058,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.0004872872668784112,
+            0.9999998807907104,
+            -8.502111450070515e-05
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-18",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.000170211174519,
+          0.00014166938090198755,
+          15.608249575623189
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13463,
+        "navPoint": [
+          6.200000000000003,
+          0.00014166938090198755,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 76,
+            "first": 607,
+            "last": 13463
+          },
+          {
+            "nodes": 41,
+            "first": 20926,
+            "last": 13463
+          }
+        ],
+        "path": {
+          "nodes": 75,
+          "first": 4349,
+          "last": 13463,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            6.000170211174519,
+            4.499624564296978e-05,
+            15.608249575623189
+          ],
+          "triangle": 96960,
+          "face": 16058,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.0004872872668784112,
+            0.9999998807907104,
+            -8.502111450070515e-05
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-30",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.3460470886991445,
+          0.00014166938090198755,
+          15.676780517597267
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13463,
+        "navPoint": [
+          6.200000000000003,
+          0.00014166938090198755,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 76,
+            "first": 607,
+            "last": 13463
+          },
+          {
+            "nodes": 41,
+            "first": 20926,
+            "last": 13463
+          }
+        ],
+        "path": {
+          "nodes": 75,
+          "first": 4349,
+          "last": 13463,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            6.3460470886991445,
+            0.00021936424244659025,
+            15.676780517597267
+          ],
+          "triangle": 96960,
+          "face": 16058,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.0004872872668784112,
+            0.9999998807907104,
+            -8.502111450070515e-05
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-12",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          6.249374705818294,
+          0.00014166938090198755,
+          15.757439316644081
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13463,
+        "navPoint": [
+          6.200000000000003,
+          0.00014166938090198755,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 76,
+            "first": 607,
+            "last": 13463
+          },
+          {
+            "nodes": 41,
+            "first": 20926,
+            "last": 13463
+          }
+        ],
+        "path": {
+          "nodes": 75,
+          "first": 4349,
+          "last": 13463,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            6.249374705818294,
+            0.00017911471755130415,
+            15.757439316644081
+          ],
+          "triangle": 96960,
+          "face": 16058,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.0004872872668784112,
+            0.9999998807907104,
+            -8.502111450070515e-05
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-11",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.26994074347125824,
+          0,
+          15.45055672513395
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13450,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 73,
+            "first": 607,
+            "last": 13450
+          },
+          {
+            "nodes": 43,
+            "first": 20926,
+            "last": 13450
+          }
+        ],
+        "path": {
+          "nodes": 72,
+          "first": 4349,
+          "last": 13450,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            0.26994074347125824,
+            0,
+            15.45055672513395
+          ],
+          "triangle": 91988,
+          "face": 12907,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-29",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.14417327707145833,
+          0,
+          15.444731274858517
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13450,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 73,
+            "first": 607,
+            "last": 13450
+          },
+          {
+            "nodes": 43,
+            "first": 20926,
+            "last": 13450
+          }
+        ],
+        "path": {
+          "nodes": 72,
+          "first": 4349,
+          "last": 13450,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            0.14417327707145833,
+            0,
+            15.444731274858517
+          ],
+          "triangle": 91988,
+          "face": 12907,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-5",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.20000000000000284,
+          0,
+          15.599999999999994
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13450,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 73,
+            "first": 607,
+            "last": 13450
+          },
+          {
+            "nodes": 43,
+            "first": 20926,
+            "last": 13450
+          }
+        ],
+        "path": {
+          "nodes": 72,
+          "first": 4349,
+          "last": 13450,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            0.20000000000000284,
+            0,
+            15.599999999999994
+          ],
+          "triangle": 91988,
+          "face": 12907,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-17",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.3529213062808141,
+          0,
+          15.728899472789337
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13450,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 73,
+            "first": 607,
+            "last": 13450
+          },
+          {
+            "nodes": 43,
+            "first": 20926,
+            "last": 13450
+          }
+        ],
+        "path": {
+          "nodes": 72,
+          "first": 4349,
+          "last": 13450,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            0.3529213062808141,
+            -2.7755575615628914e-17,
+            15.728899472789337
+          ],
+          "triangle": 91987,
+          "face": 12907,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-23",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          0.09328168996904365,
+          0,
+          15.674237472371676
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13450,
+        "navPoint": [
+          0.20000000000000284,
+          0,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 73,
+            "first": 607,
+            "last": 13450
+          },
+          {
+            "nodes": 43,
+            "first": 20926,
+            "last": 13450
+          }
+        ],
+        "path": {
+          "nodes": 72,
+          "first": 4349,
+          "last": 13450,
+          "types": [
+            "drop",
+            "walk",
+            "jump"
+          ]
+        },
+        "source": {
+          "point": [
+            0.09328168996904365,
+            0,
+            15.674237472371676
+          ],
+          "triangle": 91988,
+          "face": 12907,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-16",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.825689886040056,
+          -2.8207657717703682,
+          15.401656787977881
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13439,
+        "navPoint": [
+          -5.799999999999997,
+          -2.8207657717703682,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 80,
+            "first": 607,
+            "last": 13439
+          },
+          {
+            "nodes": 44,
+            "first": 20926,
+            "last": 13439
+          }
+        ],
+        "path": {
+          "nodes": 79,
+          "first": 4349,
+          "last": 13439,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.825689886040056,
+            -2.8169203656917277,
+            15.401656787977881
+          ],
+          "triangle": 96987,
+          "face": 15987,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.05313762649893761,
+            0.9982424974441528,
+            0.026236074045300484
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-22",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.671162475969726,
+          -2.8207657717703682,
+          15.617346250365683
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13439,
+        "navPoint": [
+          -5.799999999999997,
+          -2.8207657717703682,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 80,
+            "first": 607,
+            "last": 13439
+          },
+          {
+            "nodes": 44,
+            "first": 20926,
+            "last": 13439
+          }
+        ],
+        "path": {
+          "nodes": 79,
+          "first": 4349,
+          "last": 13439,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.671162475969726,
+            -2.89867045600786,
+            15.617346250365683
+          ],
+          "triangle": 92491,
+          "face": 12787,
+          "object": "Fld_Wave03_GroudnCementGrey_02_1__GroundCementGrey",
+          "normal": [
+            -0.043776266276836395,
+            0.9988362193107605,
+            0.020241577178239822
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-4",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.799999999999997,
+          -2.8207657717703682,
+          15.599999999999994
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13439,
+        "navPoint": [
+          -5.799999999999997,
+          -2.8207657717703682,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 80,
+            "first": 607,
+            "last": 13439
+          },
+          {
+            "nodes": 44,
+            "first": 20926,
+            "last": 13439
+          }
+        ],
+        "path": {
+          "nodes": 79,
+          "first": 4349,
+          "last": 13439,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.799999999999997,
+            -2.82076577177037,
+            15.599999999999994
+          ],
+          "triangle": 96987,
+          "face": 15987,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.05313762649893761,
+            0.9982424974441528,
+            0.026236074045300484
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-10",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.95251935002194,
+          -2.8207657717703682,
+          15.662951154627086
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13439,
+        "navPoint": [
+          -5.799999999999997,
+          -2.8207657717703682,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 80,
+            "first": 607,
+            "last": 13439
+          },
+          {
+            "nodes": 44,
+            "first": 20926,
+            "last": 13439
+          }
+        ],
+        "path": {
+          "nodes": 79,
+          "first": 4349,
+          "last": 13439,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.95251935002194,
+            -2.830539055734771,
+            15.662951154627086
+          ],
+          "triangle": 96987,
+          "face": 15987,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.05313762649893761,
+            0.9982424974441528,
+            0.026236074045300484
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      },
+      {
+        "id": "clam-28",
+        "kind": "small",
+        "team": null,
+        "pos": [
+          -5.863717002003863,
+          -2.8207657717703682,
+          15.752200997551387
+        ],
+        "grounded": true,
+        "blocked": true,
+        "navNode": 13439,
+        "navPoint": [
+          -5.799999999999997,
+          -2.8207657717703682,
+          15.599999999999994
+        ],
+        "navValid": true,
+        "pathsFromOriginalPads": [
+          {
+            "nodes": 80,
+            "first": 607,
+            "last": 13439
+          },
+          {
+            "nodes": 44,
+            "first": 20926,
+            "last": 13439
+          }
+        ],
+        "path": {
+          "nodes": 79,
+          "first": 4349,
+          "last": 13439,
+          "types": [
+            "drop",
+            "walk"
+          ]
+        },
+        "source": {
+          "point": [
+            -5.863717002003863,
+            -2.8281576900569787,
+            15.752200997551387
+          ],
+          "triangle": 96987,
+          "face": 15987,
+          "object": "Fld_Wave03_GroundRoughWood_01_1__GroundRoughWood",
+          "normal": [
+            -0.05313762649893761,
+            0.9982424974441528,
+            0.026236074045300484
+          ],
+          "mask": 1,
+          "dead": 0,
+          "ownership": 0
+        }
+      }
+    ],
+    "cases": [
+      {
+        "mode": "clams",
+        "team": 0,
+        "hz": 30,
+        "seconds": 35.2,
+        "sourcePad": [
+          0,
+          6.08,
+          -61
+        ],
+        "goal": {
+          "x": -5.707845379096778,
+          "y": -7.105427357601002e-15,
+          "z": -15.491692561564093
+        },
+        "end": [
+          -5.807839568370722,
+          5.551115123125783e-17,
+          -16.32493968691488
+        ],
+        "sourceTriangle": 69332,
+        "fire": true,
+        "traversal": 307,
+        "alive": true,
+        "grounded": true,
+        "gearAP": []
+      }
+    ],
+    "actors": 8,
+    "bots": 7,
+    "clock": "controlled manual Actor/BotBrain/Projectiles dt=1/hz in a production Match, not installed fixed Game clock",
+    "errors": []
+  },
+  "acceptedCurrentMainRefresh": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "upstreamMain": "14f9f913",
+    "aggregate": "13b310d627739c6a5af64cf9e1770c91cc6f8e52",
+    "pr": 1387,
+    "status": "Consumed; current affected actor/weapon/rule/network/build qualification in progress; earlier receipts retain exact original build scope"
   }
 }
