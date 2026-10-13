@@ -217,23 +217,142 @@
     },
     "currentBuilds": {
       "private": {
-        "contentHash": "ebb6208f9a1fce5666c64659b6e9bfd8d906fab77e16204ed691afdc1a75063e",
-        "inputHash": "3cc1799fa3a40bfae7315e976aa781cb86b3236d675e3d4a90017765dd570814",
+        "contentHash": "8d9dd02377786e6528ae7d854cd970b8da1b5cdca250a5f0b0ea0833c4a9fb50",
+        "inputHash": "fba907ba4063fc81d34d54763070a0650c9a279fe334169b32eeb665db9ed9cd",
+        "revision": "349711cdb826bb74aaf2d15715dad4fb2d2843d75f83029d20d58690576e7933",
         "packagingTests": 9,
         "passed": 9,
-        "skipped": 0,
         "failed": 0,
-        "startupBudget": "passed"
+        "skipped": 0,
+        "startupBudget": "passed",
+        "scope": "private original-five current gameplay"
       },
       "public": {
-        "contentHash": "f0dd0bdc5db32b156ffe308ea731e8a99af2e82377d86055c0913bca8392f71b",
-        "inputHash": "3cc1799fa3a40bfae7315e976aa781cb86b3236d675e3d4a90017765dd570814",
+        "contentHash": "78b2eccd86db32636b381f35d67cd0763cd6c96020e46762668c69baab0288d6",
+        "inputHash": "354d38645f942e77def9c41e544abfd4be110c76e5152b61b3650b62dd6a1d4e",
+        "revision": "b3b2a8c69596a68956393f7ad0b1958915d331ea2cd8e864dc3eef191654a1bd",
         "packagingTests": 9,
         "passed": 9,
-        "skipped": 0,
         "failed": 0,
-        "startupBudget": "passed"
+        "skipped": 0,
+        "startupBudget": "passed",
+        "scope": "public packaging includes67e5565c; source-download/cache browser not claimed"
       }
-    }
+    },
+    "dynamicFaceRegression": {
+      "before": "Actual Tower face ownership threw because dynamic rectangles carry no triangles",
+      "fix": "bounds checked dynamic rectangle contract; exact original polygon membership only for static source faces",
+      "focusedTests": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    "originalFiveActualChromium": {
+      "passed": 5,
+      "failed": 0,
+      "actorsPerMap": 8,
+      "alivePerMap": 8,
+      "botsPerMap": 7,
+      "exceptions": 0,
+      "supportedTowerKeyboardCases": 12,
+      "hagglefishTower": "source-route-unverified; menu/API/direct-online negative preserves world",
+      "retailRankedPlacement": "unverified",
+      "framesPerMap": 120,
+      "backend": "Chromium SwiftShader, instrumented unseeded samples, not hardware FPS",
+      "maps": [
+        {
+          "id": "scorch",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 10.5,
+            "p95": 27,
+            "max": 45.5
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "hagglefish",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 21.799999997019768,
+            "p95": 43.69999998807907,
+            "max": 52
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "inkblot",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 13.899999991059303,
+            "p95": 39.400000005960464,
+            "max": 52.900000005960464
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "mako",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 33.8999999910593,
+            "p95": 177.09999999403954,
+            "max": 839.7000000029802
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        },
+        {
+          "id": "brinewater",
+          "actors": 8,
+          "alive": 8,
+          "bots": 7,
+          "cpuFrame": {
+            "p50": 31.700000002980232,
+            "p95": 60.1000000089407,
+            "max": 1002.2999999970198
+          },
+          "errors": [],
+          "ruleStarts": [
+            "zones",
+            "tower",
+            "rainmaker",
+            "clams"
+          ]
+        }
+      ]
+    },
+    "performanceImprovement": "unverified; observed software-GL stalls retained"
   }
 }
