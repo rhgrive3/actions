@@ -9,7 +9,7 @@
   "spawnBarrier": 2.5,
   "version1130Verified": false,
   "placementStatus": "Local supports and interactive extent inferred from pinned Pnt DeckFloor display triangles; retail spawn, collision, moving elevator states and ranked placements unverified",
-  "sourceNavigation": {"wallClimb": true},
+  "sourceNavigation": {"wallClimb": true, "highDrops": true},
   "sourceSemantics": {
     "inactiveObjectPatterns": [
       "^FldObj_Ruins03(?:Tcl|Var|Vcl|Vgl|Vlf)(?:Stage|Center)_",

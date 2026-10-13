@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "c961c1bad0dcc2062fdfc496da2da9435e0abd79",
+  "latestConsumedFoundation": "460da55901b7c70238f377759c588c7b46b0709a",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -1709,5 +1709,42 @@
       "codeCommit": "eef78a20",
       "scope": "Tower and Lemuria bootstrap expressions also return void; assertions/product runtime unchanged"
     }
+  },
+  "acceptedSourceDrops": {
+    "foundation": "bba8682085ccc53e9dcc37749adb8357864a39be",
+    "pr": 1377,
+    "flags": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "definitionOriginalPadsRetained": true,
+    "pendingFlagsNotAdopted": [
+      "Surge",
+      "ranked input marker",
+      "Tower",
+      "positive running-jump approach"
+    ],
+    "reconversion": {
+      "seconds": 17.69,
+      "vertices": 1024229,
+      "renderTriangles": 774445,
+      "collisionTriangles": 176506,
+      "paintFaces": 54410,
+      "gridCells": 2384253,
+      "validCells": 792009,
+      "textureFiles": 216,
+      "bytes": 96847988,
+      "originalGeometryBuffersSHA256Unchanged": true,
+      "unchangedBufferFiles": 10,
+      "textureIntegrityRecordsUnchanged": true,
+      "source": ".codex-stage-sources/KiTrix/stages/Vss_Ruins03"
+    },
+    "partialMatrixStatus": "source CPU / independent source proof / build and standard match-dependent browsers active under shared locks; no complete whole-bank claim",
+    "stageReviewStatus": "Draft; positive ordinary bot still pending"
+  },
+  "acceptedOnlineSettlementChecker": {
+    "foundation": "460da55901b7c70238f377759c588c7b46b0709a",
+    "change": "consume independently reviewed final-paint-after-snapshot settlement checker before real five-mode WebSocket matrix",
+    "ownBluefinResult": "pending"
   }
 }
