@@ -755,5 +755,32 @@
     "version1130Verified": false,
     "conditions": "180 rapid simulated60Hz frames; ordinary8actor match7moving bots; unseeded random state; lowquality; ChromiumSwiftShader; render skip does not disable PaintSystem GPU draws; warm-up not controlled",
     "limits": "No before/after speed claim or hardwareFPS. Largest measured step6.562s, paint GPU draw timing6.680s total, projectile update0.509s total; accelerated softwareGPU drain/first-use and character cost require matched follow-up."
+  },
+  "fixtureScope": {
+    "cpu": "Actual Actor/WeaponRunner/Projectiles admission and source triangle sweep with fixture.make simplified world-axis Character muzzle and fixed integration/frame finishing; does not prove production rig muzzle or movement.",
+    "browser": "Actual bundled production Character/Actor/WeaponRunner/Projectiles, source-supported controlled stance, original five stages at30/60/120Hz (15cases); distinct from physical controller input and spawn tests.",
+    "runtimeChangedByScopeCorrection": false
+  },
+  "browserRunnerInitialization": {
+    "changedScripts": 6,
+    "changedInitializers": 7,
+    "change": "Install NG in a block callback without implicitly returning the full G scene/geometry object through Playwright.",
+    "syntaxPassed": true,
+    "allOtherAstNodesUnchanged": true,
+    "verificationKind": "Exact Acorn AST comparison with only the callback return removed; no browser-matrix completion inferred.",
+    "productRuntimeChanged": false,
+    "followup": {
+      "scripts": 2,
+      "initializers": 2,
+      "files": [
+        "native-tower-calibration",
+        "lemuria-unavailable"
+      ],
+      "syntaxPassed": true,
+      "allOtherAstNodesUnchanged": true,
+      "totalCorrectedScripts": 8,
+      "totalCorrectedInitializers": 9,
+      "browserMatrixClaim": false
+    }
   }
 }
