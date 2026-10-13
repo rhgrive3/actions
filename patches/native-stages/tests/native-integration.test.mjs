@@ -63,10 +63,16 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
  }else{assert.ok(stage.tower.supported&&stage.tower.path.length>2);assert.equal(stage.tower.arenaSpan.bothHalvesVerified,true);const span=stage.tower.arenaSpan;assert.ok(span.endpointProjection[0]<-span.minimumHalfDepth&&span.endpointProjection[1]>span.minimumHalfDepth,'whole swept deck/rider envelope enters both opposing halves');}
  for(const p of [...stage.rainmaker.goals,stage.rainmaker.center])assert.ok(Number.isFinite(level.groundHeight(p[0],p[2])));
  G.match.mode='turf';G.match.opts={};
- const spawned=f.make();assert.equal(f.beginInitialSquidSpawn(spawned),true);assert.ok(spawned.s3.squidSpawn.target,'initial landing fallback is supported');
+ const spawned=f.make();spawned._integrate=f.Actor.prototype._integrate;
+ assert.equal(f.beginInitialSquidSpawn(spawned),true);assert.ok(spawned.s3.squidSpawn.target,'initial landing fallback is supported');
  spawned.intent.fire=true;spawned.update(1/60);assert.equal(spawned.s3.squidSpawn.phase,'flight');spawned.intent.fire=false;
- for(let i=0;i<75;i++)spawned.update(1/60);assert.equal(spawned.s3.squidSpawn,undefined);assert.equal(spawned.grounded,true);
+ // A supported endpoint above the spawner can retain upward flight velocity.
+ // The production landing handoff then uses ordinary gravity and source
+ // collision. A no-op fixture integrator cannot verify that touchdown.
+ let landingFrames=0;
+ while(spawned.s3.squidSpawn&&landingFrames<180){G.time+=1/60;spawned.update(1/60);landingFrames++;}
+ assert.equal(spawned.s3.squidSpawn,undefined);assert.equal(spawned.grounded,true);assert.equal(spawned.ground.hit,true);
  const brain=new f.BotBrain(spawned,'normal');const candidates=f.nativePaintGoalIds(brain,G);assert.ok(candidates.length>0,'reachable native paint goals');
  const startNode=G.nav.nearest(spawned.pos,1.2);for(const target of candidates.slice(0,5))assert.ok(G.nav.path(startNode,target,spawned.team,50000),'directed path to sampled paint goal');
- console.log(JSON.stringify({id,tower:stage.tower.supported?{nodes:stage.tower.path.length,center:stage.tower.path[stage.tower.centerIndex],halfSize:stage.tower.halfSize,lift:stage.tower.localLift,arenaSpan:stage.tower.arenaSpan}:stage.ruleAvailability.tower,ppm:G.paint.ppm,atlas:2048,faces:level.faces.length,gridBytes:G.paint.grid.byteLength,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds:performance.now()-start}));
+ console.log(JSON.stringify({id,tower:stage.tower.supported?{nodes:stage.tower.path.length,center:stage.tower.path[stage.tower.centerIndex],halfSize:stage.tower.halfSize,lift:stage.tower.localLift,arenaSpan:stage.tower.arenaSpan}:stage.ruleAvailability.tower,ppm:G.paint.ppm,atlas:2048,faces:level.faces.length,gridBytes:G.paint.grid.byteLength,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,landingFrames,navMilliseconds:performance.now()-start}));
 });
