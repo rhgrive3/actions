@@ -173,7 +173,7 @@ export function updateNativeDrop(brain,G,dt){
   input.move.set(0,0,0);brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeDrop=null;return true;
   }
  }
- if(a.grounded&&nativeSourceFootSupported(G,a,to)){ 
+ if(a.grounded&&nativeSourceFootSupported(G,a,to)){
   const delta=goal.sub(a.pos).setY(0);
   if(delta.length()<.35){brain.pi=index+1;brain._nativeDrop=null;return false;}
   input.move.copy(delta);if(input.move.length()>1)input.move.normalize();return true;
