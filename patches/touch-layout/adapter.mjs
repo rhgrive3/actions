@@ -15,29 +15,32 @@ export function adaptTouchLayout(rel, code) {
   if (rel === 'src/main.js') {
     code = connect(code, '  _padMenus() {\n    const inp = this.input;', `  _padMenus() {
     const inp = this.input;
-    // The layout dialog is modal for physical controllers too. Its controls
-    // remain native touch/keyboard UI; pad input cannot reach the screen below.
-    let layoutOwnsPad = false;
+    let layoutOwnsPoll = false;
     const editorOwnsPad = () => {
-      if (!layoutOwnsPad && !inp.mobile?.editing && !inp._layoutPadEnded) return false;
-      // Keep ownership latched for this entire poll, including an accept
-      // callback which opens and closes the editor before returning.
-      layoutOwnsPad = true; inp._layoutPadEnded = false;
+      if (!layoutOwnsPoll && !inp.mobile?.editing && !inp._layoutPadAwaitNeutral) return false;
+      // Native accept may open and close the dialog before returning. Its
+      // open flag and this poll-local latch still own every remaining edge.
+      layoutOwnsPoll = true; this._layoutPadAwaitNeutral = true;
       const edges = new Set(inp.padMenuPressed || inp.padPressed || []);
       for (let i = 0; i < (inp.pad?.buttons?.length || 0); i++) {
         const button = inp.pad.buttons[i];
-        if (button.pressed || ((i === 6 || i === 7) && button.value > 0.3)) edges.add(i);
+        if (button.pressed || ((i === 6 || i === 7) && button.value > .3)) edges.add(i);
       }
       for (const i of edges) inp.consumePadMenuButton?.(i);
-      inp.padMenuPressed?.clear(); inp.padPressed?.clear();
-      this._layoutPadAxesBlocked = true; this._stickT = 0;
+      inp.padMenuPressed?.clear(); inp.padPressed?.clear(); this._stickT = 0;
       return true;
     };
-    if (editorOwnsPad()) return;
-    if (this._layoutPadAxesBlocked && inp.padAxis(0) === 0 && inp.padAxis(1) === 0)
-      this._layoutPadAxesBlocked = false;`, 'modal controller ownership');
-    // Keep the original nav declaration as the downstream pause adapter's
-    // unique connection; only its actual dispatches use this modal wrapper.
+    if (inp.mobile?.editing) { editorOwnsPad(); return; }
+    // Preserve the current full-neutral contract: a new button also waits
+    // while any button or stick from the modal session remains held.
+    if (this._layoutPadAwaitNeutral || inp._layoutPadAwaitNeutral) {
+      const held = inp.pad && (inp.pad.buttons?.some(b => b.pressed || b.value > .3) ||
+        inp.pad.axes?.slice(0, 4).some(value => Math.abs(value) > .3));
+      inp.padMenuPressed?.clear(); inp.padPressed?.clear(); this._stickT = 0;
+      if (!held) this._layoutPadAwaitNeutral = inp._layoutPadAwaitNeutral = false;
+      return;
+    }`, 'editor pad navigation ownership');
+    // Keep the exact nav declaration used by the downstream pause adapter.
     code = connect(code, '      const nav = (d) => this.menus.nav?.(d);',
       '      const nav = (d) => this.menus.nav?.(d);\n      const layoutNav = (d) => { if (!editorOwnsPad()) return nav(d); };',
       'mid-dispatch editor admission');
@@ -45,11 +48,8 @@ export function adaptTouchLayout(rel, code) {
     code = code.split("nav('").join("layoutNav('");
     code = connect(code, '      // left stick as d-pad with repeat',
       '      if (editorOwnsPad()) return;\n      // left stick as d-pad with repeat', 'editor before stick dispatch');
-    code = connect(code, "      if (pp.has(9) && this.menus.current === 'pause') this.resume();",
+    return connect(code, "      if (pp.has(9) && this.menus.current === 'pause') this.resume();",
       "      if (editorOwnsPad()) return;\n      if (pp.has(9) && this.menus.current === 'pause') this.resume();", 'editor before Start dispatch');
-    return connect(code, '      const ly = inp.padAxis(1), lx = inp.padAxis(0);',
-      '      const ly = this._layoutPadAxesBlocked ? 0 : inp.padAxis(1), lx = this._layoutPadAxesBlocked ? 0 : inp.padAxis(0);',
-      'editor-held stick rearm');
   }
   if (rel === 'src/ui/menu-art.js') {
     // The upstream settings preview calls these helpers without importing them.

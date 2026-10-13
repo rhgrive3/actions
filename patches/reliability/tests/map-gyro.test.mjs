@@ -102,19 +102,41 @@ test('#533 composed pending startup and real gyro resync preserve one consumer a
 });
 
 // Execute the published Game/Match HUD transport alongside the actual input/Diorama path.
-for(const dead of [false,true])test(`#523 + #533 emitted defaults hide corner map while ${dead?'dead':'alive'} gyro projection and A confirmation work`,{skip:!BUILT},async()=>{
+for(const dead of [false,true])for(const flip of [false,true])test(`#523 + #533 + #907 emitted corner map stays OFF while explicit ${flip?'flipped':'unflipped'} Turf Map supports ${dead?'dead':'alive'} gyro and A confirmation`,{skip:!BUILT},async()=>{
  const {pathToFileURL}=await import('node:url'),site=path.resolve(BUILT),mods=new Map(),context=vm.createContext({console,performance,URL,URLSearchParams,location:{search:''},innerWidth:1000,innerHeight:700});
  function load(file){if(mods.has(file))return mods.get(file);let source=fs.readFileSync(file,'utf8');if(file===path.join(site,'src/main.js')){const boot=/const ([\w$]+)=new ([\w$]+);\1\.boot\(\)\.catch\([\s\S]*$/,hit=source.match(boot);assert.ok(hit,'production bootstrap export');source=source.replace(boot,`export { ${hit[2]} as Game };`);}const m=new vm.SourceTextModule(source,{context,identifier:file,initializeImportMeta(meta){meta.url=pathToFileURL(file).href;}});mods.set(file,m);return m;}
  const main=load(path.join(site,'src/main.js'));await main.link((s,m)=>load(s==='three'?path.join(site,'vendor/three/build/three.module.js'):s.startsWith('three/addons/')?path.join(site,'vendor/three/jsm',s.slice('three/addons/'.length)):path.resolve(path.dirname(m.identifier),s)));await main.evaluate();
  const h=await setup(dead),G=mods.get(path.join(site,'src/core/ctx.js')).namespace.G,defaults=mods.get(path.join(site,'src/config.js')).namespace.DEFAULT_SETTINGS;
  assert.equal(defaults.minimap,false);h.G.settings={...defaults,aimAssist:0};G.camera=h.G.camera;G.teamHex=h.G.teamHex;
  Object.assign(h.m,{actors:h.G.actors,time:100,duration:180,teamSummary:mods.get(path.join(site,'src/game/match.js')).namespace.Match.prototype.teamSummary,updateController:mods.get(path.join(site,'src/game/match.js')).namespace.Match.prototype.updateController});
- let frame,hidden=0,shown=0;const game={match:h.m,settings:h.G.settings,fps:60,_hintT:0,_hints:{shot:true},_lowInkFlash:0,minimap:{canvas:{},w:100,h:100,flip:false,update(){shown++;},tickHidden(){hidden++;}},hud:{update(_dt,value){frame=value;}},input:{mobile:{setHud(){}}}};
- function hud(){main.namespace.Game.prototype._updateHud.call(game,STEP);assert.equal(frame.map,null);}
- hud();const pose=[h.camera.yaw,h.camera.pitch],pin=h.ui.pins[1],e=h.G.camera.projectionMatrix.elements;
+ // Execute the shipped projection with its real logical dimensions and bounds.
+ // Only raster scheduling is counted here; this Node fixture does not draw a canvas.
+ const Minimap=mods.get(path.join(site,'src/game/minimap.js')).namespace.Minimap;
+ const bounds={minX:-12,maxX:20,minZ:-18,maxZ:10},s=3;
+ let frame,hidden=0,shown=0,projected=0;
+ const minimap={canvas:{},level:{bounds},s,w:(bounds.maxX-bounds.minX)*s,h:(bounds.maxZ-bounds.minZ)*s,flip,
+  update(){shown++;},tickHidden(){hidden++;},toCanvas(x,z,out){projected++;return Minimap.prototype.toCanvas.call(this,x,z,out);}};
+ const game={match:h.m,settings:h.G.settings,fps:60,_hintT:0,_hints:{shot:true},_lowInkFlash:0,minimap,hud:{update(_dt,value){frame=value;}},input:{mobile:{setHud(){}}}};
+ function hud(expanded){
+  const before={hidden,shown,projected};main.namespace.Game.prototype._updateHud.call(game,STEP);
+  assert.equal(game.settings.minimap,false,'opening Turf Map must not enable the corner setting');
+  assert.equal(hidden-before.hidden,expanded?0:1);assert.equal(shown-before.shown,expanded?1:0);
+  if(!expanded){assert.equal(frame.map,null);assert.equal(projected,before.projected);assert.equal(game._hudPlayers.length,0);return;}
+  assert.equal(frame.map.canvas,minimap.canvas);assert.equal(frame.map.expanded,true);
+  const actors=h.m.actors.filter(a=>a.alive);assert.equal(frame.map.players.length,actors.length);assert.equal(projected-before.projected,actors.length);
+  actors.forEach((a,i)=>{
+   const p=frame.map.players[i],x=(flip?a.pos.x-bounds.minX:bounds.maxX-a.pos.x)/(bounds.maxX-bounds.minX),y=(flip?a.pos.z-bounds.minZ:bounds.maxZ-a.pos.z)/(bounds.maxZ-bounds.minZ);
+   assert.ok(Math.abs(p.x-x)<1e-12,'native world-to-map x');assert.ok(Math.abs(p.y-y)<1e-12,'native world-to-map y');
+   assert.equal(p.team,a.team);assert.equal(p.isSelf,a.isLocal);assert.equal(p.alive,true);assert.equal(p.color,G.teamHex[a.team]);assert.equal(p.yaw,-a.yaw+(flip?Math.PI:0));
+  });
+ }
+ h.c.setTurfMap(false);hud(false);
+ h.input.pressed.add('Tab');h.m.updateController(STEP);h.ui.update(STEP,1);assert.equal(h.c.mapHeld,true);
+ hud(true);const pose=[h.camera.yaw,h.camera.pitch],pin=h.ui.pins[1],e=h.G.camera.projectionMatrix.elements;
  const delta=(from,to,focal)=>Math.atan((from-.5)*2/focal)-Math.atan((to-.5)*2/focal);
- h.motion(delta(h.ui.cx,pin.x/1000,e[0]),delta(h.ui.cy,(pin.y-34)/700,e[5]));h.ui.update(STEP,1);hud();
+ h.motion(delta(h.ui.cx,pin.x/1000,e[0]),delta(h.ui.cy,(pin.y-34)/700,e[5]));h.ui.update(STEP,1);hud(true);
  assert.deepEqual([h.camera.yaw,h.camera.pitch],pose);assert.equal(h.c.mapGyroTarget.actor,h.allies[1]);assert.equal(h.a.superJumpState,null);
  h.frame([1]);if(dead){assert.equal(h.c.pendingRespawnJump?.actor,h.allies[1]);h.a.respawn();h.a.grounded=true;h.m.updateController(STEP);}
- assert.ok(h.a.superJumpState?.target.equals(h.allies[1].pos));hud();assert.equal(hidden,3);assert.equal(shown,0);
+ assert.ok(h.a.superJumpState?.target.equals(h.allies[1].pos));
+ h.c.setTurfMap(false);hud(false);assert.equal(hidden,2);assert.equal(shown,2);
 });

@@ -122,8 +122,8 @@ jobs:
         run: |
           node --experimental-vm-modules --test patches/reliability/tests/net.test.mjs patches/reliability/tests/next-seven-room.test.mjs patches/local-quality/tests/gyro-stale.test.mjs patches/local-quality/tests/gyro-viability.test.mjs patches/local-quality/tests/gyro-focus.test.mjs
           node --experimental-vm-modules --test --test-name-pattern='^(online |offline |ordinary online|ordinary offline|synchronous |a stale NetMatch|direct attract)' patches/reliability/tests/start.test.mjs
-      - name: Verify layout editor modal controller ownership
-        run: node --experimental-vm-modules --test patches/touch-layout/tests/pad-modal.test.mjs
+      - name: Verify modal controller and pending Pointer Lock lifetimes
+        run: node --experimental-vm-modules --test patches/reliability/tests/editor-pad-menu.test.mjs patches/reliability/tests/touch-pointerlock.test.mjs
       - name: Verify PR1172 Slosher and Ink Vac regressions
         run: node --experimental-vm-modules --test patches/network-replication/tests/slosher-birth-sampling.test.mjs patches/splatoon3/tests/issue-1150-volley-wire.test.mjs patches/splatoon3/tests/slosher-wire-group-forwarding.test.mjs patches/splatoon3/tests/issue-1149-vortex-contact.test.mjs patches/splatoon3/tests/issue-1090-ink-vac-damage-credit.test.mjs patches/splatoon3/tests/kit-ink-vac.test.mjs patches/splatoon3/tests/batch-b-final-damage.test.mjs
       - name: Verify PR1172 updated wire contracts
@@ -296,8 +296,8 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
-      - name: Verify emitted layout editor controller routing
-        run: INKWAVE_LAYOUT_PAD_SITE="$PWD/_site" node --experimental-vm-modules --test patches/touch-layout/tests/pad-modal.test.mjs
+      - name: Verify emitted modal controller and Pointer Lock lifetimes
+        run: INKWAVE_CONTROLS_SITE="$PWD/_site" INKWAVE_POINTER_LOCK_SITE="$PWD/_site" node --experimental-vm-modules --test patches/reliability/tests/editor-pad-menu.test.mjs patches/reliability/tests/touch-pointerlock.test.mjs
       - name: Verify exact owned rectangle scans against production build
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
