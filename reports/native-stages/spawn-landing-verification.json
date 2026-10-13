@@ -1,0 +1,177 @@
+{
+  "status": "passed",
+  "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+  "commits": [
+    "f680a24e",
+    "9349e05b"
+  ],
+  "reference": "Splatoon 3 11.3.0 identity/weapon data; retail spawn placement, launch trajectory and native collision unverified",
+  "weapon": "shooter / WeaponShooterNormal",
+  "gear": "three items, none main and none subs",
+  "conditions": "Chromium SwiftShader; production Actor integrator; actual 8 actors / 7 bots; controlled neutral aim + fire; both human teams and all 4 bot slots; normal source-route movement after landing; no source geometry or velocity change; not hardware FPS",
+  "negativeBefore": {
+    "id": "brinewater",
+    "team": 0,
+    "slot": 2,
+    "hz": 30,
+    "safeLandingButNoGoalRoute": true,
+    "landingNode": 590,
+    "goalNode": 3990,
+    "reproducedAfterSourceSeededPrune": true
+  },
+  "changes": {
+    "nativeBotEndpointsReachCanonicalLivePaintComponent": true,
+    "sourceNodeHeightRetainedThroughLaunchValidation": true,
+    "humanFreeAimPreserved": true,
+    "legacyPolicyAndVelocityPreserved": true,
+    "realFixtureIntegrator": true,
+    "sourceBrowserStateBasedTouchdown": true
+  },
+  "cpu": {
+    "originalFiveBotCases": 120,
+    "museumBotCases": 24,
+    "objectiveRoutesPerCase": 14,
+    "assetMatrixPass": 60,
+    "assetMatrixSkip": 4,
+    "assetMatrixFail": 0,
+    "pureLegacyAndTowerUnitPass": 7,
+    "pureAssetFixtureSkip": 1,
+    "emittedPackagingPass": 9
+  },
+  "stages": [
+    {
+      "id": "scorch",
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "actors": 8,
+      "bots": 7,
+      "cases": 30,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "humanCases": 6,
+      "botCases": 24,
+      "maximumLandingSeconds": 1,
+      "minimumPostLaunchMove": 4.049001600728384,
+      "allSourceSupports": true,
+      "allExactHeightNodes": true,
+      "allDirectedObjectiveRoutes": true,
+      "humanAirOnlyRoofCases": 0,
+      "version1130Verified": false
+    },
+    {
+      "id": "hagglefish",
+      "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+      "actors": 8,
+      "bots": 7,
+      "cases": 30,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "humanCases": 6,
+      "botCases": 24,
+      "maximumLandingSeconds": 1,
+      "minimumPostLaunchMove": 4.1784700362698235,
+      "allSourceSupports": true,
+      "allExactHeightNodes": true,
+      "allDirectedObjectiveRoutes": true,
+      "humanAirOnlyRoofCases": 0,
+      "version1130Verified": false
+    },
+    {
+      "id": "inkblot",
+      "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+      "actors": 8,
+      "bots": 7,
+      "cases": 30,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "humanCases": 6,
+      "botCases": 24,
+      "maximumLandingSeconds": 1,
+      "minimumPostLaunchMove": 3.212558300132261,
+      "allSourceSupports": true,
+      "allExactHeightNodes": true,
+      "allDirectedObjectiveRoutes": true,
+      "humanAirOnlyRoofCases": 0,
+      "version1130Verified": false
+    },
+    {
+      "id": "mako",
+      "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+      "actors": 8,
+      "bots": 7,
+      "cases": 30,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "humanCases": 6,
+      "botCases": 24,
+      "maximumLandingSeconds": 1,
+      "minimumPostLaunchMove": 3.739018656925997,
+      "allSourceSupports": true,
+      "allExactHeightNodes": true,
+      "allDirectedObjectiveRoutes": true,
+      "humanAirOnlyRoofCases": 0,
+      "version1130Verified": false
+    },
+    {
+      "id": "brinewater",
+      "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+      "actors": 8,
+      "bots": 7,
+      "cases": 30,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "humanCases": 6,
+      "botCases": 24,
+      "maximumLandingSeconds": 1,
+      "minimumPostLaunchMove": 4.144521635100862,
+      "allSourceSupports": true,
+      "allExactHeightNodes": true,
+      "allDirectedObjectiveRoutes": true,
+      "humanAirOnlyRoofCases": 0,
+      "version1130Verified": false
+    },
+    {
+      "id": "museum",
+      "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+      "actors": 8,
+      "bots": 7,
+      "cases": 30,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "humanCases": 6,
+      "botCases": 24,
+      "maximumLandingSeconds": 1.5583333333333333,
+      "minimumPostLaunchMove": 3.681105034602088,
+      "allSourceSupports": true,
+      "allExactHeightNodes": true,
+      "allDirectedObjectiveRoutes": true,
+      "humanAirOnlyRoofCases": 6,
+      "version1130Verified": false
+    }
+  ],
+  "publicSource": {
+    "museumOriginalDownload": true,
+    "derivedCacheHit": true,
+    "repeatObjDownloads": 0,
+    "alteredObjRollback": true
+  },
+  "privateEvidence": "ignored .browser-evidence and .ci-scratch; no original/derived models or screenshots committed",
+  "version1130Verified": false
+}
