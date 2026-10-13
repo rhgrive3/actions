@@ -50,9 +50,9 @@ Numeric checkpoint results, the exact accepted camera build fingerprint, softwar
 
 ```sh
 python3 patches/native-stages/tools/build-native.py --source .codex-stage-sources/KiTrix/stages --out .codex-stage-sources/generated --stages urchin
-INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node scripts/build-inkwave.mjs inkwave-public _site-native-urchin
-node scripts/build-inkwave.mjs inkwave-public _site-native-urchin-public
-INKWAVE_NATIVE_STAGE_SOURCE="$PWD/.codex-stage-sources/KiTrix/stages" INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" node --experimental-vm-modules --test patches/native-stages/tests/*.test.mjs
+INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" flock /workspace/actions/.ci-scratch/native-stage-cpu-heavy.lock node scripts/build-inkwave.mjs inkwave-public _site-native-urchin
+flock /workspace/actions/.ci-scratch/native-stage-cpu-heavy.lock node scripts/build-inkwave.mjs inkwave-public _site-native-urchin-public
+INKWAVE_NATIVE_STAGE_SOURCE="$PWD/.codex-stage-sources/KiTrix/stages" INKWAVE_NATIVE_STAGE_ASSETS="$PWD/.codex-stage-sources/generated" flock /workspace/actions/.ci-scratch/native-stage-cpu-heavy.lock node --experimental-vm-modules --test --test-concurrency=1 patches/native-stages/tests/*.test.mjs
 NATIVE_STAGE_IDS=urchin flock /workspace/actions/.ci-scratch/native-stage-browser.lock node scripts/check-inkwave-native-stages.mjs _site-native-urchin .browser-evidence/gameplay
 NATIVE_STAGE_IDS=urchin flock /workspace/actions/.ci-scratch/native-stage-browser.lock node scripts/check-inkwave-native-source-browser.mjs _site-native-urchin-public .browser-evidence/source-browser
 NATIVE_STAGE_IDS=urchin NATIVE_HOST_WEAPON=s3-blaster-short flock /workspace/actions/.ci-scratch/native-stage-browser.lock node scripts/check-inkwave-native-online.mjs _site-native-urchin .browser-evidence/online
@@ -64,6 +64,6 @@ flock /workspace/actions/.ci-scratch/native-stage-browser.lock node scripts/chec
 NATIVE_STAGE_IDS=urchin NATIVE_MOBILE_STAGE_IDS=urchin flock /workspace/actions/.ci-scratch/native-stage-browser.lock node scripts/check-inkwave-native-lifecycle.mjs _site-native-urchin .browser-evidence/lifecycle
 ```
 
-Public builds contain no original models, images or derived model buffers. The browser obtains authentic pinned source directly and verifies it before conversion. The software Chromium renderer does not establish physical mobile or Switch FPS. Source provenance is a third-party display export, so 11.3.0 extraction date, coordinate units, native gameplay flags, shader parameters and original placements remain unverified.
+Public builds contain no original models, images or derived model buffers. The browser obtains authentic pinned source directly and verifies it before conversion. The software Chromium renderer does not establish physical mobile or Switch FPS. Source provenance is a third-party display export; rights and redistribution permission, 11.3.0 extraction date, coordinate units, native gameplay flags, shader parameters and original placements remain unverified.
 
 The prepared `check-inkwave-urchin-source-input.mjs` check requires the accepted legal source-floor approach configuration. It has passed syntax validation but has not yet run against the final common code. Earlier tower capsule checks prove collision clearance only. They do not establish floor-input boarding.
