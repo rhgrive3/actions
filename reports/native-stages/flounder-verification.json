@@ -81,7 +81,9 @@
     "tower": "89cb600efe646ad1741a05de2ab21119a1438c66",
     "spawnDirectedPrune": "64b0497e50c648df1afef4ef053e0d5026eed275",
     "sourceLaunch": "64c82c024f275d9a64632ca958b63ab035d0e40a",
-    "allModePaintChecker": "2b2406385d70c2d3f0ca0c61be8b17b7193e237b"
+    "allModePaintChecker": "2b2406385d70c2d3f0ca0c61be8b17b7193e237b",
+    "sourceBotSupport": "79ad61c59889a5e424bc56ca934422dde184baaf",
+    "plainClimbRecovery": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74"
   },
   "latestTowerReverification": {
     "cpu": {
@@ -2714,5 +2716,396 @@
     "native material shaders",
     "physical Switch/mobile FPS",
     "Nintendo frame/speed equivalence"
-  ]
+  ],
+  "postAcceptanceClimbRecovery": {
+    "pr": 1372,
+    "foundation": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74",
+    "runtimeHead": "ffef6dc449adfc99394e801947cd62c160d5414b",
+    "runtimeSha256": "6456ecb803a7c186313feb5c3efeedd316577a38c62d425fa8ab5d6208cf74a4",
+    "navUnchanged": {
+      "climbEdges": 116,
+      "navNodes": 9973,
+      "validNodes": 7774,
+      "noPaintNegativeCases": 26,
+      "blockedSourceCorridors": 8,
+      "navBuildMilliseconds": 9887.899982,
+      "enemyWallReleased": true
+    },
+    "cpuBankTraversal": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 30.866666666666667,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          10,
+          12.08,
+          -70
+        ],
+        "end": [
+          -14.500000849098905,
+          6,
+          33.586943526649875
+        ],
+        "distanceToGoal": 1.4130564733503796,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 31.916666666666668,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          10,
+          12.08,
+          -70
+        ],
+        "end": [
+          -14.499958386595203,
+          6,
+          33.51206684497456
+        ],
+        "distanceToGoal": 1.487933155607344,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 35.53333333333333,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          10,
+          12.08,
+          -70
+        ],
+        "end": [
+          -14.499952685658725,
+          6,
+          33.51943916937893
+        ],
+        "distanceToGoal": 1.4805608313770862,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 31.8,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          -10,
+          12.08,
+          70
+        ],
+        "end": [
+          14.710456984232769,
+          6,
+          -33.80596180666468
+        ],
+        "distanceToGoal": 1.4314696576911021,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 33.53333333333333,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          -10,
+          12.08,
+          70
+        ],
+        "end": [
+          14.69784655113859,
+          6,
+          -33.81810809015446
+        ],
+        "distanceToGoal": 1.428397228392226,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "seconds": 33.141666666666666,
+        "replans": 0,
+        "initialWaypoints": 123,
+        "initialClimbs": 2,
+        "start": [
+          -10,
+          12.08,
+          70
+        ],
+        "end": [
+          14.667665337709915,
+          6,
+          -33.76171011944801
+        ],
+        "distanceToGoal": 1.4920264134146581,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      }
+    ],
+    "cpuBankConditions": "CPU real Actor movement, WeaponRunner, Projectiles and fixed paint clock; f.make uses a standing Character muzzle fixed in world +Z and a dry presentation tail. This is separate from the production Character CPU six-case and real Chromium six-case proofs.",
+    "productionRigCpu": [
+      {
+        "team": 0,
+        "hz": 30,
+        "seconds": 1.2666666666666666,
+        "productionCharacterMuzzle": true,
+        "realWeaponPaint": true,
+        "sourceUpperSupport": true,
+        "gearAP": 0
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 1.25,
+        "productionCharacterMuzzle": true,
+        "realWeaponPaint": true,
+        "sourceUpperSupport": true,
+        "gearAP": 0
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "seconds": 1.3583333333333334,
+        "productionCharacterMuzzle": true,
+        "realWeaponPaint": true,
+        "sourceUpperSupport": true,
+        "gearAP": 0
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "seconds": 1.2666666666666666,
+        "productionCharacterMuzzle": true,
+        "realWeaponPaint": true,
+        "sourceUpperSupport": true,
+        "gearAP": 0
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 1.25,
+        "productionCharacterMuzzle": true,
+        "realWeaponPaint": true,
+        "sourceUpperSupport": true,
+        "gearAP": 0
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "seconds": 1.2583333333333333,
+        "productionCharacterMuzzle": true,
+        "realWeaponPaint": true,
+        "sourceUpperSupport": true,
+        "gearAP": 0
+      }
+    ],
+    "productionChromium": {
+      "fingerprint": "db4598812b97",
+      "actors": 8,
+      "bots": 7,
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "seconds": 1.2666666666666666,
+          "cancelledBefore": true,
+          "released": true,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "grounded": true,
+          "ownedWallSamples": 12,
+          "sourceWallSamples": 12,
+          "end": [
+            20.49999637848154,
+            15.050000190734863,
+            -6.0937975083924965
+          ],
+          "cpuStep": {
+            "p50": 1.1000000089406967,
+            "p95": 20.600000008940697,
+            "max": 21.799999997019768
+          }
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "seconds": 1.25,
+          "cancelledBefore": true,
+          "released": true,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "grounded": true,
+          "ownedWallSamples": 12,
+          "sourceWallSamples": 12,
+          "end": [
+            20.499998350771275,
+            15.050000190734863,
+            -6.048317553952296
+          ],
+          "cpuStep": {
+            "p50": 0.7999999970197678,
+            "p95": 5.699999988079071,
+            "max": 26.599999994039536
+          }
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "seconds": 1.3583333333333334,
+          "cancelledBefore": true,
+          "released": true,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "grounded": true,
+          "ownedWallSamples": 12,
+          "sourceWallSamples": 12,
+          "end": [
+            20.500001240457937,
+            15.050000190734863,
+            -5.953871921205191
+          ],
+          "cpuStep": {
+            "p50": 0.7999999970197678,
+            "p95": 6.0999999940395355,
+            "max": 26.30000001192093
+          }
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "seconds": 1.2666666666666666,
+          "cancelledBefore": true,
+          "released": true,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "grounded": true,
+          "ownedWallSamples": 12,
+          "sourceWallSamples": 12,
+          "end": [
+            -20.499998941857214,
+            15.050000190734863,
+            6.023373315448072
+          ],
+          "cpuStep": {
+            "p50": 1.2999999970197678,
+            "p95": 6.5999999940395355,
+            "max": 24
+          }
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 1.25,
+          "cancelledBefore": true,
+          "released": true,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "grounded": true,
+          "ownedWallSamples": 12,
+          "sourceWallSamples": 12,
+          "end": [
+            -20.49999874477687,
+            15.050000190734863,
+            6.032332920302927
+          ],
+          "cpuStep": {
+            "p50": 0.7000000029802322,
+            "p95": 4.799999997019768,
+            "max": 30.19999998807907
+          }
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "seconds": 1.3583333333333334,
+          "cancelledBefore": true,
+          "released": true,
+          "fire": true,
+          "swim": true,
+          "climbed": true,
+          "grounded": true,
+          "ownedWallSamples": 12,
+          "sourceWallSamples": 12,
+          "end": [
+            -20.500001372788834,
+            15.050000190734863,
+            5.95424612706163
+          ],
+          "cpuStep": {
+            "p50": 0.5999999940395355,
+            "p95": 5.0999999940395355,
+            "max": 28.700000002980232
+          }
+        }
+      ],
+      "errors": [],
+      "conditions": "Canonical Shooter_Normal_00,0AP; source-supported initial firing stance; real prelude fire→swim interruption; normal BotBrain/Actor/production Character/WeaponRunner/Projectiles/fixed paint clock; eight actors retained, unrelated bots frozen; SwiftShader"
+    },
+    "publicPackaging": {
+      "fingerprint": "cff6681b3329",
+      "budget": {
+        "status": "passed",
+        "revision": "161177d3a66c1ecc4a377dcd58cc7968ccda3ed33a1c4abfa72746a4d3966f86",
+        "initialJSRequests": 146,
+        "modulePreloads": 145,
+        "coreModulePreloads": 131,
+        "practiceRangeModulePreloads": 14,
+        "practiceRangePreloadBytes": 74638,
+        "initialJSBytes": 2883879,
+        "criticalHTMLBytes": 15371,
+        "precacheCount": 365,
+        "precacheBytes": 5777972,
+        "workerBytes": 70517,
+        "declaredBytes": 10396012,
+        "measurementKind": "deterministic file and dependency gates; not native browser timings"
+      },
+      "emittedPackaging": {
+        "tests": 9,
+        "pass": 9,
+        "fail": 0,
+        "skip": 0
+      },
+      "thirdPartyPayloadIncluded": false
+    },
+    "limits": "This does not promote the separately owned ranked-wrapper, Drop, Surge or Tower boarding changes and does not claim autonomous cross-rule whole-bank coverage from the controlled local wall probes.",
+    "independentReview": [
+      "Root exact runtime",
+      "Bluefin exact source/negative/fullbanks/production-rig/defaults and inspected Chromium"
+    ],
+    "sourceBuffersAndMasksUnchanged": true
+  }
 }
