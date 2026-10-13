@@ -516,5 +516,17 @@
     "skipped": 4,
     "failed": 0,
     "scope": "Combat7 +grounded-form contracts and3Drop source tests; optional real3Drop/sourceBluefin1 fixtures absent indefault invocation. ProperVMflags. Not current whole-stage browser proof."
+  },
+  "current900Public": {
+    "candidateRuntime": "df7ec808",
+    "sourceHelperSHA256": "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496",
+    "contentHash": "72ddf65f1e375f9319adb56b72a2f619616652186b97cdecba965e48bfe965a4",
+    "inputHash": "b8ed9c0a25cdd03608428254858f4d6f5945fa1e514706267619562d76cbf9a8",
+    "revision": "c46648934e901bd275ea91ab98c6a8c904e29cff1f2917a88378223c20afd6f4",
+    "packagingPassed": 9,
+    "budget": "passed",
+    "corePreloads": 131,
+    "rangePreloads": 14,
+    "actualNaturalCombinedGame": "pending Wahoo current paired jump and Ship independent continuation; existing controlled goal-replay failures remain historical."
   }
 }
