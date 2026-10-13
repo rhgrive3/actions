@@ -5,7 +5,7 @@ import path from 'node:path';
 import {nativeStageCatalog,prepareNativeStageBuild} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {parseSourceOBJ} from '../runtime/source-convert.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
-import {nativeTowerClearance} from '../runtime/native-tower-clearance.mjs';
+import {nativeStageRuleStatus} from '../runtime/rule-availability.mjs';
 
 const definition=JSON.parse(fs.readFileSync(new URL('../definitions/mincemeat.json',import.meta.url)));
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
@@ -20,6 +20,10 @@ test('revised Mincemeat is discoverable with explicit inferred placement',()=>{
  assert.equal(stage.tree,'257212ff6a22efaf9773c55568f165c86fce967a');
  assert.equal(stage.version1130Verified,false);
  assert.match(stage.placementStatus,/unverified/);
+ const unavailable=nativeStageRuleStatus(stage.id,'tower',[stage]);
+ assert.equal(unavailable.supported,false);assert.equal(unavailable.status,'source-route-unverified');assert.match(unavailable.reason,/ガチヤグラ/);
+ assert.equal(unavailable.evidence.sourceAttributesPreserved,true);assert.equal(unavailable.evidence.opposingSpawnPadsPreserved,true);
+ for(const mode of ['turf','zones','rainmaker','clams'])assert.equal(nativeStageRuleStatus(stage.id,mode,[stage]).supported,true);
  const publicBuild=prepareNativeStageBuild(null);
  assert.equal(publicBuild.root,null);
  assert.equal(publicBuild.config.mode,'browser-direct');
@@ -109,24 +113,12 @@ test('Mincemeat supports, capsule movement, wall ink, and rules use actual sourc
   assert.ok(id>=0&&reachable.every(set=>set.has(id)),'both teams can reach ranked objective');
  }
  assert.ok(stage.zones[0].center[1]<11,'ranked center stays on shared lower gameplay floor');
- const clearance=nativeTowerClearance(level,PLAYER,stage.tower.halfSize),path=stage.tower.path;
- assert.equal(stage.tower.boarding.approaches.length,path.length);
- assert.ok(stage.tower.centerIndex>=3&&path.length-stage.tower.centerIndex>=4,'supported tower has travel on both sides of center');
- const span=stage.tower.arenaSpan;
- assert.equal(span.bothHalvesVerified,true);
- assert.ok(span.endpointProjection[0]<-span.minimumHalfDepth&&span.endpointProjection[1]>span.minimumHalfDepth,'the complete deck and rider envelope enters both opposing-pad arena halves');
- for(const approach of stage.tower.boarding.approaches){assert.ok(approach.height<=stage.tower.boarding.maxJumpHeight);assert.ok(reachable.every(set=>set.has(approach.sourceNode)),'both teams reach every source boarding approach');}
- assert.ok(stage.tower.sourceClearance.assurance.includes('retail trajectory/lift unverified'));
- for(let i=0;i<path.length;i++)assert.ok(clearance.clear(path[i],path[Math.max(0,i-1)]),'full tower swept deck/pole/capsule clears source triangles');
- level._addBlock({kind:'obox',center:[path[0][0],path[0][1]-.12,path[0][2]],size:[stage.tower.halfSize*2,.24,stage.tower.halfSize*2],rotY:0,paint:false,hidden:true});
- const deck=level.blocks.at(-1),rider=f.make();
- const samples=path.flatMap((p,i)=>i?[p,...[.25,.5,.75].map(t=>p.map((v,k)=>path[i-1][k]+(v-path[i-1][k])*t))]:[p]);
- for(const point of samples){
-  deck.center.set(point[0],point[1]-.12,point[2]);deck.aabbMin.copy(deck.center).sub(deck.half);deck.aabbMax.copy(deck.center).add(deck.half);
-  rider.pos.fromArray(point);rider.pos.x+=.7;rider.vel.set(0,0,0);rider.grounded=false;rider._resolve(false,rider.pos.y,false);
-  assert.ok(rider.grounded&&rider.ground.hit,'real capsule remains supported at every tower node and three interior samples of every segment');
-  assert.equal(rider.ground.block,deck.id);
- }
+ assert.equal(stage.tower.supported,false);assert.equal(stage.tower.status,'source-route-unverified');
+ assert.equal(stage.tower.reason,definition.ruleAvailability.tower.reason);
+ assert.deepEqual(stage.tower.path,[],'the asymmetric local prototype cannot enter production Tower');
+ const before={level:G.level,physics:G.physics,paint:G.paint,nav:G.nav};
+ assert.throws(()=>f.nativeRankedStage(G,'tower'),error=>error instanceof Error&&error.name==='RangeError'&&error.code==='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED'&&error.message===stage.tower.reason);
+ for(const key of Object.keys(before))assert.equal(G[key],before[key],'unsupported Tower preserves '+key);
  G.match.mode='turf';G.match.opts={};
  const actor=f.make();actor._integrate=f.Actor.prototype._integrate;assert.equal(f.beginInitialSquidSpawn(actor),true);assert.ok(actor.s3.squidSpawn.target);
  actor.intent.fire=true;actor.update(1/60);assert.equal(actor.s3.squidSpawn.phase,'flight');actor.intent.fire=false;
@@ -135,5 +127,5 @@ test('Mincemeat supports, capsule movement, wall ink, and rules use actual sourc
  assert.equal(actor.s3.squidSpawn,undefined);assert.equal(actor.grounded,true);assert.equal(actor.ground.hit,true);
  const brain=new f.BotBrain(actor,'normal'),goals=f.nativePaintGoalIds(brain,G),from=G.nav.nearest(actor.pos,1.2);assert.ok(goals.length>0);
  for(const target of goals.slice(0,5))assert.ok(G.nav.path(from,target,actor.team,50000));
- console.log(JSON.stringify({id:'mincemeat',spawnSupport,wallSwimming:true,maskedHolesUnpainted:true,movement,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds,spawnReachable:reachable.map(s=>s.size),rankedCenter:stage.zones[0].center,towerPathNodes:stage.tower.path.length,towerLift:stage.tower.localLift,towerCenter:stage.tower.path[stage.tower.centerIndex],towerArenaSpan:span,towerSourceClearance:stage.tower.sourceClearance,towerEveryNodeAndSegmentSupportVerified:true,towerBoardingSamples:samples.length,landingFrames,paintGoals:goals.length,atlas:2048,ppm:G.paint.ppm}));
+ console.log(JSON.stringify({id:'mincemeat',spawnSupport,wallSwimming:true,maskedHolesUnpainted:true,movement,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds,spawnReachable:reachable.map(s=>s.size),rankedCenter:stage.zones[0].center,tower:{supported:stage.tower.supported,status:stage.tower.status,reason:stage.tower.reason},landingFrames,paintGoals:goals.length,atlas:2048,ppm:G.paint.ppm}));
 });
