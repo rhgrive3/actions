@@ -1,0 +1,107 @@
+{
+  "stage": "bluefin",
+  "status": "draft-source-qualified-ranked-unresolved",
+  "foundation": "64b0497e50c648df1afef4ef053e0d5026eed275",
+  "source": {
+    "id": "bluefin",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "objSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "mtlSha256": "f83477a6961931fec9d4792fc6588cd45f23a58ca7ccf820f2e038d585d3ce62",
+    "vertices": 1024229,
+    "triangles": 774445,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "sourceTexturesIdentical": 216,
+    "maxPositionDifference": 0.0,
+    "version1130Verified": false,
+    "textureAndMtlGitTreeVerified": true,
+    "objBytes": 123355936,
+    "stageTree": "e5d7d0f5097921f536b1dc3830ad4ae81e7da7d0",
+    "allAcquiredMtlPngCount": 296,
+    "allAcquiredMtlPngBytes": 12025157,
+    "allGitBlobSha1AndSizeVerified": true,
+    "uint32IndicesIndependentlyExact": true,
+    "uint32IndexCount": 2323335,
+    "sharedSourceHeadUnchanged": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "sharedSourceIndexSha256": "0c8ac8d7ce7b8aac8e2f138143811abb37152e4df73670e50022b6cf12228a87"
+  },
+  "conversion": {
+    "schema": 1,
+    "id": "bluefin",
+    "internal": "Vss_Ruins03",
+    "name": "ネギトロ炭鉱",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "version1130Verified": false,
+    "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+    "boundsStatus": "Local supports and interactive extent inferred from pinned Pnt DeckFloor display triangles; retail spawn, collision, moving elevator states and ranked placements unverified",
+    "bounds": {
+      "minX": -34.5,
+      "minZ": -75,
+      "maxX": 34.5,
+      "maxZ": 75
+    },
+    "spawnPads": [
+      [
+        -12,
+        15,
+        -70
+      ],
+      [
+        12,
+        15,
+        70
+      ]
+    ],
+    "spawnStatus": "Local supports and interactive extent inferred from pinned Pnt DeckFloor display triangles; retail spawn, collision, moving elevator states and ranked placements unverified",
+    "spawnBarrier": 2.5,
+    "collisionStatus": "inferred display triangles, not native collision",
+    "paintStatus": "inferred name/material flags and planar polygon masks, not native paint masks",
+    "ruleStatus": "Pnt display layer only; ranked objectives are local calibration",
+    "gridCells": 2384253,
+    "geometry": {
+      "vertices": 1024229,
+      "triangles": 774445,
+      "collisionTriangles": 176506,
+      "bvhNodes": 32767,
+      "paintFaces": 54410
+    },
+    "chartMaxPlaneError": 0.0009762416312090273,
+    "cell": 0.25,
+    "sourceSemantics": {
+      "inactiveObjectPatterns": [
+        "^FldObj_Ruins03(?:Tcl|Var|Vcl|Vgl|Vlf)(?:Stage|Center)_",
+        "^FldObj_Ruins03GeneralBox(?:Tcl|Var|Vcl|Vgl|Vlf)_",
+        "^FldObj_Ruins03(?:Block|BlockSide|Elevator)_"
+      ],
+      "nonPaintableObjectPatterns": [
+        "^Fld(?:Obj)?_Ruins03.*__(?:.*_np(?:_xl|_ol)?|WallPlantIvyBundle|WallPlantIvySpiral|PlantationSet|FloorLight00)$"
+      ]
+    },
+    "bytes": 96847933,
+    "textureFiles": 216,
+    "validCells": 792009,
+    "conversionSeconds": 36.96
+  },
+  "cpu": {
+    "tests": 63,
+    "passed": 57,
+    "failed": 2,
+    "skipped": 4,
+    "durationMs": 133813.437671,
+    "failure": "Native ranked center component is too small from both source-supported upper pads",
+    "sourceCapsulesAndGroundedMovement30_60_120Hz": "passed",
+    "bufferMaskPythonJavaScriptEquality": "passed"
+  },
+  "unverified": [
+    "11.3.0 extracted model version/date and units",
+    "native collision and paint/grate/climb masks",
+    "retail spawns and ranked placements",
+    "moving elevator transforms/states",
+    "native BFRES shader parameters",
+    "retail frame/speed parity",
+    "physical mobile/Switch FPS"
+  ],
+  "browserStatus": "pending"
+}
