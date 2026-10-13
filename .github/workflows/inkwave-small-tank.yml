@@ -23,6 +23,12 @@ jobs:
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        browser: [chromium, webkit]
+        dpr: [1, 2]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,18 +37,17 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Negative control, normal geometry parity and resize regression
         run: node --test patches/local-quality/tests/hud-tank-small-viewport.test.mjs patches/local-quality/tests/s3-hud-look.test.mjs
       - run: node scripts/build-inkwave.mjs inkwave-public .ci-scratch/small-tank-site
-      - name: Real Chromium small startup and resize at DPR 1 and 2
-        run: node scripts/check-inkwave-small-tank.mjs .ci-scratch/small-tank-site .ci-scratch/small-tank-chromium
-      - name: Real WebKit touch small startup and resize at DPR 1 and 2
-        run: node scripts/check-inkwave-small-tank.mjs .ci-scratch/small-tank-site .ci-scratch/small-tank-webkit --webkit
+      - name: Real ${{ matrix.browser }} small startup and resize at DPR ${{ matrix.dpr }}
+        run: |
+          browser_arg=""
+          if [ "${{ matrix.browser }}" = "webkit" ]; then browser_arg="--webkit"; fi
+          node scripts/check-inkwave-small-tank.mjs .ci-scratch/small-tank-site .ci-scratch/small-tank-evidence $browser_arg --dpr ${{ matrix.dpr }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: small-tank-browser-evidence
-          path: |
-            .ci-scratch/small-tank-chromium
-            .ci-scratch/small-tank-webkit
+          name: small-tank-browser-evidence-${{ matrix.browser }}-dpr${{ matrix.dpr }}
+          path: .ci-scratch/small-tank-evidence
