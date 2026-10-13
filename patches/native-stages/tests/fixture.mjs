@@ -24,7 +24,8 @@ export async function nativeFixture(options={}){
  export { nativeRankedStage } from './patches/native-stages/runtime/native-ranked.mjs';
  export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from './patches/native-stages/runtime/engine.mjs';
  export { nativeDropClearance,nativeDropTransition,nativeDropTravelForm } from './patches/native-stages/runtime/engine.mjs';
- export { nativeSourceWaypointReached,nativeSourceTravelInput } from './patches/native-stages/runtime/native-bot-support.mjs';
+ export {nativeSurgeTransition,updateNativeSurge} from './patches/native-stages/runtime/engine.mjs';
+ export { nativeSourceWaypointReached,nativeSourceTravelInput,nativeSourceFootSupported } from './patches/native-stages/runtime/native-bot-support.mjs';
 
  export { NativeInkMesh,partitionNativeInk } from './patches/native-stages/runtime/native-ink-chunks.mjs';
  export { nativeInkGeometry,nativeInkMaterial } from './patches/native-stages/runtime/native-render.mjs';

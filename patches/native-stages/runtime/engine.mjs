@@ -7,7 +7,7 @@ export { nativeRankedStage } from './native-ranked.mjs';
 export { nativeInitialLanding,nativeArenaBasis,nativeSpawnYaw,nativeRetreatCoordinate } from './native-spawn.mjs';
 export { nativePaintGoalIds } from './native-bots.mjs';
 export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from './native-climb.mjs';
-export { nativeSourceWaypointReached,nativeSourceTravelInput } from './native-bot-support.mjs';
+export { nativeSourceWaypointReached,nativeSourceTravelInput,nativeSourceFootSupported } from './native-bot-support.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
 
@@ -19,3 +19,4 @@ import {nativePlayableComponent} from './native-ranked.mjs';
 import {nativeBotInitialLanding as selectBotLanding} from './native-spawn.mjs';
 export function nativeBotInitialLanding(G,actor,validate){return selectBotLanding(G,actor,validate,nativePlayableComponent);}
 export {nativeDropClearance,nativeDropTransition,nativeDropTravelForm,updateNativeDrop} from './native-drop.mjs';
+export {nativeSurgeTransition,updateNativeSurge} from './native-surge.mjs';
