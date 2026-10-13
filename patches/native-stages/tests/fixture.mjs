@@ -27,6 +27,7 @@ export async function nativeFixture(options={}){
  export { nativeDropClearance,nativeDropTransition,nativeDropTravelForm } from './patches/native-stages/runtime/engine.mjs';
  export {nativeSurgeTransition,updateNativeSurge} from './patches/native-stages/runtime/engine.mjs';
  export { nativeSourceWaypointReached,nativeSourceTravelInput,nativeSourceFootSupported } from './patches/native-stages/runtime/native-bot-support.mjs';
+ export {nativeSourceGroundedForm} from './patches/native-stages/runtime/native-bot-form.mjs';
 
  export { NativeInkMesh,partitionNativeInk } from './patches/native-stages/runtime/native-ink-chunks.mjs';
  export { nativeInkGeometry,nativeInkMaterial } from './patches/native-stages/runtime/native-render.mjs';
