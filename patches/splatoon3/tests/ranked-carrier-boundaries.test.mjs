@@ -59,7 +59,7 @@ for (const ap of [0, 57]) test(`carrier charge/pending/recovery applies live Mis
   assert.equal(cloud.subId, 'toxicMist', 'real catalogue throw supplies the live volume');
   for (let i = 0; i < 120 && cloud.phase !== 'deployed'; i++) { f.G.time += 1 / 60; f.G.projectiles.update(1 / 60); }
   assert.equal(cloud.phase, 'deployed'); a.pos.copy(cloud.pos);
-  const m = pickup(f, a), c = m.ranked.rule.state.charge, scale = ap === 0 ? .72 : .86;
+  const m = pickup(f, a), c = m.ranked.rule.state.charge, scale = ap === 0 ? .5 : .75;
   for (const phase of ['idle', 'input', 'charging', 'pending', 'recovery']) {
     a.intent.fire = phase === 'input'; c.firing = phase === 'charging';
     c.pending = phase === 'pending' ? {} : null; c.recovery = phase === 'recovery' ? 20 / 60 : 0;
@@ -93,6 +93,9 @@ for (const phase of ['inhale', 'exhale']) test(`pickup disposes native Ink Vac $
   activate(f, a, 'inkVac');
   const activation = activations.at(-1), cone = f.inkVacState(a).mesh;
   assert.equal(f.replayInkVac(E.activation, replica, { ...activation, actor: replica }).applied, true);
+  // Current native Vac requires startup, a held intake and cone expansion.
+  a.intent.fire = true; f.tick(a, 75);
+  assert.equal(f.inkVacState(a).sucking, true); assert.equal(f.inkVacState(a).length, 15);
   const shot = incoming(f); assert.ok(f.inkVacAbsorbCandidate(a, shot.prev, shot.pos, shot));
   if (phase === 'exhale') {
     for (let i = 0; i < 400 && f.inkVacState(a)?.phase === 'inhale'; i++) f.tick(a);
@@ -132,8 +135,9 @@ test('pickup preserves a deployed Ink Vac countershot and Storm object', async (
   const f = await world(), a = f.make('shooter'); a.nid = 231; a.team = 0; a.aimDir.set(0, 0, 1);
   activate(f, a, 'inkVac'); a.intent.fire = true;
   for (let i = 0; i < 400 && f.inkVacState(a)?.phase === 'inhale'; i++) f.tick(a);
-  assert.equal(f.inkVacState(a)?.phase, 'exhale'); a.intent.fire = false; f.tick(a);
-  assert.equal(f.inkVacState(a), null);
+  assert.equal(f.inkVacState(a)?.phase, 'exhale'); a.intent.fire = false; f.tick(a, 19);
+  assert.equal(f.inkVacState(a)?.phase, 'exhale'); assert.equal(f.G.projectiles.list.length, 0, 'native20F transition retains the return shot');
+  f.tick(a); assert.equal(f.inkVacState(a), null);
   const rounds = [...f.G.projectiles.list]; assert.equal(rounds.length, 1, 'native return shot was released');
   activate(f, a, 'storm');
   a.intent.sub = true; f.tick(a); a.intent.sub = false; f.tick(a);

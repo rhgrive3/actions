@@ -4031,6 +4031,17 @@ Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather tha
 Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
 
 
+## 2026-10-11 サブ14種・スペシャル19種の性能再照合
+
+Driveのpart02アーカイブとS3 11.3.0パラメータ、条件を記録したWiki値を再照合。数値の保管だけでなく、インク節約・軽減・時間・SPU・設置物・装甲・native通信の実際の消費箇所を修正した。根拠、実装箇所、再現、プレイ影響、確認状態は `reports/inkwave-source-parity-corrections-20261011.md`、個別のsource葉監査は `reports/source-parity-coverage-20261011.json`、設置物・装甲・通信の監査は `reports/interaction-parity-20261011.md` に記録。
+
+本節は全挙動の実機一致認定ではない。ロジック単独、配信ビルド、ブラウザ動作、本家実機比較を区別する。世界距離、標的選択、飛行/接地/壁の反応、塗り形状、未公開フィールドの意味について未確認を残す。モデリングと本格的なアニメーションは依頼の範囲外。既存の未確認項目を本変更だけで解消済みにしない。
+
+### 2026-10-11 最終ソース消費・main統合追記
+
+NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、Reef rut／Inkjet・Reef周辺塗りの値を実処理へ追加。実Actorの発射からProjectilesの30/60/120Hz進行を測定した。最新main PR1237の靴メイン対物ギアとnative Sprinkler修正も保ち、rawダメージ・攻撃行・ギアを送るowner判定で2重倍率を防止。具体的な根拠・再現・影響・未検証は`reports/inkwave-source-parity-corrections-20261011.md`と各parity報告に記載。実機完全一致は認定していない。
+
+
 ## 2026-10-12 原典表示メッシュ5ステージ統合
 
 固定 KiTrix 表示OBJから5ステージをローカルビルドする処理と、既存 Actor/Physics/PaintSystem/ナビ/ミニマップ/ランク world への接続を追加した。生/変換アセットの再配布権限は未確認のため公開ビルドには含めない。本家の参照版は11.3.0。詳細・再現手順・確認済み/未確認の区分は [原典ステージ統合記録](inkwave-native-stage5-2026-10-12.md)。30/60/120 Hz は INKWAVE ロジック検証であり実機比較の代用ではない。スポーン、表示由来の collision/paint/grate 属性、4ランクルールの配置、OBJの版、実モバイル性能は未確認を維持する。
@@ -4084,5 +4095,18 @@ Independent review found single-cloud LOS4x and96-overlap LOS4x in the first liv
 専用弾の存在に加え、S3mix のチャージ前隙（ヒト1F/イカ6F）、射撃前隙1F、射撃後隙20F、チャージキープ不可、部分チャージの非爆発、満チャージ音・発光、チャージ中速度を実装境界で補完した。専用弾は native kitDefenseCandidate の先着判定、飛行中の下向き塗り、反動、フル弾の着弾待ち、水・ハンコ・キューインキの消去に接続した。60Fちょうどの丸め誤差と爆風の足元基準も修正。Wiki/11.3.0 パラメータとロジック試験・ネイティブ試験・ブラウザ試験は区別して記録する。完全な本家弾道、反動の単位変換、着弾後0.2秒の待ち時間、防御物への全爆風補正は実機未確認。詳細と再現条件は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` のホコ追補に記載。
 
 同追補: 通常チャージャーを溜めたままホコを取得すると元の WeaponRunner が busy のまま凍り、泳ぎを禁止し、ホコを失った後に古い射撃が再開し得る経路も修正した。所持開始時に一度だけ通常ブキ状態を初期化し、実際のチャージ→取得→イカ変身→所持解除で古い弾が出ないことをネイティブ試験で確認。既に発射済みの傘の存続などは本家比較未確認として残す。
+## 2026-10-13 傘とスペシャルの入力差分
+
+`reports/inkwave-brella-special-controls-20261013.md` に19種の操作条件、Wiki/11.3.0の根拠、実行箇所、反例、未確認項目を追記。パージの布描画欠落、開口サイズ、飛行のRunner依存を修正。ナイスダマの早投げ/自動投げ/移動、R投擲系のZR代用、ジェットパックの連射/任意終了、ミサイルの空撃ち/距離制限、デコイ8→12、サメの操舵、メガホン2→6、カタログメインのスペシャル中抑止、キューインキの無操作吸引、スタンド即設置を是正。形状・弾道・追跡・通信相手の傘表示、ギア/ゲージの全実機条件は未確認を保持し、完了に読み替えない。
+
+傘/スペシャル追補: 環境復旧後に現行mainを統合。装甲/Burst/シールドの追補を含む関連272件は旧fixture4件を修正後に通過（任意1件skip）。実PerspectiveCameraのfar clippingによるマルチミサイルの距離制限も除去し、far=50に対する距離200の10発を検証。06c1ba6のCIでは傘の実WebGL表示・飛行・clearが通過。残るブラウザfixtureを50% Mist、ZR保持、R離し/接地の操作へ更新。未確認の実機比較は維持する。
+
+傘/スペシャル最終追補: キューインキのZR保持をnative snapshot既存firing bitで通信し、相手側の離し/イカ/再開も判定・描画に反映。スタンドは実床への接触で0.03浮かせず、ServeAreaHeightDown=0の本家値と同じ床の飲料受け取りを両立。関連318件全通過、配信ビルド/容量通過。全体ゲートを修正後のコードで再実行中。詳細は20261013の傘/スペシャル照合記録。実機完全一致の未確認項目は維持。
+
+傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
+
+公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
 
 独立レビュー追補: ホコのチャージ/射撃待ち/射撃後硬直の専用速度が採用済みMist減速を迂回する経路と、取得時にInk Vac/Trizookaの独立状態が残る経路を修正。実際のMist配置と30/60/120Hz・サブ影響軽減0/57APで減速の1回適用と退出復帰を確認し、ネイティブ取得から吸引終了・終了通知・再発動と発射/展開済み攻撃の存続を回帰検査する。S3mixのホコ取得・ポイズンミストの記述と既存11.3.0耐性係数を根拠とし、速度の世界単位換算・ブラウザFPS・Switch実機比較は未確認のまま維持する。詳細は上記ルール修正記録の独立レビュー節。
+
+同修正の現行main追補: 外部統合ee9fbbabのMist係数0.5/0.75、キューインキ17F発動と保持吸引、反撃19F無弾/20F発射を維持して再合成。修正前は対象5件が失敗し、修正後はホコ6件・傘/スペシャル操作12件・練習場8件の26件がsource/実minify双方で通過。旧e57上のブラウザ証拠を新合成の証明には流用せず、新headのCIで再検証する。
