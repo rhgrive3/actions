@@ -619,18 +619,33 @@ function deployInkstrike(rt,actor,state,index) {
   marker.phase='flight';marker.origin=launchAt.clone();marker.flight=1.1;marker.age=0;
   emitAction(rt,actor,'tripleInkstrike',state.serial,'marker',launchAt,target,marker.seed,{index});
 }
+// Source-bound Super Chump: 12 decoys, 80F launcher prep, one new decoy
+// every 4F over a 48F launch window. 108F flight + 210F fuse are pinned
+// to WeaponSpFirework.IceParam; the 80F/48F release window is documented
+// by the public S3 weapon timing reference.
+export const SUPER_CHUMP_DECOY_COUNT = 12;
+export function superChumpReleaseFrame(index) {
+  return Number.isInteger(index) && index >= 0 && index < SUPER_CHUMP_DECOY_COUNT ? 80 + index * 4 : null;
+}
 function throwChumps(rt,actor,state) {
   const target=groundAt(rt,aimPoint(rt,actor,26,rt.v0),rt.v1).clone(), origin=rt.v2.set(actor.pos.x,actor.pos.y+1.2,actor.pos.z).clone();
   const offset=rt.v3.copy(target).sub(actor.pos),distance=offset.length();
   if(distance<18)target.copy(actor.pos).addScaledVector(offset.normalize(),18);
   else if(distance>35)target.copy(actor.pos).addScaledVector(offset.normalize(),35);
   groundAt(rt,target,target);
-  const count=8;
+  const count=SUPER_CHUMP_DECOY_COUNT;
   for(let i=0;i<count;i++) {
-    const angle=(i/count)*Math.PI*2+seedUnit(state.seed,17)*Math.PI*2, radius=6.5;
+    // Stable per-decoy jitter, not twelve balloons placed on one circular rim.
+    // Their positions stay deterministic across local generation and wire replay.
+    const angle=(i/count)*Math.PI*2+(seedUnit(state.seed,17+i*2)-.5)*.65;
+    const radius=Math.sqrt(seedUnit(state.seed,61+i))*9.5;
     const pos=target.clone();pos.x+=Math.cos(angle)*radius;pos.z+=Math.sin(angle)*radius;
-  const obj=deployObject(rt,actor,'superChump','decoy',origin,state,{dur:(108+210)/FPS,maxRadius:6,damage:70,hp:60,seed:nextSeed(state),index:i,target:pos,scale:[.72,.72,.72]});
-    obj.phase='flight';obj.armAt=1.8;obj.flight=1.8;obj.origin=origin.clone();
+    groundAt(rt,pos,pos);
+    const releaseFrame=superChumpReleaseFrame(i);
+    const obj=deployObject(rt,actor,'superChump','decoy',origin,state,{
+      dur:(releaseFrame+108+210)/FPS,startDelay:releaseFrame/FPS,maxRadius:6,
+      damage:70,hp:60,seed:nextSeed(state),index:i,target:pos,scale:[.72,.72,.72]});
+    obj.phase='queued';obj.mesh.visible=false;obj.flight=108/FPS;obj.origin=origin.clone();
     emitAction(rt,actor,'superChump',state.serial,'balloon',origin,pos,obj.seed,{index:i});
   }
   endSpecial(rt,actor,'deployed');
@@ -868,8 +883,11 @@ function updateWorld(rt,dt) {
       }
       if(o.age>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='decoy'){
+      if(o.phase==='queued'&&o.age+1e-8>=o.startDelay){
+        o.phase='flight';if(o.mesh)o.mesh.visible=true;
+      }
       if(o.phase==='flight'){
-        const k=clamp(o.age/Math.max(.05,o.flight||1.8),0,1);
+        const k=clamp((o.age-(o.startDelay||0))/Math.max(.05,o.flight||1.8),0,1);
         o.pos.copy(o.origin).lerp(o.target,k);o.pos.y+=Math.sin(k*Math.PI)*4;
         o.mesh?.position.copy(o.pos);
         if(k>=1){o.phase='active';o.mesh?.scale.setScalar(1.15);emitObject(rt,o,'active');}
@@ -1314,7 +1332,8 @@ function replayObjectEvent(rt,actor,event) {
     const kind=typeof event.kind==='string'?event.kind:(event.id==='splattercolorScreen'?'screen':event.id==='waveBreaker'?'wave':event.id==='superChump'?'decoy':event.id==='tripleInkstrike'?'marker':'');
     if(!kind)return false;
     const state={serial:event.activation,objectSerial:serial-1,seed:event.seed,specialPowerAP:finite(event.specialPowerAP)?clamp(event.specialPowerAP,0,57):0};
-    const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9};
+    const extra={dur:finite(event.duration)?event.duration:1,maxRadius:finite(event.radius)?event.radius:(SPECIALS[event.id]?.radius||1),damage:0,hp:finite(event.hp)?event.hp:0,seed:event.seed,index:event.index||0,target,width:finite(event.width)&&event.width>0?event.width:15,height:finite(event.height)&&event.height>0?event.height:9,
+      startDelay:finite(event.startDelay)?clamp(event.startDelay,0,4):0};
     if(kind==='screen'){
       const direction=target?target.clone().sub(point).setY(0).normalize():new rt.api.THREE.Vector3(Math.sin(actor.aimYaw||0),0,Math.cos(actor.aimYaw||0));
       extra.direction=direction;extra.moveSpeed=gearCurve(state.specialPowerAP,.04,.053,.06)*FPS;extra.yaw=Math.atan2(direction.x,direction.z);
@@ -1322,7 +1341,7 @@ function replayObjectEvent(rt,actor,event) {
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);
     if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=finite(event.duration)?event.duration:1.1;}
-    if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
+    if(kind==='decoy'){object.phase=object.startDelay>0?'queued':'flight';object.origin=point.clone();object.flight=108/FPS;if(object.mesh)object.mesh.visible=object.phase!=='queued';}
     if(kind==='wave'){
       object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
       object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
