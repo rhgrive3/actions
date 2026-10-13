@@ -122,27 +122,39 @@ export function nativeDropTravelForm(brain,G){
 /** A changed first contact needs its own physical walk to the source goal. */
 function supportedDropTouchdown(G,actor,node){
  if(!nativeSourceFootSupported(G,actor,node))return false;
- const from=actor.pos,to=from.clone().set(node.x,node.y,node.z),L=G.level,down=new THREE.Vector3(0,-1,0);
+ const from=actor.pos,to=from.clone().set(node.x,node.y,node.z),L=G.level,P=G.physics,down=new THREE.Vector3(0,-1,0),foot=new Hit();
+ const sweep=P._nativeLiveDropClearance||(P._nativeLiveDropClearance=nativeDropClearance(L));
+ let previous=from.clone();
  const count=Math.max(1,Math.ceil(from.distanceTo(to)/.1));
  for(let i=0;i<=count;i++){
   const p=from.clone().lerp(to,i/count),h=L.triangleWorld.ray(p.clone().setY(p.y+.25),down,.5,{minNormalY:.68});
-  if(!h||!(h.flags&2)||Math.abs(h.point.y-p.y)>.16||L.data.triangleFace[h.triangle]<0)return false;
+  if(!h||!(h.flags&2)||L.data.triangleFace[h.triangle]<0)return false;
+  const face=L.faces[L.data.triangleFace[h.triangle]],local=h.point.clone().sub(face.origin),u=local.dot(face.u),v=local.dot(face.v),x=Math.max(0,Math.min(face.nu-1,Math.floor(u/face.cu))),z=Math.max(0,Math.min(face.nv-1,Math.floor(v/face.cv)));
+  if(!face.turf||!L.containsOnFace(face,h.point)||!L.mask[face.grid+z*face.nu+x])return false;
+  // The same installed ring that supports the real Actor predicts a short
+  // ordinary walk. Its feet can sit above the source centre on a real slope.
+  P.groundProbe(p.x,h.point.y,p.z,PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,foot,false);
+  if(!foot.hit||foot.block<0||foot.block>=L.staticBlockCount||foot.normal.y<=.68)return false;
+  p.y=foot.y;
+  if(!nativeSourceFootSupported(G,{pos:p,grounded:true,form:'kid'},{x:p.x,y:h.point.y,z:p.z})||!P.bodyFits(p,terrainRadius(false),PLAYER.stepUp,PLAYER.height,false,.003)||!sweep.clear(previous,p,terrainRadius(false),PLAYER.stepUp,PLAYER.height))return false;
+  previous=p;
  }
- const sweep=G.physics._nativeLiveDropClearance||(G.physics._nativeLiveDropClearance=nativeDropClearance(L));
- return sweep.clear(from,to,terrainRadius(false),PLAYER.stepUp,PLAYER.height);
+ return true;
 }
 
 /** Keep an ordinary departure committed until a real grounded touchdown.
  * The stock follower may advance its waypoint while still 1.8 units above it,
  * turning toward the next source support before gravity completes the drop. */
 export function updateNativeDrop(brain,G,dt){
- const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.highDrops||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive)return false;
+ const a=brain.a,N=G.nav;if(!G.level?.manifest?.sourceNavigation?.highDrops||!N||!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive){brain._nativeDrop=null;return false;}
+ const old=brain._nativeDrop;
+ if(old&&(old.level!==G.level||old.nav!==N||old.match!==G.match||old.mode!==G.match?.mode)){brain._nativeDrop=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
  let index=brain.pi;
  if(index===0&&brain.path.length>1){const first=N.nodes[brain.path[0]];if(Math.hypot(a.pos.x-first.x,a.pos.z-first.z)<.8&&Math.abs(a.pos.y-first.y)<.3)index=1;}
  const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&e.drop);
  if(!edge){brain._nativeDrop=null;return false;}
  const d=edge.drop,start=new a.pos.constructor(...d.upper),goal=new a.pos.constructor(...d.landing);
- const state=brain._nativeDrop?.edge===edge&&brain._nativeDrop.path===brain.path?brain._nativeDrop:(brain._nativeDrop={edge,path:brain.path,phase:'approach',seconds:0});state.seconds+=dt;
+ const state=brain._nativeDrop?.edge===edge&&brain._nativeDrop.path===brain.path?brain._nativeDrop:(brain._nativeDrop={edge,path:brain.path,phase:'approach',seconds:0,level:G.level,nav:N,match:G.match,mode:G.match?.mode});state.seconds+=dt;
  if(state.seconds>8){brain._nativeDrop=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
  brain.pi=index;brain.noProg=0;
  const input=a.intent;input.fire=input.squid=input.jump=input.sub=input.special=false;
