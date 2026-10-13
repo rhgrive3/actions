@@ -59,3 +59,8 @@ for(const name of ['legacy','opt-off','dead','spawn','special','super-jump','no-
 }
 assert.equal(rows.length,14);
 });
+
+test('stale replacement navigation with missing nodes aborts before any old path dereference',async()=>{
+ const f=await nativeFixture(),baseLevel=f.G.level;f.G.physics.raycast=()=>({hit:false});baseLevel.native=true;baseLevel.manifest={sourceNavigation:{wallApproach:true}};
+ for(const pi of [0,1]){const a=f.make('shooter'),b=new f.BotBrain(a,'normal'),v=a.pos.toArray(),start=[v[0]+1,v[1],v[2]],goal=[v[0]+3,v[1],v[2]],edge={to:1,type:'climb',climb:{kind:'gap-jump',lower:start,upper:goal}};f.G.nav={nodes:[{id:0,x:start[0],y:start[1],z:start[2],nb:[edge]},{id:1,x:goal[0],y:goal[1],z:goal[2],nb:[]}]};b.path=[0,1];b.pi=1;assert(f.updateNativeApproach(b,f.G,1/60));b.pi=pi;f.G.nav={nodes:[]};a.intent.move.set(.7,0,.2);a.intent.fire=a.intent.jump=a.intent.squid=true;const snapshot=()=>JSON.stringify({input:a.intent,position:a.pos,velocity:a.vel,serial:a.s3JumpSerial}),before=snapshot();assert.equal(f.updateNativeApproach(b,f.G,1/60),false);assert.equal(b.path,null);assert.equal(b._nativeApproach,null);assert.equal(snapshot(),before);}
+});

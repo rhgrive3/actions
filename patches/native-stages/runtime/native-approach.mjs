@@ -130,11 +130,11 @@ export function updateNativeApproach(brain,G,dt){
  const a=brain.a,N=G.nav;
  if(!G.level?.native||!G.level?.manifest?.sourceNavigation?.wallApproach){if(brain._nativeApproach)brain._nativeApproach=null;return false;}
  if(!brain.path||!a.alive||a.s3?.squidSpawn||a.superJumpState||a.specialActive||nativeTowerRider(G,a)||brain._nativeTowerBoarding){brain._nativeApproach=null;return false;}
- let index=brain.pi;if(index===0&&brain.path.length>1){const n=N.nodes[brain.path[0]];if(Math.hypot(a.pos.x-n.x,a.pos.z-n.z)<.8&&Math.abs(a.pos.y-n.y)<.3)index=1;}
+ const prior=brain._nativeApproach;if(prior&&(prior.actor!==a||prior.life!==(a.netLife||0)||prior.level!==G.level||prior.nav!==N||prior.match!==G.match||prior.mode!==brain.mode)){brain._nativeApproach=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
+ let index=brain.pi;if(index===0&&brain.path.length>1){const n=N.nodes[brain.path[0]];if(n&&Math.hypot(a.pos.x-n.x,a.pos.z-n.z)<.8&&Math.abs(a.pos.y-n.y)<.3)index=1;}
  const from=N.nodes[brain.path[Math.max(0,index-1)]],to=N.nodes[brain.path[index]],edge=from?.nb.find(e=>e.to===to?.id&&['approach','gap-jump'].includes(e.climb?.kind));
  if(!edge){brain._nativeApproach=null;return false;}
  if(!nativeApproachEdgeAllowed(a,edge)){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return false;}
- const prior=brain._nativeApproach;if(prior&&(prior.actor!==a||prior.life!==(a.netLife||0)||prior.level!==G.level||prior.nav!==N||prior.match!==G.match||prior.mode!==brain.mode)){brain._nativeApproach=null;brain.path=null;brain.repath=brain.goalTimer=0;return false;}
  const c=edge.climb,goal=new THREE.Vector3(...c.upper),start=new THREE.Vector3(...c.lower),input=a.intent,state=brain._nativeApproach?.edge===edge&&brain._nativeApproach.path===brain.path&&brain._nativeApproach.match===G.match&&brain._nativeApproach.mode===brain.mode&&brain._nativeApproach.actor===a&&brain._nativeApproach.life===(a.netLife||0)?brain._nativeApproach:(brain._nativeApproach={edge,path:brain.path,level:G.level,nav:N,match:G.match,mode:brain.mode,actor:a,life:a.netLife||0,phase:c.kind==='gap-jump'?'plant':'paint',seconds:0});
  if(state.level!==G.level||state.nav!==N){brain._nativeApproach=null;return false;}
  state.seconds+=dt;if(state.seconds>55){brain.path=null;brain.repath=brain.goalTimer=0;brain._nativeApproach=null;return false;}
