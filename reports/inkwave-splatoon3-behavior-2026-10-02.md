@@ -4165,3 +4165,6 @@ The same shared fixture route also carries the exact catalog-browser setup corre
 ## 2026-10-13: 原典ステージと最新mainの互換統合
 
 main14f9f913のキャラクター姿勢・ブキ・対戦ルール・ビルド更新を、原典ステージ用作業ブランチへ取り込んだ。本体の変更は維持し、共有照合記録の競合では双方の記録を残した。mainへのマージではない。default契約85通過/36任意fixture skip/0失敗、公開ビルド9/9・容量通過。公開版でユノハナのみ原典取得・v4変換・自然着地58固定tick・8人7bot・キャッシュ・破損データ時の既存world保持を確認。直接splatによる塗り確認を通常射撃の証明に読み替えない。追加ステージの旧証跡は旧artifactの範囲を維持し、各担当が変更に関係するキャラクター・射撃・ルール・通信を最終再検証する。原典抽出版、実機の移動状態・単位・ハードウェア性能は未確認。詳細: `reports/native-stages/current-main-integration.md` と同verification JSON。
+
+
+原典マスク比較CI追補: 無条件のPython/Worker合成比較はNumPy/Pillow/Numbaをimportするため、専用workflowでPython3.12と検証済み固定依存を明示した。比較3/3・pip check通過。実行を直列にしてメモリ上限を維持し、比較や負例をskipへ変えていない。ゲーム動作は不変。hosted CIは未確認。詳細: `reports/native-stages/python-contract-ci.md`。
