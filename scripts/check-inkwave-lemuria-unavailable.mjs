@@ -49,7 +49,7 @@ try{
   page.on('request',request=>{if(/kirakira-dev\/KiTrix/.test(request.url()))sourceRequests.push(request.url());});
   await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0,audioVolume:0})));
   await page.goto(address+'/?map='+(peer?'tidewater':'lemuria')+(peer?'':'&autostart=90')+'&relay='+encodeURIComponent(relayURL),{waitUntil:'domcontentloaded'});
-  await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI).href)).G);
+  await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI).href)).G;});
   await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
   assert.equal(await page.locator('#boot-error').textContent(),'');
   await page.waitForFunction(()=>NG.game?.debug?.freeze);
