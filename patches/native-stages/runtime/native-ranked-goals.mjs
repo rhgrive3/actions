@@ -14,7 +14,7 @@ function liveSourceFloor(L,hit){
  * by RankedWorld. Opted physical transitions have only been qualified with the
  * ordinary zero-AP Shooter, so other weapon states retain direct-LOS policy. */
 export function nativeRankedBotGoalReachable(G,row,target){
- const N=G.nav,L=G.level;if(!L?.native||!N||!Array.isArray(target)||target.length<3||!target.slice(0,3).every(Number.isFinite))return false;
+ const N=G.nav,L=G.level;if(!L?.native||!N||!row||!Array.isArray(target)||target.length<3||!target.slice(0,3).every(Number.isFinite))return false;
  const a=G.actors.find(a=>String(a.nid??`${a.team??0}:${a.slot??0}`)===String(row.id));
  if(!a?.alive||a.team!==row.team||!a.bot||a.weaponId!=='shooter'||a.specialActive||a.superJumpState||a.s3?.squidSpawn||Object.values(a.s3?.abilityPoints||{}).some(n=>n>0))return false;
  const start=N.nearest(a.pos,.6);if(start<0||!nativeSourceFootSupported(G,a,N.nodes[start])||Math.hypot(N.nodes[start].x-a.pos.x,N.nodes[start].z-a.pos.z)>.85)return false;
