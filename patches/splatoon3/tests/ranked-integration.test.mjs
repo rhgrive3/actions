@@ -7,14 +7,15 @@ const RANKED_EXPORTS = `
   export { Match } from './inkwave-public/src/game/match.js';
   export { BotBrain } from './inkwave-public/src/game/bots.js';
   export { NetSession } from './inkwave-public/src/net/session.js';
-  export { installRanked } from './patches/splatoon3/runtime/ranked/install.mjs';
+  export { installRanked, buildFrame } from './patches/splatoon3/runtime/ranked/install.mjs';
   export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs';
   export { createRankedEffects } from './patches/splatoon3/runtime/ranked/combat.mjs';
 `;
 
-async function bootRanked() {
+async function bootRanked(options = {}) {
   const f = await fixture({
     fullRuntime: true,
+    ...options,
     adaptNative: adaptBuildSource,
     adaptRuntime: adaptBuildSource,
     extraExports: RANKED_EXPORTS,
@@ -55,6 +56,9 @@ test('ranked runtime suppresses carrier fire, splats a timed-out carrier, and re
   };
   f.tick(carrier, 36);
   assert.equal(f.shots.length, 0, 'the active Rainmaker carrier cannot emit its normal weapon');
+  const beforeSpecial = carrier.special, beforeTurf = carrier.stats.turf; carrier.addTurf(10);
+  assert.equal(carrier.special, beforeSpecial, 'pending paint and death-blast credit cannot increase a carrier gauge');
+  assert.equal(carrier.stats.turf, beforeTurf + 10);
 
   const timeoutCalls = [];
   carrier.alive = true;
@@ -94,7 +98,7 @@ test('ranked runtime suppresses carrier fire, splats a timed-out carrier, and re
   const ownerPacket = guestPackets.at(-1);
   assert.equal(ownerPacket?.k, 't');
   assert.deepEqual(JSON.parse(JSON.stringify(ownerPacket?.rki)), {
-    match: 'ranked-fixture', id: '23', seq: 1, fire: true, throw: true, aim: [0, 0, 1],
+    match: 'ranked-fixture', id: '23', seq: 1, fire: true, throw: true, aim: [0, 0, 1], special: null, specialDeployed: false, clamDrop: 0,
   }, 'the guest streams its owner-authenticated ranked command with the native actor tick');
   assert.equal(owner._rankedThrowPending, false, 'one-shot throw input is consumed once it is sent');
 
@@ -108,7 +112,7 @@ test('ranked runtime suppresses carrier fire, splats a timed-out carrier, and re
   hostNet.bind(hostMatch);
   hostNet.onMessage('guest', ownerPacket);
   assert.deepEqual(JSON.parse(JSON.stringify(hostNet.rankedInputs.get('23'))), {
-    seq: 1, fire: true, throw: true, aim: [0, 0, 1], at: f.G.time,
+    seq: 1, fire: true, throw: true, aim: [0, 0, 1], at: f.G.time, special: null, specialDeployed: false, clamDrop: 0,
   }, 'the host accepts the command only for the actor owned by that guest');
 
   hostEngine.setCount(0, 55);
@@ -191,4 +195,47 @@ for (const mode of ['zones', 'tower', 'rainmaker', 'clams']) test(`native ranked
     assert.equal(cfg.mode,mode); assert.equal(cfg.duration,300); assert.equal(cfg.roster.length,8);
     assert.equal(guest._startCfg.id,cfg.id);
   } finally {host.leave();guest.leave();}
+});
+
+test('native special lifecycle carries pickup restrictions and inventory ejection into the host rule', async()=>{
+  const f=await bootRanked(),a=f.make('shooter');a.nid=230;a.team=0;a.slot=0;
+  const stage={id:'native-clam-specials',clams:{spawns:[],goals:[[0,0,10],[0,0,-10]]}},e=new f.RankedEngine('clams',stage);
+  const m=f.G.match={mode:'clams',state:'playing',playing:()=>true,ranked:e,actors:[a],rankedBarrierHits:[],rankedWorld:{zoneCoverage:()=>[],floorAt:()=>0,blocked:()=>false}};
+  e.rule.state.inventories['230']={team:0,small:7,power:false};a.weapon={...a.weapon,special:'krakenRoyale'};a.special=a.specialCost();a._startSpecial();
+  assert.equal(a.specialActive?.id,'krakenRoyale');assert.equal(a._rankedClamDrop,1,'native activation reaches the ranked lifecycle hook');
+  const actual=f.buildFrame(m,{G:f.G});assert.equal(actual.actors[0].special,'krakenRoyale');assert.equal(actual.actors[0].clamDrop,1);
+  e.update(1/60,actual);assert.equal(e.rule.state.inventories['230'].small,0);assert.equal(e.rule.state.clams.length,7);
+  e.update(1/60,actual);assert.equal(e.rule.state.clams.length,7,'the same lifecycle counter cannot eject twice');
+});
+
+test('native objective effects apply Power Clam paint through the game paint path without special credit',async()=>{
+  const f=await bootRanked(),calls=[];f.G.paint.splat=(...args)=>{calls.push(args);return 1;};
+  const m={state:'playing',actors:[],ranked:{revision:12}},effects=f.createRankedEffects({...f.installedRuntime,emit:f.emit},m);
+  effects.event({kind:'clam-paint',team:1,pos:[2,0,3],radius:.7});assert.equal(calls.length,1);assert.deepEqual(Array.from(calls[0][0].toArray()),[2,0,3]);assert.equal(calls[0][2],1);assert.equal(calls[0][3].claimMode,'no-special');
+  effects.event({kind:'clam-paint',team:1,pos:[2,0,3],radius:.7},true);assert.equal(calls.length,1,'followers get native paint replication rather than duplicate paint events');effects.dispose();
+});
+
+test('native Rainmaker pickup cancels allowed actor-owned specials while keeping deployed object lifetime',async()=>{
+  const f=await bootRanked(),a=f.make('shooter');a.nid=231;a.team=0;a.weapon={...a.weapon,special:'crabTank'};a.special=a.specialCost();
+  const stage={id:'native-rm-specials',rainmaker:{center:[0,0,0],goals:[[0,0,10],[0,0,-10]],checkpoints:[[],[]]}},e=new f.RankedEngine('rainmaker',stage);
+  const m=f.G.match={mode:'rainmaker',state:'playing',playing:()=>true,ranked:e,actors:[a],rankedBarrierHits:[],rankedWorld:{zoneCoverage:()=>[],floorAt:()=>0,blocked:()=>false},rankedEffects:{event(){}},rankedGains:[0,0]};
+  a._startSpecial();assert.equal(a.specialActive?.id,'crabTank');e.rule.state.barrier.active=false;e.update(1/60,f.buildFrame(m,{G:f.G}));assert.equal(e.rule.state.carrier,'231');
+  f.Match.prototype.playRankedEvents.call(m,e.events);assert.equal(a.specialActive,null);assert.equal(a._s3AllSpecialState,null);assert.equal(a.special,0);
+});
+
+test('Rainmaker sweep reaches the real native Ultra Stamp guard and never detonates behind it', async () => {
+  const f = await bootRanked({ realProjectiles: true }), shooter = f.make('shooter'), guard = f.make('shooter');
+  shooter.nid = 'carrier'; shooter.team = 0; shooter.pos.set(0, 0, 0);
+  guard.nid = 'stamp'; guard.team = 1; guard.pos.set(0, 0, 3); guard.yaw = guard.aimYaw = Math.PI; guard.aimDir.set(0, 0, -1);
+  guard.weapon = { ...guard.weapon, special: 'ultraStamp' }; guard.special = guard.specialCost();
+  const m = f.G.match = { mode: 'rainmaker', state: 'playing', playing: () => true, actors: [shooter, guard], ranked: { revision: 0, rule: { state: { carrier: shooter.nid, charge: { value: 1 } } } } };
+  f.G.actors = m.actors; guard._startSpecial(); assert.equal(guard.specialActive?.id, 'ultraStamp');
+  f.G.physics.segment = (_start, _end, hit) => { hit.hit = false; return hit; };
+  const rings = [], removals = []; f.G.fx = { ...f.G.fx, ring: (...a) => rings.push(a) }; f.G.scene = { add() {}, remove: o => removals.push(o) };
+  const effects = f.createRankedEffects(f.installedRuntime, m);
+  effects.event({ kind: 'rainmaker-shot', actorId: shooter.nid, team: 0, pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
+    damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, directRange: 4.4 });
+  effects.update(.1); effects.update(.1); effects.update(.3);
+  assert.equal(removals.length, 1); assert.deepEqual(rings, []); assert.equal(guard.hp, 100);
+  effects.dispose();
 });

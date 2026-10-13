@@ -8,12 +8,21 @@ import { installRankedBots } from './bots.mjs';
 import { installRankedNetwork, actorId } from './network.mjs';
 import { installRankedCombat, createRankedEffects, isCarrier } from './combat.mjs';
 
+import { interruptSpecialForObjective } from '../all-specials.mjs';
+
 const INSTALLED = Symbol.for('inkwave.ranked.v1');
 export function installRanked(context) {
   if (Match.prototype[INSTALLED]) return;
   Object.defineProperty(Match.prototype, INSTALLED, { value: true });
   const api = { ...context, Match, BotBrain, NetSession }, { G, Actor, PlayerController } = api;
   installRankedCombat(api); installRankedNetwork(api); installRankedUi(api); installRankedBots(api);
+  const dropClams = a => {
+    if (G.match?.mode === 'clams' && a && !a.remote) a._rankedClamDrop = (a._rankedClamDrop || 0) + 1;
+  };
+  api.on?.('all:special', e => {
+    if ((e?.id === 'krakenRoyale' && e.action === 'activate') || (e?.id === 'reefslider' && e.action === 'impact')) dropClams(e.actor);
+  });
+  api.on?.('special:slam', e => dropClams(e?.actor));
   const setup = Match.prototype.setup;
   Match.prototype.setup = function () {
     const r = setup.call(this);
@@ -55,6 +64,11 @@ export function installRanked(context) {
     for (const e of events) {
       if (!e || typeof e.kind !== 'string') continue;
       if (e.kind === 'zone-capture' && !visualOnly) this.rankedWorld.captureZone(e.zone, e.team);
+      if (e.kind === 'rainmaker-pickup') {
+        const a = this.actors.find(a => actorId(a) === String(e.id));
+        if (a?.specialActive) interruptSpecialForObjective(api, a);
+        if (a && !a.remote) a.ink = api.PLAYER.inkMax;
+      }
       if (e.kind === 'special-gain' && !visualOnly) {
         this.rankedGains[e.team] += e.points;
         for (const a of this.actors) if (a.team === e.team && a.alive && !a.remote && !a.specialActive) a.special = Math.min(a.specialCost(), a.special + e.points);
@@ -104,7 +118,8 @@ export function installRanked(context) {
     this._rankedInput = { fire: !!this.intent.fire, throw: !!this.intent.throw, aim };
     if (this.intent.throw) this._rankedThrowPending = true;
     if (isCarrier(m, this)) {
-      this.intent.fire = this.intent.sub = this.intent.special = false;
+      if (this.specialActive) interruptSpecialForObjective(api, this);
+      this.intent.sub = this.intent.special = false;
       if (this._prevIntent) this._prevIntent.sub = false;
       this.fireBuffer = 0;
     }
@@ -119,7 +134,9 @@ export function buildFrame(match, api) {
     if (cmd && (!a.remote || api.G.time - cmd.at < .75)) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
     if (a.remote && cmd) cmd.throw = false;
     if (!a.remote) { a.intent.throw = false; if (!nm || nm.isHost) a._rankedThrowPending = false; }
-    return { id, team: a.team, pos: a.pos.toArray(), alive: a.alive && !a.s3Disconnected, grounded: a.grounded,
+    const special = a.remote && cmd ? cmd.special : a.specialActive?.id ?? null;
+    const specialDeployed = a.remote && cmd ? cmd.specialDeployed : special === 'storm' && a.specialActive?.t > 0;
+    return { special, specialDeployed, clamDrop: a.remote && cmd ? cmd.clamDrop : a._rankedClamDrop || 0, id, team: a.team, pos: a.pos.toArray(), alive: a.alive && !a.s3Disconnected, grounded: a.grounded,
       remote: a.remote, onTower: !!a._rankedOnTower, weight: a.weapon.weight || 'middle', swimming: a.form === 'squid', slot: a.slot };
   });
   return { actors, inputs, zoneCoverage: match.rankedWorld.zoneCoverage(), barrierHits: match.rankedBarrierHits.splice(0),
