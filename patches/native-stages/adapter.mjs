@@ -84,6 +84,16 @@ export function adaptNativeStages(rel,code){
   once('    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);', '    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);\n    const candidates = G.level.native ? nativePaintGoalIds(this, G) : nav.validIds;');
   once('      const id = nav.validIds[(Math.random() * nav.validIds.length) | 0];', '      if (!candidates.length) break;\n      const id = candidates[(Math.random() * candidates.length) | 0];');
  }
+ if(rel==='src/game/actor.js'){
+  code="import { nativeSpawnYaw } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('    const yaw = this.team === 0 ? 0 : Math.PI;', '    const yaw = nativeSpawnYaw(G.level, this.team, this.team === 0 ? 0 : Math.PI);');
+ }
+ if(rel==='src/game/match.js'){
+  code="import { nativeSpawnYaw } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  const initial='a.spawnAt(_v, a.team === 0 ? 0 : Math.PI);';
+  if(code.split(initial).length!==3)throw Error('Native match initial placement adapter conflict');
+  code=code.replaceAll(initial,'a.spawnAt(_v, nativeSpawnYaw(G.level, a.team, a.team === 0 ? 0 : Math.PI));');
+ }
  if(rel==='src/game/nav.js'){
   code="import { buildNativeNav } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('  _build() {','  _build() {\n    if (this.level.native) return buildNativeNav(this);');
@@ -98,9 +108,16 @@ export function adaptNativeStages(rel,code){
   updatePaintQuality(game, q.paintAtlas, G, THREE_LIB);`);
  }
  if(rel==='patches/splatoon3/runtime/respawn-lifecycle.mjs'){
-  code="import { nativeInitialLanding } from '../../native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeInitialLanding, nativeSpawnYaw } from '../../native-stages/runtime/engine.mjs';\n"+code;
+  once('(actor.team === 0 ? 0 : Math.PI); dx', 'nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI); dx');
+  once('const angle = (actor.team === 0 ? 0 : Math.PI) +', 'const angle = nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI) +');
+  once('p = slotPoint(actor), yaw = actor.team === 0 ? 0 : Math.PI;', 'p = slotPoint(actor), yaw = nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI);');
   once('    return slotTarget(actor);', '    return slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z) => supportedTarget(actor,x,z));');
   once('?? slotTarget(actor))', '?? slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z) => supportedTarget(actor,x,z)))');
+ }
+ if(rel==='patches/splatoon3/runtime/ranked/rainmaker.mjs'){
+  code="import { nativeRetreatCoordinate } from '../../../native-stages/runtime/engine.mjs';\n"+code;
+  once('const retreat = this._isRetreating(team, pos[2]);', 'const retreat = this._isRetreating(team, nativeRetreatCoordinate(this.config, pos));');
  }
  if(rel==='patches/splatoon3/runtime/paint-ownership.mjs'){
   code="import { nativePieceHasInterior, nativeAncillaryCanClaim } from '../../native-stages/runtime/native-paint.mjs';\n"+code;
