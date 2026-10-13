@@ -9,6 +9,7 @@ export async function nativeFixture(){
  export { nativePaintGoalIds } from './patches/native-stages/runtime/engine.mjs';
  export { NavGraph } from './inkwave-public/src/game/nav.js';
  export { nativeRankedStage } from './patches/native-stages/runtime/native-ranked.mjs';
+ export { nativeClimbTransition,updateNativeClimb,nativeClimbTravelForm } from './patches/native-stages/runtime/engine.mjs';
  export { NativeInkMesh,partitionNativeInk } from './patches/native-stages/runtime/native-ink-chunks.mjs';
  export { nativeInkGeometry,nativeInkMaterial } from './patches/native-stages/runtime/native-render.mjs';
  `});
