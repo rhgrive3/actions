@@ -22,3 +22,4 @@ export {nativeDropClearance,nativeDropTransition,nativeDropTravelForm,updateNati
 export {nativeSurgeTransition,updateNativeSurge} from './native-surge.mjs';
 
 export {nativeRankedTowerApproach,updateNativeTowerBoarding,nativeTowerRider} from './native-ranked-boarding.mjs';
+export {nativeJumpAttachTransition,updateNativeJumpAttach} from './native-jump-attach.mjs';
