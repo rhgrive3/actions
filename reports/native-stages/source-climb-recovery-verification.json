@@ -387,10 +387,7 @@
     "commonNodes": 3055,
     "sourceBuffersUnchanged": true
   },
-  "pending": [
-    "Current pure public startup/packaging gates",
-    "Independent exact-final cross-rule review"
-  ],
+  "pending": [],
   "excludedEvidence": [
     "Earlier boot failures",
     "Graph-wide margin experiment",
@@ -401,5 +398,37 @@
     "Retail source units/collision/paint/climb masks/spawn/ranked/moving placements",
     "11.3.0 native source version/date",
     "Physical hardware FPS and retail weapon/gear parity"
-  ]
+  ],
+  "sourceBankTraversalConditions": "CPU real Actor movement, WeaponRunner, Projectiles and fixed paint clock; f.make uses a standing Character muzzle fixed in world +Z and a dry presentation tail. This is separate from the production Character CPU six-case and real Chromium six-case proofs.",
+  "publicPackaging": {
+    "fingerprint": "cff6681b3329",
+    "budget": {
+      "status": "passed",
+      "revision": "161177d3a66c1ecc4a377dcd58cc7968ccda3ed33a1c4abfa72746a4d3966f86",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2883879,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5777972,
+      "workerBytes": 70517,
+      "declaredBytes": 10396012,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "emittedPackaging": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skip": 0
+    },
+    "thirdPartyPayloadIncluded": false
+  },
+  "reviews": {
+    "root": "Independent read-only exact ffef code review; accepts narrow plain controller scope and authorizes promotion after current packaging gates",
+    "bluefin": "Independent exact source negatives/fullbanks3/3; interruption/production rig2PASS1irrelevantstageSKIP; defaults5PASS3sourceSKIPs; no blocker. Wrong receipt and old graph-wide experiment excluded."
+  },
+  "limits": "This does not promote the separately owned ranked-wrapper, Drop, Surge or Tower boarding changes and does not claim autonomous cross-rule whole-bank coverage from the controlled local wall probes."
 }
