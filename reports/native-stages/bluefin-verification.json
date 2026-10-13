@@ -501,7 +501,7 @@
     "screenshotInspected": true,
     "hardwarePerformanceClaim": false
   },
-  "latestConsumedFoundation": "3249d6dc5c8da6c085247c8213d0b7b4c69a24f4",
+  "latestConsumedFoundation": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
   "identityMetadata": {
     "/workspace/actions/.codex-stage-sources/VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
     "/workspace/actions/.codex-stage-sources/leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
@@ -8536,7 +8536,7 @@
     "scope": "Proper production Character/Actor raw-kernel30Hz ordinary negative-bank route, empty source ink/0.5 RNG/zeroAP. Stronger every-actual-capsule assertion finds a wide SQ contact after actual ground snap; prior grounded endpoint-only arrival does not establish continuous whole-route clearance. Production fixed60 browser route is separately pending. No source/role/mask/graph/Actor state changes."
   },
   "preparedFinalBankChecks": {
-    "status": "prepared; both banks still await accepted positive approach and shared grounded form",
+    "status": "prepared; accepted grounded form consumed, both-bank final waits independently accepted positive approach",
     "cpu": "patches/native-stages/tests/bluefin-banks.test.mjs",
     "browser": "scripts/check-inkwave-native-bluefin-banks.mjs",
     "conditions": "Both original pads to opposing genuine Y9 banks. Every actual capsule and final static source-foot support. CPU raw-kernel30/60/120; Chromium fresh normal eight-actor/seven-bot Match through actual Game._frame at render30/60/120 with observed/asserted Actor/BotBrain STEP1/60. Ordinary actual weapons/projectiles; empty initial ink, zeroAP, deterministic0.5 RNG. No later source/pose/velocity/ownership writes. Whole-bank results pending approach and retained SQ contact assessment.",
@@ -8553,7 +8553,7 @@
     "status": "passed",
     "candidateCommonHead": "f5d9786f502dde714f2596ec0b24ed50f542634c",
     "pr": "https://github.com/rhgrive3/actions/pull/1405",
-    "accepted": false,
+    "accepted": true,
     "definitionFlags": {
       "wallClimb": true,
       "highDrops": true
@@ -8802,6 +8802,15 @@
     "errors": [],
     "conditions": "real Chromium SwiftShader; installed Game._frame at render30/60/120 and observed production Actor/BotBrain STEP1/60; fresh normal eight-actor/seven-bot Match per trial; other actors start on independently supported positions near original own-team pads with frozen input; controlled bot starts on the original pad; empty initial ink and ordinary BotBrain/Actor/weapon/projectiles/paint clock; no later pose or ink assignment; every live capsule sweep and final static source-foot support verified; timed render frames include the independent sweep; 0.5 RNG before source Match Actor/Brain construction; not console or mobile hardware",
     "evidence": "/workspace/stage-worktrees/bluefin-grounded-form/.browser-evidence/grounded-form/full-negative-game/browser.json",
-    "scope": "Private common-fix candidate proves the original positive pad to genuine negative bank at current Game STEP1/60, including actual plain-climb crest. Named peer review and shared adoption remain pending; positive-bank approach and whole-stage qualification are incomplete."
+    "scope": "Accepted common-fix runtime proves original positive pad to genuine negative bank at Game STEP1/60 including actual plain-climb crest. Definition flags unchanged. Final artifact pair still awaits positive-bank approach and complete whole-stage checks."
+  },
+  "acceptedGroundedSourceForm": {
+    "foundation": "0c39e684610d3ab57edeee68a7ce73d0e94ef067",
+    "pr": "https://github.com/rhgrive3/actions/pull/1405",
+    "peer": "/root/manta",
+    "commonHead": "9e1abb985471616ebaaf093d72c555584933e636",
+    "runtimeHead": "5d42a1fc39b48eae02894b05b8d165929c444a05",
+    "ownerMerge": "55fa72a3527f646ac5323d88504f6a321df6795f",
+    "scope": "Grounded ordinary static source walk only; choose human input from source SQ-blocked/human-clear polyline. No physics/source/Nav/stage flags/Foot/wet changes; specialized traversal and legacy guarded."
   }
 }
