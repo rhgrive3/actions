@@ -5,6 +5,7 @@ on:
       - 'patches/native-stages/**'
       - 'scripts/inkwave-source-composition.mjs'
       - 'scripts/build-inkwave.mjs'
+      - 'scripts/prepare-inkwave-ray-stage.mjs'
       - 'scripts/lib/inkwave-native-stages.mjs'
       - '.github/workflows/validate-inkwave-native-stage5.yml'
   workflow_dispatch:
@@ -28,5 +29,30 @@ jobs:
         run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/boolean-ground-parity.test.mjs
       - name: Verify emitted vertical-slab hit and damage parity
         run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/vertical-slab-parity.test.mjs
+      - name: Verify actual emitted generic ray boundaries and coercion parity
+        run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/ray-generic-parity.test.mjs
+      - name: Prepare pinned test-only Scorch triangles
+        run: node scripts/prepare-inkwave-ray-stage.mjs --out .ray-stage-assets > ray-stage-receipt.json
+      - name: Require existing real-terrain source and emitted assertions
+        run: |
+          set -euo pipefail
+          test -s .ray-stage-assets/scorch/manifest.json
+          unset INKWAVE_NATIVE_STAGE_ASSETS
+          export INKWAVE_RAY_TEST_STAGE_ASSETS="$PWD/.ray-stage-assets"
+          for lane in source emitted; do
+            if [ "$lane" = emitted ]; then export INKWAVE_BUILT_SITE="$PWD/_site"; else unset INKWAVE_BUILT_SITE; fi
+            node --experimental-vm-modules --test --test-reporter=tap --test-name-pattern='native source physics, painting, movement, nav and rules: scorch$' patches/native-stages/tests/native-integration.test.mjs | tee "ray-stage-$lane.log"
+            grep -Eq '^ok [0-9]+ - native source physics, painting, movement, nav and rules: scorch$' "ray-stage-$lane.log"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: generic-ray-terrain-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            ray-stage-receipt.json
+            ray-stage-source.log
+            ray-stage-emitted.log
+          if-no-files-found: error
+          retention-days: 14
       - name: Assert reference model payload remains excluded
         run: test ! -e _site/_native-reference-assets && node --test scripts/tests/inkwave-stage-assets.test.mjs

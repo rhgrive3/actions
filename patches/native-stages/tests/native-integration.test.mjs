@@ -4,13 +4,16 @@ import fs from 'node:fs';
 import { nativeFixture,readStage } from './fixture.mjs';
 import { prepareNativeStageBuild } from '../../../scripts/lib/inkwave-native-stages.mjs';
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
+const RAY_ROOT=process.env.INKWAVE_RAY_TEST_STAGE_ASSETS;
+assert.ok(!RAY_ROOT||!ROOT,'ray-only test assets and full native assets must not be mixed');
+const DATA_ROOT=RAY_ROOT||ROOT;
 const IDS=['scorch','hagglefish','inkblot','mako','brinewater'];
 
 test('public builds offer five source choices without reference model payload',()=>{
  const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');assert.deepEqual(build.config.stages.map(s=>s.id),IDS);
 });
-for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async()=>{
- const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);
+for(const id of RAY_ROOT?['scorch']:IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!DATA_ROOT},async()=>{
+ const f=await nativeFixture({coreOnly:true}),{G,THREE,PLAYER}=f,data=readStage(DATA_ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);
  G.level=level;G.physics=physics;
  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new CpuPaint(null,level,{atlasSize:2048,maxDensity:4,cell:.25});

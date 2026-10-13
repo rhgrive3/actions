@@ -32,8 +32,14 @@ export class TriangleWorld {
    }else{
    for(let k=0;k<3;k++){
     const o=k===0?origin.x:k===1?origin.y:origin.z,d=k===0?dir.x:k===1?dir.y:dir.z;
-    if(Math.abs(d)<1e-12){if(o<nodes[ni+k]||o>nodes[ni+3+k]){miss=true;break;}continue;}
-    const a=(nodes[ni+k]-o)/d,b=(nodes[ni+3+k]-o)/d;low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low){miss=true;break;}
+    if(typeof d==='number'?d>-1e-12&&d<1e-12:Math.abs(d)<1e-12){if(o<nodes[ni+k]||o>nodes[ni+3+k]){miss=true;break;}continue;}
+    const a=(nodes[ni+k]-o)/d,b=(nodes[ni+3+k]-o)/d;
+    // Keep divisions/read order. The common numeric interval needs no Math
+    // calls; retain native min/max for unordered/coercing/signed-zero cases.
+    if(a===a&&b===b&&low===low&&typeof high==='number'&&high===high&&high!==0&&(a!==0||b!==0)){
+     const near=a<b?a:b,far=a>b?a:b;if(near>low)low=near;if(far<high)high=far;
+    }else {low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));}
+    if(high<low){miss=true;break;}
    }
    }
    if(miss)continue;

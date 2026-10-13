@@ -2,8 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fixture } from '../../splatoon3/tests/source-fixture.mjs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
-export async function nativeFixture(){
- return fixture({fullRuntime:true,realProjectiles:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,extraExports:`
+export async function nativeFixture(options={}){
+ // Core-only consumers work with the actual emitted engine bundle, where
+ // source-only render helper modules are deliberately not separate files.
+ const coreExports=options.coreOnly?`
+ export {NativeLevel,NativePhysics,nativeRankedStage,nativePaintGoalIds} from './patches/native-stages/runtime/engine.mjs';
+ export {BotBrain} from './inkwave-public/src/game/bots.js';
+ export {NavGraph} from './inkwave-public/src/game/nav.js';
+ `:null;
+ return fixture({fullRuntime:true,realProjectiles:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,extraExports:coreExports||`
  export { NativeLevel,NativePhysics } from './patches/native-stages/runtime/engine.mjs';
  export { BotBrain } from './inkwave-public/src/game/bots.js';
  export { nativePaintGoalIds } from './patches/native-stages/runtime/engine.mjs';
