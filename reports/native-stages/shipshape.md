@@ -50,7 +50,7 @@ A separate navigation trial places the other seven real actors on genuine
 supported own-bank surfaces outside the intended route's 21-unit awareness
 range. This isolates navigation without changing perception or authored pads.
 The tested bot completes all three source climbs and reaches the opposite bank,
-then stalls eight metres from its goal. Drop edge 28642 → 28230 starts on the
+then stalls eight source units from its goal. Drop edge 28642 → 28230 starts on the
 original `WallCrane` slope: the node centre is y 5.179844, while the real supported
 foot is y 5.340193. The old Drop approach gate rejects that 0.160349 difference.
 The accepted physical support helper admits the same real foot; a production
