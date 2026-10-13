@@ -73,7 +73,7 @@ try{
     },{id,mode});
     // Leave the live match through production quit. Menu input/lifecycle guards
     // then own their ordinary screen transitions and physical clicks.
-    await page.evaluate(async()=>{const g=NG.game;await g.quitToMenu();g._skipRender=true;g.debug.unfreeze();});
+    await page.evaluate(async()=>{const g=NG.game;await g.quitToMenu();g._skipRender=true;g.debug.freezeBots();g.debug.unfreeze();});
     const screen=async name=>page.waitForFunction(name=>NG.mode==='menu'&&NG.game.menus.current===name&&NG.game.menus._scr?.name===name,name,{timeout:30000});
     const click=async key=>{await page.waitForFunction(key=>{const m=NG.game.menus,r=m._scr?.el,t=r?.querySelector('[data-id="'+key+'"]');if(!t||t.disabled||r.inert)return false;let k=1;for(let e=t;e;e=e.parentElement){k*=Number(getComputedStyle(e).opacity);if(e===r)break;}return k>.6;},key,{timeout:30000});await page.locator('.iw-screen:not(.is-leaving) [data-id="'+key+'"]').click({timeout:30000});};
     await screen('main');const baseline=await page.evaluate(()=>({mode:NG.mode,screen:NG.game.menus.current,attract:!!NG.match?.attract}));assert.equal(baseline.mode,'menu');
