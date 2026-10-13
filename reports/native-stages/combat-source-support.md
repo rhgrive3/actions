@@ -1,5 +1,7 @@
 # 原典の上層での戦闘歩行支持
 
+現行90040586+df7の変更は、Shipshapeによる名前付き独立レビューを通過した共通修正。対象は支持された戦闘歩行、既存の非敵スポーンgoalの保持、実装済み接地Trizooka chargeの通常移動だけ。以下の以前の記録は、その時点の候補・封印artifactの証跡として保持する。全対岸AIと別担当の着地衝突修正の完了は主張しない。
+
 候補の修正は、native原典上で接地しているbotのfight/retreatだけに適用する。従来のwet判定は落下死亡閾値より上の船底を安全な床とみなし、上層からそこまで通常歩行できるかを調べていなかった。既存groundProbeで現在formのstepUp/stepDown/footRadiusに従った連続支持を確認し、既存edgeGuardの旋回・停止へ結果を渡す。連続した下り坂、NoPaint、人型の金網、実dynamic足場は支持として維持する。イカが通過する金網、崖、source worldとphysicsの不一致は安全な支持として新たに許可しない。
 
 地形・衝突・NoPaint・インク・速度・接地物理・スポーン・通常navigation/ranked/特殊移動の入力所有者は変更しない。原典はKiTrix固定0611f51b、オヒョウVss_Twist00のSHA8413aae6…3771d9。参照ブキはLeanny11.3.0のShooter_Normal_00、ゼロAP。抽出版、原典座標の単位、Nintendoのcollision/paint/climb mask、実機の停止距離とAI判断は未確認。
@@ -41,3 +43,11 @@ Chromiumで実際にインストールされたGame._frameを使用し、旧判�
 ## 元goal再取得の検証条件を明示
 
 元173eeと現在7a306のbank checkerは、最初の元source支持goalを設定し、paint modeでpathを失った/goalが変わったときにも同じ元goalへ_pathToを再実行した。他botも固定している。試験対象のperception・actions・Actor・ブキ・SPはproductionのままだが、これは制御した元goal再取得のreplayであり、無制御の自律AIとは扱わない。元の非許容落下と入力順の反例はこの条件に限定する。4,286件は各Actor固定STEPのカプセル適合で、連続移動sweepの証明ではない。Wahooの次の厳格candidateではpostsetup goal強制を除き、通常paint policyでgoalが変わるケースとsource落下/衝突を区別する。root候補df7は採用90040586のDrop/main18ceを取り込んだが、旧artifact証跡は更新版と読み替えない。
+
+## 現行の独立レビューと採用範囲
+
+Shipshapeが現行90040586+df7の足元・同goal・実接地Trizookaのコードと証拠を独立確認し、狭い共通挙動にPASSを出した。root helperのSHAはdec49d2c…で変更なし。現行公開revision c4664893はcanonical9/9とcore131/range14の容量制限を通過、変更に関係するdefaultは8通過・4任意原典fixture skip・失敗0。
+
+別のWahooジャンプ候補を組み合わせたprivateでは、実際の直前WALKからの同じ進入条件で旧3ケースが落下、新6ケースが元ジャンプ先へ着地した。続く6ケースも元の次のwaypointへ支持されたsourceDropで進んだ。実Actorは固定1/60、描画30/60/120Hz、初期の生存敵contextを制御し、開始後の姿勢・速度を強制していない。この後続修正はPR1399には含めず、独立した採用判断とする。
+
+以前の制御Game12、元goal再取得replayと強い全対岸assertの失敗を保存し、現行版や自律AI成功へ読み替えない。修正済み接触点どうしの直線chordは実際の離散solverの経路保証ではなく、連続衝突の証明として扱わない。別のsource foot補正による実身体接触はMantaが対応中で、ステージ全経路の最終gateに残る。Nintendoの本家11.3.0のAI・SP中移動・地形mask、原典座標の単位・抽出版、全ブキ・実機性能は未確認。

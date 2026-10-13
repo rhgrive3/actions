@@ -4203,3 +4203,8 @@ Final accepted0c39-composed Chromium proof has six actual Game._frame edge compl
 2026-10-13 最新main18ce互換候補: 通信bomb/snapshotと原典Sprinkler被害、復活/editor/touch/HUD修正を作業ブランチへmainから取り込み、共有記録の双方を保持。mainへのマージではない。関連default145通過/4任意emitted skip/0失敗、正しいemitted再実行15/15・skip0、公開canonical9/9と容量通過。実ブラウザ入力・Scorch読込/通常射撃・全5ルール実WS・独立peerは進行中で完成扱いしない。原典/物理/単位/実機性能は不変・未確認を維持。詳細: [main-18ce-compatibility.md](native-stages/main-18ce-compatibility.md)。
 
 最新main18ce互換の採用追補: Hump担当の独立reviewがCLOSED/accepted。変更suite140通過/4任意emitted skip/0失敗、実emitted15/15・skip0とprivate/public9/9・容量も独立通過。現在の実Chrome Input5、公開Scorch原典取得/v4/自然58固定tick着地/cache/破損rollback、通常Shooter実Game3描画cadence固定1/60、全5ルール実WSで完全grid SHA一致/受入watermark到達/全送信・成長・再生queue空/例外0を確認。入力fixtureと支持姿勢/aim/他bot固定の射撃条件を本家/ハードウェア再現としない。共通native/原典/Actor物理は不変、第三者抽出assetsを公開せずmainへのマージもしない。詳細: [main-18ce-compatibility.md](native-stages/main-18ce-compatibility.md)。
+
+
+### 原典戦闘支持・既存goal保持の独立レビュー確定範囲
+
+現行90040586+df7・helper dec49のnative接地fight/retreat足元ガード、既存のvalid非敵zone goalの通常A*保持、実装済みactive kid Trizooka chargeの通常水平移動について、Shipshapeの名前付き独立レビューがPASS。公開canonical9/9・core131/range14容量通過、関係default8通過/4任意原典skip/0失敗。旧制御Game12と元goal再取得の実Game失敗は旧artifactに紐づけて保存し、自律AI完成へ読み替えない。別のジャンプ候補との現行paired実入力で両陣営6着地と元の次waypoint6到達を確認したが、その候補は別PRの採用範囲。全経路でのsource foot/body接触は別担当が修正中。参照11.3.0・Shooter_Normal_00・ゼロAP、初期敵context制御、Actor1/60/描画30/60/120。原典の抽出版・座標単位、本家AI/SP移動/地形mask、全ブキとhardware性能は未確認。詳細: [combat-source-support.md](native-stages/combat-source-support.md) と同verification JSON。

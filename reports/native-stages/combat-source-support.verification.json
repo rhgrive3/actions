@@ -305,7 +305,7 @@
   ],
   "sourceBuffersUnchanged": true,
   "errors": [],
-  "qualificationStatus": "Draft; current0c39+830 fixes old deck/SP failures but genuine current ordinaryjump combat input failure remains, Wahoo correction and Ship independent peer in progress; no wholebank claim.",
+  "qualificationStatus": "Qualified narrow common behavior: named Shipshape independent review PASS on current900+df7, unchanged helper dec49. Whole-bank stage traversal, unrestricted autonomous AI, pending grounded-body coupling and retail/hardware parity remain unverified.",
   "commonHead": "457c42024c904c949661534f762260c79075b121",
   "source": {
     "repository": "kirakira-dev/KiTrix",
@@ -528,5 +528,34 @@
     "corePreloads": 131,
     "rangePreloads": 14,
     "actualNaturalCombinedGame": "pending Wahoo current paired jump and Ship independent continuation; existing controlled goal-replay failures remain historical."
+  },
+  "namedPeerClosure": {
+    "peer": "/root/shipshape",
+    "dateUtc": "2026-10-13T20:01:00Z",
+    "candidateRuntime": "df7ec808f7b5c2eb8986574125dd5381849f5b1e",
+    "helperSha256": "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496",
+    "scope": "Native supported combat-wet, same valid current-world non-enemy route goal, genuine grounded kid active Trizooka charge. Historical controlled Game12 and original-goal replay remain bound to their recorded immutable artifacts. Current private paired genuine source jump/onward continuation executes unchanged root helper with pending Wahoo correction; that correction is not included by this PR.",
+    "result": "passed",
+    "currentPairedComponent": {
+      "incomingBaselineFailed": 3,
+      "incomingCandidateLanded": 6,
+      "onwardCandidateArrivedAtOriginalNextWaypoint": 6,
+      "actorStep": 0.016666666666666666,
+      "renderHz": [
+        30,
+        60,
+        120
+      ],
+      "postSetupPoseVelocityOverride": false,
+      "scope": "Controlled initial live-enemy combat context and actual incoming ordinary walk, not unrestricted autonomous full-bank completion."
+    },
+    "exclusions": [
+      "whole-bank continuous collision guarantee",
+      "straight chord through separately source-corrected poses",
+      "grounded-body foot correction owned separately by Manta",
+      "unrestricted autonomous AI",
+      "Nintendo coordinates/units/collision mask/extraction version",
+      "retail Trizooka movement and hardware performance"
+    ]
   }
 }
