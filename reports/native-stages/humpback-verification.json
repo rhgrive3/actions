@@ -6900,5 +6900,516 @@
         "measurementKind": "deterministic file and dependency gates; not native browser timings"
       }
     }
+  },
+  "rankedObjectiveDiagnostic": {
+    "foundation": "67e5565c1ed10cf6adc8c5ad102e5d8863840935",
+    "buildFingerprint": "103bacfdcc9616d4a67c75d61937aa5629476ed0cf06207a0e8961e4bf15c9dc",
+    "passed": 18,
+    "failed": 0,
+    "scope": "Actual production Match/RankedEngine/rule botGoal/installed wrapper/Character/WeaponRunner/Projectiles; controlled objective approach, not score simulation or final v4 claim",
+    "browser": [
+      {
+        "id": "humpback",
+        "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+        "actors": 8,
+        "bots": 7,
+        "cases": [
+          {
+            "mode": "zones",
+            "team": 0,
+            "hz": 30,
+            "seconds": 23.7,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": -0.4000000000000057
+            },
+            "end": [
+              -0.5474555771731545,
+              3.0999999046325684,
+              -0.9744403747420739
+            ],
+            "sourceTriangle": 94449,
+            "fire": true,
+            "traversal": 50,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "zones",
+            "team": 0,
+            "hz": 60,
+            "seconds": 25.016666666666666,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": -0.4000000000000057
+            },
+            "end": [
+              -0.5731257506289686,
+              3.0999999046325684,
+              -0.984477870224606
+            ],
+            "sourceTriangle": 94449,
+            "fire": true,
+            "traversal": 98,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "zones",
+            "team": 0,
+            "hz": 120,
+            "seconds": 25.35,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": -0.4000000000000057
+            },
+            "end": [
+              -0.5864439963979255,
+              3.0999999046325684,
+              -0.9959596050524788
+            ],
+            "sourceTriangle": 94449,
+            "fire": true,
+            "traversal": 155,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "zones",
+            "team": 1,
+            "hz": 30,
+            "seconds": 22.033333333333335,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": -0.4000000000000057
+            },
+            "end": [
+              0.9790337948340798,
+              3.0999999046325684,
+              0.1859590010067338
+            ],
+            "sourceTriangle": 105828,
+            "fire": true,
+            "traversal": 54,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "zones",
+            "team": 1,
+            "hz": 60,
+            "seconds": 21.4,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": -0.4000000000000057
+            },
+            "end": [
+              1.005150286679092,
+              3.0999999046325684,
+              0.1499228313849599
+            ],
+            "sourceTriangle": 105828,
+            "fire": true,
+            "traversal": 88,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "zones",
+            "team": 1,
+            "hz": 120,
+            "seconds": 21.733333333333334,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": -0.4000000000000057
+            },
+            "end": [
+              1.0095185620080895,
+              3.0999999046325684,
+              0.17321998873943362
+            ],
+            "sourceTriangle": 105828,
+            "fire": true,
+            "traversal": 221,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "rainmaker",
+            "team": 0,
+            "hz": 30,
+            "seconds": 24.3,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325755,
+              "z": -2.4000000000000057,
+              "node": 10343
+            },
+            "end": [
+              1.107340721047262,
+              3.0999999046325684,
+              -2.626165424695906
+            ],
+            "sourceTriangle": 105798,
+            "fire": true,
+            "traversal": 50,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "rainmaker",
+            "team": 0,
+            "hz": 60,
+            "seconds": 24.216666666666665,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325755,
+              "z": -2.4000000000000057,
+              "node": 10343
+            },
+            "end": [
+              1.1399536937879406,
+              3.0999999046325684,
+              -2.67590587668015
+            ],
+            "sourceTriangle": 105798,
+            "fire": true,
+            "traversal": 98,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "rainmaker",
+            "team": 0,
+            "hz": 120,
+            "seconds": 23.816666666666666,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325755,
+              "z": -2.4000000000000057,
+              "node": 10343
+            },
+            "end": [
+              1.1553436318023733,
+              3.0999999046325684,
+              -2.6483547132370533
+            ],
+            "sourceTriangle": 105798,
+            "fire": true,
+            "traversal": 155,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "rainmaker",
+            "team": 1,
+            "hz": 30,
+            "seconds": 22,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": 1.5999999999999943,
+              "node": 11063
+            },
+            "end": [
+              0.9321636920184566,
+              3.0999999046325684,
+              2.2043145922206198
+            ],
+            "sourceTriangle": 105838,
+            "fire": true,
+            "traversal": 54,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "rainmaker",
+            "team": 1,
+            "hz": 60,
+            "seconds": 21.75,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": 1.5999999999999943,
+              "node": 11063
+            },
+            "end": [
+              1.16717630291058,
+              3.0999999046325684,
+              1.7509949012213686
+            ],
+            "sourceTriangle": 105838,
+            "fire": true,
+            "traversal": 88,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "rainmaker",
+            "team": 1,
+            "hz": 120,
+            "seconds": 21.675,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 0.20000000000000284,
+              "y": 3.0999999046325684,
+              "z": 1.5999999999999943,
+              "node": 11063
+            },
+            "end": [
+              0.9802835943877874,
+              3.0999999046325684,
+              2.225274683262369
+            ],
+            "sourceTriangle": 105838,
+            "fire": true,
+            "traversal": 221,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "clams",
+            "team": 0,
+            "hz": 30,
+            "seconds": 26.1,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": -5.707845379096778,
+              "y": -7.105427357601002e-15,
+              "z": -15.491692561564093
+            },
+            "end": [
+              -5.321459339021397,
+              -5.551115123125783e-17,
+              -16.250953087753672
+            ],
+            "sourceTriangle": 69328,
+            "fire": true,
+            "traversal": 102,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "clams",
+            "team": 0,
+            "hz": 60,
+            "seconds": 54.516666666666666,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": -5.707845379096778,
+              "y": -7.105427357601002e-15,
+              "z": -15.491692561564093
+            },
+            "end": [
+              -5.743336275840261,
+              5.551115123125783e-17,
+              -16.06329287548462
+            ],
+            "sourceTriangle": 69332,
+            "fire": true,
+            "traversal": 220,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "clams",
+            "team": 0,
+            "hz": 120,
+            "seconds": 75.64166666666667,
+            "sourcePad": [
+              0,
+              6.08,
+              -61
+            ],
+            "goal": {
+              "x": -5.707845379096778,
+              "y": -7.105427357601002e-15,
+              "z": -15.491692561564093
+            },
+            "end": [
+              -4.804674021165157,
+              0,
+              -15.902451917238933
+            ],
+            "sourceTriangle": 92023,
+            "fire": true,
+            "traversal": 429,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "clams",
+            "team": 1,
+            "hz": 30,
+            "seconds": 41.96666666666667,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 6.000170211174519,
+              "y": 0.00014166938090198755,
+              "z": 15.608249575623189
+            },
+            "end": [
+              6.187835911972892,
+              0.00016063893434981047,
+              16.27329510312341
+            ],
+            "sourceTriangle": 96953,
+            "fire": true,
+            "traversal": 54,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "clams",
+            "team": 1,
+            "hz": 60,
+            "seconds": 36.7,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 6.000170211174519,
+              "y": 0.00014166938090198755,
+              "z": 15.608249575623189
+            },
+            "end": [
+              6.154229924664787,
+              0.00015104325125064877,
+              16.379858736422108
+            ],
+            "sourceTriangle": 96953,
+            "fire": true,
+            "traversal": 109,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          },
+          {
+            "mode": "clams",
+            "team": 1,
+            "hz": 120,
+            "seconds": 27.416666666666668,
+            "sourcePad": [
+              0,
+              6.08,
+              61
+            ],
+            "goal": {
+              "x": 6.000170211174519,
+              "y": 0.00014166938090198755,
+              "z": 15.608249575623189
+            },
+            "end": [
+              6.184143193454121,
+              0.00016469569062765865,
+              16.386266022551233
+            ],
+            "sourceTriangle": 96953,
+            "fire": true,
+            "traversal": 210,
+            "alive": true,
+            "grounded": true,
+            "gearAP": []
+          }
+        ],
+        "conditions": "Actual production Match/RankedEngine/rule botGoal/installed ranked wrapper/Actor/WeaponRunner/Projectiles; eight real actors and seven bots, original source-supported pad setups, empty initial ink, zero AP, no later pose/velocity/ink writes; controlled objective approach without score simulation; nearby Clam collection can legitimately need no wall painting; fixed RNG before Actor construction; SwiftShader",
+        "errors": []
+      }
+    ]
   }
 }
