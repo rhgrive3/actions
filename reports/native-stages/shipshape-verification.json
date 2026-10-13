@@ -33106,6 +33106,178 @@
       "sourceUnchanged": true,
       "simulationStep": 0.016666666666666666,
       "gearAP": []
+    },
+    "confirmedNaturalCombatMode": {
+      "tick": 5168,
+      "mode": "fight",
+      "target": {
+        "team": 1,
+        "slot": 3,
+        "position": [
+          9.95,
+          6.050000190734863,
+          64.5
+        ],
+        "alive": true
+      },
+      "position": [
+        16.400427757833956,
+        5.0398890796237525,
+        45.36087606110939
+      ],
+      "lastGrounded": {
+        "tick": 5151,
+        "position": [
+          17.804188559077698,
+          6.050000190734863,
+          45.88280957847482
+        ],
+        "previous": [
+          17.868462593451316,
+          6.050000190734863,
+          45.90243715448497
+        ],
+        "velocity": [
+          -3.856442062417022,
+          0,
+          -1.1776545606090127
+        ],
+        "grounded": true,
+        "form": "squid",
+        "edge": null,
+        "input": {
+          "move": [
+            0,
+            0,
+            0
+          ],
+          "squid": true,
+          "jump": false,
+          "fire": false
+        },
+        "mode": "fight",
+        "target": {
+          "team": 1,
+          "slot": 3,
+          "position": [
+            9.95,
+            6.050000190734863,
+            64.5
+          ],
+          "alive": true
+        },
+        "think": 0.2,
+        "seeTimer": 1.2,
+        "lostTimer": 0,
+        "jumpSerial": 11,
+        "pi": 7,
+        "goal": 27627,
+        "phases": {},
+        "contacts": {
+          "wall": false,
+          "ceiling": false,
+          "ground": false
+        },
+        "groundHit": {
+          "hit": true,
+          "y": 6.050000190734863,
+          "normal": [
+            0,
+            1,
+            0
+          ],
+          "block": 34393,
+          "face": 34393
+        }
+      },
+      "belowSource": {
+        "point": [
+          16.400427757833956,
+          -14.864700317382812,
+          45.36087606110939
+        ],
+        "face": 102928,
+        "triangle": 232493,
+        "object": "Fld_Twist00_VesselFloor00_mesh1__VesselFloor00",
+        "flags": 3
+      }
+    },
+    "experimentalExactCombatOverlay": {
+      "kind": "natural-combat-overlay-outcome",
+      "team": 0,
+      "hz": 30,
+      "seconds": 90,
+      "maxSupportedZ": 46.10300818954092,
+      "unqualifiedDeparture": false,
+      "end": [
+        18.499999763417005,
+        6,
+        44.019082969321694
+      ],
+      "grounded": true,
+      "mode": "paint",
+      "path": [
+        23637,
+        23925,
+        24217,
+        24501,
+        24754,
+        25023,
+        25305,
+        25597,
+        25882,
+        25861,
+        26069,
+        26354,
+        26563,
+        26776,
+        26977,
+        27159,
+        27346,
+        27525,
+        27689,
+        27851,
+        27988,
+        27985,
+        27982,
+        27980,
+        27978,
+        27975,
+        27972,
+        27969,
+        27966,
+        27963,
+        27960,
+        28100,
+        28257,
+        28255,
+        28395,
+        28393,
+        28391,
+        28389,
+        28386,
+        28517,
+        28647,
+        28646,
+        28645,
+        28642,
+        28230,
+        28076,
+        27933,
+        27791,
+        27627
+      ],
+      "pi": 6,
+      "goal": 27627,
+      "target": null,
+      "artifact": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+      "exactHelperSha256": "347a351635260a86d220f24cecd5ed34968a89e8dd11d6e9a5f2ab7722ffb7da",
+      "sourceCommit": "2199adc7",
+      "hook": "exact helper function at BotBrain._wet; null verdict calls original method; canonical installed config/GroundHit",
+      "geometryInputPoseVelocityUnchanged": true,
+      "fullRoutePassed": false,
+      "productionCompositionClaim": false,
+      "conclusion": "original hull fall prevented for90sec; fight/paint loop and onward wholebank progress unresolved"
     }
   },
   "currentMainSourceRender": {
@@ -33782,7 +33954,8 @@
     "floor": "0e6dd2474930b4fde75e2b5e5012030b175b4952",
     "towerRider": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
     "artifactResealPending": true,
-    "sourceGeometryAndMaskChanged": false
+    "sourceGeometryAndMaskChanged": false,
+    "ordinaryJumpInput": "fd23d46d87498dced990c5ee5655db2462169e2e"
   },
   "ownPr": {
     "url": "https://github.com/rhgrive3/actions/pull/1394",
