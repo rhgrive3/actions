@@ -37,6 +37,29 @@ test('an ordinary shooter interruption can resume painting a qualified source cl
  console.log(JSON.stringify({id,sourceSha256:L.manifest.sourceSha256,cases}));
 });
 
+test('production rig muzzles paint nearby source walls after ordinary stream interruptions',{skip:!available||id!=='flounder'},async()=>{
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE}=f,L=G.level=new f.NativeLevel(readStage(root,id)),P=G.physics=new f.NativePhysics(L);
+ class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
+ G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});const N=G.nav=new f.NavGraph(L,P);G.camera=new THREE.PerspectiveCamera();f.setRandom(()=>.5);const cases=[];
+ const tick=(a,dt)=>{G.time+=dt;a.update(dt);G.projectiles.update(dt);G.paint.advanceSimulation(dt);};
+ try{for(const team of [0,1]){
+  const center=N.nearest(new THREE.Vector3(0,12,0),1.2),route=N.path(N.nearest(L.spawnPads[team],1.2),center,team,50000),at=route.slice(1).findIndex((to,i)=>N.edgeType(route[i],to)==='climb'),from=N.nodes[route[at]],edge=from.nb.find(e=>e.to===route[at+1]),c=edge.climb;
+  for(const hz of [30,60,120]){
+   G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();G.actors=[];
+   const a=new f.Actor({team,name:'source rig',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});a.isBot=true;a.spawnAt(new THREE.Vector3(...c.paintStance),team?Math.PI:0);a.invuln=0;G.actors=[a];
+   const normal=new THREE.Vector3(...c.normal);a.aimYaw=Math.atan2(normal.x,normal.z);a.aimPitch=0;a.aimPoint.copy(a.pos).add(new THREE.Vector3(0,1.1,0)).addScaledVector(normal,6);a.intent.fire=true;
+   for(let i=0;i<Math.ceil(hz*.3);i++)tick(a,1/hz);
+   a.intent.fire=false;a.intent.squid=true;tick(a,1/hz);assert.equal(a.weaponRunner.s3ShooterCancelMain,true);
+   const b=a.bot=new f.BotBrain(a,'normal');b.path=[from.id,edge.to];b.pi=1;b.goal=edge.to;b.goalTimer=b.repath=b.bombCd=1000;
+   let climbed=false,fire=false,released=false,seconds=0;
+   for(let i=0;i<hz*8;i++){b.update(1/hz);released ||=b._nativeClimb?.phase==='release';fire ||=a.intent.fire;tick(a,1/hz);climbed ||=a.climbing;seconds=(i+1)/hz;if(climbed&&a.grounded&&Math.abs(a.pos.y-c.upper[1])<.16)break;}
+   assert.ok(released&&fire&&climbed&&a.alive&&a.grounded&&Math.abs(a.pos.y-c.upper[1])<.16,JSON.stringify({team,hz,seconds,climbed,fire,released,end:a.pos.toArray(),counts:G.paint.counts}));assert.ok(c.samples.every(s=>G.paint.sample(s.face,s.u,s.v)===team+1));assert.deepEqual(Object.keys(a.s3.abilityPoints),[]);
+   cases.push({team,hz,seconds,productionCharacterMuzzle:true,realWeaponPaint:true,sourceUpperSupport:true,gearAP:0});
+  }
+ }}finally{f.restoreRandom();}
+ console.log(JSON.stringify({id,cases}));
+});
+
 test('a live bot uses a source-screened contact line beside an authentic wall edge',{skip:!available||id!=='manta'},async()=>{
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(root,id);data.manifest.sourceNavigation={wallClimb:true};
  const L=G.level=new f.NativeLevel(data),P=G.physics=new f.NativePhysics(L);
