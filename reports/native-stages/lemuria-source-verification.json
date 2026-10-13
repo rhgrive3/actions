@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "id": "lemuria",
+  "internal": "Vss_AutoWalk00",
+  "availability": "source-unavailable",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "pinnedTreeFileCount": 13633,
+  "pinnedAutoWalkPathCount": 0,
+  "version1130Verified": false,
+  "geometryVerified": false,
+  "rulesPlacementVerified": false,
+  "metadata": [
+    {
+      "file": "SceneInfo.json",
+      "sha256": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e",
+      "matchingRowCount": 1
+    },
+    {
+      "file": "VersusSceneInfo-1130.json",
+      "sha256": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
+      "matchingRowCount": 1
+    }
+  ],
+  "publicHistory": {
+    "api": "https://api.github.com/repos/kirakira-dev/KiTrix/",
+    "commitCount": 8,
+    "branches": [
+      "main"
+    ],
+    "forkCount": 0,
+    "releaseCount": 0,
+    "completeTrees": [
+      {
+        "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+        "entryCount": 13965,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      },
+      {
+        "commit": "0b677daeaf1ee8ed7ba0205f817f988f65429855",
+        "entryCount": 13965,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      },
+      {
+        "commit": "0e80bd86942074a7ff6417c3e970846ff2fcc135",
+        "entryCount": 13964,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      },
+      {
+        "commit": "2328e69ea42650b522009f0303bb3883cb5d9d00",
+        "entryCount": 13965,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      },
+      {
+        "commit": "7b5a393766c5551aee063256ede95df44da9183e",
+        "entryCount": 13705,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      },
+      {
+        "commit": "906ebf3a22b52192bf4f81efe20b6c6bb7b729b4",
+        "entryCount": 13974,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      },
+      {
+        "commit": "a21f89529bc9f26929d71b3179f098a9738821a2",
+        "entryCount": 13963,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      },
+      {
+        "commit": "e7c83c7e5c46933ca6f2196200f44c15b7a51d5f",
+        "entryCount": 13964,
+        "truncated": false,
+        "autoWalkPathCount": 0
+      }
+    ]
+  }
+}

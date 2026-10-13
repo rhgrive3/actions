@@ -615,5 +615,172 @@
       "declaredBytes": 10370789,
       "measurementKind": "deterministic file and dependency gates; not native browser timings"
     }
+  },
+  "eightActorProfile": {
+    "id": "scorch",
+    "actors": 8,
+    "alive": 8,
+    "bots": 7,
+    "moved": [
+      0,
+      3.4857799243114185,
+      0.329997147546681,
+      4.799620279664296,
+      3.580635565748316,
+      5.0704481919000965,
+      2.3668010564399573,
+      1.2041392686253618
+    ],
+    "cpuFrame": {
+      "p50": 39.599999994039536,
+      "p95": 98.59999999403954,
+      "max": 6561.9000000059605
+    },
+    "profile": {
+      "physics.raycast": {
+        "milliseconds": 336.9000002592802,
+        "calls": 31558
+      },
+      "bot.update": {
+        "milliseconds": 410.899999961257,
+        "calls": 1260
+      },
+      "physics.collideBody": {
+        "milliseconds": 35.59999988973141,
+        "calls": 1440
+      },
+      "physics.groundProbe": {
+        "milliseconds": 90.09999999403954,
+        "calls": 1353
+      },
+      "character.update": {
+        "milliseconds": 4218.700000107288,
+        "calls": 1440
+      },
+      "actor.update": {
+        "milliseconds": 5109.100000113249,
+        "calls": 1440
+      },
+      "projectiles.update": {
+        "milliseconds": 508.7999999523163,
+        "calls": 180
+      },
+      "paint._advanceSplatOwnership": {
+        "milliseconds": 391.90000039339066,
+        "calls": 8264
+      },
+      "paint.radius.2.3": {
+        "milliseconds": 237.60000009834766,
+        "calls": 3369,
+        "faceVisits": 751742
+      },
+      "paint._emitGrowth": {
+        "milliseconds": 567.1999998241663,
+        "calls": 8378
+      },
+      "paint.radius.2.1": {
+        "milliseconds": 126.50000025331974,
+        "calls": 3115,
+        "faceVisits": 498176
+      },
+      "paint.radius.0.9": {
+        "milliseconds": 27.200000017881393,
+        "calls": 1494,
+        "faceVisits": 4836
+      },
+      "paint.radius.1.7": {
+        "milliseconds": 0,
+        "calls": 187,
+        "faceVisits": 187
+      },
+      "paint.radius.2": {
+        "milliseconds": 0.6000000238418579,
+        "calls": 99,
+        "faceVisits": 2019
+      },
+      "paint._drawQuads": {
+        "milliseconds": 6679.700000047684,
+        "calls": 361
+      },
+      "paint.advanceSimulation": {
+        "milliseconds": 7675.000000014901,
+        "calls": 180
+      },
+      "fx.update": {
+        "milliseconds": 45.90000008046627,
+        "calls": 180
+      },
+      "environment.update": {
+        "milliseconds": 78.60000002384186,
+        "calls": 180
+      },
+      "paint.flush": {
+        "milliseconds": 4.000000014901161,
+        "calls": 181
+      },
+      "minimap.update": {
+        "milliseconds": 80.59999996423721,
+        "calls": 180
+      },
+      "paint.coverage": {
+        "milliseconds": 14.999999940395355,
+        "calls": 181
+      },
+      "hud.update": {
+        "milliseconds": 559.3999999761581,
+        "calls": 180
+      },
+      "paint._cpuSplat": {
+        "milliseconds": 38.90000006556511,
+        "calls": 7647
+      },
+      "paint.splat": {
+        "milliseconds": 415.2999999821186,
+        "calls": 121
+      },
+      "physics.bodyFits": {
+        "milliseconds": 0.09999999403953552,
+        "calls": 19
+      },
+      "nav.nearest": {
+        "milliseconds": 0.09999999403953552,
+        "calls": 15
+      },
+      "nav.path": {
+        "milliseconds": 5.0999999940395355,
+        "calls": 5
+      }
+    },
+    "errors": [],
+    "version1130Verified": false,
+    "conditions": "180 rapid simulated60Hz frames; ordinary8actor match7moving bots; unseeded random state; lowquality; ChromiumSwiftShader; render skip does not disable PaintSystem GPU draws; warm-up not controlled",
+    "limits": "No before/after speed claim or hardwareFPS. Largest measured step6.562s, paint GPU draw timing6.680s total, projectile update0.509s total; accelerated softwareGPU drain/first-use and character cost require matched follow-up."
+  },
+  "fixtureScope": {
+    "cpu": "Actual Actor/WeaponRunner/Projectiles admission and source triangle sweep with fixture.make simplified world-axis Character muzzle and fixed integration/frame finishing; does not prove production rig muzzle or movement.",
+    "browser": "Actual bundled production Character/Actor/WeaponRunner/Projectiles, source-supported controlled stance, original five stages at30/60/120Hz (15cases); distinct from physical controller input and spawn tests.",
+    "runtimeChangedByScopeCorrection": false
+  },
+  "browserRunnerInitialization": {
+    "changedScripts": 6,
+    "changedInitializers": 7,
+    "change": "Install NG in a block callback without implicitly returning the full G scene/geometry object through Playwright.",
+    "syntaxPassed": true,
+    "allOtherAstNodesUnchanged": true,
+    "verificationKind": "Exact Acorn AST comparison with only the callback return removed; no browser-matrix completion inferred.",
+    "productRuntimeChanged": false,
+    "followup": {
+      "scripts": 2,
+      "initializers": 2,
+      "files": [
+        "native-tower-calibration",
+        "lemuria-unavailable"
+      ],
+      "syntaxPassed": true,
+      "allOtherAstNodesUnchanged": true,
+      "totalCorrectedScripts": 8,
+      "totalCorrectedInitializers": 9,
+      "browserMatrixClaim": false
+    }
   }
 }

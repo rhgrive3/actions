@@ -1,6 +1,34 @@
 import * as THREE from 'three';
 import { PLAYER } from '../../../src/config.js';
+import { nativeClimbTransition } from './native-climb.mjs';
 const down=new THREE.Vector3(0,-1,0),origin=new THREE.Vector3(),a=new THREE.Vector3(),b=new THREE.Vector3();
+/** Keep real routes out of both supported spawn layers. The legacy largest
+ * undirected component can be a decorative floor far beneath a native deck. */
+export function pruneNativeNav(graph){
+ const L=graph.level,P=graph.physics,step=graph.step,seeds=[];
+ for(const pad of L.spawnPads){
+  const support=L.triangleWorld.ray(origin.set(pad.x,pad.y+.3,pad.z),down,.6,{minNormalY:.68});
+  if(!support||Math.abs(support.point.y-pad.y)>.15)throw Error('Native navigation spawn lacks source support');
+  const candidates=graph.nodes.filter(n=>Math.abs(n.y-support.point.y)<=.7&&Math.hypot(n.x-pad.x,n.z-pad.z)<=step*1.6);
+  candidates.sort((n,m)=>((n.x-pad.x)**2+(n.z-pad.z)**2+(n.y-support.point.y)**2*6)-((m.x-pad.x)**2+(m.z-pad.z)**2+(m.y-support.point.y)**2*6));
+  let seed=-1;
+  for(const n of candidates){
+   const count=Math.max(1,Math.ceil(Math.hypot(n.x-pad.x,n.z-pad.z)/.2));let clear=true;
+   for(let i=0;i<=count;i++){
+    const t=i/count,x=pad.x+(n.x-pad.x)*t,z=pad.z+(n.z-pad.z)*t,y=support.point.y+(n.y-support.point.y)*t;
+    const h=L.triangleWorld.ray(origin.set(x,y+.25,z),down,.5,{minNormalY:.68});
+    if(!h||Math.abs(h.point.y-y)>.2||!P.bodyFits(origin.set(x,h.point.y+.01,z),PLAYER.radius+.04,.32,PLAYER.height,false,.01)){clear=false;break;}
+   }
+   if(clear){seed=n.id;break;}
+  }
+  if(seed<0)throw Error('Native navigation spawn has no clear source-supported node');
+  seeds.push(seed);
+ }
+ const valid=new Uint8Array(graph.nodes.length),queue=[];
+ for(const seed of seeds)if(!valid[seed]){valid[seed]=1;queue.push(seed);}
+ for(let i=0;i<queue.length;i++)for(const edge of graph.nodes[queue[i]].nb)if(!valid[edge.to]){valid[edge.to]=1;queue.push(edge.to);}
+ graph.valid=valid;graph.validIds=graph.nodes.filter(n=>valid[n.id]).map(n=>n.id);graph.nativeSpawnNodeIds=seeds;
+}
 /** Populate the existing NavGraph/A* contract from triangle support, not chart boxes. */
 export function buildNativeNav(graph){
  const L=graph.level,w=L.triangleWorld,B=L.bounds,st=graph.step;
@@ -30,12 +58,15 @@ export function buildNativeNav(graph){
     // The stock 3.4-unit drop cap is an AI policy for the small blockouts.
     // Native high ledges can drop safely to verified support above fall death.
     else if(!(dx&&dz)&&dy<-.5&&m.y>PLAYER.fallDeathY){type='drop';cost=st+.8;}
-    else continue;
+    else {
+     if(!(dx&&dz)){const edge=nativeClimbTransition(graph,n,m);if(edge)n.nb.push(edge);}
+     continue;
+    }
     const lift=type==='walk'?.65:1.5;
     if(!graph.physics.los(a.set(n.x,n.y+lift,n.z),b.set(m.x,m.y+lift,m.z)))continue;
     n.nb.push({to:id,cost,type});
    }
   }
  }
- graph._prune();
+ pruneNativeNav(graph);
 }
