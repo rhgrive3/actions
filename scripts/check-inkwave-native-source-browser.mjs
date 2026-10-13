@@ -49,9 +49,9 @@ try{
  }
  if(result.stages.length){
   console.log('source failure rollback');const first=SOURCE_STAGES.find(s=>s.id===result.stages[0].id);
-  // A single-stage run is still on that same source stage. Select a different
-  // real world before the corruption probe so startMatch must load the source.
-  await page.evaluate(async()=>{const {MAPS}=await import(new URL('src/config.js',document.baseURI));await NG.game._buildWorld(MAPS.find(m=>m.id==='tidewater'));});
+  // Establish a different complete match before unfreezing: its actors,
+  // controller and world must all agree during the failed source transition.
+  await page.evaluate(async()=>{NG.game.menus.wipe.cancel();await NG.game.startMatch({mapId:'tidewater',mode:'turf',difficulty:'easy'});});
   await page.evaluate(async()=>{for(const key of await caches.keys())if(key.startsWith('inkwave-native-source-'))await caches.delete(key);await new Promise((resolve,reject)=>{const q=indexedDB.deleteDatabase('inkwave-native-derived-v2');q.onsuccess=resolve;q.onerror=()=>reject(q.error);q.onblocked=()=>reject(Error('Derived cache still open'));});});
   await context.route('**/stages/'+first.internal+'/'+first.internal+'.obj',route=>route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},body:Buffer.alloc(4)}));
   await page.evaluate(()=>{globalThis.rollbackLevel=NG.level;NG.game.input.exitLock();NG.game.debug.unfreeze();NG.game._skipRender=true;NG.game.menus.show('setup');});
