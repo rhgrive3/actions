@@ -18,5 +18,7 @@ for n,chunk in enumerate([base64.b64encode((root/'comparison.jpg').read_bytes())
 a=json.loads((root/'before'/'gallery.json').read_text());b=json.loads((root/'after'/'gallery.json').read_text())
 for x,y in zip(a['rows'],b['rows']):
  assert x['id']==y['id'];assert x['muzzle']==y['muzzle'];assert not y['nonFinite'];assert y['maxGrip']<.008
- assert x['drawCalls']==y['drawCalls'],(x['id'],'draw-call regression',x['drawCalls'],y['drawCalls'])
+ # A rebuilt weapon can combine formerly separate opaque batches; never permit more draws.
+ assert 0<y['drawCalls']<=x['drawCalls'],(x['id'],'draw-call increase/empty render',x['drawCalls'],y['drawCalls'])
+ assert y['renderTriangles']>0 and y['tris']>0,(x['id'],'missing rendered/model triangles')
  print('CIRCLED_AB '+json.dumps({'id':x['id'],'before':{k:x[k] for k in ['tris','geometryKB','buildMs','renderMs','drawCalls','renderTriangles']},'after':{k:y[k] for k in ['tris','geometryKB','buildMs','renderMs','drawCalls','renderTriangles']}}))
