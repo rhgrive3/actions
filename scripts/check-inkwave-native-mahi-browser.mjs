@@ -6,6 +6,8 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {WebSocketServer} from 'ws';
+import {RoomDurableObject} from '../server/src/index.js';
 
 const repo=path.resolve(import.meta.dirname,'..'),site=path.resolve(process.argv[2]||'_site-native-mahi');
 const source=path.resolve(process.argv[3]||'.codex-stage-sources/originals/Vss_Hiagari04');
@@ -31,17 +33,27 @@ const server=http.createServer(async(req,res)=>{
  }catch{res.writeHead(404);res.end('Missing');}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const relay=new WebSocketServer({host:'127.0.0.1',port:0});await new Promise(resolve=>relay.once('listening',resolve));
+const rooms=new Map(),wireStarts=[];
+relay.on('connection',(socket,request)=>{
+ const url=new URL(request.url,'http://local'),code=url.pathname.split('/')[2];if(!rooms.has(code))rooms.set(code,new RoomDurableObject({},{}));
+ rooms.get(code).handleSession({send:data=>{if(socket.readyState===1)socket.send(data);},addEventListener:(name,callback)=>socket.on(name,name==='message'?data=>{
+  const raw=data.toString();try{const payload=JSON.parse(raw.startsWith('b|')?raw.slice(2):raw.startsWith('s|')?raw.slice(raw.indexOf('|',2)+1):raw);if(payload.k==='start')wireStarts.push({map:payload.map,mode:payload.mode});}catch{}
+  callback({data:raw});
+ }:callback)},url.searchParams.get('name')||'Player');
+});
+const address='http://127.0.0.1:'+server.address().port+'/?map=tidewater&relay='+encodeURIComponent('ws://127.0.0.1:'+relay.address().port);
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-features=LocalNetworkAccessChecks','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const result={id:'mahi',status:'running',measurement:'Chromium SwiftShader; unavailable-stage admission and source parsing only; no playable match or hardware FPS claim',errors:[],unexpectedSourceDownloads:0};
 const save=()=>fs.writeFileSync(path.join(out,'browser.json'),JSON.stringify(result,null,2)+'\n');
 let page;
 try{
- const context=await browser.newContext({viewport:{width:960,height:640},locale:'ja-JP'});page=await context.newPage();
+ const context=await browser.newContext({viewport:{width:960,height:640},locale:'ja-JP'});await context.grantPermissions(['local-network-access']);page=await context.newPage();
  page.on('pageerror',error=>result.errors.push(error.message));
  page.on('console',message=>{if(message.type()==='error')result.errors.push(message.text());});
  page.on('request',request=>{if(request.url().includes('/stages/Vss_Hiagari04/'))result.unexpectedSourceDownloads++;});
  await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0,audioVolume:0})));
- await page.goto('http://127.0.0.1:'+server.address().port+'/?map=tidewater',{waitUntil:'domcontentloaded'});
+ await page.goto(address,{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});
  assert.equal(await page.locator('#boot-error').textContent(),'');
@@ -63,13 +75,16 @@ try{
   const g=NG.game,before={level:NG.level,physics:NG.physics,nav:NG.nav,paint:NG.paint,match:NG.match},rules=[];
   for(const mode of ['turf','zones','tower','rainmaker','clams']){
    let rejected=false,message='';try{const outcome=await g.startMatch({mapId:'mahi',mode});rejected=outcome===false;}catch(error){rejected=true;message=error.message;}
-   rules.push({mode,rejected,message,levelRetained:NG.level===before.level,matchRetained:NG.match===before.match});
+   const apiRejected=await g.api.startMatch({mapId:'mahi',mode})===false;
+   rules.push({mode,rejected,apiRejected,message,levelRetained:NG.level===before.level,matchRetained:NG.match===before.match});
   }
   let worldRejected=false,worldMessage='';try{await g._buildWorld({id:'mahi',name:'マヒマヒリゾート＆スパ'});}catch(error){worldRejected=true;worldMessage=error.message;}
-  return {rules,worldRejected,worldMessage,authoritiesRetained:NG.level===before.level&&NG.physics===before.physics&&NG.nav===before.nav&&NG.paint===before.paint&&NG.match===before.match};
+  let onlineWorldRejected=false;try{await g.startNetMatch({map:'mahi',mode:'turf'},{});}catch(error){onlineWorldRejected=error.name==='RangeError';}
+  const oldSelection=g.menus._setup.mapId;g.menus._setup.mapId='mahi';g.menus._startMatch();const staleSelectionRejected=!g.menus._starting;g.menus._setup.mapId=oldSelection;
+  return {rules,worldRejected,worldMessage,onlineWorldRejected,staleSelectionRejected,authoritiesRetained:NG.level===before.level&&NG.physics===before.physics&&NG.nav===before.nav&&NG.paint===before.paint&&NG.match===before.match};
  });
- for(const rule of result.admission.rules){assert.equal(rule.rejected,true,rule.mode+' silently fell back');assert.equal(rule.levelRetained,true);assert.equal(rule.matchRetained,true);}
- assert.equal(result.admission.worldRejected,true);assert.equal(result.admission.authoritiesRetained,true);
+ for(const rule of result.admission.rules){assert.equal(rule.rejected,true,rule.mode+' silently fell back');assert.equal(rule.apiRejected,true);assert.equal(rule.levelRetained,true);assert.equal(rule.matchRetained,true);}
+ assert.equal(result.admission.worldRejected,true);assert.equal(result.admission.onlineWorldRejected,true);assert.equal(result.admission.staleSelectionRejected,true);assert.equal(result.admission.authoritiesRetained,true);
  result.source=await page.evaluate(async({definition,identity})=>{
   const {parseSourceOBJ}=await import('/__mahi-runtime/source-convert.mjs');
   const {verifySourceBytes}=await import('/__mahi-runtime/source-cache.mjs');
@@ -88,7 +103,32 @@ try{
    renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
  },{definition,identity});
  assert.equal(result.source.vertices,247052);assert.equal(result.source.triangles,188912);assert.equal(result.source.objects,98);assert.equal(result.source.rawGitBlobsVerified,225);assert.equal(result.source.pngFilesVerified,224);
+ console.log('Mahi admission and original source verified');save();
+ const guestContext=await browser.newContext({viewport:{width:960,height:640}});await guestContext.grantPermissions(['local-network-access']);const guest=await guestContext.newPage();
+ guest.on('pageerror',error=>result.errors.push(error.message));guest.on('request',request=>{if(request.url().includes('/stages/Vss_Hiagari04/'))result.unexpectedSourceDownloads++;});
+ await guest.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0,audioVolume:0})));
+ await guest.goto(address,{waitUntil:'domcontentloaded'});await guest.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
+ await guest.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await guest.locator('#boot-error').textContent(),'');
+ await guest.evaluate(()=>{NG.game.debug.freeze();NG.game._skipRender=true;});
+ result.online=[];
+ for(const mode of ['turf','zones','tower','rainmaker','clams']){
+  const code=await page.evaluate(()=>NG.net.create('Mahi Host'));await guest.evaluate(code=>NG.net.join(code,'Mahi Guest'),code);
+  await Promise.all([page,guest].map(peer=>peer.waitForFunction(()=>NG.net.state==='lobby'&&NG.net.lobby.players.length===2)));
+  const before=wireStarts.length,hostBlock=await page.evaluate(mode=>{
+   const net=NG.net,prior=net.lobby.map;net.setSettings({map:'mahi'});const settingsRejected=net.lobby.map===prior;
+   net.lobby.map='mahi';net.lobby.mode=mode;return {settingsRejected,canStart:net.canStart(),started:net.start(),reason:net.startBlock()};
+  },mode);
+  assert.equal(hostBlock.settingsRejected,true);assert.equal(hostBlock.canStart,false);assert.equal(hostBlock.started,false);assert.equal(wireStarts.length,before);
+  await guest.evaluate(()=>{globalThis.mahiGuardWorld={level:NG.level,physics:NG.physics,nav:NG.nav,paint:NG.paint,match:NG.match};});
+  await page.evaluate(mode=>NG.net.tr.broadcast({k:'start',map:'mahi',mode,roster:[],host:NG.net.myId,id:'mahi-unavailable-'+mode}),mode);
+  await guest.waitForFunction(()=>NG.net.state==='error'&&NG.net.error?.includes('マヒマヒリゾート＆スパ'));
+  const incoming=await guest.evaluate(()=>({state:NG.net.state,error:NG.net.error,startCfg:NG.net._startCfg,
+   authoritiesRetained:NG.level===mahiGuardWorld.level&&NG.physics===mahiGuardWorld.physics&&NG.nav===mahiGuardWorld.nav&&NG.paint===mahiGuardWorld.paint&&NG.match===mahiGuardWorld.match}));
+  assert.equal(incoming.authoritiesRetained,true);assert.equal(incoming.startCfg,null);assert.equal(wireStarts.length-before,1);
+  result.online.push({mode,hostBlock,incoming,malformedStartPackets:wireStarts.length-before,transport:'real WebSocket + production RoomDurableObject'});save();
+  await Promise.all([page,guest].map(peer=>peer.evaluate(()=>NG.net.leave())));
+ }
  assert.equal(result.unexpectedSourceDownloads,0);assert.deepEqual(result.errors,[]);result.status='passed';save();
  console.log(JSON.stringify(result));
 }catch(error){result.status='failed';result.error=error.stack;await page?.screenshot({path:path.join(out,'failure.png'),timeout:15000}).catch(()=>{});throw error;}
-finally{save();await browser.close();await new Promise(resolve=>server.close(resolve));}
+finally{save();await browser.close();for(const client of relay.clients)client.terminate();await new Promise(resolve=>relay.close(resolve));await new Promise(resolve=>server.close(resolve));}
