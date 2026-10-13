@@ -2,24 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { World,makeBuild,REV_A,REV_B,REV_C } from './worker-fixture.mjs';
+import { REVISION_BUDGET_BYTES } from '../adapter.mjs';
 const prefix='inkwave-startup-v2:/actions/:';
 const asset=(revision,path='src/main.js')=>`_versions/${revision}/${path}`;
 const get=async(w,path,opts)=> (await w.request(path,opts)).response;
 async function installed(build=makeBuild(),world=new World()) {world.serve(build);const worker=world.worker(build);await worker.install();await worker.activate();return {world,worker,build};}
 
-
-test('numeric production precache resolves immutable asset paths and rejects corrupt indices',async()=>{
-  const world=new World(),build=makeBuild();
-  const paths=Object.keys(build.config.assets);
-  build.config.precache=build.config.precache.map(rel=>paths.indexOf(rel));
-  world.serve(build);
-  const worker=world.worker(build);
-  await worker.install();await worker.activate();
-  assert.equal((await worker.status()).offlineReady,true);
-  world.offline=true;
-  for(const rel of paths)assert.equal((await get(worker,asset(REV_A,rel))).status,200);
-  const broken=makeBuild(REV_B);broken.config.precache=[paths.length];
-  assert.throws(()=>world.worker(broken),/Invalid precache index/);
+test('numeric precache recovers canonical assets and rejects corrupt index manifests',async()=>{
+ const world=new World(),build=makeBuild();
+ const paths=Object.keys(build.config.assets);
+ build.config.precache=build.config.precache.map(rel=>paths.indexOf(rel));
+ world.serve(build);const worker=world.worker(build);
+ await worker.install();await worker.activate();
+ assert.equal((await worker.status()).offlineReady,true);
+ world.offline=true;
+ for(const rel of paths)assert.equal((await get(worker,asset(REV_A,rel))).status,200);
+ const invalid=makeBuild(REV_B);invalid.config.precache=[paths.length];
+ assert.throws(()=>world.worker(invalid),/Invalid precache index/);
 });
 
 test('complete snapshot commits last, claims only on activation, never skipWaiting',async()=>{
@@ -152,7 +151,7 @@ test('uncacheable Vary star fails candidate, not previous snapshot',async()=>{
  await assert.rejects(world.worker(b).install(),/Uncacheable/);assert(world.maps.has(prefix+REV_A));assert(!world.maps.has(prefix+REV_B));
 });
 test('budget checks reject oversize revisions before network or storage writes',async()=>{
- const world=new World(),b=makeBuild();b.config.declaredBytes=12*1024*1024+1;await assert.rejects(world.worker(b).install(),/budget/);assert.equal(world.fetches.length,0);assert.equal(world.puts.length,0);
+ const world=new World(),b=makeBuild();b.config.declaredBytes=REVISION_BUDGET_BYTES+1;await assert.rejects(world.worker(b).install(),/budget/);assert.equal(world.fetches.length,0);assert.equal(world.puts.length,0);
 });
 test('old worker fixture really refetches/rewrites warm scripts and bypasses JSON',{skip:!process.env.INKWAVE_BASELINE_SITE},async()=>{
  const oldPath=process.env.INKWAVE_BASELINE_SITE;if(!oldPath)return;
