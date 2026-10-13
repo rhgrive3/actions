@@ -1,4 +1,3 @@
-import {nativeRankedTowerApproach,updateNativeTowerBoarding} from '../../../native-stages/runtime/engine.mjs';
 const RANKED_MODES = new Set(['zones', 'tower', 'rainmaker', 'clams']);
 const finite = (n, fallback = 0) => Number.isFinite(n) ? n : fallback;
 const point = value => Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(Number.isFinite)
@@ -60,8 +59,8 @@ function clamThrowAim(actor, goal, engine) {
   };
 }
 
-function towerApproachPath(brain, target, engine, G, frame, jumpHeight) {
-  const source = nativeRankedTowerApproach(brain, target, engine, G);
+function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTower) {
+  const source = nativeTower?.approach?.(brain, target, engine, G) ?? null;
   if (source !== null) return source;
   const nav = G?.nav, actor = brain.a;
   if (!nav?.nodes?.length || typeof nav.nearest !== 'function' || typeof nav.path !== 'function') return false;
@@ -154,7 +153,7 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
   return null;
 }
 
-function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
+function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   const a = brain.a, it = a.intent;
   const objective = point(goal.pos);
   if (!objective) return false;
@@ -206,7 +205,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
     const gravity = Math.max(1, finite(PLAYER?.gravity, 25));
     const maxJumpHeight = jumpVelocity * jumpVelocity / (2 * gravity) + 0.22;
     const foundTowerApproach = engine.mode === 'tower' && action === 'ride'
-      && towerApproachPath(brain, target, engine, G, frame, maxJumpHeight);
+      && towerApproachPath(brain, target, engine, G, frame, maxJumpHeight, nativeTower);
     // Only use the edge-target steering below after A* has selected a real
     // static nav node. If the nav mesh has no reachable node, keep the clear
     // short direct approach so a jump still carries the actor onto the deck.
@@ -375,7 +374,7 @@ export function installRankedBots(api = {}) {
       || (typeof match.playing === 'function' && !match.playing())) return update.call(this, dt);
 
     this._nativeTraversalHandled = false;
-    if (updateNativeTowerBoarding(this,G,engine,dt)) return;
+    if (api.nativeTower?.update?.(this,G,engine,dt)) return;
     let nativeTail = null;
     const hadOwnTail = Object.prototype.hasOwnProperty.call(this, '_tail');
     const oldTail = this._tail;
@@ -410,7 +409,7 @@ export function installRankedBots(api = {}) {
     }
     // Native perception and reaction timing still run; the final steering and
     // objective action then take ownership for this frame.
-    if (!steerRanked(this, dt, goal, engine, frame, G, api.PLAYER) && nativeTail && typeof oldTail === 'function') oldTail.apply(this, nativeTail);
+    if (!steerRanked(this, dt, goal, engine, frame, G, api.PLAYER, api.nativeTower) && nativeTail && typeof oldTail === 'function') oldTail.apply(this, nativeTail);
     return result;
   };
   return () => { proto.update = update; delete proto._rankedBotWrapped; };

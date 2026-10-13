@@ -168,6 +168,10 @@ export function adaptNativeStages(rel,code){
     }`);
   once('function claimPaintCell(paint, index, value, orderId, orderState = null) {', 'function claimPaintCell(paint, index, value, orderId, orderState = null) {\n  if (paint.level?.native && paint.dead[index]) return false;');
  }
+ if(rel==='patches/splatoon3/runtime/ranked/bots.mjs'){
+  code="import {nativeRankedTowerApproach,updateNativeTowerBoarding} from '../../../native-stages/runtime/engine.mjs';\n"+code;
+  once('  const { G, BotBrain } = api;', '  api={...api,nativeTower:{approach:nativeRankedTowerApproach,update:updateNativeTowerBoarding}};\n  const { G, BotBrain } = api;');
+ }
  if(rel==='patches/splatoon3/runtime/ranked/stages.mjs'){
   code="import { nativeRankedStage } from '../../../native-stages/runtime/engine.mjs';\n"+code;
   once('  const spec = SPECS[id];','  if (level?.native) return nativeRankedStage(G,G.match?.mode);\n  const spec = SPECS[id];');
