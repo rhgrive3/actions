@@ -5,6 +5,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import crypto from 'node:crypto';
 import {nativeFixture,readStage} from './fixture.mjs';
+import {fixture} from '../../splatoon3/tests/source-fixture.mjs';
 import {nativeStageCatalog} from '../../../scripts/lib/inkwave-native-stages.mjs';
 
 const stage=nativeStageCatalog().stages.find(s=>s.id==='airport');
@@ -55,7 +56,13 @@ test('airport independent original text agrees with every float32 attribute and 
 });
 
 test('airport source supports, clear capsules and real opening launches reach local objectives',{skip:!enabled},async()=>{
- const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=new f.NativeLevel(readStage(ASSETS,'airport')),P=new f.NativePhysics(L);
+ // The emitted engine bundles the native modules; use its actual public exports
+ // for a built-artifact run rather than importing source-only module paths.
+ const f=process.env.INKWAVE_BUILT_SITE?await fixture({fullRuntime:true,realProjectiles:true,extraExports:`
+  export {NativeLevel,NativePhysics,nativeRankedStage} from './patches/native-stages/runtime/engine.mjs';
+  export {NavGraph} from './inkwave-public/src/game/nav.js';
+ `}):await nativeFixture();
+ const {G,THREE,PLAYER}=f,L=new f.NativeLevel(readStage(ASSETS,'airport')),P=new f.NativePhysics(L);
  G.level=L;G.physics=P;
  class Paint extends f.PaintSystem{_initGPU(){this.quads=0;}_pushQuad(){}}
  G.paint=new Paint(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
