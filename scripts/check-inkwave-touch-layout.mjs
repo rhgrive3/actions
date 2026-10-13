@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { adaptTouchLayout, touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
+import { installTouchLayoutDiagnostics } from './lib/inkwave-touch-layout-diagnostics.mjs';
 
 const option = name => { const at = process.argv.indexOf(name); return at < 0 ? null : process.argv[at + 1]; };
 const repo = fileURLToPath(new URL('../', import.meta.url));
@@ -79,9 +80,10 @@ try {
       const context = await engine.launchPersistentContext(path.join(browserDir, 'profile'), { ...config, headless: true, reducedMotion: 'reduce',
         artifactsDir: path.join(browserDir, 'artifacts'), downloadsPath: path.join(browserDir, 'downloads'),
         ...(engineName === 'chromium' ? { args: ['--no-sandbox', '--disable-dev-shm-usage'] } : {}) });
-      const entry = { engine: engineName, name, viewport: config.viewport, checks: [] }; report.cases.push(entry);
+      const entry = { engine: engineName, browserVersion: context.browser()?.version?.() ?? null, name, viewport: config.viewport, checks: [] }; report.cases.push(entry);
       const page = context.pages()[0] || await context.newPage();
       page.setDefaultTimeout(10000);
+      await page.addInitScript(installTouchLayoutDiagnostics);
       page.on('pageerror', error => report.errors.push(`${engineName}/${name}: ${error.message}`));
       try {
         await page.goto(address); await page.waitForFunction(() => window.ready);
@@ -226,6 +228,7 @@ try {
         entry.status = 'passed';
       } catch (error) {
         entry.status = 'failed'; report.errors.push(`${engineName}/${name}: ${error.stack}`);
+        entry.diagnostics = await page.evaluate(() => ({current:window.__touchLayoutSnapshot?.()??null,events:window.__touchLayoutEvents??[]})).catch(e=>({error:String(e).slice(0,400)}));
         await page.screenshot({ path: path.join(evidence, `${engineName}-${name}-failure.png`) }).catch(() => {});
       } finally { await context.close(); }
     }

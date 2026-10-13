@@ -13,6 +13,14 @@ function pack(f,width=16,height=16,frames=1) {
   return {schema:'inkwave-volume-v1',patterns:[{width,height,fps:30,frames:Array.from({length:frames},()=>({rgba:new f.buffers.Uint8Array(rgba),levels:[level,level]}))}]};
 }
 function renderer(f,capacity=128) {return new f.InkVolumes(new f.THREE.Group(),{sunDir:new f.THREE.Vector3(0,1,0),sunCol:new f.THREE.Color('white'),sky:new f.THREE.Color('gray'),ground:new f.THREE.Color('gray')},{capacity,triangleBudget:600000});}
+function assertTipPosition(matrix, position) {
+  // Matrix4.compose copies translation unchanged; InstancedMesh.setMatrixAt
+  // stores it once in Float32Array. Compare that exact storage conversion,
+  // not decimal buckets whose half-way boundary can split the same endpoint.
+  const actual=matrix.elements.slice(12,15),expected=position.toArray().map(Math.fround);
+  assert(actual.every(Number.isFinite)&&expected.every(Number.isFinite),'tip coordinates must be finite');
+  assert.deepEqual(actual,expected,'tip equals the exact Float32 projectile position');
+}
 function snapshot(p) {return {wid:p.wid,type:p.type,age:p.age,life:p.life,delay:p.delay,damage:p.damage,team:p.team,ghost:p.ghost,straight:p.straight,radius:p.radius,size:p.size,grav:p.grav,drag:p.drag,seed:p.seed,pos:p.pos.toArray(),prev:p.prev?.toArray(),start:p.start?.toArray(),vel:p.vel.toArray(),meta:JSON.stringify(p.inkMeta),vertical:p.s3Vertical};}
 test('early natural freefall remains horizontal; the renderer never infers vertical from airborne position',async()=>{
   const f=await api(),a=f.make('roller');a.form='kid';a.ink=100;a.grounded=false;a.intent.fire=true;f.tick(a,35);a.intent.fire=false;assert(f.G.projectiles.list.length);
@@ -48,10 +56,46 @@ test('actual Shooter/Dualies/Splatling births draw connected rods, preserve auth
     const p=f.G.projectiles.list[0];assert.equal(p._inkVolumeRecipe,'shooter');p.age=3/60;p.pos.addScaledVector(p.vel,3/60);
     const before=snapshot(p);e.begin();assert(f.submitInkVolume(e,p));e.end();assert.deepEqual(snapshot(p),before);assert.equal(e.metrics.active,3);
     const resources=[...e.assets.get('shooter').resources];e.begin();assert(f.submitInkVolume(e,p));e.end();assert.deepEqual([...e.assets.get('shooter').resources],resources);
-    const tip=e.assets.get('shooter').patterns[1].frames[0][0],m=new f.THREE.Matrix4();tip.mesh.getMatrixAt(0,m);assert.deepEqual(m.elements.slice(12,15).map(v=>Math.round(v*1e5)),p.pos.toArray().map(v=>Math.round(v*1e5)));
+    const tip=e.assets.get('shooter').patterns[1].frames[0][0],m=new f.THREE.Matrix4();tip.mesh.getMatrixAt(0,m);assertTipPosition(m,p.pos);
     e.capacity=2;e.begin();assert.equal(f.submitInkVolume(e,p),false);e.end();assert.equal(e.metrics.active,0);assert(e.root.children.every(m=>m.count===0));e.capacity=128;
   }
   e.dispose();
+});
+
+test('native tip translations retain exact Float32 endpoints at decimal-rounding boundaries',async()=>{
+  const f=await api(),e=renderer(f),line=pack(f,32,8),dot=pack(f);
+  e.register('shooter',{...line,patterns:[line.patterns[0],dot.patterns[0]]});
+  const positions=[
+    [0,1.064605,3.449965],
+    [1.06460501,-1.06460501,-3.449965],
+    [-3.449965,3.44996501,1.06460501],
+  ];
+  try {
+    for(const kind of ['shooter','dualies','splatling']) {
+      f.G.projectiles.clear();const a=f.make(kind);f.G.projectiles.fireShooter(a,a.weapon,0);
+      const p=f.G.projectiles.list[0];assert(p,kind+' native birth');p.age=3/60;
+      for(const xyz of positions) {
+        p.pos.set(...xyz);const before=snapshot(p);e.begin();assert(f.submitInkVolume(e,p));e.end();
+        const tip=e.assets.get('shooter').patterns[1].frames[0][0],m=new f.THREE.Matrix4();
+        assert(tip.mesh.instanceMatrix.array instanceof f.buffers.Float32Array);
+        tip.mesh.getMatrixAt(0,m);assertTipPosition(m,p.pos);
+        assert.deepEqual(snapshot(p),before,kind+' authoritative state');
+        // A single representable step on any axis is a real stored endpoint
+        // change. The contract must reject it, even inside one old 1e-5 bucket.
+        const bits=new Uint32Array(1),value=new Float32Array(bits.buffer);
+        for(let axis=0;axis<3;axis++) {
+          const offset=12+axis,original=tip.mesh.instanceMatrix.array[offset];
+          value[0]=original;bits[0]++;
+          tip.mesh.instanceMatrix.array[offset]=value[0];tip.mesh.getMatrixAt(0,m);
+          assert.throws(()=>assertTipPosition(m,p.pos),{code:'ERR_ASSERTION'},kind+' rejects one-ULP axis '+axis);
+          tip.mesh.instanceMatrix.array[offset]=NaN;tip.mesh.getMatrixAt(0,m);
+          assert.throws(()=>assertTipPosition(m,p.pos),{code:'ERR_ASSERTION'},kind+' rejects nonfinite axis '+axis);
+          tip.mesh.instanceMatrix.array[offset]=original;
+        }
+        tip.mesh.getMatrixAt(0,m);assertTipPosition(m,p.pos);
+      }
+    }
+  } finally {e.dispose();}
 });
 test('Slosher uses a continuous sheet and sourced tail without detached beads or camera rotation',async()=>{
   const f=await api(),e=renderer(f);e.register('roller',pack(f,16,16,16));const a=f.make('slosher');f.G.projectiles.fireSlosh(a,a.weapon);const p=f.G.projectiles.list[0];assert.equal(p._inkVolumeRecipe,'slosher');

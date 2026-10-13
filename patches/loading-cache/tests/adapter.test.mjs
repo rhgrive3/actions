@@ -70,6 +70,7 @@ for (const [inputKey, relativeInput] of [
  ['build-script/inkwave-source-composition.mjs', 'scripts/inkwave-source-composition.mjs'],
  ['build-script/lib/inkwave-build-only-modules.mjs', 'scripts/lib/inkwave-build-only-modules.mjs'],
  ['build-script/lib/inkwave-worker-compaction.mjs', 'scripts/lib/inkwave-worker-compaction.mjs'],
+ ['build-script/lib/inkwave-source-compaction.mjs', 'scripts/lib/inkwave-source-compaction.mjs'],
 ]) test('exact-source checker rejects forged ' + inputKey + ' despite self-consistent manifest',()=>{
  const root=path.resolve(new URL('../../../',import.meta.url).pathname);
  const dir=fs.mkdtempSync(path.join(TEST_TMP,'iw-identity-'));

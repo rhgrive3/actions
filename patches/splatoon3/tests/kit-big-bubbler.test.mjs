@@ -22,6 +22,7 @@ import {
   adjudicateBigBubblerDamage,
   BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION, hermite2d, kitBarrierShelter, bigBubblerCanopyHp,
   BIG_BUBBLER_OWNERSHIP, rollerBubblerCandidate, applyRollerBubblerHit,
+  damageBigBubblerFromInkVac,
 } from '../runtime/kit-big-bubbler.mjs';
 
 const MODULE_PATH = new URL('../runtime/kit-big-bubbler.mjs', import.meta.url);
@@ -118,6 +119,42 @@ test('the pinned Hermit2DSmooth curves evaluate through their pinned endpoints',
     assert.ok(v >= previous - 1e-9, 'the pinned radius curve is monotonic');
     previous = v;
   }
+});
+
+test('independent Wiki measurements corroborate rawDamageToHP /10', () => {
+  // Inkipedia reports 1536 base HP and 92.1 damage per second. The pinned 11.3.0
+  // rows are 15360 and 921, respectively; the shared /10 conversion maps both.
+  // The runtime's distinct MaxFieldHP shell role remains separately calibrated.
+  assert.equal(BIG_BUBBLER_RAW.maxHp / 10, 1536);
+  assert.equal(BIG_BUBBLER_RAW.timeDamage / 10, 92.1);
+  assert.equal(BIG_BUBBLER_RAW.damageRatio, 0.64);
+  assert.equal(BIG_BUBBLER_CALIBRATION.rawPerDamageUnit, 10);
+  assert.equal(BIG_BUBBLER_RAW.maxRadius, 7.5);
+});
+
+test('continuous Ink Vac damage uses the Bubbler owner API and applies DamgeRatio once', async () => {
+  const { f } = await composed();
+  level(f);
+  const owner = roller(f); owner.team = 1; f.G.actors = [owner]; activate(f, owner);
+  const dome = bigBubblerDomes()[0];
+  const attacker = f.make('charger'); attacker.team = 0; attacker.alive = true; attacker.nid = 12;
+  const before = dome.hp;
+  assert.equal(damageBigBubblerFromInkVac(dome, attacker, 2, dome.pos), 1.28);
+  assert.equal(dome.hp, before - 1.28, '2 HP/source-frame is multiplied by BarrierParam.DamgeRatio .64 once');
+
+  clearBigBubblers('remote-proposal-test');
+  const remoteOwner = f.make('roller'); remoteOwner.team = 1; remoteOwner.nid = 9; remoteOwner.remote = true;
+  assert.equal(replayBigBubbler('deploy', remoteOwner, VALID_DEPLOY()).ok, true);
+  const remote = bigBubblerRemoteDomes()[0], remoteBefore = remote.hp;
+  let proposal = null;
+  const stop = f.on('kit:bubbler:damage-proposal', event => { proposal = event; });
+  assert.equal(damageBigBubblerFromInkVac(remote, attacker, 2, remote.pos), 0,
+    'a replica dome never spends local HP');
+  stop();
+  assert.equal(remote.hp, remoteBefore);
+  assert.equal(proposal?.actor, attacker);
+  assert.equal(proposal?.target, 'canopy');
+  assert.equal(proposal?.amount, 1.28);
 });
 
 test('#1013 both durability pools follow their own pinned Special Power Up control points', async () => {
@@ -220,7 +257,9 @@ test('querying the barrier changes no position, no HP, no turf and emits nothing
   assert.equal(events, 0, 'the query emits nothing');
   // and the module really is the prototype target the parent will call
   assert.equal(typeof f.G.projectiles.kitBarrierCandidate, 'function');
-  assert.equal(f.G.projectiles.kitBarrierCandidate.length, 3, 'the parent hook takes (p, start, end)');
+  assert.equal(f.G.projectiles.kitBarrierCandidate.length, 4, 'the parent hook also accepts the optional excluded-dome set');
+  assert.equal(f.G.projectiles.kitBarrierCandidate(p, start, end, new Set([candidate.domeId])), null,
+    'the optional piercing query skips an already settled dome without mutating it');
   assert.equal(f.G.projectiles._step, f.Projectiles.prototype._step,
     'the native step is untouched: no predictive fallback, one physics truth');
 });
