@@ -1,6 +1,7 @@
 /** Explicit local objectives derived from reachable nav nodes. Never retail coordinates.
  * The Pnt display mesh is shared by all rules until original placement data exists. */
 import {nativeTowerClearance} from './native-tower-clearance.mjs';
+import {nativeArenaBasis} from './native-spawn.mjs';
 // Kosaraju without recursion: source stages can contain thousands of ledges.
 // A tiny elevated floor near XZ center must not become the whole ranked arena.
 export function nativeRankedComponent(N,paintable,spawnIds=[]){
@@ -23,7 +24,9 @@ export function nativeRankedStage(G){
  const L=G.level,N=G.nav;if(!L?.native||!N?.validIds.length)throw Error('No reachable native ranked navigation');
  const all=N.validIds;
  const nearest=(ids,x,z)=>{let best=null,score=Infinity;for(const id of ids){const n=N.nodes[id];if(n.zone>=0)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<score){score=d;best=n;}}return best;};
- const B=L.bounds,mx=(B.minX+B.maxX)*.5,mz=(B.minZ+B.maxZ)*.5,dz=(B.maxZ-B.minZ)*.2;
+ const B=L.bounds,basis=nativeArenaBasis(L),mx=basis.origin.x,mz=basis.origin.z,axis=basis.forward,cross=basis.lateral;
+ const dz=((B.maxX-B.minX)*Math.abs(axis.x)+(B.maxZ-B.minZ)*Math.abs(axis.z))*.2;
+ const point=(along,lateral=0)=>[mx+axis.x*along+cross.x*lateral,mz+axis.z*along+cross.z*lateral];
  // Drop edges are directed. Use the center's mutually reachable component,
  // rather than treating the original undirected prune as a playable uphill route.
  const probe=L.spawnPads[0].clone(),down=probe.clone().set(0,-1,0);
@@ -36,13 +39,14 @@ export function nativeRankedStage(G){
  });
  if(!paintable.length)throw Error('Native ranked stage has no live paint floor');
  const playable=nativeRankedComponent(N,paintable,L.spawnPads.map(p=>N.nearest(p,1.2))),common=playable.common,middle=nearest(playable.paintable,mx,mz);
- const pick=(x,z)=>nearest(common,x,z),ends=[pick(mx,mz-dz),pick(mx,mz+dz)];
+ const pick=(along,lateral=0)=>nearest(common,...point(along,lateral)),ends=[pick(-dz),pick(dz)];
  const tower=nativeTowerRoute(G,playable.reachable,playable.reachablePaintable,middle,ends,mx,mz,dz);
- const v=n=>[n.x,n.y,n.z],goals=[v(ends[1]),v(ends[0])],checkpoints=[[v(pick(mx,mz+dz*.5))],[v(pick(mx,mz-dz*.5))]];
- const clams=[-1,1].flatMap(s=>[-1,0,1].map(t=>v(pick(mx+t*6,mz+s*dz*.6))));
+ const v=n=>[n.x,n.y,n.z],goals=[v(ends[1]),v(ends[0])],checkpoints=[[v(pick(dz*.5))],[v(pick(-dz*.5))]];
+ const clams=[-1,1].flatMap(s=>[-1,0,1].map(t=>v(pick(s*dz*.6,t*6))));
+ const projectedOrigin=mx*axis.x+mz*axis.z;
  return {id:L.layout.id,zones:[{center:v(middle),size:[6,6]}],
   tower:{...tower,speed:1.2,checkpoints:[[{progress:.6,count:5}],[{progress:.6,count:5}]]},
-  rainmaker:{center:v(middle),goals,checkpoints,retreatZ:[mz-dz*1.7,mz+dz*1.7]},clams:{spawns:clams,goals},
+  rainmaker:{center:v(middle),goals,checkpoints,retreatZ:[projectedOrigin-dz*1.7,projectedOrigin+dz*1.7],nativeRetreatAxis:[axis.x,axis.z]},clams:{spawns:clams,goals},
   calibration:'LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED.',version1130Verified:false};
 }
 
@@ -50,6 +54,7 @@ export function nativeRankedStage(G){
  * Otherwise find directed routes on source-clear supported navigation nodes.
  * A lower local lift is considered only after the ordinary lift has no route. */
 export function nativeTowerRoute(G,common,paintable,middle,ends,mx,mz,dz){
+ const basis=nativeArenaBasis(G.level),point=s=>[mx+basis.forward.x*s,mz+basis.forward.z*s];
  const N=G.nav,nearest=(ids,x,z)=>{let best=-1,score=Infinity;for(const id of ids){const n=N.nodes[id];if(n.zone>=0)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<score){score=d;best=id;}}return best;};
  let clearance=nativeTowerClearance(G.level,G.physics.actorBody);
  const position=(id,lift)=>{const n=N.nodes[id];return[n.x,n.y+lift,n.z];};
@@ -73,7 +78,7 @@ export function nativeTowerRoute(G,common,paintable,middle,ends,mx,mz,dz){
   const graph={...N,nodes,valid:allowed,validIds:common.filter(id=>allowed[id]),_g:null,_from:null,_seen:null,_closed:null,_stamp:0,path:N.path};
   let selected;try{selected=nativeRankedComponent(graph,paintable.filter(id=>allowed[id]));}catch{attempts.push({halfSize,lift,allowed:graph.validIds.length,component:0});continue;}
   graph.valid.fill(0);for(const id of selected.common)graph.valid[id]=1;graph.validIds=selected.common;
-  const center=nearest(selected.paintable,mx,mz),first=nearest(selected.common,mx,mz-dz),last=nearest(selected.common,mx,mz+dz);
+  const center=nearest(selected.paintable,mx,mz),first=nearest(selected.common,...point(-dz)),last=nearest(selected.common,...point(dz));
   const calibrated=route(graph,center,first,last,lift);if(calibrated)return calibrated;
   attempts.push({halfSize,lift,allowed:common.filter(id=>allowed[id]).length,component:selected.common.length,center,first,last});
  }
