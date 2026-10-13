@@ -74,15 +74,6 @@ export const SUCTION = {
   // deliberately NOT used as the charge curve; Curling owns its charge mapping.
   throwSpeedTiers: { low: perSecond(1.12), mid: perSecond(1.4), high: perSecond(1.68) },
 
-  // MoveParam + spawn-bullet player addition. XRate/Y/Z are per-owner-axis;
-  // suction's Z inheritance differs from generic Splat Bomb.
-  spawnSpeedY: perSecond(0.24),
-  spawnSpeedYWorldMin: perSecond(-0.4),
-  inheritYPlus: 4,
-  inheritYMax: perSecond(0.32),
-  inheritXRate: 1.6,
-  inheritZRate: 2.0,
-
   // MoveParam.FlyGravity is omitted for Suction in 11.3.0 (Splat Bomb states 0.016).
   gravity: null,
   gravityStatus: 'unknown-omitted',
@@ -166,13 +157,10 @@ export const CURLING = {
   spawnSpeedYWorldMin: perSecond(-0.5),
   inheritYPlus: 2,
   inheritYMax: perSecond(0.16),
-  inheritXRate: 0.8,               // spl__SpawnBulletAdditionMovePlayerParam.XRate
-  inheritZRate: 1.2,               // spl__SpawnBulletAdditionMovePlayerParam.ZRate
   // Same launch contract as Suction. SpawnSpeedY equals SpawnSpeedYMaxCharge,
   // so the vertical launch does not depend on the held charge.
   launch: Object.freeze({ spawnSpeedY: perSecond(0.12), spawnSpeedYWorldMin: perSecond(-0.5),
-    inheritX: 0.8, inheritZ: 1.2, inheritXRate: 0.8, inheritZRate: 1.2,
-    inheritYPlus: 2.0, inheritYMax: perSecond(0.16) }),
+    inheritX: 0.8, inheritZ: 1.2, inheritYPlus: 2.0, inheritYMax: perSecond(0.16) }),
   // MoveParam.FlyPositionAirResist: horizontal speed removed per 60 Hz flight
   // step. GroundPositionAirResist is an explicit 0.0: the rolling speed is
   // governed by the BaseSpeed fields below instead of a drag term.
@@ -188,7 +176,6 @@ export const CURLING = {
   groundGravity: 0.0016 * 3600,    // MoveParam.GroundGravity
   gravityStatus: 'extracted',
   burstFrame: frames(210),         // rolling burst window before the blast
-  burstTimingSpeedStartRestFrame: frames(90),
   burstStatus: 'extracted',
   warningAnimRestFrame: frames(90),
   baseSpeedMinCharge: 0.22,
@@ -657,7 +644,7 @@ export function kitBombContact(SUB, b, hit, dt) {
 // Rolling trail, called from the native loop once the bomb is rolling. The centre
 // is a real THREE.Vector3 because the native PaintSystem reads vector fields.
 // Allocated once per bomb and reused; no per-frame allocation.
-export function kitBombTrail(SUB, b, paint, projectiles, game = G_REF) {
+export function kitBombTrail(SUB, b, paint, projectiles) {
   if (b?.s3Mode === 'chasing') { stepAutobomb(b, G_REF); return 0; }
   if (b?.s3Mode === 'sprinkling') {
     if (b.owner?.alive === false) return 0;
@@ -691,19 +678,7 @@ export function kitBombTrail(SUB, b, paint, projectiles, game = G_REF) {
   // native PaintSystem receives the type it expects, with no extra module import
   // and no per-frame allocation.
   if (!b.s3TrailPoint) b.s3TrailPoint = new b.pos.constructor();
-  const physics = game?.physics;
-  if (physics?.raycast && Number.isFinite(spec.paintCheckHeight)) {
-    const scratch = projectiles || b;
-    const origin = scratch._s3CurlingPaintOrigin || (scratch._s3CurlingPaintOrigin = new b.pos.constructor());
-    const down = scratch._s3CurlingPaintDown || (scratch._s3CurlingPaintDown = new b.pos.constructor());
-    const hit = scratch._s3CurlingPaintHit || (scratch._s3CurlingPaintHit = {
-      hit: false, dist: 0, point: new b.pos.constructor(), normal: new b.pos.constructor(), block: -1, face: -1,
-    });
-    origin.copy(b.pos); origin.y += 0.2; down.set(0, -1, 0);
-    const floor = physics.raycast(origin, down, spec.paintCheckHeight, hit, true);
-    if (!floor?.hit) return 0;
-    b.s3TrailPoint.copy(floor.point).addScaledVector(floor.normal, 0.1);
-  } else b.s3TrailPoint.copy(b.pos);
+  b.s3TrailPoint.copy(b.pos);
   const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random(), claimOwner: b.owner });
   if (area > 0) b.owner?.addTurf?.(area);
   return area;
@@ -864,6 +839,21 @@ const PACKET_SUB_IDS = Object.freeze(['suction', 'curling', 'sprinkler', 'autobo
 
 const packetSubId = (raw) => (typeof raw === 'string' && raw.length <= 16 && PACKET_SUB_IDS.includes(raw) ? raw : null);
 
+// Match the native owner's one-Sprinkler lifecycle for authenticated replicas.
+// Network admission can call this before allocating the replacement, so an old
+// persistent Sprinkler cannot pin a finite bomb budget. Never retire local
+// authority, another actor's device, or that actor's other deployed attacks.
+export function retireReplacedGhostSprinklers(projectiles, actor, except = null) {
+  if (!Array.isArray(projectiles?.bombs) || !actor) return;
+  for (let i = projectiles.bombs.length - 1; i >= 0; i--) {
+    const b = projectiles.bombs[i];
+    if (b === except || b?.ghost !== true || b.owner !== actor
+      || b.s3GhostResolved?.spec?.mode !== 'sprinkler') continue;
+    projectiles._releaseBomb(b);
+    projectiles.bombs.splice(i, 1);
+  }
+}
+
 // Recording side. Returns `null` while a ghost is being replayed: `ghostBomb`
 // builds its record through the native `throwBomb`, whose `!a.remote` guard is the
 // only thing standing between a peer's packet and a new packet of our own. Once a
@@ -894,6 +884,7 @@ export function kitGhostBombAttach(SUB, projectiles, b, rawId, rawCharge) {
   // the whole life of the record.
   const resolved = resolveSubAtCharge(spec, charge);
   if (!resolved) return null;
+  if (spec.mode === 'sprinkler') retireReplacedGhostSprinklers(projectiles, b.owner, b);
   b.s3GhostResolved = resolved;
   b.s3Charge = resolved.charge;
   b.s3Mode = 'flight';
@@ -990,19 +981,6 @@ export function kitThrowVelocity(actor, resolved, speed, out) {
     ? spec.spawnSpeedY + (spec.spawnSpeedYMaxCharge - spec.spawnSpeedY) * (resolved.charge || 0)
     : spec.launch.spawnSpeedY;
   return fidelityThrowVelocity(actor, 'bomb', out, speed, { ...SUB_SPECIAL_FIDELITY.bomb, ...spec.launch, spawnSpeedY: y });
-}
-
-// The source's FlyPositionAirResist is a 60 Hz per-frame linear damping value.
-// Convert it to a dt exponent so all render cadences produce the same flight.
-// Curling switches to its separate grounded resistance path after floor contact.
-export function kitBombApplyAirResistance(SUB, b, dt) {
-  if (!(dt > 0) || !Number.isFinite(dt) || b?.s3Mode !== 'flight') return b;
-  const spec = presentedOf(b)?.spec;
-  if (spec?.id !== 'curling' || !Number.isFinite(spec.flyPositionAirResist)) return b;
-  const retention = Math.max(0, 1 - spec.flyPositionAirResist);
-  const scale = Math.pow(retention, dt * 60);
-  b.vel?.multiplyScalar?.(scale);
-  return b;
 }
 
 // ---- Install -----------------------------------------------------------------
