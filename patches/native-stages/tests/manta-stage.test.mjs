@@ -67,11 +67,19 @@ test('Manta opposite source pads fit capsules and reach a common deck in both di
   actor.intent.fire=false;
   for(let i=0;i<hz/2;i++){G.time+=1/hz;actor.update(1/hz);}
   assert(actor.alive&&actor.grounded);
-  const distance=actor.pos.distanceTo(level.spawnPads[0]);assert(distance>1);
-  motion.push({hz,seconds:.5,distance,pos:actor.pos.toArray()});
+  const distance=actor.pos.distanceTo(level.spawnPads[0]);
+  assert(distance>.8&&distance<1,'the retained source railing blocks direct inward movement');
+  assert(actor.contacts.wall&&actor.contacts.wallBlock>=0);
+  const rail=actor.contacts.wallBlock;
+  actor.spawnAt(level.spawnPads[0],Math.PI/2);actor.intent.move.set(1,0,0);
+  for(let i=0;i<hz/2;i++){G.time+=1/hz;actor.update(1/hz);}
+  const support=physics.raycast(actor.pos.clone().setY(actor.pos.y+.1),new THREE.Vector3(0,-1,0),.3);
+  assert(actor.alive&&actor.grounded&&actor.pos.distanceTo(level.spawnPads[0])>2);
+  assert(support.hit&&support.face>=0&&Math.abs(support.point.y-actor.pos.y)<.02);
+  motion.push({hz,seconds:.5,blockedDistance:distance,sourceRailTriangle:rail,distance:actor.pos.distanceTo(level.spawnPads[0]),pos:actor.pos.toArray(),sourceSupportTriangle:support.triangle});
  }
  assert(Math.max(...motion.map(x=>x.distance))-Math.min(...motion.map(x=>x.distance))<.25);
- const evidence={id:'manta',sourceSha256:definition.sourceSha256,spawnNodeIds:seeds,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,commonNodes:common.common.length,commonPaintable:common.paintable.length,motion,weapon:'shooter',gear:'default fixture profile',state:'grounded humanoid, firing off',input:'normalized vector toward opposing supported pad'};
+ const evidence={id:'manta',sourceSha256:definition.sourceSha256,spawnNodeIds:seeds,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,commonNodes:common.common.length,commonPaintable:common.paintable.length,motion,weapon:'shooter',gear:'default fixture profile',state:'grounded humanoid, firing off',input:'inward movement retains source railing collision; ordinary tangent +X movement retains exact source floor'};
  console.log(JSON.stringify(evidence));
  if(process.env.MANTA_CPU_REPORT){fs.mkdirSync(path.dirname(process.env.MANTA_CPU_REPORT),{recursive:true});fs.writeFileSync(process.env.MANTA_CPU_REPORT,JSON.stringify(evidence,null,2));}
 });
