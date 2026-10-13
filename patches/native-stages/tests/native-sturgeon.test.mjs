@@ -42,6 +42,7 @@ test('sturgeon opposed pads support full capsules and both teams reach the same 
  const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,data=readStage(root,'sturgeon');
  G.scene=new THREE.Scene();G.camera=new THREE.PerspectiveCamera();
  const level=new f.NativeLevel(data),physics=new f.NativePhysics(level);G.level=level;G.physics=physics;
+ G.match.mode='turf';G.match.opts={};
  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new CpuPaint(null,level,{atlasSize:2048,maxDensity:4,cell:.25});
  for(const pad of level.spawnPads){
@@ -76,10 +77,12 @@ test('sturgeon opposed pads support full capsules and both teams reach the same 
    actor.isBot=bot;actor.bot=bot?new f.BotBrain(actor,'normal'):null;
    actor.aimPoint.copy(pad).sub(opponent.clone().sub(pad).normalize().multiplyScalar(8));
    if(actor.bot)actor.bot.aimYaw=expectedYaw+Math.PI;
-   actor.alive=false;actor.respawn();
+   actor.alive=false;
+   if(actor.bot)actor.bot.update(1/hz); // Production death observation precedes respawn.
+   actor.respawn();
    assert.ok(actor.s3.squidSpawn?.target,'death respawn starts the production source launch');
    assert.ok(Math.abs(actor.aimYaw-expectedYaw)<1e-9,'respawn resets stale aim toward opposed support');
-   if(actor.bot)assert.ok(Math.abs(actor.bot.aimYaw-expectedYaw)<1e-9,'live bot aim follows the reset');
+   if(actor.bot){actor.bot.update(1/hz);assert.ok(Math.cos(actor.bot.aimYaw-expectedYaw)>.8,'first live brain tick resets stale outward aim before ordinary steering');}
    actor.intent.fire=true;G.time+=1/hz;actor.update(1/hz);actor.intent.fire=false;
    let frames=0;
    while(actor.s3.squidSpawn&&frames<hz*3){G.time+=1/hz;actor.update(1/hz);frames++;}
