@@ -57,9 +57,6 @@ export function nativeDropTransition(graph,upper,lower){
  const L=graph.level,P=graph.physics;if(!L.manifest.sourceNavigation?.highDrops)return null;
  const dx=lower.x-upper.x,dz=lower.z-upper.z,length=Math.hypot(dx,dz),fall=upper.y-lower.y;
  if(fall<=1.25||lower.y<=PLAYER.fallDeathY+.5||length<.1||length>graph.step*2.01||!lower.nativePaintable)return null;
- const key=upper.id+':'+Math.sign(dx)+':'+Math.sign(dz),cache=graph._nativeDropCache||(graph._nativeDropCache=new Map());
- if(cache.has(key))return cache.get(key);
- cache.set(key,null);
  // A lower layer beneath the interior of an upper floor is not a departure.
  // Ordinary walking edges already carry the actor toward that floor's real
  // boundary. Screen only its supported edge instead of simulating every roof
@@ -67,6 +64,9 @@ export function nativeDropTransition(graph,upper,lower){
  const edgeGround=new Hit();
  P.groundProbe(lower.x,upper.y,lower.z,PLAYER.stepUp,PLAYER.stepDown,PLAYER.footRadius,edgeGround,false);
  if(edgeGround.hit&&Math.abs(edgeGround.y-upper.y)<=.5)return null;
+ const key=upper.id+':'+dx/length+':'+dz/length,cache=graph._nativeDropCache||(graph._nativeDropCache=new Map());
+ if(cache.has(key))return cache.get(key);
+ cache.set(key,null);
  const sweep=graph._nativeDropClearance||(graph._nativeDropClearance=nativeDropClearance(L)),direction=new THREE.Vector3(dx/length,0,dz/length),pos=new THREE.Vector3(upper.x,upper.y,upper.z),previous=pos.clone(),velocity=new THREE.Vector3(),normal=new THREE.Vector3(0,1,0),hit=new Hit();
  const human=terrainRadius(false),squid=terrainRadius(true),step=1/60,groundSpeed=weightSpeedCurve('shooter','run')[0]*60;
  if(!P.bodyFits(pos,human,PLAYER.stepUp,PLAYER.height,false,.003))return null;
