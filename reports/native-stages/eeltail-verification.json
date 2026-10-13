@@ -1,9 +1,10 @@
 {
-  "schema": 1,
+  "schema": 2,
   "id": "eeltail",
   "internal": "Vss_District00",
   "verifiedAt": "2026-10-13",
-  "foundationCommit": "a84009dee41bdb8350401412e21a4e991a426adb",
+  "status": "passed",
+  "foundationCommit": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
   "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
   "sourceTree": "a9c61480637edfe4a2482a9d3e2e189294867f60",
   "source": {
@@ -30,6 +31,30 @@
     "indicesSha256": "4427805aac3be3caead8a1e74050b517583a738d28cdd2ecdf968e2e90f9bba6",
     "indicesUint32LocalStreamIdentical": true
   },
+  "stageDefinitionSha256": "bc3d9525aa1deb05b20a8a4ce1129f1b26923d1e48b51231aa98ad61d1ed29d9",
+  "sourceSemantics": {
+    "nonCollidableObjectPatterns": [
+      "^Fld_District00_Shadow0__Shadow$"
+    ]
+  },
+  "shadowInference": {
+    "object": "Fld_District00_Shadow0__Shadow",
+    "triangles": 530,
+    "bounds": [
+      [
+        -121.5047,
+        -8.9225,
+        -113.3141
+      ],
+      [
+        131.4187,
+        96.6,
+        185.0925
+      ]
+    ],
+    "basis": "Exact source-name/bounds display-only inference, not recovered native collision flags",
+    "renderTrianglesPreserved": true
+  },
   "converted": {
     "geometry": {
       "vertices": 1056904,
@@ -43,18 +68,20 @@
     "chartMaxPlaneError": 0.004398109950204103,
     "textureFiles": 280,
     "bytes": 117215861,
-    "conversionSeconds": 20.23,
     "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
     "collisionStatus": "inferred display triangles, not native collision",
     "paintStatus": "inferred name/material flags and planar polygon masks, not native paint masks",
-    "ruleStatus": "Pnt display layer only; ranked objectives are local calibration"
+    "ruleStatus": "Pnt display layer only; ranked objectives are local calibration",
+    "objects": 402,
+    "activeObjects": 188,
+    "inferredCollidableObjects": 112
   },
   "support": {
     "ppm": 2.5600000000000005,
     "turfTotal": 277528,
     "navNodes": 12447,
-    "navValid": 8268,
-    "navMilliseconds": 12165.383662,
+    "navValid": 6126,
+    "navMilliseconds": 11247.696256,
     "supports": [
       {
         "team": 0,
@@ -123,29 +150,18 @@
     ],
     "rankedError": null
   },
-  "rankedCalibration": {
-    "zone": [
-      {
-        "center": [
-          0,
-          6.000000000000001,
-          -0.5
-        ],
-        "size": [
-          6,
-          6
-        ]
-      }
-    ],
-    "towerPathNodes": 86,
-    "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
-  },
   "node": {
-    "tests": 16,
-    "passed": 16,
-    "failed": 0,
-    "skipped": 0,
-    "exactBrowserPythonBufferAndMaskParity": true
+    "tests": 69,
+    "pass": 64,
+    "fail": 0,
+    "skipped": 5,
+    "skippedFixtures": [
+      "native opening and death respawn use actual Urchin support and opposing-pad aim at 30/60/120 Hz for both teams",
+      "opted source walls have real supported routes, while NoPaint and disabled paths reject",
+      "original Flounder admitted source shot paints its real wall at 30 Hz",
+      "original Flounder admitted source shot paints its real wall at 60 Hz",
+      "original Flounder admitted source shot paints its real wall at 120 Hz"
+    ]
   },
   "motion": {
     "id": "eeltail",
@@ -732,40 +748,314 @@
     ],
     "passed": true
   },
+  "towerNode": {
+    "status": "passed",
+    "baseline": false,
+    "stages": [
+      {
+        "id": "eeltail",
+        "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+        "supported": true,
+        "otherModesDigest": "40e017e8701f4a76130bc7bfeae3a48879ebed38c1c3ad3634dfbad7143a4ea2",
+        "version1130Verified": false,
+        "pathDigest": "30a1a04afa0457a10a9318b4216121abbf727d6162ddece0ab468ee6208e1fe5",
+        "nodes": 80,
+        "centerIndex": 40,
+        "center": [
+          0,
+          7.2,
+          0.5
+        ],
+        "arcLengthsByTeam": [
+          40.244914408233214,
+          41.24491074695091
+        ],
+        "arcRatio": 1.0248477690516125,
+        "waypointSpacingMax": 1.4142224015848512,
+        "endpointProjections": [
+          -39.13102365320695,
+          39.13102365320695
+        ],
+        "halfSize": 1.2,
+        "lift": 1.2,
+        "sourceClearance": {
+          "queries": 80,
+          "triangleTests": 1705
+        },
+        "sourceBoarding": {
+          "candidates": 640,
+          "arcs": 80,
+          "bodySamples": 1040
+        },
+        "timings": [
+          {
+            "team": 0,
+            "hz": 30,
+            "elapsed": 38.549999999999095,
+            "frames": 1157,
+            "counts": [
+              0,
+              100
+            ],
+            "checkpointProgress": [
+              [
+                5
+              ],
+              [
+                0
+              ]
+            ],
+            "checkpointCleared": [
+              [
+                true
+              ],
+              [
+                false
+              ]
+            ],
+            "events": [
+              {
+                "kind": "finish",
+                "team": 0,
+                "reason": "knockout",
+                "knockout": true,
+                "at": 38.549999999999095
+              }
+            ]
+          },
+          {
+            "team": 1,
+            "hz": 30,
+            "elapsed": 39.38333333333238,
+            "frames": 1182,
+            "counts": [
+              100,
+              0
+            ],
+            "checkpointProgress": [
+              [
+                0
+              ],
+              [
+                5
+              ]
+            ],
+            "checkpointCleared": [
+              [
+                false
+              ],
+              [
+                true
+              ]
+            ],
+            "events": [
+              {
+                "kind": "finish",
+                "team": 1,
+                "reason": "knockout",
+                "knockout": true,
+                "at": 39.38333333333238
+              }
+            ]
+          },
+          {
+            "team": 0,
+            "hz": 60,
+            "elapsed": 38.549999999999095,
+            "frames": 2313,
+            "counts": [
+              0,
+              100
+            ],
+            "checkpointProgress": [
+              [
+                5
+              ],
+              [
+                0
+              ]
+            ],
+            "checkpointCleared": [
+              [
+                true
+              ],
+              [
+                false
+              ]
+            ],
+            "events": [
+              {
+                "kind": "finish",
+                "team": 0,
+                "reason": "knockout",
+                "knockout": true,
+                "at": 38.549999999999095
+              }
+            ]
+          },
+          {
+            "team": 1,
+            "hz": 60,
+            "elapsed": 39.38333333333238,
+            "frames": 2363,
+            "counts": [
+              100,
+              0
+            ],
+            "checkpointProgress": [
+              [
+                0
+              ],
+              [
+                5
+              ]
+            ],
+            "checkpointCleared": [
+              [
+                false
+              ],
+              [
+                true
+              ]
+            ],
+            "events": [
+              {
+                "kind": "finish",
+                "team": 1,
+                "reason": "knockout",
+                "knockout": true,
+                "at": 39.38333333333238
+              }
+            ]
+          },
+          {
+            "team": 0,
+            "hz": 120,
+            "elapsed": 38.54166666666512,
+            "frames": 4625,
+            "counts": [
+              0,
+              100
+            ],
+            "checkpointProgress": [
+              [
+                5
+              ],
+              [
+                0
+              ]
+            ],
+            "checkpointCleared": [
+              [
+                true
+              ],
+              [
+                false
+              ]
+            ],
+            "events": [
+              {
+                "kind": "finish",
+                "team": 0,
+                "reason": "knockout",
+                "knockout": true,
+                "at": 38.54166666666512
+              }
+            ]
+          },
+          {
+            "team": 1,
+            "hz": 120,
+            "elapsed": 39.37499999999841,
+            "frames": 4725,
+            "counts": [
+              100,
+              0
+            ],
+            "checkpointProgress": [
+              [
+                0
+              ],
+              [
+                5
+              ]
+            ],
+            "checkpointCleared": [
+              [
+                false
+              ],
+              [
+                true
+              ]
+            ],
+            "events": [
+              {
+                "kind": "finish",
+                "team": 1,
+                "reason": "knockout",
+                "knockout": true,
+                "at": 39.37499999999841
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conditions": "actual source NavGraph/NativePhysics/capsule and production RankedEngine/TowerRule; controlled single-rider rule frames; physical boarding measured separately; local calibration, retail placements unverified"
+  },
   "builds": {
     "public": {
-      "contentHash": "045d2db745551881f00e3bef93c358a802757df9c88a91d8fbf90db6ac8cabdc",
-      "inputHash": "d1c61a552d5cac2055dba5e62ddef30632addf57bc63839bff44036579e51443",
-      "hasSourcePayload": false
+      "contentHash": "5c8d317862b0ca2b6db8b118d152916befcad659f975ef1a1af738f455c8211e",
+      "inputHash": "eb52f598415a5d67fba78ede668202a36cc8a8307dc9cecf009c4dc046a1852f",
+      "mode": "browser-direct",
+      "hasReferencePayload": false
     },
     "private": {
-      "contentHash": "35b3d5dd1a0e7401bed31b6693df2d723753448bbdd10bc34219a57be94f8c40",
-      "inputHash": "d1c61a552d5cac2055dba5e62ddef30632addf57bc63839bff44036579e51443",
-      "hasSourcePayload": true
+      "contentHash": "1273c471990042e33ad6d91afbba865e512ad20caf12514119c2b32f0382e2ec",
+      "inputHash": "eb52f598415a5d67fba78ede668202a36cc8a8307dc9cecf009c4dc046a1852f",
+      "mode": "local-prepared",
+      "hasReferencePayload": true
     }
   },
-  "sourceSemantics": {
-    "nonCollidableObjectPatterns": [
-      "^Fld_District00_Shadow0__Shadow$"
-    ]
+  "packaging": {
+    "tests": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
   },
-  "shadowInference": {
-    "object": "Fld_District00_Shadow0__Shadow",
-    "triangles": 530,
-    "bounds": [
-      [
-        -121.5047,
-        -8.9225,
-        -113.3141
-      ],
-      [
-        131.4187,
-        96.6,
-        185.0925
-      ]
-    ],
-    "basis": "Exact source-name/bounds display-only inference, not recovered native collision flags",
-    "renderTrianglesPreserved": true
+  "budgets": {
+    "public": {
+      "status": "passed",
+      "revision": "0bdebe45eaf74af7c5fb99058068d051559c97a22dc4fe59e5c649c352a93160",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2882029,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5776122,
+      "workerBytes": 70517,
+      "declaredBytes": 10394162,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "private": {
+      "status": "passed",
+      "revision": "4ac6a6d2a2b9ed6d5df34eb23c5223f6774d706acc76a09f687ae05042813183",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2879178,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5773271,
+      "workerBytes": 70517,
+      "declaredBytes": 10391311,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
   },
   "browser": {
     "status": "passed",
@@ -786,22 +1076,24 @@
           "actors": 8,
           "bots": 7,
           "coverage": [
-            0.0024979307624035498,
-            0.007073307357643329
+            0.0016124041185688104,
+            0.002433056569646264
           ],
           "spawn": {
             "grounded": true,
-            "active": false
+            "active": false,
+            "landingFrames": 58,
+            "maximumLandingFrames": 180
           },
           "sourceMetrics": {
             "cached": false,
-            "conversionMilliseconds": 13186.89999999851,
+            "conversionMilliseconds": 13064.79999999702,
             "recipe": "inkwave-browser-source-v3"
           },
           "gameMetrics": {
-            "loadMilliseconds": 91912.79999999702,
-            "navMilliseconds": 586.7000000029802,
-            "shaderWarmMilliseconds": 107.79999999701977,
+            "loadMilliseconds": 74521.40000000596,
+            "navMilliseconds": 379.20000000298023,
+            "shaderWarmMilliseconds": 27.5,
             "vertices": 1056904,
             "triangles": 763146,
             "faces": 67563,
@@ -813,9 +1105,9 @@
             "version1130Verified": false
           },
           "render": {
-            "frame": 1676,
-            "calls": 249,
-            "triangles": 783979,
+            "frame": 1576,
+            "calls": 246,
+            "triangles": 789289,
             "points": 0,
             "lines": 0
           },
@@ -846,132 +1138,924 @@
         "loadingRemoved": true
       }
     },
-    "gameplay": [
-      {
-        "id": "eeltail",
-        "native": true,
-        "actors": 8,
-        "alive": 8,
-        "bots": 7,
-        "moved": [
-          0,
-          0.9670892843823982,
-          0.957508512553098,
-          8.276974552692849,
-          7.633597313348365,
-          5.617554599690522,
-          0.08863012261162663,
-          8.268915977380766
+    "gameplay": {
+      "id": "eeltail",
+      "native": true,
+      "actors": 8,
+      "alive": 8,
+      "bots": 7,
+      "moved": [
+        0,
+        5.169993283028605,
+        12.713063376521713,
+        4.827853842453757,
+        2.94927813033541,
+        4.751269133134495,
+        5.795463323695923,
+        2.6206428787442455
+      ],
+      "coverage": [
+        0.012549388958899503,
+        0.010198617198036289
+      ],
+      "turfTotal": 277528,
+      "counts": [
+        3269,
+        2705
+      ],
+      "metrics": {
+        "loadMilliseconds": 3289.7000000029802,
+        "navMilliseconds": 547.5,
+        "shaderWarmMilliseconds": 25.200000002980232,
+        "vertices": 1056904,
+        "triangles": 763146,
+        "faces": 67563,
+        "gridBytes": 2430264,
+        "atlas": 2048,
+        "ppm": 2.5600000000000005,
+        "textureCount": 103,
+        "quality": "low",
+        "version1130Verified": false
+      },
+      "cpuFrame": {
+        "p50": 21.099999994039536,
+        "p95": 46,
+        "max": 316
+      },
+      "render": {
+        "frame": 392,
+        "calls": 255,
+        "triangles": 804886,
+        "points": 0,
+        "lines": 0
+      },
+      "memory": {
+        "geometries": 400,
+        "textures": 122
+      },
+      "navValid": 6126,
+      "local": {
+        "pos": [
+          -6.481676249990807,
+          12,
+          -81.04328570466923
         ],
-        "coverage": [
-          0.004064234763271363,
-          0.013365377340003877
-        ],
-        "turfTotal": 277528,
-        "counts": [
-          1040,
-          3344
-        ],
-        "metrics": {
-          "loadMilliseconds": 3215.2999999970198,
-          "navMilliseconds": 490.70000000298023,
-          "shaderWarmMilliseconds": 11.099999994039536,
-          "vertices": 1056904,
-          "triangles": 763146,
-          "faces": 67563,
-          "gridBytes": 2430264,
-          "atlas": 2048,
-          "ppm": 2.5600000000000005,
-          "textureCount": 103,
-          "quality": "low",
-          "version1130Verified": false
-        },
-        "cpuFrame": {
-          "p50": 10.200000002980232,
-          "p95": 28.899999998509884,
-          "max": 46.79999999701977
-        },
-        "render": {
-          "frame": 393,
-          "calls": 257,
-          "triangles": 791556,
-          "points": 0,
-          "lines": 0
-        },
-        "memory": {
-          "geometries": 406,
-          "textures": 122
-        },
-        "navValid": 8268,
-        "local": {
-          "pos": [
-            -7.439059691972125,
-            12,
-            -81.00015473937862
+        "alive": true,
+        "grounded": true
+      },
+      "version1130Verified": false,
+      "rules": [
+        {
+          "mode": "zones",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            98,
+            100
           ],
-          "alive": true,
-          "grounded": true
+          "snapshotBytes": 511,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
         },
-        "version1130Verified": false,
-        "rules": [
+        {
+          "mode": "tower",
+          "towerProof": {
+            "pathNodes": 80,
+            "segmentInteriorSamples": 3,
+            "actualCapsuleSupports": 634,
+            "halfSize": 1.2,
+            "localLift": 1.2,
+            "sourceClearance": {
+              "queries": 9072,
+              "triangleTests": 168047,
+              "radius": 2.097056274847714,
+              "height": 2.03,
+              "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+            },
+            "arenaSpan": {
+              "origin": [
+                0,
+                0
+              ],
+              "forward": [
+                0.0803841899203101,
+                0.9967639550118451
+              ],
+              "endpointProjection": [
+                -39.13102365320695,
+                39.13102365320695
+              ],
+              "minimumHalfDepth": 2.097056274847714,
+              "bothHalvesVerified": true
+            },
+            "liveGroundedHumanCounted": true,
+            "keyboardBoarding": [
+              {
+                "hz": 30,
+                "boarded": true,
+                "frames": 14,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 67675,
+                "towerBlock": 67675,
+                "position": [
+                  0.29286585930948333,
+                  7.2,
+                  -0.09034230195173987
+                ],
+                "approach": {
+                  "sourceNode": 6146,
+                  "start": [
+                    1,
+                    6.000000000000001,
+                    -1.5
+                  ],
+                  "end": [
+                    0.4024922359499621,
+                    7.2,
+                    -0.30498447189992417
+                  ],
+                  "height": 1.1999999999999993,
+                  "jumping": true,
+                  "hz": 30
+                }
+              },
+              {
+                "hz": 60,
+                "boarded": true,
+                "frames": 27,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 67675,
+                "towerBlock": 67675,
+                "position": [
+                  0.28684071317879034,
+                  7.2,
+                  -0.07006889392504723
+                ],
+                "approach": {
+                  "sourceNode": 6146,
+                  "start": [
+                    1,
+                    6.000000000000001,
+                    -1.5
+                  ],
+                  "end": [
+                    0.4024922359499621,
+                    7.2,
+                    -0.30498447189992417
+                  ],
+                  "height": 1.1999999999999993,
+                  "jumping": true,
+                  "hz": 60
+                }
+              },
+              {
+                "hz": 120,
+                "boarded": true,
+                "frames": 54,
+                "reachedEnd": false,
+                "controller": 0,
+                "grounded": true,
+                "groundHit": true,
+                "groundBlock": 67675,
+                "towerBlock": 67675,
+                "position": [
+                  0.2783585577620688,
+                  7.2,
+                  -0.05009999999998749
+                ],
+                "approach": {
+                  "sourceNode": 6146,
+                  "start": [
+                    1,
+                    6.000000000000001,
+                    -1.5
+                  ],
+                  "end": [
+                    0.4024922359499621,
+                    7.2,
+                    -0.30498447189992417
+                  ],
+                  "height": 1.1999999999999993,
+                  "jumping": true,
+                  "hz": 120
+                }
+              }
+            ]
+          },
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            98,
+            100
+          ],
+          "snapshotBytes": 783,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "rainmaker",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "snapshotBytes": 958,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        },
+        {
+          "mode": "clams",
+          "towerProof": null,
+          "state": "playing",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "snapshotBytes": 7906,
+          "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+        }
+      ],
+      "errors": []
+    },
+    "projectiles": {
+      "id": "eeltail",
+      "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "hz": 30,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 92,
+              "triangle": 265,
+              "distanceToTarget": 0.024930980227186688,
+              "object": 56
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 8.200000002980232,
+            "max": 22.899999991059303
+          }
+        },
+        {
+          "hz": 60,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 92,
+              "triangle": 265,
+              "distanceToTarget": 0.024930980227186688,
+              "object": 56
+            }
+          ],
+          "naturalWallSplats": 5,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 2.7999999970197678,
+            "max": 4.300000011920929
+          }
+        },
+        {
+          "hz": 120,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 92,
+              "triangle": 265,
+              "distanceToTarget": 0.024930980227186688,
+              "object": 56
+            }
+          ],
+          "naturalWallSplats": 5,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.10000000894069672,
+            "max": 0.7000000029802322
+          }
+        }
+      ],
+      "sourceObject": "FldObj_District00_PackPnt_BaseBoxC4_1__MetalPlate00",
+      "face": 92,
+      "triangle": 265,
+      "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+      "errors": []
+    },
+    "minimapAndRespawn": {
+      "status": "passed",
+      "errors": [],
+      "measurement": "Real Chromium game; exact source triangles and dynamic tower; diagnostic probes, not retail comparison",
+      "minimap": {
+        "center": {
+          "index": 38367,
+          "x": -0.019531250000003553,
+          "z": -0.5742187500000142,
+          "height": 6,
+          "cell": 2192554
+        },
+        "topSurface": 13.499999999999993,
+        "spawns": [
           {
-            "mode": "zones",
-            "state": "playing",
-            "actors": 8,
-            "counts": [
-              98,
-              100
-            ],
-            "snapshotBytes": 511,
-            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+            "index": 74296,
+            "x": -7.67578125,
+            "z": -92.83203125000003,
+            "height": 15,
+            "cell": 1766290
           },
           {
-            "mode": "tower",
-            "state": "playing",
-            "actors": 8,
-            "counts": [
-              98,
-              100
-            ],
-            "snapshotBytes": 774,
-            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
-          },
-          {
-            "mode": "rainmaker",
-            "state": "playing",
-            "actors": 8,
-            "counts": [
-              100,
-              100
-            ],
-            "snapshotBytes": 958,
-            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
-          },
-          {
-            "mode": "clams",
-            "state": "playing",
-            "actors": 8,
-            "counts": [
-              100,
-              100
-            ],
-            "snapshotBytes": 7882,
-            "calibration": "LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+            "index": 1991,
+            "x": 7.63671875,
+            "z": 92.83203125,
+            "height": 15,
+            "cell": 1770223
           }
         ],
-        "errors": []
-      }
-    ],
+        "flipped": {
+          "index": 37920,
+          "x": -0.019531250000003553,
+          "z": -0.5742187500000142,
+          "height": 6,
+          "cell": 2192554
+        },
+        "inkPixel": [
+          255,
+          236,
+          162,
+          255
+        ],
+        "levelOwnsNavigation": true,
+        "ownInkVisible": true,
+        "actors": 8,
+        "bots": 7,
+        "initialSpawnActors": [
+          {
+            "team": 0,
+            "alive": true,
+            "position": [
+              -6.4817536311943496,
+              12,
+              -81.04327911455594
+            ],
+            "spawnActive": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "position": [
+              -12.104679283052116,
+              15,
+              -89.54796862111863
+            ],
+            "spawnActive": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "position": [
+              -5.970764743013837,
+              15,
+              -95.82375117997118
+            ],
+            "spawnActive": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "position": [
+              2.158321039955523,
+              12.391618161958005,
+              -86.95540167339777
+            ],
+            "spawnActive": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "position": [
+              4.528088492324943,
+              15.436166666666667,
+              83.73929911490283
+            ],
+            "spawnActive": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "position": [
+              15.446049282323964,
+              14.458007971180495,
+              87.65442979398284
+            ],
+            "spawnActive": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "position": [
+              6.444375422120722,
+              12,
+              79.27341480274478
+            ],
+            "spawnActive": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "position": [
+              -4.968318956143655,
+              12,
+              79.5416986274298
+            ],
+            "spawnActive": false
+          }
+        ],
+        "local": {
+          "position": [
+            -6.4817536311943496,
+            12,
+            -81.04327911455594
+          ],
+          "grounded": true,
+          "spawnActive": false
+        }
+      },
+      "deathRespawns": [
+        {
+          "team": 0,
+          "hz": 30,
+          "bot": false,
+          "weapon": "shooter",
+          "target": [
+            -6.592130823599354,
+            15,
+            -92.37889327926545
+          ],
+          "position": [
+            -6.47147289556423,
+            12,
+            -81.0441590845545
+          ],
+          "grounded": true
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "bot": false,
+          "weapon": "shooter",
+          "target": [
+            -6.592130823599354,
+            15,
+            -92.37889327926545
+          ],
+          "position": [
+            -6.471091930806567,
+            12,
+            -81.04419186398725
+          ],
+          "grounded": true
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "bot": false,
+          "weapon": "shooter",
+          "target": [
+            -6.592130823599354,
+            15,
+            -92.37889327926545
+          ],
+          "position": [
+            -6.473556324217398,
+            12,
+            -81.04398003596323
+          ],
+          "grounded": true
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "bot": true,
+          "weapon": "s3-spinner-hyper",
+          "target": [
+            10,
+            15,
+            86.5
+          ],
+          "position": [
+            10,
+            15,
+            86.5
+          ],
+          "grounded": true
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "bot": true,
+          "weapon": "s3-spinner-hyper",
+          "target": [
+            10,
+            15,
+            86.5
+          ],
+          "position": [
+            10,
+            15,
+            86.5
+          ],
+          "grounded": true
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "bot": true,
+          "weapon": "s3-spinner-hyper",
+          "target": [
+            10,
+            15,
+            86.5
+          ],
+          "position": [
+            10,
+            15,
+            86.5
+          ],
+          "grounded": true
+        }
+      ],
+      "tower": {
+        "pathNodes": 80,
+        "centerIndex": 40,
+        "halfSize": 1.2,
+        "localLift": 1.2,
+        "sourceClearance": {
+          "queries": 9072,
+          "triangleTests": 168047,
+          "radius": 2.097056274847714,
+          "height": 2.03,
+          "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+        },
+        "probes": 160,
+        "failures": [],
+        "controllingTeam": 0,
+        "version1130Verified": false,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      },
+      "otherRanked": [
+        {
+          "mode": "zones",
+          "actors": 8,
+          "counts": [
+            98,
+            100
+          ],
+          "goals": null,
+          "version1130Verified": false
+        },
+        {
+          "mode": "rainmaker",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "goals": [
+            [
+              3,
+              7.99750322257006,
+              39.5
+            ],
+            [
+              -3,
+              7.99750322257006,
+              -39.5
+            ]
+          ],
+          "version1130Verified": false
+        },
+        {
+          "mode": "clams",
+          "actors": 8,
+          "counts": [
+            100,
+            100
+          ],
+          "goals": [
+            [
+              3,
+              7.99750322257006,
+              39.5
+            ],
+            [
+              -3,
+              7.99750322257006,
+              -39.5
+            ]
+          ],
+          "version1130Verified": false
+        }
+      ],
+      "build": "1273c471990042e33ad6d91afbba865e512ad20caf12514119c2b32f0382e2ec"
+    },
+    "camera": {
+      "status": "passed",
+      "id": "eeltail",
+      "offline": [
+        {
+          "hz": 30,
+          "team": 0,
+          "rigYaw": 0.08047101126546088,
+          "aimYaw": 0.08047101126546088,
+          "expectedYaw": 0.08047101126546088,
+          "alignment": 0.9999899423536407,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "browser canvas pointer lock + physical mouse fire",
+            "inputAlignment": 0.9999899424804011
+          }
+        },
+        {
+          "hz": 60,
+          "team": 0,
+          "rigYaw": 0.08047101126546088,
+          "aimYaw": 0.08047101126546088,
+          "expectedYaw": 0.08047101126546088,
+          "alignment": 0.9999899432760079,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "browser canvas pointer lock + physical mouse fire",
+            "inputAlignment": 0.9999899432284708
+          }
+        },
+        {
+          "hz": 120,
+          "team": 0,
+          "rigYaw": 0.08047101126546088,
+          "aimYaw": 0.08047101126546088,
+          "expectedYaw": 0.08047101126546088,
+          "alignment": 0.9999899433308163,
+          "actors": 8,
+          "mode": "turf",
+          "native": true,
+          "landing": {
+            "alive": true,
+            "grounded": true,
+            "spawnActive": false,
+            "input": "browser canvas pointer lock + physical mouse fire",
+            "inputAlignment": 0.9999899432764378
+          }
+        }
+      ],
+      "online": [
+        {
+          "hz": 30,
+          "peers": [
+            {
+              "hz": 30,
+              "team": 0,
+              "rigYaw": 0.08047101126546088,
+              "aimYaw": 0.08047101126546088,
+              "expectedYaw": 0.08047101126546088,
+              "alignment": 0.9999899429305632,
+              "actors": 8,
+              "mode": "turf",
+              "native": true,
+              "landing": {
+                "alive": true,
+                "grounded": true,
+                "spawnActive": false,
+                "input": "browser canvas pointer lock + physical mouse fire",
+                "inputAlignment": 0.999989942922281
+              }
+            },
+            {
+              "hz": 30,
+              "team": 1,
+              "rigYaw": -3.0611216423243324,
+              "aimYaw": -3.0611216423243324,
+              "expectedYaw": -3.0611216423243324,
+              "alignment": 0.9998642959610616,
+              "actors": 8,
+              "mode": "turf",
+              "native": true,
+              "landing": {
+                "alive": true,
+                "grounded": true,
+                "spawnActive": false,
+                "input": "browser canvas pointer lock + physical mouse fire",
+                "inputAlignment": 0.9998642959610615
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject"
+        },
+        {
+          "hz": 60,
+          "peers": [
+            {
+              "hz": 60,
+              "team": 0,
+              "rigYaw": 0.08047101126546088,
+              "aimYaw": 0.08047101126546088,
+              "expectedYaw": 0.08047101126546088,
+              "alignment": 0.9999899429216229,
+              "actors": 8,
+              "mode": "turf",
+              "native": true,
+              "landing": {
+                "alive": true,
+                "grounded": true,
+                "spawnActive": false,
+                "input": "browser canvas pointer lock + physical mouse fire",
+                "inputAlignment": 0.9999899429183222
+              }
+            },
+            {
+              "hz": 60,
+              "team": 1,
+              "rigYaw": -3.0611216423243324,
+              "aimYaw": -3.0611216423243324,
+              "expectedYaw": -3.0611216423243324,
+              "alignment": 0.9998642959610612,
+              "actors": 8,
+              "mode": "turf",
+              "native": true,
+              "landing": {
+                "alive": true,
+                "grounded": true,
+                "spawnActive": false,
+                "input": "browser canvas pointer lock + physical mouse fire",
+                "inputAlignment": 0.9998642959610612
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject"
+        },
+        {
+          "hz": 120,
+          "peers": [
+            {
+              "hz": 120,
+              "team": 0,
+              "rigYaw": 0.08047101126546088,
+              "aimYaw": 0.08047101126546088,
+              "expectedYaw": 0.08047101126546088,
+              "alignment": 0.9999899429254134,
+              "actors": 8,
+              "mode": "turf",
+              "native": true,
+              "landing": {
+                "alive": true,
+                "grounded": true,
+                "spawnActive": false,
+                "input": "browser canvas pointer lock + physical mouse fire",
+                "inputAlignment": 0.999989942919933
+              }
+            },
+            {
+              "hz": 120,
+              "team": 1,
+              "rigYaw": -3.0611216423243324,
+              "aimYaw": -3.0611216423243324,
+              "expectedYaw": -3.0611216423243324,
+              "alignment": 0.9998642959610612,
+              "actors": 8,
+              "mode": "turf",
+              "native": true,
+              "landing": {
+                "alive": true,
+                "grounded": true,
+                "spawnActive": false,
+                "input": "browser canvas pointer lock + physical mouse fire",
+                "inputAlignment": 0.9998642959610612
+              }
+            }
+          ],
+          "transport": "real WebSocket + production RoomDurableObject"
+        }
+      ],
+      "errors": [],
+      "resources": [
+        {
+          "phase": "menu",
+          "gridBytes": 2430264,
+          "paintGrowing": 0,
+          "paintOrderRecords": 1,
+          "renderer": {
+            "geometries": 203,
+            "textures": 16
+          },
+          "jsHeapBytes": 690692816
+        },
+        {
+          "phase": "menu",
+          "gridBytes": 2430264,
+          "paintGrowing": 0,
+          "paintOrderRecords": 1,
+          "renderer": {
+            "geometries": 203,
+            "textures": 16
+          },
+          "jsHeapBytes": 710748720
+        },
+        {
+          "phase": "menu",
+          "gridBytes": 2430264,
+          "paintGrowing": 0,
+          "paintOrderRecords": 1,
+          "renderer": {
+            "geometries": 203,
+            "textures": 16
+          },
+          "jsHeapBytes": 465151092
+        }
+      ],
+      "pointerLockEnvironment": {
+        "locked": true,
+        "error": null,
+        "focused": true
+      },
+      "legacy": {
+        "id": "tidewater",
+        "native": false,
+        "rigYaw": 0,
+        "aimYaw": 0
+      },
+      "packets": 1209
+    },
     "online": {
       "status": "passed",
+      "hostWeapon": "s3-blaster-short",
+      "probeRadius": 3.84,
+      "fullGridEqualityRequiredInEverySupportedMode": true,
       "results": [
         {
-          "id": "eeltail",
           "mode": "turf",
           "identities": [
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "turf",
               "native": true,
@@ -979,118 +2063,43 @@
             },
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "turf",
               "native": true,
               "gridBytes": 2430264
             }
           ],
-          "evidence": [
-            {
-              "gridSha256": "5c5a46401a4432f1f75b592fbd420a6d8effbd48c017b99d00cdde1439051e96",
-              "coverage": [
-                0.004543802080905319,
-                0.0017358466023995778
-              ],
-              "stats": {
-                "in": 190,
-                "out": 190,
-                "extrap": 129,
-                "snaps": 1
-              },
-              "diagnostic": {
-                "time": 9.550000000000054,
-                "out": 0,
-                "growing": 0,
-                "counts": [
-                  1269,
-                  437
-                ],
-                "applied": [
-                  [
-                    "p_m73ft6a",
-                    244
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_j0y0tvz",
-                    "tr": 48.811101586597424,
-                    "lastTs": 48.964,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      48.897,
-                      567,
-                      48.964,
-                      570
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "gridSha256": "5c5a46401a4432f1f75b592fbd420a6d8effbd48c017b99d00cdde1439051e96",
-              "coverage": [
-                0.004543802080905319,
-                0.0017358466023995778
-              ],
-              "stats": {
-                "in": 190,
-                "out": 190,
-                "extrap": 882,
-                "snaps": 7
-              },
-              "diagnostic": {
-                "time": 9.550000000000054,
-                "out": 0,
-                "growing": 0,
-                "counts": [
-                  1269,
-                  437
-                ],
-                "applied": [
-                  [
-                    "p_m73ft6a",
-                    244
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_m73ft6a",
-                    "tr": 76.76313758467037,
-                    "lastTs": 76.918,
-                    "lastEventSeq": 252,
-                    "lastPaintSeq": 244,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      76.85,
-                      567,
-                      76.918,
-                      570
-                    ]
-                  }
-                ]
-              }
-            }
-          ],
-          "playback": {
+          "paintPlayback": {
             "settled": true,
-            "frames": 205,
-            "probeRadius": 1.5
+            "frames": 230,
+            "probeRadius": 3.84
           },
+          "fullGridSha256": "39cc830f0fec724caa647f7205867d94877c6bf88059a8bc98d2d993450b55eb",
+          "fullGridEqual": true,
+          "rankedCounts": [
+            null,
+            null
+          ],
+          "coverage": [
+            [
+              0.008122104386633789,
+              0.003179071733134389
+            ],
+            [
+              0.008122104386633789,
+              0.003179071733134389
+            ]
+          ],
           "transport": "real WebSocket + production RoomDurableObject",
-          "packets": 413
+          "packets": 434
         },
         {
-          "id": "eeltail",
           "mode": "zones",
           "identities": [
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "zones",
               "native": true,
@@ -1098,121 +2107,49 @@
             },
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "zones",
               "native": true,
               "gridBytes": 2430264
             }
           ],
-          "evidence": [
-            {
-              "gridSha256": "01bbdbbe778ca3fe7cfec2275c7e84a8468873c658cbf7c92cfa421cf7e6cac1",
-              "coverage": [
-                0.003196693266216456,
-                0.0048887221027273916
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 125,
-                "snaps": 1
-              },
-              "diagnostic": {
-                "time": 15.716666666667027,
-                "out": 0,
-                "growing": 53,
-                "counts": [
-                  751,
-                  1251
-                ],
-                "applied": [
-                  [
-                    "p_svvnl8g",
-                    494
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_6e9rh37",
-                    "tr": 56.791516256857484,
-                    "lastTs": 57.23,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      57.155,
-                      939,
-                      57.23,
-                      942
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "gridSha256": "3f2faca4fdbc631d4bf69ed953ab4229f0e998cfce32b6611c8558e7eb1379e9",
-              "coverage": [
-                0.003196693266216456,
-                0.004850412862519742
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 875,
-                "snaps": 7
-              },
-              "diagnostic": {
-                "time": 15.716666666667027,
-                "out": 0,
-                "growing": 55,
-                "counts": [
-                  751,
-                  1242
-                ],
-                "applied": [
-                  [
-                    "p_svvnl8g",
-                    489
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_svvnl8g",
-                    "tr": 84.74653931007842,
-                    "lastTs": 85.183,
-                    "lastEventSeq": 489,
-                    "lastPaintSeq": 494,
-                    "queued": 26,
-                    "paintQueued": 2,
-                    "physicsPoints": [
-                      85.108,
-                      939,
-                      85.183,
-                      942
-                    ]
-                  }
-                ]
-              }
-            }
+          "paintPlayback": {
+            "settled": true,
+            "frames": 395,
+            "probeRadius": 3.84
+          },
+          "fullGridSha256": "70b59848852cb8c89decf4c2ad0883d2d75476c32ea1c16fcf6c7e95897c952e",
+          "fullGridEqual": true,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "coverage": [
+            [
+              0.006721159046349381,
+              0.011768269426054913
+            ],
+            [
+              0.006721159046349381,
+              0.011768269426054913
+            ]
           ],
           "transport": "real WebSocket + production RoomDurableObject",
-          "packets": 688
+          "packets": 994
         },
         {
-          "id": "eeltail",
           "mode": "tower",
           "identities": [
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "tower",
               "native": true,
@@ -1220,109 +2157,49 @@
             },
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "tower",
               "native": true,
               "gridBytes": 2430364
             }
           ],
-          "evidence": [
-            {
-              "gridSha256": "7a57c4507c1376a031a1c8f37aa3da174e812ba97bb176bcda95bf1ee133a430",
-              "coverage": [
-                0,
-                0
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 213,
-                "snaps": 1
-              },
-              "diagnostic": {
-                "time": 21.883333333333372,
-                "out": 0,
-                "growing": 0,
-                "counts": [
-                  0,
-                  0
-                ],
-                "applied": [],
-                "peers": [
-                  {
-                    "id": "p_l31edeb",
-                    "tr": 63.537537406386235,
-                    "lastTs": 63.532,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      63.506,
-                      1309,
-                      63.532,
-                      1312
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "gridSha256": "7a57c4507c1376a031a1c8f37aa3da174e812ba97bb176bcda95bf1ee133a430",
-              "coverage": [
-                0,
-                0
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 1526,
-                "snaps": 7
-              },
-              "diagnostic": {
-                "time": 21.883333333333372,
-                "out": 0,
-                "growing": 0,
-                "counts": [
-                  0,
-                  0
-                ],
-                "applied": [],
-                "peers": [
-                  {
-                    "id": "p_wvsbkym",
-                    "tr": 91.49088124887544,
-                    "lastTs": 91.486,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      91.46,
-                      1309,
-                      91.486,
-                      1312
-                    ]
-                  }
-                ]
-              }
-            }
+          "paintPlayback": {
+            "settled": true,
+            "frames": 15,
+            "probeRadius": 3.84
+          },
+          "fullGridSha256": "e2a419cb8100b6bf812d7850d0156c730aa5686e1b96c3fc4c1800bc661f22e3",
+          "fullGridEqual": true,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "coverage": [
+            [
+              0.0031551539455905294,
+              0
+            ],
+            [
+              0.0031551539455905294,
+              0
+            ]
           ],
           "transport": "real WebSocket + production RoomDurableObject",
-          "packets": 961
+          "packets": 1292
         },
         {
-          "id": "eeltail",
           "mode": "rainmaker",
           "identities": [
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "rainmaker",
               "native": true,
@@ -1330,121 +2207,49 @@
             },
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "rainmaker",
               "native": true,
               "gridBytes": 2430264
             }
           ],
-          "evidence": [
-            {
-              "gridSha256": "c9002a4df2fb792d13fc50276a11b3907332603edc8cf92f10125d9f9f463fe9",
-              "coverage": [
-                0.0033953063690507195,
-                0.004015416727660217
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 110,
-                "snaps": 1
-              },
-              "diagnostic": {
-                "time": 28.049999999999688,
-                "out": 1,
-                "growing": 58,
-                "counts": [
-                  931,
-                  1001
-                ],
-                "applied": [
-                  [
-                    "p_nj6w4v8",
-                    950
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_9ox9xav",
-                    "tr": 70.59745523863337,
-                    "lastTs": 70.806,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      70.761,
-                      1679,
-                      70.806,
-                      1682
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "gridSha256": "c9002a4df2fb792d13fc50276a11b3907332603edc8cf92f10125d9f9f463fe9",
-              "coverage": [
-                0.0033953063690507195,
-                0.004015416727660217
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 742,
-                "snaps": 7
-              },
-              "diagnostic": {
-                "time": 28.049999999999688,
-                "out": 0,
-                "growing": 71,
-                "counts": [
-                  931,
-                  1001
-                ],
-                "applied": [
-                  [
-                    "p_nj6w4v8",
-                    927
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_nj6w4v8",
-                    "tr": 98.55496375353445,
-                    "lastTs": 98.758,
-                    "lastEventSeq": 927,
-                    "lastPaintSeq": 949,
-                    "queued": 22,
-                    "paintQueued": 13,
-                    "physicsPoints": [
-                      98.714,
-                      1679,
-                      98.758,
-                      1682
-                    ]
-                  }
-                ]
-              }
-            }
+          "paintPlayback": {
+            "settled": true,
+            "frames": 350,
+            "probeRadius": 3.84
+          },
+          "fullGridSha256": "753ec2c4cf3ff01a18e60e1a3a6bc1e4806c49c41b05729c8975849c3561a5b9",
+          "fullGridEqual": true,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "coverage": [
+            [
+              0.008941096041134557,
+              0.003238853351202915
+            ],
+            [
+              0.008941096041134557,
+              0.003238853351202915
+            ]
           ],
           "transport": "real WebSocket + production RoomDurableObject",
-          "packets": 1234
+          "packets": 1813
         },
         {
-          "id": "eeltail",
           "mode": "clams",
           "identities": [
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "clams",
               "native": true,
@@ -1452,117 +2257,46 @@
             },
             {
               "stage": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
-              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:63d601cd0f218da6ba342c4d635da4689d80dcad602d793fc6046ab2283d0f2d",
+              "fingerprint": "native-stage-v1:eeltail:a02c681db162230dd3842e8ae2b0c6b1a27a344980129d1f1bd6d5d800184829:c0244dd1900306668c9063f1fcff1d1a330da4fd036ae6f7643ef34889052f23",
               "actors": 8,
               "rule": "clams",
               "native": true,
               "gridBytes": 2430264
             }
           ],
-          "evidence": [
-            {
-              "gridSha256": "f22c74f8baef805939b5e7a711b605c5296c5aa52cab12a5061d09dda87d1d38",
-              "coverage": [
-                0.0012397680468535747,
-                0.001579192013004401
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 173,
-                "snaps": 1
-              },
-              "diagnostic": {
-                "time": 34.21666666666601,
-                "out": 0,
-                "growing": 14,
-                "counts": [
-                  299,
-                  371
-                ],
-                "applied": [
-                  [
-                    "p_qxgxkoe",
-                    1073
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_mxjwlpv",
-                    "tr": 77.82503126282717,
-                    "lastTs": 77.96,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      77.93,
-                      2049,
-                      77.96,
-                      2052
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "gridSha256": "f22c74f8baef805939b5e7a711b605c5296c5aa52cab12a5061d09dda87d1d38",
-              "coverage": [
-                0.0012397680468535747,
-                0.001579192013004401
-              ],
-              "ranked": [
-                65,
-                100
-              ],
-              "stats": {
-                "in": 124,
-                "out": 124,
-                "extrap": 1218,
-                "snaps": 7
-              },
-              "diagnostic": {
-                "time": 34.21666666666601,
-                "out": 0,
-                "growing": 14,
-                "counts": [
-                  299,
-                  371
-                ],
-                "applied": [
-                  [
-                    "p_qxgxkoe",
-                    1073
-                  ]
-                ],
-                "peers": [
-                  {
-                    "id": "p_qxgxkoe",
-                    "tr": 105.78002417325236,
-                    "lastTs": 105.913,
-                    "lastEventSeq": 1073,
-                    "lastPaintSeq": 1073,
-                    "queued": 0,
-                    "paintQueued": 0,
-                    "physicsPoints": [
-                      105.883,
-                      2049,
-                      105.913,
-                      2052
-                    ]
-                  }
-                ]
-              }
-            }
+          "paintPlayback": {
+            "settled": true,
+            "frames": 225,
+            "probeRadius": 3.84
+          },
+          "fullGridSha256": "97ecb8eaa43456532dda2445c4b82727f8b7250db076c9ea04040db9e5fce748",
+          "fullGridEqual": true,
+          "rankedCounts": [
+            [
+              65,
+              100
+            ],
+            [
+              65,
+              100
+            ]
+          ],
+          "coverage": [
+            [
+              0.006003500392834445,
+              0.0011450206239843233
+            ],
+            [
+              0.006003500392834445,
+              0.0011450206239843233
+            ]
           ],
           "transport": "real WebSocket + production RoomDurableObject",
-          "packets": 1507
+          "packets": 2254
         }
       ],
-      "errors": [],
-      "packets": 1507
+      "packets": 2254,
+      "errors": []
     },
     "render": {
       "status": "passed",
@@ -1584,41 +2318,41 @@
               "differences": [],
               "pixels": 153600,
               "baseline": {
-                "milliseconds": 9,
+                "milliseconds": 5.9000000059604645,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 12531132,
+                "triangles": 12544740,
                 "calls": 3938,
-                "p50": 9,
-                "p95": 18.700000002980232,
+                "p50": 8.200000002980232,
+                "p95": 10.600000008940697,
                 "samples": [
-                  18.5,
-                  18.700000002980232,
-                  8.100000001490116,
-                  7.799999997019768,
-                  5.600000001490116,
-                  9
+                  10.600000008940697,
+                  8.200000002980232,
+                  8.700000002980232,
+                  6.800000011920929,
+                  7.699999988079071,
+                  5.9000000059604645
                 ]
               },
               "chunked": {
-                "milliseconds": 7.800000004470348,
+                "milliseconds": 4.200000002980232,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
-                "inkTriangles": 129135,
+                "inkTriangles": 129175,
                 "inkCalls": 1,
-                "triangles": 11745086,
+                "triangles": 11757790,
                 "calls": 3692,
-                "p50": 9.699999995529652,
-                "p95": 14.700000002980232,
+                "p50": 12.599999994039536,
+                "p95": 26.399999991059303,
                 "samples": [
-                  14.700000002980232,
-                  9.699999995529652,
-                  9.900000005960464,
-                  8.800000004470348,
-                  8.799999997019768,
-                  7.800000004470348
+                  12.599999994039536,
+                  13.299999997019768,
+                  9.100000008940697,
+                  26.399999991059303,
+                  6.700000002980232,
+                  4.200000002980232
                 ]
               }
             },
@@ -1631,41 +2365,41 @@
               "differences": [],
               "pixels": 153600,
               "baseline": {
-                "milliseconds": 2.2999999970197678,
+                "milliseconds": 9.099999994039536,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 27325750,
-                "calls": 8482,
-                "p50": 2.399999998509884,
-                "p95": 3.100000001490116,
+                "triangles": 27364558,
+                "calls": 8498,
+                "p50": 2.3999999910593033,
+                "p95": 9.099999994039536,
                 "samples": [
-                  3.100000001490116,
-                  2.6999999955296516,
-                  2.399999998509884,
                   2.2000000029802322,
-                  2.1999999955296516,
-                  2.2999999970197678
+                  2.3999999910593033,
+                  1.9000000059604645,
+                  2,
+                  2.3999999910593033,
+                  9.099999994039536
                 ]
               },
               "chunked": {
-                "milliseconds": 2.3000000044703484,
+                "milliseconds": 11.799999997019768,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 80737,
                 "inkCalls": 1,
-                "triangles": 26553455,
-                "calls": 8251,
-                "p50": 2.600000001490116,
-                "p95": 3.7000000029802322,
+                "triangles": 26590919,
+                "calls": 8266,
+                "p50": 2.4000000059604645,
+                "p95": 11.799999997019768,
                 "samples": [
-                  3.399999998509884,
-                  3.7000000029802322,
-                  2.600000001490116,
-                  2.100000001490116,
-                  2.399999998509884,
-                  2.3000000044703484
+                  2.4000000059604645,
+                  2.1000000089406967,
+                  2,
+                  2,
+                  3.1000000089406967,
+                  11.799999997019768
                 ]
               }
             },
@@ -1678,41 +2412,41 @@
               "differences": [],
               "pixels": 153600,
               "baseline": {
-                "milliseconds": 2.5999999940395355,
+                "milliseconds": 8,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 42668052,
-                "calls": 13234,
-                "p50": 2.5999999940395355,
-                "p95": 6.799999997019768,
+                "triangles": 42402396,
+                "calls": 12998,
+                "p50": 8,
+                "p95": 18.5,
                 "samples": [
-                  6.799999997019768,
-                  2.0999999940395355,
-                  2.2000000029802322,
+                  3.5999999940395355,
                   2.5,
-                  3,
-                  2.5999999940395355
+                  2.2999999970197678,
+                  18.5,
+                  9.700000002980232,
+                  8
                 ]
               },
               "chunked": {
-                "milliseconds": 2.4000000059604645,
-                "selectionMilliseconds": 0,
+                "milliseconds": 8.200000002980232,
+                "selectionMilliseconds": 0.09999999403953552,
                 "indexChanged": false,
                 "inkTriangles": 130383,
                 "inkCalls": 1,
-                "triangles": 41878398,
-                "calls": 12987,
-                "p50": 2.600000001490116,
-                "p95": 5.699999995529652,
+                "triangles": 41632107,
+                "calls": 12767,
+                "p50": 8.200000002980232,
+                "p95": 9.799999997019768,
                 "samples": [
-                  2.8000000044703484,
-                  2.100000001490116,
-                  2,
-                  2.600000001490116,
-                  5.699999995529652,
-                  2.4000000059604645
+                  4.5,
+                  2.7000000029802322,
+                  5.200000002980232,
+                  9.799999997019768,
+                  8.599999994039536,
+                  8.200000002980232
                 ]
               }
             }
@@ -1721,253 +2455,253 @@
             {
               "frame": 0,
               "baseline": {
-                "milliseconds": 4.799999997019768,
+                "milliseconds": 5.299999997019768,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 46315967,
-                "calls": 14321
+                "triangles": 46057031,
+                "calls": 14090
               },
               "chunked": {
-                "milliseconds": 4.299999997019768,
-                "selectionMilliseconds": 0.7999999970197678,
+                "milliseconds": 4.200000002980232,
+                "selectionMilliseconds": 0.5999999940395355,
                 "indexChanged": true,
-                "inkTriangles": 120056,
+                "inkTriangles": 123196,
                 "inkCalls": 1,
-                "triangles": 47072190,
-                "calls": 14560
+                "triangles": 46817738,
+                "calls": 14330
               }
             },
             {
               "frame": 1,
-              "baseline": {
-                "milliseconds": 2.7000000029802322,
-                "selectionMilliseconds": 0,
-                "indexChanged": false,
-                "inkTriangles": 135250,
-                "inkCalls": 1,
-                "triangles": 48616180,
-                "calls": 15044
-              },
-              "chunked": {
-                "milliseconds": 3.899999998509884,
-                "selectionMilliseconds": 0.5,
-                "indexChanged": true,
-                "inkTriangles": 125040,
-                "inkCalls": 1,
-                "triangles": 47839080,
-                "calls": 14802
-              }
-            },
-            {
-              "frame": 2,
-              "baseline": {
-                "milliseconds": 2.399999998509884,
-                "selectionMilliseconds": 0,
-                "indexChanged": false,
-                "inkTriangles": 135250,
-                "inkCalls": 1,
-                "triangles": 49389766,
-                "calls": 15289
-              },
-              "chunked": {
-                "milliseconds": 3.600000001490116,
-                "selectionMilliseconds": 0.3999999985098839,
-                "indexChanged": true,
-                "inkTriangles": 127985,
-                "inkCalls": 1,
-                "triangles": 50156087,
-                "calls": 15534
-              }
-            },
-            {
-              "frame": 3,
               "baseline": {
                 "milliseconds": 2.5,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 51696607,
-                "calls": 16024
+                "triangles": 48383457,
+                "calls": 14820
               },
               "chunked": {
-                "milliseconds": 3.899999998509884,
-                "selectionMilliseconds": 0.6000000014901161,
+                "milliseconds": 4.100000008940697,
+                "selectionMilliseconds": 0.29999999701976776,
                 "indexChanged": true,
-                "inkTriangles": 128598,
+                "inkTriangles": 127685,
                 "inkCalls": 1,
-                "triangles": 50923021,
-                "calls": 15779
+                "triangles": 47596815,
+                "calls": 14575
+              }
+            },
+            {
+              "frame": 2,
+              "baseline": {
+                "milliseconds": 2.5,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 49149181,
+                "calls": 15062
+              },
+              "chunked": {
+                "milliseconds": 3,
+                "selectionMilliseconds": 0.3999999910593033,
+                "indexChanged": true,
+                "inkTriangles": 128444,
+                "inkCalls": 1,
+                "triangles": 49908099,
+                "calls": 15304
+              }
+            },
+            {
+              "frame": 3,
+              "baseline": {
+                "milliseconds": 3,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 51433234,
+                "calls": 15788
+              },
+              "chunked": {
+                "milliseconds": 2.8999999910593033,
+                "selectionMilliseconds": 0.4000000059604645,
+                "indexChanged": true,
+                "inkTriangles": 128937,
+                "inkCalls": 1,
+                "triangles": 50667510,
+                "calls": 15546
               }
             },
             {
               "frame": 4,
+              "baseline": {
+                "milliseconds": 3.2000000029802322,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 52220624,
+                "calls": 16035
+              },
+              "chunked": {
+                "milliseconds": 8.700000002980232,
+                "selectionMilliseconds": 0.5999999940395355,
+                "indexChanged": true,
+                "inkTriangles": 129135,
+                "inkCalls": 1,
+                "triangles": 53001899,
+                "calls": 16282
+              }
+            },
+            {
+              "frame": 5,
+              "baseline": {
+                "milliseconds": 6.899999991059303,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 54569349,
+                "calls": 16774
+              },
+              "chunked": {
+                "milliseconds": 11.200000002980232,
+                "selectionMilliseconds": 0.5,
+                "indexChanged": true,
+                "inkTriangles": 128496,
+                "inkCalls": 1,
+                "triangles": 53782247,
+                "calls": 16528
+              }
+            },
+            {
+              "frame": 6,
+              "baseline": {
+                "milliseconds": 8,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 55335073,
+                "calls": 17016
+              },
+              "chunked": {
+                "milliseconds": 5.299999997019768,
+                "selectionMilliseconds": 0.3999999910593033,
+                "indexChanged": true,
+                "inkTriangles": 128528,
+                "inkCalls": 1,
+                "triangles": 56094075,
+                "calls": 17258
+              }
+            },
+            {
+              "frame": 7,
+              "baseline": {
+                "milliseconds": 4.700000002980232,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 135250,
+                "inkCalls": 1,
+                "triangles": 57620438,
+                "calls": 17742
+              },
+              "chunked": {
+                "milliseconds": 5.699999988079071,
+                "selectionMilliseconds": 0.29999999701976776,
+                "indexChanged": true,
+                "inkTriangles": 130165,
+                "inkCalls": 1,
+                "triangles": 56854714,
+                "calls": 17500
+              }
+            },
+            {
+              "frame": 8,
               "baseline": {
                 "milliseconds": 4.5,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 52482653,
-                "calls": 16270
+                "triangles": 58385722,
+                "calls": 17983
               },
               "chunked": {
-                "milliseconds": 9.200000002980232,
-                "selectionMilliseconds": 0.3999999985098839,
+                "milliseconds": 8.400000005960464,
+                "selectionMilliseconds": 0.4000000059604645,
                 "indexChanged": true,
-                "inkTriangles": 129091,
+                "inkTriangles": 130633,
                 "inkCalls": 1,
-                "triangles": 53262540,
-                "calls": 16516
+                "triangles": 59146389,
+                "calls": 18224
               }
             },
             {
-              "frame": 5,
+              "frame": 9,
               "baseline": {
-                "milliseconds": 6.399999998509884,
+                "milliseconds": 3.2000000029802322,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 54784479,
-                "calls": 16998
+                "triangles": 60715566,
+                "calls": 18716
               },
               "chunked": {
-                "milliseconds": 11,
-                "selectionMilliseconds": 0.3999999985098839,
+                "milliseconds": 4.299999997019768,
+                "selectionMilliseconds": 0.4000000059604645,
                 "indexChanged": true,
-                "inkTriangles": 128429,
+                "inkTriangles": 130527,
                 "inkCalls": 1,
-                "triangles": 54020099,
-                "calls": 16757
+                "triangles": 59928616,
+                "calls": 18470
               }
             },
             {
-              "frame": 6,
+              "frame": 10,
               "baseline": {
                 "milliseconds": 2.5999999940395355,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 55548859,
-                "calls": 17239
+                "triangles": 61480848,
+                "calls": 18956
               },
               "chunked": {
-                "milliseconds": 10.200000002980232,
-                "selectionMilliseconds": 0.5,
+                "milliseconds": 23.799999997019768,
+                "selectionMilliseconds": 0.3999999910593033,
                 "indexChanged": true,
-                "inkTriangles": 128452,
+                "inkTriangles": 130153,
                 "inkCalls": 1,
-                "triangles": 56306441,
-                "calls": 17480
-              }
-            },
-            {
-              "frame": 7,
-              "baseline": {
-                "milliseconds": 3.5,
-                "selectionMilliseconds": 0,
-                "indexChanged": false,
-                "inkTriangles": 135250,
-                "inkCalls": 1,
-                "triangles": 57828447,
-                "calls": 17962
-              },
-              "chunked": {
-                "milliseconds": 5.600000001490116,
-                "selectionMilliseconds": 0.4000000059604645,
-                "indexChanged": true,
-                "inkTriangles": 128496,
-                "inkCalls": 1,
-                "triangles": 57064067,
-                "calls": 17721
-              }
-            },
-            {
-              "frame": 8,
-              "baseline": {
-                "milliseconds": 2.1999999955296516,
-                "selectionMilliseconds": 0,
-                "indexChanged": false,
-                "inkTriangles": 135250,
-                "inkCalls": 1,
-                "triangles": 58592387,
-                "calls": 18202
-              },
-              "chunked": {
-                "milliseconds": 3.8000000044703484,
-                "selectionMilliseconds": 0.3999999985098839,
-                "indexChanged": true,
-                "inkTriangles": 130165,
-                "inkCalls": 1,
-                "triangles": 59351242,
-                "calls": 18442
-              }
-            },
-            {
-              "frame": 9,
-              "baseline": {
-                "milliseconds": 2.1999999955296516,
-                "selectionMilliseconds": 0,
-                "indexChanged": false,
-                "inkTriangles": 135250,
-                "inkCalls": 1,
-                "triangles": 60917681,
-                "calls": 18932
-              },
-              "chunked": {
-                "milliseconds": 4,
-                "selectionMilliseconds": 0.3999999985098839,
-                "indexChanged": true,
-                "inkTriangles": 130477,
-                "inkCalls": 1,
-                "triangles": 60132075,
-                "calls": 18687
-              }
-            },
-            {
-              "frame": 10,
-              "baseline": {
-                "milliseconds": 2.2999999970197678,
-                "selectionMilliseconds": 0,
-                "indexChanged": false,
-                "inkTriangles": 135250,
-                "inkCalls": 1,
-                "triangles": 61681621,
-                "calls": 19172
-              },
-              "chunked": {
-                "milliseconds": 3.600000001490116,
-                "selectionMilliseconds": 0.29999999701976776,
-                "indexChanged": true,
-                "inkTriangles": 130427,
-                "inkCalls": 1,
-                "triangles": 62440738,
-                "calls": 19412
+                "triangles": 62241033,
+                "calls": 19196
               }
             },
             {
               "frame": 11,
               "baseline": {
-                "milliseconds": 2.2000000029802322,
+                "milliseconds": 5,
                 "selectionMilliseconds": 0,
                 "indexChanged": false,
                 "inkTriangles": 135250,
                 "inkCalls": 1,
-                "triangles": 63981750,
-                "calls": 19898
+                "triangles": 63766281,
+                "calls": 19676
               },
               "chunked": {
-                "milliseconds": 4,
-                "selectionMilliseconds": 0.3999999985098839,
+                "milliseconds": 5.9000000059604645,
+                "selectionMilliseconds": 0.5,
                 "indexChanged": true,
-                "inkTriangles": 129974,
+                "inkTriangles": 129934,
                 "inkCalls": 1,
-                "triangles": 63208606,
-                "calls": 19655
+                "triangles": 63000999,
+                "calls": 19436
               }
             }
           ],
@@ -2011,7 +2745,7 @@
           "native": false,
           "nativeGroups": 0,
           "memory": {
-            "geometries": 210,
+            "geometries": 209,
             "textures": 28
           }
         },
@@ -2020,7 +2754,7 @@
           "native": true,
           "nativeGroups": 1,
           "memory": {
-            "geometries": 370,
+            "geometries": 369,
             "textures": 121
           }
         },
@@ -2029,7 +2763,7 @@
           "native": false,
           "nativeGroups": 0,
           "memory": {
-            "geometries": 210,
+            "geometries": 209,
             "textures": 28
           }
         }
@@ -2052,11 +2786,11 @@
           "atlas": 2048,
           "textureCount": 103,
           "cpuFrame": {
-            "p50": 13.699999995529652,
-            "p95": 33.899999998509884,
-            "max": 159.30000000447035
+            "p50": 11.899999991059303,
+            "p95": 40.900000005960464,
+            "max": 86.59999999403954
           },
-          "gpuDrainRenderMs": 10,
+          "gpuDrainRenderMs": 7.700000002980232,
           "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
           "local": {
             "grounded": true,
@@ -2067,13 +2801,34 @@
       ]
     }
   },
-  "stageDefinitionSha256": "bc3d9525aa1deb05b20a8a4ce1129f1b26923d1e48b51231aa98ad61d1ed29d9",
-  "movementVerifierSha256": "6c3da37554c6c75353e5dda8443ec24b5b525734a46225d3baa8ff3c66f87d92",
-  "sharedCheckerCliGuards": {
-    "passed": 11,
-    "failed": 0,
-    "conditions": "source-browser and lifecycle empty/unknown/duplicate requested-id guards"
+  "immutableBaseline": {
+    "foundationCommit": "a84009dee41bdb8350401412e21a4e991a426adb",
+    "builds": {
+      "public": {
+        "contentHash": "045d2db745551881f00e3bef93c358a802757df9c88a91d8fbf90db6ac8cabdc",
+        "inputHash": "d1c61a552d5cac2055dba5e62ddef30632addf57bc63839bff44036579e51443",
+        "hasSourcePayload": false
+      },
+      "private": {
+        "contentHash": "35b3d5dd1a0e7401bed31b6693df2d723753448bbdd10bc34219a57be94f8c40",
+        "inputHash": "d1c61a552d5cac2055dba5e62ddef30632addf57bc63839bff44036579e51443",
+        "hasSourcePayload": true
+      }
+    },
+    "node": {
+      "tests": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "exactBrowserPythonBufferAndMaskParity": true
+    },
+    "browserStatus": "passed",
+    "conditions": "Earlier immutable a84009de plus exact Shadow classifier; preserved separately from final accepted runtime",
+    "fullFiveModeOnline": true,
+    "renderChangedPixels": 0,
+    "lifecyclePassed": true
   },
   "version1130Verified": false,
-  "retailComparison": "UNVERIFIED: retail transform, native collision/paint semantics, spawning, ranked placements and device movement/render performance"
+  "retailComparison": "UNVERIFIED: extraction date/units/retail transform; native collision, paint/grate/climb masks; source material shader; original moving-object placements/states; Nintendo spawn/ranked placements; console and physical mobile movement/render performance",
+  "performanceInterpretation": "Chromium SwiftShader timing is diagnostic. Gameplay CPU p50/p95/max 21.1/46/316ms; chunked gameplay render p50 12.6ms versus original single-mesh 8.2ms. No performance improvement or hardware FPS claim."
 }
