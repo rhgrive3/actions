@@ -30,7 +30,8 @@ test('airport independent original text agrees with every float32 attribute and 
  const lines=readline.createInterface({input:fs.createReadStream(file),crlfDelay:Infinity});
  for await(const line of lines){
   if(line.startsWith('o ')){
-   object++;offset=data.manifest.objects[object].vo;uvOffset=uv;
+   object++;offset=position;uvOffset=uv;
+   assert.equal(data.manifest.objects[object].vo,offset,'source object starts at independently counted vertex');
    assert.equal(line.slice(2).trim(),data.manifest.objects[object].name);
   }else if(line.startsWith('v ')){
    const v=line.trim().split(/\s+/).slice(1).map(Number);
@@ -41,9 +42,9 @@ test('airport independent original text agrees with every float32 attribute and 
    for(let k=0;k<3;k++)assert.equal(data.vertices[normal*8+3+k],Math.fround(v[k]),'normal '+normal+'/'+k);
    normal++;
   }else if(line.startsWith('vt ')){
-   const v=line.trim().split(/\s+/).slice(1).map(Number),o=data.manifest.objects[object];
+   const v=line.trim().split(/\s+/).slice(1).map(Number);
    // The source has aligned per-object streams; objects without UVs insert zeros.
-   const vertex=o.vo+uv-uvOffset;
+   const vertex=offset+uv-uvOffset;
    for(let k=0;k<2;k++)assert.equal(data.vertices[vertex*8+6+k],Math.fround(v[k]),'UV '+uv+'/'+k);
    uv++;
   }else if(line.startsWith('f ')){
