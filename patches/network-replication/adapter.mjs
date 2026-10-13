@@ -2273,6 +2273,10 @@ ${bombHit}`;
     bombs = bombs.replace(/\bdt\b/g,'stepDt').replace('_updateBombs(stepDt)', '_updateBombs(dt)').replace('peer ? SIM_DT : stepDt','peer ? SIM_DT : dt');
     bombs = bombs.replaceAll('this.bombs.splice(i, 1); continue;', 'this.bombs.splice(i, 1); break;');
     bombs = once(bombs,'      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);', '      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);\n      }', 'close bomb steps');
+    bombs = once(bombs,
+      '      b.mesh.rotation.x += b.spin.x * stepDt * (b.fuse < 0 ? 1 : 0.2);\n      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);',
+      '      b.mesh.rotation.set(b.mesh.rotation.x + b.spin.x * stepDt * (b.fuse < 0 ? 1 : 0.2), b.mesh.rotation.y, b.mesh.rotation.z + b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2), b.mesh.rotation.order);',
+      'coalesce adjacent bomb Euler writes without skipping a physics step');
     code = code.slice(0,bombStart)+bombs+code.slice(bombEnd);
     patch('e.len || 20, e.charge || 0.5', 'e.len ?? 20, e.charge ?? 0.5', 'charger zero values');
     patch('    this.clouds.push({ owner: b.owner,', `    this.clouds.push({ _netPeer: b._netPeer, _netBorn: b._netBorn + (b._netSteps - 1) * SIM_DT, _netBornTick: b._netBornTick + b._netSteps - 1, _netSteps: 0, owner: b.owner,`, 'cloud inherits owner timeline');
