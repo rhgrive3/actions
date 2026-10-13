@@ -23,7 +23,7 @@ const installers = [
 ];
 export async function specialEvidenceFixture() {
   const extraExports = installers.map(([name, path]) => `export { ${name} } from './patches/${path}';`).join('\n') + `
-    export { inkVacActorContact, inkVacState, disposeInkVac, replayInkVac, INK_VAC_EVENTS, INK_VAC_CALIBRATION } from './patches/splatoon3/runtime/kit-ink-vac.mjs';
+    export { inkVacActorContact, inkVacState, disposeInkVac, replayInkVac, advanceInkVacReplica, INK_VAC_EVENTS, INK_VAC_CALIBRATION } from './patches/splatoon3/runtime/kit-ink-vac.mjs';
   `;
   const f = await fixture({ fullRuntime: true, realProjectiles: true, adapt: compose, adaptRuntime: compose, extraExports });
   const source = fs.readFileSync(new URL('../bootstrap.mjs', import.meta.url), 'utf8');
