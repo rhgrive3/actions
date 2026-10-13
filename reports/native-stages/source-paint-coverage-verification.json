@@ -178,9 +178,36 @@
     "sourceGeometryAndRoles": "unchanged"
   },
   "validation": {
-    "syntheticAndPythonWorkerParity": "queued",
+    "syntheticAndPythonWorkerParity": {
+      "tests": 3,
+      "passed": 3,
+      "failures": 0,
+      "skipped": 0,
+      "includes": "original polygon ownership, thin1e-6 intersection,1e-13 roundoff neighbour,holes,NoPaint,compiled parity"
+    },
     "originalShipshapeAndRealWeaponBrowser": "pending",
     "retailPaintMasks": "unverified",
-    "hardwarePerformance": "unverified"
+    "hardwarePerformance": "unverified",
+    "originalFiveBufferIdentity": {
+      "unchangedBuffersPerStage": 9,
+      "stages": [
+        "scorch",
+        "hagglefish",
+        "inkblot",
+        "mako",
+        "brinewater"
+      ],
+      "beforeRoundoffCorrection": true
+    },
+    "originalFivePhysicsPaintMovementNavRules": {
+      "passed": 5,
+      "failures": 0,
+      "beforeRoundoffCorrection": true
+    },
+    "fullSourceWorkerPythonParity": {
+      "firstScorchRun": "failed in152 mask cells at numerically zero-area projected boundaries; all other buffers match",
+      "correctedMatchingNumericalMargin": 1e-09,
+      "allFiveRebuildAndParity": "in progress"
+    }
   }
 }
