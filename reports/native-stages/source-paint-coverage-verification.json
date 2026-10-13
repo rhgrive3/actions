@@ -1,0 +1,186 @@
+{
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+  "before": {
+    "sampleCount": 1638,
+    "insideOriginalPaintableTriangleButDeadCell": 134,
+    "examples": [
+      {
+        "sign": -1,
+        "z": 39,
+        "side": 0,
+        "y": 2.35,
+        "hit": true,
+        "triangle": 83556,
+        "flags": 3,
+        "sourceObject": "Fld_Twist00_GapFill_01_1__Walls00",
+        "explicitNoPaint": false,
+        "role": {
+          "active": true,
+          "collidable": true,
+          "paintable": true,
+          "grate": false
+        },
+        "face": 35192,
+        "faceMembership": true,
+        "containsOnFace": true,
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "uv": [
+          1.5,
+          0.7299999952316285
+        ],
+        "cell": {
+          "i": 6,
+          "j": 3,
+          "cu": 0.24583334392971462,
+          "cv": 0.23944443464279175,
+          "mask": 0,
+          "centerUV": [
+            1.597916735543145,
+            0.8380555212497711
+          ],
+          "centerInsideExactSourcePolygon": false
+        }
+      },
+      {
+        "sign": -1,
+        "z": 39,
+        "side": 0,
+        "y": 2.4,
+        "hit": true,
+        "triangle": 83574,
+        "flags": 3,
+        "sourceObject": "Fld_Twist00_GapFill_01_1__Walls00",
+        "explicitNoPaint": false,
+        "role": {
+          "active": true,
+          "collidable": true,
+          "paintable": true,
+          "grate": false
+        },
+        "face": 35197,
+        "faceMembership": true,
+        "containsOnFace": true,
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "uv": [
+          1.5,
+          0.8999999999999999
+        ],
+        "cell": {
+          "i": 6,
+          "j": 3,
+          "cu": 0.25,
+          "cv": 0.23947369424920334,
+          "mask": 0,
+          "centerUV": [
+            1.625,
+            0.8381579298722117
+          ],
+          "centerInsideExactSourcePolygon": false
+        }
+      },
+      {
+        "sign": -1,
+        "z": 39,
+        "side": 0,
+        "y": 5,
+        "hit": true,
+        "triangle": 83561,
+        "flags": 3,
+        "sourceObject": "Fld_Twist00_GapFill_01_1__Walls00",
+        "explicitNoPaint": false,
+        "role": {
+          "active": true,
+          "collidable": true,
+          "paintable": true,
+          "grate": false
+        },
+        "face": 35197,
+        "faceMembership": true,
+        "containsOnFace": true,
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "uv": [
+          1.5,
+          3.5
+        ],
+        "cell": {
+          "i": 6,
+          "j": 14,
+          "cu": 0.25,
+          "cv": 0.23947369424920334,
+          "mask": 0,
+          "centerUV": [
+            1.625,
+            3.4723685666134485
+          ],
+          "centerInsideExactSourcePolygon": false
+        }
+      },
+      {
+        "sign": -1,
+        "z": 39,
+        "side": 0,
+        "y": 5.15,
+        "hit": true,
+        "triangle": 83549,
+        "flags": 3,
+        "sourceObject": "Fld_Twist00_GapFill_01_1__Walls00",
+        "explicitNoPaint": false,
+        "role": {
+          "active": true,
+          "collidable": true,
+          "paintable": true,
+          "grate": false
+        },
+        "face": 35192,
+        "faceMembership": true,
+        "containsOnFace": true,
+        "normal": [
+          -1,
+          0,
+          0
+        ],
+        "uv": [
+          1.5,
+          3.5299999952316288
+        ],
+        "cell": {
+          "i": 6,
+          "j": 14,
+          "cu": 0.24583334392971462,
+          "cv": 0.23944443464279175,
+          "mask": 0,
+          "centerUV": [
+            1.597916735543145,
+            3.4719443023204803
+          ],
+          "centerInsideExactSourcePolygon": false
+        }
+      }
+    ]
+  },
+  "candidate": {
+    "recipe": "inkwave-browser-source-v4",
+    "coverage": "positive-area source triangle / grid cell intersection",
+    "ownership": "exact original polygon membership at queried UV",
+    "sourceGeometryAndRoles": "unchanged"
+  },
+  "validation": {
+    "syntheticAndPythonWorkerParity": "queued",
+    "originalShipshapeAndRealWeaponBrowser": "pending",
+    "retailPaintMasks": "unverified",
+    "hardwarePerformance": "unverified"
+  }
+}
