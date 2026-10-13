@@ -1,5 +1,10 @@
 export function adaptNativeStages(rel,code){
  const once=(a,b)=>{if(code.split(a).length!==2)throw Error('Native stage adapter conflict: '+rel+' / '+a.slice(0,70));code=code.replace(a,b);};
+ if(rel==='src/game/inkCollision.js'){
+  code="import { sweepNativeLevelSphere } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  const signature='export function sweepLevelSphere(level, from, to, radius, out, skipGrates = true) {';
+  once(signature,signature+'\n  if (level.native) return sweepNativeLevelSphere(level, from, to, radius, out, skipGrates, sweepLevelSphere);');
+ }
  if(rel==='src/config.js'){
   code="import { nativeStageEnabled, NATIVE_MAPS } from '../patches/native-stages/runtime/registry.mjs';\n"+code;
   once('export const OFFLINE_MAPS =',"if (nativeStageEnabled) { for (const m of NATIVE_MAPS) { const i = MAPS.findIndex(x => x.id === m.id); if (i >= 0) MAPS[i] = m; else MAPS.push(m); } }\nexport const OFFLINE_MAPS =");

@@ -1,3 +1,4 @@
+export { sweepNativeLevelSphere } from './native-projectile-sweep.mjs';
 export { initNativeGrid,layoutNativePaint,NativeLevel } from './native-level.mjs';
 export { NativePhysics } from './native-physics.mjs';
 export { buildNativeWorld,releaseNativeWorld } from './native-world.mjs';
