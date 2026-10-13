@@ -28,10 +28,11 @@ for x,y in zip(a['rows'],b['rows']):
  assert x['id']==y['id'];assert x['muzzle']==y['muzzle'];assert not y['nonFinite'];assert y['maxGrip']<.008
  for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']:assert x[k] and y[k],(y['id'],k)
  # Moving paper reuses the existing native ink draw; no new draw channel.
- expected=0
+ # Batch consolidation is permitted; existing mesh and lifecycle guards remain strict.
  for state in ['closedRender','openRender']:
   assert x[state]['lod']==y[state]['lod']=='game' and x[state]['weaponNear'] and y[state]['weaponNear'],(y['id'],'uncontrolled LOD',state,x[state],y[state])
-  assert y[state]['drawCalls']-x[state]['drawCalls']==expected,(y['id'],state,x[state],y[state])
+  assert 0<y[state]['drawCalls']<=x[state]['drawCalls'],(y['id'],state,'draw-call increase/empty render',x[state],y[state])
+  assert y[state]['triangles']>0,(y['id'],state,'empty rendered geometry')
  for case in y.get('guardCases',[]):assert case['angleDeg']<6 and case['centreOffset']<.05,(y['id'],'guard alignment',case)
  row={'id':x['id'],'guardCases':y.get('guardCases'),'reverseBefore':x.get('reverseCases'),'reverseAfter':y.get('reverseCases'),'before':{k:x[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'after':{k:y[k]for k in ['tris','geometryKB','buildMs','closedRender','openRender']},'maxGrip':y['maxGrip'],'lifecycle':{k:y[k]for k in ['sawOpen','sawLaunched','sawHidden','sawFolded']}}
  rows.append(row);print('BRELLA_AB '+json.dumps(row))
