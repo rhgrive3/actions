@@ -22,7 +22,12 @@ export class TriangleWorld {
    const ni=stack.pop()*8;let low=0,high=best,miss=false;
    if(verticalDown){
     if(origin.x<nodes[ni]||origin.x>nodes[ni+3]||origin.z<nodes[ni+2]||origin.z>nodes[ni+5])miss=true;
-    else {const a=(nodes[ni+1]-origin.y)/dir.y,b=(nodes[ni+4]-origin.y)/dir.y;low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low)miss=true;}
+    else {const a=(nodes[ni+1]-origin.y)/dir.y,b=(nodes[ni+4]-origin.y)/dir.y;
+     // Ordered downward endpoints: [b,a] overlaps [0,best] unless one
+     // interval is wholly outside. Preserve NaN/unordered/coercion fallback.
+     if(a>=b&&typeof best==='number')miss=best===best&&(a<0||best<0||b>best);
+     else {low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low)miss=true;}
+    }
    }else{
    for(let k=0;k<3;k++){
     const o=k===0?origin.x:k===1?origin.y:origin.z,d=k===0?dir.x:k===1?dir.y:dir.z;

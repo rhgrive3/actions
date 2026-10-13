@@ -4106,3 +4106,10 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+
+## 2026-10-13: native downward-slab predicate experiment
+
+A separate ee9-based CPU candidate changes only the ordered exact-down BVH interval rejection, retaining native divisions, fallback/coercion behavior and every nearest-hit field/counter. No bot, cadence, movement, damage, paint or visual behavior is intentionally changed. Source and actual emitted before/after replay match separately at 30/60/120 Hz; real damage and native-wall protection tests also pass. This preserves the existing INKWAVE comparison baseline rather than declaring new Splatoon 3 Ver.11.3.0 retail parity.
+
+Captured rays use 73.8% fewer Math min/max calls with identical triangle work. Normal-realm Node timing has one mixed short batch and a favorable longer batch; the same-harness VM CPU replay improves in all four pairs. None establishes browser, whole-game FPS or iPad mini6 performance. Source versus emitted trajectories differ even on baseline and are not compared as identical. Full evidence, all raw trial values, limitations and reproduction: [native vertical-slab report](inkwave-native-vertical-slab-2026-10-13.md). PR #1366 remains frozen and separate; no main merge is performed.
