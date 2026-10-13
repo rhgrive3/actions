@@ -76,3 +76,34 @@ test('Bluefin opposing source ledges really walk or jump down to retained lower 
  }
  console.log(JSON.stringify({id:'bluefin',actualSourceBankDrops:cases,conditions:'ordinary real Actor integrator; shooter; kid; zero AP; no paint or fire; 2 seconds inward movement; all source collision retained'}));
 });
+
+test('Bluefin source running jump and existing wall input physically reach the original positive upper bank',{skip:!available},async()=>{
+ const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'bluefin')),P=G.physics=new f.NativePhysics(L);
+ class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
+ G.match.mode='turf';G.match.opts={};G.camera=new THREE.PerspectiveCamera();const cases=[];
+ for(const hz of [30,60,120]){
+  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();
+  const start=new THREE.Vector3(20,3,18.5),support=P.raycast(start.clone().add(new THREE.Vector3(0,.3,0)),new THREE.Vector3(0,-1,0),.6);
+  assert(support.hit&&support.normal.y>.99&&support.point.distanceTo(start)<.01);
+  assert.match(L.manifest.objects[L.data.objectIds[support.triangle]].name,/__BlueTarp00$/);
+  assert(P.bodyFits(start.clone().add(new THREE.Vector3(0,.01,0)),PLAYER.radius+.04,.32,PLAYER.height));
+  let wallSamples=0,noPaintSamples=0;
+  for(let y=3.25;y<9.2;y+=.15){const wall=P.raycast(new THREE.Vector3(26,y,18.5),new THREE.Vector3(1,0,0),5);if(!wall.hit)continue;if(wall.face<0){noPaintSamples++;continue;}G.paint.splat(wall.point.clone().addScaledVector(wall.normal,.005),1.8,0,{instant:true,seed:.375});wallSamples++;}
+  assert(wallSamples>30,'friendly initial wall ownership uses actual source faces');
+  for(let x=19;x<=24.5;x+=.3){const floor=P.raycast(new THREE.Vector3(x,5,18.5),new THREE.Vector3(0,-1,0),3);if(floor.hit&&floor.face>=0)G.paint.splat(floor.point.clone().add(new THREE.Vector3(0,.005,0)),1.3,0,{instant:true,seed:.375});}
+  const actor=f.make('shooter');actor.team=0;actor._integrate=f.Actor.prototype._integrate;actor._spawnBarrier=f.Actor.prototype._spawnBarrier;actor.spawnAt(start,Math.PI/2);G.actors=[actor];actor.intent.move.set(1,0,0);actor.intent.squid=true;actor.intent.jump=false;
+  let jumped=false,climbed=false,burst=false,seconds=0;
+  for(let frame=0;frame<hz*8;frame++){
+   if(!jumped&&actor.pos.x>23.7){actor.intent.jump=true;jumped=true;}
+   if(actor.climbing)actor.intent.jump=false;
+   G.time+=1/hz;actor.update(1/hz);climbed ||=actor.climbing;burst ||=actor.s3.surge?.phase==='burst';seconds=(frame+1)/hz;
+   if(climbed&&actor.grounded&&actor.pos.y>8.9||!actor.alive)break;
+  }
+  assert(actor.alive&&actor.grounded&&actor.pos.y>8.9&&actor.pos.y<9.15&&actor.pos.x>27.5&&jumped&&climbed,'ordinary running jump and wall input reaches real positive bank '+JSON.stringify({hz,end:actor.pos.toArray(),alive:actor.alive,grounded:actor.grounded,jumped,climbed,burst,seconds}));
+  const endSupport=P.raycast(actor.pos.clone().add(new THREE.Vector3(0,.2,0)),new THREE.Vector3(0,-1,0),.4);
+  assert(endSupport.hit&&endSupport.normal.y>.68&&endSupport.point.distanceTo(actor.pos)<.01);
+  assert.deepEqual(Object.keys(actor.s3.abilityPoints),[]);
+  cases.push({team:0,hz,start:Array.from(start.toArray()),sourceStartTriangle:support.triangle,end:Array.from(actor.pos.toArray()),sourceEndTriangle:endSupport.triangle,seconds,wallSamples,noPaintSamples,jumped,climbed,existingSurgeBurst:burst,grounded:true,weapon:'shooter / Shooter_Normal_00',gearAP:0});
+ }
+ console.log(JSON.stringify({id:'bluefin',positiveBankHumanAccess:cases,conditions:'real Actor integrator and source collision; source-supported initial pose only; initial friendly source wall/floor ownership; run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink assignment; initial manual ownership is not weapon paint proof'}));
+});

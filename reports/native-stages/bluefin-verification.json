@@ -517,5 +517,139 @@
       "skipped": 1
     },
     "fullBankPhysicalQualification": "pending source-supported drop validation"
+  },
+  "sourcePositiveBankHumanAccess": {
+    "foundation": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
+    "testPass": 1,
+    "testFail": 0,
+    "id": "bluefin",
+    "positiveBankHumanAccess": [
+      {
+        "team": 0,
+        "hz": 30,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "end": [
+          27.920349841391705,
+          9.009785228113635,
+          18.505319090374833
+        ],
+        "sourceEndTriangle": 87660,
+        "seconds": 2.033333333333333,
+        "wallSamples": 39,
+        "noPaintSamples": 0,
+        "jumped": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "grounded": true,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "end": [
+          28.02947608987535,
+          9.009790167526889,
+          18.50294956387287
+        ],
+        "sourceEndTriangle": 87661,
+        "seconds": 2.1,
+        "wallSamples": 39,
+        "noPaintSamples": 0,
+        "jumped": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "grounded": true,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "start": [
+          20,
+          3,
+          18.5
+        ],
+        "sourceStartTriangle": 173307,
+        "end": [
+          28.02202812287651,
+          9.00979336965686,
+          18.501415889035897
+        ],
+        "sourceEndTriangle": 87661,
+        "seconds": 2.1166666666666667,
+        "wallSamples": 39,
+        "noPaintSamples": 0,
+        "jumped": true,
+        "climbed": true,
+        "existingSurgeBurst": true,
+        "grounded": true,
+        "weapon": "shooter / Shooter_Normal_00",
+        "gearAP": 0
+      }
+    ],
+    "conditions": "real Actor integrator and source collision; source-supported initial pose only; initial friendly source wall/floor ownership; run inward, press jump at x>23.7, hold squid, release jump after attachment; no later pose/velocity/ink assignment; initial manual ownership is not weapon paint proof",
+    "browserQualification": "pending",
+    "fullOrdinaryBotBankRoute": "pending shared navigation qualification"
+  },
+  "privateDropCalibration": {
+    "status": "diagnostic only; candidate not adopted",
+    "candidate": "175b942d",
+    "sourceFlags": {
+      "wallClimb": true,
+      "highDrops": true
+    },
+    "originalUpperPadsRetained": true,
+    "candidateNodes": 10854,
+    "validNodes": 6606,
+    "teamReach": [
+      4133,
+      6193
+    ],
+    "commonNodes": 3720,
+    "positiveBankRoute": false,
+    "negativeBankRoute": true,
+    "ordinaryNegativeBankBotRoute": false,
+    "negativeBankHumanRatesPassed": [
+      30,
+      60,
+      120
+    ],
+    "halfGrid": {
+      "step": 0.5,
+      "candidateNodes": 40147,
+      "validNodes": 14873,
+      "teamReach": [
+        7437,
+        7436
+      ],
+      "commonNodes": 0
+    },
+    "firstBotDivergence": {
+      "type": "walk",
+      "sourceObject": "FldObj_Ruins03PntStage_polySurface8362405517__BlockCurbYellow",
+      "sourceTriangle": 109812,
+      "sourceFace": 33580,
+      "nodePosition": [
+        -6,
+        3.5,
+        3.5
+      ],
+      "actualLateralPosition": -6.33,
+      "actualAdjacentSourceSupport": false
+    },
+    "limitations": "Lower/common topology and isolated drops do not establish whole-bank bot play; source rendering, masks and collision retained; no moving elevator state invented"
   }
 }
