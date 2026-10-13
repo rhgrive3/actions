@@ -77,7 +77,11 @@ try{
     const screen=async name=>page.waitForFunction(name=>NG.mode==='menu'&&NG.game.menus.current===name&&NG.game.menus._scr?.name===name,name,{timeout:30000});
     const click=async key=>{await page.waitForFunction(key=>{const m=NG.game.menus,r=m._scr?.el,t=r?.querySelector('[data-id="'+key+'"]');if(!t||t.disabled||r.inert)return false;let k=1;for(let e=t;e;e=e.parentElement){k*=Number(getComputedStyle(e).opacity);if(e===r)break;}return k>.6;},key,{timeout:30000});await page.locator('.iw-screen:not(.is-leaving) [data-id="'+key+'"]').click({timeout:30000});};
     await screen('main');const baseline=await page.evaluate(()=>({mode:NG.mode,screen:NG.game.menus.current,attract:!!NG.match?.attract}));assert.equal(baseline.mode,'menu');
-    if(await page.locator('.iw-news').count()){await click(await page.locator('.iw-news [data-id="news-skip"]').count()?'news-skip':'news-later');await page.locator('.iw-news').waitFor({state:'hidden',timeout:10000});}
+    // First-main news is scheduled after the wipe (and may await hero images).
+    // An immediate DOM count can miss it while it later blocks physical PLAY.
+    const newsUnseen=await page.evaluate(async()=>!(await import(new URL('src/ui/news.js',document.baseURI))).newsSeen());
+    if(newsUnseen)await page.locator('.iw-news').waitFor({state:'visible',timeout:15000});
+    if(await page.locator('.iw-news').count()){await page.locator('.iw-news [data-id="news-skip"],.iw-news [data-id="news-later"]').first().click({timeout:15000});await page.locator('.iw-news').waitFor({state:'hidden',timeout:10000});}
     await click('play');await screen('mode');await click('mode-tower');await screen('setup');await click('map-'+id);
     const disabled=await page.evaluate(()=>{const root=NG.game.menus._scr.el,b=root.querySelector('[data-native-rule-supported="false"]'),r=root.querySelector('[data-native-rule-reason]');return{disabled:b?.disabled,reason:r?.textContent,map:NG.game.menus._setup.mapId,mode:NG.game.menus._setup.mode};});assert.equal(disabled.disabled,true);assert.ok(disabled.reason.includes('ガチヤグラ'));assert.equal(disabled.mode,'tower');
     await page.screenshot({path:path.join(evidence,id+'-tower-unavailable.png'),timeout:60000});await click('map-tidewater');assert.equal(await page.evaluate(()=>NG.game.menus._scr.el.querySelector('[data-native-rule-supported="true"]')?.disabled),false);
