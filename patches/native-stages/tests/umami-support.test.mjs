@@ -28,7 +28,7 @@ test('Umami opposing source floors have capsule clearance and directed routes to
   const target=N.nearest(new THREE.Vector3(...p),1.2);assert.ok(N.path(from,target,team,50000),'team '+team+' to '+p);
  }
  const water=L.manifest.objects.filter(o=>/^Fld_Factory00_pPlane(?:590_1__GroundWater00_va|644_1__GroundWater00)$/.test(o.name));assert.equal(water.length,2);assert.ok(water.every(o=>o.active&&!o.collidable&&!o.paintable&&o.bounds[1][1]<-1.45),'original underwater bottom remains display only');
- const fallen=f.make('shooter');fallen._integrate=f.Actor.prototype._integrate;fallen.pos.set(0,-2,-55);fallen.intent.move.set(0,0,0);fallen.intent.fire=false;fallen.update(1/60);assert.equal(fallen.alive,false,'fall under original water floor uses real existing death logic');
+ const fallen=f.make('shooter');fallen._integrate=f.Actor.prototype._integrate;fallen.pos.set(-20,-2,-46);fallen.intent.move.set(0,0,0);fallen.intent.fire=false;fallen.update(1/60);assert.equal(fallen.alive,false,'fall under original water floor uses real existing death logic');
  const sourceOnly=L.manifest.objects.filter(o=>o.name.startsWith('FldObj_Factory00_PackVar_'));
  assert.ok(sourceOnly.length>0);assert.ok(sourceOnly.every(o=>!o.active&&!o.collidable));
  for(const o of L.manifest.objects.filter(o=>o.name.includes('GeneralBoxNoPaint_')&&o.active))assert.equal(o.paintable,false);
