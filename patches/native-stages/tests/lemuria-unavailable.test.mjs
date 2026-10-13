@@ -4,13 +4,14 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {prepareNativeStageBuild} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {adaptBuildSource} from '../../../scripts/inkwave-source-composition.mjs';
+import {nativeStageRuleStatus} from '../runtime/rule-availability.mjs';
 import {isRankedMode} from '../../splatoon3/runtime/ranked/engine.mjs';
 
 const definition=JSON.parse(fs.readFileSync(new URL('../definitions/lemuria.json',import.meta.url)));
 const code=rel=>adaptBuildSource(rel,fs.readFileSync(new URL('../../../inkwave-public/'+rel,import.meta.url),'utf8'));
 const section=(source,start,end)=>{const at=source.indexOf(start),until=source.indexOf(end,at);assert.ok(at>=0&&until>at,start);return source.slice(at,until);};
 const main=code('src/main.js'),session=code('src/net/session.js'),menus=code('src/ui/menus.js');
-const context=()=>vm.createContext({UNAVAILABLE_NATIVE_STAGES:[definition],isRankedMode});
+const context=()=>vm.createContext({nativeStageEnabled:true,nativeStageRuleStatus,UNAVAILABLE_NATIVE_STAGES:[definition],isRankedMode});
 
 test('Lemuria is roster-confirmed but has no invented geometry, placement or playable build entry',()=>{
  const build=prepareNativeStageBuild(null).config;

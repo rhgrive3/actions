@@ -1,3 +1,4 @@
+import {adaptNativeRuleAvailability} from './rule-availability-adapter.mjs';
 export function adaptNativeStages(rel,code){
  const once=(a,b)=>{if(code.split(a).length!==2)throw Error('Native stage adapter conflict: '+rel+' / '+a.slice(0,70));code=code.replace(a,b);};
  if(rel==='src/game/inkCollision.js'){
@@ -27,15 +28,6 @@ export function adaptNativeStages(rel,code){
  }
  if(rel==='src/main.js'){
   code="import { nativeStageEnabled, NATIVE_IDS, UNAVAILABLE_NATIVE_STAGES } from '../patches/native-stages/runtime/registry.mjs';\nimport { buildNativeWorld, releaseNativeWorld, nativeSpawnYaw, nativeArenaBasis } from '../patches/native-stages/runtime/engine.mjs';\n"+code;
-  once('this.rig.yaw = m.local.team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, m.local.team, m.local.team === 0 ? 0 : Math.PI);');
-  once('this.rig.yaw = team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, team, team === 0 ? 0 : Math.PI);');
-  once('    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});', `    const nativeBasis = nativeArenaBasis(L);
-    if (nativeBasis) {
-      const fx=nativeBasis.forward.x*sgn, fz=nativeBasis.forward.z*sgn;
-      to.set(pad.x-fx*(I?.toBack??5.2),pad.y+2.6,pad.z-fz*(I?.toBack??5.2));
-      lookTo.set(pad.x+fx*6,pad.y+1.6,pad.z+fz*6);
-    }
-    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});`);
   const unavailableGuard = `
     const unavailable = UNAVAILABLE_NATIVE_STAGES.find(stage => stage.id === (o.mapId || this.mapDef?.id));
     if (unavailable) { this.menus?.toast?.(unavailable.name + '：' + unavailable.reason); return false; }`;
@@ -51,6 +43,15 @@ export function adaptNativeStages(rel,code){
     this.menus?.show(unavailableRequestedStage ? 'setup' : params.has('skipTitle') ? 'main' : 'title');
     if (unavailableRequestedStage) this.menus?.toast?.(unavailableRequestedStage.name + '：' + unavailableRequestedStage.reason);`);
   once("if (params.has('autostart')) this.api.startMatch({ mapId: map.id,", "if (params.has('autostart')) this.api.startMatch({ mapId: unavailableRequestedStage ? pm : map.id,");
+  once('this.rig.yaw = m.local.team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, m.local.team, m.local.team === 0 ? 0 : Math.PI);');
+  once('this.rig.yaw = team === 0 ? 0 : Math.PI;', 'this.rig.yaw = nativeSpawnYaw(G.level, team, team === 0 ? 0 : Math.PI);');
+  once('    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});', `    const nativeBasis = nativeArenaBasis(L);
+    if (nativeBasis) {
+      const fx=nativeBasis.forward.x*sgn, fz=nativeBasis.forward.z*sgn;
+      to.set(pad.x-fx*(I?.toBack??5.2),pad.y+2.6,pad.z-fz*(I?.toBack??5.2));
+      lookTo.set(pad.x+fx*6,pad.y+1.6,pad.z+fz*6);
+    }
+    this.rig.cinematic(from, to, lookFrom, lookTo, 3.6, () => {});`);
   once('if (this._builtQuality !== this.settings?.quality) applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });', 'if (this._builtQuality !== this.settings?.quality) await applyRuntimeWorldQuality(this, this.settings, this.mobile, { G, effectiveQuality, dressingFor, THREE });');
   once('    this._builtQuality = this.settings?.quality;',`    if (nativeStageEnabled && NATIVE_IDS.includes(layoutId)) {
       await buildNativeWorld(this, map, worldCurrent); return;
@@ -156,7 +157,7 @@ export function adaptNativeStages(rel,code){
  }
  if(rel==='patches/splatoon3/runtime/ranked/stages.mjs'){
   code="import { nativeRankedStage } from '../../../native-stages/runtime/engine.mjs';\n"+code;
-  once('  const spec = SPECS[id];','  if (level?.native) return nativeRankedStage(G);\n  const spec = SPECS[id];');
+  once('  const spec = SPECS[id];','  if (level?.native) return nativeRankedStage(G,G.match?.mode);\n  const spec = SPECS[id];');
  }
- return code;
+ return adaptNativeRuleAvailability(rel,code);
 }
