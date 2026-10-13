@@ -32,7 +32,7 @@ test('actual NetMatch bind forwards activation and native JSON playback binds re
 test('native packed absorption proposal credits only the real owner once and rejects a foreign peer', async () => {
   const { f, sender, receiver, make } = await setup();
   const vac = make(2, 'peer-B', false), shooter = make(3, 'peer-A', false, 1), shooterProxy = make(3, 'peer-A', true, 1);
-  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();
+  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();vac.intent.fire=true;
   const state = f.inkVacState(vac); receiver.byNid.set(2, vac); receiver.byNid.set(3, shooterProxy);
   f.G.netm = sender;
   sender._onLocalEvent(EV.absorb, { actor: shooter, target: vac, kit: 'inkVac', serial: state.serial, key: '3#p1', damage: 40 });
@@ -48,7 +48,10 @@ test('real native projectile step absorbs before the actor and ghost absorption 
   const { installKitDefense } = await import('../runtime/kit-defense.mjs'); installKitDefense(f);
   const vac = make(1, 'peer-A', false), shooter = make(2, 'peer-B', false, 1);
   vac.pos.set(0, 0, 0); vac.aimDir.set(0, 0, 1);
-  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();
+  vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();vac.intent.fire=true;
+  // The cone grows at .3334 units per 60 Hz frame; reach full source length
+  // before checking first-contact ordering at z=20.
+  f.tick(vac, 74);
   f.G.actors = [vac, shooter]; f.G.physics.segment = () => ({ hit: false });
   const system = f.G.projectiles; let hits = 0; system.applyHit = () => { hits++; };
   const round = ghost => {
@@ -125,4 +128,22 @@ test('actual native Bubbler proposal packet is shooter-bound and adjudicated by 
   receiver._play('peer-A', packet); assert.equal(dome.hp, hp - 3600);
   receiver._play('peer-A', packet); assert.equal(dome.hp, hp - 3600);
   sender.unsubs.forEach(fn => fn()); f.G.projectiles.clear();
+});
+
+test('native snapshots stop and restart the remote Ink Vac intake with the held ZR level',async()=>{
+ const {f,sender,receiver,make}=await setup(),owner=make(1,'peer-A',false),proxy=make(1,'peer-A',true),victim=make(2,'peer-B',false,1);
+ owner.weapon={...owner.weapon,special:'inkVac',specialCost:190};proxy.weapon=owner.weapon;owner.special=190;owner.pos.set(0,0,0);owner.aimDir.set(0,0,1);victim.pos.set(0,0,5);
+ sender.bind({actors:[owner],state:'playing',time:180});receiver.bind({actors:[proxy,victim],state:'playing',time:180});
+ let clock=0;f.context.performance={now:()=>clock};let packet;sender.s.tr={broadcast:p=>{packet=JSON.parse(JSON.stringify(p));}};
+ f.G.netm=sender;owner._startSpecial();f.G.netm=receiver;receiver._play('peer-A',JSON.parse(JSON.stringify(sender.out.find(e=>e[1]==='ev'&&e[2]===EV.activation))));
+ const sample=()=>{clock+=100;sender._sendTick();receiver.onMessage('peer-A',packet);receiver._peer('peer-A').tr=packet.ts;receiver._sample(proxy,packet.ts,0);receiver.applyRemote(proxy,1/60);};
+ owner.intent.fire=false;owner.weaponRunner.firingT=1;sample();
+ let state=f.inkVacState(proxy);assert.ok(state?.remote);assert.equal(state.sucking,false,'stale main firing pose does not represent suction');assert.equal(state.length,0);
+ owner.intent.fire=true;for(let i=0;i<30;i++)owner.update(1/60);sample();for(let i=0;i<44;i++)f.advanceInkVacReplica(proxy,1/60);
+ assert.equal(state.sucking,true);assert.equal(state.length,15);
+ const point=victim.pos.clone().setY(1);const shot={pos:point,vel:new f.THREE.Vector3(0,0,-1),team:1,damage:30};assert.ok(f.inkVacAbsorbCandidate(proxy,point,point,shot));
+ owner.intent.fire=false;owner.update(1/60);sample();assert.equal(state.sucking,false);assert.equal(state.length,0);assert.equal(f.inkVacAbsorbCandidate(proxy,point,point,shot),null);
+ owner.intent.fire=true;for(let i=0;i<13;i++)owner.update(1/60);sample();assert.ok(state.length>0&&state.length<1,'restarting uses the small cone instead of the elapsed special clock');
+ owner.intent.squid=true;owner.update(1/60);sample();assert.equal(state.sucking,false);assert.equal(state.length,0);
+ assert.equal(state.charge,0,'snapshot presentation never authors charge');sender.dispose();receiver.dispose();
 });

@@ -4,6 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './kit-composed-fixture.mjs';
+import { fixture as sourceFixture } from './source-fixture.mjs';
+import { objectDamageScale } from '../runtime/sub-resistance.mjs';
 import { installKitInkVac, inkVacAbsorbCandidate, disposeInkVac, blastRadius, intakeNearRadius,
   intakeFarRadius, exhaleDamage, exhaleSpeed, inkVacBlastDescriptor, INK_VAC_CALIBRATION, VAC_ID, inkVacOwnerMoveSpeed }
   from '../runtime/kit-ink-vac.mjs';
@@ -18,10 +20,14 @@ async function setup() {
   a.special = 190;
   return { f, system, a };
 }
-const activate = (f, a) => { a.intent.special = true; f.tick(a); a.intent.special = false; };
+const activate = (f, a) => { a.intent.fire=true; a.intent.special = true; f.tick(a); a.intent.special = false;f.tick(a,29); };
+const expandIntake = (f, a, frames = 45) => f.tick(a, frames);
+const activateExpanded = (f, a) => { activate(f, a); expandIntake(f, a); };
+const expandReplica = (f, a, frames = 45) => { for (let i = 0; i < frames; i++) f.advanceInkVacReplica(a, 1 / 60); };
 const enemyShot = (f, x, y, z, vx, vy, vz) => ({ pos: new f.THREE.Vector3(x, y, z),
   vel: new f.THREE.Vector3(vx, vy, vz), team: 1, damage: 30 });
 const shoot = (f, a, n = Math.ceil(INK_VAC_CALIBRATION.absorbCapacityDamage / 30)) => {
+  expandIntake(f, a);
   for (let i = 0; i < n; i++) {
     const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
     const c = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);
@@ -35,7 +41,7 @@ const enterExhale = (f, a, max = 400) => {
 const fireReturn = (f, a) => {
   // Carry the physical hold across suction; a fresh exhale press fires immediately.
   a.intent.fire = true;
-  enterExhale(f, a);
+  enterExhale(f, a);f.tick(a,20);
   a.intent.fire = true; f.tick(a);
   assert.ok(f.inkVacState(a), 'holding ZR in exhale does not launch early (#1120)');
   a.intent.fire = false; f.tick(a);
@@ -55,7 +61,7 @@ test('activation consumes the special once, refills the tank once, and opens a h
 
 test('the intake absorbs a frontal enemy projectile and disables its damage', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
   const cand = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);
   assert.ok(cand, 'a frontal incoming shot is accepted');
@@ -73,7 +79,7 @@ test('the intake rejects a backside projectile', async () => {
 
 test('an intervening wall blocks intake absorption (LOS at first contact)', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   f.G.physics.los = () => false;
   const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
   assert.equal(inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p), null);
@@ -81,7 +87,7 @@ test('an intervening wall blocks intake absorption (LOS at first contact)', asyn
 
 test('intake range is limited to the pinned intake length', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   const near = enemyShot(f, 0, 1, 12, 0, 0, -3);
   assert.ok(inkVacAbsorbCandidate(a, near.pos.clone(), near.pos.clone().addScaledVector(near.vel, 1 / 60), near));
   const far = enemyShot(f, 0, 1, 20, 0, 0, -3);
@@ -90,7 +96,7 @@ test('intake range is limited to the pinned intake length', async () => {
 
 test('a projectile that only SWEEPS THROUGH the volume is absorbed at its analytic first entry', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   // Both endpoints are outside the volume; the segment crosses it. The old
   // endpoint-inside gate missed this entirely.
   const start = new f.THREE.Vector3(0, 1, 20), end = new f.THREE.Vector3(0, 1, -20);
@@ -104,7 +110,7 @@ test('a projectile that only SWEEPS THROUGH the volume is absorbed at its analyt
 
 test('the intake is aim-aligned including vertical aim', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   // Aim level: a high incoming shot above the cone is not absorbed.
   const high = enemyShot(f, 0, 12, 5, 0, -3, -3);
   assert.equal(inkVacAbsorbCandidate(a, high.pos.clone(), high.pos.clone().addScaledVector(high.vel, 1 / 60), high), null,
@@ -116,9 +122,94 @@ test('the intake is aim-aligned including vertical aim', async () => {
   assert.ok(cand, 'the intake follows the vertical aim axis');
 });
 
+test('pinned inhale length growth is time-consistent at 30, 60, and 120 updates per second', async () => {
+  for (const hz of [30, 60, 120]) {
+    const { f, a } = await setup();
+    activate(f, a); // advance through source startup and the first intake warmup
+    const state = f.inkVacState(a), dt = 1 / hz;
+    const advanceTo = seconds => {
+      while (state.inhaleAge + 1e-10 < seconds) a.update(Math.min(dt, seconds - state.inhaleAge));
+    };
+    advanceTo(0.25);
+    assert.ok(Math.abs(state.length - 0.25 * 60 * 0.3334) < 1e-8,
+      `${hz} Hz reaches the source rate at 0.25 s (got ${state.length})`);
+    const shot = enemyShot(f, 0, 1, 8, 0, 0, -3);
+    const segment = () => inkVacAbsorbCandidate(a, shot.pos.clone(),
+      shot.pos.clone().addScaledVector(shot.vel, 1 / 60), shot);
+    assert.equal(segment(), null, `${hz} Hz has not reached z=8 at 0.25 s`);
+    advanceTo(0.5);
+    assert.ok(segment(), `${hz} Hz reaches z=8 at 0.5 s`);
+    advanceTo(0.75);
+    assert.equal(state.length, 15, `${hz} Hz clamps at LengthMax after 45 game frames`);
+  }
+});
+
+test('continuous Ink Vac object damage uses 20 raw per source frame, cone contact, and one shared hit', async () => {
+  for (const hz of [30, 60, 120]) {
+    const { f, system, a } = await setup();
+    const inside = { team: 1, owner: { team: 1 }, pos: new f.THREE.Vector3(0, 1, 5), damage: 0 };
+    const outside = { team: 1, owner: { team: 1 }, pos: new f.THREE.Vector3(5, 1, 5), damage: 0 };
+    const objects = [inside, outside];
+    const damageApi = (attack, center, radius, damageAt, cause) => {
+      assert.equal(attack, a);
+      assert.equal(cause, 'BlowerInhale');
+      for (const object of objects) object.damage += damageAt(center.distanceTo(object.pos), object);
+      return true;
+    };
+    system.s3DamageSubObjects = damageApi;
+    system.s3DamageSpecialObjects = damageApi;
+    activate(f, a);
+    expandIntake(f, a); // reach is full before measuring the fixed source cadence
+    inside.damage = outside.damage = 0;
+    const dt = 1 / hz;
+    for (let i = 0; i < hz; i++) a.update(dt);
+    assert.ok(Math.abs(inside.damage - 120) < 1e-8,
+      `${hz} Hz receives 120 HP/s (20 raw / 10 × 60); got ${inside.damage}`);
+    assert.equal(outside.damage, 0, 'a device outside the cone radial profile receives no damage');
+
+    const before = inside.damage;
+    f.G.physics.los = () => false;
+    a.update(dt);
+    assert.equal(inside.damage, before, 'an intervening surface blocks the object contact');
+  }
+});
+
+test('Ink Vac damages real custom-sub and special objects through their shared APIs at 30/60/120 Hz', async () => {
+  const f = await sourceFixture({ fullRuntime: true, productionComposition: true, realProjectiles: true,
+    extraExports: "export { inkVacState } from './patches/splatoon3/runtime/kit-ink-vac.mjs';" });
+  const system = f.G.projectiles, owner = f.make('charger'), enemy = f.make('shooter');
+  owner.weapon = { ...owner.weapon, special: VAC_ID, specialCost: 190 }; owner.special = 190;
+  enemy.team = 1; enemy.pos.set(40, 0, 40);
+  system._s3SubObjects = [];
+  system._s3AllSpecialObjects = [];
+  const wall = { subId: 'splashWall', phase: 'deployed', dead: false, team: 1, owner: enemy,
+    pos: new f.THREE.Vector3(0, 0, 5), hp: 10000, yaw: 0,
+    spec: { wallWidth: 8, wallHeight: 5 } };
+  const wave = { id: 'waveBreaker', kind: 'wave', dead: false, team: 1, owner: enemy,
+    pos: new f.THREE.Vector3(0, 1, 6), hp: 10000, maxHp: 10000 };
+  system._s3SubObjects.push(wall);
+  system._s3AllSpecialObjects.push(wave);
+  activate(f, owner);
+  assert.equal(f.inkVacState(owner)?.phase, 'inhale', 'full native composition starts the real intake');
+  f.tick(owner, 74);
+  const subRate = objectDamageScale(owner, 'splashWall', 'BlowerInhale');
+  const specialRate = objectDamageScale(owner, 'waveBreaker', 'BlowerInhale');
+  assert.equal(subRate, 1, 'the continuous vortex uses the BlowerInhale all-1 object row');
+  assert.equal(specialRate, 1, 'the continuous vortex uses the BlowerInhale all-1 object row');
+  for (const hz of [30, 60, 120]) {
+    const wallBefore = wall.hp, waveBefore = wave.hp, dt = 1 / hz;
+    for (let i = 0; i < hz; i++) owner.update(dt);
+    const wallDamage = wallBefore - wall.hp, waveDamage = waveBefore - wave.hp;
+    assert.ok(Math.abs(wallDamage - 120 * subRate) < 1e-7,
+      `custom sub path is 120 HP/s × its source object row at ${hz} Hz (got ${wallDamage}, expected ${120 * subRate})`);
+    assert.ok(Math.abs(waveDamage - 120 * specialRate) < 1e-7,
+      `special object path is 120 HP/s × its source object row at ${hz} Hz (got ${waveDamage}, expected ${120 * specialRate})`);
+  }
+});
+
 test('charge accrues once per accepted absorption and never double-credits', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
   const cand = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);
   cand.onHit();
@@ -163,13 +254,14 @@ test('#1042 unfilled suction lasts 360F, then a separate 150F return-shot hold a
   assert.equal(INK_VAC_CALIBRATION.inhaleDurationSeconds, 6);
   assert.equal(INK_VAC_CALIBRATION.exhaleHoldSeconds, 2.5);
 
-  let inhaleTicks = 0;
+  const initialTicks=Math.round(state.t*60);let inhaleTicks = 0;
   while (state.phase === 'inhale' && inhaleTicks < 400) { f.tick(a); inhaleTicks++; }
   assert.equal(state.phase, 'exhale');
-  assert.ok(inhaleTicks >= 359 && inhaleTicks <= 360, `suction transition stayed on the 360F boundary: ${inhaleTicks}`);
+  assert.ok(initialTicks+inhaleTicks >= 359 && initialTicks+inhaleTicks <= 360, `suction transition stayed on the 360F boundary: ${initialTicks+inhaleTicks}`);
   assert.equal(system.list.length, 0, 'ending suction does not itself fire the countershot');
   assert.ok(a.specialActive, 'special remains active in the return-shot hold');
 
+  f.tick(a,20);assert.equal(system.list.length,0,'20F transition does not auto-fire');
   for (let i = 0; i < 149; i++) {
     f.tick(a);
     assert.equal(system.list.length, 0, `no forced return shot before hold frame ${i + 1}`);
@@ -190,7 +282,9 @@ test('#1042 filling the Vac ends suction early but still enters the return-shot 
   a.intent.fire = true; f.tick(a);
   assert.ok(f.inkVacState(a), 'held ZR cannot release the countershot');
   a.intent.fire = false; f.tick(a);
-  assert.equal(f.inkVacState(a), null, 'the ZR release edge fires in exhale phase');
+  assert.ok(f.inkVacState(a),'an early release is buffered during the20F transition');assert.equal(system.list.length,0);
+  f.tick(a,17);assert.equal(system.list.length,0,'no countershot through transition frame19');f.tick(a);
+  assert.equal(f.inkVacState(a), null, 'the buffered ZR release fires on transition frame20');
   assert.equal(system.list.length, 1);
 });
 
@@ -203,7 +297,7 @@ test('#1120 a held suction ZR waits for a genuine release edge after entering ex
   enterExhale(f, a, 30);
   assert.equal(f.inkVacState(a).phase, 'exhale');
   assert.equal(system.list.length, 0);
-  for (let frame = 0; frame < 5; frame++) {
+  for (let frame = 0; frame < 20; frame++) {
     f.tick(a);
     assert.equal(system.list.length, 0, 'continuing to hold suction ZR cannot auto-fire');
   }
@@ -215,7 +309,7 @@ test('#1120 a held suction ZR waits for a genuine release edge after entering ex
 
 test('zero-length segments, tangent contact and a zero aim vector are safe', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   const st = f.inkVacState(a);
   const inside = new f.THREE.Vector3(0, 1, 3);
   const outside = new f.THREE.Vector3(0, 1, 30);
@@ -248,7 +342,7 @@ test('a disposed actor state yields no intake candidate', async () => {
 
 test('a ghost projectile is neither credited nor neutralised', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
   p.ghost = true;
   const cand = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);
@@ -288,7 +382,7 @@ test('a dt0 frame is a strict no-op: no release, no countershot, no main shot', 
 
 test('the release frame does not also fire the replaced main weapon or sub', async () => {
   const { f, a } = await setup();
-  activate(f, a); a.intent.fire = true; shoot(f, a); enterExhale(f, a, 30);
+  activate(f, a); a.intent.fire = true; shoot(f, a); enterExhale(f, a, 30);f.tick(a,20);
   const seen = [];
   const runner = a.weaponRunner, real = runner.update;
   runner.update = function (dt, inp) { seen.push({ ...inp }); return real.call(this, dt, inp); };
@@ -300,10 +394,10 @@ test('the release frame does not also fire the replaced main weapon or sub', asy
     'main and sub stay suppressed on the release frame');
 });
 
-test('a fresh ZR press after suction releases the countershot immediately', async () => {
+test('a fresh ZR press after the20F transition releases the countershot immediately', async () => {
   const { f, a, system } = await setup();
-  activate(f, a); shoot(f, a); enterExhale(f, a, 30);
-  const before = system.list.length;
+  activate(f, a); shoot(f, a); enterExhale(f, a, 30);f.inkVacState(a).fireHeld=false;f.inkVacState(a).exhaleArmed=false;a.intent.fire=false;f.tick(a,20);
+  const before = system.list.length;f.tick(a,20);
   a.intent.fire = true; f.tick(a); a.intent.fire = false;
   assert.equal(a.specialActive, null);
   assert.equal(f.inkVacState(a), null);
@@ -355,7 +449,7 @@ test('a remote ghost authors no projectile (and thus no damage/paint) on release
   activate(f, a);
   shoot(f, a);
   enterExhale(f, a, 30);
-  const before = system.list.length;
+  const before = system.list.length;f.tick(a,20);
   a.intent.fire = true; f.tick(a);
   a.intent.fire = false; f.tick(a);
   assert.equal(system.list.length, before, 'a remote ghost authors no projectile');
@@ -392,6 +486,7 @@ test('the held visual is visible, aim-aligned, and never extends behind the owne
   const { f, a } = await setup();
   f.G.scene = new f.THREE.Scene();
   activate(f, a);
+  expandIntake(f, a);
   const mesh = f.G.scene.children[0];
   assert.ok(mesh.visible, 'the intake visual is visible while active');
   mesh.geometry.computeBoundingBox();
@@ -435,14 +530,19 @@ test('#1010 absorbed charge does not resize suction; Special Power Up does', asy
 test('pinned/calibrated geometry helpers expose the labelled values', async () => {
   await setup();
   assert.equal(intakeNearRadius(0), 0.8, '0 AP uses RadiusMin.Low');
+  assert.equal(intakeNearRadius(0.5), 1.1, 'half Special Power Up progress uses RadiusMin.Mid');
   assert.equal(intakeNearRadius(1), 1.4, 'max Special Power Up uses RadiusMin.High');
   assert.equal(intakeFarRadius(0), 3.3, '0 AP uses RadiusMax.Low');
+  assert.equal(intakeFarRadius(0.5), 3.8, 'half Special Power Up progress uses RadiusMax.Mid');
   assert.equal(intakeFarRadius(1), 4.3, 'max Special Power Up uses RadiusMax.High');
   assert.equal(blastRadius(0), 6.0);
   assert.equal(blastRadius(1), 11.0);
   assert.ok(Math.abs(exhaleSpeed(0) - 33) < 1e-9, '0.55*60 = 33 u/s');
   assert.ok(Math.abs(exhaleSpeed(1) - 42) < 1e-9, '0.7*60 = 42 u/s');
-  assert.ok(INK_VAC_CALIBRATION.geometryStatus.includes('unconfirmed'));
+  assert.deepEqual(INK_VAC_CALIBRATION.intakeRadiusTiers.near, [0.8, 1.1, 1.4]);
+  assert.deepEqual(INK_VAC_CALIBRATION.intakeRadiusTiers.far, [3.3, 3.8, 4.3]);
+  assert.ok(INK_VAC_CALIBRATION.geometryStatus.includes('calibrated'));
+  assert.ok(INK_VAC_CALIBRATION.inhaleLengthStatus.includes('LengthAddPerFrame .3334'));
   assert.ok(INK_VAC_CALIBRATION.damageStatus.includes('scale limitation'));
 });
 
@@ -501,7 +601,7 @@ async function twoActorSetup() {
   p1.weapon = { ...p1.weapon, special: VAC_ID, specialCost: 190 }; p1.special = 190;
   const p2 = f.make('shooter'); p2.nid = 2; p2.remote = true; p2.team = 1;
   const q1 = f.make('charger'); q1.nid = 1; q1.remote = true; q1.team = 0;
-  q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;
+  q1.aimDir.set(0, 0, 1); q1.aimYaw = 0;q1.intent.fire=true;
   const q2 = f.make('shooter'); q2.nid = 2; q2.remote = false; q2.team = 1;
   const viewP = new Map([[1, p1], [2, p2]]);       // machine P resolves nids its own way
   const viewQ = new Map([[1, q1], [2, q2]]);       // machine Q likewise
@@ -594,6 +694,10 @@ test('a remote state never authors a countershot, paint, gauge, refill or damage
   const activation = rec.find(r => r.name === f.INK_VAC_EVENTS.activation).payload;
   const serial = activation.serial;
   hop(f, viewQ, activation, f.INK_VAC_EVENTS.activation);
+  let objectCalls = 0;
+  system.s3DamageSubObjects = system.s3DamageSpecialObjects = () => { objectCalls++; return true; };
+  f.advanceInkVacReplica(q1, 1 / 60);
+  assert.equal(objectCalls, 0, 'a presentation-only replica never runs the object-damage APIs');
   const projectiles = system.list.length, tank = q1.ink, gauge = q1.special, hp = q1.hp, count = f.G.scene.children.length;
   const charged = hop(f, viewQ, { actor: activation.actor, kit: VAC_ID, serial, charge: 1 }, f.INK_VAC_EVENTS.charge);
   assert.equal(charged.verdict.applied, true);
@@ -617,6 +721,7 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
   const activation = rec.find(r => r.name === EV.activation).payload;
   const serial = activation.serial;
   hop(f, viewQ, activation, EV.activation);
+  expandReplica(f, q1);
   // Machine Q: Q's local player shoots a native round at P's actor on Q's machine.
   const p = { pos: at(f, q1, 5), vel: new f.THREE.Vector3(0, 0, -3), owner: q2, team: 2, damage: 30 };
   const [s, e] = step(f, q1, 5);
@@ -661,7 +766,7 @@ test('a shooter proposal neutralises its damage and the owner credits it exactly
 });
 
 test('#1090 damage-equivalent charge is proportional, saturates and rejects invalid proposals', async () => {
-  const { f, a } = await setup(); activate(f, a);
+  const { f, a } = await setup(); activateExpanded(f, a);
   const makeShot = damage => ({ ...enemyShot(f, 0, 1, 5, 0, 0, -3), damage });
   for (const damage of [30, 60, 100]) {
     const p=makeShot(damage);
@@ -685,6 +790,7 @@ test('a ghost round in a replica intake is consumed visually and proposes nothin
   activate(f, p1);
   const activation = rec.find(r => r.name === f.INK_VAC_EVENTS.activation).payload;
   hop(f, viewQ, activation, f.INK_VAC_EVENTS.activation);
+  expandReplica(f, q1);
   rec.length = 0;
   const p = { pos: at(f, q1, 5), vel: new f.THREE.Vector3(0, 0, -3), owner: q2, team: 2, damage: 0, ghost: true };
   const [s, e] = step(f, q1, 5);
@@ -745,7 +851,7 @@ test('a replica cone advances on the remote-actor path only, and never on dt 0',
 
 test('a stale onHit closure captured before disposal is a no-op', async () => {
   const { f, a } = await setup();
-  activate(f, a);
+  activateExpanded(f, a);
   const p = enemyShot(f, 0, 1, 5, 0, 0, -3);
   const cand = inkVacAbsorbCandidate(a, p.pos.clone(), p.pos.clone().addScaledVector(p.vel, 1 / 60), p);
   assert.ok(cand);
@@ -1007,7 +1113,7 @@ test('the Vac owner walks at the pinned MoveSpeedMinCharge 0.09 -> MoveSpeedFull
   near(f.inkVacState(a).charge, 1, 'filled');
   near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'full intake');
   a.intent.fire = true; enterExhale(f, a);
-  near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'return-shot hold keeps the full-charge speed');
+  near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'return-shot hold keeps the full-charge speed');f.tick(a,20);
   a.intent.fire = false; f.tick(a);
   assert.ok(!f.inkVacState(a), 'released');
   near(a.weaponRunner.moveSpeed(), ordinary, 'ordinary walking target after release');

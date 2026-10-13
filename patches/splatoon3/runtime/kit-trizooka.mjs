@@ -99,7 +99,7 @@ export const TRIZOOKA = {
 export const TRIZOOKA_SPEC_UP = {
   apDomain: [0, 57],
   duration: [TRIZOOKA.duration, TRIZOOKA.durationMid, TRIZOOKA.durationHigh],
-  // BlastParam.SubSpecialSpecUpList PaintRadius Low/Mid/High: the burst's ink radius
+  // BlastParam.SubSpecialSpecUpList PaintRadius Low/Mid/High: the burst's ink radius.
   paintRadius: [TRIZOOKA.paintRadius, TRIZOOKA.paintRadiusMid, TRIZOOKA.paintRadiusHigh],
   // DistanceDamageDistanceRate, applied to DISTANCE only
   distanceRate: [1.0, 1.15, 1.3],
@@ -189,8 +189,8 @@ export function trizookaSpecialWeapon(ap = 0) {
   const bands = splashBandsFor(ap);
   const damageMax = bands[0][1];
   const damageMin = bands[bands.length - 1][1];
-  // the damaging radius is the OUTER BAND DISTANCE x rate. PaintRadius (3.2) is
-  // the ink/FX radius, a different quantity, and must not stand in for it.
+  // The damaging radius is the OUTER BAND DISTANCE x rate, while ink/FX radius
+  // follows its own extracted Special Power Up control points.
   const splashRadius = splashRadiusFor(ap);
   return {
     kind: 'trizooka',

@@ -140,6 +140,8 @@ function installTouchLayout(MobileInput, controls) {
     this._layoutFocus = document.activeElement;
     this.reset(); this.pressed.clear(); this.jumpTarget = -1;
     this.editing = true;
+    // Remember the modal boundary even if it opens and closes between frames.
+    if (this.owner) this.owner._layoutPadAwaitNeutral = true;
     this._syncVisible(); this._layoutAll(); this._drawStick(false);
     const ui = document.querySelector('.iw-ui');
     const accent = ui && getComputedStyle(ui).getPropertyValue('--a').trim();
