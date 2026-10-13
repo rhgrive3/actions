@@ -1,6 +1,11 @@
 import {adaptNativeRuleAvailability} from './rule-availability-adapter.mjs';
 export function adaptNativeStages(rel,code){
  const once=(a,b)=>{if(code.split(a).length!==2)throw Error('Native stage adapter conflict: '+rel+' / '+a.slice(0,70));code=code.replace(a,b);};
+ if(rel==='patches/splatoon3/runtime/weapons-collision.mjs'){
+  code="import { sweepNativeCatalogueSphere } from '../../native-stages/runtime/engine.mjs';\n"+code;
+  const signature='export function sweptWorldHit(physics, from, to, r0, r1, out, skipGrates = true) {';
+  once(signature,signature+'\n  if (physics?.level?.native) return sweepNativeCatalogueSphere(physics, from, to, r0, r1, out, skipGrates, sweptWorldHit);');
+ }
  if(rel==='src/game/inkCollision.js'){
   code="import { sweepNativeLevelSphere } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   const signature='export function sweepLevelSphere(level, from, to, radius, out, skipGrates = true) {';
