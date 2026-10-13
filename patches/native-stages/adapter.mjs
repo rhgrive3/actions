@@ -113,6 +113,7 @@ export function adaptNativeStages(rel,code){
   once('(actor.team === 0 ? 0 : Math.PI); dx', 'nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI); dx');
   once('const angle = (actor.team === 0 ? 0 : Math.PI) +', 'const angle = nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI) +');
   once('p = slotPoint(actor), yaw = actor.team === 0 ? 0 : Math.PI;', 'p = slotPoint(actor), yaw = nativeSpawnYaw(G.level, actor.team, actor.team === 0 ? 0 : Math.PI);');
+  once('initial && actor.isBot ? initialBotTarget(actor)', '(initial || G.level?.native) && actor.isBot ? initialBotTarget(actor)');
   once('    return slotTarget(actor);', '    return slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z) => supportedTarget(actor,x,z));');
   once('?? slotTarget(actor))', '?? slotTarget(actor) ?? nativeInitialLanding(G, actor, (x,z) => supportedTarget(actor,x,z)))');
  }
