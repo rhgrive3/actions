@@ -60,6 +60,9 @@ export class NativeLevel extends Level {
  }
  containsFaceUV(face,u,v){
   if(u<0||v<0||u>face.su||v>face.sv)return false;
+  // Ranked vehicles keep the existing rectangular dynamic-box contract.
+  // Only original static source faces carry a source-triangle polygon.
+  if(face.block>=this.staticBlockCount)return true;
   const p=this._sampleNative||(this._sampleNative=new THREE.Vector3());
   p.copy(face.origin).addScaledVector(face.u,u).addScaledVector(face.v,v);
   return this.containsOnFace(face,p,0);
