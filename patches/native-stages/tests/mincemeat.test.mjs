@@ -5,6 +5,7 @@ import path from 'node:path';
 import {nativeStageCatalog,prepareNativeStageBuild} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {parseSourceOBJ} from '../runtime/source-convert.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
+import {nativeTowerClearance} from '../runtime/native-tower-clearance.mjs';
 
 const definition=JSON.parse(fs.readFileSync(new URL('../definitions/mincemeat.json',import.meta.url)));
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
@@ -108,11 +109,26 @@ test('Mincemeat supports, capsule movement, wall ink, and rules use actual sourc
   assert.ok(id>=0&&reachable.every(set=>set.has(id)),'both teams can reach ranked objective');
  }
  assert.ok(stage.zones[0].center[1]<11,'ranked center stays on shared lower gameplay floor');
+ const clearance=nativeTowerClearance(level,PLAYER,stage.tower.halfSize),path=stage.tower.path;
+ assert.equal(stage.tower.boarding.approaches.length,path.length);
+ assert.ok(stage.tower.centerIndex>=3&&path.length-stage.tower.centerIndex>=4,'supported tower has travel on both sides of center');
+ for(const approach of stage.tower.boarding.approaches){assert.ok(approach.height<=stage.tower.boarding.maxJumpHeight);assert.ok(reachable.every(set=>set.has(approach.sourceNode)),'both teams reach every source boarding approach');}
+ assert.ok(stage.tower.sourceClearance.assurance.includes('retail trajectory/lift unverified'));
+ for(let i=0;i<path.length;i++)assert.ok(clearance.clear(path[i],path[Math.max(0,i-1)]),'full tower swept deck/pole/capsule clears source triangles');
+ level._addBlock({kind:'obox',center:[path[0][0],path[0][1]-.12,path[0][2]],size:[stage.tower.halfSize*2,.24,stage.tower.halfSize*2],rotY:0,paint:false,hidden:true});
+ const deck=level.blocks.at(-1),rider=f.make();
+ const samples=path.flatMap((p,i)=>i?[p,...[.25,.5,.75].map(t=>p.map((v,k)=>path[i-1][k]+(v-path[i-1][k])*t))]:[p]);
+ for(const point of samples){
+  deck.center.set(point[0],point[1]-.12,point[2]);deck.aabbMin.copy(deck.center).sub(deck.half);deck.aabbMax.copy(deck.center).add(deck.half);
+  rider.pos.fromArray(point);rider.pos.x+=.7;rider.vel.set(0,0,0);rider.grounded=false;rider._resolve(false,rider.pos.y,false);
+  assert.ok(rider.grounded&&rider.ground.hit,'real capsule remains supported at every tower node and three interior samples of every segment');
+  assert.equal(rider.ground.block,deck.id);
+ }
  G.match.mode='turf';G.match.opts={};
  const actor=f.make();assert.equal(f.beginInitialSquidSpawn(actor),true);assert.ok(actor.s3.squidSpawn.target);
  actor.intent.fire=true;actor.update(1/60);assert.equal(actor.s3.squidSpawn.phase,'flight');actor.intent.fire=false;
  for(let i=0;i<75;i++)actor.update(1/60);assert.equal(actor.s3.squidSpawn,undefined);assert.equal(actor.grounded,true);
  const brain=new f.BotBrain(actor,'normal'),goals=f.nativePaintGoalIds(brain,G),from=G.nav.nearest(actor.pos,1.2);assert.ok(goals.length>0);
  for(const target of goals.slice(0,5))assert.ok(G.nav.path(from,target,actor.team,50000));
- console.log(JSON.stringify({id:'mincemeat',spawnSupport,wallSwimming:true,maskedHolesUnpainted:true,movement,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds,spawnReachable:reachable.map(s=>s.size),rankedCenter:stage.zones[0].center,towerPathNodes:stage.tower.path.length,paintGoals:goals.length,atlas:2048,ppm:G.paint.ppm}));
+ console.log(JSON.stringify({id:'mincemeat',spawnSupport,wallSwimming:true,maskedHolesUnpainted:true,movement,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds,spawnReachable:reachable.map(s=>s.size),rankedCenter:stage.zones[0].center,towerPathNodes:stage.tower.path.length,towerLift:stage.tower.localLift,towerCenter:stage.tower.path[stage.tower.centerIndex],towerSourceClearance:stage.tower.sourceClearance,towerEveryNodeAndSegmentSupportVerified:true,towerBoardingSamples:samples.length,paintGoals:goals.length,atlas:2048,ppm:G.paint.ppm}));
 });
