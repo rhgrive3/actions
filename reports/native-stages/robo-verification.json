@@ -342,15 +342,15 @@
       "errors": [],
       "downloads": 2,
       "menu": [
-        "タイドウォーター広場",
-        "ケルプライン埠頭",
-        "ハリヤードマリーナ",
-        "ユノハナ大渓谷",
-        "ヤガラ市場",
-        "海女美術大学",
-        "ザトウマーケット",
-        "クサヤ温泉",
-        "バイガイ亭"
+        "\u30bf\u30a4\u30c9\u30a6\u30a9\u30fc\u30bf\u30fc\u5e83\u5834",
+        "\u30b1\u30eb\u30d7\u30e9\u30a4\u30f3\u57e0\u982d",
+        "\u30cf\u30ea\u30e4\u30fc\u30c9\u30de\u30ea\u30fc\u30ca",
+        "\u30e6\u30ce\u30cf\u30ca\u5927\u6e13\u8c37",
+        "\u30e4\u30ac\u30e9\u5e02\u5834",
+        "\u6d77\u5973\u7f8e\u8853\u5927\u5b66",
+        "\u30b6\u30c8\u30a6\u30de\u30fc\u30b1\u30c3\u30c8",
+        "\u30af\u30b5\u30e4\u6e29\u6cc9",
+        "\u30d0\u30a4\u30ac\u30a4\u4ead"
       ],
       "cache": {
         "id": "robo",
@@ -1853,7 +1853,7 @@
         "shadows": false,
         "bloom": false
       },
-      "input": "KeyW + left fire frames 0–89; release frames 90–179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
+      "input": "KeyW + left fire frames 0\u201389; release frames 90\u2013179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
       "actors": [
         {
           "weapon": "s3-blaster-short",
@@ -2681,7 +2681,7 @@
         "shadows": false,
         "bloom": false
       },
-      "input": "KeyW + left fire frames 0–89; release frames 90–179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
+      "input": "KeyW + left fire frames 0\u201389; release frames 90\u2013179; camera yaw opposing-pad axis, pitch 0.2; 7 normal bots remain active",
       "actors": [
         {
           "weapon": "shooter",
@@ -3263,9 +3263,9 @@
     }
   ],
   "pending": [
-    "qualified shared Tower and Clams ranked acceptance",
+    "qualified source Clams collection and natural eighth-clam Power acceptance",
     "final accepted-main/follower immutable private/public pair",
-    "affected actual source shots, human and bank routes, rule/UI/network and source/cache/render/lifecycle checks",
+    "affected actual source shots, human and bank routes, natural moving Tower rides and Clams collection, rule/UI/network and source/cache/render/lifecycle checks",
     "full-fidelity fixed-loadout warmed performance with exact final producer states",
     "final self-review and Ready PR1335",
     "self-integrate and push aggregate PR1324 under full integration lock"
@@ -3591,7 +3591,7 @@
     "prototypes": "No highDrops definition adoption; private prototype failed; shared runtime owners have exact contacts and first touchdown mismatch.",
     "clock": "Direct Actor/BotBrain dt at raw30/60/120 Hz; production Game._frame instead uses fixed 1/60 ticks. This negative is not yet a production render-cadence failure."
   },
-  "acceptedFoundationCurrentBranch": "0e6dd2474930b4fde75e2b5e5012030b175b4952",
+  "acceptedFoundationCurrentBranch": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
   "laterAcceptedProofs": {
     "foundation": "4d0d88ef05cd2fc5389bddcdcf3a7539fc926dd2",
     "polygonMaskVersion": 4,
@@ -5349,5 +5349,17 @@
     "otherStageAssetSkips": true,
     "log": ".ci-scratch/robo-current846-node.log",
     "scope": "serial asset-enabled native source geometry, masks, physics, paint, Nav and local rules; optional Character source-motion import unavailable in one VM-only legacy control; actual browser Character remains separate"
+  },
+  "acceptedTowerPeer": {
+    "pr": 1395,
+    "commonRuntimeHead": "900d139ffaf420a2b14e636569fe455ee2fa5c29",
+    "acceptedFoundation": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
+    "namedPrivateReceipt": ".ci-scratch/robo-peer-native-tower-review.md",
+    "independentGuardChecks": {
+      "invalidationControls": 10,
+      "riderNegativeControls": 9
+    },
+    "artifactModulesByteEqual": 6,
+    "scope": "Independent mode/world/nav/action/death/current-engine guards and immutable private/public emitted bindings; Manta actual Game six rides and 16855 boarding/rider source capsules. This is a shared-common qualification, not a final Robo ride receipt."
   }
 }

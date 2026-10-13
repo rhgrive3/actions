@@ -5,14 +5,16 @@ system. Local supports and gameplay semantics are inferred. This is not a
 recovered Nintendo 11.3.0 collision or placement asset.
 
 Verification is still in progress. The branch consumes accepted foundation
-`0e6dd247`, including the current-main refresh and qualified ordinary floor
-follower. The full historical matrix used
+`90b7ba79`, including the current-main refresh, qualified ordinary floor
+follower and current-world Tower rider/boarding guards. The full historical matrix used
 `7ddb538a`; newer immutable source, wall-shot and human-route checks used accepted
 `4d0d88ef` with v4 polygon ownership and the ink-edge correction. A separate
 private floor-follower candidate completes all six opposing-bank cases without
 changing source bytes. That shared floor correction is now accepted through
-PR #1390. The PR remains a draft until the shared Tower/ranked changes qualify
-and the affected final composition passes.
+PR #1390. The PR remains a draft until source Clams collection qualifies and the affected
+final composition passes. The accepted Tower common was independently peer
+reviewed for mode, world, nav, action and death invalidation; its Manta source
+ride proof remains separately scoped.
 
 ## Source and identity
 
@@ -148,7 +150,7 @@ already fallen to the original CableB floor at approximately
 clears this now-unreachable path. The repair must prevent the preceding corner
 departure; suppressing that legitimate recovery would conceal the defect.
 
-A separate unpushed worktree tests the sole shared follower owner's narrow
+A preserved private calibration tested the sole shared follower owner's narrow
 candidate `4d358281`: ordinary native floor following uses one waypoint,
 source-foot arrival and planted corner input rather than skipping unsupported
 waypoints. All six matched actual Game bank cases arrive, retain their original
