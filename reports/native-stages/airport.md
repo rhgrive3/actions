@@ -36,6 +36,6 @@
 
 描画のゲーム/中央/俯瞰は A/A・B/B・元single meshとindexed cullingの差分がすべて0画素。12移動カメラを含め、物理・ナビ・CPU塗りauthorityは保持した。描画三角形は86,792を基準に、ゲーム視点84,588・中央51,744・俯瞰85,292。SwiftShaderのrender drain p50は基準/分割がゲーム3.0/3.8ms・中央3.6/3.5ms・俯瞰6.6/8.4msで、一部視点は分割の方が遅かった。ゲームの180 CPU samplesはp50 14.3ms / p95 41.1ms / max1253.8ms。タッチ844×390はp50 9.8ms / p95 31.4ms / max1166.8ms、render drain4.8ms。並行CPU・cgroupメモリ負荷とソフトウェア描画の診断値であり、実機FPSを意味しない。
 
-品質high→lowでsource位置・CPU grid・authorityが一致し、壊れたbinaryの拒否、準備キャンセル、native→legacy→nativeの掃除、互換fingerprintの改変/欠落拒否と844×390タッチ表示に成功した。実画像は私有領域で確認した。個別[PR #1342](https://github.com/rhgrive3/actions/pull/1342)をレビュー可能とし、[集約PR #1324](https://github.com/rhgrive3/actions/pull/1324)へレビュー枝だけを統合する。
+品質high→lowでsource位置・CPU grid・authorityが一致し、壊れたbinaryの拒否、準備キャンセル、native→legacy→nativeの掃除、互換fingerprintの改変/欠落拒否と844×390タッチ表示に成功した。実画像は私有領域で確認した。個別[PR #1342](https://github.com/rhgrive3/actions/pull/1342)はReady。[集約PR #1324](https://github.com/rhgrive3/actions/pull/1324)のレビュー枝へ、全merge/pushを統合ロック内で行い、`3ebcc8b1fa031102ca60f9ffbe5cce6d06860939`として統合済み。mainはマージしていない。
 
 ブラウザ・詳細ログ・OBJ/MTL/PNG・派生バッファは私有 ignored 領域だけに置く。SwiftShader の時間を実スマートフォン・Switch の FPS として扱わない。

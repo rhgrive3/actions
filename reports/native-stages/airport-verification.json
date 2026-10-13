@@ -1,5 +1,5 @@
 {
-  "status": "verified-reviewable",
+  "status": "verified-and-review-aggregate-integrated",
   "id": "airport",
   "name": "カジキ空港",
   "internal": "Vss_Propeller00",
@@ -2513,10 +2513,7 @@
       "collisionPreserved": true
     }
   ],
-  "pending": [
-    "mark PR1342 Ready after pushed report",
-    "self-integrate tested branch into aggregate PR1324 under integration lock"
-  ],
+  "pending": [],
   "unverified": [
     "KiTrix extraction version/date",
     "retail units/native collision/paint/grate/climb masks",
@@ -2525,7 +2522,7 @@
     "console controller comparisons and physical hardware FPS"
   ],
   "readyForReview": true,
-  "reviewAggregateIntegrated": false,
+  "reviewAggregateIntegrated": true,
   "current": {
     "productFoundation": "29c01b4fbf71afeb26b57cb56787456c1e1c0a74",
     "acceptedRunnerFoundation": "e7882e628483b3b3b830ae66038a9b0b2dd1af04",
@@ -5728,5 +5725,13 @@
       "localBuildContentHash": "0dd900badd9b12dba409edd4b42f38f795665e64912afc5cfec73be94f04c6a6"
     },
     "pauseDraftHead": "1877d896c7071c2660c8b29b2a8e13e55a162ec3"
+  },
+  "reviewAggregateIntegration": {
+    "reviewBranch": "codex/native-stage-reviewed",
+    "aggregatePR": "https://github.com/rhgrive3/actions/pull/1324",
+    "initialIntegrationMergeSha": "3ebcc8b1fa031102ca60f9ffbe5cce6d06860939",
+    "testedStageHead": "19278200fbe4d052f7f4122ecec05bf33748bcc0",
+    "mergeAndPushHeldFullIntegrationFlock": true,
+    "mainMerged": false
   }
 }
