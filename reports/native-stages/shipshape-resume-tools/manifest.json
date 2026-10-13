@@ -1,0 +1,246 @@
+{
+  "schema": 1,
+  "status": "WIP archival snapshot; no qualification or Ready promotion",
+  "baseOwnerHead": "e4c742820b0c29c84360301b511333ee1ab49864",
+  "commonHead": "ecf6f90b10328f560326351e9194a1b6a4ba82a4",
+  "commonDraftPR": 1420,
+  "snapshotBranch": "wip/native-shipshape-remote-resume-20261013",
+  "savedCodeCount": 27,
+  "savedHistoricalPatchCount": 3,
+  "savedHistoricalDocCount": 1,
+  "audit": {
+    "allMjsParsedPreviously": true,
+    "maxStaticArrayElements": 9,
+    "maxStaticStringCharacters": 664,
+    "pythonParsedPreviously": true,
+    "noBulkOriginalGeometryOrEncodedAssets": true,
+    "noSourceImagesGridsTracesLogs": true
+  },
+  "excluded": [
+    "raw and derived original assets",
+    "screenshots and source images",
+    "full ink grids",
+    "detailed traces and logs",
+    "compiled output",
+    "private detailed checkpoint (replaced by public resume summary)"
+  ],
+  "entries": [
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-current-edge-observer.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-current-edge-observer.mjs",
+      "bytes": 22185,
+      "sha256": "9322081c5fea0c529dab05c58f61f8b2f9c9a3b1755e0bf86a34c547b28a05f7",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-current-packaged.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-current-packaged.mjs",
+      "bytes": 21936,
+      "sha256": "fbca344c8b5f22bb088d06bf59f7b72a4dce0acda4c80c09714cd5433be562cd",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-current-strict-observer.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-current-strict-observer.mjs",
+      "bytes": 24998,
+      "sha256": "4251a1b9c75e93f11c45d5a4324ba793a61ac9127c67c1d3fe071dffad9abdec",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-mode-baseline.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-mode-baseline.mjs",
+      "bytes": 17346,
+      "sha256": "a2558b971244302f743c582d749cea4bf2ed28151fe659ad11e5f85aa94b4eb0",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-mode-candidate.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-mode-candidate.mjs",
+      "bytes": 18742,
+      "sha256": "c2e0bd7b46968f1ebf252cc95ef2ac3b0ae1db078f0613a099fd8a8cb42aff9d",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-path-candidate.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-path-candidate.mjs",
+      "bytes": 20650,
+      "sha256": "74e4d098b3949a153d4cba97c8e3917416c7f5dff5797e3741fd583cf24ca326",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-path-special-observer.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-path-special-observer.mjs",
+      "bytes": 20883,
+      "sha256": "29e15efcbe42aa9f89ffd35cf6e14c6a96ad8ad0b30650012f766418f12774ed",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/check-shipshape-combat-path-trizooka-candidate.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/check-shipshape-combat-path-trizooka-candidate.mjs",
+      "bytes": 21004,
+      "sha256": "0696729e88951beb47db5232d699ac2e76e8f42766ddda8cde0bcf8a061c7f3a",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/classify-shipshape-foot-pop.py",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/classify-shipshape-foot-pop.py",
+      "bytes": 3597,
+      "sha256": "c864b6c7c389073a0b7756fe1899c13d41082ab2b5cbc94ef6cae505d5dd3a59",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/current-joint-tower-human-executed.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/current-joint-tower-human-executed.mjs",
+      "bytes": 11788,
+      "sha256": "4fd2892f8aee1577afca24784dd458f7eebbc8ae925c498e68050a2776dd2226",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/final-current/build-and-gates.sh",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/final-current/build-and-gates.sh",
+      "bytes": 946,
+      "sha256": "f5908247ced707978fa21d922db3a3e4719da71701ce6ade37d8b50162bd11ff",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/grounded-body-private-bank-peer-executed.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/grounded-body-private-bank-peer-executed.mjs",
+      "bytes": 25991,
+      "sha256": "076f9c72ea2875daa99811d7b88f00ab26dc3e16e2b1b8ac005e113109c65369",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/native-combat-support-2199.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/native-combat-support-2199.mjs",
+      "bytes": 1246,
+      "sha256": "347a351635260a86d220f24cecd5ed34968a89e8dd11d6e9a5f2ab7722ffb7da",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/native-combat-support-310ea.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/native-combat-support-310ea.mjs",
+      "bytes": 2177,
+      "sha256": "e3e8c2ef2e2aa1343c226d2e60e5f936286290d0c72c9f981e12e16f173c22d3",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/native-combat-support-830f.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/native-combat-support-830f.mjs",
+      "bytes": 2507,
+      "sha256": "dec49d2ca6d042cb7981312d44dfd339fab8b132b087ed986c8ac22091cf5496",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-climb-rejections.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-climb-rejections.mjs",
+      "bytes": 1634,
+      "sha256": "bc825053a101bcac15505d1bc047a48b55a2c90c999255c9f651723e4ace5bbc",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-drop-probe.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-drop-probe.mjs",
+      "bytes": 1360,
+      "sha256": "c6cec0f56de4c995dd5c154446c81d79cb822bdd1f38ca1f4394c546c593741e",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-drop-rejections.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-drop-rejections.mjs",
+      "bytes": 5981,
+      "sha256": "6bed337f5c94019d262838e6ec46176429f7777c53c42549f536601c1d7ca395",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-facade-ascent.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-facade-ascent.mjs",
+      "bytes": 3708,
+      "sha256": "b3c76f3ea1a3a6d6e970aa5d7e747c559ff654c42f9949fc2d95f07738f45374",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-facade-jump-ascent.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-facade-jump-ascent.mjs",
+      "bytes": 4048,
+      "sha256": "9b27bf05f19f956e8e567c5a6369130e1749905acc218af0a241ece3834e7057",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-facade-jump-capsules.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-facade-jump-capsules.mjs",
+      "bytes": 4533,
+      "sha256": "ceaa89cf376dd7e10ea4b1e278f7bf199f5c9239deee39c7349459a17490ec30",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-frontier-probes.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-frontier-probes.mjs",
+      "bytes": 845,
+      "sha256": "bbbe0a78662d9014e765bc943c75c2e28a8306f51aca9b58fe70e4aaa5d29eea",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-mask-scalar.py",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-mask-scalar.py",
+      "bytes": 1946,
+      "sha256": "d145161c7074bee4ae98909c438155572fceb9f0aaa0247e62b80fb01511341f",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-mask-scan.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-mask-scan.mjs",
+      "bytes": 2187,
+      "sha256": "00cf26e425a92a8aefeb4e4c1c41462c1a5efb9ec1ec0de30eaed02966b5c84b",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-support-probe.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/shipshape-support-probe.mjs",
+      "bytes": 1073,
+      "sha256": "7d3cbfcd2baba5a247009b7233ef6371813a7b9b9b4b7ab4bd224789e6df9f0b",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/source-partial-shot.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/source-partial-shot.mjs",
+      "bytes": 2432,
+      "sha256": "0e9b5f2bd9ca41ebbffb8ae0ae96b7167c256d68b49c90fad7f513b2304d1f13",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/source-wall-profile-2520-executed.mjs",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/source-wall-profile-2520-executed.mjs",
+      "bytes": 26761,
+      "sha256": "ca66599d2ba3998dc9f52ff9cc14e32bc3ddbc1ea006983e8f8ba76bcc63bbea",
+      "kind": "pure-code"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/final-current/dry-refill-candidate.patch",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/final-current/dry-refill-candidate.patch",
+      "bytes": 1890,
+      "sha256": "c29b161e39e9c3ad50cdad3b8021132c33a24530919cd911fbfadaf54bd81284",
+      "kind": "historical-code-patch"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/final-current/dry-refill-candidate-v1.patch",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/final-current/dry-refill-candidate-v1.patch",
+      "bytes": 1890,
+      "sha256": "c29b161e39e9c3ad50cdad3b8021132c33a24530919cd911fbfadaf54bd81284",
+      "kind": "historical-code-patch"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/final-current/dry-refill-candidate-v2.patch",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/final-current/dry-refill-candidate-v2.patch",
+      "bytes": 1870,
+      "sha256": "0d18b91ce731ee4f1f7ecc6c61e583408c0a86af9b32c8980d8c198f49ac7e60",
+      "kind": "historical-code-patch"
+    },
+    {
+      "originalIgnoredPath": ".ci-scratch/shipshape-pr-body.md",
+      "snapshotPath": "reports/native-stages/shipshape-resume-tools/historical/shipshape-pr-body.md",
+      "bytes": 2642,
+      "sha256": "a779a972f2aeaddf36c4922c158e717abf02023de96f3e5fd7f43f475513a357",
+      "kind": "obsolete-pr-description"
+    }
+  ]
+}
