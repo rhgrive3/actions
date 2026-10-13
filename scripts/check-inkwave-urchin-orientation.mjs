@@ -6,7 +6,7 @@ const server=http.createServer((req,res)=>{try{const name=new URL(req.url,'http:
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),result={status:'running',errors:[],rates:[]};
 try{
  const page=await browser.newPage({viewport:{width:960,height:640}});page.on('pageerror',e=>result.errors.push(e.message));await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
- await page.goto('http://127.0.0.1:'+server.address().port+'/?map=urchin',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
+ await page.goto('http://127.0.0.1:'+server.address().port+'/?map=urchin',{waitUntil:'domcontentloaded'});await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
  for(const hz of [30,60,120]){
   const proof=await page.evaluate(async hz=>{
    const G=NG,g=G.game;g.debug.freeze();g.menus.wipe.cancel();g._skipRender=true;await g.startMatch({mapId:'urchin',mode:'turf',duration:180,difficulty:'normal'});

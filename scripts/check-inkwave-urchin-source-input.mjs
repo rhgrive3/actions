@@ -37,8 +37,8 @@ try{
    await g.startMatch({mapId:'urchin',mode:'tower',difficulty:'easy'});
    g._skipRender=true;g.debug.freezeBots();
    for(let i=0;i<Math.ceil(hz*5.5);i++)g._frame(1/hz);
-   g.debug.fire(true);for(let i=0;i<Math.ceil(hz*.15);i++)g._frame(1/hz);
-   g.debug.fire(false);for(let i=0;i<Math.ceil(hz*1.5);i++)g._frame(1/hz);
+   g.input.mouse.left=true;for(let i=0;i<Math.ceil(hz*.15);i++)g._frame(1/hz);
+   g.input.mouse.left=false;for(let i=0;i<Math.ceil(hz*1.5);i++)g._frame(1/hz);
    const a=G.local,e=G.match.ranked,w=G.match.rankedWorld;
    if(a.s3?.squidSpawn||!a.grounded)throw Error('Human initial source launch must land before floor boarding setup');
    const t=e.stage.tower,approach=t.boarding?.approaches[t.centerIndex];
@@ -53,14 +53,15 @@ try{
    globalThis.urchinBoardingEnd=approach.end;
    return {hz,team:a.team,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,start:approach.start,end:approach.end,sourceNode:approach.sourceNode,height:approach.height,jumping:approach.jumping,deckBlock:w.towerBlockId,sourceGround:true,outsideDeck:true,zeroInitialVelocity:true,localLift:t.localLift,halfSize:t.halfSize,routePoints:t.path.length,legalApproaches:t.boarding.approaches.length,initialCount:e.counts[a.team]};
   },hz);
-  await page.keyboard.down('w');await page.keyboard.down('Space');
+  await page.keyboard.down('w');if(setup.jumping)await page.keyboard.down('Space');
   let releasedMove=false,releasedJump=false,contact;
   for(let frame=0;frame<Math.ceil(hz*1.5);frame++){
    contact=await page.evaluate(hz=>{
     const G=NG,g=G.game,a=G.local;g._frame(1/hz);
     return {distance:Math.hypot(a.pos.x-urchinBoardingEnd[0],a.pos.z-urchinBoardingEnd[2]),alive:a.alive,grounded:a.grounded,groundHit:a.ground.hit,groundBlock:a.ground.block,onTower:!!a._rankedOnTower,riders:[...G.match.ranked.rule.state.riders],controllingTeam:G.match.ranked.rule.state.controllingTeam,count:G.match.ranked.counts[a.team],position:a.pos.toArray()};
    },hz);
-   if(!releasedMove&&contact.distance<.25){await page.keyboard.up('w');releasedMove=true;}
+   const dx=setup.end[0]-setup.start[0],dz=setup.end[2]-setup.start[2],length=Math.hypot(dx,dz);
+   if(!releasedMove&&((contact.position[0]-setup.start[0])*dx+(contact.position[2]-setup.start[2])*dz)/length>=length-.15){await page.keyboard.up('w');releasedMove=true;}
    if(!releasedJump&&frame>=Math.ceil(hz*.4)){await page.keyboard.up('Space');releasedJump=true;}
    if(contact.grounded&&contact.groundHit&&contact.groundBlock===setup.deckBlock&&contact.controllingTeam===setup.team)break;
   }
@@ -71,10 +72,10 @@ try{
   assert.ok(contact.riders.length>0,'Actual grounded contact must produce a counted rider');
   const progress=await page.evaluate(hz=>{for(let i=0;i<hz;i++)NG.game._frame(1/hz);const e=NG.match.ranked,a=NG.local;return{count:e.counts[a.team],controllingTeam:e.rule.state.controllingTeam,grounded:a.grounded,groundBlock:a.ground.block};},hz);
   assert.ok(progress.count<setup.initialCount,'Actual counted rider must advance the ranked score');
-  result.boarding.push({...setup,input:'physical KeyW + Space through production PlayerController',contact,progress});save();
+  result.boarding.push({...setup,input:setup.jumping?'physical KeyW + Space through production PlayerController':'physical KeyW through production PlayerController',contact,progress});save();
   console.log(JSON.stringify({hz,localLift:setup.localLift,deckContact:true,count:progress.count,controllingTeam:progress.controllingTeam}));
  }
- await page.evaluate(()=>NG.renderer.render(NG.scene,NG.camera));
+ await page.evaluate(()=>{NG.renderer.render(NG.scene,NG.camera);});
  await page.screenshot({path:path.join(out,'urchin-keyboard-tower.png'),timeout:60000});
  assert.equal(result.errors.length,0,JSON.stringify(result.errors));result.status='passed';
 }catch(error){result.status='failed';result.error=error.stack;throw error;}

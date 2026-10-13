@@ -23,7 +23,7 @@ test('Urchin every uint32 render index matches the independent pinned OBJ face s
 });
 
 test('Urchin actual asphalt supports, source exclusions, both-team directed ranked access and 30/60/120Hz ground movement',{skip:!available},async()=>{
- const f=await nativeFixture(),{G,THREE,PLAYER}=f,L=new f.NativeLevel(readStage(ROOT,'urchin')),P=new f.NativePhysics(L);G.level=L;G.physics=P;
+ const f=await nativeFixture({includeCharacter:true}),{G,THREE,PLAYER}=f,L=new f.NativeLevel(readStage(ROOT,'urchin')),P=new f.NativePhysics(L);G.level=L;G.physics=P;G.camera=new THREE.PerspectiveCamera();
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});
  const excluded=L.manifest.objects.filter(o=>/^Fld_Crank02_(?:BakeDummy|Prop_Crank02WaterTower[AB]_)/.test(o.name));
@@ -33,7 +33,7 @@ test('Urchin actual asphalt supports, source exclusions, both-team directed rank
   assert.equal(h.hit,true);assert.equal(h.normal.y,1);assert(h.point.distanceTo(pad)<1e-6);assert.equal(L.manifest.objects[L.data.objectIds[h.triangle]].name,'Fld_Crank02_Asphalt_1__AsphaltBace');
   assert(P.bodyFits(pad.clone().add(new THREE.Vector3(0,.01,0)),PLAYER.radius+.04,.32,PLAYER.height));
   for(const hz of [30,60,120]){
-   const a=f.make('shooter');a.team=team;a._integrate=f.Actor.prototype._integrate;a.spawnAt(pad,0);a.intent.move.set(team===0?-1:1,0,0);a.intent.fire=false;
+   const a=new f.Actor({team,name:'Urchin source controller',weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});G.actors=[a];a.spawnAt(pad,0);a.intent.move.set(team===0?-1:1,0,0);a.intent.fire=false;
    for(let i=0;i<hz*.5;i++){G.time+=1/hz;a.update(1/hz);}
    assert(a.alive&&a.grounded,'source-supported inward movement '+team+' '+hz);assert(a.pos.distanceTo(pad)>1,'real controller moves on source floor');
   }
