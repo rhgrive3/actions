@@ -47,3 +47,11 @@ NATIVE_HOST_WEAPON=s3-blaster-short node scripts/check-inkwave-native-online.mjs
 ```
 
 公開後の改善は別ブランチで続ける。source三角形/CPU塗り/物理を保持した描画負荷削減と、初回処理スパイクを次の測定対象にする。
+
+## mainとPagesへの反映
+
+PR [#1285](https://github.com/rhgrive3/actions/pull/1285)をユーザーの明示指示でmainへマージした。merge commitは `ed3a046574208471c5db5309e2469d263cacfdfd`。Pages run [38254171363](https://github.com/rhgrive3/actions/actions/runs/38254171363)はbuild/upload/deployすべて成功。
+
+公開URL https://rhgrive3.github.io/actions/ の新規Chromiumブラウザで既存3+原典5の選択肢を確認し、実際のユノハナ選択ボタンから開始した。ブラウザ直接取得モード、固定OBJ SHA-256、279,299表示三角形、8人、ページ例外0を確認した。証拠はignored `.browser-evidence/native-pages-live/result.json`。これは公開動線の確認で、Ver.11.3.0完全一致や実機FPSの認定ではない。
+
+継続ブランチはmain mergeを基点にした `codex/stage5-render-performance`。元の三角形/塗り属性を維持した画面外描画の削減を実装・比較し、追加の変更は別PRに残す。

@@ -4068,6 +4068,8 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
 
+2026-10-12継続: PR #1285をmainへマージし、Pages公開版で原典5択とユノハナの8人起動を確認した。続きの `codex/stage5-render-performance` は元三角形/塗り属性/CPU authorityを保持し、画面外インクのindexだけを除外する。地形15方向の画素差0、全原典Node23/関連27が成功。中央比較視点のインク三角形は約39〜53%減ったが、ソフトウェアGL時間のばらつきがあり実機FPS改善とは判定しない。詳細とシミュレーション/画素比較の条件は [描画領域の記録](inkwave-native-stage-render-2026-10-12.md)。本家11.3.0のscene/mask/スポーン/描画と実モバイルは未確認を維持する。
+
 ## 2026-10-12: プライムシューター・ジェットスイーパーのモデル作り直しと銃口・構え
 
 参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
@@ -4106,3 +4108,19 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
 
 公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+
+## Ink Vac release contract fixture follow-up (2026-10-13)
+
+The old #1120 source-contract assertion still required immediate release through a pre-#1252 source string. Current main correctly buffers a fresh press/release edge until the sourced 20F inhale-to-exhale transition, then permits the 150F shot window. The regression now requires the existing edge queue, readiness guard and transition-plus-hold deadline while retaining the held-suction negative guard. Runtime behavior is unchanged. Clean-main source and emitted native controls distinguish held ZR, buffered early release, no projectile through transition frame19 and exactly one on frame20; fixture logic and browser evidence remain separately reported, with no new hardware parity claim.
+
+The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
+
+## 2026-10-12: 立ち方・ブキの持ち方・足運び（P02 の一部）
+
+- **本家の根拠**: 参照版は Ver.11.3.0。任天堂公式ブキ紹介のシューター動画 `y7Zl26Zl12n`（側面の歩き、射撃後の待機）と `9LnjRgbl2Ng`（背後からの射撃しながらの走り）。どちらも過去の記録と SHA-256 が一致した。収録版・入力・ギアは不明。上体と頭は待機・歩き・走りで直立し、射撃していないシューターは右手で腰の高さに持つ（歩きは銃身がほぼ水平で前向き、立ち止まると銃口が下）。歩きで後ろのすねは水平まで上がらない。
+- **INKWAVE の実装箇所**: 試合中の体は初代（Wii U）`Player00` クリップをリターゲットした `src/game/motion/source-controller.js` / `retarget.js` が決める。射撃中の上半身だけが本体の手続き姿勢。初代の Hold 系クリップは上体 16〜31°・首 最大 25°前傾していて、そのまま出ていた。シューターの銃身は体の左へ 63〜72°横向き、遊脚の足首は弱い入力でも 0.25 m 上がり膝が 100°曲がる。
+- **再現操作**: シューターで止まる、弱い入力で歩く、最大入力で走る。正面と側面から見る。
+- **変更**: `patches/splatoon3/runtime/source-posture.mjs` を adapter で 3 箇所に接続。idle/move 状態だけ、上体の前傾を 20〜40%、首を 25% に縮める。射撃していないシューターは、移動中だけ銃身をほぼ水平・前向きにする（両手持ちのまま）。停止中の持ち方は変えない。遊脚の足首の高さを歩き 50%、走り 70% にする。補正後は待機の上体 4.7°・首 4.8°、歩きは上体 3°・首 2°・銃口ピッチ −8°、膝 93°。
+- **プレイへの影響**: 見た目だけ。発射位置の差は初弾 0.000 mm、射撃 1 秒後 0.010 mm。移動・接地・射撃のロジックは不変。
+- **確認状態**: 実ソースバンクを読み込む VM テスト（`patches/splatoon3/tests/source-posture.test.mjs`）と Chromium 描画で確認。Switch 実機比較ではない。停止中の持ち方は途中で片手持ちに変えたが、本家は支え手を添えていて判断が誤りだったため、修正前の両手持ちに戻した。射撃中にブキを体から離して構える差（発射位置に影響するため未変更）、シューター以外の持ち方、待機のしゃがみの深さ、歩幅・歩調・横歩き・後ろ歩き・坂は未確認のまま。詳細は `patches/splatoon3/reference/stance-carry-comparison-2026-10-12.md`。

@@ -14,6 +14,7 @@ const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'
 const result={status:'running',stages:[],errors:[],downloads:0},context=await browser.newContext({viewport:{width:960,height:640},locale:'ja-JP'}),page=await context.newPage();
 const save=()=>fs.writeFileSync(path.join(out,'source-browser.json'),JSON.stringify(result,null,2));
 page.on('pageerror',e=>{result.errors.push(e.message);console.log('page-error '+e.message);});
+page.on('console',m=>{if(m.type()==='error'){result.errors.push(m.text());console.log('browser-error '+m.text());}});
 page.on('request',r=>{if(r.url().includes('media.githubusercontent.com/media/kirakira-dev/KiTrix/')&&r.url().endsWith('.obj'))result.downloads++;});
 try{
  await page.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));});
