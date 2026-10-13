@@ -4204,6 +4204,12 @@ Final accepted0c39-composed Chromium proof has six actual Game._frame edge compl
 
 最新main18ce互換の採用追補: Hump担当の独立reviewがCLOSED/accepted。変更suite140通過/4任意emitted skip/0失敗、実emitted15/15・skip0とprivate/public9/9・容量も独立通過。現在の実Chrome Input5、公開Scorch原典取得/v4/自然58固定tick着地/cache/破損rollback、通常Shooter実Game3描画cadence固定1/60、全5ルール実WSで完全grid SHA一致/受入watermark到達/全送信・成長・再生queue空/例外0を確認。入力fixtureと支持姿勢/aim/他bot固定の射撃条件を本家/ハードウェア再現としない。共通native/原典/Actor物理は不変、第三者抽出assetsを公開せずmainへのマージもしない。詳細: [main-18ce-compatibility.md](native-stages/main-18ce-compatibility.md)。
 
+### 原典支持の上向き接地と胴体衝突の結合
+
+オヒョウ原典の実Game tick2456では、胴体解決後に足元が0.0914157017原典単位上がり、元の壁三角形34778へ0.0037673822単位食い込んだ。これは既存source solverのradius−0.0001基準でも実接触であり、bodyFitsの公開default0.01や診断0.003を変更していない。`native-physics.mjs`とbuild用movement adapterは、実際に上がった静的原典支持だけを同じ胴体resolverで再解決し、実足元probeと胴体適合を確認してから接地を確定する。既存の壁速度処理・着地event・dynamic支持・legacyを維持し、source/NoPaint/寸法/入力/velocityを代用値で変更しない。
+
+参照は11.3.0のShooter_Normal_00・ゼロAP、KiTrix固定表示抽出。正確なcaptured状態を初期化するActor/Character component4/4とRoot独立4/4、別の原典支持上から通常の微入力＋1固定tickジャンプによる実Game比較でbaseline3件の接地後接触とcandidate3件・計450固定tickの接触解消を確認。描画30/60/120でもActorは1/60、8人7bot・着地1回・全10buffer/237texture byte不変・例外0。default95通過/57任意asset skip、legacy/grate/slope/Tower/Drop小契約13/13、private/public各9/9・容量通過。元5ステージもWahoo独立実Game15/15・source着地120件/初期有向経路30件・8人生存7bot・Actor/Brain1/60・ゼロAP/例外0で通過し、全scalar caseが旧1733と一致。新ea625証跡を独立に封印し、旧artifactの付け替えや全対岸証明にしない。Root/Shipshape named reviewはCLOSED PASS。最初の30tickジャンプ保持では反例を再現せず、旧fixtureのceilingBlock期待誤り・任意VM motion import警告・2451の直線chord診断失敗も保存している。内部衝突補正の連続軌道、全対岸、本家の単位/抽出版/collision/実機FPSを完了扱いしない。詳細: [source-foot-body.md](native-stages/source-foot-body.md)、[numeric receipts](native-stages/source-foot-body-verification.json)。
+
 
 ### 原典戦闘支持・既存goal保持の独立レビュー確定範囲
 
