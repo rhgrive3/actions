@@ -31,3 +31,21 @@ test('Umami opposing source floors have capsule clearance and directed routes to
  assert.ok(sourceOnly.length>0);assert.ok(sourceOnly.every(o=>!o.active&&!o.collidable));
  for(const o of L.manifest.objects.filter(o=>o.name.includes('GeneralBoxNoPaint_')&&o.active))assert.equal(o.paintable,false);
 });
+test('Umami opening, death respawn and inward grounded walk use actual source at 30/60/120 Hz',{skip:!available},async()=>{
+ const f=await nativeFixture(),{G,THREE}=f,L=G.level=new f.NativeLevel(readStage(ROOT,'umami'));G.physics=new f.NativePhysics(L);
+ class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
+ G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(L,G.physics);G.match.mode='turf';G.match.opts={};
+ const measurements=[];
+ for(const team of [0,1])for(const hz of [30,60,120])for(const opening of [true,false]){
+  const a=f.make('shooter');a.team=team;a._integrate=f.Actor.prototype._integrate;a.spawnAt(L.spawnPads[team],0);a.intent.fire=false;a.intent.move.set(0,0,0);
+  if(opening)assert.ok(f.beginInitialSquidSpawn(a));else{a.alive=false;a.respawn();}
+  assert.ok(a.s3.squidSpawn.target);a.intent.fire=true;a.update(1/hz);a.intent.fire=false;
+  for(let k=0;k<Math.ceil(hz*1.5);k++){G.time+=1/hz;a.update(1/hz);}
+  assert.equal(a.s3.squidSpawn,undefined);assert.ok(a.alive&&a.grounded&&a.ground.hit);
+  const start=a.pos.clone(),direction=L.spawnPads[1-team].clone().sub(L.spawnPads[team]);direction.y=0;direction.normalize();a.intent.move.copy(direction);
+  for(let k=0;k<hz*.2;k++){G.time+=1/hz;a.update(1/hz);}
+  const distance=a.pos.distanceTo(start);assert.ok(distance>.05&&distance<5);assert.ok(a.alive&&a.grounded);
+  measurements.push({team,hz,opening,grounded:a.grounded,distance});
+ }
+ console.log(JSON.stringify({umamiNativeMovement:measurements,weapon:'fixture shooter; owned game movement',gear:'fixture default; console gear equivalence unverified',state:'initial launch or death respawn, dry source floor, 0.2 s full inward walk'}));
+});
