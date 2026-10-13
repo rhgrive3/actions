@@ -837,6 +837,10 @@ function doAreaImpact(rt, actor, id, state, center, seed=nextSeed(state), radius
   fxBurst(rt,actor,c,r,'impact');
   emitAction(rt,actor,id,state.serial,'impact',c,null,seed,{radius:r,damage:damage??d.damageMax});
 }
+// WeaponSpMicroLaser.LaunchParam.LockonDeg=80: full 160-degree front cone.
+export function killerWailLockOnEligible(dot) {
+  return finite(dot) && dot >= Math.cos(80*Math.PI/180);
+}
 function selectTargets(rt, actor, max=4, range=32) {
   const dir=aimDirection(rt,actor,rt.v0), out=[];
   for(const target of rt.api.G.actors||[]) {
@@ -850,6 +854,9 @@ function selectTargets(rt, actor, max=4, range=32) {
         const aspect=camera.aspect||1,limit=gearCurve(ap,140,190,240)/360;
         if(projected.z< -1||Math.hypot(projected.x*aspect,projected.y)>limit)continue;
       }else if(dot<.94)continue;
+    }else if(actor.specialActive?.id==='killerWail'){
+      // Wail uses the source's ±80° cone, not the 20° generic launcher cone.
+      if(!killerWailLockOnEligible(dot))continue;
     }else if(dot<.94)continue;
     out.push({actor:target,d,dot});
   }

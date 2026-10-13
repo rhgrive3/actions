@@ -1,0 +1,21 @@
+name: Verify INKWAVE Killer Wail lock geometry
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/runtime/all-specials.mjs'
+      - 'patches/splatoon3/tests/special-wail-lockon-1130.test.mjs'
+      - '.github/workflows/inkwave-wail-lockon-1130.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lockon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify pinned MicroLaser lock-on source and actual Actor selection
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/special-wail-lockon-1130.test.mjs
