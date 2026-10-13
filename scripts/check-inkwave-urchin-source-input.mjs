@@ -69,7 +69,7 @@ try{
   assert.equal(contact.alive,true);assert.equal(contact.grounded,true);
   assert.equal(contact.groundHit,true);assert.equal(contact.groundBlock,setup.deckBlock,'Physical run/jump must land on the actual dynamic deck');
   assert.equal(contact.controllingTeam,setup.team);assert.equal(contact.onTower,true);
-  assert.ok(contact.riders.length>0,'Actual grounded contact must produce a counted rider');
+  assert.ok(contact.riders[setup.team]>0,'Actual grounded contact must produce a counted team rider');
   const progress=await page.evaluate(hz=>{for(let i=0;i<hz;i++)NG.game._frame(1/hz);const e=NG.match.ranked,a=NG.local;return{count:e.counts[a.team],controllingTeam:e.rule.state.controllingTeam,grounded:a.grounded,groundBlock:a.ground.block};},hz);
   assert.ok(progress.count<setup.initialCount,'Actual counted rider must advance the ranked score');
   result.boarding.push({...setup,input:setup.jumping?'physical KeyW + Space through production PlayerController':'physical KeyW through production PlayerController',contact,progress});save();
