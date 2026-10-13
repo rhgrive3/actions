@@ -159,5 +159,5 @@ export function adaptNativeStages(rel,code){
   code="import { nativeRankedStage } from '../../../native-stages/runtime/engine.mjs';\n"+code;
   once('  const spec = SPECS[id];','  if (level?.native) return nativeRankedStage(G,G.match?.mode);\n  const spec = SPECS[id];');
  }
- return code;
+ return adaptNativeRuleAvailability(rel,code);
 }
