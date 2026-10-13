@@ -4176,3 +4176,8 @@ main14f9f913のキャラクター姿勢・ブキ・対戦ルール・ビルド�
 
 
 追加12ステージ原典マスクv4再封印: 旧検証artifactを保持し、原典ポリゴンの部分セル修正を含む独立したprivate候補を作成。元5マップの完全Python変換と同一マスクの負例付き対照、追加12マップのworker独立変換が14/14・skip0・失敗0。元の塗れるセルを除去せず部分セル2944658を追加し、全頂点/衝突/role/chart参照/PNGバイトと旧ownerデータは不変。serialized originからの再投影は厳密対照で失敗し、元converterと同じfirst-vertex/min式へ修正。原典ディレクトリ指定誤りも負例を保存して正しいSHA固定sourceで再検証。全12マップの最新mainでのルール/通信/描画完了には読み替えない。詳細: `reports/native-stages/reviewed-v4-mask-reseal.md` と同verification JSON。
+
+
+## 2026-10-13: 原典上層での戦闘移動と崖判定（検証中）
+
+オヒョウの実Game固定tick5137で敵認識後に戦闘へ移り、原典roof高さ6.05から保持された船底VesselFloor00高さ−14.8647へ落ちる事象を再現した。元のwet判定は床が落下死亡閾値より上なら安全としており、上層からの通常歩行支持を確認していなかった。native・接地・fight/retreatの通常移動だけ、実groundProbeと現在formのstepUp/stepDown/footRadiusで連続支持を確認する候補を追加。地形・塗れない面・船底・衝突・入力物理は不変。坂/段差、NoPaint、金網の人型/イカ差、現在dynamic足場、legacy/通常navigation/airborne/特殊移動の負例を含む合成4件は通過。原典のproduction Actorと実Gameで比較中、未採用。Nintendoの原典版・AI判断・座標単位・実機速度の一致を主張しない。

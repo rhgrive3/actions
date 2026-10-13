@@ -95,7 +95,8 @@ export function adaptNativeStages(rel,code){
     return this.grid[k];`);
  }
  if(rel==='src/game/bots.js'){
-  code="import { nativePaintGoalIds,updateNativeJumpAttach,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop,updateNativeSurge,nativeSourceWaypointReached,nativeSourceTravelInput,nativeTowerRider } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  code="import { nativeCombatWet,nativePaintGoalIds,updateNativeJumpAttach,updateNativeClimb,nativeClimbTravelForm,nativeDropTravelForm,updateNativeDrop,updateNativeSurge,nativeSourceWaypointReached,nativeSourceTravelInput,nativeTowerRider } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
+  once('  _wet(x, z, y) { const gy =', '  _wet(x, z, y) { const sourceWet=nativeCombatWet(this,G,x,z,y); if(sourceWet!==null)return sourceWet; const gy =');
   once('    this.think -= dt; this.jumpCd -= dt;', '    if (!nativeTowerRider(G,this.a) && (updateNativeJumpAttach(this,G,dt)||updateNativeSurge(this,G,dt)||updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt))) { this._nativeTraversalHandled=true; return; }\n    this.think -= dt; this.jumpCd -= dt;');
   once('    const p = nav.path(s, g, this.a.team);', '    const p = nav.path(s, g, this.a.team, G.level.native ? Math.max(6000, nav.nodes.length * 4) : undefined);');
 
