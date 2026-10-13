@@ -4523,6 +4523,322 @@
         }
       ],
       "privateEvidence": ".browser-evidence/robo-v4-alpha-banks/banks.json"
+    },
+    "sourceOwnershipCalibration": {
+      "status": "passed-private-follower-artifact-mask-behavior-independent",
+      "revision": "0a57c0b2e688173734373cc48c3d666ac52174d946184490f2179ef9df7d3f24",
+      "contentHash": "a95ba21b9bd3fe19c3a8e0badeef8cf8e03aba58f8236342e9956c61837cc087",
+      "sourceRecipe": "inkwave-browser-source-v4",
+      "oldMaskSha256": "69a5f595830a6859df784de84b7e8d89cf1671d642c0b65186f6c046b05cd8b3",
+      "sourceCatalogSha256": "86422426b73c5cb3701d1dbd2cd0a5bd83d8b13c1c8e576e1281de9ed59f88f8",
+      "privateEvidence": ".browser-evidence/robo-private-mask-ownership/ownership.json",
+      "proof": {
+        "conditions": "Partial source shots: controlled input/aim, actual Game._frame fixed STEP1/60 at three render cadences. Wall ownership/release: ordinary Actor/Character/WeaponRunner/Projectiles raw 1/60 single interaction. Actual eight-alive/seven-bot Match; zero-AP Shooter; initial source-supported setups only, then intent inputs without pose/velocity/ink writes. SwiftShader, no retail or hardware FPS claim.",
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e",
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "partialWall": {
+          "stance": [
+            5.979999542236328,
+            4.7253332720862495,
+            -5.175999816258749
+          ],
+          "target": [
+            8.979999542236328,
+            5.5440000057220455,
+            -5.175999816258749
+          ],
+          "face": 906,
+          "triangle": 5155,
+          "cell": 18044,
+          "sourceObject": "Fld_Cross00_BigMapCap_low5_1__FloorBaseStructure00"
+        },
+        "cases": [
+          {
+            "renderHz": 30,
+            "simulationStep": 0.016666666666666666,
+            "actorTicks": 64,
+            "admitted": 1,
+            "owned": 1,
+            "cellOwner": 1,
+            "sameCellOutside": 0,
+            "sourceContacts": [
+              {
+                "face": 906,
+                "triangle": 5155,
+                "point": [
+                  8.979999542236328,
+                  5.5424411697051745,
+                  -5.171750869425995
+                ],
+                "u": 0.028248939839142118,
+                "v": 1.0624411506316882,
+                "centerUV": [
+                  0.11999996503194173,
+                  0.9771428448813302
+                ],
+                "k": 18044,
+                "inside": true,
+                "centerInside": false,
+                "distanceToTarget": 0.00452587217175481,
+                "oldMask": 0,
+                "newMask": 1
+              }
+            ],
+            "naturalPaint": [
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              }
+            ],
+            "sourceApproachWaypoints": [
+              67,
+              55
+            ],
+            "alive": true,
+            "grounded": true
+          },
+          {
+            "renderHz": 60,
+            "simulationStep": 0.016666666666666666,
+            "actorTicks": 63,
+            "admitted": 1,
+            "owned": 1,
+            "cellOwner": 1,
+            "sameCellOutside": 0,
+            "sourceContacts": [
+              {
+                "face": 906,
+                "triangle": 5155,
+                "point": [
+                  8.979999542236328,
+                  5.538132227666998,
+                  -5.172398708411973
+                ],
+                "u": 0.027601100853163807,
+                "v": 1.0581322085935119,
+                "centerUV": [
+                  0.11999996503194173,
+                  0.9771428448813302
+                ],
+                "k": 18044,
+                "inside": true,
+                "centerInside": false,
+                "distanceToTarget": 0.006884678425852925,
+                "oldMask": 0,
+                "newMask": 1
+              }
+            ],
+            "naturalPaint": [
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              }
+            ],
+            "sourceApproachWaypoints": [
+              67,
+              55
+            ],
+            "alive": true,
+            "grounded": true
+          },
+          {
+            "renderHz": 120,
+            "simulationStep": 0.016666666666666666,
+            "actorTicks": 63,
+            "admitted": 1,
+            "owned": 1,
+            "cellOwner": 1,
+            "sameCellOutside": 0,
+            "sourceContacts": [
+              {
+                "face": 906,
+                "triangle": 5155,
+                "point": [
+                  8.979999542236328,
+                  5.537679490127352,
+                  -5.1726499919158595
+                ],
+                "u": 0.027349817349277217,
+                "v": 1.0576794710538655,
+                "centerUV": [
+                  0.11999996503194173,
+                  0.9771428448813302
+                ],
+                "k": 18044,
+                "inside": true,
+                "centerInside": false,
+                "distanceToTarget": 0.007153337718224886,
+                "oldMask": 0,
+                "newMask": 1
+              }
+            ],
+            "naturalPaint": [
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              },
+              {
+                "team": 0
+              }
+            ],
+            "sourceApproachWaypoints": [
+              67,
+              55
+            ],
+            "alive": true,
+            "grounded": true
+          }
+        ],
+        "negative": {
+          "uncoveredCell": 217,
+          "uncoveredOwnership": 0,
+          "noPaintTriangle": 47638,
+          "noPaintFace": -1,
+          "noPaintOwnership": 0,
+          "noPaintObject": "Fld_Cross00_GeneralCube_Pnt_FldObj_GeneralBoxNoPaint_45x15x15_Blitz_2__FenceVinyl"
+        },
+        "enemyRelease": {
+          "hz": 60,
+          "ownAdmitted": 15,
+          "ownNaturalSplats": 92,
+          "attached": true,
+          "upward": true,
+          "sourceObject": "Fld_Cross00_SFDuctA_low10_1__WallParts00",
+          "receiverWeapon": "shooter",
+          "enemyWeapon": "shooter",
+          "receiverAbilityPoints": {},
+          "enemyAbilityPoints": {},
+          "enemyAdmitted": 1,
+          "enemyNaturalSplats": 1,
+          "enemyImpacts": [
+            {
+              "face": 6906,
+              "triangle": 21832,
+              "point": [
+                52.5,
+                7.835439933095355,
+                -36.27896474552494
+              ]
+            }
+          ],
+          "released": true,
+          "enemyOwnedAtRelease": true,
+          "trace": [
+            {
+              "frame": 0,
+              "owner": 1,
+              "wasClimbing": true,
+              "climbing": true,
+              "position": [
+                51.81600000000001,
+                7.511777777777778,
+                -37.5
+              ],
+              "alive": true,
+              "wallFace": 6906,
+              "wallTriangle": 21835
+            },
+            {
+              "frame": 1,
+              "owner": 1,
+              "wasClimbing": true,
+              "climbing": true,
+              "position": [
+                51.82490106115683,
+                7.50900871084603,
+                -37.49999979038451
+              ],
+              "alive": true,
+              "wallFace": 6906,
+              "wallTriangle": 21835
+            },
+            {
+              "frame": 2,
+              "owner": 1,
+              "wasClimbing": true,
+              "climbing": true,
+              "position": [
+                51.82492572435842,
+                7.504308509709071,
+                -37.4999986073167
+              ],
+              "alive": true,
+              "wallFace": 6906,
+              "wallTriangle": 21835
+            },
+            {
+              "frame": 3,
+              "owner": 1,
+              "wasClimbing": true,
+              "climbing": true,
+              "position": [
+                51.82500153419807,
+                7.498489144865336,
+                -37.49999588573706
+              ],
+              "alive": true,
+              "wallFace": 6906,
+              "wallTriangle": 21835
+            },
+            {
+              "frame": 4,
+              "owner": 1,
+              "wasClimbing": true,
+              "climbing": true,
+              "position": [
+                51.8249,
+                7.491530582797834,
+                -37.499990840861614
+              ],
+              "alive": true,
+              "wallFace": 6906,
+              "wallTriangle": 21835
+            },
+            {
+              "frame": 5,
+              "owner": 2,
+              "wasClimbing": true,
+              "climbing": false,
+              "position": [
+                51.8249,
+                7.5,
+                -37.499990840861614
+              ],
+              "alive": true,
+              "wallFace": 6906,
+              "wallTriangle": 21835
+            }
+          ]
+        }
+      },
+      "errors": []
     }
   },
   "privateFloorFollowerCounterproof": {
