@@ -7692,5 +7692,526 @@
     "genericOwner": "Manta",
     "namedIndependentPeer": "Bluefin",
     "promotionConditions": "Pending exact separate shared PR/SHA, full original-pad→lower-island→upper-bank ordinary BotBrain current CPU/Chromium proof atallrates/opposed contexts, source/NoPaint/fullcapsule/default/guard/public9/budget review. No proposed flag adopted."
+  },
+  "currentMainPositiveHumanTakeoffWitness": {
+    "foundation": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+    "recipe": "inkwave-browser-source-v4",
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "durationMilliseconds": 24645.49204,
+    "conditions": "production Actor integrator/frame finishing and Character muzzle, WeaponRunner/projectiles and source collision; CPU VM optional source motion unavailable; source-supported initial pose only; empty initial paint; ordinary fire/aim/refill then inward run, jump at x>23.7, hold squid/jump through attachment, stop at feet>=7.2 until full existing Surge charge, release jump for one squid tick then kid/+X; every live approach/climb capsule continuously source-screened; 23 separately supported bank walkway points; no later pose/velocity/ink or manual ownership assignment; deterministic 0.5 RNG",
+    "cases": [
+      {
+        "hz": 30,
+        "witnesses": {
+          "jumpRequest": {
+            "frame": 15,
+            "seconds": 0.5,
+            "when": "before actual Actor update",
+            "position": [
+              23.983999999999998,
+              3.049999952316284,
+              18.5
+            ],
+            "velocity": [
+              9.120000000000001,
+              0,
+              0
+            ],
+            "form": "squid",
+            "grounded": true,
+            "climbing": false,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": true,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": {
+              "triangle": 173766,
+              "face": 53207,
+              "point": [
+                23.983999999999998,
+                3.049999952316284,
+                18.5
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            }
+          },
+          "firstAirborne": {
+            "frame": 16,
+            "seconds": 0.5333333333333333,
+            "when": "after actual Actor update",
+            "position": [
+              24.247999999999998,
+              3.3022221745385063,
+              18.5
+            ],
+            "velocity": [
+              7.920000000000001,
+              7.566666666666667,
+              0
+            ],
+            "form": "squid",
+            "grounded": false,
+            "climbing": false,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": true,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": null
+          },
+          "firstAttachment": {
+            "frame": 27,
+            "seconds": 0.9,
+            "when": "after actual Actor update",
+            "position": [
+              26.8249,
+              4.362777730094063,
+              18.5
+            ],
+            "velocity": [
+              0,
+              1.5333333333333332,
+              0
+            ],
+            "form": "squid",
+            "grounded": false,
+            "climbing": true,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": false,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": null
+          }
+        },
+        "continuousActualCapsuleSamples": 106,
+        "continuousActualCapsuleFailures": 0
+      },
+      {
+        "hz": 60,
+        "witnesses": {
+          "jumpRequest": {
+            "frame": 29,
+            "seconds": 0.48333333333333334,
+            "when": "before actual Actor update",
+            "position": [
+              23.76,
+              3.049999952316284,
+              18.5
+            ],
+            "velocity": [
+              9.72,
+              0,
+              0
+            ],
+            "form": "squid",
+            "grounded": true,
+            "climbing": false,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": true,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": {
+              "triangle": 173765,
+              "face": 53207,
+              "point": [
+                23.76,
+                3.049999952316284,
+                18.5
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            }
+          },
+          "firstAirborne": {
+            "frame": 30,
+            "seconds": 0.5,
+            "when": "after actual Actor update",
+            "position": [
+              23.912000000000003,
+              3.1830555078718397,
+              18.5
+            ],
+            "velocity": [
+              9.120000000000001,
+              7.983333333333333,
+              0
+            ],
+            "form": "squid",
+            "grounded": false,
+            "climbing": false,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": true,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": {
+              "triangle": 173766,
+              "face": 53207,
+              "point": [
+                23.912000000000003,
+                3.049999952316284,
+                18.5
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            }
+          },
+          "firstAttachment": {
+            "frame": 50,
+            "seconds": 0.8333333333333334,
+            "when": "after actual Actor update",
+            "position": [
+              26.800000000000022,
+              4.41680550787184,
+              18.5
+            ],
+            "velocity": [
+              0,
+              1.0583333333333313,
+              0
+            ],
+            "form": "squid",
+            "grounded": false,
+            "climbing": true,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": false,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": null
+          }
+        },
+        "continuousActualCapsuleSamples": 204,
+        "continuousActualCapsuleFailures": 0
+      },
+      {
+        "hz": 120,
+        "witnesses": {
+          "jumpRequest": {
+            "frame": 58,
+            "seconds": 0.48333333333333334,
+            "when": "before actual Actor update",
+            "position": [
+              23.72,
+              3.049999952316284,
+              18.5
+            ],
+            "velocity": [
+              9.719999999999995,
+              0,
+              0
+            ],
+            "form": "squid",
+            "grounded": true,
+            "climbing": false,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": true,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": {
+              "triangle": 173765,
+              "face": 53207,
+              "point": [
+                23.72,
+                3.049999952316284,
+                18.5
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            }
+          },
+          "firstAirborne": {
+            "frame": 59,
+            "seconds": 0.49166666666666664,
+            "when": "after actual Actor update",
+            "position": [
+              23.798499999999997,
+              3.118263841205173,
+              18.5
+            ],
+            "velocity": [
+              9.419999999999995,
+              8.191666666666666,
+              0
+            ],
+            "form": "squid",
+            "grounded": false,
+            "climbing": false,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": true,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": {
+              "triangle": 173765,
+              "face": 53207,
+              "point": [
+                23.798499999999997,
+                3.049999952316284,
+                18.5
+              ],
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            }
+          },
+          "firstAttachment": {
+            "frame": 98,
+            "seconds": 0.8166666666666667,
+            "when": "after actual Actor update",
+            "position": [
+              26.78149999999993,
+              4.43975689676073,
+              18.5
+            ],
+            "velocity": [
+              0,
+              0.8833333333333375,
+              0
+            ],
+            "form": "squid",
+            "grounded": false,
+            "climbing": true,
+            "input": {
+              "move": [
+                1,
+                0,
+                0
+              ],
+              "squid": true,
+              "jump": true,
+              "fire": false
+            },
+            "collider": {
+              "radius": 0.675,
+              "lift": 0.16,
+              "height": 0.55,
+              "skipGrates": true
+            },
+            "ground": {
+              "hit": true,
+              "y": 3.049999952316284,
+              "block": 53207,
+              "normal": [
+                0,
+                1,
+                0
+              ],
+              "object": "Fld_Ruins03_polySurface8362405287_1__WallBrickBase"
+            },
+            "centreSource": null
+          }
+        },
+        "continuousActualCapsuleSamples": 403,
+        "continuousActualCapsuleFailures": 0
+      }
+    ],
+    "evidence": ".browser-evidence/current-main-calibration/positive-human-takeoff-witness.json",
+    "ignoredTest": ".ci-scratch/positive-human-takeoff-witness.test.mjs",
+    "ignoredTestSHA256": "f15cd4464702f64c785a7b1e822608017317b8c359ffd0289b6a4a9a6aab4563",
+    "scope": "Read-only nine actual running-history snapshots; every original input/assertion retained. No hypothetical takeoff, Actor state, graph, role or geometry changes. GroundHit fields can remain stale after airborne: actual grounded state and literal centre ray are separately recorded. No bot/admission claim."
   }
 }
