@@ -27,8 +27,13 @@ test('source waypoint arrival uses the actual controller footprint on a real Hum
   assert(a.alive&&a.grounded);assert(Math.abs(a.pos.y-node.y)>.16,'reproduce the rejected real footprint height');
   const position=Array.from(a.pos.toArray()),velocity=Array.from(a.vel.toArray());
   assert.equal(f.nativeSourceWaypointReached(G,a,node),true);
+  assert.equal(f.nativeSourceFootSupported(G,a,node),true,'physical support is shared with other opted traversal handlers');
+  const navigation=L.manifest.sourceNavigation;L.manifest.sourceNavigation=undefined;
+  assert.equal(f.nativeSourceFootSupported(G,a,node),true,'physical support does not depend on the high-drop follower opt-in');
+  L.manifest.sourceNavigation=navigation;
   assert.deepEqual(Array.from(a.pos.toArray()),position);assert.deepEqual(Array.from(a.vel.toArray()),velocity);
   assert.equal(f.nativeSourceWaypointReached(G,a,{...node,y:node.y+.5}),false,'a higher unsupported target remains rejected');
+  assert.equal(f.nativeSourceFootSupported(G,a,{...node,y:node.y+.5}),false);
   assert.equal(f.nativeSourceWaypointReached(G,a,{...node,y:node.y-.5}),false,'a lower unrelated target remains rejected');
   a.grounded=false;assert.equal(f.nativeSourceWaypointReached(G,a,node),false,'airborne arrival remains rejected');a.grounded=true;
   const support=a._nativeWaypointGround;
@@ -42,6 +47,7 @@ test('source waypoint arrival uses the actual controller footprint on a real Hum
  }}finally{f.restoreRandom();}
  L._addBlock({kind:'box',min:[node.x+.12,node.y+.2,node.z-.08],max:[node.x+.3,node.y+.3,node.z+.08],paint:false,hidden:true});
  assert.equal(f.nativeSourceWaypointReached(G,lastActor,node),false,'a dynamic box under only the foot ring cannot substitute for original source support');
+ assert.equal(f.nativeSourceFootSupported(G,lastActor,node),false);
  assert(lastActor._nativeWaypointGround.block>=L.staticBlockCount);
  assert.equal(digest(),before,'original triangles, roles and masks remain unchanged');
  console.log(JSON.stringify({cases,sourceBuffersUnchanged:true,scope:'Standalone production Actor/Character on pinned source; natural neutral settling, no production-match or retail measurement claim'}));
