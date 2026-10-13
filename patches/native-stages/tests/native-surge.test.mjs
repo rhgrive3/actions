@@ -52,15 +52,32 @@ test('authentic Manta narrow rims retain NoPaint and obstruction negatives while
   const floor=L.triangleWorld.ray(a.pos.clone().setY(a.pos.y+.1),new THREE.Vector3(0,-1,0),.3,{minNormalY:.68});assert.ok(a.alive&&a.grounded&&a.pos.distanceTo(goal)<.6&&fire&&swim&&surge,'the real weapon/brain/controller reaches genuine supported roof '+JSON.stringify({from,hz,seconds,position:a.pos.toArray(),goal:goal.toArray(),fire,swim,surge}));assert.ok(floor&&(floor.flags&2));assert.deepEqual(Object.keys(a.s3.abilityPoints),[]);
   assert.ok(edge.climb.samples.every(s=>G.paint.sample(s.face,s.u,s.v)===a.team+1));cases.push({from,team:a.team,hz,seconds,goal:goal.toArray(),end:a.pos.toArray(),sourceLandingTriangle:floor.triangle,weapon:'shooter / Shooter_Normal_00',gearAP:0,fire,swim,surge,grounded:true,sourceCapsulesClear:true});
  }
+ const interruptionCases=[];
+ for(const hz of [30,60,120]){
+  G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();G.actors=[];
+  const edge=edges[0].edge,a=f.make('shooter');a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;a.isBot=true;a.spawnAt(new THREE.Vector3(...edge.climb.paintStance),0);a.invuln=0;G.actors=[a];
+  const away=new THREE.Vector3(...edge.climb.normal);a.aimYaw=Math.atan2(away.x,away.z);a.aimPitch=0;a.aimPoint.copy(a.pos).add(new THREE.Vector3(0,1.1,0)).addScaledVector(away,6);a.intent.fire=true;
+  const tick=()=>{G.time+=1/hz;a.character.root.position.copy(a.pos);a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);};
+  for(let i=0;i<Math.ceil(hz*.3);i++)tick();
+  a.intent.squid=true;for(let i=0;i<Math.ceil(hz*.15);i++)tick();
+  assert.ok(a.weaponRunner.s3ShooterCancelMain,'ordinary held-fire swim interruption cancels the actual Shooter stream');
+  assert.ok(edge.climb.samples.some(s=>G.paint.sample(s.face,s.u,s.v)!==a.team+1),'the interrupted shots leave a real source wall to paint');
+  const brain=a.bot=new f.BotBrain(a,'normal'),goal=new THREE.Vector3(...edge.climb.upper);assert.ok(brain._pathTo(goal,.6));brain.goalTimer=brain.repath=brain.bombCd=1000;
+  let released=false,newAdmittedShots=0;const stop=f.on('weapon:fire',event=>{if(event.actor===a)newAdmittedShots++;});
+  for(let i=0;i<hz*10;i++){brain.update(1/hz);released ||=!a.intent.fire;tick();if(a.grounded&&a.pos.distanceTo(goal)<.6)break;}
+  stop();
+  assert.ok(released&&newAdmittedShots>0&&a.grounded&&a.pos.distanceTo(goal)<.6,'ordinary fire release, new admitted projectiles and supported source ascent recover after the interruption '+JSON.stringify({hz,released,newAdmittedShots,end:a.pos.toArray(),goal:goal.toArray(),grounded:a.grounded,cancelMain:a.weaponRunner.s3ShooterCancelMain,phase:brain._nativeSurge?.phase}));
+  interruptionCases.push({hz,naturalSwimInterruption:true,ordinaryFireRelease:released,newAdmittedShots,end:a.pos.toArray(),grounded:a.grounded});
+ }
  const bankCases=[];
  for(const team of [0,1])for(const hz of [30,60,120]){
   G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();G.actors=[];const a=f.make('shooter');a._integrate=f.Actor.prototype._integrate;a._spawnBarrier=f.Actor.prototype._spawnBarrier;a.team=team;a.isBot=true;a.spawnAt(L.spawnPads[team],team?Math.PI:0);a.invuln=0;G.actors=[a];
   const targetPoint=new THREE.Vector3(team?-12:12,8,team?-30.102798461914062:30.897201538085938),to=N.nearest(targetPoint,.6),target=N.nodes[to];assert.ok(target.nativePaintable&&target.zone<0);const goal=new THREE.Vector3(target.x,target.y,target.z),brain=a.bot=new f.BotBrain(a,'normal');assert.ok(brain._pathTo(goal,.6));brain.goalTimer=brain.repath=brain.bombCd=1000;const waypoints=brain.path.length,climbs=brain.path.slice(1).filter((id,i)=>N.edgeType(brain.path[i],id)==='climb').length,drops=brain.path.slice(1).filter((id,i)=>N.nodes[brain.path[i]].nb.find(e=>e.to===id)?.drop).length;
   assert.ok(climbs>=1&&drops>=1);let seconds=0,fire=false,surge=false;
   for(let frame=0;frame<hz*90;frame++){
-   assert.ok(brain.path&&brain.goal===to,'the ordinary full-bank path stays live without goal reacquisition');G.time+=1/hz;brain.update(1/hz);fire ||=a.intent.fire;a.character.root.position.copy(a.pos);a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);surge ||=a.s3.surge?.phase==='burst';seconds=(frame+1)/hz;if(a.grounded&&a.pos.distanceTo(goal)<.75)break;
+   assert.ok(brain.path&&brain.goal===to,'the ordinary full-bank path stays live without goal reacquisition '+JSON.stringify({team,hz,frame,position:a.pos.toArray(),pi:brain.pi,plain:brain._nativeClimb&&{phase:brain._nativeClimb.phase,seconds:brain._nativeClimb.seconds,stalled:brain._nativeClimb.stalled},wall:a.wallHit,ledge:a._ledgeHit,contacts:a.contacts}));G.time+=1/hz;brain.update(1/hz);fire ||=a.intent.fire;a.character.root.position.copy(a.pos);a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);surge ||=a.s3.surge?.phase==='burst';seconds=(frame+1)/hz;if(a.grounded&&a.pos.distanceTo(goal)<.75)break;
   }
   assert.ok(a.alive&&a.grounded&&a.pos.distanceTo(goal)<.75&&fire&&surge,'the actual opposed source-bank bot route completes '+JSON.stringify({team,hz,seconds,end:a.pos.toArray(),goal:goal.toArray(),fire,surge}));bankCases.push({team,hz,seconds,sourcePad:L.spawnPads[team].toArray(),goal:goal.toArray(),end:a.pos.toArray(),waypoints,climbs,drops,replans:0,grounded:true,actualWeaponPaint:true});
  }
- assert.equal(hash(),before,'source collision, flags, chart IDs and masks remain immutable');console.log(JSON.stringify({id:'manta',sourceSha256:L.manifest.sourceSha256,nav:N.nodes.length,valid:N.validIds.length,common:N.validIds.filter(id=>both.every(s=>s.has(id))).length,cases,bankCases,sourceBuffersUnchanged:true}));
+ assert.equal(hash(),before,'source collision, flags, chart IDs and masks remain immutable');console.log(JSON.stringify({id:'manta',sourceSha256:L.manifest.sourceSha256,nav:N.nodes.length,valid:N.validIds.length,common:N.validIds.filter(id=>both.every(s=>s.has(id))).length,cases,interruptionCases,bankCases,sourceBuffersUnchanged:true}));
 });
