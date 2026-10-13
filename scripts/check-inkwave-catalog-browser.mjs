@@ -216,7 +216,7 @@ try {
       for(const id of ['booyahBomb','crabTank'])for(const equipped of [false,true]){
         const defender=makeActor('shooter'),attacker=makeActor('shooter');attacker.team=1;attacker.pos.set(0,0,5);G.actors=[defender,attacker];
         attacker.s3.loadout=emptyLoadout();if(equipped)attacker.s3.loadout[2].main='objectShredder';attacker.s3RefreshGear();
-        defender.weapon={...defender.weapon,special:id,specialCost:100};defender.special=100;defender._startSpecial();defender._updateSpecial(1/60);defender.invuln=0;
+        defender.weapon={...defender.weapon,special:id,specialCost:100};defender.special=100;defender._startSpecial();for(let t=0;t<(id==='booyahBomb'?30:1);t++)defender._updateSpecial(1/60);defender.invuln=0;
         const state=defender._s3AllSpecialState,rate=equipped?(id==='crabTank'?1.3:1.1):1,before=state.armorHP;
         defender.damage(100,attacker,'shooter');check(Math.abs(state.armorHP-(before-100*rate))<1e-8,id+' compiled target gear');
         state.armorHP=50;defender.specialActive.armorHP=50;defender.hp=100;

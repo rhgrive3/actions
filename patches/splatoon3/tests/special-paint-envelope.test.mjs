@@ -23,7 +23,7 @@ for(const seed of [.13,.37,.79])test(`powered special disk area has bounded tran
    // The retained six-direction Chump stencil has a measured one-cell loss
    // for seed .37 at AP54→57; this is bounded, not claimed strictly monotone.
    const tolerance=id==='superChump'&&seed===.37&&values[i-1].ap===54&&values[i].ap===57?.0625:0;
-   assert.ok(values[i].area+tolerance>=values[i-1].area,id+' bounded area '+values[i].ap);
+   assert.ok(values[i].area+tolerance>=values[i-1].area,id+' bounded area '+values[i].ap+' transition '+values[i-1].area+' -> '+values[i].area+' (seed '+seed+')');
   }
   assert.ok(values[2].area/values[1].area<1.05,id+' has no 3.74 tile-threshold area jump');
   const radii=id==='inkjet'?[3.2,4]:id==='superChump'?[3.5,4.1]:[3.15,3.78];
