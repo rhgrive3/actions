@@ -86,7 +86,11 @@ export function updateNativeClimb(brain,G,dt){
   const turn=(target,current)=>{let d=target-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;return current+Math.max(-6*dt,Math.min(6*dt,d));};
   brain.aimYaw=turn(yaw,brain.aimYaw);brain.aimPitch=turn(pitch,brain.aimPitch);a.aimYaw=brain.aimYaw;a.aimPitch=brain.aimPitch;
   const cp=Math.cos(a.aimPitch);a.aimPoint.copy(a.pos).add(new THREE.Vector3(Math.sin(a.aimYaw)*cp*6,1.1+Math.sin(a.aimPitch)*6,Math.cos(a.aimYaw)*cp*6));
-  it.fire=a.ink>PLAYER.inkMax*.15;it.squid=!it.fire;state.phase=it.fire?'paint':'refill';
+  // An interrupted shooter stream can require a released trigger frame before
+  // it admits another shot. Supply that normal input without changing the
+  // weapon runner's cancellation state or the actor's ink.
+  if(a.weaponRunner?.s3ShooterCancelMain){state.phase='release';}
+  else {it.fire=a.ink>PLAYER.inkMax*.15;it.squid=!it.fire;state.phase=it.fire?'paint':'refill';}
  }else{
   // The painted route is a source wall line, not the whole facade. Keep
   // ordinary sideways swim input aimed at that line after attachment too.
