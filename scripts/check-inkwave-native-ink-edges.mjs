@@ -49,12 +49,19 @@ try{
    const ink=g.levelMesh,production=ink.material,compile=production.onBeforeCompile,reference=production.clone();
    reference.onBeforeCompile=shader=>{compile(shader);if(!shader.fragmentShader.includes('diffuseColor.a *= gInk;'))throw Error('Coverage-alpha patch missing');shader.fragmentShader=shader.fragmentShader.replace('diffuseColor.a *= gInk;','');};
    reference.onBeforeRender=production.onBeforeRender;reference.customProgramCacheKey=()=> 'native-ink-edge-old-opaque-control';
+   const productionKey=production.customProgramCacheKey;let currentMode=null;
+   const setStyle=material=>{
+    const mode=material===production?'fixed':material===reference?'old':'core';
+    if(mode===currentMode)return;currentMode=mode;
+    production.onBeforeCompile=shader=>{compile(shader);if(mode!=='fixed')shader.fragmentShader=shader.fragmentShader.replace('diffuseColor.a *= gInk;','');if(mode==='core')shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>','if (gInk < 1.0) discard;\n#include <opaque_fragment>');};
+    production.customProgramCacheKey=mode==='fixed'?productionKey:()=> 'native-ink-edge-same-material-'+mode;production.needsUpdate=true;
+   };
    const camera=G.camera.clone();G.camera.position.copy(probe.target).addScaledVector(G.level.faces[probe.face].n,4);G.camera.lookAt(probe.target);G.camera.updateMatrixWorld();
    const target=new T.WebGLRenderTarget(480,320),previous=r.getRenderTarget(),background=G.scene.background,clear=r.getClearColor(new T.Color()),clearAlpha=r.getClearAlpha();
    const visible=G.scene.children.map(o=>[o,o.visible]),characters=G.actors.map(a=>[a.character.root,a.character.root.visible]);
    const hooks=new Map();G.scene.traverse(o=>{if(o.isMesh&&o!==ink){hooks.set(o,o.onBeforeRender);o.onBeforeRender=()=>{};}});
    const grid=G.paint.grid.slice(),read=()=>{const b=new Uint8Array(480*320*4);r.readRenderTargetPixels(target,0,0,480,320,b);return b;};
-   const draw=(material,on=true)=>{ink.material=material;ink.visible=on;r.clear();r.render(G.scene,G.camera);gl.finish();return read();};
+   const draw=(material,on=true)=>{setStyle(material);ink.material=production;ink.visible=on;r.clear();r.render(G.scene,G.camera);gl.finish();return read();};
    let metrics;
    try{
     r.setRenderTarget(target);G.scene.background=null;r.setClearColor(0,0);
@@ -85,17 +92,17 @@ try{
     const core=reference.clone();core.onBeforeRender=production.onBeforeRender;
     core.onBeforeCompile=shader=>{reference.onBeforeCompile(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>','if (gInk < 1.0) discard;\n#include <opaque_fragment>');};
     core.customProgramCacheKey=()=> 'native-ink-edge-source-face-solid-control';
-    let isolatedOpaqueCenters=0,isolatedOpaqueColorErrors=0;
+    let isolatedOpaqueCenters=0,isolatedOpaqueColorErrors=0,isolatedMaxChannelError=0;const isolatedDifferences=[];
     try{
      for(const [o] of visible)if(o!==ink&&!o.isLight)o.visible=false;ink.visible=false;G.scene.background=null;r.setClearColor(0,0);
-     const focusDraw=material=>{focus.material=material;r.clear();r.render(G.scene,G.camera);gl.finish();return read();};
+     const focusDraw=material=>{setStyle(material);focus.material=production;r.clear();r.render(G.scene,G.camera);gl.finish();return read();};
      focusDraw(core);focusDraw(production);const oldCore=focusDraw(core),newCore=focusDraw(production);
-     for(let i=0;i<oldCore.length;i+=4)if(oldCore[i+3]===255){isolatedOpaqueCenters++;if([0,1,2,3].some(k=>oldCore[i+k]!==newCore[i+k]))isolatedOpaqueColorErrors++;}
+     for(let i=0;i<oldCore.length;i+=4)if(oldCore[i+3]===255){isolatedOpaqueCenters++;if([0,1,2,3].some(k=>oldCore[i+k]!==newCore[i+k])){isolatedOpaqueColorErrors++;for(let k=0;k<4;k++)isolatedMaxChannelError=Math.max(isolatedMaxChannelError,Math.abs(oldCore[i+k]-newCore[i+k]));if(isolatedDifferences.length<8)isolatedDifferences.push({x:(i/4)%480,y:Math.floor(i/4/480),old:Array.from(oldCore.subarray(i,i+4)),fixed:Array.from(newCore.subarray(i,i+4))});}}
     }finally{focus.removeFromParent();focusGeometry.dispose();core.dispose();}
-    metrics={oldOpaqueRemoved,opaqueCenters,wholeSourceOpaqueColorDifferences:opaqueColorErrors,partialPixels,fixedSelfPixels,sourceRestored,oldSourceObscured,isolatedOpaqueCenters,isolatedOpaqueColorErrors};
-    globalThis.nativeInkEdgeScreenshot={reference,production,camera};
+    metrics={oldOpaqueRemoved,opaqueCenters,wholeSourceOpaqueColorDifferences:opaqueColorErrors,partialPixels,fixedSelfPixels,sourceRestored,oldSourceObscured,isolatedOpaqueCenters,isolatedOpaqueColorErrors,isolatedMaxChannelError,isolatedDifferences};
+    globalThis.nativeInkEdgeScreenshot={reference,production,camera,setStyle};
    }finally{
-    ink.material=production;ink.visible=true;for(const [o,v] of visible)o.visible=v;for(const [root,v] of characters)root.visible=v;
+    setStyle(production);ink.material=production;ink.visible=true;for(const [o,v] of visible)o.visible=v;for(const [root,v] of characters)root.visible=v;
     for(const [o,hook] of hooks)o.onBeforeRender=hook;r.setRenderTarget(previous);r.setClearColor(clear,clearAlpha);G.scene.background=background;target.dispose();
    }
    if(grid.some((v,i)=>v!==G.paint.grid[i]))throw Error('Shader comparison changed gameplay paint');
@@ -104,13 +111,13 @@ try{
    return {id:G.level.layout.id,sourceSha256:G.level.manifest.sourceSha256,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,weapon:a.weaponId,sourceWeapon:a.weapon.sourceMainActor,sourceObject:probe.sourceObject,face:probe.face,triangle:probe.triangle,admitted,naturalWallSplats,cpuPaintUnchanged:true,...metrics};
   });
   proof.errors=errors;result.stages.push(proof);save();console.log(JSON.stringify(proof));
+  await p.screenshot({path:path.join(out,id+'-fixed.png')});
+  await p.evaluate(()=>{nativeInkEdgeScreenshot.setStyle(nativeInkEdgeScreenshot.reference);NG.renderer.render(NG.scene,NG.camera);});
+  await p.screenshot({path:path.join(out,id+'-old.png')});
+  await p.evaluate(()=>{nativeInkEdgeScreenshot.setStyle(nativeInkEdgeScreenshot.production);nativeInkEdgeScreenshot.reference.dispose();NG.camera.copy(nativeInkEdgeScreenshot.camera);});
   assert.equal(errors.length,0);assert.equal(proof.actors,8);assert.equal(proof.bots,7);assert(proof.oldOpaqueRemoved>50,'Old opaque fringe counterexample absent');
   assert(proof.oldSourceObscured>20,'Old fringe did not obscure source texture');assert.equal(proof.sourceRestored,proof.oldOpaqueRemoved,'Outside-ink source pixels not restored');
   assert(proof.isolatedOpaqueCenters>50);assert.equal(proof.isolatedOpaqueColorErrors,0,'Isolated solid original-face ink colour changed');assert.equal(proof.fixedSelfPixels,0);assert(proof.partialPixels>0,'Antialiased edge disappeared');
-  await p.screenshot({path:path.join(out,id+'-fixed.png')});
-  await p.evaluate(()=>{NG.game.levelMesh.material=nativeInkEdgeScreenshot.reference;NG.renderer.render(NG.scene,NG.camera);});
-  await p.screenshot({path:path.join(out,id+'-old.png')});
-  await p.evaluate(()=>{NG.game.levelMesh.material=nativeInkEdgeScreenshot.production;nativeInkEdgeScreenshot.reference.dispose();NG.camera.copy(nativeInkEdgeScreenshot.camera);});
   await c.close();
  }
  result.status='passed';
