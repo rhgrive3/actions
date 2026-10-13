@@ -1,0 +1,213 @@
+{
+  "cases": [
+    {
+      "hz": 30,
+      "node": {
+        "x": 10.2,
+        "y": 2.204948592,
+        "z": -1.4
+      },
+      "feet": [
+        10.2,
+        2.3654926717066083,
+        -1.4
+      ],
+      "centreTriangle": 95004,
+      "footprintY": 2.3654926717066083,
+      "footprintBlock": 14774,
+      "centreHeightDifference": 0.16054407970660822,
+      "productionActor": true,
+      "productionCharacter": true,
+      "weapon": "Shooter_Normal_00",
+      "gearAP": 0
+    },
+    {
+      "hz": 60,
+      "node": {
+        "x": 10.2,
+        "y": 2.204948592,
+        "z": -1.4
+      },
+      "feet": [
+        10.2,
+        2.3654926717066083,
+        -1.4
+      ],
+      "centreTriangle": 95004,
+      "footprintY": 2.3654926717066083,
+      "footprintBlock": 14774,
+      "centreHeightDifference": 0.16054407970660822,
+      "productionActor": true,
+      "productionCharacter": true,
+      "weapon": "Shooter_Normal_00",
+      "gearAP": 0
+    },
+    {
+      "hz": 120,
+      "node": {
+        "x": 10.2,
+        "y": 2.204948592,
+        "z": -1.4
+      },
+      "feet": [
+        10.2,
+        2.3654926717066083,
+        -1.4
+      ],
+      "centreTriangle": 95004,
+      "footprintY": 2.3654926717066083,
+      "footprintBlock": 14774,
+      "centreHeightDifference": 0.16054407970660822,
+      "productionActor": true,
+      "productionCharacter": true,
+      "weapon": "Shooter_Normal_00",
+      "gearAP": 0
+    }
+  ],
+  "sourceBuffersUnchanged": true,
+  "scope": "Standalone production Actor/Character on pinned source; natural neutral settling, no production-match or retail measurement claim",
+  "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "sourceSha256": "fcff18651320c4855b2af6278ad726aa7a8fbb4021c0329913163082a29e604d",
+  "referenceVersion": "Splatoon 3 11.3.0 identity only; extracted export version unverified",
+  "validation": {
+    "standaloneProductionCharacterRates": [
+      30,
+      60,
+      120
+    ],
+    "defaultAndUnsupportedGuardsPassed": true,
+    "browserWholeBank": {
+      "status": "passed",
+      "buildFingerprint": "b88ab1732a3e3b6be936392375ca7e2f3903a59bef7a972cd4e020434cccaef4",
+      "supportSourceSha256": "deb8bb81409eb871686c914b94b09b88e7151c9fa2c1a65fcaa3d64b40ffc330",
+      "samePublicSourceIdentityVerified": true,
+      "cases": [
+        {
+          "team": 0,
+          "hz": 30,
+          "seconds": 39.56666666666667,
+          "sourceTriangle": 91858,
+          "pathNodes": 96,
+          "maxTravel": 95.21069810576715,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "refillGoalReplans": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "team": 0,
+          "hz": 60,
+          "seconds": 37.63333333333333,
+          "sourceTriangle": 91858,
+          "pathNodes": 96,
+          "maxTravel": 95.19949713553927,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "refillGoalReplans": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "team": 0,
+          "hz": 120,
+          "seconds": 36.625,
+          "sourceTriangle": 91858,
+          "pathNodes": 96,
+          "maxTravel": 95.20714694215366,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "refillGoalReplans": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "team": 1,
+          "hz": 30,
+          "seconds": 37.86666666666667,
+          "sourceTriangle": 91910,
+          "pathNodes": 97,
+          "maxTravel": 95.61464123226578,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "refillGoalReplans": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "team": 1,
+          "hz": 60,
+          "seconds": 34.3,
+          "sourceTriangle": 91910,
+          "pathNodes": 97,
+          "maxTravel": 95.57647275239303,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "refillGoalReplans": 0,
+          "alive": true,
+          "grounded": true
+        },
+        {
+          "team": 1,
+          "hz": 120,
+          "seconds": 34.516666666666666,
+          "sourceTriangle": 91910,
+          "pathNodes": 97,
+          "maxTravel": 95.56920486939595,
+          "actors": 8,
+          "aliveActors": 8,
+          "bots": 7,
+          "refillGoalReplans": 0,
+          "alive": true,
+          "grounded": true
+        }
+      ],
+      "conditions": "Real native Turf match, controlled supported original source pad starts; production Actor/Character/BotBrain/WeaponShooterNormal/Projectiles, zero AP, initially empty ink, ordinary inputs, no position/velocity/ink writes after setup; SwiftShader; not retail/hardware FPS"
+    },
+    "hardwareFPS": "unverified",
+    "retailFootprintAndNavigation": "unverified",
+    "dynamicFootRingSubstitutionRejected": true,
+    "finalSourceRegression": {
+      "tests": 4,
+      "passed": 3,
+      "explicitBluefinAssetSkip": 1,
+      "failures": 0
+    },
+    "publicBuild": {
+      "contentHash": "3b5dadf306647afcaf95748d36b7830ab29ab46e259fa4ede468fa841101d1e0",
+      "inputHash": "b9daca02b0e8e064c3809e3dccb034853ec862e740cc6bdf5c215efdf686b9bf",
+      "packaging": {
+        "tests": 9,
+        "passed": 9,
+        "skipped": 0,
+        "failed": 0
+      },
+      "startupBudget": "passed"
+    },
+    "independentHumpbackOwnerCPU": {
+      "passed": 5,
+      "skipped": 0,
+      "failed": 0,
+      "cases": 6,
+      "rates": [
+        30,
+        60,
+        120
+      ],
+      "teams": [
+        0,
+        1
+      ],
+      "genuineOpposingBowlRoute": true,
+      "sourceActorCharacterBotBrain": true,
+      "ordinaryInputsOnly": true,
+      "noRefillGoalReselectionUsed": true,
+      "receipt": "Humpback private source-banks-foot-candidate.json; CPU 205.08 seconds, not browser timing"
+    }
+  }
+}

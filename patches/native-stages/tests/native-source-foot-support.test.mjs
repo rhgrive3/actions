@@ -14,13 +14,14 @@ test('source waypoint arrival uses the actual controller footprint on a real Hum
  assert.equal(L.manifest.sourceNavigation.highDrops,true);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;this.dryMesh={visible:false};this._dryU={uDry:{value:0}};} _pushQuad(){} _drawQuads(){}}
  G.camera=new THREE.PerspectiveCamera();G.match.mode='turf';G.match.opts={};
- const node={x:10.2,y:2.204948592,z:-1.4},cases=[];
+ const node={x:10.2,y:2.204948592,z:-1.4},cases=[];let lastActor;
  const centre=P.raycast(new THREE.Vector3(node.x,node.y+.1,node.z),new THREE.Vector3(0,-1,0),.3);
  assert(centre.hit&&centre.triangle===95004);assert(Math.abs(centre.point.y-node.y)<1e-7);
  f.setRandom(()=>.5);
  try{for(const hz of [30,60,120]){
   G.paint=new Cpu(null,L,{atlasSize:2048,maxDensity:4,cell:.25});G.projectiles.clear();
   const a=new f.Actor({team:1,weapon:'shooter',CharacterClass:f.Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
+  lastActor=a;
   a.spawnAt(new THREE.Vector3(node.x,node.y,node.z),0);G.actors=[a];
   for(let frame=0;frame<hz;frame++){G.time+=1/hz;a.update(1/hz);G.projectiles.update(1/hz);G.paint.advanceSimulation(1/hz);}
   assert(a.alive&&a.grounded);assert(Math.abs(a.pos.y-node.y)>.16,'reproduce the rejected real footprint height');
@@ -39,6 +40,9 @@ test('source waypoint arrival uses the actual controller footprint on a real Hum
   a.form='kid';P.groundProbe=probe;
   cases.push({hz,node,feet:position,centreTriangle:centre.triangle,footprintY:support.y,footprintBlock:support.block,centreHeightDifference:a.pos.y-node.y,productionActor:true,productionCharacter:true,weapon:'Shooter_Normal_00',gearAP:0});
  }}finally{f.restoreRandom();}
+ L._addBlock({kind:'box',min:[node.x+.12,node.y+.2,node.z-.08],max:[node.x+.3,node.y+.3,node.z+.08],paint:false,hidden:true});
+ assert.equal(f.nativeSourceWaypointReached(G,lastActor,node),false,'a dynamic box under only the foot ring cannot substitute for original source support');
+ assert(lastActor._nativeWaypointGround.block>=L.staticBlockCount);
  assert.equal(digest(),before,'original triangles, roles and masks remain unchanged');
  console.log(JSON.stringify({cases,sourceBuffersUnchanged:true,scope:'Standalone production Actor/Character on pinned source; natural neutral settling, no production-match or retail measurement claim'}));
 });
