@@ -3,6 +3,7 @@
 import {nativeTowerClearance} from './native-tower-clearance.mjs';
 import {nativeArenaBasis} from './native-spawn.mjs';
 import {nativeTowerBoarding} from './native-tower-boarding.mjs';
+import {nativeTowerStartIndex} from './native-tower-calibration.mjs';
 import {nativeStageRuleStatus} from './rule-availability.mjs';
 const sourceStageCache=new WeakMap();
 const playableSourceCache=new WeakMap();
@@ -91,7 +92,7 @@ export function nativeTowerRoute(G,common,paintable,middle,ends,mx,mz,dz){
   if(!(projected(first)<-clearance.radius&&projected(last)>clearance.radius))return null;
   if(path.length<3||path.some((p,i)=>!clearance.clear(p,path[Math.max(0,i-1)])))return null;
   const approaches=ids.map((id,i)=>boarding.find(id,path[i]));if(approaches.some(p=>!p))return null;
-  return {path,arenaSpan:{origin:[mx,mz],forward:[basis.forward.x,basis.forward.z],endpointProjection:[projected(first),projected(last)],minimumHalfDepth:clearance.radius,bothHalvesVerified:true},centerIndex:a.length-1,halfSize:clearance.halfSize,localLift:lift,boarding:{maxJumpHeight:boarding.maxJumpHeight,metrics:{...boarding.metrics},approaches,assurance:boarding.assurance},sourceClearance:{...clearance.metrics,radius:clearance.radius,height:clearance.height,assurance:clearance.assurance}};
+  return {path,arenaSpan:{origin:[mx,mz],forward:[basis.forward.x,basis.forward.z],endpointProjection:[projected(first),projected(last)],minimumHalfDepth:clearance.radius,bothHalvesVerified:true},centerIndex:nativeTowerStartIndex(path),halfSize:clearance.halfSize,localLift:lift,boarding:{maxJumpHeight:boarding.maxJumpHeight,metrics:{...boarding.metrics},approaches,assurance:boarding.assurance},sourceClearance:{...clearance.metrics,radius:clearance.radius,height:clearance.height,assurance:clearance.assurance}};
  };
  const original=route(N,middle.id,ends[0].id,ends[1].id,3.3);if(original)return original;
  const attempts=[];
