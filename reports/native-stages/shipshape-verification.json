@@ -9495,5 +9495,426 @@
     "opposingPadsRetained": true,
     "geometryOverride": false,
     "stageReady": false
+  },
+  "currentMainSourceRender": {
+    "artifact": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
+    "runtimeScope": "accepted846 + accepted ordinary source JumpAttach, before accepted ordinary-floor metadata/code reseal",
+    "receipt": {
+      "status": "passed",
+      "measurement": "Chromium SwiftShader; warm then freeze unrelated per-draw mesh hooks; timing retains eight actors; pixel comparison hides character roots to isolate stage rendering; alternating renders; not mobile hardware",
+      "stages": [
+        {
+          "id": "shipshape",
+          "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+          "actors": 8,
+          "chunks": 718,
+          "tileSize": 16,
+          "views": [
+            {
+              "name": "gameplay",
+              "changedPixels": 0,
+              "maxChannelError": 0,
+              "baselineSelfPixels": 0,
+              "chunkedSelfPixels": 0,
+              "differences": [],
+              "pixels": 153600,
+              "baseline": {
+                "milliseconds": 2.8999999910593033,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 12818616,
+                "calls": 2980,
+                "p50": 5.0999999940395355,
+                "p95": 15.300000011920929,
+                "samples": [
+                  5.0999999940395355,
+                  15.300000011920929,
+                  6.199999988079071,
+                  4.799999997019768,
+                  4.300000011920929,
+                  2.8999999910593033
+                ]
+              },
+              "chunked": {
+                "milliseconds": 4.5,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 158696,
+                "inkCalls": 1,
+                "triangles": 11980999,
+                "calls": 2794,
+                "p50": 7.600000008940697,
+                "p95": 24,
+                "samples": [
+                  24,
+                  17.19999998807907,
+                  7.600000008940697,
+                  5.5999999940395355,
+                  4.5,
+                  4.5
+                ]
+              }
+            },
+            {
+              "name": "center",
+              "changedPixels": 0,
+              "maxChannelError": 0,
+              "baselineSelfPixels": 0,
+              "chunkedSelfPixels": 0,
+              "differences": [],
+              "pixels": 153600,
+              "baseline": {
+                "milliseconds": 8.399999991059303,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 27900174,
+                "calls": 6260,
+                "p50": 4,
+                "p95": 8.399999991059303,
+                "samples": [
+                  4,
+                  2.7000000029802322,
+                  2.5999999940395355,
+                  7,
+                  3.2000000029802322,
+                  8.399999991059303
+                ]
+              },
+              "chunked": {
+                "milliseconds": 2.300000011920929,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 106119,
+                "inkCalls": 1,
+                "triangles": 27071444,
+                "calls": 6090,
+                "p50": 2.7000000029802322,
+                "p95": 3,
+                "samples": [
+                  2.8999999910593033,
+                  2.7000000029802322,
+                  2.7000000029802322,
+                  3,
+                  2.3999999910593033,
+                  2.300000011920929
+                ]
+              }
+            },
+            {
+              "name": "overhead",
+              "changedPixels": 0,
+              "maxChannelError": 0,
+              "baselineSelfPixels": 0,
+              "chunkedSelfPixels": 0,
+              "differences": [],
+              "pixels": 153600,
+              "baseline": {
+                "milliseconds": 8.800000011920929,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 44566994,
+                "calls": 10216,
+                "p50": 5.699999988079071,
+                "p95": 8.800000011920929,
+                "samples": [
+                  3.4000000059604645,
+                  5.699999988079071,
+                  2.800000011920929,
+                  6.0999999940395355,
+                  4.300000011920929,
+                  8.800000011920929
+                ]
+              },
+              "chunked": {
+                "milliseconds": 13.599999994039536,
+                "selectionMilliseconds": 8.099999994039536,
+                "indexChanged": false,
+                "inkTriangles": 211382,
+                "inkCalls": 1,
+                "triangles": 43685749,
+                "calls": 10005,
+                "p50": 2.4000000059604645,
+                "p95": 13.599999994039536,
+                "samples": [
+                  2.4000000059604645,
+                  2,
+                  2.2999999970197678,
+                  2.2999999970197678,
+                  12.099999994039536,
+                  13.599999994039536
+                ]
+              }
+            }
+          ],
+          "moving": [
+            {
+              "frame": 0,
+              "baseline": {
+                "milliseconds": 5.899999991059303,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 48386864,
+                "calls": 10987
+              },
+              "chunked": {
+                "milliseconds": 5.100000008940697,
+                "selectionMilliseconds": 1.0999999940395355,
+                "indexChanged": true,
+                "inkTriangles": 139111,
+                "inkCalls": 1,
+                "triangles": 49129108,
+                "calls": 11178
+              }
+            },
+            {
+              "frame": 1,
+              "baseline": {
+                "milliseconds": 4.4000000059604645,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 50721771,
+                "calls": 11560
+              },
+              "chunked": {
+                "milliseconds": 5.799999997019768,
+                "selectionMilliseconds": 1,
+                "indexChanged": true,
+                "inkTriangles": 149918,
+                "inkCalls": 1,
+                "triangles": 49882159,
+                "calls": 11369
+              }
+            },
+            {
+              "frame": 2,
+              "baseline": {
+                "milliseconds": 4.5,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 51549602,
+                "calls": 11742
+              },
+              "chunked": {
+                "milliseconds": 7.200000002980232,
+                "selectionMilliseconds": 1.2000000029802322,
+                "indexChanged": true,
+                "inkTriangles": 152790,
+                "inkCalls": 1,
+                "triangles": 52293744,
+                "calls": 11924
+              }
+            },
+            {
+              "frame": 3,
+              "baseline": {
+                "milliseconds": 2.5999999940395355,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 53867034,
+                "calls": 12288
+              },
+              "chunked": {
+                "milliseconds": 6.700000002980232,
+                "selectionMilliseconds": 1.5,
+                "indexChanged": true,
+                "inkTriangles": 154107,
+                "inkCalls": 1,
+                "triangles": 53039203,
+                "calls": 12106
+              }
+            },
+            {
+              "frame": 4,
+              "baseline": {
+                "milliseconds": 2.800000011920929,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 54694865,
+                "calls": 12470
+              },
+              "chunked": {
+                "milliseconds": 8,
+                "selectionMilliseconds": 1.2000000029802322,
+                "indexChanged": true,
+                "inkTriangles": 152172,
+                "inkCalls": 1,
+                "triangles": 55438389,
+                "calls": 12652
+              }
+            },
+            {
+              "frame": 5,
+              "baseline": {
+                "milliseconds": 13.799999997019768,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 57036853,
+                "calls": 13032
+              },
+              "chunked": {
+                "milliseconds": 19.400000005960464,
+                "selectionMilliseconds": 1.2999999970197678,
+                "indexChanged": true,
+                "inkTriangles": 156599,
+                "inkCalls": 1,
+                "triangles": 56197681,
+                "calls": 12842
+              }
+            },
+            {
+              "frame": 6,
+              "baseline": {
+                "milliseconds": 9.100000008940697,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 57875324,
+                "calls": 13218
+              },
+              "chunked": {
+                "milliseconds": 10.199999988079071,
+                "selectionMilliseconds": 1.2999999970197678,
+                "indexChanged": true,
+                "inkTriangles": 165454,
+                "inkCalls": 1,
+                "triangles": 58642770,
+                "calls": 13404
+              }
+            },
+            {
+              "frame": 7,
+              "baseline": {
+                "milliseconds": 8.200000002980232,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 60247850,
+                "calls": 13782
+              },
+              "chunked": {
+                "milliseconds": 15.399999991059303,
+                "selectionMilliseconds": 1.300000011920929,
+                "indexChanged": true,
+                "inkTriangles": 163223,
+                "inkCalls": 1,
+                "triangles": 59408682,
+                "calls": 13593
+              }
+            },
+            {
+              "frame": 8,
+              "baseline": {
+                "milliseconds": 4,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 61087018,
+                "calls": 13971
+              },
+              "chunked": {
+                "milliseconds": 10.700000002980232,
+                "selectionMilliseconds": 5.4000000059604645,
+                "indexChanged": true,
+                "inkTriangles": 161788,
+                "inkCalls": 1,
+                "triangles": 61851495,
+                "calls": 14160
+              }
+            },
+            {
+              "frame": 9,
+              "baseline": {
+                "milliseconds": 33.30000001192093,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 63425198,
+                "calls": 14522
+              },
+              "chunked": {
+                "milliseconds": 10.099999994039536,
+                "selectionMilliseconds": 1.199999988079071,
+                "indexChanged": true,
+                "inkTriangles": 154528,
+                "inkCalls": 1,
+                "triangles": 62597371,
+                "calls": 14341
+              }
+            },
+            {
+              "frame": 10,
+              "baseline": {
+                "milliseconds": 9.400000005960464,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 64224206,
+                "calls": 14691
+              },
+              "chunked": {
+                "milliseconds": 9.599999994039536,
+                "selectionMilliseconds": 1.2999999970197678,
+                "indexChanged": true,
+                "inkTriangles": 134662,
+                "inkCalls": 1,
+                "triangles": 64921397,
+                "calls": 14860
+              }
+            },
+            {
+              "frame": 11,
+              "baseline": {
+                "milliseconds": 7,
+                "selectionMilliseconds": 0,
+                "indexChanged": false,
+                "inkTriangles": 236479,
+                "inkCalls": 1,
+                "triangles": 66416292,
+                "calls": 15198
+              },
+              "chunked": {
+                "milliseconds": 13,
+                "selectionMilliseconds": 1.199999988079071,
+                "indexChanged": true,
+                "inkTriangles": 133358,
+                "inkCalls": 1,
+                "triangles": 65617284,
+                "calls": 15029
+              }
+            }
+          ],
+          "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "authoritiesUnchanged": true,
+          "cpuPaintUnchanged": true,
+          "version1130Verified": false
+        }
+      ],
+      "errors": []
+    },
+    "hardwareFpsClaim": false,
+    "gameplayTimingRegressionRetained": true
   }
 }
