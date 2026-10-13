@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { nativeFixture,readStage } from './fixture.mjs';
-import { prepareNativeStageBuild } from '../../../scripts/lib/inkwave-native-stages.mjs';
+import { prepareNativeStageBuild,nativeStageCatalog } from '../../../scripts/lib/inkwave-native-stages.mjs';
 import path from 'node:path';
 import {nativeStageRuleStatus} from '../runtime/rule-availability.mjs';
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
@@ -54,7 +54,7 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
  const start=performance.now();G.nav=new f.NavGraph(level,physics);
  assert.ok(G.nav.validIds.length>100);const stage=f.nativeRankedStage(G);
  assert.equal(stage.version1130Verified,false);assert.match(stage.calibration,/UNVERIFIED/);
- const capability=nativeStageRuleStatus(id,'tower');
+ const capability=nativeStageRuleStatus(id,'tower',nativeStageCatalog().stages);
  if(capability?.supported===false){
   assert.equal(capability.status,'source-route-unverified');assert.ok(capability.reason);
   assert.equal(stage.tower.supported,false);assert.equal(stage.tower.path.length,0);assert.equal(stage.ruleAvailability.tower.status,'source-route-unverified');
