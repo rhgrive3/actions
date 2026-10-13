@@ -2,6 +2,7 @@
  * The Pnt display mesh is shared by all rules until original placement data exists. */
 import {nativeTowerClearance} from './native-tower-clearance.mjs';
 import {nativeArenaBasis} from './native-spawn.mjs';
+import {nativeStageRuleStatus} from './rule-availability.mjs';
 // Kosaraju without recursion: source stages can contain thousands of ledges.
 // A tiny elevated floor near XZ center must not become the whole ranked arena.
 export function nativeRankedComponent(N,paintable,spawnIds=[]){
@@ -20,7 +21,7 @@ export function nativeRankedComponent(N,paintable,spawnIds=[]){
  if(best<0||groups[best].length<10)throw Error('Native ranked center component is too small');
  return {common:groups[best],paintable:paintable.filter(id=>component[id]===best&&(!reachable||reachable[id])),reachable:N.validIds.filter(id=>!reachable||reachable[id]),reachablePaintable:paintable.filter(id=>!reachable||reachable[id])};
 }
-export function nativeRankedStage(G){
+export function nativeRankedStage(G,requiredMode=null){
  const L=G.level,N=G.nav;if(!L?.native||!N?.validIds.length)throw Error('No reachable native ranked navigation');
  const all=N.validIds;
  const nearest=(ids,x,z)=>{let best=null,score=Infinity;for(const id of ids){const n=N.nodes[id];if(n.zone>=0)continue;const d=(n.x-x)**2+(n.z-z)**2;if(d<score){score=d;best=n;}}return best;};
@@ -40,11 +41,17 @@ export function nativeRankedStage(G){
  if(!paintable.length)throw Error('Native ranked stage has no live paint floor');
  const playable=nativeRankedComponent(N,paintable,L.spawnPads.map(p=>N.nearest(p,1.2))),common=playable.common,middle=nearest(playable.paintable,mx,mz);
  const pick=(along,lateral=0)=>nearest(common,...point(along,lateral)),ends=[pick(-dz),pick(dz)];
- const tower=nativeTowerRoute(G,playable.reachable,playable.reachablePaintable,middle,ends,mx,mz,dz);
+ const configured=nativeStageRuleStatus(L.layout.id,'tower');let tower;
+ if(configured?.supported===false)tower={...configured,path:[]};
+ else try{tower={supported:true,...nativeTowerRoute(G,playable.reachable,playable.reachablePaintable,middle,ends,mx,mz,dz)};}catch(error){
+  if(error.code!=='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED')throw error;
+  tower={supported:false,status:'source-route-unverified',reason:'安全なヤグラ経路を確認できないため、このルールは利用できません。',evidence:error.message,path:[]};
+ }
+ if(requiredMode==='tower'&&!tower.supported){const error=new RangeError(tower.reason);error.code='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED';throw error;}
  const v=n=>[n.x,n.y,n.z],goals=[v(ends[1]),v(ends[0])],checkpoints=[[v(pick(dz*.5))],[v(pick(-dz*.5))]];
  const clams=[-1,1].flatMap(s=>[-1,0,1].map(t=>v(pick(s*dz*.6,t*6))));
  const projectedOrigin=mx*axis.x+mz*axis.z;
- return {id:L.layout.id,zones:[{center:v(middle),size:[6,6]}],
+ return {id:L.layout.id,ruleAvailability:{tower:{supported:tower.supported,status:tower.status||'source-clear-local',reason:tower.reason||null}},zones:[{center:v(middle),size:[6,6]}],
   tower:{...tower,speed:1.2,checkpoints:[[{progress:.6,count:5}],[{progress:.6,count:5}]]},
   rainmaker:{center:v(middle),goals,checkpoints,retreatZ:[projectedOrigin-dz*1.7,projectedOrigin+dz*1.7],nativeRetreatAxis:[axis.x,axis.z]},clams:{spawns:clams,goals},
   calibration:'LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED.',version1130Verified:false};
@@ -82,5 +89,5 @@ export function nativeTowerRoute(G,common,paintable,middle,ends,mx,mz,dz){
   const calibrated=route(graph,center,first,last,lift);if(calibrated)return calibrated;
   attempts.push({halfSize,lift,allowed:common.filter(id=>allowed[id]).length,component:selected.common.length,center,first,last});
  }
- throw Error('Native ranked source has no clear supported tower route: '+JSON.stringify(attempts));
+ const error=new Error('Native ranked source has no clear supported tower route: '+JSON.stringify(attempts));error.code='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED';throw error;
 }

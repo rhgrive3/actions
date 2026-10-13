@@ -53,7 +53,11 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
  const start=performance.now();G.nav=new f.NavGraph(level,physics);
  assert.ok(G.nav.validIds.length>100);const stage=f.nativeRankedStage(G);
  assert.equal(stage.version1130Verified,false);assert.match(stage.calibration,/UNVERIFIED/);
- assert.ok(stage.tower.path.length>2);
+ if(id==='hagglefish'){
+  assert.equal(stage.tower.supported,false);assert.equal(stage.tower.path.length,0);assert.equal(stage.ruleAvailability.tower.status,'source-route-unverified');
+  assert.throws(()=>f.nativeRankedStage(G,'tower'),e=>e.code==='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED');
+  for(const mode of ['zones','rainmaker','clams'])assert.ok(f.nativeRankedStage(G,mode)[mode==='zones'?'zones':mode]);
+ }else assert.ok(stage.tower.supported&&stage.tower.path.length>2);
  for(const p of [...stage.rainmaker.goals,stage.rainmaker.center])assert.ok(Number.isFinite(level.groundHeight(p[0],p[2])));
  G.match.mode='turf';G.match.opts={};
  const spawned=f.make();assert.equal(f.beginInitialSquidSpawn(spawned),true);assert.ok(spawned.s3.squidSpawn.target,'initial landing fallback is supported');
