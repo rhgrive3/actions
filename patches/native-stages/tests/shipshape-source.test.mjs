@@ -59,6 +59,15 @@ test('Shipshape every pinned MTL and PNG matches Git blob SHA1 and byte count',{
  console.log(JSON.stringify({id:spec.id,pinnedMtlPngBlobs:verified,sourceBytes:bytes,allGitBlobSha1AndBytesIdentical:true}));
 });
 
+test('Shipshape every converted source PNG retains the complete original bytes',{skip:!source||!assets},()=>{
+ const out=path.join(assets,spec.id),manifest=JSON.parse(fs.readFileSync(path.join(out,'manifest.json')));let files=0,bytes=0;
+ for(const [name,pin] of Object.entries(manifest.textureIntegrity)){
+  const original=fs.readFileSync(path.join(source,spec.internal,name)),converted=fs.readFileSync(path.join(out,name));
+  assert.deepEqual(converted,original,name+' every byte');assert.equal(converted.length,pin.bytes);assert.equal(sha(converted),pin.sha256);files++;bytes+=converted.length;
+ }
+ assert.equal(files,237);console.log(JSON.stringify({id:spec.id,convertedSourcePngFiles:files,bytes,everyOriginalPngByteRetained:true}));
+});
+
 test('Shipshape only two malformed unplaced crane source roles change; hull and roof contacts remain',{skip:!source||!assets},async()=>{
  const f=await nativeFixture(),{THREE}=f;
  const original=parseSourceOBJ(fs.readFileSync(path.join(source,spec.internal,spec.internal+'.obj'),'utf8'));
