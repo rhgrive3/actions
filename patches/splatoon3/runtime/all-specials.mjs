@@ -841,6 +841,9 @@ function deployObject(rt, actor, id, kind, pos, state, extra={}) {
   const spec=SPECIALS[id], object={
     kind,id,owner:actor,team:actor.team,specialPowerAP:state.specialPowerAP||0,activation:state.serial,serial:(state.objectSerial=((state.objectSerial||0)+1)),
     pos:pos.clone(),age:0,dur:extra.dur??spec.duration,maxRadius:extra.maxRadius??spec.radius,
+    // The deploy packet is emitted in this constructor. Snapshot the WaveParam
+    // source lifetime before the first packet, not after creating the device.
+    maxWaveFrame:finite(extra.maxWaveFrame)&&extra.maxWaveFrame>0?extra.maxWaveFrame:0,
     damage:extra.damage??spec.near,seed:normalizedSeed(extra.seed??nextSeed(state)),dead:false,
     hp:extra.hp||0,maxHp:extra.hp||0,phase:extra.phase||'armed',index:extra.index||0,
     pulse:0,nextPulse:extra.nextPulse||.75,once:new Set(),target:extra.target?.clone?.()||null,
@@ -1011,7 +1014,7 @@ function deployScreen(rt,actor,state) {
 function deployWave(rt,actor,state) {
   const pos=groundAt(rt,aimPoint(rt,actor,16,rt.v0),rt.v1).clone(),ap=state.specialPowerAP;
   const maxRadius=gearCurve(ap,20,24,27),maxFrame=gearCurve(ap,160,192,216)/FPS;
-  const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
+  const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,maxWaveFrame:maxFrame,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
   object.markingUntil=rt.api.G.time+45/FPS;
   object.direction=rt.v2.copy(pos).sub(actor.pos).setY(0).normalize();
@@ -1019,9 +1022,17 @@ function deployWave(rt,actor,state) {
   endSpecial(rt,actor,'deployed');
 }
 function spawnWaveFront(rt,device,pulse) {
+  // An authoritative deploy packet can arrive before the remote device's
+  // simulated 90/240/390F pulse. Reuse that exact wave identity rather than
+  // drawing a duplicate ring with the same owner/activation/object serial.
+  const serial=(device.objectSerial||device.serial)+1;
+  if(device.owner.remote){
+    const existing=(rt.system?._s3AllSpecialObjects||[]).find(o=>!o.dead&&o.owner===device.owner&&o.id==='waveBreaker'&&o.kind==='waveFront'&&o.activation===device.activation&&o.serial===serial);
+    if(existing){device.objectSerial=serial;return existing;}
+  }
   const state={serial:device.activation,objectSerial:device.objectSerial||device.serial,seed:device.seed};
   const wave=deployObject(rt,device.owner,'waveBreaker','waveFront',device.pos,state,{dur:device.maxWaveFrame,
-    maxRadius:device.maxRadius,damage:45,seed:device.seed,index:pulse,scale:[1,1,1]});
+    maxRadius:device.maxRadius,maxWaveFrame:device.maxWaveFrame,damage:45,seed:device.seed,index:pulse,scale:[1,1,1]});
   device.objectSerial=state.objectSerial;wave.maxWaveFrame=device.maxWaveFrame;wave.last=0;wave.seen=new Set();wave.pulse=pulse;
   return wave;
 }
@@ -1955,6 +1966,9 @@ function replayObjectEvent(rt,actor,event) {
     if(kind==='wave'){
       object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
       object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
+      // Source GeneratorParam.MarkingFrame=45. Without this, remotely
+      // replayed devices never mark a recipient within the initial ring.
+      object.markingUntil=rt.api.G.time+45/FPS;
     }else if(kind==='waveFront'){
       object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
       object.last=0;object.seen=new Set();object.pulse=event.index||0;

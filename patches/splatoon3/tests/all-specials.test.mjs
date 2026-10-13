@@ -84,6 +84,54 @@ test('Wave Breaker marks nearby placement for 45 frames and holds until a manual
  assert.ok(victim.s3.revealedUntil[a.team]<=f.G.time+1e-9,'the generator placement mark expires after 45 frames');
 });
 
+test('Wave Breaker first deploy packet preserves 11.3.0 AP-scaled 160/192/216F wave travel on remote replay',async()=>{
+ const {emptyLoadout}=await import('../runtime/gear.mjs');
+ for(const [ap,expectedFrames] of [[0,160],[57,216]]){
+  const f=await setup(),owner=f.make(),ghost=f.make();
+  owner.s3.loadout=emptyLoadout();
+  if(ap===57)for(const gear of owner.s3.loadout){gear.main='specialPower';gear.subs.fill('specialPower');}
+  owner.s3RefreshGear();equip(owner,'waveBreaker');f.G.actors=[owner];
+  const events=eventFeed(f,'all:special');ready(owner);deployInput(owner);
+  const packet=events.find(e=>e.id==='waveBreaker'&&e.action==='deploy'&&e.kind==='wave');
+  assert.ok(packet,'real first deploy packet');
+  assert.equal(packet.waveFrame,expectedFrames/60,'wave travel is serialized before device publication');
+  ghost.remote=true;ghost.team=1;
+  assert.equal(f.replayAllSpecials(f,{...packet,actor:ghost}),true);
+  const received=f.G.projectiles._s3AllSpecialObjects.find(o=>o.owner===ghost&&o.kind==='wave');
+  assert.ok(received);assert.equal(received.maxWaveFrame,expectedFrames/60);
+  assert.equal(received.pulseFrames[0],90/60);
+ }
+});
+
+test('Wave Breaker remote replay marks for 45F and reuses a waveFront packet received before the simulated pulse',async()=>{
+ const f=await setup(),owner=f.make(),ghost=f.make(),victim=f.make();
+ equip(owner,'waveBreaker');ghost.remote=true;ghost.team=1;victim.team=0;victim.isLocal=true;
+ f.G.actors=[owner,ghost,victim];const events=eventFeed(f,'all:special');ready(owner);deployInput(owner);
+ tickWorld(f,90);
+ const devicePacket=events.find(e=>e.id==='waveBreaker'&&e.action==='deploy'&&e.kind==='wave');
+ const frontPacket=events.find(e=>e.id==='waveBreaker'&&e.action==='deploy'&&e.kind==='waveFront');
+ assert.ok(devicePacket);assert.ok(frontPacket,'actual owner front emitted at source frame 90');
+ assert.equal(frontPacket.waveFrame,160/60,'front lifetime is carried with the first packet');
+ assert.equal(f.replayAllSpecials(f,{...devicePacket,actor:ghost}),true);
+ assert.equal(f.replayAllSpecials(f,{...frontPacket,actor:ghost}),true);
+ const objects=()=>f.G.projectiles._s3AllSpecialObjects;
+ const remoteDevice=objects().find(o=>o.owner===ghost&&o.kind==='wave');
+ const remoteFront=objects().find(o=>o.owner===ghost&&o.kind==='waveFront');
+ assert.ok(remoteDevice);assert.ok(remoteFront);
+ assert.ok(Math.abs(remoteDevice.markingUntil-(f.G.time+45/60))<1e-8,'ghost receives source generator mark lifetime');
+ victim.pos.copy(remoteDevice.pos);victim.pos.z+=1.5;
+ const damage=[],nativeApply=f.G.projectiles.applyHit;
+ f.G.projectiles.applyHit=(a,v,...args)=>{if(a===ghost)damage.push([v,...args]);return nativeApply.call(f.G.projectiles,a,v,...args);};
+ try{
+  tickWorld(f,4);assert.ok(victim.s3?.revealedUntil?.[ghost.team]>f.G.time,'remote generator marks its local recipient');
+  tickWorld(f,86);
+  const fronts=objects().filter(o=>o.owner===ghost&&o.kind==='waveFront');
+  assert.equal(fronts.length,1,'no second locally synthesized ghost front at the same wave serial');
+  assert.equal(fronts[0],remoteFront,'the earlier authoritative front keeps its identity');
+  assert.equal(damage.length,0,'remote presentation must never author a hit');
+ }finally{f.G.projectiles.applyHit=nativeApply;}
+});
+
 test('Wave Breaker pulse misses a jumping player above the source height limit',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'waveBreaker');victim.team=1;victim.pos.set(0,2.5,18.5);f.G.actors=[a,victim];
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
