@@ -73,12 +73,12 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   // Pinned 11.3.0 PoisonMistForPlayer.SideStepInkConsumeRate. This multiplier
   // is explicit even though ordinary drain/speed defaults are absent.
   actorDodgeInkCostScale: 3.5,
-  actorInkFractionPerSecond: .12,
+  actorInkFractionPerSecond: .0022 * 60,
   actorMoveSpeedScale: .6,
   // #1149: PoisonMistForPlayer.SideStepInkConsumeRate 3.5 (Leanny/splat3 @7280ff9c,
   // WeaponSpBlower). Applied to the Dualies dodge-roll admission cost only.
   sideStepInkConsumeRate: 3.5,
-  actorSuppressionStatus: 'engineering calibration: 12% tank/s and 60% movement cap; sparse S3 PoisonMistForPlayer data omits drain/speed defaults; retail magnitudes unverified',
+  actorSuppressionStatus: 'Wiki 11.3.0 measurement: .22% tank/source frame; 60% movement cap remains engineering calibration; sparse PoisonMistForPlayer data omits these defaults',
   rawToHp: RAW_TO_HP,
   framesPerSecond: 60,
   breathOriginHeight: 1.0,   // intake origin above feet (kid chest) — calibration
@@ -86,6 +86,8 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   absorbCapacityDamage: ABSORB_CAPACITY_HP,
   absorbDamageLimit: MAX_ACCEPTED_DAMAGE_HP,
   absorbStatus: 'damage-proportional, 1100 approximate S3 capacity; remote source damage requires separate authoritative hit attestation',
+  activationFrames: 17, inhaleStartHumanFrames: 12, inhaleStartSquidFrames: 18,
+  inputTimingStatus: 'S3mix 11.3.0 measured startup 17F; human intake starts on13th held frame, squid on19th; retail input sampling unmeasured',
   inhaleLengthAddPerFrame: INHALE_LENGTH_ADD_PER_FRAME,
   inhaleLengthStatus: 'pinned LengthAddPerFrame .3334 and LengthMax 15; reach grows to maximum in about 45 gameplay frames',
   intakeRadiusTiers: Object.freeze({ near: Object.freeze([NEAR_LOW, NEAR_MID, NEAR_HIGH]), far: Object.freeze([FAR_LOW, FAR_MID, FAR_HIGH]) }),
@@ -100,8 +102,9 @@ export const INK_VAC_CALIBRATION = Object.freeze({
   inhaleDurationStatus: 'community-verified S3 suction cap: 360F / 6.0 s',
   exhaleHoldSeconds: EXHALE_WAIT / 60,
   exhaleHoldStatus: 'pinned ExhaleWaitFrame 150: post-suction return-shot hold / automatic-fire deadline',
-  minInhaleSeconds: INHALE_TO_EXHALE_WAIT / 60,
-  minInhaleStatus: 'pinned InhaleToExhaleWaitFrame 20: earliest inhale-to-exhale transition after charge completion',
+  minInhaleSeconds: 0, // no artificial minimum;20F is the post-suction transition
+  inhaleToExhaleSeconds: INHALE_TO_EXHALE_WAIT / 60,
+  minInhaleStatus: 'no minimum inhale; pinned InhaleToExhaleWaitFrame 20 is the post-completion transition, before the150F shot window',
   burstLifetimeSeconds: SPAWN_BLAST_WAIT / 60,
   burstLifetimeStatus: 'pinned SpawnBlastWaitFrame 50 used as the native projectile lifetime; delay stays 0 so the native integrator runs immediately and bursts on the age>life deadline',
   proposalMemory: PROPOSAL_MEMORY,
@@ -441,7 +444,8 @@ function makeState(actor, opts = {}) {
   const specialPower = clamp01(Number.isFinite(opts.specialPower)
     ? opts.specialPower : actor?.s3?.modifiers?.specialPower || 0);
   return { actor, remote, serial: opts.serial, t: 0, phase: 'inhale', charge: 0, absorbed: 0, specialPower, length: 0,
-    fireHeld: false, exhaleArmed: false, sucking:false, inhaleAge:0,
+    fireHeld: false, exhaleArmed: false, sucking:false, inhaleAge:0, activationAge:0, intakeHeld:false, intakeWarmup:0, intakeStep:0,
+    _move:new api.THREE.Vector3(),
     nearR: intakeNearRadius(specialPower), farR: intakeFarRadius(specialPower), baseFar: FAR_HIGH,
     mesh: null, geo: null, mat: null,
     _fwd: new api.THREE.Vector3(), _org: new api.THREE.Vector3(), _q: new api.THREE.Vector3(),
@@ -486,6 +490,7 @@ function updateVisual(state) {
 export function disposeInkVac(actor) {
   const state = states.get(actor);
   if (!state) return;
+  actor._s3InkVacSucking=false;
   disposeVisual(state);
   if (actor.specialActive && actor.specialActive.id === VAC_ID) actor.specialActive = null;
   states.delete(actor);
@@ -503,7 +508,7 @@ export function disposeInkVac(actor) {
 // A replica NEVER reaches here: it only ever hides its presentation.
 function beginExhale(state) {
   if (!state || state.phase !== 'inhale') return false;
-  state.phase = 'exhale';
+  state.phase = 'exhale';state.sucking=false;state.actor._s3InkVacSucking=false;
   state.t = 0;
   // #1120: a ZR hold carried out of suction arms a later RELEASE edge; the
   // held level itself never authors the return shot.
@@ -621,8 +626,8 @@ function damageInhaleObjects(state, eligible, seen) {
 function inkVacUpdate(a, dt) {
   const state = states.get(a);
   if (!state || state.phase !== 'inhale' || !(dt > 0)) return;
-  const eligible = Math.min(dt, Math.max(0, INK_VAC_CALIBRATION.inhaleDurationSeconds - state.t));
-  if (state.sucking)state.inhaleAge+=dt;else state.inhaleAge=0;
+  const eligible = Math.min(state.intakeStep??dt, Math.max(0, INK_VAC_CALIBRATION.inhaleDurationSeconds - state.t));
+  if (state.sucking)state.inhaleAge+=eligible;else state.inhaleAge=0;
   if (!a.remote && !state.remote && state.sucking) {
     const seen = new Set(); let count = 0;
     for (const victim of api.G.actors || []) {
@@ -659,7 +664,7 @@ export function advanceInkVacReplica(actor, dt) {
     updateVisual(state);
     if (state.t + 1e-10 >= INK_VAC_CALIBRATION.inhaleDurationSeconds ||
         state.charge >= 1 && state.t + 1e-10 >= INK_VAC_CALIBRATION.minInhaleSeconds) beginExhale(state);
-  } else if (state.phase === 'exhale' && state.t >= INK_VAC_CALIBRATION.exhaleHoldSeconds + 5) {
+  } else if (state.phase === 'exhale' && state.t >= INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds + 5) {
     state.phase = 'done';
     states.delete(actor);
   }
@@ -833,18 +838,29 @@ export function installKitInkVac(context, _profile) {
       if (!(dt > 0)) return undefined;
 
       const it = this.intent;
-      const fire = it.fire, sub = it.sub, squid = it.squid;
-      state.sucking=state.phase==='inhale'&&!!fire&&!squid;
+      const fire = it.fire, sub = it.sub, squid = it.squid, jump=it.jump;
+      const startupRemaining=Math.max(0,INK_VAC_CALIBRATION.activationFrames/60-state.activationAge);
+      const activeDt=Math.max(0,dt-startupRemaining),startup=activeDt<=1e-10;
+      state.activationAge+=dt;state.intakeStep=0;
+      const held=state.phase==='inhale'&&!!fire&&!squid;
+      if(!held){state.intakeHeld=false;state.intakeWarmup=0;}
+      else if(activeDt>0){
+        if(!state.intakeHeld){state.intakeHeld=true;state.intakeWarmup=(this.form==='squid'?INK_VAC_CALIBRATION.inhaleStartSquidFrames:INK_VAC_CALIBRATION.inhaleStartHumanFrames)/60;}
+        const warm=Math.min(activeDt,state.intakeWarmup);state.intakeWarmup=Math.max(0,state.intakeWarmup-warm);state.intakeStep=activeDt-warm;
+      }
+      state.sucking=held&&state.intakeStep>1e-10;this._s3InkVacSucking=state.sucking;
       if(!state.sucking){state.inhaleAge=0;state.length=0;}
       this.fireBuffer=0; // Vac owns ZR; buffered main shots cannot escape the masked update
       if(this._prevIntent)this._prevIntent.sub=false; // no ordinary sub-release event while Vac owns R
-      it.fire = false; it.sub = false; it.squid = !!squid;
+      it.fire = false; it.sub = false; it.squid = !startup&&!!squid;
+      if(startup){state._move.copy(it.move);it.move.set(0,0,0);it.jump=false;}
       this.form = 'kid';
       this.specialActive = null;
       let result;
       try { result = update.call(this, dt); }
       finally {
-        it.fire = fire; it.sub = sub; it.squid = squid;
+        it.fire = fire; it.sub = sub; it.squid = squid;it.jump=jump;
+        if(startup)it.move.copy(state._move);
         if (this.alive && states.get(this) === state && !this.specialActive) this.specialActive = s;
       }
 
@@ -857,13 +873,15 @@ export function installKitInkVac(context, _profile) {
       } else if (state.phase === 'exhale') {
         state.t += dt;
         // A held suction ZR is not a NEW shot request. It waits until release.
-        // A fresh press after suction, however, authors the return shot at once.
+        // A fresh press or release requests the countershot; the20F source
+        // inhale→exhale transition must finish before it can be authored.
         const freshPressEdge = !state.exhaleArmed && !state.fireHeld && !!fire;
         const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;
         if (fire && !freshPressEdge) state.exhaleArmed = true;
         state.fireHeld = !!fire;
-        if (freshPressEdge) { release(state); return result; }
-        if (releaseEdge || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);
+        if(freshPressEdge||releaseEdge)state.exhaleFireRequested=true;
+        const ready=state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds;
+        if(ready&&(state.exhaleFireRequested||state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds))release(state);
       }
       return result;
     };
@@ -912,7 +930,7 @@ export function installKitInkVac(context, _profile) {
       api.G.audio?.play('special_activate', { pos: this.isLocal ? undefined : this.pos, volume: this.isLocal ? 1 : 0.7 });
       const state = makeState(this, { remote: false, serial: ++activationSeq,
         specialPower: this.s3?.modifiers?.specialPower || 0 });
-      states.set(this, state);
+      states.set(this, state);this._s3InkVacSucking=false;
       this.specialActive = { id: VAC_ID, t: 0, phase: 'inhale', armor: false };
       this.ink = api.PLAYER.inkMax;                 // tank refill, once per activation
       createVisual(state);

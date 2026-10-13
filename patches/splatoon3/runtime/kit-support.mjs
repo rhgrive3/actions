@@ -186,7 +186,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
     if(G.time>=stand.expires||!playing) {releaseVisual(stand,G);coolers.splice(i,1);continue;}
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
-    for(const a of G.actors || [])if(drinkEligible(a,stand,G.time)) {
+    for(const a of G.actors || [])if(drinkEligible(a,stand,G.time,PLAYER)) {
       stand.taken.add(a); giveDrink(a,G.time,stand.drinkSeconds);
       G.fx?.burst?.(a.pos,new THREE.Vector3(0,1,0),G.teamColors?.[a.team],{count:6,speed:2,size:.08});
     }

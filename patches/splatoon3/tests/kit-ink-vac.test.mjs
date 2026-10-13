@@ -20,7 +20,7 @@ async function setup() {
   a.special = 190;
   return { f, system, a };
 }
-const activate = (f, a) => { a.intent.fire=true; a.intent.special = true; f.tick(a); a.intent.special = false; };
+const activate = (f, a) => { a.intent.fire=true; a.intent.special = true; f.tick(a); a.intent.special = false;f.tick(a,29); };
 const expandIntake = (f, a, frames = 45) => f.tick(a, frames);
 const activateExpanded = (f, a) => { activate(f, a); expandIntake(f, a); };
 const expandReplica = (f, a, frames = 45) => { for (let i = 0; i < frames; i++) f.advanceInkVacReplica(a, 1 / 60); };
@@ -41,7 +41,7 @@ const enterExhale = (f, a, max = 400) => {
 const fireReturn = (f, a) => {
   // Carry the physical hold across suction; a fresh exhale press fires immediately.
   a.intent.fire = true;
-  enterExhale(f, a);
+  enterExhale(f, a);f.tick(a,20);
   a.intent.fire = true; f.tick(a);
   assert.ok(f.inkVacState(a), 'holding ZR in exhale does not launch early (#1120)');
   a.intent.fire = false; f.tick(a);
@@ -125,10 +125,10 @@ test('the intake is aim-aligned including vertical aim', async () => {
 test('pinned inhale length growth is time-consistent at 30, 60, and 120 updates per second', async () => {
   for (const hz of [30, 60, 120]) {
     const { f, a } = await setup();
-    activate(f, a); // activation update already advances one 1/60-second game step
+    activate(f, a); // advance through source startup and the first intake warmup
     const state = f.inkVacState(a), dt = 1 / hz;
     const advanceTo = seconds => {
-      while (state.t + 1e-10 < seconds) a.update(Math.min(dt, seconds - state.t));
+      while (state.inhaleAge + 1e-10 < seconds) a.update(Math.min(dt, seconds - state.inhaleAge));
     };
     advanceTo(0.25);
     assert.ok(Math.abs(state.length - 0.25 * 60 * 0.3334) < 1e-8,
@@ -191,7 +191,7 @@ test('Ink Vac damages real custom-sub and special objects through their shared A
   system._s3AllSpecialObjects.push(wave);
   activate(f, owner);
   assert.equal(f.inkVacState(owner)?.phase, 'inhale', 'full native composition starts the real intake');
-  f.tick(owner, 45);
+  f.tick(owner, 74);
   const subRate = objectDamageScale(owner, 'splashWall', 'BlowerInhale');
   const specialRate = objectDamageScale(owner, 'waveBreaker', 'BlowerInhale');
   assert.equal(subRate, 1, 'the continuous vortex uses the BlowerInhale all-1 object row');
@@ -254,13 +254,14 @@ test('#1042 unfilled suction lasts 360F, then a separate 150F return-shot hold a
   assert.equal(INK_VAC_CALIBRATION.inhaleDurationSeconds, 6);
   assert.equal(INK_VAC_CALIBRATION.exhaleHoldSeconds, 2.5);
 
-  let inhaleTicks = 0;
+  const initialTicks=Math.round(state.t*60);let inhaleTicks = 0;
   while (state.phase === 'inhale' && inhaleTicks < 400) { f.tick(a); inhaleTicks++; }
   assert.equal(state.phase, 'exhale');
-  assert.ok(inhaleTicks >= 359 && inhaleTicks <= 360, `suction transition stayed on the 360F boundary: ${inhaleTicks}`);
+  assert.ok(initialTicks+inhaleTicks >= 359 && initialTicks+inhaleTicks <= 360, `suction transition stayed on the 360F boundary: ${initialTicks+inhaleTicks}`);
   assert.equal(system.list.length, 0, 'ending suction does not itself fire the countershot');
   assert.ok(a.specialActive, 'special remains active in the return-shot hold');
 
+  f.tick(a,20);assert.equal(system.list.length,0,'20F transition does not auto-fire');
   for (let i = 0; i < 149; i++) {
     f.tick(a);
     assert.equal(system.list.length, 0, `no forced return shot before hold frame ${i + 1}`);
@@ -281,7 +282,9 @@ test('#1042 filling the Vac ends suction early but still enters the return-shot 
   a.intent.fire = true; f.tick(a);
   assert.ok(f.inkVacState(a), 'held ZR cannot release the countershot');
   a.intent.fire = false; f.tick(a);
-  assert.equal(f.inkVacState(a), null, 'the ZR release edge fires in exhale phase');
+  assert.ok(f.inkVacState(a),'an early release is buffered during the20F transition');assert.equal(system.list.length,0);
+  f.tick(a,17);assert.equal(system.list.length,0,'no countershot through transition frame19');f.tick(a);
+  assert.equal(f.inkVacState(a), null, 'the buffered ZR release fires on transition frame20');
   assert.equal(system.list.length, 1);
 });
 
@@ -294,7 +297,7 @@ test('#1120 a held suction ZR waits for a genuine release edge after entering ex
   enterExhale(f, a, 30);
   assert.equal(f.inkVacState(a).phase, 'exhale');
   assert.equal(system.list.length, 0);
-  for (let frame = 0; frame < 5; frame++) {
+  for (let frame = 0; frame < 20; frame++) {
     f.tick(a);
     assert.equal(system.list.length, 0, 'continuing to hold suction ZR cannot auto-fire');
   }
@@ -379,7 +382,7 @@ test('a dt0 frame is a strict no-op: no release, no countershot, no main shot', 
 
 test('the release frame does not also fire the replaced main weapon or sub', async () => {
   const { f, a } = await setup();
-  activate(f, a); a.intent.fire = true; shoot(f, a); enterExhale(f, a, 30);
+  activate(f, a); a.intent.fire = true; shoot(f, a); enterExhale(f, a, 30);f.tick(a,20);
   const seen = [];
   const runner = a.weaponRunner, real = runner.update;
   runner.update = function (dt, inp) { seen.push({ ...inp }); return real.call(this, dt, inp); };
@@ -391,10 +394,10 @@ test('the release frame does not also fire the replaced main weapon or sub', asy
     'main and sub stay suppressed on the release frame');
 });
 
-test('a fresh ZR press after suction releases the countershot immediately', async () => {
+test('a fresh ZR press after the20F transition releases the countershot immediately', async () => {
   const { f, a, system } = await setup();
-  activate(f, a); shoot(f, a); enterExhale(f, a, 30);f.inkVacState(a).fireHeld=false;f.inkVacState(a).exhaleArmed=false;a.intent.fire=false;f.tick(a);
-  const before = system.list.length;
+  activate(f, a); shoot(f, a); enterExhale(f, a, 30);f.inkVacState(a).fireHeld=false;f.inkVacState(a).exhaleArmed=false;a.intent.fire=false;f.tick(a,20);
+  const before = system.list.length;f.tick(a,20);
   a.intent.fire = true; f.tick(a); a.intent.fire = false;
   assert.equal(a.specialActive, null);
   assert.equal(f.inkVacState(a), null);
@@ -446,7 +449,7 @@ test('a remote ghost authors no projectile (and thus no damage/paint) on release
   activate(f, a);
   shoot(f, a);
   enterExhale(f, a, 30);
-  const before = system.list.length;
+  const before = system.list.length;f.tick(a,20);
   a.intent.fire = true; f.tick(a);
   a.intent.fire = false; f.tick(a);
   assert.equal(system.list.length, before, 'a remote ghost authors no projectile');
@@ -1110,7 +1113,7 @@ test('the Vac owner walks at the pinned MoveSpeedMinCharge 0.09 -> MoveSpeedFull
   near(f.inkVacState(a).charge, 1, 'filled');
   near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'full intake');
   a.intent.fire = true; enterExhale(f, a);
-  near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'return-shot hold keeps the full-charge speed');
+  near(a.weaponRunner.moveSpeed(), 0.07 * 60, 'return-shot hold keeps the full-charge speed');f.tick(a,20);
   a.intent.fire = false; f.tick(a);
   assert.ok(!f.inkVacState(a), 'released');
   near(a.weaponRunner.moveSpeed(), ordinary, 'ordinary walking target after release');

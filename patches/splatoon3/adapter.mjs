@@ -1155,7 +1155,7 @@ export function adaptSource(rel, code) {
     // The existing firing bit carries the held intake level for Ink Vac.
     // Weapon firingT is deliberately masked while Vac owns the trigger.
     code = replaceOnce(code, '  if (wr.firingT > 0) f |= F.firing;',
-      "  if (a.specialActive?.id === 'inkVac' ? !!a.intent.fire && !a.intent.squid : wr.firingT > 0) f |= F.firing;", 'Ink Vac held intake wire level');
+      "  if (a.specialActive?.id === 'inkVac' ? !!a._s3InkVacSucking : wr.firingT > 0) f |= F.firing;", 'Ink Vac held intake wire level');
     // #904: replicate the owner-proven wall normal while showing the charge
     // pose, without enabling ordinary remote wall-climb movement.
     code = replaceOnce(code, '  if (a.climbing) f |= F.climb;',

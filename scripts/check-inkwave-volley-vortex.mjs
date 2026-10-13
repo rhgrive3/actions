@@ -83,7 +83,7 @@ try{
   await Promise.all(pages.map(p=>p.evaluate(()=>{G.actors[1].hp=100;G.actors[1].ink=100;})));
   // The sourced Ink Vac cone starts at zero length and extends by 0.3334 per 60 Hz frame.
   // Grow it with real Actor updates while the victim is outside the 15 m maximum reach.
-  for(let i=0;i<20;i++){
+  for(let i=0;i<100;i++){
    await host.evaluate(()=>G.local.update(1/60));await guest.evaluate(()=>{ vac.advanceInkVacReplica(G.actors[0],1/60); G.local.update(1/60); });await frames(1);
   }
   assert.equal(await host.evaluate(()=>vac.inkVacState(G.local).absorbedDamage ?? 0),0);
@@ -98,7 +98,7 @@ try{
   const owner=await host.evaluate(()=>({damage:vac.inkVacState(G.local).absorbedDamage,count:vac.inkVacState(G.local).absorbed,remoteInk:G.actors[1].ink}));
   const victim=await guest.evaluate(()=>({ink:G.local.ink,hp:G.local.hp,replicaDamage:vac.inkVacState(G.actors[0]).absorbedDamage||0}));
   assert(Math.abs(owner.damage-45)<1e-8);assert.equal(owner.count,0);assert.equal(owner.remoteInk,100);
-  assert(Math.abs(victim.ink-94)<1e-8);assert.equal(victim.hp,100);assert.equal(victim.replicaDamage,0);
+  assert(Math.abs(victim.ink-93.4)<1e-8);assert.equal(victim.hp,100);assert.equal(victim.replicaDamage,0);
   const slow=await guest.evaluate(()=>{const a=G.local;a.intent.move.set(1,0,0);a.vel.set(20,0,0);a._horizontal(1/60,false,false);const inside=a.vel.length();a.pos.z=-5;a.vel.set(20,0,0);a._horizontal(1/60,false,false);return{inside,outside:a.vel.length(),cap:a.weaponRunner.moveSpeed()*.6};});
   assert(slow.inside<=slow.cap+1e-8);assert(slow.outside>slow.cap);
   await host.evaluate(()=>{G.local.intent.fire=false;G.local.update(1/60);});await frames(15);

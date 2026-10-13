@@ -51,7 +51,7 @@ test('real native projectile step absorbs before the actor and ghost absorption 
   vac.weapon = { ...vac.weapon, special: 'inkVac', specialCost: 190 }; vac.special = 190; vac._startSpecial();vac.intent.fire=true;
   // The cone grows at .3334 units per 60 Hz frame; reach full source length
   // before checking first-contact ordering at z=20.
-  f.tick(vac, 45);
+  f.tick(vac, 74);
   f.G.actors = [vac, shooter]; f.G.physics.segment = () => ({ hit: false });
   const system = f.G.projectiles; let hits = 0; system.applyHit = () => { hits++; };
   const round = ghost => {
@@ -139,11 +139,11 @@ test('native snapshots stop and restart the remote Ink Vac intake with the held 
  const sample=()=>{clock+=100;sender._sendTick();receiver.onMessage('peer-A',packet);receiver._peer('peer-A').tr=packet.ts;receiver._sample(proxy,packet.ts,0);receiver.applyRemote(proxy,1/60);};
  owner.intent.fire=false;owner.weaponRunner.firingT=1;sample();
  let state=f.inkVacState(proxy);assert.ok(state?.remote);assert.equal(state.sucking,false,'stale main firing pose does not represent suction');assert.equal(state.length,0);
- owner.intent.fire=true;sample();for(let i=0;i<44;i++)f.advanceInkVacReplica(proxy,1/60);
+ owner.intent.fire=true;for(let i=0;i<30;i++)owner.update(1/60);sample();for(let i=0;i<44;i++)f.advanceInkVacReplica(proxy,1/60);
  assert.equal(state.sucking,true);assert.equal(state.length,15);
  const point=victim.pos.clone().setY(1);const shot={pos:point,vel:new f.THREE.Vector3(0,0,-1),team:1,damage:30};assert.ok(f.inkVacAbsorbCandidate(proxy,point,point,shot));
- owner.intent.fire=false;sample();assert.equal(state.sucking,false);assert.equal(state.length,0);assert.equal(f.inkVacAbsorbCandidate(proxy,point,point,shot),null);
- owner.intent.fire=true;sample();assert.ok(state.length>0&&state.length<1,'restarting uses the small cone instead of the elapsed special clock');
- owner.intent.squid=true;sample();assert.equal(state.sucking,false);assert.equal(state.length,0);
+ owner.intent.fire=false;owner.update(1/60);sample();assert.equal(state.sucking,false);assert.equal(state.length,0);assert.equal(f.inkVacAbsorbCandidate(proxy,point,point,shot),null);
+ owner.intent.fire=true;for(let i=0;i<13;i++)owner.update(1/60);sample();assert.ok(state.length>0&&state.length<1,'restarting uses the small cone instead of the elapsed special clock');
+ owner.intent.squid=true;owner.update(1/60);sample();assert.equal(state.sucking,false);assert.equal(state.length,0);
  assert.equal(state.charge,0,'snapshot presentation never authors charge');sender.dispose();receiver.dispose();
 });

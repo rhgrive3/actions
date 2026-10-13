@@ -325,3 +325,16 @@ test('Point Sensor mark source life follows the thrown field across owner respaw
   nm._play('clientA',mark);
   assert.equal(enemy.s3.revealedUntil[0],8,'the field source life remains valid after owner respawn');
 });
+
+test('Tacticooler source cylinder accepts partial native kid capsule across height and radial boundaries',async()=>{
+ const {f,actor:a}=await setup();
+ a.form='kid';a.remote=false;a.alive=true;a.team=0;a.pos.set(0,0,0);
+ const stand={team:0,pos:new f.THREE.Vector3(),expires:10,taken:new Set()},body=f.PLAYER;
+ a.pos.y=-body.height+.01;assert.equal(drinkEligible(a,stand,0,body),true,'the head can reach a stand on the platform above');
+ a.pos.y=-body.height-.01;assert.equal(drinkEligible(a,stand,0,body),false,'the whole body below the cylinder stays outside');
+ a.pos.set(TACTICOOLER.radiusWorld+body.radius-.01,0,0);assert.equal(drinkEligible(a,stand,0,body),true,'the capsule side can graze the source radius');
+ a.pos.x=TACTICOOLER.radiusWorld+body.radius+.01;assert.equal(drinkEligible(a,stand,0,body),false);
+ a.pos.set(TACTICOOLER.radiusWorld+body.radius*.8,-body.height+body.radius*.2,0);assert.equal(drinkEligible(a,stand,0,body),false,'rounded corners require actual capsule overlap');
+ a.pos.set(0,3.01,0);assert.equal(drinkEligible(a,stand,0,body),false);
+ a.form='squid';a.pos.set(0,0,0);assert.equal(drinkEligible(a,stand,0,body),false);
+});

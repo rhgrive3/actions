@@ -34,7 +34,7 @@ async function setup(t, { sub = 'suction', legacy = false, shooterWeapon = 'shoo
   // the authored 15-unit intake before probing a projectile at z=20. This
   // keeps this test about proposal authority, not a zero-length activation.
   f.G.actors = [vac];
-  for (let tick = 0; tick < 45; tick++) {
+  for (let tick = 0; tick < 74; tick++) {
     f.tick(vac);
     api.advanceInkVacReplica(proxy, 1 / 60);
   }

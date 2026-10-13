@@ -10,7 +10,7 @@ async function setup() {
   owner.aimDir.set(0, 0, 1); owner.aimYaw = owner.aimPitch = 0;
   owner.special = owner.specialCost(); owner._startSpecial();owner.intent.fire=true;
   // The source cone reaches its15m limit after 45F; do not assume instant reach.
-  for(let i=0;i<45;i++)owner.update(1/60);
+  for(let i=0;i<74;i++)owner.update(1/60);
   victim.team = 1; victim.pos.set(0, 0, 5); victim.intent.fire = true;
   assert.equal(f.inkVacActorContact(owner, victim), true);
   const base = victim.weapon.rollInk;

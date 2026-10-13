@@ -11,7 +11,7 @@ async function setup(){
   // Grow the source-defined 15-unit intake before measuring actor contact.
   // The target begins behind the owner so this calibration interval cannot
   // author contact drain or alter the measured 30-tick sample.
-  f.tick(a,45);b.pos.set(0,0,5);
+  f.tick(a,74);b.pos.set(0,0,5);
   return {f,a,b};
 }
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
@@ -21,7 +21,7 @@ for(const hz of [30,60,120])test(`#1149 ${hz}Hz native Actor contact drains/slow
     acc+=1/hz;while(acc+1e-10>=1/60){acc-=1/60;f.tick(a);f.tick(b);}
   }
   close(inkVacState(a).absorbedDamage,45);close(inkVacState(a).charge,45/1100);
-  close(b.ink,94);assert.equal(b.hp,100);assert.equal(inkVacState(a).absorbed,0,'actor credit is not a projectile count');
+  close(b.ink,93.4);assert.equal(b.hp,100);assert.equal(inkVacState(a).absorbed,0,'actor credit is not a projectile count');
   b.intent.move.set(1,0,0);b.vel.set(20,0,0);b._horizontal(1/60,false,false);
   assert.ok(b.vel.length()<=b.weaponRunner.moveSpeed()*.6+1e-8);
   b.pos.z=-5;b.vel.set(20,0,0);b._horizontal(1/60,false,false);assert.ok(b.vel.length()>b.weaponRunner.moveSpeed()*.6);
@@ -46,6 +46,6 @@ test('#1149 remote cone affects only a local victim; replica and duplicate actor
   disposeInkVac(a);a.remote=true;b.remote=false;
   const r=replayInkVac(EV.activation,a,{actor:a,kit:'inkVac',serial:500,power:0,charge:0},{from:'A'});assert.equal(r.applied,true);
   for(let i=0;i<45;i++)f.advanceInkVacReplica(a,1/60);
-  f.tick(b,30);close(b.ink,94);assert.equal(inkVacState(a).charge,0,'replica cannot credit gauge');
+  f.tick(b,30);close(b.ink,93.4);assert.equal(inkVacState(a).charge,0,'replica cannot credit gauge');
   replayInkVac(EV.dispose,a,{actor:a,kit:'inkVac',serial:500},{from:'A'});assert.equal(inkVacActorContact(a,b),false);
 });

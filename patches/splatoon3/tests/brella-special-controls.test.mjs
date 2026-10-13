@@ -100,3 +100,19 @@ test('Tacticooler holds without auto-placement and serves only after a released 
  releaseSub(f,a);step(f,a,12);assert.equal((f.G.projectiles._s3SupportCoolers||[]).length,0,'windup finishes before a stand appears');step(f,a);
  const device=f.G.projectiles._s3SupportCoolerThrows[0];assert.ok(device);for(let i=0;i<10;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}assert.equal(f.G.projectiles._s3SupportCoolers.length,1);a.character.dispose();
 });
+
+test('Ink Vac gates17F activation then12F human or18F squid intake, including mixed frame rates',async()=>{
+ const f=await boot();
+ for(const hz of [30,60,120]){
+  const a=f.make('charger');a.weapon={...a.weapon,special:'inkVac',specialCost:100};a.special=100;a._startSpecial();a.intent.fire=true;a.intent.move.set(1,0,0);
+  const state=f.inkVacState(a),advance=frames=>{let left=frames/60;while(left>1e-10){const dt=Math.min(1/hz,left);f.G.time+=dt;a.update(dt);left-=dt;}};
+  advance(17);assert.equal(state.length,0);assert.equal(a.vel.x,0,'startup blocks walking');
+  advance(12);assert.equal(state.length,0);assert.equal(a._s3InkVacSucking,false);
+  advance(1);assert.ok(Math.abs(state.length-.3334)<1e-8,`${hz}Hz source13th held frame opens the human intake`);assert.equal(a._s3InkVacSucking,true);
+  a.intent.fire=false;advance(1);assert.equal(state.length,0);
+  a.intent.fire=true;advance(12);assert.equal(state.length,0);advance(1);assert.ok(Math.abs(state.length-.3334)<1e-8);
+  a.intent.squid=true;advance(1);assert.equal(state.length,0);assert.equal(a.form,'squid');
+  a.intent.squid=false;advance(18);assert.equal(state.length,0);advance(1);assert.ok(Math.abs(state.length-.3334)<1e-8,'squid intake opens on19th frame');
+  a.reset();
+ }
+});

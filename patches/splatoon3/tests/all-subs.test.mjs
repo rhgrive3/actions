@@ -531,7 +531,7 @@ test('the real Ink Vac defense consumes one custom sub object and charges only o
   vac.intent.special=true;f.tick(vac);vac.intent.special=false;vac.intent.fire=true;
   // 11.3.0 LengthAddPerFrame=.3334 takes about 45 frames to reach LengthMax=15;
   // this far projectile exercises the grown intake instead of an empty first frame.
-  f.tick(vac,14);
+  f.tick(vac,74);
   assert.equal(f.installedRuntime.inkVacState(vac)?.phase,'inhale','the live Ink Vac is active');
 
   const object=f.G.projectiles.throwBomb(shooter);
