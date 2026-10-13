@@ -747,6 +747,7 @@
       {
         "team": 0,
         "hz": 30,
+        "frameInputHz": 30,
         "start": [
           20,
           3,
@@ -754,15 +755,34 @@
         ],
         "sourceStartTriangle": 173307,
         "wallSamples": 39,
+        "naturalPaint": {
+          "fireFrames": 78,
+          "paintSeconds": 2.6000000000000005,
+          "refillSeconds": 0.8666666666666666,
+          "wallOwned": 39,
+          "floorOwned": 7,
+          "floorTargets": 8,
+          "unownedFloor": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ]
+        },
         "alive": true,
         "grounded": true,
         "climbed": true,
         "existingSurgeBurst": true,
-        "seconds": 2.1,
+        "seconds": 2.2666666666666666,
         "capEnd": [
-          28.02006547474377,
-          9.009790886131848,
-          18.50260538473232
+          28.06572196113558,
+          9.009790674261478,
+          18.502706861017696
         ],
         "walkwaySourceSupports": 24,
         "bankGoal": [
@@ -771,12 +791,13 @@
           40.5
         ],
         "bankEnd": [
-          19.899410714388164,
+          19.900771793600917,
           9,
-          40.187488852657
+          40.18921172868176
         ],
-        "distanceToGoal": 0.3283008096145047,
-        "bankWalkSeconds": 5.066666666666666,
+        "distanceToGoal": 0.32624467280579084,
+        "bankWalkSeconds": 5,
+        "simulationTicks": 436,
         "weapon": "shooter",
         "gear": [
           {
@@ -808,6 +829,7 @@
       {
         "team": 0,
         "hz": 60,
+        "frameInputHz": 60,
         "start": [
           20,
           3,
@@ -815,15 +837,34 @@
         ],
         "sourceStartTriangle": 173307,
         "wallSamples": 39,
+        "naturalPaint": {
+          "fireFrames": 156,
+          "paintSeconds": 2.5999999999999956,
+          "refillSeconds": 0.850000000000001,
+          "wallOwned": 39,
+          "floorOwned": 7,
+          "floorTargets": 8,
+          "unownedFloor": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ]
+        },
         "alive": true,
         "grounded": true,
         "climbed": true,
         "existingSurgeBurst": true,
-        "seconds": 2.1,
+        "seconds": 2.216666666666667,
         "capEnd": [
-          28.03058720098646,
-          9.009790167526889,
-          18.50294956387287
+          28.019149845243916,
+          9.009790861682722,
+          18.502617094752928
         ],
         "walkwaySourceSupports": 24,
         "bankGoal": [
@@ -832,12 +873,13 @@
           40.5
         ],
         "bankEnd": [
-          20.005756945382263,
+          19.987578563700506,
           9,
-          40.23548328663101
+          40.17360728462765
         ],
-        "distanceToGoal": 0.2645793530713749,
-        "bankWalkSeconds": 4.966666666666667,
+        "distanceToGoal": 0.32662898941747087,
+        "bankWalkSeconds": 4.983333333333333,
+        "simulationTicks": 432,
         "weapon": "shooter",
         "gear": [
           {
@@ -869,6 +911,7 @@
       {
         "team": 0,
         "hz": 120,
+        "frameInputHz": 120,
         "start": [
           20,
           3,
@@ -876,15 +919,34 @@
         ],
         "sourceStartTriangle": 173307,
         "wallSamples": 39,
+        "naturalPaint": {
+          "fireFrames": 313,
+          "paintSeconds": 2.6083333333333267,
+          "refillSeconds": 0.8416666666666661,
+          "wallOwned": 39,
+          "floorOwned": 7,
+          "floorTargets": 8,
+          "unownedFloor": [
+            {
+              "point": [
+                24,
+                3.049999952316284,
+                18.5
+              ],
+              "face": 53207,
+              "triangle": 173766
+            }
+          ]
+        },
         "alive": true,
         "grounded": true,
         "climbed": true,
         "existingSurgeBurst": true,
-        "seconds": 2.1,
+        "seconds": 2.216666666666667,
         "capEnd": [
-          28.03058720098646,
-          9.009790167526889,
-          18.50294956387287
+          28.019149845243916,
+          9.009790861682722,
+          18.502617094752928
         ],
         "walkwaySourceSupports": 24,
         "bankGoal": [
@@ -893,12 +955,13 @@
           40.5
         ],
         "bankEnd": [
-          20.005756945382263,
+          19.987578563700506,
           9,
-          40.23548328663101
+          40.17360728462765
         ],
-        "distanceToGoal": 0.2645793530713749,
-        "bankWalkSeconds": 4.966666666666667,
+        "distanceToGoal": 0.32662898941747087,
+        "bankWalkSeconds": 4.983333333333333,
+        "simulationTicks": 432,
         "weapon": "shooter",
         "gear": [
           {
@@ -930,6 +993,7 @@
       {
         "team": 1,
         "hz": 30,
+        "frameInputHz": 30,
         "start": [
           -27,
           3,
@@ -937,6 +1001,7 @@
         ],
         "sourceStartTriangle": 171854,
         "wallSamples": 39,
+        "naturalPaint": null,
         "alive": true,
         "grounded": true,
         "climbed": true,
@@ -960,6 +1025,7 @@
         ],
         "distanceToGoal": 0.33756059190675264,
         "bankWalkSeconds": 4.8,
+        "simulationTicks": 364,
         "weapon": "shooter",
         "gear": [
           {
@@ -991,6 +1057,7 @@
       {
         "team": 1,
         "hz": 60,
+        "frameInputHz": 60,
         "start": [
           -27,
           3,
@@ -998,6 +1065,7 @@
         ],
         "sourceStartTriangle": 171854,
         "wallSamples": 39,
+        "naturalPaint": null,
         "alive": true,
         "grounded": true,
         "climbed": true,
@@ -1021,6 +1089,7 @@
         ],
         "distanceToGoal": 0.2644829925211469,
         "bankWalkSeconds": 4.8,
+        "simulationTicks": 363,
         "weapon": "shooter",
         "gear": [
           {
@@ -1052,6 +1121,7 @@
       {
         "team": 1,
         "hz": 120,
+        "frameInputHz": 120,
         "start": [
           -27,
           3,
@@ -1059,6 +1129,7 @@
         ],
         "sourceStartTriangle": 171854,
         "wallSamples": 39,
+        "naturalPaint": null,
         "alive": true,
         "grounded": true,
         "climbed": true,
@@ -1082,6 +1153,7 @@
         ],
         "distanceToGoal": 0.2644829925211469,
         "bankWalkSeconds": 4.8,
+        "simulationTicks": 363,
         "weapon": "shooter",
         "gear": [
           {
@@ -1112,9 +1184,10 @@
       }
     ],
     "errors": [],
-    "conditions": "real Chromium PlayerController keyboard W/Shift/Space; source-supported initial poses; friendly wall/runway initially painted; existing Actor movement and Surge; later source walkway via keyboard W and camera yaw; eight actors/seven bots retained; bots frozen; no later Actor pose, velocity or ink assignment; manual initial ownership is not weapon paint proof; SwiftShader, not hardware measurement",
+    "conditions": "real Chromium PlayerController keyboard W/Shift/Space; 30/60/120 Hz frame/input cadence with the production fixed 60 Hz simulation; source-supported initial poses; positive bank starts with empty ownership and controlled real Actor/WeaponRunner/Projectiles aim/fire/refill paints wall/runway at 30/60/120 Hz; negative wall initially friendly-painted; real keyboard movement and existing Surge; later source walkway via keyboard W and camera yaw; eight actors/seven bots retained; bots frozen; no later Actor pose, velocity or ink assignment; positive natural projectile paint recorded separately from production fixed-clock keyboard movement; negative initial manual wall ownership is not weapon paint proof; SwiftShader, not hardware measurement",
     "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
     "version1130Verified": false,
+    "simulationHz": 60,
     "actors": 8,
     "bots": 7,
     "candidateBuildSource": "175b942d",
@@ -1123,9 +1196,8 @@
       60,
       120
     ],
-    "simulationHz": 60,
-    "simulationClockBasis": "production clock source inspection; final runner also reads STEP/tick count",
-    "weaponPaintClaim": false,
+    "simulationClockBasis": "runtime STEP=1/60 assertion and actual s3Clock tick counts; natural projectile preparation directly exercises Actor at each listed rate before the fixed-clock keyboard phase",
+    "weaponPaintClaim": "positive preparation only; negative initial wall ownership remains manual",
     "screenshotInspectedPrivately": true
   },
   "privateStrictBankBotCandidate": {
