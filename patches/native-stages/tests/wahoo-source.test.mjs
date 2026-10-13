@@ -35,7 +35,7 @@ test('Wahoo original MTL and every PNG match pinned Git blob hashes and sizes',{
   const raw=fs.readFileSync(path.join(SOURCE,stage.internal,name)),copied=fs.readFileSync(path.join(ASSETS,'wahoo',name));
   assert.deepEqual(copied,raw);assert.equal(raw.length,pin.bytes);assert.equal(crypto.createHash('sha256').update(raw).digest('hex'),pin.sha256);
  }
- assert.equal(Object.keys(d.manifest.textureIntegrity).length,196);
+ assert.equal(Object.keys(d.manifest.textureIntegrity).length,187);
 });
 
 test('Wahoo independent original stream matches every float32 attribute and local uint32 face index',{skip:!SOURCE||!ASSETS||!fs.existsSync(path.join(ASSETS||'', 'wahoo','manifest.json'))},()=>{
@@ -56,7 +56,7 @@ test('Wahoo independent original stream matches every float32 attribute and loca
  for(const o of d.manifest.objects)if(o.sourceHasUV)for(let i=o.vo;i<o.vo+o.vc;i++)gotUV.push(d.vertices[i*8+6],d.vertices[i*8+7]);
  assert.deepEqual(new Float32Array(gotUV),uv);assert.deepEqual(d.indices,new Uint32Array(indices));
  const wheels=d.manifest.objects.filter(o=>o.name.startsWith('FldObj_Carousel03_FerrisWheel_'));
- assert.equal(wheels.length,2);assert.ok(wheels.every(o=>o.active&&!o.collidable&&!o.paintable));
+ assert.equal(wheels.length,2);assert.ok(wheels.every(o=>!o.active&&!o.collidable&&!o.paintable));
  assert.ok(wheels.every(o=>o.bounds[0][1]<-64&&o.bounds[1][1]>96),'wheel remains in its unplaced original export pose');
  assert.ok(d.manifest.objects.some(o=>o.name.includes('RotationAttractions')&&o.collidable),'central static export triangles remain available');
 });
@@ -92,8 +92,9 @@ test('Wahoo pads have source floor/capsule support and both teams reach every lo
  console.log(JSON.stringify({id:'wahoo',movement,state:'human; neutral ink; no shooting; micro/full forward, 90-degree turn, reverse and stop',input:phasesForReport()}));
  G.match.mode='turf';G.match.opts={};const basis=nativeArenaBasis(G.level);
  assert.equal(basis.forward.x,1);assert.equal(basis.forward.z,0);
- for(const team of [0,1])for(const hz of [30,60,120])for(const opening of [true,false]){
-  const a=f.make('shooter');a.team=team;a._integrate=f.Actor.prototype._integrate;a.spawnAt(G.level.spawnPads[team],0);a.aimPoint.copy(G.level.spawnPads[team]);a.intent.move.set(0,0,0);a.intent.fire=false;
+ for(const team of [0,1])for(const hz of [30,60,120])for(const opening of [true,false])for(const isBot of [false,true]){
+  const a=f.make('shooter');a.team=team;a.isBot=isBot;a.slot=0;a._integrate=f.Actor.prototype._integrate;a.spawnAt(G.level.spawnPads[team],0);a.aimPoint.copy(G.level.spawnPads[team]);a.intent.move.set(0,0,0);a.intent.fire=false;
+  if(isBot){a.bot=new f.BotBrain(a,'normal');a.aimPoint.z+=100;a.aimYaw=0;a.bot.aimYaw=0;}
   if(opening)assert.equal(f.beginInitialSquidSpawn(a),true);else{a.alive=false;a.respawn();}
   assert.equal(a.yaw,nativeSpawnYaw(G.level,team,0));assert.equal(a.aimYaw,a.yaw);
   const target=a.s3.squidSpawn.target,pad=G.level.spawnPads[team];assert.ok(target&&(target.x-pad.x)*(team?-1:1)>0,'supported launch points toward opposing X side');

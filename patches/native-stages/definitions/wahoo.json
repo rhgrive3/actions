@@ -24,9 +24,9 @@
   ],
   "spawnBarrier": 2.5,
   "version1130Verified": false,
-  "placementStatus": "Local source-supported static export pose; native moving-object transforms/trajectory, retail collision and 11.3.0 placements UNVERIFIED",
+  "placementStatus": "Local supported frozen export pose; unplaced FerrisWheel prototype display excluded; native moving-object transforms/trajectory, retail collision and 11.3.0 placements UNVERIFIED",
   "sourceSemantics": {
-    "nonCollidableObjectPatterns": [
+    "inactiveObjectPatterns": [
       "^FldObj_Carousel03_FerrisWheel_"
     ]
   }
