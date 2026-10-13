@@ -4165,3 +4165,8 @@ S3mix Splash Wall supplies Rainmaker direct x1 / weapon-blast x2. Dedicated rank
 独立レビュー追補: ホコのチャージ/射撃待ち/射撃後硬直の専用速度が採用済みMist減速を迂回する経路と、取得時にInk Vac/Trizookaの独立状態が残る経路を修正。実際のMist配置と30/60/120Hz・サブ影響軽減0/57APで減速の1回適用と退出復帰を確認し、ネイティブ取得から吸引終了・終了通知・再発動と発射/展開済み攻撃の存続を回帰検査する。S3mixのホコ取得・ポイズンミストの記述と既存11.3.0耐性係数を根拠とし、速度の世界単位換算・ブラウザFPS・Switch実機比較は未確認のまま維持する。詳細は上記ルール修正記録の独立レビュー節。
 
 同修正の現行main追補: 外部統合ee9fbbabのMist係数0.5/0.75、キューインキ17F発動と保持吸引、反撃19F無弾/20F発射を維持して再合成。修正前は対象5件が失敗し、修正後はホコ6件・傘/スペシャル操作12件・練習場8件の26件がsource/実minify双方で通過。旧e57上のブラウザ証拠を新合成の証明には流用せず、新headのCIで再検証する。
+
+
+## 2026-10-14 — 全issue監査と入力寿命の修正
+
+全69件を確認し、#1396（取消済みPointer Lock）、#1400（editorへのpad入力透過）を修正。#1359/#1321の検証済み候補から#1357/#1360/#1340/#1311を集約した。公開ミラーとworkflowは不変。source監査455pass/4skip、配布版の入力/復活97passとnetwork32pass、梱包9pass、容量ゲート通過。修正前のbrowser反例を保ち、配布版の実Chromiumでeditor・neutral待ち・取消lock・fresh retry・小さいnative Canvas2D tankの5ケースが合格。controllerと非同期latencyは制御fixtureで、Switch/Android/iOS/Joy-Conの実機比較ではない。未公開の数値・曲線・原典単位を確定せず、残り63件を全解消済みとしない。全件表、正確なsource/build hash、失敗の保持、参照は `reports/inkwave-issue-resolution-2026-10-14.md` と同名JSON。
