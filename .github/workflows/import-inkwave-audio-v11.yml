@@ -1,0 +1,65 @@
+name: Integrate INKWAVE v11 audio
+on:
+  push:
+    branches: [integrate/inkwave-audio-v11-real-assets-20261012]
+    paths: ['.github/workflows/import-inkwave-audio-v11.yml']
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    env:
+      AUDIO_BRANCH: integrate/inkwave-audio-v11-real-assets-20261012
+      PACKAGE_SHA256: 3af3a69627ce70c8fc1f4972194903ce01a4a780614cffdf0b9aa8aec6229381
+      GH_API_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch only after the Actions worker starts
+        shell: bash
+        run: |
+          set -euo pipefail
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}/contents/transfer/audio-v11/ready-${GITHUB_RUN_ID}.txt?ref=${AUDIO_BRANCH}"
+          ready=0
+          for i in $(seq 1 540); do
+            if curl -fsS --max-time 12 -H "Authorization: Bearer ${GH_API_TOKEN}" -H 'Accept: application/vnd.github+json' "$api" -o /tmp/pointer.json 2>/dev/null; then
+              url=$(python3 -c 'import json,base64; print(base64.b64decode(json.load(open("/tmp/pointer.json"))["content"]).decode().strip())')
+              case "$url" in https://sdmntpr*.oaiusercontent.com/files/*) ;; *) echo "Untrusted host" >&2; exit 1;; esac
+              curl -fLsS --connect-timeout 10 --max-time 180 "$url" -o /tmp/inkwave-v11.zip
+              printf '%s  %s\n' "$PACKAGE_SHA256" /tmp/inkwave-v11.zip | sha256sum --check
+              ready=1; break
+            fi
+            if (( i % 18 == 0 )); then echo "Awaiting verified handoff: $i"; fi
+            sleep 10
+          done
+          test "$ready" = 1
+          mkdir -p /tmp/audio-v11-package
+          unzip -q /tmp/inkwave-v11.zip -d /tmp/audio-v11-package
+          python3 /tmp/audio-v11-package/import_audio_v11.py .
+      - name: Build dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
+      - name: Verify audio, game compatibility and production build
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/audio-v11-real-only.test.mjs patches/splatoon3/tests/real-s3-loader-v7.test.mjs patches/splatoon3/tests/weapon-audio.test.mjs patches/splatoon3/tests/audio-refinement.test.mjs
+          python3 tools/audio/verify-s3-real-files.py
+          node scripts/check-inkwave-patches.mjs --quick
+          node scripts/build-inkwave.mjs inkwave-public /tmp/inkwave-v11-site
+          node scripts/check-inkwave-startup-budget.mjs /tmp/inkwave-v11-site
+      - name: Commit verified integration
+        run: |
+          set -euo pipefail
+          git fetch origin "$AUDIO_BRANCH"
+          git merge --ff-only FETCH_HEAD
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add patches/splatoon3/audio-adapter.mjs patches/splatoon3/runtime/audio/ patches/splatoon3/tests/ patches/splatoon3/bootstrap.mjs patches/loading-cache/adapter.mjs scripts/inkwave-source-composition.mjs docs/audio-rebuild/README-v11.ja.md tools/audio/
+          git rm -f .github/workflows/import-inkwave-audio-v11.yml
+          git rm -f "transfer/audio-v11/ready-${GITHUB_RUN_ID}.txt"
+          git diff --cached --check
+          git commit -m 'feat(inkwave): integrate v11 audio and supplied MP3 assets'
+          git push origin "HEAD:${AUDIO_BRANCH}"
