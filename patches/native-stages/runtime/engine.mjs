@@ -8,4 +8,11 @@ export { nativeInitialLanding,nativeArenaBasis,nativeSpawnYaw,nativeRetreatCoord
 export { nativePaintGoalIds } from './native-bots.mjs';
 export { applyNativeQuality } from './native-quality.mjs';
 export { nativeStageArt } from './source-menu.mjs';
+
+export {nativeStageRuleStatus} from './rule-availability.mjs';
+export {nativeTowerClearance} from './native-tower-clearance.mjs';
+export {nativeTowerBoarding} from './native-tower-boarding.mjs';
 export { sweepNativeLevelSphere } from './native-projectile-sweep.mjs';
+import {nativePlayableComponent} from './native-ranked.mjs';
+import {nativeBotInitialLanding as selectBotLanding} from './native-spawn.mjs';
+export function nativeBotInitialLanding(G,actor,validate){return selectBotLanding(G,actor,validate,nativePlayableComponent);}
