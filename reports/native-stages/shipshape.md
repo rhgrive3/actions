@@ -4,7 +4,12 @@ Stage owner branch: `codex/native-shipshape`. Initial accepted foundation:
 `79ad61c59889a5e424bc56ca934422dde184baaf`. The current tested runtime includes
 accepted current-main foundation `846f0532b6b3bcde3dfed893b81ee07d3dc58cd5`
 and accepted source jump attachment `e35ae3a560d228f13e85fd79a462b92989f1a403`.
-Stage verification is in progress; the complete opposite-bank bot route fails.
+The branch also consumes accepted ordinary source-floor support
+`0e6dd2474930b4fde75e2b5e5012030b175b4952` and physical Tower rider guards
+`90b7ba7905986d301772f842e244c8ecb12b0b7a`. The current immutable browser
+artifact predates those two merges. Stage verification is in progress; the
+complete opposite-bank bot route fails. Own [PR #1394](https://github.com/rhgrive3/actions/pull/1394)
+remains Draft.
 Numeric receipts are in [shipshape-verification.json](shipshape-verification.json).
 
 Accepted source coverage #1381 corrects partially covered cells while retaining
@@ -32,13 +37,27 @@ remains rejected. Both original opposing pads now have directed routes to
 and seven bots. This establishes the narrow attachment behavior. It does
 not establish complete bank execution or stage readiness.
 
-The first full team-0 opposite-bank trial at 30 Hz eventually falls onto the
-intact lower vessel hull, at y -14.8647, after ordinary route recovery. A
-fixed-step observer is tracing the first departure from the intended supported
-route. The hull, roofs, NoPaint surfaces and opposing pads remain unchanged;
-the failed route is retained as an unfinished requirement. Source drops are
-observed at each installed simulation step so handler arrival is recorded
-before the ordinary bot selects another goal.
+The first full team-0 opposite-bank trial at 30 Hz falls onto the intact lower
+vessel hull, at y -14.8647. The fixed-step trace shows the bot perceives an
+opponent on its supported pad, switches into combat and clears its navigation
+path. It then leaves the roof at `[17.8042,6.05,45.8828]`. The existing combat
+edge guard accepts the distant lower hull as ground. That native combat support
+correction is root-owned and unresolved; no hull, roof or NoPaint surface is
+removed to hide the failure.
+
+A separate navigation trial places the other seven real actors on genuine
+supported own-bank surfaces outside the intended route's 21-unit awareness
+range. This isolates navigation without changing perception or authored pads.
+The tested bot completes all three source climbs and reaches the opposite bank,
+then stalls eight metres from its goal. Drop edge 28642 → 28230 starts on the
+original `WallCrane` slope: the node centre is y 5.179844, while the real supported
+foot is y 5.340193. The old Drop approach gate rejects that 0.160349 difference.
+The accepted physical support helper admits the same real foot; a production
+Actor/Character regression passes 36 strict source capsule checks and preserves
+all geometry, flags and masks. Manta owns the pending Drop recovery correction;
+it has not been consumed or claimed as accepted. Complete bank execution remains
+unfinished. Source drop arrival is observed at every installed simulation step
+before ordinary AI selects its next goal.
 
 The current private artifact is
 `173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5`,
@@ -48,6 +67,14 @@ Both contain all nine packaged stages and pass the existing distribution
 budgets. Current original-source ownership proof also passes the six admitted
 Shooter contacts, same-cell outside-polygon ownership zero, original NoPaint
 glass, uncovered cells and actual enemy Shooter overpaint release.
+
+Three current source views have zero A/A, B/B and cross-draw pixel differences,
+and twelve moving-camera frames retain physics, navigation and CPU ink identity.
+The initial six-sample gameplay-view medians were 5.1 ms for the single mesh and
+7.6 ms for partitioned draws. A repeat with twelve warm pairs and sixty alternating
+matched pairs, retaining all eight actors, measures 3.4 ms for both medians with
+zero pixel differences. Both runs remain recorded; a material regression was
+not reproduced. These are Chromium SwiftShader timings, without hardware FPS claims.
 
 The local stage uses the original KiTrix display export rather than a blockout.
 Its pinned repository commit is `0611f51b35c9736ee986fb2218461e2585b7875e`,

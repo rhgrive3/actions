@@ -33055,7 +33055,58 @@
         }
       ]
     },
-    "dropRecoveryCandidate": "Manta provisional45fa3b88; not consumed or accepted"
+    "dropRecoveryCandidate": "Manta provisional45fa3b88; not consumed or accepted",
+    "actualSlopeFootWitness": {
+      "upper": {
+        "id": 28642,
+        "x": -18.5,
+        "y": 5.1798441621614515,
+        "z": 63
+      },
+      "lower": {
+        "id": 28230,
+        "x": -18.5,
+        "y": 1.1794999837875224,
+        "z": 60
+      },
+      "position": [
+        -18.5,
+        5.340192766656487,
+        63
+      ],
+      "nodeCenterDifference": 0.1603486044950353,
+      "center": {
+        "point": [
+          -18.5,
+          5.1798441621614595,
+          63
+        ],
+        "normal": [
+          -0.5555360317230225,
+          0.8314924240112305,
+          0
+        ],
+        "triangle": 159857,
+        "face": 72849,
+        "object": "Fld_Twist00_Main_body8_10__WallCrane"
+      },
+      "foot": {
+        "y": 5.340192766656487,
+        "normal": [
+          -0.5555360317230225,
+          0.8314924240112305,
+          0
+        ],
+        "block": 72849,
+        "face": 72849
+      },
+      "upperFootSupported": true,
+      "lowerFootSupported": false,
+      "capsuleChecks": 36,
+      "sourceUnchanged": true,
+      "simulationStep": 0.016666666666666666,
+      "gearAP": []
+    }
   },
   "currentMainSourceRender": {
     "artifact": "173ee4252f9b4b65560cf171a44806bb11873496465459aba8ddddfc8c5479c5",
@@ -33726,5 +33777,16 @@
     "scope": "same affected gameplay view;12 warm pairs/60 alternating matched pairs/8actors/source and state retained",
     "conclusion": "earlier six-sample5.1→7.6ms difference not reproduced; both medians3.4ms; no culling/runtime/geometry change justified",
     "hardwareFpsClaim": false
+  },
+  "acceptedAfterCurrentArtifact": {
+    "floor": "0e6dd2474930b4fde75e2b5e5012030b175b4952",
+    "towerRider": "90b7ba7905986d301772f842e244c8ecb12b0b7a",
+    "artifactResealPending": true,
+    "sourceGeometryAndMaskChanged": false
+  },
+  "ownPr": {
+    "url": "https://github.com/rhgrive3/actions/pull/1394",
+    "status": "draft",
+    "stageReady": false
   }
 }
