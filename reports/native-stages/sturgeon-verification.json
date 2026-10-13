@@ -1,0 +1,699 @@
+{
+  "schema": 1,
+  "id": "sturgeon",
+  "status": "paused-draft-final-gated-matrix-pending",
+  "referenceVersion": "Splatoon 3 Ver.11.3.0 identity only",
+  "version1130Verified": false,
+  "source": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "tree": "fd3bcfd8eb89378b4f1764d3947e5132febf3295",
+    "objBytes": 31263599,
+    "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+    "lfsSmudge": "Resource not accessible by integration",
+    "publicMediaFallback": true
+  },
+  "independentSource": {
+    "id": "sturgeon",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "objSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+    "mtlSha256": "f5db31a556f91e4acc8cf07ec41cb642519a309baf3b3647cb6d094f49f2fd47",
+    "vertices": 269203,
+    "triangles": 188196,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "sourceTexturesIdentical": 149,
+    "maxPositionDifference": 0.0,
+    "version1130Verified": false,
+    "textureAndMtlGitTreeVerified": true
+  },
+  "pinnedDownloadedBlobs": {
+    "files": 201,
+    "pngFiles": 200,
+    "mtlFiles": 1,
+    "bytes": 14332856,
+    "gitBlobSha1AndSizeVerified": true
+  },
+  "independentUint32FaceIndices": {
+    "identical": true,
+    "vertices": 269203,
+    "triangles": 188196,
+    "method": "Independent original OBJ text face fan triangulation, object-local uint32 indices; not importer reuse"
+  },
+  "placement": {
+    "id": "sturgeon",
+    "internal": "Vss_Nagasaki03",
+    "name": "チョウザメ造船",
+    "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+    "tree": "fd3bcfd8eb89378b4f1764d3947e5132febf3295",
+    "bounds": {
+      "minX": -30,
+      "minZ": -72.5,
+      "maxX": 30,
+      "maxZ": 72.5
+    },
+    "spawnPads": [
+      [
+        -15,
+        11.08,
+        -63
+      ],
+      [
+        15,
+        11.08,
+        63
+      ]
+    ],
+    "spawnBarrier": 2.5,
+    "version1130Verified": false,
+    "placementStatus": "Local opposed supports on source GroundSteelPlate02 floor at Y=11, with 0.08 clearance; interactive bounds from its original XZ extent. Native 11.3.0 placements and moving-platform states remain unverified.",
+    "sourceSemantics": {
+      "nonCollidableObjectPatterns": [
+        "^FldObj_Nagasaki03_Crane_",
+        "^Fld_Nagasaki03_CameraWall_"
+      ]
+    }
+  },
+  "conversion": {
+    "schema": 1,
+    "id": "sturgeon",
+    "internal": "Vss_Nagasaki03",
+    "name": "チョウザメ造船",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+    "version1130Verified": false,
+    "coordinates": "OBJ Y-up float32, no scale/translation; retail unit equivalence unverified",
+    "boundsStatus": "Local opposed supports on source GroundSteelPlate02 floor at Y=11, with 0.08 clearance; interactive bounds from its original XZ extent. Native 11.3.0 placements and moving-platform states remain unverified.",
+    "bounds": {
+      "minX": -30,
+      "minZ": -72.5,
+      "maxX": 30,
+      "maxZ": 72.5
+    },
+    "spawnPads": [
+      [
+        -15,
+        11.08,
+        -63
+      ],
+      [
+        15,
+        11.08,
+        63
+      ]
+    ],
+    "spawnStatus": "Local opposed supports on source GroundSteelPlate02 floor at Y=11, with 0.08 clearance; interactive bounds from its original XZ extent. Native 11.3.0 placements and moving-platform states remain unverified.",
+    "spawnBarrier": 2.5,
+    "collisionStatus": "inferred display triangles, not native collision",
+    "paintStatus": "inferred name/material flags and planar polygon masks, not native paint masks",
+    "ruleStatus": "Pnt display layer only; ranked objectives are local calibration",
+    "gridCells": 2259705,
+    "geometry": {
+      "vertices": 269203,
+      "triangles": 188196,
+      "collisionTriangles": 127210,
+      "bvhNodes": 32767,
+      "paintFaces": 29598
+    },
+    "chartMaxPlaneError": 0.0009002685546875,
+    "cell": 0.25,
+    "sourceSemantics": {
+      "nonCollidableObjectPatterns": [
+        "^FldObj_Nagasaki03_Crane_",
+        "^Fld_Nagasaki03_CameraWall_"
+      ]
+    },
+    "bytes": 50997067,
+    "textureFiles": 149,
+    "validCells": 975556,
+    "conversionSeconds": 21.2
+  },
+  "measurementConditions": {
+    "chromium": "154.0.8037.57 Debian GNU/Linux 13",
+    "renderer": "SwiftShader software GL",
+    "browserLock": "/workspace/actions/.ci-scratch/native-stage-browser.lock",
+    "cpuLoad": "Other stage CPU jobs can run concurrently; GPU browser checks serialized",
+    "mobileHardwareMeasured": false,
+    "consoleHardwareMeasured": false
+  },
+  "unverified": [
+    "Native extraction version/date",
+    "Retail world units",
+    "Native collision/paint/grate/climb flags",
+    "Native spawn and ranked placements",
+    "Moving-platform transforms/states",
+    "Native material shaders",
+    "Physical Switch/mobile FPS",
+    "Physical-console control/frame-value equivalence"
+  ],
+  "actualProjectiles": [
+    {
+      "id": "sturgeon",
+      "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+      "version1130Verified": false,
+      "actors": 8,
+      "bots": 7,
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "cases": [
+        {
+          "hz": 30,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 14480,
+              "triangle": 64824,
+              "distanceToTarget": 0.03001391240317809,
+              "object": 70
+            }
+          ],
+          "naturalWallSplats": 4,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 2.3999999910593033,
+            "max": 8.799999997019768
+          }
+        },
+        {
+          "hz": 60,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 14480,
+              "triangle": 64824,
+              "distanceToTarget": 0.03001391240317809,
+              "object": 70
+            }
+          ],
+          "naturalWallSplats": 5,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.30000001192092896,
+            "max": 4.100000008940697
+          }
+        },
+        {
+          "hz": 120,
+          "admitted": 1,
+          "owned": 1,
+          "sourceSweepHit": true,
+          "sourceContacts": [
+            {
+              "face": 14480,
+              "triangle": 64824,
+              "distanceToTarget": 0.03001391240317809,
+              "object": 70
+            }
+          ],
+          "naturalWallSplats": 5,
+          "alive": true,
+          "grounded": true,
+          "projectileCpu": {
+            "p50": 0,
+            "p95": 0.29999999701976776,
+            "max": 1.6000000089406967
+          }
+        }
+      ],
+      "sourceObject": "Fld_Nagasaki03_Wallshipmetal01_A_01__Wallshipmetal01",
+      "face": 14480,
+      "triangle": 64824,
+      "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+      "errors": []
+    }
+  ],
+  "publicSourceBrowser": {
+    "status": "passed",
+    "stages": [
+      {
+        "id": "sturgeon",
+        "sourceMode": "browser-direct",
+        "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+        "geometry": {
+          "vertices": 269203,
+          "triangles": 188196,
+          "collisionTriangles": 127210,
+          "bvhNodes": 32767,
+          "paintFaces": 29598
+        },
+        "actors": 8,
+        "bots": 7,
+        "coverage": [
+          0.003757272860155944,
+          0.0036163655623089965
+        ],
+        "spawn": {
+          "grounded": true,
+          "active": false
+        },
+        "sourceMetrics": {
+          "cached": false,
+          "conversionMilliseconds": 5157.4000000059605,
+          "recipe": "inkwave-browser-source-v3"
+        },
+        "gameMetrics": {
+          "loadMilliseconds": 42395.39999999106,
+          "navMilliseconds": 649.5999999940395,
+          "shaderWarmMilliseconds": 65.40000000596046,
+          "vertices": 269203,
+          "triangles": 188196,
+          "faces": 29598,
+          "gridBytes": 2259705,
+          "atlas": 2048,
+          "ppm": 3.2,
+          "textureCount": 58,
+          "quality": "low",
+          "version1130Verified": false
+        },
+        "render": {
+          "frame": 987,
+          "calls": 170,
+          "triangles": 516153,
+          "points": 0,
+          "lines": 0
+        },
+        "version1130Verified": false
+      }
+    ],
+    "errors": [],
+    "downloads": 2,
+    "menu": [
+      "タイドウォーター広場",
+      "ケルプライン埠頭",
+      "ハリヤードマリーナ",
+      "ユノハナ大渓谷",
+      "ヤガラ市場",
+      "海女美術大学",
+      "ザトウマーケット",
+      "クサヤ温泉",
+      "チョウザメ造船"
+    ],
+    "cache": {
+      "id": "sturgeon",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    },
+    "failureRollback": {
+      "levelRetained": true,
+      "menu": "setup",
+      "loadingRemoved": true
+    }
+  },
+  "render": {
+    "status": "passed",
+    "errors": [],
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "actors": 8,
+    "chunks": 181,
+    "movingCameraFrames": 12,
+    "movingIndexChanges": 12,
+    "authoritiesUnchanged": true,
+    "cpuPaintUnchanged": true,
+    "views": [
+      {
+        "name": "gameplay",
+        "changedPixels": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 57306,
+        "chunkedInkTriangles": 49451,
+        "baselineRenderP50Milliseconds": 5,
+        "chunkedRenderP50Milliseconds": 3.0999999940395355
+      },
+      {
+        "name": "center",
+        "changedPixels": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 57306,
+        "chunkedInkTriangles": 20690,
+        "baselineRenderP50Milliseconds": 1.8999999910593033,
+        "chunkedRenderP50Milliseconds": 2.2000000029802322
+      },
+      {
+        "name": "overhead",
+        "changedPixels": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 57306,
+        "chunkedInkTriangles": 57306,
+        "baselineRenderP50Milliseconds": 2.7999999970197678,
+        "chunkedRenderP50Milliseconds": 2.7999999970197678
+      }
+    ]
+  },
+  "initialChecks": {
+    "nativeSuite": {
+      "passed": 32,
+      "failed": 0,
+      "skipped": 4,
+      "skipScope": "Original Urchin opening and original Flounder weapon tests require those separate source assets; Sturgeon dedicated regressions all ran"
+    },
+    "buildCatalogInputs": {
+      "passed": 14,
+      "failed": 0
+    },
+    "emittedPackaging": {
+      "passed": 9,
+      "failed": 0
+    }
+  },
+  "budgetLocal": {
+    "status": "passed",
+    "revision": "128874aeb3eb7e34a58a00ddf489aeb313f0855f66ce40e1e25a22dec3113e19",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 74638,
+    "initialJSBytes": 2859757,
+    "criticalHTMLBytes": 15371,
+    "precacheCount": 365,
+    "precacheBytes": 5751099,
+    "workerBytes": 70516,
+    "declaredBytes": 10369139,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "budgetPublic": {
+    "status": "passed",
+    "revision": "f85a2247a7a38390d026373ca9206c687c00308cd7031f3cac6cc2ca94a1d042",
+    "initialJSRequests": 146,
+    "modulePreloads": 145,
+    "coreModulePreloads": 131,
+    "practiceRangeModulePreloads": 14,
+    "practiceRangePreloadBytes": 74638,
+    "initialJSBytes": 2862149,
+    "criticalHTMLBytes": 15371,
+    "precacheCount": 365,
+    "precacheBytes": 5753491,
+    "workerBytes": 70517,
+    "declaredBytes": 10371531,
+    "measurementKind": "deterministic file and dependency gates; not native browser timings"
+  },
+  "sourceMovement": {
+    "id": "sturgeon",
+    "opposedPadDistance": 129.52219886953742,
+    "navNodes": 10712,
+    "validNodes": 4908,
+    "rankedCenter": [
+      -0.5,
+      8.999899864196777,
+      0
+    ],
+    "movement": [
+      {
+        "hz": 30,
+        "weapon": "shooter",
+        "gearAP": 0,
+        "seconds": 1,
+        "input": [
+          0,
+          0,
+          1
+        ],
+        "pos": [
+          -15,
+          11.074999809265137,
+          -57.608000000000004
+        ],
+        "groundedFrames": 30
+      },
+      {
+        "hz": 60,
+        "weapon": "shooter",
+        "gearAP": 0,
+        "seconds": 1,
+        "input": [
+          0,
+          0,
+          1
+        ],
+        "pos": [
+          -15,
+          11.074999809265137,
+          -57.654000000000174
+        ],
+        "groundedFrames": 60
+      },
+      {
+        "hz": 120,
+        "weapon": "shooter",
+        "gearAP": 0,
+        "seconds": 1,
+        "input": [
+          0,
+          0,
+          1
+        ],
+        "pos": [
+          -15,
+          11.074999809265137,
+          -57.676999999999815
+        ],
+        "groundedFrames": 120
+      }
+    ]
+  },
+  "testedImplementationSha": "f64487e56b7d7bfd8cee482bffd3039550bdb5ee",
+  "acceptedFoundationSha": "4716dacdbfec7940cca4cde770ae0098ce5f7e5d",
+  "ownPullRequest": "https://github.com/rhgrive3/actions/pull/1337",
+  "pullRequestDraft": true,
+  "aggregateIntegrated": false,
+  "lifecycle": {
+    "status": "passed",
+    "errors": [],
+    "quality": {
+      "cpuGridUnchanged": true,
+      "trianglePositionsUnchanged": true,
+      "authoritiesRetained": true,
+      "finalAtlas": 2048,
+      "textureCount": 58
+    },
+    "failureRollback": {
+      "rejected": true,
+      "levelRetained": true,
+      "paintRetained": true,
+      "displayRetained": true
+    },
+    "corruptionProbe": {
+      "requests": 1,
+      "error": "Native integrity mismatch: sturgeon/vertices.bin"
+    },
+    "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+    "cancellation": {
+      "id": "tidewater",
+      "nativeGroups": 0,
+      "preparationCancelled": true
+    },
+    "switches": [
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 227,
+          "textures": 28
+        }
+      },
+      {
+        "id": "sturgeon",
+        "native": true,
+        "nativeGroups": 1,
+        "memory": {
+          "geometries": 284,
+          "textures": 76
+        }
+      },
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 227,
+          "textures": 28
+        }
+      }
+    ],
+    "fingerprint": {
+      "same": true,
+      "changed": false,
+      "missing": false
+    },
+    "mobile": [
+      {
+        "id": "sturgeon",
+        "viewport": [
+          844,
+          390
+        ],
+        "touch": true,
+        "actors": 8,
+        "native": true,
+        "atlas": 2048,
+        "textureCount": 58,
+        "cpuFrame": {
+          "p50": 17.700000002980232,
+          "p95": 49.69999998807907,
+          "max": 83.40000000596046
+        },
+        "gpuDrainRenderMs": 12.199999988079071,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "local": {
+          "grounded": true,
+          "spawn": false
+        },
+        "mobileHardwareMeasured": false
+      }
+    ]
+  },
+  "builds": {
+    "private": {
+      "site": "_site-native-sturgeon",
+      "inputHash": "8c443df2a324472ce259b3cf67d8dfed741700cc77679676f53a4d71363d3b17",
+      "contentHash": "7b895eaedb983ec27f26e12ee387176c3c2644a4f2253dd9b040721c0e355e40",
+      "revision": "128874aeb3eb7e34a58a00ddf489aeb313f0855f66ce40e1e25a22dec3113e19",
+      "nativeMode": "local-prepared",
+      "runtimeSha256": "1157a34738052ca45052544eac2e78aa224d84484472bebd373f45a8d1d50c4a",
+      "stageIntegritySha256": "73761c579cc42fc374f15e280b366c64086b77059783c8f40de65d7684be422b",
+      "nativeCatalogContainsSturgeon": true
+    },
+    "public": {
+      "site": "_site-native-sturgeon-public",
+      "inputHash": "8c443df2a324472ce259b3cf67d8dfed741700cc77679676f53a4d71363d3b17",
+      "contentHash": "eddbbce9484fe5dcf1e9a45307e4936994750124cabcd4cd84812f270ae08b19",
+      "revision": "f85a2247a7a38390d026373ca9206c687c00308cd7031f3cac6cc2ca94a1d042",
+      "nativeMode": "browser-direct",
+      "runtimeSha256": "1157a34738052ca45052544eac2e78aa224d84484472bebd373f45a8d1d50c4a",
+      "stageIntegritySha256": "10231ba63778b1429e45d1280a24a32833ae2ccb0eccd54a3ade5403fccace6a",
+      "nativeCatalogContainsSturgeon": true
+    }
+  },
+  "identityReferences": {
+    "VersusSceneInfo-1130.json": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
+    "leanny-1130/SceneInfo.json": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e"
+  },
+  "pendingMatrix": [
+    "Consume root-promoted accepted Minc/Manta/Museum foundation SHAs; do not consume provisional common commits",
+    "Qualify full tower swept deck/pole/real-rider envelope and genuinely boardable waypoint approaches in both opposed arena halves; encode honest scoped unavailability if source cannot qualify",
+    "Final 8-actor/7-bot gameplay, natural spawn launch/landing, paint/bot motion, minimap/camera/errors, all supported rules and actual unsupported-rule guards",
+    "Real WebSocket + production RoomDurableObject, all supported modes; owned s3-blaster-short radius3.84 and complete CPU-grid equality after replay/growth queues settle; exact final native fingerprints",
+    "Rebuild public/private at final accepted foundation; re-run applicable source/runtime/emitted/budget/browser checks including actual30/60/120Hz weapon proof, public-menu download/cache/alteredOBJ rollback, moving camera render and lifecycle",
+    "Final self-review/fix/retest, update evidence and own PR1337 to Ready",
+    "SELF-INTEGRATE tested codex/native-sturgeon into /workspace/stage-review codex/native-stage-reviewed under integration lock, push aggregate PR1324; no main merge; report own URL and aggregate mergeSHA to root"
+  ],
+  "selfReviewCheckpoint": {
+    "uniqueChangedFilesOnly": true,
+    "noOriginalAssetsOrGeometryCommitted": true,
+    "sourceRenderBuffersPreserved": true,
+    "honestVersionAndMovingStateUncertainty": true,
+    "noManualPaintCountedAsWeaponProof": true,
+    "noKnownUniqueFailure": true,
+    "finalRuleAndNetworkQualificationPending": true,
+    "physicalConsoleParityNotClaimed": true
+  },
+  "privateEvidence": {
+    ".ci-scratch/sturgeon-budget-local.log": {
+      "bytes": 520,
+      "sha256": "f6be70f2cac5f4ebd5fa3e17a90596616541e394f652ae18a95875f26c248871"
+    },
+    ".ci-scratch/sturgeon-budget-public.log": {
+      "bytes": 520,
+      "sha256": "912db810a8f123a2ca317aa324b9f8c01fc574abb6078738cce587744ccaa781"
+    },
+    ".ci-scratch/sturgeon-build-catalog-tests.log": {
+      "bytes": 1500,
+      "sha256": "10cff72c8946cf818d4d08b679b61f3f7745ac004b8b4b46ed9f4b870b0e707b"
+    },
+    ".ci-scratch/sturgeon-build-local.log": {
+      "bytes": 652,
+      "sha256": "b0e0d007112f151222228fce1f23a2e77021f586313cdf9571b6291c891aade0"
+    },
+    ".ci-scratch/sturgeon-build-public.log": {
+      "bytes": 652,
+      "sha256": "45ea527260d0e32edce77e2ad6439b8eaed59dfaeb1f04b0908bde1ffc6964ea"
+    },
+    ".ci-scratch/sturgeon-conversion.log": {
+      "bytes": 1605,
+      "sha256": "b135b6f2c84141bd7f524b4bd19152b28b8b29c01d0c205a40b46a192ac9d84a"
+    },
+    ".ci-scratch/sturgeon-lifecycle.log": {
+      "bytes": 76,
+      "sha256": "d2be83117966df82a38ca0e1efad4cfbad7af94e7b059019718b05639afcbab5"
+    },
+    ".ci-scratch/sturgeon-native-tests.log": {
+      "bytes": 5862,
+      "sha256": "307769140ad3cdeec7b18a59f33cb1c7c942dea4dbfdab56c73004461204bbbb"
+    },
+    ".ci-scratch/sturgeon-packaging-tests.log": {
+      "bytes": 999,
+      "sha256": "c8a5e49168c9e3e47bad37964407f40f297b0344484f54f00ef4b01c5ce4a316"
+    },
+    ".ci-scratch/sturgeon-projectiles.log": {
+      "bytes": 1473,
+      "sha256": "69e74dc95b4576dfbea67d0631c61dad0285aa20e2051c07afca5d86f56f833f"
+    },
+    ".ci-scratch/sturgeon-render.log": {
+      "bytes": 372,
+      "sha256": "0e461d8ef15f083c19b1a79e44af39864c0512ec71a3b8b49c7f5a2a0d434fc9"
+    },
+    ".ci-scratch/sturgeon-source-browser.log": {
+      "bytes": 65,
+      "sha256": "b6abc30d2a219652d043b13eceabb5f44855e056216f720432e2fc4e11e6577b"
+    },
+    ".ci-scratch/sturgeon-source-verification.log": {
+      "bytes": 508,
+      "sha256": "0da58be211b656f92a2fe81d2ee61d956342f5132b6274fe249c18122ec2c645"
+    },
+    ".browser-evidence/sturgeon-lifecycle/lifecycle.json": {
+      "bytes": 1909,
+      "sha256": "a9bfc3c69f89e849820bf73ba9114e51a6e67656736e068dcc7f3df91df6e711"
+    },
+    ".browser-evidence/sturgeon-projectiles/browser.json": {
+      "bytes": 2511,
+      "sha256": "d8c19958719feed8e98d731e11e233d8ee7b0c7b518cd92d23b94f7bcdd20992"
+    },
+    ".browser-evidence/sturgeon-render/render.json": {
+      "bytes": 12430,
+      "sha256": "a6a4a949f67819cfeea478a652ce0b3e434e2b007237e1c60602ce5ba7e62d9c"
+    },
+    ".browser-evidence/sturgeon-source-public/source-browser.json": {
+      "bytes": 1855,
+      "sha256": "ea149f5e48d78ce5b8b6f536e940cc03e99d99839d21d5fb43065d19a9389c97"
+    }
+  }
+}
