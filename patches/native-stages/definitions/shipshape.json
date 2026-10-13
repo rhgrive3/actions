@@ -1,0 +1,36 @@
+{
+  "id": "shipshape",
+  "internal": "Vss_Twist00",
+  "name": "オヒョウ海運",
+  "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+  "tree": "d1b59d640b885fee46b3cb93c6dab4b38ba32019",
+  "bounds": {
+    "minX": -32,
+    "minZ": -72.5,
+    "maxX": 32,
+    "maxZ": 72.5
+  },
+  "spawnPads": [
+    [
+      -8,
+      6.08,
+      -66
+    ],
+    [
+      8,
+      6.08,
+      66
+    ]
+  ],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Inferred opposing source Floor00 bank supports and interactive Walls00_cp extent; two malformed unplaced crane-winch prototypes excluded by exact source object name. Retail spawn/ranked placement, crane states and 11.3.0 extraction provenance unverified",
+  "sourceSemantics": {
+    "inactiveObjectPatterns": [
+      "^FldObj_BlueCranes_Hoisting_winch_[12]__VesselCraneSet01$"
+    ]
+  },
+  "sourceNavigation": {
+    "wallClimb": true
+  }
+}
