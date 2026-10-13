@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {nativeStageCatalog,nativeStageIdentity} from '../../../scripts/lib/inkwave-native-stages.mjs';
 import {nativeFixture,readStage} from './fixture.mjs';
+import {nativeTowerClearance} from '../runtime/native-tower-clearance.mjs';
 
 const SOURCE=process.env.INKWAVE_NATIVE_STAGE_SOURCE,ASSETS=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
 const REPOSITORY=process.env.INKWAVE_NATIVE_STAGE_REPOSITORY;
@@ -68,7 +69,10 @@ test('Wahoo pads have source floor/capsule support and both teams reach every lo
   assert.equal(h.hit,true);assert.ok(Math.abs(h.point.y-pad.y)<.001);assert.ok(h.normal.y>.99);
   assert.equal(G.physics.bodyFits(pad.clone().setY(pad.y+.01),PLAYER.radius+.04,.32,PLAYER.height,false,.01),true);
  }
- const s=f.nativeRankedStage(G),targets=[s.zones[0].center,s.rainmaker.center,...s.rainmaker.goals,...s.rainmaker.checkpoints.flat(),...s.clams.spawns,...s.tower.path.map(p=>[p[0],p[1]-3.3,p[2]])];
+ const s=f.nativeRankedStage(G),targets=[s.zones[0].center,s.rainmaker.center,...s.rainmaker.goals,...s.rainmaker.checkpoints.flat(),...s.clams.spawns,...s.tower.path.map(p=>[p[0],p[1]-s.tower.localLift,p[2]])];
+ assert.equal(s.tower.localLift,3.3);assert.equal(s.tower.halfSize,1.2);
+ const clearance=nativeTowerClearance(G.level,G.physics.actorBody,s.tower.halfSize);
+ for(let i=0;i<s.tower.path.length;i++)assert.equal(clearance.clear(s.tower.path[i],s.tower.path[Math.max(0,i-1)]),true,'rotating deck, pole and live human capsule clear segment '+i);
  for(let team=0;team<2;team++){
   const start=G.nav.nearest(G.level.spawnPads[team],1.2);
   for(const p of targets){const target=G.nav.nearest(new THREE.Vector3(...p),1.2);assert.ok(G.nav.path(start,target,team,50000),'team '+team+' reaches '+JSON.stringify(p));}
