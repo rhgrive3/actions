@@ -1,0 +1,218 @@
+{
+  "schema": 2,
+  "id": "urchin",
+  "name": "デカライン高架下",
+  "internal": "Vss_Crank02",
+  "status": "draft-checkpoint-pending-accepted-boarding-and-final-matrix",
+  "source": {
+    "id": "urchin",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "objSha256": "17f3c5645505f75d58b99d5333cb8d2f710e230a3278c18a64e47258c2ec942c",
+    "mtlSha256": "1a3e2c5a91c00ea61b7c240cfcbb2cad0046b448ba522c6f1edf0b4f3312661f",
+    "vertices": 534545,
+    "triangles": 407073,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "sourceTexturesIdentical": 195,
+    "maxPositionDifference": 0.0,
+    "version1130Verified": false,
+    "textureAndMtlGitTreeVerified": true,
+    "tree": "3ea9e36f296ab6f6b9c636abc1cc401ce1768f07",
+    "objBytes": 64033907,
+    "mtlBytes": 38406,
+    "mtlGitBlob": "29ce0e6b25446a4e2abbb763e1cc8131d7a1e621",
+    "allAcquiredMtlPngFiles": 266,
+    "allAcquiredMtlPngBytes": 25717600,
+    "everyUint32IndexIdentical": true,
+    "independentSourceTriangles": 407073
+  },
+  "conversion": {
+    "geometry": {
+      "vertices": 534545,
+      "triangles": 407073,
+      "collisionTriangles": 196245,
+      "bvhNodes": 32767,
+      "paintFaces": 56045
+    },
+    "gridCells": 2539305,
+    "validCells": 857897,
+    "chartMaxPlaneError": 0.0015296773784330491,
+    "textureFiles": 195,
+    "bytes": 90924962,
+    "conversionSeconds": 14.8
+  },
+  "sourceSupport": {
+    "pads": [
+      {
+        "pad": [
+          90,
+          12,
+          -20
+        ],
+        "support": [
+          90,
+          12,
+          -20
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "bodyFits": true,
+        "object": "Fld_Crank02_Asphalt_1__AsphaltBace"
+      },
+      {
+        "pad": [
+          -90,
+          12,
+          20
+        ],
+        "support": [
+          -90,
+          12,
+          20
+        ],
+        "normal": [
+          0,
+          1,
+          0
+        ],
+        "bodyFits": true,
+        "object": "Fld_Crank02_Asphalt_1__AsphaltBace"
+      }
+    ],
+    "navNodes": 12883,
+    "validNodes": 10715,
+    "dedicatedBothTeamRankedDirectedAccessPassed": true,
+    "placementAssurance": "Local original-source supports; retail placements unverified"
+  },
+  "acceptedSharedFixes": {
+    "arenaBasisFoundation": "78a7da7d",
+    "staleNativeBotAimFoundation": "c15572d53d97b8919e8734dced7f1bb289bb2361",
+    "cameraFoundation": "33cecb0583de92b260478356d4340513a3188065",
+    "cameraAggregate": "d7c73264c8babf180218133fa30a20502e435943",
+    "continuousSourceProjectileFoundation": "4716dacdbfec7940cca4cde770ae0098ce5f7e5d"
+  },
+  "tests": {
+    "sourceCandidateNativeSuite": {
+      "passed": 30,
+      "failed": 0,
+      "scope": "Before accepted final tower approach and endpoint gating"
+    },
+    "sourceIndicesAndSupportedMovement": {
+      "passed": 2,
+      "failed": 0,
+      "ratesHz": [
+        30,
+        60,
+        120
+      ],
+      "teams": 2,
+      "seconds": 0.5,
+      "weapon": "legacy shooter",
+      "gear": "fixture default; no explicit ability loadout"
+    },
+    "nativeRespawnRainmakerRelevant": {
+      "passed": 62,
+      "failed": 0
+    },
+    "sourceLaunchOrientation": {
+      "launches": 60,
+      "ratesHz": [
+        30,
+        60,
+        120
+      ],
+      "teams": 2,
+      "humanAndFourBotSlots": true,
+      "openingAndDeathRespawn": true,
+      "allGrounded": true,
+      "legacyUnchanged": true
+    },
+    "cameraComposedStartContracts": {
+      "passed": 152,
+      "failed": 0
+    },
+    "cameraAggregateContracts": {
+      "passed": 182,
+      "failed": 0,
+      "assetSkips": 20
+    }
+  },
+  "camera": {
+    "status": "passed",
+    "ratesHz": [
+      30,
+      60,
+      120
+    ],
+    "menuHumanLaunches": 3,
+    "onlineHumanLaunches": 6,
+    "actualSetupTicketAndStartClicks": true,
+    "newMatchIdentityRequired": true,
+    "input": "real browser canvas pointer lock + physical mouse fire",
+    "minimumInwardTargetAlignment": 0.999885373583625,
+    "allRigAndAimYawEqualInferredPadYaw": true,
+    "allSourceLandingsGrounded": true,
+    "transport": "real WebSocket + production RoomDurableObject",
+    "packets": 1213,
+    "legacy": {
+      "id": "tidewater",
+      "native": false,
+      "rigYaw": 0,
+      "aimYaw": 0
+    },
+    "browserErrors": [],
+    "verifiedBuild": {
+      "contentHash": "efb4846b7fb7803a8f40669ec308f4cf4aae13adf41485382ceeb74af1c92fb8",
+      "inputHash": "0de3d96b46257b019a7ecc8a660eed595873597cffc747a255208395bc500bf3",
+      "revision": "91097897eca0d5e63d2bcafa0cbb03a2dfe1b5e0bb5a60150f98d1a6830c16c8"
+    },
+    "softwareRenderer": "Chromium SwiftShader",
+    "sourceScreenshotInspected": true,
+    "nativeRetailCameraCoordinatesVerified": false
+  },
+  "towerApproachPreflight": {
+    "status": "private-owner-candidate-only; not final input or boarding proof",
+    "lift": 1.2,
+    "halfSize": 1.2,
+    "routePoses": 57,
+    "legalApproaches": 57,
+    "maxNormalJumpHeight": 1.6312,
+    "sourceClearance": {
+      "queries": 7926,
+      "triangleTests": 262265,
+      "radius": 2.097056274847714,
+      "height": 2.03,
+      "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+    },
+    "floorToDeckPhysicalKeyboardVerified": false
+  },
+  "pendingFinalChecks": [
+    "accepted Mincemeat opposed route/full footprint/legal boarding/mode gates",
+    "final private/public immutable builds and budget identity",
+    "final source-enabled Native Node suite",
+    "all-five-rule gameplay",
+    "public direct-source acquisition/conversion/cache/corruption rollback",
+    "five-mode real WebSocket full-grid/ranked equality",
+    "three-view pixel identity and 12 moving cameras",
+    "quality/corruption/cancellation/switch/mobile lifecycle",
+    "source-admitted ordinary projectile contacts at 30/60/120",
+    "source-floor physical keyboard tower boarding and rider count progress",
+    "final camera/respawn relevant probes",
+    "Ready PR and aggregate self-integration"
+  ],
+  "version1130Verified": false,
+  "physicalMobileOrSwitchMeasured": false,
+  "unverified": [
+    "retail spawn/ranked placements",
+    "native collision/paint/grate/climb masks",
+    "source extraction version/date",
+    "native coordinate units",
+    "native material/shader reconstruction",
+    "moving object state/transforms",
+    "physical mobile or Switch performance"
+  ]
+}
