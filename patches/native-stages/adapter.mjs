@@ -91,7 +91,7 @@ export function adaptNativeStages(rel,code){
   once('        let px = (i + 0.5) * f.cu - lu, py = (j + 0.5) * f.cv - lv;', '        if (this.level.native && this.dead[f.grid + j * f.nu + i]) continue;\n        let px = (i + 0.5) * f.cu - lu, py = (j + 0.5) * f.cv - lv;');
   once('        const prev = this.grid[k];','        if (this.level.native && this.dead[k]) continue;\n        const prev = this.grid[k];');
   once('    return this.grid[f.grid + j * f.nu + i];',`    const k = f.grid + j * f.nu + i;
-    if (this.level.native && (u < 0 || v < 0 || u > f.su || v > f.sv || this.dead[k])) return 0;
+    if (this.level.native && (this.dead[k] || !this.level.containsFaceUV(f,u,v))) return 0;
     return this.grid[k];`);
  }
  if(rel==='src/game/bots.js'){
