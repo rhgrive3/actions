@@ -1,0 +1,67 @@
+# スペシャルウェポンのモデル（all-specials の13種）
+
+参照版: Splatoon 3 Ver.11.3.0。モデル寸法・メッシュ・テクスチャは公開されていないため、形と比率はすべて下記の画像から読み取った推定値。任天堂のメッシュ・テクスチャ・画像はリポジトリに含めていない。
+
+- 対象: マルチミサイル、ジェットパック、ナイスダマ、ウルトラハンコ、ショクワンダー、メガホンレーザー5.1ch、カニタンク、サメライド、トリプルトルネード、デコイチラシ、テイオウイカ、スミナガシート、ホップソナー（`all-specials.mjs` の13種。これまで球・円柱・板で描いていた）
+- 対象外: ウルトラショット、キューインキ、アメフラシ、ウルトラチャクチ、グレートバリア、エナジースタンドは、2026-10-10 の作業で作られた専用モデル（`special-motion.mjs`、`kit-big-bubbler.mjs`、`kit-support.mjs`）をそのまま使う
+- 実装: `patches/splatoon3/runtime/special-models.mjs`（モデル。`sub-models.mjs` の部品・共有ジオメトリ・チームインク素材を共用）、`special-presentation.mjs`（キャラへの装着、置く物、弾）
+- 検証: `patches/splatoon3/tests/special-models.test.mjs`、`scripts/render-inkwave-special-gallery.mjs`（ビルド成果物をヘッドレス Chromium で描画）
+
+## 参照した画像（Inkipedia, splatoonwiki.org の File: 名）
+
+| スペシャル | 主な参照 |
+|---|---|
+| マルチミサイル | S3 Weapon Special Tenta Missiles.png、S2 Tenta Missiles Model.png、S2 Tenta Missiles promo render.jpg、S3 Tenta Missiles promo image.jpg |
+| ジェットパック | S3 Weapon Special Inkjet.png、S2 Inkjet promo render.jpg、S3 Inkjet screenshot.jpg |
+| ナイスダマ | S3 Weapon Special Booyah Bomb.png、S2 Booyah Bomb promo render.jpg、S3 Booyah Bomb screenshot.jpg |
+| ウルトラハンコ | S3 Weapon Special Ultra Stamp.png、S2 Ultra Stamp Model.png、S2 Ultra Stamp promo render.jpg、S3 Ultra Stamp screenshot.jpg |
+| ショクワンダー | S3 Weapon Special Zipcaster.png、S3 Weapon Special Inkling Zipcaster 3D.png（キャラの回転画像 62 コマ） |
+| メガホンレーザー5.1ch | S3 Weapon Special Killer Wail 5.1.png、S3 Killer Wail 5.1 Model.png、S3 promo screenshot Killer Wail 5.1 00〜02.jpg |
+| カニタンク | S3 Weapon Special Crab Tank.png、S3 Crab Tank Model.png（球形態を含む）、S3 promo screenshot Crab Tank 00〜02.jpg |
+| サメライド | S3 Weapon Special Reefslider.png、S3 Reefslider Model.png、S3 Reefslider Promotional 3D Render.jpg、S3 Reefslider model rotating.mp4 |
+| トリプルトルネード | S3 Weapon Special Triple Inkstrike.png、S3 Triple Inkstrike Promotional 3D Render.jpg、S3 Triple Inkstrike model rotating.mp4、S3 Triple Inkstrike promo image.jpg |
+| デコイチラシ | S3 Weapon Special Super Chump.png、S3 Super Chump Model.png、S3 Super Chump Promotional 3D Render.png、S3 Super Chump model rotating.mp4 |
+| テイオウイカ | S3 Weapon Special Kraken Royale.png、S3 Kraken Royale Model.png、S3 Kraken Royale model rotating.mp4、S3 Weapon Special Inkling Kraken Royale 3D.png |
+| スミナガシート | S3 Weapon Special Splattercolor Screen.png、S3 Splattercolor Screen Promotional 3D Render.jpg、S3 Splattercolor Screen model rotating.mp4 |
+| ホップソナー | S3 Weapon Special Wave Breaker.png、S3 Wave Breaker Promotional 3D Render.jpg、S3 Wave Breaker model rotating.mp4、S3 Wave Breaker promo image.jpg |
+
+回転動画は 8 方向（等間隔）、キャラの回転画像は 8 コマを切り出して比べた。
+
+## 形・表示のしかた
+
+| スペシャル | モデル（読み取った構造） | インク色 | 表示（すべて見た目のみ） |
+|---|---|---|---|
+| マルチミサイル | 2×2 の発射箱と上の1連の箱（側面と上面の窓からピンクの筒が見える）、後ろに伸びるピンクの筒と白い溝付きキャップ、L字の握り。弾は白い胴とインク色の先端・羽根 | 箱 | 発動中は右肩に担ぐ。発射した弾は進行方向を向く |
+| ジェットパック | 背中にインクタンク2本・灰色のモーター箱と赤い枠・黒いホース・下向きの2つの噴射口と噴射炎、手に黒い穴あき砲身と灰色の缶 | タンク・噴射炎 | 背中（胸の骨に固定）と手元。砲は照準の上下に合わせて傾く |
+| ナイスダマ | 白く光る芯、インク色の淡い光、巻きつく5本のインクの帯 | 光・帯 | 頭上に掲げ、溜めに応じて大きくなる。投げた球も同じ形 |
+| ウルトラハンコ | 溝付きのゴム円盤3段（面にレリーフ）、背面の青い台と半透明の箱、青いホース、黄色の長い柄（蛇腹・赤い端） | 円盤 | 両手で柄を持ち（右手は柄の端、左手はその上）、頭を前上に構える。振るたびに握りを軸に振り下ろす。投げたハンコは回転して飛ぶ |
+| ショクワンダー | 全身が光沢のあるインクに覆われた姿（目は残す） | 体全体 | 体のメッシュと同じ骨格のインク色の複製を重ねる。移動中は手から目標へインクの線を描く |
+| メガホンレーザー5.1ch | インク色の角丸四角の枠（ねじ穴）、黒いコーン、灰色のセンターキャップ、銀の磁石 | 枠 | 6基を子どもの周りに六角形に浮かべ、照準の上下に向ける。照射中は枠が光る |
+| カニタンク | ドーム形の殻（黄色にインク色の上部）、縞のスカート、灰色の腕と大きな爪、4本脚、黒い握り柱、中央の砲。球形態は黄色の球にインク色の上下と縞 | 殻の上部・縞・爪の内側 | 機体の上に子どもが乗る形。球形態では球だけを表示し、子どもは隠す |
+| サメライド | 空気で膨らんだインク色のサメ、白い腹、背びれ・胸びれ・尾びれ、赤白の目、歯の並んだ口、青い口かご、灰色の手綱、橙の握り、後ろの2本の噴射筒 | 胴・ひれ・噴射筒 | 子どもがまたがる位置に表示 |
+| トリプルトルネード | ふたの開いたインク色のケース（赤い留め具・ミサイルの溝）、投げる目印は赤いドームのビーコン、着弾後はねじれたインクの竜巻 | ケース・ビーコンの台・竜巻 | ケースを胸の前に持つ。目印は回りながら飛び、着弾地点に竜巻（太さは塗り半径の広がりに連動、高さ 7 m） |
+| デコイチラシ | 水玉と白い帯と顔の付いたインク色の風船、首のピンクのリボン・青いつまみの弁・白い吸盤の台。発射機は透明な球をインク色のU字台で支え、橙の多連キャップ・ばね・黒い台 | 風船・U字台 | 発射機を手に持つ。投げた風船は飛んで着地し、そこに立つ |
+| テイオウイカ | 直立した巨大なイカ。前後に薄い矢じり形の頭（ひれの先の幅は高さの 0.53 倍、上から 1/4・1/2・3/4 の高さで幅 0.26・0.46・0.70 倍、先端は丸い）、切れ目なく続く狭い胴、頭の張り出しの下の怒った目（暗いくぼみ・白目・黒目・眉）、目の下の短い足の房、太い2本の腕と涙形の大きなパッド（裏は白く吸盤の輪） | 全体 | 子どもとイカの姿を隠してテイオウイカを表示。高さ約 2.6 m。寸法はキャラの回転画像（1 コマに 2 体）の正面像 255 px から換算 |
+| スミナガシート | 装置は透明な瓶（中にインクの渦）・黒いふたと赤いボタン・インク色の口・横の帯。幕は上下がくぼんだ蝶ネクタイ形のマーブル模様（インク色・薄いインク色・白） | 瓶の中身・幕 | 瓶を手に持つ。幕はゲーム側の大きさ（15×9 m）で、模様がゆっくり流れる |
+| ホップソナー | 光る粒の入ったインク色のドーム、銀の輪、黄色のかご、銀の芯と青いつまみ、インク色の帯と円すい、銀の先端、L字の銀の台 | ドーム・帯・円すい | 設置前は手に持つ。設置後は装置と、広がるインクの波の帯（半径はゲーム側の波に連動） |
+
+- 置く物（デコイ・目印・竜巻・波・幕）は、ゲーム側の仮の形を非表示にして同じ位置にモデルを描く。位置・寿命・当たり判定・塗りはゲーム側のまま。
+- 弾（マルチミサイル・ナイスダマ・ウルトラハンコ）は、ゲーム側のインクの弾に重ねてモデルを描く（インクの弾の描画は残る）。
+- 装置を持つ間はメインブキを隠し、スペシャルが終わると元に戻す。
+- 手で持つ装置（ウルトラハンコ・マルチミサイル・ジェットパックの砲・ナイスダマ・トリプルトルネードのケース・デコイチラシの発射機・スミナガシートの瓶・ホップソナー）と乗り物の握り（カニタンク・サメライド）には手を添える位置を決め、キャラの2関節の腕の計算（`_solveLimb`）で毎フレーム腕をそこへ伸ばす。
+- 相手（リモート）は同期される `specialActive.id` で同じ装置を表示する。段階（溜め・照射など）は相手側では分からないため、基本の姿勢で表示する。
+
+## 本家との差分・確認状態
+
+| 項目 | 状態 |
+|---|---|
+| 形・比率 | 画像から推定。全モデルを 4 方向で描画し、参照画像と並べて修正した |
+| 寸法の絶対値 | 未確認（公開値なし） |
+| 持ち方・体の姿勢 | 手は装置の握りへ伸ばす（上記）。握る位置・肘の向き・装置の構える高さは画像からの推定。体の姿勢（乗る姿勢・ジェットパックの飛行姿勢・ナイスダマを掲げる姿勢）は本家と合わせていない（未対応） |
+| ロゴ・文字・細かい模様 | 簡略化。未確認 |
+| ナイスダマの帯・光、竜巻、霧状の演出の動き | 画像から推定。未確認 |
+| メガホンレーザー5.1ch のスピーカー | 本家は標的の近くへ飛んでいくが、INKWAVE は子どもの周りに浮かべたまま。未対応 |
+| ショクワンダーのインクの線 | ゲーム側の移動先（`zipTarget`）へ手から引くだけ。本家の線の形・太さは未確認 |
+| テイオウイカの足の動き | 歩く速さで左右の腕を振るだけ。本家の跳ねる動き・頭の傾きは未対応 |
+| 2026-10-13 の修正 | 初版のテイオウイカは四角錐の頭と棒状の脚で、回転画像の 1 コマに 2 体並ぶことに気付かず横幅を約 1.3 倍に測っていた。初版のウルトラハンコは手と離れて浮いていた。どちらも作り直した |
+| プレイへの影響 | 見た目だけ。位置・速度・寿命・塗り・ダメージ・当たり判定・通信は変更していない |

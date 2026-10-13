@@ -57,6 +57,9 @@ const FINISH = {
   label: [0xf6f6f2, { roughness: 0.5, metalness: 0 }],
   mark: [0xffffff, { roughness: 0.5, metalness: 0 }],
   stripe: [0xffffff, { roughness: 0.2, metalness: 0, transparent: true, opacity: 0.72 }],
+  magenta: [0xe0259c, { roughness: 0.35, metalness: 0.1 }],
+  violet: [0x6a32d2, { roughness: 0.35, metalness: 0.15 }],
+  green: [0x2c9c3e, { roughness: 0.35, metalness: 0.1 }],
   decalRed: [0xd8262e, { roughness: 0.5, metalness: 0 }],
   decalBlue: [0x2a3fb0, { roughness: 0.5, metalness: 0 }],
 };
@@ -70,8 +73,8 @@ const INK_FINISH = {
   inkMilk: { roughness: 0.16, metalness: 0, transparent: true, opacity: 0.74 },
   inkGlow: { roughness: 0.3, metalness: 0, emissive: 1.4 },
   inkHolo: { basic: true, transparent: true, opacity: 0.78, depthWrite: false, double: true },
-  inkSheet: { basic: true, transparent: true, opacity: 0.24, depthWrite: false, double: true },
-  inkStream: { basic: true, transparent: true, opacity: 0.5, depthWrite: false, double: true },
+  inkSheet: { basic: true, transparent: true, opacity: 0.22, depthWrite: false, double: true },
+  inkStream: { basic: true, transparent: true, opacity: 0.85, depthWrite: false, double: true },
   mist: { basic: true, transparent: true, opacity: 0.1, depthWrite: false, shade: 0.55, grey: 0.4 },
 };
 
@@ -439,58 +442,83 @@ function angleShooterModel(THREE) {
 }
 
 // ---- Splash Wall: a syringe stand with two arched spray arms ------------------
-// Icon (folded), promo render, S1 render and S3 screenshot: round black foot,
-// steel lower rod, ink collars round a clear graduated tank of ink, ink upper
-// rod, steel hub with a spike, two arched ink arms with steel joints and a
-// thin top wire, and a curtain of falling ink streams under the arms.
+// S2 promo render (front, full height), S3 screenshot (tank, arm, streams),
+// S3 icon (folded): silver dome foot, a three-stage telescopic silver lower
+// rod, fixed-magenta castellated collars round a clear graduated tank whose
+// ink level is the team ink, a ribbed black upper rod, a fixed-violet sleeve
+// under a silver hub with a green spike, and two fixed-violet arms that rise
+// gently and droop to green tips, with silver clamps, a U bracket, a black
+// wire over the clamps and a silver brace from the sleeve. Only the tank's ink
+// and the falling streams take the team colour (S3 screenshot: violet arms
+// and magenta collars on an orange-ink wall).
+// Heights follow the S2 promo (hub at 570 px over the foot); the arms span the
+// gameplay wall width, so the stand is ~25% wider than S3 (calibrated 4.2 x
+// 2.8 m collision box).
+const WALL_ARM = [[0, 0], [0.19, 0.064], [0.35, 0.09], [0.53, 0.1], [0.72, 0.07], [1, -0.03]];
 function armY(x, W, H) {
-  const u = Math.abs(x) / (W / 2);
-  return H * 0.9 + 0.12 * Math.sin(Math.PI * Math.min(u / 0.55, 1)) - 0.2 * Math.max(0, (u - 0.55) / 0.45) ** 2;
+  const L = W / 2, u = Math.min(1, Math.abs(x) / L), hub = H * 0.92;
+  for (let i = 1; i < WALL_ARM.length; i++) if (WALL_ARM[i][0] >= u) {
+    const a = WALL_ARM[i - 1], b = WALL_ARM[i], t = (u - a[0]) / (b[0] - a[0]);
+    return hub + (a[1] + (b[1] - a[1]) * t) * L * 0.55;
+  }
+  return hub;
 }
 function splashWallModel(THREE, W, H) {
   const K = kit();
-  const y = (f) => H * f;
-  K.add('body', 'black', latheY(THREE, [[0, 0], [0.13, 0], [0.142, 0.012], [0.11, 0.04], [0.045, 0.062], [0, 0.066]], 24));
-  K.add('body', 'steel', new THREE.CylinderGeometry(0.022, 0.022, y(0.33) - 0.06, 12).translate(0, (y(0.33) + 0.06) / 2, 0),
-    new THREE.CylinderGeometry(0.1, 0.1, 0.02, 24).translate(0, y(0.355), 0), new THREE.CylinderGeometry(0.1, 0.1, 0.02, 24).translate(0, y(0.615), 0),
-    new THREE.CylinderGeometry(0.06, 0.06, 0.1, 18).translate(0, y(0.9), 0));
-  K.add('body', 'ink', new THREE.CylinderGeometry(0.105, 0.105, 0.05, 24).translate(0, y(0.338), 0),
-    new THREE.CylinderGeometry(0.105, 0.105, 0.05, 24).translate(0, y(0.632), 0),
-    new THREE.CylinderGeometry(0.026, 0.026, y(0.87) - y(0.645), 12).translate(0, (y(0.87) + y(0.645)) / 2, 0),
-    new THREE.CylinderGeometry(0.07, 0.07, 0.04, 18).translate(0, y(0.868), 0));
-  K.add('body', 'glass', new THREE.CylinderGeometry(0.09, 0.09, y(0.605) - y(0.365), 24, 1, true).translate(0, (y(0.605) + y(0.365)) / 2, 0));
-  K.add('body', 'inkGlass', new THREE.CylinderGeometry(0.08, 0.08, y(0.57) - y(0.368), 20).translate(0, (y(0.57) + y(0.368)) / 2, 0));
+  const hub = H * 0.92, f = (v) => hub * v, u = hub / 570;   // promo pixels -> metres
+  const cyl = (r, y0, y1, seg = 16, r1 = r) => new THREE.CylinderGeometry(r1, r, y1 - y0, seg).translate(0, (y0 + y1) / 2, 0);
+  // Foot and telescopic lower rod (collapses toward the tank when folded).
+  K.pivot('leg', [0, f(0.416), 0]);
+  K.add('leg', 'steel', latheY(THREE, [[0, 0], [30 * u, 0], [31 * u, 4 * u], [26 * u, 9 * u], [12 * u, 14 * u], [6 * u, 16 * u], [0, 16 * u]], 28));
+  K.add('leg', 'black', new THREE.CylinderGeometry(27 * u, 29 * u, 3 * u, 28).translate(0, 5 * u, 0));
+  K.add('leg', 'steel', cyl(4 * u, 14 * u, f(0.15), 12), cyl(5.5 * u, f(0.15), f(0.29), 14), cyl(7.5 * u, f(0.29), f(0.416), 16),
+    cyl(6.5 * u, f(0.145), f(0.16), 14), cyl(8.5 * u, f(0.285), f(0.3), 16));
+  // Tank between the magenta collars; graduation marks, plunger, ink fill.
+  K.add('body', 'magenta', cyl(18 * u, f(0.416), f(0.43), 24), cyl(16 * u, f(0.43), f(0.437), 24),
+    cyl(16 * u, f(0.765), f(0.775), 24), cyl(18 * u, f(0.775), f(0.79), 24),
+    ...Array.from({ length: 8 }, (_, k) => { const a = k * TAU / 8; return box(THREE, 5 * u, 4 * u, 4 * u, Math.sin(a) * 15 * u, f(0.792), Math.cos(a) * 15 * u).rotateY(0); }));
+  K.add('body', 'glass', new THREE.CylinderGeometry(15 * u, 15 * u, f(0.765) - f(0.437), 24, 1, true).translate(0, (f(0.765) + f(0.437)) / 2, 0));
   const marks = [];
-  for (let i = 0; i < 14; i++) { const yy = y(0.385) + i * (y(0.585) - y(0.385)) / 13, wide = i % 4 === 0; marks.push(box(THREE, wide ? 0.04 : 0.022, 0.006, 0.003, wide ? -0.01 : 0, yy, 0.091)); }
+  for (let i = 0; i < 18; i++) { const yy = f(0.47) + i * (f(0.74) - f(0.47)) / 17, wide = i % 4 === 0; marks.push(box(THREE, (wide ? 9 : 5) * u, 1.2 * u, 0.6 * u, -3 * u, yy, 15.2 * u)); }
   K.add('body', 'mark', ...marks);
-  K.add('body', 'black', new THREE.ConeGeometry(0.022, 0.2, 10).translate(0, y(0.9) + 0.15, 0));
-  // Arms: built per side so mirroring never flips the winding.
+  K.add('body', 'label', cyl(11 * u, f(0.69), f(0.755), 16));
+  K.pivot('fill', [0, f(0.437), 0]);
+  K.add('fill', 'inkGlass', cyl(13.5 * u, f(0.437), f(0.755), 20));
+  // Ribbed black upper rod, violet sleeve, silver hub, green spike.
+  const ribs = [];
+  for (let y = f(0.8); y < f(0.905); y += 3.2 * u) ribs.push(new THREE.TorusGeometry(5.6 * u, 0.8 * u, 4, 12).rotateX(Math.PI / 2).translate(0, y, 0));
+  K.add('body', 'black', cyl(5 * u, f(0.79), f(0.915), 12), ...ribs);
+  K.add('body', 'violet', cyl(9 * u, f(0.912), f(0.973), 16), box(THREE, 6 * u, 10 * u, 21 * u, 0, f(0.94), 0));
+  K.add('body', 'steel', new THREE.CylinderGeometry(8 * u, 12 * u, f(1) - f(0.973), 16).translate(0, (f(1) + f(0.973)) / 2, 0));
+  K.add('body', 'green', new THREE.ConeGeometry(4 * u, 30 * u, 10).translate(0, f(1) + 15 * u, 0), cyl(4.5 * u, f(1), f(1) + 4 * u, 10));
+  // Arms, built per side so mirroring never flips the winding.
   for (const [name, s] of [['armR', 1], ['armL', -1]]) {
-    const hub = [s * 0.06, y(0.9), 0];
-    K.pivot(name, hub);
+    const root = [s * 9 * u, f(0.965), 0];
+    K.pivot(name, root);
     const pts = [];
-    for (let i = 0; i <= 10; i++) { const x = s * (0.06 + i / 10 * (W / 2 - 0.06)); pts.push([x, armY(x, W, H), 0]); }
-    K.add(name, 'ink', tube(THREE, pts, 0.022, 40, 8));
-    K.add(name, 'inkDark', tube(THREE, pts.slice(1, 9).map(([x, yy]) => [x, yy + 0.05, 0]), 0.008, 30, 5));
-    const joints = [];
-    for (const f of [0.18, 0.45, 0.72]) { const x = s * f * W / 2; joints.push(box(THREE, 0.09, 0.07, 0.07, x, armY(x, W, H) + 0.015, 0)); }
-    K.add(name, 'steel', ...joints);
+    for (let i = 0; i <= 16; i++) { const x = s * (9 * u + i / 16 * (W / 2 - 9 * u)); pts.push([x, armY(x, W, H), 0]); }
+    K.add(name, 'violet', tube(THREE, pts, 6 * u, 48, 8));
+    const at = (fr) => { const x = s * fr * W / 2; return [x, armY(x, W, H), 0]; };
+    const c1 = at(0.35), c2 = at(0.53), c3 = at(0.72);
+    K.add(name, 'steel', box(THREE, 24 * u, 13 * u, 16 * u, c1[0], c1[1] + 3 * u, 0), box(THREE, 24 * u, 13 * u, 16 * u, c3[0], c3[1] + 3 * u, 0),
+      box(THREE, 10 * u, 10 * u, 13 * u, c2[0], c2[1] + 3 * u, 0),
+      tube(THREE, [[c2[0] - s * 3 * u, c2[1] + 4 * u, 0], [c2[0] - s * 3 * u, c2[1] + 14 * u, 0], [c2[0] + s * 3 * u, c2[1] + 14 * u, 0], [c2[0] + s * 3 * u, c2[1] + 4 * u, 0]], 1.8 * u, 12, 5),
+      rod(THREE, [s * 9 * u, f(0.93), 0], [c1[0] - s * 8 * u, c1[1] - 2 * u, 0], 2.4 * u, 6));
+    K.add(name, 'black', tube(THREE, [[c1[0], c1[1] + 6 * u, 0], [(c1[0] + c2[0]) / 2, c2[1] + 14 * u, 0], [c2[0], c2[1] + 15 * u, 0],
+      [(c2[0] + c3[0]) / 2, c2[1] + 13 * u, 0], [c3[0], c3[1] + 6 * u, 0]], 2 * u, 24, 5));
     const tip = pts[pts.length - 1];
-    K.add(name, 'black', new THREE.ConeGeometry(0.03, 0.08, 10).rotateZ(s * Math.PI / 2 * -1).translate(tip[0] + s * 0.03, tip[1], 0));
+    K.add(name, 'green', new THREE.CylinderGeometry(6 * u, 8 * u, 13 * u, 10).rotateZ(-s * Math.PI / 2 + s * 0.06).translate(tip[0] + s * 3 * u, tip[1], 0));
   }
-  // Curtain: falling streams and a faint sheet between them.
-  const streams = [], n = 17;
-  for (let i = 0; i < n; i++) {
-    const x = -W / 2 + 0.12 + i * (W - 0.24) / (n - 1), top = armY(x, W, H) - 0.02;
-    streams.push(box(THREE, 0.085, top, 0.03, x, top / 2, 0));
+  // Curtain: separate falling streams from the arms (S3 screenshot: about
+  // seven per side), each a bright core inside a soft glow.
+  const cores = [], glows = [], n = 7;
+  for (const s of [-1, 1]) for (let i = 0; i < n; i++) {
+    const x = s * (0.1 + i / (n - 1) * 0.86) * W / 2, top = armY(x, W, H) - 0.02;
+    cores.push(new THREE.CylinderGeometry(0.018, 0.024, top, 8, 1, true).translate(x, top / 2, 0));
+    glows.push(new THREE.CylinderGeometry(0.05, 0.07, top, 10, 1, true).translate(x, top / 2, 0));
   }
-  K.add('curtain', 'inkStream', ...streams);
-  const sheet = [], seg = 24, idx = [];
-  for (let i = 0; i <= seg; i++) { const x = -W / 2 + i * W / seg; sheet.push(x, armY(x, W, H) - 0.02, 0, x, 0, 0); }
-  for (let i = 0; i < seg; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
-  const plane = new THREE.BufferGeometry();
-  plane.setAttribute('position', new THREE.Float32BufferAttribute(sheet, 3)); plane.setIndex(idx); plane.computeVertexNormals();
-  K.add('curtain', 'inkSheet', plane);
+  K.add('curtain', 'inkStream', ...cores);
+  K.add('curtain', 'inkSheet', ...glows);
   return K.finish(THREE);
 }
 
@@ -642,6 +670,15 @@ const BUILDERS = {
   toxicMist: toxicMistModel, toxicMistCloud: mistCloudModel, angleShooter: angleShooterModel,
   sprinkler: sprinklerModel, beakon: beakonModel, pointSensor: pointSensorModel,
 };
+// Other presentation modules (special-models.mjs) add their builders here so
+// they share the geometry cache, finishes and team-ink handling.
+export function registerSubModelBuilder(id, build) {
+  if (BUILDERS[id] && BUILDERS[id] !== build) throw new Error(`model builder ${id} registered twice`);
+  BUILDERS[id] = build;
+}
+export const MODEL_KIT = Object.freeze({ kit, rod, tube, strap, latheY, latheZ, box, smooth, orient, polyhedron, merge, TAU });
+export function registerFinish(name, color, opts = {}) { if (!FINISH[name]) FINISH[name] = [color, opts]; }
+export function registerInkFinish(name, opts) { if (!(name in INK_FINISH)) INK_FINISH[name] = opts; }
 const cacheByThree = new WeakMap();
 function sharedModel(THREE, id, dims) {
   let cache = cacheByThree.get(THREE);
@@ -769,12 +806,20 @@ export function poseSubModel(model, s = {}) {
       const u = Number.isFinite(s.unfold) ? Math.min(1, Math.max(0, s.unfold)) : 1;
       const arms = smoothstep(u * 1.6 - 0.6), grow = smoothstep(u * 1.4);
       model.root.scale.setScalar(SPLASH_WALL_FOLDED_SCALE + (1 - SPLASH_WALL_FOLDED_SCALE) * grow);
-      if (g.armR) g.armR.rotation.z = (1 - arms) * Math.PI * 0.44;
-      if (g.armL) g.armL.rotation.z = -(1 - arms) * Math.PI * 0.44;
+      // Folded (S3 icon): arms drawn in and pointing up in a bundle about the
+      // tank's length, lower rod telescoped up toward the tank.
+      const reach = 0.38 + 0.62 * arms;
+      if (g.armR) { g.armR.rotation.z = (1 - arms) * Math.PI * 0.48; g.armR.scale.x = reach; }
+      if (g.armL) { g.armL.rotation.z = -(1 - arms) * Math.PI * 0.48; g.armL.scale.x = reach; }
+      if (g.leg) g.leg.scale.y = 0.42 + 0.58 * grow;
       if (g.curtain) {
         g.curtain.visible = u >= 0.999;
-        g.curtain.scale.y = 1 + 0.015 * Math.sin(st.t * 21);
+        const glow = model.materials.get('inkSheet');
+        if (glow) glow.opacity = 0.18 + 0.06 * Math.sin(st.t * 23);
       }
+      // Tank ink level follows the wall's remaining HP (presentation only).
+      // Full is ~85% of the tank so the plunger and marks stay visible (refs).
+      if (g.fill) g.fill.scale.y = 0.85 * Math.max(0.05, Number.isFinite(s.fill) ? Math.min(1, s.fill) : 1);
       break;
     }
     case 'inkMine':

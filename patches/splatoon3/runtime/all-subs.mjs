@@ -268,7 +268,9 @@ function poseVisual(api, object, dt) {
   const unfold = id === 'splashWall' && deployed ? (now - (object.deployedAt ?? now)) / SPLASH_WALL_UNFOLD_SECONDS : 0;
   let bulge = 0;
   if (id === 'fizzy') bulge = Math.min(1, .25 * (object.popLimit - 1) + (object.fuse > 0 ? .5 * Math.min(1, object.age / object.fuse) : 0));
-  poseSubModel(model, { dt, speed: object.grounded ? Math.hypot(v.x, v.z) : 0, unfold,
+  if (id === 'splashWall' && !Number.isFinite(object.s3HpMax)) object.s3HpMax = object.hp;
+  const fill = id === 'splashWall' && object.s3HpMax > 0 ? object.hp / object.s3HpMax : 1;
+  poseSubModel(model, { dt, speed: object.grounded ? Math.hypot(v.x, v.z) : 0, unfold, fill,
     armed: deployed && now >= object.activeAt, flying: !deployed, active: deployed, bulge });
 }
 function disposeVisual(api, object, projectiles) {
