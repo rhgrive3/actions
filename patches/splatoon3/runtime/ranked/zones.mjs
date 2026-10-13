@@ -92,6 +92,7 @@ export class ZonesRule {
       && teamId(this.state.zones[0].team)
       ? this.state.zones[0].team : -1;
     this.state.controllingTeam = allTeam;
+    if (previousControl >= 0 && previousControl !== allTeam) this.engine.resolveTie?.(previousControl);
 
     if (allTeam >= 0) {
       if (this.state.zoneRunTeam < 0) {

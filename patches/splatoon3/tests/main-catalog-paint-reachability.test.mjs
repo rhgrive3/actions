@@ -6,7 +6,8 @@ import {MAIN_WEAPON_CATALOG as C} from '../runtime/main-weapon-catalog-data.mjs'
 test('all 65 actual main Actors paint reachable floor and credit exactly its ownership',async()=>{
 const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"}); f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile); const rows=[];
 for(const r of C.records){
- f.G.actors=[]; const {paint,V}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
+ f.G.projectiles.clear();f.G.actors=[]; const {paint,V}=makePaintWorld(f); // each weapon uses a fresh battle; detached canopies survive owner resets
+f.G.settings={};f.setRandom(()=>.37);
  const a=f.make(r.id);a.form='kid';a.aimDir.set(0,-.12,1).normalize();a.aimPoint.set(0,0,12);a.pos.set(0,0,0);a.ink=100;
  let stamps=0,ownerless=0,invalid=0;const raw=paint.splat;
  paint.splat=function(at,R,team,opts={}){stamps++;if(!opts.cosmetic&&!opts.claimOwner&&!this._paintNextOwner)ownerless++;if(!Number.isFinite(R)||R<=0)invalid++;return raw.call(this,at,R,team,opts);};
