@@ -82,7 +82,7 @@ test('Turf-point adapter composes after Storm and Tidal Slam lock transforms', (
   const end = actor.indexOf('  addTurfNoSpecial(', begin);
   assert.ok(begin >= 0 && end > begin, 'both native Turf credit entry points exist');
   const turf = actor.slice(begin, end);
-  assert.match(turf, /this\\.stats\\.turf \\+= points;/);
-  assert.match(turf, /this\\.special \\+ points/);
-  assert.match(turf, /!this\\.specialActive && !\\(this\\.stormGaugeLock > 0\\) && !this\\.s3TidalSlamGaugeFinish/);
+  assert.ok(turf.includes("this.stats.turf += points;"), 'literal composed Turf credit and gauge lock');
+  assert.ok(turf.includes("this.special + points"), 'literal composed Turf credit and gauge lock');
+  assert.ok(turf.includes("!this.specialActive && !(this.stormGaugeLock > 0) && !this.s3TidalSlamGaugeFinish"), 'literal composed Turf credit and gauge lock');
 });
