@@ -18,7 +18,7 @@ import { touchLayoutIdentity } from '../patches/touch-layout/adapter.mjs';
 import { reliabilityIdentity, RELIABILITY_ROOT } from '../patches/reliability/adapter.mjs';
 import { qualityIdentity, QUALITY_ROOT } from '../patches/local-quality/adapter.mjs';
 import { networkIdentity, NETWORK_ROOT } from '../patches/network-replication/adapter.mjs';
-import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity } from '../patches/loading-cache/adapter.mjs';
+import { LOADING_ROOT, prepareLoading, finalizeLoadingWorker, loadingIdentity, INITIAL_JS_BUDGET_BYTES } from '../patches/loading-cache/adapter.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from './lib/inkwave-build-only-modules.mjs';
 import { staticEsModuleImports } from './lib/inkwave-module-imports.mjs';
 import { compactLoadingWorkerTemplate } from './lib/inkwave-worker-compaction.mjs';
@@ -90,7 +90,7 @@ for (const file of walk(PATCH_ROOT)) {
   if (rel.startsWith('tests/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel === 'upstream-lock.json' || BUILD_ONLY_PATCH_MODULES.has('patches/splatoon3/' + rel.split(path.sep).join('/'))) continue;
   // Pinned source/audit tables are input evidence for tests and profile generation,
   // never fetched by the browser. Keep them in Git, but exclude their JSON from
-  // the deployed PWA asset/hash manifest and the 64 KiB service worker.
+  // the deployed PWA asset/hash manifest and the bounded Service Worker.
   if (rel.startsWith('reference/') && rel.endsWith('.json')) continue;
   // Scorch menu artwork belongs at the shared stage asset URLs, not under the
   // patch source namespace. Merge only its stage manifest entry below.
@@ -473,7 +473,7 @@ const preloadOrder = order.filter((file) => {
   if (deferredIntegrationPreloads.has(file)) return false;
   if (isRange(file)) return true;
   const size = bytes(file);
-  if (corePreloadCount >= 131 || initialHintBytes + size > 3.2 * 1024 * 1024) return false;
+  if (corePreloadCount >= 131 || initialHintBytes + size > INITIAL_JS_BUDGET_BYTES) return false;
   corePreloadCount++; initialHintBytes += size;
   return true;
 });

@@ -4,7 +4,7 @@
 // lying on the silhouette's top edge above the opening (kept level by animateWeapon), and the native pitcher
 // handle, its thumb lever and the native right-hand grip are kept at the origin. Scale is an estimate (see the
 // reference doc). Everything is procedural geometry.
-import { Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, sweep, rotateAbout } from './kit.mjs';
+import { Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout, sweep } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = origin in the image, s = metres/pixel.
 // Returns [z, y], the layout slab() takes directly (muzzle toward +Z, up = +Y).

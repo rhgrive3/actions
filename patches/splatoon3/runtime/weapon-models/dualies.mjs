@@ -4,8 +4,7 @@
 // renders show the pair overlapped; the turntables show single pistols). Parts the turntable shows in team
 // colour are ink. The native recoil `slide` / `slideInk` / `led` channels are kept (hidden: no real dualie
 // has a sliding top). Scale: the pistol handle is 0.11 m. Everything is procedural geometry.
-import { THREE, Pieces, M, V, box, sphere, zlathe, ylathe, zcyl, ring, cyl, pipe, sweep, slab, smoothOutline, pistolGrip, TRIGGER_PIVOT,
-  part, rebuild } from './kit.mjs';
+import { Pieces, M, box, sphere, zlathe, zcyl, ring, cyl, pipe, slab, smoothOutline, pistolGrip, TRIGGER_PIVOT, part, rebuild, THREE, V, ylathe, sweep } from './kit.mjs';
 
 const finish = (d, body, ink, trig, muzzle) => rebuild(d, { body, ink, parts: { trigger: part(trig, TRIGGER_PIVOT) }, muzzle });
 /** Side-profile shell: outline [[z, y], ...] (muzzle +Z) extruded `t` across X. */
