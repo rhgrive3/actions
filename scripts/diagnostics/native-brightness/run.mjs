@@ -1,7 +1,7 @@
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {deflateSync} from 'node:zlib';
 import {initializePair,connectPair,pairBooted,verifyPairRequest} from './trusted-io.mjs';
 import {installCanvasCapture} from './inkwave-canvas-capture.mjs';import {verifySavedPngCapture,decodeCapturePng} from './inkwave-png-evidence.mjs';
-import {prepareLightingScene} from './prepare.mjs';
+import {prepareLightingScene,landLightingScene} from './prepare.mjs';
 import {collectMaskedLighting} from './masked-lighting.mjs';
 const PIN='1c84fa1a8776f1f3b6d6bc8da807c6dba0668a94',sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const site=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]),binding=JSON.parse(fs.readFileSync(process.argv[4]));fs.mkdirSync(out,{recursive:true});
@@ -25,9 +25,13 @@ try{
    await page.route('**/*',route=>{const p=verifyPairRequest(route,url,manifest,row).catch(async e=>{row.errors.push(String(e));await route.abort('failed').catch(()=>{});});pending.push(p);return p;});
    await page.addInitScript(initializePair);await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'high',shadows:true,bloom:false,minimap:false,musicVolume:0})));
    await page.goto(url+'?map=inkblot',{waitUntil:'domcontentloaded',timeout:90000});await page.evaluate(connectPair);await page.waitForFunction(pairBooted,null,{timeout:180000});
-   row.preparation=await page.evaluate(prepareLightingScene,theme);
    await page.evaluate(installCanvasCapture);
    const dir=path.join(out,theme);fs.mkdirSync(dir,{recursive:true});
+   row.aimPreparation=await page.evaluate(prepareLightingScene,theme);
+   const aim=await page.evaluate(()=>globalThis.__captureNativeCanvas('aim-reference-active-fx'));verifySavedPngCapture(aim);
+   const aimBytes=Buffer.from(aim.png.slice(22),'base64');fs.writeFileSync(path.join(dir,'aim-reference-active-fx.png'),aimBytes);
+   row.aimReference={file:theme+'/aim-reference-active-fx.png',sha256:sha(aimBytes),scope:'Original AIM camera and active FX; separate from landed control view',capture:aim.capture};save();
+   try{row.preparation=await page.evaluate(landLightingScene);}finally{row.landingReceipt=await page.evaluate(()=>globalThis.__lightingLandingReceipt??null);save();}
    const result=await collectMaskedLighting(page,{expectedTheme:theme,expectedRevision:manifest.build.revision,verifyCapture:verifySavedPngCapture,onMask:mask=>fs.writeFileSync(path.join(dir,'mask.png'),maskPng(mask)),onOriginal:original=>{for(const frame of original.rows){verifySavedPngCapture(frame.capture);fs.writeFileSync(path.join(dir,frame.mode+'.png'),Buffer.from(frame.capture.png.slice(22),'base64'));}}});
    const mask=maskPng(result.mask);fs.writeFileSync(path.join(dir,'mask.png'),mask);result.mask.pngSha256=sha(mask);delete result.mask.labels;
    for(const frame of result.rows){const bytes=Buffer.from(frame.capture.png.slice(22),'base64');fs.writeFileSync(path.join(dir,frame.mode+'.png'),bytes);frame.capture={pngFile:frame.mode+'.png',pngSha256:sha(bytes),rawSha256:sha(Buffer.from(frame.capture.rawRGBA,'base64')),exactPngReadbackVerified:true,...frame.capture.capture};}

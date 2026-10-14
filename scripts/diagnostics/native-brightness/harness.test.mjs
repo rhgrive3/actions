@@ -5,7 +5,7 @@ const T=await import(process.env.INKWAVE_LIGHTING_THREE_MODULE || new URL('../..
 import {captureNativeGeometryMask} from './geometry-mask.mjs';
 import {runIndependentLightControls,maskedStatistics,collectMaskedLighting} from './masked-lighting.mjs';
 import {runFrozenComposerControls} from './frozen-controls.mjs';
-import {prepareLightingScene} from './prepare.mjs';
+import {prepareLightingScene,landLightingScene} from './prepare.mjs';
 
 function setup(theme='day'){
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(),group=new T.Group(),mat=new T.MeshStandardMaterial({normalMap:new T.Texture(),roughnessMap:new T.Texture()}),mesh=new T.Mesh(new T.BoxGeometry(),mat);mesh.receiveShadow=true;group.add(mesh);scene.add(group);
@@ -71,9 +71,25 @@ test('preparation waits beyond 4.2s intro then settles, without moving camera or
 test('preparation rejects stuck intro within explicit bound',async()=>{
  const {G,ticks}=preparationFixture({stuck:true});await assert.rejects(invoke(prepareLightingScene,{NG:G,__resetPairRandom(){}})('day'),/intro did not complete/);assert.equal(ticks(),300);
 });
-test('preparation rejects active ScreenFX rather than disabling it',async()=>{
- const {G}=preparationFixture({effects:true});await assert.rejects(invoke(prepareLightingScene,{NG:G,__resetPairRandom(){}})('day'),/not quiescent/);assert.equal(G.screenfx.pass.enabled,true);
+test('AIM preparation preserves active ScreenFX for separate reference',async()=>{
+ const {G}=preparationFixture({effects:true});const r=await invoke(prepareLightingScene,{NG:G,__resetPairRandom(){}})('day');assert.equal(r.phase.screenFxEnabled,true);assert.equal(G.screenfx.pass.enabled,true);
 });
 test('native material array is rejected before mask mutations',()=>{
  const {G,mesh,mat}=setup();mesh.material=[mat];assert.throws(()=>invoke(captureNativeGeometryMask,{NG:G})(),/single native MeshStandardMaterial/);assert.equal(mesh.material[0],mat);
+});
+
+function landingFixture({stuck=false,effectsStuck=false}={}){
+ const {G}=preparationFixture({effects:true}),g=G.game,a=G.local;G.match.state='playing';g.frozen=true;g._skipRender=true;a.invuln=Infinity;G.screenfx.s={shimmer:.7};let n=0;
+ g._frame=()=>{n++;a.intent.fire=g.input.mouse.left;if(g.input.mouse.left)a.s3.squidSpawn.phase='flight';if(n===4&&!stuck){delete a.s3.squidSpawn;a.grounded=true;a.ground={hit:true};a.invuln=0;}if(n===80&&!effectsStuck){G.screenfx.pass.enabled=false;G.screenfx.s.shimmer=0;}};
+ return {G,ticks:()=>n};
+}
+test('ordinary launch preserves AIM receipt then waits for genuine landing and natural FX decay',()=>{
+ const {G,ticks}=landingFixture(),pos=G.local.pos.clone(),camera=G.camera.position.clone();const r=invoke(landLightingScene,{NG:G})();
+ assert.equal(r.aim.spawn,'aim');assert.equal(r.aim.shimmer,.7);assert.equal(r.aim.invuln,'Infinity');assert.equal(r.flightTicks,3);assert.equal(r.settleTicks,76);assert.equal(ticks(),80);assert.equal(r.final.screenFxEnabled,false);assert.equal(r.final.groundHit,true);assert.deepEqual(G.local.pos,pos);assert.deepEqual(G.camera.position,camera);assert.equal(G.game.input.mouse.left,false);
+});
+test('flight failure retains numeric trace and releases mouse',()=>{
+ const {G}=landingFixture({stuck:true}),ctx={NG:G};assert.throws(()=>invoke(landLightingScene,ctx)(),/did not land/);assert.equal(G.game.input.mouse.left,false);assert.equal(G.local.s3.squidSpawn.phase,'flight');
+});
+test('persistent landed FX fail bounded gate without disabling effects',()=>{
+ const {G,ticks}=landingFixture({effectsStuck:true});assert.throws(()=>invoke(landLightingScene,{NG:G})(),/did not decay naturally/);assert.equal(ticks(),604);assert.equal(G.screenfx.pass.enabled,true);assert.equal(G.screenfx.s.shimmer,.7);
 });

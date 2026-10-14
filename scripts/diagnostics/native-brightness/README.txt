@@ -1,4 +1,4 @@
-PRIVATE REVIEW CANDIDATE. No workflow run, runtime patch, branch or PR publication.
+HARNESS-ONLY RECOVERY REVIEW. Original diagnostic head44f9 was published and run38625056161 failed preparation before any control capture. This revision preserves AIM as a separate reference, then uses actual input/landing for the quiescent diagnostic. Runtime source remains pinned1c84 and unchanged.
 
 Purpose
 Separate native Inkblot underlighting from material/normal/shadow/tonemapping causes on the actual production composer, rather than choose a generic brightness boost. Original user photos remain byte-identical in ../photos. They establish the symptom and target appearance, not a matched camera/build numerical baseline.
@@ -7,7 +7,7 @@ Files and provenance
 - frozen-controls.mjs: exact PR1324 af7d frozen-controls blob b2be4440d3871d4674116e7e24ff49ccd3836fdd, with expectedTheme/day-sunset prerequisite adaptation and fail-closed single MeshStandardMaterial guard. The original nine modes are unchanged.
 - geometry-mask.mjs: separate render-target mask, no simulation changes.
 - masked-lighting.mjs: adds independent exposure-only and hemisphere-only controls, computes same-pixel statistics, requires exact source/build, exact restored composer bytes and identical before/after masks.
-- harness.test.mjs / tests.log: 15 passing Node/Three synthetic tests. No actual GPU/image qualification.
+- harness.test.mjs / tests.log: 18 passing Node/Three synthetic tests. No actual GPU/image qualification.
 
 Integration, once reviewed
 Import collectMaskedLighting. Reuse the existing trusted production build/source runner, offline page controls, freeze, verified Three namespace, and __captureNativeCanvas installation. Pass expectedTheme, exact expectedRevision, and existing verifySavedPngCapture as verifyCapture. Do not use the original day-only verifyLightingIdentity on sunset output.
@@ -40,6 +40,6 @@ Sprite occluders use real SpriteMaterial retaining rotation/sizeAttenuation; Mes
 
 Root-review corrections applied
 - Unique push branch review/native-brightness-1c84-20261014, no workflow_dispatch and no PR. Source main1c84 tree9516ed63e5d72702aee424863191b29c74cb50e2 independently verified by root.
-- prepare.mjs follows the verified intro wait:240 lifecycle ticks, up to60 ticks until actual playing, then60 settle ticks. It checks actual mode/match/AIM, local controller/alive/fire release, menus.current null, wipe idle, frozen/skip flags, and disabled ScreenFX/extraPass with zero grade hurt/flash. No phase/camera/actor replacement or forced FX disabling. Synthetic4.2s intro case finishes at313ticks; stuck intro is rejected by300.
+- prepare.mjs follows the verified intro wait:240 lifecycle ticks, up to60 ticks until actual playing, then60 settle ticks. AIM has native invuln Infinity and shimmer, so it is preserved as a separate active-FX PNG and numeric receipt. landLightingScene uses one ordinary mouse-fire tick, released input, up to240 real flight/landing ticks, then60 minimum and600 maximum natural FX-decay ticks. Actual grounded plus ground.hit, alive/local controller, no spawn phase, frozen/skip, released fire, idle menu/wipe, disabled ScreenFX/extraPass and zero grade hurt/flash are required. No actor, camera, phase, FX or position override. Landed and AIM views are explicitly different. Failure retains numeric FX/phase trace; no thresholds are weakened. The initial AIM/quiescence contradiction was a harness preparation error, not evidence of the user's darkness cause.
 - Exact current main build script060eb6a45c2c731bb4308e52a2c22abc0c05e7ea explicitly imports process.env.ESBUILD_MODULE via pathToFileURL; this build environment option is source-verified.
 - Current nativeDisplay constructs one MeshStandardMaterial per mesh. Mask and controls now reject arrays/custom materials before assuming normalScale/emissive. Historical high/day receipt has79 of123 meshes alphaTest0, including GroundWhite, GroundAsphaltWet, DV_GroundRepeat and WallBrick; sufficient eligible surface types exist, but the actual64-pixel viewport threshold remains fail-closed and GPU-unverified.
