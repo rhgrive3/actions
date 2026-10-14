@@ -9,6 +9,10 @@ import { installRollerVisualQuality } from './roller-visual.mjs';
 import { installMenuQuality } from './menu.mjs';
 import { installOffscreenVisualBudget } from './offscreen-visual-budget.mjs';
 import { installOfflineOffscreenBudget, installAttractBotBudget } from './offline-offscreen-budget.mjs';
+import { installIntermediateTickBudget } from './intermediate-tick-budget.mjs';
+import { installKidShadowProxy } from './kid-shadow-proxy.mjs';
+import { touchPrimary } from '../../src/core/device.js';
+import * as THREE from 'three';
 export function installQuality(profile){
   const api={Character,CHARACTER_CHANNELS,CHARACTER_TIMERS,Projectiles};
   installRollerMotionQuality(api,rollerDetailMotionSnapshot);
@@ -21,4 +25,8 @@ export function installQuality(profile){
   // stable offscreen leg IK, pose tail, hair and material presentation work.
   installOfflineOffscreenBudget(api,G);
   installAttractBotBudget({ BotBrain }, G);
+  // Outermost Character.update wrapper: bots/replicas skip visual work on fixed ticks that are never drawn.
+  installIntermediateTickBudget(api,G);
+  // Touch devices (sun map capped at 2048²): kids cast their shadow from the far-tier body.
+  installKidShadowProxy(api,G,THREE,()=>touchPrimary);
 }

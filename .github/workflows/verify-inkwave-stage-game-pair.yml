@@ -1,0 +1,122 @@
+name: Verify immutable INKWAVE stage Game pair
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Reviewed published immutable candidate commit (full SHA)
+        required: true
+        type: string
+      candidate_tree:
+        description: Reviewed candidate tree (full SHA)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-stage-game-pair-${{ github.event.pull_request.number || inputs.candidate_sha }}
+  cancel-in-progress: false
+jobs:
+  paired-game:
+    if: >-
+      (github.event_name == 'pull_request' && github.head_ref == 'codex/native-stage-reviewed' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' && github.ref_name == 'codex/native-stage-reviewed')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BASELINE_SHA: 55b4750aea5e45136a588fbd7242c106aff2323a
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || inputs.candidate_sha }}
+      CANDIDATE_TREE: ${{ inputs.candidate_tree }}
+    steps:
+      - name: Validate immutable inputs
+        shell: bash
+        run: |
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then [[ "$CANDIDATE_TREE" =~ ^[0-9a-f]{40}$ ]]; fi
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+          persist-credentials: false
+          path: harness
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASELINE_SHA }}
+          persist-credentials: false
+          path: baseline
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+          persist-credentials: false
+          path: candidate
+      - name: Bind candidate and harness to the immutable event commit
+        shell: bash
+        run: |
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C harness rev-parse HEAD)" = "$CANDIDATE_SHA"
+          tree=$(git -C candidate rev-parse HEAD^{tree})
+          [[ "$tree" =~ ^[0-9a-f]{40}$ ]]
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then test "$tree" = "$CANDIDATE_TREE"; fi
+          echo "CANDIDATE_TREE=$tree" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install fixed browser/build dependencies
+        working-directory: harness
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify only the isolated diagnostic contracts
+        working-directory: harness
+        run: node --test scripts/test-inkwave-stage-game-pair.mjs scripts/test-inkwave-lighting-controls.mjs
+      - name: Build both immutable public sites without model payload
+        id: builds
+        shell: bash
+        run: |
+          mkdir -p evidence
+          echo "BASELINE_ROOT=$GITHUB_WORKSPACE/baseline" >> "$GITHUB_ENV"
+          echo "CANDIDATE_ROOT=$GITHUB_WORKSPACE/candidate" >> "$GITHUB_ENV"
+          echo "BASELINE_SITE=$GITHUB_WORKSPACE/baseline-site" >> "$GITHUB_ENV"
+          echo "CANDIDATE_SITE=$GITHUB_WORKSPACE/candidate-site" >> "$GITHUB_ENV"
+          echo "STAGE_PAIR_BINDINGS=$GITHUB_WORKSPACE/evidence/build-bindings.json" >> "$GITHUB_ENV"
+          test "$(git -C baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C candidate rev-parse HEAD^{tree})" = "$CANDIDATE_TREE"
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/harness/node_modules/esbuild/lib/main.js"
+          (cd baseline && node scripts/build-inkwave.mjs inkwave-public ../baseline-site) > evidence/baseline-build.log 2>&1
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site) > evidence/candidate-build.log 2>&1
+      - name: Verify build identity and admitted Game shots
+        working-directory: harness
+        run: |
+          node scripts/bind-inkwave-stage-pair.mjs
+          node scripts/check-inkwave-stage-game-pair.mjs "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/game-pair" "$BASELINE_SITE"
+      - name: Verify candidate catalogue Game admission and real relay paint
+        # Explicit hold: real-relay verification awaits confirmation of its allowed scope.
+        # Do not remove this hold or report this gate passed based on offline results.
+        if: ${{ false }}
+        working-directory: harness
+        env:
+          NATIVE_STAGE_IDS: inkblot
+          NATIVE_ONLINE_MODES: turf
+          NATIVE_HOST_WEAPON: s3-blaster-short
+        run: |
+          test -f "$CANDIDATE_SITE/inkwave-build.json"
+          export NATIVE_ONLINE_SOURCE_ROOT="$CANDIDATE_ROOT"
+          export CHROMIUM_PATH="$(node --input-type=module -e "import {chromium} from 'playwright';console.log(chromium.executablePath())")"
+          cp "$CANDIDATE_ROOT/scripts/check-inkwave-native-catalogue-online.mjs" scripts/stage-candidate-online-runtime.mjs
+          sha256sum scripts/stage-candidate-online-runtime.mjs > "$GITHUB_WORKSPACE/evidence/online-checker-sha256.txt"
+          node scripts/stage-candidate-online-runtime.mjs "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/catalogue-online"
+      - name: Record outstanding real-relay verification hold
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p evidence
+          printf '%s\n' '{"gate":"candidate catalogue Game admission and real relay paint","status":"held-not-run","reason":"Real-relay scope clarification pending; offline Game and lighting results do not satisfy this gate"}' > evidence/catalogue-online-held.json
+      - name: Preserve bounded receipts and captures (no source models or grids)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-game-pair-${{ env.CANDIDATE_SHA }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 7
