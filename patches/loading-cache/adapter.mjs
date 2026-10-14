@@ -163,7 +163,12 @@ export function prepareLoading(build, preloads, options = {}) {
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {
   if(!/^[a-f0-9]{64}$/.test(revision))throw new Error('loading-cache: invalid revision');
   const index=fs.readFileSync(path.join(build,'index.html'));
-  const config={schema:1,revision,index:{bytes:index.length,sha256:hash(index)},declaredBytes:plan.assetBytes+index.length,precache:plan.precache,assets:plan.assets};
+  const positions=new Map(Object.keys(plan.assets).map((rel,i)=>[rel,i]));
+  const precache=plan.budget?.mode==='production'?plan.precache.map(rel=>{
+    if(!positions.has(rel))throw new Error('loading-cache: missing precache dependency '+rel);
+    return positions.get(rel);
+  }):plan.precache;
+  const config={schema:1,revision,index:{bytes:index.length,sha256:hash(index)},declaredBytes:plan.assetBytes+index.length,precache,assets:plan.assets};
   let template=fs.readFileSync(path.join(LOADING_ROOT,'sw.js'),'utf8');
   if(plan.budget?.mode === 'diagnostic-unminified')
     template=countReplace(template,'const MAX_REVISION_BYTES = 48 * 1024 * 1024;',
