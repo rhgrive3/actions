@@ -4314,3 +4314,14 @@ Splatoon3 Ver11.3.0 identity／WeaponBlasterShort・0AP、KiTrix0611原典を参
 ## 2026-10-14 Native-stage authorized resume
 
 Modern native catalogue shots use source-triangle contact rather than source bookkeeping OBBs; fresh natural Bluefin five-mode full-grid settlement passes. Retail masks/units and hardware speed remain unverified. [Source sweep](native-stages/catalogue-source-sweep.md).
+
+
+### 2026-10-14: source sphere cost correction (Draft1419)
+
+## Final composition cost correction — 2026-10-14
+
+The proposed common is technically composed with aggregate58ba and maina9f9341c; later main636e2b68 adds only eight isolated QA files, without production input changes. The corrected source path's21-stage source-centred workload exposed expensive varying-radius cases (Urchin growing p95~143.5ms). Analytic face/finite-edge/vertex entry removes repeated searches for ordinary candidates, retaining the original search for contacts within1e-9 segment time to preserve its selected source triangle/material. The initial unrefined32ed02b0 failed a strict adjacent-triangle identity comparison and is not accepted as final.
+
+The refined kernel passes17 selected contracts with4 named optional source skips, actualEXIT0, including4,114 independent equations and12,000 independent convex-distance oracle cases. Strict Scorch48-query old/new hit, triangle, flags, object, time, point and normal comparison passes. The first-stage diagnostic growing/shrinking p95 is~12.03/11.44ms against the earlier92.4/107.6ms; concurrent source tests prevent a hardware or complete-match performance claim. Source geometry, eligibility, weapon parameters and actual dynamic OBB solver are unchanged.
+
+The execution server then disconnected; recovery timed out and the environment registry reported environment_offline. Full21-stage reference/cost comparison, updated controlled Humpback banks and final actual browser/WS composition cannot be reported passed. Code and bounded receipts are remotely preserved, with those final gates explicitly pending. Aggregate technical inclusion does not represent independent approval or a Ready-first foundation adoption. The common remains Draft. No new main merge or source/generated asset publication.
