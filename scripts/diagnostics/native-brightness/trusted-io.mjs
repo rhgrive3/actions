@@ -33,3 +33,11 @@ export async function verifyPairRequest(route,url,manifest,row){
  }
  return verifyAndDeliverArtifact(route,url,manifest,row);
 }
+
+export function verifyNonblankCapture(capture){
+ const b=Buffer.from(capture.rawRGBA,'base64');assert.ok(b.length>=4&&b.length%4===0,'Invalid raw capture');
+ let opaque=0,nonzero=0,varied=false;
+ for(let i=0;i<b.length;i+=4){if(b[i+3])opaque++;if(b[i]||b[i+1]||b[i+2])nonzero++;if(b[i]!==b[0]||b[i+1]!==b[1]||b[i+2]!==b[2])varied=true;}
+ assert.ok(opaque&&nonzero&&varied,'Blank or uniform framebuffer cannot qualify as scene evidence');
+ return {pixels:b.length/4,nonzeroAlphaPixels:opaque,nonzeroRgbPixels:nonzero,variedRgb:varied};
+}

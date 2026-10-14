@@ -32,7 +32,9 @@ export function captureNativeGeometryMask() {
       o.material=opaque?classified:basic;if(opaque)eligible++;
     });
     if(!eligible)throw Error('No eligible opaque native mesh');
-    r.xr.enabled=false;r.shadowMap.enabled=false;r.toneMapping=T.NoToneMapping;r.outputColorSpace=T.LinearSRGBColorSpace;r.autoClear=true;
+    // Keep supported production drawing-buffer output. This offscreen data
+    // target and raw shader labels require no renderer colorspace setter.
+    r.xr.enabled=false;r.shadowMap.enabled=false;r.autoClear=true;
     G.scene.background=null;G.scene.overrideMaterial=null;r.setRenderTarget(target);r.setViewport(0,0,w,h);r.setScissorTest(false);r.setClearColor(0,1);r.clear();r.render(G.scene,G.camera);
     const bytes=new Uint8Array(w*h*4);r.readRenderTargetPixels(target,0,0,w,h,bytes);
     const error=gl.getError();if(error)throw Error('Geometry mask GL error '+error);

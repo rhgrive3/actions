@@ -5,7 +5,8 @@ const T=await import(process.env.INKWAVE_LIGHTING_THREE_MODULE || new URL('../..
 import {captureNativeGeometryMask} from './geometry-mask.mjs';
 import {runIndependentLightControls,maskedStatistics,collectMaskedLighting} from './masked-lighting.mjs';
 import {runFrozenComposerControls} from './frozen-controls.mjs';
-import {prepareLightingScene,landLightingScene} from './prepare.mjs';
+import {verifyNonblankCapture} from './trusted-io.mjs';
+import {prepareLightingScene,landLightingScene,captureAimReference} from './prepare.mjs';
 
 function setup(theme='day'){
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(),group=new T.Group(),mat=new T.MeshStandardMaterial({normalMap:new T.Texture(),roughnessMap:new T.Texture()}),mesh=new T.Mesh(new T.BoxGeometry(),mat);mesh.receiveShadow=true;group.add(mesh);scene.add(group);
@@ -40,7 +41,7 @@ for(const theme of ['day','sunset'])test(`${theme} reused nine controls restore 
  const r=await callback({expectedTheme:theme});assert.equal(r.rows.length,9);assert.equal(mesh.material,mat);assert.equal(mesh.receiveShadow,true);assert.equal(G.renderer.toneMapping,T.NeutralToneMapping);
 });
 for(const failure of [false,true])test(`mask renderer restores state on ${failure?'readback failure':'success'}`,()=>{
- const {G,mesh,mat}=setup(),r=G.renderer;const spriteMat=new T.SpriteMaterial({rotation:.7,sizeAttenuation:false}),sprite=new T.Sprite(spriteMat);G.scene.add(sprite);let target=null,viewport=new T.Vector4(1,2,3,4),scissor=new T.Vector4(5,6,7,8),scissorTest=true,clear=new T.Color(.1,.2,.3),clearAlpha=.4;
+ const {G,mesh,mat}=setup(),r=G.renderer;let output=r.outputColorSpace;Object.defineProperty(r,'outputColorSpace',{get:()=>output,set:v=>{assert.equal(v,T.SRGBColorSpace,'Only existing supported drawing-buffer output allowed');output=v;}});const spriteMat=new T.SpriteMaterial({rotation:.7,sizeAttenuation:false}),sprite=new T.Sprite(spriteMat);G.scene.add(sprite);let target=null,viewport=new T.Vector4(1,2,3,4),scissor=new T.Vector4(5,6,7,8),scissorTest=true,clear=new T.Color(.1,.2,.3),clearAlpha=.4;
  r.autoClear=false;const bg=new T.Color(.2,.3,.4);G.scene.background=bg;
  Object.assign(r,{getContext:()=>({drawingBufferWidth:16,drawingBufferHeight:16,getError:()=>0}),getRenderTarget:()=>target,setRenderTarget:v=>target=v,getViewport:v=>v.copy(viewport),setViewport:(...v)=>viewport=v[0]?.isVector4?v[0].clone():new T.Vector4(...v),getScissor:v=>v.copy(scissor),setScissor:v=>scissor=v.clone(),getScissorTest:()=>scissorTest,setScissorTest:v=>scissorTest=v,getClearColor:v=>v.copy(clear),getClearAlpha:()=>clearAlpha,setClearColor:(v,a)=>{clear=v?.isColor?v.clone():new T.Color(v);clearAlpha=a;},clear(){},render(){assert.notEqual(mesh.material,mat);assert.equal(sprite.material.isSpriteMaterial,true);assert.equal(sprite.material.rotation,.7);assert.equal(sprite.material.sizeAttenuation,false);assert.equal(r.shadowMap.enabled,false);},readRenderTargetPixels(t,x,y,w,h,bytes){if(failure)throw Error('readback failed');for(let i=0;i<bytes.length;i+=4){bytes[i]=255;bytes[i+3]=255;}}});
  const cb=invoke(captureNativeGeometryMask,{NG:G,btoa:s=>Buffer.from(s,'binary').toString('base64')});
@@ -58,7 +59,7 @@ function preparationFixture({stuck=false,effects=false}={}){
  G.mode='match';G.local={alive:true,s3:{squidSpawn:{phase:'aim'}},intent:{fire:false},pos:new T.Vector3(1,2,3)};G.match={state:'intro',controller:{a:G.local}};G.screenfx={pass:{enabled:effects}};
  g.menus={current:null,wipe:{busy:false,cancel(){}}};g.input={mouse:{left:false}};
  g.debug={freeze(){g.frozen=true;},freezeBots(){},fire(v){G.local.intent.fire=v;}};
- g._setSettings=v=>Object.assign(g.settings,v);g.startMatch=async v=>{g.theme=v.time;};
+ g._setSettings=v=>Object.assign(g.settings,v);g.startMatch=async v=>{g.time=v.time;g.theme=v.time==='dusk'?'sunset':'day';};
  g._frame=()=>{ticks++;if(!stuck&&ticks===253)G.match.state='playing';};G.paint.flush=()=>{};
  g.R.grade.uniforms.uHurt={value:0};g.R.grade.uniforms.uFlash={value:0};G.renderer.getContext=()=>({getExtension:()=>null,getParameter:()=> 'synthetic'});
  return {G,ticks:()=>ticks};
@@ -92,4 +93,21 @@ test('flight failure retains numeric trace and releases mouse',()=>{
 });
 test('persistent landed FX fail bounded gate without disabling effects',()=>{
  const {G,ticks}=landingFixture({effectsStuck:true});assert.throws(()=>invoke(landLightingScene,{NG:G})(),/did not decay naturally/);assert.equal(ticks(),604);assert.equal(G.screenfx.pass.enabled,true);assert.equal(G.screenfx.s.shimmer,.7);
+});
+
+test('AIM render and synchronous readback happen in the same callback',async()=>{
+ const calls=[],capture={rawRGBA:Buffer.from([0,0,0,255,1,2,3,255]).toString('base64')};
+ const result=await invoke(captureAimReference,{NG:{game:{R:{render(){calls.push('render');}}}},__captureNativeCanvas(){calls.push('read');return Promise.resolve(capture);}})();
+ assert.deepEqual(calls,['render','read']);assert.equal(verifyNonblankCapture(result).variedRgb,true);
+});
+test('blank cleared and uniform framebuffers cannot qualify as AIM evidence',()=>{
+ for(const bytes of [[0,0,0,0,0,0,0,0],[0,0,0,255,0,0,0,255],[255,255,255,255,255,255,255,255]])assert.throws(()=>verifyNonblankCapture({rawRGBA:Buffer.from(bytes).toString('base64')}),/Blank or uniform/);
+});
+
+test('all serialized callbacks use only Three exports present in the production bundle',async()=>{
+ const fs=await import('node:fs/promises');
+ for(const file of ['geometry-mask.mjs','frozen-controls.mjs','masked-lighting.mjs','prepare.mjs','trusted-io.mjs','inkwave-canvas-capture.mjs']){
+ const source=await fs.readFile(new URL('./'+file,import.meta.url),'utf8');
+ for(const [,key] of source.matchAll(/\bT\.(\w+)/g))assert.notEqual(T[key],undefined,file+': missing production Three export '+key);
+ }
 });
