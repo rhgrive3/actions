@@ -15,7 +15,7 @@ assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
 for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,file))),digest,file);
 const sourceSha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const prefix='/_versions/'+manifest.build.revision+'/';
-const ids=['s3-stringer-normal-02','s3-maneuver-short-02','s3-charger-quick-01','s3-slosher-double-02','s3-shooter-normal-01'];
+const ids=['s3-stringer-normal-02','s3-maneuver-short-02','s3-charger-quick-01','s3-slosher-double-02','shooter-01'];
 const modelSourcePaths=['patches/splatoon3/runtime/weapon-models/variants-bulbz-followup.mjs','patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs','patches/splatoon3/runtime/weapon-models/variants-squiffer-v4-followup.mjs','patches/splatoon3/runtime/weapon-models/hornz-dread-wringer.mjs','patches/splatoon3/runtime/weapon-models/tentatek-shell.mjs'];
 const modelInputs={};
 for(const relative of modelSourcePaths){const digest=hash(fs.readFileSync(path.resolve(relative)));assert.equal(manifest.files['patch/'+relative.slice('patches/splatoon3/'.length)],digest,relative);modelInputs[relative]=digest;}
@@ -68,9 +68,26 @@ try{
    if(hands.length!==(paired?2:1))throw Error('Unexpected native hand count');
    return hands;
   }
+  function snapshotHeld(weapons){
+   return weapons.map(weapon=>{const pivot=weapon.pivot,parent=pivot.parent;return {weapon,pivot,parent,sibling:parent.children.indexOf(pivot),before:pivot.matrixWorld.elements.slice(),local:pivot.matrix.clone(),world:pivot.matrixWorld.clone(),position:pivot.position.clone(),quaternion:pivot.quaternion.clone(),scale:pivot.scale.clone(),matrixAutoUpdate:pivot.matrixAutoUpdate,matrixWorldAutoUpdate:pivot.matrixWorldAutoUpdate,matrixWorldNeedsUpdate:pivot.matrixWorldNeedsUpdate};});
+  }
+  function mountHeld(snapshots,group){
+   group.updateWorldMatrix(true,false);
+   const inverse=group.matrixWorld.clone().invert();
+   for(const s of snapshots){group.add(s.pivot);s.pivot.matrixAutoUpdate=false;s.pivot.matrixWorldAutoUpdate=true;s.pivot.matrix.copy(inverse).multiply(s.world);s.pivot.matrixWorldNeedsUpdate=true;}
+   group.updateMatrixWorld(true);
+   for(const {pivot,before} of snapshots)if(pivot.matrixWorld.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-before[k])>1e-8))throw Error('Held capture changed rendered native pivot');
+  }
   function restoreHeld(snapshots,group,scene,ch){
-   for(const item of snapshots)item.parent.attach(item.pivot);scene.remove(group);ch.root.updateMatrixWorld(true);
-   for(const {pivot,parent,before} of snapshots)if(pivot.parent!==parent||pivot.matrixWorld.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-before[k])>1e-8))throw Error('Held capture changed native pivot');
+   for(const s of snapshots){
+    s.parent.add(s.pivot);
+    s.pivot.position.copy(s.position);s.pivot.quaternion.copy(s.quaternion);s.pivot.scale.copy(s.scale);
+    s.pivot.matrix.copy(s.local);s.pivot.matrixWorld.copy(s.world);s.pivot.matrixAutoUpdate=s.matrixAutoUpdate;s.pivot.matrixWorldAutoUpdate=s.matrixWorldAutoUpdate;s.pivot.matrixWorldNeedsUpdate=s.matrixWorldNeedsUpdate;
+   }
+   for(const s of [...snapshots].sort((a,b)=>a.sibling-b.sibling)){const children=s.parent.children;children.splice(children.indexOf(s.pivot),1);children.splice(s.sibling,0,s.pivot);}
+   scene.remove(group);ch.root.updateMatrixWorld(true);
+   for(const {pivot,parent,before,local} of snapshots)if(pivot.parent!==parent||pivot.matrix.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-local.elements[k])>1e-8)||pivot.matrixWorld.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-before[k])>1e-8))throw Error('Held capture changed native pivot');
+   for(const s of snapshots)s.pivot.matrixWorldNeedsUpdate=s.matrixWorldNeedsUpdate;
   }
   const result=[];
   for(const id of ids)for(const team of [0,1]){
@@ -102,8 +119,10 @@ try{
     if(state==='release'&&!(ch._wst.sinceRelease<.05))throw Error('Native release state missing');
     ch.root.updateMatrixWorld(true);
     const weapons=nativeHands(w,pairedFamily);
-    const snapshots=weapons.map(weapon=>({weapon,pivot:weapon.pivot,parent:weapon.pivot.parent,before:weapon.pivot.matrixWorld.elements.slice()}));
-    const group=new THREE.Group();scene.add(group);for(const item of snapshots)group.attach(item.pivot);group.updateMatrixWorld(true);
+    const snapshots=snapshotHeld(weapons);
+    const group=new THREE.Group();scene.add(group);
+    try{
+    mountHeld(snapshots,group);
     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),span=Math.max(...bounds.getSize(new THREE.Vector3()).toArray());
     if(!(span>0&&Number.isFinite(span)))throw Error('Invalid native held bounds');
     camera.position.copy(center).add(new THREE.Vector3(-1,.3,.5).normalize().multiplyScalar(span*2.5));camera.lookAt(center);
@@ -112,7 +131,7 @@ try{
     const view='native-'+(i?'variant':'base')+'-'+(grounded?'ground':'air')+'-'+state;
     heldViews.push({view,png:renderer.domElement.toDataURL('image/png').split(',')[1]});
     heldReceipts.push({view,grounded,state,charge:ch._wst.charge,sinceRelease:ch._wst.sinceRelease,hands:snapshots.map(({weapon,before},hand)=>({hand,muzzle:weapon.muzzle.getWorldPosition(new THREE.Vector3()).toArray(),pivotMatrix:before})),triangles:renderer.info.render.triangles});
-    restoreHeld(snapshots,group,scene,ch);
+    }finally{restoreHeld(snapshots,group,scene,ch);}
    }
    // Reset through the same presentation path before static model-space views.
    for(const a of actors){a.grounded=true;a.ground.hit=true;a.weaponRunner.charge=0;a.weaponRunner.charging=false;a.character.lastRelease=99;for(let frame=0;frame<60;frame++){G.time+=1/60;a._finishFrame(1/60);}}
