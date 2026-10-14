@@ -1,6 +1,6 @@
-// Issue #642: use the packed, unsigned RGB HDR format for the mobile Grade
-// output target only when that output is nonnegative and the format is
-// renderable on this WebGL context. The scene/read target remains RGBA16F.
+// Issue #642: use packed, unsigned RGB HDR for the mobile post target only
+// when its output is nonnegative and the format is renderable on this WebGL
+// context. The scene target remains RGBA16F.
 
 export function composerGradeKeepsPackedTargetNonnegative(grade) {
   // This checks the environment-controlled Grade inputs. The remaining live
@@ -148,14 +148,23 @@ export function selectComposerTargetFormat(THREE, renderer, {
 export function configureComposerColorTargets(THREE, composer, selection) {
   if (!selection?.packed) return composer;
 
-  // EffectComposer starts with target1 as writeBuffer and target2 as
-  // readBuffer. RenderPass writes the scene to target2; the first ShaderPass
-  // (Grade) writes to target1. Keep scene RGB/alpha in HalfFloat and pack only
-  // the known nonnegative Grade output. ScreenFX writes back to target2.
+  // RenderPass must write the scene to target2; Grade writes to target1.
+  // ScreenFX, when enabled, writes back to target2. Output can also write to
+  // target1 before FXAA: the current Neutral/sRGB output stays nonnegative for
+  // nonnegative inputs, and FXAA reads RGB only. Preserve scene RGB/alpha in
+  // HalfFloat regardless of the preceding frame's enabled-pass swap count.
   const sceneTarget = composer?.renderTarget2;
   if (!sceneTarget?.texture) throw new TypeError('composer read target is unavailable');
   sceneTarget.texture.format = THREE.RGBAFormat;
   sceneTarget.texture.type = THREE.HalfFloatType;
+  // Pass enablement changes swap parity. Restore the semantic target roles
+  // each frame so the scene never moves into the unsigned packed target.
+  const render = composer.render;
+  composer.render = function (...args) {
+    this.writeBuffer = this.renderTarget1;
+    this.readBuffer = this.renderTarget2;
+    return render.apply(this, args);
+  };
   return composer;
 }
 
