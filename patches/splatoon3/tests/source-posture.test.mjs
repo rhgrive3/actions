@@ -274,3 +274,62 @@ test('the posture blend is frame-rate independent, holds on paused frames and le
   }
   assert.ok(Math.max(...weights) - Math.min(...weights) < 0.02, `0.1 s release weights ${weights.map(w => w.toFixed(3))}`);
 });
+
+
+test('source ToHuman bow is corrected after kid silhouette returns, without changing action clocks', async () => {
+  const api = await production();
+  const emergence = api.posture.sourceEmergePostureWeight;
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0.2 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0.85 }), 1);
+  assert.equal(emergence({ state: 'ToHuman', formKid: false, grounded: true, formWeight: 1 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: false, formWeight: 1 }), 0);
+  assert.equal(emergence({ state: 'manual', formKid: true, grounded: true, formWeight: 1 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true,
+    formWeight: 1, manual: { name: 'ToHuman' } }), 0);
+  let previous = 0;
+  for (let i = 0; i <= 100; i++) {
+    const current = emergence({ state: 'ToHuman', formKid: true, grounded: true,
+      formWeight: i / 100 });
+    assert.ok(current >= previous - 1e-12 && current >= 0 && current <= 1);
+    previous = current;
+  }
+
+  const traces = [];
+  for (const on of [false, true]) {
+    api.posture.setSourcePostureEnabled(on);
+    const ch = await rig(api), st = state(), samples = [];
+    drive(api, ch, st, { frames: 90 });
+    st.form = 'squid';
+    drive(api, ch, st, { frames: 45 });
+    assert.equal(ch.sourceMotion.formKid, false);
+    st.form = 'kid';
+    drive(api, ch, st, { frames: 36, onFrame: () => {
+      const c = ch.sourceMotion, m = measure(api, ch);
+      samples.push({ state: c.state, formWeight: c.formWeight,
+        weight: api.posture.sourcePostureWeight(c.retarget),
+        torso: m.torso, neck: m.neck, formTime: c.formTime });
+    } });
+    traces.push(samples);
+    ch.dispose();
+  }
+  api.posture.setSourcePostureEnabled(true);
+
+  const [oldTrace, newTrace] = traces;
+  assert.equal(oldTrace.length, newTrace.length);
+  const visible = newTrace.map((p, i) => ({ ...p, i })).filter(p =>
+    p.state === 'ToHuman' && p.formWeight >= 0.65);
+  assert.ok(visible.length >= 2, 'the actual source ToHuman clip must overlap visible kid frames');
+  for (const sample of visible) {
+    assert.equal(oldTrace[sample.i].state, 'ToHuman', 'the baseline uses the same transition clip');
+    assert.ok(sample.weight >= emergence({ state: 'ToHuman', formKid: true,
+      grounded: true, formWeight: sample.formWeight }) - 1e-8,
+    'late form correction must not lag behind the returning silhouette');
+    assert.ok(sample.torso <= oldTrace[sample.i].torso + 3,
+      'the repair must not introduce an extra forward bow');
+  }
+  assert.ok(visible.some(p => oldTrace[p.i].torso - p.torso > 1),
+    'the real sourced returning upper body should reduce its forward lean');
+  const settled = newTrace.at(-1);
+  assert.ok(Math.abs(settled.torso) < 8 && Math.abs(settled.neck) < 8,
+    'settled humanoid should hand off smoothly to the existing upright idle calibration');
+});
