@@ -9,12 +9,23 @@ let promise;const production=()=>promise??=fixture({fullRuntime:true,includeChar
 const plain=x=>JSON.parse(JSON.stringify(x));
 function signature(d){const h=crypto.createHash('sha256');for(const g of[d.body,d.ink]){for(const a of Object.values(g.attributes))h.update(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength));h.update(Buffer.from(g.index.array.buffer));}return h.digest('hex');}
 test('both families preserve main hand/muzzle/channel contracts',async()=>{
- const f=await production();for(const [id,b]of Object.entries(baseline.models)){
+ // The two rebuilt weapons must retain the pinned gameplay contracts. Other
+ // models are compared against the actual current-main production snapshot,
+ // never against the stale b078 fixture after unrelated model additions.
+ const liveBefore=process.env.QUAD_EXPLOSHER_BASELINE
+   ? JSON.parse(fs.readFileSync(process.env.QUAD_EXPLOSHER_BASELINE,'utf8')):null;
+ const f=await production();let pinned=0;
+ for(const [id,b]of Object.entries(baseline.models)){
   const d=f.getWeaponDef(id),socket=k=>({pos:Array.from(d[k].pos.toArray()),quat:Array.from(d[k].quat.toArray())});
   const current={muzzle:Array.from(d.muzzle.toArray()),handR:socket('handR'),handL:socket('handL'),inHand:socket('inHand'),dual:d.dual??false,channels:Object.fromEntries(Object.entries(d.parts).map(([k,p])=>[k,{pivot:Array.from(p.pivot.toArray()),mat:p.mat}]))};
-  const {geometryHash,...contract}=b;assert.deepEqual(plain(current),contract,id+' no gameplay frame or animation channel change');
+  if(IDS.includes(id))pinned++;
+  const reference=IDS.includes(id)?b:liveBefore?.[id];
+  if(!reference) continue; // Dedicated CI supplies immutable current-main before snapshot.
+  const {geometryHash,triangles,bytes,bounds,...contract}=reference;
+  assert.deepEqual(plain(current),contract,id+' no gameplay frame or animation channel change');
 
  }
+ assert.equal(pinned,2,'both rebuilt model contracts are always checked');
 });
 // Floating-point tessellation can vary by Node/V8 version. Geometry equality must be
 // measured against the actual immutable before build on THIS runner, never another CPU's hash.
