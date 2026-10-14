@@ -1,0 +1,496 @@
+/**
+ * Measured source envelopes and 7-band spectral profiles from zerokizo/splatoonsweps.
+ * Collected 2026-10-11 using GitHub file bytes (WAV PCM16), not generated guesses.
+ * These are primarily Splatoon 1 lineage assets, not Splatoon 3 Ver.11.3.0 audio.
+ * No third-party audio samples are embedded or redistributed here.
+ * env: relative dB RMS in successive 15 ms windows, first 300 ms.
+ * seq: relative integrated band power dB at 0, 45, 110, 200 ms; edges Hz
+ *      0/180/450/1000/2200/4500/10000/22050. Non-calibrated reference.
+ */
+export const REFERENCE_SOURCE={
+  repo:'https://github.com/zerokizo/splatoonsweps',
+  revision:'a74592726f38f26fd1d3a15ed315701068283847',
+  gameLineage:'Splatoon 1 era community reimplementation; NOT verified Splatoon 3 11.3.0',
+  sampling:'GitHub original WAV or MP3 decoded to 44.1 kHz mono; relative 15 ms RMS envelopes and 7-band STFT power',
+  status:'measured-reference-features-only; no Nintendo WAV included',
+  attribution:'Research use of measured features only. Source recordings remain with their rights holders.'
+};
+const entries={
+'shooter/splattershot.wav':{
+ sha:'bd7a7fd9cc2ae93d5d4371aca2d28b6e2ed8c2fe',ms:800,rmsDb:-21.6,
+ env:[-7,-8,-22,-30.5,-30.9,-28.9,-30.4,-36.9,-38.3,-36.8,-37.3,-39.1,-43.5,-40.7,-39.5,-45.6,-46.9,-46.3,-45.4,-47.1],
+ seq:[[0,-1.1,-5.4,-11.2,-13.3,-17.1,-27.9],[-3.6,0,-4.6,-9.9,-6,-8.6,-20.7],[-1.8,0,-7.4,-8.4,-9.1,-14.3,-28.7],[0,-5.7,-10.7,-11.7,-11.2,-19.2,-34.6]]},
+'shooter/52.wav':{
+ sha:'2944213a80e5fc0a97d51c9f87b2f8cfb691e4ca',ms:787,rmsDb:-18,
+ env:[-3.3,-5.2,-16.4,-17.5,-20.6,-23.6,-25.7,-28.4,-30.7,-31.1,-33.6,-34.1,-35.8,-31.3,-35.2,-39,-41,-39.7,-41.7,-44.6],
+ seq:[[0,-6.3,-14.3,-16.9,-13.6,-17.2,-31.5],[0,-4,-13.7,-12.2,-9.3,-12.5,-25],[-.3,-1.8,-5.9,-1.8,0,-2.3,-20.4],[0,-5.1,-13.5,-13.2,-11.4,-15.5,-33.3]]},
+'shooter/aerospray.wav':{
+ sha:'6bfa08061410029c92fbf5b3db165d7b4d010d7d',ms:431,rmsDb:-20,
+ env:[-5.6,-22.1,-29.8,-31.8,-33.9,-32.4,-39.6,-36.4,-42.2,-42.7,-44.2,-44.3,-46,-45.6,-50,-49.9,-50.8,-52.7,-53.2,-56.3],
+ seq:[[-3.9,0,-3.1,-3.5,-9.2,-13.1,-20.9],[-5.4,0,-3.6,-5.1,-9.7,-13.1,-21],[-6.5,0,-4.3,-6,-6.6,-14.8,-24.2],[0,-1.6,-3.8,-1,-10,-20.7,-27]]},
+'shooter/jet.wav':{
+ sha:'29fcc33eb890b271dfda39543c4f0f3cbdedaba6',ms:715,rmsDb:-17.6,
+ env:[-3.8,-4,-20.1,-22.8,-26.9,-30.9,-31.2,-32.7,-35.2,-35.8,-36.1,-40.3,-39.6,-41,-43.1,-46.2,-45.5,-49.4,-49.8,-50.9],
+ seq:[[0,-7,-11.9,-17.4,-14.7,-18,-31.2],[0,-3,-4.5,-5.3,-.7,-7.8,-27.3],[-4.2,0,-6.5,-6.8,-5.9,-12.2,-30],[0,-.7,-6.4,-4.9,-6.3,-13.6,-23.3]]},
+'charger/splatcharger.wav':{
+ sha:'767f5a03190e2b937d240b3a6d15811e2c2fb97a',ms:565,rmsDb:-11,
+ env:[-5.3,-6.5,-8.1,-8,-7.8,-7.5,-7.2,-8.2,-6.3,-8,-7.1,-9.3,-9.2,-9.8,-9,-10.2,-10.7,-14.2,-12.9,-13],
+ seq:[[-8.4,0,-3.4,-11.1,-18.5,-22.9,-34.3],[-10.3,-.9,0,-4.3,-11.8,-16,-27.9],[-16.7,-4.7,0,-4.3,-8.9,-14.1,-23.9],[-15.2,-2.7,0,-1.3,-9.9,-14.5,-31]]},
+'charger/splatchargerfull.wav':{
+ sha:'fc6f7fabaabf847b2746da1df0473c93729fa880',ms:654,rmsDb:-10.9,
+ env:[-5.5,-6.3,-7.2,-7.9,-8.8,-7.3,-7.3,-7.4,-8,-6.6,-7.2,-7.7,-7.3,-9.3,-9.3,-9.8,-8.9,-9.2,-11.5,-10.3],
+ seq:[[-4.4,0,-3.9,-14.4,-20.6,-25.2,-37.5],[-4.3,0,-7.1,-9.6,-16,-20.3,-38],[-10.1,-.8,0,-3.8,-8.1,-13.2,-27.3],[-16,-3.3,0,-1.8,-8.5,-13.4,-30.2]]},
+'roller/splatroller_roll.wav':{
+ sha:'08fec6afab507a7e2945f2b1f1fbcce54f0afe4c',ms:3920,rmsDb:-20.8,
+ env:[-14.3,-18,-18.4,-19.2,-14.9,-15.4,-18.5,-19.8,-21.5,-24.2,-19.9,-21.2,-19.6,-15.6,-21.5,-27.5,-18.5,-19.9,-18.6,-24.1],
+ seq:[[-34.4,-16.3,-7.4,-3.5,0,-5.3,-21.6],[-44.6,-28.5,-17.5,-5.9,0,-7.5,-23.4],[-39.4,-16.9,-4.4,-3.6,0,-5,-18.8],[-39.9,-21.3,-5.6,0,-4.9,-9.3,-18.4]]},
+'roller/preswing.wav':{
+ sha:'dbba092d4122caa26abadc5654cce14990d7ee3a',ms:705,rmsDb:-18.3,
+ env:[-83.7,-84.6,-83.8,-30.3,-23.6,-22.7,-14.2,-16,-9.9,-13.2,-11.7,-12.9,-12.7,-8.5,-10.7,-14.2,-18.2,-19.3,-21.4,-22.7],
+ seq:[[-43.4,-39.9,-42.1,-34.1,-35.2,-19.9,0],[-7.8,0,-5.1,-4.7,-6.8,-15,-33.9],[-1.4,0,-3.9,-9.4,-10.4,-14.6,-31.8],[0,-2.4,-.8,-6.5,-5.8,-6.5,-21.3]]},
+'slosher/slosher1.wav':{
+ sha:'3ed950aab5cad13bb01f87db016665dbc6ca65b9',ms:705,rmsDb:-19.9,
+ env:[-8.8,-16.5,-16.5,-19.1,-13.3,-17.1,-15.8,-15.1,-17.6,-13,-14,-18.2,-18.8,-20.1,-23.6,-25.4,-27.5,-25.1,-30.2,-29.5],
+ seq:[[-12,0,-2.3,-3.7,-3.4,-8,-14.3],[-8.1,0,-2.9,-9.4,-9.4,-13.2,-20.2],[-8.2,-.3,-1.9,0,-1.4,-4,-14.2],[-3.8,-4.7,-2.7,-2.3,0,-3.4,-11.6]]},
+'slosher/slosher2.wav':{
+ sha:'73231b569fc48be76f6f9ae0a8ff83180543c88c',ms:708,rmsDb:-17.6,
+ env:[-6.5,-11.1,-15.3,-15.1,-12,-14.7,-13.9,-13.2,-15.2,-12,-11.2,-15.3,-17.2,-17.4,-20,-22.9,-24,-22.8,-28.1,-27.3],
+ seq:[[-8.9,0,-2.4,-5.7,-6.4,-9.4,-15.7],[-7.8,0,-1.9,-8.7,-9.2,-13.1,-20.1],[-11,-3.1,-4.3,0,-1,-3.6,-13],[-4.3,-5.6,-4.3,-3.4,0,-4.2,-12.6]]},
+'slosher/trislosher.wav':{
+ sha:'5d165e41d0787bacdf0afea1b0a5ce7704a14d34',ms:653,rmsDb:-15.8,
+ env:[-5.8,-9.5,-10.8,-11.7,-11.4,-10.2,-9,-9.4,-13.2,-15.4,-14.6,-17.8,-18.8,-20.5,-23.1,-22.8,-22.6,-24.1,-23.7,-24.8],
+ seq:[[-4.2,0,-.2,-1.6,-1.4,-4.8,-12.7],[-16,-4.4,-.9,0,-.3,0,-10.1],[-10.2,-1.5,0,-2.5,-2,-2.5,-12.9],[-24.5,-12.3,-.7,-.3,0,-1,-13.3]]},
+'slosher/machine1.wav':{
+ sha:'cd9e98846c874a17e6169cfedfb723e824b804a2',ms:609,rmsDb:-17.4,
+ env:[-8.9,-10.6,-11.1,-15.3,-14,-13.3,-13.3,-16,-15.1,-12.7,-13,-16.5,-19.6,-19,-19.3,-21,-21.3,-19.2,-20.7,-23.1],
+ seq:[[-.6,0,-2.9,-8.1,-8.7,-8.1,-20.1],[-9.2,0,-8.3,-10.1,-9.8,-9.3,-25.3],[-9.9,0,-11.2,-8.6,-9.7,-16.7,-37.2],[-28.8,-8,-2,0,-1.9,-3.6,-20.7]]},
+
+'roller/dynamoroller_roll.wav':{
+ sha:'1d873a57dab6ca19b29854c62726d8376f9c9e8d',ms:3774,rmsDb:-19.7,
+ env:[-16.5,-16.3,-15.5,-21.1,-20.5,-25.2,-15.1,-24.7,-25.1,-20.1,-22.6,-27.9,-18.3,-25,-17.3,-17.1,-20.6,-21,-18.6,-21.1],
+ seq:[[-40.4,-12.9,-4.2,0,0,-5.9,-17.7],[-34.1,-15.2,-3.3,0,-1.9,-6.7,-14.4],[-41.7,-16.5,-12.1,-6.7,0,-4.1,-18.7],[-41.7,-14,-6.8,-3.8,0,-7,-21.1]]},
+'roller/inkbrush_run.wav':{
+ sha:'18b953a7b0f1bfe5ba2c329c54b59b8cd9d56b77',ms:2475,rmsDb:-17.7,
+ env:[-18.3,-17.8,-17.7,-17.3,-18.4,-18,-16.1,-17.8,-18.8,-16.7,-17.6,-16.6,-18.9,-19,-18.6,-18.1,-17.9,-19.6,-20.2,-16.3],
+ seq:[[-25.8,-24.3,-15,-6.1,-1.5,0,-19],[-31.7,-28.4,-18.8,-9,-3.3,0,-13.3],[-35.9,-29.1,-14,-8.1,-3.7,0,-20.6],[-26.2,-28,-13.9,-10.7,-2,0,-16.5]]},
+'roller/swing0.wav':{
+ sha:'e2cb46d151ae056eeb6f7ce375d67193fd7fe236',ms:718,rmsDb:-12.3,
+ env:[-32,-21.3,-15.8,-14.6,-10.3,-10.8,-11.2,-11.6,-7.3,-8.5,-8,-7.2,-6.4,-6.1,-6.4,-7.4,-6.8,-8.5,-9.5,-14.4],
+ seq:[[0,-14,-10.3,-13.5,-13.9,-13.4,-19.9],[-5.1,-10,0,-7.8,-9.2,-10.6,-19.6],[0,-5.3,-0.5,-4.4,-3.8,-3.5,-18.9],[0,-4.7,-9.9,-8.6,-10.5,-8.7,-21.3]]},
+'splatling/heavysplatling2.wav':{
+ sha:'fb79b4bc4c4a75f8a61b1023a127a0c1b8a78bf3',ms:654,rmsDb:-17.1,
+ env:[-12.2,-13.1,-11.3,-12,-13.6,-14.5,-13.7,-12.7,-11.9,-11.8,-12.9,-14.1,-12.6,-13.8,-12.3,-11.8,-11.9,-11.9,-16.1,-12.8],
+ seq:[[-19.7,-19.6,-10,-8,-5.4,0,-14.7],[-20.8,-26.3,-15.5,-9.3,-4.6,0,-14.2],[-18.5,-21.6,-10.7,-10,-3.7,0,-15.5],[-19.8,-19.6,-10.6,-8.1,-5.6,0,-14.6]]},
+};
+const byWeapon={
+ WeaponShooterNormal:{fire:'shooter/splattershot.wav'},
+ WeaponShooterGravity:{fire:'shooter/52.wav'},
+ WeaponShooterBlaze:{fire:'shooter/aerospray.wav'},
+ WeaponShooterLong:{fire:'shooter/jet.wav'},
+ WeaponChargerNormal:{fire:'charger/splatcharger.wav',fire_full:'charger/splatchargerfull.wav'},
+ WeaponChargerNormalScope:{fire:'charger/splatcharger.wav',fire_full:'charger/splatchargerfull.wav'},
+ WeaponRollerNormal:{fire:'roller/swing0.wav',roll:'roller/splatroller_roll.wav',windup:'roller/preswing.wav'},
+ WeaponRollerHeavy:{fire:'roller/swing0.wav',roll:'roller/dynamoroller_roll.wav'},
+ WeaponBrushMini:{roll:'roller/inkbrush_run.wav'},
+ WeaponSpinnerStandard:{ready:'splatling/heavysplatling2.wav'},
+ WeaponSlosherStrong:{fire:'slosher/slosher1.wav'},
+ WeaponSlosherDiffusion:{fire:'slosher/trislosher.wav'},
+ WeaponSlosherLauncher:{fire:'slosher/machine1.wav'},
+};
+
+// Additional byte-level WAV measurements made 2026-10-12. All of these are S1-era
+// community assets, NOT measurements from Splatoon 3. See each pinned Git blob SHA.
+const additionalEntries={
+ 'shooter/zap.wav':{
+  sha:'e250065f795ce4c356d3b6d17ab2a7141ce06778',ms:411,rmsDb:-17.4,
+  env:[-4.1,-10.9,-19.2,-19.3,-25.8,-26.3,-29.5,-29.8,-32.2,-31.5,-35,-33.2,-36.6,-34.2,-41.1,-39,-42.3,-42.2,-46.5,-49],
+  seq:[[-4.46,0,-3.82,-9.76,-13.91,-15.97,-23.3],[-11.19,0,-5.95,-13.55,-13.76,-16.47,-23.6],[-3.19,0,-7.9,-10.01,-11.79,-19.06,-28.22],[-5.8,0,-5.07,-7.12,-9.03,-19.82,-26.84]]},
+ 'roller/carbonroller_roll.wav':{
+  sha:'4741f9882dcfaf77c420a086c35b7be89e76a6bb',ms:3920,rmsDb:-21.4,
+  env:[-14.5,-19.8,-23.8,-20.2,-15.1,-15.4,-18,-19.7,-21.6,-24.3,-20.8,-22.4,-23.2,-24.6,-28.8,-26.8,-18.9,-24.6,-32.5,-26.4],
+  seq:[[-47.42,-24.94,-10.49,-3.81,0,-7.66,-25.92],[-48.67,-30.3,-18.55,-6.28,0,-7.8,-28.42],[-43.33,-19.77,-9.03,-3.42,0,-4.95,-15.82],[-33.98,-17.9,-6.86,-1.75,0,-5.19,-15.05]]},
+ 'roller/octobrush_run.wav':{
+  sha:'0d432379a6e6a7f852c6720fb1c5bbf862d3a1d3',ms:3099,rmsDb:-19.6,
+  env:[-19.5,-18.8,-18.7,-16.8,-16.7,-17.8,-21.4,-19.4,-19,-17.5,-17.4,-15.6,-18.6,-19.1,-16.3,-20.1,-21.3,-21.5,-22,-19.6],
+  seq:[[-34.9,-24.11,-14.56,-5.15,0,-11.75,-22.56],[-32.06,-24.96,-9.53,-7.56,0,-3.98,-16.49],[-31.83,-28,-12.29,-6.99,0,-3.48,-18.67],[-35.27,-29.46,-8.58,-7.46,0,-6.94,-25.7]]},
+ 'splatling/minisplatling2.wav':{
+  sha:'368e523f50f7012959673b079342f6b8e997b52b',ms:133,rmsDb:-18.9,
+  env:[-16.4,-15.7,-16.6,-15.3,-15.2,-18.5,-16.9,-18.8,-16.7,null,null,null,null,null,null,null,null,null,null,null],
+  seq:[[-38.69,-32.12,-6.36,0,-2.66,-9.28,-9.34],[-41.54,-28.98,-5.83,0,-1.61,-9.36,-10.2],[-31.43,-25.32,-8.05,0,-2.24,-11.93,-11.8],null]},
+ 'splatling/hydrasplatling2.wav':{
+  sha:'b8a59661e062ac2a703f4cb60b7a91c85313dfcd',ms:2229,rmsDb:-13.6,
+  env:[-13.8,-11.9,-13.8,-12.5,-10.5,-13,-18.8,-16.5,-14.4,-12.5,-13.5,-11.6,-15.3,-12.6,-13.5,-12.2,-11.3,-14.1,-13.4,-15.6],
+  seq:[[-11.5,0,-12.85,-18.87,-16.91,-16.54,-21.52],[-8.75,0,-17.19,-21.48,-19.39,-16.21,-20.83],[-6.13,0,-12.63,-15.45,-14.98,-18.49,-21.28],[-2.49,0,-13.18,-15.36,-14,-17.55,-20.92]]},
+ 'roller/carbonroller_preswing.wav':{
+  sha:'7c0783bc8b761fea4ccee85c494224e89710fbdf',ms:522,rmsDb:-20.8,
+  env:[-84.1,-84.1,-84.3,-37.4,-33.2,-25.6,-13.7,-12.9,-11.3,-15.1,-15.9,-22,-21.5,-18.1,-19,-20.6,-23.4,-25.3,-23.3,-31.7],
+  seq:[[-49.51,-46.38,-42.68,-39.53,-40.65,-21,0],[0,0,-1.67,-8.4,-15.51,-21.51,-35.73],[-2.09,0,-3.45,-12.27,-20.74,-26.03,-36.72],[0,-2.4,-5.83,-17.52,-25.45,-26.4,-39.9]]},
+ 'slosher/machine2.wav':{
+  sha:'4b21684687cf1cbc70fc67470ac7e62a2c0289ad',ms:611,rmsDb:-17.3,
+  env:[-8.6,-9.6,-10.5,-15.5,-14.3,-12.6,-14.2,-17.7,-15.2,-11.8,-14.1,-16.4,-21.9,-20.3,-20.6,-22.1,-22.9,-20,-21.4,-23.6],
+  seq:[[-2.76,0,-3.23,-9.05,-9.37,-8.73,-19.84],[-13.87,0,-7.85,-11.38,-11.74,-10.72,-25.18],[-18.07,0,-11.75,-12.64,-12.82,-19.82,-38.72],[-26.24,-6.24,-1.72,0,-1.83,-4.02,-21.04]]},
+ 'roller/octobrush0.wav':{
+  sha:'73fa3781e5e9cd5b06ce6bf6e9c1e3ebb6486b40',ms:853,rmsDb:-19.5,
+  env:[-11.8,-10.2,-10.7,-11.3,-11.5,-14.4,-16.6,-19.4,-18.6,-17.8,-16.8,-17.8,-16.6,-16.5,-19.1,-18.9,-24,-25.5,-26.4,-30.6],
+  seq:[[-9.44,-10.21,-6.19,-5.54,-2.12,0,-9.71],[-10.7,-10.94,-2.47,-1.57,-0.93,0,-7.64],[-9.72,-14.15,-9.83,-11.66,0,-5.73,-16.74],[-10.8,-13.05,-12.41,-7.52,0,-1.65,-16.77]]},
+};
+// Track multiple measured takes when the public sound registration explicitly alternates them.
+Object.assign(byWeapon,{
+ WeaponShooterQuickMiddle:{fire:'shooter/zap.wav'},
+ WeaponRollerCompact:{roll:'roller/carbonroller_roll.wav',windup:'roller/carbonroller_preswing.wav'},
+ WeaponBrushNormal:{roll:'roller/octobrush_run.wav',fire:'roller/octobrush0.wav'},
+ WeaponSpinnerQuick:{ready:'splatling/minisplatling2.wav'},
+ WeaponSpinnerHyper:{ready:'splatling/hydrasplatling2.wav'},
+ WeaponSlosherStrong:{fire:['slosher/slosher1.wav','slosher/slosher2.wav']},
+ WeaponSlosherDiffusion:{fire:['slosher/trislosher.wav','slosher/slosher2.wav']},
+ WeaponSlosherLauncher:{fire:['slosher/machine1.wav','slosher/machine2.wav']},
+});
+
+// v4: decoded original public repository WAV/MP3 assets for research only.
+// These feature vectors are NOT Nintendo Splatoon 3 samples or retail SLINK data.
+const v4Entries={
+  "charger/prefire.wav":{
+    "sha":"2943841b3094b13fbc46f039bcfcdcf5b7b18281",
+    "ms":205,
+    "rmsDb":-22.5,
+    "env":[
+      -15.2,
+      -14.7,
+      -25.7,
+      -32.4,
+      -36.4,
+      -36.5,
+      -34.5,
+      -28.6,
+      -30.3,
+      -28.9,
+      -24.1,
+      -41.4,
+      -48.7,
+      -63.7,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "seq":[
+      [
+        -38.88,
+        -32.76,
+        -14.43,
+        -2.77,
+        0.0,
+        -0.2,
+        -5.42
+      ],
+      [
+        -27.6,
+        -19.1,
+        -15.03,
+        -2.94,
+        -1.46,
+        0.0,
+        -8.28
+      ],
+      [
+        -35.27,
+        -30.83,
+        -27.52,
+        -13.62,
+        -2.37,
+        0.0,
+        -8.18
+      ],
+      [
+        -25.89,
+        -18.39,
+        -13.73,
+        -6.18,
+        -0.05,
+        0.0,
+        -6.16
+      ]
+    ]
+  },
+  "roller/inkbrush0.wav":{
+    "sha":"e19354d3c15702e8faa8c9ca01ef2cadacd830d8",
+    "ms":923,
+    "rmsDb":-17.3,
+    "env":[
+      -18.8,
+      -9.9,
+      -10.2,
+      -10.8,
+      -8.6,
+      -9.1,
+      -13.2,
+      -17.6,
+      -12.9,
+      -13.3,
+      -13.4,
+      -16.6,
+      -12.2,
+      -12.4,
+      -12.9,
+      -13.8,
+      -20.4,
+      -20.0,
+      -29.9,
+      -36.6
+    ],
+    "seq":[
+      [
+        -28.93,
+        -29.06,
+        -18.89,
+        -8.92,
+        -3.24,
+        0.0,
+        -14.7
+      ],
+      [
+        -29.71,
+        -31.75,
+        -14.98,
+        -1.93,
+        -0.07,
+        0.0,
+        -17.86
+      ],
+      [
+        -36.37,
+        -29.81,
+        -19.93,
+        -14.97,
+        0.0,
+        -8.02,
+        -31.01
+      ],
+      [
+        -35.39,
+        -35.08,
+        -22.9,
+        -13.83,
+        0.0,
+        -2.62,
+        -32.2
+      ]
+    ]
+  },
+  "roller/inkbrush1.wav":{
+    "sha":"972fd162882e6c90f568de025daf59d016f8de27",
+    "ms":584,
+    "rmsDb":-19.1,
+    "env":[
+      -14.5,
+      -13.0,
+      -10.3,
+      -14.3,
+      -12.5,
+      -15.2,
+      -13.7,
+      -13.0,
+      -18.3,
+      -18.1,
+      -22.8,
+      -27.8,
+      -27.4,
+      -20.9,
+      -21.7,
+      -24.0,
+      -30.1,
+      -36.1,
+      -21.5,
+      -20.3
+    ],
+    "seq":[
+      [
+        -19.66,
+        -16.63,
+        -8.41,
+        -4.6,
+        0.0,
+        -4.97,
+        -16.16
+      ],
+      [
+        -25.03,
+        -18.86,
+        -13.87,
+        -9.76,
+        -0.87,
+        0.0,
+        -17.97
+      ],
+      [
+        -29.48,
+        -16.53,
+        -6.48,
+        -2.49,
+        0.0,
+        -1.66,
+        -14.48
+      ],
+      [
+        -36.52,
+        -27.74,
+        -15.77,
+        -3.9,
+        0.0,
+        -0.57,
+        -18.88
+      ]
+    ]
+  },
+  "roller/swing1.wav":{
+    "sha":"0011cfa9e026df7790070865817e6977708fd310",
+    "ms":715,
+    "rmsDb":-12.2,
+    "env":[
+      -33.8,
+      -23.0,
+      -17.5,
+      -16.3,
+      -11.9,
+      -12.5,
+      -12.9,
+      -11.8,
+      -7.0,
+      -8.3,
+      -8.9,
+      -5.8,
+      -6.6,
+      -6.4,
+      -5.6,
+      -6.2,
+      -8.2,
+      -11.7,
+      -12.3,
+      -9.4
+    ],
+    "seq":[
+      [
+        0.0,
+        -14.0,
+        -10.35,
+        -13.57,
+        -13.9,
+        -13.47,
+        -19.83
+      ],
+      [
+        -4.85,
+        -10.0,
+        0.0,
+        -7.91,
+        -9.3,
+        -10.77,
+        -19.71
+      ],
+      [
+        -0.41,
+        -4.26,
+        -0.25,
+        0.0,
+        -3.83,
+        -3.82,
+        -18.94
+      ],
+      [
+        0.0,
+        -7.94,
+        -13.28,
+        -10.28,
+        -10.64,
+        -10.25,
+        -22.81
+      ]
+    ]
+  },
+  "shooter/splattershotpro.mp3":{
+    "sha":"bcd12a1bf0f5a90b54630cbf1c254d741183caa0",
+    "ms":596,
+    "rmsDb":-17.6,
+    "env":[
+      -3.4,
+      -7.0,
+      -22.0,
+      -25.8,
+      -29.8,
+      -31.4,
+      -33.7,
+      -35.2,
+      -37.1,
+      -38.8,
+      -40.2,
+      -40.6,
+      -46.6,
+      -45.9,
+      -48.9,
+      -49.7,
+      -51.4,
+      -51.2,
+      -48.0,
+      -47.9
+    ],
+    "seq":[
+      [
+        0.0,
+        -1.17,
+        -10.78,
+        -14.81,
+        -11.91,
+        -13.57,
+        -25.59
+      ],
+      [
+        0.0,
+        -0.22,
+        -4.3,
+        -6.15,
+        -1.51,
+        -6.31,
+        -20.4
+      ],
+      [
+        -0.88,
+        0.0,
+        -4.71,
+        -5.55,
+        -4.97,
+        -9.11,
+        -24.72
+      ],
+      [
+        -0.58,
+        0.0,
+        -4.37,
+        -2.87,
+        -3.5,
+        -9.41,
+        -16.24
+      ]
+    ]
+  }
+};
+Object.assign(byWeapon,{
+ WeaponShooterExpert:{fire:'shooter/splattershotpro.mp3'},
+ WeaponBrushMini:{fire:['roller/inkbrush0.wav','roller/inkbrush1.wav'],roll:'roller/inkbrush_run.wav'},
+ WeaponChargerNormal:{fire:'charger/splatcharger.wav',fire_full:'charger/splatchargerfull.wav',ready:'charger/prefire.wav'},
+ WeaponChargerNormalScope:{fire:'charger/splatcharger.wav',fire_full:'charger/splatchargerfull.wav',ready:'charger/prefire.wav'},
+ WeaponRollerNormal:{fire:['roller/swing0.wav','roller/swing1.wav'],roll:'roller/splatroller_roll.wav',windup:'roller/preswing.wav'},
+});
+
+export const REFERENCE_ENTRIES=Object.freeze(Object.fromEntries(Object.entries({...entries,...additionalEntries,...v4Entries}).map(([name,entry])=>[name,Object.freeze({
+  ...entry,url:`${REFERENCE_SOURCE.repo}/blob/${REFERENCE_SOURCE.revision}/sound/splatoonsweps/weapons/${name}`
+})])));
+export const REFERENCE_WEAPON_MAP=Object.freeze(byWeapon);
+export function sourceMeasurementFor(recipe,event,variant=0){
+ const mapping=REFERENCE_WEAPON_MAP[recipe?.sourceActor]?.[event];
+ const index=Number.isFinite(variant)?Math.abs(Math.trunc(variant)):0;
+ const filename=Array.isArray(mapping)?mapping[index%mapping.length]:mapping;
+ return filename?REFERENCE_ENTRIES[filename]||null:null;
+}
+export function sourceCoverageSummary(weapons){const actual=[];for(const r of Object.values(weapons))for(const event of r.events){if(sourceMeasurementFor(r,event))actual.push({id:r.id,event,source:(Array.isArray(REFERENCE_WEAPON_MAP[r.sourceActor][event])?REFERENCE_WEAPON_MAP[r.sourceActor][event][0]:REFERENCE_WEAPON_MAP[r.sourceActor][event])});}return actual;}

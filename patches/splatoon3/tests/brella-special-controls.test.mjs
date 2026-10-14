@@ -78,7 +78,9 @@ test('Tenta ignores empty reticles and sub, admits far targets through walls',as
 test('Reefslider locks travel direction and only a fresh fire press cancels after fifteen frames',async()=>{
  const f=await boot(),a=actor(f,'shooter','reefslider');a._startSpecial();a.intent.fire=true;step(f,a,39);const state=a._s3AllSpecialState,d=state.direction.clone();
  a.intent.sub=true;a.intent.move.set(1,0,0);step(f,a,20);assert.equal(state.phase,'dash');assert.ok(state.direction.distanceTo(d)<1e-8);
- a.intent.fire=false;step(f,a);a.intent.fire=true;step(f,a);assert.equal(state.phase,'recovery');a.character.dispose();
+ a.intent.fire=false;step(f,a);a.intent.fire=true;step(f,a);
+ assert.equal(state.phase,'brake','a fresh cancel enters the sourced 38F preburst, not instant recovery');
+ a.intent.fire=false;step(f,a,38);assert.equal(state.phase,'recovery');a.character.dispose();
 });
 
 test('Killer Wail locks three fixed pairs and still runs a catalogue main weapon',async()=>{
