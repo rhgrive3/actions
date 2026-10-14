@@ -6,6 +6,17 @@ import {collectControlledLaunchPair} from './check-inkwave-controlled-launch-pai
 import {installCanvasCapture} from './lib/inkwave-canvas-capture.mjs';
 import {probeProjectileVisibility} from './lib/inkwave-projectile-repeat-probe.mjs';
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
+export function parkBootedGame(){
+ const G=globalThis.NG,g=G?.game;
+ if(!g?.menus||G.mode==='boot')throw Error('Cannot park an unbooted Game');
+ g.debug.freeze();g._skipRender=true;
+ return {mode:G.mode,frozen:g.frozen,skipRender:g._skipRender};
+}
+export function inspectBootProgress(){
+ const G=globalThis.NG,g=G?.game;
+ return {mode:G?.mode??null,gamePresent:!!g,menusPresent:!!g?.menus,frozen:g?.frozen??null,skipRender:g?._skipRender??null,actualMap:G?.level?.layout?.id??null,native:!!G?.level?.native,source:G?.level?.manifest?.sourceSha256??null,documentState:document.readyState,loadingText:document.body?.innerText?.slice(0,2000)??null};
+}
+
 export function verifyControlledSites({baselineSite,candidateSite,bindings,baselineSHA,candidateSHA}){
  assert.equal(baselineSHA,'55b4750aea5e45136a588fbd7242c106aff2323a');
  assert.equal(candidateSHA,'4318dca34dfb68443d7c962cacd905aa65d8202e');
@@ -43,7 +54,13 @@ export async function runControlledDiagnostic(candidateSite,out,baselineSite){
    await page.route('**/*',route=>{const task=verifyPairRequest(route,url,manifest,row).catch(async error=>{row.errors.push(String(error));await route.abort('failed').catch(()=>{});});pending.push(task);return task;});
    await page.addInitScript(initializePair);await page.goto(url+'?map=inkblot',{waitUntil:'domcontentloaded',timeout:90000});
    const served=await page.request.get(new URL('inkwave-build.json',url).href);assert.ok(served.ok());assert.deepEqual(await served.json(),manifest,'Served target changed');
-   await page.evaluate(connectPair);await page.waitForFunction(pairBooted,null,{timeout:180000});
+   await page.evaluate(connectPair);
+   row.phase='waiting-for-boot';save();
+   try{await page.waitForFunction(pairBooted,null,{timeout:180000});}
+   catch(error){row.bootProgress=await page.evaluate(inspectBootProgress).catch(e=>({inspectionError:String(e)}));throw error;}
+   // Do not leave baseline's attract loop rendering while candidate converts
+   // its native stage and initializes a second SwiftShader renderer.
+   row.bootPark=await page.evaluate(parkBootedGame);row.phase='booted-parked';save();
   }
   // Independently capture the original natural frame-6 repeats. A controlled
   // aim mismatch must not prevent collecting the original visibility failure.
