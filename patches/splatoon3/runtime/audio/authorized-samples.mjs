@@ -126,6 +126,8 @@ export class AuthorizedSamplePack {
     if(typeof this.fetcher!=='function')throw new Error('fetch API unavailable');
     if(!Number.isInteger(concurrency)||concurrency<1||concurrency>4)throw new RangeError('concurrency must be 1..4');
     const generation=++this.generation;
+    const current=()=>this.generation===generation && this.ctx.state!=='closed';
+    const cancelled=Symbol('cancelled audio sample load');
     const next=replace?new Map():new Map(this.loaded);
     let total=replace?0:decodedBytes(next),done=0,repairs=0,cursor=0;
     const errors=[],decoded=new Map();
@@ -134,14 +136,18 @@ export class AuthorizedSamplePack {
       if(decoded.has(clip.file))return decoded.get(clip.file);
       const promise=(async()=>{
         const url=baseURL.replace(/\/$/,'')+'/'+clip.file;
+        if(!current())throw cancelled;
         const res=await this.fetcher(url);
+        if(!current())throw cancelled;
         if(!res?.ok)throw new Error('HTTP '+(res?.status??'unknown'));
         const reported=Number(res.headers?.get?.('content-length'));
         if(Number.isFinite(reported)&&reported>MAX_FILE_BYTES)throw new Error('Clip exceeds 8 MiB');
         const bytes=await res.arrayBuffer();
+        if(!current())throw cancelled;
         if(!(bytes instanceof ArrayBuffer)||bytes.byteLength>MAX_FILE_BYTES||!bytes.byteLength)throw new Error('Clip is empty or exceeds 8 MiB');
         // Hash validation is per manifest entry below, even for reused decoded files.
         const pcm=await this.ctx.decodeAudioData(bytes.slice(0));
+        if(!current())throw cancelled;
         if(!pcm||!finite(pcm.duration)||pcm.duration<=0||pcm.duration>30||!Number.isInteger(pcm.length)||pcm.length<=0||
            !Number.isInteger(pcm.numberOfChannels)||pcm.numberOfChannels<1||pcm.numberOfChannels>8)
           throw new Error('Invalid decoded sample');
@@ -150,7 +156,7 @@ export class AuthorizedSamplePack {
       decoded.set(clip.file,promise);return promise;
     };
     const jobs=Array.from({length:Math.min(concurrency,Math.max(1,valid.length))},async()=>{
-      while(cursor<valid.length){
+      while(cursor<valid.length && current()){
         const clip=valid[cursor++];this.pending++;
         try{
           // Reuse an already verified, byte-identical source buffer across IDs.
@@ -161,9 +167,11 @@ export class AuthorizedSamplePack {
           if(existing){buffer=existing.buffer;}
           else {
             const {bytes,pcm}=await getDecoded(clip);
+            if(!current())return;
             if(clip.sha256){
               if(!globalThis.crypto?.subtle)throw new Error('SHA256 requested but SubtleCrypto unavailable');
               const dig=await globalThis.crypto.subtle.digest('SHA-256',bytes);
+              if(!current())return;
               const sha=Array.from(new Uint8Array(dig),v=>v.toString(16).padStart(2,'0')).join('');
               if(sha.toLowerCase()!==clip.sha256.toLowerCase())throw new Error('Checksum mismatch');
             }
@@ -189,13 +197,13 @@ export class AuthorizedSamplePack {
           next.clear();for(const [name,row] of candidate)next.set(name,row);
           total=candidateBytes;
           done++;
-        }catch(e){errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
+        }catch(e){if(e!==cancelled && current())errors.push({file:clip.file,id:clip.id,event:clip.event,error:String(e?.message||e)});}
         finally{this.pending--;}
       }
     });
     await Promise.all(jobs);
     // Last-request-wins. The old playback bank remains valid throughout network/decode.
-    if(this.generation!==generation)return {loaded:0,rejected:errors.length,errors,cancelled:true,bytes:this.bytes};
+    if(!current())return {loaded:0,rejected:errors.length,errors,cancelled:true,bytes:this.bytes};
     this.loaded=next;this.bytes=total;this._reindex();this.errors=errors;this.repaired=repairs;
     this.manifest={targetVersion:manifest.targetVersion||null,usageRights:manifest.usageRights,source:manifest.source||null};
     this.source='user-supplied';

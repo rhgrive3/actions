@@ -4245,3 +4245,10 @@ The regression now uses each native expiry event to identify its emitting decoy 
 
 
 最終追記：ローラーのイカ化/サブ構えでrollingとダッシュ時計を消す経路も追加したが、実行環境の切断（environment_offline）のため最終native/emitted再検証は未完了。935ファイルの全体実行は6,000件以上まで観測できたが、最終exitは回収できていない。constrained即時Charger beamの生成コード装備差も未解決の検証項目として維持する。詳細と直前までのsource/emitted成功数は全カテゴリ再点検記録の最終保存節を参照。全件合格、ブラウザ/実WebSocket/本家実機検証完了、main反映済みとは主張しない。
+
+
+## 2026-10-13: audio v11 非同期ロードの所有期間（#1322 派生）
+
+音響Draft5530272では、manifest待機中に音声bankを破棄・コンテキスト置換しても、完了後に古いbankへの取得・デコード・再格納が続く。実モジュールと合成データで再現し、既存のgenerationとbank/context所有判定を各await境界へ接続した。正常な共有キャッシュ、新しい所有者のロード、失敗後の再試行は維持する。stopAllや音声再生規則、MP3は変更しない。
+
+限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。

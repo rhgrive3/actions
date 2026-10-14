@@ -39,6 +39,17 @@ test('missing special inventory is source versioned and Tenta stages ten source-
  assert.match(f.ALL_SPECIALS_STATUS.reference,/11\.3\.0/);assert.match(f.ALL_SPECIALS_STATUS.calibration,/world-unit mapping/);
 });
 
+test('Tenta Missiles retain their four-source-frame salvo clock after coarse actor ticks',async()=>{
+ for(const hz of [20,30,60,120]){
+  const f=await setup(),actor=f.make(),victim=f.make();equip(actor,'tentaMissiles');
+  victim.team=1;victim.pos.set(0,0,5);f.G.actors=[actor,victim];
+  ready(actor);deployInput(actor);tickActorWorldAtHz(f,actor,hz,36);
+  const fired=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');
+  assert.equal(fired.length,10,`at ${hz}Hz, all ten source-scheduled rounds must launch by frame 37`);
+  assert.equal(actor.specialActive,null,`at ${hz}Hz, salvo completion must end the special`);
+ }
+});
+
 test('Tenta Missiles rise, dive onto the locked ground coordinate, and apply impact damage',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'tentaMissiles');victim.team=1;victim.pos.set(0,0,8);f.G.actors=[a,victim];
  ready(a);deployInput(a);const missiles=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');

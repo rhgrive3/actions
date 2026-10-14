@@ -3317,10 +3317,15 @@ export class Character {
     // backpack: hangs from the straps — bottom swings back on acceleration, sways sideways, bounces with the stride
     if (xb.tank) {
       if (!this._tankRest) this._tankRest = xb.tank.position.clone();
-      const bob = this.gaitW * this.runW * Math.cos(TAU * 2 * (this.phase - this.duty * 0.5));
-      const ty = spr(sp, S_TKY, clamp(-this.headAcc.y * 0.001, -0.012, 0.012), 4.5, 0.22, dt);
-      const rx = spr(sp, S_TKX, clamp(this.kaz * 0.0022 + 0.035 * bob - this.vyS * 0.004, -0.12, 0.12), 3.0, 0.26, dt);
-      const rz = spr(sp, S_TKZ, clamp(-this.kax * 0.002 + 0.02 * Math.sin(TAU * this.phase) * this.gaitW, -0.1, 0.1), 3.0, 0.26, dt);
+      // The hidden human skeleton still receives root acceleration while the
+      // character swims and refills ink. Do not drive the backpack springs with
+      // that unrelated squid motion: a returning tank must inherit a settled
+      // local strap frame, not a noisy acceleration sample.
+      const tankW = this.form === 'kid' ? 1 : clamp(this.kidScale, 0, 1);
+      const bob = tankW * this.gaitW * this.runW * Math.cos(TAU * 2 * (this.phase - this.duty * 0.5));
+      const ty = spr(sp, S_TKY, clamp(-this.headAcc.y * 0.001, -0.012, 0.012) * tankW, 4.5, 0.22, dt);
+      const rx = spr(sp, S_TKX, clamp(this.kaz * 0.0022 * tankW + 0.035 * bob - this.vyS * 0.004 * tankW, -0.12, 0.12), 3.0, 0.26, dt);
+      const rz = spr(sp, S_TKZ, clamp(-this.kax * 0.002 * tankW + 0.02 * Math.sin(TAU * this.phase) * this.gaitW * tankW, -0.1, 0.1), 3.0, 0.26, dt);
       xb.tank.position.set(this._tankRest.x, this._tankRest.y + ty, this._tankRest.z);
       xb.tank.rotation.set(rx, 0, rz);
     }
@@ -3376,9 +3381,12 @@ export class Character {
 
   _updateTank(dt) {
     const sp = this.sp, T = this.tank;
-    // slosh driven by body acceleration (kid space), lagging and ringing like a liquid
-    const tx = spr(sp, S_TANKX, clamp(this.kax * 0.004, -0.1, 0.1), 1.6, 0.14, dt);
-    const tz = spr(sp, S_TANKZ, clamp(-this.kaz * 0.004, -0.1, 0.1), 1.6, 0.14, dt);
+    // Ink volume tracks its own recovery clock in all forms, but the
+    // human-tank liquid's inertial tilt only belongs to the visible human
+    // carrier. Keep integrating toward neutral through submerged movement.
+    const tankW = this.form === 'kid' ? 1 : clamp(this.kidScale, 0, 1);
+    const tx = spr(sp, S_TANKX, clamp(this.kax * 0.004, -0.1, 0.1) * tankW, 1.6, 0.14, dt);
+    const tz = spr(sp, S_TANKZ, clamp(-this.kaz * 0.004, -0.1, 0.1) * tankW, 1.6, 0.14, dt);
     const tl = spr(sp, S_TANKL, 0, 2.4, 0.18, dt);
     this.slosh = Math.hypot(tx, tz);
     const f = T.fill;

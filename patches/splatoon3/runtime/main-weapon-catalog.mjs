@@ -1,5 +1,5 @@
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
-import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
+import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
@@ -283,7 +283,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
-    s.roll = null; s.lunge=null; s.melee=null; s.turret = 0;
+    s.roll = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
     s.rollingFrames=0;s.rollingDash=false;
     if (s.canopy && !s.canopy.launched) s.canopy.open = false;
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
@@ -366,6 +366,104 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if (h.hit) paint(owner,h.point,radius,depth,direction,h.face);
   }
 
+  // Trace the centre path on actual collision polygons, never paint-chart
+  // rectangles. Coalesced intervals and streamed plane crossings follow
+  // continuous upper support without a geometry-density cut-off.
+  function rollingPaint(owner, at, radius, depth, direction, contact) {
+    const level=G.level, from=owner.pos, tol=1e-9;
+    if(!owner.ground?.hit || !level || !Number.isFinite(from.x+from.y+from.z+at.x+at.z))return;
+    // Partial/test levels without collision queries cannot prove floor contact.
+    if(typeof (level.triangleWorld?level.queryDynamicBlocks:level.queryBlocks)!=='function')return;
+    const surfaces=[], dx=at.x-from.x,dz=at.z-from.z;
+    function polygon(points,normal,faceId){
+      const face=level.faces[faceId];
+      if(!face?.paintable || !(normal.y>0))return;
+      // Collision vertices define the plane. Stored float32 shading/contact
+      // normals can disagree across an exact shared edge after rounding.
+      const o=points[0],ex=points[1].x-o.x,ey=points[1].y-o.y,ez=points[1].z-o.z;
+      const fx=points[2].x-o.x,fy=points[2].y-o.y,fz=points[2].z-o.z;
+      const nx=ey*fz-ez*fy,ny=ez*fx-ex*fz,nz=ex*fy-ey*fx;
+      if(ny===0)return;
+      const y0=o.y-((from.x-o.x)*nx+(from.z-o.z)*nz)/ny;
+      const dy=-(dx*nx+dz*nz)/ny;
+      if(!Number.isFinite(y0+dy))return;
+      let area=0,lo=0,hi=1;
+      for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];area+=a.x*b.z-b.x*a.z;}
+      if(Math.abs(area)<1e-12)return;
+      const sign=Math.sign(area);
+      for(let i=0;i<points.length;i++){
+        const a=points[i],b=points[(i+1)%points.length],ex=b.x-a.x,ez=b.z-a.z;
+        const q=sign*(ex*(from.z-a.z)-ez*(from.x-a.x)),d=sign*(ex*dz-ez*dx);
+        if(Math.abs(d)<1e-12){if(q < -tol)return;}
+        else if(d>0)lo=Math.max(lo,-q/d);else hi=Math.min(hi,-q/d);
+      }
+      if(lo>hi+tol || hi<0 || lo>1)return;
+      surfaces.push({lo:Math.max(0,lo),hi:Math.min(1,hi),y0,dy,normal:normal.clone(),face:faceId,start:faceId===owner.ground.face&&lo<=tol,endFaces:hi>=1-tol?[faceId]:[]});
+    }
+    const min=contact.origin.set(Math.min(from.x,at.x),-Infinity,Math.min(from.z,at.z));
+    const max=contact.down.set(Math.max(from.x,at.x),Infinity,Math.max(from.z,at.z));
+    const world=level.triangleWorld;
+    if(world)world.queryBox(min,max,id=>{
+      if(world.flags[id]&4)return;
+      const normal=contact.point.fromArray(world.normals,id*3);
+      const tri=world.triangle(id);
+      polygon([tri.a,tri.b,tri.c],normal,level.data.triangleFace[id]);
+    });
+    const ids=[];
+    if(world)level.queryDynamicBlocks(min.x,min.z,max.x,max.z,ids);
+    else level.queryBlocks(min.x,min.z,max.x,max.z,ids);
+    for(const id of ids){
+      const block=level.blocks[id];if(!block?.solid||block.grate)continue;
+      for(const faceId of block.faces){
+        const face=level.faces[faceId];if(!face || !(face.n.y>0))continue;
+        const o=face.origin,u=face.u,v=face.v;
+        polygon([o,o.clone().addScaledVector(u,face.su),o.clone().addScaledVector(u,face.su).addScaledVector(v,face.sv),o.clone().addScaledVector(v,face.sv)],face.n,faceId);
+      }
+    }
+    if(!surfaces.length)return;
+    // Merge actual overlapping/touching intervals on the exact same path
+    // plane across chart IDs; retain accepted support membership explicitly.
+    // Missing collision intervals remain gaps regardless of chart identity.
+    surfaces.sort((a,b)=>a.y0-b.y0||a.dy-b.dy||a.lo-b.lo);
+    let count=0;
+    for(const s of surfaces){
+      const prior=surfaces[count-1];
+      if(prior&&prior.y0===s.y0&&prior.dy===s.dy&&s.lo<=prior.hi+tol)
+        {prior.hi=Math.max(prior.hi,s.hi);prior.start ||= s.start;for(const face of s.endFaces)if(!prior.endFaces.includes(face))prior.endFaces.push(face);}
+      else surfaces[count++]=s;
+    }
+    surfaces.length=count;
+    let current=surfaces.find(s=>s.start&&s.lo<=tol);
+    if(!current)return;
+    // Stream the next endpoint/upper-plane crossing instead of constructing
+    // all pairwise events. Storage is linear in intersecting collision pieces;
+    // mesh density never silently disables a valid contact.
+    let t=0;
+    while(t<1-tol){
+      const y=current.y0+current.dy*t;
+      let next=null;
+      for(const s of surfaces){
+        if(s.lo>t+tol||s.hi<=t+tol||Math.abs(s.y0+s.dy*t-y)>1e-8)continue;
+        if(!next||s.dy>next.dy||(s.dy===next.dy&&s.hi>next.hi))next=s;
+      }
+      if(!next)return;current=next;
+      let end=current.hi;
+      for(const s of surfaces){
+        if(s.dy<=current.dy)continue;
+        const cross=(current.y0-s.y0)/(s.dy-current.dy);
+        if(cross>t+tol&&cross<end&&cross>=s.lo-tol&&cross<=s.hi+tol)end=cross;
+      }
+      if(!(end>t))return;
+      t=end;
+    }
+    contact.point.set(at.x,current.y0+current.dy,at.z);
+    contact.origin.copy(contact.point).addScaledVector(current.normal,.15);
+    contact.down.copy(current.normal).negate();
+    const h=G.physics.raycast(contact.origin,contact.down,.3,contact.hit,true);
+    if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)
+      paint(owner,h.point,radius,depth,direction,h.face);
+  }
+
   function mode(r, key='normal', unit=0, charge=0) {
     const p = r.parameters;
     let b=p, packet=null, index=0;
@@ -443,6 +541,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function emitSingle(runner,r,key='normal',charge=0,volley=null) {
     const a=runner.a, s=state(runner), desc=mode(r,key,0,charge);
+    // INKWAVE's cumulative-floor policy distributes fractional SpawnNum over
+    // accepted shots. The pinned value does not establish retail ordering.
+    // Shooter budgets also apply to the existing projected-paint fallback;
+    // missing physics still yields no detached splash spec or invented gravity.
+    const sourceNum=desc.b.SplashSpawnParam?.SpawnNum;
+    if ((desc.splashDropSpec || r.family==='shooter') && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
+        Number.isFinite(sourceNum) && sourceNum >= 0) {
+      const ordinal=s.paintShotOrdinal||0;
+      desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
+      s.paintShotOrdinal=ordinal+1;
+    }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
@@ -769,7 +878,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(runner),speed=Math.hypot(a.vel.x,a.vel.z),stick=Math.hypot(a.intent.move?.x||0,a.intent.move?.z||0);
     // Held ZR alone is not an attack: rolling needs stick input, ground
     // contact and movement. Do not paint, hit or drain ink while stationary.
-    if(!a.grounded||stick<=EPS||speed<=EPS){s.rollingFrames=0;s.rollingDash=false;return;}
+    if(!a.grounded||stick<=EPS||speed<=EPS){s.rollingFrames=0;s.rollingDash=false;s.rollPaint=null;return;}
     const normal=finite(roll.SpeedNormal,.132)*HZ;
     if(s.rollingDash&&speed+EPS<finite(roll.SpeedDashTurnBreak,normal/HZ)*HZ)s.rollingDash=false;
     if(stick>=1-EPS&&speed+EPS>=normal&&!dashTurnBreakActive(a))s.rollingFrames+=dt*HZ;
@@ -778,7 +887,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const min=finite(roll.SpeedInkConsumeMin,0)*HZ,max=finite(roll.SpeedInkConsumeMax,.132)*HZ;
     const fraction=max>min?clamp((speed-min)/(max-min)):1;
     const cost=lerp(finite(roll.InkConsumeMinPerFrame,.0001),finite(roll.InkConsumeMaxPerFrame,.001),fraction)*100*HZ*dt*inkMod(a);
-    if(!pay(runner,cost,finite(roll.InkRecoverStop,20)/HZ)){runner.rolling=false;return;}
+    if(!pay(runner,cost,finite(roll.InkRecoverStop,20)/HZ)){runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;return;}
     const paintParam=body.PaintParam||{},paintMax=finite(paintParam.WidthHalfMax,.9);
     const paintSpeedMin=finite(paintParam.SpeedMin,0)*HZ,paintSpeedMax=finite(paintParam.SpeedMax,max/HZ)*HZ;
     // Missing sparse width defaults stay calibrated; interpolate only an
@@ -786,7 +895,28 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const radius=lerp(finite(paintParam.WidthHalfMin,paintMax),paintMax,
       paintSpeedMax>paintSpeedMin?clamp((speed-paintSpeedMin)/(paintSpeedMax-paintSpeedMin)):1);
     const at=a.pos.clone().addScaledVector(a.aimDir,.6);
-    floorPaint(a,at,radius,1+speed*dt/Math.max(.1,radius),a.aimDir);
+    // Drum/brush floor contact follows body yaw, not reticle pitch. An aimed-down
+    // camera formerly pushed the ray origin below the floor and lost every mark.
+    // Keep the existing 'at' for damage contact; only paint is floor-anchored.
+    const stroke=s.rollPaint||(s.rollPaint={
+      from:a.pos.clone(),to:a.pos.clone(),point:a.pos.clone(),heading:a.pos.clone(),active:false,
+      contact:{point:a.pos.clone(),origin:a.pos.clone(),down:a.pos.clone(),hit:new Hit()},face:-1,
+    });
+    const heading=stroke.heading.set(Math.sin(a.yaw),0,Math.cos(a.yaw));
+    const to=stroke.to.set(a.pos.x+heading.x*.6,a.pos.y+.35,a.pos.z+heading.z*.6);
+    const from=stroke.from;
+    if (stroke.face!==a.ground?.face) stroke.active=false;
+    const distance=stroke.active?Math.hypot(to.x-from.x,to.z-from.z):0;
+    // On a normal 60Hz frame there is one native source-width stamp; only a
+    // discontinuous long frame is subdivided, with a strict six-splat cap.
+    const stamps=Math.min(6,Math.max(1,Math.ceil(distance/Math.max(.28,radius*.52))));
+    const depth=1+speed*dt/Math.max(.1,radius);
+    for(let i=1;i<=stamps;i++){
+      const t=i/stamps;
+      stroke.point.set(from.x+(to.x-from.x)*t,to.y,from.z+(to.z-from.z)*t);
+      rollingPaint(a,stroke.point,radius,depth,heading,stroke.contact);
+    }
+    from.copy(to);stroke.active=true;stroke.face=a.ground?.face;
     s.contactTimes ||= new Map();
     for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
@@ -944,10 +1074,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         // Account for the different first windup: a 23F first Vincent swing
         // must not unlock a 1F follow-up immediately when that first shot emits.
         runner.cooldown=(brush?windup+communityRepeat-(s.swingCount===0?1:0)-1:windup+finite(t.PostDelayFrame,21))/HZ;
-        runner.rolling=false;s.rollingFrames=0;s.rollingDash=false;s.swingCount++;
+        runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;s.swingCount++;
       }
     }else if(input.fire&&a.grounded&&!s.pending&&runner.cooldown<=EPS){runner.rolling=true;rolling(runner,r,dt);}
-    else {runner.rolling=false;s.rollingFrames=0;s.rollingDash=false;}
+    else {runner.rolling=false;s.rollPaint=null;s.rollingFrames=0;s.rollingDash=false;}
   }
   function slosh(runner,r,input,s) {
     if(!input.fire||runner.cooldown>EPS||s.pending)return;
