@@ -67,6 +67,12 @@ test('all added rollers: normal speed precedes each source dash duration; stoppi
   a.weaponRunner.update(DT,{fire:true,firePressed:false});close(a.weaponRunner.moveSpeed(),p.SpeedDash*60);
   a.intent.move.set(0,0,0);a.vel.set(0,0,0);a.weaponRunner.update(DT,{fire:true,firePressed:false});
   close(a.weaponRunner.moveSpeed(),p.SpeedNormal*60);
+  a.intent.move.set(0,0,1);a.vel.set(0,0,p.SpeedNormal*60);
+  for(let i=0;i<p.DashFrame;i++)a.weaponRunner.update(DT,{fire:true,firePressed:false});
+  close(a.weaponRunner.moveSpeed(),p.SpeedDash*60);
+  a.form='squid';a.weaponRunner.update(DT,{fire:false});assert.equal(a.weaponRunner.rolling,false);
+  a.form='kid';a.weaponRunner.update(DT,{fire:true,firePressed:false});
+  close(a.weaponRunner.moveSpeed(),p.SpeedNormal*60);
  }
 });
 

@@ -4242,3 +4242,6 @@ The regression now uses each native expiry event to identify its emitting decoy 
 根拠の版、操作条件、実装箇所、影響、確認範囲と未解決差分は [全カテゴリ再点検記録](inkwave-wiki-full-2026-10-14.md) を参照。Wikiと抽出値が食い違うバレル1周装填欄、サメ前隙/無敵開始、トーピードの?付き時間は転記で解決しない。低インクのNintendo資金/返却の完全時系列、BowTiltKeepFrame/reset、レティクル/骨格姿勢、残留マーカー線、壁垂れ・スクリュー渦、レンダリングブラウザと実WebSocket・Switch実機は未確認として残す。最新mainの設置物ヤグラ追従/寿命は既実装であり、古い未実装記述から再実装しない。外部CIの待機を検証完了扱いにしない。
 
 バレルの41発/161F予約に伴い、HUDが終端の追加1Fを第2チャージへ混入する差分も修正した。リングはnative支払済み残区間から計算し、48Fの1周リリースで第2リングを0に維持する。装填区間の期待値は根拠付き更新、描画レシピの縦振り入力は受付ジャンプで再現する。Playwrightだけ存在しChromium実体がない環境で、optional WebGL試験を虚偽の成功にしないため明示skipを追加し、要求モードでは失敗を維持する。
+
+
+最終追記：ローラーのイカ化/サブ構えでrollingとダッシュ時計を消す経路も追加したが、実行環境の切断（environment_offline）のため最終native/emitted再検証は未完了。935ファイルの全体実行は6,000件以上まで観測できたが、最終exitは回収できていない。constrained即時Charger beamの生成コード装備差も未解決の検証項目として維持する。詳細と直前までのsource/emitted成功数は全カテゴリ再点検記録の最終保存節を参照。全件合格、ブラウザ/実WebSocket/本家実機検証完了、main反映済みとは主張しない。

@@ -163,7 +163,7 @@ test('#294: insufficient sub, special, weapon switch, reset and death cannot dup
   a.setWeapon('splatling'); a.grounded = true;
   advance(a, 72); release(a); advance(a, 13, { fire: false });
   a.weapon = { ...a.weapon, special: 'storm' }; f.G.projectiles.throwStorm = () => {};
-  a._startSpecial(); assert.equal(a.weaponRunner.streaming, false); near(a.ink, 97.75);
+  a._startSpecial(); assert.equal(a.weaponRunner.streaming, false); near(a.ink, 100-4*(22.5/41));
   a.specialActive = null; advance(a, 60, { fire: false });
   const count = f.shots.length;
   advance(a, 72); release(a); a.alive = false; a.weaponRunner.onDeath();

@@ -1114,7 +1114,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
-    if(a.form!=='kid'||input.sub||this.aimingSub){s.pressed=!!input.fire;return;}
+    if(a.form!=='kid'||input.sub||this.aimingSub){
+      this.rolling=false;s.rollingFrames=0;s.rollingDash=false;
+      s.pressed=!!input.fire;return;
+    }
     if(r.family==='shooter'||r.family==='blaster')auto(this,r,input,s,dt);
     else if(r.family==='dualies')dualies(this,r,input,s,dt);
     else if(r.family==='roller'||r.family==='brush')swing(this,r,input,s,dt);
