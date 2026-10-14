@@ -1,42 +1,32 @@
-name: Verify immutable INKWAVE stage Game pair
+name: Diagnose frozen INKWAVE controlled launch
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  workflow_dispatch:
-    inputs:
-      candidate_sha:
-        description: Reviewed published immutable candidate commit (full SHA)
-        required: true
-        type: string
-      candidate_tree:
-        description: Reviewed candidate tree (full SHA)
-        required: true
-        type: string
+  push:
+    branches: [review/stage-controlled-4318-20261014]
 permissions:
   contents: read
 concurrency:
-  group: inkwave-stage-game-pair-${{ github.event.pull_request.number || inputs.candidate_sha }}
+  group: inkwave-controlled-launch-4318-${{ github.sha }}
   cancel-in-progress: false
 jobs:
   paired-game:
-    if: >-
-      (github.event_name == 'pull_request' && github.head_ref == 'codex/native-stage-reviewed' && github.event.pull_request.head.repo.full_name == github.repository) ||
-      (github.event_name == 'workflow_dispatch' && github.ref_name == 'codex/native-stage-reviewed')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/review/stage-controlled-4318-20261014'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
       BASELINE_SHA: 55b4750aea5e45136a588fbd7242c106aff2323a
-      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || inputs.candidate_sha }}
-      CANDIDATE_TREE: ${{ inputs.candidate_tree }}
+      CANDIDATE_SHA: 4318dca34dfb68443d7c962cacd905aa65d8202e
+      DIAGNOSTIC_HARNESS_SHA: ${{ github.sha }}
+      CANDIDATE_TREE: 52cdad1449199dd7d7a2b89ccbdb0b71afe302e3
     steps:
       - name: Validate immutable inputs
         shell: bash
         run: |
-          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
-          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then [[ "$CANDIDATE_TREE" =~ ^[0-9a-f]{40}$ ]]; fi
+          test "$CANDIDATE_SHA" = 4318dca34dfb68443d7c962cacd905aa65d8202e
+          test "$CANDIDATE_TREE" = 52cdad1449199dd7d7a2b89ccbdb0b71afe302e3
+          [[ "$DIAGNOSTIC_HARNESS_SHA" =~ ^[0-9a-f]{40}$ ]]
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.CANDIDATE_SHA }}
+          ref: ${{ env.DIAGNOSTIC_HARNESS_SHA }}
           persist-credentials: false
           path: harness
       - uses: actions/checkout@v4
@@ -49,14 +39,16 @@ jobs:
           ref: ${{ env.CANDIDATE_SHA }}
           persist-credentials: false
           path: candidate
-      - name: Bind candidate and harness to the immutable event commit
+      - name: Bind frozen candidate and separate immutable diagnostic harness
         shell: bash
         run: |
           test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
-          test "$(git -C harness rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C harness rev-parse HEAD)" = "$DIAGNOSTIC_HARNESS_SHA"
+          test "$(git -C harness hash-object scripts/check-inkwave-stage-game-pair.mjs)" = 0b8dc294ffecc396235da137beb9b84dd4e74082
+          test "$(git -C harness hash-object scripts/lib/inkwave-projectile-visibility-probe.mjs)" = b7f6b40f690126de10a90e1a4131c9da973d44ae
           tree=$(git -C candidate rev-parse HEAD^{tree})
           [[ "$tree" =~ ^[0-9a-f]{40}$ ]]
-          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then test "$tree" = "$CANDIDATE_TREE"; fi
+          test "$tree" = "$CANDIDATE_TREE"
           echo "CANDIDATE_TREE=$tree" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
@@ -68,7 +60,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify only the isolated diagnostic contracts
         working-directory: harness
-        run: node --test scripts/test-inkwave-stage-game-pair.mjs scripts/test-inkwave-lighting-controls.mjs
+        run: node --test scripts/test-inkwave-lighting-controls.mjs scripts/test-stage-capture-controls.mjs scripts/test-stage-controlled-host.mjs
       - name: Build both immutable public sites without model payload
         id: builds
         shell: bash
@@ -85,11 +77,21 @@ jobs:
           export ESBUILD_MODULE="$GITHUB_WORKSPACE/harness/node_modules/esbuild/lib/main.js"
           (cd baseline && node scripts/build-inkwave.mjs inkwave-public ../baseline-site) > evidence/baseline-build.log 2>&1
           (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site) > evidence/candidate-build.log 2>&1
-      - name: Verify build identity and admitted Game shots
+      - name: Verify immutable build bindings
+        id: bindings
+        working-directory: harness
+        run: node scripts/bind-inkwave-stage-pair.mjs
+      - name: Preserve original natural Game pair verdict
+        id: natural
+        working-directory: harness
+        run: node scripts/check-inkwave-stage-game-pair.mjs "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/game-pair" "$BASELINE_SITE"
+      - name: Collect separate controlled launch and four-read repeat diagnostic
+        # A failed natural verdict is preserved, not turned into success.
+        if: ${{ !cancelled() && steps.builds.outcome == 'success' && steps.bindings.outcome == 'success' }}
         working-directory: harness
         run: |
-          node scripts/bind-inkwave-stage-pair.mjs
-          node scripts/check-inkwave-stage-game-pair.mjs "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/game-pair" "$BASELINE_SITE"
+          printf '%s\n' "$DIAGNOSTIC_HARNESS_SHA" > "$GITHUB_WORKSPACE/evidence/diagnostic-harness-sha.txt"
+          node scripts/run-inkwave-controlled-launch-pair.mjs "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/controlled-diagnostic" "$BASELINE_SITE"
       - name: Verify candidate catalogue Game admission and real relay paint
         # Explicit hold: real-relay verification awaits confirmation of its allowed scope.
         # Do not remove this hold or report this gate passed based on offline results.
@@ -116,7 +118,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: stage-game-pair-${{ env.CANDIDATE_SHA }}
+          name: stage-controlled-diagnostic-${{ env.CANDIDATE_SHA }}-${{ env.DIAGNOSTIC_HARNESS_SHA }}
           path: evidence/
           if-no-files-found: error
           retention-days: 7
