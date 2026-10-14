@@ -20,9 +20,47 @@ export function hornzDreadWringer(d) {
   };
   // Rear shoulder sits below the hopper instead of penetrating its cavity.
   const pinkTop=z=>Math.min(.065,.025+Math.max(0,z-.085)*.50)-Math.max(0,z-.293)*.90;
-  const pinkRing=(hx,hz,r,y)=>contour(hx,hz,r).map(([x,z])=>[x,y===null?pinkTop(.181+z):y,.181+z]);
+  // Keep shared ring topology and insert only the exact pinkTop breakpoints
+  // on either rim contour. Constant/linear spans need no uniform subdivision.
+  const rimContours=[contour(.084,.149,.030),contour(.074,.139,.024)];
+  const ringSamples=Array.from({length:32},(_,i)=>{
+    const ts=new Set([0]);for(const ring of rimContours){const a=ring[i][1]+.181,b=ring[(i+1)%32][1]+.181;
+      for(const z of [.085,.165,.293])if((z-a)*(z-b)<0)ts.add((z-a)/(b-a));
+    }return [...ts].sort((a,b)=>a-b);
+  });
+  const pinkRing=(hx,hz,r,y)=>{
+    const ring=contour(hx,hz,r),out=[];
+    for(let i=0;i<ring.length;i++)for(const t of ringSamples[i]){
+      const a=ring[i],b=ring[(i+1)%ring.length],x=a[0]+(b[0]-a[0])*t,z=.181+a[1]+(b[1]-a[1])*t;
+      out.push([x,y===null?pinkTop(z):y,z]);
+    }return out;
+  };
   const pinkLoops=[pinkRing(.071,.132,.022,-.074),pinkRing(.080,.145,.027,-.060),pinkRing(.084,.149,.030,null),pinkRing(.074,.139,.024,null),pinkRing(.065,.126,.019,-.063)];
-  p.add(meshFromLoops(pinkLoops,[[0,1,true],[1,2,true],[2,3,true],[3,4,true]],[[0,false],[4,true]]),C.pink,M.gloss);
+  const pinkShell=meshFromLoops(pinkLoops,[[0,1,true],[1,2,true],[2,3,true],[3,4,true]],[[0,false],[4,true]]);
+  p.add(pinkShell,C.pink,M.gloss);
+  // Deterministic barycentric projection onto the two outer wall bands.
+  // Precompute Y/Z triangle coefficients once; no scene, material or raycast
+  // is created during a model build. Each side uses its own actual triangles.
+  const wallTriangles=[];
+  for(const [lo,hi]of [[0,1],[1,2]])for(let i=0;i<pinkLoops[lo].length;i++){
+    const j=(i+1)%pinkLoops[lo].length;
+    for(const [a,b,c]of [[pinkLoops[lo][i],pinkLoops[hi][i],pinkLoops[lo][j]],
+      [pinkLoops[lo][j],pinkLoops[hi][i],pinkLoops[hi][j]]]){
+      const by=b[1]-a[1],bz=b[2]-a[2],cy=c[1]-a[1],cz=c[2]-a[2],det=by*cz-bz*cy;
+      if(Math.abs(det)<1e-14)continue;
+      wallTriangles.push({a,dx:b[0]-a[0],ex:c[0]-a[0],by,bz,cy,cz,inv:1/det,
+        minY:Math.min(a[1],b[1],c[1]),maxY:Math.max(a[1],b[1],c[1]),minZ:Math.min(a[2],b[2],c[2]),maxZ:Math.max(a[2],b[2],c[2])});
+    }
+  }
+  const surfaceX=(y,z,side)=>{
+    let x=-Infinity;
+    for(const t of wallTriangles){
+      if(y<t.minY-1e-9||y>t.maxY+1e-9||z<t.minZ-1e-9||z>t.maxZ+1e-9)continue;
+      const dy=y-t.a[1],dz=z-t.a[2],u=(dy*t.cz-dz*t.cy)*t.inv,v=(t.by*dz-t.bz*dy)*t.inv;
+      if(u>=-1e-8&&v>=-1e-8&&u+v<=1+1e-8)x=Math.max(x,side*(t.a[0]+u*t.dx+v*t.ex));
+    }return x;
+  };
+  const decalHits=new Map();
   p.add(pipe([...pinkLoops[2],pinkLoops[2][0]],.0045,96,8),C.edge,M.gloss);
   p.add(pipe([...pinkLoops[0],pinkLoops[0][0]],.003,96,6),C.edge,M.gloss);
   // Irregular tapered black tiger stripes on the pink shell (flat printed
@@ -39,15 +77,44 @@ export function hornzDreadWringer(d) {
     [[.149,-.072],[.173,-.072],[.165,-.053],[.174,-.041],[.190,-.037],[.179,-.027],[.160,-.039],[.154,-.055]],
     [[.232,-.072],[.258,-.072],[.248,-.056],[.255,-.038],[.241,-.027],[.240,-.044],[.227,-.050]]
   ];
-  for(const s of [-1,1])for(const outline of stripeProfiles){
-    const g=slab(smoothOutline(outline,40),.0008,0,0),a=g.attributes.position;
-    for(let i=0;i<a.count;i++){
-      let y=a.getY(i);const z=a.getZ(i);y=Math.min(y,pinkTop(z)-.0015);a.setY(i,y);const w=y<-.060?.071+(y+.074)/.014*.009:.080+(y+.060)/.125*.004;
-      const end=Math.max(0,Math.abs(z-.181)-.119),r=.030;
-      const inset=end>0?r-Math.sqrt(Math.max(0,r*r-end*end)):0;
-      a.setX(i,s*(w-inset+.0007)+a.getX(i));
-    }g.computeVertexNormals();p.add(g,C.stripe,M.print);
-  }
+  const projectPrint=(v,side)=>{
+    let y=Math.max(-.071,Math.min(v[1],pinkTop(v[2])-.003)),z=v[2];
+    const key=side+':'+y+':'+z;let hit=decalHits.get(key);
+    for(let attempt=0;!hit&&attempt<80;attempt++){
+      const x=surfaceX(y,z,side);if(Number.isFinite(x)){hit={x,y};break;}y-=.0005;
+    }
+    if(!hit)throw new Error('Hornz stripe has no supporting shell surface');
+    decalHits.set(key,hit);return [side*(hit.x+.0009)+v[0],hit.y,z];
+  };
+  // Split only triangles whose interpolated interior fails the clearance
+  // band. Flat-wall print triangles remain unchanged; curved corners refine.
+  const subdividePrint=(src,side)=>{
+    const p=src.attributes.position,ix=src.index,out=[];
+    const split=(a,b,c,depth=0)=>{
+      const input=[a,b,c],points=input.map(v=>projectPrint(v,side));
+      const bad=[[.5,.5,0],[0,.5,.5],[.5,0,.5],[1/3,1/3,1/3]].some(w=>{
+        const q=[0,1,2].map(k=>points.reduce((sum,p,i)=>sum+p[k]*w[i],0)),surface=surfaceX(q[1],q[2],side),gap=side*q[0]-surface;
+        return !Number.isFinite(surface)||gap<.00015||gap>.0017;
+      });
+      if(bad&&depth<12){
+        const lengths=input.map((v,i)=>{const w=input[(i+1)%3];return(v[1]-w[1])**2+(v[2]-w[2])**2;});
+        const k=lengths.indexOf(Math.max(...lengths)),u=input[k],v=input[(k+1)%3],w=input[(k+2)%3],m=u.map((x,i)=>(x+v[i])/2);
+        split(u,m,w,depth+1);split(m,v,w,depth+1);
+      }else { if(bad)throw new Error('Hornz print refinement did not converge');out.push(...points.flat()); }
+    };
+    const n=ix?ix.count:p.count;
+    for(let i=0;i<n;i+=3){const tri=[0,1,2].map(k=>{const j=ix?ix.getX(i+k):i+k;return[p.getX(j),p.getY(j),p.getZ(j)];});
+      // An exact split at the lower-wall bend avoids chasing a sharp kink.
+      for(const sign of [-1,1]){const polygon=[];
+        for(let k=0;k<3;k++){const a=tri[k],b=tri[(k+1)%3],da=sign*(a[1]+.060),db=sign*(b[1]+.060);
+          if(da>=0)polygon.push(a);
+          if((da>0&&db<0)||(da<0&&db>0)){const t=da/(da-db);polygon.push(a.map((v,j)=>v+(b[j]-v)*t));}
+        }for(let k=1;k<polygon.length-1;k++)split(polygon[0],polygon[k],polygon[k+1]);
+      }
+    }
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(out,3));g.setIndex(Array.from({length:out.length/3},(_,i)=>i));g.computeVertexNormals();src.dispose();return g;
+  };
+  for(const side of [-1,1])for(const outline of stripeProfiles)p.add(subdividePrint(slab(smoothOutline(outline,40),.0008,0,0),side),C.stripe,M.print);
   // The pale part's mouth faces forward and upward, not straight upward.
   // Its thick rounded-rectangle rim lies on a plane tilted back approximately 32 degrees;
   // the hollow shell tapers down/back to the wheel end seen in the rotation.
