@@ -9,12 +9,11 @@
 // held level and forward at the right hip, and a trailing shin that stays well
 // short of horizontal. See reference/stance-carry-comparison-2026-10-12.md.
 //
-// This module only changes presentation in the source controller's ground
-// idle/move states: torso/neck lean, the moving non-firing shooter carry and the
-// swing ankle height. The standing two-hand weapon hold is left as authored.
-// It does not touch Actor movement, the native firing pose (nativeWeaponPoseRequired
-// hands every attack to the native upper body), foot contacts, jumps, landings,
-// form changes, dances or manual clip playback.
+// This module changes presentation in the source controller's ground idle/move
+// states and, only as the returning kid becomes visible, the source ToHuman
+// torso/neck forward bend. The standing two-hand weapon hold stays authored.
+// It does not touch Actor form clocks, movement, source clip sampling, native
+// firing poses, planted feet, jumps, dances or manual clip playback.
 // The values below are INKWAVE calibrations read from video, never extracted
 // Nintendo joint angles.
 import * as THREE from 'three';
@@ -29,6 +28,11 @@ export const SOURCE_POSTURE = Object.freeze({
   // and between the standing and moving shooter carry (starts and stops never snap).
   response: 8,
   standResponse: 6,
+  // Suppress the old Wii U ToHuman bow only after the humanoid silhouette starts
+  // reappearing. Smoothstep reaches full correction before the ordinary idle
+  // source pose takes over, so there is no uncorrected one-frame "nod".
+  emergeStart: 0.20,
+  emergeFull: 0.85,
   // Moving shooter carry: muzzle pitch (rad, negative = down), inward yaw toward
   // the midline (rad, + = kid left) and how much of the source barrel direction
   // is replaced by that target. Faded out when standing: the standing two-hand
@@ -64,13 +68,23 @@ function controllerOf(retarget) {
   const c = retarget.character?.sourceMotion;
   return c && c.retarget === retarget ? c : null;
 }
+/** Source ToHuman is crouched in the Wii U rig. Keep its earliest curl, but
+ * remove the forward bow while the human silhouette becomes visible. No
+ * side effect on squid/air/manual paths or the authoritative form timer. */
+export function sourceEmergePostureWeight(c) {
+  if (!c || c.manual || c.formKid !== true || c.state !== 'ToHuman' || !c.grounded) return 0;
+  const t = clamp((c.formWeight - SOURCE_POSTURE.emergeStart) /
+    (SOURCE_POSTURE.emergeFull - SOURCE_POSTURE.emergeStart), 0, 1);
+  return t * t * (3 - 2 * t);
+}
 /** 0..1 weight of the posture correction for this controller frame (smoothed, frame-rate independent). */
 export function sourcePostureWeight(retarget) {
   return postureState(retarget).weight;
 }
 function advanceWeight(retarget) {
   const st = postureState(retarget), c = controllerOf(retarget);
-  const wanted = enabled && c && !c.manual && c.formKid !== false && CORRECTED_STATES.has(c.state) ? 1 : 0;
+  const emerging = enabled ? sourceEmergePostureWeight(c) : 0;
+  const wanted = enabled && c && !c.manual && c.formKid !== false && CORRECTED_STATES.has(c.state) ? 1 : emerging;
   const now = c ? c.time : null;
   // The first frame (or a controller clock that went backwards) snaps to the wanted state; a
   // paused (dt = 0) frame holds the weight; otherwise blend at a frame-rate independent rate.
@@ -82,6 +96,10 @@ function advanceWeight(retarget) {
     st.weight += (wanted - st.weight) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
     st.move += (move - st.move) * (1 - Math.exp(-SOURCE_POSTURE.standResponse * dt));
   }
+  // The source transition's visible silhouette must not remain hunched merely
+  // because the preceding squid state had a zero posture correction weight.
+  // Carry the completed weight into the following idle clip without a pop.
+  if (emerging > st.weight) st.weight = emerging;
   st.time = now;
   st.neck = 0;
   return st.weight;
@@ -116,7 +134,8 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
  *  Standing (smoothed stand/move weight) leaves the source two-hand hold unchanged. */
 export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
-  if (!c || c.weaponKind !== 'shooter' || !controller.retarget) return;
+  if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
+      !CORRECTED_STATES.has(controller.state)) return;
   const w = sourcePostureWeight(controller.retarget) * clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
   if (w <= 1e-4) return;
   const k = SOURCE_POSTURE.carry;
