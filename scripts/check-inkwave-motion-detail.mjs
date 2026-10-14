@@ -213,7 +213,7 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       if (hash(body) !== manifest.artifacts[key]) throw Error('Active artifact mismatch: ' + key);
       loaded.push(key);
       const mime = key.endsWith('.json') ? 'application/json'
-        : /\\.m?js$/.test(key) ? 'text/javascript' : 'application/octet-stream';
+        : /\.m?js$/.test(key) ? 'text/javascript' : 'application/octet-stream';
       await route.fulfill({ status: 200, headers: { 'content-type': mime }, body });
     } catch (error) { recordError(error.message); try { await route.abort(); } catch {} }
   });
