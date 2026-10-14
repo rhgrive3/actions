@@ -1,3 +1,4 @@
+import { installHealthHitObserver } from './combat-info.mjs';
 // #716 — Splatoon 3 (11.0+) approximate remaining-HP bars.
 // Presentation only: authoritative damage, HP replication and visibility stay
 // owned by Actor / NetMatch. Bars never affect hitboxes, combat or scoring.
@@ -59,7 +60,9 @@ function makeRow(layer, doc) {
   node.appendChild(fill);layer.appendChild(node);
   return {node,fill,hp:NaN,until:-Infinity,life:undefined,alive:true};
 }
-export function installHealthBarHud({ HUD, G, THREE, PLAYER }, env = globalThis) {
+export function installHealthBarHud(api, env = globalThis) {
+  installHealthHitObserver(api);
+  const { HUD, G, THREE, PLAYER } = api;
   if (!HUD?.prototype || !THREE?.Vector3 || !G || !PLAYER || Object.hasOwn(HUD.prototype, INSTALLED)) return;
   const proto = HUD.prototype;
   Object.defineProperty(proto, INSTALLED, {value:true});
