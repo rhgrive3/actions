@@ -8,11 +8,19 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {chromium,webkit} from 'playwright';
 import {WebSocketServer} from 'ws';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {verifyRuntimeBuild} from './lib/inkwave-runtime-evidence.mjs';
+import {checkGyroMotionDenial,GYRO_MOTION_DENIAL_CONTEXT} from './lib/inkwave-gyro-motion-denial.mjs';
 import {RoomDurableObject} from '../server/src/index.js';
 const site=path.resolve(process.argv[2]||'_site'), engines=process.argv.includes('--webkit')?['chromium','webkit']:['chromium'];
 const hash=data=>crypto.createHash('sha256').update(data).digest('hex');
-const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
-for(const [file,digest] of Object.entries(build.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,file))),digest,file);
+const root=fileURLToPath(new URL('../',import.meta.url));
+const sourceHead=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
+const build=verifyRuntimeBuild(site,root,sourceHead);
+const manifestSHA256=hash(fs.readFileSync(path.join(site,'inkwave-build.json')));
+const gyroModules=Object.fromEntries(['src/core/mobile.js','src/core/gyro.js','patches/local-quality/gyro.mjs','patches/local-quality/gyro-permission.mjs'].map(file=>[file,build.artifacts[file]]));
+for(const [file,digest] of Object.entries(gyroModules))assert.match(digest||'',/^[a-f0-9]{64}$/,file);
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css'};
 const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://localhost');
@@ -128,9 +136,13 @@ try{
     }
     assert.equal(await gyro.evaluate(()=>notices.length),3);await gyro.evaluate(()=>m.destroy());
     assert.deepEqual(errors,[]);results.push({engine,gyroOutages:3,permissionPrompts:1});
+    const denial=await browser.newPage(GYRO_MOTION_DENIAL_CONTEXT);denial.on('pageerror',e=>errors.push(e.message));
+    await denial.goto(address);
+    results.push({engine,gyroMotionDenial:await checkGyroMotionDenial(denial)});
+    await denial.close();assert.deepEqual(errors,[]);
     await browser.close();browser=null;
   }
-  console.log(JSON.stringify({status:'passed',contentHash:build.contentHash,transport:'native WebSocket + RoomDurableObject',sensor:'synthetic orientation; no device hardware claim',results},null,2));
+  console.log(JSON.stringify({status:'passed',sourceHead,manifestSHA256,contentHash:build.contentHash,inputHash:build.inputHash,gyroModules,transport:'native WebSocket + RoomDurableObject',sensor:'synthetic orientation/motion and delayed permission promises; no native permission scheduling or device hardware claim',results},null,2));
 }finally{
   await browser?.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));
 }

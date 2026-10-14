@@ -6,6 +6,9 @@ on:
       - 'patches/local-quality/**'
       - '.github/workflows/inkwave-reopened-six.yml'
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: false
 jobs:
   reopened-six:
     runs-on: ubuntu-latest

@@ -39,7 +39,10 @@ function prepare(w) {
   const { G, local, match, session, projectiles, defaultFinishFrame } = w;
   if (local.weaponId !== 'charger') session.setWeapon('charger');
   local.reset();
-  for (const [key, value] of Object.entries(local.intent)) local.intent[key] = typeof value === 'number' ? 0 : false;
+  for (const [key, value] of Object.entries(local.intent)) {
+    if(value?.isVector3)value.set(0,0,0);
+    else local.intent[key] = typeof value === 'number' ? 0 : false;
+  }
   for (const [key, value] of Object.entries(local._prevIntent)) local._prevIntent[key] = typeof value === 'number' ? 0 : false;
   local._finishFrame = defaultFinishFrame;
   projectiles.clear(); G.time = 0;
@@ -162,6 +165,8 @@ test('Practice Range Ink Vac weapon-change lifecycle through the complete six-ad
         // release, so the native edge (not an immediate birth) authors the shot.
         local.intent.fire = true; tick();
         local.intent.fire = false; tick();
+        assert.equal(releaseEvents.length,0,'early input stays buffered during the source20F transition');
+        tick(17);assert.equal(releaseEvents.length,0,'no blast through transition frame19');tick();
         assert.equal(releaseEvents.length, 1, 'the real native kit emitted one release event');
         assert.equal(releaseEvents[0].authored, true, 'that release event reports its authored native projectile');
         assert.equal(R.inkVacState(local), null, 'the real native release retired the held state');

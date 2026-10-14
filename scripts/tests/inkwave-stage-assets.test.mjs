@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import test from 'node:test';
+import { decodePrecacheEntries } from '../lib/inkwave-cache-manifest.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
@@ -69,7 +70,7 @@ test('Scorch stage menu URLs resolve to valid images in the emitted offline asse
   assert.ok(buildMatch, 'emitted worker build configuration');
   const cacheManifest = JSON.parse(buildMatch[1]);
   assert.equal(cacheManifest.revision, revision, 'worker and emitted files use the same immutable revision');
-  assert.ok(cacheManifest.precache.includes('assets/stages/manifest.json'), 'stage manifest is installed for offline use');
+  assert.ok(decodePrecacheEntries(cacheManifest.precache, cacheManifest.assets).includes('assets/stages/manifest.json'), 'stage manifest is installed for offline use');
 
   for (const time of ['day', 'dusk']) for (const small of [false, true]) {
     const name = `scorch-${time}${small ? '-sm' : ''}.webp`;
