@@ -52,8 +52,6 @@ export function adaptNativeStages(rel,code){
     return this.grid[k];`);
  }
  if(rel==='src/game/bots.js'){
-  once('  _wet(x, z, y) { const gy = G.level.groundHeight(x, z, y + 0.6); return gy === -Infinity || gy < PLAYER.fallDeathY; }',
-   '  _wet(x, z, y) { if (G.level.native && typeof G.level.hasGroundAbove === "function") return !G.level.hasGroundAbove(x, z, y + 0.6, PLAYER.fallDeathY); const gy = G.level.groundHeight(x, z, y + 0.6); return gy === -Infinity || gy < PLAYER.fallDeathY; }');
   code="import { nativePaintGoalIds } from '../../patches/native-stages/runtime/engine.mjs';\n"+code;
   once('    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);', '    const mates = G.actors.filter((o) => o !== a && o.team === a.team && o.bot);\n    const candidates = G.level.native ? nativePaintGoalIds(this, G) : nav.validIds;');
   once('      const id = nav.validIds[(Math.random() * nav.validIds.length) | 0];', '      if (!candidates.length) break;\n      const id = candidates[(Math.random() * candidates.length) | 0];');

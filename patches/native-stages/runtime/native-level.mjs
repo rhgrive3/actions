@@ -48,17 +48,6 @@ export class NativeLevel extends Level {
   const hit=this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,{minNormalY:.68});
   return hit?hit.point.y:-Infinity;
  }
- // Bot water guards need only one walkable support above the fall limit.
- // Keep groundHeight's exact origin/reach and triangle acceptance; ordinary
- // ground/spawn/controller callers continue to receive the nearest height.
- hasGroundAbove(x,z,yMax,minimumY){
-  if(this.groundHeight!==NATIVE_GROUND_HEIGHT){
-   const y=this.groundHeight(x,z,yMax);return y!==-Infinity&&!(y<minimumY);
-  }
-  const yMin=this.triangleWorld.nodes[1]-1;
-  if(yMax<yMin)return false;
-  return !!this.triangleWorld.ray(this._probe.set(x,yMax+.001,z),DOWN,yMax-yMin+1,{minNormalY:.68,anyHit:true,minHitY:minimumY});
- }
  containsOnFace(face,p,tolerance=.002){
   const rel=this._relNative||(this._relNative=new THREE.Vector3());rel.copy(p).sub(face.origin);
   const a=rel.dot(face.u),b=rel.dot(face.v);
@@ -86,9 +75,6 @@ export class NativeLevel extends Level {
  buildGeometry(){if(!this.nativePaint)throw Error("Native paint is not initialized");return nativeInkGeometry(this,this.nativePaint);}
  blockForTriangle(id){const f=this.data.triangleFace[id];return f>=0?f:this.objectBlock[this.triangleWorld.objectIds[id]];}
 }
-
-// Preserve fallback for later instance, subclass or prototype ground overrides.
-const NATIVE_GROUND_HEIGHT=NativeLevel.prototype.groundHeight;
 
 export function initNativeGrid(paint){
  const lvl=paint.level;paint.grid=new Uint8Array(lvl.mask.length);

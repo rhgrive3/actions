@@ -84,6 +84,7 @@ import { installTripleSlamFists } from './triple-slam-fists.mjs';
 import { installDeathBlast } from './death-blast.mjs';
 import { installAllSubs, replaySub } from './all-subs.mjs';
 import { installAllSpecials, replaySpecial } from './all-specials.mjs';
+import { installSpecialModels } from './special-presentation.mjs';
 import {installCatalogueSplashdown,replaySplashdown,installCatalogueLoadout,SUB_NAMES,SPECIAL_NAMES,installCatalogueNetwork,completeBaseKits,installCatalogueVision,installCatalogueBeakonJumps,installCatalogueControls} from './catalogue.mjs';
 
 let installed = false;
@@ -204,6 +205,7 @@ export function install(profile) {
   installNativeSprinklerDamage(api);
   installBotPaintDeviceProfile({ G, Actor });
   installSpecialPresentation(api, profile);
+  installSpecialModels(api);
   // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
   installWeaponFamilyMotion(api);
   return api;
