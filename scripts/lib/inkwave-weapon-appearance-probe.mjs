@@ -26,9 +26,28 @@ export async function checkWeaponAppearancePicker({ page, evidence }) {
   const assert = (ok,label) => { if(!ok) throw Error('Appearance picker: '+label); };
   try {
     const card=page.locator('.iw-loadout:not(.is-leaving) [data-id="w-'+initial.id+'"]');
+    // The live Menus owner rejects input while the newly mounted panel is
+    // still fading in. Visible DOM does not imply that the menu admits clicks.
+    await page.waitForFunction(id => {
+      const m=globalThis.s3ProbeG.game.menus, root=m._scr?.el;
+      const card=root?.querySelector('[data-id="w-'+id+'"]');
+      if (!card || m.current!=='loadout' || !root.isConnected || root.inert || m._modal) return false;
+      let opacity=1;
+      for (let el=card; el; el=el.parentElement) {
+        opacity *= Number(getComputedStyle(el).opacity);
+        if (el===root) break;
+      }
+      return opacity>0.6;
+    }, initial.id, {timeout:15000});
     await card.click();
+    // Wait for native loadout admission rather than assuming Playwright's
+    // successful pointer dispatch means the menu accepted the event.
+    await page.waitForFunction(id => globalThis.s3ProbeG.game.menus.api.getLoadout().weapon===id,
+      initial.id, {timeout:15000});
     const button=page.locator(selector);await button.waitFor({state:'visible'});
-    const before=await read();assert(before.kit===initial.id&&before.selected===initial.defaultId,'official kit default');
+    const before=await read();
+    assert(before.kit===initial.id&&before.selected===initial.defaultId,
+      'official kit default '+JSON.stringify({before,defaultId:initial.defaultId}));
     assert(before.candidate,'included in native navigation candidates');
     await button.click();await waitPreference(initial.base);const pointer=await read();
     assert(pointer.selected===initial.base&&pointer.focus,'trusted pointer selects explicit Base');
