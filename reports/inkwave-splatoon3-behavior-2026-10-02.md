@@ -4310,3 +4310,7 @@ main18ce→9bedのサブ／スペシャル表示、Goo Tuber銃口・握り、Bu
 Splatoon3 Ver11.3.0 identity／WeaponBlasterShort・0AP、KiTrix0611原典を参照。Bluefinの実Game固定1/60から自然に生成されたLunaは0.87 raw-unit区間の最初でsource fence bookkeeping OBB内判定によりY12.6462→8.9237へ接触終了し、原典床の3.84塗り投影を失った。同じ三角形原典・同一区間はsource BVHで非接触。legacy inkと別のcatalogue `sweptWorldHit`だけがsource chart/object boxを実体として使っていた。emitted経路をnative triangleへ接続し、実moving entityのみ既存analytic OBB、non-native・geometry・mask・weapon値・Actor入力は保持。線形半径変化は凸距離gapから初回接触を求め、最大半径はbroadphaseのみ。
 
 候補e984のselected41件は38pass・Flounder原典shot任意3skip・0fail／実EXIT0。Hump独立原典同一区間と56analytic対照も終了、source10buffer SHA一致。これはkernel/source証拠で、修正後の実browser／全5rule WS／packaging／性能は未実行。旧3回のWS失敗、2.496nearest floor projectionと3.84burst fallback、未観測descriptor keyは区別して保存。metric単位・retail抽出版／本家collision・paint・grate法則・実機FPSは未確認。権利未確認のraw assets・画像・全gridはcommitしない。[条件・残検証](native-stages/catalogue-source-sweep.md)。
+
+## 2026-10-14 Native-stage authorized resume
+
+Modern native catalogue shots use source-triangle contact rather than source bookkeeping OBBs; fresh natural Bluefin five-mode full-grid settlement passes. Retail masks/units and hardware speed remain unverified. [Source sweep](native-stages/catalogue-source-sweep.md).
