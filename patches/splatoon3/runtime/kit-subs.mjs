@@ -678,7 +678,17 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
   // native PaintSystem receives the type it expects, with no extra module import
   // and no per-frame allocation.
   if (!b.s3TrailPoint) b.s3TrailPoint = new b.pos.constructor();
-  b.s3TrailPoint.copy(b.pos);
+  // MoveParam.PaintCheckHeight=2.0 is a downward surface-search bound, not
+  // permission to stamp ink at the airborne bomb centre (or on another floor).
+  // Reuse native-vector ray data per bomb to avoid allocations on trail frames.
+  const physics = G_REF?.physics;
+  if (!physics?.raycast || !(spec.paintCheckHeight > 0)) return 0;
+  b.s3TrailDown ||= new b.pos.constructor(0, -1, 0);
+  b.s3TrailHit ||= { hit: false, point: new b.pos.constructor(), normal: new b.pos.constructor() };
+  const hit = physics.raycast(b.pos, b.s3TrailDown, spec.paintCheckHeight, b.s3TrailHit);
+  if (!hit?.hit || !hit.point || !(hit.normal?.y > 0)) return 0;
+  // A small paint-side bias avoids the decal sitting inside the contacted face.
+  b.s3TrailPoint.copy(hit.point).addScaledVector(hit.normal, 0.1);
   const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random(), claimOwner: b.owner });
   if (area > 0) b.owner?.addTurf?.(area);
   return area;
