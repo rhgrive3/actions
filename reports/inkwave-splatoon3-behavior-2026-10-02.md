@@ -4353,6 +4353,10 @@ The preceding density/duplicate-work counts retain their historical inputs and d
   - ブラウザ実動作（SwiftShader、1133×744 CSS、DPR 2、Bot 8 体密集、同じ瞬間の描画で比較）: 影パスの三角形は 275k → 119k、1 フレームの合計は 663k → 506k。画像差は、2/255 を超える画素が 0.1%、8/255 を超える画素が 0.006%、最大 44/255 で、足元と自分の体に落ちる影の縁にわずかに出るだけだった。切り出し画像を目視で比べても区別できなかった。同じ条件で 2 回描くと完全に一致する（決定的）ことも確認した。
   - 未確認: 端末実機での FPS と GPU 時間。
 
+## 2026-10-14: Tenacity respects spent-special locks (Refs #469 / #647)
+
+On main `636e2b68`, the real Actor/Match production composition recharged after Ink Storm's throw animation while its gauge lock remained live, and increased Slam's pending landing segment. Both passive helpers now honor those existing lock owners. A Match-local capability also prevents simultaneous Actor and post-roster Match awards; existing independent rate constants stay unchanged. See [reproduction, reference confidence and bounded validation](inkwave-tenacity-special-lock-2026-10-14.md). The existing community rate discrepancy, retail drain curves and hardware comparison remain unverified; no full Issue closure or retail-parity claim.
+
 ## 2026-10-13 ネイティブ地形のボット水際判定の計算削減
 
 `BotBrain._wet` が必要とする「落下死の高さ以上に歩ける地面があるか」だけを、従来と同じ真下レイ・法線条件・距離・境界値で判定する。通常の最寄り地面、射撃、当たり判定、塗り、ボット数・更新頻度は変更しない。上下に重なる床、穴、天井、斜面、グレーチング、カスタム地面取得を固定旧実装と照合した。実際の Actor→ブキ→弾→ダメージと塗り命令、地形で遮られた標的、30/60/120 Hz の集団ボットと配信済み形式の圧縮コードも別々に検証。
