@@ -6,7 +6,7 @@ import { MODELS as CHARGERS } from './chargers.mjs';
 import { MODELS as SPLATLINGS } from './splatlings.mjs';
 import { MODELS as DUALIES } from './dualies.mjs';
 import { MODELS as BRELLAS } from './brellas.mjs';
-import { MODELS as STRINGERS } from './stringers.mjs';
+import { MODELS as STRINGERS, reefMilK } from './stringers.mjs';
 const BASE = { ...CHARGERS, ...SPLATLINGS, ...DUALIES, ...BRELLAS, ...STRINGERS };
 const colors = new Map();
 const color = value => { if (!colors.has(value)) colors.set(value,new THREE.Color(value)); return colors.get(value); };
@@ -118,9 +118,9 @@ variant('Stringer_Normal_01','s3-stringer-normal','Inkline Tri-Stringer',{'#7a3b
 variant('Stringer_Normal_02','s3-stringer-normal','Bulbz Tri-Stringer',{'#7a3b22':'#b58085'});
 {
   const base=BASE['s3-stringer-short'];
-  definitions.push(['Stringer_Short_02',Object.freeze({...base,baseId:'s3-stringer-short',sourceRow:'Stringer_Short_02',name:'REEF-LUX 450 MIL-K',
+  definitions.push(['Stringer_Short_02',Object.freeze({...base,baseId:'s3-stringer-short',sourceRow:'Stringer_Short_02',name:'REEF-LUX 450 MIL-K',shapeRevision:'reference-bottle-flat-limbs-open-cams',
     sourceUrl:'https://splatoonwiki.org/wiki/REEF-LUX_450_MIL-K',inkPartition:'redString',
-    build(d){d=finish(base.build(d),{'#17181b':'#d5d5c9','#2a2b30':'#dadad0','#a9adb4':'#d3d2c8','#9a9ea6':'#b76d61'});
+    build(d){d=finish(reefMilK(d),{'#17181b':'#d5d5c9','#2a2b30':'#dadad0','#a9adb4':'#d3d2c8','#9a9ea6':'#b76d61'});
       for(const n of ['string','stringL']){const p=d.parts[n];p.mat='body';const c=p.src.attributes.color.clone(),red=color('#b76d61');for(let i=0;i<c.count;i++)c.setXYZ(i,red.r,red.g,red.b);p.src.setAttribute('color',c);}return d;}})]);
 }
 function splitSurface(g, matches) {

@@ -75,10 +75,18 @@ test('Twinklez silver tanks leave native ink while nozzle tips retain team owner
  assert.deepEqual(signature(spec.build(fresh())),signature(v));
 });
 
-test('MIL-K fixed red strings keep bow animation and all geometry unchanged',async()=>{
+test('MIL-K reference silhouette preserves base, ink, anchors and bow animation',async()=>{
  const f=await production(),spec=f.VARIANT_MODELS.Stringer_Short_02,base=f.ST.MODELS[spec.baseId];
  const b=base.build({kind:'charger',parts:{}}),v=spec.build({kind:'charger',parts:{}});
- for(const [n,g] of geometries(b))assert.deepEqual(triangles(g),triangles(new Map(geometries(v)).get(n)),n);
+ const snapshot=signature(b);
+ for(const [n,g] of geometries(b))if(n!=='body')assert.deepEqual(triangles(g),triangles(new Map(geometries(v)).get(n)),n);
+ assert.notDeepEqual(triangles(v.body),triangles(b.body),'variant-only reference silhouette');
+ assert.deepEqual(signature(base.build({kind:'charger',parts:{}})),snapshot,'base builder unchanged');
+ assert.deepEqual(signature(b),snapshot,'base instance unchanged');
+ assert.deepEqual(signature(spec.build({kind:'charger',parts:{}})),signature(v),'deterministic');
+ const total=geometries(v).reduce((n,[,g])=>n+g.index.count/3,0);assert.ok(total<=16000,'existing16k budget');
+ for(const [n,g] of geometries(v))for(const [key,a] of Object.entries(g.attributes))assert.ok(Array.from(a.array).every(Number.isFinite),n+'.'+key);
+ for(const key of ['pos','handY','handZ'])assert.deepEqual(v.gripL[key].toArray(),b.gripL[key].toArray());
  for(const n of ['string','stringL']){assert.equal(v.parts[n].mat,'body');assert.equal(b.parts[n].mat,'ink');assert.deepEqual(v.parts[n].pivot.toArray(),b.parts[n].pivot.toArray());}
  assert.equal(spec.animate,base.animate);assert.deepEqual(v.bowCfg,b.bowCfg);assert.deepEqual(v.muzzle.toArray(),b.muzzle.toArray());
 });

@@ -1,6 +1,7 @@
 // Source-row IDs are the canonical pinned 11.3.0 kit identities, not invented
 // main-catalogue IDs. These are standalone derived visuals, pending selection wiring.
 import { M } from './kit.mjs';
+import { tentatekShell } from './tentatek-shell.mjs';
 import { MODELS as A } from './shooters.mjs';
 import { MODELS as B } from './shooters-b.mjs';
 import { MODELS as C } from './blasters.mjs';
@@ -46,11 +47,7 @@ export const VARIANT_MODELS = Object.freeze({
   Shooter_Precision_01: variant('s3-shooter-precision', 'Shooter_Precision_01', 'シャープマーカーネオ', 'Neo_Splash-o-matic', { '#b48c36':'#c0c5cc' }),
   Shooter_Precision_02: variant('s3-shooter-precision', 'Shooter_Precision_02', 'シャープマーカーGECK', 'Splash-o-matic_GCK-O', { '#b48c36':'#594331' }, lamp),
   Shooter_Blaze_01: variant('s3-shooter-blaze', 'Shooter_Blaze_01', 'プロモデラーRG', 'Aerospray_RG', { '#a8acb2':'#d0a646', '#6e737a':'#8e6927' }),
-  Shooter_Normal_01: variant('shooter', 'Shooter_Normal_01', 'スプラシューターコラボ', 'Tentatek_Splattershot', {}, d => {
-    // Source-backed pink fixed tank; native can channel remains for motion only.
-    fixedCanSurface(d, 'can', '#db428b');
-    recolor(d.body, { '#efbf2a':'#db428b' }, (_x, y, z) => y > .085 && z < .17);
-  }, true),
+  Shooter_Normal_01: variant('shooter', 'Shooter_Normal_01', 'スプラシューターコラボ', 'Tentatek_Splattershot', {}, tentatekShell, true),
   Shooter_Normal_02: variant('shooter', 'Shooter_Normal_02', 'スプラシューター煌', 'Glamorz_Splattershot', { '#3d2ba0':'#b9c0cd', '#efbf2a':'#d5d9df' }, d => {
     fixedCanSurface(d, 'can', '#c5a9d3'); glowSticks(d);
   }, true),

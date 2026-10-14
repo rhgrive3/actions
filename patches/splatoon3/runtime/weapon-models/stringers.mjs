@@ -100,6 +100,42 @@ function reef(d) {
   });
 }
 
+// MIL-K visible silhouette, independently built so the original REEF-LUX stays unchanged.
+// Reference: pinned Wst_Stringer_Short_02.png (11.3.0). The single oblique icon
+// supports the bottle shoulder, flat limbs and open cams; hidden detail is not inferred.
+// Gameplay anchors, draw string, muzzle, charge coil and team-ink aperture retain reef's values.
+export function reefMilK(d) {
+  const C = { limb: '#e4e0d4', steel: '#a9adb4', dark: '#2a2b30', black: '#17181b', string: '#cfd6c4', grip: '#2a2b30' };
+  const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, coilR: 0.056, coil0: -0.01, coil1: 0.09,
+    arrowFront: 0.02, muzzleZ: 0.15, gripL: gripSpec([0, 0.0, 0.095], [0, 0, 1], [0.75, -0.62, -0.1]) };
+  return bow(d, cfg, (body, ink) => {
+    // Broad bottle shoulder tapering to a short neck, rather than seven exposed screw ribs.
+    body.add(zlathe([[0,-0.045],[0.054,-0.045],[0.067,-0.025],[0.068,0.045],
+      [0.061,0.068],[0.043,0.088],[0.033,0.098],[0.033,0.137],[0.029,0.15],[0.012,0.15]],0,YC,0,24),C.black,M.satin);
+    body.add(ring(0.065,0.003,0,YC,-0.025,'z',4,20),C.steel,M.satin);
+    body.add(ring(0.035,0.003,0,YC,0.11,'z',4,18),C.steel,M.satin);
+    body.add(ring(0.032,0.003,0,YC,0.143,'z',4,18),C.steel,M.satin);
+    // Keep the native team-ink aperture exactly, with no new team-color surfaces.
+    ink.add(ring(0.03,0.004,0,YC,0.152,'z',4,18));
+    for (const s of [1,-1]) {
+      // Flat swept cream limbs have broad faces in the reference, not round tubes.
+      const edge=[[-0.01,0.06],[-0.012,0.12],[-0.025,0.19],[-0.06,0.25],[-0.115,0.287],[-0.16,0.31],
+        [-0.177,0.29],[-0.13,0.26],[-0.088,0.225],[-0.062,0.174],[-0.05,0.112],[-0.05,0.06]];
+      body.add(slab(edge.map(([z,y])=>[z,YC+s*y]),0.025,0,0.003),C.limb,M.satin);
+      const y=YC+s*cfg.span,z=cfg.riserZ-cfg.back+0.01;
+      // Open wheel with a thin axle bridge. The ring aperture is actual geometry.
+      body.add(ring(0.025,0.007,0,y,z,'x',6,20),C.steel,M.satin);
+      body.add(box(0.018,0.009,0.043,0,y,z,0.35),C.steel,M.satin);
+      body.add(xcyl(0.007,-0.012,0.012,y,z,10),C.dark,M.satin);
+      body.add(zcyl(0.009,0,0.065,0,YC+s*0.15,10),C.steel,M.satin);
+      body.add(zcyl(0.011,0.048,0.067,0,YC+s*0.15,10),C.limb,M.satin);
+      // Visible orange tension cable runs inward from the cam; no unseen cross-rig added.
+      body.add(pipe([[0,y,z],[0,YC+s*0.14,cfg.riserZ-0.02]],0.002,8,5),'#cf744b',M.satin);
+    }
+    body.add(box(0.016,0.09,0.016,0,YC,cfg.riserZ-cfg.back,0.4),C.limb,M.satin);
+  });
+}
+
 // ------------------------------------------------------------------------------------------ Wellstring V
 function wellstring(d) {
   // Wmn_Stringer_Explosion: hydraulic crossbow. Green riveted pump cylinder with a gold name plate, a hex

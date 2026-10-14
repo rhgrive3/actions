@@ -1,7 +1,8 @@
 // Alternate-kit procedural finishes, derived from the current base builders.
 // Exact 11.3.0 source-row identities; these are visuals, not new gameplay kits.
-import { THREE, Pieces, M, box, slab, sphere, zlathe } from './kit.mjs';
+import { THREE, Pieces, M, box, slab, sphere } from './kit.mjs';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { hornzDreadWringer } from './hornz-dread-wringer.mjs';
 import { MODELS as ROLLERS } from './rollers.mjs';
 import { MODELS as BRUSHES } from './brushes.mjs';
 import { MODELS as SLOSHERS } from './sloshers.mjs';
@@ -116,7 +117,7 @@ function detail(d, type) {
     case 'blob': chevrons(p,.1,0,.17,'#283d75',.01);break;
     case 'explo': badge(p,.103,0,.18,'#eee6cc',.023);break;
     case 'dread': badge(p,.079,0,.14,'#dfddd1',.023);break;
-    case 'hornz': for(const sx of [-1,1])for(let i=0;i<3;i++){const g=zlathe([[0,0],[.009,.003],[0,.03]],0,0,0,6).rotateY(sx*Math.PI/2).translate(sx*.08,.055,.17+i*.025);p.add(g,'#a2a3a7',M.metal);}break;
+    case 'hornz': hornzDreadWringer(d); return;
     case 'stamper': p.add(box(.003,.012,.07,.018,0,-.005),'#4d9460',M.print);badge(p,.014,.006,.20,'#dedccf',.015);break;
     case 'stickerz': for(let i=0;i<4;i++)badge(p,.014,0,.12+i*.052,['#85b9e0','#c89ed4','#78ccb4','#e5bf77'][i],.016);break;
     case 'wiper': chevrons(p,.009,.005,.18,'#405b85',.009);chevrons(p,0,.052,.12,'#e9dd9b',.006);break;
