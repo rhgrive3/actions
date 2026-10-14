@@ -4351,3 +4351,10 @@ The regression now uses each native expiry event to identify its emitting decoy 
 音響Draft5530272では、manifest待機中に音声bankを破棄・コンテキスト置換しても、完了後に古いbankへの取得・デコード・再格納が続く。実モジュールと合成データで再現し、既存のgenerationとbank/context所有判定を各await境界へ接続した。正常な共有キャッシュ、新しい所有者のロード、失敗後の再試行は維持する。stopAllや音声再生規則、MP3は変更しない。
 
 限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。
+
+
+### 2026-10-14: final native common composition and variable-sphere cost
+
+Draft aggregate validation composes reviewed58ba, proposed source catalogue correction1419 and narrow dry source-climb refill1420 with maina9f9341c. Source-centred changing-radius queries exposed a CPU cost problem in the repeated64+36 distance searches. The final kernel uses analytic earliest face/finite-edge/vertex contact with the same linearly changing sphere, source BVH, eligibility and contact authority.4,114 independent signed-plane/rounded-edge cases plus12,000 arbitrary-orientation convex-distance oracle cases pass. Initial overlap, tangent/zero-radius faces, NoPaint/grate and actual dynamic OBB priority are retained. Source units, Nintendo retail collision/masks, hardware FPS and whole-match performance remain unverified. The Humpback source fixture now keeps its nominated controlled bank goal after ordinary recovery selects a new paint goal; it does not override physical path resets or weaken arrival/support/time bounds. Historical and final executions are distinguished in [the final composition record](native-stages/final-common-integration-2026-10-14.md). Independent acceptance, Bluefin/Shipshape full-stage qualification and the existing source/placement/Tower gates remain separate.
+
+A later main636e2b68 adds only isolated character-QA tools/workflow files and is included; production source/build adapter/gameplay inputs remain byte-identical to the consumed a9 baseline.

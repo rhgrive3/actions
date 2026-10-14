@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import {readStage} from './fixture.mjs';
 
 const f=await fixture({fullRuntime:true,realProjectiles:true,adaptNative:adaptBuildSource,adaptRuntime:adaptBuildSource,
- extraExports:"export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs'; export {sweptWorldHit} from './patches/splatoon3/runtime/weapons-collision.mjs';"});
+ extraExports:"export {NativeLevel,NativePhysics} from './patches/native-stages/runtime/engine.mjs'; export {sweptWorldHit} from './patches/splatoon3/runtime/weapons-collision.mjs'; export {sphereTriangleEntry} from './patches/native-stages/runtime/sphere-triangle-entry.mjs';"});
 const V=(x,y,z)=>new f.THREE.Vector3(x,y,z);
 function stage(flags=3,paint=true){
  return new f.NativeLevel({manifest:{id:'synthetic-catalogue-sweep',bounds:{minX:-10,minZ:-10,maxX:10,maxZ:10},spawnPads:[[-5,0,0],[5,0,0]],spawnBarrier:0,
@@ -84,4 +84,30 @@ test('recorded Bluefin Luna first step clears the original source instead of ter
  level.native=false;const legacy=sweep(level,from,to);assert.equal(legacy.hit,true);assert.equal(legacy.dist,0);assert.equal(legacy.face,-1);
  level.native=true;const actual=sweep(level,from,to);assert.equal(actual.hit,false);assert.equal(actual.block,-1);assert.equal(actual.face,-1);assert.equal(actual.triangle,-1);close(actual.dist,.87,1e-10);
  assert.deepEqual(hash(),before,'all ten original source buffers remain exact');
+});
+
+// Independent distance oracle: convex minimisation and bisection, without
+// using the face/edge/vertex equations implemented by the production kernel.
+test('analytic entry agrees with an independent convex-distance oracle in arbitrary orientations',()=>{
+ let seed=0x20261014;
+ const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/2**32;};
+ const vector=scale=>V((random()-.5)*scale,(random()-.5)*scale,(random()-.5)*scale);
+ const probe=V(),normal=V(),position=V(),closest=V();
+ for(let i=0;i<12000;i++){
+  const triangle=new f.THREE.Triangle(vector(8),vector(8),vector(8));
+  const from=vector(12),delta=i%17===0?V():vector(20),r0=i%19===0?0:random()*2,r1=i%3===0?r0:random()*2;
+  const gap=t=>{position.copy(from).addScaledVector(delta,t);triangle.closestPointToPoint(position,closest);return position.distanceTo(closest)-r0-(r1-r0)*t;};
+  let expected=Infinity;
+  if(gap(0)<=1e-10)expected=0;
+  else {
+   let lo=0,hi=1;const ratio=(Math.sqrt(5)-1)/2;
+   let a=hi-ratio*(hi-lo),b=lo+ratio*(hi-lo),fa=gap(a),fb=gap(b);
+   for(let j=0;j<96;j++){if(fa<=fb){hi=b;b=a;fb=fa;a=hi-ratio*(hi-lo);fa=gap(a);}else{lo=a;a=b;fa=fb;b=lo+ratio*(hi-lo);fb=gap(b);}}
+   let end=fa<=fb?a:b;if(gap(1)<=1e-10)end=1;
+   if(gap(end)<=1e-10){lo=0;hi=end;for(let j=0;j<64;j++){const mid=(lo+hi)/2;if(gap(mid)<=1e-10)hi=mid;else lo=mid;}expected=hi;}
+  }
+  const actual=f.sphereTriangleEntry(triangle,from,delta,r0,r1-r0,probe,normal);
+  assert.equal(actual===Infinity,expected===Infinity,'case '+i);
+  if(expected!==Infinity)close(actual,expected,2e-7);
+ }
 });

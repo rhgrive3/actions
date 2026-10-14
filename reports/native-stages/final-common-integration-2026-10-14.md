@@ -1,0 +1,19 @@
+# Final common composition — 2026-10-14
+
+The Draft aggregate composes reviewed checkpoint58ba9889117749314d2eaa6f1b51732e6572ae04, proposed common1419 at27725219088a34e43731eb2e646098100a1973cf, proposed common1420 atc99d1310a6cfb1ba65e9fb3394799c6fdbc42778, and maina9f9341ca7f6f70518910d93f20345852f50d7e1. This is technical integration for independent review, without a claim that the proposed commons have received final approval. A later main636e2b68cdace5ccbd651d05d2f2fc1eb900ecd0 adds only eight isolated character-QA files/workflow paths; it is also consumed without changing production inputs. Main is not changed. Bluefin1343 and Shipshape1394 remain separate unfinished stage PRs; no definition for either enters the aggregate.
+
+## Collision qualification
+
+The source-corrected baseline a8d5588e0e203cc065332b9c27d10c31e4a96456 contains the genuine triangle entry plus unchanged dynamic OBB path. A workload sampled16 evenly spaced original triangles from each of21 playable stages. Submitted2.4-unit source-centred segments use constant(.2/.2), growing(.1/.8), and shrinking(.8/.1) radii, four warm rounds and eight alternating measured rounds. It exposed expensive changing-radius queries, including Urchin growing p95~143.5ms and max~178.1ms. These are synthetic Node CPU component measurements, not match performance, retail units or physical-device FPS.
+
+The final kernel replaces repeated distance searches with earliest contact against the same triangle face, three finite edges and three vertices. Face contact is linear; rounded features are quadratic; the sphere radius still changes linearly. BVH, original eligibility, source buffers, actual dynamic OBB solver and returned contact geometry remain authoritative. Initial overlap and the prior1e-10 distance tolerance remain.4,114 independent signed-plane/rounded-edge equations and12,000 arbitrarily oriented independent convex-distance oracle cases pass. Thin walls, holes, tangent/initial overlaps, zero-radius faces, grates, NoPaint and dynamic nearest-hit contracts remain checked.
+
+## Fixed goal fixture correction
+
+The baseline original-source suite recorded a Humpback team0/120Hz failure: ordinary recovery selected a different paint goal, so the controlled opposed-bank assertion was no longer testing its nominated goal. The fixture already restored this goal after refill. It now also records and restores it after ordinary navigation goal selection, using the existing _pathTo API. Actual path reset, physics, grounded touchdown, movement inputs, source support, ink resources,90second limit,0.85 arrival bound and85-unit minimum travel remain. This is a correction to the controlled-goal fixture, not autonomous goal selection evidence. The historical failure is retained; the updated six-case result must be recorded separately.
+
+## Scope and comparison
+
+Splatoon3 reference11.3.0 describes the catalogue reference. The pinned display model is not confirmed retail collision, Pnt/grate masks, metric units, spawn/ranked placement or extraction version. Actual source triangle collision and dry human refill now follow the installed INKWAVE gameplay authorities; Nintendo hardware equivalence remains unverified. Hagglefish/Mincemeat/Humpback retain Tower-only gates. Lemuria lacks its original source; Mahi lacks moving placements.21 playable stages are represented, not25 verified retail stages.
+
+Final numeric receipts, exact code/build bindings and checks are recorded separately on the handoff branch after the immutable tested code is frozen. Original source models/textures, derivative geometry, screenshots and full paint grids are excluded from commits.

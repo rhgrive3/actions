@@ -1,5 +1,6 @@
 // BVH and segment/triangle distance adapted from the user-supplied R6 handoff.
 import * as THREE from 'three';
+import {sphereTriangleEntry} from './sphere-triangle-entry.mjs';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const V=()=>new THREE.Vector3();
 
@@ -57,10 +58,9 @@ export class TriangleWorld {
    const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack.push(left,right);continue;}const start=-left-1;for(let k=start;k<start+right;k++)fn(this.order[k]);
   }
  }
- /** Continuous sphere contact with source triangles, including edges/corners.
-  * Distance to a convex triangle along a segment is convex. The exact closest
-  * segment/triangle pair brackets its first radius entry; bisection finds that
-  * entry without sampling over thin walls or substituting chart rectangles. */
+ /** Continuous sphere contact with unchanged source faces, edges and vertices.
+  * Each feature yields a linear/quadratic earliest entry, including a linearly
+  * changing radius. The BVH and contact/material selection stay authoritative. */
  sweepSphere(from,to,radius,{ignoreGrates=false,endRadius=radius}={}){
   if(!(radius>=0)||!(endRadius>=0)||!Number.isFinite(radius+endRadius)||!Number.isFinite(from.x+from.y+from.z+to.x+to.y+to.z)||this.nodes.length<8)return null;
   const scratch=this._sphereSweep||(this._sphereSweep={box:new THREE.Box3(),delta:V(),probe:V(),normal:V()}),{box,delta,probe,normal}=scratch;
@@ -71,36 +71,8 @@ export class TriangleWorld {
   this.queryBox(box.min,box.max,id=>{
    if(ignoreGrates&&(this.flags[id]&4))return;
    const tri=this.triangle(id);this.triangleTests++;
-   const minimum=this._capsuleDistance(from,to,tri);
-   if(minimum>maxRadius+1e-10)return;
-   const closest=lengthSquared?clamp(probe.copy(this._bests).sub(from).dot(delta)/lengthSquared,0,1):0;
-   const initial=this._capsuleDistance(from,from,tri);let time=0;
-   if(initial>radius+1e-10){
-    let hi=closest;
-    if(change!==0){
-     const gap=t=>{probe.copy(from).addScaledVector(delta,t);return this._capsuleDistance(probe,probe,tri)-radius-change*t;};
-     if(gap(1)<=1e-10)hi=1;
-     else {
-      // Distance to a convex triangle minus a linear radius is convex too.
-      // Its minimum can occur after the fixed-radius nearest point, including
-      // stationary growth. Bracket it before finding the first entry.
-      const ratio=(Math.sqrt(5)-1)*.5;let lo=0,high=1,a=high-ratio*(high-lo),b=lo+ratio*(high-lo),fa=gap(a),fb=gap(b);
-      for(let i=0;i<64;i++){
-       if(fa<=fb){high=b;b=a;fb=fa;a=high-ratio*(high-lo);fa=gap(a);}
-       else {lo=a;a=b;fa=fb;b=lo+ratio*(high-lo);fb=gap(b);}
-      }
-      hi=fa<=fb?a:b;if(Math.min(fa,fb)>1e-10)return;
-     }
-    }else if(!lengthSquared||!closest)return;
-    let lo=0;
-    // Keep the outside endpoint outside, including tangent contacts. At most
-    // 2^-36 of the submitted segment is left unresolved.
-    for(let i=0;i<36;i++){
-     const mid=(lo+hi)*.5;probe.copy(from).addScaledVector(delta,mid);
-     if(this._capsuleDistance(probe,probe,tri)<=radius+change*mid+1e-10)hi=mid;else lo=mid;
-    }
-    time=hi;
-   }
+   const time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal);
+   if(time===Infinity)return;
    if(time>best||time===best&&result&&id>result.triangle)return;
    probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,tri);
    normal.subVectors(probe,this._bestp);
