@@ -2,7 +2,7 @@
   "sourceRow": "Stringer_Normal_02",
   "baseId": "s3-stringer-normal",
   "inspectedAt": "2026-10-14",
-  "status": "Static geometry candidate; retail accuracy and firing-color behavior not accepted",
+  "status": "Private source-backed brace and stepped-shell candidate; fresh exact-head GPU review pending",
   "sources": [
     {
       "page": "https://splatoonwiki.org/wiki/File:S3_Bulbz_Tri-Stringer_model_rotating.mp4",
@@ -55,8 +55,8 @@
   ],
   "validation": {
     "command": "node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
-    "passed": 6,
-    "triangles": 11752,
+    "passed": 8,
+    "triangles": 11672,
     "covers": [
       "Base isolation/determinism",
       "Native anchors and part geometry/pivots",
@@ -65,7 +65,9 @@
       "Three capsules on one limb",
       "Native transforms at 30/60/120Hz",
       "Finite indexed geometry under 16000 triangles",
-      "Exact trapezoid area and forward normals independent of planar subdivision"
+      "Exact trapezoid area and forward normals independent of planar subdivision",
+      "Continuous pale brace coverage between centre and side forward collars",
+      "Stepped-in front cap outer radius with retained open bore axes"
     ],
     "notCovered": [
       "Production bundle",
@@ -74,5 +76,16 @@
       "No build-time or GPU speedup claim from 300 fewer planar triangles"
     ],
     "diagnostics": "Private CPU z-buffer previews are geometry diagnostics only."
+  },
+  "revision": "Observed pale collar braces and stepped tube tips; isolated from straight-ring optimization",
+  "observedFrame": {
+    "source": "https://cdn.wikimg.net/en/splatoonwiki/images/f/f8/S3_Bulbz_Tri-Stringer_model_rotating.mp4",
+    "observedAtUtc": "2026-10-14T19:54:18Z",
+    "playbackTimeSeconds": null,
+    "observedFeatures": [
+      "Broad pale connecting braces between centre and side tube collars",
+      "Stepped dark metallic tube fronts and pale faceted collars"
+    ],
+    "limits": "Single uncalibrated oblique frame; section widths, bevels and exact taper remain authored estimates. No etched glyphs added."
   }
 }

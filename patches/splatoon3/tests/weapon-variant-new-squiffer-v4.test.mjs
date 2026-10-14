@@ -13,7 +13,7 @@ const production=()=>loaded??=(async()=>{
  const sourceHash=sha(source);
  // Trace metadata is source-only data, bound to the same model input as the
  // emitted registry. All seven geometry/native assertions execute registry code.
- assert.equal(sourceHash,'41dcb5848cce747725ffb839ef47c7687509f640bb6bed3a40962582e144cb88');
+ assert.equal(sourceHash,'288505b0dbe7991f487239edf73804af1c264322c1bdf6d9614d100ac278c9ff');
  const trace=source.match(/export const TANK_TRACE=Object\.freeze\((\{[^\n]+\})\);/);
  assert.ok(trace,'registered trace metadata must exist');
  if(process.env.INKWAVE_BUILT_SITE){
@@ -97,4 +97,19 @@ test('receiver front is a tapered molded section rather than constant thickness 
   if(p.getZ(i)>.21&&p.getZ(i)<.24)tip=Math.max(tip,Math.abs(p.getX(i)));
  }
  assert.ok(root>.014);assert.ok(tip<root*.7);assert.ok(tip>.005);
+});
+
+test('registered tank print follows molded shell with bounded surface clearance',async()=>{
+ const f=await production(),d=f.SQUIFFER_VARIANTS.Charger_Quick_01.build(fresh()),g=d.body,p=g.attributes.position,c=g.attributes.color;
+ const shellColor=new f.THREE.Color('#8b9291'),colors=['#dfe1dc','#242a29','#ebc139','#c7372d','#202627'].map(x=>new f.THREE.Color(x));
+ const matches=(i,col)=>Math.abs(c.getX(i)-col.r)<1e-6&&Math.abs(c.getY(i)-col.g)<1e-6&&Math.abs(c.getZ(i)-col.b)<1e-6;
+ const ids=[];for(let i=0;i<g.index.count;i+=3)if(matches(g.index.getX(i),shellColor))ids.push(g.index.getX(i),g.index.getX(i+1),g.index.getX(i+2));
+ const shell=g.clone();shell.setIndex(ids);const mesh=new f.THREE.Mesh(shell,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ let samples=0,max=0,min=Infinity;
+ for(let i=0;i<p.count;i++)if(colors.some(col=>matches(i,col))){
+  const x=p.getX(i),side=Math.sign(x),hits=new f.THREE.Raycaster(new f.THREE.Vector3(side*.1,p.getY(i),p.getZ(i)),new f.THREE.Vector3(-side,0,0)).intersectObject(mesh);
+  assert.ok(hits.length,'print must have shell support');const gap=Math.abs(x)-Math.abs(hits[0].point.x);max=Math.max(max,gap);min=Math.min(min,gap);samples++;
+  assert.ok(gap>-.00002&&gap<.0008,`raised or buried print: ${gap}`);
+ }
+ assert.ok(samples>100);console.log(JSON.stringify({printSamples:samples,minClearance:min,maxClearance:max}));
 });

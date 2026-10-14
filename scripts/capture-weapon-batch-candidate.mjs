@@ -15,8 +15,8 @@ assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
 for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,file))),digest,file);
 const sourceSha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const prefix='/_versions/'+manifest.build.revision+'/';
-const ids=['s3-stringer-normal-02','s3-maneuver-short-02','s3-charger-quick-01','s3-slosher-double-02','shooter-01'];
-const modelSourcePaths=['patches/splatoon3/runtime/weapon-models/variants-bulbz-followup.mjs','patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs','patches/splatoon3/runtime/weapon-models/variants-squiffer-v4-followup.mjs','patches/splatoon3/runtime/weapon-models/hornz-dread-wringer.mjs','patches/splatoon3/runtime/weapon-models/tentatek-shell.mjs'];
+const ids=['s3-stringer-normal-02','s3-maneuver-short-02','s3-charger-quick-01','s3-slosher-double-02','shooter-01','s3-stringer-short-02'];
+const modelSourcePaths=['patches/splatoon3/runtime/weapon-models/variants-bulbz-followup.mjs','patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs','patches/splatoon3/runtime/weapon-models/variants-squiffer-v4-followup.mjs','patches/splatoon3/runtime/weapon-models/hornz-dread-wringer.mjs','patches/splatoon3/runtime/weapon-models/tentatek-shell.mjs','patches/splatoon3/runtime/weapon-models/stringers.mjs'];
 const modelInputs={};
 for(const relative of modelSourcePaths){const digest=hash(fs.readFileSync(path.resolve(relative)));assert.equal(manifest.files['patch/'+relative.slice('patches/splatoon3/'.length)],digest,relative);modelInputs[relative]=digest;}
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.bin':'application/octet-stream'};
@@ -59,7 +59,7 @@ try{
   G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.match={playing:()=>true};G.time=0;
   G.projectiles=Object.fromEntries(['fireShooter','fireDualies','fireBlaster','fireSlosh','fireFlick','fireCharger','fireSplatling','throwBomb'].map(n=>[n,()=>{}]));
   function captureModes(baseId){
-   const chargeFamily=baseId==='s3-stringer-normal'||baseId==='s3-charger-quick',pairedFamily=baseId==='s3-maneuver-short';
+   const chargeFamily=baseId==='s3-stringer-normal'||baseId==='s3-stringer-short'||baseId==='s3-charger-quick',pairedFamily=baseId==='s3-maneuver-short';
    return {chargeFamily,pairedFamily,poseStates:chargeFamily?['rest','charge','release']:['rest'],groundStates:chargeFamily?[true,false]:[true]};
   }
   function nativeHands(w,paired){

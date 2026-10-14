@@ -51,8 +51,8 @@ jobs:
           env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs | tee variant-test-results/squiffer-v4-source.tap
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs | tee variant-test-results/squiffer-v4-emitted.tap
           for file in variant-test-results/squiffer-v4-source.tap variant-test-results/squiffer-v4-emitted.tap; do
-            grep -qx '# tests 8' "$file"
-            grep -qx '# pass 8' "$file"
+            grep -qx '# tests 9' "$file"
+            grep -qx '# pass 9' "$file"
             grep -qx '# fail 0' "$file"
             grep -qx '# skipped 0' "$file"
           done
@@ -63,8 +63,8 @@ jobs:
           env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-bulbz.test.mjs | tee variant-test-results/bulbz-source.tap
           INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-bulbz.test.mjs | tee variant-test-results/bulbz-emitted.tap
           for file in variant-test-results/bulbz-source.tap variant-test-results/bulbz-emitted.tap; do
-            grep -qx '# tests 6' "$file"
-            grep -qx '# pass 6' "$file"
+            grep -qx '# tests 8' "$file"
+            grep -qx '# pass 8' "$file"
             grep -qx '# fail 0' "$file"
             grep -qx '# skipped 0' "$file"
           done
@@ -104,10 +104,55 @@ jobs:
             grep -qx '# fail 0' "$file"
             grep -qx '# skipped 0' "$file"
           done
+      - name: Gate Hornz cavity and MIL-K attachment in source and emitted registry (3 each, no skips)
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-cavity-wall-motion.test.mjs patches/splatoon3/tests/milk-nock-attachment.test.mjs | tee variant-test-results/cavity-milk-source.tap
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-cavity-wall-motion.test.mjs patches/splatoon3/tests/milk-nock-attachment.test.mjs | tee variant-test-results/cavity-milk-emitted.tap
+          for file in variant-test-results/cavity-milk-source.tap variant-test-results/cavity-milk-emitted.tap; do
+            grep -qx '# tests 3' "$file"
+            grep -qx '# pass 3' "$file"
+            grep -qx '# fail 0' "$file"
+            grep -qx '# skipped 0' "$file"
+          done
+      - name: Gate ranged family public registry source and emitted (7 each, no skips)
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variants-ranged-defense.test.mjs | tee variant-test-results/ranged-source.tap
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variants-ranged-defense.test.mjs | tee variant-test-results/ranged-emitted.tap
+          for file in variant-test-results/ranged-source.tap variant-test-results/ranged-emitted.tap; do
+            grep -qx '# tests 7' "$file"
+            grep -qx '# pass 7' "$file"
+            grep -qx '# fail 0' "$file"
+            grep -qx '# skipped 0' "$file"
+          done
+      - name: Gate frozen A/B affine capture harness
+        run: node --test scripts/capture-weapon-frozen-ab.test.mjs
+      - uses: actions/checkout@v4
+        with:
+          ref: 889f2468c7bf6cd275d704e68f23de6378f857f5
+          path: _baseline_source
+      - name: Build frozen 889f with the same pinned compiler
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        run: |
+          test "$(git -C _baseline_source rev-parse HEAD)" = 889f2468c7bf6cd275d704e68f23de6378f857f5
+          (cd _baseline_source && node scripts/build-inkwave.mjs inkwave-public ../_baseline_site)
       - name: Install capture browser after runtime gates pass
         run: npx playwright install --with-deps chromium
       - name: Capture actual emitted weapon meshes
         run: node scripts/capture-weapon-batch-candidate.mjs --site _site --out variant-gallery
+      - name: Capture matched frozen and candidate Bulbz and Squiffer
+        run: node scripts/capture-weapon-frozen-ab.mjs --baseline-source _baseline_source --baseline-site _baseline_site --candidate-source . --candidate-site _site --out weapon-frozen-ab
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-frozen-ab-${{ github.sha }}
+          path: weapon-frozen-ab
+          if-no-files-found: warn
+          retention-days: 7
       - uses: actions/upload-artifact@v4
         if: always()
         with:

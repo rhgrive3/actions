@@ -1,6 +1,6 @@
 // Bulbz static geometry/ownership pass, isolated from the adopted Tri-Stringer.
 // Official HD evidence and deferred firing-color behavior: reference manifest.
-import {THREE,Pieces,M,box,sphere,zcyl,zlathe,xlathe,ring,pipe,pistolGrip} from './kit.mjs';
+import {THREE,Pieces,M,box,sphere,zcyl,zlathe,xlathe,ring,pipe,slab,pistolGrip} from './kit.mjs';
 import {MODELS as STRINGERS} from './stringers.mjs';
 const base=STRINGERS['s3-stringer-normal'];
 const YC=.085,SPAN=.4,TIP_Z=-.24;
@@ -61,11 +61,22 @@ function build(fresh){
  // and team-ink only inside their open bores. Never color the whole reel ink.
  const tubes=[[YC,.052,-.052,.175],[YC+.1,.021,.005,.135],[YC-.1,.021,.005,.135]];
  for(const [y,r,z0,z1] of tubes){
-  body.add(zlathe([[r*.73,z0],[r,z0+.008],[r,z1-.027],[r*.94,z1-.014],[r*.68,z1-.014],[r*.68,z0],[r*.73,z0]],0,y,0,24),C.darkMetal,M.metal);
-  for(const z of [z0+.028,z1-.045])body.add(ring(r+.001,.003,0,y,z,'z',5,24),C.steel,M.metal);
-  body.add(zlathe([[r*.66,z1-.015],[r*1.04,z1-.015],[r*1.04,z1],[r*.66,z1]],0,y,0,24),C.black,M.satin);
-  for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(box(.003,.003,.013,Math.cos(a)*r*1.045,y+Math.sin(a)*r*1.045,z1-.007,.1,4,4),C.steel,M.metal);}
+  body.add(zlathe([[r*.73,z0],[r,z0+.008],[r,z1-.040],[r*.90,z1-.022],[r*.84,z1-.014],[r*.68,z1-.014],[r*.68,z0],[r*.73,z0]],0,y,0,24),C.darkMetal,M.metal);
+  // Official rotation shows broad pale stepped collars, not thin wire rings.
+  // Twelve-sided outer shoulder is a bounded procedural estimate.
+  for(const z of [z0+.028,z1-.045])body.add(zlathe([[r-.001,z-.0055],[r+.001,z-.0055],[r+.003,z-.003],[r+.003,z+.003],[r+.001,z+.0055],[r-.001,z+.0055],[r-.001,z-.0055]],0,y,0,12),C.steel,M.satin);
+  body.add(zlathe([[r*.66,z1-.015],[r*.95,z1-.015],[r*.90,z1-.004],[r*.86,z1],[r*.66,z1]],0,y,0,24),C.black,M.satin);
+  for(let k=0;k<12;k++){const a=k*Math.PI/6;body.add(box(.003,.003,.013,Math.cos(a)*r*.92,y+Math.sin(a)*r*.92,z1-.007,.1,4,4),C.steel,M.metal);}
   ink.add(zcyl(r*.65,z1-.004,z1-.003,0,y,20),'#ffffff',M.gloss);
+ }
+ // Broad curved pale braces join the forward centre collar to both side
+ // collars in the observed official oblique frame. Keep native tube axes.
+ // Width/thickness are authored estimates, not calibrated retail dimensions.
+ for(const side of [-1,1]){
+  const profile=[[.135,YC+side*.050],[.135,YC+side*.058],[.129,YC+side*.065],
+   [.100,YC+side*.075],[.096,YC+side*.083],[.085,YC+side*.083],
+   [.088,YC+side*.071],[.121,YC+side*.058],[.124,YC+side*.050]];
+  body.add(slab(profile,.012,0,.002),C.steel,M.satin);
  }
  // Dark reel housing behind the centre tube and light faceted rim. The
  // procedural emblem is omitted rather than substituting a misleading badge.

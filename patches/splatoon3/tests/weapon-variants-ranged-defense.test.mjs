@@ -1,15 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {fileURLToPath} from 'node:url';
 import { fixture } from './source-fixture.mjs';
+const hash=s=>crypto.createHash('sha256').update(s).digest('hex');
+function bindBuild(){
+ const root=fileURLToPath(new URL('../../../',import.meta.url)),sourceHashes={};
+ for(const name of ['registry','kit','stringers','variants-ranged-defense']){const rel='patches/splatoon3/runtime/weapon-models/'+name+'.mjs';sourceHashes[rel]=hash(fs.readFileSync(path.join(root,rel)));}
+ if(process.env.INKWAVE_BUILT_SITE){
+  const site=path.resolve(process.env.INKWAVE_BUILT_SITE),manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
+  assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
+  for(const [rel,digest]of Object.entries(sourceHashes))assert.equal(manifest.files[rel.replace('patches/splatoon3/','patch/')],digest,'built input '+rel);
+  for(const name of ['registry','kit']){const rel='patches/splatoon3/runtime/weapon-models/'+name+'.mjs';assert.ok(manifest.artifacts[rel]);assert.equal(hash(fs.readFileSync(path.join(site,rel))),manifest.artifacts[rel]);const versioned='_versions/'+manifest.build.revision+'/'+rel;assert.equal(manifest.artifacts[versioned],manifest.artifacts[rel]);assert.equal(hash(fs.readFileSync(path.join(site,versioned))),manifest.artifacts[versioned]);}
+ }
+ console.log('Ranged registry source binding',JSON.stringify(sourceHashes));
+}
 let loaded;
-const production=()=>loaded??=fixture({extraExports:`
-export { VARIANT_MODELS } from './patches/splatoon3/runtime/weapon-models/variants-ranged-defense.mjs';
-export * as CH from './patches/splatoon3/runtime/weapon-models/chargers.mjs';
-export * as SP from './patches/splatoon3/runtime/weapon-models/splatlings.mjs';
-export * as DU from './patches/splatoon3/runtime/weapon-models/dualies.mjs';
-export * as BR from './patches/splatoon3/runtime/weapon-models/brellas.mjs';
-export * as ST from './patches/splatoon3/runtime/weapon-models/stringers.mjs';`});
+// Public registry selection in both modes; shape follow-ups have dedicated gates.
+const production=()=>loaded??=(async()=>{
+ bindBuild();
+ const f=await fixture({extraExports:`export {weaponVariantSpec,weaponModelSpec,registeredWeaponModels} from './patches/splatoon3/runtime/weapon-models/registry.mjs';`});
+ const rows=JSON.parse(fs.readFileSync(new URL('../reference/weapon-variants-ranged-defense-1130.json',import.meta.url))).records;
+ const VARIANT_MODELS=Object.fromEntries(rows.map(r=>[r.sourceRow,f.weaponVariantSpec(r.sourceRow)]).filter(([,spec])=>spec));
+ assert.equal(Object.keys(VARIANT_MODELS).length,36,'all registered ranged variants retained');
+ const MODELS=Object.fromEntries(f.registeredWeaponModels().map(id=>[id,f.weaponModelSpec(id)]));
+ return {...f,VARIANT_MODELS,CH:{MODELS},SP:{MODELS},DU:{MODELS},BR:{MODELS},ST:{MODELS}};
+})();
 const geometries=d=>[['body',d.body],['ink',d.ink],...Object.entries(d.parts).map(([n,p])=>[n,p.src]),['glow',d.glow]].filter(([,g])=>g?.attributes);
 function signature(d){return geometries(d).map(([n,g])=>[n,...Object.entries(g.attributes).map(([k,a])=>[k,Array.from(a.array)]),Array.from(g.index?.array??[])]);}
 test('ranged variants own fresh finishes while preserving exact topology, channels, ink and gameplay anchors',async()=>{
@@ -17,6 +32,8 @@ test('ranged variants own fresh finishes while preserving exact topology, channe
  const fresh=()=>({kind:'test-family',parts:{},gripL:{pos:new f.THREE.Vector3(0,0,.1),handZ:new f.THREE.Vector3(0,0,1),handY:new f.THREE.Vector3(0,1,0)}});
  const rows=JSON.parse(fs.readFileSync(new URL('../reference/weapon-variants-ranged-defense-1130.json',import.meta.url))).records;
  for(const [id,spec] of Object.entries(f.VARIANT_MODELS)){
+  // These registry replacements are validated by their mandatory9/8/9-test suites.
+  if(['Charger_Quick_01','Stringer_Normal_02','Maneuver_Short_02'].includes(id)){assert.ok(rows.some(r=>r.sourceRow===id&&r.baseId===spec.baseId));continue;}
   if(spec.inkPartition||spec.addedDetail)continue;
   assert.ok(rows.some(r=>r.sourceRow===id&&r.baseId===spec.baseId),id+' pinned row');
   const original=base[spec.baseId].build(fresh()),snapshot=signature(original),v=spec.build(fresh());
@@ -79,7 +96,7 @@ test('MIL-K reference silhouette preserves base, ink, anchors and bow animation'
  const f=await production(),spec=f.VARIANT_MODELS.Stringer_Short_02,base=f.ST.MODELS[spec.baseId];
  const b=base.build({kind:'charger',parts:{}}),v=spec.build({kind:'charger',parts:{}});
  const snapshot=signature(b);
- for(const [n,g] of geometries(b))if(!['body','string','stringL'].includes(n))assert.deepEqual(triangles(g),triangles(new Map(geometries(v)).get(n)),n);
+ for(const [n,g] of geometries(b))if(!['body','string','stringL','arrow'].includes(n))assert.deepEqual(triangles(g),triangles(new Map(geometries(v)).get(n)),n);
  assert.notDeepEqual(triangles(v.body),triangles(b.body),'variant-only reference silhouette');
  assert.deepEqual(signature(base.build({kind:'charger',parts:{}})),snapshot,'base builder unchanged');
  assert.deepEqual(signature(b),snapshot,'base instance unchanged');
@@ -88,7 +105,8 @@ test('MIL-K reference silhouette preserves base, ink, anchors and bow animation'
  for(const [n,g] of geometries(v))for(const [key,a] of Object.entries(g.attributes))assert.ok(Array.from(a.array).every(Number.isFinite),n+'.'+key);
  for(const key of ['pos','handY','handZ'])assert.deepEqual(v.gripL[key].toArray(),b.gripL[key].toArray());
  for(const n of ['string','stringL']){const p=b.parts[n].src.attributes.position,q=v.parts[n].src.attributes.position;assert.deepEqual(Array.from(b.parts[n].src.index.array),Array.from(v.parts[n].src.index.array));for(let i=0;i<p.count;i++){assert.equal(q.getY(i),p.getY(i));assert.ok(Math.abs(q.getX(i)-p.getX(i)*1.5625)<1e-7);assert.ok(Math.abs((q.getZ(i)+.17)-(p.getZ(i)+.17)*1.5625)<1e-7);}assert.equal(v.parts[n].mat,'body');assert.equal(b.parts[n].mat,'ink');assert.deepEqual(v.parts[n].pivot.toArray(),b.parts[n].pivot.toArray());}
- assert.equal(spec.animate,base.animate);assert.deepEqual(v.bowCfg,b.bowCfg);assert.deepEqual(v.muzzle.toArray(),b.muzzle.toArray());
+ assert.equal(spec.animate,base.animate);assert.deepEqual({...v.bowCfg},{...b.bowCfg,arrowNockFit:true});
+ const ap=b.parts.arrow.src.attributes.position,aq=v.parts.arrow.src.attributes.position;assert.equal(ap.count,aq.count);assert.deepEqual(Array.from(b.parts.arrow.src.index.array),Array.from(v.parts.arrow.src.index.array));for(let i=0;i<ap.count;i++){assert.equal(ap.getX(i),aq.getX(i));assert.equal(ap.getY(i),aq.getY(i));assert.ok(Math.abs(aq.getZ(i)-(ap.getZ(i)<-.15?ap.getZ(i)-.006:ap.getZ(i)))<1e-7);}assert.deepEqual(v.parts.arrow.pivot.toArray(),b.parts.arrow.pivot.toArray());assert.deepEqual(v.muzzle.toArray(),b.muzzle.toArray());
 });
 test('Undercover Sorella partitions shaft/check lines without geometry duplication or rig drift',async()=>{
  const f=await production(),spec=f.VARIANT_MODELS.Shelter_Compact_01,base=f.BR.MODELS[spec.baseId];
@@ -106,4 +124,14 @@ test('Heavy Deco adds only24 low-poly rhinestones without modifying underlying w
  assert.equal(v.body.index.count-b.body.index.count,24*8*3);assert.deepEqual(triangles(v.ink),triangles(b.ink));
  assert.deepEqual(v.muzzle.toArray(),b.muzzle.toArray());assert.equal(spec.animate,base.animate);
  const total=geometries(v).reduce((n,[,g])=>n+g.index.count/3,0);assert.ok(total<=16000,'existing16k budget');
+});
+
+// Follow actual production part pivots and animate(), rather than testing only a formula.
+test('MIL-K arrow remains attached to its nock throughout charge and release',async()=>{
+ const f=await production(),spec=f.VARIANT_MODELS.Stringer_Short_02,d=spec.build({kind:'charger',parts:{}}),T=f.THREE;
+ assert.equal(d.bowCfg.arrowNockFit,true);
+ const w={def:d,ps:{},parts:Object.fromEntries(Object.entries(d.parts).map(([n,p])=>{const m=new T.Object3D();m.geometry=p.src.clone().translate(-p.pivot.x,-p.pivot.y,-p.pivot.z);m.position.copy(p.pivot);m.userData.rest=p.pivot.clone();return[n,m];}))};
+ const extent=(m,low)=>{let r=low?Infinity:-Infinity;const p=m.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(m.matrixWorld);r=low?Math.min(r,v.z):Math.max(r,v.z);}return r;};
+ try{for(let i=0;i<=120;i++)for(const sinceRelease of [0,.01,.1,.39,1]){spec.animate(w,{charge:i/120,sinceRelease});for(const m of Object.values(w.parts))m.updateMatrixWorld(true);const gap=extent(w.parts.arrow,true)-extent(w.parts.nock,false);assert.ok(Math.abs(gap)<1e-7,`arrow/nock attachment gap ${gap}`);}}
+ finally{for(const m of Object.values(w.parts))m.geometry.dispose();for(const [,g]of geometries(d))g.dispose();}
 });

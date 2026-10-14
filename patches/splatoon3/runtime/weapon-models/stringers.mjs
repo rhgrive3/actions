@@ -41,8 +41,10 @@ function bow(d, cfg, extra) {
   s1.add(ycyl(cfg.stringR ?? 0.0016, YC, YC + span, 0, tipZ, 5), C.string, M.satin);
   s2.add(ycyl(cfg.stringR ?? 0.0016, YC - span, YC, 0, tipZ, 5), C.string, M.satin);
   nock.add(box(0.012, 0.03, 0.012, 0, YC, tipZ, 0.5), C.steel, M.satin);
-  arrow.add(zcyl(0.0035, tipZ + 0.012, cfg.arrowFront, 0, YC, 8), C.black, M.satin);
+  // MIL-K seats the shaft at the nock front; original builders retain their offset.
+  arrow.add(zcyl(0.0035, tipZ + (cfg.arrowNockFit ? 0.006 : 0.012), cfg.arrowFront, 0, YC, 8), C.black, M.satin);
   d.bowCfg = { span, tipZ, arrowFront: cfg.arrowFront };
+  if (cfg.arrowNockFit) d.bowCfg.arrowNockFit = true;
   const parts = {
     trigger: part(tr, [0, 0.0315, 0.0282]),
     string: part(s1, [0, YC + span, tipZ], 'ink'),
@@ -105,7 +107,7 @@ function reef(d) {
 // Only this variant uses the new geometry. Existing base and native gameplay rig stay unchanged.
 export function reefMilK(d) {
   const C = { limb: '#e4e0d4', steel: '#a9adb4', dark: '#2a2b30', black: '#17181b', string: '#cfd6c4', grip: '#2a2b30' };
-  const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, stringR: 0.0025, coilR: 0.056, coil0: -0.01, coil1: 0.09,
+  const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, stringR: 0.0025, arrowNockFit: true, coilR: 0.056, coil0: -0.01, coil1: 0.09,
     arrowFront: 0.02, muzzleZ: 0.15, gripL: gripSpec([0, 0.0, 0.095], [0, 0, 1], [0.75, -0.62, -0.1]) };
   return bow(d, cfg, (body, ink) => {
     // HD02/06 projected ratios: rear body/shoulder about 0.8, rear carriage/bow 0.20-0.25.
@@ -256,7 +258,8 @@ function animateBow(w, st) {
   if (up) { up.rotation.x = a; up.scale.y = k; }
   if (lo) { lo.rotation.x = -a; lo.scale.y = k; }
   if (nock) nock.position.z = nock.userData.rest.z - draw;
-  if (arr) arr.scale.z = 1 + draw / (c.arrowFront - c.tipZ);
+  // Scale the MIL-K shaft about its fixed front using its actual rest length.
+  if (arr) arr.scale.z = 1 + draw / (c.arrowFront - c.tipZ - (c.arrowNockFit ? 0.006 : 0));
 }
 
 export const MODELS = {

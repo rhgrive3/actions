@@ -67,3 +67,19 @@ test('finite indexed attributes remain under near-model triangle budget',async()
  for(const g of [d.body,d.ink,d.glow,...Object.values(d.parts).map(p=>p.src)]){triangles+=g.index.count/3;for(const a of Object.values(g.attributes))for(const v of a.array)assert.ok(Number.isFinite(v));for(const i of g.index.array)assert.ok(i<g.attributes.position.count);}
  assert.ok(triangles<16000);console.log(JSON.stringify({bulbzTriangles:triangles,bodyVertices:d.body.attributes.position.count,inkVertices:d.ink.attributes.position.count}));
 });
+
+test('pale structural braces continuously join centre and side forward collars',async()=>{
+ const f=await production(),d=f.BULBZ.Stringer_Normal_02.build(fresh()),g=d.body,mesh=new f.THREE.Mesh(g,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ const pale=new f.THREE.Color('#b9c5c2'),color=g.attributes.color;
+ for(const side of [-1,1])for(const [z,dy]of [[.127,.061],[.118,.066],[.108,.070],[.098,.076]]){
+  const hits=new f.THREE.Raycaster(new f.THREE.Vector3(-.1,.085+side*dy,z),new f.THREE.Vector3(1,0,0)).intersectObject(mesh);
+  assert.ok(hits.some(h=>{const i=g.index.getX(h.faceIndex*3);return Math.abs(color.getX(i)-pale.r)<1e-6&&Math.abs(color.getY(i)-pale.g)<1e-6;}),`missing pale brace ${side} ${z}`);
+ }
+});
+test('front dark tube caps step inward while the native bore axes stay clear',async()=>{
+ const f=await production(),d=f.BULBZ.Stringer_Normal_02.build(fresh()),mesh=new f.THREE.Mesh(d.body,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ for(const [y,r,z1]of [[.085,.052,.175],[.185,.021,.135],[-.015,.021,.135]]){
+  const hits=new f.THREE.Raycaster(new f.THREE.Vector3(-.1,y,z1-.001),new f.THREE.Vector3(1,0,0)).intersectObject(mesh);assert.ok(hits.length>=4);
+  const xs=hits.map(h=>Math.abs(h.point.x));assert.ok(Math.max(...xs)<r*.95,'front cap must step inward from main shell');assert.ok(Math.min(...xs)>r*.64,'native open bore retained');
+ }
+});

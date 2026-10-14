@@ -53,6 +53,44 @@ function taperThickness(g,z0,z1,endScale){
   p.needsUpdate=true;g.computeVertexNormals();return g;
 }
 
+// Print contours are clipped against the actual molded shell facets so the
+// registered artwork follows bevels without changing its source-space outline.
+const tankPrintCache=new Map();
+function shellPrint(shell,outline,side,offset){
+ const key=JSON.stringify([outline,side,offset]);
+ if(tankPrintCache.has(key))return tankPrintCache.get(key).clone();
+ const flat=slab(outline,.001,0,0),p=flat.attributes.position,idx=flat.index;
+ const s=shell.attributes.position,si=shell.index,out=[];
+ const cross=(a,b,c)=>(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]);
+ const vertex=(a,i)=>[a.getX(i),a.getY(i),a.getZ(i)];
+ for(let i=0;i<(idx?.count||p.count);i+=3){
+  const tri=[0,1,2].map(k=>vertex(p,idx?idx.getX(i+k):i+k));
+  if(tri.some(v=>v[0]<0.00049))continue; // one planar face only
+  for(let j=0;j<si.count;j+=3){
+   const face=[0,1,2].map(k=>vertex(s,si.getX(j+k))),area=cross(...face);
+   if(area*side<1e-12)continue; // only the outward-facing shell half
+   let poly=tri;
+   for(let e=0;e<3&&poly.length;e++){
+    const a=face[e],b=face[(e+1)%3],clipped=[];
+    for(let k=0;k<poly.length;k++){
+     const u=poly[k],v=poly[(k+1)%poly.length],du=cross(a,b,u)*side,dv=cross(a,b,v)*side;
+     if(du>=-1e-12)clipped.push(u);
+     if((du<0&&dv>0)||(du>0&&dv<0)){const t=du/(du-dv);clipped.push(u.map((q,n)=>q+(v[n]-q)*t));}
+    }
+    poly=clipped;
+   }
+   if(poly.length<3)continue;
+   poly=poly.map(v=>{const wa=cross(face[1],face[2],v)/area,wb=cross(face[2],face[0],v)/area,wc=1-wa-wb;return [wa*face[0][0]+wb*face[1][0]+wc*face[2][0]+side*offset,v[1],v[2]];});
+   for(let k=1;k<poly.length-1;k++){
+    let t=[poly[0],poly[k],poly[k+1]];if(Math.abs(cross(...t))<1e-12)continue;
+    if(cross(...t)*side<0)t=[t[0],t[2],t[1]];out.push(...t.flat());
+   }
+  }
+ }
+ flat.dispose();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(out,3));g.computeVertexNormals();
+ tankPrintCache.set(key,g);return g.clone();
+}
+
 const NEW_SQUIFF = {blue:'#789780',white:'#b6c9cd',grey:'#8b9291',brown:'#79574a',dark:'#202626'};
 function newSquiffer(d) {
   const C = NEW_SQUIFF, s = 0.00105, P = px(486, 446, s), Y = (446 - 398) * s, H = (x, y, X = 0) => piv(P, x, y, X);
@@ -79,26 +117,26 @@ function newSquiffer(d) {
   const rim=[[.003,-.039],[.002,.035],[.008,.048],[.017,.051],[.024,.049],
     [.022,.042],[.016,.039],[.014,-.037],[.021,-.044],[.020,-.049],[.011,-.047]];
   bottle.add(slab(moldOutline(rim),.049,0,.005),'#676d70',M.satin);
+  bottle.transform(g=>taperThickness(g,.135,.188,.70));
   for(const side of [-1,1]) {
-    const x=side*.0237;
     // Graphic contours sit directly on the shell. V1/V2's rectangular plaque
     // and repeated pseudo-letters are removed. Only resolved edge silhouettes
     // are included; ambiguous holes and the burst wordmark are intentionally blank.
     for(const points of TANK_TRACE.resolvedGlyphEdges){
       const shape=points.map(tankPoint);
-      bottle.add(slab(shape,.001,x+side*.0012,0),'#dfe1dc',M.print);
+      bottle.add(shellPrint(bottle.list[0],shape,side,.00015),'#dfe1dc',M.print);
     }
     const star=TANK_TRACE.burst.map(tankPoint);
     const center=star.reduce((a,p)=>[a[0]+p[0]/star.length,a[1]+p[1]/star.length],[0,0]);
     const inset=k=>star.map(p=>[center[0]+(p[0]-center[0])*k,center[1]+(p[1]-center[1])*k]);
-    bottle.add(slab(star,.001,x+side*.0019,0),'#242a29',M.print);
-    bottle.add(slab(inset(.93),.001,x+side*.0025,0),'#ebc139',M.print);
-    bottle.add(slab(inset(.79),.001,x+side*.0031,0),'#c7372d',M.print);
+    bottle.add(shellPrint(bottle.list[0],star,side,.00015),'#242a29',M.print);
+    bottle.add(shellPrint(bottle.list[0],inset(.93),side,.00030),'#ebc139',M.print);
+    bottle.add(shellPrint(bottle.list[0],inset(.79),side,.00045),'#c7372d',M.print);
     // The dark crossing strip is resolved; its white glyph interiors are not.
-    bottle.add(slab([[474,516],[555,522],[553,541],[473,532]].map(tankPoint),.001,x+side*.0037,0),'#202627',M.print);
+    bottle.add(shellPrint(bottle.list[0],[[474,516],[555,522],[553,541],[473,532]].map(tankPoint),side,.00060),'#202627',M.print);
 
   }
-  body.merge(bottle.transform(g=>taperThickness(g,.135,.188,.70).rotateX(pitch).translate(0,b0y,b0z)));
+  body.merge(bottle.transform(g=>g.rotateX(pitch).translate(0,b0y,b0z)));
   // ribbed grey spout and white collar into the receiver
   body.add(cyl(0.014, H(350, 372), H(412, 400), 14), C.grey, M.metal);
   for (let k = 0; k < 4; k++) { const u = 0.15 + k * 0.2, a = H(350 + 62 * u, 372 + 28 * u); body.add(cyl(0.0165, a, H(352 + 62 * u, 373 + 28 * u), 14), C.grey, M.metal); }

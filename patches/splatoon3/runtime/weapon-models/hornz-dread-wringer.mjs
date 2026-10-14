@@ -128,6 +128,12 @@ export function hornzDreadWringer(d) {
     hopperRing(.060,.032,.013,.072,.085),
     hopperRing(.048,.019,.009,.059,.036)
   ];
+  // STUDY ONLY: matched inner/outer deformation, fades to zero at mouth.
+  for(const ring of hopperLoops)for(const v of ring){
+    const vertical=Math.max(0,Math.min(1,(.072-v[1])/.032));
+    const rear=Math.max(0,Math.min(1,(.14-v[2])/.055));
+    v[1]-=0.008*vertical*rear;
+  }
   p.add(meshFromLoops(hopperLoops,[[0,1],[1,2],[2,3],[3,4],[4,5]],[[0,true],[5,false]]),C.grey,M.satin);
   // Broad rim comes from the shell's annulus; avoid a thin white wire cage.
   p.add(pipe([...hopperLoops[2],hopperLoops[2][0]],.0028,96,8),C.light,M.satin);
@@ -168,7 +174,7 @@ export function hornzDreadWringer(d) {
   // leaving overlapping, nearly coincident surfaces in v4. Remove
   // that duplicate volume only for Hornz, keeping the animated part intact.
   // Rear liquid is a thin sheet inside the scoop, on the team-ink channel.
-  const pool=new Pieces().add(box(.070,.002,.042,0,.060,.082,.35), '#ffffff', M.satin).build();
+  const pool=new Pieces().add(box(.090,.002,.060,0,.060,.082,.35), '#ffffff', M.satin).build();
   d.ink.dispose();d.ink=pool;
   d.slosherInkSurfaceOnly=true; // rear pool translates with native drain; never height-clamped
   return d;
