@@ -135,7 +135,61 @@ try{
  fs.writeFileSync(path.join(evidence,'network-comparison-diagnostic.json'),JSON.stringify({sourceSha,contentHash:build.contentHash,paired,maxSpawnError,maxVelocityError,maxPositionError,worstPosition}));
  assert(paired>0);assert(maxSpawnError<.01);assert(maxVelocityError<.01);if(!baseline)assert(maxPositionError<.08,'trajectory quantization tolerance');assert.equal(errors.length,0,JSON.stringify(errors));
  const ticks=wire.filter(p=>p.text.startsWith('b|')&&JSON.parse(p.text.slice(2)).k==='t');
- result={status:baseline?'baseline-reproduced':'passed',baseline,delayFrames,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket + production RoomDurableObject.handleSession',arena:'native replication modules and physics; UI/character meshes/audio omitted',players:2,attacksPerPlayer:5,paired, maxSpawnError,maxVelocityError,maxPositionError,virtualSeconds:(15+275+120)/60,tickPackets:ticks.length,tickBytes:ticks.reduce((s,p)=>s+p.bytes,0),traces:traces.map(x=>({actors:x.actors,remaining:x.remaining,stats:x.stats,puffSourceSlots:x.puffSourceSlots,puffGenerationBytes:x.puffGenerationBytes,maxProjectiles:x.trace.maxProjectiles,maxFx:x.trace.maxFx,maxPuffs:x.trace.maxPuffs,maxRemote:x.trace.maxRemote,projectileAllocations:x.trace.projectileAllocations,puffLinkedFrames:x.trace.puffLinkedFrames,remoteDropLinks:x.trace.remoteDropLinks,remotePuffLinks:x.trace.remotePuffLinks,curtains:x.trace.curtains,unboundCurtains:x.trace.unboundCurtains,puffEnvelopeError:x.trace.puffEnvelopeError,invalidPuffVisible:x.trace.invalidPuffVisible,linkedFrames:x.trace.linkedFrames,maxEnvelopeError:x.trace.maxEnvelopeError})),loadedArtifacts:[...receipts],errors};
+ // Full-installer bomb authority over the same real host/guest relay. The
+ // launch and received replica are native; terminal geometry/age are controlled
+ // to isolate recipient ownership from trajectory and render timing.
+ const bombAuthority=[];
+ if(!baseline)for(const senderIndex of [0,1]){
+  const receiverIndex=1-senderIndex,attackerOwner=traces[senderIndex].myId;
+  for(const page of pages)await page.evaluate(owner=>{
+   const G=NG;G.projectiles.clear();
+   globalThis.bombProbe={owner,damage:[],births:0};
+   for(const a of G.actors){
+    a.weapon={...G.game.match.local.weapon,sub:'bomb'};
+    a.weaponRunner.reset();a.alive=true;a.hp=100;a.ink=100;a.invuln=0;
+    a.netLife=0;a._netLifeStartedAt=performance.now()/1000-2;
+    a.pos.set(0,12,0);a.aimPitch=.9;a.aimDir.set(0,Math.sin(.9),Math.cos(.9));
+    a.damage=function(amount){bombProbe.damage.push({nid:this.nid,remote:this.remote,amount});this.hp=Math.max(0,this.hp-amount);return false;};
+   }
+  },attackerOwner);
+  await runFrames(15);
+  const source=await pages[senderIndex].evaluate(()=>{
+   const G=NG,a=G.match.local,P=G.projectiles;
+   for(let i=0;i<8;i++)a.weaponRunner.update(1/60,{sub:true,fire:false});
+   a.weaponRunner.update(1/60,{sub:false,subReleased:true,fire:false});
+   a.weaponRunner.update(1/60,{sub:false,fire:false});
+   const b=P.bombs.find(b=>b.owner===a&&!b.ghost);
+   if(!b)throw Error('native paid bomb release did not create a recorded object');
+   return {nid:a.nid,owner:a.owner,ink:a.ink,kind:b.kind};
+  });
+  assert(source.ink<100,'browser bomb pays native ink');assert.equal(source.kind,'bomb');
+  let received=false;
+  for(let frame=0;frame<60&&!received;frame++){
+   await runFrames(1);
+   received=await pages[receiverIndex].evaluate(owner=>NG.projectiles.bombs.some(b=>b.ghost&&b.owner.owner===owner),attackerOwner);
+  }
+  assert(received,'native host/guest bomb must arrive over the production relay');
+  const sides=[];
+  for(const [index,page]of pages.entries())sides.push(await page.evaluate(({owner,sender})=>{
+   const G=NG,b=G.projectiles.bombs.find(b=>b.owner.owner===owner&&b.ghost!==sender);
+   if(!b)throw Error('missing native source/replica before authority probe');
+   const victim=G.actors.find(a=>a.owner!==owner);
+   victim.pos.set(0,.6,2);victim.hp=100;b.pos.set(0,.6,0);b.age=1;
+   const before=bombProbe.damage.length;
+   G.projectiles._explodeBomb(b);
+   return {sender,victimRemote:victim.remote,hp:victim.hp,damage:bombProbe.damage.slice(before),
+    nativeReplicaClock:sender||!!b._netPeer&&Number.isFinite(b._netBornLocal)};
+  },{owner:attackerOwner,sender:index===senderIndex}));
+  bombAuthority.push({direction:senderIndex===0?'host-to-guest':'guest-to-host',source,sides});
+  fs.writeFileSync(path.join(evidence,'network-bomb-authority.json'),JSON.stringify({sourceSha,contentHash:build.contentHash,delayFrames,bombAuthority},null,2));
+  assert.equal(sides[senderIndex].victimRemote,true);assert.equal(sides[receiverIndex].victimRemote,false);
+  assert.equal(sides[senderIndex].hp,100,'sender cannot damage the in-range remote victim');
+  assert.equal(sides[senderIndex].damage.length,0);
+  assert.equal(sides[receiverIndex].hp,0,'full installed recipient must receive native bomb damage');
+  assert(sides[receiverIndex].damage.some(x=>!x.remote&&x.amount>0));
+  assert(sides[receiverIndex].nativeReplicaClock,'receiver must use the authenticated native replay handle');
+ }
+ result={status:baseline?'baseline-reproduced':'passed',bombAuthority,baseline,delayFrames,sourceSha,contentHash:build.contentHash,fixtureHash:hash(fixtureCode),transport:'real WebSocket + production RoomDurableObject.handleSession',arena:'native replication modules and physics; UI/character meshes/audio omitted',players:2,attacksPerPlayer:5,paired, maxSpawnError,maxVelocityError,maxPositionError,virtualSeconds:(15+275+120)/60,tickPackets:ticks.length,tickBytes:ticks.reduce((s,p)=>s+p.bytes,0),traces:traces.map(x=>({actors:x.actors,remaining:x.remaining,stats:x.stats,puffSourceSlots:x.puffSourceSlots,puffGenerationBytes:x.puffGenerationBytes,maxProjectiles:x.trace.maxProjectiles,maxFx:x.trace.maxFx,maxPuffs:x.trace.maxPuffs,maxRemote:x.trace.maxRemote,projectileAllocations:x.trace.projectileAllocations,puffLinkedFrames:x.trace.puffLinkedFrames,remoteDropLinks:x.trace.remoteDropLinks,remotePuffLinks:x.trace.remotePuffLinks,curtains:x.trace.curtains,unboundCurtains:x.trace.unboundCurtains,puffEnvelopeError:x.trace.puffEnvelopeError,invalidPuffVisible:x.trace.invalidPuffVisible,linkedFrames:x.trace.linkedFrames,maxEnvelopeError:x.trace.maxEnvelopeError})),loadedArtifacts:[...receipts],errors};
 }catch(error){const diagnostic=await Promise.all(pages.map(async p=>{const d=await p.evaluate(()=>({mode:globalThis.NG?.mode,s3:globalThis.NG?.s3,game:!!globalThis.NG?.game,bootError:document.querySelector('#boot-error')?.textContent,base:document.baseURI})).catch(e=>({error:e.message}));await p.screenshot({path:path.join(evidence,'failure-'+pages.indexOf(p)+'.png'),timeout:15000}).catch(()=>{});return d;}));result={diagnostic,status:'failed',sourceSha,contentHash:build.contentHash,error:error.stack,errors};process.exitCode=1;}
 finally{for(const c of contexts)await c.close();for(const ws of relay.clients)ws.terminate();await new Promise(r=>relay.close(r));await new Promise(r=>server.close(r));}
 const out=path.join(evidence,'network-browser-result.json');fs.writeFileSync(out+'.pending',JSON.stringify(result,null,2)+'\n');fs.renameSync(out+'.pending',out);console.log(JSON.stringify({...result,loadedArtifacts:result.loadedArtifacts?.length}));
