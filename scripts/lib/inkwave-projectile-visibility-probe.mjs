@@ -173,7 +173,7 @@ export async function probeProjectileVisibility(page, out, {casePlan=null}={}) {
       const message=String(error?.stack||error);caseRecord.error=caseRecord.error?caseRecord.error+'\n'+message:message;
     };
     try {
-    const birth=await page.evaluate(async ({weapon,scenario,stopAtFirstShot})=>{
+    const birth=await page.evaluate(async ({weapon,scenario,stopAtFirstShot,resetFiringRandom})=>{
       const G=globalThis.NG||window.__G,g=G.game||window.__inkwave,a=G.local;
       globalThis.__projectileCaseRestore={yaw:g.rig.yaw,pitch:g.rig.pitch,camera:G.camera.clone(),step:G.projectiles._step,world:G.projectiles.inkFlight.world,fire:g.input.mouse.left,frozen:g.frozen,skipRender:g._skipRender,bots:(G.actors||[]).filter(a=>a.bot&&!a.isLocal).map(a=>[a.bot,a.bot.update])};
       g.debug.freeze();g.debug.freezeBots();g._skipRender=true;
@@ -212,6 +212,7 @@ export async function probeProjectileVisibility(page, out, {casePlan=null}={}) {
       flight.world=function(from,to,radius,hit){const result=oldWorld.call(this,from,to,radius,hit);if(current)current.world.push({from:from.toArray(),to:to.toArray(),radius,hit:!!result.hit,distance:result.hit?result.dist:null,...hitMetadata(result)});return result;};
       const ticks=[];
       try {
+      if(resetFiringRandom){if(typeof globalThis.__resetPairRandom!=='function')throw Error('Paired firing RNG reset unavailable');globalThis.__resetPairRandom();}
       g.debug.fire(true);if(weapon==='splatling'){for(let i=0;i<40;i++)g._frame(1/60);g.debug.fire(false);}
       for(let i=0;i<90;i++){
         traceTick=i;
@@ -224,7 +225,7 @@ export async function probeProjectileVisibility(page, out, {casePlan=null}={}) {
       g._skipRender=true;
       globalThis.__projectileProbe={camera:G.camera.clone(),rounds:stopAtFirstShot?attemptedRounds:G.projectiles.list.filter(p=>p.owner===a)};
       return {weapon,scenario,firstNativeStep:stopAtFirstShot?{attempted:attemptedRounds.length,survived:attemptedRounds.filter(p=>system.list.includes(p)).length,dead:attemptedRounds.filter(p=>!system.list.includes(p)).length}:null,trace,traceDropped,traceComplete:traceDropped===0,laneSearch,selectedLane,actualLane,clearLaneVerified,clearanceFailure,searchPosition,status:G.projectiles.list.some(p=>p.owner===a)?'live-rounds':'inconclusive-no-live-rounds',ticks,local:{position:a.pos.toArray(),alive:a.alive,form:a.form},rounds:__projectileProbe.rounds.map(p=>({type:p.type,wid:p.wid,recipe:p._inkVolumeRecipe,age:p.age,size:p.size,vis:p.vis,delay:p.delay,position:p.pos.toArray(),velocity:p.vel.toArray()})),volumeError:G.fx.inkVolumeError||null,assets:[...(G.fx.inkVolumes?.assets.keys()||[])]};
-    },{weapon,scenario,stopAtFirstShot:!!planned});
+    },{weapon,scenario,stopAtFirstShot:!!planned,resetFiringRandom:planned?.resetFiringRandom===true});
     birth.views=[];caseRecord=birth;report.cases.push(birth);fs.writeFileSync(path.join(out,'projectile-visibility.json'),JSON.stringify(report,null,2));
     if(!birth.rounds.length){try{await page.evaluate(()=>{const G=globalThis.NG||window.__G;(G.game||window.__inkwave).R.render();});birth.noLiveImageMode='fresh composer render after native stepping; no projectile redraw';await page.screenshot({path:path.join(out,label+'-no-live-rounds.png'),timeout:60000});}finally{await page.evaluate(()=>{delete globalThis.__projectileProbe;});}continue;}
     try {

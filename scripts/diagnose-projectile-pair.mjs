@@ -16,7 +16,12 @@ export async function connectPair(){globalThis.NG=(await import(new URL('src/cor
 export function pairBooted(){return !!(NG.game?.menus&&NG.mode!=='boot');}
 export async function preparePair({mapId}){
  const G=NG,g=G.game;g.debug.freeze();globalThis.__resetPairRandom();g._skipRender=true;g.menus.wipe.cancel();
- g._setSettings({quality:'low',shadows:false,bloom:false});await g.startMatch({mapId,mode:'turf',difficulty:'normal',time:'day'});
+ if(g.settings.quality!=='low')throw Error('Expected low quality before preparation');
+ g._setSettings({shadows:false,bloom:false});
+ const picker=g._pickPalette;let picks=0;
+ g._pickPalette=function(...args){const random=Math.random;Math.random=()=>.7;try{picks++;return picker.apply(this,args);}finally{Math.random=random;}};
+ try{await g.startMatch({mapId,mode:'turf',difficulty:'normal',time:'day'});}finally{g._pickPalette=picker;}
+ if(picks!==1||g.palette.id!=='aqua-cherry')throw Error('Native controlled palette selection did not match pinned config');
  g.debug.freeze();g.debug.freezeBots();g._skipRender=true;g.debug.fire(false);
  for(let i=0;i<240;i++)g._frame(1/60);G.paint.flush(1/60);
  const gl=G.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');
@@ -49,6 +54,12 @@ export async function verifyAndDeliverArtifact(route,baseURL,manifest,row){
  }catch(error){row.errors.push(relative+': '+String(error));await route.abort('failed').catch(()=>{});}
 }
 export function finalizePairCase(row){if(row.errors.length||row.loadedArtifacts.some(r=>!r.match))row.complete=false;return row.complete;}
+export function describePairEvidence(report){
+ const shot=(variant,mapId)=>report.cases.find(c=>c.variant===variant&&c.mapId===mapId)?.projectiles?.cases[0];
+ const old=shot('baseline','inkblot'),fixed=shot('fixed','inkblot');
+ const immediate=old?.trace?.[0];
+ return {scope:'Historical controlled behavior comparison; collection and matched conditions are separate gates',baselineImmediateCollisionReproduced:!!(immediate?.dead&&immediate.world?.some(h=>h.hit&&h.distance===0&&h.nativeObject!=null)),candidateFirstStepSurvived:fixed?.firstNativeStep?.survived>0,candidateFrames:(fixed?.temporal?.frames||[]).map(f=>({frame:f.frame,survives:f.survives,nativeVisible:f.nativeVisibilityEstablished})),matchedPair:report.matchedConditions.every(r=>r.matched)&&report.matchedLaunch.every(r=>r.matched)};
+}
 export async function runPair(candidateSite,out,baselineSite){
  const {chromium}=await import('playwright');fs.mkdirSync(out,{recursive:true});
  const report={status:'running',scope:'Historical public b3e8312c byte-identical local reconstruction plus collision-only comparison; controlled RNG/network interception affects cache/timing, not a performance study; Chromium iPad-like emulation is not physical Safari. Asset revision is a build content identity, not a Git source commit.',sourceBaseline:'b3e8312c9ab4be773561ff8c28ff3423271593b5',cases:[],errors:[],visibilityEstablished:false};
@@ -72,12 +83,13 @@ export async function runPair(candidateSite,out,baselineSite){
     const served=await page.request.get(new URL('inkwave-build.json',url).href);assert.ok(served.ok());assert.deepEqual(await served.json(),manifest,'Served target changed');
     await page.evaluate(connectPair);await page.waitForFunction(pairBooted,null,{timeout:180000});await page.evaluate(installCanvasCapture);
     row.conditions=await page.evaluate(preparePair,{mapId});assert.equal(row.conditions.actualMap,mapId,'Requested stage was not installed');assert.equal(row.conditions.native,mapId==='inkblot');if(mapId==='inkblot')assert.equal(row.conditions.source,manifest.build.nativeStages.stages.find(s=>s.id===mapId).sourceSha256,'Native source identity changed');assert.ok(row.conditions.baseURI.endsWith('/_versions/'+manifest.build.revision+'/'),'HTML asset revision changed');
-    row.projectiles=await probeProjectileVisibility(page,path.join(out,variant+'-'+mapId),{casePlan:[{scenario:'original-stance',weapon:'shooter',frames:[1,2,3,6]}]});
+    row.projectiles=await probeProjectileVisibility(page,path.join(out,variant+'-'+mapId),{casePlan:[{scenario:'original-stance',weapon:'shooter',frames:[1,2,3,6],resetFiringRandom:true}]});
     assert.equal(row.projectiles.complete,true,'Native temporal collection incomplete');await Promise.all(pendingResponses);assert.ok(row.loadedArtifacts.some(r=>r.path.endsWith('/src/game/inkCollision.js')),'Actual collision module response not verified');assert.equal(row.errors.length,0,'Browser runtime or artifact error');row.complete=true;
    }catch(e){row.error=String(e?.stack||e);row.complete=false;}finally{await Promise.all(pendingResponses);try{await context?.close();}catch(error){row.errors.push('Context close: '+String(error));}await Promise.all(pendingResponses);finalizePairCase(row);save();}
   }
   report.matchedConditions=['inkblot','tidewater'].map(mapId=>{const a=report.cases.find(r=>r.mapId===mapId&&r.variant==='baseline'),b=report.cases.find(r=>r.mapId===mapId&&r.variant==='fixed');const fields=['actualMap','native','source','teamHex','actor','camera','rig','time','quality','canvas'];return {mapId,matched:!!a?.conditions&&!!b?.conditions&&fields.every(k=>JSON.stringify(a.conditions[k])===JSON.stringify(b.conditions[k])),fields};});
   report.matchedLaunch=['inkblot','tidewater'].map(mapId=>{const cases=report.cases.filter(r=>r.mapId===mapId),launch=cases.map(r=>r.projectiles?.cases[0]?.trace?.[0]);const fields=['ageBefore','positionBefore','velocityBefore','actorPosition','aimDir','aimPoint'];return {mapId,matched:launch.length===2&&launch.every(Boolean)&&fields.every(k=>JSON.stringify(launch[0][k])===JSON.stringify(launch[1][k])),fields};});
+  report.outcomes=describePairEvidence(report);
   report.status=report.cases.length===4&&report.cases.every(r=>r.complete)&&report.matchedConditions.every(r=>r.matched)&&report.matchedLaunch.every(r=>r.matched)?'collected':'incomplete';
  }finally{await browser?.close();await Promise.all(Object.values(servers).map(server=>new Promise(r=>server.close(r))));save();}
  return report;
