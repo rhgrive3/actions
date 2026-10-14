@@ -25,6 +25,16 @@ const ast=parse(worker,{ecmaVersion:'latest',sourceType:'script'});const build=a
 const config=JSON.parse(worker.slice(build.start,build.end));assert.equal(config.revision,revision);assert.equal(config.index.sha256,hash(Buffer.from(html)));assert(config.index.bytes===Buffer.byteLength(html));
 // Accept historical named descriptors and current tuples only after validating every field.
 config.assets=normalizeCacheAssets(config.assets);
+// Production workers use asset-map positions to avoid repeating precache paths.
+// Decode those positions here before the unchanged hash, size and import audits.
+const precacheAssetPaths=Object.keys(config.assets);
+if(config.precache.some(value=>typeof value==='number')){
+ assert(config.precache.every(index=>Number.isSafeInteger(index)&&index>=0&&index<precacheAssetPaths.length),
+  'precache indices must all reference valid immutable assets');
+ config.precache=config.precache.map(index=>precacheAssetPaths[index]);
+}
+assert(config.precache.every(file=>typeof file==='string'&&Object.hasOwn(config.assets,file)),
+ 'precache must list verified assets');
 const core=new Set(config.precache);assert.equal(core.size,config.precache.length);const precacheBytes=config.precache.reduce((sum,file)=>sum+config.assets[file].bytes,0);assert(precacheBytes<=PRECACHE_BUDGET_BYTES,'core precache budget');assert(config.declaredBytes<=REVISION_BUDGET_BYTES,'revision payload budget');
 const importMap=JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]).imports;
 const resolve=(from,spec)=>{for(const[k,v]of Object.entries(importMap).sort((a,b)=>b[0].length-a[0].length))if(k.endsWith('/')?spec.startsWith(k):spec===k)return path.posix.normalize(v.replace(/^\.\//,'')+(k.endsWith('/')?spec.slice(k.length):''));return spec.startsWith('.')?path.posix.normalize(path.posix.join(path.posix.dirname(from),spec)):null;};
