@@ -641,10 +641,11 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
 // motion produced by chaining several independent smoothsteps. These are
 // INKWAVE grip coordinates, NOT recovered Nintendo bone tracks.
 const HORIZONTAL_GRIPS = [
-  // The native Character starts the actual flick facing forward (rx=0.8),
-  // not in the backwards-facing idle carry (-2.5). Starting at READY_ROTATION
-  // detached the support wrist by centimetres before the first coil frame.
-  { a: [-.11, .84, .18], r: [.8, .1, 0] },
+  // Enter directly from the settled shoulder carry. The old forward-facing
+  // initial grip rotated 3.3 radians over the first few ticks and dropped the
+  // real roller geometry between coil samples; the two-arm IK correction now
+  // preserves both grip sockets without that discontinuity.
+  { a: READY_ANCHOR, r: READY_ROTATION },
   { a: [-.13, 1.06, -.02], r: [-2.3, .3, 0] },
   { a: [-.07, .98 + DRUM_LIFT, .3], r: [-.1, .05, 0] },
   { a: [-.06, .74, .3], r: [.75, .05, 0] },
@@ -793,7 +794,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const floor = neededGround ? bottom(q) : .1;
       // Native rolling already provides an acceptable near-ground drum. Only
       // correct real penetration or a high floating contact, not every frame.
-      const groundError = contacting ? Math.max(0,-.003-floor,floor-.045) : Math.max(0,-.002-floor);
+      const groundError = contacting ? Math.max(0,-.003-floor,floor-.025) : Math.max(0,-.002-floor);
       return groundError;
     };
     bestQ.copy(orientation);
