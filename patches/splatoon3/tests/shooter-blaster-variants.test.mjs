@@ -148,41 +148,43 @@ test('inspected icons preserve N-ZAP gray receiver, Clawz black stock and Jet wh
  }
 });
 
-test('Tentatek replaces inherited straps with a smooth pink shell and visible cream emblem without changing base or native channels',async()=>{
+test('Tentatek HD reconstruction preserves base and native channels while correcting bilateral plates, curved frame and fore-end',async()=>{
  const f=await load(),a=f.A.shooter.build(fresh(f.K,'shooter'));
  const fingerprint=d=>JSON.stringify(channels(d).map(([n,g])=>[n,Array.from(g.index.array),Object.fromEntries(Object.entries(g.attributes).map(([k,v])=>[k,Array.from(v.array)]))]));
  const before=fingerprint(a),d=f.VARIANT_MODELS.Shooter_Normal_01.build(fresh(f.K,'shooter'));
  assert.equal(fingerprint(a),before);assert.equal(fingerprint(f.A.shooter.build(fresh(f.K,'shooter'))),before);
- assert.equal(d.variantGeometryRevision.removedBandTriangles,872,'224 collar + two 324-triangle S bands');
- assert.equal(d.body.attributes.position.count,a.body.attributes.position.count,'all surviving base vertices keep their positions');
- assert.deepEqual(Array.from(d.body.attributes.position.array),Array.from(a.body.attributes.position.array));
- assert.equal(a.body.index.count-d.body.index.count,d.variantGeometryRevision.removedBandTriangles*3);
- const retained=new Set(Array.from(d.body.index.array)),yellow=new f.K.THREE.Color('#efbf2a');
- for(let j=0;j<a.body.attributes.position.count;j++)if(!retained.has(j)) {
-  const p=a.body.attributes.position,c=a.body.attributes.color;
-  assert.ok(p.getY(j)>.055&&p.getZ(j)>-.04&&p.getZ(j)<.15,'only original strap region removed');
-  assert.ok(Math.abs(c.getX(j)-yellow.r)<1e-6&&Math.abs(c.getY(j)-yellow.g)<1e-6&&Math.abs(c.getZ(j)-yellow.b)<1e-6);
+ const revision=d.variantGeometryRevision;assert.equal(revision.removedBandTriangles,0);
+ assert.equal(revision.removedForeEnd,1004);assert.equal(revision.removedPlate,68);assert.ok(revision.removedPurple>500);
+ assert.ok(revision.bandVertices>500);assert.equal(JSON.stringify(revision.emblemSides),'[-1,1]');assert.equal(revision.reverseSideVerified,true);
+ assert.deepEqual(Array.from(d.body.attributes.position.array.slice(0,a.body.attributes.position.array.length)),Array.from(a.body.attributes.position.array),'surviving source vertices do not move');
+ const retained=new Set(Array.from(d.body.index.array)),ac=a.body.attributes.color,ap=a.body.attributes.position,yellow=new f.K.THREE.Color('#efbf2a');let preservedBandFaces=0;
+ for(let i=0;i<a.body.index.count;i+=3){
+  const ids=Array.from(a.body.index.array.slice(i,i+3));
+  if(ids.every(j=>Math.abs(ac.getX(j)-yellow.r)<1e-6&&Math.abs(ac.getY(j)-yellow.g)<1e-6&&Math.abs(ac.getZ(j)-yellow.b)<1e-6&&ap.getY(j)>(ap.getZ(j)<0?.0584:.0589)&&ap.getZ(j)>-.04&&ap.getZ(j)<.15)){
+   preservedBandFaces++;assert.ok(ids.every(j=>retained.has(j)),'HD-confirmed pink band retained');
+  }
  }
+ assert.equal(preservedBandFaces,872);
  assert.equal(triangles(d.parts.can.src).length,0,'old capsule no longer drawn');
  for(const n of ['ink','trigger','bolt','led']) {
   const ga=n==='ink'?a.ink:a.parts[n].src,gd=n==='ink'?d.ink:d.parts[n].src;
   assert.deepEqual(Array.from(gd.index.array),Array.from(ga.index.array));
   for(const key of Object.keys(ga.attributes))assert.deepEqual(Array.from(gd.attributes[key].array),Array.from(ga.attributes[key].array));
  }
- const skin=d.parts.variantSkin.src,cream=new f.K.THREE.Color('#f3e3cf');let creamCount=0,creamNormalX=0;
+ const skin=d.parts.variantSkin.src,cream=new f.K.THREE.Color('#eeeee7');let creamCount=0,normalOut=0,centers=new Set();
  for(let i=0;i<skin.attributes.position.count;i++)if(Math.abs(skin.attributes.color.getX(i)-cream.r)<1e-6){
-  creamCount++;assert.ok(skin.attributes.position.getX(i)<0);creamNormalX+=skin.attributes.normal.getX(i);
+  creamCount++;const outward=Math.sign(skin.attributes.position.getX(i))*skin.attributes.normal.getX(i);assert.ok(outward>0,'each plate normal faces its own side');normalOut+=outward;
+  assert.equal(skin.attributes.aMat.getX(i),f.K.M.satin);
  }
- assert.equal(creamCount,4512);assert.ok(creamNormalX<0,'emblem faces outwards on visible left flank');
- let centerFilled=false;
+ assert.equal(creamCount,9024);console.log({normalOut});assert.ok(normalOut>0,'both plates face outward');
  for(let i=0;i<skin.index.count;i+=3) {
   const ids=Array.from(skin.index.array.slice(i,i+3));
   if(!ids.every(j=>Math.abs(skin.attributes.color.getX(j)-cream.r)<1e-6))continue;
-  const v=ids.map(j=>[skin.attributes.position.getZ(j)-.026,skin.attributes.position.getY(j)-(.11/120*117)]);
-  const cross=(a,b)=>a[0]*b[1]-a[1]*b[0], signs=v.map((a,k)=>cross(a,v[(k+1)%3]));
-  if(signs.every(x=>x>=-1e-12)||signs.every(x=>x<=1e-12))centerFilled=true;
+  const v=ids.map(j=>[skin.attributes.position.getZ(j)-.038,skin.attributes.position.getY(j)-(.11/120*117)]);
+  const cross=(a,b)=>a[0]*b[1]-a[1]*b[0],signs=v.map((a,k)=>cross(a,v[(k+1)%3]));
+  if(signs.every(x=>x>=-1e-12)||signs.every(x=>x<=1e-12))centers.add(Math.sign(skin.attributes.position.getX(ids[0])));
  }
- assert.ok(centerFilled,'actual weapon logo center is filled cream, not the separate icon badge outline');
- console.log(JSON.stringify({removedBandTriangles:d.variantGeometryRevision.removedBandTriangles,baseBodyTriangles:a.body.index.count/3,variantBodyTriangles:d.body.index.count/3,newShellAndEmblemTriangles:skin.index.count/3,baseCanTriangles:a.parts.can.src.index.count/3,creamVertices:creamCount,creamNormalX}));
+ assert.equal(centers.size,2,'solid filled center on both sides');
+ console.log(JSON.stringify({revision,baseBodyTriangles:a.body.index.count/3,variantBodyTriangles:d.body.index.count/3,newShellAndEmblemTriangles:skin.index.count/3,baseCanTriangles:a.parts.can.src.index.count/3,creamVertices:creamCount,normalOut}));
  if(process.env.TENTATEK_GEOMETRY_EXPORT)fs.writeFileSync(process.env.TENTATEK_GEOMETRY_EXPORT,JSON.stringify(Object.fromEntries([['base',a],['corrected',d]].map(([name,model])=>[name,channels(model).map(([n,g])=>({n,p:Array.from(g.attributes.position.array),c:Array.from(g.attributes.color.array),idx:Array.from(g.index.array)}))]))));
 });

@@ -100,37 +100,57 @@ function reef(d) {
   });
 }
 
-// MIL-K visible silhouette, independently built so the original REEF-LUX stays unchanged.
-// Reference: pinned Wst_Stringer_Short_02.png (11.3.0). The single oblique icon
-// supports the bottle shoulder, flat limbs and open cams; hidden detail is not inferred.
-// Gameplay anchors, draw string, muzzle, charge coil and team-ink aperture retain reef's values.
+// MIL-K shape reconstructed from Nintendo Today! rotating render, frames 02/06/10s.
+// Source: https://splatoonwiki.org/wiki/File:S3_REEF-LUX_450_MIL-K_model_rotating.mp4
+// Only this variant uses the new geometry. Existing base and native gameplay rig stay unchanged.
 export function reefMilK(d) {
   const C = { limb: '#e4e0d4', steel: '#a9adb4', dark: '#2a2b30', black: '#17181b', string: '#cfd6c4', grip: '#2a2b30' };
   const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, coilR: 0.056, coil0: -0.01, coil1: 0.09,
     arrowFront: 0.02, muzzleZ: 0.15, gripL: gripSpec([0, 0.0, 0.095], [0, 0, 1], [0.75, -0.62, -0.1]) };
   return bow(d, cfg, (body, ink) => {
-    // Broad bottle shoulder tapering to a short neck, rather than seven exposed screw ribs.
-    body.add(zlathe([[0,-0.045],[0.054,-0.045],[0.067,-0.025],[0.068,0.045],
-      [0.061,0.068],[0.043,0.088],[0.033,0.098],[0.033,0.137],[0.029,0.15],[0.012,0.15]],0,YC,0,24),C.black,M.satin);
-    body.add(ring(0.065,0.003,0,YC,-0.025,'z',4,20),C.steel,M.satin);
-    body.add(ring(0.035,0.003,0,YC,0.11,'z',4,18),C.steel,M.satin);
-    body.add(ring(0.032,0.003,0,YC,0.143,'z',4,18),C.steel,M.satin);
-    // Keep the native team-ink aperture exactly, with no new team-color surfaces.
+    // Long bottle: broad rear closure near the string, rounded forward shoulder and short neck.
+    // Opaque native surface is retained; the reference's translucency is not simulated with paint.
+    body.add(zlathe([[0,-0.129],[0.052,-0.129],[0.06,-0.115],[0.064,0.04],
+      [0.061,0.065],[0.048,0.085],[0.036,0.095],[0.036,0.131],[0.029,0.15],[0.012,0.15]],0,YC,0,24),C.black,M.satin);
+    body.add(ring(0.055,0.005,0,YC,-0.124,'z',5,20),C.limb,M.satin);
+    // Concentric rear cap ribs visible in the 06s back/side view.
+    for (const r of [0.014,0.025,0.036,0.046])body.add(ring(r,0.0018,0,YC,-0.133,'z',4,20),C.limb,M.satin);
+    body.add(ring(0.039,0.004,0,YC,0.105,'z',4,18),C.limb,M.satin);
+    body.add(ring(0.033,0.003,0,YC,0.143,'z',4,18),C.steel,M.satin);
     ink.add(ring(0.03,0.004,0,YC,0.152,'z',4,18));
     for (const s of [1,-1]) {
-      // Flat swept cream limbs have broad faces in the reference, not round tubes.
+      // The rotating edge view resolves two thin rails, with a long opening in each side profile.
       const edge=[[-0.01,0.06],[-0.012,0.12],[-0.025,0.19],[-0.06,0.25],[-0.115,0.287],[-0.16,0.31],
         [-0.177,0.29],[-0.13,0.26],[-0.088,0.225],[-0.062,0.174],[-0.05,0.112],[-0.05,0.06]];
-      body.add(slab(edge.map(([z,y])=>[z,YC+s*y]),0.025,0,0.003),C.limb,M.satin);
+      const slot=[[-0.028,0.116],[-0.039,0.184],[-0.074,0.241],[-0.128,0.275],
+        [-0.12,0.263],[-0.083,0.229],[-0.051,0.178],[-0.04,0.115]];
+      for(const x of [-0.015,0.015])body.add(slab(edge.map(([z,y])=>[z,YC+s*y]),0.009,x,0.0015,[slot.map(([z,y])=>[z,YC+s*y])]),C.limb,M.satin);
       const y=YC+s*cfg.span,z=cfg.riserZ-cfg.back+0.01;
-      // Open wheel with a thin axle bridge. The ring aperture is actual geometry.
-      body.add(ring(0.025,0.007,0,y,z,'x',6,20),C.steel,M.satin);
-      body.add(box(0.018,0.009,0.043,0,y,z,0.35),C.steel,M.satin);
-      body.add(xcyl(0.007,-0.012,0.012,y,z,10),C.dark,M.satin);
+      // Solid, layered octagonal pulley with central bolt, not an open ring.
+      body.add(xcyl(0.031,-0.012,0.012,y,z,8),C.limb,M.satin);
+      for(const side of [-1,1]) {
+        const x=side*0.017;
+        body.add(xcyl(0.026,x-0.003,x+0.003,y,z,8),C.limb,M.satin);
+        body.add(xcyl(0.007,x-0.006,x+0.006,y,z,6),'#707773',M.satin);
+      }
       body.add(zcyl(0.009,0,0.065,0,YC+s*0.15,10),C.steel,M.satin);
       body.add(zcyl(0.011,0.048,0.067,0,YC+s*0.15,10),C.limb,M.satin);
-      // Visible orange tension cable runs inward from the cam; no unseen cross-rig added.
       body.add(pipe([[0,y,z],[0,YC+s*0.14,cfg.riserZ-0.02]],0.002,8,5),'#cf744b',M.satin);
+      // Attachment block and visible side screw where the limb meets the bottle.
+      body.add(box(0.047,0.049,0.04,0,YC+s*0.092,-0.025,0.4),C.limb,M.satin);
+      for(const x of [-0.026,0.026])body.add(xcyl(0.003,x-0.001,x+0.001,YC+s*0.092,-0.025,8),'#707773',M.satin);
+    }
+    // Upper-only metal squid-outline clip, resolved in both side and edge video views.
+    const clip=[[-0.04,0.24],[-0.005,0.25],[0.005,0.22],[-0.008,0.208],[-0.006,0.198],
+      [-0.016,0.193],[-0.014,0.185],[-0.023,0.183],[-0.03,0.192],[-0.035,0.185],[-0.044,0.19],[-0.04,0.204],[-0.048,0.219],[-0.04,0.24]];
+    body.add(pipe(clip.map(([z,y])=>[0.029,YC+y,z]),0.003,28,6),'#545f59',M.satin);
+    body.add(pipe([[0.029,YC+0.239,-0.035],[0.029,YC+0.247,-0.01]],0.0032,3,6),'#8c9351',M.satin);
+    // Lower-only white perforated wrap: geometry for bands, small dark inset marks for the holes.
+    const wrap=[[-0.008,0.116],[-0.021,0.178],[-0.038,0.205],[-0.063,0.194],[-0.049,0.165],[-0.04,0.111]];
+    body.add(slab(wrap.map(([z,y])=>[z,YC-y]),0.045,0,0.002),'#efeee7',M.rubber);
+    for(const side of [-1,1])for(let row=0;row<6;row++)for(let col=0;col<3;col++) {
+      const y=0.122+row*0.011,z=-0.017-row*0.003-col*0.008;
+      body.add(xcyl(0.0009,side*0.023-0.0003,side*0.023+0.0003,YC-y,z,5),'#a9aba3',M.rubber);
     }
     body.add(box(0.016,0.09,0.016,0,YC,cfg.riserZ-cfg.back,0.4),C.limb,M.satin);
   });

@@ -118,10 +118,10 @@ variant('Stringer_Normal_01','s3-stringer-normal','Inkline Tri-Stringer',{'#7a3b
 variant('Stringer_Normal_02','s3-stringer-normal','Bulbz Tri-Stringer',{'#7a3b22':'#b58085'});
 {
   const base=BASE['s3-stringer-short'];
-  definitions.push(['Stringer_Short_02',Object.freeze({...base,baseId:'s3-stringer-short',sourceRow:'Stringer_Short_02',name:'REEF-LUX 450 MIL-K',shapeRevision:'reference-bottle-flat-limbs-open-cams',
+  definitions.push(['Stringer_Short_02',Object.freeze({...base,baseId:'s3-stringer-short',sourceRow:'Stringer_Short_02',name:'REEF-LUX 450 MIL-K',shapeRevision:'video-bottle-slotted-rails-octagonal-pulleys',
     sourceUrl:'https://splatoonwiki.org/wiki/REEF-LUX_450_MIL-K',inkPartition:'redString',
     build(d){d=finish(reefMilK(d),{'#17181b':'#d5d5c9','#2a2b30':'#dadad0','#a9adb4':'#d3d2c8','#9a9ea6':'#b76d61'});
-      for(const n of ['string','stringL']){const p=d.parts[n];p.mat='body';const c=p.src.attributes.color.clone(),red=color('#b76d61');for(let i=0;i<c.count;i++)c.setXYZ(i,red.r,red.g,red.b);p.src.setAttribute('color',c);}return d;}})]);
+      for(const n of ['string','stringL']){const p=d.parts[n];p.mat='body';const c=p.src.attributes.color.clone(),red=color('#cf744b');for(let i=0;i<c.count;i++)c.setXYZ(i,red.r,red.g,red.b);p.src.setAttribute('color',c);}return d;}})]);
 }
 function splitSurface(g, matches) {
   const fixed=[],owned=[];

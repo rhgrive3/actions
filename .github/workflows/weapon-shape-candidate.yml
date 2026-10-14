@@ -1,7 +1,7 @@
 name: Render three reference-based shape corrections
 on:
   push:
-    branches: [review/weapon-shape-corrections-20261014]
+    branches: [review/weapon-shape-v2-20261014]
 permissions:
   contents: read
 jobs:
