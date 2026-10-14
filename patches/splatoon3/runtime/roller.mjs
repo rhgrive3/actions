@@ -722,7 +722,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
     const isRightRoller = limb === this.limbs.armR && this.weaponKind === 'roller' &&
-      this.kidForm && !this.dance && !!orientation && weight > .999 && !this.P[C.SPIN];
+      // A held special replaces the roller with its own two-hand prop. Its
+      // wrist targets must use the native solver, never roller drum alignment.
+      this.kidForm && !this.dance && !this.actor?.specialActive && !!orientation && weight > .999 && !this.P[C.SPIN];
     if (!isRightRoller) return solve.call(this, limb, target, pole, orientation, weight, index);
     const d = this.weapon.def, arms = this.limbs;
     if (!rightOrigin) {
