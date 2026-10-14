@@ -1,6 +1,6 @@
-// Fractional SpawnNum is distributed over accepted shot ordinals, exactly as
-// the already shipped InkFlight shooter-family splashPlan distributes 1.5
-// events as 1,2,1,2 rather than always rounding up to 2.
+// INKWAVE policy: distribute fractional SpawnNum over accepted shot ordinals,
+// matching the existing InkFlight accumulator. The pinned number alone does
+// not establish Nintendo's ordering, initial phase or reset behavior.
 export function catalogFractionalSplashCount(value, ordinal) {
   if (!(Number.isFinite(value) && value >= 0) || !Number.isSafeInteger(ordinal) || ordinal < 0)
     throw new RangeError('Invalid source fractional splash count / shot ordinal');

@@ -4,7 +4,7 @@ import {catalogFractionalSplashCount} from '../runtime/catalog-splash-paint.mjs'
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 import {fixture} from './source-fixture.mjs';
 
-test('pinned fractional SpawnNum distributes deterministic splash drops rather than ceil per bullet',()=>{
+test('local cumulative-floor policy distributes candidate budgets rather than ceil per bullet',()=>{
  for(const value of [0,0.2,0.5,1,1.4,1.5,2.4,3,3.8]){
   const n=80,arr=Array.from({length:n},(_,i)=>catalogFractionalSplashCount(value,i));
   assert.equal(arr.reduce((sum,x)=>sum+x,0),Math.floor(value*n+1e-9));
@@ -15,7 +15,9 @@ test('pinned fractional SpawnNum distributes deterministic splash drops rather t
  assert.throws(()=>catalogFractionalSplashCount(1.5,-1),RangeError);
 });
 
-test('all fractional source shooters retain their exact drop budgets through real Actor / Projectiles emissions',async()=>{
+// This observes descriptor budgets at _push, not detached births or landings.
+// catalog-fractional-policy.test.mjs separately exercises those local paths.
+test('all fractional catalog shooters receive local descriptor budgets through accepted shots',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
   extraExports:"export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
@@ -23,7 +25,7 @@ test('all fractional source shooters retain their exact drop budgets through rea
  const selected=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='shooter'&&
   Number.isFinite(r.parameters.SplashSpawnParam?.SpawnNum)&&
   !Number.isInteger(r.parameters.SplashSpawnParam.SpawnNum));
- assert.ok(selected.length>=5,'S3 11.3.0 contains multiple fractional paint schedules');
+ assert.ok(selected.length>=5,'pinned catalog contains multiple fractional SpawnNum values');
  for(const r of selected){
   f.G.actors.length=0;f.G.projectiles.clear();
   const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;
@@ -32,8 +34,8 @@ test('all fractional source shooters retain their exact drop budgets through rea
   try{f.tick(a,180);}finally{f.G.projectiles._push=push;}
   assert.ok(counts.length>=3,r.id+' accepted shots');
   const expected=counts.map((_,i)=>catalogFractionalSplashCount(r.parameters.SplashSpawnParam.SpawnNum,i));
-  assert.deepEqual(counts,expected,r.id+' real accepted-shot fractional budget');
+  assert.deepEqual(counts,expected,r.id+' accepted-shot local descriptor budget');
   assert.ok(counts.reduce((s,x)=>s+x,0)<=Math.ceil(counts.length*r.parameters.SplashSpawnParam.SpawnNum),
-   r.id+' source average not exceeded');
+   r.id+' local cumulative budget not exceeded');
  }
 });

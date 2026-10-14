@@ -421,12 +421,12 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function emitSingle(runner,r,key='normal',charge=0,volley=null) {
     const a=runner.a, s=state(runner), desc=mode(r,key,0,charge);
-    // The source SpawnNum may be fractional: 1.4/1.5/2.4 is an
-    // average per accepted shot, not a per-projectile ceil. Native
-    // shooter-family InkFlight already preserves this exact principle.
-    // Keep all collision, head launch, damage and network metadata unchanged.
+    // INKWAVE's cumulative-floor policy distributes fractional SpawnNum over
+    // accepted shots. The pinned value does not establish retail ordering.
+    // Shooter budgets also apply to the existing projected-paint fallback;
+    // missing physics still yields no detached splash spec or invented gravity.
     const sourceNum=desc.b.SplashSpawnParam?.SpawnNum;
-    if (desc.splashDropSpec && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
+    if ((desc.splashDropSpec || r.family==='shooter') && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
         Number.isFinite(sourceNum) && sourceNum >= 0) {
       const ordinal=s.paintShotOrdinal||0;
       desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
