@@ -4286,3 +4286,10 @@ These are INKWAVE online consistency fixes, not a retail Splatoon 3 timing measu
 The old mixed-sub producer/lifecycle coverage claim is withdrawn: directly replacing the fixture weapon's sub did not reset the native runner's cached Suction spec. Wire labels could say Curling/Autobomb/Sprinkler while owner physics still resolved Suction. The correction resets the real runner and checks live/release/birth/resolved/wire/receiver subtype, exact ink debit and each intended native lifecycle; a no-reset negative must fail. Autobomb/Sprinkler use verified downward throws so the fixture actually reaches search/deployment before out-of-floor retirement or replacement. This is a test/report correction, with no production or retail coefficient change.
 
 The preceding density/duplicate-work counts retain their historical inputs and do not become corrected kit-specific performance evidence. The ordinary synthetic-floor scope, consecutive-stall and admission-wait limitations remain. Separate full-installer victim-local damage, Bubbler and recipient-life evidence is unaffected. Final bound verification is recorded in `reports/network-replication/bomb-authority-budget-2026-10-13.md`; browser and retail comparisons remain distinct.
+
+
+## 2026-10-13: audio v11 非同期ロードの所有期間（#1322 派生）
+
+音響Draft5530272では、manifest待機中に音声bankを破棄・コンテキスト置換しても、完了後に古いbankへの取得・デコード・再格納が続く。実モジュールと合成データで再現し、既存のgenerationとbank/context所有判定を各await境界へ接続した。正常な共有キャッシュ、新しい所有者のロード、失敗後の再試行は維持する。stopAllや音声再生規則、MP3は変更しない。
+
+限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。
