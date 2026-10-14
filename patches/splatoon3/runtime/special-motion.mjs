@@ -495,10 +495,60 @@ export function createStormCloud(color,THREE){return api(THREE).createStormCloud
 export function createTacticooler(color,THREE){return api(THREE).createTacticooler(color);}
 export function createVacVortex(color,length,near,far,THREE){return api(THREE).createVacVortex(color,length,near,far);}
 
+// Program keepers. Special visuals are built on first use and the per-use ones
+// (Ink Vac vortex, Big Bubbler field, slam fists, storm cloud, Tacticooler and
+// the all-specials.mjs deployables) are disposed after every use. three.js
+// deletes a program, and forgets the shader stage ids that key a ShaderMaterial
+// program, when its last material is disposed, so each activation linked its
+// programs again synchronously mid-match (measured: the Ink Vac intake frames
+// stalled on getProgramParameter at every activation). One never-disposed
+// instance of every factory, compiled with the kids' match-load warm-up against
+// the same scene and HDR target, keeps those programs and stage ids alive:
+// later instances, built from the same shader text and parameters, resolve to
+// the cached programs. Nothing is added to the scene; like Character.warmAll,
+// the one warm shadow pass is redrawn by the next frame's shadow update.
+let programKeepers=null,keeperRT=null;
+const keeperWarmFrame=new WeakMap();
+export function specialProgramKeepers(THREE){
+  if(programKeepers)return programKeepers;
+  const f=api(THREE),g=new THREE.Group();g.name='special-program-keepers';
+  for(const m of [f.createTrizooka(0xffffff),f.createInkVac(0xffffff),f.createVacPack(0xffffff),f.createStormDevice(0xffffff),
+    f.createInkFist(0xffffff),f.createBubblerHardware(0xffffff),f.createVacVortex(0xffffff,1,.5,1),f.createStormCloud(0xffffff),
+    f.createTacticooler(0xffffff)])g.add(m);
+  // deployables (Splattercolor Screen, Wave Breaker, Super Chump, Inkstrike, Booyah Bomb, Crab Tank ball)
+  for(const kind of WORLD_MESH_KINDS){const {geometry,material}=worldMeshParts(THREE,kind,0xffffff);const m=new THREE.Mesh(geometry,material);m.name='keeper:'+kind;g.add(m);}
+  g.traverse(o=>{o.visible=true;});
+  return programKeepers=g;
+}
+export function warmSpecialPrograms(THREE,G,renderer,camera,target){
+  if(!renderer?.compileAsync||!camera||!target)return null;
+  const frame=renderer.info?.render?.frame;
+  if(keeperWarmFrame.get(target)===frame)return null;   // once per load batch (every kid's warmAll shares the frame)
+  keeperWarmFrame.set(target,frame);
+  const rt0=renderer.getRenderTarget();
+  let p=null;
+  try{
+    // the match draws into the composer's HDR target: compile against one (same as Character.warmAll)
+    renderer.setRenderTarget(G.post?.composer?.readBuffer||(keeperRT||(keeperRT=new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType}))));
+    p=renderer.compileAsync(specialProgramKeepers(THREE),camera,target);
+  }catch(e){console.warn('[inkwave] special program warm',e);}
+  finally{renderer.setRenderTarget(rt0);}
+  // shadow-depth variants (e.g. the instanced storm cloud): one shadow pass of the keepers, as Character.warmAll does
+  const sm=renderer.shadowMap,lights=[];
+  if(sm?.enabled&&typeof sm.render==='function'&&target.traverseVisible)target.traverseVisible(o=>{if(o.isLight&&o.castShadow&&o.shadow)lights.push(o);});
+  if(lights.length){
+    const keepers=specialProgramKeepers(THREE),nu=sm.needsUpdate;keepers.updateMatrixWorld(true);
+    try{sm.needsUpdate=true;sm.render(lights,keepers,camera);}catch(e){console.warn('[inkwave] special shadow warm',e);}
+    finally{sm.needsUpdate=nu;}
+  }
+  return p?.catch?.(e=>console.warn('[inkwave] special program warm',e))??null;
+}
+
 // Observe the final native special owners. This layer never steps gameplay,
 // changes a token/timer, authors a hit/paint row or dispatches a network event.
 import { inkVacState } from './kit-ink-vac.mjs';
 import { specialPresentationToken } from './special-presentation-owner.mjs';
+import { worldMeshParts, WORLD_MESH_KINDS } from './all-specials.mjs';
 import { TRIZOOKA_CARTRIDGE } from './kit-trizooka.mjs';
 import { FIST_TRAVEL, tripleSlamFistCenters } from './triple-slam-fists.mjs';
 const PRESENTATION_INSTALL=Symbol.for('inkwave.s3.special-presentation.v1');
@@ -521,6 +571,13 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
   Object.defineProperty(Character.prototype,PRESENTATION_INSTALL,{value:{states:presentationStates,blocked:presentationBlocked}});
   const cp=Character.prototype,update=cp.update,build=cp._buildPose,apply=cp._applyPose,dispose=cp.dispose;
   const muzzle=cp.getMuzzle,aimMuzzle=cp.getAimMuzzle,setWeapon=cp.setWeapon;
+  const warmAll=cp.warmAll;
+  if(typeof warmAll==='function')cp.warmAll=function(renderer=G.renderer,camera=G.camera,target=G.scene,...rest){
+    const done=warmAll.call(this,renderer,camera,target,...rest);
+    const keep=warmSpecialPrograms(THREE,G,renderer,camera,target);
+    // the match-load fade (main.js _warmCharacters, 8 s cap) also waits for the keeper programs to link
+    return keep&&typeof done?.then==='function'?done.then(v=>keep.then(()=>v)):done;
+  };
   function presentationState(ch){let m=presentationMap(ch).get(ch);if(m)return m;
     m={kind:null,models:new Map(),model:null,weapon:null,error:0,shotAt:-Infinity,shotSerial:0,
       a:new THREE.Vector3(),b:new THREE.Vector3(),p:new THREE.Vector3(),dir:new THREE.Vector3(),q:new THREE.Quaternion(),handQ:new THREE.Quaternion(),
