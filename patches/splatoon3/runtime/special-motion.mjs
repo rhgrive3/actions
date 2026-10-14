@@ -521,6 +521,8 @@ export function specialProgramKeepers(THREE){
     f.createTacticooler(0xffffff)])g.add(m);
   // deployables (Splattercolor Screen, Wave Breaker, Super Chump, Inkstrike, Booyah Bomb, Crab Tank ball)
   for(const kind of WORLD_MESH_KINDS){const {geometry,material}=worldMeshParts(THREE,kind,0xffffff);const m=new THREE.Mesh(geometry,material);m.name='keeper:'+kind;g.add(m);}
+  // the animated Splattercolor marble sheet (special-models.mjs) is built per deployment
+  {const sheet=buildScreenSheet(THREE,0xffffff,2,2);sheet.name='keeper:screen-sheet';g.add(sheet);}
   g.traverse(o=>{o.visible=true;});
   return programKeepers=g;
 }
@@ -552,6 +554,7 @@ export function warmSpecialPrograms(THREE,G,renderer,camera,target){
 // changes a token/timer, authors a hit/paint row or dispatches a network event.
 import { inkVacState } from './kit-ink-vac.mjs';
 import { worldMeshParts, WORLD_MESH_KINDS } from './all-specials.mjs';
+import { buildScreenSheet } from './special-models.mjs';
 import { TRIZOOKA_CARTRIDGE } from './kit-trizooka.mjs';
 import { FIST_TRAVEL, tripleSlamFistCenters } from './triple-slam-fists.mjs';
 const PRESENTATION_INSTALL=Symbol.for('inkwave.s3.special-presentation.v1');

@@ -478,9 +478,10 @@ const OBJECT_FX = {
     },
     end(r, o) { const p = o.pos; this.smoke(this.v[0].copy(p).setY(p.y + 2), 6, this.hdr(r.color, 0.95), { kind: PUFF.MIST, size: 1.4, speed: 2, rise: 3, life: 1.1, alpha: 0.45 }); },
   },
-  decoy: { // Super Chump balloon: confetti launch, bob, pop
+  decoy: { // Super Chump balloon: confetti launch, landing marks, bob, pop
     start(r, o) {
       r.d.trail = this.ribbon(true, { width: 0.25, widthTail: 0.04, color: this.hdr(r.color, 1.8, 0.8), alpha: 0.9, style: RIBBON.GLOW, life: 0.35, spacing: 0.15 });
+      if (o.target && o.phase === 'flight') r.d.mark = this.disc(true, (o.flight || 1.8) + 0.1, DISC.TARGET, this.v[0].copy(o.target).setY(o.target.y + 0.05), this.up, 0.4, 1.3, this.hdr(r.color, 1.3, 0.5), 0.6, { hold: 0.9, spin: 2 });
     },
     frame(r, o) {
       if (o.phase === 'flight') { this.pushRibbon(r.d.trail, o.pos, true); if (vfxRandom() < 0.35) this.spark(SPARK.STAR, o.pos, 0, -1, 0, 0.35, 0.16, 0.02, this.hdr(r.color, 1.8, 1.4), 1); }
@@ -1074,9 +1075,14 @@ const DIRECTORS = {
     phase(a, t, phase) {
       const c = t.color;
       if (phase === 'charge') {
-        t.d.charge = this.band(true, 0, BAND.SWIRL, a.pos, 2.4, 2.4, 2.2, 2.2, this.hdr(c, 1.8, 1), 0.9, { fade: false, speed: 3,
+        t.d.charge = this.band(true, 0, BAND.SWIRL, a.pos, 2.4, 2.4, 2.2, 2.2, this.hdr(c, 1.4, 0.4), 0.45, { fade: false, speed: 3,
           follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const k = clamp01((this.time - t.phaseAt) / (35 / 60)); rec.v[0] = a.pos.x; rec.v[1] = a.pos.y; rec.v[2] = a.pos.z; rec.v[4] = 2.4 - 1.2 * k; rec.v[15] = 3 + 9 * k; } });
-        (t.d.recs ||= []).push(t.d.charge);
+        // S3 footage (85.0s): arrows on the floor point the way the charge will go
+        t.d.arrows = this.disc(false, 0, DISC.CHEVRON, a.pos, this.up, 2.2, 2.2, this.hdr(c, 1.15, 0.2), 0.95, { fade: false,
+          follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const f = a._s3AllSpecialState?.direction || this.aim(a, this.v[6]);
+            rec.v[0] = a.pos.x + f.x * 3.6; rec.v[1] = groundBelow(this, a) + 0.05; rec.v[2] = a.pos.z + f.z * 3.6; rec.v[7] = Math.atan2(f.z, f.x);
+            rec.v[11] = 0.5 + 0.5 * smooth((this.time - t.phaseAt) / (35 / 60)); } });
+        (t.d.recs ||= []).push(t.d.charge, t.d.arrows);
       } else if (phase === 'dash') {
         this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 1), c, 0.9, 0.16);
         this.disc(true, 0.4, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.6, 3.2, this.hdr(c, 1.5, 0.5), 0.9);

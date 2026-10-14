@@ -318,7 +318,7 @@ class RibbonPool {
 export const BEAM = Object.freeze({ LASER: 0, JET: 1, LINE: 2, PILLAR: 3, TWISTER: 4, CHARGE: 5 });
 export const SHELL = Object.freeze({ INK: 0, ORB: 1, HOLO: 2, SHOCK: 3, FLASH: 4 });
 export const BAND = Object.freeze({ WAVE: 0, SHOCK: 1, SWIRL: 2, TWISTER: 3, CURTAIN: 4 });
-export const DISC = Object.freeze({ SHOCK: 0, RETICLE: 1, TARGET: 2, FLASH: 3, RUNE: 4, SPEAKER: 5, SPLAT: 6 });
+export const DISC = Object.freeze({ SHOCK: 0, RETICLE: 1, TARGET: 2, FLASH: 3, RUNE: 4, SPEAKER: 5, SPLAT: 6, CHEVRON: 7 });
 
 const BEAM_VERT = `
 attribute vec4 iA; attribute vec4 iB;  // start xyz r0 | end xyz r1
@@ -536,6 +536,14 @@ void main(){
     float ring = 1.0 - smoothstep(0.0, 0.1, abs(r - 0.85));
     a = ring + (1.0 - r) * 0.25 * (0.6 + 0.4 * sin(uTime * 30.0));
     col = mix(col, vec3(max(col.r, max(col.g, col.b))), 0.7);
+  } else if (style == 7) {     // chevrons: three arrows flowing toward local +y (charge direction)
+    float k = 0.0;
+    for (int i = 0; i < 3; i++) {
+      float c = fract(float(i) / 3.0 + uTime * 1.2) * 1.6 - 0.8;
+      float d = abs((vUv.y - c) + abs(vUv.x) * 0.9);
+      k = max(k, (1.0 - smoothstep(0.05, 0.11, d)) * step(abs(vUv.x), 0.55) * (1.0 - smoothstep(0.55, 0.85, abs(c))));
+    }
+    a = k;
   } else {                     // splat: ink blot with tendrils (ground ink flash)
     float n = sxFbm(vec2(ang * 2.0 + seed * 9.0, r * 3.0));
     float edge = 0.65 + 0.35 * n;

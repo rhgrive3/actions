@@ -34,6 +34,7 @@
 | `runtime/hit-spawn-motion.mjs` | 被弾・復活の表示と操作復帰に残る姿勢の補正 |
 | `runtime/idle-motion.mjs`, `runtime/emotes-motion.mjs` | 待機の身振り、勝敗・メニューの姿勢と中断 |
 | `runtime/special-motion.mjs`, `runtime/face-motion.mjs` | 既存スペシャルの表示復帰と、実際の照準に従う視線 |
+| `runtime/special-vfx.mjs`, `runtime/special-vfx-kit.mjs` | 19種のスペシャルの発動・持続・攻撃・着弾・終了の演出（GPUプール12描画）。実イベントと複製イベントを読むだけで、塗り・当たり・乱数・通信に影響しない。比較は [special-vfx.md](reference/special-vfx.md) |
 | `runtime/weapons.mjs` | チャージ保持・貫通、縦振り、スライド後射撃、弾の減衰 |
 | `runtime/gear.mjs` | 3 部位×4 スロット、AP、効果曲線、保存と装備画面 |
 | `runtime/resources.mjs` | インク回復の待ち時間、敵インク、HP 回復 |
