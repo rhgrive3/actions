@@ -15,7 +15,7 @@ assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
 for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,file))),digest,file);
 const sourceSha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const prefix='/_versions/'+manifest.build.revision+'/';
-const ids=['s3-charger-quick-01'];
+const ids=['s3-maneuver-short-02'];
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.bin':'application/octet-stream'};
 const server=http.createServer((req,res)=>{
  const pathname=new URL(req.url,'http://localhost').pathname;
@@ -66,6 +66,52 @@ try{
     if(i===1&&ch.weapon.def.modelVariantId!==variantId)throw Error('Variant was not selected '+id);
     if(i===0&&ch.weapon.def.modelVariantId)throw Error('Base unexpectedly has variant '+id);
    }
+   const pairedViews=[],pairedReceipts=[];
+   // Pose the native two-hand rig off-scene. Only its actual two weapon pivots
+   // are attached for rendering; no character/body geometry enters the scene.
+   // Recoil snapshots below are presentation diagnostics, not admitted shots.
+   G.actors=actors;
+   const capturePair=(a,label)=>{
+    const ch=a.character,w=ch.weapon;
+    if(!ch.dual||!w.left)throw Error('Missing native left pistol '+id);
+    ch.root.updateMatrixWorld(true);
+    const pivots=[w.pivot,w.left.pivot],parents=pivots.map(p=>p.parent),originalMatrices=pivots.map(p=>p.matrixWorld.elements.slice());
+    const group=new THREE.Group();scene.add(group);
+    for(const pivot of pivots)group.attach(pivot);
+    group.updateMatrixWorld(true);
+    const b=new THREE.Box3().setFromObject(group),center=b.getCenter(new THREE.Vector3());
+    const pairSpan=Math.max(...b.getSize(new THREE.Vector3()).toArray());
+    if(!(pairSpan>0&&Number.isFinite(pairSpan)))throw Error('Invalid native paired bounds '+id);
+    camera.position.copy(center).add(new THREE.Vector3(-1,.3,.5).normalize().multiplyScalar(pairSpan*2.5));camera.lookAt(center);
+    renderer.render(scene,camera);renderer.render(scene,camera);
+    if(renderer.getContext().getError()!==0)throw Error('WebGL native pair '+label);
+    pairedViews.push({view:label,png:renderer.domElement.toDataURL('image/png').split(',')[1]});
+    pairedReceipts.push({view:label,models:pivots.length,muzzles:[w.muzzle,w.left.muzzle].map(m=>m.getWorldPosition(new THREE.Vector3()).toArray())});
+    pivots.forEach((p,i)=>parents[i].attach(p));scene.remove(group);ch.root.updateMatrixWorld(true);
+    for(let i=0;i<pivots.length;i++){
+     if(pivots[i].parent!==parents[i])throw Error('Native weapon parent not restored '+label);
+     if(pivots[i].matrixWorld.elements.some((v,k)=>Math.abs(v-originalMatrices[i][k])>1e-8))throw Error('Native weapon world transform changed by capture '+label);
+    }
+   };
+   for(let i=0;i<actors.length;i++){
+    const a=actors[i];a.form='kid';a.kidT=10;a.grounded=true;a.ground.hit=true;a.intent.fire=false;
+    for(let frame=0;frame<60;frame++){G.time+=1/60;a._finishFrame(1/60);}
+    capturePair(a,i===0?'paired-base-held':'paired-variant-held');
+   }
+   for(const hand of [0,1]){
+    const a=actors[1],ch=a.character,timers=api.CHARACTER_TIMERS;
+    ch.root.updateMatrixWorld(true);
+    const pivots=[ch.weapon.pivot,ch.weapon.left.pivot],before=pivots.map(p=>p.matrixWorld.elements.slice());
+    const keys=[timers.T_SHOOT,timers.T_SHOOTL],clockBefore=keys.map(k=>ch.tr[k]);
+    ch.trigger('shoot',{hand});const clockTriggered=keys.map(k=>ch.tr[k]);
+    if(clockTriggered[hand]!==0||clockTriggered[1-hand]!==clockBefore[1-hand])throw Error('Native recoil hand isolation failed '+hand);
+    a._finishFrame(1/60);ch.root.updateMatrixWorld(true);
+    const matrixDelta=pivots.map((p,i)=>Math.max(...p.matrixWorld.elements.map((v,k)=>Math.abs(v-before[i][k]))));
+    if(!(matrixDelta[hand]>1e-8))throw Error('Requested hand has no native recoil transform '+hand);
+    capturePair(a,hand===0?'paired-right-recoil':'paired-left-recoil');
+    Object.assign(pairedReceipts.at(-1),{diagnosticHand:hand,clockBefore,clockTriggered,matrixDelta,handIsolation:'Only the requested native shot timer resets; shared pose can move both pivots'});
+    for(let frame=0;frame<60;frame++)a._finishFrame(1/60);
+   }
    // Detach the actual native instances: retain material callbacks and every part.
    // Character bodies are never added to the rendered scene.
    const models=actors.map(a=>{const g=a.character.weapon.pivot;g.removeFromParent();a.character.weapon.off.position.set(0,0,0);a.character.weapon.off.quaternion.identity();g.updateMatrixWorld(true);return g;});
@@ -73,7 +119,7 @@ try{
    const sizes=bounds.map(b=>b.getSize(new THREE.Vector3()));
    const span=Math.max(...sizes.flatMap(s=>s.toArray()));
    if(!(span>0&&Number.isFinite(span)))throw Error('Invalid geometry bounds '+id);
-   const captures=[],extraViews=[];
+   const captures=[],extraViews=[...pairedViews];
    for(let i=0;i<models.length;i++){
     const g=models[i],center=bounds[i].getCenter(new THREE.Vector3());scene.add(g);
     camera.position.copy(center).add(new THREE.Vector3(-1,.3,.5).normalize().multiplyScalar(span*2.5));camera.lookAt(center);
@@ -83,7 +129,7 @@ try{
     if(i===1){for(const [view,dir] of [['opposite',[1,.3,.5]],['upper',[-.6,1,.6]]]){camera.position.copy(center).add(new THREE.Vector3(...dir).normalize().multiplyScalar(span*2.5));camera.lookAt(center);renderer.render(scene,camera);renderer.render(scene,camera);if(renderer.getContext().getError()!==0)throw Error('WebGL '+view);extraViews.push({view,png:renderer.domElement.toDataURL('image/png').split(',')[1]});}}
     scene.remove(g);
    }
-   result.push({id:team?id+'-blue':id,sourceId:id,team,baseId,variantId,name:WEAPONS[id].referenceNames?.en||WEAPONS[id].name,baseName:WEAPONS[baseId].referenceNames?.en||WEAPONS[baseId].name,basePng:captures[0],variantPng:captures[1],extraViews,baseSize:sizes[0].toArray(),variantSize:sizes[1].toArray()});
+   result.push({id:team?id+'-blue':id,sourceId:id,team,baseId,variantId,name:WEAPONS[id].referenceNames?.en||WEAPONS[id].name,baseName:WEAPONS[baseId].referenceNames?.en||WEAPONS[baseId].name,basePng:captures[0],variantPng:captures[1],extraViews,pairedReceipts,baseSize:sizes[0].toArray(),variantSize:sizes[1].toArray()});
    for(const a of actors)a.character.dispose();
   }
   env.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return result;
@@ -103,6 +149,6 @@ try{
  await page.setContent(html(rows,true));await page.locator('img').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
  await page.screenshot({path:path.join(out,'weapon-variants-overview.png'),fullPage:true});
  fs.writeFileSync(path.join(out,'index.html'),html(rows,false));
- const receipt={sourceSha,contentHash:manifest.contentHash,renderer:'Chromium SwiftShader; actual native weapon.pivot instances; original production materials and callbacks',characterRendered:false,presentationTransform:'Native off group reset to identity for model-space comparison only; geometry and shaders unchanged',teamColors:['#ff8825','#484ce8'],rows:rows.map(({basePng,variantPng,extraViews,...r})=>({...r,extraViews:extraViews.map(x=>x.view)})),errors};
+ const receipt={sourceSha,contentHash:manifest.contentHash,renderer:'Chromium SwiftShader; actual native weapon.pivot instances; original production materials and callbacks',characterRendered:false,pairedMode:'Native held pivots and direct Character shoot hand0/hand1 animation diagnostics; no gameplay firing claim',presentationTransform:'Native off group reset to identity for model-space comparison only; geometry and shaders unchanged',teamColors:['#ff8825','#484ce8'],rows:rows.map(({basePng,variantPng,extraViews,...r})=>({...r,extraViews:extraViews.map(x=>x.view)})),errors};
  fs.writeFileSync(path.join(out,'gallery-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt,null,2));
 }catch(e){fs.writeFileSync(path.join(out,'capture-error.json'),JSON.stringify({sourceSha,contentHash:manifest.contentHash,error:String(e),networkFailures},null,2));throw e;}finally{await browser?.close();await new Promise(r=>server.close(r));}

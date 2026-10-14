@@ -1,7 +1,7 @@
-name: Render three reference-based shape corrections
+name: Render Dapple NOC-T diagnostic candidate
 on:
   push:
-    branches: [review/new-squiffer-candidate-20261014]
+    branches: [review/dapple-noct-candidate-20261014]
 permissions:
   contents: read
 jobs:
@@ -46,6 +46,8 @@ jobs:
           grep -qx '# skipped 3' variant-test-results/emitted.tap
       - name: Verify New Squiffer source geometry
         run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-new-squiffer.test.mjs
+      - name: Verify Dapple NOC-T source geometry
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs
       - name: Install capture browser after runtime gates pass
         run: npx playwright install --with-deps chromium
       - name: Capture actual emitted weapon meshes

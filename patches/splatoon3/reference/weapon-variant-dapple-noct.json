@@ -1,0 +1,55 @@
+{
+  "sourceRow": "Maneuver_Short_02",
+  "baseId": "s3-maneuver-short",
+  "referenceVersion": "Splatoon 3 Splatlands Collection; canonical11.3.0 row",
+  "inspectedAt": "2026-10-14",
+  "sources": [
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_Dapple_Dualies_NOC-T_model_rotating.mp4",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/9/9d/S3_Dapple_Dualies_NOC-T_model_rotating.mp4",
+      "dimensions": [
+        1920,
+        1080
+      ],
+      "officialOrigin": "https://x.com/SplatoonJP/status/1932635902091858206",
+      "inspected": [
+        "Rear/opposite flank before end of video",
+        "Front/three-quarter at24s",
+        "Near-side at7s"
+      ],
+      "retrieval": "Viewed streamed source in cloud browser; no full video written to disk."
+    }
+  ],
+  "observedDifferences": [
+    "Large forward yellow-lens black cup on curled bracket is completely absent in prior palette-only variant.",
+    "Upper long white inlays stay white in reference beside lime team-colored bristles; prior base assigned those inlays team ink.",
+    "Upper frame and lower skid have actual openings; prior solid profiles lacked them.",
+    "Orange/grey rear toothbrush arm sweeps far backward rather than short vertical pipe.",
+    "Black rear truss boom and taut white cord instead of short grey curved wire."
+  ],
+  "implementation": [
+    "Self-contained variant builder; original dualies and ranged variants unchanged.",
+    "Cup light, lens/rim, bracket, rear valve/boom/cord.",
+    "Real upper/lower holes with ray-tested lower openings.",
+    "Fixed upper white inlays and team-owned bristle bundles.",
+    "Brown inner/grey outer side panels and orange/grey brush arm."
+  ],
+  "invariants": [
+    "Native muzzle [0,0.066,0.13] unchanged.",
+    "Native grip metadata, dual flag and trigger geometry/pivot unchanged.",
+    "No gameplay, roll, cadence, projectile or hold code changes."
+  ],
+  "limitations": [
+    "Frame proportion correction is constrained by retained native muzzle/grip anchors. A preliminary image-space discrepancy is perspective-dependent, not a verified2x dimensional error.",
+    "No calibrated multiview reconstruction or measured retail geometry dimensions.",
+    "Glyphs/brand stickers are geometric approximations; exact lettering, worn finish and metal roughness unverified.",
+    "One pistol model is copied to both hands by existing runtime; handed visual differences need actual paired capture.",
+    "CPU side/rear/opposite previews are diagnostic only; actual runtime shader and held-character validation pending."
+  ],
+  "baseSha256": "3d4d610063af3d1032443e7e742cfdb681fd0b38681a69f0f831d45db38ce89c",
+  "verification": {
+    "focusedTests": "5 tests; final run in tests.log",
+    "fullBuild": "not run",
+    "runtimeRender": "pending root"
+  }
+}

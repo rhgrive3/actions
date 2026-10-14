@@ -20,6 +20,7 @@ import { VARIANT_MODELS as SHOOTER_VARIANTS } from './shooter-blaster-variants.m
 import { VARIANT_MODELS as MELEE_VARIANTS } from './variants-melee.mjs';
 import { VARIANT_MODELS as RANGED_VARIANTS } from './variants-ranged-defense.mjs';
 import { FOLLOWUP_MODELS as SQUIFFER_FOLLOWUP } from './variants-squiffer-followup.mjs';
+import { FOLLOWUP_MODELS as NOCT_FOLLOWUP } from './variants-dapple-noct-followup.mjs';
 
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 const FAMILIES = Object.freeze([['shooter', SHOOTERS], ['shooter', SHOOTERS_B], ['blaster', BLASTERS], ['dualies', DUALIES],
@@ -47,7 +48,7 @@ for (const [family, mod] of FAMILIES) {
 // Alternate appearance IDs never enter the gameplay catalogue. Only implemented
 // rows are selectable; retain base IDs for direct family animation table lookups.
 const VARIANTS = new Map();
-for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, {...RANGED_VARIANTS,...SQUIFFER_FOLLOWUP}]) {
+for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, {...RANGED_VARIANTS,...SQUIFFER_FOLLOWUP,...NOCT_FOLLOWUP}]) {
   for (const [id, spec] of Object.entries(group)) {
     if (SPECS.has(id) || VARIANTS.has(id)) throw new Error(`Duplicate weapon appearance ${id}`);
     const base = SPECS.get(spec.baseId);
