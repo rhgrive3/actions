@@ -76,9 +76,13 @@ export async function runControlledDiagnostic(candidateSite,out,baselineSite){
   report.controlled=await collectControlledLaunchPair({baselinePage:pages.baseline,candidatePage:pages.candidate,out:path.join(out,'controlled-case')});
   await Promise.all(pending);
   for(const row of report.cases){
-   const conditions=report.controlled.cases.find(c=>c.variant===row.variant)?.natural,manifest=manifests[row.variant];
+   const manifest=manifests[row.variant],controlledConditions=report.controlled.cases.find(c=>c.variant===row.variant)?.natural;
+   row.controlledValidation=controlledConditions?{status:'checked'}:{status:'skipped-incomplete',reason:'Controlled preparation did not reach this variant; preserve controlled-case error'};
+   const conditionSets=[row.repeatConditions,...(controlledConditions?[controlledConditions]:[])];
+   for(const conditions of conditionSets){
    assert.equal(conditions?.actualMap,'inkblot');assert.equal(conditions.native,true);assert.equal(conditions.source,manifest.build.nativeStages.stages.find(s=>s.id==='inkblot').sourceSha256);
-   assert.ok(conditions.baseURI.endsWith('/_versions/'+manifest.build.revision+'/'));assert.ok(row.sourceDownloads.length>0,'Pinned OBJ request not observed');assert.ok(row.loadedArtifacts.some(r=>r.path.endsWith('/src/game/inkCollision.js')),'Loaded collision module not verified');
+   assert.ok(conditions.baseURI.endsWith('/_versions/'+manifest.build.revision+'/'));}
+   assert.ok(row.sourceDownloads.length>0,'Pinned OBJ request not observed');assert.ok(row.loadedArtifacts.some(r=>r.path.endsWith('/src/game/inkCollision.js')),'Loaded collision module not verified');
    row.complete=row.errors.length===0;finalizePairCase(row);
   }
   report.status=report.naturalRepeatCollectionComplete&&report.controlled.status==='collected'&&report.cases.every(r=>r.complete)?'collected':'incomplete';

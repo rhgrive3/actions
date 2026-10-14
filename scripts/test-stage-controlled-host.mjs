@@ -16,3 +16,5 @@ test('booted baseline is parked before opening the candidate context',()=>{
  const previous=globalThis.NG;let freezes=0;globalThis.NG={mode:'menu',game:{menus:{},frozen:false,debug:{freeze(){freezes++;globalThis.NG.game.frozen=true;}}}};
  try{const r=parkBootedGame();assert.equal(freezes,1);assert.equal(r.frozen,true);assert.equal(r.skipRender,true);globalThis.NG.mode='boot';assert.throws(()=>parkBootedGame(),/unbooted/);}finally{if(previous===undefined)delete globalThis.NG;else globalThis.NG=previous;}
 });
+
+test('unprepared controlled variant is explicitly skipped incomplete without discarding repeat identity checks',()=>{const s=fs.readFileSync(new URL('./run-inkwave-controlled-launch-pair.mjs',import.meta.url),'utf8');assert.match(s,/status:'skipped-incomplete'/);assert.match(s,/const conditionSets=\[row.repeatConditions/);assert.match(s,/report.controlled.status==='collected'/);});
