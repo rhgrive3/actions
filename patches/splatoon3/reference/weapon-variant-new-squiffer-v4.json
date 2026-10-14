@@ -1,0 +1,605 @@
+{
+  "sourceRow": "Charger_Quick_01",
+  "baseId": "s3-charger-quick",
+  "referenceVersion": "Official Fresh Season 2024; canonical11.3.0 identity",
+  "inspectedAt": "2026-10-14",
+  "references": [
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_New_Squiffer_Promotional_3D_Render.png",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/2/21/S3_New_Squiffer_Promotional_3D_Render.png",
+      "dimensions": [
+        1812,
+        1019
+      ],
+      "inspection": "Actual high-resolution pixels viewed via cloud browser; rotation viewed at0s/6s, both flanks and flattened end."
+    },
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_New_Squiffer_model_rotating.mp4",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/c/cb/S3_New_Squiffer_model_rotating.mp4",
+      "dimensions": null,
+      "inspection": "Actual high-resolution pixels viewed via cloud browser; rotation viewed at0s/6s, both flanks and flattened end."
+    },
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_Fizzbang_Promo_New_Squiffer.png",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/c/c8/S3_Fizzbang_Promo_New_Squiffer.png",
+      "dimensions": [
+        1920,
+        1080
+      ],
+      "inspection": "Actual high-resolution pixels viewed via cloud browser; rotation viewed at0s/6s, both flanks and flattened end."
+    }
+  ],
+  "officialPromoOrigin": "https://x.com/SplatoonJP/status/1758054540920910003",
+  "icon": {
+    "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/images/weapon/Wst_Charger_Quick_01.png",
+    "gitBlob": "a85b50b4d72e292201f6d498de6bd0905d589c3d",
+    "role": "Identity/palette crosscheck only; not used alone for shape."
+  },
+  "changes": [
+    "Flattened tapered fixed-gray tank replaces round ink tank.",
+    "Classic cylinder rings removed; bilateral starburst shoulder labels and dark rear graphic.",
+    "Collar/clips/muzzle/trigger team ink, corroborated by lime promo and cyan gameplay frame.",
+    "Fixed pale-blue barrel/grip and muted-green frame."
+  ],
+  "limits": [
+    "Dimensions artist-estimated from official views, not measured game mesh.",
+    "Tank glyphs and starburst lettering are procedural approximations.",
+    "Receiver/bar/muzzle inherit base geometry; CPU view suggests receiver upper contour too flat.",
+    "CPU previews are not runtime shader or held-character validation.",
+    "No gameplay/timing changes or retail behavior equivalence claim."
+  ],
+  "baseSourceSha256": "06901d06a9e7e2a5902c77fbeb809306c043933f8bdffb6a231fb32f24f86cef",
+  "validation": {
+    "focusedTests": "4/4 passed",
+    "triangles": 5552,
+    "fullBuild": "not run",
+    "runtimeRender": "not run"
+  },
+  "revision": "v4 private soft tank mold and tapered keel, v3 trace preserved",
+  "v2Changes": [
+    "Rounded receiver shoulder and narrowed swept keel replace long flat slab",
+    "Curved pale-blue grip shell extends below receiver while retaining native hand-axis position",
+    "Muted green fixed receiver value adjusted; final color must be judged with production shader",
+    "Lower rail meets revised receiver endpoint; all gameplay anchors and dynamic channels unchanged"
+  ],
+  "v2Limits": [
+    "Tank markings remain procedural approximation",
+    "Tank shoulder and volume still require correction against reference",
+    "Grip contour is constrained by native hand axis; native held alignment must be captured",
+    "No retail parity acceptance until exact-head runtime comparison"
+  ],
+  "v2Validation": {
+    "tests": 5,
+    "triangles": 6508,
+    "command": "node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-new-squiffer-v2.test.mjs"
+  },
+  "v3Trace": {
+    "status": "Reference-space trace planning only. No candidate module or remote head changed.",
+    "source": "https://cdn.wikimg.net/en/splatoonwiki/images/2/21/S3_New_Squiffer_Promotional_3D_Render.png",
+    "sourceDimensions": [
+      1812,
+      1019
+    ],
+    "coordinateSystem": "Observed natural-size browser viewport screenshot, 1180x757, scrolled image. Coordinates below are screenshot coordinates, not original-image coordinates. Registration must be preserved with the matching screenshot before geometry mapping.",
+    "confirmed": [
+      "Remove the rectangular light border and dark plaque: the official outlined glyphs sit directly over the dark grey shell.",
+      "The main rear mark is large, irregular and stacked. It must not be substituted with repeated E/C-shaped invented letters.",
+      "The forward sticker is an asymmetric red burst with a thin dark outline and yellow inset outline, not a regular alternating-radius star.",
+      "A short black wordmark strip crosses the burst, but the light marks are graphical glyphs; do not assign invented Latin text.",
+      "The tank shell has a curved rear lip and stepped/tapered shoulder around the burst; current polygonal v2 shell remains approximate."
+    ],
+    "burstOuterTraceViewportPixels": [
+      [
+        476,
+        414
+      ],
+      [
+        482,
+        399
+      ],
+      [
+        494,
+        401
+      ],
+      [
+        497,
+        384
+      ],
+      [
+        508,
+        392
+      ],
+      [
+        522,
+        377
+      ],
+      [
+        527,
+        395
+      ],
+      [
+        542,
+        387
+      ],
+      [
+        541,
+        402
+      ],
+      [
+        557,
+        398
+      ],
+      [
+        549,
+        412
+      ],
+      [
+        560,
+        418
+      ],
+      [
+        549,
+        427
+      ],
+      [
+        562,
+        438
+      ],
+      [
+        549,
+        443
+      ],
+      [
+        552,
+        458
+      ],
+      [
+        534,
+        455
+      ],
+      [
+        530,
+        475
+      ],
+      [
+        517,
+        466
+      ],
+      [
+        506,
+        478
+      ],
+      [
+        499,
+        466
+      ],
+      [
+        486,
+        472
+      ],
+      [
+        487,
+        452
+      ],
+      [
+        474,
+        451
+      ],
+      [
+        479,
+        437
+      ],
+      [
+        471,
+        431
+      ]
+    ],
+    "landmarksViewportPixels": {
+      "rearLipTop": [
+        412,
+        283
+      ],
+      "rearLipBottom": [
+        365,
+        404
+      ],
+      "rearGlyphBounds": [
+        391,
+        327,
+        478,
+        442
+      ],
+      "burstBounds": [
+        471,
+        377,
+        562,
+        478
+      ],
+      "neckEnd": [
+        621,
+        455
+      ]
+    },
+    "uncertainty": [
+      "Burst points are a manual first trace at native screenshot scale, not pixel-accurate segmentation.",
+      "Rear glyph interior overlaps and outline widths need closer evidence before a mesh trace is safe.",
+      "Projection and cylindrical/shoulder curvature mean screenshot pixels cannot be copied directly as planar bottle coordinates.",
+      "Verify opposite side before applying bilateral mirrored markings."
+    ],
+    "nextCorrection": "Replace regular star with registered asymmetric outline; remove invented plaque/letters. Trace only visually resolved graphic contours; leave unresolved glyph fragments absent rather than fabricate them.",
+    "registeredScreenshot": "/workspace/shared/squiffer-official-tank-natural.jpg",
+    "verifiedImageRect": {
+      "x": 0,
+      "y": -102,
+      "width": 1812,
+      "height": 1019
+    },
+    "sourcePixelTransform": "sourceX=viewportX; sourceY=viewportY+102, confirmed by DOM image rectangle",
+    "burstOuterTraceSourcePixels": [
+      [
+        476,
+        516
+      ],
+      [
+        482,
+        501
+      ],
+      [
+        494,
+        503
+      ],
+      [
+        497,
+        486
+      ],
+      [
+        508,
+        494
+      ],
+      [
+        522,
+        479
+      ],
+      [
+        527,
+        497
+      ],
+      [
+        542,
+        489
+      ],
+      [
+        541,
+        504
+      ],
+      [
+        557,
+        500
+      ],
+      [
+        549,
+        514
+      ],
+      [
+        560,
+        520
+      ],
+      [
+        549,
+        529
+      ],
+      [
+        562,
+        540
+      ],
+      [
+        549,
+        545
+      ],
+      [
+        552,
+        560
+      ],
+      [
+        534,
+        557
+      ],
+      [
+        530,
+        577
+      ],
+      [
+        517,
+        568
+      ],
+      [
+        506,
+        580
+      ],
+      [
+        499,
+        568
+      ],
+      [
+        486,
+        574
+      ],
+      [
+        487,
+        554
+      ],
+      [
+        474,
+        553
+      ],
+      [
+        479,
+        539
+      ],
+      [
+        471,
+        533
+      ]
+    ],
+    "resolvedGlyphEdgesSourcePixels": [
+      [
+        [
+          405,
+          435
+        ],
+        [
+          415,
+          432
+        ],
+        [
+          426,
+          452
+        ],
+        [
+          423,
+          459
+        ],
+        [
+          414,
+          455
+        ],
+        [
+          411,
+          462
+        ],
+        [
+          400,
+          459
+        ]
+      ],
+      [
+        [
+          427,
+          459
+        ],
+        [
+          451,
+          467
+        ],
+        [
+          448,
+          475
+        ],
+        [
+          434,
+          470
+        ],
+        [
+          430,
+          478
+        ],
+        [
+          447,
+          483
+        ],
+        [
+          444,
+          492
+        ],
+        [
+          419,
+          484
+        ],
+        [
+          415,
+          477
+        ]
+      ],
+      [
+        [
+          412,
+          493
+        ],
+        [
+          421,
+          496
+        ],
+        [
+          418,
+          506
+        ],
+        [
+          425,
+          509
+        ],
+        [
+          428,
+          498
+        ],
+        [
+          437,
+          502
+        ],
+        [
+          432,
+          518
+        ],
+        [
+          410,
+          510
+        ]
+      ]
+    ]
+  },
+  "v3Limits": [
+    "Three resolved light silhouettes only; ambiguous glyph holes omitted",
+    "Burst wordmark light marks omitted instead of invented letters",
+    "Planar source registration approximate; opposite-side mark layout not accepted",
+    "Bottle molded contour unchanged fromv2",
+    "v2 source anchors and channels preserved",
+    "Rear mark intentionally incomplete: three resolved strokes do not reconstruct the whole large outlined emblem. CPU preview confirms omissions, not retail acceptance."
+  ],
+  "v3Validation": {
+    "tests": 6,
+    "triangles": 6252,
+    "command": "node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-new-squiffer-v3.test.mjs"
+  },
+  "v4Changes": [
+    "Rounded tank perimeter/shoulder and rear rim, fixed grey palette unchanged",
+    "Tank neck thickness tapers to70percent; all graphic meshes receive same position transform",
+    "Receiver front thickness tapers to44percent; native grip region and anchors unchanged",
+    "Adaptive curve sampling retains high-curvature joins while reducing straight/gentle portions"
+  ],
+  "v4Validation": {
+    "tests": 8,
+    "triangles": 6468,
+    "deltaFromV3": 216,
+    "initialUniformAttemptTriangles": 7356,
+    "initialDeltaFromV3": 1104,
+    "optimization": "Adaptive39tank/25rim/38receiver points instead of initial64/40/72; existing16000triangle cap unchanged",
+    "buildCost": {
+      "scope": "Local source-builder microbenchmark, not production bundle or GPU timing",
+      "stats": {
+        "v3": {
+          "triangles": 6252,
+          "attributeAndIndexBytes": 156584,
+          "samples": 20,
+          "warmups": 5,
+          "medianMs": 46.11025649999999,
+          "p25Ms": 43.5546260000001,
+          "p75Ms": 53.17762799999991
+        },
+        "v4": {
+          "triangles": 6468,
+          "attributeAndIndexBytes": 162200,
+          "samples": 20,
+          "warmups": 5,
+          "medianMs": 50.88338250000015,
+          "p25Ms": 48.004215999999815,
+          "p75Ms": 54.63045599999987
+        }
+      }
+    },
+    "curveSampling": {
+      "scope": "Tessellation deviation from same authored spline, not retail shape accuracy",
+      "rows": [
+        {
+          "name": "shape",
+          "segments": 39,
+          "maxCurveChordErrorMeters": 0.000577412885862273
+        },
+        {
+          "name": "rim",
+          "segments": 25,
+          "maxCurveChordErrorMeters": 0.0005786985381039764
+        },
+        {
+          "name": "receiverContour",
+          "segments": 38,
+          "maxCurveChordErrorMeters": 0.0006606427521763438
+        }
+      ]
+    },
+    "nativeNumeric": {
+      "v3": {
+        "handR": [
+          -0.1500806124979226,
+          0.7366871162558579,
+          0.1781810600079085
+        ],
+        "handL": [
+          0.04848273844667747,
+          0.7804255001678364,
+          0.2548674494498432
+        ],
+        "muzzle": [
+          0.390862797732004,
+          0.9573772513414817,
+          0.6150440071025595
+        ],
+        "pivot": [
+          0.40791323433379456,
+          0.5533252207269768,
+          -0.726249263932701,
+          0,
+          -0.8571149314977026,
+          -0.041992768291620464,
+          -0.5134107533105415,
+          0,
+          -0.31458033546144365,
+          0.8319061290305854,
+          0.45713390272688736,
+          0,
+          -0.09468029111878146,
+          0.7530015297197059,
+          0.18661576832642807,
+          1
+        ],
+        "rootUnattached": true
+      },
+      "v4": {
+        "handR": [
+          -0.1500806124979226,
+          0.7366871162558579,
+          0.1781810600079085
+        ],
+        "handL": [
+          0.04848273844667747,
+          0.7804255001678364,
+          0.2548674494498432
+        ],
+        "muzzle": [
+          0.390862797732004,
+          0.9573772513414817,
+          0.6150440071025595
+        ],
+        "pivot": [
+          0.40791323433379456,
+          0.5533252207269768,
+          -0.726249263932701,
+          0,
+          -0.8571149314977026,
+          -0.041992768291620464,
+          -0.5134107533105415,
+          0,
+          -0.31458033546144365,
+          0.8319061290305854,
+          0.45713390272688736,
+          0,
+          -0.09468029111878146,
+          0.7530015297197059,
+          0.18661576832642807,
+          1
+        ],
+        "rootUnattached": true
+      },
+      "nativeBoneAndMuzzleInvariant": true,
+      "characterRendered": false,
+      "limit": "Numeric transform equality and local grip enclosure only; no visual hand-clearance claim"
+    },
+    "shapeParity": "Ink/glow/trigger/port geometry hashes, palettes, native grips/muzzle/part pivots unchanged. Adopted base isolated. Retail silhouette not accepted; no pixel-parity claim."
+  },
+  "v4Limits": [
+    "CPU geometry preview only; exact-head production render pending",
+    "Authored spline/thickness estimates are not reconstructed retail mesh",
+    "Tessellation error is relative to same authored spline, not official silhouette",
+    "Partialv3label remains incomplete, no new invented interiors",
+    "Native hand-bone equality plus local grip containment does not establish full hand clearance",
+    "Local warmed builder cost is not bundle/GPU timing; no full build run locally"
+  ]
+}

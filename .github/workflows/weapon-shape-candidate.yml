@@ -1,13 +1,13 @@
-name: Render Dapple NOC-T v2 diagnostic candidate
+name: Render reviewed weapon batch candidate
 on:
   push:
-    branches: [review/noct-v2-candidate-20261014]
+    branches: [review/weapon-batch-candidate-20261014]
 permissions:
   contents: read
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,14 +44,70 @@ jobs:
           grep -qx '# pass 5' variant-test-results/emitted.tap
           grep -qx '# fail 0' variant-test-results/emitted.tap
           grep -qx '# skipped 3' variant-test-results/emitted.tap
-      - name: Verify New Squiffer source geometry
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-new-squiffer-v2.test.mjs
-      - name: Verify Dapple NOC-T v2 source geometry
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs
+      - name: Gate selected Squiffer v4 source and emitted registry invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs | tee variant-test-results/squiffer-v4-source.tap
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs | tee variant-test-results/squiffer-v4-emitted.tap
+          for file in variant-test-results/squiffer-v4-source.tap variant-test-results/squiffer-v4-emitted.tap; do
+            grep -qx '# tests 8' "$file"
+            grep -qx '# pass 8' "$file"
+            grep -qx '# fail 0' "$file"
+            grep -qx '# skipped 0' "$file"
+          done
+      - name: Gate Bulbz source and emitted registry geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-bulbz.test.mjs | tee variant-test-results/bulbz-source.tap
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-bulbz.test.mjs | tee variant-test-results/bulbz-emitted.tap
+          for file in variant-test-results/bulbz-source.tap variant-test-results/bulbz-emitted.tap; do
+            grep -qx '# tests 6' "$file"
+            grep -qx '# pass 6' "$file"
+            grep -qx '# fail 0' "$file"
+            grep -qx '# skipped 0' "$file"
+          done
+      - name: Gate NOC-T source and emitted registry invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs | tee variant-test-results/noct-source.tap
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs | tee variant-test-results/noct-emitted.tap
+          for file in variant-test-results/noct-source.tap variant-test-results/noct-emitted.tap; do
+            grep -qx '# tests 9' "$file"
+            grep -qx '# pass 9' "$file"
+            grep -qx '# fail 0' "$file"
+            grep -qx '# skipped 0' "$file"
+          done
+      - name: Gate Hornz stripe source and emitted containment (1 pass each, 0 skip)
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-stripe-containment.test.mjs | tee variant-test-results/stripe-source.tap
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-stripe-containment.test.mjs | tee variant-test-results/stripe-emitted.tap
+          for file in variant-test-results/stripe-source.tap variant-test-results/stripe-emitted.tap; do
+            grep -qx '# tests 1' "$file"
+            grep -qx '# pass 1' "$file"
+            grep -qx '# fail 0' "$file"
+            grep -qx '# skipped 0' "$file"
+          done
+      - name: Gate Tentatek family source and emitted registry invariants (9 pass each, 0 skip)
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/shooter-blaster-variants.test.mjs | tee variant-test-results/tentatek-source.tap
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/shooter-blaster-variants.test.mjs | tee variant-test-results/tentatek-emitted.tap
+          for file in variant-test-results/tentatek-source.tap variant-test-results/tentatek-emitted.tap; do
+            grep -qx '# tests 9' "$file"
+            grep -qx '# pass 9' "$file"
+            grep -qx '# fail 0' "$file"
+            grep -qx '# skipped 0' "$file"
+          done
       - name: Install capture browser after runtime gates pass
         run: npx playwright install --with-deps chromium
       - name: Capture actual emitted weapon meshes
-        run: node scripts/capture-weapon-shape-candidate.mjs --site _site --out variant-gallery
+        run: node scripts/capture-weapon-batch-candidate.mjs --site _site --out variant-gallery
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -66,4 +122,3 @@ jobs:
           path: variant-test-results
           if-no-files-found: warn
           retention-days: 7
-

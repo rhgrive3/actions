@@ -19,8 +19,8 @@ import * as SPLATANAS from './splatanas.mjs';
 import { VARIANT_MODELS as SHOOTER_VARIANTS } from './shooter-blaster-variants.mjs';
 import { VARIANT_MODELS as MELEE_VARIANTS } from './variants-melee.mjs';
 import { VARIANT_MODELS as RANGED_VARIANTS } from './variants-ranged-defense.mjs';
-import { FOLLOWUP_MODELS as SQUIFFER_FOLLOWUP } from './variants-squiffer-followup.mjs';
-import { FOLLOWUP_MODELS as SQUIFFER_V2_FOLLOWUP } from './variants-squiffer-v2-followup.mjs';
+import { FOLLOWUP_MODELS as SQUIFFER_V4_FOLLOWUP } from './variants-squiffer-v4-followup.mjs';
+import { FOLLOWUP_MODELS as BULBZ_FOLLOWUP } from './variants-bulbz-followup.mjs';
 import { FOLLOWUP_MODELS as NOCT_FOLLOWUP } from './variants-dapple-noct-followup.mjs';
 
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
@@ -49,7 +49,7 @@ for (const [family, mod] of FAMILIES) {
 // Alternate appearance IDs never enter the gameplay catalogue. Only implemented
 // rows are selectable; retain base IDs for direct family animation table lookups.
 const VARIANTS = new Map();
-for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, {...RANGED_VARIANTS,...SQUIFFER_FOLLOWUP,...SQUIFFER_V2_FOLLOWUP,...NOCT_FOLLOWUP}]) {
+for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, {...RANGED_VARIANTS,...SQUIFFER_V4_FOLLOWUP,...NOCT_FOLLOWUP,...BULBZ_FOLLOWUP}]) {
   for (const [id, spec] of Object.entries(group)) {
     if (SPECS.has(id) || VARIANTS.has(id)) throw new Error(`Duplicate weapon appearance ${id}`);
     const base = SPECS.get(spec.baseId);
@@ -127,4 +127,3 @@ const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush']);
 export function weaponNeedsNativeCarry(id) {
   return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(weaponBaseModelId(id))?.nativeCarry);
 }
-

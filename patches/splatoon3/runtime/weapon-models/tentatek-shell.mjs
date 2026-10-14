@@ -138,12 +138,30 @@ function wordmark(side) {
   }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();return g;
 }
+// The inherited S band follows the base capsule's shallow endcap. The
+// Tentatek endcap is shorter and rounder, so only its forward lower tip needs
+// radial adjustment. Preserve angular path, Z registration and band section.
+function fitFrontBandTip(g) {
+  const p=g.attributes.position,c=g.attributes.color,pink=new THREE.Color(PINK);
+  const center=R+.0026/2+.0005,moved=new Set(),normals=g.attributes.normal.clone();let changed=0;
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+    if(z<=Z1-CAP||z>=.15||y>=CY||y<=.0589)continue;
+    if(Math.abs(c.getX(i)-pink.r)>1e-6||Math.abs(c.getY(i)-pink.g)>1e-6||Math.abs(c.getZ(i)-pink.b)>1e-6)continue;
+    const r=Math.hypot(x,y-CY),shrink=z>Z1-.03?Math.sqrt(Math.max(.5,1-((z-Z1+.03)/.05)**2)):1;
+    const delta=radius(z)+.0018-center*shrink,scale=(r+delta)/r;
+    p.setX(i,x*scale);p.setY(i,CY+(y-CY)*scale);moved.add(i);changed++;
+  }
+  if(changed){g.computeVertexNormals();for(let i=0;i<p.count;i++)if(!moved.has(i))g.attributes.normal.setXYZ(i,normals.getX(i),normals.getY(i),normals.getZ(i));g.computeBoundingBox();g.computeBoundingSphere();}
+  return changed;
+}
 export function tentatekShell(d) {
   // The official turntable confirms pink collar/S bands, and both logo sides.
   // Keep the original band triangles; recolor the complete pieces, including
   // their lower reaches. The fore-end and front plate are excluded.
   const bandVertices=recolor(d.body,{'#efbf2a':PINK},(_x,y,z)=>
     (y>.085&&z<-.04)||(y>(z<0?.0584:.0589)&&z>-.04&&z<.15));
+  const frontBandTipVertices=fitFrontBandTip(d.body);
   const changed=frameAndForeEnd(d),shell=new Pieces(),profile=[];
   for(let i=0;i<=40;i++){const z=Z0+(Z1-Z0)*i/40;profile.push([radius(z),z]);}
   shell.add(zlathe(profile,0,CY,0,40),PINK,M.gloss);
@@ -158,7 +176,7 @@ export function tentatekShell(d) {
   d.parts.can.src.dispose();d.parts.can.src=emptyGeometry();
   d.parts.variantSkin=part(shell,d.parts.can.pivot,'body');
   d.variantGeometryRevision={source:'S3_Tentatek_Splattershot_model_rotating.mp4',removedBandTriangles:0,bandVertices,tankTriangleCount,
-    ...changed,shellProfile:'cylindrical-center-elliptical-endcaps',emblemSides:[-1,1],reverseSideVerified:true,
+    ...changed,frontBandTipVertices,shellProfile:'cylindrical-center-elliptical-endcaps',emblemSides:[-1,1],reverseSideVerified:true,
     wordmarkTrace:{sourceFrameSeconds:2,runs:117,exactGlyphContours:false,xOffset:.00035},
     guardOpening:{width:.049,height:.026,ratio:.049/.026},ridgeSweep:'forward-while-descending',
     missingDetails:['tank seam','exact retail surface response','subpixel wordmark contours']};

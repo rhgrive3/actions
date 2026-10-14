@@ -25,7 +25,9 @@ function build(d){
  [.015,-.005],[.017,.021],[.022,.041],[.020,.047],[0,.047]],28),20);
  grip.scale(.76,1,1).rotateX(Math.atan2(.25,1)).translate(0,-.008,-.002);
  body.add(grip,C.black,M.satin); // Smooth source surface, not the rubber knurl shader.
- body.add(box(.023,.024,.033,0,.048,0,.2,6,4),C.black,M.satin);
+ // Narrow shoulder joins the frame spine between the real upper windows.
+ body.add(slab([[-.0165,.036],[.0165,.036],[.0165,.058],[.004,.066],[.004,.078],
+  [-.004,.078],[-.004,.066],[-.0165,.058]],.023,0,.001),C.black,M.satin);
  body.add(box(.025,.022,.038,0,-.069,-.014,.2,6,4),C.black,M.satin);
  body.add(slab(rounded(upper,32),.032,0,.002,upperWindows.map(h=>rounded(h,12))),C.edge,M.satin);
  body.add(slab(rounded(skid,32),.032,0,.0015,skidWindows.map(h=>rounded(h,12))),C.edge,M.satin);
@@ -68,7 +70,8 @@ function build(d){
   .translate(-.014+x*.007,.044-z*.003,-.180+z*.008));
  // Large front-facing cup light on a coiled metal bracket, separate from the
  // firing nozzle. It has a convex yellow lens and narrow stepped black rim.
- body.add(pipe([[0,.096,.065],[0,.114,.073],[0,.123,.064],[0,.137,.075]],.003,16,7),C.metal,M.metal);
+ // Seat only the bracket foot in the reshaped neck; cup and coil anchors stay fixed.
+ body.add(pipe([[0,.082,.065],[0,.114,.073],[0,.123,.064],[0,.137,.075]],.003,16,7),C.metal,M.metal);
  body.add(zlathe([[0,.055],[.018,.055],[.032,.067],[.043,.082],[.044,.119],[.041,.125],[.034,.125],[.034,.117],[0,.117]],0,.174,0,28),C.black,M.satin);
  body.add(sphere(.035,.035,.006,0,.174,.119,24,12),C.lens,M.lens);
  body.add(ring(.038,.002,0,.174,.124,'z',6,28),'#4b5149',M.satin);

@@ -1,0 +1,78 @@
+{
+  "sourceRow": "Stringer_Normal_02",
+  "baseId": "s3-stringer-normal",
+  "inspectedAt": "2026-10-14",
+  "status": "Static geometry candidate; retail accuracy and firing-color behavior not accepted",
+  "sources": [
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_Bulbz_Tri-Stringer_model_rotating.mp4",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/f/f8/S3_Bulbz_Tri-Stringer_model_rotating.mp4",
+      "officialOrigin": "https://x.com/SplatoonJP/status/1932737572389982488",
+      "dimensions": [
+        1920,
+        1080
+      ],
+      "durationSeconds": 24,
+      "inspected": [
+        "Projectile-facing RGB bands and three elongated bulbs",
+        "User-facing pale marble limbs and black rails",
+        "Dark tubes and rear reel, opposite/oblique views"
+      ],
+      "retrieval": "Streamed in cloud browser. No full video saved."
+    },
+    {
+      "page": "https://splatoonwiki.org/wiki/Bulbz_Tri-Stringer",
+      "role": "Secondary crosscheck only; shooting-color transition not verified by observed gameplay."
+    }
+  ],
+  "implementation": [
+    "Independent variant body: flat tapered limbs, fixed RGB front bands, approximate pale marble rear, dark rails/clamps",
+    "Three elongated capsule bulbs on one limb; native held handedness pending",
+    "Dark metal tubes, light rings and black reel; team ink only in three tube interiors",
+    "Native grip, muzzle, glow, part geometry/pivots and bowCfg retained",
+    "Animated strings fixed black; original native animate callback retained",
+    "Straight planar limb/band faces use one trapezoid span; original curved rails/caps remain byte-identical"
+  ],
+  "nativeTimingInvestigation": {
+    "stateAvailable": [
+      "color",
+      "sinceRelease",
+      "sinceShoot",
+      "charge",
+      "chargeFlash",
+      "firing"
+    ],
+    "source": "inkwave-public/src/game/character.js animation state; runtime/weapon-models/stringers.mjs animateBow",
+    "existingBehavior": "Release overshoot uses exp(-sinceRelease*14)*sin(sinceRelease*70) for first 0.4s. This controls motion, not a color fade.",
+    "decision": "No invented shooting-color duration or curve; no new animation callback."
+  },
+  "unresolved": [
+    "Retail firing transition surfaces, duration and curve require gameplay evidence",
+    "Native held capture must verify handedness and proportions; anchors unchanged",
+    "Marble is procedural approximation",
+    "Emberz text under tube and reel emblem omitted pending legible reference",
+    "Tube/reel contour and overall proportions approximate; retail parity not claimed"
+  ],
+  "validation": {
+    "command": "node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
+    "passed": 6,
+    "triangles": 11752,
+    "covers": [
+      "Base isolation/determinism",
+      "Native anchors and part geometry/pivots",
+      "Ink ownership",
+      "Front normals",
+      "Three capsules on one limb",
+      "Native transforms at 30/60/120Hz",
+      "Finite indexed geometry under 16000 triangles",
+      "Exact trapezoid area and forward normals independent of planar subdivision"
+    ],
+    "notCovered": [
+      "Production bundle",
+      "Actual GPU held render",
+      "Retail firing-color parity",
+      "No build-time or GPU speedup claim from 300 fewer planar triangles"
+    ],
+    "diagnostics": "Private CPU z-buffer previews are geometry diagnostics only."
+  }
+}

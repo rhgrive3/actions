@@ -50,17 +50,20 @@
   ],
   "baseSha256": "3d4d610063af3d1032443e7e742cfdb681fd0b38681a69f0f831d45db38ce89c",
   "verification": {
-    "focusedTests": "6/6 source geometry tests passed, including unchanged native anchors/trigger/base isolation, real cutouts, team ownership, finite geometry and11042triangles below unchanged16000cap.",
-    "pairedNative": "Passed both team colors with held, right-recoil and left-recoil states; selected-hand clock isolation and parent/world-matrix restoration asserted using existing source fixture with v2 overlay. Not exact whole-head emitted or gameplay/retail acceptance.",
+    "focusedTests": "9/9 registry-bound source geometry tests passed with zero skips, including unchanged native anchors/trigger/base isolation, real cutouts, team ownership, finite attributes, 11098 triangles below unchanged 16000 cap, shoulder connectivity, 1890-ray upper-window occupancy preservation and optic bracket attachment. The pre-optic shoulder candidate fails the ninth regression at y=.089.",
+    "pairedNative": "Localized shoulder source smoke passed both team colors with held/right/left recoil; selected-hand clock isolation and parent/world-matrix restoration asserted. Bounded cached fixture, not exact whole-head emitted or gameplay/retail acceptance.",
     "preview": "One CPU side preview streamed in-memory and inspected; no duplicate image file written.",
     "fullBuild": "not run",
-    "runtimeRender": "Private v2 still requires exact emitted render; v1 capture is not v2 acceptance."
+    "runtimeRender": "Private v2 still requires exact emitted render; v1 capture is not v2 acceptance.",
+    "opticAttachment": "Exact composed registry rerun 9/9; independently repeated geometric probe confirms endpoint inside frame. No new GPU/paired smoke for this delta."
   },
-  "revision": "Private v2 after actual 3da5e188 shader capture review",
+  "revision": "Localized shoulder and optic bracket attachment corrections after c6bf79 diagnostic source review",
   "v2Corrections": [
     "Compact curved rear brush elbow and wider team-colored head; rear truss and taut cord shortened coherently.",
     "Smooth flared and tapered grip uses satin surface instead of rubber knurl; native trigger geometry, pivot and grip metadata unchanged.",
     "Round actual upper/lower cutouts and exterior corners with bounded samples; front neck now sweeps down and inward.",
-    "Optic unchanged because apparent height remains perspective-sensitive; no arbitrary rescale."
+    "Optic unchanged because apparent height remains perspective-sensitive; no arbitrary rescale.",
+    "Localized shoulder joins the central upper frame spine without occluding windows. Published c6bf geometry fails gap regression; correction preserves its dense upper-window occupancy mask.",
+    "Only the optic bracket foot is lowered from y .096 to .082, seating it .003214 inside the existing front neck. Remaining coil control points, cup, frame, muzzle/grip and native motion are unchanged; independent geometry probe finds 15 bracket vertices inside the frame. Fresh emitted/paired capture remains required."
   ]
 }

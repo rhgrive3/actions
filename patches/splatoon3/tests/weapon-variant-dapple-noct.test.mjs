@@ -1,9 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import {fixture} from './source-fixture.mjs';
 let loaded;
-const production=()=>loaded??=fixture({extraExports:`export {FOLLOWUP_MODELS as NOCT} from './patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs';export {M} from './patches/splatoon3/runtime/weapon-models/kit.mjs';export {MODELS as DUALIES} from './patches/splatoon3/runtime/weapon-models/dualies.mjs';`});
+const production=()=>loaded??=(async()=>{
+ if(process.env.INKWAVE_BUILT_SITE){
+  const site=path.resolve(process.env.INKWAVE_BUILT_SITE),manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
+  const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+  const sourceHash=sha(fs.readFileSync(new URL('../runtime/weapon-models/variants-dapple-noct-followup.mjs',import.meta.url)));
+  const registryHash=sha(fs.readFileSync(path.join(site,'patches/splatoon3/runtime/weapon-models/registry.mjs')));
+  assert.equal(manifest.files['patch/runtime/weapon-models/variants-dapple-noct-followup.mjs'],sourceHash);
+  assert.equal(manifest.artifacts['patches/splatoon3/runtime/weapon-models/registry.mjs'],registryHash);
+  console.log('NOCT_EMITTED_REGISTRY_RECEIPT',JSON.stringify({contentHash:manifest.contentHash,inputHash:manifest.inputHash,sourceHash,registryHash}));
+ }
+ const f=await fixture({extraExports:`export {weaponVariantSpec,weaponModelSpec} from './patches/splatoon3/runtime/weapon-models/registry.mjs';export {M} from './patches/splatoon3/runtime/weapon-models/kit.mjs';`});
+ return {...f,NOCT:{Maneuver_Short_02:f.weaponVariantSpec('Maneuver_Short_02')},DUALIES:{'s3-maneuver-short':f.weaponModelSpec('s3-maneuver-short')}};
+})();
 const fresh=()=>({kind:'dualies',dual:true,parts:{},gripR:{pos:[0,0,0]},gripL:{pos:[0,0,0]}});
 const hash=g=>crypto.createHash('sha256').update(Buffer.concat([...Object.values(g.attributes).map(a=>Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength)),Buffer.from(g.index.array.buffer)])).digest('hex');
 const shape=d=>[d.body,d.ink,...Object.values(d.parts).map(p=>p.src)].map(hash);
@@ -47,4 +61,35 @@ test('v2 compact broad brush, smooth grip and rounded upper openings retain real
  }assert.ok(gripVertices>100);
  const mesh=new f.THREE.Mesh(d.body,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
  for(const [z,y] of [[-.017,.088],[.021,.085]])assert.equal(new f.THREE.Raycaster(new f.THREE.Vector3(-.1,y,z),new f.THREE.Vector3(1,0,0)).intersectObject(mesh).length,0);
+});
+
+test('grip shoulder remains continuous into the raised upper frame',async()=>{
+ const f=await production(),d=f.NOCT.Maneuver_Short_02.build(fresh());
+ const mesh=new f.THREE.Mesh(d.body,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ for(const y of [.055,.060,.065,.070,.075])assert.ok(new f.THREE.Raycaster(new f.THREE.Vector3(-.1,y,0),new f.THREE.Vector3(1,0,0)).intersectObject(mesh).length>0,`air gap at shoulder y=${y}`);
+});
+
+test('dense upper-window occupancy preserves the published contour',async()=>{
+ const f=await production(),d=f.NOCT.Maneuver_Short_02.build(fresh());
+ const mesh=new f.THREE.Mesh(d.body,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ // Golden c6bf79 side-ray mask: 1 mm grid around both windows, excluding
+ // only the central frame spine where the shoulder intentionally joins.
+ let mask='';
+ for(let iy=74;iy<=103;iy++)for(let iz=-30;iz<=42;iz++){
+  if(iz>-5&&iz<6)continue;
+  mask+=new f.THREE.Raycaster(new f.THREE.Vector3(-.1,iy/1000,iz/1000),new f.THREE.Vector3(1,0,0)).intersectObject(mesh).length?'1':'0';
+ }
+ assert.equal(mask.length,1890);
+ assert.equal(crypto.createHash('sha256').update(mask).digest('hex'),'aac82a873d849b9141906379ee09d9f121873e169fd66b7cd111a6ee2c590d76');
+});
+
+test('optic bracket foot continuously joins the reshaped front neck',async()=>{
+ const f=await production(),d=f.NOCT.Maneuver_Short_02.build(fresh());
+ const mesh=new f.THREE.Mesh(d.body,new f.THREE.MeshBasicMaterial({side:f.THREE.DoubleSide}));mesh.updateMatrixWorld(true);
+ // Sample above the neck surface: old foot leaves whole cross-sections empty.
+ for(let iy=85;iy<=98;iy++){
+  let occupied=false;
+  for(let iz=120;iz<=160;iz++)if(new f.THREE.Raycaster(new f.THREE.Vector3(-.1,iy/1000,iz/2000),new f.THREE.Vector3(1,0,0)).intersectObject(mesh).length){occupied=true;break;}
+  assert.ok(occupied,`disconnected optic foot at y=${iy/1000}`);
+ }
 });

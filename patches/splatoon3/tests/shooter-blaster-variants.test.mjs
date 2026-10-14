@@ -2,33 +2,35 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { fixture } from './source-fixture.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const SOURCE = process.env.INKWAVE_VARIANT_BASE || (fs.existsSync(path.join(ROOT,'inkwave-public/src/game/character-geo.js')) ? ROOT : path.resolve(ROOT, '../inkwave-gameplay-unowned-private'));
 const identity = JSON.parse(fs.readFileSync(path.join(ROOT,'patches/splatoon3/reference/shooter-blaster-variant-identity-1130.json'),'utf8'));
 let loaded;
 async function load() {
   if (loaded) return loaded;
-  const ctx = vm.createContext({ console }), mods = new Map();
-  function file(id) {
-    if (mods.has(id)) return mods.get(id);
-    let physical = id;
-    if (!fs.existsSync(physical)) physical = path.join(SOURCE,path.relative(ROOT,id));
-    const m = new vm.SourceTextModule(fs.readFileSync(physical,'utf8'),{context:ctx,identifier:id});mods.set(id,m);return m;
+  const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+  const sourceHash=sha(fs.readFileSync(new URL('../runtime/weapon-models/tentatek-shell.mjs',import.meta.url)));
+  assert.equal(sourceHash,'3ec929ae9b51cd55dbb51a9bffe12e96d6e3efe87e90c1143a7cd61cf967c51d');
+  if(process.env.INKWAVE_BUILT_SITE){
+    const site=path.resolve(process.env.INKWAVE_BUILT_SITE),manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json'),'utf8'));
+    assert.equal(sha(JSON.stringify(manifest.artifacts)),manifest.contentHash,'artifact manifest hash');
+    assert.equal(manifest.files['patch/runtime/weapon-models/tentatek-shell.mjs'],sourceHash);
+    for(const relative of ['runtime/weapon-models/registry.mjs','runtime/weapon-models/shooter-blaster-variants.mjs'])
+      assert.equal(manifest.files['patch/'+relative],sha(fs.readFileSync(path.join(ROOT,'patches/splatoon3',relative))));
+    const registryHash=sha(fs.readFileSync(path.join(site,'patches/splatoon3/runtime/weapon-models/registry.mjs')));
+    assert.equal(manifest.artifacts['patches/splatoon3/runtime/weapon-models/registry.mjs'],registryHash);
+    assert.equal(manifest.artifacts['patches/splatoon3/runtime/weapon-models/kit.mjs'],sha(fs.readFileSync(path.join(site,'patches/splatoon3/runtime/weapon-models/kit.mjs'))));
+    for(const name of ['registry','kit']){const rel='patches/splatoon3/runtime/weapon-models/'+name+'.mjs';assert.equal(manifest.artifacts['_versions/'+manifest.build.revision+'/'+rel],manifest.artifacts[rel],'capture and fixture artifact identity');}
+    console.log('TENTATEK_EMITTED_REGISTRY_RECEIPT',JSON.stringify({contentHash:manifest.contentHash,inputHash:manifest.inputHash,sourceHash,registryHash}));
   }
-  const entry = new vm.SourceTextModule(`export * as K from './patches/splatoon3/runtime/weapon-models/kit.mjs';
-    export {VARIANT_MODELS} from './patches/splatoon3/runtime/weapon-models/shooter-blaster-variants.mjs';
-    export {MODELS as A} from './patches/splatoon3/runtime/weapon-models/shooters.mjs';
-    export {MODELS as B} from './patches/splatoon3/runtime/weapon-models/shooters-b.mjs';
-    export {MODELS as C} from './patches/splatoon3/runtime/weapon-models/blasters.mjs';`,{context:ctx,identifier:path.join(ROOT,'entry.mjs')});
-  await entry.link((spec,from)=>{
-    if(spec==='three')return file(path.join(SOURCE,'inkwave-public/vendor/three/build/three.module.js'));
-    if(spec.startsWith('three/addons/'))return file(path.join(SOURCE,'inkwave-public/vendor/three/jsm',spec.slice(13)));
-    let p=path.resolve(path.dirname(from.identifier),spec);
-    if(p.startsWith(path.join(ROOT,'src/')))p=path.join(SOURCE,'inkwave-public',path.relative(ROOT,p));
-    return file(p);
-  });await entry.evaluate();return loaded=entry.namespace;
+  const f=await fixture({extraExports:`export * as K from './patches/splatoon3/runtime/weapon-models/kit.mjs';
+    export {weaponVariantSpec,weaponModelSpec,registeredWeaponVariants,registeredWeaponModels} from './patches/splatoon3/runtime/weapon-models/registry.mjs';`});
+  const variantIds=f.registeredWeaponVariants().filter(id=>id.startsWith('Shooter_')||id.startsWith('Blaster_'));
+  assert.deepEqual([...variantIds].sort(),identity.records.map(r=>r.sourceRow).sort(),'all shooter/blaster appearances resolve through the production registry');
+  return loaded={K:f.K,VARIANT_MODELS:Object.fromEntries(variantIds.map(id=>[id,f.weaponVariantSpec(id)])),
+    A:Object.fromEntries(f.registeredWeaponModels().map(id=>[id,f.weaponModelSpec(id)])),B:{},C:{}};
 }
 const PARTITIONS = { Shooter_Normal_01:'can', Shooter_Normal_02:'can', Shooter_Expert_02:'can', Shooter_Long_01:'ink', Blaster_Short_01:'ink', Blaster_Middle_02:'ink', Blaster_LightLong_02:'ink' };
 function channels(d) {return [['body',d.body],['ink',d.ink],...Object.entries(d.parts).map(([n,p])=>[n,p.src])];}
@@ -156,7 +158,18 @@ test('Tentatek HD reconstruction preserves base and native channels while correc
  const revision=d.variantGeometryRevision;assert.equal(revision.removedBandTriangles,0);
  assert.equal(revision.removedForeEnd,1004);assert.equal(revision.removedPlate,68);assert.ok(revision.removedPurple>500);
  assert.ok(revision.bandVertices>500);assert.equal(JSON.stringify(revision.emblemSides),'[-1,1]');assert.equal(revision.reverseSideVerified,true);
- assert.deepEqual(Array.from(d.body.attributes.position.array.slice(0,a.body.attributes.position.array.length)),Array.from(a.body.attributes.position.array),'surviving source vertices do not move');
+ // Only the verified forward-lower band tip follows the corrected endcap.
+ // Every other inherited position, and all Z registrations, remain exact.
+ const sourcePosition=a.body.attributes.position,variantPosition=d.body.attributes.position;let fittedTipVertices=0;
+ for(let i=0;i<sourcePosition.count;i++){
+  const x=sourcePosition.getX(i),y=sourcePosition.getY(i),z=sourcePosition.getZ(i);assert.equal(variantPosition.getZ(i),z);
+  if(x!==variantPosition.getX(i)||y!==variantPosition.getY(i)){
+   assert.ok(z>.1243&&z<.15&&y<.10725&&y>.0589,'only the verified front-lower band tip moves');fittedTipVertices++;
+  } else {
+   assert.deepEqual(Array.from(new Uint8Array(variantPosition.array.buffer,variantPosition.array.byteOffset+i*12,12)),Array.from(new Uint8Array(sourcePosition.array.buffer,sourcePosition.array.byteOffset+i*12,12)),'non-target position bytes');
+  }
+ }
+ assert.equal(fittedTipVertices,104);assert.equal(revision.frontBandTipVertices,104);
  const retained=new Set(Array.from(d.body.index.array)),ac=a.body.attributes.color,ap=a.body.attributes.position,yellow=new f.K.THREE.Color('#efbf2a');let preservedBandFaces=0;
  for(let i=0;i<a.body.index.count;i+=3){
   const ids=Array.from(a.body.index.array.slice(i,i+3));
@@ -209,4 +222,19 @@ test('wordmark stays surface-close, outward and occluded from the upper capture 
    const R=52*.11/120,cy=117*.11/120,rad=Math.sqrt(pt.x*pt.x+(pt.y-cy)**2),gap=rad-R;counts.minClearance=Math.min(counts.minClearance,gap);counts.maxClearance=Math.max(counts.maxClearance,gap);
   }data[view]=counts;
  }assert.equal(data.upper.visible,0,'upper camera cannot see through tank to either wordmark');for(const x of Object.values(data))assert.equal(x.backFacingVisible,0);assert.ok(actualMin>0&&actualMax<.0006,'wordmark is outside actual triangulated tank and less than0.6mm away');console.log('WORDMARK_OCCLUSION',JSON.stringify({views:data,actualSurfaceGap:{min:actualMin,max:actualMax}}));
+});
+
+test('Tentatek verified front-lower outer band has positive bounded clearance from its actual tank',async()=>{
+ const f=await load(),T=f.K.THREE,a=f.A.shooter.build(fresh(f.K,'shooter')),d=f.VARIANT_MODELS.Shooter_Normal_01.build(fresh(f.K,'shooter'));
+ const tank=d.parts.variantSkin.src.clone();tank.setIndex(Array.from(tank.index.array.slice(0,d.variantGeometryRevision.tankTriangleCount*3)));
+ const material=new T.MeshBasicMaterial({side:T.DoubleSide}),mesh=new T.Mesh(tank,material);mesh.updateMatrixWorld(true);
+ const p=d.body.attributes.position,n=a.body.attributes.normal,c=d.body.attributes.color,pink=new T.Color('#ed3886'),cy=.10725;let samples=0;
+ try{for(let i=0;i<a.body.attributes.position.count;i++){
+  const x=p.getX(i),y=p.getY(i),z=p.getZ(i);if(z<=.1243||z>=.15||y>=cy||y<=.0589)continue;
+  if(Math.abs(c.getX(i)-pink.r)>1e-6||Math.abs(c.getY(i)-pink.g)>1e-6||Math.abs(c.getZ(i)-pink.b)>1e-6)continue;
+  const dir=new T.Vector3(x,y-cy,0).normalize();if(n.getX(i)*dir.x+n.getY(i)*dir.y<=.7)continue;
+  const hit=new T.Raycaster(new T.Vector3(0,cy,z).addScaledVector(dir,.2),dir.clone().negate()).intersectObject(mesh)[0];assert.ok(hit);
+  const gap=Math.hypot(x,y-cy)-Math.hypot(hit.point.x,hit.point.y-cy);
+  assert.ok(gap>=.0025&&gap<=.004,`front outer band clearance ${gap}`);samples++;
+ }assert.equal(samples,24);}finally{tank.dispose();material.dispose();dispose(a);dispose(d);}
 });
