@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+// Exact unmodified 5780 receipts: deterministic .37 RNG, source production composition.
+const BASELINE_5780={"s3-maneuver-short":"148f72c7204b1d8040e53c98521c8a799533a77770cef9bd97c1e08295c81a20","s3-maneuver-gallon":"09ccb3b9ba810fa80b39434fc9baa6222adba6c4684dfc229a7dbe673f513b3e","s3-maneuver-dual":"8ac90f68c6c3fc3c48e90201a0508177cce6ef68da5e26c6087eb7602eda8cda","s3-maneuver-stepper":"d8e6cffb3507ae4f26390f2bd45c2f30e1ef681c7a13b775d222a7db2fd574ab","s3-maneuver-long":"aeafe0e14621485d75ad6fec9463bb8298f279b1b1638874eba6f9de06b6c88c","dualies":"ed3a6fbd4ebe93bf74a0e386103765a1607968ed51d8584588c4d4ea492714a1","shooter":"d7373eab526e07b28295304dadce206bf21970377e8952702047659c43a29abf","s3-charger-quick":"4e6ce978290137e1202d8913f49491d47d5cc823fa30516289afff48e8c17278","s3-stringer-normal":"b41c3674cdb58a20fab9289a5ce1b484db355f1bb55003f0d35982f9afc5e95d"};
+
+import {fixture} from './source-fixture.mjs';
+test('all catalog dualies and non-dual controls preserve admission, count, damage, ink and cadence',async()=>{
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:`export {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';`});
+ f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
+ const dualies=Object.keys(f.WEAPONS).filter(id=>f.WEAPONS[id].catalogRecord?.family==='dualies');assert.ok(dualies.includes('s3-maneuver-short'));assert.ok(dualies.length>=5);const baseIds=['s3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3-maneuver-stepper','s3-maneuver-long'],variantIds=['s3-maneuver-dual-01','s3-maneuver-dual-02','s3-maneuver-gallon-01','s3-maneuver-long-01','s3-maneuver-short-01','s3-maneuver-short-02','s3-maneuver-stepper-01'];const requested=process.env.INKWAVE_EXPECT_KIT_SET;if(requested){assert.ok(['base','expanded'].includes(requested));assert.deepEqual([...dualies].sort(),[...baseIds,...(requested==='expanded'?variantIds:[])].sort(),'explicit expected playable kit set');}console.log('KIT_SET_RECEIPT',JSON.stringify({expected:requested||'not specified',actual:dualies,variantCoverage:variantIds.filter(id=>dualies.includes(id)),unavailableVariants:variantIds.filter(id=>!dualies.includes(id))}));
+ const ids=[...dualies,'dualies',f.WEAPONS['shooter-01']?'shooter-01':'shooter',f.WEAPONS['s3-charger-quick-01']?'s3-charger-quick-01':'s3-charger-quick',f.WEAPONS['s3-stringer-normal-02']?'s3-stringer-normal-02':'s3-stringer-normal'],results={};
+ for(const id of ids){f.G.projectiles.clear();f.G.actors=[];f.setRandom(()=>.37);const a=f.make(id);a.ink=100;a.form='kid';const snapshots=[],hands=[];
+ for(let frame=0;frame<90;frame++){const before=f.G.projectiles.list.length,events=a.character.events.length;a.intent.fire=frame<75;f.tick(a);
+  const shots=f.G.projectiles.list.slice(before);if(shots.length){snapshots.push({frame,ink:a.ink,cooldown:a.weaponRunner.cooldown,firingT:a.weaponRunner.firingT,shots:shots.map(p=>({damage:p.damage,catalogDamage:p.catalog?.descriptor?.damage,kind:p.kind,weapon:p.weapon,velocity:p.vel?.toArray(),charge:p.catalog?.descriptor?.charge}))});}
+  const added=a.character.events.slice(events);for(const e of added){if(e[0]!=='shoot')continue;if(dualies.includes(id)){hands.push(e[1]?.hand??null);{assert.ok(e[1]?.hand===0||e[1]?.hand===1,id+' hand');assert.equal(a.weaponRunner.sinceHand[e[1].hand],0);}}else if(id!=='dualies')assert.equal(e[1],undefined,id+' non-dual notification unchanged');}
+ }
+ assert.ok(snapshots.length,id+' admitted shots');if(dualies.includes(id))for(let i=1;i<hands.length;i++)assert.notEqual(hands[i],hands[i-1],id+' alternating hands');
+ if(dualies.includes(id)){const hand=a.weaponRunner.hand,n=f.G.projectiles.list.length,events=a.character.events.length;a.ink=0;a.weaponRunner.cooldown=0;a.weaponRunner.update(1/60,{fire:true});assert.equal(a.weaponRunner.hand,hand,id+' empty admission cannot advance hand');assert.equal(f.G.projectiles.list.length,n);assert.equal(a.character.events.filter(e=>e[0]==='shoot').length,hands.length);a.ink=100;a.weaponRunner.cooldown=1;a.weaponRunner.update(1/60,{fire:true});assert.equal(a.weaponRunner.hand,hand,id+' cooldown cannot advance hand');assert.equal(f.G.projectiles.list.length,n);}
+ if(process.env.INKWAVE_EXPECT_KIT_SET==='base')assert.equal(createHash('sha256').update(JSON.stringify(snapshots)).digest('hex'),BASELINE_5780[id],id+' exact baseline count/damage/ink/cadence/velocity receipt');
+ results[id]={snapshots,finalInk:a.ink,projectiles:f.G.projectiles.list.length};
+ }
+ console.log('CATALOG_HAND_COVERAGE',JSON.stringify({dualies:dualies.length,controls:4,total:ids.length}));f.restoreRandom();f.G.projectiles.clear();
+});

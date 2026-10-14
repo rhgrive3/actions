@@ -1,0 +1,85 @@
+name: Validate catalog dualies handed candidate
+on:
+  push:
+    branches: [review/dualies-handed-5780-20261014]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      INKWAVE_EXPECT_KIT_SET: base
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact checkout and gate nine source tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          mkdir -p handed-test-results
+          printf '%s\n' "${{ github.sha }}" > handed-test-results/head.txt
+          sha256sum patches/splatoon3/runtime/{main-weapon-catalog,weapon-edgecases}.mjs > handed-test-results/source-runtime.sha256
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/catalog-{native-held,dualies-hands,dualies-admission-network,dualies-muzzle-safety}.test.mjs | tee handed-test-results/source.tap
+          grep -qx '# tests 9' handed-test-results/source.tap
+          grep -qx '# pass 9' handed-test-results/source.tap
+          grep -qx '# fail 0' handed-test-results/source.tap
+          grep -qx '# skipped 0' handed-test-results/source.tap
+      - name: Gate 44 adjacent source catalog and network tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/{catalog-dualies-clock,weapon-edgecases,muzzle-grate-safety,kit-network}.test.mjs | tee handed-test-results/adjacent-source.tap
+          grep -qx '# tests 44' handed-test-results/adjacent-source.tap
+          grep -qx '# pass 44' handed-test-results/adjacent-source.tap
+          grep -qx '# fail 0' handed-test-results/adjacent-source.tap
+          grep -qx '# skipped 0' handed-test-results/adjacent-source.tap
+      - name: Build exact candidate and bind emitted runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {createHash} from 'node:crypto';
+          const identity=JSON.parse(fs.readFileSync('_site/inkwave-build.json','utf8'));
+          const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+          assert.equal(hash(JSON.stringify(identity.artifacts)),identity.contentHash);
+          for(const [file,expected] of Object.entries(identity.artifacts)){
+            assert.equal(hash(fs.readFileSync('_site/'+file)),expected,'emitted artifact '+file);
+          }
+          for(const name of ['main-weapon-catalog','weapon-edgecases']){
+            const source=fs.readFileSync('patches/splatoon3/runtime/'+name+'.mjs');
+            assert.equal(identity.files['patch/runtime/'+name+'.mjs'],createHash('sha256').update(source).digest('hex'));
+            const emitted=fs.readFileSync('_site/patches/splatoon3/runtime/'+name+'.mjs');
+            assert.equal(identity.artifacts['patches/splatoon3/runtime/'+name+'.mjs'],createHash('sha256').update(emitted).digest('hex'));
+            assert.ok(emitted.length>0);
+          }
+          console.log('EXACT_BUILD_IDENTITY',identity.contentHash);
+          JS
+          cp _site/inkwave-build.json handed-test-results/inkwave-build.json
+          sha256sum _site/patches/splatoon3/runtime/{main-weapon-catalog,weapon-edgecases}.mjs > handed-test-results/emitted-runtime.sha256
+      - name: Gate the same nine tests against emitted runtime
+        shell: bash
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/catalog-{native-held,dualies-hands,dualies-admission-network,dualies-muzzle-safety}.test.mjs | tee handed-test-results/emitted.tap
+          grep -qx '# tests 9' handed-test-results/emitted.tap
+          grep -qx '# pass 9' handed-test-results/emitted.tap
+          grep -qx '# fail 0' handed-test-results/emitted.tap
+          grep -qx '# skipped 0' handed-test-results/emitted.tap
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dualies-handed-tests-${{ github.sha }}
+          path: handed-test-results
+          if-no-files-found: error

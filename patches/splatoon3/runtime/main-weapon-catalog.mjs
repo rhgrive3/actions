@@ -325,16 +325,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return true;
   }
   const inkMod = a => (a.s3?.modifiers?.inkSaverMain ?? 1)/(a.weapon.inkTankScale||1);
-  function notify(a, r, origin, direction, charge = 0) {
-    a.character.trigger(r.family==='charger'||r.family==='stringer'?'charge_release':'shoot');
-    emit('weapon:fire',{actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge});
+  const CATALOG_HANDS=Object.freeze([Object.freeze({hand:0}),Object.freeze({hand:1})]);
+  function notify(a, r, origin, direction, charge = 0, hand = null) {
+    if(r.family==='dualies')a.character.trigger('shoot',CATALOG_HANDS[hand]);
+    else a.character.trigger(r.family==='charger'||r.family==='stringer'?'charge_release':'shoot');
+    const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};if(hand!==null)event.hand=hand;emit('weapon:fire',event);
     if (a.isLocal || a._nearCamera?.()) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',
         {pos:a.isLocal?undefined:origin,volume:.45});
       G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
     }
   }
-  function origin(a) { G.projectiles._muzzle(a,muzzle); G.projectiles._aimFrom(a,muzzle,dir); return muzzle; }
+  function origin(a, hand = null) { if(hand===null)G.projectiles._muzzle(a,muzzle);else G.projectiles._muzzleHand(a,hand,muzzle); G.projectiles._aimFrom(a,muzzle,dir); return muzzle; }
   function angle(direction,yaw=0,pitch=0) {
     const y = Math.atan2(direction.x,direction.z)+yaw*RAD;
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
@@ -541,6 +543,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function emitSingle(runner,r,key='normal',charge=0,volley=null) {
     const a=runner.a, s=state(runner), desc=mode(r,key,0,charge);
+    // Select the same next hand as native dualies; commit its clock only after admission.
+    const hand=r.family==='dualies'?(runner.hand^1):null;
     // INKWAVE's cumulative-floor policy distributes fractional SpawnNum over
     // accepted shots. The pinned value does not establish retail ordering.
     // Shooter budgets also apply to the existing projected-paint fallback;
@@ -554,7 +558,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
-    origin(a);
+    origin(a,hand);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
     const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
       ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
@@ -574,7 +578,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     runner.spread=spread;
     spawn(a,r,desc,aim,muzzle,{volley,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
-    notify(a,r,muzzle,aim,charge);
+    if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
+    notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){

@@ -187,7 +187,7 @@ export function installWeaponEdgecases({ Actor, WeaponRunner, Projectiles, PLAYE
   };
   Projectiles.prototype._muzzleHand = function (actor, hand, out) {
     nativeMuzzleHand.call(this, actor, hand, out);
-    if (actor.weapon?.kind !== 'dualies') return out;
+    if (actor.weapon?.kind !== 'dualies' && actor.weapon?.catalogRecord?.family !== 'dualies') return out;
     muzzleFrom.copy(actor.pos); muzzleFrom.y += actor.form === 'squid' ? .4 : 1.05;
     if (!Number.isFinite(out.x) || !Number.isFinite(out.y) || !Number.isFinite(out.z) || obstructed(out)) {
       out.copy(muzzleFrom).addScaledVector(actor.aimDir, .3);
