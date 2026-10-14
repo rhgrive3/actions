@@ -139,3 +139,21 @@ test('actual menu input preparation waits for paint outside timing and rejects d
  painted=false;assert.equal(run(()=>+getComputedStyle(window.runtimeModePrime.a).opacity>=.9),false);
  detached=true;await assert.rejects(primeRuntimeMenuRows(page,path.join(root,'detached.png'),'kbm'),/detached/);
 });
+
+test('all committed inputs remain verified above the old 64 MiB aggregate capture limit',()=>{
+ const repo=path.join(root,'large-repo'),site=path.join(repo,'site');
+ fs.mkdirSync(repo,{recursive:true});
+ {
+  fs.mkdirSync(site);const git=(args,opts={})=>execFileSync('git',args,{cwd:repo,encoding:'utf8',...opts}).trim();git(['init','--quiet']);
+  const bytes=Buffer.alloc(1024*1024,37),blob=git(['hash-object','-w','--stdin'],{input:bytes});
+  const files={};let index='';for(let i=0;i<66;i++){files['upstream/'+i+'.bin']=hash(bytes);index+='100644 '+blob+'\tinkwave-public/'+i+'.bin\n';}
+  index+='100644 '+blob+'\tscripts/build-inkwave.mjs\n';git(['update-index','--index-info'],{input:index});const tree=git(['write-tree']);
+  const sha=git(['-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit-tree',tree,'-m','fixture']);
+  const manifest={artifacts:{},contentHash:hash('{}'),files,build:{script:hash(bytes)}};
+  const save=()=>fs.writeFileSync(path.join(site,'inkwave-build.json'),JSON.stringify(manifest));save();
+  assert.equal(verifyRuntimeBuild(site,repo,sha).contentHash,manifest.contentHash);
+  manifest.files['upstream/65.bin']=hash('bad final input');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA: inkwave-public\/65.bin/);
+  manifest.files['upstream/65.bin']=hash(bytes);manifest.build.script=hash('bad build script');save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Build differs from source SHA: scripts\/build-inkwave.mjs/);
+  manifest.build.script=hash(bytes);manifest.files['upstream/missing.bin']=hash(bytes);save();assert.throws(()=>verifyRuntimeBuild(site,repo,sha),/Missing source input/);
+ }
+});

@@ -208,7 +208,14 @@ export function installGyroQuality(Gyro, getScreenAngle, isAndroid = () => /Andr
     if (this._hasQ && (t < this._tQ || t - this._tQ > 500)) this.resync();
     accessFor(this).sample(t);
     if (isAndroid() && this._src !== 'ori') fallback(this, 'android-attitude');
-    const observed = state(this), age = t - observed.motionTime;
+    const observed = state(this);
+    // Optional motion permission can settle after orientation has started.
+    // A later denial retires prior zero-rate evidence immediately; orientation
+    // remains authorized and must not be suppressed by a denied sensor stream.
+    if (accessFor(this).motionPermission === 'denied') {
+      observed.stationaryMotion = false; observed.motionTime = -Infinity;
+    }
+    const age = t - observed.motionTime;
     const stationary = isAndroid() && observed.stationaryMotion && age >= 0 && age <= 75;
     const yaw = this.dYaw, pitch = this.dPitch;
     const s=observed,hadQ=this._hasQ,previousTime=this._tQ;s.event={kind:'orientation',time:t};

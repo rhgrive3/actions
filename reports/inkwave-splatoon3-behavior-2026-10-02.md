@@ -4303,3 +4303,51 @@ Source approach final3f9/bc qualification: proper private/public9+9 and131/14 bu
 main18ce→9bedのサブ／スペシャル表示、Goo Tuber銃口・握り、Bucket Slosher形状とCI待機方針を、承認済みGroundBody1415／source approach1411を保持した9ee0d652へ統合した。元のstage geometry/flags/masks、frozen public、既存authorityはmain差分で変更しない。現在のsource／既存sub・special lifecycle／hit・net／muzzle・grate／resources198件は195pass・Flounder私有原典shot3任意skip・0fail。原典5stage5/5・実Shipshape body4/4、1554code＋1781fixtureの開始終了SHA一致。モデル47件は旧3f実行に正確な同一inputを結び、現行再実行とはしない。現行emitted15、実Game Shooter_Normal_00／0APの30/60/120・固定1/60で3source wall shotsを確認した。
 
 現行RoomDO実WS全5ruleでは、通常mouse初期発進・実source着地後のWeaponBlasterShort／0APを実PlayerController→Actor/WeaponRunner→catalogue `_push`で各1発観測した。catalogue burstの下向きsource-floor rayから3.84 claimOwner塗りが実polygon／positive maskを新規取得し、39Actor ticks＝39clock ticks／1/60、2060packet／0error。両peerの全grid SHAと初期・最終watermark／growth・replay・out queue解消が一致。これは現行catalogue床投影であり、legacy物理落下／timed dropや本家airburstの同一性ではない。ranked setCount65のhost snapshotは同期だけの確認。旧manual3.84 stampも転送probeとして区別する。旧d8fのlegacy observer失敗・153件中断・VM／browser準備失敗は保存した。private/public各9/9、131/14budget、10module同一、247sourceファイル同一、第三者assets/imagesは非commit。新モデルUUIDのMath.random消費順、retail抽出版／単位・配置・握り／衝突塗り式、実機FPS／controller、全bank自律playは未確認のまま。[条件と結果](native-stages/main-9bed-compatibility.md)、[数値記録](native-stages/main-9bed-compatibility.verification.json)。
+
+
+### 2026-10-13: catalogue弾のnative包囲箱誤接触（Draft #1419）
+
+Splatoon3 Ver11.3.0 identity／WeaponBlasterShort・0AP、KiTrix0611原典を参照。Bluefinの実Game固定1/60から自然に生成されたLunaは0.87 raw-unit区間の最初でsource fence bookkeeping OBB内判定によりY12.6462→8.9237へ接触終了し、原典床の3.84塗り投影を失った。同じ三角形原典・同一区間はsource BVHで非接触。legacy inkと別のcatalogue `sweptWorldHit`だけがsource chart/object boxを実体として使っていた。emitted経路をnative triangleへ接続し、実moving entityのみ既存analytic OBB、non-native・geometry・mask・weapon値・Actor入力は保持。線形半径変化は凸距離gapから初回接触を求め、最大半径はbroadphaseのみ。
+
+候補e984のselected41件は38pass・Flounder原典shot任意3skip・0fail／実EXIT0。Hump独立原典同一区間と56analytic対照も終了、source10buffer SHA一致。これはkernel/source証拠で、修正後の実browser／全5rule WS／packaging／性能は未実行。旧3回のWS失敗、2.496nearest floor projectionと3.84burst fallback、未観測descriptor keyは区別して保存。metric単位・retail抽出版／本家collision・paint・grate法則・実機FPSは未確認。権利未確認のraw assets・画像・全gridはcommitしない。[条件・残検証](native-stages/catalogue-source-sweep.md)。
+
+## 2026-10-14 Native-stage authorized resume
+
+Modern native catalogue shots use source-triangle contact rather than source bookkeeping OBBs; fresh natural Bluefin five-mode full-grid settlement passes. Retail masks/units and hardware speed remain unverified. [Source sweep](native-stages/catalogue-source-sweep.md).
+
+## 2026-10-14 Native-stage authorized resume
+
+The dry opted source-climb stance releases only ordinary SQ input after static source/Pnt/polygon/body guards. Actual Shipshape Zones team1 at30/60/120 recovers normally and reaches the original support; own-painted SQ input/recovery is preserved. Retail parameters/physics/units remain unverified. [Dry refill](native-stages/source-climb-dry-refill.md).
+
+## 2026-10-13 — 18ce7b6c 後の入力寿命の残差
+
+- 外部 main の #1396/#1400 修正を保持し、同じ pad poll の accept で editor が開閉した後の B/Start/肩/スティック透過と、Input 無効化後の Pointer Lock 遅延完了だけを限定修正する。単一 pending request と全入力 neutral 待ちの既存契約は保持。
+- source と実配布コード回帰は各 48/48、隣接 85/85、workflow 15/15、梱包 9/9。現 main 反例は新規 15 件が失敗。独立レビューでも source/配布各 48 件と native lifecycle 各 5 件を再確認。最終 CI と採用は別途確認し、この追記だけで解消済みとしない。詳細と限界は `reports/inkwave-input-followup-2026-10-13.md`。
+
+
+## 2026-10-13: 18ce composition の Curling / native Sprinkler 防御回帰を復元
+
+14f9 で通過していた Curling の 20 HP 接触・Bomb_CurlingBullet 行と、native Sprinkler の Bomb / Vac / Wail AoE・所有者側ダメージ提案が、18ce の旧ファイル取り込みで失われた。元の4ケースをそのまま比較し、14f9成功・18ce失敗を確認。対象2 runtime hunkと削除された3 AoE testだけを復元し、18ceのvictim-local ghost bomb authority、Bubbler遮蔽、FIFO/quota、producer reset、候補vector遅延構築を維持した。source34+追加1通過。実minifiedを指定した35ケースも通過（26はfull-installer/emitted、既存9はsource defenseの手動installを残す）。追加Curlingケースと復元AoE3件は18ce実minifiedで失敗し修正版で成功。runtime独立reviewとsource34件は通過、追加test/documentationの最終readbackは未完。本家の新規実機一致やstutter解消は主張しない。詳細は `reports/inkwave-bomb-defense-restoration-2026-10-13.md`。
+
+同日追補: さらに Curling trail の床投影欠落を、14f9実minified成功・18ce実minified失敗で確認。source PaintCheckHeight=2 の下向き接地探索と接地点の塗り、床なし時の非塗りだけを旧実装どおり復元し、18ceのghost Sprinkler置換は全byte維持。kit-subs source38件、新規実emitted1件、合成後の防御/authority source35件・emitted指定35件（うち既存9件はsource防御手動install）成功。最終buildは `b1cedb52073238d645239872a3767a69f70107e69965364b92293fd79d6a3c50`。GPU描画・実機・stutter改善を示す結果ではない。
+
+### 2026-10-13: deterministic Super Chump expiry attribution
+
+The shared source regression incorrectly attributed all nearby cross stamps to each decoy. Legal activation seed 111 places decoys 6 and 9 at the same position: native expiry still produces four cross stamps and one satellite per decoy (48 + 12 overall), while the old spatial grouping counts eight at either overlapping position. This caused the exact fc48 CI assertion failure and is a test attribution defect, not a change to native paint behavior.
+
+The regression now uses each native expiry event to identify its emitting decoy and checks the exact cross shape, team, claim owner, no-special credit and once-only expiry. The overlapping seed remains explicit; missing/extra cross stamps, duplicate expiry, displaced geometry and wrong ownership are rejected. Independent source and retained production-emitted controls passed; the old seeded assertion and runtime count/duplicate-expiry mutations fail as intended. The test-only change does not modify runtime, paint constants, budgets or update scheduling. Final new-main release checks retain their own exact build and test identities.
+
+## 2026-10-13: optional motion-denial evidence lifetime (#187 boundary)
+
+- Baseline: main `9bed52751a909af84f9a9c0d6abb7cdd1a61c6b0`; production `inkwave-public/` composed with the existing local-quality Gyro/MobileInput overlays. This is not the removed prototype.
+- Controlled reproduction: orientation permission resolves first; a zero-rate motion sample is observed; the independent motion-permission promise subsequently resolves `denied`. Main retains the earlier stationary evidence and suppresses a later legitimate orientation-only turn for the remainder of its existing 75 ms trust window. All four 30/60/90/120 Hz cases reproduce the loss.
+- Narrow correction: before admitting stationary evidence in the orientation path, retire that evidence when the current optional motion permission is explicitly denied. Orientation permission, sensor listeners, sensitivity, calibration, 0.35 deg/s threshold, 75 ms window, and valid/granted motion paths are unchanged. No actual user permission is changed by this patch or its tests.
+- Regression scope: real source-composed Gyro/MobileInput and real GyroPermission asynchronous callbacks with controlled sensor/permission fixture delivery. Covers delayed denial, ignored subsequent denied samples, granted/no-motion controls, queued aim preservation, and rejected stale permission generations. Existing gyro suites remain required; physical Android/iOS permission-delivery timing and hardware sensor behavior are unverified.
+- Comparison boundary: S3 11.3.0 remains the gameplay reference, but browser sensor permission sequencing has no claimed Nintendo-equivalent numeric behavior. This fixes a browser-only input-admission inconsistency; it does not establish general #187 Android drift calibration or justify closing that Issue. Browser UI and final-head hosted CI are not yet verified.
+
+
+## 2026-10-13: audio v11 非同期ロードの所有期間（#1322 派生）
+
+音響Draft5530272では、manifest待機中に音声bankを破棄・コンテキスト置換しても、完了後に古いbankへの取得・デコード・再格納が続く。実モジュールと合成データで再現し、既存のgenerationとbank/context所有判定を各await境界へ接続した。正常な共有キャッシュ、新しい所有者のロード、失敗後の再試行は維持する。stopAllや音声再生規則、MP3は変更しない。
+
+限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。

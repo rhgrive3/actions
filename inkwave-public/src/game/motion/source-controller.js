@@ -18,7 +18,7 @@ export class SourceMotionController {
  constructor(character, options={}) {
   this.character=character;this.options=options;this.variant=options.motionVariant==='Player01'?'Player01':'Player00';
   this.enabled=options.sourceMotion!==false;this.status=this.enabled?'loading':'disabled';this.error=null;this.disposed=false;
-  this.time=0;this.phase=0;this.distance=0;this.speed=0;this.velocityY=0;this.localX=0;this.localZ=1;this.active=false;
+  this.time=0;this.phase=0;this.distance=0;this.speed=0;this.velocityY=0;this.localX=0;this.localZ=1;this.hasTravelHeading=false;this.active=false;
   this.previousRoot=character.root.position.clone();this.rootSet=false;this.previousYaw=0;this.turnRate=0;this.yawStep=0;this.pivoting=false;this.gaitSpeed=0;this.localTurnRate=0;this.localYawReady=false;this.lastLocalYaw=0;this.turnGroundDisable=false;
   this.runBlend=0;this.strafeBalance=0;this.direction=new Float64Array([1,0,0,0]);this.directionTarget=new Float64Array(4);this.shootBlend=0;this.shootUntil=0;this.directionTurnUntil=0;
   this.currentState='';this.transitionTime=99;this.currentClips=[];this.fallbacks=new Set();this.contact=[0,0];this.lift=[0,0];
@@ -44,11 +44,11 @@ export class SourceMotionController {
    this.runSpeed=this.run.stride*this.retarget.legScale*HOST_MOTION.fps/bank.clips.get('RunHold_Nrml').frames;
    bank.sample('WaitHold_Nrml',this.time*HOST_MOTION.fps,this.pose);this.activationTime=0;this.activationPose=null;
    this.renderedPose=this.character.boneList.map(b=>({p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));this.airFrom=this.renderedPose.map(b=>({p:b.p.clone(),q:b.q.clone(),s:b.s.clone()}));this.finalState=null;this.airBlendTime=99;
-   this.currentState='';this.rootSet=false;this.runBlend=0;this.strafeBalance=0;this.shootBlend=0;this.shootUntil=0;this.directionTurnUntil=0;this.status='ready';this.error=null;return this;
+   this.currentState='';this.rootSet=false;this.hasTravelHeading=false;this.localYawReady=false;this.runBlend=0;this.strafeBalance=0;this.shootBlend=0;this.shootUntil=0;this.directionTurnUntil=0;this.status='ready';this.error=null;return this;
   }catch(error){if(token===this.loadToken){this.status='error';this.error=String(error?.message||error);console.error('[INKWAVE source motion]',this.error);}return this;}
  }
  setVariant(variant){if(!['Player00','Player01'].includes(variant))throw new Error('Unknown human source variant');this.status='loading';this.active=false;this.ready=this.load(variant);return this.ready;}
- setEnabled(enabled){this.pivotWeight=0;this.pivoting=false;this.runBlend=0;this.strafeBalance=0;this.enabled=!!enabled;this.activationTime=0;this.activationPose=null;this.rootHair?.reset();if(!this.enabled)this.squidRig?.resetDeformation();this.active=false;this.rootSet=false;this.retarget?.reset();if(this.enabled&&!this.bank)this.ready=this.load(this.variant);}
+ setEnabled(enabled){this.pivotWeight=0;this.pivoting=false;this.runBlend=0;this.strafeBalance=0;this.enabled=!!enabled;this.activationTime=0;this.activationPose=null;this.rootHair?.reset();if(!this.enabled)this.squidRig?.resetDeformation();this.active=false;this.rootSet=false;this.hasTravelHeading=false;this.localYawReady=false;this.retarget?.reset();if(this.enabled&&!this.bank)this.ready=this.load(this.variant);}
  playClip(name,{frame=0,loop=undefined,rate=1,squid=false,contact=false}={}){
   const bank=squid?this.squidBank:this.bank;if(!bank?.clips.has(name))throw new Error(`Unavailable source clip ${name}`);
   this.manual={name,frame,loop,rate,squid,contact};this.activationTime=99;this.currentState='';this.retarget?.reset();
@@ -59,7 +59,7 @@ export class SourceMotionController {
   if(name==='land'){this.landTime=0;this.retarget?.reset();}
   if(name==='dodge'){this.dodgeUntil=this.time+(Number(arg?.t)||0.3)+0.2;this.retarget?.reset();}
   if(name==='special_leap'||name==='special_slam')this.specialUntil=this.time+2;
-  if(name==='spawn'){this.pivotWeight=0;this.pivoting=false;this.runBlend=0;this.strafeBalance=0;this.shootUntil=0;this.directionTurnUntil=0;this.shootBlend=0;this.rootSet=false;this.retarget?.reset();this.currentState='';this.action={name:'spawn',time:0};return;}
+  if(name==='spawn'){this.pivotWeight=0;this.pivoting=false;this.runBlend=0;this.strafeBalance=0;this.shootUntil=0;this.directionTurnUntil=0;this.shootBlend=0;this.rootSet=false;this.hasTravelHeading=false;this.localYawReady=false;this.retarget?.reset();this.currentState='';this.action={name:'spawn',time:0};return;}
   if(['shoot','slosh','flick','throw','charge_release','hit'].includes(name))this.action={name,time:0};
  }
  choose(candidates){for(const name of candidates)if(this.bank.clips.has(name))return name;throw new Error(`No source clip in ${candidates.join(', ')}`);}
@@ -91,10 +91,26 @@ export class SourceMotionController {
   this.previousRoot.copy(R);this.rootSet=true;
   this.motionVX=dt>0&&!teleport?dx/dt:0;this.motionVZ=dt>0&&!teleport?dz/dt:0;
   this.yawStep=dt>0&&!teleport?mod(yaw-this.previousYaw+Math.PI,Math.PI*2)-Math.PI:0;this.turnRate=dt>0?this.yawStep/dt:0;this.previousYaw=yaw;
-  if(teleport){this.pivotWeight=0;this.pivoting=false;this.runBlend=0;this.strafeBalance=0;dx=dy=dz=dist=0;this.bodyBalance?.reset();this.retarget?.reset();this.rootHair?.reset();}
+  if(teleport){this.pivotWeight=0;this.pivoting=false;this.runBlend=0;this.strafeBalance=0;this.hasTravelHeading=false;this.localYawReady=false;dx=dy=dz=dist=0;this.bodyBalance?.reset();this.retarget?.reset();this.rootHair?.reset();}
   const lm=s.localMove||{};this.treadmill=!c.inWorld&&dist<1e-10&&Number(s.speed)>0&&Math.hypot(lm.x||0,lm.z||0)>0;
-  if(this.treadmill){const n=Math.hypot(lm.x||0,lm.z||0);this.localX=-(lm.x||0)/n;this.localZ=(lm.z||0)/n;dist=Number(s.speed)*dt;}
-  else if(dist>1e-12){this.localX=(dx*Math.cos(yaw)-dz*Math.sin(yaw))/dist;this.localZ=(dx*Math.sin(yaw)+dz*Math.cos(yaw))/dist;}
+  // Separate the travel heading used by animation from the raw displacement.
+  // Normalising a sub-millimetre frame delta magnifies positional quantisation
+  // into a full diagonal-direction reversal. That reversal then unplants both
+  // feet in applyBody, causing visible 60Hz shimmy. Physics remains unfiltered.
+  if(this.treadmill)dist=Number(s.speed)*dt;
+  const n=this.treadmill?Math.hypot(lm.x||0,lm.z||0):dist;
+  const rawX=this.treadmill?-(lm.x||0)/n:n>0?(dx*Math.cos(yaw)-dz*Math.sin(yaw))/n:0;
+  const rawZ=this.treadmill?(lm.z||0)/n:n>0?(dx*Math.sin(yaw)+dz*Math.cos(yaw))/n:1;
+  const visualSpeed=dt>0?dist/dt:0;
+  const confidence=clamp((visualSpeed-.06)/.30,0,1);
+  if(n>1e-10&&confidence>0) {
+   const targetYaw=Math.atan2(rawX,rawZ);
+   const lastYaw=Math.atan2(this.localX,this.localZ);
+   const delta=mod(targetYaw-lastYaw+Math.PI,Math.PI*2)-Math.PI;
+   const alpha=this.hasTravelHeading?-Math.expm1(-dt*(9+Math.min(visualSpeed,6))*confidence):1;
+   const heading=lastYaw+delta*alpha;
+   this.localX=Math.sin(heading);this.localZ=Math.cos(heading);this.hasTravelHeading=true;
+  }
   const localYaw=Math.atan2(this.localX,this.localZ);
   this.localTurnRate=dt>0&&this.localYawReady&&!teleport?mod(localYaw-this.lastLocalYaw+Math.PI,Math.PI*2)-Math.PI:0;
   this.localTurnRate=dt>0?this.localTurnRate/dt:0;
@@ -377,9 +393,19 @@ this.constrainLeft=true;
    if(this.formEvent&&this.formTime<this.squidBank.clips.get(this.formKid?'Sqd_ToHuman':'Sqd_ToSquid').frames/HOST_MOTION.fps){name=this.formKid?'Sqd_ToHuman':'Sqd_ToSquid';frame=this.formTime*HOST_MOTION.fps;}
    else if(!this.grounded){name='Sqd_Jump';frame=this.airTime*HOST_MOTION.fps;}
    else if(this.landTime<this.squidBank.clips.get('Sqd_Jump_Ed').frames/HOST_MOTION.fps){name='Sqd_Jump_Ed';frame=this.landTime*HOST_MOTION.fps;}
-   else{name=this.speed>1e-5?'Sqd_Walk':'Sqd_Wait';frame=null;}
+   else{
+    // Sqd_Wait is the upright, dry-squid idle clip. Blending into it at
+    // exactly zero velocity while submerged produces an apparent bow. Keep
+    // the source's swimming skeleton and let the independent surface-glide
+    // layer settle its pitch, height and amplitude instead.
+    name=s.form==='swim'||this.speed>.04?'Sqd_Walk':'Sqd_Wait';frame=null;
+   }
    if(name!==this.squidState){this.previousSquid.copy(this.squidPose);this.squidState=name;this.squidFrame=0;this.squidBlendTime=0;}
-   else{this.squidFrame+=dt*HOST_MOTION.fps;this.squidBlendTime+=dt;}
+   else{
+    const rate=s.form==='swim'&&name==='Sqd_Walk'
+     ?Math.max(.08,Math.min(1,this.speed/Math.max(.1,this.runSpeed))):1;
+    this.squidFrame+=dt*HOST_MOTION.fps*rate;this.squidBlendTime+=dt;
+   }
    if(frame===null)frame=this.squidFrame;
    this.squidBank.sample(name,frame,this.squidPose);
    if(this.squidBlendTime<HOST_MOTION.transitionSeconds&&!name.startsWith('Sqd_To')){const out=this.squidBlendPose||(this.squidBlendPose=new SourcePose(this.squidBank));out.copy(this.previousSquid).mix(this.squidPose,SMOOTH(this.squidBlendTime/HOST_MOTION.transitionSeconds));this.squidPose.copy(out).fk();}
