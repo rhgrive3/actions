@@ -98,24 +98,25 @@ test('a barrier pop leaves the Rainmaker available to either team and emits one 
 
 test('charge is carried through held fire and emits a normalized dedicated Rainmaker shot on release', () => {
   const { engine, rule, carrier } = popAndPickup(0);
-  rule.update(0.4, { actors: [carrier], inputs: { [carrier.id]: { fire: true, aim: [0, 0, 4] } } });
+  rule.update(0.4 + 1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true, aim: [0, 0, 4] } } });
   assert.equal(rule.state.charge.value, 0.4);
   rule.update(0.6, { actors: [carrier], inputs: { [carrier.id]: { fire: true, aim: [0, 0, 4] } } });
   assert.equal(rule.state.charge.value, 1);
-  rule.update(0, { actors: [carrier], inputs: { [carrier.id]: { fire: false, aim: [0, 0, 4] } } });
+  rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false, aim: [0, 0, 4] } } });
   assert.deepEqual(event(engine, 'rainmaker-shot'), {
     id: 0, actorId: carrier.id, team: 0, pos: [0, 0, 0], aim: [0, 0, 1], charge: 1,
     damage: 60, blastDamage: 180, outerDamage: 40,
     radius: 1.4, nearRadius: 0.92, directRange: 4.4, nearRange: 5.3, effectiveRange: 5.8,
-    paintRadius: 5, speed: 18,
+    paintRadius: 1, speed: 18, launchY: .28 * 10 * 60 * .02, recoil: 1.44, trailRadius: .48,
   });
-  assert.deepEqual(rule.state.charge, { seconds: 0, value: 0, firing: false });
+  assert.equal(rule.state.charge.recovery, 20 / 60);
+  assert.equal(rule.state.charge.pending, null);
 });
 
 test('partial shot keeps actor identity, sequence ID, and distinct direct, blast and paint values', () => {
   const { engine, rule, carrier } = popAndPickup(1, 'rainmaker-carrier');
-  rule.update(0.5, { actors: [carrier], inputs: { [carrier.id]: { fire: true, aim: [1, 0, 1] } } });
-  rule.update(0, { actors: [carrier], inputs: { [carrier.id]: { fire: false, aim: [1, 0, 1] } } });
+  rule.update(0.5 + 1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true, aim: [1, 0, 1] } } });
+  rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false, aim: [1, 0, 1] } } });
   const shot = event(engine, 'rainmaker-shot');
   assert.equal(shot.id, 0, 'projectile sequence remains separate from actor identity');
   assert.equal(shot.actorId, carrier.id);
@@ -124,19 +125,19 @@ test('partial shot keeps actor identity, sequence ID, and distinct direct, blast
   assert.equal(shot.outerDamage, 0);
   assert.equal(shot.radius, 0);
   assert.equal(shot.effectiveRange, 2.35);
-  assert.equal(shot.paintRadius, 1.95);
+  assert.ok(Math.abs(shot.paintRadius - .39) < 1e-12);
   assert.equal(shot.speed, 14.4, 'native DU/F projectile speed is converted to the host world scale');
   assert.ok(Math.abs(Math.hypot(...shot.aim) - 1) < 1e-12);
 });
 
 test('Rainmaker shot release below twenty frames is rejected; twenty frames fires a minimum partial shot', () => {
   const { engine, rule, carrier } = popAndPickup(0);
-  rule.update(19 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
-  rule.update(0, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
+  rule.update(20 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
   assert.equal(engine.events.filter(item => item.kind === 'rainmaker-shot').length, 0);
 
-  rule.update(20 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
-  rule.update(0, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
+  rule.update(21 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
   const shot = event(engine, 'rainmaker-shot');
   assert.equal(shot.charge, 20 / 60);
   assert.equal(shot.damage, 30);
@@ -169,37 +170,20 @@ test('ordinary carrier timeout remains sixty seconds across uneven update interv
   assert.equal(engine.events.filter(item => item.kind === 'rainmaker-timeout').length, 1);
 });
 
-test('death drops a shielded Rainmaker and an untouched drop resets after fifteen seconds', () => {
-  const { rule, carrier } = popAndPickup(0);
-  carrier.pos = [0, 0, 5];
-  carrier.alive = false;
-  rule.update(0, { actors: [carrier] });
-  assert.equal(rule.state.carrier, null);
-  assert.deepEqual(rule.state.pos, [0, 0, 5]);
-  assert.equal(rule.state.barrier.active, true);
-  assert.equal(rule.state.lastDropReason, 'death');
-  rule.update(14.9, { actors: [] });
-  assert.deepEqual(rule.state.pos, [0, 0, 5]);
-  rule.update(0.2, { actors: [] });
-  assert.deepEqual(rule.state.pos, [0, 0, 0]);
-  assert.equal(rule.state.barrier.active, true);
-  assert.equal(rule.state.dropped, false);
+test('death reforms a shield after three seconds; only a popped non-central shield returns after fifteen seconds', () => {
+  const {rule,carrier}=popAndPickup(0);carrier.pos=[0,0,5];carrier.alive=false;
+  rule.update(0,{actors:[carrier]});assert.deepEqual(rule.state.pos,[0,0,5]);assert.equal(rule.state.barrier.active,false);
+  rule.update(3,{actors:[]});assert.equal(rule.state.barrier.active,true);
+  rule.update(20,{actors:[]});assert.deepEqual(rule.state.pos,[0,0,5],'an intact shield is not on the popped return timer');
+  rule.update(0,{barrierHits:[{team:0,damage:1000,kind:'Shooter'}]});rule.update(14.9,{actors:[]});assert.deepEqual(rule.state.pos,[0,0,5]);
+  rule.update(.2,{actors:[]});assert.deepEqual(rule.state.pos,[0,0,0]);assert.equal(rule.state.barrier.active,false);
+  rule.update(3,{actors:[]});assert.equal(rule.state.barrier.active,true);
 });
-
-test('falling on the carrier’s own half resets to center; falling on attack side drops at the fall point', () => {
-  const own = popAndPickup(0);
-  own.carrier.pos = [0, 0, -5];
-  own.rule.update(0, { actors: [own.carrier], floorAt: () => null });
-  assert.deepEqual(own.rule.state.pos, [0, 0, 0]);
-  assert.equal(own.rule.state.lastDropReason, 'fall');
-  assert.equal(own.rule.state.dropped, false);
-
-  const attack = popAndPickup(0);
-  attack.carrier.pos = [0, 0, 5];
-  attack.rule.update(0, { actors: [attack.carrier], floorAt: () => null });
-  assert.deepEqual(attack.rule.state.pos, [0, 0, 5]);
-  assert.equal(attack.rule.state.barrier.active, true);
-  assert.equal(attack.rule.state.dropped, true);
+test('own-side fall resets to center; enemy-side fall retains the last grounded safe position',()=>{
+  const own=popAndPickup(0);own.carrier.pos=[0,-5,-5];own.carrier.grounded=false;own.rule.update(0,{actors:[own.carrier],floorAt:()=>null});assert.deepEqual(own.rule.state.pos,[0,0,0]);
+  const attack=popAndPickup(0);attack.carrier.pos=[0,0,2];attack.rule.update(0,{actors:[attack.carrier],floorAt:()=>0});
+  attack.carrier.pos=[0,-5,5];attack.carrier.grounded=false;attack.rule.update(0,{actors:[attack.carrier],floorAt:()=>null});assert.deepEqual(attack.rule.state.pos,[0,0,2]);
+  assert.equal(attack.rule.state.barrier.active,false);attack.rule.update(3,{actors:[]});assert.equal(attack.rule.state.barrier.active,true);
 });
 
 test('either of two checkpoints opens the goal gate, drops the Rainmaker and requires a fresh shield pop', () => {
@@ -290,7 +274,42 @@ test('special charge, snapshots, restore and removeActor remain deterministic an
   assert.equal(rule.state.pos[0], 0, 'snapshot is a structured clone');
   rule.removeActor(carrier.id);
   assert.equal(rule.state.carrier, null);
-  assert.equal(rule.state.barrier.active, true);
+  assert.equal(rule.state.barrier.active, false);
   rule.restore(rule.snapshot());
+  assert.equal(rule.state.respawnRemaining, 3);
+  rule.update(3, {actors:[]});
   assert.equal(rule.state.barrier.active, true);
+});
+
+for (const dt of [1 / 60, .05, .2]) test(`shot windups and recovery consume elapsed time (${dt}s)`, () => {
+  const { engine, rule, carrier } = popAndPickup(0);
+  const step = (seconds, fire) => {
+    while (seconds > 1e-10) { const elapsed = Math.min(dt, seconds); rule.update(elapsed, { actors: [carrier], inputs: { [carrier.id]: { fire } } }); seconds -= elapsed; }
+  };
+  step(61 / 60, true); assert.equal(rule.state.charge.value, 1);
+  rule.update(0, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 0, 'release requires the one-frame pre-shot delay');
+  const resumed = new RainmakerRule(engine, stage).restore(JSON.parse(JSON.stringify(rule.snapshot())));
+  resumed.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  rule.restore(resumed.snapshot());
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 1);
+  step(20 / 60, true); assert.equal(rule.state.charge.seconds, 0, 'held fire cannot charge during recovery');
+  step(61 / 60, true); step(1 / 60, false);
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 2);
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-charged').length, 2, 'one charge cue per complete charge');
+});
+
+test('swimming loses a held charge and the next squid emergence has six frames of pre-charge delay', () => {
+  const { engine, rule, carrier } = popAndPickup(0);
+  rule.update(61 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  carrier.swimming = true;
+  rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
+  assert.equal(rule.state.charge.value, 0);
+  assert.equal(engine.events.filter(e => e.kind === 'rainmaker-shot').length, 0);
+  carrier.swimming = false;
+  rule.update(6 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  assert.equal(rule.state.charge.seconds, 0);
+  rule.update(20 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: true } } });
+  rule.update(1 / 60, { actors: [carrier], inputs: { [carrier.id]: { fire: false } } });
+  assert.equal(event(engine, 'rainmaker-shot').damage, 30);
 });

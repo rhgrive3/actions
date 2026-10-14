@@ -32,7 +32,7 @@ import {
 import { installKitDefense, explosionBubblerRow } from '../runtime/kit-defense.mjs';
 import { abilityAllowed, emptyLoadout, normalizeLoadout } from '../runtime/gear.mjs';
 
-const RAW_PER_DAMAGE_UNIT = BIG_BUBBLER_CALIBRATION.rawPerDamageUnit; // 100 (declared)
+const RAW_PER_DAMAGE_UNIT = BIG_BUBBLER_CALIBRATION.rawPerDamageUnit; // 10 (Wiki-correlated)
 const CANOPY_RATIO = BIG_BUBBLER_RAW.damageRatio;                     // 0.64
 const BLASTER_DIRECT = 125;                  // profile.weapons.blaster.directDamage
 const DOME_HP = 40000;                       // pinned test budget above one contact
@@ -304,10 +304,11 @@ test('#1161 local 1.9x and remote 2.09x proposals each apply once through host a
   const withObjectShredder = expected * OBJECT_SHREDDER_MULTIPLIER;
   const remoteCand = kitBarrierCandidate(blastRound(f, remoteShooter, start, remoteShooter.weapon), start, end);
   assert.ok(remoteCand && remoteCand.remote, 'a local round against a remote dome only proposes');
-  assert.equal(remoteCand.damage, withObjectShredder, 'the proposal carries 1.9 x 1.1 and 0.64 once');
+  assert.ok(Math.abs(remoteCand.damage - withObjectShredder) < 1e-9, 'the proposal carries 1.9 x 1.1 and 0.64 once');
   const remoteHp = remote.hp;
   assert.equal(remoteCand.onHit(), 0, 'the proposing client spends nothing');
-  assert.equal(remoteCand.proposal.amount, withObjectShredder, 'the flat proposal carries the canonical 2.09x amount');
+  assert.ok(Math.abs(remoteCand.proposal.amount - withObjectShredder) < 1e-9,
+    'the flat proposal carries the canonical 2.09x amount');
   assert.equal(remote.hp, remoteHp, 'the remote dome is untouched on the proposing client');
 
   // ---- host adjudication: applies the SAME amount once, never re-multiplies
@@ -318,12 +319,14 @@ test('#1161 local 1.9x and remote 2.09x proposals each apply once through host a
   const result = adjudicateBigBubblerDamage(remoteCand.proposal, { host: true, roster });
   assert.equal(result.ok, true, `adjudication must accept the proposal: ${JSON.stringify(result)}`);
   assert.equal(result.reason, 'applied');
-  assert.equal(result.applied, withObjectShredder, 'the host applies the fully resolved amount once without re-multiplying');
-  assert.equal(local.hp, DOME_HP - withObjectShredder, 'and the authoritative dome moved by exactly that amount');
+  assert.ok(Math.abs(result.applied - withObjectShredder) < 1e-9,
+    'the host applies the fully resolved amount once without re-multiplying');
+  assert.ok(Math.abs(local.hp - (DOME_HP - withObjectShredder)) < 1e-9,
+    'and the authoritative dome moved by exactly that amount');
   const again = adjudicateBigBubblerDamage(remoteCand.proposal, { host: true, roster });
   assert.equal(again.ok, true);
   assert.equal(again.reason, 'duplicate', 'a retransmit is a duplicate');
-  assert.equal(local.hp, DOME_HP - withObjectShredder, 'and never re-applies');
+  assert.ok(Math.abs(local.hp - (DOME_HP - withObjectShredder)) < 1e-9, 'and never re-applies');
 
   // sanity: the owner identity used by adjudication is the real one
   assert.equal(remoteCand.proposal.domeOwner, bigBubblerOwnerId(owner));

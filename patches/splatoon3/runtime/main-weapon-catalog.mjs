@@ -1,8 +1,11 @@
+import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
+
+import { catalogueAttackRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
@@ -11,6 +14,7 @@ import { withShotBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
 import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
+import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -407,15 +411,16 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function spawn(a,r,descriptor,direction,at,options={}) {
     const system=G.projectiles, p=system._new();
+    p.catalogVisual=catalogVisualSpec(r,descriptor,options.index||0);
     Object.assign(p,{type:'shot',wid:r.id,owner:a,team:a.team,age:0,life:descriptor.life,straight:finite(descriptor.m.GoStraightToBrakeStateFrame,4)/HZ,
       radius:descriptor.radius,damage:descriptor.damage,size:finite(descriptor.c.InitRadiusForPlayer,.2),
       trail:0,trailEvery:0,trailRadius:0,grav:0,drag:0,seed:Math.random(),ghost:!!options.ghost,
       delay:finite(options.delay,0),vis:.1,tail0:.8,tailK:1.3,wob:.02,wobF:26,nose:.3,sats:0,
       inkMeta:{s3Catalog:[1,descriptor.key,descriptor.unit,descriptor.charge,options.index||0]},
       catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
-        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0}});
+        index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
-    p.vel.y += finite(options.lift,0);
+    p.vel.y += finite(options.lift,0);updateCatalogVisual(p);
     system._push(p);
     return p;
   }
@@ -516,8 +521,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(a===skip)continue;
       base.copy(a.pos);base.y+=.7;const distance=base.distanceTo(p.pos);
       if(distance>radius||!G.physics.los(p.pos,base))continue;
-      const damage=damageBands(bands,distance);if(damage>0)system.applyHit(p.owner,a,damage,p.wid);
+      const damage=damageBands(bands,distance);if(damage>0)withObjectDamageCause({...p,type:'area'},()=>system.applyHit(p.owner,a,damage,p.wid));
     }
+    const area={...p,type:'area'},cause=catalogueAttackRow(area);
+    system.s3DamageSubObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
+    system.s3DamageSpecialObjects?.(area,p.pos,radius,d=>damageBands(bands,d),cause);
     G.boss?.splash(p.owner,p.pos,radius,bands[0]?.Damage/10||0,0,p.wid);
     G.fx?.explosion(p.pos,p.owner.color,radius);
     emit('weapon:impact',{pos:p.pos.clone(),normal:down.clone().negate(),team:p.team,kind:'burst',radius});
@@ -556,10 +564,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const depth=lerp(finite(q.DepthScaleNear,d.depth),finite(q.DepthScaleFar,d.depth),t)*factor;
     return {width,depth};
   }
-  function collisionRadius(c,what,frames,index=0) {
+  function collisionRadius(c,what,frames,index=0,bounces=0) {
     const init=finite(c['InitRadiusFor'+what],.2)+finite(c['AfterOffsetInitRadiusFor'+what],0)*index;
     const end=finite(c['EndRadiusFor'+what],init)+finite(c['AfterOffsetEndRadiusFor'+what],0)*index;
-    return Math.max(0,lerp(init,end,clamp(frames/Math.max(1,finite(c['ChangeFrameFor'+what],0)))));
+    return Math.max(0,lerp(init,end,clamp(frames/Math.max(1,finite(c['ChangeFrameFor'+what],0))))) * catalogBubbleRadiusScale(bounces);
   }
   function lobes(p){
     const s=p.catalog,c=s.descriptor.c,params=c.ParamArray||[c],offsets=c.OffsetArray||[];
@@ -591,12 +599,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     const before=s.travel;
     p.pos.addScaledVector(p.vel,DT);
+    updateCatalogVisual(p);
     s.travel+=p.prev.distanceTo(p.pos);
     if(s.travel>s.range) { const f=clamp((s.range-before)/(s.travel-before));p.pos.lerpVectors(p.prev,p.pos,f);s.travel=s.range; }
   }
   function finishContact(system,p,h) {
     const s=p.catalog,d=s.descriptor,r=s.r;
-    if(p.ghost)return true;
+    if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub')return true;
     const at=h.point||p.pos;
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
     if(d.key==='arrow') {
@@ -606,20 +615,35 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
     }
     if(r.parameters.BlastParam?.BlastParam){p.pos.copy(at);explosion(system,p,r.parameters.BlastParam.BlastParam);return true;}
-    if(r.sourceActor==='WeaponSlosherBathtub'&&s.bounces<3&&h.normal) {
+    if(r.sourceActor==='WeaponSlosherBathtub'&&h.normal&&catalogBubbleCanBounce(s.groundBounces,h.normal.y)) {
+      const ground=h.normal.y>.35;
       const bp=r.parameters.BounceGroupParam.BounceParam.find(b=>(b.UnitOrderNum??0)===d.unit)||{};
-      paint(p.owner,at,finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index);
-      p.pos.copy(at);p.pos.addScaledVector(h.normal,.05);
+      // Keep the established paint owner and footprint untouched (lane ③).
+      // The source's first-bounce footprint decays by 15% on each later contact.
+      // Retain the existing single paint owner and do not duplicate paint events.
+      const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);
+      if(!p.ghost)paint(p.owner,at,bounceRadius);
+      const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
+      p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
-      // The omitted restitution remains the INKWAVE elastic-bounce model.
+      if(!ground)p.vel.multiplyScalar(.8); // sourced wall reflection, no wall-bounce cap
+      if(!p.ghost&&(p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
+        G.fx?.burst(at,h.normal,p.owner.color,{count:5,speed:1.8,size:.09,spread:.8,paint:false});
+      // BounceAfterMaxSpeed is explicit only for the smaller bubble group.
       if(bp.BounceAfterMaxSpeed!=null&&p.vel.length()>bp.BounceAfterMaxSpeed*HZ)p.vel.setLength(bp.BounceAfterMaxSpeed*HZ);
-      s.bounces++;return false;
+      s.bounces++;if(ground)s.groundBounces++;
+      updateCatalogVisual(p);return false;
     }
+    if(p.ghost)return true;
     const footprint=impactPaint(p);
     paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
+    if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
+       (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
+      G.fx?.burst(at,h.normal||down,p.owner.color,{count:r.family==='roller'?12:9,speed:2.5,
+        size:r.family==='roller'?.14:.11,spread:1.2,paint:false});
     return true;
   }
-  P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;return p;};
+  P._new=function(...args){const p=fresh.apply(this,args);p.catalog=null;p.catalogVisual=null;return p;};
   P._step=function(p,dt){
     if(!p.catalog)return step.call(this,p,dt);
     const s=p.catalog,d=s.descriptor;
@@ -630,22 +654,23 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const travelBefore=s.travel;
       advance(p);
       const shapes=lobes(p),len=p.prev.distanceTo(p.pos);
+      const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
       let world=s.hit;world.hit=false;
       for(const q of shapes){
-        const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index);
+        const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
         const candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
         if(candidate.hit&&(!world.hit||candidate.dist<world.dist))world=candidate;
       }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
       else defense=null;
-      const pr1=Math.max(...shapes.map(q=>collisionRadius(q.param,'Player',p.age*HZ,s.index)));
+      const pr1=Math.max(...shapes.map(q=>collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale)));
       for(const a of G.actors||[]){
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
         let entry=null;
         for(const q of shapes){
-          const pr0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index),radius=collisionRadius(q.param,'Player',p.age*HZ,s.index);
+          const pr0=collisionRadius(q.param,'Player',(p.age-DT)*HZ,s.index,bounceScale),radius=collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale);
           const contact=capsuleEntry(q.from,q.to,a.pos,hurtboxRadius(a,PLAYER),hurtboxHeight(a,PLAYER),pr0,radius);
           if(contact!=null&&(entry==null||contact<entry))entry=contact;
         }
@@ -678,13 +703,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
         if(target){
-          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)this.applyHit(p.owner,target,amount,p.wid);}
+          if(!p.ghost&&target.team!==p.team){const amount=impactDamage(p,target);if(amount>0)withObjectDamageCause(p,()=>this.applyHit(p.owner,target,amount,p.wid));}
           if(s.r.family==='charger'&&d.charge+EPS>=1&&d.m.ThroughFullCharge!==false){s.seen.add(target);continue;}
           if(s.r.family==='blaster'&&!p.ghost)explosion(this,p,d.b.BlastParam,target);
           if(s.r.parameters.BlastParam?.BlastParam&&!p.ghost)explosion(this,p,s.r.parameters.BlastParam.BlastParam);
           return true;
         }
         if(boss){if(!p.ghost)G.boss.hit(p.owner,impactDamage(p,boss.target||G.boss),boss.target,p.wid,p.pos.clone());return true;}
+        // A rebound consumed only the travelled portion of this tick. Counting
+        // its unused tail shortened the Bloblobber's remaining sourced reach.
+        if(s.r.sourceActor==='WeaponSlosherBathtub'&&world.hit)
+          s.travel=travelBefore+len*Math.max(0,Math.min(1,stop));
         if(finishContact(this,p,world))return true;
       }
       if(!p.ghost&&!d.splashDropSpec&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
@@ -707,7 +736,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(p&&r&&!r.legacy&&Array.isArray(meta)&&meta.length===5&&meta[0]===1&&allowed.includes(meta[1])&&
       Number.isSafeInteger(meta[2])&&meta[2]>=0&&meta[2]<30&&Number.isFinite(meta[3])&&meta[3]>=0&&meta[3]<=1){
       try {const d=mode(r,meta[1],meta[2],meta[3]);p.catalog={r,descriptor:d,travel:0,nextSplash:d.splashDropSpec?d.splashFirst:1,dropCount:0,
-        hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0};}
+        hit:new Hit(),seen:new Set(),index:Math.max(0,finite(meta[4],0)),phase:0,stuck:false,fuse:0,carry:0,range:d.range,bounces:0,groundBounces:0};
+        p.catalogVisual=catalogVisualSpec(r,d,p.catalog.index);updateCatalogVisual(p);}
       catch { /* malformed visual packet cannot create a gameplay object */ }
     }return result;
   };
@@ -722,7 +752,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=state(runner);s.contactTimes ||= new Map();
     for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(at)<radius+PLAYER.radius&&
       G.time-(s.contactTimes.get(enemy)??-Infinity)>=.4&&G.physics.los(at,enemy.pos)){
-      G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id);s.contactTimes.set(enemy,G.time);
+      withObjectDamageCause({owner:a,type:r.family==='brush'?'brush-body':'roller',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(body.Damage,250)/10,r.id));s.contactTimes.set(enemy,G.time);
     }
   }
   function beginPending(s,frames,fire){s.pending={remaining:frames/HZ,fire};}
@@ -829,7 +859,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const x=dx*cy-dz*sy-center.X,z=dx*sy+dz*cy-center.Z;
       if(Math.abs(x)<ext.X+PLAYER.radius&&Math.abs(z)<ext.Z+PLAYER.radius&&
         Math.abs(enemy.pos.y-a.pos.y)<ext.Y+PLAYER.height&&G.physics.los(a.pos,enemy.pos))
-        G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id);
+        withObjectDamageCause({owner:a,type:'saber-melee',catalog:{r,descriptor:{key}}},()=>G.projectiles.applyHit(a,enemy,b.DamageParam.DamageValue/10,r.id));
     }
   }
   function swing(runner,r,input,s,dt) {
@@ -891,15 +921,27 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(this.weapon.catalogRecord&&motion){this.vel.x=motion.direction.x*motion.speed;this.vel.z=motion.direction.z*motion.speed;return;}
     return nativeHorizontal.call(this,dt,...args);
   };
+  const launchedCanopies = new Set();
+  const worldUpdate = P.update;
+  P.update = function(dt,...args){
+    if(Number.isFinite(dt)&&dt>0)for(const c of launchedCanopies){
+      c.pos.addScaledVector(c.dir,c.speed*dt);c.remaining-=dt;
+      if(c.remaining<=EPS||c.hp<=0){retireDetachedCanopy(c);launchedCanopies.delete(c);continue;}
+      floorPaint(c.owner,c.pos,c.paintRadius);showDetachedCanopy(api,c.owner,c,c.weaponId);
+      c.contacts ||= new Map();
+      for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==c.owner.team&&enemy.pos.distanceTo(c.pos)<c.radius+PLAYER.radius&&G.time-(c.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(c.pos,enemy.pos)){
+        withObjectDamageCause({owner:c.owner,type:'canopy',catalog:{r:c.record}},()=>G.projectiles.applyHit(c.owner,enemy,finite(c.record.parameters.spl__BulletShelterCanopyParam.CanopyDamage,300)/10,c.weaponId));c.contacts.set(enemy,G.time);
+      }
+    }
+    return worldUpdate.call(this,dt,...args);
+  };
   function brella(runner,r,input,s,dt) {
     const a=runner.a,p=r.parameters,measure=BRELLA_MEASURED[r.sourceActor],t=weaponParam(r),c=p.spl__BulletShelterCanopyParam||{};
     s.naked=Math.max(0,s.naked-dt);
     const canopy=s.canopy;
     if(canopy){
       canopy.age+=dt;
-      if(canopy.launched){canopy.pos.addScaledVector(canopy.dir,finite(c.CanopyInitSpeed,7.92)*dt);floorPaint(a,canopy.pos,finite(c.CanopyPaintRadius,1));
-        canopy.remaining-=dt;if(canopy.remaining<=EPS||canopy.hp<=0)s.canopy=null;}
-      else {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
+      {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
         canopy.open=!!input.fire&&canopy.age*HZ>=measure.open;
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
@@ -908,12 +950,14 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(canopy.open&&canopy.age*HZ>=measure.open+measure.launch&&p.spl__WeaponShelterCanopyParam.IsCanopyShot!==false){
           canopy.launched=true;canopy.remaining=finite(c.CanopyFrame,300)/HZ;
           s.naked=finite(c.CanopyNakedFrame,330)/HZ;
+          canopy.owner=a;canopy.weaponId=r.id;canopy.speed=finite(c.CanopyInitSpeed,7.92);canopy.paintRadius=finite(c.CanopyPaintRadius,1);
+          canopy.record=r;canopy.visualSource=a.character?.weapon?.def;launchedCanopies.add(canopy);showDetachedCanopy(api,a,canopy,r.id);s.canopy=null;
         }}
       if(canopy.open||canopy.launched){
         canopy.contacts ||= new Map();
         for(const enemy of G.actors||[])if(enemy.alive&&enemy.team!==a.team&&enemy.pos.distanceTo(canopy.pos)<canopy.radius+PLAYER.radius&&
           G.time-(canopy.contacts.get(enemy)??-Infinity)>=30/HZ&&G.physics.los(canopy.pos,enemy.pos)){
-          G.projectiles.applyHit(a,enemy,finite(c.CanopyDamage,300)/10,r.id);canopy.contacts.set(enemy,G.time);
+          withObjectDamageCause({owner:a,type:'canopy',catalog:{r}},()=>G.projectiles.applyHit(a,enemy,finite(c.CanopyDamage,300)/10,r.id));canopy.contacts.set(enemy,G.time);
         }
       }
     }
@@ -929,14 +973,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   const nativeDefense=P.kitDefenseCandidate;
   function hurtCanopy(a,s,c,damage){
-    const raw=a.weapon.catalogRecord.parameters.spl__BulletShelterCanopyParam;
+    const raw=(c.record||a.weapon.catalogRecord).parameters.spl__BulletShelterCanopyParam;
     c.hp=Math.max(0,c.hp-damage*(c.launched?finite(raw.CanopyAttackedDamageRate,.5):1));
-    if(c.hp<=0){s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}
+    if(c.hp<=0){if(c.launched){retireDetachedCanopy(c);launchedCanopies.delete(c);}else{s.canopy=null;s.naked=finite(raw.CanopyNakedFrame,330)/HZ;}}
   }
   P.kitDefenseCandidate=function(p){
     let best=nativeDefense?.call(this,p)||null;
     const len=p.prev.distanceTo(p.pos);
-    for(const a of G.actors||[]){const s=a.weaponRunner?.catalogState,c=s?.canopy;
+    const guards=[...(G.actors||[]).map(a=>({a,s:a.weaponRunner?.catalogState,c:a.weaponRunner?.catalogState?.canopy})),...Array.from(launchedCanopies,c=>({a:c.owner,s:c.owner.weaponRunner?.catalogState,c}))];
+    for(const {a,s,c} of guards){
       if(!a.alive||a.team===p.team||!c||!c.open&&!c.launched||c.hp<=0)continue;
       const t=capsuleEntry(p.prev,p.pos,c.pos,c.radius,c.radius*2,.1);
       if(t==null||t*len>=(best?.distance??Infinity))continue;
@@ -958,7 +1003,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     return nativeApplyHit.call(this,attacker,victim,damage,wid,...args);
   };
-  P.clear=function(...args){for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
+  P.clear=function(...args){for(const c of launchedCanopies)retireDetachedCanopy(c);launchedCanopies.clear();for(const a of G.actors||[])if(a.weaponRunner?.catalogState)cancel(a.weaponRunner);return clear.apply(this,args);};
   const startSpecial=Actor.prototype._startSpecial;
   Actor.prototype._startSpecial=function(...args){const before=this.stats?.specials;const result=startSpecial.apply(this,args);
     if(this.stats?.specials>before&&this.weapon.catalogRecord)cancel(this.weaponRunner);return result;};
