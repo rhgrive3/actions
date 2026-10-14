@@ -15,7 +15,7 @@ assert.equal(hash(JSON.stringify(manifest.artifacts)),manifest.contentHash);
 for(const [file,digest]of Object.entries(manifest.artifacts))assert.equal(hash(fs.readFileSync(path.join(site,file))),digest,file);
 const sourceSha=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const prefix='/_versions/'+manifest.build.revision+'/';
-const ids=['shooter-01','s3-slosher-double-02','s3-stringer-short-02'];
+const ids=['s3-charger-quick-01'];
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.bin':'application/octet-stream'};
 const server=http.createServer((req,res)=>{
  const pathname=new URL(req.url,'http://localhost').pathname;
@@ -55,10 +55,10 @@ try{
   G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.match={playing:()=>true};G.time=0;
   G.projectiles=Object.fromEntries(['fireShooter','fireDualies','fireBlaster','fireSlosh','fireFlick','fireCharger','fireSplatling','throwBomb'].map(n=>[n,()=>{}]));
   const result=[];
-  for(const id of ids){
+  for(const id of ids)for(const team of [0,1]){
    const baseId=R.weaponBaseModelId(id),variantId=R.weaponDefaultAppearance(id),spec=R.weaponVariantSpec(variantId);
    if(!WEAPONS[id]||!spec||spec.baseId!==baseId)throw Error('Missing real variant '+id);
-   const actors=[baseId,id].map(weapon=>new Actor({team:0,weapon,isLocal:false,name:'weapon-gallery',CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}));
+   const actors=[baseId,id].map(weapon=>new Actor({team,weapon,isLocal:false,name:'weapon-gallery',CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}));
    for(let i=0;i<actors.length;i++){
     const a=actors[i],ch=a.character;ch.actor=a;ch.onEvent=null;
     if(ch.root.parent)throw Error('Character unexpectedly attached to scene');
@@ -83,16 +83,16 @@ try{
     if(i===1){for(const [view,dir] of [['opposite',[1,.3,.5]],['upper',[-.6,1,.6]]]){camera.position.copy(center).add(new THREE.Vector3(...dir).normalize().multiplyScalar(span*2.5));camera.lookAt(center);renderer.render(scene,camera);renderer.render(scene,camera);if(renderer.getContext().getError()!==0)throw Error('WebGL '+view);extraViews.push({view,png:renderer.domElement.toDataURL('image/png').split(',')[1]});}}
     scene.remove(g);
    }
-   result.push({id,baseId,variantId,name:WEAPONS[id].referenceNames?.en||WEAPONS[id].name,baseName:WEAPONS[baseId].referenceNames?.en||WEAPONS[baseId].name,basePng:captures[0],variantPng:captures[1],extraViews,baseSize:sizes[0].toArray(),variantSize:sizes[1].toArray()});
+   result.push({id:team?id+'-blue':id,sourceId:id,team,baseId,variantId,name:WEAPONS[id].referenceNames?.en||WEAPONS[id].name,baseName:WEAPONS[baseId].referenceNames?.en||WEAPONS[baseId].name,basePng:captures[0],variantPng:captures[1],extraViews,baseSize:sizes[0].toArray(),variantSize:sizes[1].toArray()});
    for(const a of actors)a.character.dispose();
   }
   env.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return result;
  },{prefix,ids});
- assert.equal(rows.length,ids.length);assert.deepEqual(errors,[]);
+ assert.equal(rows.length,ids.length*2);assert.deepEqual(errors,[]);
  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const css='*{box-sizing:border-box}body{margin:0;padding:24px;background:#101922;color:#edf2f5;font:16px Arial,sans-serif}h1{font-size:26px;margin:0 0 8px}p{color:#b9c9d5;margin:0 0 20px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.card{background:#1b2935;border:1px solid #3b4d5c;border-radius:12px;padding:16px;break-inside:avoid}h2{font-size:20px;margin:0 0 12px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}figure{margin:0}figcaption{font-size:15px;font-weight:bold;margin-bottom:8px}img{display:block;width:100%;border-radius:7px}small{display:block;color:#b9c9d5;margin-top:10px;font-size:12px}.single .grid{grid-template-columns:1fr}';
  const card=(r,data)=>'<section class="card"><h2>'+esc(r.name)+'</h2><div class="pair"><figure><figcaption>BASE · '+esc(r.baseName)+'</figcaption><img src="'+(data?'data:image/png;base64,'+r.basePng:r.id+'-base.png')+'"></figure><figure><figcaption>VARIANT · '+esc(r.name)+'</figcaption><img src="'+(data?'data:image/png;base64,'+r.variantPng:r.id+'-variant.png')+'"></figure></div><small>'+esc(r.baseId+' → '+r.variantId)+'</small></section>';
- const html=(items,data,single=false)=>'<!doctype html><meta charset="utf-8"><title>INKWAVE weapon variants</title><style>'+css+'</style><body class="'+(single?'single':'')+'"><h1>INKWAVE · Shape correction candidate</h1><p>Production shaders; model-space view; identical lighting and per-pair physical scale · Orange team ink · Build '+manifest.contentHash.slice(0,12)+'</p><main class="grid">'+items.map(r=>card(r,data)).join('')+'</main></body>';
+ const html=(items,data,single=false)=>'<!doctype html><meta charset="utf-8"><title>INKWAVE weapon variants</title><style>'+css+'</style><body class="'+(single?'single':'')+'"><h1>INKWAVE · Shape correction candidate</h1><p>Production shaders; model-space view; identical lighting and per-pair physical scale · Orange / blue team ink · Build '+manifest.contentHash.slice(0,12)+'</p><main class="grid">'+items.map(r=>card(r,data)).join('')+'</main></body>';
  for(const row of rows){
   for(const v of row.extraViews)fs.writeFileSync(path.join(out,row.id+'-'+v.view+'.png'),Buffer.from(v.png,'base64'));
   fs.writeFileSync(path.join(out,row.id+'-base.png'),Buffer.from(row.basePng,'base64'));

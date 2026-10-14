@@ -1,0 +1,58 @@
+{
+  "sourceRow": "Charger_Quick_01",
+  "baseId": "s3-charger-quick",
+  "referenceVersion": "Official Fresh Season 2024; canonical11.3.0 identity",
+  "inspectedAt": "2026-10-14",
+  "references": [
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_New_Squiffer_Promotional_3D_Render.png",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/2/21/S3_New_Squiffer_Promotional_3D_Render.png",
+      "dimensions": [
+        1812,
+        1019
+      ],
+      "inspection": "Actual high-resolution pixels viewed via cloud browser; rotation viewed at0s/6s, both flanks and flattened end."
+    },
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_New_Squiffer_model_rotating.mp4",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/c/cb/S3_New_Squiffer_model_rotating.mp4",
+      "dimensions": null,
+      "inspection": "Actual high-resolution pixels viewed via cloud browser; rotation viewed at0s/6s, both flanks and flattened end."
+    },
+    {
+      "page": "https://splatoonwiki.org/wiki/File:S3_Fizzbang_Promo_New_Squiffer.png",
+      "media": "https://cdn.wikimg.net/en/splatoonwiki/images/c/c8/S3_Fizzbang_Promo_New_Squiffer.png",
+      "dimensions": [
+        1920,
+        1080
+      ],
+      "inspection": "Actual high-resolution pixels viewed via cloud browser; rotation viewed at0s/6s, both flanks and flattened end."
+    }
+  ],
+  "officialPromoOrigin": "https://x.com/SplatoonJP/status/1758054540920910003",
+  "icon": {
+    "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/images/weapon/Wst_Charger_Quick_01.png",
+    "gitBlob": "a85b50b4d72e292201f6d498de6bd0905d589c3d",
+    "role": "Identity/palette crosscheck only; not used alone for shape."
+  },
+  "changes": [
+    "Flattened tapered fixed-gray tank replaces round ink tank.",
+    "Classic cylinder rings removed; bilateral starburst shoulder labels and dark rear graphic.",
+    "Collar/clips/muzzle/trigger team ink, corroborated by lime promo and cyan gameplay frame.",
+    "Fixed pale-blue barrel/grip and muted-green frame."
+  ],
+  "limits": [
+    "Dimensions artist-estimated from official views, not measured game mesh.",
+    "Tank glyphs and starburst lettering are procedural approximations.",
+    "Receiver/bar/muzzle inherit base geometry; CPU view suggests receiver upper contour too flat.",
+    "CPU previews are not runtime shader or held-character validation.",
+    "No gameplay/timing changes or retail behavior equivalence claim."
+  ],
+  "baseSourceSha256": "06901d06a9e7e2a5902c77fbeb809306c043933f8bdffb6a231fb32f24f86cef",
+  "validation": {
+    "focusedTests": "4/4 passed",
+    "triangles": 5552,
+    "fullBuild": "not run",
+    "runtimeRender": "not run"
+  }
+}

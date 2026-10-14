@@ -1,7 +1,7 @@
 name: Render three reference-based shape corrections
 on:
   push:
-    branches: [review/weapon-shape-v2-20261014]
+    branches: [review/new-squiffer-candidate-20261014]
 permissions:
   contents: read
 jobs:
@@ -44,6 +44,8 @@ jobs:
           grep -qx '# pass 5' variant-test-results/emitted.tap
           grep -qx '# fail 0' variant-test-results/emitted.tap
           grep -qx '# skipped 3' variant-test-results/emitted.tap
+      - name: Verify New Squiffer source geometry
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-new-squiffer.test.mjs
       - name: Install capture browser after runtime gates pass
         run: npx playwright install --with-deps chromium
       - name: Capture actual emitted weapon meshes
