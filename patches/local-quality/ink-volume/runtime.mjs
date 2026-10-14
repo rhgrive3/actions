@@ -38,6 +38,9 @@ export function animationFrame(age, count, fps) {
 
 // Bounded frame/LOD batches. No geometry/material allocation in gameplay.
 // No physics, RNG, camera-facing orientation, paint or damage authority here.
+// Frames a newly registered pack stays fully in the render list (texture upload + program compile, as before).
+export const WARM_FRAMES = 2;
+
 export class InkVolumes {
   constructor(root, lighting, { capacity = 128, maxDistance = 65, lodDistance = 22, triangleBudget = 600000 } = {}) {
     if (!Number.isInteger(capacity) || capacity < 1 || capacity > 1024) throw Error('Invalid volume capacity');
@@ -55,7 +58,7 @@ export class InkVolumes {
   register(name, pack) {
     if (this.disposed || this.assets.has(name)) throw Error('Ink volume name already registered or engine disposed');
     if (!pack || pack.schema !== 'inkwave-volume-v1' || !Array.isArray(pack.patterns) || !pack.patterns.length || pack.patterns.length > 8) throw Error('Invalid volume pack');
-    const asset = { patterns: [], resources: [], bytes: 0 };
+    const asset = { patterns: [], resources: [], bytes: 0, warmFrames: WARM_FRAMES, showAll: true };
     try {
       for (const p of pack.patterns) {
         if (!Number.isInteger(p.width) || !Number.isInteger(p.height) || p.width < 1 || p.height < 1 || p.width > 512 || p.height > 512 || !Array.isArray(p.frames) || p.frames.length < 1 || p.frames.length > 32 || !(p.fps > 0 && p.fps <= 120)) throw Error('Invalid volume pattern');
@@ -97,6 +100,9 @@ export class InkVolumes {
             const before=(_renderer,_scene,_camera,_geometry,mat)=>{uniforms.uFrameBounds.value.set(...bounds);mat.uniformsNeedUpdate=true;};mesh.onBeforeRender=fringe.onBeforeRender=before;
             mesh.count = 0; mesh.frustumCulled = false; mesh.castShadow = false; mesh.name = 'InkVolume:' + name + ':' + f + ':' + levels.length;
             fringe.count=0;fringe.frustumCulled=false;fringe.castShadow=false;fringe.name=mesh.name+':fringe';
+            // Empty batches stay out of the render list (see WARM_FRAMES): an instanced mesh with count 0 draws nothing,
+            // but a visible one still costs three.js its program/state/VAO setup and this onBeforeRender's full uniform
+            // upload every frame.
             const batch = { mesh, fringe, triangles:drawIndices.length/3, n: 0, matrixRange: { start: 0, count: 0 }, colorRange: { start: 0, count: 0 } }; levels.push(batch);
             asset.bytes += data.positions.byteLength + data.normals.byteLength + uv.byteLength + drawIndices.byteLength + this.capacity * 19 * 4;
           }
@@ -112,9 +118,14 @@ export class InkVolumes {
   begin(camera = this.camera) {
     this.camera = camera; this.metrics.active = this.metrics.culled = this.metrics.overflow = this.metrics.triangles = this.metrics.batches = 0;
     if (camera) { camera.updateMatrixWorld(); this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); this.frustum.setFromProjectionMatrix(this.clip); }
+    for (const a of this.assets.values()) {
+      // a newly registered pack keeps every batch in the render list for its first frames, as before: they upload its
+      // atlas textures and compile its programs then, not at the pack's first mid-match use
+      a.showAll = a.warmFrames > 0; if (a.showAll) a.warmFrames--;
+    }
     for (const a of this.assets.values()) for (const p of a.patterns) {
       if (camera) { p.uniforms.uSunDirV.value.copy(this.light.sunDir).transformDirection(camera.matrixWorldInverse); p.uniforms.uUpV.value.set(0, 1, 0).transformDirection(camera.matrixWorldInverse); }
-      for (const ls of p.frames) for (const b of ls) { b.n = 0; b.mesh.count = b.fringe.count = 0; }
+      for (const ls of p.frames) for (const b of ls) { b.n = 0; b.mesh.count = b.fringe.count = 0; b.mesh.visible = b.fringe.visible = a.showAll; }
     }
   }
   submit(name, source, size, patternIndex = 0) {
@@ -157,7 +168,8 @@ export class InkVolumes {
   }
   end() {
     for (const a of this.assets.values()) for (const p of a.patterns) for (const ls of p.frames) for (const b of ls) {
-      b.mesh.count = b.mesh.geometry.drawRange.count ? b.n : 0; b.fringe.count = b.fringe.geometry.drawRange.count ? b.n : 0; if (!b.n) continue; this.metrics.batches+=Number(b.mesh.count>0)+Number(b.fringe.count>0);
+      b.mesh.count = b.mesh.geometry.drawRange.count ? b.n : 0; b.fringe.count = b.fringe.geometry.drawRange.count ? b.n : 0;
+      b.mesh.visible = a.showAll || b.mesh.count > 0; b.fringe.visible = a.showAll || b.fringe.count > 0; if (!b.n) continue; this.metrics.batches+=Number(b.mesh.count>0)+Number(b.fringe.count>0);
       upload(b.mesh.instanceMatrix, b.matrixRange, b.n);
       upload(b.mesh.instanceColor, b.colorRange, b.n);
     }

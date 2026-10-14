@@ -579,24 +579,32 @@ function disposeMesh(rt, object) {
   });
   object.mesh = null;
 }
-function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
-  const { THREE, G } = rt.api;
-  if (!G.scene?.add || !THREE?.Mesh) return null;
+// Geometry + material of one deployable's world mesh. Shared with the program
+// keepers in special-motion.mjs, so their warmed programs match exactly.
+export function worldMeshParts(THREE, kind, color) {
   let geometry, material;
   if (kind === 'screen') {
     geometry = new THREE.PlaneGeometry(8, 4.5);
-    material = new THREE.MeshBasicMaterial({ color: colorOf(rt,owner), transparent:true, opacity:.34, side:THREE.DoubleSide, depthWrite:false });
+    material = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.34, side:THREE.DoubleSide, depthWrite:false });
   } else if (kind === 'wave') {
     geometry = new THREE.CylinderGeometry(.38,.38,1.15,10);
-    material = new THREE.MeshStandardMaterial({ color:colorOf(rt,owner), emissive:colorOf(rt,owner), emissiveIntensity:.22, roughness:.42 });
+    material = new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:.22, roughness:.42 });
   } else if (kind === 'waveFront') {
     geometry = new THREE.RingGeometry(.96,1,48);
-    material = new THREE.MeshBasicMaterial({ color:colorOf(rt,owner), transparent:true, opacity:.7, side:THREE.DoubleSide, depthWrite:false });
+    material = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.7, side:THREE.DoubleSide, depthWrite:false });
   } else {
     geometry = new THREE.SphereGeometry(kind === 'decoy' ? .42 : .7, 10, 8);
-    material = new THREE.MeshStandardMaterial({ color:colorOf(rt,owner), emissive:colorOf(rt,owner), emissiveIntensity:.22, roughness:.55,
+    material = new THREE.MeshStandardMaterial({ color, emissive:color, emissiveIntensity:.22, roughness:.55,
       transparent:kind === 'strike'||kind === 'crabBall', opacity:kind === 'strike'?.42:kind === 'crabBall'?.72:1 });
   }
+  return { geometry, material };
+}
+// one of each distinct worldMeshParts material variant (other kinds share the sphere branch)
+export const WORLD_MESH_KINDS = Object.freeze(['screen', 'wave', 'waveFront', 'decoy', 'strike', 'crabBall']);
+function worldMesh(rt, owner, kind, center, scale = [1,1,1]) {
+  const { THREE, G } = rt.api;
+  if (!G.scene?.add || !THREE?.Mesh) return null;
+  const { geometry, material } = worldMeshParts(THREE, kind, colorOf(rt,owner));
   const mesh = new THREE.Mesh(geometry, material);
   if (kind === 'waveFront') mesh.rotation.x = -Math.PI / 2;
   mesh.position.copy(center); mesh.scale.set(...scale);
