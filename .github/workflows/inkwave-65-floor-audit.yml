@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
 jobs:
-  65-main-weapon-paint:
+  main-weapon-paint-65:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
