@@ -137,3 +137,7 @@ PR #1324 head `cfd7ccad511b26c2a0c7c84323f93331ecbe30ec` was freshly inspected. 
 ## Known shared CI dependency
 
 Base ee9 has a separately owned catalog test expectation for Booyah armor before its newly introduced 30-frame startup. The fixture-only correction is tracked in PR #1355. This candidate does not weaken that assertion, import unrelated runtime changes, or treat its own focused results as an aggregate CI pass. The central integration owner must verify required checks on the published exact head and reconcile that shared dependency.
+
+## 2026-10-14 main reconciliation
+
+The current integrated branch inherits main `0ec29a1d0c801d7c77c6ccd9b7b4200bd333a703` in its second parent and retains all existing adopted modal/Pointer Lock and Curling/Sprinkler fixes from that main. Only the novel native Boolean-ground and vertical-slab runtime, emitted tests, evidence, four CPU tools, and exact report append are reintroduced. The previous broad 30-path composition has been reduced to **17 changed paths**. The native-stage workflow restores both emitted parity gates; the general Validate workflow intentionally comes from main because it already contains the same input/bomb validation steps. This records source composition only: do not infer new whole-game FPS improvements, browser acceptance, or Splatoon 3 retail parity. The final PR head must be validated by fresh hosted CI before merge.
