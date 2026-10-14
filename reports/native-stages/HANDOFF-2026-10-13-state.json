@@ -1,0 +1,231 @@
+{
+  "savedAt": "2026-10-13 UTC",
+  "scope": "All task code and unpublished historical tips remotely saved. All preexisting owner verification jobs closed. Original completion goal remains unfinished and preserved for resume.",
+  "counts": {
+    "additionalReviewedGameplay": 16,
+    "additionalBlockedSourceOrPlacement": 2,
+    "additionalUnfinishedGameplay": 2,
+    "originalStages": 5
+  },
+  "refs": {
+    "foundation": {
+      "branch": "codex/native-stage-expansion",
+      "sha": "a84a691ce58b63076af965761221f06b9162965b",
+      "pr": 1323,
+      "status": "qualified base"
+    },
+    "aggregate": {
+      "branch": "codex/native-stage-reviewed",
+      "sha": "58ba9889117749314d2eaa6f1b51732e6572ae04",
+      "pr": 1324,
+      "status": "Draft; final combined qualification NOT run"
+    },
+    "bluefin": {
+      "branch": "codex/native-bluefin",
+      "sha": "1adbeda76f40c658a18656ed32c835791c9e1e98",
+      "pr": 1343,
+      "status": "Draft; human verifier and corrected naturalWS pending"
+    },
+    "shipshape": {
+      "branch": "codex/native-shipshape",
+      "sha": "e4c742820b0c29c84360301b511333ee1ab49864",
+      "pr": 1394,
+      "status": "Draft; complete current stage matrix pending"
+    },
+    "catalogueSourceSweep": {
+      "branch": "codex/native-catalogue-source-sweep",
+      "sha": "ad5e9dc7ce3aa8cf06ef9216474d2e0443e5aa01",
+      "testedCode": "e9840789281dfbabb6852a2e5fe1cb5c040f3bce",
+      "pr": 1419,
+      "status": "Draft; code/source/kernel proved, packaging/Game/WS pending"
+    },
+    "drySourceRefill": {
+      "branch": "codex/native-source-climb-refill",
+      "sha": "ecf6f90b10328f560326351e9194a1b6a4ba82a4",
+      "pr": 1420,
+      "status": "Draft; common-worktree fixtures/public packaging/reports/final peer pending"
+    },
+    "bluefinAllCodeWip": {
+      "branch": "codex/wip-native-bluefin-save-20261013",
+      "sha": "c0a420b219f1eb7c454ec702e2181e871e66236f",
+      "status": "WIP exact code snapshot, unverified oracle +22 diagnostics"
+    },
+    "shipshapeAllCodeWip": {
+      "branch": "wip/native-shipshape-remote-resume-20261013",
+      "sha": "466e703dcabe41f28ba4ee053ef24cc827102d47",
+      "status": "WIP34 files,27 diagnostic helpers +historical patches/docs/resume"
+    },
+    "humpbackPeerWip": {
+      "branch": "codex/wip-humpback-bluefin-peer-helpers-20261013",
+      "sha": "ef2d6dc3b046bf6bf78e9b27bca8f7cb5412b4d5",
+      "status": "WIP12 exact helpers +ENV relocation preparation; relocation unqualified"
+    },
+    "wahooPeerWip": {
+      "branch": "codex/wip-wahoo-peer-helpers-20261013",
+      "sha": "b4d79039cc8c8f6276b54a37c55802f6fcfdc811",
+      "status": "WIP4 source/primary/wet/retained helpers +resume"
+    }
+  },
+  "historicalCodeTipSnapshots": [
+    {
+      "localBranch": "codex/native-combat-shipshape-validation",
+      "sha": "7a306f72bcbcd5227d79cbf44c6f08752149aedc",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-combat-shipshape-validation",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-humpback-clams-diagnostic",
+      "sha": "a38b0c59dc51453ec6a097ea44b18a558ce1514f",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-humpback-clams-diagnostic",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-mincemeat-before-foundation",
+      "sha": "28cc45a13cf103359b1acfc2e9b8c1b3f858592e",
+      "remoteOriginal": null,
+      "assetDifferences": [
+        "reports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ],
+      "backupRef": "codex/wip-save-20261013/native-mincemeat-before-foundation",
+      "assetStatusReview": [
+        "D\treports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ]
+    },
+    {
+      "localBranch": "codex/native-ranked-inputs-calibration",
+      "sha": "77ea84c4ae71bd9dddadaf41a584b6a322c2c2c4",
+      "remoteOriginal": null,
+      "assetDifferences": [
+        "reports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ],
+      "backupRef": "codex/wip-save-20261013/native-ranked-inputs-calibration",
+      "assetStatusReview": [
+        "D\treports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ]
+    },
+    {
+      "localBranch": "codex/native-robo-follower-calibration",
+      "sha": "cd21d1d092c708f04158275f90daeed8d5a5bfb1",
+      "remoteOriginal": null,
+      "assetDifferences": [
+        "reports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ],
+      "backupRef": "codex/wip-save-20261013/native-robo-follower-calibration",
+      "assetStatusReview": [
+        "D\treports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ]
+    },
+    {
+      "localBranch": "codex/native-source-drop-calibration",
+      "sha": "802c2c7c28540c83afc979de9898fa3a042df192",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-source-drop-calibration",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-source-goals-calibration",
+      "sha": "0ae7f10eca5f5a679d933e666dfa6f9904170c21",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-source-goals-calibration",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-source-grounded-body-baseline",
+      "sha": "54606ac89aada20e0a98ca6975024ba4f3d1df4f",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-source-grounded-body-baseline",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-source-grounded-body-ship-context",
+      "sha": "3539a1d1244a361efa77758bd6632ec15917b43a",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-source-grounded-body-ship-context",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-source-jump-combat-baseline",
+      "sha": "844c89a82e348f75cf05389c3eb1309569c6ccea",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-source-jump-combat-baseline",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-source-jump-combat-calibration",
+      "sha": "e5eaadddbc1d508692b26664563e1a2475b53e64",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-source-jump-combat-calibration",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-source-projectiles",
+      "sha": "c8e159c3a8d95358792be278efee38de04ac8ae6",
+      "remoteOriginal": "af611dff5710142b6d78219277d941921584ea3a",
+      "assetDifferences": [
+        "reports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ],
+      "backupRef": "codex/wip-save-20261013/native-source-projectiles",
+      "assetStatusReview": [
+        "D\treports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ]
+    },
+    {
+      "localBranch": "codex/native-source-tower-calibration",
+      "sha": "f601cf3e7f76ef562c2008ecc558864521f24c71",
+      "remoteOriginal": null,
+      "assetDifferences": [],
+      "backupRef": "codex/wip-save-20261013/native-source-tower-calibration",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/native-tower-clearance",
+      "sha": "718b959228e65b0136a5c751bac481d6e9298971",
+      "remoteOriginal": null,
+      "assetDifferences": [
+        "reports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ],
+      "backupRef": "codex/wip-save-20261013/native-tower-clearance",
+      "assetStatusReview": [
+        "D\treports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ]
+    },
+    {
+      "localBranch": "codex/private-native-bluefin-approach",
+      "sha": "db1178fe52f138f06d8269c1d726cf2193e2a7b6",
+      "backupRef": "codex/wip-save-20261013/codex-private-native-bluefin-approach",
+      "assetStatusReview": []
+    },
+    {
+      "localBranch": "codex/private-native-flounder-ranked",
+      "sha": "3c7e4d3daa2972d31a76c845225885b83f4aef8e",
+      "backupRef": "codex/wip-save-20261013/codex-private-native-flounder-ranked",
+      "assetStatusReview": [
+        "D\treports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ]
+    },
+    {
+      "localBranch": "codex/private-native-source-support-drops",
+      "sha": "c538be08597a437c8919472e1672fdfc51a6b7c0",
+      "backupRef": "codex/wip-save-20261013/codex-private-native-source-support-drops",
+      "assetStatusReview": [
+        "D\treports/assets/inkwave-stance-carry-2026-10-12.jpg"
+      ]
+    }
+  ],
+  "sourcePin": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "qualifiedConsumedMain": "9bed52751a909af84f9a9c0d6abb7cdd1a61c6b0",
+  "laterObservedUnqualifiedMain": "b3e8312c9ab4be773561ff8c28ff3423271593b5",
+  "noNewMainMerge": true,
+  "sourceAssetsAndFullPrivateEvidenceExcluded": true,
+  "allOwnerJobsClosed": true
+}
