@@ -152,9 +152,17 @@ function fillRest(mesh) {
   rest = { bottom, top, y: rest?.y ?? mesh.position.y, scaleY: rest?.scaleY ?? mesh.scale.y, geometry: g, start, end };
   fills.set(mesh, rest); return rest;
 }
-function lowerFill(mesh, depth) {
+function lowerFill(mesh, depth, surfaceOnly = false) {
   const r = fillRest(mesh);
   if (!r || !(r.top > r.bottom)) return;
+  // Thin variant-authored liquid sheets have no volume to compress. Their
+  // explicit definition flag opts into translation; all existing fills keep
+  // the original bottom-anchored, half-height-clamped compression below.
+  if (surfaceOnly) {
+    mesh.scale.y = r.scaleY;
+    mesh.position.y = r.y - depth;
+    return;
+  }
   const scale = 1 - Math.min(depth / r.scaleY, (r.top - r.bottom) * .5) / (r.top - r.bottom);
   mesh.scale.y = r.scaleY * scale;
   mesh.position.y = r.y + r.bottom * r.scaleY * (1 - scale);
@@ -168,7 +176,7 @@ function clear(ch) {
     if (w.def.kind === 'slosher') {
       const surface = w.parts?.surface;
       if (surface) { surface.position.copy(surface.userData.rest); surface.scale.set(1, 1, 1); surface.rotation.set(0, 0, 0); }
-      lowerFill(w.ink, 0); lowerFill(w.inkFar, 0);
+      lowerFill(w.ink, 0, w.def.slosherInkSurfaceOnly === true); lowerFill(w.inkFar, 0, w.def.slosherInkSurfaceOnly === true);
       if (w.parts?.lever) w.parts.lever.rotation.x = 0;
     }
     if (w.def.kind === 'splatling') {
@@ -450,7 +458,7 @@ export function installWeaponDetailMotion({ Character, WeaponRunner, Projectiles
         parts.surface.rotation.x = clamp(parts.surface.rotation.x, -tilt, tilt);
         parts.surface.rotation.z = clamp(parts.surface.rotation.z, -tilt, tilt);
       }
-      lowerFill(w.ink, depth); lowerFill(w.inkFar, depth);
+      lowerFill(w.ink, depth, w.def.slosherInkSurfaceOnly === true); lowerFill(w.inkFar, depth, w.def.slosherInkSurfaceOnly === true);
       if (parts.lever) parts.lever.rotation.x = 0; // no supported original thumb-lever mechanism
     }
     if (w.def.kind === 'blaster') {

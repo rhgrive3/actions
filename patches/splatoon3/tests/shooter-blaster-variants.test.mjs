@@ -191,3 +191,22 @@ test('Tentatek HD reconstruction preserves base and native channels while correc
  console.log(JSON.stringify({revision,baseBodyTriangles:a.body.index.count/3,variantBodyTriangles:d.body.index.count/3,newShellAndEmblemTriangles:skin.index.count/3,baseCanTriangles:a.parts.can.src.index.count/3,creamVertices:creamCount,normalOut}));
  if(process.env.TENTATEK_GEOMETRY_EXPORT)fs.writeFileSync(process.env.TENTATEK_GEOMETRY_EXPORT,JSON.stringify(Object.fromEntries([['base',a],['corrected',d]].map(([name,model])=>[name,channels(model).map(([n,g])=>({n,p:Array.from(g.attributes.position.array),c:Array.from(g.attributes.color.array),idx:Array.from(g.index.array)}))]))));
 });
+
+test('wordmark stays surface-close, outward and occluded from the upper capture camera',async()=>{
+ const f=await load(),d=f.VARIANT_MODELS.Shooter_Normal_01.build(fresh(f.K,'shooter')),T=f.K.THREE;
+ const meshes=channels(d).map(([name,g])=>{const m=new T.Mesh(g,new T.MeshBasicMaterial({side:T.DoubleSide}));m.name=name;m.updateMatrixWorld(true);return m;});
+ const bounds=new T.Box3();for(const m of meshes){m.geometry.computeBoundingBox();bounds.union(m.geometry.boundingBox);}
+ const center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3()),span=Math.max(...size.toArray()),g=d.parts.variantSkin.src;
+ const tankGeo=g.clone().setIndex(Array.from(g.index.array.slice(0,d.variantGeometryRevision.tankTriangleCount*3))),tank=new T.Mesh(tankGeo,new T.MeshBasicMaterial({side:T.DoubleSide}));tank.updateMatrixWorld(true);let actualMin=Infinity,actualMax=0;
+ const data={};for(const [view,dir]of [['front',[-1,.3,.5]],['upper',[-.6,1,.6]],['opposite',[1,.3,.5]]]) {
+  const camera=center.clone().add(new T.Vector3(...dir).normalize().multiplyScalar(span*2.5)),counts={visible:0,hidden:0,backFacingVisible:0,visibleSides:{},minClearance:Infinity,maxClearance:0};
+  for(let i=0;i<g.index.count;i+=3){const ids=Array.from(g.index.array.slice(i,i+3));if(!ids.every(j=>g.attributes.aMat.getX(j)===f.K.M.print))continue;
+   const pt=new T.Vector3(),normal=new T.Vector3();for(const j of ids){pt.add(new T.Vector3().fromBufferAttribute(g.attributes.position,j));normal.add(new T.Vector3().fromBufferAttribute(g.attributes.normal,j));}pt.multiplyScalar(1/3);normal.normalize();
+   const ray=new T.Raycaster(camera,pt.clone().sub(camera).normalize()),hits=ray.intersectObjects(meshes),dist=camera.distanceTo(pt);
+   const visible=hits.length&&hits[0].distance>=dist-.00001;
+   if(visible){counts.visible++;counts.visibleSides[Math.sign(pt.x)]=(counts.visibleSides[Math.sign(pt.x)]||0)+1;if(normal.dot(camera.clone().sub(pt))<0)counts.backFacingVisible++;}else counts.hidden++;
+   if(view==='front'){const normalRay=new T.Vector3(pt.x,pt.y-117*.11/120,0).normalize(),rayOrigin=pt.clone().addScaledVector(normalRay,.01),contact=new T.Raycaster(rayOrigin,normalRay.clone().negate()).intersectObject(tank);assert.ok(contact.length,'wordmark has tank beneath it');const gap=contact[0].distance-.01;actualMin=Math.min(actualMin,gap);actualMax=Math.max(actualMax,gap);}
+   const R=52*.11/120,cy=117*.11/120,rad=Math.sqrt(pt.x*pt.x+(pt.y-cy)**2),gap=rad-R;counts.minClearance=Math.min(counts.minClearance,gap);counts.maxClearance=Math.max(counts.maxClearance,gap);
+  }data[view]=counts;
+ }assert.equal(data.upper.visible,0,'upper camera cannot see through tank to either wordmark');for(const x of Object.values(data))assert.equal(x.backFacingVisible,0);assert.ok(actualMin>0&&actualMax<.0006,'wordmark is outside actual triangulated tank and less than0.6mm away');console.log('WORDMARK_OCCLUSION',JSON.stringify({views:data,actualSurfaceGap:{min:actualMin,max:actualMax}}));
+});

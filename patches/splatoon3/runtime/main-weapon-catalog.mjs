@@ -136,6 +136,9 @@ function definition(r, api) {
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
     damageMax:damageMax(r), projSpeed:speed, straightTime:finite(move.GoStraightToBrakeStateFrame,4)/HZ,
     fireInterval:Math.max(1,rate)/HZ, chargeTime:charge?chargeFrames(r)/HZ:0,
+    // Existing slosh presentation consumes this sourced timing; catalogue
+    // scheduling continues to own the actual pending admission below.
+    ...(r.family==='slosher'?{windup:finite(t.SwingLiftFrame,12)/HZ}:{}),
     moveSpeedFiring:(r.family==='splatana'?finite(p.spl__WeaponSaberParam.SwingParam.WeakSwingMoveVelLimit,.06):finite(t.MoveSpeed, finite(t.SwingMoveSpeed, finite(t.MoveSpeedFullCharge,.072))))*HZ,
     // Saber charge uses DU/frame while simple-family speed fields use source
     // world-units/frame (10 DU/world-unit), hence its separate conversion.
@@ -309,7 +312,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   const inkMod = a => (a.s3?.modifiers?.inkSaverMain ?? 1)/(a.weapon.inkTankScale||1);
   function notify(a, r, origin, direction, charge = 0) {
-    a.character.trigger(r.family==='charger'||r.family==='stringer'?'charge_release':'shoot');
+    // notify runs after the admitted volley has been pushed, never when its
+    // windup is merely reserved. Catalogue buckets must enter the native
+    // slosh presentation path; a generic shoot event cannot start liquid drain.
+    a.character.trigger(r.family==='slosher'?'slosh':r.family==='charger'||r.family==='stringer'?'charge_release':'shoot');
     emit('weapon:fire',{actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge});
     if (a.isLocal || a._nearCamera?.()) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',

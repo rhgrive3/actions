@@ -20,7 +20,32 @@ jobs:
           test "$(git rev-parse HEAD)" = "${{ github.sha }}"
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
           node scripts/build-inkwave.mjs inkwave-public _site
-          npx playwright install --with-deps chromium
+      # Runtime/presentation regressions are independent of screenshot review.
+      # Source: 4 Hornz + 4 catalog tests. Emitted: Hornz helper-injection tests
+      # explicitly skip (3), real production Hornz (1) and catalog (4) must pass.
+      - name: Gate source firing and ink-surface motion (8 pass, 0 skip)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p variant-test-results
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-ink-surface-motion.test.mjs patches/splatoon3/tests/catalog-slosher-presentation.test.mjs | tee variant-test-results/source.tap
+          grep -qx '# tests 8' variant-test-results/source.tap
+          grep -qx '# pass 8' variant-test-results/source.tap
+          grep -qx '# fail 0' variant-test-results/source.tap
+          grep -qx '# skipped 0' variant-test-results/source.tap
+      - name: Gate emitted firing and ink-surface motion (5 pass, 3 source-only skips)
+        shell: bash
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-ink-surface-motion.test.mjs patches/splatoon3/tests/catalog-slosher-presentation.test.mjs | tee variant-test-results/emitted.tap
+          grep -qx '# tests 8' variant-test-results/emitted.tap
+          grep -qx '# pass 5' variant-test-results/emitted.tap
+          grep -qx '# fail 0' variant-test-results/emitted.tap
+          grep -qx '# skipped 3' variant-test-results/emitted.tap
+      - name: Install capture browser after runtime gates pass
+        run: npx playwright install --with-deps chromium
       - name: Capture actual emitted weapon meshes
         run: node scripts/capture-weapon-shape-candidate.mjs --site _site --out variant-gallery
       - uses: actions/upload-artifact@v4
@@ -29,4 +54,11 @@ jobs:
           name: weapon-shape-candidate-${{ github.sha }}
           path: variant-gallery
           if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-shape-test-results-${{ github.sha }}
+          path: variant-test-results
+          if-no-files-found: warn
           retention-days: 7

@@ -38,8 +38,8 @@ function bow(d, cfg, extra) {
   extra(body, ink, C, cfg);
   // string halves hinged at the tips, pointing at the rest nock; re-aimed and scaled per frame
   const s1 = new Pieces(), s2 = new Pieces(), nock = new Pieces(), arrow = new Pieces();
-  s1.add(ycyl(0.0016, YC, YC + span, 0, tipZ, 5), C.string, M.satin);
-  s2.add(ycyl(0.0016, YC - span, YC, 0, tipZ, 5), C.string, M.satin);
+  s1.add(ycyl(cfg.stringR ?? 0.0016, YC, YC + span, 0, tipZ, 5), C.string, M.satin);
+  s2.add(ycyl(cfg.stringR ?? 0.0016, YC - span, YC, 0, tipZ, 5), C.string, M.satin);
   nock.add(box(0.012, 0.03, 0.012, 0, YC, tipZ, 0.5), C.steel, M.satin);
   arrow.add(zcyl(0.0035, tipZ + 0.012, cfg.arrowFront, 0, YC, 8), C.black, M.satin);
   d.bowCfg = { span, tipZ, arrowFront: cfg.arrowFront };
@@ -105,27 +105,35 @@ function reef(d) {
 // Only this variant uses the new geometry. Existing base and native gameplay rig stay unchanged.
 export function reefMilK(d) {
   const C = { limb: '#e4e0d4', steel: '#a9adb4', dark: '#2a2b30', black: '#17181b', string: '#cfd6c4', grip: '#2a2b30' };
-  const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, coilR: 0.056, coil0: -0.01, coil1: 0.09,
+  const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, stringR: 0.0025, coilR: 0.056, coil0: -0.01, coil1: 0.09,
     arrowFront: 0.02, muzzleZ: 0.15, gripL: gripSpec([0, 0.0, 0.095], [0, 0, 1], [0.75, -0.62, -0.1]) };
   return bow(d, cfg, (body, ink) => {
-    // 400px icon and HD rotation: narrow rear bottle steps into a broad front shoulder.
-    // V3's almost constant-radius cylinder erased this defining bottle/coupling silhouette.
-    body.add(zlathe([[0,-0.129],[0.038,-0.129],[0.043,-0.119],[0.046,-0.104],
-      [0.046,-0.045],[0.049,-0.026],[0.057,-0.018],[0.057,-0.008],[0,-0.008]],0,YC,0,24),'#e1e1d6',M.satin);
-    body.add(ring(0.04,0.004,0,YC,-0.124,'z',5,20),C.limb,M.satin);
-    for (const r of [0.014,0.025,0.034])body.add(ring(r,0.0018,0,YC,-0.133,'z',4,20),C.limb,M.satin);
-    const shoulder=zlathe([[0.048,-0.025],[0.061,-0.025],[0.071,-0.015],[0.075,0.005],
-      [0.075,0.037],[0.071,0.053],[0.059,0.067],[0.044,0.079],
-      [0.036,0.095],[0,0.095]],0,YC,0,48);
-    // The shallow vertical scallops are part of the cream shoulder itself.
+    // HD02/06 projected ratios: rear body/shoulder about 0.8, rear carriage/bow 0.20-0.25.
+    // Shorter, flatter shoulder and flared rear closure replace v4's bulbous connector.
+    const bottle=zlathe([[0,-0.13],[0.047,-0.13],[0.053,-0.126],[0.053,-0.118],
+      [0.049,-0.109],[0.05,-0.032],[0.052,-0.009],[0.052,0.006],[0,0.006]],0,YC,0,32);
+    const bp=bottle.attributes.position;
+    for(let i=0;i<bp.count;i++){
+      const x=bp.getX(i),y=bp.getY(i)-YC,r=Math.hypot(x,y);
+      if(r>1e-6){const a=Math.atan2(y,x),cs=Math.cos(a),sn=Math.sin(a);
+        // Subtle broad side panels; not a perfectly round tube or a sharp rectangular box.
+        bp.setXY(i,Math.sign(cs)*Math.abs(cs)**0.88*r*0.94,YC+Math.sign(sn)*Math.abs(sn)**0.88*r);}
+    }
+    bottle.computeVertexNormals();body.add(bottle,'#e1e1d6',M.satin);
+    body.add(ring(0.051,0.0025,0,YC,-0.124,'z',5,24),C.limb,M.satin);
+    for(const r of [0.014,0.025,0.036,0.045])body.add(ring(r,0.0018,0,YC,-0.133,'z',4,20),C.limb,M.satin);
+    const shoulder=zlathe([[0.049,-0.005],[0.058,-0.005],[0.064,0.006],[0.065,0.013],
+      [0.065,0.046],[0.06,0.058],[0.048,0.069],[0.036,0.085],[0,0.095]],0,YC,0,48);
     const cp=shoulder.attributes.position;
     for(let i=0;i<cp.count;i++){
       const x=cp.getX(i),y=cp.getY(i)-YC,z=cp.getZ(i),r=Math.hypot(x,y);
-      if(r>0.07&&z>-.016&&z<.054){const nr=r-.0018*(.5+.5*Math.cos(Math.atan2(y,x)*12));cp.setXY(i,x*nr/r,YC+y*nr/r);}
+      if(r>.06&&z>.005&&z<.05){const nr=r-.0012*(.5+.5*Math.cos(Math.atan2(y,x)*12));cp.setXY(i,x*nr/r,YC+y*nr/r);}
     }
     shoulder.computeVertexNormals();body.add(shoulder,'#c9cbbd',M.satin);
-    body.add(ring(0.063,0.0035,0,YC,-0.022,'z',4,24),'#d5d7c9',M.satin);
-    body.add(ring(0.061,0.003,0,YC,0.065,'z',4,24),'#e4e3d6',M.satin);
+    body.add(ring(0.058,0.0025,0,YC,-0.003,'z',4,24),'#d5d7c9',M.satin);
+    // A distinct front band has straighter sides than the shoulder taper.
+    body.add(zlathe([[0.052,0.054],[0.062,0.054],[0.064,0.058],[0.064,0.064],
+      [0.059,0.069],[0.049,0.069],[0.052,0.054]],0,YC,0,32),'#e4e3d6',M.satin);
     // HD 10s: broad stepped outer coupling and a longitudinally fluted front sleeve.
     // Their native fixed finish stays neutral; video team color/translucency is a separate gap.
     body.add(zlathe([[0.034,0.086],[0.049,0.086],[0.053,0.091],[0.053,0.098],
@@ -168,7 +176,7 @@ export function reefMilK(d) {
       body.add(pipe([[0,y,z],[0,YC+s*0.14,cfg.riserZ-0.02]],0.0028,8,6),'#cf744b',M.satin);
       // Missing in v3: root-to-rear-carriage brace closes the visible triangle.
       // Static support cables, separate from the untouched native animated draw string.
-      body.add(pipe([[0,YC+s*0.14,cfg.riserZ-0.02],[0,YC+s*0.045,cfg.riserZ-cfg.back]],0.0028,8,6),'#cf744b',M.satin);
+      body.add(pipe([[0,YC+s*0.14,cfg.riserZ-0.02],[0,YC+s*0.06,cfg.riserZ-cfg.back]],0.0028,8,6),'#cf744b',M.satin);
       // Attachment block and visible side screw where the limb meets the bottle.
       body.add(box(0.047,0.049,0.04,0,YC+s*0.092,-0.025,0.4),C.limb,M.satin);
       for(const x of [-0.026,0.026])body.add(xcyl(0.003,x-0.001,x+0.001,YC+s*0.092,-0.025,8),'#707773',M.satin);
@@ -185,7 +193,10 @@ export function reefMilK(d) {
       const y=0.122+row*0.011,z=-0.017-row*0.003-col*0.008;
       body.add(xcyl(0.0009,side*0.023-0.0003,side*0.023+0.0003,YC-y,z,5),'#a9aba3',M.rubber);
     }
-    body.add(pipe([[0,YC-0.05,-0.17],[0,YC-0.025,-0.178],[0,YC+0.025,-0.178],[0,YC+0.05,-0.17]],0.01,16,8),C.limb,M.satin);
+    // Broad shallow plate, not a tube: HD rear carriage is about one fifth of the bow span.
+    const carriage=[[-0.165,-0.065],[-0.179,-0.059],[-0.19,-0.032],[-0.193,0],[-0.19,0.032],[-0.179,0.059],
+      [-0.165,0.065],[-0.158,0.05],[-0.17,0.026],[-0.175,0],[-0.17,-0.026],[-0.158,-0.05]];
+    body.add(slab(carriage.map(([z,y])=>[z,YC+y]),0.036,0,0.0025),C.limb,M.satin);
   });
 }
 

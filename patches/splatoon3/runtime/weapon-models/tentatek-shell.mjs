@@ -1,7 +1,7 @@
 // Procedural reconstruction from official S3 Tentatek turntable (02s/06s/10s),
 // S3 promotional render; ambiguous alternate gameplay still is not used.
 // A procedural approximation, not a retail mesh or verified multiview reconstruction.
-import { THREE, Pieces, M, zlathe, emptyGeometry, part, slab, smoothOutline, pipe, box, sphere, frontSlab, zcyl } from './kit.mjs';
+import { THREE, Pieces, M, zlathe, emptyGeometry, part, slab, smoothOutline, pipe, pipeR, box, sphere, frontSlab, zcyl } from './kit.mjs';
 import { recolor } from './variant-shooter-surfaces.mjs';
 const S = .11 / 120, Z0 = (52 - 118) * S, Z1 = (290 - 118) * S;
 const CY = (265 - 148) * S, CZ = (Z0 + Z1) / 2, R = 52 * S;
@@ -84,10 +84,12 @@ function frameAndForeEnd(d) {
   const removedOldPins=removeComponents(g,'#1c1d22',b=>b.min.z>.17&&b.max.z<.181&&b.max.y<.05);
   const p=new Pieces(),purple='#3d2ba0',yellow='#efbf2a';
   // HD side silhouette: broad curved pistol heel, no rectangular base shoe.
-  const outline=[[-.038,.06],[.079,.06],[.08,.035],[.069,.026],[.072,.012],[.064,-.008],[.047,-.019],[.023,-.019],[.011,-.01],
+  const outline=[[-.038,.06],[.079,.06],[.08,.035],[.069,.026],[.072,.012],[.064,-.005],[.047,-.010],[.023,-.010],[.011,-.007],
     [.003,-.038],[-.004,-.064],[-.017,-.072],[-.037,-.063],[-.042,-.05],[-.029,-.013],[-.025,.011],[-.035,.035]];
-  const hole=[[.014,.025],[.053,.025],[.061,.015],[.055,.002],[.041,-.007],[.023,-.006],[.014,.004]];
-  p.add(slab(smoothOutline(outline,64),.028,0,.004,[smoothOutline(hole,28)]),purple,M.gloss);
+  // Rotation 02s/06s: a wide, near-trapezoidal opening with a short flat
+  // lower edge, not an ellipse. Authored width/height = .049/.026 = 1.88.
+  const hole=[[.014,.025],[.053,.025],[.063,.016],[.055,.005],[.043,-.001],[.025,-.001],[.014,.007]];
+  p.add(slab(smoothOutline(outline,64),.028,0,.004,[hole]),purple,M.gloss);
   for(const side of [-1,1]) {
     for(const y of [.042,.051])p.add(box(.0018,.0023,.04,side*.015,y,.025,.4,6,4),'#332290',M.gloss);
     p.add(sphere(.0015,.0032,.0032,side*.015,-.052,-.026,8,6),'#9aa0a8',M.metal);
@@ -103,7 +105,9 @@ function frameAndForeEnd(d) {
   // The previous ridges were mostly inside the .038-wide slab. Put the three
   // swept finger ridges on the outside faces, as visible in the S3 promo.
   for(const side of [-1,1]) {
-    for(const z of [.107,.124,.141])p.add(pipe([[side*.0195,.038,z+.002],[side*.0215,.030,z],[side*.021,.022,z-.004],[side*.018,.015,z-.006]],.0024,12,6),yellow,M.gloss);
+    // S3 promo and 06s agree: ridges cluster toward the muzzle and sweep
+    // FORWARD as they descend around the belly. V4 swept them backwards.
+    for(const z of [.123,.137,.151])p.add(pipeR([[side*.021,.037,z-.006],[side*.024,.027,z-.003],[side*.022,.016,z+.002],[side*.014,.010,z+.004]],t=>.0015+.0028*Math.sin(Math.PI*t),16,8),yellow,M.gloss);
     for(const z of [.086,.151]) {
       p.add(sphere(.0016,.0032,.0032,side*.0205,.044,z,10,8),'#bcc2c3',M.metal);
       p.add(box(.0007,.0007,.0035,side*.0221,.044,z,.25,4,4),'#58606a',M.satin);
@@ -126,7 +130,7 @@ function wordmark(side) {
     const start=positions.length/3;
     for(const [u,v]of [[u0,row],[u1,row],[u1,row+1],[u0,row+1]]) {
       const z=.038-side*(u-56)*.00063,y=CY-.029-v*.00048;
-      const x=side*(Math.sqrt(Math.max(.00001,radius(z)**2-(y-CY)**2))+.0018);positions.push(x,y,z);
+      const x=side*(Math.sqrt(Math.max(.00001,radius(z)**2-(y-CY)**2))+.00035);positions.push(x,y,z);
     }
     // Mirroring the text direction on the opposite side keeps it readable from
     // either outward view, instead of reflecting glyphs through the tank.
@@ -143,6 +147,7 @@ export function tentatekShell(d) {
   const changed=frameAndForeEnd(d),shell=new Pieces(),profile=[];
   for(let i=0;i<=40;i++){const z=Z0+(Z1-Z0)*i/40;profile.push([radius(z),z]);}
   shell.add(zlathe(profile,0,CY,0,40),PINK,M.gloss);
+  const tankTriangleCount=shell.list[0].index.count/3;
   for(const side of [-1,1]) {
     shell.add(emblem(side,1.075,.0048,1),PINK,M.gloss);
     // Plate reflects dark/light over the turntable, so use silver-white satin
@@ -152,8 +157,9 @@ export function tentatekShell(d) {
   }
   d.parts.can.src.dispose();d.parts.can.src=emptyGeometry();
   d.parts.variantSkin=part(shell,d.parts.can.pivot,'body');
-  d.variantGeometryRevision={source:'S3_Tentatek_Splattershot_model_rotating.mp4',removedBandTriangles:0,bandVertices,
+  d.variantGeometryRevision={source:'S3_Tentatek_Splattershot_model_rotating.mp4',removedBandTriangles:0,bandVertices,tankTriangleCount,
     ...changed,shellProfile:'cylindrical-center-elliptical-endcaps',emblemSides:[-1,1],reverseSideVerified:true,
-    wordmarkTrace:{sourceFrameSeconds:2,runs:117,exactGlyphContours:false},
+    wordmarkTrace:{sourceFrameSeconds:2,runs:117,exactGlyphContours:false,xOffset:.00035},
+    guardOpening:{width:.049,height:.026,ratio:.049/.026},ridgeSweep:'forward-while-descending',
     missingDetails:['tank seam','exact retail surface response','subpixel wordmark contours']};
 }

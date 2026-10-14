@@ -79,7 +79,7 @@ test('MIL-K reference silhouette preserves base, ink, anchors and bow animation'
  const f=await production(),spec=f.VARIANT_MODELS.Stringer_Short_02,base=f.ST.MODELS[spec.baseId];
  const b=base.build({kind:'charger',parts:{}}),v=spec.build({kind:'charger',parts:{}});
  const snapshot=signature(b);
- for(const [n,g] of geometries(b))if(n!=='body')assert.deepEqual(triangles(g),triangles(new Map(geometries(v)).get(n)),n);
+ for(const [n,g] of geometries(b))if(!['body','string','stringL'].includes(n))assert.deepEqual(triangles(g),triangles(new Map(geometries(v)).get(n)),n);
  assert.notDeepEqual(triangles(v.body),triangles(b.body),'variant-only reference silhouette');
  assert.deepEqual(signature(base.build({kind:'charger',parts:{}})),snapshot,'base builder unchanged');
  assert.deepEqual(signature(b),snapshot,'base instance unchanged');
@@ -87,7 +87,7 @@ test('MIL-K reference silhouette preserves base, ink, anchors and bow animation'
  const total=geometries(v).reduce((n,[,g])=>n+g.index.count/3,0);assert.ok(total<=16000,'existing16k budget');
  for(const [n,g] of geometries(v))for(const [key,a] of Object.entries(g.attributes))assert.ok(Array.from(a.array).every(Number.isFinite),n+'.'+key);
  for(const key of ['pos','handY','handZ'])assert.deepEqual(v.gripL[key].toArray(),b.gripL[key].toArray());
- for(const n of ['string','stringL']){assert.equal(v.parts[n].mat,'body');assert.equal(b.parts[n].mat,'ink');assert.deepEqual(v.parts[n].pivot.toArray(),b.parts[n].pivot.toArray());}
+ for(const n of ['string','stringL']){const p=b.parts[n].src.attributes.position,q=v.parts[n].src.attributes.position;assert.deepEqual(Array.from(b.parts[n].src.index.array),Array.from(v.parts[n].src.index.array));for(let i=0;i<p.count;i++){assert.equal(q.getY(i),p.getY(i));assert.ok(Math.abs(q.getX(i)-p.getX(i)*1.5625)<1e-7);assert.ok(Math.abs((q.getZ(i)+.17)-(p.getZ(i)+.17)*1.5625)<1e-7);}assert.equal(v.parts[n].mat,'body');assert.equal(b.parts[n].mat,'ink');assert.deepEqual(v.parts[n].pivot.toArray(),b.parts[n].pivot.toArray());}
  assert.equal(spec.animate,base.animate);assert.deepEqual(v.bowCfg,b.bowCfg);assert.deepEqual(v.muzzle.toArray(),b.muzzle.toArray());
 });
 test('Undercover Sorella partitions shaft/check lines without geometry duplication or rig drift',async()=>{
