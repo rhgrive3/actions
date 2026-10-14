@@ -58,8 +58,57 @@ async function boot({exit='async',request='immediate'}={}) {
   overlay:(kind='look')=>overlayTarget(kind),
   completePendingLock(){assert.equal(typeof resolvePendingLock,'function');resolvePendingLock();},
   rejectPendingLock(){assert.equal(typeof rejectPendingLock,'function');rejectPendingLock(Error('unadjusted movement unavailable'));},
+  lockError(){for(const fn of docListeners.get('pointerlockerror')||[])fn();},
   unlocked(){doc.pointerLockElement=null;fireDoc();},locked(){doc.pointerLockElement=canvas;fireDoc();},listenerCount:()=>[...listeners.values(),...docListeners.values()].reduce((n,a)=>n+a.length,0)};
 }
+
+test('#1396 explicit exit retires a pending acquisition without a second pause',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();const pauses=h.unlocks();
+ h.input.requestLock();h.input.exitLock();h.completePendingLock();
+ assert.equal(h.input.locked,false);assert.equal(h.exits(),1);
+ h.unlocked();assert.equal(h.unlocks(),pauses);
+ h.input.requestLock();h.completePendingLock();assert.equal(h.input.locked,true,'fresh explicit retry');
+});
+test('#1396 cancelled raw-mouse rejection cannot start a fallback request',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();h.input.exitLock();
+ h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
+ assert.equal(h.requests(),1);h.input.requestLock();h.completePendingLock();assert.equal(h.input.locked,true);
+});
+test('#1396 late acquisition is bound to the playing match that requested it',async()=>{
+ for(const transition of ['finish','replace','menu','attract']){
+  const h=await boot({request:'pending'});h.unlocked();const pauses=h.unlocks();h.input.requestLock();
+  if(transition==='finish')h.G.match.state='finish';
+  if(transition==='replace')h.G.match={state:'playing',paused:false,attract:false};
+  if(transition==='menu')h.G.mode='menu';
+  if(transition==='attract')h.G.match.attract=true;
+  h.completePendingLock();assert.equal(h.input.locked,false,transition);
+  h.unlocked();assert.equal(h.unlocks(),pauses,transition);
+ }
+});
+test('#1396 deliberate initial countdown capture remains valid',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.G.match.state='countdown';
+ h.input.requestLock();h.completePendingLock();assert.equal(h.input.locked,true);
+});
+test('#1396 initial menu request can complete in the newly created countdown',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.G.mode='menu';h.G.match=null;
+ h.input.requestLock();h.G.mode='match';h.G.match={state:'countdown',paused:false,attract:false};
+ h.completePendingLock();assert.equal(h.input.locked,true);
+});
+test('#1396 one browser request at a time disambiguates obsolete completion from fresh intent',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();h.input.exitLock();
+ h.input.requestLock();assert.equal(h.requests(),1,'no overlapping browser request');
+ h.completePendingLock();assert.equal(h.input.locked,false);h.unlocked();
+ h.input.requestLock();h.completePendingLock();assert.equal(h.requests(),2);assert.equal(h.input.locked,true);
+});
+test('#1396 modern error event preserves the eligible plain-pointer fallback',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
+ h.lockError();h.rejectPendingLock();await Promise.resolve();await Promise.resolve();
+ assert.equal(h.requests(),2);h.completePendingLock();assert.equal(h.input.locked,true);
+});
+test('#1396 legacy event-only error retires a failed request for a new user gesture',async()=>{
+ const h=await boot();h.unlocked();h.input.requestLock();h.lockError();h.input.requestLock();
+ assert.equal(h.requests(),2);h.locked();assert.equal(h.input.locked,true);
+});
 for(const kind of ['fire','stick','look'])for(const exit of ['sync','async'])test(`#662 ${kind} touch survives ${exit} mouse unlock and delayed motion`,async()=>{
  const h=await boot({exit}),e=h.touch(kind),owned=()=>h.mobile._ptr.has(e.pointerId)||h.mobile._stick.id===e.pointerId;
  assert.equal(h.exits(),1);assert.equal(h.input.lastDevice,'touch');assert.equal(h.input.locked,false);assert.equal(owned(),true);
@@ -200,3 +249,13 @@ test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor 
    assert.equal(h.requests(),state==='playing'?2:1,state);assert.equal(h.unlocks(),1);
   }
  });
+
+
+test('#1396 disabling Input retires pending completion; a fresh enabled request still works',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
+ h.input.enabled=false;h.completePendingLock();await Promise.resolve();
+ assert.equal(h.input.locked,false);assert.equal(h.exits(),1);
+ h.move();assert.equal(h.input.mouse.dx,0);h.unlocked();assert.equal(h.unlocks(),1,'retirement does not pause twice');
+ h.input.enabled=true;h.input.requestLock();h.completePendingLock();await Promise.resolve();
+ assert.equal(h.input.locked,true);assert.equal(h.requests(),2);
+});

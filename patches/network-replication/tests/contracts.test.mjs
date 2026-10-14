@@ -14,7 +14,7 @@ test('baseline reproduces publication ordering; final packet preserves native lo
 test('projectile timeline catches up delay without exhausting lifetime budget or freezing',async()=>{
  const f=await fixture(),nm=f.makeNetMatch(f.makeSession()),a=f.makeActor({nid:0,owner:'p2',remote:true});f.bind(nm,[a]);
  const e=[1000,'p',0,'shot','shooter',0,30,0,0,0,1,.4,.2,.06666666666666667,.1,.1,57.6,0,0,0,.1,.8,1.3,.03,26,.3,3,0,.123,1];
- const peer={tr:1000.5};nm.peers.set('p2',peer);nm._play('p2',e);f.projectiles.update(1/60);assert.equal(f.projectiles.list.length,1);assert(f.projectiles.list[0].age>.1);
+ const peer={tr:1000.5};nm.peers.set('p2',peer);nm._play('p2',e);f.projectiles.update(1/60);assert.equal(f.projectiles.list.length,1);assert(f.projectiles.list[0].age>=.1-1e-6, 'the first bounded 30-step catch-up advances past its 0.4s delay');
  peer.tr=1001;f.projectiles.update(1/60);assert.equal(f.projectiles.list.length,0);assert(f.projectiles.pool[0]._qualityDead);
 });
 test('replayed birth in a newer packet cannot resurrect an ended projectile',async()=>{

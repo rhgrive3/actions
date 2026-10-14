@@ -1,0 +1,172 @@
+name: Verify composed INKWAVE crowd changes
+on:
+  pull_request:
+    paths:
+      - 'patches/local-quality/**'
+      - 'patches/splatoon3/**'
+      - 'patches/native-stages/**'
+      - 'scripts/**'
+      - 'reports/inkwave-crowd-integration*'
+      - .github/workflows/inkwave-crowd-integration.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+jobs:
+  single-change-comparison:
+    if: github.head_ref == 'perf/inkwave-crowd-integration' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        control: [rig, hidden]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          path: candidate
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          path: control
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and browser tools
+        run: |
+          cd candidate
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python -m pip install Pillow
+      - name: Verify reviewed ancestry and prepare one-change control
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          node candidate/scripts/lib/inkwave-crowd-integration.mjs source "$PWD/candidate" "$SOURCE_SHA" > evidence/source-receipt.json
+          node candidate/scripts/lib/inkwave-crowd-integration.mjs control "$PWD/control" "$SOURCE_SHA" '${{ matrix.control }}' > evidence/control-receipt.json
+          python candidate/scripts/tests/inkwave-crowd-integration-png.test.py 2>&1 | tee evidence/png-guard-tests.log
+          cd candidate
+          node --test scripts/tests/inkwave-crowd-integration.test.mjs scripts/tests/live-ray-mirror.test.mjs | tee ../evidence/guard-tests.log
+      - name: Build and bind exact composed inputs and artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$PWD/candidate/node_modules/esbuild/lib/main.js"
+          node candidate/scripts/build-inkwave.mjs candidate/inkwave-public site-b | tee evidence/candidate-build.log
+          node control/scripts/build-inkwave.mjs control/inkwave-public site-a | tee evidence/control-build.log
+          cp site-b/inkwave-build.json evidence/candidate-build.json
+          cp site-a/inkwave-build.json evidence/control-build.json
+          node candidate/scripts/lib/inkwave-crowd-integration.mjs pair '${{ matrix.control }}' "$PWD/candidate" "$PWD/site-b" "$PWD/control" "$PWD/site-a" "$SOURCE_SHA" > evidence/composition-receipt.json
+          cd candidate
+          INKWAVE_BUILT_SITE="$PWD/../site-b" node --test scripts/tests/inkwave-build-packaging.test.mjs | tee ../evidence/packaging-tests.log
+      - name: Rig source contracts
+        if: matrix.control == 'rig'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd candidate
+          node --experimental-vm-modules --test patches/local-quality/tests/retarget-branch-update.test.mjs patches/local-quality/tests/cloth-derivative.test.mjs | tee ../evidence/rig-tests.log
+      - name: Both native source-bank scenes with strict original ABBA comparator
+        if: matrix.control == 'rig'
+        timeout-minutes: 30
+        shell: bash
+        run: |
+          set +e
+          export CHROMIUM_PATH="$(node -e "console.log(require('./candidate/node_modules/playwright').chromium.executablePath())")"
+          status=0
+          for bank in default mixed; do
+            if [[ "$bank" == mixed ]]; then export INKWAVE_RIG_MIXED=1; else export INKWAVE_RIG_MIXED=0; fi
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/$bank/A1" || status=1
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/$bank/B1" || status=1
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-b" "$PWD/evidence/$bank/B2" || status=1
+            node candidate/scripts/check-inkwave-crowd-rig.mjs "$PWD/site-a" "$PWD/evidence/$bank/A2" || status=1
+            node candidate/scripts/compare-inkwave-crowd-rig.mjs evidence/$bank/{A1,B1,B2,A2}/result.json > evidence/$bank/comparison.json || status=1
+          done
+          python candidate/scripts/verify-inkwave-crowd-integration-png.py evidence > evidence/independent-png-verification.json || status=1
+          exit "$status"
+      - name: Hidden placeholder source and emitted all-65 contracts
+        if: matrix.control == 'hidden'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd candidate
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-empty-part-draw.test.mjs | tee ../evidence/hidden-source-tests.log
+          INKWAVE_BUILT_SITE="$PWD/../site-b" node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs | tee ../evidence/hidden-emitted-tests.log
+      - name: Full and weapon-only completed output ABBA with exact draw deltas
+        if: matrix.control == 'hidden'
+        timeout-minutes: 30
+        shell: bash
+        run: |
+          set +e
+          status=0
+          node candidate/scripts/measure-inkwave-empty-weapon-draws.mjs --site site-a --out evidence/A --variant A || status=1
+          node candidate/scripts/measure-inkwave-empty-weapon-draws.mjs --site site-b --out evidence/B --variant B || status=1
+          node candidate/scripts/measure-inkwave-empty-weapon-draws.mjs --site site-b --out evidence/B2 --variant B2 || status=1
+          node candidate/scripts/measure-inkwave-empty-weapon-draws.mjs --site site-a --out evidence/A2 --variant A2 || status=1
+          python candidate/scripts/compare-inkwave-empty-weapon-draws.py evidence || status=1
+          node candidate/scripts/lib/inkwave-crowd-integration.mjs hidden evidence > evidence/exact-draw-verification.json || status=1
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composed-crowd-${{ matrix.control }}-${{ env.SOURCE_SHA }}
+          path: evidence
+          if-no-files-found: error
+          retention-days: 14
+  live-ray-equivalence:
+    if: github.head_ref == 'perf/inkwave-crowd-integration' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          path: candidate
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 545c6b3fcfc0d25c43678e9b44b1af4e26400fec
+          path: baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and browser tools
+        run: |
+          cd candidate
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify exact source and observer negative controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          node candidate/scripts/lib/inkwave-crowd-integration.mjs source "$PWD/candidate" "$SOURCE_SHA" > evidence/source-receipt.json
+          cd candidate
+          node --test scripts/tests/live-ray-mirror.test.mjs scripts/tests/inkwave-crowd-integration.test.mjs | tee ../evidence/observer-tests.log
+      - name: Build and execute the actual-main live ray mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$PWD/candidate/node_modules/esbuild/lib/main.js"
+          node baseline/scripts/build-inkwave.mjs baseline/inkwave-public site-a | tee evidence/baseline-build.log
+          node candidate/scripts/build-inkwave.mjs candidate/inkwave-public site-b | tee evidence/candidate-build.log
+          cp site-a/inkwave-build.json evidence/baseline-build.json
+          cp site-b/inkwave-build.json evidence/candidate-build.json
+          node -e "const a=require('./site-b/inkwave-build.json');const e=require('./candidate/reports/inkwave-crowd-integration-inputs.json');if(a.contentHash!==e.combinedContentHash)throw Error('Unexpected composed product')"
+          timeout --signal=TERM --kill-after=30s 20m node candidate/scripts/diagnose-inkwave-native-ray-live-equivalence.mjs --stage scorch --baseline-sha 545c6b3fcfc0d25c43678e9b44b1af4e26400fec --candidate-sha "$SOURCE_SHA" --baseline-root baseline --candidate-root candidate --baseline-site site-a --candidate-site site-b --playwright "$PWD/candidate/node_modules/playwright/index.mjs" --evidence-dir evidence | tee evidence/diagnostic.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composed-crowd-live-ray-${{ env.SOURCE_SHA }}
+          path: evidence
+          if-no-files-found: error
+          retention-days: 14

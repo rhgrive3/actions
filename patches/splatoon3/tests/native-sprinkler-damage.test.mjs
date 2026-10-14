@@ -13,6 +13,28 @@ for(const wear of [false,true])test(`native Sprinkler is damaged once and retire
  let explosions=0;const explode=f.G.projectiles._explodeBomb;f.G.projectiles._explodeBomb=function(...args){explosions++;return explode.apply(this,args);};f.G.projectiles.update(1/60);assert.equal(f.G.projectiles.bombs.includes(b),false);assert.equal(explosions,0);
 });
 
+test('native bomb AoE uses the source object-rate row and applies Object Shredder once',async()=>{
+ const f=await setup(),owner=f.make(),a=f.make();owner.team=1;a.team=0;f.G.actors=[owner,a];const b=deploy(f,owner),center=b.pos.clone();
+ const blast=(cause,amount=1)=>f.G.projectiles.s3DamageSubObjects(a,center,2,()=>amount,cause);
+ assert.equal(blast('Bomb'),true);assert.equal(b.s3DeviceHP,118,'Bomb row is 2x against Sprinkler');
+ b.s3DeviceHP=120;a.s3.loadout[2].main='objectShredder';
+ assert.equal(blast('Bomb'),true);assert.equal(b.s3DeviceHP,100,'Bomb row 2x and Object Shredder 10x are each applied once');
+ b.s3DeviceHP=120;a.s3.loadout[2].main='runSpeed';
+ assert.equal(blast('Default'),true);assert.equal(b.s3DeviceHP,119,'generic row remains 1x');
+});
+
+test('native Sprinkler AoE keeps Vac frame damage and Wail pierces LOS with its source row',async()=>{
+ const f=await setup(),owner=f.make(),a=f.make();owner.team=1;a.team=0;f.G.actors=[owner,a];const b=deploy(f,owner),center=b.pos.clone();
+ b.s3DeviceHP=120;
+ f.G.physics.los=()=>false;
+ f.G.projectiles.s3DamageSubObjects(a,center,2,()=>2,'BlowerInhale');assert.equal(b.s3DeviceHP,120,'blocked Vac LOS does not reach the device');
+ f.G.projectiles.s3DamageSubObjects(a,center,2,(_d,object)=>{assert.equal(object.subId,'sprinkler');return 2;},'BlowerInhale',{pierceLOS:true});
+ assert.equal(b.s3DeviceHP,118,'Vac applies its raw 2 HP per frame once');
+ b.s3DeviceHP=120;
+ f.G.projectiles.s3DamageSubObjects(a,center,2,()=>3.5,'MicroLaser',{pierceLOS:true});
+ assert.equal(b.s3DeviceHP,116.5,'Wail reaches through blocked LOS and its source row is nonzero');
+});
+
 function bind(f,myId){const owner=f.make(),a=f.make();Object.assign(owner,{nid:301,owner:'defender',netLife:3});Object.assign(a,{nid:302,owner:'attacker',netLife:7,team:1});owner.weapon={...owner.weapon,sub:'sprinkler'};owner.weaponRunner.reset();a.s3.loadout[2].main='objectShredder';const nm=new f.NetMatch({myId,hostId:'defender',isHost:myId==='defender',tr:{broadcast(){},sendTo(){}}},{id:'native-devices'});nm.bind({actors:[owner,a],state:'playing',time:180});f.G.netm=nm;f.G.match=nm.match;return {owner,a,nm};}
 test('native Sprinkler birth and damage survive real JSON transport; only target owner destroys and retires the ghost',async()=>{
  const rx=await setup(),r=bind(rx,'defender'),target=deploy(rx,r.owner);assert.ok(target.s3DeviceBirth);assert.equal(target.s3DeviceBirth.life,3);
@@ -27,6 +49,19 @@ test('native Sprinkler birth and damage survive real JSON transport; only target
  r.nm._play('attacker',JSON.parse(JSON.stringify(wire)));assert.equal(r.nm.out.filter(e=>e[1]==='ac'&&e[5].phase==='nativeObjectState').length,1);
  s.nm._play('defender',JSON.parse(JSON.stringify(states[0])));assert.equal(ghost.s3Destroyed,true);assert.equal(ghost.s3DeviceHP,0);
  tx.G.projectiles.update(1/60);rx.G.projectiles.update(1/60);assert.equal(tx.G.projectiles.bombs.includes(ghost),false);assert.equal(rx.G.projectiles.bombs.includes(target),false);
+});
+
+test('remote native Sprinkler AoE proposal carries raw damage and source row for owner-side scaling',async()=>{
+ const rx=await setup(),r=bind(rx,'defender'),target=deploy(rx,r.owner);
+ const birth=JSON.parse(JSON.stringify(r.nm.out.find(e=>e[1]==='b')));
+ const tx=await setup(),s=bind(tx,'attacker');s.nm._play('defender',birth);const ghost=tx.G.projectiles.bombs.find(b=>b.owner===s.owner);assert.ok(ghost?.ghost);
+ tx.kitBombContact(tx.SUB,ghost,{hit:true,point:new tx.THREE.Vector3(0,0,0),normal:new tx.THREE.Vector3(0,1,0)});
+ assert.equal(tx.G.projectiles.s3DamageSubObjects(s.a,ghost.pos.clone(),2,()=>12,'Bomb'),true);
+ assert.equal(ghost.s3DeviceHP,120,'the attacking peer does not write native HP');
+ const row=s.nm.out.find(e=>e[1]==='ac'&&e[5].phase==='nativeObjectHit');assert.ok(row);
+ const event=JSON.parse(JSON.stringify(row[5]));assert.equal(event.damage,12);assert.equal(event.cause,'Bomb');assert.equal(event.objectShredder,true);assert.equal(event.rate,undefined);
+ r.nm._play('attacker',JSON.parse(JSON.stringify(row)));
+ assert.equal(target.s3DeviceHP,0,'owner applies Bomb x Object Shredder from the shared table');assert.equal(target.s3Destroyed,true);
 });
 
 test('native device proposals reject stale birth/life, wrong match, distant hit, numeric gear and forged owner state',async()=>{
@@ -83,4 +118,20 @@ test('empty native device collection adds no per-projectile vector allocation',a
  try{for(let i=0;i<1000;i++)assert.equal(f.G.projectiles.kitBarrierCandidate(p,start,end),null);}
  finally{f.THREE.Vector3.prototype.clone=clone;}
  assert.equal(clones,0,'no candidate geometry is allocated when no native device exists');
+});
+
+test('nonempty bombs without an eligible deployed enemy Sprinkler allocate no candidate geometry',async()=>{
+ const f=await setup(),owner=f.make(),attacker=f.make();attacker.team=1;
+ const b=deploy(f,owner),P=f.G.projectiles,start=b.pos.clone().add(new f.THREE.Vector3(0,0,-1)),end=b.pos.clone().add(new f.THREE.Vector3(0,0,1));
+ const p={owner:attacker,team:attacker.team,size:.01,damage:10};
+ for(const state of ['ordinary','flight','destroyed','friendly','same-owner']){
+  b.s3Resolved={...b.s3Resolved,spec:{...b.s3Resolved.spec,id:state==='ordinary'?'bomb':'sprinkler'}};b.s3Mode=state==='flight'?'flight':'sprinkling';b.s3Destroyed=state==='destroyed';b.team=state==='friendly'?attacker.team:owner.team;b.owner=state==='same-owner'?attacker:owner;
+  const clone=f.THREE.Vector3.prototype.clone;let clones=0;f.THREE.Vector3.prototype.clone=function(){clones++;return clone.call(this);};
+  try{for(let i=0;i<100;i++)assert.equal(P.nativeSprinklerCandidate(p,start,end),null);}
+  finally{f.THREE.Vector3.prototype.clone=clone;}
+  assert.equal(clones,0,state+' cannot need a segment or contact vector');
+ }
+ b.s3Resolved={...b.s3Resolved,spec:{...b.s3Resolved.spec,id:'sprinkler'}};b.s3Mode='sprinkling';b.s3Destroyed=false;b.team=owner.team;b.owner=owner;
+ const hit=P.nativeSprinklerCandidate(p,start,end);assert.ok(hit,'the same real deployed object remains hittable');hit.onHit();assert.equal(b.s3DeviceHP,110);hit.onHit();assert.equal(b.s3DeviceHP,110);
+ f.G.projectiles.clear();
 });

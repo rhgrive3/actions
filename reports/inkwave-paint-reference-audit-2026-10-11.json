@@ -1,5 +1,62 @@
 {
-  "schema": 1,
+  "schema": 2,
+  "adoptedMain": "b078c37907351f1bbc13d0e7d4b5cbeb0a330009",
+  "adoptedCorrections": [
+    {
+      "pr": 1222,
+      "scope": "Hidden simulation, special credit/pool safety"
+    },
+    {
+      "pr": 1224,
+      "scope": "22 explicit catalog falling-splash physics paths; contact/range/lifetime release clipping"
+    },
+    {
+      "pr": 1225,
+      "scope": "Catalog recorded seed and nominal depth envelope"
+    },
+    {
+      "pr": 1227,
+      "scope": "Source-backed sub paint admission"
+    },
+    {
+      "pr": 1233,
+      "scope": "Sprinkler cosmetic replay cannot author duplicate ownership"
+    },
+    {
+      "pr": 1239,
+      "scope": "Special AP disk boundary and source gear curves; quantized stencil residual remains"
+    },
+    {
+      "pr": 1251,
+      "scope": "Piece-local CPU ownership scan, existing results preserved"
+    },
+    {
+      "pr": 1258,
+      "scope": "Unused local order Map keys removed; exact Chromium/WebKit source/built ownership and masks preserved"
+    },
+    {
+      "pr": 1262,
+      "scope": "Owned-run CPU traversal preserves ordered rectangles and exact Chromium/WebKit masks; controlled workload benefit measured"
+    }
+  ],
+  "unadoptedCandidates": [
+    {
+      "pr": 1235,
+      "reason": "Source wall-drop feature increases measured CPU and wire cost"
+    },
+    {
+      "pr": 1238,
+      "reason": "Cache whole-workload benefit not established"
+    },
+    {
+      "pr": 1245,
+      "reason": "Bandwidth/CPU tradeoff awaits adoption decision"
+    },
+    {
+      "pr": 1254,
+      "reason": "Unadopted: strict WebKit atlas byte mismatch; subsequent cases and WebKit built mode unverified"
+    }
+  ],
   "referenceVersion": "11.3.0",
   "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
   "worldUnitsPerSourceUnit": 1,
@@ -97,14 +154,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -198,14 +261,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -295,14 +364,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -404,14 +479,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -505,6 +586,11 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "native",
+        "retailStencil": "unverified"
+      },
       "runtime": "Existing native weapon lane plus weapons-fidelity/agent3 adapters",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
@@ -603,14 +689,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -708,14 +800,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -805,14 +903,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -902,14 +1006,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -999,14 +1109,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -1112,14 +1228,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -1345,14 +1467,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -1566,6 +1694,11 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "native",
+        "retailStencil": "unverified"
+      },
       "runtime": "Existing native weapon lane plus weapons-fidelity/agent3 adapters",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
@@ -1800,14 +1933,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -2045,14 +2184,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -2278,14 +2423,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -2511,14 +2662,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -2876,14 +3033,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -2985,14 +3148,20 @@
           "value": 1.56
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -3086,14 +3255,20 @@
           "value": 1.92
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -3259,14 +3434,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -3808,14 +3989,20 @@
           "value": 1
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -4249,6 +4436,11 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "native",
+        "retailStencil": "unverified"
+      },
       "runtime": "Existing native weapon lane plus weapons-fidelity/agent3 adapters",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
@@ -4711,14 +4903,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -5296,14 +5494,20 @@
           "value": 1
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -5857,14 +6061,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -6078,14 +6288,20 @@
           "value": 12
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -6283,14 +6499,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -6680,14 +6902,20 @@
           "value": 14
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -6853,14 +7081,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -7006,6 +7240,11 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "native",
+        "retailStencil": "unverified"
+      },
       "runtime": "Existing native weapon lane plus weapons-fidelity/agent3 adapters",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
@@ -7152,14 +7391,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -7317,14 +7562,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -7470,14 +7721,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -7639,14 +7896,20 @@
           "value": 1.35
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -7804,14 +8067,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -7969,14 +8238,20 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -8526,6 +8801,11 @@
           "value": 2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "native",
+        "retailStencil": "unverified"
+      },
       "runtime": "Existing native weapon lane plus weapons-fidelity/agent3 adapters",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
@@ -9448,14 +9728,20 @@
           "value": 1.8
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -9957,14 +10243,20 @@
           "value": 2.4
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -10286,14 +10578,20 @@
           "value": 1.875
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -10587,14 +10885,20 @@
           "value": 2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -11040,14 +11344,20 @@
           "value": 2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -11161,14 +11471,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -11270,6 +11586,11 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "native",
+        "retailStencil": "unverified"
+      },
       "runtime": "Existing native weapon lane plus weapons-fidelity/agent3 adapters",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
@@ -11380,14 +11701,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -11561,14 +11888,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -11674,14 +12007,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -11795,14 +12134,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -11908,14 +12253,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12013,6 +12364,11 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "native",
+        "retailStencil": "unverified"
+      },
       "runtime": "Existing native weapon lane plus weapons-fidelity/agent3 adapters",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
@@ -12131,14 +12487,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12240,14 +12602,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12345,14 +12713,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12470,14 +12844,20 @@
           "value": 1.3
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Explicit source-physics contact path adopted in PR1224",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12583,14 +12963,20 @@
           "value": 0.08
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12708,14 +13094,20 @@
           "value": 0.08
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12845,14 +13237,20 @@
           "value": 0.08
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -12994,14 +13392,20 @@
           "value": 0.08
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -13063,14 +13467,20 @@
           "value": 5
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -13120,14 +13530,20 @@
           "value": 7
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -13181,14 +13597,20 @@
           "value": 5
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -13298,14 +13720,20 @@
           "value": 2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -13431,14 +13859,20 @@
           "value": 2
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     },
     {
@@ -13616,14 +14050,20 @@
           "value": 2.4
         }
       ],
+      "implicitSpecUpEntries": [],
+      "runtimeCoverage": {
+        "lane": "catalog",
+        "fallingSplash": "Existing family path; do not infer PR1224 coverage",
+        "nominalDepthEnvelope": "PR1225 adopted; nominal dimensions only",
+        "retailStencil": "unverified"
+      },
       "runtime": "runtime/main-weapon-catalog.mjs: mode / impactPaint / floorPaint / finishContact",
       "verified": "Pinned source hash and retained numeric leaves; separate Actor paint-reachability receipt required",
       "retailParity": "unverified",
       "limitations": [
-        "Fixed paint seed 0",
-        "Airborne splash immediately projects to floor",
-        "DepthScale below 1 is clamped by nonnegative stretch",
-        "Sparse defaults and wall drips incomplete"
+        "Retail stencil and multi-surface projection remain unverified",
+        "Sparse source defaults and unconnected family-specific physics remain",
+        "Source wall-drop band candidate PR1235 is not adopted due to measured cost"
       ]
     }
   ],
@@ -13679,6 +14119,7 @@
           "value": 0.52
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "fuse/gravity/world scale and quadratic interpolation calibrated; raw splash damage, paint and throw tuple extracted; direct damage calibrated from current gameplay references",
       "retailParity": "unverified",
@@ -13719,6 +14160,7 @@
           "value": 0.52
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "damage/radius/chase frame rows and throw tuple extracted; world mapping/paint calibrated",
       "retailParity": "unverified",
@@ -13919,6 +14361,7 @@
           "value": 1.1
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "per-stage charge frames and blast arrays extracted; acceleration mapped from community testing; bounce flight and hop interval calibrated",
       "retailParity": "unverified",
@@ -14035,6 +14478,7 @@
           "value": 0.15
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "damage/radius/fuse and throw tuple extracted; target acquisition/world mapping calibrated",
       "retailParity": "unverified",
@@ -14067,6 +14511,7 @@
           "value": 1
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "cost, sensor/damage/paint radii and marks extracted; public gameplay reports indefinite lifetime and oldest-mine detonation on third placement; arm/ink-contact/world scale calibrated",
       "retailParity": "unverified",
@@ -14078,6 +14523,7 @@
       "sourceUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponPoisonMist.game__GameParameterTable.json",
       "sourceSha256": "1667647b6176234ab455f97351fb8d316c40ba779b0bee660588be1e254fcdf7",
       "paintFields": [],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "cost, area cutoff and effect-level frames extracted; lifetime/slow/drain/world scale calibrated",
       "retailParity": "unverified",
@@ -14118,6 +14564,7 @@
           "value": 2.6
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "direct damage, marking/tail frames, paint radius and throw speed extracted; rebound mapping calibrated",
       "retailParity": "unverified",
@@ -14129,6 +14576,7 @@
       "sourceUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShield.game__GameParameterTable.json",
       "sourceSha256": "ac757c5d3a6a29d45031d68527e3e9e7a6f4a5b7ac72cf7189250532db8c9648",
       "paintFields": [],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "cost/recovery/gravity/throw/HP tiers extracted; wall dimensions and lifetime calibrated",
       "retailParity": "unverified",
@@ -14161,6 +14609,7 @@
           "value": 1.4
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "cost/recovery/cadence/paint radii extracted; droplet pattern and world mapping calibrated; public references report 120 HP and unlimited low-power duration",
       "retailParity": "unverified",
@@ -14172,6 +14621,7 @@
       "sourceUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponBeacon.game__GameParameterTable.json",
       "sourceSha256": "e73cf2ca0655d67fd0b382ee3a81edc7302db4f91e66c511b3d46643b8173eb2",
       "paintFields": [],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-subs.mjs: surfacePaintWithCredit",
       "interpretation": "cost, recovery and throw speed extracted; public references report three placements, 120 HP, one/two-use jumps, and unlimited duration; world mapping calibrated",
       "retailParity": "unverified",
@@ -14204,6 +14654,7 @@
           "value": 45
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "native/kit-sub path + sub-special-fidelity",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -14260,6 +14711,7 @@
           "value": 0.48
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "native/kit-sub path + sub-special-fidelity",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -14364,6 +14816,7 @@
           "value": 1.075
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "native/kit-sub path + sub-special-fidelity",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -14375,6 +14828,7 @@
       "sourceUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponPointSensor.game__GameParameterTable.json",
       "sourceSha256": "57d0ab596ccdc9cd2e8da079ba4a169fc87aee36aeba079aafd81894d78bac03",
       "paintFields": [],
+      "implicitSpecUpEntries": [],
       "runtime": "native/kit-sub path + sub-special-fidelity",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -14423,6 +14877,19 @@
         {
           "pointer": "/GameParameters/spl__BulletBlastParam/SubSpecialSpecUpList/2/Value/Mid",
           "value": 3
+        }
+      ],
+      "implicitSpecUpEntries": [
+        {
+          "pointer": "/GameParameters/spl__BulletBlastParam/SubSpecialSpecUpList/0",
+          "value": {
+            "Value": {
+              "High": 3.78,
+              "Low": 3.15,
+              "Mid": 3.465
+            }
+          },
+          "semantic": "Source omits SpecUpType; numeric presence alone does not establish the engine default"
         }
       ],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
@@ -14513,6 +14980,19 @@
           "value": 0.665
         }
       ],
+      "implicitSpecUpEntries": [
+        {
+          "pointer": "/GameParameters/BlastParam/SubSpecialSpecUpList/0",
+          "value": {
+            "Value": {
+              "High": 4,
+              "Low": 3.2,
+              "Mid": 3.6
+            }
+          },
+          "semantic": "Source omits SpecUpType; numeric presence alone does not establish the engine default"
+        }
+      ],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 50/30 at 2.55/5, paint 3.2, 450/480/510F; 120 direct is community-reported, flight tuning calibrated",
       "retailParity": "unverified",
@@ -14577,6 +15057,7 @@
           "value": 0.5
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 4700 armor; auto charge .002/.006/.01 per frame, self cheer .077, ally charge .088/.044/.022/.011 per cheerer, gauge credit 6/3/2/1/.5 and max15, blast radius 12.6, paint radius 13.5, paint span 6F. 3.3 damage/frame is community-reported; blast growth and charge inputs calibrated",
       "retailParity": "unverified",
@@ -14641,6 +15122,7 @@
           "value": 0.144
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: swing splash 40 at 4; throw 220/60 at 3.6/8, paint 5, 450/570/660F; 100 contact is community-reported and action hitboxes are calibrated",
       "retailParity": "unverified",
@@ -14673,6 +15155,7 @@
           "value": 1.4
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 540F, hook blast 45/35 at 5.25/6, ink capacity/cost and tick drain; hook world reach and tether movement calibrated",
       "retailParity": "unverified",
@@ -14684,6 +15167,7 @@
       "sourceUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpMicroLaser.game__GameParameterTable.json",
       "sourceSha256": "89c603551389349e2a163be212ddefa36c75dc9f0bf22c6e42a7200c0a6dd3b0",
       "paintFields": [],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated",
       "retailParity": "unverified",
@@ -14812,6 +15296,7 @@
           "value": 0
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 50 cannon direct / 30 at 4.8, 32-to-16 shooter over 9–25F, 500 armor and 480/570/660F; steering calibrated",
       "retailParity": "unverified",
@@ -14932,6 +15417,7 @@
           "value": 1.2
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: Skewer 38F pre-move +54F movement, 220 at9/70 at14.9; 7.51 base paint value from table spec-up row; collision/world scale calibrated",
       "retailParity": "unverified",
@@ -14960,6 +15446,7 @@
           "value": 2
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 360F, 7.7 damage radius, 7 paint and 50F spread; 37.5 per 5F from public mechanics, marker flight calibrated",
       "retailParity": "unverified",
@@ -15032,6 +15519,19 @@
           "value": 2.8
         }
       ],
+      "implicitSpecUpEntries": [
+        {
+          "pointer": "/GameParameters/IceParam/BlastParam/SubSpecialSpecUpList/0",
+          "value": {
+            "Value": {
+              "High": 4.1,
+              "Low": 3.5,
+              "Mid": 3.8
+            }
+          },
+          "semantic": "Source omits SpecUpType; numeric presence alone does not establish the engine default"
+        }
+      ],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 70/35 at 3.6/6, paint 3.5, decoy HP 60, 108F flight, 210F burst and 635F special; count and spread calibrated",
       "retailParity": "unverified",
@@ -15076,6 +15576,7 @@
           "value": 0.21
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 480/540/600F, 35F charge/dash and 60 jump attack; remaining contact/charge values require game comparison",
       "retailParity": "unverified",
@@ -15244,6 +15745,7 @@
           "value": 45
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 60F startup, 560F running, 60F closing; touch 400 raw, mark 120F, saturation 360F; moving-wall scale calibrated",
       "retailParity": "unverified",
@@ -15255,6 +15757,7 @@
       "sourceUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpShockSonar.game__GameParameterTable.json",
       "sourceSha256": "437209c1e549ab796d1dc480a07bf870e5078936ad8e85ed1a7363fc90cf7cbe",
       "paintFields": [],
+      "implicitSpecUpEntries": [],
       "runtime": "runtime/all-specials.mjs: paintStamp / paintDisk / special projectile route",
       "interpretation": "11.3.0 table: 45 damage at 90/240/390F, 480 device HP, 30 contact damage/0.5s, 45F generator mark, radii 20/24/27, wave 160/192/216F; 8s wave marks, world mapping calibrated",
       "retailParity": "unverified",
@@ -15283,6 +15786,7 @@
           "value": 3.6
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "special-specific runtime/kit implementation",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -15299,6 +15803,7 @@
           "value": 4.5
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "special-specific runtime/kit implementation",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -15391,6 +15896,7 @@
           "value": -0.7
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "special-specific runtime/kit implementation",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -15411,6 +15917,7 @@
           "value": 120
         }
       ],
+      "implicitSpecUpEntries": [],
       "runtime": "special-specific runtime/kit implementation",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -15422,6 +15929,7 @@
       "sourceUrl": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpEnergyStand.game__GameParameterTable.json",
       "sourceSha256": "4222305b40620e1d269ce9119299419c4141e496ebf9e0cba069534932306c7d",
       "paintFields": [],
+      "implicitSpecUpEntries": [],
       "runtime": "special-specific runtime/kit implementation",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -15470,6 +15978,19 @@
           "value": 9
         }
       ],
+      "implicitSpecUpEntries": [
+        {
+          "pointer": "/GameParameters/BlastParamNormal/SubSpecialSpecUpList/1",
+          "value": {
+            "Value": {
+              "High": 12,
+              "Low": 10,
+              "Mid": 11
+            }
+          },
+          "semantic": "Source omits SpecUpType; numeric presence alone does not establish the engine default"
+        }
+      ],
       "runtime": "special-specific runtime/kit implementation",
       "interpretation": "Inspect dedicated source connection",
       "retailParity": "unverified",
@@ -15480,7 +16001,7 @@
     "Retail stencil textures/meshes are not included; procedural blob/ray/drip shapes are calibration",
     "Face projection, multi-surface cross paint and source units need controlled retail image/area validation",
     "CPU grid is coarse; antialiasing and cosmetic specks are not all gameplay paint",
-    "Big-special disk tiling currently extends its nominal radius at outer stamps",
+    "Special disk tiling remains a procedural approximation; source radius/AP threshold discontinuity was reduced in PR1239, with one-cell quantization residuals",
     "Renderer wetness restoration after hidden replay is not certified pixel-identical"
   ]
 }

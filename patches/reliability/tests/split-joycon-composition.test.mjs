@@ -58,7 +58,11 @@ async function boot() {
   const G = { settings: { aimAssist: 0, sensitivity: 1, padSensitivity: 1, invertY: false }, rig: { mapK: 0 }, actors: [] };
   const playerContext = vm.createContext({ console, performance });
   const playerDeps = {
-    three: `export class Vector3 { constructor(...v) { return new globalThis.Vector3(...v); } }`,
+    // The genuine camera helper evaluates these constructors at module load.
+    // Rendering is outside this input-only VM fixture, so provide only the
+    // THREE types needed to instantiate its module-level scratch objects.
+    three: `export class Vector3 { constructor(...v) { return new globalThis.Vector3(...v); } }
+      export class Quaternion {} export class Euler {}`,
     '../core/ctx.js': 'export const G = globalThis.G; export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)); export const lerp=(a,b,t)=>a+(b-a)*t; export const angleDiff=(a,b)=>((b-a+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;',
     '../config.js': 'export const PLAYER = { radius: 0.4, squidHeight: 0.4, height: 1.8 };',
     './physics.js': 'export class Physics {} export class Hit {}',
@@ -71,6 +75,12 @@ async function boot() {
     if (['../../patches/splatoon3/runtime/player-hurtbox.mjs', '../../patches/splatoon3/runtime/pad-sensitivity.mjs',
       '../../patches/splatoon3/runtime/superjump-destination.mjs'].includes(spec))
       return fileModule(playerContext, playerDepsCache, path.join(ROOT, 'patches', spec.slice('../../patches/'.length)));
+    // Keep the real production camera/look integrator in this full-composition
+    // Joy-Con test. Without this import the VM linker fails before exercising
+    // any controller behavior; replacing it with dummy exports would hide drift.
+    if (spec === '../../patches/splatoon3/runtime/camera-aim-controls.mjs') {
+      return fileModule(playerContext, playerDepsCache, path.join(ROOT, 'patches', spec.slice('../../patches/'.length)));
+    }
     if (spec === '../../patches/splatoon3/runtime/weapons-fidelity.mjs') {
       return stubModule(playerContext, playerDepsCache, spec, 'export function updateShotGuide() {} export function projectShotGuide() {}');
     }

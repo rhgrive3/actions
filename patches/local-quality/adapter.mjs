@@ -1,3 +1,6 @@
+import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
+import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
+import { adaptInkVolumes } from './ink-volume-adapter.mjs';
 import { adaptMenuNavigationTimer } from './menu-navigation-timer-adapter.mjs';
 import { adaptMuralAtlas } from './mural-atlas-adapter.mjs';
 import { adaptBotPaintObservation } from './bot-paint-observation-adapter.mjs';
@@ -28,6 +31,7 @@ import { adaptFxActorLifetime } from './fx-actor-lifetime-adapter.mjs';
 import { adaptHudSnapshots } from './hud-snapshots-adapter.mjs';
 import { adaptResultContinuation } from './result-continuation-adapter.mjs';
 import { adaptShowcaseShadow } from './showcase-shadow-adapter.mjs';
+import { adaptShowcaseAlpha } from './showcase-alpha-adapter.mjs';
 import { adaptTeamWipeout } from './team-wipeout-adapter.mjs';
 import { adaptSplatlingReticle } from './splatling-reticle-adapter.mjs';
 import { adaptPortraitGuard } from './portrait-guard-adapter.mjs';
@@ -66,6 +70,7 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptPaintHotpath } from './paint-hotpath-adapter.mjs';
+import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
 import { adaptRuntimeFrameScratch } from './runtime-frame-scratch-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
 import { adaptFinishTape } from './finish-tape-adapter.mjs';
@@ -73,6 +78,10 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'cloth-derivative-adapter.mjs',
+  'retarget-branch-update-adapter.mjs',
+  'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
+  'ink-volume/assets/roller/manifest.json', 'ink-volume/assets/roller/volumes.bin.gz', 'ink-volume/assets/shooter/manifest.json', 'ink-volume/assets/shooter/volumes.bin.gz',
   'lobby-quality-adapter.mjs', 'first-touch-source-adapter.mjs', 'touch-relayout-adapter.mjs',
   'menu-navigation-timer-adapter.mjs',
   'mural-atlas-adapter.mjs',
@@ -86,7 +95,7 @@ const IDENTITY_FILES = [
   'hud-snapshots-adapter.mjs', 'hud-snapshots.mjs',
   'hud-authority-adapter.mjs', 's3-hud-look-adapter.mjs', 's3-squid-look-adapter.mjs', 'fonts/iw-s3-digits.woff2', 'fonts/iw-s3-jp.woff2', 'fonts/OFL-RoundedMplus1c.txt', 'hud/s3-squid-badge.svg',
   'result-continuation-adapter.mjs', 'result-continuation.mjs',
-  'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs',
+  'showcase-shadow.mjs', 'showcase-shadow-adapter.mjs', 'showcase-alpha-adapter.mjs',
   'team-wipeout.mjs', 'team-wipeout-adapter.mjs',
   'splatling-reticle.mjs', 'splatling-reticle-adapter.mjs',
   'portrait-guard.mjs', 'portrait-guard-adapter.mjs',
@@ -115,6 +124,7 @@ const IDENTITY_FILES = [
   'mobile-platform.mjs', 'gyro-permission.mjs', 'gyro-startup.mjs',
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
+  'collision-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
 ];
@@ -135,10 +145,11 @@ export function adaptQualitySource(rel, code) {
   code = adaptIssue484(rel, code);
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
-  const painted = adaptPaintHotpath(rel, paced, replaceOnce);
+  const broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
+  const painted = adaptPaintHotpath(rel, broadphased, replaceOnce);
   const lazy = adaptComposerTarget(rel, painted, replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
-  return adaptRuntimeFrameScratch(rel, navigated, replaceOnce);
+  return adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce);
 }
 
 function adaptQualityLayer(rel, code) {
@@ -168,6 +179,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptIssue460Source(rel, code);
   code = adaptIssue461Source(rel, code);
   code = adaptAudioListener(rel, code);
+  code = adaptRetargetBranchUpdates(rel, code);
   code = adaptAimProfiles(rel, code);
   code = adaptMedalSource(rel, code);
   code = adaptResourceSource(rel, code, replaceOnce);
@@ -212,6 +224,7 @@ function adaptQualityLayer(rel, code) {
   code = adaptTenacity(rel, code, replaceOnce);
   if (rel !== 'src/ui/menus.js') code = adaptResultContinuation(rel, code, replaceOnce);
   code = adaptShowcaseShadow(rel, code, replaceOnce);
+  code = adaptShowcaseAlpha(rel, code, replaceOnce);
   code = adaptTeamWipeout(rel, code, replaceOnce);
   code = adaptSplatlingReticle(rel, code, replaceOnce);
   code = adaptPortraitGuard(rel, code, replaceOnce);

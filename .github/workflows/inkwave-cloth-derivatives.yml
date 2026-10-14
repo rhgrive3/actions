@@ -1,0 +1,55 @@
+name: Verify native cloth derivative stability
+on:
+  push:
+    branches: [codex/fix-cloth-derivative-flow]
+    paths:
+      - patches/local-quality/cloth-derivative-adapter.mjs
+      - patches/local-quality/adapter.mjs
+      - patches/local-quality/tests/cloth-derivative.test.mjs
+      - scripts/lib/inkwave-build-only-modules.mjs
+      - scripts/check-inkwave-cloth-rig.mjs
+      - scripts/check-inkwave-cloth-game.mjs
+      - .github/workflows/inkwave-cloth-derivatives.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned build and browser tools
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Guarded source tests and exact production build
+        run: |
+          node --test patches/local-quality/tests/cloth-derivative.test.mjs
+          node scripts/build-inkwave.mjs inkwave-public site
+          node -e "if(require('./site/inkwave-build.json').contentHash!=='ec70b09f4912be9cd9eed68789a3de5bcf70ea1e94cb149c831c54edf476b060')throw Error('Unexpected product input identity')"
+          INKWAVE_BUILT_SITE="$PWD/site" node --test scripts/tests/inkwave-build-packaging.test.mjs
+      - name: Native rigs and real game completed output
+        shell: bash
+        run: |
+          set +e
+          export CHROMIUM_PATH="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          status=0
+          node scripts/check-inkwave-cloth-rig.mjs "$PWD/site" "$PWD/evidence/rig/default" || status=1
+          INKWAVE_RIG_MIXED=1 node scripts/check-inkwave-cloth-rig.mjs "$PWD/site" "$PWD/evidence/rig/mixed" || status=1
+          node scripts/check-inkwave-cloth-game.mjs "$PWD/site" "$PWD/evidence/game/tidewater" tidewater || status=1
+          node scripts/check-inkwave-cloth-game.mjs "$PWD/site" "$PWD/evidence/game/scorch" scorch || status=1
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cloth-derivative-product-evidence
+          path: |
+            evidence
+            site/inkwave-build.json
