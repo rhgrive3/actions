@@ -59,12 +59,16 @@ test('no physical m² reward for wall-only or buried ink, without losing swim ow
   assert.equal(credited, floor.p.counts[0] * floor.face.cu * floor.face.cv);
 });
 
-test('stationary held roller makes the initial floor mark; fast steps subdivide but cap work', async () => {
+test('zero-velocity held roller with active movement input makes the initial floor mark; fast steps subdivide but cap work', async () => {
   const f = await batchFixture(), a = f.make('roller'), r = a.weaponRunner;
   a.isLocal = true; a.grounded = true; a.ink = 100; a.intent.fire = true;
+  // Stationary means zero velocity here, not zero stick: native floor-roll
+  // admission still requires movement input (the separate wall path does not).
+  a.intent.move.set(0, 0, 0.5);
+  assert.equal(a.vel.lengthSq(), 0);
   r.rolling = false; r.rollT = 0; r.flick = -1; r.cooldown = 0;
   r._roller(1 / 60, { fire: true }, a.weapon);
-  assert.ok(f.paint.filter(e => e.opts.kind === 'roll').length >= 3, 'initial stationary mark');
+  assert.ok(f.paint.filter(e => e.opts.kind === 'roll').length >= 3, 'initial zero-velocity mark with active movement input');
   f.paint.length = 0;
   a.pos.z += 1.2; a.vel.z = 7.92; r.rollT = 1.5;
   r._roller(1 / 60, { fire: true }, a.weapon);
@@ -85,4 +89,44 @@ test('Turf-point adapter composes after Storm and Tidal Slam lock transforms', (
   assert.ok(turf.includes("this.stats.turf += points;"), 'literal composed Turf credit and gauge lock');
   assert.ok(turf.includes("this.special + points"), 'literal composed Turf credit and gauge lock');
   assert.ok(turf.includes("!this.specialActive && !(this.stormGaugeLock > 0) && !this.s3TidalSlamGaugeFinish"), 'literal composed Turf credit and gauge lock');
+});
+
+
+test('real Actor collision can stop an active roll input, while zero/deadzone input cannot paint floor', async () => {
+  for (const stick of [0, 0.001, -0.5]) {
+    const f = await batchFixture(), { G, PLAYER } = f;
+    // Wall behind the Actor; the forward-facing drum remains over free floor.
+    G.level = new f.Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},
+      spawnPads:[[-80,0,0],[80,0,0]],spawnBarrier:0,
+      single:[{kind:'box',min:[-100,-0.5,-100],max:[100,0,100]},
+        {kind:'box',min:[-20,0,-1],max:[20,4,0]}],half:[]});
+    G.physics = new f.Physics(G.level);
+    const a = f.make('roller'), r = a.weaponRunner;
+    delete a._integrate; // restore the real prototype integration/collision path
+    const radius = PLAYER.s3HumanoidTerrainRadiusRaw * PLAYER.s3TerrainDistanceScale;
+    a.pos.set(0, 0, radius + 0.0001); a.vel.set(0, 0, 0);
+    a.isLocal = true; a.kidT = 1; a.intent.fire = true; a._prevIntent.fire = true;
+    a.intent.move.set(0, 0, stick);
+    r.rolling = false; r.rollT = 0; r.flick = -1; r.cooldown = 0;
+    const nativeRoller = r._roller, observed = [];
+    r._roller = function (...args) {
+      observed.push({speed:Math.hypot(a.vel.x,a.vel.z), wall:a.contacts.wall,
+        grounded:a.grounded, stick:a.intent.move.z, fire:args[1].fire});
+      return nativeRoller.apply(this, args);
+    };
+    G.time += 1 / 60; a.update(1 / 60);
+    assert.equal(observed.length, 1, 'native Actor update reaches the weapon once');
+    assert.equal(observed[0].fire, true);
+    assert.equal(observed[0].grounded, true);
+    assert.equal(observed[0].stick, stick);
+    const body = f.paint.filter(e => e.opts.kind === 'roll');
+    if (stick === -0.5) {
+      assert.equal(observed[0].wall, true, 'native capsule collision was exercised');
+      assert.equal(observed[0].speed, 0, 'collision stopped the actor before weapon admission');
+      assert.equal(body.length, 3, 'stopped actor still makes the admitted initial mark');
+    } else {
+      assert.equal(body.length, 0, 'zero/deadzone stick must not authorize floor paint');
+      assert.equal(f.paint.length, 0, 'no other paint path may hide the admission failure');
+    }
+  }
 });

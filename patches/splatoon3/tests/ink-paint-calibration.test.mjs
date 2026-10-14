@@ -35,12 +35,14 @@ test('native composed Actor and PaintSystem credit physically owned ink in point
  const at=V(0,.005,5),dir=V(0,0,1),radius=1.93,stretch=1.24;
  const before=paint.splat(at,radius,a.team,{kind:'shot',face:0,seed:.37,stretch:dir,stretchAmt:stretch,claimOwner:a});
  assert.ok(before>0 && paint.growing.length===1);
+ // Native paint callers own initial body credit; claimOwner retains later growth.
+ a.addTurf(before);
  const mask=paint.growing[0];
  const expected=directFloorFootprint(radius,stretch);
  assert.ok(Math.abs(mask.R-expected.radius)<1e-8,'real production radius is lateral-constrained');
  assert.ok(Math.abs(mask.entries[6]-expected.stretchAmt)<1e-8,'shader/CPU receive the same stretch');
  const firstCredit=a.stats.turf;
- paint.splat(at,radius,a.team,{kind:'shot',face:0,seed:.37,stretch:dir,stretchAmt:stretch,claimOwner:a});
+ a.addTurf(paint.splat(at,radius,a.team,{kind:'shot',face:0,seed:.37,stretch:dir,stretchAmt:stretch,claimOwner:a}));
  assert.equal(a.stats.turf,firstCredit,'overlapping same-team body never double scores');
  for(let i=0;i<210;i++)paint.advanceSimulation(1/60);
  const squares=paint.counts[0]*face.cu*face.cv;
@@ -56,7 +58,7 @@ test('native composed Actor and PaintSystem credit physically owned ink in point
 test('no-special owner still scores physical points without recharging special',async()=>{
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  const {paint,face,V}=makePaintWorld(f),owner=f.make('shooter');f.G.actors=[owner];
- paint.splat(V(0,.005,5),2,0,{kind:'shot',face:0,seed:.19,claimOwner:owner,claimMode:'no-special'});
+ owner.addTurfNoSpecial(paint.splat(V(0,.005,5),2,0,{kind:'shot',face:0,seed:.19,claimOwner:owner,claimMode:'no-special'}));
  for(let i=0;i<210;i++)paint.advanceSimulation(1/60);
  assert.ok(paint.counts[0]>0);
  assert.ok(Math.abs(owner.stats.turf-inkPaintPoints(paint.counts[0]*face.cu*face.cv))<1e-7);
@@ -81,4 +83,48 @@ test('physical Turf points respect active Storm and Tidal Slam gauge locks', asy
   a.addTurf(area);
   assert.ok(Math.abs(a.stats.turf - 3) < 1e-12, 'ordinary Turf remains measured in points');
   assert.ok(Math.abs(a.special - 1) < 1e-12, 'ordinary gauge charges exactly once in points');
+});
+
+
+test('native projectile and installed Slam callers credit initial body area exactly once', async () => {
+ for(const kind of ['shot','slam']) {
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const {paint,face,V}=makePaintWorld(f), a=f.make('shooter');
+  f.G.actors=[a];f.G.settings={};f.setRandom(()=>.37);a.pos.set(0,0,8);
+  const calls=[], splats=[], nativeSplat=paint.splat;
+  for(const method of ['addTurf','addTurfNoSpecial']) {
+   const native=a[method];a[method]=function(area){calls.push({method,area});return native.call(this,area);};
+  }
+  paint.splat=function(...args){const area=nativeSplat.apply(this,args);splats.push(area);return area;};
+  if(kind==='shot') f.G.projectiles.inkFlight.paint({owner:a,team:a.team,seed:.37},
+   {face:0,point:V(0,0,5),normal:V(0,1,0)}, {radius:1.93,stretch:1.24},V(0,0,1),'shot');
+  else a._slamImpact(f.SPECIALS.slam);
+  assert.equal(splats.length,kind==='shot'?1:10,'real native paint caller was exercised');
+  assert.equal(calls.length,1,'body credit belongs to one caller, not the paint owner wrapper');
+  assert.equal(calls[0].method,kind==='shot'?'addTurf':'addTurfNoSpecial');
+  const area=splats.reduce((sum,value)=>sum+value,0);assert.ok(area>0);
+  assert.equal(calls[0].area,area,'Slam aggregates every native ring splat before credit');
+  assert.ok(Math.abs(a.stats.turf-inkPaintPoints(area))<1e-7);
+  for(let i=0;i<210;i++)paint.advanceSimulation(1/60);
+  assert.ok(Math.abs(a.stats.turf-inkPaintPoints(paint.counts[0]*face.cu*face.cv))<1e-7);
+  if(kind==='slam')assert.equal(a.special,0);
+  else assert.ok(Math.abs(a.special-a.stats.turf)<1e-7);
+ }
+});
+
+test('missing or double initial body credit cannot satisfy the final owned-area ledger', async () => {
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+ for(const mode of ['normal','no-special'])for(const credits of [0,1,2]) {
+  const {paint,face,V}=makePaintWorld(f), owner=f.make('shooter');f.G.actors=[owner];
+  const area=paint.splat(V(0,.005,5),1.93,0,{kind:'shot',face:0,seed:.37,
+   stretch:V(0,0,1),stretchAmt:1.24,claimOwner:owner,claimMode:mode});
+  assert.ok(area>0);
+  for(let i=0;i<credits;i++)owner[mode==='normal'?'addTurf':'addTurfNoSpecial'](area);
+  for(let i=0;i<210;i++)paint.advanceSimulation(1/60);
+  const expected=inkPaintPoints(paint.counts[0]*face.cu*face.cv);
+  const error=owner.stats.turf-expected;
+  assert.ok(Math.abs(error-(credits-1)*inkPaintPoints(area))<1e-7);
+  assert.equal(Math.abs(error)<1e-7,credits===1,'only exactly one body credit matches owned cells');
+  if(mode==='no-special')assert.equal(owner.special,0);
+ }
 });
