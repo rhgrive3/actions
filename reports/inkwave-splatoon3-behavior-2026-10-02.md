@@ -4266,3 +4266,23 @@ The regression now uses each native expiry event to identify its emitting decoy 
 - Narrow correction: before admitting stationary evidence in the orientation path, retire that evidence when the current optional motion permission is explicitly denied. Orientation permission, sensor listeners, sensitivity, calibration, 0.35 deg/s threshold, 75 ms window, and valid/granted motion paths are unchanged. No actual user permission is changed by this patch or its tests.
 - Regression scope: real source-composed Gyro/MobileInput and real GyroPermission asynchronous callbacks with controlled sensor/permission fixture delivery. Covers delayed denial, ignored subsequent denied samples, granted/no-motion controls, queued aim preservation, and rejected stale permission generations. Existing gyro suites remain required; physical Android/iOS permission-delivery timing and hardware sensor behavior are unverified.
 - Comparison boundary: S3 11.3.0 remains the gameplay reference, but browser sensor permission sequencing has no claimed Nintendo-equivalent numeric behavior. This fixes a browser-only input-admission inconsistency; it does not establish general #187 Android drift calibration or justify closing that Issue. Browser UI and final-head hosted CI are not yet verified.
+
+
+## 2026-10-13: native remote bomb authority and bounded admission (#1321 correction)
+
+The live bomb cap cannot treat native replicas as cosmetic: they drive victim-local bomb/Storm consequences. The correction reserves locally bound roster shares, keeps quota-full attacks in the existing finite owner FIFO without spending event/Storm identity, and mirrors native same-owner Sprinkler replacement so persistent replicas cannot pin that FIFO. The hard actor/owner/global object limits and input/owner/life guards remain.
+
+A full `installS3` regression also exposed the existing `kit-defense` blanket ghost return, which suppressed even unsaturated victim-local bomb damage. Only native bomb replicas now reach the existing victim-authority lane; native Bubbler shielding stays read-only and neither replica object HP nor remote damage proposals are granted. The older partial-installer diagnostic is not adoption proof. Full-installed source and actual minified controls cover the correction; exact-head browser/CI acceptance remains pending.
+
+These are INKWAVE online consistency fixes, not a retail Splatoon 3 timing measurement. No source coefficients were inferred or changed. Controlled terminal geometry, constrained producer locomotion, finite backlog limits and remaining browser/retail limits are recorded in [the bounded authority report](network-replication/bomb-authority-budget-2026-10-13.md).
+
+- #1321 密集負荷の限定診断: native 161発の遅延burstは欠落113→0・live48→28だが、総CPU中央値425→799ms、追加FIFO待ちは合成owner clockで最大183ms。最後の試行は16.67ms超の連続処理frameが2→11となり、負荷無害・実機FPS改善とは扱わない。Sprinkler置換はlive48→7となったが、生成/破棄費用も記録した。詳細・再現用診断は `reports/network-replication/bomb-authority-budget-2026-10-13.md`。browserでのstall/実時間遅延は未確認。
+
+- #1321 重複処理削減: native bombの隣接Euler更新を1回のsetにまとめ、native Sprinklerの該当候補が無いstepでは一時Vector生成を避けた。600frameの全状態・順序・life判定を保持し、独立4536回転/630接触比較と実minified33+14caseで確認。161発burstのVector clone38182→2279、Quaternion更新71484→35742。実時間stall改善は未証明で、追加待ちとmain採用holdを維持する。
+
+
+## 2026-10-13: #1368 native producer test identity correction
+
+The old mixed-sub producer/lifecycle coverage claim is withdrawn: directly replacing the fixture weapon's sub did not reset the native runner's cached Suction spec. Wire labels could say Curling/Autobomb/Sprinkler while owner physics still resolved Suction. The correction resets the real runner and checks live/release/birth/resolved/wire/receiver subtype, exact ink debit and each intended native lifecycle; a no-reset negative must fail. Autobomb/Sprinkler use verified downward throws so the fixture actually reaches search/deployment before out-of-floor retirement or replacement. This is a test/report correction, with no production or retail coefficient change.
+
+The preceding density/duplicate-work counts retain their historical inputs and do not become corrected kit-specific performance evidence. The ordinary synthetic-floor scope, consecutive-stall and admission-wait limitations remain. Separate full-installer victim-local damage, Bubbler and recipient-life evidence is unaffected. Final bound verification is recorded in `reports/network-replication/bomb-authority-budget-2026-10-13.md`; browser and retail comparisons remain distinct.
