@@ -716,7 +716,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // their authored sockets without changing the gameplay Runner or hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
   let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
-  let weaponQ, inverseHandQ, candidateQ, bestQ, center, axisX, axisY, axisZ, trialQ;
+  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ;
+  const SEARCH_AXES = [[1,0,0],[0,1,0],[0,0,1]];
   const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
     const isRightRoller = limb === this.limbs.armR && this.weaponKind === 'roller' &&
@@ -728,7 +729,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       leftOrigin = target.clone(); leftParentQ = orientation.clone();
       delta = target.clone(); toLeft = target.clone(); axis = target.clone(); searchAxis = target.clone();
       turn = orientation.clone(); weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
-      candidateQ = orientation.clone(); bestQ = orientation.clone(); trialQ = orientation.clone();
+      candidateQ = orientation.clone(); bestQ = orientation.clone(); baseQ = orientation.clone(); trialQ = orientation.clone();
       center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
     }
     // The native solver clamps exactly at 99.95% of the rest-chain length.
@@ -790,7 +791,9 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     const evaluate = q => {
       alignLeft(q);
       const floor = neededGround ? bottom(q) : .1;
-      const groundError = contacting ? Math.abs(floor-.018) : Math.max(0,-.002-floor);
+      // Native rolling already provides an acceptable near-ground drum. Only
+      // correct real penetration or a high floating contact, not every frame.
+      const groundError = contacting ? Math.max(0,-.003-floor,floor-.045) : Math.max(0,-.002-floor);
       return groundError;
     };
     bestQ.copy(orientation);
@@ -800,9 +803,8 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // the left hand remains reachable after every tested candidate.
     if (neededGround && bestGroundError > .003) {
       let bestCost = bestGroundError*30;
-      const axes = [[1,0,0],[0,1,0],[0,0,1]];
-      const baseQ = orientation.clone();
-      for(const [x,y,z] of axes)for(const sign of [-1,1]) {
+      baseQ.copy(orientation);
+      for(const [x,y,z] of SEARCH_AXES)for(const sign of [-1,1]) {
         searchAxis.set(x,y,z);
         for(let step=1;step<=30;step++){
           const a=step*.05;
