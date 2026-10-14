@@ -1,0 +1,2597 @@
+{
+  "schema": 1,
+  "baseRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+  "headline": "Exact observed behavior, fewer native support triangle tests; no established whole-game speedup",
+  "files": {
+    "patches/native-stages/adapter.mjs": "b8ebf07d1c3430291e477645376c2a81bb004c4afcf74f6a69e5061996021abc",
+    "patches/native-stages/runtime/native-level.mjs": "f518b56894b7eb49ca41c63f0800a5e47ae9905d058a22d163f29c0c2b433fe7",
+    "patches/native-stages/runtime/triangle-world.mjs": "4fabb1e3474ceb3bd252d0754ada607159af6da83e9e0db0d81d55c82d999a69",
+    "patches/native-stages/tests/boolean-ground-parity.test.mjs": "3f40879844c081d1fcf2b95deb724c905e36822c27838fbb20d425386ce460e5",
+    "scripts/measure-inkwave-native-ground.mjs": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+    "scripts/benchmark-inkwave-native-ground.mjs": "64192037c461f808d127929ec648f514abd64169d225f375f18ca96fd81fa966"
+  },
+  "geometry": {
+    "stage": "scorch",
+    "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+    "collisionTriangles": 133737,
+    "paintFaces": 45171,
+    "maskCells": 1469898
+  },
+  "parity": [
+    {
+      "mode": "source",
+      "hz": 30,
+      "exactCompared": [
+        "alive",
+        "counts",
+        "randomCalls",
+        "rngState",
+        "final",
+        "trace"
+      ],
+      "before": {
+        "schema": 1,
+        "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "frozen-ground-baseline",
+        "built": null,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 30,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 3166.824520000002,
+        "cpu": {
+          "user": 3672871,
+          "system": 89227
+        },
+        "memory": {
+          "before": {
+            "rss": 535556096,
+            "heapTotal": 347029504,
+            "heapUsed": 264776760,
+            "external": 120455761,
+            "arrayBuffers": 76485912
+          },
+          "after": {
+            "rss": 532967424,
+            "heapTotal": 341299200,
+            "heapUsed": 265956512,
+            "external": 120768525,
+            "arrayBuffers": 76798636
+          }
+        },
+        "gc": {
+          "count": 2,
+          "ms": 16.79006500542164,
+          "events": [
+            {
+              "kind": 1,
+              "ms": 15.39079100266099,
+              "offset": 44.19951899999796
+            },
+            {
+              "kind": 1,
+              "ms": 1.3992740027606487,
+              "offset": 1414.7793939999974
+            }
+          ]
+        },
+        "frame": {
+          "p50": 21.270769000002474,
+          "p95": 79.37792700000136,
+          "p99": 161.22771700000158
+        },
+        "counts": {
+          "quads": 3547,
+          "draws": 112,
+          "splats": 30,
+          "hits": 0,
+          "damage": 0,
+          "los": 1503,
+          "blocked": 0
+        },
+        "rays": 10047,
+        "triangleTests": 260996,
+        "randomCalls": 1415,
+        "rngState": 1516396292,
+        "timings": {},
+        "trace": {
+          "actors": "cfbd4e1774125ce834f7a903a05ad647d9c3c88055a4927fccbeea3cf0316eec",
+          "grid": "1450b97cb87f9cfc136115beb70527d02c1662f7d94af94b4626d0a0955c5325",
+          "orders": "e66d9e0372be7c7c0f91a84c1882dd9a89a6acb50298bb8c5c06451af15df02f",
+          "commands": "77061c754d2b95c18abf8656efb4a0fd03b3190a2f247888b8885f036aeaa8d1",
+          "uploads": "bc56f32d6b9d5c42cdb1045866559b663629a3884b13d4c7d25ca7cb516d1297"
+        },
+        "file": "ground-verified-source-baseline30.json",
+        "rawFileSha256": "21c2e808731233f70c49cbc14ff15ea2dd9fd0b3f7a56dee160a6d1ef58f85cd",
+        "finalSnapshotSha256": "31aac07c3c449eeff7e3579009ed36df5c15af2ad90b41e0059117ffc539e115"
+      },
+      "after": {
+        "schema": 1,
+        "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "candidate",
+        "built": null,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 30,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 1190.1596169999975,
+        "cpu": {
+          "user": 1557933,
+          "system": 0
+        },
+        "memory": {
+          "before": {
+            "rss": 494559232,
+            "heapTotal": 314978304,
+            "heapUsed": 211673544,
+            "external": 120670156,
+            "arrayBuffers": 76700307
+          },
+          "after": {
+            "rss": 500588544,
+            "heapTotal": 319434752,
+            "heapUsed": 234044744,
+            "external": 120838498,
+            "arrayBuffers": 76868609
+          }
+        },
+        "gc": {
+          "count": 2,
+          "ms": 3.248035002499819,
+          "events": [
+            {
+              "kind": 1,
+              "ms": 2.392815001308918,
+              "offset": 297.20413899999767
+            },
+            {
+              "kind": 1,
+              "ms": 0.8552200011909008,
+              "offset": 789.644178999999
+            }
+          ]
+        },
+        "frame": {
+          "p50": 11.670258000001922,
+          "p95": 22.338277000002563,
+          "p99": 29.724984999997105
+        },
+        "counts": {
+          "quads": 3547,
+          "draws": 112,
+          "splats": 30,
+          "hits": 0,
+          "damage": 0,
+          "los": 1503,
+          "blocked": 0
+        },
+        "rays": 10047,
+        "triangleTests": 208820,
+        "randomCalls": 1415,
+        "rngState": 1516396292,
+        "timings": {},
+        "trace": {
+          "actors": "cfbd4e1774125ce834f7a903a05ad647d9c3c88055a4927fccbeea3cf0316eec",
+          "grid": "1450b97cb87f9cfc136115beb70527d02c1662f7d94af94b4626d0a0955c5325",
+          "orders": "e66d9e0372be7c7c0f91a84c1882dd9a89a6acb50298bb8c5c06451af15df02f",
+          "commands": "77061c754d2b95c18abf8656efb4a0fd03b3190a2f247888b8885f036aeaa8d1",
+          "uploads": "bc56f32d6b9d5c42cdb1045866559b663629a3884b13d4c7d25ca7cb516d1297"
+        },
+        "file": "ground-verified-source-candidate30.json",
+        "rawFileSha256": "960b55af7d96ebfa39b5a79bb1c7f1b3b504c6d0cc5f2db72e7b935bd38cef0b",
+        "finalSnapshotSha256": "31aac07c3c449eeff7e3579009ed36df5c15af2ad90b41e0059117ffc539e115"
+      }
+    },
+    {
+      "mode": "source",
+      "hz": 60,
+      "exactCompared": [
+        "alive",
+        "counts",
+        "randomCalls",
+        "rngState",
+        "final",
+        "trace"
+      ],
+      "before": {
+        "schema": 1,
+        "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "frozen-ground-baseline",
+        "built": null,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 60,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 2497.339247,
+        "cpu": {
+          "user": 3254271,
+          "system": 0
+        },
+        "memory": {
+          "before": {
+            "rss": 526532608,
+            "heapTotal": 340647936,
+            "heapUsed": 244162424,
+            "external": 122200043,
+            "arrayBuffers": 78230194
+          },
+          "after": {
+            "rss": 517910528,
+            "heapTotal": 327962624,
+            "heapUsed": 172720320,
+            "external": 120452493,
+            "arrayBuffers": 76482604
+          }
+        },
+        "gc": {
+          "count": 4,
+          "ms": 16.978569004684687,
+          "events": [
+            {
+              "kind": 1,
+              "ms": 2.453617002815008,
+              "offset": 446.77577200000087
+            },
+            {
+              "kind": 1,
+              "ms": 1.131826002150774,
+              "offset": 1429.977087000003
+            },
+            {
+              "kind": 8,
+              "ms": 1.62533900141716,
+              "offset": 2283.600888000001
+            },
+            {
+              "kind": 4,
+              "ms": 11.767786998301744,
+              "offset": 2387.922745
+            }
+          ]
+        },
+        "frame": {
+          "p50": 10.62796900000103,
+          "p95": 27.85510399999839,
+          "p99": 40.38985500000126
+        },
+        "counts": {
+          "quads": 11341,
+          "draws": 87,
+          "splats": 26,
+          "hits": 0,
+          "damage": 0,
+          "los": 1511,
+          "blocked": 0
+        },
+        "rays": 14043,
+        "triangleTests": 429434,
+        "randomCalls": 1459,
+        "rngState": 1812560832,
+        "timings": {},
+        "trace": {
+          "actors": "b1dd5ebc7dfcec55dc9eaae50efc74e05ad64a623351b74f72cc90fbe4076697",
+          "grid": "d3963a63cc7186b43de6c3e43eda16538be714e5f74f88c89956d757a293e3f8",
+          "orders": "caed4279ea1a69b9f0e08f645c5deab9cc375bd2927729fa78976f043f1ac3cb",
+          "commands": "96b90796ae26f64c93829d8348f1da40d24ad11221481347591da8972c509c73",
+          "uploads": "4dbcc232576c6b44a0b69d21270bb59f5fe109bf30e825341e421fd8c14b154e"
+        },
+        "file": "ground-verified-source-baseline60.json",
+        "rawFileSha256": "9f119bbb355c2ccfab48ebe40aeb99757beea7cb2d615ab8c8779475a4afd2f3",
+        "finalSnapshotSha256": "ce73776a2e9fc2a329f903806c6cf47d6b93b4bde7db1c642c8948f0b2278f52"
+      },
+      "after": {
+        "schema": 1,
+        "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "candidate",
+        "built": null,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 60,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 1940.4879540000002,
+        "cpu": {
+          "user": 2240818,
+          "system": 26904
+        },
+        "memory": {
+          "before": {
+            "rss": 526794752,
+            "heapTotal": 338165760,
+            "heapUsed": 240941232,
+            "external": 122175745,
+            "arrayBuffers": 78205896
+          },
+          "after": {
+            "rss": 531513344,
+            "heapTotal": 341573632,
+            "heapUsed": 259928848,
+            "external": 123490173,
+            "arrayBuffers": 79520284
+          }
+        },
+        "gc": {
+          "count": 2,
+          "ms": 2.95006899908185,
+          "events": [
+            {
+              "kind": 1,
+              "ms": 1.3162060007452965,
+              "offset": 415.68977900000027
+            },
+            {
+              "kind": 1,
+              "ms": 1.6338629983365536,
+              "offset": 1082.1163080000006
+            }
+          ]
+        },
+        "frame": {
+          "p50": 7.523863000000347,
+          "p95": 17.51799999999821,
+          "p99": 20.32495199999903
+        },
+        "counts": {
+          "quads": 11341,
+          "draws": 87,
+          "splats": 26,
+          "hits": 0,
+          "damage": 0,
+          "los": 1511,
+          "blocked": 0
+        },
+        "rays": 14043,
+        "triangleTests": 364980,
+        "randomCalls": 1459,
+        "rngState": 1812560832,
+        "timings": {},
+        "trace": {
+          "actors": "b1dd5ebc7dfcec55dc9eaae50efc74e05ad64a623351b74f72cc90fbe4076697",
+          "grid": "d3963a63cc7186b43de6c3e43eda16538be714e5f74f88c89956d757a293e3f8",
+          "orders": "caed4279ea1a69b9f0e08f645c5deab9cc375bd2927729fa78976f043f1ac3cb",
+          "commands": "96b90796ae26f64c93829d8348f1da40d24ad11221481347591da8972c509c73",
+          "uploads": "4dbcc232576c6b44a0b69d21270bb59f5fe109bf30e825341e421fd8c14b154e"
+        },
+        "file": "ground-verified-source-candidate60.json",
+        "rawFileSha256": "9c0cbd198d6da46e656e6ab6ae3ea853c3ea5212bc83b468bd324f2342914f35",
+        "finalSnapshotSha256": "ce73776a2e9fc2a329f903806c6cf47d6b93b4bde7db1c642c8948f0b2278f52"
+      }
+    },
+    {
+      "mode": "source",
+      "hz": 120,
+      "exactCompared": [
+        "alive",
+        "counts",
+        "randomCalls",
+        "rngState",
+        "final",
+        "trace"
+      ],
+      "before": {
+        "schema": 1,
+        "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "frozen-ground-baseline",
+        "built": null,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 120,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 6284.754068999999,
+        "cpu": {
+          "user": 6351284,
+          "system": 129611
+        },
+        "memory": {
+          "before": {
+            "rss": 526987264,
+            "heapTotal": 340541440,
+            "heapUsed": 247025248,
+            "external": 122182925,
+            "arrayBuffers": 78213076
+          },
+          "after": {
+            "rss": 532885504,
+            "heapTotal": 344735744,
+            "heapUsed": 257735560,
+            "external": 122614365,
+            "arrayBuffers": 78644476
+          }
+        },
+        "gc": {
+          "count": 3,
+          "ms": 5.603279996663332,
+          "events": [
+            {
+              "kind": 1,
+              "ms": 3.1198999993503094,
+              "offset": 309.3171970000003
+            },
+            {
+              "kind": 1,
+              "ms": 1.7550409995019436,
+              "offset": 4471.465993000002
+            },
+            {
+              "kind": 1,
+              "ms": 0.728338997811079,
+              "offset": 5334.6081300000005
+            }
+          ]
+        },
+        "frame": {
+          "p50": 5.3278339999997115,
+          "p95": 15.156175000000076,
+          "p99": 43.26000099999874
+        },
+        "counts": {
+          "quads": 8036,
+          "draws": 106,
+          "splats": 29,
+          "hits": 0,
+          "damage": 0,
+          "los": 1803,
+          "blocked": 0
+        },
+        "rays": 22214,
+        "triangleTests": 735668,
+        "randomCalls": 1532,
+        "rngState": 3816431591,
+        "timings": {},
+        "trace": {
+          "actors": "f5bcc77dd2ef57db46572c14a3520f6221fb8f69526a6921079646579f3eb11f",
+          "grid": "5b6e5fa644c4d90511719812f93b089c2d460fd447fa168edc86e3aa75f6f6d0",
+          "orders": "f6149b1ce3a05a2e43ff3d2ac5dbf9857b008e9e72f267f68713a7b65330bb81",
+          "commands": "2e02681d98cf42088a2dac8d0cf6aca58ccf6e64fb6ed68dce6724ea660feebe",
+          "uploads": "f3521017a1e4c00f5641b69e0127b6ddb1229b97399cc04d789883472e1f2058"
+        },
+        "file": "ground-verified-source-baseline120.json",
+        "rawFileSha256": "757a9bc90b9b973d05545f009b3c4dbb35a8b54f7da7d00184fd5d8ea1459cd2",
+        "finalSnapshotSha256": "95dbe13673c24760908149627164fec7eec92d767f789e46980177c9abba570b"
+      },
+      "after": {
+        "schema": 1,
+        "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "candidate",
+        "built": null,
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 120,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 6765.165795000001,
+        "cpu": {
+          "user": 7036753,
+          "system": 87981
+        },
+        "memory": {
+          "before": {
+            "rss": 541724672,
+            "heapTotal": 353878016,
+            "heapUsed": 230698968,
+            "external": 120441917,
+            "arrayBuffers": 76416692
+          },
+          "after": {
+            "rss": 545394688,
+            "heapTotal": 358072320,
+            "heapUsed": 238238272,
+            "external": 120550757,
+            "arrayBuffers": 76580868
+          }
+        },
+        "gc": {
+          "count": 3,
+          "ms": 50.13033699989319,
+          "events": [
+            {
+              "kind": 1,
+              "ms": 7.792106002569199,
+              "offset": 1065.2386750000005
+            },
+            {
+              "kind": 1,
+              "ms": 36.161648999899626,
+              "offset": 2928.457166
+            },
+            {
+              "kind": 1,
+              "ms": 6.176581997424364,
+              "offset": 6182.4671579999995
+            }
+          ]
+        },
+        "frame": {
+          "p50": 10.616848999998183,
+          "p95": 34.555812999999034,
+          "p99": 119.98334899999827
+        },
+        "counts": {
+          "quads": 8036,
+          "draws": 106,
+          "splats": 29,
+          "hits": 0,
+          "damage": 0,
+          "los": 1803,
+          "blocked": 0
+        },
+        "rays": 22214,
+        "triangleTests": 659766,
+        "randomCalls": 1532,
+        "rngState": 3816431591,
+        "timings": {},
+        "trace": {
+          "actors": "f5bcc77dd2ef57db46572c14a3520f6221fb8f69526a6921079646579f3eb11f",
+          "grid": "5b6e5fa644c4d90511719812f93b089c2d460fd447fa168edc86e3aa75f6f6d0",
+          "orders": "f6149b1ce3a05a2e43ff3d2ac5dbf9857b008e9e72f267f68713a7b65330bb81",
+          "commands": "2e02681d98cf42088a2dac8d0cf6aca58ccf6e64fb6ed68dce6724ea660feebe",
+          "uploads": "f3521017a1e4c00f5641b69e0127b6ddb1229b97399cc04d789883472e1f2058"
+        },
+        "file": "ground-verified-source-candidate120.json",
+        "rawFileSha256": "40bba275bd634b3780c5b5ba0996958c6e3f278b2165afa51c5a5834d6a6844c",
+        "finalSnapshotSha256": "95dbe13673c24760908149627164fec7eec92d767f789e46980177c9abba570b"
+      }
+    },
+    {
+      "mode": "emitted",
+      "hz": 30,
+      "exactCompared": [
+        "alive",
+        "counts",
+        "randomCalls",
+        "rngState",
+        "final",
+        "trace"
+      ],
+      "before": {
+        "schema": 1,
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "baseline-built",
+        "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 30,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 1442.338033,
+        "cpu": {
+          "user": 1724872,
+          "system": 0
+        },
+        "frame": {
+          "p50": 15.540524000000005,
+          "p95": 31.234161000000313,
+          "p99": 35.423516000002564
+        },
+        "counts": {
+          "quads": 7540,
+          "draws": 58,
+          "splats": 30,
+          "hits": 0,
+          "damage": 0,
+          "los": 1622,
+          "blocked": 0
+        },
+        "rays": 10756,
+        "triangleTests": 284191,
+        "randomCalls": 1471,
+        "rngState": 3917834524,
+        "timings": {},
+        "trace": {
+          "actors": "8e3cc7d3c238d71a209699b6c31596b7ecb695ee607be0a80905353b83140686",
+          "grid": "84986753567e19e214656cd1ffc4505c58c70f4c1a87d9d2883f0338f5d87ed1",
+          "orders": "f3ddb112d518c3e10f5ca15e6c9a5798b7336e82b6e487822bc78b8b5a1c8095",
+          "commands": "90e0e753a34be7aa0efe5e2ac275833ec06a4cffc6f8f9ebf6a6840b981a2aaf",
+          "uploads": "f053cddc92f523bf5037c969c4bab4f23949a2fb441a56450277e988d2579112"
+        },
+        "file": "ground-final-built-baseline30.json",
+        "rawFileSha256": "a300a1e715fbe4c37f99829948f1e9971c5e01adf19f34e16c29088614a8f077",
+        "finalSnapshotSha256": "d5dfc3ad2628082565762162559b8cffb600f04aef3624aa1fac7a2ff8a62d1f"
+      },
+      "after": {
+        "schema": 1,
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "candidate-built",
+        "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 30,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 1243.7738869999994,
+        "cpu": {
+          "user": 1465160,
+          "system": 42818
+        },
+        "frame": {
+          "p50": 13.070230000001175,
+          "p95": 22.97125600000072,
+          "p99": 27.04999400000088
+        },
+        "counts": {
+          "quads": 7540,
+          "draws": 58,
+          "splats": 30,
+          "hits": 0,
+          "damage": 0,
+          "los": 1622,
+          "blocked": 0
+        },
+        "rays": 10756,
+        "triangleTests": 219378,
+        "randomCalls": 1471,
+        "rngState": 3917834524,
+        "timings": {},
+        "trace": {
+          "actors": "8e3cc7d3c238d71a209699b6c31596b7ecb695ee607be0a80905353b83140686",
+          "grid": "84986753567e19e214656cd1ffc4505c58c70f4c1a87d9d2883f0338f5d87ed1",
+          "orders": "f3ddb112d518c3e10f5ca15e6c9a5798b7336e82b6e487822bc78b8b5a1c8095",
+          "commands": "90e0e753a34be7aa0efe5e2ac275833ec06a4cffc6f8f9ebf6a6840b981a2aaf",
+          "uploads": "f053cddc92f523bf5037c969c4bab4f23949a2fb441a56450277e988d2579112"
+        },
+        "file": "ground-final-built-candidate30.json",
+        "rawFileSha256": "a05705acb924b2eec75841e15c1002655867820bfb1dd843e72e2a0c68e802d2",
+        "finalSnapshotSha256": "d5dfc3ad2628082565762162559b8cffb600f04aef3624aa1fac7a2ff8a62d1f"
+      }
+    },
+    {
+      "mode": "emitted",
+      "hz": 60,
+      "exactCompared": [
+        "alive",
+        "counts",
+        "randomCalls",
+        "rngState",
+        "final",
+        "trace"
+      ],
+      "before": {
+        "schema": 1,
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "baseline-built",
+        "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 60,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 2044.8841029999985,
+        "cpu": {
+          "user": 2315603,
+          "system": 32994
+        },
+        "frame": {
+          "p50": 8.663205999999263,
+          "p95": 19.022759000001315,
+          "p99": 21.665226000000985
+        },
+        "counts": {
+          "quads": 6370,
+          "draws": 53,
+          "splats": 28,
+          "hits": 0,
+          "damage": 0,
+          "los": 1556,
+          "blocked": 0
+        },
+        "rays": 14368,
+        "triangleTests": 493282,
+        "randomCalls": 1465,
+        "rngState": 4137858118,
+        "timings": {},
+        "trace": {
+          "actors": "23e8c0dcf3c5e5c79e2cff8c661b371db5c3e72280bfb3094120e7f6cbfcc67c",
+          "grid": "3f709f2374b92ab8e98604d28e35864189750aae96bb34742a96770b145e4b14",
+          "orders": "eec81ef09d6b9395729a72792be6e656f42845ae0ccd08370291ee72a63f33ee",
+          "commands": "cb4bd5d73a38c59a9c7565d411b7e4a7e6135133d094f34ad5926dc093bf2d2c",
+          "uploads": "d9cc74c988eef4be4fb32eb552d6df37b5ab105a0e5b7832dbc71bf6da3f7364"
+        },
+        "file": "ground-final-built-baseline60.json",
+        "rawFileSha256": "7de6a04ab971a441529673f94fe796453fbc661b89553272e3882fcd6657db24",
+        "finalSnapshotSha256": "84d3ddbded5c0d053a1255f18c4a61fdc4dfc5289d3387b6965b8182b0ffb37f"
+      },
+      "after": {
+        "schema": 1,
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "candidate-built",
+        "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 60,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 1848.7323560000004,
+        "cpu": {
+          "user": 2109499,
+          "system": 3987
+        },
+        "frame": {
+          "p50": 8.064244000001054,
+          "p95": 14.521585999998933,
+          "p99": 18.884405999999217
+        },
+        "counts": {
+          "quads": 6370,
+          "draws": 53,
+          "splats": 28,
+          "hits": 0,
+          "damage": 0,
+          "los": 1556,
+          "blocked": 0
+        },
+        "rays": 14368,
+        "triangleTests": 426170,
+        "randomCalls": 1465,
+        "rngState": 4137858118,
+        "timings": {},
+        "trace": {
+          "actors": "23e8c0dcf3c5e5c79e2cff8c661b371db5c3e72280bfb3094120e7f6cbfcc67c",
+          "grid": "3f709f2374b92ab8e98604d28e35864189750aae96bb34742a96770b145e4b14",
+          "orders": "eec81ef09d6b9395729a72792be6e656f42845ae0ccd08370291ee72a63f33ee",
+          "commands": "cb4bd5d73a38c59a9c7565d411b7e4a7e6135133d094f34ad5926dc093bf2d2c",
+          "uploads": "d9cc74c988eef4be4fb32eb552d6df37b5ab105a0e5b7832dbc71bf6da3f7364"
+        },
+        "file": "ground-final-built-candidate60.json",
+        "rawFileSha256": "f44d1972b7e3ead082dc3f1100701671e47785d54ad804d85e2febb031c233c5",
+        "finalSnapshotSha256": "84d3ddbded5c0d053a1255f18c4a61fdc4dfc5289d3387b6965b8182b0ffb37f"
+      }
+    },
+    {
+      "mode": "emitted",
+      "hz": 120,
+      "exactCompared": [
+        "alive",
+        "counts",
+        "randomCalls",
+        "rngState",
+        "final",
+        "trace"
+      ],
+      "before": {
+        "schema": 1,
+        "harnessSha256": "7baebfa5e6dac29a3f09b9716bc979233a108b97286cb5722cef077dd460b1c4",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "baseline-built",
+        "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 120,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "duel": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 3141.326914000001,
+        "cpu": {
+          "user": 3436412,
+          "system": 13432
+        },
+        "frame": {
+          "p50": 5.4558990000005,
+          "p95": 12.204545000000508,
+          "p99": 16.281560999999783
+        },
+        "counts": {
+          "quads": 15709,
+          "draws": 84,
+          "splats": 33,
+          "hits": 0,
+          "damage": 0,
+          "los": 1538,
+          "blocked": 0
+        },
+        "rays": 20679,
+        "triangleTests": 696681,
+        "randomCalls": 1527,
+        "rngState": 430778420,
+        "timings": {},
+        "trace": {
+          "actors": "9e8df1396a4dab690b54d89d907614291e63bf2a178f37b599997dc41385a516",
+          "grid": "040e17fc71433b3c25d0ed26b4b112bafe85d5774884818b6ace1e12c879976f",
+          "orders": "1869c6cd03cdf622923ea7a0299735fbb2a95df30f0f5c8440e4c64b4d5acc83",
+          "commands": "00c7d07ceb00b439573fe5403f820a5c495eddc78a39af901b81af275ee46634",
+          "uploads": "7dbdbe282ce5d3114cdfe4b1dd69637a8052ea07d4018fc1d2ffdd37fc173931"
+        },
+        "file": "ground-final-built-baseline120.json",
+        "rawFileSha256": "47e22ed00934c6ef4ea4a8edb9132f63de5632a7ace5eb28a662534c23c57c50",
+        "finalSnapshotSha256": "562df8bd2ac869fbd2cf5e2b4fb65dbbc5fa6d4fa014543368ed8fea5582bef8"
+      },
+      "after": {
+        "schema": 1,
+        "harnessSha256": "7baebfa5e6dac29a3f09b9716bc979233a108b97286cb5722cef077dd460b1c4",
+        "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+        "variant": "candidate-built",
+        "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "hz": 120,
+        "seconds": 2,
+        "warmup": 1,
+        "actors": 8,
+        "combat": false,
+        "duel": false,
+        "record": true,
+        "profile": false,
+        "alive": 8,
+        "elapsed": 3135.186400999999,
+        "cpu": {
+          "user": 3444989,
+          "system": 12993
+        },
+        "frame": {
+          "p50": 5.19256999999925,
+          "p95": 11.277996000000712,
+          "p99": 15.089371000000028
+        },
+        "counts": {
+          "quads": 15709,
+          "draws": 84,
+          "splats": 33,
+          "hits": 0,
+          "damage": 0,
+          "los": 1538,
+          "blocked": 0
+        },
+        "rays": 20679,
+        "triangleTests": 640126,
+        "randomCalls": 1527,
+        "rngState": 430778420,
+        "timings": {},
+        "trace": {
+          "actors": "9e8df1396a4dab690b54d89d907614291e63bf2a178f37b599997dc41385a516",
+          "grid": "040e17fc71433b3c25d0ed26b4b112bafe85d5774884818b6ace1e12c879976f",
+          "orders": "1869c6cd03cdf622923ea7a0299735fbb2a95df30f0f5c8440e4c64b4d5acc83",
+          "commands": "00c7d07ceb00b439573fe5403f820a5c495eddc78a39af901b81af275ee46634",
+          "uploads": "7dbdbe282ce5d3114cdfe4b1dd69637a8052ea07d4018fc1d2ffdd37fc173931"
+        },
+        "file": "ground-final-built-candidate120.json",
+        "rawFileSha256": "bc8c69388bf0cdb3c6428e4ae20cdc5dd07471faa02722cf334621f1c031ba66",
+        "finalSnapshotSha256": "562df8bd2ac869fbd2cf5e2b4fb65dbbc5fa6d4fa014543368ed8fea5582bef8"
+      }
+    }
+  ],
+  "density": [
+    {
+      "schema": 1,
+      "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+      "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+      "variant": "frozen-ground-baseline",
+      "built": null,
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "hz": 60,
+      "seconds": 2,
+      "warmup": 1,
+      "actors": 1,
+      "combat": false,
+      "record": false,
+      "profile": true,
+      "alive": 1,
+      "elapsed": 379.7315239999989,
+      "cpu": {
+        "user": 419301,
+        "system": 25733
+      },
+      "memory": {
+        "before": {
+          "rss": 560308224,
+          "heapTotal": 369999872,
+          "heapUsed": 293116696,
+          "external": 122148911,
+          "arrayBuffers": 78179062
+        },
+        "after": {
+          "rss": 531718144,
+          "heapTotal": 341381120,
+          "heapUsed": 212855376,
+          "external": 122148967,
+          "arrayBuffers": 78172156
+        }
+      },
+      "gc": {
+        "count": 1,
+        "ms": 8.704608000814915,
+        "events": [
+          {
+            "kind": 1,
+            "ms": 8.704608000814915,
+            "offset": 187.24104499999885
+          }
+        ]
+      },
+      "frame": {
+        "p50": 1.400986999997258,
+        "p95": 12.477781000001414,
+        "p99": 14.722026000003098
+      },
+      "counts": {
+        "quads": 5115,
+        "draws": 97,
+        "splats": 5,
+        "hits": 0,
+        "damage": 0,
+        "los": 272,
+        "blocked": 0
+      },
+      "rays": 1646,
+      "triangleTests": 38458,
+      "randomCalls": 418,
+      "rngState": 314120469,
+      "timings": {
+        "_steer": {
+          "calls": 120,
+          "ms": 86.54147099998227
+        },
+        "_tail": {
+          "calls": 120,
+          "ms": 6.96811400002116
+        },
+        "queryBox": {
+          "calls": 122,
+          "ms": 0.6506989999907091
+        },
+        "ray": {
+          "calls": 1646,
+          "ms": 150.37758200000826
+        },
+        "groundProbe": {
+          "calls": 99,
+          "ms": 65.65127700000448
+        },
+        "advanceSimulation": {
+          "calls": 120,
+          "ms": 106.44338800001424
+        },
+        "flush": {
+          "calls": 120,
+          "ms": 0.21228400001928094
+        },
+        "los": {
+          "calls": 272,
+          "ms": 54.40014900001552
+        },
+        "_perceive": {
+          "calls": 10,
+          "ms": 0.07834399999774178
+        },
+        "splat": {
+          "calls": 5,
+          "ms": 25.516888000005565
+        }
+      },
+      "trace": null,
+      "file": "ground-density-1.json",
+      "rawFileSha256": "433c461e27bfabcc618b33c812bd15b32e17d397368f460d2ea4fda3a4c6da7f",
+      "finalSnapshotSha256": "35febaead51b309904a011d9f91106aef0fabe910381c666888f7d79b12eef0b",
+      "waterQueries": 458
+    },
+    {
+      "schema": 1,
+      "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+      "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+      "variant": "frozen-ground-baseline",
+      "built": null,
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "hz": 60,
+      "seconds": 2,
+      "warmup": 1,
+      "actors": 2,
+      "combat": false,
+      "record": false,
+      "profile": true,
+      "alive": 2,
+      "elapsed": 300.46635700000115,
+      "cpu": {
+        "user": 483425,
+        "system": 10920
+      },
+      "memory": {
+        "before": {
+          "rss": 528068608,
+          "heapTotal": 339492864,
+          "heapUsed": 209548064,
+          "external": 122160345,
+          "arrayBuffers": 78176652
+        },
+        "after": {
+          "rss": 528855040,
+          "heapTotal": 339755008,
+          "heapUsed": 232533424,
+          "external": 122146557,
+          "arrayBuffers": 78176668
+        }
+      },
+      "gc": {
+        "count": 0,
+        "ms": 0,
+        "events": []
+      },
+      "frame": {
+        "p50": 1.0901819999999134,
+        "p95": 8.184683000001314,
+        "p99": 11.362035000000105
+      },
+      "counts": {
+        "quads": 0,
+        "draws": 0,
+        "splats": 4,
+        "hits": 0,
+        "damage": 0,
+        "los": 483,
+        "blocked": 0
+      },
+      "rays": 4282,
+      "triangleTests": 111844,
+      "randomCalls": 523,
+      "rngState": 827879160,
+      "timings": {
+        "_steer": {
+          "calls": 240,
+          "ms": 144.32397200000014
+        },
+        "_tail": {
+          "calls": 240,
+          "ms": 6.416880999995556
+        },
+        "queryBox": {
+          "calls": 243,
+          "ms": 1.0965349999914906
+        },
+        "ray": {
+          "calls": 4282,
+          "ms": 229.74714000001586
+        },
+        "groundProbe": {
+          "calls": 205,
+          "ms": 77.64392199999747
+        },
+        "advanceSimulation": {
+          "calls": 120,
+          "ms": 1.486589999996795
+        },
+        "flush": {
+          "calls": 120,
+          "ms": 0.1529959999897983
+        },
+        "los": {
+          "calls": 483,
+          "ms": 61.3222960000021
+        },
+        "_perceive": {
+          "calls": 18,
+          "ms": 10.321619999995164
+        },
+        "splat": {
+          "calls": 4,
+          "ms": 2.3928720000021713
+        }
+      },
+      "trace": null,
+      "file": "ground-density-2.json",
+      "rawFileSha256": "251dfbaa55d93f0f06217c1948829061301e18ae9e52e8a6c8127d9a191dedc4",
+      "finalSnapshotSha256": "bda2eb4833e6468470bdc6ddb57734718c6906a3f28b29bc4473b48df1fc66ce",
+      "waterQueries": 1932
+    },
+    {
+      "schema": 1,
+      "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+      "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+      "variant": "frozen-ground-baseline",
+      "built": null,
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "hz": 60,
+      "seconds": 2,
+      "warmup": 1,
+      "actors": 4,
+      "combat": false,
+      "record": false,
+      "profile": true,
+      "alive": 4,
+      "elapsed": 1272.5810010000005,
+      "cpu": {
+        "user": 1448387,
+        "system": 0
+      },
+      "memory": {
+        "before": {
+          "rss": 503922688,
+          "heapTotal": 316411904,
+          "heapUsed": 205159360,
+          "external": 120669170,
+          "arrayBuffers": 76699321
+        },
+        "after": {
+          "rss": 507068416,
+          "heapTotal": 318771200,
+          "heapUsed": 201635344,
+          "external": 120669226,
+          "arrayBuffers": 76685493
+        }
+      },
+      "gc": {
+        "count": 1,
+        "ms": 3.9816460013389587,
+        "events": [
+          {
+            "kind": 1,
+            "ms": 3.9816460013389587,
+            "offset": 930.809725000001
+          }
+        ]
+      },
+      "frame": {
+        "p50": 8.37051000000065,
+        "p95": 23.18409100000099,
+        "p99": 31.73104499999863
+      },
+      "counts": {
+        "quads": 3391,
+        "draws": 56,
+        "splats": 13,
+        "hits": 0,
+        "damage": 0,
+        "los": 740,
+        "blocked": 0
+      },
+      "rays": 7169,
+      "triangleTests": 236889,
+      "randomCalls": 874,
+      "rngState": 3685463837,
+      "timings": {
+        "_steer": {
+          "calls": 480,
+          "ms": 383.05986800000574
+        },
+        "ray": {
+          "calls": 7169,
+          "ms": 750.6497860000036
+        },
+        "_tail": {
+          "calls": 480,
+          "ms": 41.8626069999882
+        },
+        "queryBox": {
+          "calls": 486,
+          "ms": 3.70665299999564
+        },
+        "groundProbe": {
+          "calls": 410,
+          "ms": 360.30276400004186
+        },
+        "los": {
+          "calls": 740,
+          "ms": 176.49208899998848
+        },
+        "advanceSimulation": {
+          "calls": 120,
+          "ms": 69.92027000000598
+        },
+        "flush": {
+          "calls": 120,
+          "ms": 0.392998000001171
+        },
+        "_perceive": {
+          "calls": 37,
+          "ms": 22.971782000005987
+        },
+        "splat": {
+          "calls": 13,
+          "ms": 37.936625000003914
+        }
+      },
+      "trace": null,
+      "file": "ground-density-4.json",
+      "rawFileSha256": "b88068d54d14a5dfa234688378d100a525de23341319d28a5bc8304470a78fc4",
+      "finalSnapshotSha256": "1b3b67c3f94c6d191378bc6d17cead90c7613ee3e4611191ae5f1bf0c812ca83",
+      "waterQueries": 2669
+    },
+    {
+      "schema": 1,
+      "harnessSha256": "605b0e37ed4ba34435f1ecfdc52a37a6dbeb540ab8d94e8c1b4970275c2f8b10",
+      "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+      "variant": "frozen-ground-baseline",
+      "built": null,
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "hz": 60,
+      "seconds": 2,
+      "warmup": 1,
+      "actors": 8,
+      "combat": false,
+      "record": false,
+      "profile": true,
+      "alive": 8,
+      "elapsed": 2344.546172000002,
+      "cpu": {
+        "user": 2752988,
+        "system": 1264
+      },
+      "memory": {
+        "before": {
+          "rss": 499437568,
+          "heapTotal": 314720256,
+          "heapUsed": 193029072,
+          "external": 120441917,
+          "arrayBuffers": 76416692
+        },
+        "after": {
+          "rss": 507564032,
+          "heapTotal": 318128128,
+          "heapUsed": 226431352,
+          "external": 120386597,
+          "arrayBuffers": 76416708
+        }
+      },
+      "gc": {
+        "count": 1,
+        "ms": 9.322496999055147,
+        "events": [
+          {
+            "kind": 1,
+            "ms": 9.322496999055147,
+            "offset": 1233.6401380000025
+          }
+        ]
+      },
+      "frame": {
+        "p50": 13.01189400000294,
+        "p95": 40.722781000004034,
+        "p99": 57.533307999998215
+      },
+      "counts": {
+        "quads": 11341,
+        "draws": 87,
+        "splats": 26,
+        "hits": 0,
+        "damage": 0,
+        "los": 1511,
+        "blocked": 0
+      },
+      "rays": 14043,
+      "triangleTests": 429434,
+      "randomCalls": 1459,
+      "rngState": 1812560832,
+      "timings": {
+        "_steer": {
+          "calls": 960,
+          "ms": 543.330082999928
+        },
+        "_tail": {
+          "calls": 960,
+          "ms": 189.23241599990433
+        },
+        "queryBox": {
+          "calls": 974,
+          "ms": 10.967579000054684
+        },
+        "ray": {
+          "calls": 14043,
+          "ms": 1416.9012150000708
+        },
+        "groundProbe": {
+          "calls": 804,
+          "ms": 543.0140760002105
+        },
+        "advanceSimulation": {
+          "calls": 120,
+          "ms": 137.24183400003676
+        },
+        "flush": {
+          "calls": 120,
+          "ms": 0.2438850000326056
+        },
+        "los": {
+          "calls": 1511,
+          "ms": 293.72927100004745
+        },
+        "_perceive": {
+          "calls": 76,
+          "ms": 65.05765499996778
+        },
+        "splat": {
+          "calls": 26,
+          "ms": 105.29147399999056
+        },
+        "_capsuleDistance": {
+          "calls": 567,
+          "ms": 4.308233000047039
+        }
+      },
+      "trace": null,
+      "file": "ground-density-8.json",
+      "rawFileSha256": "d989b39976a75c30402d5e9778d30e01311ee320dd74f21fb6ce5b3cf59a63e2",
+      "finalSnapshotSha256": "ce73776a2e9fc2a329f903806c6cf47d6b93b4bde7db1c642c8948f0b2278f52",
+      "waterQueries": 5160
+    }
+  ],
+  "componentBatches": [
+    {
+      "schema": 1,
+      "component": "BotBrain native water-guard support queries",
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "inputSha256": "55ab024e476ea7fae74d3014c157a8fb1ca9999fbfd03df8c0b09a9813435d6e",
+      "inputQueries": 5160,
+      "loops": 10,
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+        "logicalCpus": 9
+      },
+      "results": [
+        {
+          "variant": "before",
+          "ms": 3987.5717640000003,
+          "cpu": {
+            "user": 3973551,
+            "system": 4114
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        },
+        {
+          "variant": "after",
+          "ms": 2366.8752700000023,
+          "cpu": {
+            "user": 2367593,
+            "system": 6936
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "after",
+          "ms": 2301.3054709999997,
+          "cpu": {
+            "user": 2298460,
+            "system": 0
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "before",
+          "ms": 3883.649942,
+          "cpu": {
+            "user": 3877917,
+            "system": 0
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        },
+        {
+          "variant": "before",
+          "ms": 3962.6603959999993,
+          "cpu": {
+            "user": 3955245,
+            "system": 1277
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        },
+        {
+          "variant": "after",
+          "ms": 2533.8694099999993,
+          "cpu": {
+            "user": 2525895,
+            "system": 6815
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "after",
+          "ms": 2335.8058889999993,
+          "cpu": {
+            "user": 2333439,
+            "system": 2348
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "before",
+          "ms": 4464.220991999999,
+          "cpu": {
+            "user": 4393549,
+            "system": 63189
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        }
+      ],
+      "limits": [
+        "Native CPU component in Node, not whole-game/browser/device FPS.",
+        "Shared executor load may affect wall times; process CPU includes V8 helper threads.",
+        "Both before and after execute all captured query inputs without visibility caching."
+      ]
+    },
+    {
+      "schema": 1,
+      "component": "BotBrain native water-guard support queries",
+      "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+      "inputSha256": "55ab024e476ea7fae74d3014c157a8fb1ca9999fbfd03df8c0b09a9813435d6e",
+      "inputQueries": 5160,
+      "loops": 10,
+      "environment": {
+        "node": "v24.19.0",
+        "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+        "logicalCpus": 9
+      },
+      "results": [
+        {
+          "variant": "before",
+          "ms": 2381.335935,
+          "cpu": {
+            "user": 2379997,
+            "system": 41069
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        },
+        {
+          "variant": "after",
+          "ms": 1182.510710999999,
+          "cpu": {
+            "user": 1182462,
+            "system": 0
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "after",
+          "ms": 1146.1543650000003,
+          "cpu": {
+            "user": 1146195,
+            "system": 0
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "before",
+          "ms": 2014.589876,
+          "cpu": {
+            "user": 2014810,
+            "system": 0
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        },
+        {
+          "variant": "before",
+          "ms": 3196.226039000001,
+          "cpu": {
+            "user": 3193483,
+            "system": 0
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        },
+        {
+          "variant": "after",
+          "ms": 3435.6556600000004,
+          "cpu": {
+            "user": 3392461,
+            "system": 17700
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "after",
+          "ms": 2750.24381,
+          "cpu": {
+            "user": 3779930,
+            "system": 11303
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 619380
+        },
+        {
+          "variant": "before",
+          "ms": 5054.236634000001,
+          "cpu": {
+            "user": 5035859,
+            "system": 18274
+          },
+          "supported": 51600,
+          "queries": 51600,
+          "triangleTests": 1263920
+        }
+      ],
+      "limits": [
+        "Native CPU component in Node, not whole-game/browser/device FPS.",
+        "Shared executor load may affect wall times; process CPU includes V8 helper threads.",
+        "Both before and after execute all captured query inputs without visibility caching."
+      ]
+    }
+  ],
+  "cpuBatches": [
+    {
+      "order": "BAABBAAB (B=baseline,A=candidate)",
+      "trials": [
+        {
+          "schema": 1,
+          "harnessSha256": "5d8b66e267eee2648ed595c42cb9c7f01c413424d96f87890bb52dd95211a18c",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 3574.1053300000003,
+          "cpu": {
+            "user": 4119123,
+            "system": 40911
+          },
+          "frame": {
+            "p50": 11.15240300000005,
+            "p95": 40.321632999999565,
+            "p99": 56.298061000001326
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-1-baseline.json",
+          "rawFileSha256": "85156feec827b129ad9d478117ed8fafd546d2be118ae1c75b42b15399111e94",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "5d8b66e267eee2648ed595c42cb9c7f01c413424d96f87890bb52dd95211a18c",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 2112.8990190000004,
+          "cpu": {
+            "user": 2628816,
+            "system": 15627
+          },
+          "frame": {
+            "p50": 7.741328000000067,
+            "p95": 17.827425999999832,
+            "p99": 21.81590199999846
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-2-candidate.json",
+          "rawFileSha256": "9c39725a974dc3fc78801c438ba17cbfe698225651d218f8e2d4a897def3ba8d",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "5d8b66e267eee2648ed595c42cb9c7f01c413424d96f87890bb52dd95211a18c",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 1939.421597999999,
+          "cpu": {
+            "user": 2480043,
+            "system": 27478
+          },
+          "frame": {
+            "p50": 7.214853999999832,
+            "p95": 15.081809999999678,
+            "p99": 19.996667999999772
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-3-candidate.json",
+          "rawFileSha256": "b5dd015a6912bbd9144e735a0b523650618e3d1171d56a63015b7b10a5ccb05a",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "5d8b66e267eee2648ed595c42cb9c7f01c413424d96f87890bb52dd95211a18c",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 1906.9456690000006,
+          "cpu": {
+            "user": 2362068,
+            "system": 26494
+          },
+          "frame": {
+            "p50": 7.186838999999964,
+            "p95": 15.502126999999746,
+            "p99": 19.007309999999052
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-4-baseline.json",
+          "rawFileSha256": "b60f3c469b1848c6426090e8b75097ac2b499037c263323a8a3a7384560f816d",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "5d8b66e267eee2648ed595c42cb9c7f01c413424d96f87890bb52dd95211a18c",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 2358.2163390000005,
+          "cpu": {
+            "user": 2863282,
+            "system": 65343
+          },
+          "frame": {
+            "p50": 7.846787999998924,
+            "p95": 19.51695000000109,
+            "p99": 33.083989000000656
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-5-baseline.json",
+          "rawFileSha256": "36ef0620d53ccd08f8914dc007789882d9c9d072b6929ff048cc431de9511c97",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "57dee0ff3651cba5bc6933943c0aeaf30a17c8f89880cce62dffd15353213ff5",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 1816.0263950000008,
+          "cpu": {
+            "user": 2324193,
+            "system": 0
+          },
+          "frame": {
+            "p50": 6.7311810000010155,
+            "p95": 15.338647000000492,
+            "p99": 20.944424999999683
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-6-candidate.json",
+          "rawFileSha256": "bed4647688552214682554cf4d2701061a418a6c41625aa35337b5c00cdd7732",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "57dee0ff3651cba5bc6933943c0aeaf30a17c8f89880cce62dffd15353213ff5",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 2252.045733000001,
+          "cpu": {
+            "user": 2695831,
+            "system": 6696
+          },
+          "frame": {
+            "p50": 7.984424000000217,
+            "p95": 21.12803200000053,
+            "p99": 29.525126000000455
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-7-candidate.json",
+          "rawFileSha256": "ef14d1ddd22525da877bba4f4a9853180e05f1f4f9db7a318a072be62aa5fc31",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "57dee0ff3651cba5bc6933943c0aeaf30a17c8f89880cce62dffd15353213ff5",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "duel": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 2048.333667000001,
+          "cpu": {
+            "user": 2486550,
+            "system": 41853
+          },
+          "frame": {
+            "p50": 7.753623000000516,
+            "p95": 16.346451000001252,
+            "p99": 19.54455499999858
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-cpu-8-baseline.json",
+          "rawFileSha256": "c69bb15c93a428b40885d47d652b2f1b71f1d5cff38f28a84365f6d388ba012c",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        }
+      ]
+    },
+    {
+      "order": "BAABBAAB (B=baseline,A=candidate)",
+      "trials": [
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 3908.920772999998,
+          "cpu": {
+            "user": 4485335,
+            "system": 40588
+          },
+          "memory": {
+            "before": {
+              "rss": 516055040,
+              "heapTotal": 325021696,
+              "heapUsed": 217606560,
+              "external": 122178417,
+              "arrayBuffers": 78160114
+            },
+            "after": {
+              "rss": 523001856,
+              "heapTotal": 331051008,
+              "heapUsed": 200072736,
+              "external": 122123097,
+              "arrayBuffers": 78153208
+            }
+          },
+          "gc": {
+            "count": 3,
+            "ms": 7.89988699555397,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 1.8532159999012947,
+                "offset": 754.8932269999968
+              },
+              {
+                "kind": 1,
+                "ms": 3.0190349966287613,
+                "offset": 2041.354132999997
+              },
+              {
+                "kind": 1,
+                "ms": 3.0276359990239143,
+                "offset": 3761.343217999998
+              }
+            ]
+          },
+          "frame": {
+            "p50": 15.092520000001969,
+            "p95": 31.687160999998014,
+            "p99": 38.96421399999963
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-1-baseline.json",
+          "rawFileSha256": "5fce962ce237f34e7b2b0dbf14f7c903fd058198025385f5ff90490b6c697ecb",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 1849.406814,
+          "cpu": {
+            "user": 2216780,
+            "system": 23106
+          },
+          "memory": {
+            "before": {
+              "rss": 512942080,
+              "heapTotal": 325283840,
+              "heapUsed": 213717776,
+              "external": 122178993,
+              "arrayBuffers": 78153768
+            },
+            "after": {
+              "rss": 523165696,
+              "heapTotal": 331051008,
+              "heapUsed": 260814992,
+              "external": 122123673,
+              "arrayBuffers": 78153784
+            }
+          },
+          "gc": {
+            "count": 2,
+            "ms": 2.1621569953858852,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 1.3280889987945557,
+                "offset": 489.4528859999991
+              },
+              {
+                "kind": 1,
+                "ms": 0.8340679965913296,
+                "offset": 1096.9033929999987
+              }
+            ]
+          },
+          "frame": {
+            "p50": 6.9196219999994355,
+            "p95": 14.048447999999553,
+            "p99": 17.9923200000012
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-2-candidate.json",
+          "rawFileSha256": "a8548e99de19bd60f3bcf4df52f829c576f3bea94ab84428b409af0526717db3",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 3415.8055160000004,
+          "cpu": {
+            "user": 3848937,
+            "system": 117254
+          },
+          "memory": {
+            "before": {
+              "rss": 516562944,
+              "heapTotal": 330838016,
+              "heapUsed": 201862280,
+              "external": 122218017,
+              "arrayBuffers": 78192792
+            },
+            "after": {
+              "rss": 526131200,
+              "heapTotal": 336343040,
+              "heapUsed": 249647120,
+              "external": 122162697,
+              "arrayBuffers": 78192808
+            }
+          },
+          "gc": {
+            "count": 2,
+            "ms": 4.920717004686594,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 1.7958110012114048,
+                "offset": 924.2482140000011
+              },
+              {
+                "kind": 1,
+                "ms": 3.124906003475189,
+                "offset": 2371.3051750000013
+              }
+            ]
+          },
+          "frame": {
+            "p50": 13.100162999999156,
+            "p95": 26.35726699999941,
+            "p99": 32.58647999999994
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-3-candidate.json",
+          "rawFileSha256": "68f055a19e7636a6c60ad02e8f5a3f67f0babbd744511e1c163e3373826354ce",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 2230.38818,
+          "cpu": {
+            "user": 2827651,
+            "system": 26590
+          },
+          "memory": {
+            "before": {
+              "rss": 512827392,
+              "heapTotal": 324128768,
+              "heapUsed": 218573816,
+              "external": 122154511,
+              "arrayBuffers": 78184662
+            },
+            "after": {
+              "rss": 519380992,
+              "heapTotal": 329633792,
+              "heapUsed": 253928432,
+              "external": 122133801,
+              "arrayBuffers": 78163912
+            }
+          },
+          "gc": {
+            "count": 2,
+            "ms": 2.4744260013103485,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 1.4542779996991158,
+                "offset": 460.2236079999984
+              },
+              {
+                "kind": 1,
+                "ms": 1.0201480016112328,
+                "offset": 1219.6257779999996
+              }
+            ]
+          },
+          "frame": {
+            "p50": 8.10845800000061,
+            "p95": 18.14524900000106,
+            "p99": 25.158785999999964
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-4-baseline.json",
+          "rawFileSha256": "45c59cf8bcbdc9467d8066769085ed9f56d54b61d25d2344b4cd823c79083f90",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 1879.1755950000006,
+          "cpu": {
+            "user": 2282572,
+            "system": 8171
+          },
+          "memory": {
+            "before": {
+              "rss": 493658112,
+              "heapTotal": 308043776,
+              "heapUsed": 187872368,
+              "external": 120625721,
+              "arrayBuffers": 76600496
+            },
+            "after": {
+              "rss": 502702080,
+              "heapTotal": 313810944,
+              "heapUsed": 238242392,
+              "external": 120570401,
+              "arrayBuffers": 76600512
+            }
+          },
+          "gc": {
+            "count": 2,
+            "ms": 2.155767999589443,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 1.2371810004115105,
+                "offset": 455.89237800000046
+              },
+              {
+                "kind": 1,
+                "ms": 0.9185869991779327,
+                "offset": 1166.7297199999994
+              }
+            ]
+          },
+          "frame": {
+            "p50": 6.905485000001136,
+            "p95": 15.862003999998706,
+            "p99": 18.945835000000443
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-5-baseline.json",
+          "rawFileSha256": "079ccdd6e06aa4eb7d25c0d12994db715bd58baca6488cb8441a52a777c75ca2",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 2128.5089019999996,
+          "cpu": {
+            "user": 2525598,
+            "system": 40016
+          },
+          "memory": {
+            "before": {
+              "rss": 523202560,
+              "heapTotal": 332279808,
+              "heapUsed": 200670560,
+              "external": 122183697,
+              "arrayBuffers": 78158472
+            },
+            "after": {
+              "rss": 529756160,
+              "heapTotal": 338833408,
+              "heapUsed": 246101232,
+              "external": 122128377,
+              "arrayBuffers": 78158488
+            }
+          },
+          "gc": {
+            "count": 2,
+            "ms": 2.4014719985425472,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 1.5171299986541271,
+                "offset": 728.9062759999997
+              },
+              {
+                "kind": 1,
+                "ms": 0.8843419998884201,
+                "offset": 1552.6037259999994
+              }
+            ]
+          },
+          "frame": {
+            "p50": 7.359744999999748,
+            "p95": 18.130934999999226,
+            "p99": 31.302960000000894
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-6-candidate.json",
+          "rawFileSha256": "789fa81e74dc7d40940b003d9bc784a90efc59ba1b6ebeaaa2202856efb766a5",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "candidate-built",
+          "built": "7d668fe35ce869b682a939e04394cc85b82092577ba82b98bea2eaf9f715d744",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 1885.488933999999,
+          "cpu": {
+            "user": 2336150,
+            "system": 18315
+          },
+          "memory": {
+            "before": {
+              "rss": 523755520,
+              "heapTotal": 332279808,
+              "heapUsed": 201979480,
+              "external": 122195217,
+              "arrayBuffers": 78169992
+            },
+            "after": {
+              "rss": 530309120,
+              "heapTotal": 338309120,
+              "heapUsed": 248904144,
+              "external": 122139897,
+              "arrayBuffers": 78170008
+            }
+          },
+          "gc": {
+            "count": 2,
+            "ms": 2.6611469984054565,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 1.7260999977588654,
+                "offset": 543.1567679999989
+              },
+              {
+                "kind": 1,
+                "ms": 0.9350470006465912,
+                "offset": 1367.8134759999994
+              }
+            ]
+          },
+          "frame": {
+            "p50": 7.251234999999724,
+            "p95": 14.543228000000454,
+            "p99": 18.77958000000035
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 760732,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-7-candidate.json",
+          "rawFileSha256": "6978d4b891b32d72608cad89af7ebe570c3fe79e474884a561a153d86075696e",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        },
+        {
+          "schema": 1,
+          "harnessSha256": "fbf4beafd563557600eb922bd8e2b72397a3edc41f3baa0b9d4d907d1210a3f0",
+          "sourceRevision": "ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe",
+          "variant": "baseline-built",
+          "built": "656f2be5ffdb259bc89825a8370fe46d66ba1a76d2f76d51146ef542ed6539c8",
+          "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+          "hz": 60,
+          "seconds": 4,
+          "warmup": 1,
+          "actors": 8,
+          "combat": false,
+          "record": false,
+          "profile": false,
+          "alive": 8,
+          "elapsed": 9645.958787000001,
+          "cpu": {
+            "user": 11896556,
+            "system": 353192
+          },
+          "memory": {
+            "before": {
+              "rss": 526667776,
+              "heapTotal": 337383424,
+              "heapUsed": 203844368,
+              "external": 122181777,
+              "arrayBuffers": 78156552
+            },
+            "after": {
+              "rss": 533876736,
+              "heapTotal": 343937024,
+              "heapUsed": 253945384,
+              "external": 122126457,
+              "arrayBuffers": 78156568
+            }
+          },
+          "gc": {
+            "count": 2,
+            "ms": 16.194223001599312,
+            "events": [
+              {
+                "kind": 1,
+                "ms": 4.186643000692129,
+                "offset": 672.5452249999998
+              },
+              {
+                "kind": 1,
+                "ms": 12.007580000907183,
+                "offset": 2054.5154390000007
+              }
+            ]
+          },
+          "frame": {
+            "p50": 11.31890199999907,
+            "p95": 103.05635899999834,
+            "p99": 331.6912969999976
+          },
+          "counts": {
+            "quads": 13749,
+            "draws": 173,
+            "splats": 52,
+            "hits": 0,
+            "damage": 0,
+            "los": 3636,
+            "blocked": 0
+          },
+          "rays": 30730,
+          "triangleTests": 904462,
+          "randomCalls": 2015,
+          "rngState": 3454107068,
+          "timings": {},
+          "trace": null,
+          "file": "ground-final-cpu-8-baseline.json",
+          "rawFileSha256": "0eded4e54f1002f283147cef76e6b9e70166f201209cf97670a672cd5aa6b8b3",
+          "finalSnapshotSha256": "1a0674b9fa504ce3f1733547e37b40294b311f253793835d2b9164e7067012f2"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Node CPU fixture, not a browser or device FPS measurement.",
+    "Invulnerability holds 8 actors alive in density replay; normal damage is verified separately with synthetic native geometry.",
+    "Renderer raster/driver, character display, audio and FX are absent; native paint CPU atlas writes execute.",
+    "Source and emitted modules are separate paired experiments, not cross-format bit equality.",
+    "All two full CPU batches and both component batches are retained; no trial is discarded.",
+    "First CPU batch has two harness identities from an unused experimental duel option being edited. Final batch uses one identical harness.",
+    "After the final CPU batch, only the source-baseline integrity guard changed from HEAD equality to fixed SHA verification; emitted measured code and runtime artifact are unchanged.",
+    "GC observations are not forced or subtracted; heap deltas are not allocation totals."
+  ],
+  "tests": {
+    "sourceContracts": {
+      "pass": 32,
+      "skip": 10,
+      "logSha256": "02855c1ceaa303d027fe00c9c83da6ba5ac591f1a985fc64cf925615ffac6031"
+    },
+    "sourceDamageOracle": {
+      "pass": 9,
+      "skip": 0,
+      "logSha256": "8b546e46cd62862c805dfb4dcf603833eb12a85aa96e0eeb3bca9033ff801a68"
+    },
+    "emittedOracle": {
+      "pass": 9,
+      "skip": 0,
+      "logSha256": "e2dcd6630b61c9664a69eb7e4703ff3f88dd765f262c55665cdfa6ab418c1441"
+    },
+    "packaging": {
+      "pass": 1,
+      "skip": 0,
+      "logSha256": "890d0a37cce04bf38f45aeda93cda237f3bf6127f94591c73718bd4c9950b6c4"
+    }
+  },
+  "foundationOverlap": {
+    "pr": 1324,
+    "head": "cfd7ccad511b26c2a0c7c84323f93331ecbe30ec",
+    "scope": "isolated two-file patch and combined bot-adapter syntax check, not a full foundation build",
+    "result": "pass"
+  }
+}

@@ -11,7 +11,8 @@ export class TriangleWorld {
   this._u=V();this._v=V();this._w=V();this._p=V();this._q=V();this._cp=V();this._sp=V();this._bestp=V();this._bests=V();this._d=V();this._s0=V();this._s1=V();this._center=V();this._normal=V();
   this.queryCount=0;this.triangleTests=0;
  }
- ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2}={}) {
+ // anyHit is reserved for Boolean ground support; ordinary callers retain exact nearest-hit data.
+ ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2,anyHit=false,minHitY=-Infinity}={}) {
   if(!Number.isFinite(origin.x+origin.y+origin.z+dir.x+dir.y+dir.z))return null;
   const nodes=this.nodes,stack=[0],verts=this.triangles,norm=this.normals;let best=far,id=-1,bu=0,bv=0;
   // Ground/edge probes use this exact direction. Keep native division and
@@ -22,7 +23,12 @@ export class TriangleWorld {
    const ni=stack.pop()*8;let low=0,high=best,miss=false;
    if(verticalDown){
     if(origin.x<nodes[ni]||origin.x>nodes[ni+3]||origin.z<nodes[ni+2]||origin.z>nodes[ni+5])miss=true;
-    else {const a=(nodes[ni+1]-origin.y)/dir.y,b=(nodes[ni+4]-origin.y)/dir.y;low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low)miss=true;}
+    else {const a=(nodes[ni+1]-origin.y)/dir.y,b=(nodes[ni+4]-origin.y)/dir.y;
+     // Ordered downward endpoints: [b,a] overlaps [0,best] unless one
+     // interval is wholly outside. Preserve NaN/unordered/coercion fallback.
+     if(a>=b&&typeof best==='number')miss=best===best&&(a<0||best<0||b>best);
+     else {low=Math.max(low,Math.min(a,b));high=Math.min(high,Math.max(a,b));if(high<low)miss=true;}
+    }
    }else{
    for(let k=0;k<3;k++){
     const o=k===0?origin.x:k===1?origin.y:origin.z,d=k===0?dir.x:k===1?dir.y:dir.z;
@@ -44,7 +50,7 @@ export class TriangleWorld {
     const qx=sy*ez-sz*ey,qy=sz*ex-sx*ez,qz=sx*ey-sy*ex,v=(dir.x*qx+dir.y*qy+dir.z*qz)*inv;
     if(v<-.000001||u+v>1.000001)continue;
     const distance=(fx*qx+fy*qy+fz*qz)*inv;
-    if(distance<.00001||distance>best)continue;best=distance;id=t;bu=u;bv=v;
+    if(distance<.00001||distance>best)continue;if(anyHit){if(!(origin.y+dir.y*distance<minHitY))return true;continue;}best=distance;id=t;bu=u;bv=v;
    }
   }
   if(id<0)return null;
