@@ -4290,3 +4290,7 @@ The regression now uses each native expiry event to identify its emitting decoy 
   - ロジック単独: `kid-shadow-proxy.test.mjs`。遠距離用ジオメトリであること、表示段階では影を落とさないこと、段階切り替えへの追従、遠距離段階を先に作った場合、作り直し、影パス中だけレイヤーが見えて終わると元に戻ること、無効時は従来どおりであることを確認した。
   - ブラウザ実動作（SwiftShader、1133×744 CSS、DPR 2、Bot 8 体密集、同じ瞬間の描画で比較）: 影パスの三角形は 275k → 119k、1 フレームの合計は 663k → 506k。画像差は、2/255 を超える画素が 0.1%、8/255 を超える画素が 0.006%、最大 44/255 で、足元と自分の体に落ちる影の縁にわずかに出るだけだった。切り出し画像を目視で比べても区別できなかった。同じ条件で 2 回描くと完全に一致する（決定的）ことも確認した。
   - 未確認: 端末実機での FPS と GPU 時間。
+
+## 2026-10-14: Tenacity respects spent-special locks (Refs #469 / #647)
+
+On main `636e2b68`, the real Actor/Match production composition recharged after Ink Storm's throw animation while its gauge lock remained live, and increased Slam's pending landing segment. Both passive helpers now honor those existing lock owners. A Match-local capability also prevents simultaneous Actor and post-roster Match awards; existing independent rate constants stay unchanged. See [reproduction, reference confidence and bounded validation](inkwave-tenacity-special-lock-2026-10-14.md). The existing community rate discrepancy, retail drain curves and hardware comparison remain unverified; no full Issue closure or retail-parity claim.
