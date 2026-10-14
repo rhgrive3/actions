@@ -3,7 +3,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture,emitMainShot} from './source-fixture.mjs';
 import {makePaintWorld} from './paint-authority-fixture.mjs';
-import {inkPaintPoints} from '../runtime/ink-paint-calibration.mjs';
 import {MAIN_WEAPON_CATALOG} from '../runtime/main-weapon-catalog-data.mjs';
 import {catalogSplashDropSpec,catalogFractionalSplashCount} from '../runtime/catalog-splash-paint.mjs';
 const selected=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&r.family==='shooter'&&Number.isFinite(r.parameters.SplashSpawnParam?.SpawnNum)&&!Number.isInteger(r.parameters.SplashSpawnParam.SpawnNum));
@@ -101,8 +100,8 @@ for(const dt of [1/30,1/60,1/144])test('TripleQuick real projected paint and tur
  }
  for(let i=0;i<300;i++)paint.advanceSimulation(1/60);
  assert.ok(stamps.some(x=>x.value>0));assert.ok(stamps.every(x=>x.owner===a));assert.ok(paint.counts[0]>0);
- const ownedPoints=inkPaintPoints(paint.counts[0]*face.cu*face.cv);
- assert.ok(Math.abs(a.stats.turf-ownedPoints)<1e-7,`${a.stats.turf} vs owned ${ownedPoints}`);
+ const ownedArea=(paint.counts[0]*face.cu*face.cv);
+ assert.ok(Math.abs(a.stats.turf-ownedArea)<1e-7,`${a.stats.turf} vs owned ${ownedArea}`);
  assert.ok(Math.abs(a.special-a.stats.turf)<1e-7);
  const turf=a.stats.turf;for(let i=0;i<60;i++)paint.advanceSimulation(1/60);assert.equal(a.stats.turf,turf);
 });

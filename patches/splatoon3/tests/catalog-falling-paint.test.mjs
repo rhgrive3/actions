@@ -30,7 +30,7 @@ test('airborne catalog splash lands before acquiring floor ownership, with deter
  const drops=baseline.stamps.filter(s=>s.opts.kind==='drop');assert.ok(drops.length>0);
  assert.ok(drops.every(s=>s.time>.2),'high airborne splash cannot immediately ray-project onto floor');
  assert.ok(baseline.landings.every(l=>l.frames>0&&l.height>1));
- assert.ok(Math.abs(baseline.turf-baseline.cells*.0625/3.305785)<1e-7);
+ assert.equal(baseline.turf,baseline.cells*.0625);
  for(const rate of [30,120]){const next=await shot(rate);assert.deepEqual(next.grid,baseline.grid);assert.equal(next.turf,baseline.turf);}
 });
 
@@ -38,7 +38,7 @@ test('falling splash collides with an earlier wall and keeps floor turf separate
  const alive=await shot(60,8,{wall:true}),dead=await shot(60,8,{wall:true,dead:true});
  assert.ok(alive.landings.some(l=>l.normalY<.45),'wall collision happens before floor landing');
  assert.ok(alive.landings.every(l=>l.face>=0),'landings carry an authoritative surface');
- assert.ok(Math.abs(alive.turf-alive.cells*.0625/3.305785)<1e-7,'wall paint never counts as floor turf points');
+ assert.equal(alive.turf,alive.cells*.0625,'wall paint never counts as floor turf');
  assert.deepEqual(dead.grid,alive.grid);assert.equal(dead.turf,alive.turf);
 });
 

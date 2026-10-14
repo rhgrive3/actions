@@ -73,13 +73,8 @@ export function adaptPaintHotpath(rel, code, replaceOnce) {
   // With the historical CPU cutoff 0.97, d < 0.68*r guarantees
   // d/(r*blobWobble) < 0.96867 < 0.97; the canonical cutoff 1 is also safe.
   // Do not alter the body boundary, GPU shader, roll band, or claim order.
-  // S3 floor paint caps the native random body to WidthHalf; both models keep
-  // the proven min wobble 0.702, so the 0.68 inner-disc shortcut remains safe.
-  const nativeCut = '          if (d / (r * blobWobble(Math.atan2(py, px), seed)) > ';
-  const cappedCut = '          if (d / (r * Math.min(1, blobWobble(Math.atan2(py, px), seed))) > ';
-  const bodyRatio = [nativeCut, cappedCut].flatMap(prefix => [0.97, 1].map(cut => prefix + cut + ') continue;'))
-    .filter(anchor => code.includes(anchor));
-  if (bodyRatio.length !== 1) {
+  const bodyRatio = code.match(/          if \(d \/ \(r \* blobWobble\(Math\.atan2\(py, px\), seed\)\) > (?:0\.97|1)\) continue;/g);
+  if (!bodyRatio || bodyRatio.length !== 1) {
     throw new Error('paint hotpath: expected one native/canonical blob wobble cut');
   }
   change(bodyRatio[0],

@@ -5,8 +5,6 @@ on:
       - 'patches/splatoon3/runtime/**'
       - 'patches/splatoon3/tests/main-weapon-catalog*.test.mjs'
       - 'patches/splatoon3/tests/source-fixture.mjs'
-      - 'scripts/measure-inkwave-floor-actions.mjs'
-      - 'scripts/measure-inkwave-single-shot.mjs'
       - '.github/workflows/inkwave-main-weapons.yml'
   workflow_dispatch:
 permissions:
@@ -17,7 +15,7 @@ concurrency:
 jobs:
   numerical-main:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,25 +27,3 @@ jobs:
         run: |
           git rev-parse HEAD
           node --experimental-vm-modules --test patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs patches/splatoon3/tests/catalog-projectile-vfx-range.test.mjs
-      - name: Audit 65 source-composed main-weapon floor paint
-        env:
-          INKWAVE_PAINT_AUDIT_OUT: paint-action-audit.json
-        run: node --experimental-vm-modules scripts/measure-inkwave-floor-actions.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: inkwave-65-weapon-floor-coverage
-          path: paint-action-audit.json
-          retention-days: 14
-          if-no-files-found: warn
-      - name: Measure direct and detached single-shot paint for seven legacy main families
-        env:
-          INKWAVE_SINGLE_SHOT_OUT: single-shot-paint-audit.json
-        run: node --experimental-vm-modules scripts/measure-inkwave-single-shot.mjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: inkwave-legacy-single-shot-floor
-          path: single-shot-paint-audit.json
-          retention-days: 14
-          if-no-files-found: warn

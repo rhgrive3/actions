@@ -53,7 +53,7 @@ test('real native Slosher flight awards positive late floor cells at finer suppo
     const before = owner.stats.turf, cellsBefore = paint.counts[owner.team];
     paint.advanceSimulation(1 / 60);
     const credit = owner.stats.turf - before, cells = paint.counts[owner.team] - cellsBefore;
-    assert.ok(Math.abs(credit - cells * face.cu * face.cv / 3.305785) < 1e-7, 'each phase credits newly claimed floor cells converted to points');
+    assert.equal(credit, cells * face.cu * face.cv, 'each temporal phase credits only its newly claimed floor cells');
     lateCredit += credit; lateCells += cells;
   }
   assert.ok(emissions.length > 1 && emissions.every(a => a === owner), 'real release and landing paths retain the same actor');

@@ -28,7 +28,6 @@ import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
 import { adaptPaintOwnership } from './paint-ownership-adapter.mjs';
-import { adaptFloorPaintFidelity } from './floor-paint-fidelity-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -1138,7 +1137,6 @@ export function adaptSource(rel, code) {
       "      if (p.s3SpecialWeapon) this.applyHit(p.owner, e, distanceDamage(w.splashBands || w.damageBands, d, !kitTrizookaSteppedBands(p)), p.wid || 'blaster');\n      else applyBlasterBlastContact(this, p, e, c, _v, d <= damageRadius ? blasterBurstDamage(p, w, d, distanceDamage) : 0, G.netm);",
       'Blaster air-burst authoritative contact');
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    code = adaptFloorPaintFidelity(rel, code, replaceOnce);
     return `import { rollerStickActive, rollerContactCandidate } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { kitBombExplosionPaint, kitBombKnockback } from '../../patches/splatoon3/runtime/kit-subs.mjs';\nimport { applyProjectileHit, chargerDamage, chargerInkCost, distanceDamage, splatlingChargeCap } from '../../patches/splatoon3/runtime/weapons.mjs';\nimport { bombReleasePosition, bombPreviewPosition } from '../../patches/splatoon3/runtime/bomb-motion.mjs';\nimport { applySplatBombSurfaceResponse, applySplatBombKnockback, applyBlasterBlastContact, BLASTER_KNOCKBACK } from '../../patches/splatoon3/runtime/sub-special-fidelity.mjs';\nimport { blasterBlastExposed } from '../../patches/splatoon3/runtime/blast-occlusion.mjs';\n` + code;
   }
   if (rel === 'src/fx/swimWake.js') {
@@ -1351,7 +1349,6 @@ export function adaptSource(rel, code) {
     code = replaceOnce(code, '      this.invuln = 0.3;', '      // #573: protection ends with the action/landing owner.', 'Slam has no detached post-impact invulnerability');
     code = adaptTidalSlamGauge(rel, code, replaceOnce);
     code = adaptPaintOwnership(rel, code, replaceOnce);
-    code = adaptFloorPaintFidelity(rel, code, replaceOnce);
     code = "import { startDropRoller } from '../../patches/splatoon3/runtime/gear.mjs';\n" + code;
     return `import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { beginTidalSlamGauge, updateTidalSlamGauge, completeTidalSlamGauge, queueTidalSlamGaugeFinish, finishTidalSlamGauge, clearTidalSlamGaugeFinish } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { rollerEmergeDelay, rollerFireBuffer } from '../../patches/splatoon3/runtime/roller.mjs';\nimport { finalWeaponDamage } from '../../patches/splatoon3/runtime/final-damage.mjs';\nimport { swimSplashVisible } from '../../patches/splatoon3/runtime/swim-stealth.mjs';\nimport { prepareSuperJump, rememberSuperJumpGround, superJumpTarget, superJumpStartupTime, stealthJumpExtraTime, updateSuperJumpMain, SUPERJUMP_MAIN_PROGRESS } from '../../patches/splatoon3/runtime/superjump.mjs';\nimport { beforeActions, wallRollRequested, crossSurgeInkGap, normalJumpVelocity, clearFullCancelCandidate, hasFullCancelGroundAttack, takeFullCancelJumpVelocity } from '../../patches/splatoon3/runtime/movement.mjs';\nimport { updateResources, updateHealthRecovery, updateSpecialHealthRecovery } from '../../patches/splatoon3/runtime/resources.mjs';\nimport { scheduleLethal, flushPendingLethal, clearPendingLethal, hasPendingLethal } from '../../patches/splatoon3/runtime/damage-timing.mjs';\n` + code;
   }
@@ -1714,7 +1711,6 @@ export function adaptSource(rel, code) {
       ['  if (k < 5.5) return vec4(2.0, 2.0, 0.0, 1.0);     // droplet paint', '  if (k < 5.5) return vec4(2.0, 0.0, 0.0, 1.0);     // droplet paint'],
       ['      float len = r * (0.07 + (big ? 0.5 : 0.4) * h2 * h2 * h2) * tsp;', '      float len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;'],
     ]) code = replaceOnce(code, from, to, 'paint shape within the source radius');
-    code = adaptFloorPaintFidelity(rel, code, replaceOnce);
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
       "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
       code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +

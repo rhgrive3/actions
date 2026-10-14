@@ -106,7 +106,6 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/splatoon3/minimap-dirty-adapter.mjs',
   'patches/splatoon3/movement-physics-adapter.mjs',
   'patches/splatoon3/pad-sensitivity-adapter.mjs',
-  'patches/splatoon3/floor-paint-fidelity-adapter.mjs',
   'patches/splatoon3/paint-ownership-adapter.mjs',
   'patches/splatoon3/paint-splat-pool-adapter.mjs',
   'patches/splatoon3/respawn-lifecycle-adapter.mjs',
