@@ -4,6 +4,14 @@
  * no skipWaiting, automatic reload, or cross-revision response substitution.
  */
 const BUILD = /*__INKWAVE_CACHE_BUILD__*/ null;
+// Convert valid production manifest indices to their immutable asset paths.
+if(BUILD.precache.some(value=>typeof value==='number')){
+  const paths=Object.keys(BUILD.assets);
+  BUILD.precache=BUILD.precache.map(index=>{
+    if(!Number.isSafeInteger(index)||index<0||index>=paths.length)throw new Error('Invalid precache index');
+    return paths[index];
+  });
+}
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `inkwave-startup-v2:${SCOPE.pathname}:`;
 const META = PREFIX + 'state';

@@ -5,8 +5,9 @@
 // Cross-version S3 lobby-line <-> INKWAVE world geometry remains uncalibrated.
 import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorThrowSpeed, pointSensorContact, pointSensorMark, clearPointSensorMarks } from './support-recon.mjs';
 import { gearCurve } from './gear.mjs';
+import { buildSubModel, poseSubModel, isSharedGeometry } from './sub-models.mjs';
 import { createTacticooler, disposeSpecialModel } from './special-motion.mjs';
-import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
+import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDrinkFrames, drinkEligible, giveDrink, retireDrink } from './support-cooler.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.support-kit.v1');
 const TINY = 1e-9;
@@ -32,19 +33,39 @@ function releaseVisual(record, G) {
   if(m.userData?.specialKind){disposeSpecialModel(m);record.mesh=null;return;}
   m.traverse?.(o => {
     if (!o.isMesh) return;
-    o.geometry?.dispose?.();
+    if (!isSharedGeometry(o.geometry)) o.geometry?.dispose?.();
     const materials = Array.isArray(o.material) ? o.material : [o.material];
     materials.forEach(a => a?.dispose?.());
   });
   record.mesh = null;
 }
+// S3 Point Sensor model (sub-models.mjs); presentation only.
 function sensorVisual(owner, pos, THREE, G) {
   if (!G.scene?.add) return null;
-  const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.13, 9, 7),
-    new THREE.MeshStandardMaterial({ color: owner.color || G.teamColors?.[owner.team] || 0xffcc33, emissive: owner.color || 0xffcc33, emissiveIntensity: .4 }));
-  sphere.position.copy(pos);
-  G.scene.add(sphere);
-  return sphere;
+  const color = owner.color || G.teamColors?.[owner.team] || 0xffcc33;
+  const ink = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .12, roughness: .4, metalness: .1 });
+  const model = buildSubModel(THREE, 'pointSensor', ink);
+  const group = new THREE.Group();
+  if (model) group.add(model.root);
+  else group.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 9, 7), ink));
+  group.userData.s3SubModel = model;
+  group.rotation.y = owner.aimYaw || owner.yaw || 0;
+  group.position.copy(pos);
+  G.scene.add(group);
+  return group;
+}
+function poseSensorVisual(sensor, dt) {
+  const m = sensor.mesh;
+  if (!m) return;
+  m.position.copy(sensor.pos);
+  // Tumbles in flight; settles upright where it lands.
+  const model = m.userData?.s3SubModel;
+  if (sensor.activeAt === null) { m.rotation.x += dt * 8; m.rotation.z += dt * 3; }
+  else {
+    m.rotation.set(0, m.rotation.y, 0);
+    if (model) model.root.position.y = 0.07;   // box bottom on the surface (pos is 0.03 off it)
+  }
+  poseSubModel(model, { dt });
 }
 function coolerVisual(owner, pos, THREE, G) {
   if (!G.scene?.add) return null;
@@ -95,6 +116,24 @@ function spawnPointSensor(owner, projectile, G, THREE, Hit, remote = false, reco
   if (!remote) emitNet(G,owner,['p',owner.nid,sensor.seq,pos.x,pos.y,pos.z,vel.x,vel.y,vel.z,sensor.sourceLife]);
   return sensor;
 }
+// A stand follows a physical Tower platform, not the caster who threw it.
+// Use the existing RankedWorld footprint so off-tower throws keep 900F.
+function supportTowerBinding(G, pos) {
+  const world=G.match?.mode==='tower'&&G.match.rankedWorld;
+  if (!world || world._inTowerVolume?.({pos},false)!==true) return {onTower:false,local:null};
+  const block=world.towerBlock,axes=block?.axes;
+  if (!vec3(block?.center)||!Array.isArray(axes)||axes.length!==3||!axes.every(vec3))
+    return {onTower:true,local:null};
+  const relative=pos.clone().sub(block.center);
+  return {onTower:true,local:axes.map(axis=>relative.dot(axis))};
+}
+function advanceTowerStand(stand,G) {
+  const offset=stand.towerLocal,block=G.match?.rankedWorld?.towerBlock;
+  if (!offset||!vec3(block?.center)||!Array.isArray(block?.axes)||block.axes.length!==3)return;
+  stand.pos.copy(block.center);
+  for(let i=0;i<3;i++)stand.pos.addScaledVector(block.axes[i],offset[i]);
+  stand.mesh?.position?.copy?.(stand.pos);
+}
 function deployCooler(owner, projectile, G, THREE, remote = false, position = null, incomingSeq = null, incomingFrames = null) {
   const pos = position ? new THREE.Vector3(...position) :
     owner.pos.clone().add(new THREE.Vector3(Math.sin(owner.yaw || 0)*1.6,0,Math.cos(owner.yaw || 0)*1.6));
@@ -108,7 +147,9 @@ function deployCooler(owner, projectile, G, THREE, remote = false, position = nu
     && incomingFrames >= TACTICOOLER_SOURCE.powerUpFrames[0]
     && incomingFrames <= TACTICOOLER_SOURCE.powerUpFrames[2]
     ? incomingFrames : tacticoolerDrinkFrames(owner.s3?.abilityPoints?.specialPower, gearCurve);
-  const stand={ owner, team:owner.team, pos, expires:G.time+TACTICOOLER.standSeconds,
+  const tower=supportTowerBinding(G,pos);
+  const stand={ owner, team:owner.team, pos, onTower:tower.onTower,towerLocal:tower.local,
+    expires:G.time+tacticoolerStandFrames(tower.onTower)/60,
     drinkSeconds:drinkFrames/60, sourceLife:life(owner), seq:remote?incomingSeq:serial(owner),
     taken:new Set(), mesh:coolerVisual(owner,pos,THREE,G) };
   stands.push(stand);
@@ -147,7 +188,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
         sensor.activeAt=G.time;sensor.expires=G.time+POINT_SENSOR.areaSeconds;
       }
     }
-    sensor.mesh?.position?.copy(sensor.pos);
+    poseSensorVisual(sensor, dt);
     if(sensor.activeAt!==null && playing) {
       if(!sensor.ghost) for(const actor of G.actors || []) {
         if(sensor.seen.has(actor) || actor.team===sensor.team ||
@@ -183,6 +224,7 @@ function stepSupport(projectile, G, THREE, dt, Physics, PLAYER) {
   const coolers=projectile._s3SupportCoolers || [];
   for(let i=coolers.length-1;i>=0;i--) {
     const stand=coolers[i];
+    advanceTowerStand(stand,G);
     if(G.time>=stand.expires||!playing) {releaseVisual(stand,G);coolers.splice(i,1);continue;}
     // Each actor's owner decides whether it obtained a drink; remote replicas
     // never mutate another peer's authoritative gear, HP or weapon state.
