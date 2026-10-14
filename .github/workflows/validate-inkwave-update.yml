@@ -494,7 +494,7 @@ jobs:
         run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'responsive'
-        run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
+        run: node scripts/check-inkwave-responsive-isolated.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
         if: matrix.suite == 'startup'
         run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
