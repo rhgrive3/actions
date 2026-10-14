@@ -5,6 +5,7 @@ import {initializePair,connectPair,pairBooted,preparePair,verifyPairRequest,fina
 import {collectControlledLaunchPair} from './check-inkwave-controlled-launch-pair.mjs';
 import {installCanvasCapture} from './lib/inkwave-canvas-capture.mjs';
 import {probeProjectileVisibility} from './lib/inkwave-projectile-repeat-probe.mjs';
+import {traceSpawnPhases,compareSpawnTraceRepeats} from './lib/inkwave-spawn-phase-trace.mjs';
 const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 export function parkBootedGame(){
  const G=globalThis.NG,g=G?.game;
@@ -62,6 +63,20 @@ export async function runControlledDiagnostic(candidateSite,out,baselineSite){
    // its native stage and initializes a second SwiftShader renderer.
    row.bootPark=await page.evaluate(parkBootedGame);row.phase='booted-parked';save();
   }
+  if(process.env.STAGE_PHASE_TRACE_ONLY==='1'){
+   report.phaseTraceOnly=true;report.acceptanceEvidence=false;report.phaseTraceRepeats=[];
+   for(const row of report.cases){
+    const traces=[];row.phaseTraces=[];
+    for(let attempt=1;attempt<=2;attempt++){
+     const trace=await pages[row.variant].evaluate(traceSpawnPhases,{frames:320,maxEvents:2048});traces.push(trace);
+     const file='phase-trace-'+row.variant+'-'+attempt+'.json',bytes=JSON.stringify(trace,null,2);fs.writeFileSync(path.join(out,file),bytes);
+     row.phaseTraces.push({attempt,file,sha256:sha(bytes),complete:trace.complete,dropped:trace.dropped,events:trace.events.length,localCorrections:trace.events.filter(e=>e.index===trace.localIndex&&e.stage==='post-actor-match-correction').length,errors:trace.errors});save();
+    }
+    row.traceConditions=await pages[row.variant].evaluate(()=>({actualMap:NG.level.layout.id,native:!!NG.level.native,source:NG.level.manifest?.sourceSha256,baseURI:document.baseURI}));
+    report.phaseTraceRepeats.push({variant:row.variant,...compareSpawnTraceRepeats(...traces)});save();
+   }
+   report.phaseTraceCollectionComplete=report.cases.every(r=>r.phaseTraces.length===2&&r.phaseTraces.every(t=>t.complete))&&report.phaseTraceRepeats.every(r=>r.matched);
+  }else{
   // Independently capture the original natural frame-6 repeats. A controlled
   // aim mismatch must not prevent collecting the original visibility failure.
   for(const row of report.cases){
@@ -74,18 +89,19 @@ export async function runControlledDiagnostic(candidateSite,out,baselineSite){
   }
   report.naturalRepeatCollectionComplete=report.cases.every(row=>!row.repeatError&&row.naturalRepeats?.complete===true);
   report.controlled=await collectControlledLaunchPair({baselinePage:pages.baseline,candidatePage:pages.candidate,out:path.join(out,'controlled-case')});
+  }
   await Promise.all(pending);
   for(const row of report.cases){
-   const manifest=manifests[row.variant],controlledConditions=report.controlled.cases.find(c=>c.variant===row.variant)?.natural;
+   const manifest=manifests[row.variant],controlledConditions=report.controlled?.cases.find(c=>c.variant===row.variant)?.natural;
    row.controlledValidation=controlledConditions?{status:'checked'}:{status:'skipped-incomplete',reason:'Controlled preparation did not reach this variant; preserve controlled-case error'};
-   const conditionSets=[row.repeatConditions,...(controlledConditions?[controlledConditions]:[])];
+   const conditionSets=[row.traceConditions??row.repeatConditions,...(controlledConditions?[controlledConditions]:[])];
    for(const conditions of conditionSets){
    assert.equal(conditions?.actualMap,'inkblot');assert.equal(conditions.native,true);assert.equal(conditions.source,manifest.build.nativeStages.stages.find(s=>s.id==='inkblot').sourceSha256);
    assert.ok(conditions.baseURI.endsWith('/_versions/'+manifest.build.revision+'/'));}
    assert.ok(row.sourceDownloads.length>0,'Pinned OBJ request not observed');assert.ok(row.loadedArtifacts.some(r=>r.path.endsWith('/src/game/inkCollision.js')),'Loaded collision module not verified');
    row.complete=row.errors.length===0;finalizePairCase(row);
   }
-  report.status=report.naturalRepeatCollectionComplete&&report.controlled.status==='collected'&&report.cases.every(r=>r.complete)?'collected':'incomplete';
+  report.status=(report.phaseTraceOnly?report.phaseTraceCollectionComplete:report.naturalRepeatCollectionComplete&&report.controlled.status==='collected')&&report.cases.every(r=>r.complete)?'collected':'incomplete';
  }catch(error){report.errors.push(String(error?.stack||error));}
  finally{
   await Promise.allSettled(pending);

@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
+      STAGE_PHASE_TRACE_ONLY: '1'
       BASELINE_SHA: 55b4750aea5e45136a588fbd7242c106aff2323a
       CANDIDATE_SHA: 4318dca34dfb68443d7c962cacd905aa65d8202e
       DIAGNOSTIC_HARNESS_SHA: ${{ github.sha }}
@@ -60,7 +61,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify only the isolated diagnostic contracts
         working-directory: harness
-        run: node --test scripts/test-inkwave-lighting-controls.mjs scripts/test-stage-capture-controls.mjs scripts/test-stage-controlled-host.mjs
+        run: node --test scripts/test-inkwave-lighting-controls.mjs scripts/test-stage-capture-controls.mjs scripts/test-stage-controlled-host.mjs scripts/test-stage-spawn-trace.mjs
       - name: Build both immutable public sites without model payload
         id: builds
         shell: bash
@@ -83,9 +84,11 @@ jobs:
         run: node scripts/bind-inkwave-stage-pair.mjs
       - name: Preserve original natural Game pair verdict
         id: natural
+        # Phase-only diagnostic preserves prior natural evidence; no repeated PNG capture.
+        if: env.STAGE_PHASE_TRACE_ONLY != '1'
         working-directory: harness
         run: node scripts/check-inkwave-stage-game-pair.mjs "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/game-pair" "$BASELINE_SITE"
-      - name: Collect separate controlled launch and four-read repeat diagnostic
+      - name: Collect separate bounded spawn phase diagnostic
         # A failed natural verdict is preserved, not turned into success.
         if: ${{ !cancelled() && steps.builds.outcome == 'success' && steps.bindings.outcome == 'success' }}
         working-directory: harness
