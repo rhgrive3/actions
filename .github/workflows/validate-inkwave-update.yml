@@ -591,7 +591,12 @@ jobs:
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
           ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public "$DIAGNOSTIC_STORAGE/site"
-          node scripts/diagnose-inkwave-stage-visibility.mjs "$DIAGNOSTIC_STORAGE/site" "$DIAGNOSTIC_STORAGE/probe"
+          git fetch --no-tags --depth=1 origin b3e8312c9ab4be773561ff8c28ff3423271593b5
+          node scripts/prepare-historical-baseline.mjs "$GITHUB_WORKSPACE" "$DIAGNOSTIC_STORAGE/baseline-source"
+          ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node "$DIAGNOSTIC_STORAGE/baseline-source/scripts/build-inkwave.mjs" "$DIAGNOSTIC_STORAGE/baseline-source/inkwave-public" "$DIAGNOSTIC_STORAGE/baseline-site"
+          mkdir -p "$DIAGNOSTIC_STORAGE/probe"
+          cp "$DIAGNOSTIC_STORAGE/historical-source-receipt.json" "$DIAGNOSTIC_STORAGE/probe/"
+          node scripts/diagnose-inkwave-stage-visibility.mjs "$DIAGNOSTIC_STORAGE/site" "$DIAGNOSTIC_STORAGE/probe" "$DIAGNOSTIC_STORAGE/baseline-site"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
