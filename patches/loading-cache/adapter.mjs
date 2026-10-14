@@ -138,6 +138,8 @@ export function prepareLoading(build, preloads, options = {}) {
     const rel=path.relative(build,file).split(path.sep).join('/');
     if(['index.html','sw.js','.nojekyll','inkwave-build.json'].includes(rel)||rel.startsWith('_versions/')||rel.includes('/dev/')||rel.endsWith('/sw.js'))continue;
     if(!/\.(?:m?js|css|json|png|jpg|jpeg|webp|svg|woff2|webmanifest|glb|gltf|ogg|mp3|wav)$/.test(rel))continue;
+    // Audio MP3s are streamed on demand, not counted in the cold PWA revision budget.
+    if(/^patches\/splatoon3\/runtime\/audio\/s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/.test(rel))continue;
     const bytes=fs.readFileSync(file);assets[rel]=[bytes.length,hash(bytes)];
   }
   const css=Object.keys(assets).filter(rel=>rel.endsWith('.css')); // Includes @import HUD CSS and non-./ HTML hrefs.

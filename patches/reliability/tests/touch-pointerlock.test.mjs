@@ -249,3 +249,13 @@ test('#859 a late pre-touch lock cannot restore lock after a blocked map/editor 
    assert.equal(h.requests(),state==='playing'?2:1,state);assert.equal(h.unlocks(),1);
   }
  });
+
+
+test('#1396 disabling Input retires pending completion; a fresh enabled request still works',async()=>{
+ const h=await boot({request:'pending'});h.unlocked();h.input.requestLock();
+ h.input.enabled=false;h.completePendingLock();await Promise.resolve();
+ assert.equal(h.input.locked,false);assert.equal(h.exits(),1);
+ h.move();assert.equal(h.input.mouse.dx,0);h.unlocked();assert.equal(h.unlocks(),1,'retirement does not pause twice');
+ h.input.enabled=true;h.input.requestLock();h.completePendingLock();await Promise.resolve();
+ assert.equal(h.input.locked,true);assert.equal(h.requests(),2);
+});

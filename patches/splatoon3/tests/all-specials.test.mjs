@@ -434,16 +434,45 @@ test('Tenta and Inkjet special paint channels stamp the sourced cross and satell
 });
 
 test('Super Chump expiry paints sourced cross and satellite channels',async()=>{
- const f=await setup(),owner=f.make();equip(owner,'superChump');owner._resolve=()=>{};ready(owner);deployInput(owner);
- const decoys=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.id==='superChump'&&o.kind==='decoy');assert.equal(decoys.length,12);
- const calls=[];f.G.paint.splat=(at,radius)=>{calls.push({at:at.clone(),radius});return 1;};tickWorld(f,320);
- const cross=calls.filter(call=>call.radius===2.5),satellites=calls.filter(call=>call.radius===1.116);
- assert.equal(cross.length,48,'each of twelve decoys emits four radius-2.5 cross stamps at expiry');
- assert.equal(satellites.length,12,'each decoy emits one sourced radius-1.116 satellite stamp');
- for(const decoy of decoys){
-  const stamps=cross.filter(call=>Math.abs(Math.abs(call.at.x-decoy.pos.x)+Math.abs(call.at.z-decoy.pos.z)-2.5)<1e-9);
-  assert.equal(stamps.length,4,'the calibrated cross places four stamps at the sourced check length');
- }
+ const f=await setup(),owner=f.make();equip(owner,'superChump');owner._resolve=()=>{};
+ // The source-quantized seed can legitimately place two decoys together. Keep
+ // that case deterministic: spatially grouping all stamps would count eight.
+ f.setRandom(()=>(111+.125)/0xffffffff);
+ const pending=[],expiries=[];
+ try{
+  ready(owner);assert.equal(owner._s3AllSpecialState.seed,111);deployInput(owner);
+  const decoys=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.id==='superChump'&&o.kind==='decoy');assert.equal(decoys.length,12);
+  const bySerial=new Map(decoys.map(o=>[o.serial,o]));
+  f.G.paint.splat=(at,radius,team,options)=>{pending.push({at:at.clone(),radius,team,claimOwner:options?.claimOwner,claimMode:options?.claimMode});return 1;};
+  f.on('all:special',e=>{if(e.id==='superChump'&&e.action==='expire')expiries.push({object:e.object,index:e.index,activation:e.activation,actor:e.actor,stamps:pending.splice(0)});});
+  tickWorld(f,320);assert.equal(pending.length,0,'all expiry paint is attributed to a native expiry event');
+  function verify(rows){
+   assert.equal(rows.length,12,'each decoy expires once');const seen=new Set();
+   for(const row of rows){
+    const decoy=bySerial.get(row.object);assert.ok(decoy,'expiry names a deployed decoy');assert.equal(seen.has(row.object),false,'no duplicate expiry');seen.add(row.object);
+    assert.equal(row.index,decoy.index);assert.equal(row.activation,decoy.activation);assert.equal(row.actor,owner);
+    const cross=row.stamps.filter(call=>call.radius===2.5),satellites=row.stamps.filter(call=>call.radius===1.116);
+    assert.equal(cross.length,4,'each expiry emits four radius-2.5 cross stamps');assert.equal(satellites.length,1,'each expiry emits one sourced radius-1.116 satellite');
+    for(const call of row.stamps){assert.equal(call.team,owner.team);assert.equal(call.claimOwner,owner);assert.equal(call.claimMode,'no-special');}
+    for(const [dx,dz] of [[2.5,0],[-2.5,0],[0,2.5],[0,-2.5]]){
+     assert.equal(cross.filter(call=>Math.abs(call.at.x-(decoy.pos.x+dx))<1e-9&&Math.abs(call.at.z-(decoy.pos.z+dz))<1e-9).length,1,'one stamp at each sourced cross offset');
+    }
+   }
+  }
+  verify(expiries);
+  const calls=expiries.flatMap(row=>row.stamps),cross=calls.filter(call=>call.radius===2.5),satellites=calls.filter(call=>call.radius===1.116);
+  assert.equal(cross.length,48);assert.equal(satellites.length,12);
+  assert.deepEqual(decoys[6].pos.toArray(),decoys[9].pos.toArray(),'seed111 retains the legitimate overlapping pair');
+  assert.equal(cross.filter(call=>Math.abs(Math.abs(call.at.x-decoys[6].pos.x)+Math.abs(call.at.z-decoys[6].pos.z)-2.5)<1e-9).length,8,'old global spatial attribution would double-count');
+  // Negative controls protect the oracle, rather than selecting a lucky seed
+  // or weakening the expected native paint count when positions overlap.
+  const copy=()=>expiries.map(row=>({...row,stamps:row.stamps.map(call=>({...call,at:call.at.clone()}))}));
+  const missing=copy(),at=missing[0].stamps.findIndex(call=>call.radius===2.5);missing[0].stamps.splice(at,1);assert.throws(()=>verify(missing),/four radius-2.5/);
+  const extra=copy();extra[0].stamps.push({...extra[0].stamps.find(call=>call.radius===2.5)});assert.throws(()=>verify(extra),/four radius-2.5/);
+  const duplicate=copy();duplicate[1]=duplicate[0];assert.throws(()=>verify(duplicate),/duplicate expiry/);
+  const displaced=copy();displaced[0].stamps.find(call=>call.radius===2.5).at.x+=.25;assert.throws(()=>verify(displaced),/sourced cross offset/);
+  const wrongOwner=copy();wrongOwner[0].stamps[0].claimOwner=null;assert.throws(()=>verify(wrongOwner));
+ }finally{f.restoreRandom();}
 });
 
 test('Zipcaster hook movement paints sourced cross marks and a two-frame calibrated trail',async()=>{
