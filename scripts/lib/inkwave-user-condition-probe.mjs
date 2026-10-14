@@ -17,17 +17,29 @@ export async function captureUserCondition(mobile){
 
 // Instrumented setup uses the native palette picker and native match lifecycle.
 // No palette/material replacement and no assignment to match state or timer.
-export async function prepareUserConditionMatch(){
- const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await globalThis.__setDiagnosticQuality('high');
+export async function prepareUserConditionMatch({nativeDefaults=false}={}){
+ const G=NG,g=G.game,initialSettings=JSON.stringify(g.settings);
+ g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();
+ if(nativeDefaults){
+  if(globalThis.__diagnosticColdStart?.initialSettingsStorage!==null)throw Error('Cold start settings were seeded');
+  if(g.settings.quality!=='high'||g.settings.shadows!==true||g.settings.bloom!==true)throw Error('Cold start did not retain native default settings');
+ }else await globalThis.__setDiagnosticQuality('high');
  const picker=g._pickPalette;let picks=0;
  g._pickPalette=function(...args){const random=Math.random;Math.random=()=>.7;try{picks++;return picker.apply(this,args);}finally{Math.random=random;}};
  try{await g.startMatch({mapId:'inkblot',mode:'turf',difficulty:'normal',time:'day'});}finally{g._pickPalette=picker;}
  g.debug.freeze();g._skipRender=true;
+ if(nativeDefaults){
+  const world=g.nativeWorld;
+  if(JSON.stringify(g.settings)!==initialSettings)throw Error('Cold start settings changed during native setup');
+  if(!world||world.metrics.quality!=='high'||world.metrics.qualityError||!(world.metrics.textureCount>0))throw Error('Cold start native textures are not ready');
+  globalThis.__diagnosticQualityReady={requested:null,actual:world.metrics.quality,textureCount:world.metrics.textureCount,changed:false,nativeColdStart:true,settings:{...g.settings},effectiveQuality:{...g.R.q},initialSettingsStorage:globalThis.__diagnosticColdStart.initialSettingsStorage};
+ }
  if(picks!==1||g.palette.id!=='aqua-cherry')throw Error('Native controlled palette selection did not match pinned config');
  let introFrames=0;while(g.match.state!=='playing'&&introFrames<600){g._frame(1/60);introFrames++;}
  if(g.match.state!=='playing')throw Error('Native intro did not reach playing within bounded frames');
  const timeBefore=g.match.time;for(let i=0;i<240;i++)g._frame(1/60);
  const timeAfter=g.match.time;if(g.match.state!=='playing'||Math.abs((timeBefore-timeAfter)-4)>1e-6)throw Error('Native live match time did not advance four seconds');
+ if(nativeDefaults&&JSON.stringify(g.settings)!==initialSettings)throw Error('Cold start settings changed during native frames');
  G.paint.flush(1/60);globalThis.__userConditionPreparation={introFrames,liveFrames:240,deltaSeconds:1/60,timeBefore,timeAfter,paletteRandom:.7,paletteId:g.palette.id,instrumentation:'Native palette picker given fixed RNG draw; native intro and live game frames advanced, rendering skipped until capture'};
  return globalThis.__userConditionPreparation;
 }
@@ -55,4 +67,12 @@ export function installDiagnosticQualityReadiness(){
   globalThis.__diagnosticQualityReady={requested:quality,actual:world.metrics.quality,textureCount:world.metrics.textureCount,changed,waitedMilliseconds:Date.now()-start};
   return globalThis.__diagnosticQualityReady;
  };
+}
+
+// Installed before application code in a fresh browser context. Never seeds settings.
+export function initializeDefaultColdStart(){
+ const initialSettingsStorage=localStorage.getItem('inkwave.settings');
+ if(initialSettingsStorage!==null)throw Error('Cold start settings were seeded before application boot');
+ globalThis.__diagnosticColdStart={initialSettingsStorage};
+ let s=0x12345678;Math.random=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};
 }

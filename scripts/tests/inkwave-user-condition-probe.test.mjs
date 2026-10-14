@@ -37,3 +37,25 @@ test('quality readiness awaits committed textures and rejects error, timeout, to
 });
 
 test('WebKit context is explicitly labelled Linux emulation rather than Chromium or physical Safari',async()=>{const r=await fixture(0,'webkit').run();assert.match(r.conditions.platform,/Playwright WebKit on Linux/);assert.match(r.conditions.platform,/not physical iPad Safari/);assert.doesNotMatch(r.conditions.platform,/SwiftShader/);});
+
+test('fresh-realm default cold start never writes settings and rejects any seeded storage',async()=>{
+ const {initializeDefaultColdStart}=await import('../lib/inkwave-user-condition-probe.mjs');
+ for(const saved of [null,'{}','{"quality":"high"}','{"quality":"low"}']){
+  let writes=0;const c=vm.createContext({localStorage:{getItem:()=>saved,setItem:()=>{writes++;}},Math:Object.create(Math)});
+  if(saved===null){vm.runInContext('('+initializeDefaultColdStart.toString()+')()',c);assert.equal(c.__diagnosticColdStart.initialSettingsStorage,null);}
+  else assert.throws(()=>vm.runInContext('('+initializeDefaultColdStart.toString()+')()',c),/seeded/);
+  assert.equal(writes,0);
+ }
+});
+test('serialized default native lifecycle retains settings, forbids quality setter, and requires ready textures',async()=>{
+ const {prepareUserConditionMatch,initializeDefaultColdStart}=await import('../lib/inkwave-user-condition-probe.mjs');
+ for(const mode of ['success','seeded','low','mutated','frame-mutation','unready','load-error']){
+  let ticks=0;const settings={quality:mode==='low'?'low':'high',shadows:true,bloom:true,minimap:false};
+  const g={settings,R:{q:{pixelRatio:1.2,bloom:false}},nativeWorld:{metrics:{quality:mode==='unready'?'low':'high',textureCount:223,...mode==='load-error'?{qualityError:'failed'}:{}}},debug:{freeze(){}},menus:{wipe:{cancel(){}}},_setSettings(){throw Error('settings setter forbidden');},_pickPalette(){return {id:'aqua-cherry'};},match:{state:'intro',time:180},async startMatch(){this.palette=this._pickPalette();if(mode==='mutated')settings.bloom=false;},_frame(){ticks++;if(mode==='frame-mutation')settings.bloom=false;if(this.match.state==='intro')this.match.state='playing';else this.match.time-=1/60;}};
+  const c=vm.createContext({NG:{game:g,paint:{flush(){}}},localStorage:{getItem:()=>null,setItem(){throw Error('settings write forbidden');}},Math:Object.create(Math),__setDiagnosticQuality(){throw Error('quality transition forbidden');}});
+  vm.runInContext('('+initializeDefaultColdStart.toString()+')()',c);if(mode==='seeded')c.__diagnosticColdStart.initialSettingsStorage='{}';
+  const run=()=>vm.runInContext('('+prepareUserConditionMatch.toString()+')({nativeDefaults:true})',c);
+  if(mode==='success'){await run();assert.equal(ticks,241);assert.equal(c.__diagnosticQualityReady.changed,false);assert.equal(c.__diagnosticQualityReady.nativeColdStart,true);assert.equal(settings.bloom,true);}
+  else await assert.rejects(run,/seeded|default settings|settings changed|not ready/);
+ }
+});
