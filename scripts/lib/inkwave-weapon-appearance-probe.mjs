@@ -49,8 +49,25 @@ export async function checkWeaponAppearancePicker({ page, evidence }) {
     assert(before.kit===initial.id&&before.selected===initial.defaultId,
       'official kit default '+JSON.stringify({before,defaultId:initial.defaultId}));
     assert(before.candidate,'included in native navigation candidates');
-    await button.click();await waitPreference(initial.base);const pointer=await read();
-    assert(pointer.selected===initial.base&&pointer.focus,'trusted pointer selects explicit Base');
+    // Pointer focus is an event-time property: subsequent hover/navigation can
+    // legitimately move the focus before the async storage read completes.
+    // Verify a trusted native click and focus *during that click*, not later.
+    await page.evaluate(() => {
+      const m=globalThis.s3ProbeG.game.menus;
+      const el=m._scr.el.querySelector('[data-id="weapon-appearance"]');
+      m.__appearanceClickTrace=[];
+      el.addEventListener('click',event => {
+        m.__appearanceClickTrace.push({
+          trusted:event.isTrusted,bound:m._binds.has(el),focused:m._focus===el
+        });
+      },{once:true});
+    });
+    await button.click();await waitPreference(initial.base);
+    const pointer=await read();
+    pointer.admission=await page.evaluate(() => globalThis.s3ProbeG.game.menus.__appearanceClickTrace?.[0]??null);
+    assert(pointer.selected===initial.base&&pointer.candidate&&pointer.admission?.trusted&&
+      pointer.admission?.bound&&pointer.admission?.focused,
+      'trusted pointer selects explicit Base '+JSON.stringify(pointer));
     await page.keyboard.press('Enter');await waitPreference(initial.options[2].id);const keyboard=await read();
     await page.evaluate(()=>globalThis.s3ProbeG.game.menus.nav('accept'));
     await waitPreference(initial.options[3]?.id??null);const pad=await read();
