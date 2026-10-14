@@ -31,6 +31,27 @@ test('Curling release and preview consume own launch Y and inherited vertical tu
  for(let i=0;i<every;i++)f.step();
  near(arc.getX(1),b.pos.x);assert.ok(Math.abs(arc.getY(1)-b.pos.y)<1e-4);near(arc.getZ(1),b.pos.z);
 });
+test('Curling applies source X/Z player-velocity inheritance independently',async()=>{
+ const f=await setup();f.a.vel.set(2,0,3);const b=f.throw();
+ near(b.vel.x,1.6,'XRate 0.8 × actor X velocity 2');
+ near(b.vel.z,27.6,'forward SpawnSpeedZ 24 plus ZRate 1.2 × actor Z velocity 3');
+});
+test('Suction applies its own source launch tuple, including distinct Z inheritance',async()=>{
+ const f=await setup('suction');f.a.vel.set(2,0,3);const b=f.throw();
+ near(b.vel.x,3.2,'XRate 1.6 × actor X velocity 2');
+ near(b.vel.y,14.4,'SpawnSpeedY 0.24/F × 60');
+ near(b.vel.z,73.2,'forward SpawnSpeedZ 67.2 plus ZRate 2 × actor Z velocity 3');
+});
+test('Curling FlyPositionAirResist follows source 60 Hz damping at 30/60/120 Hz',async()=>{
+ const retention=1-.05866;
+ for(const hz of [30,60,120]){
+  const f=await setup();f.a.vel.set(5,0,0);const b=f.throw(),initialX=b.vel.x;
+  const dt=1/hz;
+  for(let i=0;i<hz/2;i++){f.G.time+=dt;f.ps._updateBombs(dt);}
+  const expected=initialX*Math.pow(retention,30);
+  near(b.vel.x,expected,`${hz} Hz: half a second is 30 source damping frames`);
+ }
+});
 test('Curling airborne release clock expires at charge-dependent lifetime under every render cadence',async()=>{
  for(const hz of [30,60,120])for(const hold of [0,1]){
   const f=await setup('curling',hold),b=f.throw(), clock=new f.FixedClock();

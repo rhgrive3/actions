@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { fixture } from './source-fixture.mjs';
+import { inkPaintPoints } from '../runtime/ink-paint-calibration.mjs';
 
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 
@@ -28,11 +29,15 @@ for (const weapon of ['shooter', 'dualies', 'splatling']) {
       assert.equal(paint.growing.at(-1).paintOwner, owner, `${kind} carries the real Actor owner`);
     }
     const bodyCells = paint.counts[0], bodyCredit = owner.stats.turf;
-    assert.equal(bodyCredit, bodyCells * face.cu * face.cv, 'native addTurf credits the initial body once');
+    assert.equal(bodyCells, paint.grid.filter(team => team === 1).length, 'raw floor ownership counts the initial body cells');
+    const bodyArea = bodyCells * face.cu * face.cv;
+    assert.ok(bodyArea > 0, 'initial ownership has positive raw world area');
+    assert.ok(Math.abs(bodyCredit - inkPaintPoints(bodyArea)) < 1e-7, 'native addTurf credits the initial body once in turf points');
     for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);
     assert.ok(paint.counts[0] > bodyCells, 'ancillary cells really become owned');
     assert.ok(owner.stats.turf > bodyCredit, 'late cells increase the emitting actor credit');
-    assert.ok(Math.abs(owner.stats.turf - paint.counts[0] * face.cu * face.cv / 3.305785) < 1e-7, 'every claimed floor cell credits exactly once in turf points');
+    assert.equal(paint.counts[0], paint.grid.filter(team => team === 1).length, 'raw floor ownership counts body and late cells');
+    assert.ok(Math.abs(owner.stats.turf - inkPaintPoints(paint.counts[0] * face.cu * face.cv)) < 1e-7, 'every claimed floor cell credits exactly once in turf points');
     assert.equal(owner.special, owner.stats.turf, 'ordinary late paint contributes the native special gauge');
     const done = owner.stats.turf;
     for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);

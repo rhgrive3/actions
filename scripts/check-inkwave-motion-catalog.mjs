@@ -8,6 +8,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { catalogAudioGraph, validateCatalogAudioWorker } from './lib/inkwave-catalog-audio.mjs';
 import { pixelDifference } from './check-inkwave-motion-detail.mjs';
 
 export const CATALOG_MODULES = Object.freeze([
@@ -101,7 +102,7 @@ export function catalogStoragePath(dir, workspaceRoots = [process.cwd(), process
   return resolved;
 }
 export function catalogInputPath(key) {
-  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3', 'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability', 'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication', 'loading-cache': 'patches/loading-cache', 'practice-range': 'patches/practice-range', 'build-script': 'scripts' };
+  const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3', 'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability', 'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication', 'loading-cache': 'patches/loading-cache', 'practice-range': 'patches/practice-range', 'native-stages': 'patches/native-stages', 'build-script': 'scripts' };
   const [namespace, ...parts] = key.split('/');
   if (!Object.hasOwn(roots, namespace) || !parts.length || parts.some(part => !part || part === '.' || part === '..' || part.includes('\\'))) fail('input namespace/path ' + key);
   return roots[namespace] + '/' + parts.join('/');
@@ -155,18 +156,41 @@ export function validateCatalogReceipts(manifest, receipts) {
     if (!receipts.some(r => r.file === keys[0] && r.sha256 === manifest.artifacts[keys[0]] && r.bytes > 0)) fail('missing-module loaded ' + suffix);
   }
   for (const r of receipts) if (!manifest.artifacts[r.file] || r.sha256 !== manifest.artifacts[r.file] || !Number.isInteger(r.bytes) || r.bytes <= 0) fail('loaded-byte identity ' + r.file);
+  const workerInput=Object.keys(manifest.artifacts).find(k=>k.endsWith('/patches/splatoon3/runtime/audio/render-worker.mjs'));
+  if(!workerInput&&Object.keys(manifest.artifacts).some(k=>k.includes('/patches/splatoon3/runtime/audio/')))fail('missing-module audio worker source input');
+  if(workerInput){
+    validateCatalogAudioWorker(CATALOG_ROOT);
+    for(const suffix of ['src/audio/audio.js','src/audio/music.js']){const keys=Object.keys(manifest.artifacts).filter(k=>k.endsWith('/'+suffix));if(keys.length!==1||!receipts.some(r=>r.file===keys[0]&&r.sha256===manifest.artifacts[keys[0]]&&r.bytes>0))fail('missing-module production audio entry '+suffix);}
+    const workerOutput=workerInput.replace(/\.mjs$/,'.js');
+    if(!manifest.artifacts[workerOutput]||!receipts.some(r=>r.file===workerOutput&&r.sha256===manifest.artifacts[workerOutput]&&r.bytes>0))fail('missing-module generated audio worker '+workerOutput);
+  }
   for (const file of Object.keys(manifest.artifacts).filter(k => k.startsWith('_versions/') && /\/patches\/splatoon3\/runtime\/.*\.mjs$/.test(k))) {
     // death-camera.mjs is a shipped compatibility re-export, not an imported
     // core module. The implementation and install edge are required above via
     // render.mjs and install.mjs.
     if (file.endsWith('/patches/splatoon3/runtime/death-camera.mjs')) continue;
+    // Source-only worker input: exact regeneration and loaded generated output checked above.
+    if (file===workerInput) continue;
     if (!receipts.some(r => r.file === file && r.sha256 === manifest.artifacts[file])) fail('missing-module installed graph ' + file);
   }
+}
+// Saved results must prove the awaited worker protocol as well as fetched bytes.
+// Motion-only synthetic fixtures have no audio graph; real audio builds do.
+export function validateCatalogAudioGraphResult(result) {
+  const artifacts=result?.artifacts||{},keys=Object.keys(artifacts);
+  if(!keys.some(k=>k.includes('/patches/splatoon3/runtime/audio/')))return;
+  const inputs=keys.filter(k=>k.endsWith('/patches/splatoon3/runtime/audio/render-worker.mjs'));
+  const outputs=keys.filter(k=>k.endsWith('/patches/splatoon3/runtime/audio/render-worker.js'));
+  if(inputs.length!==1||outputs.length!==1||outputs[0]!==inputs[0].replace(/\.mjs$/,'.js'))fail('audio graph worker revision/denominator');
+  const graph=result.audioGraph,worker=outputs[0];
+  if(graph?.source!=='production-entry-imports-and-generated-worker'||graph.deviceInitialized!==false||graph.workerProtocol!=='invalid-id-rejected'||graph.workerTerminated!==true||graph.workerPath!=='/'+worker)fail('audio graph protocol proof');
+  if(!result.loaded?.some(r=>r.file===worker&&r.sha256===artifacts[worker]&&Number.isInteger(r.bytes)&&r.bytes>0))fail('audio graph worker receipt');
 }
 export function validateCatalogResult(result) {
   if (result?.schema !== 1 || result.installCalls !== 1 || result.source !== 'built-production-native' || result.gpu?.contextLost !== false || !result.gpu?.renderer || result.errors?.length !== 0) fail('runtime identity / shader errors');
   if (result.gpu.pixelControls?.dither !== false || result.gpu.pixelControls?.samples !== 0 || result.gpu.pixelControls?.target !== 'explicit-srgb-rgba8') fail('controlled pixel framebuffer');
   validateCatalogReceipts({ contentHash: result.contentHash, artifacts: result.artifacts }, result.loaded);
+  validateCatalogAudioGraphResult(result);
   validateCatalogTurfFinish(result.turfFinish);
   if (result.duplicateRealm?.modules !== CATALOG_MODULES.length || result.duplicateRealm?.unchanged !== true) fail('cross-realm install');
   if (!Array.isArray(result.data) || result.data.length !== CATALOG_SCENARIOS.length || new Set(result.data.map(r => r.name)).size !== CATALOG_SCENARIOS.length) fail('scenario denominator');
@@ -412,6 +436,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
   // Ranked bootstrap ships a separate module graph, but this isolated Turf
   // motion fixture never enters the ranked bootstrap path. Load and verify its
   // immutable emitted graph without changing the Turf fixture's behaviour.
+  const audioGraph=await globalThis.catalogAudioGraph(prefix);
   const { installRanked } = await import(prefix + 'patches/splatoon3/runtime/ranked/install.mjs');
   if (typeof installRanked !== 'function') throw Error('Ranked runtime installer missing');
   // Exercise the real Match dependency entry, including its deadline helper.
@@ -922,7 +947,7 @@ async function runCatalog({ prefix, scenarios, modules, contentHash, footLayout,
       try { if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready; if (ch.sourceMotion?.status !== 'ready') throw Error('Variable-dt source unavailable'); ch.update(0, null); const time = ch.t; for (let i = 0; i < hz; i++) ch.update(1 / hz, null); previewRates.push({ hz, frames: hz, finite: Array.from(ch.P).every(Number.isFinite) && Array.from(ch.ikErr).every(Number.isFinite), elapsed: ch.t - time }); }
       finally { collect(ch.root); ch.dispose(); }
     }
-    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
+    const result = { schema: 1, source: 'built-production-native', installCalls: 1, contentHash, audioGraph, turfFinish, duplicateRealm, gpu, data, images, previewRates, fixture: { render: 'actual Chromium WebGL (software ANGLE SwiftShader); native shaders compiled; same-frame RGB visibility pairs; native hero audit LOD', geometry: 'actual native indexed/skinned CPU output; does not include custom GPU vertex deformation', gameplay: 'native isolated methods; case driver and diagnostic assignments disclosed', parity: 'Nintendo executable version/gear/input/joint curves remain unknown; no console/iOS/full-match parity claim' } };
     globalThis.catalogPartial = result; return result;
   } finally {
     projectiles.clear(); collect(scene);
@@ -993,12 +1018,12 @@ async function main() {
     });
     await page.exposeFunction('catalogReadImage', file => { safeName(file.replace(/\.png$/, '')); return 'data:image/png;base64,' + fs.readFileSync(path.join(output, file)).toString('base64'); });
     await page.exposeFunction('catalogSaveCase', row => { safeName(row.name); publish(row.name + '-native.json', row); console.log(JSON.stringify({ scenario: row.name, frames: row.frames, renderPairs: row.renders.length, cleanup: row.cleanup.cleanStates })); });
-    await page.route('http://127.0.0.1:' + server.address().port + '/**', async route => {
+    await browser.route('http://127.0.0.1:' + server.address().port + '/**', async route => {
       try { const response = await route.fetch(), body = await response.body(), file = decodeURIComponent(new URL(response.url()).pathname).slice(1); if (file !== 'motion-catalog') { if (!manifest.artifacts[file] || hash(body) !== manifest.artifacts[file]) throw Error('Active immutable artifact mismatch ' + file); loaded.set(file, { file, sha256: hash(body), bytes: body.length }); } await route.fulfill({ response, body }); }
       catch (e) { error(e.message); await route.abort(); }
     });
     await page.goto('http://127.0.0.1:' + server.address().port + '/motion-catalog');
-    await page.addScriptTag({ content: 'globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogRollerVerticalLaunch=' + catalogRollerVerticalLaunch.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
+    await page.addScriptTag({ content: 'globalThis.catalogAudioGraph='+catalogAudioGraph.toString()+';globalThis.catalogPixelDifference=' + pixelDifference.toString() + ';globalThis.catalogRenderFrames=' + catalogRenderFrames.toString() + ';globalThis.catalogTurfFinishProbe=' + catalogTurfFinishProbe.toString() + ';globalThis.catalogRollerVerticalLaunch=' + catalogRollerVerticalLaunch.toString() + ';globalThis.catalogDualiesInput=' + catalogDualiesInput.toString() + ';' });
     result = await page.evaluate(runCatalog, { prefix, contentHash: manifest.contentHash, scenarios: CATALOG_SCENARIOS, modules: CATALOG_MODULES, footLayout, wallHeight: CATALOG_WALL_HEIGHT });
     // finally executes after the returned object was built; fetch its cleanup
     // snapshot explicitly so a missing cleanup cannot pass as a successful run.

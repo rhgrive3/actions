@@ -56,11 +56,12 @@ import { createBubblerHardware, disposeSpecialModel } from './special-motion.mjs
 // roster}): the owning side checks authority, ownership, team hostility, amount
 // and duplicate identity before any HP moves.
 //
-// Everything in BIG_BUBBLER_CALIBRATION is a DECLARED mapping, not a source.
-// The 11.3.0 tables pin raw internal numbers whose engine scale is not publicly
-// documented; see reports/public-kit-big-bubbler-20261004.md.
+// The pinned parameter fields are raw values. Inkipedia's Splatoon 3 measurements
+// independently establish the /10 normalization for MaxHP and TimeDamage; the
+// remaining field-to-object mapping and radius/placement timing stay calibrated.
 
 import { fidelityDamage } from './weapons-fidelity.mjs';
+import { objectDamageRow, objectDamageScale, catalogueAttackRow } from './sub-resistance.mjs';
 
 const BUBBLER_ID = 'bubbler';
 const INSTALL = Symbol.for('inkwave.s3.kit-big-bubbler.install.v1');
@@ -100,13 +101,14 @@ export const BIG_BUBBLER_RAW = Object.freeze({
 
 // DECLARED calibration: what is pinned and what is assumed.
 export const BIG_BUBBLER_CALIBRATION = Object.freeze({
-  status: 'declared calibration; the 11.3.0 raw internal scale for MaxHP/MaxFieldHP/TimeDamage is unconfirmed',
-  // Raw dome HP units per one INKWAVE damage unit. DECLARED. It is NOT the
-  // weapons' damage factor and is deliberately not HP/10.
-  rawPerDamageUnit: 100,
-  // TimeDamage cadence. DECLARED per second: a per-frame reading ends a full
-  // canopy in 16.7 ticks (0.28 s), which contradicts the observable multi-second
-  // dome, so that reading is rejected as an inference. One constant switches it.
+  status: 'wiki-corroborated rawDamageToHP /10 for HP and TimeDamage; source-field roles and geometry mappings remain calibrated',
+  // The 11.3.0 raw table uses the same x10 scale as weapon damage: Wiki S3
+  // records MaxHP.Low 15360 as 1536 HP, TimeDamage 921 as 92.1 HP/s, and shell
+  // DamgeRatio 0.64. Convert normalized INKWAVE projectile damage back to this
+  // raw HP scale once. The prior 100 multiplier made shots ten times too strong.
+  rawPerDamageUnit: 10,
+  // TimeDamage is the wiki-confirmed 92.1 HP/s rate; the ratio below retains the
+  // same duration when this adapter assigns the MaxFieldHP budget to the shell.
   timeDamageIntervalSeconds: 1,
   // Radius growth window. DECLARED mapping onto the pinned drone frames.
   radiusGrowthSeconds: 45 / 60,
@@ -115,9 +117,8 @@ export const BIG_BUBBLER_CALIBRATION = Object.freeze({
   deployDistance: 3,
   // Paint the interior at ignition using the pinned BaseParam.PaintRadius.
   paintAtIgnition: true,
-  // OverlapFieldDamage is left OFF: its unit is unresolved (read through the
-  // canopy mapping it is 5/100 = 0.05 INKWAVE damage per tick), so enabling it
-  // would assert gameplay that no receipt supports.
+  // OverlapFieldDamage is left OFF: its target and unit are unresolved, so
+  // enabling it would assert gameplay that no receipt supports.
   overlapFieldDamage: false,
   // Owner respawn runs Actor.reset(); erasing there would delete the dome right
   // after the owner's own death, which the reference does not do.
@@ -201,22 +202,42 @@ const BOMB_ROWS = Object.freeze({ bomb: 'Bomb_DirectHit', suction: 'Bomb_Suction
 // with no pinned row (it keeps 1.0). Explosion probes carry their row explicitly.
 export function bigBubblerSourceRow(p) {
   if (!p) return null;
-  if (typeof p.s3BubblerRow === 'string') return p.s3BubblerRow;
-  if (p.wid === 'trizooka') return 'UltraShot';
-  if (p.wid === 'inkVac' || p.s3SpecialWeapon?.id === 'inkVac') return 'BlowerExhale';
-  if (p.type === 'bomb') return BOMB_ROWS[p.s3InkVacBomb?.s3Sub?.id || p.s3InkVacBomb?.s3Resolved?.spec?.id || 'bomb'] ?? null;
+  if (typeof p.s3BubblerRow === 'string') return objectDamageRow(p, p.s3BubblerRow);
+  if (p.wid === 'trizooka') return objectDamageRow(p, 'UltraShot');
+  if (p.wid === 'inkVac' || p.s3SpecialWeapon?.id === 'inkVac') return objectDamageRow(p, 'BlowerExhale');
+  if (p.type === 'bomb') {
+    const subId = p.s3InkVacBomb?.s3Sub?.id || p.s3InkVacBomb?.s3Resolved?.spec?.id || 'bomb';
+    const row = BOMB_ROWS[subId];
+    return row ? objectDamageRow(p, row) : null;
+  }
   const weapon = p.s3Weapon || p.owner?.weapon;
-  if (p.type === 'beam' && weapon?.kind === 'charger') return p.full ? 'ChargerFull' : 'Charger';
-  if (weapon?.kind === 'roller') return p.type === 'drop' ? 'RollerSplash' : 'RollerCore';
-  if (p.type === 'blast' && weapon?.kind === 'blaster') return 'Blaster_KillOneShot';
-  return WEAPON_DEFAULT_ROWS[weapon?.kind] ?? null;
+  if (p.type === 'beam' && weapon?.kind === 'charger') {
+    const descriptor = { ...p.catalog?.descriptor, charge: p.full ? 1 : p.catalog?.descriptor?.charge ?? 0 };
+    const catalog = p.catalog?.r ? p.catalog : weapon?.catalogRecord ? { r: weapon.catalogRecord, descriptor } : null;
+    return objectDamageRow(p, catalogueAttackRow({ ...p, type: 'shot', ...(catalog ? { catalog: { ...catalog, descriptor } } : {}) }, weapon)
+      || (p.full ? 'ChargerFull' : 'Charger'));
+  }
+  if (weapon?.kind === 'roller') {
+    if (p.type !== 'drop') return objectDamageRow(p, 'RollerCore');
+    return objectDamageRow(p, catalogueAttackRow(p, weapon) || 'RollerSplash');
+  }
+  if (p.type === 'blast' && weapon?.kind === 'blaster') {
+    // The direct projectile is a Normal attack; the separately resolved blast
+    // core arrives with its own explicit s3BubblerRow from kit-defense.
+    return objectDamageRow(p, catalogueAttackRow({ ...p, type: 'shot' }, weapon) || 'Blaster_KillOneShot');
+  }
+  const selected = catalogueAttackRow(p, weapon);
+  if (selected) return objectDamageRow(p, selected);
+  return WEAPON_DEFAULT_ROWS[weapon?.kind] ? objectDamageRow(p, WEAPON_DEFAULT_ROWS[weapon.kind]) : null;
 }
 
 export function bigBubblerSourceRate(p, target) {
-  const rates = BIG_BUBBLER_SOURCE_RATES[bigBubblerSourceRow(p)];
-  if (!rates) return 1;
-  const shredder = p?.owner?.s3?.modifiers?.objectShredder === true ? OBJECT_SHREDDER_MULTIPLIER : 1;
-  return rates[target === 'field' ? 1 : 0] * shredder;
+  const row = bigBubblerSourceRow(p);
+  if (!row) return 1;
+  // Native actor/object contacts and the Bubbler share the exact 11.3 source
+  // row table. Let that single boundary apply Object Shredder once as well.
+  const subject = p?.owner && typeof p.owner === 'object' && !p.pos ? { ...p, pos: {} } : p;
+  return objectDamageScale(subject, target === 'field' ? 'bubblerField' : 'bubblerCanopy', row);
 }
 
 // The damage this projectile would deal to a target at `hitPoint`, using the SAME
@@ -483,6 +504,31 @@ export function bigBubblerBarrierHp(owner) {
   return gearCurve(ap, raw.maxFieldHp, raw.maxFieldHpMid, raw.maxFieldHpHigh);
 }
 
+// Tower Control dome lifetime is shorter only on the physical moving deck.
+// Reuse RankedWorld's live tower collision geometry, never the caster's mode.
+function bubblerTowerBinding(G, pos) {
+  const ranked=G.match?.mode==='tower' ? G.match.rankedWorld : null;
+  if(!ranked || ranked._inTowerVolume?.({pos},false)!==true)
+    return {onTower:false,local:null};
+  const block=ranked.towerBlock,axes=block?.axes;
+  if(!block?.center?.isVector3 || !Array.isArray(axes) || axes.length!==3 ||
+     !axes.every(axis=>axis?.isVector3))return {onTower:true,local:null};
+  const relative=pos.clone().sub(block.center);
+  return {onTower:true,local:axes.map(axis=>relative.dot(axis))};
+}
+function advanceBubblerTower(dome) {
+  const local=dome.towerLocal,block=api?.G?.match?.rankedWorld?.towerBlock;
+  if(!local || !block?.center?.isVector3 || !Array.isArray(block.axes) ||
+     block.axes.length!==3 || !block.axes.every(axis=>axis?.isVector3))return;
+  dome.pos.copy(block.center);
+  for(let i=0;i<3;i++)dome.pos.addScaledVector(block.axes[i],local[i]);
+  dome.group?.position?.copy(dome.pos);
+}
+export function bigBubblerTimeDamage(onTower=false) {
+  // BarrierParam.TimeDamageOnVLift (1842) versus normal TimeDamage (921).
+  const damage=onTower === true ? raw.timeDamageOnVLift : raw.timeDamage;
+  return damage * raw.maxFieldHp / raw.maxHp;
+}
 function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp, fieldHpMax = raw.maxHp }) {
   return {
     id, serial, owner, team, pos, t: 0, remote: !!remote,
@@ -495,6 +541,7 @@ function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp
     damageProgress: 0,
     radius: raw.minRadius, emitterY: 0, ignited: false,
     burnAccum: 0, overlapAccum: 0, dead: false,
+    onTower: false, towerLocal: null,
   };
 }
 
@@ -511,6 +558,8 @@ function deploy(owner) {
     id: `${owner.team}:${bigBubblerOwnerId(owner) ?? 'unknown'}:${serial}`,
     serial, owner, team: owner.team, pos, remote: false, hpMax: bigBubblerBarrierHp(owner), fieldHpMax: bigBubblerCanopyHp(owner),
   });
+  const tower=bubblerTowerBinding(api.G,dome.pos);
+  dome.onTower=tower.onTower;dome.towerLocal=tower.local;
   buildVisual(dome);
   domes.push(dome);
   syncVisual(dome);
@@ -547,7 +596,7 @@ function syncVisual(dome) {
 // `cause` selects the event name so an INCOMING projectile contact
 // ('kit:bubbler:hit', the only one a remote proxy replays as a hit) is never
 // confused with the internal TimeDamage burn or the optional overlap tick.
-function damageDome(dome, target, amount, cause = 'shot') {
+function damageDome(dome, target, amount, cause = 'shot', damageSource = cause) {
   if (dome.dead || !(amount > 0)) return 0;
   const weak = target === 'field'; // historical wire name: exposed launcher/device
   const max = weak ? dome.fieldHpMax : dome.hpMax;
@@ -558,12 +607,62 @@ function damageDome(dome, target, amount, cause = 'shot') {
   dome.damageProgress = clamp((dome.damageProgress || 0) + amount / Math.max(1e-10, max), 0, 1);
   api.emit?.(cause === 'shot' ? 'kit:bubbler:hit' : `kit:bubbler:${cause}`, {
     actor: dome.owner, owner: dome.owner, domeId: dome.id, serial: dome.serial,
-    eventId: dome.hitSerial = (dome.hitSerial || 0) + 1, team: dome.team, target, amount, cause,
+    eventId: dome.hitSerial = (dome.hitSerial || 0) + 1, team: dome.team, target, amount, cause: damageSource,
     hp: dome.hp, fieldHp: dome.fieldHp, damageProgress: dome.damageProgress,
   });
   if (dome.damageProgress >= 1 - 1e-10 || dome.hp <= 0 || dome.fieldHp <= 0)
     removeDome(dome, weak ? 'emitter-destroyed' : 'canopy-destroyed');
   return amount;
+}
+
+// Continuous Ink Vac damage is not a projectile contact, so it cannot be fed
+// through kitBarrierCandidate(). Keep Bubbler's owner boundary here: a local
+// dome spends its own HP, while a remote dome receives the same flat proposal
+// shape as a real incoming round. The BarrierParam.DamgeRatio is applied once to
+// the canopy rate, matching the sourced barrier target rule.
+export function damageBigBubblerFromInkVac(dome, attacker, amount, point = dome?.pos) {
+  if (!api || !dome || dome.dead || attacker?.remote || !attacker?.alive ||
+      !Number.isInteger(attacker.team) || dome.team === attacker.team || !(amount > 0) ||
+      !point?.isVector3 || !listOf(dome).includes(dome)) return 0;
+  const damage = amount * raw.damageRatio;
+  if (!(damage > 0)) return 0;
+  if (dome.remote) {
+    const shooter = bigBubblerOwnerId(attacker), domeOwner = bigBubblerOwnerId(dome.owner);
+    const eventId = ++proposalSerial;
+    const payload = {
+      e: 'damage-proposal', domeId: dome.id, serial: dome.serial,
+      team: attacker.team, target: 'canopy', amount: damage, eventId,
+      pointX: point.x, pointY: point.y, pointZ: point.z,
+      normalX: 0, normalY: 1, normalZ: 0,
+    };
+    if (shooter !== null) { payload.shooter = shooter; payload.shooterTeam = attacker.team; }
+    if (domeOwner !== null) payload.domeOwner = domeOwner;
+    api.emit?.('kit:bubbler:damage-proposal', { ...payload, actor: attacker });
+    return 0;
+  }
+  return damageDome(dome, 'canopy', damage, 'shot', 'inkVac');
+}
+
+// Piercing continuous attacks such as Killer Wail damage a dome they cross
+// without joining projectile first-contact arbitration: the laser keeps
+// travelling and cannot be swallowed by Ink Vac. The explicit source row goes
+// through the same object-rate table and Object Shredder boundary as rounds.
+export function damageBigBubblerFromBeam(attacker, start, end, damage, cause = 'MicroLaser') {
+  if (!api || !attacker || attacker.remote || !attacker.alive || !Number.isInteger(attacker.team) ||
+      !start?.isVector3 || !end?.isVector3 || !(damage > 0) || cause !== 'MicroLaser') return 0;
+  const probe = { owner: attacker, team: attacker.team, damage, size: 0, type: 'beam',
+    s3BubblerRow: cause, damageSource: cause, ghost: false };
+  const excludedDomeIds = new Set();
+  const maxContacts = domes.length + remoteDomes.length;
+  let applied = 0;
+  for (let i = 0; i < maxContacts; i++) {
+    const candidate = kitBarrierCandidate(probe, start, end, excludedDomeIds);
+    if (!candidate) break;
+    excludedDomeIds.add(candidate.domeId);
+    excludedDomeIds.add(`${candidate.domeId}\u0000${candidate.serial}`);
+    applied += candidate.onHit();
+  }
+  return applied;
 }
 
 // ------------------------------------------------------------------- query
@@ -619,7 +718,7 @@ function domeEntry(dome, start, end, radius, out) {
  * The candidate reuses one internal record, so it is valid only until the next
  * query. The caller must arbitrate and invoke onHit() before asking again.
  */
-export function kitBarrierCandidate(p, start, end) {
+export function kitBarrierCandidate(p, start, end, excludedDomeIds = null) {
   if (!p || !start || !end) return null;
   const radius = p.size || 0;
   // A neutral round (no team, or a non-integer one) may only ever be intercepted
@@ -629,6 +728,7 @@ export function kitBarrierCandidate(p, start, end) {
   for (const pool of [domes, remoteDomes]) {
     for (const dome of pool) {
       if (dome.dead) continue;
+      if (excludedDomeIds?.has?.(dome.id) || excludedDomeIds?.has?.(`${dome.id}\u0000${dome.serial}`)) continue;
       if (hostile && dome.team === p.team) continue;
       const hit = domeEntry(dome, start, end, radius, probeRecord);
       if (!hit) continue;
@@ -671,6 +771,7 @@ export function kitBarrierCandidate(p, start, end) {
   // #1051 DamgeRatio belongs to the outer barrier only. Proposals carry the
   // post-ratio amount so the remote authority must not apply it a second time.
   candidate.damage = sourceDamage * (candidate.target === 'canopy' ? raw.damageRatio : 1);
+  candidate.damageSource = typeof p.damageSource === 'string' ? p.damageSource : 'shot';
   candidate.settled = false;
   candidate.proposal = null;
   // One monotonic identity per SETTLED hit on this client, independent of the
@@ -732,7 +833,7 @@ export function kitBarrierCandidate(p, start, end) {
       api.emit?.('kit:bubbler:damage-proposal', { ...candidate.proposal, ...(candidate.shooter ? { actor: candidate.shooter } : {}) });
       return 0;
     }
-    const applied = damageDome(dome, candidate.target, candidate.damage);
+    const applied = damageDome(dome, candidate.target, candidate.damage, 'shot', candidate.damageSource || 'shot');
     api.G.fx?.burst?.(candidate.point, candidate.normal, dome.color,
       { count: 6, speed: 3, size: 0.07 });
     api.emit?.('weapon:impact', { pos: candidate.point.clone(), normal: candidate.normal.clone(),
@@ -874,6 +975,7 @@ export function tickBigBubblers(dt) {
   if (!(dt > 0) || !domes.length) return;
   for (const dome of [...domes]) {
     if (dome.dead) continue;
+    advanceBubblerTower(dome);
     dome.t += dt;
     dome.radius = radiusAt(dome.t);
     const ascend = clamp(dome.t / (raw.ascendFrames / 60), 0, 1);
@@ -896,7 +998,7 @@ export function tickBigBubblers(dt) {
         dome.burnAccum -= interval;
         // MaxFieldHP is 2x the old swapped canopy budget. Scale the internal
         // TimeDamage delta by the same ratio so passive lifetime is unchanged.
-        damageDome(dome, 'canopy', raw.timeDamage * raw.maxFieldHp / raw.maxHp, 'burn');
+        damageDome(dome, 'canopy', bigBubblerTimeDamage(dome.onTower), 'burn');
       }
       if (tuning.overlapFieldDamage && !dome.dead) {
         const tickSeconds = raw.overlapFieldDamageInterval / 60;
@@ -922,6 +1024,7 @@ export function tickRemoteBigBubblers(dt) {
   if (!(dt > 0) || !remoteDomes.length) return;
   for (const dome of [...remoteDomes]) {
     if (dome.dead) continue;
+    advanceBubblerTower(dome);
     dome.t += dt;
     dome.radius = radiusAt(dome.t);
     const ascend = clamp(dome.t / (raw.ascendFrames / 60), 0, 1);
@@ -1096,6 +1199,8 @@ function replayDeploy(owner, payload) {
     id: v.domeId, serial: v.serial, owner: owner ?? null, team: v.team,
     pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true, hpMax: Math.max(raw.maxFieldHp, v.hp), fieldHpMax: Math.max(raw.maxHp, v.fieldHp),
   });
+  const tower=bubblerTowerBinding(api.G,dome.pos);
+  dome.onTower=tower.onTower;dome.towerLocal=tower.local;
   // The transmitted state is authoritative for the IMAGE only.
   dome.t = v.t;
   dome.hp = Math.min(v.hp, dome.hpMax);
@@ -1380,12 +1485,17 @@ export function installKitBigBubbler(context, profile) {
   // existing wall/actor/boss tests). It is inert; the caller compares
   // candidate.distance with the native contact distance and invokes onHit() on
   // the winner only. The module never touches _step itself.
-  Projectiles.prototype.kitBarrierCandidate = function (p, start, end) {
-    return kitBarrierCandidate(p, start || p.prev, end || p.pos);
+  Projectiles.prototype.kitBarrierCandidate = function (p, start, end, excludedDomeIds) {
+    return kitBarrierCandidate(p, start || p.prev, end || p.pos, excludedDomeIds);
   };
   // Explosion shielding handoff for the native blast path. Read-only.
   Projectiles.prototype.kitBarrierShelter = function (p, start, end) {
     return kitBarrierShelter(p, start || p.prev, end || p.pos);
+  };
+  // Piercing beam consumer: its caller records damage but keeps the native
+  // beam sweep moving through the target.
+  Projectiles.prototype.damageBigBubblerFromBeam = function (attacker, start, end, damage, cause = 'MicroLaser') {
+    return damageBigBubblerFromBeam(attacker, start, end, damage, cause);
   };
   // Replay ingest the parent calls from its typed NetMatch events. Presentational
   // only; see BIG_BUBBLER_OWNERSHIP for exactly what this does and does not own.

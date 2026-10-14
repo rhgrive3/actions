@@ -11,9 +11,8 @@ import { qualityIdentity } from '../../patches/local-quality/adapter.mjs';
 import { parse } from '../../patches/loading-cache/vendor/acorn.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../lib/inkwave-build-only-modules.mjs';
 import { staticEsModuleImports } from '../lib/inkwave-module-imports.mjs';
+import { decodePrecacheEntries } from '../lib/inkwave-cache-manifest.mjs';
 import { World } from '../../patches/loading-cache/tests/worker-fixture.mjs';
-import { inflateSync } from 'node:zlib';
-import { compactLightmapPng } from '../lib/inkwave-lightmap-compaction.mjs';
 import { decodeGrayLightmap } from '../lib/inkwave-lossless-lightmap.mjs';
 
 const root = new URL('../../', import.meta.url);
@@ -43,6 +42,7 @@ const auditedBuildExports = new Map([
   ['patches/local-quality/issue-480-camera-shake-fidelity.mjs', ['REQUIRED_WIRING', 'ISSUE_480_CAMERA_RIG', 'ISSUE_480_SCREENFX', 'ISSUE_480_MENUS']],
   ['patches/local-quality/medal-adapter.mjs', ['replaceOnce', 'S3_AWARDS', 'S3_PRIORITY_RANKS', 'S3_AWARD_ORDER']],
   ['patches/local-quality/minimap-resource-adapter.mjs', ['replaceOnceMinimap']],
+  ['patches/local-quality/showcase-alpha-adapter.mjs', ['selectShowcaseAlphaTarget']],
   ['patches/local-quality/team-special-signal-adapter.mjs', []],
   ['patches/local-quality/texlib-adapter.mjs', ['replaceOnceTexlib']],
   ['patches/reliability/map-look.mjs', []],
@@ -112,43 +112,31 @@ test('minified static ESM imports are found without whitespace and with re-expor
 });
 
 const site = process.env.INKWAVE_BUILT_SITE && path.resolve(process.env.INKWAVE_BUILT_SITE);
-test('lightmap compaction preserves every pixel and non-image PNG chunk', () => {
-  function decode(bytes) {
-    const keep=[],data=[];let width,height;
-    for(let at=8;at<bytes.length;){
-      const n=bytes.readUInt32BE(at),type=bytes.toString('ascii',at+4,at+8);
-      if(type==='IDAT')data.push(bytes.subarray(at+8,at+8+n));
-      else keep.push(bytes.subarray(at,at+n+12));
-      if(type==='IHDR'){width=bytes.readUInt32BE(at+8);height=bytes.readUInt32BE(at+12);}
-      at+=n+12;
-    }
-    const raw=inflateSync(Buffer.concat(data)),pixels=Buffer.alloc(width*height);
-    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-      const offset=y*(width+1),filter=raw[offset];assert([0,1,2].includes(filter));
-      const predictor=filter===1?(x?pixels[y*width+x-1]:0):filter===2?(y?pixels[(y-1)*width+x]:0):0;
-      pixels[y*width+x]=(raw[offset+1+x]+predictor)&255;
-    }
-    return {width,height,pixels,keep};
+test('emitted lossless lightmaps preserve every pixel while reducing the offline snapshot', { skip: !site }, () => {
+  const files = [
+    'inkwave-public/assets/lightmaps/halyard.png',
+    'inkwave-public/assets/lightmaps/kelpline.png',
+    'inkwave-public/assets/lightmaps/tidewater.png',
+    'inkwave-public/assets/lightmaps/cargo.png',
+    'patches/practice-range/assets/lightmaps/range.png',
+  ];
+  let saved = 0;
+  for (const file of files) {
+    const source = fs.readFileSync(new URL(file, root));
+    const emitted = fs.readFileSync(path.join(site, 'assets/lightmaps', path.basename(file)));
+    const before = decodeGrayLightmap(source), after = decodeGrayLightmap(emitted);
+    assert.equal(after.width, before.width, file + ': width');
+    assert.equal(after.height, before.height, file + ': height');
+    assert(after.ihdr.equals(before.ihdr), file + ': image metadata');
+    assert(after.pixels.equals(before.pixels), file + ': every decoded pixel');
+    assert(emitted.length <= source.length, file + ': emitted encoding never grows');
+    saved += source.length - emitted.length;
   }
-  let saved=0;
-  for(const file of ['inkwave-public/assets/lightmaps/halyard.png','inkwave-public/assets/lightmaps/kelpline.png','inkwave-public/assets/lightmaps/tidewater.png','inkwave-public/assets/lightmaps/cargo.png','patches/practice-range/assets/lightmaps/range.png']){
-    const raw=fs.readFileSync(new URL(file,root)),packed=compactLightmapPng(raw);
-    assert.deepEqual(decode(packed),decode(raw),file);assert(packed.length<=raw.length);saved+=raw.length-packed.length;
-    if(site){
-      const emitted=fs.readFileSync(path.join(site,'assets/lightmaps',path.basename(file)));
-      const before=decodeGrayLightmap(raw),after=decodeGrayLightmap(emitted);
-      assert.equal(after.width,before.width);assert.equal(after.height,before.height);
-      assert(after.ihdr.equals(before.ihdr), 'PNG image metadata is preserved');
-      assert(after.pixels.equals(before.pixels), 'both lossless encoders preserve every emitted pixel: '+file);
-      assert(emitted.length<=raw.length, 'emitted encoding never increases the source payload');
-    }
-  }
-  assert(saved>100*1024,'meaningful lossless reduction for the combined catalogue');
+  assert(saved > 100 * 1024, 'the complete offline lightmap catalogue remains losslessly compacted');
 });
-
 test('ESM minification preserves the emitted module export interface', {skip:!site}, () => {
   const identity=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
-  const roots={upstream:'inkwave-public',patch:'patches/splatoon3','touch-layout':'patches/touch-layout',reliability:'patches/reliability','local-quality':'patches/local-quality','network-replication':'patches/network-replication','practice-range':'patches/practice-range','loading-cache':'patches/loading-cache'};
+  const roots={upstream:'inkwave-public',patch:'patches/splatoon3','touch-layout':'patches/touch-layout',reliability:'patches/reliability','local-quality':'patches/local-quality','network-replication':'patches/network-replication','practice-range':'patches/practice-range','native-stages':'patches/native-stages','loading-cache':'patches/loading-cache'};
   const exports=source=>parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.flatMap(n=>{
     if(n.type==='ExportDefaultDeclaration')return['default'];
     if(n.type==='ExportAllDeclaration')return['*:'+n.source.value];
@@ -182,7 +170,7 @@ test('emitted identity binds every input to one canonical tracked path including
   const roots = { upstream: 'inkwave-public', patch: 'patches/splatoon3',
     'touch-layout': 'patches/touch-layout', reliability: 'patches/reliability',
     'local-quality': 'patches/local-quality', 'network-replication': 'patches/network-replication',
-    'practice-range': 'patches/practice-range', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
+    'practice-range': 'patches/practice-range', 'native-stages': 'patches/native-stages', 'loading-cache': 'patches/loading-cache', 'build-script': 'scripts' };
   const tracked = new Map(execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], { cwd: fileURLToPath(root), encoding: 'utf8' })
     .split('\0').filter(Boolean).map(row => { const [meta, file] = row.split('\t'); return [file, meta.split(' ')[2]]; }));
   const mapped = [];
@@ -217,7 +205,7 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   const identity = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json')));
   const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   assert.equal(identity.inputHash, hash(JSON.stringify(identity.files)));
-  for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-lightmap-compaction.mjs']) {
+  for (const file of ['inkwave-source-composition.mjs', 'lib/inkwave-build-only-modules.mjs', 'lib/inkwave-worker-compaction.mjs', 'lib/inkwave-source-compaction.mjs', 'lib/inkwave-stage-assets.mjs', 'lib/inkwave-lossless-lightmap.mjs']) {
     assert.equal(identity.files['build-script/' + file], hash(fs.readFileSync(new URL('scripts/' + file, root))),
       'direct builder helper participates in source identity: ' + file);
   }
@@ -226,36 +214,39 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   const ast = parse(workerSource, { ecmaVersion: 'latest', sourceType: 'script' });
   const binding = ast.body.flatMap(n => n.type === 'VariableDeclaration' ? n.declarations : []).find(n => n.id.name === 'BUILD');
   const config = JSON.parse(workerSource.slice(binding.init.start, binding.init.end));
+  // The production manifest stores stable asset-key indices; inspect the decoded
+  // filenames while leaving the exact stamped worker config untouched.
+  const precache = decodePrecacheEntries(config.precache, config.assets);
   const profileSource = fs.readFileSync(new URL('patches/splatoon3/profile.json', root), 'utf8');
   const profileEmitted = fs.readFileSync(path.join(site, 'patches/splatoon3/profile.json'), 'utf8');
   assert.deepEqual(JSON.parse(profileEmitted), JSON.parse(profileSource),
     'profile compaction preserves every tuning value and source field');
   assert.equal(profileEmitted, JSON.stringify(JSON.parse(profileSource)), 'compact only emitted JSON whitespace');
   assert.equal(identity.files['patch/profile.json'], hash(Buffer.from(profileSource)), 'identity retains raw profile input');
-  assert(config.precache.includes('patches/splatoon3/profile.json'), 'all tuning data remains available offline');
+  assert(precache.includes('patches/splatoon3/profile.json'), 'all tuning data remains available offline');
   // The model-family bundle still has a static import of its separate kit.mjs.
   for (const file of ['patches/splatoon3/runtime/weapon-models/registry.mjs',
     'patches/splatoon3/runtime/weapon-models/kit.mjs']) {
-    assert(config.precache.includes(file), 'weapon model dependency not offline-ready: ' + file);
+    assert(precache.includes(file), 'weapon model dependency not offline-ready: ' + file);
   }
   const weaponRegistry = 'patches/splatoon3/runtime/weapon-models/registry.mjs';
   const emittedImports = staticEsModuleImports(fs.readFileSync(path.join(site, weaponRegistry), 'utf8'));
   assert(emittedImports.includes('./kit.mjs'), 'minified weapon registry retains its shared modelling-kit import');
   for (const spec of emittedImports.filter(spec => spec.startsWith('.'))) {
     const dependency = path.posix.normalize(path.posix.join(path.posix.dirname(weaponRegistry), spec));
-    assert(config.precache.includes(dependency), 'weapon bundle static import not precached: ' + dependency);
+    assert(precache.includes(dependency), 'weapon bundle static import not precached: ' + dependency);
   }
-  assert(config.precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= PRECACHE_BUDGET_BYTES,
+  assert(precache.reduce((sum, file) => sum + config.assets[file][0], 0) <= PRECACHE_BUDGET_BYTES,
     'precache ceiling includes the complete runtime dependency graph');
   for (const file of BUILD_ONLY_PATCH_MODULES) {
     assert(!fs.existsSync(path.join(site, file)), file);
     assert(!Object.hasOwn(config.assets, file), file);
-    assert(!config.precache.includes(file), file);
+    assert(!precache.includes(file), file);
   }
   for (const file of runtimeHelpers) {
     assert(fs.existsSync(path.join(site, file)), file);
     assert(Object.hasOwn(config.assets, file), file);
-    assert(config.precache.includes(file), file);
+    assert(precache.includes(file), file);
   }
   const index = fs.readFileSync(path.join(site, 'index.html'));
   const bodies = Object.fromEntries(Object.keys(config.assets).map(file =>
@@ -285,7 +276,7 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   assert.equal(worker.counts.skipWaiting, 0);
   world.offline = true;
   assert.equal(await (await worker.request('./', { mode: 'navigate' })).response.text(), index.toString());
-  for (const file of config.precache) {
+  for (const file of precache) {
     const result = await worker.request(`_versions/${config.revision}/${file}`);
     assert.deepEqual(Buffer.from(await result.response.arrayBuffer()), bodies[file], file);
   }
@@ -295,4 +286,13 @@ test('emitted worker keeps the complete runtime graph, installs, and replays ver
   await assert.rejects(candidate.install(), /integrity/);
   assert.equal((await candidate.status()).offlineReady, false);
   assert(!corrupt.puts.some(row => row.url.endsWith('__inkwave_cache_complete__')));
+});
+
+test('indexed worker precache decodes strictly before offline graph checks', () => {
+  const assets = {'z/actual.js':[7,'b'.repeat(64)],'a/actual.css':[9,'c'.repeat(64)]};
+  assert.deepEqual(decodePrecacheEntries([1,0], assets), ['a/actual.css','z/actual.js']);
+  assert.deepEqual(decodePrecacheEntries(['z/actual.js'], assets), ['z/actual.js']);
+  assert.throws(() => decodePrecacheEntries([1,'z/actual.js'], assets), /cache precache index/);
+  assert.throws(() => decodePrecacheEntries([2], assets), /cache precache index/);
+  assert.throws(() => decodePrecacheEntries([0,0], assets), /cache precache uniqueness/);
 });

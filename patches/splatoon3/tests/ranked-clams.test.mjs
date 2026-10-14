@@ -61,7 +61,7 @@ const makeRule = (options = {}) => {
 };
 
 test('Splatoon 3 starts with thirty persistent field clams and preserves snapshots as JSON state', () => {
-  const { rule } = makeRule({ clams: { spawns: Array.from({ length: 30 }, (_, i) => [i, 0, 0]) } });
+  const { rule } = makeRule({ clams: { spawns: Array.from({ length: 33 }, (_, i) => [i * 3, 0, 0]) } });
   assert.equal(rule.state.clams.length, 30);
   rule.update(20, blankFrame());
   assert.equal(rule.state.clams.length, 33, 'only one group is spawned after twelve seconds');
@@ -72,7 +72,7 @@ test('Splatoon 3 starts with thirty persistent field clams and preserves snapsho
   assert.equal(rule.state.clams.length, 33, 'snapshot is detached from authoritative state');
 });
 
-test('only grounded actors collect grounded clams; eight small clams become one held Power Clam', () => {
+test('actors within reach can collect clams in the air; eight small clams become one held Power Clam', () => {
   const { rule } = makeRule();
   const grounded = point('p0', 0, [0, 0, 0]);
   const airborne = point('p1', 1, [4, 0, 0], { grounded: false });
@@ -80,7 +80,7 @@ test('only grounded actors collect grounded clams; eight small clams become one 
   addGroundClam(rule, 'small', null, [4, 0, 0]);
   rule.update(1 / 60, blankFrame([grounded, airborne]));
   assert.deepEqual(rule.state.inventories.p0, { team: 0, small: 7, power: false });
-  assert.equal(rule.state.inventories.p1.small, 0, 'airborne pickup is ignored');
+  assert.equal(rule.state.inventories.p1.small, 1, 'being airborne does not prohibit pickup within reach');
   rule.state.clams = rule.state.clams.filter(clam => clam.pos[0] !== 0);
   addGroundClam(rule, 'small', null, [0, 0, 0]);
   rule.update(1 / 60, blankFrame([grounded]));
@@ -184,6 +184,8 @@ test('Power Clam breaks the barrier for twenty points; clams score three and add
   rule.state.inventories.p0 = { team: 0, small: 0, power: true };
   rule.update(1 / 60, blankFrame([actor], { p0: { throw: true, aim: [0, 0, 1] } }));
   rule.update(0.2, blankFrame([actor]));
+  assert.deepEqual(engine.counts, [100, 100], 'the drilling Power Clam has not opened the barrier');
+  rule.update(1.2, blankFrame([actor]));
   assert.deepEqual(engine.counts, [80, 100]);
   assert.equal(rule.state.baskets[0].barrierOpen, true);
   assert.equal(rule.state.baskets[1].tucked, true, 'the opposite basket is tucked during the scoring window');
@@ -250,7 +252,7 @@ test('RankedEngine gives scoreless overtime 180 real seconds and advances both o
 test('RankedEngine generates field clams every four seconds throughout scoreless overtime', () => {
   const engine = new RankedEngine('clams', {
     id: 'clams-engine-ot-spawns',
-    clams: { spawns: [[0, 0, 0]], goals: [[0, 0, 1], [0, 0, -1]] },
+    clams: { spawns: Array.from({length:33}, (_,i)=>[i*3,0,0]), goals: [[0, 0, 1], [0, 0, -1]] },
   });
   assert.equal(engine.rule.state.clams.length, 30);
   engine.time = 0.1;
@@ -318,16 +320,16 @@ test('an open scoring window can sustain overtime even when the losing side has 
   const { rule, engine } = makeRule();
   engine.counts = [40, 70];
   rule.state.scoredPoints = [60, 30];
-  rule.state.baskets[0].barrierOpen = true;
-  rule.state.baskets[0].openTimer = 0.2;
-  rule.state.baskets[0].chancePoints = 20;
+  rule.state.baskets[1].barrierOpen = true;
+  rule.state.baskets[1].openTimer = 0.2;
+  rule.state.baskets[1].chancePoints = 20;
   assert.equal(rule.beginOvertime(), true);
   assert.equal(rule.state.overtime.opportunityTimer, null);
   rule.updateOvertime(0.1, blankFrame());
   assert.equal(engine.winner, null, 'the open scoring opportunity remains active');
   rule.updateOvertime(0.1, blankFrame());
   assert.equal(engine.winner, 0, 'overtime ends when the open basket closes');
-  assert.equal(engine.events.find(event => event.kind === 'finish')?.data.reason, 'clam-overtime-barrier-closed');
+  assert.equal(engine.events.find(event => event.kind === 'finish')?.data.reason, 'clam-overtime-chance-ended');
 });
 
 test('opening the comeback basket inside twenty seconds clears the opening deadline; losing the chance still ends overtime', () => {
@@ -337,8 +339,9 @@ test('opening the comeback basket inside twenty seconds clears the opening deadl
   rule.state.inventories.lastChance = { team: 1, small: 0, power: true };
   rule.beginOvertime();
   const actor = point('lastChance', 1, [0, 0, 0]);
-  rule.updateOvertime(19, blankFrame([actor], { lastChance: { throw: true, aim: [0, 0, -1] } }));
+  rule.updateOvertime(17, blankFrame([actor], { lastChance: { throw: true, aim: [0, 0, -1] } }));
   rule.updateOvertime(0.2, blankFrame([actor]));
+  rule.updateOvertime(1.2, blankFrame([actor]));
   assert.equal(engine.winner, null);
   assert.equal(rule.state.baskets[1].barrierOpen, true);
   assert.equal(rule.state.overtime.opportunityTimer, null);

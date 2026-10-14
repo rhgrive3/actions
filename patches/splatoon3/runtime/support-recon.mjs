@@ -4,8 +4,9 @@ import { subMarkSeconds } from './sub-mark-resistance.mjs';
 // Splatoon3-resources/splat3/data/parameter/1130/weapon/
 // WeaponPointSensor.game__GameParameterTable.json
 // SHA256 57d0ab596ccdc9cd2e8da079ba4a169fc87aee36aeba079aafd81894d78bac03
-// The raw engine distance 6.0 is provisionally mapped to 6 INKWAVE world units;
-// player-collision and field durations still require real-console comparison.
+// Wiki system units: 50 DU = 5 m = one test-range line. Source distance
+// 6 m agrees with the measured 1.2-line radius; actual capsule/collision
+// agreement still requires real-console comparison.
 export const POINT_SENSOR_SOURCE = Object.freeze({
   areaDistance: Object.freeze([6, 6, 6]),
   markingFrames: Object.freeze([480, 720, 960]),
@@ -23,7 +24,7 @@ export const POINT_SENSOR = Object.freeze({
 });
 export function pointSensorMarkFrames(ap, gearCurve) {
   return typeof gearCurve === 'function'
-    ? Math.round(gearCurve(ap || 0, ...POINT_SENSOR_SOURCE.markingFrames))
+    ? Math.floor(gearCurve(ap || 0, ...POINT_SENSOR_SOURCE.markingFrames)+1e-9)
     : POINT_SENSOR_SOURCE.markingFrames[0];
 }
 export function pointSensorThrowSpeed(ap, gearCurve) {

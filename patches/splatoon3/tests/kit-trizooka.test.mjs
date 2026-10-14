@@ -21,7 +21,7 @@ import {
   installKitTrizooka, installTrizookaLifecycle, trizookaSpecialWeapon, trizookaProjectileDescriptor,
   startTrizooka, stepTrizooka, endTrizooka, canActivateTrizooka, disposeTrizooka, trizookaIsActive, trizookaGaugeFraction,
   newTrizookaState, newTrizookaReplayState, trizookaReplayActivate, trizookaReplayFire, trizookaReplayEnd,
-  splashBandsFor, splashRadiusFor, perpendicularBasis,
+  splashBandsFor, splashRadiusFor, paintRadiusFor, perpendicularBasis,
   throwVolley, apOf, durationFor,
   selectTrizookaFlight, selectTrizookaCollision, trizookaOrbitOffset, trizookaDragPerSecond,
   trizookaClearProjectile, trizookaApplyProjectile,
@@ -46,6 +46,7 @@ test('spec matches the pinned UltraShot table, not the quarantined stamp values'
   assert.equal(TRIZOOKA.directHitDamage, 220);         // DirectHitDamage 2200 / 10
   assert.deepEqual(TRIZOOKA.splashBands, [[2.5, 53], [4.0, 35]]);
   assert.equal(TRIZOOKA.paintRadius, 3.2);
+  assert.deepEqual(TRIZOOKA_SPEC_UP.paintRadius, [3.2, 3.6, 4.0]);
   // AP 0 duration. The quarantined draft used the UltraStamp 570F.
   assert.equal(TRIZOOKA.duration, 330 / 60);
   assert.notEqual(TRIZOOKA.duration, 570 / 60);
@@ -65,6 +66,8 @@ test('spec matches the pinned UltraShot table, not the quarantined stamp values'
   assert.deepEqual(TRIZOOKA_SPEC_UP.duration, [330 / 60, 405 / 60, 480 / 60]);
   assert.equal(apOf({}), 0, 'an actor without an equipped AP snapshot uses zero');
   assert.equal(durationFor(0), 330 / 60);
+  assert.equal(paintRadiusFor(0), 3.2);
+  assert.equal(paintRadiusFor(57), 4.0);
 });
 
 test('the volley configuration is a real non-null calibration, honestly labelled', () => {
@@ -609,7 +612,8 @@ test('the AP rate stretches distance and never the damage', async () => {
   assert.equal(ap0.splashRadius, 4.0, 'outer band distance at AP 0');
   assert.equal(ap57.splashRadius, 4.0 * 1.3);
   assert.notEqual(ap0.splashRadius, TRIZOOKA.paintRadius, 'PaintRadius is not the damage radius');
-  assert.equal(ap0.paintRadius, 3.2, 'the ink/FX radius stays PaintRadius');
+  assert.equal(ap0.paintRadius, 3.2, 'AP 0 uses PaintRadius Low');
+  assert.equal(ap57.paintRadius, 4.0, 'AP 57 uses PaintRadius High');
   // a target at 3.9m: inside AP0's 4.0 band, still inside AP57's 5.2 band
   const inside = (bands, d) => bands.some(([r, dmg]) => d <= r && dmg > 0);
   assert.equal(inside(ap0.splashBands, 3.9), true);
@@ -793,7 +797,7 @@ test('the descriptor exposes the full native blast field names', () => {
   assert.equal(d.splashDamageMax, 53);
   assert.equal(d.splashDamageMin, 35);
   assert.equal(d.splashBands[0][1], 53);
-  assert.equal(d.paintRadius, 3.2, 'the ink/FX radius stays PaintRadius');
+  assert.equal(d.paintRadius, 3.2, 'AP 0 uses PaintRadius Low');
 });
 
 // ---- replay ----------------------------------------------------------------
