@@ -172,19 +172,22 @@ test('Tentatek HD reconstruction preserves base and native channels while correc
   for(const key of Object.keys(ga.attributes))assert.deepEqual(Array.from(gd.attributes[key].array),Array.from(ga.attributes[key].array));
  }
  const skin=d.parts.variantSkin.src,cream=new f.K.THREE.Color('#eeeee7');let creamCount=0,normalOut=0,centers=new Set();
- for(let i=0;i<skin.attributes.position.count;i++)if(Math.abs(skin.attributes.color.getX(i)-cream.r)<1e-6){
+ for(let i=0;i<skin.attributes.position.count;i++)if(Math.abs(skin.attributes.color.getX(i)-cream.r)<1e-6&&skin.attributes.aMat.getX(i)===f.K.M.satin){
   creamCount++;const outward=Math.sign(skin.attributes.position.getX(i))*skin.attributes.normal.getX(i);assert.ok(outward>0,'each plate normal faces its own side');normalOut+=outward;
   assert.equal(skin.attributes.aMat.getX(i),f.K.M.satin);
  }
  assert.equal(creamCount,9024);console.log({normalOut});assert.ok(normalOut>0,'both plates face outward');
  for(let i=0;i<skin.index.count;i+=3) {
   const ids=Array.from(skin.index.array.slice(i,i+3));
-  if(!ids.every(j=>Math.abs(skin.attributes.color.getX(j)-cream.r)<1e-6))continue;
+  if(!ids.every(j=>Math.abs(skin.attributes.color.getX(j)-cream.r)<1e-6&&skin.attributes.aMat.getX(j)===f.K.M.satin))continue;
   const v=ids.map(j=>[skin.attributes.position.getZ(j)-.038,skin.attributes.position.getY(j)-(.11/120*117)]);
   const cross=(a,b)=>a[0]*b[1]-a[1]*b[0],signs=v.map((a,k)=>cross(a,v[(k+1)%3]));
   if(signs.every(x=>x>=-1e-12)||signs.every(x=>x<=1e-12))centers.add(Math.sign(skin.attributes.position.getX(ids[0])));
  }
  assert.equal(centers.size,2,'solid filled center on both sides');
+ let printed=0;for(let i=0;i<skin.attributes.position.count;i++)if(skin.attributes.aMat.getX(i)===f.K.M.print){
+  printed++;assert.ok(Math.sign(skin.attributes.position.getX(i))*skin.attributes.normal.getX(i)>0,'wordmark faces outward');
+ }assert.equal(printed,117*4*2,'pixel-traced wordmark on both sides');assert.ok(revision.removedOldPins>0);
  console.log(JSON.stringify({revision,baseBodyTriangles:a.body.index.count/3,variantBodyTriangles:d.body.index.count/3,newShellAndEmblemTriangles:skin.index.count/3,baseCanTriangles:a.parts.can.src.index.count/3,creamVertices:creamCount,normalOut}));
  if(process.env.TENTATEK_GEOMETRY_EXPORT)fs.writeFileSync(process.env.TENTATEK_GEOMETRY_EXPORT,JSON.stringify(Object.fromEntries([['base',a],['corrected',d]].map(([name,model])=>[name,channels(model).map(([n,g])=>({n,p:Array.from(g.attributes.position.array),c:Array.from(g.attributes.color.array),idx:Array.from(g.index.array)}))]))));
 });

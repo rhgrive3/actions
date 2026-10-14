@@ -73,15 +73,17 @@ try{
    const sizes=bounds.map(b=>b.getSize(new THREE.Vector3()));
    const span=Math.max(...sizes.flatMap(s=>s.toArray()));
    if(!(span>0&&Number.isFinite(span)))throw Error('Invalid geometry bounds '+id);
-   const captures=[];
+   const captures=[],extraViews=[];
    for(let i=0;i<models.length;i++){
     const g=models[i],center=bounds[i].getCenter(new THREE.Vector3());scene.add(g);
     camera.position.copy(center).add(new THREE.Vector3(-1,.3,.5).normalize().multiplyScalar(span*2.5));camera.lookAt(center);
     renderer.render(scene,camera);renderer.render(scene,camera);
     if(renderer.getContext().getError()!==0)throw Error('WebGL error '+id);
-    captures.push(renderer.domElement.toDataURL('image/png').split(',')[1]);scene.remove(g);
+    captures.push(renderer.domElement.toDataURL('image/png').split(',')[1]);
+    if(i===1){for(const [view,dir] of [['opposite',[1,.3,.5]],['upper',[-.6,1,.6]]]){camera.position.copy(center).add(new THREE.Vector3(...dir).normalize().multiplyScalar(span*2.5));camera.lookAt(center);renderer.render(scene,camera);renderer.render(scene,camera);if(renderer.getContext().getError()!==0)throw Error('WebGL '+view);extraViews.push({view,png:renderer.domElement.toDataURL('image/png').split(',')[1]});}}
+    scene.remove(g);
    }
-   result.push({id,baseId,variantId,name:WEAPONS[id].referenceNames?.en||WEAPONS[id].name,baseName:WEAPONS[baseId].referenceNames?.en||WEAPONS[baseId].name,basePng:captures[0],variantPng:captures[1],baseSize:sizes[0].toArray(),variantSize:sizes[1].toArray()});
+   result.push({id,baseId,variantId,name:WEAPONS[id].referenceNames?.en||WEAPONS[id].name,baseName:WEAPONS[baseId].referenceNames?.en||WEAPONS[baseId].name,basePng:captures[0],variantPng:captures[1],extraViews,baseSize:sizes[0].toArray(),variantSize:sizes[1].toArray()});
    for(const a of actors)a.character.dispose();
   }
   env.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return result;
@@ -92,6 +94,7 @@ try{
  const card=(r,data)=>'<section class="card"><h2>'+esc(r.name)+'</h2><div class="pair"><figure><figcaption>BASE · '+esc(r.baseName)+'</figcaption><img src="'+(data?'data:image/png;base64,'+r.basePng:r.id+'-base.png')+'"></figure><figure><figcaption>VARIANT · '+esc(r.name)+'</figcaption><img src="'+(data?'data:image/png;base64,'+r.variantPng:r.id+'-variant.png')+'"></figure></div><small>'+esc(r.baseId+' → '+r.variantId)+'</small></section>';
  const html=(items,data,single=false)=>'<!doctype html><meta charset="utf-8"><title>INKWAVE weapon variants</title><style>'+css+'</style><body class="'+(single?'single':'')+'"><h1>INKWAVE · Shape correction candidate</h1><p>Production shaders; model-space view; identical lighting and per-pair physical scale · Orange team ink · Build '+manifest.contentHash.slice(0,12)+'</p><main class="grid">'+items.map(r=>card(r,data)).join('')+'</main></body>';
  for(const row of rows){
+  for(const v of row.extraViews)fs.writeFileSync(path.join(out,row.id+'-'+v.view+'.png'),Buffer.from(v.png,'base64'));
   fs.writeFileSync(path.join(out,row.id+'-base.png'),Buffer.from(row.basePng,'base64'));
   fs.writeFileSync(path.join(out,row.id+'-variant.png'),Buffer.from(row.variantPng,'base64'));
   await page.setContent(html([row],true,true));await page.locator('img').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
@@ -100,6 +103,6 @@ try{
  await page.setContent(html(rows,true));await page.locator('img').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
  await page.screenshot({path:path.join(out,'weapon-variants-overview.png'),fullPage:true});
  fs.writeFileSync(path.join(out,'index.html'),html(rows,false));
- const receipt={sourceSha,contentHash:manifest.contentHash,renderer:'Chromium SwiftShader; actual native weapon.pivot instances; original production materials and callbacks',characterRendered:false,presentationTransform:'Native off group reset to identity for model-space comparison only; geometry and shaders unchanged',teamColors:['#ff8825','#484ce8'],rows:rows.map(({basePng,variantPng,...r})=>r),errors};
+ const receipt={sourceSha,contentHash:manifest.contentHash,renderer:'Chromium SwiftShader; actual native weapon.pivot instances; original production materials and callbacks',characterRendered:false,presentationTransform:'Native off group reset to identity for model-space comparison only; geometry and shaders unchanged',teamColors:['#ff8825','#484ce8'],rows:rows.map(({basePng,variantPng,extraViews,...r})=>({...r,extraViews:extraViews.map(x=>x.view)})),errors};
  fs.writeFileSync(path.join(out,'gallery-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt,null,2));
 }catch(e){fs.writeFileSync(path.join(out,'capture-error.json'),JSON.stringify({sourceSha,contentHash:manifest.contentHash,error:String(e),networkFailures},null,2));throw e;}finally{await browser?.close();await new Promise(r=>server.close(r));}

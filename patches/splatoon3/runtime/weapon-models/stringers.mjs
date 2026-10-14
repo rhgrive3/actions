@@ -108,18 +108,29 @@ export function reefMilK(d) {
   const cfg = { C, span: 0.3, back: 0.14, riserZ: -0.03, limbR: 0, coilR: 0.056, coil0: -0.01, coil1: 0.09,
     arrowFront: 0.02, muzzleZ: 0.15, gripL: gripSpec([0, 0.0, 0.095], [0, 0, 1], [0.75, -0.62, -0.1]) };
   return bow(d, cfg, (body, ink) => {
-    // Long bottle: broad rear closure near the string, rounded forward shoulder and short neck.
-    // Opaque native surface is retained; the reference's translucency is not simulated with paint.
-    body.add(zlathe([[0,-0.129],[0.052,-0.129],[0.06,-0.115],[0.064,0.04],
-      [0.061,0.065],[0.048,0.085],[0.036,0.095],[0,0.095]],0,YC,0,24),C.black,M.satin);
-    body.add(ring(0.055,0.005,0,YC,-0.124,'z',5,20),C.limb,M.satin);
-    // Concentric rear cap ribs visible in the 06s back/side view.
-    for (const r of [0.014,0.025,0.036,0.046])body.add(ring(r,0.0018,0,YC,-0.133,'z',4,20),C.limb,M.satin);
+    // 400px icon and HD rotation: narrow rear bottle steps into a broad front shoulder.
+    // V3's almost constant-radius cylinder erased this defining bottle/coupling silhouette.
+    body.add(zlathe([[0,-0.129],[0.038,-0.129],[0.043,-0.119],[0.046,-0.104],
+      [0.046,-0.045],[0.049,-0.026],[0.057,-0.018],[0.057,-0.008],[0,-0.008]],0,YC,0,24),'#e1e1d6',M.satin);
+    body.add(ring(0.04,0.004,0,YC,-0.124,'z',5,20),C.limb,M.satin);
+    for (const r of [0.014,0.025,0.034])body.add(ring(r,0.0018,0,YC,-0.133,'z',4,20),C.limb,M.satin);
+    const shoulder=zlathe([[0.048,-0.025],[0.061,-0.025],[0.071,-0.015],[0.075,0.005],
+      [0.075,0.037],[0.071,0.053],[0.059,0.067],[0.044,0.079],
+      [0.036,0.095],[0,0.095]],0,YC,0,48);
+    // The shallow vertical scallops are part of the cream shoulder itself.
+    const cp=shoulder.attributes.position;
+    for(let i=0;i<cp.count;i++){
+      const x=cp.getX(i),y=cp.getY(i)-YC,z=cp.getZ(i),r=Math.hypot(x,y);
+      if(r>0.07&&z>-.016&&z<.054){const nr=r-.0018*(.5+.5*Math.cos(Math.atan2(y,x)*12));cp.setXY(i,x*nr/r,YC+y*nr/r);}
+    }
+    shoulder.computeVertexNormals();body.add(shoulder,'#c9cbbd',M.satin);
+    body.add(ring(0.063,0.0035,0,YC,-0.022,'z',4,24),'#d5d7c9',M.satin);
+    body.add(ring(0.061,0.003,0,YC,0.065,'z',4,24),'#e4e3d6',M.satin);
     // HD 10s: broad stepped outer coupling and a longitudinally fluted front sleeve.
     // Their native fixed finish stays neutral; video team color/translucency is a separate gap.
     body.add(zlathe([[0.034,0.086],[0.049,0.086],[0.053,0.091],[0.053,0.098],
       [0.049,0.101],[0.049,0.108],[0.052,0.111],[0.052,0.117],
-      [0.047,0.12],[0.034,0.12],[0.034,0.086]],0,YC,0,32),C.limb,M.satin);
+      [0.047,0.12],[0.034,0.12],[0.034,0.086]],0,YC,0,32),'#92978c',M.satin);
     const sleeve=zlathe([[0.023,0.115],[0.046,0.115],[0.05,0.12],[0.05,0.139],
       [0.046,0.146],[0.041,0.15],[0.023,0.15],[0.023,0.115]],0,YC,0,48);
     const sp=sleeve.attributes.position;
@@ -131,7 +142,7 @@ export function reefMilK(d) {
         sp.setXY(i,x*nr/r,YC+y*nr/r);
       }
     }
-    sleeve.computeVertexNormals();body.add(sleeve,C.steel,M.satin);
+    sleeve.computeVertexNormals();body.add(sleeve,'#727970',M.satin);
     // Small concentric metal nozzle remains distinct from the broad outer coupling.
     body.add(zlathe([[0.006,0.141],[0.018,0.141],[0.019,0.146],
       [0.014,0.155],[0.006,0.155],[0.006,0.141]],0,YC,0,16),C.limb,M.satin);
@@ -154,7 +165,10 @@ export function reefMilK(d) {
       }
       body.add(zcyl(0.009,0,0.065,0,YC+s*0.15,10),C.steel,M.satin);
       body.add(zcyl(0.011,0.048,0.067,0,YC+s*0.15,10),C.limb,M.satin);
-      body.add(pipe([[0,y,z],[0,YC+s*0.14,cfg.riserZ-0.02]],0.002,8,5),'#cf744b',M.satin);
+      body.add(pipe([[0,y,z],[0,YC+s*0.14,cfg.riserZ-0.02]],0.0028,8,6),'#cf744b',M.satin);
+      // Missing in v3: root-to-rear-carriage brace closes the visible triangle.
+      // Static support cables, separate from the untouched native animated draw string.
+      body.add(pipe([[0,YC+s*0.14,cfg.riserZ-0.02],[0,YC+s*0.045,cfg.riserZ-cfg.back]],0.0028,8,6),'#cf744b',M.satin);
       // Attachment block and visible side screw where the limb meets the bottle.
       body.add(box(0.047,0.049,0.04,0,YC+s*0.092,-0.025,0.4),C.limb,M.satin);
       for(const x of [-0.026,0.026])body.add(xcyl(0.003,x-0.001,x+0.001,YC+s*0.092,-0.025,8),'#707773',M.satin);
@@ -171,7 +185,7 @@ export function reefMilK(d) {
       const y=0.122+row*0.011,z=-0.017-row*0.003-col*0.008;
       body.add(xcyl(0.0009,side*0.023-0.0003,side*0.023+0.0003,YC-y,z,5),'#a9aba3',M.rubber);
     }
-    body.add(box(0.016,0.09,0.016,0,YC,cfg.riserZ-cfg.back,0.4),C.limb,M.satin);
+    body.add(pipe([[0,YC-0.05,-0.17],[0,YC-0.025,-0.178],[0,YC+0.025,-0.178],[0,YC+0.05,-0.17]],0.01,16,8),C.limb,M.satin);
   });
 }
 

@@ -1,5 +1,5 @@
 // Procedural reconstruction from official S3 Tentatek turntable (02s/06s/10s),
-// Nintendo Chill Season 2022 gameplay and S3 promotional render.
+// S3 promotional render; ambiguous alternate gameplay still is not used.
 // A procedural approximation, not a retail mesh or verified multiview reconstruction.
 import { THREE, Pieces, M, zlathe, emptyGeometry, part, slab, smoothOutline, pipe, box, sphere, frontSlab, zcyl } from './kit.mjs';
 import { recolor } from './variant-shooter-surfaces.mjs';
@@ -13,7 +13,7 @@ const radius = z => {const t=z<Z0+CAP?(z-Z0-CAP)/CAP:z>Z1-CAP?(z-Z1+CAP)/CAP:0;r
 function emblem(side, scale=1, offset=.0057, depth=2) {
   // The weapon's emblem is SOLID cream; the separate bottom-right icon badge
   // has a pink interior and must not be mistaken for the weapon-side marking.
-  // Tiny lettering is omitted because the source cannot resolve its glyphs.
+  // The separate wordmark is traced from the official rotation frame below.
   const outline = [[-.055,.008],[-.05,.023],[-.035,.026],[-.017,.012],[0,.005],
     [.018,.023],[.035,.025],[.048,.014],[.049,-.003],[.039,-.019],
     [.022,-.021],[.006,-.007],[-.006,-.006],[-.024,-.023],[-.041,-.023],[-.053,-.011]];
@@ -79,11 +79,14 @@ function frameAndForeEnd(d) {
   const g=d.body,removedPurple=removeComponents(g,'#3d2ba0',()=>true);
   const removedForeEnd=removeComponents(g,'#efbf2a',b=>b.min.z>.06&&b.max.z<.18&&b.max.y<.06);
   const removedPlate=removeComponents(g,'#efbf2a',(b,n)=>n===68&&b.min.z>.15&&b.max.z<.19);
+  // The old two tiny pin-heads remained after replacing the base front stop.
+  // Retail has one broad lower circular stop, created below.
+  const removedOldPins=removeComponents(g,'#1c1d22',b=>b.min.z>.17&&b.max.z<.181&&b.max.y<.05);
   const p=new Pieces(),purple='#3d2ba0',yellow='#efbf2a';
   // HD side silhouette: broad curved pistol heel, no rectangular base shoe.
-  const outline=[[-.038,.06],[.079,.06],[.08,.035],[.054,.026],[.052,.003],[.04,-.014],[.022,-.017],[.011,-.01],
+  const outline=[[-.038,.06],[.079,.06],[.08,.035],[.069,.026],[.072,.012],[.064,-.008],[.047,-.019],[.023,-.019],[.011,-.01],
     [.003,-.038],[-.004,-.064],[-.017,-.072],[-.037,-.063],[-.042,-.05],[-.029,-.013],[-.025,.011],[-.035,.035]];
-  const hole=[[.018,.026],[.041,.026],[.046,.015],[.043,.003],[.03,-.005],[.018,-.002],[.012,.009]];
+  const hole=[[.014,.025],[.053,.025],[.061,.015],[.055,.002],[.041,-.007],[.023,-.006],[.014,.004]];
   p.add(slab(smoothOutline(outline,64),.028,0,.004,[smoothOutline(hole,28)]),purple,M.gloss);
   for(const side of [-1,1]) {
     for(const y of [.042,.051])p.add(box(.0018,.0023,.04,side*.015,y,.025,.4,6,4),'#332290',M.gloss);
@@ -97,13 +100,39 @@ function frameAndForeEnd(d) {
   // inherited broad bowl and four straight bars. Native support socket stays.
   const fore=[[.071,.054],[.141,.054],[.16,.045],[.164,.026],[.153,.012],[.136,.009],[.114,.015],[.09,.024],[.074,.041]];
   p.add(slab(smoothOutline(fore,40),.038,0,.005),yellow,M.gloss);
-  for(const z of [.107,.124,.141])p.add(pipe([[-.017,.028,z],[-.014,.016,z-.003],[0,.011,z-.004],[.014,.016,z-.003],[.017,.028,z]],.003,12,6),yellow,M.gloss);
+  // The previous ridges were mostly inside the .038-wide slab. Put the three
+  // swept finger ridges on the outside faces, as visible in the S3 promo.
+  for(const side of [-1,1]) {
+    for(const z of [.107,.124,.141])p.add(pipe([[side*.0195,.038,z+.002],[side*.0215,.030,z],[side*.021,.022,z-.004],[side*.018,.015,z-.006]],.0024,12,6),yellow,M.gloss);
+    for(const z of [.086,.151]) {
+      p.add(sphere(.0016,.0032,.0032,side*.0205,.044,z,10,8),'#bcc2c3',M.metal);
+      p.add(box(.0007,.0007,.0035,side*.0221,.044,z,.25,4,4),'#58606a',M.satin);
+    }
+  }
   // Front stop is an oblong plate, rather than a stepped rectangular extrusion.
   const plate=[];for(let i=0;i<40;i++){const a=i/40*Math.PI*2;plate.push([.025*Math.cos(a),.055+.049*Math.sin(a)]);}
   p.add(frontSlab(plate,.011,.172,.002),yellow,M.gloss);
   p.add(zcyl(.010,.178,.180,0,.026,20),'#303038',M.satin);
   p.list.unshift(d.body);d.body=p.build();
-  return {removedPurple,removedForeEnd,removedPlate};
+  return {removedPurple,removedForeEnd,removedPlate,removedOldPins};
+}
+// Pixel-run trace of the physical wordmark from official S3 turntable 02s.
+// Source pixels: origin(627,347), rotation -atan(.31), 112x28 sampling grid.
+// A thresholded geometry approximation, not invented Latin text or a font.
+const WORDMARK_RUNS=[[],[],[],[],[],[],[],[[95,98]],[[92,98]],[[48,50],[54,57],[66,69],[79,84],[92,96]],[[25,26],[31,33],[48,59],[67,69],[79,82],[92,94]],[[24,29],[30,36],[47,49],[50,60],[68,70],[79,81],[91,93]],[[9,12],[23,39],[45,49],[55,60],[68,72],[78,81],[91,93]],[[9,13],[24,28],[29,38],[45,47],[56,61],[70,72],[78,80],[91,97]],[[9,13],[23,27],[35,38],[44,46],[59,61],[70,73],[76,80],[89,99]],[[8,15],[23,26],[27,29],[36,38],[43,46],[59,63],[69,83],[89,92],[93,94],[96,99]],[[8,14],[23,32],[34,37],[43,46],[59,63],[69,84],[89,91]],[[8,15],[23,37],[42,46],[59,62],[66,75],[76,83],[88,92],[102,103]],[[8,16],[24,31],[32,37],[43,45],[59,62],[66,70],[72,73],[79,85],[89,92],[102,104]],[[7,11],[14,17],[24,30],[43,48],[60,61],[66,70],[82,85],[89,96],[97,104]],[[7,11],[13,18],[24,27],[45,52],[57,60],[66,70],[92,95],[96,97],[99,103]],[[5,10],[14,19],[23,28],[46,57],[58,59],[68,69]],[[4,10],[18,20],[24,34],[35,40],[48,49],[51,54],[55,57]],[[4,11],[18,21],[24,27],[28,33],[34,35]],[[4,10]],[[4,5],[7,10]],[],[]];
+function wordmark(side) {
+  const positions=[],indices=[];
+  for(let row=0;row<WORDMARK_RUNS.length;row++)for(const [u0,u1]of WORDMARK_RUNS[row]) {
+    const start=positions.length/3;
+    for(const [u,v]of [[u0,row],[u1,row],[u1,row+1],[u0,row+1]]) {
+      const z=.038-side*(u-56)*.00063,y=CY-.029-v*.00048;
+      const x=side*(Math.sqrt(Math.max(.00001,radius(z)**2-(y-CY)**2))+.0018);positions.push(x,y,z);
+    }
+    // Mirroring the text direction on the opposite side keeps it readable from
+    // either outward view, instead of reflecting glyphs through the tank.
+    indices.push(start,start+2,start+1,start,start+3,start+2);
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setIndex(indices);g.computeVertexNormals();return g;
 }
 export function tentatekShell(d) {
   // The official turntable confirms pink collar/S bands, and both logo sides.
@@ -119,10 +148,12 @@ export function tentatekShell(d) {
     // Plate reflects dark/light over the turntable, so use silver-white satin
     // instead of a flat cream print. The retail shader is not reproduced.
     shell.add(emblem(side,1,.0057,2),CREAM,M.satin);
+    shell.add(wordmark(side),CREAM,M.print);
   }
   d.parts.can.src.dispose();d.parts.can.src=emptyGeometry();
   d.parts.variantSkin=part(shell,d.parts.can.pivot,'body');
   d.variantGeometryRevision={source:'S3_Tentatek_Splattershot_model_rotating.mp4',removedBandTriangles:0,bandVertices,
     ...changed,shellProfile:'cylindrical-center-elliptical-endcaps',emblemSides:[-1,1],reverseSideVerified:true,
-    missingDetails:['wordmark glyphs','tank seam','exact retail surface response']};
+    wordmarkTrace:{sourceFrameSeconds:2,runs:117,exactGlyphContours:false},
+    missingDetails:['tank seam','exact retail surface response','subpixel wordmark contours']};
 }
