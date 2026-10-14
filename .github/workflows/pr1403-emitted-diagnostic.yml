@@ -1,0 +1,84 @@
+name: Diagnose exact PR 1403 emitted boundaries
+on:
+  push:
+    branches: [review/pr1403-emitted-4621-20261014]
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 4621e25891272e8757c3715169b0d6512a30c124
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build pinned unmodified gameplay tree
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 4621e25891272e8757c3715169b0d6512a30c124
+          test -z "$(git status --porcelain)"
+          mkdir -p diagnostic-results
+          git rev-parse HEAD > diagnostic-results/source-sha.txt
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2
+          node scripts/build-inkwave.mjs inkwave-public _site
+          cp _site/inkwave-build.json diagnostic-results/build-identity.json
+      - name: Verify every emitted artifact and exact runtime input hashes
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import crypto from 'node:crypto';import assert from 'node:assert/strict';
+          const hash=x=>crypto.createHash('sha256').update(x).digest('hex'),m=JSON.parse(fs.readFileSync('_site/inkwave-build.json'));
+          assert.equal(hash(JSON.stringify(m.artifacts)),m.contentHash);
+          for(const [p,h]of Object.entries(m.artifacts))assert.equal(hash(fs.readFileSync('_site/'+p)),h,p);
+          for(const p of ['runtime/main-weapon-catalog.mjs','runtime/weapons-charger-flight.mjs'])assert.equal(hash(fs.readFileSync('patches/splatoon3/'+p)),m.files['patch/'+p],p);
+          console.log(JSON.stringify({contentHash:m.contentHash,inputHash:m.inputHash,source:'4621e25891272e8757c3715169b0d6512a30c124'}));
+          NODE
+      - name: Run all 63 emitted rolling interruption cases
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/catalog-rolling-form-reset.test.mjs | tee diagnostic-results/roller-reset.tap
+          grep -qx '# tests 63' diagnostic-results/roller-reset.tap
+          grep -qx '# pass 63' diagnostic-results/roller-reset.tap
+          grep -qx '# fail 0' diagnostic-results/roller-reset.tap
+          grep -qx '# skipped 0' diagnostic-results/roller-reset.tap
+      - name: Run complete adjacent emitted geometry and real Actor callers
+        if: always()
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/catalog-rolling-support.test.mjs patches/splatoon3/tests/catalog-rolling-native-support.test.mjs | tee diagnostic-results/roller-adjacent.tap
+          grep -qx '# fail 0' diagnostic-results/roller-adjacent.tap
+          grep -qx '# skipped 0' diagnostic-results/roller-adjacent.tap
+      - name: Diagnose native emitted Charger flight with real wall and actors
+        if: always()
+        env:
+          INKWAVE_BUILT_SITE: _site
+        run: |
+          set -euo pipefail
+          cat > .charger-diagnostic.mjs <<'NODE'
+          import assert from 'node:assert/strict';
+          import {fixture} from './patches/splatoon3/tests/source-fixture.mjs';
+          const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true}),{G,THREE}=f,a=f.make('charger');
+          a.pos.set(0,0,0);a.character.root.position.copy(a.pos);a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,30);
+          const victims=[3,6,9].map(z=>{const e=f.make();e.team=1;e.pos.set(0,0,z);return e;});
+          const teammate=f.make();teammate.pos.set(0,0,2);G.actors=[a,teammate,...victims];
+          G.level=new f.Level({bounds:{minX:-20,maxX:20,minZ:-20,maxZ:20},spawnPads:[[-15,0,0],[15,0,0]],spawnBarrier:0,single:[{kind:'box',min:[-20,-1,-20],max:[20,0,20]},{kind:'box',min:[-5,0,7],max:[5,4,8]}],half:[]});G.physics=new f.Physics(G.level);
+          const system=new f.Projectiles(new THREE.Scene()),hits=[];system.applyHit=(_a,t,damage)=>hits.push({z:t.pos.z,damage});
+          G.projectiles=system;a.ink=100;a.kidT=10;a.intent.fire=true;f.tick(a,61);assert.ok(a.weaponRunner.charge>=.999,'native full charge');a.intent.fire=false;let releaseFrames=0;while(!(system._fidelityChargerFlights?.length)&&releaseFrames<30){f.tick(a);releaseFrames++;}const immediate={hits:[...hits],flights:system._fidelityChargerFlights?.length,beam:system.beams[0]?.mesh.scale.z};
+          for(let i=0;i<30;i++){G.time+=1/60;system.update(1/60);}
+          console.log(JSON.stringify({releaseFrames,immediate,after30frames:{hits,flights:system._fidelityChargerFlights?.length}}));
+          assert.equal(immediate.hits.length,0);assert.equal(immediate.flights,1);assert.deepEqual(hits.map(h=>h.z),[3,6]);assert.ok(hits.every(h=>h.damage===160));
+          NODE
+          node --experimental-vm-modules .charger-diagnostic.mjs | tee diagnostic-results/charger-production.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr1403-emitted-4621-diagnostic-${{ github.sha }}
+          path: diagnostic-results
+          if-no-files-found: error
+          retention-days: 7
