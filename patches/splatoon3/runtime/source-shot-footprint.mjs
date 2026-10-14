@@ -24,8 +24,14 @@ export const SOURCE_SHOT_RASTER_ENVELOPE = Object.freeze({
 // (bomb, blast, roll, speck) keep their legacy size and shape.
 // A face key is the contract of the source collision or catalog paint path.
 // This excludes generic untyped and cosmetic splats from global shrinking.
-export function sourceShotRasterRadius(radius, kind, face, cosmetic = false) {
-  if (cosmetic || !Number.isInteger(face) || !Number.isFinite(radius) || radius <= 0) return radius;
+export function sourceShotRasterRadius(radius, kind, face, cosmetic = false, tag = undefined) {
+  // The source catalogue uses face=-1 when the floor ray cannot return a
+  // source face ID. NetMatch drops -1 during replay, but preserves kind='shot'.
+  // Preserve identical local/remote normalization for that explicitly tagged
+  // path without touching untagged legacy paint.
+  const sourceTaggedShot = kind === 0 && tag === 'shot';
+  if (cosmetic || (!Number.isInteger(face) && !sourceTaggedShot) ||
+      !Number.isFinite(radius) || radius <= 0) return radius;
   if (kind === 0 || kind === 1 || kind === 4) return radius / SOURCE_SHOT_RASTER_ENVELOPE.shot;
   if (kind === 5) return radius / SOURCE_SHOT_RASTER_ENVELOPE.drop;
   return radius;
