@@ -13,7 +13,10 @@ export function installCanvasCapture(){
  globalThis.__captureNativeCanvas=async(mode)=>{
   globalThis.__nativeCanvasCaptureFailure=null;
   const r=NG.renderer,gl=r.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
-  const viewport=r.getViewport(new T.Vector4()).toArray(),scissor=r.getScissor(new T.Vector4()).toArray(),size=r.getSize(new T.Vector2());
+  // Pinned WebGLRenderer getters only invoke target.copy (Vector4) or set (Vector2).
+  // Keep these read-only targets local, avoiding an undeclared Three namespace.
+  const target=()=>({copy(v){this.x=v.x;this.y=v.y;this.z=v.z;this.w=v.w;return this;},set(x,y){this.x=x;this.y=y;return this;},toArray(){return [this.x,this.y,this.z,this.w];}});
+  const viewport=r.getViewport(target()).toArray(),scissor=r.getScissor(target()).toArray(),size=r.getSize(target());
   const state={contextAttributes:gl.getContextAttributes(),drawingBufferColorSpace:gl.drawingBufferColorSpace??null,unpackColorSpace:gl.unpackColorSpace??null,outputColorSpace:r.outputColorSpace??null,
    glViewport:Array.from(gl.getParameter(gl.VIEWPORT)),glScissor:Array.from(gl.getParameter(gl.SCISSOR_BOX)),glScissorTest:gl.isEnabled(gl.SCISSOR_TEST),
    readFramebufferIsDefault:gl.getParameter(gl.READ_FRAMEBUFFER_BINDING??gl.FRAMEBUFFER_BINDING)===null,drawFramebufferIsDefault:gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING??gl.FRAMEBUFFER_BINDING)===null,

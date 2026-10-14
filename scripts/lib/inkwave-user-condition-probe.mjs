@@ -11,14 +11,14 @@ export async function captureUserCondition(mobile){
      targets[key].readError=gl.getError();if(targets[key].framebufferStatus!==gl.FRAMEBUFFER_COMPLETE||targets[key].readError!==0)throw Error('Cloud/environment framebuffer readback failed');
     }}catch(error){cloudErrors.push(String(error.stack||error));}finally{r.setRenderTarget(previousTarget,previousFace,previousMip);}
     const frame=await globalThis.__captureNativeCanvas(mobile?'mobile-high-normal':'desktop-high-normal');
-    frame.conditions={platform:mobile?'Chromium SwiftShader with touch and iOS user agent emulation; not physical Safari':'Desktop Chromium SwiftShader',historicalReferenceCandidate:'14f9f913a8438353d0e462a0e74e17d8af876230',photoCachedSourceKnown:false,photoCameraExact:false,preparation:globalThis.__userConditionPreparation||null,actualMatchState:g.match?.state,actualMatchTime:g.match?.time,settings:{...g.settings},effectiveQuality:{...g.R.q},mobileDetection:{...g.mobile},palette:g.palette,camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),matrix:G.camera.matrixWorld.toArray(),projection:G.camera.projectionMatrix.toArray()},localPosition:G.local.pos.toArray(),rig:{yaw:g.rig.yaw,pitch:g.rig.pitch},theme:g.theme,viewport:[innerWidth,innerHeight],screenSize:typeof screen!=='undefined'?[screen.width,screen.height]:null,devicePixelRatio,rendererPixelRatio:r.getPixelRatio(),environment:tex(G.scene.environment),environmentIntensity:G.scene.environmentIntensity,cloudTargets:targets,cloudErrors,cloudCoverage:e?._cloudMat?.uniforms?.uCov?.value,cloudSeed:e?._cloudMat?.uniforms?.uSeed?.value,cloudReadiness:'Five exact framebuffer texel samples; sparse diagnostic only, not whole-map validity'};return frame;
+    frame.conditions={platform:mobile?'Chromium SwiftShader with touch and iOS user agent emulation; not physical Safari':'Desktop Chromium SwiftShader',historicalReferenceCandidate:'14f9f913a8438353d0e462a0e74e17d8af876230',photoCachedSourceKnown:false,photoCameraExact:false,preparation:globalThis.__userConditionPreparation||null,qualityReadiness:globalThis.__diagnosticQualityReady||null,actualMatchState:g.match?.state,actualMatchTime:g.match?.time,settings:{...g.settings},effectiveQuality:{...g.R.q},mobileDetection:{...g.mobile},palette:g.palette,camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),matrix:G.camera.matrixWorld.toArray(),projection:G.camera.projectionMatrix.toArray()},localPosition:G.local.pos.toArray(),rig:{yaw:g.rig.yaw,pitch:g.rig.pitch},theme:g.theme,viewport:[innerWidth,innerHeight],screenSize:typeof screen!=='undefined'?[screen.width,screen.height]:null,devicePixelRatio,rendererPixelRatio:r.getPixelRatio(),environment:tex(G.scene.environment),environmentIntensity:G.scene.environmentIntensity,cloudTargets:targets,cloudErrors,cloudCoverage:e?._cloudMat?.uniforms?.uCov?.value,cloudSeed:e?._cloudMat?.uniforms?.uSeed?.value,cloudReadiness:'Five exact framebuffer texel samples; sparse diagnostic only, not whole-map validity'};return frame;
    
 }
 
 // Instrumented setup uses the native palette picker and native match lifecycle.
 // No palette/material replacement and no assignment to match state or timer.
 export async function prepareUserConditionMatch(){
- const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();g._setSettings({quality:'high',shadows:true,bloom:false});
+ const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();await globalThis.__setDiagnosticQuality('high');
  const picker=g._pickPalette;let picks=0;
  g._pickPalette=function(...args){const random=Math.random;Math.random=()=>.7;try{picks++;return picker.apply(this,args);}finally{Math.random=random;}};
  try{await g.startMatch({mapId:'inkblot',mode:'turf',difficulty:'normal',time:'day'});}finally{g._pickPalette=picker;}
@@ -30,4 +30,29 @@ export async function prepareUserConditionMatch(){
  const timeAfter=g.match.time;if(g.match.state!=='playing'||Math.abs((timeBefore-timeAfter)-4)>1e-6)throw Error('Native live match time did not advance four seconds');
  G.paint.flush(1/60);globalThis.__userConditionPreparation={introFrames,liveFrames:240,deltaSeconds:1/60,timeBefore,timeAfter,paletteRandom:.7,paletteId:g.palette.id,instrumentation:'Native palette picker given fixed RNG draw; native intro and live game frames advanced, rendering skipped until capture'};
  return globalThis.__userConditionPreparation;
+}
+
+// _setSettings discards applyNativeQuality's Promise. Its metrics.quality is
+// written only after updateTextures completes; wait for that committed state.
+export function installDiagnosticQualityReadiness(){
+ let readyWorld,readyToken;
+ globalThis.__setDiagnosticQuality=async quality=>{
+  const g=NG.game,world=g.nativeWorld,expected=['high','ultra'].includes(quality)?'high':quality==='low'?'low':'balanced';
+  if(!world)throw Error('Native quality readiness requires native world');
+  const changed=g.settings.quality!==quality;
+  if(changed&&world.metrics.quality===expected)throw Error('Ambiguous native quality transition already at target');
+  if(!changed&&world.qualityToken&&(readyWorld!==world||readyToken!==world.qualityToken))throw Error('Unobserved same-quality native update may be pending');
+  g._setSettings({...changed?{quality}:{},shadows:quality==='high',bloom:false});
+  const token=world.qualityToken,start=Date.now();
+  while(world.metrics.quality!==expected){
+   if(g.nativeWorld!==world||world.qualityToken!==token)throw Error('Native world or quality token replaced while awaiting quality');
+   if(world.metrics.qualityError)throw Error('Native quality load failed: '+world.metrics.qualityError);
+   if(Date.now()-start>120000)throw Error('Native quality readiness timeout');
+   await new Promise(resolve=>setTimeout(resolve,25));
+  }
+  if(g.nativeWorld!==world||world.qualityToken!==token||world.metrics.qualityError)throw Error('Native quality completion identity/error mismatch');
+  readyWorld=world;readyToken=token;
+  globalThis.__diagnosticQualityReady={requested:quality,actual:world.metrics.quality,textureCount:world.metrics.textureCount,changed,waitedMilliseconds:Date.now()-start};
+  return globalThis.__diagnosticQualityReady;
+ };
 }

@@ -16,7 +16,7 @@ test('serialized native setup advances intro then four live seconds and restores
   const math=Object.create(Math),random=()=>.01;math.random=random;let ticks=0;
   const picker=function(){assert.equal(this,g);return {id:math.random()===.7?'aqua-cherry':'wrong'};};
   const g={debug:{freeze(){}},menus:{wipe:{cancel(){}}},_setSettings(){},_pickPalette:picker,match:{state:'intro',time:180},async startMatch(){this.palette=this._pickPalette();if(fail)throw Error('start failed');},_frame(){ticks++;if(this.match.state==='intro'){if(ticks===253)this.match.state='playing';}else this.match.time-=1/60;}};
-  const context=vm.createContext({NG:{game:g,paint:{flush(){}}},Math:math});
+  const context=vm.createContext({NG:{game:g,paint:{flush(){}}},__setDiagnosticQuality:async()=>{},Math:math});
   const run=()=>vm.runInContext('('+prepareUserConditionMatch.toString()+')()',context);
   if(fail)await assert.rejects(run,/start failed/);else{const r=await run();assert.equal(r.introFrames,253);assert.equal(r.liveFrames,240);assert.ok(Math.abs(r.timeAfter-176)<1e-6);assert.equal(ticks,493);}
   assert.equal(g._pickPalette,picker);assert.equal(math.random,random);
@@ -24,5 +24,14 @@ test('serialized native setup advances intro then four live seconds and restores
 });
 test('native setup rejects paused time and failure to leave intro within bounded frames',async()=>{
  const {prepareUserConditionMatch}=await import('../lib/inkwave-user-condition-probe.mjs');
- for(const stuck of [true,false]){let n=0;const g={debug:{freeze(){}},menus:{wipe:{cancel(){}}},_setSettings(){},_pickPalette(){return {id:'aqua-cherry'};},match:{state:'intro',time:180},async startMatch(){this.palette=this._pickPalette();},_frame(){n++;if(!stuck)this.match.state='playing';}};const context=vm.createContext({NG:{game:g,paint:{flush(){}}}});await assert.rejects(()=>vm.runInContext('('+prepareUserConditionMatch.toString()+')()',context),stuck?/intro did not/:/time did not/);assert.ok(n<=600);}
+ for(const stuck of [true,false]){let n=0;const g={debug:{freeze(){}},menus:{wipe:{cancel(){}}},_setSettings(){},_pickPalette(){return {id:'aqua-cherry'};},match:{state:'intro',time:180},async startMatch(){this.palette=this._pickPalette();},_frame(){n++;if(!stuck)this.match.state='playing';}};const context=vm.createContext({NG:{game:g,paint:{flush(){}}},__setDiagnosticQuality:async()=>{}});await assert.rejects(()=>vm.runInContext('('+prepareUserConditionMatch.toString()+')()',context),stuck?/intro did not/:/time did not/);assert.ok(n<=600);}
+});
+test('quality readiness awaits committed textures and rejects error, timeout, token swap and ambiguous pending quality',async()=>{
+ const {installDiagnosticQualityReadiness}=await import('../lib/inkwave-user-condition-probe.mjs');
+ for(const mode of ['success','error','timeout','token-swap','ambiguous']){
+  let now=0,waits=0;const world={metrics:{quality:mode==='ambiguous'?'high':'low',textureCount:94}},g={settings:{quality:'low'},nativeWorld:world,_setSettings(p){Object.assign(this.settings,p);world.qualityToken={};}};
+  const context=vm.createContext({NG:{game:g},Date:{now:()=>now},setTimeout:fn=>{waits++;now+=mode==='timeout'?120001:25;if(mode==='success'){world.metrics.quality='high';world.metrics.textureCount=223;}if(mode==='error')world.metrics.qualityError='injected load failure';if(mode==='token-swap')world.qualityToken={};fn();}});
+  vm.runInContext('('+installDiagnosticQualityReadiness.toString()+')()',context);
+  if(mode==='success'){const r=await context.__setDiagnosticQuality('high');assert.equal(r.textureCount,223);assert.equal(waits,1);}else await assert.rejects(()=>context.__setDiagnosticQuality('high'),mode==='ambiguous'?/Ambiguous/:mode==='error'?/load failed/:mode==='timeout'?/timeout/:/token replaced/);
+ }
 });
