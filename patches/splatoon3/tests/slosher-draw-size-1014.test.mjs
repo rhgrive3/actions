@@ -96,8 +96,20 @@ test('#1014 real native Slosher mesh retains all nine sourced heads and capped f
 });
 test('#1014 ChangeFrame controls sourced Slosher radius and TailSolidFrame limits native visual history',async()=>{
   const {f,ps}=await volley(units=>Object.assign(units[0].DrawSizeParam,{InitRadius:.4,EndRadius:.8,AfterOffsetInitRadius:0,AfterOffsetEndRadius:0,ChangeFrame:6,TailSolidFrame:2}));
-  const p=ps.list[0];ps.list=[p];p.delay=0;p.sats=0;p.vel.set(60,0,0);
+  const p=ps.list[0];ps.list=[p];p.sats=0;
   const v=ps.projectileVisuals;
+  assert.equal(p._s3SloshBirthPending,true,'queued Slosher has not refreshed its native muzzle');
+  assert.equal(v.ensureBirth(p),false,'presentation cannot initialize a pending native birth');
+  assert.ok(!p._iwVisualHistory,'no history is fabricated from the enqueue position');
+  // Let the real fixed-step owner refresh the muzzle and initialize history.
+  // Only after that transition, reset the visual sample ring for this existing
+  // controlled-age radius/tail probe; never bypass the gameplay birth guard.
+  f.G.time+=DT;ps.update(DT);
+  assert.ok(ps.list.includes(p),'the original round survives its actual birth step');
+  assert.equal(p._s3SloshBirthPending,false,'native physics completed birth');
+  assert.ok(p._iwVisualHistory?.count>0,'native physics recorded the first sample');
+  assert.equal(v.ensureBirth(p),true,'an admitted native round has visual history');
+  p._iwVisualHistory.reset();p.vel.set(60,0,0);
   for(const [age,radius] of [[0,.4],[.025,.5],[.05,.6],[.1,.8],[.2,.8]]){
     p.age=age;p.pos.set(age*60,1,0);
     v.ensureBirth(p);
