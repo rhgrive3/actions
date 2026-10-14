@@ -4,8 +4,9 @@
 // Leanny/splat3 ActorInfo (Fmdb). Scale: the pistol handle below the receiver is
 // ~7.5-8 cm in every reference (the same kid hand), which with the gameplay
 // promo shots puts the Splat Charger at ~1.1 m against the 1.32 m kid.
-import { Pieces, M, box, sphere, zlathe, ylathe, zcyl, ycyl, xcyl, cyl, ring, pipe, slab, smoothOutline, pistolGrip, gripSpec,
-  part, rebuild, glowGeometry } from './kit.mjs';
+import { THREE, Pieces, M, V, box, sphere, zlathe, ylathe, zcyl, ycyl, xcyl, cyl, ring, pipe, slab, smoothOutline, pistolGrip, gripSpec,
+  part, rebuild, glowGeometry, sweep, GRIP_PISTOL, PISTOL_AXIS } from './kit.mjs';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // Reference pixel → weapon space: (gx, gy) = handle axis point in the levelled frame, s = m/px.
 const px = (gx, gy, s) => (x, y) => [(x - gx) * s, (gy - y) * s];
@@ -329,53 +330,90 @@ function bamboozler(d) {
 }
 
 // --------------------------------------------------------------------------------------- Goo Tuber
-const GOO = { red: '#e2402b', orange: '#ec6a1e', black: '#1e1f23', white: '#eef0f2', steel: '#9aa0a8' };
-/** Goo Tuber (Wmn_Charger_Keeper): a ribbed squeeze bulb (red) at the back with a short white tail pipe,
- *  orange paddle grip with a sticker and a black lever trigger under the bulb's neck, a straight
- *  corrugated feed tube (ink) to the black nozzle with its wire brackets, and a long hose (ink) hanging
- *  in two loops from the tube's mid clip round to the nozzle. Levelled (−29.6°), mirrored left-side frame
- *  of S3 Custom Goo Tuber model rotating.mp4 (t = 6.9 s; same shape, colours from the base render).
- *  Scale: the fist covers the upper ~60 % of the paddle (S3 Goo Tuber charge 10.0.0.mp4), 0.67 m overall.
- *  The bulb blushes from red to white as the charge builds (same capture): the charge coil sits in the
- *  four bulb grooves, rear → front. */
+const GOO = { red: '#d4301c', orange: '#dc5e1d', black: '#1f1f22', dark: '#34353a', white: '#ecebe8', tube: '#c9c4bf', steel: '#9a9794', hose: 0xd3cfcb };
+// Bore height above the paddle grip and the hose coil (helix about X hung on the feed tube) in weapon metres.
+const GOO_Y = 0.075, GOO_COIL = { z: 0.4, y: GOO_Y - 0.107, r: 0.135, turns: 2.25, x0: -0.034, x1: 0.034, tube: 0.0158 };
+/** Sweep along points whose per-vertex path parameter becomes the coil threshold aSeg ∈ [a, b]. */
+function gooGlow(points, radius, a, b, seg) {
+  const s = sweep(points.map(p => V(...p)), { seg, radial: 9, capSteps: 2, radius });
+  const g = new Pieces().add(s.geo, '#ffffff', M.satin).build(), t = s.t, out = new Float32Array(t.length);
+  for (let i = 0; i < t.length; i++) out[i] = a + (b - a) * t[i];
+  g.setAttribute('aSeg', new THREE.Float32BufferAttribute(out, 1)); return g;
+}
+/** Goo Tuber (Wmn_Charger_Keeper): ribbed red squeeze bulb with a white tail pipe at the back, an orange
+ *  paddle grip (white label, lanyard) hanging under the bulb neck with a black lever trigger ahead of it,
+ *  a straight corrugated white feed tube with a black finned clip, a long black nozzle with a finned
+ *  bracket, and a long white hose: from under the rear bracket it drops, runs forward and is coiled
+ *  (≈2¼ turns about the holder's left–right axis) and hung over the front of the feed tube, its end
+ *  plugged into the nozzle bracket. Sources: official 3D render (refs/s3-charger-keeper.3d.png), the
+ *  turntable "S3 Custom Goo Tuber model rotating.mp4" (side t = 0 / 6 s, front t = 3 s) and the charge
+ *  capture "S3 Goo Tuber charge 10.0.0.mp4" (side view, kid charging): the hose and feed tube are pale
+ *  grey when empty and fill with team-coloured ink as the charge builds, so they are the charge coil
+ *  channel (aSeg runs from the hose start under the grip, round the coil, then the feed tube to the
+ *  nozzle). Scale from that capture: bulb tail → nozzle tip ≈ 740 px against an Inkling hand ≈ 90 px
+ *  (≈ 0.1 m) and head ≈ 240 px → ≈ 0.86 m overall (image-derived, not measured in game). */
 function gooTuber(d) {
-  const C = GOO, s = 0.00093, P = px(520, 395, s), Y = (395 - 320) * s, H = (x, y, X = 0) => piv(P, x, y, X), Z = x => P(x, 0)[0], R = r => r * s;
-  const body = new Pieces(), ink = new Pieces();
-  // ribbed bulb with tail pipe and a collar into the feed tube
-  const [, by] = P(0, 340), b0 = Z(321), b1 = Z(485), L = b1 - b0, prof = [[0, b0], [R(26), b0 + 0.002]];
-  for (let k = 0; k <= 16; k++) { const u = k / 16, env = Math.sin(Math.PI * (0.08 + 0.84 * u)) ** 0.55, rib = 1 - 0.07 * (0.5 + 0.5 * Math.cos(u * Math.PI * 2 * 4)); prof.push([R(54) * env * rib, b0 + 0.004 + u * (L - 0.012)]); }
-  prof.push([R(22), b1 - 0.004], [R(16), b1], [0, b1]);
-  body.add(zlathe(prof, 0, by, 0, 26), C.red, M.gloss);
-  body.add(zcyl(R(10), Z(288), b0 + 0.004, 0, by, 14), C.white, M.gloss);
-  body.add(zcyl(R(14), b1 - 0.004, b1 + 0.014, 0, (by + Y) / 2, 16), C.white, M.gloss);
-  // corrugated feed tube (ink) to the black nozzle
-  const t0 = b1 + 0.01, t1 = Z(818);
-  ink.add(zcyl(R(10.5), t0, t1, 0, Y, 14));
-  for (let k = 0; k < 18; k++) ink.add(ring(R(11), 0.0014, 0, Y, t0 + 0.01 + k * (t1 - t0 - 0.02) / 17, 'z', 3, 14));
-  body.add(zlathe([[0, Z(815)], [R(24), Z(815)], [R(25), Z(822)], [R(24), Z(1004)], [R(20), Z(1010)], [R(12), Z(1010)], [R(12), Z(1006)], [0, Z(1006)]], 0, P(0, 322)[1], 0, 20), C.black, M.satin);
-  for (const x of [850, 975]) body.add(ring(R(25.5), 0.0016, 0, P(0, 322)[1], Z(x), 'z', 3, 20), C.steel, M.metal);
-  // wire brackets: the mid clip (holds the hose) and the nozzle bracket with its prongs
-  const wire = (pts) => body.add(pipe(pts.map(([x, y, X = 0]) => H(x, y, X)), 0.0026, 24, 5), C.black, M.metal);
-  wire([[606, 306], [607, 360], [610, 398], [650, 442]]); wire([[586, 302, 0.012], [606, 308], [626, 300, -0.012]]);
-  wire([[846, 266], [900, 284], [930, 296]]); wire([[931, 270], [933, 300], [936, 346], [970, 384]]); wire([[982, 356], [930, 380], [868, 402]]);
-  // orange paddle grip with a white sticker, black lever trigger
-  body.add(slab(outline(P, [[504, 346], [546, 346], [543, 380], [528, 430], [517, 470], [501, 476], [481, 440], [476, 424], [500, 380]]), 0.022, 0, 0.004), C.orange, M.satin);
-  body.add(slab(outline(P, [[492, 392], [522, 394], [514, 440], [486, 436]]), 0.0006, -0.0112, 0.0002), C.white, M.print);
-  const trig = new Pieces().add(pipe([H(542, 360), H(552, 384), H(565, 410)], 0.0032, 10, 6), C.black, M.metal);
-  // hose (ink): from the mid clip down into two loops and up into the nozzle
-  ink.add(pipe([H(606, 352, -0.012), H(575, 420, -0.014), H(575, 510, -0.016), H(650, 560, -0.016), H(780, 562, -0.014), H(880, 505, -0.01), H(905, 430, -0.006),
-    H(870, 368, 0), H(790, 352, 0.008), H(705, 380, 0.012), H(672, 452, 0.014), H(720, 512, 0.014), H(815, 505, 0.01), H(852, 432, 0.004), H(838, 346, 0)], R(13), 120, 8));
-  // charge coil: rings in the bulb grooves
-  const g = new Pieces();
-  for (let k = 0; k < 4; k++) { const u = (k + 0.5) / 4, z = b0 + 0.004 + u * (L - 0.012), env = Math.sin(Math.PI * (0.08 + 0.84 * u)) ** 0.55; g.add(ring(R(54) * env * 0.935, 0.0032, 0, by, z, 'z', 4, 26), '#ffffff', M.led); }
+  const C = GOO, Y = GOO_Y, K = GOO_COIL, body = new Pieces();
+  // bulb: four ribs, white tail pipe and neck collar into the feed tube
+  const b0 = -0.208, b1 = -0.03, prof = [[0, b0], [0.016, b0 + 0.002]];
+  for (let k = 0; k <= 24; k++) {
+    const u = k / 24, env = Math.sin(Math.PI * (0.04 + 0.92 * u)) ** 0.28, rib = 1 - 0.08 * (0.5 - 0.5 * Math.cos(u * Math.PI * 2 * 4.5));
+    prof.push([0.057 * env * rib, b0 + 0.004 + u * (b1 - b0 - 0.012)]);
+  }
+  prof.push([0.017, b1 - 0.004], [0.015, b1], [0, b1]);
+  body.add(zlathe(prof, 0, Y, 0, 28), C.red, M.gloss);
+  body.add(zlathe([[0, -0.247], [0.0105, -0.247], [0.0125, -0.243], [0.0125, b0 + 0.006], [0, b0 + 0.006]], 0, Y, 0, 14), C.white, M.gloss);
+  body.add(zlathe([[0, b1 - 0.006], [0.0175, b1 - 0.006], [0.0175, 0.012], [0.0155, 0.02], [0, 0.02]], 0, Y, 0, 16), C.white, M.gloss);
+  // corrugated feed tube to the nozzle (base colour; its ink fill is the coil channel below)
+  const t0 = 0.018, t1 = 0.402;
+  body.add(zcyl(0.0118, t0, t1, 0, Y, 14), C.tube, M.satin);
+  for (let k = 0; k < 7; k++) body.add(ring(0.0128, 0.0018, 0, Y, t0 + 0.012 + k * 0.011, 'z', 4, 14), C.tube, M.satin);
+  // rear bracket (black plate under the neck) and the finned mid clip
+  body.add(box(0.03, 0.03, 0.012, 0, Y - 0.012, 0.034, 0.3), C.black, M.satin);
+  body.add(zcyl(0.0152, 0.028, 0.04, 0, Y, 16), C.black, M.satin);
+  body.add(zcyl(0.015, 0.092, 0.106, 0, Y, 16), C.black, M.satin);
+  body.add(slab([[0.094, Y - 0.01], [0.106, Y - 0.01], [0.112, Y - 0.06], [0.098, Y - 0.1], [0.084, Y - 0.108], [0.094, Y - 0.06]], 0.006, 0, 0.0015), C.black, M.satin);
+  body.add(pipe([[0, Y + 0.012, 0.1], [0, Y + 0.03, 0.118], [0, Y + 0.036, 0.15]], 0.0028, 10, 5), C.black, M.satin);
+  // nozzle: long black barrel, grey front ring and tip, finned bracket with a top sight and side fins
+  const n0 = 0.398, n1 = 0.572;
+  body.add(zlathe([[0, n0], [0.022, n0], [0.025, n0 + 0.008], [0.025, n1 - 0.03], [0.023, n1 - 0.024], [0.023, n1 - 0.006], [0.017, n1], [0.01, n1], [0.01, n1 - 0.004], [0, n1 - 0.004]], 0, Y, 0, 22), C.black, M.satin);
+  for (const z of [n0 + 0.03, n1 - 0.03]) body.add(ring(0.0255, 0.0018, 0, Y, z, 'z', 4, 22), C.dark, M.metal);
+  const nb = 0.44;
+  body.add(box(0.07, 0.074, 0.016, 0, Y + 0.004, nb, 0.25), C.black, M.satin);
+  body.add(slab([[nb - 0.012, Y + 0.035], [nb + 0.008, Y + 0.035], [nb + 0.03, Y + 0.075], [nb + 0.018, Y + 0.078]], 0.006, 0, 0.0015), C.black, M.satin);
+  for (const sx of [-1, 1]) body.add(slab([[nb - 0.01, Y + 0.02], [nb + 0.01, Y + 0.02], [nb + 0.05, Y + 0.044], [nb + 0.04, Y + 0.05]], 0.005, sx * 0.03, 0.0015), C.black, M.satin);
+  body.add(pipe([[0, Y - 0.03, nb], [0, Y - 0.07, nb + 0.004], [0, Y - 0.088, nb + 0.012]], 0.0034, 12, 5), C.black, M.satin);   // hose hook
+  // orange paddle grip along the raked native grip axis, white label, lanyard loop at its foot
+  const ax = PISTOL_AXIS.toArray(), tip = (s, f = 0) => [0, ax[1] * s, ax[2] * s + f];
+  const paddle = box(0.021, 0.124, 0.046, 0, 0, 0, 0.22).rotateX(Math.atan2(ax[2], ax[1])).translate(0, -0.004, -0.004);
+  body.add(paddle, C.orange, M.satin);
+  body.add(box(0.0006, 0.06, 0.03, 0, 0, 0, 0.1).rotateX(Math.atan2(ax[2], ax[1])).translate(-0.0108, -0.01, -0.006), C.white, M.print);
+  body.add(pipe([tip(-0.06, -0.01), [0.002, -0.085, -0.03], [0.004, -0.098, -0.012], [0.002, -0.082, -0.0]], 0.0012, 14, 4), C.white, M.satin);
+  const trig = new Pieces().add(pipe([[0, 0.05, 0.03], [0, 0.03, 0.036], [0, 0.0, 0.032]], 0.0035, 10, 6), C.black, M.satin);
+  // hose: from under the rear bracket down, forward along the bottom, the coil hung on the feed tube,
+  // then up into the hook under the nozzle bracket
+  const lead = [[0, Y - 0.012, 0.118], [0, Y - 0.06, 0.12], [0.004, -0.06, 0.13], [0.01, -0.12, 0.17], [K.x0, -0.15, 0.27]];
+  const coil = [], steps = 64, a0 = -Math.PI / 4;
+  for (let i = 0; i <= steps; i++) {
+    const u = i / steps, a = a0 + u * K.turns * Math.PI * 2;
+    coil.push([K.x0 + (K.x1 - K.x0) * u, K.y - Math.cos(a) * K.r, K.z + Math.sin(a) * K.r]);
+  }
+  const tail = [[K.x1 + 0.004, -0.085, nb + 0.06], [0.006, Y - 0.092, nb + 0.014]];
+  const hosePts = [...lead, ...coil, ...tail];
+  const corrugate = t => K.tube * (t < 0.12 ? 1 + 0.09 * Math.sin(t * 900) : 1);
+  const glow = mergeGeometries([gooGlow(hosePts, corrugate, 0, 0.78, 260),
+    gooGlow([[0, Y, t0 + 0.004], [0, Y, (t0 + t1) / 2], [0, Y, t1 - 0.004]], () => 0.0128, 0.8, 1, 24)], false);
   return rebuild(d, {
-    body, ink, glow: glowGeometry(g, b0, b1),
-    parts: { trigger: part(trig, H(542, 360)), ports: ports(Z(1008), P(0, 322)[1], R(12)) },
-    // support hand on the feed tube just behind the mid clip (S3 Goo Tuber charge 10.0.0.mp4)
-    gripL: gripSpec(H(650, 320), [0, 0, 1], [0.75, -0.62, -0.1]),
-    muzzle: [0, P(0, 322)[1], Z(1010) + 0.002],
+    body, ink: new Pieces(), glow,
+    parts: { trigger: part(trig, [0, 0.05, 0.03]), ports: ports(n1 - 0.002, Y, 0.01) },
+    gripR: GRIP_PISTOL,
+    // support hand round the feed tube just ahead of the mid clip (charge capture: left hand mid-tube)
+    gripL: gripSpec([0, Y, 0.165], [0, 0, 1], [0.75, -0.62, -0.1]),
+    muzzle: [0, Y, n1 + 0.002],
   });
 }
+/** Empty hose / feed tube colour under the team-coloured charge fill (the coil material is per weapon). */
+function gooAnimate(w) { if (w.coil) w.coil.color.setHex(GOO.hose); }
 
 // --------------------------------------------------------------------------------------- Snipewriter 5H
 const PENCIL = { tan: '#d99a5f', blue: '#2452c9', black: '#1d1e24', pink: '#e7857f', red: '#d8473c', lens: '#c9d6df', steel: '#a3a8b0' };
@@ -425,7 +463,7 @@ const ELITER_HOLD = { aim: { p: [-0.07, 0.0, 0.2], r: [0, 0.06, 0] } };
 // Bamboozler: short gun held by the upright culm, rear sight right in front of the eye.
 const BAMBOO_HOLD = { aim: { p: [-0.07, 0.05, 0.13], r: [0, 0.06, 0] } };
 // Goo Tuber: the bulb sits at the cheek, the eye looks along the feed tube.
-const GOO_HOLD = { aim: { p: [-0.075, 0.06, 0.17], r: [0, 0.06, 0] } };
+const GOO_HOLD = { aim: { p: [-0.09, 0.06, 0.18], r: [0, 0.06, 0] } };
 const SCOPE_HOLD = { aim: { p: [-0.06, 0.035, 0.17], r: [0, 0.06, 0] } };
 
 // Sighting: while aiming, the head drops and leans onto the weapon so the eye sits behind the rail /
@@ -448,7 +486,7 @@ export const MODELS = {
   's3-charger-normalscope': { sourceModel: 'Wmn_Charger_NormalTScope', build: splatterscope, hold: SCOPE_HOLD },
   's3-charger-quick': { sourceModel: 'Wmn_Charger_Quick', build: squiffer, hold: SPLAT_HOLD },
   's3-charger-light': { sourceModel: 'Wmn_Charger_Light', build: bamboozler, hold: BAMBOO_HOLD },
-  's3-charger-keeper': { sourceModel: 'Wmn_Charger_Keeper', build: gooTuber, hold: GOO_HOLD },
+  's3-charger-keeper': { sourceModel: 'Wmn_Charger_Keeper', build: gooTuber, hold: GOO_HOLD, animate: gooAnimate },
   's3-charger-long': { sourceModel: 'Wmn_Charger_Long', build: eliter, hold: ELITER_HOLD, nativeCarry: true },
   's3-charger-longscope': { sourceModel: 'Wmn_Charger_LongScope', build: eliterScope, hold: ELITER_HOLD, nativeCarry: true },
   's3-charger-pencil': { sourceModel: 'Wmn_Charger_Pencil', build: pencil, hold: SPLAT_HOLD },

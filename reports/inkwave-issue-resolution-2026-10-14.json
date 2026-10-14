@@ -1,0 +1,937 @@
+{
+  "baseline": "14f9f913a8438353d0e462a0e74e17d8af876230",
+  "candidateCodeCommit": "aea1df165e338d51d51db9752c0a87a60bbcce27",
+  "contentHash": "99a82bafc4b265ea325512f704794be0a347e848c5c7338fe2f4f72340f54f1a",
+  "issueCount": 69,
+  "fixedCandidateCount": 6,
+  "remainingOpenCount": 63,
+  "checks": {
+    "imported-source": {
+      "tests": 96,
+      "pass": 96,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "17a59b06830196b92497afd23ede7387fdeeadbff3d0b2af57d0c920f913b2dd"
+    },
+    "input-final-source": {
+      "tests": 32,
+      "pass": 32,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "6d8521875de23bcc03d7f280b0e74a3be87d20fd63dea0fcec9997bf15bd89b4"
+    },
+    "issue-audit-source": {
+      "tests": 459,
+      "pass": 455,
+      "fail": 0,
+      "skipped": 4,
+      "logSha256": "0ad4e6da9eda885a8af46014acf3e746f47674871303cc324faf27d8ce4f602a"
+    },
+    "input-emitted": {
+      "tests": 97,
+      "pass": 97,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "98a36941f6350c84862bebdf3a14303e9a59bad3e34cb4f1c4cc48ec0bb9fbee"
+    },
+    "network-emitted": {
+      "tests": 32,
+      "pass": 32,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "cfc14d1a89f71f5f3a044572783eb4785aceabc3ed3c6019885d6ac4c8d748f8"
+    },
+    "packaging-final": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "7be7190e1f5133eeecd1f6291316d964aa20c5d691f2c24e634cb3677148e0f4"
+    },
+    "browser-candidate": {
+      "status": "passed",
+      "contentHash": "99a82bafc4b265ea325512f704794be0a347e848c5c7338fe2f4f72340f54f1a",
+      "cases": [
+        {
+          "name": "editor-pad-modal",
+          "editing": true,
+          "current": "settings",
+          "calls": [],
+          "pass": true
+        },
+        {
+          "name": "editor-neutral-before-fresh-navigation",
+          "pass": true
+        },
+        {
+          "name": "cancelled-native-completion",
+          "locked": false,
+          "browserLocked": false,
+          "requests": 1,
+          "pass": true
+        },
+        {
+          "name": "fresh-native-pointer-lock-retry",
+          "pass": true
+        },
+        {
+          "name": "native-canvas-small-tank",
+          "pass": true
+        }
+      ],
+      "scope": "Emitted modules in Chromium. Controlled gamepad snapshots, controlled asynchronous native Pointer Lock admission, real Canvas2D. No physical controller, mobile-device or Switch claim."
+    },
+    "browser-baseline": {
+      "status": "passed",
+      "contentHash": "bbb2d5efa3e1e9726fef85a241fa7ac00f02eda09b92ae83df0d3bcd5397d6fa",
+      "cases": [
+        {
+          "name": "editor-pad-modal",
+          "editing": true,
+          "current": null,
+          "calls": [
+            "back",
+            "back"
+          ],
+          "pass": false
+        },
+        {
+          "name": "cancelled-native-completion",
+          "locked": true,
+          "browserLocked": true,
+          "requests": 1,
+          "pass": false
+        },
+        {
+          "name": "native-canvas-small-tank",
+          "pass": false
+        }
+      ],
+      "scope": "Emitted modules in Chromium. Controlled gamepad snapshots, controlled asynchronous native Pointer Lock admission, real Canvas2D. No physical controller, mobile-device or Switch claim."
+    }
+  },
+  "sources": {
+    "pointerLock": "https://www.w3.org/TR/pointerlock/",
+    "gamepad": "https://www.w3.org/TR/gamepad/",
+    "canvas": "https://html.spec.whatwg.org/multipage/canvas.html#dom-context-2d-roundrect",
+    "referenceVersion": "https://en-americas-support.nintendo.com/app/answers/detail/a_id/59461/",
+    "pinnedTables": "https://github.com/Leanny/splat3/tree/7280ff9cde8bb1c5dcef46c700c326471584d2e6"
+  },
+  "importedHeads": {
+    "1359": "b1be2e00b91ae0739acea5944fa7c13b3b98f636",
+    "1321": "0e98e1e4937043c6c6b181735990f188f7fac853"
+  },
+  "limitations": [
+    "Six issues have candidate fixes; the other 63 are not asserted resolved.",
+    "Retail frame/curve/unit equivalence and hardware-specific input/render acceptance still require missing sources or controlled captures.",
+    "No hosted workflow dispatched, rerun or new waiting PR.",
+    "Scouting run was interrupted and changed underneath; it is not counted as an immutable baseline pass.",
+    "Initial browser fixture CSS incorrectly affected editor buttons; corrected fixture evidence is recorded separately.",
+    "Packaging initially failed against the uncommitted code tree; the unchanged guard passed 9/9 after committing the actual inputs."
+  ],
+  "issues": [
+    {
+      "number": 1400,
+      "url": "https://github.com/rhgrive3/actions/issues/1400",
+      "title": "[INKWAVE] Gamepad input passes through the touch-layout editor and can resume play behind it",
+      "status": "fixed-in-candidate",
+      "change": "編集ダイアログのゲームパッド入力所有と閉じた後のニュートラル待ち",
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "## Current-main reproduction\nBaseline: `14f9f913a8438353d0e462a0e74e17d8af876230`.\n\nThe touch-layout editor is marked as a modal dialog and captures keyboard navigation, but actual `Game._padMenus()` has no editor admission check. While `input.mobile.editing === true`, it still routes A/B, D-pad, shoulders and stick navigation to the underlying `menus.current` screen.\n\nA deterministic regression using the existing real composed Input, fixed clock, Game menu routing and Menus.nav/_back/_resume reproduces:\n1. Pause an offline match and open settings.\n2. Keep the touch-layout editor active (`mobile.editing=true`).\n3. Press B, release, press B again.\n4. First B changes the underlying settings screen to pause; second B clears the menu and sets match.paused=false, while mobile.editing remains true.\n\nThe real source-composed and emitted/minified `_padMenus` also independently dispatch a back action to the underlying settings menu during editing. This is deterministic event/state evidence, not a physical controller/browser UI reproduction; the fixture sets the editor-active state rather than opening the entire native DOM editor.\n\n## Expected\nAn open editor owns its navigation. Gamepad inpu",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1396,
+      "url": "https://github.com/rhgrive3/actions/issues/1396",
+      "title": "[INKWAVE] A cancelled pending Pointer Lock can recapture the cursor during quit",
+      "status": "fixed-in-candidate",
+      "change": "Pointer Lock要求の取消・試合識別・非同期fallbackの寿命",
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "## Current-main reproduction\nConfirmed on main `14f9f913a8438353d0e462a0e74e17d8af876230` in the production-composed Input fixture. The existing emitted build independently reproduces the late-completion admission gap.\n\n1. Start a Pointer Lock reacquisition during a playing match, and keep its browser response pending.\n2. Invoke `Input.exitLock()`, as `Game.quitToMenu()` does before hiding the menu and awaiting its fade. No lock has been acquired yet, so the existing exit method does nothing.\n3. While the quit transition is still awaiting its fade, the old request succeeds and fires `pointerlockchange`.\n4. The current handler accepts `input.locked = true`. There is no cancellation identity. A later request rejection can also run its plain-pointer fallback while the obsolete request has no cancellation marker.\n\nA second deterministic admission check shows that a request initiated during `playing` can also succeed after the match changes to `finish`; the synchronous touch-to-mouse reacquisition path already rejects that context. These are deterministic browser-event fixtures, not a claim that the race has been reproduced on hardware.\n\n## Bounded ownership\nCoordinated with the central",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1360,
+      "url": "https://github.com/rhgrive3/actions/issues/1360",
+      "title": "Emitted map-gyro regression fixture still assumes the explicit Turf Map is hidden",
+      "status": "fixed-in-candidate",
+      "change": "明示的に開いたTurf Mapを描画する現行契約にテストを修正",
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "## Reproduced on current main\nPinned main `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`, built from a clean separate worktree.\n\n```\nnode scripts/build-inkwave.mjs inkwave-public _site-map-gyro-baseline\nINKWAVE_CONTROLS_SITE=_site-map-gyro-baseline node --experimental-vm-modules --test patches/reliability/tests/map-gyro.test.mjs\n```\n\nResult: 11 pass, 2 fail. Both emitted `#523 + #533` alive/dead cases throw `TypeError: this.minimap.toCanvas is not a function` inside the actual emitted `Game._updateHud`.\n\n## Cause and impact\nThe fixture opens Tab, but its minimal minimap has no projection method and still requires `frame.map === null`, three hidden ticks and no update calls. The merged #907 contract intentionally updates/projects the explicitly opened Turf Map even while the persistent corner-map setting is OFF. The fixture predates that contract. Source-only runs skip both emitted cases, so the stale expectation prevents these optional regressions from validating the shipped Game/Match transport.\n\n## Bounded ownership\nIssue-resolution worker is claiming this test-only repair after current open-PR/issue search and integration-owner coordination. Use the actual emitted Minimap projection",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1357,
+      "url": "https://github.com/rhgrive3/actions/issues/1357",
+      "title": "[INKWAVE] Queued respawn Super Jump can follow a teammate into an unconfirmed new life",
+      "status": "fixed-in-candidate",
+      "change": "復活待ちSuper Jumpの選択先をcombat lifeに結び付ける",
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "## Reproduction on current main\nVerified against `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`, using the actual production-composed Actor, PlayerController, Input and Match controller path.\n\n1. A local player is splatted and opens the Turf Map.\n2. Confirm a live teammate while waiting to respawn. The teammate is at combat life 1 and position (18, 0, 6).\n3. Before the next local controller observation, the teammate dies and respawns. Its existing Actor object is reused, but `netLife` advances to 2 and it moves to its spawn point.\n4. The local player respawns and lands while keeping the map open, without another target confirmation.\n5. The old pending request starts Super Jump to the teammate's new-life position (in the deterministic fixture, approximately 0.908, 4.5, 0.621).\n\nThe existing controller cancels if it observes the teammate dead, but fails if death and respawn occur between observations. Network snapshots can skip intermediate states, so a stable Actor object alone is insufficient target identity.\n\n## Cause and impact\n`patches/reliability/respawn-navigation-adapter.mjs::requestMapJump` stores only `{ actor: target }`. Both later checks validate current membership/team/alive",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1340,
+      "url": "https://github.com/rhgrive3/actions/issues/1340",
+      "title": "[INKWAVE] Narrow HUD ink tank sends negative roundRect radii and aborts a game frame",
+      "status": "fixed-in-candidate",
+      "change": "小画面HUDのroundRect半径・インク槽寸法を正に保つ",
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "## Reproduction and scope\nCurrent main `21ea40eef76538f628e45a983a73a7ff00d9c773` composes `patches/local-quality/s3-hud-look-adapter.mjs` into the shipped HUD. At a 320×200 CSS viewport, DPR 1, its `--u=min(1vw,1.7778vh)` tank width is 5 CSS pixels. `_drawTank` computes `bw=3`, `rf=0.96`, minimum frame `f=2.4`, then sends bottom radii `rf-f*0.6=-0.48` to native `Path2D.roundRect`. The inner well width is also negative.\n\nThe normal PlayerController benchmark setup hit this real-browser RangeError before timing in [run 38342113690](https://github.com/rhgrive3/actions/actions/runs/38342113690). I separately reproduced the negative radius in the current production-composed method using a strict path recorder. The same CSS sizing predicts the failure at narrow portrait widths; actual startup/resize browser coverage will establish that scope rather than asserting complete mobile support.\n\n## Expected\nKeep a positive drawable ink well and nonnegative finite corners at narrow sizes. Preserve existing valid geometry at normal viewports; do not catch/ignore the RangeError, hide the tank, or bypass HUD updates.\n\n## Ownership / intended fix\nClaimed by the issue-resolution worker, coordinated ",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1311,
+      "url": "https://github.com/rhgrive3/actions/issues/1311",
+      "title": "[INKWAVE][Bug] Valid-life remote projectile birth flood exhausts the ghost pool",
+      "status": "fixed-in-candidate",
+      "change": "通信弾を生成前にactor/owner/globalの実稼働数で制限する",
+      "namedRegressionFiles": [
+        "patches/network-replication/tests/issue-1311-ghost-birth-budget.test.mjs"
+      ],
+      "lastRecordedContext": "Fix progress (2026-10-13): #1321 now includes the #1311 before-allocation remote ghost projectile caps (128/actor, 256/peer, 640 total) and source-based regression tests forward-ported from #1313 onto current `main` (`dbe94c5599cc7ea873282804f0d88d14aedbe071`). #1313 itself has become merge-conflicted; please treat #1321 as the current-main consolidation and avoid merging the two implementations independently. This Issue should remain open until #1321 passes exact-head validation and lands.",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1165,
+      "url": "https://github.com/rhgrive3/actions/issues/1165",
+      "title": "[INKWAVE][Bug] Roller band edge differs between GPU ink and CPU turf grid",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-1165-roller-band-grid.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当 追記（訂正）: 前回コメントの残作業のうち、CPU 判定の幅ゆらぎ追加と `-0.03 * r` inset の除去は、main の `patches/splatoon3/issue-batch-1171-adapter.mjs` の #1165 節（b7179419 由来、PR #1171 は closed・未マージ）として既に composed build に入っていることを確認しました。そのため再実装はしていません。\n\n本セッションで実施したのは次の 2 点です。\n- GLSL と CPU の帯式が合成後の本体ソースに一致し、格子中心のセルで半径 0.3 / 0.62 / 1.0、seed 5 種（π/60 を含む）、方向 4 の全組で所有判定が一致することを確認するネイティブ回帰テスト `patches/splatoon3/tests/issue-1165-roller-band-grid.test.mjs` を追加（未加工の upstream では失敗、合成後は成功）。\n- `reports/inkwave-splatoon3-behavior-2026-10-02.md` 末尾に #1165 の記録を追記。\n\n未確認のまま残すもの: 実ブラウザの WebGL atlas readback、30/60/120/144 Hz の描画差、敵インク上の重ね塗り、bot の判断、決勝 Judd の差、実機の見え方。Splatoon 3 本家のローラー塗り形状との一致も未確認です。merge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1149,
+      "url": "https://github.com/rhgrive3/actions/issues/1149",
+      "title": "[INKWAVE][Systems] Ink Vac suction never drains or slows opponents inside the vortex",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-1149-sidestep-vortex.test.mjs",
+        "patches/splatoon3/tests/issue-1149-vortex-contact.test.mjs",
+        "patches/splatoon3/tests/issue-1149-vortex-dodge-cost.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `97ae3fe` の `patches/splatoon3/runtime/kit-ink-vac.mjs` の敵接触・吸い込み実装、および未マージ PR #1182 集約担当へ渡された sidestep 差分）を main 基点で上書き担当します。\n残作業: 吸い込まれている（敵の接触中の）Dualies のダッジロール（サイドステップ）のインク消費が、通常の `rollInk` のままになっている点を修正します。一次抽出の `PoisonMistForPlayer.SideStepInkConsumeRate = 3.5` を、接触中の admission 時の消費に適用し、残量チェックと支払いを同じ倍率で行います。味方・LOS遮蔽・離脱・終了・remote victim は対象外のままにします。\n根拠確認予定: Leanny/splat3 @7280ff9c の `WeaponSpBlower.game__GameParameterTable.json`（ReceiveDamageForPlayer=15、PoisonMistForPlayer.SideStepInkConsumeRate=3.5）、および決定論テスト。通常 drain 12%/s と移動 60% 上限は INKWAVE の校正値のままで、実機値としては扱いません。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1140,
+      "url": "https://github.com/rhgrive3/actions/issues/1140",
+      "title": "[INKWAVE][Slosher] High-drop Bucket Slosher hitboxes never shrink with fall distance",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-1140-slosher-impact-drop.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/weapons-fidelity.mjs` の `slosherDropScale` / `fidelitySlosherImpactPaint`、および PR #1182 head の重複経路除去）を上書き担当します。\n残作業:\n- main の Slosher `_impact` 二重wrapper（`paint.splat` 差し替え）が、adapter 側で距離区分と高低差縮小を適用済みの先頭スタンプを固定0.2倍の値で上書きしているため、これを除去して単一経路に統合する（PR #1182 の重複経路除去を移植）。\n- `slosherImpactPaintSource` の固定0.2換算を profile の `worldUnitsPerSourceUnit`（現行値 1）へ置き換え、既存の 1011 試験の期待値を合わせる。\n- 高低差縮小の回帰試験（低高度は従来どおり、高高度で縮小、足元ペイント除外、70→50 減衰は独立、30/60/120 Hz で同一結果）を追加する。\n根拠確認予定: リポジトリ内の Ver. 11.3.0 固定 profile（7280ff9c）と既存の数値記録、Leanny/splat3 の該当パラメータ、wikiwiki の Slosher 検証記事（高所での縮小の記述）。\n未確認のまま残すもの: Nintendo の collision / paint 縮小曲線の正確な式、極端な落下での消失の実機挙動、実機キャプチャとの一致。merge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1116,
+      "url": "https://github.com/rhgrive3/actions/issues/1116",
+      "title": "[INKWAVE][Motion] Non-shooter jumps reuse generic airborne pose despite Splatoon 3 weapon-class jump animations",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `659bb9fc` の `patches/splatoon3/runtime/jump-motion.mjs` の武器種別ジャンプ提示）を上書き担当します。\n残作業:\n- 射撃・チャージ中の空中ジャンプを通常ジャンプと状態別に分け、公開コーパスの `JumpShoot_*` 名を状態別の候補として記録する。対象は Shooter / Roller / Splatling / Charger（コーパスに該当名あり）。Dualies / Slosher / Normal は該当名がないため通常候補のまま。ポーズ値は変更しない（INKWAVE の局所校正のまま）。\n- 上記の回帰テストと、比較記録（`patches/splatoon3/reference/jump-motion-comparison-2026-10-03.md`、`reports/inkwave-splatoon3-behavior-2026-10-02.md`）の追記。\n- 実際に再生されるリソース、ブキ種別の関節曲線、Blaster と射撃名の対応は未確認として残す。\n根拠確認予定: Flexlion animations.txt @7740d29（`JumpShoot_*` 名を再取得済み）、Leanny WeaponInfoMain @7280ff9、Nintendo 公式 11.3.0。ROMFS・実機キャプチャは未取得。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1110,
+      "url": "https://github.com/rhgrive3/actions/issues/1110",
+      "title": "[INKWAVE][Motion] Remote Super Jump charge corrupts squid scale because network phase has no progress timer",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/network-replication/tests/issue-1110-superjump-epoch.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `sjT` 有限化・#1142 統合、未マージ commit `39813071` on `inkwave/c-1110-codex1-next-20261009`）を上書き担当します。\n残作業: (1) 同一フェーズ内の再発動・古いサンプルの再生で、観測側の Super Jump charge 進行が前回の値に固着する残存を、送信者 epoch（optional sidecar、旧形式は既存 `sjT` タプルへ fallback）で区別する。(2) 上記を `patches/network-replication/` に移植し、owner/remote、重複・古いサンプル、死亡・リスポーン、30/60/120Hz の回帰試験を追加する。(3) `reports/inkwave-splatoon3-behavior-2026-10-02.md` の末尾に #1110 の記録を追記する。ゲーム権威（移動・当たり・被弾・行動許可）は変更しない。\n根拠確認予定: 公開版ソース（`inkwave-public/src/net/netmatch.js`、`actor.js`）と現行パッチのコード照合、ロジック単独の回帰試験。Splatoon 3 側の数値は新規に確定せず、既存 profile・reference の範囲に留める。\nmerge前の自動closeや実機検証完了は主張しません。二クライアントの実機観測は未実施として未確認に残します。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1097,
+      "url": "https://github.com/rhgrive3/actions/issues/1097",
+      "title": "[INKWAVE][Motion] Hit reactions use one weapon-agnostic flinch instead of Splatoon 3's weapon-class damage poses",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-1097-held-grip.test.mjs",
+        "patches/splatoon3/tests/issue-1097-hit-reaction.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（remote branch `origin/inkwave/c-1097-codex6-budget32-20261009` の 56b2daa1、内容が同一の `origin/inkwave/c-1097-codex3-public29-20261009` の 764fa42f。`patches/splatoon3/runtime/weapon-hit-reaction.mjs`、回帰試験、install配線、`T_HIT` adapter export、比較記録）を上書き担当します。\n残作業:\n- 既存部分実装を現行 main（97ae3fec）へ移植し、adapter / install / 回帰試験の接続を現行コードに合わせる\n- Shooter / Charger / Roller / Dualies などの構え・射撃・両手 muzzle への影響を再検証し、既存 fixture で未カバーの武器族を記録に明記する\n- 現行 main で canonical build の precache が 5,242,880 bytes 以内に収まるか確認する（既存記録は自ブランチ基準で 1,289 bytes の余裕のみ）\n- 本家の damage 選択規則・関節曲線・onset/peak/recovery は未確認のまま比較記録に残す。参照 corpus に bare `Damage` 項目が無い点、Blaster の基底 `Damage_*` が無い点も明記する\n根拠確認予定: Nintendo 公式 Ver.11.3.0 更新履歴、pinned Leanny/splat3 と公開アニメーション名 corpus（Flexlion / ParameterIlliterate / tkgstrator のハッシュ）、Google Drive の関連メモ、ローカル fixture 試験。ROMFS・実機キャプチャは本セッションでは未実施。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1022,
+      "url": "https://github.com/rhgrive3/actions/issues/1022",
+      "title": "[INKWAVE][Slosher] Bucket Slosher ignores S3 RandomRotateYBias and uses uniform yaw scatter",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-1022-slosher-yaw-bias.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/weapons-fidelity.mjs` の `slosherYawOffset`（ライブ発射経路）と未使用の `biasedSourceYaw`、`patches/splatoon3/tests/issue-1022-slosher-yaw-bias.test.mjs`）を上書き担当します。\n残作業:\n- ライブ経路が消費する RandomRotateYBias=0.65 の曲線は未検証の独自式のままのため、本家の意味（サンプリング則）を確認できるまで「未確認」として明示する。\n- 未使用の `biasedSourceYaw` は「Splatoon deviation law」と書かれた未検証の式で、媒介変数の意味（一様になる値）もライブ式と異なるため、削除して発射経路の1関数に統一する。\n- #1022 のテストを発射経路（`slosherYawOffset`）に向け、除外粒子が乱数を消費しないこと、±RandomRotateYDegree の範囲、偏り0の一様対照を確認する。\n- reports/inkwave-splatoon3-behavior-2026-10-02.md に #1022 の記録（本家根拠、実装箇所、再現操作、プレイへの影響、確認状態）を追加する。\n根拠確認予定: Leanny/splat3 の固定コミット（7280ff9c）のパラメータ抽出、任天堂公式 Ver.11.3.0 の資料、Inkipedia や公開パラメータ解説の検索。見つからない場合は未確認のまま残す。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 1011,
+      "url": "https://github.com/rhgrive3/actions/issues/1011",
+      "title": "[INKWAVE][Slosher] Bucket Slosher impact paint ignores S3 per-unit near/far PaintParam",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-1011-slosher-impact-composition.test.mjs",
+        "patches/splatoon3/tests/issue-1011-slosher-impact-source.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/weapons-fidelity.mjs` の Slosher 着弾塗り、adapter の `fidelitySlosherImpactPaint`、および draft PR #1182 の重複経路除去）を上書き担当します。\n\n残作業:\n- main に残る Slosher 用の二重 `_impact` ラッパーを除去する。このラッパーは固定 0.2 倍の `slosherImpactPaintSource` で最初の `G.paint.splat` を置換し、高低差縮小を消している。着弾塗りは adapter の `fidelitySlosherImpactPaint` だけを権威にする。\n- 9弾の native `_impact` 回帰を追加する。Unit 1 先頭弾の近距離幅が profile/source の 4.44 になること、Unit 1 後続弾が 1.44/1.92、Unit 2 先頭弾が 1.2/1.2、後続弾が 0.96/1.14 になることを固定 seed で確認する。\n- 距離の near/far 補間式、`worldUnitsPerSourceUnit` の値、高低差縮小の実機対応は未確認のまま残す。\n\n根拠確認予定: Leanny/splat3 コミット 7280ff9c の WeaponSlosherStrong パラメータ（PaintParam / AfterPaintParam）、既存の `reference/curated-numbers.json` と `reference/numeric-status.json`、wikiwiki のパラメータ資料。\n\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 997,
+      "url": "https://github.com/rhgrive3/actions/issues/997",
+      "title": "[INKWAVE][Motion] Ordinary weak diagonal walking gait does not match Splatoon 3",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（未マージの `inkwave/gpt6-seven-next-20261008-71` 上の e774ec73 `weakDiagonalWalkTrace` と 7b2d87d4 のテスト、および main の c8aa54d3 によるサイドストライドのテンポ切り離し）を上書き担当します。\n\n残作業:\n- 未マージの weak-diagonal トレース（`patches/splatoon3/runtime/walk.mjs` の `weakDiagonalWalkTrace`）と回帰テストを main へ移植し、同じ速度・方向違いで歩行時計が変わらないことを固定する\n- 骨盤ひねり `strafeTwist` と walk→run の `runStart/runFull`、`walkMotion` の斜め則は、Splatoon 3 の基準なしに置換しない。未確認のまま残し、コード上にも明記する\n- 斜め・横歩きのステップ長、骨盤、足向きの Splatoon 3 基準比較は未実施。基準クリップ化と計測は未着手\n\n根拠確認予定: Nintendo 公式 Ver. 11.3.0 情報、リポジトリ固定の Leanny/splat3 コミット、`patches/splatoon3/reference` の既存値、実機 60 fps キャプチャ（未取得）\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 992,
+      "url": "https://github.com/rhgrive3/actions/issues/992",
+      "title": "[INKWAVE][Dualies] Normal-shot turf paint ignores S3 distance-angle paint profile and uses fixed random blobs",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-992-dualies-impact-paint.test.mjs",
+        "patches/splatoon3/tests/issue-992-dualies-normal-paint.test.mjs",
+        "patches/splatoon3/tests/issue-992-native-flight-paint.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 引き継ぎ担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `inkwave-public/src/game/inkFlight.js` の dualies profile と `inkFlightRuntime.js` による native 通常発射塗り・ドロップレット、PR #1182 `a8bead03` の Refs #992 項目）を担当します。既存実装は上書きせず、残作業のみ編集します。\n\n残作業:\n- native 通常発射の決定的回帰試験を追加する（近距離・遠距離・急角度/落下・ドロップレット）。\n- 通常発射が generic trail（trailRadius×0.8〜1.2）を使わず native 所有であることを、実発射経路で固定する。\n- 未出典の anchor（far 20、angle 10〜35、height 1.5〜10、splash depthMax 1.2）は出典が得られるまで未確認のまま残す。数値は変更しない。\n- PR #1182 の 7パターン位相・粒子動力学・break-free 高さ合成は未検証として残す。\n\n根拠確認予定: pinned Leanny/splat3 `7280ff9` の Splat Dualies PaintParam / SplashSpawnParam（`patches/splatoon3/profile.json` と一致を確認済み）、splatoonwiki の Splat Dualies。\n\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 966,
+      "url": "https://github.com/rhgrive3/actions/issues/966",
+      "title": "[INKWAVE][Damage] Tidal Slam impact resolves around 55F instead of S3 Triple Splashdown's 70F",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-966-slam-impact.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（draft PR #1181 のブランチ `fix/inkwave-10-issues-20261009` の commit 300824fe / c50fb2d3 / c9acb9a7 / ac9af891、`patches/splatoon3/profile.json` の `specials.slam.hang`）を上書き担当します。\n残作業:\n- 上記の部分実装を main 系の現行コードへ移植し、`specials.slam.hang` を 0.25→0.5（+15F）に設定して、60Hz の衝突 tick を約70Fに合わせる。\n- 同じ衝突 tick で、塗り・ダメージ・状態遷移（Slam 終了）が一致することを回帰テストで確認する。\n- 30/60/120Hz の描画で固定シミュレーションの衝突 tick が変わらないことを確認する。\n- 拳・爆発の既存挙動を独立にテストできる状態を維持する。\n- `specials.slam.hang` の出典と未確認状態を numeric-status に記録する。\n根拠確認予定: 任天堂公式 Ver.11.3.0 と Leanny/splat3 固定コミット 7280ff9c の抽出値（Triple Splashdown の70F相当値は未確認。本Issueの70Fは目標値であり、任天堂公開値としては扱わない）、Inkipedia / splatoonwiki 等の公開フレーム情報、既存の INKWAVE 調査台帳。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 956,
+      "url": "https://github.com/rhgrive3/actions/issues/956",
+      "title": "[INKWAVE][Physics] Splat Charger muzzle height ignores footwear, removing S3 shoe-dependent shot origin",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "Ver.11.3.0 のユーザー提供Drive ZIPを実際に展開して、本件が「数値不足」で止まる原因を再確認しました。\n\n- ZIP: `Splatoon-public-sources-part-02-of-19.zip`（Drive、約59MB、バイナリ取得済）。\n- `data/mush/1130/GearInfoShoes.json`: **256種類**。SHA-256 `63653f7226ab12ed082fde2016fd5cbc48be7c95b55b7af2667ea984b7508f15`。各行は `Model` ではなく `LObjParam` / `Material` / `Brand` / `Label` / `Skill` 等のギアカタログ情報を含む。靴底の世界座標、足高、厚さを明示した数値フィールドはありません。\n- `data/parameter/1130/weapon/WeaponChargerNormal.game__GameParameterTable.json`: SHA-256 `dfe4637def507f933b0bbecbc805331f6357bb69ac165608a6e558406a4b72c1`。`WeaponKeepChargeParam.MuzzleLocalPos={X:-0.314,Y:0.2105,Z:2.0176}` は存在します。ただしこれは**一つの武器ローカル銃口オフセット**で、靴アイテムごとの底高補正値ではありません。\n\nWebでも厚底とチャージャー射線の定性的な差は確認可能（https://blog.esuteru.com/archives/9938770.html 、元の撮影者 2022-09-14）。しかしそのスクリーンショットから11.3.0の `Y` world-unit値を証明することはできません。\n\n必要な追加一次データは対応する S3 **シューズのモデル頂点/靴底の基準骨格と装備時のActor足高の参照**です。モデルファイルまたは計測座標が取れれば靴2種の差分を算出して、レーザー・実弾共通の物理原点へ接続できます。現段階では未確定の数値を硬直した定数として実装せず、#956をOpen保持します。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 952,
+      "url": "https://github.com/rhgrive3/actions/issues/952",
+      "title": "[INKWAVE][Motion] Heavy Splatling charge entry ignores S3 dedicated ground-deceleration curve-delay",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "追加の原典監査（Drive実ファイルを展開して確認）: https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b\n\nDriveの`Splatoon-public-sources-part-02-of-19.zip`に含まれる11.3.0 `WeaponSpinnerStandard.game__GameParameterTable.json` (SHA256 `92647d586beee176…`) を実展開して確認: `WeaponParam.MoveSpeed_Charge=0.062`, `VelGnd_Bias_Charge=0.9`, `VelGnd_DownRt_Charge=0.05`, `MoveSpeed=0.07`。現mainの`splatling.mjs`は `.05` を60Hz指数減速モデルに組み込むが`.9`は未使用。公開パラメータ説明は`.9`を曲線、`.05`を遅延と呼ぶものの、積分式と単位は明記しない。よって「数値は未取得」は誤りで、未解決なのは**2値の適用式と開始フレーム**。値を根拠なく減速率そのものと見なした再調整は避ける。実Actorの減速速度トレースを確定できる資料が必要。\n\n原典数値・INKWAVE採用モデル・実機未確認を混同せず、残る式/挙動の受入条件が解決するまでこのIssueはOpenを維持します。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 940,
+      "url": "https://github.com/rhgrive3/actions/issues/940",
+      "title": "[INKWAVE][Motion] Heavy Splatling uses generic cone bloom instead of S3's fixed 30% outer-reticle shot distribution",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-940-splatling-envelope.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `97ae3fec` の `patches/splatoon3/runtime/splatling.mjs` の Splatling `_spreadDeg` 固定cone化、`patches/splatoon3/runtime/splatling-jump-spread.mjs` の #850 経路、コメント 6079181985 の限定方針）を上書き担当します。\n\n現況: 標準時の Splatling は `Stand_DegSwerve 3.3 × spreadFirst 0.6` の単一cone（約1.98°）で、3.3°の envelope に到達する発射がありません。generic bloom は Splatling では発生しません（bloom は常に0）。\n\n残作業:\n1. 標準時（接地・#850 回復外）の envelope を profile の `Stand_DegSwerve`（3.3°）にし、`spreadFirst` による縮小を発射ごとの内側kernelだけに限定する。\n2. `Stand_DegBiasMax`（0.3）を、発射ごとに外側envelopeを選ぶ確率として扱う（Shooter の `ShooterAccuracy` と同じ規約）。内側kernelは既存の `spreadFirst`（0.6）を暫定維持し、内側照準の角度は未確認のまま残す。\n3. ZR release 後の stream で bloom 回復が Splatling に作用しないことを回帰試験で固定する。\n4. #850 の 25F→70F ジャンプ・着地回復、独立 pitch 1.6°、チャージ、インク、4F cadence、ghost velocity を変えない。\n5. 30/60/120 Hz の固定tickで、同一seedの発射状態が一致することを試験する。\n\n根拠確認予定: Leanny/splat3 固定コミット 7280ff9c の `WeaponSpinnerStandard`（Stand_DegBiasMax/Min、Stand_DegSwerve）、Nintendo 公式更新履歴、Inkipedia の Heavy Splatling、User:XarrotD/Data_Explanation の偏差計算（連続分布の式）。XarrotD の式と二択30%モデルの不一致は未解決として記録します。\nmerge前の自動closeや実機検証完了は主張しません。最終PDFと内側reticleの実測校正は未確認のままです。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 923,
+      "url": "https://github.com/rhgrive3/actions/issues/923",
+      "title": "[INKWAVE][Perf] TIME UP and JUDGE keep full actor physics simulation running for about 7.7s",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/adapter.mjs` にある finish/judge 中の Actor・soft-push 停止、`patches/splatoon3/tests/turf-finish.test.mjs` の #923 試験）を上書き担当します。\n残作業: (1) スペシャル・飛翔物ごとの TIME UP 終端規則。現状は全飛翔物を一律に進めるのみで、個別の終端規則はコードにありません。(2) 本家の終端挙動（外部報告では Ink Storm 等は終了で止まり、Bomb / Tenta Missiles / Triple Inkstrike 等は着弾塗りが結果に残る）の実機キャプチャによる固定。(3) 統合CIでの確認。\n根拠確認予定: S3 実機キャプチャ（再現可能な終端表）。公開資料の検索では確定できなかったため、それまで上記の規則は未確認のまま扱います。\n本回のコード変更はありません（残件が実機計測のみのため）。main 上の #923 試験は turf-finish.test.mjs の 13 件中の #923 2 件を含めて pass を確認しました。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 912,
+      "url": "https://github.com/rhgrive3/actions/issues/912",
+      "title": "[INKWAVE][Damage] Ground Tidal Slam omits Triple Splashdown's two fist explosions and overlap damage",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/network-replication/tests/issue-912-fist-paint-replication.test.mjs",
+        "patches/splatoon3/tests/issue-912-triple-slam-fists.test.mjs"
+      ],
+      "lastRecordedContext": "追加の原典監査（Drive実ファイルを展開して確認）: https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b\n\nDriveの11.3.0原典を実際に展開して確認。`WeaponSpSuperLanding.game__GameParameterTable.json` (SHA256 `c72d1e280bf25cb5e9588d9f48821af7988c530513a044650db1b61153fd4891`) は`DistanceDamage=[(1800,7),(700,10),(550,14)]`、`PaintRadius=13`を持つ617byteの単一`spl__BulletBlastParam`のみ。**2つの拳に関する発生座標・遅延・専用ダメージ配列はここに存在しない**。現main`triple-slam-fists.mjs`も別のWiki由来(6.54、30°、220/60/9.6等)を用いると明記。元Issueの2拳発動は実装済みでも拳塗り形状は分割スタンプの近似で、11.3.0の抽出数値だけでは完全再現を証明できない。`WeaponSpSuperLanding`の旧値を拳の数値と偽って代入しない。\n\n原典数値・INKWAVE採用モデル・実機未確認を混同せず、残る式/挙動の受入条件が解決するまでこのIssueはOpenを維持します。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 905,
+      "url": "https://github.com/rhgrive3/actions/issues/905",
+      "title": "[INKWAVE][Bug] Adopted Ink Storm stays ghost-only for turf after its owner disconnects",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/disconnect-fidelity.mjs` の `retireDisconnectedStorms` と `onLeave` の退場経路、daaa7395 経由。未マージ枝の 598d6ce9 / 416b3337 / 8f204bf2 と同内容）を上書き担当します。\n残作業:\n- 退場後に持ち主から届く `_tick` / `_play`（Storm 投擲 `b`、スプラット `s`）が再生されないことを、ホスト・非ホストの両方で固定する回帰試験（現状は直接の試験なし）\n- 退場の時点を 30/60/120 Hz の固定更新で変えても、雲・Storm 投擲の回収結果が同じことを確認する回帰試験\n- 未対応のまま記録: 退場時に各 peer で未再生の切断前スプラットを `peer.events` から破棄するため、peer 間で再生済み／未再生の境界が一致するかは未確認（プロトコル変更を伴うため本作業では変更しない）\n- 採用（adoption）・権限移譲の受け入れ条件は、現行の退場方針（#201 の no-bot 切断）により対象外として記録\n根拠確認予定: Splatoon Wiki「Communication error」（コメント3で引用されたもの、本セッションでは未再取得）、Nintendo 公式資料での切断後の Ink Storm の扱い（未確認）\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 891,
+      "url": "https://github.com/rhgrive3/actions/issues/891",
+      "title": "[INKWAVE][Motion] Splat Dualies sustained-fire accuracy uses 4-shot cone bloom instead of S3 1%-25% outer-reticle bias",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/dualies-bias-891.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（Draft PR #1188 head `d05f988d` の `patches/splatoon3/runtime/weapon-accuracy.mjs` と `shooter-accuracy.mjs` の Dualies bias 状態）を上書き担当します。\n残作業: 現行 main では Dualies 通常射撃が汎用 bloom（`_spreadDeg` / `this.bloom`）のままで、bias 状態が存在しません。#1188 の実装を現行 main に移植し、Dualies 専用の bias 状態（grounded 最小 0.01、成功した通常弾ごと +0.01、上限 0.25、最終弾から 5F 保持、その後 -0.005/fixed frame、jump 0.40）を接続します。発射数と回復境界の回帰試験を追加します。HUD が同じ状態を読むかは未確認として残します。\n根拠確認予定: Nintendo 公式アップデート情報、pin 済み Leanny/splat3 (7280ff9c) の Dualies パラメータ、既存の `patches/splatoon3/profile.json` と `reference/numeric-status.json`、Inkipedia の Splat Dualies 記述。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 890,
+      "url": "https://github.com/rhgrive3/actions/issues/890",
+      "title": "[INKWAVE][Movement] Normal jumps ignore B hold duration so small and high jumps collapse to one arc",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-890-buffered-release-native.test.mjs",
+        "patches/splatoon3/tests/issue-890-form-transition-native.test.mjs",
+        "patches/splatoon3/tests/issue-890-jump-hold.test.mjs"
+      ],
+      "lastRecordedContext": "PR #1202 head 7d74919c の通常ジャンプholdを、別ブランチ fix/pr1202-data-fidelity-20261010 の移動担当として引き継ぎレビューします。既存の同tickヒト化・buffered release修正と担当コメントは確認済みで重複実装しません。上昇終了・別の移動状態への遷移でhold履歴が残る境界を調査します。Driveの初代アニメーション長は物理閾値の根拠にはせず、5F/.7の暫定設定を変更しません。PR1202・main変更/mergeなし、実機数値の受入完了も主張しません。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 887,
+      "url": "https://github.com/rhgrive3/actions/issues/887",
+      "title": "[INKWAVE][Motion] Splat Dualies jump spread snaps to ground instead of S3 25F-70F recovery",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（`inkwave/c-887-codex1-reboot5-20261009` の commit `7b16b655`、同内容の `inkwave/c-887-cl1-work6-20261009` の `fbf3aebc`、Draft PR #1199）を上書き担当します。\n\n残作業:\n- main の `patches/splatoon3/runtime/weapons.mjs` の `_spreadDeg` は Dualies を `grounded ? spreadGround : spreadAir` で選んでおり、S3 `Jump_DegBiasMax=0.4` / 25F→70F の状態がまだ無い。これを接続する。\n- 着地の grounded 切替だけで 7.5° → 2° へ即時収束しないことを回帰で確認する。\n- 空中で 70F を超えた場合に bias が 0 へ落ち、空中射撃が 2° になる経路を塞ぐ（`ShooterAccuracy` の空中=jumpBias 規則に合わせる。空中での正確な仕様は未確認のまま扱う）。\n- LapOver 0° のターレット射撃と通常 5F 射撃間隔の独立性、射撃コーンと HUD/レティクルが同じ状態を参照することを確認する。\n- 回帰テストの追加と挙動比較記録への追記。\n\n根拠確認予定: Leanny/splat3 固定コミット 7280ff9c の WeaponManeuverNormal（Stand/Jump_DegSwerve、Jump_DegBias*）、Nintendo 公式アップデート情報（Ver.11.3.0）、Inkipedia の DegBias 説明。25F–70F の正確な曲線と、時計の起点（跳躍開始か着地か）は未確認のまま扱い、Blaster 既存実装と同じ跳躍開始起点を採用します。\n\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 878,
+      "url": "https://github.com/rhgrive3/actions/issues/878",
+      "title": "[INKWAVE][Match] Hiding the host tab freezes the authoritative Turf War clock and strands guests at 0-00",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-13 担当範囲の追記: 現在の main f6399281264e99326000088c398f399e2da09348 で、既存の hidden deadline/result 修正とは別に「既に hidden の guest が、relay の host 切断通知で新 host へ昇格した場合」を再現しました。実 Match / NetSession / NetMatch と既存 in-process relay を通し、旧 host の socket を切断すると新 host は isHost=true・follower=false になりますが、期限 timer は0本のままです。120秒後も playing・残8.83125秒・result=null でした。\n\n最新 Open PR と本Issueの全14コメントを確認し、旧 #1202 の統合済み部分および現在の他担当と重複しない、この host-acquisition 境界だけを担当します。native migration の順序を維持し、platform-game / platform-adapter の通知接続と既存期限処理の再利用、source/emitted/relay の正負回帰を実装します。新しい切断policy・物理catch-up・本家未確認数値は追加しません。実browser/relayや本家の切断policyの未確認条件は残し、Issue全体の完了・closeを先取りしません。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 856,
+      "url": "https://github.com/rhgrive3/actions/issues/856",
+      "title": "[INKWAVE][Damage] Super Jump flight freezes HP recovery despite S3 recovery depending only on submersion",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "担当開始: 武器/戦闘修正担当。最新統合 PR #868 @c1b9cf4e270c34d6afe0a5a8964ad49a22f9f739、Issueコメントなし、対応PR検索なし、movement担当との非重複を確認しました。実Actorの合法Super Jumpからflightへ入り、回復待機完了・HP50/ink20で30固定tick進めてもHP50/ink20のままを再現しました。現profileの通常回復率12.5 HP/sを使えばこの区間はHP56.25となるはずです。本Issue記載12.6との差は別の値校正として残し、この修正で係数は変更しません。scopeは既存HP回復式を共通helper化してflightの状態所有経路へ1回だけ接続し、通常更新・離陸/着地・上限・待機時間を検証することです。飛行中のインク補充/地面の敵インク接触を新たに走らせず、#744 charge更新を保持します。私有差分を統合担当へ渡し、main mergeは行いません。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 846,
+      "url": "https://github.com/rhgrive3/actions/issues/846",
+      "title": "[INKWAVE][Movement] Squid Surge fast climb expires after 18F instead of continuing to wall top or ink edge",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の c9283ef のブースト失効後の中立自動登攀 `auto-climb` 継続、および PR #1182 統合担当の提出分 97e3e6c）を上書き担当します。\n残作業:\n- 壁に付着し続け、壁頂・インク端に達していない間は、Squid Surge の自動登攀を固定18F（charge比例）で打ち切らず、`burst` 状態を維持する。終了は壁頂・インク端・下入力/ジャンプ等の取消で行う。\n- 自動登攀（`auto-climb`）中に実際の壁頂へ達した場合も、`squidsurge_top` と上方向の発射速度を適用する（main は `burst` 限定のため欠落）。\n- 部分チャージ、取消、離壁、壁Roll、30/60/120Hz の回帰試験を追加する。\n- 97e3e6c は本ブランチに存在しないため、同等範囲を再実装し、統合時に重複を照合する。\n- 速度の距離依存曲線（長い壁での上昇速度）は未確認のまま残し、既存値を変更しない。\n根拠確認予定: Nintendo 公式更新履歴（Ver.11.3.0）、GameWith・Gamepur のスプラトゥーン3攻略記事（自動登攀・壁頂到達で発射）、Leanny/splat3 固定コミットの数値、リポジトリ内 profile.json と reference/numeric-status.json。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 845,
+      "url": "https://github.com/rhgrive3/actions/issues/845",
+      "title": "[INKWAVE][Perf] Frustum-culled actors keep Character pose, foot-IK raycasts and hair simulation running every tick",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "Orchestrator C batch PR #1183 をReady for reviewで公開しました: https://github.com/rhgrive3/actions/pull/1183\n\nHEAD `f74cf7cde899a65eb6ec5347539c796b04ccf2d0`、main baseline `5d0be6b7`。本件は残存部分の改善をRefsとして含めています。実機等の未確認基準を解消済みにはしていません。 combined native90/90、実ビルド出力4/4、追加network20/20が合格。完成diffの独立レビュー済み、正確なPR headのCIを確認中です。mergeは行っていません。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 841,
+      "url": "https://github.com/rhgrive3/actions/issues/841",
+      "title": "[INKWAVE][Damage] Ink Storm throw animation freezes HP recovery during the special-active window",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-841-inkstorm-hp-recovery.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当の訂正: 先の引き継ぎコメントにある「投擲中の `updateResources()` を止める」方針は取り下げます。main の既存テスト `patches/splatoon3/tests/storm-throwlock-resources.test.mjs`（#624）が、Storm の投擲窓で通常の敵インク接触ダメージと資源更新を行うことを明示的に固定しており、PR #1190 より前の base `5d0be6b7` でも同じ分岐です。この分岐を狭めると同テストの 4 件が失敗するため、既存挙動は変更しません。\nその結果、本Issueの受け入れ基準「投擲中にインク補充・敵地面接触ダメージを追加しない」は、現行 main では文字どおりには満たしていません（#624 由来の既存挙動）。この食い違いは本セッションでは解決せず、オーナー判断事項として残します。\n本セッションの作業は、HP 回復の 30/60/120 Hz 同等性、activation / exit 境界での 1 回だけの適用、味方雨で 100 HP/s が重複しないこと、の回帰テストを追加することに限定します。本体コードは変更しません。\n未確認: Issue 本文の「1.75 HP/F = 100 HP/s」は 60 Hz で 105 HP/s となり内部で食い違うため、味方雨の値は 100 HP/s（コード既定値）のまま未確認です。12.6 HP/s の一次資料での再確認も未了です。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 838,
+      "url": "https://github.com/rhgrive3/actions/issues/838",
+      "title": "[INKWAVE][Match] Online guests can keep firing at 0-00 until the host finish packet arrives",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の c9283ef2 \"Bound guest input and bot observations...\"、`reports/guest-deadline-input-838.md`、`patches/splatoon3/runtime/turf-finish.mjs` の `blockExpiredGuestInput`）を上書き担当します。\n残作業: 現状はゲストのローカル時計が0に達した時点でのみ入力を閉じるため、ローカル時計がホストより遅れている間はホストの終了後も入力を受理しうる。ホストの `c` メッセージの残時間を、中継RTTによる片道遅延の推定で補正して入力ゲートに接続する（ホストの時計の権威を入力境界に使う）。遅延 100/250/500 ms の host→guest 時刻・終了パケットを想定した決定的回帰試験を追加する。\n未確定として残す: 終了時刻の共通エポック化（プロトコル変更）、ホスト側での所有者イベントのタイムスタンプ拒否、片道遅延の推定（ホスト側の経路が未計測のため推定誤差を含む）。\n根拠確認予定: 本リポジトリ pin 版 netmatch.js / transport.js の時刻・RTT実装、Nintendo 公式資料（Ver. 11.3.0 の対戦時間）、既存のスプラ3比較記録。実機での遅延計測は未実施で、単体・決定的試験の結果を実機比較の代用にしません。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 771,
+      "url": "https://github.com/rhgrive3/actions/issues/771",
+      "title": "[INKWAVE][Roller] Horizontal flick ignores S3 SwerveRateBySpeed and fixes each main-glob yaw",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-771-roller-speed-swerve.test.mjs"
+      ],
+      "lastRecordedContext": "追加の原典監査（Drive実ファイルを展開して確認）: https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b\n\nDrive 11.3.0 `WeaponRollerNormal.game__GameParameterTable.json` (SHA256 `5b423eb35d4cac26…`)を直接確認。横振りメインUnit[0]は`BulletNum=12`,`SpawnPositionWidth=0.8`,`SpawnPositionRandomCube=0.1`,`SpawnWideDegree=18`,`SpawnSpeedRandom=0.36`,`SwerveRateBySpeed=0.05`。近接Unit[1]はWidth0.4/Random0.1/WideDegree4/SpeedRandom0.11/SwerveRateBySpeed0.1。これらはソース実値で、`SwerveRateBySpeed`自体の角度への変換則と符号は疎なJSONからは読めない。横方向の実弾角速度への結合式の根拠が必要。\n\n原典数値・INKWAVE採用モデル・実機未確認を混同せず、残る式/挙動の受入条件が解決するまでこのIssueはOpenを維持します。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 735,
+      "url": "https://github.com/rhgrive3/actions/issues/735",
+      "title": "[INKWAVE][Systems] Ink Storm can damage enemies arbitrarily far below the cloud because no vertical cutoff is enforced",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/storm-vertical-cutoff-735.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `97ae3fec` の `patches/splatoon3/adapter.mjs` `_updateClouds` 内部下限ゲート・`tests/storm-paint-radius.test.mjs` の #735 回帰、未提出ブランチ `inkwave/c-735-codex2-impl12-20261009` / `inkwave/c-735-cl8-work6-20261009` の docs のみのコミット）を上書き担当します。\n残作業: (1) 内部下限ゲート（`e.pos.y < cloudY - 14` で除外）の境界テスト（内側 / 境界 / 外側）と、ゲート無効時に遠方の被弾が発生する負の対照。(2) 30/60/120 Hz での対象判定と積分ダメージ（24 HP/s）の同値性テスト。(3) 報告書の #735 記録を現行 main に合わせて更新。S3 の数値下限は未確認のまま残し、内部較正として明記します。\n根拠確認予定: 固定済み Leanny/splat3 `7280ff9c` の `WeaponSpInkStorm` 表（CloudParam / RainParam）の再取得と項目確認、Inkipedia / S3 Wiki の該当記述。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 725,
+      "url": "https://github.com/rhgrive3/actions/issues/725",
+      "title": "[INKWAVE][Aim] DeviceMotion gyro sensitivity spans ~1.30x-3.27x instead of Splatoon 3 measured ~1x-3x range",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `8c351574`: `patches/splatoon3/adapter.mjs` の `GYRO_DEG` 置換と `gyroSens` コメント）を上書き担当します。\n残作業:\n- 端点（-5 / 0 / +5）の利得が公開計測値 1:1 / 1.8:1 / 3:1 に一致することを固定する回帰試験の追加（main には専用の試験がない）\n- 30 / 60 / 120 Hz の合成センサー列で同じ物理回転から同じ積分回転になることの試験（現行の平滑化は dt 依存のため実測で確認）\n- raw 利得と低速の平滑化・引き締めを分けて試験\n- `reference/curated-numbers.json` の `camera.gyro`（現在 unknown）と数値登録の出典・未確認範囲の記録\n- 中間設定（-2.5 / +2.5 など）は本家値と主張せず、確認済み端点間の線形補間のままとして未確認を明記\n- 本家 Ver.11.3.0 の同一条件での実機計測は未確認のまま残す\n根拠確認予定: 第三者のコントローラー橋渡し計測（DamianS-eng/GTuner-TitanTwo の README 注記、Splatoon Motion Controls Explained）、Nintendo 公式更新履歴（版の対応確認）、リポジトリ内の curated-numbers / numeric-status の記録\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 719,
+      "url": "https://github.com/rhgrive3/actions/issues/719",
+      "title": "[INKWAVE][Motion] Splat Dualies cannot dodge-roll in midair while Splatoon 3 allows airborne slides",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-719-532-dualies-dodge.test.mjs",
+        "patches/splatoon3/tests/issue-719-dualies-airborne-roll.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（未merge の remote branch `origin/fix/inkwave-10-issues-20261009` の commit `66e4994c`（`issue-10-gameplay-adapter.mjs` による actor.js の置換）と `ec0f43b2`（`tests/issue-719-532-dualies-dodge.test.mjs`）。main には未反映）を上書き担当します。\n\n残作業:\n- main の `inkwave-public/src/game/actor.js` の `this.grounded` による空中 Dualies ロール遮断（L278 相当）を、WeaponRunner の既存の発動条件（射撃・方向・ロール数・インク）に委ねる形へ置き換える\n- 空中ロール発動時は単一の dodge トークンを保持し（`airborne` 印）、降下は INKWAVE 既存の gravity / maxFall に従う。S3 固有の垂直速度は推定しない\n- 通常ジャンプの coyote 窓（地形から離れた直後）では従来どおりジャンプを優先する\n- 着地中のロールが再発動・二重課金されないことを回帰で確認する\n- 回帰試験: 空中発動と課金 1 回、射撃・方向・ロール数・インク欠落時の不発、地上ロール不変、coyote 窓、着地後の単一遷移\n\n根拠確認予定: 任天堂の Ver. 11.3.0 更新情報、Inkipedia の Dualies / Mobility の記述（本Issue記載の出典）、Leanny/splat3 (7280ff9c) の Dualies 数値。空中降下の垂直速度・加速度は公開資料で確定できない場合は 未確認 のまま残します。30/60/120 Hz の描画レートによる一致は本変更の試験では未確認です。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 716,
+      "url": "https://github.com/rhgrive3/actions/issues/716",
+      "title": "[INKWAVE][Match] Damaged players lack Splatoon 3 Ver. 11.0+ remaining-health bars",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/health-bar-composition-716.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `97ae3fec` の `patches/splatoon3/runtime/combat-info.mjs` と #231 による health marker 接続、draft PR #1182 の Refs #716 項目）を上書き担当します。\n\n残作業:\n- 敵の残HP表示の3秒窓が `actor.lastDamage`（回復待ち用の共有タイマー）を参照している。敵インクに触れると `patches/splatoon3/runtime/issue-415-adapter.mjs`（`adapter.mjs` で適用）の `resetEnemyInkRecovery` が毎フレーム `lastDamage` を0に戻すため、HPが減っていない敵でも敵インク上にいる間はバーが消えない（本セッションの単独再現で、被弾後4.5秒時点もバー1本、被弾のみの対照は0本）。これを「HPの実減少を観測した時刻」から計る表示専用の時計へ分離し、ローカル・リモートの両方で同じ規則にする。\n- 上の分離に対する回帰試験を追加する（インク接触だけでは3秒後に消える、新しい被弾で窓が更新される、味方・遮蔽・潜伏・索敵の既存規則は変えない）。\n- 残HP表示の見た目、3秒値の実機校正、敵インクのダメージ刻みが「被弾」として窓を更新するかは未確認のまま残す。\n\n根拠確認予定: Nintendo 公式（Ver.11.0.0 の記事、Ver.11.3.0 の公式更新履歴）、既存の report 記録（#231）、リポジトリ内の実装と試験。敵インク接触の扱いについての本家根拠は確認できた範囲のみ使う。\n\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 713,
+      "url": "https://github.com/rhgrive3/actions/issues/713",
+      "title": "[INKWAVE][Roller] Break-free impact paint ignores S3 height-based depth scaling",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-713-roller-height-depth.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（未マージのコミット `1a1f0528` → `1a852752`、ブランチ `inkwave/c-713-codex3-reboot5-20261009` / `inkwave/c-713-cl3-work6-20261009`、ファイル `patches/splatoon3/runtime/roller-impact-paint.mjs`・`patches/splatoon3/runtime/weapons-fidelity.mjs`・`patches/splatoon3/tests/issue-713-roller-height-depth.test.mjs`）を上書き担当します。\n\n残作業:\n- 上記の部分実装を現行 main（`97ae3fec`）上へ移植し、受け入れ条件（`HeightUseDepthScaleMaxBreakFree` / `HeightUseDepthScaleMinBreakFree` の実行時消費、低高度・高高度で縦深度が変わること、水平・垂直ユニットの閾値テスト、#611 / #674 との併用、ダメージ・軌道・衝突の不変）を再検証する\n- 高さ基準（飛行頂点 − 接触点）、線形補間、`max` 合成は公開資料で未確認のため、未確認として記録に残す\n- 関連テストを実行し、`reports/inkwave-splatoon3-behavior-2026-10-02.md` の差分記録を更新する\n\n根拠確認予定: 本家 Ver. 11.3.0 の Leanny/splat3 固定コミット（`7280ff9`）の `WeaponRollerNormal` 抽出値、Nintendo 公式アップデート履歴、公開 projectile source（`inkwave-public/src/game/inkFlightRuntime.js`）の高さ入力。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 649,
+      "url": "https://github.com/rhgrive3/actions/issues/649",
+      "title": "[INKWAVE][Roller] Rolling paint stays fixed-width instead of widening with S3 roll speed",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-649-roller-speed-width.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/roller-max-paint.mjs`（#189、最大速度のみ）、未マージブランチ `origin/fix/inkwave-10-unassigned-20261010-gpt6-a` の 8ac9051f / e755edf5 / 03929d44）を上書き担当します。\n残作業:\n- main では SpeedMax（0.132）未満の転がり（通常速度 0.108 を含む）で側面の床帯が出ず、塗り幅が速度に応じて広がらない。未マージ commit の速度比例の床帯（外側境界を静止時の本体幅から最大幅まで線形に接続）を移植し、本体接触の塗りと床専用の側面飛沫の区別を維持する。\n- 静止・低速・ダッシュ直前・ダッシュ速度の決定的回帰試験を追加する。\n- 中間曲線（線形）と静止時の端点は本家の未公開値のため INKWAVE の近似として記録し、未確認のままにする。\n- 被弾幅（#578）、インク消費（#537/#148）、ロール速度・ダッシュ時間は変更しない。\n根拠確認予定: Nintendo 11.3.0 更新情報、Leanny/splat3 固定コミット 7280ff9c の WeaponRollerNormal（BodyParam.PaintParam の SpeedMax=0.132、WidthHalfMax=2.8）、wikiwiki の速度依存の記述。中間曲線の一次データは見つからない見込みで、その部分は未確認のまま残します。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 647,
+      "url": "https://github.com/rhgrive3/actions/issues/647",
+      "title": "[INKWAVE][Systems] Tidal Slam empties the special gauge instantly instead of the Triple Splashdown through-landing drain",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-469-647-bootstrap-scope.test.mjs",
+        "patches/splatoon3/tests/issue-647-landing-gauge-admission.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/tidal-slam-gauge.mjs`・`patches/splatoon3/tidal-slam-gauge-adapter.mjs` と #648 系テスト、および未マージ draft PR #1182 の `patches/splatoon3/tidal-slam-gauge-adapter.mjs` 追加分と `patches/splatoon3/tests/issue-647-landing-gauge-admission.test.mjs`）を上書き担当します。\n残作業: 着地後の確定待ち（`s3TidalSlamGaugeFinish` が残る間）に `addTurf` で使用中ゲージが再充填され、`specialReady` が真になって二度目の Slam が開始できる問題を main 上で塞ぎます。PR #1182 の admission 修正を main の現行コードに合わせて移植し、負例を含む回帰試験を追加します。ゲージ曲線・1セグメント量・着地時間の未計測値は変更しません。\n根拠確認予定: Nintendo 11.3.0 更新履歴、攻略＆検証 Wiki（ウルトラチャクチ）、Inkipedia の Triple Splashdown、リポジトリ内の numeric-status / curated-numbers（既存出典の再確認）。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 642,
+      "url": "https://github.com/rhgrive3/actions/issues/642",
+      "title": "[INKWAVE][Perf] Mobile post stack permanently pins two full-resolution RGBA16F composer buffers",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/local-quality/tests/composer-residual-642.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `dc0f3698` 遅延生成・hidden時解放、`6811a67e` モバイル Grade 出力の R11F_G11F_B10F 化、PR #1177・#1183 経由）を上書き担当します。\n\nmain 97ae3fec で `patches/local-quality/tests/composer-residual-642.test.mjs` と `composer-target-adapter.test.mjs` を実行し、8/8 pass を確認しました。\n\n残作業（本セッションではコード変更なし。残りは実機計測と許容値の合意）:\n- LOW / MEDIUM / HIGH の実タッチ端末で、WebGL/GPU メモリの before/after 捕捉を取得する（現状は SwiftShader の FBO 検証と attachment bits からの color-only 計算のみ）。\n- 画像差分の許容値（現在 mean ≤1.25、P99 ≤3、alpha 不一致 0）を合意する。現在の値は実装側が設定したもので、Issue の「agreed tolerance」には未合意。\n- 実機の iOS / Android GPU での FBO 対応と見た目の一致を確認する。\n- シーン側と ScreenFX 書き戻し側のターゲットは RGBA16F のまま（現行の保守的な選択）。減らすかどうかは上記の視覚差分の合意後に判断する。\n\n根拠確認予定: 実機ブラウザの GPU/WebGL メモリ計測、Three.js r186 の EffectComposer 実装と WebGL2 の FBO 規則、既存の SwiftShader 差分ハーネスの結果。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 574,
+      "url": "https://github.com/rhgrive3/actions/issues/574",
+      "title": "[INKWAVE][Damage] Blaster explosions omit Splatoon 3 knockback and never push hit players",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-574-blaster-knockback.test.mjs"
+      ],
+      "lastRecordedContext": "追加の原典監査（Drive実ファイルを展開して確認）: https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b\n\nDrive 11.3.0 `WeaponBlasterMiddle.game__GameParameterTable.json` (SHA256 `36139282d2bd915f…`) の`BlastParam.KnockBackParam`は`Accel=700`,`Bias=0.8`,`Distance=3.5`で確定。現mainの`BLASTER_KNOCKBACK`は全3値一致し、`issue-574-blaster-knockback.test.mjs`は実衝突で放射状押し出し・地形/味方/無敵の除外・30/60/120Hz一致を検証。残るのはBiasから実速度に変換するNintendo内部式（パラメータ表に無い）と実機計測。値の不足ではない。\n\n原典数値・INKWAVE採用モデル・実機未確認を混同せず、残る式/挙動の受入条件が解決するまでこのIssueはOpenを維持します。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 573,
+      "url": "https://github.com/rhgrive3/actions/issues/573",
+      "title": "[INKWAVE][Systems] Tidal Slam uses 75% damage reduction instead of Triple Splashdown's 50F invulnerability transition",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main 上の `patches/splatoon3/runtime/tidal-slam-gauge.mjs` の `slamProtected`、`adapter.mjs` の Slam 向け `armor: false` 変換と `invuln = 0.3` の除去、`tests/slam-damage-state.test.mjs`。PR #1174 は未マージで closed）を上書き担当します。\n残作業: 敵インクによるダメージ経路（`patches/splatoon3/runtime/resources.mjs` の `updateResources`。敵インク分岐は `a.invuln <= 0` のみで判定し、`slamProtected` を見ていない）を、被ダメージの受付と同じ無敵判定に揃える。49/50/51F と着地境界での敵インク回帰試験を追加する。着地後の保護継続時間は未確認のまま残す。\n根拠確認予定: Ver.11.3.0 の公式パッチノート、ピン留め済みの Leanny/splat3 データ（WeaponSpPogo の Rise_NoDamageStartFrame = 50）、既存の `reference/numeric-status.json`。無敵中に敵インクが入らないことの S3 側の根拠は未確認として扱う。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 541,
+      "url": "https://github.com/rhgrive3/actions/issues/541",
+      "title": "[INKWAVE][Roller] Empty ink immediately cancels rolling instead of preserving S3 dry-roll state",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-541-roller-dry-roll.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `97ae3fec` の `patches/splatoon3/runtime/roller.mjs::installRollerLogic` のdry roll処理と `patches/splatoon3/tests/issue-541-roller-dry-roll.test.mjs`）を上書き担当します。\n残作業:\n- 乾いたローリング中に補給（ink > 0.5）された場合、`rolling` が true のまま保持されるため native の遷移が発火せず、通常ローリングへの再入でロール音ループが再開されない不具合を修正する（再入を native の遷移経路で行い、ループは一つだけ開始する）。\n- 再入後にループが重複せず一つだけ存在することを回帰試験で固定する。\n- 乾いたローリング中の移動速度・クランク音（カチャカチャ音）は未確認のまま据え置き、数値を推測で入れない。\n- 比較記録 `reports/inkwave-splatoon3-behavior-2026-10-02.md` の末尾に #541 の追記を行う。\n根拠確認予定: Splatoon Wiki の Splat Roller、Nintendo 公式の Ver. 11.3.0 情報、Inkipedia、固定コミット Leanny/splat3 `7280ff9` のデータ、Google Drive 内の計測メモ。根拠が得られない速度・音の数値は未確認のまま残します。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 539,
+      "url": "https://github.com/rhgrive3/actions/issues/539",
+      "title": "[INKWAVE][Charger] Partial-charge movement is pinned to full-charge speed instead of Splatoon 3's 0.96→0.21 curve",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-539-charger-movement.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（未マージ draft PR #1181 / ブランチ `fix/inkwave-10-issues-20261009` の #539 関連コミット b55f4b5d・a0188053・dd0e134e・ac9af891・c6cac012・fcde99cf、および main の `patches/splatoon3/runtime/weapons.mjs` の定速分岐）を上書き担当します。\n残作業: main の charger 充填中分岐が全充填フレームで 1.20 u/s を返している点を、部分チャージの移動曲線に置き換える。最小側（0.96 相当 = 5.76 u/s）、最大部分側（0.21 相当 = 1.26 u/s）、完全充填（0.20 相当 = 1.20 u/s）を profile と numeric-status に分離して記録し、進行量はダメージ用カーブではなく時間正規化の chargeT で駆動する。最短 8F 未満は通常側の速度を維持する。中間区間の補間形は未確認として記録する。回帰テストを追加し、#377 系の旧テストを整合させる。Run Speed Up (#243)、完全充填ジャンプ (#251)、ダメージ・射程・インク・チャージ維持・塗りは変更しない。\n根拠確認予定: Ver.11.3.0 の公式パッチノート、Leanny/splat3 固定コミット 7280ff9 の WeaponChargerNormal（固定抽出には MoveSpeedFullCharge = 0.02 のみで、部分チャージ移動の項目は見当たらないことを確認済み）、wikiwiki の Splat Charger 検証表（本セッションの取得は HTTP 403 のため、数値は未確認のまま扱う）。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 537,
+      "url": "https://github.com/rhgrive3/actions/issues/537",
+      "title": "[INKWAVE][Roller] Slow rolling can drain below S3's 1.2%/s minimum ink consumption",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-537-roller-roll-ink-floor.test.mjs"
+      ],
+      "lastRecordedContext": "Orchestrator C 結果更新: 最新main `5d0be6b7fdebfd07e696e75497aaa97aa5ff5648` のproduction overlayで本件の `1.2%/s rolling ink floor` 修正が既に有効です。再開レーンで既存実装と本Issueのnative回帰を確認し、7/7件が合格しました。重複変更は追加せず、今回の新規修正件数には含めません。実機で未確認の数値・中間挙動は比較記録の未確認表示を維持します。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 532,
+      "url": "https://github.com/rhgrive3/actions/issues/532",
+      "title": "[INKWAVE][Motion] Splat Dualies dodge-roll targets 2.8 units instead of S3's 5.0 DU trajectory",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-532-dualies-dodge-distance.test.mjs",
+        "patches/splatoon3/tests/issue-719-532-dualies-dodge.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（未マージのブランチ `fix/inkwave-10-issues-20261009` の e48cbc9f（profile の dualies `rollDist: 5.0`）、ec0f43b2（#532 回帰試験）、ac9af891（numeric-status の rollDist 記録））を上書き担当します。main では `rollDist` が汎用値 2.8 のまま S3 build に継承されており、現時点では未解消です。\n残作業:\n- 上記 `rollDist: 5.0` を main に移植し、profile.json の dualies に明示設定して汎用 2.8 の継承を止める\n- 5.0 の総移動量を既存の 12F ダッシュ積分（`dodgeIntervalDistance`）で 4 方向とも同一に再現する回帰試験を追加する\n- 2 連続ロールの総量、衝突による打ち切り、4F 射撃ゲート、ロールインク 7% は既存値のまま維持する\n- 「S3 DU → INKWAVE world unit」の換算は根拠がないため未確認として残す（既存の raw 値を 1:1 で使う運用に従い、物理スケールは未確認と記録）\n- 4.0（ダッシュ中）+ 1.0（後のスライド）の分配は本家 wiki の記述のみで、今回は分配を新設せず総量 5.0 のみを扱う\n根拠確認予定: Splatoon Wiki（Splat Dualies、DU ページ、User:XarrotD/newdata の計測表）、既存の numeric-status と Leanny 抽出値（12F・4F の一致確認）。Nintendo 公式の移動距離値は未確認。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 522,
+      "url": "https://github.com/rhgrive3/actions/issues/522",
+      "title": "[INKWAVE][Bug] Online paint events are unauthenticated and can alter authoritative turf and the winner",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/network-replication/tests/issue-522-paint-numeric-admission.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-11 追加監査: PR #1213 の新メイン65種を導入するため、`patches/network-replication/catalog-paint-admission.mjs::catalogPaintRadiusLimit` が通信ペイント半径の許容値を「同じ sender が所有するcatalog Actor全員の抽出パラメータ最大値」へ拡張しています。11.3.0 Drive原典には例として `WeaponRollerHeavy.VerticalSwingUnitGroupParam.Unit[0].UnitParam.PaintParam.WidthHalfFar=4.6`、`WeaponSlosherStrong.UnitGroupParam.Unit[1].PaintParam.WidthHalfNear=4.44`、`WeaponSlosherWashtub.BlastParam.BlastParam.PaintRadius=4.5` があり、従来の受信既定 cap=5.2×0.72=3.744 を超えます。\n\nこれは catalog 用の正規大半径塗りを拒否しない利点がある反面、**イベント自体の発射主権証明は拡張していません**。受信ペイント `s` に catalog Actorのnid/shot birthが結び付いていないため、許容半径以下の恣意的なチーム塗りを同peerから送れる問題が続きます。既存#522の「未証明の任意小半径の塗りも送れる」脅威は前からあり、今回の拡張もその対策の完成ではありません。sender一般イベント・match・team・sequence検証のみでは合法なブキ発射位置・インク残量・弾道・接触は証明できません。\n\n完全対処には、半径ごとに単純maxだけ認めるのではなく、catalog mainの実発射（owner+nid+life+weapon+発射seq）で一度だけ得られるpaint許可、攻撃種別に対応する半径／形状／着地と消費済み/死亡/再試合の検証を追加する必要があります。これを行わない限り、PR #1213 に「65種の数値カタログ」は成立しても本Issue #522 は Open を維持してください。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 498,
+      "url": "https://github.com/rhgrive3/actions/issues/498",
+      "title": "[INKWAVE][Roller] Flick paint width never applies S3's 0.6x age decay",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-498-roller-paint-age-endpoints.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/roller-impact-paint.mjs`、`patches/splatoon3/adapter.mjs` のRoller trail配線、`tests/issue-498-roller-paint-age-endpoints.test.mjs`、PR #1169 由来）を上書き担当します。\n残作業: \n- 20F/30F開始→50F到達（0.6倍）の中間遷移曲線（現行は線形の暫定実装）と、フレーム丸めの一次根拠の確定\n- 上記の実機フレーム計測（未確認のまま残す）\n根拠確認予定: Nintendo公式資料、Leanny/splat3 (7280ff9cde8bb1c5dcef46c700c326471584d2e6) のパラメータ表、wikiwiki のパラメータ解説、Google Drive 内の計測メモ。本セッションで Web / Drive を検索済みで、中間曲線の一次根拠は見つかっていません。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 469,
+      "url": "https://github.com/rhgrive3/actions/issues/469",
+      "title": "[INKWAVE][Systems] Ink Storm special gauge is emptied instantly instead of draining after use",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-469-647-bootstrap-scope.test.mjs",
+        "patches/splatoon3/tests/issue-469-storm-gauge-display.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の actor-owned `stormGaugeLock` と、Draft PR #1182 head `b08a3abd` の表示用 `stormGaugeFraction` / `hudFrameSnapshot` 変更）を上書き担当します。\n\n残作業:\n- main の `patches/local-quality/hud-snapshots.mjs` は `a.specialFrac()` のみを読むため、発動直後と使用中に表示が 0 になる。既存の actor-owned `stormGaugeLock` の残り時間を使用済み表示の比率として同じ時計から投影する（holding は満量、投擲後のみ減少、lock 終了で解除）。\n- 投擲直後の初期 lock 長を保持し、Special Power 延長・死亡・reset で表示が跳ねないようにする。\n- 使用済み値を spendable charge、specialReady、ネットワーク送信の charge に戻さない。\n- 決定論的 fixed-step 試験（発動 tick、中間点、0 到達、再蓄積解禁、死亡中、30/60/120Hz）と、表示接続だけを外した対照試験を追加する。\n- `reports/inkwave-splatoon3-behavior-2026-10-02.md` の末尾に #469 の記録を追記し、未確認項目は未確認のまま残す。\n\n根拠確認予定: 公開版 `Actor._startSpecial()` / `_updateSpecial()`、main の `storm-effects.mjs` にある 480F の出典コメント（S3 検証 Wiki, GP0）の一次照合、Inkipedia の Special Gauge / Ink Storm、Nintendo Ver.11.3.0 の公式更新履歴。480F の出典を確認できない場合は未確認として残す。Nintendo 実機でのゲージ描画曲線・セグメント遷移は未計測のまま扱う。\n\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 466,
+      "url": "https://github.com/rhgrive3/actions/issues/466",
+      "title": "[INKWAVE][Roller] Dash turning never uses S3 SpeedDashTurnBreak and stays at 0.132/frame",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-466-roller-dash-turn-break.test.mjs",
+        "patches/splatoon3/tests/issue-466-roller-dash-turn.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（PR #1182 ブランチ `fix/inkwave-ten-currentmain-20261009` の `patches/splatoon3/runtime/movement-physics.mjs` の `rollingMovementSpeed`、`profile.json` の `rollDashTurnBreakSpeed`、`patches/movement-physics/tests/roller-dash-turn-break.test.mjs`）を上書き担当します。現行 main では `rollingMovementSpeed` が `rollT` だけで 6.48 / 7.92 を返し、`SpeedDashTurnBreak` を読んでいません。\n残作業: \n- main に PR #1182 の反転判定（入力と速度の内積が負のとき 0.108/frame = 6.48 WU/s の上限）をポートし、90F以降の直進 7.92 は維持する。\n- `SpeedDashTurnBreak` の抽出値 0.108 を `reference/curated-numbers.json` と `reference/numeric-status.json` に登録する。\n- 回帰試験を `patches/splatoon3/tests/` に追加する（直進通常、直進ダッシュ、ダッシュ中の反転、反転後の回復、無入力・低速時の不変）。\n- 反転の閾値（内積<0 = 入力が進行方向から90度超）と回復の時間は本家側の根拠が未確認のため、未確認として記録する。\n根拠確認予定: Leanny/splat3 固定コミット 7280ff9c の Ver.11.3.0 WeaponRollerNormal raw 値、Nintendo 公式 Ver.11.3.0 情報、解説ページの説明文（発動条件の記述が無い場合は未確認のまま残す）。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 408,
+      "url": "https://github.com/rhgrive3/actions/issues/408",
+      "title": "[INKWAVE][Shooter] Splattershot keeps firing walk speed for 21f after ZR release",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-408-shooter-movement-window.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（commit `fe71fa29`「Decouple Splattershot 4F post-shot locomotion from long visual pose timer (Refs #408)」の内容、`patches/splatoon3/runtime/shooter-movement.mjs`・`runtime/weapons.mjs`・`runtime/gear.mjs` の移動判定）を上書き担当します。\n\n残作業:\n- 現在の main には 0.35秒の表示用 `firingT` ではなく、発射された弾で開く 4/60秒の移動状態が入っていますが、回帰試験は純粋関数の4tickに限られています。WeaponRunner と Actor を通した固定時間ステップ試験を追加し、連続射撃、単発の解放、短押し・連射の解放、ギア適用時の移動速度分岐を確認します。\n- 4F の移動解除は、本家のヒト移動速度の推移で確認できていないため「確定」とは書かず、実装値の契約として記録して未確認のまま残します（owner監査コメント 5988676945 の方針に従う）。\n- `reports/inkwave-splatoon3-behavior-2026-10-02.md` の末尾に #408 の差分記録（本家の根拠、INKWAVE実装箇所、再現操作、プレイへの影響、確認状態）を追記します。\n根拠確認予定: Nintendo 公式 Ver. 11.3.0 更新履歴、wikiwiki Splattershot 検証表（射撃時・非射撃時のヒト速、射撃後隙）、Leanny/splat3 @7280ff9c の WeaponShooterNormal パラメータ、Inkipedia。ZR解放後のヒト移動速度の実機推移は未確認のまま残します。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 387,
+      "url": "https://github.com/rhgrive3/actions/issues/387",
+      "title": "[INKWAVE][Roller] Rolling contact applies damage but omits S3 roller-body knockback responses",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-387-roller-body-knockback.test.mjs"
+      ],
+      "lastRecordedContext": "追加の原典監査（Drive実ファイルを展開して確認）: https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b\n\nDrive 11.3.0 `WeaponRollerNormal.game__GameParameterTable.json` (SHA256 `5b423eb35d4cac26…`) の`BodyParam.CollisionParam`を直接確認。対象へのKnockBackOpponentはAccelMin420/Max800/MyVelocityRate30/OpponentVelocityRate4800、自身の反動DamageOnは410/550/4800/30、DamageOffは280/280/4800/30。現mainの`roller-body-knockback.mjs`は全値をすでに読み、独自`AccelMin + rate × closingSpeed`を用いて`#535`の変換へ渡している。**不足は数値ではなく係数の物理単位・合成式と1回の接触の適用時刻**。元の欠落（全く押されない）自体は部分修正済みだが、任天堂実機の反動距離とは未照合。\n\n原典数値・INKWAVE採用モデル・実機未確認を混同せず、残る式/挙動の受入条件が解決するまでこのIssueはOpenを維持します。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 378,
+      "url": "https://github.com/rhgrive3/actions/issues/378",
+      "title": "[INKWAVE][Physics] Heavy Splatling keeps weak generic drag after 8f instead of S3 brake state",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-378-splatling-brake-state.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `97ae3fec` の `patches/splatoon3/runtime/weapons-fidelity.mjs` の `initializeSplatlingFlight` / `splatlingReach` と `profile.json` の `weaponsFidelity`、および `inkwave-public/src/game/inkFlight.js` の splatling プロファイル）を上書き担当します。\n\n残作業:\n- 60 Hz・30 Hz・120 Hz で 8F（直進終了）、9F（ブレーキ開始、1.05 u/f から 0.672 u/f）、ブレーキ→自由遷移の回帰試験を追加する（現状は試験なし）。\n- 最小チャージ弾で `p.fidelityPhase` が 0 のまま残る原因（実飛行は `inkFlight` の `inkPhase` が管理し、`advanceFidelityProjectile` は呼ばれない）を修正し、両者を同期させる。\n- ブレーキ減衰 0.36、ブレーキ重力 252、BrakeToFreeVelocityY -9、自由抗力 0.02 は共有の既定値のまま。Leanny/splat3 固定コミット `7280ff9` の Heavy Splatling（WeaponSpinnerStandard）の MoveParam には該当フィールドが見当たらないため、未確認として記録する。\n- 充電依存・乱数の初速（#252）と直進8Fの扱いは本作業の対象外として分離する。\n\n根拠確認予定: Leanny/splat3 固定コミットの WeaponSpinnerStandard（MoveParam を確認済み）、Nintendo 公式アップデート情報、既存 `inkFlight` 定数の出典。実機フレーム計測は未確認のまま残します。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 351,
+      "url": "https://github.com/rhgrive3/actions/issues/351",
+      "title": "[INKWAVE][ギア/索敵] リベンジがなく、自分を倒した相手の死亡まで続く本人限定追跡を使えない",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-351-haunt-network-life.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/haunt.mjs` と、未マージの PR #1182 head の commit `46e12a8`）を上書き担当します。\n\n残作業: main では `haunt:arm` の検証が `Actor.netLife` と比べるため、通常オンラインの復活後に正規の arm が捨てられ、被害側の SP 100→50 と追加復活時間が適用されない欠落が残っています（`netmatch.js` の `_playEvents` が `applyRemote` より先に実行される順序が根拠）。#1182 の `46e12a8` と同趣旨の修正を main 上で移植し、実 NetMatch 経路の回帰テストで失敗→成功を確認します。既存の 45F / 15パーセントポイント 等の数値は変更しません。\n根拠確認予定: 既存レポートに記載の本家根拠（任天堂公式更新履歴の Ver.2.1.0 / Ver.3.0.0、Splatoon3攻略＆検証Wiki・リベンジの +45F / SP減少の記載）との照合のみ。新規の数値は導入しません。相打ち・死後弾の発動境界、特殊ギア併用、透過距離の校正は未確認のまま残します。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 292,
+      "url": "https://github.com/rhgrive3/actions/issues/292",
+      "title": "[INKWAVE][Movement] Drop Roller is absent from Super Jump landing",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/network-replication/tests/issue-292-drop-roller.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `c69116a9` / `9efb135d`、`patches/splatoon3/runtime/gear.mjs`、`patches/splatoon3/adapter.mjs`、`patches/network-replication/adapter.mjs`）を上書き担当します。\n残作業: (1) Drop Roller のロール移動の距離・速度・動作時間は本家の一次データが未確認のため、現行の0.3秒制御窓（INKWAVE暫定値）を本家同等として扱わない。(2) ロール中の本家の射撃可否・インク消費は未確認のまま残す。(3) Inkjet / Zipcaster の帰還経路は公開版に存在しないため対象外。(4) 既存の #292 テストを再実行し、未確認項目を報告に照合する。\n根拠確認予定: Leanny/splat3 固定コミット `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の抽出データ再検索、Splatoon Wiki の Drop Roller 項目、既存 `reports/inkwave-splatoon3-behavior-2026-10-02.md` の #292 記録。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 287,
+      "url": "https://github.com/rhgrive3/actions/issues/287",
+      "title": "[INKWAVE][Aim] Controller sensitivity uses 0.2×–3.0× instead of Splatoon 3's −5…+5 right-stick scale",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-287-settings-reset.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main に既に入っている −5…+5 表示と legacy 1×→0 の移行に加え、draft PR #1182 の commit `b901914d` にある reset 経路の変換）を上書き担当します。\n\n残作業:\n- 現 main では「RESET TO DEFAULTS」が legacy 既定値 `padSensitivity: 1.0` を `_setSettings` に渡し、S3 設定 +1 としてアクティブ profile に保存される経路を、legacy→S3 変換（既定 1× → 0）で閉じる（`b901914d` の変換を移植）。\n- 回帰試験 `issue-287-settings-reset.test.mjs` と `pad-sensitivity.test.mjs` の更新を移植し、修正前に失敗することを確認する。\n- 報告 `reports/inkwave-stick-reset-287-2026-10-09.md` と `reports/inkwave-splatoon3-behavior-2026-10-02.md` へ #287 の追記。\n- S3 の右スティック感度の実ゲイン曲線、設定 0 の校正、−5/0/+5 の旋回速度トレースの一致は未確認のまま残す（実機計測が必要）。\n\n根拠確認予定: Nintendo 公式 Ver.11.3.0 の設定項目（−5…+5 は確認済みの範囲のみ）、Inkipedia の Options 項目、リポジトリ固定の Leanny/splat3 抽出値の再確認（右スティック感度の係数は未抽出）。実機計測の代替にはしない。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 285,
+      "url": "https://github.com/rhgrive3/actions/issues/285",
+      "title": "[INKWAVE][Roller] Horizontal flick collapses S3 spatial spawn width into one common projectile origin",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-285-horizontal-spawn-origin.test.mjs"
+      ],
+      "lastRecordedContext": "引継ぎ担当（2026-10-09 JST）：10/7 Local Batch 5/5の予告から48時間以上PR完成なし。水平ローラーの12弾が共通発射座標のままなのを確認。S3 SpawnPositionWidth=0.8/SpawnPositionRandomCube=0.1 を個別の射出点に導入します。基準scaleは独立設定として明示、根拠未確認の意味論は新しい本家数値として断定しません。実Projectiles.fireFlickの12/5レコードを回帰します。branch `fix/inkwave-10-issues-20261009`.",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 278,
+      "url": "https://github.com/rhgrive3/actions/issues/278",
+      "title": "[INKWAVE][Roller] Vertical flick launches all five globs from one origin instead of S3's tiered spawn offsets",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-278-vertical-spawn-origin.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/weapons-fidelity.mjs` の `configureFidelityFlick` による組別の射出高さ適用と `patches/splatoon3/tests/issue-278-vertical-spawn-origin.test.mjs`、および未マージの `fix/inkwave-10-issues-20261009` の 99d372cf / c676b72f / 8564a1e1）を上書き担当します。\n\n本文の現状記述（5発すべてが同一の `p.start`）は現 main では成立せず、既存テストが縦1+2+2の3つの異なる始点（y 偏差 +0.5 / 0 / -1.0）を確認しています。未マージブランチの `adjustFlickSpawnPosition` は同じ偏差を二重に適用するため移植しません。\n\n残作業:\n- `SpawnPositionHeight` と `SpawnPositionOffsetHeight` を足し合わせる扱い、および生値を INKWAVE のワールド単位（スケール1）として使う扱いは、本家の根拠が見つからないため「未確認」としてプロファイルとコードに明示する（挙動は変えない）\n- 参照値（Ver. 11.3.0 の組別フィールド）と未確認の扱いを回帰テストで固定する\n- `reports/inkwave-splatoon3-behavior-2026-10-02.md` の末尾に #278 の差分記録を追記し、確認状態を未確認のまま残す\n\n根拠確認予定: Leanny/splat3 コミット `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の `WeaponRollerNormal` の値（確認済み。このファイルには意味論やフィールドの説明はない）、Nintendo公式資料、Inkipedia 等の二次資料（意味論の一次資料は未発見）。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 272,
+      "url": "https://github.com/rhgrive3/actions/issues/272",
+      "title": "[INKWAVE][Movement] Stealth Jump cannot apply Splatoon 3 Ver. 11.0.0's distance-based Super Jump flight penalty",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-272-sign-concealment.test.mjs",
+        "patches/splatoon3/tests/issue-272-stealth-jump.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/splatoon3/runtime/superjump.mjs`、`adapter.mjs` の超ジャンプ飛行配線、commit `9224ee65` のクツ主ギア表示）を上書き担当します。\n残作業: (1) 公開版のローカル飛行（自分・Bot）で、ステルスジャンプ装備者の超ジャンプ標識（owner 側の着地リング `actor.js` と countdown の `concealed`）を敵チームから隠す配線。味方には見せたままにする。(2) ネット対戦の遠隔側は loadout が複製されていないため、この隠蔽は未対応のまま記録する。(3) 飛行延長の距離座標アンカー（`level.stealthJumpFoci`）は未公開のため fail-closed のまま据え置き、実機計測または検証済み抽出値を待つ。(4) 60 / 100 unit の閾値と線形曲線は未検証として明記する。Issue 本文の headgear 主ギアは、既存報告の固定版データ（KindLimit = Shoes）に合わせて shoes main を正とする。\n根拠確認予定: Leanny/splat3 の固定コミット `7280ff9c` の該当データ、Nintendo 公式の更新履歴、Inkipedia の Stealth Jump 記述。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 268,
+      "url": "https://github.com/rhgrive3/actions/issues/268",
+      "title": "[INKWAVE][Bug] GPU splatter and wall drips render as team ink but never enter the CPU ownership grid",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当 状況更新: 残作業は未解決のままです。main `97ae3fec`（#1177 / #1175 取り込み済み）で、Charger 壁ドロップ stamp のドリップ寿命を本家経路の残りフレーム（`(総フレーム−現フレーム)/60`）に合わせる修正を試しましたが、fixture では壁 splat が `paint.growing` に載らず（area 0）、回帰試験で検証できないため取り消しました。コードの変更はありません。\n記録のみ commit `657b05e9`（ブランチ `worktree-agent-a46b7687f0a1f07c0`、`reports/inkwave-splatoon3-behavior-2026-10-02.md` 末尾に #268 の項目）。\n次の作業: 実際の壁・塗り面を持つ経路で、壁 splat が #264 / #570 のラッパーを通って `paint.growing` に入るかを確認し、そのうえで寿命を設定する。\n未確認のまま: `FallPeriodSecondFrame = 10` と `FallPeriodLastFrameMin = 15` の既定値（XarrotD paramtable）、速度の単位、Switch 上の timing と座標一致。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 264,
+      "url": "https://github.com/rhgrive3/actions/issues/264",
+      "title": "[INKWAVE][Bug] GPU splatter/drips render as team ink but never enter the CPU ownership grid",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-264-additional-paint-owners.test.mjs",
+        "patches/splatoon3/tests/issue-264-paint-authority.test.mjs",
+        "patches/splatoon3/tests/issue-264-paint-hash.test.mjs",
+        "patches/splatoon3/tests/issue-264-paint-score-boundaries.test.mjs",
+        "patches/splatoon3/tests/issue-264-paint-temporal-ownership.test.mjs",
+        "patches/splatoon3/tests/issue-264-subcell-spatter-owner.test.mjs",
+        "patches/splatoon3/tests/issue-264-wall-paint-owners.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main `97ae3fec` の `patches/splatoon3/runtime/paint-ownership.mjs`、`patches/splatoon3/paint-ownership-adapter.mjs`、`patches/splatoon3/tests/issue-264-*.test.mjs`、main に含まれる `93e3e8b8` の成果）を上書き担当します。\n\n残作業:\n- 受入条件「固定 seed=0.5・kind=bomb の遠方スパッタ点を CPU 所有にする、または権威インクとして描かない」は main で未充足と確認しました。native GLSL（`inkwave-public/src/world/paint.js`）は同チーム色の極小スパッタを `h1×2π` の角度、距離 `R×(1.3+1.2·h2)`、半径 `R×(0.011+0.02·h3)×fall` で描きますが、CPU の `cellIsSolidlyVisible`（セル中心＋内側4点の5サンプル）は本番セル 0.25 m でこれを所有しません。R=2.7 の14個すべてで、ドット円と半対角線の範囲内に所有セルがありませんでした（一時probe、未コミット。0.125 m 格子では所有セルが現れるため、解像度に依存する欠落です）。\n- 極小ドット（スパッタ・サテライト）にも所有判定を拡張し、描かれたドットと所有セルの対応を回帰テストで固定します。判定は保守的な規則にとどめ、規則と未確認部分を記録します。\n- 既存の browser probe（`paint-mask-browser-fixture.mjs`）は「CPU所有セル ⊆ GPU可視」の向きだけを検証しているため、「GPU可視 ⊆ CPU所有」の向きを追加検証します。\n\n根拠確認予定: 固定した native GLSL と既存の browser probe の方式、本家 Ver.11.3.0 の公開資料（ピクセル単位の公開値はないため、該当分は未確認として残します）。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 258,
+      "url": "https://github.com/rhgrive3/actions/issues/258",
+      "title": "[INKWAVE][Slosher] 弾群が70×1＋50×7で本家4＋5弾と異なり、薙ぎ払いにも反応しない",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-258-slosher-sweep.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の #1083/#1144 統合による `patches/splatoon3/runtime/weapons-fidelity.mjs` の fireSlosh 薙ぎ払い角 `launchFrame` 係数、および Draft PR #1182 の群境界修正）を上書き担当します。\n残作業: 薙ぎ払い角の係数を出生delayではなく、群ごとの発射間隔（Leanny 11.3.0 の AfterOffsetDelayFrame 1 / 2）の累積で決める（main の [0,1,2,3,4,6,8,10,12] を群境界で [0,1,2,3,5,7,9,11,13] へ）。静止・左右旋回・±π・30/60/120Hz・reset の回帰テストを更新する。4+5弾・70/50HP・出生時刻は変更しない。\n根拠確認予定: Leanny/splat3 11.3.0 の UnitGroupParam（群間隔・発生delay・弾数）と、公開Wikiの薙ぎ払い説明。Wikiは本セッションからHTTP 403で取得できないため、角度係数則は未確認のまま扱う。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 253,
+      "url": "https://github.com/rhgrive3/actions/issues/253",
+      "title": "[INKWAVE][壁移動] 通常の壁泳ぎでスティックを離すと高度が完全固定され、無入力の下降がない",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-253-wall-climb-descent.test.mjs"
+      ],
+      "lastRecordedContext": "PR #1202 head 7d74919c をレビューする移動担当として、別ブランチ fix/pr1202-data-fidelity-20261010 で無入力壁下降の状態寿命を引き継ぎます。既存の担当・PR1202実装と試験を確認済みです。reset・壁離脱後にも s3NeutralWallSlideT が残る境界を検証し、新しい接触へ下降履歴が持ち越される場合だけ修正します。既存の0.9 WU/s・3.6 WU/s²は未校正値のまま、PR1202のブランチは変更せず、mainへのpush/mergeも行いません。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 226,
+      "url": "https://github.com/rhgrive3/actions/issues/226",
+      "title": "[INKWAVE][Paint][要検証] アメフラシRainNum=72と公開版172回の塗り呼出の対応を校正する",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `f534d6b2` / `22e20925` / `d47a3574` の雨計測ハーネス・試験・`reports/inkwave-storm-rain-calibration-2026-10-09.*`）を上書き担当します。\n残作業:\n- 本家の `RainNum=72` が生成総数・同時管理数・再利用・地面到達のどれに対応するかは未確定のまま残す。同条件の実機観測、または生成ライフサイクルを説明する出典がない限り確定させない。\n- main の計測は production 合成（adapter の 0.3 秒後までの更新窓を含む）の 178 candidate rays のみを記録している。Issue 本文の公開版のみ（0.3 秒前で停止）の 172 呼出を同じ会計で再現し、別スコープとして記録・試験する。\n- 報告書の「2つの実行スコープを別々に記録」という記述を、実際の成果物に合わせて訂正する。\n- 生成・再利用・地面到達・塗り・装飾の分離計測を維持し、ゲームの数値（RainNum・塗り回数・上限）は変更しない。\n根拠確認予定: 公開版ソースの決定論的測定（30/60/120Hz）、既存の Leanny 11.3.0 抽出値と Wiki（既存の出典）、本家の雨粒ライフサイクルを説明する出典の追加検索（見つからなければ未確認のまま）。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 198,
+      "url": "https://github.com/rhgrive3/actions/issues/198",
+      "title": "[INKWAVE][Shooter] Splattershot uses generic cone bloom instead of the 1%-25% outer-reticle probability model",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-198-shooter-outer-probability.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（f90ab1a6 の `patches/splatoon3/runtime/shooter-accuracy.mjs` と、04d8e70a 経由の `runtime/weapons.mjs` の fireShooter / _spreadDeg 配線）を上書き担当します。\n残作業:\n- 外側確率の上限 25% と 6F 回復ゲートは、固定した Leanny 11.3.0 の WeaponParam に存在せず、Inkipedia（コミュニティ資料）のみが根拠である。コードのコメントを実際の出典に合わせ、未確認として明示する（挙動は変更しない）。\n- 1%開始・+1pt/発・24発で上限・6F待ち・-1.5pt/F・ジャンプ40%の状態機構について、2発目の明示試験、フレーム間隔を分割した場合の不変性試験を追加する。\n- 射撃経路（外側/内側の選択と HUD の spread が同一の状態から得られること）の回帰試験を、可能な範囲で追加する。\n- 内側照準の角度分布（spreadFirst 0.45 の暫定値）は未確認のまま残す。\n- `reports/inkwave-splatoon3-behavior-2026-10-02.md` の末尾に #198 の差分記録を追記する。\n根拠確認予定: Leanny 11.3.0 `WeaponShooterNormal`（固定コミット 7280ff9c、sha256 dfca9f45… を照合済み）、Inkipedia Splattershot（S3節、コミュニティ資料）、Nintendo 11.3.0 更新履歴。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 187,
+      "url": "https://github.com/rhgrive3/actions/issues/187",
+      "title": "[INKWAVE][Mobile] Android DeviceOrientation drift is integrated as gyro aim and can keep rotating the camera",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（main の `patches/local-quality/gyro.mjs` の完全零 rotationRate ガード、`patches/local-quality/tests/android-stationary.test.mjs`、Draft #536 の 9239be95）を上書き担当します。\n残作業: Android の rotationRate 判定を「3軸が厳密に0」から Issue 本文の「実質的に0（effectively zero）」へ広げる。現状はローカル probe（未コミット）で、rotationRate が 1e-4 deg/s でも 10秒・1°/s の姿勢ドリフトが約0.31 rad の視点累積になり、完全0のときだけ0になることを確認。閾値は既存の静止判定 STILL_DEG=0.35 deg/s を流用し、微小非ゼロノイズ（30/60/90/120Hz）・閾値境界・実回転の非回帰試験を追加する。\n根拠確認予定: W3C Device Orientation and Motion の rotationRate 単位、既存コードの静止閾値の出典（工学値であり本家の公開値ではない）、Splatoon 3 のジャイロ入力の公開資料（角速度入力か否か）。\nmerge前の自動closeや実機検証完了は主張しません。実機の rotationRate ノイズ/バイアス分布と Android 実装差の校正は未確認として残します。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 79,
+      "url": "https://github.com/rhgrive3/actions/issues/79",
+      "title": "[INKWAVE][Shooter] Splattershot impact paint still ignores floor-wall size and impact-angle rules",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [
+        "patches/splatoon3/tests/issue-79-shooter-impact-paint.test.mjs"
+      ],
+      "lastRecordedContext": "2026-10-10 JST / 上書き担当: 本セッション（Claude Code、統合ブランチ `ccr-bfa73df8-u3uhvi`、単一の統合PRで提出予定）が本Issueの残作業を引き継ぎ、既存の部分実装（`patches/splatoon3/profile.json` の shooter `PaintParam` / `SplashPaintParam` / `WallDropCollisionPaintParam` の取り込み、`runtime/weapons-fidelity.mjs` の shooter flight paint と nearest splash（#507/#873）、`tests/issue-873-shooter-flight-paint.test.mjs`）を上書き担当します。\n\n残作業:\n- 床着弾（normal.y ≥ 0.4）の本弾 `_impact` 塗りを Shooter 固有の `PaintParam` に置換する（WidthHalfNear/Middle/Far の距離帯、DepthScaleMax/Min の着弾角度補間、ブレイクフリー位相の別envelope）。\n- 乱数による半径揺らぎ（0.85〜1.15倍）を床着弾の塗り範囲から除去する。\n- 着弾角度の閾値と遠距離帯の端点は Shooter 記録に無いため未確認として明記し、暫定値で動かす。\n- 壁着弾の専用フットプリントは出典上の対応が未確認のため今回は変更しない。\n- 飛沫（flight droplet）は既存の #873 経路を変更せず回帰試験で確認する。\n- 回帰試験を追加する。\n\n根拠確認予定: Leanny/splat3 コミット 7280ff9cde8bb1c5dcef46c700c326471584d2e6 の WeaponShooterNormal（SHA-256 一致を確認予定）、既存の roller 着弾実装（#411/#674）との対応、Splatoon Wiki / Inkipedia の公開値。\nmerge前の自動closeや実機検証完了は主張しません。\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    },
+    {
+      "number": 71,
+      "url": "https://github.com/rhgrive3/actions/issues/71",
+      "title": "[INKWAVE][Aim] Gamepad support has no Joy-Con / Pro Controller motion-gyro input path",
+      "status": "open-acceptance-gap",
+      "change": null,
+      "namedRegressionFiles": [],
+      "lastRecordedContext": "PR #1202から分けた fix/pr1202-data-fidelity-20261010 の移動・入力担当として、既存HID実装の入力所有権を追加レビューします。先行担当コメント・実装済みSPI較正とdecoder試験を確認済みです。標準パッドのXマップtoggleとHIDジャイロwrapperのマップ判定差、カメラreset・入力停止時の残留sampleを実composed入力経路で確認します。Joy-Con L軸や未検証のNintendo感度値は創作せず、PR1202/mainのブランチへ直接変更しません。",
+      "contextWarning": "Historical issue comments are retrieval context; they are not proof that the same code gap remains on current main."
+    }
+  ]
+}

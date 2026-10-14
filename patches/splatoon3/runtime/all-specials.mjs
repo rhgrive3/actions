@@ -34,7 +34,7 @@ const SPECIALS = Object.freeze({
   zipcaster: { name: 'Zipcaster', source: 'WeaponSpSuperHook', duration: 9, radius: 6, paintRadius: 1.4, near: 45, far: 35, status: '11.3.0 table: 540F, 1.5× ink capacity, hook/per-second ink costs vary with Special Power Up; hook blast 45/35 at 5.25/6; direct hit and hook flight mapping still need game comparison' },
   killerWail: { name: 'Killer Wail 5.1', source: 'WeaponSpMicroLaser', duration: [308/60, 348/60, 368/60], radius: 27, paintRadius: 0, near: 3.5, far: 3.5, status: '11.3.0 table: 36F charge, 35 raw every 5F, 180/220/240F laser lifetime, 20F after-wait and dual launch; world conversion/lock geometry calibrated' },
   crabTank: { name: 'Crab Tank', source: 'WeaponSpChariot', duration: [8, 9.5, 11], radius: 4.8, paintRadius: 4.5, near: 30, far: 30, direct: 50, status: '11.3.0 table: 20F shooter/cannon start, shooter repeat 12F→4F over90F (bias.2; interpolation calibrated), cannon lock32F, 500 armor, 480/570/660F; 25F finish lock and steering need retail comparison' },
-  reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 1.533, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: 38F grounded startup, invulnerability from25F, movement54F/cancel after15F, recovery28F and player collision radius.8; blast/contact220/70, SPU damage×1/1.1/1.2 and paint7.51/8.26/9.012; trajectory calibrated' },
+  reefslider: { name: 'Reefslider', source: 'WeaponSpSkewer', duration: 158/FPS, radius: 14.9, paintRadius: 7.51, near: 220, far: 70, status: '11.3.0 table: 38F grounded startup, invulnerability from25F, movement54F/cancel after15F, recovery28F and player collision radius.8; blast/contact220/70, SPU damage×1/1.1/1.2 and paint7.51/8.26/9.012; trajectory calibrated' },
   tripleInkstrike: { name: 'Triple Inkstrike', source: 'WeaponSpTripleTornado', duration: 6, radius: 7.7, paintRadius: 7, near: 37.5, far: 37.5, status: '11.3.0 table: 360F, 7.7 damage radius, 7 paint and 50F spread; 37.5 per 5F from public mechanics, marker flight calibrated' },
   superChump: { name: 'Super Chump', source: 'WeaponSpFirework', duration: 10.583, radius: 6, paintRadius: 3.5, near: 70, far: 35, status: '11.3.0 table: 70/35 at 3.6/6, paint radius 3.5/3.8/4.1 and damage radii ×1/1.1/1.2 by Special Power Up; decoy HP 60, 108F flight, 210F burst and 635F special; count/spread calibrated' },
   krakenRoyale: { name: 'Kraken Royale', source: 'WeaponSpCastle', duration: [8, 9, 10], radius: 2.65, paintRadius: 1.2, near: 60, far: 60, status: '11.3.0 table: charge cancellable through34F, charge35F, dash35F, jump60, and 480/540/600F; charge-release direction/hitbox calibration remains' },
@@ -488,13 +488,46 @@ function damageBandRadius(rt, actor, center, bands, radius, source, once = null,
   },objectCause);
   return applied;
 }
+// 11.3.0 WeaponSpCastle.BodyParam.CollisionDashRadiusForPlayer = 1.5.
+// Test against the whole travel segment, not just the centre of one frame.
+export function krakenDashSweptContact(from,to,target,radius=1.5){
+  if(![from?.x,from?.z,to?.x,to?.z,target?.x,target?.z,radius].every(finite)||radius<0)return false;
+  // Test-only planar positions are supported when all three omit y. Actual
+  // Actor positions include y; a horizontal-only sweep incorrectly hits an
+  // opponent on an upper platform through the floor.
+  const missing=[from.y,to.y,target.y].filter(y=>y===undefined).length;
+  if(missing!==0&&missing!==3)return false;
+  if(missing===0&&![from.y,to.y,target.y].every(finite))return false;
+  const dy=missing===3?0:to.y-from.y,dx=to.x-from.x,dz=to.z-from.z;
+  const lengthSq=dx*dx+dy*dy+dz*dz;
+  const proj=(target.x-from.x)*dx+(target.z-from.z)*dz+
+    (missing===3?0:(target.y-from.y)*dy);
+  const t=lengthSq>1e-12?clamp(proj/lengthSq,0,1):0;
+  const x=target.x-(from.x+t*dx),z=target.z-(from.z+t*dz);
+  const y=missing===3?0:target.y-(from.y+t*dy);
+  return x*x+y*y+z*z<=radius*radius;
+}
+// 11.3.0 WeaponSpChariotParam: lateral X=.075/F, forward Z=.015/F.
+// Preserve the native mode's 60Hz unit bridge, with a camera-relative turn.
+export function crabTankAttackTargetVelocity(move,yaw=0){
+  if(![move?.x,move?.z,yaw].every(finite))return {x:0,z:0};
+  const length=Math.hypot(move.x,move.z),norm=length>1?1/length:1,mx=move.x*norm,mz=move.z*norm;
+  const fx=Math.sin(yaw),fz=Math.cos(yaw),rx=fz,rz=-fx;
+  const lateral=mx*rx+mz*rz,forward=mx*fx+mz*fz;
+  return {x:(rx*lateral*.075+fx*forward*.015)*FPS,z:(rz*lateral*.075+fz*forward*.015)*FPS};
+}
 function moveActor(rt, actor, dt, state, { speed = null, squid = true, jump = true, flight = false } = {}) {
   const P = rt.api.PLAYER, move = actor.intent?.move;
   const useSquid = squid && !!actor.intent?.squid;
   actor.form = useSquid ? 'squid' : 'kid';
   const enemyInk = actor.grounded && actor.groundTeam === 2;
   if (speed == null) actor._horizontal?.(dt, useSquid, enemyInk);
-  else {
+  else if(speed==='crab'){
+    const target=crabTankAttackTargetVelocity(move,actor.aimYaw??actor.yaw??0);
+    const alpha=1-Math.exp(-8*dt);
+    actor.vel.x+=(target.x-actor.vel.x)*alpha;
+    actor.vel.z+=(target.z-actor.vel.z)*alpha;
+  }else {
     const cap = speed * (move ? Math.min(1, Math.hypot(move.x,move.z)) : 0);
     const yaw = Math.atan2(move?.x || 0, move?.z || 0);
     if (cap > .01) { actor.vel.x += (Math.sin(yaw)*cap-actor.vel.x) * (1-Math.exp(-8*dt)); actor.vel.z += (Math.cos(yaw)*cap-actor.vel.z) * (1-Math.exp(-8*dt)); }
@@ -808,6 +841,9 @@ function deployObject(rt, actor, id, kind, pos, state, extra={}) {
   const spec=SPECIALS[id], object={
     kind,id,owner:actor,team:actor.team,specialPowerAP:state.specialPowerAP||0,activation:state.serial,serial:(state.objectSerial=((state.objectSerial||0)+1)),
     pos:pos.clone(),age:0,dur:extra.dur??spec.duration,maxRadius:extra.maxRadius??spec.radius,
+    // The deploy packet is emitted in this constructor. Snapshot the WaveParam
+    // source lifetime before the first packet, not after creating the device.
+    maxWaveFrame:finite(extra.maxWaveFrame)&&extra.maxWaveFrame>0?extra.maxWaveFrame:0,
     damage:extra.damage??spec.near,seed:normalizedSeed(extra.seed??nextSeed(state)),dead:false,
     hp:extra.hp||0,maxHp:extra.hp||0,phase:extra.phase||'armed',index:extra.index||0,
     pulse:0,nextPulse:extra.nextPulse||.75,once:new Set(),target:extra.target?.clone?.()||null,
@@ -879,7 +915,7 @@ function launchMissileStep(rt, actor, state) {
   if(state.missileIndex>=state.pendingMissiles.length){
     emitAction(rt,actor,'tentaMissiles',state.serial,'launch',origin,null,nextSeed(state),{count:state.missileIndex});
     endSpecial(rt,actor,'launched');
-  }else state.nextMissileAt=state.t+4/FPS;
+  }else state.nextMissileAt+=4/FPS;
   return true;
 }
 function launchInkjet(rt,actor,state) {
@@ -915,6 +951,12 @@ function crabBomb(rt,actor,state) {
   launch(rt,actor,'crabTank',origin,dir,{speed:14,grav:23,drag:.18,life:1.4,arc:2.5,seed:nextSeed(state),size:.2,damage:50,paintRadius:4.5});
   emitAction(rt,actor,'crabTank',state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,10),nextSeed(state));
 }
+// WeaponSpSkewer 11.3.0 per-frame MoveAcc=MoveBrk=.031; top speed=.405.
+// A change of frame rate must not change the distance travelled in source ticks.
+export function reefsliderRawSpeed(speed, braking = false, sourceFrames = 1) {
+  if(!finite(speed)||!finite(sourceFrames)||sourceFrames<0)return 0;
+  return clamp(speed+(braking?-.031:.031)*sourceFrames,0,.405);
+}
 function reefImpact(rt,actor,state,center) {
   if(state.impacted)return;state.impacted=true;
   const seed=nextSeed(state),ap=state.specialPowerAP||0,point=groundAt(rt,center,rt.v1).clone(),desc=specialDescription('reefslider',ap);
@@ -938,8 +980,8 @@ function paintReefRut(rt,actor,state,from,to,dt) {
 function deployInkstrike(rt,actor,state,index) {
   const target=aimPoint(rt,actor,28,rt.v0).clone();groundAt(rt,target,rt.v1);target.copy(rt.v1);
   const launchAt=rt.v2.set(actor.pos.x,actor.pos.y+1.1,actor.pos.z).clone();
-  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{dur:1.1,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,target,scale:[.36,.36,.36]});
-  marker.phase='flight';marker.origin=launchAt.clone();marker.flight=1.1;marker.age=0;
+  const marker=deployObject(rt,actor,'tripleInkstrike','marker',launchAt,state,{dur:82/FPS+51/FPS,maxRadius:7.7,damage:37.5,seed:nextSeed(state),index,target,scale:[.36,.36,.36]});
+  marker.phase='flight';marker.origin=launchAt.clone();marker.flight=82/FPS;marker.age=0;
   emitAction(rt,actor,'tripleInkstrike',state.serial,'marker',launchAt,target,marker.seed,{index});
 }
 function throwChumps(rt,actor,state) {
@@ -972,7 +1014,7 @@ function deployScreen(rt,actor,state) {
 function deployWave(rt,actor,state) {
   const pos=groundAt(rt,aimPoint(rt,actor,16,rt.v0),rt.v1).clone(),ap=state.specialPowerAP;
   const maxRadius=gearCurve(ap,20,24,27),maxFrame=gearCurve(ap,160,192,216)/FPS;
-  const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
+  const object=deployObject(rt,actor,'waveBreaker','wave',pos,state,{dur:390/FPS,maxRadius,maxWaveFrame:maxFrame,damage:45,hp:480,seed:nextSeed(state),nextPulse:1.5});
   object.hp=480;object.maxHp=480;object.pulse=0;object.maxWaveFrame=maxFrame;object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
   object.markingUntil=rt.api.G.time+45/FPS;
   object.direction=rt.v2.copy(pos).sub(actor.pos).setY(0).normalize();
@@ -980,9 +1022,17 @@ function deployWave(rt,actor,state) {
   endSpecial(rt,actor,'deployed');
 }
 function spawnWaveFront(rt,device,pulse) {
+  // An authoritative deploy packet can arrive before the remote device's
+  // simulated 90/240/390F pulse. Reuse that exact wave identity rather than
+  // drawing a duplicate ring with the same owner/activation/object serial.
+  const serial=(device.objectSerial||device.serial)+1;
+  if(device.owner.remote){
+    const existing=(rt.system?._s3AllSpecialObjects||[]).find(o=>!o.dead&&o.owner===device.owner&&o.id==='waveBreaker'&&o.kind==='waveFront'&&o.activation===device.activation&&o.serial===serial);
+    if(existing){device.objectSerial=serial;return existing;}
+  }
   const state={serial:device.activation,objectSerial:device.objectSerial||device.serial,seed:device.seed};
   const wave=deployObject(rt,device.owner,'waveBreaker','waveFront',device.pos,state,{dur:device.maxWaveFrame,
-    maxRadius:device.maxRadius,damage:45,seed:device.seed,index:pulse,scale:[1,1,1]});
+    maxRadius:device.maxRadius,maxWaveFrame:device.maxWaveFrame,damage:45,seed:device.seed,index:pulse,scale:[1,1,1]});
   device.objectSerial=state.objectSerial;wave.maxWaveFrame=device.maxWaveFrame;wave.last=0;wave.seen=new Set();wave.pulse=pulse;
   return wave;
 }
@@ -1161,11 +1211,21 @@ function updateWorld(rt,dt) {
     const o=list[i];if(!o||o.dead){list.splice(i,1);continue;}
     o.age+=dt;
     if(o.kind==='marker'){
-      const k=clamp(o.age/Math.max(.05,o.flight||1.1),0,1);
+      const k=clamp(o.age/Math.max(.05,o.flight||82/FPS),0,1);
       o.pos.copy(o.origin).lerp(o.target,k);o.pos.y+=Math.sin(k*Math.PI)*4;
       o.mesh?.position.copy(o.pos);
-      if(k>=1){o.kind='strike';o.phase='active';o.dur=3.1;o.activeAt=o.age;o.maxRadius=7.7;o.currentRadius=.5;o.nextDamage=o.age;
-        o.paintT=0;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);fxBurst(rt,o.owner,o.target,1.6,'deploy');emitObject(rt,o,'active');}
+      if(k>=1){
+        // 82F from marker throw to the first damage frame, then 51F of tornado
+        // with damage every five source frames (0,5,...50: eleven ticks).
+        o.kind='strike';o.phase='active';o.dur=51/FPS;o.activeAt=o.age;
+        o.maxRadius=7.7;o.currentRadius=.5;o.nextDamage=o.age+5/FPS;
+        o.paintT=0;o.once=new Set();o.mesh?.scale.set(.2,.25,.2);
+        if(!o.owner.remote){
+          const hitCenter=rt.v0.copy(o.pos);hitCenter.y+=.8;
+          damageBandRadius(rt,o.owner,hitCenter,descriptions.tripleInkstrike.splashBands,o.currentRadius,'tripleInkstrike');
+        }
+        fxBurst(rt,o.owner,o.target,1.6,'deploy');emitObject(rt,o,'active');
+      }
     }else if(o.kind==='strike'){
       const elapsed=o.age-(o.activeAt||0),spread=50/FPS;
       o.currentRadius=.5+(o.maxRadius-.5)*clamp(elapsed/spread,0,1);
@@ -1184,7 +1244,7 @@ function updateWorld(rt,dt) {
           if(!o.owner.remote&&(o.pulse||0)%4===0)emitObject(rt,o,'pulse');
         }
       }
-      if(elapsed>=o.dur)removeWorld(rt,o,'expire');
+      if(elapsed+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='booyahBlast'){
       // DamageRadiusStart/End and PaintSpanFrame are 60 Hz source frames.
       // Accumulate those frames here so the per-frame 3.3 damage is invariant
@@ -1231,6 +1291,9 @@ function updateWorld(rt,dt) {
       if(o.age>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='waveFront'){
       updateWaveFront(rt,o);
+      // Each emitted wave has its own source MaxFrame and must retire after
+      // its last hit frame, even if the device or another wave still exists.
+      if(o.age+1e-8>=o.dur)removeWorld(rt,o,'expire');
     }else if(o.kind==='decoy'){
       if(o.phase==='flight'){
         const k=clamp(o.age/Math.max(.05,o.flight||1.8),0,1);
@@ -1321,7 +1384,8 @@ function activeStep(rt,actor,dt) {
   if(state.id==='tentaMissiles'){
     if(state.phase==='launching')dampForSpecial(actor,dt);else moveActor(rt,actor,dt,state,{squid:true});
     if(state.phase==='launching'){
-      if(elapsed+1e-8>=state.nextMissileAt)launchMissileStep(rt,actor,state);
+      while(state.missileIndex<state.pendingMissiles.length&&elapsed+1e-8>=state.nextMissileAt)
+        launchMissileStep(rt,actor,state);
     }else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
     else if(edges.fire&&prepareMissiles(rt,actor,state))launchMissileStep(rt,actor,state);
     return;
@@ -1371,13 +1435,38 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='ultraStamp'){
+    // 11.1.0 published frame timings retained in 11.3.0:
+    // activation 17F, first grounded swing windup 30F, first->second 20F,
+    // continuous intervals 13F; airborne jump swing startup 8F and
+    // a 40F delay before further grounded stomps. No 5F damage spam.
     const throwing=!!actor.intent.sub;
+    const jumpStarted=edges.jump&&actor.intent.fire&&actor.grounded&&!throwing;
     moveActor(rt,actor,dt,state,{speed:actor.intent.fire&&!throwing?2.6:null,squid:!actor.intent.fire&&!throwing,jump:true});
-    if(elapsed+1e-8>=17/FPS&&!throwing&&actor.intent.fire&&actor.form!=='squid'&&elapsed+1e-8>=state.nextSwing){
-      state.nextSwing=elapsed+(actor.grounded?12:30)/FPS;stampSwing(rt,actor,state,!actor.grounded);
+    if(throwing){
+      state.stampHolding=false;state.stampCount=0;
+      state.jumpStampAt=null;
+    } else if(actor.intent.fire){
+      if(!state.stampHolding){
+        state.stampHolding=true;state.stampCount=0;
+        state.nextSwing=Math.max(47/FPS,elapsed+30/FPS);
+      }
+      if(jumpStarted){
+        state.jumpStampAt=elapsed+8/FPS;
+        state.nextSwing=Math.max(state.nextSwing,elapsed+48/FPS);
+      }
+      if(state.jumpStampAt!==null&&elapsed+1e-8>=state.jumpStampAt){
+        stampSwing(rt,actor,state,true);
+        state.jumpStampAt=null;state.nextSwing=elapsed+40/FPS;
+      }else if(state.jumpStampAt===null&&elapsed+1e-8>=state.nextSwing&&actor.form!=='squid'){
+        stampSwing(rt,actor,state,false);
+        state.stampCount++;
+        state.nextSwing=elapsed+(state.stampCount===1?20:13)/FPS;
+      }
+    }else{
+      state.stampHolding=false;state.stampCount=0;state.jumpStampAt=null;
     }
     state.phase=throwing?'aimThrow':'active';s.phase=state.phase;
-    if(edges.subUp)queueSubThrow(state,13,throwStamp);
+    if(edges.subUp)queueSubThrow(state,42,throwStamp);
     else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
     return;
   }
@@ -1412,8 +1501,12 @@ function activeStep(rt,actor,dt) {
     const normalInk=actor.ink;
     actor.ink=state.inkFuel;
     try{
-      runSpecialMain(actor,dt,{fire:!!actor.intent.fire&&actor.form!=='squid',firePressed:edges.fire,
-        sub:false,subReleased:false});
+      // WeaponSpSuperHook: ordinary shooting is allowed between hook uses,
+      // never during hook flight, player pull, or 12F post-hook wait. Preserve
+      // the native weapon's cadence and the single Zipcaster ink reserve.
+      const canFire=state.phase==='ready'&&actor.form!=='squid';
+      runSpecialMain(actor,dt,{fire:canFire&&!!actor.intent.fire,
+        firePressed:canFire&&edges.fire,sub:false,subReleased:false});
     }finally{
       state.inkFuel=clamp(Number(actor.ink)||0,0,150);
       actor.ink=normalInk;
@@ -1428,11 +1521,17 @@ function activeStep(rt,actor,dt) {
     return;
   }
   if(state.id==='killerWail'){
-    moveActor(rt,actor,dt,state,{squid:true});
-    // Wail remains a simultaneous special layer: the ordinary runner stays
-    // live and owns main shots, ink and weapon cadence during laser ticks.
-    runSpecialMain(actor,dt,{fire:!!actor.intent.fire,firePressed:edges.fire,
-      sub:!!actor.intent.sub&&actor.form!=='squid',subReleased:edges.subUp&&actor.form!=='squid'});
+    // WeaponSpMicroLaser.PlayerParam: NoShot / NoBomb / NoSquid = 40F after
+    // firing. Keep ordinary movement, but do not enable the three prohibited
+    // actions before their earliest source-backed recovery point.
+    const controlsUnlocked=elapsed+1e-8>=40/FPS;
+    moveActor(rt,actor,dt,state,{squid:controlsUnlocked});
+    // Wail remains a simultaneous special layer. Once eligible, the native
+    // weapon runner keeps owning main/sub cadence and ammunition.
+    runSpecialMain(actor,dt,{fire:controlsUnlocked&&!!actor.intent.fire,
+      firePressed:controlsUnlocked&&edges.fire,
+      sub:controlsUnlocked&&!!actor.intent.sub&&actor.form!=='squid',
+      subReleased:controlsUnlocked&&edges.subUp&&actor.form!=='squid'});
     while(state.beams<3&&elapsed+1e-8>=state.nextLock){lockWailPair(rt,actor,state,state.beams++);state.nextLock+=36/FPS;state.phase='laser';}
     for(const pair of state.beamPairs){if(pair.target?.alive){pair.trace.push({t:elapsed,pos:pair.target.pos.clone()});while(pair.trace.length>20)pair.trace.shift();}}
     for(const pair of state.beamPairs)while(pair.nextTick< pair.until-1e-8&&elapsed+1e-8>=pair.nextTick){fireWailTick(rt,actor,state,pair);pair.nextTick+=5/FPS;}
@@ -1449,12 +1548,12 @@ function activeStep(rt,actor,dt) {
     if(state.wasRolling&&!rolling){state.nextShot=Math.max(state.nextShot,elapsed+20/60);state.fireStart=null;}
     if(rolling){state.fireStart=null;}
     state.wasRolling=rolling;
-    moveActor(rt,actor,dt,state,{speed:rolling?8.5:4.2,squid:false,jump:true});
-    if(actor.intent.sub&&!rolling&&elapsed<state.duration-25/60&&elapsed>=state.nextCannon){
+    moveActor(rt,actor,dt,state,{speed:rolling?8.5:'crab',squid:false,jump:true});
+    if(actor.intent.sub&&!rolling&&elapsed+1e-8<state.duration-25/60&&elapsed+1e-8>=state.nextCannon){
       const origin=rt.v0.set(actor.pos.x,actor.pos.y+.95,actor.pos.z).clone(),dir=aimDirection(rt,actor,rt.v1);
       launch(rt,actor,'crabTank',origin,dir,{speed:18,grav:18,drag:.12,life:1.7,arc:2.4,damage:50,radius:4.5,size:.28,paintRadius:4.5,sourceMode:'cannon',seed:nextSeed(state)});
       emitAction(rt,actor,state.id,state.serial,'cannon',origin,rt.v2.copy(origin).addScaledVector(dir,16),nextSeed(state));
-      state.nextCannon=elapsed+32/60;state.nextShot=Math.max(state.nextShot,elapsed+32/60);state.fireStart=null;state.cannonT=elapsed+32/60;
+      state.nextCannon=elapsed+75/FPS;state.nextShot=Math.max(state.nextShot,elapsed+32/FPS);state.fireStart=null;state.cannonT=elapsed+32/60;
     }
     crabBall(rt,actor,state,rolling);
     if(!rolling&&actor.intent.fire){
@@ -1467,7 +1566,7 @@ function activeStep(rt,actor,dt) {
       const progress=clamp((elapsed-state.fireStart)/(90/60),0,1),interval=12-8*Math.pow(progress,.2);
       state.nextShot=elapsed+interval/60;
     }
-    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,[[1.15,40]],1.15,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v0),.9,nextSeed(state));}
+    if(rolling&&elapsed>=state.nextBody){state.nextBody=elapsed+.45;const c=actor.pos.clone();c.y+=.75;withObjectDamageCause(actor,()=>damageBandRadius(rt,actor,c,[[1.45,40]],1.45,'crabTank',null,2.8,'Chariot_Body'),'Chariot_Body');paintStamp(rt,actor,groundAt(rt,actor.pos,rt.v0),.9,nextSeed(state));}
     if(elapsed+1e-8>=state.duration){state.phase='finish';state.finishUntil=state.duration+25/60;crabBall(rt,actor,state,false);moveActor(rt,actor,dt,state,{speed:0,squid:false,jump:false});}return;
   }
   if(state.id==='reefslider'){
@@ -1480,31 +1579,78 @@ function activeStep(rt,actor,dt) {
     if(state.phase==='startup'){
       moveActor(rt,actor,dt,state,{squid:false,jump:true});
       if(actor.grounded){state.startupT+=dt;const aim=aimDirection(rt,actor,rt.v0);aim.y=0;if(aim.lengthSq()>.01)state.direction.copy(aim.normalize());
-        if(state.startupT>=25/60)actor.invuln=Math.max(actor.invuln,1/60);
-        if(state.startupT>=38/60){state.phase='dash';state.dashT=0;state.travel=0;actor.character?.trigger?.('special_dash');}}
+        if(state.startupT+1e-8>=25/FPS)actor.invuln=Math.max(actor.invuln,1/FPS);
+        if(state.startupT+1e-8>=38/FPS){
+          state.phase='dash';s.phase='dash';state.dashT=0;state.travel=0;state.reefSpeedRaw=0;
+          actor.character?.trigger?.('special_dash');
+        }}
       return;
     }
-    if(state.phase==='dash'){
-      state.dashT+=dt;
-      if(state.dashT+1e-8>=15/60&&edges.fire){reefImpact(rt,actor,state,actor.pos.clone());return;}
-      actor.vel.x=state.direction.x*24.3;actor.vel.z=state.direction.z*24.3;actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
-      const before=actor.pos.clone(),py=actor.pos.y;actor.pos.addScaledVector(actor.vel,dt);actor.grounded=false;actor._resolve?.(false,py,false);
-      paintReefRut(rt,actor,state,before,actor.pos,dt);
-      for(const victim of rt.api.G.actors||[]){
-        if(!victim?.alive||victim.team===actor.team||state.footHits.has(victim))continue;
-        const point=rt.v12.set(victim.pos.x,victim.pos.y+.75,victim.pos.z);
-        if(segmentDistance(rt,point,before,actor.pos)<=1.2){state.footHits.add(victim);rt.api.G.projectiles.applyHit(actor,victim,220,'reefslider');}
+    if(state.phase==='dash'||state.phase==='brake'){
+      const braking=state.phase==='brake';
+      if(braking)state.brakeT+=dt;else state.dashT+=dt;
+      // MoveCancelableFrame=15 forbids instant explosions. Cancel, wall contact
+      // or 54F maximum dash all enter PreBurstFrame=38 braking/arming phase.
+      if(!braking&&state.dashT+1e-8>=15/FPS&&edges.fire){
+        state.phase='brake';s.phase='brake';state.brakeT=0;
       }
-      state.travel+=before.distanceTo(actor.pos);
-      if(actor.contacts?.wall||state.dashT>=54/60){reefImpact(rt,actor,state,actor.pos.clone());return;}
-      actor.invuln=Math.max(actor.invuln,.18);
+      const isBrake=state.phase==='brake';
+      const frames=clamp(dt*FPS,0,6);
+      state.reefSpeedRaw=reefsliderRawSpeed(state.reefSpeedRaw||0,isBrake,frames);
+      const speed=state.reefSpeedRaw*FPS;
+      actor.vel.x=state.direction.x*speed;actor.vel.z=state.direction.z*speed;
+      actor.vel.y=Math.max(-5,actor.vel.y-24*dt);
+      const from=actor.pos.clone(),py=actor.pos.y;
+      if(actor.contacts?.wall){state.reefSpeedRaw=0;actor.vel.x=actor.vel.z=0;}
+      actor.pos.addScaledVector(actor.vel,dt);actor.grounded=false;
+      actor._resolve?.(false,py,false);
+      paintReefRut(rt,actor,state,from,actor.pos,dt);
+      if(!isBrake){
+        for(const victim of rt.api.G.actors||[]){
+          if(!victim?.alive||victim.team===actor.team||state.footHits.has(victim))continue;
+          // WeaponSpSkewer BulletParam.CollisionRadiusForPlayer=.8 and
+          // WeaponParam.OffsetLocal_DetectPlayer={X:0,Y:.8,Z:1}.
+          // Sweep the rider's actual forward/upward detector, not the foot
+          // position with an inflated horizontal radius (which hits upper floors).
+          const point=rt.v12.set(victim.pos.x,victim.pos.y+.75,victim.pos.z);
+          const detectFrom=rt.v13.copy(from).addScaledVector(state.direction,1);
+          const detectTo=rt.v14.copy(actor.pos).addScaledVector(state.direction,1);
+          detectFrom.y+=.8;detectTo.y+=.8;
+          if(segmentDistance(rt,point,detectFrom,detectTo)<=.8){
+            state.footHits.add(victim);rt.api.G.projectiles.applyHit(actor,victim,220,'reefslider');
+          }
+        }
+      }
+      // The 11.3.0 dash acceleration is horizontal: gravity must not inflate travel.
+      // MoveFrame=54 is the powered slide only. The 38F preburst still
+      // moves the actor, but is not extra dash distance.
+      if(!isBrake)state.travel+=Math.hypot(actor.pos.x-from.x,actor.pos.z-from.z);
+      actor.invuln=Math.max(actor.invuln,dt+.025);
+      // Complete the 54th source movement step before starting the 38F fuse.
+      if(!isBrake&&(actor.contacts?.wall||state.dashT+1e-8>=54/FPS)){
+        state.phase='brake';s.phase='brake';state.brakeT=0;
+      } else if(isBrake&&state.brakeT+1e-8>=38/FPS){
+        reefImpact(rt,actor,state,actor.pos.clone());
+      }
     }
     return;
   }
   if(state.id==='tripleInkstrike'){
     moveActor(rt,actor,dt,state,{squid:false});
-    if(edges.subUp&&state.shots<3){queueSubThrow(state,13,(r,a,st,index)=>{deployInkstrike(r,a,st,index);st.shots++;if(st.shots>=3)endSpecial(r,a,'deployed');},state.shots);}
-    else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'deployed');return;
+    if(edges.subUp&&state.shots<3)state.markerQueued=true;
+    // 20F activation +14F throw. The 19F post-throw recovery and next 14F
+    // throw yield a 33F spacing; this keeps the actual sub-release input path.
+    if(state.markerQueued&&state.shots<3&&elapsed+14/FPS<=state.duration+1e-8
+       &&elapsed+1e-8>=state.nextMarkerStart){
+      state.markerQueued=false;
+      queueSubThrow(state,14,(r,a,st,index)=>{
+        deployInkstrike(r,a,st,index);
+        st.shots++;
+        st.nextMarkerStart=st.t+19/FPS;
+        if(st.shots>=3)endSpecial(r,a,'deployed');
+      },state.shots);
+    } else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'timeout');
+    return;
   }
   if(state.id==='superChump'){
     moveActor(rt,actor,dt,state,{squid:false});
@@ -1521,10 +1667,25 @@ function activeStep(rt,actor,dt) {
       state.dashT+=dt;const before=actor.pos.clone(),py=actor.pos.y;
       actor.vel.x=state.direction.x*21;actor.vel.z=state.direction.z*21;actor.vel.y=0;
       actor.pos.addScaledVector(actor.vel,dt);actor._resolve?.(false,py,false);
-      const swept=rt.v1.copy(before).lerp(actor.pos,.5);state.dashHits||=new Set();
+      state.dashHits||=new Set();
+      // 11.3.0 WeaponSpCastle BodyParam: CollisionDashFrontOffset=2.75,
+      // CollisionDashRadiusForPlayer=1.5. Offset BOTH ends of the true
+      // 3D travelled segment; never enlarge radius at the actor's feet.
+      const hitFrom=rt.v13.copy(before).addScaledVector(state.direction,2.75);
+      const hitTo=rt.v14.copy(actor.pos).addScaledVector(state.direction,2.75);
       for(const victim of rt.api.G.actors||[]){
         if(!victim?.alive||victim.team===actor.team||state.dashHits.has(victim))continue;
-        if(Math.hypot(victim.pos.x-swept.x,victim.pos.z-swept.z)<=1.5){rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');state.dashHits.add(victim);}
+        if(!krakenDashSweptContact(hitFrom,hitTo,victim.pos,1.5))continue;
+        // The attack capsule projects 2.75 ahead of the resolved body. A
+        // solid wall can block the body while the capsule reaches past it.
+        // Require native LOS from the corresponding unshifted body point.
+        const sweep=rt.v2.copy(hitTo).sub(hitFrom),lengthSq=sweep.lengthSq();
+        const t=lengthSq>1e-12?clamp(rt.v3.copy(victim.pos).sub(hitFrom).dot(sweep)/lengthSq,0,1):0;
+        const from=rt.v3.copy(before).lerp(actor.pos,t),to=rt.v4.copy(victim.pos);
+        from.y+=.05;to.y+=.05; // Avoid a floor-coplanar ray.
+        if(rt.api.G.physics?.los&&!rt.api.G.physics.los(from,to))continue;
+        rt.api.G.projectiles.applyHit(actor,victim,120,'krakenRoyale');
+        state.dashHits.add(victim);
       }
       stampLine(rt,actor,before,actor.pos,1.2,nextSeed(state));
       if(state.dashT>=35/60){state.phase='active';state.dashT=0;}
@@ -1567,9 +1728,10 @@ function makeState(rt,actor,id) {
     charge:0,travel:0,objectSerial:0,armor:false,hitIds:new Set(),nextBody:.2,
   };
   if(id==='booyahBomb'){state.charge=0;state.armorHP=470;state.cheerCalls=new WeakMap();state.cheerHeld=new WeakMap();actor.s3CatalogueBooyah=serial;}
+  if(id==='ultraStamp'){state.stampHolding=false;state.stampCount=0;state.jumpStampAt=null;state.nextSwing=47/FPS;}
   if(id==='crabTank'){state.armorHP=500;state.cannon=false;state.nextShot=20/60;state.nextCannon=20/60;state.cannonT=0;state.fireStart=null;state.wasRolling=false;}
   if(id==='reefslider'){state.paintRadius=gearCurve(ap,7.51,8.26,9.012);state.damageDistanceRate=gearCurve(ap,1,1.1,1.2);state.phase='startup';state.direction=aimDirection(rt,actor,new rt.api.THREE.Vector3());state.direction.y=0;state.direction.normalize();state.startupT=0;state.footHits=new Set();}
-  if(id==='tripleInkstrike')state.nextMarker=0;
+  if(id==='tripleInkstrike'){state.nextMarkerStart=20/FPS;state.markerQueued=false;}
   if(id==='waveBreaker')state.phase='ready';
   if(id==='zipcaster')state.phase='ready';
   if(id==='krakenRoyale'){state.armorHP=Infinity;state.phase='startup';state.direction=new rt.api.THREE.Vector3();}
@@ -1811,11 +1973,14 @@ function replayObjectEvent(rt,actor,event) {
     }
     if(kind==='booyahBlast'){extra.startDelay=finite(event.startDelay)?event.startDelay:40/FPS;extra.expand=finite(event.expand)?event.expand:40/FPS;extra.damage=3.3;}
     object=deployObject(rt,actor,event.id,kind,point,state,extra);
-    if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=finite(event.duration)?event.duration:1.1;}
+    if(kind==='marker'){object.phase='flight';object.origin=point.clone();object.flight=82/FPS;}
     if(kind==='decoy'){object.phase='flight';object.origin=point.clone();object.flight=108/FPS;}
     if(kind==='wave'){
       object.hp=finite(event.hp)?event.hp:480;object.maxHp=object.hp;object.pulse=0;object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
       object.pulseFrames=[90/FPS,240/FPS,390/FPS];object.waves=[];
+      // Source GeneratorParam.MarkingFrame=45. Without this, remotely
+      // replayed devices never mark a recipient within the initial ring.
+      object.markingUntil=rt.api.G.time+45/FPS;
     }else if(kind==='waveFront'){
       object.maxWaveFrame=finite(event.waveFrame)&&event.waveFrame>0?event.waveFrame:160/FPS;
       object.last=0;object.seen=new Set();object.pulse=event.index||0;
@@ -1827,7 +1992,7 @@ function replayObjectEvent(rt,actor,event) {
     object.pos.copy(point);if(object.mesh){object.mesh.position.copy(point);if(object.kind==='screen')object.mesh.position.y+=object.height/2;}
     if(object.kind==='screen'&&target){const normal=target.clone().sub(point).setY(0).normalize();object.normal.copy(normal);object.direction.copy(normal);object.tangent.set(normal.z,0,-normal.x);object.target=target;}
   }else if(event.action==='active'){
-    if(object.kind==='marker'){object.kind='strike';object.phase='active';object.activeAt=object.age;object.dur=3.1;object.maxRadius=7.7;object.currentRadius=.5;object.nextDamage=object.age;object.once=new Set();}
+    if(object.kind==='marker'){object.kind='strike';object.phase='active';object.activeAt=object.age;object.dur=51/FPS;object.maxRadius=7.7;object.currentRadius=.5;object.nextDamage=object.age+5/FPS;object.once=new Set();}
     if(object.kind==='decoy')object.phase='active';
   }else if(event.action==='hit')object.hp=finite(event.hp)?event.hp:object.hp;
   else if(event.action==='destroy'||event.action==='expire')removeWorld(rt,object,event.action);

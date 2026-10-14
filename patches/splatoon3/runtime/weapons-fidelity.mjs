@@ -1116,6 +1116,7 @@ export const INK_LOOK=Object.freeze({
   blast:Object.freeze([0.35,6,1,1,1,1]),
   satellite:Object.freeze([0.5,4,1,1,1,1]),
   droplet:Object.freeze([1.3,6,0.35,1.5,2.2,1]),
+  bubble:Object.freeze([0,1,1,1,1,0]), // Bloblobber round bubble (no spiky crown or beads)
   none:Object.freeze([0,1,1,1,1,1]),
 });
 // Shooter-family tail (rod) length. Splatoon 3 keeps a separate tail end per
@@ -1141,11 +1142,22 @@ export function shotTailFrames(p) {
 // native tail scaled by the look; under a width scale the length beyond the
 // drawn head stays the same world length (the Slosher's sourced TailLength).
 export function fidelityInkTail(p,tail,drawnRadius,look) {
+  // Catalog Sloshers keep their own sourced DrawSizeParam TailLength and are
+  // physically 'shot' internally. Never force the Shooter 2-frame rod on them.
+  const style=p?.catalogVisual?.style;
+  if(style==='bubble')return 1;
+  if(style==='sheet')return Math.max(1,1+Math.max(0,(p.tail0??1)-1)/look[4]);
+  if(style==='crown')return Math.max(1,1+(tail*look[3]-1)/look[4]);
   if(p?.type!=='shot'||!(drawnRadius>0)||!p.start||!p.pos)return Math.max(1,1+(tail*look[3]-1)/look[4]);
   const travel=p.start.distanceTo(p.pos),speed=p.vel?p.vel.length():0;
   return Math.max(1,Math.min(travel,speed*shotTailFrames(p)/60)/drawnRadius);
 }
 export function fidelityInkLook(p) {
+  const style=p?.catalogVisual?.style;
+  if(style==='sheet')return INK_LOOK.slosh;
+  if(style==='bubble')return INK_LOOK.bubble;
+  if(style==='crown')return INK_LOOK.drop;
+  if(style==='rod')return INK_LOOK.shot;
   return INK_LOOK[p?.type]??INK_LOOK.none;
 }
 export function writeInkLook(out,index,look,seed) {
@@ -2342,7 +2354,17 @@ export function installWeaponsFidelity(context,profile) {
         }
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
           // #411/#674/#611/#713 share one authoritative landing-paint sample.
-          return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
+          return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>{
+            const result=nativeImpact.call(this,p,hit);
+            // The painted footprint remains owned by withRollerImpactPaint.
+            // This is a separate, unpainted 0.2-0.3s impact sheet so the
+            // airborne blob does not disappear at the moment of contact.
+            if(p.owner?.color&&hit?.point&&(p.owner.isLocal||
+               !context.G.camera?.position||context.G.camera.position.distanceToSquared(hit.point)<625))
+              context.G.fx?.burst(hit.point,hit.normal,p.owner.color,
+                {count:12,speed:2.5,size:.14,spread:1.2,paint:false});
+            return result;
+          });
         }
         if(w?.kind==='shooter' && p.type==='shot' && !p.fidelityWallDrop && w.impactPaint &&
            hit?.normal?.y>=SHOOTER_FLOOR_NORMAL_Y && context.G.paint?.splat){

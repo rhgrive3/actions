@@ -64,7 +64,17 @@ export function adaptSource(rel, code) {
   code = adaptWeaponCatalog(rel, code);
   if (rel === 'src/game/motion/source-controller.js') {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
-    return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" + code;
+    // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
+    code = replaceOnce(code, 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis).premultiply(this.retarget.aim);', 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis);sourceCarryWeapon(this,this.weaponQ);this.weaponQ.premultiply(this.retarget.aim);', 'source shooter carry posture');
+    return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
+      "import { sourceCarryWeapon } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
+  }
+  if (rel === 'src/game/motion/retarget.js') {
+    // S3 posture: reduce the Wii U clips' torso/neck lean before the aim pitch; arms keep their solved directions.
+    code = replaceOnce(code, '   if(isUpper&&upper)this.q.premultiply(this.aim);', '   sourcePostureBone(this,target,this.q,dir,isUpper&&upper);\n   if(isUpper&&upper)this.q.premultiply(this.aim);', 'source torso/neck posture');
+    // S3 gait: lower the Wii U swing-ankle height before leg IK; contacts are solved later in ground().
+    code = replaceOnce(code, "   this.v3.add(c.rest['foot'+label]);\n", "   this.v3.add(c.rest['foot'+label]);\n   sourceFootLift(this,this.v3,label);\n", 'source swing foot lift');
+    return "import { sourcePostureBone, sourceFootLift } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   code = adaptBubblerMap(rel, code);
   code = adaptIssueBatch1171(rel, code, replaceOnce);

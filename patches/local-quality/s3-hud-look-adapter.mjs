@@ -154,15 +154,19 @@ const S3_DRAW_TANK = `  _drawTank(dt, sub, low, nosub) {
     const T2 = this._tankCache || (this._tankCache = {});
     if (T2.W !== W || T2.H !== H) {
       T2.W = W; T2.H = H;
-      const p = 1 * dpr, x0 = p, x1 = W - p, bw = x1 - x0;
-      const nub = H * 0.035, neck = H * 0.075, sh = bw * 0.2, yb = p + nub + neck + sh, yEnd = H - p, rf = bw * 0.32;
+      const p = Math.min(dpr, W / 3, H / 3), x0 = p, x1 = W - p, bw = x1 - x0;
+      const nub = H * 0.035, neck = H * 0.075, sh = Math.min(bw * 0.2, (H - p * 2 - nub - neck) / 2), yb = p + nub + neck + sh, yEnd = H - p, rf = Math.min(bw * 0.32, (yEnd - yb) / 2);
       const nL = x0 + bw * 0.22, nR = x1 - bw * 0.22, uL = x0 + bw * 0.36, uR = x1 - bw * 0.36;
       const o = new Path2D();
       o.moveTo(x0, yb); o.lineTo(nL - bw * 0.04, yb - sh); o.lineTo(nL, yb - sh); o.lineTo(nL, p + nub);
       o.lineTo(uL, p + nub); o.arcTo(uL, p, uR, p, nub * 0.6); o.arcTo(uR, p, uR, p + nub, nub * 0.6); o.lineTo(uR, p + nub);
       o.lineTo(nR, p + nub); o.lineTo(nR, yb - sh); o.lineTo(nR + bw * 0.04, yb - sh); o.lineTo(x1, yb);
       o.lineTo(x1, yEnd - rf); o.arcTo(x1, yEnd, x1 - rf, yEnd, rf); o.lineTo(x0 + rf, yEnd); o.arcTo(x0, yEnd, x0, yEnd - rf, rf); o.closePath();
-      const f = Math.max(2.4 * dpr, bw * 0.13);
+      // Keep every already-valid canister path unchanged. At narrow sizes the
+      // minimum frame can consume the well and make its bottom radius negative.
+      // Only then fit the frame inside the existing outer foot radius.
+      const frame = Math.max(2.4 * dpr, bw * 0.13);
+      const f = bw - frame * 2 > 0 && yEnd - yb - frame * 1.2 > 0 && rf - frame * 0.6 >= 0 ? frame : Math.min(frame, rf);
       const well = new Path2D(); well.roundRect(x0 + f, yb + f * 0.2, bw - f * 2, yEnd - f - (yb + f * 0.2), [bw * 0.06, bw * 0.06, rf - f * 0.6, rf - f * 0.6]);
       Object.assign(T2, { outline: o, well, wx: x0 + f, ww: bw - f * 2, wy: yb + f * 0.2, wh: yEnd - f - (yb + f * 0.2) });
     }
