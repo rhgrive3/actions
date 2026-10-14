@@ -11,6 +11,7 @@ import { collectVisibilityEvidence, requireProjectileEvidence, visibilityVerdict
 import { createCaptureEvaluator, withCaptureRestoration, collectCaptureModes } from './lib/inkwave-capture-evidence.mjs';
 import { installCanvasCapture } from './lib/inkwave-canvas-capture.mjs';
 import { probeLightingIsolation } from './lib/inkwave-lighting-isolation.mjs';
+import {probeReferenceViews} from './lib/inkwave-reference-view.mjs';
 import { captureUserCondition, prepareUserConditionMatch, installDiagnosticQualityReadiness } from './lib/inkwave-user-condition-probe.mjs';
 const site=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]);
 fs.mkdirSync(out,{recursive:true});
@@ -24,9 +25,9 @@ let browser,page;
 try{
  browser=await chromium.launch({...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  let context;
- const openFreshPage=async({mobile=false,referenceViewport=false}={})=>{
+ const openFreshPage=async({mobile=false,referenceViewport=false,referenceCrop=false}={})=>{
  if(context)await context.close();
- context=await browser.newContext({viewport:referenceViewport?{width:1133,height:744}:{width:960,height:640},locale:'ja-JP',...(referenceViewport?{deviceScaleFactor:2,screen:{width:1133,height:744}}:{}),...(mobile?{isMobile:true,hasTouch:true,userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();
+ context=await browser.newContext({viewport:referenceViewport?{width:1133,height:referenceCrop?637:744}:{width:960,height:640},locale:'ja-JP',...(referenceViewport?{deviceScaleFactor:2,screen:{width:1133,height:744}}:{}),...(mobile?{isMobile:true,hasTouch:true,userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();
  page.on('pageerror',e=>result.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
  await page.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));let s=0x12345678;Math.random=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};});
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=inkblot',{waitUntil:'domcontentloaded'});
@@ -69,6 +70,11 @@ r.shadowMap.enabled=stageIdentity.shadowEnabled;r.render(G.scene,G.camera);retur
  };
  if(process.argv[4]==='full-matrix'){
   await collectVisibilityEvidence({renderStage,probeProjectiles,save,onFailure:failure=>{result.failures.push(failure);}});
+ }else if(process.argv[4]!=='lighting-isolation'){
+  result.plan='two-reference-views-fill-zero-only';result.fullAcceptanceEstablished=false;
+  await openFreshPage({mobile:true,referenceViewport:true,referenceCrop:true});await page.evaluate(prepareUserConditionMatch);
+  result.referenceViews=await probeReferenceViews(page,path.join(out,'reference-views'));
+  assert.equal(result.referenceViews.status,'collected','Reference view collection failed; retained evidence is exploratory');
  }else{
   result.plan='focused-user-condition-and-lighting-state-only';
   result.fullAcceptanceEstablished=false;
