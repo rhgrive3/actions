@@ -915,7 +915,7 @@ function launchMissileStep(rt, actor, state) {
   if(state.missileIndex>=state.pendingMissiles.length){
     emitAction(rt,actor,'tentaMissiles',state.serial,'launch',origin,null,nextSeed(state),{count:state.missileIndex});
     endSpecial(rt,actor,'launched');
-  }else state.nextMissileAt=state.t+4/FPS;
+  }else state.nextMissileAt+=4/FPS;
   return true;
 }
 function launchInkjet(rt,actor,state) {
@@ -1384,7 +1384,8 @@ function activeStep(rt,actor,dt) {
   if(state.id==='tentaMissiles'){
     if(state.phase==='launching')dampForSpecial(actor,dt);else moveActor(rt,actor,dt,state,{squid:true});
     if(state.phase==='launching'){
-      if(elapsed+1e-8>=state.nextMissileAt)launchMissileStep(rt,actor,state);
+      while(state.missileIndex<state.pendingMissiles.length&&elapsed+1e-8>=state.nextMissileAt)
+        launchMissileStep(rt,actor,state);
     }else if(elapsed+1e-8>=state.duration)endSpecial(rt,actor,'duration');
     else if(edges.fire&&prepareMissiles(rt,actor,state))launchMissileStep(rt,actor,state);
     return;
