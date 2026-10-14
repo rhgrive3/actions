@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createCaptureEvaluator,withCaptureRestoration} from './inkwave-capture-evidence.mjs';
+import {battleVerticalFov,BATTLE_HUMANOID_VERTICAL_FOV,battleFrame} from '../../patches/splatoon3/runtime/battle-framing.mjs';
 import {captureUserCondition} from './inkwave-user-condition-probe.mjs';
 
 // Approximate, independently checked visible roof corners, not recovered source vertices.
-export const referenceLandmarks={reference:'IMG_7083.jpeg',photo:[1536,1009],gameCrop:[0,109,1536,864],candidate:[1359,892],candidateProjection:[1.0805524464212812,1.6455187120904726],candidatePosition:[17.858118671327816,22.682854932800137,-62.06203718183782],candidateQuaternion:[0,.9982005399352043,.05996400647944456,0],points:[
+export const referenceLandmarks={reference:'IMG_7083.jpeg',photo:[1536,1009],gameCrop:[0,109,1536,864],candidate:[1359,892],candidateCssViewport:[1133,744],candidateProjection:[1.0805524464212812,1.6455187120904726],candidatePosition:[17.858118671327816,22.682854932800137,-62.06203718183782],candidateQuaternion:[0,.9982005399352043,.05996400647944456,0],points:[
  {name:'near facade roof-right',candidate:[752,302],photo:[510,274]},
  {name:'narrow facade roof-right',candidate:[1154,333],photo:[899,301]},
  {name:'distant rectangular block roof-right',candidate:[1130,272],photo:[864,232]}
@@ -51,10 +52,14 @@ export async function probeReferenceViews(page,out){
  const evaluate=createCaptureEvaluator({page,out,onPersistenceError:e=>report.errors.push(e)});
  try{await withCaptureRestoration(async()=>{
   report.original=await page.evaluate(referenceCameraControl,{action:'save'});
-  for(const [key,expected] of [['position',referenceLandmarks.candidatePosition],['quaternion',referenceLandmarks.candidateQuaternion]])if(report.original.pose[key].some((v,i)=>Math.abs(v-expected[i])>1e-8))throw Error('Reference landmark source camera differs: '+key);
-  if(Math.abs(report.original.pose.projection[5]-referenceLandmarks.candidateProjection[1])>1e-8)throw Error('Reference landmark source vertical FOV differs');
-  report.fit=fitReferenceOrientation(report.original.pose.projection);
   for(const mode of ['aspect-only','landmark-oriented']){
+   if(mode==='landmark-oriented'){
+  for(const [key,expected] of [['position',referenceLandmarks.candidatePosition],['quaternion',referenceLandmarks.candidateQuaternion]])if(report.original.pose[key].some((v,i)=>Math.abs(v-expected[i])>1e-8))throw Error('Reference landmark source camera differs: '+key);
+  const pose=report.original.pose,expectedFov=battleVerticalFov(BATTLE_HUMANOID_VERTICAL_FOV,pose.aspect),expectedY=1/Math.tan(expectedFov*Math.PI/360);
+  if(Math.abs(pose.fov-expectedFov)>1e-8||Math.abs(pose.projection[5]-expectedY)>1e-8||Math.abs(pose.projection[0]-expectedY/pose.aspect)>1e-8)throw Error('Reference camera violates native battle framing');
+  report.framingContract={referenceVerticalFov:BATTLE_HUMANOID_VERTICAL_FOV,actualVerticalFov:pose.fov,expectedVerticalFov:expectedFov,source:'patches/splatoon3/runtime/battle-framing.mjs',priorCandidateCssCrop:battleFrame(...referenceLandmarks.candidateCssViewport),currentCssCrop:battleFrame(1133,637)};
+  report.fit=fitReferenceOrientation(report.original.pose.projection);
+   }
    const control=await page.evaluate(referenceCameraControl,{action:'orient',...(mode==='landmark-oriented'?report.fit:{yaw:0,pitch:0})});
    const frame=await evaluate(captureUserCondition,true);frame.mode=mode;frame.referenceControl=control;report.frames.push(frame);
    const errors=[];for(const [ext,bytes] of [['png',Buffer.from(frame.png.split(',')[1],'base64')],['rgba',Buffer.from(frame.rawRGBA,'base64')]])try{fs.writeFileSync(path.join(out,mode+'.'+ext),bytes);}catch(e){errors.push(e);}
