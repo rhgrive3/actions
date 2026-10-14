@@ -1,0 +1,75 @@
+name: Diagnose pinned native Inkblot lighting
+on:
+  push:
+    branches: [review/native-brightness-1c84-20261014]
+permissions:
+  contents: read
+concurrency:
+  group: native-inkblot-lighting-diagnostic
+  cancel-in-progress: false
+jobs:
+  lighting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOURCE_SHA: 1c84fa1a8776f1f3b6d6bc8da807c6dba0668a94
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned diagnostic tools
+        working-directory: harness
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify diagnostic manifest and source pin
+        shell: bash
+        run: |
+          test "$(git -C source rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C harness rev-parse HEAD)" = "$GITHUB_SHA"
+          test -z "$(git -C source status --porcelain)"
+          cd harness/scripts/diagnostics/native-brightness
+          sha256sum -c files.sha256
+      - name: Build immutable source, without model artifact upload
+        shell: bash
+        run: |
+          mkdir -p evidence
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/harness/node_modules/esbuild/lib/main.js"
+          (cd source && node scripts/build-inkwave.mjs inkwave-public ../site) > evidence/build.log 2>&1
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import crypto from 'node:crypto';import {execFileSync} from 'node:child_process';
+          const head=execFileSync('git',['-C','source','rev-parse','HEAD']).toString().trim(),tree=execFileSync('git',['-C','source','rev-parse','HEAD^{tree}']).toString().trim(),dirty=!!execFileSync('git',['-C','source','status','--porcelain']).toString().trim();
+          if(head!==process.env.SOURCE_SHA||dirty)throw Error('Immutable build checkout changed');
+          const manifestSHA256=crypto.createHash('sha256').update(fs.readFileSync('site/inkwave-build.json')).digest('hex');
+          fs.writeFileSync('evidence/binding.json',JSON.stringify({head,tree,dirty,manifestSHA256,harness:process.env.GITHUB_SHA},null,2));
+          JS
+      - name: Verify synthetic contracts
+        run: |
+          export INKWAVE_LIGHTING_THREE_MODULE="file://$GITHUB_WORKSPACE/site/vendor/three/build/three.module.js"
+          node --test harness/scripts/diagnostics/native-brightness/harness.test.mjs
+      - name: Capture matched actual production composer, day and sunset
+        working-directory: harness
+        run: node scripts/diagnostics/native-brightness/run.mjs "$GITHUB_WORKSPACE/site" "$GITHUB_WORKSPACE/evidence/lighting" "$GITHUB_WORKSPACE/evidence/binding.json"
+      - name: Enforce small evidence payload
+        id: bound
+        if: always()
+        run: |
+          test "$(du -sb evidence | cut -f1)" -le 25000000
+          test -z "$(find evidence -type f \( -name '*.obj' -o -name '*.glb' -o -name '*.rgba' -o -name '*.bin' \) -print)"
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && steps.bound.outcome == 'success' }}
+        with:
+          name: native-inkblot-lighting-${{ env.SOURCE_SHA }}
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: error

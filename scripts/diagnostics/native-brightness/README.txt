@@ -1,0 +1,45 @@
+PRIVATE REVIEW CANDIDATE. No workflow run, runtime patch, branch or PR publication.
+
+Purpose
+Separate native Inkblot underlighting from material/normal/shadow/tonemapping causes on the actual production composer, rather than choose a generic brightness boost. Original user photos remain byte-identical in ../photos. They establish the symptom and target appearance, not a matched camera/build numerical baseline.
+
+Files and provenance
+- frozen-controls.mjs: exact PR1324 af7d frozen-controls blob b2be4440d3871d4674116e7e24ff49ccd3836fdd, with expectedTheme/day-sunset prerequisite adaptation and fail-closed single MeshStandardMaterial guard. The original nine modes are unchanged.
+- geometry-mask.mjs: separate render-target mask, no simulation changes.
+- masked-lighting.mjs: adds independent exposure-only and hemisphere-only controls, computes same-pixel statistics, requires exact source/build, exact restored composer bytes and identical before/after masks.
+- harness.test.mjs / tests.log: 15 passing Node/Three synthetic tests. No actual GPU/image qualification.
+
+Integration, once reviewed
+Import collectMaskedLighting. Reuse the existing trusted production build/source runner, offline page controls, freeze, verified Three namespace, and __captureNativeCanvas installation. Pass expectedTheme, exact expectedRevision, and existing verifySavedPngCapture as verifyCapture. Do not use the original day-only verifyLightingIdentity on sunset output.
+Run twice on separately prepared actual high-quality native Inkblot matches, one day and one sunset. Do not switch theme during an individual series. Existing nine control capture runs should be extended rather than duplicated. Persist the returned small JSON statistics and mask; existing trusted capture persistence can write evidence PNG/raw frames when a run is authorized. No workflow dispatch is part of this candidate.
+
+Mask design
+Separate RGBA8/depth target at actual canvas resolution. Opaque native meshes output red for upward camera-facing near-horizontal geometry (normal.y > .85), green for vertical geometry (abs(normal.y) < .25), black otherwise. Other scene geometry depth-occludes in black. Transparent/cutout native meshes are conservatively excluded. The actual native ink overlay uses its actual paintUv and GPU paint texture; a 3x3 texture neighborhood with alpha >= .001 excludes painted texels and uncertain edges. Five-pixel erosion excludes silhouette/ink mixed neighborhoods, covering the production FXAA four-pixel span. Canvas reads exclude DOM HUD; sky is not native geometry. This is a conservative opaque-surface subset, not all stage pixels or floor area.
+Renderer target, viewport, scissor, clear state, tone/output, XR, autoClear, shadow enablement, scene background/override and all material identities are restored in finally, including injected readback failures. Shadow rendering is disabled only during mask rendering so black replacement materials cannot contaminate cached shadow maps. No masks are substituted for gameplay acceptance captures.
+
+Independent light controls
+After the original nine modes, extended-baseline, exposure-only (actual Grade uExposure x1.25), hemisphere-only (actual hemisphere light intensity x2), extended-restored-baseline. Each starts from saved real values; sun/other lights/environment/renderer tone exposure stay unchanged. Each render verifies requested knob values survived the production update. Both success and injected capture-failure restoration are tested. Factors are perturbations for diagnosis, not proposed production coefficients.
+
+Required output and interpretation
+For each theme: exact source/build URI, camera/projection, materials/renderer/grade/applicability, actual light colors/intensities, mask identity, and all 13 rows. Report floor/wall pixel count, encoded-RGB mean/median/p10/p90, near-black and near-white fraction, RGB means, with at least 64 eligible pixels per region. All rows use exactly one same-view mask.
+- Lit baseline vs unlit albedo: separates material color availability from aggregate lighting response.
+- Shadow-off: tests source shadow contribution without changing light values.
+- Normal-off and roughness-off: isolate material map contributions.
+- Environment-off: identifies actual IBL contribution; non-change does not prove correct environment assignment.
+- Linear tone: checks tone response while keeping production grade/output path.
+- Exposure-only vs hemisphere-only: exposure changes all scene radiance; hemisphere adds diffuse fill according to normals. Prefer causal source correction only after spatial evidence supports it.
+These are display-encoded measurements, not physical irradiance ratios. Do not compare day and sunset as if they were identical lighting, or compare differently positioned user photos as pixel matches.
+
+Limits before adoption
+Synthetic tests verify serialization/state/metrics contracts, not GPU shader compilation or raster masks. Review actual mask images against frozen original frame before treating floor/wall stats as qualified. Transparent/skinned/sprite occluders use conservative replacement and can over-exclude. Unknown screen-space distortion/overlays could move scene pixels; verify production ScreenFX is quiescent and no in-canvas HUD/overlay before using the statistics. Original controls leave ink enabled for unlit, but shared mask excludes painted regions. Capture equality and repeat restorations must pass; do not loosen gates when they fail. No iPad, retail-reference, dusk GPU, or coefficient acceptance is claimed.
+
+Review-ready hosted runner (not published or dispatched)
+publication-manifest.json maps the files to scripts/diagnostics/native-brightness and one workflow. workflow.yml triggers only on push to review/native-brightness-1c84-20261014, read-only permissions, pins source main1c84, hashes every emitted artifact before use, intercepts/pins native OBJ and emitted modules, blocks WebSockets, builds outside the clean source checkout, and records a source/build/harness binding. Use run.mjs only in that reviewed hosted environment; do not retry local Chromium. Actual composer high/day and high/sunset run in separate fresh contexts at960x540. These are Chromium diagnostics, never an iPad user-agent qualification.
+It preserves 13 PNG frames and one mask PNG per theme plus numeric receipts, without raw RGBA, model or atlas files. Mask is persisted before controls, original nine frames before extended controls, so a late failure cannot erase all earlier evidence. Artifact upload is gated at25MB and rejects model/raw payloads. Final status remains collected-awaiting-mask-visual-review, never automatic brightness acceptance.
+Sprite occluders use real SpriteMaterial retaining rotation/sizeAttenuation; MeshBasicMaterial retains Three skinning/morph/instancing on original mesh objects. Both sprite restoration and shadow-map disabling/restoration are covered by tests. Custom vertex-displacing ShaderMaterials remain a conservative mask concern requiring visual audit; do not assume surrogate black geometry reproduces those displacements exactly.
+
+Root-review corrections applied
+- Unique push branch review/native-brightness-1c84-20261014, no workflow_dispatch and no PR. Source main1c84 tree9516ed63e5d72702aee424863191b29c74cb50e2 independently verified by root.
+- prepare.mjs follows the verified intro wait:240 lifecycle ticks, up to60 ticks until actual playing, then60 settle ticks. It checks actual mode/match/AIM, local controller/alive/fire release, menus.current null, wipe idle, frozen/skip flags, and disabled ScreenFX/extraPass with zero grade hurt/flash. No phase/camera/actor replacement or forced FX disabling. Synthetic4.2s intro case finishes at313ticks; stuck intro is rejected by300.
+- Exact current main build script060eb6a45c2c731bb4308e52a2c22abc0c05e7ea explicitly imports process.env.ESBUILD_MODULE via pathToFileURL; this build environment option is source-verified.
+- Current nativeDisplay constructs one MeshStandardMaterial per mesh. Mask and controls now reject arrays/custom materials before assuming normalScale/emissive. Historical high/day receipt has79 of123 meshes alphaTest0, including GroundWhite, GroundAsphaltWet, DV_GroundRepeat and WallBrick; sufficient eligible surface types exist, but the actual64-pixel viewport threshold remains fail-closed and GPU-unverified.
