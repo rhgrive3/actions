@@ -44,6 +44,12 @@ test('only source-faced paint is adjusted: specials, body rollers, cosmetics and
     close(sourceShotRasterRadius(2.1, kind, NaN), 2.1);
     close(sourceShotRasterRadius(2.1, kind, 0, false) > 0 ? 1 : 0, 1);
   }
+  // NetMatch encodes face -1 for catalogue shots and omits that face on
+  // receiver playback. Its explicit kind='shot' survives on the wire.
+  close(sourceShotRasterRadius(1.93, 0, -1, false, 'shot'),
+    sourceShotRasterRadius(1.93, 0, undefined, false, 'shot'));
+  close(sourceShotRasterRadius(1.93, 0, undefined, false, 'bomb'), 1.93);
+  close(sourceShotRasterRadius(1.93, 0, undefined), 1.93);
   close(sourceShotRasterRadius(0, 0, 3), 0);
   close(sourceShotRasterRadius(-1, 0, 3), -1);
   assert.equal(sourceShotRasterRadius(Infinity, 0, 3), Infinity);
@@ -52,7 +58,7 @@ test('only source-faced paint is adjusted: specials, body rollers, cosmetics and
 test('actual production paint composition normalizes once after network recording, before shared CPU/GPU stamping', () => {
   const source = fs.readFileSync(upstream, 'utf8');
   const built = adaptSource('src/world/paint.js', source);
-  const injected = 'radius = sourceShotRasterRadius(radius, kind, opts.face, cosmetic);';
+  const injected = 'radius = sourceShotRasterRadius(radius, kind, opts.face, cosmetic, opts.kind);';
   assert.equal(built.split(injected).length - 1, 1, 'only one transform, never twice');
   assert.ok(built.includes("import { sourceShotRasterRadius } from '../../patches/splatoon3/runtime/source-shot-footprint.mjs';"));
   assert.ok(built.indexOf('nm.recSplat(center, radius, team, opts)') < built.indexOf(injected),
