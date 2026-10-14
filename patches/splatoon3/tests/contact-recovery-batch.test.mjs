@@ -1,6 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {fixture,emitMainShot} from './source-fixture.mjs';
 import {FixedClock} from '../runtime/clock.mjs';
+import {adaptIssue479} from '../issue-479-adapter.mjs';
 const DT=1/60,near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 function box(f,id,x,z,wx,wz,yaw=0,{centerY=1,halfY=1}={}){
  const V=f.THREE.Vector3,center=new V(x,centerY,z),half=new V(wx/2,halfY,wz/2),c=Math.cos(yaw),s=Math.sin(yaw);
@@ -54,11 +55,31 @@ test('#176: last actual roll ink use reaches first refill at20F, not inherited43
  }
 });
 
-test('#176: horizontal43F / vertical58F swing stops retain their own boundaries',async()=>{
- for(const [grounded,frames]of [[true,43],[false,58]]){
-  const f=await fixture(),a=f.make('roller');a.grounded=grounded;a.intent.fire=true;f.tick(a);const ink=a.ink;near(ink,91.5);a.intent.fire=false;let startup=0;while(!f.shots.length&&startup++<120)f.tick(a);assert.equal(f.shots.length,1,'native release must occur before recovery measurement');
-  for(let i=1;i<frames;i++){f.tick(a);near(a.ink,ink);}f.tick(a);assert.ok(a.ink>ink,`${frames}F`);assert.equal(a.s3.rollerRefillMode,false);
- }
+async function swingRecovery(mode, frames) {
+ const f=await fixture({productionComposition:true,adaptRuntime:adaptIssue479}),a=f.make('roller');
+ if(mode==='jump') {
+  a.intent.jump=true;f.tick(a);a.intent.jump=false;
+  assert.ok(a.character.events.some(e=>e[0]==='jump'),'vertical control requires native jump admission');
+  assert.equal(a.grounded,false);
+ } else if(mode==='natural-fall') a.grounded=false;
+ const vertical=mode==='jump';
+ a.intent.fire=true;f.tick(a);const ink=a.ink;near(ink,91.5);a.intent.fire=false;
+ assert.equal(a.weaponRunner.s3FlickVertical,vertical,'selected mode must match the recovery clock under test');
+ assert.equal(a.weaponRunner.s3RollerAttack?.vertical,vertical);
+ let startup=0;while(!f.shots.length&&startup++<120)f.tick(a);
+ assert.equal(f.shots.length,1,'native release must occur before recovery measurement');
+ assert.equal(startup,vertical?31:21,'verify the selected native windup before measuring recovery');
+ assert.equal(a.weaponRunner.s3FlickVertical,vertical,'mode remains latched through release');
+ for(let i=1;i<frames;i++){f.tick(a);near(a.ink,ink);}f.tick(a);assert.ok(a.ink>ink,`${frames}F`);assert.equal(a.s3.rollerRefillMode,false);
+}
+
+test('#176: grounded horizontal43F / native-jump vertical58F retain their own boundaries',async()=>{
+ await swingRecovery('ground',43);
+ await swingRecovery('jump',58);
+});
+
+test('#176: first-frame natural free fall retains #479 horizontal mode and43F recovery',async()=>{
+ await swingRecovery('natural-fall',43);
 });
 
 test('#176: active roll never refills, and an outstanding longer lock is not shortened',async()=>{
