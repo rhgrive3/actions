@@ -1,3 +1,12 @@
+// INKWAVE policy: distribute fractional SpawnNum over accepted shot ordinals,
+// matching the existing InkFlight accumulator. The pinned number alone does
+// not establish Nintendo's ordering, initial phase or reset behavior.
+export function catalogFractionalSplashCount(value, ordinal) {
+  if (!(Number.isFinite(value) && value >= 0) || !Number.isSafeInteger(ordinal) || ordinal < 0)
+    throw new RangeError('Invalid source fractional splash count / shot ordinal');
+  return Math.max(0,Math.floor((ordinal+1)*value+1e-9)-Math.floor(ordinal*value+1e-9));
+}
+
 import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 
 // Added main weapons use the already installed, fixed-60Hz splash drop queue.

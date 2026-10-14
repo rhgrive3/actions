@@ -4225,6 +4225,13 @@ The regression now uses each native expiry event to identify its emitting decoy 
 - Regression scope: real source-composed Gyro/MobileInput and real GyroPermission asynchronous callbacks with controlled sensor/permission fixture delivery. Covers delayed denial, ignored subsequent denied samples, granted/no-motion controls, queued aim preservation, and rejected stale permission generations. Existing gyro suites remain required; physical Android/iOS permission-delivery timing and hardware sensor behavior are unverified.
 - Comparison boundary: S3 11.3.0 remains the gameplay reference, but browser sensor permission sequencing has no claimed Nintendo-equivalent numeric behavior. This fixes a browser-only input-admission inconsistency; it does not establish general #187 Android drift calibration or justify closing that Issue. Browser UI and final-head hosted CI are not yet verified.
 
+
+## 2026-10-13: audio v11 非同期ロードの所有期間（#1322 派生）
+
+音響Draft5530272では、manifest待機中に音声bankを破棄・コンテキスト置換しても、完了後に古いbankへの取得・デコード・再格納が続く。実モジュールと合成データで再現し、既存のgenerationとbank/context所有判定を各await境界へ接続した。正常な共有キャッシュ、新しい所有者のロード、失敗後の再試行は維持する。stopAllや音声再生規則、MP3は変更しない。
+
+限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。
+
 ## 2026-10-13: rematch material ownership handoff candidate (#1367)
 
 A bounded owned-material bridge preserves native program references until replacement menu-character warmup settles, and the existing Character disposed flag now blocks resource creation after a pending optional-motion load. Setup/start callbacks, same-object material reuse, cancellation, failure, context loss, repeated returns and overflow are covered. Source25/25, emitted25/25, adjacent191/191 and packaging/workflow24/24 pass; exact18ce emitted runtime retains two expected failures. Independent native ownership accounting matches18 baseline disposal events and excludes four shared materials.

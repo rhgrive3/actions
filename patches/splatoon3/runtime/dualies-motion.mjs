@@ -5,11 +5,31 @@ import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admi
 import { clearRemoteDodgeClock, remoteDodgePresentation } from './remote-dodge-clock.mjs';
 const INSTALL = Symbol.for('inkwave.splatoon3.dualies-motion.v1');
 const clamp01 = x => Math.max(0, Math.min(1, x));
-const smooth = x => { const u = clamp01(x); return u * u * (3 - 2 * u); };
+// A single smoothstep over a roll goes almost motionless halfway through,
+ // then snaps its remaining turn into the feet-plant. The native action clock
+ // stays authoritative. Integrate a C1 rotation curve through the real roll.
+export function dualiesTurnFraction(progress, calibration = DUALIES_MOTION_CALIBRATION) {
+  const { turnStart: start, turnCruise: cruise, turnAtCruise: at, turnEnd: end } = calibration;
+  const u = clamp01(progress);
+  if (u <= start) return 0;
+  if (u >= end) return 1;
+  const h0 = cruise - start, h1 = end - cruise;
+  if (!(h0 > 0 && h1 > 0 && at > 0 && at < 1)) return clamp01((u - start) / Math.max(1e-6, end - start));
+  const a = at / h0, b = (1 - at) / h1;
+  const tangent = (h0 + h1) / (h0 / a + h1 / b);
+  const first = u <= cruise;
+  const lo = first ? start : cruise, h = first ? h0 : h1;
+  const v = (u - lo) / h, v2 = v * v, v3 = v2 * v;
+  const startValue = first ? 0 : at, endValue = first ? at : 1;
+  const m0 = first ? 0 : tangent, m1 = first ? tangent : 0;
+  return Math.max(0, Math.min(1,
+    (2 * v3 - 3 * v2 + 1) * startValue + (v3 - 2 * v2 + v) * h * m0
+    + (-2 * v3 + 3 * v2) * endValue + (v3 - v2) * h * m1));
+}
 
 export const DUALIES_MOTION_CALIBRATION = Object.freeze({
   status: 'visual calibration on the public INKWAVE rig; not Nintendo joint data',
-  turnStart: .12, turnEnd: .94,
+  turnStart: .12, turnCruise: .62, turnAtCruise: .76, turnEnd: .94,
 });
 
 export function dualiesMotionSnapshot(ch) {
@@ -146,11 +166,11 @@ export function installDualiesMotion({ Character, WeaponRunner, CHARACTER_CHANNE
       return;
     }
     const result = dodge.call(this, P, s.progress * this.dodgeDur);
-    // Keep the native tuck/IK/weapon transforms. Delay rotation until the body
-    // has tucked, then finish before the feet extend. These fractions are
-    // visual calibration against 0PQkeAEk294, not published Nintendo values.
-    const { turnStart, turnEnd } = DUALIES_MOTION_CALIBRATION;
-    this.tumble = s.progress < 1 ? 2 * Math.PI * smooth((s.progress - turnStart) / (turnEnd - turnStart)) : 0;
+    // Keep original native tuck, weapon grips and IK. One rotation velocity
+    // spans the drive and unwind phases; no independent easing at the shared
+    // keyframe. Root-local axis is reprojected from the fixed world dodge
+    // direction above, so camera yaw does not rotate the physical tumble.
+    this.tumble = s.progress < 1 ? 2 * Math.PI * dualiesTurnFraction(s.progress) : 0;
     this.tumbleX = s.z; this.tumbleZ = -s.x;
     return result;
   };
