@@ -1,7 +1,7 @@
-name: Render Squiffer v2 silhouette candidate
+name: Render Dapple NOC-T v2 diagnostic candidate
 on:
   push:
-    branches: [review/squiffer-v2-candidate-20261014]
+    branches: [review/noct-v2-candidate-20261014]
 permissions:
   contents: read
 jobs:
@@ -46,6 +46,8 @@ jobs:
           grep -qx '# skipped 3' variant-test-results/emitted.tap
       - name: Verify New Squiffer source geometry
         run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-new-squiffer-v2.test.mjs
+      - name: Verify Dapple NOC-T v2 source geometry
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs
       - name: Install capture browser after runtime gates pass
         run: npx playwright install --with-deps chromium
       - name: Capture actual emitted weapon meshes
@@ -64,3 +66,4 @@ jobs:
           path: variant-test-results
           if-no-files-found: warn
           retention-days: 7
+

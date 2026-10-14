@@ -15,7 +15,8 @@
       "inspected": [
         "Rear/opposite flank before end of video",
         "Front/three-quarter at24s",
-        "Near-side at7s"
+        "Near-side at7s",
+        "Paused6.929577s actual1920x1080 stream shown at1180x757; independently inspected frontmost pistol for grip, curved brush elbow, openings and front neck."
       ],
       "retrieval": "Viewed streamed source in cloud browser; no full video written to disk."
     }
@@ -44,12 +45,22 @@
     "No calibrated multiview reconstruction or measured retail geometry dimensions.",
     "Glyphs/brand stickers are geometric approximations; exact lettering, worn finish and metal roughness unverified.",
     "One pistol model is copied to both hands by existing runtime; handed visual differences need actual paired capture.",
-    "CPU side/rear/opposite previews are diagnostic only; actual runtime shader and held-character validation pending."
+    "CPU side/rear/opposite previews are diagnostic only; actual runtime shader and held-character validation pending.",
+    "V2 contour coordinates are source-guided authored approximations, not calibrated dimensions. Keep HOLD until fresh shader/paired captures are compared to the same reference view."
   ],
   "baseSha256": "3d4d610063af3d1032443e7e742cfdb681fd0b38681a69f0f831d45db38ce89c",
   "verification": {
-    "focusedTests": "5 tests; final run in tests.log",
+    "focusedTests": "6/6 source geometry tests passed, including unchanged native anchors/trigger/base isolation, real cutouts, team ownership, finite geometry and11042triangles below unchanged16000cap.",
+    "pairedNative": "Passed both team colors with held, right-recoil and left-recoil states; selected-hand clock isolation and parent/world-matrix restoration asserted using existing source fixture with v2 overlay. Not exact whole-head emitted or gameplay/retail acceptance.",
+    "preview": "One CPU side preview streamed in-memory and inspected; no duplicate image file written.",
     "fullBuild": "not run",
-    "runtimeRender": "pending root"
-  }
+    "runtimeRender": "Private v2 still requires exact emitted render; v1 capture is not v2 acceptance."
+  },
+  "revision": "Private v2 after actual 3da5e188 shader capture review",
+  "v2Corrections": [
+    "Compact curved rear brush elbow and wider team-colored head; rear truss and taut cord shortened coherently.",
+    "Smooth flared and tapered grip uses satin surface instead of rubber knurl; native trigger geometry, pivot and grip metadata unchanged.",
+    "Round actual upper/lower cutouts and exterior corners with bounded samples; front neck now sweeps down and inward.",
+    "Optic unchanged because apparent height remains perspective-sensitive; no arbitrary rescale."
+  ]
 }
