@@ -1,0 +1,142 @@
+{
+  "status": "Draft: fixes integrated; final source/browser qualification blocked by offline execution environment; CI requested once",
+  "candidate": "60b88072641b632ec387e05f3ab70565dfd64b63",
+  "tree": "516f72d03f98d036c20efeeb10ced5beefb37fb2",
+  "main": "636e2b68cdace5ccbd651d05d2f2fc1eb900ecd0",
+  "common1419": "6b186c7f1ba33956b2e86a29a8ea3a58b7544e50",
+  "common1420": "c99d1310a6cfb1ba65e9fb3394799c6fdbc42778",
+  "baseline": "a8d5588e0e203cc065332b9c27d10c31e4a96456",
+  "baselineContracts": {
+    "total": 5615,
+    "passed": 5592,
+    "skipped": 23,
+    "failed": 0
+  },
+  "baselineNetwork": {
+    "total": 489,
+    "passed": 489,
+    "skipped": 0,
+    "failed": 0
+  },
+  "refinedSelected": {
+    "total": 21,
+    "passed": 17,
+    "skipped": 4,
+    "failed": 0,
+    "exit": 0,
+    "independentCases": 16114
+  },
+  "refinedScorch": {
+    "queries": 48,
+    "identityExact": true,
+    "timeTolerance": 2e-7,
+    "pointNormalTolerance": 0.000002,
+    "costDiagnosticGrowingP95Milliseconds": 12.033296,
+    "costDiagnosticShrinkingP95Milliseconds": 11.440294,
+    "hardwareOrWholeMatchPerformance": false
+  },
+  "sourcePin": "0611f51b35c9736ee986fb2218461e2585b7875e",
+  "originalObjHashesMatched": 21,
+  "convertedStages": 21,
+  "unfinishedStagePrs": [
+    1343,
+    1394
+  ],
+  "independentApproval": false,
+  "mainMerged": false,
+  "environment": {
+    "error": "409 Conflict environment_offline: Environment is not connected",
+    "priorError": "exec-server transport disconnected; recovery timed out after25s",
+    "queuedSessionCompletions": "unknown"
+  },
+  "ci": {
+    "dispatches": 0,
+    "reruns": 0,
+    "aggregateSynchronizations": 1,
+    "runs": [
+      {
+        "id": 38574213767,
+        "name": "INKWAVE main-weapon numerical regressions",
+        "status": "queued",
+        "conclusion": null
+      },
+      {
+        "id": 38574213748,
+        "name": "Validate INKWAVE update",
+        "status": "queued",
+        "conclusion": null
+      },
+      {
+        "id": 38574213832,
+        "name": "INKWAVE native-stage input identity gates",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "id": 38574213840,
+        "name": "Verify composed INKWAVE crowd changes",
+        "status": "completed",
+        "conclusion": "skipped"
+      },
+      {
+        "id": 38574213749,
+        "name": "Validate INKWAVE ranked modes",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "id": 38574213757,
+        "name": "Validate INKWAVE native stage integration",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "id": 38574213759,
+        "name": "INKWAVE reopened-six focused regressions",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "codeBlobBindings": [
+    {
+      "path": "patches/native-stages/runtime/triangle-world.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "90666b77f028f2960860b4db612c5d261b58a450"
+    },
+    {
+      "path": "patches/native-stages/runtime/sphere-triangle-entry.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "759ac8f03daf58f7c089b2d3889c9d88798b75f3"
+    },
+    {
+      "path": "patches/native-stages/tests/humpback-source.test.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "823ece281cd0019d361a4c9bbdd31a12da457073"
+    },
+    {
+      "path": "patches/native-stages/tests/native-catalogue-projectile-sweep.test.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "683d6e9d2e7b28a93965df12cd49bf7faa01fea2"
+    },
+    {
+      "path": "scripts/bench-inkwave-native-catalogue-sweep.mjs",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "fb843c000a935781193327f5f582c84ad2260323"
+    }
+  ],
+  "pending": [
+    "Full21 source reference/cost comparison",
+    "Updated Humpback6 CPU banks",
+    "Final source collision/refill CPU",
+    "Final private/public production builds and budgets",
+    "Final actual fixed-Game source shots",
+    "Final strict real-WS complete-grid/watermark/queue settlement",
+    "Candidate CI conclusion"
+  ]
+}
