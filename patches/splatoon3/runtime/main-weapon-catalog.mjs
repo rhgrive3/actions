@@ -1,5 +1,5 @@
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
-import { catalogSplashDropSpec, catalogPaintEllipse } from './catalog-splash-paint.mjs';
+import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount } from './catalog-splash-paint.mjs';
 import { spawnSplashDrop } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
@@ -524,6 +524,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   }
   function emitSingle(runner,r,key='normal',charge=0,volley=null) {
     const a=runner.a, s=state(runner), desc=mode(r,key,0,charge);
+    // INKWAVE's cumulative-floor policy distributes fractional SpawnNum over
+    // accepted shots. The pinned value does not establish retail ordering.
+    // Shooter budgets also apply to the existing projected-paint fallback;
+    // missing physics still yields no detached splash spec or invented gravity.
+    const sourceNum=desc.b.SplashSpawnParam?.SpawnNum;
+    if ((desc.splashDropSpec || r.family==='shooter') && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
+        Number.isFinite(sourceNum) && sourceNum >= 0) {
+      const ordinal=s.paintShotOrdinal||0;
+      desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
+      s.paintShotOrdinal=ordinal+1;
+    }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
     origin(a);
