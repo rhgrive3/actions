@@ -97,6 +97,9 @@ export class InkVolumes {
             const before=(_renderer,_scene,_camera,_geometry,mat)=>{uniforms.uFrameBounds.value.set(...bounds);mat.uniformsNeedUpdate=true;};mesh.onBeforeRender=fringe.onBeforeRender=before;
             mesh.count = 0; mesh.frustumCulled = false; mesh.castShadow = false; mesh.name = 'InkVolume:' + name + ':' + f + ':' + levels.length;
             fringe.count=0;fringe.frustumCulled=false;fringe.castShadow=false;fringe.name=mesh.name+':fringe';
+            // Empty batches stay out of the render list: an instanced mesh with count 0 draws nothing, but a visible one
+            // still costs three.js its program/state/VAO setup and this onBeforeRender's full uniform upload every frame.
+            mesh.visible=fringe.visible=false;
             const batch = { mesh, fringe, triangles:drawIndices.length/3, n: 0, matrixRange: { start: 0, count: 0 }, colorRange: { start: 0, count: 0 } }; levels.push(batch);
             asset.bytes += data.positions.byteLength + data.normals.byteLength + uv.byteLength + drawIndices.byteLength + this.capacity * 19 * 4;
           }
@@ -114,7 +117,7 @@ export class InkVolumes {
     if (camera) { camera.updateMatrixWorld(); this.clip.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); this.frustum.setFromProjectionMatrix(this.clip); }
     for (const a of this.assets.values()) for (const p of a.patterns) {
       if (camera) { p.uniforms.uSunDirV.value.copy(this.light.sunDir).transformDirection(camera.matrixWorldInverse); p.uniforms.uUpV.value.set(0, 1, 0).transformDirection(camera.matrixWorldInverse); }
-      for (const ls of p.frames) for (const b of ls) { b.n = 0; b.mesh.count = b.fringe.count = 0; }
+      for (const ls of p.frames) for (const b of ls) { b.n = 0; b.mesh.count = b.fringe.count = 0; b.mesh.visible = b.fringe.visible = false; }
     }
   }
   submit(name, source, size, patternIndex = 0) {
@@ -157,7 +160,8 @@ export class InkVolumes {
   }
   end() {
     for (const a of this.assets.values()) for (const p of a.patterns) for (const ls of p.frames) for (const b of ls) {
-      b.mesh.count = b.mesh.geometry.drawRange.count ? b.n : 0; b.fringe.count = b.fringe.geometry.drawRange.count ? b.n : 0; if (!b.n) continue; this.metrics.batches+=Number(b.mesh.count>0)+Number(b.fringe.count>0);
+      b.mesh.count = b.mesh.geometry.drawRange.count ? b.n : 0; b.fringe.count = b.fringe.geometry.drawRange.count ? b.n : 0;
+      b.mesh.visible = b.mesh.count > 0; b.fringe.visible = b.fringe.count > 0; if (!b.n) continue; this.metrics.batches+=Number(b.mesh.count>0)+Number(b.fringe.count>0);
       upload(b.mesh.instanceMatrix, b.matrixRange, b.n);
       upload(b.mesh.instanceColor, b.colorRange, b.n);
     }

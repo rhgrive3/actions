@@ -133,9 +133,12 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   assert.deepEqual(first.elements.slice(0, 12), orientation, 'camera/velocity must not rotate a born shape'); assert.equal(first.elements[12], 1);
   p.pos.set(0, 0, 500); engine.begin(camera); assert(f.submitRollerVolume(engine, p)); engine.end(); assert.equal(engine.metrics.culled, 1); assert.equal(engine.metrics.active, 0);
   p.pos.set(0, 0, -30); camera.position.set(0, 0, 0); camera.lookAt(0, 0, -30); engine.begin(camera); assert(f.submitRollerVolume(engine, p)); engine.end(); assert.equal(engine.assets.get('roller').patterns[0].frames[0][1].mesh.count, 1);
+  // only batches with instances are in the render list (an empty visible InstancedMesh still costs program/uniform setup)
+  for (const x of root.children) assert.equal(x.visible, x.count > 0, x.name);
+  assert(root.children.some(x => x.visible));
   p._qualityGeneration++; p.pos.set(0, 0, -3); p.vel.set(5, 0, 0); f.captureRollerVolume(p); engine.begin(camera); assert(f.submitRollerVolume(engine, p)); engine.end(); mesh.getMatrixAt(0, first);
   assert.notDeepEqual(first.elements.slice(0, 12), orientation, 'pooled generation captures its own shot direction');
-  engine.clear(); assert(root.children.every(x => x.count === 0)); assert.deepEqual([...engine.assets.get('roller').resources], resources);
+  engine.clear(); assert(root.children.every(x => x.count === 0 && x.visible === false)); assert.deepEqual([...engine.assets.get('roller').resources], resources);
   engine.dispose(); engine.dispose(); assert.equal(root.children.length, 0); assert.equal(engine.metrics.bytes, 0); for (const r of resources) assert.equal(disposals.get(r), 1);
   assert.throws(() => engine.register('later', { schema: 'inkwave-volume-v1', patterns: [pattern] }));
   // A boot completion promise must not retain the returned asset/buffer graph
