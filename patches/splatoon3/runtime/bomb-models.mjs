@@ -28,6 +28,10 @@
 // and the charge growth is the trail ratio PaintRadiusMaxCharge/MinCharge
 // (1.29 / 1.075) from the pinned 11.3.0 table.
 //
+// Autobomb and Sprinkler also ride the native bomb record; they take their
+// models from sub-models.mjs (with the other eleven non-bomb subs), and every
+// sub's hand-held prop is built here (bomb models below, the rest there).
+//
 // Nothing here reads or writes gameplay state: positions, velocities, fuses,
 // paint, damage and network rows stay with _updateBombs and kit-subs. The
 // record's `mesh` group keeps its native position/scale/rotation contract;
@@ -36,6 +40,8 @@
 // _releaseBomb disposes every material it finds on the record.
 
 import { kitBombPresentation, CURLING } from './kit-subs.mjs';
+import { SPRINKLER, sprinklerPhase } from './kit-sprinkler.mjs';
+import { buildSubModel, poseSubModel, buildHeldSubModel, tintSubModel, SUB_MODEL_IDS, HELD_SCALE } from './sub-models.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.bomb-models.install.v1');
 const HELD = Symbol('inkwave.s3.bomb-models.held');
@@ -47,6 +53,9 @@ export const CURLING_CHARGE_GROWTH = CURLING.paintRadiusMaxCharge / CURLING.pain
 export const CURLING_LIGHT_GREEN = 0x39ff6a;
 export const CURLING_LIGHT_RED = 0xff2a1e;
 export const BOMB_MODEL_IDS = Object.freeze(['bomb', 'suction', 'curling']);
+// Subs that ride the native bomb record (kit-autobomb / kit-sprinkler) but
+// take their own model from sub-models.mjs instead of the Splat Bomb pyramid.
+export const NATIVE_SUB_MODEL_IDS = Object.freeze(['autobomb', 'sprinkler']);
 
 // Non-ink surface finishes (icon colours). 'ink' parts take the team ink.
 const FINISH = {
@@ -210,6 +219,10 @@ const finish = (THREE, kind) => { const f = FINISH[kind] || FINISH.black; return
 // Thrown/ghost model. Returns the model group plus the ink mesh that the
 // native fuse pulse will drive through `b.body`.
 export function buildThrownBombModel(THREE, id, inkMaterial) {
+  if (NATIVE_SUB_MODEL_IDS.includes(id)) {
+    const sub = buildSubModel(THREE, id, inkMaterial);
+    return { root: sub.root, body: sub.body, light: null, id, sub };
+  }
   const g = geometries(THREE), root = new THREE.Group();
   const key = id === 'suction' || id === 'curling' ? id : 'bomb';
   let body = null, light = null;
@@ -251,6 +264,9 @@ export function applyThrownBombModel(THREE, system, b) {
   }
   // Curling and Suction sit at the native 0.21 contact offset from the surface:
   // place each model so that its own resting face is on that surface.
+  // Autobomb stands and Sprinkler sits on its own base: the record centre is
+  // the native 0.21 contact offset above the surface.
+  if (id === 'autobomb' || id === 'sprinkler') model.root.position.y = -CONTACT_BIAS;
   if (id === 'curling') {
     model.root.position.y = -CONTACT_BIAS;
     const c = Number.isFinite(resolved?.charge) ? resolved.charge : 0;
@@ -262,10 +278,49 @@ export function applyThrownBombModel(THREE, system, b) {
   return model;
 }
 
+const SPRINKLER_SPIN = SPRINKLER.spinDegreesPerFrame.map(d => d * Math.PI / 180 * 60);   // rad/s per phase
+
 // Orientation and lights after the native step has placed the record.
-export function poseThrownBombModel(THREE, b, scratch) {
+export function poseThrownBombModel(THREE, b, scratch, dt = 0) {
   const m = b?.s3Model;
   if (!m) return;
+  if (m.id === 'autobomb') {
+    // Walks upright toward its target; turns toward a target it is facing
+    // during the native rotate window (kit-autobomb rotateFrames).
+    const h = Math.hypot(b.vel.x, b.vel.z), target = b.s3Auto?.target?.pos;
+    let yaw = b.s3ModelYaw ?? Math.atan2(b.vel.x, b.vel.z);
+    if (h > 0.05) yaw = Math.atan2(b.vel.x, b.vel.z);
+    else if (target) {
+      const want = Math.atan2(target.x - b.pos.x, target.z - b.pos.z);
+      let d = want - yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
+      yaw += d * Math.min(1, dt * 12);
+    }
+    b.s3ModelYaw = yaw;
+    b.mesh.rotation.set(0, yaw, 0);
+    poseSubModel(m.sub, { dt, speed: b.s3Mode === 'chasing' ? h : 0 });
+    return;
+  }
+  if (m.id === 'sprinkler') {
+    if (b.s3Mode === 'sprinkling') {
+      // Base on the surface it stuck to (floor, wall or ceiling).
+      if (b.s3SurfaceNormal) {
+        scratch.up.set(0, 1, 0);
+        scratch.n.copy(b.s3SurfaceNormal).normalize();
+        b.mesh.quaternion.setFromUnitVectors(scratch.up, scratch.n);
+      }
+      // Head spin follows the spray phase (SpinDegreesPerFrame 33/11/1, the
+      // record's own power-resolved periods); it holds still during the 30F
+      // deploy window. Replayed records count from when they were first seen
+      // sprinkling.
+      if (b.s3SpinStartAge == null) b.s3SpinStartAge = b.s3Sprinkler?.sourceAge ?? b.age;
+      const spec = b.s3Resolved?.spec ?? b.s3GhostResolved?.spec;
+      const phase = sprinklerPhase((b.age - b.s3SpinStartAge) * 60, spec?.mode === 'sprinkler' ? spec : SPRINKLER);
+      const rate = phase < 0 ? 0 : SPRINKLER_SPIN[phase];
+      b.s3SpinAngle = ((b.s3SpinAngle || 0) + rate * dt) % TAU;
+    }
+    poseSubModel(m.sub, { dt, spin: b.s3SpinAngle || 0 });
+    return;
+  }
   if (m.id === 'curling') {
     // A curling stone slides flat; it faces its travel direction instead of
     // tumbling like a thrown Splat Bomb.
@@ -299,7 +354,7 @@ let heldShared = null;
 const HELD_DROP = { bomb: -0.23, suction: -0.24, curling: -0.36 };
 function heldGeometries(THREE) {
   if (heldShared) return heldShared;
-  const s = 0.2;   // native held bulb is ~0.05 radius against the 0.2 thrown sphere
+  const s = HELD_SCALE;   // shared with every sub prop (sub-models.mjs HELD_SCALE)
   const g = geometries(THREE);
   heldShared = {};
   for (const id of BOMB_MODEL_IDS) {
@@ -310,7 +365,7 @@ function heldGeometries(THREE) {
 
 export function heldBombModelId(character) {
   const sub = character?._owner?.()?.weapon?.sub;
-  return sub === 'suction' || sub === 'curling' ? sub : 'bomb';
+  return sub === 'suction' || sub === 'curling' || SUB_MODEL_IDS.includes(sub) ? sub : 'bomb';
 }
 
 // Every kit (the Splat Bomb too) holds its own model; the native generic bulb
@@ -325,10 +380,18 @@ export function applyHeldBombModel(THREE, character, id) {
     state.custom.traverse(o => { if (o.material && !o.userData.s3HeldInk) o.material.dispose?.(); });
     state.custom = null;
   }
-  const custom = BOMB_MODEL_IDS.includes(id);
+  const subModel = SUB_MODEL_IDS.includes(id), custom = BOMB_MODEL_IDS.includes(id) || subModel;
   for (const child of state.native) child.visible = !custom;
   bomb.ink = state.nativeInk;
-  if (custom) {
+  if (subModel) {
+    const inkMat = state.nativeInk.material, held = buildHeldSubModel(THREE, id, inkMat);
+    for (const p of held.model.inkMeshes) p.userData.s3HeldInk = true;
+    bomb.group.add(held.holder);
+    state.custom = held.holder;
+    const inkParts = held.model.inkMeshes;
+    bomb.ink = { get material() { return state.nativeInk.material; },
+      set material(v) { state.nativeInk.material = v; for (const p of inkParts) p.material = v; if (v?.color) tintSubModel(held.model, v.color); } };
+  } else if (custom) {
     const root = new THREE.Group(), inkMat = state.nativeInk.material;
     for (const [kind, geo] of heldGeometries(THREE)[id]) {
       const ink = kind === 'ink';
@@ -360,7 +423,7 @@ export function installBombModels(api) {
     // (replay), so every record has it by its first step.
     for (const b of this.bombs) if (!b.s3Model && b.kind === 'bomb') applyThrownBombModel(THREE, this, b);
     const out = updateBombs.call(this, dt);
-    for (const b of this.bombs) if (b.s3Model) poseThrownBombModel(THREE, b, scratch);
+    for (const b of this.bombs) if (b.s3Model) poseThrownBombModel(THREE, b, scratch, dt);
     return out;
   };
   if (Character?.prototype?._applyPose) {

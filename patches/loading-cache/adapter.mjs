@@ -138,6 +138,8 @@ export function prepareLoading(build, preloads, options = {}) {
     const rel=path.relative(build,file).split(path.sep).join('/');
     if(['index.html','sw.js','.nojekyll','inkwave-build.json'].includes(rel)||rel.startsWith('_versions/')||rel.includes('/dev/')||rel.endsWith('/sw.js'))continue;
     if(!/\.(?:m?js|css|json|png|jpg|jpeg|webp|svg|woff2|webmanifest|glb|gltf|ogg|mp3|wav)$/.test(rel))continue;
+    // Audio MP3s are streamed on demand, not counted in the cold PWA revision budget.
+    if(/^patches\/splatoon3\/runtime\/audio\/s3-real\/[A-Za-z0-9_.+()\-]+\.mp3$/.test(rel))continue;
     const bytes=fs.readFileSync(file);assets[rel]=[bytes.length,hash(bytes)];
   }
   const css=Object.keys(assets).filter(rel=>rel.endsWith('.css')); // Includes @import HUD CSS and non-./ HTML hrefs.
@@ -161,7 +163,12 @@ export function prepareLoading(build, preloads, options = {}) {
 export function finalizeLoadingWorker(build, revision, plan, compactTemplate = source => source) {
   if(!/^[a-f0-9]{64}$/.test(revision))throw new Error('loading-cache: invalid revision');
   const index=fs.readFileSync(path.join(build,'index.html'));
-  const config={schema:1,revision,index:{bytes:index.length,sha256:hash(index)},declaredBytes:plan.assetBytes+index.length,precache:plan.precache,assets:plan.assets};
+  const positions=new Map(Object.keys(plan.assets).map((rel,i)=>[rel,i]));
+  const precache=plan.budget?.mode==='production'?plan.precache.map(rel=>{
+    if(!positions.has(rel))throw new Error('loading-cache: missing precache dependency '+rel);
+    return positions.get(rel);
+  }):plan.precache;
+  const config={schema:1,revision,index:{bytes:index.length,sha256:hash(index)},declaredBytes:plan.assetBytes+index.length,precache,assets:plan.assets};
   let template=fs.readFileSync(path.join(LOADING_ROOT,'sw.js'),'utf8');
   if(plan.budget?.mode === 'diagnostic-unminified')
     template=countReplace(template,'const MAX_REVISION_BYTES = 48 * 1024 * 1024;',

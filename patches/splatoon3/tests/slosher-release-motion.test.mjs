@@ -87,7 +87,10 @@ test('actual Slosher release reaches existing raised key at 12F and repeats at 2
     const m=api.slosherMotionSnapshot(r.ch), d=r.snapshot();
     assert.ok(m.released); assert.ok(Math.abs(m.visualAge-.25)<1e-8);
     assert.ok(Math.abs(d.sloshReleaseAge)<1e-8);
-    assert.ok(Math.abs(r.ch.P[api.CHARACTER_CHANNELS.ANCR]-1.5)<1e-8, 'existing native raised key, no invented joint angle');
+    // The key is added to the carry→aim anchor pitch of the weapon's own hold (the Bucket
+    // tilts its forward-facing mouth up at aim); natively both pitches are 0. P is Float32.
+    const h=r.ch.hold, base=h.carry.r[0]+(h.aim.r[0]-h.carry.r[0])*r.ch.wAim;
+    assert.ok(Math.abs(r.ch.P[api.CHARACTER_CHANNELS.ANCR]-base-1.5)<1e-6, 'existing native raised key, no invented joint angle');
     rows.push({...r.events.at(-1),visualAge:m.visualAge, pitch:r.ch.P[api.CHARACTER_CHANNELS.ANCR]});
    }
   }

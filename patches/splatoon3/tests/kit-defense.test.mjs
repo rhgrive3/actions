@@ -153,3 +153,24 @@ test('Slosher defense before a paintable wall does not become an agent3 wall dro
  assert.equal(contacts,defense?1:0);assert.equal(p.agent3SlosherWallDrop==null,defense);
  }
 });
+
+test('full installer keeps Curling producer contact in the emitted defense module', async () => {
+  const { fixture: productionFixture } = await import('./source-fixture.mjs');
+  const f = await productionFixture({ fullRuntime: true, productionComposition: true, realProjectiles: true });
+  const owner=f.make('roller'); owner.team=0;
+  owner.weapon={...owner.weapon,sub:'curling'}; owner.weaponRunner.reset();
+  const system=f.G.projectiles; system.throwBomb(owner);
+  const bomb=system.bombs.at(-1);
+  assert.equal(bomb.s3Sub.id,'curling');
+  assert.equal(bomb.s3Resolved.spec.id,'curling');
+  const start=new f.THREE.Vector3(0,1,0),end=new f.THREE.Vector3(4,1,0);
+  let received;
+  system.kitBarrierCandidate=(p,a,b)=>{received={p,a,b};return {distance:2,onHit(){}};};
+  const candidate=system.kitBombDefenseCandidate(bomb,start,end);
+  assert.ok(candidate,'the full installer admits native Curling contact');
+  assert.equal(candidate.distance,2);
+  assert.equal(received.p.damage,20);
+  assert.equal(received.p.s3Sub.id,'curling');
+  assert.equal(received.p.s3Resolved,bomb.s3Resolved);
+  assert.equal(received.a,start);assert.equal(received.b,end);
+});
