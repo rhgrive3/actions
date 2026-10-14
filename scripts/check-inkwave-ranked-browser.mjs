@@ -99,6 +99,18 @@ try{
      step(20,false);if(!damage.includes(60)||!damage.includes(180)||target.alive)throw Error('Native Rainmaker direct/delayed blast did not splat: '+JSON.stringify(damage));
      if(a.ink<beforeInk||a.special!==beforeSpecial)throw Error('Carrier attack consumed ink or gained special');
      weapon={targetCondition:'unarmored',shots:events.length,charge:events[0].charge,direct:events[0].damage,blast:events[0].blastDamage,damage,inkBefore:beforeInk,inkAfter:a.ink,targetSplat:!target.alive};
+     const wallOwner=m.actors.find(v=>v.team!==a.team&&v.alive&&!v.specialActive);
+     if(!wallOwner)throw Error('No native owner for Rainmaker wall proof');
+     wallOwner.weapon={...wallOwner.weapon,sub:'splashWall'};
+     wallOwner.s3.abilityPoints={...wallOwner.s3.abilityPoints,subPower:0};a.s3.objectHitGear=false;a.vel.set(0,0,0);
+     const wall=RG.projectiles.throwBomb(wallOwner);if(!wall||wall.subId!=='splashWall')throw Error('Native wall creation failed');
+     wall.phase='deployed';wall.pos.set(a.pos.x+lane.dx*1.2,a.pos.y,a.pos.z+lane.dz*1.2);wall.yaw=Math.atan2(lane.dx,lane.dz);
+     const wallBefore=wall.hp;
+     step(61,true);step(1,false);step(20,true);step(20,false);
+     if(events.length!==2||wallBefore!==800||Math.abs(wall.hp-380)>1e-8)throw Error('Native Rainmaker wall direct/blast did not apply 60+360: '+JSON.stringify({shots:events.length,before:wallBefore,after:wall.hp}));
+     if(a.ink<beforeInk||a.special!==beforeSpecial)throw Error('Wall attack consumed ink or gained special');
+     weapon.wall={shots:1,hpBefore:wallBefore,hpAfter:wall.hp,direct:60,blast:360};
+
     }finally{m.playRankedEvents=play;target.damage=hurt;a.intent.fire=false;}
    }
    const snap=e.snapshot();if(!e.restore(snap))throw Error('Own snapshot rejected');return {counts:[...e.counts],snapshotBytes:JSON.stringify(snap).length,weapon};
@@ -128,7 +140,7 @@ try{
   await p.evaluate(()=>{RG.game.debug.freeze();RG.game.debug.freezeBots();RG.match.ranked.setCount(0,65);RG.match.ranked.revision++;RG.netm._sendNow({k:'rkstate',rk:{match:RG.netm.cfg.id,host:RG.netm.s.hostId,state:RG.match.ranked.snapshot(),gains:RG.match.rankedGains}});});
   await guest.waitForFunction(()=>RG.match.ranked.counts[0]===65,null,{timeout:30000});
   const online=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({mode:RG.match.mode,counts:[...RG.match.ranked.counts],follower:RG.match.follower,actors:RG.match.actors.length,time:RG.match.time}))));assert.deepEqual(online[0].counts,online[1].counts);assert.equal(online[0].mode,mode);assert.equal(online[1].mode,mode);
-  let onlineWeapon = null;
+  let onlineWeapon = null, onlineWall = null;
   if(mode==='rainmaker'){
    await Promise.all([p,guest].map(pg=>pg.waitForFunction(()=>!document.querySelector('.iw-lineup')&&!document.querySelector('.iw-bn--go'),null,{timeout:15000})));
    const guestId=await guest.evaluate(()=>String(RG.match.local.nid??`${RG.match.local.team}:${RG.match.local.slot}`));
@@ -144,6 +156,34 @@ try{
     RG.game.debug.unfreeze();
    },guestId);
    await guest.waitForFunction(id=>RG.match.ranked.rule.state.carrier===id,guestId,{timeout:30000});
+   const wallPlacement=await guest.evaluate(()=>{
+    const a=RG.match.local,world=RG.match.rankedWorld;
+    const dirs=[[0,1],[1,0],[0,-1],[-1,0]];
+    const dir=dirs.find(([dx,dz])=>{const at=a.pos.clone();at.x+=dx*2;at.z+=dz*2;const floor=world.floorAt(at.x,at.z);return Number.isFinite(floor)&&Math.abs(floor-a.pos.y)<.8&&(!world.hasLineOfSight||world.hasLineOfSight(a.pos,at));});
+    if(!dir)throw Error('No native floor lane for online wall proof');
+    const [dx,dz]=dir,yaw=Math.atan2(dx,dz);RG.rig.yaw=yaw;RG.rig.pitch=0;a.vel.set(0,0,0);a.s3.objectHitGear=false;
+    return {pos:[a.pos.x+dx*1.2,a.pos.y,a.pos.z+dz*1.2],yaw};
+   });
+   const wallIdentity=await p.evaluate(placement=>{
+    const owner=RG.match.local;owner.weapon={...owner.weapon,sub:'splashWall'};owner.s3.abilityPoints={...owner.s3.abilityPoints,subPower:0};
+    const wall=RG.projectiles.throwBomb(owner);if(!wall||wall.subId!=='splashWall')throw Error('Host native wall creation failed');
+    wall.phase='deployed';wall.pos.fromArray(placement.pos);wall.yaw=placement.yaw;globalThis.rankedNativeWall=wall;globalThis.rankedWallDrops=[];globalThis.rankedWallPlay=RG.netm._play;
+    RG.netm._play=function(from,e,...args){
+     const tracks=e?.[1]==='ac'&&e[2]==='sub'&&e[5]?.phase==='objectHit'&&e[5].targetOwnerId===owner.nid;
+     const before=wall.hp,result=rankedWallPlay.call(this,from,e,...args);if(tracks)rankedWallDrops.push(before-wall.hp);return result;
+    };
+    return {ownerNid:owner.nid,seq:wall.seq,sourceLife:wall.sourceLife};
+   },wallPlacement);
+   await guest.evaluate(({placement,identity})=>{
+    const owner=RG.netm.byNid.get(identity.ownerNid);if(!owner)throw Error('Missing wall owner on guest');
+    owner.weapon={...owner.weapon,sub:'splashWall'};owner.s3.abilityPoints={...owner.s3.abilityPoints,subPower:0};
+    const remote=owner.remote;let wall;try{owner.remote=false;wall=RG.projectiles.throwBomb(owner);}finally{owner.remote=remote;}
+    if(!wall||wall.subId!=='splashWall')throw Error('Guest native wall creation failed');
+    wall.ghost=true;wall.phase='deployed';wall.pos.fromArray(placement.pos);wall.yaw=placement.yaw;wall.seq=identity.seq;wall.sourceLife=identity.sourceLife;
+    globalThis.rankedNativeWall=wall;globalThis.rankedWallPackets=[];globalThis.rankedWallRec=RG.netm._rec;
+    RG.netm._rec=function(e,...args){if(e[0]==='ac'&&e[1]==='sub'&&e[4]?.phase==='objectHit'&&e[4].targetOwnerId===identity.ownerNid)
+     rankedWallPackets.push({...e[4]});return rankedWallRec.call(this,e,...args);};
+   },{placement:wallPlacement,identity:wallIdentity});
    try{
     await guest.evaluate(()=>{RG.input.mouse.left=true;});
     await p.waitForFunction(()=>RG.match.ranked.rule.state.charge.value===1,null,{timeout:30000});
@@ -154,14 +194,19 @@ try{
     assert.equal(onlineWeapon[0][0].actorId,guestId);assert.equal(onlineWeapon[0][0].charge,1);assert.equal(onlineWeapon[0][0].damage,60);assert.equal(onlineWeapon[0][0].blastDamage,180);
     assert.equal(onlineWeapon[0][0].visualOnly,false);assert.equal(onlineWeapon[1][0].visualOnly,true);
     assert.deepEqual({...onlineWeapon[0][0],visualOnly:true},onlineWeapon[1][0]);
-   }finally{await guest.evaluate(()=>{RG.input.mouse.left=false;});await p.evaluate(()=>RG.game.debug.freeze());}
+    await p.waitForFunction(()=>rankedWallDrops.length===2,null,{timeout:30000});
+    onlineWall=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({hp:rankedNativeWall.hp,ghost:!!rankedNativeWall.ghost,drops:globalThis.rankedWallDrops||[],packets:(globalThis.rankedWallPackets||[]).map(e=>({damage:e.damage,cause:e.cause,targetOwnerId:e.targetOwnerId,targetSeq:e.targetSeq}))}))));
+    assert.deepEqual(onlineWall[0].drops,[60,360]);assert.equal(onlineWall[0].ghost,false);
+    assert.ok(onlineWall[1].hp>0&&onlineWall[1].hp<=800);assert.equal(onlineWall[1].ghost,true);
+    assert.deepEqual(onlineWall[1].packets.map(e=>e.damage),[60,180]);assert.deepEqual(onlineWall[1].packets.map(e=>e.cause),['Gachihoko_Bullet','Gachihoko_BombCore']);
+   }finally{await guest.evaluate(()=>{RG.input.mouse.left=false;if(globalThis.rankedWallRec)RG.netm._rec=rankedWallRec;});await p.evaluate(()=>{if(globalThis.rankedWallPlay)RG.netm._play=rankedWallPlay;RG.game.debug.freeze();});}
   }
   for(const [i,pg] of [p,guest].entries()){
    await pg.waitForFunction(()=>!document.querySelector('.iw-bn--go'),null,{timeout:15000});
    await pg.evaluate(()=>RG.renderer.render(RG.scene,RG.camera));
    await capture(pg,{path:path.join(out,mode+'-online-'+i+'.jpg'),type:'jpeg',quality:60});
   }
-  let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;if(onlineWeapon)record.onlineWeapon=onlineWeapon;
+  let record=results.find(r=>r.mode===mode);if(!record)results.push(record={mode});record.online=online;if(onlineWeapon)record.onlineWeapon=onlineWeapon;if(onlineWall)record.onlineWall=onlineWall;
   await p.evaluate(()=>{RG.match.ranked.setCount(0,0);RG.match.advanceRanked(1/60);});
   await guest.waitForFunction(()=>RG.match.ranked.winner===0&&RG.match.ranked.knockout&&RG.match.state==='finish',null,{timeout:30000});
   record.terminal=await Promise.all([p,guest].map(pg=>pg.evaluate(()=>({winner:RG.match.ranked.winner,knockout:RG.match.ranked.knockout,counts:[...RG.match.ranked.counts],state:RG.match.state}))));

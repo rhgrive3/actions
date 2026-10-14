@@ -189,7 +189,7 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -298,6 +298,8 @@ jobs:
           git rev-parse HEAD > _site-source-sha.txt
       - name: Verify emitted modal controller and Pointer Lock lifetimes
         run: INKWAVE_CONTROLS_SITE="$PWD/_site" INKWAVE_POINTER_LOCK_SITE="$PWD/_site" node --experimental-vm-modules --test patches/reliability/tests/editor-pad-menu.test.mjs patches/reliability/tests/touch-pointerlock.test.mjs
+      - name: Verify emitted explicit Turf Map and gyro transport
+        run: INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/reliability/tests/map-gyro.test.mjs
       - name: Verify exact owned rectangle scans against production build
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
