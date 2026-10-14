@@ -1,7 +1,7 @@
-name: Verify and render Hornz stripe v6 diagnostic
+name: Render Squiffer v2 silhouette candidate
 on:
   push:
-    branches: [review/hornz-stripe-v6-20261014]
+    branches: [review/squiffer-v2-candidate-20261014]
 permissions:
   contents: read
 jobs:
@@ -44,26 +44,8 @@ jobs:
           grep -qx '# pass 5' variant-test-results/emitted.tap
           grep -qx '# fail 0' variant-test-results/emitted.tap
           grep -qx '# skipped 3' variant-test-results/emitted.tap
-      - name: Gate source Hornz stripe geometry (1 pass, 0 skip)
-        shell: bash
-        run: |
-          set -euo pipefail
-          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-stripe-containment.test.mjs | tee variant-test-results/stripe-source.tap
-          grep -qx '# tests 1' variant-test-results/stripe-source.tap
-          grep -qx '# pass 1' variant-test-results/stripe-source.tap
-          grep -qx '# fail 0' variant-test-results/stripe-source.tap
-          grep -qx '# skipped 0' variant-test-results/stripe-source.tap
-      - name: Gate emitted Hornz stripe geometry (1 pass, 0 skip)
-        shell: bash
-        env:
-          INKWAVE_BUILT_SITE: _site
-        run: |
-          set -euo pipefail
-          node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-stripe-containment.test.mjs | tee variant-test-results/stripe-emitted.tap
-          grep -qx '# tests 1' variant-test-results/stripe-emitted.tap
-          grep -qx '# pass 1' variant-test-results/stripe-emitted.tap
-          grep -qx '# fail 0' variant-test-results/stripe-emitted.tap
-          grep -qx '# skipped 0' variant-test-results/stripe-emitted.tap
+      - name: Verify New Squiffer source geometry
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/weapon-variant-new-squiffer-v2.test.mjs
       - name: Install capture browser after runtime gates pass
         run: npx playwright install --with-deps chromium
       - name: Capture actual emitted weapon meshes
