@@ -11,7 +11,7 @@ import { collectVisibilityEvidence, requireProjectileEvidence, visibilityVerdict
 import { createCaptureEvaluator, withCaptureRestoration, collectCaptureModes } from './lib/inkwave-capture-evidence.mjs';
 import { installCanvasCapture } from './lib/inkwave-canvas-capture.mjs';
 import { probeLightingIsolation } from './lib/inkwave-lighting-isolation.mjs';
-import { captureUserCondition } from './lib/inkwave-user-condition-probe.mjs';
+import { captureUserCondition, prepareUserConditionMatch } from './lib/inkwave-user-condition-probe.mjs';
 const site=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]);
 fs.mkdirSync(out,{recursive:true});
 const result={status:'running',sourceSha:process.env.SOURCE_SHA||null,measurement:'Controlled candidate experiment on main465c: existing native source-triangle collision plus zero-default scoped lighting with diagnostic-only coefficient overrides; exact sourceSha and build receipt identify this composition; held projectile draw fix and CPU optimization excluded; job success alone does not establish native-camera visibility, current-main acceptance or mobile/retail equivalence',components:{baseMain:'465c7a978c577f9c156e565f594bb7f5f1c7e470',nativeSweep:'c5b27bde991e0db63d609b587f358410cc66df58',lightingScope:'69695c299392832828cd47f880190d7d675f1d35',diagnosticControls:'85880387761be8335a0e1616a476e8b9a54a02ac',heldProjectileDrawFix:false,cpuOptimization:false},stages:[],errors:[]};
@@ -26,7 +26,7 @@ try{
  let context;
  const openFreshPage=async({mobile=false,referenceViewport=false}={})=>{
  if(context)await context.close();
- context=await browser.newContext({viewport:referenceViewport?{width:960,height:540}:{width:960,height:640},locale:'ja-JP',...(referenceViewport?{deviceScaleFactor:2}:{}),...(mobile?{isMobile:true,hasTouch:true,userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();
+ context=await browser.newContext({viewport:referenceViewport?{width:1133,height:744}:{width:960,height:640},locale:'ja-JP',...(referenceViewport?{deviceScaleFactor:2,screen:{width:1133,height:744}}:{}),...(mobile?{isMobile:true,hasTouch:true,userAgent:'Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'}:{})});page=await context.newPage();
  page.on('pageerror',e=>result.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')result.errors.push(m.text());});
  await page.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));let s=0x12345678;Math.random=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};});
  await page.goto('http://127.0.0.1:'+server.address().port+'/?map=inkblot',{waitUntil:'domcontentloaded'});
@@ -75,11 +75,12 @@ r.shadowMap.enabled=stageIdentity.shadowEnabled;r.render(G.scene,G.camera);retur
   const attempt=async(phase,quality,fn)=>{try{await fn();}catch(error){result.failures.push({phase,quality,time:'day',error:String(error.stack||error)});}finally{save();}};
   result.userConditionBaselines=[];
   for(const mobile of [true,false])await attempt('user-condition-baseline',mobile?'mobile-high':'desktop-high',async()=>{
-   await openFreshPage({mobile,referenceViewport:true});await prepareNativeMatch('high','day',240);
+   await openFreshPage({mobile,referenceViewport:true});await page.evaluate(prepareUserConditionMatch);
    const capture=await createCaptureEvaluator({page,out,onPersistenceError:e=>result.errors.push(e)})(captureUserCondition,mobile);
    const name=mobile?'mobile-high-normal':'desktop-high-normal';writeCapture(capture,path.join(out,name+'.png'));result.userConditionBaselines.push(capture);save();
    await page.screenshot({path:path.join(out,name+'-with-hud.png'),timeout:15000});
    assert.equal(capture.conditions.cloudErrors.length,0,'Cloud/environment readback failed; canvas evidence retained');
+   if(mobile){assert.equal(capture.conditions.mobileDetection.tablet,true,'Requested tablet classified otherwise');assert.equal(capture.conditions.mobileDetection.phone,false);}assert.equal(capture.conditions.palette.id,'aqua-cherry');
   });
   if(result.userConditionBaselines.length===2){const [a,b]=result.userConditionBaselines;result.userConditionCameraMatched=JSON.stringify(a.conditions.camera)===JSON.stringify(b.conditions.camera);if(!result.userConditionCameraMatched)result.failures.push({phase:'user-condition-camera',error:'Native mobile and desktop cameras differ; do not claim matched-camera comparison'});}
   await attempt('lighting-isolation','high',async()=>{

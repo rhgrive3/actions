@@ -11,6 +11,23 @@ export async function captureUserCondition(mobile){
      targets[key].readError=gl.getError();if(targets[key].framebufferStatus!==gl.FRAMEBUFFER_COMPLETE||targets[key].readError!==0)throw Error('Cloud/environment framebuffer readback failed');
     }}catch(error){cloudErrors.push(String(error.stack||error));}finally{r.setRenderTarget(previousTarget,previousFace,previousMip);}
     const frame=await globalThis.__captureNativeCanvas(mobile?'mobile-high-normal':'desktop-high-normal');
-    frame.conditions={platform:'Chromium SwiftShader; touch and iOS user agent emulated, not physical Safari',historicalReferenceCandidate:'14f9f913a8438353d0e462a0e74e17d8af876230',photoCachedSourceKnown:false,photoCameraExact:false,simulationFrames:240,deltaSeconds:1/60,elapsedTargetSeconds:4,settings:{...g.settings},effectiveQuality:{...g.R.q},mobileDetection:{...g.mobile},palette:g.palette,camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),matrix:G.camera.matrixWorld.toArray(),projection:G.camera.projectionMatrix.toArray()},localPosition:G.local.pos.toArray(),rig:{yaw:g.rig.yaw,pitch:g.rig.pitch},theme:g.theme,viewport:[innerWidth,innerHeight],devicePixelRatio,rendererPixelRatio:r.getPixelRatio(),environment:tex(G.scene.environment),environmentIntensity:G.scene.environmentIntensity,cloudTargets:targets,cloudErrors,cloudCoverage:e?._cloudMat?.uniforms?.uCov?.value,cloudSeed:e?._cloudMat?.uniforms?.uSeed?.value,cloudReadiness:'Five exact framebuffer texel samples; sparse diagnostic only, not whole-map validity'};return frame;
+    frame.conditions={platform:mobile?'Chromium SwiftShader with touch and iOS user agent emulation; not physical Safari':'Desktop Chromium SwiftShader',historicalReferenceCandidate:'14f9f913a8438353d0e462a0e74e17d8af876230',photoCachedSourceKnown:false,photoCameraExact:false,preparation:globalThis.__userConditionPreparation||null,actualMatchState:g.match?.state,actualMatchTime:g.match?.time,settings:{...g.settings},effectiveQuality:{...g.R.q},mobileDetection:{...g.mobile},palette:g.palette,camera:{position:G.camera.position.toArray(),quaternion:G.camera.quaternion.toArray(),matrix:G.camera.matrixWorld.toArray(),projection:G.camera.projectionMatrix.toArray()},localPosition:G.local.pos.toArray(),rig:{yaw:g.rig.yaw,pitch:g.rig.pitch},theme:g.theme,viewport:[innerWidth,innerHeight],screenSize:typeof screen!=='undefined'?[screen.width,screen.height]:null,devicePixelRatio,rendererPixelRatio:r.getPixelRatio(),environment:tex(G.scene.environment),environmentIntensity:G.scene.environmentIntensity,cloudTargets:targets,cloudErrors,cloudCoverage:e?._cloudMat?.uniforms?.uCov?.value,cloudSeed:e?._cloudMat?.uniforms?.uSeed?.value,cloudReadiness:'Five exact framebuffer texel samples; sparse diagnostic only, not whole-map validity'};return frame;
    
+}
+
+// Instrumented setup uses the native palette picker and native match lifecycle.
+// No palette/material replacement and no assignment to match state or timer.
+export async function prepareUserConditionMatch(){
+ const G=NG,g=G.game;g.debug.freeze();g._skipRender=true;g.menus.wipe.cancel();g._setSettings({quality:'high',shadows:true,bloom:false});
+ const picker=g._pickPalette;let picks=0;
+ g._pickPalette=function(...args){const random=Math.random;Math.random=()=>.7;try{picks++;return picker.apply(this,args);}finally{Math.random=random;}};
+ try{await g.startMatch({mapId:'inkblot',mode:'turf',difficulty:'normal',time:'day'});}finally{g._pickPalette=picker;}
+ g.debug.freeze();g._skipRender=true;
+ if(picks!==1||g.palette.id!=='aqua-cherry')throw Error('Native controlled palette selection did not match pinned config');
+ let introFrames=0;while(g.match.state!=='playing'&&introFrames<600){g._frame(1/60);introFrames++;}
+ if(g.match.state!=='playing')throw Error('Native intro did not reach playing within bounded frames');
+ const timeBefore=g.match.time;for(let i=0;i<240;i++)g._frame(1/60);
+ const timeAfter=g.match.time;if(g.match.state!=='playing'||Math.abs((timeBefore-timeAfter)-4)>1e-6)throw Error('Native live match time did not advance four seconds');
+ G.paint.flush(1/60);globalThis.__userConditionPreparation={introFrames,liveFrames:240,deltaSeconds:1/60,timeBefore,timeAfter,paletteRandom:.7,paletteId:g.palette.id,instrumentation:'Native palette picker given fixed RNG draw; native intro and live game frames advanced, rendering skipped until capture'};
+ return globalThis.__userConditionPreparation;
 }
