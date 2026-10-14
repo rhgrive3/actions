@@ -17,6 +17,9 @@ on:
       - 'scripts/inkwave-source-composition.mjs'
       - '.github/workflows/validate-inkwave-ranked.yml'
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:

@@ -1,14 +1,29 @@
-import test from 'node:test';
+import {installWeaponAudioEngine} from '../runtime/audio/engine.mjs';
+import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { batchFixture } from './batch03-fixture.mjs';
 import { FixedClock } from '../runtime/clock.mjs';
 const DT=1/60, near=(a,b,eps=1e-8)=>assert.ok(Math.abs(a-b)<eps,`${a} != ${b}`);
+const chargeAudio = [];
+afterEach(() => { for (const audio of chargeAudio.splice(0)) audio.disposeWeaponAudio(); });
+// Exercise the production weapon-audio engine and decoded sample bank. Only the
+// AudioContext/decoder and final mixer are synthetic; no external MP3 is loaded.
 async function charger(air=false) {
   const f=await fixture({productionComposition:true}), a=f.make('charger'), r=a.weaponRunner;
   a.grounded=!air; a.intent.fire=true; a.isLocal=true; a.ink=100; r.s3ChargerRepeat=true;
   const pitch=[],dings=[];
-  f.G.audio={loop:()=>({set:p=>pitch.push(p.pitch),stop(){}}),play:id=>dings.push(id)};
+  class FixtureMixer {
+    constructor(){this.ctx={sampleRate:48000,currentTime:0,state:'running',decodeAudioData:async()=>({sampleRate:48000,numberOfChannels:1,length:64,duration:64/48000,getChannelData(){return new Float32Array(64);}})};this.byName=new Map();}
+    _def(){return null;} init(){return this;} stats(){return {};} stopAll(){}
+    loop(name){assert.equal(name,'main:charger:charge');return {playing:true,set:p=>pitch.push(p.pitch),stop(){}};}
+    play(name){assert.equal(name,'main:charger:ready');dings.push('charger_full');}
+  }
+  installWeaponAudioEngine(FixtureMixer);const audio=f.G.audio=new FixtureMixer(),bank=audio.weaponBank();
+  chargeAudio.push(audio);
+  bank.authorized.fetcher=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(8)});
+  const result=await bank.authorized.load({schema:1,usageRights:'Synthetic test bytes only; no MP3 or external service',clips:['charge','ready'].map(event=>({id:'charger',event,variant:0,file:'s3-real/fixture-'+event+'.mp3',seamlessLoop:event==='charge'}))});
+  assert.equal(result.loaded,2);assert.equal(result.rejected,0);
   const step=(dt=DT)=>{f.G.time+=dt;r._charger(dt,{fire:true},a.weapon);};
   return {...f,a,r,pitch,dings,step};
 }

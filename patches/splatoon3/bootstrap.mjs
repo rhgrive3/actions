@@ -1,3 +1,4 @@
+import { installWeaponAudioRuntime } from './runtime/audio/runtime.mjs';
 import { install } from './runtime/install.mjs';
 import { installWeaponsFidelity } from './runtime/weapons-fidelity.mjs';
 import { installQuality } from '../local-quality/install.mjs';
@@ -22,6 +23,7 @@ try {
   installWeaponsFidelity(context, profile);
   installIssueEightFollowup(context);
   installMainWeaponCatalogRuntime(context, profile);
+  installWeaponAudioRuntime(context);
   await import('../../src/main.js');
 } catch (error) {
   console.error('[INKWAVE patches]', error);
