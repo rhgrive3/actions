@@ -1,0 +1,35 @@
+name: Compare requested variants with game references
+on:
+  push:
+    branches: [review/weapon-reference-comparison-20261014]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: weapon-variant-gallery-5945cf0d9b307c67821ff87381832de10a26d922
+          run-id: 38599785644
+          github-token: ${{ github.token }}
+          path: captured-gallery
+      - name: Prepare screenshot browser
+        run: |
+          npm install --no-save --no-package-lock --silent playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Compare pinned references and previously captured models
+        run: node scripts/compare-weapon-reference-gallery.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-reference-comparison-${{ github.sha }}
+          path: retail-comparison
+          if-no-files-found: error
+          retention-days: 7
