@@ -7,6 +7,7 @@ import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS, VARIANT_BASE_WEAPON } from '../runtime/alternate-weapon-kits-data.mjs';
 import { registerAlternateWeaponKits } from '../runtime/alternate-weapon-kits.mjs';
 import { fixture } from './source-fixture.mjs';
+import { WEIGHT_SPEED_CURVES, weaponWeight, weaponAccelerationClass, weightSpeedCurve } from '../runtime/weapon-weight.mjs';
 
 const BASE = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 const records = ALTERNATE_WEAPON_KITS;
@@ -60,6 +61,10 @@ test('registered variants keep base weapon mechanics but own sourced kits and lo
       assert.equal(w.variantOf,kit.baseId);
       assert.equal(w.variantVisualStatus,'shared-base-model');
       assert.equal(w.modelKind,base.modelKind);
+      assert.equal(weaponWeight(kit.id),weaponWeight(kit.baseId),kit.main+' weight');
+      assert.equal(weaponAccelerationClass(kit.id),weaponAccelerationClass(kit.baseId),kit.main+' acceleration');
+      assert.deepEqual(weightSpeedCurve(kit.id,'run'),WEIGHT_SPEED_CURVES[weaponWeight(kit.baseId)].run);
+      assert.deepEqual(weightSpeedCurve(kit.id,'swim'),WEIGHT_SPEED_CURVES[weaponWeight(kit.baseId)].swim);
       assert.equal(w.kind,base.kind);
       assert.equal(w.catalogRecord,base.catalogRecord);
       assert.equal(w.sourceMainActor,base.sourceMainActor);
