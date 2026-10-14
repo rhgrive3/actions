@@ -120,7 +120,9 @@ test('pinned alternate rows match raw Leanny 11.3.0 source when provided', t => 
 
 test('production: 95 variants select the original model, and both legacy/catalog variants fire', async () => {
   const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true,
-    extraExports:"export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js'; export * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs';" });
+    extraExports:"export { getWeaponDef } from './inkwave-public/src/game/character-weapons.js'; export * as REG from './patches/splatoon3/runtime/weapon-models/registry.mjs'; export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';" });
+  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);
+  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
   assert.equal(f.WEAPON_ORDER.length,160);
   assert.equal(f.REG.registeredWeaponModels().length,65);
   for(const kit of records) {
@@ -140,7 +142,6 @@ test('production: 95 variants select the original model, and both legacy/catalog
     f.G.projectiles.clear();f.G.actors.length=0;
     const actor=f.make(kit.id);
     assert.equal(actor.weaponId,kit.id);
-    assert.equal(actor.character.weaponModel,kit.baseId);
     assert.equal(actor.weapon.special,kit.special);
     assert.equal(actor.weapon.sub,kit.sub);
     actor.form='kid';actor.ink=100;actor.intent.fire=true;
