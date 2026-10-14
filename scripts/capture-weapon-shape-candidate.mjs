@@ -24,11 +24,14 @@ const server=http.createServer((req,res)=>{
  if(!file.startsWith(site+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
  res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');fs.createReadStream(file).pipe(res);
 });
+const networkFailures=[];
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:1440,height:800}}),errors=[];
  page.on('pageerror',e=>errors.push(String(e)));
+ page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));
+ page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
  await page.goto('http://127.0.0.1:'+server.address().port+'/review');
  const rows=await page.evaluate(async({prefix,ids})=>{
   const THREE=await import('three');
@@ -99,4 +102,4 @@ try{
  fs.writeFileSync(path.join(out,'index.html'),html(rows,false));
  const receipt={sourceSha,contentHash:manifest.contentHash,renderer:'Chromium SwiftShader; actual native weapon.pivot instances; original production materials and callbacks',characterRendered:false,presentationTransform:'Native off group reset to identity for model-space comparison only; geometry and shaders unchanged',teamColors:['#ff8825','#484ce8'],rows:rows.map(({basePng,variantPng,...r})=>r),errors};
  fs.writeFileSync(path.join(out,'gallery-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt,null,2));
-}finally{await browser?.close();await new Promise(r=>server.close(r));}
+}catch(e){fs.writeFileSync(path.join(out,'capture-error.json'),JSON.stringify({sourceSha,contentHash:manifest.contentHash,error:String(e),networkFailures},null,2));throw e;}finally{await browser?.close();await new Promise(r=>server.close(r));}

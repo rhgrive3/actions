@@ -1,6 +1,7 @@
 // Hornz-only procedural reconstruction. Sources: official SplatNet3 400px icon
 // and @SplatoonJP/status/1932728512353579047 rotation (2s, 6s, 10s).
 // No retail mesh or texture is embedded. Native gameplay channels are retained.
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Pieces, M, box, slab, cyl, pipe, zlathe } from './kit.mjs';
 
 export function hornzDreadWringer(d) {
@@ -77,5 +78,14 @@ export function hornzDreadWringer(d) {
   // Origin-centred gameplay hand sleeve stays clear and unchanged in size.
   p.add(pipe([[0,.058,.033],[0,.060,.004],[0,.030,-.012],[0,-.030,-.012],[0,-.060,.004],[0,-.058,.033]],.0052,24,8),C.grey,M.satin);
   p.add(cyl(.0125,[0,-.05,-.004],[0,.05,-.004],14),C.dark,M.rubber);
-  const body=p.build();d.body?.dispose?.();d.body=body;return d;
+  const body=p.build();d.body?.dispose?.();d.body=body;
+  // Official rotation (2s/14s) shows team-coloured ink in both vessels.
+  // The inherited front ink spans z≈.163–.313, outside this rear cavity.
+  // Append only a shallow rear pool to the existing team-ink draw channel;
+  // never bake the reference's turquoise colour into fixed body geometry.
+  const pool=new Pieces().add(box(.116,.014,.104,0,.009,.084,.25), '#ffffff', M.satin).build();
+  const ink=mergeGeometries([d.ink,pool],false);
+  if(!ink)throw new Error('Hornz rear ink attributes differ');
+  d.ink.dispose();pool.dispose();d.ink=ink;
+  return d;
 }

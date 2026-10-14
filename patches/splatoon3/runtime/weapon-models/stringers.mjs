@@ -111,12 +111,31 @@ export function reefMilK(d) {
     // Long bottle: broad rear closure near the string, rounded forward shoulder and short neck.
     // Opaque native surface is retained; the reference's translucency is not simulated with paint.
     body.add(zlathe([[0,-0.129],[0.052,-0.129],[0.06,-0.115],[0.064,0.04],
-      [0.061,0.065],[0.048,0.085],[0.036,0.095],[0.036,0.131],[0.029,0.15],[0.012,0.15]],0,YC,0,24),C.black,M.satin);
+      [0.061,0.065],[0.048,0.085],[0.036,0.095],[0,0.095]],0,YC,0,24),C.black,M.satin);
     body.add(ring(0.055,0.005,0,YC,-0.124,'z',5,20),C.limb,M.satin);
     // Concentric rear cap ribs visible in the 06s back/side view.
     for (const r of [0.014,0.025,0.036,0.046])body.add(ring(r,0.0018,0,YC,-0.133,'z',4,20),C.limb,M.satin);
-    body.add(ring(0.039,0.004,0,YC,0.105,'z',4,18),C.limb,M.satin);
-    body.add(ring(0.033,0.003,0,YC,0.143,'z',4,18),C.steel,M.satin);
+    // HD 10s: broad stepped outer coupling and a longitudinally fluted front sleeve.
+    // Their native fixed finish stays neutral; video team color/translucency is a separate gap.
+    body.add(zlathe([[0.034,0.086],[0.049,0.086],[0.053,0.091],[0.053,0.098],
+      [0.049,0.101],[0.049,0.108],[0.052,0.111],[0.052,0.117],
+      [0.047,0.12],[0.034,0.12],[0.034,0.086]],0,YC,0,32),C.limb,M.satin);
+    const sleeve=zlathe([[0.023,0.115],[0.046,0.115],[0.05,0.12],[0.05,0.139],
+      [0.046,0.146],[0.041,0.15],[0.023,0.15],[0.023,0.115]],0,YC,0,48);
+    const sp=sleeve.attributes.position;
+    for(let i=0;i<sp.count;i++){
+      const x=sp.getX(i),y=sp.getY(i)-YC,z=sp.getZ(i),r=Math.hypot(x,y);
+      if(r>0.04&&z>0.118&&z<0.147){
+        // Twelve shallow axial scallops cut the silhouette, not just color stripes.
+        const nr=r-0.004*(0.5+0.5*Math.cos(Math.atan2(y,x)*12));
+        sp.setXY(i,x*nr/r,YC+y*nr/r);
+      }
+    }
+    sleeve.computeVertexNormals();body.add(sleeve,C.steel,M.satin);
+    // Small concentric metal nozzle remains distinct from the broad outer coupling.
+    body.add(zlathe([[0.006,0.141],[0.018,0.141],[0.019,0.146],
+      [0.014,0.155],[0.006,0.155],[0.006,0.141]],0,YC,0,16),C.limb,M.satin);
+    body.add(zlathe([[0.004,0.143],[0.006,0.143],[0.006,0.154],[0.004,0.154]],0,YC,0,12),'#555e5b',M.satin);
     ink.add(ring(0.03,0.004,0,YC,0.152,'z',4,18));
     for (const s of [1,-1]) {
       // The rotating edge view resolves two thin rails, with a long opening in each side profile.
