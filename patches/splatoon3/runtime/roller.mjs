@@ -709,109 +709,112 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // target BEFORE the native arm IK; its left-hand solver then follows the same
   // unchanged grips. The support cylinder is derived from this rig's actual
   // geometry, not a new height constant or a gameplay collision volume.
+  // Solve the displayed roller around the *actual right wrist*. The weapon
+  // is attached to handR, not to the nominal IK target: translating that target
+  // past the arm's finite reach never translates the drum, but it detaches the
+  // support hand. Rotate the weapon around handR so both actual wrists meet
+  // their authored sockets without changing the gameplay Runner or hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
-  // Both hands are solved by the original Character IK. The roller's visual
-  // rig can only request a transform reachable by BOTH arm chains; a simple
-  // upward right-wrist shift cleared the floor but detached its support hand.
-  let center, axisX, axisY, axisZ, weaponQ, inverseHandQ;
-  let rightShoulder, leftShoulder, rightQuat, leftQuat, leftCenter, deltaGrip;
-  let trial, best, diff, localUp, invKidQ, spinQ, sampleQ, bestQ, axes;
+  let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, turn;
+  let weaponQ, inverseHandQ, candidateQ, bestQ, center, axisX, axisY, axisZ, trialQ;
+  const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
-    const contact = !!this._s3RollerContactPose;
-    const flick = !contact && !!this.s3RollerFlick && this.kidForm && this.grounded && !this.dance;
-    // A neutral carry belongs entirely to native arm IK. Do not rotate or
-    // project its weapon grip just to satisfy a flick-only drum constraint.
-    if ((contact || flick) && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
-      const d = this.weapon.def;
-      let bound = bounds.get(d);
-      if (!bound) {
-        let minX = Infinity, maxX = -Infinity, radius = 0;
-        for (const geo of [d.drum, d.drumCaps]) {
-          const p = geo?.attributes.position;
-          for (let i = 0; p && i < p.count; i++) {
-            minX = Math.min(minX, p.getX(i)); maxX = Math.max(maxX, p.getX(i));
-            radius = Math.max(radius, Math.hypot(p.getY(i), p.getZ(i)));
-          }
-        }
-        bound = { centerX: (minX + maxX) * .5, halfWidth: (maxX - minX) * .5, radius };
-        bounds.set(d, bound);
-      }
-      if (!center) {
-        center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
-        weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
-        rightShoulder = target.clone(); leftShoulder = target.clone(); rightQuat = orientation.clone(); leftQuat = orientation.clone();
-        leftCenter = target.clone(); deltaGrip = target.clone(); trial = target.clone(); best = target.clone();
-        diff = target.clone(); localUp = target.clone(); invKidQ = orientation.clone();
-        spinQ = orientation.clone(); sampleQ = orientation.clone(); bestQ = orientation.clone();
-        axes = [target.clone().set(1, 0, 0), target.clone().set(0, 1, 0), target.clone().set(0, 0, 1)];
-      }
-      const kid = this.kid, arms = this.limbs;
-      this._kidXform(arms.armR.up.parent, rightShoulder, rightQuat);
-      rightShoulder.add(diff.copy(arms.armR.up.position).applyQuaternion(rightQuat));
-      this._kidXform(arms.armL.up.parent, leftShoulder, leftQuat);
-      leftShoulder.add(diff.copy(arms.armL.up.position).applyQuaternion(leftQuat));
-      const reachR = (arms.armR.a + arms.armR.b) * .9995 - .002;
-      const reachL = (arms.armL.a + arms.armL.b) * .9995 - .002;
-      localUp.set(0, 1, 0).applyQuaternion(invKidQ.copy(kid.quaternion).invert()).divide(kid.scale);
-      const bottomFor = (quat, position) => {
-        weaponQ.copy(quat).multiply(inverseHandQ.copy(d.handR.quat).invert());
-        center.copy(d.drumAt); center.x += bound.centerX;
-        center.sub(d.handR.pos).applyQuaternion(weaponQ).add(position).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
-        axisX.set(1, 0, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-        axisY.set(0, 1, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-        axisZ.set(0, 0, 1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-        return center.y - bound.halfWidth * Math.abs(axisX.y) - bound.radius * Math.hypot(axisY.y, axisZ.y);
-      };
-      const project = (position, shoulder, reach) => {
-        diff.subVectors(position, shoulder);
-        const dist = diff.length();
-        if (dist > reach) position.addScaledVector(diff, reach / dist - 1);
-      };
-      // Alternating projection onto both arm-reach balls and the drum's ground
-      // half-space. Those sets are convex at each candidate orientation, so no
-      // artificial arm extension or detached support hand is needed.
-      const sample = (quat, position) => {
-        weaponQ.copy(quat).multiply(inverseHandQ.copy(d.handR.quat).invert());
-        leftCenter.copy(d.handL.pos).sub(d.handR.pos).applyQuaternion(weaponQ);
-        leftCenter.copy(leftShoulder).sub(leftCenter);
-        for (let k = 0; k < 16; k++) {
-          project(position, rightShoulder, reachR);
-          project(position, leftCenter, reachL);
-          const ground = contact || flick ? bottomFor(quat, position) : 0;
-          const shift = contact ? .002 - ground : flick ? Math.max(0, .004 - ground) : 0;
-          if (Math.abs(shift) > .000001) position.addScaledVector(localUp, shift);
-        }
-        const bottom = contact || flick ? bottomFor(quat, position) : 0;
-        const excessR = Math.max(0, position.distanceTo(rightShoulder) - reachR);
-        const excessL = Math.max(0, position.distanceTo(leftCenter) - reachL);
-        const floorError = contact ? Math.abs(bottom - .002) : flick ? Math.max(0, .004 - bottom) : 0;
-        return excessR + excessL + floorError;
-      };
-      trial.copy(target);
-      let bestError = sample(orientation, trial);
-      best.copy(trial); bestQ.copy(orientation);
-      let bestCost = bestError * 40 + best.distanceTo(target) * .35;
-      // A pose whose original shoulder/hand geometry already clears the floor
-      // needs no angular search. Where it cannot satisfy both reach balls,
-      // rotate the grip a fraction rather than shifting an outstretched arm.
-      if (bestError > .001) {
-        for (const axis of axes) for (const sign of [-1, 1]) {
-          for (let a = .08; a <= 1.44; a += .08) {
-            sampleQ.copy(spinQ.setFromAxisAngle(axis, sign * a)).multiply(orientation);
-            trial.copy(target);
-            const error = sample(sampleQ, trial);
-            const cost = error * 40 + trial.distanceTo(target) * .35 + a * .04;
-            if (cost < bestCost) {
-              bestCost = cost; bestError = error;
-              best.copy(trial); bestQ.copy(sampleQ);
-            }
-            if (error < .0002) break;
-          }
-        }
-      }
-      target.copy(best);
-      orientation.copy(bestQ);
+    const isRightRoller = limb === this.limbs.armR && this.weaponKind === 'roller' &&
+      this.kidForm && !this.dance && !!orientation && weight > .999 && !this.P[C.SPIN];
+    if (!isRightRoller) return solve.call(this, limb, target, pole, orientation, weight, index);
+    const d = this.weapon.def, arms = this.limbs;
+    if (!rightOrigin) {
+      rightOrigin = target.clone(); rightParentQ = orientation.clone();
+      leftOrigin = target.clone(); leftParentQ = orientation.clone();
+      delta = target.clone(); toLeft = target.clone(); axis = target.clone();
+      turn = orientation.clone(); weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
+      candidateQ = orientation.clone(); bestQ = orientation.clone(); trialQ = orientation.clone();
+      center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
     }
+    // The native solver clamps exactly at 99.95% of the rest-chain length.
+    // Keep the visual grip target just inside that physical limit.
+    this._kidXform(arms.armR.up.parent, rightOrigin, rightParentQ);
+    rightOrigin.add(delta.copy(arms.armR.up.position).applyQuaternion(rightParentQ));
+    const reachR = (arms.armR.a + arms.armR.b) * .9995 - .001;
+    delta.subVectors(target, rightOrigin);
+    if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));
+    this._kidXform(arms.armL.up.parent, leftOrigin, leftParentQ);
+    leftOrigin.add(delta.copy(arms.armL.up.position).applyQuaternion(leftParentQ));
+    const reachL = (arms.armL.a + arms.armL.b) * .9995 - .001;
+    const armLeftHeld = this.P[C.IKL] > .99 && this.P[C.LTW] < .001;
+    const alignLeft = q => {
+      if (!armLeftHeld) return;
+      weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      delta.copy(d.handL.pos).sub(d.handR.pos).applyQuaternion(weaponQ);
+      toLeft.subVectors(leftOrigin, target);
+      const a = delta.length(), b = toLeft.length();
+      if (a < 1e-7 || b < 1e-7) return;
+      const now = Math.acos(rotCos(delta.dot(toLeft) / (a * b)));
+      const allowable = Math.acos(rotCos((a*a + b*b - reachL*reachL)/(2*a*b)));
+      if (now <= allowable) return;
+      axis.crossVectors(delta, toLeft);
+      if (axis.lengthSq() < 1e-12) return;
+      // Minimum-angle quaternion sending the support grip into left IK reach;
+      // margin keeps it in reach after native f32 bone transforms.
+      q.premultiply(turn.setFromAxisAngle(axis.normalize(),now-allowable + .003));
+    };
+    const contacting = !!this._s3RollerContactPose;
+    const swinging = !contacting && !!this.s3RollerFlick && this.grounded;
+    const neededGround = contacting || swinging;
+    let bound;
+    const bottom = q => {
+      if (!bound) {
+        bound = bounds.get(d);
+        if (!bound) {
+          let minX = Infinity, maxX = -Infinity, radius = 0;
+          for (const geo of [d.drum, d.drumCaps]) {
+            const pos = geo?.attributes.position;
+            for (let i = 0; pos && i < pos.count; i++) {
+              minX = Math.min(minX,pos.getX(i)); maxX = Math.max(maxX,pos.getX(i));
+              radius = Math.max(radius,Math.hypot(pos.getY(i),pos.getZ(i)));
+            }
+          }
+          bound = {centerX:(minX+maxX)*.5, halfWidth:(maxX-minX)*.5, radius};
+          bounds.set(d,bound);
+        }
+      }
+      const kid = this.kid;
+      weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      center.copy(d.drumAt);center.x += bound.centerX;
+      center.sub(d.handR.pos).applyQuaternion(weaponQ).add(target).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
+      axisX.set(1,0,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisY.set(0,1,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisZ.set(0,0,1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      return center.y - bound.halfWidth*Math.abs(axisX.y) - bound.radius*Math.hypot(axisY.y,axisZ.y);
+    };
+    const evaluate = q => {
+      alignLeft(q);
+      const floor = neededGround ? bottom(q) : .1;
+      const groundError = contacting ? Math.abs(floor-.018) : Math.max(0,-.002-floor);
+      return groundError;
+    };
+    bestQ.copy(orientation);
+    let bestGroundError = evaluate(bestQ);
+    // A roll surface must sit near the floor; a windup must never clip it.
+    // Search purely in orientation, so the right hand remains the pivot and
+    // the left hand remains reachable after every tested candidate.
+    if (neededGround && bestGroundError > .003) {
+      let bestCost = bestGroundError*30;
+      const axes = [[1,0,0],[0,1,0],[0,0,1]];
+      const baseQ = orientation.clone();
+      for(const [x,y,z] of axes)for(const sign of [-1,1]) {
+        axis.set(x,y,z);
+        for(let step=1;step<=30;step++){
+          const a=step*.05;
+          candidateQ.copy(trialQ.setFromAxisAngle(axis,sign*a)).multiply(baseQ);
+          const floorError=evaluate(candidateQ);
+          const cost=floorError*30+a*.06;
+          if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);}
+          if(floorError<=.003)break;
+        }
+      }
+    }
+    orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
   };
   Character.prototype._s3CancelRollerFlick = function () {
