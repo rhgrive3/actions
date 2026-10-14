@@ -21,7 +21,7 @@ export function adaptPaintOwnership(rel, code, replaceOnce) {
     code = replaceOnce(code,
       '    const kind = cosmetic && opts.kind === undefined ? K_SPECK : this._kind(opts, radius, st, sAmt);',
       '    const kind = cosmetic && opts.kind === undefined ? K_SPECK : this._kind(opts, radius, st, sAmt);\n' +
-      '    radius = sourceShotRasterRadius(radius, kind, opts.face, cosmetic);',
+      '    radius = sourceShotRasterRadius(radius, kind, opts.face, cosmetic, opts.kind);',
       'source-defined shot width bounds procedural raster');
     code = "import { sourceShotRasterRadius } from '../../patches/splatoon3/runtime/source-shot-footprint.mjs';\n" + code;
     code = replaceOnce(code,
