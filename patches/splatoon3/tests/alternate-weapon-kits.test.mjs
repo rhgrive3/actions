@@ -104,16 +104,23 @@ test('pinned alternate rows match raw Leanny 11.3.0 source when provided', t => 
   const info=new Map(read('data/mush/1130/WeaponInfoMain.json').map(r=>[r.__RowId,r]));
   const ja=read('data/language/JPja.json')['CommonMsg/Weapon/WeaponName_Main'];
   const en=read('data/language/USen.json')['CommonMsg/Weapon/WeaponName_Main'];
-  const baseKits=read('data/mush/1130/WeaponInfoMain.json')
-    .filter(r=>r.Type==='Versus'&&r.__RowId.endsWith('_00'));
-  const baseById=new Map(MAIN_WEAPON_CATALOG.records.map(r=>[r.sourceRow,r]));
-  const sourceBase=baseKits.filter(r=>baseById.has(r.__RowId));
-  assert.equal(sourceBase.length,65);
+  const canonical=JSON.parse(fs.readFileSync(new URL('../reference/canonical-kits-1130.json',import.meta.url),'utf8'));
+  const subs=new Map(canonical.records.map(r=>[r.SubWeapon,r.sub]));
+  const specials=new Map(canonical.records.map(r=>[r.SpecialWeapon,r.special]));
+  for(const [source,key] of Object.entries({
+    SpFirework:'superChump', SpCastle:'krakenRoyale',
+    SpPogo:'tripleSplashdown', SpChimney:'splattercolorScreen',
+  })) specials.set('Work/Gyml/'+source+'.spl__WeaponInfoSpecial.gyml',key);
+  const baseRows=new Map(canonical.records.map(r=>[r.sourceRow,r.id]));
+  assert.equal(baseRows.size,65);
   for(const k of records) {
     const r=info.get(k.main);
     assert.ok(r,k.main);
+    assert.equal(k.baseId,baseRows.get(k.main.replace(/_0[12]$/,'_00')));
     assert.equal(k.names.ja,ja[k.main]);
     assert.equal(k.names.en,en[k.main]);
+    assert.equal(k.sub,subs.get(r.SubWeapon),k.main+' sub Gyml');
+    assert.equal(k.special,specials.get(r.SpecialWeapon),k.main+' special Gyml');
     assert.equal(k.specialCost,r.SpecialPoint);
   }
 });
