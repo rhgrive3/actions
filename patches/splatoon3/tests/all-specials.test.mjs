@@ -6,6 +6,7 @@ import './kraken-dash-occlusion.test.mjs';
 
 const EXTRA=`export {replaySpecial as replayAllSpecials,ALL_SPECIALS,ALL_SPECIALS_STATUS} from './patches/splatoon3/runtime/all-specials.mjs';`;
 async function setup(){const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:EXTRA});f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;}
+function hookWall(f){f.G.physics.raycast=(o,d,length,h)=>{h.hit=d.z>0;h.dist=Math.min(5,length);h.point.copy(o).addScaledVector(d,h.dist);return h;};}
 function equip(actor,id){actor.weapon={...actor.weapon,special:id,specialCost:100};actor.special=100;actor.alive=true;actor.remote=false;actor._resolve=()=>{};actor.intent.fire=false;actor.intent.sub=false;actor.intent.jump=false;actor._prevIntent ||= {};Object.assign(actor._prevIntent,{fire:false,sub:false,jump:false,squid:false,booyah:false});}
 function deployedWall(f,owner,pos){owner.weapon={...owner.weapon,sub:'splashWall'};const wall=f.G.projectiles.throwBomb(owner);wall.phase='deployed';wall.pos.set(...pos);wall.prev.copy(wall.pos);wall.vel.set(0,0,0);wall.activeAt=Infinity;wall.deployedAt=f.G.time;wall.expireAt=Infinity;wall.yaw=0;return wall;}
 function tickWorld(f,frames){for(let i=0;i<frames;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}}
@@ -242,7 +243,7 @@ test('remote screen replay creates presentation and recipient status without aut
 
 test('Zipcaster repeats hooks, fires the equipped main from its special ink tank, and returns through native Super Jump',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'zipcaster');victim.team=1;victim.pos.set(0,0,5);f.G.actors=[a,victim];
- f.G.match={playing:()=>true};f.G.physics.raycast=(_o,_d,_distance,h)=>{h.hit=false;return h;};a.aimDir.set(0,0,1);a.aimPoint=new f.THREE.Vector3(0,1,5);
+ f.G.match={playing:()=>true};hookWall(f);a.aimDir.set(0,0,1);a.aimPoint=new f.THREE.Vector3(0,1,5);
  const events=eventFeed(f,'all:special'),hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  ready(a);const state=a._s3AllSpecialState,origin=a.pos.clone();
  a.intent.sub=true;a._updateSpecial(1/60);assert.equal(state.phase,'hookFlight','a real sub press launches the source-speed hook before player pull');assert.ok(state.inkFuel<150);
@@ -479,7 +480,7 @@ test('Super Chump expiry paints sourced cross and satellite channels',async()=>{
 
 test('Zipcaster hook movement paints sourced cross marks and a two-frame calibrated trail',async()=>{
  const f=await setup(),a=f.make();equip(a,'zipcaster');a._resolve=()=>{};a.aimDir.set(0,0,1);a.aimPoint=new f.THREE.Vector3(0,1,5);
- f.G.physics.raycast=(_o,_d,_distance,h)=>{h.hit=false;return h;};const calls=[];f.G.paint.splat=(at,radius)=>{calls.push({at:at.clone(),radius,frame});return 1;};
+ hookWall(f);const calls=[];f.G.paint.splat=(at,radius)=>{calls.push({at:at.clone(),radius,frame});return 1;};
  let frame=0;ready(a);const state=a._s3AllSpecialState;a.intent.sub=true;a._updateSpecial(1/60);frame++;
  assert.equal(state.phase,'hookFlight','a real sub press begins source-speed hook travel');a.intent.sub=false;
  for(let i=0;i<60&&state.phase!=='ready';i++){a._updateSpecial(1/60);frame++;}
@@ -560,7 +561,7 @@ test('source special launch forces advance the same actual projectile at 30/60/1
 });
 
 test('Zipcaster special-power AP controls native hook cost and time drain at 30/60/120 Hz',async()=>{
- const f=await setup();const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
+ const f=await setup();hookWall(f);const {emptyLoadout,gearCurve}=await import('../runtime/gear.mjs');
  for(const ap of [0,10,57])for(const hz of [30,60,120]){
   const a=f.make();a.s3.loadout=emptyLoadout();if(ap===10)a.s3.loadout[0].main='specialPower';if(ap===57)for(const p of a.s3.loadout){p.main='specialPower';p.subs.fill('specialPower');}a.s3RefreshGear();equip(a,'zipcaster');f.G.actors=[a];
   ready(a);const s=a._s3AllSpecialState,drain=gearCurve(ap,15,13.05,12),hook=gearCurve(ap,4,2.5,1.5);

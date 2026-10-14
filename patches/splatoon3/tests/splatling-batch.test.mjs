@@ -78,9 +78,9 @@ test('#250: reholding ZR cannot change a stream spread sequence or charge it aga
   for (const fire of [false, true]) {
     const f = await fixture(), a = f.make('splatling'), spreads = [];
     f.G.projectiles.fireSplatling = (_a, _w, spread) => spreads.push(spread);
-    advance(a, 72); release(a); advance(a, 160, { fire });
+    advance(a, 72); release(a); advance(a, 161, { fire });
     assert.equal(a.weaponRunner.streaming, false); assert.equal(a.weaponRunner.charging, false);
-    near(a.ink, 77.5); assert.equal(spreads.length, 40); traces.push(spreads);
+    near(a.ink, 77.5); assert.equal(spreads.length, 41); traces.push(spreads);
     a.grounded = false; assert.ok(a.weaponRunner._spreadDeg(a.weapon) > spreads[0]);
   }
   assert.deepEqual(traces[0], traces[1]);
