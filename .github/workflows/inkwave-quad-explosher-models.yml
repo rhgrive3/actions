@@ -28,7 +28,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe
+          ref: ${{ github.event.pull_request.base.sha }}
           path: .model-baseline
           persist-credentials: false
       - uses: actions/checkout@v4
