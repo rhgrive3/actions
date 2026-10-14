@@ -136,6 +136,12 @@ export async function captureNativeProjectileTemporal({frames}) {
  const gl=G.renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
  const read=()=>{g.R.render();if(cameraKey()!==fixedKey)throw Error('Temporal camera changed');const pixels=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,pixels);return pixels;};
  const count=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(a[i]!==b[i]||a[i+1]!==b[i+1]||a[i+2]!==b[i+2])n++;return n;};
+ // An actual thin shot can cover fewer pixels at frame 6 than an early large
+ // splash. Reject repeated-render noise by RGB amplitude as a second,
+ // independently measured signal, never by dropping the on/off control.
+ const strong=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)
+  if(Math.max(Math.abs(a[i]-b[i]),Math.abs(a[i+1]-b[i+1]),Math.abs(a[i+2]-b[i+2]))>=24)n++;
+  return n;};
  try{
   g.debug.fire(false);
   for(const frame of frames){
@@ -149,8 +155,24 @@ export async function captureNativeProjectileTemporal({frames}) {
     const on=read();row.onCapture=await globalThis.__captureNativeCanvas('temporal-'+frame+'-on');const onRepeat=read();
     for(const m of meshes)m.visible=false;
     const off=read();row.offCapture=await globalThis.__captureNativeCanvas('temporal-'+frame+'-off');const offRepeat=read();
-    Object.assign(row,{changedPixels:count(on,off),onRepeatChangedPixels:count(on,onRepeat),offRepeatChangedPixels:count(off,offRepeat),glError:gl.getError()});
-    row.nativeVisibilityEstablished=row.survives&&row.glError===0&&row.changedPixels>Math.max(row.onRepeatChangedPixels,row.offRepeatChangedPixels)*4+50;
+    Object.assign(row,{
+     changedPixels:count(on,off),
+     onRepeatChangedPixels:count(on,onRepeat),
+     offRepeatChangedPixels:count(off,offRepeat),
+     strongPixels:strong(on,off),
+     onRepeatStrongPixels:strong(on,onRepeat),
+     offRepeatStrongPixels:strong(off,offRepeat),
+     glError:gl.getError()
+    });
+    const pixelNoise=Math.max(row.onRepeatChangedPixels,row.offRepeatChangedPixels);
+    const strongNoise=Math.max(row.onRepeatStrongPixels,row.offRepeatStrongPixels);
+    // Both gates require genuine unchanged-camera on/off evidence. The second
+    // requires at least 24 high-contrast pixels and >6x repeat-render noise
+    // plus 12 pixels; a handful of low-amplitude readback changes cannot pass.
+    row.nativeVisibilityEstablished=row.survives&&row.glError===0&&(
+      row.changedPixels>pixelNoise*4+50 ||
+      (row.strongPixels>=24 && row.strongPixels>strongNoise*6+12)
+    );
    }finally{for(const[m,v]of visible)m.visible=v;row.visibilityRestored=[...visible].every(([m,v])=>m.visible===v);row.sampledFieldsUnchanged=fieldState()===before;row.noRedrawDuringMeasurement=drawCount===callsBefore;row.materialFlagsUnchanged=materialState()===materialsBefore;if(!row.materialFlagsUnchanged||!row.visibilityRestored||!row.sampledFieldsUnchanged||!row.noRedrawDuringMeasurement){row.nativeVisibilityEstablished=false;report.errors.push('Temporal measurement changed state');}}
   }
  }catch(error){report.errors.push(String(error?.stack||error));if(globalThis.__nativeCanvasCaptureFailure){report.captureFailure=globalThis.__nativeCanvasCaptureFailure;delete globalThis.__nativeCanvasCaptureFailure;}}
