@@ -122,7 +122,9 @@ test('the full installer rejects reinstall without changing passive ownership or
 
 // Source-only instrumentation: publication is delayed without changing either
 // award helper. Emitted acceptance runs the production-order tests separately.
-test('source ordering control: Match ownership published after Actor installation still defers exactly once', async () => {
+test('source ordering control: Match ownership published after Actor installation still defers exactly once', {
+  skip: process.env.INKWAVE_BUILT_SITE ? 'Source-only injected ownership export; production ordering is covered by emitted tests' : false,
+}, async () => {
   const { a, tick } = await world({ lateOwner: true });
   tick(); close(a.special, 3.26 * STEP);
 });
