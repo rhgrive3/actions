@@ -857,7 +857,7 @@ const DIRECTORS = {
       t.rayAcc = (t.rayAcc || 0) + dt * (10 + 30 * charge);
       while (t.rayAcc >= 1) { t.rayAcc -= 1; const th = rnd(TAU), el = rnd(1.3, -1.3);
         this.spark(SPARK.RAY, ball, Math.cos(th) * Math.cos(el), Math.sin(el), Math.sin(th) * Math.cos(el), rnd(0.18, 0.1), 0.06 + 0.05 * charge, 0.02, this.hdr(c, 2.3, 1.0), 1, { drag: 0, stretch: 0.9 + 1.6 * charge, grav: 0 }); }
-      if (charge >= 1 && !t.d.full) { t.d.full = true; this.flash(ball, c, 2.6, 0.3); this.disc(true, 0.5, DISC.SHOCK, ball, this.v[2].copy(this.camPos).sub(ball).normalize(), 0.5, 3.5, this.hdr(c, 1.8, 1.2), 1); }
+      if (charge >= 1 && !t.d.full) { t.d.full = true; this.flash(ball, c, 2.6, 0.3); this.disc(true, 0.4, DISC.SHOCK, ball, this.v[2].copy(this.camPos).sub(ball).normalize(), 0.5, 2.3, this.hdr(c, 1.6, 0.8), 0.8); }
       if (charge >= 1 && vfxRandom() < 0.4) this.spark(SPARK.STAR, this.v[1].copy(ball).add(this.v[2].set(rnd(1, -1), rnd(1, -1), rnd(1, -1))), 0, 0, 0, 0.2, 0.32, 0.03, this.hdr(c, 2, 1.8), 1);
     },
     event(a, e, pos, target) {
