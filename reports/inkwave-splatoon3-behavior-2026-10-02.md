@@ -4368,3 +4368,10 @@ On main `636e2b68`, the real Actor/Match production composition recharged after 
 A separate ee9-based CPU candidate changes only the ordered exact-down BVH interval rejection, retaining native divisions, fallback/coercion behavior and every nearest-hit field/counter. No bot, cadence, movement, damage, paint or visual behavior is intentionally changed. Source and actual emitted before/after replay match separately at 30/60/120 Hz; real damage and native-wall protection tests also pass. This preserves the existing INKWAVE comparison baseline rather than declaring new Splatoon 3 Ver.11.3.0 retail parity.
 
 Captured rays use 73.8% fewer Math min/max calls with identical triangle work. Normal-realm Node timing has one mixed short batch and a favorable longer batch; the same-harness VM CPU replay improves in all four pairs. None establishes browser, whole-game FPS or iPad mini6 performance. Source versus emitted trajectories differ even on baseline and are not compared as identical. Full evidence, all raw trial values, limitations and reproduction: [native vertical-slab report](inkwave-native-vertical-slab-2026-10-13.md). PR #1366 remains frozen and separate; no main merge is performed.
+
+
+## 2026-10-15: 体力バーの表示安定性とDOM更新削減
+
+`runtime/combat-info.mjs` の canonical 体力バーに、DOMノード単位の最終描画値キャッシュを追加。同じ表示位置・HP・色を毎フレーム書き直す処理と、非表示済みバーへの重複書き込みを削減した。NaN/Infinityの投影座標はマーカー生成時に除外し、描画側も不正な座標/HPで古い表示を残さず隠す。正常な次フレームでは再表示し、行オブジェクトの再利用や別Actorへの割当でも最新値を描画する。
+
+比較対象は既存のSplatoon 3 11.3.0・全ブキ/ギア。Ver.11の体力表示と固定SplPlayerの180F表示窓、遮蔽・潜伏・非公開追跡・復活lifeの条件を維持し、本家の非公開描画方式や実機FPS改善は主張しない。修正前mainで新規5件すべて失敗、source関連35件と隣接36件、実際のminified helper新規5件＋composition3件が成功。DOM/描画失敗はfixtureであり、ChromiumとSwitch/モバイル実機は未検証。手順と検証範囲は [体力HUDの記録](inkwave-health-hud-stability-2026-10-15.md)。
