@@ -314,7 +314,7 @@ export function configureFidelityInkFlight(projectiles, helpers) {
 
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
-function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
+function rawWeapon(w) { const id = w?.id || w?.kind; return completion?.weapons[VARIANT_BASE_WEAPON[id] || id]; }
 
 // #992: S3 BulletShooterPaintParam's sparse defaults and interpolation semantics
 // are documented by the original parameter research in
@@ -1136,7 +1136,8 @@ export const INK_LOOK=Object.freeze({
 // sourced value.
 export const SHOT_TAIL_FRAMES_DEFAULT=2;
 export function shotTailFrames(p) {
-  const v=completion?.weapons?.[p?.wid]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
+  const id=p?.wid;
+  const v=completion?.weapons?.[VARIANT_BASE_WEAPON[id] || id]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
   return Number.isFinite(v)&&v>0?v:SHOT_TAIL_FRAMES_DEFAULT;
 }
 // Back length (in drawn head radii) for the instanced blob. Others: the
