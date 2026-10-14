@@ -589,9 +589,9 @@ jobs:
       - name: Build and diagnose (not an acceptance benchmark)
         run: |
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps webkit
           ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js" node scripts/build-inkwave.mjs inkwave-public "$DIAGNOSTIC_STORAGE/site"
-          CHROMIUM_PATH="$(node --input-type=module -e 'import {chromium} from "playwright"; console.log(chromium.executablePath())')" node scripts/diagnose-inkwave-stage-visibility.mjs "$DIAGNOSTIC_STORAGE/site" "$DIAGNOSTIC_STORAGE/probe"
+          DIAGNOSTIC_BROWSER=webkit node scripts/diagnose-inkwave-stage-visibility.mjs "$DIAGNOSTIC_STORAGE/site" "$DIAGNOSTIC_STORAGE/probe"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

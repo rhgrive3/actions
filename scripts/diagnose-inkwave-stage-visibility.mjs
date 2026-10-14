@@ -5,12 +5,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 import { probeProjectileVisibility } from './lib/inkwave-projectile-visibility-probe.mjs';
 import { collectVisibilityEvidence, requireProjectileEvidence, visibilityVerdict } from './lib/inkwave-visibility-sequence.mjs';
 import { createCaptureEvaluator, withCaptureRestoration, collectCaptureModes } from './lib/inkwave-capture-evidence.mjs';
 import { installCanvasCapture } from './lib/inkwave-canvas-capture.mjs';
 import { probeLightingIsolation } from './lib/inkwave-lighting-isolation.mjs';
+import {diagnosticBrowserConfig} from './lib/inkwave-diagnostic-browser.mjs';
 import {probeReferenceViews} from './lib/inkwave-reference-view.mjs';
 import { captureUserCondition, prepareUserConditionMatch, installDiagnosticQualityReadiness } from './lib/inkwave-user-condition-probe.mjs';
 const site=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]);
@@ -23,7 +24,8 @@ const server=http.createServer((req,res)=>{try{const u=new URL(req.url,'http://l
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser,page;
 try{
- browser=await chromium.launch({...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ const browserConfig=diagnosticBrowserConfig(process.env.DIAGNOSTIC_BROWSER||'chromium',process.env.CHROMIUM_PATH);
+ browser=await ({chromium,webkit}[browserConfig.engine]).launch(browserConfig.launch);result.browser={...browserConfig,version:browser.version()};
  let context;
  const openFreshPage=async({mobile=false,referenceViewport=false,referenceCrop=false}={})=>{
  if(context)await context.close();
@@ -34,6 +36,7 @@ try{
  await page.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);
  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:240000});assert.equal(await page.locator('#boot-error').textContent(),'');
  result.runtime=await page.evaluate(async()=>{const gl=NG.renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {build:await (await fetch(new URL('inkwave-build.json',location.href))).json(),userAgent:navigator.userAgent,renderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),vendor:ext?gl.getParameter(ext.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR),version:gl.getParameter(gl.VERSION),shadingLanguage:gl.getParameter(gl.SHADING_LANGUAGE_VERSION)};});assert.deepEqual(result.runtime.build,result.build,'Served build differs from local receipt');save();
+ await page.evaluate(engine=>globalThis.__diagnosticBrowserEngine=engine,browserConfig.engine);
  await page.evaluate(installCanvasCapture);await page.evaluate(installDiagnosticQualityReadiness);
  };
  if(process.argv[4]==='full-matrix')await openFreshPage();

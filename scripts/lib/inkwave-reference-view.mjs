@@ -43,7 +43,7 @@ export function referenceCameraControl({action,yaw=0,pitch=0}){
   const q=mul(mul(original.pose.quaternion,[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]),[Math.sin(pitch/2),0,0,Math.cos(pitch/2)]);c.quaternion.fromArray(q);c.updateMatrixWorld(true);
  }
  if(JSON.stringify(inputs())!==JSON.stringify(original.inputs))throw Error('Reference game/fill/quality inputs drifted');
- return {pose:pose(),inputs:inputs(),screen:[screen.width,screen.height],viewport:[innerWidth,innerHeight],drawingBuffer:[G.renderer.domElement.width,G.renderer.domElement.height],devicePixelRatio,shaderPrograms:(G.renderer.info?.programs||[]).map(p=>({id:p.id,name:p.name,diagnosticsAvailable:!!p.diagnostics,runnable:p.diagnostics?.runnable,programLog:p.diagnostics?.programLog,vertexLog:p.diagnostics?.vertexShader?.log,fragmentLog:p.diagnostics?.fragmentShader?.log}))};
+ return {pose:pose(),inputs:inputs(),screen:[screen.width,screen.height],viewport:[innerWidth,innerHeight],drawingBuffer:[G.renderer.domElement.width,G.renderer.domElement.height],devicePixelRatio,shaderPrograms:(G.renderer.info?.programs||[]).map(p=>{const gl=G.renderer.getContext(),row={id:p.id,name:p.name,diagnosticsAvailable:!!p.diagnostics};try{row.linked=gl.getProgramParameter(p.program,gl.LINK_STATUS);row.programLog=gl.getProgramInfoLog(p.program);row.shaders=(gl.getAttachedShaders(p.program)||[]).map(shader=>(()=>{const type=gl.getShaderParameter(shader,gl.SHADER_TYPE);return {type,stage:type===gl.VERTEX_SHADER?'vertex':type===gl.FRAGMENT_SHADER?'fragment':'unknown',compiled:gl.getShaderParameter(shader,gl.COMPILE_STATUS),log:gl.getShaderInfoLog(shader)};})());}catch(error){row.inspectionError=String(error);}return row;}),shaderReadError:G.renderer.getContext().getError()};
 }
 
 export async function probeReferenceViews(page,out){
@@ -66,7 +66,9 @@ export async function probeReferenceViews(page,out){
    if(errors.length)throw new AggregateError(errors,'Reference view persistence failed');delete frame.png;delete frame.rawRGBA;frame.pngFile=mode+'.png';frame.rawRGBAFile=mode+'.rgba';
    frame.afterCapture=await page.evaluate(referenceCameraControl,{action:'observe'});
    if(JSON.stringify(frame.afterCapture.pose)!==JSON.stringify(control.pose))throw Error('Reference camera changed during capture');
-   if(frame.conditions.cloudErrors.length)throw Error('Reference cloud/environment readback failed');save();
+   if(frame.conditions.cloudErrors.length)throw Error('Reference cloud/environment readback failed');
+   frame.shaderInspectionAccepted=control.shaderReadError===0&&frame.afterCapture.shaderReadError===0&&frame.afterCapture.shaderPrograms.length>0&&frame.afterCapture.shaderPrograms.every(p=>!p.inspectionError&&p.linked===true&&p.shaders.length===2&&p.shaders.some(s=>s.stage==='vertex')&&p.shaders.some(s=>s.stage==='fragment')&&p.shaders.every(s=>Number.isFinite(s.type)&&s.compiled===true));
+   if(!frame.shaderInspectionAccepted)report.errors.push(mode+': shader link/compile inspection failed or unavailable; PNG retained, not proof of a rendering defect');save();
   }
  },async()=>{report.restoration=await page.evaluate(referenceCameraControl,{action:'restore'});});
  }catch(e){report.errors.push(String(e.stack||e));}
