@@ -1,0 +1,13 @@
+# Dry source wall-climb refill input
+
+On the controlled original Shipshape Floor00 firing stance, the opted native climb controller requests squid form below15% ink. The installed resource controller does not recover ink in dry squid form, so the old actual Zones/team1 case timed out at90seconds. The common change only releases ordinary squid input while grounded at the exact static, upright, unpainted source stance, with positive polygon/Pnt mask and a strict fitting human body. Rates/timers/ink, source, path, physics and weapon/pose are not edited. Own-painted kid→squid and submerged recovery retain the existing input.
+
+## Fresh resume checks
+
+Pure commonecf6f90b, with the global asset catalog unset, passes the dedicated source fixture1/1 without skips via `NATIVE_SHIPSHAPE_CLIMB_REFILL_ASSETS`. Its ordinary Shooter drains ink naturally, walks into the original dry stance and recovers with ordinary resources. Sixteen labelled source/control fault cases remain scoped as recorded in that fixture. Defaults are101pass/60explicit optional asset skips/0fail, actual exit0. Pure-common public packaging9/9/no skips and unchanged startup budgets pass. The common helper SHA matches the isolated Shipshape code exactly; no Shipshape definition enters the common PR.
+
+A fresh immutable Shipshapee4c74282/tree49aa3340 (local merge46dd has the identical tree) actual Zones/team1 route now arrives on original source support at45.700/45.683/45.683seconds for render30/60/120, with actual Actor1/60 and2742/2741/2741 steps. Dry normal recovery gives14.5 ink in87 ticks; dry-squid stagnation is bounded to16 observed ticks. This reproduces the saved candidate result, not a new console parity claim. Actual own-painted kid→squid and wet recovery pass3/3: retained SQ input and0.555556 ink per sampled wet tick,8actors/7bots/0AP/errors0. Python/worker source parity passes3/3; immutable derived integrity227Bluefin/248Shipshape files is rechecked separately.
+
+## Remaining review boundary
+
+This common is still Draft pending named independent Wahoo review and Ready-first promotion. Current Shipshape full-rule/bank/Tower/WS/cache/render/lifecycle qualification and final aggregate remain open. The measured browser is SwiftShader, with controlled input/RNG and supported other actors. The pinned display source is not Nintendo's native collision/mask/placement/units or confirmed11.3.0 extraction. Optional CPU source-motion warnings and historical failures remain private. Source/generated models, textures, images and detailed traces are excluded from commits. No new main merge. [Bounded numeric receipt](source-climb-dry-refill-resume-2026-10-14.json).
