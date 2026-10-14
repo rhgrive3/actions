@@ -24,6 +24,16 @@ function coatMaterial(material, s, cfg) {
   if (!material || material[MATERIAL]) return;
   const compile = material.onBeforeCompile, key = material.customProgramCacheKey;
   Object.defineProperty(material, MATERIAL, { value: true });
+  // A native LOD dither twin (character-lod.js ditherMaterial) cloned from an
+  // already-coated base delegates to that base's hook and froze the base key,
+  // marker included. Wrapping it again injects nothing (identity early return
+  // below) but re-keys an identical program: warmAll compiled the twin under
+  // its frozen key, so the first mid-match LOD fade would link a duplicate
+  // program synchronously. Keep the frozen key; the program text is unchanged.
+  if (typeof key === 'function' && String(key.call(material)).includes('|iwSpawnCoating1')) {
+    s.materials.add(material);
+    return;
+  }
   material.onBeforeCompile = function (shader, renderer) {
     compile.call(this, shader, renderer);
     // Native dither clones delegate to their already-hooked base. The Flow
