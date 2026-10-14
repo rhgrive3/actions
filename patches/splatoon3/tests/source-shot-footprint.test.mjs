@@ -71,3 +71,42 @@ test('actual production paint composition normalizes once after network recordin
   assert.ok(built.includes('r * (1.3 + 1.2 * h2)'),
     'changing artist radius-extents requires an updated maximum-reach proof');
 });
+
+
+test('actual PaintSystem gives local and network replay identical source-shot body ownership', async () => {
+  const { fixture } = await import('./source-fixture.mjs');
+  const { makePaintWorld } = await import('./paint-authority-fixture.mjs');
+  const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
+  const { paint, V, face } = makePaintWorld(f);
+  const input = V(0, 0, 8), rawRadius = 1.93;
+  const seed = .37, net = { mute: 0, applying: false, out: [],
+    recSplat(center, radius, team, opts) {
+      this.out.push({ radius, team, kind: opts.kind, face: opts.face, seed: opts.seed, point: center.clone() });
+    },
+  };
+  f.G.netm = net;
+  const snapshot = (withFace) => {
+    paint.clear();
+    const area = paint.splat(input, rawRadius, 0, { kind: 'shot', seed,
+      ...(withFace ? { face: 0 } : {}) });
+    assert.ok(area > 0);
+    const growing = paint.growing.at(-1);
+    close(growing.R, rawRadius / bounds.shot);
+    assert.ok(growing.entries.includes(face), 'real floor face receives the sourced stamp');
+    return { area, body: Array.from(paint.grid), radius: growing.R };
+  };
+
+  const local = snapshot(true);
+  assert.equal(net.out.length, 1);
+  assert.equal(net.out[0].radius, rawRadius, 'network retains nominal source width');
+  assert.equal(net.out[0].face, 0, 'world-contact face is recorded');
+  net.applying = true;
+  const remote = snapshot(true);
+  assert.deepEqual(remote, local, 'paint replay uses identical local source width');
+  net.applying = false;
+  const catalogLocal = snapshot(false);
+  net.applying = true;
+  const catalogReplay = snapshot(false);
+  assert.deepEqual(catalogReplay, catalogLocal,
+    'face-less catalog shot also has matching network replay footprint');
+});
