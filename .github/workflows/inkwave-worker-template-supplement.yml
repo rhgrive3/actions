@@ -1,0 +1,80 @@
+name: INKWAVE pinned worker-template supplement
+on:
+  pull_request:
+    types: [opened]
+    paths:
+      - .github/workflows/inkwave-worker-template-supplement.yml
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-worker-template-supplement-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  worker-template:
+    if: github.head_ref == 'verify/worker-template-pinned-20261014'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: atomic-1414
+            sha: 2dd3192e7f78e1425abf9117b69f12b4f6033731
+            tree: 5339b0630fcde16dda9d6406342880885d191ddc
+          - label: audio-1322
+            sha: b4ca8fabf34c68524fd1e2a632b563c33e11a59b
+            tree: a9d4bef10082bc873045d976fb2dc9045737f086
+    env:
+      SOURCE_SHA: ${{ matrix.sha }}
+      SOURCE_TREE: ${{ matrix.tree }}
+      INKWAVE_TEST_SCRATCH: /mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-supplement-${{ github.run_id }}-${{ matrix.label }}
+      EVIDENCE_DIR: /mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-supplement-${{ github.run_id }}-${{ matrix.label }}/evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bind exact source and physical workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$SOURCE_TREE"
+          test "$(realpath -m "$INKWAVE_TEST_SCRATCH")" = "$INKWAVE_TEST_SCRATCH"
+          sudo mkdir -p "$INKWAVE_TEST_SCRATCH"
+          sudo chown "$(id -u):$(id -g)" "$INKWAVE_TEST_SCRATCH"
+          test "$(realpath /mnt/workspace)" = /mnt/workspace
+          test "$(realpath "$INKWAVE_TEST_SCRATCH")" = "$INKWAVE_TEST_SCRATCH"
+          test -w "$INKWAVE_TEST_SCRATCH"
+          mkdir -p "$EVIDENCE_DIR"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const paths=['patches/loading-cache/tests/worker-template-compaction.test.mjs','patches/loading-cache/adapter.mjs','patches/loading-cache/sw.js'];
+          const files=Object.fromEntries(paths.map(p=>[p,crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')]));
+          fs.writeFileSync(process.env.EVIDENCE_DIR+'/source.json',JSON.stringify({sourceSha:process.env.SOURCE_SHA,tree:process.env.SOURCE_TREE,node:process.version,workspace:fs.realpathSync('/mnt/workspace'),scratch:fs.realpathSync(process.env.INKWAVE_TEST_SCRATCH),files},null,2));
+          NODE
+      - name: Run all four unchanged worker-template contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap patches/loading-cache/tests/worker-template-compaction.test.mjs | tee "$EVIDENCE_DIR/tests.tap"
+          git diff --exit-code
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import crypto from 'node:crypto';
+          const tap=fs.readFileSync(process.env.EVIDENCE_DIR+'/tests.tap','utf8');
+          for(const line of ['# tests 4','# pass 4','# fail 0','# cancelled 0','# skipped 0'])assert.ok(tap.split(/\r?\n/).includes(line),'Missing exact TAP summary: '+line);
+          fs.writeFileSync(process.env.EVIDENCE_DIR+'/result.json',JSON.stringify({status:'passed',sourceSha:process.env.SOURCE_SHA,tree:process.env.SOURCE_TREE,tests:4,pass:4,fail:0,skipped:0,tapSha256:crypto.createHash('sha256').update(tap).digest('hex')},null,2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: worker-template-${{ matrix.label }}-${{ matrix.sha }}
+          path: ${{ env.EVIDENCE_DIR }}/
+          if-no-files-found: error
+          retention-days: 14
