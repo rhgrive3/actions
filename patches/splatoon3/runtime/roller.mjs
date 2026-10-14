@@ -715,7 +715,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // support hand. Rotate the weapon around handR so both actual wrists meet
   // their authored sockets without changing the gameplay Runner or hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
-  let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, turn;
+  let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
   let weaponQ, inverseHandQ, candidateQ, bestQ, center, axisX, axisY, axisZ, trialQ;
   const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
@@ -726,7 +726,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     if (!rightOrigin) {
       rightOrigin = target.clone(); rightParentQ = orientation.clone();
       leftOrigin = target.clone(); leftParentQ = orientation.clone();
-      delta = target.clone(); toLeft = target.clone(); axis = target.clone();
+      delta = target.clone(); toLeft = target.clone(); axis = target.clone(); searchAxis = target.clone();
       turn = orientation.clone(); weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
       candidateQ = orientation.clone(); bestQ = orientation.clone(); trialQ = orientation.clone();
       center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
@@ -803,10 +803,10 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       const axes = [[1,0,0],[0,1,0],[0,0,1]];
       const baseQ = orientation.clone();
       for(const [x,y,z] of axes)for(const sign of [-1,1]) {
-        axis.set(x,y,z);
+        searchAxis.set(x,y,z);
         for(let step=1;step<=30;step++){
           const a=step*.05;
-          candidateQ.copy(trialQ.setFromAxisAngle(axis,sign*a)).multiply(baseQ);
+          candidateQ.copy(trialQ.setFromAxisAngle(searchAxis,sign*a)).multiply(baseQ);
           const floorError=evaluate(candidateQ);
           const cost=floorError*30+a*.06;
           if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);}
