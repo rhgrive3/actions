@@ -9,6 +9,9 @@ on:
       - scripts/render-nova-origin-review.mjs
       - scripts/compare-five-refinement-images.mjs
       - patches/splatoon3/tests/five-shooter-compact-stripes.test.mjs
+      - patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
+      - patches/splatoon3/weapon-lod-material-packing-adapter.mjs
+      - patches/splatoon3/adapter.mjs
       - scripts/check-five-shooter-network.mjs
       - scripts/fixtures/five-shooter-network.mjs
       - .github/workflows/five-circled-shooters.yml
