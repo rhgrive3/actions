@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rangeRealm, rangeWorld } from './harness.mjs';
 import { MAIN_WEAPON_CATALOG } from '../../splatoon3/runtime/main-weapon-catalog-data.mjs';
+import { ALTERNATE_WEAPON_KITS } from '../../splatoon3/runtime/alternate-weapon-kits-data.mjs';
 
 async function world() {
   const R = await rangeRealm();
@@ -156,12 +157,23 @@ test('catalog expansion keeps hub pads separate and every main switchable', asyn
       assert.equal(local.weaponId, pads[i].weapon, 'each physical pad admits its own weapon');
     }
     const ids = Object.keys(R.WEAPONS);
-    // Keep all 65 pinned S3 mains switchable while retaining the separate
-    // opt-in INKWAVE training support kit that main adds to the WEAPONS table.
+    // Keep all 65 pinned mains, their 95 separately selectable sourced kits,
+    // and the optional INKWAVE training support kit. Variants must not silently
+    // displace their playable base main or masquerade as a training-only ID.
     const catalogIds = new Set(MAIN_WEAPON_CATALOG.records.map(record => record.id));
+    const alternateIds = new Set(ALTERNATE_WEAPON_KITS.map(kit => kit.id));
     assert.equal(catalogIds.size, 65);
-    assert.deepEqual(ids.filter(id => !catalogIds.has(id)), ['support']);
+    assert.equal(alternateIds.size, 95);
+    assert.equal(ids.length, catalogIds.size + alternateIds.size + 1);
+    assert.deepEqual(ids.filter(id => !catalogIds.has(id) && !alternateIds.has(id)), ['support']);
     for (const id of catalogIds) assert.ok(ids.includes(id), 'missing sourced main: ' + id);
+    for (const kit of ALTERNATE_WEAPON_KITS) {
+      assert.ok(ids.includes(kit.id), 'missing sourced alternate: ' + kit.main);
+      assert.equal(R.WEAPONS[kit.id].variantOf, kit.baseId, kit.main + ' base');
+      assert.equal(R.WEAPONS[kit.id].sub, kit.sub, kit.main + ' sub');
+      assert.equal(R.WEAPONS[kit.id].special, kit.special, kit.main + ' special');
+      assert.equal(R.WEAPONS[kit.id].specialCost, kit.specialCost, kit.main + ' cost');
+    }
     for (const id of ids) {
       s.setWeapon(id);
       assert.equal(local.weaponId, id, id);
