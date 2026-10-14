@@ -1,0 +1,32 @@
+name: Capture requested weapon variant gallery
+on:
+  push:
+    branches: [review/weapon-variant-screenshots-20261014]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build exact model source
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          node scripts/build-inkwave.mjs inkwave-public _site
+          npx playwright install --with-deps chromium
+      - name: Capture actual emitted weapon meshes
+        run: node scripts/capture-weapon-variant-gallery.mjs --site _site --out variant-gallery
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-variant-gallery-${{ github.sha }}
+          path: variant-gallery
+          if-no-files-found: error
+          retention-days: 7
