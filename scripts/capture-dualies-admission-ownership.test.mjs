@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const source=fs.readFileSync(new URL('./capture-dualies-actual-input.mjs',import.meta.url),'utf8');
+const start=source.indexOf('  function admittedSlice('),end=source.indexOf('  const result=[];',start);
+const context=vm.createContext({});vm.runInContext(source.slice(start,end)+'\nglobalThis.check=admittedSlice;',context);
+const owner={},foreign={},shot=(who=owner,team=1)=>({owner:who,team});
+test('own single projectile is admitted',()=>assert.equal(context.check([shot()],0,owner,1).length,1));
+test('all three stringer projectiles are admitted together',()=>assert.equal(context.check([shot(),shot(),shot()],0,owner,1).length,3));
+test('old projectile cannot satisfy a later notification',()=>assert.throws(()=>context.check([shot()],1,owner,1),/newly admitted/));
+test('foreign owner is rejected',()=>assert.throws(()=>context.check([shot(foreign)],0,owner,1),/owner\/team/));
+test('wrong team is rejected',()=>assert.throws(()=>context.check([shot(owner,0)],0,owner,1),/owner\/team/));
+test('foreign middle member of multi-projectile slice is rejected',()=>assert.throws(()=>context.check([shot(),shot(foreign),shot()],0,owner,1),/owner\/team/));
+test('only new owned slice satisfies subsequent notification',()=>assert.equal(context.check([shot(foreign),shot()],1,owner,1).length,1));

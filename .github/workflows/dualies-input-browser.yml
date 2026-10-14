@@ -1,0 +1,68 @@
+name: Capture admitted dualies input on validated runtime
+on:
+  push:
+    branches: [review/dualies-input-browser-20261014]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+      - name: Checkout immutable validated runtime
+        uses: actions/checkout@v4
+        with:
+          ref: 592449c22914dd2d53ab25f62df3464e8922bbcc
+          path: runtime
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gate harness ownership and exact runtime identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p browser-results
+          test "$(git -C diagnostic rev-parse HEAD)" = "${{ github.sha }}"
+          test "$(git -C runtime rev-parse HEAD)" = 592449c22914dd2d53ab25f62df3464e8922bbcc
+          printf '%s\n' "${{ github.sha }}" > browser-results/harness-head.txt
+          git -C runtime rev-parse HEAD > browser-results/runtime-head.txt
+          sha256sum diagnostic/scripts/capture-dualies-actual-input.mjs > browser-results/harness.sha256
+          node --check diagnostic/scripts/capture-dualies-actual-input.mjs
+          node --test --test-reporter=tap diagnostic/scripts/capture-dualies-admission-ownership.test.mjs | tee browser-results/ownership.tap
+          grep -qx '# tests 7' browser-results/ownership.tap
+          grep -qx '# pass 7' browser-results/ownership.tap
+          grep -qx '# fail 0' browser-results/ownership.tap
+          grep -qx '# skipped 0' browser-results/ownership.tap
+      - name: Install pinned build and browser tools
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {createRequire} from 'node:module';
+          import path from 'node:path';
+          const require=createRequire(path.resolve('diagnostic/scripts/capture-dualies-actual-input.mjs'));
+          const resolved=require.resolve('playwright');
+          assert.ok(resolved.startsWith(path.resolve('node_modules/playwright')+path.sep),resolved);
+          console.log('HARNESS_PLAYWRIGHT',resolved);
+          JS
+      - name: Build immutable runtime and capture actual admitted input
+        shell: bash
+        working-directory: runtime
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        run: |
+          set -euo pipefail
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node ../diagnostic/scripts/capture-dualies-actual-input.mjs --site _site --out ../browser-results/capture
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: admitted-input-browser-${{ github.sha }}
+          path: browser-results
+          if-no-files-found: error
