@@ -67,20 +67,56 @@ export class TriangleWorld {
   delta.subVectors(to,from);const lengthSquared=delta.lengthSq(),length=Math.sqrt(lengthSquared);
   const maxRadius=Math.max(radius,endRadius),change=endRadius-radius;
   box.min.copy(from).min(to).addScalar(-maxRadius-1e-9);box.max.copy(from).max(to).addScalar(maxRadius+1e-9);
-  let best=Infinity,result=null;this.queryCount++;
+  let best=Infinity,bestReference=null,result=null;this.queryCount++;
   this.queryBox(box.min,box.max,id=>{
    if(ignoreGrates&&(this.flags[id]&4))return;
    const tri=this.triangle(id);this.triangleTests++;
-   const time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal);
+   let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal);
    if(time===Infinity)return;
-   if(time>best||time===best&&result&&id>result.triangle)return;
-   probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,tri);
+   const analyticTime=time;
+   if(result&&Math.abs(time-best)<=1e-9){
+    // Original distance searches quantise almost simultaneous source contacts.
+    // Preserve their selected triangle/material only for these ambiguous hits;
+    // far-away candidates never incur the old per-triangle search cost.
+    if(bestReference===null)bestReference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(result.triangle),probe);
+    const reference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(id),probe);
+    if(reference===Infinity||reference>bestReference||reference===bestReference&&id>result.triangle)return;
+    time=reference;bestReference=reference;
+   }else {if(time>best)return;bestReference=null;}
+   probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,this.triangle(id));
    normal.subVectors(probe,this._bestp);
    if(normal.lengthSq()<1e-20){normal.fromArray(this.normals,id*3);if(normal.dot(delta)>0)normal.negate();}
    else normal.normalize();
-   best=time;result={triangle:id,time,distance:time*length,point:this._bestp.clone(),normal:normal.clone(),flags:this.flags[id],object:this.objectIds[id]};
+   best=analyticTime;result={triangle:id,time,distance:time*length,point:this._bestp.clone(),normal:normal.clone(),flags:this.flags[id],object:this.objectIds[id]};
   });
   return result;
+ }
+ // The previous source entry equation is retained solely to resolve
+ // sub-nanosegment contact ordering, with its original brackets/iterations.
+ _sphereDistanceEntry(from,to,delta,radius,change,tri,probe){
+  const lengthSquared=delta.lengthSq(),maxRadius=Math.max(radius,radius+change);
+  if(this._capsuleDistance(from,to,tri)>maxRadius+1e-10)return Infinity;
+  const closest=lengthSquared?clamp(probe.copy(this._bests).sub(from).dot(delta)/lengthSquared,0,1):0;
+  if(this._capsuleDistance(from,from,tri)<=radius+1e-10)return 0;
+  let hi=closest;
+  if(change!==0){
+   const gap=t=>{probe.copy(from).addScaledVector(delta,t);return this._capsuleDistance(probe,probe,tri)-radius-change*t;};
+   if(gap(1)<=1e-10)hi=1;
+   else {
+    const ratio=(Math.sqrt(5)-1)*.5;let lo=0,high=1,a=high-ratio*(high-lo),b=lo+ratio*(high-lo),fa=gap(a),fb=gap(b);
+    for(let i=0;i<64;i++){
+     if(fa<=fb){high=b;b=a;fb=fa;a=high-ratio*(high-lo);fa=gap(a);}
+     else {lo=a;a=b;fa=fb;b=lo+ratio*(high-lo);fb=gap(b);}
+    }
+    hi=fa<=fb?a:b;if(Math.min(fa,fb)>1e-10)return Infinity;
+   }
+  }else if(!lengthSquared||!closest)return Infinity;
+  let lo=0;
+  for(let i=0;i<36;i++){
+   const mid=(lo+hi)*.5;probe.copy(from).addScaledVector(delta,mid);
+   if(this._capsuleDistance(probe,probe,tri)<=radius+change*mid+1e-10)hi=mid;else lo=mid;
+  }
+  return hi;
  }
  triangle(id,out=this._triangle){const i=id*9,a=this.triangles;out.a.fromArray(a,i);out.b.fromArray(a,i+3);out.c.fromArray(a,i+6);return out;}
  ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(new THREE.Vector3(x,y+up,z),new THREE.Vector3(0,-1,0),up+down,{ignoreGrates:squid,minNormalY:.62});}
