@@ -432,9 +432,13 @@ function createVacVortex(color,length,near,far){
   const mat=new THREE.ShaderMaterial({uniforms:{color:{value:new THREE.Color(color)},age:{value:0},near:{value:near},far:{value:far},extent:{value:length}},
     vertexShader:`uniform float near;uniform float far;uniform float extent;varying vec2 uv0;
       void main(){uv0=uv;vec3 p=position;p.xz*=mix(near,far,p.y);p.y*=extent;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
-    fragmentShader:`uniform vec3 color;uniform float age;varying vec2 uv0;void main(){float path=uv0.x*6.+uv0.y*2.+age*2.;
-      float spiral=pow(.5+.5*cos(path*6.283185),10.);float dust=pow(.5+.5*sin(uv0.x*170.+uv0.y*110.+age*13.),20.);
-      float edge=smoothstep(0.,.04,uv0.y)*(1.-smoothstep(.85,1.,uv0.y));gl_FragColor=vec4(color*(.8+spiral*.7),(.025+.24*spiral+.09*dust)*edge);
+    // S3 footage: a translucent team-colour funnel, a broad swirl winding into the nozzle and rings drawn down it.
+    fragmentShader:`uniform vec3 color;uniform float age;varying vec2 uv0;void main(){
+      float swirl=pow(.5+.5*cos((uv0.x*3.+uv0.y*1.6+age*1.6)*6.283185),3.);
+      float rings=pow(.5+.5*cos((uv0.y*5.+age*2.2)*6.283185),6.);
+      float dust=pow(.5+.5*sin(uv0.x*170.+uv0.y*110.+age*13.),20.);
+      float edge=smoothstep(0.,.08,uv0.y)*(1.-smoothstep(.55,1.,uv0.y));
+      gl_FragColor=vec4(color*(.8+.6*rings+.4*swirl),(.04+.18*swirl+.22*rings+.06*dust)*edge);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>}`,transparent:true,depthWrite:false,side:THREE.DoubleSide});
   const m=new THREE.Mesh(geo,mat);m.name='special:vac-vortex';m.frustumCulled=false;return m;

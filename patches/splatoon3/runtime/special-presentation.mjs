@@ -16,6 +16,21 @@ import { buildScreenSheet, INKSTRIKE_LID_OPEN, CRAB_TANK_GRIPS } from './special
 const INSTALL = Symbol.for('inkwave.s3.special-models.install.v1');
 const OBJECTS = Symbol('inkwave.s3.special-models.objects'), ROUNDS = Symbol('inkwave.s3.special-models.rounds');
 const clamp01 = x => Math.max(0, Math.min(1, x));
+const smooth = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+const easeIn = x => { x = clamp01(x); return x * x * x; };
+const easeOut = x => 1 - Math.pow(1 - clamp01(x), 3);
+const easeOutBack = x => { x = clamp01(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const kick = (age, rate = 18) => (age >= 0 && age < 2 ? Math.exp(-age * rate) : 0);   // 1 at the event, decaying
+
+// Device motion keyed to the special's real events (local state or replayed
+// presentation marks, actor._s3SpecialMarks). INKWAVE calibration against the
+// Splatoon 3 footage cited in reference/special-vfx.md; not Nintendo curves.
+export const SPECIAL_DEVICE_MOTION = Object.freeze({
+  stamp: { rest: 0, raised: -1.35, strike: 1.2, windup: 6 / 60, hold: 4 / 60, recover: 0.2, throwBack: -1.9 },
+  speakers: { deploy: 0.38, recoil: 0.07 },
+  kraken: { emerge: 0.55, charge: 35 / 60 },
+  status: 'presentation calibration (INKWAVE); original joint/device curves are not public',
+});
 
 // Device per special while it is active, and where it is attached.
 //  host: 'kid' (kid space, feet at origin, +Z forward), 'chest' (chest bone),
@@ -26,7 +41,7 @@ export const SPECIAL_DEVICES = Object.freeze({
   tentaMissiles: [{ model: 'spTentaLauncher', host: 'kid', pos: [-0.31, 1.27, -0.07], rot: [-0.55, 0, 0.12], scale: 0.9, hideWeapon: true, hands: { R: [0.065, -0.34, 0.07], L: [0.16, -0.15, 0.15] } }],
   inkjet: [{ model: 'spInkjetPack', host: 'chest', pos: [0, -0.02, -0.21], rot: [0, 0, 0], scale: 0.62 },
     { model: 'spInkjetCannon', host: 'kid', pos: [-0.12, 0.98, 0.32], rot: [0, 0, 0], scale: 0.9, aim: true, hideWeapon: true, hands: { R: [0, -0.11, 0.02], L: [0, -0.085, 0.25] } }],
-  booyahBomb: [{ model: 'spBooyahBall', host: 'kid', pos: [0, 1.95, 0.05], rot: [0, 0, 0], scale: 1, charge: true, hideWeapon: true, hands: { R: [0.05, -0.36, 0.02] } }],
+  booyahBomb: [{ model: 'spBooyahBall', host: 'kid', pos: [0, 1.95, 0.05], rot: [0, 0, 0], scale: 1, charge: true, hideWeapon: true, hands: { R: [0.12, -0.33, 0.02], L: [-0.12, -0.33, 0.02] } }],
   // Held by the handle end at the hands, head up in front (S3 screenshot);
   // the swing pivots about the grip.
   ultraStamp: [{ model: 'spUltraStamp', host: 'kid', pos: [0, 0.88, 0.33], rot: [2.88, 0, 0], scale: 0.85, swing: true, grip: [0, -0.66, -1.15], hideWeapon: true, hands: { R: [0, 0.63, 1.085], L: [0, 0.48, 0.77] } }],
@@ -65,6 +80,86 @@ function disposeModel(group) {
   });
 }
 
+// Ultra Stamp: hold → wind up overhead → slam to the source swing frame → recover for the next
+// (local: the next swing time is known; remote: the replayed swing mark drives the follow-through).
+function stampArc(a, s, state, t) {
+  const M = SPECIAL_DEVICE_MOTION.stamp, marks = a._s3SpecialMarks || {};
+  const last = Math.max(marks.swing ?? -99, marks.jumpSwing ?? -99), since = t - last;
+  const holding = state ? !!state.stampHolding : since < 0.5;
+  if (state?.phase === 'aimThrow') { s.stampArc = (s.stampArc ?? 0) + (M.throwBack - (s.stampArc ?? 0)) * 0.25; return s.stampArc; }
+  let arc;
+  if (since >= 0 && since < M.hold) arc = M.strike;
+  else if (since >= M.hold && since < M.hold + M.recover) arc = M.strike + (holding ? M.raised - M.strike : M.rest - M.strike) * smooth((since - M.hold) / M.recover);
+  else arc = holding ? M.raised : M.rest;
+  if (state && holding && Number.isFinite(state.nextSwing) && Number.isFinite(state.t)) {
+    const toNext = state.nextSwing - state.t;                              // anticipate the authoritative swing frame
+    if (toNext >= 0 && toNext < M.windup) arc = M.strike + (M.raised - M.strike) * (1 - easeIn(1 - toNext / M.windup));
+  }
+  s.stampArc = arc;
+  return arc;
+}
+function animateDevice(a, s, d, spec, state, t, dt) {
+  const marks = a._s3SpecialMarks || {}, age = t - s.startedAt, g = d.model.groups || {};
+  const id = s.id, base = d.basePos ||= d.holder.position.clone();
+  if (id === 'tentaMissiles') {
+    // a kick per missile leaving the crate, the launcher tipping up while the salvo goes
+    const idx = state?.missileIndex ?? -1;
+    if (idx !== s.launched) { if (idx > s.launched && s.launched >= 0) s.launchAt = t; s.launched = idx; }
+    const k = kick(t - s.launchAt, 20), salvo = state?.phase === 'launching' ? 1 : 0;
+    s.salvo = (s.salvo ?? 0) + (salvo - (s.salvo ?? 0)) * Math.min(1, dt * 10);
+    d.holder.position.set(base.x, base.y + 0.05 * s.salvo, base.z - 0.07 * k);
+    d.holder.rotation.x = spec.rot[0] - 0.25 * s.salvo + 0.08 * k;
+  } else if (id === 'inkjet') {
+    if (g.flame) { const f = 0.85 + 0.15 * Math.sin(t * 53) + 0.1 * Math.sin(t * 31); g.flame.scale.set(f, 0.8 + 0.4 * f, f); }
+    if (spec.aim) { const k = kick(t - (marks.shot ?? -99), 14); d.holder.position.set(base.x, base.y + 0.02 * k, base.z - 0.12 * k); d.holder.rotation.x = -(a.aimPitch || 0) - 0.25 * k; }
+  } else if (id === 'booyahBomb') {
+    const c = clamp01(state?.charge || 0), pulse = 1 + 0.035 * Math.sin(t * (8 + 16 * c));
+    d.holder.scale.multiplyScalar(pulse);
+    d.holder.position.set(base.x, base.y + 0.25 * c + 0.03 * Math.sin(t * 5), base.z);
+    d.holder.rotation.y += dt * (0.6 + 2.5 * c);
+  } else if (id === 'crabTank') {
+    const shot = kick(t - (marks.shot ?? -99), 26), cannon = kick(t - (marks.cannon ?? -99), 9);
+    const left = Math.floor((marks.shot ?? 0) * 60) % 2;                    // the claws fire alternately
+    if (g.clawL) g.clawL.position.z = (g.clawL.userData.rest?.z ?? 0) - 0.06 * shot * left;
+    if (g.clawR) g.clawR.position.z = (g.clawR.userData.rest?.z ?? 0) - 0.06 * shot * (1 - left);
+    d.holder.position.set(base.x, base.y + 0.03 * Math.abs(Math.sin(t * 9)) * Math.min(1, Math.hypot(a.vel?.x || 0, a.vel?.z || 0) / 3), base.z - 0.16 * cannon);
+    d.holder.rotation.x = spec.rot[0] - 0.12 * cannon;
+  } else if (id === 'reefslider') {
+    // the shark surfaces out of the ink, then bucks and rolls with the ride; brakes shudder before the burst
+    const phase = state?.phase ?? a.specialActive?.phase, up = easeOutBack(age / 0.35);
+    const ride = phase === 'dash' ? 1 : 0, brake = phase === 'brake' ? 1 : 0;
+    d.holder.position.set(base.x + (brake ? 0.02 * Math.sin(t * 70) : 0), base.y - 0.35 * (1 - clamp01(up)) + 0.04 * Math.sin(t * 11) * ride, base.z);
+    d.holder.rotation.set(spec.rot[0] - 0.12 * ride * (0.5 + 0.5 * Math.sin(t * 6)), spec.rot[1], spec.rot[2] + 0.07 * Math.sin(t * 5) * (ride + brake));
+    d.holder.scale.setScalar(spec.scale * (0.7 + 0.3 * clamp01(up)) * (1 + 0.04 * brake * Math.sin(t * 40)));
+  } else if (id === 'tripleInkstrike') {
+    if (g.lid) { const open = smooth((t - (marks.marker ?? -99) + 0.25) / 0.12) * (1 - smooth((t - (marks.marker ?? -99) - 0.25) / 0.2));
+      const throwing = state && Number.isFinite(state.throwAt) ? 1 : 0; s.lid = (s.lid ?? 0) + (Math.max(open, throwing) - (s.lid ?? 0)) * Math.min(1, dt * 14);
+      g.lid.rotation.x = INKSTRIKE_LID_OPEN * (1 - s.lid); }
+  } else if (id === 'superChump') {
+    const k = kick(t - (marks.balloon ?? -99), 7);
+    if (g.globe) { s.spin = (s.spin ?? 0) + dt * (1.2 + 22 * k); g.globe.rotation.set(spec.tilt || 0, s.spin, 0); }
+    d.holder.position.set(base.x, base.y, base.z - 0.1 * k);
+    d.holder.rotation.x = spec.rot[0] - 0.35 * k;
+  } else if (id === 'krakenRoyale') {
+    // squash and stretch: emerge with an overshoot, crouch while charging, stretch along the dash, splat on a jump attack
+    const M = SPECIAL_DEVICE_MOTION.kraken, phase = state?.phase ?? a.specialActive?.phase;
+    const emerge = easeOutBack(age / M.emerge);
+    let sx = 1, sy = 1, sz = 1;
+    if (phase === 'charge') { const k = smooth((state?.chargeT || 0) / M.charge); sx = sz = 1 + 0.12 * k; sy = 1 - 0.18 * k + 0.02 * Math.sin(t * 40) * k; }
+    else if (phase === 'dash') { sx = 0.9; sy = 0.92; sz = 1.25; }
+    else if (phase === 'finish') { const k = smooth((age - (state?.duration ?? age)) / 0.8); sx = sz = 1 - 0.5 * k; sy = 1 - 0.6 * k; }
+    else { const b = Math.sin(t * 7) * 0.03; sy += b; sx -= b * 0.5; sz -= b * 0.5; }
+    const land = kick(t - (marks.jump ?? -99), 10); sy -= 0.25 * land; sx += 0.15 * land; sz += 0.15 * land;
+    const e = Math.max(0.01, emerge);
+    d.holder.scale.set(spec.scale * sx * e, spec.scale * sy * e, spec.scale * sz * e);
+  } else if (id === 'waveBreaker' || id === 'splattercolorScreen') {
+    // raised ready to throw while the sub is held
+    const ready = a.intent?.sub ? 1 : 0; s.ready = (s.ready ?? 0) + (ready - (s.ready ?? 0)) * Math.min(1, dt * 12);
+    d.holder.position.set(base.x, base.y + 0.35 * s.ready, base.z - 0.15 * s.ready);
+    d.holder.rotation.x = spec.rot[0] - 0.6 * s.ready;
+  }
+}
+
 export function installSpecialModels(api) {
   const { THREE, G, Character, Projectiles } = api;
   if (!THREE || !Projectiles?.prototype?.update) return api;
@@ -83,7 +178,12 @@ export function installSpecialModels(api) {
     if (o.kind === 'decoy') pres.models.main = add('spChumpDecoy');
     else if (o.kind === 'marker' || o.kind === 'strike') { pres.models.main = add('spInkstrikeBeacon'); pres.models.tornado = add('spInkstrikeTornado'); }
     else if (o.kind === 'wave') { pres.models.main = add('spWaveBreaker'); pres.rings = []; }
-    else if (o.kind === 'screen') { pres.sheet = buildScreenSheet(THREE, color, o.width || 15, o.height || 9); group.add(pres.sheet); }
+    else if (o.kind === 'screen') {
+      pres.sheet = buildScreenSheet(THREE, color, o.width || 15, o.height || 9); group.add(pres.sheet);
+      // S3 footage: the curtain rises out of the thrown jar, which stays at its foot.
+      pres.models.jar = add('spScreenJar');
+      if (pres.models.jar) pres.models.jar.root.scale.setScalar(1.1);
+    }
     else return null;
     (G.scene || null)?.add?.(group);
     return pres;
@@ -92,11 +192,21 @@ export function installSpecialModels(api) {
     const g = pres.group, m = pres.models;
     if (o.mesh) o.mesh.visible = false;
     if (o.kind === 'screen') {
-      g.position.copy(o.pos); g.position.y += (o.height || 9) / 2;
+      // Unfurl over the 60F startup and fold back down over the 60F close (presentation of the
+      // source StartFrame/EndFrame; the moving plane and its hits are unchanged).
+      const H = o.height || 9, dur = o.dur || 680 / 60;
+      const rise = clamp01(o.age / 1), fold = clamp01((o.age - (dur - 1)) / 1);
+      const k = (1 - Math.pow(1 - rise, 3)) * (1 - fold * fold), wob = 1 + 0.04 * Math.sin(o.age * 9) * (1 - rise);
+      g.position.copy(o.pos);
       g.rotation.set(0, Math.atan2(o.normal.x, o.normal.z), 0);
+      pres.sheet.scale.set(0.35 + 0.65 * k * wob, Math.max(0.001, k), 1);
+      pres.sheet.position.y = H / 2 * Math.max(0.001, k);
+      pres.sheet.visible = k > 0.002;
       const mat = pres.sheet.userData.s3ScreenSheet;
-      mat.mat.opacity = 0.78 + 0.08 * Math.sin(o.age * 7);
+      mat.mat.opacity = 0.8 + 0.06 * Math.sin(o.age * 7);
+      if (mat.mat.uniforms?.uTime) mat.mat.uniforms.uTime.value = o.age;
       mat.tex.offset.x += dt * 0.02; mat.tex.offset.y += dt * 0.01;
+      if (m.jar) { m.jar.root.rotation.y = o.age * 2.4; m.jar.root.position.y = 0.05 + 0.1 * Math.abs(Math.sin(o.age * 6)) * (1 - rise); poseSubModel(m.jar, { dt }); }
       return;
     }
     g.position.copy(o.pos);
@@ -189,7 +299,7 @@ export function installSpecialModels(api) {
   }
   function begin(ch, id) {
     retire(ch);
-    const s = { id, devices: [], weapon: null, swing: -1, swingAt: -1 };
+    const s = { id, devices: [], weapon: null, swing: -1, swingAt: -1, startedAt: G.time || 0, launched: -1, launchAt: -99, shotAt: -99, shots: -1 };
     const color = ch.color || colorOf(ch.actor);
     for (const spec of SPECIAL_DEVICES[id] || []) {
       if (spec.inkCoat) { s.coat = true; continue; }
@@ -260,17 +370,19 @@ export function installSpecialModels(api) {
         d.holder.scale.setScalar(spec.scale * (0.55 + 0.75 * c));
         if (d.model.groups.ribbons) d.model.groups.ribbons.rotation.y += dt * (4 + 6 * c);
       }
-      if (spec.swing && state) {
-        if (state.swings !== s.swing) { s.swing = state.swings; s.swingAt = t; }
-        const k = clamp01((t - s.swingAt) / 0.32), arc = s.swingAt >= 0 ? Math.sin(k * Math.PI) * 1.6 : 0;
-        d.holder.rotation.x = spec.rot[0] + arc;
-      }
+      if (spec.swing) d.holder.rotation.x = spec.rot[0] + stampArc(a, s, state, t);
       if (spec.speakers) {
-        const firing = a.specialActive?.phase === 'laser';
-        d.holder.position.set(d.base[0], d.base[1] + Math.sin(t * 3 + d.base[0] * 2) * 0.05, -0.35);
-        d.holder.rotation.set(-(a.aimPitch || 0), 0, 0);
-        const m = d.model.materials?.get('ink'); if (m?.emissiveIntensity != null) m.emissiveIntensity = firing ? 0.5 + 0.4 * Math.sin(t * 30) : 0.08;
+        // Deploy: the six speakers fly out of the kid's back and pop to size, then bob;
+        // each laser tick kicks the cone back (S3 footage, Killer Wail 5.1 activation).
+        const M = SPECIAL_DEVICE_MOTION.speakers, age = t - s.startedAt, k = easeOutBack(age / M.deploy), i = s.devices.indexOf(d);
+        const laserAge = t - (a._s3SpecialMarks?.laser ?? -99), firing = a.specialActive?.phase === 'laser' || laserAge < 0.2;
+        const recoil = kick(laserAge - (i % 3) * 0.012, 22) * M.recoil;
+        d.holder.position.set(d.base[0] * k, 1.1 + (d.base[1] - 1.1) * k + Math.sin(t * 3 + d.base[0] * 2) * 0.05 * k, -0.35 - 0.25 * (1 - k) - recoil);
+        d.holder.scale.setScalar(spec.scale * (0.15 + 0.85 * clamp01(k)) * (1 + recoil * 1.2));
+        d.holder.rotation.set(-(a.aimPitch || 0) + recoil * 2, (1 - clamp01(k)) * (d.base[0] > 0 ? 1.2 : -1.2), 0);
+        const m = d.model.materials?.get('ink'); if (m?.emissiveIntensity != null) m.emissiveIntensity = firing ? 0.5 + 0.4 * Math.sin(t * 30) : 0.08 + 0.5 * kick(age, 4);
       }
+      animateDevice(a, s, d, spec, state, t, dt);
       if (spec.crab) {
         const ball = a.specialActive?.pose === 'ball' || state?.ballMode;
         d.holder.visible = !ball;
@@ -315,6 +427,8 @@ export function installSpecialModels(api) {
     return out;
   };
   if (dispose) cp.dispose = function (...args) { retire(this); return dispose.apply(this, args); };
+  // Read-only view of the live device holders, for presentation layers that anchor effects to them.
+  if (!cp.s3SpecialDevices) cp.s3SpecialDevices = function () { return states.get(this)?.devices || null; };
   return api;
 }
 export default installSpecialModels;
