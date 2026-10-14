@@ -97,9 +97,10 @@ export function installNativeSprinklerDamage(api){
  // actor and ranked-shield contacts, without changing other kit barriers.
  Projectiles.prototype.nativeSprinklerCandidate=function(p,start,end,best=null){
   if(!p||!start||!end||!this.bombs?.length)return best;
-  const d=end.clone().sub(start),length=d.length();if(!(length>1e-8))return best;
+  let d=null,length=0;
   for(const b of this.bombs||[]){
    if(!sprinkler(b)||b.s3Mode!=='sprinkling'||b.s3Destroyed||b.owner===p.owner||b.team===p.team)continue;
+   if(!d){d=end.clone().sub(start);length=d.length();if(!(length>1e-8))return best;}
    // Physical hitbox is INKWAVE calibration, separate from the existing 120-HP profile.
    const radius=.42+Math.max(0,p.size||0),m=start.clone().sub(b.pos),c=m.lengthSq()-radius*radius,dot=m.dot(d),disc=dot*dot-length*length*c;
    if(c>0&&disc<0)continue;const t=c<=0?0:(-dot-Math.sqrt(disc))/(length*length);

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 import { gearCurve } from '../runtime/gear.mjs';
 import { POINT_SENSOR, POINT_SENSOR_SOURCE, pointSensorMarkFrames, pointSensorThrowSpeed, pointSensorMark, pointSensorContact } from '../runtime/support-recon.mjs';
-import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerDrinkFrames, giveDrink, retireDrink, drinkEligible, drinkGearPoints } from '../runtime/support-cooler.mjs';
+import { TACTICOOLER, TACTICOOLER_SOURCE, tacticoolerStandFrames, tacticoolerDrinkFrames, giveDrink, retireDrink, drinkEligible, drinkGearPoints } from '../runtime/support-cooler.mjs';
 
 const tick = (f, n = 1) => { for(let i=0;i<n;i++) { f.G.time+=1/60; f.G.projectiles.update(1/60); } };
 function throwAndLandCooler(f,a){a.aimDir.set(0,-1,0);a.intent.sub=true;a._updateSpecial(1/60);a.intent.sub=false;a._updateSpecial(1/60);
@@ -337,4 +337,34 @@ test('Tacticooler source cylinder accepts partial native kid capsule across heig
  a.pos.set(TACTICOOLER.radiusWorld+body.radius*.8,-body.height+body.radius*.2,0);assert.equal(drinkEligible(a,stand,0,body),false,'rounded corners require actual capsule overlap');
  a.pos.set(0,3.01,0);assert.equal(drinkEligible(a,stand,0,body),false);
  a.form='squid';a.pos.set(0,0,0);assert.equal(drinkEligible(a,stand,0,body),false);
+});
+
+// FridgeParam.PutFrameOnYagura (450F) is shorter than ordinary PutFrame (900F).
+test('tacticooler tower duration and moving-platform attachment use the landed stand position',async()=>{
+ assert.equal(tacticoolerStandFrames(),900);
+ assert.equal(tacticoolerStandFrames(true),450);
+ const {f,actor}=await setup(),V=f.THREE.Vector3;
+ const block={center:new V(0,0,0),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)]};
+ f.G.match.mode='tower';
+ f.G.match.rankedWorld={towerBlock:block,_inTowerVolume:()=>true};
+ actor.special=actor.specialCost();
+ actor._startSpecial();throwAndLandCooler(f,actor);
+ const stand=f.G.projectiles._s3SupportCoolers?.[0];assert.ok(stand);
+ assert.equal(stand.onTower,true);
+ assert.ok(Math.abs((stand.expires-f.G.time)-7.5)<1e-8);
+ const original=stand.pos.clone();block.center.add(new V(.8,.2,-.4));tick(f);
+ assert.ok(stand.pos.distanceTo(original.clone().add(new V(.8,.2,-.4)))<1e-9,
+   'the stand follows the physical moving tower, including height');
+ assert.ok(stand.mesh.position.distanceTo(stand.pos)<1e-9);
+ f.G.time=stand.expires;tick(f);
+ assert.equal(f.G.projectiles._s3SupportCoolers.length,0,'tower deck stand expires after 450F');
+
+ const other=await setup();
+ other.f.G.match.mode='tower';
+ other.f.G.match.rankedWorld={towerBlock:block,_inTowerVolume:()=>false};
+ other.actor.special=other.actor.specialCost();other.actor._startSpecial();
+ throwAndLandCooler(other.f,other.actor);
+ const normal=other.f.G.projectiles._s3SupportCoolers?.[0];assert.ok(normal);
+ assert.equal(normal.onTower,false,'caster in Tower mode does not shorten an off-deck stand');
+ assert.ok(Math.abs((normal.expires-other.f.G.time)-15)<1e-8);
 });

@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
+// Include native wall-occlusion and hit-authority controls in the 19-special gate.
+import './kraken-dash-occlusion.test.mjs';
 
 const EXTRA=`export {replaySpecial as replayAllSpecials,ALL_SPECIALS,ALL_SPECIALS_STATUS} from './patches/splatoon3/runtime/all-specials.mjs';`;
 async function setup(){const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:EXTRA});f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};return f;}
@@ -34,6 +36,17 @@ test('missing special inventory is source versioned and Tenta stages ten source-
  for(const e of rows){assert.ok([e.pos,...(e.target?[e.target]:[])].flat().every(Number.isFinite));assert.ok(Number.isInteger(e.seed)&&e.seed>=0&&e.seed<=0xffffffff);}
  assert.deepEqual(Object.keys(f.ALL_SPECIALS).sort(),['booyahBomb','crabTank','inkjet','killerWail','krakenRoyale','reefslider','splattercolorScreen','superChump','tentaMissiles','tripleInkstrike','ultraStamp','waveBreaker','zipcaster'].sort());
  assert.match(f.ALL_SPECIALS_STATUS.reference,/11\.3\.0/);assert.match(f.ALL_SPECIALS_STATUS.calibration,/world-unit mapping/);
+});
+
+test('Tenta Missiles retain their four-source-frame salvo clock after coarse actor ticks',async()=>{
+ for(const hz of [20,30,60,120]){
+  const f=await setup(),actor=f.make(),victim=f.make();equip(actor,'tentaMissiles');
+  victim.team=1;victim.pos.set(0,0,5);f.G.actors=[actor,victim];
+  ready(actor);deployInput(actor);tickActorWorldAtHz(f,actor,hz,36);
+  const fired=f.G.projectiles.list.filter(p=>p.s3AllSpecial==='tentaMissiles');
+  assert.equal(fired.length,10,`at ${hz}Hz, all ten source-scheduled rounds must launch by frame 37`);
+  assert.equal(actor.specialActive,null,`at ${hz}Hz, salvo completion must end the special`);
+ }
 });
 
 test('Tenta Missiles rise, dive onto the locked ground coordinate, and apply impact damage',async()=>{
@@ -82,6 +95,54 @@ test('Wave Breaker marks nearby placement for 45 frames and holds until a manual
  victim.pos.copy(device.pos);tickWorld(f,4);const until=victim.s3?.revealedUntil?.[a.team];assert.ok(until>f.G.time);
  victim.pos.z+=100;tickWorld(f,39);assert.ok(victim.s3.revealedUntil[a.team]>f.G.time);tickWorld(f,2);
  assert.ok(victim.s3.revealedUntil[a.team]<=f.G.time+1e-9,'the generator placement mark expires after 45 frames');
+});
+
+test('Wave Breaker first deploy packet preserves 11.3.0 AP-scaled 160/192/216F wave travel on remote replay',async()=>{
+ const {emptyLoadout}=await import('../runtime/gear.mjs');
+ for(const [ap,expectedFrames] of [[0,160],[57,216]]){
+  const f=await setup(),owner=f.make(),ghost=f.make();
+  owner.s3.loadout=emptyLoadout();
+  if(ap===57)for(const gear of owner.s3.loadout){gear.main='specialPower';gear.subs.fill('specialPower');}
+  owner.s3RefreshGear();equip(owner,'waveBreaker');f.G.actors=[owner];
+  const events=eventFeed(f,'all:special');ready(owner);deployInput(owner);
+  const packet=events.find(e=>e.id==='waveBreaker'&&e.action==='deploy'&&e.kind==='wave');
+  assert.ok(packet,'real first deploy packet');
+  assert.equal(packet.waveFrame,expectedFrames/60,'wave travel is serialized before device publication');
+  ghost.remote=true;ghost.team=1;
+  assert.equal(f.replayAllSpecials(f,{...packet,actor:ghost}),true);
+  const received=f.G.projectiles._s3AllSpecialObjects.find(o=>o.owner===ghost&&o.kind==='wave');
+  assert.ok(received);assert.equal(received.maxWaveFrame,expectedFrames/60);
+  assert.equal(received.pulseFrames[0],90/60);
+ }
+});
+
+test('Wave Breaker remote replay marks for 45F and reuses a waveFront packet received before the simulated pulse',async()=>{
+ const f=await setup(),owner=f.make(),ghost=f.make(),victim=f.make();
+ equip(owner,'waveBreaker');ghost.remote=true;ghost.team=1;victim.team=0;victim.isLocal=true;
+ f.G.actors=[owner,ghost,victim];const events=eventFeed(f,'all:special');ready(owner);deployInput(owner);
+ tickWorld(f,90);
+ const devicePacket=events.find(e=>e.id==='waveBreaker'&&e.action==='deploy'&&e.kind==='wave');
+ const frontPacket=events.find(e=>e.id==='waveBreaker'&&e.action==='deploy'&&e.kind==='waveFront');
+ assert.ok(devicePacket);assert.ok(frontPacket,'actual owner front emitted at source frame 90');
+ assert.equal(frontPacket.waveFrame,160/60,'front lifetime is carried with the first packet');
+ assert.equal(f.replayAllSpecials(f,{...devicePacket,actor:ghost}),true);
+ assert.equal(f.replayAllSpecials(f,{...frontPacket,actor:ghost}),true);
+ const objects=()=>f.G.projectiles._s3AllSpecialObjects;
+ const remoteDevice=objects().find(o=>o.owner===ghost&&o.kind==='wave');
+ const remoteFront=objects().find(o=>o.owner===ghost&&o.kind==='waveFront');
+ assert.ok(remoteDevice);assert.ok(remoteFront);
+ assert.ok(Math.abs(remoteDevice.markingUntil-(f.G.time+45/60))<1e-8,'ghost receives source generator mark lifetime');
+ victim.pos.copy(remoteDevice.pos);victim.pos.z+=1.5;
+ const damage=[],nativeApply=f.G.projectiles.applyHit;
+ f.G.projectiles.applyHit=(a,v,...args)=>{if(a===ghost)damage.push([v,...args]);return nativeApply.call(f.G.projectiles,a,v,...args);};
+ try{
+  tickWorld(f,4);assert.ok(victim.s3?.revealedUntil?.[ghost.team]>f.G.time,'remote generator marks its local recipient');
+  tickWorld(f,86);
+  const fronts=objects().filter(o=>o.owner===ghost&&o.kind==='waveFront');
+  assert.equal(fronts.length,1,'no second locally synthesized ghost front at the same wave serial');
+  assert.equal(fronts[0],remoteFront,'the earlier authoritative front keeps its identity');
+  assert.equal(damage.length,0,'remote presentation must never author a hit');
+ }finally{f.G.projectiles.applyHit=nativeApply;}
 });
 
 test('Wave Breaker pulse misses a jumping player above the source height limit',async()=>{
@@ -209,7 +270,7 @@ test('Zipcaster repeats hooks, fires the equipped main from its special ink tank
 });
 
 test('Kraken Royale charges while held, starts its 35F dash on release, and supports the 34F cancel',async()=>{
- const f=await setup(),a=f.make(),victim=f.make();equip(a,'krakenRoyale');victim.team=1;victim.pos.set(0,0,1);f.G.actors=[a,victim];a._resolve=()=>{};a.aimPoint=new f.THREE.Vector3(0,1,20);
+ const f=await setup(),a=f.make(),victim=f.make();equip(a,'krakenRoyale');victim.team=1;victim.pos.set(0,0,2.75);f.G.actors=[a,victim];a._resolve=()=>{};a.aimPoint=new f.THREE.Vector3(0,1,20);
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
  ready(a);const state=a._s3AllSpecialState;assert.ok(state.direction instanceof f.THREE.Vector3);
  deployInput(a);assert.equal(state.phase,'charge');assert.ok(state.direction.z>.99);
@@ -262,9 +323,12 @@ test('Inkjet exhaust stops during squid descent and return',async()=>{
 test('Ultra Stamp uses jump swings and blocks a projectile through its forward guard',async()=>{
  const f=await setup(),a=f.make(),victim=f.make(),shooter=f.make();equip(a,'ultraStamp');victim.team=1;victim.pos.set(0,0,2);shooter.team=1;f.G.actors=[a,victim,shooter];
  const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
- const events=eventFeed(f,'all:special');a._resolve=()=>{};ready(a);for(let i=0;i<17;i++)a._updateSpecial(1/60);a.intent.fire=true;a._updateSpecial(1/60);
+ const events=eventFeed(f,'all:special');a._resolve=()=>{};ready(a);for(let i=0;i<17;i++)a._updateSpecial(1/60);a.intent.fire=true;
+ for(let i=0;i<30;i++)a._updateSpecial(1/60);
+ assert.equal(hits.some(h=>h[1]===victim&&h[2]===100&&h[3]==='ultraStamp'),false,'the sourced 30F first-swing windup must not damage early');
+ a._updateSpecial(1/60);
  assert.ok(hits.some(h=>h[1]===victim&&h[2]===100&&h[3]==='ultraStamp'));
- a.intent.jump=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.ok(events.some(e=>e.action==='jumpSwing'));
+ a.grounded=true;a.intent.jump=true;for(let i=0;i<30;i++)a._updateSpecial(1/60);assert.ok(events.some(e=>e.action==='jumpSwing'));
  const incoming={owner:shooter,team:shooter.team,prev:new f.THREE.Vector3(0,.78,3),pos:new f.THREE.Vector3(0,.78,.2),damage:20,size:.15,ghost:false};
  const guard=f.G.projectiles.kitDefenseCandidate(incoming);assert.equal(guard?.kind,'ultra-stamp-guard');assert.equal(guard.onHit(),true);
  assert.ok(events.some(e=>e.action==='block'));
@@ -293,7 +357,12 @@ test('Reefslider waits for grounded 38F startup, gates cancel to15F, and deals d
  assert.equal(a._s3AllSpecialState.phase,'startup','airborne activation waits for the grounded startup');
  a.grounded=true;for(let i=0;i<38;i++)a._updateSpecial(1/60);assert.equal(a._s3AllSpecialState.phase,'dash');
  a.intent.fire=true;for(let i=0;i<14;i++)a._updateSpecial(1/60);assert.ok(a.specialActive,'early cancel remains locked until movement frame15');
- a.intent.fire=false;a._updateSpecial(1/60);a.intent.fire=true;a._updateSpecial(1/60);assert.ok(a.specialActive,'burst recovery remains active for28F');assert.ok(events.some(e=>e.action==='impact'));
+ a.intent.fire=false;a._updateSpecial(1/60);a.intent.fire=true;a._updateSpecial(1/60);
+ assert.equal(a._s3AllSpecialState.phase,'brake','15F cancel starts 38F preburst, not instant impact');
+ assert.equal(events.some(e=>e.action==='impact'),false);
+ a.intent.fire=false;for(let i=0;i<38;i++)a._updateSpecial(1/60);
+ assert.equal(a._s3AllSpecialState.phase,'recovery');
+ assert.ok(events.some(e=>e.action==='impact'));
  assert.ok(hits.some(h=>h[1]===victim&&h[2]===220&&h[3]==='reefslider'),'the dash capsule applies the sourced220 contact hit');
  for(let i=0;i<28;i++)a._updateSpecial(1/60);assert.equal(a.specialActive,null);
 });
@@ -301,8 +370,10 @@ test('Reefslider waits for grounded 38F startup, gates cancel to15F, and deals d
 test('Killer Wail beams tick through terrain and the main weapon remains live during the special',async()=>{
  const f=await setup(),a=f.make(),victim=f.make();equip(a,'killerWail');victim.team=1;victim.pos.set(0,1,5);f.G.actors=[a,victim];
  f.G.physics.los=()=>false;const hits=[],apply=f.G.projectiles.applyHit;f.G.projectiles.applyHit=function(...args){hits.push(args);return apply.apply(this,args);};
- ready(a);a.intent.fire=true;for(let i=0;i<40;i++)a._updateSpecial(1/60);
- assert.ok(f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'main fire still uses the native weapon runner');
+ ready(a);a.intent.fire=true;for(let i=0;i<39;i++)a._updateSpecial(1/60);
+ assert.equal(f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),false,'MicroLaser source forbids main shots for the first 39F');
+ for(let i=0;i<14;i++)a._updateSpecial(1/60);
+ assert.ok(f.G.projectiles.list.some(p=>p.owner===a&&!p.s3AllSpecial),'native main fire resumes after the 40F gate while beams remain active');
  const beam=hits.find(h=>h[1]===victim&&h[3]==='killerWail');assert.ok(beam);assert.equal(beam[2],3.5,'Wail damage is a 3.5 tick, not a one-hit burst');
 });
 
@@ -335,7 +406,15 @@ test('direct Crab cannon and thrown Stamp hits retain their source rows on actor
   victim.damage=function(amount,source,kind){seen.push(source?._s3AllSpecialDamageCause);return damage.call(this,amount,source,kind);};
   ready(attacker);
   if(special==='crabTank'){for(let i=0;i<20;i++)attacker._updateSpecial(1/60);attacker.intent.sub=true;attacker._updateSpecial(1/60);}
-  else{deployInput(attacker);}
+  else{
+   // Integration must use the real R-release edge and source 42F throw windup.
+   attacker.intent.sub=true;attacker._updateSpecial(1/60);
+   attacker.intent.sub=false;attacker._updateSpecial(1/60);
+   assert.ok(Number.isFinite(attacker._s3AllSpecialState?.throwAt),'Stamp throw must be scheduled by the release edge');
+   for(let i=0;i<41;i++)attacker._updateSpecial(1/60);
+   assert.equal(f.G.projectiles.list.some(p=>p.s3AllSpecial==='ultraStamp'),false,'Stamp cannot fly before frame 42');
+   attacker._updateSpecial(1/60);
+  }
   const p=f.G.projectiles.list.find(projectile=>projectile.s3AllSpecial===special);assert.ok(p,`${special} emits a projectile`);
   f.G.projectiles._blastBurst=()=>true;p.pos.set(victim.pos.x,victim.pos.y+.8,victim.pos.z);p.prev.copy(p.pos);p.vel.set(0,0,0);p.grav=0;p.drag=0;p.straight=10;p.age=0;
   f.G.projectiles._step(p,1/60);
@@ -368,16 +447,45 @@ test('Tenta and Inkjet special paint channels stamp the sourced cross and satell
 });
 
 test('Super Chump expiry paints sourced cross and satellite channels',async()=>{
- const f=await setup(),owner=f.make();equip(owner,'superChump');owner._resolve=()=>{};ready(owner);deployInput(owner);
- const decoys=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.id==='superChump'&&o.kind==='decoy');assert.equal(decoys.length,12);
- const calls=[];f.G.paint.splat=(at,radius)=>{calls.push({at:at.clone(),radius});return 1;};tickWorld(f,320);
- const cross=calls.filter(call=>call.radius===2.5),satellites=calls.filter(call=>call.radius===1.116);
- assert.equal(cross.length,48,'each of twelve decoys emits four radius-2.5 cross stamps at expiry');
- assert.equal(satellites.length,12,'each decoy emits one sourced radius-1.116 satellite stamp');
- for(const decoy of decoys){
-  const stamps=cross.filter(call=>Math.abs(Math.abs(call.at.x-decoy.pos.x)+Math.abs(call.at.z-decoy.pos.z)-2.5)<1e-9);
-  assert.equal(stamps.length,4,'the calibrated cross places four stamps at the sourced check length');
- }
+ const f=await setup(),owner=f.make();equip(owner,'superChump');owner._resolve=()=>{};
+ // The source-quantized seed can legitimately place two decoys together. Keep
+ // that case deterministic: spatially grouping all stamps would count eight.
+ f.setRandom(()=>(111+.125)/0xffffffff);
+ const pending=[],expiries=[];
+ try{
+  ready(owner);assert.equal(owner._s3AllSpecialState.seed,111);deployInput(owner);
+  const decoys=f.G.projectiles._s3AllSpecialObjects.filter(o=>o.id==='superChump'&&o.kind==='decoy');assert.equal(decoys.length,12);
+  const bySerial=new Map(decoys.map(o=>[o.serial,o]));
+  f.G.paint.splat=(at,radius,team,options)=>{pending.push({at:at.clone(),radius,team,claimOwner:options?.claimOwner,claimMode:options?.claimMode});return 1;};
+  f.on('all:special',e=>{if(e.id==='superChump'&&e.action==='expire')expiries.push({object:e.object,index:e.index,activation:e.activation,actor:e.actor,stamps:pending.splice(0)});});
+  tickWorld(f,320);assert.equal(pending.length,0,'all expiry paint is attributed to a native expiry event');
+  function verify(rows){
+   assert.equal(rows.length,12,'each decoy expires once');const seen=new Set();
+   for(const row of rows){
+    const decoy=bySerial.get(row.object);assert.ok(decoy,'expiry names a deployed decoy');assert.equal(seen.has(row.object),false,'no duplicate expiry');seen.add(row.object);
+    assert.equal(row.index,decoy.index);assert.equal(row.activation,decoy.activation);assert.equal(row.actor,owner);
+    const cross=row.stamps.filter(call=>call.radius===2.5),satellites=row.stamps.filter(call=>call.radius===1.116);
+    assert.equal(cross.length,4,'each expiry emits four radius-2.5 cross stamps');assert.equal(satellites.length,1,'each expiry emits one sourced radius-1.116 satellite');
+    for(const call of row.stamps){assert.equal(call.team,owner.team);assert.equal(call.claimOwner,owner);assert.equal(call.claimMode,'no-special');}
+    for(const [dx,dz] of [[2.5,0],[-2.5,0],[0,2.5],[0,-2.5]]){
+     assert.equal(cross.filter(call=>Math.abs(call.at.x-(decoy.pos.x+dx))<1e-9&&Math.abs(call.at.z-(decoy.pos.z+dz))<1e-9).length,1,'one stamp at each sourced cross offset');
+    }
+   }
+  }
+  verify(expiries);
+  const calls=expiries.flatMap(row=>row.stamps),cross=calls.filter(call=>call.radius===2.5),satellites=calls.filter(call=>call.radius===1.116);
+  assert.equal(cross.length,48);assert.equal(satellites.length,12);
+  assert.deepEqual(decoys[6].pos.toArray(),decoys[9].pos.toArray(),'seed111 retains the legitimate overlapping pair');
+  assert.equal(cross.filter(call=>Math.abs(Math.abs(call.at.x-decoys[6].pos.x)+Math.abs(call.at.z-decoys[6].pos.z)-2.5)<1e-9).length,8,'old global spatial attribution would double-count');
+  // Negative controls protect the oracle, rather than selecting a lucky seed
+  // or weakening the expected native paint count when positions overlap.
+  const copy=()=>expiries.map(row=>({...row,stamps:row.stamps.map(call=>({...call,at:call.at.clone()}))}));
+  const missing=copy(),at=missing[0].stamps.findIndex(call=>call.radius===2.5);missing[0].stamps.splice(at,1);assert.throws(()=>verify(missing),/four radius-2.5/);
+  const extra=copy();extra[0].stamps.push({...extra[0].stamps.find(call=>call.radius===2.5)});assert.throws(()=>verify(extra),/four radius-2.5/);
+  const duplicate=copy();duplicate[1]=duplicate[0];assert.throws(()=>verify(duplicate),/duplicate expiry/);
+  const displaced=copy();displaced[0].stamps.find(call=>call.radius===2.5).at.x+=.25;assert.throws(()=>verify(displaced),/sourced cross offset/);
+  const wrongOwner=copy();wrongOwner[0].stamps[0].claimOwner=null;assert.throws(()=>verify(wrongOwner));
+ }finally{f.restoreRandom();}
 });
 
 test('Zipcaster hook movement paints sourced cross marks and a two-frame calibrated trail',async()=>{
@@ -485,7 +593,10 @@ test('Reefslider snapshots special-power paint and damage-distance curves withou
   assert.equal(s.paintRadius,gearCurve(ap,7.51,8.26,9.012));assert.equal(s.damageDistanceRate,scale);
   a.s3.loadout=emptyLoadout();a.s3RefreshGear();assert.equal(s.damageDistanceRate,scale,'activation snapshot');
   // The source Impact input is accepted after the 15F dash-cancel window.
-  s.phase='dash';s.dashT=15/60;deployInput(a);
+  s.phase='dash';s.dashT=15/60;s.reefSpeedRaw=0;deployInput(a);
+  assert.equal(s.phase,'brake');
+  for(let i=0;i<38;i++)a._updateSpecial(1/60);
+  assert.equal(s.phase,'recovery');
   const hit=hits.find(h=>h[1]===near);assert.ok(hit);assert.ok(hit[2]<=220);assert.equal(hits.some(h=>h[1]===far),16<=14.9*scale);
   f.G.projectiles.applyHit=old;
  }
@@ -550,7 +661,7 @@ test('every catalogue-launched special projectile keeps a wire identity accepted
  const f=await setup();
  for(const id of ['tentaMissiles','inkjet','booyahBomb','ultraStamp','crabTank']){
   f.G.projectiles.clear();f.G.netm=null;const a=f.make();a.nid=7;a._resolve=()=>{};equip(a,id);f.G.actors=[a];ready(a);const target=f.make();target.team=1;target.pos.set(0,0,8);f.G.actors.push(target);a.intent.fire=id==='inkjet'||id==='tentaMissiles';a.intent.sub=id==='booyahBomb'||id==='ultraStamp';if(id==='ultraStamp'||id==='booyahBomb'){a._updateSpecial(1/60);a.intent.sub=false;}
-  for(let i=0;i<40&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
+  for(let i=0;i<50&&a.specialActive;i++){if(id==='crabTank'&&i===21)a.intent.sub=true;a._updateSpecial(1/60);}
   const p=f.G.projectiles.list.find(x=>x.s3AllSpecial===id);assert.ok(p,id+' emitted');
   const nm=new f.NetMatch({myId:'owner'},{});nm.recProj(p);const packet=JSON.parse(JSON.stringify(nm.out.at(-1)));assert.equal(packet[4],id);
   const remote=f.make();remote.remote=true;remote.nid=7;const before=f.G.projectiles.list.length;f.G.projectiles.ghostProjectile(remote,packet);assert.equal(f.G.projectiles.list.length,before+1,id+' accepted');const ghost=f.G.projectiles.list.at(-1);assert.equal(ghost.s3SpecialWeapon.id,id);assert.equal(ghost.damage,0);

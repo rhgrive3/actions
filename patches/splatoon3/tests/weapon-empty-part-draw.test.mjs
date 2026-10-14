@@ -31,5 +31,6 @@ test('all 65 weapons preserve every geometry byte and animated channel while hid
   await cb.warmAll(renderer,new B.THREE.PerspectiveCamera(),B.G.scene);for(const [,m,p]of mb)assert.equal(m.visible,p.hidden!==true);
   ca.dispose();cb.dispose();
  }
- assert.equal(hidden,154);assert.equal(weapons,58);console.log(JSON.stringify({hiddenParts:hidden,affectedWeapons:weapons}));
+ // 154 in 58 weapons when the census was taken; the rebuilt Bucket Slosher (#1310) hides its native 'lever' channel.
+ assert.equal(hidden,155);assert.equal(weapons,59);console.log(JSON.stringify({hiddenParts:hidden,affectedWeapons:weapons}));
 });

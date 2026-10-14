@@ -22,6 +22,7 @@
 | `runtime/flow-motion.mjs` | フロー開始・延長・失効の粒子と外周表示、描画パスとリソースの分離 |
 | `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正。左右の足は一つの歩行時計で交互に動く |
 | `runtime/carry-motion.mjs` | シューターの歩行・待機・射撃・復帰で連続する両手の支持 |
+| `runtime/source-posture.mjs` | Wii U 版ソースモーションの上体・首の前傾、シューターの非射撃時の持ち方、遊脚の高さを S3 映像に合わせて補正（`reference/stance-carry-comparison-2026-10-12.md`） |
 | `runtime/jump-motion.mjs`, `runtime/landing-motion.mjs` | 通常ジャンプの武器種別 presentation selector と INKWAVE ローカル脚校正（#1116）、着地の圧縮・復帰 |
 | `runtime/swim-motion.mjs`, `runtime/wall-motion.mjs` | 通常の泳ぎ・方向転換、壁登り・イカノボリの表示 |
 | `runtime/form-motion.mjs` | ヒト・イカへの変形と中断時の復帰 |
