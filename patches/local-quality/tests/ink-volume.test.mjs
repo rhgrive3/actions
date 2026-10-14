@@ -111,6 +111,8 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   backing.set(sourcePositions);pattern.frames[0].levels[0].positions=backing.subarray(0,sourcePositions.length);
   engine.register('roller', { schema: 'inkwave-volume-v1', patterns: [pattern, pattern] });
   assert.equal(root.children.length, 128);
+  // a fresh pack stays fully in the render list for its first frames (atlas upload + program compile as before)
+  assert(root.children.every(x => x.visible));
   const resources = [...engine.assets.get('roller').resources], disposals = new Map();
   for (const r of resources) r.addEventListener('dispose', () => disposals.set(r, (disposals.get(r) || 0) + 1));
   const actor = f.make('roller'), p = { type: 'drop', owner: actor, delay: 0, age: 0, seed: .2, size: .15, pos: new f.THREE.Vector3(0, 0, -3), vel: new f.THREE.Vector3(0, 0, -5), _qualityGeneration: 1 };
@@ -118,6 +120,7 @@ test('frame boundaries, instanced reuse, pose/position coupling, culling, capaci
   for (let i = 0; i < 16; i++) assert.equal(f.animationFrame(i / 30, 16, 30), i);
   assert.equal(f.animationFrame(100, 16, 30), 15);
   engine.begin(camera); assert(f.submitRollerVolume(engine, p)); assert(f.submitRollerVolume(engine, p)); assert.equal(f.submitRollerVolume(engine, p), false); engine.end();
+  assert(root.children.every(x => x.visible), 'warm frame 1 of 2');
   assert.equal(engine.metrics.active, 2); assert.equal(engine.metrics.batches, 2); assert.equal(engine.metrics.overflow, 1);
   const batch=engine.assets.get('roller').patterns[0].frames[0][0];
   assert.notEqual(batch.mesh.geometry.attributes.position.array.buffer,backing.buffer,'GPU cache does not pin the unrelated serialized pack');
