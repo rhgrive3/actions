@@ -11,19 +11,19 @@ export function explosionBubblerRow(p) {
   if (p.type === 'blast' && (p.s3Weapon || p.owner?.weapon)?.kind === 'blaster') return 'Blaster_BlasterMiddle';
   return null;
 }
+function chooseDefenseCandidate(best, candidate, length) {
+  if (!candidate || typeof candidate.onHit !== 'function' ||
+      !Number.isFinite(candidate.distance) || candidate.distance < 0 || candidate.distance > length) return best;
+  return !best || candidate.distance < best.distance ? candidate : best;
+}
 export function installKitDefense(api) {
   const { Projectiles, G } = api;
   Projectiles.prototype.kitDefenseCandidate = function (p) {
     const length = p.prev.distanceTo(p.pos);
     let best = null;
-    const consider = candidate => {
-      if (!candidate || typeof candidate.onHit !== 'function' ||
-          !Number.isFinite(candidate.distance) || candidate.distance < 0 || candidate.distance > length) return;
-      if (!best || candidate.distance < best.distance) best = candidate;
-    };
-    consider(this.kitBarrierCandidate?.(p, p.prev, p.pos));
+    best = chooseDefenseCandidate(best, this.kitBarrierCandidate?.(p, p.prev, p.pos), length);
     if (api.inkVacAbsorbCandidate) for (const actor of G.actors || []) {
-      if (actor.alive && actor.team !== p.team) consider(api.inkVacAbsorbCandidate(actor, p.prev, p.pos, p));
+      if (actor.alive && actor.team !== p.team) best = chooseDefenseCandidate(best, api.inkVacAbsorbCandidate(actor, p.prev, p.pos, p), length);
     }
     return best;
   };
@@ -118,3 +118,4 @@ export function installKitDefense(api) {
   };
   return api;
 }
+
