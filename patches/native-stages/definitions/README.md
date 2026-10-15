@@ -34,3 +34,11 @@ browser-direct checks. Asset-enabled native Node tests enumerate the private
 catalog instead of requiring the original five stages. Browser jobs sharing a
 software GPU must hold `/workspace/actions/.ci-scratch/native-stage-browser.lock`
 with `flock`; timing reports must identify SwiftShader and concurrent CPU load.
+
+
+Large private-asset landing and integration tests automatically execute each
+original stage case in a fresh Node process. No stage assertions are removed;
+each parent requires its exact child case to pass. This prevents accumulated
+VM/geometry heaps from exhausting Node's default memory limit. For a bounded
+all-stage numeric receipt, run `node scripts/check-inkwave-native-stage-node-matrix.mjs PRIVATE_ASSETS PRIVATE_EVIDENCE`;
+it requires both original suites for every catalog stage and binds native module hashes.

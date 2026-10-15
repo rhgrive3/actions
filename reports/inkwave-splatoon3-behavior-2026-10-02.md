@@ -4456,6 +4456,14 @@ The preceding density/duplicate-work counts retain their historical inputs and d
 
 限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。
 
+
+### 2026-10-14: final native common composition and variable-sphere cost
+
+Draft aggregate validation composes reviewed58ba, proposed source catalogue correction1419 and narrow dry source-climb refill1420 with maina9f9341c. Source-centred changing-radius queries exposed a CPU cost problem in the repeated64+36 distance searches. The final kernel uses analytic earliest face/finite-edge/vertex contact with the same linearly changing sphere, source BVH, eligibility and contact authority.4,114 independent signed-plane/rounded-edge cases plus12,000 arbitrary-orientation convex-distance oracle cases pass. Initial overlap, tangent/zero-radius faces, NoPaint/grate and actual dynamic OBB priority are retained. Source units, Nintendo retail collision/masks, hardware FPS and whole-match performance remain unverified. The Humpback source fixture now keeps its nominated controlled bank goal after ordinary recovery selects a new paint goal; it does not override physical path resets or weaken arrival/support/time bounds. Historical and final executions are distinguished in [the final composition record](native-stages/final-common-integration-2026-10-14.md). Independent acceptance, Bluefin/Shipshape full-stage qualification and the existing source/placement/Tower gates remain separate.
+
+A later main636e2b68 adds only isolated character-QA tools/workflow files and is included; production source/build adapter/gameplay inputs remain byte-identical to the consumed a9 baseline.
+
+Strict source comparison exposed different adjacent-triangle selection in the initial analytic32ed02b0 candidate. Nearly simultaneous contacts within1e-9 segment time now use the unchanged prior search to retain its triangle/material ordering. That failed candidate is not accepted as final.
 ## 2026-10-13 Ink Vac の実 Actor.update 描画所有権
 
 - 基準は main `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`（#1252 の 17F 発動・12F 吸引開始・20F 反撃移行を含む）。既存の Splatoon 3 11.3.0 参照プロファイルを変更しない。本家のキューインキ構え・銃口・関節位置との実機比較は未確認。この修正は公開 INKWAVE の更新経路の不整合を直すもので、本家との一致を新たに証明しない。
@@ -4601,6 +4609,9 @@ The three reviewed PR #1445 workstreams are reconciled with the latest main rath
 
 Negative control reproduces the actual PR CI failure by assertion. Corrected combined native queue/volume/pool suite passes20/20; adjacent source network/snapshot/ranked checks pass42/42. The full quality rerun, emitted checks and final provenance are recorded in the systems audit. WebKit/physical-device limits remain separate.
 
+## 2026-10-14: Private stage composition with newer main
+
+This private technical composition joins aggregate 60b88072641b632ec387e05f3ab70565dfd64b63 and main 55b4750aea5e45136a588fbd7242c106aff2323a (common ancestor 636e2b68cdace5ccbd651d05d2f2fc1eb900ecd0). Both report appendices are retained. All 319 aggregate-exclusive and 21 newer-main-exclusive changed paths retain their respective parent blobs. Newer main includes runtime changes from #1427 and the Roller test correction from #1429, plus the test-only pressed-button-center correction from #1433; checks of the earlier aggregate do not establish compatibility of this combined runtime. This candidate has not received fresh combined-code validation or final independent acceptance. Named review and Ready-first gates remain. Bluefin #1343 and Shipshape #1394 remain unfinished; Lemuria source, Mahi placement, and existing Tower gates remain unresolved. Technical composition does not authorize a main merge.
 ## 2026-10-13: rematch material ownership handoff candidate (#1367)
 
 A bounded owned-material bridge preserves native program references until replacement menu-character warmup settles, and the existing Character disposed flag now blocks resource creation after a pending optional-motion load. Setup/start callbacks, same-object material reuse, cancellation, failure, context loss, repeated returns and overflow are covered. Source25/25, emitted25/25, adjacent191/191 and packaging/workflow24/24 pass; exact18ce emitted runtime retains two expected failures. Independent native ownership accounting matches18 baseline disposal events and excludes four shared materials.

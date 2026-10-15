@@ -1,3 +1,4 @@
+import {isolatedNativeStageTest} from './stage-process-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,12 +12,10 @@ const IDS=ROOT?JSON.parse(fs.readFileSync(path.join(ROOT,'catalog.json'),'utf8')
 test('public builds offer five source choices without reference model payload',()=>{
  const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');for(const id of ['scorch','hagglefish','inkblot','mako','brinewater'])assert(build.config.stages.some(s=>s.id===id));
 });
-// Reuse the installed VM, while resetting every live world owner per stage.
-// A separate full catalogue VM per case retains gigabytes under node:test.
-let runtime;const loadRuntime=()=>runtime??=nativeFixture();
-for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async()=>{
- const f=await loadRuntime(),{G,THREE,PLAYER}=f,data=readStage(ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);
- G.actors.length=0;G.time=0;G.projectiles.clear();G.level=level;G.physics=physics;
+for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async(testContext)=>{
+ if(await isolatedNativeStageTest(import.meta.url,testContext.name))return;
+ const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);
+ G.level=level;G.physics=physics;
  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new CpuPaint(null,level,{atlasSize:2048,maxDensity:4,cell:.25});
  assert.ok(G.paint.ppm>0);assert.ok(G.paint.turfTotal>1000);assert.equal(G.paint.grid.length,data.mask.length);assert.ok(data.manifest.chartMaxPlaneError<.005);

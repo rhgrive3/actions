@@ -110,8 +110,11 @@ test('sturgeon opt-off ranked frames retain exact pre-marker production inputs a
  const withoutMarker=(rel,raw)=>{
   let code=adaptBuildSource(rel,raw);
   if(rel==='src/game/bots.js'){
-   const marked='if (updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt)) { this._nativeTraversalHandled=true; return; }';
-   assert.ok(code.includes(marked));code=code.replace(marked,'if (updateNativeDrop(this,G,dt)||updateNativeClimb(this,G,dt)) return;');
+   // Remove only the marker delta; retain all currently qualified traversal
+   // controllers and the Tower-rider guard on both sides of the comparison.
+   const marked=' { this._nativeTraversalHandled=true; return; }';
+   assert.equal(code.split(marked).length,2,'one exact traversal marker');
+   code=code.replace(marked,' return;');
   }
   if(rel==='patches/splatoon3/runtime/ranked/bots.mjs'){
    assert.ok(code.includes('    this._nativeTraversalHandled = false;\n'));
