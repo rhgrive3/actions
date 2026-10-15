@@ -39,6 +39,7 @@ import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 import { adaptScorchGorge } from './scorch-gorge-adapter.mjs';
 import { adaptIssue719Dodge } from './issue-719-dodge-adapter.mjs';
 import { adaptWeaponCatalog } from './weapon-catalog-adapter.mjs';
+import { adaptWeaponLodMaterialPacking } from './weapon-lod-material-packing-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -63,6 +64,7 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 
 export function adaptSource(rel, code) {
   code = adaptWeaponCatalog(rel, code);
+  code = adaptWeaponLodMaterialPacking(rel, code);
   if (rel === 'src/game/motion/source-controller.js') {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
     // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.

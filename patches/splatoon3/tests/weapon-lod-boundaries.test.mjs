@@ -27,8 +27,31 @@ function indexed(g,names){const h=crypto.createHash('sha256');const ii=g.index.a
 function bytes(g){return g.index.array.byteLength+Object.values(g.attributes).reduce((n,a)=>n+a.array.byteLength,0);}
 function mixed(g,name){const a=g.attributes[name],ii=g.index.array;if(!a)return 0;let count=0;for(let i=0;i<ii.length;i+=3){const values=[0,1,2].map(j=>Array.from({length:a.itemSize},(_,k)=>a.getComponent(ii[i+j],k)).join(','));if(new Set(values).size>1)count++;}return count;}
 test('surviving weapon corners retain authored material and RGBA, including gradients',async()=>{const f=await context();for(const isIndexed of[true,false])for(const gradient of[false,true]){const src=synthetic(f.THREE,isIndexed,true,gradient),out=f.clusterDecimate(src,1);assert.equal(out.index.count,6);for(let corner=0;corner<6;corner++)for(const name of['aMat','color'])for(let k=0;k<src.attributes[name].itemSize;k++)assert.equal(out.attributes[name].getComponent(out.index.getX(corner),k),src.attributes[name].getComponent(corner,k),`${name}/${corner}/${k}`);if(baseline)assert.ok(mixed(f.beforeCluster(src,1),'aMat')>0,'old path reproduces cross-material pollution');}});
+test('far weapon material IDs use exact byte packing but fractional materials retain float storage',async()=>{
+ const f=await context();
+ const original=synthetic(f.THREE,true,true,true);
+ const packed=f.clusterDecimate(original,1);
+ assert.equal(packed.attributes.aMat.array.BYTES_PER_ELEMENT,1,'integer material labels save 75% of their vertex buffer');
+ const before=indexed(original,['aMat','color']);
+ assert.equal(indexed(packed,['aMat','color']),before,'all original material IDs and RGBA corners remain bit exact');
+ assert.equal(indexed(original,['aMat','color']),before,'source must remain immutable');
+ original.attributes.aMat.setX(2,0.5);
+ const fallback=f.clusterDecimate(original,1);
+ assert.equal(fallback.attributes.aMat.array.BYTES_PER_ELEMENT,4,'fractional material IDs must not be quantized');
+ assert.equal(fallback.attributes.aMat.getX(fallback.index.getX(2)),0.5);
+});
 test('nonweapon clustering stays byte-identical and the existing cache stays stable',{skip:!baseline},async()=>{const f=await context();for(const indexed of[true,false]){const src=synthetic(f.THREE,indexed,false),a=f.beforeCluster(src,1),b=f.clusterDecimate(src,1);assert.deepEqual(Buffer.from(a.index.array.buffer),Buffer.from(b.index.array.buffer));for(const name of Object.keys(a.attributes))assert.deepEqual(Buffer.from(a.attributes[name].array.buffer),Buffer.from(b.attributes[name].array.buffer));}const src=synthetic(f.THREE);const far=f.farGeometry(src,1);assert.equal(far,f.farGeometry(src,1));});
 test('all 65 weapons retain triangle positions, normals, tint, source geometry and cache identity',{skip:!baseline},async()=>{const f=await context(),ids=[...new Set([...f.registeredWeaponModels(),'slosher'])];assert.equal(ids.length,65);const rows=[];let oldBytes=0,newBytes=0;
  for(const id of ids){const d=f.getWeaponDef(id),row={id};for(const [part,target]of[['body',700],['ink',300]]){const src=d[part],names=Object.keys(src.attributes),original=indexed(src,names),a=f.beforeFar(src,target),t=performance.now(),b=f.farGeometry(src,target),coldBuildMs=performance.now()-t;assert.equal(b,f.farGeometry(src,target));assert.equal(indexed(src,names),original,id+' source immutable');assert.equal(a.index.count,b.index.count,id+'/'+part+' triangle count');assert.equal(indexed(a,['position']),indexed(b,['position']),id+'/'+part+' silhouette');assert.equal(indexed(a,names.filter(n=>!['position','color','aMat'].includes(n))),indexed(b,names.filter(n=>!['position','color','aMat'].includes(n))),id+'/'+part+' normal/tint/animation attributes');assert.ok(mixed(b,'aMat')<=mixed(src,'aMat'),id+'/'+part+' no new material interpolation');assert.ok(mixed(b,'color')<=mixed(src,'color'),id+'/'+part+' only authored colour gradients');oldBytes+=bytes(a);newBytes+=bytes(b);row[part]={triangles:b.index.count/3,beforeBytes:bytes(a),afterBytes:bytes(b),mixedMaterialBefore:mixed(a,'aMat'),mixedMaterialAfter:mixed(b,'aMat'),mixedColorSource:mixed(src,'color'),mixedColorAfter:mixed(b,'color'),coldBuildMs};}assert.ok((row.body.afterBytes+row.ink.afterBytes)/(row.body.beforeBytes+row.ink.beforeBytes)<2,id+' geometry allocation growth bounded');rows.push(row);}
- assert.ok(newBytes<oldBytes*1.20,'all-65 cached geometry growth below 20%; not a simultaneous-visible claim');if(process.env.WEAPON_LOD_REPORT)fs.writeFileSync(process.env.WEAPON_LOD_REPORT,JSON.stringify({models:ids.length,oldBytes,newBytes,rows},null,2));console.log('WEAPON_LOD_BOUNDARIES '+JSON.stringify({models:ids.length,oldBytes,newBytes}));
+ // Evidence must survive a failed budget gate. Report the actual excess and
+ // contributing model parts; this does not relax the strict 20% acceptance.
+ const ratio=newBytes/oldBytes;
+ const largestDelta=rows.map(row=>({id:row.id,
+   deltaBytes:['body','ink'].reduce((sum,part)=>sum+row[part].afterBytes-row[part].beforeBytes,0)}))
+   .sort((a,b)=>b.deltaBytes-a.deltaBytes).slice(0,12);
+ if(process.env.WEAPON_LOD_REPORT)
+   fs.writeFileSync(process.env.WEAPON_LOD_REPORT,JSON.stringify({models:ids.length,oldBytes,newBytes,ratio,largestDelta,rows},null,2));
+ console.log('WEAPON_LOD_BOUNDARIES '+JSON.stringify({models:ids.length,oldBytes,newBytes,ratio,largestDelta}));
+ assert.ok(newBytes<oldBytes*1.20,'all-65 cached geometry growth below 20%; not a simultaneous-visible claim: '
+   +JSON.stringify({oldBytes,newBytes,ratio,excessBytes:newBytes-oldBytes*1.20,largestDelta}));
 });
