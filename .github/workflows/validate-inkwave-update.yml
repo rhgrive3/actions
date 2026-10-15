@@ -303,6 +303,8 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify actual built codec and authenticated JSON transport
+        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-packet-codec.test.mjs patches/network-replication/tests/paint-packet-codec-order.test.mjs
       - name: Verify real emitted material handoff ownership and cancellation
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
