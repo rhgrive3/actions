@@ -18,6 +18,22 @@ function leaf(side,x0,x1,zOffset=0){
  if((side<0)!==(zOffset<0))for(let i=0;i<ix.length;i+=3)[ix[i+1],ix[i+2]]=[ix[i+2],ix[i+1]];
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();return g;
 }
+// Flat authored marble print. Keep the existing vein path; no retail trace.
+// The rear plane is z = -.04 - .2*t - .005. Offset 50 micrometres
+// along its normal to avoid coplanar overlap, instead of raised round cords.
+function marblePrint(points,side){
+ const normal=new THREE.Vector3(0,-side*.2,-.34).normalize(),pos=[],ix=[];
+ for(let i=0;i<points.length;i++){
+  const a=new THREE.Vector3(...points[Math.max(0,i-1)]),b=new THREE.Vector3(...points[Math.min(points.length-1,i+1)]);
+  const across=b.sub(a).normalize().cross(normal).normalize().multiplyScalar(.00045);
+  const center=new THREE.Vector3(...points[i]);center.z+=.0007;center.addScaledVector(normal,.00005);
+  for(const sign of [-1,1]){const v=center.clone().addScaledVector(across,sign);pos.push(v.x,v.y,v.z);}
+ }
+ for(let i=0;i<points.length-1;i++){const a=i*2;ix.push(a,a+1,a+2,a+1,a+3,a+2);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(ix);g.computeVertexNormals();
+ const n=g.attributes.normal;if(new THREE.Vector3(n.getX(0),n.getY(0),n.getZ(0)).dot(normal)<0){for(let i=0;i<ix.length;i+=3)[ix[i+1],ix[i+2]]=[ix[i+2],ix[i+1]];g.setIndex(ix);g.computeVertexNormals();}
+ return g;
+}
 function solidLeaf(side){
  const front=leaf(side,-.024,.024,.005),back=leaf(side,-.024,.024,-.005);
  // A closed bevelled-width section: broad front/back plus narrow side walls.
@@ -52,7 +68,7 @@ function build(fresh){
   // procedural marble approximation, not a claimed retail texture trace.
   for(let k=0;k<3;k++){
    const pts=[];for(let j=0;j<=14;j++){const t=j/14,[y,z]=center(side,t),x=(-.016+k*.014)*(1-.24*t)+.002*Math.sin(t*27+k);pts.push([x,y,z-.0057]);}
-   body.add(pipe(pts,.00045,28,4),C.vein,M.print);
+   body.add(marblePrint(pts,side),C.vein,M.print);
   }
  }
  body.add(box(.034,.17,.04,0,YC,-.04,.3),C.black,M.satin);

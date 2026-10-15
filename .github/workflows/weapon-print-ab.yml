@@ -1,0 +1,90 @@
+name: Review isolated weapon print surfaces
+on:
+  push:
+    branches: [review/weapon-print-surfaces-20261015]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Exact source and bounded harness gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          mkdir -p print-test-results
+          git rev-parse HEAD > print-test-results/head.txt
+          git rev-parse HEAD^{tree} > print-test-results/tree.txt
+          git ls-tree -r HEAD > print-test-results/source-tree.txt
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          node --test --test-reporter=tap scripts/capture-weapon-print-ab.test.mjs | tee print-test-results/harness.tap
+          env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs patches/splatoon3/tests/weapon-variant-bulbz.test.mjs patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs | tee print-test-results/source.tap
+          for item in harness:11 source:20; do
+            name=${item%:*}; count=${item#*:}
+            grep -qx "# tests $count" print-test-results/$name.tap
+            grep -qx "# pass $count" print-test-results/$name.tap
+            for key in fail skipped cancelled todo; do grep -qx "# $key 0" print-test-results/$name.tap; done
+          done
+      - name: Build and gate exact candidate emitted modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build-inkwave.mjs inkwave-public _site
+          INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs patches/splatoon3/tests/weapon-variant-bulbz.test.mjs patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs | tee print-test-results/emitted.tap
+          grep -qx '# tests 20' print-test-results/emitted.tap
+          grep -qx '# pass 20' print-test-results/emitted.tap
+          for key in fail skipped cancelled todo; do grep -qx "# $key 0" print-test-results/emitted.tap; done
+          cp _site/inkwave-build.json print-test-results/candidate-build.json
+      - uses: actions/checkout@v4
+        with:
+          ref: 009a9e54898b0ed48e38f5ede105077a736e7a0b
+          path: _baseline_source
+      - name: Build immutable 009a9 baseline with same compiler
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C _baseline_source rev-parse HEAD)" = 009a9e54898b0ed48e38f5ede105077a736e7a0b
+          (cd _baseline_source && node scripts/build-inkwave.mjs inkwave-public ../_baseline_site)
+          cp _baseline_site/inkwave-build.json print-test-results/baseline-build.json
+      - name: Install isolated CI Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Capture 48 nonblank matched print and release-motion frames
+        run: node scripts/capture-weapon-print-ab.mjs --baseline-source _baseline_source --baseline-site _baseline_site --candidate-source . --candidate-site _site --out weapon-print-ab
+      - name: Bind source emitted tests and image receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+          const sha=b=>createHash('sha256').update(b).digest('hex'),read=p=>fs.readFileSync(p),out='print-test-results/';
+          const build=JSON.parse(read(out+'candidate-build.json')),ab=JSON.parse(read('weapon-print-ab/ab-result.json')),head=read(out+'head.txt').toString().trim();
+          assert.equal(ab.candidate.sourceSha,head);assert.equal(ab.baseline.sourceSha,'009a9e54898b0ed48e38f5ede105077a736e7a0b');assert.equal(ab.candidate.contentHash,build.contentHash);assert.equal(ab.candidate.inputHash,build.inputHash);assert.equal(ab.images.length,48);assert.equal(ab.comparisons.length,24);assert.equal(ab.characterRendered,false);assert.deepEqual(ab.errors,[]);assert.deepEqual(ab.networkFailures,[]);
+          const emitted=read(out+'emitted.tap').toString().split('\n').filter(s=>s.startsWith('# INKWAVE built fixture '));assert.ok(emitted.length>=3);for(const s of emitted)assert.ok(s.endsWith(' contentHash='+build.contentHash));assert.ok(!read(out+'source.tap').toString().includes('INKWAVE built fixture'));
+          for(const img of ab.images){assert.equal(sha(read('weapon-print-ab/'+img.file)),img.sha256);assert.ok(img.foregroundPixels>=250&&img.quantizedColors>=16);assert.ok(img.printROI.visiblePixels>=32&&img.printROI.inFrameVertices/img.printROI.selectedVertices>=.75);assert.ok(img.printROI.ndcBounds.every(Number.isFinite));}
+          const files=['harness.tap','source.tap','emitted.tap','source-tree.txt','candidate-build.json','baseline-build.json'];
+          fs.writeFileSync(out+'verification.json',JSON.stringify({head,tree:read(out+'tree.txt').toString().trim(),inputHash:build.inputHash,contentHash:build.contentHash,tests:{harness:11,source:20,emitted:20,skipped:0},files:Object.fromEntries(files.map(p=>[p,sha(read(out+p))])),abReceiptSHA256:sha(read('weapon-print-ab/ab-result.json')),images:48,limits:'Controlled weapon-only native presentation, not gameplay admission, retail fidelity or physical-device acceptance.'},null,2));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-print-ab-${{ github.sha }}
+          path: weapon-print-ab
+          if-no-files-found: warn
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-print-tests-${{ github.sha }}
+          path: print-test-results
+          if-no-files-found: error
+          retention-days: 7
