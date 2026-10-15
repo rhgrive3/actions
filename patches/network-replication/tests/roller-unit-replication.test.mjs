@@ -113,9 +113,9 @@ test('#305 normalizes depleted Roller flags across every base/inkMeta/kit birth 
   }
  }
 });
-test('moving vertical lower unit replicates the floor core and grown side-wall contact envelopes',async()=>{
+test('moving vertical lower unit replicates the floor core and grown X/Z wall contact envelopes',async()=>{
  const f=await pair(),q=replay(f)[3],p=f.births[3];assert.equal(p.fidelityRollerUnitIndex,2);assert.equal(q.fidelityRollerUnitIndex,2);
- const distances=[],sideDistances=[];for(const [world,particle] of [[f.local,p],[f.remote,q]]){
+ const distances=[],sideDistances=[],frontDistances=[];for(const [world,particle] of [[f.local,p],[f.remote,q]]){
   const V=world.THREE.Vector3,b={id:0,solid:true,center:new V(0,-.1,0),half:new V(10,.1,10),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
   world.G.physics=new world.Physics({blocks:[b],faces:[],queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;}});world.G.actors=[];
   particle.prev.set(0,2,0);particle.pos.set(0,-1,0);particle.age=.1;particle.fidelityPrevAge=.1;world.fidelityProjectileTargets(world.projectiles,particle);const hit=world.fidelityWorldHit(world.projectiles,particle);assert.equal(hit.hit,true);distances.push(hit.dist);
@@ -125,9 +125,14 @@ test('moving vertical lower unit replicates the floor core and grown side-wall c
   b.center.set(-.1,0,0);b.half.set(.1,10,10);particle.prev.set(2,0,0);particle.pos.set(-1,0,0);
   world.fidelityProjectileTargets(world.projectiles,particle);const side=world.fidelityWorldHit(world.projectiles,particle);
   assert.equal(side.hit,true);assert.ok(Math.abs(side.normal.y)<1e-9);sideDistances.push(side.dist);
+  // Keep the independently added frontal Z-wall case as well as the X-wall.
+  b.center.set(0,1,10);b.half.set(10,10,10);particle.prev.set(0,1,-2);particle.pos.set(0,1,1);
+  world.fidelityProjectileTargets(world.projectiles,particle);const front=world.fidelityWorldHit(world.projectiles,particle);
+  assert.equal(front.hit,true);assert.ok(Math.abs(front.normal.y)<1e-9);assert.ok(Math.abs(front.normal.z)>.99);frontDistances.push(front.dist);
  }
  assert.ok(Math.abs(distances[0]-1.9)<1e-9);assert.equal(distances[0],distances[1]);
  assert.ok(Math.abs(sideDistances[0]-1.45)<1e-9);assert.equal(sideDistances[0],sideDistances[1]);
+ assert.ok(Math.abs(frontDistances[0]-1.45)<1e-9);assert.equal(frontDistances[0],frontDistances[1]);
 });
 test('legacy27/30/32 packets retain the historical inference fallback',async()=>{
  for(const length of [27,30,32]){
