@@ -41,7 +41,21 @@ for(const change of ['radius','stretch','direction','center','origin','projectil
  if(change==='radius')core[5]+=.1;if(change==='stretch')core[12]=1;if(change==='direction'){core[9]=1;core[11]=0;}if(change==='center')core[2]=12;if(change==='origin')core[15][6][0]=12;if(change==='projectile')core[15][5]++;if(change==='unit')birth[33]=8;if(change==='weapon')h.receiver.actors[0].weapon=h.receiver.f.WEAPONS.shooter;if(change==='owner')h.receiver.actors[0].owner='intruder';if(change==='match')core[15][1]='old';
  for(const e of rows)receive(h.receiver,e);assert.ok(h.receiver.f.G.paint.grid.every(x=>x===0));});
 for(const change of ['weapon','death'])test('approved flight survives owner '+change,async()=>{const h=await pair();receive(h.receiver,h.birth);if(change==='weapon'){h.receiver.actors[0].weapon=h.receiver.f.WEAPONS.shooter;h.sender.actors[0].weapon=h.sender.f.WEAPONS.shooter;}else{h.receiver.actors[0].alive=false;h.receiver.actors[0].netLife=1;h.receiver.actors[0].net.lastLife=1;h.sender.actors[0].alive=false;h.sender.actors[0].netLife=1;}h.sender.nm.out=[];h.impact();assert.ok(h.sender.nm.out[0][15]);receive(h.receiver,h.sender.nm.out[0]);same(h.sender,h.receiver);});
-for(const order of ['reverse','newer','older'])test('causal playback '+order,async()=>{const h=await pair();if(order==='reverse')tick(h.receiver,[...h.rows].reverse());else{tick(h.receiver,[h.rows[1]],1000.1);drain(h.receiver);tick(h.receiver,[h.birth],order==='older'?1000:1000.2);}drain(h.receiver);same(h.sender,h.receiver);});
+// An event may be reordered inside a single authenticated owner envelope.
+// Across envelopes, however, reliable ordered transport may not backfill an
+// older projectile birth after its later-sequence terrain impact. Doing so
+// would turn a stale/replayed birth into an unauthorized paint permit.
+for(const order of ['reverse','newer','older'])test('causal playback '+order,async()=>{
+ const h=await pair();
+ if(order==='reverse'){
+   tick(h.receiver,[...h.rows].reverse());drain(h.receiver);same(h.sender,h.receiver);
+   return;
+ }
+ tick(h.receiver,[h.rows[1]],1000.1);drain(h.receiver);
+ tick(h.receiver,[h.birth],order==='older'?1000:1000.2);drain(h.receiver);
+ assert.ok(h.receiver.f.G.paint.grid.every(x=>x===0),
+   'a late lower-sequence or lower-timestamp birth cannot authorize spent Slosher paint');
+});
 test('real delayed Slosher fire emits its birth before impact with no trail or splash permit reuse',async()=>{
  const sender=await client('a'),receiver=await client('b');for(const c of [sender,receiver]){c.actors[0].weapon=c.f.WEAPONS.slosher;c.actors[0].netLife=0;c.actors[0].net.lastLife=0;}
  const f=sender.f,owner=sender.actors[0];owner.character.getMuzzle=out=>out.copy(owner.pos).add(new f.THREE.Vector3(0,1.2,0));owner.grounded=true;f.G.physics.segment=(_a,_b,hit)=>{hit.hit=false;return hit;};
@@ -52,7 +66,25 @@ test('real delayed Slosher fire emits its birth before impact with no trail or s
  for(const e of sender.nm.out)receive(receiver,e);same(sender,receiver);
 });
 test('expired missing birth remains closed and no longer blocks unrelated paint',async()=>{const h=await pair();tick(h.receiver,[h.rows[1]],1000.1);h.receiver.f.clock.advance(3);tick(h.receiver,[h.birth],1000);drain(h.receiver);assert.ok(h.receiver.f.G.paint.grid.every(x=>x===0));h.sender.nm.out=[];h.sender.f.G.paint.splat(new h.sender.f.THREE.Vector3(12,0,0),1,0,{seed:.5});tick(h.receiver,h.sender.nm.out,1000.2);drain(h.receiver);assert.ok(h.receiver.f.G.paint.grid.some(x=>x!==0));});
-test('predeadline core recovers from older birth envelope and commits once',async()=>{const h=await pair();h.receiver.nm.s.hostId='b';h.receiver.nm.s.isHost=true;tick(h.receiver,[h.rows[1]],1000.1);tick(h.receiver,[h.birth],1000);assert.equal(h.receiver.nm.commitDeadlinePaint(),1);same(h.sender,h.receiver);const counts=Array.from(h.receiver.f.G.paint.counts);drain(h.receiver);assert.deepEqual(Array.from(h.receiver.f.G.paint.counts),counts);});
+test('predeadline core commits once after an authenticated earlier birth envelope',async()=>{
+ const h=await pair();h.receiver.nm.s.hostId='b';h.receiver.nm.s.isHost=true;
+ tick(h.receiver,[h.birth],1000);drain(h.receiver);
+ tick(h.receiver,[h.rows[1]],1000.1);
+ assert.equal(h.receiver.nm.commitDeadlinePaint(),1);
+ same(h.sender,h.receiver);
+ const counts=Array.from(h.receiver.f.G.paint.counts);
+ drain(h.receiver);
+ assert.deepEqual(Array.from(h.receiver.f.G.paint.counts),counts);
+});
+test('host deadline rejects a lower-timestamp projectile birth arriving after its impact',async()=>{
+ const h=await pair();h.receiver.nm.s.hostId='b';h.receiver.nm.s.isHost=true;
+ tick(h.receiver,[h.rows[1]],1000.1);
+ tick(h.receiver,[h.birth],1000);
+ assert.equal(h.receiver.nm.commitDeadlinePaint(),0);
+ drain(h.receiver);
+ assert.ok(h.receiver.f.G.paint.grid.every(x=>x===0),
+   'a replayed older birth must not credit terrain or the special meter');
+});
 test('same projectile ID on a new birth sequence cannot grant a second impact',async()=>{const h=await pair();for(const e of h.rows)receive(h.receiver,e);const before=Array.from(h.receiver.f.G.paint.grid);const fake=JSON.parse(JSON.stringify(h.birth));fake._netSeq=3;fake._netTick=h.birth._netTick;fake[fake.length-1]=3;receive(h.receiver,fake);const core=JSON.parse(JSON.stringify(h.rows[1]));core._netSeq=4;core._netTick=h.rows[1]._netTick;core[core.length-1]=4;core[15][4]=3;core[2]=12;core[15][7][0]=12;receive(h.receiver,core);assert.deepEqual(Array.from(h.receiver.f.G.paint.grid),before);});
 test('births without terrain impact stay bounded without disabling later Slosher paint',async()=>{const h=await pair();for(let i=0;i<140;i++){h.p.pos.copy(h.p.start);h.sender.nm.out=[];h.sender.nm.recProj(h.p);receive(h.receiver,h.sender.nm.out[0]);}h.sender.nm.out=[];h.p.pos.set(0,0,5);h.impact();receive(h.receiver,h.sender.nm.out[0]);same(h.sender,h.receiver);});
 test('ghost impact cannot produce a new authored impact permit',async()=>{const h=await pair();h.sender.nm.out=[];h.p.ghost=true;h.impact();assert.equal(h.sender.nm.out.filter(e=>e[1]==='s'&&e[15]?.[0]==='inkwave-slosher-impact-v1').length,0);});
