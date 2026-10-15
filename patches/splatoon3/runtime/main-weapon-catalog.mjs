@@ -345,7 +345,15 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
     }
   }
-  function origin(a) { G.projectiles._muzzle(a,muzzle); G.projectiles._aimFrom(a,muzzle,dir); return muzzle; }
+  function origin(a, hand=null) {
+    // Catalogue Dualies must release the round from the same real hand socket
+    // that the native two-pistol renderer and trigger animation own.
+    // All non-Dualies retain the original one-muzzle/aim path.
+    if(hand===null)G.projectiles._muzzle(a,muzzle);
+    else G.projectiles._muzzleHand(a,hand,muzzle);
+    G.projectiles._aimFrom(a,muzzle,dir);
+    return muzzle;
+  }
   function angle(direction,yaw=0,pitch=0) {
     const y = Math.atan2(direction.x,direction.z)+yaw*RAD;
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
@@ -575,7 +583,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
-    origin(a);
+    // Peek without consuming the next hand: denied shots must not rotate it.
+    const hand=r.family==='dualies' ? (runner.hand^1) : null;
+    origin(a,hand);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
     const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
       ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
@@ -605,10 +615,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     spawn(a,r,desc,aim,at,{volley,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
-    // Only an admitted, spawned catalog round advances native dual-wield presentation.
-    // Origin remains unchanged here; left-muzzle launch parity is a separate pending qualification.
-    let hand=null;
-    if(r.family==='dualies'){runner.hand^=1;hand=runner.hand;runner.sinceHand[hand]=0;}
+    // Only an admitted, spawned catalogue round consumes the chosen hand.
+    // Hand-specific physics muzzle, network birth and visual trigger agree.
+    if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
     notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
