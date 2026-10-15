@@ -114,11 +114,25 @@ const cacheSnapshot=async(page,label)=>{
   return row;
 };
 const waitMenu=async page=>{
-  await page.waitForFunction(()=>{
-    const m=window.__inkwaveStartup?.snapshot?.()?.marks?.['menu-interactive'];
-    const screen=document.querySelector('.iw-ui')?.dataset.screen;
-    return Number.isFinite(m)&&['title','main'].includes(screen);
-  },undefined,{timeout});
+  try {
+    await page.waitForFunction(()=>{
+      const m=window.__inkwaveStartup?.snapshot?.()?.marks?.['menu-interactive'];
+      const screen=document.querySelector('.iw-ui')?.dataset.screen;
+      return Number.isFinite(m)&&['title','main'].includes(screen);
+    },undefined,{timeout,polling:250});
+  } catch(error) {
+    // rAF polling can starve behind SwiftShader's multi-second scene draws.
+    // Keep the original interactive-mark AND real title/main screen gate,
+    // but record the actual runtime state if the timer also fails.
+    const observed=await page.evaluate(()=>({
+      marks:window.__inkwaveStartup?.snapshot?.()?.marks||null,
+      screen:document.querySelector('.iw-ui')?.dataset.screen||null,
+      mode:window.__G?.mode||null,
+      bootMs:window.__inkwave?.bootMs??null,
+      renderer:!!window.__G?.renderer,
+    })).catch(e=>({observationError:String(e)}));
+    throw new Error('Interactive startup gate failed: '+JSON.stringify(observed),{cause:error});
+  }
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>resolve())));
 };
 const measure=async(page,label,action,pageErrors)=>{
