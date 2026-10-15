@@ -1,0 +1,75 @@
+{
+  "baseHead": "d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd",
+  "current": {
+    "head": "3907cf12bbce1ab4e7d1bc090a3e95408700b314",
+    "tree": "81826aa43db3a98e4605f3f6db5a56af4fde5bca",
+    "registrySHA256": "967941ab5e219111a7c5eb81023772bd6eabb022b5f4596d95953652ecddbc9f",
+    "payload": [
+      {
+        "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+        "blob": "94867aff0e9b18ea8c402061b495e9709864afde",
+        "sha256": "bfb306f49cf64c517667dcec1b8e2262a22599b9c817d0b266163d268de1d78a"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs",
+        "blob": "29ffc8daa60c5d7bcb7930bf93adb8b5199a484d",
+        "sha256": "1ecd5994f70d0bf87f25a6b495531ea8ab479c35933e120d8abf5f1b4a46f48a"
+      },
+      {
+        "path": "patches/splatoon3/tests/noct-tessellation-native-actor.test.mjs",
+        "blob": "7d665e82a95ec498748fc95c49a72ad10e8bae3d",
+        "sha256": "8545e69130d05a312bf1e86dd701766b1e4222d68619c54c73147dfe9d94e366"
+      }
+    ],
+    "variantIds": [
+      "Charger_Quick_01",
+      "Maneuver_Short_02",
+      "Shelter_Normal_01",
+      "Slosher_Washtub_01",
+      "Stringer_Normal_02",
+      "Stringer_Short_02"
+    ],
+    "baseModelCount": 65,
+    "testFiles": [
+      "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+      "patches/splatoon3/tests/noct-tessellation-native-actor.test.mjs"
+    ],
+    "pass": 11
+  },
+  "light": {
+    "head": "3d1543491c43b94142ebd04c02b9eda3e2cf70a7",
+    "tree": "87d542ac3b9f416c6c21c1a6460c09ad8a4871ab",
+    "registrySHA256": "f5a999755c28bff74f2793808c75e7d901264a408313cfc3247871b4fae8def7",
+    "payload": [
+      {
+        "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+        "blob": "94867aff0e9b18ea8c402061b495e9709864afde",
+        "sha256": "bfb306f49cf64c517667dcec1b8e2262a22599b9c817d0b266163d268de1d78a"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs",
+        "blob": "bed1bf4d7c188565c1ea538ecab326a5ce3b2545",
+        "sha256": "bb2250160f3970b032f074ccca8b4fcbec4e60384bd825c9a240776cf20844ed"
+      },
+      {
+        "path": "patches/splatoon3/tests/noct-tessellation-native-actor.test.mjs",
+        "blob": "7d665e82a95ec498748fc95c49a72ad10e8bae3d",
+        "sha256": "8545e69130d05a312bf1e86dd701766b1e4222d68619c54c73147dfe9d94e366"
+      }
+    ],
+    "variantIds": [
+      "Charger_Quick_01",
+      "Maneuver_Short_02",
+      "Shelter_Normal_01",
+      "Slosher_Washtub_01",
+      "Stringer_Normal_02",
+      "Stringer_Short_02"
+    ],
+    "baseModelCount": 65,
+    "testFiles": [
+      "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+      "patches/splatoon3/tests/noct-tessellation-native-actor.test.mjs"
+    ],
+    "pass": 11
+  }
+}

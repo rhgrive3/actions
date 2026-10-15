@@ -1,0 +1,113 @@
+{
+  "status": "frozen diagnostic pending final independent binding review and GPU execution",
+  "controls": 39,
+  "sourcePerGraph": 11,
+  "emittedPerGraph": 11,
+  "siteLocalPNGs": 16,
+  "independentComparisonViews": 12,
+  "traceTicks": 960,
+  "files": [
+    {
+      "path": "capture-noct-cost.mjs",
+      "sha256": "7c5c17a64c9370ae3427585eafce5b9f3f97bdaacee1cf08c86aafa7e9fedc7f",
+      "blob": "e3180c3e5e52259d27177d38ce4a577e84123b26",
+      "bytes": 10385
+    },
+    {
+      "path": "capture-noct-integration.mjs",
+      "sha256": "cce9fab1b6008c970d80193010e83c19b709e54d6a0f491560e21c98c48e6923",
+      "blob": "f11941aca8d4b9e456444ac3468f6df97cc282e7",
+      "bytes": 12979
+    },
+    {
+      "path": "noct-contract.mjs",
+      "sha256": "2cdf5711a0dc39c5c27d604293207a0aae44226835c5e47a1739dc075170084f",
+      "blob": "0bb804bed0b43fa075a4c5bc0b688dffba675652",
+      "bytes": 3521
+    },
+    {
+      "path": "noct-contract.test.mjs",
+      "sha256": "1274b54c454bb7ec473e98988006dfb0fdef41441a7eac968d28f2dcd07894d1",
+      "blob": "ddc1d0145a5fc403a49115a09434bf331551eeeb",
+      "bytes": 2509
+    },
+    {
+      "path": "noct-plan.mjs",
+      "sha256": "8cf58a4005abbd03d7897068ed991b9736c5b6b9f4d037c43c9e32eb11aa6b00",
+      "blob": "b51dd0622474b6951310c76e93724086eb30ed5d",
+      "bytes": 1905
+    },
+    {
+      "path": "noct-plan.test.mjs",
+      "sha256": "640b9e2c09cf40e5f45b00d59a1f0637c3e79d1d53e8fc7eb236d0e3691b0347",
+      "blob": "82068b452086cd4e6f701ef31c0e699d5b041d70",
+      "bytes": 1639
+    },
+    {
+      "path": "noct-capture-integrity.test.mjs",
+      "sha256": "8d95a94f24534a88c019e682438aa879b346943ef9a8102958aae67b02c75ac2",
+      "blob": "87edfc140f06daa0a7af771ef22d240f129d45bb",
+      "bytes": 1621
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d39ac0d873875e60798c736f2b35c4371cd73531c96eae240e79a5069003ab02",
+      "blob": "dbb52e8b2527b55e090edc8d68183594e295df9b",
+      "bytes": 2782
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "blob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "5050ed474519e930879cec0246fb75ef07a66a2f4690eaf94dc35e85b0d489b4",
+      "blob": "4e5c7c2cda0349265fa81ce44182758396d982ad",
+      "bytes": 1342
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "dc23e6e7d434adb6f5f326b94904dff566f1c81581e222038557702e0bdf5321",
+      "blob": "95dfca95c89e56299b8471829a31fc113150d1f8",
+      "bytes": 2538
+    },
+    {
+      "path": "select-heads.mjs",
+      "sha256": "24029cee8f5e8dfa1e3e23fed2e0acf9290ab67262727b777f0fc05d933ec7d0",
+      "blob": "17e7ab391476b33f7cea7d4d8d2cacf9f3ae81e3",
+      "bytes": 237
+    },
+    {
+      "path": "check-noct-source.mjs",
+      "sha256": "2942775d7239ab7c30fb6ea5bf5d47d1144cf96095a07e7a632881c2858a7a11",
+      "blob": "b322cf42f90c79b814e4da789afe7afb2dbfbd4b",
+      "bytes": 1435
+    },
+    {
+      "path": "run-noct-tests.mjs",
+      "sha256": "6e9b7500bd0a377c9aeb5dbd784e76e61e3d7cf1015247b85fc79f6e7c58b22f",
+      "blob": "ef1eea6de6c9bd1c6a943b9beca7951ab7f9555f",
+      "bytes": 892
+    },
+    {
+      "path": "ACCEPTANCE_SCOPE.txt",
+      "sha256": "542b31ad5006978609ada798dfa67d3b74a1a3d29b7feb7b5d3d5ecbb1cae21e",
+      "blob": "b50e5e15615dc7675c44fbf045bd087b54c5e421",
+      "bytes": 2585
+    },
+    {
+      "path": ".github/workflows/noct-cost-acceptance.yml",
+      "sha256": "101fb9351ff08091fd54d93923321138f661fce497bc18b61c1434d6defbde5e",
+      "blob": "c8a71103bc527849f94463f970445374f7165522",
+      "bytes": 2959
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "b0f8daddc55cafda161fc0e83255f1ec7d91b503adbbbef8805734bbb80fb853",
+      "blob": "acb2ec953ca2a4be207424f6750d5412bf625423",
+      "bytes": 2805
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+name: Review NOC-T bounded tessellation
+on:
+  push:
+    branches: [review/noct-cost-acceptance-20261015]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Select exact evaluation heads
+        run: node diagnostic/select-heads.mjs diagnostic/acceptance-plan.json "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CURRENT }}
+          persist-credentials: false
+          fetch-depth: 2
+          path: current
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.LIGHT }}
+          persist-credentials: false
+          fetch-depth: 2
+          path: light
+      - name: Bind exact source and model-only pair delta
+        run: |
+          mkdir -p evidence diagnostic/plans
+          node diagnostic/check-noct-source.mjs diagnostic/acceptance-plan.json current light diagnostic/plans
+      - name: Pinned dependencies and browser
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Fail-closed diagnostic controls
+        run: node --test diagnostic/noct-contract.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/noct-plan.test.mjs diagnostic/noct-capture-integrity.test.mjs
+      - name: Two source and production-emitted gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          for role in current light; do
+            node diagnostic/run-noct-tests.mjs diagnostic/acceptance-plan.json "$role" "$role" "evidence/$role"
+            (cd "$role" && node scripts/build-inkwave.mjs inkwave-public "../$role-site")
+            cp "$role-site/inkwave-build.json" "evidence/$role/build.json"
+            node diagnostic/run-noct-tests.mjs diagnostic/acceptance-plan.json "$role" "$role" "evidence/$role" "$role-site"
+          done
+      - name: Current native held-weapon acceptance
+        run: node diagnostic/capture-noct-integration.mjs --plan diagnostic/plans/current-plan.json --source current --site current-site --out evidence/current/images
+      - name: Light native matched acceptance
+        run: node diagnostic/capture-noct-integration.mjs --light --reference evidence/current/images/noct-result.json --plan diagnostic/plans/light-plan.json --source light --site light-site --out evidence/light/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: noct-cost-acceptance
+          path: evidence
+          if-no-files-found: error

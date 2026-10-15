@@ -1,0 +1,1 @@
+import fs from'node:fs';import{validatePlan}from'./noct-plan.mjs';const[file,out]=process.argv.slice(2);const p=validatePlan(JSON.parse(fs.readFileSync(file)));fs.appendFileSync(out,`CURRENT=${p.current.head}\nLIGHT=${p.light.head}\n`);

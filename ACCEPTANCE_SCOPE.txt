@@ -1,0 +1,14 @@
+NOC-T bounded tessellation evaluation, based on the original first-batch candidate d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd.
+The later first-batch ee29 successor changes two unrelated regression tests; these evaluation graphs deliberately retain the original d0 source tree except the explicit catalog hand-clock fix and portable Actor regression. No main catalog paint changes are imported.
+
+Current and light both contain the exact old-graph catalog fix 94867aff and the same two Actor tests. Light changes only the NOC-T model leaf bb225016. Native upper-window contour ray mask is preserved; the failed earlier e32 prototype remains historical evidence.
+
+Each graph must pass the unchanged nine NOC-T tests plus two real Actor tests, in source and production-emitted modes: 11 passed, zero skipped, for each of four runs. A two-build comparison is necessary because each production registry exposes one NOC-T definition. Both builds use the same pinned production builder and dependencies.
+
+The controlled native component render uses day Environment256/PMREM, Neutral tone mapping, exposure .94, sRGB, identical camera and environment receipts, actual emitted Actor/Character/Runner, both hands' moving triggers, projectile admissions, muzzle/part pose, clock/reset, and strict source/tree/input/artifact/delivery bindings. It is not a full Game/compositor screenshot or a physical-device FPS measurement.
+
+Each site renders base plus selected NOC-T, both teams, rest/firing: eight frames. Both site-local sets are preserved (16 PNG). The independent visual comparison contains 12 views: base/current/light, two teams, two states; the light site's four repeated base views are additional controls, not extra distinct variants. Every saved image must pass projection and foreground/color gates.
+
+CPU geometry inventory counts unique geometries and typed-array identities across all native pivot descendants, including hidden/far geometry. It is not measured GPU allocation. Expected array bytes: current579452, light411428. Expected visible near submitted triangles: current22196, light15672. Exact source-builder totals use a different inventory and are recorded separately.
+
+First observed construction/render and steady render plus full RGBA readPixels are separated. Four warm samples are discarded, followed by twelve alternating samples per role/state. These timings include readback, browser fixture and SwiftShader effects and do not establish gameplay FPS gains. Native trace equality and source/emitted regression gates are not relaxed to accept timing or image results.
