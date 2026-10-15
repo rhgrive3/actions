@@ -55,7 +55,7 @@ function moveFactor(c) {
   return m * m * (3 - 2 * m);
 }
 function postureState(retarget) {
-  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, carry: 0, time: null, neck: 0 });
+  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false });
 }
 /** Smoothed 0 standing … 1 moving, so a stop or start never snaps the carry or the support hand. */
 function smoothMove(retarget) { return postureState(retarget).move; }
@@ -75,15 +75,11 @@ export function sourceEmergePostureWeight(c) {
 export function sourcePostureWeight(retarget) {
   return postureState(retarget).weight;
 }
-/** The weapon carry is a separate, transition-aware envelope. Ground move to
- * air and air to landing retain the original carry; a form/manual clip owns its
- * weapon, and returning to the humanoid gait eases the carry back in. */
+/** Genuine grounded idle/move acquires the moving shooter's carry.
+ * Only that prior acquisition survives into air/land; a new visible humanoid
+ * emerging into air must not borrow the old squid's weapon pose. */
 export function sourceCarryWeight(retarget) {
-  return postureState(retarget).carry;
-}
-function ordinaryCarryState(c) {
-  return !!c && !c.manual && c.formKid === true &&
-    (CORRECTED_STATES.has(c.state) || c.state === 'air' || c.state === 'land');
+  return postureState(retarget).carryEligible ? 1 : 0;
 }
 function formClipOwnsCarry(c) {
   return !c || !!c.manual || c.formKid === false ||
@@ -97,18 +93,20 @@ function advanceWeight(retarget) {
   // The first frame (or a controller clock that went backwards) snaps to the wanted state; a
   // paused (dt = 0) frame holds the weight; otherwise blend at a frame-rate independent rate.
   const move = moveFactor(c);
-  const carryWanted = enabled && ordinaryCarryState(c) ? 1 : 0;
-  if (!enabled) { st.weight = 0; st.carry = 0; }
-  if (!enabled || st.time === null || now === null || now < st.time) { st.weight = enabled ? wanted : 0; st.move = move; st.carry = carryWanted; }
+  // Preserve ordinary moving->air->land carry continuity. Only grounded
+  // idle/move can acquire it; ToHuman/manual/squid reset that origin state.
+  if (!enabled || !c || c.manual || c.formKid === false ||
+      st.time === null || now === null || now < st.time) st.carryEligible = false;
+  if (enabled && c && !c.manual && c.formKid !== false) {
+    if (CORRECTED_STATES.has(c.state)) st.carryEligible = true;
+    else if (c.state !== 'air' && c.state !== 'land') st.carryEligible = false;
+  }
+  if (!enabled) st.weight = 0;
+  if (!enabled || st.time === null || now === null || now < st.time) { st.weight = enabled ? wanted : 0; st.move = move; }
   else {
     const dt = clamp(now - st.time, 0, 0.1);
     st.weight += (wanted - st.weight) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
     st.move += (move - st.move) * (1 - Math.exp(-SOURCE_POSTURE.standResponse * dt));
-    // The visible ToHuman/ToSquid or manual clip must not borrow a ground
-    // carry. On exit, fade in instead of switching straight to a fully
-    // rotated airborne weapon while posture weight is still decaying.
-    if (formClipOwnsCarry(c)) st.carry = 0;
-    else st.carry += (carryWanted - st.carry) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
   }
   // The source transition's visible silhouette must not remain hunched merely
   // because the preceding squid state had a zero posture correction weight.
@@ -154,8 +152,8 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
 export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
   if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
-      formClipOwnsCarry(controller)) return;
-  const w = sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
+      formClipOwnsCarry(controller) || !sourceCarryWeight(controller.retarget)) return;
+  const w = sourcePostureWeight(controller.retarget) *
     clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
   if (w <= 1e-4) return;
   const k = SOURCE_POSTURE.carry;
