@@ -50,10 +50,10 @@ variant('Maneuver_Gallon_01','s3-maneuver-gallon','Glooga Dualies Deco',{'#2346c
 variant('Maneuver_Dual_01','s3-maneuver-dual','Custom Dualie Squelchers',{},(n,p,i,c)=>n==='body'&&within(p,i,0,.09,-.02,.035,.028,.04)&&close(c,i,color('#c0281e'))?'#d8c22c':null);
 variant('Maneuver_Short_01','s3-maneuver-short','Dapple Dualies Nouveau',{'#a01a5c':'#26438b'});
 variant('Maneuver_Stepper_01','s3-maneuver-stepper','Light Tetra Dualies',{'#202328':'#e5e5df','#702891':'#d3423c'});
-variant('Shelter_Focus_01','s3-shelter-focus','Recycled Brella 24 Mk II',{'#d9532a':'#ad723b'},(n,p,i,c)=>n==='body'&&p.getZ(i)>.53&&close(c,i,color('#d9532a'))?'#885294':null);
+variant('Shelter_Focus_01','s3-shelter-focus','Recycled Brella 24 Mk II',{'#bd4728':'#ad723b'},(n,p,i,c)=>n==='body'&&p.getZ(i)>.53&&close(c,i,color('#bd4728'))?'#885294':null);
 variant('Stringer_Explosion_01','s3-stringer-explosion','Custom Wellstring V',{},(n,p,i,c)=>n==='body'&&p.getY(i)<.02&&Math.abs(p.getZ(i))<.04&&close(c,i,color('#1f5d46'))?'#25292c':null);
 variant('Maneuver_Normal_01','dualies','Enperry Splat Dualies',{'#2f8a3a':'#d3ab33','#c02a8e':'#ecebe6'});
-variant('Shelter_Wide_01','s3-shelter-wide','Tenta Sorella Brella',{'#d8262c':'#dcc536'});
+variant('Shelter_Wide_01','s3-shelter-wide','Tenta Sorella Brella',{'#b72328':'#dcc536'});
 variant('Stringer_Short_01','s3-stringer-short','REEF-LUX 450 Deco',{},(n,p,i,c)=>n==='body'&&p.getZ(i)>.09&&close(c,i,color('#a9adb4'))?'#24272a':null);
 variant('Spinner_Hyper_01','s3-spinner-hyper','Custom Hydra Splatling',{'#e8c22a':'#8ccddc'});
 variant('Charger_Pencil_01','s3-charger-pencil','Snipewriter 5B',{'#2452c9':'#8b3037'});

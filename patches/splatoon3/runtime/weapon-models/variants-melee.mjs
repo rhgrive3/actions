@@ -91,7 +91,7 @@ const rows = [
  ['Saber_Normal_02','s3-saber-normal','Stickerz Splatana Stamper',{'#26346f':'#dbe94a','#6f737b':'#28272d','#ecebe6':'#24242b'},'stickerz'],
  ['Saber_Lite_01','s3-saber-lite','Splatana Wiper Deco',{'#1a1a1d':'#d8d9d5'},'wiper'],
  ['Saber_Lite_02','s3-saber-lite','Splatana Wiper RUS-T',{'#1a1a1d':'#815c40','#b8bcc4':'#79907c'},'rust'],
- ['Saber_Heavy_01','s3-saber-heavy','Charcoal Decavitator',{'#eceef0':'#20212e','#58c1e8':'#c8a64d','#d9e6ea':'#4b4b5e','#243a8f':'#a28b49'},null],
+ ['Saber_Heavy_01','s3-saber-heavy','Charcoal Decavitator',{'#f3f4e8':'#20212e','#67b9db':'#c8a64d','#dde9e6':'#4b4b5e','#92dcca':'#20212e'},null],
 ];
 function detail(d, type) {
   if (!type) return;
