@@ -1,0 +1,52 @@
+name: Qualify main7e51 range pause readiness
+on:
+  push:
+    branches: [review/main7e51-pause-readiness-20261015]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gate diagnostic helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pause-diagnostic/tests
+          node --check scripts/check-inkwave-range.mjs
+          node --test --test-reporter=tap scripts/pause-entrance-ready.test.mjs | tee pause-diagnostic/tests/source.tap
+          grep -qx '# tests 6' pause-diagnostic/tests/source.tap
+          grep -qx '# pass 6' pause-diagnostic/tests/source.tap
+          grep -qx '# fail 0' pause-diagnostic/tests/source.tap
+          grep -qx '# skipped 0' pause-diagnostic/tests/source.tap
+      - uses: actions/checkout@v4
+        with:
+          ref: 7e51deb687252bc7d9490af3cd99f6f1dc905a8e
+          path: _frozen_source
+      - name: Build immutable source with original compiler
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        run: |
+          test "$(git -C _frozen_source rev-parse HEAD)" = 7e51deb687252bc7d9490af3cd99f6f1dc905a8e
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          (cd _frozen_source && node scripts/build-inkwave.mjs inkwave-public ../_frozen_site)
+      - name: Install original browser matrix
+        run: npx playwright install --with-deps chromium webkit
+      - name: Qualify bounded readiness on immutable main runtime
+        run: node scripts/check-inkwave-range.mjs --source _frozen_source --site _frozen_site --evidence-dir pause-diagnostic/evidence --profile-dir pause-diagnostic/profiles
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main7e51-pause-readiness-${{ github.sha }}
+          path: |
+            pause-diagnostic/evidence
+            pause-diagnostic/tests
+          if-no-files-found: error
+          retention-days: 7

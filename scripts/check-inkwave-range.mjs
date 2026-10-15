@@ -11,6 +11,10 @@
 //   node scripts/check-inkwave-range.mjs --site <built site> --evidence-dir <dir> --profile-dir <dir> [--quick]
 //   (RANGE_BROWSERS=chromium limits the browsers for a local run; CI runs all of them)
 import fs from 'node:fs';
+import {execFileSync} from 'node:child_process';
+const FROZEN_SOURCE='7e51deb687252bc7d9490af3cd99f6f1dc905a8e';
+const FROZEN_CONTENT='8a3044f055637ea2ebdafb3be5c4c2ea471be44c5c46ba8754bbabc20acf319a';
+import {waitForPauseEntrance,collectPauseEntranceEvidence,assertArtifactDigest} from './pause-entrance-ready.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -19,6 +23,9 @@ import { pathToFileURL } from 'node:url';
 
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), profile = option('--profile-dir');
+const sourceRoot=option('--source');
+if(execFileSync('git',['-C',sourceRoot,'rev-parse','HEAD'],{encoding:'utf8'}).trim()!==FROZEN_SOURCE)throw Error('Frozen source mismatch');
+if(execFileSync('git',['-C',sourceRoot,'status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim())throw Error('Frozen source dirty');
 const quick = process.argv.includes('--quick');
 const signageOnly = process.argv.includes('--signage-only');
 const physical = (p) => (fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p)));
@@ -32,14 +39,20 @@ const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'
 if (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw new Error('Build identity mismatch');
 if (!Object.keys(manifest.files).some((k) => k.startsWith('practice-range/'))) throw new Error('Build does not include the practice range layer');
 
+if(manifest.contentHash!==FROZEN_CONTENT||manifest.build.esbuild!=='0.28.2')throw Error('Frozen emitted build mismatch');
+for(const [file,digest] of Object.entries(manifest.artifacts))if(hash(fs.readFileSync(path.join(site,file)))!==digest)throw Error('Artifact mismatch '+file);
+fs.writeFileSync(path.join(evidence,'capture-input-receipt.json'),JSON.stringify({sourceSha:FROZEN_SOURCE,diagnosticSha:process.env.GITHUB_SHA||null,contentHash:manifest.contentHash,manifestSha256:hash(fs.readFileSync(path.join(site,'inkwave-build.json'))),scriptSha256:hash(fs.readFileSync(new URL(import.meta.url))),helperSha256:hash(fs.readFileSync(new URL('./pause-entrance-ready.mjs',import.meta.url)))},null,2));
 const pw = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };
+const requestFailures=[],requestedArtifacts=new Set(),manifestDigest=hash(fs.readFileSync(path.join(site,'inkwave-build.json')));
 const server = http.createServer((q, r) => {
   try {
     const p = decodeURIComponent(new URL(q.url, 'http://x').pathname), f = path.resolve(site, '.' + (p === '/' ? '/index.html' : p));
     if (!f.startsWith(site + path.sep) || !fs.statSync(f).isFile()) throw 0;
-    r.writeHead(200, { 'content-type': mime[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' }); fs.createReadStream(f).pipe(r);
-  } catch { r.writeHead(404); r.end('Not found'); }
+    const key=path.relative(site,f).split(path.sep).join('/'),bytes=fs.readFileSync(f);
+    assertArtifactDigest(key,hash(bytes),manifest.artifacts,manifestDigest);requestedArtifacts.add(key);
+    r.writeHead(200, { 'content-type': mime[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' }); r.end(bytes);
+  } catch (error) { requestFailures.push({url:q.url,error:String(error)}); r.writeHead(404); r.end('Not found'); }
 });
 await new Promise((res) => server.listen(0, '127.0.0.1', res));
 const base = `http://127.0.0.1:${server.address().port}/`;
@@ -64,6 +77,9 @@ for (const run of RUNS) {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => out.errors.push(String(e.message).slice(0, 400)));
     page.on('response', (r) => { if (r.status() >= 400) out.missing.push(r.status() + ' ' + r.url()); });
+    page.on('console',m=>{if(m.type()==='error')out.errors.push('console: '+m.text());});
+    page.on('requestfailed',r=>out.missing.push('failed '+r.url()));
+    await page.route('**/*',async route=>{if(new URL(route.request().url()).origin!==base.slice(0,-1)){out.missing.push('unknown origin '+route.request().url());await route.abort();}else await route.continue();});
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', lang: 'en' })));
     await page.goto(base + '?range&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForFunction(() => (window.__G?.match?.range && window.__G.match.state === 'playing') || document.getElementById('boot-error')?.textContent, null, { timeout: 420000 });
@@ -226,8 +242,16 @@ for (const run of RUNS) {
     // the range pause screen + travel
     await page.evaluate(() => window.__inkwave.pause());
     await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
-    await page.waitForTimeout(1200);
+    let pauseReadinessError;
+    try { await waitForPauseEntrance(page); }
+    catch (error) { pauseReadinessError = error; }
+    out.checks.pauseEntrance = {settled: !pauseReadinessError,
+      error: pauseReadinessError ? String(pauseReadinessError) : null};
+    out.checks.pauseEntrance.state = await page.evaluate(collectPauseEntranceEvidence);
+    fs.writeFileSync(path.join(evidence, run.name + '-pause-readiness.json'),
+      JSON.stringify({contentHash:manifest.contentHash,...out.checks.pauseEntrance},null,2));
     await page.screenshot({ path: path.join(evidence, run.name + '-pause.png'), timeout: 240000 });
+    if (pauseReadinessError) throw pauseReadinessError;
     // The hub ring remains readable. The scrollable picker must expose
     // all 65 original mains plus their 95 non-replica _01/_02 kits, not drop
     // entries when its catalogue grows beyond the former 65-item limit.
@@ -386,6 +410,8 @@ for (const run of RUNS) {
   console.log(run.name, out.status, out.failure || '');
 }
 server.close();
+if(requestFailures.length)failed=true;
+fs.writeFileSync(path.join(evidence,'capture-request-receipt.json'),JSON.stringify({sourceSha:FROZEN_SOURCE,contentHash:manifest.contentHash,requestedArtifacts:[...requestedArtifacts],requestFailures},null,2));
 const result = { scope: signageOnly ? 'signage-only' : 'full-range', fullAcceptance: !signageOnly, status: failed ? 'failed' : 'passed', contentHash: manifest.contentHash, runs: results };
 fs.writeFileSync(path.join(evidence, 'range-result.json'), JSON.stringify(result, null, 2) + '\n');
 if (failed) process.exitCode = 1;
