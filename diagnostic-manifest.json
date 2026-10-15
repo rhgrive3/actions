@@ -1,0 +1,151 @@
+{
+  "scope": "Exact fbd main versus PR1486 eca901a; current-main source/emitted/GPU pending",
+  "controls": 44,
+  "sourcePerGraph": 11,
+  "emittedPerGraph": 11,
+  "siteLocalPNGs": 16,
+  "independentComparisonViews": 12,
+  "traceTicks": 960,
+  "files": [
+    {
+      "path": "capture-noct-cost.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/capture-noct-cost.mjs",
+      "bytes": 10385,
+      "sha256": "7c5c17a64c9370ae3427585eafce5b9f3f97bdaacee1cf08c86aafa7e9fedc7f",
+      "blob": "e3180c3e5e52259d27177d38ce4a577e84123b26"
+    },
+    {
+      "path": "capture-noct-integration.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/capture-noct-integration.mjs",
+      "bytes": 12972,
+      "sha256": "14d5b47368e401e9b8900453190aea6e98dd45380c83b4e8ee948ac8b9db0194",
+      "blob": "f8f64144a892a863bb852e9ebf77e87df48f1d72"
+    },
+    {
+      "path": "noct-contract.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/noct-contract.mjs",
+      "bytes": 3521,
+      "sha256": "2cdf5711a0dc39c5c27d604293207a0aae44226835c5e47a1739dc075170084f",
+      "blob": "0bb804bed0b43fa075a4c5bc0b688dffba675652"
+    },
+    {
+      "path": "noct-contract.test.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/noct-contract.test.mjs",
+      "bytes": 2509,
+      "sha256": "1274b54c454bb7ec473e98988006dfb0fdef41441a7eac968d28f2dcd07894d1",
+      "blob": "ddc1d0145a5fc403a49115a09434bf331551eeeb"
+    },
+    {
+      "path": "noct-plan.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/noct-plan.mjs",
+      "bytes": 6012,
+      "sha256": "66ddb85163f143c9ef72ff60dd65726369d1b7707bb1916905862fe2274cd172",
+      "blob": "e754369c53ad4323b009a18e7f4243a2a0037491"
+    },
+    {
+      "path": "noct-plan.test.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/noct-plan.test.mjs",
+      "bytes": 981,
+      "sha256": "96dbc5cf9f86f65e5bd05f0bb6429d22693c721509ab13ff60f9fa1b5ed6278f",
+      "blob": "c39c605c1790c6d8c3be2f6ae26d7c6bb8fe2abb"
+    },
+    {
+      "path": "noct-capture-integrity.test.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/noct-capture-integrity.test.mjs",
+      "bytes": 1621,
+      "sha256": "8d95a94f24534a88c019e682438aa879b346943ef9a8102958aae67b02c75ac2",
+      "blob": "87edfc140f06daa0a7af771ef22d240f129d45bb"
+    },
+    {
+      "path": "build-binding.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/build-binding.mjs",
+      "bytes": 2782,
+      "sha256": "d39ac0d873875e60798c736f2b35c4371cd73531c96eae240e79a5069003ab02",
+      "blob": "dbb52e8b2527b55e090edc8d68183594e295df9b"
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/build-binding.test.mjs",
+      "bytes": 2896,
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "blob": "ea2b357a4151e2238224853aee5abe369a18deef"
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/capture-checkpoint.mjs",
+      "bytes": 1342,
+      "sha256": "5050ed474519e930879cec0246fb75ef07a66a2f4690eaf94dc35e85b0d489b4",
+      "blob": "4e5c7c2cda0349265fa81ce44182758396d982ad"
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/capture-checkpoint.test.mjs",
+      "bytes": 2538,
+      "sha256": "dc23e6e7d434adb6f5f326b94904dff566f1c81581e222038557702e0bdf5321",
+      "blob": "95dfca95c89e56299b8471829a31fc113150d1f8"
+    },
+    {
+      "path": "select-heads.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/select-heads.mjs",
+      "bytes": 237,
+      "sha256": "24029cee8f5e8dfa1e3e23fed2e0acf9290ab67262727b777f0fc05d933ec7d0",
+      "blob": "17e7ab391476b33f7cea7d4d8d2cacf9f3ae81e3"
+    },
+    {
+      "path": "check-noct-source.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/check-noct-source.mjs",
+      "bytes": 1356,
+      "sha256": "f3713ce5eb152e2866dc938a76a26f1096008a5a73b6e9f5baa79f7d30a33f10",
+      "blob": "dc9d06d5935338913854fdbf2a68d37fbbc7c9ba"
+    },
+    {
+      "path": "run-noct-tests.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/run-noct-tests.mjs",
+      "bytes": 1086,
+      "sha256": "758ffe06a9598912709f2d163524ba4ae1db584f14a6d9592de8dd8651acbeb2",
+      "blob": "f6aa6c7091ed082e72a68c28c8eed6d785c592f6"
+    },
+    {
+      "path": "ACCEPTANCE_SCOPE.txt",
+      "fullContentPath": "/tmp/noct-main-browser/ACCEPTANCE_SCOPE.txt",
+      "bytes": 567,
+      "sha256": "56f31121cc9fc7a7daf091b04f4a87411539a7bd3aea6793eed72bb6ed3b95fb",
+      "blob": "95505ec87618a6db3cb78eae6cf87e1f195a02e2"
+    },
+    {
+      "path": ".github/workflows/noct-cost-acceptance.yml",
+      "fullContentPath": "/tmp/noct-main-browser/noct-gpu.yml",
+      "bytes": 2996,
+      "sha256": "3b8a16d335c37e2bceb2d53bbe55fad311734b6e94dc5bdd20d8249a27f6a3f9",
+      "blob": "e34167a9c6f584dca1bb1873de99a904215983f4"
+    },
+    {
+      "path": "acceptance-plan.json",
+      "fullContentPath": "/tmp/noct-main-browser/acceptance-plan.json",
+      "bytes": 6737,
+      "sha256": "b127c777b80947a1a893f7ee900d7c815860f32b7bc05b6a4ef3ee3ebedae7ce",
+      "blob": "6367e4dccd6f6cddf6a07b38e129984c4bfddab7"
+    },
+    {
+      "path": "noct-tessellation-native-actor.test.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/noct-tessellation-native-actor.test.mjs",
+      "bytes": 3228,
+      "sha256": "a72464d2c2621355d22486fea3615634dedcba941cd20ada13a21efad4b6dbcb",
+      "blob": "c50e11dd85ab49c3363370243f6ee847d8605ab3"
+    },
+    {
+      "path": "source-pair.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/source-pair.mjs",
+      "bytes": 261,
+      "sha256": "d473db735da0f2d16b9831df8e9224d82213b5ff9f2bbaaf149ba85092e07860",
+      "blob": "c5af302eca030a95f19b5129943c8a99fa2ed397"
+    },
+    {
+      "path": "source-pair.test.mjs",
+      "fullContentPath": "/tmp/noct-main-browser/source-pair.test.mjs",
+      "bytes": 817,
+      "sha256": "447d4d92e8db9418ff90db731c5923e6c9e33c3d32ac755ab7ad73f5619c2681",
+      "blob": "de9418c45081d84485afb0056b45be25fe1bb98b"
+    }
+  ]
+}

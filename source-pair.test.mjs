@@ -1,0 +1,4 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import{validateSourcePair}from'./source-pair.mjs';import{MODEL,CATALOG,validatePlan}from'./noct-plan.mjs';
+const p=validatePlan(JSON.parse(fs.readFileSync(new URL('./acceptance-plan.json',import.meta.url))));const actual=()=>({currentHead:p.baseHead,lightParent:p.current.head,changedPaths:[MODEL]});
+test('exact main/model-only source pair accepted',()=>validateSourcePair(p,actual()));
+for(const[n,fn]of Object.entries({oldBase:r=>r.currentHead='3907cf12bbce1ab4e7d1bc090a3e95408700b314',wrongParent:r=>r.lightParent='0'.repeat(40),catalogInjection:r=>r.changedPaths.push(CATALOG),missingModel:r=>r.changedPaths=[]})){test('source pair rejects '+n,()=>{const r=actual();fn(r);assert.throws(()=>validateSourcePair(p,r));});}

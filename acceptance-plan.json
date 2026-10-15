@@ -1,0 +1,193 @@
+{
+  "baseHead": "fbdcacb690ec5c9abd10e14d6b623a6f4206aab0",
+  "current": {
+    "head": "fbdcacb690ec5c9abd10e14d6b623a6f4206aab0",
+    "tree": "fd4f25b5277550c81b8108caa7460a2f217946c5",
+    "registrySHA256": "d9b7ed3cb89a7ac28839631bf2fe85b5924bd3769438854abf57d6edc499b4fa",
+    "payload": [
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs",
+        "blob": "29ffc8daa60c5d7bcb7930bf93adb8b5199a484d",
+        "sha256": "1ecd5994f70d0bf87f25a6b495531ea8ab479c35933e120d8abf5f1b4a46f48a"
+      },
+      {
+        "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+        "blob": "9d23bc4a62ad972191179e9aada4712f44aa54d7",
+        "sha256": "2f0652ee72f2858739b688bae61fa0ab8d47b28a38033bb2c342fe44d094e9e3"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+        "blob": "93473eeabf8e0ef14c926c0641e7d6600b5d6b88",
+        "sha256": "eff35c1bf2218d39547db2fae9d2d8b72bd0822975458a8e65d7130c06f66435"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+        "blob": "c29be833c719915d9db1c2f5da9c3f6f74621e33",
+        "sha256": "b91c581e911399a515955cdcbc95565c0a7040cb29f530142bb7b68a8f103fc1"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/dualies.mjs",
+        "blob": "7635ca39b2bf984e35e1e13f76bd8aebe41c49fd",
+        "sha256": "a8c515ef607bfa749a2cf3903bbdc4174561713da527bbcd06e08e683f0fad36"
+      },
+      {
+        "path": "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "blob": "e7467cf68ed00ca348ecbc675235c55baab32e92",
+        "sha256": "31c8ce7c9d0d18b476c676d0a0e0353f8495cfb31edc23e8f8dd7a78292ccc5e"
+      },
+      {
+        "path": "scripts/build-inkwave.mjs",
+        "blob": "4c44ce829b592c814eba671c6220aa3a3e896aee",
+        "sha256": "42fc5b74752605b41048b5f47e0cda7a2b0d30ae33282e152f4a8cb869dcd124"
+      }
+    ],
+    "variantIds": [
+      "Blaster_LightShort_01",
+      "Blaster_Light_01",
+      "Blaster_Middle_01",
+      "Blaster_Precision_01",
+      "Charger_Keeper_01",
+      "Charger_Light_01",
+      "Charger_LongScope_01",
+      "Charger_Long_01",
+      "Charger_NormalScope_01",
+      "Charger_NormalScope_02",
+      "Charger_Normal_01",
+      "Charger_Normal_02",
+      "Charger_Pencil_01",
+      "Charger_Quick_01",
+      "Maneuver_Long_01",
+      "Maneuver_Normal_01",
+      "Maneuver_Short_01",
+      "Maneuver_Short_02",
+      "Maneuver_Stepper_01",
+      "Roller_Heavy_01",
+      "Roller_Hunter_01",
+      "Saber_Heavy_01",
+      "Saber_Lite_02",
+      "Saber_Normal_01",
+      "Saber_Normal_02",
+      "Shelter_Focus_01",
+      "Shelter_Normal_01",
+      "Shelter_Wide_01",
+      "Shelter_Wide_02",
+      "Shooter_Blaze_01",
+      "Shooter_Precision_01",
+      "Shooter_QuickMiddle_01",
+      "Shooter_Short_01",
+      "Shooter_TripleMiddle_01",
+      "Shooter_TripleQuick_01",
+      "Slosher_Bathtub_01",
+      "Slosher_Diffusion_01",
+      "Slosher_Launcher_01",
+      "Slosher_Strong_01",
+      "Slosher_Washtub_01",
+      "Stringer_Explosion_01",
+      "Stringer_Normal_01",
+      "Stringer_Normal_02",
+      "Stringer_Short_01",
+      "Stringer_Short_02"
+    ],
+    "baseModelCount": 65,
+    "testFiles": [
+      "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+      "diagnostic:noct-tessellation-native-actor.test.mjs"
+    ],
+    "pass": 11
+  },
+  "light": {
+    "head": "eca901a65efea5f9675f3cab57380dcfc5f579fe",
+    "tree": "77ca942ade8422c7ce320ccf75919429ae69c943",
+    "registrySHA256": "07027ea112e21d75961c554b274ccf369ba83f3802f363aa2bffe08a66cad740",
+    "payload": [
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/variants-dapple-noct-followup.mjs",
+        "blob": "bed1bf4d7c188565c1ea538ecab326a5ce3b2545",
+        "sha256": "bb2250160f3970b032f074ccca8b4fcbec4e60384bd825c9a240776cf20844ed"
+      },
+      {
+        "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+        "blob": "9d23bc4a62ad972191179e9aada4712f44aa54d7",
+        "sha256": "2f0652ee72f2858739b688bae61fa0ab8d47b28a38033bb2c342fe44d094e9e3"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+        "blob": "93473eeabf8e0ef14c926c0641e7d6600b5d6b88",
+        "sha256": "eff35c1bf2218d39547db2fae9d2d8b72bd0822975458a8e65d7130c06f66435"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+        "blob": "c29be833c719915d9db1c2f5da9c3f6f74621e33",
+        "sha256": "b91c581e911399a515955cdcbc95565c0a7040cb29f530142bb7b68a8f103fc1"
+      },
+      {
+        "path": "patches/splatoon3/runtime/weapon-models/dualies.mjs",
+        "blob": "7635ca39b2bf984e35e1e13f76bd8aebe41c49fd",
+        "sha256": "a8c515ef607bfa749a2cf3903bbdc4174561713da527bbcd06e08e683f0fad36"
+      },
+      {
+        "path": "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "blob": "e7467cf68ed00ca348ecbc675235c55baab32e92",
+        "sha256": "31c8ce7c9d0d18b476c676d0a0e0353f8495cfb31edc23e8f8dd7a78292ccc5e"
+      },
+      {
+        "path": "scripts/build-inkwave.mjs",
+        "blob": "4c44ce829b592c814eba671c6220aa3a3e896aee",
+        "sha256": "42fc5b74752605b41048b5f47e0cda7a2b0d30ae33282e152f4a8cb869dcd124"
+      }
+    ],
+    "variantIds": [
+      "Blaster_LightShort_01",
+      "Blaster_Light_01",
+      "Blaster_Middle_01",
+      "Blaster_Precision_01",
+      "Charger_Keeper_01",
+      "Charger_Light_01",
+      "Charger_LongScope_01",
+      "Charger_Long_01",
+      "Charger_NormalScope_01",
+      "Charger_NormalScope_02",
+      "Charger_Normal_01",
+      "Charger_Normal_02",
+      "Charger_Pencil_01",
+      "Charger_Quick_01",
+      "Maneuver_Long_01",
+      "Maneuver_Normal_01",
+      "Maneuver_Short_01",
+      "Maneuver_Short_02",
+      "Maneuver_Stepper_01",
+      "Roller_Heavy_01",
+      "Roller_Hunter_01",
+      "Saber_Heavy_01",
+      "Saber_Lite_02",
+      "Saber_Normal_01",
+      "Saber_Normal_02",
+      "Shelter_Focus_01",
+      "Shelter_Normal_01",
+      "Shelter_Wide_01",
+      "Shelter_Wide_02",
+      "Shooter_Blaze_01",
+      "Shooter_Precision_01",
+      "Shooter_QuickMiddle_01",
+      "Shooter_Short_01",
+      "Shooter_TripleMiddle_01",
+      "Shooter_TripleQuick_01",
+      "Slosher_Bathtub_01",
+      "Slosher_Diffusion_01",
+      "Slosher_Launcher_01",
+      "Slosher_Strong_01",
+      "Slosher_Washtub_01",
+      "Stringer_Explosion_01",
+      "Stringer_Normal_01",
+      "Stringer_Normal_02",
+      "Stringer_Short_01",
+      "Stringer_Short_02"
+    ],
+    "baseModelCount": 65,
+    "testFiles": [
+      "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+      "diagnostic:noct-tessellation-native-actor.test.mjs"
+    ],
+    "pass": 11
+  }
+}
