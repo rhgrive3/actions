@@ -1,0 +1,96 @@
+{
+  "scope": "Existing main manual Jet Custom normal-light8 views; shared-site component, no runtime edits",
+  "head": "fbdcacb690ec5c9abd10e14d6b623a6f4206aab0",
+  "files": [
+    {
+      "path": "capture-jet-custom.mjs",
+      "sha256": "5b3753ad104df23526a7907cf8dc06bc9c96fd976ba3c41c76f865cec9f89f67",
+      "bytes": 15149
+    },
+    {
+      "path": "capture.test.mjs",
+      "sha256": "c5582e702afe35f43693117737eb00d268695cb2dd24b8b8feebffe6957d64e8",
+      "bytes": 6642
+    },
+    {
+      "path": "capture-jet-integration.mjs",
+      "sha256": "e2e7c4159ff3161ed8f61e3f3370e2a4a817cf6aadd2799a078553e164a0d8dd",
+      "bytes": 13301
+    },
+    {
+      "path": "jet-capture-contract.mjs",
+      "sha256": "268bcba7c2253ee9e4870713524e8d9e9786f1ce7c6b6b14f76ae3963cf07fa9",
+      "bytes": 2790
+    },
+    {
+      "path": "jet-capture-contract.test.mjs",
+      "sha256": "d2029df0745910fc858278f38ce45df0146f59c29735a264101ad8ed73e20870",
+      "bytes": 1669
+    },
+    {
+      "path": "source-frames.json",
+      "sha256": "6139793c54a8031addb14b5d4fac4d0cf9b8934af1728488b1cad9f156cb230a",
+      "bytes": 32253
+    },
+    {
+      "path": "jet-actor.test.mjs",
+      "sha256": "19f099e8f83139e43d3f68ca73e6db3aba4ae9065bba7de65c46c6c460470f2f",
+      "bytes": 4718
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "bytes": 2832
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "bytes": 1243
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+      "bytes": 2719
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "afd9cf1657fa5950f5427ef47c3bd5541c87bba5468e452849e41c4db2c7961a",
+      "bytes": 3695
+    },
+    {
+      "path": "preflight.mjs",
+      "sha256": "2d23cb1ceec9bac909e6bf06094b626070f1a46fc1927f1018233230e48da1cb",
+      "bytes": 1218
+    },
+    {
+      "path": ".github/workflows/jet-custom-acceptance.yml",
+      "sha256": "c937be605fcc37d39e21c4643d5fec030a4efbc08f935338d72f78aae258c8e5",
+      "bytes": 2583
+    },
+    {
+      "path": "capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "bytes": 478
+    },
+    {
+      "path": "capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "bytes": 1036
+    },
+    {
+      "path": "test-count.mjs",
+      "sha256": "ee2c9fddb7e39f553576d5cfccd10fc8a23d3f32863f292e3fda186c00807748",
+      "bytes": 513
+    },
+    {
+      "path": "test-count.test.mjs",
+      "sha256": "93769425ce8261478965eabe841c373f54249678358dc197b6a6d5435fc12333",
+      "bytes": 577
+    }
+  ]
+}

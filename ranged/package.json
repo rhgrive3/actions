@@ -1,0 +1,215 @@
+{
+  "scope": "Existing six manual appearances, exact fbd; no default or runtime edits. Common one-build integration component.",
+  "files": [
+    {
+      "path": "capture-ranged-six.mjs",
+      "sha256": "3fb93fd7e13111c98332895d278f75b2641caf0f5f225f67e07ad55b2b443c08",
+      "bytes": 16174
+    },
+    {
+      "path": "capture.test.mjs",
+      "sha256": "908867a252b59966531ef4bfd03fc8761fa848323d9ef7af047428f8dd5946ba",
+      "bytes": 7715
+    },
+    {
+      "path": "ranged-capture-contract.mjs",
+      "sha256": "1e5fd727b07fa5ea8f444c274b8ca3bf76fed3eda8ebd4debbafb815883dc889",
+      "bytes": 3153
+    },
+    {
+      "path": "contract.test.mjs",
+      "sha256": "752c2120683aa74b9636854aeb0545c0f8df7be75ba9c790af88ae681c59667c",
+      "bytes": 1623
+    },
+    {
+      "path": "source-frames.json",
+      "sha256": "2cb441f3ed2eadf413f1a64be352b97d46c66221dc288ddc3723c5796bfb658c",
+      "bytes": 206181
+    },
+    {
+      "path": "capture-ranged-integration.mjs",
+      "sha256": "eced09550b2bfff43da314393f27ac10a0ecc0beccd3e9c348f5b984e1cd5907",
+      "bytes": 13349
+    },
+    {
+      "path": "owner-actor.test.mjs",
+      "sha256": "8c2d4919545e4ca8f364778e23339363f72a3474f2333f11f1d1eaa2eefef452",
+      "bytes": 5526
+    },
+    {
+      "path": "remaining-actor.test.mjs",
+      "sha256": "34a9d6b229170504002f74e67c813e61ef5206307e3d03d59c3139f7cc9cc88c",
+      "bytes": 6478
+    },
+    {
+      "path": "disposal.test.mjs",
+      "sha256": "4b23221623b10d83dd896e18676b8a57d18ba3490adf6befbf5d6d3b4118ea8a",
+      "bytes": 3112
+    },
+    {
+      "path": "canopy.test.mjs",
+      "sha256": "b5dfb13916797d6fc6f4ea7929a03fffc0ab58b4829d58216ef1712ba59d832b",
+      "bytes": 5705
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "bytes": 2832
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "bytes": 1243
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+      "bytes": 2719
+    },
+    {
+      "path": "capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "bytes": 478
+    },
+    {
+      "path": "capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "bytes": 1036
+    },
+    {
+      "path": "preflight.mjs",
+      "sha256": "2d23cb1ceec9bac909e6bf06094b626070f1a46fc1927f1018233230e48da1cb",
+      "bytes": 1218
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "bc20e8c35b016f2f8799cbaa4dc87a574f0e73e5f5e2c317d33fe9d9ef8e5557",
+      "bytes": 2925
+    }
+  ],
+  "controls": 36,
+  "sourceFrames": 48,
+  "sourceReplay": {
+    "frames": 48,
+    "helperSHA256": "3fb93fd7e13111c98332895d278f75b2641caf0f5f225f67e07ad55b2b443c08",
+    "sameFinalBytes": true,
+    "renderer": "synthetic raster only; real GPU pending"
+  },
+  "sourceEmittedActorExpected": 10,
+  "sourceEmittedActorFiles": [
+    "owner-actor.test.mjs",
+    "remaining-actor.test.mjs",
+    "disposal.test.mjs",
+    "canopy.test.mjs"
+  ],
+  "sourceHead": "fbdcacb690ec5c9abd10e14d6b623a6f4206aab0",
+  "sourceTree": "fd4f25b5277550c81b8108caa7460a2f217946c5",
+  "requiredImagePairs": 24,
+  "imageGate": "Every matching base/manual image SHA must differ; same camera and exact common native state.",
+  "authoredCostDeltas": {
+    "Shelter_Compact_01": {
+      "drawCalls": 1,
+      "triangles": 0
+    },
+    "Spinner_Standard_01": {
+      "drawCalls": 0,
+      "triangles": 192
+    },
+    "others": {
+      "drawCalls": 0,
+      "triangles": 0
+    }
+  },
+  "inputs": [
+    {
+      "path": "/tmp/main-fbd-readonly/receipts/ranged-capture-source-23-consumed.json.gz",
+      "sha256": "744118140a7e2bb22284e69d2ea017f5f1ea30b433df9d8ce25248126fa0116b",
+      "inputs": 523
+    },
+    {
+      "path": "/tmp/main-fbd-readonly/receipts/ranged-capture-no-update-32-consumed.json.gz",
+      "sha256": "744118140a7e2bb22284e69d2ea017f5f1ea30b433df9d8ce25248126fa0116b",
+      "inputs": 523
+    },
+    {
+      "path": "/tmp/main-fbd-readonly/receipts/ranged-capture-final-7-consumed.json.gz",
+      "sha256": "744118140a7e2bb22284e69d2ea017f5f1ea30b433df9d8ce25248126fa0116b",
+      "inputs": 523,
+      "allExpectedEffectiveMatchOfficialMap": true
+    }
+  ],
+  "evidence": [
+    {
+      "path": "/tmp/ranged-six-capture/source.log",
+      "sha256": "798f31b06c595141fceab391b5eca604ed5df2571522f1a3849dddafe517828a"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/source.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/no-update.log",
+      "sha256": "90a348c175fcf85ecde54ed60e1b15c31ad678aa2b81e06e36ffd25117bf6743"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/no-update.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/all-controls.tap",
+      "sha256": "3c458eb66eb2d8566064f371bfd1a7d35f9e22d3bacc822ab24d7b090113194a"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/replay.mjs",
+      "sha256": "ed2043c5223ba4c3b651ec9a723760657972068eb11d195b0a35aca214865507"
+    },
+    {
+      "path": "/tmp/variant-main-inventory/ranged-six-actor-final.json",
+      "sha256": "fc191a7aab31e55532f247af43b028b36f8fba9d9271f04d739591803b5bd710"
+    },
+    {
+      "path": "/tmp/variant-main-inventory/ranged-owner-actor-receipt.json",
+      "sha256": "3da7eb782ad2af18d7363e59e9852af2fcf33693f0e02ab090121e41ff68b976"
+    },
+    {
+      "path": "/tmp/variant-main-inventory/ranged-six-receipt.json",
+      "sha256": "e4f429f2702d2b828a915edb121071b1177d18b06f302873902e7cdb16f77f0e"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/source-final.log",
+      "sha256": "26818ce94482d1d49f0da803c13894307d466a9e6b80b7dd3d75395452153e90"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/source-final.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/source-final-helper.sha",
+      "sha256": "96091942c92dc78e56cf731d02642c9659386570a2490cdbc5a3e9e7fad76539"
+    },
+    {
+      "path": "/tmp/ranged-six-capture/all-controls-v3.tap",
+      "sha256": "65a7321b05390146864c3b556bd606740a124b03082ecd6a39d99826aef67332"
+    }
+  ],
+  "limits": [
+    "New full production emitted and real GPU unexecuted.",
+    "Rest images qualify existing finish only; actual charged firing and canopy lifecycle are separate mandatory source/emitted Actor tests.",
+    "Camera uses same baseline fit; no new geometry, color or detail changes.",
+    "No-update negative uses prior helper with identical native clock gate; final controls also reject missing or transformed owned canopy. Earlier evidence retained with its original scope."
+  ],
+  "rows": [
+    "Maneuver_Gallon_01",
+    "Maneuver_Normal_02",
+    "Shelter_Compact_01",
+    "Spinner_Downpour_01",
+    "Spinner_HyperShort_01",
+    "Spinner_Standard_01"
+  ],
+  "finalDelta": "Compact manual canopyInk is required, position/quaternion/scale/visibility exactly equal canopy; owner color remains mandatory. Other rows retain every part matrix. Scope corrected to six rows/48 views."
+}

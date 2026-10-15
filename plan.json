@@ -1,0 +1,77 @@
+{
+  "status": "frozen local shared integration; independent review and publication pending",
+  "sourceHead": "fbdcacb690ec5c9abd10e14d6b623a6f4206aab0",
+  "sourceTree": "fd4f25b5277550c81b8108caa7460a2f217946c5",
+  "registrySHA256": "d9b7ed3cb89a7ac28839631bf2fe85b5924bd3769438854abf57d6edc499b4fa",
+  "singleCandidateCheckout": true,
+  "productionBuilds": 1,
+  "lanes": [
+    {
+      "id": "forge-annaki",
+      "package": "/tmp/forge-annaki-capture",
+      "manifestSHA256": "306b6726b959cebc23b9136bbb70d9266a1c3920d337535dddf12a3857c85654",
+      "sourceTests": 2,
+      "emittedTests": 2,
+      "images": 16,
+      "entry": "capture-forge-integration.mjs",
+      "review": "independent component PASS",
+      "packageSHA256": "b42df8a31d7aed9fee4b6485d4c72be8261d63aae587834e83fe1925baf9e457"
+    },
+    {
+      "id": "jet-custom",
+      "package": "/tmp/jet-custom-capture",
+      "sourceTests": 2,
+      "emittedTests": 2,
+      "images": 8,
+      "review": "independent component PASS",
+      "manifestSHA256": "aa4b9f0ca443813f8c359cf2508b1dbdf270a824b8de6009e375e334bab46e2b",
+      "packageSHA256": "d854a4c5ba77a57fcc639d60aa2fabe4c8d570058990f645df3cf603abc18a18"
+    },
+    {
+      "id": "ranged-six",
+      "images": 48,
+      "sourceTests": 10,
+      "emittedTests": 10,
+      "review": "independent component PASS",
+      "package": "/tmp/ranged-six-capture",
+      "packageSHA256": "b5974d3f2a9c2453d37458a205dd8f8be0ce149af4998b60e98a7ead3ed2e6ef"
+    }
+  ],
+  "imageTotal": 72,
+  "execution": [
+    "Verify every frozen package and identical source HEAD/tree/registry digest.",
+    "Run all required source tests against one immutable checkout.",
+    "Build once with pinned production builder and tools.",
+    "Run every required emitted suite against that same site.",
+    "Run each existing capture entry sequentially, preserving its independent environment setup, served-byte validation, cleanup and output directory.",
+    "After build succeeds, later capture lanes run even when an earlier capture fails; retain failed job state and all partial evidence.",
+    "Require every lane success; no aggregate success from only a subset."
+  ],
+  "limits": [
+    "Already published spinner/manual3/NOC diagnostics unchanged.",
+    "No runtime changes or default appearance changes.",
+    "No claim of measured CPU/FPS benefit."
+  ],
+  "jobTimeoutMinutes": 60,
+  "timeoutScope": "One 60-minute job for all three lanes replaces three standalone 45-minute templates; individual runtime and image gates are unchanged.",
+  "sourceTestsTotal": 14,
+  "emittedTestsTotal": 14,
+  "excludedPublication": "No manual3 Dual01/Dual02/JetCOBR source-frame data or validation payload is included.",
+  "laneBindings": [
+    {
+      "id": "forge",
+      "packageSHA256": "b42df8a31d7aed9fee4b6485d4c72be8261d63aae587834e83fe1925baf9e457",
+      "payloadFiles": 17
+    },
+    {
+      "id": "jet",
+      "packageSHA256": "d854a4c5ba77a57fcc639d60aa2fabe4c8d570058990f645df3cf603abc18a18",
+      "payloadFiles": 18
+    },
+    {
+      "id": "ranged",
+      "packageSHA256": "b5974d3f2a9c2453d37458a205dd8f8be0ce149af4998b60e98a7ead3ed2e6ef",
+      "payloadFiles": 18
+    }
+  ]
+}

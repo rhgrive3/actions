@@ -1,0 +1,95 @@
+name: Review existing manual weapon appearances together
+on:
+  push:
+    branches: [review/manual-main-shared-acceptance-20261015]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: fbdcacb690ec5c9abd10e14d6b623a6f4206aab0
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools once
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Bind all frozen components to one checkout
+        run: |
+          ln -s "$GITHUB_WORKSPACE/candidate" diagnostic/candidate
+          mkdir -p evidence/{forge,jet,ranged}
+          node diagnostic/shared-preflight.mjs
+          node --test diagnostic/shared-preflight.test.mjs diagnostic/test-count.test.mjs diagnostic/workflow.test.mjs
+          node diagnostic/forge/preflight.mjs
+          node diagnostic/jet/preflight.mjs
+          node diagnostic/ranged/preflight.mjs
+      - name: forge frozen controls
+        run: node --test diagnostic/forge/capture-resources.test.mjs diagnostic/forge/capture.test.mjs diagnostic/forge/forge-capture-contract.test.mjs diagnostic/forge/build-binding.test.mjs diagnostic/forge/capture-checkpoint.test.mjs
+      - name: forge exact source Actor tests
+        run: |
+          FORGE_SOURCE="$PWD/candidate" node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/forge/forge-actor.test.mjs > evidence/forge/source.tap
+          node diagnostic/test-count.mjs evidence/forge/source.tap 2
+      - name: jet frozen controls
+        run: node --test diagnostic/jet/test-count.test.mjs diagnostic/jet/capture-resources.test.mjs diagnostic/jet/capture.test.mjs diagnostic/jet/jet-capture-contract.test.mjs diagnostic/jet/build-binding.test.mjs diagnostic/jet/capture-checkpoint.test.mjs
+      - name: jet exact source Actor tests
+        run: |
+          JET_SOURCE="$PWD/candidate" node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/jet/jet-actor.test.mjs > evidence/jet/source.tap
+          node diagnostic/test-count.mjs evidence/jet/source.tap 2
+      - name: ranged frozen controls
+        run: node --test diagnostic/ranged/capture-resources.test.mjs diagnostic/ranged/capture.test.mjs diagnostic/ranged/contract.test.mjs diagnostic/ranged/build-binding.test.mjs diagnostic/ranged/capture-checkpoint.test.mjs
+      - name: ranged exact source Actor tests
+        run: |
+          RANGED_SOURCE="$PWD/candidate" node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/ranged/owner-actor.test.mjs diagnostic/ranged/remaining-actor.test.mjs diagnostic/ranged/disposal.test.mjs diagnostic/ranged/canopy.test.mjs > evidence/ranged/source.tap
+          node diagnostic/test-count.mjs evidence/ranged/source.tap 10
+      - name: One shared production build
+        id: build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: forge exact emitted Actor tests
+        id: forge_emitted
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          FORGE_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/forge/forge-actor.test.mjs > evidence/forge/emitted.tap
+          node diagnostic/test-count.mjs evidence/forge/emitted.tap 2
+      - name: forge native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.forge_emitted.outcome == 'success' }}
+        run: node diagnostic/forge/capture-forge-integration.mjs --plan diagnostic/forge/acceptance-plan.json --source candidate --site candidate-site --out evidence/forge/images
+      - name: jet exact emitted Actor tests
+        id: jet_emitted
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          JET_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/jet/jet-actor.test.mjs > evidence/jet/emitted.tap
+          node diagnostic/test-count.mjs evidence/jet/emitted.tap 2
+      - name: jet native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.jet_emitted.outcome == 'success' }}
+        run: node diagnostic/jet/capture-jet-integration.mjs --plan diagnostic/jet/acceptance-plan.json --source candidate --site candidate-site --out evidence/jet/images
+      - name: ranged exact emitted Actor tests
+        id: ranged_emitted
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        run: |
+          RANGED_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap diagnostic/ranged/owner-actor.test.mjs diagnostic/ranged/remaining-actor.test.mjs diagnostic/ranged/disposal.test.mjs diagnostic/ranged/canopy.test.mjs > evidence/ranged/emitted.tap
+          node diagnostic/test-count.mjs evidence/ranged/emitted.tap 10
+      - name: ranged native-day images
+        if: ${{ always() && steps.build.outcome == 'success' && steps.ranged_emitted.outcome == 'success' }}
+        run: node diagnostic/ranged/capture-ranged-integration.mjs --plan diagnostic/ranged/acceptance-plan.json --source candidate --site candidate-site --out evidence/ranged/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: manual-main-shared-acceptance
+          path: evidence
+          if-no-files-found: error
