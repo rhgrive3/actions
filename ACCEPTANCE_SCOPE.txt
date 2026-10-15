@@ -1,0 +1,14 @@
+Limited first batch: Bulbz, Squiffer beta, NOC-T, MIL-K, Sorella, Custom Explosher.
+Base: PR1271 deb583a0519d099182cd95d251c5c1a061b76dcc. Candidate PR1470 head d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd, tree3017165176c0376fe209b1713f49d22b60b7bee8. Hosted acceptance is authorized; results remain pending.
+
+Planned gates on one exact production site:
+- Source and emitted: same selected owner/API/actual Actor-Character suites, expected 46 passed and zero skipped each. The final 6 cases call actual _finishFrame, native hold/carry selection and selected part animation with controlled runner charge states. They do not demonstrate real firing admission or ink payment for every family.
+- Print 24 PNGs and 20 native pose receipts; NOC-T/MIL-K 6 PNGs; Sorella base/variant 20 PNGs; Custom Explosher base/variant 4 PNGs.
+- Native day Environment, PMREM256, Neutral tone mapping, exposure0.94, sRGB. This is a controlled native-light weapon component view; final stage/compositor appearance is not asserted.
+- Sorella uses actual installed WeaponRunner canopy open, close, launch and enemy hit, with detached owner/live mesh references and bounded native hide. Color zoning remains an approximation and unique white branding is absent; no full source-game appearance claim.
+- Custom Explosher restores two source color lookups on unchanged geometry. Unchanged branding/ridge details are outside this acceptance.
+- Processing comparison: the same site, team, camera, native rest pose, renderer and full-size synchronous RGBA readback for base and variant. Construction, first measured render, and 12 alternating post-warmup samples per role are retained separately. Four warmups per role. Initial samples can reuse shared browser/material caches. This is controlled submission/readback wall time, not GPU timer duration or gameplay FPS. Report noise honestly and retain raw samples.
+
+Completed locally: 32 diagnostic integrity/shape/negative controls; 6 actual Actor-Character source tests (all finite matrices, nonempty actual parts and restoration). Existing owner37+API3 are separately reported by the graph owner. No emitted or GPU success is claimed for this draft.
+
+The original four-model and five-model historical packages remain separate. Only explicitly adopted six variants are registered; the base catalog remains65. All model payloads, source checkout head/tree, source input hashes, content manifest and exact emitted registry artifact are mandatory bindings. Unknown network paths and external HTTP/WebSocket are rejected.

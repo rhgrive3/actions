@@ -1,0 +1,215 @@
+#!/usr/bin/env node
+import {validateBuildBinding,validateDelivered} from './build-binding.mjs';
+// Single-site integration smoke. Original frozen A/B remains a separate gate.
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';import {chromium} from 'playwright';import {PNG} from 'pngjs';import {captureNoctMilk} from './capture-noct-milk.mjs';import {captureSorella} from './capture-sorella.mjs';import {captureExplosher} from './capture-explosher.mjs';import {compareNativeWeaponWork} from './compare-native-weapon-work.mjs';
+const arg=(n,d)=>{const i=process.argv.indexOf(n);return path.resolve(i<0?d:process.argv[i+1]);};
+const out=arg('--out','print-integration');fs.mkdirSync(out,{recursive:true});
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const plan=JSON.parse(fs.readFileSync(arg('--plan','acceptance-plan.json')));
+assert.match(plan.head,/^[a-f0-9]{40}$/);
+const site=arg('--site','_site'),source=arg('--source','.');
+assert.equal(execFileSync('git',['-C',source,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),plan.head);
+assert.equal(execFileSync('git',['-C',source,'rev-parse','HEAD^{tree}'],{encoding:'utf8'}).trim(),plan.tree);
+execFileSync('git',['-C',source,'diff','--exit-code','HEAD','--'],{stdio:'pipe'});
+const manifest=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
+const buildBinding=validateBuildBinding(manifest,plan,p=>fs.readFileSync(path.join(source,p)),p=>fs.readFileSync(path.join(site,p)),hash);
+const modelInputs={};
+for(const [name,digest] of Object.entries({'variants-bulbz-followup.mjs':'95f0f7d3f9a10de6309097e66e3e45d7515b6c36ef425fb6d1ea7f6d24df9d23','variants-squiffer-v4-followup.mjs':'288505b0dbe7991f487239edf73804af1c264322c1bdf6d9614d100ac278c9ff'})){
+ const p='patches/splatoon3/runtime/weapon-models/'+name;assert.equal(hash(fs.readFileSync(path.join(source,p))),digest);assert.equal(manifest.files['patch/'+p.slice('patches/splatoon3/'.length)],digest);modelInputs[p]=digest;
+}
+const seed=0x6b17a9c3,ids=['s3-stringer-normal-02','s3-charger-quick-01'];
+// All helper payload hashes are pinned by the diagnostic package manifest.
+const helperSource=captureNoctMilk.toString(),sorellaSource=captureSorella.toString(),explosherSource=captureExplosher.toString(),workSource=compareNativeWeaponWork.toString();
+const errors=[],networkFailures=[],delivered={};let browser;
+async function capture(input,shared){
+ const {site,manifest}=input,prefix='/_versions/'+manifest.build.revision+'/';
+ const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;if(pathname==='/review'){res.setHeader('Content-Type','text/html');res.end('<!doctype html><link rel="icon" href="data:,"><script type="importmap">'+JSON.stringify({imports:{three:prefix+'vendor/three/build/three.module.js','three/addons/':prefix+'vendor/three/jsm/'}})+'</script><body style="margin:0"></body>');return;}const rel=pathname.startsWith(prefix)?decodeURIComponent(pathname.slice(prefix.length)):null;if(!rel||!Object.hasOwn(manifest.artifacts,rel)){res.writeHead(404);res.end();return;}const file=path.resolve(site,rel);if(!file.startsWith(site+path.sep)){res.writeHead(404);res.end();return;}const bytes=fs.readFileSync(file);if(hash(bytes)!==manifest.artifacts[rel]){res.writeHead(409);res.end();return;}res.setHeader('Content-Type',/\.(m?js)$/.test(file)?'text/javascript':file.endsWith('.json')?'application/json':'application/octet-stream');delivered[rel]=hash(bytes);res.end(bytes);});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const context=await browser.newContext({viewport:{width:1920,height:1080},deviceScaleFactor:1});
+ try{
+ await context.routeWebSocket('**/*',ws=>{networkFailures.push({url:ws.url(),error:'WebSocket rejected'});ws.close();});
+ await context.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!=='http://127.0.0.1:'+server.address().port){networkFailures.push({url:u.href,error:'external origin rejected'});return route.abort();}return route.continue();});
+ await context.addInitScript(({seed})=>{window.__captureNativeNow=performance.now.bind(performance);let state=seed>>>0;Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};Date.now=()=>1700000000000;Object.defineProperty(performance,'now',{value:()=>1000});window.__abRngState=()=>state;window.__abResetRng=()=>{state=seed>>>0;};},{seed});
+ const page=await context.newPage();page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
+ await page.goto('http://127.0.0.1:'+server.address().port+'/review');
+ return await page.evaluate(async({prefix,ids,shared,helperSource,sorellaSource,explosherSource,workSource,variantIds,baseModelCount})=>{
+  function validateThreeExports(namespace){
+   const required=['Box3','Color','Float32BufferAttribute','Group','HalfFloatType','MeshBasicMaterial','NeutralToneMapping','PerspectiveCamera','SRGBColorSpace','Scene','Vector3','WebGLRenderer'];
+   for(const name of required)if(namespace[name]===undefined)throw Error('Missing emitted THREE export: '+name);
+   return required;
+  }
+  const THREE=await import('three');validateThreeExports(THREE);
+  const {Environment}=await import(prefix+'src/world/environment.js');
+  const {install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
+  const {installMainWeaponCatalogRuntime}=await import(prefix+'patches/splatoon3/runtime/main-weapon-catalog.mjs');
+  const R=await import(prefix+'patches/splatoon3/runtime/weapon-models/registry.mjs');
+  if(R.registeredWeaponModels().length!==baseModelCount)throw Error('Base model catalog changed');
+  const actualVariantIds=R.registeredWeaponVariantModels().slice().sort();
+  if(JSON.stringify(actualVariantIds)!==JSON.stringify(variantIds.slice().sort())||new Set(actualVariantIds).size!==6)throw Error('Expected exactly the six approved variant registrations');
+  const profile=await fetch(prefix+'patches/splatoon3/profile.json').then(r=>r.json());
+  const api=install(profile);installMainWeaponCatalogRuntime(api,profile);
+  const {Actor,Character,G,Physics,WEAPONS}=api;
+  const scene=new THREE.Scene();scene.background=new THREE.Color('#e6eaf2');G.scene=scene;
+  const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(1920,1080);
+  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=.94;document.body.append(renderer.domElement);
+  const shaderErrors=[];renderer.debug.checkShaderErrors=true;renderer.debug.onShaderError=(gl,program,vs,fs)=>shaderErrors.push([gl.getProgramInfoLog(program),gl.getShaderInfoLog(vs),gl.getShaderInfoLog(fs)].join('\n'));
+  const camera=new THREE.PerspectiveCamera(34,1920/1080,.15,6500);G.camera=camera;
+  G.teamColors=[new THREE.Color('#ff8825'),new THREE.Color('#484ce8')];
+  G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,o)=>{o.length=0;return o;}};
+  G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.match={playing:()=>true};G.time=0;
+  G.projectiles=Object.fromEntries(['fireShooter','fireDualies','fireBlaster','fireSlosh','fireFlick','fireCharger','fireSplatling','throwBomb'].map(n=>[n,()=>{}]));
+  function validateEnvironmentContract(e){
+   if(e.cubeSize!==256||e.width!==768||e.height!==1024||e.colorSpace!=='srgb-linear'||e.type!==THREE.HalfFloatType||e.mapping!==306)throw Error('Invalid production PMREM dimensions, LOD or color-space contract');
+   if(!Number.isFinite(e.meanRadiance)||e.meanRadiance<=0||!Number.isFinite(e.maxRadiance)||e.maxRadiance<=0||e.nonfinite!==0||e.negative!==0||e.positivePixels<1000)throw Error('Invalid PMREM radiance');
+   return e;
+  }
+  // IEEE754 binary16 readback; do not require tree-shaken DataUtils exports.
+  function halfFloat(bits){
+   const sign=bits&0x8000?-1:1,exponent=(bits>>>10)&31,fraction=bits&1023;
+   return exponent===31?(fraction?NaN:sign*Infinity):sign*(exponent?2**(exponent-15)*(1+fraction/1024):2**-14*fraction/1024);
+  }
+  function environmentEvidence(env){
+   const rt=env._envRT,raw=new Uint16Array(rt.width*rt.height*4);renderer.readRenderTargetPixels(rt,0,0,rt.width,rt.height,raw);
+   let sum=0,max=0,nonfinite=0,negative=0,positivePixels=0;
+   for(let i=0;i<raw.length;i+=4){let lit=false;for(let c=0;c<3;c++){const v=halfFloat(raw[i+c]);if(!Number.isFinite(v))nonfinite++;if(v<0)negative++;if(v>0)lit=true;sum+=v;max=Math.max(max,v);}if(lit)positivePixels++;}
+   if(renderer.getContext().getError()!==0||shaderErrors.length)throw Error('Native environment GPU/shader error');
+   return validateEnvironmentContract({theme:env.theme,cubeSize:rt.height/4,width:rt.width,height:rt.height,colorSpace:rt.texture.colorSpace,type:rt.texture.type,mapping:rt.texture.mapping,meanRadiance:sum/(rt.width*rt.height*3),maxRadiance:max,nonfinite,negative,positivePixels,environmentIntensity:env.scene.environmentIntensity,sun:{position:env.sun.position.toArray(),target:env.sun.target.position.toArray(),color:env.sun.color.toArray(),intensity:env.sun.intensity},hemi:{color:env.hemi.color.toArray(),ground:env.hemi.groundColor.toArray(),intensity:env.hemi.intensity}});
+  }
+  window.__abResetRng();const nativeScene=new THREE.Scene(),nativeEnvironment=new Environment(renderer,nativeScene,{theme:'day',shadowSize:512});
+  const environmentReceipt=environmentEvidence(nativeEnvironment);
+  let undersizedRejected=false;try{validateEnvironmentContract({...environmentReceipt,cubeSize:8,width:336,height:32});}catch(e){undersizedRejected=/PMREM/.test(String(e));}
+  if(!undersizedRejected)throw Error('Undersized PMREM negative control was not rejected');
+  if(shared&&JSON.stringify(environmentReceipt)!==JSON.stringify(shared.environment))throw Error('A/B native environment drift');
+  scene.add(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);scene.environment=nativeEnvironment.envMap;scene.environmentIntensity=environmentReceipt.environmentIntensity;
+  const measuredWork=await (0,eval)('('+workSource+')')({api,R,THREE,scene,renderer,camera});
+  const explosher=await (0,eval)('('+explosherSource+')')({api,R,THREE,scene,renderer,camera});
+  const noctMilk=await (0,eval)('('+helperSource+')')({api,R,THREE,scene,renderer,camera});
+  const sorella=await (0,eval)('('+sorellaSource+')')({api,R,THREE,scene,renderer,camera});
+  function captureModes(baseId){
+   const chargeFamily=baseId==='s3-stringer-normal'||baseId==='s3-charger-quick',pairedFamily=baseId==='s3-maneuver-short';
+   return {chargeFamily,pairedFamily,poseStates:chargeFamily?['rest','charge','release']:['rest'],groundStates:chargeFamily?[true,false]:[true]};
+  }
+  function nativeHands(w,paired){
+   const hands=[],seen=new Set();
+   for(let current=w;current;current=current.left){if(seen.has(current)||hands.length>=2)throw Error('Invalid native weapon chain');seen.add(current);hands.push(current);}
+   if(hands.length!==(paired?2:1))throw Error('Unexpected native hand count');
+   return hands;
+  }
+  function snapshotHeld(weapons){
+   return weapons.map(weapon=>{const pivot=weapon.pivot,parent=pivot.parent;return {weapon,pivot,parent,sibling:parent.children.indexOf(pivot),before:pivot.matrixWorld.elements.slice(),local:pivot.matrix.clone(),world:pivot.matrixWorld.clone(),position:pivot.position.clone(),quaternion:pivot.quaternion.clone(),scale:pivot.scale.clone(),matrixAutoUpdate:pivot.matrixAutoUpdate,matrixWorldAutoUpdate:pivot.matrixWorldAutoUpdate,matrixWorldNeedsUpdate:pivot.matrixWorldNeedsUpdate};});
+  }
+  function mountHeld(snapshots,group){
+   group.updateWorldMatrix(true,false);
+   const inverse=group.matrixWorld.clone().invert();
+   for(const s of snapshots){group.add(s.pivot);s.pivot.matrixAutoUpdate=false;s.pivot.matrixWorldAutoUpdate=true;s.pivot.matrix.copy(inverse).multiply(s.world);s.pivot.matrixWorldNeedsUpdate=true;}
+   group.updateMatrixWorld(true);
+   for(const {pivot,before} of snapshots)if(pivot.matrixWorld.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-before[k])>1e-8))throw Error('Held capture changed rendered native pivot');
+  }
+  function restoreHeld(snapshots,group,scene,ch){
+   for(const s of snapshots){
+    s.parent.add(s.pivot);
+    s.pivot.position.copy(s.position);s.pivot.quaternion.copy(s.quaternion);s.pivot.scale.copy(s.scale);
+    s.pivot.matrix.copy(s.local);s.pivot.matrixWorld.copy(s.world);s.pivot.matrixAutoUpdate=s.matrixAutoUpdate;s.pivot.matrixWorldAutoUpdate=s.matrixWorldAutoUpdate;s.pivot.matrixWorldNeedsUpdate=s.matrixWorldNeedsUpdate;
+   }
+   for(const s of [...snapshots].sort((a,b)=>a.sibling-b.sibling)){const children=s.parent.children;children.splice(children.indexOf(s.pivot),1);children.splice(s.sibling,0,s.pivot);}
+   scene.remove(group);ch.root.updateMatrixWorld(true);
+   for(const {pivot,parent,before,local} of snapshots)if(pivot.parent!==parent||pivot.matrix.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-local.elements[k])>1e-8)||pivot.matrixWorld.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-before[k])>1e-8))throw Error('Held capture changed native pivot');
+   for(const s of snapshots)s.pivot.matrixWorldNeedsUpdate=s.matrixWorldNeedsUpdate;
+  }
+  const frames=[],cameras={},poses={},unlitMaterials=new Map();
+  function close(a,b,label){if(a.length!==b.length||a.some((v,i)=>!Number.isFinite(v)||Math.abs(v-b[i])>1e-8))throw Error('A/B mismatch '+label);}
+  function printBounds(key,weapon){
+   const bounds=new THREE.Box3(),p=weapon.body.geometry.attributes.position,c=weapon.body.geometry.attributes.color,vein=new THREE.Color('#8b918f');let count=0;
+   for(let i=0;i<p.count;i++){
+    const selected=key.startsWith('s3-charger-quick')?p.getZ(i)<-.16:Math.abs(c.getX(i)-vein.r)<1e-6&&Math.abs(c.getY(i)-vein.g)<1e-6&&Math.abs(c.getZ(i)-vein.b)<1e-6&&(key.includes('-team0-')?p.getY(i)>.085:p.getY(i)<.085);
+    if(selected){bounds.expandByPoint(new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(weapon.body.matrixWorld));count++;}
+   }
+   if(count<60||bounds.isEmpty())throw Error('Missing print target');return bounds;
+  }
+  function validatePrintMask(key,group,weapon){
+   const originalGeometry=weapon.body.geometry,geometry=originalGeometry.clone(),p=geometry.attributes.position,c=geometry.attributes.color,colors=new Float32Array(p.count*3),isSquiffer=key.startsWith('s3-charger-quick');
+   const palette=(isSquiffer?['#dfe1dc','#242a29','#ebc139','#c7372d','#202627']:['#8b918f']).map(x=>new THREE.Color(x));let selected=0,inFrame=0,minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+   for(let i=0;i<p.count;i++){
+    const match=palette.some(x=>Math.abs(c.getX(i)-x.r)<1e-6&&Math.abs(c.getY(i)-x.g)<1e-6&&Math.abs(c.getZ(i)-x.b)<1e-6)&&(isSquiffer?p.getZ(i)<-.16:key.includes('-team0-')?p.getY(i)>.085:p.getY(i)<.085);
+    if(!match)continue;selected++;colors.set([1,1,1],i*3);const q=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(weapon.body.matrixWorld).project(camera);if(!q.toArray().every(Number.isFinite))throw Error('Nonfinite print ROI');if(Math.abs(q.x)<=1&&Math.abs(q.y)<=1&&Math.abs(q.z)<=1)inFrame++;minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minY=Math.min(minY,q.y);maxY=Math.max(maxY,q.y);
+   }
+   if(selected<60||inFrame/selected<.75)throw Error('Print ROI outside frame '+key);geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+   const changed=[],created=[],background=scene.background;
+   try{
+    group.traverse(o=>{if(!o.isMesh)return;const convert=m=>{const mask=new THREE.MeshBasicMaterial({color:o===weapon.body?0xffffff:0x000000,vertexColors:o===weapon.body,side:m.side,depthTest:m.depthTest,depthWrite:m.depthWrite,transparent:m.transparent,opacity:m.opacity,toneMapped:false});created.push(mask);return mask;};changed.push([o,o.material,o.onBeforeRender]);o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);o.onBeforeRender=()=>{};});
+    weapon.body.geometry=geometry;scene.background=new THREE.Color(0);renderer.render(scene,camera);const gl=renderer.getContext(),rgba=new Uint8Array(1920*1080*4);gl.readPixels(0,0,1920,1080,gl.RGBA,gl.UNSIGNED_BYTE,rgba);let visiblePixels=0;for(let i=0;i<rgba.length;i+=4)if(rgba[i]>200&&rgba[i+1]>200&&rgba[i+2]>200)visiblePixels++;if(visiblePixels<32)throw Error('Print target occluded or absent '+key+' visiblePixels='+visiblePixels);return {selectedVertices:selected,inFrameVertices:inFrame,ndcBounds:[minX,minY,maxX,maxY],visiblePixels,method:'White print-only vertex mask with black depth-writing weapon occluders; actual body matrixWorld and material side/depth flags'};
+   }finally{weapon.body.geometry=originalGeometry;scene.background=background;for(const [o,m,cb]of changed){o.material=m;o.onBeforeRender=cb;}geometry.dispose();for(const m of created)m.dispose();}
+  }
+  function printDirection(id,team,frame){
+   const angle=(75+frame*.025)*Math.PI/180,limbY=team===0?-.25:.25;
+   return id==='s3-charger-quick-01'?(frame<0?[1,.15,0]:[-Math.cos(angle),.10,Math.sin(angle)]):(frame<0?[0,limbY,-1]:[Math.sin(angle),limbY,-Math.cos(angle)]);
+  }
+  function cameraFrame(key,group,dir,weapon,modes=['lit','unlit'],drift=0){
+   if(weapon.near!==true||weapon.body.visible!==true||weapon.bodyFar.visible!==false)throw Error('A/B requires actual near body '+key);
+   if(shared){const c=shared.cameras[key];if(!c)throw Error('Missing frozen camera '+key);camera.position.fromArray(c.position);camera.quaternion.fromArray(c.quaternion);camera.scale.fromArray(c.scale);camera.matrixAutoUpdate=false;camera.matrix.fromArray(c.local);camera.matrixWorld.fromArray(c.world);camera.matrixWorldInverse.copy(camera.matrixWorld).invert();camera.projectionMatrix.fromArray(c.projection);camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();}
+   else{const b=printBounds(key,weapon),center=b.getCenter(new THREE.Vector3()),span=Math.max(...b.getSize(new THREE.Vector3()).toArray());if(!(span>0&&Number.isFinite(span)))throw Error('Bad print bounds');const direction=new THREE.Vector3(...dir).transformDirection(weapon.body.matrixWorld);camera.position.copy(center).add(direction.multiplyScalar(span*2.1));camera.lookAt(center);camera.updateMatrixWorld(true);const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0),shift=2*span*2.1*Math.tan(camera.fov*Math.PI/360)/1080*drift;camera.position.addScaledVector(right,shift);camera.updateMatrixWorld(true);}
+   cameras[key]={position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),scale:camera.scale.toArray(),local:camera.matrix.toArray(),world:camera.matrixWorld.toArray(),projection:camera.projectionMatrix.toArray()};
+   if(shared)for(const p of ['position','quaternion','scale','local','world','projection'])close(cameras[key][p],shared.cameras[key][p],key+' '+p);
+   for(const mode of modes){
+    if(weapon.near!==true||weapon.body.visible!==true||weapon.bodyFar.visible!==false)throw Error('A/B near-body pass '+key+' '+mode);
+    const changed=[];
+    if(mode==='unlit')group.traverse(o=>{if(!o.isMesh)return;const convert=m=>{if(!unlitMaterials.has(m)){const flat=new THREE.MeshBasicMaterial({color:m.color?.clone()||new THREE.Color(0xffffff),map:m.map||null,vertexColors:m.vertexColors,side:m.side,transparent:m.transparent,opacity:m.opacity,alphaTest:m.alphaTest,depthTest:m.depthTest,depthWrite:m.depthWrite});unlitMaterials.set(m,flat);}return unlitMaterials.get(m);};changed.push([o,o.material,o.onBeforeRender]);o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);o.onBeforeRender=()=>{};});
+    try{renderer.render(scene,camera);renderer.render(scene,camera);if(renderer.getContext().getError()!==0||renderer.info.render.triangles<=0)throw Error('WebGL '+key);const gl=renderer.getContext(),rgba=new Uint8Array(1920*1080*4);gl.readPixels(0,0,1920,1080,gl.RGBA,gl.UNSIGNED_BYTE,rgba);let foreground=0;const colors=new Set();for(let i=0;i<rgba.length;i+=4){if(Math.abs(rgba[i]-rgba[0])+Math.abs(rgba[i+1]-rgba[1])+Math.abs(rgba[i+2]-rgba[2])>12)foreground++;if(i%64===0)colors.add((rgba[i]>>3)*1024+(rgba[i+1]>>3)*32+(rgba[i+2]>>3));}if(foreground<250||colors.size<16)throw Error('Blank or trivial frame '+key);const png=renderer.domElement.toDataURL('image/png').split(',')[1],triangles=renderer.info.render.triangles,drawCalls=renderer.info.render.calls,memory={geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures},printROI=validatePrintMask(key,group,weapon);frames.push({key,mode,png,triangles,drawCalls,memory,foregroundPixels:foreground,quantizedColors:colors.size,printROI});}
+    finally{for(const [o,m,cb]of changed){o.material=m;o.onBeforeRender=cb;}}
+   }
+  }
+  for(const id of ids)for(const team of [0,1]){
+   const spec=R.weaponModelSpec(id),baseId=spec?.baseId,variantId=spec?.sourceRow;if(!WEAPONS[id])throw Error('Missing weapon '+id);
+   window.__abResetRng();
+   const a=new Actor({team,weapon:id,isLocal:false,name:'matched-ab',CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character,w=ch.weapon;ch.actor=a;ch.onEvent=null;G.actors=[a];
+   if(ch.root.parent||w.def.modelVariantId!==variantId||w.def.modelId!==baseId)throw Error('Native identity');
+   // UUID allocation differs with geometry count; start presentation from the same RNG state.
+   window.__abResetRng();
+   a.form='kid';a.kidT=10;a.grounded=true;a.ground.hit=true;a.intent.fire=false;a.vel.set(0,0,0);a.weaponRunner.charge=1;a.weaponRunner.charging=true;ch.lastRelease=99;
+   for(let frame=0;frame<60;frame++){G.time+=1/60;a._finishFrame(1/60);}
+   if(!(ch._wst.charge>.99))throw Error('Native charge');
+   for(let frame=-1;frame<4;frame++){
+    if(frame===0){a.weaponRunner.charge=0;a.weaponRunner.charging=false;ch.trigger('charge_release');}
+    if(frame>=0){G.time+=1/60;a._finishFrame(1/60);if(!(ch._wst.sinceRelease<.1))throw Error('Native release progression');}
+    ch.root.updateMatrixWorld(true);const snapshots=snapshotHeld(nativeHands(w,false)),group=new THREE.Group(),key=id+'-team'+team+'-'+(frame<0?'charge-close':'release-motion-'+frame);
+    poses[key]={near:w.near,bodyVisible:w.body.visible,bodyFarVisible:w.bodyFar.visible,pivot:snapshots[0].before,local:snapshots[0].local.toArray(),muzzle:w.muzzle.getWorldPosition(new THREE.Vector3()).toArray(),charge:ch._wst.charge,sinceRelease:ch._wst.sinceRelease,time:G.time,rng:window.__abRngState()};
+    if(shared){for(const p of ['pivot','local','muzzle'])close(poses[key][p],shared.poses[key][p],key+' '+p);for(const p of ['near','bodyVisible','bodyFarVisible','charge','sinceRelease','time','rng'])if(poses[key][p]!==shared.poses[key][p])throw Error('A/B state mismatch '+key+' '+p);}
+    const direction=printDirection(id,team,frame);
+    scene.add(group);try{mountHeld(snapshots,group);cameraFrame(key,group,direction,w,frame<0?['lit','unlit']:['lit'],frame<0?0:frame*.125);}finally{restoreHeld(snapshots,group,scene,ch);}
+   }
+   ch.dispose();
+  }
+  if(shaderErrors.length)throw Error('Shader errors: '+shaderErrors.join('\n'));for(const m of unlitMaterials.values())m.dispose();scene.remove(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);nativeEnvironment.dispose();return {noctMilk,sorella,explosher,measuredWork,frames,cameras,poses,environment:environmentReceipt,undersizedRejected,shaderErrors,rng:window.__abRngState(),gpu:{depthBits:renderer.getContext().getParameter(renderer.getContext().DEPTH_BITS),context:renderer.getContext().getContextAttributes(),logarithmicDepthBuffer:renderer.capabilities.logarithmicDepthBuffer,reverseDepthBuffer:renderer.capabilities.reverseDepthBuffer}};
+ },{prefix,ids,shared,helperSource,sorellaSource,explosherSource,workSource,variantIds:plan.variantIds,baseModelCount:plan.baseModelCount});
+ }finally{await context.close();await new Promise(r=>server.close(r));}
+}
+try{
+ browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ const result=await capture({site,manifest},null);
+ validateDelivered(delivered,manifest);assert.equal(result.frames.length,24);assert.equal(Object.keys(result.poses).length,20);assert.ok(result.undersizedRejected);assert.deepEqual(result.shaderErrors,[]);assert.deepEqual(errors,[]);assert.deepEqual(networkFailures,[]);
+ const images=[];for(const f of result.frames){const file=f.key+'-'+f.mode+'.png',bytes=Buffer.from(f.png,'base64');fs.writeFileSync(path.join(out,file),bytes);const {png,...receipt}=f;images.push({...receipt,file,sha256:hash(bytes)});}
+ const noctMilkImages=[];assert.equal(result.noctMilk.frames.length,6);
+ const expectedTuples=['s3-maneuver-short-02:0:rest','s3-maneuver-short-02:1:rest','s3-stringer-short-02:0:charge','s3-stringer-short-02:0:release','s3-stringer-short-02:1:charge','s3-stringer-short-02:1:release'];
+ assert.deepEqual(result.noctMilk.frames.map(f=>f.id+':'+f.team+':'+f.state).sort(),expectedTuples.sort());
+ for(const f of result.noctMilk.frames){assert.equal(f.camera.position.length,3);assert.equal(f.camera.quaternion.length,4);assert.equal(f.grounded,f.id==='s3-maneuver-short-02');assert.equal(f.variantId,f.id==='s3-maneuver-short-02'?'Maneuver_Short_02':'Stringer_Short_02');assert.ok(Number.isFinite(f.triangles)&&f.triangles>0);assert.ok([f.charge,f.sinceRelease,...f.camera.position,...f.camera.quaternion].every(Number.isFinite));assert.equal(f.hands.length,f.id==='s3-maneuver-short-02'?2:1);for(const h of f.hands){assert.equal(h.muzzle.length,3);assert.equal(h.pivotMatrix.length,16);assert.equal(h.near,true);assert.equal(h.bodyVisible,true);assert.equal(h.bodyFarVisible,false);assert.ok([...h.muzzle,...h.pivotMatrix].every(Number.isFinite));}}
+
+ for(const f of result.noctMilk.frames){const bytes=Buffer.from(f.png,'base64'),image=PNG.sync.read(bytes);assert.equal(image.width,1920);assert.equal(image.height,1080);let foreground=0;const colors=new Set();for(let i=0;i<image.data.length;i+=4){if(Math.abs(image.data[i]-image.data[0])+Math.abs(image.data[i+1]-image.data[1])+Math.abs(image.data[i+2]-image.data[2])>12)foreground++;if(i%64===0)colors.add((image.data[i]>>3)*1024+(image.data[i+1]>>3)*32+(image.data[i+2]>>3));}assert.ok(foreground>=250&&colors.size>=16,'blank Noct/MILK frame');assert.equal(f.restored,true);const file=f.id+'-team'+f.team+'-'+f.state+'.png';fs.writeFileSync(path.join(out,file),bytes);const {png,...receipt}=f;noctMilkImages.push({...receipt,file,sha256:hash(bytes),foregroundPixels:foreground,quantizedColors:colors.size});}
+ fs.writeFileSync(path.join(out,'noct-milk-integration.json'),JSON.stringify({sourceSha:plan.head,contentHash:manifest.contentHash,environment:result.environment,scope:result.noctMilk.scope,images:noctMilkImages},null,2));
+ const sorellaImages=[];assert.equal(result.sorella.frames.length,20);
+ const sorellaTuples=[];for(const team of [0,1])for(const role of ['base','variant'])for(const state of ['initial','open','closed','launched','broken'])sorellaTuples.push(team+':'+role+':'+state);
+ assert.deepEqual(result.sorella.frames.map(f=>f.team+':'+f.role+':'+f.state).sort(),sorellaTuples.sort());
+ for(const f of result.sorella.frames){
+  assert.equal(f.id,f.role==='base'?'s3-shelter-normal':'s3-shelter-normal-01');assert.equal(f.baseId,'s3-shelter-normal');if(f.role==='variant')assert.equal(f.variantId,'Shelter_Normal_01');
+  assert.equal(f.pivotMatrix.length,16);assert.equal(f.muzzle.length,3);assert.equal(f.camera.position.length,3);assert.equal(f.camera.quaternion.length,4);assert.equal(f.grounded,true);assert.equal(f.near,true);assert.equal(f.bodyVisible,true);assert.equal(f.bodyFarVisible,false);assert.equal(f.restored,true);assert.ok([f.frame,f.bo,f.bv,f.naked,f.maxGrip,f.triangles,f.drawCalls,...f.pivotMatrix,...f.muzzle,...f.camera.position,...f.camera.quaternion].every(Number.isFinite));assert.ok(f.triangles>0&&f.drawCalls>0&&f.maxGrip<=.008);
+  const bytes=Buffer.from(f.png,'base64'),image=PNG.sync.read(bytes);assert.equal(image.width,1920);assert.equal(image.height,1080);let foreground=0;const colors=new Set();for(let i=0;i<image.data.length;i+=4){if(Math.abs(image.data[i]-image.data[0])+Math.abs(image.data[i+1]-image.data[1])+Math.abs(image.data[i+2]-image.data[2])>12)foreground++;if(i%64===0)colors.add((image.data[i]>>3)*1024+(image.data[i+1]>>3)*32+(image.data[i+2]>>3));}assert.ok(foreground>=250&&colors.size>=16,'blank Sorella frame');const file='sorella-'+f.role+'-team'+f.team+'-'+f.state+'.png';fs.writeFileSync(path.join(out,file),bytes);const {png,...row}=f;sorellaImages.push({...row,file,sha256:hash(bytes),foregroundPixels:foreground,quantizedColors:colors.size});
+ }
+ fs.writeFileSync(path.join(out,'sorella-integration.json'),JSON.stringify({sourceSha:plan.head,contentHash:manifest.contentHash,environment:result.environment,scope:result.sorella.scope,images:sorellaImages},null,2));
+ assert.equal(result.measuredWork.results.length,24);
+ for(const r of result.measuredWork.results){assert.equal(r.steadyMs.length,12);assert.ok([r.constructionMs,r.firstMeasuredRenderMs,...r.steadyMs].every(n=>Number.isFinite(n)&&n>=0));assert.ok(r.triangles>0&&r.drawCalls>0&&r.geometryBytes>0);}
+ fs.writeFileSync(path.join(out,'native-work-comparison.json'),JSON.stringify({sourceSha:plan.head,contentHash:manifest.contentHash,environment:result.environment,...result.measuredWork},null,2));
+ const explosherImages=[];assert.equal(result.explosher.frames.length,4);
+ assert.deepEqual(result.explosher.frames.map(f=>f.id+':'+f.team).sort(),['s3-slosher-washtub:0','s3-slosher-washtub:1','s3-slosher-washtub-01:0','s3-slosher-washtub-01:1'].sort());
+ for(const f of result.explosher.frames){assert.equal(f.baseId,'s3-slosher-washtub');assert.equal(f.variantId,f.id==='s3-slosher-washtub-01'?'Slosher_Washtub_01':null);assert.equal(f.state,'rest');assert.equal(f.grounded,true);assert.equal(f.restored,true);assert.equal(f.hands.length,1);assert.equal(f.hands[0].near,true);assert.ok(f.triangles>0);const bytes=Buffer.from(f.png,'base64'),image=PNG.sync.read(bytes);assert.equal(image.width,1920);assert.equal(image.height,1080);let fg=0;for(let i=0;i<image.data.length;i+=4)if(Math.abs(image.data[i]-image.data[0])+Math.abs(image.data[i+1]-image.data[1])+Math.abs(image.data[i+2]-image.data[2])>12)fg++;assert.ok(fg>=250,'blank Explosher');const file=f.id+'-team'+f.team+'.png';fs.writeFileSync(path.join(out,file),bytes);const {png,...row}=f;explosherImages.push({...row,file,sha256:hash(bytes),foregroundPixels:fg});}
+ fs.writeFileSync(path.join(out,'explosher-integration.json'),JSON.stringify({sourceSha:plan.head,contentHash:manifest.contentHash,environment:result.environment,images:explosherImages},null,2));
+ const {frames,noctMilk,sorella,explosher,measuredWork,...receipt}=result;
+ fs.writeFileSync(path.join(out,'print-integration.json'),JSON.stringify({sourceSha:plan.head,contentHash:manifest.contentHash,inputHash:manifest.inputHash,modelInputs,buildBinding,delivered,...receipt,images,errors,networkFailures,scope:'Single-site existing-candidate visibility and native day-environment presentation smoke. No baseline comparison, compositor, gameplay admission, or full production appearance claim.'},null,2));
+}catch(e){fs.writeFileSync(path.join(out,'print-integration-error.json'),JSON.stringify({error:String(e),errors,networkFailures},null,2));throw e;}finally{await browser?.close();}

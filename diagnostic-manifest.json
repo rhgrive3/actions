@@ -1,0 +1,121 @@
+{
+  "status": "frozen hosted acceptance; GPU and emitted execution pending",
+  "baseHead": "deb583a0519d099182cd95d251c5c1a061b76dcc",
+  "registrySHA256": "967941ab5e219111a7c5eb81023772bd6eabb022b5f4596d95953652ecddbc9f",
+  "expectedGates": {
+    "source": 46,
+    "emitted": 46,
+    "skipped": 0,
+    "diagnosticControls": 32,
+    "images": 54,
+    "measuredRows": 24,
+    "steadySamplesPerRow": 12
+  },
+  "scope": "Six explicit variants only; actual source Actor/Character controlled animation tested; emitted and browser pending. Same production site reused for base and variant images/work measurement. No gameplay FPS claim. No full original-game appearance claim.",
+  "files": [
+    {
+      "path": "build-binding.mjs",
+      "sha256": "a429183f6fb8afeb65977af5c0161ee68b54c2c0122bdcc65326ab2615f924a2",
+      "blob": "6bf80594b506b32ac91cc86f439e76756e4e5e4c",
+      "bytes": 2683
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "blob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-print-integration.mjs",
+      "sha256": "507464bf8a2aa69aa37d8bce77d41822bb2ef6a1c4b5f0cdefbff603d665853e",
+      "blob": "cb6eb411b4a461468e476c76416124e3b7091df9",
+      "bytes": 31614
+    },
+    {
+      "path": "capture-print-integrity.test.mjs",
+      "sha256": "823650bed383ea2aa6001130e8b6b81dd8b6cf19415d8bed47883bfa311f8662",
+      "blob": "25f77b11369f110dc7d5fcc6acac85589118796e",
+      "bytes": 3437
+    },
+    {
+      "path": "capture-noct-milk.mjs",
+      "sha256": "7cbb65b2d079a50b9595f04d12bf626d349cc8d76bb8c78dceb0b097f1fe5de5",
+      "blob": "4f763c9692b768ed7a4f6f3eca482ae66d0dbb72",
+      "bytes": 6515
+    },
+    {
+      "path": "capture-sorella.mjs",
+      "sha256": "0794578c3aa5964d48c54ed3aa5d18ebe15d7004480a7b4fda1bfed13f50ac8a",
+      "blob": "9e092a36ad203d48f9726f005eff91e48cb29ec1",
+      "bytes": 11775
+    },
+    {
+      "path": "capture-explosher.mjs",
+      "sha256": "367936036c2e0081ebfcbbe88032bb51e5c91761848324c391afcfc369fe04c4",
+      "blob": "c3f5287f6f61174c0b9568f05cc6c10b72e3092a",
+      "bytes": 7588
+    },
+    {
+      "path": "compare-native-weapon-work.mjs",
+      "sha256": "980ea8e8c38ea409a1b76ad4389d8036f956f03f279adc42b2809d734ddf3dbb",
+      "blob": "e33d88c0ac1d310233d0212d367dc54cc18c7f00",
+      "bytes": 7298
+    },
+    {
+      "path": "native-work-controls.test.mjs",
+      "sha256": "7bc917743142d01af8e3f8f88a32d2059765bf521db71b0ad67f665459aeaca3",
+      "blob": "14d790d188e581be4835ae12e79d95098f04ceee",
+      "bytes": 3274
+    },
+    {
+      "path": "sorella-capture-controls.test.mjs",
+      "sha256": "b3f46f483aaafb93837ffc18426960431402613cef62affcab1cf9cd72eccc9b",
+      "blob": "b861de787f72af6e406ff4425ef3daa36dcacc7e",
+      "bytes": 1507
+    },
+    {
+      "path": "variant-plan.mjs",
+      "sha256": "df28f06826d90989182565d05085fc182f2b1888d99810b8001d10f8d2bdf64e",
+      "blob": "f9f0c750f9167c78d19e40f6eb2c64d01dde4c33",
+      "bytes": 1536
+    },
+    {
+      "path": "variant-plan.test.mjs",
+      "sha256": "7e3938b11f770896326b850df1a986d1ab0edae507b42a64a39de892ec4417eb",
+      "blob": "4f78f8a8a2d475ccfe0205d5804a859bf46337ea",
+      "bytes": 1267
+    },
+    {
+      "path": "check-source-plan.mjs",
+      "sha256": "cc1f38ebaa8eef8f508d7ce5dd3052dbe16884fc54acf6b06b30eb6a1a39a25d",
+      "blob": "fa6ef97372c212e55c30bb521772791dd4ffc0e3",
+      "bytes": 1080
+    },
+    {
+      "path": "run-owner-tests.mjs",
+      "sha256": "1b2bf93efd8b2d3f76d09b8d5aa50e1d7192e921fe01a2e63abbdee24c0fe3cf",
+      "blob": "aa572888863ed9ce9fe1cd6f1a964078571dc583",
+      "bytes": 1490
+    },
+    {
+      "path": ".github/workflows/limited-weapon-acceptance.yml",
+      "sha256": "278e8b7bbd648f837d67e390dabe6cdfd690476339ee7015bb44ed865965c547",
+      "blob": "f92040a9742005ad12cdeb6b797988edea26b3a0",
+      "bytes": 2731
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "cb815e2989e696bf4ce858f89e6d961f6b9d896ae2d4dfa201e85d75da01a5db",
+      "blob": "0c5fdd7301335d98dc7eb78f98a02c2435e3023e",
+      "bytes": 6604
+    },
+    {
+      "path": "ACCEPTANCE_SCOPE.txt",
+      "sha256": "58d9c98b708b41fec513d641da1bbd68adcab149dee775aeba053cc2ab2f9bf2",
+      "blob": "75b77f5db51fb167336505187943b602090515c1",
+      "bytes": 2535
+    }
+  ],
+  "candidateHead": "d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd",
+  "candidateTree": "3017165176c0376fe209b1713f49d22b60b7bee8"
+}

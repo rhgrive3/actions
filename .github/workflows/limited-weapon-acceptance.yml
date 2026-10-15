@@ -1,0 +1,54 @@
+name: Review limited weapon candidates
+on:
+  push:
+    branches: [review/limited-weapon-acceptance-20261015]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: diagnostic
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require frozen plan
+        run: |
+          node --input-type=module -e "import fs from 'node:fs';import {validateVariantPlan}from './diagnostic/variant-plan.mjs';validateVariantPlan(JSON.parse(fs.readFileSync('./diagnostic/acceptance-plan.json')))"
+          echo "CANDIDATE=$(node -p 'require(\"./diagnostic/acceptance-plan.json\").candidateHead')" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE }}
+          path: candidate
+      - name: Bind exact checkout and all candidate payloads
+        run: node diagnostic/check-source-plan.mjs diagnostic/acceptance-plan.json candidate diagnostic/print-plan.json
+      - name: Pinned dependencies and browser
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Portable fail-closed capture controls
+        run: node --test diagnostic/build-binding.test.mjs diagnostic/capture-print-integrity.test.mjs diagnostic/variant-plan.test.mjs diagnostic/sorella-capture-controls.test.mjs diagnostic/native-work-controls.test.mjs
+      - name: Exact candidate source gates
+        run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --out evidence --mode source
+      - name: One shared production emitted build
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          cd candidate
+          node scripts/build-inkwave.mjs inkwave-public ../candidate-site
+          cp ../candidate-site/inkwave-build.json ../evidence/candidate-build.json
+      - name: Exact candidate emitted gates
+        run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence --mode emitted
+      - name: Native daylight matched held-weapon acceptance
+        run: node diagnostic/capture-print-integration.mjs --plan diagnostic/print-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: limited-weapon-acceptance
+          path: evidence
+          if-no-files-found: error
