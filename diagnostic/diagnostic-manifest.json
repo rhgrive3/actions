@@ -1,0 +1,149 @@
+{
+  "status": "frozen local controls; independent review pending; actual browser pending",
+  "candidateHead": "97e73d721e262c4d13f7f9a7eacfedddefacbcd3",
+  "candidateTree": "d3ec5f0141ac8dd6e46cc835b48aa6c597e83a2f",
+  "baseHead": "21f54ffc024383d0d65b77ffece0e710c93b4bd3",
+  "expected": {
+    "modelSource": 145,
+    "modelEmitted": 145,
+    "skips": 0,
+    "settingsSource": 2,
+    "controls": 68,
+    "images": 72,
+    "workRows": 36
+  },
+  "files": [
+    {
+      "path": "build-binding.mjs",
+      "blob": "dbb52e8b2527b55e090edc8d68183594e295df9b",
+      "sha256": "d39ac0d873875e60798c736f2b35c4371cd73531c96eae240e79a5069003ab02",
+      "bytes": 2782
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "blob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "bytes": 2896
+    },
+    {
+      "path": "check-source-plan.mjs",
+      "blob": "fa6ef97372c212e55c30bb521772791dd4ffc0e3",
+      "sha256": "cc1f38ebaa8eef8f508d7ce5dd3052dbe16884fc54acf6b06b30eb6a1a39a25d",
+      "bytes": 1080
+    },
+    {
+      "path": "select-candidate.mjs",
+      "blob": "fd9865c0656ee1c55578871476f6bfc3cc1982b4",
+      "sha256": "8c4909cd550f1b0ea496d68d9b6a7d84599ef023fe218cf60e2e3441332baff5",
+      "bytes": 491
+    },
+    {
+      "path": "select-candidate.test.mjs",
+      "blob": "85d5969c75342e52a373bfcbc8fd3cbafa338efd",
+      "sha256": "05d00b6b0c639ef4e0251b4f5b8c40282cf3b59b46e0014ccb41c1372741a8c6",
+      "bytes": 1499
+    },
+    {
+      "path": "variant-plan.mjs",
+      "blob": "393781a66f942dd9e6b228cf986bdac749b22220",
+      "sha256": "ecb9587a7f27fc7630bf4dab15f3917e7c16e41b85d96dfb9035a2d3bd7debdf",
+      "bytes": 2127
+    },
+    {
+      "path": "variant-plan.test.mjs",
+      "blob": "6facd27aed18206baa7101fb4d51c1fdb8166c54",
+      "sha256": "0f91ac4b1851bee13b10d3feb93951bfaa9d7f2a1ddf8eb77299fe6535d1b536",
+      "bytes": 1927
+    },
+    {
+      "path": "run-owner-tests.mjs",
+      "blob": "b7b8e950c4b8e9c06c8a5c4da37581aa7bce644b",
+      "sha256": "a0ecd163af154b7e11c6a5d09cd82f4c7e30eeea48f64587ca02633077d006c5",
+      "bytes": 1501
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "blob": "3dec005d102deab897a74f136a69cc8fc9fac8df",
+      "sha256": "71c3164c74a6a828b5877d23a3a4ae5391b6ee1bfc2b2a0e0b9332df6ea76c8d",
+      "bytes": 1231
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "blob": "bb68c8052f9291e63ed3eec222bc432ab8ff6db3",
+      "sha256": "014b0ab28ad4d73c96ef4fa8014a1f01772fde35a363924b1a731559a398e473",
+      "bytes": 2104
+    },
+    {
+      "path": "capture-checkpoint-order.test.mjs",
+      "blob": "06af2a6b148f8adfcb07e2bae9ef41cb0f007f71",
+      "sha256": "101db0d750b8a3de8d820906cb027b82b2b451eebd826902644b0134cceff404",
+      "bytes": 1300
+    },
+    {
+      "path": "native-work-controls.test.mjs",
+      "blob": "3d8771ea770227672c3bb0e26931c6af43346c54",
+      "sha256": "3d9003f1ef9e512242b7dbc0f097e6a6da3871832ba50aa8d4cabefd57e55e84",
+      "bytes": 3274
+    },
+    {
+      "path": "compare-native-weapon-work.mjs",
+      "blob": "b7b720c0a1dcdb8fbefc6eaec86bc66dee1a0386",
+      "sha256": "697fdbf531cdc25c02a41fe578bf7886b14797338716bb08d52521770e7050b5",
+      "bytes": 7428
+    },
+    {
+      "path": "capture-fifth-integration.mjs",
+      "blob": "f01bb9d251dbfa2eefc0f13f889203599569478d",
+      "sha256": "731490e0b7c4e3e590bbd4c9c92c20d34a78348b99e5313b070a77df611c2fef",
+      "bytes": 13114
+    },
+    {
+      "path": "fifth-capture-integrity.test.mjs",
+      "blob": "49b4c33ebe48de615be784234caec68f7cd7c45a",
+      "sha256": "5fe1b46ca94930ccd236d9fc5362b43e69960b8a914446825b68622605bb0fd3",
+      "bytes": 3673
+    },
+    {
+      "path": "fifth-capture-contract.mjs",
+      "blob": "dfcec442f9f3def65ecc3160386a8e9bb8a77fd6",
+      "sha256": "b1c3bd1bc9e576ea3e77998358c784f439a7eedb4937482d5fd4f5c803c5477e",
+      "bytes": 2217
+    },
+    {
+      "path": "fifth-capture-contract.test.mjs",
+      "blob": "c717609bacd00a5e711aef17eae128295f01b6b8",
+      "sha256": "5f96980f9734e48fef7f940810329e182e26edde896260113f2c4839a6186a60",
+      "bytes": 1539
+    },
+    {
+      "path": "capture-b-fifth.mjs",
+      "blob": "d1c036ea6480630dc1328bb54b3c934b566ae3fd",
+      "sha256": "3bb6070512e7b6dff9548b70f02a1fca0f2cfe6c2fca68d27bd69520a02f206d",
+      "bytes": 16028
+    },
+    {
+      "path": "capture-b-fifth.test.mjs",
+      "blob": "a6bc04186f44e3874fd6cbb8c7e634809b8c465f",
+      "sha256": "e2e1a0da308cb694da2304a76e2fc93bb5141fa6142be7e0e7b956fc34e26141",
+      "bytes": 6893
+    },
+    {
+      "path": "acceptance-plan.json",
+      "blob": "73b9c2f04c0338917c745347e934f786de87921d",
+      "sha256": "503b01841a77e1f956606fe4e9a2c9acba2c0b983c88257521d936d3d9258a92",
+      "bytes": 6288
+    },
+    {
+      "path": "ACCEPTANCE_SCOPE.txt",
+      "blob": "78d56a9cae6045dc3fe3e5cf8d9e2499a4fafc98",
+      "sha256": "7afa51b7dc808b649a82e487303f9159b775a5bf6a088b5170c14d1b53260581",
+      "bytes": 1668
+    },
+    {
+      "path": ".github/workflows/fifth-weapon-acceptance.yml",
+      "blob": "726cb197626b2bcbdf9bf63ca4241b6b73aea35a",
+      "sha256": "1474837940f9a2a8659303c224814f9bf5f4c1207f5177bea1fbe13535f66442",
+      "bytes": 2962
+    }
+  ]
+}
