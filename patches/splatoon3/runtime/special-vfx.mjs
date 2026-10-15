@@ -88,7 +88,10 @@ class Director {
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = clamp(up + rnd(o.spread ?? 1, -(o.spread ?? 1)) * 0.6, -1, 1), h = Math.sqrt(1 - y * y), s = speed * rnd(1.2, 0.55);
       if (o.glow) this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, { drag, grav: o.grav ?? 4, stretch: o.stretch ?? 0.09 });
-      else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 1.4), col, { drag: drag * 0.35, grav: o.grav ?? 14 });
+      else if (i % 3 === 2) {   // glossy shards with white cores among the drops (S3 splatter)
+        const c = this.inkCol(col), sz = size * rnd(3.6, 2);
+        this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.4, 0.9), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL, { drag: drag * 0.5, grav: (o.grav ?? 14) * 0.6, rot: rnd(TAU), spin: rnd(12, -12), fadeIn: 0.01 });
+      } else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 0.8), col, { drag: drag * 0.35, grav: o.grav ?? 14, stretch: 0.05 });
     }
   }
   // one liquid ink drop (a lit teardrop impostor in the puff pool); col is the plain team colour
@@ -179,7 +182,12 @@ class Director {
     const pe = fx.paintEffects; fx.paintEffects = false;
     try { fx.explosion(pos, col, radius); } finally { fx.paintEffects = pe; }
   }
-  nativeBurst(pos, normal, col, opts) { this.G.fx?.burst?.(pos, normal, col, { ...opts, paint: false }); }
+  // A spray burst. The game's own droplets are clean glossy spheres, which read as bubbles next to S3's lobed
+  // splatter, so special bursts throw this layer's irregular drops and white-cored shards instead.
+  nativeBurst(pos, normal, col, opts = {}) {
+    const c = col?.isColor ? [col.r, col.g, col.b] : col;
+    this.streaks(pos, opts.count ?? 12, (opts.speed ?? 6) * 1.1, c, { up: normal?.y > 0.5 ? 0.5 : 0, life: 0.6, size: (opts.size ?? 0.1) * 0.8 });
+  }
   // a brief light at the heart of a burst: small and short, so the liquid ink stays the subject
   flash(pos, col, size, life = 0.28) {
     this.shell(true, life * 0.7, SHELL.FLASH, pos, size * 0.15, size * 0.45, this.hdr(col, 1.2, 1.0), 0.6, { hold: 0.05 });
@@ -188,12 +196,12 @@ class Director {
   // A big special explosion: the ink itself (dome, crown, drops), its shock (ground ring, sphere edge) and light.
   inkBlast(pos, col, radius, o = {}) {
     const G = this.G, R = radius, p = this.v[6].copy(pos);
-    if (o.native !== false) this.nativeBlast(p, this.c.setRGB(col[0], col[1], col[2]), Math.min(R, 6));
+    // the game's own blast (torn glossy sheets and round droplets) reads as plastic beside S3's splatter: opt-in only
+    if (o.native === true) this.nativeBlast(p, this.c.setRGB(col[0], col[1], col[2]), Math.min(R, 6));
     this.flash(this.v[5].copy(p).setY(p.y + 0.6), col, Math.min(2.6, R * 0.3));
     // the liquid: a glossy ink dome tearing open, a crown thrown off its foot, a puddle and a ring of spray on the floor
     this.shell(false, o.domeLife ?? 0.75, SHELL.INK, p, R * 0.08, R * (o.dome ?? 0.5), col, 1, { hemi: true, sy: o.sy ?? 0.85, hold: 0.25, ease: easeOut });
     this.disc(false, 0.9, DISC.SPLAT, this.v[5].copy(p).setY(p.y + 0.03), this.up, R * 0.25, R * 0.85, col, 1, { hold: 0.55 });
-    this.disc(false, 0.5, DISC.SHOCK, this.v[5].copy(p).setY(p.y + 0.05), this.up, R * 0.2, R * 1.05, col, 1, { hold: 0.2 });
     this.band(false, 0.7, BAND.SHOCK, p, R * 0.18, R * 0.8, 0.4, Math.min(4.5, R * 0.42), col, 1, { hold: 0.25 });
     this.streaks(this.v[5].copy(p).setY(p.y + 0.4), o.streaks ?? Math.min(40, 10 + R * 3), Math.min(26, 8 + R * 1.6), col, { up: 0.45, life: 0.6, size: 0.07 });
     this.chunks(this.v[5].copy(p).setY(p.y + 0.3), o.chunks ?? Math.min(28, 6 + R * 2), Math.min(18, 5 + R * 1.2), col, { size: 0.2 + R * 0.015 });
@@ -206,8 +214,6 @@ class Director {
     this.flash(chest, col, C.flash * scale * 0.5, 0.2);
     // ink bursts off the body: a puddle, a ring of spray, a liquid crown and thrown drops
     this.disc(false, 0.8, DISC.SPLAT, this.v[2].copy(p).setY(p.y + 0.03), this.up, 0.4 * scale, 1.6 * scale, col, 1, { hold: 0.55 });
-    this.disc(false, 0.42, DISC.SHOCK, this.v[2].copy(p).setY(p.y + 0.05), this.up, 0.4, C.ring * scale, col, 1, { hold: 0.15 });
-    this.band(false, 0.5, BAND.SHOCK, p, 0.5 * scale, 1.3 * scale, 0.3, 1.2 * scale, col, 1, { hold: 0.2 });
     this.streaks(chest, C.streaks * scale, 9 * scale, col, { up: 0.35, life: 0.5, size: 0.05 });
     this.petals(chest, 10 * scale, 8 * scale, col, { size: 0.16 * scale });
     for (let i = 0; i < Math.round(10 * this.kit.q); i++) {                 // the S3 activation spikes: rays radiating from the body
@@ -535,7 +541,6 @@ const OBJECT_FX = {
       if (r.d.funnel) r.d.funnel.dead = true;
       for (const k of ['mark']) if (r.d[k]) r.d[k].dead = true;
       this.flash(this.v[0].copy(p).setY(p.y + 1), c, 2.2, 0.3);
-      this.disc(false, 0.5, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.5, 8.5, c, 1);
       const life = (o.dur || 51 / 60) + 0.5;
       const radius = () => Math.max(0.5, (o.currentRadius || 0.5));
       r.d.twA = this.band(false, life, BAND.TWISTER, p, 1, 1, C.twisterHeight, C.twisterHeight, this.hdr(c, 1.0), 0.95,
@@ -602,7 +607,6 @@ const OBJECT_FX = {
     start(r, o) {
       const c = r.color, p = o.pos;
       this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.2, 0.25);
-      this.disc(false, 0.6, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.3, 3.5, c, 1);
       r.d.holo = this.shell(true, 0, SHELL.HOLO, this.v[0].copy(p), 1.1, 1.1, this.hdr(c, 1.3, 0.5), 0.75,
         { hemi: true, sy: 1.5, fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y; rec.v[2] = o.pos.z; const hp = o.maxHp ? clamp01(o.hp / o.maxHp) : 1; rec.v[11] = 0.45 + 0.35 * hp; } });
       r.d.dots = this.disc(true, 0, DISC.TARGET, this.v[0].copy(p).setY(p.y + 0.04), this.up, 2.2, 2.2, this.hdr(c, 1.2, 0.5), 0.55,
@@ -655,11 +659,10 @@ const OBJECT_FX = {
         this.shell(false, life + 0.2, SHELL.INK, k0, 0.8, R * 0.97, c, 1, { hemi: true, sy: 0.9, hold: 0.55, ease: t => smooth(t * 1.4) });
         this.shell(true, life, SHELL.ORB, k0, 1, R, this.hdr(c, 1.1, 0.8), 0.35, { hemi: true, sy: 0.9, hold: 0.7, ease: t => smooth(t * 1.4) });
         this.shell(true, life, SHELL.SHOCK, k0, 1, R * 1.03, this.hdr(c, 1.5, 1.2), 0.6, { hemi: true, sy: 0.9, hold: 0.75, ease: t => smooth(t * 1.4) });
-        this.disc(false, life, DISC.SHOCK, this.v[0].copy(k0).setY(k0.y + 0.06), this.up, 1, R * 1.05, c, 1, { hold: 0.7, ease: t => smooth(t * 1.4) });
         this.disc(false, life + 0.5, DISC.SPLAT, this.v[0].copy(k0).setY(k0.y + 0.03), this.up, 1, R * 0.95, c, 1, { hold: 0.6, ease: t => smooth(t * 1.4) });
         this.streaks(this.v[0].copy(k0).setY(k0.y + 1), 46, 26, c, { up: 0.4, life: 0.9, size: 0.09, drag: 1.5 });
         this.chunks(this.v[0].copy(k0).setY(k0.y + 0.5), 30, 20, c, { size: 0.3 });
-        this.nativeBlast(k0, this.c.setRGB(...c), 6);
+        this.petals(this.v[0].copy(k0).setY(k0.y + 1), 40, 18, c, { size: 0.34 });
       } else if (this.near(p, 80) && vfxRandom() < 0.9) {
         const k = clamp01((f - 40) / 40), th = rnd(TAU), rr = R * smooth(k * 1.4);
         this.v[0].set(p.x + Math.cos(th) * rr, p.y + rnd(1.5, 0.2), p.z + Math.sin(th) * rr);
@@ -686,7 +689,6 @@ const KIT_FX = {
         follow: (rec) => { if (r.gone) return false; const q = d.pos; rec.v[0] = q.x; rec.v[1] = q.y + 0.5; rec.v[2] = q.z; rec.v[4] = q.x; rec.v[5] = q.y + 30; rec.v[6] = q.z; } });
       this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.0, 0.25);
       this.shell(true, 0.8, SHELL.SHOCK, p, 0.5, 6, this.hdr(c, 1.3, 0.6), 0.5, { hemi: true });
-      this.disc(false, 0.8, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.4, 4.5, c, 1);
       this.disc(false, 0.9, DISC.SPLAT, this.v[0].copy(p).setY(p.y + 0.03), this.up, 0.3, 1.8, c, 1);
       this.streaks(this.v[0].copy(p).setY(p.y + 0.4), 22, 12, c, { up: 0.7, life: 0.6 });
     },
@@ -892,7 +894,6 @@ const DIRECTORS = {
       this.activation(a, t.color, 1.1);
       const p = a.pos;   // the launch: a ground blast below the pack
       this.disc(false, 0.9, DISC.SPLAT, this.v[0].copy(p).setY(p.y + 0.03), this.up, 0.5, 2.6, t.color, 1);
-      this.disc(false, 0.5, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.4, 4, t.color, 1);
       this.smoke(p, 10, this.hdr(t.color, 0.95), { kind: PUFF.MIST, size: 0.8, speed: 4, rise: 0.6, life: 0.9, alpha: 0.55 });
       t.d.jets = [0, 1].map(() => this.beam(false, 0, BEAM.JET, a.pos, a.pos, 0.12, 0.4, t.color, 1, { speed: 14 }));
       t.d.cones = [0, 1].map(() => this.beam(true, 0, BEAM.PILLAR, a.pos, a.pos, 0.08, 0.3, this.hdr(t.color, 1.2, 1.0), 0.3, { speed: 10 }));
@@ -986,9 +987,13 @@ const DIRECTORS = {
       if ((e.action === 'swing' || e.action === 'jumpSwing') && target) {
         const big = e.action === 'jumpSwing', g = this.v[0].copy(target); g.y = groundBelowPoint(this, target, a.pos.y);
         this.flash(this.v[1].copy(g).setY(g.y + 0.3), c, big ? 1.8 : 1.1, 0.18);
-        this.disc(false, 0.36, DISC.SHOCK, this.v[1].copy(g).setY(g.y + 0.05), this.up, 0.3, big ? 4.4 : 3.4, c, 1, { hold: 0.15 });
         this.disc(false, 0.8, DISC.SPLAT, this.v[1].copy(g).setY(g.y + 0.03), this.up, 0.4, big ? 2.6 : 1.8, c, 1);
         this.band(false, 0.45, BAND.SHOCK, g, 0.5, big ? 3.6 : 2.6, 0.3, big ? 1.8 : 1.2, c, 1, { hold: 0.2 });
+        // S3 (217.4s): the slam throws a tall column of ink straight up in front of the kid
+        this.band(false, 0.6, BAND.SHOCK, g, 0.35, big ? 1.4 : 1.1, 0.8, big ? 4.2 : 3.4, c, 1, { hold: 0.3, taper: 0.55 });
+        for (let i = 0; i < Math.round((big ? 26 : 18) * this.kit.q); i++) { const th = rnd(TAU), sp = rnd(2.5, 0.5);
+          this.drop(this.v[1].set(g.x + Math.cos(th) * 0.4, g.y + 0.3, g.z + Math.sin(th) * 0.4), Math.cos(th) * sp, rnd(13, 7), Math.sin(th) * sp, rnd(1.1, 0.7), rnd(0.2, 0.08), c, { grav: 16, drag: 0.4, stretch: 0.05 }); }
+        this.petals(this.v[1].copy(g).setY(g.y + 1), big ? 16 : 10, 6, c, { size: 0.24, upMin: 0.4, upMax: 1 });
         this.chunks(this.v[1].copy(g).setY(g.y + 0.2), big ? 18 : 12, big ? 11 : 8, c, { size: 0.2, upMin: 0.5 });
         this.smoke(g, big ? 8 : 5, [0.75, 0.73, 0.7], { kind: PUFF.DUST, size: 0.45, speed: 4, rise: 0.4, life: 0.7, alpha: 0.5, buoy: 0.2 });
         this.nativeBurst(this.v[1].copy(g).setY(g.y + 0.15), this.up, this.c.setRGB(...c), { count: big ? 16 : 10, speed: 7, size: 0.12, paint: false });
@@ -1075,7 +1080,6 @@ const DIRECTORS = {
         const m = this.v[4].copy(pos).addScaledVector(dir, 1.1);
         this.muzzle(m, dir, c, 1.15);
         this.smoke(m, 8, [0.92, 0.92, 0.95], { size: 0.45, speed: 2.5, life: 1.1, alpha: 0.55, rise: 1.5 });
-        this.disc(false, 0.3, DISC.SHOCK, m, dir, 0.3, 1.8, c, 1);
       }
     },
   },
@@ -1089,7 +1093,6 @@ const DIRECTORS = {
     phase(a, t, phase) {
       const c = t.color;
       if (phase === 'dash') {
-        this.disc(false, 0.45, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.5, 4, c, 1);
         this.puff(PUFF.MIST, a.pos, 0, 1, 0, 0.6, 1, 2, this.hdr(c, 0.9), 0.5);
         t.d.wakeL = this.ribbon(false, { width: 0.7, widthTail: 1.6, color: c, alpha: 1, style: RIBBON.INK, life: 0.7, spacing: 0.3, flat: true });
         t.d.wakeR = this.ribbon(false, { width: 0.7, widthTail: 1.6, color: c, alpha: 1, style: RIBBON.INK, life: 0.7, spacing: 0.3, flat: true });
@@ -1193,7 +1196,7 @@ const DIRECTORS = {
       const c = t.color;
       if (phase === 'charge') {
         // thin ink filaments winding in round the body as the charge builds (the S3 effects are fine strands, not sheets)
-        t.d.fil = krakenFilaments(this, c, 12, 0.09, 0.24, 4);
+        t.d.fil = krakenFilaments(this, c, 14, 0.12, 0.3, 4);
         // S3 footage (85.0s): arrows on the floor point the way the charge will go
         t.d.arrows = this.disc(false, 0, DISC.CHEVRON, a.pos, this.up, 2.2, 2.2, [0.95, 0.95, 0.95], 0.95, { fade: false,
           follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const f = a._s3AllSpecialState?.direction || this.aim(a, this.v[6]);
@@ -1202,14 +1205,13 @@ const DIRECTORS = {
         (t.d.recs ||= []).push(t.d.arrows);
       } else if (phase === 'dash') {
         this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 0.4), c, 0.9, 0.16);
-        this.disc(false, 0.4, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.6, 3.2, c, 1);
         // S3 (89.9/92.9s): a cage of many thin pink and white strands whirling round the body, white streaks and petals
         endFilaments(this, t.d.fil); t.d.fil = null;
-        t.d.dashRibs = krakenFilaments(this, c, 20, 0.13, 0.22, 3);
+        t.d.dashRibs = krakenFilaments(this, c, 22, 0.16, 0.3, 3);
       }
       if (phase !== 'charge' && t.d.fil) { endFilaments(this, t.d.fil); t.d.fil = null; }
       if (phase !== 'dash' && t.d.dashRibs) { endFilaments(this, t.d.dashRibs); t.d.dashRibs = null; }
-      if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 0.3), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25);
+      if (phase === 'finish') { this.v[0].copy(a.pos).setY(a.pos.y + 0.3); this.flash(this.v[0], c, 1.6, 0.25); this.streaks(this.v[0], 24, 10, c, { up: 0.5, life: 0.7, size: 0.09 });
         this.stars(a.pos, 8, 0.8, [3, 3, 3], { h: 1.2, h0: 0.2 }); this.petals(this.v[0], 30, 9, c, { size: 0.26 }); }   // S3 (96.8s): a white star burst and petals
     },
     frame(a, t, dt) {
@@ -1231,7 +1233,6 @@ const DIRECTORS = {
     },
     event(a, e, pos) {
       if (e.action === 'jump' && pos) { const c = this.rgb(a), g = this.v[0].copy(pos); g.y = groundBelowPoint(this, pos, a.pos.y);
-        this.disc(false, 0.45, DISC.SHOCK, this.v[1].copy(g).setY(g.y + 0.05), this.up, 0.4, 3.2, c, 1);
         this.disc(false, 0.8, DISC.SPLAT, this.v[1].copy(g).setY(g.y + 0.03), this.up, 0.4, 2.2, c, 1);
         this.band(false, 0.45, BAND.SHOCK, g, 0.6, 2.6, 0.3, 1.4, c, 1);
         this.chunks(this.v[1].copy(g).setY(g.y + 0.2), 14, 8, c, { size: 0.22 }); }

@@ -187,7 +187,10 @@ void main(){
     // when stretched along its velocity; shaded exactly like the game's droplets (sxInk)
     float st = vStretch, L = 1.0 + st;
     vec2 P = vec2(vUv.x, vUv.y * L);                                   // quad units: x radius 1, y half-length L
-    float lump = (sxNoise(vec2(atan(P.y - st, P.x) * 1.6 + vPar.w * 17.0, vPar.w * 5.0)) - 0.5) * 0.22 * (1.0 - min(st, 1.0));
+    float an = atan(P.y - st, P.x);
+    // S3 splatter is never a clean ball: lobed, spiky flecks (two noise octaves round the rim)
+    float lump = ((sxNoise(vec2(an * 1.3 + vPar.w * 17.0, vPar.w * 5.0)) - 0.5) * 0.5
+               + (sxNoise(vec2(an * 3.8 + vPar.w * 29.0, vPar.w * 11.0)) - 0.5) * 0.32) * (1.0 - 0.6 * min(st, 1.0));
     float rh = 0.92, rt = mix(rh, 0.12, clamp(st * 0.8, 0.0, 1.0));
     vec2 A = vec2(0.0, st - (1.0 - rh)), B = vec2(0.0, -L + rt);
     vec2 pa = P - A, ba = B - A;
