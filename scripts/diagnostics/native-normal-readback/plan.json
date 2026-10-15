@@ -1,0 +1,8 @@
+{
+  "sourceHead": "bdb51b2e6dd300cda287d23f158b3d5c44056e3f",
+  "sourceTree": "59e89f5574bfc8065c5a20ef3ee756ce978dcd54",
+  "candidateRuntimeSHA256": "93139d9328596b3ef59821a420759180ae9c9bdd644794aee582b8bb12296b98",
+  "scope": "Private preparation only: exact Core loader preimage and two-hunk candidate, actual Chromium ImageBitmap/OffscreenCanvas/CacheStorage/Three DataTexture with synthetic PNGs. Eight scenarios per role, real readback counts/allocated ImageData bytes and equal output RGBA. No stage/fullgame/GPU upload/RSS qualification. No public workflow yet.",
+  "baselineHead": "994dd151c5308d0a68c8f163ecc897a578490306",
+  "baselineTree": "6025079314f0bcd912ba71400a20796747aac6f4"
+}

@@ -1,0 +1,57 @@
+{
+  "sourceHead": "bdb51b2e6dd300cda287d23f158b3d5c44056e3f",
+  "sourceTree": "59e89f5574bfc8065c5a20ef3ee756ce978dcd54",
+  "baselineHead": "994dd151c5308d0a68c8f163ecc897a578490306",
+  "baselineTree": "6025079314f0bcd912ba71400a20796747aac6f4",
+  "files": {
+    "acceptance.mjs": {
+      "sha256": "0b62e48047eb3c132f3f668e296e0a72dbb3e4c25ce44940010ec73ae8a8a03b",
+      "bytes": 5598
+    },
+    "baseline.mjs": {
+      "sha256": "7e885a80b111238d4b479c798a3195641da5415637f2e89f6eec1b3819f9b09b",
+      "bytes": 6945
+    },
+    "binding.mjs": {
+      "sha256": "71a52bc8396d5a31ea03b2fe2e19f69487a2bbaa8c9f0f153d2058c3e45d533f",
+      "bytes": 2477
+    },
+    "binding.test.mjs": {
+      "sha256": "bd934d271367ea9c136bdc35a4032d72d1fb1ebd9251e9f3517cf0a1d58cdec6",
+      "bytes": 1769
+    },
+    "checkout.test.mjs": {
+      "sha256": "dc499aab73810db09679e89b8b5baf615830654234b4224e6cb8dc3a3c06f603",
+      "bytes": 2389
+    },
+    "gate.mjs": {
+      "sha256": "3dd07327eeef7feed640cdd8f93a3e0e0072c55e9f148a242c198a0cf1fa3437",
+      "bytes": 2866
+    },
+    "gate.test.mjs": {
+      "sha256": "5cd9b7bc5c6a480ab0dce819636b83e61a8a01505101cad7db40395a20611f9e",
+      "bytes": 2415
+    },
+    "plan.json": {
+      "sha256": "91226d251355a240c3648d1511b841a85c5a022dcb8b1fe68da4e5eeab933e66",
+      "bytes": 698
+    },
+    "probe.mjs": {
+      "sha256": "ab5956a8c780c47bd2515707d21abb60a4b054d520afad65dd131380b29019e2",
+      "bytes": 5461
+    },
+    "run-hosted.sh": {
+      "sha256": "ca2f3eddd3babe68e1886b40a11f44dde1e2fcb12e845dbac5cc690d5adfb77d",
+      "bytes": 292
+    },
+    "supervise.py": {
+      "sha256": "e84851f5ea7ee20f19c6b3c5bfb1db476a769ec8d4d2ce2f76735c2cd27fae49",
+      "bytes": 3401
+    },
+    "workflow.yml": {
+      "sha256": "7873bd6c3b96e4f1b6fec17a613740bae34846c326c10db158dd974c54c854c6",
+      "bytes": 3118
+    }
+  },
+  "scope": "Private preparation only: exact Core loader preimage and two-hunk candidate, actual Chromium ImageBitmap/OffscreenCanvas/CacheStorage/Three DataTexture with synthetic PNGs. Eight scenarios per role, real readback counts/allocated ImageData bytes and equal output RGBA. No stage/fullgame/GPU upload/RSS qualification. No public workflow yet."
+}
