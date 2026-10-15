@@ -1,0 +1,145 @@
+{
+  "scope": "Existing fbd main manual94 appearances; three unselected official kit appearances remain manual-only. 20 normal-light rest images; source/emitted real charge-release test. No runtime payload.",
+  "files": [
+    {
+      "path": "capture-manual-spinners.mjs",
+      "sha256": "4864a0df8d198d9bf3c62f9b347a90b2a3692412d0558cb5935e0394bf76d108",
+      "bytes": 14962
+    },
+    {
+      "path": "capture.test.mjs",
+      "sha256": "093a6dc1610cdcdacc25de5807b92fd31d7b4dcd60cfaede885c3c27699c5b57",
+      "bytes": 6602
+    },
+    {
+      "path": "capture-spinner-integration.mjs",
+      "sha256": "2587d6dd8d4d8332b754de6105763719983f307ce6e127423750b4e3f4d88b8a",
+      "bytes": 13161
+    },
+    {
+      "path": "spinner-capture-contract.mjs",
+      "sha256": "5d866194363c887bbd48cd4dfa048988256593f56e197f0de1ba1520c3b46b23",
+      "bytes": 2506
+    },
+    {
+      "path": "spinner-capture-contract.test.mjs",
+      "sha256": "72be2d5c78fcddda7173aedc1b78414bad39df26d983525040f0be322c4adee6",
+      "bytes": 1028
+    },
+    {
+      "path": "source-frames.json",
+      "sha256": "820f4b6449ce08653c1791345a920759c63552686aceb832bd3de73bc111f828",
+      "bytes": 69061
+    },
+    {
+      "path": "spinner-actor.test.mjs",
+      "sha256": "cf3a33596112ff6fad94db6057f2798ab87ad2c7163d6830a234dc7d3bd1c8aa",
+      "bytes": 5129
+    },
+    {
+      "path": "build-binding.mjs",
+      "sha256": "d402e6f9d278bf589c4540d966ceaba6ad7e8ba011be0d975a3774581b237a2a",
+      "bytes": 2832
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "bytes": 1243
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+      "bytes": 2719
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "f82119e52b6d092ab193951b6a8ae4af522e28b20f31a50027a290ce03394b69",
+      "bytes": 2896
+    },
+    {
+      "path": "preflight.mjs",
+      "sha256": "2d23cb1ceec9bac909e6bf06094b626070f1a46fc1927f1018233230e48da1cb",
+      "bytes": 1218
+    },
+    {
+      "path": ".github/workflows/spinner-manual-acceptance.yml",
+      "sha256": "4636f0c3200f07c1274f0c9c6940e081fc3ce35058094321cfa15cb0ce0c7097",
+      "bytes": 2370
+    },
+    {
+      "path": "capture-resources.mjs",
+      "sha256": "1d81047ab52414c60495bacf744db5985846ecdd1651913f7f6185379442c270",
+      "bytes": 478
+    },
+    {
+      "path": "capture-resources.test.mjs",
+      "sha256": "05048eed03677f582f1b6984e3922cd36bfa0eb659d58e1eca401947bf3a0d80",
+      "bytes": 1036
+    }
+  ],
+  "controls": 32,
+  "sourceReplay": {
+    "head": "fbdcacb690ec5c9abd10e14d6b623a6f4206aab0",
+    "frames": 20,
+    "raster": "synthetic; actual Actor/Physics/appearance modules",
+    "receipts": [
+      {
+        "path": "/tmp/main-fbd-readonly/receipts/spinner-capture-clock-negative-428-consumed.json.gz",
+        "sha256": "744118140a7e2bb22284e69d2ea017f5f1ea30b433df9d8ce25248126fa0116b",
+        "inputs": 523
+      },
+      {
+        "path": "/tmp/main-fbd-readonly/receipts/spinner-capture-clock-positive-7-consumed.json.gz",
+        "sha256": "744118140a7e2bb22284e69d2ea017f5f1ea30b433df9d8ce25248126fa0116b",
+        "inputs": 523
+      }
+    ],
+    "positiveExit": 0,
+    "noNativeUpdateExit": 1,
+    "negativeError": "Native rest update did not advance actor clocks"
+  },
+  "limits": [
+    "Hosted full production build and real GPU remain unexecuted.",
+    "Registry-only emission qualification is separate; hosted emitted Actor test must pass."
+  ],
+  "evidence": [
+    {
+      "path": "/tmp/spinner-main-capture/replay-clock.log",
+      "sha256": "2e1e1b11d70f736fd265992ed8253d0df623e9b88efde90e0142baf6bbb8bd06"
+    },
+    {
+      "path": "/tmp/spinner-main-capture/replay-clock.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "/tmp/spinner-main-capture/no-native-update-clock.log",
+      "sha256": "ff1fd2aa9f03809bfb68b76ba09605003f32980c2e16ee9873df6cceb0d81e4b"
+    },
+    {
+      "path": "/tmp/spinner-main-capture/no-native-update-clock.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    {
+      "path": "/tmp/spinner-main-capture/all-controls-v2.log",
+      "sha256": "b8863a9ad533945301a35d093cb18ba6257a09cb35187af54fe79741653f9a90"
+    },
+    {
+      "path": "/tmp/spinner-main-capture/no-native-update.log",
+      "sha256": "e0c5f1fb7e3f6d1c1318a97ce1363600bc8988a4dc92e78de5086465b9247e6f"
+    },
+    {
+      "path": "/tmp/spinner-main-capture/attempt1-rest-only-helper.mjs",
+      "sha256": "3b264ab2cb55817816cca5a130564e27e28e4ce71eaaaae4adb2bcdcd2d70d32"
+    },
+    {
+      "path": "/tmp/spinner-main-capture/all-controls-final.log",
+      "sha256": "03971b3f00987fbab7da77a38c2069e02da8002267433d8e8b7adbbf3187da03"
+    }
+  ],
+  "history": "Initial rest-only gate admitted no-op Actor updates. Retained failed negative; native anim.time and kidT progression now mandatory. No production model changes."
+}
