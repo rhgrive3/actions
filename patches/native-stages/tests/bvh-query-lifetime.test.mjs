@@ -1,8 +1,10 @@
+import {canonicalSourceRay,canonicalizeContactReference} from './canonical-ray-oracle.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {setup,geometry,flatten,oldWorld,oldPhysics} from './fixtures/bvh-query-fixture.mjs';
 const f=await setup(),{V}=f;
+const reference=()=>canonicalizeContactReference(f.make(true),f.OldWorld);
 const bounds=[V(-8,-8,-8),V(8,8,8)];
 const ids=w=>{const a=[];w.queryBox(...bounds,id=>a.push(id));return a;};
 const released=w=>{assert.equal(w._queryDepth,0);for(const s of w._queryStacks)assert.equal(s.length,0);};
@@ -27,7 +29,7 @@ test('default ray results stay independent; reusable output preserves every fiel
 });
 test('pooled stacks preserve traversal order during nested box and ray queries, exceptions and early exits',()=>{
  const a=new f.OldWorld(geometry()),b=new f.CurrentWorld(geometry()),expected=ids(a),actual=[];
- b.queryBox(...bounds,id=>{actual.push(id);if(actual.length===1){assert.deepEqual(ids(b),expected);assert.deepEqual(flatten(b.ray(V(0,6,0),V(0,-1,0))),flatten(a.ray(V(0,6,0),V(0,-1,0))));}});
+ b.queryBox(...bounds,id=>{actual.push(id);if(actual.length===1){assert.deepEqual(ids(b),expected);assert.deepEqual(flatten(b.ray(V(0,6,0),V(0,-1,0))),flatten(canonicalSourceRay(a,f.OldWorld,V(0,6,0),V(0,-1,0))));}});
  assert.deepEqual(actual,expected);released(b);assert.equal(b._queryStacks.length,2);
  const seen=[];b.queryBox(...bounds,id=>{seen.push(id);return false;});assert.deepEqual(seen,expected,'default callbacks returning false still visit everything');
  const stopped=[];b.queryBox(...bounds,id=>{stopped.push(id);return false;},true);assert.deepEqual(stopped,expected.slice(0,1));released(b);
@@ -39,7 +41,7 @@ test('pooled stacks preserve traversal order during nested box and ray queries, 
  assert.equal(b._queryStacks.length,stacks.length);for(let i=0;i<stacks.length;i++)assert.equal(b._queryStacks[i],stacks[i]);released(b);
 });
 test('NativePhysics copies pooled hits into independent caller results and retains dynamic precedence',()=>{
- const a=f.make(true),b=f.make();
+ const a=reference(),b=f.make();
  for(const grate of [false,true])for(const x of [-4,-1,0,1,4,5])for(const far of [0,.00001,2,10,Infinity,NaN]){
   const origin=V(x,6,0),dir=V(0,-1,0);assert.deepEqual(flatten(b.physics.raycast(origin,dir,far,new f.Hit(),grate)),flatten(a.physics.raycast(origin,dir,far,new f.Hit(),grate)));
  }
@@ -49,15 +51,15 @@ test('NativePhysics copies pooled hits into independent caller results and retai
  const current=b.physics.raycast(V(0,6,0),V(0,-1,0),10);assert.deepEqual(flatten(current),flatten(a.physics.raycast(V(0,6,0),V(0,-1,0),10)));assert.equal(current.block,123);
 });
 test('bodyFits preserves decisions and stops visiting triangles after the first obstruction',()=>{
- const a=f.make(true),b=f.make();let before=0,after=0;
+ const a=reference(),b=f.make();let before=0,after=0;
  for(const [pair,increment]of [[a,()=>before++],[b,()=>after++]]){const native=pair.world.queryBox;pair.world.queryBox=function(lo,hi,fn,stop){return native.call(this,lo,hi,id=>{increment();return fn(id);},stop);};}
  for(const squid of [false,true])for(const x of [-5,-3,0,3,5])for(const y of [-1,0,.3,1,2.4,4])for(const margin of [0,.01,.38]){
   assert.equal(b.physics.bodyFits(V(x,y,0),.38,.1,1.45,squid,margin),a.physics.bodyFits(V(x,y,0),.38,.1,1.45,squid,margin));
  }
  assert.ok(after<before*.5,JSON.stringify({before,after}));released(b.world);console.log(JSON.stringify({bodyFitCallbacks:{before,after}}));
 });
-for(const hz of [30,60,120])test(`native contacts and ray outputs retain exact movement at ${hz} Hz`,()=>{
- const a=f.make(true),b=f.make(),positions=[V(-3,2.5,-2),V(-3,2.5,-2)];
+for(const hz of [30,60,120])test(`native contacts retain exact canonical-source movement at ${hz} Hz`,()=>{
+ const a=reference(),b=f.make(),positions=[V(-3,2.5,-2),V(-3,2.5,-2)];
  for(let i=0;i<hz*3;i++){
   const outputs=[];
   for(const [index,pair]of [a,b].entries()){

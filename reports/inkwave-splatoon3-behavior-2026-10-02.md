@@ -4698,3 +4698,6 @@ Current-base follow-up (2026-10-13): the final reconciliation preserves external
   is distinct from full-game rendering; Switch/mobile hardware and retail
   equivalence remain unverified. Details and workload limits are in
   `reports/inkwave-bvh-optimization-2026-10-16.md`.
+
+- 小画面の実ブラウザ画像で、外観ボタンの英日併記と生成称号の英語が残ることを確認し追加修正。外観ラベルは選択肢名と分けて翻訳し、生成称号はハッシュ元のプレイヤー名を変えず、既定の形容詞・名詞だけ翻訳する。ブキ一覧の説明とオンライン手順は小画面で収まる短い日本語にした。
+- main で追加された BVH 結果・スタック再利用も統合。凍結済みの最適化前ソルバーを残したまま、独立な検証側にも明示的な三角形 ID 順を与え、最適化による状態共有や動的障害物の優先順位を引き続き検証する。

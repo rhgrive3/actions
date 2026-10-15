@@ -155,7 +155,7 @@ export function adaptWeaponCatalog(rel, code) {
     const appearance = h('button', { class: 'iw-btn iw-btn--menu', type: 'button', 'aria-label': 'Weapon appearance / ブキの見た目' }, appearanceLabel);
     const refreshAppearance = () => {
       const options = weaponAppearanceOptions(shown, LANG), selected = weaponAppearancePreference(shown) ?? '';
-      appearanceLabel.textContent = 'APPEARANCE / 見た目: ' + (options.find(o => o.id === selected) || options[0]).name;
+      appearanceLabel.textContent = tr('APPEARANCE / 見た目: ') + (options.find(o => o.id === selected) || options[0]).name;
       appearance.hidden = options.length < 2;
       appearance.disabled = options.length < 2;
     };

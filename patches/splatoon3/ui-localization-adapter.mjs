@@ -11,12 +11,18 @@ export function adaptUiLocalization(rel, code) {
   }
   if (rel === 'src/i18n.js') {
     if (!code.includes('const JA = {')) throw Error('Missing Japanese dictionary anchor');
-    code = code.replace('const JA = {', 'const JA = {\n...' + JSON.stringify(UI_JA) + ',');
+    const dictionary = parse(code,{ecmaVersion:'latest',sourceType:'module'}).body.find(node=>node.type==='VariableDeclaration'&&node.declarations[0]?.id.name==='JA').declarations[0].init;
+    code = code.slice(0,dictionary.end-1)+'\n  ...UI_JA,\n'+code.slice(dictionary.end-1);
     code = code.replace('if (out == null && isJa) out = JA[s];', 'if (out == null) out = isJa ? JA[s] : UI_EN[s];');
     code = code.replace('if (!isJa) return s;\n  const v = JA[s];', 'if (!isJa) return UI_EN[s] ?? s;\n  const v = JA[s];');
-    return "import { makeUiTranslator } from '../patches/splatoon3/runtime/ui-strings.mjs';\nconst UI_EN = " + JSON.stringify(UI_EN) + ';\n' + code + '\nexport const tu = makeUiTranslator(t, JA, isJa);\n';
+    return "import { makeUiTranslator, UI_JA, UI_EN } from '../patches/splatoon3/runtime/ui-strings.mjs';\n" + code + '\nexport const tu = makeUiTranslator(t, JA, isJa);\n';
   }
   if (!/^src\/ui\/(menus|menu-art|hud|hud-boss|diorama)\.js$/.test(rel)) return code;
+  if (rel === 'src/ui/menus.js' && code.includes('const TITLE_ADJ =')) {
+    const title = 'return `${TITLE_ADJ[x % TITLE_ADJ.length]} ${TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]}`;';
+    if (!code.includes(title)) throw Error('Missing authored splashtag localization anchor');
+    code = code.replace(title, "return LANG === 'ja' ? tr(TITLE_ADJ[x % TITLE_ADJ.length]) + tr(TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]) : `${TITLE_ADJ[x % TITLE_ADJ.length]} ${TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]}`;");
+  }
   const ast = parse(code, { ecmaVersion: 'latest', sourceType: 'module' }), changes = [];
   const ownedValues = new Set(['hint','txt','E.title','E.text','m.blurb || \'\'','w.blurb || \'\'','sp.blurb || \'\'','info[v]?.text || \'\'','MOVE_LABELS[id] || id.toUpperCase()']);
   const ownedTargets = /^(?:hintEl|errTitle|errText|createStatus|statusTxt|botsNote|readySub|startSub|cap|blurb|blurbEl|spBlurb|kind|appearanceLabel)\.textContent$/;
