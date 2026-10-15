@@ -1,0 +1,63 @@
+{
+  "executionAuthorized": false,
+  "diagnosticBranch": "review/camera-hud-browser-20261015",
+  "scope": "Exact emitted component DOM and CameraRig output parity; no physical device, FPS or full gameplay claim",
+  "sources": {
+    "baseline": {
+      "head": "81bac38832f11eb77413e6c39713bda8a0ad7936",
+      "tree": "4401da6b37cef011724833ef971149fae314fec4",
+      "blobs": {
+        "patches/local-quality/adapter.mjs": "91729a306626738bab14bb10c413c1351ba3dfae",
+        "inkwave-public/src/ui/hud.js": "893490e98c2444876a1d9b76207e820c348c2781",
+        "inkwave-public/src/game/cameraRig.js": "4aa0afe836d5e178002cbc08239727fd3868b9f4"
+      }
+    },
+    "candidate": {
+      "head": "d8e3bf1daeff8421c0364c570ec8a9884ce41fd5",
+      "tree": "a13025bfbf80306784b8f1973c18a2c1fbe89732",
+      "blobs": {
+        "patches/local-quality/adapter.mjs": "e3b67aa5789bc5efd3a2c90ae9ae7a918e4506ee",
+        "inkwave-public/src/ui/hud.js": "893490e98c2444876a1d9b76207e820c348c2781",
+        "inkwave-public/src/game/cameraRig.js": "4aa0afe836d5e178002cbc08239727fd3868b9f4",
+        "patches/local-quality/camera-fov-cache-adapter.mjs": "dd5dd88417a7a6231d7f16e00b4486316f0dd751"
+      }
+    }
+  },
+  "files": {
+    "bindings.mjs": {
+      "bytes": 5913,
+      "sha256": "5c3de2d18f1c1c9205f068fa5e945d13997d7ef2a729d9dec12d5429022a2fb2",
+      "publicationPath": "scripts/camera-hud-browser/bindings.mjs"
+    },
+    "bindings.test.mjs": {
+      "bytes": 4011,
+      "sha256": "9d62b6869ac2d7a22615dff489871990f1262f4babdda5b4b274458660935be9",
+      "publicationPath": "scripts/camera-hud-browser/bindings.test.mjs"
+    },
+    "browser.mjs": {
+      "bytes": 3502,
+      "sha256": "a6b0faf37f68de134099d408478605faabd15ddd341f6f82eea9c34079637f62",
+      "publicationPath": "scripts/camera-hud-browser/browser.mjs"
+    },
+    "camera-probe.mjs": {
+      "bytes": 6831,
+      "sha256": "a0015f0cb68dfddc0023c4efac0c33a5d5ebdedb505d7ce4786ceb656e337387",
+      "publicationPath": "scripts/camera-hud-browser/camera-probe.mjs"
+    },
+    "hud-probe.mjs": {
+      "bytes": 5146,
+      "sha256": "331f0f0f553df22d2da5165d189937fc3f64836b1fbd549560309be58f72e4d1",
+      "publicationPath": "scripts/camera-hud-browser/hud-probe.mjs"
+    },
+    "run-hosted.mjs": {
+      "bytes": 2623,
+      "sha256": "c7ac26913d60626eb93582c33c867c872a789876ae11a5508295fb7a96cadf8e",
+      "publicationPath": "scripts/camera-hud-browser/run-hosted.mjs"
+    },
+    "inkwave-camera-hud-browser.yml": {
+      "bytes": 6393,
+      "sha256": "2b5534ae71815832a5d3b76ccbf92ab707b672ef9c736eecf91ed6d30c91d9a5",
+      "publicationPath": ".github/workflows/inkwave-camera-hud-browser.yml"
+    }
+  }
+}
