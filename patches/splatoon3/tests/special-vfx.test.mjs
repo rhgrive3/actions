@@ -214,3 +214,49 @@ test('effect meshes stay out of override passes (GTAO normal/depth) and draw nor
   }
   void d;
 });
+
+test('Super Chump aim preview shows exactly the twelve landing points the throw uses', async () => {
+  const f = await fixture({ fullRuntime: true, realProjectiles: true });
+  const { G, THREE } = f;
+  G.scene = new THREE.Scene(); G.projectiles = new f.installedRuntime.Projectiles(G.scene);
+  G.physics = { los: () => true, segment: (a, b, h) => { h.hit = false; return h; },
+    raycast: (a, d, max, h) => { h.hit = false; if (d.y < -1e-6 && a.y >= 0) { const t = a.y / -d.y; if (t <= max) { h.hit = true; h.point.copy(a).addScaledVector(d, t); h.point.y = 0; h.normal.set(0, 1, 0); h.dist = t; } } return h; } };
+  const a = f.make('shooter'); a.isLocal = true;
+  a.aimDir.set(0.3, -0.05, 1).normalize(); a.aimYaw = Math.atan2(0.3, 1); a.aimPoint = new THREE.Vector3(6, 0, 20);
+  a.weapon = { ...a.weapon, special: 'superChump', specialCost: 200 }; a.special = 200;
+  a._startSpecial();
+  for (let k = 0; k < 5; k++) { a._updateSpecial(1 / 60); G.projectiles.update(1 / 60); G.time += 1 / 60; }
+  // the module instance inside the fixture realm owns the live state
+  const preview = f.installedRuntime.superChumpLandingPreview?.(f.installedRuntime, a);
+  assert.ok(preview, 'preview available while aiming');
+  assert.equal(preview.positions.length, 12);
+  a.intent.fire = true; a._updateSpecial(1 / 60);
+  const decoys = (G.projectiles._s3AllSpecialObjects || []).filter(o => o.kind === 'decoy');
+  assert.equal(decoys.length, 12, 'the throw deployed twelve decoys');
+  for (let i = 0; i < 12; i++) assert.ok(decoys[i].target.distanceTo(preview.positions[i]) < 1e-9, `decoy ${i} lands where the preview showed`);
+  assert.equal(f.installedRuntime.superChumpLandingPreview(f.installedRuntime, a), null, 'no preview after the throw');
+});
+
+test('Tenta Missiles lock HUD brackets exactly the opponents the salvo locks', async () => {
+  const env = await boot(), { f, G, fx } = env;
+  const a = caster(f, G, 'tentaMissiles');
+  const near = f.make('shooter'), wide = f.make('shooter');
+  near.team = wide.team = 1; near.hp = wide.hp = 1e6;
+  near.pos.set(0.5, 0, 14); wide.pos.set(16, 0, 14);
+  a._startSpecial();
+  const step = () => { for (const key of ['fire', 'sub', 'jump', 'squid', 'booyah']) a.intent[key] = false; a._updateSpecial(1 / 60); G.projectiles.update(1 / 60); G.time += 1 / 60; fx.update(1 / 60, G.camera); };
+  for (let k = 0; k < 4; k++) step();
+  const preview = f.installedRuntime.tentaMissilesLockPreview?.(f.installedRuntime, a);
+  assert.ok(preview, 'lock read-out available while aiming');
+  assert.ok(Math.abs(preview.limit - 140 / 360) < 1e-12, 'circle radius is TargetInCircleRadius 140 over 360 without Special Power Up');
+  // the read-out comes from the fixture realm, so compare members rather than array prototypes
+  assert.deepEqual([...preview.targets], [near], 'only the opponent inside the circle is locked');
+  const t = specialVfxDirector(fx).tracks.get(a);
+  assert.deepEqual([...(t?.d.locks?.keys() || [])], [near], 'the HUD fallback brackets the same opponent');
+  const targets = [];
+  const off = f.on('all:special', e => { if (e.id === 'tentaMissiles' && e.action === 'target') targets.push(e); });
+  a.intent.fire = true; a._updateSpecial(1 / 60);
+  off?.();
+  assert.equal(targets.length, 1, 'the salvo locks one target');
+  G.projectiles.clear(); fx.clear(); G.actors.length = 0;
+});

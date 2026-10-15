@@ -141,17 +141,31 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     d.holder.position.set(base.x, base.y, base.z - 0.1 * k);
     d.holder.rotation.x = spec.rot[0] - 0.35 * k;
   } else if (id === 'krakenRoyale') {
-    // squash and stretch: emerge with an overshoot, crouch while charging, stretch along the dash, splat on a jump attack
+    // S3 footage (83.0–94.9s): Kraken Royale is not upright. The giant squid lies along the floor, mantle
+    // and fins leading, eyes on top, the two arms trailing, and swims with its arms; it crouches while
+    // charging, stretches along the dash and noses up on a jump. The model is authored upright (mantle +Y,
+    // face +Z), so the holder lays it down: Rx(-90°) turns the mantle backward with the face up, Ry(180°)
+    // turns it to lead. In model space afterwards: x = side, y = length (mantle forward), z = up.
     const M = SPECIAL_DEVICE_MOTION.kraken, phase = state?.phase ?? a.specialActive?.phase;
-    const emerge = easeOutBack(age / M.emerge);
-    let sx = 1, sy = 1, sz = 1;
-    if (phase === 'charge') { const k = smooth((state?.chargeT || 0) / M.charge); sx = sz = 1 + 0.12 * k; sy = 1 - 0.18 * k + 0.02 * Math.sin(t * 40) * k; }
-    else if (phase === 'dash') { sx = 0.9; sy = 0.92; sz = 1.25; }
-    else if (phase === 'finish') { const k = smooth((age - (state?.duration ?? age)) / 0.8); sx = sz = 1 - 0.5 * k; sy = 1 - 0.6 * k; }
-    else { const b = Math.sin(t * 7) * 0.03; sy += b; sx -= b * 0.5; sz -= b * 0.5; }
-    const land = kick(t - (marks.jump ?? -99), 10); sy -= 0.25 * land; sx += 0.15 * land; sz += 0.15 * land;
-    const e = Math.max(0.01, emerge);
-    d.holder.scale.set(spec.scale * sx * e, spec.scale * sy * e, spec.scale * sz * e);
+    const emerge = easeOutBack(age / M.emerge), e = Math.max(0.01, emerge);
+    const speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0), vy = a.vel?.y || 0, air = a.grounded === false;
+    let sx = 1, len = 1, up = 1;
+    if (phase === 'charge') { const k = smooth((state?.chargeT || 0) / M.charge); len = 1 - 0.18 * k; sx = 1 + 0.12 * k; up = 1 + 0.1 * k + 0.02 * Math.sin(t * 40) * k; }
+    else if (phase === 'dash') { len = 1.28; sx = 0.88; up = 0.86; }
+    else if (phase === 'finish') { const k = smooth((age - (state?.duration ?? age)) / 0.8); sx = up = 1 - 0.55 * k; len = 1 - 0.6 * k; }
+    else { const b = Math.sin(t * (5 + speed * 0.8)) * 0.04; up += b; len -= b * 0.5; }
+    const land = kick(t - (marks.jump ?? -99), 10); up -= 0.28 * land; sx += 0.16 * land; len += 0.1 * land;
+    s.krakenPitch = (s.krakenPitch ?? 0) + (clamp01((vy + 6) / 14) * 0.8 - 0.25 - (s.krakenPitch ?? 0)) * Math.min(1, dt * 10) * (air ? 1 : 0)
+      + (air ? 0 : -(s.krakenPitch ?? 0) * Math.min(1, dt * 12));
+    const roll = Math.sin(t * 3.1) * 0.05 + (phase === 'dash' ? Math.sin(t * 22) * 0.06 : 0);
+    d.holder.rotation.set(-Math.PI / 2 + (s.krakenPitch || 0), Math.PI, roll, 'YXZ');
+    d.holder.position.set(0, 0.42 * up * e + 0.05 * Math.abs(Math.sin(t * (5 + speed * 0.8))) * (air ? 0 : 1), -1.15 * len * e);
+    d.holder.scale.setScalar(spec.scale * e);
+    d.model.root.scale.set(sx, len, up);
+    // the two arms sweep like a swimming squid; faster with speed, trailing flat on the dash
+    const sweep = phase === 'dash' ? 0.12 : 0.35 + Math.min(0.35, speed * 0.05), freq = 6 + speed * 1.4;
+    if (g.legL) g.legL.rotation.x = Math.sin(t * freq) * sweep - (phase === 'dash' ? 0.25 : 0);
+    if (g.legR) g.legR.rotation.x = Math.sin(t * freq + Math.PI) * sweep - (phase === 'dash' ? 0.25 : 0);
   } else if (id === 'waveBreaker' || id === 'splattercolorScreen') {
     // raised ready to throw while the sub is held
     const ready = a.intent?.sub ? 1 : 0; s.ready = (s.ready ?? 0) + (ready - (s.ready ?? 0)) * Math.min(1, dt * 12);
@@ -168,6 +182,7 @@ export function installSpecialModels(api) {
   const colorOf = (owner, team) => owner?.color || G.teamColors?.[owner?.team ?? team] || 0xffcc33;
   const inkMat = (color) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.08, roughness: 0.42, metalness: 0.1 });
   const v = new THREE.Vector3(), q = new THREE.Quaternion(), fwd = new THREE.Vector3(0, 0, 1), grip = new THREE.Vector3(), pole = new THREE.Vector3();
+  const leanQ = new THREE.Quaternion(), leanAxis = new THREE.Vector3(1, 0, 0), pivotA = new THREE.Vector3(), pivotB = new THREE.Vector3(), keep = new THREE.Matrix4(), inv = new THREE.Matrix4();
 
   // ---- deployed objects and projectiles --------------------------------------
   function objectModel(o) {
@@ -394,6 +409,24 @@ export function installSpecialModels(api) {
           g.rotation.set(s.ballRoll, a.yaw || 0, 0, 'YXZ');
           if (state?.ballMesh) state.ballMesh.visible = false;
         } else if (s.ball) s.ball.root.parent.visible = false;
+      }
+    }
+    // Reefslider rider (S3 footage 102.8s): crouched forward over the shark, not sitting upright. Character.update
+    // rebuilds the kid transform every frame about the hips, so the lean is re-applied after it; the shark (a kid
+    // child) is counter-transformed to keep its own world pose, then the hands reach the handles below.
+    if (s.id === 'reefslider' && ch.kid && ch.kid.visible !== false) {
+      const phase = state?.phase ?? a.specialActive?.phase, age = t - s.startedAt;
+      const target = phase === 'dash' ? 0.72 : phase === 'brake' ? 0.55 : phase === 'recovery' ? 0.2 : 0.35 * smooth(age / 0.3);
+      s.lean = (s.lean ?? 0) + (target - (s.lean ?? 0)) * Math.min(1, dt * 9);
+      const holders = s.devices.map(d => { d.holder.updateWorldMatrix(true, false); return [d.holder, d.holder.matrixWorld.clone()]; });
+      pivotA.set(0, 0.62, 0).applyQuaternion(ch.kid.quaternion);
+      leanQ.setFromAxisAngle(leanAxis, s.lean); ch.kid.quaternion.multiply(leanQ);
+      pivotB.set(0, 0.62, 0).applyQuaternion(ch.kid.quaternion);
+      ch.kid.position.add(pivotA).sub(pivotB); ch.kid.position.y -= 0.16 * s.lean;
+      ch.kid.updateMatrixWorld(true);
+      for (const [h, world] of holders) {
+        inv.copy(h.parent.matrixWorld).invert(); keep.multiplyMatrices(inv, world);
+        keep.decompose(h.position, h.quaternion, h.scale); h.updateMatrixWorld(true);
       }
     }
     // Hands on the device: the native two-bone arm solver reaches each grip

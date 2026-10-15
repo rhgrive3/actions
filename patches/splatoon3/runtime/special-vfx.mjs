@@ -22,6 +22,7 @@ import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom,
 import { inkVacState } from './kit-ink-vac.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 import { createInkFist, disposeSpecialModel } from './special-motion.mjs';
+import { superChumpLandingPreview, tentaMissilesLockPreview } from './all-specials.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-vfx.install.v1');
 const TAU = Math.PI * 2;
@@ -327,6 +328,58 @@ class Director {
       r.age += dt; this.call(KIT_FX.cloud.frame, r, c, dt);
     }
     for (const [c, r] of this.storms) if (!ss.has(c)) { this.call(KIT_FX.cloud.end, r, c); this.storms.delete(c); }
+  }
+  // Tenta Missiles lock HUD (an SVG in the game HUD's marker layer). Returns false when there is no DOM HUD.
+  tentaHud(t, show, limit = 0, inside = []) {
+    const doc = globalThis.document, layer = this.G.hud?.markerLayer, canvas = this.G.renderer?.domElement;
+    if (!doc?.createElementNS || !layer?.appendChild || !canvas?.getBoundingClientRect) return false;
+    const NS = 'http://www.w3.org/2000/svg';
+    let h = t.d.hud;
+    if (!h && show) {
+      const svg = doc.createElementNS(NS, 'svg');
+      svg.setAttribute('class', 'iw-tenta-lock');
+      svg.setAttribute('style', 'position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:3');
+      const mk = (tag, attrs) => { const e = doc.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); svg.appendChild(e); return e; };
+      const col = `rgb(${t.color.map(x => Math.round(255 * Math.pow(Math.min(1, x), 1 / 2.2))).join(',')})`;
+      h = t.d.hud = { svg, col, brackets: [],
+        // outer frame: sized from the footage (about 2.3x the lock circle), decorative only
+        glow: mk('circle', { fill: 'none', stroke: col, 'stroke-width': 10, opacity: 0.16 }),
+        ring: mk('circle', { fill: 'none', stroke: col, 'stroke-width': 3, opacity: 0.9 }),
+        // the actual lock circle
+        inner: mk('circle', { fill: 'none', stroke: '#fff', 'stroke-width': 2, opacity: 0.7, 'stroke-dasharray': '10 6' }),
+        ticks: mk('path', { fill: 'none', stroke: col, 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0.9 }) };
+      layer.appendChild(svg);
+    }
+    if (!h) return true;
+    h.svg.style.display = show ? '' : 'none';
+    if (!show) return true;
+    const lr = layer.getBoundingClientRect(), cr = canvas.getBoundingClientRect();
+    const cx = cr.left - lr.left + cr.width / 2, cy = cr.top - lr.top + cr.height / 2, R = limit * cr.height / 2, k = this.time;
+    const RO = R * 2.3;
+    for (const c of [h.glow, h.ring]) { c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', RO); }
+    h.inner.setAttribute('cx', cx); h.inner.setAttribute('cy', cy); h.inner.setAttribute('r', R);
+    h.inner.setAttribute('transform', `rotate(${(k * 40) % 360} ${cx} ${cy})`);
+    let d = '';
+    for (let i = 0; i < 4; i++) { const th = i * Math.PI / 2, c0 = Math.cos(th), s0 = Math.sin(th);
+      d += `M${cx + c0 * RO * 0.94} ${cy + s0 * RO * 0.94}L${cx + c0 * RO * 1.05} ${cy + s0 * RO * 1.05}`; }
+    h.ticks.setAttribute('d', d);
+    // a rotating four-corner bracket on each opponent inside the circle
+    for (let i = 0; i < Math.max(inside.length, h.brackets.length); i++) {
+      let b = h.brackets[i];
+      if (!b && i < inside.length) {
+        b = h.brackets[i] = globalThis.document.createElementNS(NS, 'path');
+        b.setAttribute('fill', 'none'); b.setAttribute('stroke', h.col); b.setAttribute('stroke-width', 3); b.setAttribute('stroke-linecap', 'round');
+        h.svg.appendChild(b);
+      }
+      if (i >= inside.length) { b.style.display = 'none'; continue; }
+      b.style.display = '';
+      const [, nx, ny] = inside[i], x = cr.left - lr.left + (nx * 0.5 + 0.5) * cr.width, y = cr.top - lr.top + (0.5 - ny * 0.5) * cr.height;
+      const r = 16 + 3 * Math.sin(k * 10), e = 7;
+      let p = '';
+      for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) p += `M${x + sx * r} ${y + sy * (r - e)}L${x + sx * r} ${y + sy * r}L${x + sx * (r - e)} ${y + sy * r}`;
+      b.setAttribute('d', p); b.setAttribute('transform', `rotate(${(k * 90) % 360} ${x} ${y})`);
+    }
+    return true;
   }
   // Wave Breaker tracking lines: from the viewer to each opponent this device's team has marked
   // (S3 footage: thin lines run from the player to every marked target while the mark lasts).
@@ -762,15 +815,21 @@ const DIRECTORS = {
   tentaMissiles: {
     start(a, t) { this.activation(a, t.color, 1); },
     frame(a, t) {
-      // lock-on reticles over the opponents the caster's camera holds, as the S3 HUD draws them
-      if (!a.isLocal || t.phase === 'launching') { for (const r of t.d.locks?.values() || []) r.dead = true; t.d.locks?.clear(); return; }
-      const cam = this.G.camera, locks = t.d.locks ||= new Map();
-      const live = new Set();
-      for (const e of this.G.actors || []) {
-        if (!e?.alive || e.team === a.team) continue;
-        let inside = false;
-        if (cam?.isPerspectiveCamera) { const q = this.v[0].copy(e.pos); q.y += 0.7; q.project(cam); inside = q.z > -1 && q.z < 1 && Math.hypot(q.x * (cam.aspect || 1), q.y) < 140 / 360; }
-        if (!inside) continue;
+      // S3 footage (173.9s): a large lock circle in the middle of the screen and a bracket on every opponent inside
+      // it. The circle uses the gameplay lock test (selectTargets in all-specials: the projected chest within
+      // TargetInCircleRadius 140/190/240 by Special Power Up, over 360 of the half screen height) read through
+      // tentaMissilesLockPreview, so the brackets are exactly the opponents the salvo would lock. Local caster only;
+      // hidden once the salvo launches.
+      const pv = a.isLocal && a.alive && t.phase !== 'launching' ? tentaMissilesLockPreview(this.api, a) : null;
+      const show = !!pv, cam = this.G.camera, limit = pv?.limit || 0, inside = [];
+      if (pv && cam?.isPerspectiveCamera) for (const e of pv.targets) {
+        const q = this.v[0].copy(e.pos); q.y += 0.7; q.project(cam);
+        inside.push([e, q.x, q.y]);
+      }
+      if (this.tentaHud(t, show, limit, inside)) return;
+      // no HUD layer (headless/tests): fall back to world-space reticles over the same opponents
+      const locks = t.d.locks ||= new Map(), live = new Set();
+      for (const [e] of inside) {
         live.add(e);
         if (!locks.has(e)) locks.set(e, this.disc(true, 0, DISC.RETICLE, e.pos, this.up, 2.2, 1.0, this.hdr(t.color, 1.5, 1.2), 1, { fade: false, spin: 2,
           follow: (rec) => { rec.v[0] = e.pos.x; rec.v[1] = e.pos.y + 0.9; rec.v[2] = e.pos.z; const n = this.v[1].copy(this.camPos).sub(e.pos).normalize(); rec.v[4] = n.x; rec.v[5] = n.y; rec.v[6] = n.z; rec.v[3] = Math.max(0.85, rec.v[3] - 0.08); } }));
@@ -785,7 +844,7 @@ const DIRECTORS = {
         this.smoke(pos, 8, [0.92, 0.92, 0.95], { size: 0.5, speed: 2.5, life: 1.2, alpha: 0.55, rise: 2 });
       }
     },
-    end(a, t) { for (const r of t.d.locks?.values() || []) r.dead = true; },
+    end(a, t) { for (const r of t.d.locks?.values() || []) r.dead = true; this.tentaHud(t, false); t.d.hud?.svg?.remove?.(); t.d.hud = null; },
   },
   // ---------------------------------------------------------------- Inkjet
   inkjet: {
@@ -1054,6 +1113,21 @@ const DIRECTORS = {
   // ---------------------------------------------------------------- Super Chump
   superChump: {
     start(a, t) { this.activation(a, t.color, 1); },
+    frame(a, t) {
+      // S3 footage (142.3s): while aiming, the landing area shows on the floor. These are the exact twelve decoy
+      // landing points the throw would use (superChumpLandingPreview), local caster only.
+      const pv = a.isLocal ? superChumpLandingPreview(this.api, a) : null;
+      t.d.preview = pv;
+      if (!pv) return;
+      if (!t.d.marks) {
+        const c = t.color;
+        t.d.center = this.disc(true, 0, DISC.TARGET, pv.target, this.up, 2.4, 2.4, this.hdr(c, 1.4, 0.5), 0.75, { fade: false, spin: 1.5,
+          follow: (rec) => { const p = t.d.preview; if (!p) return; rec.v[0] = p.target.x; rec.v[1] = p.target.y + 0.06; rec.v[2] = p.target.z; } });
+        t.d.marks = pv.positions.map((_, i) => this.disc(true, 0, DISC.RETICLE, pv.positions[i], this.up, 1.2, 1.2, this.hdr(c, 1.3, 0.4), 0.7, { fade: false, spin: 2,
+          follow: (rec) => { const p = t.d.preview?.positions[i]; if (!p) return; rec.v[0] = p.x; rec.v[1] = p.y + 0.06; rec.v[2] = p.z; } }));
+        (t.d.recs ||= []).push(t.d.center, ...t.d.marks);
+      }
+    },
     event(a, e, pos, target) {
       if (e.action === 'balloon' && pos && (e.index ?? 0) === 0) {   // one firework burst for the salvo
         const c = this.rgb(a), m = this.v[0].copy(pos).setY(pos.y + 0.4);
@@ -1066,7 +1140,7 @@ const DIRECTORS = {
   // ---------------------------------------------------------------- Kraken Royale
   krakenRoyale: {
     start(a, t) {   // S3: the transformation bursts in a ring of ink petals
-      const c = t.color, p = this.v[0].copy(a.pos).setY(a.pos.y + 1);
+      const c = t.color, p = this.v[0].copy(a.pos).setY(a.pos.y + 0.5);   // low: the Kraken lies on the floor
       this.activation(a, c, 1.3);
       this.nativeBlast(p, this.c.setRGB(...c), 3);
       for (let i = 0; i < Math.round(30 * this.kit.q); i++) { const th = rnd(TAU), el = rnd(1, -0.1), s = rnd(13, 6);
@@ -1075,36 +1149,36 @@ const DIRECTORS = {
     phase(a, t, phase) {
       const c = t.color;
       if (phase === 'charge') {
-        t.d.charge = this.band(true, 0, BAND.SWIRL, a.pos, 2.4, 2.4, 2.2, 2.2, this.hdr(c, 1.4, 0.4), 0.45, { fade: false, speed: 3,
-          follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const k = clamp01((this.time - t.phaseAt) / (35 / 60)); rec.v[0] = a.pos.x; rec.v[1] = a.pos.y; rec.v[2] = a.pos.z; rec.v[4] = 2.4 - 1.2 * k; rec.v[15] = 3 + 9 * k; } });
+        t.d.charge = this.band(true, 0, BAND.SWIRL, a.pos, 1.8, 1.8, 1.1, 1.1, this.hdr(c, 1.4, 0.4), 0.4, { fade: false, speed: 3,
+          follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const k = clamp01((this.time - t.phaseAt) / (35 / 60)); rec.v[0] = a.pos.x; rec.v[1] = a.pos.y; rec.v[2] = a.pos.z; rec.v[4] = 1.8 - 0.7 * k; rec.v[15] = 3 + 9 * k; } });
         // S3 footage (85.0s): arrows on the floor point the way the charge will go
-        t.d.arrows = this.disc(false, 0, DISC.CHEVRON, a.pos, this.up, 2.2, 2.2, this.hdr(c, 1.15, 0.2), 0.95, { fade: false,
+        t.d.arrows = this.disc(false, 0, DISC.CHEVRON, a.pos, this.up, 2.2, 2.2, [0.95, 0.95, 0.95], 0.95, { fade: false,
           follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const f = a._s3AllSpecialState?.direction || this.aim(a, this.v[6]);
             rec.v[0] = a.pos.x + f.x * 3.6; rec.v[1] = groundBelow(this, a) + 0.05; rec.v[2] = a.pos.z + f.z * 3.6; rec.v[7] = Math.atan2(f.z, f.x);
             rec.v[11] = 0.5 + 0.5 * smooth((this.time - t.phaseAt) / (35 / 60)); } });
         (t.d.recs ||= []).push(t.d.charge, t.d.arrows);
       } else if (phase === 'dash') {
-        this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 1), c, 0.9, 0.16);
+        this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 0.6), c, 0.9, 0.16);
         this.disc(true, 0.4, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.6, 3.2, this.hdr(c, 1.5, 0.5), 0.9);
         t.d.dashRibs = [0, 1, 2].map(() => this.ribbon(true, { width: 0.32, widthTail: 0.05, color: this.hdr(c, 1.9, 1), alpha: 1, style: RIBBON.GLOW, life: 0.28, spacing: 0.12 }));
         t.d.dashInk = this.ribbon(false, { width: 1.8, widthTail: 0.4, color: this.hdr(c, 1.0), alpha: 0.85, style: RIBBON.INK, life: 0.3, spacing: 0.2, flat: true });
       }
       if (phase !== 'dash' && t.d.dashRibs) { for (const r of t.d.dashRibs) this.kit.glowRibbons.end(r); this.kit.ribbons.end(t.d.dashInk); t.d.dashRibs = null; }
-      if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 1), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25); }
+      if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 0.5), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25); }
     },
     frame(a, t, dt) {
       const c = t.color;
       if (t.phase === 'charge') {   // ink drawn in to the body
-        if (vfxRandom() < 0.8) { const th = rnd(TAU), d = rnd(3, 2); this.v[0].set(a.pos.x + Math.cos(th) * d, a.pos.y + rnd(2.4, 0.2), a.pos.z + Math.sin(th) * d);
-          this.spark(SPARK.STREAK, this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 1.2 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.06, 0.02, this.hdr(c, 2, 1.2), 1, { drag: 0, stretch: 0.07 }); }
+        if (vfxRandom() < 0.8) { const th = rnd(TAU), d = rnd(3, 2); this.v[0].set(a.pos.x + Math.cos(th) * d, a.pos.y + rnd(1.4, 0.1), a.pos.z + Math.sin(th) * d);
+          this.spark(SPARK.STREAK, this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 0.6 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.06, 0.02, this.hdr(c, 2, 1.2), 1, { drag: 0, stretch: 0.07 }); }
       } else if (t.phase === 'dash' && t.d.dashRibs) {   // S3: corkscrewing ink arcs round the charge
         for (let i = 0; i < 3; i++) { const th = this.time * 18 + i * TAU / 3, f = a._s3AllSpecialState?.direction || this.forward(a, this.v[5]);
           const sx = f.z, sz = -f.x;
-          this.v[0].set(a.pos.x + sx * Math.cos(th) * 1.3 + f.x * 1.2, a.pos.y + 1.2 + Math.sin(th) * 1.1, a.pos.z + sz * Math.cos(th) * 1.3 + f.z * 1.2);
+          this.v[0].set(a.pos.x + sx * Math.cos(th) * 1.25 + f.x * 0.6, a.pos.y + 0.75 + Math.sin(th) * 0.85, a.pos.z + sz * Math.cos(th) * 1.25 + f.z * 0.6);
           this.pushRibbon(t.d.dashRibs[i], this.v[0], true); }
         this.pushRibbon(t.d.dashInk, this.v[1].set(a.pos.x, a.pos.y + 0.1, a.pos.z), false);
         if (vfxRandom() < 0.8) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(2, 0.2), a.pos.z + rnd(1, -1)), rnd(5, -5), rnd(5, 1), rnd(5, -5), 0.45, 0.2, 0.05, c, 1, { grav: 14 });
-      } else if (vfxRandom() < 0.08) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(1.8, 0.6), a.pos.z + rnd(0.5, -0.5)), 0, -0.3, 0, 0.7, 0.09, 0.04, c, 1, { grav: 10 });
+      } else if (vfxRandom() < 0.08) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(0.9, 0.3), a.pos.z + rnd(1.2, -1.2)), 0, -0.3, 0, 0.7, 0.09, 0.04, c, 1, { grav: 10 });
     },
     event(a, e, pos) {
       if (e.action === 'jump' && pos) { const c = this.rgb(a), g = this.v[0].copy(pos); g.y = groundBelowPoint(this, pos, a.pos.y);

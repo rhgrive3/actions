@@ -36,6 +36,10 @@ const HASH = `
 float sxHash(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float sxNoise(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f*f*(3.0-2.0*f);
   return mix(mix(sxHash(i), sxHash(i+vec2(1.0,0.0)), u.x), mix(sxHash(i+vec2(0.0,1.0)), sxHash(i+vec2(1.0,1.0)), u.x), u.y); }
+float sxSeg(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
+float sxCross(vec2 a, vec2 b){ return a.x * b.y - a.y * b.x; }
+float sxTri(vec2 p, vec2 a, vec2 b, vec2 c){ float d1 = sxCross(b - a, p - a), d2 = sxCross(c - b, p - b), d3 = sxCross(a - c, p - c);
+  return ((d1 <= 0.0 && d2 <= 0.0 && d3 <= 0.0) || (d1 >= 0.0 && d2 >= 0.0 && d3 >= 0.0)) ? 1.0 : 0.0; }
 float sxFbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * sxNoise(p); p = p * 2.03 + 17.1; a *= 0.5; } return s; }
 `;
 
@@ -468,7 +472,8 @@ void main(){
     col *= 0.8 + 0.4 * n;
   } else if (style == 2) {      // swirl: spinning streaked ribbon
     float sw = pow(0.5 + 0.5 * sin((u * 3.0 + v * 1.5 - uTime * spd) * 6.2831853), 4.0);
-    a = sw * sin(v * 3.14159) * (1.0 - t);
+    // fade where the cylinder turns edge-on: otherwise its silhouette reads as a hard-edged sheet up close
+    a = sw * sin(v * 3.14159) * (1.0 - t) * smoothstep(0.08, 0.55, vFres);
   } else if (style == 3) {      // twister: spiralling ink, darker core, foam on the edges
     float sw = fract(u * 3.0 - v * 1.4 + uTime * spd + seed);
     float band = smoothstep(0.0, 0.12, sw) * (1.0 - smoothstep(0.5, 0.9, sw));
@@ -536,14 +541,15 @@ void main(){
     float ring = 1.0 - smoothstep(0.0, 0.1, abs(r - 0.85));
     a = ring + (1.0 - r) * 0.25 * (0.6 + 0.4 * sin(uTime * 30.0));
     col = mix(col, vec3(max(col.r, max(col.g, col.b))), 0.7);
-  } else if (style == 7) {     // chevrons: three arrows flowing toward local +y (charge direction)
-    float k = 0.0;
+  } else if (style == 7) {     // charge arrows: three hollow white arrowheads pointing toward local +y (S3: Kraken Royale)
+    float o = 1e3, fill = 0.0;
     for (int i = 0; i < 3; i++) {
-      float c = fract(float(i) / 3.0 + uTime * 1.2) * 1.6 - 0.8;
-      float d = abs((vUv.y - c) + abs(vUv.x) * 0.9);
-      k = max(k, (1.0 - smoothstep(0.05, 0.11, d)) * step(abs(vUv.x), 0.55) * (1.0 - smoothstep(0.55, 0.85, abs(c))));
+      vec2 p = vUv - vec2(0.0, -0.58 + float(i) * 0.58);
+      vec2 tip = vec2(0.0, 0.26), rt = vec2(0.32, -0.08), nt = vec2(0.0, 0.05), lf = vec2(-0.32, -0.08);
+      o = min(o, min(min(sxSeg(p, tip, rt), sxSeg(p, rt, nt)), min(sxSeg(p, nt, lf), sxSeg(p, lf, tip))));
+      fill = max(fill, max(sxTri(p, tip, rt, nt), sxTri(p, tip, nt, lf)) * (0.5 + 0.5 * sin(uTime * 8.0 - float(i) * 1.6)));
     }
-    a = k;
+    a = (1.0 - smoothstep(0.022, 0.04, o)) + fill * 0.22;
   } else {                     // splat: ink blot with tendrils (ground ink flash)
     float n = sxFbm(vec2(ang * 2.0 + seed * 9.0, r * 3.0));
     float edge = 0.65 + 0.35 * n;
