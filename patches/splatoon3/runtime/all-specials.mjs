@@ -17,6 +17,8 @@
 // may change local-owned device HP after the catalogue owner/life gate.
 
 import { gearCurve } from './gear.mjs';
+import { disposeInkVac } from './kit-ink-vac.mjs';
+import { endTrizooka } from './kit-trizooka.mjs';
 import { objectDamageScale, objectDamageRow, withObjectDamageCause } from './sub-resistance.mjs';
 import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 
@@ -1938,6 +1940,9 @@ function installRuntime(api) {
 export function installAllSpecials(api) { installRuntime(api); return api; }
 // Cancel actor control when picking up an objective; deployed objects survive.
 export function interruptSpecialForObjective(api, actor) {
+  if (!actor) return;
+  disposeInkVac(actor);
+  endTrizooka(actor, 'objective-pickup');
   const rt = runtimes.get(api?.Projectiles);
   if (rt && actorStates.has(actor)) endSpecial(rt, actor, 'objective-pickup');
   if (actor) { actor.specialActive = null; actor.special = 0; }

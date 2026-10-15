@@ -10,6 +10,7 @@ const RANKED_EXPORTS = `
   export { installRanked, buildFrame } from './patches/splatoon3/runtime/ranked/install.mjs';
   export { RankedEngine } from './patches/splatoon3/runtime/ranked/engine.mjs';
   export { createRankedEffects } from './patches/splatoon3/runtime/ranked/combat.mjs';
+  export { bigBubblerSourceRate, bigBubblerDomes, bigBubblerRemoteDomes, bigBubblerSnapshot, replayBigBubbler } from './patches/splatoon3/runtime/kit-big-bubbler.mjs';
 `;
 
 async function bootRanked(options = {}) {
@@ -287,4 +288,191 @@ test('pickup interrupts a real main-weapon charge so the carrier can swim and no
   assert.equal(a.weaponRunner.busy(), false); assert.equal(a.weaponRunner.charging, false); assert.equal(a.ink, f.PLAYER.inkMax);
   a.intent.fire = false; a.intent.squid = true; f.tick(a, 1); assert.equal(a.form, 'squid', 'the ordinary main charge cannot lock Rainmaker form arbitration');
   e.rule.state.carrier = null; a.intent.squid = false; f.tick(a, 30); assert.equal(f.shots.length, beforeShots, 'the pre-pickup charge cannot fire after possession ends');
+});
+
+
+async function rainmakerWallHarness() {
+  const f = await bootRanked({ realProjectiles: true });
+  const shooter = f.make('shooter'), owner = f.make('shooter'), rear = f.make('shooter'), front = f.make('shooter');
+  Object.assign(shooter, { nid: 301, owner: 'guest', team: 0, remote: false });
+  Object.assign(owner, { nid: 302, owner: 'host', team: 1, remote: false });
+  rear.nid = 303; rear.team = 1; front.nid = 304; front.team = 1;
+  shooter.pos.set(0, 0, 0); owner.pos.set(0, 0, 4); rear.pos.set(0, 0, 2.9); front.pos.set(1, 0, 1.8);
+  for (const actor of [shooter, owner, rear, front]) { actor.invuln = 0; actor.s3.spawnArmor = null; }
+  owner.weapon = { ...owner.weapon, sub: 'splashWall' }; owner.s3.abilityPoints = { ...owner.s3.abilityPoints, subPower: 0 }; shooter.s3.objectHitGear = false;
+  f.G.scene = { add() {}, remove() {} }; f.G.netm = null;
+  f.G.physics.segment = (_start, _end, hit) => { hit.hit = false; return hit; };
+  f.G.physics.los = () => true;
+  const proposals = [], emit = f.installedRuntime.emit;
+  f.installedRuntime.emit = (name, event) => { if (name === 'all:sub' && event.phase === 'objectHit') proposals.push(event); else emit(name, event); };
+  // Native creation and native HP/collision/owner callbacks; deployment position
+  // is the controlled world condition, as in the installed Stamp guard test.
+  const wall = f.G.projectiles.throwBomb(owner);
+  assert.equal(wall.subId, 'splashWall'); assert.equal(wall.hp, 800);
+  wall.phase = 'deployed'; wall.pos.set(0, 0, 2); wall.yaw = 0;
+  const m = f.G.match = { mode: 'rainmaker', state: 'playing', playing: () => true, actors: [shooter, owner, rear, front],
+    ranked: { revision: 0, rule: { state: { carrier: String(shooter.nid), charge: { value: 1 } } } } };
+  f.G.actors = m.actors;
+  const effects = f.createRankedEffects(f.installedRuntime, m);
+  const fire = visualOnly => {
+    effects.event({ kind: 'rainmaker-shot', id: 0, actorId: String(shooter.nid), team: 0, pos: [0, 0, 0], aim: [0, 0, 1],
+      charge: 1, damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92,
+      paintRadius: 1, speed: 18, directRange: 4.4 }, visualOnly);
+    effects.update(.1); effects.update(.1); effects.update(.3);
+  };
+  return { ...f, shooter, owner, rear, front, wall, proposals, effects, fire };
+}
+
+for (const gear of [false, true]) test('native Splash Wall receives Rainmaker direct x1 plus blast x2; Object Shredder once (' + gear + ')', async () => {
+  const f = await rainmakerWallHarness(); f.shooter.s3.objectHitGear = gear;
+  f.fire(false);
+  assert.equal(f.wall.hp, 800 - (60 + 180 * 2) * (gear ? 1.5 : 1));
+  assert.equal(f.rear.hp, 100, 'the virtual shield blocks the explosion behind it');
+  assert.equal(f.front.hp, 60, 'the same shield does not hide the attacker-side opponent from the far blast');
+  f.effects.dispose();
+});
+
+test('a shield destroyed by this Rainmaker blast still blocks the same explosion behind it', async () => {
+  const f = await rainmakerWallHarness(); f.wall.hp = 400; f.fire(false);
+  assert.equal(f.wall.dead, true); assert.equal(f.G.projectiles._s3SubObjects.includes(f.wall), false);
+  assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 60);
+  f.effects.dispose();
+});
+
+test('a guest-owned follower proposes native object damage and the wall owner accepts each hit only once', async () => {
+  const f = await rainmakerWallHarness(); f.owner.remote = true; f.wall.ghost = true;
+  f.fire(true);
+  assert.equal(f.wall.hp, 800, 'a remote wall presentation never spends local HP');
+  assert.deepEqual(f.proposals.map(p => p.damage), [60, 180]);
+  assert.ok(f.proposals.every(p => p.actor === f.shooter && p.targetOwnerId === f.owner.nid && p.targetSeq === f.wall.seq));
+  assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 100, 'a follower still cannot damage actors');
+  // Replay through the installed, life/target-validated native owner handler.
+  f.shooter.remote = true; f.owner.remote = false; f.wall.ghost = false;
+  f.G.netm = { byNid: new Map([[f.shooter.nid, f.shooter], [f.owner.nid, f.owner]]) };
+  for (const proposal of f.proposals) assert.equal(f.installedRuntime.replaySub(proposal), true);
+  assert.equal(f.wall.hp, 380);
+  for (const proposal of f.proposals) assert.equal(f.installedRuntime.replaySub(proposal), false);
+  assert.equal(f.wall.hp, 380, 'ordered proposal identities reject replayed hits');
+  f.effects.dispose();
+});
+
+test('the ranked host does not double-spend native object HP for a remote-owned carrier', async () => {
+  const f = await rainmakerWallHarness(); f.shooter.remote = true; f.fire(false);
+  assert.equal(f.wall.hp, 800); assert.deepEqual(f.proposals, []);
+  assert.equal(f.rear.hp, 100, 'the host still owns and occludes actor blast damage');
+  f.effects.dispose();
+});
+
+async function rainmakerArmorHarness() {
+  const f = await rainmakerWallHarness();
+  f.G.projectiles.clear();
+  const victim = f.rear;
+  victim.weapon = { ...victim.weapon, special: 'booyahBomb', specialCost: 100 };
+  victim.special = 100; victim._resolve = () => {};
+  victim.intent.fire = false; victim.intent.sub = false; victim._startSpecial();
+  for (let frame = 0; frame < 30; frame++) victim._updateSpecial(1 / 60);
+  victim.pos.set(0, 0, 2); victim.invuln = 0; victim.s3.spawnArmor = null;
+  f.front.pos.set(20, 0, 20); f.owner.pos.set(20, 0, 25);
+  return { ...f, victim };
+}
+
+for (const gear of [false, true]) test('dedicated Rainmaker actor hits retain their source phase against active Nice Ball armor (' + gear + ')', async () => {
+  const f = await rainmakerArmorHarness(); f.shooter.s3.objectHitGear = gear;
+  const before = f.victim._s3AllSpecialState.armorHP;
+  f.fire(false);
+  assert.equal(before - f.victim._s3AllSpecialState.armorHP, (60 + 180) * (gear ? 1.1 : 1));
+  assert.equal(f.victim.hp, 100);
+  assert.equal(f.shooter._s3AllSpecialDamageCause, undefined, 'the ordinary weapon cause is restored');
+  f.effects.dispose();
+});
+
+test('victim-owned ranked damage carries a bounded Rainmaker cause through native armor and rejects duplicate/foreign causes', async () => {
+  const f = await rainmakerArmorHarness(), victim = f.victim, shooter = f.shooter;
+  Object.assign(shooter, { owner: 'host', remote: true }); Object.assign(victim, { owner: 'guest', remote: false });
+  const m = f.G.match; m.local = victim; m.time = 300;
+  const nm = new f.NetMatch({ myId: 'guest', hostId: 'host', isHost: false, _members: new Set(['host', 'guest']), tr: { broadcast() {}, sendTo() {} } }, { id: 'rainmaker-armor-network', map: 'tidewater' });
+  nm.bind(m); f.G.netm = nm;
+  const before = victim._s3AllSpecialState.armorHP;
+  const packet = { k: 'rkdamage', match: nm.cfg.id, seq: 1, victim: String(victim.nid), attacker: String(shooter.nid), life: victim.netLife ?? 0, damage: 60, cause: 'Gachihoko_Bullet' };
+  nm.onMessage('host', { ...packet, cause: 'Shooter' }); nm.onMessage('foreign', packet);
+  assert.equal(victim._s3AllSpecialState.armorHP, before);
+  nm.onMessage('host', packet); nm.onMessage('host', packet);
+  assert.equal(victim._s3AllSpecialState.armorHP, before - 60);
+  nm.onMessage('host', { ...packet, seq: 2, damage: 180, cause: 'Gachihoko_BombCore' });
+  assert.equal(victim._s3AllSpecialState.armorHP, before - 240);
+  assert.equal(shooter._s3AllSpecialDamageCause, undefined);
+  f.effects.dispose();
+});
+
+test('actual dedicated projectile selects the Rainmaker direct row for native Big Bubbler contacts', async () => {
+  const f = await rainmakerWallHarness(), original = f.G.projectiles.kitDefenseCandidate, probes = [];
+  f.G.projectiles.kitDefenseCandidate = function (p) { probes.push(p); return original.call(this, p); };
+  f.fire(false);
+  const probe = probes.find(p => p.damage === 60);
+  assert.ok(probe); assert.equal(f.bigBubblerSourceRate(probe, 'canopy'), 1); assert.equal(f.bigBubblerSourceRate(probe, 'field'), .75);
+  f.effects.dispose();
+});
+
+test('Rainmaker weapon blast reaches native deployed special-device HP through its authored source row', async () => {
+  const f = await rainmakerWallHarness(), owner = f.owner;
+  owner.weapon = { ...owner.weapon, special: 'waveBreaker', specialCost: 100 }; owner.special = 100; owner._resolve = () => {};
+  owner.intent.fire = false; owner.intent.sub = false; owner._prevIntent ||= {}; owner._prevIntent.sub = false;
+  owner._startSpecial(); owner._updateSpecial(1 / 60); owner.intent.sub = true; owner._updateSpecial(1 / 60);
+  owner.intent.sub = false; for (let frame = 0; frame < 17 && owner.specialActive; frame++) owner._updateSpecial(1 / 60);
+  const device = f.G.projectiles._s3AllSpecialObjects.find(o => o.id === 'waveBreaker' && o.kind === 'wave');
+  assert.ok(device, 'actual R hold/release creates the native device'); assert.equal(device.hp, 480);
+  device.pos.set(0, 1, 2); f.fire(false);
+  assert.equal(device.hp, 480 - 60 - 180 * 2);
+  assert.equal(f.wall.hp, 800 - 180 * 2, 'the device takes first contact; the wall receives this blast once');
+  f.effects.dispose();
+});
+
+async function rainmakerDomeHarness() {
+  const f = await rainmakerWallHarness(), owner = f.owner;
+  f.G.projectiles.clear(); owner.pos.set(0, 0, 6);
+  owner.weapon = { ...owner.weapon, special: 'bubbler', specialCost: 100 }; owner.special = 100;
+  owner._startSpecial();
+  for (let frame = 0; frame < 60; frame++) { f.G.time += 1 / 60; f.G.projectiles.update(1 / 60); }
+  const dome = f.bigBubblerDomes()[0]; assert.ok(dome);
+  return { ...f, dome };
+}
+
+for (const [breaking, gear] of [[false, false], [true, false], [false, true]]) test('full Rainmaker contact applies native Big Bubbler direct/blast rows and shields the same blast (' + breaking + ', gear ' + gear + ')', async () => {
+  const f = await rainmakerDomeHarness(); f.shooter.s3.objectHitGear = gear;
+  const start = new f.THREE.Vector3(0, 1, 0), end = new f.THREE.Vector3(0, 1, 20);
+  const contact = f.G.projectiles.kitBarrierCandidate({ owner: f.shooter, team: 0, prev: start, pos: end, damage: 0, size: .16, ghost: false }, start, end);
+  assert.ok(contact?.dome, 'actual special activation deploys a native dome');
+  const dome = contact.dome; f.rear.pos.set(0, 0, contact.point.z + 1.05); f.front.pos.set(20, 0, 20);
+  if (breaking) dome.hp = 100;
+  const before = dome.hp; f.fire(false);
+  if (breaking) assert.equal(dome.dead, true);
+  else assert.ok(Math.abs(before - dome.hp - (60 + 180 * 2) * 10 * .64 * (gear ? 1.1 : 1)) < 1e-8,
+    'the native raw-unit x10 and pinned BarrierParam.DamgeRatio .64 apply once');
+  assert.equal(f.rear.hp, 100, 'the native canopy occludes actor blast damage');
+  f.effects.dispose();
+});
+
+test('an off-axis ground blast damages an otherwise empty native Bubbler without a direct projectile contact', async () => {
+  const f = await rainmakerDomeHarness(), burst = f.dome.pos.clone(); burst.x += f.dome.radius + 1; burst.y += 1;
+  f.shooter.pos.copy(burst); f.shooter.pos.y -= 1;
+  const before = f.dome.hp;
+  f.G.physics.segment = (_start, _end, hit) => { hit.hit = true; hit.dist = 0; hit.point.copy(burst); return hit; };
+  f.effects.event({ kind: 'rainmaker-shot', id: 0, actorId: '301', team: 0, pos: f.shooter.pos.toArray(), aim: [0, 1, 0], charge: 1,
+    damage: 60, blastDamage: 180, outerDamage: 40, radius: 1.4, nearRadius: .92, paintRadius: 1, speed: 18, directRange: 4.4 });
+  f.effects.update(.1); assert.equal(f.dome.hp, before, 'there was no direct contact'); f.effects.update(.3);
+  assert.ok(Math.abs(before - f.dome.hp - 40 * 2 * 10 * .64) < 1e-8, 'the far blast band reaches native canopy HP');
+  f.effects.dispose();
+});
+
+test('a locally owned guest follower proposes native Bubbler direct and blast damage without spending replica HP', async () => {
+  const f = await rainmakerDomeHarness(), snapshot = f.bigBubblerSnapshot()[0];
+  f.G.projectiles.clear(); f.owner.remote = true;
+  assert.equal(f.replayBigBubbler('deploy', f.owner, snapshot).ok, true);
+  for (let frame = 0; frame < 60; frame++) { f.G.time += 1 / 60; f.G.projectiles.update(1 / 60); }
+  const replica = f.bigBubblerRemoteDomes()[0], before = replica.hp, proposals = [];
+  const stop = f.on('kit:bubbler:damage-proposal', event => proposals.push(event)); f.fire(true); stop();
+  assert.equal(replica.hp, before); assert.deepEqual(proposals.map(p => p.amount), [60 * 10 * .64, 180 * 2 * 10 * .64]);
+  assert.ok(proposals.every(p => p.actor === f.shooter && p.shooter === 'n' + f.shooter.nid && p.domeOwner === 'n' + f.owner.nid));
+  assert.equal(f.rear.hp, 100); assert.equal(f.front.hp, 100);
+  f.effects.dispose();
 });
