@@ -12,8 +12,8 @@
 //   back end tears into flat ragged sheets (S3 About video 05, Splattershot).
 // - Brella pellet: thin double-pointed spindles in a diverging cone
 //   (S3 About video 04, Splat Brella).
-// - Stringer arrow: very thin needle with a small pointed head
-//   (S3 About video 03, Tri-Stringer).
+// - Stringer arrow: very thin needle with a small pointed head whose back
+//   half frays into torn sheets (S3 About video 03, Tri-Stringer).
 // - Splatana: a thick glossy crescent slab, convex side leading; standing for
 //   the charged vertical slash, lying flat for the horizontal swing (Splatana
 //   Wiper promotional screenshot). Span/bow from BulletSaber*Param.CollisionParam.
@@ -50,17 +50,17 @@ export const S3_SHAPE = Object.freeze({
   shot: Object.freeze({ width: 1.0, raggedFrames: 4 }),
   // Pellet head radius from the player collider; streak covers 1.5 frames of
   // travel (calibration: Splat Brella side frames 1.5-1.9 s).
-  pellet: Object.freeze({ radiusOfCollider: 0.5, frames: 1.5, minLengthRadii: 3 }),
+  pellet: Object.freeze({ radiusOfCollider: 0.3, frames: 2, minLengthRadii: 4 }),
   // Arrow: thin needle (calibration: Tri-Stringer About video 1.6-2.0 s).
   arrow: Object.freeze({ radiusOfCollider: 0.36, frames: 1.2, minLengthRadii: 6, stuckLengthRadii: 7 }),
   // Splatana crescents: half span = outer collider offset + its radius;
   // bow = tip lag of the source collider chain (horizontal 0.2), the vertical
   // slab follows the screenshot's stronger curve and chord.
   slashH: Object.freeze({ halfSpan: 1.32, bow: 0.2, depth: 0.5, thickness: 0.15 }),
-  slashV: Object.freeze({ halfSpan: 1.95, bow: 0.6, depth: 0.8, thickness: 0.22 }),
+  slashV: Object.freeze({ halfSpan: 1.95, bow: 0.9, depth: 0.8, thickness: 0.22 }),
   machine: Object.freeze({ radius: 0.2, helixRadius: 0.24, beads: 7, beadSpacing: 0.12, spin: 24 }),
-  explosher: Object.freeze({ radius: 0.3, sparkles: 16 }),
-  bubble: Object.freeze({ core: 0.58, trailing: 3 }),
+  explosher: Object.freeze({ radius: 0.24, sparkles: 28 }),
+  bubble: Object.freeze({ core: 0.7, trailing: 3 }),
 });
 
 export function s3ShapeKind(p) {
@@ -164,13 +164,13 @@ const BODY_GLSL = `
           vec2 cs = vec2(cos(th), sin(th));
           float r, z;
           if (s >= 0.0) {
-            if (kind < 0.5) { float ph = s * 1.5707963; r = cos(ph); z = 0.95 * sin(ph); }
+            if (kind < 0.5) { float ph = s * 1.5707963; r = cos(ph); z = 1.1 * sin(ph); }
             else if (kind < 1.5) { r = pow(max(1.0 - s, 0.0), 0.8); z = 1.9 * s; }
             else { r = pow(max(1.0 - s, 0.0), 0.7); z = 2.6 * s; }
           } else {
             float u = -s; z = -L * u;
             if (kind < 0.5) {
-              r = 0.86 - 0.26 * u;
+              r = 0.93 - 0.33 * u;
               float c = clamp(0.9 / max(L, 0.9), 0.05, 0.6), e = clamp((u - (1.0 - c)) / c, 0.0, 1.0);
               r *= sqrt(max(0.0, 1.0 - e * e));
             } else if (kind < 1.5) r = pow(max(1.0 - u, 0.0), 1.1);
@@ -353,7 +353,10 @@ export function bodyParams(p, kind, sp) {
   if (kind === 'pellet' && length < cfg.minLengthRadii * R)
     return { R, L: Math.max(0.4, length / Math.max(R, 1e-4)), kind: BODY_KIND.shot, rag: 0 };
   const L = Math.max(cfg.minLengthRadii, length / Math.max(R, 1e-4));
-  return { R, L, kind: BODY_KIND[kind], rag: 0 };
+  // S3 Tri-Stringer arrows fray into thin torn sheets along their back half
+  // (About video 03, 1.78-1.82 s); a stuck arrow is a clean stub.
+  const rag = kind === 'arrow' && !p.catalog?.stuck ? 0.55 : 0;
+  return { R, L, kind: BODY_KIND[kind], rag };
 }
 
 // Blob-mesh entries (glossy ink balls) appended inside the existing draw pass:
@@ -471,12 +474,12 @@ export function drawS3Shapes(system, THREE, G) {
       for (let i = 0; i < n && nk < MAX_SPARK; i++) {
         const seed = (p.seed || 0) * 91.7 + i * 3.17;
         const a = hash(seed, 1) * 6.2832, b = Math.acos(2 * hash(seed, 2) - 1);
-        const d = rad * (1.1 + 0.9 * hash(seed, 3)) + 0.25 * fract(p.age * (0.8 + hash(seed, 5)) + hash(seed, 6));
+        const d = rad * (1.2 + 2.2 * hash(seed, 3)) + 0.35 * fract(p.age * (0.8 + hash(seed, 5)) + hash(seed, 6));
         v.set(Math.sin(b) * Math.cos(a + p.age * 3), Math.cos(b), Math.sin(b) * Math.sin(a + p.age * 3)).multiplyScalar(d);
         v.addScaledVector(f, -0.35 * hash(seed, 7) * Math.min(1, sp * 0.05)).add(p.pos);
         sparkPos.array[nk * 3] = v.x; sparkPos.array[nk * 3 + 1] = v.y; sparkPos.array[nk * 3 + 2] = v.z;
         const tw = 0.5 + 0.5 * Math.sin(p.age * 30 + seed * 10);
-        sparkSize.array[nk] = 0.05 + 0.08 * tw * hash(seed, 8);
+        sparkSize.array[nk] = 0.07 + 0.09 * tw * hash(seed, 8);
         nk++;
       }
     }
