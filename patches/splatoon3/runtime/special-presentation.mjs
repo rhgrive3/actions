@@ -62,11 +62,13 @@ export const SPECIAL_DEVICES = Object.freeze({
   waveBreaker: [{ model: 'spWaveBreaker', host: 'kid', pos: [0.2, 0.62, 0.32], rot: [0.25, 0, 0], scale: 0.55, hideWeapon: true, hands: { R: [0.13, 0.3, 0], L: [-0.2, 0.62, 0] } }],
   zipcaster: [{ inkCoat: true, line: true }],
 });
-// Projectile models (the native ink round keeps drawing its ink blob).
+// Projectile models. hideBlob: the model replaces the native round's drawn ink blob (S3 175.9-179.9s: Tenta
+// Missiles fly as missiles with smoke, not as ink drops; the thrown Ultra Stamp is the stamp itself). The round's
+// flight, hits and paint are untouched; only its draw radius (p.vis, read by Projectiles._draw alone) is shrunk.
 export const SPECIAL_PROJECTILE_MODELS = Object.freeze({
-  tentaMissiles: { model: 'spTentaMissile', scale: 1.4, along: true },
+  tentaMissiles: { model: 'spTentaMissile', scale: 1.4, along: true, hideBlob: true },
   booyahBomb: { model: 'spBooyahBall', scale: 1.25, along: false, spin: true },
-  ultraStamp: { model: 'spUltraStamp', scale: 0.85, along: true, tumble: true },
+  ultraStamp: { model: 'spUltraStamp', scale: 0.85, along: true, tumble: true, hideBlob: true },
 });
 // Six speakers in a hexagon round the kid (S3 promo screenshot 02).
 const SPEAKER_RING = [[-0.55, 1.95], [0.55, 1.95], [-1.0, 1.35], [1.0, 1.35], [-0.55, 0.75], [0.55, 0.75]];
@@ -309,6 +311,7 @@ export function installSpecialModels(api) {
         r.group.add(m.root); G.scene?.add?.(r.group); rounds.set(p, r);
       }
       seen.add(p);
+      if (spec.hideBlob) { p.vis = 1e-4; p.sats = 0; }
       r.group.position.copy(p.pos);
       if (spec.along && p.vel?.lengthSq?.() > 1e-6) { v.copy(p.vel).normalize(); r.group.quaternion.setFromUnitVectors(fwd, v); }
       if (spec.tumble) { r.spin += dt * 9; r.model.root.rotation.x = r.spin; }

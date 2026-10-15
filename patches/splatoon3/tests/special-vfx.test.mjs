@@ -284,3 +284,16 @@ test('sprite quads face the camera (a mirrored, back-facing quad is culled and n
     assert.ok(area > 0, 'the first triangle stays counter-clockwise (front-facing)');
   }
 });
+
+test('a follow callback drives the shape it owns (the default easing never overwrites it)', async () => {
+  const { fx, THREE } = await boot();
+  const d = specialVfxDirector(fx), p = new THREE.Vector3();
+  const disc = d.disc(true, 0, 0, p, d.up, 0.1, 0.1, [1, 1, 1], 1, { fade: false, follow: (r) => { r.v[3] = 6; } });
+  const band = d.band(true, 0, 0, p, 0.1, 0.1, 1.6, 1.6, [1, 1, 1], 1, { fade: false, follow: (r) => { r.v[4] = 7; } });
+  const shell = d.shell(true, 0, 1, p, 0.5, 0.5, [1, 1, 1], 1, { fade: false, follow: (r) => { r.v[4] = r.v[5] = r.v[6] = 2; } });
+  d.kit.update(1 / 60, { position: new THREE.Vector3(0, 5, -5) });
+  assert.equal(disc.v[3], 6, 'expanding ring radius (e.g. a Wave Breaker wave front)');
+  assert.equal(band.v[4], 7, 'band radius (e.g. the Wave Breaker wall)');
+  assert.equal(shell.v[4], 2, 'shell size (e.g. the Booyah ball growing with its charge)');
+  d.clear();
+});

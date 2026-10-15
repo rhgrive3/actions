@@ -142,28 +142,29 @@ class Director {
     const ease = o.ease || easeOut;
     return pool.add(life, [pos.x, pos.y, pos.z, o.hemi ? 1 : 0, s0, s0 * (o.sy ?? 1), s0, 0, col[0], col[1], col[2], a, style, 0, seed, 0], (r) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0, s = s0 + (s1 - s0) * ease(t);
-      if (o.follow) { const f = o.follow(r); if (f === false) return false; }
       r.v[4] = s; r.v[5] = s * (o.sy ?? 1); r.v[6] = s; r.v[7] += (o.spin ?? 0) * 0.016;
       r.v[11] = a * (o.fade === false ? 1 : o.fadeIn ? Math.min(1, t / o.fadeIn) * (1 - smooth((t - 0.6) / 0.4)) : 1 - smooth((t - (o.hold ?? 0.35)) / (1 - (o.hold ?? 0.35))));
       r.v[13] = t;
+      // the owner's follow runs last, so the size/alpha it drives is not overwritten by the default easing
+      if (o.follow && o.follow(r) === false) return false;
     });
   }
   disc(add, life, style, pos, nrm, r0, r1, col, a, o = {}) {
     const pool = add ? this.kit.discs : this.kit.inkDiscs, seed = vfxRandom(), ease = o.ease || easeOut;
     return pool.add(life, [pos.x, pos.y, pos.z, r0, nrm.x, nrm.y, nrm.z, rnd(TAU), col[0], col[1], col[2], a, style, 0, seed, 0], (r) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
-      if (o.follow && o.follow(r) === false) return false;
       r.v[3] = r0 + (r1 - r0) * ease(t); r.v[7] += (o.spin ?? 0) * 0.016; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
+      if (o.follow && o.follow(r) === false) return false;   // after the defaults: follow wins
     });
   }
   band(add, life, style, pos, r0, r1, h0, h1, col, a, o = {}) {
     const pool = add ? this.kit.bands : this.kit.inkBands, seed = vfxRandom(), ease = o.ease || easeOut;
     return pool.add(life, [pos.x, pos.y, pos.z, rnd(TAU), r0, h0, o.taper ?? 1, o.twist ?? 0, col[0], col[1], col[2], a, style, 0, seed, o.speed ?? 1], (r) => {
       const t = r.life > 0 ? clamp01(r.t / r.life) : 0;
-      if (o.follow && o.follow(r) === false) return false;
       r.v[4] = r0 + (r1 - r0) * ease(t); r.v[5] = h0 + (h1 - h0) * ease(t); r.v[3] += (o.spin ?? 0) * 0.016; r.v[13] = t;
       if (o.fade !== false) r.v[11] = a * (1 - smooth((t - (o.hold ?? 0.5)) / (1 - (o.hold ?? 0.5))));
+      if (o.follow && o.follow(r) === false) return false;   // after the defaults: follow wins
     });
   }
   beam(add, life, style, a, b, r0, r1, col, alpha, o = {}) {
@@ -875,7 +876,7 @@ const DIRECTORS = {
       for (const [e] of inside) {
         live.add(e);
         if (!locks.has(e)) locks.set(e, this.disc(true, 0, DISC.RETICLE, e.pos, this.up, 2.2, 1.0, this.hdr(t.color, 1.5, 1.2), 1, { fade: false, spin: 2,
-          follow: (rec) => { rec.v[0] = e.pos.x; rec.v[1] = e.pos.y + 0.9; rec.v[2] = e.pos.z; const n = this.v[1].copy(this.camPos).sub(e.pos).normalize(); rec.v[4] = n.x; rec.v[5] = n.y; rec.v[6] = n.z; rec.v[3] = Math.max(0.85, rec.v[3] - 0.08); } }));
+          follow: (rec) => { rec.v[0] = e.pos.x; rec.v[1] = e.pos.y + 0.9; rec.v[2] = e.pos.z; const n = this.v[1].copy(this.camPos).sub(e.pos).normalize(); rec.v[4] = n.x; rec.v[5] = n.y; rec.v[6] = n.z; rec.v[3] = Math.max(0.85, 2.2 - rec.t * 4.8); } }));
       }
       for (const [e, r] of locks) if (!live.has(e)) { r.dead = true; locks.delete(e); }
     },
