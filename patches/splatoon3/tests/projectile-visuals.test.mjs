@@ -863,3 +863,41 @@ test('stalled remote Roller heads and liquid links share the same endpoint at ev
   assert.deepEqual(ps.list.map(gameplayRow), before, 'unrelated local ticks and changing render alpha do not advance remote gameplay state');
   ps.disposeVisuals();
 });
+
+test('source VTF Roller owns its GPU draw when installed, with geometry fallback when absent', async () => {
+  const f = await sourceFixture({ fullRuntime: true }), { THREE } = f;
+  const system = { scene: new THREE.Scene(), list: [], inkFlight: { time: 0 } };
+  let packReady = true;
+  const runtime = new ProjectileVisualRuntime(system, THREE, {
+    nativeVolumeOwns: p => !!p._inkVolumeHorizontal && packReady,
+  });
+  const p = { type: 'drop', wid: 'roller', fidelityMode: 'horizontal',
+    _inkVolumeHorizontal: true, vis: 0.3, size: 0.3, age: 0, life: 2,
+    delay: 0, seed: 0.25, owner: { color: new THREE.Color('#fda321') },
+    pos: new THREE.Vector3(0, 1, 0), prev: new THREE.Vector3(0, 1, 0),
+    vel: new THREE.Vector3(0, 0, 12) };
+  system.list.push(p);
+  runtime.reset(p);
+  runtime.beginStep(p);
+  p.age = DT; p.pos.z = 0.2;
+  runtime.recordStep(p, DT);
+  runtime.draw(1);
+  assert.equal(runtime.ensureBirth(p), false, 'ready native VTF takes ownership');
+  assert.equal(runtime.handles(p), false, 'new mesh must not duplicate VTF');
+  assert.equal(runtime.stats.vertexCount, 0);
+  assert.equal(runtime.mesh.visible, false);
+
+  packReady = false;
+  runtime.beginStep(p); p.age += DT; p.pos.z += 0.2;
+  runtime.recordStep(p, DT);
+  runtime.draw(1);
+  assert.equal(runtime.handles(p), true, 'missing VTF restores bounded procedural geometry');
+  assert.ok(runtime.stats.vertexCount > 0 && runtime.mesh.visible);
+
+  packReady = true;
+  runtime.draw(1);
+  assert.equal(runtime.handles(p), false, 'late native pack load regains single-render ownership');
+  assert.equal(runtime.stats.vertexCount, 0);
+  assert.equal(runtime.mesh.visible, false);
+  runtime.dispose();
+});
