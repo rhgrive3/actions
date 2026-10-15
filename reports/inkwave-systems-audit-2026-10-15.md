@@ -25,7 +25,7 @@ Validation:
 - Content hash: `04cf69e204e31ed6234301bf2aff60be7b4ca92429c3f322eb1e0ef0616ec39a`.
 - Exact-HEAD packaging checks are run after committing the candidate. CI status is independent of these local checks.
 
-## Audit queue and ownership
+## Initial audit queue and ownership
 
 | Area | Current disposition / next work |
 | --- | --- |
@@ -84,3 +84,21 @@ PR #1448's four-file verifier patch was reviewed: one absolute 30-second selecto
 - PR #1445's final Validate job failed in `ink-volume-recipes.test.mjs` (native catalogue wire births 6 vs 9). Inspection reproduces the failure: legitimate zero-width Diffusion Slosher entries serialize tail0=501, while its new admission caps tail0 at16. This is a concrete compatibility failure; do not merge that head. Its other substantive jobs passed, but they do not replace the failed quality regression.
 
 Independent defects confirmed during this audit are repaired in batches A/B/C. Remaining retail movement/paint numerical calibration, physical-device behavior and whole-game hardware benchmarks still need their actual evidence. Existing visual/stage/model PRs retain their own acceptance work; no unmeasured retail values or unsupported rendering fixes are inferred from these passing tests.
+
+## Batch D: reviewed queue hardening and native wire compatibility repair
+
+Baseline: batch C merged as `93ff3700c2df04d7f729a9f6f743ee38e3546205`, with merge tree exactly matching validated tree `b73e6847d076b179ce80f555b62db3a3cc458a58`.
+
+PR #1445's five-file patch was reviewed and applied cleanly to this baseline. Its failed source test was reproduced unchanged: legitimate Diffusion Slosher births drop from9 to6 because zero-width entries carry tail0=501. Tail ratio and effective rendered extent are now checked separately (ratio≤4096, base width×ratio≤128); the renderer uses its actual width/fallback choice. Zero/tiny-width sourced heads remain valid, while oversized visible geometry and nonfinite data remain rejected. No projectile/damage/paint tuning is changed. The maximum4096 covers the existing sourced ratio4001 and is explicitly an INKWAVE admission limit.
+
+The included queue fixes reject invalid match durations, reject out-of-world remote bombs, bound anomalously blocked FIFO and abandoned ghost flight, validate remote cosmetic fields, and preserve local draw headroom. Existing 90s Turf, 300s Ranked, deployed Sprinklers, local bombs and the untimed range retain their own lifecycles.
+
+- Original CI failure: run38685744625 / validate116260049394 / `ink-volume-recipes.test.mjs`, 6≠9. Preserved as a failed historical head, never claimed green.
+- Corrected combined source queue/volume/pool cases: 20/20 pass. Adjacent network/snapshot/ballistic/ranked cases: 42/42 pass. New renderer checks reject a width8×ratio501 ghost while admitting a finite .001×4001 head.
+- The existing strict JSON-wire catalogue/pool assertions are preserved; no expected projectile counts were reduced. CI adds emitted queue and volume tests to catch this compatibility error after minification too; the pool counterfactual remains source-only.
+
+Batch D checks completed so far: all local-quality source cases rerun after applying the reviewed queue patch and compatibility fix: 966 pass / 0 fail / 9 environment/emitted-only skips (975 tests). Match start, terminal integrity and all practice-range source cases: 198/198 pass. Actual emitted queue/volume: 14/14 pass; emitted ranked/profile/audio/untimed-range cross-check: 17/17 pass. An initial emitted attempt included the pool test's intentionally source-rewriting counterfactual; emitted artifacts cannot be rewritten by that source fixture, so this is kept in source coverage rather than CI's emitted step. No production or positive-count assertion was weakened.
+
+Batch D final validation: exact-HEAD packaging + imported readiness helper + workflow gates pass37/37, and startup byte/dependency gates pass. Final content/input hashes are `75868d548488e9bd41df0ce40272ce18fbe8a35de64bb0415edb0601b8404f19` / `5a019f99a22a65e7ae723683d2a6bb7de3d0ce166d534bf0e2d79693400dafba`. Chromium 153.0.8010.0 repeats a real rematch lifecycle and then 95 simulated seconds in the untimed range plus ordinary Turf return: passed, no failures/errors/missing resources. Original receipt: `inkwave-systems-d-rematch-2026-10-15.json.gz`. Together with batch C's strict three rounds, this exercises both retained UI ownership and the newly hardened clock/range boundary. It is not a physical-device benchmark or proof that intermittent #1430/#1432 are fixed.
+
+The original #1445 branch is updated with this reviewed, current-main reconciliation and compatibility repair, preserving its history through both parents. Original failed-head evidence is retained. New head CI is tracked separately from the local source/emitted/browser checks; no full exact-head CI-green claim is made. Remaining work requiring WebKit OS libraries, actual Switch/device measurements, reproducible intermittent failures or independent visual/stage/model acceptance is not marked resolved.

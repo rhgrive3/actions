@@ -322,6 +322,10 @@ jobs:
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/splatoon3/tests/audio-match-disposal.test.mjs
+      - name: Verify emitted queue hardening and native catalogue wire compatibility
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/network-replication/tests/issue-queue-oct15-hardening.test.mjs patches/local-quality/tests/ink-volume-recipes.test.mjs
       - name: Verify emitted modal controller and Pointer Lock lifetimes
         run: INKWAVE_CONTROLS_SITE="$PWD/_site" INKWAVE_POINTER_LOCK_SITE="$PWD/_site" node --experimental-vm-modules --test patches/reliability/tests/editor-pad-menu.test.mjs patches/reliability/tests/touch-pointerlock.test.mjs
       - name: Verify emitted explicit Turf Map and gyro transport
