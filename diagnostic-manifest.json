@@ -1,0 +1,153 @@
+{
+  "status": "frozen local diagnostic; actual emitted and GPU acceptance pending",
+  "candidateHead": "21f54ffc024383d0d65b77ffece0e710c93b4bd3",
+  "candidateTree": "2c0f0d7d0bd7e19ce0bc6ce5b8bca8e45db79748",
+  "expected": {
+    "source": 116,
+    "emitted": 116,
+    "skips": 0,
+    "controls": 61,
+    "images": 56,
+    "workRows": 40
+  },
+  "files": [
+    {
+      "path": "build-binding.mjs",
+      "sha256": "296fdf3b541c09cf2b669df5374a924ab48c7eca97576f19a0b8f0f520075a7b",
+      "blob": "0896de90e0582e70c6847817d9c97cf8bd119691",
+      "bytes": 2764
+    },
+    {
+      "path": "build-binding.test.mjs",
+      "sha256": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+      "blob": "ea2b357a4151e2238224853aee5abe369a18deef",
+      "bytes": 2896
+    },
+    {
+      "path": "capture-third-integration.mjs",
+      "sha256": "697102a71e70753b0aa0962a0b2f4cc351248085749ae43435479d807835da37",
+      "blob": "6edf87449f9ff6c3a988bd5eab505ce0afd60177",
+      "bytes": 12883
+    },
+    {
+      "path": "third-capture-integrity.test.mjs",
+      "sha256": "6e14af5a9ef999f72f7ffd3a71d61a49b4f7c912195917756af102e28220b85b",
+      "blob": "383f1839dc13adecce1d214bf5d74ca532f40947",
+      "bytes": 3370
+    },
+    {
+      "path": "capture-a-third.mjs",
+      "sha256": "2cfba6c6c12c29865e03a959435c094c483e6f56f668f8f7a60ccbe72330ccbc",
+      "blob": "159ee766d01e714fea03c44220bab2480a8085ca",
+      "bytes": 9073
+    },
+    {
+      "path": "capture-a-third.test.mjs",
+      "sha256": "4351b2cd4b45d1ac2e8b7ef9e4232b207595befa96dc103add69cf9b9fb147eb",
+      "blob": "c4aebdb2f03188bb2a7afe4daed181112faa2796",
+      "bytes": 1954
+    },
+    {
+      "path": "capture-b-third.mjs",
+      "sha256": "4f024abc8a0b3334d375e685867804c778ad2edd164c6ceb2a034456ff3cd5fc",
+      "blob": "f70bd8fb97a061b4b35e07c798cadb099dedcc25",
+      "bytes": 11990
+    },
+    {
+      "path": "capture-b-third.test.mjs",
+      "sha256": "5e9468f8bbc1c87646d4bd642e8ddce5239e1e49a94e2ed8f238023751c4bb06",
+      "blob": "2833e1f24c6d91665a6d8d603241cc7b32467aa6",
+      "bytes": 4558
+    },
+    {
+      "path": "capture-c-third.mjs",
+      "sha256": "35817380db1dd3a357226ca4386fce63b649a71c4e337b4588aecf7a626dca8a",
+      "blob": "7a4ab14b99a2b60a5ffbfacab167f97ebcc7b04b",
+      "bytes": 8785
+    },
+    {
+      "path": "capture-c-third.test.mjs",
+      "sha256": "3fbf317760f249121163753de270829776fc3ea3a78c4d66fef97c06852e8f7c",
+      "blob": "d554ee10bfe2ddb648fdc990bc23613df5a6e118",
+      "bytes": 1954
+    },
+    {
+      "path": "compare-native-weapon-work.mjs",
+      "sha256": "cdf1b700e02e16863535d944c53f286ef93c5e96a1585c33631256f2785cad97",
+      "blob": "0005ae68cc280bf472e5c33eb0fa7827cca877a2",
+      "bytes": 7491
+    },
+    {
+      "path": "native-work-controls.test.mjs",
+      "sha256": "8c8ce1a7b75ac6fc1bf4e25128122917fb6a441c4e41b42b37f3335e484b26d7",
+      "blob": "3e9a16905167f512569cb2df0f3b879d7611edd8",
+      "bytes": 3274
+    },
+    {
+      "path": "third-capture-contract.mjs",
+      "sha256": "5ebf26ff41367ff4d2f83a3cf9f98b9512990ab518c83ce9334beb2087bd9e2b",
+      "blob": "301d876b859aafa2f4738f95402ddb6195bfbaef",
+      "bytes": 2363
+    },
+    {
+      "path": "third-capture-contract.test.mjs",
+      "sha256": "44a5f5668ac6b07e91ed3d7c41f4aa6b7f0743f3fd494fb0c2a82b5f2d03cc0e",
+      "blob": "ef0d990630426988e1fe7ef176a565b199e87926",
+      "bytes": 1653
+    },
+    {
+      "path": "variant-plan.mjs",
+      "sha256": "8026049a31af0c8fea0e009d7330938eab58b212bb10482fe1db0b1b95754f6f",
+      "blob": "30eb8e05f6ffa71ba83942cc32306c7864f51512",
+      "bytes": 1927
+    },
+    {
+      "path": "variant-plan.test.mjs",
+      "sha256": "02f07e51a12dbb85358531e98eaaf41b8fa56581cf2cb3e15979526421228874",
+      "blob": "b1080673a006e0ed77f68ae520ce010eddc86418",
+      "bytes": 1276
+    },
+    {
+      "path": "select-candidate.mjs",
+      "sha256": "8c4909cd550f1b0ea496d68d9b6a7d84599ef023fe218cf60e2e3441332baff5",
+      "blob": "fd9865c0656ee1c55578871476f6bfc3cc1982b4",
+      "bytes": 491
+    },
+    {
+      "path": "select-candidate.test.mjs",
+      "sha256": "05d00b6b0c639ef4e0251b4f5b8c40282cf3b59b46e0014ccb41c1372741a8c6",
+      "blob": "85d5969c75342e52a373bfcbc8fd3cbafa338efd",
+      "bytes": 1499
+    },
+    {
+      "path": "check-source-plan.mjs",
+      "sha256": "cc1f38ebaa8eef8f508d7ce5dd3052dbe16884fc54acf6b06b30eb6a1a39a25d",
+      "blob": "fa6ef97372c212e55c30bb521772791dd4ffc0e3",
+      "bytes": 1080
+    },
+    {
+      "path": "run-owner-tests.mjs",
+      "sha256": "1b2bf93efd8b2d3f76d09b8d5aa50e1d7192e921fe01a2e63abbdee24c0fe3cf",
+      "blob": "aa572888863ed9ce9fe1cd6f1a964078571dc583",
+      "bytes": 1490
+    },
+    {
+      "path": "acceptance-plan.json",
+      "sha256": "2de3fe5b0c8730d8ec3bf1eb9376249126431e97ff48a592713a63049a2754d1",
+      "blob": "efdd15bb3bb5034bb7ad4ca0b3b2db02d3c387c5",
+      "bytes": 7978
+    },
+    {
+      "path": "ACCEPTANCE_SCOPE.txt",
+      "sha256": "5ffb949ba4c0673891a613e47252730764bab57572e65fd2e41f695664216566",
+      "blob": "ecf243d2347818e11c4b70222a60b24b555fdfa3",
+      "bytes": 1899
+    },
+    {
+      "path": ".github/workflows/third-weapon-acceptance.yml",
+      "sha256": "0c83b4c65596acdc1acb2b58200600eb6584502b9e0c43115e0e3e9a9be8af72",
+      "blob": "d79b012e26d63f628e88e75ad7df374bafeaf48d",
+      "bytes": 2652
+    }
+  ]
+}

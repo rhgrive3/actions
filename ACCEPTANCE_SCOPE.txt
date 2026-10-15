@@ -1,0 +1,9 @@
+Third limited batch: ten explicit new variants on the fixed 24-variant registry.
+Candidate PR1472 head 21f54ffc024383d0d65b77ffece0e710c93b4bd3, tree 2c0f0d7d0bd7e19ce0bc6ce5b8bca8e45db79748, parent 52e868afd8f64b6d830d3c0df0e9e9690d9b3751.
+One production build; source and emitted 116 model cases each, zero skips. Existing Settings2 remains a separate source-only CI check.
+Images: A4 Shooter rest16, B4 Saber native charged/release32, C2 Slosher rest8; each base/variant and both team colors, matched native-held camera and pose. All56 PNGs require 1920x1080, foreground>=250 and quantized colors>=16. Owner ink remains native; fixed-color edits are assessed at major-region scale. Logos, labels and full original-game appearance are not qualified.
+Native Environment day/PMREM256, Neutral/.94/sRGB. This controlled held-component scene omits the production compositor and stage shadows.
+B4 uses the actual installed catalog and native Actor/Runner/Character, with isolated real Projectiles. A/C use actual Actor/Character controlled animation. Source/emitted tests provide canonical dispatch and ownership regression; these are not an entire live multiplayer/gameplay acceptance.
+Processing: 40 base/variant/team rows, separate construction and first measured render, 4 warmup and 12 alternating steady samples, synchronous identical-size RGBA readback. Draw/triangle/geometry byte receipts are included. This measures controlled submissions plus readback, not game FPS or hardware calibration.
+61 portable diagnostic controls. Exact source HEAD/tree, all build inputs, reviewed emitted registry and actual versioned runtime deliveries are bound. Unknown HTTP and external HTTP/WebSocket traffic fail.
+Candidate selection writes validated40hex directly through Node to GITHUB_ENV; malformed/missing/empty heads fail before candidate checkout. Historical shell-quoting failures remain preserved.
