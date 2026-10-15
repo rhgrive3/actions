@@ -11,7 +11,8 @@
         "inkwave-public/src/game/showcase.js": "02ab7f694f6d16aa02420d660fd846b1a99a894a",
         "inkwave-public/src/net/mock.js": "af8c170a050b65c3356055dd0be43ef95410b015",
         "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8",
-        "patches/local-quality/adapter.mjs": "e3b67aa5789bc5efd3a2c90ae9ae7a918e4506ee"
+        "patches/local-quality/adapter.mjs": "e3b67aa5789bc5efd3a2c90ae9ae7a918e4506ee",
+        "inkwave-public/styles/ui.css": "57ff39d488244a9a0760c41b10862e68af59083c"
       }
     },
     "candidate": {
@@ -23,7 +24,8 @@
         "inkwave-public/src/net/mock.js": "af8c170a050b65c3356055dd0be43ef95410b015",
         "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8",
         "patches/local-quality/adapter.mjs": "e8fbe514122e556f24e053e2fb9b2bfe55605e42",
-        "patches/local-quality/lobby-slot-transform-adapter.mjs": "9652f16084b14539f185aa7a59253ff008fdcee7"
+        "patches/local-quality/lobby-slot-transform-adapter.mjs": "9652f16084b14539f185aa7a59253ff008fdcee7",
+        "inkwave-public/styles/ui.css": "57ff39d488244a9a0760c41b10862e68af59083c"
       }
     }
   },
@@ -39,18 +41,18 @@
       "publicationPath": "scripts/lobby-slot-browser/bindings.test.mjs"
     },
     "browser.mjs": {
-      "bytes": 4729,
-      "sha256": "e91ea739b07bc641ac6adb1976be59d5453af874cb5e9b37d5262748f85876e3",
+      "bytes": 5040,
+      "sha256": "05c7735cc04ca3e2430506a8f0b04ef30db3dcbaf002b2509e65949a5a6b0daa",
       "publicationPath": "scripts/lobby-slot-browser/browser.mjs"
     },
     "inkwave-lobby-slot-browser.yml": {
-      "bytes": 6418,
-      "sha256": "d9018d01c980e4f1f9ae4f473e9db5139953b174144c9aca0ea01cb6863846c1",
+      "bytes": 6445,
+      "sha256": "4789b6fa22197d169dc2dcaad09ff754e2a08b3a0248038034e3ca91955cc6cc",
       "publicationPath": ".github/workflows/inkwave-lobby-slot-browser.yml"
     },
     "lobby-probe.mjs": {
-      "bytes": 5795,
-      "sha256": "008cfba37a4867f29e43860b66d07dca9ef82354ed15cdcc73d0908d9a69133d",
+      "bytes": 6974,
+      "sha256": "26a0fbdf28661aed9aaeadeca9c11a6944e27367827a80e0268e8cd2c7f4fb70",
       "publicationPath": "scripts/lobby-slot-browser/lobby-probe.mjs"
     },
     "native-style.mjs": {
@@ -69,14 +71,16 @@
       "publicationPath": "scripts/lobby-slot-browser/style-smoke.mjs"
     },
     "verify.mjs": {
-      "bytes": 3443,
-      "sha256": "1abeb3075f92556be65e6ea4ae1e08fb55e1dc8c7e7ff07f3ba21cfe7e245859",
+      "bytes": 4240,
+      "sha256": "65d71f264b062a838f97acab470b97957820c2ab022f4174539d1d55fcca0080",
       "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
     },
     "verify.test.mjs": {
-      "bytes": 2071,
-      "sha256": "b66a51298f72a1d759d7ef366e88f5d1cde2122d8407b01ef7b10692abe2c668",
+      "bytes": 2917,
+      "sha256": "a68b6aa79c15b44f83717f747272c3ef401fea1fbad11f5272d7d76bc3f8c062",
       "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
     }
-  }
+  },
+  "repairOf": "49fd37e859f4b955fc964985903132db7b14fded",
+  "repairReason": "Exact native CSS makes parent .iw-plate width/height zero. Validate actual visible ghost/stack bounds and ancestor opacity; retain parent transform assignment count. Native CSS bob compared at shared phase zero."
 }

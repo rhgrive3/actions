@@ -121,3 +121,4 @@ jobs:
             evidence/*.json
             evidence/*.log
             evidence/*.tap
+            evidence/*.png

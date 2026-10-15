@@ -11,7 +11,7 @@ export async function lobbyProbe({input=null,styleHelper}) {
  const observe=(0,eval)('('+styleHelper+')'),original=sc.lobbySlotAnchor,own=Object.getOwnPropertyDescriptor(sc,'lobbySlotAnchor'),extTick=menus._extTick,savedMode=sc.mode,savedBots=net.lobby.bots;
  const restorers=[],frames=[],writes=[],natural=[],naturalObservation=[];let slots=[];
  const read=()=>Array.from({length:8},(_,k)=>{const a=original.call(sc,k>>2,k&3,{});if(!a)return null;check(['x','y','s','vis'].every(p=>Number.isFinite(a[p])),'finite actual projection');return{x:a.x,y:a.y,s:a.s,vis:a.vis,behind:!!a.behind};});
- const finish=()=>{for(const a of menus._scr.el.getAnimations({subtree:true})){const end=a.effect?.getComputedTiming().endTime;if(Number.isFinite(end))a.finish();}};
+ const finish=()=>{for(const a of menus._scr.el.getAnimations({subtree:true})){const end=a.effect?.getComputedTiming().endTime;if(Number.isFinite(end))a.finish();else if(a.animationName==='iw-open-bob'){a.pause();a.currentTime=0;}}};
  const restoreStyles=()=>{const errors=[];for(const restore of restorers.splice(0).reverse()){try{restore();}catch(e){errors.push(e);}}if(errors.length)throw new AggregateError(errors,'Style cleanup failed');};
  const mount=()=>{restoreStyles();menus.show('lobby',{force:true,wipe:false,light:false,instantLeave:true,back:true});check(menus._scr.name==='lobby','native remount');slots=[...menus._scr.el.querySelectorAll('.iw-plate.is-open')];check(slots.length===8,'exact eight native open nodes');finish();for(const [i,el]of slots.entries())restorers.push(observe(el,(key,value)=>{if(key==='transform')writes.push({i,value});}));};
  try {
@@ -34,7 +34,18 @@ export async function lobbyProbe({input=null,styleHelper}) {
    if(f.label==='reenter')mount();
    if(f.label==='external-repair')for(const el of slots)el.style.transform='none';
    const start=writes.length;calls=[];menus._scr.tick(1/60);check(calls.join(',')==='0,1,2,3,4,5,6,7','unchanged anchor call sequence');finish();
-   const rows=slots.map((el,i)=>{const c=getComputedStyle(el),r=el.getBoundingClientRect(),on=el.classList.contains('is-on');check([r.x,r.y,r.width,r.height].every(Number.isFinite),'finite native rect');if(on)check(r.width>0&&r.height>0&&r.right>0&&r.bottom>0&&r.left<innerWidth&&r.top<innerHeight&&Number(c.opacity)>0&&c.display!=='none'&&c.visibility==='visible','visible slot endpoint');return {i,on,classes:el.className,transform:el.style.transform,computedTransform:c.transform,opacity:c.opacity,display:c.display,visibility:c.visibility,rect:[r.x,r.y,r.width,r.height],text:el.textContent,icon:el.querySelector('.iw-plate__plus').innerHTML};});
+   const rows=slots.map((el,i)=>{
+    const c=getComputedStyle(el),r=el.getBoundingClientRect(),on=el.classList.contains('is-on');
+    const ghost=el.querySelector('.iw-plate__ghost'),stack=el.querySelector('.iw-plate__stack');check(ghost&&stack,'native visible descendants');
+    const g=getComputedStyle(ghost),gr=ghost.getBoundingClientRect(),st=getComputedStyle(stack),sr=stack.getBoundingClientRect();
+    const ancestors=[];for(let n=ghost;n;n=n.parentElement){const z=getComputedStyle(n);ancestors.push({tag:n.tagName,classes:n.className,opacity:z.opacity,display:z.display,visibility:z.visibility});}
+    const row={i,on,classes:el.className,transform:el.style.transform,computedTransform:c.transform,opacity:c.opacity,display:c.display,visibility:c.visibility,rect:[r.x,r.y,r.width,r.height],text:el.textContent,icon:el.querySelector('.iw-plate__plus').innerHTML,child:{rect:[gr.x,gr.y,gr.width,gr.height],opacity:g.opacity,display:g.display,visibility:g.visibility,color:g.color,background:g.backgroundColor},stack:{rect:[sr.x,sr.y,sr.width,sr.height],opacity:st.opacity,scale:st.scale,translate:st.translate},ancestors,bobPhase:0};
+    globalThis.LOBBY_PROBE_PARTIAL={label:f.label,row,completedFrames:frames};
+    const bob=stack.getAnimations().filter(a=>a.animationName==='iw-open-bob');if(on)check(bob.length===1&&bob[0].playState==='paused'&&bob[0].currentTime===0,'shared native bob phase');
+    check([...row.rect,...row.child.rect,...row.stack.rect].every(Number.isFinite),'finite native rect');
+    if(on)check(gr.width>0&&gr.height>0&&gr.right>0&&gr.bottom>0&&gr.left<innerWidth&&gr.top<innerHeight&&ancestors.every(a=>Number(a.opacity)>0&&a.display!=='none'&&a.visibility==='visible'),'visible slot child endpoint');
+    return row;
+   });
    frames.push({label:f.label,rows,assignments:writes.length-start,calls:[...calls]});
   }
   return {status:'passed',input,natural,naturalObservation,frames,restored:true,moduleURLs:{ctx:new URL('src/core/ctx.js',document.baseURI).href,menus:new URL('src/ui/menus.js',document.baseURI).href},scope:'Actual native lobby DOM/CSS endpoint parity using shared native Showcase projection trace; controlled ticks, not frame-time/FPS or network-room proof'};

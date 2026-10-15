@@ -17,7 +17,11 @@ export function verify(r){
   for(const [i,row]of f.rows.entries()){
    assert.equal(row.i,i);assert.equal(typeof row.on,'boolean');for(const k of ['classes','transform','computedTransform','opacity','display','visibility','text','icon'])assert.equal(typeof row[k],'string',k);
    assert(row.classes.includes('is-open'));assert.match(row.transform,/^translate3d\(/);assert.match(row.computedTransform,/^matrix/);assert.equal(row.rect.length,4);assert(row.rect.every(Number.isFinite));assert(Number.isFinite(Number(row.opacity)));
-   if(row.on){assert(row.rect[2]>0&&row.rect[3]>0);assert(Number(row.opacity)>0);assert.equal(row.visibility,'visible');assert.notEqual(row.display,'none');}
+   assert.equal(row.bobPhase,0);for(const o of [row.child,row.stack]){assert.equal(o.rect.length,4);assert(o.rect.every(Number.isFinite));assert(Number.isFinite(Number(o.opacity)));}
+   for(const k of ['display','visibility','color','background'])assert.equal(typeof row.child[k],'string');for(const k of ['scale','translate'])assert.equal(typeof row.stack[k],'string');
+   assert(row.ancestors.length>=3);for(const x of row.ancestors){assert(Number.isFinite(Number(x.opacity)));for(const k of ['tag','classes','display','visibility'])assert.equal(typeof x[k],'string');}
+   if(row.on){assert(Number(row.opacity)>0);assert.equal(row.visibility,'visible');assert.notEqual(row.display,'none');assert(row.child.rect[2]>0&&row.child.rect[3]>0);assert(row.stack.rect[2]>0&&row.stack.rect[3]>0);assert(Number(row.child.opacity)>0&&Number(row.stack.opacity)>0);assert(row.ancestors.every(x=>Number(x.opacity)>0&&x.display!=='none'&&x.visibility==='visible'));}
+
   }
  }
  assert(r.frames[124].rows.every(x=>x.text==='OPEN'&&!x.classes.includes('is-bot')));assert(r.frames[125].rows.every(x=>x.text==='BOT'&&x.classes.includes('is-bot')));
