@@ -26,8 +26,8 @@ test('stuck running, paused, pending or hidden ancestor never becomes ready',asy
   const {root}=install(t);
   for(const animation of [{pending:true,playState:'running'},{pending:false,playState:'paused'},{pending:false,playState:'running'}]) {
     root.animations=[animation];let polls=0;
-    const page={async waitForFunction(predicate,arg,options){assert.deepEqual(options,{polling:'raf',timeout:1200});assert.equal(arg,null);for(let elapsed=0;elapsed<options.timeout;elapsed+=16){polls++;assert.equal(predicate(),false);}throw new Error('Timeout 1200ms');}};
-    await assert.rejects(waitForPauseEntrance(page),/Timeout 1200ms/);assert.ok(polls>1);
+    const page={async waitForSelector(){},async waitForFunction(predicate,arg,options){assert.deepEqual(options,{polling:'raf',timeout:30000});assert.equal(arg,null);for(let elapsed=0;elapsed<options.timeout;elapsed+=16){polls++;assert.equal(predicate(),false);}throw new Error('Timeout 30000ms');}};
+    await assert.rejects(waitForPauseEntrance(page,()=>0),/Timeout 30000ms/);assert.ok(polls>1);
   }
   root.animations=[];root.style.opacity='.5';assert.equal(pauseEntranceReady(),false);
   root.style.opacity='1';root.style.display='none';assert.equal(pauseEntranceReady(),false);
@@ -64,4 +64,39 @@ test('request gate rejects unknown bytes and accepts only manifest exception',()
  assertArtifactDigest('index.html','abc',artifacts,'manifest');
  assertArtifactDigest('inkwave-build.json','manifest',artifacts,'manifest');
  for(const [key,hash] of [['unknown.js','abc'],['index.html','wrong'],['inkwave-build.json','wrong']])assert.throws(()=>assertArtifactDigest(key,hash,artifacts,'manifest'));
+});
+
+test('selector and animation share one absolute original window without reset or retry',async()=>{
+ let time=100,calls=[];
+ const page={async waitForSelector(selector,options){calls.push(['selector',options.timeout]);assert.equal(selector,'.iwr-pausescr [data-id="z-bomb"]');time+=27000;},async waitForFunction(predicate,arg,options){calls.push(['animation',options.timeout]);}};
+ await waitForPauseEntrance(page,()=>time);
+ assert.deepEqual(calls,[['selector',30000],['animation',3000]]);
+});
+test('selector consumes deadline: animation never receives zero/unlimited timeout',async()=>{
+ let time=0,calls=0;
+ const page={async waitForSelector(){time=30000;},async waitForFunction(){calls++;}};
+ await assert.rejects(waitForPauseEntrance(page,()=>time),/window exhausted/);assert.equal(calls,0);
+});
+test('selector timeout fails once and never restarts readiness',async()=>{
+ let selectors=0,animations=0;
+ await assert.rejects(waitForPauseEntrance({async waitForSelector(){selectors++;throw Error('selector timeout');},async waitForFunction(){animations++;}},()=>0),/selector timeout/);
+ assert.equal(selectors,1);assert.equal(animations,0);
+});
+
+test('negative or nonfinite remaining fails closed without animation wait',async()=>{
+ for(const last of [30001,Infinity,-Infinity,NaN]){
+  let reads=0,animations=0;const now=()=>++reads<3?0:last;
+  await assert.rejects(waitForPauseEntrance({async waitForSelector(){},async waitForFunction(){animations++;}},now),/window exhausted/);
+  assert.equal(animations,0);
+ }
+});
+test('naturally ready entrance is accepted only inside the remaining budget',async t=>{
+ install(t);let time=0,timeout;
+ await waitForPauseEntrance({async waitForSelector(){time=500;},async waitForFunction(predicate,arg,options){timeout=options.timeout;assert.equal(predicate(),true);}},()=>time);
+ assert.equal(timeout,29500);
+});
+
+test('late successful protocol response does not admit beyond absolute deadline',async()=>{
+ let time=0;
+ await assert.rejects(waitForPauseEntrance({async waitForSelector(){time=100;},async waitForFunction(){time=30001;}},()=>time),/window exhausted/);
 });

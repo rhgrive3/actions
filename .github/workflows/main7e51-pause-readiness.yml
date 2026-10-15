@@ -22,8 +22,8 @@ jobs:
           mkdir -p pause-diagnostic/tests
           node --check scripts/check-inkwave-range.mjs
           node --test --test-reporter=tap scripts/pause-entrance-ready.test.mjs | tee pause-diagnostic/tests/source.tap
-          grep -qx '# tests 6' pause-diagnostic/tests/source.tap
-          grep -qx '# pass 6' pause-diagnostic/tests/source.tap
+          grep -qx '# tests 12' pause-diagnostic/tests/source.tap
+          grep -qx '# pass 12' pause-diagnostic/tests/source.tap
           grep -qx '# fail 0' pause-diagnostic/tests/source.tap
           grep -qx '# skipped 0' pause-diagnostic/tests/source.tap
       - uses: actions/checkout@v4

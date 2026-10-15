@@ -241,7 +241,6 @@ for (const run of RUNS) {
     if (Math.abs(p.area - 400) > 1e-6 || !(p.own > 0) || !p.reset || p.after !== 0 || !p.switched || p.weaponAfter === p.weaponBefore) throw new Error('paint/pads ' + JSON.stringify(p));
     // the range pause screen + travel
     await page.evaluate(() => window.__inkwave.pause());
-    await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
     let pauseReadinessError;
     try { await waitForPauseEntrance(page); }
     catch (error) { pauseReadinessError = error; }

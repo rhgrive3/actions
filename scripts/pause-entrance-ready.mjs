@@ -17,9 +17,19 @@ export function pauseEntranceReady() {
   return true;
 }
 
-export async function waitForPauseEntrance(page) {
-  // Replace the former fixed 1200ms sleep, never add to its budget.
-  await page.waitForFunction(pauseEntranceReady, null, {polling:'raf', timeout:1200});
+export async function waitForPauseEntrance(page, now = () => performance.now()) {
+  // One absolute window starts before the original selector wait. The old
+  // path allowed 30000ms for this selector plus an unconditional 1200ms sleep.
+  // Do not reset the budget after selector admission or pass timeout:0.
+  const deadline = now() + 30000;
+  const remaining = () => {
+    const ms = Math.floor(deadline - now());
+    if (!Number.isFinite(ms) || !(ms > 0)) throw new Error('Pause entrance: original 30000ms window exhausted');
+    return ms;
+  };
+  await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', {timeout:remaining()});
+  await page.waitForFunction(pauseEntranceReady, null, {polling:'raf', timeout:remaining()});
+  remaining(); // A delayed successful protocol response must not admit past deadline.
 }
 
 export function collectPauseEntranceEvidence() {
