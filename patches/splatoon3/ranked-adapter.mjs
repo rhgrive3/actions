@@ -32,7 +32,7 @@ export function adaptRanked(rel, code) {
     code = once(code, 'opts.duration = requestedDuration ||', 'opts.duration = isRankedMode(opts.mode) ? 300 : requestedDuration ||', 'offline ranked duration');
     code = once(code, 'noBots: mapNoBots(map.id) || isRangeMap(map)', 'noBots: isRankedMode(opts.mode) ? false : mapNoBots(map.id) || isRangeMap(map)', 'ranked bot squad');
     code = once(code, "mode: params.get('mode') === 'boss' ? 'boss' : 'turf'", "mode: params.get('mode') === 'boss' || isRankedMode(params.get('mode')) ? params.get('mode') : 'turf'", 'diagnostic mode');
-    code = once(code, "prompt = t('Paint the ground — most turf wins!');", "prompt = m.ranked ? ({ zones: 'エリアを確保して、自分のカウントを0にしよう！', tower: 'ヤグラに乗って、カンモンを越えて進もう！', rainmaker: 'バリアを割ってホコを運ぼう！ カンモン通過が必要！', clams: '8個でガチアサリ！ C / Switch A（右ボタン）で敵のゴールへ投げよう！' })[m.mode] : t('Paint the ground — most turf wins!');", 'ranked opening instruction');
+    code = once(code, "prompt = t('Paint the ground — most turf wins!');", "prompt = m.ranked ? t(({ zones: 'Capture the zones and reduce your count to zero!', tower: 'Ride the tower to the enemy goal!', rainmaker: 'Carry the Rainmaker through a checkpoint to the goal!', clams: 'Collect clams and throw them into the enemy basket!' })[m.mode]) : t('Paint the ground — most turf wins!');", 'ranked opening instruction');
     // Native result statistics/progression remain in one flow; rank UI consumes
     // the authoritative count result instead of inferring it from painted turf.
     const anchor = "win: won, percents: [cov[0] * 100, cov[1] * 100], colors:";
