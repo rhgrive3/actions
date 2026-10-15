@@ -91,7 +91,9 @@ try {
   for (const mode of ['source', 'built']) {
     const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/${mode}/fixture.html`, { waitUntil: 'domcontentloaded' });
+    // The module performs synchronous shader/readback probes. Observe its
+    // explicit result below instead of charging that work to navigation.
+    await page.goto(`http://127.0.0.1:${server.address().port}/${mode}/fixture.html`, { waitUntil: 'commit' });
     await page.waitForFunction(() => globalThis.paintMaskResult || globalThis.paintMaskError, null, { timeout: 120000 });
     const outcome = await page.evaluate(() => ({ result: globalThis.paintMaskResult, error: globalThis.paintMaskError, diagnostic: globalThis.paintMaskDiagnostic }));
     if (outcome.error) fs.writeFileSync(path.join(evidence, 'paint-mask-failure.json'), JSON.stringify({ engine, mode, sourceSha, contentHash: build.contentHash, ...outcome }, null, 2) + '\n');
