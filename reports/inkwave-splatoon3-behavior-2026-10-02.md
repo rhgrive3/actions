@@ -4375,3 +4375,10 @@ Captured rays use 73.8% fewer Math min/max calls with identical triangle work. N
 `runtime/combat-info.mjs` の canonical 体力バーに、DOMノード単位の最終描画値キャッシュを追加。同じ表示位置・HP・色を毎フレーム書き直す処理と、非表示済みバーへの重複書き込みを削減した。NaN/Infinityの投影座標はマーカー生成時に除外し、描画側も不正な座標/HPで古い表示を残さず隠す。正常な次フレームでは再表示し、行オブジェクトの再利用や別Actorへの割当でも最新値を描画する。
 
 比較対象は既存のSplatoon 3 11.3.0・全ブキ/ギア。Ver.11の体力表示と固定SplPlayerの180F表示窓、遮蔽・潜伏・非公開追跡・復活lifeの条件を維持し、本家の非公開描画方式や実機FPS改善は主張しない。修正前mainで新規5件すべて失敗、source関連35件と隣接36件、実際のminified helper新規5件＋composition3件が成功。DOM/描画失敗はfixtureであり、ChromiumとSwitch/モバイル実機は未検証。手順と検証範囲は [体力HUDの記録](inkwave-health-hud-stability-2026-10-15.md)。
+
+
+## 2026-10-15: タップ誤判定・GYRO操作継続・試し撃ち表示の追加修正
+
+MAP/PAUSEとGYROに触れて24pxより外へ動かし、元へ戻して離す操作をタップ/長押し診断として確定しないようにした。GYROの接触を既存pointer mapへ登録し、押下中のパッド軸による入力所有権の横取りと、canvas捕捉失敗時にup/cancelを失う問題を修正。試し撃ちはnear plane/非有限のダメージ数字を隠し、的リセット時に古い数字とコンボカードを即時削除する。
+
+本家参照は既存のSplatoon 3 11.3.0。24px/900msは元からあるINKWAVEのブラウザUI値であり本家値ではない。武器・ギア・移動・射撃数値を推測で更新していない。修正前mainで新規10ケース中9件の失敗を再現し、修正後の同一テストと実際のminified module、Chromiumの実タッチ経路を検証。ブラウザのpad/最終gyro callbackはspy、試し撃ちDOM/cameraはfixtureであり、実センサー・Switch・モバイル実機の受入とは区別する。詳細は [追加修正の記録](inkwave-tap-range-followup-2026-10-15.md)。
