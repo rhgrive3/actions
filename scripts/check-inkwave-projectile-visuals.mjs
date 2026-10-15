@@ -167,19 +167,20 @@ async function openGameContext({ mobile = false } = {}) {
         (m?.state === 'intro' || m?.state === 'playing') &&
         !m.attract && m.local?.isLocal && m.controller && g.debug &&
         G.projectiles && G.renderer;
-    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS });
+    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
     const introTransition = await page.evaluate(completeNativeTurfIntro);
     (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
     await page.waitForFunction(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
-    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS });
+    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS, polling: 250 });
   } catch (error) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return { mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
-        matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller,
+        matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller, debug: !!g?.debug,
+        projectiles: !!G?.projectiles,
         frozen: g?.frozen, paused: m?.paused, visibility: document.visibilityState,
         orientationBlocked: m?.controller?.orientationBlocked,
         bootMarks: g?.bootMarks?.slice(-14),
