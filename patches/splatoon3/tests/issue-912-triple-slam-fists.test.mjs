@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   tripleSlamFistCenters, tripleSlamFistDamage, tickTripleSlamFists,
-  installTripleSlamFists, FIST_TRAVEL, FIST_STAMP_RADIUS, tripleSlamFistStamps,
+  installTripleSlamFists, FIST_TRAVEL, FIST_ORPHAN_DEADLINE, FIST_STAMP_RADIUS, tripleSlamFistStamps,
 } from '../runtime/triple-slam-fists.mjs';
 import { getBoot } from './tidal-slam-fixture.mjs';
 
@@ -111,11 +111,27 @@ test('#912 Super Jump Slam and remotely presented actors never instantiate fists
   assert.equal(w.hits.length, 0);
 });
 
-test('#912 owner splatted before landing cancels the pending fists (no fist-only blast is invented)', () => {
+test('#912 surviving fists still detonate after the owner is splatted before landing', () => {
   const w = world(), a = new w.Actor(); a._startSpecial(); a.alive = false;
-  for (let i = 0; i < 200; i++) a.update(1 / 60);
-  assert.equal(w.hits.length, 0);
+  assert.equal(FIST_ORPHAN_DEADLINE, 85 / 60, 'documented approximate pre-landing-death fallback');
+  for (let i = 0; i < 84; i++) a.update(1 / 60);
+  assert.equal(w.hits.length, 0, 'never invent early fist damage before the independent deadline');
+  a.update(1 / 60);
+  assert.equal(w.hits.length, 2, 'both surviving fists independently hit despite player death');
+  assert.ok(w.hits.every(h => h.cause === 'slam'));
+  assert.equal(w.paint.length, 2 * tripleSlamFistStamps(10).length);
   assert.equal(a._s3TripleSlamFists, null);
+  for (let i = 0; i < 120; i++) a.update(1 / 60);
+  assert.equal(w.hits.length, 2, 'the owner-death fallback cannot duplicate fist damage');
+});
+
+test('#912 splatting the player after landing cannot cancel either already scheduled fist', () => {
+  const w = world(), a = new w.Actor(); a._startSpecial(); a._slamImpact();
+  a.alive = false;
+  for (let i = 0; i < 14; i++) a.update(1 / 60);
+  assert.equal(w.hits.length, 0);
+  a.update(1 / 60);
+  assert.equal(w.hits.length, 2, 'the original 15F post-landing timing persists through death');
 });
 
 test('#912 fist delay is time-based: 30 sub-steps of 1/120 s fire at the same 0.25 s as 15 ticks of 1/60 s', () => {
