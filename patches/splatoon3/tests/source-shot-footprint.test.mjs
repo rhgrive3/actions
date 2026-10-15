@@ -65,7 +65,7 @@ test('source-defined WidthHalf and DepthScale bound real CPU turf on a flat floo
     cells++;
     const du = face.origin.x + (x+.5)*face.cu - centre.x;
     const dv = face.origin.z + (y+.5)*face.cv - centre.z;
-    const forwardScale = dv > 0 ? 1 + stretch : 1 + .25*stretch;
+    const forwardScale = dv > 0 ? 1 + stretch : 1; // source DepthScale has no invented rear stretch
     assert.ok(Math.hypot(du, dv/forwardScale) <= width + 1e-8,
       'source WidthHalf bounds lateral coverage after internal DepthScale elongation');
   }
