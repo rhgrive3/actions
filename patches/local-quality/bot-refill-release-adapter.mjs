@@ -10,19 +10,19 @@ export function adaptBotRefillRelease(rel, code, once) {
   // Keep an admitted charge inside the fallback until its release owner completes.
   const admission = 'a.groundTeam !== 1 && this._pathRemaining() < 1.5 && inkFrac > 0.03';
   if (code.split(admission).length - 1 !== 2) throw new Error('bot refill puddle admission conflict');
-  code = code.replaceAll(admission, 'a.groundTeam !== 1 && this._pathRemaining() < 1.5 && (inkFrac > 0.03 || w.kind === \'charger\' && (a.weaponRunner.charging || a.weaponRunner.s3ReleaseHold))');
+  code = code.replaceAll(admission, 'a.groundTeam !== 1 && this._pathRemaining() < 1.5 && (inkFrac > 0.03 || ['charger', 'splatling', 'stringer', 'splatana'].includes(w.behaviorKind || w.kind) && (a.weaponRunner.charging || a.weaponRunner.s3ReleaseHold))');
   code = once(code,
     '  _pathRemaining() {',
     '  // Refill-puddle trigger. Held Fire only emits for weapons that fire while held; charger / splatling emit on release,\n' +
     '  // and a held charge blocks kid-form recovery (busy()), so charge for a moment, then let go.\n' +
     '  _puddleFire(dt) {\n' +
-    "    const k = this.a.weapon.kind;\n" +
-    "    if (k !== 'charger' && k !== 'splatling') return true;\n" +
+    "    const k = this.a.weapon.behaviorKind || this.a.weapon.kind;\n" +
+    "    if (k !== 'charger' && k !== 'splatling' && k !== 'stringer' && k !== 'splatana') return true;\n" +
     '    const wr = this.a.weaponRunner;\n' +
     '    if (this.t - (this._puddleT ?? -9) > 0.25) this._puddleHold = 0;   // fallback was not running: start a fresh hold\n' +
     '    this._puddleT = this.t;\n' +
     '    if (wr.streaming) { this._puddleHold = 0; return false; }\n' +
-    '    if (wr.s3ReleaseHold) { this._puddleHold = 0; return false; }   // preserve the queued source-guided release\n' +
+    '    if (wr.s3ReleaseHold || wr.catalogState?.pending || wr.catalogState?.melee) { this._puddleHold = 0; return false; }   // let paid releases finish\n' +
     '    if (!wr.charging) { this._puddleHold = 0; return true; }\n' +
     '    this._puddleHold = (this._puddleHold || 0) + dt;\n' +
     `    return this._puddleHold < ${HOLD};\n` +
