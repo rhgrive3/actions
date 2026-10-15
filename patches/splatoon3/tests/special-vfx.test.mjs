@@ -297,3 +297,21 @@ test('a follow callback drives the shape it owns (the default easing never overw
   assert.equal(shell.v[4], 2, 'shell size (e.g. the Booyah ball growing with its charge)');
   d.clear();
 });
+
+test('the Ink Vac burst covers the blast radius the shot actually carries (6..11 by charge)', async () => {
+  const { f, G, fx } = await boot();
+  const d = specialVfxDirector(fx);
+  for (const [charge, radius] of [[0, 6], [1, 11]]) {
+    const a = caster(f, G, 'inkVac');
+    G.paint = { sample: () => 1, splat: () => 0 };
+    const p = G.projectiles.fireInkVacExhale(a, { charge });
+    assert.equal(p.radius, radius);
+    let widest = 0;
+    for (let k = 0; k < 120; k++) {
+      G.projectiles.update(1 / 60); G.time += 1 / 60; fx.update(1 / 60, G.camera);
+      for (const r of d.kit.shells.recs) if (!r.dead) widest = Math.max(widest, r.v[4]);
+    }
+    assert.ok(widest > radius * 0.9 && widest < radius * 1.1, `dome ${widest.toFixed(2)} for blast radius ${radius}`);
+    G.projectiles.clear(); fx.clear(); G.actors.length = 0;
+  }
+});

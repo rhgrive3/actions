@@ -472,7 +472,7 @@ const ROUND_FX = {
   booyahBomb: {
     start(r, p) {
       r.d.glow = this.ribbon(true, { width: 1.1, widthTail: 0.15, color: this.hdr(r.color, 1.6, 1.4), alpha: 1, style: RIBBON.GLOW, life: 0.45, spacing: 0.15 });
-      r.d.core = this.shell(true, 0, SHELL.ORB, p.pos, 0.9, 0.9, this.hdr(r.color, 1.5, 1.6), 1, { fade: false, follow: (rec) => { if (r.done) return false; rec.v[0] = r.last.x; rec.v[1] = r.last.y; rec.v[2] = r.last.z; } });
+      r.d.core = this.shell(true, 0, SHELL.ORB, p.pos, 0.9, 0.9, this.hdr(r.color, 0.6, 6), 1, { fade: false, follow: (rec) => { if (r.done) return false; rec.v[0] = r.last.x; rec.v[1] = r.last.y; rec.v[2] = r.last.z; } });
     },
     frame(r, p) {
       this.pushRibbon(r.d.glow, p.pos, true);
@@ -502,11 +502,18 @@ const ROUND_FX = {
     impact(r) { this.inkBlast(r.last, r.color, 3.4, { streaks: 18, chunks: 12, mist: 5, native: false }); },
   },
   inkVac: {
-    start(r, p) { r.d.glow = this.ribbon(true, { width: 0.4, widthTail: 0.08, color: this.hdr(r.color, 1.2, 0.6), alpha: 0.5, style: RIBBON.GLOW, life: 0.15, spacing: 0.15 });
+    start(r, p) { r.d.R = Number.isFinite(p.radius) && p.radius > 1 ? p.radius : 6;   // the charge-scaled 6..11 blast radius (kit-ink-vac descriptor)
+      r.d.glow = this.ribbon(true, { width: 0.4, widthTail: 0.08, color: this.hdr(r.color, 1.2, 0.6), alpha: 0.5, style: RIBBON.GLOW, life: 0.15, spacing: 0.15 });
       r.d.ink = this.ribbon(false, { width: 1.0, widthTail: 0.2, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.28, spacing: 0.15 }); },
     frame(r, p) { this.pushRibbon(r.d.glow, p.pos, true); this.pushRibbon(r.d.ink, p.pos, false);
       if (vfxRandom() < 0.7) this.drop(p.pos, rnd(3, -3), rnd(3, -3), rnd(3, -3), 0.5, 0.12, r.color, { grav: 10 }); },
-    impact(r) { this.inkBlast(r.last, r.color, 5.5, { streaks: 26, chunks: 16 }); },
+    impact(r) {   // S3 (53.4s, read as the burst): a big see-through dome of the team colour over the whole blast radius
+      const R = r.d.R || 6, c = r.color;
+      this.inkBlast(r.last, c, Math.min(R, 7), { streaks: 30, chunks: 18 });
+      this.shell(true, 0.7, SHELL.ORB, r.last, 0.8, R, this.hdr(c, 1.1, 0.8), 0.3, { hemi: true, sy: 0.85, hold: 0.55 });
+      this.shell(true, 0.7, SHELL.SHOCK, r.last, 0.8, R * 1.02, this.hdr(c, 1.5, 1.2), 0.6, { hemi: true, sy: 0.85, hold: 0.6 });
+      this.disc(false, 1.2, DISC.SPLAT, this.v[0].copy(r.last).setY(r.last.y + 0.03), this.up, 1, R * 0.9, c, 1, { hold: 0.6 });
+    },
   },
 };
 
@@ -638,7 +645,7 @@ const OBJECT_FX = {
   booyahBlast: { // 40F of the ball sitting and swelling, then a 40F energy dome to 12.6
     start(r, o) {
       const c = r.color, p = o.pos;
-      r.d.orb = this.shell(true, 0, SHELL.ORB, this.v[0].copy(p).setY(p.y + 1), 1, 1, this.hdr(c, 1.6, 1.6), 1, { fade: false,
+      r.d.orb = this.shell(true, 0, SHELL.ORB, this.v[0].copy(p).setY(p.y + 1), 1, 1, this.hdr(c, 0.6, 6), 1, { fade: false,
         follow: (rec) => { const f = (o.frameCount || 0); const k = clamp01(f / 40); rec.v[4] = rec.v[5] = rec.v[6] = 0.9 + 0.7 * k + 0.12 * Math.sin(this.time * (14 + 30 * k)); rec.v[11] = f >= 40 ? 0 : 1; } });
       r.d.warn = this.disc(true, 0, DISC.RUNE, this.v[0].copy(p).setY(p.y + 0.05), this.up, 1, 1, this.hdr(c, 1.3, 0.6), 0.8, { fade: false,
         follow: (rec) => { const f = (o.frameCount || 0); rec.v[3] = (o.maxRadius || 12.6) * smooth(f / 20); rec.v[7] += 0.02; rec.v[11] = f >= 40 ? 0 : 0.8; } });
@@ -942,7 +949,8 @@ const DIRECTORS = {
       const ball = this.v[0].set(a.pos.x, a.pos.y + 1.95 + 0.3 * charge, a.pos.z);
       const R = 0.35 + 0.65 * charge;
       if (!t.d.orb) {
-        t.d.orb = this.shell(true, 0, SHELL.ORB, ball, R, R, this.hdr(c, 1.5, 1.6), 1, { fade: false, follow: (rec) => { const st2 = a._s3AllSpecialState; const k = st2 ? clamp01(st2.charge || 0) : charge;
+        t.d.orb = this.shell(true, 0, SHELL.ORB, ball, R, R, this.hdr(c, 0.6, 6), 1,   // S3 (13.8/15.8s): a white-hot ball in a team-coloured halo
+          { fade: false, follow: (rec) => { const st2 = a._s3AllSpecialState; const k = st2 ? clamp01(st2.charge || 0) : charge;
           rec.v[0] = a.pos.x; rec.v[1] = a.pos.y + 1.95 + 0.3 * k; rec.v[2] = a.pos.z; const s = (0.42 + 0.8 * k) * (1 + 0.05 * Math.sin(this.time * (10 + 20 * k)));
           rec.v[4] = rec.v[5] = rec.v[6] = s; rec.v[7] += 0.05; } });
         t.d.halo = this.disc(true, 0, DISC.RUNE, ball, this.up, 1, 1, this.hdr(c, 1.5, 1.2), 0.8, { fade: false, spin: 2, follow: (rec) => { const st2 = a._s3AllSpecialState; const k = st2 ? clamp01(st2.charge || 0) : charge;
@@ -1263,6 +1271,18 @@ const DIRECTORS = {
       if (phase !== 'inhale') { if (phase === 'exhale' && !t.d.shot) { t.d.shot = true; const f = this.aim(a, this.v[1]); const m = this.v[0].copy(a.pos).setY(a.pos.y + 1).addScaledVector(f, 1.1); this.muzzle(m, f, c, 2.2); this.shell(true, 0.3, SHELL.SHOCK, m, 0.3, 2.0, this.hdr(c, 1.3, 1), 0.6); } return; }
       const sucking = a._s3InkVacSucking || a.intent?.fire, f = this.aim(a, this.v[1]);
       const mouth = this.v[0].copy(a.pos).setY(a.pos.y + 1).addScaledVector(f, 0.9);
+      t.d.suck = !!sucking;
+      if (!t.d.vortex) {   // S3 (51.4s): a big swirl of suction rings standing across the nozzle while it inhales
+        const fv = this.v[7];
+        t.d.vortex = this.disc(true, 0, DISC.VORTEX, mouth, f, 0.1, 0.1, this.hdr(c, 1.3, 0.9), 0, { fade: false,
+          follow: (rec) => { const tr = this.tracks.get(a), s2 = inkVacState?.(a);
+            if (!tr || tr !== t || (s2?.phase || a.specialActive?.phase) !== 'inhale') return false;
+            this.aim(a, fv); rec.v[0] = a.pos.x + fv.x * 1.6; rec.v[1] = a.pos.y + 1 + fv.y * 1.6; rec.v[2] = a.pos.z + fv.z * 1.6;
+            rec.v[4] = fv.x; rec.v[5] = fv.y; rec.v[6] = fv.z; rec.v[7] += 0.05;
+            const target = t.d.suck ? 1 : 0; rec.v[11] += (target * 0.85 - rec.v[11]) * 0.2;
+            rec.v[3] = 0.9 + 0.5 * (s2?.charge || 0) + 0.15 * Math.sin(this.time * 9); } });
+        (t.d.recs ||= []).push(t.d.vortex);
+      }
       if (sucking && this.near(a.pos, 70)) {
         // dust and droplets dragged into the nozzle along a widening cone (S3: green swirling suction rings)
         t.acc = (t.acc || 0) + dt * (30 + 40 * (st?.charge || 0));

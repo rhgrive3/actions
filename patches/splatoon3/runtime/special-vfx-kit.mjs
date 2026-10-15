@@ -408,7 +408,7 @@ class RibbonPool {
 export const BEAM = Object.freeze({ LASER: 0, JET: 1, LINE: 2, PILLAR: 3, TWISTER: 4, CHARGE: 5 });
 export const SHELL = Object.freeze({ INK: 0, ORB: 1, HOLO: 2, SHOCK: 3, FLASH: 4 });
 export const BAND = Object.freeze({ WAVE: 0, SHOCK: 1, SWIRL: 2, TWISTER: 3, CURTAIN: 4 });
-export const DISC = Object.freeze({ SHOCK: 0, RETICLE: 1, TARGET: 2, FLASH: 3, RUNE: 4, SPEAKER: 5, SPLAT: 6, CHEVRON: 7 });
+export const DISC = Object.freeze({ SHOCK: 0, RETICLE: 1, TARGET: 2, FLASH: 3, RUNE: 4, SPEAKER: 5, SPLAT: 6, CHEVRON: 7, VORTEX: 8 });
 
 const BEAM_VERT = `
 attribute vec4 iA; attribute vec4 iB;  // start xyz r0 | end xyz r1
@@ -565,7 +565,8 @@ void main(){
   int style = int(vPar.x + 0.5); float t = vPar.y, seed = vPar.z, spd = vPar.w;
   float u = vUv.x, v = vUv.y, a = 0.0; vec3 col = vCol.rgb;
   if (style == 0) {             // wave wall: a translucent fence of vertical light lines, a bright crest line and a lit base
-    float stripe = 1.0 - smoothstep(0.0, 0.32, abs(fract(u * 260.0 + seed * 7.0) - 0.5) * 2.0 - 0.6);
+    // S3 (225.3-229.3s): a fence of bold bright vertical stripes (fewer, wider bars than a fine hatch)
+    float stripe = 1.0 - smoothstep(0.0, 0.25, abs(fract(u * 72.0 + seed * 7.0) - 0.5) * 2.0 - 0.45);
     float top = exp(-pow((v - 0.9) * 13.0, 2.0));
     float base = exp(-v * 7.0);
     float flicker = 0.85 + 0.15 * sxNoise(vec2(u * 40.0 + seed * 9.0, uTime * spd * 2.0));
@@ -680,6 +681,14 @@ void main(){
       fill = max(fill, max(sxTri(p, tip, rt, nt), sxTri(p, tip, nt, lf)) * (0.5 + 0.5 * sin(uTime * 8.0 - float(i) * 1.6)));
     }
     a = (1.0 - smoothstep(0.022, 0.04, o)) + fill * 0.22;
+  } else if (style == 8) {     // suction vortex: spiral streaks wound in toward the centre, rings rushing in, a bright rim (S3: Ink Vac)
+    float lr = log(max(r, 0.03));
+    float sp = fract(ang / 6.2831853 * 5.0 + lr * 1.1 + uTime * 2.4 + seed);
+    float arm = smoothstep(0.3, 0.5, sp) * (1.0 - smoothstep(0.5, 0.62, sp)) * smoothstep(0.12, 0.4, r) * (1.0 - smoothstep(0.86, 1.0, r));
+    float rush = 1.0 - smoothstep(0.0, 0.035, abs(r - fract(seed - uTime * 1.6)));
+    float rim = 1.0 - smoothstep(0.0, 0.045, abs(r - 0.93));
+    a = max(max(arm * 0.75, rush * 0.55 * smoothstep(0.1, 0.3, r)), rim) + 0.08 * (1.0 - r);
+    col = mix(col, vec3(max(col.r, max(col.g, col.b))), 0.35);
   } else {                     // splat: a glossy ink blot with tendrils, drying back in from its rim
     float n = sxFbm(vec2(ang * 2.0 + seed * 9.0, r * 3.0));
     float edge = (0.65 + 0.35 * n) * (1.0 - 0.35 * t * t) * (uAdd > 0.5 ? 1.0 : mix(0.25, 1.0, clamp(vCol.a, 0.0, 1.0)));
