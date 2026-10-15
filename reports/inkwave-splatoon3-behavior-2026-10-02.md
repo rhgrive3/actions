@@ -4440,3 +4440,7 @@ The three reviewed PR #1445 workstreams are reconciled with the latest main rath
 - The initial guard incorrectly bounded `tail0` (a dimensionless ratio) to16 and rejected three legitimate zero-width Diffusion Slosher births (6/9 survived). Pinned source-guided rendering computes `1 + length/max(.001,radius)` and can reach4001. The revised guard separately bounds the ratio at4096 and base drawn tail extent at128 (the prior 8×16 extent), with a renderer check using its actual fallback width. This preserves zero/tiny-width native entries without permitting giant visible tails; nonfinite/negative/string/over-budget values still fail. These ceilings are admission/calibration bounds, not Nintendo values.
 
 Negative control reproduces the actual PR CI failure by assertion. Corrected combined native queue/volume/pool suite passes20/20; adjacent source network/snapshot/ranked checks pass42/42. The full quality rerun, emitted checks and final provenance are recorded in the systems audit. WebKit/physical-device limits remain separate.
+
+## 2026-10-15: 発射時のインク表現
+
+シューター・シェルター・ストリンガー・ワイパーの発射の瞬間に出るインク膜（銃口の穴あき膜、傘の前の開花、弓に巻きつく帯、振りの軌跡の波）を、本家の公式映像を拡大して比較し追加した。表示のみで、弾・当たり・塗り・通信は変更していない。寸法・寿命は映像の目視による校正値であり、銃口付近以外の本家比較は未確認のまま。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。

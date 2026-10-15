@@ -41,6 +41,7 @@ test('real births of the seven owned families draw S3 silhouettes, skip the gene
   const f = await api(), system = f.G.projectiles;
   for (const [id, kind, hold] of CASES) {
     fire(f, id, hold);
+    system._s3Shapes?.sheets.clear();
     for (let i = 0; i < 2; i++) system.update(1 / 60);
     const live = system.list.filter(p => p.delay <= 0);
     assert(live.length, id + ' live round');
@@ -58,8 +59,13 @@ test('real births of the seven owned families draw S3 silhouettes, skip the gene
     }
     const c = system.s3ShapeCounts;
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') assert.equal(c.body, live.length, id + ' body per round');
-    if (kind === 'slash-h') assert.equal(c.slashH, live.length);
-    if (kind === 'slash-v') assert.equal(c.slashV, live.length);
+    // leading slab plus the thinner layer peeling off behind it
+    if (kind === 'slash-h') assert.equal(c.slashH, 2 * live.length);
+    if (kind === 'slash-v') assert.equal(c.slashV, 2 * live.length);
+    // one firing-ink burst per shot or volley, drawn as torn sheets
+    const firing = ['shot', 'pellet', 'arrow', 'slash-h', 'slash-v'].includes(kind);
+    assert.equal(system._s3Shapes.sheets.bursts.length, firing ? 1 : 0, id + ' firing ink burst');
+    if (firing) assert(c.sheets > 0, id + ' firing ink sheets drawn');
     if (kind === 'bubble') { assert(c.shell >= live.length, 'clear shell per bubble'); assert.equal(c.core, live.length, 'round ink core per bubble'); }
     if (kind === 'machine') assert(system.blobs.count > live.length, 'glob plus corkscrew beads');
     if (kind === 'explosher') { assert(system.blobs.count >= live.length, 'glob (+ falling splashes)'); assert(c.sparkles > 0, 'glitter'); }
