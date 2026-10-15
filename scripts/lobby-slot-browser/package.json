@@ -1,7 +1,7 @@
 {
   "executionAuthorized": true,
-  "diagnosticBranch": "review/lobby-current-component-20261015",
-  "scope": "Controlled native lobby component DOM/CSS endpoints after native assets are ready. Native freeze then exact60Hz Showcase.update and camera projection; same127-frame comparison. No ordinary startup-latency, FPS or full network gameplay claim. Rebound to current main with already-adopted material handoff on both sides; earlier WebKit resource failure retained.",
+  "diagnosticBranch": "review/lobby-webkit-4g-component-20261015",
+  "scope": "WebKit controlled native lobby functionality under a separately approved maximum 4GiB hosted process-tree RSS cap. Same 127x8 DOM/style and external mutation recovery gates, viewport, source pins, 600s deadline and 2GiB reserve. Previous 3GiB baseline failure retained; no 3GiB compatibility, startup speed, lightweight or FPS qualification. No further cap increase on failure.",
   "sources": {
     "baseline": {
       "head": "adbd83ee4f6aaef8cb7853de997d42d702c8badf",
@@ -41,13 +41,13 @@
       "publicationPath": "scripts/lobby-slot-browser/bindings.test.mjs"
     },
     "browser.mjs": {
-      "bytes": 6951,
-      "sha256": "94be0784ad7397d350eca212e80366ad8003b2885f33f8eb9659fbb81dac01b4",
+      "bytes": 7206,
+      "sha256": "c69a118f917137a6637859f67c7b3154b70d95f20c3f3edddd148c618ba50b9b",
       "publicationPath": "scripts/lobby-slot-browser/browser.mjs"
     },
     "inkwave-lobby-slot-browser.yml": {
-      "bytes": 7135,
-      "sha256": "b0ffe3c0b23750b5c62420387d63d6e5a151441117fb2b44d95fccf89dc067c7",
+      "bytes": 8041,
+      "sha256": "de969997c82a449ed9dac54823e2de5b634ca1db1a3706116704cf4c8c388021",
       "publicationPath": ".github/workflows/inkwave-lobby-slot-browser.yml"
     },
     "lobby-probe.mjs": {
@@ -76,11 +76,11 @@
       "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
     },
     "verify.test.mjs": {
-      "bytes": 9941,
-      "sha256": "a9c23214f2d3cd772e15599343776168d12ac698b32da66a738aebce226dc484",
+      "bytes": 10668,
+      "sha256": "0ddd5c605de0661df2d9587304ddf15851235ce42d79b89740fb3ca14619e7e4",
       "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
     }
   },
-  "repairOf": "edcb9d281ef2fe0de033d6207aad560c22d760c8",
-  "repairReason": "Rebind unchanged controlled component acceptance to current main and reconciled PR1455; retain prior startup/resource failures."
+  "repairOf": "80afcf5331bcdbd9a83ae570a74a3ff1a3a34392",
+  "repairReason": "Separate WebKit functional budget with process name/RSS/PSS and native browser phase diagnostics; application and functional gates unchanged."
 }

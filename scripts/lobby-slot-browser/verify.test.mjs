@@ -34,8 +34,8 @@ test('engine isolation requires one exact engine and keeps both workflow jobs',(
  assert.equal(select('chromium'),'chromium');assert.equal(select('webkit'),'webkit');
  for(const v of [undefined,'','both','firefox','chromium webkit'])assert.throws(()=>select(v));
  const localWorkflow=new URL('./inkwave-lobby-slot-browser.yml',import.meta.url);const workflow=fs.readFileSync(fs.existsSync(localWorkflow)?localWorkflow:new URL('../../.github/workflows/inkwave-lobby-slot-browser.yml',import.meta.url),'utf8');
- assert.match(workflow,/engine: \[chromium, webkit\]/);assert.match(workflow,/fail-fast: false/);assert.match(workflow,/max-parallel: 1/);
- assert.match(workflow,/cap=3\*1024\*\*3;reserve=2\*1024\*\*3;deadline=600/);
+ assert.match(workflow,/engine: \[webkit\]/);assert.match(workflow,/fail-fast: false/);assert.match(workflow,/max-parallel: 1/);
+ assert.match(workflow,/cap=4\*1024\*\*3;reserve=2\*1024\*\*3;deadline=600/);
  assert.match(runnerSource,/phase\('browser',role\)/);assert.match(runnerSource,/compare\(\.\.\.results\)/);
  assert.equal((runnerSource.match(/for\(const current of \[engine\]\)/g)||[]).length,2);
 });
@@ -59,4 +59,13 @@ test('controlled readiness refuses failed freeze or native update/camera and nev
 test('controlled readiness receipt rejects mode, tick, native-ready/fade/frozen/identity gaps',()=>{
  const r={readinessMode:'controlled-component',controlledTicks:28,lobReady:true,ready:true,frozen:true,fade:1,gameIdentity:true};verifyControlledReadiness(r);
  for(const [key,value] of [['readinessMode','natural-render'],['controlledTicks',121],['controlledTicks',.5],['controlledTicks',-1],['lobReady',false],['ready',false],['frozen',false],['fade',.99],['fade',NaN],['gameIdentity',false]])assert.throws(()=>verifyControlledReadiness({...r,[key]:value}));
+});
+
+test('separate WebKit functional budget preserves deadline/reserve and diagnostic identity',()=>{
+ const w=fs.readFileSync(new URL('./inkwave-lobby-slot-browser.yml',import.meta.url),'utf8');
+ assert.match(w,/cap=4\*1024\*\*3;reserve=2\*1024\*\*3;deadline=600/);
+ assert.match(w,/if rss>cap:reason=/);assert.match(w,/current\[19\]/);
+ assert.match(w,/smaps_rollup/);assert.match(w,/pssError/);assert.match(w,/process identity changed/);
+ assert.match(browserSource,/function setPhase/);assert.match(browserSource,/subphase:phase/);
+ for(const phase of ['browser-launch','navigation','game-readiness','create-offline-lobby','lobby-readiness','fonts-and-freeze','lobby-probe'])assert(browserSource.includes("setPhase('"+phase+"')"));
 });

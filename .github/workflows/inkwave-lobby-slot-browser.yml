@@ -1,7 +1,7 @@
 name: INKWAVE isolated lobby slot DOM assignment parity
 on:
   push:
-    branches: [review/lobby-current-component-20261015]
+    branches: [review/lobby-webkit-4g-component-20261015]
 permissions:
   contents: read
 concurrency:
@@ -9,12 +9,12 @@ concurrency:
   cancel-in-progress: false
 jobs:
   lobby-slot-browser:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/review/lobby-current-component-20261015' && github.repository == 'rhgrive3/actions'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/review/lobby-webkit-4g-component-20261015' && github.repository == 'rhgrive3/actions'
     strategy:
       fail-fast: false
       max-parallel: 1
       matrix:
-        engine: [chromium, webkit]
+        engine: [webkit]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -73,12 +73,24 @@ jobs:
           export PACKAGE="$GITHUB_WORKSPACE/diagnostic/scripts/lobby-slot-browser"
           python - <<'PY'
           import json,os,pathlib,signal,subprocess,time
-          # Same conservative 3GiB process-tree RSS and 2GiB system reserve as CPU qualification.
+          # Separate WebKit functional qualification: maximum 4GiB RSS, unchanged 2GiB reserve.
+          # Earlier 3GiB failure is retained; no 3GiB compatibility or lightweight claim.
           # A single 600s supervised qualification budget; the job has a 30min hard timeout.
-          cap=3*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None;peakProcesses=[];peakPhase=None
+          cap=4*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None;peakProcesses=[];peakPhase=None
           def available():
               return int(next(x.split()[1] for x in pathlib.Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')))*1024
           assert available()>=cap+reserve,'Insufficient starting memory and reserve'
+          def detail(pid,values):
+              row={'pid':pid,'parent':values[0],'rss':values[1],'starttime':values[2],'name':None,'pssBytes':None,'pssError':None}
+              proc=pathlib.Path('/proc')/str(pid)
+              try:row['name']=(proc/'comm').read_text().strip()
+              except OSError:pass
+              try:
+                  row['pssBytes']=int(next(x.split()[1] for x in (proc/'smaps_rollup').read_text().splitlines() if x.startswith('Pss:')))*1024
+                  current=(proc/'stat').read_text().rsplit(')',1)[1].split()
+                  if int(current[19])!=values[2]:row['pssBytes']=None;row['pssError']='process identity changed'
+              except (OSError,ValueError,IndexError,StopIteration) as exc:row['pssError']=type(exc).__name__
+              return row
           p=subprocess.Popen(['node',os.environ['PACKAGE']+'/run-hosted.mjs'],start_new_session=True);start=time.monotonic()
           while p.poll() is None:
               rss=0;processes={}
@@ -96,7 +108,7 @@ jobs:
               rss=sum(processes[pid][1] for pid in descendants if pid in processes)
               free=available();minimum=free if minimum is None else min(minimum,free)
               if rss>peak:
-                  peak=rss;peakProcesses=[{'pid':pid,'parent':processes[pid][0],'rss':processes[pid][1],'starttime':processes[pid][2]} for pid in sorted(descendants) if pid in processes]
+                  peak=rss;peakProcesses=[detail(pid,processes[pid]) for pid in sorted(descendants) if pid in processes]
                   try:peakPhase=json.loads((pathlib.Path(os.environ['LOBBY_SLOT_EVIDENCE'])/'phase.json').read_text())
                   except (OSError,ValueError):peakPhase=None
               if rss>cap:reason='process-tree RSS cap exceeded'
@@ -118,7 +130,7 @@ jobs:
                   break
               time.sleep(.25)
           e=pathlib.Path(os.environ['LOBBY_SLOT_EVIDENCE']);e.mkdir(exist_ok=True)
-          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'engine':os.environ['LOBBY_SLOT_ENGINE'],'peakProcessTreeRSSBytes':peak,'peakProcesses':peakProcesses,'peakPhase':peakPhase,'minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'Hosted controlled lobby slot DOM assignment parity; no hardware/FPS/pixel claim'},indent=2)+'\n')
+          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'engine':os.environ['LOBBY_SLOT_ENGINE'],'peakProcessTreeRSSBytes':peak,'peakProcesses':peakProcesses,'peakPhase':peakPhase,'minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'WebKit controlled lobby DOM/style functionality under a 4GiB hosted RSS cap; earlier 3GiB failure retained. No 3GiB compatibility, startup-speed, lightweight or FPS claim'},indent=2)+'\n')
           assert p.returncode==0 and reason is None,'Component qualification failed; preserve compact evidence'
           PY
       - uses: actions/upload-artifact@v4
