@@ -59,6 +59,8 @@ test('production source mask uses original WidthHalf without artificial shrink o
   const flight = adaptSource('src/game/inkFlightRuntime.js',
     fs.readFileSync(new URL('../../../inkwave-public/src/game/inkFlightRuntime.js', import.meta.url), 'utf8'));
   assert.match(flight, /kind: sourceFlightInkKind\(kind\)/);
+  assert.match(flight, /shooterImpactRadius\(shooter, p, hit\.point\)/);
+  assert.match(flight, /shooterImpactDepthScale\(shooter, p, hit\.normal\)/);
   const network = fs.readFileSync(new URL('../../network-replication/adapter.mjs', import.meta.url), 'utf8');
   assert.match(network, /'source-shot', 'source-splash'/);
 });
