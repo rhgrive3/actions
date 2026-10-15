@@ -1,11 +1,17 @@
 import test from 'node:test';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-import { VARIANT_MODELS } from '../runtime/weapon-models/variants-melee.mjs';
-import { MODELS as R } from '../runtime/weapon-models/rollers.mjs';
-import { MODELS as B } from '../runtime/weapon-models/brushes.mjs';
-import { MODELS as S } from '../runtime/weapon-models/sloshers.mjs';
-import { MODELS as W } from '../runtime/weapon-models/splatanas.mjs';
+// Resolve the actual production vendor import map in a VM, not Node's
+// package resolver: the site ships Three.js under inkwave-public/vendor/three.
+import { fixture } from './source-fixture.mjs';
+const { VARIANT_MODELS, R, B, S, W, THREE, M } = await fixture({ extraExports: `
+export { VARIANT_MODELS } from './patches/splatoon3/runtime/weapon-models/variants-melee.mjs';
+export { MODELS as R } from './patches/splatoon3/runtime/weapon-models/rollers.mjs';
+export { MODELS as B } from './patches/splatoon3/runtime/weapon-models/brushes.mjs';
+export { MODELS as S } from './patches/splatoon3/runtime/weapon-models/sloshers.mjs';
+export { MODELS as W } from './patches/splatoon3/runtime/weapon-models/splatanas.mjs';
+export { M } from './patches/splatoon3/runtime/weapon-models/kit.mjs';
+` });
 const bases={...R,...B,...S,...W};
 function snap(g){return g?Object.fromEntries([...Object.entries(g.attributes).map(([k,a])=>[k,Array.from(a.array)]),['index',Array.from(g.index?.array||[])]]):null;}
 function fixed(d){return [snap(d.body),snap(d.drumCaps),...Object.values(d.parts).filter(p=>p.mat==='body').map(p=>snap(p.src))];}
@@ -45,7 +51,7 @@ test('identity manifest matches exported source rows and unique numeric IDs',()=
 });
 
 // Semantic-region regressions: these fail on the first broad palette draft.
-import { THREE, M } from '../runtime/weapon-models/kit.mjs';
+// Shared THREE and M come from the same production VM as the native builders.
 const rgb = hex => new THREE.Color(hex).toArray();
 function matches(a,i,c){return c.every((v,k)=>Math.abs(a.array[i*3+k]-v)<1e-6);}
 function mappedVertices(base,variant,from,to,predicate=()=>true){
