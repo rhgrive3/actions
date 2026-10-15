@@ -961,7 +961,7 @@ export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
   p.s3GrazePaint = { at: center, face };
   const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
-  const area = game.paint.splat(center, paintRadius, p.team, { seed, claimOwner: owner });
+  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: owner });
   if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
   return area;
 }

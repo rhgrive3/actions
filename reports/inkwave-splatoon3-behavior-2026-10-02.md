@@ -4608,6 +4608,7 @@ A bounded owned-material bridge preserves native program references until replac
 This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. One generation/512 materials and an8000ms fallback timer do not bound GPU bytes or actual wall-clock retention during a stall. Repeated same-object disposal requests coalesce; material texture/uniform/listener references may remain indirectly retained. See [the scoped evidence and fixture limitations](inkwave-rematch-material-handoff-2026-10-13.md). The final candidate is composed on d6285dca, retaining CPU/input/bomb gates and report history; its25 source/25 emitted,202 adjacent and9 packaging checks pass. Combined-tree review/publication remains centrally coordinated.
 
 
+
 ## 2026-10-15: イカ表示・変身の慣性/姿勢・ローラーとスロッシャーとシューターの塗り/当たり（プレイ報告9件）
 
 本家参照版はスプラトゥーン3 Ver.11.3.0、数値は固定コミット `7280ff9cde8bb1c5dcef46c700c326471584d2e6` の Leanny/splat3 抽出データ（`WeaponRollerHeavy` / `WeaponRollerNormal` / `WeaponSlosherStrong` / `WeaponShooterLong` / `WeaponShooterNormal`）。ギアなし。INKWAVE の測定はビルド済みサイト（全アダプター適用、未圧縮ビルド）を Chromium（swiftshader）で動かし、実 Actor / Character / WeaponRunner / Projectiles を固定60Hzで進めたブラウザ実動作。数値は同じ操作の変更前ビルド（HEAD）と比較した。本家の Switch 実機計測ではない。
@@ -4628,6 +4629,7 @@ This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. On
 - 標準ローラー（スプラローラー・カーボン・ヴァリアブル・ワイド）：任天堂公式映像 AZLlvZRlJpm（横視点、f54〜113を2F刻み）と NablZy7jqxO でも同じ順序（f61頃に真上へ持ち上げ → f70頃に頭上で水平 → f76まで静止 → 約4Fで振り下ろし、f80にドラムが床に着くと同時に放出。放出21F＝SwingFrame と整合）を確認した。旧曲線（65%振りかぶり・7F振り下ろし・放出時ドラム胸高）を、頭上到達 min(0.45×放出, 22F)・振り下ろし4F・放出時ドラム下・攻撃間隔内で床静止→10Fで構え、に変更。振り後に転がさない場合の持ち上げは映像で見えず、10Fは重いローラーからの流用（未確認）。local-quality の旧縦振り速度補正は新曲線と二重になるため無効化した。
 - シューター全般の床塗り：任天堂公式映像 y7Zl26Zl12n（スプラシューター）では連射の塗りが足元から前方へ途切れない帯になる。INKWAVE で1秒連射の床を俯瞰で撮り変更前後を比べた。元からあるスプラシューター・スプラスピナー・スプラマニューバーは変更前から帯状（0〜15m・0〜23m・0〜18mが連続）。追加ブキは変更前に抜けがあった：ヒーローシューター（s3-shooter-heavy）4〜6m・10〜11.5m、ボトルガイザー（s3-shooter-expert）4〜9m、L3リールガン（s3-shooter-quicklong）4〜10m、クーゲルシュライバー（s3-maneuver-long）4〜10m・14〜25m、ハイドラント 6〜19.5m 等。カタログ版スピナーは落下飛沫の重力値が無く別経路（弾の真下を塗る）で、`SplitNum` のずらしも飛沫予算も適用されていなかったため、同じ規則をこの経路にも適用した。変更後はいずれも足元から連続（ハイドラントは0〜19mと22〜34m）。測定は平地・水平照準・60Hzのブラウザ実動作で、本家の帯の幅・形の一致は未確認。
 - 姿勢補正の時計：イカの間は姿勢補正が評価されず、移動中に浮上すると最初のフレームの経過時間が0.1秒と扱われ、シューターの持ち方が1フレームで0→0.55まで飛んでいた（既存テストで検出）。止まっていた後の最初の更新を1フレームとして扱う。
+- main 取り込み（#1443 の塗り種別の分離）後、かすり塗りは壁しずくと同じ `source-splash` 種別で塗る。汎用の塗り形が足していた飛び散り点は付かず、半径は上記の断面のまま。ロジック単独の確認のみで、ブラウザでの塗り率の再計測はしていない。
 - かすり部分の塗りを入れた後の6回平均：スプラローラー横振り 0〜3m 0.81、3〜6m 0.95（変更前 0.79/0.91 と同等以上）、スロッシャー水平 15〜20m 0.51（変更前0.22）。
 
 副作用（かすり塗り導入前の6回平均の床塗り率、0.25m刻みで3本線の平均）：かすり判定でローラー横振りの弾も中心が床に届くまで飛ぶため、スプラローラー横振りは手前 0〜3m 0.79→0.70、3〜6m 0.91→0.79 と少し減った（到達距離は約15mで不変）。スロッシャー水平の 15〜20m は 0.22→0.46、ダイナモ横振りの 0〜3m は 0.16→0.77、スプラローラー縦振りは 15〜20m 0.87→0.79 で他の帯は同じ。手前の塗り量の本家一致は未確認。
