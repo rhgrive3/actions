@@ -29,6 +29,7 @@ try{
   const THREE=await import('three'),{G}=await import(prefix+'src/core/ctx.js'),{install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
   const profile=await fetch(prefix+'patches/splatoon3/profile.json').then(r=>r.json()),api=install(profile);
   const storms=await import(prefix+'patches/splatoon3/runtime/storm-effects.mjs');
+  const {Level}=await import(prefix+'src/world/level.js');
   const art=await import(prefix+'patches/splatoon3/runtime/special-motion.mjs'),vac=await import(prefix+'patches/splatoon3/runtime/kit-ink-vac.mjs'),bubble=await import(prefix+'patches/splatoon3/runtime/kit-big-bubbler.mjs');
   const scene=new THREE.Scene();scene.background=new THREE.Color('#dae2e7');
   const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(960,720);document.body.appendChild(renderer.domElement);
@@ -40,22 +41,31 @@ try{
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:'#b7c3cb',roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.005;scene.add(floor);
   Object.assign(G,{scene,renderer,camera,settings:{quality:'high'},mode:'match',actors:[],time:0,teamColors:[new THREE.Color('#ff7711'),new THREE.Color('#2255dd')],match:{state:'playing',playing:()=>true},level:{blocks:[],groundHeight:()=>0},paint:{sample:()=>1,splat:()=>0}});
   G.physics={los:()=>true,segment:(_a,_b,h)=>{h.hit=false;return h;},raycast:(a,_b,_c,h)=>{h.hit=true;h.point.copy(a).setY(0);h.normal.set(0,1,0);h.distance=a.y;return h;}};
+  const diagnosticLevel=G.level,diagnosticPhysics=G.physics;
   G.projectiles=new api.Projectiles(scene);const rows=[],images=[];let stormOwner;
   const render=()=>{renderer.render(scene,camera);const gl=renderer.getContext(),p=new Uint8Array(960*720*4);gl.readPixels(0,0,960,720,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
   const changed=(a,b)=>{let n=0;for(let i=0;i<a.length;i+=4)if(Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2])>=9)n++;return n;};
   const clear=()=>{G.projectiles.clear();bubble.clearBigBubblers?.();};
   for(const id of ['trizooka','inkVac','storm','slam','bubbler','tacticooler']){
-    clear();const a=new api.Actor({team:0,name:'special render',weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
-    G.actors=[a];scene.add(ch.root);ch.onEvent=null;a.grounded=a.ground.hit=true;a._integrate=()=>{};a._resolve=()=>{};a._spawnBarrier=()=>{};
+    G.level=diagnosticLevel;G.physics=diagnosticPhysics;
+    if(id==='inkVac'){
+      G.level=new Level({bounds:{minX:-100,maxX:100,minZ:-100,maxZ:100},spawnPads:[[-90,0,0],[90,0,0]],spawnBarrier:0,half:[],single:[{kind:'box',min:[-100,-.5,-100],max:[100,0,100]}]});
+      G.physics=new api.Physics(G.level);
+    }
+    clear();const a=new api.Actor({team:0,name:'special render',isLocal:id==='inkVac',weapon:'shooter',CharacterClass:api.Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),ch=a.character;
+    G.actors=[a];scene.add(ch.root);a.grounded=a.ground.hit=true;
+    if(id==='inkVac'){a.pos.set(0,0,0);a.ground.block=0;a.groundN.set(0,1,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1,20);}
+    else {ch.onEvent=null;a._integrate=()=>{};a._resolve=()=>{};a._spawnBarrier=()=>{};}
     if(id==='storm')stormOwner=a;
     if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
     if(ch.sourceMotion?.status!=='ready')throw Error('Source motion unavailable: '+id);
     a.weapon={...a.weapon,special:id,specialCost:200};a.special=200;
-    const step=dt=>{G.time+=dt;a._finishFrame(dt);};for(let i=0;i<40;i++)step(1/60);
+    const step=dt=>{G.time+=dt;if(id==='inkVac')a.update(dt);else a._finishFrame(dt);};for(let i=0;i<40;i++)step(1/60);
     a._startSpecial();if(!a.specialActive&&!(id==='bubbler'&&bubble.bigBubblerDomes().length))throw Error('Activation refused: '+id);
     let maxHandError=0;
     for(let frame=0;frame<100;frame++){
-      a.intent.fire=id==='inkVac'||id==='trizooka'&&frame>38;if(id==='tacticooler'){a.aimDir.set(0,-1,0);a.intent.sub=frame===0;}if(id==='storm'&&a.specialActive?.phase==='hold')storms.updateStormHold(a,1/60,G);else if(a.specialActive)a._updateSpecial(1/60);if(id==='bubbler')bubble.tickBigBubblers(1/60);G.projectiles.update(1/60);step(1/60);
+      a.intent.fire=id==='inkVac'||id==='trizooka'&&frame>38;if(id==='tacticooler'){a.aimDir.set(0,-1,0);a.intent.sub=frame===0;}if(id==='storm'&&a.specialActive?.phase==='hold')storms.updateStormHold(a,1/60,G);else if(id!=='inkVac'&&a.specialActive)a._updateSpecial(1/60);if(id==='bubbler')bubble.tickBigBubblers(1/60);G.projectiles.update(1/60);step(1/60);
+      if(id==='inkVac'&&(ch.sourceMotion.sourceUpper||art.specialPresentationSnapshot(ch)?.kind!=='inkVac'))throw Error('Real Actor.update lost native Vac presentation at frame '+frame);
       maxHandError=Math.max(maxHandError,art.specialPresentationSnapshot(ch)?.handError||0);
       if(id==='slam'&&frame===12){a.specialActive.phase='hang';a.specialActive.t=0;a.pos.y=2;}
       if(id==='slam'&&frame===17)break;
@@ -79,7 +89,29 @@ try{
     const visibility=objects.map(o=>o.visible);objects.forEach(o=>o.visible=false);const pixels=changed(before,render());objects.forEach((o,i)=>o.visible=visibility[i]);render();
     if(JSON.stringify(clocks)!==JSON.stringify([G.time,ch.t,a.specialActive?.t]))throw Error('Render advanced a clock: '+id);
     if(pixels<50||maxHandError>1e-5)throw Error(`Invalid visible/grip result: ${id} pixels=${pixels} hand=${maxHandError} state=${JSON.stringify(a.specialActive)} art=${JSON.stringify(art.specialPresentationSnapshot(ch))} model=${JSON.stringify(objects.map(o=>({name:o.name,visible:o.visible,pos:o.getWorldPosition(new THREE.Vector3()).toArray()})))}`);
-    rows.push({id,sourceMotion:ch.sourceMotion.status,phase:a.specialActive?.phase||null,position:a.pos.toArray(),changedPixels:pixels,actorPixels,maxHandError,calls,triangles});
+    rows.push({id,driver:id==='inkVac'?'real Actor.update with native Physics':'manual phase/finish diagnostic',sourceMotion:ch.sourceMotion.status,phase:a.specialActive?.phase||null,position:a.pos.toArray(),changedPixels:pixels,actorPixels,maxHandError,calls,triangles});
+    if(id==='inkVac'){
+      for(let frame=0;vac.inkVacState(a)?.phase==='inhale'&&frame<600;frame++){
+        step(1/60);
+        const snap=art.specialPresentationSnapshot(ch);
+        if(ch.sourceMotion.sourceUpper||snap?.kind!=='inkVac'||snap.handError>1e-5)throw Error('Vac inhale lost native ownership/grip');
+      }
+      if(vac.inkVacState(a)?.phase!=='exhale')throw Error('Vac did not reach native exhale');
+      const exhale=render(),prop=ch.kid.getObjectByName('special:inkVac');
+      images.push({name:'inkVac-exhale',data:renderer.domElement.toDataURL('image/png')});
+      prop.visible=false;const exhalePixels=changed(exhale,render());prop.visible=true;
+      if(exhalePixels<50)throw Error('Vac exhale prop is not visibly rendered');
+      const beforeShot=G.projectiles.list.length;a.intent.fire=false;
+      for(let frame=1;frame<=20;frame++){
+        step(1/60);
+        if(frame<20&&(!a.specialActive||G.projectiles.list.length!==beforeShot))throw Error('Vac countershot skipped native20F transition');
+      }
+      if(a.specialActive||vac.inkVacState(a)||G.projectiles.list.length!==beforeShot+1)throw Error('Vac countershot/cleanup boundary');
+      for(let frame=0;frame<60;frame++)step(1/60);
+      if(art.specialPresentationSnapshot(ch)?.kind||!ch.sourceMotion.sourceUpper||!ch.weapon.pivot.visible)throw Error('Vac failed to return to ordinary carry');
+      render();images.push({name:'inkVac-return',data:renderer.domElement.toDataURL('image/png')});
+      rows.at(-1).nativeLifecycle={exhalePixels,transitionFrames:20,countershots:1,returnedToCarry:true};
+    }
     a.specialActive=null;a._s3TripleSlamFists=null;vac.disposeInkVac(a);step(1/60);ch.dispose();G.actors=[];clear();
   }
   // Compile the deployed suction shader and the instanced rain cloud as well.
@@ -99,7 +131,7 @@ try{
     if(glBuffers.size!==baseline.buffers)throw Error('Native cloud instance buffer survived '+end);
   }
   const after=memory();if(after.geometries>baseline.geometries||after.textures>baseline.textures||after.programs>baseline.programs||after.buffers>baseline.buffers)throw Error('GPU resource count grew after repeated use');
-  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig + special activation/update; flat collision stub; Chromium software WebGL; no retail parity claim'};
+  return {rows,images,cloudDrawCalls,nativeCloudRetirements,baseline,after,renderer:renderer.getContext().getParameter(renderer.getContext().RENDERER),fixture:'source-loaded native rig; Vac uses actual Actor.update/Physics and native lifecycle, other specials use manual phase/finish with flat collision stub; Chromium software WebGL; no retail parity claim'};
  },prefix);
  for(const item of result.images)fs.writeFileSync(path.join(out,item.name+'.png'),Buffer.from(item.data.split(',')[1],'base64'));delete result.images;
  assert.deepEqual(errors,[]);result={status:'passed',contentHash:manifest.contentHash,revision:manifest.build.revision,...result,errors};
