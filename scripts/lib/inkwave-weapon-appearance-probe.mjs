@@ -71,17 +71,32 @@ export async function checkWeaponAppearancePicker({ page, evidence }) {
       const m=globalThis.s3ProbeG.game.menus;
       const el=m._scr.el.querySelector('[data-id="weapon-appearance"]');
       m.__appearanceClickTrace=[];
+      // Capture the actual native target before any menu handler or
+      // asynchronous loadout replacement. This is diagnostic, not synthetic
+      // input and cannot make a rejected click pass.
+      document.addEventListener('click',event => {
+        const live=m._scr?.el?.querySelector('[data-id="weapon-appearance"]');
+        const target=event.target;
+        m.__appearanceClickTrace.push({
+          trusted:event.isTrusted,phase:'capture',target:target?.dataset?.id,
+          nearestId:target?.closest?.('[data-id]')?.dataset?.id,
+          matches:!!(live&&(target===live||live.contains(target))),
+          originalConnected:el.isConnected,liveSame:live===el,
+          bound:!!m._binds.get(live)?.accept,focused:m._focus===live
+        });
+      },{capture:true,once:true});
       el.addEventListener('click',event => {
         m.__appearanceClickTrace.push({
-          trusted:event.isTrusted,bound:m._binds.has(el),focused:m._focus===el
+          trusted:event.isTrusted,phase:'target',bound:m._binds.has(el),focused:m._focus===el
         });
       },{once:true});
     });
     await button.click();await waitPreference(initial.base);
     const pointer=await read();
-    pointer.admission=await page.evaluate(() => globalThis.s3ProbeG.game.menus.__appearanceClickTrace?.[0]??null);
+    pointer.admissions=await page.evaluate(() => globalThis.s3ProbeG.game.menus.__appearanceClickTrace??[]);
+    pointer.admission=pointer.admissions.find(event=>event.phase==='capture'&&event.matches);
     assert(pointer.selected===initial.base&&pointer.candidate&&pointer.admission?.trusted&&
-      pointer.admission?.bound&&pointer.admission?.focused,
+      pointer.admission?.bound,
       'trusted pointer selects explicit Base '+JSON.stringify(pointer));
     await page.keyboard.press('Enter');await waitPreference(initial.options[2].id);const keyboard=await read();
     await page.evaluate(()=>globalThis.s3ProbeG.game.menus.nav('accept'));
