@@ -107,7 +107,7 @@ test('Slosher uses a continuous sheet and sourced tail without detached beads or
 test('catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse',async()=>{
   const f=await api(),system=f.G.projectiles,peer=f.make('shooter');peer.remote=true;peer.nid=9;peer.team=1;f.G.netm=new f.NetMatch({myId:7},{});
   for(const [id,vertical,recipe] of [['s3-roller-compact',false,'roller-horizontal'],['s3-roller-compact',true,'roller-vertical'],['s3-shooter-first',false,'shooter'],['s3-slosher-diffusion',false,'slosher'],['s3-brush-mini',false,'brush']]) {
-    system.clear();f.G.netm.out.length=0;const a=f.make(id);a.nid=7;a.form='kid';a.grounded=!vertical;a.intent.fire=true;
+    system.clear();f.G.netm.out.length=0;const a=f.make(id);a.nid=7;a.form='kid';a.grounded=true;a.intent.jump=vertical;a.intent.fire=true;
     let ticks=0;while(!system.list.length&&ticks++<180)f.tick(a);a.intent.fire=false;assert(system.list.length,id+' native action emits');
     assert(system.list.every(p=>p._inkVolumeRecipe===recipe),id+' local classification');
     const packets=JSON.parse(JSON.stringify(f.G.netm.out.filter(e=>e[1]==='p')));assert(packets.length,id+' real wire births');const original=JSON.stringify(packets);

@@ -403,7 +403,7 @@ test('regenerateMipmaps strictly uses public renderer pass into empty scene and 
   assert.equal(currentRT, 'saved-rt', 'Render target must be restored even after exception');
 });
 
-test('native WebGL / browser probe: instruments generateMipmap and gl.getError plus draw/read pixels', async () => {
+test('native WebGL / browser probe: instruments generateMipmap and gl.getError plus draw/read pixels', async t => {
   let chromium = null;
   try {
     const pw = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright').catch(() => null);
@@ -419,6 +419,13 @@ test('native WebGL / browser probe: instruments generateMipmap and gl.getError p
   }
 
   if (!chromium) {
+    assert.notEqual(process.env.INKWAVE_REQUIRE_BROWSER_TESTS, '1', 'required Playwright browser is unavailable');
+    t.skip('optional native WebGL probe: Playwright is unavailable');
+    return;
+  }
+  if (!fs.existsSync(chromium.executablePath())) {
+    assert.notEqual(process.env.INKWAVE_REQUIRE_BROWSER_TESTS, '1', 'required Chromium executable is unavailable');
+    t.skip('optional native WebGL probe: Chromium executable is unavailable');
     return;
   }
 

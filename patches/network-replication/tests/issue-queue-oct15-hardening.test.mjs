@@ -28,7 +28,7 @@ test('queued non-finite autostart is rejected before Match; normal 90s and 2s ma
     assert.equal(new f.Match({duration:Infinity,mode}).duration, 300,
       'Ranked match must keep its authoritative 300s clock: '+mode);
     assert.equal(new f.Match({duration:90,mode}).duration, 300,
-      'Ranked duration cannot inherit Turf's optional 90s: '+mode);
+      "Ranked duration cannot inherit Turf's optional 90s: "+mode);
   }
   for (const invalid of [Infinity,-Infinity,NaN,-1,0,86401,1e300,'Infinity']) {
     const m=valueFor(invalid);
@@ -37,6 +37,7 @@ test('queued non-finite autostart is rejected before Match; normal 90s and 2s ma
   }
   assert.equal(valueFor(90).duration,90,'intentional 90s match must not be altered');
   assert.equal(valueFor(180).duration,180);
+  f.G.paint.coverage = () => [0.4, 0.3];
   const match=valueFor(2);
   match.setState('playing');
   match.update(1); match.update(1.05);

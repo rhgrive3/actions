@@ -48,13 +48,13 @@ test('the Heavy Splatling humanoid startup is budgeted, so a "full" case reaches
   }
 });
 
-test('the pinned splatling-full 40-shot and 22.5 ink goldens hold on a freshly built site', async () => {
+test('the Wiki splatling-full 41-shot and 22.5 ink goldens hold on a freshly built site', async () => {
   const f = await fixture({ site, fidelity: true, floor: false, network: false });
   const c = CASES.find(x => x.key === 'splatling-full');
   const { a, chargeAtRelease } = chargeAndRelease(f, c);
   close(chargeAtRelease, 1, 1e-9);
   for (let frame = 0; frame < 240; frame++) f.tick(a, { fire: false });
-  assert.equal(f.fires.length, 40, 'splatling-full must still land the pinned 40 shots');
+  assert.equal(f.fires.length, 41, 'splatling-full includes t=0 and the 160F endpoint');
   close(round(100 - a.ink), 22.5);
 });
 
