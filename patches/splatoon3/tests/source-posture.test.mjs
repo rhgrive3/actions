@@ -338,34 +338,50 @@ test('source ToHuman bow is corrected after kid silhouette returns, without chan
 test('airborne carry survives an ordinary moving jump and landing', async () => {
   const api = await production(), ch = await rig(api), st = state(), samples = [];
   api.posture.setSourcePostureEnabled(true);
+  const carryAngle = () => {
+    const q = new api.THREE.Quaternion();
+    api.posture.sourceCarryWeapon(ch.sourceMotion, q);
+    return q.angleTo(new api.THREE.Quaternion());
+  };
   drive(api, ch, st, { speed: 6, frames: 120 });
   assert.equal(ch.sourceMotion.state, 'move');
-  assert.ok(api.posture.sourceCarryWeight(ch.sourceMotion.retarget) > 0.999);
-
+  assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 1);
+  const onGround = carryAngle();
+  assert.ok(onGround > 0.05, 'moving sourced shooter produces the actual carry transform');
   st.grounded = false;
   drive(api, ch, st, { speed: 6, frames: 12, onFrame: () => {
     const c = ch.sourceMotion;
     samples.push({ phase: 'air', state: c.state,
-      carry: api.posture.sourceCarryWeight(c.retarget), yaw: measure(api, ch).yaw });
+      carry: api.posture.sourceCarryWeight(c.retarget),
+      angle: carryAngle(), yaw: measure(api, ch).yaw });
   } });
-  assert.ok(samples.every(p => p.state === 'air' && p.carry > 0.999),
-    'ordinary ground-to-air preserves the pre-existing carry; it must not turn the barrel sideways');
+  assert.ok(samples.every(p => p.state === 'air' && p.carry === 1),
+    'ordinary ground-to-air retains the pre-existing shooter carry origin');
+  assert.ok(samples[0].angle > 0.01 && samples.at(-1).angle > 0.001 &&
+    samples[0].angle < onGround + 1e-5, 'airborne source carry fades rather than disappearing');
   assert.ok(Math.abs(samples[0].yaw) < 45,
     `first air frame unexpectedly rotated the shooter to ${samples[0].yaw.toFixed(2)}°`);
 
   st.grounded = true;
   drive(api, ch, st, { speed: 6, frames: 12, onFrame: () => {
     const c = ch.sourceMotion;
-    samples.push({ phase: 'landing', state: c.state, carry: api.posture.sourceCarryWeight(c.retarget) });
+    samples.push({ phase: 'landing', state: c.state,
+      carry: api.posture.sourceCarryWeight(c.retarget), angle: carryAngle() });
   } });
-  assert.ok(samples.filter(p => p.phase === 'landing').every(p => p.carry > 0.999),
-    'ordinary air-to-land must retain the carry without an artificial zero-weight frame');
+  const landed = samples.filter(p => p.phase === 'landing');
+  assert.ok(landed.every(p => p.carry === 1 && p.angle > 0),
+    'ordinary air-to-land must retain fading carry rather than snapping to authored hold');
   ch.dispose();
 });
 
-test('form transition owns its weapon; post-emergence air and landing restore carry gradually', async () => {
+test('sourced ToHuman cannot generate a phantom carry while airborne or landing', async () => {
   const api = await production(), ch = await rig(api), st = state(), samples = [];
   api.posture.setSourcePostureEnabled(true);
+  const carryAngle = () => {
+    const q = new api.THREE.Quaternion();
+    api.posture.sourceCarryWeapon(ch.sourceMotion, q);
+    return q.angleTo(new api.THREE.Quaternion());
+  };
   drive(api, ch, st, { frames: 90 });
   st.form = 'squid';
   drive(api, ch, st, { frames: 45 });
@@ -381,32 +397,32 @@ test('form transition owns its weapon; post-emergence air and landing restore ca
   drive(api, ch, st, { speed: 6, frames: 50, onFrame: () => {
     const c = ch.sourceMotion;
     samples.push({ state: c.state, carry: api.posture.sourceCarryWeight(c.retarget),
-      posture: api.posture.sourcePostureWeight(c.retarget) });
+      angle: carryAngle(), posture: api.posture.sourcePostureWeight(c.retarget) });
   } });
   const form = samples.filter(p => p.state === 'ToHuman');
-  assert.ok(form.length > 0 && form.every(p => p.carry === 0),
-    'form-controlled source clip never borrows the regular shooter carry');
+  assert.ok(form.length > 0 && form.every(p => p.carry === 0 && p.angle < 1e-10),
+    'visible form clip retains source-defined hold');
   const air = samples.filter(p => p.state === 'air');
-  assert.ok(air.length > 10, 'the source return clip must finish into airborne movement');
-  assert.ok(air[0].carry > 0 && air[0].carry < 0.20,
-    'first airborne frame should not snap to full regular shooter carry');
-  for (let i = 1; i < air.length; i++) {
-    assert.ok(air[i].carry >= air[i - 1].carry - 1e-8 &&
-      air[i].carry - air[i - 1].carry < 0.15, 're-entry carry must ease in monotonically');
-  }
+  assert.ok(air.length > 10 && air.some(p => p.posture > 0.001),
+    'the real bank transitions into air while posture correction is still fading');
+  assert.ok(air.every(p => p.carry === 0 && p.angle < 1e-10),
+    'ToHuman must not acquire a new airborne carry from residual weight');
 
-  const beforeLand = air.at(-1).carry, landed = [];
   st.grounded = true;
+  const landed = [];
   drive(api, ch, st, { speed: 6, frames: 12, onFrame: () =>
-    landed.push(api.posture.sourceCarryWeight(ch.sourceMotion.retarget)) });
-  assert.ok(landed.every((v, i) => v >= (i ? landed[i - 1] : beforeLand) - 1e-8),
-    'landing must not drop the carry gained after a form transition');
-  assert.ok(landed.every((v, i) => v - (i ? landed[i - 1] : beforeLand) < 0.15),
-    'landing must not introduce another carry step');
-
+    landed.push({ state: ch.sourceMotion.state,
+      carry: api.posture.sourceCarryWeight(ch.sourceMotion.retarget), angle: carryAngle() }) });
+  assert.ok(landed.every(p => p.state === 'land' && p.carry === 0 && p.angle < 1e-10),
+    'landing directly after emergence stays free of phantom carry');
+  drive(api, ch, st, { speed: 6, frames: 90 });
+  assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 1,
+    'ordinary grounded walk regains its carry after the native landing clip');
+  assert.ok(carryAngle() > 0.01);
   ch.sourceMotion.playClip('Wait');
   drive(api, ch, st, { frames: 2 });
   assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 0,
-    'a manual source clip owns its own weapon, as before');
+    'a manual source clip owns its own weapon');
+  assert.ok(carryAngle() < 1e-10);
   ch.dispose();
 });
