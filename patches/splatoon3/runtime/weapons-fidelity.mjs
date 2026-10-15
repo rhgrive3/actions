@@ -1096,9 +1096,10 @@ export function fidelitySlosherDrawRadius(p) {
 // Airborne ink silhouette (render only; collision, paint and packets are
 // untouched). Splatoon 3 footage (Inkipedia "S3 About videos" Splattershot /
 // Slosher, Nintendo official turf-war clip) shows no round balls:
-// - a Shooter round is a long smooth constant-width rod of ink (its tail,
-//   see shotTailFrames) while the SplashSpawn drops along the path fly as
-//   flat jagged splinters;
+// - a Shooter round is a long smooth rod of ink (its tail, see
+//   shotTailFrames); Shooter-family rounds are now drawn by
+//   s3-projectile-shapes.mjs. The SplashSpawn drops falling from the path are
+//   rounded beads (only the muzzle tear is jagged);
 // - Roller/Brush flicks are spiky splash crowns;
 // - a Slosher throw is one broad thin sheet without detached beads.
 // Each entry is [spike amplitude (head radii), spike count, cross-section
@@ -1106,8 +1107,7 @@ export function fidelitySlosherDrawRadius(p) {
 // width scale on the drawn radius, trailing beads 1/0]. The Slosher width 0.5
 // is read off the footage (the sheet is at most about half the character's
 // height wide while DrawSizeParam is 1.0); the rod width 0.7 matches the
-// nozzle; the splinter size 2.2x the native drop radius matches the
-// fragments near the muzzle. All are INKWAVE calibration against footage,
+// nozzle; falling drops draw at 1.5x the native drop radius. All are INKWAVE calibration against footage,
 // not extracted Nintendo mesh data.
 export const INK_LOOK=Object.freeze({
   shot:Object.freeze([0.15,-5,1,1,0.7,1]),   // negative count = rod body
@@ -1115,7 +1115,9 @@ export const INK_LOOK=Object.freeze({
   slosh:Object.freeze([0.3,4,0.32,1,0.5,0]),
   blast:Object.freeze([0.35,6,1,1,1,1]),
   satellite:Object.freeze([0.5,4,1,1,1,1]),
-  droplet:Object.freeze([1.3,6,0.35,1.5,2.2,1]),
+  // Falling SplashSpawn drops: rounded beads stretched a little along their
+  // fall (S3 About video 05, 2.6-4.4 s side frames), not flat splinters.
+  droplet:Object.freeze([0.12,4,0.9,1.25,1.5,1]),
   bubble:Object.freeze([0,1,1,1,1,0]), // Bloblobber round bubble (no spiky crown or beads)
   none:Object.freeze([0,1,1,1,1,1]),
 });

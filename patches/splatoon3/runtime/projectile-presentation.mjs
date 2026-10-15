@@ -112,14 +112,17 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     else direction.copy(axis);
     rotation.setFromUnitVectors(axis,direction);
     // d.radius is a *floor paint* footprint, not an ink model radius.
-    const radius=Math.min(.07,.042+Math.sqrt(Math.max(0,d.radius||0))*.008);
+    // Slosher splashes carry their sourced DrawRadius; Shooter drops keep the
+    // bounded footprint-derived size.
+    const radius=d.drawRadius>0?d.drawRadius:Math.min(.07,.042+Math.sqrt(Math.max(0,d.radius||0))*.008);
     scale.setScalar(radius);
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;
-    shapes[o]=1.1+Math.min(1.1,speed*.009);
-    shapes[o+1]=.025;shapes[o+2]=(d.seed||0)*30+(d.frames||0)*.65;shapes[o+3]=0;
-    inkLook[o]=1.3;inkLook[o+1]=6;inkLook[o+2]=.35;
+    // Rounded bead stretched along its fall (S3 Splattershot side frames).
+    shapes[o]=1.05+Math.min(.6,speed*.006);
+    shapes[o+1]=.03;shapes[o+2]=(d.seed||0)*30+(d.frames||0)*.65;shapes[o+3]=0;
+    inkLook[o]=.12;inkLook[o+1]=4;inkLook[o+2]=.9;
     inkLook[o+3]=((d.seed||0)*43.98)%(Math.PI*2);
     petals[count*2]=0;petals[count*2+1]=0;
     count++;drawn++;
