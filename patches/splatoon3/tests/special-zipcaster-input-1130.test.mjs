@@ -5,7 +5,7 @@ import {fixture} from './source-fixture.mjs';
 async function setup() {
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
  f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
- f.G.physics.raycast=(_o,_d,_length,h)=>{h.hit=false;return h;};
+ f.G.physics.raycast=(o,d,length,h)=>{h.hit=d.z>0;h.dist=Math.min(8,length);h.point.copy(o).addScaledVector(d,h.dist);return h;};
  const actor=f.make('shooter');
  actor.weapon={...actor.weapon,special:'zipcaster',specialCost:100};
  actor.special=100;actor.alive=true;actor.remote=false;actor._resolve=()=>{};

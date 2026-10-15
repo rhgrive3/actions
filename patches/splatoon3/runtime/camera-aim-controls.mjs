@@ -50,7 +50,10 @@ export function updateScopeZoom(rig, actor, dt) {
   if (!active) { rig.zoom = 0; rig.scopeCharge = 0; return 0; }
   const charge = actor.weaponRunner?.charging ? clamp01(actor.weaponRunner.charge) : 0;
   rig.scopeCharge = charge;
-  const envelope = charge * charge * (3 - 2 * charge);
+  // Wiki scope descriptions: zoom begins after half charge. The smoothing
+  // curve/time constant remain INKWAVE tuning, not measured retail timing.
+  const zoomCharge = clamp01((charge - .5) * 2);
+  const envelope = zoomCharge * zoomCharge * (3 - 2 * zoomCharge);
   const target = (55 - scopeVerticalFov(actor.weapon)) / 0.8 * envelope;
   const k = -Math.expm1(-8 * Math.max(0, finite(dt)));
   rig.zoom = finite(rig.zoom) + (target - finite(rig.zoom)) * k;

@@ -6,13 +6,15 @@ import {GEAR_WIRE_IDS,packOwnerGear,readAcceptedGear} from '../runtime/gear-load
 const json=x=>JSON.parse(JSON.stringify(x));
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 async function world(id){
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+ // NetMatch uses performance.now(), not G.time, for its millisecond wire clock.
+ let clockMs=0;
+ const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,vmPerformance:{now:()=>clockMs}});
  f.G.level={...f.G.level,blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.installedRuntime.Physics(f.G.level);
  const a=f.make();Object.assign(a,{nid:1,owner:'owner',invuln:0});
  let packet;const session={myId:id,hostId:'owner',isHost:id==='owner',tr:{sendTo(){},broadcast:d=>{packet=json(d);}}};
  const nm=new f.NetMatch(session,{id:'gear-match'}),m={actors:[a],state:'playing',time:180,duration:180,playing:()=>true,canRespawn:()=>false};
  nm.bind(m);f.G.netm=nm;f.G.match=m;f.G.actors=[a];
- return{f,a,nm,m,send(){f.G.time+=1/60;nm._sendTick();return json(packet);}};
+ return{f,a,nm,m,send(){clockMs+=1000/60;f.G.time+=1/60;nm._sendTick();return json(packet);}};
 }
 function receive(w,p,from='owner',sample=true){w.nm.onMessage(from,json(p));if(sample){const peer=w.nm._peer(from);peer.tr=Math.max(peer.tr||0,p.ts);w.nm._sample(w.a,peer.tr,0);w.nm.applyRemote(w.a,1/60);}}
 function equip(a,ap){a.s3.loadout=emptyLoadout();let n=ap;for(const p of a.s3.loadout)if(n>=10){p.main='runSpeed';n-=10;}for(const p of a.s3.loadout)for(let i=0;i<3&&n>=3;i++){p.subs[i]='runSpeed';n-=3;}assert.equal(n,0);a.s3RefreshGear();}
@@ -127,4 +129,11 @@ test('first dead-owner snapshot retains accepted equipment when death precedes v
  const o=await world('owner'),r=await world('viewer');equip(o.a,57);o.a.splat(null,'water');const p=o.send();receive(r,p,'owner',false);
  const peer=r.nm._peer('owner');peer.tr=p.ts;r.nm._playEvents();assert.equal(r.a.alive,false);assert.equal(r.a.net.buf.length,0);adopt(r);
  assert.equal(abilityPoints(r.a.s3.loadout).runSpeed,57);assert.deepEqual(json(r.a.s3.loadout),json(o.a.s3.loadout));
+});
+
+test('gear snapshots advance an isolated deterministic wire clock',async()=>{
+ const nativeNow=performance.now,o=await world('owner'),r=await world('viewer');
+ const packets=[o.send(),o.send(),o.send()];
+ assert.deepEqual(packets.map(p=>p.ts),[.017,.033,.05]);
+ assert.equal(r.send().ts,.017);assert.equal(performance.now,nativeNow);
 });

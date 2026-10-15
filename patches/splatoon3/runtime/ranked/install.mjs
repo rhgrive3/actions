@@ -123,6 +123,12 @@ export function installRanked(context) {
       this.intent.sub = this.intent.special = false;
       if (this._prevIntent) this._prevIntent.sub = false;
       this.fireBuffer = 0;
+      if (m.ranked.rule.state.goalHold) {
+        this.intent.move.set(0, 0, 0);
+        this.intent.fire = this.intent.jump = this.intent.squid = false;
+        this.vel.x = this.vel.z = 0;
+        this._rankedInput.fire = false;
+      }
     } else this._rankedCarrierPrepared = false;
     return actorUpdate.call(this, dt);
   };
