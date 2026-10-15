@@ -10,6 +10,10 @@ function replaceOnce(code, before, after, rel) {
 
 export function adaptNet(rel, code) {
   if (rel === 'src/net/session.js') {
+    code = "import { validLobbySnapshot, validMeUpdate } from '../../patches/reliability/session-admission.mjs';\n" + code;
+    code = replaceOnce(code, '  _applyMe(id, o) {', '  _applyMe(id, o) {\n    if (!validMeUpdate(o, WEAPONS)) return;', rel);
+    code = replaceOnce(code, '          const l = d.l;', '          const l = d.l;\n          if (!validLobbySnapshot(l, MAPS, WEAPONS, TEAM_PALETTES.length)) return;', rel);
+
     code = replaceOnce(code, `    this.tr = null;
     this.match = null;`, `    this.tr = null;
     this._roomAttempt = 0;
@@ -222,6 +226,7 @@ NetMatch.prototype.dispose = function(...args) {
 `;
   }
   if (rel === 'src/net/transport.js') {
+    code = "import { validRelayControl } from '../../patches/reliability/session-admission.mjs';\n" + code;
     code = replaceOnce(code, `    this.ws = null;
     this.id = null;`, `    this.ws = null;
     this._disconnect = null;
@@ -317,8 +322,15 @@ NetMatch.prototype.dispose = function(...args) {
           return;
         }
         let o; try { o = JSON.parse(s); } catch { return; }
+        if (!validRelayControl(o, performance.now())) return;
         if (o.t === 'err') { if (!settled) disconnect(new Error(o.e || 'Could not connect')); return; }
-        if (o.t === 'pong') { const r = performance.now() - o.c; this.rtt = this.rtt ? this.rtt + (r - this.rtt) * 0.3 : r; return; }
+        if (o.t === 'pong') {
+          if (!this._pingSent || o.c < this._pingSent) return;
+          const r = performance.now() - o.c;
+          this._pingSent = 0;
+          this.rtt = this.rtt ? this.rtt + (r - this.rtt) * 0.3 : r;
+          return;
+        }
         if (o.t === 'welcome') {
           if (settled) return;
           this.id = o.id; this._startPing(); done(resolve, o);

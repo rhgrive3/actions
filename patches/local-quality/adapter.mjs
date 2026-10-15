@@ -82,6 +82,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'view-settings.mjs',
   'material-handoff-adapter.mjs', 'material-handoff.mjs',
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
@@ -271,6 +272,18 @@ function adaptQualityLayer(rel, code) {
     code = adaptTouchRelayout(rel, code);
   }
   code = adaptPlatformSource(rel, code);
+  if (rel === 'src/main.js') {
+    code = "import { normalizeViewSettings } from '../patches/local-quality/view-settings.mjs';\n" + code;
+    code = replaceOnce(code,
+      "migrateAimProfiles(loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile)), DEFAULT_SETTINGS)",
+      "migrateAimProfiles(normalizeViewSettings(loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile)), DEFAULT_SETTINGS), DEFAULT_SETTINGS)",
+      'finite persisted camera and mouse settings');
+    code = replaceOnce(code,
+      '    applyAimSettingsChange(this.settings, partial);',
+      '    partial = normalizeViewSettings({ ...partial }, this.settings);\n    applyAimSettingsChange(this.settings, partial);',
+      'finite live camera and mouse settings');
+  }
+
   if (rel === 'src/game/cameraRig.js') {
     code = replaceOnce(code,
       "    if (this.mode !== this._prevMode || (this.mode === 'follow' && this.target !== this._prevTarget)) {\n",
