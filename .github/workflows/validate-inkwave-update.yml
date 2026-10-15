@@ -139,6 +139,8 @@ jobs:
         run: node --experimental-vm-modules --test patches/splatoon3/tests/issues-1092-1114-finish-mobile-adoption.test.mjs patches/network-replication/tests/issue-1101-adoption-cooldown.test.mjs
       - name: Verify source-sampled direction-aware humanoid gait
         run: node --experimental-vm-modules --test patches/splatoon3/tests/legacy-walk-reference.test.mjs
+      - name: Verify source-bank torso, weapon carry and squid-to-human transitions
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/source-posture.test.mjs
       - name: Verify PR1077 additional seven regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs patches/splatoon3/tests/kit-subs.test.mjs patches/splatoon3/tests/issue-1008-1020-1037-1053.test.mjs
       - name: Diagnose nine-way walk contact regression
@@ -189,7 +191,7 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -239,6 +241,7 @@ jobs:
             list(pool.map(fetch_source,sorted(paths)))
           PY
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
+          INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test --test-name-pattern='pinned alternate rows match raw' patches/splatoon3/tests/alternate-weapon-kits.test.mjs
           node scripts/generate-inkwave-weight-reference.mjs .reference-data/catalog/data/parameter/1130/weapon
           git diff --exit-code -- patches/splatoon3/reference/weapon-weight-1130.json patches/splatoon3/runtime/weapon-weight-data.mjs
           node scripts/generate-inkwave-canonical-kits.mjs .reference-data/catalog/data/mush/1130/WeaponInfoMain.json
@@ -296,8 +299,43 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify emitted Tenacity lock and passive ownership
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/tenacity-special-lock.test.mjs
+      - name: Verify emitted health HUD stability and visibility composition
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/health-hud-stability.test.mjs patches/splatoon3/tests/health-bar-composition-716.test.mjs
+      - name: Verify emitted tap gesture continuity and practice range feedback
+        env:
+          INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/reliability/tests/tap-gesture-continuity.test.mjs patches/practice-range/tests/target-feedback.test.mjs
+      - name: Verify emitted ranked input and network lifetime
+        env:
+          INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs
+      - name: Verify emitted active aim-profile sensor transitions
+        env:
+          INKWAVE_AIM_PROFILE_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/local-quality/tests/aim-profile-live-transition.test.mjs
+      - name: Verify emitted special audio match disposal
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/audio-match-disposal.test.mjs
+      - name: Verify emitted queue hardening and native catalogue wire compatibility
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/network-replication/tests/issue-queue-oct15-hardening.test.mjs patches/local-quality/tests/ink-volume-recipes.test.mjs
       - name: Verify emitted modal controller and Pointer Lock lifetimes
         run: INKWAVE_CONTROLS_SITE="$PWD/_site" INKWAVE_POINTER_LOCK_SITE="$PWD/_site" node --experimental-vm-modules --test patches/reliability/tests/editor-pad-menu.test.mjs patches/reliability/tests/touch-pointerlock.test.mjs
+      - name: Verify emitted explicit Turf Map and gyro transport
+        run: INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/reliability/tests/map-gyro.test.mjs
+      - name: Verify emitted empty Bubbler beam lifecycle
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/bubbler-empty-beam-emitted.test.mjs
       - name: Verify exact owned rectangle scans against production build
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
@@ -382,6 +420,9 @@ jobs:
       - name: Verify PR1171 rendered reticle and GPU paint parity
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-pr1171.mjs .built-site/_site
+      - name: Verify native touch gesture continuity in Chromium
+        if: matrix.suite == 'ui'
+        run: node scripts/check-inkwave-tap-gestures-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/tap-gestures"
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source

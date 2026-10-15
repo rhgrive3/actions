@@ -148,7 +148,11 @@ test('sourced falling shooter droplets reuse simulated positions without paint s
   P.blobs.getMatrixAt(0,matrix);matrix.decompose(pos,rot,scale);
   assert.ok(pos.distanceTo(drop.pos)<1e-6,'display uses real falling-ink position');
   assert.ok(scale.x>.04&&scale.x<=.071,'render radius independent from floor paint radius');
-  assert.ok(Math.abs(P.blobInkLook.array[0]-1.3)<1e-6);
+  // S3 falling drops are rounded beads: low spike amplitude, near-round section.
+  assert.ok(Math.abs(P.blobInkLook.array[0]-.12)<1e-6);
+  assert.ok(Math.abs(P.blobInkLook.array[2]-.9)<1e-6);
+  P._s3SplashDrops=[{...drop,drawRadius:.2}];P._draw();P.blobs.getMatrixAt(0,matrix);matrix.decompose(pos,rot,scale);
+  assert.ok(Math.abs(scale.x-.2)<1e-6,'Slosher splash draws its sourced DrawRadius');
   assert.equal(paints,0,'render does not score/paint');
   assert.deepEqual([drop.pos.x,drop.pos.y,drop.pos.z,drop.vel.y],start,'render is read-only');
   P._s3SplashDrops=Array.from({length:100},(_,i)=>({...drop,pos:new f.THREE.Vector3(1+i*.001,2,3)}));

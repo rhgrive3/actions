@@ -195,16 +195,27 @@ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0
       try { lastProgress = JSON.parse(text.slice(prefix.length)); } catch {}
     }
   });
+  // A double HTTP hop through route.fetch() can reset a loopback socket
+  // during the concurrent Chromium/WebKit CI jobs (ECONNRESET). Serve each
+  // immutable build artifact from the already-verified local checkout instead.
+  // This is *not* a mock: the identical bytes still pass the SHA256 check,
+  // and missing/unlisted build URLs retain the actual HTTP response.
   await page.route('http://127.0.0.1:' + server.address().port + '/**', async route => {
     try {
-      const response = await route.fetch(), body = await response.body();
-      const key = decodeURIComponent(new URL(response.url()).pathname).slice(1);
-      if (manifest.artifacts[key]) {
-        if (hash(body) !== manifest.artifacts[key]) throw Error('Active artifact mismatch: ' + key);
-        loaded.push(key);
+      const request = route.request(), key = decodeURIComponent(new URL(request.url()).pathname).slice(1);
+      if (request.method() !== 'GET' || !Object.hasOwn(manifest.artifacts, key)) {
+        await route.continue();
+        return;
       }
-      await route.fulfill({ response, body });
-    } catch (error) { recordError(error.message); await route.abort(); }
+      const file = path.resolve(site, key);
+      if (!file.startsWith(site + path.sep)) throw Error('Invalid build artifact path: ' + key);
+      const body = fs.readFileSync(file);
+      if (hash(body) !== manifest.artifacts[key]) throw Error('Active artifact mismatch: ' + key);
+      loaded.push(key);
+      const mime = key.endsWith('.json') ? 'application/json'
+        : /\.m?js$/.test(key) ? 'text/javascript' : 'application/octet-stream';
+      await route.fulfill({ status: 200, headers: { 'content-type': mime }, body });
+    } catch (error) { recordError(error.message); try { await route.abort(); } catch {} }
   });
   await page.goto('http://127.0.0.1:' + server.address().port + '/motion-detail');
   await page.addScriptTag({content:'globalThis.motionPixelDifference = '+pixelDifference.toString()+';'});

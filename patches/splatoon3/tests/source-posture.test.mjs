@@ -274,3 +274,212 @@ test('the posture blend is frame-rate independent, holds on paused frames and le
   }
   assert.ok(Math.max(...weights) - Math.min(...weights) < 0.02, `0.1 s release weights ${weights.map(w => w.toFixed(3))}`);
 });
+
+
+test('source ToHuman bow is corrected after kid silhouette returns, without changing action clocks', async () => {
+  const api = await production();
+  const emergence = api.posture.sourceEmergePostureWeight;
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0.001 }), 1);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0.85 }), 1);
+  assert.equal(emergence({ state: 'ToHuman', formKid: false, grounded: true, formWeight: 1 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: false, formWeight: 1 }), 0);
+  assert.equal(emergence({ state: 'manual', formKid: true, grounded: true, formWeight: 1 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true,
+    formWeight: 1, manual: { name: 'ToHuman' } }), 0);
+  let previous = 0;
+  for (let i = 0; i <= 100; i++) {
+    const current = emergence({ state: 'ToHuman', formKid: true, grounded: true,
+      formWeight: i / 100 });
+    assert.ok(current >= previous - 1e-12 && current >= 0 && current <= 1);
+    previous = current;
+  }
+
+  const traces = [];
+  for (const on of [false, true]) {
+    api.posture.setSourcePostureEnabled(on);
+    const ch = await rig(api), st = state(), samples = [];
+    drive(api, ch, st, { frames: 90 });
+    st.form = 'squid';
+    drive(api, ch, st, { frames: 45 });
+    assert.equal(ch.sourceMotion.formKid, false);
+    st.form = 'kid';
+    drive(api, ch, st, { frames: 36, onFrame: () => {
+      const c = ch.sourceMotion, m = measure(api, ch);
+      samples.push({ state: c.state, formWeight: c.formWeight,
+        weight: api.posture.sourcePostureWeight(c.retarget),
+        torso: m.torso, neck: m.neck, formTime: c.formTime });
+    } });
+    traces.push(samples);
+    ch.dispose();
+  }
+  api.posture.setSourcePostureEnabled(true);
+
+  const [oldTrace, newTrace] = traces;
+  assert.equal(oldTrace.length, newTrace.length);
+  const visible = newTrace.map((p, i) => ({ ...p, i })).filter(p =>
+    p.state === 'ToHuman' && p.formWeight >= 0.65);
+  assert.ok(visible.length >= 2, 'the actual source ToHuman clip must overlap visible kid frames');
+  for (const sample of visible) {
+    assert.equal(oldTrace[sample.i].state, 'ToHuman', 'the baseline uses the same transition clip');
+    assert.ok(sample.weight >= emergence({ state: 'ToHuman', formKid: true,
+      grounded: true, formWeight: sample.formWeight }) - 1e-8,
+    'late form correction must not lag behind the returning silhouette');
+    assert.ok(sample.torso <= oldTrace[sample.i].torso + 3,
+      'the repair must not introduce an extra forward bow');
+  }
+  assert.ok(visible.some(p => oldTrace[p.i].torso - p.torso > 1),
+    'the real sourced returning upper body should reduce its forward lean');
+  const settled = newTrace.at(-1);
+  assert.ok(Math.abs(settled.torso) < 8 && Math.abs(settled.neck) < 8,
+    'settled humanoid should hand off smoothly to the existing upright idle calibration');
+});
+
+test('airborne carry survives an ordinary moving jump and landing', async () => {
+  const api = await production(), ch = await rig(api), st = state(), samples = [];
+  api.posture.setSourcePostureEnabled(true);
+  const carryAngle = () => {
+    const q = new api.THREE.Quaternion();
+    api.posture.sourceCarryWeapon(ch.sourceMotion, q);
+    return q.angleTo(new api.THREE.Quaternion());
+  };
+  drive(api, ch, st, { speed: 6, frames: 120 });
+  assert.equal(ch.sourceMotion.state, 'move');
+  assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 1);
+  const onGround = carryAngle();
+  assert.ok(onGround > 0.05, 'moving sourced shooter produces the actual carry transform');
+  st.grounded = false;
+  drive(api, ch, st, { speed: 6, frames: 12, onFrame: () => {
+    const c = ch.sourceMotion;
+    samples.push({ phase: 'air', state: c.state,
+      carry: api.posture.sourceCarryWeight(c.retarget),
+      angle: carryAngle(), yaw: measure(api, ch).yaw });
+  } });
+  assert.ok(samples.every(p => p.state === 'air' && p.carry === 1),
+    'ordinary ground-to-air retains the pre-existing shooter carry origin');
+  assert.ok(samples[0].angle > 0.01 && samples.at(-1).angle > 0.001 &&
+    samples[0].angle < onGround + 1e-5, 'airborne source carry fades rather than disappearing');
+  assert.ok(Math.abs(samples[0].yaw) < 45,
+    `first air frame unexpectedly rotated the shooter to ${samples[0].yaw.toFixed(2)}°`);
+
+  st.grounded = true;
+  drive(api, ch, st, { speed: 6, frames: 12, onFrame: () => {
+    const c = ch.sourceMotion;
+    samples.push({ phase: 'landing', state: c.state,
+      carry: api.posture.sourceCarryWeight(c.retarget), angle: carryAngle() });
+  } });
+  const landed = samples.filter(p => p.phase === 'landing');
+  assert.ok(landed.every(p => p.carry === 1 && p.angle > 0),
+    'ordinary air-to-land must retain fading carry rather than snapping to authored hold');
+  ch.dispose();
+});
+
+test('sourced ToHuman cannot generate a phantom carry while airborne or landing', async () => {
+  const api = await production(), ch = await rig(api), st = state(), samples = [];
+  api.posture.setSourcePostureEnabled(true);
+  const carryAngle = () => {
+    const q = new api.THREE.Quaternion();
+    api.posture.sourceCarryWeapon(ch.sourceMotion, q);
+    return q.angleTo(new api.THREE.Quaternion());
+  };
+  drive(api, ch, st, { frames: 90 });
+  st.form = 'squid';
+  drive(api, ch, st, { frames: 45 });
+  assert.equal(ch.sourceMotion.formKid, false);
+  assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 0);
+
+  st.form = 'kid';
+  drive(api, ch, st, { frames: 10 });
+  assert.equal(ch.sourceMotion.state, 'ToHuman');
+  assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 0);
+
+  st.grounded = false;
+  drive(api, ch, st, { speed: 6, frames: 50, onFrame: () => {
+    const c = ch.sourceMotion;
+    samples.push({ state: c.state, carry: api.posture.sourceCarryWeight(c.retarget),
+      angle: carryAngle(), posture: api.posture.sourcePostureWeight(c.retarget) });
+  } });
+  const form = samples.filter(p => p.state === 'ToHuman');
+  assert.ok(form.length > 0 && form.every(p => p.carry === 0 && p.angle < 1e-10),
+    'visible form clip retains source-defined hold');
+  const air = samples.filter(p => p.state === 'air');
+  assert.ok(air.length > 10 && air.some(p => p.posture > 0.001),
+    'the real bank transitions into air while posture correction is still fading');
+  assert.ok(air.every(p => p.carry === 0 && p.angle < 1e-10),
+    'ToHuman must not acquire a new airborne carry from residual weight');
+
+  st.grounded = true;
+  const landed = [];
+  // First real landing tick is contract-stable; the authored land clip's
+  // later duration may differ across source animation bank variants.
+  drive(api, ch, st, { speed: 6, frames: 1, onFrame: () =>
+    landed.push({ state: ch.sourceMotion.state,
+      carry: api.posture.sourceCarryWeight(ch.sourceMotion.retarget), angle: carryAngle() }) });
+  assert.ok(landed.every(p => p.state === 'land' && p.carry === 0 && p.angle < 1e-10),
+    'landing directly after emergence stays free of phantom carry');
+  drive(api, ch, st, { speed: 6, frames: 90 });
+  assert.ok(api.posture.sourceCarryWeight(ch.sourceMotion.retarget) > 0.999,
+    'ordinary grounded walk gradually regains its carry after the native landing clip');
+  assert.ok(carryAngle() > 0.01);
+  ch.sourceMotion.playClip('Wait');
+  drive(api, ch, st, { frames: 2 });
+  assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 0,
+    'a manual source clip owns its own weapon');
+  assert.ok(carryAngle() < 1e-10);
+  ch.dispose();
+});
+
+test('reacquires shooter carry without a grounded ToHuman weapon snap', async () => {
+  const api = await production(), ch = await rig(api), st = state(), samples = [];
+  api.posture.setSourcePostureEnabled(true);
+  const carryAngle = () => {
+    const q = new api.THREE.Quaternion();
+    api.posture.sourceCarryWeapon(ch.sourceMotion, q);
+    return q.angleTo(new api.THREE.Quaternion());
+  };
+  // Replay the exact source weapon bone, not an identity-Quaternion surrogate.
+  // Applying the carry in isolation measures the additional angular step that
+  // the actual Player00 hand-off would introduce to the production weapon.
+  const sourceCarryTurn = () => {
+    const c = ch.sourceMotion;
+    const original = c.pose.wq[c.bank.index.weapon].clone().multiply(c.weaponReference);
+    const corrected = original.clone();
+    api.posture.sourceCarryWeapon(c, corrected);
+    return original.angleTo(corrected);
+  };
+  drive(api, ch, st, { frames: 90 });
+  st.form = 'squid';
+  drive(api, ch, st, { speed: 6, frames: 45 });
+  assert.equal(ch.sourceMotion.formKid, false);
+  st.form = 'kid';
+  drive(api, ch, st, { speed: 6, frames: 90, onFrame: () => {
+    const c = ch.sourceMotion;
+    samples.push({ state: c.state,
+      carry: api.posture.sourceCarryWeight(c.retarget), angle: carryAngle(),
+      sourceTurn: sourceCarryTurn() });
+  } });
+  const toHuman = samples.filter(x => x.state === 'ToHuman');
+  assert.ok(toHuman.length > 0 && toHuman.every(x => x.carry === 0 && x.angle < 1e-10));
+  const moving = samples.filter(x => x.state === 'move');
+  assert.ok(moving.length >= 15, 'real source bank finishes ToHuman into ordinary movement');
+  assert.ok(moving[0].carry > 0 && moving[0].carry < 0.20,
+    'first grounded return must ease in, not apply the full shooter yaw in one frame');
+  assert.ok(moving[0].sourceTurn <= 0.030001,
+    `actual sourced weapon hand-off must not add a sudden turn: ${moving[0].sourceTurn} rad`);
+  assert.ok(moving.some((p, i) => i > 40 && p.sourceTurn > 0.03),
+    'carry must recover visibly after hand-off rather than being disabled to pass the bound');
+  let previous = 0, previousAngle = 0;
+  for (const x of moving.slice(0, 15)) {
+    assert.ok(x.carry >= previous - 1e-8 && x.carry - previous < 0.15,
+      'carry blend stays monotone and bounded at 60Hz');
+    assert.ok(x.angle >= previousAngle - 0.005 && x.angle - previousAngle < 0.03,
+      'effective weapon rotation must not jump at the clip boundary');
+    previous = x.carry; previousAngle = x.angle;
+  }
+  // The retail/source ToHuman clip length is not a guessed frame constant.
+  // After the recorded handoff, provide a full steady-state interval.
+  drive(api, ch, st, { speed: 6, frames: 90 });
+  assert.ok(api.posture.sourceCarryWeight(ch.sourceMotion.retarget) > 0.999,
+    'steady moving source carry reaches original full strength');
+  ch.dispose();
+});
