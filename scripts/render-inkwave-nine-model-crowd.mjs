@@ -6,7 +6,7 @@ import path from 'node:path';
 import http from 'node:http';
 import os from 'node:os';
 import {chromium} from 'playwright';
-import {rosters} from './verify-inkwave-nine-model-crowd.mjs';
+import {rosters,expectedWeaponNear,canopyWeapons} from './verify-inkwave-nine-model-crowd.mjs';
 const arg=(key,fallback)=>{const at=process.argv.indexOf(key);return at<0?fallback:process.argv[at+1];};
 const site=path.resolve(arg('--site','_site')),out=path.resolve(arg('--out','.model-crowd')),roster=arg('--roster','A'),size=600;
 if(!rosters[roster])throw Error('Unknown roster');
@@ -26,7 +26,7 @@ try{
  await page.exposeFunction('__recordNineFrame',row=>fs.appendFileSync(path.join(out,'frames.jsonl'),JSON.stringify({...row,hostLoad:os.loadavg(),hostAt:new Date().toISOString()})+'\n'));
  await page.exposeFunction('__recordNineFailure',({image,...state})=>{fs.writeFileSync(path.join(out,'completion-failure.json'),JSON.stringify(state,null,2));if(image)fs.writeFileSync(path.join(out,'completion-failure.png'),Buffer.from(image,'base64'));});
  await page.goto('http://127.0.0.1:'+server.address().port+'/review');
- const result=await page.evaluate(async({prefix,ids,size})=>{
+ const result=await page.evaluate(async({prefix,ids,size,expectedNear,expectedCanopy})=>{
   let seed=0x51a7c0de;const resetSeed=()=>{seed=0x51a7c0de;};Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
   const THREE=await import('three'),{install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
   const profile=await fetch(prefix+'patches/splatoon3/profile.json').then(r=>r.json()),api=install(profile),{G,Physics}=api;
@@ -72,7 +72,7 @@ try{
   for(const tier of['game','far']){
    const prepare=performance.now();for(const a of actors){a.character.setLod(tier);for(let j=0;j<40;j++)a._finishFrame(1/60);}const tierPrepareMs=performance.now()-prepare;
    const expected=tier==='game'?1:2,lodStates=actors.map(a=>({force:a.character.lod.force,tier:a.character.lod.tier,to:a.character.lod.to})),weaponNear=actors.map(a=>a.character.weapon.near);
-   if(lodStates.some(s=>s.force!==expected||s.tier!==expected||s.to!==-1)||weaponNear.some(x=>x!==(tier==='game')))throw Error('Unexpected settled LOD');
+   if(lodStates.some(s=>s.force!==expected||s.tier!==expected||s.to!==-1)||weaponNear.some((x,i)=>x!==expectedNear[tier][i])||actors.some((a,i)=>!!a.character.weapon.def.parts?.canopy!==expectedCanopy[i]))throw Error('Unexpected settled LOD');
    const frames=[];let image;
    for(let index=0;index<15;index++){
     const t=performance.now();G.time+=1/60;for(const a of actors)a._finishFrame(1/60);const animated=performance.now();
@@ -92,7 +92,7 @@ try{
   const debug=gl.getExtension('WEBGL_debug_renderer_info'),browser={userAgent:navigator.userAgent,unmaskedRenderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):null,contextAttributes:gl.getContextAttributes(),width:gl.drawingBufferWidth,height:gl.drawingBufferHeight};
   for(const a of actors){a.weaponRunner.reset();scene.remove(a.character.root);a.character.dispose();}
   return{scope:'Native Renderer high-quality full post stack on an isolated 8-Actor studio scene, valid cube256 IBL in the same GL context. No world geometry/shadow workload. Synchronous final-output 1px read proves completion; times include CPU and SwiftShader/backpressure, not dedicated GPU timing or physical-device FPS.',environment:{inputWidth:width,pmremWidth:env.width,pmremHeight:env.height,toneMapping:renderer.toneMapping,exposure:renderer.toneMappingExposure},post:{gtao:!!full.gtao,bloomEnabled:!!full.bloom?.enabled,passes:full.composer.passes.map(p=>p.constructor.name),dynamicScale:full.dynScale,quality:'high',shaderStatusChecks:renderer.debug.checkShaderErrors},browser,warm,tiers};
- },{prefix,ids:rosters[roster],size});
+ },{prefix,ids:rosters[roster],size,expectedNear:Object.fromEntries(['game','far'].map(t=>[t,rosters[roster].map(id=>expectedWeaponNear(id,t))])),expectedCanopy:rosters[roster].map(id=>canopyWeapons.has(id))});
  for(const[tier,row]of Object.entries(result.tiers)){fs.writeFileSync(path.join(out,'crowd-'+tier+'.png'),Buffer.from(row.image,'base64'));delete row.image;}
  const report={revision:identity.build.revision,contentHash:identity.contentHash,roster,errors,...result};fs.writeFileSync(path.join(out,'crowd.json'),JSON.stringify(report,null,2));
  if(errors.length)throw Error(errors.join('\n'));console.log('NINE_COMPLETED_CROWD '+JSON.stringify(report));

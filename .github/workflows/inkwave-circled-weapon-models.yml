@@ -8,6 +8,9 @@ on:
       - scripts/render-inkwave-circled-weapon-gallery.mjs
       - scripts/compare-inkwave-circled-weapon-gallery.py
       - scripts/render-inkwave-brella-gallery.mjs
+      - scripts/native-gallery-day.mjs
+      - scripts/native-gallery-day.test.mjs
+      - scripts/tests/inkwave-brella-lifecycle-observer.test.mjs
       - scripts/compare-inkwave-brella-gallery.py
       - scripts/verify-inkwave-nine-model-crowd.mjs
       - scripts/render-inkwave-nine-model-crowd.mjs
@@ -36,7 +39,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 01aa5cc61c842a8616ab38ff5fb541b6becf1395
+          ref: c3f7d61d124ffa4336ca7e2ca7bc2798eb536b5b
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -113,7 +116,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 01aa5cc61c842a8616ab38ff5fb541b6becf1395
+          ref: c3f7d61d124ffa4336ca7e2ca7bc2798eb536b5b
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -140,6 +143,7 @@ jobs:
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: All nine source contracts, eight bow shapes, paid preparation and 65-weapon isolation
         run: |
+          node --test scripts/native-gallery-day.test.mjs scripts/tests/inkwave-brella-lifecycle-observer.test.mjs
           node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-circled-rebuild.test.mjs patches/splatoon3/tests/weapon-models-stringers-splatanas.test.mjs patches/splatoon3/tests/weapon-models-bow-shape-pass2.test.mjs patches/splatoon3/tests/camera-aim-controls.test.mjs patches/splatoon3/tests/controller-motion-integral.test.mjs
           node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/weapon-catalog-adapter.test.mjs patches/splatoon3/tests/brella-guard-facing.test.mjs patches/splatoon3/tests/issue-857-roller-heading.test.mjs patches/splatoon3/tests/issue-973-facing-speed.test.mjs patches/splatoon3/tests/brella-facing-wire.test.mjs
           WEAPON_IDS=s3-saber-normal,s3-saber-lite,s3-saber-heavy,s3-stringer-normal,s3-stringer-short,s3-stringer-explosion,s3-shelter-normal,s3-shelter-wide,s3-shelter-focus,s3-shelter-compact node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs

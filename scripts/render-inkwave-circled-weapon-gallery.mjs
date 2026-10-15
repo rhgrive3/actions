@@ -5,6 +5,7 @@
 // Actor/Runner/Character holding it while idle, carrying, firing and charging.
 // The images are comparison evidence, not a retail-parity score.
 //   node scripts/render-inkwave-weapon-gallery.mjs --site <built site> --out <dir> [--ids a,b] [--no-held]
+import {nativeGalleryDay} from './native-gallery-day.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -37,7 +38,7 @@ try {
   const page = await browser.newPage({ viewport: { width: size * 2, height: size * 2 } });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:' + server.address().port + '/review');
-  await page.evaluate(async ({ prefix, size }) => {
+  await page.evaluate(async ({ prefix, size, nativeDaySource }) => {
     const THREE = await import('three'), { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
     const api = install(profile), { G, Physics } = api;
@@ -52,19 +53,15 @@ try {
     renderer.setSize(size, size); renderer.setClearColor(0xffffff, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1; document.body.append(renderer.domElement);
     const scene = new THREE.Scene();
-    const px = new Uint8Array(1024 * 512 * 4); for (let y = 0; y < 512; y++) for (let x = 0; x < 1024; x++) { const v = y / 512 < 9 / 16 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 1024 + x) * 4); }
-    const sky = new THREE.DataTexture(px, 1024, 512); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
-    const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(sky).texture;
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
-    const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3, 4, 2); scene.add(key);
+    const nativeDay = await (0,eval)('('+nativeDaySource+')')({THREE,renderer,scene,prefix});
     G.scene = scene; G.teamColors = [new THREE.Color('#ff8825'), new THREE.Color('#484ce8')];
     G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, o) => { o.length = 0; return o; } };
     G.physics = new Physics(G.level); G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true }; G.time = 0;
     G.projectiles = new api.Projectiles({ add() {}, remove() {} }); // real emission path, projectiles not drawn
     G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
     const snap = () => renderer.domElement.toDataURL('image/png').split(',')[1];
-    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G };
-  }, { prefix, size });
+    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G, nativeDay };
+  }, { prefix, size, nativeDaySource:nativeGalleryDay.toString() });
   const all = await page.evaluate(() => Object.keys(window.__gallery.WEAPONS).filter(id => window.__gallery.WEAPONS[id]?.class !== undefined || window.__gallery.WEAPONS[id]?.catalogRecord));
   const list = ids.length ? ids : all;
   const rows = [];
@@ -198,6 +195,6 @@ try {
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
   }
-  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, rows, errors }, null, 2));
+  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, contentHash:identity.contentHash, environment:await page.evaluate(()=>window.__gallery.nativeDay.receipt), rows, errors }, null, 2));
   if (errors.length) { console.error('page errors:', errors.slice(0, 10)); process.exitCode = 1; }
-} finally { await browser?.close(); await new Promise(r => server.close(r)); }
+} finally { if(browser)for(const context of browser.contexts())for(const page of context.pages())await page.evaluate(()=>window.__gallery?.nativeDay?.owner.dispose()).catch(()=>{}); await browser?.close(); await new Promise(r => server.close(r)); }

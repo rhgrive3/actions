@@ -4,6 +4,14 @@ import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 
 export const selected = ['s3-saber-normal','s3-saber-lite','s3-saber-heavy','s3-stringer-normal','s3-stringer-short','s3-stringer-explosion','s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];
+// Production keeps articulated Brella canopies animated/near at every body tier.
+// Bind the exception to the exact nine-weapon roster, never an observed result.
+export const canopyWeapons = new Set(['s3-shelter-normal','s3-shelter-wide','s3-shelter-focus']);
+export function expectedWeaponNear(id,tier){
+  assert.ok(selected.includes(id),'Unknown crowd weapon');
+  assert.ok(tier==='game'||tier==='far','Unknown crowd tier');
+  return tier==='game'||canopyWeapons.has(id);
+}
 // Two eight-player scenarios are required: neither can silently omit the ninth weapon.
 export const rosters = { A: selected.slice(0,8), B: selected.slice(1) };
 assert.deepEqual([...new Set(Object.values(rosters).flat())].sort(), [...selected].sort());
@@ -30,7 +38,7 @@ if (process.argv[2] === '--roster') {
         const delta=[5,-2.7,-8],length=Math.hypot(...delta);
         assert.equal(row.camera.direction.length,3);
         row.camera.direction.forEach((v,i)=>assert.ok(Math.abs(v-delta[i]/length)<1e-12));
-        assert.deepEqual(row.weaponNear,ids.map(()=>tier==='game'));
+        assert.deepEqual(row.weaponNear,ids.map(id=>expectedWeaponNear(id,tier)));
         for (const metric of ['animationMs','renderSubmitMs','completionWaitMs','renderThroughReadbackMs'])
           for (const percentile of ['p50','p95']) assert.ok(Number.isFinite(row[metric][percentile]));
         assert.equal(row.frames.length,15);assert.equal(row.frames.filter(f=>f.phase==='measured').length,12);

@@ -5,6 +5,7 @@
 // Actor/Runner/Character holding it while idle, carrying, firing and charging.
 // The images are comparison evidence, not a retail-parity score.
 //   node scripts/render-inkwave-brella-gallery.mjs --site <built site> --out <dir> [--ids a,b] [--no-held]
+import {nativeGalleryDay} from './native-gallery-day.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
@@ -35,7 +36,7 @@ try {
   const page = await browser.newPage({ viewport: { width: size * 2, height: size * 2 } });
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto('http://127.0.0.1:' + server.address().port + '/review');
-  await page.evaluate(async ({ prefix, size }) => {
+  await page.evaluate(async ({ prefix, size, nativeDaySource }) => {
     const THREE = await import('three'), { install } = await import(prefix + 'patches/splatoon3/runtime/install.mjs');
     const profile = await fetch(prefix + 'patches/splatoon3/profile.json').then(r => r.json());
     const api = install(profile), { G, Physics } = api;
@@ -50,19 +51,15 @@ try {
     renderer.setSize(size, size); renderer.setClearColor(0xffffff, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1; document.body.append(renderer.domElement);
     const scene = new THREE.Scene();
-    const px = new Uint8Array(1024 * 512 * 4); for (let y = 0; y < 512; y++) for (let x = 0; x < 1024; x++) { const v = y / 512 < 9 / 16 ? 235 : 130; px.set([v, v, Math.min(255, v + 12), 255], (y * 1024 + x) * 4); }
-    const sky = new THREE.DataTexture(px, 1024, 512); sky.mapping = THREE.EquirectangularReflectionMapping; sky.colorSpace = THREE.SRGBColorSpace; sky.needsUpdate = true;
-    const pmrem = new THREE.PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(sky).texture;
-    scene.add(new THREE.HemisphereLight(0xffffff, 0x60718d, 2.1));
-    const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(-3, 4, 2); scene.add(key);
+    const nativeDay = await (0,eval)('('+nativeDaySource+')')({THREE,renderer,scene,prefix});
     G.scene = scene; G.teamColors = [new THREE.Color('#ff8825'), new THREE.Color('#484ce8')];
     G.level = { blocks: [], groundHeight: () => 0, queryBlocks: (_a, _b, _c, _d, o) => { o.length = 0; return o; } };
     G.physics = new Physics(G.level); G.paint = { sample: () => 1, splat: () => 0 }; G.match = { playing: () => true }; G.time = 0;
     G.projectiles = new api.Projectiles({ add() {}, remove() {} }); // real emission path, projectiles not drawn
     G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
     const snap = () => renderer.domElement.toDataURL('image/png').split(',')[1];
-    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G };
-  }, { prefix, size });
+    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G, nativeDay };
+  }, { prefix, size, nativeDaySource:nativeGalleryDay.toString() });
   const all = await page.evaluate(() => Object.keys(window.__gallery.WEAPONS).filter(id => window.__gallery.WEAPONS[id]?.class !== undefined || window.__gallery.WEAPONS[id]?.catalogRecord));
   const list = ids.length ? ids : all;
   const rows = [];
@@ -128,6 +125,20 @@ try {
         camera.position.copy(a.pos).add(off.multiplyScalar(1.15)); camera.lookAt(a.pos.clone().add(new THREE.Vector3(0, .8, .25)));
         renderer.render(scene, camera); return snap();
       };
+      // Observe the native ownership handoff: update removes the launched canopy from catalogState.
+      function observeCanopyHandoff(before, wasLaunched, after, actor, weaponId, scene) {
+        const mesh = before?.mesh;
+        return !!before && wasLaunched === false && before.launched === true && after === null
+          && before.owner === actor && before.weaponId === weaponId
+          && Number.isFinite(before.remaining) && before.remaining > 0
+          && mesh?.parent === scene && mesh.visible === true && mesh.name === 'brella-canopy:' + weaponId
+          && !!before.visualSource?.parts?.canopy?.geo
+          && ['canopy', 'canopyInk'].every(name => !before.visualSource.parts[name] || mesh.children.some(part =>
+            part.name === name && part.isMesh && part.geometry === before.visualSource.parts[name].geo && part.visible === true));
+      }
+      function heldCanopyHidden(weapon) {
+        return !!weapon.parts.canopy && ['canopy', 'canopyInk'].every(name => !weapon.parts[name] || weapon.parts[name].visible === false);
+      }
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0, sawOpen=false,sawLaunched=false,sawHidden=false,sawFolded=false;
       const benchCam=new THREE.PerspectiveCamera(42,1,.05,30);benchCam.position.set(-1.6,1.15,2.4);benchCam.lookAt(0,.8,.25);
       const bench=()=>{benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4).multiplyScalar(1.15));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.25)));const gl=renderer.getContext(),ms=[];for(let j=0;j<50;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=10)ms.push(performance.now()-t);}ms.sort((a,b)=>a-b);return{scope:'CPU submission plus gl.finish flush/backpressure only; GPU completion is not established.',lod:ch.lodTier,weaponNear:ch.weapon.near,p50:ms[Math.floor(ms.length*.5)],p95:ms[Math.floor(ms.length*.95)],drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
@@ -137,6 +148,7 @@ try {
         const fire = frame>=70&&frame<firstEnd||frame>=secondStart&&frame<secondStart+300;
         a.ink = 100; a.intent.fire = fire; a.aimPitch = 0;
         if (frame >= 30 && frame < 60) { a.vel.set(0, 0, 2.4); a.pos.z += 2.4 / 60; } else a.vel.set(0, 0, 0);
+        const canopyBefore = a.weaponRunner.catalogState?.canopy, wasLaunched = canopyBefore?.launched;
         G.time += 1 / 60; a.weaponRunner.update(1 / 60, { fire, firePressed: frame === 70||frame===secondStart }); a._finishFrame(1 / 60); ch.root.updateMatrixWorld(true);
         if (![...ch.P].every(Number.isFinite)) nonFinite = true;
         if (a.weaponRunner.firingT > 0 || a.weaponRunner.charging || a.weaponRunner.busy?.()) fired++;
@@ -152,8 +164,9 @@ try {
         const cs=a.weaponRunner.catalogState,c=cs?.canopy;
         if(frame===25)res.closedRender=bench();
         if(c?.open&&!c.launched&&ch.weapon.ps.bo>.9&&!sawOpen){sawOpen=true;shots.heldOpen=look(frame,'front');shots.heldOpenRear=look(frame,'back');shots.heldOpenSide=look(frame,'right');res.openFrame=frame;res.openRender=bench();}
-        if(c?.launched)sawLaunched=true;
-        if(sawLaunched&&!ch.weapon.parts.canopy.visible&&!sawHidden){sawHidden=true;shots.launched=look(frame,'front');res.hiddenFrame=frame;}
+        const handedOff = observeCanopyHandoff(canopyBefore, wasLaunched, c, a, id, scene);
+        if(handedOff){sawLaunched=true;res.launchFrame=frame;res.launchOwnership={owner:true,weaponId:id,heldStateCleared:c===null,detachedName:canopyBefore.mesh.name,detachedInScene:true};}
+        if(handedOff&&heldCanopyHidden(ch.weapon)&&!sawHidden){sawHidden=true;shots.launched=look(frame,'front');res.hiddenFrame=frame;}
         if(frame>firstEnd+10&&ch.weapon.parts.canopy.visible&&ch.weapon.ps.bo<.02&&!sawFolded){sawFolded=true;shots.folded=look(frame,'front');}
 
       }
@@ -232,6 +245,6 @@ try {
     delete row.images; rows.push(row);
     console.log(JSON.stringify(row));
   }
-  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, rows, errors }, null, 2));
+  fs.writeFileSync(path.join(out, 'gallery.json'), JSON.stringify({ revision: identity.build.revision, contentHash:identity.contentHash, environment:await page.evaluate(()=>window.__gallery.nativeDay.receipt), rows, errors }, null, 2));
   if (errors.length) { console.error('page errors:', errors.slice(0, 10)); process.exitCode = 1; }
-} finally { await browser?.close(); await new Promise(r => server.close(r)); }
+} finally { if(browser)for(const context of browser.contexts())for(const page of context.pages())await page.evaluate(()=>window.__gallery?.nativeDay?.owner.dispose()).catch(()=>{}); await browser?.close(); await new Promise(r => server.close(r)); }
