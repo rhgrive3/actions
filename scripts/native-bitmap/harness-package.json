@@ -1,0 +1,32 @@
+{
+  "status": "prepared-not-browser-executed",
+  "candidateHead": "3ab55b1134d93b53c806be00c6d255b232fe2278",
+  "candidateGitBlob": "fe258df4fc025e22a09bfc4b676993e3542c831d",
+  "baselineHead": "efb8cfa1d38f962a509f0a32fa8add04352344d3",
+  "files": {
+    "README.txt": {
+      "sha256": "cd43780ee952c3cc6175b8eabacff696ccdb6c51a16df82996055e44b065c88b",
+      "bytes": 2167
+    },
+    "acceptance.mjs": {
+      "sha256": "a3f2c95c22c99967a9750c51938ef29a075cb91c741679af82607b59e0df8936",
+      "bytes": 7675
+    },
+    "baseline.mjs": {
+      "sha256": "516b3f0018c41551b12734b76c68d2cb1bfbe99dc13ce553ee7e0ef00174e023",
+      "bytes": 6643
+    },
+    "candidate.mjs": {
+      "sha256": "6b706ae30aafccda4abde8913f0d57f8518a92e0173cfaf3f1904d5b4965487b",
+      "bytes": 6792
+    },
+    "receipt-gate.mjs": {
+      "sha256": "7934c5327c19777094192b46652c4e3f2563420dd65112b534c89f4602c1ae6c",
+      "bytes": 1918
+    },
+    "receipt-gate.test.mjs": {
+      "sha256": "14bb99b9f3d5ebb527010a01abb2a22ae2e16aaef600e9468e473fb2b0b2c9b3",
+      "bytes": 2481
+    }
+  }
+}

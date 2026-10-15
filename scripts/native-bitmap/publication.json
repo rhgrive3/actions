@@ -1,0 +1,46 @@
+{
+  "baseHead": "e5442657241a5b2e89bd358537ef97b22278f08d",
+  "scope": "Synthetic real Chromium bitmap ownership; runtime byte identical to reviewed3ab; no device/GPU qualification",
+  "files": {
+    "README.txt": {
+      "bytes": 2167,
+      "sha256": "cd43780ee952c3cc6175b8eabacff696ccdb6c51a16df82996055e44b065c88b"
+    },
+    "acceptance.mjs": {
+      "bytes": 7675,
+      "sha256": "a3f2c95c22c99967a9750c51938ef29a075cb91c741679af82607b59e0df8936"
+    },
+    "baseline.mjs": {
+      "bytes": 6643,
+      "sha256": "516b3f0018c41551b12734b76c68d2cb1bfbe99dc13ce553ee7e0ef00174e023"
+    },
+    "candidate.mjs": {
+      "bytes": 6792,
+      "sha256": "6b706ae30aafccda4abde8913f0d57f8518a92e0173cfaf3f1904d5b4965487b"
+    },
+    "harness-package.json": {
+      "bytes": 1068,
+      "sha256": "f70f8d5198c670b35c5ec7f6b60ccc58a7bb16ba70b8d932bc72788d0cef5865"
+    },
+    "native-bitmap.yml": {
+      "bytes": 2543,
+      "sha256": "421745f97d5c694e93dc8b2636d2ab208efd960056d35fb8e5483724480fa610"
+    },
+    "receipt-gate.mjs": {
+      "bytes": 1918,
+      "sha256": "7934c5327c19777094192b46652c4e3f2563420dd65112b534c89f4602c1ae6c"
+    },
+    "receipt-gate.test.mjs": {
+      "bytes": 2481,
+      "sha256": "14bb99b9f3d5ebb527010a01abb2a22ae2e16aaef600e9468e473fb2b0b2c9b3"
+    },
+    "run-hosted.sh": {
+      "bytes": 338,
+      "sha256": "91b4bb2fe09aaf94fc524fedd280d18a810f1a27aaeb5cfcabf2d0985fde93dd"
+    },
+    "supervise.py": {
+      "bytes": 3401,
+      "sha256": "e84851f5ea7ee20f19c6b3c5bfb1db476a769ec8d4d2ce2f76735c2cd27fae49"
+    }
+  }
+}
