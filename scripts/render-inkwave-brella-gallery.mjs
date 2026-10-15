@@ -67,11 +67,31 @@ try {
     const row = await page.evaluate(async ({ id, held, crowd }) => {
       const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
+      // Each selected model owns a separate preview lifetime. Runner.reset does
+      // not retire detached catalogue canopies; the native projectile clear does.
+      function clearPreviewProjectiles() {
+        G.projectiles.clear();
+        const remaining = [];
+        scene.traverse(o => { if (o.name?.startsWith('brella-canopy:')) remaining.push(o.name); });
+        if (remaining.length) throw new Error('Detached canopy leaked across preview boundary: ' + remaining.join(','));
+      }
+      const previewActors = new Set(), retiredActors = new Set(), previewRoots = new Set(), cleanupErrors = [];
+      let previewFailed = false, previewFailure;
+      const attemptCleanup = action => { try { action(); } catch (error) { cleanupErrors.push(error); } };
+      function disposePreviewActor(actor) {
+        if (retiredActors.has(actor)) return;
+        retiredActors.add(actor);
+        attemptCleanup(() => actor.weaponRunner.reset());
+        attemptCleanup(() => scene.remove(actor.character.root));
+        attemptCleanup(() => actor.character.dispose());
+      }
+      try {
+      clearPreviewProjectiles();
       const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
       let bytes = 0; const geos = [d.body, d.ink, d.bodyStatic, d.inkStatic, d.drum, d.drumCaps, d.glow, ...Object.values(d.parts || {}).map(p => p.geo)];
       for (const geo of new Set(geos.filter(Boolean))) { for (const a of Object.values(geo.attributes)) bytes += a.array.byteLength; if (geo.index) bytes += geo.index.array.byteLength; }
       // whole weapon at rest, including the parts and drum/glow channels
-      const g = new THREE.Group();
+      const g = new THREE.Group(); previewRoots.add(g);
       g.add(new THREE.Mesh(d.body, Mt.getPlasticMaterial()), new THREE.Mesh(d.ink, Mt.getInkMaterial(color)));
       if (d.drum) { const drum = new THREE.Group(); drum.position.copy(d.drumAt); drum.add(new THREE.Mesh(d.drum, Mt.getInkMaterial(color)), new THREE.Mesh(d.drumCaps, Mt.getPlasticMaterial())); g.add(drum); }
       if (d.glow) g.add(new THREE.Mesh(d.glow, new THREE.MeshStandardMaterial({ color: '#797d85', roughness: .3 })));
@@ -93,7 +113,7 @@ try {
         images: { side, above, front: muzzleView, persp } };
       // Open reference views use the actual registered canopy animation on the real part geometries.
       // This state-controlled pass is separate from the real Actor/Runner sequence below.
-      const openModel = new THREE.Group(), wp = { def:d, parts:{}, ps:{} };
+      const openModel = new THREE.Group(), wp = { def:d, parts:{}, ps:{} }; previewRoots.add(openModel);
       wp.ink=new THREE.Mesh(d.inkStatic,Mt.getInkMaterial(color));openModel.add(new THREE.Mesh(d.bodyStatic,Mt.getPlasticMaterial()),wp.ink);
       for(const [name,p] of Object.entries(d.parts)){
         const mesh=new THREE.Mesh(p.geo,p.mat==='ink'?Mt.getInkMaterial(color):p.mat==='lamp'?new THREE.MeshStandardMaterial({color:p.lamp?.color||0xffffff,emissive:p.lamp?.emissive||0xffffff}):Mt.getPlasticMaterial());
@@ -117,6 +137,7 @@ try {
       if (!held) return res;
       // held: real Actor + WeaponRunner + Character (native + patched pose layers)
       const a = new Actor({ team: 0, weapon: id, isLocal: true, name: id, CharacterClass: Character, style: { hair: 0, skin: 2, outfit: 0, eyes: 0 } }), ch = a.character;
+      previewActors.add(a);
       ch.actor = a; ch.onEvent = null; ch.setLod('game'); a.grounded = a.ground.hit = true; G.actors = [a]; scene.add(ch.root);
       if (ch._sourceMotionLoader) await ch._sourceMotionLoader; if (ch.sourceMotion?.ready) await ch.sourceMotion.ready;
       const look = (frame, side) => {
@@ -133,6 +154,9 @@ try {
           && Number.isFinite(before.remaining) && before.remaining > 0
           && mesh?.parent === scene && mesh.visible === true && mesh.name === 'brella-canopy:' + weaponId
           && !!before.visualSource?.parts?.canopy?.geo
+          && (weaponId !== 's3-shelter-focus' || (before.visualSource.detachedCanopyInk?.geo === before.visualSource.ink
+            && mesh.children.some(part => part.name === 'canopyInk' && part.isMesh
+              && part.geometry === before.visualSource.ink && part.visible === true)))
           && ['canopy', 'canopyInk'].every(name => !before.visualSource.parts[name] || mesh.children.some(part =>
             part.name === name && part.isMesh && part.geometry === before.visualSource.parts[name].geo && part.visible === true));
       }
@@ -208,6 +232,7 @@ try {
         res.reverseCases=[];ch.root.visible=false;
         for(const [name,mx]of[['reverseLeft',-.05],['reverseRight',.05]]){
           const r=new Actor({team:0,weapon:id,isLocal:true,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),rc=r.character;
+          previewActors.add(r);
           rc.actor=r;rc.onEvent=null;rc.setLod('game');r.grounded=r.ground.hit=true;G.actors=[r];scene.add(rc.root);
           if(rc._sourceMotionLoader)await rc._sourceMotionLoader;if(rc.sourceMotion?.ready)await rc.sourceMotion.ready;
           r.aimDir.set(0,0,1);r.intent.move.set(mx,0,-1).normalize();
@@ -230,7 +255,7 @@ try {
           }
           if(!captured||!count)throw Error('Missing reverse diagnostic '+id+' '+name);
           res.reverseCases.push({name,moveX:mx,count,maxAngle,maxCentre,maxGrip,meetsGuardBounds:maxAngle<6&&maxCentre<.05&&maxGrip<.008});
-          r.weaponRunner.reset();scene.remove(rc.root);rc.dispose();
+          disposePreviewActor(r);
         }
         ch.root.visible=true;G.actors=[a];
       }
@@ -238,6 +263,7 @@ try {
         const actors=[a], ids=['s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];
         for(let k=1;k<8;k++){
           const other=new Actor({team:k%2,weapon:ids[k%ids.length],CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}}),c=other.character;
+          previewActors.add(other);
           c.actor=other;c.onEvent=null;other.grounded=other.ground.hit=true;scene.add(c.root);actors.push(other);
           if(c._sourceMotionLoader)await c._sourceMotionLoader;if(c.sourceMotion?.ready)await c.sourceMotion.ready;
         }
@@ -251,15 +277,26 @@ try {
           res.crowd[tier]={weaponNear:actors.map(o=>o.character.weapon.near),actors:8,ids:actors.map(o=>o.weaponId||o.character.weaponModel),animationMs:quant(anim),renderSubmitMs:quant(cpu),renderCompleteMs:quant(done),timingScope:'Historical renderCompleteMs key means CPU submission plus gl.finish flush/backpressure; it is not a completion guarantee.',drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,visibleGeometryBytes:geometryBytes,rendererGeometries:renderer.info.memory.geometries};
           res.images['crowd-'+tier]=snap();
         }
-        for(const other of actors.slice(1)){other.weaponRunner.reset();scene.remove(other.character.root);other.character.dispose();}
+        for(const other of actors.slice(1))disposePreviewActor(other);
         G.actors=[a];
       }
-      a.weaponRunner.reset(); scene.remove(ch.root); ch.dispose();
       Object.assign(res.images, shots); res.maxGrip = +maxGrip.toFixed(4); res.nonFinite = nonFinite; res.firingFrames = fired;
       Object.assign(res,{sawOpen,sawLaunched,sawHidden,sawFolded});
       if(nonFinite||maxGrip>.008||!sawOpen||!sawLaunched||!sawHidden||!sawFolded)throw new Error(id+' Actor/canopy lifecycle failed: '+JSON.stringify({nonFinite,maxGrip,sawOpen,sawLaunched,sawHidden,sawFolded}));
       res.weaponKind = ch.weaponKind; res.weaponModel = ch.weaponModel;
       return res;
+      } catch (error) {
+        previewFailed = true; previewFailure = error;
+        throw error;
+      } finally {
+        // Retire native launched projectiles before disposing their source actors.
+        // A failed cleanup must not strand the remaining actors or mask the original error.
+        attemptCleanup(clearPreviewProjectiles);
+        for (const actor of previewActors) disposePreviewActor(actor);
+        for (const root of previewRoots) attemptCleanup(() => scene.remove(root));
+        G.actors = [];
+        if (cleanupErrors.length) throw new AggregateError(previewFailed ? [previewFailure, ...cleanupErrors] : cleanupErrors, 'Preview cleanup failed: ' + id);
+      }
     }, { id, held, crowd });
     for (const [k, b64] of Object.entries(row.images)) fs.writeFileSync(path.join(out, `${id}.${k}.png`), Buffer.from(b64, 'base64'));
     delete row.images; rows.push(row);

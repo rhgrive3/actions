@@ -43,21 +43,13 @@ if (process.argv[2] === '--roster') {
           for (const percentile of ['p50','p95']) assert.ok(Number.isFinite(row[metric][percentile]));
         assert.equal(row.frames.length,15);assert.equal(row.frames.filter(f=>f.phase==='measured').length,12);
         for(const [index,frame] of row.frames.entries()){assert.equal(frame.index,index);assert.equal(frame.phase,index<3?'warmup':'measured');for(const key of ['animationMs','submitMs','readbackWaitMs','renderThroughReadbackMs'])assert.ok(Number.isFinite(frame[key])&&frame[key]>=0,key+' valid raw timing');assert.equal(frame.glError,0);assert.equal(frame.contextLost,false);assert.equal(frame.defaultReadFramebuffer,true);assert.equal(frame.pixel.length,4);assert.equal(frame.pixel[3],255);assert.ok(frame.pixel.slice(0,3).some(x=>x!==0));assert.ok(frame.renderThroughReadbackMs>=frame.submitMs);assert.equal(frame.width,600);assert.equal(frame.height,600);}
-        // The old static ceiling (59 far, 118/119 game) predates the
-        // immutable main used by this very ABBA comparison. That baseline
-        // already submits 65/68 far draws in both independent rosters.
-        // Diagnose legacy-budget drift, but never attribute it to the PR.
-        // Hold the candidate to the measured *same-source* baseline instead;
-        // its fixed-geometry byte budgets and complete-frame comparisons
-        // remain mandatory below.
-        const historicalCap=tier==='far'?59:scenario==='A'?118:119;
-        const measuredMain=all['before-A'][tier].drawCalls;
+        // Exact immutable adbd baseline, measured in both ABBA baseline runs.
+        // Native canopy retention is also bound by expectedWeaponNear above.
+        const baselineDraws={A:{game:88,far:65},B:{game:91,far:68}};
         assert.ok(Number.isSafeInteger(row.drawCalls)&&row.drawCalls>0,'nonempty measured draw count');
-        assert.ok(Number.isSafeInteger(measuredMain)&&measuredMain>0,'nonempty immutable main draw budget');
-        if(pair==='before-A2') assert.equal(row.drawCalls,measuredMain,'immutable baseline repeat draw budget');
-        if(pair.startsWith('after')) assert.ok(row.drawCalls<=measuredMain,'candidate must not exceed exact-head baseline draws');
-        if(pair==='before-A' && measuredMain>historicalCap) console.warn('NINE_MODEL_HISTORICAL_MAIN_DRAW_DRIFT',JSON.stringify({scenario,tier,legacyCeiling:historicalCap,measuredMain}));
-
+        if(pair==='before-A') assert.equal(row.drawCalls,baselineDraws[scenario][tier],'exact immutable main draw contract');
+        if(pair==='before-A2') assert.equal(row.drawCalls,all['before-A'][tier].drawCalls,'immutable baseline repeat draw budget');
+        if(pair.startsWith('after')) assert.ok(row.drawCalls<=all['before-A'][tier].drawCalls,'candidate must not exceed exact-head baseline draws');
       }
     }
     for (const tier of ['game','far']) for (const pair of ['after-B','after-B2','before-A2']) {
