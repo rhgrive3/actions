@@ -32,7 +32,11 @@ test('native ink attributes retain source order, UVs and exact typed allocation'
   assert.equal(attr.count,6,name);
   assert.equal(attr.itemSize,size,name);
   assert.equal(attr.array.byteLength,6*size*4,name+' allocated extra capacity');
-  assert(attr.array instanceof Float32Array,name);
+  // Source modules execute in a separate vm.SourceTextModule realm. instanceof
+  // the host Float32Array rejects a genuine Float32Array created by that
+  // realm. Keep the strict element type/stride/capacity check across realms.
+  assert.equal(Object.prototype.toString.call(attr.array),'[object Float32Array]',name);
+  assert.equal(attr.array.BYTES_PER_ELEMENT,4,name+' element width');
  }
  assert.deepEqual(Array.from(g.getAttribute('faceUv').array),[4,5,6,5,4,6,0,0,2,0,0,1]);
  assert.deepEqual(Array.from(g.getAttribute('paintUv').array),[
