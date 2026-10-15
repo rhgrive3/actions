@@ -436,6 +436,9 @@ jobs:
       - name: Verify native touch gesture continuity in Chromium
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-tap-gestures-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/tap-gestures"
+      - name: Verify minimap observation symmetry and strict failure controls
+        if: matrix.suite == 'active'
+        run: node --test scripts/lib/minimap-canvas-observation.test.mjs
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
