@@ -7,7 +7,7 @@ import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
-import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint } from './shooter-impact-paint.mjs';
+import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
@@ -1599,8 +1599,9 @@ export function installWeaponsFidelity(context,profile) {
     dropHeightMin: (shooterPaint.DepthMinDropHeight ?? 10) * paintScale,
     worldUnitsPerSourceUnit: paintScale,
   });
-  // #79: Shooter PaintParam (Ver. 11.3.0). Far anchor and angle thresholds are not
-  // in the record; see shooter-impact-paint.mjs for the provisional choices.
+  // #79: Shooter PaintParam (Ver. 11.3.0). Sparse weapon JSON omits typed
+  // 1.1/20 distance and 10/35 angle schema defaults documented in the
+  // original parameter table; never substitute the weapon's firing range.
   const shooterImpact = completion.weapons?.shooter?.PaintParam;
   const impactSource = [shooterImpact?.WidthHalfNear, shooterImpact?.WidthHalfMiddle, shooterImpact?.WidthHalfFar,
     shooterImpact?.DistanceMiddle, shooterImpact?.DepthScaleMax, shooterImpact?.DepthScaleMin,
@@ -1611,7 +1612,11 @@ export function installWeaponsFidelity(context,profile) {
     widthNear: shooterImpact.WidthHalfNear * paintScale,
     widthMiddle: shooterImpact.WidthHalfMiddle * paintScale,
     widthFar: shooterImpact.WidthHalfFar * paintScale,
+    distanceNear: (shooterImpact.DistanceNear ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceNear) * paintScale,
     distanceMiddle: shooterImpact.DistanceMiddle * paintScale,
+    distanceFar: (shooterImpact.DistanceFar ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceFar) * paintScale,
+    degreeUseDepthScaleMax: shooterImpact.DegreeUseDepthScaleMax ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMax,
+    degreeUseDepthScaleMin: shooterImpact.DegreeUseDepthScaleMin ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMin,
     depthMax: shooterImpact.DepthScaleMax,
     depthMin: shooterImpact.DepthScaleMin,
     depthMaxBreakFree: shooterImpact.DepthScaleMaxBreakFree,
