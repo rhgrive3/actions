@@ -28,7 +28,10 @@ try {
  const bootStart=Date.now();await page.goto(base+'/?range&skipTitle');await page.waitForFunction(()=>window.__G?.match?.range&&window.__G.match.state==='playing',null,{timeout:240000});
  result.startup=await page.evaluate(async(useDefaults)=>{const G=window.__G,g=window.__inkwave;g.debug.freeze();g.debug.freezeBots();window.volumeSpawn=G.local.pos.clone();const ready=await G.fx.inkVolumeReady;window.volumePackURLs=useDefaults?(await import('/patches/local-quality/ink-volume/pack.mjs')).DEFAULT_INK_VOLUME_URLS:{roller:'/local-sheet/manifest.json',shooter:'/local-rod/manifest.json'};return {ready,error:G.fx.inkVolumeError||null,assets:[...G.fx.inkVolumes.assets.keys()],withoutConfiguration:globalThis.INKWAVE_INK_VOLUME_URL===undefined&&globalThis.INKWAVE_INK_VOLUME_URLS===undefined,geometry:G.renderer.info.memory.geometries,textures:G.renderer.info.memory.textures};},useDefaults);
  result.startup.elapsedMs=Date.now()-bootStart;assert.equal(result.startup.ready,true);assert.equal(result.startup.error,null);assert.deepEqual([...result.startup.assets].sort(),['roller','shooter']);if(useDefaults)assert(result.startup.withoutConfiguration);
- const cases=[['roller',false],['roller',true],['shooter',false],['slosher',false],['dualies',false],['splatling',false],['s3-roller-compact',true],['s3-shooter-first',false],['s3-slosher-diffusion',false]];
+ // Shooter rounds are drawn by the S3 rod silhouette (s3-projectile-shapes.mjs), not the rod volume.
+ const shooterRecipes=await page.evaluate(()=>{const G=window.__G,g=window.__inkwave,a=G.local;G.projectiles.clear();a.pos.copy(volumeSpawn);a.setWeapon('shooter');a.ink=100;a.weaponRunner.reset();g._skipRender=true;g.debug.fire(true);let t=0;while(t++<60&&!G.projectiles.list.length)g._frame(1/60);g.debug.fire(false);g._frame(1/60);g._skipRender=false;return G.projectiles.list.map(p=>[p._inkVolumeRecipe??null,p.s3Shape??null]);});
+ assert(shooterRecipes.length&&shooterRecipes.every(([r,s])=>r===null&&s==='shot'),'Shooter uses the S3 rod silhouette: '+JSON.stringify(shooterRecipes));result.shooterSilhouette=shooterRecipes;
+ const cases=[['roller',false],['roller',true],['slosher',false],['dualies',false],['splatling',false],['s3-roller-compact',true],['s3-slosher-diffusion',false]];
  for(const [id,vertical] of cases) {
   const label=id+(vertical?'-vertical':'');console.log('native input',label);
   const data=await page.evaluate(({id,vertical})=>{
@@ -78,7 +81,7 @@ try {
    assert.equal(check.darkTransparent,0,label+' '+name+' opaque body must remain solid');assert.equal(check.blackPixels,0,label+' '+name+' black side regression');data.grazing.push({view:name,...check});
   }
   await page.evaluate(()=>{volumeInspector.engine.clear();document.getElementById('volume-inspect').remove();});
-  if(!process.argv.includes('--no-performance')&&['roller','shooter','slosher'].includes(id)&&(id!=='roller'||vertical)) {
+  if(!process.argv.includes('--no-performance')&&['roller','dualies','slosher'].includes(id)&&(id!=='roller'||vertical)) {
    data.performance=await page.evaluate(async({quick})=>{
     const G=window.__G,g=window.__inkwave,e=G.fx.inkVolumes,gl=G.renderer.getContext(),ext=gl.getExtension('EXT_disjoint_timer_query_webgl2'),rows=[],median=a=>[...a].sort((a,b)=>a-b)[Math.floor((a.length-1)/2)];
     for(const enabled of [false,true,false,true]){

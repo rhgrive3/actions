@@ -130,7 +130,7 @@
       "wallImpactPaintRadius": 2.2
     },
     "splatling": {
-      "inkPerShot": 0.5625,
+      "inkPerShot": 0.5487804878048781,
       "moveSpeedFiring": 4.2,
       "projSpeed": 63,
       "spreadAir": 7,

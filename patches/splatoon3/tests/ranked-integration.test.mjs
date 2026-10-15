@@ -34,6 +34,43 @@ async function bootRanked(options = {}) {
   return f;
 }
 
+test('native Rainmaker dunk suppresses inputs and still accepts lethal damage before completion', async () => {
+  const f = await bootRanked(), a = f.make('shooter');
+  Object.assign(a, { nid: 230, slot: 0, invuln: 0 });
+  a.s3.spawnArmor = null;
+  const stage = { id: 'native-dunk', rainmaker: { center: [0,0,0], goals: [[0,0,10],[0,0,-10]], checkpoints: [[],[]] } };
+  const e = new f.RankedEngine('rainmaker', stage);
+  const m = f.G.match = { mode: 'rainmaker', state: 'playing', playing: () => true, canRespawn: () => false,
+    ranked: e, actors: [a], rankedBarrierHits: [], rankedWorld: { zoneCoverage: () => [], floorAt: () => 0, blocked: () => false } };
+  e.rule.state.barrier.active = false;
+  e.update(1/60, f.buildFrame(m, { G: f.G }));
+  a.pos.set(0,0,10); e.update(1/60, f.buildFrame(m, { G: f.G }));
+  assert.ok(e.rule.state.goalHold);
+  a.intent.move.set(1,0,1); a.vel.set(4,0,4);
+  a.intent.fire = a.intent.jump = a.intent.squid = a.intent.sub = a.intent.special = true;
+  f.tick(a);
+  assert.deepEqual(Array.from(a.intent.move.toArray()), [0,0,0]);
+  for (const id of ['fire','jump','squid','sub','special']) assert.equal(a.intent[id], false, id);
+  assert.equal(a._rankedInput.fire, false);
+  assert.equal(f.shots.length, 0);
+  assert.equal(a.alive, true);
+  e.update(29/60, f.buildFrame(m, { G: f.G }));
+  a.damage(120, null, 'shooter'); f.tick(a);
+  assert.equal(a.alive, false, 'the installed combat damage path stays live during the dunk');
+  e.update(1/60, f.buildFrame(m, { G: f.G }));
+  assert.equal(e.winner, null); assert.equal(e.rule.state.carrier, null); assert.equal(e.rule.state.goalHold, null);
+});
+
+test('native owner resumes ordinary input immediately after an interrupted Rainmaker dunk', async () => {
+  const f=await bootRanked(), a=f.make('shooter'); Object.assign(a,{nid:230,slot:0,invuln:0});
+  const e=new f.RankedEngine('rainmaker',{id:'native-dunk-return',rainmaker:{center:[0,0,0],goals:[[0,0,10],[0,0,-10]],checkpoints:[[],[]]}});
+  const m=f.G.match={mode:'rainmaker',state:'playing',playing:()=>true,ranked:e,actors:[a],rankedBarrierHits:[],rankedWorld:{zoneCoverage:()=>[],floorAt:()=>0,blocked:()=>false}};
+  e.rule.state.barrier.active=false;e.update(1/60,f.buildFrame(m,{G:f.G}));a.pos.set(0,0,10);e.update(1/60,f.buildFrame(m,{G:f.G}));
+  a.intent.fire=true;f.tick(a);assert.equal(a.intent.fire,false);
+  e.rule.removeActor('230');assert.equal(e.rule.state.goalHold,null);
+  a.intent.fire=true;f.tick(a,12);assert.equal(a.intent.fire,true);assert.ok(f.shots.length>0);
+});
+
 const fixtureStage = () => ({
   id: 'ranked-integration-stage',
   zones: [{ center: [0, 0, 0], size: [8, 8] }],
