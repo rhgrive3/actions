@@ -7,7 +7,9 @@ export function splatlingStages(charge,runner,w,out={}){
  // which jumps near1 even after a partial release. Read remaining duration
  // against the already-authoritative two-stage burst curve instead.
  if(runner?.streaming&&w.burstFirst>0&&w.burstMax>w.burstFirst&&Number.isFinite(runner.burstT)){
-  const left=Math.max(0,runner.burstT);
+  // The source-aware reservation includes a terminal reference frame after
+  // the last cadence slot. That frame is not second-stage charge progress.
+  const left=Math.max(0,runner.burstT-(runner.s3Spin?1/60:0));
   out.first=unit(left/w.burstFirst);out.second=unit((left-w.burstFirst)/(w.burstMax-w.burstFirst));return out;
  }
  const c=unit(charge);out.first=unit(c/boundary);out.second=unit((c-boundary)/(1-boundary));return out;

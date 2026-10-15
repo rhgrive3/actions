@@ -9,12 +9,11 @@
 // held level and forward at the right hip, and a trailing shin that stays well
 // short of horizontal. See reference/stance-carry-comparison-2026-10-12.md.
 //
-// This module only changes presentation in the source controller's ground
-// idle/move states: torso/neck lean, the moving non-firing shooter carry and the
-// swing ankle height. The standing two-hand weapon hold is left as authored.
-// It does not touch Actor movement, the native firing pose (nativeWeaponPoseRequired
-// hands every attack to the native upper body), foot contacts, jumps, landings,
-// form changes, dances or manual clip playback.
+// This module changes presentation in the source controller's ground idle/move
+// states and, only as the returning kid becomes visible, the source ToHuman
+// torso/neck forward bend. The standing two-hand weapon hold stays authored.
+// It does not touch Actor form clocks, movement, source clip sampling, native
+// firing poses, planted feet, jumps, dances or manual clip playback.
 // The values below are INKWAVE calibrations read from video, never extracted
 // Nintendo joint angles.
 import * as THREE from 'three';
@@ -56,7 +55,7 @@ function moveFactor(c) {
   return m * m * (3 - 2 * m);
 }
 function postureState(retarget) {
-  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0 });
+  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false, carryMix: 0, carryReentryAge: 0 });
 }
 /** Smoothed 0 standing … 1 moving, so a stop or start never snaps the carry or the support hand. */
 function smoothMove(retarget) { return postureState(retarget).move; }
@@ -64,24 +63,82 @@ function controllerOf(retarget) {
   const c = retarget.character?.sourceMotion;
   return c && c.retarget === retarget ? c : null;
 }
+/** The source controller's clip duration and formWeight already determine
+ * whether the humanoid is visible. Correct the actual ToHuman bone directions
+ * whenever they are displayed: no guessed 20% / 85% timing thresholds.
+ * The squid rig, airborne forms, and manual samples keep their own motion. */
+export function sourceEmergePostureWeight(c) {
+  return c && !c.manual && c.formKid === true && c.state === 'ToHuman' &&
+    c.grounded && c.formWeight > 0 ? 1 : 0;
+}
 /** 0..1 weight of the posture correction for this controller frame (smoothed, frame-rate independent). */
 export function sourcePostureWeight(retarget) {
   return postureState(retarget).weight;
 }
+/** Genuine grounded idle/move acquires the moving shooter's carry.
+ * Only that prior acquisition survives into air/land; a new visible humanoid
+ * emerging into air must not borrow the old squid's weapon pose. */
+export function sourceCarryWeight(retarget) {
+  const st = postureState(retarget);
+  return st.carryEligible ? st.carryMix : 0;
+}
+function formClipOwnsCarry(c) {
+  return !c || !!c.manual || c.formKid === false ||
+    c.state === 'ToHuman' || c.state === 'ToSquid';
+}
 function advanceWeight(retarget) {
   const st = postureState(retarget), c = controllerOf(retarget);
-  const wanted = enabled && c && !c.manual && c.formKid !== false && CORRECTED_STATES.has(c.state) ? 1 : 0;
+  const emerging = enabled ? sourceEmergePostureWeight(c) : 0;
+  const wanted = enabled && c && !c.manual && c.formKid !== false && CORRECTED_STATES.has(c.state) ? 1 : emerging;
   const now = c ? c.time : null;
   // The first frame (or a controller clock that went backwards) snaps to the wanted state; a
   // paused (dt = 0) frame holds the weight; otherwise blend at a frame-rate independent rate.
   const move = moveFactor(c);
+  // Preserve ordinary moving->air->land carry continuity. Only grounded
+  // idle/move can acquire it; ToHuman/manual/squid reset that origin state.
+  const fresh = st.time === null || now === null || now < st.time;
+  if (!enabled || !c || c.manual || c.formKid === false || fresh) {
+    st.carryEligible = false;
+    st.carryMix = 0;
+    st.carryReentryAge = 0;
+  }
+  if (enabled && c && !c.manual && c.formKid !== false) {
+    if (CORRECTED_STATES.has(c.state)) {
+      if (!st.carryEligible) {
+        st.carryEligible = true;
+        // A brand-new retarget controller starts in its ordinary authored
+        // ground stance; only re-entry from an actual form/action fades in.
+        if (fresh) {
+          st.carryMix = 1;
+          st.carryReentryAge = Infinity; // Initial normal locomotion keeps its original carry.
+        } else {
+          st.carryReentryAge = 0; // Re-entering from a source action cannot snap the real held gun.
+        }
+      }
+    } else if (c.state !== 'air' && c.state !== 'land') {
+      st.carryEligible = false;
+      st.carryMix = 0;
+      st.carryReentryAge = 0;
+    }
+  }
   if (!enabled) st.weight = 0;
   if (!enabled || st.time === null || now === null || now < st.time) { st.weight = enabled ? wanted : 0; st.move = move; }
   else {
     const dt = clamp(now - st.time, 0, 0.1);
     st.weight += (wanted - st.weight) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
     st.move += (move - st.move) * (1 - Math.exp(-SOURCE_POSTURE.standResponse * dt));
+    // Do not snap the weapon from ToHuman's authored hold to a fully yaw-
+    // corrected shooter on the first new grounded frame. Ordinary air/land
+    // preserves the previous mix and uses the existing posture fade.
+    if (st.carryEligible && CORRECTED_STATES.has(c?.state)) {
+      if (Number.isFinite(st.carryReentryAge)) st.carryReentryAge += dt;
+      st.carryMix += (1 - st.carryMix) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
+    }
   }
+  // The source transition's visible silhouette must not remain hunched merely
+  // because the preceding squid state had a zero posture correction weight.
+  // Carry the completed weight into the following idle clip without a pop.
+  if (emerging > st.weight) st.weight = emerging;
   st.time = now;
   st.neck = 0;
   return st.weight;
@@ -104,7 +161,12 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
     _d.copy(dir).applyQuaternion(q);
     const lean = Math.atan2(_d.z, _d.y);
     const P = SOURCE_POSTURE;
-    const keep = TORSO.has(target) ? P.torsoStandKeep + (P.torsoMoveKeep - P.torsoStandKeep) * smoothMove(retarget) : P.neckKeep;
+    // ToHuman's forward tilt comes directly from the sampled source bone q.
+    // Cancel that actual lean, not a video-estimated angle or frame fraction.
+    const emergence = sourceEmergePostureWeight(controllerOf(retarget));
+    const keep = emergence ? 0 : TORSO.has(target)
+      ? P.torsoStandKeep + (P.torsoMoveKeep - P.torsoStandKeep) * smoothMove(retarget)
+      : P.neckKeep;
     angle = -lean * (1 - keep) * w;
     if (target === 'neck') st.neck = angle;
   }
@@ -116,13 +178,26 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
  *  Standing (smoothed stand/move weight) leaves the source two-hand hold unchanged. */
 export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
-  if (!c || c.weaponKind !== 'shooter' || !controller.retarget) return;
-  const w = sourcePostureWeight(controller.retarget) * clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
+  if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
+      formClipOwnsCarry(controller) || !sourceCarryWeight(controller.retarget)) return;
+  let w = sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
+    clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
   if (w <= 1e-4) return;
   const k = SOURCE_POSTURE.carry;
   _t.set(Math.sin(k.yaw) * Math.cos(k.pitch), Math.sin(k.pitch), Math.cos(k.yaw) * Math.cos(k.pitch));
   _d.set(0, 0, 1).applyQuaternion(weaponQ);
   _t.lerp(_d, 1 - k.follow).normalize();
+  // Source clips can point the barrel far across the body at the instant
+  // ToHuman hands control back to grounded movement. Bound the *actual*
+  // source-to-target quaternion contribution, not a guessed retail joint angle.
+  // At 60 Hz the first post-form correction is at most 0.03 rad; accumulate
+  // the same angular budget by elapsed source time at other frame rates.
+  // A fresh idle/move start and an ordinary move→air→land carry are unchanged.
+  const reentryAge = postureState(controller.retarget).carryReentryAge;
+  if (Number.isFinite(reentryAge)) {
+    const sourceTurn = _d.angleTo(_t);
+    if (sourceTurn > 1e-9) w = Math.min(w, Math.max(0, reentryAge) * (0.03 * 60) / sourceTurn);
+  }
   _q.setFromUnitVectors(_d, _t);
   weaponQ.premultiply(_id.identity().slerp(_q, w)).normalize();
 }

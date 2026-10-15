@@ -68,11 +68,11 @@ test('catalog scopes are recognized from sparse source capability; E-liter uses 
 test('scope zoom has no charge=0.99 discontinuity and resets on squid/weapon change', async () => {
   const f = await world('s3-charger-longscope'); f.a.weaponRunner.charging = true;
   const values = [];
-  for (const charge of [.989, .99, .991]) {
+  for (const charge of [.98999, .99, .99001]) {
     const mock = { zoom: 0 }; f.a.weaponRunner.charge = charge;
     f.updateScopeZoom(mock, f.a, 1); values.push(mock.zoom);
   }
-  assert.ok(values[2] - values[0] < .02);
+  assert.ok(values[2] - values[0] < .001);
   f.rig.zoom = 20; f.a.form = 'squid'; f.rig.update(1 / 60); close(f.rig.zoom, 0);
 });
 

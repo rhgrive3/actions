@@ -28,6 +28,9 @@ export const RAINMAKER_OVERTIME_GRACE_SECONDS = 15;
 export const RAINMAKER_FULL_CHARGE_SECONDS = 1;
 export const RAINMAKER_MIN_CHARGE_SECONDS = 20 / 60;
 export const RAINMAKER_SHOT_RECOVERY_SECONDS = 20 / 60;
+// S3mix lists 30F for direct goal entry. Authored flat goals use this case;
+// retail side-climb/Surge entry classification and its 37F/60F are unverified.
+export const RAINMAKER_GOAL_HOLD_SECONDS = 30 / 60;
 const emptyCharge = () => ({ seconds: 0, value: 0, firing: false, delay: 0, recovery: 0, pending: null, wasSwimming: false });
 
 // Leanny 11.3.0 DamageRateInfo rows for `Gachihoko_Barrier`. `damage` in a
@@ -133,6 +136,7 @@ function initialState(stage) {
     carrierTeam: null,
     barrier: { active: true, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null },
     charge: emptyCharge(),
+    goalHold: null,
     checkpoint: {
       passed: [false, false],
       choice: [null, null],
@@ -411,6 +415,7 @@ export class RainmakerRule {
     this.state.retreatRate = 1;
     this.state.charge = emptyCharge();
     this.state.charge.wasSwimming = !!actor.swimming;
+    this.state.goalHold = null;
     this.state.dropped = false;
     this.state.dropTimer = 0;
     this.state.barrier = { active: false, max: RAINMAKER_BARRIER_MAX, health: 0, balance: 0, team: null };
@@ -436,17 +441,27 @@ export class RainmakerRule {
       return;
     }
 
-    this._updateShot(dt, actor, frame.inputs?.[actor.id]);
-    if (this.state.carrier === null) return;
     if (actor.grounded === true || frame.countAllowed?.(actor) === true) this._updateCount(team, pos);
     if (this.state.carrier === null) return;
     if (actor.grounded === true) this._checkCheckpoint(actor);
     if (this.state.carrier === null) return;
     if (actor.grounded === true && this.state.checkpoint.goalOpen[team] && this._touchesGoal(team, pos)) {
-      this.state.pos = this.goals[team].slice();
-      this._setCount(team, 0);
-      this._finish(team, 'rainmaker-goal');
+      if (!this.state.goalHold) {
+        this.state.goalHold = { remaining: RAINMAKER_GOAL_HOLD_SECONDS };
+        this.state.charge = emptyCharge();
+        this._event('rainmaker-goal-hold', { id: actor.id, team, pos: pos.slice() });
+      } else {
+        this.state.goalHold.remaining = Math.max(0, this.state.goalHold.remaining - dt);
+        if (this.state.goalHold.remaining <= 1e-9) {
+          this.state.pos = this.goals[team].slice();
+          this._setCount(team, 0);
+          this._finish(team, 'rainmaker-goal');
+        }
+      }
+      return;
     }
+    this.state.goalHold = null;
+    this._updateShot(dt, actor, frame.inputs?.[actor.id]);
   }
 
   _updateShot(dt, actor, input) {
@@ -559,6 +574,7 @@ export class RainmakerRule {
     this.state.holderRemaining = RAINMAKER_CARRY_SECONDS;
     this.state.retreatRate = 1;
     this.state.charge = emptyCharge();
+    this.state.goalHold = null;
     this.state.pos = pos.slice();
     this.state.barrier = { active: true, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
     this.state.dropped = true;
@@ -636,6 +652,7 @@ export class RainmakerRule {
     this.state.holderRemaining = RAINMAKER_CARRY_SECONDS;
     this.state.retreatRate = 1;
     this.state.charge = emptyCharge();
+    this.state.goalHold = null;
     this.state.pos = pos;
 
     const lostPos = actor ? positionOf(actor) : pos;
@@ -677,6 +694,7 @@ export class RainmakerRule {
     this.state.barrier = { active: false, max: RAINMAKER_BARRIER_MAX, health: RAINMAKER_BARRIER_MAX, balance: 0, team: null };
     this.state.respawnRemaining = RAINMAKER_RESPAWN_SECONDS;
     this.state.charge = emptyCharge();
+    this.state.goalHold = null;
     this.state.holderTime = 0;
     this.state.holderRemaining = RAINMAKER_CARRY_SECONDS;
     this.state.retreatRate = 1;

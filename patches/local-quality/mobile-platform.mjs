@@ -26,12 +26,13 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
   if (Object.hasOwn(P, INSTALLED)) return;
   Object.defineProperty(P, INSTALLED, { value: true });
   const lifecycle = getPlatformLifecycle(env), records = new WeakMap();
-  const press = P._press, up = P._up, install = P._install;
+  const press = P._press, move = P._move, up = P._up, install = P._install;
   const resetPointers = P.resetPointers, setVisible = P.setVisible, destroy = P.destroy;
   const runnable = m => lifecycle.active && m.visible && !m.editing && !m._destroyed &&
     (!m._platformCanRun || m._platformCanRun());
   function clearTap(m) {
     const tap = m._platformGyroTap; m._platformGyroTap = null;
+    if (tap && m._ptr?.get(tap.id)?.kind === 'gyro') m._ptr.delete(tap.id);
     m.els?.gyro?.classList.remove('is-down');
     if (tap) try { if (m.root?.hasPointerCapture?.(tap.id)) m.root.releasePointerCapture(tap.id); } catch {}
   }
@@ -129,13 +130,24 @@ export function installMobilePlatform(MobileInput, env = globalThis) {
     if (!lifecycle.active || this._destroyed || this.editing) return;
     clearTap(this);
     this._platformGyroTap = { id: event.pointerId, x: event.clientX, y: event.clientY, t: env.performance.now() };
+    // Share gesture ownership with Input and the canvas capture-fallback router.
+    // Otherwise a held pad axis can hide this control before its finger-up.
+    this._ptr.set(event.pointerId, { kind: 'gyro' });
     this.els?.gyro?.classList.add('is-down');
+  };
+  P._move = function (event) {
+    const tap = this._platformGyroTap;
+    if (!tap || tap.id !== event.pointerId) return move.call(this, event);
+    if (Math.hypot(event.clientX - tap.x, event.clientY - tap.y) > 24) {
+      tap.cancelled = true;
+      this.els?.gyro?.classList.remove('is-down');
+    }
   };
   P._up = function (event) {
     const tap = this._platformGyroTap;
     if (!tap || tap.id !== event.pointerId) return up.call(this, event);
-    this._platformGyroTap = null; this.els?.gyro?.classList.remove('is-down');
-    const valid = event.type === 'pointerup' && lifecycle.active && !this._destroyed && !this.editing && this.visible &&
+    clearTap(this);
+    const valid = !tap.cancelled && event.type === 'pointerup' && lifecycle.active && !this._destroyed && !this.editing && this.visible &&
       Math.hypot(event.clientX - tap.x, event.clientY - tap.y) <= 24 && this._hitButton(event.clientX, event.clientY) === 'gyro';
     this._platformGyroUp = env.performance.now();
     if (valid && this._platformGyroUp - tap.t >= 900) {

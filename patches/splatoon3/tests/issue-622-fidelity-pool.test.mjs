@@ -115,9 +115,10 @@ test('#622 canceled delayed birth releases its owner on ordinary completion', as
 test('#622 owner-timeline ghost completion uses the same detach boundary without damaging the target', async () => {
   const f = await world(), remote = f.make('slosher'), victim = enemy(f), ps = f.G.projectiles;
   remote.remote = true;
-  ps.ghostProjectile(remote, [0, 0, 0, 'slosh', 'slosher', 0, 1.05, .3, 0, 0, 30,
+  ps.ghostProjectile(remote, [0, 'p', 0, 'slosh', 'slosher', 0, 1.05, .3, 0, 0, 30,
     0, 2.4, 0, 1, .2, 0, 0, 0, 1, .2, .7, 1.5, .12, 15, .1, 0]);
   const p = ps.list[0];
+  assert.ok(p, 'valid projectile envelope must be admitted before timeline completion');
   Object.assign(p, { _netPeer: { tr: 1, lastTs: 1, sim: 60 }, _netBorn: 0, _netBornTick: 0,
     _netSteps: 0, _netMaxSteps: 150 });
   ps.update(1 / 60);
