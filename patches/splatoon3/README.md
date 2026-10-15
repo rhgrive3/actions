@@ -31,6 +31,8 @@
 | `runtime/roller.mjs` | ローラーの縦振り・横振り、振り下ろしと回復を射撃時刻へ同期 |
 | `runtime/roller-model.mjs` | ローラーのドラムの幅・直径とヨーク（見た目だけ。塗り・当たりは不変） |
 | `runtime/roller-detail-motion.mjs` | 横振りの巻き込み方向と、実際の攻撃終了後の姿勢 |
+| `runtime/roller-heavy-swing.mjs` | 本家 WeaponSpeedType=Slow（ダイナモ）の振り：頭上保持→3Fの振り下ろしで床に着いた瞬間に放出→床で静止→構えへ。公式映像 rpGkB4xjYXg から読んだフレーム数（縦振りは同形の推定） |
+| `runtime/source-form-transition.mjs` | ソース骨格の ToHuman/ToSquid を接地・静止中の変身だけに使い、移動中は歩行、空中はジャンプ姿勢を保つ |
 | `runtime/hit-spawn-motion.mjs` | 被弾・復活の表示と操作復帰に残る姿勢の補正 |
 | `runtime/idle-motion.mjs`, `runtime/emotes-motion.mjs` | 待機の身振り、勝敗・メニューの姿勢と中断 |
 | `runtime/special-motion.mjs`, `runtime/face-motion.mjs` | 既存スペシャルの表示復帰と、実際の照準に従う視線 |

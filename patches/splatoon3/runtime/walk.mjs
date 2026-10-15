@@ -218,7 +218,12 @@ export function installWalkMotion(context,profile){
     const half=mix(tuning.walkHalfStride,tuning.runHalfStride,rw)*(1-.18*this.wGoo);
     this.cad=clamp(Math.max(v,tuning.startSpeed)*this.duty/(2*half),tuning.minCadence,tuning.maxCadence);
     this.liftH=mix(tuning.walkLift,tuning.runLift,rw)*(1+.6*this.wGoo);
-    this.gaitW=damp(weight,v>(this.moving?tuning.stopSpeed:tuning.startSpeed)?1:0,v>tuning.startSpeed?12:8,dt);
+    // A kid emerging from squid form while already travelling (surfacing from a swim, ToHuman on the move)
+    // starts its gait at full weight. Damping it from 0 kept both feet gliding under the body for ~10
+    // frames (measured: 0.4 weight 6 frames after the change, body at 5.76 m/s), which read as sliding
+    // with the feet together. Ordinary starts, stops and landings keep the damped weight.
+    const emerging=this.form==='kid'&&this.formPrev!=='kid'&&this.formT<.5&&v>tuning.startSpeed;
+    this.gaitW=emerging?1:damp(weight,v>(this.moving?tuning.stopSpeed:tuning.startSpeed)?1:0,v>tuning.startSpeed?12:8,dt);
     const limit=tuning.twistRate*dt;this.hipTwist=twist+clamp(damp(twist,strafeTwist(this,v),7,dt)-twist,-limit,limit);
   };
   C._updateFeet=function(dt,s){const w=state(this);w.active=eligible(this);if(!w.active)return oldFeet.call(this,dt,s);return updateFeet(this,dt);};

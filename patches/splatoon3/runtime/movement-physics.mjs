@@ -68,6 +68,26 @@ export function stepGroundVelocity(vel, moveX, moveZ, targetSpeed, accel, dt) {
   vel.x += dx / dist * step; vel.z += dz / dist * step;
 }
 
+/** Squid -> kid on the ground: the swim speed above the humanoid's own top speed.
+ * The ordinary 0.01 m/F^2 rate (36 here) is community-measured for acceleration,
+ * neutral release and reversal, but nothing published covers the excess carried
+ * out of a swim. Applying it unchanged slid a surfacing kid 1.75 m (full swim,
+ * stick released) and still 0.66 m after a short swim, which playtesters compared
+ * against Splatoon 3 as far too much inertia. Only the part ABOVE the humanoid
+ * target speed is shed faster, for a short window after the form change; the
+ * remaining humanoid braking/acceleration, airborne momentum (squid jumps) and
+ * every other overspeed source keep the ordinary rate.
+ * INKWAVE calibration (rate 0.03 m/F^2, window 0.5 s); Switch measurement pending.
+ */
+export const FORM_EXIT_OVERSPEED = Object.freeze({ window: 0.5, rate: 108 });
+export function shedFormExitOverspeed(a, humanSpeed, dt) {
+  if (!(dt > 0) || !(a.kidT < FORM_EXIT_OVERSPEED.window) || !(humanSpeed >= 0)) return;
+  const vel = a.vel, sp = Math.hypot(vel.x, vel.z);
+  if (!(sp > humanSpeed)) return;
+  const k = Math.max(humanSpeed, sp - FORM_EXIT_OVERSPEED.rate * dt) / sp;
+  vel.x *= k; vel.z *= k;
+}
+
 /** Attack/ready state ratio for airborne acceleration and braking. The S3
  * reference gives 2x both rates for main fire, held sub and special (0.02 vs
  * 0.01 m/F^2) and does not exempt the air; the ratio is the already pinned

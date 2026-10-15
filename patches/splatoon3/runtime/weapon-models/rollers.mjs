@@ -7,6 +7,8 @@
 // (BodyParam.PaintParam.WidthHalfMax, scaled so the Splat Roller drum is 1.5 m, inside the
 // roller.test proportion bands); other sizes are read off each render relative to that
 // drum. Internal model names: Leanny/splat3 ActorInfo (Fmdb).
+import { heavyRollerSwingEnd } from '../roller-heavy-swing.mjs';
+import { weaponWeight } from '../weapon-weight.mjs';
 import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe, part, rebuild, gripSpec, clamp, damp, smooth, slab} from './kit.mjs';
 
 const TAU = Math.PI * 2;
@@ -355,7 +357,13 @@ function catalogRoller(ch, s) {
 function swingRecord(rec, vertical, interval) {
   const p = rec.parameters || {}, t = vertical ? p.WeaponVerticalSwingParam : p.WeaponWideSwingParam;
   const windup = (Number.isFinite(t?.SwingFrame) ? t.SwingFrame : vertical ? 31 : 21) / 60;
-  return { vertical, windup, interval: Math.max(interval, windup + 1 / 60), elapsed: 0, released: false, rolling: false,
+  const swingInterval = Math.max(interval, windup + 1 / 60);
+  // Sourced speed class (MainWeaponSetting.WeaponSpeedType via weapon-weight-data):
+  // the Dynamo ("Slow") uses the footage-read heavy swing,
+  // whose floor rest and lift back outlast the gameplay interval.
+  const heavy = weaponWeight(rec.id) === 'Slow';
+  return { vertical, windup, interval: heavy ? heavyRollerSwingEnd(windup, swingInterval) : swingInterval,
+    swingInterval, swingShape: heavy ? 'heavy' : null, elapsed: 0, released: false, rolling: false,
     depleted: false, groundedStart: !vertical, jumpConverted: false, catalog: true, remote: false };
 }
 /** Read-only view for regressions. */
@@ -368,7 +376,9 @@ export function FAMILY_TRIGGER(ch, name) {
   // A remote proxy hears the release only: start its record at the release.
   if (r.a?.remote) {
     const a = swingRecord(r.a.weapon.catalogRecord, !r.a.grounded, 0);
-    a.interval = a.windup + 0.45; a.elapsed = a.windup; a.released = true; a.remote = true;
+    a.swingInterval = a.windup + 0.45;
+    a.interval = a.swingShape ? heavyRollerSwingEnd(a.windup, a.swingInterval) : a.swingInterval;
+    a.elapsed = a.windup; a.released = true; a.remote = true;
     let m = SWING.get(ch); if (!m) SWING.set(ch, m = { count: 0, attack: null });
     m.attack = a; ch.s3RollerFlick = a;
   }
@@ -401,7 +411,11 @@ export function FAMILY_POSE(ch, dt, s, C) {
   const a = m.attack;
   if (!a) return;
   if (ch.s3RollerFlick !== a) { m.attack = null; return; }   // cancelled / swapped / reset
-  a.elapsed = a.remote ? a.elapsed + Math.min(0.1, Math.max(0, dt || 0)) : Math.max(a.elapsed, a.interval - Math.max(0, r.cooldown || 0));
+  // The runner cooldown fixes the clock through the gameplay interval (exact
+  // release frame); a heavy swing's floor rest/lift continues on frame time.
+  const step = Math.min(0.1, Math.max(0, dt || 0)), cooldown = Math.max(0, r.cooldown || 0);
+  a.elapsed = a.remote || cooldown <= 0 ? Math.max(a.elapsed + step, a.remote ? 0 : a.swingInterval)
+    : Math.max(a.elapsed, a.swingInterval - cooldown);
   a.released = a.elapsed >= a.windup;
   a.rolling = a.released && !!r.rolling;
   if (a.elapsed >= a.interval || (a.rolling && (ch.wRoll || 0) >= 0.95)) { m.attack = null; ch.s3RollerFlick = null; }

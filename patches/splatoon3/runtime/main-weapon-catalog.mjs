@@ -1,7 +1,8 @@
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
-import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount } from './catalog-splash-paint.mjs';
+import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
-import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
+import { spawnSplashDrop, paintDistanceFlight, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
+import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
@@ -14,7 +15,7 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint } from './weapons-fidelity.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
@@ -553,7 +554,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       trail:0,trailEvery:0,trailRadius:0,grav:0,drag:0,seed:Math.random(),ghost:!!options.ghost,
       delay:finite(options.delay,0),vis:.1,tail0:.8,tailK:1.3,wob:.02,wobF:26,nose:.3,sats:0,
       inkMeta:{s3Catalog:[1,descriptor.key,descriptor.unit,descriptor.charge,options.index||0]},
-      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
+      // Splatlings without FreeGravity (projected-splash path) stagger by SplitNum too:
+      // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
+      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);updateCatalogVisual(p);
@@ -567,10 +570,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Shooter budgets also apply to the existing projected-paint fallback;
     // missing physics still yields no detached splash spec or invented gravity.
     const sourceNum=desc.b.SplashSpawnParam?.SpawnNum;
-    if ((desc.splashDropSpec || r.family==='shooter') && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
+    if ((desc.splashDropSpec || r.family==='shooter' || r.family==='splatling') && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
         Number.isFinite(sourceNum) && sourceNum >= 0) {
       const ordinal=s.paintShotOrdinal||0;
       desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
+      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);desc.splashStaggered=true;
       s.paintShotOrdinal=ordinal+1;
     }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
@@ -638,11 +642,35 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const yaw=finite(u.BaseRotateYDegree,0)+fan;
         const aim=angle(direction,yaw,finite(u.SpawnRotateXDegree,finite(u.SpawnRotateXDegreeBase,0)));
         const d={...desc,index:i};
-        spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
+        const p=spawn(a,r,d,aim,at,{speed,delay:(finite(u.UnitDelayFrame,0)+i*finite(u.AfterOffsetDelayFrame,0))/HZ,
           index:i,volley,lift:speed*finite(u.AddSpawnSpeedYRateByXZ,finite(u.AddSpawnSpeedYRateBySpeed,0))});
+        // Vertical swing intermediate splashes ride the central Unit 0 glob, as on the native Splat Roller.
+        if(r.family==='roller'&&key==='vertical'&&j===0&&i===0&&p&&!p.ghost)configureCatalogRollerFlight(p,group);
       }
     });
+    if(r.family==='roller'&&(key==='vertical'||key==='horizontal'))paintCatalogRollerNearest(a,group);
     notify(a,r,at,direction,charge);
+  }
+  // Added Rollers (Dynamo, Carbon, Flingza, Big Swig) used to paint only where
+  // each glob landed: the group-level SpawnSplash*/SplashPaintParam (vertical)
+  // and SplashNearestParam (both swings) were never read, so a Dynamo vertical
+  // swing left the floor from the feet to ~11.75 m dry while the native Splat
+  // Roller covered it. Both now use the same sourced owners as the Splat Roller.
+  function configureCatalogRollerFlight(p,group) {
+    let spec=null;
+    try{spec=rollerVerticalPaintSpec(group,1,1);}catch{return;}
+    p.catalog.rollerFlight={spec,distance:0,index:0,last:p.pos.clone(),sample:p.pos.clone(),
+      direction:p.pos.clone(),wallSplash:null};
+  }
+  function paintCatalogRollerNearest(a,group) {
+    const n=group?.SplashNearestParam?.SpawnParam,o=n?.Offset;
+    if(!n||!o||a.remote||a.alive===false||![n.MaxHeight,o.X,o.Y,o.Z,n.PaintWidthHalf].every(Number.isFinite)||!(n.PaintWidthHalf>0))return;
+    const fx=Math.sin(a.yaw),fz=Math.cos(a.yaw),rx=Math.cos(a.yaw),rz=-Math.sin(a.yaw);
+    // SplashNearest's downward offset and MaxHeight bound the ground query, so a
+    // high airborne swing paints nothing under the player (native foot-paint rule).
+    base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+Math.max(0,n.MaxHeight),a.pos.z+rz*o.X+fz*o.Z);
+    const h=G.physics.raycast(base,down,Math.max(0,n.MaxHeight)+Math.abs(o.Y),floorHit,true);
+    if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face);
   }
   function emitArrow(runner,r,charge) {
     const a=runner.a,p=r.parameters.spl__WeaponStringerParam,t=p.ShotParam||{}, frames=charge*chargeFrames(r), count=finite(t.ArrowNum,3);
@@ -822,9 +850,22 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       const shapes=lobes(p),len=p.prev.distanceTo(p.pos);
       const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
       let world=s.hit;world.hit=false;
+      // Added Rollers/Sloshers share the native glob graze rule (weapons-fidelity GLOB_GRAZE):
+      // a contact below the glob centre is re-tested with the unit's sourced initial Field radius.
+      const graze=(s.r.family==='roller'||s.r.family==='slosher')&&s.r.sourceActor!=='WeaponSlosherBathtub';
       for(const q of shapes){
         const f0=collisionRadius(q.param,'Field',(p.age-DT)*HZ,s.index,bounceScale),f1=collisionRadius(q.param,'Field',p.age*HZ,s.index,bounceScale);
-        const candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
+        let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
+        if(graze&&candidate.hit&&candidate.normal.y>GLOB_GRAZE.normalY){
+          const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
+          if(core<Math.min(f0,f1)){
+            const touch=s.grazeTouch||(s.grazeTouch={point:candidate.point.clone(),normal:candidate.normal.clone()});
+            touch.point.copy(candidate.point);touch.normal.copy(candidate.normal);const face=candidate.face;
+            candidate=sweptWorldHit(G.physics,q.from,q.to,core,core,q.hit,true);
+            // The grazed part splashes where it touched; the rest of the glob flies on.
+            if(!candidate.hit)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
+          }
+        }
         if(candidate.hit&&(!world.hit||candidate.dist<world.dist))world=candidate;
       }
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
@@ -865,6 +906,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
           s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
         }
       }
+      if(!p.ghost&&s.rollerFlight&&len>EPS)
+        paintDistanceFlight(G,p,s.rollerFlight,p.prev.clone().lerp(p.pos,clamp(Math.min(1,stop))));
       if(stop<=1){
         p.pos.lerpVectors(p.prev,p.pos,stop);
         if(defense){defense.onHit(p);return true;}
