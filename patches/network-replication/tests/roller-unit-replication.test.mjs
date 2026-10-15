@@ -115,12 +115,17 @@ test('#305 normalizes depleted Roller flags across every base/inkMeta/kit birth 
 });
 test('moving vertical lower unit keeps its actual OBB first-contact envelope on the receiver',async()=>{
  const f=await pair(),q=replay(f)[3],p=f.births[3];assert.equal(p.fidelityRollerUnitIndex,2);assert.equal(q.fidelityRollerUnitIndex,2);
- const distances=[];for(const [world,particle] of [[f.local,p],[f.remote,q]]){
-  const V=world.THREE.Vector3,b={id:0,solid:true,center:new V(0,-.1,0),half:new V(10,.1,10),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
+ // A frontal wall ends the glob on the unit's expanded Field envelope (2 - 0.55); a floor below the glob's
+ // centre is a graze until its InitRadius core arrives (2 - 0.1). Both must match on sender and receiver.
+ const contact=(world,particle,center,half,from,to)=>{
+  const V=world.THREE.Vector3,b={id:0,solid:true,center:new V(...center),half:new V(...half),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)],faces:[-1,-1,-1,-1,-1,-1]};
   world.G.physics=new world.Physics({blocks:[b],faces:[],queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;out.push(0);return out;}});world.G.actors=[];
-  particle.prev.set(0,2,0);particle.pos.set(0,-1,0);particle.age=.1;particle.fidelityPrevAge=.1;world.fidelityProjectileTargets(world.projectiles,particle);const hit=world.fidelityWorldHit(world.projectiles,particle);assert.equal(hit.hit,true);distances.push(hit.dist);
- }
- assert.ok(Math.abs(distances[0]-1.45)<1e-9);assert.equal(distances[0],distances[1]);
+  particle.prev.set(...from);particle.pos.set(...to);particle.age=.1;particle.fidelityPrevAge=.1;world.fidelityProjectileTargets(world.projectiles,particle);const hit=world.fidelityWorldHit(world.projectiles,particle);assert.equal(hit.hit,true);return hit.dist;
+ };
+ const wall=[[f.local,p],[f.remote,q]].map(([w,x])=>contact(w,x,[0,1,10],[10,10,10],[0,1,-2],[0,1,1]));
+ assert.ok(Math.abs(wall[0]-1.45)<1e-9,`wall ${wall[0]}`);assert.equal(wall[0],wall[1]);
+ const floor=[[f.local,p],[f.remote,q]].map(([w,x])=>contact(w,x,[0,-.1,0],[10,.1,10],[0,2,0],[0,-1,0]));
+ assert.ok(Math.abs(floor[0]-1.9)<1e-9,`floor ${floor[0]}`);assert.equal(floor[0],floor[1]);
 });
 test('legacy27/30/32 packets retain the historical inference fallback',async()=>{
  for(const length of [27,30,32]){
