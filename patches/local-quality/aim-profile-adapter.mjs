@@ -62,7 +62,7 @@ export function adaptAimProfiles(rel, code) {
       "        if (partial.gyro) {";
 
     const setSettingsHeadTarget = "  _setSettings(partial) {\n" +
-      "    const prevProfile = this.settings?.aimProfile;\n" +
+      "    const prevProfile = this.settings?.aimProfile, prevGyro = !!this.settings?.gyro;\n" +
       "    applyAimSettingsChange(this.settings, partial);\n" +
       "    saveJSON('inkwave.settings', this.settings);\n" +
       "    const profileChanged = prevProfile !== this.settings.aimProfile;\n" +
@@ -71,9 +71,9 @@ export function adaptAimProfiles(rel, code) {
       "    const mob = this.input?.mobile;\n" +
       "    if (mob) {\n" +
       "      mob.applySettings(this.settings);\n" +
-      "      const gyroTransition = ('gyro' in partial) || profileChanged;\n" +
+      "      const gyroTransition = ('gyro' in partial) || profileChanged || prevGyro !== !!this.settings.gyro;\n" +
       "      if (gyroTransition) {\n" +
-      "        const turnOn = 'gyro' in partial ? !!partial.gyro : !!this.settings.gyro;\n" +
+      "        const turnOn = !!this.settings.gyro;\n" +
       "        if (turnOn) {";
 
     code = replaceOnce(code, setSettingsHeadAnchor, setSettingsHeadTarget, 'main _setSettings aim transition');
