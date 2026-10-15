@@ -37,7 +37,10 @@ test('Shooter main body selects source width and straight/break-free depth from 
   const shot = { start, vel: V(0,-1,0), inkProfile: {}, inkPhase: 0,
     fidelityPhase: 0 };
   near(shooterImpactRadius(w, shot, floor), 1.93);
-  near(shooterImpactRadius(w, shot, V(0,0,w.range)), 1.71);
+  near(w.impactPaint.distanceFar, 20);
+  near(w.impactPaint.degreeUseDepthScaleMax, 10);
+  near(w.impactPaint.degreeUseDepthScaleMin, 35);
+  near(shooterImpactRadius(w, shot, V(0,0,w.impactPaint.distanceFar)), 1.71);
   near(shooterImpactDepthScale(w, shot, V(0,1,0)), 1.31);
   shot.inkPhase = 2; // measured source flight free phase, not the generic fidelityPhase
   near(shooterImpactDepthScale(w, shot, V(0,1,0)), 1.12);
