@@ -126,3 +126,12 @@ The old far clustering algorithm counted these unused vertices in its centroids.
 ## 2026-10-13 latest-main comparison alignment
 
 The integrated five-shooter candidate preserves the already-adopted Pro/Jet builders from official main `f63c0af9c2ee991810ea792fe6976a44ed17610e`. Therefore the source substitution baseline `reference/weapon-models/shooters-b-baseline.mjs.txt` is exactly that immutable main source, not the earlier ed3 snapshot. The three dedicated workflow before-build checkouts are pinned to the same f63 commit; Nova's native origin comparison is labelled `main-f63` and uses the identical lower-socket control logic. This corrects a potentially misleading A/B where *unselected* Pro/Jet would otherwise differ and could trip the strict untouched-family shape guard. It does not resolve Nova's observed 92.97mm visual upper/lower mouth discrepancy or assert a Nintendo source coordinate. Newly rendered cases and exact-head CI remain mandatory before adoption.
+
+
+## 2026-10-15 current-main integration readback
+
+Merged immutable main `01aa5cc61c842a8616ab38ff5fb541b6becf1395`, retaining its adopted projectile silhouettes and alternate kits. All three dedicated before-build checkouts now use that same current-main snapshot; its `shooters-b.mjs` is byte-identical to the previous f63 substitution baseline, so untouched Pro/Jet geometry remains controlled. The separate f7 refinement control remains pinned to its original purpose.
+
+Source focused geometry/real Actor/compact-stripe contracts pass 11/11; emitted five-model and complete real Actor model contracts pass 8/8 without skips, at build content hash `f72df645fb901a1b933254b29ac92e56c78bb25b61f54985e963ca69f89300a6`. Source actor emission includes 30/60/120 Hz. Responsive workflow contracts pass 15/15; all fourteen Chromium/WebKit viewport cases remain mandatory in separate browser processes. These are local composition and model attachment checks, not a Nintendo footage acceptance or hardware performance result.
+
+Nova's observed 92.97 mm visual aperture/socket discrepancy, lack of a verified retail muzzle coordinate and final visual/current-main browser crowd review remain open. No arbitrary gameplay muzzle relocation is made here. Keep Draft until that acceptance is resolved.
