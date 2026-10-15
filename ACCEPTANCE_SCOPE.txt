@@ -1,0 +1,8 @@
+Fifth B9 diagnostic: immutable PR1476 head97e73d721e262c4d13f7f9a7eacfedddefacbcd3, parentthird21f54. Fourth A10 excluded.
+One candidate build shared by 145 source model tests and 145 emitted model tests; zero skips. Existing Settings reset two source cases run separately. Base-model three and view-settings four remain separate prior source evidence, not counted as model cases.
+Actual native Actor/Runner/Character charge/release with seven distinct native base cache warmups; 72 matched images across nine kits, two roles, two teams, two phases. Native successful fire events for the two hitscan base families and actual projectile admission for the other seven variants are mandatory.
+Native day Environment256, PMREM radiance, Neutral exposure .94, sRGB. Component-only visibility; compositor and stage shadows are not represented. No complete retail fidelity claim.
+36 processing rows use the same real render submission plus full RGBA readback, construction/first render separated from four warmups and twelve alternating steady samples. No GPU timer or FPS claim.
+Exact source HEAD/tree, reviewed source payloads, all build input hashes, production-emitted registry digest and actual delivered runtime bytes are required. HTTP failures, external origins, WebSockets, shader/console errors, empty/nonfinite/blank images fail closed. Native ctx event bus must be the install API's actual G context.
+Completed partial images and failed B state are saved before rethrow; partial evidence never grants acceptance. Original failed batches remain preserved.
+Browser execution remains pending until this package's own immutable diagnostic head finishes successfully.

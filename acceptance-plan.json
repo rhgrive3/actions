@@ -1,0 +1,143 @@
+{
+  "candidateHead": "97e73d721e262c4d13f7f9a7eacfedddefacbcd3",
+  "candidateTree": "d3ec5f0141ac8dd6e46cc835b48aa6c597e83a2f",
+  "baseHead": "21f54ffc024383d0d65b77ffece0e710c93b4bd3",
+  "baseTree": "2c0f0d7d0bd7e19ce0bc6ce5b8bca8e45db79748",
+  "variantIds": [
+    "Charger_Keeper_01",
+    "Charger_Light_01",
+    "Charger_LongScope_01",
+    "Charger_Long_01",
+    "Charger_NormalScope_01",
+    "Charger_NormalScope_02",
+    "Charger_Normal_01",
+    "Charger_Normal_02",
+    "Charger_Pencil_01",
+    "Charger_Quick_01",
+    "Maneuver_Short_02",
+    "Roller_Heavy_01",
+    "Saber_Heavy_01",
+    "Saber_Lite_02",
+    "Saber_Normal_01",
+    "Saber_Normal_02",
+    "Shelter_Focus_01",
+    "Shelter_Normal_01",
+    "Shelter_Wide_01",
+    "Shelter_Wide_02",
+    "Shooter_Blaze_01",
+    "Shooter_Precision_01",
+    "Shooter_QuickMiddle_01",
+    "Shooter_Short_01",
+    "Slosher_Bathtub_01",
+    "Slosher_Diffusion_01",
+    "Slosher_Launcher_01",
+    "Slosher_Washtub_01",
+    "Stringer_Explosion_01",
+    "Stringer_Normal_01",
+    "Stringer_Normal_02",
+    "Stringer_Short_01",
+    "Stringer_Short_02"
+  ],
+  "baseModelCount": 65,
+  "payload": [
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-charger-followups.mjs",
+      "sha256": "0f013e23d884a84d647436182e1d52c3123cb52d300680dff4036543ae57d941",
+      "blob": "ffd3dfb9d3474a94b99404ae86137d41733e6709"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/chargers.mjs",
+      "sha256": "63d0e0af4a723a6b30432d1f338bfeed0b0626d3e27e30eead05b948b279bf66",
+      "blob": "9e81b19408aa63ed6552af4e46c74da96ed44304"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-variant-b-charger-followups.test.mjs",
+      "sha256": "97ce0e4f808a449c22fef924e873623710712884abcefa99611a16d1db210722",
+      "blob": "cda547639b88a239a172e3ead9be8f8da01af252"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "sha256": "c3598eaad1e99a0aedade376153be69c4f19cb69f3a4fbab90446f807686baba",
+      "blob": "3f826b11afe4642413122629fd04875b0dcc2df5"
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "sha256": "f627051629cc250a5e18790454ec2750762047bbe183dc7db09234c527115cf2",
+      "blob": "812037fdddcc320fbc3b6382cc83b2184e93af0d"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+      "sha256": "7ab888b4ff9be3edbdd746768eb2ba4ec69ebd632010f57f36a003e532426265",
+      "blob": "e3e85dd47e79ef14478124f54f6de39dc8570ff3"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-variant-b-charger-native-actor.test.mjs",
+      "sha256": "9015582899bcbf4303d3d6573064599ef95fb5710a75a3c0eabb037f061ebb4a",
+      "blob": "b89ed2580c4006bdee8188dc7398b381ee4da553"
+    }
+  ],
+  "registrySHA256": "d5527023938bf4d6f299983561d679433d9785950abcf186582807fc29523776",
+  "testGates": {
+    "source": {
+      "files": [
+        "patches/splatoon3/tests/custom-explosher-finish.test.mjs",
+        "patches/splatoon3/tests/milk-nock-attachment.test.mjs",
+        "patches/splatoon3/tests/reviewed-second-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-third-ac-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs",
+        "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+        "patches/splatoon3/tests/weapon-splatana-canonical-actor.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-splatana-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-stringer-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-third.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-fixed-shooter-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-neo-marker-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-sorella.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-charger-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-charger-native-actor.test.mjs"
+      ],
+      "pass": 145,
+      "skipped": 0
+    },
+    "emitted": {
+      "files": [
+        "patches/splatoon3/tests/custom-explosher-finish.test.mjs",
+        "patches/splatoon3/tests/milk-nock-attachment.test.mjs",
+        "patches/splatoon3/tests/reviewed-second-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-third-ac-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs",
+        "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+        "patches/splatoon3/tests/weapon-splatana-canonical-actor.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-splatana-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-stringer-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-third.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-fixed-shooter-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-neo-marker-finish.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-sorella.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-charger-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-charger-native-actor.test.mjs"
+      ],
+      "pass": 145,
+      "skipped": 0
+    },
+    "settings": {
+      "files": [
+        "patches/splatoon3/tests/issue-287-settings-reset.test.mjs"
+      ],
+      "pass": 2,
+      "skipped": 0
+    }
+  }
+}
