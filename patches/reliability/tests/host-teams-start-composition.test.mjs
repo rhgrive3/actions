@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptSixFollowup } from '../inkwave-six-followup-adapter.mjs';
+import { validMeUpdate } from '../session-admission.mjs';
 import { isRankedMode } from '../../splatoon3/runtime/ranked/engine.mjs';
 
 const source = fs.readFileSync(new URL('../../../inkwave-public/src/net/session.js', import.meta.url), 'utf8');
@@ -43,7 +44,7 @@ test('current host-team composition retains weapon and room-setting ready invali
   const applyBody = built.match(/  _applyMe\(id, o\) \{([\s\S]*?)\n  \}/)?.[1];
   const settingsBody = built.match(/  setSettings\(s = \{\}\) \{([\s\S]*?)\n  \}/)?.[1];
   assert.ok(applyBody); assert.ok(settingsBody);
-  const apply = new Function('WEAPONS', 'id', 'o', applyBody);
+  const apply = new Function('validMeUpdate', `return function(WEAPONS,id,o){${applyBody}}`)(validMeUpdate);
   const compiledSettings = new Function('isRankedMode', 's', 'MAPS', 'TEAM_PALETTES', 'mapNoBots', 'mapBossOk', 'bossFallbackMap', settingsBody);
   function settings(...args) { return compiledSettings.call(this, isRankedMode, ...args); }
   let broadcasts = 0;

@@ -1,4 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
+import {normalizeViewSettings} from '../view-settings.mjs';
 import {migrateAimProfiles,applyAimSettingsChange} from '../aim-profile.mjs';
 import {viabilityFixture} from './gyro-viability-fixture.mjs';import {initialGyroDefaults} from '../gyro-permission.mjs';
 import {adaptSource} from '../../splatoon3/adapter.mjs';import {adaptTouchLayout} from '../../touch-layout/adapter.mjs';import {adaptReliability} from '../../reliability/adapter.mjs';import {adaptQualitySource} from '../adapter.mjs';
@@ -8,7 +9,7 @@ function settings(saved,profile,env) {
  const persistence=raw.slice(raw.indexOf('function loadJSON'),raw.indexOf('const DEFAULT_PROFILE'));
  const begin=main.indexOf('    this.mobile = G.mobile = deviceProfile();'),end=main.indexOf('\n    //',begin);
  assert.ok(begin>=0&&end>begin);const G={},storage={value:saved===undefined?null:JSON.stringify(saved),getItem(){return this.value;},setItem(_k,v){this.value=v;}};
- const Game=vm.runInNewContext(`${persistence}\nclass Game{bootSettings(){${main.slice(begin,end)}}};Game`,{G,migrateAimProfiles,localStorage:storage,DEFAULT_SETTINGS:{gyro:false,fovMode:'h'},deviceProfile:()=>profile,initialGyroDefaults:(d,p)=>initialGyroDefaults(d,p,env)});
+ const Game=vm.runInNewContext(`${persistence}\nclass Game{bootSettings(){${main.slice(begin,end)}}};Game`,{G,migrateAimProfiles,normalizeViewSettings,localStorage:storage,DEFAULT_SETTINGS:{gyro:false,fovMode:'h'},deviceProfile:()=>profile,initialGyroDefaults:(d,p)=>initialGyroDefaults(d,p,env)});
  const game=new Game();game.bootSettings();return {value:game.settings,G,game,storage};
 }
 for(const saved of [undefined,{}, {gyro:false},{gyro:true}])test(`#404 existing settings merge preserves ${JSON.stringify(saved)}`,()=>{
