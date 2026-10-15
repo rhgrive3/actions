@@ -81,7 +81,7 @@ for (const c of CASES) {
 }
 assert.equal(data.runner.blaster.shots,4);
 for (const interval of data.runner.blaster.intervals) near(interval,50/60,1e-7);
-assert.equal(data.runner['splatling-full'].shots,40);
+assert.equal(data.runner['splatling-full'].shots,41);
 near(data.runner['splatling-full'].inkSpent,22.5);
 near(data.runner['charger-1'].inkSpent,18);
 

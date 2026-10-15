@@ -17,11 +17,19 @@ function world(degrees=0,{floorY=0,extra=[]}={}){
  const calls=[],splat=paint.splat;paint.splat=function(at,r,team,opts){const area=splat.call(this,at,r,team,opts);calls.push({at:at.clone(),r,area,face:opts.face});return area;};
  return {paint,level,calls};
 }
-function actor(id,z=4){const a=f.make(id);a.pos.set(0,20,z);const h={hit:false,point:V(),normal:V()};f.G.physics.raycast(a.pos,V(0,-1,0),40,h,true);assert.ok(h.hit);a.pos.copy(h.point);a.ground.hit=true;a.ground.face=h.face;a.ground.normal.copy(h.normal);a.groundN.copy(h.normal);a.yaw=0;a.aimDir.set(0,-1,.001).normalize();a.grounded=true;a.form='kid';a.ink=100;a.weaponRunner.cooldown=0;return a;}
+function actor(id,z=4){const a=f.make(id);a.pos.set(0,20,z);const h={hit:false,point:V(),normal:V()};f.G.physics.raycast(a.pos,V(0,-1,0),40,h,true);assert.ok(h.hit);a.pos.copy(h.point);a.ground.hit=true;a.ground.face=h.face;a.ground.normal.copy(h.normal);a.groundN.copy(h.normal);a.yaw=0;a.aimDir.set(0,-1,.001).normalize();a.grounded=true;a.form='kid';a.ink=100;a.intent.move.set(0,0,1);a.vel.set(0,0,.12);a.weaponRunner.cooldown=0;return a;}
 const tick=(a,dt,fire=true)=>{f.G.time+=dt;a.weaponRunner.update(dt,{fire,firePressed:false,sub:false});f.G.paint.advanceSimulation(dt);};
 
-function enableActor(a){delete a._integrate;a.intent.fire=true;a._prevIntent.fire=true;a.kidT=10;a.aimPitch=-Math.PI/2;a.aimYaw=0;a.weaponRunner.cooldown=0;}
+function enableActor(a){delete a._integrate;a.intent.fire=true;a._prevIntent.fire=true;a.intent.move.set(Math.sin(a.yaw),0,Math.cos(a.yaw));a.vel.set(Math.sin(a.yaw)*.12,0,Math.cos(a.yaw)*.12);a.kidT=10;a.aimPitch=-Math.PI/2;a.aimYaw=0;a.weaponRunner.cooldown=0;}
 function actorTick(a){f.G.time+=1/60;a.update(1/60);f.G.paint.advanceSimulation(1/60);}
+// Production rolling requires both intended movement and nonzero actual speed.
+test('stationary, no-stick and blocked rollers never paint, damage or drain ink',()=>{
+ for(const r of records)for(const [stick,speed] of [[0,0],[0,.12],[1,0]]){
+  const w=world(),a=actor(r.id);a.intent.move.set(0,0,stick);a.vel.set(0,0,speed);
+  tick(a,1/60);assert.equal(w.calls.length,0,r.id+' input '+stick+' speed '+speed);
+  assert.equal(a.ink,100);assert.equal(a.stats.turf,0);
+ }
+});
 test('all seven families acquire real floor cells at 30/60/120Hz',()=>{
  for(const r of records)for(const hz of [30,60,120]){const w=world(),a=actor(r.id);tick(a,1/hz);assert.ok(w.calls.length>0,r.id+' at '+hz);assert.ok(w.paint.counts[0]>0);assert.ok(a.stats.turf>0);assert.ok(a.ink<100&&a.ink>=0);}
 });
@@ -91,7 +99,7 @@ test('native chart bounds must not prove connectivity across an actual mesh hole
 test('downhill ramp must not paint its buried extension below covering floor',()=>{
  const w=world(45),a=actor('s3-roller-compact',.2);a.yaw=Math.PI;enableActor(a);a.aimYaw=Math.PI;actorTick(a);console.log('BURIED_RAMP',JSON.stringify({pos:a.pos.toArray(),support:a.ground.face,calls:w.calls.map(c=>({at:c.at.toArray(),face:c.face}))}));assert.ok(w.calls.length>0);assert.ok(w.calls.every(c=>c.at.y>=-1e-8),'actual visible floor is y0, never buried ramp y<0');
 });
-function placed(id,z,back=false){const a=f.make(id);const p=rotate([0,20,z]);a.pos.set(...p);const h={hit:false,point:V(),normal:V()};f.G.physics.raycast(a.pos,V(0,-1,0),40,h,true);assert.ok(h.hit);a.pos.copy(h.point);a.ground.hit=true;a.ground.face=h.face;a.ground.normal.copy(h.normal);a.groundN.copy(h.normal);a.yaw=orientation+(back?Math.PI:0);a.aimDir.set(0,-1,.001).normalize();a.grounded=true;a.form='kid';a.ink=100;a.weaponRunner.cooldown=0;return a;}
+function placed(id,z,back=false){const a=f.make(id);const p=rotate([0,20,z]);a.pos.set(...p);const h={hit:false,point:V(),normal:V()};f.G.physics.raycast(a.pos,V(0,-1,0),40,h,true);assert.ok(h.hit);a.pos.copy(h.point);a.ground.hit=true;a.ground.face=h.face;a.ground.normal.copy(h.normal);a.groundN.copy(h.normal);a.yaw=orientation+(back?Math.PI:0);a.aimDir.set(0,-1,.001).normalize();a.grounded=true;a.form='kid';a.ink=100;a.intent.move.set(Math.sin(a.yaw),0,Math.cos(a.yaw));a.vel.set(Math.sin(a.yaw)*.12,0,Math.cos(a.yaw)*.12);a.weaponRunner.cooldown=0;return a;}
 function junction(gap=0,rise=2){return world(0,{floorY:-3,extra:[{kind:'box',min:[-4,-.5,0],max:[4,0,4.3]},{kind:'ramp',low:[0,0,4.3+gap],high:[0,rise,16.3+gap],width:8,thickness:.5}]});}
 for(const angle of [0,Math.PI/2,Math.PI,3*Math.PI/2])for(const r of records)for(const back of [false,true])for(const rise of [2,12])test(`seam ${r.id} angle ${angle} reverse ${back} rise ${rise}`,()=>{
   orientation=angle;const w=junction(0,rise),a=placed(r.id,back?4.7:3.9,back);tick(a,1/60);

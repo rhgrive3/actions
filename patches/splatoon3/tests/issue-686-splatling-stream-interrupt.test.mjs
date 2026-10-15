@@ -81,7 +81,7 @@ test('#686: the charge cancel is governed by its own window, not by this timer',
   assert.equal(a.weaponRunner.s3StreamInterrupt, 0, 'the stream timer was never touched');
 });
 
-test('#686: an uninterrupted stream keeps its 80F/160F duration and 4F cadence', async () => {
+test('#686: an uninterrupted stream keeps its 81F/161F endpoint-inclusive duration and 4F cadence', async () => {
   const run = async (chargeTicks, expectTicks, expectShots) => {
     const f = await fixture(), a = f.make('splatling');
     a.ink = 100;
@@ -98,13 +98,13 @@ test('#686: an uninterrupted stream keeps its 80F/160F duration and 4F cadence',
     }
     assert.ok(ticks >= expectTicks - 1 && ticks <= expectTicks + 1,
       `natural stream duration stays ${expectTicks}F (got ${ticks}F)`);
-    assert.equal(f.shots.length, expectShots, 'stream shot count is unchanged without a cancel');
+    assert.equal(f.shots.length, expectShots, 'stream includes its initial and final eligible cadence slots');
     assert.ok(gaps.length > 0 && gaps.every(g => g === 4), 'the 4F stream cadence is unchanged');
     assert.equal(a.weaponRunner.s3StreamInterrupt, 0, 'a natural end opens no interruption window');
     assert.equal(a.weaponRunner.s3ChargeInterruptT, 0);
   };
-  await run(48, 81, 20);   // first-circle release stream (80F)
-  await run(73, 161, 40);  // full-charge release stream (160F)
+  await run(49, 81, 21);   // 1F startup + 48F charge; inclusive 80F endpoint
+  await run(73, 161, 41);  // 1F startup + 72F charge; inclusive 160F endpoint
 });
 
 test('natural stream exhaustion is not turned into a 6F interruption', async () => {
