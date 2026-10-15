@@ -2107,9 +2107,15 @@ function firstSplatStateFor(session,cfg) {
     patch('    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
       '    if (!validNetworkProjectileCosmetics(e)) return null;\n    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
       'validate cosmetic ghost at source allocation boundary');
-    patch('  _draw() {\n    let n = 0;',
-      '  _draw() {\n    let n = 0, remoteDrawn = 0;',
-      'reserve shared ink instance slots for local render');
+    // Earlier fidelity and quality adapters may prepend setup work at the
+    // beginning of _draw(). Change only the counter within that method.
+    {
+      const start = code.indexOf('  _draw() {');
+      const at = code.indexOf('    let n = 0;', start);
+      if (start < 0 || at < start || at > start + 2000)
+        throw Error('Network draw counter anchor mismatch');
+      code = code.slice(0, at) + '    let n = 0, remoteDrawn = 0;' + code.slice(at + '    let n = 0;'.length);
+    }
     patch('      if (n >= MAX_BLOBS - 5) break;\n      if (p.delay > 0) continue;',
       `      if (n >= MAX_BLOBS - 5) break;
       if (p.ghost && remoteDrawn >= MAX_BLOBS - 64) continue;
