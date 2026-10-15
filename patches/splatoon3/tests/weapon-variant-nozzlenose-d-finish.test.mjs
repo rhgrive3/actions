@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 let THREE,modelSpec,buildWeaponModel,Pieces,pistolGrip;test.before(async()=>{const f=await fixture({extraExports:`export {Pieces,pistolGrip} from './patches/splatoon3/runtime/weapon-models/kit.mjs';export {weaponModelSpec,buildWeaponModel} from './patches/splatoon3/runtime/weapon-models/registry.mjs';`});THREE=f.THREE;Pieces=f.Pieces;pistolGrip=f.pistolGrip;modelSpec=f.weaponModelSpec;buildWeaponModel=f.buildWeaponModel;});
 const fresh=()=>({kind:'shooter',parts:{}}),geos=d=>[d.body,d.ink,...Object.values(d.parts).map(p=>p.src)];
-const palette={"Shooter_TripleQuick_01": {"#1e1f23": "#e6e9e9"}, "Shooter_TripleMiddle_01": {"#1e1f23": "#e6e9e9", "#26282d": "#e6e9e9", "#3b3d44": "#bbc4ce"}};
+const palette={"Shooter_TripleQuick_01": {"#202329": "#e6e9e9"}, "Shooter_TripleMiddle_01": {"#202329": "#e6e9e9", "#292d2e": "#e6e9e9"}};
 const bytes=a=>Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength);
 function verifyGeometryAndPalette(row,b,d){
  const bg=geos(b),dg=geos(d);assert.equal(dg.length,bg.length);
@@ -20,7 +20,7 @@ function verifyGeometryAndPalette(row,b,d){
   const fixed=j===0||(j>1&&b.parts[names[j]].mat==='body'&&!b.parts[names[j]].hidden),a=x.attributes.color,c=y.attributes.color;
   for(let i=0;i<a.count;i++){
    let expected=[a.getX(i),a.getY(i),a.getZ(i)];
-   if(j===0&&i<a.count-358)for(const [from,to]of colors)if(expected.every((v,k)=>Math.abs(v-[from.r,from.g,from.b][k])<1e-6)){
+   if(j===0&&b.nozzleFinishRanges.some(([start,end])=>i>=start&&i<end))for(const [from,to]of colors)if(expected.every((v,k)=>Math.abs(v-[from.r,from.g,from.b][k])<1e-6)){
     const target=to;
     expected=Array.from(new Float32Array([target.r,target.g,target.b]));changed++;break;
    }
@@ -40,8 +40,8 @@ for(const row of rows){
  test(row+' rejects wrong color, geometry corruption, missing attributes and a base-only fallback',()=>{const spec=modelSpec(row),base=modelSpec(spec.baseId);for(const corrupt of [d=>d.body.attributes.color.setX(0,.123456),d=>d.body.attributes.position.setX(0,123),d=>d.body.deleteAttribute('normal')]){const b=base.build(fresh()),d=spec.build(fresh());corrupt(d);assert.throws(()=>verifyGeometryAndPalette(row,b,d));}assert.throws(()=>verifyGeometryAndPalette(row,base.build(fresh()),base.build(fresh())));});
 }
 for(const [row,rake,w,color] of [['Shooter_TripleQuick_01',.21,.014,'#1e1f23'],['Shooter_TripleMiddle_01',.39,.0125,'#2b43b8']])test(row+' protects exact native grip, guard, trigger and all original blue vertices',()=>{
- const p=new Pieces(),tr=pistolGrip(p,{rake:rake-Math.atan2(.25,1),w,color,triggerColor:'#1e1f23',guardColor:'#1e1f23'}),g=p.build(),spec=modelSpec(row),b=modelSpec(spec.baseId).build(fresh()),d=spec.build(fresh());
- assert.equal(g.attributes.position.count,358);for(const name of Object.keys(g.attributes)){const a=g.attributes[name],x=b.body.attributes[name],y=d.body.attributes[name];assert.deepEqual(bytes(x).subarray(bytes(x).length-bytes(a).length),bytes(a));assert.deepEqual(bytes(y).subarray(bytes(y).length-bytes(a).length),bytes(a));}
+ const p=new Pieces(),tr=pistolGrip(p,{rake:rake-Math.atan2(.25,1),w,color,triggerColor:'#202329',guardColor:'#202329'}),g=p.build(),spec=modelSpec(row),b=modelSpec(spec.baseId).build(fresh()),d=spec.build(fresh());
+ assert.equal(g.attributes.position.count,358);for(const name of Object.keys(g.attributes)){const a=g.attributes[name],x=b.body.attributes[name],y=d.body.attributes[name];const [start,end]=b.nozzleGripRange;assert.equal(end-start,358);assert.deepEqual(bytes(x).subarray(start*x.itemSize*x.array.BYTES_PER_ELEMENT,end*x.itemSize*x.array.BYTES_PER_ELEMENT),bytes(a));assert.deepEqual(bytes(y).subarray(start*y.itemSize*y.array.BYTES_PER_ELEMENT,end*y.itemSize*y.array.BYTES_PER_ELEMENT),bytes(a));}
  for(const name of Object.keys(b.parts.trigger.src.attributes))assert.deepEqual(bytes(d.parts.trigger.src.attributes[name]),bytes(b.parts.trigger.src.attributes[name]));
- let blue=0;for(const hex of ['#2a3ec2','#2b43b8']){const col=new THREE.Color(hex),x=b.body.attributes.color,y=d.body.attributes.color;for(let i=0;i<x.count;i++)if(Math.abs(x.getX(i)-col.r)<1e-6&&Math.abs(x.getY(i)-col.g)<1e-6&&Math.abs(x.getZ(i)-col.b)<1e-6){assert.deepEqual([y.getX(i),y.getY(i),y.getZ(i)],[x.getX(i),x.getY(i),x.getZ(i)]);blue++;}}assert.ok(blue>0);
+ let blue=0;for(const hex of ['#293b99','#364cb2','#2b43b8']){const col=new THREE.Color(hex),x=b.body.attributes.color,y=d.body.attributes.color;for(let i=0;i<x.count;i++)if(Math.abs(x.getX(i)-col.r)<1e-6&&Math.abs(x.getY(i)-col.g)<1e-6&&Math.abs(x.getZ(i)-col.b)<1e-6){assert.deepEqual([y.getX(i),y.getY(i),y.getZ(i)],[x.getX(i),x.getY(i),x.getZ(i)]);blue++;}}assert.ok(blue>0);
 });

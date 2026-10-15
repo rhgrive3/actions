@@ -39,7 +39,7 @@ export function registerAlternateWeaponKits({ WEAPONS, WEAPON_ORDER, SUB, SPECIA
       kitStatus: 'verified-variant-kit',
       kitVerifiedSlots: ['sub', 'special'],
       kitMissingSlots: {},
-      blurb: 'Splatoon 3 Ver.11.3.0 alternate kit. Shares the base weapon\'s main behavior and temporary model.',
+      blurb: base.blurb,
     };
   }
   // Keep every established base ID in relative order, with its variants

@@ -1,3 +1,4 @@
+import { adaptUiLocalization } from '../patches/splatoon3/ui-localization-adapter.mjs';
 import { adaptNativeStages } from '../patches/native-stages/adapter.mjs';
 import { adaptWeaponAudio } from '../patches/splatoon3/audio-adapter.mjs';
 import { adaptSource } from '../patches/splatoon3/adapter.mjs';
@@ -24,5 +25,6 @@ export function adaptBuildSource(rel, code) {
   // The camera adapter must retain the terminal fail-closed position.
   code = adaptWeaponAudio(rel, code);
   code = adaptProjectileVisuals(rel, code);
+  code = adaptUiLocalization(rel, code);
   return adaptCameraAimControls(rel, code);
 }

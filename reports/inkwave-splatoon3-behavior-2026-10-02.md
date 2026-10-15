@@ -4666,3 +4666,11 @@ This private technical composition joins aggregate 60b88072641b632ec387e05f3ab70
 PR1278's Ballpoint-only shell/material correction is privately composed onto ee9 with current Mini/Nautilus and all newer special/ranked paths preserved. Source and emitted-mode model contracts10/10 each, the real source-loaded dualies2100-frame probe, and the optimized build pass; current-main rendered/GTAO/completed-output ABBA and final exact-head CI remain pending. Historical c4ef software-renderer medians and all adverse timing limits are preserved in reports/inkwave-weapon-shared-rendering-2026-10-12.md. The gallery's dualies-excluded grip metric is not treated as dual-hand closure; separate real source-loaded module evidence is explicitly distinguished from rendered hands, hardware performance and retail S3 parity.
 
 Current-base follow-up (2026-10-13): the final reconciliation preserves external model head5902e346 and its two f6399281 baseline pins, then includes shared verification head68681bf. The old ee9 probes and software-rendered ABBA figures remain historical. Fresh emitted/visual/ABBA and all final-head gates are required; native-stage rendering changes prohibit carrying the old timing result forward.
+
+### 2026-10-15: PR 統合時の表示・外観接続
+
+- 比較対象は Splatoon 3 11.3.0。既存 PR の原典ステージ・射撃・変身・外観・通信変更を統合し、ガチルールの既存改善を維持。原典の表示モデルから推定したステージ配置は、引き続き実機のガチルール配置として扱わない。
+- オンラインの接続エラー、待機人数・準備状況、ボス案内、表彰、照準設定、追加ブキ・サブ・スペシャルの説明と外観選択を日本語化。直接更新する UI 所有ラベルにも翻訳を接続。プレイヤー名・チャット・ネットワーク ID は翻訳対象外。英語設定も維持。
+- 外観は 43 件の後続レビュー済み実装をキット標準に採用。94 件の実装済み候補は端末内の手動選択に提供し、未レビューのキット標準 52 件は基本モデルを使う。ブキ性能・サブ・スペシャルは外観設定で変更しない。
+- リールガンの基本形状改修により、後続の D 仕上げが古い頂点数・末尾グリップ位置を前提にすると失敗した。基本モデルが指定するフレームとキャップの範囲に仕上げを限定し、グリップ、ガード、引き金、元の青い部品を維持。12 件の形状・パレット・ネイティブアニメーション検証が通過。
+- 原典モデル・ゲーム操作の実機比較は未実施。CPU 検証、実ブラウザ検証、統合ビルドの結果は最終統合報告に追記する。

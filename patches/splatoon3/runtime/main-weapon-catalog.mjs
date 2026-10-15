@@ -1,3 +1,4 @@
+import { familyDescription } from './content-language.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
@@ -146,7 +147,7 @@ function definition(r, api) {
     catalogRecord:r, weaponWeight:weaponWeight(r.id), sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
     kitReference:CANONICAL_KITS[r.id].main, kitStatus:'verified-base-kit',
     kitVerifiedSlots:['sub','special'], kitMissingSlots:{},
-    blurb:'Main-weapon numerical reference: Splatoon 3 11.3.0. Shared temporary model.',
+    blurb:familyDescription(r.family,api.LANG),
     range:Math.max(1, actualRange), rangeMax:Math.max(1,actualRange), rangeMin:finite(move.DistanceMinCharge,1),
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
     damageMax:damageMax(r), projSpeed:speed, straightTime:finite(move.GoStraightToBrakeStateFrame,4)/HZ,

@@ -20,7 +20,7 @@ export function adaptWeaponCatalog(rel, code) {
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
       "import { PLAYER } from '../config.js';",
-      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry, weaponAppearanceKey, weaponDefaultAppearance } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\nimport { selectedWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\n",
+      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry, weaponAppearanceKey, weaponDefaultAppearance, weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\nimport { selectedWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\n",
       'character weapon catalog import');
     code = replaceOnce(code, "    this.setWeapon(opts.weapon || 'shooter');",
       "    this.weaponAppearancePreview = opts.weaponAppearancePreview === true;\n    this.setWeapon(opts.weapon || 'shooter');", 'personal preview appearance');
@@ -49,7 +49,7 @@ export function adaptWeaponCatalog(rel, code) {
     this.bones.handR.add(w.pivot);
     if (w.left) this.bones.handL.add(w.left.pivot);
     this.weaponKind = kind; this.weaponModel = model; this.weapon = w; this.hold = weaponHold(model, HOLD[kind]);
-    this.weaponAppearanceModel = visual; this.modelVariantId = visual === model ? null : visual;
+    this.weaponAppearanceModel = visual; this.modelVariantId = visual === weaponBaseModelId(visual) ? null : visual;
     this.weaponNativeCarry = weaponNeedsNativeCarry(id);`,
       'character weapon ID to its own model and family hold');
   }
@@ -154,13 +154,13 @@ export function adaptWeaponCatalog(rel, code) {
     const appearanceLabel = h('span');
     const appearance = h('button', { class: 'iw-btn iw-btn--menu', type: 'button', 'aria-label': 'Weapon appearance / ブキの見た目' }, appearanceLabel);
     const refreshAppearance = () => {
-      const options = weaponAppearanceOptions(shown), selected = weaponAppearancePreference(shown) ?? '';
+      const options = weaponAppearanceOptions(shown, LANG), selected = weaponAppearancePreference(shown) ?? '';
       appearanceLabel.textContent = 'APPEARANCE / 見た目: ' + (options.find(o => o.id === selected) || options[0]).name;
       appearance.hidden = options.length < 2;
       appearance.disabled = options.length < 2;
     };
     this._bind(appearance, { id: 'weapon-appearance', accept: () => {
-      const options = weaponAppearanceOptions(shown), selected = weaponAppearancePreference(shown) ?? '';
+      const options = weaponAppearanceOptions(shown, LANG), selected = weaponAppearancePreference(shown) ?? '';
       const index = Math.max(0, options.findIndex(o => o.id === selected));
       setWeaponAppearance(shown, options[(index + 1) % options.length].id);
       for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponBaseModelId(shown)) c.setWeapon(shown);

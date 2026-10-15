@@ -1,3 +1,4 @@
+import { ALTERNATE_WEAPON_KITS } from './alternate-weapon-kits-data.mjs';
 // Device-local visual preference; gameplay kit IDs and network packets stay intact.
 import { registeredWeaponVariants, weaponAppearanceKey, weaponVariantSpec, weaponBaseModelId, weaponDefaultAppearance, weaponModelSpec } from './weapon-models/registry.mjs';
 export const WEAPON_APPEARANCE_STORAGE_KEY = 'inkwave.weapon-appearances.v1';
@@ -33,8 +34,9 @@ export function setWeaponAppearance(id, variantId, storage = localStore()) {
   catch { if (storage && (typeof storage === 'object' || typeof storage === 'function')) failedWrites.set(storage, next); }
   return next[base] ?? weaponDefaultAppearance(id);
 }
-export function weaponAppearanceOptions(id) {
+export function weaponAppearanceOptions(id, language = 'ja') {
+  const ja = language === 'ja';
   const base = weaponBaseModelId(id);
-  return [{ id: '', name: 'Kit default / キット標準' }, { id: base, name: 'Base / 基本モデル' },
-    ...registeredWeaponVariants(base).map(key => ({ id: key, name: weaponVariantSpec(key).name }))];
+  return [{ id: '', name: ja ? 'キット標準' : 'Kit default' }, { id: base, name: ja ? '基本モデル' : 'Base' },
+    ...registeredWeaponVariants(base).map(key => ({ id: key, name: ALTERNATE_WEAPON_KITS.find(kit => kit.main === key)?.names?.[ja ? 'ja' : 'en'] || weaponVariantSpec(key).name }))];
 }

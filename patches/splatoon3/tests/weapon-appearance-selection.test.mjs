@@ -14,8 +14,8 @@ const list = x => Array.from(x);
 const memoryStorage = () => { let value=null; return {getItem:()=>value,setItem:(_k,v)=>{value=v;},inject:v=>{value=v;}}; };
 test('visual registry resolves only built variants and keeps all base IDs/callbacks/holds', async()=>{
   const {REG:R,AP,WEAPONS}=await production();
-  const ids=R.registeredWeaponVariants(); assert.equal(ids.length,93);
-  for (const absent of ['Shelter_Compact_02','Shelter_Normal_01']) assert.equal(R.weaponVariantSpec(absent),null,absent+' withheld'); assert.equal(new Set(ids).size,ids.length);
+  const ids=R.registeredWeaponVariants(); assert.equal(ids.length,94);
+  for (const absent of ['Shelter_Compact_02']) assert.equal(R.weaponVariantSpec(absent),null,absent+' withheld'); assert.equal(new Set(ids).size,ids.length);
   const hold={carry:{p:[1,2,3]},rc:{kick:1}};
   for(const id of ids){const spec=R.weaponVariantSpec(id),base=spec.baseId;
     assert.equal(WEAPONS[id],undefined,id+' no gameplay kit'); assert.ok(WEAPONS[base]);
@@ -23,7 +23,7 @@ test('visual registry resolves only built variants and keeps all base IDs/callba
     assert.equal(R.weaponModelFamily(id),R.weaponModelFamily(base));
     assert.equal(R.weaponBehaviorFamily(id),R.weaponBehaviorFamily(base));
     assert.equal(R.weaponFamilyPose(id),R.weaponFamilyPose(base));assert.equal(R.weaponFamilyTrigger(id),R.weaponFamilyTrigger(base));
-    assert.equal(R.weaponModelSpec(id),R.weaponModelSpec(base));assert.equal(R.weaponHold(id,hold),R.weaponHold(base,hold));
+    assert.equal(R.weaponModelSpec(id).baseId,base);assert.equal(R.weaponHold(id,hold),R.weaponHold(base,hold));
     assert.equal(R.weaponNeedsNativeCarry(id),R.weaponNeedsNativeCarry(base));
     assert.equal(R.weaponAppearanceKey(base,id),id);
     assert.ok(AP.weaponAppearanceOptions(base).some(o=>o.id===id));
@@ -113,20 +113,20 @@ test('all alternate appearances retain finite native carry/attack poses and unch
   assert.ok(attacked>0,id+' admitted attack');a.weaponRunner.reset();ch.dispose();G.scene.remove(ch.root);f.AP.setWeaponAppearance(base,base,null);
  }
 });
-test('1437 kit IDs keep base APIs and select93 official appearances with2 safe fallbacks',async()=>{
+test('kit IDs retain gameplay APIs with43 reviewed defaults and52 base fallbacks',async()=>{
  const {REG:R,AP,WEAPONS,WEAPON_ORDER}=await production();
  assert.equal(WEAPON_ORDER.length,160);let implemented=0;
  for(const kit of ALTERNATE_WEAPON_KITS){
-  assert.equal(R.weaponModelKey(kit.id),kit.baseId);assert.equal(R.weaponBaseModelId(kit.id),kit.baseId);
-  assert.equal(R.weaponModelSpec(kit.id),R.weaponModelSpec(kit.baseId));
+  assert.equal(R.weaponModelKey(kit.id),R.registeredWeaponVariantModels().includes(kit.main)?kit.main:kit.baseId);assert.equal(R.weaponBaseModelId(kit.id),kit.baseId);
+  assert.equal(R.weaponModelSpec(kit.id),R.registeredWeaponVariantModels().includes(kit.main)?R.weaponVariantSpec(kit.main):R.weaponModelSpec(kit.baseId));
   assert.equal(R.weaponBehaviorFamily(kit.id),R.weaponBehaviorFamily(kit.baseId));
-  const expected=R.weaponVariantSpec(kit.main)?kit.main:kit.baseId;if(expected===kit.main)implemented++;
+  const expected=R.registeredWeaponVariantModels().includes(kit.main)?kit.main:kit.baseId;if(expected===kit.main)implemented++;
   assert.equal(R.weaponDefaultAppearance(kit.id),expected);assert.equal(AP.selectedWeaponAppearance(kit.id,memoryStorage()),expected);
   assert.equal(WEAPONS[kit.id].sourceRow,kit.main);assert.equal(WEAPONS[kit.id].sub,kit.sub);
   assert.equal(WEAPONS[kit.id].special,kit.special);assert.equal(WEAPONS[kit.id].specialCost,kit.specialCost);
   assert.ok(AP.weaponAppearanceOptions(kit.id).some(o=>o.id===kit.baseId));
  }
- assert.equal(implemented,93);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
+ assert.equal(implemented,43);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
  assert.equal(AP.selectedWeaponAppearance('unknown-kit',memoryStorage()),'unknown-kit');
 });
 test('explicit Base persists separately from absent kit default and does not leak to peers',async()=>{
@@ -140,8 +140,8 @@ test('explicit Base persists separately from absent kit default and does not lea
  s.inject(JSON.stringify({[kit.baseId]:'removed-row'}));assert.equal(f.AP.selectedWeaponAppearance(kit.id,s),kit.main);
  f.AP.setWeaponAppearance(kit.id,kit.baseId,null);
  const local=new f.Character({weapon:kit.id,isLocal:true}),peer=new f.Character({weapon:kit.id,isLocal:false}),bot=new f.Character({weapon:kit.id,isLocal:false});
- assert.equal(local.weaponModel,kit.baseId);assert.equal(local.modelVariantId,null);
- for(const ch of [peer,bot]){assert.equal(ch.weaponModel,kit.baseId);assert.equal(ch.modelVariantId,kit.main);assert.equal(ch.weapon.def.modelId,kit.baseId);}
+ assert.equal(local.weaponModel,kit.main);assert.equal(local.modelVariantId,null);
+ for(const ch of [peer,bot]){assert.equal(ch.weaponModel,kit.main);assert.equal(ch.modelVariantId,kit.main);assert.equal(ch.weapon.def.modelId,kit.baseId);}
  f.AP.setWeaponAppearance(kit.id,'',null);local.setWeapon(kit.id);assert.equal(local.modelVariantId,kit.main);
  local.setWeapon('unknown-kit');assert.equal(local.weaponModel,'shooter');assert.equal(local.modelVariantId,null);
  local.dispose();peer.dispose();bot.dispose();

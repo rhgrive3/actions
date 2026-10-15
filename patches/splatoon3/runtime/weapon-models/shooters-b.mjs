@@ -502,11 +502,18 @@ function nozzlenose(d, o) {
   const u=q.scale,Z=x=>muzzle[2]+(x-q.end)*u,Y=y=>AX+(q.axis-y)*u;
   const C={blue:'#293b99',blueEdge:'#364cb2',black:'#202329',edge:'#363a3d',mint:'#87bbb0',metal:'#b9bfbc',hose:'#d8d6c9'};
   const body=new Pieces(),can=new Pieces(),[f0,f1,f2,f3]=q.reel,ry=Y(q.reelY),rr=q.r*u;
+  // Record authored fixed frame surfaces before merging. Variants must not
+  // guess a trailing grip vertex count after a base topology rebuild.
+  const finishRanges = [];
+  const fixed = (geo, color, mat) => {
+    const start = body.list.reduce((n,g)=>n+g.attributes.position.count,0);
+    body.add(geo,color,mat);finishRanges.push([start,start+body.list.at(-1).attributes.position.count]);
+  };
   const panel=(points,width,x=0,bevel=.001)=>slab(points.map(([z,y])=>[Z(z),Y(y)]),width,x,bevel);
   const tube=(points,r,x=0)=>pipe(points.map(([z,y])=>[x,Y(y),Z(z)]),r,Math.max(10,points.length*3),6);
   // Broad reel flanges with recessed dishes, raised outer rim and a real axle.
   for(const [a,b]of[[f0,f1],[f2,f3]]){
-    body.add(zlathe([[0,Z(a)],[rr*.77,Z(a)],[rr*.96,Z(a+3)],[rr,Z(a+8)],[rr,Z(b-5)],[rr*.9,Z(b)],[0,Z(b)]],0,ry,0,36),C.blue,M.gloss);
+    fixed(zlathe([[0,Z(a)],[rr*.77,Z(a)],[rr*.96,Z(a+3)],[rr,Z(a+8)],[rr,Z(b-5)],[rr*.9,Z(b)],[0,Z(b)]],0,ry,0,36),C.blue,M.gloss);
     body.add(ring(rr*.88,.0018,0,ry,Z((a+b)/2),'z',5,36),C.blueEdge,M.gloss);
     body.add(zcyl(rr*.19,Z(a-1),Z(b+1),0,ry,14),C.edge,M.satin);
   }
@@ -521,17 +528,19 @@ function nozzlenose(d, o) {
   can.add(pipe(trace,.0008,192,4),'#aaaec0',M.satin);
   // Narrow top/bottom rails, a raked front foot and rear axle bridge leave the reel exposed.
   const frontTop=h?985:767,frontFoot=h?940:739,rearTop=h?633:483,rearFoot=h?594:442;
-  body.add(panel([[rearTop,q.top],[frontTop,q.top-4],[frontTop+9,q.top+13],[rearTop-5,q.top+15]],.023),C.black,M.satin);
-  body.add(panel([[rearFoot,q.bottom-9],[frontFoot,q.bottom+10],[frontFoot+8,q.bottom+29],[rearFoot-9,q.bottom+8]],.023),C.black,M.satin);
-  body.add(panel([[f3-4,q.top+18],[frontTop+12,q.top+13],[frontTop+8,q.bottom-35],[frontFoot+7,q.bottom+29],[frontFoot-13,q.bottom+18],[f3+8,q.bottom-6]],.038),C.black,M.satin);
-  body.add(panel([[rearTop-16,q.top+9],[f0+13,q.top+22],[f0-11,q.bottom-16],[rearFoot-7,q.bottom+12],[rearFoot-25,q.bottom-4]],.023),C.black,M.satin);
+  fixed(panel([[rearTop,q.top],[frontTop,q.top-4],[frontTop+9,q.top+13],[rearTop-5,q.top+15]],.023),C.black,M.satin);
+  fixed(panel([[rearFoot,q.bottom-9],[frontFoot,q.bottom+10],[frontFoot+8,q.bottom+29],[rearFoot-9,q.bottom+8]],.023),C.black,M.satin);
+  fixed(panel([[f3-4,q.top+18],[frontTop+12,q.top+13],[frontTop+8,q.bottom-35],[frontFoot+7,q.bottom+29],[frontFoot-13,q.bottom+18],[f3+8,q.bottom-6]],.038),C.black,M.satin);
+  fixed(panel([[rearTop-16,q.top+9],[f0+13,q.top+22],[f0-11,q.bottom-16],[rearFoot-7,q.bottom+12],[rearFoot-25,q.bottom-4]],.023),C.black,M.satin);
   // Revolver-like rear hammer/lever and narrow silver linkage are visible in both side views.
   const lever=h?[[467,447],[523,473],[493,505],[472,548],[475,603],[501,634]]:[[351,251],[398,270],[373,298],[360,344],[364,382],[391,407]];
-  body.add(tube(lever,.0042),C.black,M.satin);
+  fixed(tube(lever,.0042),C.black,M.satin);
   const endLever=lever.at(-1),linkTarget=h?[539,676]:[423,451];
   body.add(tube([endLever,linkTarget],.003),C.metal,M.metal);
-  body.add(panel(h?[[460,644],[516,661],[606,603],[619,706],[572,765],[480,740]]:[[361,415],[407,437],[449,402],[459,461],[432,511],[394,493]],.032),C.black,M.satin);
+  fixed(panel(h?[[460,644],[516,661],[606,603],[619,706],[572,765],[480,740]]:[[361,415],[407,437],[449,402],[459,461],[432,511],[394,493]],.032),C.black,M.satin);
+  const gripStart=body.list.reduce((n,g)=>n+g.attributes.position.count,0);
   const trig=raked(body,o.rake,{color:o.gripColor,triggerColor:C.black,guardColor:C.black,w:o.w});
+  const gripEnd=body.list.reduce((n,g)=>n+g.attributes.position.count,0);
   for(const sx of[-1,1])body.add(xcyl(.004,sx*.016,sx*.019,h?Y(722):Y(475),h?Z(478):Z(409),10),C.metal,M.metal);
   // Standard H-3 has a prominent T-valve, forward hex union, lower bypass and top lever.
   if(h){
@@ -555,7 +564,7 @@ function nozzlenose(d, o) {
   for(const x of[ca+7,cb-7])body.add(ring(52*u,.0023,0,AX,Z(x),'z',5,28),C.blue,M.gloss);
   const capBack=h?40:65,capFront=h?111:89,capColor=h?'#292d2e':C.blue;
   // Concave neck + faceted knob; the face is recessed, with a central outlet and radial dial holes.
-  body.add(zlathe([[0,Z(a)],[capBack*u,Z(a)],[capBack*u,Z(a+16)],[(capFront-12)*u,Z(b-7)],
+  fixed(zlathe([[0,Z(a)],[capBack*u,Z(a)],[capBack*u,Z(a+16)],[(capFront-12)*u,Z(b-7)],
     [capFront*u,Z(b)],[capFront*u,Z(c-8)],[(capFront-7)*u,Z(c)],[(capFront-25)*u,Z(c)],
     [(capFront-25)*u,Z(c-11)],[0,Z(c-11)]],0,AX,0,h?16:20),capColor,M.gloss);
   if(!h)body.add(zlathe([[65*u,Z(a)],[76*u,Z(a+35)],[89*u,Z(b)],[88*u,Z(b+2)]],0,AX,0,24),C.mint,M.satin);
@@ -567,6 +576,7 @@ function nozzlenose(d, o) {
     const ridge=box(7*u,7*u,(c-b-4)*u,0,0,0,.2,4,4).rotateZ(t).translate(Math.cos(t)*r,AX+Math.sin(t)*r,Z((b+c)/2));body.add(ridge,capColor,M.satin);
   }
   for(let j=0;j<10;j++){const t=j*Math.PI/5,r=(capFront-37)*u;body.add(zcyl(5*u,Z(c-10),Z(c-8),Math.cos(t)*r,AX+Math.sin(t)*r,8),C.black,M.rubber);}
+  d.nozzleFinishRanges=finishRanges;d.nozzleGripRange=[gripStart,gripEnd];
   return rebuild(d,{body,ink:new Pieces(),parts:{can:part(can,[0,ry,Z((f1+f2)/2)],'body'),trigger:part(trig,TRIGGER_PIVOT)},
     gripR:rakedGrip(o.rake),gripL:supportGrip([0,oldP(0,o.supY)[1],oldP(o.supX,0)[0]],0),muzzle});
 }
