@@ -23,6 +23,7 @@
 //
 // Some Splat Roller records omit schema-default fields.  Keep the documented
 // PaintParam DistanceNear default explicit instead of treating omission as 0.
+import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 const DEFAULT_DISTANCE_NEAR = 1.1;
 const DEFAULT_DISTANCE_FAR = 20;
 const DEFAULT_DEGREE_MAX = 10;
@@ -205,7 +206,7 @@ export function withRollerImpactPaint(game,projectile,hit,scale,callback) {
   paint.splat=function(point,nativeRadius,team,opts={}){
     if(replaced)return native.call(this,point,nativeRadius,team,opts);
     replaced=true;
-    return native.call(this,point,radius,team,{...opts,stretchAmt:Math.max(0,(depthScale-1)*paintScale)});
+    return native.call(this,point,radius,team,{...opts,kind:SOURCE_SHOT_PAINT_KIND,stretchAmt:Math.max(0,(depthScale-1)*paintScale)});
   };
   try{return callback({radius,depthScale,height});}finally{context.splat=native;}
 }

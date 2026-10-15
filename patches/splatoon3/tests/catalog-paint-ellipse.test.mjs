@@ -21,7 +21,7 @@ test('catalog impact seeds vary and full-precision replay preserves the real CPU
  const a=f.make('s3-shooter-short');a.form='kid';a.pos.set(0,0,0);a.aimDir.set(0,-.2,1).normalize();a.aimPoint.set(0,0,12);
  const stamps=[],native=paint.splat;paint.splat=function(at,r,team,o={}){stamps.push({at:at.clone(),r,team,opts:{...o,stretch:o.stretch?.clone()}});return native.call(this,at,r,team,o);};
  for(let i=0;i<180;i++){f.G.time+=1/60;a.intent.fire=i<30;a.weaponRunner.update(1/60,{fire:i<30,firePressed:i===0,sub:false});f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);}
- const impact=stamps.filter(s=>s.opts.kind==='shot');assert.ok(impact.length>1);assert.ok(new Set(impact.map(s=>s.opts.seed)).size>1,'each impact no longer repeats seed zero');
+ const impact=stamps.filter(s=>s.opts.kind==='source-shot');assert.ok(impact.length>1);assert.ok(new Set(impact.map(s=>s.opts.seed)).size>1,'each impact no longer repeats seed zero');
  const expected=Array.from(paint.grid),receiver=makePaintWorld(f).paint;
  for(const s of stamps){const o={...s.opts};delete o.claimOwner;delete o.claimMode;receiver.splat(s.at,s.r,s.team,o);}
  for(let i=0;i<240;i++)receiver.advanceSimulation(1/60);

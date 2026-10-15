@@ -1630,7 +1630,7 @@ const PAINT_RADIUS_MAX = 5.2 * 0.72;
 // row above PAINT_RADIUS_MAX, and only with this exact victim-blast signature.
 const PAINT_VICTIM_BLAST_RADIUS = 5;
 const PAINT_VICTIM_SPLASH_RADIUS = 1;
-const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck']);
+const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
   const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
@@ -2555,8 +2555,13 @@ function canAllocateNetworkGhost(projectiles, actor) {
   }
   if (rel === 'src/game/weapons.js') {
     code="import { slosherImpactMetadata } from '../../patches/network-replication/slosher-paint-admission.mjs';\n"+code;
-    patch('{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }',
-      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner, projectilePaint: slosherImpactMetadata(p,hit) }',
+    // The S3 source footprint introduces an explicit physical-ink kind before
+    // network provenance attaches. Accept exactly the two approved, mutually
+    // exclusive source compositions: direct old paint or source-kind paint.
+    const sourceKindAnchor = '{ seed: p.seed, kind: paint ? SOURCE_SHOT_PAINT_KIND : undefined, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }';
+    const ordinaryAnchor = '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }';
+    const paintAnchor = code.includes(sourceKindAnchor) ? sourceKindAnchor : ordinaryAnchor;
+    patch(paintAnchor, paintAnchor.slice(0, -2) + ', projectilePaint: slosherImpactMetadata(p,hit) }',
       'bind sourced Slosher terrain paint to its projectile birth');
   }
   if (rel === 'src/net/netmatch.js') {

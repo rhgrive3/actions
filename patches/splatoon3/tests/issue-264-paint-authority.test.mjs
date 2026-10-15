@@ -20,7 +20,7 @@ function emitNative(f, owner, V, { kind = 'shot', x = 0, ghost = false, face = 0
 }
 
 for (const weapon of ['shooter', 'dualies', 'splatling']) {
-  test(`native ${weapon} head and detached paint credit immediate and late cells exactly once`, async () => {
+  test(`native ${weapon} sourced head and explicit splashes credit body area without invented late cells`, async () => {
     const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
     const { paint, face, V } = makePaintWorld(f), owner = f.make(weapon);
     for (const [index, kind] of ['shot', 'drop', 'trail'].entries()) {
@@ -32,8 +32,8 @@ for (const weapon of ['shooter', 'dualies', 'splatling']) {
     assert.ok(bodyCells * face.cu * face.cv > 0, 'initial ownership has positive raw world area');
     assert.equal(bodyCredit, bodyCells * face.cu * face.cv, 'native addTurf credits the initial body once under the unchanged main scoring convention');
     for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);
-    assert.ok(paint.counts[0] > bodyCells, 'ancillary cells really become owned');
-    assert.ok(owner.stats.turf > bodyCredit, 'late cells increase the emitting actor credit');
+    assert.equal(paint.counts[0], bodyCells, 'source WidthHalf creates no invented late satellite cells');
+    assert.equal(owner.stats.turf, bodyCredit, 'real drops were credited at their own landing, never after the fact');
     assert.equal(paint.counts[0], paint.grid.filter(team => team === 1).length, 'raw floor ownership counts body and late cells');
     assert.equal(owner.stats.turf, paint.counts[0] * face.cu * face.cv, 'every claimed floor cell credits exactly once');
     assert.equal(owner.special, owner.stats.turf, 'ordinary late paint contributes the native special gauge');
@@ -59,8 +59,8 @@ test('real shooter-family fire routes every native landing through its local pai
     for (let shot = 0; shot < 8; shot++) G.projectiles[method](owner, owner.weapon, 0, shot % 2);
     assert.ok(G.projectiles.list.some(p => p.inkProfile), `${weapon} admits its real source-guided head`);
     for (let tick = 0; tick < 120; tick++) { G.time += 1 / 60; G.projectiles.update(1 / 60); }
-    assert.ok(emissions.some(e => e.kind === 'shot'), `${weapon} has a real head impact`);
-    assert.ok(emissions.some(e => e.kind === 'drop' || e.kind === 'trail'), `${weapon} lands real detached ink`);
+    assert.ok(emissions.some(e => e.kind === 'source-shot'), `${weapon} has a WidthHalf-backed head impact`);
+    assert.ok(emissions.some(e => e.kind === 'source-splash'), `${weapon} lands separately sourced detached ink`);
     assert.ok(emissions.every(e => e.owner === owner), `${weapon} has no unowned landing emission`);
   }
 });
@@ -82,7 +82,7 @@ test('native ghost and invalid hits stay unpainted; remote growth is uncredited 
   assert.equal(paint.growing.at(-1).paintOwner, owner, 'new authoritative paint uses the adopted local actor');
   const adoptedBody = owner.stats.turf;
   for (let tick = 0; tick < 32; tick++) paint.advanceSimulation(1 / 60);
-  assert.ok(owner.stats.turf > adoptedBody);
+  assert.equal(owner.stats.turf, adoptedBody, 'an adopted source splash cannot grow synthetic satellite Turf');
 });
 
 for (const rate of [30, 60, 120]) test(`offline pause freezes native paint and resumes without paint debt at ${rate} Hz`, async () => {
@@ -107,8 +107,8 @@ for (const rate of [30, 60, 120]) test(`offline pause freezes native paint and r
   assert.ok(Math.abs(G.time - before.time - 1 / 60) < 1e-10);
   assert.ok(Math.abs(paint.growing[0].age - before.age - 1 / 60) < 1e-10, 'resume advances exactly one ordinary tick');
   for (let tick = 0; tick < 31; tick++) f.runSimulation(game, 1 / 60);
-  assert.ok(paint.counts[0] > before.cells);
-  assert.ok(owner.stats.turf > before.turf);
+  assert.equal(paint.counts[0], before.cells, 'the source body has no late invented spatter');
+  assert.equal(owner.stats.turf, before.turf, 'resuming cannot award extra synthetic Turf');
   assert.equal(owner.special, owner.stats.turf);
 });
 
@@ -121,5 +121,6 @@ for (const mode of ['offline', 'online-menu', 'attract']) test(`${mode} without 
   const bodyCells = paint.counts[0], bodyCredit = owner.stats.turf;
   for (let tick = 0; tick < 32; tick++) f.runSimulation(game, 1 / 60);
   assert.ok(G.time > 0 && paint.clock > 0);
-  assert.ok(paint.counts[0] > bodyCells && owner.stats.turf > bodyCredit);
+  assert.equal(paint.counts[0], bodyCells, 'no unsourced late spots on normal source paint');
+  assert.equal(owner.stats.turf, bodyCredit, 'fixed-clock growth does not re-credit the same source area');
 });
