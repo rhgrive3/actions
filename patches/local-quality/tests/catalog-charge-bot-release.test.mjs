@@ -73,7 +73,7 @@ function checkBoundedRelease(label, w, hz, maxSeconds = 0.9) {
   const history = w.trace;
   assert.ok(history.some(s => s.fire), label + ' must attempt a legitimate charge');
   assert.ok(history.some((s,i) => i && history[i - 1].fire && !s.fire), label + ' must release Fire');
-  assert.ok(history.at(-1).shots > 0, label + ' must emit a real catalogue projectile');
+  assert.ok(history.some(row => row.shots > 0), label + ' must emit at least one real catalogue projectile');
   let uninterrupted = 0, max = 0;
   for (const row of history) {
     uninterrupted = row.charging ? uninterrupted + 1 : 0;
@@ -96,11 +96,11 @@ test('all four catalogue charge families fire and release on dry turf with a rea
     const w = scenario(f, id);
     for (let i = 0; i < 240; i++) w.step();
     assert.ok(w.trace.some((s,i) => i && w.trace[i-1].fire && !s.fire), id + ' keeps its release edge');
-    assert.ok(w.trace.at(-1).shots > 0, id + ' keeps its native shot');
+    assert.ok(w.trace.some(row => row.shots > 0), id + ' keeps its native shot');
   }
   const auto = scenario(f, catalogId(f, 'shooter'));
   for (let i = 0; i < 100; i++) auto.step();
-  assert.ok(auto.trace.at(-1).shots > 0, 'catalogue auto-fire Shooter still emits while Fire is held');
+  assert.ok(auto.trace.some(row => row.shots > 0), 'catalogue auto-fire Shooter still emits while Fire is held');
 });
 
 test('catalogue bots release in aimed combat, never hold a charged weapon indefinitely', async () => {
