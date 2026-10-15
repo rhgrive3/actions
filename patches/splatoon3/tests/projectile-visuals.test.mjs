@@ -14,6 +14,7 @@ import {
   projectileTailFrames,
   projectileVisualKind,
   projectileVisualWidth,
+  nativeVolumeOwns,
 } from '../runtime/projectile-visuals.mjs';
 import {
   PROJECTILE_VISUAL_SOURCE,
@@ -900,4 +901,30 @@ test('source VTF Roller owns its GPU draw when installed, with geometry fallback
   assert.equal(runtime.stats.vertexCount, 0);
   assert.equal(runtime.mesh.visible, false);
   runtime.dispose();
+});
+
+test('native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher', () => {
+  const packs = { isInkVolumes: true, assets: new Map([['roller', {}], ['shooter', {}]]) };
+  const owner = (kind, wid='roller') => ({
+    type: kind.includes('roller') ? 'drop' : 'shot', wid, delay: 0,
+    _inkVolumeRecipe: kind, _inkVolumeAssetName: 'projectile:' + wid + ':' + kind,
+  });
+  for (const kind of ['roller-horizontal', 'roller-vertical', 'brush']) {
+    assert.equal(nativeVolumeOwns(owner(kind), packs), true, 'existing source VTF owns ' + kind);
+  }
+  for (const kind of ['shooter', 'slosher']) {
+    assert.equal(nativeVolumeOwns(owner(kind, kind === 'slosher' ? 'slosher' : 'shooter'), packs), true,
+      'existing source VTF owns ' + kind);
+  }
+  assert.equal(nativeVolumeOwns(owner('slosher','s3-slosher-diffusion'), packs), true);
+  assert.equal(nativeVolumeOwns(owner('slosher','s3-slosher-launcher'), packs), false,
+    'unrelated Sloshing Machine does not borrow default Roller sheet');
+  assert.equal(nativeVolumeOwns({ ...owner('roller-vertical'), delay: 0.1 }, packs), false);
+  assert.equal(nativeVolumeOwns({ ...owner('roller-vertical'), _qualityDead: true }, packs), false);
+  assert.equal(nativeVolumeOwns(owner('roller-vertical'), { isInkVolumes: false, assets: packs.assets }), false);
+  assert.equal(nativeVolumeOwns(owner('roller-vertical'), { isInkVolumes: true, assets: new Map() }), false);
+  assert.equal(nativeVolumeOwns({ ...owner('slosher','s3-slosher-launcher'),
+    _inkVolumeAssetName: 'projectile:s3-slosher-launcher:slosher' }, {
+    isInkVolumes: true, assets: new Map([['projectile:s3-slosher-launcher:slosher', {}]]) }), true,
+    'an explicitly registered specific pack owns its own projectile');
 });
