@@ -270,10 +270,11 @@ export class ProjectileVisualRuntime {
   // If the pack is unavailable, the new bounded geometry remains the fallback.
   nativeVolumeOwns(p) { return p?._inkVolumeHorizontal === true &&
     this.helpers.nativeVolumeOwns?.(p) === true; }
-  handles(p) { return !this.nativeVolumeOwns(p) &&
+  nativeShapeOwns(p) { return this.helpers.nativeShapeOwns?.(p) === true; }
+  handles(p) { return !this.nativeShapeOwns(p) && !this.nativeVolumeOwns(p) &&
     !!p._iwVisualHistory && p._iwVisualKind!=='legacy'; }
   ensureBirth(p) {
-    if(this.nativeVolumeOwns(p))return false;
+    if(this.nativeShapeOwns(p)||this.nativeVolumeOwns(p))return false;
     if(p._iwVisualHistory)return true;
     // Deferred Bucket rounds have no authoritative muzzle until their actual
     // physics birth refresh. Do not draw a connection to the enqueue position.
@@ -327,7 +328,7 @@ export class ProjectileVisualRuntime {
     if(!p._iwVisualHistory)this.beginStep(p);
   }
   recordStep(p,dt=DT) {
-    if(this.nativeVolumeOwns(p))return;
+    if(this.nativeShapeOwns(p)||this.nativeVolumeOwns(p))return;
     const kind=p._iwVisualKind||projectileVisualKind(p);p._iwVisualKind=kind;
     if(this.disposed || kind==='legacy')return;
     let h=p._iwVisualHistory;
@@ -361,7 +362,7 @@ export class ProjectileVisualRuntime {
     p._iwVisualLastNetStep=finite(p._netSteps,-1);
   }
   recordPhysicsPoint(p, previousAge) {
-    if(this.disposed)return;
+    if(this.disposed||this.nativeShapeOwns(p)||this.nativeVolumeOwns(p))return;
     const kind=p._iwVisualKind||projectileVisualKind(p);p._iwVisualKind=kind;
     if(kind==='legacy')return;
     let h=p._iwVisualHistory;
@@ -374,7 +375,7 @@ export class ProjectileVisualRuntime {
   }
   release(p) {
     const h=p._iwVisualHistory;if(!h)return;
-    const tail=p._iwVisualKind==='shooter'&&h.count>1?this.trailPool.pop():null;
+    const tail=!this.nativeShapeOwns(p)&&p._iwVisualKind==='shooter'&&h.count>1?this.trailPool.pop():null;
     if(tail) {
       tail.history=h;tail.radius=projectileVisualWidth(p);tail.endAge=h.latestAge;
       tail.birth=finite(this.system.inkFlight?.time);tail.frames=projectileTailFrames(p);

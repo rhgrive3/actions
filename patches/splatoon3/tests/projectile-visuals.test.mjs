@@ -38,9 +38,12 @@ test('current S3 shape renderer and history renderer never submit the same nativ
   for(let i=0;i<4;i++){f.G.time+=DT;ps.update(DT);}
   const before=ps.list.map(gameplayRow);
   ps._draw();ps.syncVisuals(1);
-  assert.ok(ps.list.some(p=>p.s3Shape==='shot'&&ps.projectileVisuals.handles(p)));
-  assert.equal(ps.s3ShapeCounts.body,0,'the adopted renderer retains classification but yields handled bodies');
-  assert.ok(ps.projectileVisuals.mesh.visible&&ps.projectileVisuals.stats.triangles>0);
+  assert.ok(ps.list.some(p=>p.s3Shape==='shot'));
+  assert.ok(ps.list.every(p=>!ps.projectileVisuals.handles(p)));
+  assert.equal(ps.s3ShapeCounts.body,ps.list.length,'the adopted S3 renderer retains one body per native round');
+  assert.equal(ps.projectileVisuals.mesh.visible,false);
+  assert.equal(ps.projectileVisuals.stats.triangles,0);
+  assert.ok(ps.list.every(p=>p._iwVisualHistory==null));
   assert.equal(ps.projectileVisuals.geometry.drawRange.count,ps.projectileVisuals.stats.triangles*3);
   assert.deepEqual(ps.list.map(gameplayRow),before,'render ownership cannot change native flight');
   ps.clear();assert.equal(ps.projectileVisuals.mesh.visible,false);assert.equal(ps._s3Shapes.body.count,0);

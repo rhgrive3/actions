@@ -377,7 +377,6 @@ export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capac
     count++;
   };
   for (const p of list) {
-    if (system.projectileVisuals?.handles(p)) continue;
     const kind = p.s3Shape;
     if (count >= capacity) break;
     if (kind !== 'machine' && kind !== 'explosher') continue;
@@ -418,7 +417,6 @@ export function drawS3Shapes(system, THREE, G) {
   const bd = bodyData.array, cam = G?.camera?.position;
   let nb = 0, nh = 0, nv = 0, ns = 0, nc = 0, nk = 0;
   for (const p of system.list) {
-    if (system.projectileVisuals?.handles(p)) continue;
     const kind = p.s3Shape;
     if (!kind || p.delay > 0 || !p.owner?.color) continue;
     const sp = direction(p, f);
