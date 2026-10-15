@@ -12,7 +12,17 @@ for(const id of ['s3-maneuver-short','s3-maneuver-gallon','s3-maneuver-dual','s3
    assert.ok(ch.weapon.left,'actual paired native weapon');
    for(let tick=0;tick<180;tick++){
     const dt=1/60,fire=tick>=30&&tick<130;G.time+=dt;G.camera.position.z=tick<90?2:50;G.camera.updateMatrixWorld();a.ink=100;a.intent.fire=fire;const count=ps.list.length,n=notes.length,hand=r.hand;r.update(dt,{fire,firePressed:tick===30});const born=ps.list.length-count;
-    if(born){assert.equal(born,1);assert.equal(r.hand,hand^1);assert.equal(r.sinceHand[r.hand],0);assert.equal(notes.length,n+1);assert.equal(notes.at(-1).hand,r.hand);assert.equal(+notes.at(-1),1);hands.add(r.hand);shots++;}else{assert.equal(r.hand,hand);assert.equal(notes.length,n);}
+    if(born){assert.equal(born,1);assert.equal(r.hand,hand^1);assert.equal(r.sinceHand[r.hand],0);assert.equal(notes.length,n+1);assert.equal(notes.at(-1).hand,r.hand);assert.equal(+notes.at(-1),1);hands.add(r.hand);shots++;
+      // Exact same live socket is used by native Dualies and the catalog
+      // projectile; no guessed lateral offset or post-shot pose sample.
+      const native=ps._muzzleHand(a,r.hand,new THREE.Vector3());
+      const opposite=ps._muzzleHand(a,r.hand^1,new THREE.Vector3());
+      const head=ps.list.at(-1);
+      assert.ok(native.distanceTo(opposite)>.02,id+' has independently resolved left/right nozzles');
+      assert.ok(head.start.distanceTo(native)<1e-6,id+' physics birth follows hand '+r.hand);
+      assert.ok(head.pos.distanceTo(native)<1e-6,id+' initial projectile pose matches hand socket');
+      assert.ok(head.prev.distanceTo(native)<1e-6,id+' initial swept collision segment matches hand socket');
+    }else{assert.equal(r.hand,hand);assert.equal(notes.length,n);}
     a._finishFrame(dt);near.add(ch.weapon.near);finiteWeapon(ch.weapon);finiteWeapon(ch.weapon.left);moved[0]||=Math.abs(ch.weapon.parts.trigger.rotation.x)>.001;moved[1]||=Math.abs(ch.weapon.left.parts.trigger.rotation.x)>.001;
    }
    assert.ok(shots>1);assert.deepEqual([...hands].sort(),[0,1]);assert.deepEqual([...near].sort(),[false,true]);assert.deepEqual(moved,[true,true]);r.reset();assert.equal(r.hand,0);assert.deepEqual(Array.from(r.sinceHand),[99,99]);a._finishFrame(0);finiteWeapon(ch.weapon);finiteWeapon(ch.weapon.left);console.log('BASE_DUALIES_ACTOR',JSON.stringify({id,team,shots,ticks:180,moved,near:[...near]}));

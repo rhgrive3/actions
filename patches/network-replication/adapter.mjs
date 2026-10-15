@@ -2590,6 +2590,9 @@ function canAllocateNetworkGhost(projectiles, actor) {
     patch('  onLeave(id, hostChanged) {',
       '  onLeave(id, hostChanged) {\n    forgetPaintPeer(this, id);',
       'retire codec capability before same-id relay rejoin or host adoption');
+    patch("      case 'weapon:fire': G.projectiles?.ghostFire(a, e); break;",
+      "      case 'weapon:fire':\n        if (a.alive && (a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && e.weapon === (a.weapon.catalogRecord?.id || a.weapon.id) && (e.hand === 0 || e.hand === 1)) {\n          a.weaponRunner.hand = e.hand;\n          a.weaponRunner.sinceHand[e.hand] = 0;\n        }\n        G.projectiles?.ghostFire(a, e); break;", 'accepted remote dualies hand presentation');
+    patch('    const wr = a.weaponRunner;', "    const wr = a.weaponRunner;\n    if ((a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && Number.isFinite(dt) && dt > 0) { wr.sinceHand[0] += dt; wr.sinceHand[1] += dt; }", 'remote dualies presentation clocks');
   }
   if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
   return code;
