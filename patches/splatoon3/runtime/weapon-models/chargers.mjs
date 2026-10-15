@@ -476,7 +476,7 @@ const SIGHT = {
 export function FAMILY_POSE(ch, dt, s, CH) {
   const k = ch.wAim || 0;
   if (!(k > 0.001) || !ch.kidForm) return;
-  const a = SIGHT[ch.weaponModel] ?? SIGHT.charger, c = Math.min(1, Math.max(0, ch.charge || 0));
+  const a = SIGHT[ch.weapon?.def?.modelId || ch.weaponModel] ?? SIGHT.charger, c = Math.min(1, Math.max(0, ch.charge || 0));
   const w = k * (1 - a.charge + a.charge * c), P = ch.P;
   P[CH.HEAD] += a.head * w; P[CH.NECK] += a.neck * w; P[CH.HEAD + 2] += a.roll * w;
 }
