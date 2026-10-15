@@ -27,8 +27,18 @@ test('parallel browser families retain every final integration acceptance surfac
   assert.ok(workflow.includes('npx playwright install --with-deps ${{ matrix.browsers }}'));
   assert.ok(!workflow.includes('needs: validate'));
   assert.ok(workflow.includes('cancel-in-progress: true'));
-  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'responsive', 'network-browser', 'paint-mask', 'range', 'startup-browser', 'rematch-lifecycle'])
+  for (const gate of ['browser', 'motion', 'motion-detail', 'flow-render', 'wall-render', 'motion-catalog', 'touch-layout', 'reliability', 'touch-layout-identity', 'network-browser', 'paint-mask', 'range', 'startup-browser', 'rematch-lifecycle'])
     assert.ok(workflow.includes(`node scripts/check-inkwave-${gate}.mjs`), gate);
+  // The isolated wrapper keeps every original responsive case but avoids
+  // accumulating 14 persistent Chromium/WebKit contexts in one process.
+  assert.ok(workflow.includes('node scripts/check-inkwave-responsive-isolated.mjs --source .built-site/_site --section all'));
+  const responsive = fs.readFileSync(new URL('../check-inkwave-responsive-isolated.mjs', import.meta.url), 'utf8');
+  for (const engine of ['chromium', 'webkit']) assert.ok(responsive.includes(engine), engine);
+  for (const viewport of ['phone-portrait', 'phone-landscape', 'small-phone', 'tablet-portrait', 'tablet-landscape', 'tablet-split', 'desktop'])
+    assert.ok(responsive.includes(viewport), viewport);
+  assert.match(responsive, /report\.cases\.length === 14 && report\.shards\.length === 14/);
+  assert.match(responsive, /processResult\.status===0/);
+  assert.match(responsive, /--cases'/);
   assert.ok(workflow.includes('scripts/check-inkwave-network-comparison.mjs'));
   assert.ok(workflow.includes('patches/network-replication/tests/*.test.mjs'));
   assert.ok(workflow.includes('patches/practice-range/tests/*.test.mjs'));
