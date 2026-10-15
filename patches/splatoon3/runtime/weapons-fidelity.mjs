@@ -1,4 +1,5 @@
 import { withMainDirectDamage } from './private-tracking.mjs';
+import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
 import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
 import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops } from './blaster-flight-paint.mjs';
@@ -313,7 +314,7 @@ export function configureFidelityInkFlight(projectiles, helpers) {
 
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
-function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
+function rawWeapon(w) { const id = w?.id || w?.kind; return completion?.weapons[VARIANT_BASE_WEAPON[id] || id]; }
 
 // #992: S3 BulletShooterPaintParam's sparse defaults and interpolation semantics
 // are documented by the original parameter research in
@@ -1137,7 +1138,8 @@ export const INK_LOOK=Object.freeze({
 // sourced value.
 export const SHOT_TAIL_FRAMES_DEFAULT=2;
 export function shotTailFrames(p) {
-  const v=completion?.weapons?.[p?.wid]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
+  const id=p?.wid;
+  const v=completion?.weapons?.[VARIANT_BASE_WEAPON[id] || id]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
   return Number.isFinite(v)&&v>0?v:SHOT_TAIL_FRAMES_DEFAULT;
 }
 // Back length (in drawn head radii) for the instanced blob. Others: the
@@ -1648,7 +1650,7 @@ export function installWeaponsFidelity(context,profile) {
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
   function initializeSplatlingFlight(p,w){
-    const move=moves.get(w.id)||null;
+    const move=moves.get(VARIANT_BASE_WEAPON[w.id] || w.id)||null;
     p.fidelityMove=move;
     if(!move||!Number.isFinite(w.straightTime)||!Number.isFinite(w.referenceGravity))return false;
     p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=move.freeDrag*60;
@@ -1703,7 +1705,7 @@ export function installWeaponsFidelity(context,profile) {
     if(p.s3SpecialWeapon)return;
     if(!w)return;
     const raw=rawWeapon(w);p.s3Weapon=w;p.wid=w.id;p.fidelityPhase=0;
-    p.fidelityMove=moves.get(w.id)||null;
+    p.fidelityMove=moves.get(VARIANT_BASE_WEAPON[w.id] || w.id)||null;
     if(raw?.CollisionParam){
       const c=w.kind==='dualies'&&p.owner?.weaponRunner?.s3Turret?raw.CollisionLapOverParam:raw.CollisionParam;
       // On ghosts the existing size field disambiguates standing vs turret radius.
@@ -1918,7 +1920,7 @@ export function installWeaponsFidelity(context,profile) {
       pose.muzzle.lerp(pose.aimMuzzle,1-ready);
     pose.base.copy(actor.pos);pose.base.y+=actor.form==='squid' ? .4 : 1.05;
     const raw=rawWeapon(w),guide=w.shotGuide,unit=mode==='slosher'?guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum]:null;
-    const unitMove=unit?.MoveParam,move=moves.get(w.id)||null,runner=actor.weaponRunner;
+    const unitMove=unit?.MoveParam,move=moves.get(VARIANT_BASE_WEAPON[w.id] || w.id)||null,runner=actor.weaponRunner;
     const game=api.G,physics=game?.physics,level=physics?.level||game?.level||null;
     s.mode=mode;s.actor=actor;s.weapon=w;s.actorWeapon=actor.weapon;s.character=ch;
     s.getMuzzle=ch.getMuzzle;s.getAimMuzzle=ch.getAimMuzzle;s.aimReadyMethod=ch.aimReady;s.aimReady=ready;
