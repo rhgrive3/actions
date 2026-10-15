@@ -42,6 +42,7 @@ import { FOLLOWUP_MODELS as FOURTH_DUALIE_FIXED } from './variants-dualie-fixed-
 import { FOLLOWUP_MODELS as FOURTH_BLASTER_FIXED } from './variants-blaster-fixed-finish.mjs';
 import { FOLLOWUP_MODELS as FOURTH_DUALIE_LIGHT } from './variants-dualie-light-finish.mjs';
 import { FOLLOWUP_MODELS as FOURTH_BLASTER_DECO } from './variants-blaster-deco-finish.mjs';
+import { FOLLOWUP_MODELS as NEXT_C } from './variants-c-next-followup.mjs';
 import { FOLLOWUP_MODELS as FIFTH_CHARGERS } from './variants-charger-followups.mjs';
 
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
@@ -80,7 +81,7 @@ for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS]) {
 }
 const VARIANT_SPECS = new Map(), VARIANT_KITS = new Map(), VARIANT_KEYS = new Map();
 const KITS_BY_ROW = new Map(ALTERNATE_WEAPON_KITS.map(kit => [kit.main, kit]));
-for (const mod of [BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS]) {
+for (const mod of [BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FOURTH_NOZZLE, FOURTH_DUALIE_FIXED, FOURTH_BLASTER_FIXED, FOURTH_DUALIE_LIGHT, FOURTH_BLASTER_DECO, FIFTH_CHARGERS, NEXT_C]) {
   for (const [key, spec] of Object.entries(mod)) {
     const kit = KITS_BY_ROW.get(key), record = kit && RECORDS.get(kit.baseId);
     if (!kit || !record || spec.sourceRow !== key || spec.baseId !== kit.baseId)
