@@ -1,0 +1,69 @@
+name: INKWAVE defense selection regression
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/runtime/kit-defense.mjs'
+      - 'patches/splatoon3/runtime/kit-big-bubbler.mjs'
+      - 'patches/splatoon3/runtime/kit-ink-vac.mjs'
+      - 'patches/splatoon3/tests/kit-defense-selection-emitted.test.mjs'
+      - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - '.github/workflows/inkwave-defense-selection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-defense-selection-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify immutable checkout identity
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          mkdir -p .ci-evidence/defense-selection
+          git rev-parse HEAD > .ci-evidence/defense-selection/source-sha.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2
+      - name: Verify source selection and real native callers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/kit-defense-selection-emitted.test.mjs patches/splatoon3/tests/kit-defense.test.mjs patches/splatoon3/tests/kit-big-bubbler-blaster-contact.test.mjs | tee .ci-evidence/defense-selection/source-test.log
+          grep -Fx '# tests 21' .ci-evidence/defense-selection/source-test.log
+          grep -Fx '# pass 21' .ci-evidence/defense-selection/source-test.log
+          grep -Fx '# fail 0' .ci-evidence/defense-selection/source-test.log
+          grep -Fx '# skipped 0' .ci-evidence/defense-selection/source-test.log
+      - name: Build exact checkout production composition
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+      - name: Verify actual emitted native defense callers and input artifact hashes
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/kit-defense-selection-emitted.test.mjs | tee .ci-evidence/defense-selection/emitted-test.log
+          grep -Fx '# tests 3' .ci-evidence/defense-selection/emitted-test.log
+          grep -Fx '# pass 3' .ci-evidence/defense-selection/emitted-test.log
+          grep -Fx '# fail 0' .ci-evidence/defense-selection/emitted-test.log
+          grep -Fx '# skipped 0' .ci-evidence/defense-selection/emitted-test.log
+          cp _site/inkwave-build.json .ci-evidence/defense-selection/inkwave-build.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: defense-selection-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .ci-evidence/defense-selection
+          if-no-files-found: error
+          retention-days: 14
