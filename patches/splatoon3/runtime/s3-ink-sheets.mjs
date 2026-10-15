@@ -30,7 +30,7 @@ import { MUZZLE_SPLASH, INK_RING, SLOSHING_SPIRAL } from './s3-sweps-assets.mjs'
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (f, a, b) => a + (b - a) * clamp(f, 0, 1); // GMod Lerp clamps
-const HU = 0.1 / (0.1 * 3.28084 * 16 * (1.00965 / 1.5)); // metres per Hammer unit
+export const HU = 0.1 / (0.1 * 3.28084 * 16 * (1.00965 / 1.5)); // metres per Hammer unit
 
 export const SHEET_STYLE = Object.freeze({ splash: 0, arc: 1 });
 export const FIRE_INK = Object.freeze({
@@ -44,7 +44,15 @@ export const FIRE_INK = Object.freeze({
   'slash-v': Object.freeze({ style: 1, life: 12, radius: 2.2, width: 0.72, arc0: 1.95, arc1: -1.05, layers: 3, tiles: 3, solid: true, specks: 4, pivotY: 0.95 }),
   'slash-h': Object.freeze({ style: 1, life: 10, radius: 1.55, width: 0.55, arc0: 1.75, arc1: -1.75, layers: 2, tiles: 2, solid: true, specks: 3, pivotY: 0.9 }),
 });
-// Sloshing Machine (SWEPs weapon_sloshingmachine.lua mSpiralSplash*)
+// Sloshing Machine round, SWEPsShooterInk.lua RenderSloshingMachine: an ink
+// box (-12..12 HU) turned 45 deg about its up and then its right axis, plus
+// RenderGeneral's beam (width DrawRadius = max(6, 1 DU / 3) HU) from the
+// round back to its trail, which sticks to the muzzle for ShooterTrailDelay
+// (2 frames) and then lags ShooterTrailDelay * (1 - f) behind the round,
+// f = clamp((t - delay - straight) / TrailLagTime (20 frames), 0, 0.8).
+// RenderGeneral also draws a dot sprite (size DrawRadius * 0.75) at both ends.
+export const MACHINE_ROUND = Object.freeze({ half: 12 * HU, beamWidth: 6 * HU, dot: 4.5 * HU, trailDelay: 2 / 60, trailLag: 20 / 60 });
+// Sloshing Machine spiral splashes (SWEPs weapon_sloshingmachine.lua mSpiralSplash*)
 export const SPIRAL_SPLASH = Object.freeze({ spanFrames: 5, sameTime: 3, roundSplit: 4, lifeFrames: 11, roll: 120, drift: 20 * HU });
 
 // Splash cone at normalised life f, per SWEPs MuzzleSplash.lua Render().

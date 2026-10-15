@@ -105,6 +105,8 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
   for(let i=queue.length-1;i>=0&&count<capacity&&drawn<48;i--){
     const d=queue[i];
     if(!d?.owner?.color||!d.pos||!d.vel||d.owner.remote)continue;
+    // Sloshing Machine drops are SWEPs beams (s3-projectile-shapes.mjs).
+    if(d.sourceActor==='WeaponSlosherLauncher')continue;
     if(cameraPosition&&cameraPosition.distanceToSquared(d.pos)>900)continue;
     const speed=d.vel.length();
     direction.copy(d.vel);
