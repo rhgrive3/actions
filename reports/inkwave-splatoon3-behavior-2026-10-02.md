@@ -4404,3 +4404,13 @@ Captured rays use 73.8% fewer Math min/max calls with identical triangle work. N
 MAP/PAUSEとGYROに触れて24pxより外へ動かし、元へ戻して離す操作をタップ/長押し診断として確定しないようにした。GYROの接触を既存pointer mapへ登録し、押下中のパッド軸による入力所有権の横取りと、canvas捕捉失敗時にup/cancelを失う問題を修正。試し撃ちはnear plane/非有限のダメージ数字を隠し、的リセット時に古い数字とコンボカードを即時削除する。
 
 本家参照は既存のSplatoon 3 11.3.0。24px/900msは元からあるINKWAVEのブラウザUI値であり本家値ではない。武器・ギア・移動・射撃数値を推測で更新していない。修正前mainで新規10ケース中9件の失敗を再現し、修正後の同一テストと実際のminified module、Chromiumの実タッチ経路を検証。ブラウザのpad/最終gyro callbackはspy、試し撃ちDOM/cameraはfixtureであり、実センサー・Switch・モバイル実機の受入とは区別する。詳細は [追加修正の記録](inkwave-tap-range-followup-2026-10-15.md)。
+
+
+## 2026-10-15 ranked input / network lifetime follow-up
+
+Comparison target remains Splatoon 3 11.3.0, existing pinned Leanny reference `7280ff9cde8bb1c5dcef46c700c326471584d2e6`. No retail frame, damage, movement, or special table values changed. This follow-up repairs INKWAVE input arbitration and wire admission; it does not establish retail protocol equivalence.
+
+- Clam throw now respects the same map/menu/disabled/dead input ownership as ordinary attacks. Opening the Turf Map and pressing C no longer spends a clam; release is sampled while blocked, and pending network throws are cleared. Reproduction uses actual composed Input/PlayerController/Actor and ClamsRule, including a fresh press after unblocking.
+- Invalid ranked damage (nonfinite amount, old victim life, unknown victim) and out-of-range Rainmaker barrier hits no longer advance accepted sequence counters. Valid subsequent hits still apply once; numeric-string barrier damage is rejected. No combat damage values or authority model changed.
+- Ranked damage/input/hit admission stops after play/winner and after network disposal, matching the base receiver lifecycle. Remote command special metadata now expires with its existing 0.75-second fire/throw lease, so stale Crab state cannot indefinitely forbid clam collection.
+- Regression: `patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs`. Same six tests on unmodified `d6dc80e` fail by assertion (0/6); candidate passes 6/6. Wider ranked/pause/map source suite: 278 pass, one existing emitted-only skip; one skeletal test fixture initially lacked winner and passed after treating absent winner as unset. Targeted rerun 34/34. Emitted/build/browser evidence is recorded in the systems audit report; no Switch hardware comparison claimed.
