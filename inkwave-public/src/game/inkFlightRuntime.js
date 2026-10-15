@@ -24,7 +24,8 @@ export class InkFlightRuntime {
     Object.assign(this.stats, { spawned: 0, landed: 0, headImpacts: 0, peakDrops: 0 });
   }
   configure(p, key, sequence, seed, locked = false) {
-    const profile = INK_PROFILES[key];
+    // A network-owned key must select an own profile, never Object.prototype.
+    const profile = typeof key === 'string' && Object.hasOwn(INK_PROFILES, key) ? INK_PROFILES[key] : null;
     if (!profile || !Number.isSafeInteger(sequence) || sequence < 0 || !Number.isFinite(seed) || seed < 0 || seed >= 1) return false;
     p.inkProfile = profile; p.inkKey = key; p.inkSequence = sequence;
     p.inkPlan = splashPlan(profile, sequence); p.seed = seed;
