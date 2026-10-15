@@ -45,7 +45,14 @@ test('Tri and green Wellstring builders and all existing motion remain byte-iden
  const s=fs.readFileSync(new URL('../runtime/weapon-models/stringers.mjs',import.meta.url),'utf8'),m=s.indexOf('// ------------------------------------------------------------------------------------------ motion'),hash=x=>crypto.createHash('sha256').update(x).digest('hex');
  assert.equal(hash(s.slice(s.indexOf('function tri(d){'),s.indexOf('function reef(d){'))),'0b52bfc582e5bc02b2025875d2383603f723908cd4111a3b772bf20b9755c642');
  assert.equal(hash(s.slice(s.indexOf('function wellstring(d){'),m)),'61191d87e49d8b9e188c54fd374eb1498d1543e763514c3fcb0e70fea6e68cb5');
- assert.equal(hash(s.slice(m)),'f1c54e1216a8603da0d910f751087f52e80113173ea28b74cbc59b1cebf600ad');
+ // Variant-owned models dispatch through the canonical modelId while old
+ // base Stringer motion remains byte-identical beyond that one selector.
+ const altered='if (!MODELS[ch.weapon?.def?.modelId ?? ch.weaponModel]) return;';
+ const original='if (!MODELS[ch.weaponModel]) return;';
+ const motion=s.slice(m);
+ assert.equal(motion.split(altered).length,2,'exactly one adopted variant model selector');
+ assert.equal(hash(motion.replace(altered,original)),'f1c54e1216a8603da0d910f751087f52e80113173ea28b74cbc59b1cebf600ad',
+   'all other Stringer family pose and weapon animation bytes remain unchanged');
 });
 
 test('LACT cast arms have outward closed recessed sections, seated forward roots, and a substantial pull shaft',async()=>{
