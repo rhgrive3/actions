@@ -7,9 +7,12 @@ import {fileURLToPath} from 'node:url';
 export async function isolatedNativeStageTest(file,name){
  if(!process.env.INKWAVE_NATIVE_STAGE_ASSETS||process.env.INKWAVE_NATIVE_STAGE_TEST_CHILD==='1')return false;
  const pattern='^'+name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$';
+ // node:test workers pass this private flag to descendants; a new top-level
+ // runner must not inherit it or Node silently skips its requested files.
+ const env={...process.env,INKWAVE_NATIVE_STAGE_TEST_CHILD:'1'};delete env.NODE_TEST_CONTEXT;
  const result=await new Promise(resolve=>execFile(process.execPath,
   ['--experimental-vm-modules','--test','--test-reporter=tap','--test-name-pattern',pattern,fileURLToPath(file)],
-  {env:{...process.env,INKWAVE_NATIVE_STAGE_TEST_CHILD:'1'},timeout:15*60*1000,maxBuffer:4*1024*1024},
+  {env,timeout:15*60*1000,maxBuffer:4*1024*1024},
   (error,stdout,stderr)=>resolve({error,stdout,stderr})));
  if(result.stdout)process.stdout.write(result.stdout);
  if(result.stderr)process.stderr.write(result.stderr);
