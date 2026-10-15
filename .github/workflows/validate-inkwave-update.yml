@@ -160,7 +160,7 @@ jobs:
       - name: Verify cancelled native world preparation
         run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-world-cancellation.test.mjs
       - name: Verify native BVH query lifetime and collision parity
-        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs
+        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
       - name: Verify deterministic network replication
         run: node --experimental-vm-modules --test patches/network-replication/tests/*.test.mjs
       - name: Compare authoritative and reconstructed attacks
@@ -330,7 +330,7 @@ jobs:
       - name: Verify emitted native BVH query lifetime and collision parity
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
-        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs
+        run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs patches/native-stages/tests/bvh-browser-baseline.test.mjs
       - name: Verify emitted tap gesture continuity and practice range feedback
         env:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
