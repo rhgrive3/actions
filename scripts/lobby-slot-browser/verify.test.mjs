@@ -27,3 +27,15 @@ test('readiness observations preserve all original gates and expose failed condi
  assert.equal(JSON.stringify(G),original);assert.equal(globalThis.LOBBY_READINESS.polls,5);assert.match(browserSource,/waitForFunction\(observeLobbyReadiness,null,\{timeout:30000\}\)/);
  }finally{globalThis.COMPONENT_G=saved.G;globalThis.__inkwave=saved.game;globalThis.LOBBY_READINESS=saved.receipt;}
 });
+
+const runnerSource=fs.readFileSync(new URL('./run-hosted.mjs',import.meta.url),'utf8');
+const select=(0,eval)('('+runnerSource.split('\n')[0]+')');
+test('engine isolation requires one exact engine and keeps both workflow jobs',()=>{
+ assert.equal(select('chromium'),'chromium');assert.equal(select('webkit'),'webkit');
+ for(const v of [undefined,'','both','firefox','chromium webkit'])assert.throws(()=>select(v));
+ const localWorkflow=new URL('./inkwave-lobby-slot-browser.yml',import.meta.url);const workflow=fs.readFileSync(fs.existsSync(localWorkflow)?localWorkflow:new URL('../../.github/workflows/inkwave-lobby-slot-browser.yml',import.meta.url),'utf8');
+ assert.match(workflow,/engine: \[chromium, webkit\]/);assert.match(workflow,/fail-fast: false/);assert.match(workflow,/max-parallel: 1/);
+ assert.match(workflow,/cap=3\*1024\*\*3;reserve=2\*1024\*\*3;deadline=600/);
+ assert.match(runnerSource,/phase\('browser',role\)/);assert.match(runnerSource,/compare\(\.\.\.results\)/);
+ assert.equal((runnerSource.match(/for\(const current of \[engine\]\)/g)||[]).length,2);
+});

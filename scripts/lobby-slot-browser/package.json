@@ -46,8 +46,8 @@
       "publicationPath": "scripts/lobby-slot-browser/browser.mjs"
     },
     "inkwave-lobby-slot-browser.yml": {
-      "bytes": 6445,
-      "sha256": "4789b6fa22197d169dc2dcaad09ff754e2a08b3a0248038034e3ca91955cc6cc",
+      "bytes": 7125,
+      "sha256": "c030f259cb07b8a120ca3f56f4245c4d5b7571bf6828a9b0ea7ea9add00aec59",
       "publicationPath": ".github/workflows/inkwave-lobby-slot-browser.yml"
     },
     "lobby-probe.mjs": {
@@ -61,8 +61,8 @@
       "publicationPath": "scripts/lobby-slot-browser/native-style.mjs"
     },
     "run-hosted.mjs": {
-      "bytes": 3824,
-      "sha256": "9686f3b4fbaece9c7005a8a41d79ac939fb12f44bcb066687d1753f10ea13199",
+      "bytes": 4222,
+      "sha256": "b6eb972198da7f5973810a75e8a3e153a98c13af1106b356c29c057862f07867",
       "publicationPath": "scripts/lobby-slot-browser/run-hosted.mjs"
     },
     "style-smoke.mjs": {
@@ -76,8 +76,8 @@
       "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
     },
     "verify.test.mjs": {
-      "bytes": 5512,
-      "sha256": "78bf72aae142d5acf2312dd0f28b6a02418b6ca4f38e5f07dfec3b60eed24bd1",
+      "bytes": 6593,
+      "sha256": "fef6ca3fbf88eeefa456e00b8a9a794d79a8752ddce0ff2d758d1063bb7bb8ca",
       "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
     }
   },

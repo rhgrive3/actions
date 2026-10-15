@@ -10,11 +10,17 @@ concurrency:
 jobs:
   lobby-slot-browser:
     if: github.event_name == 'push' && github.ref == 'refs/heads/review/lobby-slot-browser-20261015' && github.repository == 'rhgrive3/actions'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        engine: [chromium, webkit]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       NODE_OPTIONS: --max-old-space-size=2048
       LOBBY_SLOT_AUTHORIZED: 'true'
+      LOBBY_SLOT_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -54,7 +60,7 @@ jobs:
         working-directory: diagnostic/scripts/lobby-slot-browser
         run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
-          npx playwright install --with-deps chromium webkit
+          npx playwright install --with-deps "$LOBBY_SLOT_ENGINE"
           mkdir -p "$GITHUB_WORKSPACE/evidence"
           node --test --test-reporter=tap bindings.test.mjs verify.test.mjs | tee "$GITHUB_WORKSPACE/evidence/controls.tap"
       - name: Compare fixed baseline and candidate component lobby DOM output
@@ -69,7 +75,7 @@ jobs:
           import json,os,pathlib,signal,subprocess,time
           # Same conservative 3GiB process-tree RSS and 2GiB system reserve as CPU qualification.
           # A single 600s supervised qualification budget; the job has a 30min hard timeout.
-          cap=3*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None
+          cap=3*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None;peakProcesses=[];peakPhase=None
           def available():
               return int(next(x.split()[1] for x in pathlib.Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')))*1024
           assert available()>=cap+reserve,'Insufficient starting memory and reserve'
@@ -88,7 +94,11 @@ jobs:
                   if expanded==descendants:break
                   descendants=expanded
               rss=sum(processes[pid][1] for pid in descendants if pid in processes)
-              free=available();peak=max(peak,rss);minimum=free if minimum is None else min(minimum,free)
+              free=available();minimum=free if minimum is None else min(minimum,free)
+              if rss>peak:
+                  peak=rss;peakProcesses=[{'pid':pid,'parent':processes[pid][0],'rss':processes[pid][1],'starttime':processes[pid][2]} for pid in sorted(descendants) if pid in processes]
+                  try:peakPhase=json.loads((pathlib.Path(os.environ['LOBBY_SLOT_EVIDENCE'])/'phase.json').read_text())
+                  except (OSError,ValueError):peakPhase=None
               if rss>cap:reason='process-tree RSS cap exceeded'
               elif free<reserve:reason='system memory reserve reached'
               elif time.monotonic()-start>deadline:reason='600s qualification timeout'
@@ -108,13 +118,13 @@ jobs:
                   break
               time.sleep(.25)
           e=pathlib.Path(os.environ['LOBBY_SLOT_EVIDENCE']);e.mkdir(exist_ok=True)
-          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'peakProcessTreeRSSBytes':peak,'minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'Hosted controlled lobby slot DOM assignment parity; no hardware/FPS/pixel claim'},indent=2)+'\n')
+          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'engine':os.environ['LOBBY_SLOT_ENGINE'],'peakProcessTreeRSSBytes':peak,'peakProcesses':peakProcesses,'peakPhase':peakPhase,'minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'Hosted controlled lobby slot DOM assignment parity; no hardware/FPS/pixel claim'},indent=2)+'\n')
           assert p.returncode==0 and reason is None,'Component qualification failed; preserve compact evidence'
           PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lobby-slot-browser-${{ github.run_id }}
+          name: lobby-slot-browser-${{ matrix.engine }}-${{ github.run_id }}
           if-no-files-found: error
           retention-days: 7
           path: |
