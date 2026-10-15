@@ -106,7 +106,9 @@ jobs:
   nova-origin-diagnosis:
     if: github.head_ref == 'feat/inkwave-five-circled-shooters'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The production two-owner/remote WebSocket replay took over 30 minutes
+    # after all assertions passed. Preserve it as a required real-network gate.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
