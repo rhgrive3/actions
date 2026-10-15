@@ -4681,3 +4681,20 @@ Current-base follow-up (2026-10-13): the final reconciliation preserves external
 - 有限の等距離ヒットを元の三角形 ID が小さい面へ統一し、カプセルの接触修正も元の三角形順に適用する。原典形状、判定寸法、距離しきい値、操作の速度・加速度は変更しない。非有限値や型変換の既存挙動は維持する。
 - 回帰検証は凍結した従来 ray 実装を保持。従来 BVH が実際に訪問した三角形を別順で総当たりして期待する等距離選択を独立に求め、ヒットの全情報と元の走査回数を照合する。レイとカプセルの走査順逆転ケースを含め 19 件通過。
 - JS 変換の Bluefin 原典形状で、両陣営の実 Actor / Brain / WeaponRunner / Projectile / Paint を使い、射撃、落下、壁登りによる対岸の本来の上岸への到達を CPU 60 Hz で確認。これは本家 AI や実機の移動値の検証ではない。
+
+## 2026-10-16: native collision query lifetime optimization
+
+- Reference/conditions: retain the documented Splatoon 3 11.3.0 baseline; all
+  weapon/gear settings unchanged. No new retail numeric values are inferred.
+- INKWAVE implementation: `patches/native-stages/runtime/triangle-world.mjs`
+  reuses traversal stacks and supports caller-owned ray results;
+  `native-physics.mjs` copies pooled hits and ends a fit query after obstruction.
+- Reproduction/impact: repeated movement, camera/weapon rays and blocked body
+  probes on native triangle stages avoid temporary allocations and unnecessary
+  traversal, preserving geometry, tolerances, nearest-hit order and grate rules.
+- Verification: frozen-before comparison, 7,000 mixed rays, native movement at
+  30/60/120 Hz, existing actual weapon/damage/paint replays at all three rates,
+  and actual minified Chromium component comparison. Logic/component verification
+  is distinct from full-game rendering; Switch/mobile hardware and retail
+  equivalence remain unverified. Details and workload limits are in
+  `reports/inkwave-bvh-optimization-2026-10-16.md`.

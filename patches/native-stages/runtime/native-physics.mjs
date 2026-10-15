@@ -10,11 +10,15 @@ export class NativePhysics extends Physics {
   this.dynamic=new Physics({blocks:level.blocks,faces:level.faces,
    queryBlocks:(...a)=>level.queryDynamicBlocks(...a)});
   this.dynamicHit=new Hit();
+  // This result is copied into the caller-owned Hit before the next raycast.
+  this._nativeRayHit={point:new THREE.Vector3(),normal:new THREE.Vector3()};
+  this._nativeRayOptions={ignoreGrates:false};
  }
  raycast(origin,dir,maxDist,out=new Hit(),skipGrates=false){
   out.hit=false;out.dist=maxDist;out.block=out.face=-1;
   if(!(maxDist>0)||!Number.isFinite(maxDist))return out;
-  const h=this.world.ray(origin,dir,maxDist,{ignoreGrates:skipGrates});
+  this._nativeRayOptions.ignoreGrates=skipGrates;
+  const h=this.world.ray(origin,dir,maxDist,this._nativeRayOptions,this._nativeRayHit);
   if(h){
    out.hit=true;out.dist=h.distance;out.point.copy(h.point);out.normal.copy(h.normal);
    out.block=this.level.blockForTriangle(h.triangle);out.face=this.level.data.triangleFace[h.triangle];out.triangle=h.triangle;
@@ -74,7 +78,7 @@ export class NativePhysics extends Physics {
  _sourceBodyFits(pos,radius,lift,height,skipGrates,margin){
   const w=this.world,s0=w._s0.set(pos.x,pos.y+lift+radius,pos.z),s1=w._s1.set(pos.x,pos.y+Math.max(lift+radius,height-radius),pos.z);
   min.copy(s0).min(s1).addScalar(-radius);max.copy(s0).max(s1).addScalar(radius);let fits=true;
-  w.queryBox(min,max,id=>{if(!fits||(skipGrates&&(w.flags[id]&4)))return;if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin)fits=false;});
+  w.queryBox(min,max,id=>{if(!fits||(skipGrates&&(w.flags[id]&4)))return;if(w._capsuleDistance(s0,s1,w.triangle(id))<radius-margin){fits=false;return false;}},true);
   return fits;
  }
  /** A raised source foot snap follows the body solve. Reconcile only a new
