@@ -270,3 +270,17 @@ test('a remote Kraken is drawn dashing only at dash speed (the network carries n
   assert.equal(remoteKrakenPhase({ ...a, remote: false }), null, 'local actors use their own state');
   assert.equal(remoteKrakenPhase({ ...a, specialActive: { id: 'reefslider' } }), null);
 });
+
+test('sprite quads face the camera (a mirrored, back-facing quad is culled and never draws)', async () => {
+  const { fx } = await boot();
+  const d = specialVfxDirector(fx);
+  for (const pool of [d.kit.sparks, d.kit.puffs]) {
+    const m = pool.mesh.material;
+    if (m.side === 2) continue;   // DoubleSide draws either winding
+    // quad corner (x, y) maps to ax * y + bx * x; with bx = (ax.y, -ax.x) the corners keep their counter-clockwise order
+    assert.match(m.vertexShader, /vec2 bx = vec2\(ax\.y, -ax\.x\);/, `${pool.mesh.name}: right-handed side axis`);
+    const ax = [0.6, 0.8], bx = [ax[1], -ax[0]], P = [[-1, -1], [1, -1], [1, 1]].map(([x, y]) => [ax[0] * y + bx[0] * x, ax[1] * y + bx[1] * x]);
+    const area = (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[2][0] - P[0][0]) * (P[1][1] - P[0][1]);
+    assert.ok(area > 0, 'the first triangle stays counter-clockwise (front-facing)');
+  }
+});

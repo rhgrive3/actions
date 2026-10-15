@@ -113,7 +113,7 @@ void main(){
   vec3 dv = mat3(viewMatrix) * iDir.xyz;
   float l2 = length(dv.xy);
   vec2 ax = l2 > 1e-4 ? dv.xy / l2 : vec2(cos(iPar.y), sin(iPar.y));
-  vec2 bx = vec2(-ax.y, ax.x);
+  vec2 bx = vec2(ax.y, -ax.x);   // right-handed with ax so the quad faces the camera (a mirrored quad is culled)
   float along = iDir.w * (l2 > 1e-4 ? l2 / max(length(dv), 1e-4) : 0.0) * 0.5;
   float s = iPos.w;
   c.xy += ax * position.y * (s + along) + bx * position.x * s;
@@ -200,7 +200,7 @@ void main(){
     a = 1.0 - smoothstep(-fw, fw, sd);
     if (a <= 0.0) discard;
     vec2 q = o / max(rad, 1e-3); float z = sqrt(max(1.0 - dot(q, q), 0.0));
-    vec2 bx = vec2(-vAx.y, vAx.x);
+    vec2 bx = vec2(vAx.y, -vAx.x);   // the same side axis the vertex shader used
     vec3 n = normalize(vec3(bx * q.x + vAx * q.y, z + 0.05));
     col = sxInk(vCol.rgb, n, vec3(0.0, 0.0, 1.0), 1.0);
     if (vCol.a < 0.03) discard;
