@@ -18,6 +18,17 @@ async function pair({ordinal=0,distance=5,drop=0}={}){
  impact();return{sender,receiver,p,birth,impact,rows:sender.nm.out};
 }
 for(const options of [{},{distance:10},{distance:18},{drop:5},{ordinal:1},{ordinal:4},{ordinal:8}])test('source-derived footprint '+JSON.stringify(options),async()=>{const h=await pair(options);for(const e of h.rows)receive(h.receiver,e);same(h.sender,h.receiver);});
+test('sourced Slosher terrain ink keeps its accepted source-shot kind and rejects forged source-splash cores',async()=>{
+ const h=await pair(),head=h.rows[1];
+ assert.equal(head[8],'source-shot','the live Slosher source stamp carries its physical kind over the wire');
+ for(const e of h.rows)receive(h.receiver,e);
+ same(h.sender,h.receiver);
+ const forged=JSON.parse(JSON.stringify(head));forged._netSeq=head._netSeq+2;forged._netTick=head._netTick;
+ forged[8]='source-splash';
+ const before=Array.from(h.receiver.f.G.paint.grid);
+ receive(h.receiver,forged);
+ assert.deepEqual(Array.from(h.receiver.f.G.paint.grid),before,'a drop kind cannot impersonate an authenticated head impact');
+});
 test('unreceived projectile birth cannot authorize a larger terrain impact',async()=>{const h=await pair();receive(h.receiver,h.rows[1]);assert.ok(h.receiver.f.G.paint.grid.every(x=>x===0));});
 test('duplicate core and forged later core cannot consume a second impact',async()=>{const h=await pair();for(const e of h.rows)receive(h.receiver,e);const before=Array.from(h.receiver.f.G.paint.grid);receive(h.receiver,h.rows[1]);h.impact();const forged=h.sender.nm.out.at(-1);forged[2]=12;forged[15][7][0]=12;receive(h.receiver,forged);assert.deepEqual(Array.from(h.receiver.f.G.paint.grid),before);});
 for(const change of ['radius','stretch','direction','center','origin','projectile','unit','weapon','owner','match'])test('reject mismatched '+change,async()=>{const h=await pair();const rows=h.rows.map(e=>JSON.parse(JSON.stringify(e)));for(let i=0;i<rows.length;i++){rows[i]._netSeq=h.rows[i]._netSeq;rows[i]._netTick=h.rows[i]._netTick;}
