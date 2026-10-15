@@ -4288,6 +4288,28 @@ The old mixed-sub producer/lifecycle coverage claim is withdrawn: directly repla
 The preceding density/duplicate-work counts retain their historical inputs and do not become corrected kit-specific performance evidence. The ordinary synthetic-floor scope, consecutive-stall and admission-wait limitations remain. Separate full-installer victim-local damage, Bubbler and recipient-life evidence is unaffected. Final bound verification is recorded in `reports/network-replication/bomb-authority-budget-2026-10-13.md`; browser and retail comparisons remain distinct.
 
 
+## 2026-10-14: Wiki再取得とルール接触・時間境界の修正
+
+比較対象は現行公開版を生成する overlays、基準mainは `14f9f913a8438353d0e462a0e74e17d8af876230`。参照データ版は11.3.0、Wiki個別性能表の表示版は各ページに従う。メイン65ページを再取得して版表示を記録し、既存カタログ65件のsourceActor/source SHA-256が前回の監査記録と一致することを確認した。表の抜粋で確認できる458数値欄を `reports/inkwave-wiki-refresh-2026-10-14.json` に保存した。458欄は新たに458性能を実装・検証したという意味ではない。前回206項目の照合と今回の抜粋再取得は区別する。
+
+- **本家の根拠**: S3mixの[ホコ](https://wikiwiki.jp/splatoon3mix/ガチホコバトル)はゴールでの待機中も被弾し、直上への到着30F・側面経由37F・イカノボリ60Fを区別する。[アサリ](https://wikiwiki.jp/splatoon3mix/ガチアサリ)は空中での取得・味方へのパス・敵ガチアサリの取得禁止を記載する。[ヤグラ](https://wikiwiki.jp/splatoon3mix/ガチヤグラ)は無人5秒で中立へ移り、無人帰還を通常速度の約0.8倍とする。[エリア](https://wikiwiki.jp/splatoon3mix/ガチエリア)と[Inkipediaの延長](https://splatoonwiki.org/wiki/Overtime)は連続した中立10秒を終了条件とする。直前喪失時の延長開始は両Wikiで説明粒度が違い、既存の開始条件は維持した。
+- **実装箇所・再現操作**: `runtime/ranked/rainmaker.mjs`で開いたゴールへ接地到着。以前は即0、修正後は1のまま30F保持し、最終フレームの死亡・時間切れ・接地喪失・離脱を先に処理する。保持中はnative Actorの移動・ジャンプ・変身・攻撃入力を抑制し、ダメージは受ける。途中の残時間はホスト引継ぎで保持され、不正snapshotは原子的に拒否する。
+- **接触と時間計算**: `clams.mjs`で通常60Hz投擲の軌道が取得球をかすめた場合、旧位置での二度目の判定が実際の交差を拒否していた。軌道上の最寄点で取得を検査する。壁・敵ガチアサリ・特殊状態・既存所持の拒否は維持。`tower.mjs`は無人時間4.9→5.1秒を一度だけ積算し、旧実装の帰還移動の二重加算を除いた。`zones.mjs`は直前喪失からの中立時間を延長開始時に引き継ぎ、新たに10秒付与しない。
+- **確認状態**: 旧実装の失敗対照、新規18ケース、実Actorの入力抑制・通常入力復帰・致死ダメージ、生成済みminifiedモジュールでの同じケースを検証。検証コマンド・結果と残件は `reports/inkwave-wiki-refresh-2026-10-14.md`。Nintendo実機・新規レンダリングブラウザ・公開URL反映の確認ではない。
+- **未確認**: ローカルの平坦なゴール接触には30Fを採用したが、任天堂の台座頂点/側面/イカノボリの判定形状、37F/60Fの到着分類、頭上へ掲げる骨格アニメーションは未実装/未測定。ヤグラの帰還比率はWiki近似値。旧版混在、エリアペナルティ丸め、ホコ退行3倍/4倍・延長猶予10秒/15秒、スコープ、壁垂れ、スクリュー渦、全対物・設置物のヤグラ追従は引き続き要検証。完全再現とは判定しない。
+
+### 2026-10-14：全カテゴリ再点検と追加ブキへの挙動修正
+
+最新 main `e815cfc46d4d5ab53bfa188176fb0b9e591380cb` でメイン65種、サブ14種、スペシャル19種、一般移動/ギア/塗り/入力/通信の所有者を確認した。スコープの半チャージ開始、追加ローラーの自然落下25F猶予・停止中の塗り/ダメージ禁止・ブキ固有ダッシュ時計と最低消費速度、追加18チャージブキの空中/不足倍率と支払済み発射上限、バレルの終端込み41発/161F、ストリンガーの連続射撃面、ショクワンダーの実地形命中/空振り45F、ラインマーカーの人体直撃終了を修正した。前回ルール4修正も維持する。標準AP0と不足インク、30/60/120Hz render→固定clock、native Actor入力、native Physics壁、実弾・mark/expireを使う回帰を追加した。
+
+根拠の版、操作条件、実装箇所、影響、確認範囲と未解決差分は [全カテゴリ再点検記録](inkwave-wiki-full-2026-10-14.md) を参照。Wikiと抽出値が食い違うバレル1周装填欄、サメ前隙/無敵開始、トーピードの?付き時間は転記で解決しない。低インクのNintendo資金/返却の完全時系列、BowTiltKeepFrame/reset、レティクル/骨格姿勢、残留マーカー線、壁垂れ・スクリュー渦、レンダリングブラウザと実WebSocket・Switch実機は未確認として残す。最新mainの設置物ヤグラ追従/寿命は既実装であり、古い未実装記述から再実装しない。外部CIの待機を検証完了扱いにしない。
+
+バレルの41発/161F予約に伴い、HUDが終端の追加1Fを第2チャージへ混入する差分も修正した。リングはnative支払済み残区間から計算し、48Fの1周リリースで第2リングを0に維持する。装填区間の期待値は根拠付き更新、描画レシピの縦振り入力は受付ジャンプで再現する。Playwrightだけ存在しChromium実体がない環境で、optional WebGL試験を虚偽の成功にしないため明示skipを追加し、要求モードでは失敗を維持する。
+
+
+最終追記：ローラーのイカ化/サブ構えでrollingとダッシュ時計を消す経路も追加したが、実行環境の切断（environment_offline）のため最終native/emitted再検証は未完了。935ファイルの全体実行は6,000件以上まで観測できたが、最終exitは回収できていない。constrained即時Charger beamの生成コード装備差も未解決の検証項目として維持する。詳細と直前までのsource/emitted成功数は全カテゴリ再点検記録の最終保存節を参照。全件合格、ブラウザ/実WebSocket/本家実機検証完了、main反映済みとは主張しない。
+
+
 ## 2026-10-13: audio v11 非同期ロードの所有期間（#1322 派生）
 
 音響Draft5530272では、manifest待機中に音声bankを破棄・コンテキスト置換しても、完了後に古いbankへの取得・デコード・再格納が続く。実モジュールと合成データで再現し、既存のgenerationとbank/context所有判定を各await境界へ接続した。正常な共有キャッシュ、新しい所有者のロード、失敗後の再試行は維持する。stopAllや音声再生規則、MP3は変更しない。

@@ -207,6 +207,9 @@ test('either of two checkpoints opens the goal gate, drops the Rainmaker and req
   assert.equal(rule.state.carrier, carrier.id);
   carrier.pos = [0, 0, 10];
   rule.update(0, { actors: [carrier] });
+  assert.equal(engine.winner, null, 'goal entry begins the vulnerable hold');
+  assert.equal(engine.counts[0], 1);
+  rule.update(30 / 60, { actors: [carrier] });
   assert.equal(engine.winner, 0);
   assert.equal(rule.state.terminal, true);
 });
