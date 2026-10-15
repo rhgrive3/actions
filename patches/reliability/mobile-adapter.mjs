@@ -37,6 +37,13 @@ export function adaptMobile(rel, code) {
   code = replaceOnce(code, `    // look
     this._ptr.set(e.pointerId, { kind: 'look', x, y });`, `    // Ordinary look is owned by its starting half; buttons and the stick keep priority.
     if (x >= W * 0.5) this._ptr.set(e.pointerId, { kind: 'look', x, y });`, rel);
+  code = replaceOnce(code, `    stop(e);
+    if (p.kind === 'look'`, `    stop(e);
+    if (p.kind === 'tap') {
+      if (Math.hypot((e.clientX ?? p.x) - p.x, (e.clientY ?? p.y) - p.y) > 24) p.cancelled = true;
+      return;
+    }
+    if (p.kind === 'look'`, rel);
   code = replaceOnce(code, `    if (p.kind === 'btn') this._release(p.id);`, `    if (p.kind === 'tap') { this._tapEnd(p, e); return; }
     if (p.kind === 'btn') {
       const cancelled = e.type === 'pointercancel' || e.type === 'lostpointercapture';
@@ -72,7 +79,7 @@ export function adaptMobile(rel, code) {
   _tapEnd(p, e) {
     if (!p.open) this.els[p.id]?.classList.remove('is-down');
     // Only a completed tap on the same pointer commits; pointercancel / premature lostpointercapture / drift drop it.
-    if (e.type !== 'pointerup' || this.editing || Math.hypot((e.clientX ?? p.x) - p.x, (e.clientY ?? p.y) - p.y) > 24) return;
+    if (e.type !== 'pointerup' || p.cancelled || this.editing || Math.hypot((e.clientX ?? p.x) - p.x, (e.clientY ?? p.y) - p.y) > 24) return;
     if (p.id === 'map') { this.setMap(p.open || !this.mapOpen); this.pressed.add('map'); }
     else { this.pressed.add('pause'); this.onPause?.(); }
   }

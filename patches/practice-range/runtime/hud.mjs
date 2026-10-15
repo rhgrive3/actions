@@ -145,7 +145,9 @@ export class RangeHud {
       if (f.t > f.life) { f.el.remove(); this._float.splice(i, 1); continue; }
       _p.copy(f.target.pos); _p.y += PLAYER.height + 0.35 + f.t * 0.6;
       _p.project(cam);
-      if (_p.z > 1) { f.el.style.opacity = '0'; continue; }
+      if (!Number.isFinite(_p.x) || !Number.isFinite(_p.y) || !Number.isFinite(_p.z) || _p.z < -1 || _p.z > 1) {
+        f.el.style.opacity = '0'; continue;
+      }
       const x = (_p.x * 0.5 + 0.5) * W + f.dx * f.t, y = (-_p.y * 0.5 + 0.5) * H;
       const k = f.t / f.life;
       f.el.style.opacity = String(Math.min(1, (1 - k) * 2.4));
@@ -155,5 +157,10 @@ export class RangeHud {
     if (this._toastT > (this._toastLife || 1.8) && this.toastEl.classList.contains('is-on')) this.toastEl.classList.remove('is-on');
   }
 
-  dispose() { this.root.remove(); this._float.length = 0; }
+  clearTargetFeedback() {
+    for (const f of this._float) f.el.remove();
+    this._float.length = 0; this._cardT = 99;
+    this.card.classList.remove('is-on');
+  }
+  dispose() { this.clearTargetFeedback(); this.root.remove(); }
 }

@@ -95,6 +95,7 @@ export class RangeSession {
       a.rangeTarget.combo = null; a.rangeTarget.deaths = 0;
     }
     this.last = null; this.log.length = 0;
+    this.hud.clearTargetFeedback?.();
     this.hud.toast(L('Targets reset'));
   }
 
