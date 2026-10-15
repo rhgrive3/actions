@@ -3,6 +3,7 @@
 // (modelKind) still selects gameplay, native HOLD data and the animated part
 // channels the family runtime drives. Geometry is procedural and built lazily.
 import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
+import { VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
 import * as SHOOTERS from './shooters.mjs';
 import * as SHOOTERS_B from './shooters-b.mjs';
 import * as BLASTERS from './blasters.mjs';
@@ -46,12 +47,12 @@ export function weaponFamilyPose(id) { return FAMILY_POSE.get(weaponBehaviorFami
 export function weaponFamilyTrigger(id) { return FAMILY_TRIGGER.get(weaponBehaviorFamily(id)) ?? null; }
 
 /** Native visual family (HOLD key / part channels) for a weapon ID or family kind. */
-export function weaponModelFamily(id) { return RECORDS.get(id)?.modelKind ?? id; }
+export function weaponModelFamily(id) { const base = VARIANT_BASE_WEAPON[id] || id; return RECORDS.get(base)?.modelKind ?? base; }
 /** Catalogue behaviour family (brush, brella, stringer, splatana …) for a weapon ID. */
-export function weaponBehaviorFamily(id) { return RECORDS.get(id)?.family ?? id; }
+export function weaponBehaviorFamily(id) { const base = VARIANT_BASE_WEAPON[id] || id; return RECORDS.get(base)?.family ?? base; }
 /** Cache key for getWeaponDef: the weapon ID when it owns a model, else its shared family model. */
-export function weaponModelKey(id) { return SPECS.has(id) ? id : weaponModelFamily(id); }
-export function weaponModelSpec(id) { return SPECS.get(id) ?? null; }
+export function weaponModelKey(id) { const base = VARIANT_BASE_WEAPON[id] || id; return SPECS.has(base) ? base : weaponModelFamily(base); }
+export function weaponModelSpec(id) { return SPECS.get(VARIANT_BASE_WEAPON[id] || id) ?? null; }
 export function registeredWeaponModels() { return [...SPECS.keys()]; }
 
 /** Apply the weapon's own model to a freshly built family def (before finishParts). */
@@ -89,5 +90,5 @@ export function weaponHold(key, base) {
 // clips; those families (and any model asking for it) keep the native hold.
 const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush']);
 export function weaponNeedsNativeCarry(id) {
-  return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(id)?.nativeCarry);
+  return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(VARIANT_BASE_WEAPON[id] || id)?.nativeCarry);
 }

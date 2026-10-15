@@ -10,7 +10,7 @@ export function advanceTenacity(match, dt, emit) {
   const counts = [0, 0];
   for (const a of actors) if (a.alive && (a.team === 0 || a.team === 1)) counts[a.team]++;
   for (const a of actors) {
-    if (!a.alive || a.remote || a.specialActive || a.s3?.loadout?.[0]?.main !== 'tenacity' ||
+    if (!a.alive || a.remote || a.specialActive || a.stormGaugeLock > 0 || a.s3TidalSlamGaugeFinish || a.s3?.loadout?.[0]?.main !== 'tenacity' ||
         (a.team !== 0 && a.team !== 1)) continue;
     const deficit = Math.max(0, Math.min(3, counts[1 - a.team] - counts[a.team]));
     const cost = a.specialCost(), baseCost = a.s3?.tenacityBaseCost;

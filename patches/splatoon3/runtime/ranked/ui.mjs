@@ -68,6 +68,7 @@ function objectiveText(engine, G) {
     return `${teamName(team)} TOWER · ${p}%${total ? ` · CP ${Math.min(index, total)}/${total}` : ''}`;
   }
   if (engine.mode === 'rainmaker') {
+    if (state.goalHold) return 'DUNKING · PROTECT THE CARRIER!';
     if (state.respawnRemaining > 0) return `REFORMING SHIELD · ${Math.ceil(state.respawnRemaining)}s`;
     const barrier = state.barrier;
     if (barrier?.active) {

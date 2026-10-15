@@ -1,6 +1,9 @@
 export function adaptTenacity(rel, code, once) {
   if (rel === 'src/game/match.js') {
     code = "import { advanceTenacity } from '../../patches/local-quality/tenacity.mjs';\n" + code;
+    // Match owns one post-roster passive award; the optional Actor installer
+    // defers to this class-local capability instead of adding a second award.
+    code += "\nObject.defineProperty(Match.prototype, Symbol.for('inkwave.tenacity.match-owner.v1'), { value: true });\n";
     return once(code, '    this.bossMode?.update(dt);', '    advanceTenacity(this, dt, emit);\n    this.bossMode?.update(dt);', 'Tenacity one post-actor tick');
   }
   if (rel !== 'patches/splatoon3/runtime/gear.mjs') return code;

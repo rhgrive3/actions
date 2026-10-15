@@ -6,7 +6,7 @@ export function adaptTouchPointerLock(rel, code) {
   code = "import { isMobilePointer } from '../../patches/local-quality/first-touch-adapter.mjs';\n" + code;
   code = replaceOnce(code,
     'if (p && p.catch) p.catch(() => { try { const q = this.canvas.requestPointerLock();',
-    "if (p && p.catch) p.catch(() => { if (!this.enabled || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.mode !== 'match' || G.match?.state !== 'playing' || G.match.paused || G.game?.menus?.current) return; try { const q = this.canvas.requestPointerLock();",
+    "if (p && p.catch) p.catch(() => { if (!this._pointerLockRequestCurrent(ticket) || !this.enabled || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.mode !== 'match' || G.match?.state !== 'playing' || G.match.paused || G.game?.menus?.current) { this._finishPointerLockRequest(ticket); return; } try { const q = this.canvas.requestPointerLock();",
     'pointer-lock fallback needs current playing admission');
   code=replaceOnce(code,'    this._dev = v;','    this._dev = v;\n    if (v === \'touch\') this._releaseMouseForTouch();','touch releases mouse ownership');
   code=replaceOnce(code,"    window.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') this.lastDevice = 'touch'; }, { capture: true, passive: true });",`    window.addEventListener('pointerdown', (e) => {
@@ -31,18 +31,30 @@ export function adaptTouchPointerLock(rel, code) {
   code=replaceOnce(code,`      this.locked = document.pointerLockElement === this.canvas;
       if (!this.locked) { this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0; this.onUnlock?.(); }`,`      const wasLocked = this.locked;
       const locked = document.pointerLockElement === this.canvas;
-      if (locked && (this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.match?.paused || G.game?.menus?.current)) {
+      if (locked && (!this.enabled || this._pointerLockCancelled || (this._pointerLockPending && !this._pointerLockRequestCurrent(this._pointerLockPending)) || this.lastDevice === 'touch' || this._touchUnlockPending || this._touchLockAdmissionBlocked || this.mobile?.editing || this.mobile?.mapOpen || G.match?.paused || G.game?.menus?.current)) {
+        this._finishPointerLockRequest(this._pointerLockPending);
         this.locked = false;
         if (!this._touchUnlockPending) this._releaseMouseForTouch();
         return;
       }
       this.locked = locked;
-      if (locked) { this._touchRelockWanted = false; return; }
+      if (locked) { this._finishPointerLockRequest(this._pointerLockPending); this._touchRelockWanted = false; return; }
       const touchUnlock = this._touchUnlockPending;
       this._touchUnlockPending = false;
       this.mouse.left = this.mouse.right = false; this.mouse.leftPressed = this.mouse.rightPressed = false; this.mouse.dx = this.mouse.dy = 0;
       if (!touchUnlock && wasLocked) this.onUnlock?.();`,'touch unlock is not Escape');
-  return replaceOnce(code,'  requestLock() {',`  _isTouchOverlayReacquireTarget(target, includeEditor = false) {
+  code = replaceOnce(code,'  requestLock() {',`  _pointerLockRequestCurrent(ticket) {
+    return !!ticket && this._pointerLockPending === ticket && !ticket.cancelled &&
+      (ticket.playing ? (G.mode === ticket.mode && G.match === ticket.match &&
+        G.match?.state === 'playing' && !G.match.attract) :
+        !(G.mode === 'match' && (['finish', 'judge'].includes(G.match?.state) || G.match?.attract)));
+  }
+
+  _finishPointerLockRequest(ticket) {
+    if (this._pointerLockPending === ticket) this._pointerLockPending = null;
+  }
+
+  _isTouchOverlayReacquireTarget(target, includeEditor = false) {
     const mobile = this.mobile;
     // A physical mouse can acquire KBM even while map/editor prevent lock.
     // Pointer Lock admission stays in the separate playing-context guard.
@@ -81,4 +93,28 @@ export function adaptTouchPointerLock(rel, code) {
     if (this.enabled && this.lastDevice !== 'touch' && !this.locked && !this._touchUnlockPending &&
       !this.mobile?.editing && !this.mobile?.mapOpen && G.mode === 'match' && G.match?.state === 'playing' &&
       !G.match.paused && !G.match.attract && !G.game?.menus?.current) this._touchLockAdmissionBlocked = false;`,'touch pointer-lock lifecycle owner');
+  code = replaceOnce(code,
+    "    if (this._dev === 'touch' || this.locked) return;\n    try {",
+    "    if (this._dev === 'touch' || this.locked || this._pointerLockPending) return;\n    const ticket = this._pointerLockPending = { mode: G.mode, match: G.match, playing: G.mode === 'match' && G.match?.state === 'playing', cancelled: false };\n    this._pointerLockCancelled = false;\n    try {",
+    'one pending pointer-lock identity');
+  code = replaceOnce(code,
+    "      const p = this.canvas.requestPointerLock({ unadjustedMovement: true });",
+    "      const p = this.canvas.requestPointerLock({ unadjustedMovement: true });\n      ticket.modern = !!p?.catch;",
+    'promise rejection owns modern error completion');
+  code = replaceOnce(code,
+    "if (q && q.catch) q.catch(() => {}); } catch { /* ignore */ } });",
+    "if (q && q.catch) q.catch(() => { this._finishPointerLockRequest(ticket); }); } catch { this._finishPointerLockRequest(ticket); } });",
+    'retire rejected fallback identity');
+  code = replaceOnce(code,
+    "    } catch { /* not allowed without a gesture */ }",
+    "    } catch { this._finishPointerLockRequest(ticket); /* not allowed without a gesture */ }",
+    'retire synchronous rejection identity');
+  code = replaceOnce(code,
+    "  exitLock() { if (document.pointerLockElement) document.exitPointerLock(); }",
+    "  exitLock() {\n    this._pointerLockCancelled = true;\n    if (this._pointerLockPending) this._pointerLockPending.cancelled = true;\n    if (document.pointerLockElement) document.exitPointerLock();\n  }",
+    'explicit exit cancels pending acquisition');
+  return replaceOnce(code,
+    "    document.addEventListener('pointerlockchange', () => {",
+    "    document.addEventListener('pointerlockerror', () => { if (!this._pointerLockPending?.modern) this._finishPointerLockRequest(this._pointerLockPending); });\n    document.addEventListener('pointerlockchange', () => {",
+    'retire legacy event-only failure');
 }

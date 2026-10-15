@@ -17,6 +17,7 @@ import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidel
 import { gearCurve } from './gear.mjs';
 import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
+import { buildSubModel, poseSubModel, isSharedGeometry, SPLASH_WALL_FOLDED_SCALE, SPLASH_WALL_UNFOLD_SECONDS } from './sub-models.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
@@ -243,11 +244,6 @@ function emitEvent(api, object, phase, extra = {}) {
   return payload;
 }
 
-function visualMaterial(api, owner, opacity = 1, emissive = .15) {
-  const color = owner?.color || api.G.teamColors?.[owner?.team] || 0xffcc33;
-  return new api.THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: emissive,
-    transparent: opacity < 1, opacity, roughness: .52, metalness: .08, depthWrite: opacity >= 1 });
-}
 function addMesh(api, parent, geometry, material, position = null) {
   const mesh = new api.THREE.Mesh(geometry, material);
   mesh.castShadow = true; mesh.receiveShadow = true;
@@ -255,48 +251,67 @@ function addMesh(api, parent, geometry, material, position = null) {
   parent.add(mesh); return mesh;
 }
 function sceneFor(api, projectiles) { return api.G.scene || projectiles?.scene || api.G.projectiles?.scene || null; }
+// Per-sub models (sub-models.mjs). Presentation only: the record's position,
+// velocity, phase and timers are read, never written.
+// Model origin offset from the record position while the object flies (the
+// ground models stand on their base; the record is the object's centre).
+const FLIGHT_LIFT = { autobomb: -0.21, inkMine: -0.02, sprinkler: -0.2, beakon: -0.45, pointSensor: 0 };
+// Thrown bombs tumble in flight; deployables keep upright until they land.
+const TUMBLE = new Set(['burst', 'fizzy', 'toxicMist']);
 function buildVisual(api, object, projectiles) {
   const scene=sceneFor(api,projectiles);
   if (!scene?.add) return null;
   const { THREE } = api, group = new THREE.Group(), id = object.subId;
   const color = object.owner?.color || api.G.teamColors?.[object.team] || 0xffcc33;
-  const material = visualMaterial(api, object.owner, 1, .22);
-  const orb = (r, geo = new THREE.SphereGeometry(r, 12, 9)) => addMesh(api, group, geo, material);
-  if (id === 'splashWall' && object.phase === 'deployed') {
-    const wallMat = visualMaterial(api, object.owner, .42, .25);
-    const wall = addMesh(api, group, new THREE.BoxGeometry(ALL_SUB_SPECS.splashWall.wallWidth, ALL_SUB_SPECS.splashWall.wallHeight, .12), wallMat);
-    wall.position.y = ALL_SUB_SPECS.splashWall.wallHeight / 2;
-    const foot = addMesh(api, group, new THREE.CylinderGeometry(.16,.2,.22,10), material);
-    foot.position.y = .11;
-  } else if (id === 'sprinkler' || id === 'beakon') {
-    const h = id === 'beakon' ? .85 : .55;
-    const body = addMesh(api, group, new THREE.CylinderGeometry(.18,.28,h,10), material);
-    body.position.y = h / 2;
-    const cap = addMesh(api, group, new THREE.SphereGeometry(.18,10,7), material);
-    cap.position.y = h + .06;
-  } else if (id === 'angleShooter') {
-    const body = addMesh(api, group, new THREE.CylinderGeometry(.065,.11,.75,9), material);
-    body.rotation.x = Math.PI / 2;
-  } else if (id === 'inkMine') {
-    orb(.34, new THREE.SphereGeometry(.34,12,8));
-  } else if (id === 'toxicMist' && object.phase === 'deployed') {
-    const mistMat = visualMaterial(api, object.owner, .18, .05);
-    const cloud = addMesh(api, group, new THREE.SphereGeometry(1,12,9), mistMat);
-    cloud.scale.set(ALL_SUB_SPECS.toxicMist.radius, 2.1, ALL_SUB_SPECS.toxicMist.radius);
-    cloud.position.y = 1.1;
-  } else {
-    const r = id === 'autobomb' ? .3 : id === 'splashWall' ? .25 : .2;
-    orb(r);
-    if (id === 'autobomb') {
-      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x20202a, roughness: .4 });
-      for (const x of [-.12,.12]) { const eye = addMesh(api, group, new THREE.SphereGeometry(.045,7,6), eyeMat); eye.position.set(x,.06,.23); }
+  const deployed = object.phase === 'deployed';
+  const ink = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .08, roughness: .42, metalness: .1 });
+  const modelId = id === 'toxicMist' && deployed ? 'toxicMistCloud' : id;
+  const spec = ALL_SUB_SPECS[id];
+  const model = buildSubModel(THREE, modelId, ink, {
+    dims: id === 'splashWall' ? { width: spec.wallWidth, height: spec.wallHeight } : undefined,
+    unfold: 0, armed: false,
+  });
+  if (model) {
+    if (modelId === 'toxicMistCloud') model.root.scale.set(spec.radius, 2, spec.radius);
+    else if (!deployed) {
+      if (id === 'splashWall') model.root.position.y = -spec.wallHeight * SPLASH_WALL_FOLDED_SCALE / 2;
+      else if (FLIGHT_LIFT[id]) model.root.position.y = FLIGHT_LIFT[id];
     }
+    for (const m of model.root.children) m.traverse(o => { if (o.isMesh && !o.material.transparent) o.receiveShadow = true; });
+    group.add(model.root);
+    object.s3Model = model;
+  } else {
+    addMesh(api, group, new THREE.SphereGeometry(.2, 12, 9), ink);
+    object.s3Model = null;
   }
   group.position.copy(object.pos);
   group.rotation.y = object.yaw || 0;
   group.userData.s3SubId = id;
   scene.add(group);
   return group;
+}
+function poseVisual(api, object, dt) {
+  const mesh = object.mesh, model = object.s3Model;
+  if (!mesh) return;
+  mesh.position.copy(object.pos);
+  if (!model) return;
+  const id = object.subId, deployed = object.phase === 'deployed', now = api.G.time || 0, v = object.vel;
+  if (!deployed && (id === 'torpedo' || id === 'angleShooter')) {
+    // Nose along the travel (Angle Shooter flies wide end first).
+    const h = Math.hypot(v.x, v.z);
+    if (h * h + v.y * v.y > 1e-4) mesh.rotation.set(-Math.atan2(v.y, h), Math.atan2(v.x, v.z), 0, 'YXZ');
+  } else if (!deployed && !object.grounded && TUMBLE.has(id)) {
+    mesh.rotation.x += dt * 9; mesh.rotation.z += dt * 2.5;
+  } else if (id === 'autobomb' && Math.hypot(v.x, v.z) > .05) {
+    mesh.rotation.set(0, Math.atan2(v.x, v.z), 0);
+  } else mesh.rotation.set(0, object.yaw || 0, 0);
+  const unfold = id === 'splashWall' && deployed ? (now - (object.deployedAt ?? now)) / SPLASH_WALL_UNFOLD_SECONDS : 0;
+  let bulge = 0;
+  if (id === 'fizzy') bulge = Math.min(1, .25 * (object.popLimit - 1) + (object.fuse > 0 ? .5 * Math.min(1, object.age / object.fuse) : 0));
+  if (id === 'splashWall' && !Number.isFinite(object.s3HpMax)) object.s3HpMax = object.hp;
+  const fill = id === 'splashWall' && object.s3HpMax > 0 ? object.hp / object.s3HpMax : 1;
+  poseSubModel(model, { dt, speed: object.grounded ? Math.hypot(v.x, v.z) : 0, unfold, fill,
+    armed: deployed && now >= object.activeAt, flying: !deployed, active: deployed, bulge });
 }
 function disposeVisual(api, object, projectiles) {
   const mesh = object?.mesh;
@@ -308,9 +323,9 @@ function disposeVisual(api, object, projectiles) {
     const m = Array.isArray(o.material) ? o.material : [o.material];
     for (const item of m) if (item) mats.add(item);
   });
-  for (const g of geos) g.dispose?.();
+  for (const g of geos) if (!isSharedGeometry(g)) g.dispose?.();
   for (const m of mats) m.dispose?.();
-  object.mesh = null;
+  object.mesh = null; object.s3Model = null;
 }
 function createObject(api, projectiles, owner, id, record = {}) {
   const baseSpec = ALL_SUB_SPECS[id];
@@ -534,6 +549,13 @@ function damageCustomObject(api,source,target,point,damage,cause=null){
   target.hp-=amount;
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return amount;
+}
+
+// Ranked Rainmaker uses the same raw damage / authored cause / owning-client
+// boundary as native sub and special attacks. The owner applies source rates
+// and Object Shredder once; remote presentation never spends local HP.
+export function applySubObjectHit(api, projectiles, object, projectile, point, damage, cause=null) {
+  return damageCustomObject(api, projectile, object, point, damage, cause);
 }
 
 function isSubObjectBlastTarget(target){
@@ -1085,10 +1107,10 @@ function updateFlight(api, projectiles, object, dt) {
       return;
     }
     if(object.subId==='fizzy'){burstFizzy(api,projectiles,object);return;}
-    if(object.subId==='angleShooter'){
-      object.bounceCount++;object.vel.multiplyScalar(-.72);object.pos.addScaledVector(object.vel,dt);
-      if(object.bounceCount<=spec.maxBounces){emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});return;}
-    } else { blast(api,object,object.pos); }
+    // Wiki Line Marker: a direct player hit terminates the projectile/line.
+    // Only terrain can reflect it; reflecting off a player allowed a second
+    // unsupported 40-damage hit on the return path.
+    if(object.subId!=='angleShooter')blast(api,object,object.pos);
     removeObject(api,projectiles,object);return;
   }
   if(world?.hit){
@@ -1203,8 +1225,8 @@ function updateDeployed(api,projectiles,object,dt){
     }
   }
   if(expired){removeObject(api,projectiles,object);return;}
-  // A deployed wall's rendered plane must retain the yaw used by barrier contact.
-  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+(object.subId==='splashWall'?0:object.age*2);}
+  // poseVisual turns each model; deployed walls keep the yaw used by barrier contact.
+  if(object.mesh)object.mesh.position.copy(object.pos);
 }
 
 function tickObjects(api,projectiles,dt){
@@ -1213,6 +1235,7 @@ function tickObjects(api,projectiles,dt){
     const o=list[i];if(o.dead||o.phase==='ghostWait')continue;
     if(o.subId==='sprinkler'&&!o.owner?.alive){removeObject(api,projectiles,o);continue;}
     if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);else updateFlight(api,projectiles,o,dt);
+    if(!o.dead&&o.phase!=='ghostWait')poseVisual(api,o,dt);
   }
   updateStatuses(api,dt);
 }

@@ -504,6 +504,31 @@ export function bigBubblerBarrierHp(owner) {
   return gearCurve(ap, raw.maxFieldHp, raw.maxFieldHpMid, raw.maxFieldHpHigh);
 }
 
+// Tower Control dome lifetime is shorter only on the physical moving deck.
+// Reuse RankedWorld's live tower collision geometry, never the caster's mode.
+function bubblerTowerBinding(G, pos) {
+  const ranked=G.match?.mode==='tower' ? G.match.rankedWorld : null;
+  if(!ranked || ranked._inTowerVolume?.({pos},false)!==true)
+    return {onTower:false,local:null};
+  const block=ranked.towerBlock,axes=block?.axes;
+  if(!block?.center?.isVector3 || !Array.isArray(axes) || axes.length!==3 ||
+     !axes.every(axis=>axis?.isVector3))return {onTower:true,local:null};
+  const relative=pos.clone().sub(block.center);
+  return {onTower:true,local:axes.map(axis=>relative.dot(axis))};
+}
+function advanceBubblerTower(dome) {
+  const local=dome.towerLocal,block=api?.G?.match?.rankedWorld?.towerBlock;
+  if(!local || !block?.center?.isVector3 || !Array.isArray(block.axes) ||
+     block.axes.length!==3 || !block.axes.every(axis=>axis?.isVector3))return;
+  dome.pos.copy(block.center);
+  for(let i=0;i<3;i++)dome.pos.addScaledVector(block.axes[i],local[i]);
+  dome.group?.position?.copy(dome.pos);
+}
+export function bigBubblerTimeDamage(onTower=false) {
+  // BarrierParam.TimeDamageOnVLift (1842) versus normal TimeDamage (921).
+  const damage=onTower === true ? raw.timeDamageOnVLift : raw.timeDamage;
+  return damage * raw.maxFieldHp / raw.maxHp;
+}
 function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp, fieldHpMax = raw.maxHp }) {
   return {
     id, serial, owner, team, pos, t: 0, remote: !!remote,
@@ -516,6 +541,7 @@ function makeDome({ id, serial, owner, team, pos, remote, hpMax = raw.maxFieldHp
     damageProgress: 0,
     radius: raw.minRadius, emitterY: 0, ignited: false,
     burnAccum: 0, overlapAccum: 0, dead: false,
+    onTower: false, towerLocal: null,
   };
 }
 
@@ -532,6 +558,8 @@ function deploy(owner) {
     id: `${owner.team}:${bigBubblerOwnerId(owner) ?? 'unknown'}:${serial}`,
     serial, owner, team: owner.team, pos, remote: false, hpMax: bigBubblerBarrierHp(owner), fieldHpMax: bigBubblerCanopyHp(owner),
   });
+  const tower=bubblerTowerBinding(api.G,dome.pos);
+  dome.onTower=tower.onTower;dome.towerLocal=tower.local;
   buildVisual(dome);
   domes.push(dome);
   syncVisual(dome);
@@ -622,10 +650,13 @@ export function damageBigBubblerFromInkVac(dome, attacker, amount, point = dome?
 export function damageBigBubblerFromBeam(attacker, start, end, damage, cause = 'MicroLaser') {
   if (!api || !attacker || attacker.remote || !attacker.alive || !Number.isInteger(attacker.team) ||
       !start?.isVector3 || !end?.isVector3 || !(damage > 0) || cause !== 'MicroLaser') return 0;
+  const maxContacts = domes.length + remoteDomes.length;
+  // No target can be queried or damaged. Avoid per-beam scratch allocations;
+  // read the live pools each call so later deployments are admitted immediately.
+  if (maxContacts === 0) return 0;
   const probe = { owner: attacker, team: attacker.team, damage, size: 0, type: 'beam',
     s3BubblerRow: cause, damageSource: cause, ghost: false };
   const excludedDomeIds = new Set();
-  const maxContacts = domes.length + remoteDomes.length;
   let applied = 0;
   for (let i = 0; i < maxContacts; i++) {
     const candidate = kitBarrierCandidate(probe, start, end, excludedDomeIds);
@@ -947,6 +978,7 @@ export function tickBigBubblers(dt) {
   if (!(dt > 0) || !domes.length) return;
   for (const dome of [...domes]) {
     if (dome.dead) continue;
+    advanceBubblerTower(dome);
     dome.t += dt;
     dome.radius = radiusAt(dome.t);
     const ascend = clamp(dome.t / (raw.ascendFrames / 60), 0, 1);
@@ -969,7 +1001,7 @@ export function tickBigBubblers(dt) {
         dome.burnAccum -= interval;
         // MaxFieldHP is 2x the old swapped canopy budget. Scale the internal
         // TimeDamage delta by the same ratio so passive lifetime is unchanged.
-        damageDome(dome, 'canopy', raw.timeDamage * raw.maxFieldHp / raw.maxHp, 'burn');
+        damageDome(dome, 'canopy', bigBubblerTimeDamage(dome.onTower), 'burn');
       }
       if (tuning.overlapFieldDamage && !dome.dead) {
         const tickSeconds = raw.overlapFieldDamageInterval / 60;
@@ -995,6 +1027,7 @@ export function tickRemoteBigBubblers(dt) {
   if (!(dt > 0) || !remoteDomes.length) return;
   for (const dome of [...remoteDomes]) {
     if (dome.dead) continue;
+    advanceBubblerTower(dome);
     dome.t += dt;
     dome.radius = radiusAt(dome.t);
     const ascend = clamp(dome.t / (raw.ascendFrames / 60), 0, 1);
@@ -1169,6 +1202,8 @@ function replayDeploy(owner, payload) {
     id: v.domeId, serial: v.serial, owner: owner ?? null, team: v.team,
     pos: new api.THREE.Vector3(v.pos[0], v.pos[1], v.pos[2]), remote: true, hpMax: Math.max(raw.maxFieldHp, v.hp), fieldHpMax: Math.max(raw.maxHp, v.fieldHp),
   });
+  const tower=bubblerTowerBinding(api.G,dome.pos);
+  dome.onTower=tower.onTower;dome.towerLocal=tower.local;
   // The transmitted state is authoritative for the IMAGE only.
   dome.t = v.t;
   dome.hp = Math.min(v.hp, dome.hpMax);

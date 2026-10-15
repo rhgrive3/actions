@@ -355,6 +355,10 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/muzzle-feedback.mjs',
   'patches/splatoon3/runtime/superjump-target-notification.mjs',
 
+  // Data-only alternate kits remain static and offline-cached without adding
+  // HTML modulepreload requests for 95 additional loadout identities.
+  'patches/splatoon3/runtime/alternate-weapon-kits.mjs',
+  'patches/splatoon3/runtime/alternate-weapon-kits-data.mjs',
   // Per-main-weapon models (families inlined into registry.mjs): full precache retained, no extra eager hints.
   'patches/splatoon3/runtime/weapon-models/registry.mjs',
   'patches/splatoon3/runtime/weapon-family-motion.mjs',
@@ -446,6 +450,9 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/trizooka-collision.mjs',
   'patches/splatoon3/runtime/kit-subs.mjs',
   'patches/splatoon3/runtime/bomb-models.mjs', // Per-sub bomb models; presentation only.
+  'patches/splatoon3/runtime/sub-models.mjs', // Other S3 sub models (bomb-models, all-subs, kit-support); presentation only.
+  'patches/splatoon3/runtime/special-models.mjs', // S3 special models; presentation only.
+  'patches/splatoon3/runtime/special-presentation.mjs', // Special devices, deployed objects and rounds; presentation only.
   'patches/splatoon3/runtime/kit-composition.mjs',
   'patches/splatoon3/runtime/kit-ink-vac.mjs',
   'patches/splatoon3/runtime/kit-network.mjs',

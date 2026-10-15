@@ -416,11 +416,11 @@ export class ClamsRule {
     }
   }
 
-  _segmentDistanceSq(point, a, b) {
+  _segmentClosestPoint(point, a, b) {
     const ab = sub(b, a);
     const denom = this._distanceSq(ab, [0, 0, 0]);
     const t = denom > EPS ? clamp(((point[0] - a[0]) * ab[0] + (point[1] - a[1]) * ab[1] + (point[2] - a[2]) * ab[2]) / denom, 0, 1) : 0;
-    return this._distanceSq(point, add(a, scale(ab, t)));
+    return add(a, scale(ab, t));
   }
 
   _reflect(clam, position, frame) {
@@ -597,9 +597,9 @@ export class ClamsRule {
     }
   }
 
-  _collectFromProjectile(clam, actor, frame) {
+  _collectFromProjectile(clam, actor, frame, contact = clam.pos) {
     const bodyCenter = add(vec(actor.pos), [0, 0.9, 0]);
-    if (!actor.alive || !canCollectClam(actor) || this._distanceSq(bodyCenter, clam.pos) > 0.72 ** 2) return false;
+    if (!actor.alive || !canCollectClam(actor) || this._distanceSq(bodyCenter, contact) > 0.72 ** 2) return false;
     if (clam.kind === 'power' && clam.team !== actor.team) return false;
     const inv = this._inventory(actor.id, actor.team);
     if (clam.kind === 'power') {
@@ -650,8 +650,10 @@ export class ClamsRule {
         let actorHit = false;
         for (const actor of this._actorList(frame)) {
           if (actor.alive === false || actor.id === clam.thrower) continue;
-          if (this._segmentDistanceSq(add(vec(actor.pos), [0, 0.9, 0]), previous, next) > 0.72 ** 2) continue;
-          if (this._collectFromProjectile(clam, actor, frame)) {
+          // Use the swept contact for admission too. Rechecking the old birth
+          // point loses grazing catches even at the ordinary 60Hz throw speed.
+          const contact = this._segmentClosestPoint(add(vec(actor.pos), [0, 0.9, 0]), previous, next);
+          if (this._collectFromProjectile(clam, actor, frame, contact)) {
             this.state.clams = this.state.clams.filter(item => item.id !== clam.id);
             actorHit = true;
             break;

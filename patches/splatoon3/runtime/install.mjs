@@ -28,6 +28,7 @@ import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
 import { registerMainWeaponCatalog } from './main-weapon-catalog.mjs';
+import { registerAlternateWeaponKits } from './alternate-weapon-kits.mjs';
 import { installRollerBodyKnockback } from './roller-body-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
 import { installShotGuide } from './weapons-fidelity.mjs';
@@ -84,6 +85,7 @@ import { installTripleSlamFists } from './triple-slam-fists.mjs';
 import { installDeathBlast } from './death-blast.mjs';
 import { installAllSubs, replaySub } from './all-subs.mjs';
 import { installAllSpecials, replaySpecial } from './all-specials.mjs';
+import { installSpecialModels } from './special-presentation.mjs';
 import {installCatalogueSplashdown,replaySplashdown,installCatalogueLoadout,SUB_NAMES,SPECIAL_NAMES,installCatalogueNetwork,completeBaseKits,installCatalogueVision,installCatalogueBeakonJumps,installCatalogueControls} from './catalogue.mjs';
 
 let installed = false;
@@ -194,6 +196,9 @@ export function install(profile) {
   installObjectDamageCause(api);
   installCatalogueSplashdown(api);
   completeBaseKits(api);
+  // Add the 95 official _01/_02 variants only after base kits and sub/special
+  // registries are finalized. This creates no additional weapon geometry.
+  registerAlternateWeaponKits(api);
   for (const [id, name] of Object.entries(SUB_NAMES)) if (SUB[id]) { Object.assign(SUB[id], {id, name}); SUB_ICONS[id] ||= SUB_ICONS.bomb; }
   for (const [id, name] of Object.entries(SPECIAL_NAMES)) if (SPECIALS[id]) { SPECIALS[id].name = name; SPECIAL_ICONS[id] ||= SPECIAL_ICONS.slam; }
   installCatalogueLoadout(api);
@@ -204,6 +209,7 @@ export function install(profile) {
   installNativeSprinklerDamage(api);
   installBotPaintDeviceProfile({ G, Actor });
   installSpecialPresentation(api, profile);
+  installSpecialModels(api);
   // Outermost weapon pose layer: per-weapon / per-family offsets over every native and patched hold.
   installWeaponFamilyMotion(api);
   return api;

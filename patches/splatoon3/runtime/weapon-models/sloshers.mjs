@@ -4,7 +4,7 @@
 // lying on the silhouette's top edge above the opening (kept level by animateWeapon), and the native pitcher
 // handle, its thumb lever and the native right-hand grip are kept at the origin. Scale is an estimate (see the
 // reference doc). Everything is procedural geometry.
-import { Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout } from './kit.mjs';
+import { THREE, Pieces, M, V, box, sphere, slab, part, rebuild, pipe, pipeR, cyl, ring, zlathe, ylathe, rotateAbout, sweep } from './kit.mjs';
 
 // Reference pixel -> weapon space for a side render: (gx, gy) = origin in the image, s = metres/pixel.
 // Returns [z, y], the layout slab() takes directly (muzzle toward +Z, up = +Y).
@@ -147,35 +147,91 @@ function bloblobber(d) {
   return rebuild(d, { body, ink, parts: { surface: inkDisc(0.07, top + 0.004, cz) } });
 }
 function explosher(d) {
-  // Wmn_Slosher_Washtub: an olive jerry can with embossed side panels and a dark back panel, a brass barrel
-  // with a bar grid on its mouth angled up from the front shoulder (silver collar, orange spring clamps),
-  // a chrome tube cage round both flanks and a black rubber top handle.
-  const C = { olive: '#5f6a2c', oliveD: '#4b5523', brass: '#b9893a', silver: '#c8cbcf', chrome: '#c3c6ca', black: '#1e1f23', orange: '#e8662a', panel: '#2b2d35' };
-  const cy = BY - 0.004, cz = BZ + 0.02, w = 0.13, h = 0.2, dep = 0.19;
-  const body = new Pieces(), ink = new Pieces();
-  body.add(box(w, h, dep, 0, cy, cz, 0.28, 14, 10), C.olive, M.satin);
-  for (const sx of [-1, 1]) {
-    body.add(box(0.008, h * 0.7, dep * 0.62, sx * (w / 2 + 0.002), cy - 0.01, cz, 0.3), C.oliveD, M.satin);     // embossed panel
-    body.add(box(0.004, 0.012, dep * 0.8, sx * (w / 2 + 0.005), cy - 0.01, cz, 0.4).rotateX(0.6).translate(0, 0, 0), C.oliveD, M.satin);
+  // Wmn_Slosher_Washtub. Rebuilt from all stored turntable quadrants, not a front-facing can decal.
+  // The cast can has a sloped shoulder, real lower slots, a rear box and a separate rectangular-section cage.
+  // Reference display tilt is handled by the review camera; gameplay hand and launch frames are unchanged.
+  const C={olive:'#59632f',ridge:'#69783a',darkOlive:'#435128',brass:'#ac8c48',brassEdge:'#d1b76e',silver:'#c2cbcf',steel:'#58646b',black:'#242b31',orange:'#f07931',panel:'#343943'};
+  const body=new Pieces(),ink=new Pieces(),cy=BY-.004,cz=BZ+.010;
+  const beam=(pts,r=.006,seg=24)=>{const g=sweep(pts.map(p=>V(...p)),{seg,radial:4,capSteps:1,radius:()=>r,flat:.75,outward:(_p,out)=>out.set(1,0,0),section:(c,s)=>[c-s,c+s]}).geo.toNonIndexed();g.computeVertexNormals();return g;};
+  const outline=[[cz-.096,cy-.071],[cz-.094,cy+.066],[cz-.079,cy+.089],[cz+.042,cy+.091],[cz+.085,cy+.058],[cz+.111,cy+.014],[cz+.106,cy-.071],[cz+.086,cy-.080],[cz-.075,cy-.080]];
+  body.add(slab(outline,.147,0,.008),C.olive,M.satin);
+  // Pressed broad faces follow the shoulder, with four chamfered arms around a small centre diamond.
+  for(const sx of[-1,1]){
+    const x=sx*.073;
+    const panel=[[cz-.075,cy-.056],[cz-.075,cy+.047],[cz-.058,cy+.065],[cz+.031,cy+.067],[cz+.077,cy+.031],[cz+.083,cy-.051],[cz+.063,cy-.064],[cz-.058,cy-.064]];
+    body.add(slab(panel,.002,x,.0007),C.darkOlive,M.satin);
+    body.add(slab(panel.map(([z,y])=>[cz+(z-cz)*.94,cy+(y-cy)*.90]),.002,x+sx*.0018,.0007),C.olive,M.satin);
+    for(const [y,z,yy,zz]of[[cy-.046,cz-.056,cy-.010,cz-.014],[cy+.047,cz-.052,cy+.006,cz-.009],[cy-.046,cz+.064,cy-.009,cz+.014],[cy+.039,cz+.052,cy+.006,cz+.011]])body.add(cyl(.0022,[x+sx*.004,y,z],[x+sx*.004,yy,zz],8),C.ridge,M.satin);
+    body.add(slab([[cz-.013,cy],[cz,cy+.013],[cz+.013,cy],[cz,cy-.013]],.003,x+sx*.004,.0006),C.ridge,M.satin);
+    // Two genuine lower handle slots. They are openings between the cast body and bottom runner.
+    body.add(box(.014,.011,.172,sx*.059,cy-.099,cz+.002,.23,12,4),C.olive,M.satin);
+    for(const z of[cz-.077,cz+.080])body.add(box(.022,.023,.019,sx*.059,cy-.088,z,.3,8,6),C.olive,M.satin);
   }
-  body.add(box(w * 0.92, h * 0.86, 0.012, 0, cy - 0.006, cz - dep / 2 - 0.004, 0.25), C.panel, M.satin);        // back panel
-  body.add(box(0.03, 0.026, 0.002, 0.025, cy + 0.03, cz - dep / 2 - 0.011, 0.2), '#e8c21a', M.print);          // warning label
-  // brass barrel on the front shoulder, angled up
-  const bz = cz + dep / 2 - 0.02, by = cy + h / 2 - 0.02;
-  const barrel = new Pieces();
-  barrel.add(zlathe([[0, -0.02], [0.044, -0.02], [0.044, 0.05], [0.05, 0.056], [0.05, 0.066], [0.04, 0.066], [0.04, 0.06], [0, 0.06]], 0, 0, 0, 24), C.brass, M.metal);
-  barrel.add(ring(0.046, 0.006, 0, 0, 0.0, 'z', 6, 24), C.silver, M.metal);
-  for (const z of [0.012, 0.03]) barrel.add(ring(0.047, 0.004, 0, 0, z, 'z', 5, 24), C.orange, M.gloss);
-  for (let k = -2; k <= 2; k++) barrel.add(box(0.004, 0.084, 0.004, k * 0.016, 0, 0.064, 0.5), C.brass, M.metal);  // bar grid
-  body.merge(barrel.transform(g => g.rotateX(-0.5).translate(0, by, bz)));
-  ink.add(zlathe([[0, -0.01], [0.038, -0.01], [0.038, 0.055], [0, 0.055]], 0, 0, 0, 20).rotateX(-0.5).translate(0, by, bz)); // ink in the barrel
-  // chrome cage on both flanks + black top handle
-  for (const sx of [-1, 1]) body.add(pipe([[sx * 0.078, cy - h / 2 + 0.01, cz - dep / 2 + 0.02], [sx * 0.08, cy - h / 2 - 0.006, cz + 0.03],
-    [sx * 0.082, cy + 0.02, cz + dep / 2 + 0.03], [sx * 0.07, cy + h / 2 + 0.05, cz + 0.03], [sx * 0.07, cy + h / 2 + 0.06, cz - 0.04]], 0.0055, 40, 8), C.chrome, M.metal);
-  body.add(cyl(0.012, [-0.07, cy + h / 2 + 0.06, cz - 0.04], [0.07, cy + h / 2 + 0.06, cz - 0.04], 14), C.black, M.rubber);
-  wireHandle(body, cz - dep / 2 - 0.006, C.chrome);
-  return rebuild(d, { body, ink, parts: { surface: inkDisc(0.035, cy + 0.06, cz) } });
+  // Pale stencilled side motif, traced as four coarse visible glyph silhouettes; no external texture.
+  const glyphs=[[[0,0],[6,0],[6,2],[4,2],[4,4],[6,4],[6,7],[0,7],[0,5],[3,5],[3,4],[0,4]],[[0,0],[2,0],[2,3],[5,3],[5,0],[7,0],[7,7],[5,7],[5,5],[2,5],[2,7],[0,7]],[[0,0],[7,0],[7,2],[4,2],[4,4],[7,4],[7,7],[0,7],[0,5],[2,5],[2,3],[0,3]],[[0,0],[7,0],[7,2],[2,2],[2,4],[6,4],[6,6],[2,6],[2,7],[0,7]]];
+  for(const sx of[-1,1])for(let i=0;i<glyphs.length;i++)body.add(slab(glyphs[i].map(([z,y])=>[cz+.065+i*.002+(z-3.5)*.0018,cy+.069-i*.017-y*.0018]),.0007,sx*.0775,0),'#b4baa0',M.print);
+  // Rear electronics is shorter than the tank, with a bevelled perimeter, warning plate and ventilation slots.
+  body.add(box(.119,.133,.032,0,cy-.001,cz-.103,.23,14,8),C.black,M.satin);
+  body.add(box(.109,.124,.017,0,cy-.001,cz-.120,.2,12,8),C.panel,M.satin);
+  body.add(box(.038,.045,.0018,-.027,cy+.007,cz-.130,.15,8,4),'#d7d5c7',M.print);
+  body.add(box(.034,.009,.002,-.027,cy+.025,cz-.131,.15,8,4),'#ab3735',M.print);
+  body.add(slab([[-.020,-.009],[-.006,.015],[.008,-.009]],.002,0,.0001).rotateY(Math.PI/2).translate(-.021,cy,cz-.132),'#d5bd4e',M.print);
+  for(let i=0;i<6;i++)body.add(box(.033,.0027,.002,.023,cy+.027-i*.0095,cz-.131,.1,8,4),C.black,M.satin);
+  // Cast rear carry aperture and large ribbed filler cap on the flat part of the shoulder.
+  for(const x of[-.044,.044])body.add(box(.010,.031,.016,x,cy+.100,cz-.073,.2,8,6),C.olive,M.satin);
+  body.add(box(.096,.010,.017,0,cy+.119,cz-.073,.2,12,4),C.olive,M.satin);
+  body.add(ylathe([[0,.090],[.017,.090],[.022,.096],[.023,.109],[.020,.116],[0,.116]],-.026,cy,cz-.004,20),C.olive,M.satin);
+  for(let i=0;i<10;i++){const a=i*Math.PI/5;body.add(box(.004,.012,.004,-.026+Math.cos(a)*.021,cy+.106,cz-.004+Math.sin(a)*.021,.16,6,4),C.darkOlive,M.satin);}
+  // Burner bolts onto the sloped shoulder. The silver yoke is open-sided; bronze remains visible within it.
+  // Angle-only candidate: keep the fe242 lip-plane centre fixed while pivoting the burner.
+  // The -0.70 rad trial is not inferred directly from a projected 2D reference angle.
+  const tilt=-.70,lipDepth=.076*.72;
+  const lipY=cy+.061-Math.sin(-.48)*lipDepth,lipZ=cz+.091+Math.cos(-.48)*lipDepth;
+  const by=lipY+Math.sin(tilt)*lipDepth,bz=lipZ-Math.cos(tilt)*lipDepth,burner=new Pieces();
+  burner.add(box(.120,.109,.005,0,0,-.018,.38,12,6),C.silver,M.metal);
+  // Thin mounting plate plus annular socket. The old broad dark square obscured this round junction.
+  burner.add(zlathe([[.043,-.020],[.058,-.020],[.061,-.014],[.060,-.009],[.051,-.008],[.043,-.008]],0,0,0,24),C.silver,M.metal);
+  burner.add(ring(.055,.0023,0,0,-.006,'z',4,24),C.steel,M.satin);
+  burner.add(zlathe([[.040,-.014],[.041,.012],[.051,.064],[.058,.076],[.054,.078],[.048,.055],[.038,-.014],[.040,-.014]],0,0,0,24),C.brass,M.metal);
+  burner.add(zlathe([[.043,-.008],[.049,-.008],[.050,.038],[.053,.055],[.051,.060],[.047,.041],[.040,-.004],[.043,-.008]],0,0,0,24),C.black,M.satin);
+  burner.add(ring(.056,.0021,0,0,.076,'z',5,30),C.brassEdge,M.metal);
+  // Dark burner body and the four machined silver retaining rails are separate volumes.
+  for(const sx of[-1,1]){
+    for(const sy of[-1,1])burner.add(box(.009,.010,.069,sx*.040,sy*.034,.023,.22,10,4),C.silver,M.metal);
+    for(const y of[-.034,.034])burner.add(zlathe([[0,.047],[.004,.047],[.004,.052],[0,.052]],sx*.050,y,0,10),C.steel,M.satin);
+    // Orange spring wire, elbow and brass gas fitting are anchored to the yoke rather than floating rings.
+    burner.add(pipe([[sx*.044,-.025,-.009],[sx*.052,-.025,.001],[sx*.053,-.018,.018],[sx*.054,.006,.040]],.0017,16,5),C.orange,M.gloss);
+    burner.add(box(.012,.010,.013,sx*.043,-.027,-.002,.12,8,4),C.brassEdge,M.metal);
+  }
+  for(const y of[-.033,0,.033]){const half=Math.sqrt(.054*.054-y*y);burner.add(box(half*2,.0035,.008,0,y,.078,.12,10,4),C.brassEdge,M.metal);}
+  burner.add(zlathe([[0,.037],[.043,.037],[.043,.039],[0,.039]],0,0,0,24),'#453c26',M.satin);
+  ink.add(sphere(.027,.009,.0015,0,-.016,.041,18,8).scale(1,1,.72).rotateX(tilt).translate(0,by,bz));
+  body.merge(burner.transform(g=>g.scale(1,1,.72).rotateX(tilt).translate(0,by,bz)));
+  // Gauge has a bevelled body, pale dial, red needle and two short connector stems.
+  body.add(cyl(.004,[-.048,cy+.081,cz+.054],[-.062,cy+.096,cz+.066],10),C.silver,M.metal);
+  body.add(zlathe([[0,0],[.013,0],[.014,.004],[.014,.010],[.011,.012],[0,.012]],0,0,0,20).rotateX(-.65).translate(-.064,cy+.097,cz+.066),C.silver,M.metal);
+  body.add(zlathe([[0,.012],[.010,.012],[.010,.013],[0,.013]],0,0,0,18).rotateX(-.65).translate(-.064,cy+.097,cz+.066),'#e0e3d9',M.print);
+  body.add(cyl(.001,[-.064,cy+.105,cz+.077],[-.068,cy+.109,cz+.076],6),'#b84032',M.print);
+  // Brushed rectangular-section crash frame: U side loops, reinforced front bumper and upright carry hoop.
+  for(const sx of[-1,1]){
+    const x=sx*.088;
+    body.add(beam([[x,cy+.024,cz+.068],[x,cy+.030,cz-.065],[x,cy+.013,cz-.094],[x,cy-.041,cz-.094],[x,cy-.064,cz-.071],[x,cy-.064,cz+.070]],.0064,34),C.silver,M.metal);
+    body.add(cyl(.0077,[x,cy-.064,cz-.037],[x,cy-.064,cz+.064],12),C.black,M.rubber);
+    body.add(beam([[x,cy+.028,cz-.063],[sx*.079,cy+.125,cz-.071],[sx*.066,cy+.144,cz-.064]],.0056,20),C.silver,M.metal);
+    body.add(beam([[x,cy-.064,cz+.069],[sx*.095,cy-.050,cz+.124],[sx*.082,cy-.042,cz+.139]],.0058,18),C.silver,M.metal);
+    for(const z of[cz-.064,cz+.061]){body.add(cyl(.006,[sx*.087,cy+.024,z],[sx*.099,cy+.024,z],12),C.steel,M.satin);body.add(cyl(.0025,[sx*.099,cy+.024,z],[sx*.101,cy+.024,z],8),C.black,M.satin);}
+    // Diagonal external shock, measured from the side turntable view. Both orange anchors meet the frame.
+    const low=[x,cy+.023,cz+.004],high=[x,cy+.063,cz+.072];body.add(cyl(.0047,low,high,10),C.black,M.rubber);
+    for(const p of[low,high])body.add(box(.017,.018,.009,...p,.16,8,4).rotateX(0),C.orange,M.gloss);
+    const pts=[];for(let i=0;i<=48;i++){const t=i/48,a=t*Math.PI*10;pts.push([x+Math.cos(a)*.0085,cy+.028+t*.031+Math.sin(a)*.0073,cz+.012+t*.052-Math.sin(a)*.0044]);}body.add(pipe(pts,.0017,56,5),C.steel,M.satin);
+  }
+  body.add(cyl(.009,[-.066,cy+.144,cz-.064],[.066,cy+.144,cz-.064],14),C.black,M.rubber);
+  body.add(beam([[-.082,cy-.042,cz+.139],[.082,cy-.042,cz+.139]],.0058,6),C.silver,M.metal);
+  // The native hand grip is retained at the origin; it is not the high reference carry handle.
+  wireHandle(body,cz-.107,C.black);
+  return rebuild(d,{body,ink,parts:{surface:inkDisc(.035,BY-.004+.06,BZ+.02)}});
 }
+
 function dreadWringer(d) {
   // Wmn_Slosher_Double: a low wide mop bucket — yellow open tub at the front, a grey metal wringer housing
   // at the back with two black rubber rollers and a long grey press lever hinged over it, a flat grey base
@@ -196,7 +252,124 @@ function dreadWringer(d) {
   ink.add(box(0.13, 0.08, 0.15, 0, cy - 0.005, cz + 0.06, 0.2));                                                  // ink in the tub
   return rebuild(d, { body, ink, parts: { surface: inkRect(0.12, 0.13, cy + 0.035, cz + 0.06) } });
 }
-const BUILD3D = { 's3-slosher-diffusion': triSlosher, 's3-slosher-launcher': slosherMachine, 's3-slosher-bathtub': bloblobber,
+// ------------------------------------------------------------------------------------- Slosher (Bucket)
+// Wmn_Slosher_StrongT (Splatoon 3): a black round pail lying on its side, its open mouth cut on a slant so it
+// faces forward and up; a glossy lavender frame — a side plate under each flank that rises along the lower
+// half of the mouth into an upright arm, a band round the lower lip, a rear U-frame behind the base — a black
+// top handle with chrome elbows over the mouth, and a gold coil-over shock on each flank between the arm
+// and the lower rail. Proportions from the official turntable (S3 Slosher Deco model rotating.mp4: front
+// t = 2 s, sides t = 5 / 11 s, back t = 8 s; Deco is the same shape) and colours from the base render
+// (refs/slosher.3d.png). Scale: pail Ø ≈ 0.19 m (image-derived). The native grips stay: the right fist on a
+// black upright grip in the rear U-frame (INKWAVE keeps the native pitcher-grip hold; the real kid holds the
+// top handle — recorded as a difference), the left hand on a rubber bar under the pail, the native muzzle
+// just inside the upper lip.
+const BUCKET = { yc: 0.03, R: 0.094, wall: 0.007, zb: 0.035, top: 0.235, bottom: 0.335, fill: 0.04 };
+/** Mouth plane: z of the slanted lip at height y (upper lip z = top, lower lip z = bottom). */
+const lipZ = (B, y) => B.top + ((B.yc + B.R - y) / (2 * B.R)) * (B.bottom - B.top);
+/** Lying pail shell with a slanted mouth: outer + inner wall, base, floor and the lip between them. */
+function pailShell(B, seg = 36, rows = 5) {
+  const pos = [], idx = [], Ri = B.R - B.wall, ring = (r, z0, lip) => {
+    const base = pos.length / 3;
+    for (let j = 0; j < seg; j++) {
+      const a = (j / seg) * Math.PI * 2, x = Math.cos(a) * r, y = B.yc + Math.sin(a) * r;
+      pos.push(x, y, lip ? lipZ(B, y) - (r < B.R ? 0.002 : 0) : z0);
+    }
+    return base;
+  };
+  const strip = (r, z0, inward) => {
+    const rs = [];
+    for (let i = 0; i <= rows; i++) {
+      const base = pos.length / 3;
+      for (let j = 0; j < seg; j++) {
+        const a = (j / seg) * Math.PI * 2, x = Math.cos(a) * r, y = B.yc + Math.sin(a) * r;
+        pos.push(x, y, z0 + (i / rows) * (lipZ(B, y) - z0));
+      }
+      rs.push(base);
+    }
+    for (let i = 0; i < rows; i++) for (let j = 0; j < seg; j++) {
+      const j1 = (j + 1) % seg, a = rs[i] + j, b = rs[i] + j1, c = rs[i + 1] + j, d = rs[i + 1] + j1;
+      if (inward) idx.push(a, c, b, b, c, d); else idx.push(a, b, c, b, d, c);
+    }
+    return rs;
+  };
+  const outer = strip(B.R, B.zb, false), inner = strip(Ri, B.zb + B.wall, true);
+  const o = outer[rows], n = inner[rows];
+  for (let j = 0; j < seg; j++) { const j1 = (j + 1) % seg; idx.push(o + j, o + j1, n + j, o + j1, n + j1, n + j); }
+  for (const [r0, z, face] of [[outer[0], B.zb, -1], [inner[0], B.zb + B.wall, 1]]) {
+    const c = pos.length / 3; pos.push(0, B.yc, z);
+    for (let j = 0; j < seg; j++) { const j1 = (j + 1) % seg; if (face < 0) idx.push(c, r0 + j1, r0 + j); else idx.push(c, r0 + j, r0 + j1); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+/** Ink pooled in the lower part of the lying pail up to y = B.fill, its front cut by the mouth plane. */
+function pailFill(B) {
+  const Ri = B.R - B.wall - 0.0015, h = B.fill - B.yc, a = Math.asin(Math.max(-1, Math.min(1, h / Ri))), sh = new THREE.Shape();
+  const n = 20, a0 = Math.PI - a, a1 = 2 * Math.PI + a;
+  for (let k = 0; k <= n; k++) { const t = a0 + (a1 - a0) * (k / n), x = Math.cos(t) * Ri, y = B.yc + Math.sin(t) * Ri; k ? sh.lineTo(x, y) : sh.moveTo(x, y); }
+  sh.closePath();
+  const g = new THREE.ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false, curveSegments: 4 }), p = g.attributes.position;
+  const z0 = B.zb + B.wall + 0.001;
+  for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setZ(i, z0 + p.getZ(i) * (lipZ(B, y) - 0.004 - z0)); }
+  g.computeVertexNormals(); return g;
+}
+/** Gold coil spring over a chrome damper rod between points a (upper) and b (lower), with black eyes. */
+function shock(p, a, b, C) {
+  const A = V(...a), Bv = V(...b), ax = Bv.clone().sub(A), L = ax.length(); ax.normalize();
+  const u = Math.abs(ax.x) < 0.9 ? V(1, 0, 0) : V(0, 1, 0), e1 = u.clone().cross(ax).normalize(), e2 = ax.clone().cross(e1);
+  const coil = [], turns = 7, r = 0.016;
+  for (let k = 0; k <= turns * 14; k++) {
+    const t = k / (turns * 14), w = t * turns * Math.PI * 2, s = 0.18 + 0.64 * t;
+    coil.push(A.clone().addScaledVector(ax, s * L).addScaledVector(e1, Math.cos(w) * r).addScaledVector(e2, Math.sin(w) * r));
+  }
+  p.add(pipe(coil, 0.0032, turns * 14, 5), C.gold, M.metal);
+  p.add(cyl(0.0065, a, b, 12), C.chrome, M.metal);
+  for (const [s, rr] of [[0.15, 0.013], [0.86, 0.011]]) { const c = A.clone().addScaledVector(ax, s * L); p.add(cyl(rr, c.clone().addScaledVector(ax, -0.008).toArray(), c.clone().addScaledVector(ax, 0.008).toArray(), 14), C.black, M.satin); }
+  for (const q of [A, Bv]) p.add(sphere(0.009, 0.009, 0.009, q.x, q.y, q.z, 12, 8), C.black, M.satin);
+}
+function bucketSlosher(d) {
+  const B = BUCKET, C = { pail: '#1d1e22', inner: '#2a2b30', frame: '#a07fd2', frameD: '#7653b0', black: '#18191d', chrome: '#c9ccd0', gold: '#c7ae63', white: '#eceaf0' };
+  const body = new Pieces(), ink = new Pieces();
+  body.add(pailShell(B), C.pail, M.gloss);
+  // rolled lip round the slanted mouth and the squid-wave logo on the inner upper wall
+  const lip = [];
+  for (let k = 0; k <= 40; k++) { const a = (k / 40) * Math.PI * 2, r = B.R - B.wall * 0.5, y = B.yc + Math.sin(a) * r; lip.push([Math.cos(a) * r, y, lipZ(B, y)]); }
+  body.add(pipe(lip, 0.0055, 72, 6), C.pail, M.gloss);
+  body.add(box(0.05, 0.0015, 0.04, 0, B.yc + B.R - B.wall - 0.0012, B.top - 0.05, 0.3), C.white, M.print);
+  // lavender side plates: lower rail under each flank rising along the lower lip into the upright arm
+  const X = B.R + 0.012, plate = [[0.03, -0.118], [0.33, -0.118], [0.357, -0.1], [0.352, -0.076], [0.322, -0.03], [0.302, 0.012], [0.292, 0.09],
+    [0.282, 0.17], [0.27, 0.222], [0.243, 0.232], [0.25, 0.19], [0.258, 0.1], [0.262, 0.03], [0.266, -0.012], [0.235, -0.055], [0.19, -0.07],
+    [0.17, -0.05], [0.14, -0.05], [0.125, -0.074], [0.05, -0.076], [0.03, -0.092]];
+  for (const sx of [-1, 1]) body.add(slab(plate, 0.016, sx * X, 0.004), C.frame, M.gloss);
+  // band round the lower half of the lip, joining the plates
+  const band = [];
+  for (let k = 0; k <= 20; k++) { const a = Math.PI + (k / 20) * Math.PI, r = B.R + 0.008, y = B.yc + Math.sin(a) * r; band.push([Math.cos(a) * (X - 0.002), y, lipZ(B, y) - 0.014]); }
+  body.add(pipe(band, 0.011, 40, 8), C.frame, M.gloss);
+  // rear U-frame behind the base: two uprights and a top bar, a lower cross rail joining the side rails
+  const UX = 0.066, UZ = 0.018, UT = 0.158;
+  body.add(pipe([[-UX, -0.1, UZ + 0.01], [-UX, UT - 0.012, UZ], [-UX + 0.012, UT, UZ], [UX - 0.012, UT, UZ], [UX, UT - 0.012, UZ], [UX, -0.1, UZ + 0.01]], 0.0105, 60, 8), C.frame, M.gloss);
+  body.add(box(2 * X, 0.026, 0.03, 0, -0.106, 0.04, 0.35), C.frameD, M.gloss);
+  // black right-hand grip upright in the U-frame (native pitcher grip at the origin)
+  body.add(cyl(0.0125, [0, -0.052, 0], [0, 0.052, 0], 16), C.black, M.rubber);
+  for (let k = -3; k <= 3; k++) body.add(ring(0.0128, 0.0014, 0, k * 0.013, 0, 'y', 4, 16), C.black, M.rubber);
+  body.add(pipe([[0, 0.05, 0], [0, 0.1, 0.006], [0, UT, UZ]], 0.008, 16, 6), C.frame, M.gloss);
+  body.add(pipe([[0, -0.05, 0], [0, -0.085, 0.01], [0, -0.1, 0.03]], 0.008, 16, 6), C.frame, M.gloss);
+  // left-hand rubber bar under the pail (native support grip) between the side rails
+  body.add(cyl(0.0115, [-X, -0.088, 0.2], [X, -0.088, 0.2], 16), C.black, M.rubber);
+  // top handle: black bar with chrome elbows down into the arms
+  const HY = 0.246, HZ = 0.252;
+  body.add(cyl(0.0125, [-X + 0.016, HY, HZ], [X - 0.016, HY, HZ], 16), C.black, M.rubber);
+  for (const sx of [-1, 1]) body.add(pipe([[sx * (X - 0.02), HY, HZ], [sx * (X - 0.004), HY - 0.004, HZ], [sx * X, HY - 0.018, HZ + 0.004], [sx * X, HY - 0.03, HZ + 0.008]], 0.0085, 14, 8), C.chrome, M.metal);
+  // coil-over shocks on the flanks, arm (upper, front) to the lower rail (rear)
+  for (const sx of [-1, 1]) shock(body, [sx * (X + 0.02), 0.1, 0.24], [sx * (X + 0.02), -0.062, 0.15], C);
+  ink.add(pailFill(B));
+  const zs = B.zb + B.wall + 0.003, ze = lipZ(B, B.fill) - 0.006, w = 2 * Math.sqrt((B.R - B.wall) ** 2 - (B.fill - B.yc) ** 2) - 0.006;
+  const surface = part(new Pieces().add(box(w, 0.003, ze - zs, 0, B.fill, (zs + ze) / 2, 0.22, 16, 4), '#ffffff', M.satin), [0, B.fill, (zs + ze) / 2], 'ink');
+  return rebuild(d, { body, ink, parts: { surface } });
+}
+
+const BUILD3D = { 'slosher': bucketSlosher, 's3-slosher-diffusion': triSlosher, 's3-slosher-launcher': slosherMachine, 's3-slosher-bathtub': bloblobber,
   's3-slosher-washtub': explosher, 's3-slosher-double': dreadWringer };
 
 /** Builds one slosher on the native slosher def `d`: silhouette body, pitcher handle, ink surface and lever. */
@@ -216,13 +389,17 @@ function model(d, c) {
   });
 }
 
-// The legacy Slosher keeps its reference model: its verified drawn-fill drain and indexed handle
-// regressions (weapon-detail-motion tests) depend on that bucket's inner fill and handles.
-export const MODELS = Object.fromEntries(Object.entries(CFG).filter(([id]) => id !== 'slosher').map(([id, c]) => [id, {
+export const MODELS = Object.fromEntries(Object.entries(CFG).map(([id, c]) => [id, {
   sourceModel: id === 'slosher' ? 'Wmn_Slosher_StrongT'
     : id === 's3-slosher-diffusion' ? 'Wmn_Slosher_Diffusion'
     : id === 's3-slosher-launcher' ? 'Wmn_Slosher_Launcher'
     : id === 's3-slosher-bathtub' ? 'Wmn_Slosher_Bathtub'
     : id === 's3-slosher-washtub' ? 'Wmn_Slosher_Washtub' : 'Wmn_Slosher_Double',
   build: d => (BUILD3D[id] || (dd => model(dd, c)))(d),
+  // The Bucket's mouth faces forward (not up like the Wii U pitcher the source carry clips hold), so it keeps
+  // the native data carry: the pail hangs level at the right side with its mouth to the front.
+  // While sloshing, the native heave pitches the bucket ~1.5–1.95 rad down (tuned for an upward-facing pitcher
+  // mouth). The Bucket's mouth already faces forward, so its aim tilts the mouth up 0.8 rad first: the ink
+  // still leaves with the mouth to the front instead of pointing at the ground.
+  ...(id === 'slosher' ? { nativeCarry: true, hold: { aim: { r: [-0.8, 0.05, 0] } } } : {}),
 }]));

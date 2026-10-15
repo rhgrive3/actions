@@ -5,13 +5,17 @@ import { beginActorMotionTick } from './actor-motion.mjs';
 
 export const STEP = 1 / 60;
 export class FixedClock {
-  constructor() { this.accumulator = 0; this.ticks = 0; }
+  constructor() { this.accumulator = 0; this.ticks = 0; this.advancing = false; this.finalTick = true; }
   advance(elapsed, tick, budget = 240) {
     if (!Number.isFinite(elapsed) || elapsed < 0) throw new RangeError('Invalid frame interval');
     this.accumulator += elapsed;
     let count = 0;
     while (this.accumulator + 1e-10 >= STEP && count < budget) {
-      tick(STEP);
+      // Whether the frame drawn after this advance shows this tick's state (no
+      // further tick follows). Presentation-only work may defer earlier ticks.
+      this.finalTick = !(Math.max(0, this.accumulator - STEP) + 1e-10 >= STEP && count + 1 < budget);
+      this.advancing = true;
+      try { tick(STEP); } finally { this.advancing = false; }
       this.accumulator = Math.max(0, this.accumulator - STEP);
       this.ticks++; count++;
     }

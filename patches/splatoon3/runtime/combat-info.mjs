@@ -17,11 +17,56 @@ export function mapActorVisible(actor, viewer, hpMax = 100, now = 0) {
   return enemyRevealedOnMap(actor, hpMax, viewer, now);
 }
 // Presentation-only hit clock for the enemy health window (#716). It advances
-// only when the authoritative HP is observed to fall, so enemy-ink recovery
+// when accepted damage or applied remote HP falls, so enemy-ink recovery
 // clamps and regen timers (actor.lastDamage) cannot keep a bar alive. Death
 // clears the record, and the respawn HP is the new baseline. Unverified: whether
 // S3 counts enemy-ink HP ticks as qualifying damage (ink ticks refresh here).
 const hpObserved = new WeakMap();
+const HEALTH_OBSERVER = Symbol.for('inkwave.s3.health-hit-observer.v1');
+function recordHealthLoss(actor, before, now) {
+  if (!actor?.alive || !Number.isFinite(now) || !Number.isFinite(before) ||
+      !(actor.hp > 0 && actor.hp < before - 1e-6)) return;
+  hpObserved.set(actor, { hp: actor.hp, life: actor.netLife ?? 0, at: now });
+}
+// Observe completed authoritative operations, not HUD-frame net HP deltas.
+// Healing followed by a smaller hit between renders must still refresh the bar.
+// Remote observations run after normal admission/replay; rejected packets and
+// repeated samples cannot create a hit. No gameplay state is written here.
+export function installHealthHitObserver({ Actor, NetMatch, G }) {
+  if (!G) return;
+  // Install independently: a constrained boot may provide Actor before NetMatch.
+  if (Actor?.prototype && !Object.hasOwn(Actor.prototype, HEALTH_OBSERVER)) {
+    Object.defineProperty(Actor.prototype, HEALTH_OBSERVER, { value: true });
+    const damage = Actor.prototype.damage, reset = Actor.prototype.reset;
+    Actor.prototype.damage = function (...args) {
+      const before = this.hp, result = damage.apply(this, args);
+      recordHealthLoss(this, before, G.time);
+      return result;
+    };
+    Actor.prototype.reset = function (...args) {
+      const result = reset.apply(this, args);
+      hpObserved.delete(this);
+      return result;
+    };
+  }
+  if (NetMatch?.prototype?.applyRemote && !Object.hasOwn(NetMatch.prototype, HEALTH_OBSERVER)) {
+    Object.defineProperty(NetMatch.prototype, HEALTH_OBSERVER, { value: true });
+    const apply = NetMatch.prototype.applyRemote, respawn = NetMatch.prototype._remoteRespawn;
+    NetMatch.prototype.applyRemote = function (actor, ...args) {
+      const before = actor.hp, life = actor.netLife, result = apply.call(this, actor, ...args);
+      if (actor.netLife !== life) hpObserved.delete(actor);
+      else recordHealthLoss(actor, before, G.time);
+      return result;
+    };
+    if (respawn) NetMatch.prototype._remoteRespawn = function (actor, ...args) {
+      const result = respawn.call(this, actor, ...args);
+      hpObserved.delete(actor);
+      return result;
+    };
+  }
+
+}
+
 export function healthHitAge(actor, now = 0) {
   if (!actor?.alive) { hpObserved.delete(actor); return Infinity; }
   const seen = hpObserved.get(actor);
@@ -61,25 +106,37 @@ export function buildHealthMarkers(game, G, PLAYER, THREE) {
     if (actor.character.getHeadPosition && actor.form !== 'squid') { actor.character.getHeadPosition(head); head.y += .25; }
     else { if (actor.visualPos) actor.visualPos(head); else head.copy(actor.pos); head.y += actor.form === 'squid' ? .8 : 1.7; }
     head.project(G.camera);
-    if (head.z < -1 || head.z > 1 || Math.abs(head.x) >= 1 || Math.abs(head.y) >= 1) continue;
+    if (!Number.isFinite(head.x) || !Number.isFinite(head.y) || !Number.isFinite(head.z) ||
+        head.z < -1 || head.z > 1 || Math.abs(head.x) >= 1 || Math.abs(head.y) >= 1) continue;
     const row = out[n] || (out[n] = {});
     row.x = (head.x * .5 + .5) * innerWidth; row.y = (-head.y * .5 + .5) * innerHeight;
     row.hp = Math.max(0, Math.min(1, actor.hp / PLAYER.hp)); row.color = G.teamHex[actor.team]; n++;
   }
   out.length = n; return out;
 }
+// Cache the rendered values by DOM node, not by mutable marker row: the producer
+// reuses its rows, and pooled bars may represent another actor on the next frame.
+const healthBarPaint = new WeakMap();
 export function updateHealthBars(hud, rows = []) {
   const bars = hud._healthBars || (hud._healthBars = []);
   for (let i = 0; i < Math.max(rows.length, bars.length); i++) {
     const row = rows[i]; let bar = bars[i];
-    if (!row) { if (bar) bar.hidden = true; continue; }
+    if (!row || !Number.isFinite(row.x) || !Number.isFinite(row.y) || !Number.isFinite(row.hp)) {
+      if (bar && bar.hidden !== true) bar.hidden = true;
+      continue;
+    }
     if (!bar) {
       bar = document.createElement('span'); bar.className = 'iw-health';
       bar.setAttribute('aria-hidden', 'true');
       bar.appendChild(document.createElement('i')); hud.markerLayer.appendChild(bar); bars[i] = bar;
     }
-    bar.hidden = false; bar.style.transform = `translate3d(${row.x.toFixed(1)}px,${row.y.toFixed(1)}px,0)`;
-    bar.style.setProperty('--health-color', row.color || '#fff');
-    bar.firstChild.style.transform = `scaleX(${Math.max(0, Math.min(1, row.hp))})`;
+    if (bar.hidden !== false) bar.hidden = false;
+    let paint = healthBarPaint.get(bar);
+    if (!paint) { paint = {}; healthBarPaint.set(bar, paint); }
+    const position = `translate3d(${row.x.toFixed(1)}px,${row.y.toFixed(1)}px,0)`;
+    const color = row.color || '#fff', fill = `scaleX(${Math.max(0, Math.min(1, row.hp))})`;
+    if (paint.position !== position) { bar.style.transform = position; paint.position = position; }
+    if (paint.color !== color) { bar.style.setProperty('--health-color', color); paint.color = color; }
+    if (paint.fill !== fill) { bar.firstChild.style.transform = fill; paint.fill = fill; }
   }
 }

@@ -24,7 +24,9 @@ test('actual stationary post-dodge state persists after lock and cancels on move
 });
 test('jump initiation selects vertical roller windup, retaining it after landing', async () => {
   const f = await fixture(), a = f.make('roller'), r = a.weaponRunner;
-  a.grounded = false; r.update(1 / 60, { fire: true, firePressed: true });
+  a.intent.jump=true;f.tick(a);a.intent.jump=false;
+  assert.ok(a.character.events.some(e=>e[0]==='jump'),'native jump admission');
+  r.update(1 / 60, { fire: true, firePressed: true });
   assert.equal(r.s3FlickVertical, true);
   for (let i = 0; i < 6; i++) r.update(1 / 60, { fire: true });
   a.grounded = true;
@@ -115,15 +117,19 @@ test('gear uses distinct walk and firing curves, and does not speed up roller ro
   emitMainShot(f, a); assert.ok(Math.abs(a.weaponRunner.moveSpeed()-a.weapon.moveSpeedFiring*1.25)<1e-9);
   b.weaponRunner.rolling = true; b.weaponRunner.rollT = 2; assert.equal(b.weaponRunner.moveSpeed(), b.weapon.rollSpeed);
 });
-test('splatling first stage yields its 80-frame stream, conserving the prepaid ink', async () => {
-  const f = await fixture(), a = f.make('splatling'), r = a.weaponRunner;
-  a.ink = 11.25; a.intent.fire=true;
-  for(let i=0;i<49;i++)r.update(1/60,{fire:true});
-  assert.ok(Math.abs(r.charge-2/3)<1e-9);
-  r.update(1/60,{fire:false});
-  assert.ok(Math.abs(r.burstDur-80/60)<1e-9); assert.ok(a.ink<1e-9);
-  for(let i=0;i<90;i++)r.update(1/60,{fire:false});
-  assert.equal(f.shots.length,20); assert.ok(a.ink<1e-9);
+test('splatling first stage includes 21 endpoint rounds and preserves the unspent underfunded remainder', async () => {
+  const f = await fixture();
+  for(const [available,count,frames,remaining] of [[11.25,20,77,.27439024390243905],[11.52439024390244,21,81,0]]) {
+    f.shots.length=0;
+    const a=f.make('splatling'),r=a.weaponRunner;a.ink=available;a.intent.fire=true;
+    for(let i=0;i<49;i++)r.update(1/60,{fire:true});
+    assert.ok(Math.abs(r.charge-2/3)<1e-9);
+    r.update(1/60,{fire:false});
+    assert.ok(Math.abs(r.burstDur-frames/60)<1e-9);
+    assert.ok(Math.abs(a.ink-remaining)<1e-9);
+    for(let i=0;i<90;i++)r.update(1/60,{fire:false});
+    assert.equal(f.shots.length,count);assert.ok(Math.abs(a.ink-remaining)<1e-9);
+  }
 });
 test('bomb sub power normalizes the low base once and reaches the raw high value', async () => {
   const f = await fixture(), a = f.make(), r = a.weaponRunner; let thrown;

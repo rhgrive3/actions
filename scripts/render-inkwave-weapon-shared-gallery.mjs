@@ -40,7 +40,7 @@ const server = http.createServer((req, res) => {
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 let browser; const errors = [];
 try {
-  browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, headless: true, args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width: size, height: size } });
   await page.exposeFunction('__weaponHostSnapshot', hostSnapshot);
   page.on('pageerror', e => errors.push(String(e))); page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });

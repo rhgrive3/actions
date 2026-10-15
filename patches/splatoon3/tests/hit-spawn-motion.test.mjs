@@ -209,7 +209,12 @@ test('spawn coating uses native physical shaders, geometry and LOD, expires with
         assert.equal(shader(api, mesh.material).uniforms.uS3SpawnCoating.value, r.snapshot().coating);
       }
     }
-    const dither = r.ch._ditherMat('skin', 0); r.visual(0); const program = shader(api, dither);
+    const dither = r.ch._ditherMat('skin', 0);
+    const warmedKey = dither.customProgramCacheKey();
+    r.visual(0); const program = shader(api, dither);
+    // the per-frame coat pass must not re-key the dither twin warmAll compiled (a mid-match duplicate link)
+    assert.equal(dither.customProgramCacheKey(), warmedKey);
+    assert.equal(warmedKey.split('|iwSpawnCoating1').length - 1, 1);
     assert.equal((program.fragmentShader.match(/uniform float uS3SpawnCoating/g) || []).length, 1);
     assert.equal(program.uniforms.uLodFade, r.ch.lod.fadeOut);
     assert.ok(program.fragmentShader.includes('discard'));

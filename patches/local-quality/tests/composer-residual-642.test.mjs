@@ -363,3 +363,112 @@ test('#642 adapter composes with the existing renderer and the latest PR #1175 l
   assert.ok(lazyComposed.includes('configureComposerColorTargets(THREE, composer, composerColorTarget)'));
   assert.doesNotThrow(() => new vm.SourceTextModule(lazyComposed, { identifier: `${REL}#pr1175` }));
 });
+
+// Actual vendored composer/pass classes; only GPU draw methods are replaced
+// with observations. These are control-flow tests, not pixel comparisons.
+async function frameRoleNamespace() {
+  return linkEntry(`export * as THREE from 'three';
+    export { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    export { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    export { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+    export { OutputPass } from 'three/addons/postprocessing/OutputPass.js';`);
+}
+function frameRoleFixture(ns, packed = true) {
+  const renderer = { ...nativeComposerRenderer(1), getRenderTarget: () => null, setRenderTarget() {} };
+  const target = new ns.THREE.WebGLRenderTarget(32, 24, {
+    format: packed ? ns.THREE.RGBFormat : ns.THREE.RGBAFormat,
+    type: packed ? ns.THREE.UnsignedInt101111Type : ns.THREE.HalfFloatType,
+  });
+  const composer = new ns.EffectComposer(renderer, target), originalRender = composer.render;
+  configureComposerColorTargets(ns.THREE, composer, { packed });
+  const shader = { uniforms: {}, vertexShader: 'void main(){}', fragmentShader: 'void main(){}' };
+  const passes = [new ns.RenderPass(new ns.THREE.Scene(), new ns.THREE.Camera()),
+    new ns.ShaderPass(shader), new ns.ShaderPass(shader), new ns.OutputPass(), new ns.ShaderPass(shader)];
+  const observations = [];
+  for (const [i, pass] of passes.entries()) {
+    pass.render = function (_renderer, write, read) {
+      observations.push({ i, target: i === 0 ? read : write, read, write, screen: this.renderToScreen });
+    };
+    composer.addPass(pass);
+  }
+  return { composer, originalRender, passes, observations };
+}
+
+test('#642 packed roles survive all ScreenFX toggle parity, FXAA choices, resize and rebuild', async () => {
+  const ns = await frameRoleNamespace(); let frames = 0;
+  for (const fxaa of [false, true]) for (let sequence = 0; sequence < 16; sequence++) {
+    const { composer: c, passes, observations } = frameRoleFixture(ns);
+    const wrappedRender = c.render, pair = [c.renderTarget1, c.renderTarget2];
+    assert.equal(passes[0].needsSwap, false); assert.ok(passes.slice(1).every(p => p.needsSwap));
+    passes[4].enabled = fxaa;
+    for (let frame = 0; frame < 4; frame++) {
+      if (frame === 2) { c.setPixelRatio(1.25); c.setSize(64, 48); }
+      passes[2].enabled = !!(sequence & (1 << frame)); observations.length = 0;
+      c.render(1 / 60);
+      assert.equal(c.render, wrappedRender, 'no rewrapping on frame or resize');
+      assert.equal(c.renderTarget1, pair[0]); assert.equal(c.renderTarget2, pair[1]);
+      assert.equal(pair[0].texture.format, ns.THREE.RGBFormat);
+      assert.equal(pair[0].texture.type, ns.THREE.UnsignedInt101111Type);
+      assert.equal(pair[1].texture.format, ns.THREE.RGBAFormat);
+      assert.equal(pair[1].texture.type, ns.THREE.HalfFloatType);
+      const scene = observations.find(r => r.i === 0), grade = observations.find(r => r.i === 1);
+      assert.equal(scene.target, pair[1], `scene target: FXAA=${fxaa}, sequence=${sequence}, frame=${frame}`);
+      assert.equal(grade.target, pair[0]);
+      const screenfx = observations.find(r => r.i === 2), output = observations.find(r => r.i === 3);
+      if (screenfx) assert.equal(screenfx.target, pair[1]);
+      if (fxaa) assert.equal(output.target, screenfx ? pair[0] : pair[1]);
+      assert.equal(observations.at(-1).screen, true);
+      for (const row of observations) assert.notEqual(row.read, row.write);
+      frames++;
+    }
+    assert.equal(pair[0].width, 80); assert.equal(pair[1].height, 60);
+    c.dispose(); passes.forEach(p => p.dispose?.());
+    const rebuilt = frameRoleFixture(ns);
+    rebuilt.composer.render(1 / 60);
+    assert.equal(rebuilt.observations[0].target, rebuilt.composer.renderTarget2);
+    rebuilt.composer.dispose(); rebuilt.passes.forEach(p => p.dispose?.());
+  }
+  assert.equal(frames, 128);
+});
+
+test('#642 RGBA fallback preserves native render identity and swap behavior', async () => {
+  const ns = await frameRoleNamespace();
+  const { composer: c, originalRender, passes, observations } = frameRoleFixture(ns, false);
+  assert.equal(c.render, originalRender); passes[2].enabled = false;
+  c.render(1 / 60); c.render(1 / 60);
+  assert.equal(observations[0].target, c.renderTarget2);
+  assert.equal(observations[4].target, c.renderTarget1, 'unpacked native parity is unchanged');
+  for (const target of [c.renderTarget1, c.renderTarget2]) {
+    assert.equal(target.texture.format, ns.THREE.RGBAFormat);
+    assert.equal(target.texture.type, ns.THREE.HalfFloatType);
+  }
+  c.dispose(); passes.forEach(p => p.dispose?.());
+});
+
+test('#642 packed wrapper forwards receiver, arguments, return value and original error', () => {
+  const token = {}, error = new Error('render failed'); let calls = 0, fail = false;
+  const c = {
+    renderTarget1: { texture: {} }, renderTarget2: { texture: {} },
+    render(...args) {
+      calls++; assert.equal(this, c); assert.deepEqual(args, [0.25, token]);
+      assert.equal(this.readBuffer, this.renderTarget2); assert.equal(this.writeBuffer, this.renderTarget1);
+      if (fail) throw error; return token;
+    },
+  };
+  configureComposerColorTargets({ RGBAFormat: 1, HalfFloatType: 2 }, c, { packed: true });
+  const wrapper = c.render;
+  assert.equal(c.render(0.25, token), token);
+  fail = true; assert.throws(() => c.render(0.25, token), e => e === error);
+  fail = false; assert.equal(c.render(0.25, token), token);
+  assert.equal(calls, 3); assert.equal(c.render, wrapper);
+});
+
+test('#642 production emission configures once per native composer creation', () => {
+  const emitted = compose(REL);
+  assert.equal((emitted.match(/configureComposerColorTargets\(THREE, composer, composerColorTarget\)/g) || []).length, 1);
+  assert.ok(emitted.includes('const render = composer.render;'));
+  assert.ok(emitted.includes('this.writeBuffer = this.renderTarget1;'));
+  assert.ok(emitted.includes('this.readBuffer = this.renderTarget2;'));
+  assert.ok(emitted.includes('return render.apply(this, args);'));
+  assert.doesNotThrow(() => new vm.SourceTextModule(emitted, { identifier: REL }));
+});

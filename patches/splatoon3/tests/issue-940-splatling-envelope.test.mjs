@@ -62,8 +62,8 @@ test('#940 first, second, fifteenth and final seeded stream bullets agree at 30/
     ps._push = function (p) { rows.push([frame, r.spread, ...Array.from(p.vel.toArray()), p.seed]); return push.call(this, p); };
     const clock = new FixedClock(); a.intent.fire = held;
     for (let render = 0; render < hz * 3; render++) clock.advance(1 / hz, dt => { frame++; if (r.streaming) r.update(dt, { fire: held }); });
-    assert.equal(rows.length, 40); close(a.ink, 77.5);
-    for (const i of [0, 1, 14, 39]) { assert.equal(rows[i][0], 1 + i * 4); close(rows[i][1], 3.3); }
+    assert.equal(rows.length, 41); close(a.ink, 77.5);
+    for (const i of [0, 1, 14, 40]) { assert.equal(rows[i][0], 1 + i * 4); close(rows[i][1], 3.3); }
     traces.push(rows);
   }
   for (const rows of traces.slice(1)) assert.deepEqual(rows, traces[0]);

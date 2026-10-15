@@ -22,7 +22,7 @@ import {
   adjudicateBigBubblerDamage,
   BIG_BUBBLER_RAW, BIG_BUBBLER_CALIBRATION, hermite2d, kitBarrierShelter, bigBubblerCanopyHp,
   BIG_BUBBLER_OWNERSHIP, rollerBubblerCandidate, applyRollerBubblerHit,
-  damageBigBubblerFromInkVac,
+  damageBigBubblerFromInkVac, bigBubblerTimeDamage,
 } from '../runtime/kit-big-bubbler.mjs';
 
 const MODULE_PATH = new URL('../runtime/kit-big-bubbler.mjs', import.meta.url);
@@ -1404,4 +1404,40 @@ test('#1036 local Roller against a remote Bubbler proposes damage without mutati
   attacker.remote = true;
   assert.equal(rollerBubblerCandidate(attacker, 0, 1, attacker.weapon.rollWidth), null,
     'remote replay actors cannot originate a second authoritative contact');
+});
+
+// WeaponSpGreatBarrier (11.3.0) BarrierParam: TimeDamage=921, TimeDamageOnVLift=1842.
+test('Bubbler on the moving Tower takes double passive source damage and follows its deck',async()=>{
+ const {f}=await composed();level(f);const V=f.THREE.Vector3;
+ const block={center:new V(0,0,2),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)]};
+ f.G.match ||= {};f.G.match.mode='tower';
+ f.G.match.rankedWorld={towerBlock:block,_inTowerVolume({pos}){return Math.abs(pos.z-2)<2.5&&Math.abs(pos.x)<2.5;}};
+ const a=roller(f);f.G.actors=[a];activate(f,a);
+ const dome=bigBubblerDomes()[0];assert.ok(dome,'real native special places a dome');
+ assert.equal(dome.onTower,true,'onTower comes from the placed barrier, not the owner state');
+ assert.equal(bigBubblerTimeDamage(false),BIG_BUBBLER_RAW.timeDamage*2);
+ assert.equal(bigBubblerTimeDamage(true),BIG_BUBBLER_RAW.timeDamageOnVLift*2);
+ const before=dome.pos.clone(),fullHp=dome.hp;
+ block.center.add(new V(.7,.2,-.3));tickBigBubblers(DT);
+ assert.ok(dome.pos.distanceTo(before.clone().add(new V(.7,.2,-.3)))<1e-9,
+   'tower carries the physical shield across all three axes');
+ assert.ok(dome.group.position.distanceTo(dome.pos)<1e-9,'source geometry visual follows damage volume');
+ step(f,74);
+ close(fullHp-dome.hp,bigBubblerTimeDamage(true),1e-8);
+ clearBigBubblers('test-complete');
+});
+test('Bubbler thrown OFF a Tower keeps the normal 921 damage and stays in world space',async()=>{
+ const {f}=await composed();level(f);const V=f.THREE.Vector3;
+ const block={center:new V(0,0,2),axes:[new V(1,0,0),new V(0,1,0),new V(0,0,1)]};
+ f.G.match ||= {};f.G.match.mode='tower';
+ f.G.match.rankedWorld={towerBlock:block,_inTowerVolume(){return false;}};
+ const a=roller(f);f.G.actors=[a];activate(f,a);
+ const dome=bigBubblerDomes()[0];assert.ok(dome);
+ assert.equal(dome.onTower,false);
+ const original=dome.pos.clone(),fullHp=dome.hp;
+ block.center.add(new V(1,2,1));
+ step(f,75);
+ assert.ok(dome.pos.distanceTo(original)<1e-10,'off-deck dome does not follow the tower');
+ close(fullHp-dome.hp,bigBubblerTimeDamage(false),1e-8);
+ clearBigBubblers('test-complete');
 });
