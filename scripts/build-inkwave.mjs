@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { NATIVE_ROOT, nativeStageIdentity, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
+import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
@@ -162,14 +162,14 @@ for (const [root, prefix] of [
 ]) {
   for (const file of walk(root)) {
     const rel = path.relative(root, file).split(path.sep).join('/');
-    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
+    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.startsWith('definitions/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     // One native runtime module avoids inflating the bounded worker manifest.
     if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (prefix === 'patches/native-stages' && ['runtime/engine.mjs','runtime/registry.mjs','runtime/source-worker.mjs'].includes(rel) && !unminified) {
       const bundled = await esbuild.build({ entryPoints:[file], bundle:true, format:'esm', minify:true, charset:'utf8', write:false,
-        external:['three','../../../src/*','./registry.mjs','./build-config.mjs'], legalComments:'inline' });
+        external:NATIVE_RUNTIME_EXTERNALS, legalComments:'inline' });
       fs.writeFileSync(dst,bundled.outputFiles[0].contents); continue;
     }
     if (/\.(?:m?js|css)$/.test(rel)) {

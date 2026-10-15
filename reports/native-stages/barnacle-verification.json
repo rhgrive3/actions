@@ -1,0 +1,3754 @@
+{
+  "schema": 1,
+  "id": "barnacle",
+  "numericStageId1130": 8,
+  "internal": "Vss_Section01",
+  "name": "タラポートショッピングパーク",
+  "status": "local-source-supported",
+  "verifiedAt": "2026-10-13",
+  "foundationCommit": "68bbcbf7589eb77edb7c741edc9d40fee908c037",
+  "source": {
+    "id": "barnacle",
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "tree": "c7d87b908c565e698fade2f7bbe4c9353f200435",
+    "objSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+    "objBytes": 38771334,
+    "vertices": 322386,
+    "normals": 322386,
+    "uv": 320186,
+    "indices": 753033,
+    "objects": 286,
+    "triangles": 251011,
+    "positionsFloat32Identical": true,
+    "normalsFloat32Identical": true,
+    "uvFloat32Identical": true,
+    "everyUint32IndexIdentical": true,
+    "float32BitPatternsIncludingSignedZeroIdentical": true,
+    "missingUVZerosVerified": true,
+    "converterIndependent": true,
+    "allPinnedMtlAndPngVerified": true,
+    "independentPinnedGitBlobSizesVerified": true,
+    "convertedTexturesVerified": 256,
+    "files": [
+      {
+        "path": "stages/Vss_Section01/Vss_Section01.mtl",
+        "gitBlobSha1": "c1d16d51149120c0a86fdc2a0a0cc3d37bb9936a",
+        "pinnedGitBlobBytes": 24917,
+        "bytes": 24917,
+        "sha256": "5105698b0b3a2791b7e217040f3560687ff47ca9f71b198c4a0d6ad8f1445bee"
+      },
+      {
+        "path": "stages/Vss_Section01/Vss_Section01_parts/Vss_Section01.mtl",
+        "gitBlobSha1": "c1d16d51149120c0a86fdc2a0a0cc3d37bb9936a",
+        "pinnedGitBlobBytes": 24917,
+        "bytes": 24917,
+        "sha256": "5105698b0b3a2791b7e217040f3560687ff47ca9f71b198c4a0d6ad8f1445bee"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/BakeDummy00.png",
+        "gitBlobSha1": "d14c5096c2fc261728b47355e3b4505cfc3df5c3",
+        "pinnedGitBlobBytes": 95,
+        "bytes": 95,
+        "sha256": "dd108633634f33fbbf19c460cbc1d01d66bb0a18667cc45417c1248dcb96c674"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CafeSet00_Alb.png",
+        "gitBlobSha1": "9ec6105fd13305d5449949e00bb39082485bec7a",
+        "pinnedGitBlobBytes": 16961,
+        "bytes": 16961,
+        "sha256": "bb1e815a5b815c2a27d25b9138cd9c0895a09aa05f6f21c6d9f878707bf4375d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CafeSet00_Emi.png",
+        "gitBlobSha1": "2c465cab9b28390e3fedd9f5621039fd22970e9f",
+        "pinnedGitBlobBytes": 12914,
+        "bytes": 12914,
+        "sha256": "96e4ce8725c6c44fc37b3e1b782fdd2edc341ef6f81bdf79ae23c63cfbf495c1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CafeSet00_Mtl.png",
+        "gitBlobSha1": "1e4d635e20e8871c01e2a949dcfe3292c2555a98",
+        "pinnedGitBlobBytes": 4893,
+        "bytes": 4893,
+        "sha256": "38f3cd82d8b8e11df01ccbd4178d68222a5fcaf9a0cc014ace99d40f3ee260c2"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CafeSet00_Nrm.png",
+        "gitBlobSha1": "51d1239321efc66d0e2fec52dc221600f75289ee",
+        "pinnedGitBlobBytes": 81481,
+        "bytes": 81481,
+        "sha256": "c46fa0380fe70824223abf64c8105073143d5a0bc8c1f3c5b9c12931fbd554a6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CafeSet00_Rgh.png",
+        "gitBlobSha1": "2410d990a3f35d0383353a120b7aaa0c69f88495",
+        "pinnedGitBlobBytes": 37880,
+        "bytes": 37880,
+        "sha256": "8bc2a20da1687d8426b17ddd7fe0de2f9d784d93e2ec4883dbf4411230ee647b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CampSet01_Alb.png",
+        "gitBlobSha1": "720cd242764c0fce92a693e68fb37adfe78c7f47",
+        "pinnedGitBlobBytes": 60054,
+        "bytes": 60054,
+        "sha256": "86b0a770023c19675472967298d895f7870d3500259e008e20ccdab460f9a50e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CampSet01_Nrm.png",
+        "gitBlobSha1": "dfede1eefd66e88add5448075b4004de143f3bbf",
+        "pinnedGitBlobBytes": 126546,
+        "bytes": 126546,
+        "sha256": "803c62a0fd4e7f8f2a93bd776a58b4b92a92eb055a30d5884f0233a54a9b209b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CampSet01_Rgh.png",
+        "gitBlobSha1": "df4061b0967a60ec20c094278bd4619f79de9aaa",
+        "pinnedGitBlobBytes": 44902,
+        "bytes": 44902,
+        "sha256": "e430167fc2dc874f976d19c46b8b32b96fa7700ad35faf34e26dbf8d9cf5b16d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CampSet02_Alb.png",
+        "gitBlobSha1": "75bd03e14d9277d2d90ec36453e3dd8dfcc89244",
+        "pinnedGitBlobBytes": 49667,
+        "bytes": 49667,
+        "sha256": "0d6a5d0a10997fa12e656985881298ed33c338f5d6614d4d5c97dc3f27b6ac59"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CampSet02_Nrm.png",
+        "gitBlobSha1": "15b4623cfab24205e9f33190c80276f284a5c254",
+        "pinnedGitBlobBytes": 57102,
+        "bytes": 57102,
+        "sha256": "51424acb0c88a3634e81628521e12d54d0be579ae255012f5bb5eb7c8728fdf4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CampSet02_Rgh.png",
+        "gitBlobSha1": "52d06c4698def307dc2c2a53434e7657636c1b11",
+        "pinnedGitBlobBytes": 47749,
+        "bytes": 47749,
+        "sha256": "41d3005d0fef47493b5ff988c3b2a298558c5fc1a3de09fd52784d6b75283661"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CanolaAV_Alb.png",
+        "gitBlobSha1": "d7a5664e6b21195e79b3097074ce7853b97ec1ad",
+        "pinnedGitBlobBytes": 1397,
+        "bytes": 1397,
+        "sha256": "c4f944f6369f7eddc80f997c8d4d1b7acc86323567f92fa2ed4d2cdb2cf999f3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CanolaA_Alb.png",
+        "gitBlobSha1": "f6458841cc78e7f6f1dcb1c21bcb1064b7b6c503",
+        "pinnedGitBlobBytes": 1355,
+        "bytes": 1355,
+        "sha256": "313fbb9f643280a93400704dcf85099e70482995bdb310107c4d31a1074c6694"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CanolaBV_Alb.png",
+        "gitBlobSha1": "d62fcd0a3fa226d0a3755c3fb86fe51fe9651579",
+        "pinnedGitBlobBytes": 1458,
+        "bytes": 1458,
+        "sha256": "d79d6c7a9dc2104bcbf9387429815d7467e249d6b9f42ea71e4f9c8104c2cea4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/CanolaB_Alb.png",
+        "gitBlobSha1": "f51aea54047866d1f822ea3fc1ea31778ae0a9a8",
+        "pinnedGitBlobBytes": 1034,
+        "bytes": 1034,
+        "sha256": "7e494e9aadf6f0ab6d6e92eb85870cfaca14812d90df79b6da98c1ce2bf6ee24"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Canola_Fxm.png",
+        "gitBlobSha1": "9a8549503f082fe8f62f62bfc17e095e7f9fa880",
+        "pinnedGitBlobBytes": 42581,
+        "bytes": 42581,
+        "sha256": "4e039578043533e9f0ebae94d3b92275f7ec7bc5f34c34305cd7098d4569b063"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Canola_Opa.png",
+        "gitBlobSha1": "43c11cc548f9f4ed6bec09dd51437708cd1a866e",
+        "pinnedGitBlobBytes": 142467,
+        "bytes": 142467,
+        "sha256": "290372da28f277eca2d9f47a8a5ba18f92fbeda9ca5d94c334d99f9377badb7d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet01_Alb.png",
+        "gitBlobSha1": "c5ce5732ba152ceb833b98494eaa295c2b9c96dd",
+        "pinnedGitBlobBytes": 38706,
+        "bytes": 38706,
+        "sha256": "21b69c5f406723081c867f970cebbf28c78b89c9e79873b63d50ab12668534e6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet01_Nrm.png",
+        "gitBlobSha1": "afda57249315d5d18d77d293fc1c4947edc5fa23",
+        "pinnedGitBlobBytes": 135783,
+        "bytes": 135783,
+        "sha256": "2573d7202d524c1bb33e61c96c71ed45eeb87312b62f6ce72813aca19560a5b5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet01_Rgh.png",
+        "gitBlobSha1": "0dcd8d3239fba774c3129c904dfe36652b81ca76",
+        "pinnedGitBlobBytes": 33758,
+        "bytes": 33758,
+        "sha256": "b7046a2c1bb7426aaf062a8f955762d57c2150134176bd328c1ece257b3a0a57"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet02_Alb.png",
+        "gitBlobSha1": "b4b9acd158e1d0e7b87d8858d0e49745466151b7",
+        "pinnedGitBlobBytes": 281465,
+        "bytes": 281465,
+        "sha256": "04b67bfb7e0cd0c6691ad1041de21416e420ca4fae37cec2739294911bce22e2"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet02_Col.png",
+        "gitBlobSha1": "51880590a8051cf1492b807a1d9c58bd12ce4aa8",
+        "pinnedGitBlobBytes": 872,
+        "bytes": 872,
+        "sha256": "0b26b6e98ea390dcdcbd76526cc990b224c2b5d5a735a6e31c9b255679cbfae1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet02_Nrm.png",
+        "gitBlobSha1": "c2ac70f56c11b0455dbd14cbaaa4dc8c7dce32d7",
+        "pinnedGitBlobBytes": 79023,
+        "bytes": 79023,
+        "sha256": "429a8d285c0b60a15551615a8bcb453feb88ce453e5edaa0f6cae2ba78b4948f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet02_Rgh.png",
+        "gitBlobSha1": "0c31cb18a2a17c5eaf675f753c78557e82572505",
+        "pinnedGitBlobBytes": 53323,
+        "bytes": 53323,
+        "sha256": "a0bb962545e5dcf24c0ae6fbb5da9e3f4a0d5e889e6906470dd301e30af8c085"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet03_Alb.png",
+        "gitBlobSha1": "2300971a51e57fa877eab7506c8cf7d57003a952",
+        "pinnedGitBlobBytes": 404644,
+        "bytes": 404644,
+        "sha256": "140a657cfccb28f964aa226e4f7687dc3a3f31624fc700069d4c55fb6f7fed43"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet03_Nrm.png",
+        "gitBlobSha1": "3c88244ad5cd7b14b3a4c2aee98f5042ce99e892",
+        "pinnedGitBlobBytes": 126056,
+        "bytes": 126056,
+        "sha256": "30f1d5bb3333bb91d7a076a77ce1d4880d6846ed72e5d9f24fca0eaf9ac83d84"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet03_Rgh.png",
+        "gitBlobSha1": "b2c85e3322451383b91262d3fbe23ba808392aeb",
+        "pinnedGitBlobBytes": 34665,
+        "bytes": 34665,
+        "sha256": "0312c4f8839cabcfed4abaa831928001f35638d56272bfea106ffa90bdcffd65"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet04_Alb.png",
+        "gitBlobSha1": "8a69fa38b0d9bf37cc7fadcdef10c68de40cc476",
+        "pinnedGitBlobBytes": 66888,
+        "bytes": 66888,
+        "sha256": "4a35d7d99194d10d925d0b93719e1be42bbc2beb92aeea9fb483d65dc4e74027"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet04_Nrm.png",
+        "gitBlobSha1": "7dc795dbeeb347b3f58f528e9d2f6a157c130b5d",
+        "pinnedGitBlobBytes": 16428,
+        "bytes": 16428,
+        "sha256": "1ea130ce76d29a1c66362d8e36b910faa5927fe448c2ed6b37522fdccff9be49"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet04_Rgh.png",
+        "gitBlobSha1": "216ed34966f8d1933770574231821fa4cc56d3ba",
+        "pinnedGitBlobBytes": 5724,
+        "bytes": 5724,
+        "sha256": "657d9525e95149cd1b67d073f709dbab35f7af2d2c96e69fad5efd798aefeb2a"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet05_Alb.png",
+        "gitBlobSha1": "8b3d616aa7fc9d332be6c527d573015cbc58f51f",
+        "pinnedGitBlobBytes": 70224,
+        "bytes": 70224,
+        "sha256": "9589153d9d243f6e06d3b4a3f80d70870ba7a4f7a3b8b0cba82d1a5c030ba3c6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet05_Nrm.png",
+        "gitBlobSha1": "1ae44925c612804b879ed5dde443381ccf29af43",
+        "pinnedGitBlobBytes": 107384,
+        "bytes": 107384,
+        "sha256": "22c3227b8d1e44eddf2908ce4da2b5ed8ce5352c7e143cd04b32903749ff18d5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet05_Rgh.png",
+        "gitBlobSha1": "3e532c282e62740e30b2059c34fade0ea31cac89",
+        "pinnedGitBlobBytes": 52941,
+        "bytes": 52941,
+        "sha256": "f5e5b785244364feb3a16670ab425acec1a5998c81fc762596e56a29cad8dd94"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet06_Alb.png",
+        "gitBlobSha1": "463a2c9f78e67ceeeda8815ac19434ae62ce7b7e",
+        "pinnedGitBlobBytes": 82083,
+        "bytes": 82083,
+        "sha256": "a52f943784286b2d7bb73af27c1becf55683ab2f1e7f3ce742ef585726370c24"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet06_Nrm.png",
+        "gitBlobSha1": "ada4b7ee5876b3eed9e200772a85502b3719557c",
+        "pinnedGitBlobBytes": 107262,
+        "bytes": 107262,
+        "sha256": "6a3ce4b1460585942d7dbdf7b91e21e0097333b3e37630f0c3a96e51c7cb8e10"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Carpet06_Rgh.png",
+        "gitBlobSha1": "e34a0af9ae9950510af1a0b8b813f4b96b3d3415",
+        "pinnedGitBlobBytes": 52900,
+        "bytes": 52900,
+        "sha256": "f11bc05506209a75f7a5ed0d59ef7c96cd2121c0502683722472f46d970a7d50"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete00_Alb.png",
+        "gitBlobSha1": "b6cb7a788de85327e91346655b5e6787cd3a34c2",
+        "pinnedGitBlobBytes": 256155,
+        "bytes": 256155,
+        "sha256": "ae4533e4aed1377e9314d42f3acb185c38b1fac4899ced7593bfa5ebba855bf3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete00_Mtl.png",
+        "gitBlobSha1": "8e6b9eb8401c32f0ecd2d133b47ddcb39f3c9c34",
+        "pinnedGitBlobBytes": 11379,
+        "bytes": 11379,
+        "sha256": "207dad3dbb7a43d1418ec988ba3e3b911f8e9768c072e6ef70e765daa21405f3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete00_Nrm.png",
+        "gitBlobSha1": "6b0f1eaabea36ef541bad1decfadccde34ec1b3a",
+        "pinnedGitBlobBytes": 430366,
+        "bytes": 430366,
+        "sha256": "74a7fa8f93fb85b81201735c83f59cc48a12d7ca257dc31ca43c6a247a2c3207"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete00_Rgh.png",
+        "gitBlobSha1": "b60a1690ff1fda87035c981be2b82cec57ac515b",
+        "pinnedGitBlobBytes": 179261,
+        "bytes": 179261,
+        "sha256": "7d820a9dd454a1ccea3b413fb9eec2ae9e2a2c15de7b778a8c164c8d43781c09"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete01_Alb.png",
+        "gitBlobSha1": "152b4b9e539100003ff4c0edf7219621e16e6aeb",
+        "pinnedGitBlobBytes": 283471,
+        "bytes": 283471,
+        "sha256": "570412993f5cf0c64d245ae57e8322fdc73761a3a33ed889b7b43fdddf09c521"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete01_Nrm.png",
+        "gitBlobSha1": "765c42eed997f0073c5950a8d6015226a7188cb6",
+        "pinnedGitBlobBytes": 117377,
+        "bytes": 117377,
+        "sha256": "6537df5170ce0813499cfe01aa3198db195fe64c9c028b58675cfcc75be3f69f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete01_Rgh.png",
+        "gitBlobSha1": "471239aed65c97cc373d62fbe2bcc720c9d9c382",
+        "pinnedGitBlobBytes": 3180,
+        "bytes": 3180,
+        "sha256": "5d25d056b77ad4b68ae60d3e25e94970c24f31f0aec4ae6d22faa9218b3fb861"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete03_Alb.png",
+        "gitBlobSha1": "be2949f6029f5473ec63cb08677b9e3fb20ddaac",
+        "pinnedGitBlobBytes": 166455,
+        "bytes": 166455,
+        "sha256": "3f2c6c0ca63507be377169ddd841e9135ef116b166e394192aa95b8124697003"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete03_Nrm.png",
+        "gitBlobSha1": "00c86dac4dae8aced4c217b0d665d7cbd8a7ccc7",
+        "pinnedGitBlobBytes": 100781,
+        "bytes": 100781,
+        "sha256": "23adffa2e1d53ee638f5d75c141d1621fa54ae6fb4b36312be68cfd3bc8a3392"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete03_Rgh.png",
+        "gitBlobSha1": "d924d2642b5ff65c6cb4ba41f64970b47d5fcb69",
+        "pinnedGitBlobBytes": 51949,
+        "bytes": 51949,
+        "sha256": "f7f349498545fb09f9843b63ca4a191703a87d713549b3808d2e6a0042a06b96"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete04_Alb.png",
+        "gitBlobSha1": "8dc2d42b73920e2ecea34c567d3bb2bcf9b4e041",
+        "pinnedGitBlobBytes": 874,
+        "bytes": 874,
+        "sha256": "e59afc4ff8f9fbb6133c1a223e702eb3bc2603275c5e47fdfdec7456c2e1a1cf"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete04_Nrm.png",
+        "gitBlobSha1": "1385a0a7c54e9bc083ae9b079a2c25bbc25cbc7d",
+        "pinnedGitBlobBytes": 30861,
+        "bytes": 30861,
+        "sha256": "6d248467e77fedc10503285f18e400f1486a1fae15758bc269025ee02051be61"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete04_Rgh.png",
+        "gitBlobSha1": "292e6a23e7a7a4f6a3839388733849d43183a54d",
+        "pinnedGitBlobBytes": 7084,
+        "bytes": 7084,
+        "sha256": "862786152be760ac042c504beb731bf549ba10b6e0be1d93a9c3d8018129dac5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete05_Alb.png",
+        "gitBlobSha1": "5dd7590a8e145ac64ccb9aba5d0710e4fda3e1e4",
+        "pinnedGitBlobBytes": 388466,
+        "bytes": 388466,
+        "sha256": "9b13d307303e60b1d18a05757cd13033f7a0487c6827e4c67f89e62f6b7915b4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete05_Nrm.png",
+        "gitBlobSha1": "4fb8f2e9f78ba5cfcfb576823c0796381e2545c4",
+        "pinnedGitBlobBytes": 403439,
+        "bytes": 403439,
+        "sha256": "f58e44cf8d2b7202b386e1c4321ea8aed6b1b6c68a92a7d7ed4fb0c31185027b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete05_Rgh.png",
+        "gitBlobSha1": "fc2cc2f440fc20606293c7a73f4ef75099d1946d",
+        "pinnedGitBlobBytes": 150164,
+        "bytes": 150164,
+        "sha256": "25eaef0a81923620f7f35dbf573ea6df654b0a842873b5bbbeaa9f209455a185"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete06_Alb.png",
+        "gitBlobSha1": "7d58a0e0c303b84f7ab9a8315a18e1524ce74ac4",
+        "pinnedGitBlobBytes": 67369,
+        "bytes": 67369,
+        "sha256": "40862c1a192ebd84da4466ea63629db0dc0d72eb29a3ddc22f4e06ab19490c7c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete06_Nrm.png",
+        "gitBlobSha1": "0d909907e5f5c903237e707b0776acbb8b04cf4f",
+        "pinnedGitBlobBytes": 13722,
+        "bytes": 13722,
+        "sha256": "83e6cf500939a9ec05ef3811b01e3336265d72061adf1114d815f1550ddf68ac"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Concrete06_Rgh.png",
+        "gitBlobSha1": "8588a11859a3defb4ef8df31067f3512e459d714",
+        "pinnedGitBlobBytes": 12713,
+        "bytes": 12713,
+        "sha256": "2f752e3c1942bdbcb296c004a6b293e4e690cf9a307e5be6aeed4b6d110ce290"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/DVFountain00_Alb.png",
+        "gitBlobSha1": "442d07a6d318be745180b7aa31a56597e29a852c",
+        "pinnedGitBlobBytes": 78805,
+        "bytes": 78805,
+        "sha256": "864655f10b0f30ab4f74dc29af88ace6f4fefcc9f9efb7cece354270e3ec13c4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/DVFountain00_Mtl.png",
+        "gitBlobSha1": "aed26c80cc0568c65a400169a8a1c5c784e8ca22",
+        "pinnedGitBlobBytes": 2214,
+        "bytes": 2214,
+        "sha256": "059a2ac6fa9c6f1e7226dec0abd31f5562edc7c8ee2f49fb6dfc2a4dc15f72c7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/DVFountain00_Nrm.png",
+        "gitBlobSha1": "8fbe032fb9fbe093b38d9c5e5927e0e4bae1cbc7",
+        "pinnedGitBlobBytes": 416076,
+        "bytes": 416076,
+        "sha256": "a0ef977d08eb8ed41d6706349acafa60e7a053f7da71621a4ee749d38222d0bb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/DVFountain00_Rgh.png",
+        "gitBlobSha1": "628319b00996766747f7902163bd71bd63bc7aa3",
+        "pinnedGitBlobBytes": 120824,
+        "bytes": 120824,
+        "sha256": "cb26881e7951983652c7cb480a709b404ec867422a2c08e5a3eaf602148a4170"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/DVWaterSurface_Nrm.png",
+        "gitBlobSha1": "36d8bd8fb641c4066367ff9291e7c3749050fc39",
+        "pinnedGitBlobBytes": 27206,
+        "bytes": 27206,
+        "sha256": "d2b3215632d4ac8dbd7b6203d792bde18e1aedae1a2d6db2f89ab8236ba03124"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/EventStage02_Alb.png",
+        "gitBlobSha1": "7d950b185adbbe876bde10c91f5f3bffb04d0681",
+        "pinnedGitBlobBytes": 12995,
+        "bytes": 12995,
+        "sha256": "3c91d0656dd9ceb62e1d9688a62022e861e3a90261f869df769dcbe999126b00"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/EventStage02_Mtl.png",
+        "gitBlobSha1": "a137db018ed0f5ecf3b01b7fb1a6f313de38381a",
+        "pinnedGitBlobBytes": 5564,
+        "bytes": 5564,
+        "sha256": "d6d15614909b89415869638cf3f841183e1b12f6fe1f510bbec5a3a6efae4a03"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/EventStage02_Nrm.png",
+        "gitBlobSha1": "6ed3c3dbe7505f60fa3d83ee92acf809962f99bb",
+        "pinnedGitBlobBytes": 28574,
+        "bytes": 28574,
+        "sha256": "e1d2a5e72e22da779ad4dea0ea0051afe85a8cd6b0745debec5d41233e753ddf"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/EventStage02_Rgh.png",
+        "gitBlobSha1": "d5f700765e1c250db1e43ee4ab646ac967e5eee5",
+        "pinnedGitBlobBytes": 16093,
+        "bytes": 16093,
+        "sha256": "5045875d80fc6de3cc3f5821a2eb4137387722de401619439b0f1d73eb8ac89d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage00_Alb.png",
+        "gitBlobSha1": "a36ac29d24b71eee05031c84c396a0655fd94210",
+        "pinnedGitBlobBytes": 61841,
+        "bytes": 61841,
+        "sha256": "a475a3c569f87bd35992b7fcf36050503a0dafcf2cc036b396447d2cdaa1e75b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage00_Mtl.png",
+        "gitBlobSha1": "90ba903da3235ea1daf68832da5e7a2dca76e4fd",
+        "pinnedGitBlobBytes": 5987,
+        "bytes": 5987,
+        "sha256": "22edcefcdf86227959347e97199514c4e1e5461c1febb7ab531ec7976709b6d1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage00_Nrm.png",
+        "gitBlobSha1": "a8a0bdead19072a183971dedc878dd480795635b",
+        "pinnedGitBlobBytes": 17490,
+        "bytes": 17490,
+        "sha256": "ffa950e56c263ab96d4050fa6ba029c0b373039cc621d0617f9fbc05b2d25000"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage00_Rgh.png",
+        "gitBlobSha1": "5f18163e730a620a92a5a384df431fa1363dab0b",
+        "pinnedGitBlobBytes": 11250,
+        "bytes": 11250,
+        "sha256": "688f6e97f80f199906868677672ffa951662df9ca60493b3a4d91dcfaf60ff72"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage03_Alb.png",
+        "gitBlobSha1": "3a134acd40e46531fa8a63332d34a7f7bedf0110",
+        "pinnedGitBlobBytes": 57321,
+        "bytes": 57321,
+        "sha256": "26b321ebf1fced2fcce4c51372fb5e055b5b452ff0f5a541a63895d461de3411"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage03_Mtl.png",
+        "gitBlobSha1": "89440b07bf51a9d6d92dbbe23f8e81e6e0da5b8c",
+        "pinnedGitBlobBytes": 27087,
+        "bytes": 27087,
+        "sha256": "c25c5688b7f8fedb48fe2c3aeb0f9720ba14e727fb924d7b5a5748159ca3ca3c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage03_Nrm.png",
+        "gitBlobSha1": "07fdf0c3487d2031acd691940621edb9cf9ea965",
+        "pinnedGitBlobBytes": 74505,
+        "bytes": 74505,
+        "sha256": "c37346cfa67c1f70eac6afc5d607510016a07b4094438d1cd017d4c5272e35f1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage03_Rgh.png",
+        "gitBlobSha1": "253b7a15d53bccc61fddfe039c47630e2fb675ac",
+        "pinnedGitBlobBytes": 29211,
+        "bytes": 29211,
+        "sha256": "b8da3d9e9626f43b89b6da4241068c1d1f3ec44ac192cda73af500c96c7d1e6e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage04_Alb.png",
+        "gitBlobSha1": "4f2bf82fb60d5039f1c76e4ae60c11ae99b2638a",
+        "pinnedGitBlobBytes": 50587,
+        "bytes": 50587,
+        "sha256": "8525243f3a97fa2e511b6dad7201ade43e6b0e6897148b91525a79d8f1bd24f0"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage04_Mtl.png",
+        "gitBlobSha1": "737e15b73be6699e0f519896767817efe8acb6ba",
+        "pinnedGitBlobBytes": 20087,
+        "bytes": 20087,
+        "sha256": "7ab33d6b99b441b7b82fba66f96c36fd22c3a71d846970175f21737038a2da4c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage04_Nrm.png",
+        "gitBlobSha1": "9444210d4613f68ce72965db35eeaad624fe11ad",
+        "pinnedGitBlobBytes": 39825,
+        "bytes": 39825,
+        "sha256": "5ebb85a0992fa4b079a6a6d81f8d86845e42fceafd92039181bb9fee9bbdeddb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/ExhibitionStage04_Rgh.png",
+        "gitBlobSha1": "7499cf10fcf566789d7452c3a16399b396c673a3",
+        "pinnedGitBlobBytes": 32025,
+        "bytes": 32025,
+        "sha256": "7a1c42efda1d857b0a6dccf4dbc23cc1e3198faa04ec2d5ba45375cb2574ff1b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/FloorLine04_Alb.png",
+        "gitBlobSha1": "d8cb92a08aef5b0c0dd6428146dd9a7e3fba503d",
+        "pinnedGitBlobBytes": 37693,
+        "bytes": 37693,
+        "sha256": "351613067f5a9c713bb577d27c45313f7ecd3edfdbc15010d699235c36588c6e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/FloorLine04_Mtl.png",
+        "gitBlobSha1": "50b401c2401650b008f901372e9c72d8d1f4c17c",
+        "pinnedGitBlobBytes": 880,
+        "bytes": 880,
+        "sha256": "394d8df43e78274894471aff424e08e9ca1453e00d7816a9439be1ddf1e4dc12"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/FloorLine04_Nrm.png",
+        "gitBlobSha1": "b8d2f08b818575c1756fc69a3be863bf1a304f4f",
+        "pinnedGitBlobBytes": 32321,
+        "bytes": 32321,
+        "sha256": "d7425d26f4e3417de5d0ab51e8dc0ddba66d49f5971022b723bb59b84ec6c547"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/FloorLine04_Opa.png",
+        "gitBlobSha1": "dee5da308165fbd655db25e7b58a3148a6e43edb",
+        "pinnedGitBlobBytes": 31065,
+        "bytes": 31065,
+        "sha256": "7c058e9951f02312662d55717e8931adb95d867e43d3fabdd3fe72fc09fe4f38"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/FloorLine04_Rgh.png",
+        "gitBlobSha1": "f1088b99cad45e7cfe986f242c60f4c13406cf7e",
+        "pinnedGitBlobBytes": 10235,
+        "bytes": 10235,
+        "sha256": "e57fe53873b6eaf4ee2496152b94d1e11504705811c0f60310ff9a56bb9d44da"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame00_Alb.png",
+        "gitBlobSha1": "33603139992fa01cc66fbf07cd4960ea1278d7a7",
+        "pinnedGitBlobBytes": 94857,
+        "bytes": 94857,
+        "sha256": "b233958fcdd99102897027679d47a51180234f7513c8209dc5330c1f7c16a034"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame00_Mtl.png",
+        "gitBlobSha1": "a1fdceb80c17db3f30471bf65e418d79be5fe733",
+        "pinnedGitBlobBytes": 8934,
+        "bytes": 8934,
+        "sha256": "916e8630d4f2bc80a5e524d05c1f84893e87a901c249413d89e1b8f84ed5c4c5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame00_Nrm.png",
+        "gitBlobSha1": "867d41550958566d31358492212ad153961b0348",
+        "pinnedGitBlobBytes": 52654,
+        "bytes": 52654,
+        "sha256": "2ee317bca25987cc70dd89107cf3da988c5e4771982ea96db21f9a1f5d2a5bce"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame00_Rgh.png",
+        "gitBlobSha1": "ecacdee96ab0ee75c8d13573040b736fa3eb1c22",
+        "pinnedGitBlobBytes": 26454,
+        "bytes": 26454,
+        "sha256": "92996264a38179485e3fe41c3d4eef2f1966b0c04a739b08c1ebb445209d2ed8"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame01_Alb.png",
+        "gitBlobSha1": "1ba5ea2704d1726f96676d09a9121d047a02255c",
+        "pinnedGitBlobBytes": 59620,
+        "bytes": 59620,
+        "sha256": "644a2e28b75c8f32b16c350e5eea4b6306423d6fee0e2879d0ffdc4b6e0e6e7a"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame01_Emm.png",
+        "gitBlobSha1": "2a98cc79f54d02622c1fc331f822df82d2eacaf7",
+        "pinnedGitBlobBytes": 3645,
+        "bytes": 3645,
+        "sha256": "0fe049ec15f34c0b9941c25d55655063c6e18b100f3a0598de8eff803d62406b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame01_Mtl.png",
+        "gitBlobSha1": "2c9ae7b6c23918254e387ddf8d5e590bbf859c62",
+        "pinnedGitBlobBytes": 4064,
+        "bytes": 4064,
+        "sha256": "02ade6d5b266af94a890a9a65bb276923f7533504c45c2cc7677acedd0687ea2"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame01_Nrm.png",
+        "gitBlobSha1": "1c4fe0d60ed336e7545dbd8594e6eb314fb29e0f",
+        "pinnedGitBlobBytes": 35713,
+        "bytes": 35713,
+        "sha256": "5d880be25d1af460601ae119c4f9432dc4d19ef0b1e9902147f17c4e18bf1710"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame01_Rgh.png",
+        "gitBlobSha1": "96fd984f9cb63fc86351c5f5656bb925a7d8a396",
+        "pinnedGitBlobBytes": 23405,
+        "bytes": 23405,
+        "sha256": "1329c57c5c0f891b064bc8aae38e7299709d56aac8edc3bc155273250883b494"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame02_Alb.png",
+        "gitBlobSha1": "83f55b98d16a6867bb7a117a141d523c6e1dfccb",
+        "pinnedGitBlobBytes": 133574,
+        "bytes": 133574,
+        "sha256": "d24396e9a95f97ea62ee3c0c20c34520be1cb8af9b5eb206fcd195b81cc1a01d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame02_Mtl.png",
+        "gitBlobSha1": "4f986f914cd67baac0de3c5a768228c7b0b7ec64",
+        "pinnedGitBlobBytes": 894,
+        "bytes": 894,
+        "sha256": "3b875a5262f00ecf5bf389f51d52f49636526025cf7f77150c33374cb93509ad"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame02_Nrm.png",
+        "gitBlobSha1": "29b9729bcd4d93a4e4dcd87cc9f0717394daa917",
+        "pinnedGitBlobBytes": 102190,
+        "bytes": 102190,
+        "sha256": "ea896d282a68bbbeab8a3ff90198ec26762c9505c86d52919b77197ab59a386d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame02_Rgh.png",
+        "gitBlobSha1": "dbc75c85965365e1157b3daab188c93d18cca744",
+        "pinnedGitBlobBytes": 46151,
+        "bytes": 46151,
+        "sha256": "092bd6c138c1ac8b2a5d98b16122ad0176d12daebb72fd0591d9b11f0d81eb49"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame03_Alb.png",
+        "gitBlobSha1": "f999e44b0c9dbd3908ede94b0bc0536465a8ecc8",
+        "pinnedGitBlobBytes": 90423,
+        "bytes": 90423,
+        "sha256": "3358662c1a3905fe90d6494f9d0388c6762222fb1edb0833668b60a4d35c9976"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame03_Mtl.png",
+        "gitBlobSha1": "08997f1814cba0a6028a3f34bedec6063ec629be",
+        "pinnedGitBlobBytes": 1794,
+        "bytes": 1794,
+        "sha256": "2eef33948bed7466f075ade0e13b2064ce5fcc35d9461bced1d86605bc99ac2f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame03_Nrm.png",
+        "gitBlobSha1": "7aaa0f67cfbc124677f43d7844809d8b649c8b7d",
+        "pinnedGitBlobBytes": 32318,
+        "bytes": 32318,
+        "sha256": "5e0d64c9a722ae107c49aa80bb07aff215c76657339617ab8123c3a03344a5cb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame03_Rgh.png",
+        "gitBlobSha1": "fdfe881ebc6e84c362b6ec3ad9d414e2a389ead2",
+        "pinnedGitBlobBytes": 12407,
+        "bytes": 12407,
+        "sha256": "df78ae126e0b46c81837f26b8d67a0fe23c6743accc82bdee1daf02c77f296f3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame04_Alb.png",
+        "gitBlobSha1": "6bb32f7323873ec4cc0ce66977a8f33c30707cfa",
+        "pinnedGitBlobBytes": 66525,
+        "bytes": 66525,
+        "sha256": "40c4474d151f3db4edc144d8b8aaf1f3393fd0f631d83f1d145e1bc7360961c7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame04_Mtl.png",
+        "gitBlobSha1": "f682714ec631db0a878bbd83cc40eef6646f42bb",
+        "pinnedGitBlobBytes": 934,
+        "bytes": 934,
+        "sha256": "8fe132e49ec2837244354bcfd4fe3c7a5cef9eab15a76263ffe83b7bf692b44c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame04_Nrm.png",
+        "gitBlobSha1": "7727009547cc183be6722d2799b0049257430458",
+        "pinnedGitBlobBytes": 68791,
+        "bytes": 68791,
+        "sha256": "f2931c196bc2b7e8453f8ad04ff27ee7eff37dd52d82eaa5d750a160601d3129"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame04_Rgh.png",
+        "gitBlobSha1": "38129fa6fc00b5d8e6489f4a6e5843005fa82d5d",
+        "pinnedGitBlobBytes": 40452,
+        "bytes": 40452,
+        "sha256": "b3ffba68ca45f588f542c70c235a5bc6ca5778cb57a0e900defd0bf23a0c0aee"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame06_Alb.png",
+        "gitBlobSha1": "4b385f26ab9ac816cce727843413e8fa70c2edbb",
+        "pinnedGitBlobBytes": 37896,
+        "bytes": 37896,
+        "sha256": "350b41c60cd2b6294d79421fd38c538eab28f0092921cc110246391e644b48e8"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame06_Nrm.png",
+        "gitBlobSha1": "19f99f6c9cf2e84d1624e5eda64efee81ded49f3",
+        "pinnedGitBlobBytes": 8014,
+        "bytes": 8014,
+        "sha256": "48303419342dd52f115568fa71f5d0a126c6fdc7a74d9c6aceceefc2ecf97182"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame06_Rgh.png",
+        "gitBlobSha1": "b858776b64db95f0e542f5755098479579bad823",
+        "pinnedGitBlobBytes": 5122,
+        "bytes": 5122,
+        "sha256": "4c52e28e69f65518b66636fa1cfbcc4b39a658693c5e43cc394541b2a7f56c13"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame07_Alb.png",
+        "gitBlobSha1": "88c96842250d8fbe70e333ce7c0875315d8afb35",
+        "pinnedGitBlobBytes": 15715,
+        "bytes": 15715,
+        "sha256": "5b2007860933cedc553090ec9a5947cc6a46e5f166cffaa7d805221bb407c005"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame07_Mtl.png",
+        "gitBlobSha1": "715b160b58a4855043842718768e8c6aef22f673",
+        "pinnedGitBlobBytes": 427,
+        "bytes": 427,
+        "sha256": "0ea76813d73f3eb000a61fb79d6f51f213662d1116c40c220511d20f955e8541"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame07_Nrm.png",
+        "gitBlobSha1": "1a1f8c3f44e2ea05c39a6c5343b325da2762c756",
+        "pinnedGitBlobBytes": 12209,
+        "bytes": 12209,
+        "sha256": "6a801f9e08b6622fb34d1ad2cc7029604eba61e5851a3c7405c74e4a1e0360d8"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Frame07_Rgh.png",
+        "gitBlobSha1": "5f208cd091130c056f789678c6de237f375d0ccb",
+        "pinnedGitBlobBytes": 13202,
+        "bytes": 13202,
+        "sha256": "05a31c86b0fc7e200270c98e2f7a93321555beb0c15d68f6ed4b0899b6a6279d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass00_Alb.png",
+        "gitBlobSha1": "d7cdd1c9011bd9af57312a2899f12f241b9e6638",
+        "pinnedGitBlobBytes": 2218,
+        "bytes": 2218,
+        "sha256": "df19c638c71958550bde39248f1a642281dce9018158721c603f56884b8efe26"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass00_Nrm.png",
+        "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+        "pinnedGitBlobBytes": 870,
+        "bytes": 870,
+        "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass00_Opa.png",
+        "gitBlobSha1": "d0ffec9070a74a0748e5e7b655d645949d4c60a3",
+        "pinnedGitBlobBytes": 408,
+        "bytes": 408,
+        "sha256": "878c2907a47acff226df2058f07ba14a64a38a30b2d05fc36922605c968584a1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass00_Rgh.png",
+        "gitBlobSha1": "0fa9ee38ff0377fecc37923961cb63969c1adada",
+        "pinnedGitBlobBytes": 224,
+        "bytes": 224,
+        "sha256": "dcd4e4d9ea532ab3b033b55160438cd82b7d1dcd20b65d0619f98839ad175ec1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass01_Nrm.png",
+        "gitBlobSha1": "170a29d5bc5c0eeab3b6c535a1b462a9e8555828",
+        "pinnedGitBlobBytes": 171,
+        "bytes": 171,
+        "sha256": "61bb6c97b24ca93dc063902ff967b2157c628a60d7e32cf37cf26aec28e7e883"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass02_Alb.png",
+        "gitBlobSha1": "15485d05fec8260f5c71fe041db99dc07d4afb8c",
+        "pinnedGitBlobBytes": 411,
+        "bytes": 411,
+        "sha256": "b709eb7ac4f612a6acf36617f217df15a0d0b45d4af10656441f650bb80d2af1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass02_Mtl.png",
+        "gitBlobSha1": "c37134591795498d4ea5c8a19fcf05448284cfeb",
+        "pinnedGitBlobBytes": 224,
+        "bytes": 224,
+        "sha256": "1ac930ed1aeec36a541c4a2fcb5e45370f39db2fbad28e36a2bb0c0cc3f12c68"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass02_Nrm.png",
+        "gitBlobSha1": "ca8ee7f0b69d8dc3ab19425142272c8ae448bd52",
+        "pinnedGitBlobBytes": 222,
+        "bytes": 222,
+        "sha256": "d6a688e17118bd6732b39c1221f42b3b764300d72f26f351d579a639c7bf6183"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass02_Opa.png",
+        "gitBlobSha1": "989e42540cbf8f536abdc4edbff9e79dc64b2c60",
+        "pinnedGitBlobBytes": 408,
+        "bytes": 408,
+        "sha256": "255e028e9183ff13674361dab8b41f4c1f7a95bb29b58b5babddd9be04930ef2"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Glass02_Rgh.png",
+        "gitBlobSha1": "0303bfdc02ceddd2e7353e347becd5b9dde002a0",
+        "pinnedGitBlobBytes": 223,
+        "bytes": 223,
+        "sha256": "a696a5626629823b4467548ee7d0e0da22f97063f35195212fd342aa799a4bdf"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Graffiti00_Alb.png",
+        "gitBlobSha1": "e535d66e73a76fa3194367ac546de5b7ab38298d",
+        "pinnedGitBlobBytes": 133991,
+        "bytes": 133991,
+        "sha256": "2e42d5bdb16c2e74d95205e8bbd3a0506e90806258b22ef7932a395cb7d8b48d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Graffiti00_Emi.png",
+        "gitBlobSha1": "d5430d79209e57eb96216d985893d29c3217a55c",
+        "pinnedGitBlobBytes": 4594,
+        "bytes": 4594,
+        "sha256": "61347e5cc250f9d47eb1739de72eb8dd29d2c8d2edd181766dca50e9a8e4bafb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Graffiti00_Nrm.png",
+        "gitBlobSha1": "da982502f7387078615ff9396de733257da49007",
+        "pinnedGitBlobBytes": 870,
+        "bytes": 870,
+        "sha256": "f0fb1d87d0a9636576e33f96ef776e16e370cc8f3275f09e67d106b00e24e916"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Graffiti00_Rgh.png",
+        "gitBlobSha1": "72e26a64979c4558555cd8f26ef87dd34a115a63",
+        "pinnedGitBlobBytes": 872,
+        "bytes": 872,
+        "sha256": "8868cacd65e0a5e6a6b977125294f1701a19468fc02c5e11b8e7051c421b26f9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Grass00_Alb.png",
+        "gitBlobSha1": "47fc9c904f69fad77d694cb7733f3609c1d89bbe",
+        "pinnedGitBlobBytes": 105207,
+        "bytes": 105207,
+        "sha256": "8a6b988f43b03d4038cb1b06d4e9b352345aad307f10ba7ff39ba7906dc67ea9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Grass00_Nrm.png",
+        "gitBlobSha1": "536cbe149267083324f50e46f0a1dff00a021c07",
+        "pinnedGitBlobBytes": 38913,
+        "bytes": 38913,
+        "sha256": "e2d63e505c8f4f7fed3b870ff7e3703fa0a8c140fb64fc1913e828e1c94b6f03"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Grass00_Rgh.png",
+        "gitBlobSha1": "ec944ecadc6418ba14648f727ba87abf559bdd69",
+        "pinnedGitBlobBytes": 11837,
+        "bytes": 11837,
+        "sha256": "abab95a0a9a9987f0202b159a88052eae53ddde593cd0c042d0d3056df763614"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Grass01_Alb.png",
+        "gitBlobSha1": "43faffd04f032654efb6e63a62bf7181b22d2a5f",
+        "pinnedGitBlobBytes": 336120,
+        "bytes": 336120,
+        "sha256": "7d55f023aa19f4050a420896afc78dc3cc56b23290bd3bce0290afd5c3536aaa"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Grass01_Nrm.png",
+        "gitBlobSha1": "37c6e73edc05817a1561892ed746e2603cd9e9b1",
+        "pinnedGitBlobBytes": 74780,
+        "bytes": 74780,
+        "sha256": "c98d3b954d808f2f9337d641467dc05e4d804d1226712019c61c3d343f9c27b1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Grass01_Rgh.png",
+        "gitBlobSha1": "8e6c8d24cbbc4953dfee49e3860159441f0d0082",
+        "pinnedGitBlobBytes": 26254,
+        "bytes": 26254,
+        "sha256": "dc8052443cc87a31c233483252de82d3dd6a859372b765b9a94399c30ebea76f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/HAT019_Alb.png",
+        "gitBlobSha1": "a50bdf063de2a5febca999229da1296ff5a2367e",
+        "pinnedGitBlobBytes": 351266,
+        "bytes": 351266,
+        "sha256": "f8cc68b6feb6f8df20125a5e747fa347fbc8cb48c13d17861a333c80f3f19452"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/HAT019_Nrm.png",
+        "gitBlobSha1": "abc07b15a933f7fabca9fef203dea182de768493",
+        "pinnedGitBlobBytes": 116318,
+        "bytes": 116318,
+        "sha256": "560db037108a5049775a80872c8142fe282506f0362ece3075232f29cf30a683"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Iron00_Alb.png",
+        "gitBlobSha1": "5879bcf461998bf9d392e28a8890b32b6497ff66",
+        "pinnedGitBlobBytes": 873,
+        "bytes": 873,
+        "sha256": "99d3db800b768b1243843eb11d4056867f05aad460904de0699db20e58be4fce"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Iron00_Mtl.png",
+        "gitBlobSha1": "d4dc132046ba7108c1efb50623c7ed32e545e2c2",
+        "pinnedGitBlobBytes": 406,
+        "bytes": 406,
+        "sha256": "5397345921dfe4d8a4c0f5b63e7e2afd34d3df11ca933adb10ac4faf425ca0b7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Iron00_Nrm.png",
+        "gitBlobSha1": "96d95ffabc9ecb5c334b1b00297ca7ff33362995",
+        "pinnedGitBlobBytes": 17539,
+        "bytes": 17539,
+        "sha256": "1a4f6b88f234d101c1c0bde464de7cd192b49e4d604b7e8291102525356369cb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Iron00_Rgh.png",
+        "gitBlobSha1": "2a39e3481f25c6365227ca59dad2942c5e3202d5",
+        "pinnedGitBlobBytes": 408,
+        "bytes": 408,
+        "sha256": "ea2fdd9f2a90bf3b1a5cb404bca4b721077ec65e87d913052026c6e097e1ede1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Iron00_Tcl.png",
+        "gitBlobSha1": "d4dc132046ba7108c1efb50623c7ed32e545e2c2",
+        "pinnedGitBlobBytes": 406,
+        "bytes": 406,
+        "sha256": "5397345921dfe4d8a4c0f5b63e7e2afd34d3df11ca933adb10ac4faf425ca0b7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/JointMatNoda00_Alb.png",
+        "gitBlobSha1": "b5a599d880e34dfbba12727a039111b7e8474394",
+        "pinnedGitBlobBytes": 31763,
+        "bytes": 31763,
+        "sha256": "f6648a90e43fadf11f910fd1996cd25deec5037976eed3c9b3e62c66227f49d3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/JointMatNoda00_Nrm.png",
+        "gitBlobSha1": "666114bb60a2d00275f1c064e7c93e0ea04cac9f",
+        "pinnedGitBlobBytes": 19517,
+        "bytes": 19517,
+        "sha256": "811fd0e6894501a17a85a9c417e581749503e2e00a9990bbb4e8b174077b2f7c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/JointMatNoda00_Rgh.png",
+        "gitBlobSha1": "7cffce6dc2a3cff21e44af17de4527c48c517def",
+        "pinnedGitBlobBytes": 9470,
+        "bytes": 9470,
+        "sha256": "0bf6419d7e3fe4def7d1e42f2c4ae3a0a22b916ad7f1040485a719b04920444a"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/KisdsRoomWall00_Alb.png",
+        "gitBlobSha1": "133dee09ff76b68610cf9f2c0b7cb6d068a1af0a",
+        "pinnedGitBlobBytes": 55206,
+        "bytes": 55206,
+        "sha256": "09508565c8a1e50f774373782acdabff6fb3adcc0abf3e339e51a6a67dc366e1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/KisdsRoomWall00_Nrm.png",
+        "gitBlobSha1": "d9b54a8b93d1a18557cc31571772f0d72cf012cc",
+        "pinnedGitBlobBytes": 24292,
+        "bytes": 24292,
+        "sha256": "67c68aabd05057e09b936fab8a558e396bfb1b69f170ffe34637dbce609a9058"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/KisdsRoomWall00_Rgh.png",
+        "gitBlobSha1": "6105928ab3d561a7c7ba29600b50846cfbe9344e",
+        "pinnedGitBlobBytes": 459,
+        "bytes": 459,
+        "sha256": "08c8f2f877a76eeb713c3f9d5a9522801d0cf78f9b376bbee0b75b7f38d5a92e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/LightBakeDummy00.png",
+        "gitBlobSha1": "37ab1a8d9f17303856f8e51a3232f1855509c438",
+        "pinnedGitBlobBytes": 94,
+        "bytes": 94,
+        "sha256": "79fbff0bbf92e29686427b7ac6c9d36cebf4262d1916f73c10a713e08b0f3e30"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_BOT011_2cl.png",
+        "gitBlobSha1": "a02118bf198410c0c2379c7734159ac9c5dc4b2b",
+        "pinnedGitBlobBytes": 442,
+        "bytes": 442,
+        "sha256": "e578f2fed041077ca0db4d80ee786cb9e3417903690ac582a091c6bcd0079d89"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_BOT011_Alb.png",
+        "gitBlobSha1": "379e3bfcf9a1f8cce1d2dfecd68c6352a24dae80",
+        "pinnedGitBlobBytes": 48354,
+        "bytes": 48354,
+        "sha256": "9d567f2935abd7a33190fc995f86d22458af8d85e3ceee05b50abdebca0dcbba"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_BOT011_Nrm.png",
+        "gitBlobSha1": "e4c9e026467c9a21fc40f9b7f71a67d977a8bc8b",
+        "pinnedGitBlobBytes": 100753,
+        "bytes": 100753,
+        "sha256": "9d7d3135cb267f1a26d2da5d6c611915e5534a09732e915e135e690a07f2715d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_BOT011_Rgh.png",
+        "gitBlobSha1": "f9fd31a11d3ef5c0426fdf8eab4328b8c8f089ef",
+        "pinnedGitBlobBytes": 3517,
+        "bytes": 3517,
+        "sha256": "1fc4fc104fb8e7bf68877122782394e99cc8ea0d1b945e4182bd6241fbd9e749"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_FenceVinyl_Alb.png",
+        "gitBlobSha1": "15c2a59f0f46ddcdd0436d09474c712ff294af7d",
+        "pinnedGitBlobBytes": 132777,
+        "bytes": 132777,
+        "sha256": "de1777cac2da61b29f3cb5e5ef829a85f9470a4934a991c14b5ae51c5a74de77"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_FenceVinyl_Mtl.png",
+        "gitBlobSha1": "eef0edd02eb695098692bbec76884c7ae2b6bf12",
+        "pinnedGitBlobBytes": 3083,
+        "bytes": 3083,
+        "sha256": "d4720cc6951f92768a697c7949f6dfcd0eafe8f1b3d83ea7ee12007581e8699b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_FenceVinyl_Nrm.png",
+        "gitBlobSha1": "88e9df938bfdca01edcd5cf25c1dff5822571334",
+        "pinnedGitBlobBytes": 66722,
+        "bytes": 66722,
+        "sha256": "5b240357fe19d96c147c6ef877ab0c226f872a3a3095010ad6959766ed612804"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_FenceVinyl_Rgh.png",
+        "gitBlobSha1": "a2e027746f580234fa3079b3258f77e98d192d48",
+        "pinnedGitBlobBytes": 37754,
+        "bytes": 37754,
+        "sha256": "c3eaf0bce2a897d6f3202a20d1bf2eff296d266395ddf742c3f9a3f9aa956223"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000Logo_2cl.png",
+        "gitBlobSha1": "4b9d2eec8cb9344afc26b4aaa1d8e1a8deef73ca",
+        "pinnedGitBlobBytes": 990,
+        "bytes": 990,
+        "sha256": "fcec9063f4c2e24504aa9d3e71426d5012136c6123461f26267230a3a4a540f1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000Logo_Alb.png",
+        "gitBlobSha1": "540f9cd3199bfc9b9f523e942b17ff687ff813ad",
+        "pinnedGitBlobBytes": 28143,
+        "bytes": 28143,
+        "sha256": "a53fa89f319dc7ba80913b1724bd3e0c4c5690727d318fd21994a55b3c810f6a"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000Logo_Nrm.png",
+        "gitBlobSha1": "d2fef71db783959ac0abfa47a19935a36344ebbb",
+        "pinnedGitBlobBytes": 10075,
+        "bytes": 10075,
+        "sha256": "61709baf1878a0709a27dcab2162bc0af3769272ccd3a51f06832012fd607054"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000Logo_Opa.png",
+        "gitBlobSha1": "cc7b6e2981068411e3079622e66bc1bf3719dc96",
+        "pinnedGitBlobBytes": 6523,
+        "bytes": 6523,
+        "sha256": "49fae911c4487645cfd77718689d5d57d724f514c72df3032a1c259a2abd5288"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000_2cl.png",
+        "gitBlobSha1": "de5cb40ba2d07dce59a4ed372c580184f8bcc413",
+        "pinnedGitBlobBytes": 999,
+        "bytes": 999,
+        "sha256": "f061f4860ddeecabd527a7bf0711739af3d80bc0f1164fab9f012c718b6a4ba4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000_Alb.png",
+        "gitBlobSha1": "d6e984cf8fd99da2b440d9ba0bca99f926cc3808",
+        "pinnedGitBlobBytes": 17902,
+        "bytes": 17902,
+        "sha256": "940dbaf56910e92eb3eae8ee45cfcec0d7391186cf9a2fb2a98c9fb0c3767b64"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000_Mtl.png",
+        "gitBlobSha1": "33684d752e3e5d558b2882815e786261a855a6bb",
+        "pinnedGitBlobBytes": 839,
+        "bytes": 839,
+        "sha256": "df4f4c16d9f61e0c1833911a584762cfab30cf7c88fcac41d3b412174813065f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000_Nrm.png",
+        "gitBlobSha1": "1975d84c8feeb8e0f803342a8faac84318d728ef",
+        "pinnedGitBlobBytes": 130108,
+        "bytes": 130108,
+        "sha256": "1feae3e9dd6362703ceedf493fc64a01bd900f26f9457a9220b8f41eb1c035c7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000_Rgh.png",
+        "gitBlobSha1": "49f152006b387fc9801af2e0e68773ab1f6a2586",
+        "pinnedGitBlobBytes": 2474,
+        "bytes": 2474,
+        "sha256": "e8e3c72634bf309ea56a7cf640d00f37bec2861ab94a8877f96bf776f692388c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_HAT000_Tcl.png",
+        "gitBlobSha1": "5d9bda4ec7f037893808506fefcc2af1fc7b59fe",
+        "pinnedGitBlobBytes": 3585,
+        "bytes": 3585,
+        "sha256": "a250e0efa53c37c75e9bf11cf58f606379a9dae344d50e034afb328eccd97316"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_Hat007_2cl.png",
+        "gitBlobSha1": "82528861d73c44f08654f12bb5f50a82686f8b60",
+        "pinnedGitBlobBytes": 1124,
+        "bytes": 1124,
+        "sha256": "877c10d38035ec5d3f51929683569ceb21f415789ac8da2c002ec4e6c6f34202"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_Hat007_Alb.png",
+        "gitBlobSha1": "d93f92c74c0b50c70281f5d80e4448d78f26798a",
+        "pinnedGitBlobBytes": 58492,
+        "bytes": 58492,
+        "sha256": "3e48b523e5ebe198857c8ecce2f18f5dee3fdafbf778067f8fa8185a04c25a7f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_Hat007_Mtl.png",
+        "gitBlobSha1": "9cc9b804d8240ca81da36c5d9ce3b4760c8f8eac",
+        "pinnedGitBlobBytes": 1809,
+        "bytes": 1809,
+        "sha256": "77fe79503849ad112b1a6ba5f8f76778625e48db9729b2ab01a52ad4e52b490c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_Hat007_Nrm.png",
+        "gitBlobSha1": "219afca1898809b419b6dce279b8df939c7d3593",
+        "pinnedGitBlobBytes": 128026,
+        "bytes": 128026,
+        "sha256": "2ec6a0bc6ec0f26dc32769c6d0bbe9499f7bda8ebfe7d440061aa03129ee649a"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_Hat007_Opa.png",
+        "gitBlobSha1": "f39d8821ccfccfc690c6b55ab98f43d4a2b2af4c",
+        "pinnedGitBlobBytes": 2501,
+        "bytes": 2501,
+        "sha256": "2a63656a91db14ad6b6b6339165d5ba0160e2bef328efd6ec9b2250c93a79793"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_Hat007_Rgh.png",
+        "gitBlobSha1": "c797201aaab64498d08eeccb79e40ef95e288392",
+        "pinnedGitBlobBytes": 6853,
+        "bytes": 6853,
+        "sha256": "8f4d5d21b8396ada22be48eccd7b7c4026cac0dedc53b4995c32062b57825d95"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_Hat007_Tcl.png",
+        "gitBlobSha1": "8a404ffedb0a1e5190df0f3d6c8c72a3eac7bcc5",
+        "pinnedGitBlobBytes": 4136,
+        "bytes": 4136,
+        "sha256": "5532c7af5fbc2b9df0628b2caa146b3f708ef3554a1250683df11a0c2c078239"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_JKT046_2cl.png",
+        "gitBlobSha1": "6cffaed494fe4d122fdccf62d53be5fd487987a9",
+        "pinnedGitBlobBytes": 38938,
+        "bytes": 38938,
+        "sha256": "22d65b761b55824f1ba51dc5cf1c130e5ebaa506314a0d933c35a6e26b17eb68"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_JKT046_Alb.png",
+        "gitBlobSha1": "165239bdd2c0d2f9f2c19e7d2e258dd4d6f87458",
+        "pinnedGitBlobBytes": 24174,
+        "bytes": 24174,
+        "sha256": "c03a63b2d72d07b9f518dbee3ba0d1ccc1f5e5a382e97baf607f08b7188ce174"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_JKT046_Mtl.png",
+        "gitBlobSha1": "c7468ab20f70aaee4c2d19d1d2017309ae1debbb",
+        "pinnedGitBlobBytes": 2442,
+        "bytes": 2442,
+        "sha256": "5b1986a6b01400f43801a80467738990067752ad8cbe98456319b601b16cf098"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_JKT046_Nrm.png",
+        "gitBlobSha1": "d765fe9137267a61ee3762cd026d2ae15cde48ea",
+        "pinnedGitBlobBytes": 126847,
+        "bytes": 126847,
+        "sha256": "90d75b64ef9eb50e933bbe65076259feec2e0b48c574718773302653d428988c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_JKT046_Rgh.png",
+        "gitBlobSha1": "dfda93654bcdca771fe899676f89519321209a2e",
+        "pinnedGitBlobBytes": 10579,
+        "bytes": 10579,
+        "sha256": "ee53ef4650381ad74ca584a5d75d6aeb6a884bad068ccb0c30907473a932eefe"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_TES071_F_2cl.png",
+        "gitBlobSha1": "58740be9d968f840ea1bbe44e51d76ac1cbaca4c",
+        "pinnedGitBlobBytes": 32918,
+        "bytes": 32918,
+        "sha256": "4841e4570ebcc7478659cd224bcb98eacb65e73589b1284dc4bc84ca0fd39c4b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_TES071_F_Alb.png",
+        "gitBlobSha1": "b44f3a4afbae4107247b54e7f2cd6ee5b43fed38",
+        "pinnedGitBlobBytes": 69369,
+        "bytes": 69369,
+        "sha256": "9d481275e0bdb30fb628f1d9898528e030f4552356254544d447dccc6c3320bc"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_TES071_F_Nrm.png",
+        "gitBlobSha1": "af01506695faa1747070bec9af379d0ea64c34b7",
+        "pinnedGitBlobBytes": 127458,
+        "bytes": 127458,
+        "sha256": "b882943b78ff4ddd8343b57b3e0a8d0a6ff6dd87ead2935e86b1647df40b7d15"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_TES071_F_Rgh.png",
+        "gitBlobSha1": "857283d42a8cdc10b5d4325908215e1e66fbf0b6",
+        "pinnedGitBlobBytes": 42629,
+        "bytes": 42629,
+        "sha256": "d0fd064041d24749389b227263983fcc42d1ac2cbc8170116bebed7dc99f9623"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST001_2cl.png",
+        "gitBlobSha1": "2c5af7842509781cdd0116dea86e63bc0fe5b766",
+        "pinnedGitBlobBytes": 1215,
+        "bytes": 1215,
+        "sha256": "e5c6a65444e889f9424cd16cdbece44b13e4a37a0eefefee66f3d2aaa5577859"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST001_Alb.png",
+        "gitBlobSha1": "26634ec8a9c873650020107ec4a54d535852b578",
+        "pinnedGitBlobBytes": 35982,
+        "bytes": 35982,
+        "sha256": "17e601cdd8053e880f8b49e85e94c1517a42d755aeaded7d09e4b12720989491"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST001_Mtl.png",
+        "gitBlobSha1": "d36bfe46365e6f70c99d92805400b7f43da82db1",
+        "pinnedGitBlobBytes": 631,
+        "bytes": 631,
+        "sha256": "a58bef58b1fca3b75bbd68f55c33f28ba2ff81bf3dffb32fe287db34eae0d305"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST001_Nrm.png",
+        "gitBlobSha1": "659badf677315ea2c47acb2100a840587c572d1d",
+        "pinnedGitBlobBytes": 111938,
+        "bytes": 111938,
+        "sha256": "ab9bf9ceec7b39c2c3558c91d6200ba2707d727981523e383ced4c49f2760c2d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST001_Opa.png",
+        "gitBlobSha1": "782773debe042de296b45c30a3a2e331178078b0",
+        "pinnedGitBlobBytes": 1997,
+        "bytes": 1997,
+        "sha256": "6b73c58ffe509805a1240135153fbc92cc2761d8816d5fe58cb8682f5bf3c020"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST001_Rgh.png",
+        "gitBlobSha1": "6cf9ae8dd1b62945fc574f334752ce7c0dcfb486",
+        "pinnedGitBlobBytes": 7873,
+        "bytes": 7873,
+        "sha256": "d80807b720e8dbd588483f336f859d2b43bdb4429e9e76fb54bf4f04694e3929"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST003_2cl.png",
+        "gitBlobSha1": "0fc13f42f776245d3b0bbc55246225e88d75815b",
+        "pinnedGitBlobBytes": 424,
+        "bytes": 424,
+        "sha256": "574caa9c722319cb52e0ce22a4b45d1f10781500335eba5231c22bd222f9292e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST003_Alb.png",
+        "gitBlobSha1": "702c586763907644e083c9a92b0c8e5948d7f8bc",
+        "pinnedGitBlobBytes": 122632,
+        "bytes": 122632,
+        "sha256": "55ec7a4c85795ea30691df462ca8ef7617ee6943f963ff940ec713c5a08a577d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST003_Nrm.png",
+        "gitBlobSha1": "80a3135acbfa1a40193483d5aa7f6801ec54fe9e",
+        "pinnedGitBlobBytes": 103561,
+        "bytes": 103561,
+        "sha256": "c12910671fd161a7649904b67712a3d902f3fd3eda47682715d760d9ca853927"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/M_VST003_Rgh.png",
+        "gitBlobSha1": "9be132debfce7c2e4489a4f6fbc400386ab042de",
+        "pinnedGitBlobBytes": 14713,
+        "bytes": 14713,
+        "sha256": "a376e6479fbd84c1533514b351bd9cff4f7b5ada9812543127068b19acf44d3d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Net00_Alb.png",
+        "gitBlobSha1": "b26053b7d7618b5d99ea8efa270ed05eaa395d24",
+        "pinnedGitBlobBytes": 4196,
+        "bytes": 4196,
+        "sha256": "39848bd9504f8a6d6933d84c69bd3c1846aa611f6614ff25b4472c2795a9db65"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Net00_Mtl.png",
+        "gitBlobSha1": "0303bfdc02ceddd2e7353e347becd5b9dde002a0",
+        "pinnedGitBlobBytes": 223,
+        "bytes": 223,
+        "sha256": "a696a5626629823b4467548ee7d0e0da22f97063f35195212fd342aa799a4bdf"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Net00_Nrm.png",
+        "gitBlobSha1": "439b453394bedad5b0a08c72ec28a184f11bb22f",
+        "pinnedGitBlobBytes": 5434,
+        "bytes": 5434,
+        "sha256": "3628925c3ad0e8c9c7c114c492539929ac415d14e984933a6fe62bc402c46345"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Net00_Opa.png",
+        "gitBlobSha1": "fde9c6a13176c35933b379de6a1bbb5cf4fc01a9",
+        "pinnedGitBlobBytes": 2057,
+        "bytes": 2057,
+        "sha256": "a0be8174235f96b10acba82f02797edcce663c00fca62e6a25258a3fc0aa1fb9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Net00_Rgh.png",
+        "gitBlobSha1": "34dd94243e6cb0d9f607ffda6a10b80742f52527",
+        "pinnedGitBlobBytes": 224,
+        "bytes": 224,
+        "sha256": "dab14b4c179cc8c1082a2e63af5585ee8168292c0bcf2e2a79f4c6d1a36d473a"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBodyInside_Alb.png",
+        "gitBlobSha1": "431ba2922607ef654767a68e310a2d6b53ad5257",
+        "pinnedGitBlobBytes": 37928,
+        "bytes": 37928,
+        "sha256": "e653cdcd6e7328005db85861c27aaf4a08392b54add9604860f273ae8a0d5049"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBodyInside_Emm.png",
+        "gitBlobSha1": "95fce37ede507c82157d1e64519772740b0095cf",
+        "pinnedGitBlobBytes": 24691,
+        "bytes": 24691,
+        "sha256": "4facaa70266aeb22d620fb768efb814ac1133dbc846cd4cdc77d91df6e4685e9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBodyInside_Mtl.png",
+        "gitBlobSha1": "17a8b20c58147b05bdbe4a6bea896f30d5bc84fa",
+        "pinnedGitBlobBytes": 3394,
+        "bytes": 3394,
+        "sha256": "74eca5180fb8120f256bc8538329627ba6e5dbab5eef446dbd01cf0f31cfcf16"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBodyInside_Nrm.png",
+        "gitBlobSha1": "950c062566fcc69c65ecabd5c3b73dc73e78ced8",
+        "pinnedGitBlobBytes": 23872,
+        "bytes": 23872,
+        "sha256": "c0d2549f0349c25cc325dc8acdfe7589faf4263a67b1b7543d21597b9bcc148b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBodyInside_Rgh.png",
+        "gitBlobSha1": "f0f565f2e83b4d2bab3c10bcc2b35d36d095d14d",
+        "pinnedGitBlobBytes": 8065,
+        "bytes": 8065,
+        "sha256": "afee88356c6db9e0a15c8380ee1edb1e2e6eebc3b352be7c1930e9bd7bf4d0fc"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBody_Alb.png",
+        "gitBlobSha1": "5bb10d434222553b421e119979882350379302d0",
+        "pinnedGitBlobBytes": 12055,
+        "bytes": 12055,
+        "sha256": "43bd59b57fca59466b171e188b893b9659d98e814b1711a5b6f1f2986ef8f975"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBody_Mtl.png",
+        "gitBlobSha1": "1f8ddb6cd15351d7ff155a33ee69f8dc9431dd54",
+        "pinnedGitBlobBytes": 9155,
+        "bytes": 9155,
+        "sha256": "9f42b3615b971e32d4774b9e7b4e9aa44a25d7fa960f7f22563e48141a677250"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBody_Nrm.png",
+        "gitBlobSha1": "b38ef7e2971a45a955838b6d297d1873b9e91c28",
+        "pinnedGitBlobBytes": 58659,
+        "bytes": 58659,
+        "sha256": "5b2dbba93ad04963a1748820f14c29cb4fcf7d9192667b9bbe525f64476ffe6b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/OutdoorLampBody_Rgh.png",
+        "gitBlobSha1": "b872fc20e4d980f1ee210abe80df8192320824db",
+        "pinnedGitBlobBytes": 21763,
+        "bytes": 21763,
+        "sha256": "8a52959eff691a25badf762c5590341129cc20ee11219c4d80a1795c67ba5c09"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlantIvyNotRepeat_Alb.png",
+        "gitBlobSha1": "5e58139703e32b0cf9631ff22e62f81c2d86f7a7",
+        "pinnedGitBlobBytes": 9034,
+        "bytes": 9034,
+        "sha256": "e94da9cca3158038de81ea707189334f02adeee0a1fa01ad08b3123cb6e8eb6f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlantIvyNotRepeat_Nrm.png",
+        "gitBlobSha1": "b4f4f38cc6281f807a82eafe61419f4727eeb5e5",
+        "pinnedGitBlobBytes": 70834,
+        "bytes": 70834,
+        "sha256": "b517a488d7ac5f15149609adf1060edd5a5003440db52d6e9b630408b8443074"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlantIvyNotRepeat_Opa.png",
+        "gitBlobSha1": "1c32f675e72fc7f003d1b855ee1a0381c47cce4f",
+        "pinnedGitBlobBytes": 30500,
+        "bytes": 30500,
+        "sha256": "79db883ea04109f619585dda5334eb9d439ee15f865dbe0681c3c1c1dd95a57d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlantIvyRepeat_Alb.png",
+        "gitBlobSha1": "bc851d4bfa5cc71b7584fa8576a17322dbbac11e",
+        "pinnedGitBlobBytes": 10807,
+        "bytes": 10807,
+        "sha256": "17d580de540c044a1a4b2d2b1c14c854bac2c13bb877e98de9e131d56d3b75d6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlantIvyRepeat_Nrm.png",
+        "gitBlobSha1": "e100f4a53c680aae65627c0470d24a55df15a8b7",
+        "pinnedGitBlobBytes": 86493,
+        "bytes": 86493,
+        "sha256": "08368b5d1e69d340adf9aad89916c1675cf84242becfef908e5b7b9b6f11d6c5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlantIvyRepeat_Opa.png",
+        "gitBlobSha1": "c5c8de783244d2ce2e454c6dbad7d9951569aa86",
+        "pinnedGitBlobBytes": 5393,
+        "bytes": 5393,
+        "sha256": "ca7dbd92d115f430b6bc8b2eb2a63ceded2c4167a8a8d6bb1f3af2948052f8c8"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM00_UDIM_Alb.png",
+        "gitBlobSha1": "33df2aa8ec0d9b10747bffa70c47470140a6ccc9",
+        "pinnedGitBlobBytes": 3451861,
+        "bytes": 3451861,
+        "sha256": "ec51530b3c4cb5b203a7636c122dc96c1e9a8f81bdf09912aaa50446b5ac1b12"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM00_UDIM_Mtl.png",
+        "gitBlobSha1": "e80562e87570bde07edb9f568bf14f27367e0d56",
+        "pinnedGitBlobBytes": 14290,
+        "bytes": 14290,
+        "sha256": "086047644d5fa93dcee306034640e3578e98d1ff894b931162ebd3c2c836370b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM00_UDIM_Nrm.png",
+        "gitBlobSha1": "ce7821eb3f9b363acc119f8d40bb74e586359369",
+        "pinnedGitBlobBytes": 474155,
+        "bytes": 474155,
+        "sha256": "71e1ce5ee7a28e604c48fe79c0394955ee04d0a1502fe69e5f357761845566d7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM00_UDIM_Rgh.png",
+        "gitBlobSha1": "6c9b33efbacaba6c78d1340ba3ad0b72b613be9f",
+        "pinnedGitBlobBytes": 268537,
+        "bytes": 268537,
+        "sha256": "7fc0d471b1eb5dd7b40dcdbb2688dd63e52243eacce26911f4826067bc2434d1"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM01_UDIM_Alb.png",
+        "gitBlobSha1": "8788891c293e36627ac49a1005f6093c7f78d786",
+        "pinnedGitBlobBytes": 180079,
+        "bytes": 180079,
+        "sha256": "dcb7bdf166c5bd9483d85a8e2f907a4ff199d1748983aba2e30a937a68300246"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM01_UDIM_Emi.png",
+        "gitBlobSha1": "1adcbe2e0a9b3b69ed8ddefc8d97937e5e5a8f90",
+        "pinnedGitBlobBytes": 3599,
+        "bytes": 3599,
+        "sha256": "b35bc88079360fecd08375083e0c7e23e2e15273f626830c2f8091232a035500"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM01_UDIM_Mtl.png",
+        "gitBlobSha1": "9a6506baa0bc1b5cb907eaaaa387f6edd9ccf76a",
+        "pinnedGitBlobBytes": 630,
+        "bytes": 630,
+        "sha256": "6f51da0b1bc0ad65215fffc0f648c394eec30f083796c42f3f63288359400897"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM01_UDIM_Nrm.png",
+        "gitBlobSha1": "a015eb67ed10a7d9313c535ab9832b99acb0144c",
+        "pinnedGitBlobBytes": 663,
+        "bytes": 663,
+        "sha256": "14fc2e814b71e9d6654fdbe8bb893831e6fd887644c37fcda054f4ece49fb4c3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayFieldUDIM01_UDIM_Rgh.png",
+        "gitBlobSha1": "fa93a1bc4f8df2d9a47e319bc64ea22401d9b6da",
+        "pinnedGitBlobBytes": 660,
+        "bytes": 660,
+        "sha256": "80c9a0c329f827acdb4ff625ceec64d81fe822c4597ba9f4e5084d46eb0b5730"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet00_Alb.png",
+        "gitBlobSha1": "0247a2c481c52295866470408f3763d6ecfeaf1e",
+        "pinnedGitBlobBytes": 2870,
+        "bytes": 2870,
+        "sha256": "560d620b2bf2f7fa1d60a1a089e84b4453b9b51066f65a6bb7fffa16d57270e5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet00_Nrm.png",
+        "gitBlobSha1": "b17abfa21cba8caf5db90e16dc9ea866f4c25a63",
+        "pinnedGitBlobBytes": 15278,
+        "bytes": 15278,
+        "sha256": "5e154adbe0f524582b1afc608d996fc8a66ac6eec01c7e7d1458af02a0102c20"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet00_Rgh.png",
+        "gitBlobSha1": "fe56b341353fd9d978523b1100ec08f317ecf7a3",
+        "pinnedGitBlobBytes": 31858,
+        "bytes": 31858,
+        "sha256": "9cc9c20bb80586e67e57b88eabd3a40045ee8ea509ba1c4afbd2b8d473da6a5f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet02_Alb.png",
+        "gitBlobSha1": "45969bb742d554d48d319dff0df11e04d0845407",
+        "pinnedGitBlobBytes": 287627,
+        "bytes": 287627,
+        "sha256": "2e61b58f3f4b11e7242b7ebdd6fb12377274181a99f42890edb53345163556a2"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet02_Emi.png",
+        "gitBlobSha1": "27bb6698b25ad09ff468e72fdb29bdb1b8562fc3",
+        "pinnedGitBlobBytes": 1466,
+        "bytes": 1466,
+        "sha256": "a86f820b583bf4108751151a91582472fac96cc82c4ef54c49a79c2b6f791115"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet02_Mtl.png",
+        "gitBlobSha1": "0c98eb839ff925649106724c4db4493814f306b5",
+        "pinnedGitBlobBytes": 3601,
+        "bytes": 3601,
+        "sha256": "bf20f7cde68c1df9575f5af833dd267ce45c083badcd32b1bd153418edf90af6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet02_Nrm.png",
+        "gitBlobSha1": "42160384e742fc51d1c27e8c3837b09a2e5c58b0",
+        "pinnedGitBlobBytes": 114552,
+        "bytes": 114552,
+        "sha256": "060f58a5323efa208e85aaa7940fad9eb5edbb0c2569d6e449a9dbc1b5c00fb5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/PlayRoomSet02_Rgh.png",
+        "gitBlobSha1": "f3ad7748557dd4e107fffb722fed6fd23223a664",
+        "pinnedGitBlobBytes": 48986,
+        "bytes": 48986,
+        "sha256": "148745423169404fe16811e3b95f25dcd59d055401fee2884c67db015ba22c16"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/SalmonRoeBowl00_Alb.png",
+        "gitBlobSha1": "6bedd5a64a44e8d06e938ef069898280a63104b6",
+        "pinnedGitBlobBytes": 5674,
+        "bytes": 5674,
+        "sha256": "a46745f97c90b5114accb2b125e1719c0ddf56707c35572c8ff1f0a4af3c0202"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/SalmonRoeBowl00_Nrm.png",
+        "gitBlobSha1": "df136b278d6bc04ad130c6cb45521a52c43762eb",
+        "pinnedGitBlobBytes": 1470,
+        "bytes": 1470,
+        "sha256": "b0e77b68cbc57d93db1a29fd5c115a13fcb9d9f9a1b330a2dc983cf11047f23d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/SalmonRoeBowl00_Rgh.png",
+        "gitBlobSha1": "cc2981ac9a60ace72e92031fe83375dff408b0db",
+        "pinnedGitBlobBytes": 1108,
+        "bytes": 1108,
+        "sha256": "1811fb0ce777e7b2a34301669acd61c25606bf9cda03ecf72512fcdbd7b4ff56"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Sign03_Alb.png",
+        "gitBlobSha1": "5ac757f1c889c0f7a88b7971ecb4f0bd82221e1e",
+        "pinnedGitBlobBytes": 41822,
+        "bytes": 41822,
+        "sha256": "4307b5c3322ba4fedbfd1da6a505badfda5d8286ef2bdd8288cd4a30bde9c36d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Sign03_Nrm.png",
+        "gitBlobSha1": "1b263c8d3f7f957af0773364178a524a4e0e01e6",
+        "pinnedGitBlobBytes": 53708,
+        "bytes": 53708,
+        "sha256": "66560efa8e8be4bb1f8b282e5afe208357e1cd8fd0ecafab2756bca921892854"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Sign03_Rgh.png",
+        "gitBlobSha1": "72e26a64979c4558555cd8f26ef87dd34a115a63",
+        "pinnedGitBlobBytes": 872,
+        "bytes": 872,
+        "sha256": "8868cacd65e0a5e6a6b977125294f1701a19468fc02c5e11b8e7051c421b26f9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Sign04_Alb.png",
+        "gitBlobSha1": "c1473a0189ed7b4d1885d48ba922ea8d714d6b0c",
+        "pinnedGitBlobBytes": 36232,
+        "bytes": 36232,
+        "sha256": "efa04fa4b79bc5874d4339b231d61debe315b3e2890a63219b5b1d30844f260d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Sign04_Nrm.png",
+        "gitBlobSha1": "bff2ce141a3d86514c163ef56d23f6cf86bf052a",
+        "pinnedGitBlobBytes": 53711,
+        "bytes": 53711,
+        "sha256": "2e49789703ecae977735db1dda9685c8e3321e91c74ff4a8718a706b33cf7cfc"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Sign04_Rgh.png",
+        "gitBlobSha1": "72e26a64979c4558555cd8f26ef87dd34a115a63",
+        "pinnedGitBlobBytes": 872,
+        "bytes": 872,
+        "sha256": "8868cacd65e0a5e6a6b977125294f1701a19468fc02c5e11b8e7051c421b26f9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Slope00_Alb.png",
+        "gitBlobSha1": "85b0b188107e13e7c27a90dfde1125d0d8e2768a",
+        "pinnedGitBlobBytes": 7042,
+        "bytes": 7042,
+        "sha256": "ad1f53f868210c043e9fdcf6805a0b980bdc111a6fe6b8a06bebec5ae78354f9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Slope00_Mtl.png",
+        "gitBlobSha1": "f26597f8b9043cbbe9de76c2b19eb191569f05d8",
+        "pinnedGitBlobBytes": 1398,
+        "bytes": 1398,
+        "sha256": "f3ac25a4cde68967c777fcac252a3779ab7305d299f21b4256beca5ad451043f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Slope00_Nrm.png",
+        "gitBlobSha1": "f758b4d5eb74d742b2f965c9308a6fb913fbe264",
+        "pinnedGitBlobBytes": 83969,
+        "bytes": 83969,
+        "sha256": "7371958815bcd32812c71f25ab5ea78ee90b0025c436f6827005ba54cc4563ae"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Slope00_Rgh.png",
+        "gitBlobSha1": "720cf81d4e2cd0dd7d60d3285876ef8dfb6b58e5",
+        "pinnedGitBlobBytes": 41980,
+        "bytes": 41980,
+        "sha256": "837cc917257c39dc9291b7bd2cf3d4b1671773d392b941c12ecb0023dc145526"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Slope01_Alb.png",
+        "gitBlobSha1": "e6b5b852fd412fac197ced8c087e3e453996130e",
+        "pinnedGitBlobBytes": 2894,
+        "bytes": 2894,
+        "sha256": "6dc659a7e0c97c332c3e2ec982b2d4672e591b578738566ca25b20434f0d435b"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Slope01_Nrm.png",
+        "gitBlobSha1": "b42b10e84fd2b5f69fddac4a442d89877ead9b30",
+        "pinnedGitBlobBytes": 97629,
+        "bytes": 97629,
+        "sha256": "a1fd2f57281709a85f5cfb5c4756c8f44dcd25d2db86471915e70de386fc32f2"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Slope01_Rgh.png",
+        "gitBlobSha1": "569bbf1cd36f4097ade81d6a818769d6fdab7aa5",
+        "pinnedGitBlobBytes": 6022,
+        "bytes": 6022,
+        "sha256": "be464ecff402d392904635c581d601f15e2a33f55a4424dd0475a46f9777872f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tatami00_Alb.png",
+        "gitBlobSha1": "cedea68acb5ecaae368f91fdc773be0b68e3495d",
+        "pinnedGitBlobBytes": 75486,
+        "bytes": 75486,
+        "sha256": "1f16f5e6c7513e397da18df8a4b10fa8fcb4ae4633194ec325e50169e7cb0fef"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tatami00_Nrm.png",
+        "gitBlobSha1": "dba3b38a40a4dd0a09181d05fd9dd7c472d96b7d",
+        "pinnedGitBlobBytes": 32397,
+        "bytes": 32397,
+        "sha256": "a62a6c9746066ad2cee50c7895bb37d3ac6142c69020aa0e4f49a70d1728badb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tatami00_Rgh.png",
+        "gitBlobSha1": "426a41b4b61f1dc9f01875947d3b91c72036bb12",
+        "pinnedGitBlobBytes": 12763,
+        "bytes": 12763,
+        "sha256": "e46ecda67b35e7f756965826c104866d69a4990f75ff41a44debb5c9cec950bb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Terracotta00_Alb.png",
+        "gitBlobSha1": "09367b82f6923acd986206bd9f94d0261046825d",
+        "pinnedGitBlobBytes": 52699,
+        "bytes": 52699,
+        "sha256": "6ca9d2184fdbb4d7edf26b19b451c3b4792864c9824bd2b49b86c278817f83c4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Terracotta00_Nrm.png",
+        "gitBlobSha1": "6b6262c66c1ebfe1b749e3cd9d35a1886d70e090",
+        "pinnedGitBlobBytes": 9998,
+        "bytes": 9998,
+        "sha256": "c3bde7584e1356162366546cc0f4344bd4b524bb7ef0c4e950cd42a22fb17640"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Terracotta00_Rgh.png",
+        "gitBlobSha1": "97b31bf325122e7f71a4ff0abb97d12f815fdc13",
+        "pinnedGitBlobBytes": 49336,
+        "bytes": 49336,
+        "sha256": "0573d88363ec88ad4431ef8aa873238f8bd86b0ffc7c647e71637dd857e104bc"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tile00_Alb.png",
+        "gitBlobSha1": "3cc74cd3c82934a7b0ad6323d3e93a4c5f5bf025",
+        "pinnedGitBlobBytes": 5978,
+        "bytes": 5978,
+        "sha256": "ffc72c317adb67ea6d53f0539598cec63d4b7120c50373cd5fd796f757594e17"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tile00_Nrm.png",
+        "gitBlobSha1": "03cfffec2fe7b018ed0a60b9da1053ea8f4b3b12",
+        "pinnedGitBlobBytes": 18747,
+        "bytes": 18747,
+        "sha256": "0d4a1a4fd5203f038adea362e3ff4206790e99f3b7b2dfcc22625111e27e09ea"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tile00_Rgh.png",
+        "gitBlobSha1": "a2593dba414654e5650cce3f85d63672627a0bc8",
+        "pinnedGitBlobBytes": 38078,
+        "bytes": 38078,
+        "sha256": "746277b6dd87c9c57755099f92b6221fb9d53260d0642fa28207cb1002e12415"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tile03_Alb.png",
+        "gitBlobSha1": "1d7ea44cfde64f443fd38f9c6800bce99a1690dc",
+        "pinnedGitBlobBytes": 67356,
+        "bytes": 67356,
+        "sha256": "8eff9388abe1bf0cec699f9e7ca27dcfef17cba7a65349f1418828e9d73c7adc"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tile03_Nrm.png",
+        "gitBlobSha1": "501817ca129203de180ba466faf26bcbeae27fc2",
+        "pinnedGitBlobBytes": 13829,
+        "bytes": 13829,
+        "sha256": "b01145e664b7c682bff0768dd613de0043ace7bffb8e4594da93beccde5aaca7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Tile03_Rgh.png",
+        "gitBlobSha1": "7ea92f5822faf8727d0253ab9cafdde21ed47804",
+        "pinnedGitBlobBytes": 60555,
+        "bytes": 60555,
+        "sha256": "4fe6a98ee5aa7a5324528a8a6184b660d70431e10a9f19ad22341bbcca776552"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/TileArrow00_Alb.png",
+        "gitBlobSha1": "46d64d03b1a8436d948b54ce85d5f17a6a3c53a4",
+        "pinnedGitBlobBytes": 5221,
+        "bytes": 5221,
+        "sha256": "814ec2a4195cabd1e8fb8b3b9995d403beb1e54660a8ccd8764a4b6292ea446c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/TileArrow00_Nrm.png",
+        "gitBlobSha1": "a6ebd7788f95707c4ffa177a4d84791fc99dec30",
+        "pinnedGitBlobBytes": 15314,
+        "bytes": 15314,
+        "sha256": "a3e025d09116fb7d03aab95f37a24a9ec3007dd76e3a524ad6f96299989797ef"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/TileArrow00_Rgh.png",
+        "gitBlobSha1": "3a33dbc0f2ca5b98f88c40b13b7c6ebe492fa851",
+        "pinnedGitBlobBytes": 34897,
+        "bytes": 34897,
+        "sha256": "f7c2b35dc689e4172fb6d49c20ebcf271b86a4abda59e3143a93f6c8679c9ee5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/TileCircle00_Alb.png",
+        "gitBlobSha1": "450a406ccc8d42d61acabac2b3b68482724551d4",
+        "pinnedGitBlobBytes": 9691,
+        "bytes": 9691,
+        "sha256": "33213d812471a695a2fd1bdea1385a01854b1eeb324e677bb8280e78e32395e6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/TileCircle00_Nrm.png",
+        "gitBlobSha1": "e5eb6fbfa2f9c404169fcbc553e265470fdfc1b3",
+        "pinnedGitBlobBytes": 56169,
+        "bytes": 56169,
+        "sha256": "56ba0658d75a762dd6a0d023db7f84a61baa70ab706204e4c44b8bede4e66db5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/TileCircle00_Rgh.png",
+        "gitBlobSha1": "c2d99795ae44dbc90a7bf7d95fa04731c71fd318",
+        "pinnedGitBlobBytes": 48250,
+        "bytes": 48250,
+        "sha256": "f04ddaf26cedaf4898f3dc8eec7c8a8f26169dd06e1d59992b4aad2467583b41"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylMat00_Alb.png",
+        "gitBlobSha1": "da60ce3177661cb7a1733554be5522fc5a6d0d12",
+        "pinnedGitBlobBytes": 81266,
+        "bytes": 81266,
+        "sha256": "71791f49e80155511bd0ea123510d2afb45e9a64a4c50ec6a0a7c332d925e834"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylMat00_Emm.png",
+        "gitBlobSha1": "9912d0c1fc41db5008cb1ca8d4d34995abec2312",
+        "pinnedGitBlobBytes": 1987,
+        "bytes": 1987,
+        "sha256": "b9c5914c56183da979e6aeb2339d8b4853bb99623f59bbaac875164f899b63ad"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylMat00_Mtl.png",
+        "gitBlobSha1": "8a079b83f91020c1dbc91f47d9fdbbcb2de64ee9",
+        "pinnedGitBlobBytes": 4167,
+        "bytes": 4167,
+        "sha256": "2e11bace962abfa7f83f8a6c0d783c7b43842008bd3c9c675070178d94d2404e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylMat00_Nrm.png",
+        "gitBlobSha1": "36eee52a6fb47e1248d62c698118e33f7cbb708b",
+        "pinnedGitBlobBytes": 63457,
+        "bytes": 63457,
+        "sha256": "ec6939cb2705156c72b06fe37646cb90577710b6e24e0a1e0d86793061b19c9c"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylMat00_Rgh.png",
+        "gitBlobSha1": "70c2d65760df93944a52ff11c34d402e097a9146",
+        "pinnedGitBlobBytes": 30685,
+        "bytes": 30685,
+        "sha256": "c4eccad302c2bfa5cdb1664898a8dc258f3e58d1493067feb75ab5566cfa047d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylSheet01_Alb.png",
+        "gitBlobSha1": "909c400f9f6b5c0d1d5225bcbe3ccc7815ab0c3a",
+        "pinnedGitBlobBytes": 12726,
+        "bytes": 12726,
+        "sha256": "db8c62850511ef231bc9f34e85314af844877b411e9b65265e2bcf59ae104bc3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylSheet01_Nrm.png",
+        "gitBlobSha1": "fc093bc55e06a1e1f728bc97658669790f6ea035",
+        "pinnedGitBlobBytes": 21748,
+        "bytes": 21748,
+        "sha256": "b00c454415e276046cd0c6f0578f14c33e5bee89844082c414ae1ee542663ddb"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/VinylSheet01_Rgh.png",
+        "gitBlobSha1": "98bb18406c68550bb4b401004a27d0f226c595f3",
+        "pinnedGitBlobBytes": 1844,
+        "bytes": 1844,
+        "sha256": "bcbf2277a69c837ca3a0e7ab25be8976cccd3bbc99221c25c3f4d2a108162a12"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Whitewall00_Alb.png",
+        "gitBlobSha1": "43c0a2c2f4484e3b7959f78dce7c0d22cfb73741",
+        "pinnedGitBlobBytes": 187364,
+        "bytes": 187364,
+        "sha256": "7bf1bec73169ddd9645f059d6fc98a89258643273e67f759c7857f4fedebd487"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Whitewall00_Nrm.png",
+        "gitBlobSha1": "47ac11c4bdbbbca658ba4126a765f7234af7294d",
+        "pinnedGitBlobBytes": 130108,
+        "bytes": 130108,
+        "sha256": "2f7acd0d193e827114191dd485d45684457419fdcfc3835d89302a301c3e599d"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Whitewall00_Rgh.png",
+        "gitBlobSha1": "9c0a9e8fa038afc7e22cbbc77c3315d5127cdb44",
+        "pinnedGitBlobBytes": 50094,
+        "bytes": 50094,
+        "sha256": "f4dd12b0ebf6ee16cbe5807149bad3aa6f436d1becbac7a510951c659772ffec"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood00_Alb.png",
+        "gitBlobSha1": "2fd1aebcd9b9df91ae85e1d4ca5aaf504c7356fe",
+        "pinnedGitBlobBytes": 10213,
+        "bytes": 10213,
+        "sha256": "d661ae0a2d562726006b8eb745ae030fb9fe4be3de3041db0355f243a3e66e41"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood00_Nrm.png",
+        "gitBlobSha1": "1fd278741642dca2aefc44be9794bc76829f92fd",
+        "pinnedGitBlobBytes": 107834,
+        "bytes": 107834,
+        "sha256": "bc4202efaf0bf34936e693c4ae384865982031d2c2a5109b0a3eb116fc36a05f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood00_Rgh.png",
+        "gitBlobSha1": "8606a676e2b8d9c2e8874f3b021aac82b893df22",
+        "pinnedGitBlobBytes": 51100,
+        "bytes": 51100,
+        "sha256": "7ea4441ebb4ad689c96e2637b3b35c90ee167c3abedd709dff00f820542ae5d0"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood01_Alb.png",
+        "gitBlobSha1": "6d2bc2b3bcacd58b052fddc58ba4768cc3300c60",
+        "pinnedGitBlobBytes": 7639,
+        "bytes": 7639,
+        "sha256": "140c09674a35718539370d83cedd78cc739860e30f4900415aa808767d020d31"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood01_Nrm.png",
+        "gitBlobSha1": "1a0f41d70dbecf8faec9e715e85a8be25ca9bde9",
+        "pinnedGitBlobBytes": 105534,
+        "bytes": 105534,
+        "sha256": "fbc0f22fe3125a3d97d80b3c94fd1a35700b1fbddde241104528c4bad7c6562e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood01_Rgh.png",
+        "gitBlobSha1": "e1717246f7b64cb5c2391fe79538b0b33c6e2b5a",
+        "pinnedGitBlobBytes": 50091,
+        "bytes": 50091,
+        "sha256": "4973139cf0c64c8de1434da1cab3ca4b262eef26b70ad8f45485cd941e49a79a"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood02_Alb.png",
+        "gitBlobSha1": "42ed9f48be8cdad578c15eda5bc2d8d39c96aa0f",
+        "pinnedGitBlobBytes": 6390,
+        "bytes": 6390,
+        "sha256": "99d01a2d9f2f0f148a5f9db001a8ea941511ba98422211cd6d6a5b9f9f41ecc4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood02_Mtl.png",
+        "gitBlobSha1": "d08d0abcc21b56e9cea354f3d94e3dbbf60b6fbf",
+        "pinnedGitBlobBytes": 870,
+        "bytes": 870,
+        "sha256": "db157c9795e8f8d765048d98fafeb9d64e00786866ff97a66cded0a2f8c76ed7"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood02_Nrm.png",
+        "gitBlobSha1": "981486d85c451470d232babcf91ff77f3b7125ee",
+        "pinnedGitBlobBytes": 111098,
+        "bytes": 111098,
+        "sha256": "1c84400113c9f799cd92d65dfe361ee963698b23a514f16aea0b3705156a4726"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood02_Rgh.png",
+        "gitBlobSha1": "2e731888496579dd87b31bd6d7d1a1402b9c1d72",
+        "pinnedGitBlobBytes": 56807,
+        "bytes": 56807,
+        "sha256": "707c9c46550c21513dbc510d88ed98a43560d561354227bf863e2bb8830ccc8f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood03_Alb.png",
+        "gitBlobSha1": "9a1489c562c4468b57a38cf17aec9857c7b682da",
+        "pinnedGitBlobBytes": 5508,
+        "bytes": 5508,
+        "sha256": "cdb0a147b5bc27af1b6902330159c6bcba501b39ecaea3e409e3664fa0f68801"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood03_Nrm.png",
+        "gitBlobSha1": "2d7c792690face55218941769a1a5957192202a5",
+        "pinnedGitBlobBytes": 107295,
+        "bytes": 107295,
+        "sha256": "be2058678713797268576ac96e3b8f10ad7b2b0629f36ad60e9076e28c871c2e"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood03_Rgh.png",
+        "gitBlobSha1": "0983eb06bbad6b7e747f12dbf170f8a5a53c4edc",
+        "pinnedGitBlobBytes": 55002,
+        "bytes": 55002,
+        "sha256": "1fb4a43531def48f30008d7b920bbeebeec48961c8549c17d7c09aaf6d1318cf"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood05_Alb.png",
+        "gitBlobSha1": "ebb59a03be77659d986fd4d7e189967c6e6220c7",
+        "pinnedGitBlobBytes": 12612,
+        "bytes": 12612,
+        "sha256": "bf5b01941de31368ebf0b18ca78a7836bf82683c198113ebd6e3875c89fbe645"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood05_Nrm.png",
+        "gitBlobSha1": "23e87e140aac1f89c7bc0307c60f3ce83abd0468",
+        "pinnedGitBlobBytes": 82212,
+        "bytes": 82212,
+        "sha256": "a00467e3c4248ca0ffceb3a019e1efb7788beedeaf17d92c8977ba69970600c9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood05_Rgh.png",
+        "gitBlobSha1": "389ab9ad27cee5115a3947af4fda401cfb6e8a3b",
+        "pinnedGitBlobBytes": 17817,
+        "bytes": 17817,
+        "sha256": "2cc60022f397525b08a63416c539ea28314c747b1ed9e44c3352e7a9220950f6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood06_Alb.png",
+        "gitBlobSha1": "7276db0cba9d1efce766f7b9b036942583103110",
+        "pinnedGitBlobBytes": 139851,
+        "bytes": 139851,
+        "sha256": "b81653cd7b8d9da87a04b8a1ba2810ec3f71c73b49333f531ab6077f3dadf51f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood06_Mtl.png",
+        "gitBlobSha1": "a906c1c7fcb22316bdedbf647be095af563404e6",
+        "pinnedGitBlobBytes": 1019,
+        "bytes": 1019,
+        "sha256": "e3c5b3fbe86d81c7cc64802746f4269d8a4b4219acf31490754106914733e7c4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood06_Nrm.png",
+        "gitBlobSha1": "327d4e96fb2960fe3c72045172434805b3b19384",
+        "pinnedGitBlobBytes": 89159,
+        "bytes": 89159,
+        "sha256": "bc615e29f4f6f799ba875be8696b793591f111721acf9542c84c8c6eb77babfc"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood06_Rgh.png",
+        "gitBlobSha1": "59f0313dc349ec2c06df8e486c68622636152b18",
+        "pinnedGitBlobBytes": 31420,
+        "bytes": 31420,
+        "sha256": "aeabf1661fbe56701e9f9587a02a8b758db74f070c1e36aa201780126c5409e6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood07_Alb.png",
+        "gitBlobSha1": "f9b1079f070a0c84ee8fa464356e3d7432e1697b",
+        "pinnedGitBlobBytes": 10094,
+        "bytes": 10094,
+        "sha256": "3a439ecfc09380a4d122a4ac77ae3f5884e4caf34c9ec7b3fc8efa40bb8e74cd"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood07_Nrm.png",
+        "gitBlobSha1": "741fba9757c3465b4ac5076fe8f1939cbe62019c",
+        "pinnedGitBlobBytes": 22034,
+        "bytes": 22034,
+        "sha256": "a7aa7e5194577ef8742dd801e2b0487dc567d8d91dc05127e87102e056e8363f"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/Wood07_Rgh.png",
+        "gitBlobSha1": "400490721b2f85044302e67ca250abdb31e77849",
+        "pinnedGitBlobBytes": 13075,
+        "bytes": 13075,
+        "sha256": "5894dd22177b7f8876b4be37ec67c961eb4de19d4677213cc1673a3783c5a8cc"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/WoodenBlocks00_Alb.png",
+        "gitBlobSha1": "ea607504cf58b35981635e04e82372910de701ae",
+        "pinnedGitBlobBytes": 80721,
+        "bytes": 80721,
+        "sha256": "f5d16bff708732ec869dad124e3034541eccd04fc8b99637a122c520d0b8b7b4"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/WoodenBlocks00_Mtl.png",
+        "gitBlobSha1": "6530a1d5d156840028496eec2be2eb21e2bf6609",
+        "pinnedGitBlobBytes": 598,
+        "bytes": 598,
+        "sha256": "b99e6f8e87a8c0905cea9d20ba6ea8ac74bc6e3e82b6d2f102d7e2e6148f3ca3"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/WoodenBlocks00_Nrm.png",
+        "gitBlobSha1": "98380c738a6c3cde504dafe76ffa9434b1a606fe",
+        "pinnedGitBlobBytes": 29776,
+        "bytes": 29776,
+        "sha256": "006683c8e35d0658590a67455157902dc598743568ff4faba6692cef2e2eaeaa"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/WoodenBlocks00_Rgh.png",
+        "gitBlobSha1": "d20c960b657aa933c338888a5447f87ad4964c96",
+        "pinnedGitBlobBytes": 16505,
+        "bytes": 16505,
+        "sha256": "11fd77b137d14913b89ad56e5ad7c52a35835316c89ba0f63cd951ad587162df"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/linoleum00_Alb.png",
+        "gitBlobSha1": "aadbd49cc75b6fa228071d83bbc0bcd9d10b1063",
+        "pinnedGitBlobBytes": 13597,
+        "bytes": 13597,
+        "sha256": "4c95489b60b02ff0fc28b8baf288c8a4aa499ed23c56809a9678de56bb25b900"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/linoleum00_Nrm.png",
+        "gitBlobSha1": "57077d2f6c559c16b1a40ad2120fbad904936db2",
+        "pinnedGitBlobBytes": 132635,
+        "bytes": 132635,
+        "sha256": "672cf36ed3f390dd85fef9a4b989459541c68d536c52fe57a6a78cdf00c752f6"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/linoleum00_Rgh.png",
+        "gitBlobSha1": "34b2675b6b8df2e4b7b3914764e048ffe64bd3ab",
+        "pinnedGitBlobBytes": 52664,
+        "bytes": 52664,
+        "sha256": "ebea9f83419f103ce63d44f3de2ec78595f31cc5aec48165a7fb3188084ad9b8"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiMetalNet_Alb.png",
+        "gitBlobSha1": "988372ec60246ad4acedc1a1bf0eced5c6721648",
+        "pinnedGitBlobBytes": 95136,
+        "bytes": 95136,
+        "sha256": "04fafc2fcac4281f191333f1bc1f285e9ff777230fa5e3a12e5aa57349bfb187"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiMetalNet_Mtl.png",
+        "gitBlobSha1": "2e95302898b9ec704efb56cec638ed9de587e925",
+        "pinnedGitBlobBytes": 11047,
+        "bytes": 11047,
+        "sha256": "5132037f244431df2523563d776eb08ef4f750ed11dc6215398f558032281ee5"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiMetalNet_Nrm.png",
+        "gitBlobSha1": "1da0465a2d495b6aeb37b8a70856ab1442aaebfe",
+        "pinnedGitBlobBytes": 107800,
+        "bytes": 107800,
+        "sha256": "a3ee173323b3b06af459f11e864af12cbefd71e876e8f048959468a7dadb39ea"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiMetalNet_Rgh.png",
+        "gitBlobSha1": "1e3d4fc7cb61855e7c6706760596ab2c43bd0fc7",
+        "pinnedGitBlobBytes": 48255,
+        "bytes": 48255,
+        "sha256": "c553952312596db2d7ca6f993f308da752d4b32166a95af593f1c15b1e8c0815"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiNet_Alb.png",
+        "gitBlobSha1": "57323c7764faa4eb305e3627793283f003820e9b",
+        "pinnedGitBlobBytes": 35718,
+        "bytes": 35718,
+        "sha256": "fc3793a50e3923bb9a42e204b39ca19844ba51ba19409eb1749de871478c34f9"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiNet_Mtl.png",
+        "gitBlobSha1": "edefc143c1236fc44809d08555845a187014e48e",
+        "pinnedGitBlobBytes": 13546,
+        "bytes": 13546,
+        "sha256": "d7002922af11eb6f6c0e9bbdd72f30caec43caff2c4787dc6c62b202fac02303"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiNet_Nrm.png",
+        "gitBlobSha1": "d0eeb88e89e692d587f79c24be20158391042f99",
+        "pinnedGitBlobBytes": 27501,
+        "bytes": 27501,
+        "sha256": "665f831ef3ba2dfac87024c2cf538233c28c907acbebf9246de126696bcdfe17"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiNet_Opa.png",
+        "gitBlobSha1": "8cc270e80f2f4f9ecdafd455ce56afe2ffe33ecb",
+        "pinnedGitBlobBytes": 16779,
+        "bytes": 16779,
+        "sha256": "048077f54f5877482e814954aa37c647a2da7b84a4d114ebd329a6ff54aaec73"
+      },
+      {
+        "path": "stages/Vss_Section01/textures/mJyohekiNet_Rgh.png",
+        "gitBlobSha1": "84b10d08ba9db60819f5e97084d684cc78a4921d",
+        "pinnedGitBlobBytes": 6831,
+        "bytes": 6831,
+        "sha256": "ba01798e94a20fc7b34588a060edfbd45bfc4cb2bc3e97bf5140ce430a046ce7"
+      }
+    ],
+    "version1130Verified": false
+  },
+  "sourceRepositoryImmutability": {
+    "headBefore": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "headAfter": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "indexSha256Before": "0c8ac8d7ce7b8aac8e2f138143811abb37152e4df73670e50022b6cf12228a87",
+    "indexSha256After": "0c8ac8d7ce7b8aac8e2f138143811abb37152e4df73670e50022b6cf12228a87"
+  },
+  "acquisition": {
+    "isolatedLfs": "Resource not accessible by integration",
+    "fallback": "public media.githubusercontent.com, exact LFS OID and size verified",
+    "mtlAndPng": "All 311 primary/parts MTL and texture blobs matched pinned Git SHA1 and independent recursive Git-tree sizes"
+  },
+  "identity1130": {
+    "rowId": "Vss_Section01",
+    "label": "タラポートショッピングパーク（改修後）",
+    "id": 8,
+    "displayOrder": 17,
+    "season": 4,
+    "tclSceneName": "Vss_Section00",
+    "scope": "identity only; KiTrix extraction version/date and retail units/placements unverified"
+  },
+  "cpu": {
+    "id": "barnacle",
+    "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+    "vertices": 322386,
+    "collisionTriangles": 177607,
+    "sourceRenderCollisionDigest": "25541569debdb6db9a33c328668935218acb6d44e60adbf742ccf472ab8051b2",
+    "sourceBuffersRetained": true,
+    "faces": 75857,
+    "gridCells": 1461683,
+    "turfTotal": 254179,
+    "ppm": 3.2,
+    "nav": {
+      "nodes": 10246,
+      "valid": 6920,
+      "seeds": [
+        310,
+        9886
+      ],
+      "common": 3220,
+      "commonPaintable": 2988,
+      "extent": {
+        "minX": -36.5,
+        "maxX": 36.5,
+        "minZ": -44.5,
+        "maxZ": 44.5
+      }
+    },
+    "movement": [
+      {
+        "team": 0,
+        "hz": 30,
+        "moved": 0.7119999999999753,
+        "pos": [
+          -23.777627394641573,
+          7.5,
+          -72.32361665870154
+        ],
+        "grounded": true,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "moved": 0.7020000000001446,
+        "pos": [
+          -23.780750605391038,
+          7.5,
+          -72.33311642473082
+        ],
+        "grounded": true,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "moved": 0.6970000000001559,
+        "pos": [
+          -23.782312210765745,
+          7.5,
+          -72.33786630774554
+        ],
+        "grounded": true,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "moved": 0.7119999999999753,
+        "pos": [
+          23.777627394641573,
+          7.5,
+          72.32361665870154
+        ],
+        "grounded": true,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "moved": 0.7020000000001446,
+        "pos": [
+          23.780750605391038,
+          7.5,
+          72.33311642473082
+        ],
+        "grounded": true,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "moved": 0.6970000000001559,
+        "pos": [
+          23.782312210765745,
+          7.5,
+          72.33786630774554
+        ],
+        "grounded": true,
+        "weapon": "shooter",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ]
+      }
+    ],
+    "tower": {
+      "supported": true,
+      "status": "source-clear-local",
+      "reason": null,
+      "nodes": 36,
+      "centerIndex": 17,
+      "halfSize": 1.2,
+      "lift": 1.2,
+      "arenaSpan": {
+        "origin": [
+          0,
+          0
+        ],
+        "forward": [
+          0.3123210749415851,
+          0.9499766029473213
+        ],
+        "endpointProjection": [
+          -12.616470089827782,
+          12.616470089827782
+        ],
+        "minimumHalfDepth": 2.097056274847714,
+        "bothHalvesVerified": true
+      },
+      "sourceClearance": {
+        "queries": 36,
+        "triangleTests": 2563
+      },
+      "arcLengths": [
+        19.999974345252408,
+        20.588814905702094
+      ]
+    },
+    "version1130Verified": false
+  },
+  "cpuTests": {
+    "assetMatrix": {
+      "tests": 68,
+      "passed": 64,
+      "failed": 0,
+      "skipped": 4,
+      "durationMs": 75471.151233
+    },
+    "acceptedClimbsAndCanonicalArcRetest": {
+      "passed": 8,
+      "failed": 0,
+      "skipped": 1,
+      "durationMs": 32252.688209
+    },
+    "skipScope": "Fixtures requiring other stages are skipped by the intentionally single-stage private catalog; Barnacle source/physics/rules cases are enabled.",
+    "concurrency": 1,
+    "heavyJobLock": true
+  },
+  "builds": {
+    "local": {
+      "contentHash": "31ff08e5ac664db1ac9fe66473bf93ffe1ca8eecc1fbe5a0060c324f6ec64b76",
+      "inputHash": "2e7391e1e4199de3289c2bf2e477e275c2406de477f88b4a51fa3b881c03c4eb",
+      "revision": "e1729e4688317072d8d96d4a19861ff7ac591903c4b889ee7f10ef52b2516f33",
+      "runtimeSha256": "bc4bb58aa780d36db74d1d467c3539ba8e6be34760fcb3b2c42208028b9602eb",
+      "mode": "local-prepared",
+      "artifactManifestVerified": true
+    },
+    "public": {
+      "contentHash": "c967069f74c1d6c9bc054982c0bcb22f7720463a86cd4a45a091022bb6b58f3b",
+      "inputHash": "2e7391e1e4199de3289c2bf2e477e275c2406de477f88b4a51fa3b881c03c4eb",
+      "revision": "233f27f148fc2b343081297c9f5074acee4b886dff57e49962770c8db48ea248",
+      "runtimeSha256": "bc4bb58aa780d36db74d1d467c3539ba8e6be34760fcb3b2c42208028b9602eb",
+      "mode": "browser-direct",
+      "artifactManifestVerified": true
+    }
+  },
+  "startupBudgets": {
+    "local": {
+      "status": "passed",
+      "revision": "e1729e4688317072d8d96d4a19861ff7ac591903c4b889ee7f10ef52b2516f33",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2879588,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5773681,
+      "workerBytes": 70517,
+      "declaredBytes": 10391721,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "public": {
+      "status": "passed",
+      "revision": "233f27f148fc2b343081297c9f5074acee4b886dff57e49962770c8db48ea248",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2882439,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5776532,
+      "workerBytes": 70517,
+      "declaredBytes": 10394572,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "gameplay": {
+    "actors": 8,
+    "alive": 8,
+    "bots": 7,
+    "moved": [
+      0,
+      0.4046449714392323,
+      4.403203964576654,
+      3.9460847239733634,
+      6.700283538630633,
+      5.723317902900433,
+      2.934991725847857,
+      4.8042480445012625
+    ],
+    "coverage": [
+      0.013622795285172379,
+      0.014431943396359908
+    ],
+    "turfTotal": 254179,
+    "counts": [
+      3251,
+      3307
+    ],
+    "metrics": {
+      "loadMilliseconds": 2473.5,
+      "navMilliseconds": 407.09999999403954,
+      "shaderWarmMilliseconds": 13.200000002980232,
+      "vertices": 322386,
+      "triangles": 251011,
+      "faces": 75857,
+      "gridBytes": 1461683,
+      "atlas": 2048,
+      "ppm": 3.2,
+      "textureCount": 91,
+      "quality": "low",
+      "version1130Verified": false
+    },
+    "cpuFrame": {
+      "p50": 30,
+      "p95": 57.400000005960464,
+      "max": 1325.8999999910593
+    },
+    "render": {
+      "frame": 401,
+      "calls": 225,
+      "triangles": 547855,
+      "points": 0,
+      "lines": 0
+    },
+    "memory": {
+      "geometries": 363,
+      "textures": 115
+    },
+    "navValid": 6920,
+    "local": {
+      "pos": [
+        -20.189273488332528,
+        9.050000190734863,
+        -61.62114401825585
+      ],
+      "alive": true,
+      "grounded": true
+    },
+    "errors": []
+  },
+  "rules": [
+    {
+      "mode": "turf",
+      "supported": true
+    },
+    {
+      "mode": "zones",
+      "supported": true,
+      "actors": 8,
+      "counts": [
+        98,
+        100
+      ],
+      "snapshotBytes": 512,
+      "towerProof": null
+    },
+    {
+      "mode": "tower",
+      "supported": true,
+      "actors": 8,
+      "counts": [
+        95,
+        100
+      ],
+      "snapshotBytes": 772,
+      "towerProof": {
+        "pathNodes": 36,
+        "segmentInteriorSamples": 3,
+        "actualCapsuleSupports": 282,
+        "halfSize": 1.2,
+        "localLift": 1.2,
+        "sourceClearance": {
+          "queries": 8150,
+          "triangleTests": 271645,
+          "radius": 2.097056274847714,
+          "height": 2.03,
+          "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+        },
+        "arenaSpan": {
+          "origin": [
+            0,
+            0
+          ],
+          "forward": [
+            0.3123210749415851,
+            0.9499766029473213
+          ],
+          "endpointProjection": [
+            -12.616470089827782,
+            12.616470089827782
+          ],
+          "minimumHalfDepth": 2.097056274847714,
+          "bothHalvesVerified": true
+        },
+        "liveGroundedHumanCounted": true,
+        "keyboardBoarding": [
+          {
+            "hz": 30,
+            "boarded": true,
+            "frames": 14,
+            "reachedEnd": false,
+            "controller": 0,
+            "grounded": true,
+            "groundHit": true,
+            "groundBlock": 75991,
+            "towerBlock": 75991,
+            "position": [
+              2.909649700462703,
+              5.7192001416410045,
+              -6.207134140690515
+            ],
+            "approach": {
+              "sourceNode": 4455,
+              "start": [
+                1.5,
+                4.519999980926514,
+                -5.5
+              ],
+              "end": [
+                2.695015528100076,
+                5.719999980926507,
+                -6.097507764050038
+              ],
+              "height": 1.199999999999993,
+              "jumping": true,
+              "hz": 30
+            }
+          },
+          {
+            "hz": 60,
+            "boarded": true,
+            "frames": 27,
+            "reachedEnd": false,
+            "controller": 0,
+            "grounded": true,
+            "groundHit": true,
+            "groundBlock": 75991,
+            "towerBlock": 75991,
+            "position": [
+              2.9299191159557125,
+              5.718800221998254,
+              -6.213158985366655
+            ],
+            "approach": {
+              "sourceNode": 4455,
+              "start": [
+                1.5,
+                4.519999980926514,
+                -5.5
+              ],
+              "end": [
+                2.695015528100076,
+                5.719999980926507,
+                -6.097507764050038
+              ],
+              "height": 1.199999999999993,
+              "jumping": true,
+              "hz": 60
+            }
+          },
+          {
+            "hz": 120,
+            "boarded": true,
+            "frames": 54,
+            "reachedEnd": false,
+            "controller": 0,
+            "grounded": true,
+            "groundHit": true,
+            "groundBlock": 75991,
+            "towerBlock": 75991,
+            "position": [
+              2.9498840048288986,
+              5.718400302355503,
+              -6.221641442237931
+            ],
+            "approach": {
+              "sourceNode": 4455,
+              "start": [
+                1.5,
+                4.519999980926514,
+                -5.5
+              ],
+              "end": [
+                2.695015528100076,
+                5.719999980926507,
+                -6.097507764050038
+              ],
+              "height": 1.199999999999993,
+              "jumping": true,
+              "hz": 120
+            }
+          }
+        ]
+      }
+    },
+    {
+      "mode": "rainmaker",
+      "supported": true,
+      "actors": 8,
+      "counts": [
+        100,
+        100
+      ],
+      "snapshotBytes": 962,
+      "towerProof": null
+    },
+    {
+      "mode": "clams",
+      "supported": true,
+      "actors": 8,
+      "counts": [
+        100,
+        100
+      ],
+      "snapshotBytes": 7928,
+      "towerProof": null
+    }
+  ],
+  "publicSource": {
+    "status": "passed",
+    "objDownloads": 2,
+    "choices": [
+      "タイドウォーター広場",
+      "ケルプライン埠頭",
+      "ハリヤードマリーナ",
+      "ユノハナ大渓谷",
+      "ヤガラ市場",
+      "海女美術大学",
+      "ザトウマーケット",
+      "クサヤ温泉",
+      "タラポートショッピングパーク"
+    ],
+    "cache": {
+      "id": "barnacle",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    },
+    "alteredObjRollback": {
+      "levelRetained": true,
+      "menu": "setup",
+      "loadingRemoved": true
+    },
+    "errors": []
+  },
+  "admittedSourceWallShot": {
+    "id": "barnacle",
+    "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+    "version1130Verified": false,
+    "actors": 8,
+    "bots": 7,
+    "weapon": "shooter",
+    "sourceWeapon": "WeaponShooterNormal",
+    "gear": [
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      }
+    ],
+    "cases": [
+      {
+        "hz": 30,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 957,
+            "triangle": 6863,
+            "distanceToTarget": 0.023976908859462482,
+            "object": 12
+          }
+        ],
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.5999999940395355,
+          "max": 7.299999997019768
+        }
+      },
+      {
+        "hz": 60,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 957,
+            "triangle": 6863,
+            "distanceToTarget": 0.023976908859462482,
+            "object": 12
+          }
+        ],
+        "naturalWallSplats": 5,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.29999999701976776,
+          "max": 1.7000000029802322
+        }
+      },
+      {
+        "hz": 120,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "sourceContacts": [
+          {
+            "face": 957,
+            "triangle": 6863,
+            "distanceToTarget": 0.023976908859462482,
+            "object": 12
+          }
+        ],
+        "naturalWallSplats": 5,
+        "alive": true,
+        "grounded": true,
+        "projectileCpu": {
+          "p50": 0,
+          "p95": 0.20000000298023224,
+          "max": 1.7000000029802322
+        }
+      }
+    ],
+    "sourceObject": "FldObj_Section01_PntVarSet_Wood116_1__VinylMat00",
+    "face": 957,
+    "triangle": 6863,
+    "conditions": "controlled source-supported spawnAt stance; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader",
+    "errors": []
+  },
+  "initialSourceSpawn": {
+    "cases": 30,
+    "teams": [
+      0,
+      1
+    ],
+    "hz": [
+      30,
+      60,
+      120
+    ],
+    "roles": [
+      "human",
+      "bot0",
+      "bot1",
+      "bot2",
+      "bot3"
+    ],
+    "productionIntegrator": true,
+    "maximumLandingSeconds": 1,
+    "minimumPostLaunchMove": 4.114469147522397,
+    "everyLandingGroundedAndDirectedGoalRoute": true,
+    "version1130Verified": false
+  },
+  "sourceNavMinimap": {
+    "status": "passed",
+    "stages": [
+      {
+        "id": "barnacle",
+        "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+        "seeds": [
+          {
+            "team": 0,
+            "pad": [
+              -24,
+              7.5,
+              -73
+            ],
+            "node": 359,
+            "nodeHeight": 7.5,
+            "sourceHeight": 7.5,
+            "sourceTriangle": 156737
+          },
+          {
+            "team": 1,
+            "pad": [
+              24,
+              7.5,
+              73
+            ],
+            "node": 9935,
+            "nodeHeight": 7.5,
+            "sourceHeight": 7.5,
+            "sourceTriangle": 156746
+          }
+        ],
+        "nodes": 10246,
+        "validNodes": 6920,
+        "lowerHullCandidates": 394,
+        "lowerHullValid": 0,
+        "actors": 8,
+        "bots": 7,
+        "positions": [
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              -20.18934724974331,
+              9.050000190734863,
+              -61.62111931616465
+            ],
+            "launch": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": false,
+            "pos": [
+              -26.509446948890684,
+              5.158805555555555,
+              -56.452290058050146
+            ],
+            "launch": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              -14.689834941839125,
+              7.5,
+              -60.85157500945364
+            ],
+            "launch": false
+          },
+          {
+            "team": 0,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              -19.7330519427213,
+              7.5,
+              -74.25579459284657
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              29.80412824838807,
+              4.5,
+              64.75293899310314
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              22.156567419511973,
+              4.550000190734863,
+              57.24425359763073
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              15.0778304355191,
+              7.5,
+              69.76129260327839
+            ],
+            "launch": false
+          },
+          {
+            "team": 1,
+            "alive": true,
+            "grounded": true,
+            "pos": [
+              25.843596119424642,
+              7.5,
+              74.52484485749105
+            ],
+            "launch": false
+          }
+        ],
+        "sourceCollisionTriangles": 177607,
+        "minimap": {
+          "built": true,
+          "width": 300,
+          "height": 480,
+          "livePaintPixels": 70787
+        },
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+      }
+    ],
+    "errors": [],
+    "legacy": {
+      "nodes": 4158,
+      "valid": 4154,
+      "unchanged": true
+    }
+  },
+  "render": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+    "actors": 8,
+    "chunks": 142,
+    "tileSize": 16,
+    "views": [
+      {
+        "name": "gameplay",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "pixels": 153600,
+        "baseline": {
+          "milliseconds": 2,
+          "selectionMilliseconds": 0,
+          "indexChanged": false,
+          "inkTriangles": 119205,
+          "inkCalls": 1,
+          "triangles": 8731468,
+          "calls": 3521,
+          "p50": 7,
+          "p95": 13,
+          "samples": [
+            13,
+            7,
+            8.399999991059303,
+            2.7999999970197678,
+            3.7999999970197678,
+            2
+          ]
+        },
+        "chunked": {
+          "milliseconds": 2.5999999940395355,
+          "selectionMilliseconds": 0,
+          "indexChanged": false,
+          "inkTriangles": 114114,
+          "inkCalls": 1,
+          "triangles": 8183289,
+          "calls": 3301,
+          "p50": 3.2999999970197678,
+          "p95": 8,
+          "samples": [
+            8,
+            5.399999991059303,
+            3.2999999970197678,
+            2.800000011920929,
+            2.5,
+            2.5999999940395355
+          ]
+        }
+      },
+      {
+        "name": "center",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "pixels": 153600,
+        "baseline": {
+          "milliseconds": 8.099999994039536,
+          "selectionMilliseconds": 0,
+          "indexChanged": false,
+          "inkTriangles": 119205,
+          "inkCalls": 1,
+          "triangles": 18690646,
+          "calls": 7317,
+          "p50": 4.5,
+          "p95": 8.099999994039536,
+          "samples": [
+            7.0999999940395355,
+            2.1000000089406967,
+            1.7999999970197678,
+            3.4000000059604645,
+            4.5,
+            8.099999994039536
+          ]
+        },
+        "chunked": {
+          "milliseconds": 2.2999999970197678,
+          "selectionMilliseconds": 0.09999999403953552,
+          "indexChanged": false,
+          "inkTriangles": 77884,
+          "inkCalls": 1,
+          "triangles": 18160426,
+          "calls": 7123,
+          "p50": 2.2999999970197678,
+          "p95": 4.299999997019768,
+          "samples": [
+            2.5999999940395355,
+            2.2000000029802322,
+            1.9000000059604645,
+            1.7999999970197678,
+            4.299999997019768,
+            2.2999999970197678
+          ]
+        }
+      },
+      {
+        "name": "overhead",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "pixels": 153600,
+        "baseline": {
+          "milliseconds": 9.100000008940697,
+          "selectionMilliseconds": 0,
+          "indexChanged": false,
+          "inkTriangles": 119205,
+          "inkCalls": 1,
+          "triangles": 29732432,
+          "calls": 11829,
+          "p50": 5.0999999940395355,
+          "p95": 11,
+          "samples": [
+            2.699999988079071,
+            11,
+            2.699999988079071,
+            3.2000000029802322,
+            5.0999999940395355,
+            9.100000008940697
+          ]
+        },
+        "chunked": {
+          "milliseconds": 2.2999999970197678,
+          "selectionMilliseconds": 0,
+          "indexChanged": false,
+          "inkTriangles": 119205,
+          "inkCalls": 1,
+          "triangles": 29148705,
+          "calls": 11587,
+          "p50": 5.200000002980232,
+          "p95": 10.200000002980232,
+          "samples": [
+            3.1000000089406967,
+            5.200000002980232,
+            10.200000002980232,
+            4.9000000059604645,
+            7.5,
+            2.2999999970197678
+          ]
+        }
+      }
+    ],
+    "movingCameras": 12,
+    "movingIndexRebuilds": 9,
+    "movingRenderP50": 6.299999997019768,
+    "authoritiesUnchanged": true,
+    "cpuPaintUnchanged": true,
+    "measurement": "SwiftShader drain timing; not mobile/Switch hardware FPS"
+  },
+  "lifecycle": {
+    "status": "passed",
+    "errors": [],
+    "quality": {
+      "cpuGridUnchanged": true,
+      "trianglePositionsUnchanged": true,
+      "authoritiesRetained": true,
+      "finalAtlas": 2048,
+      "textureCount": 91
+    },
+    "failureRollback": {
+      "rejected": true,
+      "levelRetained": true,
+      "paintRetained": true,
+      "displayRetained": true
+    },
+    "corruptionProbe": {
+      "requests": 1,
+      "error": "Native integrity mismatch: barnacle/vertices.bin"
+    },
+    "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+    "cancellation": {
+      "id": "tidewater",
+      "nativeGroups": 0,
+      "preparationCancelled": true
+    },
+    "switches": [
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 229,
+          "textures": 28
+        }
+      },
+      {
+        "id": "barnacle",
+        "native": true,
+        "nativeGroups": 1,
+        "memory": {
+          "geometries": 349,
+          "textures": 112
+        }
+      },
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 229,
+          "textures": 28
+        }
+      }
+    ],
+    "fingerprint": {
+      "same": true,
+      "changed": false,
+      "missing": false
+    },
+    "mobile": [
+      {
+        "id": "barnacle",
+        "viewport": [
+          844,
+          390
+        ],
+        "touch": true,
+        "actors": 8,
+        "native": true,
+        "atlas": 2048,
+        "textureCount": 91,
+        "cpuFrame": {
+          "p50": 20.80000001192093,
+          "p95": 50.70000000298023,
+          "max": 2798.5999999940395
+        },
+        "gpuDrainRenderMs": 9.900000005960464,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "local": {
+          "grounded": true,
+          "spawn": false
+        },
+        "mobileHardwareMeasured": false
+      }
+    ]
+  },
+  "trustedTouch": {
+    "status": "passed",
+    "errors": [],
+    "conditions": "844x390 mobile emulation; trusted CDP touch events through ordinary MobileInput and PlayerController; eight actual actors/seven bots, normal difficulty/default shooter/no gear bonuses; SwiftShader, hardware FPS unverified",
+    "launch": {
+      "touchFire": true,
+      "phase": "flight",
+      "lastDevice": "touch"
+    },
+    "landing": {
+      "grounded": true,
+      "sourceGround": true,
+      "spawnActive": false,
+      "pos": [
+        -20.18934724974331,
+        9.050000190734863,
+        -61.62111931616465
+      ]
+    },
+    "movement": {
+      "input": {
+        "x": 0,
+        "y": 0.945482087449059
+      },
+      "moved": 2.3577192071552253,
+      "alive": true,
+      "grounded": false
+    },
+    "shot": {
+      "touchFire": true,
+      "admittedProjectiles": 3,
+      "weapon": "shooter",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gear": [
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        },
+        {
+          "main": "none",
+          "subs": [
+            "none",
+            "none",
+            "none"
+          ]
+        }
+      ],
+      "alive": true
+    },
+    "world": {
+      "id": "barnacle",
+      "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+      "actors": 8,
+      "bots": 7,
+      "viewport": [
+        844,
+        390
+      ],
+      "mobile": true,
+      "version1130Verified": false
+    }
+  },
+  "camera": {
+    "status": "passed",
+    "offline": [
+      {
+        "hz": 30,
+        "team": 0,
+        "rigYaw": 0.31763535128953074,
+        "aimYaw": 0.31763535128953074,
+        "expectedYaw": 0.31763535128953074,
+        "alignment": 0.9999847983801723,
+        "actors": 8,
+        "mode": "turf",
+        "native": true,
+        "landing": {
+          "alive": true,
+          "grounded": true,
+          "spawnActive": false,
+          "input": "browser canvas pointer lock + physical mouse fire",
+          "inputAlignment": 0.9999847985362665
+        }
+      },
+      {
+        "hz": 60,
+        "team": 0,
+        "rigYaw": 0.31763535128953074,
+        "aimYaw": 0.31763535128953074,
+        "expectedYaw": 0.31763535128953074,
+        "alignment": 0.9999847990470312,
+        "actors": 8,
+        "mode": "turf",
+        "native": true,
+        "landing": {
+          "alive": true,
+          "grounded": true,
+          "spawnActive": false,
+          "input": "browser canvas pointer lock + physical mouse fire",
+          "inputAlignment": 0.9999847990470312
+        }
+      },
+      {
+        "hz": 120,
+        "team": 0,
+        "rigYaw": 0.31763535128953074,
+        "aimYaw": 0.31763535128953074,
+        "expectedYaw": 0.31763535128953074,
+        "alignment": 0.9999847990470312,
+        "actors": 8,
+        "mode": "turf",
+        "native": true,
+        "landing": {
+          "alive": true,
+          "grounded": true,
+          "spawnActive": false,
+          "input": "browser canvas pointer lock + physical mouse fire",
+          "inputAlignment": 0.9999847990470312
+        }
+      }
+    ],
+    "online": [
+      {
+        "hz": 30,
+        "peers": [
+          {
+            "hz": 30,
+            "team": 0,
+            "rigYaw": 0.31763535128953074,
+            "aimYaw": 0.31763535128953074,
+            "expectedYaw": 0.31763535128953074,
+            "alignment": 0.9999847990470312,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9999847990470312
+            }
+          },
+          {
+            "hz": 30,
+            "team": 1,
+            "rigYaw": -2.8239573023002627,
+            "aimYaw": -2.8239573023002627,
+            "expectedYaw": -2.8239573023002627,
+            "alignment": 0.999838913933108,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.999838913933108
+            }
+          }
+        ],
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "hz": 60,
+        "peers": [
+          {
+            "hz": 60,
+            "team": 0,
+            "rigYaw": 0.31763535128953074,
+            "aimYaw": 0.31763535128953074,
+            "expectedYaw": 0.31763535128953074,
+            "alignment": 0.9999847990470312,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9999847990470312
+            }
+          },
+          {
+            "hz": 60,
+            "team": 1,
+            "rigYaw": -2.8239573023002627,
+            "aimYaw": -2.8239573023002627,
+            "expectedYaw": -2.8239573023002627,
+            "alignment": 0.9998389139331075,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998389139331075
+            }
+          }
+        ],
+        "transport": "real WebSocket + production RoomDurableObject"
+      },
+      {
+        "hz": 120,
+        "peers": [
+          {
+            "hz": 120,
+            "team": 0,
+            "rigYaw": 0.31763535128953074,
+            "aimYaw": 0.31763535128953074,
+            "expectedYaw": 0.31763535128953074,
+            "alignment": 0.9999847990470312,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9999847990470312
+            }
+          },
+          {
+            "hz": 120,
+            "team": 1,
+            "rigYaw": -2.8239573023002627,
+            "aimYaw": -2.8239573023002627,
+            "expectedYaw": -2.8239573023002627,
+            "alignment": 0.9998389139331075,
+            "actors": 8,
+            "mode": "turf",
+            "native": true,
+            "landing": {
+              "alive": true,
+              "grounded": true,
+              "spawnActive": false,
+              "input": "browser canvas pointer lock + physical mouse fire",
+              "inputAlignment": 0.9998389139331075
+            }
+          }
+        ],
+        "transport": "real WebSocket + production RoomDurableObject"
+      }
+    ],
+    "pointerLockEnvironment": {
+      "locked": true,
+      "error": null,
+      "focused": true
+    },
+    "legacy": {
+      "id": "tidewater",
+      "native": false,
+      "rigYaw": 0,
+      "aimYaw": 0
+    },
+    "packets": 1205,
+    "errors": []
+  },
+  "online": {
+    "status": "passed",
+    "transport": "real WebSocket + production RoomDurableObject",
+    "hostWeapon": "s3-blaster-short",
+    "scope": "3.84 radius ordered-paint transport control; separate ordinary Actor/WeaponRunner/Projectiles source-wall shot proof above; manual stamp is not weapon emission evidence",
+    "modes": [
+      {
+        "mode": "turf",
+        "actorsPerPeer": 8,
+        "gridBytes": 1461683,
+        "fingerprint": "native-stage-v1:barnacle:cb8704f34cc910291a0bb3554351f015e4937e489f3e21293c16e0cdffded14d:bc4bb58aa780d36db74d1d467c3539ba8e6be34760fcb3b2c42208028b9602eb",
+        "fullGridSha256": "5bcb547edd4419a7a9000f281e9edaffada390a75a3d4fd0c410cf579cf6a8fd",
+        "fullGridEqual": true,
+        "paintQueuesEmpty": true,
+        "rankedCountsEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 215,
+          "probeRadius": 3.84
+        },
+        "packets": 422
+      },
+      {
+        "mode": "zones",
+        "actorsPerPeer": 8,
+        "gridBytes": 1461683,
+        "fingerprint": "native-stage-v1:barnacle:cb8704f34cc910291a0bb3554351f015e4937e489f3e21293c16e0cdffded14d:bc4bb58aa780d36db74d1d467c3539ba8e6be34760fcb3b2c42208028b9602eb",
+        "fullGridSha256": "a34c87e7b6268457a9e101ffc0e1903b5201fba3298408eed484bfd4ce3fd1c8",
+        "fullGridEqual": true,
+        "paintQueuesEmpty": true,
+        "rankedCountsEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 395,
+          "probeRadius": 3.84
+        },
+        "packets": 980
+      },
+      {
+        "mode": "tower",
+        "actorsPerPeer": 8,
+        "gridBytes": 1461783,
+        "fingerprint": "native-stage-v1:barnacle:cb8704f34cc910291a0bb3554351f015e4937e489f3e21293c16e0cdffded14d:bc4bb58aa780d36db74d1d467c3539ba8e6be34760fcb3b2c42208028b9602eb",
+        "fullGridSha256": "2dc821314ad76a48dcc894241fce7a3867874567f47853e71857d9d83b019812",
+        "fullGridEqual": true,
+        "paintQueuesEmpty": true,
+        "rankedCountsEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 20,
+          "probeRadius": 3.84
+        },
+        "packets": 1280
+      },
+      {
+        "mode": "rainmaker",
+        "actorsPerPeer": 8,
+        "gridBytes": 1461683,
+        "fingerprint": "native-stage-v1:barnacle:cb8704f34cc910291a0bb3554351f015e4937e489f3e21293c16e0cdffded14d:bc4bb58aa780d36db74d1d467c3539ba8e6be34760fcb3b2c42208028b9602eb",
+        "fullGridSha256": "f9220567c9951b14292362404bb3d99b4b1b8562a8e55c54283910fd976cbc48",
+        "fullGridEqual": true,
+        "paintQueuesEmpty": true,
+        "rankedCountsEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 220,
+          "probeRadius": 3.84
+        },
+        "packets": 1716
+      },
+      {
+        "mode": "clams",
+        "actorsPerPeer": 8,
+        "gridBytes": 1461683,
+        "fingerprint": "native-stage-v1:barnacle:cb8704f34cc910291a0bb3554351f015e4937e489f3e21293c16e0cdffded14d:bc4bb58aa780d36db74d1d467c3539ba8e6be34760fcb3b2c42208028b9602eb",
+        "fullGridSha256": "dcefe004610b5827f8e946c4bd1f9a3d9211d89f50a4c37a2e8ccc7c366f4f11",
+        "fullGridEqual": true,
+        "paintQueuesEmpty": true,
+        "rankedCountsEqual": true,
+        "playback": {
+          "settled": true,
+          "frames": 235,
+          "probeRadius": 3.84
+        },
+        "packets": 2166
+      }
+    ],
+    "errors": []
+  },
+  "unverified": [
+    "KiTrix extraction date/version and retail unit equivalence",
+    "native collision and paint/grate/climb masks",
+    "retail spawns and ranked placements",
+    "moving-object transforms/states",
+    "native material shaders and retail BG environment",
+    "hardware FPS and direct 11.3.0 console behavior comparison"
+  ],
+  "noThirdPartyMediaPublished": true,
+  "version1130Verified": false
+}

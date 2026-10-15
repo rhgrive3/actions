@@ -23,12 +23,17 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock esbuild@0.28.2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned synthetic Python source-mask contract dependencies
+        run: python -m pip install --disable-pip-version-check -r patches/native-stages/tools/requirements-ci.txt
       - name: Geometry, paint and existing stage/rule contracts (no third-party assets)
-        run: node --experimental-vm-modules --test patches/native-stages/tests/*.test.mjs patches/splatoon3/tests/scorch-gorge-stage.test.mjs patches/splatoon3/tests/ranked-world.test.mjs
+        run: node --experimental-vm-modules --test --test-concurrency=1 patches/native-stages/tests/*.test.mjs patches/splatoon3/tests/scorch-gorge-stage.test.mjs patches/splatoon3/tests/ranked-world.test.mjs
       - name: Build public composition without reference models
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - name: Verify emitted Boolean-ground hit and damage parity
-        run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/boolean-ground-parity.test.mjs
+        run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/sphere-triangle-small-world.test.mjs
       - name: Verify emitted vertical-slab hit and damage parity
         run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/vertical-slab-parity.test.mjs
       - name: Assert reference model payload remains excluded

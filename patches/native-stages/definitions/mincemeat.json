@@ -1,0 +1,58 @@
+{
+  "id": "mincemeat",
+  "internal": "Vss_Scrap01",
+  "name": "ナメロウ金属",
+  "sourceSha256": "11cecf76146211ac7fff04394763b0a1d883605f78136b4aee59b8e8dd076d23",
+  "tree": "257212ff6a22efaf9773c55568f165c86fce967a",
+  "bounds": {
+    "minX": -31,
+    "minZ": -75,
+    "maxX": 31,
+    "maxZ": 75
+  },
+  "spawnPads": [
+    [
+      -7.5,
+      9.08,
+      -60.5
+    ],
+    [
+      7.5,
+      9.033200340270996,
+      59.5
+    ]
+  ],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Inferred revised Vss_Scrap01 structural floor extent and two paintable, body-clear supports in the same directed navigation component; retail units, spawns and ranked placements unverified.",
+  "sourceSemantics": {
+    "inactiveObjectPatterns": [
+      "^FldObj_Scrap01(?:Box)?(?:Var|Vlf|Vgl|Vcl|Tcl)_",
+      "^FldObj_Scrap01_(?:Cape|Slope|Fence)(?:Var|Vlf|Vgl|Vcl|Tcl)_"
+    ],
+    "nonPaintableObjectPatterns": [
+      "^FldObj_Scrap01BoxPntVar_.*GeneralBoxNoPaint_"
+    ]
+  },
+  "ruleAvailability": {
+    "tower": {
+      "supported": false,
+      "status": "source-route-unverified",
+      "reason": "両陣営で利用できるヤグラ経路と得点移動の均衡を確認できないため、このステージではガチヤグラを利用できません。",
+      "evidence": {
+        "scope": "Current inferred source common/Pnt selection and local walking/tower planner; not retail rule availability or physical impossibility.",
+        "sourceAttributesPreserved": true,
+        "opposingSpawnPadsPreserved": true,
+        "clearBoardablePrototypeNodes": 36,
+        "prototypeTeamAttackArc": [
+          3.0476402207765574,
+          35.73236098362085
+        ],
+        "prototypeAttackArcRatio": 11.72459949177204,
+        "sourceVlfNamedObjects": 18,
+        "privateVlfCommonExperiment": "Exact attributes and opposing pads retained; all six current deck/lift candidates fail to establish practical opposite-field routes; only asymmetric 0.8/1.2 prototype survives.",
+        "retailTrajectoryAndBalanceVerified": false
+      }
+    }
+  }
+}

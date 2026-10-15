@@ -9,7 +9,7 @@ def sha(p):
   for b in iter(lambda:f.read(1<<20),b''):h.update(b)
  return h.hexdigest()
 
-def parse_obj(file):
+def parse_obj(file,semantics=None):
  # The source exporter has an independent aligned v/vt/vn stream per object.
  # Explicit assertions prevent the silent UV/index corruption of generic loaders.
  geo=array('f');ind=array('I');objects=[];verts=[];norms=[];uvs=[];faces=[];name=None;mat=None;offset=0;uvOffset=0;normalOffset=0
@@ -22,17 +22,18 @@ def parse_obj(file):
   first=len(geo)//8;io=len(ind)
   geo.extend(np.concatenate([v,n,u],axis=1).ravel());ind.extend(faces)
   lo=v.min(axis=0);hi=v.max(axis=0)
-  bg=name.startswith('FldBG');s=(name+' '+str(mat)).lower()
+  bg=name.startswith(('FldBG','Fld_BG'));s=(name+' '+str(mat)).lower()
   alpha=any(k in s for k in ['graffiti','warningtape','canola','leaf','grass','cloth','flag','stencil','notice','chainlink','net','grate','fence','vinyl','alpha','rope','fabric','dvpoolfloat','spotlight'])
   # This classifier does NOT assert original physics flags; all entries keep evidence.
   decor=any(k in s for k in ['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','groundgrass','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])
   decor=decor or str(mat).lower().endswith('_water') or '_water_' in name.lower() or str(mat).lower().endswith(('_plant','_code00'))
   surface=str(mat).lower();grate=any(k in surface for k in ['grate','coppernet','chainlink','meshfloor','waffledplate'])
   glass=any(k in surface for k in ['glass','window'])
-  layer=re.search(r'Pack(Pnt|Var|Vlf|Vgl|Vcl|Tcl)',name)
-  active=(not layer or layer.group(1)=='Pnt') and 'TriColor' not in name
-  collider=active and (name.startswith('Fld_') or name.startswith('FldObj_')) and not decor
-  paint=collider and not (grate or glass or str(mat).lower().endswith(('_np','_cp','_op')))
+  layer=re.search(r'(?:Pack|_)(Pnt|Var|Vlf|Vgl|Vcl|Tcl)(?:Set)?(?:_|$)',name)
+  matches=lambda key:any(re.search(pattern,name) for pattern in (semantics or {}).get(key,[]))
+  active=(not layer or layer.group(1)=='Pnt') and 'TriColor' not in name and not matches('inactiveObjectPatterns')
+  collider=active and not bg and (name.startswith('Fld_') or name.startswith('FldObj_')) and not decor and not matches('nonCollidableObjectPatterns')
+  paint=collider and not (grate or glass or str(mat).lower().endswith(('_np','_cp','_op'))) and not matches('nonPaintableObjectPatterns')
   objects.append(dict(name=name,material=mat,vo=first,vc=len(v),io=io,ic=len(faces),bounds=[lo.tolist(),hi.tolist()],background=bg,collidable=collider,paintable=paint,grate=grate,glass=glass,alpha=alpha,sourceHasUV=bool(uvs),active=active,ruleLayer=layer.group(1) if layer else None))
   offset+=len(verts);uvOffset+=len(uvs);normalOffset+=len(norms);verts=[];norms=[];uvs=[];faces=[]
  with file.open() as f:

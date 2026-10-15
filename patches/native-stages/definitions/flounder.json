@@ -1,0 +1,45 @@
+{
+  "id": "flounder",
+  "internal": "Vss_Jyoheki03",
+  "name": "ヒラメが丘団地",
+  "sourceSha256": "2cd34230fe9858e9651f0a597f8a8c740ca1067595379158dcaf64943fea384b",
+  "tree": "dd181a9d2772d8858f7c73245716639bee97f932",
+  "bounds": {
+    "minX": -44,
+    "minZ": -82.5,
+    "maxX": 44,
+    "maxZ": 82.5
+  },
+  "spawnPads": [
+    [
+      10,
+      12.08,
+      -70
+    ],
+    [
+      -10,
+      12.08,
+      70
+    ]
+  ],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Local supported pads and Pnt/base interactive extent inferred from pinned display triangles; retail spawn, collision and ranked placements unverified",
+  "sourceSemantics": {
+    "inactiveObjectPatterns": [
+      "^FldObj_HirameSideHoko_",
+      "^FldObj_JyohekiPlayGroundNight_",
+      "^FldBG_Jyoheki03_(?:SedanBase_1|Tire1_2|Tire2_2|Tire3_2|Tire4_3)__CarSet$"
+    ],
+    "nonCollidableObjectPatterns": [
+      "^FldObj_JyohekiPlayGround(?:_|Seesaw_)",
+      "^Fld_Jyoheki03_(?:BarberPole|Fan|Picture)_Anim"
+    ],
+    "nonPaintableObjectPatterns": [
+      "^Fld(?:Obj)?_(?:Joheki03|Jyoheki03)_.*(?:__TropicalPlantsSetLeaves|__InsectPlant|__mJyohekiWireNetting|__mJyohekiMetalNet|__mJyohekiNet)$"
+    ]
+  },
+  "sourceNavigation": {
+    "wallClimb": true
+  }
+}

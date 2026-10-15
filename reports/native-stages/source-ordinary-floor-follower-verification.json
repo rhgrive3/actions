@@ -1,0 +1,984 @@
+{
+  "schema": 1,
+  "status": "verified-ordinary-native-floor-follower",
+  "pr": 1390,
+  "baseline": "846f0532b6b3bcde3dfed893b81ee07d3dc58cd5",
+  "runtimeCandidate": "4d358281fa2416305ea67a26593e4845b8a18187",
+  "legacyGuardCorrection": "6c150183",
+  "scope": "Ordinary native source-floor waypoint following; no whole-stage completion claim. Legacy/default movement and normal2.4s recovery retained. Jump, special traversal, Clams goals, Tower, source geometry/flags/masks unchanged.",
+  "sourceReference": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "retail11_3_0MovementVerified": false,
+    "unitsVerified": false
+  },
+  "cpu": {
+    "tests": 107,
+    "pass": 94,
+    "skippedOptionalFixtures": 13,
+    "fail": 0,
+    "milliseconds": 429027.742583,
+    "assets": "accepted v4 original-five plus direct dedicated Wahoo fixture",
+    "sourceFootPredicateChanged": false
+  },
+  "public": {
+    "contentHash": "eef3181c9522c6715abdc59dff99f4e5033a3eacec71113d2958bfb6b1a0870b",
+    "revision": "61fd53c0a535c734ee665ca24822d3d06184d8bf958abf5a8071571a56718b01",
+    "packaging": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0
+    },
+    "budget": {
+      "status": "passed",
+      "revision": "61fd53c0a535c734ee665ca24822d3d06184d8bf958abf5a8071571a56718b01",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2739084,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5839749,
+      "workerBytes": 71147,
+      "declaredBytes": 10460441,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "roboMatched": {
+    "status": "passed",
+    "artifacts": {
+      "status": "private unaccepted follower candidate",
+      "candidateCommit": "4d358281fa2416305ea67a26593e4845b8a18187",
+      "oldRevision": "dda9a13529264ad179260f2255bcc641dae319e4f58b0edcfeb92e14db8b0b3a",
+      "oldContentHash": "aade943ca30bf12ac56b3b0fbf1566375d6cfa81fe5e953af7592ece6ac152f7",
+      "candidateRevision": "0a57c0b2e688173734373cc48c3d666ac52174d946184490f2179ef9df7d3f24",
+      "candidateContentHash": "a95ba21b9bd3fe19c3a8e0badeef8cf8e03aba58f8236342e9956c61837cc087",
+      "candidateRuntime": "221421c7434f09569730f63b349bb028469b1eade3cbe4cf14901922f0f0472c",
+      "sourceAssetFilesIdentical": 163,
+      "stageIntegrityIdentical": true,
+      "stageIntegrity": "02157bca59bca348e01ee884cf6917bda94d47b642f86d2f93f9f5b105294d92",
+      "sourceNavigationFlags": false,
+      "sourceAssetBytesIdentical": 67676722
+    },
+    "conditions": "Production Match with eight alive actors/seven bots; ordinary Actor/Character/BotBrain/WeaponRunner/Projectiles. Both original supported pads to actual opposed-bank Nav supports. Other bots frozen; empty initial ink; zero-AP Shooter; 0.5 RNG before Actor construction. Only initial spawnAt setup; no subsequent pose, velocity, ink, or geometry writes. Real refill completion can reselect the fixed goal. Default installed Game._frame uses fixed 1/60 gameplay ticks at 30/60/120 render cadences; ROBO_BANK_CLOCK=raw is a separate raw-dt stress diagnostic. Distances are raw source units. SwiftShader, no hardware FPS claim.",
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1740,
+        "seconds": 29,
+        "start": [
+          -60,
+          7.505000114440918,
+          22
+        ],
+        "goal": [
+          33.5,
+          4.505000114440918,
+          -12.5
+        ],
+        "end": [
+          33.410474588611876,
+          4.505000114440918,
+          -13.301847901770337
+        ],
+        "alive": true,
+        "pathNodes": 95,
+        "refillGoalReplans": 0,
+        "goalTransitions": [],
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1739,
+        "seconds": 28.983333333333334,
+        "start": [
+          -60,
+          7.505000114440918,
+          22
+        ],
+        "goal": [
+          33.5,
+          4.505000114440918,
+          -12.5
+        ],
+        "end": [
+          33.40674635175632,
+          4.505000114440918,
+          -13.335240419644089
+        ],
+        "alive": true,
+        "pathNodes": 95,
+        "refillGoalReplans": 0,
+        "goalTransitions": [],
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1739,
+        "seconds": 28.983333333333334,
+        "start": [
+          -60,
+          7.505000114440918,
+          22
+        ],
+        "goal": [
+          33.5,
+          4.505000114440918,
+          -12.5
+        ],
+        "end": [
+          33.40674635175632,
+          4.505000114440918,
+          -13.335240419644089
+        ],
+        "alive": true,
+        "pathNodes": 95,
+        "refillGoalReplans": 0,
+        "goalTransitions": [],
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1792,
+        "seconds": 29.866666666666667,
+        "start": [
+          60,
+          7.505000114440918,
+          -22
+        ],
+        "goal": [
+          -33.5,
+          4.505000114440918,
+          12.5
+        ],
+        "end": [
+          -33.410286884862934,
+          4.505000114440918,
+          13.30206521844545
+        ],
+        "alive": true,
+        "pathNodes": 96,
+        "refillGoalReplans": 0,
+        "goalTransitions": [],
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1791,
+        "seconds": 29.85,
+        "start": [
+          60,
+          7.505000114440918,
+          -22
+        ],
+        "goal": [
+          -33.5,
+          4.505000114440918,
+          12.5
+        ],
+        "end": [
+          -33.406551927461784,
+          4.505000114440918,
+          13.335456985293158
+        ],
+        "alive": true,
+        "pathNodes": 96,
+        "refillGoalReplans": 0,
+        "goalTransitions": [],
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "actorStepIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 1791,
+        "seconds": 29.85,
+        "start": [
+          60,
+          7.505000114440918,
+          -22
+        ],
+        "goal": [
+          -33.5,
+          4.505000114440918,
+          12.5
+        ],
+        "end": [
+          -33.406551927461784,
+          4.505000114440918,
+          13.335456985293158
+        ],
+        "alive": true,
+        "pathNodes": 96,
+        "refillGoalReplans": 0,
+        "goalTransitions": [],
+        "abilityPoints": {},
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "productionCharacter": true,
+        "actors": 8,
+        "aliveActors": 8,
+        "bots": 7,
+        "sourceSha256": "8dacb74311fc9af52fbcebbb37038246871dfc7ad633830b16d62eb57d7e655e"
+      }
+    ]
+  },
+  "wahooFloorPrefixes": {
+    "status": "passed",
+    "contentHash": "0bc3c7befecf3006eda2858edd9c21c161abb6544cfb67be1c6bd8ad9dfbb3e9",
+    "cases": [
+      {
+        "team": 0,
+        "hz": 30,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "ticks": 1252,
+        "seconds": 20.866666666666667,
+        "routeNodes": 37,
+        "originalRouteNodes": 118,
+        "floorSegment": {
+          "endpointNode": 3747,
+          "originalWaypoint": 36,
+          "firstNonWalk": "drop",
+          "endpoint": [
+            -53.40070343017578,
+            17.5,
+            -14.185100555419922
+          ]
+        },
+        "arrived": true,
+        "firstPathLoss": null,
+        "skippedUnsupported": [],
+        "start": [
+          -85,
+          18,
+          0
+        ],
+        "end": [
+          -54.38140943731624,
+          17.5,
+          -14.016218238508772
+        ],
+        "alive": true,
+        "gearAP": []
+      },
+      {
+        "team": 0,
+        "hz": 60,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "ticks": 1248,
+        "seconds": 20.8,
+        "routeNodes": 37,
+        "originalRouteNodes": 118,
+        "floorSegment": {
+          "endpointNode": 3747,
+          "originalWaypoint": 36,
+          "firstNonWalk": "drop",
+          "endpoint": [
+            -53.40070343017578,
+            17.5,
+            -14.185100555419922
+          ]
+        },
+        "arrived": true,
+        "firstPathLoss": null,
+        "skippedUnsupported": [],
+        "start": [
+          -85,
+          18,
+          0
+        ],
+        "end": [
+          -54.370659255022574,
+          17.5,
+          -14.021171908127968
+        ],
+        "alive": true,
+        "gearAP": []
+      },
+      {
+        "team": 0,
+        "hz": 120,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "ticks": 1248,
+        "seconds": 20.8,
+        "routeNodes": 37,
+        "originalRouteNodes": 118,
+        "floorSegment": {
+          "endpointNode": 3747,
+          "originalWaypoint": 36,
+          "firstNonWalk": "drop",
+          "endpoint": [
+            -53.40070343017578,
+            17.5,
+            -14.185100555419922
+          ]
+        },
+        "arrived": true,
+        "firstPathLoss": null,
+        "skippedUnsupported": [],
+        "start": [
+          -85,
+          18,
+          0
+        ],
+        "end": [
+          -54.370659255022574,
+          17.5,
+          -14.021171908127968
+        ],
+        "alive": true,
+        "gearAP": []
+      },
+      {
+        "team": 1,
+        "hz": 30,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "ticks": 468,
+        "seconds": 7.8,
+        "routeNodes": 18,
+        "originalRouteNodes": 95,
+        "floorSegment": {
+          "endpointNode": 4395,
+          "originalWaypoint": 17,
+          "firstNonWalk": "drop",
+          "endpoint": [
+            67.59929656982422,
+            15.050000190734863,
+            -11.185100555419922
+          ]
+        },
+        "arrived": true,
+        "firstPathLoss": null,
+        "skippedUnsupported": [],
+        "start": [
+          85,
+          18,
+          0
+        ],
+        "end": [
+          68.57569738304278,
+          15,
+          -11.178576003341513
+        ],
+        "alive": true,
+        "gearAP": []
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "ticks": 468,
+        "seconds": 7.8,
+        "routeNodes": 18,
+        "originalRouteNodes": 95,
+        "floorSegment": {
+          "endpointNode": 4395,
+          "originalWaypoint": 17,
+          "firstNonWalk": "drop",
+          "endpoint": [
+            67.59929656982422,
+            15.050000190734863,
+            -11.185100555419922
+          ]
+        },
+        "arrived": true,
+        "firstPathLoss": null,
+        "skippedUnsupported": [],
+        "start": [
+          85,
+          18,
+          0
+        ],
+        "end": [
+          68.57569738304278,
+          15,
+          -11.178576003341513
+        ],
+        "alive": true,
+        "gearAP": []
+      },
+      {
+        "team": 1,
+        "hz": 120,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "ticks": 468,
+        "seconds": 7.8,
+        "routeNodes": 18,
+        "originalRouteNodes": 95,
+        "floorSegment": {
+          "endpointNode": 4395,
+          "originalWaypoint": 17,
+          "firstNonWalk": "drop",
+          "endpoint": [
+            67.59929656982422,
+            15.050000190734863,
+            -11.185100555419922
+          ]
+        },
+        "arrived": true,
+        "firstPathLoss": null,
+        "skippedUnsupported": [],
+        "start": [
+          85,
+          18,
+          0
+        ],
+        "end": [
+          68.57569738304278,
+          15,
+          -11.178576003341513
+        ],
+        "alive": true,
+        "gearAP": []
+      }
+    ],
+    "errors": []
+  },
+  "wahooWholeCenter": {
+    "status": "unresolved-source-jump-input-failure",
+    "sourceGoal": [
+      -0.40070343017578125,
+      13,
+      -5.185100555419922
+    ],
+    "allSixBeforeAndCandidate120SecondArrivals": 0,
+    "candidateUnsafeWaypointAdvances": 0,
+    "firstLoss": {
+      "team": 1,
+      "renderHz": 60,
+      "actorStep": 0.016666666666666666,
+      "tick": 1731,
+      "pi": 75,
+      "type": "jump",
+      "fromNode": 2230,
+      "toNode": 2403,
+      "rise": 1.152560632378748,
+      "cause": "Existing1F BotBrain jump release invokes installed ordinary early-release small hop. Normal2.4s recovery correctly abandons stalled route. Separate sustained-input physical verification underway."
+    }
+  },
+  "originalFiveBrowser": {
+    "status": "passed",
+    "cases": [
+      {
+        "id": "scorch",
+        "renderHz": 30,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "sourceNavigation": null,
+        "moved": [
+          18.07864384437064,
+          19.518211036505594
+        ],
+        "sourceGroundedSamples": [
+          160,
+          160
+        ],
+        "routeNodes": [
+          67,
+          68
+        ],
+        "finiteSearchBounds": [
+          27688,
+          27688
+        ]
+      },
+      {
+        "id": "scorch",
+        "renderHz": 60,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "sourceNavigation": null,
+        "moved": [
+          18.07864384437064,
+          19.518211036505594
+        ],
+        "sourceGroundedSamples": [
+          321,
+          321
+        ],
+        "routeNodes": [
+          67,
+          68
+        ],
+        "finiteSearchBounds": [
+          27688,
+          27688
+        ]
+      },
+      {
+        "id": "scorch",
+        "renderHz": 120,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8",
+        "sourceNavigation": null,
+        "moved": [
+          18.07864384437064,
+          19.518211036505594
+        ],
+        "sourceGroundedSamples": [
+          642,
+          642
+        ],
+        "routeNodes": [
+          67,
+          68
+        ],
+        "finiteSearchBounds": [
+          27688,
+          27688
+        ]
+      },
+      {
+        "id": "hagglefish",
+        "renderHz": 30,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "sourceNavigation": null,
+        "moved": [
+          31.08373616294154,
+          38.70608781741709
+        ],
+        "sourceGroundedSamples": [
+          167,
+          166
+        ],
+        "routeNodes": [
+          60,
+          64
+        ],
+        "finiteSearchBounds": [
+          34836,
+          34836
+        ]
+      },
+      {
+        "id": "hagglefish",
+        "renderHz": 60,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "sourceNavigation": null,
+        "moved": [
+          31.08373616294154,
+          38.70608781741709
+        ],
+        "sourceGroundedSamples": [
+          335,
+          332
+        ],
+        "routeNodes": [
+          60,
+          64
+        ],
+        "finiteSearchBounds": [
+          34836,
+          34836
+        ]
+      },
+      {
+        "id": "hagglefish",
+        "renderHz": 120,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "1da0c775b47e42e9bc8657675034e935c672866ee109c13896283b3bbe7c77f4",
+        "sourceNavigation": null,
+        "moved": [
+          31.08373616294154,
+          38.70608781741709
+        ],
+        "sourceGroundedSamples": [
+          670,
+          664
+        ],
+        "routeNodes": [
+          60,
+          64
+        ],
+        "finiteSearchBounds": [
+          34836,
+          34836
+        ]
+      },
+      {
+        "id": "inkblot",
+        "renderHz": 30,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "sourceNavigation": null,
+        "moved": [
+          31.097570343838957,
+          30.432673223333445
+        ],
+        "sourceGroundedSamples": [
+          172,
+          153
+        ],
+        "routeNodes": [
+          70,
+          54
+        ],
+        "finiteSearchBounds": [
+          59816,
+          59816
+        ]
+      },
+      {
+        "id": "inkblot",
+        "renderHz": 60,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "sourceNavigation": null,
+        "moved": [
+          31.097570343838957,
+          30.432673223333445
+        ],
+        "sourceGroundedSamples": [
+          344,
+          305
+        ],
+        "routeNodes": [
+          70,
+          54
+        ],
+        "finiteSearchBounds": [
+          59816,
+          59816
+        ]
+      },
+      {
+        "id": "inkblot",
+        "renderHz": 120,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "bef74ead213cfc4c041820319dbac7ab702d5f0f2df86db8369b162879f8b4f3",
+        "sourceNavigation": null,
+        "moved": [
+          31.097570343838957,
+          30.432673223333445
+        ],
+        "sourceGroundedSamples": [
+          688,
+          610
+        ],
+        "routeNodes": [
+          70,
+          54
+        ],
+        "finiteSearchBounds": [
+          59816,
+          59816
+        ]
+      },
+      {
+        "id": "mako",
+        "renderHz": 30,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "sourceNavigation": null,
+        "moved": [
+          22.885261206997757,
+          30.793016156254804
+        ],
+        "sourceGroundedSamples": [
+          151,
+          152
+        ],
+        "routeNodes": [
+          52,
+          52
+        ],
+        "finiteSearchBounds": [
+          34096,
+          34096
+        ]
+      },
+      {
+        "id": "mako",
+        "renderHz": 60,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "sourceNavigation": null,
+        "moved": [
+          22.885261206997757,
+          30.793016156254804
+        ],
+        "sourceGroundedSamples": [
+          301,
+          304
+        ],
+        "routeNodes": [
+          52,
+          52
+        ],
+        "finiteSearchBounds": [
+          34096,
+          34096
+        ]
+      },
+      {
+        "id": "mako",
+        "renderHz": 120,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "27f6ed7271c652d7a2f6306ed7ebd9ea46076affd9edecb30d5a607ba4a520ad",
+        "sourceNavigation": null,
+        "moved": [
+          22.885261206997757,
+          30.793016156254804
+        ],
+        "sourceGroundedSamples": [
+          602,
+          608
+        ],
+        "routeNodes": [
+          52,
+          52
+        ],
+        "finiteSearchBounds": [
+          34096,
+          34096
+        ]
+      },
+      {
+        "id": "brinewater",
+        "renderHz": 30,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "sourceNavigation": null,
+        "moved": [
+          33.25380244076751,
+          25.40032076639758
+        ],
+        "sourceGroundedSamples": [
+          166,
+          166
+        ],
+        "routeNodes": [
+          55,
+          65
+        ],
+        "finiteSearchBounds": [
+          32588,
+          32588
+        ]
+      },
+      {
+        "id": "brinewater",
+        "renderHz": 60,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "sourceNavigation": null,
+        "moved": [
+          33.25380244076751,
+          25.40032076639758
+        ],
+        "sourceGroundedSamples": [
+          332,
+          332
+        ],
+        "routeNodes": [
+          55,
+          65
+        ],
+        "finiteSearchBounds": [
+          32588,
+          32588
+        ]
+      },
+      {
+        "id": "brinewater",
+        "renderHz": 120,
+        "actorDts": [
+          0.016666666666666666
+        ],
+        "brainDts": [
+          0.016666666666666666
+        ],
+        "sourceSha256": "3b1d042105ca2918a3abe3efcf7d2eb8c0239bc542712b23f87ffaef8854612e",
+        "sourceNavigation": null,
+        "moved": [
+          33.25380244076751,
+          25.40032076639758
+        ],
+        "sourceGroundedSamples": [
+          664,
+          664
+        ],
+        "routeNodes": [
+          55,
+          65
+        ],
+        "finiteSearchBounds": [
+          32588,
+          32588
+        ]
+      }
+    ],
+    "actualActorLandings": 120,
+    "actualDirectedInitialBotRoutes": 30,
+    "contentHash": "0bc3c7befecf3006eda2858edd9c21c161abb6544cfb67be1c6bd8ad9dfbb3e9",
+    "revision": "0ac503ecd61ff6cedc9f66d07ac885ff82a050342260ecd29d1d2465883df41f",
+    "errors": [],
+    "firstAttempt": "Preserved failed centre-ray checker; R2 uses the actual foot ring/static source/upnormal/height contract."
+  },
+  "unverified": [
+    "retail Nintendo source motion/AI/unit/fps parity",
+    "Wahoo whole-center route completion",
+    "software GL evidence is not hardware FPS"
+  ]
+}

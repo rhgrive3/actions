@@ -4105,6 +4105,42 @@ NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、
 
 計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
 
+
+## 2026-10-13：原典ステージ追加と比較記録の分割
+
+ユーザー指示の残り20ステージを専任担当・独立PRで追加する。以下の各記録を本比較記録のステージ別差分として参照する。リンク先の記録がない段階は担当中であり、検証済みを意味しない。参照対象はSplatoon 3 Ver.11.3.0の公開SceneInfo/VersusSceneInfoと固定KiTrix表示用抽出データ。OBJの抽出バージョン、Nintendoの衝突・塗り・移動物体・スポーン・ガチ配置、実機性能は引き続き未確認。各記録に参照ハッシュ、ブキ・ギア・状態・操作、30/60/120Hzロジックとブラウザ、オンライン、自己レビュー、未検証点を分けて保存する。
+
+共通変更：PntSet系の別ルール地形と背景を正しく分類し、必要な名前由来の除外をレビュー対象のステージ定義に記録する。描画頂点・法線・UV・インデックスは削除・変形しない。ガチのローカル配置は、両チームの支持点から到達できる十分大きな有向相互到達成分を選び、中央の孤立屋根を採用しない。本家配置の復元ではなくローカル検証用調整であり、その影響と比較根拠は各ステージ記録に残す。原典欠落または配置欠落は利用不能として扱い、架空の地形で補完しない。
+
+- [ゴンズイ地区](native-stages/eeltail.md)
+- [マテガイ放水路](native-stages/undertow.md)
+- [ナメロウ金属](native-stages/mincemeat.md)
+- [マサバ海峡大橋](native-stages/hammerhead.md)
+- [マヒマヒリゾート＆スパ](native-stages/mahi.md)
+- [リュウグウターミナル](native-stages/lemuria.md)
+- [スメーシーワールド](native-stages/wahoo.md)
+- [デカライン高架下](native-stages/urchin.md)
+- [バイガイ亭](native-stages/robo.md)
+- [ナンプラー遺跡](native-stages/umami.md)
+- [ヒラメが丘団地](native-stages/flounder.md)
+- [チョウザメ造船](native-stages/sturgeon.md)
+- [マンタマリア号](native-stages/manta.md)
+- [キンメダイ美術館](native-stages/museum.md)
+- [カジキ空港](native-stages/airport.md)
+- [ネギトロ炭鉱](native-stages/bluefin.md)
+- [タラポートショッピングパーク](native-stages/barnacle.md)
+- [タカアシ経済特区](native-stages/crableg.md)
+- [オヒョウ海運](native-stages/shipshape.md)
+- [コンブトラック](native-stages/humpback.md)
+
+原典ステージ共通の射撃差分は [連続球衝突と実ブキの壁塗り](native-stages/projectile-source-sweep.md) に記録する。チャートや元オブジェクトの外接箱への誤衝突を修正し、実際の元三角形と動的なゲーム物体への接触を検証する。本家実機の衝突形状との一致は未確認。
+
+原典の坂で足元のリング接地が経路点の中心高さを上回り、ボットが到着判定を通れない差分は [原典面と実キャラクターの足元支持](native-stages/source-foot-support.md) に記録する。許容幅を広げず、実際の接地処理で支持高さを求める。30・60・120Hz の原典上の単独 Actor/Character 検証、両チームの対岸までの実ボット経路6件、実際の8人対戦でのブラウザ経路6件が合格。本家の足形・接地・経路との同一性は未確認。
+
+原典ステージ共通の追加差分： [ヤグラ全体の支持・経路と利用不能ルールの拒否](native-stages/source-tower-clearance.md)、[実際の支持層からの有向経路](native-stages/spawn-nav.md)、[自然な射出着地とボットの目標到達可能性](native-stages/spawn-landing.md)。表示用メッシュに対する実装検証と、本家のスポーン・配置・動作・実機性能の未確認事項を区別する。幾何的に支持できる経路でも、ゴールまでの実際の距離と所要時間に偏りがある場合はステージ別に再評価する。
+
+本体のインク描画を原典地形に重ねた際の広い白い縁は [原典インクの透明な縁](native-stages/source-ink-edge.md) に記録する。既存シェーダーの実際のインク被覆率をアルファにも適用し、未塗装部分に白い下地を描かない。通常ブキで塗った原典2ステージの比較で元テクスチャと不透明インクの色が一致し、CPU塗りデータは不変。同じ2ステージの描画分割比較6視点で差分0ピクセル、移動カメラ24件も合格。本家シェーダーと実機性能の同一性は未確認。
+原典ポリゴン境界内の塗れる点が、セル中心の判定だけで塗れなくなる差分は [原典ポリゴン境界とインク所有](native-stages/source-paint-coverage.md) に記録する。原典三角形とセルの面積を持つ交差で派生マスクを作り、所有色の問い合わせは実際の原典ポリゴン内に限定する。動的ヤグラ面は既存の矩形判定を維持する。最初の5ステージの原典Python/Worker一致15件と実際の8人対戦ブラウザ5件が合格。別担当のオヒョウ原典上の通常射撃ブラウザ6件、同セルのポリゴン外・塗れない面・未被覆穴・通常の敵射撃での壁泳ぎ解除も合格。本家の塗りマスク、得点面積、実機性能は未確認。
 ## 2026-10-13: 残り11種のサブウェポンのモデル（複数方向の実物資料との比較）
 
 参照版 Ver.11.3.0。対象: クイックボム・ロボットボム・タンサンボム・トーピード・トラップ・ポイズンミスト・ラインマーカー・スプラッシュシールド・スプリンクラー・ジャンプビーコン・ポイントセンサー（スプラッシュ・キューバン・カーリングは 2026-10-11 に作成済み）。ブキ・ギアの前提なし（サブパワーアップ 0）。
@@ -4256,9 +4292,94 @@ S3mix Splash Wall supplies Rainmaker direct x1 / weapon-blast x2. Dedicated rank
 同修正の現行main追補: 外部統合ee9fbbabのMist係数0.5/0.75、キューインキ17F発動と保持吸引、反撃19F無弾/20F発射を維持して再合成。修正前は対象5件が失敗し、修正後はホコ6件・傘/スペシャル操作12件・練習場8件の26件がsource/実minify双方で通過。旧e57上のブラウザ証拠を新合成の証明には流用せず、新headのCIで再検証する。
 
 
+
+## 2026-10-13: 原典ステージと最新mainの互換統合
+
+main14f9f913のキャラクター姿勢・ブキ・対戦ルール・ビルド更新を、原典ステージ用作業ブランチへ取り込んだ。本体の変更は維持し、共有照合記録の競合では双方の記録を残した。mainへのマージではない。default契約85通過/36任意fixture skip/0失敗、公開ビルド9/9・容量通過。公開版でユノハナのみ原典取得・v4変換・自然着地58固定tick・8人7bot・キャッシュ・破損データ時の既存world保持を確認。直接splatによる塗り確認を通常射撃の証明に読み替えない。追加ステージの旧証跡は旧artifactの範囲を維持し、各担当が変更に関係するキャラクター・射撃・ルール・通信を最終再検証する。原典抽出版、実機の移動状態・単位・ハードウェア性能は未確認。詳細: `reports/native-stages/current-main-integration.md` と同verification JSON。
+
+
+原典マスク比較CI追補: 無条件のPython/Worker合成比較はNumPy/Pillow/Numbaをimportするため、専用workflowでPython3.12と検証済み固定依存を明示した。比較3/3・pip check通過。実行を直列にしてメモリ上限を維持し、比較や負例をskipへ変えていない。ゲーム動作は不変。hosted CIは未確認。詳細: `reports/native-stages/python-contract-ci.md`。
+
+
+原典5ステージ通常射撃追補: 最新main14f9f913・原典マスクv4で実Game._frame/Match/Character/WeaponRunner/Projectilesを使った15/15ケースが通過。描画30/60/120HzでもActor/弾の観測dtは1/60、固定clockとtick数一致。通常Shooter1発から原典の壁への衝突・自然な塗り・接地生存、8人7bot・例外0を確認。射撃中botを固定し、source支持spawnAt姿勢と照準inputを制御した試験であり、マウス照準・本家配置・全ルール/全ブキ・性能向上の証明へ読み替えない。旧raw Actor dt試験は維持。詳細: `reports/native-stages/fixed-game-source-shots.md` と同verification JSON。
+
+原典壁への通常ジャンプ接続追補: オヒョウ原典表示メッシュの連続した塗れる壁には0.15単位の凹凸があり、接地したイカの直線接続は実カプセルのため拒否される。明示的な`wallJumpAttach`指定では、通常Shooterで自然に塗り、原典支持上から通常人型ジャンプ→イカ変身→壁泳ぎ→原典支持への着地を既存inputだけで実行する。直線接続範囲、NoPaint・穴・屋根・衝突・原典配列は変更せず、共有変更でステージ指定を自動有効化しない。参照ブキはLeanny11.3.0のShooter_Normal_00・ゼロAP、原典は固定KiTrix表示抽出。最新main14f9f913の実Game固定1/60で描画30/60/120Hz・全5modeの30ケースと通常ジャンプなし6負例、自然射撃の部分セル6件・同セル外/NoPaint/穴/敵塗り解除、8人生存7bot・例外0を確認。独立VMや旧raw Actor dtを実機同等としない。本家の移動状態・単位・collision/paint/climb masks・抽出版・hardware FPSと、別途失敗中のオヒョウ全対岸ルートは未確認のまま。詳細: [source-jump-attach.md](native-stages/source-jump-attach.md) と同verification JSON。
+
+
+追加12ステージ原典マスクv4再封印: 旧検証artifactを保持し、原典ポリゴンの部分セル修正を含む独立したprivate候補を作成。元5マップの完全Python変換と同一マスクの負例付き対照、追加12マップのworker独立変換が14/14・skip0・失敗0。元の塗れるセルを除去せず部分セル2944658を追加し、全頂点/衝突/role/chart参照/PNGバイトと旧ownerデータは不変。serialized originからの再投影は厳密対照で失敗し、元converterと同じfirst-vertex/min式へ修正。原典ディレクトリ指定誤りも負例を保存して正しいSHA固定sourceで再検証。全12マップの最新mainでのルール/通信/描画完了には読み替えない。詳細: `reports/native-stages/reviewed-v4-mask-reseal.md` と同verification JSON。
+
+
+## 2026-10-13: 原典上層での戦闘移動と崖判定（候補）
+
+保持された船底が落下死亡閾値より上なら安全とする旧wet判定に、native・接地・fight/retreat限定の連続した実足場支持確認を追加した候補。既存groundProbe/form寸法を使い、NoPaint・金網form差・連続下り坂・dynamic支持を維持、通常navigation/特殊移動/legacyの負例を含む4件通過。実Game固定1/60で旧/新×人型/イカ×描画30/60/120Hzの制御された戦闘方向12比較が通過。旧人型3件が下層へ落ちる一方、新版は上層で生存接地し、元の10配列SHA不変・8人7bot・例外0。直接splatによる初期インクと制御inputの回帰試験であり、自然な全対岸AI戦闘の完了ではない。初回の自然AI試験では戦闘後paint modeで候補も上層を離れstay-roof assertが失敗し、記録を保持。typed edgeの記録不足で許容降下か別不具合かは未判定。元の対岸traceは最終mode未記録で再確認が必要。公開/担当tracked privateのcanonical9/9・容量通過、private全input/artifact/build metadataがR2と完全一致。default35通過/6任意asset skip/0失敗、初回VM flag/dependency準備漏れの失敗は保存して再検証。独立peer進行中、未採用。原典版・単位・本家AI/停止距離・実機速度は未確認。詳細: [combat-source-support.md](native-stages/combat-source-support.md) と同verification JSON。
+
+原典ステージの通常ジャンプ入力保持追補: スメーシーの変更していない1.15256高の原典段差で、botの1固定tickだけのジャンプ入力が既存の早離し小ジャンプを起こし、両padから中央への全経路が通常2.4秒回復で失敗した。`native-jump-input.mjs` は既存botが要求し、原典足元支持と実Actorのserialで成立した通常ジャンプだけを同じ経路・mode・Level/Nav/Matchの上昇中に保持する。参照はKiTrix固定表示抽出と11.3.0のShooter_Normal_00・ゼロAP。最新main14f9f913を含む採用90b上の実Game固定1/60・描画30/60/120Hzで元の両padから118/95ノードの中央経路6/6、実カプセル15,174件・違反0。短い段差のbotはstock `_needJump` の2回の支持付き入力（tick0/40、noProg0/.2、既存.6秒cooldown）で着地し、1回保証に読み替えない。物理W/Space・bot・NoPaint壁12件、死亡/自然復活・mode/world変更など10負例と実キーボードTower乗車が通過。source125件108通過/17任意skip/default82通過/43任意skip/失敗0、公開9/9・容量通過。原典配列・flags・Actor物理・jump成立条件・通常回復・特殊移動dispatchは不変。本家のジャンプ保持時間・AI/入力・単位・collision/masks・moving-platform・hardware FPSは未確認を維持。詳細: [source-ordinary-jump-input.md](native-stages/source-ordinary-jump-input.md) と同verification JSON。Wahoo全5ルールの最終stage検証は別PR1327。
+
+
+原典戦闘の経路保持候補追補: 同じ元のオヒョウ条件で最後までfightだったことを独立再観測し、wetのみの正確なoverlayで90秒間の船底落下防止を確認。ただし対岸到着は失敗し、敵が既存enemy spawn zone内でA*が正しく拒否→経路を失う往復を分類した。通常native接地fightのみ、同じ生存敵・同じNav/Level/Physics/path/goalとvalid非敵zoneを確認し、元の成功済みgoalへ通常A*を再実行する候補を追加。新node/座標/zone/Actor input/物理を作らない。実NavGraph/A*含む6件と3249 composition default38通過/10任意asset skip/0失敗、private/public canonical9/9・容量通過。元自然条件の先への移動はpeer進行中、未採用。実Chrome同一問い合わせwarm交互30×100でAPI中央値旧0.003ms/新0.087ms、速度向上・hardware FPSの証明ではない。別位置のVM値との直接比較もしない。詳細: combat-source-support.md と同verification JSON。
+
+### Native source grounded form choice
+
+Ordinary native walking now has a narrowly scoped candidate that chooses human input only when the installed static foot-support path has a continuously blocked swimming capsule and a clear human capsule. On the unchanged Bluefin SlopeFramePlate, source support snapping exposes a real wide-body collision missed by straight interpolation. Matched actual Game fixed 1/60 tests at render 30/60/120 reproduce all six baseline contacts and clear all six candidate traversals through natural Shooter consumption/automatic refill, with both real team identities, eight actors/seven bots and zero AP. The actor physics, source geometry/NoPaint/masks/Nav/stage flags, existing foot/water predicates and specialized/legacy ownership stay unchanged. The original-pad negative-bank route also clears 16,394 continuous actual capsules at render 30/60/120 with Actor/Brain STEP 1/60, through the existing source wall and drops. Named Manta independent review accepts this narrow selector after source/API/default guards and compiled actual Game evidence review. Raw 30 plain-climb stress and the still-incomplete full-stage positive approach remain separate. Nintendo 11.3.0 units/body/controller parity, other-loadout completeness and hardware FPS remain unverified. Exact scopes and identities: [source grounded form](native-stages/source-grounded-form.md).
+
+原典戦闘の接地Trizooka候補追補: 実装済みactive kid chargeが通常水平intentと接地解決を消費する状態だけ、既存foot/同goalガードへ含める。元173eeの独立再観測でSP中の船底落下を防ぎ、8回の元goal再計画が成立したが、後のtarget取得時の通常ジャンプは別途失敗した。元173eeは採用fd23前であり、現在0c39+830の封印private9/9・容量通過上で強い実Game対岸assertを再検証中。物理/原典/input/SP時間は不変。本家11.3.0のSP中移動・AI/入力・単位・hardwareと対岸完了は未確認。詳細: [combat-source-support.md](native-stages/combat-source-support.md)。
+
+2026-10-13 Source Drop recovery follow-up: opted canonical zero-AP Shooter bots now plant through ordinary braking on the installed static source foot support before departing. Shipshape node28642 records the crane-slope centre5.17984416216 while real feet5.34019276666 exceed the old0.16 centre tolerance; the shared foot predicate accepts the genuine footprint. Robo's actual first support around0.08 can differ from forecast centre−0.1667. A changed touchdown must pass original paint polygon/live mask, static foot support and full capsule walk screens, otherwise ordinary neutral input releases to real navigation. Source data, NoPaint, Actor motion and the trajectory/clearance qualifier are unchanged.
+Final accepted0c39-composed Chromium proof has six actual Game._frame edge completions at render30/60/120 and Actor/movement STEP1/60,448 Actor+448 micro capsule samples,8alive/7bots/0AP/0errors. A separately controlled actual grounded NoPaint contact returns through ordinary replan to original supported Pnt node2184 after277 clear fixed steps; this does not prove ordinaryGoal3165 completion or sustained roaming. The earlier six-second roam capsule failure remains retained. Proper Character source kernels are distinct from fixed Game physics; retail11.3.0 units/collision/placements/frame parity and hardware FPS remain unverified. Exact source/current-build/default/public9+budget and named-peer evidence: [Source Drop recovery](native-stages/source-drop-recovery.md), [numeric receipts](native-stages/source-drop-recovery-verification.json).
+
 ## 2026-10-14 — 全issue監査と入力寿命の修正
 
 全69件を確認し、#1396（取消済みPointer Lock）、#1400（editorへのpad入力透過）を修正。#1359/#1321の検証済み候補から#1357/#1360/#1340/#1311を集約した。公開ミラーとworkflowは不変。source監査455pass/4skip、配布版の入力/復活97passとnetwork32pass、梱包9pass、容量ゲート通過。修正前のbrowser反例を保ち、配布版の実Chromiumでeditor・neutral待ち・取消lock・fresh retry・小さいnative Canvas2D tankの5ケースが合格。controllerと非同期latencyは制御fixtureで、Switch/Android/iOS/Joy-Conの実機比較ではない。未公開の数値・曲線・原典単位を確定せず、残り63件を全解消済みとしない。全件表、正確なsource/build hash、失敗の保持、参照は `reports/inkwave-issue-resolution-2026-10-14.md` と同名JSON。
+
+2026-10-13 最新main18ce互換候補: 通信bomb/snapshotと原典Sprinkler被害、復活/editor/touch/HUD修正を作業ブランチへmainから取り込み、共有記録の双方を保持。mainへのマージではない。関連default145通過/4任意emitted skip/0失敗、正しいemitted再実行15/15・skip0、公開canonical9/9と容量通過。実ブラウザ入力・Scorch読込/通常射撃・全5ルール実WS・独立peerは進行中で完成扱いしない。原典/物理/単位/実機性能は不変・未確認を維持。詳細: [main-18ce-compatibility.md](native-stages/main-18ce-compatibility.md)。
+
+最新main18ce互換の採用追補: Hump担当の独立reviewがCLOSED/accepted。変更suite140通過/4任意emitted skip/0失敗、実emitted15/15・skip0とprivate/public9/9・容量も独立通過。現在の実Chrome Input5、公開Scorch原典取得/v4/自然58固定tick着地/cache/破損rollback、通常Shooter実Game3描画cadence固定1/60、全5ルール実WSで完全grid SHA一致/受入watermark到達/全送信・成長・再生queue空/例外0を確認。入力fixtureと支持姿勢/aim/他bot固定の射撃条件を本家/ハードウェア再現としない。共通native/原典/Actor物理は不変、第三者抽出assetsを公開せずmainへのマージもしない。詳細: [main-18ce-compatibility.md](native-stages/main-18ce-compatibility.md)。
+
+### 原典支持の上向き接地と胴体衝突の結合
+
+オヒョウ原典の実Game tick2456では、胴体解決後に足元が0.0914157017原典単位上がり、元の壁三角形34778へ0.0037673822単位食い込んだ。これは既存source solverのradius−0.0001基準でも実接触であり、bodyFitsの公開default0.01や診断0.003を変更していない。`native-physics.mjs`とbuild用movement adapterは、実際に上がった静的原典支持だけを同じ胴体resolverで再解決し、実足元probeと胴体適合を確認してから接地を確定する。既存の壁速度処理・着地event・dynamic支持・legacyを維持し、source/NoPaint/寸法/入力/velocityを代用値で変更しない。
+
+参照は11.3.0のShooter_Normal_00・ゼロAP、KiTrix固定表示抽出。正確なcaptured状態を初期化するActor/Character component4/4とRoot独立4/4、別の原典支持上から通常の微入力＋1固定tickジャンプによる実Game比較でbaseline3件の接地後接触とcandidate3件・計450固定tickの接触解消を確認。描画30/60/120でもActorは1/60、8人7bot・着地1回・全10buffer/237texture byte不変・例外0。default95通過/57任意asset skip、legacy/grate/slope/Tower/Drop小契約13/13、private/public各9/9・容量通過。元5ステージもWahoo独立実Game15/15・source着地120件/初期有向経路30件・8人生存7bot・Actor/Brain1/60・ゼロAP/例外0で通過し、全scalar caseが旧1733と一致。新ea625証跡を独立に封印し、旧artifactの付け替えや全対岸証明にしない。Root/Shipshape named reviewはCLOSED PASS。最初の30tickジャンプ保持では反例を再現せず、旧fixtureのceilingBlock期待誤り・任意VM motion import警告・2451の直線chord診断失敗も保存している。内部衝突補正の連続軌道、全対岸、本家の単位/抽出版/collision/実機FPSを完了扱いしない。詳細: [source-foot-body.md](native-stages/source-foot-body.md)、[numeric receipts](native-stages/source-foot-body-verification.json)。
+
+### Native source running-jump approach (independently accepted)
+
+The pinned KiTrix Bluefin display source exposes a supported lower runway behind a retained NoPaint obstruction and a genuine gap before the upper-bank wall. The optional `wallApproach` candidate uses explicit source-screened player-only short jumps and running wall attachment, natural canonical zero-AP Shooter paint/refill, the installed full Surge charge and one actual burst step before human input. It preserves all ten source buffers, 216 source PNGs, original upper pads, NoPaint collision, Actor velocities/forms/support snapping, existing Foot API and Tower exclusions. Qualification is limited to the measured Shooter profile; other loadouts do not acquire these edges.
+
+The earlier335 artifact passes both original-pad opposing-bank Game routes at render30/60/120 with fixed Actor/Brain1/60,24280 continuous source capsules and504 owned/static SQ attachment/cap rays. Its real keyboard lower-prefix cases pass1664 clear capsules through26 source waypoints. Those are exact earlier artifact scopes. Current guard controls exposed a held-B no-launch and a height-compatible distant support: the executor now releases ordinary input and aborts the stale path before landing steering, and an actually admitted gap must reach the existing .25XZ/.16Y source touchdown envelope. The first firing-stance, lowest wall-paint,120-second bank and failed-retry negatives remain retained. Current3f9/bc source2, compiled Game6 with24,180 clear capsules/504 naturally owned SQ rays and private/public9+9/budgets are qualified. The v3 keyboard3 receipt is retained through exact unchanged executed-human-code binding to v4, never relabeled. Named Hump final report acceptance is CLOSED at68ad (receiptSHA003e30df…); common Ready/selfpromotion follows; the OWN stage remains Draft for fresh GroundBody/upcoming main compatibility and its complete matrix. Nintendo11.3.0 units, retail collision/navigation/controller behavior, moving-platform state, all-loadout completeness and hardware FPS stay unverified. Details and exact identities: [source-positive-approach.md](native-stages/source-positive-approach.md) and [numeric evidence](native-stages/source-positive-approach-verification.json).
+
+
+### 原典戦闘支持・既存goal保持の独立レビュー確定範囲
+
+現行90040586+df7・helper dec49のnative接地fight/retreat足元ガード、既存のvalid非敵zone goalの通常A*保持、実装済みactive kid Trizooka chargeの通常水平移動について、Shipshapeの名前付き独立レビューがPASS。公開canonical9/9・core131/range14容量通過、関係default8通過/4任意原典skip/0失敗。旧制御Game12と元goal再取得の実Game失敗は旧artifactに紐づけて保存し、自律AI完成へ読み替えない。別のジャンプ候補との現行paired実入力で両陣営6着地と元の次waypoint6到達を確認したが、その候補は別PRの採用範囲。全経路でのsource foot/body接触は別担当が修正中。参照11.3.0・Shooter_Normal_00・ゼロAP、初期敵context制御、Actor1/60/描画30/60/120。原典の抽出版・座標単位、本家AI/SP移動/地形mask、全ブキとhardware性能は未確認。詳細: [combat-source-support.md](native-stages/combat-source-support.md) と同verification JSON。
+
+### 2026-10-13: ソース戦闘ジャンプの既存入力保持（#1409）
+
+元のソース足場を通常歩行で助走し、戦闘中にBotBrainが既に要求したjumpをActorが受理しても、次の短いreleaseとcombat strafe/repathで次の支持を外すケースを修正した。同じsource経路/node/目標/実敵/world/modeとserial+1が続く実飛行だけ入力を保持し、着地・sub/special/throw・context変更で既存所有者へ返す。Actorの発射・速度・geometry/flags/mask・衝突・回復は変更しない。Shooter_Normal_00/0AP、オヒョウの元のwalk→.5rise jumpで旧版3cadenceは落下、候補両team×3cadenceは同じ23STEP発射から元のNP TOPへ58STEP着地し、348接触なしsource sweep/strict poseを確認した。続く元のsource Drop waypointにも6件到達（932接触なし区間、FootSupported=true）。二度目は通常_needJumpの要求で前nodeFoot=falseのためhelperはholdせず、global一回発射とは主張しない。141default（88pass/53資産optional skip）・元5source141（110pass/31optional skip）、source/action/dynamic/NoPaint/legacy negatives、private/public各9と131/14budget・7実gameplay module同一を記録した。戦闘前2456のfoot/body接触は別件で全bank未確認。接触補正poseの弦は実ソルバー内部経路と同一とは仮定せず、失敗を保存する。11.3.0識別情報と公開固定sourceのみ参照し、本家jump入力/実寸/衝突/実機性能は未計測。motion定数はproject heuristics。[条件と差分](native-stages/jump-combat-input.md)、[数値記録](native-stages/jump-combat-input-verification.json)。
+
+追加のcurrent public direct初期確認も15/15成功。元の5source×render30/60/120で、120実source着地・30元のdirected初期経路・Actor/Brain固定1/60・0errorsを記録した。6秒初期navigationはwholebank到達ではない。Ready1409をfoundation3f9d0e54/aggregate92494729へfull-lockで自己統合し、両branchのsyntax/影響チェック16pass/4source optional skip/0failを確認した。
+
+Source approach final3f9/bc qualification: proper private/public9+9 and131/14 budgets,current source2/no skips,actual fixed Game original-pad both-bank6 at render30/60/120 with24,180 clear capsules/504 naturally owned source SQ rays/8alive7bots0AP0errors. Real v3 keyboard3/1,664 capsules is retained by independent exact unchanged executed-human-code binding to v4 with frozen bots, not relabeled. Actual Tower rider single ownership guard passes; body/vehicle route physics is separate. Held-B/distant return and stale-navpi0/pi1 counterexamples now have neutral-release/path-abort controls. Named Hump common review CLOSED/ACCEPTED at68ad; OWN stage must freshly consume GroundBody32495/upcoming qualified9bed and complete its matrix. Retail/hardware uncertainties remain. See [source-positive-approach.md](native-stages/source-positive-approach.md).
+
+### 2026-10-13: main9bedのモデル更新とネイティブ統合互換性（#1416）
+
+main18ce→9bedのサブ／スペシャル表示、Goo Tuber銃口・握り、Bucket Slosher形状とCI待機方針を、承認済みGroundBody1415／source approach1411を保持した9ee0d652へ統合した。元のstage geometry/flags/masks、frozen public、既存authorityはmain差分で変更しない。現在のsource／既存sub・special lifecycle／hit・net／muzzle・grate／resources198件は195pass・Flounder私有原典shot3任意skip・0fail。原典5stage5/5・実Shipshape body4/4、1554code＋1781fixtureの開始終了SHA一致。モデル47件は旧3f実行に正確な同一inputを結び、現行再実行とはしない。現行emitted15、実Game Shooter_Normal_00／0APの30/60/120・固定1/60で3source wall shotsを確認した。
+
+現行RoomDO実WS全5ruleでは、通常mouse初期発進・実source着地後のWeaponBlasterShort／0APを実PlayerController→Actor/WeaponRunner→catalogue `_push`で各1発観測した。catalogue burstの下向きsource-floor rayから3.84 claimOwner塗りが実polygon／positive maskを新規取得し、39Actor ticks＝39clock ticks／1/60、2060packet／0error。両peerの全grid SHAと初期・最終watermark／growth・replay・out queue解消が一致。これは現行catalogue床投影であり、legacy物理落下／timed dropや本家airburstの同一性ではない。ranked setCount65のhost snapshotは同期だけの確認。旧manual3.84 stampも転送probeとして区別する。旧d8fのlegacy observer失敗・153件中断・VM／browser準備失敗は保存した。private/public各9/9、131/14budget、10module同一、247sourceファイル同一、第三者assets/imagesは非commit。新モデルUUIDのMath.random消費順、retail抽出版／単位・配置・握り／衝突塗り式、実機FPS／controller、全bank自律playは未確認のまま。[条件と結果](native-stages/main-9bed-compatibility.md)、[数値記録](native-stages/main-9bed-compatibility.verification.json)。
+
+
+### 2026-10-13: catalogue弾のnative包囲箱誤接触（Draft #1419）
+
+Splatoon3 Ver11.3.0 identity／WeaponBlasterShort・0AP、KiTrix0611原典を参照。Bluefinの実Game固定1/60から自然に生成されたLunaは0.87 raw-unit区間の最初でsource fence bookkeeping OBB内判定によりY12.6462→8.9237へ接触終了し、原典床の3.84塗り投影を失った。同じ三角形原典・同一区間はsource BVHで非接触。legacy inkと別のcatalogue `sweptWorldHit`だけがsource chart/object boxを実体として使っていた。emitted経路をnative triangleへ接続し、実moving entityのみ既存analytic OBB、non-native・geometry・mask・weapon値・Actor入力は保持。線形半径変化は凸距離gapから初回接触を求め、最大半径はbroadphaseのみ。
+
+候補e984のselected41件は38pass・Flounder原典shot任意3skip・0fail／実EXIT0。Hump独立原典同一区間と56analytic対照も終了、source10buffer SHA一致。これはkernel/source証拠で、修正後の実browser／全5rule WS／packaging／性能は未実行。旧3回のWS失敗、2.496nearest floor projectionと3.84burst fallback、未観測descriptor keyは区別して保存。metric単位・retail抽出版／本家collision・paint・grate法則・実機FPSは未確認。権利未確認のraw assets・画像・全gridはcommitしない。[条件・残検証](native-stages/catalogue-source-sweep.md)。
+
+## 2026-10-14 Native-stage authorized resume
+
+Modern native catalogue shots use source-triangle contact rather than source bookkeeping OBBs; fresh natural Bluefin five-mode full-grid settlement passes. Retail masks/units and hardware speed remain unverified. [Source sweep](native-stages/catalogue-source-sweep.md).
+
+## 2026-10-14 Native-stage authorized resume
+
+The dry opted source-climb stance releases only ordinary SQ input after static source/Pnt/polygon/body guards. Actual Shipshape Zones team1 at30/60/120 recovers normally and reaches the original support; own-painted SQ input/recovery is preserved. Retail parameters/physics/units remain unverified. [Dry refill](native-stages/source-climb-dry-refill.md).
 
 ## 2026-10-13 — 18ce7b6c 後の入力寿命の残差
 
@@ -4345,6 +4466,15 @@ The preceding density/duplicate-work counts retain their historical inputs and d
 - 命中境界: 同じ60 Hzの復帰最初の通常弾を native InkFlight / Actor.damage で飛ばすと、z=8 m の右側命中境界が約 **1.486 mm** 動いた。共通の敵位置 x=2.80619385298707 m, z=8 m では基準は外れ（100 HP）、修正後は36ダメージ（64 HP）。中心の敵は両方36ダメージ。これは意図的な境界例であり、一般的な命中率や本家との精度比較ではない。
 - 乱数とオンライン: 同一 seed のグローバル Math.random を使う比較では、新たに表示する Three の物体/素材 UUID により通常弾の個別 spread サンプルもずれる。呼び出し元監査では差分は全て `Three.generateUUID`（各4回）で、追加のゲームプレイ乱数呼び出しはない。既存 spread の2回の抽選と分布式/幅は変更していない。グローバル乱数と Character 乱数を両方固定した対照では1890更新の source/minified トレースが一致するが、これは実運用のビット一致を意味しない。オンラインは `NetMatch.recProj` が発生位置・速度・inkMeta を送信し、受信側 `ghostProjectile` はそれを復元する。ghost は描画のみで、塗り・ダメージは所有者から別送される。この経路はグローバル乱数の lockstep 再現を要求しない。RNG 系統の再設計は行っていない。
 - ブラウザゲート `check-inkwave-special-presentation.mjs` の Vac 部分は手動 `_updateSpecial` / `_finishFrame` を廃し、実 `Actor.update` と native Physics で inhale・exhale・解除復帰を通す。モデル非表示差分の pixels、左右グリップ、反撃数を判定し、既存の他スペシャル用手動診断と区別する。変更後のブラウザ実行・画像確認・CI は未実行で、描画成功とは記載しない。
+
+
+### 2026-10-14: final native common composition and variable-sphere cost
+
+Draft aggregate validation composes reviewed58ba, proposed source catalogue correction1419 and narrow dry source-climb refill1420 with maina9f9341c. Source-centred changing-radius queries exposed a CPU cost problem in the repeated64+36 distance searches. The final kernel uses analytic earliest face/finite-edge/vertex contact with the same linearly changing sphere, source BVH, eligibility and contact authority.4,114 independent signed-plane/rounded-edge cases plus12,000 arbitrary-orientation convex-distance oracle cases pass. Initial overlap, tangent/zero-radius faces, NoPaint/grate and actual dynamic OBB priority are retained. Source units, Nintendo retail collision/masks, hardware FPS and whole-match performance remain unverified. The Humpback source fixture now keeps its nominated controlled bank goal after ordinary recovery selects a new paint goal; it does not override physical path resets or weaken arrival/support/time bounds. Historical and final executions are distinguished in [the final composition record](native-stages/final-common-integration-2026-10-14.md). Independent acceptance, Bluefin/Shipshape full-stage qualification and the existing source/placement/Tower gates remain separate.
+
+A later main636e2b68 adds only isolated character-QA tools/workflow files and is included; production source/build adapter/gameplay inputs remain byte-identical to the consumed a9 baseline.
+
+Strict source comparison exposed different adjacent-triangle selection in the initial analytic32ed02b0 candidate. Nearly simultaneous contacts within1e-9 segment time now use the unchanged prior search to retain its triangle/material ordering. That failed candidate is not accepted as final.
 
 ## 2026-10-13: タブレット・スマホでの Bot 密集時の重さ（試合中のシェーダー同期コンパイルと塗り所有判定の割り当て）
 
@@ -4494,3 +4624,7 @@ Six wire negative cases and three view negative cases fail before their correcti
 ## 2026-10-15: SplatoonSWEPs を参考にした発射時のインク
 
 所有者の指示で SplatoonSWEPs（Splatoon 2 の Garry's Mod 版）のテクスチャをそのまま取り込み、シューター・シェルターの銃口膜を SWEPs の MuzzleSplash（円錐2枚、α テスト基準 0.1→0.9）にした。ストリンガー・ワイパーの帯は inkring テクスチャで破れる。スクリュースロッシャーは SWEPs の箱と半透明の渦が本家と違うため採らず、所有者提供の本家画像に合わせて、回転するねじれた穴あきのインク膜（丸い塊なし）と細い筋のしずくにした。表示のみで、弾・当たり・塗り・通信は変更していない。数値は SWEPs の値または画像からの目視で、Splatoon 3 の実測ではない。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
+
+## 2026-10-14: Private stage composition with newer main
+
+This private technical composition joins aggregate 60b88072641b632ec387e05f3ab70565dfd64b63 and main 55b4750aea5e45136a588fbd7242c106aff2323a (common ancestor 636e2b68cdace5ccbd651d05d2f2fc1eb900ecd0). Both report appendices are retained. All 319 aggregate-exclusive and 21 newer-main-exclusive changed paths retain their respective parent blobs. Newer main includes runtime changes from #1427 and the Roller test correction from #1429, plus the test-only pressed-button-center correction from #1433; checks of the earlier aggregate do not establish compatibility of this combined runtime. This candidate has not received fresh combined-code validation or final independent acceptance. Named review and Ready-first gates remain. Bluefin #1343 and Shipshape #1394 remain unfinished; Lemuria source, Mahi placement, and existing Tower gates remain unresolved. Technical composition does not authorize a main merge.

@@ -60,6 +60,14 @@ const combat=await fixture({productionComposition:true,adaptRuntime:adaptBuildSo
 `});
 const CombatOldWorld=new Function('THREE',unmodule(oldWorld)+'\nreturn TriangleWorld;')(combat.THREE);
 const CombatOldLevel=new Function('THREE','Level','nativeInkGeometry','TriangleWorld',unmodule(oldLevel)+'\nreturn NativeLevel;')(combat.THREE,combat.Level,null,CombatOldWorld);
+// Freeze the original ray solver while retaining today's sphere-contact API.
+// The old fixture has no sweepSphere; substituting its entire Level would
+// test missing API composition instead of the downward-ray optimization.
+class CombatRayBaseline extends combat.NativeLevel {
+ constructor(geometry){super(geometry);const frozen=new CombatOldWorld(geometry);this.triangleWorld.ray=frozen.ray.bind(frozen);}
+ hasGroundAbove(x,z,yMax,minimumY){const y=this.groundHeight(x,z,yMax);return y!==-Infinity&&!(y<minimumY);}
+}
+
 function damageReplay(LevelClass,hz,blocked=false){
  const {G,THREE}=combat;combat.setRandom(()=>.37);G.time=0;G.actors=[];
  const geometry=planes([[0]]);
@@ -88,12 +96,12 @@ function damageReplay(LevelClass,hz,blocked=false){
  return {hits,paint,frames};
 }
 for(const hz of [30,60,120])test(`real weapon-admission damage and paint commands retain the frozen native result at ${hz} Hz`,()=>{
- const before=damageReplay(CombatOldLevel,hz),after=damageReplay(combat.NativeLevel,hz);
+ const before=damageReplay(CombatRayBaseline,hz),after=damageReplay(combat.NativeLevel,hz);
  assert.ok(before.hits.length>=3,'the ordinary weapon must actually hit');
  assert.ok(before.frames.some(row=>row[4]===false),'the target must actually be splatted');
  assert.ok(before.paint.length>0,'real projectiles must actually issue paint commands');
  assert.deepEqual(after,before);
- const wallBefore=damageReplay(CombatOldLevel,hz,true),wallAfter=damageReplay(combat.NativeLevel,hz,true);
+ const wallBefore=damageReplay(CombatRayBaseline,hz,true),wallAfter=damageReplay(combat.NativeLevel,hz,true);
  assert.equal(wallBefore.hits.length,0,'native wall must block ordinary damage');
  assert.ok(wallBefore.frames.every(row=>row[4]),'the protected target must survive');
  assert.deepEqual(wallAfter,wallBefore);

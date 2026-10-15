@@ -1,7 +1,8 @@
 import { nativeStageBuild } from './build-config.mjs';
 import {SOURCE_STAGES,sourceURL} from './source-catalog.mjs';
 export const nativeStageEnabled = !!nativeStageBuild;
-export const NATIVE_IDS = Object.freeze(['scorch','hagglefish','inkblot','mako','brinewater']);
+export const NATIVE_IDS = Object.freeze(SOURCE_STAGES.map(s=>s.id));
+export const UNAVAILABLE_NATIVE_STAGES = Object.freeze(nativeStageBuild?.unavailableStages || []);
 export const NATIVE_MAPS = (nativeStageBuild?.stages || []).map(s => ({
  id:s.id, name:s.name, blurb:nativeStageBuild.mode==='browser-direct'?'初回はKiTrixの公開モデルを取得します。物理・ルール配置は検証中。':'原典表示メッシュによる検証版。物理・ルール配置は推定。',
  theme:'day',times:{day:'day',dusk:'sunset'},nativeSource:true,noBoss:true,

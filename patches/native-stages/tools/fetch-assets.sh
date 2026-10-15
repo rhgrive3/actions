@@ -6,6 +6,8 @@ REPO_ROOT="${1:-$PWD}"
 REFERENCE_COMMIT=0611f51b35c9736ee986fb2218461e2585b7875e
 TARGET="$REPO_ROOT/.codex-stage-sources/KiTrix"
 STAGES=(Vss_Yunohana Vss_Yagara Vss_Upland03 Vss_Line03 Vss_BigSlope00)
+if [ "$#" -gt 1 ]; then STAGES=("${@:2}"); fi
+for stage in "${STAGES[@]}"; do [[ "$stage" =~ ^Vss_[A-Za-z0-9]+$ ]] || { echo 'Invalid stage directory' >&2; exit 2; }; done
 command -v git >/dev/null
 command -v git-lfs >/dev/null || { echo 'Install git-lfs in the Codex Cloud setup environment.' >&2; exit 2; }
 if [ ! -d "$TARGET/.git" ]; then
