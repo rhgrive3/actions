@@ -1,0 +1,126 @@
+{
+  "candidateHead": "52e868afd8f64b6d830d3c0df0e9e9690d9b3751",
+  "candidateTree": "ff7fc3039809daba8e128213103a283d6aa3c200",
+  "baseHead": "d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd",
+  "baseTree": "3017165176c0376fe209b1713f49d22b60b7bee8",
+  "variantIds": [
+    "Charger_Quick_01",
+    "Maneuver_Short_02",
+    "Roller_Heavy_01",
+    "Shelter_Focus_01",
+    "Shelter_Normal_01",
+    "Shelter_Wide_01",
+    "Shelter_Wide_02",
+    "Slosher_Diffusion_01",
+    "Slosher_Washtub_01",
+    "Stringer_Explosion_01",
+    "Stringer_Normal_01",
+    "Stringer_Normal_02",
+    "Stringer_Short_01",
+    "Stringer_Short_02"
+  ],
+  "baseModelCount": 65,
+  "payload": [
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-brella-palette-followup.mjs",
+      "blob": "480864d333d26557415697aaeee47e0f3a32175c",
+      "sha256": "2eb2746d00d1bdf5a054c70d67483043235670cccac0b153f5053919d3195533"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs",
+      "blob": "b62734709dd66c4756c4545cfa0696762c69d08b",
+      "sha256": "6ad850b03e106d5c10b465571a14c082984fbfc5461f45ae94ae96158082d108"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-reef-deco-followup.mjs",
+      "blob": "039110a6c281c36628661785131fe4b4f91a663a",
+      "sha256": "ae08cd9bdeeb08febbbbf58a0e9e9bc38ef11630ba6e864aad40cee30abb2ffa"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-inkline-followup.mjs",
+      "blob": "ef6de54f6700258792e12909fd567108884f51ab",
+      "sha256": "2ac22653c80b62741a8cca770adeed18b59425faf828df2b3c9a10462986c9e1"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-custom-wellstring-followup.mjs",
+      "blob": "0645efb8fac74639b337065b8bd23fee74b9c450",
+      "sha256": "67c7308e8bd58043512e5bccfabf25a744df093b0be5750b0c4428d4376d1e08"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-c-palette-followup.mjs",
+      "blob": "0d38499e33e24654c97b82e5f593cd1a889a672f",
+      "sha256": "69252100def613acfb537428cb0dc0be89d40c54605ee0d0e41df67dd200f7db"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-variant-c-palette.test.mjs",
+      "blob": "067869f8947d45589542821d39e2a62176786f17",
+      "sha256": "d04319e380f3694272c8e9f3f77847c4aea488e3a456668f9a345ba4fadb09b9"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "blob": "eb12ce215926319510a4c95bce496135817d9581",
+      "sha256": "521d8c6ef42d3c72b4e8ccbb29f96f3b276ad805b00fce3e9dcbaa82d04778f4"
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "blob": "51d339f5c086185b8250e2304a27458c74df3a7c",
+      "sha256": "2ced116e8ff055f0ec62c88d44701cdb8e6a474e81d7c8e37708b8f995974651"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-variant-b-stringer-followups.test.mjs",
+      "blob": "365a75b0dcdbb0d7c47ddb25333f69fb3a3512ba",
+      "sha256": "dfa93278ce34c6b00afd3390e391a57840899709ad7b9de27947c9b2109af0af"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+      "blob": "5a2ba64d029de3cfec1da0ea7bda51192b6a3317",
+      "sha256": "0e98339e703c7c5d29b749d632bceabce449b3d81b17d81c732fcd5620070ddf"
+    },
+    {
+      "path": "patches/splatoon3/tests/reviewed-second-variants-native-character.test.mjs",
+      "blob": "49018346273944f9fd685ce9b266511b657ed3a9",
+      "sha256": "4f7715d0d7d0f4acd22db836f5ac16dcadae63acb904d5c3ff3bc26ce81a768a"
+    }
+  ],
+  "registrySHA256": "51432c400be37a1ea9e55fb93fdb29442ba6f58c760f9b2c43e0b3c26151e70f",
+  "testGates": {
+    "source": {
+      "files": [
+        "patches/splatoon3/tests/custom-explosher-finish.test.mjs",
+        "patches/splatoon3/tests/milk-nock-attachment.test.mjs",
+        "patches/splatoon3/tests/reviewed-second-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs",
+        "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-stringer-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-sorella.test.mjs"
+      ],
+      "pass": 79,
+      "skipped": 0
+    },
+    "emitted": {
+      "files": [
+        "patches/splatoon3/tests/custom-explosher-finish.test.mjs",
+        "patches/splatoon3/tests/milk-nock-attachment.test.mjs",
+        "patches/splatoon3/tests/reviewed-second-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/reviewed-variants-native-character.test.mjs",
+        "patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs",
+        "patches/splatoon3/tests/weapon-limited-variants.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-b-stringer-followups.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-brella-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-bulbz.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-c-palette.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-dapple-noct.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs",
+        "patches/splatoon3/tests/weapon-variant-sorella.test.mjs"
+      ],
+      "pass": 79,
+      "skipped": 0
+    }
+  }
+}

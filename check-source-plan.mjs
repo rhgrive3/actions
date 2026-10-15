@@ -1,0 +1,5 @@
+import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';import {execFileSync} from 'node:child_process';import {validateVariantPlan} from './variant-plan.mjs';
+const [file,candidate,out]=process.argv.slice(2),p=validateVariantPlan(JSON.parse(fs.readFileSync(file)));const git=(...args)=>execFileSync('git',['-C',candidate,...args],{encoding:'utf8'}).trim();
+assert.equal(git('rev-parse','HEAD'),p.candidateHead);assert.equal(git('rev-parse','HEAD^{tree}'),p.candidateTree);assert.equal(git('status','--porcelain','--untracked-files=no'),'');
+for(const f of p.payload){const b=fs.readFileSync(path.join(candidate,f.path));assert.equal(crypto.createHash('sha256').update(b).digest('hex'),f.sha256,f.path);assert.equal(crypto.createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex'),f.blob,f.path);}
+fs.writeFileSync(out,JSON.stringify({head:p.candidateHead,tree:p.candidateTree,payload:p.payload,registrySHA256:p.registrySHA256,variantIds:p.variantIds,baseModelCount:p.baseModelCount},null,2));

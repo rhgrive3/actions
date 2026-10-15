@@ -1,0 +1,12 @@
+Second limited weapon batch, stacked on the frozen six-model first batch.
+Candidate PR1471: 52e868afd8f64b6d830d3c0df0e9e9690d9b3751, tree ff7fc3039809daba8e128213103a283d6aa3c200; parent d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd.
+
+One shared production build, exact fourteen-variant registry and unchanged65 base-model catalog. All source inputs, builder and actual served artifact hashes are required. Source and emitted gates use the same13 model test files, expected79 passed/zero skipped. This includes actual Actor/Character tests for the first6 and new8, with controlled runner states, hold/nativeCarry/part animator and matrix assertions. These are not a blanket real firing/payment test for all fourteen weapons. Existing Settings fixture2 tests remain separate from model79.
+
+Images for the new8 only: A Brella palettes24 PNGs (initial/open), B stringers24 PNGs (charge/release), C Roller/Slosher palettes8 PNGs (rest). A additionally preserves60 actual native lifecycle receipts, including closed/launched/broken and ownership/damage controls. No unchanged first-batch image is regenerated for this package.
+
+Controlled native day Environment with PMREM256, Neutral/.94 and sRGB, common base/candidate cameras, actual held pivot restoration, strict nonblank image checks. This qualifies component presentation under native lighting, not the full scene/compositor or complete source-game appearance.
+
+Processing comparison keeps32 rows (eight models, base/variant, two teams), construction/first measured render and twelve alternating post-warmup samples separate. Four warmups per role, identical full-resolution synchronous RGBA readback. Shared caches may already be warm; these are controlled submission/readback wall times, not GPU timer values or gameplay FPS.
+
+Local controls51 passed. New actual Actor source8 passed. Full hosted source/emitted, GPU images and processing measurements remain pending. No new model geometry, palette tuning or runtime behavior change is introduced by this diagnostic package.
