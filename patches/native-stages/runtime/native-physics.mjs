@@ -31,9 +31,15 @@ export class NativePhysics extends Physics {
   for(let pass=0;pass<iterations;pass++){
    s0.set(pos.x,pos.y+lift+radius,pos.z);s1.set(pos.x,pos.y+Math.max(lift+radius,height-radius),pos.z);
    min.copy(s0).min(s1).addScalar(-radius-.002);max.copy(s0).max(s1).addScalar(radius+.002);let moved=false;
-   w.queryBox(min,max,id=>{
-    if(skipGrates&&(w.flags[id]&4))return;
-    const t=w.triangle(id),dist=w._capsuleDistance(s0,s1,t);if(dist>=radius-SOURCE_CONTACT_EPSILON)return;
+   // BVH builders partition equal-centre triangles differently. Collision
+   // corrections are sequential, so broad-phase traversal must not choose the
+   // controller result. Preserve canonical source triangle order in both the
+   // worker conversion and the prepared conversion.
+   const candidates=this._contactCandidates||(this._contactCandidates=[]);candidates.length=0;
+   w.queryBox(min,max,id=>candidates.push(id));candidates.sort((a,b)=>a-b);
+   for(const id of candidates){
+    if(skipGrates&&(w.flags[id]&4))continue;
+    const t=w.triangle(id),dist=w._capsuleDistance(s0,s1,t);if(dist>=radius-SOURCE_CONTACT_EPSILON)continue;
     dir.subVectors(w._bests,w._bestp);
     if(dist<1e-8){dir.fromArray(w.normals,id*3);w._center.copy(s0).add(s1).multiplyScalar(.5).sub(t.a);if(dir.dot(w._center)<0)dir.negate();}else dir.multiplyScalar(1/dist);
     const depth=radius-dist+SOURCE_CONTACT_EPSILON,hl=Math.hypot(dir.x,dir.z),block=this.level.blockForTriangle(id);
@@ -48,7 +54,7 @@ export class NativePhysics extends Physics {
      else if(Math.abs(dir.y)<.6){c.wall=true;c.wallNormal.copy(dir);c.wallBlock=block;}
     }
     moved=true;
-   });
+   }
    if(!moved)break;
   }
   return c;

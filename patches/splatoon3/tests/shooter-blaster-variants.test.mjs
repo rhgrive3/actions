@@ -137,7 +137,7 @@ test('source-backed fixed/ink partitions conserve exact oriented triangles witho
 
 test('inspected icons preserve N-ZAP gray receiver, Clawz black stock and Jet white labels',async()=>{
  const f=await load(),base={...f.A,...f.B,...f.C};
- for(const [id,hex]of [['Shooter_QuickMiddle_01','#9a9b9e'],['Shooter_QuickMiddle_01','#7c7d81'],['Shooter_Heavy_02','#2b2c2f'],['Shooter_Long_01','#eceee8']]){
+ for(const [id,hex]of [['Shooter_QuickMiddle_01','#9a9b9e'],['Shooter_QuickMiddle_01','#7c7d81'],['Shooter_Heavy_02','#27282b'],['Shooter_Long_01','#eceee8']]){
   const s=f.VARIANT_MODELS[id],a=base[s.baseId].build(fresh(f.K,'shooter')),b=s.build(fresh(f.K,'shooter')),t=new f.K.THREE.Color(hex),ac=a.body.attributes.color,bc=b.body.attributes.color;let matched=0;
   for(let i=0;i<ac.count;i++)if(Math.abs(ac.getX(i)-t.r)<1e-6&&Math.abs(ac.getY(i)-t.g)<1e-6&&Math.abs(ac.getZ(i)-t.b)<1e-6){
    assert.equal(bc.getX(i),ac.getX(i));assert.equal(bc.getY(i),ac.getY(i));assert.equal(bc.getZ(i),ac.getZ(i));matched++;

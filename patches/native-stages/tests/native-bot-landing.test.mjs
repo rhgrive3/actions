@@ -1,8 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
 import {nativeFixture,readStage} from './fixture.mjs';
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS,ids=root?JSON.parse(fs.readFileSync(path.join(root,'catalog.json'))).stages.map(s=>s.id):['scorch','hagglefish','inkblot','mako','brinewater'];
+// Reuse the installed VM, while resetting every live world owner per stage.
+// A separate full catalogue VM per case retains gigabytes under node:test.
+let runtime;const loadRuntime=()=>runtime??=nativeFixture();
 for(const id of ids)test('source bot launch retains an actual directed objective route after touchdown: '+id,{skip:!root},async()=>{
- const f=await nativeFixture(),{G,THREE}=f,data=readStage(root,id);G.level=new f.NativeLevel(data);G.physics=new f.NativePhysics(G.level);
+ const f=await loadRuntime(),{G,THREE}=f,data=readStage(root,id);G.actors.length=0;G.time=0;G.projectiles.clear();G.level=new f.NativeLevel(data);G.physics=new f.NativePhysics(G.level);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,G.level,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(G.level,G.physics);G.match.mode='turf';G.match.opts={};
  const stage=f.nativeRankedStage(G),targets=[stage.zones[0].center,stage.rainmaker.center,...stage.rainmaker.goals,...stage.rainmaker.checkpoints.flat(),...stage.clams.spawns,...stage.clams.goals],cases=[];

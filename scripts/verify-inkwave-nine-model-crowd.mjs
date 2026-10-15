@@ -52,8 +52,8 @@ if (process.argv[2] === '--roster') {
         // remain mandatory below.
         const historicalCap=tier==='far'?59:scenario==='A'?118:119;
         const measuredMain=all['before-A'][tier].drawCalls;
-        assert.ok(Number.isSafeInteger(measuredMain)&&measuredMain>0,'nonempty immutable main draw budget');
         assert.ok(Number.isSafeInteger(row.drawCalls)&&row.drawCalls>0,'nonempty measured draw count');
+        assert.ok(Number.isSafeInteger(measuredMain)&&measuredMain>0,'nonempty immutable main draw budget');
         if(pair==='before-A2') assert.equal(row.drawCalls,measuredMain,'immutable baseline repeat draw budget');
         if(pair.startsWith('after')) assert.ok(row.drawCalls<=measuredMain,'candidate must not exceed exact-head baseline draws');
         if(pair==='before-A' && measuredMain>historicalCap) console.warn('NINE_MODEL_HISTORICAL_MAIN_DRAW_DRIFT',JSON.stringify({scenario,tier,legacyCeiling:historicalCap,measuredMain}));

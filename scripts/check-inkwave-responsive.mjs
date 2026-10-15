@@ -26,7 +26,9 @@ const selectedCases = (arg('--cases') || arg('--case') || '').split(',').filter(
 assert(['core', 'expansion', 'all'].includes(section), 'Unknown menu section');
 const physical = (p) => fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p));
 for (const p of [evidence, cache]) {
-  assert(physical(p).startsWith('/mnt/workspace/'), `Persistent workspace storage required: ${p}`);
+  const target=physical(p), repository=physical(repo).replace(/\/$/, '');
+  assert(!['/tmp','/var/tmp','/dev/shm'].some(root=>target===root||target.startsWith(root+'/'))
+    && (target.startsWith('/mnt/workspace/') || target.startsWith(repository+'/')), `Persistent workspace storage required: ${p}`);
   fs.mkdirSync(p, { recursive: true });
 }
 const require = createRequire(import.meta.url);

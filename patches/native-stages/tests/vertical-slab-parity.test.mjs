@@ -1,3 +1,4 @@
+import {canonicalRayOracleData,traceSourceRay} from './canonical-ray-oracle.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -39,9 +40,9 @@ test('frozen nearest-ray and native-level oracles retain their SHA-256',()=>{
  assert.equal(createHash('sha256').update(oldWorld).digest('hex'),'76206bdf0a42a5122759ca0914435e3a3f89da590740253e8c4f18d6127af92f');
  assert.equal(createHash('sha256').update(oldLevel).digest('hex'),'eb9dc9bea68bf981d15a4e532470d1a1c83f267c615e73840da0f304a3fc35c4');
 });
-test('ordinary nearest ray remains bit-exact, including hit ties, counters and invalid inputs',()=>{
- const d=data(),a=new OldWorld(d),b=new CurrentWorld(d),r=random(0x122);
- const compare=(o,dir,far,opts)=>{assert.deepEqual(flat(b.ray(o,dir,far,opts)),flat(a.ray(o,dir,far,opts)));assert.equal(b.queryCount,a.queryCount);assert.equal(b.triangleTests,a.triangleTests);};
+test('nearest rays preserve exact geometry and traversal counts with canonical source-ID ties',()=>{
+ const d=data(),a=new OldWorld(d),b=new CurrentWorld(d),visited=traceSourceRay(a),r=random(0x122);
+ const compare=(o,dir,far,opts)=>{visited.length=0;const legacy=a.ray(o,dir,far,opts),oracle=legacy?new OldWorld(canonicalRayOracleData(d,visited)):null;assert.deepEqual(flat(b.ray(o,dir,far,opts)),flat(Number.isFinite(legacy?.distance)?oracle.ray(o,dir,far,opts):legacy));assert.equal(b.queryCount,a.queryCount);assert.equal(b.triangleTests,a.triangleTests);};
  for(let i=0;i<12000;i++)compare(V((r()-.5)*35,(r()-.5)*25,(r()-.5)*35),i%3?V(r()-.5,r()-.5,r()-.5).normalize():V(i%2?-0:0,-1,0),r()*40,{ignoreGrates:i%2===0,minNormalY:[-2,.62,.68,1.1][i%4]});
  for(const x of [-8-1e-12,-8,-8+1e-12,-0,0,8-1e-12,8,8+1e-12,NaN,Infinity,-Infinity])for(const y of [0,.00000999999,.00001,.00001000001,2,2.00001,10])for(const far of [-1,-0,0,.00001,2,20,Infinity,NaN])compare(V(x,y,0),V(-0,-1,0),far,{});
 });
@@ -121,16 +122,17 @@ test('ordered scalar predicate retains all special values and one million extrem
 });
 
 test('full source or emitted rays preserve inverted/NaN/extreme slab fallback and memory layout',()=>{
- const d=planes([[0],[2]]),a=new OldWorld(d),b=new CurrentWorld(d);
+ const d=planes([[0],[2]]),a=new OldWorld(d),b=new CurrentWorld(d),oracle=new OldWorld(canonicalRayOracleData(d));
  assert.deepEqual(Object.keys(b).sort(),Object.keys(a).sort());
  for(const key of ['nodes','triangles','normals','flags','objectIds','order'])assert.equal(b[key],a[key],'no auxiliary geometry copy');
  const special=[NaN,Infinity,-Infinity,Number.MAX_VALUE,-Number.MAX_VALUE,Number.MIN_VALUE,-Number.MIN_VALUE,-1,-0,0,1,4];
  let checked=0;
  for(const lower of special)for(const upper of special){
-  a.nodes=b.nodes=new Float64Array([-4,lower,-4,4,upper,4,-1,4]);
+  oracle.nodes=a.nodes=b.nodes=new Float64Array([-4,lower,-4,4,upper,4,-1,4]);
   for(const y of [-Number.MAX_VALUE,-4,-0,0,2,4,Number.MAX_VALUE])for(const far of [...special,null,'0','4','bad',false,true]){
    const origin=V(0,y,-0),direction=V(-0,-1,0);
-   assert.deepEqual(flat(b.ray(origin,direction,far)),flat(a.ray(origin,direction,far)));
+   const legacy=a.ray(origin,direction,far);
+   assert.deepEqual(flat(b.ray(origin,direction,far)),flat(Number.isFinite(legacy?.distance)?oracle.ray(origin,direction,far):legacy));
    assert.equal(b.queryCount,a.queryCount);assert.equal(b.triangleTests,a.triangleTests);checked++;
   }
  }
@@ -147,7 +149,7 @@ test('non-number far coercions and exceptions retain original evaluation order',
   log=>({[Symbol.toPrimitive](hint){log.push(hint);return 4;}}),
  ];
  for(const factory of factories){
-  const run=World=>{const log=[],w=new World(d);let hit,error;try{hit=flat(w.ray(V(0,3,0),V(0,-1,0),factory(log)));}catch(e){error=[e.name,e.message];}return {hit,error,log,queries:w.queryCount,triangles:w.triangleTests};};
+  const run=World=>{const log=[],w=new World(World===OldWorld?canonicalRayOracleData(d):d);let hit,error;try{hit=flat(w.ray(V(0,3,0),V(0,-1,0),factory(log)));}catch(e){error=[e.name,e.message];}return {hit,error,log,queries:w.queryCount,triangles:w.triangleTests};};
   assert.deepEqual(run(CurrentWorld),run(OldWorld));
  }
 });

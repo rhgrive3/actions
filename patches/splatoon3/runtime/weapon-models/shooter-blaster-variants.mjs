@@ -1,6 +1,7 @@
 // Source-row IDs are the canonical pinned 11.3.0 kit identities, not invented
 // main-catalogue IDs. These are standalone derived visuals, pending selection wiring.
 import { M } from './kit.mjs';
+import { FOLLOWUP_MODELS as NOZZLE_FINISHES } from './variants-nozzlenose-d-finish.mjs';
 import { MODELS as A } from './shooters.mjs';
 import { MODELS as B } from './shooters-b.mjs';
 import { MODELS as C } from './blasters.mjs';
@@ -16,6 +17,7 @@ function variant(baseId, sourceRow, name, article, palette, decorate, followsCan
     visualStatus: 'procedural-approximation-awaiting-multiview-review',
     ...(followsCan ? { animate: canAccessoryAnimation(base.animate) } : {}),
     build(freshFamilyDef) {
+      if (NOZZLE_FINISHES[sourceRow]) return NOZZLE_FINISHES[sourceRow].build(freshFamilyDef);
       const d = base.build(freshFamilyDef);
       fixedSurfaces(d, palette); decorate?.(d);
       d.variantSourceRow = sourceRow; d.baseModelId = baseId;
@@ -27,8 +29,8 @@ export const VARIANT_MODELS = Object.freeze({
   Shooter_First_01: variant('s3-shooter-first', 'Shooter_First_01', 'もみじシューター', 'Custom_Splattershot_Jr.', {}, starSticker, true),
   Shooter_Gravity_01: variant('s3-shooter-gravity', 'Shooter_Gravity_01', '.52ガロンデコ', '.52_Gal_Deco', {}, stones),
   Shooter_Blaze_02: variant('s3-shooter-blaze', 'Shooter_Blaze_02', 'プロモデラー彩', 'Colorz_Aerospray', { '#a8acb2':'#647cbb', '#6e737a':'#794c9f' }, d => colorRing(d)),
-  Shooter_Heavy_02: variant('s3-shooter-heavy', 'Shooter_Heavy_02', '.96ガロン爪', 'Clawz_.96_Gal', {}, d => paintPattern(d, ['#9d9a92'], ['#b89054','#3e3025'], 'spots')),
-  Shooter_TripleMiddle_02: variant('s3-shooter-triplemiddle', 'Shooter_TripleMiddle_02', 'H3リールガンSNAK', 'H-3_Nozzlenose_VIP-R', { '#2a3ec2':'#5c7850', '#2b43b8':'#5c7850', '#c9c8dc':'#809778' }, d => paintPattern(d,['#5c7850','#26282d'],['#607c4c','#354632'])),
+  Shooter_Heavy_02: variant('s3-shooter-heavy', 'Shooter_Heavy_02', '.96ガロン爪', 'Clawz_.96_Gal', {}, d => paintPattern(d, ['#babba7'], ['#b89054','#3e3025'], 'spots')),
+  Shooter_TripleMiddle_02: variant('s3-shooter-triplemiddle', 'Shooter_TripleMiddle_02', 'H3リールガンSNAK', 'H-3_Nozzlenose_VIP-R', { '#293b99':'#5c7850', '#364cb2':'#809778', '#2b43b8':'#5c7850' }, d => paintPattern(d,['#5c7850','#26282d'],['#607c4c','#354632'])),
   Blaster_Long_01: variant('s3-blaster-long', 'Blaster_Long_01', 'ロングブラスターカスタム', 'Custom_Range_Blaster', {}, plainSticker),
   Blaster_LightLong_01: variant('s3-blaster-lightlong', 'Blaster_LightLong_01', 'Rブラスターエリートデコ', 'Rapid_Blaster_Pro_Deco', { '#d0234f':'#3272be' }, plainSticker),
   Blaster_LightLong_02: variant('s3-blaster-lightlong', 'Blaster_LightLong_02', 'RブラスターエリートWNTR', 'Rapid_Blaster_Pro_WNT-R', { '#d0234f':'#b39c78', '#f5a21f':'#bfc3c7', '#d7d6cf':'#9a9e9c', '#bdbcb4':'#737b79' }, d => {
@@ -66,11 +68,11 @@ export const VARIANT_MODELS = Object.freeze({
   Shooter_Heavy_01: variant('s3-shooter-heavy', 'Shooter_Heavy_01', '.96ガロンデコ', '.96_Gal_Deco', {}, stones),
   Shooter_Long_01: variant('s3-shooter-long', 'Shooter_Long_01', 'ジェットスイーパーカスタム', 'Custom_Jet_Squelcher', {}, d => partitionInk(d, 'ink', '#ecd047')),
   Shooter_Long_02: variant('s3-shooter-long', 'Shooter_Long_02', 'ジェットスイーパーCOBR', 'Jet_Squelcher_COB-R', {}, d => paintPattern(d,['#0d6366','#0a4f52'],['#a0865b','#6c593c'])),
-  Shooter_QuickLong_01: variant('s3-shooter-quicklong', 'Shooter_QuickLong_01', 'スペースシューターコラボ', 'Annaki_Splattershot_Nova', { '#e9e22a':'#ac2858' }),
-  Shooter_TripleQuick_01: variant('s3-shooter-triplequick', 'Shooter_TripleQuick_01', 'L3リールガンD', 'L-3_Nozzlenose_D', { '#2a3ec2':'#93bce3', '#1e1f23':'#e6e9e9', '#c9c8dc':'#dee2eb' }),
+  Shooter_QuickLong_01: variant('s3-shooter-quicklong', 'Shooter_QuickLong_01', 'スペースシューターコラボ', 'Annaki_Splattershot_Nova', { '#d5dc28':'#ac2858' }),
+  Shooter_TripleQuick_01: variant('s3-shooter-triplequick', 'Shooter_TripleQuick_01', 'L3リールガンD', 'L-3_Nozzlenose_D', { '#293b99':'#93bce3', '#364cb2':'#dee2eb', '#202329':'#e6e9e9' }),
   Shooter_TripleMiddle_01: variant('s3-shooter-triplemiddle', 'Shooter_TripleMiddle_01', 'H3リールガンD', 'H-3_Nozzlenose_D', { '#2a3ec2':'#93bce3', '#2b43b8':'#93bce3', '#1e1f23':'#e6e9e9', '#26282d':'#e6e9e9', '#3b3d44':'#bbc4ce', '#c9c8dc':'#dee2eb' }),
   Shooter_TripleQuick_02: variant('s3-shooter-triplequick', 'Shooter_TripleQuick_02', 'L3リールガン箔', 'Glitterz_L-3_Nozzlenose', { '#2a3ec2':'#67c857', '#1e1f23':'#b7c7b0', '#c9c8dc':'#caa9c2', '#7ccfb8':'#eb923c' }, squidCharm, true),
-  Shooter_Flash_01: variant('s3-shooter-flash', 'Shooter_Flash_01', 'ボトルガイザーフォイル', 'Foil_Squeezer', { '#a85d2a':'#633b28', '#e5e2d8':'#c8a44e' }, greenFoil),
+  Shooter_Flash_01: variant('s3-shooter-flash', 'Shooter_Flash_01', 'ボトルガイザーフォイル', 'Foil_Squeezer', { '#b9401f':'#369777', '#e6e7da':'#c8a44e' }, greenFoil),
   Blaster_Middle_01: variant('blaster', 'Blaster_Middle_01', 'ホットブラスターカスタム', 'Custom_Blaster', { '#d5262b':'#eeece6' }),
   Blaster_Short_01: variant('s3-blaster-short', 'Blaster_Short_01', 'ノヴァブラスターネオ', 'Luna_Blaster_Neo', { '#e9e6df':'#22242b', '#d4d0c8':'#353840', '#55575c':'#eeece6' }, d => {
     recolor(d.parts.trigger.src, {'#2c2e33':'#eeece6'});

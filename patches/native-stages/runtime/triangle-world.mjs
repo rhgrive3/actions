@@ -51,7 +51,7 @@ export class TriangleWorld {
     const qx=sy*ez-sz*ey,qy=sz*ex-sx*ez,qz=sx*ey-sy*ex,v=(dir.x*qx+dir.y*qy+dir.z*qz)*inv;
     if(v<-.000001||u+v>1.000001)continue;
     const distance=(fx*qx+fy*qy+fz*qz)*inv;
-    if(distance<.00001||distance>best)continue;if(anyHit){if(!(origin.y+dir.y*distance<minHitY))return true;continue;}best=distance;id=t;bu=u;bv=v;
+    if(distance<.00001||distance>best||distance===best&&id>=0&&t>id)continue;if(anyHit){if(!(origin.y+dir.y*distance<minHitY))return true;continue;}best=distance;id=t;bu=u;bv=v;
    }
   }
   if(id<0)return null;
