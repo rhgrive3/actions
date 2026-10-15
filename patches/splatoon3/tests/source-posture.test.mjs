@@ -416,13 +416,49 @@ test('sourced ToHuman cannot generate a phantom carry while airborne or landing'
   assert.ok(landed.every(p => p.state === 'land' && p.carry === 0 && p.angle < 1e-10),
     'landing directly after emergence stays free of phantom carry');
   drive(api, ch, st, { speed: 6, frames: 90 });
-  assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 1,
-    'ordinary grounded walk regains its carry after the native landing clip');
+  assert.ok(api.posture.sourceCarryWeight(ch.sourceMotion.retarget) > 0.999,
+    'ordinary grounded walk gradually regains its carry after the native landing clip');
   assert.ok(carryAngle() > 0.01);
   ch.sourceMotion.playClip('Wait');
   drive(api, ch, st, { frames: 2 });
   assert.equal(api.posture.sourceCarryWeight(ch.sourceMotion.retarget), 0,
     'a manual source clip owns its own weapon');
   assert.ok(carryAngle() < 1e-10);
+  ch.dispose();
+});
+
+test('reacquires shooter carry without a grounded ToHuman weapon snap', async () => {
+  const api = await production(), ch = await rig(api), st = state(), samples = [];
+  api.posture.setSourcePostureEnabled(true);
+  const carryAngle = () => {
+    const q = new api.THREE.Quaternion();
+    api.posture.sourceCarryWeapon(ch.sourceMotion, q);
+    return q.angleTo(new api.THREE.Quaternion());
+  };
+  drive(api, ch, st, { frames: 90 });
+  st.form = 'squid';
+  drive(api, ch, st, { speed: 6, frames: 45 });
+  assert.equal(ch.sourceMotion.formKid, false);
+  st.form = 'kid';
+  drive(api, ch, st, { speed: 6, frames: 90, onFrame: () => {
+    const c = ch.sourceMotion;
+    samples.push({ state: c.state,
+      carry: api.posture.sourceCarryWeight(c.retarget), angle: carryAngle() });
+  } });
+  const toHuman = samples.filter(x => x.state === 'ToHuman');
+  assert.ok(toHuman.length > 0 && toHuman.every(x => x.carry === 0 && x.angle < 1e-10));
+  const moving = samples.filter(x => x.state === 'move');
+  assert.ok(moving.length >= 15, 'real source bank finishes ToHuman into ordinary movement');
+  assert.ok(moving[0].carry > 0 && moving[0].carry < 0.20,
+    'first grounded return must ease in, not apply the full shooter yaw in one frame');
+  let previous = 0, previousAngle = 0;
+  for (const x of moving.slice(0, 15)) {
+    assert.ok(x.carry >= previous - 1e-8 && x.carry - previous < 0.15,
+      'carry blend stays monotone and bounded at 60Hz');
+    assert.ok(x.angle >= previousAngle - 0.005 && x.angle - previousAngle < 0.03,
+      'effective weapon rotation must not jump at the clip boundary');
+    previous = x.carry; previousAngle = x.angle;
+  }
+  assert.ok(moving.at(-1).carry > 0.999, 'steady moving source carry reaches original full strength');
   ch.dispose();
 });
