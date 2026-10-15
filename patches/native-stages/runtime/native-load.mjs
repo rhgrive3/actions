@@ -60,7 +60,8 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   }else texture=new THREE.Texture(bitmap);
   texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;textures.set(file,texture);
  }};
- const results=await Promise.allSettled(Array.from({length:6},worker));const failed=results.find(r=>r.status==='rejected');
+ // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
+  const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));const failed=results.find(r=>r.status==='rejected');
  if(failed||signal?.aborted){for(const t of textures.values()){t.image?.close?.();t.dispose();}throw failed?.reason||new DOMException('Aborted','AbortError');}
  return textures;
 }
