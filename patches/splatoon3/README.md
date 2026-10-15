@@ -40,6 +40,8 @@
 | `runtime/flow.mjs` | フローの発動・延長・失効。強化量等は暫定設定 |
 | `runtime/scoring.mjs` | 壁を除く、露出した床の実面積による塗り判定 |
 | `runtime/death-blast.mjs` | やられ爆発の塗りを SplPlayer `DieBlastParam`（半径 5.0、周囲の飛沫 10 個・半径 1.0）に合わせる。飛沫の飛行は未模擬 |
+| `runtime/s3-ink-sheets.mjs` | 発射の瞬間のインク膜（シューター・シェルターは SplatoonSWEPs の MuzzleSplash、ストリンガーの螺旋の帯、ワイパーの振りの波）と、スクリュースロッシャーの弾（回転するねじれたインク膜）。表示のみ |
+| `runtime/s3-sweps-assets.mjs` | SplatoonSWEPs からそのまま取り込んだ muzzlesplash・inkring テクスチャ（α）（所有者の許可による） |
 | `runtime/s3-projectile-shapes.mjs` | シューター・シェルター・ストリンガー・ワイパー・スクリュー・エクスプロッシャー・オーバーフロッシャーの飛行中の弾の形（棒・紡錘・針・三日月板・螺旋・光点・透明な泡）。表示のみ。根拠は `reports/inkwave-s3-projectile-shapes-2026-10-15.md` |
 | `runtime/bomb-models.mjs` | ボム3種の見た目（スプラッシュ＝丸い三角錐、キューバン＝吸盤付きの缶、カーリング＝取っ手付きの黒い円筒と緑→赤ランプ）を投擲・ゴースト・手持ちに適用。表示のみ |
 | `runtime/ui.mjs`, `runtime/render.mjs` | 公開版のメニュー・影無効時の起動不具合を補正 |

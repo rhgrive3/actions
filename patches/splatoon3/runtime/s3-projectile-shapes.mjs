@@ -27,6 +27,7 @@
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from './alternate-weapon-kits-data.mjs';
 import { shotTailFrames } from './weapons-fidelity.mjs';
+import { createInkSheets, FIRE_INK, MACHINE_DRILL } from './s3-ink-sheets.mjs';
 
 const INSTALLED = Symbol.for('inkwave.s3.projectile-shapes.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
@@ -58,7 +59,6 @@ export const S3_SHAPE = Object.freeze({
   // slab follows the screenshot's stronger curve and chord.
   slashH: Object.freeze({ halfSpan: 1.32, bow: 0.2, depth: 0.5, thickness: 0.15 }),
   slashV: Object.freeze({ halfSpan: 1.95, bow: 0.9, depth: 0.8, thickness: 0.22 }),
-  machine: Object.freeze({ radius: 0.2, helixRadius: 0.24, beads: 7, beadSpacing: 0.12, spin: 24 }),
   explosher: Object.freeze({ radius: 0.24, sparkles: 28 }),
   bubble: Object.freeze({ core: 0.7, trailing: 3 }),
 });
@@ -275,7 +275,15 @@ function createRenderer(THREE, scene) {
   const bodyData = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BODY * 4), 4);
   bodyData.setUsage(THREE.DynamicDrawUsage);
   body.geometry.setAttribute('aBody', bodyData);
-  const slashMat = glossy(THREE, 's3-slash-1');
+  // Streaks run along the slab like the reference's poured-ink lines.
+  const slashMat = glossy(THREE, 's3-slash-2', sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vS3Local;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvS3Local = position;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vS3Local;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        { float f = vS3Local.z * 17.0 + vS3Local.y * 31.0 + sin(vS3Local.x * 2.3) * 1.3;
+          diffuseColor.rgb *= 0.84 + 0.2 * fract(sin(floor(f) * 12.9898) * 43758.5453) + 0.06 * sin(f * 6.2832); }`);
+  });
   const slashH = new THREE.InstancedMesh(crescentGeometry(THREE, S3_SHAPE.slashH), slashMat, MAX_SLASH);
   const slashV = new THREE.InstancedMesh(crescentGeometry(THREE, S3_SHAPE.slashV), slashMat, MAX_SLASH);
   const shell = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 24, 16), bubbleMaterial(THREE), MAX_SHELL);
@@ -302,11 +310,13 @@ function createRenderer(THREE, scene) {
   sparks.frustumCulled = false; sparks.visible = false; sparks.renderOrder = 3;
   sparks.onBeforeRender = (renderer, sc, camera, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : sparks.userData.count || 0; };
   scene.add(body, slashH, slashV, shell, core, sparks);
-  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize,
+  const sheets = createInkSheets(THREE, scene, { nearDither: NEAR_DITHER, rim: RIM });
+  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize, sheets, lastFire: { kind: '', x: 0, y: 0, z: 0, t: -1 },
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), s: new THREE.Vector3(),
     v: new THREE.Vector3(), v2: new THREE.Vector3(), f: new THREE.Vector3(), x: new THREE.Vector3(), y: new THREE.Vector3(),
     basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
     dispose() {
+      sheets.dispose();
       scene.remove(body, slashH, slashV, shell, core, sparks);
       for (const o of [body, slashH, slashV, shell, core, sparks]) { o.geometry.dispose(); o.material.dispose(); }
     } };
@@ -360,12 +370,11 @@ export function bodyParams(p, kind, sp) {
 }
 
 // Blob-mesh entries (glossy ink balls) appended inside the existing draw pass:
-// Machine globs and helix beads, Explosher globs (the Bloblobber core is a
+// Explosher globs (the Bloblobber core is a
 // true sphere in its own mesh: the native blob always tapers its back half).
 export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capacity, matrix, rotation, scale, dir, axis) {
   const list = system?.list;
   if (!list) return count;
-  const tmp = system._s3ShapeTmp || (system._s3ShapeTmp = { v: axis.clone(), r: axis.clone(), u: axis.clone() });
   const write = (at, radius, color, tail, wob, phase, look) => {
     if (count >= capacity) return;
     scale.setScalar(radius); matrix.compose(at, rotation, scale);
@@ -379,36 +388,42 @@ export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capac
   for (const p of list) {
     const kind = p.s3Shape;
     if (count >= capacity) break;
-    if (kind !== 'machine' && kind !== 'explosher') continue;
+    if (kind !== 'explosher') continue;
     if (!p.owner?.color || p.delay > 0) continue;
     const sp = direction(p, dir);
     rotation.setFromUnitVectors(axis, dir);
     const seed = p.seed || 0, ph = seed * 40 + p.age * 18;
     const grow = clamp(p.age * 20, 0.2, 1);
-    if (kind === 'explosher') {
-      const R = S3_SHAPE.explosher.radius * grow;
-      write(p.pos, R, p.owner.color, 1.15 + Math.min(0.3, sp * 0.006), 0.12, ph, [0.32, 3, 1, (seed * 43.98) % 6.2832]);
-    } else {
-      // Source DrawSizeParam: only the leading unit is visible (unit 1 is 0).
-      if (!(p.vis > 0)) continue;
-      const cfg = S3_SHAPE.machine, R = cfg.radius * grow;
-      write(p.pos, R, p.owner.color, 1.2 + Math.min(0.3, sp * 0.006), 0.05, ph, [0, 1, 1, seed]);
-      // two-strand corkscrew trailing the glob
-      if (Math.abs(dir.y) < 0.95) tmp.r.set(-dir.z, 0, dir.x).normalize(); else tmp.r.set(1, 0, 0);
-      tmp.u.crossVectors(dir, tmp.r);
-      const travel = p.start ? p.start.distanceTo(p.pos) : Infinity;
-      for (let strand = 0; strand < 2; strand++) for (let i = 1; i <= cfg.beads; i++) {
-        const back = i * cfg.beadSpacing + R * 0.6;
-        if (back > travel) break;
-        const k = i / cfg.beads, ang = -p.age * cfg.spin + i * 0.95 + strand * Math.PI + seed * 6.2832;
-        const hr = cfg.helixRadius * grow * (1 - 0.25 * k);
-        tmp.v.copy(p.pos).addScaledVector(dir, -back)
-          .addScaledVector(tmp.r, Math.cos(ang) * hr).addScaledVector(tmp.u, Math.sin(ang) * hr);
-        write(tmp.v, 0.055 * grow * (1 - 0.55 * k), p.owner.color, 1.15, 0.02, ph + i, [0, 1, 1, 0]);
-      }
-    }
+    const R = S3_SHAPE.explosher.radius * grow;
+    write(p.pos, R, p.owner.color, 1.15 + Math.min(0.3, sp * 0.006), 0.12, ph, [0.32, 3, 1, (seed * 43.98) % 6.2832]);
   }
   return count;
+}
+
+// One firing-ink burst per shot (one per Brella/Stringer volley), only for a
+// round seen within its first frames, so pooled reuse or a late first draw
+// never replays an old firing.
+function fireInk(R, p, kind, f, G, system) {
+  p.s3FireSeed = p.seed;
+  if (!(p.age < 4 / 60) || !p.start) return;
+  const time = Number.isFinite(G?.time) ? G.time : 0, last = R.lastFire;
+  if (last.kind === kind && Math.abs(last.t - (time - p.age)) < 0.02 &&
+      Math.hypot(last.x - p.start.x, last.y - p.start.y, last.z - p.start.z) < 0.08) return;
+  last.kind = kind; last.t = time - p.age; last.x = p.start.x; last.y = p.start.y; last.z = p.start.z;
+  const cam = G?.camera?.position;
+  if (cam && cam.distanceToSquared(p.start) > 1600) return;
+  let at = p.start, t0 = time - p.age, follow = null;
+  const cfg = FIRE_INK[kind];
+  if (cfg.pivotY != null && p.owner?.pos) {
+    // the swing wave hangs around the player, already mid-sweep at bullet birth
+    at = R.v.copy(p.owner.pos); at.y += cfg.pivotY; t0 -= 4 / 60;
+  } else if (cfg.style === 0 && typeof system?._muzzle === 'function' && p.owner?.character?.getMuzzle && p.owner.pos) {
+    // SWEPs sticks the splash to the muzzle attachment; rounds are born ahead of it
+    system._muzzle(p.owner, R.v);
+    if (R.v.distanceToSquared(p.start) < 4) { at = R.v; follow = p.owner; }
+  }
+  const burst = R.sheets.add(kind, at, f, p.owner.color, p.seed || 0, t0, follow);
+  if (burst) R.sheets.specks(G?.fx, burst);
 }
 
 export function drawS3Shapes(system, THREE, G) {
@@ -421,6 +436,12 @@ export function drawS3Shapes(system, THREE, G) {
     if (!kind || p.delay > 0 || !p.owner?.color) continue;
     const sp = direction(p, f);
     const color = p.owner.color;
+    if (FIRE_INK[kind] && p.s3FireSeed !== p.seed) fireInk(R, p, kind, f, G, system);
+    if (kind === 'machine' && p.vis > 0) {
+      // the round itself: a spinning twisted membrane, never drawn behind the muzzle
+      const travel = p.start ? p.start.distanceTo(p.pos) : MACHINE_DRILL.length;
+      R.sheets.drill(p.pos, f.clone(), color, p.seed || 0, (Number.isFinite(G?.time) ? G.time : 0), Math.min(MACHINE_DRILL.length, travel));
+    }
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') {
       if (nb >= MAX_BODY) continue;
       const b = bodyParams(p, kind, sp);
@@ -446,6 +467,14 @@ export function drawS3Shapes(system, THREE, G) {
       m.compose(p.pos, q, s);
       mesh.setMatrixAt(n, m); mesh.setColorAt(n, color);
       if (kind === 'slash-h') nh++; else nv++;
+      // a thinner second layer peels off behind the leading slab
+      if ((kind === 'slash-h' ? nh : nv) < MAX_SLASH) {
+        v.copy(p.pos).addScaledVector(f, -0.28 - 0.1 * born);
+        q2.setFromAxisAngle(Z, ((p.seed || 0) - 0.5) * 0.35); q.multiply(q2);
+        m.compose(v, q, s.multiplyScalar(0.82));
+        mesh.setMatrixAt(kind === 'slash-h' ? nh : nv, m); mesh.setColorAt(kind === 'slash-h' ? nh : nv, color);
+        if (kind === 'slash-h') nh++; else nv++;
+      }
     } else if (kind === 'bubble') {
       const r = drawRadius(p);
       if (ns < MAX_SHELL && r > 0) {
@@ -486,12 +515,19 @@ export function drawS3Shapes(system, THREE, G) {
   }
   bodyData.clearUpdateRanges(); bodyData.addUpdateRange(0, nb * 4); bodyData.needsUpdate = nb > 0;
   upload(body, nb); upload(slashH, nh); upload(slashV, nv); upload(shell, ns); upload(core, nc);
+  // SWEPs MuzzleSplash renders at the muzzle attachment every frame
+  for (const b of R.sheets.bursts) if (b.owner?.character?.getMuzzle && b.owner.pos) {
+    system._muzzle(b.owner, R.v2);
+    if (R.v2.distanceToSquared(b.at) < 4) b.at.copy(R.v2);
+    if (b.owner.aimDir?.lengthSq?.() > 1e-6) b.dir.copy(b.owner.aimDir).normalize();
+  }
+  const ink = R.sheets.draw(Number.isFinite(G?.time) ? G.time : 0, cam);
   R.sparks.visible = nk > 0; R.sparks.userData.count = nk; R.sparks.geometry.setDrawRange(0, nk);
   if (nk) {
     sparkPos.clearUpdateRanges(); sparkPos.addUpdateRange(0, nk * 3); sparkPos.needsUpdate = true;
     sparkSize.clearUpdateRanges(); sparkSize.addUpdateRange(0, nk); sparkSize.needsUpdate = true;
   }
-  return { body: nb, slashH: nh, slashV: nv, shell: ns, core: nc, sparkles: nk };
+  return { body: nb, slashH: nh, slashV: nv, shell: ns, core: nc, sparkles: nk, sheets: ink.sheets, drills: ink.drills };
 }
 
 // Classify every live projectile before the native pass (which skips
@@ -511,7 +547,7 @@ export function installS3ProjectileShapes(api) {
   };
   if (typeof clear === 'function') P.clear = function (...args) {
     const result = clear.apply(this, args);
-    if (this._s3Shapes) drawS3Shapes(this, THREE, G);
+    if (this._s3Shapes) { this._s3Shapes.sheets.clear(); drawS3Shapes(this, THREE, G); }
     return result;
   };
 }
