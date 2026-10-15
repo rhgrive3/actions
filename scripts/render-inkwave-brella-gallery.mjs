@@ -166,7 +166,11 @@ try {
         if(c?.open&&!c.launched&&ch.weapon.ps.bo>.9&&!sawOpen){sawOpen=true;shots.heldOpen=look(frame,'front');shots.heldOpenRear=look(frame,'back');shots.heldOpenSide=look(frame,'right');res.openFrame=frame;res.openRender=bench();}
         const handedOff = observeCanopyHandoff(canopyBefore, wasLaunched, c, a, id, scene);
         if(handedOff){sawLaunched=true;res.launchFrame=frame;res.launchOwnership={owner:true,weaponId:id,heldStateCleared:c===null,detachedName:canopyBefore.mesh.name,detachedInScene:true};}
-        if(handedOff&&heldCanopyHidden(ch.weapon)&&!sawHidden){sawHidden=true;shots.launched=look(frame,'front');res.hiddenFrame=frame;}
+        // Character.update can consume the native launch token on the next
+        // animation tick after Runner detaches the canopy. Require the real
+        // held mesh to become hidden after the validated handoff, rather than
+        // assuming both owners commit on the same source frame.
+        if(sawLaunched&&heldCanopyHidden(ch.weapon)&&!sawHidden){sawHidden=true;shots.launched=look(frame,'front');res.hiddenFrame=frame;}
         if(frame>firstEnd+10&&ch.weapon.parts.canopy.visible&&ch.weapon.ps.bo<.02&&!sawFolded){sawFolded=true;shots.folded=look(frame,'front');}
 
       }
