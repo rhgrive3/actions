@@ -6,7 +6,7 @@
     "source": 116,
     "emitted": 116,
     "skips": 0,
-    "controls": 61,
+    "controls": 68,
     "images": 56,
     "workRows": 40
   },
@@ -25,9 +25,9 @@
     },
     {
       "path": "capture-third-integration.mjs",
-      "sha256": "697102a71e70753b0aa0962a0b2f4cc351248085749ae43435479d807835da37",
-      "blob": "6edf87449f9ff6c3a988bd5eab505ce0afd60177",
-      "bytes": 12883
+      "sha256": "02be5a6b2babd5cb5d4bc58c2e1d00897346a99688318039ee2b395a9347beb0",
+      "blob": "97b4929b3d552487c89138666b275b0d6a5e86fc",
+      "bytes": 13358
     },
     {
       "path": "third-capture-integrity.test.mjs",
@@ -49,15 +49,15 @@
     },
     {
       "path": "capture-b-third.mjs",
-      "sha256": "4f024abc8a0b3334d375e685867804c778ad2edd164c6ceb2a034456ff3cd5fc",
-      "blob": "f70bd8fb97a061b4b35e07c798cadb099dedcc25",
-      "bytes": 11990
+      "sha256": "86ef69b22984ffb42198ae8c5a2a4998c10c72d42f8026e72c48b62de19ac9bd",
+      "blob": "8ae1f958f37c6d6729a9d73bc6807639bea8eba9",
+      "bytes": 13499
     },
     {
       "path": "capture-b-third.test.mjs",
-      "sha256": "5e9468f8bbc1c87646d4bd642e8ddce5239e1e49a94e2ed8f238023751c4bb06",
-      "blob": "2833e1f24c6d91665a6d8d603241cc7b32467aa6",
-      "bytes": 4558
+      "sha256": "b9015460d7f6417603eb2a2fc56bd810d5d3ee6a954699ee25d1cf905d510309",
+      "blob": "ccf0ee3c93a0800f652048c1fa974b68d56de1f6",
+      "bytes": 5748
     },
     {
       "path": "capture-c-third.mjs",
@@ -145,9 +145,27 @@
     },
     {
       "path": ".github/workflows/third-weapon-acceptance.yml",
-      "sha256": "0c83b4c65596acdc1acb2b58200600eb6584502b9e0c43115e0e3e9a9be8af72",
-      "blob": "d79b012e26d63f628e88e75ad7df374bafeaf48d",
-      "bytes": 2652
+      "sha256": "489ec79a6616ebd4580fdb44553247f9b4be80ce2b4e592ec97fe6769679b10c",
+      "blob": "bd1ac7766ab57c1a2e60f754824d1ba68b7a2fe0",
+      "bytes": 2736
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "71c3164c74a6a828b5877d23a3a4ae5391b6ee1bfc2b2a0e0b9332df6ea76c8d",
+      "blob": "3dec005d102deab897a74f136a69cc8fc9fac8df",
+      "bytes": 1231
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "014b0ab28ad4d73c96ef4fa8014a1f01772fde35a363924b1a731559a398e473",
+      "blob": "bb68c8052f9291e63ed3eec222bc432ab8ff6db3",
+      "bytes": 2104
+    },
+    {
+      "path": "capture-checkpoint-order.test.mjs",
+      "sha256": "cba3c49767e7f53937f3c0e9d399f7dd763c10a2f523e40bdff4d5d8b85d6f98",
+      "blob": "9359e45f1dc1375701c655427b54fd5bdb3658a2",
+      "bytes": 1404
     }
   ]
 }

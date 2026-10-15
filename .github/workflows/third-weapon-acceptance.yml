@@ -31,7 +31,7 @@ jobs:
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
           npx playwright install --with-deps chromium
       - name: Portable fail-closed capture controls
-        run: node --test diagnostic/build-binding.test.mjs diagnostic/third-capture-integrity.test.mjs diagnostic/variant-plan.test.mjs diagnostic/third-capture-contract.test.mjs diagnostic/native-work-controls.test.mjs diagnostic/capture-b-third.test.mjs diagnostic/capture-a-third.test.mjs diagnostic/capture-c-third.test.mjs
+        run: node --test diagnostic/build-binding.test.mjs diagnostic/third-capture-integrity.test.mjs diagnostic/variant-plan.test.mjs diagnostic/third-capture-contract.test.mjs diagnostic/native-work-controls.test.mjs diagnostic/capture-b-third.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/capture-checkpoint-order.test.mjs diagnostic/capture-a-third.test.mjs diagnostic/capture-c-third.test.mjs
       - name: Exact candidate source gates
         run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --out evidence --mode source
       - name: One shared production emitted build
