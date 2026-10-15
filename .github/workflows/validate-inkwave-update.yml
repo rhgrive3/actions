@@ -157,6 +157,8 @@ jobs:
         run: node --test tests/ink-flight/model.test.mjs
       - name: Verify cancelled native texture ownership
         run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-texture-cancellation.test.mjs
+      - name: Verify cancelled native world preparation
+        run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-world-cancellation.test.mjs
       - name: Verify native BVH query lifetime and collision parity
         run: node --experimental-vm-modules --test patches/native-stages/tests/bvh-query-lifetime.test.mjs patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/vertical-slab-parity.test.mjs
       - name: Verify deterministic network replication
