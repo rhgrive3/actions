@@ -810,7 +810,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.carry=Math.max(0,s.carry-DT);
       if(s.stuck){s.fuse-=DT;if(s.fuse<=EPS){explosion(this,p,d.b.DetonationParam.BlastParam);return true;}continue;}
       const travelBefore=s.travel;
+      this.projectileVisuals?.beginPhysicsStep(p);
       advance(p);
+      this.projectileVisuals?.recordPhysicsPoint(p,p.age-DT);
       const shapes=lobes(p),len=p.prev.distanceTo(p.pos);
       const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
       let world=s.hit;world.hit=false;

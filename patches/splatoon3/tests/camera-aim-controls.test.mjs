@@ -172,7 +172,13 @@ test('camera final pass fails closed on incompatible/duplicate upstream anchors'
   assert.throws(()=>adaptCameraAimControls('src/game/player.js',''),/missing/);
   assert.equal(adaptCameraAimControls('src/game/actor.js','unchanged'),'unchanged');
   const s=fs.readFileSync(new URL('../../../scripts/inkwave-source-composition.mjs',import.meta.url),'utf8');
-  assert.ok(s.indexOf('return adaptCameraAimControls')>s.indexOf('code = adaptRange'));
+  const range=s.indexOf('code = adaptRange');
+  const visuals=s.indexOf('code = adaptProjectileVisuals');
+  const camera=s.indexOf('return adaptCameraAimControls');
+  assert.ok(range>=0&&visuals>range,'VFX observes the composed range and gameplay adapters');
+  assert.ok(camera>visuals,'the fail-closed camera and aim pass remains terminal after presentation VFX');
+  assert.equal((s.match(/return adaptCameraAimControls\(/g)||[]).length,1,
+    'one terminal camera composition owns its fail-closed anchor');
 });
 
 test('same-tick optical origin cannot rotate through a nearby wall before the render step',async()=>{

@@ -45,9 +45,16 @@ try {
    const eligible=G.projectiles.list.filter(p=>p._inkVolumeRecipe&&!p._qualityDead&&p.delay<=0);
    const snapshot=p=>[p.wid,p.type,p.age,p.delay,p.damage,p.life,p.radius,p.size,p.grav,p.drag,p.pos.toArray(),p.vel.toArray(),p.seed,JSON.stringify(p.inkMeta)];
    const before=JSON.stringify(G.projectiles.list.map(snapshot));G.projectiles._draw();const after=JSON.stringify(G.projectiles.list.map(snapshot));
-   window.volumeHeads=eligible;return {id,vertical,ticks,eligible:eligible.length,recipes:eligible.map(p=>p._inkVolumeRecipe),metrics:{...e.metrics},authorityUnchanged:before===after,calls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,positions:eligible.map(p=>p.pos.toArray())};
+   const visuals=G.projectiles.projectileVisuals,historyOwned=eligible.filter(p=>visuals?.handles(p)).length;
+   window.volumeHeads=eligible;return {id,vertical,ticks,eligible:eligible.length,recipes:eligible.map(p=>p._inkVolumeRecipe),metrics:{...e.metrics},history:{owned:historyOwned,visible:!!visuals?.mesh?.visible,triangles:visuals?.stats?.triangles||0,indices:visuals?.geometry?.drawRange?.count||0},authorityUnchanged:before===after,calls:G.renderer.info.render.calls,triangles:G.renderer.info.render.triangles,positions:eligible.map(p=>p.pos.toArray())};
   },{id,vertical});
-  assert(data.eligible>0,'native action emitted volume heads: '+label);assert(data.authorityUnchanged);assert(data.metrics.active>0);assert.equal(data.metrics.overflow,0,'bounded native volley fits: '+label);
+  assert(data.eligible>0,'native action emitted volume heads: '+label);assert(data.authorityUnchanged);
+  if(data.history.owned){
+   assert.equal(data.history.owned,data.eligible,'one presentation backend per native volley: '+label);
+   assert(data.history.visible&&data.history.triangles>0&&data.history.indices===data.history.triangles*3,'history-owned native heads have visible uploaded geometry: '+label);
+   assert.equal(data.metrics.active,0,'history-owned bodies must not duplicate the volume draw: '+label);
+  }else assert(data.metrics.active>0,'native volume backend must draw every retained volume case: '+label);
+  assert.equal(data.metrics.overflow,0,'bounded native volley fits: '+label);
   if(vertical)assert(data.recipes.every(x=>x==='roller-vertical'),'jump + fire must select actual vertical mode');
   assert(data.recipes.every(x=>x===data.recipes[0]));await page.screenshot({path:path.join(out,label+'-game.png')});
   // Render the very same native heads, with their original positions/data,
