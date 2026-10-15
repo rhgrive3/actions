@@ -1,3 +1,4 @@
+import { makeUiTranslator, UI_JA, UI_EN } from '../runtime/ui-strings.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -13,7 +14,7 @@ for (const lang of ['ja', 'en']) test(`composed game dictionary translates ranke
   await module.link(spec => {
     const exports = spec.includes('config')
       ? { WEAPONS: {}, SUB: {}, SPECIALS: {}, MAPS: [], DIFFICULTY: {}, TEAM_PALETTES: [], COLORBLIND_PALETTE: {}, TEAM_NAMES: [] }
-      : spec.includes('device') ? { touchPrimary: false } : {};
+      : spec.includes('device') ? { touchPrimary: false } : spec.includes('ui-strings') ? { makeUiTranslator, UI_JA, UI_EN } : {};
     return new vm.SyntheticModule(Object.keys(exports), function () {
       for (const [key, value] of Object.entries(exports)) this.setExport(key, value);
     }, { context });

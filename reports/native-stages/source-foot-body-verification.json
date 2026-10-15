@@ -1,0 +1,1054 @@
+{
+  "schema": 1,
+  "status": "qualified-ready",
+  "runtimeCommit": "8a3e8f4da6ac859f0b8f769bc29d5110c99a10d3",
+  "composedCommit": "8fcace3f5966fbfb8793899fae497244d9ce6876",
+  "acceptedFoundation": "3f9d0e544bd22f10bf65ef2d14abea0fc9f55bcb",
+  "main": "18ce7b6c8b4c612f289787332b6be65862f34bea",
+  "source": {
+    "scope": "initial captured source contact and real Actor/Character _resolve component; no full Game or internal correction-path assertion",
+    "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+    "sourceBuffers": {
+      "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+      "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+      "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+      "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+      "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+      "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+      "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+      "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+      "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+      "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+    },
+    "textures": {
+      "count": 237,
+      "manifestSha256": "c7a9e20ee1413e09818260910f6c104c31c6a3eb3f93694367280a21ecd5b7b5"
+    },
+    "results": [
+      {
+        "enabled": false,
+        "position": [
+          -13.550256052754355,
+          0.009999999776482582,
+          -21.346448012436802
+        ],
+        "velocity": [
+          0.18782921276407266,
+          0,
+          0.022978370418725746
+        ],
+        "groundBlock": 28955,
+        "bodyFitsResolver": false,
+        "lands": 1,
+        "calls": [
+          {
+            "start": [
+              -13.550661417211382,
+              -0.08040773048033192,
+              -21.33920497028435
+            ],
+            "end": [
+              -13.550256052754355,
+              -0.08141570194905008,
+              -21.346448012436802
+            ],
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45
+          }
+        ]
+      },
+      {
+        "enabled": true,
+        "position": [
+          -13.550254890964137,
+          0.009999999776482582,
+          -21.35031539446806
+        ],
+        "velocity": [
+          0.18783609868561274,
+          0,
+          5.6427355848327754e-05
+        ],
+        "groundBlock": 28955,
+        "bodyFitsResolver": true,
+        "lands": 1,
+        "calls": [
+          {
+            "start": [
+              -13.550661417211382,
+              -0.08040773048033192,
+              -21.33920497028435
+            ],
+            "end": [
+              -13.550256052754355,
+              -0.08141570194905008,
+              -21.346448012436802
+            ],
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45
+          },
+          {
+            "start": [
+              -13.550256052754355,
+              0.009999999776482582,
+              -21.346448012436802
+            ],
+            "end": [
+              -13.550254890964137,
+              0.009999999776482582,
+              -21.35031539446806
+            ],
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45
+          }
+        ]
+      }
+    ]
+  },
+  "builds": {
+    "baselinePrivate": {
+      "path": "/workspace/stage-worktrees/native-grounded-body-baseline/_site-native-grounded-body-baseline",
+      "contentHash": "4982d2e45213f780a428b8c31d17c84dd308d41213fc9487cd45396c2e766d28",
+      "nativeRuntimeSha256": "f8c02cf920b0868bbcd02da7a159390e70ffcfbc1ddcbb93f1b26aa323641084",
+      "artifactRevision": "b6f0ea505813aa095db9b46058bd5d78cceb82e53f2a8a427afc28e193622ff1"
+    },
+    "candidatePrivate": {
+      "path": "/workspace/stage-worktrees/native-grounded-body-ship-context/_site-native-grounded-body-candidate",
+      "contentHash": "5e3e46316d100c02f5c7a54e0d69c1ce2297f3ae8078ac75f49cc313b3e7873c",
+      "nativeRuntimeSha256": "68c3c8f49c99ea2aff2d5b6e43200a65cee9d837daa245e1a85e9e449cf84604",
+      "artifactRevision": "fa20a5bb0024fa6b4344270a4bd10a62e0db9446c79072aeb32d829d571ca50b"
+    },
+    "candidatePublic": {
+      "path": "/workspace/stage-worktrees/native-grounded-body/_site-native-grounded-body-public",
+      "contentHash": "ea625f6da84731aac12478cc6b449c157f33d00ae0297656aa8fe7096ff483f5",
+      "nativeRuntimeSha256": "aad684c840045e149f20e5eb645761136b478458fa7e285d0d789be4d1aaac80",
+      "artifactRevision": "b98fdcfe435c7300ad938470e9225c99a38f0e8488d919e5a9108c9fe735b070"
+    }
+  },
+  "compiledModules": {
+    "patches/native-stages/runtime/engine.mjs": {
+      "private": "ffcda70600e5ed1943c168087ee984193571075fcc034a132fad656313e7f442",
+      "public": "ffcda70600e5ed1943c168087ee984193571075fcc034a132fad656313e7f442",
+      "same": true
+    },
+    "src/game/actor.js": {
+      "private": "aa89fb26de0225cd5e5893db27ac73e97f4024defee247ac4bebd77e4afdfb28",
+      "public": "aa89fb26de0225cd5e5893db27ac73e97f4024defee247ac4bebd77e4afdfb28",
+      "same": true
+    },
+    "src/game/bots.js": {
+      "private": "e600d26cca6ca1480d09789c1054978907c25613e439ae9becdf451bf9a556a3",
+      "public": "e600d26cca6ca1480d09789c1054978907c25613e439ae9becdf451bf9a556a3",
+      "same": true
+    },
+    "patches/splatoon3/runtime/movement.mjs": {
+      "private": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+      "public": "db2958ca6eaaf4e52fa9957eb79722d7c4c4ff9446163e784969f507ba815ba6",
+      "same": true
+    },
+    "patches/splatoon3/runtime/ranked/bots.mjs": {
+      "private": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04",
+      "public": "9736705067695833b6a6dca2fa2d6ecf72e8abc6c9c2a7013a4e3c00b1aa3f04",
+      "same": true
+    },
+    "patches/splatoon3/runtime/ranked/clams.mjs": {
+      "private": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905",
+      "public": "08c05e4f90bbe3ee93d22d70fd545f813423492fd4e95d323650b143ae1a3905",
+      "same": true
+    },
+    "patches/splatoon3/runtime/install.mjs": {
+      "private": "6e00d427e473e158e38ad7d67c6af6b96bf1fa1b469086741a24bf00c25bcc94",
+      "public": "6e00d427e473e158e38ad7d67c6af6b96bf1fa1b469086741a24bf00c25bcc94",
+      "same": true
+    }
+  },
+  "nativePhysicsSha256": "a27257d80d6004c670588561498da67cfc9c85decd7e0fbe24a8ba2ffcffe311",
+  "movementAdapterSha256": "001f0ab77bdeea04dfc9775534949abd92e216cb9b3a5f8658a320d6a1a54f64",
+  "game": {
+    "baseline": {
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "baseline": true,
+      "results": [
+        {
+          "renderHz": 30,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "ticks": 30,
+          "profile": {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          "start": {
+            "position": [
+              -13.5,
+              0.01,
+              -21.8
+            ],
+            "triangle": 64037,
+            "sourceObject": "Fld_Twist00_Decal00_Bolts10_1__Decal00"
+          },
+          "input": {
+            "move": [
+              0,
+              0,
+              0.2
+            ],
+            "jumpHeldFixedTicks": 1,
+            "squid": false
+          },
+          "intrusions": [
+            {
+              "tick": 29,
+              "position": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "velocity": [
+                0.012681736940785879,
+                0,
+                0.0018741274991346257
+              ],
+              "profile": {
+                "radius": 0.35,
+                "lift": 0.35,
+                "height": 1.45,
+                "skipGrates": false
+              },
+              "lastBody": {
+                "before": [
+                  -13.500016785164435,
+                  -0.025879051395738872,
+                  -21.340300302189835
+                ],
+                "resolved": [
+                  -13.499817877164746,
+                  -0.026369220102646064,
+                  -21.349755841280494
+                ],
+                "fits": true,
+                "contacts": {
+                  "wall": true,
+                  "ground": false,
+                  "ceiling": false,
+                  "wallBlock": 13396,
+                  "groundBlock": -1
+                }
+              },
+              "ground": {
+                "y": 0.009999999776482527,
+                "block": 28955,
+                "face": 28955,
+                "normal": [
+                  0,
+                  1,
+                  0
+                ]
+              }
+            }
+          ],
+          "raised": [
+            {
+              "tick": 29,
+              "position": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "lastBody": {
+                "before": [
+                  -13.500016785164435,
+                  -0.025879051395738872,
+                  -21.340300302189835
+                ],
+                "resolved": [
+                  -13.499817877164746,
+                  -0.026369220102646064,
+                  -21.349755841280494
+                ],
+                "fits": true,
+                "contacts": {
+                  "wall": true,
+                  "ground": false,
+                  "ceiling": false,
+                  "wallBlock": 13396,
+                  "groundBlock": -1
+                }
+              },
+              "fit": false
+            }
+          ],
+          "coupling": [],
+          "bodyCalls": 30,
+          "end": [
+            -13.499713595276832,
+            0.009999999776482582,
+            -21.35030021148834
+          ],
+          "alive": true,
+          "grounded": true,
+          "lands": 1,
+          "jumpSerial": 1,
+          "sourceBuffers": {
+            "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+            "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+            "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+            "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+            "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+            "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+            "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+            "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+            "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+            "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+          },
+          "unchanged": {
+            "flags": true,
+            "objectIds": true,
+            "nodes": true,
+            "order": true,
+            "normals": true,
+            "vertices": true,
+            "indices": true,
+            "triangleFace": true,
+            "triangles": true,
+            "mask": true
+          },
+          "gearAP": [],
+          "actors": 8,
+          "bots": 7,
+          "scope": "ordinary controlled inputs after original source-supported setup; actual fixed Game/Actor/Character; no pose/velocity/ink writes after setup, no internal collision-correction trajectory claim"
+        },
+        {
+          "renderHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "ticks": 29,
+          "profile": {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          "start": {
+            "position": [
+              -13.5,
+              0.01,
+              -21.8
+            ],
+            "triangle": 64037,
+            "sourceObject": "Fld_Twist00_Decal00_Bolts10_1__Decal00"
+          },
+          "input": {
+            "move": [
+              0,
+              0,
+              0.2
+            ],
+            "jumpHeldFixedTicks": 1,
+            "squid": false
+          },
+          "intrusions": [
+            {
+              "tick": 29,
+              "position": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "velocity": [
+                0.012681736940785879,
+                0,
+                0.0018741274991346257
+              ],
+              "profile": {
+                "radius": 0.35,
+                "lift": 0.35,
+                "height": 1.45,
+                "skipGrates": false
+              },
+              "lastBody": {
+                "before": [
+                  -13.500016785164435,
+                  -0.025879051395738872,
+                  -21.340300302189835
+                ],
+                "resolved": [
+                  -13.499817877164746,
+                  -0.026369220102646064,
+                  -21.349755841280494
+                ],
+                "fits": true,
+                "contacts": {
+                  "wall": true,
+                  "ground": false,
+                  "ceiling": false,
+                  "wallBlock": 13396,
+                  "groundBlock": -1
+                }
+              },
+              "ground": {
+                "y": 0.009999999776482527,
+                "block": 28955,
+                "face": 28955,
+                "normal": [
+                  0,
+                  1,
+                  0
+                ]
+              }
+            }
+          ],
+          "raised": [
+            {
+              "tick": 29,
+              "position": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "lastBody": {
+                "before": [
+                  -13.500016785164435,
+                  -0.025879051395738872,
+                  -21.340300302189835
+                ],
+                "resolved": [
+                  -13.499817877164746,
+                  -0.026369220102646064,
+                  -21.349755841280494
+                ],
+                "fits": true,
+                "contacts": {
+                  "wall": true,
+                  "ground": false,
+                  "ceiling": false,
+                  "wallBlock": 13396,
+                  "groundBlock": -1
+                }
+              },
+              "fit": false
+            }
+          ],
+          "coupling": [],
+          "bodyCalls": 29,
+          "end": [
+            -13.499817877164746,
+            0.009999999776482527,
+            -21.349755841280494
+          ],
+          "alive": true,
+          "grounded": true,
+          "lands": 1,
+          "jumpSerial": 1,
+          "sourceBuffers": {
+            "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+            "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+            "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+            "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+            "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+            "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+            "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+            "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+            "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+            "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+          },
+          "unchanged": {
+            "flags": true,
+            "objectIds": true,
+            "nodes": true,
+            "order": true,
+            "normals": true,
+            "vertices": true,
+            "indices": true,
+            "triangleFace": true,
+            "triangles": true,
+            "mask": true
+          },
+          "gearAP": [],
+          "actors": 8,
+          "bots": 7,
+          "scope": "ordinary controlled inputs after original source-supported setup; actual fixed Game/Actor/Character; no pose/velocity/ink writes after setup, no internal collision-correction trajectory claim"
+        },
+        {
+          "renderHz": 120,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "ticks": 29,
+          "profile": {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          "start": {
+            "position": [
+              -13.5,
+              0.01,
+              -21.8
+            ],
+            "triangle": 64037,
+            "sourceObject": "Fld_Twist00_Decal00_Bolts10_1__Decal00"
+          },
+          "input": {
+            "move": [
+              0,
+              0,
+              0.2
+            ],
+            "jumpHeldFixedTicks": 1,
+            "squid": false
+          },
+          "intrusions": [
+            {
+              "tick": 29,
+              "position": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "velocity": [
+                0.012681736940785879,
+                0,
+                0.0018741274991346257
+              ],
+              "profile": {
+                "radius": 0.35,
+                "lift": 0.35,
+                "height": 1.45,
+                "skipGrates": false
+              },
+              "lastBody": {
+                "before": [
+                  -13.500016785164435,
+                  -0.025879051395738872,
+                  -21.340300302189835
+                ],
+                "resolved": [
+                  -13.499817877164746,
+                  -0.026369220102646064,
+                  -21.349755841280494
+                ],
+                "fits": true,
+                "contacts": {
+                  "wall": true,
+                  "ground": false,
+                  "ceiling": false,
+                  "wallBlock": 13396,
+                  "groundBlock": -1
+                }
+              },
+              "ground": {
+                "y": 0.009999999776482527,
+                "block": 28955,
+                "face": 28955,
+                "normal": [
+                  0,
+                  1,
+                  0
+                ]
+              }
+            }
+          ],
+          "raised": [
+            {
+              "tick": 29,
+              "position": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "lastBody": {
+                "before": [
+                  -13.500016785164435,
+                  -0.025879051395738872,
+                  -21.340300302189835
+                ],
+                "resolved": [
+                  -13.499817877164746,
+                  -0.026369220102646064,
+                  -21.349755841280494
+                ],
+                "fits": true,
+                "contacts": {
+                  "wall": true,
+                  "ground": false,
+                  "ceiling": false,
+                  "wallBlock": 13396,
+                  "groundBlock": -1
+                }
+              },
+              "fit": false
+            }
+          ],
+          "coupling": [],
+          "bodyCalls": 29,
+          "end": [
+            -13.499817877164746,
+            0.009999999776482527,
+            -21.349755841280494
+          ],
+          "alive": true,
+          "grounded": true,
+          "lands": 1,
+          "jumpSerial": 1,
+          "sourceBuffers": {
+            "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+            "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+            "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+            "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+            "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+            "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+            "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+            "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+            "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+            "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+          },
+          "unchanged": {
+            "flags": true,
+            "objectIds": true,
+            "nodes": true,
+            "order": true,
+            "normals": true,
+            "vertices": true,
+            "indices": true,
+            "triangleFace": true,
+            "triangles": true,
+            "mask": true
+          },
+          "gearAP": [],
+          "actors": 8,
+          "bots": 7,
+          "scope": "ordinary controlled inputs after original source-supported setup; actual fixed Game/Actor/Character; no pose/velocity/ink writes after setup, no internal collision-correction trajectory claim"
+        }
+      ],
+      "errors": [],
+      "buildContentHash": "4982d2e45213f780a428b8c31d17c84dd308d41213fc9487cd45396c2e766d28"
+    },
+    "candidate": {
+      "sourceSha256": "8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9",
+      "baseline": false,
+      "results": [
+        {
+          "renderHz": 30,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "ticks": 150,
+          "profile": {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          "start": {
+            "position": [
+              -13.5,
+              0.01,
+              -21.8
+            ],
+            "triangle": 64037,
+            "sourceObject": "Fld_Twist00_Decal00_Bolts10_1__Decal00"
+          },
+          "input": {
+            "move": [
+              0,
+              0,
+              0.2
+            ],
+            "jumpHeldFixedTicks": 1,
+            "squid": false
+          },
+          "intrusions": [],
+          "raised": [],
+          "coupling": [
+            {
+              "tick": 29,
+              "before": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "after": [
+                -13.499817713622507,
+                0.009999999776482582,
+                -21.350300242766263
+              ],
+              "supported": true,
+              "bodyFits": true,
+              "foot": {
+                "y": 0.009999999776482582,
+                "block": 28955,
+                "face": 28955
+              }
+            }
+          ],
+          "bodyCalls": 151,
+          "end": [
+            -13.49893063844512,
+            0.009999999776482582,
+            -21.350299976282304
+          ],
+          "alive": true,
+          "grounded": true,
+          "lands": 1,
+          "jumpSerial": 1,
+          "sourceBuffers": {
+            "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+            "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+            "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+            "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+            "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+            "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+            "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+            "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+            "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+            "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+          },
+          "unchanged": {
+            "flags": true,
+            "objectIds": true,
+            "order": true,
+            "nodes": true,
+            "normals": true,
+            "triangleFace": true,
+            "indices": true,
+            "vertices": true,
+            "triangles": true,
+            "mask": true
+          },
+          "gearAP": [],
+          "actors": 8,
+          "bots": 7,
+          "scope": "ordinary controlled inputs after original source-supported setup; actual fixed Game/Actor/Character; no pose/velocity/ink writes after setup, no internal collision-correction trajectory claim"
+        },
+        {
+          "renderHz": 60,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "ticks": 150,
+          "profile": {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          "start": {
+            "position": [
+              -13.5,
+              0.01,
+              -21.8
+            ],
+            "triangle": 64037,
+            "sourceObject": "Fld_Twist00_Decal00_Bolts10_1__Decal00"
+          },
+          "input": {
+            "move": [
+              0,
+              0,
+              0.2
+            ],
+            "jumpHeldFixedTicks": 1,
+            "squid": false
+          },
+          "intrusions": [],
+          "raised": [],
+          "coupling": [
+            {
+              "tick": 29,
+              "before": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "after": [
+                -13.499817713622507,
+                0.009999999776482582,
+                -21.350300242766263
+              ],
+              "supported": true,
+              "bodyFits": true,
+              "foot": {
+                "y": 0.009999999776482582,
+                "block": 28955,
+                "face": 28955
+              }
+            }
+          ],
+          "bodyCalls": 151,
+          "end": [
+            -13.49893063844512,
+            0.009999999776482582,
+            -21.350299976282304
+          ],
+          "alive": true,
+          "grounded": true,
+          "lands": 1,
+          "jumpSerial": 1,
+          "sourceBuffers": {
+            "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+            "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+            "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+            "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+            "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+            "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+            "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+            "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+            "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+            "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+          },
+          "unchanged": {
+            "flags": true,
+            "objectIds": true,
+            "order": true,
+            "nodes": true,
+            "normals": true,
+            "triangleFace": true,
+            "indices": true,
+            "vertices": true,
+            "triangles": true,
+            "mask": true
+          },
+          "gearAP": [],
+          "actors": 8,
+          "bots": 7,
+          "scope": "ordinary controlled inputs after original source-supported setup; actual fixed Game/Actor/Character; no pose/velocity/ink writes after setup, no internal collision-correction trajectory claim"
+        },
+        {
+          "renderHz": 120,
+          "physicsIntervals": [
+            0.016666666666666666
+          ],
+          "ticks": 150,
+          "profile": {
+            "radius": 0.35,
+            "lift": 0.35,
+            "height": 1.45,
+            "skipGrates": false
+          },
+          "start": {
+            "position": [
+              -13.5,
+              0.01,
+              -21.8
+            ],
+            "triangle": 64037,
+            "sourceObject": "Fld_Twist00_Decal00_Bolts10_1__Decal00"
+          },
+          "input": {
+            "move": [
+              0,
+              0,
+              0.2
+            ],
+            "jumpHeldFixedTicks": 1,
+            "squid": false
+          },
+          "intrusions": [],
+          "raised": [],
+          "coupling": [
+            {
+              "tick": 29,
+              "before": [
+                -13.499817877164746,
+                0.009999999776482527,
+                -21.349755841280494
+              ],
+              "after": [
+                -13.499817713622507,
+                0.009999999776482582,
+                -21.350300242766263
+              ],
+              "supported": true,
+              "bodyFits": true,
+              "foot": {
+                "y": 0.009999999776482582,
+                "block": 28955,
+                "face": 28955
+              }
+            }
+          ],
+          "bodyCalls": 151,
+          "end": [
+            -13.49893063844512,
+            0.009999999776482582,
+            -21.350299976282304
+          ],
+          "alive": true,
+          "grounded": true,
+          "lands": 1,
+          "jumpSerial": 1,
+          "sourceBuffers": {
+            "flags": "0286555b6144d71027c296e00d9579e256ad83109a5e47764ab30aea0faaec5c",
+            "objectIds": "9fa6232566c10a72bbd4f146dd7950ba83fef8d4768ac2e29f03b8d8269a140e",
+            "order": "fe65ca8b84e0878e0f6315175a7e2aa460aaf4afefea78c4962013f9365dc7e9",
+            "nodes": "dbbab56b93fa7f513a7d6c8df21f1a8cd51ff2f199974def214cb9b2a211bc4d",
+            "normals": "f88872dd7a5916d6ecefc01d81ee52c5c3250dd80b1bb8d9b42649ba3d3bd1ee",
+            "triangleFace": "bc458f547e499dbc97dff4f6138200123485f8fe6684c6414c73c1a328b68ccb",
+            "indices": "aba91206edcca4a613b536a905453649089848dd3164a39a4184067896cd9f1b",
+            "vertices": "25bc00a46b88933a4387a565c1a2c18274b415a3349a8d7cadcd7d4e046bcbde",
+            "triangles": "d11672d1ed52846b9728df11ba0af00262c201060b08aa53309e15f89f865859",
+            "mask": "20eded50871082851cf21f07d2fbc35a790289382252b580072db07467cbd097"
+          },
+          "unchanged": {
+            "flags": true,
+            "objectIds": true,
+            "order": true,
+            "nodes": true,
+            "normals": true,
+            "triangleFace": true,
+            "indices": true,
+            "vertices": true,
+            "triangles": true,
+            "mask": true
+          },
+          "gearAP": [],
+          "actors": 8,
+          "bots": 7,
+          "scope": "ordinary controlled inputs after original source-supported setup; actual fixed Game/Actor/Character; no pose/velocity/ink writes after setup, no internal collision-correction trajectory claim"
+        }
+      ],
+      "errors": [],
+      "buildContentHash": "5e3e46316d100c02f5c7a54e0d69c1ce2297f3ae8078ac75f49cc313b3e7873c"
+    }
+  },
+  "checks": {
+    "sourceComponents": {
+      "tests": 4,
+      "pass": 4,
+      "skip": 0,
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-source-tests-final.log"
+    },
+    "independentRootSourceComponents": {
+      "tests": 4,
+      "pass": 4,
+      "skip": 0,
+      "fail": 0
+    },
+    "smallLegacyNativeLifecycle": {
+      "tests": 13,
+      "pass": 13,
+      "skip": 0,
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-small-contracts.log"
+    },
+    "defaults": {
+      "tests": 152,
+      "pass": 95,
+      "skip": 57,
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-defaults.log"
+    },
+    "privatePackaging": {
+      "tests": 9,
+      "pass": 9,
+      "skip": 0,
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-private-packaging-final.log"
+    },
+    "publicPackaging": {
+      "tests": 9,
+      "pass": 9,
+      "skip": 0,
+      "fail": 0,
+      "receipt": ".ci-scratch/grounded-body-public-packaging.log"
+    },
+    "privateStartupBudget": {
+      "status": "passed",
+      "revision": "fa20a5bb0024fa6b4344270a4bd10a62e0db9446c79072aeb32d829d571ca50b",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2764821,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5866504,
+      "workerBytes": 71148,
+      "declaredBytes": 10487641,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "publicStartupBudget": {
+      "status": "passed",
+      "revision": "b98fdcfe435c7300ad938470e9225c99a38f0e8488d919e5a9108c9fe735b070",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74503,
+      "initialJSBytes": 2766669,
+      "criticalHTMLBytes": 15422,
+      "precacheCount": 368,
+      "precacheBytes": 5868352,
+      "workerBytes": 71148,
+      "declaredBytes": 10489489,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "originalFiveAffectedGame": {
+    "receipt": "/workspace/stage-worktrees/wahoo-combat-jump/.browser-evidence/ground-body-original-five-initial/initial-floor.json",
+    "sha256": "2161a0a2542d15079c134f1b0bcb8ac7da6d070e860e6d27cad1b466d8f2de1c",
+    "comparisonReceipt": "/workspace/stage-worktrees/wahoo-combat-jump/.ci-scratch/ground-body-original-five/before-after-summary.json",
+    "comparisonSha256": "a1c14253ce6fd4b7be80c8bff373dccdef287bad9b330cab1e11a5bb8fd4724e",
+    "cases": 15,
+    "sourceActorLandings": 120,
+    "directedInitialRoutes": 30,
+    "actors": 8,
+    "bots": 7,
+    "gearAP": 0,
+    "physicsStep": 0.016666666666666666,
+    "errors": 0,
+    "scalarCasesExactlyEqualHistorical1733": true,
+    "historicalScope": "old1733 remains separately bound; new ea625 receipt is actual independently rerun validation",
+    "scope": "initial natural source launch/landing and six-second ordinary navigation; no whole-bank/internal correction path guarantee"
+  },
+  "peers": {
+    "root": "closed code/source component and actual matched Game; receipts /workspace/actions/.ci-scratch/grounded-body-root-peer/source-components-corrected.json and browser-pair-review.json",
+    "shipshape": "CLOSED PASS code/component/actual Game/private-public/default/original-five review at 7d9a1376 with precision-only doc descendant; no further approval required",
+    "wahoo": "CLOSED PASS affected original-five actual Game15/120source actor landings/30 initial directed routes; stable candidate before/after hashes unchanged"
+  },
+  "historicalFailures": [
+    "8a3 dynamic ceiling block fixture expected an ID the inherited solver does not emit; fixed fixture only at f01c571b",
+    "Initial spawnAt captured-contact fixture settled before replay; corrected actual _resolve initializes the captured pre-body state",
+    "Held30-frame ordinary jump did not reproduce; unchanged baseline/candidate failed oracle logs retained",
+    "Old2451 straight collision-correction chord rejection is distinct from actual2456 committed body intrusion",
+    "First packaging invocation used the wrong selection environment and retained explicit optional skips; final INKWAVE_BUILT_SITE private/public suites each9/9 with zero skips supersede only that fixture scope"
+  ],
+  "limits": [
+    "No complete Shipshape bank claim",
+    "No continuous internal collision-correction path claim",
+    "VM optional source-motion import warning is distinct from zero-error actual Chromium",
+    "Distances are source units; retail11.3 collision/masks/units/controller parity/hardwareFPS remain unverified",
+    "Original supported setup followed only by ordinary move/jump inputs; no postsetup pose/velocity/ink writes",
+    "Screenshot is the original human bank camera, not a close-up of the controlled foot contact"
+  ],
+  "receiptHashes": {
+    ".ci-scratch/grounded-body-private-budget.log": "27521c6e30f0b5bf01e89b7cdbe18c6d2646584f6e22073b8e2f140b6e1d52ba",
+    ".ci-scratch/grounded-body-build-pair.log": "36396ab95c3de27b5901807b0041271f583876ab0840502a262e1cb87f17930b",
+    ".ci-scratch/grounded-body-defaults.log": "b5df74f51dae64f784a4255c65470ad837f511535116aae742998f1d828e3a57",
+    ".ci-scratch/grounded-body-public-packaging.log": "090a66cb333990fdfbd72e33126f27c5c74fd55298056e854c519bc8a2e15292",
+    ".ci-scratch/grounded-body-small-contracts.log": "433d5fce3928677dd984bb498a827ae8e0bebc2a35d46ef48f2f5e508fbfe3c9",
+    ".ci-scratch/grounded-body-baseline-short-jump-browser.log": "b2f2a1cd888525d6deea5d4840eca5a689b50170050ab19e44eecb48f93e7d09",
+    ".ci-scratch/grounded-body-private-packaging-final.log": "7517d1b7e527c88de6a43ad9756c4ff2110ab37d4b78c7e5b7da4846a29c0b2b",
+    ".ci-scratch/grounded-body-public-budget.log": "896b6f1cb9b24d8c8aa04e64fd9eee18edaebe34b7dd8757537e657d614d9ee5",
+    ".ci-scratch/grounded-body-candidate-browser.log": "f50e4dfd0244f9c342473ea077f0aea342b4bc95d23dc56f6a7fe3c5d36b0bf1",
+    ".ci-scratch/grounded-body-source-tests.log": "2db68938c6013a181f29510952a7c91f6208a39556cf52830f2a9b27060d9072",
+    ".ci-scratch/grounded-body-baseline-browser.log": "bd4cac39287c2c164af1d47ced73dbf013464d27562a453b90773eccd19f7c7e",
+    ".ci-scratch/grounded-body-private-packaging.log": "24853fb8b82c446cdd86660e26c0174169f8d7c72fb453e229c848c3dd8f01f1",
+    ".ci-scratch/grounded-body-candidate-short-jump-browser.log": "1e5fb028794fec3b73ea992beb7399cf20188e2eb3306774a61aaa3f31a57ec0",
+    ".ci-scratch/grounded-body-source-tests-final.log": "9d50c2e6b4f63c0e4239a79f8104011ef32f19a8a441fc50215e3388d52161cb",
+    ".browser-evidence/grounded-body-baseline-short-jump/browser.json": "1672094e8fec591fd0c3bd5dbc0b03d2677e7eaef08b11b1b2072065697c75f2",
+    ".browser-evidence/grounded-body-candidate-short-jump/browser.json": "d4ec54fba4e56e1f38bfce8e8bf7739c96240d80c1843c82d760c6ef7d3b309a"
+  },
+  "pr": "https://github.com/rhgrive3/actions/pull/1415"
+}

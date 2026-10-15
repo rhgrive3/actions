@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { NATIVE_ROOT, nativeStageIdentity, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
+import { NATIVE_ROOT, nativeStageIdentity,NATIVE_RUNTIME_EXTERNALS, prepareNativeStageBuild, copyLocalNativeAssets } from './lib/inkwave-native-stages.mjs';
 import { adaptBuildSource } from './inkwave-source-composition.mjs';
 // Build the INKWAVE GitHub Pages site with the independent gameplay patches applied to the output tree.
 // Keep inkwave-public/ unchanged, then minify every JS and CSS file
@@ -33,7 +33,7 @@ const OUT = physicalLocation(path.resolve(process.argv[3] || '_site'));
 if (fs.existsSync(OUT) && !fs.statSync(OUT).isDirectory()) throw new Error('Build output must be a directory');
 const projectRoot = path.resolve(PATCH_ROOT, '../..');
 // Inlined into weapon-models/registry.mjs by the production build (see the patch copy loop).
-const WEAPON_MODEL_FAMILY = /^runtime\/weapon-models\/(shooters|shooters-b|blasters|dualies|rollers|brushes|chargers|stringers|sloshers|splatlings|brellas|splatanas)\.mjs$/;
+const WEAPON_MODEL_FAMILY = /^runtime\/weapon-models\/(shooters|shooters-b|blasters|dualies|rollers|brushes|chargers|stringers|sloshers|splatlings|brellas|splatanas|shooter-blaster-variants|variant-shooter-surfaces|variants-melee|variants-ranged-defense|variants-bulbz-followup|variants-squiffer-v4-followup|variants-dapple-noct-followup|variants-milk-followup|variants-sorella-followup|custom-explosher-finish|variants-brella-palette-followup|variants-reef-deco-followup|variants-inkline-followup|variants-custom-wellstring-followup|variants-c-palette-followup|variants-fixed-shooter-finish|variants-neo-marker-finish|variants-charcoal-followup|variants-stamper-nouveau-followup|variants-wiper-rust-followup|variants-stickerz-followup|variants-c-third-followup|variants-nozzlenose-d-finish|variants-dualie-fixed-finish|variants-blaster-fixed-finish|variants-dualie-light-finish|variants-blaster-deco-finish|variants-charger-followups|variants-c-next-followup)\.mjs$/;
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
 if (contains(OUT, projectRoot) || contains(OUT, SRC) || contains(SRC, OUT) || contains(PATCH_ROOT, OUT) || contains(RELIABILITY_ROOT, OUT) || contains(QUALITY_ROOT, OUT) || contains(NETWORK_ROOT, OUT) || contains(LOADING_ROOT, OUT) || contains(RANGE_ROOT, OUT)) throw new Error('Build output must be separate from upstream source and patch files');
 checkCompatibility(SRC);
@@ -162,14 +162,14 @@ for (const [root, prefix] of [
 ]) {
   for (const file of walk(root)) {
     const rel = path.relative(root, file).split(path.sep).join('/');
-    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
+    if (rel.startsWith('tests/') || rel.startsWith('tools/') || rel.startsWith('definitions/') || rel.endsWith('.md') || rel === 'adapter.mjs' || rel.endsWith('-adapter.mjs') || BUILD_ONLY_PATCH_MODULES.has(prefix + '/' + rel)) continue;
     // One native runtime module avoids inflating the bounded worker manifest.
     if (prefix === 'patches/native-stages' && !unminified && rel.startsWith('runtime/') && !['runtime/engine.mjs','runtime/registry.mjs','runtime/build-config.mjs','runtime/native-paint.mjs','runtime/source-worker.mjs'].includes(rel)) continue;
     const dst = path.join(BUILD, prefix, rel);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     if (prefix === 'patches/native-stages' && ['runtime/engine.mjs','runtime/registry.mjs','runtime/source-worker.mjs'].includes(rel) && !unminified) {
       const bundled = await esbuild.build({ entryPoints:[file], bundle:true, format:'esm', minify:true, charset:'utf8', write:false,
-        external:['three','../../../src/*','./registry.mjs','./build-config.mjs'], legalComments:'inline' });
+        external:NATIVE_RUNTIME_EXTERNALS, legalComments:'inline' });
       fs.writeFileSync(dst,bundled.outputFiles[0].contents); continue;
     }
     if (/\.(?:m?js|css)$/.test(rel)) {

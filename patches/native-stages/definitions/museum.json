@@ -1,0 +1,33 @@
+{
+  "id": "museum",
+  "internal": "Vss_Pivot03",
+  "name": "キンメダイ美術館",
+  "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+  "tree": "777211951cc54e036f9770990476f968bf5a1a33",
+  "bounds": {
+    "minX": -66,
+    "minZ": -55,
+    "maxX": 66,
+    "maxZ": 55
+  },
+  "spawnPads": [
+    [
+      -42,
+      16.5,
+      -51
+    ],
+    [
+      42,
+      16.5,
+      51
+    ]
+  ],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "LOCAL source-supported opposing floor pads and Pnt display extent; retail spawn, rotating-object placement/state, native masks and 11.3.0 ranked placements unverified.",
+  "sourceSemantics": {
+    "nonPaintableObjectPatterns": [
+      "^FldObj_Pivot03_PackPnt_Obj_GeneralBoxNoPaint_30x15x15_Blitz_1__FenceVinyl$"
+    ]
+  }
+}

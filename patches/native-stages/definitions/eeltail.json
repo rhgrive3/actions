@@ -1,0 +1,33 @@
+{
+  "id": "eeltail",
+  "internal": "Vss_District00",
+  "name": "ゴンズイ地区",
+  "sourceSha256": "5d22e97f51ed26fed86035ccff8c5d88e99798bf135b0f01b527a6f26797599f",
+  "tree": "a9c61480637edfe4a2482a9d3e2e189294867f60",
+  "bounds": {
+    "minX": -28.5,
+    "minZ": -98,
+    "maxX": 28.5,
+    "maxZ": 98
+  },
+  "spawnPads": [
+    [
+      -7.5,
+      15.08,
+      -93
+    ],
+    [
+      7.5,
+      15.08,
+      93
+    ]
+  ],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Inferred Pnt display support: y=15 end platforms, ±28.5 × ±98 core extent, both spawns reach center; retail placements unverified",
+  "sourceSemantics": {
+    "nonCollidableObjectPatterns": [
+      "^Fld_District00_Shadow0__Shadow$"
+    ]
+  }
+}

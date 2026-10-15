@@ -1,0 +1,799 @@
+{
+  "schema_version": 1,
+  "audit_date": "2026-10-11",
+  "target_game": "Splatoon 3",
+  "target_parameter_version": "11.3.0",
+  "kind": "projectile_vfx_source_evidence_not_asset_manifest",
+  "summary_status": "parser_and_source_parameters_verified_original_projectile_assets_and_runtime_dispatch_unresolved",
+  "evidence_classes": {
+    "A": "Pinned S3 explicit parameter value",
+    "B": "Actual stock S3 VFX/geometry artifact inspected",
+    "C": "Original game runtime algorithm inspected",
+    "D": "Public investigation/documentation",
+    "E": "Measured source gameplay frames",
+    "F": "INKWAVE implementation or tests"
+  },
+  "classification_rules": [
+    "A parameter value does not prove B geometry or C runtime equation.",
+    "HoianViewer source describes its own simulation; reading its code is not an independent game validation.",
+    "A viewer gap is not absence of the corresponding effect in the game.",
+    "A missing per-weapon key is not a confirmed numeric runtime default.",
+    "A symbol list is not executable source or a recovered algorithm."
+  ],
+  "sources": [
+    {
+      "id": "H01",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Core/Formats/Esetb.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Core/Formats/Esetb.cs",
+      "git_blob_sha": "7f92e5d4a649baba22602d434cbc0e9f5d52cd6c",
+      "line_anchors": [
+        9,
+        59
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H02",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "Library/EffectLibrary/VfxFile.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/Library/EffectLibrary/VfxFile.cs",
+      "git_blob_sha": "c19d8547489b0daf60bc22a1ee2bd018c0831792",
+      "line_anchors": [
+        13,
+        86
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H03",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "Library/EffectLibrary/Emitter.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/Library/EffectLibrary/Emitter.cs",
+      "git_blob_sha": "171c190e5ce483c01f8b9a727a201d13fa212234",
+      "line_anchors": [
+        53,
+        185
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H04",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Effects/Sim/HistoryStripes.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Effects/Sim/HistoryStripes.cs",
+      "git_blob_sha": "c884057f96017b60be35972ef73e75ba5fd79ec9",
+      "line_anchors": [
+        8,
+        49,
+        95,
+        192,
+        246,
+        273,
+        319,
+        481
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H05",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Effects/Viewer/EffectFile.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Effects/Viewer/EffectFile.cs",
+      "git_blob_sha": "ae733f5f46af31d7d11f88a5b6e828c81d5c0919",
+      "line_anchors": [
+        13,
+        25,
+        107,
+        117
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H06",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Effects/Viewer/EffectPlayback.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Effects/Viewer/EffectPlayback.cs",
+      "git_blob_sha": "5e3ff3687e47e6c920d34e2b712b5d05353b19bd",
+      "line_anchors": [
+        10,
+        39,
+        245,
+        254,
+        334,
+        351
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H07",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "Library/EffectLibrary/PrimitiveArchive.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/Library/EffectLibrary/PrimitiveArchive.cs",
+      "git_blob_sha": "225896ddae618651fefc683ab48e4605e515ed8d",
+      "line_anchors": [
+        11,
+        26,
+        108,
+        158,
+        184,
+        204
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H08",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "Library/EffectLibrary/EmitterLayout.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/Library/EffectLibrary/EmitterLayout.cs",
+      "git_blob_sha": "d8be5057920c2267d4041abce892af266439e3cf",
+      "line_anchors": [
+        17,
+        28,
+        49,
+        110,
+        180,
+        270
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H09",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Effects/Sim/EmitterDef.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Effects/Sim/EmitterDef.cs",
+      "git_blob_sha": "cafee348f97fa956880015fb01151c797f2d95d9",
+      "line_anchors": [
+        244,
+        255,
+        360,
+        372
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H10",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Effects/Gl/EffectRenderer.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Effects/Gl/EffectRenderer.cs",
+      "git_blob_sha": "9a44cb1e2c67a6162c5394364ff6c5a0e5374d9a",
+      "line_anchors": [
+        95,
+        147,
+        495,
+        576
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H11",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Program.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Program.cs",
+      "git_blob_sha": "b9ce058dedf8f2a0d8af2718fe8148a2e7010ab3",
+      "line_anchors": [
+        63,
+        68
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H12",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "README.md",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/README.md",
+      "git_blob_sha": "c7d19f0512c8a47be1b67792f1617b9fa7dae2d9",
+      "line_anchors": [
+        38,
+        44
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H13",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/PlayerViewer.csproj",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/PlayerViewer.csproj",
+      "git_blob_sha": "3b180c0a9eee217aba5218258dd2071cec4e7bd1",
+      "line_anchors": [
+        1,
+        7
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H14",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Effects/Sim/SimDrawInputs.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Effects/Sim/SimDrawInputs.cs",
+      "git_blob_sha": "f9f8b93157497e9cd01527f66ceb7babfe10296d",
+      "line_anchors": [
+        58,
+        98
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "H15",
+      "repository": "nvnprogram/HoianViewer",
+      "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+      "path": "PlayerViewer/Effects/Sim/EmitterInstance.cs",
+      "url": "https://github.com/nvnprogram/HoianViewer/blob/89f23684b9dede5da8207e5f9f1980150bec774a/PlayerViewer/Effects/Sim/EmitterInstance.cs",
+      "git_blob_sha": "5398a5a8b85fad58c7968fcaeec831355632719e",
+      "line_anchors": [
+        123,
+        133,
+        191,
+        198
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "K01",
+      "repository": "KillzXGaming/EffectLibrary",
+      "commit": "d5491138d645221ec92189eeff3ded8c43fd0a1a",
+      "path": "README.md",
+      "url": "https://github.com/KillzXGaming/EffectLibrary/blob/d5491138d645221ec92189eeff3ded8c43fd0a1a/README.md",
+      "git_blob_sha": "9c946f2fb9805d195035d3eaf8e29357e46d2453",
+      "line_anchors": [
+        1,
+        7
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "K02",
+      "repository": "KillzXGaming/EffectLibrary",
+      "commit": "d5491138d645221ec92189eeff3ded8c43fd0a1a",
+      "path": "EffectLibrary/FileData/EFT2/PtclFile.cs",
+      "url": "https://github.com/KillzXGaming/EffectLibrary/blob/d5491138d645221ec92189eeff3ded8c43fd0a1a/EffectLibrary/FileData/EFT2/PtclFile.cs",
+      "git_blob_sha": "fa1968634e1fd4266a5a34f33f2598af6025c769",
+      "line_anchors": [
+        10,
+        25,
+        54,
+        77,
+        138,
+        158
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "K03",
+      "repository": "KillzXGaming/EffectLibrary",
+      "commit": "d5491138d645221ec92189eeff3ded8c43fd0a1a",
+      "path": "EffectLibrary/FileData/EFT2/EmitterStructs/Emitter.cs",
+      "url": "https://github.com/KillzXGaming/EffectLibrary/blob/d5491138d645221ec92189eeff3ded8c43fd0a1a/EffectLibrary/FileData/EFT2/EmitterStructs/Emitter.cs",
+      "git_blob_sha": "d19b5d81bac5e77fae1a5f91180344216fd85df1",
+      "line_anchors": [
+        12,
+        109
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "K04",
+      "repository": "KillzXGaming/EffectLibrary",
+      "commit": "d5491138d645221ec92189eeff3ded8c43fd0a1a",
+      "path": "LICENSE",
+      "url": "https://github.com/KillzXGaming/EffectLibrary/blob/d5491138d645221ec92189eeff3ded8c43fd0a1a/LICENSE",
+      "git_blob_sha": "2dc001740aaac3b66f8e0a77bf5b8d7edf346f48",
+      "line_anchors": [
+        1,
+        21
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "A01",
+      "repository": "DesperC/Awesome-Splatoon3-Hacking",
+      "commit": "07b2888c04cc383a54b27b05edb62051868ebe03",
+      "path": "README.md",
+      "url": "https://github.com/DesperC/Awesome-Splatoon3-Hacking/blob/07b2888c04cc383a54b27b05edb62051868ebe03/README.md",
+      "git_blob_sha": "6a8956aef54c29b1143d92b3e0e97b95af0850e0",
+      "line_anchors": [
+        65,
+        78,
+        128,
+        139,
+        421,
+        426
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "A02",
+      "repository": "DesperC/Awesome-Splatoon3-Hacking",
+      "commit": "07b2888c04cc383a54b27b05edb62051868ebe03",
+      "path": "LICENSE",
+      "url": "https://github.com/DesperC/Awesome-Splatoon3-Hacking/blob/07b2888c04cc383a54b27b05edb62051868ebe03/LICENSE",
+      "git_blob_sha": "0e259d42c996742e9e3cba14c677129b2c1b6311",
+      "line_anchors": [
+        1,
+        4
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "S201",
+      "repository": "YoshiCrystal9/Blitz_MasterVer22-Decomp",
+      "commit": "6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac",
+      "path": "README.md",
+      "url": "https://github.com/YoshiCrystal9/Blitz_MasterVer22-Decomp/blob/6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac/README.md",
+      "git_blob_sha": "8abf3a6d5a3c70ba67bd0af0a25e920742f102e7",
+      "line_anchors": [
+        1,
+        7,
+        42,
+        47
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "S202",
+      "repository": "YoshiCrystal9/Blitz_MasterVer22-Decomp",
+      "commit": "6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac",
+      "path": "src/Game/Bullet/GameBullet.cpp",
+      "url": "https://github.com/YoshiCrystal9/Blitz_MasterVer22-Decomp/blob/6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac/src/Game/Bullet/GameBullet.cpp",
+      "git_blob_sha": "4917418b481ad59fa0b3232de88495a48d3a6788",
+      "line_anchors": [
+        1,
+        5
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "S203",
+      "repository": "YoshiCrystal9/Blitz_MasterVer22-Decomp",
+      "commit": "6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac",
+      "path": "src/Game/Bullet/GameBulletSimple.cpp",
+      "url": "https://github.com/YoshiCrystal9/Blitz_MasterVer22-Decomp/blob/6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac/src/Game/Bullet/GameBulletSimple.cpp",
+      "git_blob_sha": "fd5af3a83997337ac1a22a607fb50ca7a4492cb6",
+      "line_anchors": [
+        1,
+        7
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "L01",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "path": "data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponShooterNormal.game__GameParameterTable.json",
+      "git_blob_sha": "bd43a9a6af6a86e8b1d3c1416eadf94724da3079",
+      "line_anchors": [
+        1,
+        122
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "L02",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "path": "data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "git_blob_sha": "76e62caaa2c3bee8f502b1794c8cf91cf5cbc972",
+      "line_anchors": [
+        110,
+        113
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "L03",
+      "repository": "Leanny/splat3",
+      "commit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+      "path": "data/parameter/100/weapon/WeaponShooterMissionLv3.game__GameParameterTable.json",
+      "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/100/weapon/WeaponShooterMissionLv3.game__GameParameterTable.json",
+      "git_blob_sha": "25844ae840ac1a3e494bd5f9c10cb34cd8179f2b",
+      "line_anchors": [
+        30,
+        38
+      ],
+      "retrieval_status": "primary_source_read",
+      "meaning_limit": "Public source implementation or extracted parameters; does not prove stock S3 projectile geometry or game-to-emitter dispatch."
+    },
+    {
+      "id": "S204",
+      "repository": "YoshiCrystal9/Blitz_MasterVer22-Decomp",
+      "commit": "6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac",
+      "path": "data/blitz_functions.csv",
+      "url": "https://github.com/YoshiCrystal9/Blitz_MasterVer22-Decomp/blob/6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac/data/blitz_functions.csv",
+      "raw_url": "https://raw.githubusercontent.com/YoshiCrystal9/Blitz_MasterVer22-Decomp/6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac/data/blitz_functions.csv",
+      "git_blob_sha": "eceb80fb1855a99bb8781b712eaef8d56d62ecd6",
+      "sha256": "2e62abbc48fc9a4efb7c37fe33589d09eaa3348b13d5088d885d0c6380e4b81a",
+      "bytes": 13347889,
+      "rows": 149530,
+      "retrieval_status": "entire_csv_read_and_git_blob_sha_verified",
+      "line_anchors": [
+        19053,
+        19056,
+        19057,
+        19061,
+        20194,
+        21942
+      ],
+      "meaning_limit": "S2 3.1.0 symbol names/addresses/sizes only; no algorithm bodies, S3 default values, or S3 geometry."
+    }
+  ],
+  "verified_findings": [
+    {
+      "id": "esetb_wrapper",
+      "source_ids": [
+        "H01"
+      ],
+      "status": "source_code_verified",
+      "facts": [
+        "Esetb.Load calls Romfs.Decompress before BYML parsing.",
+        "PtclBin must be a BYML aligned binary node; Esets preserves stored set-name order.",
+        "VfxFile is built from PtclBin."
+      ]
+    },
+    {
+      "id": "vfxb_version_sections",
+      "source_ids": [
+        "H02"
+      ],
+      "status": "source_code_verified",
+      "facts": [
+        "The loader accepts VFXB magic and version 46, rejecting other versions.",
+        "ESTA emitter order is also Esets order.",
+        "GRTF textures, G3PR BFRES primitive archive, PRMA native primitives, GRSN shader archive are separate typed views."
+      ]
+    },
+    {
+      "id": "primitive_distinction",
+      "source_ids": [
+        "H03",
+        "H07",
+        "H09",
+        "H10"
+      ],
+      "status": "source_code_verified",
+      "facts": [
+        "ShapePrimitiveId is read as shape/emission geometry; drawing mesh resolution uses ParticlePrimitiveId.",
+        "G3NT associates primitive GUID with BFRES model index and vertex-attribute mapping.",
+        "PRMA PRIM exposes float4 attribute arrays and u32 index arrays.",
+        "Missing primitive resolution must be reported rather than replaced with an assumed stock mesh."
+      ]
+    },
+    {
+      "id": "history_stripes",
+      "source_ids": [
+        "H04",
+        "H09",
+        "H10",
+        "H14",
+        "H15"
+      ],
+      "status": "viewer_implementation_verified_target_assignment_unknown",
+      "facts": [
+        "EP02 is parsed as a history-stripe plugin.",
+        "Each particle has position/direction/emitter-axis history, updated each calculation; optional Hermite subdivision produces points.",
+        "FollowEmitter switches local/world handling.",
+        "Fewer than three points draw no stripe in both divided and undivided code.",
+        "Dead-particle stripes remain on a delayed list and shrink with frame-boundary-aware handling.",
+        "Renderer emits triangle strips; Option=1 enables a crossed second strip.",
+        "This does not identify Shooter/Roller/Slosher as EP02 users.",
+        "HistoryStripes is allocated only when CalcType is Cpu; GPU EP02 support is not established by the EP02 parser."
+      ]
+    },
+    {
+      "id": "viewer_gaps",
+      "source_ids": [
+        "H05",
+        "H15"
+      ],
+      "status": "source_code_verified",
+      "facts": [
+        "GpuCompute is flagged CpuFallback.",
+        "FCSF is flagged CustomField.",
+        "EP01 or EP03 is flagged Stripes; connection/super stripes are not simulated and not drawn.",
+        "EP02 is not included in that unsupported-Stripes flag."
+      ]
+    },
+    {
+      "id": "frame_playback",
+      "source_ids": [
+        "H06"
+      ],
+      "status": "viewer_implementation_verified",
+      "facts": [
+        "Playback advances whole frames at 60 Hz; default seed is zero.",
+        "Frame f is after f+1 calculations.",
+        "Seeking replays or resumes snapshots.",
+        "Wall-time update caps catch-up at four steps and drops remaining accumulated time; use Seek for frame exports."
+      ]
+    },
+    {
+      "id": "splatling_tail",
+      "source_ids": [
+        "L02"
+      ],
+      "evidence_class": "A",
+      "status": "explicit_parameter",
+      "weapon": "WeaponSpinnerStandard",
+      "json_path": "GameParameters.spl__BulletShooterTailLengthParam.MaxLengthFrame",
+      "value": 3,
+      "limits": [
+        "Splatling-specific explicit value, not a normal-shooter default proof."
+      ]
+    },
+    {
+      "id": "shooter_tail_default",
+      "source_ids": [
+        "L01"
+      ],
+      "evidence_class": "A",
+      "status": "key_absent_runtime_default_unknown",
+      "weapon": "WeaponShooterNormal",
+      "json_path": "GameParameters.spl__BulletShooterTailLengthParam.MaxLengthFrame",
+      "raw_key_present": false,
+      "resolved_runtime_value": null,
+      "limits": [
+        "Cannot infer zero, three, ten, or inheritance from this omission."
+      ]
+    },
+    {
+      "id": "mission_tail_other_slot",
+      "source_ids": [
+        "L03"
+      ],
+      "evidence_class": "A",
+      "status": "explicit_other_slot_other_version",
+      "weapon": "WeaponShooterMissionLv3",
+      "parameter_version": "1.0.0",
+      "json_path": "GameParameters.DiffusionTailLengthParam.MaxLengthFrame",
+      "type": "spl__BulletShooterTailLengthParam",
+      "value": 10,
+      "limits": [
+        "Same declared type, but different DiffusionTailLengthParam slot, mission weapon and version1.0.0; does not establish ordinary11.3.0 shooter runtime default.",
+        "The supplied re-v3 report incorrectly describes this as a different type; primary raw JSON corrects that description."
+      ]
+    },
+    {
+      "id": "s2_symbols",
+      "source_ids": [
+        "S201",
+        "S202",
+        "S203",
+        "S204"
+      ],
+      "status": "symbols_verified_bodies_absent",
+      "facts": [
+        "Project states Splatoon 2 3.1.0.",
+        "Bullet.cpp is an empty namespace and BulletSimple.cpp only has an empty reset body.",
+        "CSV contains BulletShooterBase::updateTailPos() and separate shooter/roller/roller-jump/slosher effect-dispatch symbol names.",
+        "These names do not yield the state equation or prove S3 equivalence."
+      ]
+    }
+  ],
+  "asset_inventory": {
+    "status": "no_original_projectile_vfx_assets_inspected",
+    "reference_pack": {
+      "path": "reference-input/re-v3",
+      "stock_esetb_bfres_bntx_bfsha_files": 0,
+      "contents": "research Markdown/JSON, metadata-only scripts, uncompiled exporter example"
+    },
+    "inspected_public_repositories": [
+      {
+        "repository": "nvnprogram/HoianViewer",
+        "commit": "89f23684b9dede5da8207e5f9f1980150bec774a",
+        "recursive_tree_complete": true,
+        "tree_entries": 1477,
+        "stock_projectile_asset_matches": 0,
+        "notes": "One generic Cafe-Shader-Studio/GLFrameworkEngine/Objects/Texture.zip; no identified stock S3 projectile assets. README requires a RomFS dump."
+      },
+      {
+        "repository": "KillzXGaming/EffectLibrary",
+        "commit": "d5491138d645221ec92189eeff3ded8c43fd0a1a",
+        "recursive_tree_complete": true,
+        "stock_projectile_asset_matches": 0,
+        "notes": "Parser/converter source and dependency DLLs; MIT LICENSE is for library code, not stock Nintendo art."
+      },
+      {
+        "repository": "DesperC/Awesome-Splatoon3-Hacking",
+        "commit": "07b2888c04cc383a54b27b05edb62051868ebe03",
+        "recursive_tree_complete": true,
+        "tree_entries": 2,
+        "stock_projectile_asset_matches": 0,
+        "notes": "Only README.md and LICENSE. CC0 guide text and external mod links do not establish licensed stock projectile assets."
+      },
+      {
+        "repository": "YoshiCrystal9/Blitz_MasterVer22-Decomp",
+        "commit": "6e6f8ebb1a3d8ebac518ba47b881ec5d3740baac",
+        "recursive_tree_complete": true,
+        "stock_s3_projectile_asset_matches": 0,
+        "notes": "S2 partial decomp/symbol data. Original executable supplied separately."
+      }
+    ],
+    "public_availability_conclusion": "No reusable, licensed stock S3 projectile VFX/geometry package was identified in the inspected sources. This is bounded to inspected sources, not a claim of global absence.",
+    "prohibited_inferences": [
+      "Publicly downloadable ripped models imply permission to publish Nintendo art.",
+      "A modding guide's code/document license grants a license for game assets.",
+      "Viewer source replaces the original Effect directory or runtime callback dispatch."
+    ],
+    "drive_bundle": {
+      "status": "manifest_explicitly_excludes_romfs",
+      "folder_url": "https://drive.google.com/drive/folders/1iAhs_iWB0jfPkAB3lgUT9le95T-B323b",
+      "manifest_path": "reference-input/SOURCE_INFO.txt",
+      "manifest_facts": [
+        "Public GitHub snapshots only.",
+        "Git histories, external downloads and Splatoon3 game RomFS are explicitly excluded.",
+        "A separately obtained legitimate RomFS is required."
+      ],
+      "archive_01_inventory": {
+        "entries": 1716,
+        "splatoon3_entries": 1252,
+        "esetb_vfx_ptcl_matches": 0,
+        "verification_owner": "root"
+      },
+      "code_integrity_checks": {
+        "status": "six_files_git_blob_sha_match_live_pinned_sources",
+        "paths": [
+          {
+            "path": "PlayerViewer/Core/Formats/Esetb.cs",
+            "git_blob_sha": "7f92e5d4a649baba22602d434cbc0e9f5d52cd6c",
+            "matches": true
+          },
+          {
+            "path": "Library/EffectLibrary/VfxFile.cs",
+            "git_blob_sha": "c19d8547489b0daf60bc22a1ee2bd018c0831792",
+            "matches": true
+          },
+          {
+            "path": "Library/EffectLibrary/Emitter.cs",
+            "git_blob_sha": "171c190e5ce483c01f8b9a727a201d13fa212234",
+            "matches": true
+          },
+          {
+            "path": "PlayerViewer/Effects/Sim/HistoryStripes.cs",
+            "git_blob_sha": "c884057f96017b60be35972ef73e75ba5fd79ec9",
+            "matches": true
+          },
+          {
+            "path": "PlayerViewer/Effects/Viewer/EffectFile.cs",
+            "git_blob_sha": "ae733f5f46af31d7d11f88a5b6e828c81d5c0919",
+            "matches": true
+          },
+          {
+            "path": "PlayerViewer/Effects/Viewer/EffectPlayback.cs",
+            "git_blob_sha": "5e3ff3687e47e6c920d34e2b712b5d05353b19bd",
+            "matches": true
+          }
+        ]
+      },
+      "remaining_archive_scope": "Archive19 inspected by root; unrelated source images not used. Other17 archives need not be presumed individually inspected. Bundle-wide RomFS exclusion is based on its SOURCE_INFO manifest."
+    }
+  },
+  "target_modes": [
+    {
+      "weapon": "WeaponShooterNormal",
+      "mode": "ordinary_shot",
+      "actual_effect_file": null,
+      "actual_set_name": null,
+      "primitive_ids": null,
+      "texture_ids": null,
+      "stripe_plugin": null,
+      "status": "actual_asset_and_dispatch_unresolved"
+    },
+    {
+      "weapon": "WeaponRollerNormal",
+      "mode": "wide_swing",
+      "actual_effect_file": null,
+      "actual_set_name": null,
+      "primitive_ids": null,
+      "texture_ids": null,
+      "stripe_plugin": null,
+      "status": "actual_asset_and_dispatch_unresolved"
+    },
+    {
+      "weapon": "WeaponRollerNormal",
+      "mode": "vertical_swing",
+      "actual_effect_file": null,
+      "actual_set_name": null,
+      "primitive_ids": null,
+      "texture_ids": null,
+      "stripe_plugin": null,
+      "status": "actual_asset_and_dispatch_unresolved"
+    },
+    {
+      "weapon": "WeaponSlosherStrong",
+      "mode": "main_unit_1_four_and_unit_2_five",
+      "actual_effect_file": null,
+      "actual_set_name": null,
+      "primitive_ids": null,
+      "texture_ids": null,
+      "stripe_plugin": null,
+      "status": "actual_asset_and_dispatch_unresolved"
+    }
+  ],
+  "metadata_extraction_guidance": {
+    "status": "proposed_fields_not_actual_extraction",
+    "file_fields": [
+      "Relative path",
+      "SHA256",
+      "game/update version",
+      "BYML version/alignment",
+      "VFXB version/name",
+      "StoredNames and ESTA names/order"
+    ],
+    "emitter_fields": [
+      "Set index/name",
+      "Emitter parent/index/full hierarchy path",
+      "Name",
+      "Life/InfiniteLife",
+      "CalcType/FollowType/BillboardType/VolumeType",
+      "DrawPath",
+      "OneTime/StartFrame/EmissionFrames/Rate/RateRandom/Interval/IntervalRandom",
+      "ShapePrimitiveId/ParticlePrimitiveId/ParticlePrimitiveExId as hex strings",
+      "ShaderIndex/DepthModeShaderIndex/PassShaderIndex/ComputeShaderIndex",
+      "CustomShaderFlags",
+      "CustomAction and original callback provenance",
+      "RenderState",
+      "Six sampler IDs as hex strings, cross-binary flag, resolution result",
+      "Animation tags and keyframes",
+      "Subsection tags and raw sizes",
+      "EP01/EP02/EP03/FCSF flags",
+      "EP02 parameters if present",
+      "Field Confidence.Verified/Likely/Guess",
+      "Viewer gaps and parse errors"
+    ],
+    "limits": [
+      "File/name keyword search is a candidate queue, not dispatch proof.",
+      "The source-pack HoianEffectManifest.cs is not compiled here and omits EP02, hierarchy, rate/interval, field confidence and resolution results.",
+      "No dotnet executable is installed; Hoian project targets net10.0.",
+      "Export metadata and derived comparison metrics only; stock asset bytes are not added to this repository."
+    ]
+  },
+  "unresolved": [
+    "S3 ordinary-shooter MaxLengthFrame runtime constructor/default.",
+    "Original shooter/roller wide/roller vertical/slosher actual Effect file and EmitterSet identities.",
+    "Whether target tails/sheets use EP01, EP02, EP03, custom callbacks or game-generated geometry.",
+    "Original meshes, connected-liquid-sheet topology, textures, shader parameters and external resource bindings.",
+    "How TailLengthMin/Max/TailSolidFrame feeds actual stock mesh generation.",
+    "Independent S3 11.3.0 gameplay validation of HoianViewer reimplementation."
+  ]
+}

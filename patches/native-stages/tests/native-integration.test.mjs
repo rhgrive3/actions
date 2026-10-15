@@ -1,15 +1,19 @@
+import {isolatedNativeStageTest} from './stage-process-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { nativeFixture,readStage } from './fixture.mjs';
-import { prepareNativeStageBuild } from '../../../scripts/lib/inkwave-native-stages.mjs';
+import { prepareNativeStageBuild,nativeStageCatalog } from '../../../scripts/lib/inkwave-native-stages.mjs';
+import path from 'node:path';
+import {nativeStageRuleStatus} from '../runtime/rule-availability.mjs';
 const ROOT=process.env.INKWAVE_NATIVE_STAGE_ASSETS;
-const IDS=['scorch','hagglefish','inkblot','mako','brinewater'];
+const IDS=ROOT?JSON.parse(fs.readFileSync(path.join(ROOT,'catalog.json'),'utf8')).stages.map(s=>s.id):['scorch','hagglefish','inkblot','mako','brinewater'];
 
 test('public builds offer five source choices without reference model payload',()=>{
- const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');assert.deepEqual(build.config.stages.map(s=>s.id),IDS);
+ const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');for(const id of ['scorch','hagglefish','inkblot','mako','brinewater'])assert(build.config.stages.some(s=>s.id===id));
 });
-for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async()=>{
+for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async(testContext)=>{
+ if(await isolatedNativeStageTest(import.meta.url,testContext.name))return;
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);
  G.level=level;G.physics=physics;
  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
@@ -22,7 +26,7 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
   assert.ok(area>0,'positive claimed ground area');assert.equal(G.paint.sample(h.face,h.u,h.v),1);
  }
  // Find a real exported wall triangle and exercise the existing squid climb.
- let wallProof=false;
+ let wallProof=false,cappedWallSamples=0;
  for(const face of level.faces){
   if(!face.wall||face.sv<1.5)continue;
   for(const tid of face.triangles.slice(0,4)){
@@ -35,6 +39,14 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
    const actor=f.make();actor.pos.copy(feet);actor.intent.move.copy(face.n).negate();actor.form='squid';actor.climbExit=0;
    actor._updateClimb(1/60,true);
    if(!actor.climbing)continue;
+   // A nearby unowned upper source chart correctly stops an attached squid at
+   // the paint line. That is not an upward lane; keep looking without changing
+   // source geometry or treating a capped attachment as a climb regression.
+   if(actor.vel.y<=0){
+    const upper=actor._ledgeHit;
+    assert.ok(upper.hit&&Math.abs(upper.normal.y)<.5&&!(upper.face>=0&&G.paint.sample(upper.face,upper.u,upper.v)===1),'attached zero-speed source sample must be stopped by an unowned upper wall');
+    assert.equal(actor.climbV,0);cappedWallSamples++;continue;
+   }
    assert.ok(actor.vel.y>0,'painted source wall grants upward swim velocity');
    G.paint.splat(hit.point.clone().addScaledVector(hit.normal,.03),3,1,{seed:.375,instant:true});actor._updateClimb(1/60,true);assert.equal(actor.climbing,false,'enemy wall ink releases squid');wallProof=true;break;
   }
@@ -52,13 +64,25 @@ for(const id of IDS)test('native source physics, painting, movement, nav and rul
  const start=performance.now();G.nav=new f.NavGraph(level,physics);
  assert.ok(G.nav.validIds.length>100);const stage=f.nativeRankedStage(G);
  assert.equal(stage.version1130Verified,false);assert.match(stage.calibration,/UNVERIFIED/);
- assert.ok(stage.tower.path.length>2);
+ const capability=nativeStageRuleStatus(id,'tower',nativeStageCatalog().stages);
+ if(capability?.supported===false){
+  assert.equal(capability.status,'source-route-unverified');assert.ok(capability.reason);
+  assert.equal(stage.tower.supported,false);assert.equal(stage.tower.path.length,0);assert.equal(stage.ruleAvailability.tower.status,'source-route-unverified');
+  assert.throws(()=>f.nativeRankedStage(G,'tower'),e=>e.code==='NATIVE_TOWER_SOURCE_CLEARANCE_UNSUPPORTED');
+  for(const mode of ['zones','rainmaker','clams'])assert.ok(f.nativeRankedStage(G,mode)[mode==='zones'?'zones':mode]);
+ }else{assert.ok(stage.tower.supported&&stage.tower.path.length>2);assert.equal(stage.tower.arenaSpan.bothHalvesVerified,true);const span=stage.tower.arenaSpan;assert.ok(span.endpointProjection[0]<-span.minimumHalfDepth&&span.endpointProjection[1]>span.minimumHalfDepth,'whole swept deck/rider envelope enters both opposing halves');}
  for(const p of [...stage.rainmaker.goals,stage.rainmaker.center])assert.ok(Number.isFinite(level.groundHeight(p[0],p[2])));
  G.match.mode='turf';G.match.opts={};
- const spawned=f.make();assert.equal(f.beginInitialSquidSpawn(spawned),true);assert.ok(spawned.s3.squidSpawn.target,'initial landing fallback is supported');
+ const spawned=f.make();spawned._integrate=f.Actor.prototype._integrate;
+ assert.equal(f.beginInitialSquidSpawn(spawned),true);assert.ok(spawned.s3.squidSpawn.target,'initial landing fallback is supported');
  spawned.intent.fire=true;spawned.update(1/60);assert.equal(spawned.s3.squidSpawn.phase,'flight');spawned.intent.fire=false;
- for(let i=0;i<75;i++)spawned.update(1/60);assert.equal(spawned.s3.squidSpawn,undefined);assert.equal(spawned.grounded,true);
+ // A supported endpoint above the spawner can retain upward flight velocity.
+ // The production landing handoff then uses ordinary gravity and source
+ // collision. A no-op fixture integrator cannot verify that touchdown.
+ let landingFrames=0;
+ while(spawned.s3.squidSpawn&&landingFrames<180){G.time+=1/60;spawned.update(1/60);landingFrames++;}
+ assert.equal(spawned.s3.squidSpawn,undefined);assert.equal(spawned.grounded,true);assert.equal(spawned.ground.hit,true);
  const brain=new f.BotBrain(spawned,'normal');const candidates=f.nativePaintGoalIds(brain,G);assert.ok(candidates.length>0,'reachable native paint goals');
  const startNode=G.nav.nearest(spawned.pos,1.2);for(const target of candidates.slice(0,5))assert.ok(G.nav.path(startNode,target,spawned.team,50000),'directed path to sampled paint goal');
- console.log(JSON.stringify({id,ppm:G.paint.ppm,atlas:2048,faces:level.faces.length,gridBytes:G.paint.grid.byteLength,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,navMilliseconds:performance.now()-start}));
+ console.log(JSON.stringify({id,cappedWallSamples,tower:stage.tower.supported?{nodes:stage.tower.path.length,center:stage.tower.path[stage.tower.centerIndex],halfSize:stage.tower.halfSize,lift:stage.tower.localLift,arenaSpan:stage.tower.arenaSpan}:stage.ruleAvailability.tower,ppm:G.paint.ppm,atlas:2048,faces:level.faces.length,gridBytes:G.paint.grid.byteLength,navNodes:G.nav.nodes.length,validNodes:G.nav.validIds.length,landingFrames,navMilliseconds:performance.now()-start}));
 });

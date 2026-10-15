@@ -2579,6 +2579,21 @@ function canAllocateNetworkGhost(projectiles, actor) {
       '    if (Array.isArray(d?.e)) d = { ...d, _eventOverBudget: d.e.length > 256, e: d.e.slice(0, 256).filter(Array.isArray) };',
       'cap owner timeline rows per packet');
   }
+  if (rel === 'src/net/netmatch.js') {
+    code = "import { packPaintTick, acceptPaintTick, forgetPaintPeer } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
+    patch('    this.s.tr?.broadcast(msg);',
+      '    this.s.tr?.broadcast(packPaintTick(this, msg));',
+      'negotiate lossless paint rows with current relay members');
+    patch('  onMessage(from, d) {',
+      '  onMessage(from, d) {\n    d = acceptPaintTick(this, from, d);\n    if (!d) return;',
+      'decode bounded paint rows before unchanged sender and HLC admission');
+    patch('  onLeave(id, hostChanged) {',
+      '  onLeave(id, hostChanged) {\n    forgetPaintPeer(this, id);',
+      'retire codec capability before same-id relay rejoin or host adoption');
+    patch("      case 'weapon:fire': G.projectiles?.ghostFire(a, e); break;",
+      "      case 'weapon:fire':\n        if (a.alive && (a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && e.weapon === (a.weapon.catalogRecord?.id || a.weapon.id) && (e.hand === 0 || e.hand === 1)) {\n          a.weaponRunner.hand = e.hand;\n          a.weaponRunner.sinceHand[e.hand] = 0;\n        }\n        G.projectiles?.ghostFire(a, e); break;", 'accepted remote dualies hand presentation');
+    patch('    const wr = a.weaponRunner;', "    const wr = a.weaponRunner;\n    if ((a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && Number.isFinite(dt) && dt > 0) { wr.sinceHand[0] += dt; wr.sinceHand[1] += dt; }", 'remote dualies presentation clocks');
+  }
   if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
   return code;
 }

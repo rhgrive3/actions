@@ -51,9 +51,10 @@ test('every main weapon model keeps finite geometry, grips, muzzle socket and na
     assert.equal(f.getWeaponDef(id), d, id + ' cached');
     if (registeredWeaponModels().includes(id)) assert.equal(d.modelId, id);
     for (const k of ['body', 'ink', 'bodyStatic', 'inkStatic']) finiteGeometry(d[k], id + '.' + k);
+    if (d.glass) finiteGeometry(d.glass, id + '.glass');
     for (const [name, p] of Object.entries(d.parts)) { finiteGeometry(p.geo, id + '.' + name); assert.ok(p.pivot.toArray().every(Number.isFinite)); }
     for (const name of CHANNELS[fam] || []) assert.ok(d.parts[name], `${id} keeps native ${name} channel`);
-    let tris = 0; for (const g of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (g) tris += g.index.count / 3;
+    let tris = 0; for (const g of [d.body, d.ink, d.drum, d.drumCaps, d.glow, d.glass]) if (g) tris += g.index.count / 3;
     assert.ok(tris <= TRI_BUDGET, `${id} ${tris} triangles within ${TRI_BUDGET}`);
     for (const k of ['handR', 'handL']) { assert.ok(d[k].pos.toArray().every(Number.isFinite)); assert.ok(Math.abs(d[k].quat.length() - 1) < 1e-6); }
     const m = new THREE.Matrix4().compose(d.handR.pos, d.handR.quat, V).multiply(new THREE.Matrix4().compose(d.inHand.pos, d.inHand.quat, V));

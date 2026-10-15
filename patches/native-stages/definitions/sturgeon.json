@@ -1,0 +1,15 @@
+{
+  "id": "sturgeon",
+  "internal": "Vss_Nagasaki03",
+  "name": "チョウザメ造船",
+  "sourceSha256": "7db028642562633eec19030d4b77219f9e5d5f2b189ce0d2a396911b7ddafb30",
+  "tree": "fd3bcfd8eb89378b4f1764d3947e5132febf3295",
+  "bounds": { "minX": -30, "minZ": -72.5, "maxX": 30, "maxZ": 72.5 },
+  "spawnPads": [[-15, 11.08, -63], [15, 11.08, 63]],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Local opposed supports on source GroundSteelPlate02 floor at Y=11, with 0.08 clearance; interactive bounds from its original XZ extent. Native 11.3.0 placements and moving-platform states remain unverified.",
+  "sourceSemantics": {
+    "nonCollidableObjectPatterns": ["^FldObj_Nagasaki03_Crane_", "^Fld_Nagasaki03_CameraWall_"]
+  }
+}

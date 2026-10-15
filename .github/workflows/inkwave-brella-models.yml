@@ -1,0 +1,134 @@
+name: INKWAVE three Brella model review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/runtime/weapon-models/brellas.mjs
+      - patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs
+      - patches/splatoon3/adapter.mjs
+      - patches/splatoon3/brella-guard-facing-adapter.mjs
+      - patches/splatoon3/runtime/brella-guard-facing.mjs
+      - patches/splatoon3/runtime/main-weapon-catalog.mjs
+      - patches/splatoon3/tests/brella-guard-facing.test.mjs
+      - patches/splatoon3/tests/brella-facing-wire.test.mjs
+      - scripts/render-inkwave-brella-gallery.mjs
+      - scripts/compare-inkwave-brella-gallery.py
+      - .github/workflows/inkwave-brella-models.yml
+permissions:
+  contents: read
+concurrency:
+  group: brella-model-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  visual:
+    if: github.head_ref == 'feat/inkwave-three-brella-rebuild'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: bca45e7cb55f3331a58459ea0219e42b44762712
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build exact before and after production compositions
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Verify geometry, unmodified Undercover, shield gameplay and animations
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/weapon-catalog-adapter.test.mjs patches/splatoon3/tests/brella-guard-facing.test.mjs patches/splatoon3/tests/issue-857-roller-heading.test.mjs patches/splatoon3/tests/issue-973-facing-speed.test.mjs
+          WEAPON_IDS=s3-shelter-normal,s3-shelter-wide,s3-shelter-focus,s3-shelter-compact node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Render all angles and live open, fold, launch on the same runner
+        run: |
+          IDS=s3-shelter-normal,s3-shelter-wide,s3-shelter-focus
+          node scripts/render-inkwave-brella-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
+          node scripts/render-inkwave-brella-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+          python3 scripts/compare-inkwave-brella-gallery.py .model-evidence reports/inkwave-weapon-model-workspace/refs ${IDS//,/ }
+          python3 - <<'PYCODE'
+          import json
+          rows=json.load(open('.model-evidence/after/gallery.json'))['rows']
+          for row in rows:
+            assert len(row['reverseCases'])==2
+            for case in row['reverseCases']:
+              assert case['meetsGuardBounds'],(row['id'],case)
+          print('BRELLA_REVERSE_BROWSER_GATE passed')
+          PYCODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: three-brella-model-review-${{ github.event.pull_request.head.sha }}
+          path: .model-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+  crowd:
+    if: github.head_ref == 'feat/inkwave-three-brella-rebuild'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: bca45e7cb55f3331a58459ea0219e42b44762712
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable baseline and candidate
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Verify exact emitted runtime geometry and real Actor contracts
+        env:
+          INKWAVE_BUILT_SITE: .model-after-site
+          WEAPON_IDS: s3-shelter-normal,s3-shelter-wide,s3-shelter-focus
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/brella-facing-wire.test.mjs
+          # The immutable built fixture intentionally does not apply adaptRuntime.
+          # The 65-weapon A/B oracle therefore runs in source above, not as a false built comparison.
+          node --experimental-vm-modules --test --test-name-pattern='^(open guard|preparation requires|repeated close|guard yaw-wrap|real held)' patches/splatoon3/tests/brella-guard-facing.test.mjs
+      - name: Eight mixed-weapon Actors, gameplay and far LOD, controlled ABBA
+        run: |
+          for pair in before-A after-B after-B2 before-A2; do
+            version="${pair%%-*}"
+            node scripts/render-inkwave-brella-gallery.mjs --site ".model-${version}-site" --out ".model-crowd/${pair}" --ids s3-shelter-normal --size 600 --crowd
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const all={};for(const name of ['before-A','after-B','after-B2','before-A2']){const data=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/gallery.json'));if(data.errors.length)throw Error(data.errors.join('\n'));all[name]=data.rows[0].crowd;}
+          for(const tier of['game','far'])for(const name of['after-B','after-B2']){
+            if(all[name][tier].actors!==8||new Set(all[name][tier].ids).size!==3)throw Error('Incomplete mixed-weapon crowd');
+            if(all[name][tier].drawCalls-all['before-A'][tier].drawCalls!==0)throw Error('Draw-call regression '+tier);
+          }
+          fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));console.log('BRELLA_CROWD_ABBA '+JSON.stringify(all));
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: brella-model-crowd-${{ github.event.pull_request.head.sha }}
+          path: .model-crowd
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

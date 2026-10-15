@@ -2,6 +2,23 @@
 // contains no third-party vertices, images or native gameplay placement data.
 import {SOURCE_COMMIT,SOURCE_RECIPE} from './source-catalog.mjs';
 const F=Math.fround;
+/** Positive-area overlap between a source triangle and a grid cell. A centre
+ * sample alone drops paintable strips at the original polygon boundary. */
+export function sourceTriangleCellOverlap(ax,ay,bx,by,cx,cy,x0,y0,x1,y1){
+ if(Math.abs((by-cy)*(ax-cx)+(cx-bx)*(ay-cy))<1e-12)return false;
+ // Float64 chart projections differ by roundoff across JS and NumPy. Reject
+ // numerically zero-area contacts rather than claiming adjacent empty cells.
+ const epsilon=1e-9;
+ if(Math.max(ax,bx,cx)<=x0+epsilon||Math.min(ax,bx,cx)>=x1-epsilon||Math.max(ay,by,cy)<=y0+epsilon||Math.min(ay,by,cy)>=y1-epsilon)return false;
+ const mx=(x0+x1)*.5,my=(y0+y1)*.5,hx=(x1-x0)*.5,hy=(y1-y0)*.5;
+ for(let edge=0;edge<3;edge++){
+  const ex=edge===0?bx-ax:edge===1?cx-bx:ax-cx,ey=edge===0?by-ay:edge===1?cy-by:ay-cy;
+  const nx=-ey,ny=ex,a=ax*nx+ay*ny,b=bx*nx+by*ny,c=cx*nx+cy*ny,p=mx*nx+my*ny,r=Math.abs(nx)*hx+Math.abs(ny)*hy;
+  const margin=epsilon*(Math.abs(nx)+Math.abs(ny));
+  if(Math.max(a,b,c)<=p-r+margin||Math.min(a,b,c)>=p+r-margin)return false;
+ }
+ return true;
+}
 class BufferBuilder{
  constructor(Type,initial=4096){this.Type=Type;this.array=new Type(initial);this.length=0;}
  push(...values){if(this.length+values.length>this.array.length){const a=new this.Type(Math.max(this.length+values.length,this.array.length*2));a.set(this.array);this.array=a;}this.array.set(values,this.length);this.length+=values.length;}
@@ -9,18 +26,20 @@ class BufferBuilder{
 }
 function lines(text,visit){let start=0;while(start<text.length){let end=text.indexOf('\n',start);if(end<0)end=text.length;visit(text.slice(start,end).trimEnd());start=end+1;}}
 const any=(s,words)=>words.some(w=>s.includes(w));
-function classify(name,material){
+function classify(name,material,semantics){
  const s=(name+' '+material).toLowerCase(),m=(material||'').toLowerCase();
  const alpha=any(s,['graffiti','warningtape','canola','leaf','grass','cloth','flag','stencil','notice','chainlink','net','grate','fence','vinyl','alpha','rope','fabric','dvpoolfloat','spotlight']);
  const decor=any(s,['graffiti','warningtape','canola','leaf','flag','cloth','stencil','light_cp','spotlight','lens','vinylseat','carshadow','__carsset','_car_','buss_shadow','treebush','groundgrass','watersurfice','__water_','__waterpuddle','watersurface','seawater','skyplane'])||m.endsWith('_water')||name.toLowerCase().includes('_water_')||m.endsWith('_plant')||m.endsWith('_code00');
- const layer=name.match(/Pack(Pnt|Var|Vlf|Vgl|Vcl|Tcl)/)?.[1]||null;
- const active=(!layer||layer==='Pnt')&&!name.includes('TriColor');
+ const layer=name.match(/(?:Pack|_)(Pnt|Var|Vlf|Vgl|Vcl|Tcl)(?:Set)?(?:_|$)/)?.[1]||null;
+ const matches=key=>(semantics?.[key]||[]).some(pattern=>new RegExp(pattern).test(name));
+ const active=(!layer||layer==='Pnt')&&!name.includes('TriColor')&&!matches('inactiveObjectPatterns');
  const grate=any(m,['grate','coppernet','chainlink','meshfloor','waffledplate']),glass=any(m,['glass','window']);
- const collidable=active&&(name.startsWith('Fld_')||name.startsWith('FldObj_'))&&!decor;
- const paintable=collidable&&!grate&&!glass&&!['_np','_cp','_op'].some(x=>m.endsWith(x));
- return {background:name.startsWith('FldBG'),collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
+ const background=name.startsWith('FldBG')||name.startsWith('Fld_BG');
+ const collidable=active&&!background&&(name.startsWith('Fld_')||name.startsWith('FldObj_'))&&!decor&&!matches('nonCollidableObjectPatterns');
+ const paintable=collidable&&!grate&&!glass&&!['_np','_cp','_op'].some(x=>m.endsWith(x))&&!matches('nonPaintableObjectPatterns');
+ return {background,collidable,paintable,grate,glass,alpha,active,ruleLayer:layer};
 }
-export function parseSourceOBJ(text){
+export function parseSourceOBJ(text,semantics){
  const geometry=[],indexChunks=[],objects=[];
  let v=new BufferBuilder(Float32Array),n=new BufferBuilder(Float32Array),uv=new BufferBuilder(Float32Array),ix=new BufferBuilder(Uint32Array);
  let name=null,material=null,vo=0,io=0,uvOffset=0,normalOffset=0;
@@ -33,7 +52,7 @@ export function parseSourceOBJ(text){
    if(uv.length){g[i*8+6]=uv.array[i*2];g[i*8+7]=uv.array[i*2+1];}
   }
   geometry.push(g);indexChunks.push(ix.finish());
-  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material)});
+  objects.push({name,material,vo,vc:count,io,ic:ix.length,bounds:[min,max],sourceHasUV:!!uv.length,...classify(name,material,semantics)});
   vo+=count;io+=ix.length;uvOffset+=uv.length/2;normalOffset+=n.length/3;
   v=new BufferBuilder(Float32Array);n=new BufferBuilder(Float32Array);uv=new BufferBuilder(Float32Array);ix=new BufferBuilder(Uint32Array);
  }
@@ -134,7 +153,7 @@ function paintCharts(data){
    for(let j=0;j<3;j++){xy[i*6+j*2]-=lo[0];xy[i*6+j*2+1]-=lo[1];const rel=[0,1,2].map(k=>T[id*9+j*3+k]-origin[k]);maxError=Math.max(maxError,Math.abs(dot(rel,n)));}
    const at=i*6,ax=xy[at],ay=xy[at+1],bx=xy[at+2],by=xy[at+3],cx=xy[at+4],cy=xy[at+5],den=(by-cy)*(ax-cx)+(cx-bx)*(ay-cy);if(Math.abs(den)<1e-12)continue;
    const x0=Math.max(0,Math.trunc(Math.min(ax,bx,cx)/cu)),x1=Math.min(nu,Math.trunc(Math.max(ax,bx,cx)/cu)+1),y0=Math.max(0,Math.trunc(Math.min(ay,by,cy)/cv)),y1=Math.min(nv,Math.trunc(Math.max(ay,by,cy)/cv)+1);
-   for(let j=y0;j<y1;j++)for(let k=x0;k<x1;k++){const x=(k+.5)*cu,y=(j+.5)*cv,a=((by-cy)*(x-cx)+(cx-bx)*(y-cy))/den,b=((cy-ay)*(x-cx)+(ax-cx)*(y-cy))/den;if(a>=-1e-6&&b>=-1e-6&&a+b<=1+1e-6)mask[j*nu+k]=1;}
+   for(let j=y0;j<y1;j++)for(let k=x0;k<x1;k++)if(sourceTriangleCellOverlap(ax,ay,bx,by,cx,cy,k*cu,j*cv,(k+1)*cu,(j+1)*cv))mask[j*nu+k]=1;
   }
   faces.push({origin,u,v,n,su,sv,nu,nv,cu,cv,grid,object:objectIds[ids[0]],triangles:ids,bounds:[min,max],area});masks.push(mask);grid+=mask.length;
  }
@@ -160,7 +179,7 @@ export function parseSourceMaterials(text,objects,files){
  return materials;
 }
 export function convertSource(stage,obj,mtl,files,progress=()=>{}){
- progress('OBJ');const geometry=parseSourceOBJ(obj);
+ progress('OBJ');const geometry=parseSourceOBJ(obj,stage.sourceSemantics);
  progress('collision');const data=collision(geometry);
  progress('BVH');Object.assign(data,buildSourceBVH(data.triangles));
  progress('paint');const charts=paintCharts(data);

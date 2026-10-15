@@ -1,0 +1,37 @@
+{
+  "id": "mahi",
+  "internal": "Vss_Hiagari04",
+  "name": "マヒマヒリゾート＆スパ",
+  "availability": "placement-unavailable",
+  "reason": "固定ソースには浮遊地形の配置情報が含まれず、両陣地が接続されません。",
+  "sourceSha256": "fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561",
+  "tree": "0aa56643280cbb4271142de95ecc1d95839f5839",
+  "version1130Verified": false,
+  "placementStatus": "BLOCKED: revised display export has disconnected opposing banks and overlapping Float object prototypes without placement transforms; water-state and retail placements unverified",
+  "sourceSemantics": {
+    "nonCollidableObjectPatterns": [
+      "^FldObj_Hiagari04_AirPlane_",
+      "^FldObj_Hiagari04Float"
+    ]
+  },
+  "source": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "tree": "0aa56643280cbb4271142de95ecc1d95839f5839",
+    "objSha256": "fc8f7233063cdbe7b2bd821b30cbe60e94e7a20e6a5d60ce00ce9b272232d561"
+  },
+  "sourceEvidence": {
+    "sceneInfoRow": "Vss_Hiagari04",
+    "sceneInfoLabel": "マヒマヒリゾート&スパ(改修後)",
+    "sceneInfoPreloadResources": [
+      "Model/FldObj_Hiagari04.bfres",
+      "Model/Fld_Hiagari04.bfres"
+    ],
+    "sourceCommit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "objBytes": 29497521,
+    "geometryVersionUnverified": true,
+    "placementTransformsAvailable": false,
+    "waterStateAvailable": false,
+    "verificationReport": "reports/native-stages/mahi-verification.json"
+  }
+}

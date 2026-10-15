@@ -16,6 +16,17 @@ export function showDetachedCanopy(api, owner, canopy, id) {
       cloth.scale.set(aperture.scale / .11, aperture.scale / .11, 1 / aperture.depth);
       group.add(cloth);
     }
+    const paper = def.detachedCanopyInk;
+    if (paper && id === 's3-shelter-focus' && !def.parts.canopyInk
+      && paper.geo === def.ink && paper.pivot?.equals(def.parts.canopy.pivot)) {
+      // Recycled's held ink draw is the paper, in weapon space rather than part-local space.
+      // Borrow the exact cached buffer; flight owns only its material and mesh.
+      const material = new THREE.MeshStandardMaterial({ color: owner.color, roughness: .7, side: THREE.DoubleSide });
+      const cloth = new THREE.Mesh(paper.geo, material); cloth.name = 'canopyInk';
+      cloth.scale.set(aperture.scale / .11, aperture.scale / .11, 1 / aperture.depth);
+      cloth.position.copy(paper.pivot).multiply(cloth.scale).negate();
+      group.add(cloth);
+    }
     canopy.mesh = group;G.scene.add(group);
   }
   canopy.mesh.position.copy(canopy.pos);

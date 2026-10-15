@@ -2151,6 +2151,16 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
+  "specials.slam.damageNearRadius": {
+    "value": 6.4,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
+  "specials.slam.damageRadius": {
+    "value": 9.6,
+    "status": "calibration or derived value; see reference raw table and unverified list",
+    "binding": null
+  },
   "specials.slam.hang": {
     "value": 0.5,
     "status": "calibration or derived value; see reference raw table and unverified list",

@@ -1,0 +1,114 @@
+name: INKWAVE weapon transparent shell review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/adapter.mjs
+      - patches/splatoon3/runtime/weapon-models/**
+      - patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+      - scripts/render-inkwave-weapon-shared-gallery.mjs
+      - scripts/measure-inkwave-weapon-shell-cost.mjs
+      - .github/workflows/inkwave-weapon-shared-rendering.yml
+permissions:
+  contents: read
+concurrency:
+  group: weapon-shared-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review:
+    if: github.head_ref == 'fix/weapon-shared-mirror-glass'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 01aa5cc61c842a8616ab38ff5fb541b6becf1395
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable main and candidate
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Source and emitted material, LOD, hand and gameplay contracts
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+          INKWAVE_BUILT_SITE=.model-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-shared-rendering.test.mjs
+          INKWAVE_BUILT_SITE=.model-after-site node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs
+      - name: Same-camera main and candidate, real Actor source motion, dark and light backgrounds
+        run: |
+          IDS=s3-spinner-downpour,s3-maneuver-short,s3-maneuver-gallon,s3-slosher-launcher
+          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
+          node scripts/render-inkwave-weapon-shared-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-shared-visual-${{ github.event.pull_request.head.sha }}
+          path: |
+            .model-evidence
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+  crowd:
+    if: github.head_ref == 'fix/weapon-shared-mirror-glass'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 01aa5cc61c842a8616ab38ff5fb541b6becf1395
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build immutable main and candidate
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Limited completed-output adoption ABBA, raw frames retained
+        run: |
+          for pair in before-A1 after-B1 after-B2 before-A2; do
+            version="${pair%%-*}"; variant="${pair#*-}"
+            node scripts/measure-inkwave-weapon-shell-cost.mjs --site ".model-${version}-site" --out ".model-crowd/${variant}" --variant "$variant"
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const all={};for(const name of['A1','B1','B2','A2']){const d=JSON.parse(fs.readFileSync('.model-crowd/'+name+'/result.json'));if(d.errors.length)throw Error(d.errors.join('\n'));all[name]=d;}
+          fs.writeFileSync('.model-crowd/comparison.json',JSON.stringify(all,null,2));
+          for(const tier of['game','far'])for(const name of['B1','B2']){
+            const actual=all[name].tiers[tier].preparation,base=all.A1.tiers[tier].preparation;
+            if(actual.nonzero!==base.nonzero+2||actual.zero!==base.zero+2)throw Error('Nonzero/zero gate budget differs '+tier);
+            if(all[name].tiers[tier].frames.filter(f=>f.phase==='measured').length!==12)throw Error('Incomplete adoption samples');
+          }
+          console.log('Adoption ABBA complete; interpret 12-frame raw/range, not device FPS');
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weapon-shared-crowd-${{ github.event.pull_request.head.sha }}
+          path: .model-crowd
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

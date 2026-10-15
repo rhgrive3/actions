@@ -297,3 +297,35 @@
   visibility: hidden;
   opacity: 0;
 }
+
+/* Alternate-kit loadout: 160 weapon cards must not push the action panel
+   several screens below the clipped menu. Scroll cards inside their own
+   bounded native menu region; keep the active detail and appearance action
+   visible and reachable by pointer, keyboard and gamepad navigation. */
+.iw-loadout .iw-loadout__body .iw-wgrid.is-compact {
+  max-height: min(34vh, calc(var(--u) * 26));
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--a-rgb), .65) transparent;
+  padding: calc(var(--u) * .2) calc(var(--u) * .45) calc(var(--u) * .7);
+}
+.iw-loadout .iw-loadout__body .iw-wd {
+  position: relative;
+  min-width: 0;
+  z-index: 2;
+}
+.iw-loadout .iw-wd [data-id="weapon-appearance"] {
+  grid-column: 1 / -1;
+  z-index: 3;
+  min-height: 44px;
+  height: auto;
+  padding: max(8px, calc(var(--u) * .65)) max(12px, calc(var(--u) * 1.1));
+  font: 800 max(12px, var(--fs-s)) / 1.25 'Rubik', 'IW JP Body', sans-serif;
+}
+.iw-loadout .iw-wd [data-id="weapon-appearance"] span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

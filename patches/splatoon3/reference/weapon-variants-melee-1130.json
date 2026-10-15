@@ -1,0 +1,216 @@
+{
+  "referenceVersion": "11.3.0",
+  "sourceCommit": "7280ff9cde8bb1c5dcef46c700c326471584d2e6",
+  "sourceUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json",
+  "sourceSha256": "53641c4b4c96d56d3ed4ca8d4c7426d83a0bf28af6f85e9eafc391b2ae9f663e",
+  "records": [
+    {
+      "sourceRow": "Roller_Normal_01",
+      "sourceId": 1011,
+      "rowPointer": "/134",
+      "baseId": "roller",
+      "name": "Krak-On Splat Roller",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Krak-On_Splat_Roller"
+    },
+    {
+      "sourceRow": "Roller_Compact_01",
+      "sourceId": 1001,
+      "rowPointer": "/120",
+      "baseId": "s3-roller-compact",
+      "name": "Carbon Roller Deco",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Carbon_Roller_Deco"
+    },
+    {
+      "sourceRow": "Roller_Compact_02",
+      "sourceId": 1002,
+      "rowPointer": "/121",
+      "baseId": "s3-roller-compact",
+      "name": "Carbon Roller ANG-L",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Carbon_Roller_ANG-L"
+    },
+    {
+      "sourceRow": "Roller_Heavy_01",
+      "sourceId": 1021,
+      "rowPointer": "/125",
+      "baseId": "s3-roller-heavy",
+      "name": "Gold Dynamo Roller",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Gold_Dynamo_Roller"
+    },
+    {
+      "sourceRow": "Roller_Heavy_02",
+      "sourceId": 1022,
+      "rowPointer": "/126",
+      "baseId": "s3-roller-heavy",
+      "name": "Starz Dynamo Roller",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Starz_Dynamo_Roller"
+    },
+    {
+      "sourceRow": "Roller_Hunter_01",
+      "sourceId": 1031,
+      "rowPointer": "/130",
+      "baseId": "s3-roller-hunter",
+      "name": "Foil Flingza Roller",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Foil_Flingza_Roller"
+    },
+    {
+      "sourceRow": "Roller_Wide_01",
+      "sourceId": 1041,
+      "rowPointer": "/142",
+      "baseId": "s3-roller-wide",
+      "name": "Big Swig Roller Express",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Big_Swig_Roller_Express"
+    },
+    {
+      "sourceRow": "Roller_Wide_02",
+      "sourceId": 1042,
+      "rowPointer": "/143",
+      "baseId": "s3-roller-wide",
+      "name": "Planetz Big Swig Roller",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Planetz_Big_Swig_Roller"
+    },
+    {
+      "sourceRow": "Brush_Mini_01",
+      "sourceId": 1101,
+      "rowPointer": "/39",
+      "baseId": "s3-brush-mini",
+      "name": "Inkbrush Nouveau",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Inkbrush_Nouveau"
+    },
+    {
+      "sourceRow": "Brush_Normal_01",
+      "sourceId": 1111,
+      "rowPointer": "/43",
+      "baseId": "s3-brush-normal",
+      "name": "Octobrush Nouveau",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Octobrush_Nouveau"
+    },
+    {
+      "sourceRow": "Brush_Normal_02",
+      "sourceId": 1112,
+      "rowPointer": "/44",
+      "baseId": "s3-brush-normal",
+      "name": "Cometz Octobrush",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Cometz_Octobrush"
+    },
+    {
+      "sourceRow": "Brush_Heavy_01",
+      "sourceId": 1121,
+      "rowPointer": "/35",
+      "baseId": "s3-brush-heavy",
+      "name": "Painbrush Nouveau",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Painbrush_Nouveau"
+    },
+    {
+      "sourceRow": "Brush_Heavy_02",
+      "sourceId": 1122,
+      "rowPointer": "/36",
+      "baseId": "s3-brush-heavy",
+      "name": "Painbrush BRN-Z",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Painbrush_BRN-Z"
+    },
+    {
+      "sourceRow": "Slosher_Strong_01",
+      "sourceId": 3001,
+      "rowPointer": "/281",
+      "baseId": "slosher",
+      "name": "Slosher Deco",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Slosher_Deco"
+    },
+    {
+      "sourceRow": "Slosher_Diffusion_01",
+      "sourceId": 3011,
+      "rowPointer": "/265",
+      "baseId": "s3-slosher-diffusion",
+      "name": "Tri-Slosher Nouveau",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Tri-Slosher_Nouveau"
+    },
+    {
+      "sourceRow": "Slosher_Diffusion_02",
+      "sourceId": 3012,
+      "rowPointer": "/266",
+      "baseId": "s3-slosher-diffusion",
+      "name": "Tri-Slosher ASH-N",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Tri-Slosher_ASH-N"
+    },
+    {
+      "sourceRow": "Slosher_Launcher_01",
+      "sourceId": 3021,
+      "rowPointer": "/274",
+      "baseId": "s3-slosher-launcher",
+      "name": "Sloshing Machine Neo",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Sloshing_Machine_Neo"
+    },
+    {
+      "sourceRow": "Slosher_Bathtub_01",
+      "sourceId": 3031,
+      "rowPointer": "/260",
+      "baseId": "s3-slosher-bathtub",
+      "name": "Bloblobber Deco",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Bloblobber_Deco"
+    },
+    {
+      "sourceRow": "Slosher_Washtub_01",
+      "sourceId": 3041,
+      "rowPointer": "/286",
+      "baseId": "s3-slosher-washtub",
+      "name": "Custom Explosher",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Custom_Explosher"
+    },
+    {
+      "sourceRow": "Slosher_Double_01",
+      "sourceId": 3051,
+      "rowPointer": "/270",
+      "baseId": "s3-slosher-double",
+      "name": "Dread Wringer D",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Dread_Wringer_D"
+    },
+    {
+      "sourceRow": "Slosher_Double_02",
+      "sourceId": 3052,
+      "rowPointer": "/271",
+      "baseId": "s3-slosher-double",
+      "name": "Hornz Dread Wringer",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Hornz_Dread_Wringer"
+    },
+    {
+      "sourceRow": "Saber_Normal_01",
+      "sourceId": 8001,
+      "rowPointer": "/154",
+      "baseId": "s3-saber-normal",
+      "name": "Splatana Stamper Nouveau",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Splatana_Stamper_Nouveau"
+    },
+    {
+      "sourceRow": "Saber_Normal_02",
+      "sourceId": 8002,
+      "rowPointer": "/155",
+      "baseId": "s3-saber-normal",
+      "name": "Stickerz Splatana Stamper",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Stickerz_Splatana_Stamper"
+    },
+    {
+      "sourceRow": "Saber_Lite_01",
+      "sourceId": 8011,
+      "rowPointer": "/150",
+      "baseId": "s3-saber-lite",
+      "name": "Splatana Wiper Deco",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Splatana_Wiper_Deco"
+    },
+    {
+      "sourceRow": "Saber_Lite_02",
+      "sourceId": 8012,
+      "rowPointer": "/151",
+      "baseId": "s3-saber-lite",
+      "name": "Splatana Wiper RUS-T",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Splatana_Wiper_RUS-T"
+    },
+    {
+      "sourceRow": "Saber_Heavy_01",
+      "sourceId": 8021,
+      "rowPointer": "/147",
+      "baseId": "s3-saber-heavy",
+      "name": "Charcoal Decavitator",
+      "appearanceUrl": "https://splatoonwiki.org/wiki/Charcoal_Decavitator"
+    }
+  ]
+}

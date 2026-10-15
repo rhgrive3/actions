@@ -399,8 +399,11 @@ test('sourced ToHuman cannot generate a phantom carry while airborne or landing'
     samples.push({ state: c.state, carry: api.posture.sourceCarryWeight(c.retarget),
       angle: carryAngle(), posture: api.posture.sourcePostureWeight(c.retarget) });
   } });
+  // An airborne kid no longer plays the grounded ToHuman clip (source-form-transition.mjs):
+  // the jump pose takes over on the first airborne frame; any ToHuman sample keeps its hold.
   const form = samples.filter(p => p.state === 'ToHuman');
-  assert.ok(form.length > 0 && form.every(p => p.carry === 0 && p.angle < 1e-10),
+  assert.equal(samples[0].state, 'air', 'leaving the ground mid-ToHuman hands over to the air pose');
+  assert.ok(form.every(p => p.carry === 0 && p.angle < 1e-10),
     'visible form clip retains source-defined hold');
   const air = samples.filter(p => p.state === 'air');
   assert.ok(air.length > 10 && air.some(p => p.posture > 0.001),
@@ -458,14 +461,18 @@ test('reacquires shooter carry without a grounded ToHuman weapon snap', async ()
       carry: api.posture.sourceCarryWeight(c.retarget), angle: carryAngle(),
       sourceTurn: sourceCarryTurn() });
   } });
+  // Surfacing at 6 m/s steps straight into locomotion (source-form-transition.mjs) instead of
+  // sliding in the ToHuman clip; the weapon hand-off below must still ease in.
   const toHuman = samples.filter(x => x.state === 'ToHuman');
-  assert.ok(toHuman.length > 0 && toHuman.every(x => x.carry === 0 && x.angle < 1e-10));
+  assert.ok(toHuman.every(x => x.carry === 0 && x.angle < 1e-10));
+  assert.equal(samples[0].state, 'move', 'moving emergence uses locomotion from the first frame');
   const moving = samples.filter(x => x.state === 'move');
-  assert.ok(moving.length >= 15, 'real source bank finishes ToHuman into ordinary movement');
-  assert.ok(moving[0].carry > 0 && moving[0].carry < 0.20,
+  assert.ok(moving.length >= 15, 'real source bank returns into ordinary movement');
+  const handoff = moving.find(x => x.carry > 0);
+  assert.ok(handoff && handoff.carry < 0.20,
     'first grounded return must ease in, not apply the full shooter yaw in one frame');
-  assert.ok(moving[0].sourceTurn <= 0.030001,
-    `actual sourced weapon hand-off must not add a sudden turn: ${moving[0].sourceTurn} rad`);
+  assert.ok(handoff.sourceTurn <= 0.030001,
+    `actual sourced weapon hand-off must not add a sudden turn: ${handoff.sourceTurn} rad`);
   assert.ok(moving.some((p, i) => i > 40 && p.sourceTurn > 0.03),
     'carry must recover visibly after hand-off rather than being disabled to pass the bound');
   let previous = 0, previousAngle = 0;

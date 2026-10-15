@@ -1,0 +1,633 @@
+{
+  "id": "museum",
+  "internal": "Vss_Pivot03",
+  "name": "キンメダイ美術館",
+  "status": "passed",
+  "acceptedFoundation": "a1cd234b9725367529c176cf25420d12ba29c875",
+  "source": {
+    "id": "museum",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "tree": "777211951cc54e036f9770990476f968bf5a1a33",
+    "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+    "sourceBytes": 41209929,
+    "sourceObjects": 225,
+    "sourceVertices": 361197,
+    "sourceTriangles": 241259,
+    "positionsFloat32Exact": true,
+    "normalsFloat32Exact": true,
+    "uvFloat32Exact": true,
+    "indicesUint32Exact": true,
+    "allPinnedMtlPngVerified": 234,
+    "sourceMtlSha256": "fb4750ed9864714de3e2ba176b7ae3d040cf86a1d8037e150e47b099c9cf65ba",
+    "derivedTextureBytesExact": 212,
+    "renderVerticesSha256": "5aa85f10499f3db113a6b1e1375a9be32337b658bb378041b3e03ecc49abe9a3",
+    "renderIndicesSha256": "89c07bb7caa9e9aedeba00b7095669f0fc9fbb7c990331752bf6c1992a49efe0",
+    "version1130Verified": false
+  },
+  "sourceRepositoryImmutable": {
+    "head": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "indexSha256": "0c8ac8d7ce7b8aac8e2f138143811abb37152e4df73670e50022b6cf12228a87",
+    "unchangedAfterRead": true
+  },
+  "metadata1130": {
+    "VersusSceneInfoSha256": "205532c39ebe91f5c704b5a3e674652ed644361b656f7d42e8580c89290a8c62",
+    "SceneInfoSha256": "37b9cce349998238b86c353c151f618827220a718a0613a44ef2c64295c87d3e",
+    "identityOnly": true
+  },
+  "builds": {
+    "local": {
+      "contentHash": "700af97dcc7d580c6ee6d06035584e37a98950c3f078860d8442974ee9bfd221",
+      "inputHash": "51e535cdfe06cae082a126a43b83893aa8454a315c4fa06ef8fd04fad33b4202",
+      "revision": "f5fa9f702dd543ed06414384b182ff4f06608faa0c44609946c9b6fa9fc3b399"
+    },
+    "public": {
+      "contentHash": "3a566580c7c17fdd12af0f5198f887ef331fec15f47a4208259c7687620b2b80",
+      "inputHash": "51e535cdfe06cae082a126a43b83893aa8454a315c4fa06ef8fd04fad33b4202",
+      "revision": "fa96d9aeb77f307ddc87c480ce5c92d35516d3a274a2c0a385e5d721d4dd48e7",
+      "sourcePayloadBundled": false
+    }
+  },
+  "cpu": {
+    "beforeCanonicalFixture": {
+      "pass": 60,
+      "skip": 4,
+      "fail": 0
+    },
+    "afterCanonicalFixture": {
+      "tests": 65,
+      "pass": 61,
+      "skip": 4,
+      "fail": 0,
+      "cancelled": 0,
+      "durationMs": 177628.125047,
+      "sourceEnabled": true,
+      "concurrency": 1,
+      "serializedHeavyAssetLock": true
+    },
+    "browserPythonRenderAndMaskBytesEqual": true,
+    "navNodes": 21141,
+    "validNodes": 7088,
+    "bothTeamRoutes": [
+      {
+        "team": 0,
+        "spawnNode": 1126,
+        "reachableNodes": 4831,
+        "objectives": 14
+      },
+      {
+        "team": 1,
+        "spawnNode": 20275,
+        "reachableNodes": 4831,
+        "objectives": 14
+      }
+    ],
+    "launchCases": 30,
+    "sourceNodeHeightChecks": true,
+    "groundedMovementRates": [
+      30,
+      60,
+      120
+    ],
+    "wallClimbAndEnemyInkRelease": true,
+    "maskedOwnershipHolesPreserved": true,
+    "sealedLaunchSummary": {
+      "cases": 30,
+      "grounded": 30,
+      "routesToEachObjective": 14,
+      "botWalkingValid": true,
+      "maxLandingSeconds": 1.575,
+      "sourceSupportTriangles": [
+        89817,
+        89833,
+        122379,
+        122380,
+        122643
+      ]
+    }
+  },
+  "gameplay": {
+    "actors": 8,
+    "bots": 7,
+    "alive": 8,
+    "coverage": [
+      0.003728108816279859,
+      0.005868148018001579
+    ],
+    "botMovement": [
+      3.5295321107365285,
+      4.989991300835875,
+      0.646980008741342,
+      0.17209118259273226,
+      0.3892408768460752,
+      4.407918447772999,
+      8.047003798273622
+    ],
+    "cpuFrameMilliseconds": {
+      "p50": 10.300000011920929,
+      "p95": 35.5,
+      "max": 55.1000000089407
+    },
+    "nativeMetrics": {
+      "loadMilliseconds": 3536.5999999940395,
+      "navMilliseconds": 887.5,
+      "shaderWarmMilliseconds": 11.400000005960464,
+      "vertices": 361197,
+      "triangles": 241259,
+      "faces": 47855,
+      "gridBytes": 3085851,
+      "atlas": 2048,
+      "ppm": 2.5600000000000005,
+      "textureCount": 76,
+      "quality": "low",
+      "version1130Verified": false
+    },
+    "rules": [
+      {
+        "mode": "zones",
+        "towerProof": null,
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          98,
+          100
+        ],
+        "snapshotBytes": 510,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      },
+      {
+        "mode": "tower",
+        "towerProof": {
+          "pathNodes": 18,
+          "segmentInteriorSamples": 3,
+          "actualCapsuleSupports": 138,
+          "halfSize": 1.2,
+          "localLift": 1.2,
+          "sourceClearance": {
+            "queries": 7694,
+            "triangleTests": 122061,
+            "radius": 2.097056274847714,
+            "height": 2.03,
+            "assurance": "Conservative source-triangle swept deck, pole and live human-capsule envelope; local inference; retail trajectory/lift unverified"
+          },
+          "arenaSpan": {
+            "origin": [
+              0,
+              0
+            ],
+            "forward": [
+              0.6357072528610996,
+              0.7719302356170495
+            ],
+            "endpointProjection": [
+              -10.421058180830169,
+              10.421058180830169
+            ],
+            "minimumHalfDepth": 2.097056274847714,
+            "bothHalvesVerified": true
+          },
+          "liveGroundedHumanCounted": true,
+          "keyboardBoarding": [
+            {
+              "hz": 30,
+              "boarded": true,
+              "frames": 14,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 47943,
+              "towerBlock": 47943,
+              "position": [
+                -0.7800382872447823,
+                5.2,
+                -1.0544891359115822
+              ],
+              "approach": {
+                "sourceNode": 10033,
+                "start": [
+                  -1.5,
+                  4,
+                  -2.5
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  5.2,
+                  -1.3049844718999242
+                ],
+                "height": 1.2000000000000002,
+                "jumping": true,
+                "hz": 30
+              }
+            },
+            {
+              "hz": 60,
+              "boarded": true,
+              "frames": 27,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 47943,
+              "towerBlock": 47943,
+              "position": [
+                -0.7667062290959177,
+                5.2,
+                -1.0395369228129856
+              ],
+              "approach": {
+                "sourceNode": 10033,
+                "start": [
+                  -1.5,
+                  4,
+                  -2.5
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  5.2,
+                  -1.3049844718999242
+                ],
+                "height": 1.2000000000000002,
+                "jumping": true,
+                "hz": 60
+              }
+            },
+            {
+              "hz": 120,
+              "boarded": true,
+              "frames": 54,
+              "reachedEnd": false,
+              "controller": 0,
+              "grounded": true,
+              "groundHit": true,
+              "groundBlock": 47943,
+              "towerBlock": 47943,
+              "position": [
+                -0.7560052765203386,
+                5.2,
+                -1.0261526886644066
+              ],
+              "approach": {
+                "sourceNode": 10033,
+                "start": [
+                  -1.5,
+                  4,
+                  -2.5
+                ],
+                "end": [
+                  -0.9024922359499621,
+                  5.2,
+                  -1.3049844718999242
+                ],
+                "height": 1.2000000000000002,
+                "jumping": true,
+                "hz": 120
+              }
+            }
+          ]
+        },
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          91,
+          100
+        ],
+        "snapshotBytes": 785,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      },
+      {
+        "mode": "rainmaker",
+        "towerProof": null,
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          100,
+          100
+        ],
+        "snapshotBytes": 944,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      },
+      {
+        "mode": "clams",
+        "towerProof": null,
+        "state": "playing",
+        "actors": 8,
+        "counts": [
+          100,
+          100
+        ],
+        "snapshotBytes": 8041,
+        "calibration": "LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED."
+      }
+    ],
+    "errors": []
+  },
+  "actualWeaponWallPaint": {
+    "weapon": "shooter",
+    "sourceWeapon": "WeaponShooterNormal",
+    "gear": [
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      }
+    ],
+    "rates": [
+      {
+        "hz": 30,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "hz": 60,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "hz": 120,
+        "admitted": 1,
+        "owned": 1,
+        "sourceSweepHit": true,
+        "naturalWallSplats": 4,
+        "alive": true,
+        "grounded": true
+      }
+    ],
+    "sourceObject": "FldObj_Pivot03_PackPnt_Area_1716_1__PortableStageFloor",
+    "manualStampUsed": false
+  },
+  "naturalSourceLaunch": {
+    "cases": 30,
+    "rates": [
+      30,
+      60,
+      120
+    ],
+    "bothHumanTeamsAndAllFourBotSlots": true,
+    "maximumLandingSeconds": 1.5583333333333333,
+    "minimumOrdinaryPostLaunchMovement": 3.681105034602088,
+    "sourceRoofsAndVelocityPreserved": true,
+    "allExactHeightNodes": true
+  },
+  "online": {
+    "transport": "real WebSocket + production RoomDurableObject",
+    "modes": [
+      "turf",
+      "zones",
+      "tower",
+      "rainmaker",
+      "clams"
+    ],
+    "actorsPerPeer": 8,
+    "packets": 1514,
+    "weapon": "s3-blaster-short",
+    "playback": {
+      "settled": true,
+      "frames": 210,
+      "probeRadius": 3.84
+    },
+    "completeGridSha256": [
+      "2fd9fd7e5be41b0fd112574f0a91bb5ee4d01e1472ae62b33bf79394210d45cc",
+      "2fd9fd7e5be41b0fd112574f0a91bb5ee4d01e1472ae62b33bf79394210d45cc"
+    ],
+    "rankedCountsEqual": true,
+    "fingerprintsEqual": true,
+    "errors": []
+  },
+  "render": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "staticViews": [
+      {
+        "name": "gameplay",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 77947,
+        "chunkedInkTriangles": 65919,
+        "baselineP50Milliseconds": 5.100000008940697,
+        "chunkedP50Milliseconds": 7.799999997019768
+      },
+      {
+        "name": "center",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 77947,
+        "chunkedInkTriangles": 39634,
+        "baselineP50Milliseconds": 2.2000000029802322,
+        "chunkedP50Milliseconds": 2.0999999940395355
+      },
+      {
+        "name": "overhead",
+        "changedPixels": 0,
+        "maxChannelError": 0,
+        "baselineSelfPixels": 0,
+        "chunkedSelfPixels": 0,
+        "baselineInkTriangles": 77947,
+        "chunkedInkTriangles": 77947,
+        "baselineP50Milliseconds": 15.899999991059303,
+        "chunkedP50Milliseconds": 6.700000002980232
+      }
+    ],
+    "movingCameras": 12,
+    "movingIndexUploads": 12,
+    "authoritiesUnchanged": true,
+    "cpuPaintUnchanged": true,
+    "sourceBuffersExact": true,
+    "pixelReference": "actual original single ink mesh; A/A and B/B controls; eight actors retained in timings"
+  },
+  "publicSource": {
+    "downloadVerified": true,
+    "sourceSha256": "ffe207e9b3d3eb4fc482ca45887fea1f1a131fdb2e2a0403535e1f281453bad1",
+    "geometry": {
+      "vertices": 361197,
+      "triangles": 241259,
+      "collisionTriangles": 126989,
+      "bvhNodes": 32767,
+      "paintFaces": 47855
+    },
+    "spawn": {
+      "grounded": true,
+      "active": false,
+      "landingFrames": 91,
+      "maximumLandingFrames": 180
+    },
+    "cache": {
+      "id": "museum",
+      "derivedCacheHit": true,
+      "objDownloads": 0
+    },
+    "alteredObjFailureRollback": {
+      "levelRetained": true,
+      "menu": "setup",
+      "loadingRemoved": true
+    },
+    "errors": []
+  },
+  "lifecycle": {
+    "status": "passed",
+    "errors": [],
+    "quality": {
+      "cpuGridUnchanged": true,
+      "trianglePositionsUnchanged": true,
+      "authoritiesRetained": true,
+      "finalAtlas": 2048,
+      "textureCount": 76
+    },
+    "failureRollback": {
+      "rejected": true,
+      "levelRetained": true,
+      "paintRetained": true,
+      "displayRetained": true
+    },
+    "corruptionProbe": {
+      "requests": 1,
+      "error": "Native integrity mismatch: museum/vertices.bin"
+    },
+    "singleStageSeam": "Production buildNativeWorld helper reloads detached assets; user same-map start legitimately retains its live world.",
+    "cancellation": {
+      "id": "tidewater",
+      "nativeGroups": 0,
+      "preparationCancelled": true
+    },
+    "switches": [
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 226,
+          "textures": 28
+        }
+      },
+      {
+        "id": "museum",
+        "native": true,
+        "nativeGroups": 1,
+        "memory": {
+          "geometries": 313,
+          "textures": 94
+        }
+      },
+      {
+        "id": "tidewater",
+        "native": false,
+        "nativeGroups": 0,
+        "memory": {
+          "geometries": 226,
+          "textures": 28
+        }
+      }
+    ],
+    "fingerprint": {
+      "same": true,
+      "changed": false,
+      "missing": false
+    },
+    "mobile": [
+      {
+        "id": "museum",
+        "viewport": [
+          844,
+          390
+        ],
+        "touch": true,
+        "actors": 8,
+        "native": true,
+        "atlas": 2048,
+        "textureCount": 76,
+        "cpuFrame": {
+          "p50": 10.100000008940697,
+          "p95": 31.200000002980232,
+          "max": 48.20000000298023
+        },
+        "gpuDrainRenderMs": 6.600000008940697,
+        "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "local": {
+          "grounded": true,
+          "spawn": false
+        },
+        "mobileHardwareMeasured": false
+      }
+    ]
+  },
+  "packaging": {
+    "committedEmittedPass": 9,
+    "startupBudgetLocal": {
+      "status": "passed",
+      "revision": "f5fa9f702dd543ed06414384b182ff4f06608faa0c44609946c9b6fa9fc3b399",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2872532,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5766625,
+      "workerBytes": 70517,
+      "declaredBytes": 10384665,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    },
+    "startupBudgetPublic": {
+      "status": "passed",
+      "revision": "fa96d9aeb77f307ddc87c480ce5c92d35516d3a274a2c0a385e5d721d4dd48e7",
+      "initialJSRequests": 146,
+      "modulePreloads": 145,
+      "coreModulePreloads": 131,
+      "practiceRangeModulePreloads": 14,
+      "practiceRangePreloadBytes": 74638,
+      "initialJSBytes": 2875383,
+      "criticalHTMLBytes": 15371,
+      "precacheCount": 365,
+      "precacheBytes": 5769476,
+      "workerBytes": 70517,
+      "declaredBytes": 10387516,
+      "measurementKind": "deterministic file and dependency gates; not native browser timings"
+    }
+  },
+  "selfReview": {
+    "geometryBuffersUnmodified": true,
+    "screenshotsInspected": [
+      "gameplay",
+      "overhead",
+      "source-only",
+      "844x390 touch"
+    ],
+    "sourceAndDerivedModelsAndScreenshotsPrivate": true,
+    "dynamicMuseumRotationStateUnverified": true,
+    "displayGeometryCollisionAndPaintFlagsInferred": true,
+    "sourceFoliageCanOccludeRoofCamera": true,
+    "softwareGLTimingNotPhysicalMobileOrSwitchFPS": true,
+    "renderGameplaySampleDidNotShowTimingGainDespiteCulling": true
+  },
+  "version1130Verified": false
+}

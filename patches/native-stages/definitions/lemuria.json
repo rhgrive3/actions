@@ -1,0 +1,14 @@
+{
+  "id": "lemuria",
+  "internal": "Vss_AutoWalk00",
+  "name": "リュウグウターミナル",
+  "availability": "source-unavailable",
+  "reason": "公開モデルが見つからないため、現在プレイできません。",
+  "source": {
+    "repository": "kirakira-dev/KiTrix",
+    "commit": "0611f51b35c9736ee986fb2218461e2585b7875e",
+    "searchStatus": "exhausted-public-search-2026-10-13"
+  },
+  "version1130Verified": false,
+  "placementStatus": "blocked-source-unavailable"
+}

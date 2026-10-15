@@ -10,9 +10,9 @@ export function nativeInkMaterial(paint, murals, texlib){
   // Ink shading uses dFdx/fwidth. Discarding at the start of a non-uniform
   // fragment quad makes those derivatives undefined at the ink edge. Evaluate
   // shading first, then suppress unpainted fragments before writing colour.
-  shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>','if (texture2D(uPaint, vPaintUv).a < 0.015) discard;\n#include <opaque_fragment>');
+  shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>','if (texture2D(uPaint, vPaintUv).a < 0.015) discard;\ndiffuseColor.a *= gInk;\n#include <opaque_fragment>');
  };
- mat.customProgramCacheKey=()=> 'native-ink-overlay-v2';return mat;
+ mat.customProgramCacheKey=()=> 'native-ink-overlay-v3';return mat;
 }
 
 export function nativeInkGeometry(level,paint){

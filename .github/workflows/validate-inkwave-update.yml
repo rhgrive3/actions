@@ -118,6 +118,8 @@ jobs:
           if-no-files-found: error
           path: ${{ env.FOCUSED_EVIDENCE_DIR }}/
           retention-days: 14
+      - name: Verify queued InkFlight and catalogue bot liveness fixes
+        run: node --experimental-vm-modules --test patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs patches/local-quality/tests/catalog-charge-bot-release.test.mjs
       - name: Verify source session admission and finite view settings
         run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
       - name: Verify claimed room startup and gyro health regressions
@@ -247,6 +249,8 @@ jobs:
             list(pool.map(fetch_source,sorted(paths)))
           PY
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
+          node scripts/generate-inkwave-catalog-wall-drop.mjs .reference-data/catalog/data/parameter/1130/weapon
+          git diff --exit-code -- patches/splatoon3/runtime/catalog-wall-drop-data.mjs
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test --test-name-pattern='pinned alternate rows match raw' patches/splatoon3/tests/alternate-weapon-kits.test.mjs
           node scripts/generate-inkwave-weight-reference.mjs .reference-data/catalog/data/parameter/1130/weapon
           git diff --exit-code -- patches/splatoon3/reference/weapon-weight-1130.json patches/splatoon3/runtime/weapon-weight-data.mjs
@@ -309,6 +313,8 @@ jobs:
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs
+      - name: Verify actual built codec and authenticated JSON transport
+        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-packet-codec.test.mjs patches/network-replication/tests/paint-packet-codec-order.test.mjs
       - name: Verify emitted Tenacity lock and passive ownership
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
@@ -442,6 +448,9 @@ jobs:
       - name: Verify native touch gesture continuity in Chromium
         if: matrix.suite == 'ui'
         run: node scripts/check-inkwave-tap-gestures-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/tap-gestures"
+      - name: Verify minimap observation symmetry and strict failure controls
+        if: matrix.suite == 'active'
+        run: node --test scripts/lib/minimap-canvas-observation.test.mjs
       - name: Verify active browser behavior and loaded artifact bytes
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/game" --profile-dir "$CI_STORAGE/cache/game" --exact-source
@@ -545,6 +554,7 @@ jobs:
       - name: Reject forged touch and reliability source identities
         if: matrix.suite == 'ui'
         run: |
+          node --test scripts/tests/inkwave-identity-helper-loading.test.mjs scripts/lib/minimap-canvas-three-binding.test.mjs
           node scripts/check-inkwave-touch-layout-identity.mjs --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-touch" --evidence-dir "$CI_STORAGE/evidence/identity-touch"
           node scripts/check-inkwave-touch-layout-identity.mjs --network --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-network" --evidence-dir "$CI_STORAGE/evidence/identity-network"
           node scripts/check-inkwave-touch-layout-identity.mjs --reliability --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-reliability" --evidence-dir "$CI_STORAGE/evidence/identity-reliability"
