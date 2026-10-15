@@ -27,7 +27,7 @@ async function shot(rate,height=8,{wall=false,dead=false,ghost=false}={}){
 
 test('airborne catalog splash lands before acquiring floor ownership, with deterministic 30/60/120Hz final paint',async()=>{
  const baseline=await shot(60);assert.ok(baseline.queued);assert.ok(baseline.landings.length>0);
- const drops=baseline.stamps.filter(s=>s.opts.kind==='drop');assert.ok(drops.length>0);
+ const drops=baseline.stamps.filter(s=>s.opts.kind==='source-splash');assert.ok(drops.length>0);
  assert.ok(drops.every(s=>s.time>.2),'high airborne splash cannot immediately ray-project onto floor');
  assert.ok(baseline.landings.every(l=>l.frames>0&&l.height>1));
  assert.equal(baseline.turf,baseline.cells*.0625);

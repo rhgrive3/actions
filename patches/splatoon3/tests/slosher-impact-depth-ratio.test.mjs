@@ -25,7 +25,7 @@ for (const [unitIndex, bulletIndex, endpoint] of [[1, 0, 'Near'], [1, 1, 'Near']
     assert.ok(paint.counts[0] > 0, 'native impact paints scoring cells');
     const expected = makePaintWorld(f).paint;
     expected.splat(center.clone().add(V(0, .14, 0)), source[`WidthHalf${endpoint}`] * scale, 0, {
-      seed: .5, stretch: V(0, 0, 1), stretchAmt: source[`DepthScale${endpoint}`] - 1,
+      kind: 'source-splash', seed: .5, stretch: V(0, 0, 1), stretchAmt: source[`DepthScale${endpoint}`] - 1,
     });
     assert.deepEqual(actual, Array.from(expected.grid), 'source ratio reaches actual scoring footprint without adding a second base width');
   });

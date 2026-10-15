@@ -140,6 +140,26 @@ test('zone capture uses the live paint grid and reaches full exposed turf covera
   paint.dispose?.();
 });
 
+test('a calibrated floor band excludes box tops and other storeys from zone scoring and capture paint', () => {
+  const { level, stage } = makeMap('tidewater');
+  stage.zones = [{ center: stage.zones[0].center, size: [13, 11] }];
+  const paint = new f.PaintSystem(paintRenderer(f.THREE), level, { atlasSize: 1024, cell: 0.5 });
+  f.G.paint = paint;
+  const api = { G: f.G, THREE: f.THREE, Hit: f.Hit };
+  const projected = new f.RankedWorld(api, { mode: 'zones', actors: [] }, stage);
+  const otherFloors = projected._zoneCells[0].filter(cell => Math.abs(cell.center.y - stage.zones[0].center[1]) > 0.75)
+    .map(cell => cell.cell);
+  assert.ok(otherFloors.length > 0, 'the unbounded projected area really contains elevated geometry');
+  projected.dispose();
+  stage.zones[0].heightTolerance = 0.75;
+  const band = new f.RankedWorld(api, { mode: 'zones', actors: [] }, stage);
+  assert.ok(band._zoneCells[0].every(cell => Math.abs(cell.center.y - stage.zones[0].center[1]) <= 0.75));
+  band.captureZone(0, 0);
+  assert.ok(band.zoneCoverage()[0][0] >= 0.99);
+  assert.ok(otherFloors.every(cell => paint.grid[cell] === 0), 'capturing the marked floor must not paint another storey');
+  band.dispose(); paint.dispose?.();
+});
+
 test('moving tower paint face fits every map atlas and follows a Physics support face', () => {
   for (const id of MAP_IDS) {
     const { level, physics, stage } = makeMap(id);

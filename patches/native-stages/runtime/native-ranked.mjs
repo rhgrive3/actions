@@ -1,3 +1,4 @@
+import { nativeZone } from './native-zone.mjs';
 /** Explicit local objectives derived from reachable nav nodes. Never retail coordinates.
  * The Pnt display mesh is shared by all rules until original placement data exists. */
 export function nativeRankedStage(G){
@@ -27,7 +28,9 @@ export function nativeRankedStage(G){
  const path=[...nodePath,...other.slice(1)].map(id=>{const n=N.nodes[id];return[n.x,n.y+3.3,n.z];});
  const v=n=>[n.x,n.y,n.z],goals=[v(ends[1]),v(ends[0])],checkpoints=[[v(pick(mx,mz+dz*.5))],[v(pick(mx,mz-dz*.5))]];
  const clams=[-1,1].flatMap(s=>[-1,0,1].map(t=>v(pick(mx+t*6,mz+s*dz*.6))));
- return {id:L.layout.id,zones:[{center:v(middle),size:[6,6]}],
+ const commonSet=new Set(common),zone=nativeZone(paintable.filter(id=>commonSet.has(id)).map(id=>N.nodes[id]),middle,N.step,
+  (x,y,z)=>!!L.triangleWorld.ray(probe.set(x,y+.55,z),down,1.1,{minNormalY:.7}));
+ return {id:L.layout.id,zones:[zone],
   tower:{path,centerIndex:nodePath.length-1,halfSize:1.2,speed:1.2,checkpoints:[[{progress:.6,count:5}],[{progress:.6,count:5}]]},
   rainmaker:{center:v(middle),goals,checkpoints,retreatZ:[mz-dz*1.7,mz+dz*1.7]},clams:{spawns:clams,goals},
   calibration:'LOCAL reachable-nav calibration on Pnt display mesh. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED.',version1130Verified:false};
