@@ -1,0 +1,46 @@
+{
+  "baseHead": "01aa5cc61c842a8616ab38ff5fb541b6becf1395",
+  "scope": "diagnostic-only synthetic real IndexedDB",
+  "files": {
+    "README.txt": {
+      "bytes": 1448,
+      "sha256": "5420a4a9fc372029cc81a5210add9b3a84ba0b98e28f18c3aec96e7a7ac7eaa4"
+    },
+    "acceptance.mjs": {
+      "bytes": 11965,
+      "sha256": "895b60903548931bc38aca206aea377f7e7cd0784fc4a4ad22134a772d3e86b2"
+    },
+    "baseline.mjs": {
+      "bytes": 4333,
+      "sha256": "31a47aeb648147683589e6483831ab5f03c1d9e401cec42f84c5edf3a7633de1"
+    },
+    "candidate.mjs": {
+      "bytes": 5359,
+      "sha256": "fec8f4f96b1cac7b196af8ba461f78e86f068966c07ceac57ae4dad6da4cf118"
+    },
+    "harness-package.json": {
+      "bytes": 914,
+      "sha256": "56f6fc912a8c07b857d879c3d3b579e3d0c7fe9ff7fa6ab6133313942625a8a9"
+    },
+    "native-cache-idb.yml": {
+      "bytes": 2748,
+      "sha256": "e4bb975319c6b58e47482185631dfa8790b896b6caf3d5dc9ee06309914c996c"
+    },
+    "receipt-gate.mjs": {
+      "bytes": 995,
+      "sha256": "fedc15173bc9a00dc49d8641b5b12133f61cdad011a92352fd410b2787fd7258"
+    },
+    "receipt-gate.test.mjs": {
+      "bytes": 1327,
+      "sha256": "54370b34d3d021b825aa7c9e990038faa99de9c1b885279fb12a84f48c6ffab3"
+    },
+    "run-hosted.sh": {
+      "bytes": 272,
+      "sha256": "c157750aa2f8eaa274c6c5c3bd333773155460812fce982d74025175c035daf8"
+    },
+    "supervise.py": {
+      "bytes": 3391,
+      "sha256": "3b261895182c243355ba43d16e80c94d4171d8bdfb295f66d01a8ed9ee8dbeae"
+    }
+  }
+}

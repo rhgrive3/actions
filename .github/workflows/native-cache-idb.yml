@@ -1,0 +1,61 @@
+name: INKWAVE isolated IndexedDB cache acceptance
+on:
+  push:
+    branches: [review/native-source-cache-idb-20261015]
+permissions:
+  contents: read
+concurrency:
+  group: native-source-cache-idb-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  indexeddb:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/review/native-source-cache-idb-20261015'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      IDB_BASELINE_SHA256: 31a47aeb648147683589e6483831ab5f03c1d9e401cec42f84c5edf3a7633de1
+      IDB_CANDIDATE_SHA256: fec8f4f96b1cac7b196af8ba461f78e86f068966c07ceac57ae4dad6da4cf118
+      NODE_OPTIONS: --max-old-space-size=512
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+      - name: Verify frozen payloads
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('scripts/native-cache-idb');m=json.loads((p/'publication.json').read_text())
+          actual={f.name for f in p.iterdir() if f.is_file() and f.name!='publication.json'}
+          assert actual|{'native-cache-idb.yml'}==set(m['files'])
+          for name,pin in m['files'].items():
+              f=pathlib.Path('.github/workflows/native-cache-idb.yml') if name=='native-cache-idb.yml' else p/name
+              b=f.read_bytes();assert len(b)==pin['bytes'] and hashlib.sha256(b).hexdigest()==pin['sha256'],name
+          assert hashlib.sha256((p/'harness-package.json').read_bytes()).hexdigest()=='56f6fc912a8c07b857d879c3d3b579e3d0c7fe9ff7fa6ab6133313942625a8a9'
+          h=json.loads((p/'harness-package.json').read_text())
+          for name,pin in h['files'].items():
+              b=(p/name).read_bytes();assert len(b)==pin['bytes'] and hashlib.sha256(b).hexdigest()==pin['sha256'],name
+          PY
+      - name: Install pinned browser
+        working-directory: scripts/native-cache-idb
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Run bounded synthetic IndexedDB acceptance
+        run: |
+          export PACKAGE="$GITHUB_WORKSPACE/scripts/native-cache-idb"
+          export IDB_EVIDENCE="$GITHUB_WORKSPACE/evidence"
+          python "$PACKAGE/supervise.py"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-source-cache-idb-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            evidence/*.json
+            evidence/*.log

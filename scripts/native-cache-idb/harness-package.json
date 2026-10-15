@@ -1,0 +1,25 @@
+{
+  "status": "prepared-not-browser-executed",
+  "sourceHead": "01aa5cc61c842a8616ab38ff5fb541b6becf1395",
+  "runtimePath": "patches/native-stages/runtime/source-cache.mjs",
+  "baselineSHA256": "31a47aeb648147683589e6483831ab5f03c1d9e401cec42f84c5edf3a7633de1",
+  "candidateSHA256": "fec8f4f96b1cac7b196af8ba461f78e86f068966c07ceac57ae4dad6da4cf118",
+  "files": {
+    "README.txt": {
+      "sha256": "5420a4a9fc372029cc81a5210add9b3a84ba0b98e28f18c3aec96e7a7ac7eaa4",
+      "bytes": 1448
+    },
+    "acceptance.mjs": {
+      "sha256": "895b60903548931bc38aca206aea377f7e7cd0784fc4a4ad22134a772d3e86b2",
+      "bytes": 11965
+    },
+    "receipt-gate.mjs": {
+      "sha256": "fedc15173bc9a00dc49d8641b5b12133f61cdad011a92352fd410b2787fd7258",
+      "bytes": 995
+    },
+    "receipt-gate.test.mjs": {
+      "sha256": "54370b34d3d021b825aa7c9e990038faa99de9c1b885279fb12a84f48c6ffab3",
+      "bytes": 1327
+    }
+  }
+}
