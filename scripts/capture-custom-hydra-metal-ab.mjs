@@ -49,10 +49,11 @@ async function capture(input,shared){
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const context=await browser.newContext({viewport:{width:720,height:600},deviceScaleFactor:1});
  try{
  await context.addInitScript(({seed})=>{let state=seed>>>0;Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};Date.now=()=>1700000000000;Object.defineProperty(performance,'now',{value:()=>1000});window.__abRngState=()=>state;window.__abResetRng=()=>{state=seed>>>0;};},{seed});
- const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
+ const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
  await page.goto('http://127.0.0.1:'+server.address().port+'/review');
  return await page.evaluate(async({prefix,ids,shared})=>{
   const THREE=await import('three');
+  const {Environment}=await import(prefix+'src/world/environment.js');
   const {install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
   const {installMainWeaponCatalogRuntime}=await import(prefix+'patches/splatoon3/runtime/main-weapon-catalog.mjs');
   const R=await import(prefix+'patches/splatoon3/runtime/weapon-models/registry.mjs');
@@ -62,21 +63,45 @@ async function capture(input,shared){
   const {Actor,Character,G,Physics,WEAPONS}=api;
   const scene=new THREE.Scene();scene.background=new THREE.Color('#e6eaf2');G.scene=scene;
   const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(720,600);
-  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;document.body.append(renderer.domElement);
-  const pixels=new Uint8Array(32*16*4);for(let y=0;y<16;y++)for(let x=0;x<32;x++){const n=(y*32+x)*4,v=y<9?235:130;pixels.set([v,v,Math.min(255,v+12),255],n);}
-  const sky=new THREE.DataTexture(pixels,32,16);sky.mapping=THREE.EquirectangularReflectionMapping;sky.colorSpace=THREE.SRGBColorSpace;sky.needsUpdate=true;
-  const pmrem=new THREE.PMREMGenerator(renderer),env=pmrem.fromEquirectangular(sky);scene.environment=env.texture;
-  const hemi=new THREE.HemisphereLight(0xffffff,0x60718d,2.1);scene.add(hemi);
-  const keyLight=new THREE.DirectionalLight(0xffffff,3.3);keyLight.position.set(-2,4,3);scene.add(keyLight);
+  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=.94;document.body.append(renderer.domElement);
+  const shaderErrors=[];renderer.debug.checkShaderErrors=true;
+  renderer.debug.onShaderError=(gl,program,vs,fs)=>shaderErrors.push([gl.getProgramInfoLog(program),gl.getShaderInfoLog(vs),gl.getShaderInfoLog(fs)].join('\n'));
   const camera=new THREE.PerspectiveCamera(34,720/600,.01,50);G.camera=camera;
   G.teamColors=[new THREE.Color('#ff8825'),new THREE.Color('#484ce8')];
   G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,o)=>{o.length=0;return o;}};
   G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.match={playing:()=>true};G.time=0;
   const projectileScene=new THREE.Scene();const projectiles=new api.Projectiles(projectileScene);G.projectiles=projectiles;
-  function captureModes(baseId){
-   const chargeFamily=baseId==='s3-stringer-normal'||baseId==='s3-charger-quick',pairedFamily=baseId==='s3-maneuver-short';
-   return {chargeFamily,pairedFamily,poseStates:chargeFamily?['rest','charge','release']:['rest'],groundStates:chargeFamily?[true,false]:[true]};
+  // IEEE 754 binary16 decoder; DataUtils is absent from tree-shaken emitted Three.
+  function fromHalfFloat(bits){
+   const sign=(bits&32768)?-1:1,exponent=(bits>>>10)&31,fraction=bits&1023;
+   if(exponent===31)return fraction?NaN:sign*Infinity;
+   return sign*(exponent===0?fraction*Math.pow(2,-24):(1+fraction/1024)*Math.pow(2,exponent-15));
   }
+  function validateEnvironmentContract(e){
+   if(e.renderer?.toneMapping!==7||e.renderer?.exposure!==.94||e.renderer?.outputColorSpace!=='srgb')throw Error('Invalid production renderer contract');
+   if(e.cubeSize!==256||e.width!==768||e.height!==1024||e.colorSpace!=='srgb-linear'||e.type!==THREE.HalfFloatType||e.mapping!==306)throw Error('Invalid production PMREM dimensions, LOD or color-space contract');
+   if(!Number.isFinite(e.meanRadiance)||e.meanRadiance<=0||!Number.isFinite(e.maxRadiance)||e.maxRadiance<=0||e.nonfinite!==0||e.negative!==0||e.positivePixels<1000)throw Error('Invalid PMREM radiance');
+   return e;
+  }
+  function environmentEvidence(env){
+   const rt=env._envRT,raw=new Uint16Array(rt.width*rt.height*4);renderer.readRenderTargetPixels(rt,0,0,rt.width,rt.height,raw);
+   let sum=0,max=0,nonfinite=0,negative=0,positivePixels=0;
+   for(let i=0;i<raw.length;i+=4){let lit=false;for(let c=0;c<3;c++){const v=fromHalfFloat(raw[i+c]);if(!Number.isFinite(v))nonfinite++;if(v<0)negative++;if(v>0)lit=true;sum+=v;max=Math.max(max,v);}if(lit)positivePixels++;}
+   if(renderer.getContext().getError()!==0||shaderErrors.length)throw Error('Native environment GPU/shader error');
+   return validateEnvironmentContract({theme:env.theme,renderer:{toneMapping:renderer.toneMapping,exposure:renderer.toneMappingExposure,outputColorSpace:renderer.outputColorSpace},cubeSize:rt.height/4,width:rt.width,height:rt.height,colorSpace:rt.texture.colorSpace,type:rt.texture.type,mapping:rt.texture.mapping,meanRadiance:sum/(rt.width*rt.height*3),maxRadiance:max,nonfinite,negative,positivePixels,environmentIntensity:env.scene.environmentIntensity,sun:{position:env.sun.position.toArray(),target:env.sun.target.position.toArray(),color:env.sun.color.toArray(),intensity:env.sun.intensity},hemi:{color:env.hemi.color.toArray(),ground:env.hemi.groundColor.toArray(),intensity:env.hemi.intensity}});
+  }
+  const nativeEnvironments={},environmentReceipts={};
+  for(const theme of ['day','sunset']){
+   window.__abResetRng();const nativeScene=new THREE.Scene();
+   const env=new Environment(renderer,nativeScene,{theme,shadowSize:512});
+   nativeEnvironments[theme]=env;environmentReceipts[theme]=environmentEvidence(env);
+  }
+  // The former 32x16 equirectangular input implies cubeSize8, below even Three's
+  // LOD_MIN=4 (16px). Reject that exact negative control before material capture.
+  let undersizedRejected=false;try{validateEnvironmentContract({...environmentReceipts.day,cubeSize:8,width:336,height:32});}catch(e){undersizedRejected=/PMREM/.test(String(e));}
+  if(!undersizedRejected)throw Error('Undersized PMREM negative control was not rejected');
+  if(shared)for(const theme of ['day','sunset'])if(JSON.stringify(environmentReceipts[theme])!==JSON.stringify(shared.environments[theme]))throw Error('A/B native environment drift '+theme);
+  let activeEnvironment=null;
   function nativeHands(w,paired){
    const hands=[],seen=new Set();
    for(let current=w;current;current=current.left){if(seen.has(current)||hands.length>=2)throw Error('Invalid native weapon chain');seen.add(current);hands.push(current);}
@@ -129,8 +154,9 @@ async function capture(input,shared){
    cameras[key]={up:camera.up.toArray(),position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),scale:camera.scale.toArray(),local:camera.matrix.toArray(),world:camera.matrixWorld.toArray(),projection:camera.projectionMatrix.toArray()};
    if(shared)for(const p of ['up','position','quaternion','scale','local','world','projection'])close(cameras[key][p],shared.cameras[key][p],key+' '+p);
    const can=visibleCan(weapon,group);
-   for(const mode of ['day','dark']){
-    hemi.intensity=mode==='day'?2.1:.28;keyLight.intensity=mode==='day'?3.3:.4;scene.environmentIntensity=mode==='day'?1:.12;
+   for(const mode of ['day','sunset']){
+    if(activeEnvironment)scene.remove(activeEnvironment.sun,activeEnvironment.sun.target,activeEnvironment.hemi);
+    activeEnvironment=nativeEnvironments[mode];scene.add(activeEnvironment.sun,activeEnvironment.sun.target,activeEnvironment.hemi);scene.environment=activeEnvironment.envMap;scene.environmentIntensity=environmentReceipts[mode].environmentIntensity;
     renderer.render(scene,camera);renderer.render(scene,camera);
     if(renderer.getContext().getError()!==0||renderer.info.render.triangles<=0)throw Error('WebGL '+key);
     const gl=renderer.getContext(),pixels=new Uint8Array(720*600*4);gl.readPixels(0,0,720,600,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
@@ -174,16 +200,16 @@ async function capture(input,shared){
    projectiles.clear();
    ch.dispose();
   }
-  env.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return {frames,cameras,poses,rng:window.__abRngState()};
+  if(shaderErrors.length)throw Error('Shader errors: '+shaderErrors.join('\n'));if(activeEnvironment)scene.remove(activeEnvironment.sun,activeEnvironment.sun.target,activeEnvironment.hemi);for(const env of Object.values(nativeEnvironments))env.dispose();renderer.dispose();return {frames,cameras,poses,environments:environmentReceipts,undersizedRejected,shaderErrors,rng:window.__abRngState()};
  },{prefix,ids,shared});
  }finally{await context.close();await new Promise(r=>server.close(r));}
 }
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const a=await capture(baseline,null);const b=await capture(candidate,{cameras:a.cameras,poses:a.poses});
- assert.equal(a.frames.length,24);assert.equal(b.frames.length,24);assert.equal(Object.keys(a.poses).length,6);assert.deepEqual(a.cameras,b.cameras);assert.deepEqual(a.poses,b.poses);assert.deepEqual(errors,[]);assert.deepEqual(networkFailures,[]);
+ const a=await capture(baseline,null);const b=await capture(candidate,{cameras:a.cameras,poses:a.poses,environments:a.environments});
+ assert.equal(a.frames.length,24);assert.equal(b.frames.length,24);assert.equal(Object.keys(a.poses).length,6);assert.deepEqual(a.cameras,b.cameras);assert.deepEqual(a.poses,b.poses);assert.deepEqual(a.environments,b.environments);assert.ok(a.undersizedRejected&&b.undersizedRejected);assert.deepEqual(a.shaderErrors,[]);assert.deepEqual(b.shaderErrors,[]);assert.deepEqual(errors,[]);assert.deepEqual(networkFailures,[]);
  const images=[];for(const [label,result]of [['frozen',a],['candidate',b]])for(const f of result.frames){const file=label+'-'+f.key+'-'+f.mode+'.png',bytes=Buffer.from(f.png,'base64');fs.writeFileSync(path.join(out,file),bytes);const {mask,...can}=f.can;images.push({file,key:f.key,mode:f.mode,sha256:hash(bytes),triangles:f.triangles,can:{...can,maskSHA256:hash(JSON.stringify(mask))}});}
  for(let i=0;i<a.frames.length;i++){assert.equal(a.frames[i].key,b.frames[i].key);assert.equal(a.frames[i].mode,b.frames[i].mode);assert.deepEqual(a.frames[i].can.mask,b.frames[i].can.mask,'Visible can mask drift');}
  const summary=input=>({sourceSha:input.sourceSha,contentHash:input.manifest.contentHash,modelInputs:input.modelInputs});
- const receipt={baseline:summary(baseline),candidate:summary(candidate),inputComparison,harnessSHA256:hash(fs.readFileSync(new URL(import.meta.url))),pipelineHashes,seed,rng:a.rng,renderer:'Chromium SwiftShader',size:[720,600],cameraBasis:'Immutable fc99 native held weapon bounds; direction and up transformed by actual body.matrixWorld; exact shared cameras',characterRendered:false,method:'Weapon-only actual native rest, charge and admitted stream; both teams, two rear-can views, day and dark lighting. White-can mask uses full occluding geometry; ROI display-encoded weighted RGB brightness is diagnostic, not material adoption.',strictTolerance:1e-8,poses:a.poses,cameras:a.cameras,images,errors,networkFailures};fs.writeFileSync(path.join(out,'ab-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({frames:images.length,poses:Object.keys(a.poses).length,baseline:receipt.baseline,candidate:receipt.candidate}));
+ const receipt={baseline:summary(baseline),candidate:summary(candidate),inputComparison,harnessSHA256:hash(fs.readFileSync(new URL(import.meta.url))),pipelineHashes,seed,rng:a.rng,renderer:'Chromium SwiftShader',size:[720,600],cameraBasis:'Immutable fc99 native held weapon bounds; direction and up transformed by actual body.matrixWorld; exact shared cameras',characterRendered:false,method:'Weapon-only actual native rest, charge and admitted stream; both teams, two rear-can views, production day/sunset sky PMREM and native lights. White-can mask uses full occluding geometry; ROI display-encoded weighted RGB brightness is diagnostic, not material adoption.',strictTolerance:1e-8,poses:a.poses,cameras:a.cameras,environments:a.environments,undersizedRejected:a.undersizedRejected,images,errors,networkFailures};fs.writeFileSync(path.join(out,'ab-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({frames:images.length,poses:Object.keys(a.poses).length,baseline:receipt.baseline,candidate:receipt.candidate}));
 }catch(e){fs.writeFileSync(path.join(out,'ab-error.json'),JSON.stringify({error:String(e),errors,networkFailures},null,2));throw e;}finally{await browser?.close();}
