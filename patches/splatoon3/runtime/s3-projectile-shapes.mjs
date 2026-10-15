@@ -27,7 +27,7 @@
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from './alternate-weapon-kits-data.mjs';
 import { shotTailFrames } from './weapons-fidelity.mjs';
-import { createInkSheets, FIRE_INK, SPIRAL_SPLASH } from './s3-ink-sheets.mjs';
+import { createInkSheets, FIRE_INK, MACHINE_DRILL } from './s3-ink-sheets.mjs';
 
 const INSTALLED = Symbol.for('inkwave.s3.projectile-shapes.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
@@ -59,8 +59,6 @@ export const S3_SHAPE = Object.freeze({
   // slab follows the screenshot's stronger curve and chord.
   slashH: Object.freeze({ halfSpan: 1.32, bow: 0.2, depth: 0.5, thickness: 0.15 }),
   slashV: Object.freeze({ halfSpan: 1.95, bow: 0.9, depth: 0.8, thickness: 0.22 }),
-  // Machine glob; its spiral splashes are SWEPs ribbons (s3-ink-sheets.mjs).
-  machine: Object.freeze({ radius: 0.2 }),
   explosher: Object.freeze({ radius: 0.24, sparkles: 28 }),
   bubble: Object.freeze({ core: 0.7, trailing: 3 }),
 });
@@ -372,7 +370,7 @@ export function bodyParams(p, kind, sp) {
 }
 
 // Blob-mesh entries (glossy ink balls) appended inside the existing draw pass:
-// Machine globs, Explosher globs (the Bloblobber core is a
+// Explosher globs (the Bloblobber core is a
 // true sphere in its own mesh: the native blob always tapers its back half).
 export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capacity, matrix, rotation, scale, dir, axis) {
   const list = system?.list;
@@ -390,21 +388,14 @@ export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capac
   for (const p of list) {
     const kind = p.s3Shape;
     if (count >= capacity) break;
-    if (kind !== 'machine' && kind !== 'explosher') continue;
+    if (kind !== 'explosher') continue;
     if (!p.owner?.color || p.delay > 0) continue;
     const sp = direction(p, dir);
     rotation.setFromUnitVectors(axis, dir);
     const seed = p.seed || 0, ph = seed * 40 + p.age * 18;
     const grow = clamp(p.age * 20, 0.2, 1);
-    if (kind === 'explosher') {
-      const R = S3_SHAPE.explosher.radius * grow;
-      write(p.pos, R, p.owner.color, 1.15 + Math.min(0.3, sp * 0.006), 0.12, ph, [0.32, 3, 1, (seed * 43.98) % 6.2832]);
-    } else {
-      // Source DrawSizeParam: only the leading unit is visible (unit 1 is 0).
-      if (!(p.vis > 0)) continue;
-      const cfg = S3_SHAPE.machine, R = cfg.radius * grow;
-      write(p.pos, R, p.owner.color, 1.2 + Math.min(0.3, sp * 0.006), 0.05, ph, [0, 1, 1, seed]);
-    }
+    const R = S3_SHAPE.explosher.radius * grow;
+    write(p.pos, R, p.owner.color, 1.15 + Math.min(0.3, sp * 0.006), 0.12, ph, [0.32, 3, 1, (seed * 43.98) % 6.2832]);
   }
   return count;
 }
@@ -435,27 +426,6 @@ function fireInk(R, p, kind, f, G, system) {
   if (burst) R.sheets.specks(G?.fx, burst);
 }
 
-// SWEPs CreateSpiralEffects: the visible Sloshing Machine round leaves a group
-// of spiral ribbons every span; groups step round by 360 / RoundSplitNum.
-// Timed from the round's own birth, so draw rate never changes the count.
-function spiralInk(R, p, f, G) {
-  const time = Number.isFinite(G?.time) ? G.time : 0, span = SPIRAL_SPLASH.spanFrames / 60;
-  if (p.s3SpiralSeed !== p.seed) { p.s3SpiralSeed = p.seed; p.s3SpiralCount = 0; }
-  // SWEPs starts its timer 5 frames early, so the first group leaves at once
-  const due = Math.floor(p.age / span) + 1;
-  if (p.s3SpiralCount >= due) return;
-  // a late first draw (or a far camera) skips groups that would already be gone
-  p.s3SpiralCount = Math.max(p.s3SpiralCount, due - Math.ceil(SPIRAL_SPLASH.lifeFrames / SPIRAL_SPLASH.spanFrames));
-  const cam = G?.camera?.position;
-  for (; p.s3SpiralCount < due; p.s3SpiralCount++) {
-    const t0 = time - p.age + p.s3SpiralCount * span;
-    if (cam && cam.distanceToSquared(p.pos) > 1600) continue;
-    const offset = p.s3SpiralCount * 360 / SPIRAL_SPLASH.roundSplit;
-    for (let i = 0; i < SPIRAL_SPLASH.sameTime; i++)
-      R.sheets.addSpiral(p.pos, f, p.owner.color, i * 360 / SPIRAL_SPLASH.sameTime + offset, t0);
-  }
-}
-
 export function drawS3Shapes(system, THREE, G) {
   const R = system._s3Shapes || (system._s3Shapes = createRenderer(THREE, system.scene));
   const { body, bodyData, slashH, slashV, shell, core, sparkPos, sparkSize, m, q, q2, s, v, f, x, y, basis, Z, UP } = R;
@@ -467,7 +437,11 @@ export function drawS3Shapes(system, THREE, G) {
     const sp = direction(p, f);
     const color = p.owner.color;
     if (FIRE_INK[kind] && p.s3FireSeed !== p.seed) fireInk(R, p, kind, f, G, system);
-    if (kind === 'machine' && p.vis > 0) spiralInk(R, p, f, G);
+    if (kind === 'machine' && p.vis > 0) {
+      // the round itself: a spinning twisted membrane, never drawn behind the muzzle
+      const travel = p.start ? p.start.distanceTo(p.pos) : MACHINE_DRILL.length;
+      R.sheets.drill(p.pos, f.clone(), color, p.seed || 0, (Number.isFinite(G?.time) ? G.time : 0), Math.min(MACHINE_DRILL.length, travel));
+    }
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') {
       if (nb >= MAX_BODY) continue;
       const b = bodyParams(p, kind, sp);
@@ -553,7 +527,7 @@ export function drawS3Shapes(system, THREE, G) {
     sparkPos.clearUpdateRanges(); sparkPos.addUpdateRange(0, nk * 3); sparkPos.needsUpdate = true;
     sparkSize.clearUpdateRanges(); sparkSize.addUpdateRange(0, nk); sparkSize.needsUpdate = true;
   }
-  return { body: nb, slashH: nh, slashV: nv, shell: ns, core: nc, sparkles: nk, sheets: ink.sheets, spirals: ink.spirals };
+  return { body: nb, slashH: nh, slashV: nv, shell: ns, core: nc, sparkles: nk, sheets: ink.sheets, drills: ink.drills };
 }
 
 // Classify every live projectile before the native pass (which skips

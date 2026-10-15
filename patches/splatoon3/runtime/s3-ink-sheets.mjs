@@ -1,6 +1,6 @@
 // Splatoon 3 firing ink: the torn ink sheets each main weapon throws out at the
-// moment of firing, and the Sloshing Machine's spiral splashes. Separate from
-// the flying round. Render only: never touches projectiles, collision, paint
+// moment of firing, and the Sloshing Machine's spinning membrane. Separate
+// from the other flying rounds. Render only: never touches projectiles, collision, paint
 // or packets.
 //
 // The shapes follow SplatoonSWEPs (github.com/zerokizo/splatoonsweps @ a7459272,
@@ -13,12 +13,8 @@
 //   to its fingers. It follows the muzzle while it lives. Length t = Lerp(f, 3, rad * scale), radius
 //   r = Lerp(4f(1 - f), rad / 5, rad); the second cone runs at 2f with
 //   t = Lerp(1.4f, ...). Shooter dispatch: 7 frames, scale 2, radius 25 HU.
-// - Sloshing Machine: lua/effects/SplatoonSWEPsShooterInk.lua CreateSpiralEffects
-//   and SplatoonSWEPsSloshingSpiral.lua. Every mSpiralSplashMinSpanFrame (5)
-//   frames the round leaves mSpiralSplashSameTimeBulletNum (3) spiral ribbons
-//   120 deg apart, offset 360 / mSpiralSplashRoundSplitNum (90) deg per group;
-//   each lives mSpiralSplashLifeFrame (11) frames, rolls 120 deg and drifts
-//   20 HU forward while its alpha fades linearly (translucent inkring).
+// - Sloshing Machine: not SWEPs (its box glob and translucent spiral swirls
+//   do not match Splatoon 3); see MACHINE_DRILL below.
 // - Stringer / Splatana are not in SWEPs. Their swept ribbons keep the footage
 //   calibration below and take the inkring membrane texture for holes and edge.
 //   Stringer: twisted ribbons wrap the bow on release while droplets hang
@@ -26,7 +22,7 @@
 //   blade arc with a torn outer edge (Splatana Wiper promotional screenshot).
 // Built the same way as SWEPs, at its own scale: ss.ToHammerUnits
 // (.1 * 3.28084 * 16 * 1.00965 / 1.5 HU per DU) with INKWAVE's 10 DU per metre.
-import { MUZZLE_SPLASH, INK_RING, SLOSHING_SPIRAL } from './s3-sweps-assets.mjs';
+import { MUZZLE_SPLASH, INK_RING } from './s3-sweps-assets.mjs';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (f, a, b) => a + (b - a) * clamp(f, 0, 1); // GMod Lerp clamps
@@ -44,8 +40,6 @@ export const FIRE_INK = Object.freeze({
   'slash-v': Object.freeze({ style: 1, life: 12, radius: 2.2, width: 0.72, arc0: 1.95, arc1: -1.05, layers: 3, tiles: 3, solid: true, specks: 4, pivotY: 0.95 }),
   'slash-h': Object.freeze({ style: 1, life: 10, radius: 1.55, width: 0.55, arc0: 1.75, arc1: -1.75, layers: 2, tiles: 2, solid: true, specks: 3, pivotY: 0.9 }),
 });
-// Sloshing Machine (SWEPs weapon_sloshingmachine.lua mSpiralSplash*)
-export const SPIRAL_SPLASH = Object.freeze({ spanFrames: 5, sameTime: 3, roundSplit: 4, lifeFrames: 11, roll: 120, drift: 20 * HU });
 
 // Splash cone at normalised life f, per SWEPs MuzzleSplash.lua Render().
 export function splashCone(cfg, f, layer) {
@@ -82,16 +76,6 @@ function sheetGeometry(THREE, nu = 32, nv = 8) {
   g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(pos.length), 3));
   g.setIndex(idx);
   g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 64);
-  return g;
-}
-
-function spiralGeometry(THREE) {
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(SLOSHING_SPIRAL.position, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(SLOSHING_SPIRAL.uv, 2));
-  g.setIndex(SLOSHING_SPIRAL.index);
-  g.computeVertexNormals();
-  g.computeBoundingSphere();
   return g;
 }
 
@@ -137,7 +121,7 @@ const BUMP = `
     float det = dot(sx, r1) * face;
     return normalize(abs(det) * n - sign(det) * (dh.x * r1 + dh.y * r2));
   }`;
-const FRAGMENT_STATE = '\nfloat vS3Streak = 1.0; float vS3Alpha = 1.0; vec2 vS3Dh = vec2(0.0);';
+const FRAGMENT_STATE = '\nfloat vS3Streak = 1.0; vec2 vS3Dh = vec2(0.0);';
 
 const SHEET_FRAGMENT = `
   varying vec2 vS3Uv;
@@ -170,28 +154,47 @@ const SHEET_CUT = `
     vS3Streak = 0.8 + 0.3 * h;
   }`;
 
-const SPIRAL_VERTEX = `
-  attribute vec2 aSpiral;
+// Sloshing Machine round (Splatoon 3 promotional screenshot shared by the
+// owner, 2026-10-15): no ball, a long twisted ink membrane torn with holes,
+// pointed and fingered at its leading end, thinning into strands back towards
+// the muzzle, spinning about its flight line. Built as one helicoid ribbon:
+// u runs head (0) -> tail (1) behind the round, v across through the axis.
+export const MACHINE_DRILL = Object.freeze({ length: 2.8, radius: 0.5, turns: 1.1, spin: 12 });
+// aDrill: (length, radius, phase, seed)
+const DRILL_VERTEX = `
+  attribute vec4 aDrill;
   varying vec2 vS3Uv;
-  varying vec2 vS3S;`;
-const SPIRAL_FRAGMENT = `
+  varying vec2 vS3S;
+  ${NOISE}
+  vec3 s3DrillP(float u, float v) {
+    float s = v * 2.0 - 1.0, seed = aDrill.w;
+    // pointed head, widest a third back, thinning tail
+    float r = aDrill.y * smoothstep(0.0, 0.22, u) * (1.0 - 0.7 * smoothstep(0.4, 1.0, u));
+    r *= 0.85 + 0.3 * s3n(vec2(u * 6.0 + seed * 11.0, s * 2.0));
+    float a = aDrill.z + u * ${(Math.PI * 2 * MACHINE_DRILL.turns).toFixed(5)} + (s3n(vec2(u * 3.0, seed * 5.0)) - 0.5) * 0.6;
+    // the membrane billows: its two halves bow back like a wake
+    float z = -u * aDrill.x - abs(s) * r * 0.35;
+    return vec3(cos(a) * s * r, sin(a) * s * r, z);
+  }
+  vec3 s3DrillPos;`;
+const DRILL_CUT = `
+  {
+    float u = vS3Uv.x, v = vS3Uv.y;
+    float h = texture2D(s3Ring, vec2(v, u * 3.0 + vS3S.y)).r;
+    vS3Dh = vec2(dFdx(h), dFdy(h)) * 2.5;
+    // whole near the head, torn into strands towards the muzzle
+    if (h < 0.05 + 0.5 * smoothstep(0.3, 1.0, u)) discard;
+    vS3Streak = 0.8 + 0.3 * h;
+  }`;
+
+const DRILL_FRAGMENT = `
   varying vec2 vS3Uv;
   varying vec2 vS3S;
   uniform sampler2D s3Ring;
   ${BUMP}`;
-// SloshingSpiral.lua: translucent inkring, alpha = texture * (Duration - t) / Duration.
-const SPIRAL_CUT = `
-  {
-    float h = texture2D(s3Ring, vS3Uv).r;
-    vS3Dh = vec2(dFdx(h), dFdy(h)) * 2.5;
-    vS3Alpha = h * (1.0 - vS3S.x);
-    if (vS3Alpha < 0.004) discard;
-    vS3Streak = 0.8 + 0.3 * h;
-  }`;
 
-function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertexBody, fragmentHead, cut, translucent = false }) {
-  const mat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.1, side: THREE.DoubleSide,
-    transparent: translucent, depthWrite: !translucent });
+function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertexBody, fragmentHead, cut }) {
+  const mat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.1, side: THREE.DoubleSide });
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, uniforms);
     let vs = sh.vertexShader.replace('#include <common>', '#include <common>' + vertexHead);
@@ -200,7 +203,7 @@ function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertex
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>' + fragmentHead + FRAGMENT_STATE)
       .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>' + cut + nearDither)
-      .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= vS3Streak; diffuseColor.a *= vS3Alpha;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= vS3Streak;')
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n normal = s3Bump(-vViewPosition, normal, vS3Dh, faceDirection);')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>' + rim);
   };
@@ -208,7 +211,7 @@ function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertex
   return mat;
 }
 
-const MAX_SHEET = 48, MAX_BURST = 24, MAX_SPIRAL = 48;
+const MAX_SHEET = 48, MAX_BURST = 24, MAX_DRILL = 16;
 
 export function createInkSheets(THREE, scene, { nearDither, rim }) {
   const splashTex = decodeAlpha(THREE, MUZZLE_SPLASH, false), ringTex = decodeAlpha(THREE, INK_RING, true);
@@ -231,23 +234,34 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
   const a = new THREE.InstancedBufferAttribute(new Float32Array(MAX_SHEET * 4), 4).setUsage(THREE.DynamicDrawUsage);
   const b = new THREE.InstancedBufferAttribute(new Float32Array(MAX_SHEET * 4), 4).setUsage(THREE.DynamicDrawUsage);
   mesh.geometry.setAttribute('aSheetA', a); mesh.geometry.setAttribute('aSheetB', b);
-  const spiral = new THREE.InstancedMesh(spiralGeometry(THREE), inkMaterial(THREE, 's3-ink-spiral-2', nearDither, rim, uniforms, {
-    vertexHead: SPIRAL_VERTEX,
-    vertexBody: [['#include <begin_vertex>', '#include <begin_vertex>\nvS3Uv = uv; vS3S = aSpiral;']],
-    fragmentHead: SPIRAL_FRAGMENT, cut: SPIRAL_CUT, translucent: true,
-  }), MAX_SPIRAL);
-  const sa = new THREE.InstancedBufferAttribute(new Float32Array(MAX_SPIRAL * 2), 2).setUsage(THREE.DynamicDrawUsage);
-  spiral.geometry.setAttribute('aSpiral', sa);
+  const drillMesh = new THREE.InstancedMesh(sheetGeometry(THREE, 40, 8), inkMaterial(THREE, 's3-ink-drill-1', nearDither, rim, uniforms, {
+    vertexHead: DRILL_VERTEX,
+    vertexBody: [['#include <beginnormal_vertex>', `
+        vec3 objectNormal;
+        {
+          vec2 uv0 = position.xy;
+          s3DrillPos = s3DrillP(uv0.x, uv0.y);
+          vec3 du = s3DrillP(min(uv0.x + 0.01, 1.0), uv0.y) - s3DrillP(max(uv0.x - 0.01, 0.0), uv0.y);
+          vec3 dv = s3DrillP(uv0.x, min(uv0.y + 0.01, 1.0)) - s3DrillP(uv0.x, max(uv0.y - 0.01, 0.0));
+          vec3 n = cross(dv, du);
+          objectNormal = dot(n, n) > 1e-14 ? normalize(n) : vec3(0.0, 0.0, 1.0);
+          vS3Uv = uv0; vS3S = aDrill.zw;
+        }`], ['#include <begin_vertex>', 'vec3 transformed = s3DrillPos;']],
+    fragmentHead: DRILL_FRAGMENT, cut: DRILL_CUT,
+  }), MAX_DRILL);
+  const da = new THREE.InstancedBufferAttribute(new Float32Array(MAX_DRILL * 4), 4).setUsage(THREE.DynamicDrawUsage);
+  drillMesh.geometry.setAttribute('aDrill', da);
+  const drills = [];
   const white = new THREE.Color(1, 1, 1);
-  // GTAO/depth override passes would draw the raw unit grid / the uncut spiral.
+  // GTAO/depth override passes would draw the raw unit grids.
   const gate = (r, sc, c, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : Infinity; };
-  for (const o of [mesh, spiral]) {
+  for (const o of [mesh, drillMesh]) {
     o.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     o.setColorAt(0, white); o.instanceColor.setUsage(THREE.DynamicDrawUsage);
     o.frustumCulled = false; o.count = 0; o.visible = false; o.onBeforeRender = gate;
   }
-  scene.add(mesh, spiral);
-  const bursts = [], spirals = [];
+  scene.add(mesh, drillMesh);
+  const bursts = [];
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), q2 = new THREE.Quaternion(), s = new THREE.Vector3(),
     x = new THREE.Vector3(), y = new THREE.Vector3(), z = new THREE.Vector3(), basis = new THREE.Matrix4(),
     Z = new THREE.Vector3(0, 0, 1), UP = new THREE.Vector3(0, 1, 0), drop = new THREE.Vector3();
@@ -259,7 +273,13 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
     o.instanceColor.clearUpdateRanges(); o.instanceColor.addUpdateRange(0, n * 3); o.instanceColor.needsUpdate = true;
   };
   return {
-    mesh, spiral, bursts, spirals,
+    mesh, drillMesh, bursts, drills,
+    // One Sloshing Machine round this frame: head at `at`, flying along `dir`,
+    // `length` clamped to its travelled distance.
+    drill(at, dir, color, seed, time, length) {
+      if (drills.length >= MAX_DRILL) return;
+      drills.push({ at, dir, color, seed, time, length });
+    },
     // Remember one firing; `at` is the nozzle (or the swing pivot), `dir` the shot direction.
     // `owner` (SWEPs splash only) keeps the splash on that actor's muzzle.
     add(kind, at, dir, color, seed, time, owner = null) {
@@ -270,19 +290,6 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
         at: at.clone(), dir: dir.clone().normalize(), owner };
       bursts.push(burst);
       return burst;
-    },
-    // One Sloshing Machine spiral ribbon, rolled `deg` around the travel direction.
-    addSpiral(at, dir, color, deg, time) {
-      if (spirals.length >= MAX_SPIRAL) spirals.shift();
-      const d = dir.clone().normalize();
-      // Source Angle() has no roll: the model's up stays towards world up
-      x.crossVectors(UP, d); if (x.lengthSq() < 1e-6) x.set(1, 0, 0); x.normalize();
-      y.crossVectors(d, x);
-      basis.makeBasis(x, y, d);
-      const sp = { t0: time, at: at.clone(), dir: d, rot: new THREE.Quaternion().setFromRotationMatrix(basis), deg,
-        color: color.clone ? color.clone() : color };
-      spirals.push(sp);
-      return sp;
     },
     // Fire-and-forget droplets go through the existing FX droplet pool.
     specks(fx, burst) {
@@ -341,26 +348,29 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
         }
       }
       upload(mesh, n, [a, b], 4);
-      const S = sa.array, life = SPIRAL_SPLASH.lifeFrames / 60;
-      let ns = 0;
-      for (let i = spirals.length - 1; i >= 0; i--) {
-        const sp = spirals[i], t = (time - sp.t0) / life;
-        if (!(t >= 0) || t >= 1) { spirals.splice(i, 1); continue; }
-        if (ns >= MAX_SPIRAL || (cam && cam.distanceToSquared(sp.at) > 1600)) continue;
-        q2.setFromAxisAngle(Z, (sp.deg + SPIRAL_SPLASH.roll * t) * Math.PI / 180);
-        q.copy(sp.rot).multiply(q2);
-        m.compose(drop.copy(sp.at).addScaledVector(sp.dir, SPIRAL_SPLASH.drift * t), q, s.setScalar(HU));
-        spiral.setMatrixAt(ns, m); spiral.setColorAt(ns, sp.color);
-        S[ns * 2] = t; S[ns * 2 + 1] = 0;
-        ns++;
+      const D = da.array;
+      let nd = 0;
+      for (const d of drills) {
+        if (cam && cam.distanceToSquared(d.at) > 1600) continue;
+        // roll 0 keeps the ribbon's phase steady under pitch/yaw; spin is time-driven
+        x.crossVectors(UP, d.dir); if (x.lengthSq() < 1e-6) x.set(1, 0, 0); x.normalize();
+        y.crossVectors(d.dir, x);
+        basis.makeBasis(x, y, d.dir); q.setFromRotationMatrix(basis);
+        m.compose(d.at, q, s.setScalar(1));
+        drillMesh.setMatrixAt(nd, m); drillMesh.setColorAt(nd, d.color);
+        D[nd * 4] = Math.max(0.05, d.length); D[nd * 4 + 1] = MACHINE_DRILL.radius;
+        // wrapped in double precision so a long match keeps float32 phase steps exact
+        D[nd * 4 + 2] = (d.seed * 6.2832 + d.time * MACHINE_DRILL.spin) % 6.283185307179586; D[nd * 4 + 3] = d.seed;
+        nd++;
       }
-      upload(spiral, ns, [sa], 2);
-      return { sheets: n, spirals: ns };
+      drills.length = 0;
+      upload(drillMesh, nd, [da], 4);
+      return { sheets: n, drills: nd };
     },
-    clear() { bursts.length = 0; spirals.length = 0; for (const o of [mesh, spiral]) { o.count = 0; o.visible = false; } },
+    clear() { bursts.length = 0; drills.length = 0; for (const o of [mesh, drillMesh]) { o.count = 0; o.visible = false; } },
     dispose() {
-      scene.remove(mesh, spiral);
-      for (const o of [mesh, spiral]) { o.geometry.dispose(); o.material.dispose(); }
+      scene.remove(mesh, drillMesh);
+      for (const o of [mesh, drillMesh]) { o.geometry.dispose(); o.material.dispose(); }
       splashTex.dispose(); ringTex.dispose();
     },
   };
