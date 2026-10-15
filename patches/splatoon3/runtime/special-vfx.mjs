@@ -1164,7 +1164,7 @@ const DIRECTORS = {
   // ---------------------------------------------------------------- Kraken Royale
   krakenRoyale: {
     start(a, t) {   // S3: the transformation bursts in a ring of ink petals
-      const c = t.color, p = this.v[0].copy(a.pos).setY(a.pos.y + 0.5);   // low: the Kraken lies on the floor
+      const c = t.color, p = this.v[0].copy(a.pos).setY(a.pos.y + 0.3);   // low: the Kraken's belly rests on the floor
       this.activation(a, c, 1.3);
       this.nativeBlast(p, this.c.setRGB(...c), 3);
       for (let i = 0; i < Math.round(30 * this.kit.q); i++) { const th = rnd(TAU), el = rnd(1, -0.1), s = rnd(13, 6);
@@ -1183,24 +1183,24 @@ const DIRECTORS = {
             rec.v[11] = 0.5 + 0.5 * smooth((this.time - t.phaseAt) / (35 / 60)); } });
         (t.d.recs ||= []).push(t.d.charge, t.d.arrows);
       } else if (phase === 'dash') {
-        this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 0.6), c, 0.9, 0.16);
+        this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 0.4), c, 0.9, 0.16);
         this.disc(false, 0.4, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.6, 3.2, c, 1);
         // S3 (89–93s): spiralling bands of liquid ink wrapped round the charge
         t.d.dashRibs = [0, 1, 2].map(() => this.ribbon(false, { width: 0.26, widthTail: 0.06, color: c, alpha: 1, style: RIBBON.INK, life: 0.13, spacing: 0.08 }));
         t.d.dashInk = this.ribbon(false, { width: 1.8, widthTail: 0.4, color: c, alpha: 1, style: RIBBON.INK, life: 0.3, spacing: 0.2, flat: true });
       }
       if (phase !== 'dash' && t.d.dashRibs) { for (const r of t.d.dashRibs) this.kit.ribbons.end(r); this.kit.ribbons.end(t.d.dashInk); t.d.dashRibs = null; }
-      if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 0.5), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25); }
+      if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 0.3), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25); }
     },
     frame(a, t, dt) {
       const c = t.color;
       if (t.phase === 'charge') {   // ink drawn in to the body
         if (vfxRandom() < 0.8) { const th = rnd(TAU), d = rnd(3, 2); this.v[0].set(a.pos.x + Math.cos(th) * d, a.pos.y + rnd(1.4, 0.1), a.pos.z + Math.sin(th) * d);
-          this.drop(this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 0.6 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.08, c, { drag: 0, grav: 0, stretch: 0.05, shrink: 0.3 }); }
+          this.drop(this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 0.35 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.08, c, { drag: 0, grav: 0, stretch: 0.05, shrink: 0.3 }); }
       } else if (t.phase === 'dash' && t.d.dashRibs) {   // S3: corkscrewing ink arcs round the charge
         for (let i = 0; i < 3; i++) { const th = this.time * 18 + i * TAU / 3, f = a._s3AllSpecialState?.direction || this.forward(a, this.v[5]);
           const sx = f.z, sz = -f.x;
-          this.v[0].set(a.pos.x + sx * Math.cos(th) * 1.05 + f.x * 0.4, a.pos.y + 0.6 + Math.sin(th) * 0.6, a.pos.z + sz * Math.cos(th) * 1.05 + f.z * 0.4);
+          this.v[0].set(a.pos.x + sx * Math.cos(th) * 1.05 + f.x * 0.4, a.pos.y + 0.42 + Math.sin(th) * 0.42, a.pos.z + sz * Math.cos(th) * 1.05 + f.z * 0.4);
           this.pushRibbon(t.d.dashRibs[i], this.v[0], false); }
         this.pushRibbon(t.d.dashInk, this.v[1].set(a.pos.x, a.pos.y + 0.1, a.pos.z), false);
         if (vfxRandom() < 0.8) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(2, 0.2), a.pos.z + rnd(1, -1)), rnd(5, -5), rnd(5, 1), rnd(5, -5), 0.45, 0.2, 0.05, c, 1, { grav: 14 });

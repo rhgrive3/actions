@@ -98,6 +98,23 @@ function stampArc(a, s, state, t) {
   s.stampArc = arc;
   return arc;
 }
+// Model-space vertex sample of the Kraken (rest pose), cached on the model, for floor contact.
+function krakenPoints(m) {
+  if (m.userData?.krakenPts) return m.userData.krakenPts;
+  const root = m.root, out = [];
+  root.updateWorldMatrix(true, true);
+  const inv = root.matrixWorld.clone().invert(), M = root.matrixWorld.clone(), v = root.position.clone();
+  root.traverse((o) => {
+    const pos = o.isMesh && o.geometry?.attributes?.position; if (!pos) return;
+    M.multiplyMatrices(inv, o.matrixWorld);
+    const step = Math.max(1, Math.floor(pos.count / 600));
+    for (let i = 0; i < pos.count; i += step) { v.fromBufferAttribute(pos, i).applyMatrix4(M); out.push(v.x, v.y, v.z); }
+  });
+  // points are in the root's own (unscaled model) frame: the per-frame squash is applied by the caller
+  (m.userData ||= {}).krakenPts = new Float32Array(out);
+  return m.userData.krakenPts;
+}
+
 function animateDevice(a, s, d, spec, state, t, dt) {
   const marks = a._s3SpecialMarks || {}, age = t - s.startedAt, g = d.model.groups || {};
   const id = s.id, base = d.basePos ||= d.holder.position.clone();
@@ -158,10 +175,17 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     s.krakenPitch = (s.krakenPitch ?? 0) + (clamp01((vy + 6) / 14) * 0.8 - 0.25 - (s.krakenPitch ?? 0)) * Math.min(1, dt * 10) * (air ? 1 : 0)
       + (air ? 0 : -(s.krakenPitch ?? 0) * Math.min(1, dt * 12));
     const roll = Math.sin(t * 3.1) * 0.05 + (phase === 'dash' ? Math.sin(t * 22) * 0.06 : 0);
-    d.holder.rotation.set(-Math.PI / 2 + (s.krakenPitch || 0), Math.PI, roll, 'YXZ');
-    d.holder.position.set(0, 0.42 * up * e + 0.05 * Math.abs(Math.sin(t * (5 + speed * 0.8))) * (air ? 0 : 1), -1.15 * len * e);
+    const rx = -Math.PI / 2 + (s.krakenPitch || 0);
+    d.holder.rotation.set(rx, Math.PI, roll, 'YXZ');
     d.holder.scale.setScalar(spec.scale * e);
     d.model.root.scale.set(sx, len, up);
+    // Rest the belly on the floor: the lowest model point under this frame's rotation and squash sits at the
+    // host origin (the actor's feet). A fixed lift left the Kraken hovering about 0.2 above the ground.
+    const pts = krakenPoints(d.model), cx = Math.cos(rx), ry0 = cx * Math.sin(roll), ry1 = cx * Math.cos(roll), ry2 = -Math.sin(rx);
+    let minY = Infinity;
+    for (let i = 0; i < pts.length; i += 3) { const y = ry0 * sx * pts[i] + ry1 * len * pts[i + 1] + ry2 * up * pts[i + 2]; if (y < minY) minY = y; }
+    const lift = Number.isFinite(minY) ? -minY * spec.scale * e : 0.25 * up * e;
+    d.holder.position.set(0, lift + 0.025 * Math.abs(Math.sin(t * (5 + speed * 0.8))) * (air ? 0 : 1), -1.15 * len * e);
     // the two arms sweep like a swimming squid; faster with speed, trailing flat on the dash
     const sweep = phase === 'dash' ? 0.12 : 0.35 + Math.min(0.35, speed * 0.05), freq = 6 + speed * 1.4;
     if (g.legL) g.legL.rotation.x = Math.sin(t * freq) * sweep - (phase === 'dash' ? 0.25 : 0);
