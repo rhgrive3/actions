@@ -23,10 +23,7 @@ export function adaptProjectileVisuals(rel,code) {
   if(rel!=='src/game/weapons.js')return code;
   code="import { ProjectileVisualRuntime } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\n"+code;
   code=once(code,'    scene.add(this.blobs);',
-    '    scene.add(this.blobs);\n    this.projectileVisuals = new ProjectileVisualRuntime(this, THREE, {
-      fidelitySlosherDrawRadius,
-      nativeVolumeOwns: p => !!(p?._inkVolumeHorizontal && G.fx?.inkVolumes?.assets?.has('roller')),
-    });',
+    '    scene.add(this.blobs);\n    this.projectileVisuals = new ProjectileVisualRuntime(this, THREE, {\n      fidelitySlosherDrawRadius,\n      nativeVolumeOwns: p => !!(p?._inkVolumeHorizontal && G.fx?.inkVolumes?.assets?.has("roller")),\n    });',
     'one additional shared opaque geometry batch');
   code=once(code,'  _recycle(p) {\n    p.owner = null;',
     '  _recycle(p) {\n    this.projectileVisuals.release(p);\n    p.owner = null;',
