@@ -16,7 +16,8 @@ export function captureInkVolume(p, weapon = p.owner?.weapon, packet = null) {
   p._inkVolumeRecipe=null;
   if(!p.s3SpecialWeapon) {
     if((family==='roller'||family==='brush')&&(p.type==='drop'||catalogBirth))p._inkVolumeRecipe=vertical?'roller-vertical':family==='brush'?'brush':'roller-horizontal';
-    else if(['shooter','dualies','splatling'].includes(family)&&p.type==='shot')p._inkVolumeRecipe='shooter';
+    // Shooter rounds use the S3 rod silhouette (splatoon3/runtime/s3-projectile-shapes.mjs).
+    else if(['dualies','splatling'].includes(family)&&p.type==='shot')p._inkVolumeRecipe='shooter';
     else if(family==='slosher'&&(p.type==='slosh'||catalogBirth))p._inkVolumeRecipe='slosher';
   }
   p._inkVolumeAssetName=p._inkVolumeRecipe?'projectile:'+p.wid+':'+p._inkVolumeRecipe:null;

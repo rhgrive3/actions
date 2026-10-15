@@ -1,4 +1,17 @@
+// Splatoon3mix's S3-specific pickup/throw tables; no retail timing claims.
+const NO_CLAM_PICKUP = new Set(['zipcaster', 'crabTank', 'krakenRoyale', 'tripleSplashdown', 'slam']);
+const NO_CLAM_THROW = new Set(['trizooka', 'zipcaster', 'booyahBomb', 'inkVac', 'inkjet', 'ultraStamp', 'crabTank', 'reefslider', 'tripleInkstrike', 'krakenRoyale', 'tripleSplashdown', 'slam']);
+const DEPLOY_FIRST = new Set(['tentaMissiles', 'storm', 'waveBreaker', 'tacticooler', 'superChump', 'splattercolorScreen']);
+const NO_HOCO_PICKUP = new Set(['reefslider', 'zipcaster', 'inkjet', 'booyahBomb']);
+export function canCollectClam(actor) { return !NO_CLAM_PICKUP.has(actor?.special); }
+export function canThrowClam(actor) {
+  const id = actor?.special;
+  return !NO_CLAM_THROW.has(id) && (!DEPLOY_FIRST.has(id) || actor.specialDeployed === true);
+}
+export function canCollectRainmaker(actor) { return !NO_HOCO_PICKUP.has(actor?.special); }
 const EPS = 1e-8;
+// Wiki says a little over one second; 1.2s is local timing pending hardware.
+export const CLAM_BARRIER_BREAK_SECONDS = 1.2;
 const MAX_SMALL_CLAMS = 7;
 const CLAMS_PER_POWER = 8;
 const FIELD_CAP = 40;
@@ -56,6 +69,7 @@ function makeState(stage) {
     tucked: false,
     chancePoints: 0,
     openedWhileLeading: false,
+    pendingBreak: null,
   }));
   return {
     clams: [],
@@ -64,6 +78,8 @@ function makeState(stage) {
     spawnTimer: NORMAL_SPAWN_SECONDS,
     nextClamId: 1,
     nextSpawnIndex: 0,
+    nextBreakSequence: 0,
+    specialDrops: {},
     actorPositions: {},
     actorTeams: {},
     generatedPower: [0, 0],
@@ -181,7 +197,14 @@ export class ClamsRule {
     if (!points.length) return 0;
     const count = Math.max(0, Math.min(3, FIELD_CAP - this.totalClams()));
     if (!count) return 0;
-    const pointIndex = this.state.nextSpawnIndex++ % points.length;
+    let pointIndex = -1;
+    for (let n = 0; n < points.length; n++) {
+      const candidate = this.state.nextSpawnIndex++ % points.length, p = points[candidate];
+      if (!this.state.clams.some(c => c.grounded && Math.hypot(c.pos[0] - p[0], c.pos[2] - p[2]) <= .5 && Math.abs(c.pos[1] - p[1]) <= .4)) {
+        pointIndex = candidate; break;
+      }
+    }
+    if (pointIndex < 0) return 0;
     const base = points[pointIndex];
     const offsets = [[-0.22, 0], [0.22, 0], [0, 0.22]];
     let spawned = 0;
@@ -238,6 +261,18 @@ export class ClamsRule {
       this.state.actorTeams[actor.id] = actor.team;
       const inv = this._inventory(actor.id, actor.team);
       if (actor.alive === false && (inv.small || inv.power)) this._dropInventory(actor.id, actor.pos, actor.team, frame);
+      if (Number.isSafeInteger(actor.clamDrop) && actor.clamDrop > (this.state.specialDrops[actor.id] || 0)) {
+        this.state.specialDrops[actor.id] = actor.clamDrop;
+        const start = this.state.clams.length;
+        this._dropSmallInventory(actor.id, actor.pos, actor.team, frame);
+        this._dropInventory(actor.id, actor.pos, actor.team, frame);
+        // Eject rather than immediately collecting the inventory again in the
+        // same host tick. Airborne thrower exclusion lasts until landing.
+        this.state.clams.slice(start).forEach((c, i) => {
+          c.pos[1] += .1; c.grounded = false; c.thrower = actor.id; c.ownerTeam = actor.team;
+          const angle = i * 2.399963; c.velocity = [Math.cos(angle) * 1.5, 2, Math.sin(angle) * 1.5];
+        });
+      }
     }
   }
 
@@ -281,6 +316,7 @@ export class ClamsRule {
     delete this.state.inventories[id];
     delete this.state.actorPositions[id];
     delete this.state.actorTeams[id];
+    delete this.state.specialDrops[id];
   }
 
   _distanceSq(a, b) {
@@ -288,7 +324,7 @@ export class ClamsRule {
   }
 
   _pickup(clam, actor, frame) {
-    if (!actor.alive || actor.grounded !== true || clam.grounded !== true || this._distanceSq(vec(actor.pos), clam.pos) > 0.82 ** 2) return false;
+    if (!actor.alive || !canCollectClam(actor) || !clam.grounded || this._distanceSq(vec(actor.pos), clam.pos) > 0.82 ** 2) return false;
     const inv = this._inventory(actor.id, actor.team);
     if (clam.kind === 'power') {
       if (clam.team !== actor.team || inv.power) return false;
@@ -331,7 +367,7 @@ export class ClamsRule {
   }
 
   _processPickups(frame) {
-    const actors = this._actorList(frame).filter(actor => actor.alive !== false && actor.grounded === true);
+    const actors = this._actorList(frame).filter(actor => actor.alive !== false && canCollectClam(actor));
     for (const clam of [...this.state.clams]) {
       if (!clam.grounded) continue;
       for (const actor of actors) {
@@ -342,7 +378,7 @@ export class ClamsRule {
 
   _throw(actor, input, frame) {
     const inv = this.state.inventories[actor.id];
-    if (!inv || actor.alive === false || (!inv.power && !inv.small)) return false;
+    if (!inv || actor.alive === false || !canThrowClam(actor) || (!inv.power && !inv.small)) return false;
     const kind = inv.power ? 'power' : 'small';
     const team = actor.team;
     if (kind === 'power') inv.power = false;
@@ -380,11 +416,11 @@ export class ClamsRule {
     }
   }
 
-  _segmentDistanceSq(point, a, b) {
+  _segmentClosestPoint(point, a, b) {
     const ab = sub(b, a);
     const denom = this._distanceSq(ab, [0, 0, 0]);
     const t = denom > EPS ? clamp(((point[0] - a[0]) * ab[0] + (point[1] - a[1]) * ab[1] + (point[2] - a[2]) * ab[2]) / denom, 0, 1) : 0;
-    return this._distanceSq(point, add(a, scale(ab, t)));
+    return add(a, scale(ab, t));
   }
 
   _reflect(clam, position, frame) {
@@ -425,7 +461,11 @@ export class ClamsRule {
       this._reflect(clam, closest, frame);
       return true;
     }
-    if (clam.kind === 'power' && !basket.barrierOpen) this._openBasket(team, closest);
+    if (clam.kind === 'power' && !basket.barrierOpen) {
+      if (basket.pendingBreak) { this._reflect(clam, closest, frame); return true; }
+      basket.pendingBreak = { remaining: CLAM_BARRIER_BREAK_SECONDS, pos: [...closest], sequence: this.state.nextBreakSequence++ };
+      this._event('clam-barrier-drill', { team, pos: [...closest], seconds: CLAM_BARRIER_BREAK_SECONDS });
+    }
     else this._score(team, clam.kind, closest);
     this.state.clams = this.state.clams.filter(item => item.id !== clam.id);
     return true;
@@ -492,6 +532,7 @@ export class ClamsRule {
       counterPower: true,
     });
     this._event('clam-counter-power', { id: clam.id, team, pos: [...clam.pos] });
+    this._paintPower(clam, clam.pos);
     return clam;
   }
 
@@ -499,6 +540,7 @@ export class ClamsRule {
     const basket = this.state.baskets[team];
     if (!basket.barrierOpen) return;
     const defender = 1 - team;
+    this.engine.resolveTie?.(team);
     basket.barrierOpen = false;
     basket.openTimer = 0;
     basket.tucked = true;
@@ -516,16 +558,33 @@ export class ClamsRule {
     this._counterPower(defender, basket.goal ?? [0, 0, 0], frame);
     this._event('clam-barrier-close', { team, defendingTeam: defender, seconds: BASKET_COOLDOWN_SECONDS, penalty: points / 2, goal: basket.goal });
     if (this.state.overtime.active && this.state.overtime.mode === 'comeback') {
-      if (team === this.state.overtime.winningTeam || team === this.state.overtime.losingTeam) {
-        this._finish(this.state.overtime.winningTeam, team === this.state.overtime.losingTeam ? 'clam-overtime-chance-ended' : 'clam-overtime-barrier-closed');
-      }
+      if (team === this.state.overtime.losingTeam)
+        this._finish(this.state.overtime.winningTeam, 'clam-overtime-chance-ended');
     }
   }
 
   _advanceBasketTimers(dt, frame) {
+    const ready = [];
+    const newlyOpened = new Map();
+    for (const basket of this.state.baskets) if (basket.pendingBreak) {
+      basket.pendingBreak.remaining -= dt;
+      if (basket.pendingBreak.remaining <= EPS) ready.push(basket);
+    }
+    ready.sort((a, b) => a.pendingBreak.remaining - b.pendingBreak.remaining || a.pendingBreak.sequence - b.pendingBreak.sequence);
+    for (const basket of ready) {
+      const drill = basket.pendingBreak; basket.pendingBreak = null;
+      if (basket.tucked || basket.cooldown > 0) {
+        const floor = this._floorAt(frame, drill.pos[0], drill.pos[2]);
+        this._newClam('power', basket.team, [drill.pos[0], floor ?? drill.pos[1], drill.pos[2]]);
+      } else {
+        this._openBasket(basket.team, drill.pos);
+        newlyOpened.set(basket.team, Math.max(0, -drill.remaining));
+      }
+      if (this.engine?.winner != null) return;
+    }
     for (const basket of this.state.baskets) {
       if (basket.barrierOpen) {
-        basket.openTimer = Math.max(0, basket.openTimer - dt);
+        basket.openTimer = Math.max(0, basket.openTimer - (newlyOpened.get(basket.team) ?? dt));
         if (basket.openTimer <= EPS) this._closeBasket(basket.team, frame);
       } else if (basket.cooldown > 0) {
         basket.cooldown = Math.max(0, basket.cooldown - dt);
@@ -538,9 +597,9 @@ export class ClamsRule {
     }
   }
 
-  _collectFromProjectile(clam, actor, frame) {
+  _collectFromProjectile(clam, actor, frame, contact = clam.pos) {
     const bodyCenter = add(vec(actor.pos), [0, 0.9, 0]);
-    if (!actor.alive || actor.grounded !== true || this._distanceSq(bodyCenter, clam.pos) > 0.72 ** 2) return false;
+    if (!actor.alive || !canCollectClam(actor) || this._distanceSq(bodyCenter, contact) > 0.72 ** 2) return false;
     if (clam.kind === 'power' && clam.team !== actor.team) return false;
     const inv = this._inventory(actor.id, actor.team);
     if (clam.kind === 'power') {
@@ -579,6 +638,7 @@ export class ClamsRule {
         const next = add(previous, scale(clam.velocity, step));
         const blocked = typeof frame?.blocked === 'function' && frame.blocked(previous, next) === true;
         if (blocked) {
+          this._paintPower(clam, previous);
           this._event('clam-collision', { id: clam.id, pos: [...previous], kind: clam.kind });
           this._reflect(clam, previous, frame);
           continue;
@@ -590,8 +650,10 @@ export class ClamsRule {
         let actorHit = false;
         for (const actor of this._actorList(frame)) {
           if (actor.alive === false || actor.id === clam.thrower) continue;
-          if (this._segmentDistanceSq(add(vec(actor.pos), [0, 0.9, 0]), previous, next) > 0.72 ** 2) continue;
-          if (this._collectFromProjectile(clam, actor, frame)) {
+          // Use the swept contact for admission too. Rechecking the old birth
+          // point loses grazing catches even at the ordinary 60Hz throw speed.
+          const contact = this._segmentClosestPoint(add(vec(actor.pos), [0, 0.9, 0]), previous, next);
+          if (this._collectFromProjectile(clam, actor, frame, contact)) {
             this.state.clams = this.state.clams.filter(item => item.id !== clam.id);
             actorHit = true;
             break;
@@ -606,6 +668,7 @@ export class ClamsRule {
         }
         if (next[1] <= floor) {
           clam.pos = [next[0], floor, next[2]];
+          this._paintPower(clam, clam.pos);
           if (clam.velocity[1] < -1 && clam.bounces < 1) {
             clam.velocity[1] = Math.abs(clam.velocity[1]) * 0.28;
             clam.velocity[0] *= 0.5;
@@ -630,6 +693,11 @@ export class ClamsRule {
         this._event('clam-expire', { id: clam.id, team: clam.team, kind: clam.kind });
       }
     }
+  }
+  _paintPower(clam, pos) {
+    if (clam.kind !== 'power' || clam.painted || !validTeam(clam.team)) return;
+    clam.painted = true;
+    this._event('clam-paint', { team: clam.team, pos: [...pos], radius: .7 });
   }
 
   _isAhead(team) {
@@ -662,15 +730,16 @@ export class ClamsRule {
     const losingBasket = this.state.baskets[losingTeam];
     const winningBasket = this.state.baskets[winningTeam];
     const hasPowerOpportunity = this._hasPower(losingTeam);
-    const winnerWindowOpen = winningBasket.barrierOpen;
-    const loserWasLeadingWhenOpened = losingBasket.barrierOpen && losingBasket.openedWhileLeading;
+    // baskets[team] is that team's ATTACK target, not its own defended goal.
+    const winnerWindowOpen = losingBasket.barrierOpen;
+    const loserWasLeadingWhenOpened = winningBasket.barrierOpen && !winningBasket.openedWhileLeading;
     if (!hasPowerOpportunity && !winnerWindowOpen && !loserWasLeadingWhenOpened) return false;
-    const waitingForOpen = !losingBasket.barrierOpen && hasPowerOpportunity;
+    const waitingForOpen = !losingBasket.barrierOpen;
     this.state.overtime = {
       active: true,
       mode: 'comeback',
       elapsed: 0,
-      opportunityTimer: waitingForOpen && hasPowerOpportunity ? COMEBACK_SECONDS : null,
+      opportunityTimer: waitingForOpen ? COMEBACK_SECONDS : null,
       losingTeam,
       winningTeam,
       waitingForOpen,
@@ -715,7 +784,8 @@ export class ClamsRule {
         return;
       }
     }
-    if (overtime.waitingForOpen && overtime.requiresPowerOpportunity && !this._hasPower(overtime.losingTeam)) {
+    if (this._hasPower(overtime.losingTeam)) overtime.requiresPowerOpportunity = true;
+    if (overtime.waitingForOpen && overtime.requiresPowerOpportunity && !this._hasPower(overtime.losingTeam) && !losingBasket.pendingBreak) {
       this._finish(overtime.winningTeam, 'clam-overtime-power-clams-lost');
     }
   }
@@ -767,6 +837,8 @@ export class ClamsRule {
     if (!this.state.inventories || typeof this.state.inventories !== 'object') this.state.inventories = {};
     if (!Array.isArray(this.state.baskets) || this.state.baskets.length !== 2) this.state.baskets = makeState(this.stage).baskets;
     if (!Array.isArray(this.state.generatedPower)) this.state.generatedPower = [0, 0];
+    if (!this.state.specialDrops) this.state.specialDrops = {};
+    if (!Number.isSafeInteger(this.state.nextBreakSequence)) this.state.nextBreakSequence = 0;
     if (!Array.isArray(this.state.scoredPoints)) this.state.scoredPoints = [0, 0];
     if (!this.state.overtime || typeof this.state.overtime !== 'object') this.state.overtime = makeState(this.stage).overtime;
     if (!Number.isFinite(this.state.spawnTimer)) this.state.spawnTimer = NORMAL_SPAWN_SECONDS;

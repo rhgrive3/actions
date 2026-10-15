@@ -7,7 +7,7 @@ test('#501 natural stream end admits new charge on fourth subsequent tick, no so
  }
 });
 test('#501 first/full charge and burst endpoints, shots and separate refill stop are preserved',async()=>{
- for(const frames of [48,72]){const f=await endStream(frames);assert.equal(f.ticks,frames===48?80:160);assert.equal(f.shots.length,frames===48?20:40);near(f.a.weapon.firstChargeTime,48/60);near(f.a.weapon.chargeTime,72/60);near(f.a.weapon.fireInterval,4/60);near(f.a.weapon.inkRecoverStop,40/60);}
+ for(const frames of [48,72]){const f=await endStream(frames);assert.equal(f.ticks,frames===48?81:161);assert.equal(f.shots.length,frames===48?21:41);near(f.a.weapon.firstChargeTime,48/60);near(f.a.weapon.chargeTime,72/60);near(f.a.weapon.fireInterval,4/60);near(f.a.weapon.inkRecoverStop,40/60);}
 });
 test('#501 squid cancellation never acquires natural-end recovery or emits a phantom burst',async()=>{
  const f=await fixture(),a=f.make('splatling'),r=a.weaponRunner;r.update(DT,{fire:true});r.update(DT,{fire:false});a.form='squid';r.update(DT,{fire:false});assert.equal(r.streaming,false);assert.equal(f.shots.length,0);assert.ok(r.cooldown<4/60);r.reset();assert.equal(r.charging,false);

@@ -78,9 +78,9 @@ test('#250: reholding ZR cannot change a stream spread sequence or charge it aga
   for (const fire of [false, true]) {
     const f = await fixture(), a = f.make('splatling'), spreads = [];
     f.G.projectiles.fireSplatling = (_a, _w, spread) => spreads.push(spread);
-    advance(a, 72); release(a); advance(a, 160, { fire });
+    advance(a, 72); release(a); advance(a, 161, { fire });
     assert.equal(a.weaponRunner.streaming, false); assert.equal(a.weaponRunner.charging, false);
-    near(a.ink, 77.5); assert.equal(spreads.length, 40); traces.push(spreads);
+    near(a.ink, 77.5); assert.equal(spreads.length, 41); traces.push(spreads);
     a.grounded = false; assert.ok(a.weaponRunner._spreadDeg(a.weapon) > spreads[0]);
   }
   assert.deepEqual(traces[0], traces[1]);
@@ -163,7 +163,7 @@ test('#294: insufficient sub, special, weapon switch, reset and death cannot dup
   a.setWeapon('splatling'); a.grounded = true;
   advance(a, 72); release(a); advance(a, 13, { fire: false });
   a.weapon = { ...a.weapon, special: 'storm' }; f.G.projectiles.throwStorm = () => {};
-  a._startSpecial(); assert.equal(a.weaponRunner.streaming, false); near(a.ink, 97.75);
+  a._startSpecial(); assert.equal(a.weaponRunner.streaming, false); near(a.ink, 100-4*(22.5/41));
   a.specialActive = null; advance(a, 60, { fire: false });
   const count = f.shots.length;
   advance(a, 72); release(a); a.alive = false; a.weaponRunner.onDeath();

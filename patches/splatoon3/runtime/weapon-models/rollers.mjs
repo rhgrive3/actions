@@ -7,8 +7,7 @@
 // (BodyParam.PaintParam.WidthHalfMax, scaled so the Splat Roller drum is 1.5 m, inside the
 // roller.test proportion bands); other sizes are read off each render relative to that
 // drum. Internal model names: Leanny/splat3 ActorInfo (Fmdb).
-import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe,
-  part, rebuild, gripSpec, clamp, damp, smooth } from './kit.mjs';
+import { THREE, Pieces, M, V, box, sphere, xlathe, zlathe, ylathe, zcyl, xcyl, ycyl, cyl, ring, pipe, sweep, lathe, part, rebuild, gripSpec, clamp, damp, smooth, slab} from './kit.mjs';
 
 const TAU = Math.PI * 2;
 // Native Roller grips (character-weapons.js buildRoller): every pose layer in
@@ -166,12 +165,14 @@ function carbonRoller(d) {
 
 // ------------------------------------------------------------------------------------------ Dynamo Roller
 function dynamoRoller(d) {
-  // Wmn_Roller_Heavy: long dimpled drum held at its left (+X) end by a big gear
-  // housing, a guard rod along the top to the far end cap, a cross rod to a
-  // black clamp block, a finned motor cylinder with ink lines, a long thin rod
-  // and a rubber grip.
+  // Wmn_Roller_Heavy: the exposed generator/drive has its own axis behind
+  // the drum, joined by twin bearing plates. It is not a coaxial end cap.
   const C = { gun: '#55565b', dark: '#28282c', steel: '#a9abb1', black: '#18181b', copper: '#c27a3c' };
-  const W = drumWidth(3.4), r = 0.19, dz = 1.13, dx = -0.37, hz = 0.88;
+  // Reference-aligned front/back axes put the handle on the drum midline.
+  // Keep the authored hand/fold frames and gameplay/VFX socket unchanged;
+  // the visible drum is centred; the measured separate drive is reconstructed.
+  const W = drumWidth(3.4), r = 0.19, dz = 1.13, dx = 0, hz = 0.88;
+  const muzzleX = -0.37; // stable native socket; independent of visual axle centre
   const body = new Pieces(), ink = new Pieces(), frame = new Pieces(), frameInk = new Pieces(), caps = new Pieces();
   body.add(zlathe([[0, -0.12], [0.013, -0.12], [0.019, -0.11], [0.019, 0.1], [0.015, 0.11], [0, 0.112]], 0, 0, 0, 14), C.black, M.rubber);
   for (let k = 0; k < 6; k++) body.add(ring(0.0195, 0.0018, 0, 0, -0.08 + k * 0.035, 'z', 4, 14), C.dark, M.rubber);
@@ -184,31 +185,74 @@ function dynamoRoller(d) {
   for (const z of [0.55, 0.77]) body.add(ring(0.062, 0.006, 0, 0, z, 'z', 4, 22), C.steel, M.metal);
   for (const s of [-1, 1]) ink.add(pipe([[s * 0.075, 0, 0.53], [s * 0.085, 0.01, 0.6], [s * 0.085, 0.01, 0.72], [s * 0.075, 0, 0.8]], 0.007, 16, 6));
   body.add(zcyl(0.02, 0.8, hz - 0.02, 0, 0, 12), C.steel, M.metal);
-  // roller side: clamp block, cross rod, gear housing, top guard rod, far end cap
+  // The 0s/6s axis-levelled views give a 0.344/0.388 setback when
+  // normalized by the unchanged 0.38 drum diameter. Use 0.36, with Y=0
+  // as the common-plane construction assumption (not a calibrated scan).
+  const gx = W / 2 + dx, gz = dz - 0.36, caseR = 0.25;
   frame.add(box(0.24, 0.09, 0.12, 0.03, 0, hz + 0.04, 0.25), C.dark, M.satin);
-  frame.add(box(0.05, 0.1, 0.1, 0.17, 0, hz + 0.06, 0.3), C.gun, M.metal);
+  frame.add(box(0.07, 0.10, hz + 0.12 - gz, 0.17, 0, (hz + 0.12 + gz) / 2, 0.25), C.gun, M.metal);
   for (const sy of [-1, 1]) for (const x of [-0.04, 0.05]) frame.add(ycyl(0.012, 0, sy * 0.045, x, hz + 0.04, 10), C.steel, M.metal);
-  const gx = W / 2 + dx;
-  frame.add(xcyl(0.026, 0.1, gx + 0.03, 0, hz + 0.09, 12), C.dark, M.metal);
-  frame.add(cyl(0.03, [gx + 0.02, 0, hz + 0.09], [gx + 0.04, 0, dz - 0.05], 12), C.gun, M.metal);
-  frame.add(xlathe([[0, 0], [0.24, 0], [0.26, 0.02], [0.26, 0.1], [0.22, 0.13], [0.07, 0.14], [0, 0.14]], gx, 0, dz, 28), C.gun, M.metal);
-  frame.add(ring(0.21, 0.012, gx + 0.125, 0, 0, 'x', 5, 28).translate(0, 0, dz), C.dark, M.metal);
-  for (let k = 0; k < 16; k++) { const a = k / 16 * TAU; frame.add(box(0.03, 0.022, 0.022, gx + 0.06, Math.cos(a) * 0.262, Math.sin(a) * 0.262 + dz, 0.5), C.dark, M.metal); }
-  frame.transform(g => g); // keep order
-  frameInk.add(ring(0.12, 0.008, gx + 0.122, 0, dz, 'x', 4, 24));
-  frame.add(xlathe([[0, 0], [0.07, 0], [0.07, 0.02], [0, 0.03]], gx + 0.12, 0, dz, 16), C.copper, M.metal);
-  const gz = dz; // gear housing centred on the axle
-  frame.transform(g => g);
+  // Exposed transverse steel shaft enters the rear cone on the DRIVE axis.
+  frame.add(xcyl(0.019, 0.17, gx - 0.31, 0, gz, 14), C.steel, M.metal);
+  frame.add(xlathe([[0, -0.34], [0.033, -0.34], [0.036, -0.30], [0.075, -0.25], [0.15, -0.12], [0.205, -0.03], [0.205, 0], [0, 0]], gx, 0, gz, 24), C.gun, M.metal);
+  for (const [x,rr] of [[-0.30,0.037],[-0.12,0.153],[-0.025,0.207]]) frame.add(ring(rr,0.004,gx+x,0,gz,'x',4,24),C.steel,M.metal);
+  // Open annular case: axial core 0.21, with front stator teeth and copper
+  // windings visible through the aperture instead of a solid black disc.
+  frame.add(xlathe([[0.208,-0.025],[0.237,-0.025],[0.247,0],[0.247,0.025],[0.229,0.04],[0.229,0.115],[0.247,0.13],[0.247,0.165],[0.224,0.185],[0.208,0.185],[0.208,-0.025]],gx,0,gz,28),C.gun,M.metal);
+  for (const x of [-0.015,0.155]) frame.add(ring(0.241,0.009,gx+x,0,gz,'x',5,32),C.steel,M.metal);
+  frame.add(xcyl(0.185,gx+0.13,gx+0.155,0,gz,28),C.dark,M.metal);
+  for(let k=0;k<24;k++){
+    const a=k/24*TAU,ca=Math.cos(a),sa=Math.sin(a);
+    const tooth=box(0.035,0.087,0.016,0,0,0,0.30,6,4).rotateX(a).translate(gx+0.19,ca*0.147,gz+sa*0.147);
+    frame.add(tooth,C.steel,M.metal);
+    const winding=[[0.15,0.188],[0.196,0.188],[0.216,0.204],[0.192,0.221],[0.151,0.22]].map(([x,rr])=>[gx+x,ca*rr,gz+sa*rr]);
+    frame.add(pipe(winding,0.006,6,4),C.copper,M.metal);
+  }
+  frame.add(ring(0.205,0.006,gx+0.191,0,gz,'x',4,40),C.copper,M.metal);
+  frame.add(xlathe([[0,0.16],[0.095,0.16],[0.095,0.205],[0.065,0.227],[0.055,0.254],[0.031,0.272],[0,0.272]],gx,0,gz,8),C.steel,M.metal);
+  // Vented case bands, retaining straps and bolts, distinct from team ink.
+  for(let k=0;k<8;k++){
+    const a=k/8*TAU,ca=Math.cos(a),sa=Math.sin(a);
+    frame.add(box(0.085,0.012,0.042,0,0,0,0.25,6,4).rotateX(a).translate(gx+0.064,ca*0.232,gz+sa*0.232),'#81a7a1',M.satin);
+  }
+  for(let k=0;k<3;k++){
+    const a=k/3*TAU+.25,ca=Math.cos(a),sa=Math.sin(a);
+    frame.add(box(0.20,0.02,0.04,0,0,0,0.25,6,4).rotateX(a).translate(gx+0.085,ca*caseR,gz+sa*caseR),C.gun,M.metal);
+    frame.add(xcyl(0.013,gx+0.17,gx+0.218,ca*0.226,gz+sa*0.226,8),C.steel,M.metal);
+  }
+  // Source 9-11s shows small bearing plates and bent fork straps, not a
+  // large filled figure-eight plate around the entire generator. Leave the
+  // case rim independent and the neck windows open on BOTH axial faces.
+  const circle=(z,r,n=20)=>Array.from({length:n},(_,k)=>[z+Math.sin(k/n*TAU)*r,Math.cos(k/n*TAU)*r]);
+  const bearingOutline=[[dz+.15,-.045],[dz+.17,0],[dz+.15,.045],[dz+.07,.10],[dz-.025,.11],[dz-.08,.08],[dz-.10,0],[dz-.08,-.08],[dz-.025,-.11],[dz+.07,-.10]];
+  const forkStrip=(side,x)=>{
+    const curve=new THREE.CatmullRomCurve3([[dz+.035,.095],[dz-.065,.11],[gz+.21,.145],[gz+.14,.218],[gz+.08,.238]].map(([z,y])=>V(z,side*y,0)));
+    const left=[],right=[];
+    for(let k=0;k<=8;k++){const t=k/8,q=curve.getPoint(t),n=curve.getTangent(t),half=(.026+.012*Math.abs(2*t-1))/2;left.push([q.x-n.y*half,q.y+n.x*half]);right.push([q.x+n.y*half,q.y-n.x*half]);}
+    return slab([...left,...right.reverse()],.018,x,.002,[],4);
+  };
+  for(const x of [gx-0.015,gx+0.165]){
+    frame.add(slab(bearingOutline,.022,x,.003,[circle(dz,.070)],4),C.gun,M.metal);
+    for(const side of [-1,1])frame.add(forkStrip(side,x),C.gun,M.metal);
+  }
+  // The drum has its own narrow end collar, tapered bearing and axle nut.
+  // Its steel section overlaps both fork plates around the 0.070 holes;
+  // an over-short taper would leave the front bearing plate floating.
+  frame.add(xlathe([[0,-.025],[r*1.02,-.025],[r*1.04,.024],[r*.97,.045],[.092,.049],[.092,.105],[.092,.14],[.072,.21],[0,.215]],gx,0,dz,28),C.steel,M.metal);
+  frame.add(xcyl(0.043,gx+.18,gx+.24,0,dz,8),C.gun,M.metal);
+  frame.add(xcyl(0.025,gx+.23,gx+.275,0,dz,12),C.steel,M.metal);
+  for(const sy of [-1,1]) frame.add(xcyl(0.012,gx+.15,gx+.185,sy*.075,dz+.085,8),C.steel,M.metal);
+  frame.add(box(0.036,0.058,0.055,gx+0.008,r+0.008,dz-0.03,0.35,8,6),C.gun,M.metal);
+  frame.add(cyl(0.012,[gx,r+0.035,dz-0.03],[-W/2+dx-0.02,r+0.035,dz-0.03],10),C.black,M.metal);
   const fx = -W / 2 + dx;
-  frame.add(cyl(0.012, [gx, r + 0.035, gz - 0.03], [fx - 0.02, r + 0.035, gz - 0.03], 10), C.black, M.metal);
   frame.add(xlathe([[0, 0], [r * 1.02, 0], [r * 1.05, -0.03], [r * 0.85, -0.06], [0, -0.07]], fx, 0, dz, 24), C.gun, M.metal);
-  frame.add(box(0.03, 0.06, 0.04, fx - 0.02, r + 0.01, gz - 0.03, 0.4), C.dark, M.metal);
+  frame.add(box(0.03, 0.06, 0.04, fx - 0.02, r + 0.01, dz - 0.03, 0.4), C.dark, M.metal);
   for (const sx of [-1, 1]) rim(caps, sx * (W / 2 - 0.01), r, 0.02, C.dark, M.metal);
   const drum = new Pieces().add(drumGeo(W, r, { dimples: 8 }), '#ffffff');
-  // the gear housing is centred on the drum axle: author it there
+  // Both separated axes fold together; only the original drum channel spins.
   rebuild(d, {
     body, ink, parts: { hinge: part(frame, [0, 0, hz]), hingeInk: part(frameInk, [0, 0, hz], 'ink') },
-    gripR: GRIP_R(), gripL: GRIP_L(0.14), muzzle: [dx, 0, dz],
+    gripR: GRIP_R(), gripL: GRIP_L(0.14), muzzle: [muzzleX, 0, dz],
     drum: { geo: drum, caps, at: [dx, 0, dz], r },
   });
   return setFold(d, [0, 0, hz]);

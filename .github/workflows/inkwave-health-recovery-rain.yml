@@ -1,0 +1,56 @@
+name: INKWAVE health recovery rain query regression
+on:
+  pull_request:
+    paths:
+      - 'patches/splatoon3/runtime/resources.mjs'
+      - 'patches/splatoon3/runtime/storm-effects.mjs'
+      - 'patches/splatoon3/tests/health-recovery-rain-gate.test.mjs'
+      - 'patches/splatoon3/tests/source-fixture.mjs'
+      - 'scripts/inkwave-source-composition.mjs'
+      - 'scripts/build-inkwave.mjs'
+      - '.github/workflows/inkwave-health-recovery-rain.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inkwave-health-rain-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify immutable checkout identity
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          mkdir -p .ci-evidence/health-rain
+          git rev-parse HEAD > .ci-evidence/health-rain/source-sha.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-package-lock esbuild@0.28.2
+      - name: Verify source parity and adjacent Storm behavior
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/health-recovery-rain-gate.test.mjs patches/splatoon3/tests/storm-effects.test.mjs patches/splatoon3/tests/storm-vertical-cutoff-735.test.mjs
+      - name: Build exact checkout production composition
+        run: |
+          node scripts/build-inkwave.mjs inkwave-public _site
+          node scripts/check-inkwave-startup-budget.mjs _site
+      - name: Verify actual emitted health recovery and input artifact hashes
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        shell: bash
+        run: |
+          node --experimental-vm-modules --test --test-name-pattern='fixture-graph recovery gate' patches/splatoon3/tests/health-recovery-rain-gate.test.mjs | tee .ci-evidence/health-rain/emitted-test.log
+          cp _site/inkwave-build.json .ci-evidence/health-rain/inkwave-build.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: health-rain-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: .ci-evidence/health-rain
+          if-no-files-found: error
+          retention-days: 14

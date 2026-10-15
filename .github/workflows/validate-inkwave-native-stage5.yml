@@ -8,6 +8,9 @@ on:
       - 'scripts/lib/inkwave-native-stages.mjs'
       - '.github/workflows/validate-inkwave-native-stage5.yml'
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -24,5 +27,9 @@ jobs:
         run: node --experimental-vm-modules --test patches/native-stages/tests/*.test.mjs patches/splatoon3/tests/scorch-gorge-stage.test.mjs patches/splatoon3/tests/ranked-world.test.mjs
       - name: Build public composition without reference models
         run: node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Verify emitted Boolean-ground hit and damage parity
+        run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/boolean-ground-parity.test.mjs
+      - name: Verify emitted vertical-slab hit and damage parity
+        run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/vertical-slab-parity.test.mjs
       - name: Assert reference model payload remains excluded
         run: test ! -e _site/_native-reference-assets && node --test scripts/tests/inkwave-stage-assets.test.mjs

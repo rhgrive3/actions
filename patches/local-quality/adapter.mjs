@@ -1,3 +1,4 @@
+import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
@@ -70,6 +71,8 @@ import { adaptLobbyResources } from './lobby-resource-adapter.mjs';
 import { adaptFrameOrder } from './frame-order-adapter.mjs';
 import { adaptRangeFramePacing } from './range-frame-pacing-adapter.mjs';
 import { adaptPaintHotpath } from './paint-hotpath-adapter.mjs';
+import { adaptPerfReadout } from './perf-readout-adapter.mjs';
+import { adaptFxEmptyPools } from './fx-empty-pools-adapter.mjs';
 import { adaptCollisionHotpath } from './collision-hotpath-adapter.mjs';
 import { adaptRuntimeFrameScratch } from './runtime-frame-scratch-adapter.mjs';
 import { adaptReflSkip } from './refl-skip-adapter.mjs';
@@ -78,6 +81,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
   'ink-volume-adapter.mjs', 'ink-volume/vtf.mjs', 'ink-volume/mesh.mjs', 'ink-volume/runtime.mjs', 'ink-volume/pack.mjs', 'ink-volume/roller.mjs', 'ink-volume/recipes.mjs',
@@ -139,6 +143,8 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptCameraFovCache(rel, code);
+  if (rel === 'src/ui/hud.js') code = replaceOnce(code, "      d.el.style.transform = `rotate(${ang.toFixed(3)}rad)`;\n      d.el.style.opacity = o.toFixed(2);", "      const transform = `rotate(${ang.toFixed(3)}rad)`, opacity = o.toFixed(2);\n      if (d._transform !== transform) { d._transform = transform; d.el.style.transform = transform; }\n      if (d._opacity !== opacity) { d._opacity = opacity; d.el.style.opacity = opacity; }", 'damage-direction unchanged style writes');
   code = adaptMuralAtlas(rel, code, replaceOnce);
   code = adaptIssue482(rel, code);
   code = adaptIssue405(rel, code);
@@ -146,7 +152,7 @@ export function adaptQualitySource(rel, code) {
   const framed = adaptFrameOrder(rel, adaptQualityLayer(rel, code));
   const paced = adaptRangeFramePacing(rel, framed);
   const broadphased = adaptCollisionHotpath(rel, paced, replaceOnce);
-  const painted = adaptPaintHotpath(rel, broadphased, replaceOnce);
+  const painted = adaptFxEmptyPools(rel, adaptPerfReadout(rel, adaptPaintHotpath(rel, broadphased, replaceOnce), replaceOnce), replaceOnce);
   const lazy = adaptComposerTarget(rel, painted, replaceOnce);
   const navigated = adaptMenuNavigationTimer(rel, adaptComposerFormat(rel, lazy, replaceOnce), replaceOnce);
   return adaptInkVolumes(rel, adaptClothDerivativeFlow(rel, adaptRuntimeFrameScratch(rel, navigated, replaceOnce)), replaceOnce);

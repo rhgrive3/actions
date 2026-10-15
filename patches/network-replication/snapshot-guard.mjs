@@ -21,6 +21,12 @@ export function validForwardedEventPayload(name, payload) {
   for (const key of EVENT_VECTOR_FIELDS) {
     if (Object.hasOwn(payload, key) && !validEventVector(payload[key])) return false;
   }
+  if (name === 'weapon:fire') {
+    // Charger ribbons turn these into a mesh width and lifetime. Keep the
+    // scalars numeric on all forwarded shots, before replay identity advances.
+    return (!Object.hasOwn(payload, 'charge') || bounded(payload.charge, 0, 1.25))
+      && (!Object.hasOwn(payload, 'len') || bounded(payload.len, Number.EPSILON, 128));
+  }
   if (name !== 'special:slam') return true;
   const actor = payload.actor;
   return !!actor && typeof actor === 'object' && !Array.isArray(actor)
@@ -28,6 +34,81 @@ export function validForwardedEventPayload(name, payload) {
     && validEventVector(payload.pos)
     && bounded(payload.radius, Number.MIN_VALUE, 64)
     && Math.fround(payload.radius) > 0;
+}
+
+// Receiver-side, active-object budgets, not the size of the pending event FIFO.
+// Remote bombs also own victim-local damage, so another actor must not borrow
+// their share of the live-object budget. Ordinary local bombs remain intact.
+// Count live objects rather than maintaining counters that could go stale on
+// explosion, recycling, disconnect, match reset, or ownership handoff.
+export const REMOTE_GHOST_BOMB_LIMITS = Object.freeze({ actor: 24, peer: 48, total: 96 });
+export const REMOTE_GHOST_STORM_RESERVE = 2;
+export function ghostBombActorAllowance(actor, ownerId, roster = null) {
+  if (!actor || actor.owner !== ownerId) return 0;
+  if (roster === null) return REMOTE_GHOST_BOMB_LIMITS.actor;
+  if (!Array.isArray(roster) || !roster.includes(actor) || !roster.length) return 0;
+  let owned = 0;
+  for (const entry of roster) if (entry?.owner === ownerId) owned++;
+  return Math.min(REMOTE_GHOST_BOMB_LIMITS.actor,
+    Math.floor(REMOTE_GHOST_BOMB_LIMITS.total / roster.length),
+    Math.floor(REMOTE_GHOST_BOMB_LIMITS.peer / owned));
+}
+export function allowGhostBombBirth(bombs, actor, ownerId, kind = 'bomb', roster = null) {
+  if (!Array.isArray(bombs) || !actor || typeof ownerId !== 'string' || !ownerId) return false;
+  const allowance = ghostBombActorAllowance(actor, ownerId, roster);
+  const stormAllowance = Math.min(REMOTE_GHOST_STORM_RESERVE, allowance);
+  const classAllowance = kind === 'storm' ? stormAllowance : allowance - stormAllowance;
+  if (classAllowance <= 0) return false;
+  let total = 0, byPeer = 0, byActor = 0, byClass = 0;
+  for (const b of bombs) {
+    if (!b?.ghost) continue;
+    total++;
+    if (b.owner?.owner === ownerId) byPeer++;
+    if (b.owner === actor) {
+      byActor++;
+      if ((b.kind === 'storm') === (kind === 'storm')) byClass++;
+    }
+    if (total >= REMOTE_GHOST_BOMB_LIMITS.total
+      || byPeer >= REMOTE_GHOST_BOMB_LIMITS.peer
+      || byActor >= allowance || byClass >= classAllowance) return false;
+  }
+  return true;
+}
+
+// Bounds intentionally far exceed every published arena and legal native throw.
+// Stage bounds add an outer horizontal envelope when a Level supplies them.
+export function validNetworkBombBirth(e, stageBounds = null) {
+  if (!Array.isArray(e) || e[1] !== 'b' || (e[3] !== 'bomb' && e[3] !== 'storm')) return false;
+  for (let i = 4; i <= 9; i++) if (!bounded(e[i], -4096, 4096)) return false;
+  if (Math.hypot(e[7], e[8], e[9]) > 1024) return false;
+  const b = stageBounds;
+  if (b && [b.minX,b.maxX,b.minZ,b.maxZ].every(finite)
+    && b.minX <= b.maxX && b.minZ <= b.maxZ) {
+    if (e[4] < b.minX - 256 || e[4] > b.maxX + 256
+      || e[6] < b.minZ - 256 || e[6] > b.maxZ + 256) return false;
+  }
+  return true;
+}
+
+// Only visual metadata is checked. Gameplay parameters and owner authority
+// keep their independent existing gates. Matches current native producer slots
+// 19..26 and the renderer's four-entry SAT_SIZE table.
+// Tail is a ratio, not a world length. Source-owned zero-width Slosher
+// entries reach 1 + 4/.001 = 4001; bound ratio and base drawn extent separately.
+export const NETWORK_PROJECTILE_TAIL_RATIO_MAX = 4096;
+export const NETWORK_PROJECTILE_TAIL_EXTENT_MAX = 128;
+export function validNetworkProjectileCosmetics(e) {
+  if (!Array.isArray(e) || e[1] !== 'p') return false;
+  if (e[19] !== undefined && e[19] !== 0 && e[19] !== 1) return false;
+  for (const [i,low,high] of [[20,0,8],[22,0,16],[23,0,4],[24,0,512],[25,-2,4]]) {
+    if (e[i] !== undefined && !bounded(e[i], low, high)) return false;
+  }
+  if (e[21] !== undefined) {
+    const width = e[20] ?? e[15];
+    if (!bounded(e[21], 0, NETWORK_PROJECTILE_TAIL_RATIO_MAX) || !finite(width) || width < 0
+      || width * e[21] > NETWORK_PROJECTILE_TAIL_EXTENT_MAX) return false;
+  }
+  return e[26] === undefined || integer(e[26], 0, 4);
 }
 
 export function validSnapshotTimestamp(timestamp) {

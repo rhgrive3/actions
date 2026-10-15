@@ -36,7 +36,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          ref: 01aa5cc61c842a8616ab38ff5fb541b6becf1395
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -113,7 +113,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          ref: 01aa5cc61c842a8616ab38ff5fb541b6becf1395
           path: .model-baseline
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -122,6 +122,11 @@ jobs:
       - run: |
           npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
           npx playwright install --with-deps chromium
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .native-input-negative
+          persist-credentials: false
       - name: Prepare the same persistent verifier fixture paths as general validation
         run: |
           runtime_fixtures=/mnt/workspace/.dev-state/agent-work/scratch/inkwave-runtime-performance-ui-evidence-tests
@@ -142,7 +147,7 @@ jobs:
           node --test patches/splatoon3/tests/nine-model-crowd-budget.test.mjs
           node --experimental-vm-modules --test patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs
           # Keep the exact-main namespace rejection as a negative control, then execute the integrated verifiers.
-          if NATIVE_INPUT_ROOT="$GITHUB_WORKSPACE/.model-baseline" node --test scripts/tests/inkwave-native-stage-inputs.test.mjs > .native-input-before.log 2>&1; then
+          if NATIVE_INPUT_ROOT="$GITHUB_WORKSPACE/.native-input-negative" node --test scripts/tests/inkwave-native-stage-inputs.test.mjs > .native-input-before.log 2>&1; then
             echo 'Native input negative control unexpectedly passed'; exit 1
           fi
           grep -q 'Catalog input namespace/path native-stages/' .native-input-before.log

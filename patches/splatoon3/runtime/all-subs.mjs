@@ -1,6 +1,6 @@
 import { configureToxicMist, toxicMistContains, toxicMistScale } from './toxic-mist.mjs';
 import { replayNativeSprinklerDamage } from './native-sprinkler-damage.mjs';
-import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
+import { objectShredderEquipped, withObjectHitGear } from './object-gear.mjs';
 // Runtime overlay for the ten Splatoon 3 sub weapons that are not represented
 // by the published INKWAVE bomb/support lanes.  The upstream release path still
 // owns input admission, ink payment, throw pose and the hold clock: this module
@@ -15,7 +15,9 @@ import { objectGearRate, objectShredderEquipped, withObjectHitGear } from './obj
 
 import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidelity.mjs';
 import { gearCurve } from './gear.mjs';
+import { objectDamageScale, objectDamageRow, subEffectScale } from './sub-resistance.mjs';
 import { subMarkSeconds } from './sub-mark-resistance.mjs';
+import { buildSubModel, poseSubModel, isSharedGeometry, SPLASH_WALL_FOLDED_SCALE, SPLASH_WALL_UNFOLD_SECONDS } from './sub-models.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.all-subs.v1');
 const STEP = 1 / 60;
@@ -51,6 +53,7 @@ const finite3 = p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && Number
 const frameSeconds = f => f / 60;
 const rawDamage = n => n / 10;
 const speedPerSecond = n => n * 60;
+const accelPerSecondSquared = n => n * 3600;
 
 // The core values are extracted from the table named in `source`; other fields
 // are called out at the point of use and on `calibration`.
@@ -61,10 +64,10 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwSpeed: speedPerSecond(1.12), throwSpeedTiers: Object.freeze({ low: speedPerSecond(1.12), mid: speedPerSecond(1.4), high: speedPerSecond(1.68) }),
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 1.6, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
-    radius: 4, damageInner: 2.8, damageOuter: 4, damageMax: rawDamage(350), damageMin: rawDamage(250), damageFalloff: 'calibrated-quadratic',
+    radius: 4, damageInner: 2.8, damageOuter: 4, damageMax: rawDamage(350), damageMin: rawDamage(250), damageFalloff: 'discrete',
     paintRadius: 4, crossPaintRadius: 1.4, gravity: 24, fuse: .72,
-    directDamage: 60, directDamageStatus: 'calibrated-current-gameplay',
-    inkCostFallback: 45, calibration: 'fuse/gravity/world scale and quadratic interpolation calibrated; raw splash damage, paint and throw tuple extracted; direct damage calibrated from current gameplay references',
+    directDamage: 25, directDamageStatus: 'wiki-measured-first-hit', contactBurstDelayFrames: 1,
+    inkCostFallback: 45, calibration: 'fuse/gravity/world scale calibrated; raw splash damage, paint and throw tuple extracted; Wiki measures a 25 direct hit followed 1F later by 35 near blast (two separate damage events)',
   }),
   autobomb: Object.freeze({
     id: 'autobomb', name: 'Autobomb', source: 'WeaponBombRobot.game__GameParameterTable.json',
@@ -72,10 +75,19 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwSpeed: speedPerSecond(1.12), throwSpeedTiers: Object.freeze({ low: speedPerSecond(1.12), mid: speedPerSecond(1.4), high: speedPerSecond(1.68) }),
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 2, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
-    radius: 6.5, damageInner: 2.85, damageOuter: 6.5, damageMax: rawDamage(1800), damageMin: rawDamage(300), damageFalloff: 'calibrated-quadratic',
-    paintRadius: 4, gravity: 24, chaseRadius: 10, chaseSpeed: 5.4,
+    radius: 6.5, damageInner: 2.85, damageOuter: 6.5, damageMax: rawDamage(1800), damageMin: rawDamage(300), damageFalloff: 'discrete',
+    paintRadius: 4, gravity: accelPerSecondSquared(.016), flyPositionAirResist: .05866, flyRotateAirResist: .01985,
+    chaseRadius: 10, chaseSpeed: 5.4,
+    findRotateFrames: 10, noTargetBurstWaitFrames: 180, chaseBurstWaitFrames: 60,
+    approachBurstWaitFrames: 60, unfindBurstWaitFrames: 60,
+    chaseMovement: Object.freeze({
+      beforeRotateFrames:30, yawDegreesPerFrame:2,
+      groundAcceleration:.003*3600, groundMaxSpeed:.09*60,
+      airAcceleration:.012*3600, airMaxSpeedXZ:.09*60, airMaxSpeedY:.18*60,
+      approachDistance:.65,
+    }),
     chaseSeconds: frameSeconds(150), noTargetSeconds: frameSeconds(180),
-    inkCostFallback: 55, calibration: 'damage/radius/chase frame rows and throw tuple extracted; world mapping/paint calibrated',
+    inkCostFallback: 55, calibration: 'damage/radius/chase timing, ground-air acceleration/speed limits, yaw, approach distance and burst wait fields extracted; target choice, panel impacts, steering and world mapping calibrated',
   }),
   fizzy: Object.freeze({
     id: 'fizzy', name: 'Fizzy Bomb', source: 'WeaponBombFizzy.game__GameParameterTable.json',
@@ -84,18 +96,26 @@ export const ALL_SUB_SPECS = Object.freeze({
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 2, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
     chargeFrames: Object.freeze([40, 80]), burstWaitFrames: Object.freeze([15, 1, 1]), objectDamage: rawDamage(100),
+    hop: Object.freeze({ lowPitchDeg: 48, highPitchDeg: 58, lowVelocity: speedPerSecond(.24), highVelocity: speedPerSecond(.32) }),
+    flySplashDistance: Object.freeze([2.2,2.2,2.2]),
+    flySplashPaintRadius: Object.freeze([.9,1.0,1.1]),
+    flySplashPaintParam: Object.freeze([
+      Object.freeze({depthMaxDropHeight:3,depthMinDropHeight:10,depthScaleMax:1.6,depthScaleMin:1.6,widthHalf:1.2,widthHalfNearest:1.2}),
+      Object.freeze({depthScaleMax:1.6,depthScaleMin:1.6,widthHalf:1.26,widthHalfNearest:1.26}),
+      Object.freeze({depthScaleMax:1.6,depthScaleMin:1.6,widthHalf:1.32,widthHalfNearest:1.32}),
+    ]),
     // `chargeable` is reserved by kit-subs for Curling Bomb's path and expects
     // its minCharge/maxCharge blast tuple. Fizzy's hold timing is instead read
     // directly from the real runner by this module at throw time.
     maxChargeTime: frameSeconds(120),
     blurb: 'サブを保持。左右の切り返し・ジャンプ連打・照準を振ると速く充電、離すと投げる。',
     bursts: Object.freeze([
-      Object.freeze({ radius: 3.8, damageInner: 1.6, damageOuter: 3.8, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic', paintRadius: 3.0, crossPaintRadius: 2.0 }),
-      Object.freeze({ radius: 4.5, damageInner: 1.95, damageOuter: 4.5, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic', paintRadius: 3.4, crossPaintRadius: 2.0 }),
-      Object.freeze({ radius: 5.45, damageInner: 2.6, damageOuter: 5.45, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic', paintRadius: 3.8, crossPaintRadius: 2.0 }),
+      Object.freeze({ radius: 3.8, damageInner: 1.6, damageOuter: 3.8, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.0, crossPaintRadius: 2.0 }),
+      Object.freeze({ radius: 4.5, damageInner: 1.95, damageOuter: 4.5, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.4, crossPaintRadius: 2.0 }),
+      Object.freeze({ radius: 5.45, damageInner: 2.6, damageOuter: 5.45, damageMax: rawDamage(500), damageMin: rawDamage(350), damageFalloff: 'discrete', paintRadius: 3.8, crossPaintRadius: 2.0 }),
     ]),
-    gravity: 24, inkCostFallback: 60,
-    calibration: 'per-stage charge frames and blast arrays extracted; acceleration mapped from community testing; bounce flight and hop interval calibrated',
+    gravity: 24, groundGravity: accelPerSecondSquared(.016), flyRotateAirResist: .018, inkCostFallback: 60,
+    calibration: 'per-stage charge frames, blast, hop and flight-splash arrays extracted; acceleration mapped from community testing; bounce flight, paint stamp shape and hop interval calibrated',
   }),
   torpedo: Object.freeze({
     id: 'torpedo', name: 'Torpedo', source: 'WeaponBombTorpedo.game__GameParameterTable.json',
@@ -106,10 +126,12 @@ export const ALL_SUB_SPECS = Object.freeze({
     // The parameter rows omit target HP; public gameplay documents a 20 HP
     // shot-down threshold. This is not extracted from the pinned JSON.
     hp: 20, hpStatus: 'public-gameplay',
-    radius: 6, damageInner: 2.6, damageOuter: 6, damageMax: rawDamage(600), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic',
-    paintRadius: 3.5, burstSeconds: frameSeconds(30), gravity: 24, chaseRadius: 12,
+    radius: 6, damageInner: 2.6, damageOuter: 6, damageMax: rawDamage(600), damageMin: rawDamage(350), damageFalloff: 'discrete',
+    paintRadius: 3.5, burstSeconds: frameSeconds(30), gravity: 24, flyRotateAirResist: .018, chaseRadius: 12, chaseStartFrames: 20,
+    throwBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
+    chaseBlast: Object.freeze({ nearDamage: rawDamage(600), farDamage: rawDamage(350), nearRadius: 2.6, farRadius: 6, paintRadius: 3.5 }),
     splashRadius: 2.6, splashPaintRadius: 2, splashDamage: rawDamage(120),
-    inkCostFallback: 65, calibration: 'damage/radius/fuse and throw tuple extracted; target acquisition/world mapping calibrated',
+    inkCostFallback: 65, calibration: 'throw/chase damage bands, recovery, fuse, 20F chase-start delay and throw tuple extracted; delay origin/target acquisition, separate splash actor/object routing and world mapping calibrated',
   }),
   inkMine: Object.freeze({
     id: 'inkMine', name: 'Ink Mine', source: 'WeaponTrap.game__GameParameterTable.json',
@@ -117,7 +139,8 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwSpeed: speedPerSecond(1.12), throwSpeedTiers: Object.freeze({ low: speedPerSecond(1.12), mid: speedPerSecond(1.12), high: speedPerSecond(1.12) }),
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 0, inheritZ: 0, inheritYPlus: 0, inheritYMax: 0,
-    radius: 8, damageInner: 3.6, damageOuter: 8, damageMax: rawDamage(450), damageMin: rawDamage(350), damageFalloff: 'calibrated-quadratic',
+    radius: 8, damageInner: 3.6, damageOuter: 8, damageMax: rawDamage(450), damageMin: rawDamage(350), damageFalloff: 'discrete',
+    damageDistanceRate: Object.freeze([1, 1.1875, 1.375]),
     markRadiusTiers: Object.freeze([8, 9.5, 11]), sensorRadius: 3, sensorRadiusTiers: Object.freeze([3, 3.5, 4]), inkTriggerRadius: .45, markFrames: Object.freeze([300, 450, 600]), paintRadius: 5,
     maxOwnerObjects: 2, lifetime: Infinity, armSeconds: .6, gravity: 24,
     inkCostFallback: 60, calibration: 'cost, sensor/damage/paint radii and marks extracted; public gameplay reports indefinite lifetime and oldest-mine detonation on third placement; arm/ink-contact/world scale calibrated',
@@ -128,8 +151,12 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwSpeed: speedPerSecond(1.12), throwSpeedTiers: Object.freeze({ low: speedPerSecond(1.12), mid: speedPerSecond(1.4), high: speedPerSecond(1.68) }),
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 1.6, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
-    radius: 5.4, lifetime: 6, gravity: 24, slowScale: .72, inkDrainPerSecond: 6,
-    inkCostFallback: 55, calibration: 'cost, area cutoff and effect-level frames extracted; lifetime/slow/drain/world scale calibrated',
+    // DistanceForOff=5.4 is the raw engine cutoff. The Wiki measures 1.05
+    // trial lines; its system page defines one line as 5 world units/metres.
+    radius: 1.05 * 5, sourceCutoff: 5.4, radiusStatus: 'wiki-measured-trial-lines-to-world-units', lifetime: 5,
+    effectLevels: Object.freeze([{ frame: 60, nextLevelCount: 3 }, { frame: 30, nextLevelCount: 4 }, { frame: 15, nextLevelCount: 0 }]),
+    gravity: 24, slowScale: .5, inkDrainMaxPercent: 40, jumpScale: .5,
+    inkCostFallback: 55, calibration: 'cost, 80F lockout, effect levels and cutoff extracted; 5s/1.05 trial-line (5.25 world-unit)/50% slow/40% max drain are Wiki measurements; jump magnitude is unquantified and retained as explicit calibration',
   }),
   angleShooter: Object.freeze({
     id: 'angleShooter', name: 'Angle Shooter', source: 'WeaponLineMarker.game__GameParameterTable.json',
@@ -137,7 +164,7 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwSpeed: speedPerSecond(6.3), throwSpeedTiers: Object.freeze({ low: speedPerSecond(6.3), mid: speedPerSecond(6.55), high: speedPerSecond(6.8) }),
     spawnSpeedY: 0, spawnSpeedYWorldMin: speedPerSecond(-100), inheritX: 0, inheritYPlus: 0, inheritYMax: 0,
     directDamage: rawDamage(400), markFrames: Object.freeze([300, 450, 600]),
-    tailFrames: 90, paintRadius: 2.6, collisionRadius: .25, gravity: 0, maxBounces: 2,
+    flightFrames: 7, tailFrames: 90, paintRadius: 2.6, collisionRadius: .25, gravity: 0, flyPositionAirResist: 0, maxBounces: 2,
     inkCostFallback: 40, calibration: 'direct damage, marking/tail frames, paint radius and throw speed extracted; rebound mapping calibrated',
   }),
   splashWall: Object.freeze({
@@ -145,8 +172,10 @@ export const ALL_SUB_SPECS = Object.freeze({
     inkCost: 60, inkCostStatus: 'extracted', inkRecoverStop: frameSeconds(85),
     throwSpeed: speedPerSecond(.3), throwSpeedTiers: Object.freeze({ low: speedPerSecond(.3), mid: speedPerSecond(.3), high: speedPerSecond(.3) }),
     spawnSpeedY: speedPerSecond(.07), spawnSpeedYWorldMin: speedPerSecond(-.5), inheritX: 0, inheritYPlus: 0, inheritYMax: 0,
-    gravity: .009 * 3600, wallHpTiers: Object.freeze([800, 1150, 1500]), wallWidth: 4.2, wallHeight: 2.8, lifetime: 7,
-    inkCostFallback: 60, calibration: 'cost/recovery/gravity/throw/HP tiers extracted; wall dimensions and lifetime calibrated',
+    gravity: accelPerSecondSquared(.009), flyPositionAirResist: .001,
+    wallHpTiers: Object.freeze([800, 1150, 1500]), wallWidth: 4.2, wallHeight: 2.8,
+    lifetime: frameSeconds(400), hpDecayFrames: 400, damageSpanFrames: 30, contactDamage: 30,
+    inkCostFallback: 60, calibration: 'cost/recovery/gravity/throw/HP tiers/DamageSpanFrame extracted; 400F life, HP decay and 30 damage/30F contact sourced from community Wiki; dimensions calibrated',
   }),
   sprinkler: Object.freeze({
     id: 'sprinkler', name: 'Sprinkler', source: 'WeaponSprinkler.game__GameParameterTable.json',
@@ -154,7 +183,7 @@ export const ALL_SUB_SPECS = Object.freeze({
     throwSpeed: speedPerSecond(1.12), throwSpeedTiers: Object.freeze({ low: speedPerSecond(1.12), mid: speedPerSecond(1.12), high: speedPerSecond(1.12) }),
     spawnSpeedY: speedPerSecond(.24), spawnSpeedYWorldMin: speedPerSecond(-.4),
     inheritX: 1.6, inheritZ: 2, inheritYPlus: 4, inheritYMax: speedPerSecond(.32),
-    hitPaintRadius: 2.9, paintRadius: .25,
+    hitPaintRadius: 2.9, placePaintRadius: .3, spoutDrawRadius: .25, paintRadius: 1.4, dropletDamage: 20, dropletHitRadius: .15,
     firstPeriodFrames: Object.freeze([480, 630, 780]), laterPeriodFrames: Object.freeze([900, 960, 1020]),
     maxOwnerObjects: 1, lifetime: Infinity, hp: 120, gravity: 24,
     inkCostFallback: 60, calibration: 'cost/recovery/cadence/paint radii extracted; droplet pattern and world mapping calibrated; public references report 120 HP and unlimited low-power duration',
@@ -173,6 +202,17 @@ export const ALL_SUB_IDS = Object.freeze([
   'bomb', 'suction', 'curling', 'burst', 'autobomb', 'fizzy', 'torpedo',
   'inkMine', 'toxicMist', 'angleShooter', 'splashWall', 'sprinkler', 'beakon', 'pointSensor',
 ]);
+
+// ConsumeRt_Sub_Lv0..4 from pinned 11.3.0 misc/params.json, selected by each
+// weapon's own SubWeaponSetting.SubInkSaveLv. Splash Wall has no setting row;
+// the 35% maximum saving at GP57 is measured on the community Wiki.
+const SUB_INK_SAVE_CURVES=Object.freeze({
+  burst:Object.freeze([1,.855555,.711111]),
+  autobomb:Object.freeze([1,.85,.7]), fizzy:Object.freeze([1,.85,.7]), torpedo:Object.freeze([1,.85,.7]),
+  inkMine:Object.freeze([1,.8,.6]), toxicMist:Object.freeze([1,.85,.7]),
+  angleShooter:Object.freeze([1,.9,.8]), splashWall:Object.freeze([1,.825,.65]),
+  sprinkler:Object.freeze([1,.8,.6]), beakon:Object.freeze([1,.8,.6]),
+});
 
 function makeSeed(actor, seq, time) {
   let x = (Math.imul((actor?.nid || 0) + 1, 0x9e3779b1) ^ Math.imul(seq, 0x85ebca6b) ^ Math.imul(Math.floor((time || 0) * 60) + 1, 0xc2b2ae35)) >>> 0;
@@ -204,11 +244,6 @@ function emitEvent(api, object, phase, extra = {}) {
   return payload;
 }
 
-function visualMaterial(api, owner, opacity = 1, emissive = .15) {
-  const color = owner?.color || api.G.teamColors?.[owner?.team] || 0xffcc33;
-  return new api.THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: emissive,
-    transparent: opacity < 1, opacity, roughness: .52, metalness: .08, depthWrite: opacity >= 1 });
-}
 function addMesh(api, parent, geometry, material, position = null) {
   const mesh = new api.THREE.Mesh(geometry, material);
   mesh.castShadow = true; mesh.receiveShadow = true;
@@ -216,48 +251,67 @@ function addMesh(api, parent, geometry, material, position = null) {
   parent.add(mesh); return mesh;
 }
 function sceneFor(api, projectiles) { return api.G.scene || projectiles?.scene || api.G.projectiles?.scene || null; }
+// Per-sub models (sub-models.mjs). Presentation only: the record's position,
+// velocity, phase and timers are read, never written.
+// Model origin offset from the record position while the object flies (the
+// ground models stand on their base; the record is the object's centre).
+const FLIGHT_LIFT = { autobomb: -0.21, inkMine: -0.02, sprinkler: -0.2, beakon: -0.45, pointSensor: 0 };
+// Thrown bombs tumble in flight; deployables keep upright until they land.
+const TUMBLE = new Set(['burst', 'fizzy', 'toxicMist']);
 function buildVisual(api, object, projectiles) {
   const scene=sceneFor(api,projectiles);
   if (!scene?.add) return null;
   const { THREE } = api, group = new THREE.Group(), id = object.subId;
   const color = object.owner?.color || api.G.teamColors?.[object.team] || 0xffcc33;
-  const material = visualMaterial(api, object.owner, 1, .22);
-  const orb = (r, geo = new THREE.SphereGeometry(r, 12, 9)) => addMesh(api, group, geo, material);
-  if (id === 'splashWall' && object.phase === 'deployed') {
-    const wallMat = visualMaterial(api, object.owner, .42, .25);
-    const wall = addMesh(api, group, new THREE.BoxGeometry(ALL_SUB_SPECS.splashWall.wallWidth, ALL_SUB_SPECS.splashWall.wallHeight, .12), wallMat);
-    wall.position.y = ALL_SUB_SPECS.splashWall.wallHeight / 2;
-    const foot = addMesh(api, group, new THREE.CylinderGeometry(.16,.2,.22,10), material);
-    foot.position.y = .11;
-  } else if (id === 'sprinkler' || id === 'beakon') {
-    const h = id === 'beakon' ? .85 : .55;
-    const body = addMesh(api, group, new THREE.CylinderGeometry(.18,.28,h,10), material);
-    body.position.y = h / 2;
-    const cap = addMesh(api, group, new THREE.SphereGeometry(.18,10,7), material);
-    cap.position.y = h + .06;
-  } else if (id === 'angleShooter') {
-    const body = addMesh(api, group, new THREE.CylinderGeometry(.065,.11,.75,9), material);
-    body.rotation.x = Math.PI / 2;
-  } else if (id === 'inkMine') {
-    orb(.34, new THREE.SphereGeometry(.34,12,8));
-  } else if (id === 'toxicMist' && object.phase === 'deployed') {
-    const mistMat = visualMaterial(api, object.owner, .18, .05);
-    const cloud = addMesh(api, group, new THREE.SphereGeometry(1,12,9), mistMat);
-    cloud.scale.set(ALL_SUB_SPECS.toxicMist.radius, 2.1, ALL_SUB_SPECS.toxicMist.radius);
-    cloud.position.y = 1.1;
-  } else {
-    const r = id === 'autobomb' ? .3 : id === 'splashWall' ? .25 : .2;
-    orb(r);
-    if (id === 'autobomb') {
-      const eyeMat = new THREE.MeshStandardMaterial({ color: 0x20202a, roughness: .4 });
-      for (const x of [-.12,.12]) { const eye = addMesh(api, group, new THREE.SphereGeometry(.045,7,6), eyeMat); eye.position.set(x,.06,.23); }
+  const deployed = object.phase === 'deployed';
+  const ink = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .08, roughness: .42, metalness: .1 });
+  const modelId = id === 'toxicMist' && deployed ? 'toxicMistCloud' : id;
+  const spec = ALL_SUB_SPECS[id];
+  const model = buildSubModel(THREE, modelId, ink, {
+    dims: id === 'splashWall' ? { width: spec.wallWidth, height: spec.wallHeight } : undefined,
+    unfold: 0, armed: false,
+  });
+  if (model) {
+    if (modelId === 'toxicMistCloud') model.root.scale.set(spec.radius, 2, spec.radius);
+    else if (!deployed) {
+      if (id === 'splashWall') model.root.position.y = -spec.wallHeight * SPLASH_WALL_FOLDED_SCALE / 2;
+      else if (FLIGHT_LIFT[id]) model.root.position.y = FLIGHT_LIFT[id];
     }
+    for (const m of model.root.children) m.traverse(o => { if (o.isMesh && !o.material.transparent) o.receiveShadow = true; });
+    group.add(model.root);
+    object.s3Model = model;
+  } else {
+    addMesh(api, group, new THREE.SphereGeometry(.2, 12, 9), ink);
+    object.s3Model = null;
   }
   group.position.copy(object.pos);
   group.rotation.y = object.yaw || 0;
   group.userData.s3SubId = id;
   scene.add(group);
   return group;
+}
+function poseVisual(api, object, dt) {
+  const mesh = object.mesh, model = object.s3Model;
+  if (!mesh) return;
+  mesh.position.copy(object.pos);
+  if (!model) return;
+  const id = object.subId, deployed = object.phase === 'deployed', now = api.G.time || 0, v = object.vel;
+  if (!deployed && (id === 'torpedo' || id === 'angleShooter')) {
+    // Nose along the travel (Angle Shooter flies wide end first).
+    const h = Math.hypot(v.x, v.z);
+    if (h * h + v.y * v.y > 1e-4) mesh.rotation.set(-Math.atan2(v.y, h), Math.atan2(v.x, v.z), 0, 'YXZ');
+  } else if (!deployed && !object.grounded && TUMBLE.has(id)) {
+    mesh.rotation.x += dt * 9; mesh.rotation.z += dt * 2.5;
+  } else if (id === 'autobomb' && Math.hypot(v.x, v.z) > .05) {
+    mesh.rotation.set(0, Math.atan2(v.x, v.z), 0);
+  } else mesh.rotation.set(0, object.yaw || 0, 0);
+  const unfold = id === 'splashWall' && deployed ? (now - (object.deployedAt ?? now)) / SPLASH_WALL_UNFOLD_SECONDS : 0;
+  let bulge = 0;
+  if (id === 'fizzy') bulge = Math.min(1, .25 * (object.popLimit - 1) + (object.fuse > 0 ? .5 * Math.min(1, object.age / object.fuse) : 0));
+  if (id === 'splashWall' && !Number.isFinite(object.s3HpMax)) object.s3HpMax = object.hp;
+  const fill = id === 'splashWall' && object.s3HpMax > 0 ? object.hp / object.s3HpMax : 1;
+  poseSubModel(model, { dt, speed: object.grounded ? Math.hypot(v.x, v.z) : 0, unfold, fill,
+    armed: deployed && now >= object.activeAt, flying: !deployed, active: deployed, bulge });
 }
 function disposeVisual(api, object, projectiles) {
   const mesh = object?.mesh;
@@ -269,9 +323,9 @@ function disposeVisual(api, object, projectiles) {
     const m = Array.isArray(o.material) ? o.material : [o.material];
     for (const item of m) if (item) mats.add(item);
   });
-  for (const g of geos) g.dispose?.();
+  for (const g of geos) if (!isSharedGeometry(g)) g.dispose?.();
   for (const m of mats) m.dispose?.();
-  object.mesh = null;
+  object.mesh = null; object.s3Model = null;
 }
 function createObject(api, projectiles, owner, id, record = {}) {
   const baseSpec = ALL_SUB_SPECS[id];
@@ -280,6 +334,10 @@ function createObject(api, projectiles, owner, id, record = {}) {
   const spec = id === 'inkMine' ? { ...baseSpec,
     sensorRadius: gearCurve(ap, ...baseSpec.sensorRadiusTiers),
     markRadius: gearCurve(ap, ...baseSpec.markRadiusTiers),
+    damageDistanceScale: gearCurve(ap, ...baseSpec.damageDistanceRate),
+    damageInner: baseSpec.damageInner * gearCurve(ap, ...baseSpec.damageDistanceRate),
+    damageOuter: baseSpec.damageOuter * gearCurve(ap, ...baseSpec.damageDistanceRate),
+    radius: baseSpec.radius * gearCurve(ap, ...baseSpec.damageDistanceRate),
   } : baseSpec;
   const THREE = api.THREE, seq = Number.isSafeInteger(record.seq) ? record.seq : nextSeq(owner);
   const pos = record.pos?.isVector3 ? record.pos.clone() : new THREE.Vector3(record.x ?? owner.pos.x, record.y ?? owner.pos.y + 1.35, record.z ?? owner.pos.z);
@@ -304,6 +362,7 @@ function createObject(api, projectiles, owner, id, record = {}) {
     reservations: id === 'beakon' ? new Map() : null,
     expireAt: Infinity, activeAt: Infinity,
   };
+  if(id==='splashWall')object.wallHpInitial=object.hp;
   const heldSeconds = Number.isFinite(record.hold) ? record.hold : owner.weaponRunner?.s3SubHold || 0;
   if (id === 'fizzy') {
     const hold = heldSeconds;
@@ -409,6 +468,11 @@ function deploy(api, projectiles, object, pos, normal = null) {
   object.deployedAt = api.G.time || 0;
   if(object.subId==='sprinkler'){object.pulse=0;object.sprinklerDrops=0;}
   object.expireAt = Number.isFinite(spec.lifetime) ? (api.G.time||0) + spec.lifetime : Infinity;
+  if(object.subId==='splashWall'){
+    object.wallHpInitial=object.hp;
+    object.wallContactUntil=new WeakMap();
+  }
+  if(object.subId==='sprinkler'&&!object.ghost)surfacePaint(api,object.owner,object.team,object.pos,spec.placePaintRadius,object.seed^0x27d4eb2d);
   object.pos.y += object.subId === 'splashWall' ? 0 : 0.02;
   if (object.subId === 'beakon') {
     object.grounded = true; object.alive = true; object.superJumpState = null;
@@ -437,6 +501,7 @@ function surfacePaintWithCredit(api, owner, team, point, radius, seed, credit, p
 function damageAt(distance, spec) {
   if (Number.isFinite(spec.directDamage)) return spec.directDamage;
   if (!Number.isFinite(spec.damageOuter) || distance > spec.damageOuter) return 0;
+  if (spec.damageFalloff === 'discrete') return distance <= (spec.damageInner || 0) ? spec.damageMax : spec.damageMin;
   const t = clamp((distance - (spec.damageInner || 0)) / Math.max(1e-6,spec.damageOuter - (spec.damageInner || 0)),0,1);
   const falloff = spec.damageFalloff === 'calibrated-quadratic' ? (1 - t) ** 2 : 1 - t;
   return lerp(spec.damageMin,spec.damageMax,falloff);
@@ -460,17 +525,82 @@ function markSeconds(spec, owner, apOverride = null) {
 
 function detonateInkMine(api,projectiles,mine){
   if(!mine||mine.dead||mine.subId!=='inkMine'||mine.ghost)return false;
-  const duration=markSeconds({markFrames:mine.spec.markFrames},mine.owner,mine.subPowerAP);
+  const baseDuration=markSeconds({markFrames:mine.spec.markFrames},mine.owner,mine.subPowerAP);
   for(const target of hostileActors(api,mine.owner)){
     const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y,dz=target.pos.z-mine.pos.z;
     if(dx*dx+dy*dy+dz*dz>mine.spec.markRadius**2||api.G.physics?.los&&!api.G.physics.los(mine.pos,target.pos))continue;
-    applyMark(api,target,mine.team,duration,mine.subId);
+    applyMark(api,target,mine.team,baseDuration,mine.subId);
     if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:mine.subId,seq:mine.seq,life:ownerLife(mine.owner),sourceLife:mine.sourceLife,eventSeq:nextSeq(mine.owner),
-      targetId:target.nid,targetLife:ownerLife(target),frames:Math.round(duration*60),sourceTeam:mine.team,actor:mine.owner});
+      targetId:target.nid,targetLife:ownerLife(target),frames:Math.round(baseDuration*60),sourceTeam:mine.team,actor:mine.owner});
   }
   blast(api,mine,mine.pos);
   removeObject(api,projectiles,mine);
   return true;
+}
+
+function damageCustomObject(api,source,target,point,damage,cause=null){
+  const sourceOwner=source?.owner&&typeof source.owner==='object'?source.owner:source;
+  const sourceTeam=source?.team??sourceOwner?.team;
+  if(!(damage>0)||target===source||target.dead||target.team===sourceTeam||source?.remote||sourceOwner?.remote)return 0;
+  const amount=damage*objectDamageScale(source,target.subId,cause);
+  if(!(amount>0))return 0;
+  if(target.ghost){if(!source.ghost)emitObjectHit(api,target,source,point,damage,cause);return 0;}
+  if(target.owner?.remote){emitObjectHit(api,target,source,point,damage,cause);return 0;}
+  target.hp-=amount;
+  if(target.hp<=0)removeObject(api,api.G.projectiles,target);
+  return amount;
+}
+
+// Ranked Rainmaker uses the same raw damage / authored cause / owning-client
+// boundary as native sub and special attacks. The owner applies source rates
+// and Object Shredder once; remote presentation never spends local HP.
+export function applySubObjectHit(api, projectiles, object, projectile, point, damage, cause=null) {
+  return damageCustomObject(api, projectile, object, point, damage, cause);
+}
+
+function isSubObjectBlastTarget(target){
+  return target.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(target.subId) ||
+    target.subId==='torpedo'&&target.chasedTarget&&['flight','chase'].includes(target.phase);
+}
+function subObjectBlastPoint(api,target,origin){
+  if(target.subId!=='splashWall')return target.pos.clone().add(new api.THREE.Vector3(0,.7,0));
+  const yaw=target.yaw||0,rx=Math.cos(yaw),rz=-Math.sin(yaw);
+  const side=clamp((origin.x-target.pos.x)*rx+(origin.z-target.pos.z)*rz,-target.spec.wallWidth/2,target.spec.wallWidth/2);
+  const y=clamp(origin.y,target.pos.y,target.pos.y+target.spec.wallHeight);
+  return new api.THREE.Vector3(target.pos.x+rx*side,y,target.pos.z+rz*side);
+}
+
+function damageSubObjectsInRadius(api,projectiles,source,center,radius,damageAt,cause=null,includeSpecials=true,options={}){
+  for(const target of entityList(projectiles)){
+    const sourceTeam=source?.team??source?.owner?.team;
+    if(target===source||target.dead||!isSubObjectBlastTarget(target)||target.team===sourceTeam)continue;
+    const point=subObjectBlastPoint(api,target,center),distance=point.distanceTo(center);
+    if(distance>radius||!options.pierceLOS&&api.G.physics?.los&&!api.G.physics.los(center,point))continue;
+    damageCustomObject(api,source,target,point,damageAt(distance,target),cause);
+  }
+  projectiles.nativeSprinklerAoE?.(source,center,radius,damageAt,cause,options);
+  if(includeSpecials)projectiles.s3DamageSpecialObjects?.(source,center,radius,damageAt,cause);
+}
+
+function nativeBombDamageAt(bomb,api,distance){
+  const r=bomb?.s3Resolved;
+  let inner=r?.damageInnerDistance,outer=r?.damageOuterDistance,max=r?.damageMax,min=r?.damageMin;
+  if(!Number.isFinite(inner)||!Number.isFinite(outer)||!Number.isFinite(max)||!Number.isFinite(min)){
+    const bands=api.SUB?.bomb?.damageBands||[];
+    [[inner,max],[outer,min]]=bands;
+  }
+  if(!Number.isFinite(outer)||distance>outer)return 0;
+  return distance<=(inner||0)?(max||0):(min||0);
+}
+function damageNativeBombObjects(api,projectiles,bomb){
+  if(!bomb||bomb.ghost||bomb.owner?.remote||!bomb.pos)return;
+  const id=bomb.s3Sub?.id||bomb.s3Resolved?.spec?.id||'bomb';
+  // Curling's rolling contact is Bomb_CurlingBullet; its final explosion uses
+  // the Bomb source row, just like other bomb blast phases.
+  const cause=id==='suction'?'Bomb_Suction':'Bomb';
+  const damageAt=d=>nativeBombDamageAt(bomb,api,d);
+  const r=bomb.s3Resolved?.radius||api.SUB?.bomb?.radius||8;
+  damageSubObjectsInRadius(api,projectiles,bomb,bomb.pos,r,damageAt,cause);
 }
 
 function enemyInkNearMine(api,mine){
@@ -482,11 +612,21 @@ function enemyInkNearMine(api,mine){
 }
 
 function blast(api, object, pos, burstIndex = 0) {
-  const sourceSpec = object.subId === 'fizzy' ? object.spec.bursts[Math.min(2,burstIndex)] : object.spec;
-  // Burst Bomb's 60-HP direct collision replaces the 35-HP splash on that
-  // target; using one `damageAt` call for each path would incorrectly stack.
+  const sourceSpec = object.subId === 'fizzy' ? object.spec.bursts[Math.min(2,burstIndex)] :
+    object.subId === 'torpedo' ? {
+      ...object.spec,
+      damageMax: object.chasedTarget ? object.spec.chaseBlast.nearDamage : object.spec.throwBlast.nearDamage,
+      damageMin: object.chasedTarget ? object.spec.chaseBlast.farDamage : object.spec.throwBlast.farDamage,
+      damageInner: object.chasedTarget ? object.spec.chaseBlast.nearRadius : object.spec.throwBlast.nearRadius,
+      damageOuter: object.chasedTarget ? object.spec.chaseBlast.farRadius : object.spec.throwBlast.farRadius,
+      paintRadius: object.chasedTarget ? object.spec.chaseBlast.paintRadius : object.spec.throwBlast.paintRadius,
+      splashRadius: object.chasedTarget ? object.spec.splashRadius : 0,
+      splashPaintRadius: object.chasedTarget ? object.spec.splashPaintRadius : 0,
+      splashDamage: object.chasedTarget ? object.spec.splashDamage : 0,
+    } : object.spec;
+  // Burst Bomb's Wiki-measured 25 direct hit is followed one frame later by
+  // the ordinary 35/25 blast bands. Preserve both separately-timed events.
   const spec = object.subId === 'burst' ? { ...sourceSpec, directDamage: undefined } : sourceSpec;
-  const skippedTarget = object.subId === 'burst' ? object.directTarget : null;
   if (!object.ghost) {
     if (Number.isFinite(spec.paintRadius)) {
       const center = pos.clone();
@@ -506,20 +646,23 @@ function blast(api, object, pos, burstIndex = 0) {
     if (outer > 0) {
       const targetPoint = api._allSubTargetPoint ||= new api.THREE.Vector3();
       for (const target of hostileActors(api,object.owner)) {
-        if (target === skippedTarget) continue;
         targetPoint.copy(target.pos); targetPoint.y += target.form === 'squid' ? .45 : .7;
         const d = targetPoint.distanceTo(pos);
         if (d > outer || api.G.physics?.los && !api.G.physics.los(pos,targetPoint)) continue;
+        const shelter=api.G.projectiles?.kitBarrierCandidate?.(object,pos,targetPoint);
+        if(shelter?.object?.subId==='splashWall'&&shelter.distance<pos.distanceTo(targetPoint)-1e-6)continue;
         const amount = damageAt(d,spec);
         if (amount > 0) api.G.projectiles?.applyHit?.(object.owner,target,amount,object.subId);
       }
+      const mainCause=object.subId==='torpedo'?'Bomb_TorpedoBullet':object.subId==='inkMine'?'Bomb_Trap':null;
+      damageSubObjectsInRadius(api,api.G.projectiles,object,pos,outer,d=>damageAt(d,spec),mainCause);
       if (spec.splashRadius > 0 && (object.subId !== 'torpedo' || object.chasedTarget)) {
         for (const target of hostileActors(api,object.owner)) {
-          if(target===skippedTarget)continue;
           targetPoint.copy(target.pos); targetPoint.y += .7;
           const d=targetPoint.distanceTo(pos);
           if (d <= spec.splashRadius && api.G.physics?.los?.(pos,targetPoint)) api.G.projectiles?.applyHit?.(object.owner,target,spec.splashDamage,object.subId+'-splash');
         }
+        damageSubObjectsInRadius(api,api.G.projectiles,object,pos,spec.splashRadius,()=>spec.splashDamage,'Bomb_TorpedoSplashBurst');
       }
     }
   }
@@ -538,6 +681,55 @@ function closestActor(api, object, maxDistance, lineOfSight = true) {
   }
   return best ? { actor:best, distance:bestD } : null;
 }
+function steerAutobomb(object,target,dt,air=false){
+  const m=object.spec.chaseMovement,dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z;
+  const desired=Math.atan2(dx,dz),current=Math.atan2(object.vel.x,object.vel.z);
+  let d=desired-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;
+  const maxTurn=m.yawDegreesPerFrame*Math.PI/180*60*dt,angle=current+clamp(d,-maxTurn,maxTurn);
+  const speedNow=Math.hypot(object.vel.x,object.vel.z),max=air?m.airMaxSpeedXZ:m.groundMaxSpeed,accel=air?m.airAcceleration:m.groundAcceleration;
+  const speed=clamp(speedNow+accel*dt,0,max);
+  object.vel.x=Math.sin(angle)*speed;object.vel.z=Math.cos(angle)*speed;object.yaw=angle;
+  if(air)object.vel.y=clamp(object.vel.y,-m.airMaxSpeedY,m.airMaxSpeedY);else object.vel.y=0;
+}
+function armAutobombBurst(object,frames){
+  object.phase='burstWait';
+  object.fuse=frameSeconds(frames);
+  object.vel.set(0,0,0);
+}
+function applyFlightPositionAirResist(object,dt){
+  const resist=object.spec.flyPositionAirResist;
+  if(!(resist>0))return;
+  // The extracted AirResist values are per-frame velocity retention losses.
+  // The sub-object integrator runs at 60 Hz, and exponentiating preserves the
+  // same retention if its outer caller advances at another frame rate.
+  object.vel.multiplyScalar(Math.pow(1-resist,dt*60));
+}
+
+function paintFizzyFlight(api,object,start,end){
+  if(object.subId!=='fizzy'||object.ghost)return;
+  const spec=object.spec,index=clamp((object.popLimit||1)-1,0,2),interval=spec.flySplashDistance[index];
+  if(!(interval>0))return;
+  const delta=end.clone().sub(start),distance=delta.length();if(!(distance>1e-8))return;
+  let pending=object.flySplashDistance||0,consumed=0;
+  while(pending+distance-consumed+1e-10>=interval){
+    const advance=interval-pending,t=clamp((consumed+advance)/distance,0,1);
+    const point=start.clone().addScaledVector(delta,t),seed=(object.seed^Math.imul((object.flySplashDrops||0)+1,0x9e3779b1))>>>0;
+    const radius=spec.flySplashPaintRadius[index];
+    // 11.3.0 pins the spacing, drop radius and tiered depth/width tuples. The
+    // public paint API only accepts circular splats, so this path keeps the
+    // sourced centre/radius and leaves the Nintendo elongated footprint as a gap.
+    const paintPoint=point.clone();
+    const hit=api.G.physics?.raycast?.(point,api._allSubDown ||= new api.THREE.Vector3(0,-1,0),10,api._allSubPaintHit ||= new api.Hit());
+    if(hit?.hit)paintPoint.copy(hit.point).addScaledVector(hit.normal,.025);
+    else paintPoint.y=Math.max(0,point.y-1.35);
+    surfacePaint(api,object.owner,object.team,paintPoint,radius,seed);
+    object.flySplashDrops=(object.flySplashDrops||0)+1;
+    emitEvent(api,object,'fizzyFlightPaint',{x:paintPoint.x,y:paintPoint.y,z:paintPoint.z,radius,seed,index});
+    consumed+=advance;pending=0;
+  }
+  object.flySplashDistance=Math.max(0,pending+distance-consumed);
+}
+
 function contactActor(api, object, start, end, size = .25) {
   const length = start.distanceTo(end);
   if (!(length > 1e-7) || !api.Physics?.segmentCapsuleDist) return null;
@@ -561,7 +753,7 @@ function customObjectCandidate(api, projectiles, p, start, end) {
     // object itself when its own sweep asks the shared defense hook for a result.
     if (object===p || object.dead || object.team===p.team) continue;
     const targetableTorpedo=object.subId==='torpedo'&&object.chasedTarget&&['flight','chase'].includes(object.phase);
-    const targetableDeployable=object.phase==='deployed'&&['splashWall','sprinkler','beakon','inkMine'].includes(object.subId);
+    const targetableDeployable=object.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(object.subId);
     if(!targetableTorpedo&&!targetableDeployable)continue;
     let hit=null;
     if (object.subId==='splashWall') {
@@ -587,34 +779,46 @@ function customObjectCandidate(api, projectiles, p, start, end) {
       // The deployed object's owner is the authority for its HP. A ghost round
       // may spend HP on that owner's client; the local shooter's client sends a
       // bounded proposal when it sees a remote-owned deployable.
-      const amount=Number.isFinite(p.damage)?clamp(p.damage,0,2200):0;
+      const amount=Number.isFinite(p.damage)?clamp(p.damage,0,2200)*objectDamageScale(p,object.subId):0;
       if(amount<=0)return 0;
+      const subId=p.s3Sub?.id||p.subId;
+      if((p.kind==='bomb'||p.type==='bomb')&&p.s3InkVacBomb&&['bomb','suction','curling'].includes(subId)){
+        if(!p.ghost)projectiles._explodeBomb?.(p.s3InkVacBomb);
+        return 0;
+      }
+      if(object.subId==='splashWall'&&['burst','autobomb','fizzy','torpedo'].includes(subId)){
+        const center=hit.point.clone();if(p.vel?.lengthSq()>0)center.addScaledVector(p.vel.clone().normalize(),-.001);
+        blast(api,p,center);
+        removeObject(api,projectiles,p);
+        return 0;
+      }
       if(p.ghost)return 0;
-      if(object.ghost){if(!p.ghost)emitObjectHit(api,object,p,hit.point,amount);return 0;}
+      if(object.ghost){if(!p.ghost)emitObjectHit(api,object,p,hit.point,p.damage);return 0;}
       if(localOwner(object.owner)){
-        object.hp-=amount*objectGearRate(p.owner,object.subId);
+        object.hp-=amount;
         if(object.hp<=0)removeObject(api,projectiles,object);
         return amount;
       }
-      emitObjectHit(api,object,p,hit.point,amount);
+      emitObjectHit(api,object,p,hit.point,p.damage);
       return 0;
     };
     best=candidate;
   }
   return best;
 }
-function emitObjectHit(api, object, projectile, point, damage) {
-  const shooter=projectile.owner;
+function emitObjectHit(api, object, projectile, point, damage, cause=null) {
+  const shooter=projectile?.owner&&typeof projectile.owner==='object'?projectile.owner:projectile;
   if(!localOwner(shooter)||!Number.isInteger(object.owner?.nid)||!Number.isInteger(shooter?.nid))return;
-  const event={v:1,phase:'objectHit',subId:projectile.wid||projectile.type||'projectile',
-    seq:projectile.s3SubSeq||0,eventSeq:nextSeq(shooter),targetOwnerId:object.owner.nid,
+  const event={v:1,phase:'objectHit',subId:projectile?.wid||projectile?.type||projectile?.s3Sub?.id||projectile?.s3AllSpecial||'projectile',
+    seq:projectile?.s3SubSeq||0,eventSeq:nextSeq(shooter),targetOwnerId:object.owner.nid,
     life:ownerLife(shooter),targetLife:object.sourceLife,targetOwnerLife:ownerLife(object.owner),targetSeq:object.seq,targetSubId:object.subId,
-    damage:clamp(damage,0,2200),objectShredder:objectShredderEquipped(shooter),x:point.x,y:point.y,z:point.z,actor:shooter};
+    damage:clamp(damage,0,2200),cause:objectDamageRow(projectile,cause),objectShredder:objectShredderEquipped(shooter),x:point.x,y:point.y,z:point.z,actor:shooter};
   api.emit?.('all:sub',event);
 }
 function objectHitKey(event) { return `${event.actor?.nid??event.actorId}:${event.life??ownerLife(event.actor)}:${event.eventSeq}`; }
 const objectHitSeen = new Set();
 const beaconResultSeen = new Set();
+const statusEventSeen = new Set();
 function beaconReservationKey(actor, life, reservationId) { return `${actor?.nid}:${life}:${reservationId}`; }
 function emitActorEvent(api, actor, phase, beacon, extra = {}) {
   if(!localOwner(actor)||!Number.isInteger(actor?.nid)||!beacon)return null;
@@ -730,27 +934,47 @@ function applyRemoteObjectHit(api,event) {
   if(!target||target.ghost)return false;
   const reach=target.subId==='splashWall'?ALL_SUB_SPECS.splashWall.wallWidth/2+1:target.subId==='torpedo'?1:1.5;
   if(target.pos.distanceTo(new api.THREE.Vector3(event.x,event.y,event.z))>reach)return false;
-  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear(shooter,event.objectShredder,()=>objectGearRate(shooter,target.subId));
+  target.hp-=clamp(event.damage,0,2200)*withObjectHitGear(shooter,event.objectShredder,()=>objectDamageScale(shooter,target.subId,event.cause||'Default'));
   if(target.hp<=0)removeObject(api,api.G.projectiles,target);
   return true;
 }
 
 function armToxicStatus(api, cloud, target, emit = true) {
   if(!target?.alive||target.team===cloud.team)return;
-  const until=(api.G.time||0)+.35;
+  const now=api.G.time||0, spec=cloud.spec, effectScale=subEffectScale(target,'mist');
+  const speedScale=1-(1-spec.slowScale)*effectScale;
+  const jumpScale=1-(1-spec.jumpScale)*effectScale;
+  const until=now+2*STEP;
+  cloud.toxicProgress ||= new WeakMap();
+  let progress=cloud.toxicProgress.get(target);
+  if(!progress){progress={level:0,count:0,elapsed:0,nextAt:frameSeconds(spec.effectLevels[0].frame),drained:0};cloud.toxicProgress.set(target,progress);}
+  progress.elapsed+=STEP;
+  let inkLoss=0;
+  if(progress.elapsed+1e-10>=progress.nextAt){
+    const total=spec.inkDrainMaxPercent*effectScale;
+    inkLoss=Math.min(total-progress.drained,spec.inkDrainMaxPercent/7*effectScale);
+    progress.drained+=inkLoss;
+    const level=spec.effectLevels[progress.level];
+    progress.count++;
+    if(level.nextLevelCount>0&&progress.count>=level.nextLevelCount){progress.level=Math.min(progress.level+1,spec.effectLevels.length-1);progress.count=0;}
+    progress.nextAt=progress.elapsed+frameSeconds(spec.effectLevels[progress.level].frame);
+  }
   // Only the target's owning client mutates movement/ink. A local source emits
   // a short lease for remote enemies; a replayed cloud directly affects local
   // enemies so its area status remains active on the authority.
   if(!target.remote){
     target.s3 ||= {};
     target.s3.toxicMistSlowUntil=Math.max(target.s3.toxicMistSlowUntil||0,until);
-    target.s3.toxicMistScale=Math.min(target.s3.toxicMistScale||1,cloud.spec.slowScale);
+    target.s3.toxicMistScale=Math.min(target.s3.toxicMistScale??1,speedScale);
+    target.s3.toxicMistJumpScale=Math.min(target.s3.toxicMistJumpScale??1,jumpScale);
+    if(inkLoss>0)target.ink=Math.max(0,(target.ink??100)-inkLoss);
   }
   const prev=cloud.seenToxic.get(target)||-Infinity;
-  if(emit&&!cloud.ghost&&(api.G.time||0)-prev>=.25){
-    cloud.seenToxic.set(target,api.G.time||0);
+  if(emit&&!cloud.ghost&&(inkLoss>0||now-prev>=.25)){
+    cloud.seenToxic.set(target,now);
     if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'status',subId:cloud.subId,seq:cloud.seq,sourceLife:cloud.sourceLife,
-      eventSeq:nextSeq(cloud.owner),life:ownerLife(cloud.owner),targetId:target.nid,targetLife:ownerLife(target),status:'toxicMist',until,
+      eventSeq:nextSeq(cloud.owner),life:ownerLife(cloud.owner),targetId:target.nid,targetLife:ownerLife(target),status:'toxicMist',until:now+.35,
+      speedScale,jumpScale,inkLoss,
       sourceTeam:cloud.team,actor:cloud.owner});
   }
 }
@@ -767,56 +991,77 @@ function replayStatus(api,event) {
 function updateStatuses(api, dt) {
   for(const actor of api.G.actors||[]){
     const s=actor?.s3;if(!s)continue;
-    if(toxicMistScale(actor)<1&&!actor.remote) actor.ink=Math.max(0,(actor.ink??100)-ALL_SUB_SPECS.toxicMist.inkDrainPerSecond*dt);
-    if((s.toxicMistSlowUntil||0)<=(api.G.time||0)){delete s.toxicMistSlowUntil;delete s.toxicMistScale;}
+    if((s.toxicMistSlowUntil||0)<=(api.G.time||0)){delete s.toxicMistSlowUntil;delete s.toxicMistScale;delete s.toxicMistJumpScale;}
   }
 }
 
 function updateFlight(api, projectiles, object, dt) {
   const spec=object.spec;
   if(object.ghost&&object.phase==='ghostWait')return;
-  if(object.grounded&&(object.subId==='autobomb'||object.subId==='torpedo')){
+  if(object.phase==='burstWait'){
+    object.age+=dt;object.prev.copy(object.pos);object.fuse-=dt;
+    if(object.fuse<=0){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
+    return;
+  }
+  if(object.grounded&&object.subId==='autobomb'){
     object.age+=dt;object.prev.copy(object.pos);
-    if(object.subId==='torpedo'){
-      object.fuse-=dt;
-      if(object.fuse<=0){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
-    }else{
-      const target=closestActor(api,object,spec.chaseRadius,true)?.actor;
-      if(target){
-        object.chasedTarget=true;
-        const dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z,desired=Math.atan2(dx,dz),current=Math.atan2(object.vel.x,object.vel.z);
-        let d=desired-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;
-        const angle=current+clamp(d,-2.2*dt,2.2*dt),speed=spec.chaseSpeed||6.2;
-        object.vel.x=Math.sin(angle)*speed;object.vel.z=Math.cos(angle)*speed;
-        object.pos.x+=object.vel.x*dt;object.pos.z+=object.vel.z*dt;object.yaw=angle;
-        if(target.pos.distanceTo(object.pos)<.75){object.pos.copy(target.pos);object.pos.y+=.35;if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
-      }else if(object.age>=spec.noTargetSeconds){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
+    let target=object.autobombTarget;
+    if(target&&!target.alive){object.autobombTarget=null;armAutobombBurst(object,spec.unfindBurstWaitFrames);return;}
+    if(!target&&object.age>=frameSeconds(spec.findRotateFrames)){
+      target=closestActor(api,object,spec.chaseRadius,true)?.actor||null;
+      if(target)object.autobombTarget=target;
+      else {armAutobombBurst(object,spec.noTargetBurstWaitFrames);return;}
     }
+    if(target&&object.age>=frameSeconds(spec.chaseMovement.beforeRotateFrames)){
+      const distance=target.pos.distanceTo(object.pos);
+      if(distance<=spec.chaseMovement.approachDistance){armAutobombBurst(object,spec.approachBurstWaitFrames);return;}
+      object.chasedTarget=true;object.chaseAge=(object.chaseAge||0)+dt;
+      steerAutobomb(object,target,dt,false);object.pos.x+=object.vel.x*dt;object.pos.z+=object.vel.z*dt;
+      if(object.chaseAge>=spec.chaseSeconds)armAutobombBurst(object,spec.chaseBurstWaitFrames);
+    }
+    if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw||0;}
+    return;
+  }
+  if(object.grounded&&object.subId==='torpedo'){
+    object.age+=dt;object.prev.copy(object.pos);object.fuse-=dt;
+    if(object.fuse<=0){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
     if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw||0;}
     return;
   }
   object.age+=dt;object.prev.copy(object.pos);
   if(object.subId==='autobomb'||object.subId==='torpedo'){
-    const target=closestActor(api,object,object.subId==='autobomb'?spec.chaseRadius:spec.chaseRadius,true)?.actor;
-    if(target&&object.age>.3){
+    // Autobomb search and target tracking begin only after landing. The source
+    // Robot Bomb walks, searches, then holds its burst; it is not a homing
+    // airborne projectile.
+    const target=object.subId==='autobomb'?null:closestActor(api,object,spec.chaseRadius,true)?.actor;
+      const canChase=object.age>=frameSeconds(spec.chaseStartFrames||spec.chaseMovement?.beforeRotateFrames||0);
+    if(target&&canChase){
       object.phase='chase'; object.chasedTarget=true;
-      const dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z,desired=Math.atan2(dx,dz),current=Math.atan2(object.vel.x,object.vel.z);
-      let d=desired-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;
-      const turn=clamp(d,-2.2*dt,2.2*dt),angle=current+turn;
-      const speed=Math.max(spec.chaseSpeed||6.2,Math.hypot(object.vel.x,object.vel.z));
-      object.vel.x=Math.sin(angle)*speed;object.vel.z=Math.cos(angle)*speed;object.vel.y=Math.max(-3,Math.min(2,object.vel.y));
-      if(target.pos.distanceTo(object.pos)<.75||object.age>=(spec.chaseSeconds||2.5)){
+      if(object.subId==='autobomb'){
+        object.chaseAge=(object.chaseAge||0)+dt;
+        steerAutobomb(object,target,dt,true);
+      }else{
+        const dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z,desired=Math.atan2(dx,dz),current=Math.atan2(object.vel.x,object.vel.z);
+        let d=desired-current;while(d>Math.PI)d-=Math.PI*2;while(d< -Math.PI)d+=Math.PI*2;
+        const turn=clamp(d,-2.2*dt,2.2*dt),angle=current+turn;
+        const speed=Math.max(spec.chaseSpeed||6.2,Math.hypot(object.vel.x,object.vel.z));
+        object.vel.x=Math.sin(angle)*speed;object.vel.z=Math.cos(angle)*speed;object.vel.y=Math.max(-3,Math.min(2,object.vel.y));
+      }
+      const approach=object.subId==='autobomb'?spec.chaseMovement.approachDistance:.75;
+      const chaseOver=object.subId==='autobomb'?object.chaseAge>=spec.chaseSeconds:object.age>=(spec.chaseSeconds||2.5);
+      if(target.pos.distanceTo(object.pos)<approach||chaseOver){
         object.pos.copy(target.pos);object.pos.y+=.35;
         if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}
         return;
       }
-    } else if(object.subId==='autobomb'&&object.age>spec.noTargetSeconds){if(object.ghost)object.phase='ghostWait';else{blast(api,object,object.pos);removeObject(api,projectiles,object);}return;}
+    }
   }
   if(object.subId==='angleShooter') object.vel.y=0;
   else object.vel.y-=spec.gravity*dt;
+  applyFlightPositionAirResist(object,dt);
   object.pos.addScaledVector(object.vel,dt);
   const world=api.G.physics?.segment?.(object.prev,object.pos,projectiles._s3SubHit ||= new api.Hit());
-  const actor=contactActor(api,object,object.prev,object.pos,object.subId==='angleShooter'?spec.collisionRadius:.22);
+  const actor=object.subId==='toxicMist'?null:contactActor(api,object,object.prev,object.pos,object.subId==='angleShooter'?spec.collisionRadius:.22);
   // The native defense lane uses the projectile record it receives for both
   // hit arbitration and Ink Vac's one-shot consume marker. Keep this record
   // persistent across the candidate call so an accepted inhale disables the
@@ -845,6 +1090,10 @@ function updateFlight(api, projectiles, object, dt) {
       const amount=object.subId==='angleShooter'||object.subId==='burst'?spec.directDamage:0;
       if(object.subId==='burst'&&amount>0)object.directTarget=actor.actor;
       if(amount>0)api.G.projectiles?.applyHit?.(object.owner,actor.actor,amount,object.subId);
+      if(object.subId==='burst'){
+        object.phase='burstWait';object.fuse=frameSeconds(spec.contactBurstDelayFrames);object.vel.set(0,0,0);
+        return;
+      }
       if(object.subId==='angleShooter'){
         const duration=markSeconds(spec,object.owner,object.subPowerAP);
         applyMark(api,actor.actor,object.team,duration,object.subId);
@@ -858,10 +1107,10 @@ function updateFlight(api, projectiles, object, dt) {
       return;
     }
     if(object.subId==='fizzy'){burstFizzy(api,projectiles,object);return;}
-    if(object.subId==='angleShooter'){
-      object.bounceCount++;object.vel.multiplyScalar(-.72);object.pos.addScaledVector(object.vel,dt);
-      if(object.bounceCount<=spec.maxBounces){emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});return;}
-    } else { blast(api,object,object.pos); }
+    // Wiki Line Marker: a direct player hit terminates the projectile/line.
+    // Only terrain can reflect it; reflecting off a player allowed a second
+    // unsupported 40-damage hit on the return path.
+    if(object.subId!=='angleShooter')blast(api,object,object.pos);
     removeObject(api,projectiles,object);return;
   }
   if(world?.hit){
@@ -888,7 +1137,7 @@ function updateFlight(api, projectiles, object, dt) {
   }
   if(object.subId==='fizzy'&&object.age+1e-10>=object.fuse){if(object.ghost)object.phase='ghostWait';else burstFizzy(api,projectiles,object);return;}
   if(object.subId==='toxicMist'&&object.age>=1.2){if(object.ghost)object.phase='ghostWait';else deploy(api,projectiles,object,object.pos);return;}
-  const flightLimit=object.subId==='angleShooter'?spec.tailFrames/60:
+  const flightLimit=object.subId==='angleShooter'?frameSeconds(spec.flightFrames):
     object.subId==='autobomb'?spec.noTargetSeconds:object.subId==='torpedo'?Math.max(2.2,spec.chaseSeconds||0):2.2;
   if(object.age>flightLimit){
     if(object.ghost){object.phase='ghostWait';return;}
@@ -907,14 +1156,39 @@ function burstFizzy(api,projectiles,object){
   object.fuse=frameSeconds(object.spec.burstWaitFrames[Math.min(2,index+1)]||1);
   const direction=new api.THREE.Vector3(object.vel.x,0,object.vel.z);
   if(direction.lengthSq()<1e-6)direction.set(Math.sin(object.yaw),0,Math.cos(object.yaw));
-  direction.normalize();object.pos.addScaledVector(direction,.62);object.vel.x=direction.x*5.5;object.vel.z=direction.z*5.5;object.vel.y=3.4;
+  direction.normalize();object.pos.addScaledVector(direction,.62);
+  const hop=object.spec.hop,high=object.popLimit>=3;
+  const velocity=high?hop.highVelocity:hop.lowVelocity,pitch=(high?hop.highPitchDeg:hop.lowPitchDeg)*Math.PI/180;
+  object.vel.x=direction.x*velocity*Math.cos(pitch);object.vel.z=direction.z*velocity*Math.cos(pitch);object.vel.y=velocity*Math.sin(pitch);
   emitEvent(api,object,'fizzyHop',{pops:object.pops,fuse:object.fuse});
 }
 function updateDeployed(api,projectiles,object,dt){
   const {G}=api,spec=object.spec;
   object.age+=dt;
   if(object.subId==='sprinkler'&&!object.owner?.alive){removeObject(api,projectiles,object);return;}
-  if((G.time||0)>=object.expireAt){removeObject(api,projectiles,object);return;}
+  const expired=(G.time||0)>=object.expireAt;
+  if(expired&&object.subId!=='toxicMist'){removeObject(api,projectiles,object);return;}
+  if(object.subId==='splashWall'){
+    // Adapters/tests may restore a deployed wall directly from a replay or a
+    // save without passing the local deploy constructor. Initialize the decay
+    // baseline once from the authoritative initial HP in either path.
+    object.wallHpInitial??=object.hp;
+    object.wallContactUntil ||= new WeakMap();
+    object.hp=Math.max(0,object.hp-object.wallHpInitial/spec.hpDecayFrames*60*dt);
+    if(object.hp<=0){removeObject(api,projectiles,object);return;}
+    if((G.time||0)>=object.activeAt){
+      const nX=Math.sin(object.yaw||0),nZ=Math.cos(object.yaw||0),rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),now=G.time||0;
+      for(const target of hostileActors(api,object.owner)){
+        const dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z;
+        const side=Math.abs(dx*rX+dz*rZ),depth=Math.abs(dx*nX+dz*nZ),feet=target.pos.y;
+        if(side>spec.wallWidth/2+api.PLAYER.radius||depth>.32||feet>object.pos.y+spec.wallHeight||feet+api.PLAYER.height<object.pos.y)continue;
+        const ready=object.wallContactUntil.get(target)||-Infinity;
+        if(now+1e-10<ready)continue;
+        api.G.projectiles?.applyHit?.(object.owner,target,spec.contactDamage,'splashWall');
+        object.wallContactUntil.set(target,now+frameSeconds(spec.damageSpanFrames));
+      }
+    }
+  }
   if(object.subId==='inkMine'){
     if((G.time||0)<object.activeAt)return;
     if(object.ghost)return;
@@ -944,12 +1218,15 @@ function updateDeployed(api,projectiles,object,dt){
         const point=new api.THREE.Vector3(object.pos.x+Math.cos(angle)*radius,object.pos.y+.04,object.pos.z+Math.sin(angle)*radius);
         const seed=(object.seed^Math.imul(drop+1,0x85ebca6b))>>>0;
         surfacePaint(api,object.owner,object.team,point,spec.paintRadius,seed);
+        const victim=contactActor(api,object,object.pos,point,spec.dropletHitRadius);
+        if(victim)api.G.projectiles?.applyHit?.(object.owner,victim.actor,spec.dropletDamage,'sprinkler');
         emitEvent(api,object,'sprinklerDrop',{x:point.x,y:point.y,z:point.z,radius:spec.paintRadius,seed,drop});
       }
     }
   }
-  // A deployed wall's rendered plane must retain the yaw used by barrier contact.
-  if(object.mesh){object.mesh.position.copy(object.pos);object.mesh.rotation.y=object.yaw+(object.subId==='splashWall'?0:object.age*2);}
+  if(expired){removeObject(api,projectiles,object);return;}
+  // poseVisual turns each model; deployed walls keep the yaw used by barrier contact.
+  if(object.mesh)object.mesh.position.copy(object.pos);
 }
 
 function tickObjects(api,projectiles,dt){
@@ -958,6 +1235,7 @@ function tickObjects(api,projectiles,dt){
     const o=list[i];if(o.dead||o.phase==='ghostWait')continue;
     if(o.subId==='sprinkler'&&!o.owner?.alive){removeObject(api,projectiles,o);continue;}
     if(o.phase==='deployed')updateDeployed(api,projectiles,o,dt);else updateFlight(api,projectiles,o,dt);
+    if(!o.dead&&o.phase!=='ghostWait')poseVisual(api,o,dt);
   }
   updateStatuses(api,dt);
 }
@@ -1047,20 +1325,34 @@ export function replaySub(api,event){
 function registerSpecs(api,profile){
   const {SUB}=api;
   for(const [id,base] of Object.entries(ALL_SUB_SPECS)){
-    const costCurve=profile?.bomb?.inkSaverCurve||profile?.gear?.inkSaverSub||[1,.825,.65];
+    const costCurve=SUB_INK_SAVE_CURVES[id];
     const previous=SUB[id]||{};
     SUB[id]={...base,...previous,id,inkCostFallback:base.inkCost,
-      inkSaverCurve:Array.isArray(previous.inkSaverCurve)?previous.inkSaverCurve:costCurve};
+      inkSaverCurve:costCurve};
   }
   return SUB;
 }
 
 export function installAllSubs(api,profile={}){
-  const {SUB,Projectiles,WeaponRunner,G}=api;
+  const {SUB,Projectiles,WeaponRunner,Actor,G}=api;
   if(!SUB||!Projectiles||!WeaponRunner||!G||!api.THREE)throw new Error('all subs require the composed Projectiles, WeaponRunner and game context');
   if(Projectiles.prototype[INSTALL])return api;
   configureToxicMist(api);
   registerSpecs(api,profile);
+  // Specials and native attack AoEs use this boundary to hit deployed custom
+  // sub devices. Keep this entry point sub-only: the all-subs blast path below
+  // explicitly adds special devices once, while all-specials owns its own list.
+  Projectiles.prototype.s3DamageSubObjects=function(attack,center,radius,damageAtDistance,cause=null,options={}){
+    if(!center?.isVector3||!(radius>0)||typeof damageAtDistance!=='function')return false;
+    damageSubObjectsInRadius(api,this,attack,center,radius,damageAtDistance,cause,false,options);
+    return true;
+  };
+  const nativeBombExplode=Projectiles.prototype._explodeBomb;
+  if(nativeBombExplode)Projectiles.prototype._explodeBomb=function(bomb,...args){
+    const result=nativeBombExplode.call(this,bomb,...args);
+    damageNativeBombObjects(api,this,bomb);
+    return result;
+  };
   const nativeThrow=Projectiles.prototype.throwBomb;
   Projectiles.prototype.throwBomb=function(actor,...args){
     const id=actor?.weapon?.sub;
@@ -1152,13 +1444,14 @@ export function installAllSubs(api,profile={}){
     this._s3SubObjects=[];this._s3SubAccumulator=0;
     markBirths.delete(this);
     api.G.s3Beakons=[];
-    for(const actor of api.G.actors||[])if(actor?.s3){delete actor.s3.toxicMistSlowUntil;delete actor.s3.toxicMistScale;}
-    objectHitSeen.clear();beaconResultSeen.clear();
+    for(const actor of api.G.actors||[])if(actor?.s3){delete actor.s3.toxicMistSlowUntil;delete actor.s3.toxicMistScale;delete actor.s3.toxicMistJumpScale;}
+    objectHitSeen.clear();beaconResultSeen.clear();statusEventSeen.clear();
     return nativeClear.apply(this,args);
   };
 
   // Reuse the existing Bubbler/Ink Vac first-contact lane. Splash Wall blocks
-  // hostile sweeps, while Sprinkler, Beakon and Ink Mine can be shot as objects.
+  // hostile sweeps; source-mapped destructible sub targets are Sprinkler,
+  // Beakon and a locked Torpedo. Ink Mine targetability is unverified.
   const barrier=Projectiles.prototype.kitBarrierCandidate;
   Projectiles.prototype.kitBarrierCandidate=function(p,start,end){
     const original=barrier?.call(this,p,start||p?.prev,end||p?.pos);
@@ -1171,6 +1464,15 @@ export function installAllSubs(api,profile={}){
   const nativeMove=WeaponRunner.prototype.moveSpeed;
   WeaponRunner.prototype.moveSpeed=function(...args){
     return nativeMove.apply(this,args)*toxicMistScale(this.a);
+  };
+
+  const nativeMovementStep=Actor?.prototype?._integrateMovementStep;
+  if(nativeMovementStep)Actor.prototype._integrateMovementStep=function(dt,isSquid,jumped,...args){
+    const s=this.s3;
+    if(jumped&&s?.toxicMistSlowUntil>(G.time||0)&&this.vel){
+      this.vel.y*=s.toxicMistJumpScale||ALL_SUB_SPECS.toxicMist.jumpScale;
+    }
+    return nativeMovementStep.call(this,dt,isSquid,jumped,...args);
   };
 
   api.replaySub=event=>replaySub(api,event);
