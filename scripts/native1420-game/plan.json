@@ -71,5 +71,6 @@
     "systemReserveMiB": 2048,
     "qualificationDeadlineSeconds": 600,
     "jobTimeoutMinutes": 30
-  }
+  },
+  "recoveryScope": "Original run38681154517 exceeded configured3GiB summed RSS during source conversion/startMatch with13.28GB available. Preserve3GiB cap/2GiB reserve/Nodeheap,600s/30min limits and gameplay gates. Dispose intercepted API responses after fulfillment; bind exact manifest versioned engine paths; add peak process telemetry before any later budget decision."
 }

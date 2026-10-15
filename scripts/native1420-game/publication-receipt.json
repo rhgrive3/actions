@@ -1,0 +1,10 @@
+{
+  "head": "bea969f68908aa0a7fd945fd7acb577fad2298b6",
+  "tree": "a815f84c45705ea38991d260101653b45cd5d2ae",
+  "parent": "c99d1310a6cfb1ba65e9fb3394799c6fdbc42778",
+  "branch": "review/native1420-game-behavior-20261015",
+  "run": 38681154517,
+  "job": 116245792438,
+  "manifestSHA256": "7c411ecfe3f8ebec462e873dfe95da5a645be3a97379a0700d70f8efc9792476",
+  "state": "failed; diagnosis delegated; no rerun yet"
+}

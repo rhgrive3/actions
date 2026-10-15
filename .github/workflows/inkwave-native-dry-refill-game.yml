@@ -65,9 +65,9 @@ jobs:
           export PACKAGE="$GITHUB_WORKSPACE/diagnostic/scripts/native1420-game"
           python - <<'PY'
           import json,os,pathlib,signal,subprocess,time
-          # Same conservative 3GiB process-tree RSS and 2GiB system reserve as CPU qualification.
+          # Browser+source conversion budget: summed RSS includes shared pages in multiple processes.
           # A single 600s supervised qualification budget; the job has a 30min hard timeout.
-          cap=3*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None
+          cap=3*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None;peakProcesses=[]
           def available():
               return int(next(x.split()[1] for x in pathlib.Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')))*1024
           assert available()>=cap,'Insufficient starting memory'
@@ -86,7 +86,13 @@ jobs:
                   if expanded==descendants:break
                   descendants=expanded
               rss=sum(processes[pid][1] for pid in descendants if pid in processes)
-              free=available();peak=max(peak,rss);minimum=free if minimum is None else min(minimum,free)
+              if rss>peak:
+                  peak=rss;peakProcesses=[]
+                  for pid in sorted(descendants,key=lambda pid:processes.get(pid,(0,0))[1],reverse=True)[:20]:
+                      try:name=pathlib.Path('/proc',str(pid),'comm').read_text().strip()
+                      except OSError:name='exited'
+                      peakProcesses.append({'pid':pid,'name':name,'rssBytes':processes.get(pid,(0,0))[1]})
+              free=available();minimum=free if minimum is None else min(minimum,free)
               if rss>cap:reason='process-tree RSS cap exceeded'
               elif free<reserve:reason='system memory reserve reached'
               elif time.monotonic()-start>deadline:reason='600s qualification timeout'
@@ -103,7 +109,7 @@ jobs:
                   break
               time.sleep(.25)
           e=pathlib.Path(os.environ['GAME_EVIDENCE']);e.mkdir(exist_ok=True)
-          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'peakProcessTreeRSSBytes':peak,'minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'Hosted controlled fixed-step Game behavior; no hardware/FPS/pixel claim'},indent=2)+'\n')
+          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'peakProcessTreeRSSBytes':peak,'peakProcesses':peakProcesses,'accounting':'Sum of descendant RSS; shared physical pages may be counted more than once','minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'Hosted controlled fixed-step Game behavior; no hardware/FPS/pixel claim'},indent=2)+'\n')
           assert p.returncode==0 and reason is None,'Game qualification failed; preserve compact evidence'
           PY
       - uses: actions/upload-artifact@v4

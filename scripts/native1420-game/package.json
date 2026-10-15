@@ -2,8 +2,8 @@
   "scope": "Reviewed private package and hosted workflow proposal; publication and execution require root approval",
   "files": {
     "browser-preload.mjs": {
-      "bytes": 4776,
-      "sha256": "33cc262d6c2d502c8923e50e6bea2b2d4e26460d10c14bdf8aa092ee59cfeb8d"
+      "bytes": 4339,
+      "sha256": "5727aa7499674a0b8b6d9035445eede234b4b0dbc0148dd7996737c11d72d52f"
     },
     "composition-receipt.json": {
       "bytes": 560,
@@ -14,24 +14,28 @@
       "sha256": "f57d8cec9f5107e84e6285b4db25acb608948a505b66be352ea3bb5678a3a914"
     },
     "inkwave-native-dry-refill-game.yml": {
-      "bytes": 5898,
-      "sha256": "663a84f5a70f7458deccfcc31d1f54928a6bdc8055d7156dac148f407f57ed39"
+      "bytes": 6449,
+      "sha256": "9b883dacb4b1e7c894629a6090acb98119ca05346f6eef600ef5a98671b3d276"
     },
     "owner-check.json": {
       "bytes": 500,
       "sha256": "e9d5a8a1e8e01cc5b8d3ee196267c70f259e576aaf8d8ff81174dd7d9762aefe"
     },
     "plan.json": {
-      "bytes": 3486,
-      "sha256": "c7d36a302c5db9f71065f8ccfcbaf21ea71161d898f9bf356e29ddd90a2fb5ab"
+      "bytes": 3861,
+      "sha256": "382ebb993e6666dc4a9b78242ed8391e34a1688345068caa61e15bd1ad929437"
     },
     "prepare-build.mjs": {
-      "bytes": 2880,
-      "sha256": "abcb771862e83186ac1011096bf2831d398a3202a89c910e5e3a48e7836dc4ce"
+      "bytes": 2983,
+      "sha256": "321d4cccf6f7b0b2f9c21f72e665bc4fac1e529180b4fd79f37984c5c2647628"
     },
     "prepare-resources.mjs": {
-      "bytes": 5316,
-      "sha256": "2765f46e3132271447da015a552af5bbf73623587ae86a4fbadc794e1d652c19"
+      "bytes": 6298,
+      "sha256": "df930e2be6415bead51dcd5f3016978635a6cc4f921bf3299b5e0080d0d59967"
+    },
+    "publication-receipt.json": {
+      "bytes": 412,
+      "sha256": "009043d719798e834b45d288a2431d3552b88281438087582a30eb8ed02f6410"
     },
     "run-hosted.sh": {
       "bytes": 2567,
@@ -42,20 +46,20 @@
       "sha256": "8c7e69363af843e658b9519bcdd4768b0c71862b09d8d3764a97183df45c6c57"
     },
     "test-final-binding.mjs": {
-      "bytes": 1721,
-      "sha256": "e00a5e9da4a8916537e4628621d4dda682d40fbd47d0bcef1fd2c739521d9878"
+      "bytes": 2478,
+      "sha256": "b2700d5480d9632e7175016642842c46626e7e2fa5c073ca945ec8997d78e577"
     },
     "test-game-receipts.mjs": {
       "bytes": 2790,
       "sha256": "531b031943fdeeda32820ee1545329d6527f22a4012f902529d348fba97c41fd"
     },
     "test-resource-pins.mjs": {
-      "bytes": 1703,
-      "sha256": "506898d918eac670e6ed924a2bfca69973b83c4a75ad27d2d04a8abbe9b2e793"
+      "bytes": 3531,
+      "sha256": "c418ba5f8260321f3b82b8bf9736732177abd3658b56582463ea4fc316fbdd4c"
     },
     "verify-final.mjs": {
-      "bytes": 1754,
-      "sha256": "a88c38138858f8681d3bc29006ac937d4685c7518fcd5ef04d1306a9cefb6616"
+      "bytes": 2017,
+      "sha256": "267f9bae4ba2c50db7bfa8fb7b434db071581b5e0e5f43688ffc04a63eb2852d"
     },
     "verify-game-receipts.mjs": {
       "bytes": 3269,
