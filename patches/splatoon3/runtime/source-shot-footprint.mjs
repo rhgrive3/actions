@@ -20,8 +20,6 @@ export function sourceFlightInkKind(kind) {
   return kind;
 }
 
-// Geometry used by the raster's source kinds: smooth deterministic growth,
-// a clipped organic inner edge, no synthetic satellites or timed spatter.
-// This is a bounded INKWAVE approximation. Nintendo's proprietary mask
-// textures and full per-pixel spread law have not been extracted.
-export const SOURCE_BODY_OUTLINE = 'min(1, blobWobble) / source WidthHalf';
+// The new source kinds are drawn with the source WidthHalf/DepthScale
+// envelope, without secondary scored splatters. The exact Nintendo ink
+// mask textures and surface-stamp shape are not available from these scalars.
