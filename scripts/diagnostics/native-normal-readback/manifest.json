@@ -17,8 +17,8 @@
       "bytes": 2477
     },
     "binding.test.mjs": {
-      "sha256": "bd934d271367ea9c136bdc35a4032d72d1fb1ebd9251e9f3517cf0a1d58cdec6",
-      "bytes": 1769
+      "sha256": "4cc13881ff89ab424c9d2f0e12e70893c8b647b37c420fa7c6bd6f87f4e99489",
+      "bytes": 3067
     },
     "checkout.test.mjs": {
       "sha256": "dc499aab73810db09679e89b8b5baf615830654234b4224e6cb8dc3a3c06f603",
@@ -37,8 +37,8 @@
       "bytes": 698
     },
     "probe.mjs": {
-      "sha256": "ab5956a8c780c47bd2515707d21abb60a4b054d520afad65dd131380b29019e2",
-      "bytes": 5461
+      "sha256": "ab8cbac0391a063eb3bb4aded6a39bce0e60e385f9a4b793803612faaa0a222d",
+      "bytes": 5462
     },
     "run-hosted.sh": {
       "sha256": "ca2f3eddd3babe68e1886b40a11f44dde1e2fcb12e845dbac5cc690d5adfb77d",
