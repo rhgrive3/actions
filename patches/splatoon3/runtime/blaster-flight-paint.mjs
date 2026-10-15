@@ -29,6 +29,7 @@
  *    WidthHalf x (WidthHalf * depth) footprint is mapped onto PaintSystem's
  *    forward smear with equal total length and equal area (see splashStretch).
  */
+import { SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 const EPS = 1e-9;
 const STEP_FRAMES_PER_SECOND = 60;
 // A splash that has not reached terrain after 4 s of free fall (> 450 world
@@ -165,7 +166,12 @@ function landSplashDrop(game, drop, hit) {
   // #1107 sphere footprint around their landing point.
   const surfaceOnly = !!drop.spec.surfaceOnly && Number.isInteger(hit.face) && hit.face >= 0;
   const point = drop.pos.copy(hit.point).addScaledVector(hit.normal, surfaceOnly ? .005 : .1);
-  const opts = { seed: drop.seed, kind: drop.kind, claimOwner: drop.owner };
+  // 11.3.0 SplashPaintParam owns this radius and the scheduled falling
+  // drop. A source-backed impact stamps one physical mask only. The
+  // independent ShotColHit burst-sphere is not a SplashPaintParam drop.
+  const kind = drop.spec?.surfaceOnly && drop.depth
+    ? SOURCE_SPLASH_PAINT_KIND : drop.kind;
+  const opts = { seed: drop.seed, kind, claimOwner: drop.owner };
   if (surfaceOnly) opts.face = hit.face;
   const floor = hit.normal.y > .45;
   if (drop.depth && floor && (drop.dirX || drop.dirZ)) {

@@ -1,3 +1,4 @@
+import { nativeZone } from './native-zone.mjs';
 /** Explicit local objectives derived from reachable nav nodes. Never retail coordinates.
  * The inferred source display/common selection is shared by all rules until original placement data exists. */
 import {nativeTowerClearance} from './native-tower-clearance.mjs';
@@ -68,7 +69,10 @@ export function nativeRankedStage(G,requiredMode=null){
  const v=n=>[n.x,n.y,n.z],goals=[v(ends[1]),v(ends[0])],checkpoints=[[v(pick(dz*.5))],[v(pick(-dz*.5))]];
  const clams=[-1,1].flatMap(s=>[-1,0,1].map(t=>v(pick(s*dz*.6,t*6))));
  const projectedOrigin=mx*axis.x+mz*axis.z;
- const stage={id:L.layout.id,ruleAvailability:{tower:{supported:tower.supported,status:tower.status||'source-clear-local',reason:tower.reason||null}},zones:[{center:v(middle),size:[6,6]}],
+ const zoneProbe=L.triangleWorld._p.clone(),zoneDown=zoneProbe.clone().set(0,-1,0);
+ const zone=nativeZone(playable.paintable.map(id=>N.nodes[id]),middle,N.step,
+  (x,y,z)=>!!L.triangleWorld.ray(zoneProbe.set(x,y+.55,z),zoneDown,1.1,{minNormalY:.7}));
+ const stage={id:L.layout.id,ruleAvailability:{tower:{supported:tower.supported,status:tower.status||'source-clear-local',reason:tower.reason||null}},zones:[zone],
   tower:{...tower,speed:1.2,checkpoints:[[{progress:.6,count:5}],[{progress:.6,count:5}]]},
   rainmaker:{center:v(middle),goals,checkpoints,retreatZ:[projectedOrigin-dz*1.7,projectedOrigin+dz*1.7],nativeRetreatAxis:[axis.x,axis.z]},clams:{spawns:clams,goals},
   calibration:'LOCAL reachable-nav calibration on inferred source display/common selection. 11.3.0 ranked geometry, zones, routes, checkpoints and goals UNVERIFIED.',version1130Verified:false};

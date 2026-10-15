@@ -1,3 +1,4 @@
+import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { coherentMotionStart } from './actor-motion.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { capsuleEntry, sweptWorldHit } from './weapons-collision.mjs';
@@ -97,7 +98,7 @@ export function installChargerFlight(api,completion) {
     feetFrom.set(actor.pos.x,actor.pos.y+.2,actor.pos.z);
     const h=G.physics.raycast(feetFrom,feetDown,3.5,feetHit,true);
     if(!h.hit)return;
-    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:'trail',claimOwner:actor});
+    const area=G.paint.splat(feetAt.copy(h.point).addScaledVector(h.normal,.1),radius,actor.team,{seed:0,kind:SOURCE_SPLASH_PAINT_KIND,claimOwner:actor});
     actor.addTurf(area);
   }
   function begin(system,actor,w,charge,origin,dir,ghost=false,maxDistance=null){
@@ -177,7 +178,7 @@ export function installChargerFlight(api,completion) {
       const h=G.physics.raycast(p,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
       if(h.hit && beginChargerWallDrop(system,job,h,completion.weapons.charger,api,true)) continue;
       if(h.hit)area+=G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),radius,job.team,
-        {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1),claimOwner:job.owner});
+        {seed:Math.random(),kind:SOURCE_SPLASH_PAINT_KIND,stretch:job.dir,stretchAmt:Math.max(0,paint.depth/paint.width-1),claimOwner:job.owner});
     }
     job.owner.addTurf(area);
   }
@@ -228,12 +229,12 @@ export function installChargerFlight(api,completion) {
       if(!job.ghost && target!=='defense' && !(world.hit && !target)){
         const h=G.physics.raycast(job.pos,new THREE.Vector3(0,-1,0),3.5,new Hit(),true);
         if(h.hit)job.owner.addTurf(G.paint.splat(h.point.clone().addScaledVector(h.normal,.1),job.paint.width*job.paint.terminalRate,job.team,
-          {seed:Math.random(),stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1),claimOwner:job.owner}));
+          {seed:Math.random(),kind:SOURCE_SPLASH_PAINT_KIND,stretch:job.dir,stretchAmt:Math.max(0,job.paint.depth/job.paint.width-1),claimOwner:job.owner}));
       }
       if(world.hit&&!target&&!job.ghost){
         if (!beginChargerWallDrop(system,job,world,completion.weapons.charger,api)) {
           const area=G.paint.splat(world.point.clone().addScaledVector(world.normal,.12),job.paint.impact,job.team,
-            {seed:Math.random(),stretch:job.dir,stretchAmt:.6,claimOwner:job.owner});job.owner.addTurf(area);
+            {seed:Math.random(),kind:SOURCE_SHOT_PAINT_KIND,stretch:job.dir,stretchAmt:.6,claimOwner:job.owner});job.owner.addTurf(area);
         }
         G.fx?.burst(world.point,world.normal,job.owner.color,{count:10,speed:4,size:.09,paint:false});
       }
@@ -300,7 +301,7 @@ export function beginChargerWallDrop(system,job,hit,raw,api,splash=false){
 }
 function stamp(s,point,radius,api,face){
  if(s.ghost||!(radius>0))return;
- const opts={seed:unit(s.seed,++s.paintIndex),kind:'drop',claimOwner:s.owner};
+ const opts={seed:unit(s.seed,++s.paintIndex),kind:SOURCE_SPLASH_PAINT_KIND,claimOwner:s.owner};
  if(Number.isInteger(face)&&face>=0)opts.face=face;
  const area=api.G.paint.splat(point,radius,s.team,opts);if(Number.isFinite(area))s.owner?.addTurf?.(area);
 }

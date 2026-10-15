@@ -1,8 +1,22 @@
+import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from '../runtime/source-shot-footprint.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
 
 const near=(a,b,label='')=>assert.ok(Math.abs(a-b)<1e-8,`${label}: ${a} != ${b}`);
+// Independent painter-coordinate geometry: front=1+sa, rear=1+sa/4.
+// Centre offset must give equal longitudinal extrema about impact. This
+// checks the existing piecewise painter bounds, not a globally elliptical contour.
+function assertSourcePaintBounds(body,hit,sourceDepth) {
+  const sa=1.6*Math.max(0,sourceDepth-1),back=.375*body.radius*sa;
+  near(body.stretch,sa,'painter stretch from independent source depth');
+  const dx=body.center[0]-hit.point[0],dz=body.center[2]-hit.point[2];
+  near(dx,-hit.heading[0]*back,'ellipse centre X offset');
+  near(dz,-hit.heading[2]*back,'ellipse centre Z offset');
+  near(body.radius*(1+sa)-back,body.radius*Math.max(1,sourceDepth),'forward longitudinal bound');
+  near(body.radius*(1+sa/4)+back,body.radius*Math.max(1,sourceDepth),'rear longitudinal bound');
+}
+
 async function nativeFloor(bridgeControl = false) {
   const f=await fixture({productionComposition:true,realProjectiles:true,fullRuntime:true,
     adaptRuntime:(rel,code)=>bridgeControl && rel==='patches/splatoon3/runtime/weapons-fidelity.mjs'
@@ -31,7 +45,7 @@ async function nativeFloor(bridgeControl = false) {
   let genericImpacts=0;const impact=ps._impact;
   ps._impact=function(...args){genericImpacts++;return impact.apply(this,args);};
   const contacts=[],nativeImpact=ps.inkFlight.impact;
-  ps.inkFlight.impact=function(p,hit){contacts.push({phase:p.inkPhase,fallbackPhase:p.fidelityPhase,
+  ps.inkFlight.impact=function(p,hit){contacts.push({phase:p.inkPhase,fallbackPhase:p.fidelityPhase,point:hit.point.toArray(),heading:p.vel.clone().setY(0).normalize().toArray(),
     distance:p.start.distanceTo(hit.point),angle:Math.asin(Math.abs(p.vel.dot(hit.normal))/p.vel.length())*180/Math.PI,
     legacy:f.paintShape(p.inkProfile,p.start.distanceTo(hit.point),Math.asin(Math.abs(p.vel.dot(hit.normal))/p.vel.length())*180/Math.PI,p.inkPhase,Math.max(0,p.inkPeak-hit.point.y))});
     return nativeImpact.call(this,p,hit);};
@@ -60,25 +74,29 @@ test('#992 native fire-to-floor path consumes retained source while never visiti
   paint.DepthScaleMax+=.5;paint.DepthScaleMin+=.5;
   fire(s);advance(s);
   assert.equal(s.generic(),0);assert.equal(s.contacts.length,1);
-  const hit=s.contacts[0],body=s.records.find(r=>r.kind==='shot');
+  const hit=s.contacts[0],body=s.records.find(r=>r.kind===SOURCE_SHOT_PAINT_KIND);
   assert.equal(hit.phase,0);assert.ok(body?.area>0);
   const t=Math.max(0,Math.min(1,(hit.distance-1.1)/(20-1.1)));
   near(body.radius,2.71+(2.66-2.71)*t,'installed width reaches native CPU paint');
-  near(body.stretch,2.74+(1.81-2.74)*Math.max(0,Math.min(1,(hit.angle-10)/25))-1,'installed angle depth');
+  // PaintSystem coordinates encode the unchanged source depth via the existing
+  // ellipse mapping: sa = 1.6 * (depth - 1), not raw InkFlight stretch.
+  near(body.stretch / 1.6,2.74+(1.81-2.74)*Math.max(0,Math.min(1,(hit.angle-10)/25))-1,'installed angle depth after painter-coordinate mapping');
+  assertSourcePaintBounds(body,hit,2.74+(1.81-2.74)*Math.max(0,Math.min(1,(hit.angle-10)/25)));
   near(s.turf(),s.records.reduce((sum,row)=>sum+row.area,0),'same native paint owns credit');
   const control=await nativeFloor(true),cp=control.f.profile.weaponsFidelityCompletion.weapons.dualies.PaintParam;
   cp.WidthHalfNear+=1;cp.WidthHalfMiddle+=1;cp.WidthHalfFar+=1;cp.DepthScaleMax+=.5;cp.DepthScaleMin+=.5;
-  fire(control);advance(control);const before=control.records.find(r=>r.kind==='shot');
+  fire(control);advance(control);const before=control.records.find(r=>r.kind===SOURCE_SHOT_PAINT_KIND);
   near(body.radius-before.radius,1,'bridge-off control still ignores installed width');
-  near(body.stretch-before.stretch,.5,'bridge-off control still ignores installed angle source');
+  near((body.stretch-before.stretch) / 1.6,.5,'bridge-off control still ignores installed angle source');
 });
 
 test('#992 native break/free phase retains its existing height model rather than using stale fallback phase zero',async()=>{
   const s=await nativeFloor();fire(s,{height:4,angle:0});advance(s);
   assert.equal(s.generic(),0);assert.equal(s.contacts.length,1);
-  const hit=s.contacts[0],body=s.records.find(r=>r.kind==='shot');
+  const hit=s.contacts[0],body=s.records.find(r=>r.kind===SOURCE_SHOT_PAINT_KIND);
   assert.ok(hit.phase>0);assert.equal(hit.fallbackPhase,0,'separate generic phase is stale for native heads');
-  near(body.radius,hit.legacy.radius);near(body.stretch,hit.legacy.stretch);
+  near(body.radius,hit.legacy.radius);near(body.stretch / 1.6,hit.legacy.stretch,'native break/free height model survives painter-coordinate mapping');
+  assertSourcePaintBounds(body,hit,1+hit.legacy.stretch);
 });
 
 test('#992 full installed native head/drop paint and CPU turf agree across 30/60/120 render schedules',async()=>{
@@ -97,7 +115,7 @@ test('#992 existing seven-shot native drop sequence is capped per projectile and
     assert.ok(s.ps.inkFlight.stats.spawned-before<=1,'no extra generic droplets');
   }
   assert.deepEqual(sequences,[0,1,2,3,4,5,6]);assert.equal(s.generic(),0);
-  assert.ok(s.records.some(r=>r.kind==='drop'||r.kind==='trail'),'native detached droplets reach CPU paint');
+  assert.ok(s.records.some(r=>r.kind===SOURCE_SPLASH_PAINT_KIND),'native detached droplets reach CPU paint');
   const before=s.records.length,turf=s.turf();fire(s,{height:4,angle:0,ghost:true});advance(s);
   assert.equal(s.records.length,before);near(s.turf(),turf);
 });

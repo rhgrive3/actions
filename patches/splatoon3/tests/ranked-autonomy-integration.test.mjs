@@ -165,15 +165,33 @@ test('native ranked bots paint and capture a zone, then count it down', () => {
   assert.ok(seen.maxCountDelta > 0, `captured zones must change the ranked count: ${JSON.stringify([...seen.events])}`);
 });
 
+test('native projectiles cover and capture an expanded 13 by 11 zone', () => {
+  const original = stage.zones;
+  stage.zones = [{ center: original[0].center.slice(), size: [13, 11], heightTolerance: 0.75 }];
+  const match = start('zones', { inactiveTeams: [0] }), seen = metrics();
+  try {
+    step(match, 90 * 60, seen, state => state.maxCountDelta > 0);
+    assert.ok(seen.events.get('zone-capture') > 0, 'distributed paint goals must capture the expanded real paint index: ' + JSON.stringify({ coverage: match.rankedWorld.zoneCoverage(), actors: match.actors.filter(a => a.alive).map(a => ({ pos: a.pos.toArray(), ink: a.ink, mode: a.bot.mode, goal: a.bot.goal, pi: a.bot.pi, path: a.bot.path, want: match.ranked.rule.botGoal({team:a.team,slot:a.slot,pos:a.pos.toArray()}, frameFor(match)) })) }));
+    assert.ok(seen.maxCountDelta > 0);
+  } finally { finish(match); stage.zones = original; }
+});
+
 test('native ranked bots jump onto the moving Tower deck and carry its live objective', () => {
   const match = start('tower'), seen = metrics();
+  let hits = 0;
+  const stop = f.on('hit', event => {
+    if (event.damage > 0 && match.actors.includes(event.attacker) && match.actors.includes(event.victim)
+      && event.attacker.team !== event.victim.team) hits++;
+  });
   const initial = match.ranked.rule.state.pathDistance;
-  step(match, 60 * 60, seen);
+  try { step(match, 60 * 60, seen); }
+  finally { stop(); }
   const moved = Math.abs(match.ranked.rule.state.pathDistance - initial) > 0.5 || seen.maxProgress > initial / match.ranked.rule.metrics.total + 0.01;
   finish(match);
   assert.ok(seen.boarded, `at least one native Actor must land on the live tower collider: ${JSON.stringify([...seen.events])}`);
   assert.ok(moved, `native riders must move the Tower and update counts: ${JSON.stringify([...seen.events])}`);
   assert.ok(seen.maxCountDelta > 0, `native riders must change an actual ranked count: ${JSON.stringify([...seen.events])}`);
+  assert.ok(hits > 0, 'native Tower projectiles must inflict accepted opponent damage while bots play the objective');
 });
 
 test('native Rainmaker combat pops the shield, picks up, and lets nearby escorts fight', () => {

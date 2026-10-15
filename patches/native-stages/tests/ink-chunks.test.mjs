@@ -10,6 +10,46 @@ test('native ink clips unpainted colour after evaluating shading derivatives',as
  assert(clip<shader.fragmentShader.indexOf('#include <opaque_fragment>'));assert.equal(shader.uniforms.uPaint.value,paint.texture);material.dispose();
 });
 
+test('native ink attributes retain source order, UVs and exact typed allocation',async()=>{
+ const f=await nativeFixture(),{THREE}=f;
+ const triangles=new Float32Array([
+  0,0,0, 2,0,0, 0,0,1,
+  4,1,5, 6,1,5, 4,1,6,
+ ]);
+ const face={
+  triangles:[1,0],atlas:{x:3,y:5,pad:1,ppm:4},
+  origin:new THREE.Vector3(),u:new THREE.Vector3(1,0,0),
+  v:new THREE.Vector3(0,0,1),n:new THREE.Vector3(0,1,0),
+  su:8,sv:7,wall:true,
+ };
+ const paint={paintFaces:[{...face,atlas:null},face],size:128};
+ const g=f.nativeInkGeometry({data:{triangles}},paint);
+ const expectedPositions=[4,1,5,6,1,5,4,1,6,0,0,0,2,0,0,0,0,1];
+ assert.deepEqual(Array.from(g.getAttribute('position').array),expectedPositions);
+ const sizes={position:3,normal:3,color:3,paintUv:2,faceUv:2,
+  faceData:4,faceFlags:3,faceTan:3,lightUv:2};
+ for(const [name,size] of Object.entries(sizes)){
+  const attr=g.getAttribute(name);
+  assert.equal(attr.count,6,name);
+  assert.equal(attr.itemSize,size,name);
+  assert.equal(attr.array.byteLength,6*size*4,name+' allocated extra capacity');
+  // Source modules execute in a separate vm.SourceTextModule realm. instanceof
+  // the host Float32Array rejects a genuine Float32Array created by that
+  // realm. Keep the strict element type/stride/capacity check across realms.
+  assert.equal(Object.prototype.toString.call(attr.array),'[object Float32Array]',name);
+  assert.equal(attr.array.BYTES_PER_ELEMENT,4,name+' element width');
+ }
+ assert.deepEqual(Array.from(g.getAttribute('faceUv').array),[4,5,6,5,4,6,0,0,2,0,0,1]);
+ assert.deepEqual(Array.from(g.getAttribute('paintUv').array),[
+  20/128,26/128,28/128,26/128,20/128,30/128,
+  4/128,6/128,12/128,6/128,4/128,10/128,
+ ]);
+ assert.deepEqual(Array.from(g.getAttribute('faceFlags').array),[1,0,-1,1,0,-1,1,0,-1,1,0,-1,1,0,-1,1,0,-1]);
+ assert.deepEqual(Array.from(g.getAttribute('faceData').array),Array.from({length:6},()=>[0,1,8,7]).flat());
+ assert.equal(g.boundingSphere?.radius>0,true);
+ g.dispose();
+});
+
 test('render chunks preserve crossing triangles and bound only their indexed vertices',async()=>{
  const f=await nativeFixture(),{THREE}=f,g=new THREE.BufferGeometry();
  // First triangle spans tiles; second is far away. The chunks share positions

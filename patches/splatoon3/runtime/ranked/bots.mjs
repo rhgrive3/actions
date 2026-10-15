@@ -410,9 +410,31 @@ export function installRankedBots(api = {}) {
     const rankedEscort = engine.mode === 'rainmaker' && actor.slot % 2 === 1
       && ['barrier', 'defend'].includes(goal?.action)
       && engine.rule?.state?.carrier !== actorId(actor);
-    if (rankedEscort && nativeTail && enemy?.alive && enemy.team !== actor.team && this.seeTimer > 0
-      && Math.hypot(enemy.pos.x - actor.pos.x, enemy.pos.z - actor.pos.z) <= 16
+    const towerCombat = engine.mode === 'tower' && ['ride', 'defend'].includes(goal.action);
+    const carrier = engine.mode === 'rainmaker' && engine.rule?.state?.carrier === actorId(actor);
+    // Refill owns its swim/paint cycle until the native controller releases it.
+    // Replacing it with an objective fire input strands an empty tank on land.
+    const refill = !carrier && this.mode === 'refill';
+    const duel = (rankedEscort || towerCombat) && enemy?.alive && enemy.team !== actor.team && this.seeTimer > 0
+      && Math.hypot(enemy.pos.x - actor.pos.x, enemy.pos.z - actor.pos.z) <= 16;
+    if ((refill || duel) && nativeTail
       && typeof oldTail === 'function') {
+      const row = frameActor(actor, frame);
+      const platform = point(engine.rule?.state?.position);
+      const riding = towerCombat && actor.grounded && (row.onTower || platform
+        && Math.abs(actor.pos.x - platform.x) <= finite(engine.stage?.tower?.halfSize, 1.4)
+        && Math.abs(actor.pos.z - platform.z) <= finite(engine.stage?.tower?.halfSize, 1.4)
+        && Math.abs(actor.pos.y - platform.y) <= 0.3);
+      if (riding && !refill) {
+        // Aim and weapon-specific charge/release still come from combat. A
+        // rider must not strafe off the moving deck while defending it.
+        nativeTail[1].set(0, 0, 0);
+        nativeTail[5] = false;
+        this.mvMag = 0;
+        this.noProg = 0;
+        this._needJump = false;
+        actor.intent.jump = false;
+      }
       oldTail.apply(this, nativeTail);
       return result;
     }

@@ -16,20 +16,39 @@ export function nativeInkMaterial(paint, murals, texlib){
 }
 
 export function nativeInkGeometry(level,paint){
- const positions=[],normals=[],colors=[],uv=[],faceUv=[],faceData=[],faceFlags=[],tan=[],light=[];
- const p=new THREE.Vector3(),rel=new THREE.Vector3();
- for(const f of paint.paintFaces){
-  const a=f.atlas;if(!a||!f.triangles)continue;
-  for(const id of f.triangles)for(let k=0;k<3;k++){
-   p.fromArray(level.data.triangles,id*9+k*3);rel.copy(p).sub(f.origin);const u=rel.dot(f.u),v=rel.dot(f.v);
-   positions.push(p.x,p.y,p.z);normals.push(f.n.x,f.n.y,f.n.z);colors.push(1,1,1);
-   uv.push((a.x+a.pad+u*a.ppm)/paint.size,(a.y+a.pad+v*a.ppm)/paint.size);
-   faceUv.push(u,v);faceData.push(0,1,f.su,f.sv);faceFlags.push(f.wall?1:0,0,-1);tan.push(f.u.x,f.u.y,f.u.z);light.push(-1,-1);
+  // The source triangle/paint order is fixed. Allocate final GPU attributes once:
+  // temporary JS number arrays used to double peak memory on large OBJ stages.
+  const specs=[['position',3],['normal',3],['color',3],['paintUv',2],['faceUv',2],
+    ['faceData',4],['faceFlags',3],['faceTan',3],['lightUv',2]];
+  let count=0;
+  for(const f of paint.paintFaces)if(f.atlas&&f.triangles)count+=f.triangles.length*3;
+  const arrays=Object.fromEntries(specs.map(([name,size])=>[name,new Float32Array(count*size)]));
+  const {position,normal,color,paintUv,faceUv,faceData,faceFlags,faceTan,lightUv}=arrays;
+  const p=new THREE.Vector3(),rel=new THREE.Vector3();
+  let vertex=0;
+  for(const f of paint.paintFaces){
+    const a=f.atlas;if(!a||!f.triangles)continue;
+    for(const id of f.triangles)for(let k=0;k<3;k++){
+      p.fromArray(level.data.triangles,id*9+k*3);rel.copy(p).sub(f.origin);
+      const u=rel.dot(f.u),v=rel.dot(f.v),i2=vertex*2,i3=vertex*3,i4=vertex*4;
+      position[i3]=p.x;position[i3+1]=p.y;position[i3+2]=p.z;
+      normal[i3]=f.n.x;normal[i3+1]=f.n.y;normal[i3+2]=f.n.z;
+      color[i3]=1;color[i3+1]=1;color[i3+2]=1;
+      paintUv[i2]=(a.x+a.pad+u*a.ppm)/paint.size;
+      paintUv[i2+1]=(a.y+a.pad+v*a.ppm)/paint.size;
+      faceUv[i2]=u;faceUv[i2+1]=v;
+      faceData[i4+1]=1;faceData[i4+2]=f.su;faceData[i4+3]=f.sv;
+      faceFlags[i3]=f.wall?1:0;faceFlags[i3+2]=-1;
+      faceTan[i3]=f.u.x;faceTan[i3+1]=f.u.y;faceTan[i3+2]=f.u.z;
+      lightUv[i2]=-1;lightUv[i2+1]=-1;
+      vertex++;
+    }
   }
- }
- const g=new THREE.BufferGeometry();
- for(const [key,arr,size] of [['position',positions,3],['normal',normals,3],['color',colors,3],['paintUv',uv,2],['faceUv',faceUv,2],['faceData',faceData,4],['faceFlags',faceFlags,3],['faceTan',tan,3],['lightUv',light,2]])g.setAttribute(key,new THREE.Float32BufferAttribute(arr,size));
- g.computeBoundingSphere();return g;
+  const g=new THREE.BufferGeometry();
+  // BufferAttribute accepts Float32Array without making the second copy that
+  // Float32BufferAttribute's constructor would allocate.
+  for(const [name,size] of specs)g.setAttribute(name,new THREE.BufferAttribute(arrays[name],size));
+  g.computeBoundingSphere();return g;
 }
 
 // Display geometry keeps exporter positions/indices/UVs. Background is culled per

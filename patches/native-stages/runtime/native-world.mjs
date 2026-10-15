@@ -23,14 +23,14 @@ function releaseCurrent(game){
 /** Prepare detached, publish atomically through the existing worldCurrent guard. */
 export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
- let display,paint,inkGeometry,inkMat,inkMesh;
+ let display,paint,inkGeometry,inkMat,inkMesh,pendingTextures;
  const status=sourceLoadingStatus(map.name);
  try{
   const data=await loadNativeData(map.id,signal);if(!current())return;
   status.update('textures');
   const level=new NativeLevel(data),physics=new NativePhysics(level);
   const quality=['high','ultra'].includes(game.settings.quality)?'high':game.settings.quality==='low'?'low':'balanced';
-  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,game.mobile?.touch?1024:undefined);display=nativeDisplay(data,textures,quality);
+  const textures=await loadNativeTextures(map.id,data,G.renderer,quality,signal,game.mobile?.touch?1024:undefined);pendingTextures=textures;display=nativeDisplay(data,textures,quality);pendingTextures=null;
   if(!current()){display.dispose();return;}
   paint=new PaintSystem(G.renderer,level,{atlasSize:Math.min(G.renderer.capabilities.maxTextureSize,(game.mobile?.touch||['low','medium'].includes(game.settings.quality))?2048:4096),maxDensity:quality==='low'?4:8,cell:.25});
   // Compact charts use a 2-texel guard. Avoid sampling other charts through
@@ -65,6 +65,7 @@ export async function buildNativeWorld(game,map,current){
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
   game._shadowRoots();if(G.teamColors[0])game._setPalette(game.palette||game._pickPalette());
  }catch(error){
+  for(const t of pendingTextures?.values()||[]){t.image?.close?.();t.dispose();}pendingTextures?.clear();
   display?.dispose();paint?.dispose();if(inkMesh)inkMesh.dispose();else inkGeometry?.dispose();inkMat?.dispose();
   if(error.name!=='AbortError'&&current())throw error;
  }finally{status.close();}

@@ -6,6 +6,7 @@ import { compose } from './idle-fixture.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
 import { idleAttractMenuBudget, notePausedWorldChange, pausedWorldFrame } from '../idle-resources.mjs';
+import { normalizeViewSettings } from '../view-settings.mjs';
 import { applyAimSettingsChange } from '../aim-profile.mjs';
 import { installClock, runSimulation } from '../../splatoon3/runtime/clock.mjs';
 import { syncPortraitFrame } from '../portrait-guard.mjs';
@@ -140,8 +141,8 @@ test('composed offline pause compares fixed controls without enumerating setting
     const setStart = source.indexOf('  _setSettings(partial) {');
     const setEnd = source.indexOf('\n  _applyAudioVolumes(', setStart);
     assert.ok(setStart >= 0 && setEnd > setStart, 'production settings writer remains in composed Game source');
-    const SettingsWriter = new Function('notePausedWorldChange', 'applyAimSettingsChange', 'G', 'saveJSON',
-      `return class SettingsWriter {\n${source.slice(setStart, setEnd)}\n}`)(notePausedWorldChange, applyAimSettingsChange, h.G, () => {});
+    const SettingsWriter = new Function('notePausedWorldChange', 'applyAimSettingsChange', 'normalizeViewSettings', 'G', 'saveJSON',
+      `return class SettingsWriter {\n${source.slice(setStart, setEnd)}\n}`)(notePausedWorldChange, applyAimSettingsChange, normalizeViewSettings, h.G, () => {});
     SettingsWriter.prototype._setSettings.call(h.game, { lang: 'en' });
     assert.equal(h.game._pausedWorldRevision || 0, 0, 'language-only writes do not invalidate the arena');
     h.frame(1 / 60); assert.equal(h.calls.worldRender, 1);
