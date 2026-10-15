@@ -334,3 +334,67 @@ test('source ToHuman bow is corrected after kid silhouette returns, without chan
   assert.ok(Math.abs(settled.torso) < 8 && Math.abs(settled.neck) < 8,
     'settled humanoid should hand off smoothly to the existing upright idle calibration');
 });
+
+
+test('source shooter carry survives normal air/landing but not ToHuman-to-air or manual clips', async () => {
+  const api = await production(), { THREE } = api, idleQ = new THREE.Quaternion();
+  api.posture.setSourcePostureEnabled(true);
+  const amount = ch => {
+    const q = new THREE.Quaternion();
+    api.posture.sourceCarryWeapon(ch.sourceMotion, q);
+    return q.angleTo(idleQ);
+  };
+  const ch = await rig(api), st = state();
+  drive(api, ch, st, { speed: 6, frames: 120 });
+  const ground = amount(ch);
+  assert.ok(ground > 0.05, 'the corrected moving shooter owns a real carry transform');
+  st.grounded = false;
+  const air = [];
+  drive(api, ch, st, { speed: 6, frames: 12, onFrame: () => air.push({
+    state: ch.sourceMotion.state, carry: amount(ch),
+  }) });
+  assert.ok(air.every(x => x.state === 'air'), 'the exact sourced jump owns all test frames');
+  assert.ok(air[0].carry > 0.01 && air.at(-1).carry > 0.002,
+    'a real jump retains the fading source carry instead of an instantaneous 72-degree hand turn');
+  assert.ok(air[0].carry <= ground + 1e-6, 'the carry must decay after departing the ground');
+  st.grounded = true;
+  let landing;
+  drive(api, ch, st, { speed: 6, frames: 1, onFrame: () => {
+    landing = { state: ch.sourceMotion.state, carry: amount(ch) };
+  } });
+  assert.equal(landing.state, 'land');
+  assert.ok(landing.carry > 0.001 && Math.abs(landing.carry - air.at(-1).carry) < 0.03,
+    'the air-to-land frame must retain the same decaying carry, not snap to source hold');
+  ch.sourceMotion.playClip('Wait');
+  drive(api, ch, st, { speed: 6, frames: 1 });
+  assert.ok(amount(ch) < 1e-10, 'manual source clips must never inherit ground carry');
+  ch.dispose();
+
+  const emerging = await rig(api), swimmer = state();
+  swimmer.form = 'squid';
+  drive(api, emerging, swimmer, { speed: 6, frames: 45 });
+  assert.equal(emerging.sourceMotion.formKid, false);
+  swimmer.form = 'kid';
+  drive(api, emerging, swimmer, { speed: 6, frames: 10 });
+  assert.equal(emerging.sourceMotion.state, 'ToHuman');
+  assert.ok(amount(emerging) < 1e-10, 'the sourced ToHuman pose is not ordinary weapon carry');
+  swimmer.grounded = false;
+  const formAir = [];
+  drive(api, emerging, swimmer, { speed: 6, frames: 60, onFrame: () => {
+    formAir.push({ state: emerging.sourceMotion.state,
+      weight: api.posture.sourcePostureWeight(emerging.sourceMotion.retarget),
+      carry: amount(emerging) });
+  } });
+  const actualAir = formAir.filter(f => f.state === 'air');
+  assert.ok(actualAir.length > 0 && actualAir.some(f => f.weight > 0.001),
+    'the ToHuman frame must transition into real air while residual posture weight remains');
+  assert.ok(actualAir.every(f => f.carry < 1e-10),
+    'air after emergence must not create a shooter carry from residual posture weight');
+  swimmer.grounded = true;
+  drive(api, emerging, swimmer, { speed: 6, frames: 1 });
+  assert.equal(emerging.sourceMotion.state, 'land');
+  assert.ok(amount(emerging) < 1e-10, 'landing after an emerging source clip stays free of phantom carry');
+  drive(api, emerging, swimmer, { speed: 6, frames: 75 });
+  assert.ok(amount(emerging) > 0.01, 'ordinary grounded locomotion may reacquire the carry afterward');
+  emerging.dispose();
+});

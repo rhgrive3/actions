@@ -55,7 +55,7 @@ function moveFactor(c) {
   return m * m * (3 - 2 * m);
 }
 function postureState(retarget) {
-  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0 });
+  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false });
 }
 /** Smoothed 0 standing … 1 moving, so a stop or start never snaps the carry or the support hand. */
 function smoothMove(retarget) { return postureState(retarget).move; }
@@ -83,6 +83,15 @@ function advanceWeight(retarget) {
   // The first frame (or a controller clock that went backwards) snaps to the wanted state; a
   // paused (dt = 0) frame holds the weight; otherwise blend at a frame-rate independent rate.
   const move = moveFactor(c);
+  // The ground carry must fade through ordinary air/landing rather than snapping
+  // off on its first frame. An emerging squid has never acquired that ground
+  // carry, even if ToHuman leaves a temporarily nonzero posture blend weight.
+  if (!enabled || !c || c.manual || c.formKid === false ||
+      st.time === null || now === null || now < st.time) st.carryEligible = false;
+  if (enabled && c && !c.manual && c.formKid !== false) {
+    if (CORRECTED_STATES.has(c.state)) st.carryEligible = true;
+    else if (c.state !== 'air' && c.state !== 'land') st.carryEligible = false;
+  }
   if (!enabled) st.weight = 0;
   if (!enabled || st.time === null || now === null || now < st.time) { st.weight = enabled ? wanted : 0; st.move = move; }
   else {
@@ -133,9 +142,13 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
  *  Standing (smoothed stand/move weight) leaves the source two-hand hold unchanged. */
 export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
-  if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
-      !CORRECTED_STATES.has(controller.state)) return;
-  const w = sourcePostureWeight(controller.retarget) * clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
+  if (!c || c.weaponKind !== 'shooter' || !controller.retarget) return;
+  const st = postureState(controller.retarget);
+  // Only genuine grounded idle/move can *start* this correction. Its smoothed
+  // residual follows ordinary air/land; ToHuman/ToSquid and manual samples do
+  // not inherit a stale shooter carry from an earlier life/form.
+  if (!st.carryEligible) return;
+  const w = st.weight * clamp(1 - (controller.shootBlend || 0), 0, 1) * st.move;
   if (w <= 1e-4) return;
   const k = SOURCE_POSTURE.carry;
   _t.set(Math.sin(k.yaw) * Math.cos(k.pitch), Math.sin(k.pitch), Math.cos(k.yaw) * Math.cos(k.pitch));
