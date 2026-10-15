@@ -5,8 +5,8 @@ const {THREE,MAIN_WEAPON_CATALOG,ALTERNATE_WEAPON_KITS}=R;
 const selected=R.registeredWeaponVariantModels(), geos=d=>[d.body,d.ink,...Object.values(d.parts||{}).map(p=>p.src)].filter(Boolean);
 const digest=d=>geos(d).map(g=>{const h=crypto.createHash('sha256');for(const [k,a]of Object.entries(g.attributes)){h.update(k);h.update(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength));}if(g.index)h.update(Buffer.from(g.index.array.buffer,g.index.array.byteOffset,g.index.array.byteLength));return h.digest('hex');});
 const fresh=id=>({kind:R.weaponModelFamily(id),parts:{}}),dispose=d=>geos(d).forEach(g=>g.dispose());
-test('exact fourteen selected rows; all 65 main and 95 alternate families resolve without changing unselected keys',()=>{
- const rows=['Stringer_Normal_02','Charger_Quick_01','Maneuver_Short_02','Stringer_Short_02','Shelter_Normal_01','Slosher_Washtub_01','Shelter_Wide_01','Shelter_Wide_02','Shelter_Focus_01','Stringer_Short_01','Stringer_Normal_01','Stringer_Explosion_01','Roller_Heavy_01','Slosher_Diffusion_01'];
+test('exact twenty-four selected rows; all 65 main and 95 alternate families resolve without changing unselected keys',()=>{
+ const rows=['Stringer_Normal_02','Charger_Quick_01','Maneuver_Short_02','Stringer_Short_02','Shelter_Normal_01','Slosher_Washtub_01','Shelter_Wide_01','Shelter_Wide_02','Shelter_Focus_01','Stringer_Short_01','Stringer_Normal_01','Stringer_Explosion_01','Roller_Heavy_01','Slosher_Diffusion_01','Shooter_Blaze_01','Shooter_QuickMiddle_01','Shooter_Short_01','Shooter_Precision_01','Saber_Heavy_01','Saber_Normal_01','Saber_Normal_02','Saber_Lite_02','Slosher_Launcher_01','Slosher_Bathtub_01'];
  assert.deepEqual([...selected].sort(),rows.sort());assert.equal(MAIN_WEAPON_CATALOG.records.length,65);assert.equal(ALTERNATE_WEAPON_KITS.length,95);assert.equal(R.registeredWeaponModels().length,65);
  const records=new Map(MAIN_WEAPON_CATALOG.records.map(r=>[r.id,r]));let unselected=0;
  for(const row of [...MAIN_WEAPON_CATALOG.records,...ALTERNATE_WEAPON_KITS]){
@@ -15,7 +15,7 @@ test('exact fourteen selected rows; all 65 main and 95 alternate families resolv
   assert.equal(R.weaponNeedsNativeCarry(row.id),['brella','splatana','stringer','brush'].includes(base.family)||!!R.weaponModelSpec(row.id)?.nativeCarry);
   if(selected.includes(row.main))continue;
   if(row.main)unselected++;assert.equal(R.weaponModelKey(row.id),base.id);assert.equal(R.weaponModelSpec(row.id),R.weaponModelSpec(base.id));
- }assert.equal(unselected,81);
+ }assert.equal(unselected,71);
 });
 test('selected official aliases have one canonical key, spec, cached hold, build and native animation',()=>{
  for(const row of ALTERNATE_WEAPON_KITS.filter(r=>selected.includes(r.main))){
