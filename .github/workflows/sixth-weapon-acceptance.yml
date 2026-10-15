@@ -1,0 +1,61 @@
+name: Review sixth limited weapon batch
+on:
+  push:
+    branches: [review/sixth-weapon-acceptance-20261015]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Require frozen plan
+        run: |
+          node --test diagnostic/select-candidate.test.mjs
+          node diagnostic/select-candidate.mjs diagnostic/acceptance-plan.json "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE }}
+          persist-credentials: false
+          path: candidate
+      - name: Bind exact checkout and all candidate payloads
+        run: node diagnostic/check-source-plan.mjs diagnostic/acceptance-plan.json candidate diagnostic/print-plan.json
+      - name: Pinned dependencies and browser
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Portable fail-closed capture controls
+        run: node --test diagnostic/test-plan.test.mjs diagnostic/build-binding.test.mjs diagnostic/sixth-capture-integrity.test.mjs diagnostic/variant-plan.test.mjs diagnostic/sixth-capture-contract.test.mjs diagnostic/native-work-controls.test.mjs diagnostic/capture-c-next.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/capture-checkpoint-order.test.mjs
+      - name: Exact candidate source gates
+        run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --out evidence --mode source
+      - name: Separate existing Settings source gate
+        run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --out evidence --mode settings
+      - name: Separate shared source gates with explicit optional reference skip
+        run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --out evidence --mode shared
+      - name: One shared production emitted build
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          cd candidate
+          node scripts/build-inkwave.mjs inkwave-public ../candidate-site
+          cp ../candidate-site/inkwave-build.json ../evidence/candidate-build.json
+      - name: Exact candidate emitted gates
+        run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence --mode emitted
+      - name: Native daylight matched held-weapon acceptance
+        run: node diagnostic/capture-sixth-integration.mjs --plan diagnostic/print-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sixth-weapon-acceptance
+          path: evidence
+          if-no-files-found: error

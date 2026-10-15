@@ -1,0 +1,9 @@
+Sixth C2 acceptance, base54ec. Candidate PR1482 head7d124b3860e4a07867a31e94b8dd1a80163d0467, tree d137ed03bf8850576cb01ff9703850d089a92e2d.
+26 registered variants are validated, while images and measured submissions cover only Slosher Deco and Foil Flingza against their native bases, both teams.
+20 controlled actual-Actor views: Slosher rest/shot and Flingza rest/horizontal/natural-fall vertical. No additional old-model image run.
+124 model test cases source and emitted; Settings2 separately; shared alternate/bow13 pass plus1 optional raw-reference skip separately. The hosted optional raw-reference case remains an explicit skip; separate fixed-source supplement e037b253 qualifies that reference case locally (alternate6/6, one additional unique case).
+Exact production registry bundling produced232598B SHA c14519077419f805b2812001a07a31ac2a291d41a6ccb2671893bdc70a4cd4c3. This is not a full build or GPU receipt.
+Native day Environment cube256, Neutral tone mapping/.94 exposure/sRGB; no full compositor or stage shadows. Same base camera, local RNG warmup, actual native physics/Actor/Runner and owned cleanup.
+Source/public ctx identity, versioned manifest served-byte hashes, required runtime deliveries, blocked external HTTP/WebSocket, actual PNG nonblank/projection gates, and awaited partial evidence retained.
+12 steady render+readPixels samples per role, construction/first measured sample and geometry bytes recorded. No FPS or whole-game performance claim.
+Actual hosted emitted and GPU qualification remains pending.

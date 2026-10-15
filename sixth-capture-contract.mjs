@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+export const SIXTH_ROWS=[['slosher-01','Slosher_Strong_01','slosher',['rest','shot']],['s3-roller-hunter-01','Roller_Hunter_01','s3-roller-hunter',['rest','horizontal','vertical']]];
+const finite=(a,n,label)=>{assert.ok(Array.isArray(a)&&a.length===n,label);assert.ok(a.every(Number.isFinite),label);};
+export function validateSixthFrames(frames,group,{states=false}={}){
+ assert.equal(group,'C');const expected=[];for(const[kit,row,base,phases]of SIXTH_ROWS)for(const role of ['base','variant'])for(const team of [0,1])for(const state of phases)expected.push([kit,role,team,state].join(':'));
+ assert.equal(frames.length,expected.length);const actual=[];
+ for(const f of frames){const entry=SIXTH_ROWS.find(([kit,row,base])=>f.rowId===row);assert.ok(entry);const[kit,row,base,phases]=entry;assert.ok(phases.includes(f.state));actual.push([kit,f.role,f.team,f.state].join(':'));assert.equal(f.id,f.role==='base'?base:kit);assert.equal(f.baseId,base);assert.equal(f.variantId,f.role==='base'?null:row);assert.equal(f.restored,true);assert.equal(typeof f.grounded,'boolean');assert.ok(Number.isInteger(f.ticks)&&f.ticks>0);assert.ok(Number.isInteger(f.births)&&f.births>=0);assert.ok(Number.isFinite(f.extension));assert.equal(typeof f.attackSeen,'boolean');
+ if(f.state==='rest')assert.equal(f.births,0);else assert.ok(f.births>0,'actual native action outcome');if(f.state==='horizontal'){assert.equal(f.attackSeen,true);assert.equal(f.extension,0);}if(f.state==='vertical'){assert.equal(f.attackSeen,true);assert.ok(f.extension>.5);}
+ assert.ok(f.triangles>0&&Number.isFinite(f.triangles));assert.ok(f.drawCalls>0&&Number.isFinite(f.drawCalls));finite(f.camera.position,3,'camera');finite(f.camera.quaternion,4,'quaternion');assert.ok(Array.isArray(f.pose)&&f.pose.length>0);finite(f.pose,f.pose.length,'pose');assert.equal(f.hands.length,1);for(const h of f.hands){assert.equal(h.near,true);assert.equal(h.bodyVisible,true);assert.equal(h.bodyFarVisible,false);finite(h.muzzle,3,'muzzle');finite(h.pivotMatrix,16,'pivot');}if(!states)assert.ok(typeof f.png==='string'&&f.png.length>0);
+ }assert.deepEqual(actual.sort(),expected.sort());return expected.length;
+}

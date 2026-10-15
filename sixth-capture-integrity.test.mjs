@@ -1,0 +1,26 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+const b=fs.readFileSync(new URL('./capture-sixth-integration.mjs',import.meta.url),'utf8');
+test('browser callback and every serialized helper parse with the current twenty-six-variant API',()=>{
+ const begin=b.indexOf('return await page.evaluate(')+'return await page.evaluate('.length,end=b.indexOf(' },{prefix,ids,shared,bSource,workSource,variantIds:plan.variantIds,baseModelCount:plan.baseModelCount});');assert.ok(end>begin);assert.equal(typeof vm.runInNewContext('('+b.slice(begin,end)+' })'),'function');
+ for(const file of ['capture-c-next.mjs','compare-native-weapon-work.mjs']){const s=fs.readFileSync(new URL('./'+file,import.meta.url),'utf8');assert.equal(typeof vm.runInNewContext('('+s.slice(s.indexOf('export async function')).replace('export ', '')+')'),'function');assert.ok(!/weaponBaseModelId|weaponDefaultAppearance|weaponVariantSpec/.test(s));}
+ assert.ok(b.includes('registeredWeaponVariantModels()'));
+});
+test('single-site entry requires exact identities, all images and lifecycle receipts',()=>{for(const text of ['assert.match(plan.head','assert.equal(execFileSync','validateBuildBinding','validateDelivered','routeWebSocket','validateSixthFrames','assert.equal(images.length,20)','result.work.results.length,8'])assert.ok(b.includes(text),text);});
+import vm from 'node:vm';import path from 'node:path';import crypto from 'node:crypto';
+test('served bytes fail closed for unknown paths, traversal and changed artifacts',()=>{
+ const hash=x=>crypto.createHash('sha256').update(x).digest('hex'),bytes=Buffer.from('export{}'),manifest={build:{revision:'r'},artifacts:{'module.mjs':hash(bytes)}},site='/site',prefix='/_versions/r/';let changed=false;
+ const start=b.indexOf('http.createServer('),end=b.indexOf(';\n await new Promise',start);
+ const handler=vm.runInNewContext(b.slice(start,end),{http:{createServer:f=>f},URL,path,site,prefix,manifest,hash,delivered:{},fs:{readFileSync:()=>changed?Buffer.from('changed'):bytes}});
+ const request=url=>{let status=200,body;handler({url},{setHeader(){},writeHead(v){status=v},end(v){body=v}});return {status,body};};
+ assert.equal(request('/_versions/r/module.mjs').status,200);assert.equal(request('/_versions/r/unknown.mjs').status,404);assert.equal(request('/module.mjs').status,404);assert.equal(request('/_versions/r/../module.mjs').status,404);changed=true;assert.equal(request('/_versions/r/module.mjs').status,409);
+});
+test('every serialized THREE identifier is required and undefined exports fail closed',()=>{
+ const files=['capture-sixth-integration.mjs','capture-c-next.mjs','compare-native-weapon-work.mjs'];
+ const used=[...new Set(files.flatMap(file=>[...fs.readFileSync(new URL('./'+file,import.meta.url),'utf8').matchAll(/THREE\.([A-Za-z0-9_]+)/g)].map(m=>m[1])))].sort();
+ const start=b.indexOf('  function validateThreeExports('),end=b.indexOf('\n  const THREE=',start),validate=vm.runInNewContext('('+b.slice(start,end).trim()+')'),complete=Object.fromEntries(used.map(k=>[k,{}]));
+ assert.deepEqual(Array.from(validate(complete)).sort(),used);for(const name of used)assert.throws(()=>validate({...complete,[name]:undefined}),new RegExp('Missing emitted THREE export: '+name));
+});
+
+test('native hitscan event observation uses the same actual emitted context and required delivery',()=>{const binding=fs.readFileSync(new URL('./build-binding.mjs',import.meta.url),'utf8');assert.ok(b.includes("await import(prefix+'src/core/ctx.js')"));assert.ok(b.includes('nativeCtx.G!==api.G'));assert.ok(b.includes('api.onNativeEvent=on'));assert.ok(binding.includes("'src/core/ctx.js'"));});
+import * as actualHelper from './capture-c-next.mjs';
+test('browser entry imports an actually exported C helper and serializes that same function',()=>{const m=b.match(/import \{(\w+)\} from '\.\/capture-c-next\.mjs'/);assert(m);assert.equal(typeof actualHelper[m[1]],'function');assert.ok(b.includes('bSource='+m[1]+'.toString()'));});

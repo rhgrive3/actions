@@ -1,0 +1,27 @@
+{
+  "files": {
+    ".github/workflows/sixth-weapon-acceptance.yml": "fa8a76ed4417f6aecde055dbc1168506330aa73661ed8db81bd8309fa2011e19",
+    "ACCEPTANCE_SCOPE.txt": "2e616a1c0578b82f45b4dcda14ec49c522848fade5077dd135c67bc742a16f8a",
+    "acceptance-plan.json": "cbc062abf64a3604ba4d4c3f31219182172b27d3d841f2b1ac04659a221a3475",
+    "build-binding.mjs": "d39ac0d873875e60798c736f2b35c4371cd73531c96eae240e79a5069003ab02",
+    "build-binding.test.mjs": "b29e5f360414dbd0d37d8226613cc60b036c917c0da44ea6650f20948d49595d",
+    "capture-c-next.mjs": "d064907bccf47e27ba20d580cbf05a4b869d79523daafc6118e1598be45c85ff",
+    "capture-c-next.test.mjs": "d8ba3955fa1d4db7a8d8b2650888a6f16cc8b874a1f59360ece6def867f651e7",
+    "capture-checkpoint-order.test.mjs": "3db200be5736fbfb0e7c53fd2921eb76b96ae8c892981e8c2d87969e5e3e37c0",
+    "capture-checkpoint.mjs": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+    "capture-checkpoint.test.mjs": "cf6b2cdcb15be8779487ba9944558d4963c7af525c3fdda7f2c76eb9187af95a",
+    "capture-sixth-integration.mjs": "e9875bfe9781102e00a90a88855863aa96f7e75e4e8df75c7a1987e52781de44",
+    "check-source-plan.mjs": "cc1f38ebaa8eef8f508d7ce5dd3052dbe16884fc54acf6b06b30eb6a1a39a25d",
+    "compare-native-weapon-work.mjs": "9f0ce29ce6894b924e7e89ae574b8ea2ff3a989cf0cecd32864cdbff7ac218fa",
+    "native-work-controls.test.mjs": "c7bca5879ef85c04ce23780ae6cac13267d546f06e459ac8291578180041e133",
+    "run-owner-tests.mjs": "5ff02e465754745f691ba89f2a1bc04d9072aaa99da20f848cafafc32c6c3266",
+    "select-candidate.mjs": "8c4909cd550f1b0ea496d68d9b6a7d84599ef023fe218cf60e2e3441332baff5",
+    "select-candidate.test.mjs": "e0c5ef43ede1733c216f345c30871888f366f26a09f10c8de036310250ff6564",
+    "sixth-capture-contract.mjs": "540f11d6bd0b9f1eb67e136777a3212a05c6a184a18a95d34d11c8a9509d9c79",
+    "sixth-capture-contract.test.mjs": "faa9ea05d389e73a4feaf3b4fc1b1181789e7a3a1ce617890db47287bcc2e65f",
+    "sixth-capture-integrity.test.mjs": "51c19109dd16b28c1f7b81ba4b738456b5f5ad2f5fb1372f716607a7f29ee883",
+    "test-plan.test.mjs": "10b9c516bbca0caee98109b0c4878e4d7c65f3a0a5c6e2f1abf3c105981459bc",
+    "variant-plan.mjs": "eae46b53d079972023f7e2c26d2d1f5bd0423e3622dbdbf2bf7771c143fa5ae2",
+    "variant-plan.test.mjs": "1e901c1bdfa0831c7e2e7f1ef6eea99366795385566d98704ebaf6f1edba97f0"
+  }
+}
