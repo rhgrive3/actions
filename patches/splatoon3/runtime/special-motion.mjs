@@ -547,6 +547,7 @@ export function warmSpecialPrograms(THREE,G,renderer,camera,target){
 // Observe the final native special owners. This layer never steps gameplay,
 // changes a token/timer, authors a hit/paint row or dispatches a network event.
 import { inkVacState } from './kit-ink-vac.mjs';
+import { specialPresentationToken } from './special-presentation-owner.mjs';
 import { worldMeshParts, WORLD_MESH_KINDS } from './all-specials.mjs';
 import { TRIZOOKA_CARTRIDGE } from './kit-trizooka.mjs';
 import { FIST_TRAVEL, tripleSlamFistCenters } from './triple-slam-fists.mjs';
@@ -556,8 +557,8 @@ export const SPECIAL_ART_STATUS='procedural S3 reference interpretation; retail 
 function presentationShown(ch){for(let p=ch.root;p;p=p.parent)if(!p.visible)return false;return true;}
 const presentationMap=ch=>ch?.[PRESENTATION_INSTALL]?.states||presentationStates;
 const blockedMap=ch=>ch?.[PRESENTATION_INSTALL]?.blocked||presentationBlocked;
-function mapped(ch){const a=ch.actor;if(!a||blockedMap(ch).get(ch)===a.specialActive||!a.alive||a.superJumpState||ch.dance||ch.s3SpecialPresentationEnabled===false||!ch.kidForm||!presentationShown(ch))return null;
-  const id=a.specialActive?.id;return id==='trizooka'||id==='inkVac'||id==='slam'||id==='storm'&&a.specialActive.phase==='hold'?id:null;}
+function mapped(ch){const a=ch.actor,token=specialPresentationToken(a);if(!a||blockedMap(ch).get(ch)===token||!a.alive||a.superJumpState||ch.dance||ch.s3SpecialPresentationEnabled===false||!ch.kidForm||!presentationShown(ch))return null;
+  const id=token?.id;return id==='trizooka'||id==='inkVac'||id==='slam'||id==='storm'&&token.phase==='hold'?id:null;}
 export function specialPresentationSnapshot(ch){const m=presentationMap(ch).get(ch);return m?{kind:m.kind,handError:m.error,
   heldVisible:!!m.model?.visible,fistsVisible:!!m.fists?.visible,ejects:m.ejects?.children.filter(x=>x.visible).length||0,status:SPECIAL_ART_STATUS}:null;}
 function restore(ch,m){if(m.weapon){m.weapon.pivot.visible=m.weaponVisible;if(m.weapon.left)m.weapon.left.pivot.visible=m.leftVisible;m.weapon=null;}
@@ -712,7 +713,7 @@ export function installSpecialPresentation({Character,Actor,Projectiles,THREE,G,
   cp.getMuzzle=function(out){const m=presentationMap(this).get(this);if(mapped(this)==='trizooka'&&m?.kind==='trizooka'&&m.model){
       m.model.updateWorldMatrix(true,false);return m.model.localToWorld(out.copy(m.model.userData.muzzle));}return muzzle.call(this,out);};
   cp.getAimMuzzle=function(out,pitch){if(mapped(this)==='trizooka'&&presentationMap(this).get(this)?.kind==='trizooka'){this.getMuzzle(out);return true;}return aimMuzzle.call(this,out,pitch);};
-  cp.setWeapon=function(...args){if(this.actor?.specialActive)presentationBlocked.set(this,this.actor.specialActive);retire(this);return setWeapon.apply(this,args);};
+  cp.setWeapon=function(...args){const token=specialPresentationToken(this.actor);if(token)presentationBlocked.set(this,token);retire(this);return setWeapon.apply(this,args);};
   if(Projectiles?.prototype){const pp=Projectiles.prototype,storm=pp.throwStorm,spawn=pp._spawnCloud,release=pp._releaseCloud;
     pp.throwStorm=function(...args){const n=this.bombs.length,result=storm.apply(this,args);for(let i=n;i<this.bombs.length;i++){
         const b=this.bombs[i];if(b.kind!=='storm')continue;const old=b.body,g=createStormDevice(G.teamColors[b.team],THREE);
