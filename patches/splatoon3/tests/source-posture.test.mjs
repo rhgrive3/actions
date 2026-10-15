@@ -459,6 +459,10 @@ test('reacquires shooter carry without a grounded ToHuman weapon snap', async ()
       'effective weapon rotation must not jump at the clip boundary');
     previous = x.carry; previousAngle = x.angle;
   }
-  assert.ok(moving.at(-1).carry > 0.999, 'steady moving source carry reaches original full strength');
+  // The retail/source ToHuman clip length is not a guessed frame constant.
+  // After the recorded handoff, provide a full steady-state interval.
+  drive(api, ch, st, { speed: 6, frames: 90 });
+  assert.ok(api.posture.sourceCarryWeight(ch.sourceMotion.retarget) > 0.999,
+    'steady moving source carry reaches original full strength');
   ch.dispose();
 });
