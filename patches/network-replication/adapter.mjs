@@ -2107,8 +2107,8 @@ function firstSplatStateFor(session,cfg) {
     patch('    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
       '    if (!validNetworkProjectileCosmetics(e)) return null;\n    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
       'validate cosmetic ghost at source allocation boundary');
-    patch('    let n = 0;\n    const B = this.blobs, shp = this.blobShape.array;',
-      '    let n = 0, remoteDrawn = 0;\n    const B = this.blobs, shp = this.blobShape.array;',
+    patch('  _draw() {\n    let n = 0;',
+      '  _draw() {\n    let n = 0, remoteDrawn = 0;',
       'reserve shared ink instance slots for local render');
     patch('      if (n >= MAX_BLOBS - 5) break;\n      if (p.delay > 0) continue;',
       `      if (n >= MAX_BLOBS - 5) break;
@@ -2128,14 +2128,14 @@ function firstSplatStateFor(session,cfg) {
     patch('      n++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
       '      n++; if (p.ghost) remoteDrawn++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
       'track remote cosmetic budget without changing valid shot order');
-    patch('      const ns = p.sats || 0;',
-      '      const ns = Number.isSafeInteger(p.sats) ? Math.max(0, Math.min(SAT_SIZE.length, p.sats)) : 0;',
+    patch('      const ns = look[5] ? p.sats || 0 : 0;',
+      '      const ns = look[5] && Number.isSafeInteger(p.sats) ? Math.max(0, Math.min(SAT_SIZE.length, p.sats)) : 0;',
       'defend against oversized satellite count');
     patch('      for (let i = 0; i < ns && n < MAX_BLOBS; i++) {',
       '      for (let i = 0; i < ns && n < MAX_BLOBS && (!p.ghost || remoteDrawn < MAX_BLOBS - 64); i++) {',
       'reserve local draw slots against remote beads');
-    patch('        n++;\n      }\n    }\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);',
-      '        n++; if (p.ghost) remoteDrawn++;\n      }\n    }\n    n = this.inkFlight.draw(B, shp, n, MAX_BLOBS);',
+    patch('        writeInkLook(inkLook, n, INK_LOOK.satellite, p.seed + i * 0.37);\n        n++;',
+      '        writeInkLook(inkLook, n, INK_LOOK.satellite, p.seed + i * 0.37);\n        n++; if (p.ghost) remoteDrawn++;',
       'track satellite allocations at the render boundary');
 
     // The existing later `charger zero values` adapter already changes || to ??.
