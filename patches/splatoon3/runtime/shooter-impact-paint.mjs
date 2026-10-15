@@ -43,7 +43,10 @@ export function shooterImpactDepthScale(weapon, projectile, normal) {
   const paint = weapon?.impactPaint;
   const angle = rollerImpactAngleDegrees(projectile?.vel, normal);
   if (!paint || angle === null) return null;
-  const straight = (projectile.fidelityPhase ?? 0) === 0;
+  // Source-guided InkFlight has its own 60Hz phase; never silently pin it
+  // to straight-state when only fidelityPhase (generic projectile) is absent.
+  const phase = projectile?.inkProfile ? projectile.inkPhase : projectile?.fidelityPhase;
+  const straight = (phase ?? 0) === 0;
   const max = straight ? paint.depthMax : paint.depthMaxBreakFree;
   const min = straight ? paint.depthMin : paint.depthMinBreakFree;
   return lerp(max, min, clamp01((angle - PROVISIONAL_DEGREE_MAX) / (PROVISIONAL_DEGREE_MIN - PROVISIONAL_DEGREE_MAX)));
