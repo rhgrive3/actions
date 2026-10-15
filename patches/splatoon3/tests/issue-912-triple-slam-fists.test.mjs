@@ -183,6 +183,35 @@ test('#912 composed production Tidal Slam: fists explode 15F after landing, sepa
   }
 });
 
+test('#912 composed main/Super Jump Slam uses source damage endpoints independently of paint width', async () => {
+  const f = await getBoot();
+  const { G, SPECIALS } = f;
+  const prev = G.actors;
+  G.actors = [];
+  const owner = f.make();
+  const near = f.make({ team: 1, pos: [6.4, 0, 0] });
+  const mid = f.make({ team: 1, pos: [8, 0, 0] });
+  const far = f.make({ team: 1, pos: [9.6, 0, 0] });
+  const outside = f.make({ team: 1, pos: [9.61, 0, 0] });
+  const hits = [], originalHit = G.projectiles.applyHit, originalLOS = G.physics.los;
+  G.projectiles.applyHit = (attacker, victim, damage, cause) => hits.push({ attacker, victim, damage, cause });
+  G.physics.los = () => true;
+  try {
+    assert.equal(SPECIALS.slam.damageNearRadius, 6.4);
+    assert.equal(SPECIALS.slam.damageRadius, 9.6);
+    assert.equal(SPECIALS.slam.radius, 5.2, 'paint radius is unchanged; network admission must not change implicitly');
+    owner._slamImpact(SPECIALS.slam);
+    const damage = victim => hits.find(h => h.victim === victim)?.damage;
+    assert.equal(damage(near), 220);
+    assert.ok(Math.abs(damage(mid) - 140) < 1e-8, 'between 6.4 and 9.6 damage interpolates linearly');
+    assert.ok(Math.abs(damage(far) - 60) < 1e-8);
+    assert.equal(damage(outside), undefined);
+    assert.ok(hits.every(h => h.attacker === owner && h.cause === 'slam'));
+  } finally {
+    G.projectiles.applyHit = originalHit; G.physics.los = originalLOS; G.actors = prev;
+  }
+});
+
 test('#912 S3 production bootstrap installs the fist owner after the ordinary special phases', () => {
   const file = fileURLToPath(new URL('../runtime/install.mjs', import.meta.url));
   const code = fs.readFileSync(file, 'utf8');

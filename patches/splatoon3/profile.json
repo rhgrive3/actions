@@ -444,6 +444,8 @@
     "slam": {
       "damageMax": 220,
       "damageMin": 60,
+      "damageNearRadius": 6.4,
+      "damageRadius": 9.6,
       "hang": 0.5
     }
   },
