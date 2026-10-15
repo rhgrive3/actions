@@ -3,7 +3,7 @@ import test from 'node:test';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 
-for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} body and ancillary paint change ownership without turf or special credit`, async () => {
+for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} sourced paint keeps physical ownership bounded without inventing spatter credit`, async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { paint, V } = makePaintWorld(f, { wall: surface === 'wall', occluded: surface === 'occluded-floor' });
   const owner = f.make('shooter'), onWall = surface === 'wall';
@@ -22,10 +22,10 @@ for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} body a
   for (let tick = 0; tick < finishTicks; tick++) paint.advanceSimulation(1 / 60);
   const added = [];
   for (let i = 0; i < paint.grid.length; i++) if (!bodyGrid[i] && paint.grid[i]) added.push(i);
-  assert.ok(added.length > 0, 'real ancillary ownership grows on the excluded surface');
+  assert.equal(added.length, 0, 'no unsourced late satellite ink on excluded surfaces');
   assert.ok(added.every(i => paint._paintOwnershipOrder[i] === order),
     'ancillary grid writes retain their chronological owner');
-  assert.ok(paint.version > version, 'non-scoring paint changes still invalidate cached surface reads');
+  assert.equal(paint.version, version, 'a sourced mask with no new cells never invalidates the cache twice');
   assert.deepEqual(Array.from(paint.counts), [0, 0], 'neither surface contributes to Turf coverage');
   assert.equal(owner.stats.turf, 0, 'excluded ancillary cells cannot award turf points');
   assert.equal(owner.special, 0, 'excluded ancillary cells cannot charge special');
