@@ -111,8 +111,12 @@ async function capture(input,shared){
    const changed=[],created=[],background=scene.background;
    try{
     group.traverse(o=>{if(!o.isMesh)return;const convert=m=>{const mask=new THREE.MeshBasicMaterial({color:o===weapon.body?0xffffff:0x000000,vertexColors:o===weapon.body,side:m.side,depthTest:m.depthTest,depthWrite:m.depthWrite,transparent:m.transparent,opacity:m.opacity,toneMapped:false});created.push(mask);return mask;};changed.push([o,o.material,o.onBeforeRender]);o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);o.onBeforeRender=()=>{};});
-    weapon.body.geometry=geometry;scene.background=new THREE.Color(0);renderer.render(scene,camera);const gl=renderer.getContext(),rgba=new Uint8Array(1920*1080*4);gl.readPixels(0,0,1920,1080,gl.RGBA,gl.UNSIGNED_BYTE,rgba);let visiblePixels=0;for(let i=0;i<rgba.length;i+=4)if(rgba[i]>200&&rgba[i+1]>200&&rgba[i+2]>200)visiblePixels++;if(visiblePixels<32)throw Error('Print target occluded or absent '+key);return {selectedVertices:selected,inFrameVertices:inFrame,ndcBounds:[minX,minY,maxX,maxY],visiblePixels,method:'White print-only vertex mask with black depth-writing weapon occluders; actual body matrixWorld and material side/depth flags'};
+    weapon.body.geometry=geometry;scene.background=new THREE.Color(0);renderer.render(scene,camera);const gl=renderer.getContext(),rgba=new Uint8Array(1920*1080*4);gl.readPixels(0,0,1920,1080,gl.RGBA,gl.UNSIGNED_BYTE,rgba);let visiblePixels=0;for(let i=0;i<rgba.length;i+=4)if(rgba[i]>200&&rgba[i+1]>200&&rgba[i+2]>200)visiblePixels++;if(visiblePixels<32)throw Error('Print target occluded or absent '+key+' visiblePixels='+visiblePixels);return {selectedVertices:selected,inFrameVertices:inFrame,ndcBounds:[minX,minY,maxX,maxY],visiblePixels,method:'White print-only vertex mask with black depth-writing weapon occluders; actual body matrixWorld and material side/depth flags'};
    }finally{weapon.body.geometry=originalGeometry;scene.background=background;for(const [o,m,cb]of changed){o.material=m;o.onBeforeRender=cb;}geometry.dispose();for(const m of created)m.dispose();}
+  }
+  function printDirection(id,team,frame){
+   const angle=(75+frame*.025)*Math.PI/180,limbY=team===0?-.25:.25;
+   return id==='s3-charger-quick-01'?(frame<0?[1,.15,0]:[-Math.cos(angle),.10,Math.sin(angle)]):(frame<0?[0,limbY,-1]:[Math.sin(angle),limbY,-Math.cos(angle)]);
   }
   function cameraFrame(key,group,dir,weapon,modes=['lit','unlit'],drift=0){
    if(weapon.near!==true||weapon.body.visible!==true||weapon.bodyFar.visible!==false)throw Error('A/B requires actual near body '+key);
@@ -144,8 +148,7 @@ async function capture(input,shared){
     ch.root.updateMatrixWorld(true);const snapshots=snapshotHeld(nativeHands(w,false)),group=new THREE.Group(),key=id+'-team'+team+'-'+(frame<0?'charge-close':'release-motion-'+frame);
     poses[key]={near:w.near,bodyVisible:w.body.visible,bodyFarVisible:w.bodyFar.visible,pivot:snapshots[0].before,local:snapshots[0].local.toArray(),muzzle:w.muzzle.getWorldPosition(new THREE.Vector3()).toArray(),charge:ch._wst.charge,sinceRelease:ch._wst.sinceRelease,time:G.time,rng:window.__abRngState()};
     if(shared){for(const p of ['pivot','local','muzzle'])close(poses[key][p],shared.poses[key][p],key+' '+p);for(const p of ['near','bodyVisible','bodyFarVisible','charge','sinceRelease','time','rng'])if(poses[key][p]!==shared.poses[key][p])throw Error('A/B state mismatch '+key+' '+p);}
-    const angle=(75+frame*.025)*Math.PI/180;
-    const direction=id==='s3-charger-quick-01'?(frame<0?[1,.15,0]:[-Math.cos(angle),.10,Math.sin(angle)]):(frame<0?[0,-.25,-1]:[Math.sin(angle),-.25,-Math.cos(angle)]);
+    const direction=printDirection(id,team,frame);
     scene.add(group);try{mountHeld(snapshots,group);cameraFrame(key,group,direction,w,frame<0?['lit','unlit']:['lit'],frame<0?0:frame*.125);}finally{restoreHeld(snapshots,group,scene,ch);}
    }
    ch.dispose();
