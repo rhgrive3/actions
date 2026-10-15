@@ -1,4 +1,5 @@
 import { fidelitySlosherPaintBirth, fidelitySlosherImpactPaint } from '../splatoon3/runtime/weapons-fidelity.mjs';
+import { SOURCE_SHOT_PAINT_KIND } from '../splatoon3/runtime/source-shot-footprint.mjs';
 export const SLOSHER_IMPACT_TAG='inkwave-slosher-impact-v1';
 const safe=n=>Number.isSafeInteger(n)&&n>=0;
 const vec=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite);
@@ -25,7 +26,7 @@ export function slosherImpactMatches(b,e){
  const [origin,point,normal]=m.slice(6);
  if(origin.some((v,i)=>r2(v)!==[b.start.x,b.start.y,b.start.z][i])
    ||Math.abs(Math.hypot(...normal)-1)>1e-6||e[7]!==b.seed
-   ||(e[8]!==0&&e[8]!==undefined)||(e[13]!==-1&&e[13]!==undefined))return false;
+   ||(e[8]!==0&&e[8]!==undefined&&e[8]!==SOURCE_SHOT_PAINT_KIND)||(e[13]!==-1&&e[13]!==undefined))return false;
  if(point.some((v,i)=>v+normal[i]*.14!==e[2+i]))return false;
  // Match the native normalize -> flatten -> near-vertical fallback exactly.
  // Gravity/braking changes slope, but may not invent another horizontal heading.
