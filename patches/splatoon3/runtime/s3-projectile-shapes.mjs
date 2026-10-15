@@ -303,6 +303,7 @@ function createRenderer(THREE, scene) {
   sparks.onBeforeRender = (renderer, sc, camera, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : sparks.userData.count || 0; };
   scene.add(body, slashH, slashV, shell, core, sparks);
   return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize,
+    bodyParams: { R: 0, L: 0, kind: 0, rag: 0 },
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), s: new THREE.Vector3(),
     v: new THREE.Vector3(), v2: new THREE.Vector3(), f: new THREE.Vector3(), x: new THREE.Vector3(), y: new THREE.Vector3(),
     basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
@@ -333,7 +334,7 @@ function drawRadius(p) { return p.vis || p.size || 0.1; }
 // Native rounds keep their drawn radius, catalog Shooters share 0.1.
 function shotRadius(p) { return p.catalog ? 0.1 : p.vis || 0.1; }
 
-export function bodyParams(p, kind, sp) {
+export function bodyParams(p, kind, sp, out = {}) {
   const travel = p.start ? p.start.distanceTo(p.pos) : Infinity;
   const grow = clamp(p.age * 20, 0.15, 1);
   if (kind === 'shot') {
@@ -341,7 +342,8 @@ export function bodyParams(p, kind, sp) {
     const length = Math.max(0, Math.min(travel, sp * shotTailFrames(p) / 60) - R);
     const frames = p.age * 60;
     const rag = clamp(1 - (frames - 1) / S3_SHAPE.shot.raggedFrames, 0, 1);
-    return { R, L: length / Math.max(R, 1e-4), kind: BODY_KIND.shot, rag };
+    out.R = R; out.L = length / Math.max(R, 1e-4); out.kind = BODY_KIND.shot; out.rag = rag;
+    return out;
   }
   const c = p.catalog?.descriptor?.c;
   const collider = finite(c?.InitRadiusForPlayer, finite(p.size, 0.2));
@@ -350,13 +352,16 @@ export function bodyParams(p, kind, sp) {
   let length = Math.min(travel, sp * cfg.frames / 60);
   if (kind === 'arrow' && p.catalog?.stuck) length = cfg.stuckLengthRadii * R;
   // A braked pellet has no streak left: it falls as a rounded drop.
-  if (kind === 'pellet' && length < cfg.minLengthRadii * R)
-    return { R, L: Math.max(0.4, length / Math.max(R, 1e-4)), kind: BODY_KIND.shot, rag: 0 };
+  if (kind === 'pellet' && length < cfg.minLengthRadii * R) {
+    out.R = R; out.L = Math.max(0.4, length / Math.max(R, 1e-4)); out.kind = BODY_KIND.shot; out.rag = 0;
+    return out;
+  }
   const L = Math.max(cfg.minLengthRadii, length / Math.max(R, 1e-4));
   // S3 Tri-Stringer arrows fray into thin torn sheets along their back half
   // (About video 03, 1.78-1.82 s); a stuck arrow is a clean stub.
   const rag = kind === 'arrow' && !p.catalog?.stuck ? 0.55 : 0;
-  return { R, L, kind: BODY_KIND[kind], rag };
+  out.R = R; out.L = L; out.kind = BODY_KIND[kind]; out.rag = rag;
+  return out;
 }
 
 // Blob-mesh entries (glossy ink balls) appended inside the existing draw pass:
@@ -423,7 +428,7 @@ export function drawS3Shapes(system, THREE, G) {
     const color = p.owner.color;
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') {
       if (nb >= MAX_BODY) continue;
-      const b = bodyParams(p, kind, sp);
+      const b = bodyParams(p, kind, sp, R.bodyParams);
       if (!(b.R > 0)) continue;
       q.setFromUnitVectors(Z, f);
       // roll the cross-section with the seed so torn tails differ per round
