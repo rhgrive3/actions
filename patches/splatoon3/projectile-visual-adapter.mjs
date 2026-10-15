@@ -21,9 +21,9 @@ export function adaptProjectileVisuals(rel,code) {
       'render history interpolation after camera/aim');
   }
   if(rel!=='src/game/weapons.js')return code;
-  code="import { s3ShapeKind } from '../../patches/splatoon3/runtime/s3-projectile-shapes.mjs';\nimport { ProjectileVisualRuntime } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\n"+code;
+  code="import { s3ShapeKind } from '../../patches/splatoon3/runtime/s3-projectile-shapes.mjs';\nimport { ProjectileVisualRuntime, nativeVolumeOwns } from '../../patches/splatoon3/runtime/projectile-visuals.mjs';\n"+code;
   code=once(code,'    scene.add(this.blobs);',
-    '    scene.add(this.blobs);\n    this.projectileVisuals = new ProjectileVisualRuntime(this, THREE, {\n      fidelitySlosherDrawRadius,\n      nativeShapeOwns: p => Object.hasOwn(Projectiles.prototype, Symbol.for("inkwave.s3.projectile-shapes.v1")) && !!s3ShapeKind(p),\n      nativeVolumeOwns: p => !!(p?._inkVolumeHorizontal && G.fx?.inkVolumes?.assets?.has("roller")),\n    });',
+    '    scene.add(this.blobs);\n    this.projectileVisuals = new ProjectileVisualRuntime(this, THREE, {\n      fidelitySlosherDrawRadius,\n      nativeShapeOwns: p => Object.hasOwn(Projectiles.prototype, Symbol.for("inkwave.s3.projectile-shapes.v1")) && !!s3ShapeKind(p),\n      nativeVolumeOwns: p => nativeVolumeOwns(p, G.fx?.inkVolumes),\n    });',
     'one additional shared opaque geometry batch');
   code=once(code,'  _recycle(p) {\n    p.owner = null;',
     '  _recycle(p) {\n    this.projectileVisuals.release(p);\n    p.owner = null;',

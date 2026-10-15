@@ -192,6 +192,23 @@ function tailLimits(p) {
   return d;
 }
 
+/** Match the existing production volume-submission owner. A loaded native
+ * VTF pack must take precedence over a second polygon body. If unavailable,
+ * the bounded history renderer remains the visual fallback. This is a
+ * presentation decision only: projectile simulation/paint are untouched. */
+export function nativeVolumeOwns(p, engine) {
+  if (!p?._inkVolumeRecipe || p._qualityDead || p.delay > 0 ||
+      engine?.isInkVolumes !== true || !engine.assets) return false;
+  const assets = engine.assets, recipe = p._inkVolumeRecipe;
+  if (p._inkVolumeAssetName && assets.has(p._inkVolumeAssetName)) return true;
+  if (recipe === 'roller-horizontal' || recipe === 'roller-vertical' || recipe === 'brush')
+    return assets.has('roller');
+  if (recipe === 'shooter') return assets.has('shooter');
+  if (recipe === 'slosher')
+    return (p.wid === 'slosher' || p.wid === 's3-slosher-diffusion') && assets.has('roller');
+  return false;
+}
+
 export class ProjectileVisualRuntime {
   constructor(system, THREE, helpers={}) {
     this.system=system; this.THREE=THREE; this.helpers=helpers; this.capacity=700;
@@ -268,8 +285,7 @@ export class ProjectileVisualRuntime {
   // whenever the installed InkVolumes pack is ready. A second procedural
   // body would duplicate its GPU draws and silently disable the source atlas.
   // If the pack is unavailable, the new bounded geometry remains the fallback.
-  nativeVolumeOwns(p) { return p?._inkVolumeHorizontal === true &&
-    this.helpers.nativeVolumeOwns?.(p) === true; }
+  nativeVolumeOwns(p) { return this.helpers.nativeVolumeOwns?.(p) === true; }
   nativeShapeOwns(p) { return this.helpers.nativeShapeOwns?.(p) === true; }
   handles(p) { return !this.nativeShapeOwns(p) && !this.nativeVolumeOwns(p) &&
     !!p._iwVisualHistory && p._iwVisualKind!=='legacy'; }

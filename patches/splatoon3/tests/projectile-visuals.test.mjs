@@ -14,6 +14,7 @@ import {
   projectileTailFrames,
   projectileVisualKind,
   projectileVisualWidth,
+  nativeVolumeOwns,
 } from '../runtime/projectile-visuals.mjs';
 import {
   PROJECTILE_VISUAL_SOURCE,
@@ -894,10 +895,10 @@ test('source VTF Roller owns its GPU draw when installed, with geometry fallback
   const system = { scene: new THREE.Scene(), list: [], inkFlight: { time: 0 } };
   let packReady = true;
   const runtime = new ProjectileVisualRuntime(system, THREE, {
-    nativeVolumeOwns: p => !!p._inkVolumeHorizontal && packReady,
+    nativeVolumeOwns: p => packReady && nativeVolumeOwns(p, { isInkVolumes:true, assets:new Map([["roller",{}]]) }),
   });
   const p = { type: 'drop', wid: 'roller', fidelityMode: 'horizontal',
-    _inkVolumeHorizontal: true, vis: 0.3, size: 0.3, age: 0, life: 2,
+    _inkVolumeHorizontal: true, _inkVolumeRecipe:'roller-horizontal', vis: 0.3, size: 0.3, age: 0, life: 2,
     delay: 0, seed: 0.25, owner: { color: new THREE.Color('#fda321') },
     pos: new THREE.Vector3(0, 1, 0), prev: new THREE.Vector3(0, 1, 0),
     vel: new THREE.Vector3(0, 0, 12) };
@@ -910,6 +911,11 @@ test('source VTF Roller owns its GPU draw when installed, with geometry fallback
   assert.equal(runtime.ensureBirth(p), false, 'ready native VTF takes ownership');
   assert.equal(runtime.handles(p), false, 'new mesh must not duplicate VTF');
   assert.equal(runtime.stats.vertexCount, 0);
+  assert.equal(runtime.mesh.visible, false);
+
+  p._inkVolumeHorizontal = false; p._inkVolumeRecipe = 'roller-vertical';
+  assert.equal(runtime.ensureBirth(p), false, 'native vertical pack also prevents history allocation');
+  runtime.draw(1);
   assert.equal(runtime.mesh.visible, false);
 
   packReady = false;
@@ -925,4 +931,30 @@ test('source VTF Roller owns its GPU draw when installed, with geometry fallback
   assert.equal(runtime.stats.vertexCount, 0);
   assert.equal(runtime.mesh.visible, false);
   runtime.dispose();
+});
+
+test('native VTF recipe matches the compositor for horizontal and vertical Roller, Shooter and Slosher', () => {
+  const packs = { isInkVolumes: true, assets: new Map([['roller', {}], ['shooter', {}]]) };
+  const owner = (kind, wid='roller') => ({
+    type: kind.includes('roller') ? 'drop' : 'shot', wid, delay: 0,
+    _inkVolumeRecipe: kind, _inkVolumeAssetName: 'projectile:' + wid + ':' + kind,
+  });
+  for (const kind of ['roller-horizontal', 'roller-vertical', 'brush']) {
+    assert.equal(nativeVolumeOwns(owner(kind), packs), true, 'existing source VTF owns ' + kind);
+  }
+  for (const kind of ['shooter', 'slosher']) {
+    assert.equal(nativeVolumeOwns(owner(kind, kind === 'slosher' ? 'slosher' : 'shooter'), packs), true,
+      'existing source VTF owns ' + kind);
+  }
+  assert.equal(nativeVolumeOwns(owner('slosher','s3-slosher-diffusion'), packs), true);
+  assert.equal(nativeVolumeOwns(owner('slosher','s3-slosher-launcher'), packs), false,
+    'unrelated Sloshing Machine does not borrow default Roller sheet');
+  assert.equal(nativeVolumeOwns({ ...owner('roller-vertical'), delay: 0.1 }, packs), false);
+  assert.equal(nativeVolumeOwns({ ...owner('roller-vertical'), _qualityDead: true }, packs), false);
+  assert.equal(nativeVolumeOwns(owner('roller-vertical'), { isInkVolumes: false, assets: packs.assets }), false);
+  assert.equal(nativeVolumeOwns(owner('roller-vertical'), { isInkVolumes: true, assets: new Map() }), false);
+  assert.equal(nativeVolumeOwns({ ...owner('slosher','s3-slosher-launcher'),
+    _inkVolumeAssetName: 'projectile:s3-slosher-launcher:slosher' }, {
+    isInkVolumes: true, assets: new Map([['projectile:s3-slosher-launcher:slosher', {}]]) }), true,
+    'an explicitly registered specific pack owns its own projectile');
 });
