@@ -1,6 +1,9 @@
 // Runs unchanged emitted HUD methods against native DOM/CSS. Controlled component inputs.
 export async function hudProbe(){
  const {G}=await import(new URL('src/core/ctx.js',document.baseURI));
+ const {COLORBLIND_PALETTE}=await import(new URL('src/config.js',document.baseURI));
+ if(G.settings?.colorblind!==true||G.teamHex?.[0]!==COLORBLIND_PALETTE.a||G.teamHex?.[1]!==COLORBLIND_PALETTE.b)throw Error('HUD DOM: native fixed palette not established');
+ const paletteInput={colorblind:G.settings.colorblind,id:COLORBLIND_PALETTE.id,teamHex:[...G.teamHex]};
  const {HUD}=await import(new URL('src/ui/hud.js',document.baseURI));
  const native=G.game.hud,holder=Object.create(HUD.prototype),root=native.el.cloneNode(false),layer=native.ddLayer.cloneNode(false);
  root.className='iw-hud is-live';root.style.zIndex='10000';root.append(layer);document.body.append(root);
@@ -32,6 +35,6 @@ export async function hudProbe(){
   const oldest=holder._dd[0].el;hit(actors[6]);check(!oldest.isConnected&&holder._dd.length===6,'six arc cap eviction');
   for(let i=0;i<20;i++){actors[1].pos.x=Math.sin(i/9)*8;actors[1].alive=i<10;const t=i/40;G.camera={position:{x:i/100,z:1},matrixWorld:{elements:[Math.cos(t),0,-Math.sin(t),0,0,1,0,0,Math.sin(t),0,Math.cos(t),0,0,0,0,1]}};tick(1/60,'motion'+i);}
   holder._clearDamageDirs();check(layer.childElementCount===0,'clear removes actual nodes');snapshot('clear');hit(actors[0]);tick(1/60,'recreate');for(let i=0;i<110;i++)tick(1/60,'expire'+i);check(layer.childElementCount===0&&holder._dd.length===0,'expiry removes actual nodes');
-  return{activeRestart,frames,events,stationaryWrites,totalWrites:writes.length,scope:'Native emitted HUD component DOM/CSS parity; deterministic sampled hit animation endpoint; no full Game damage admission or device/FPS claim'};
- }finally{for(const restore of originals.reverse())restore();holder._clearDamageDirs();root.remove();G.camera=savedCamera;check(G.camera===savedCamera&&!root.isConnected,'fixture restored');}
+  return{paletteInput,activeRestart,frames,events,stationaryWrites,totalWrites:writes.length,scope:'Native emitted HUD component DOM/CSS parity; deterministic sampled hit animation endpoint; no full Game damage admission or device/FPS claim'};
+ }finally{for(const restore of originals.reverse())restore();holder._clearDamageDirs();root.remove();G.camera=savedCamera;check(G.camera===savedCamera&&!root.isConnected,'fixture restored');check(G.settings.colorblind===true&&G.teamHex[0]===paletteInput.teamHex[0]&&G.teamHex[1]===paletteInput.teamHex[1],'native palette remained fixed');}
 }

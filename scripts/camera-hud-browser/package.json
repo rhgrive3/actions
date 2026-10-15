@@ -9,7 +9,8 @@
       "blobs": {
         "patches/local-quality/adapter.mjs": "91729a306626738bab14bb10c413c1351ba3dfae",
         "inkwave-public/src/ui/hud.js": "893490e98c2444876a1d9b76207e820c348c2781",
-        "inkwave-public/src/game/cameraRig.js": "4aa0afe836d5e178002cbc08239727fd3868b9f4"
+        "inkwave-public/src/game/cameraRig.js": "4aa0afe836d5e178002cbc08239727fd3868b9f4",
+        "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8"
       }
     },
     "candidate": {
@@ -19,24 +20,25 @@
         "patches/local-quality/adapter.mjs": "e3b67aa5789bc5efd3a2c90ae9ae7a918e4506ee",
         "inkwave-public/src/ui/hud.js": "893490e98c2444876a1d9b76207e820c348c2781",
         "inkwave-public/src/game/cameraRig.js": "4aa0afe836d5e178002cbc08239727fd3868b9f4",
-        "patches/local-quality/camera-fov-cache-adapter.mjs": "dd5dd88417a7a6231d7f16e00b4486316f0dd751"
+        "patches/local-quality/camera-fov-cache-adapter.mjs": "dd5dd88417a7a6231d7f16e00b4486316f0dd751",
+        "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8"
       }
     }
   },
   "files": {
     "bindings.mjs": {
-      "bytes": 5913,
-      "sha256": "5c3de2d18f1c1c9205f068fa5e945d13997d7ef2a729d9dec12d5429022a2fb2",
+      "bytes": 6035,
+      "sha256": "09fb8afc225027d5b80c42b0479a7d691bc0250bf6ab5a38bc7a46fccd1a001e",
       "publicationPath": "scripts/camera-hud-browser/bindings.mjs"
     },
     "bindings.test.mjs": {
-      "bytes": 6343,
-      "sha256": "652a1db1a64197313fd36d0c6dbfb1db417d8250e00652365f6abe94e2dfeb08",
+      "bytes": 6986,
+      "sha256": "30b7d745a122bffa6e0a17a2f7be16b49e9764bc78e9a81631772b0ab9ca3f15",
       "publicationPath": "scripts/camera-hud-browser/bindings.test.mjs"
     },
     "browser.mjs": {
-      "bytes": 3502,
-      "sha256": "a6b0faf37f68de134099d408478605faabd15ddd341f6f82eea9c34079637f62",
+      "bytes": 3518,
+      "sha256": "fe6f82050a8e1d0993322f335e60e6d4b44ef361c6bcf8b9b049425744996045",
       "publicationPath": "scripts/camera-hud-browser/browser.mjs"
     },
     "camera-probe.mjs": {
@@ -45,8 +47,8 @@
       "publicationPath": "scripts/camera-hud-browser/camera-probe.mjs"
     },
     "hud-probe.mjs": {
-      "bytes": 5929,
-      "sha256": "3c1f96a531b04b5ec938b7890c153a80a8001ccc2307119d63e26331b9da25b1",
+      "bytes": 6453,
+      "sha256": "dde224ddefd7b6c9742810c1823fd5ecaab05c11a4fd69bc14fbe282b8a3a027",
       "publicationPath": "scripts/camera-hud-browser/hud-probe.mjs"
     },
     "run-hosted.mjs": {
@@ -65,9 +67,9 @@
       "sha256": "ff7cab5edd0f672fa4b59a9eb37234649ff9be9cdbbd2efd95e4976d57e7a391"
     }
   },
-  "diagnosticParent": "58dc2551c34415f97a4428ff2eff0fbb2caa0712",
+  "diagnosticParent": "135ad9e22a8509698a4cd516397a6759786ce6fd",
   "failureArtifact": {
-    "id": 11949513629,
-    "sha256": "587eee24c7db3a432a7989b0d6918a28be032ebe78b4f1b1fe53931a55bc36f3"
+    "id": 11950996814,
+    "sha256": "8a572ad7718c5e9e9de97ee158c5447b924a00c5514bba735ee31e89310d6546"
   }
 }
