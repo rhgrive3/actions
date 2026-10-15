@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fixture} from './robustness-fixture.mjs';
+import { slosherImpactMatches } from '../slosher-paint-admission.mjs';
 async function client(id){const f=await fixture();const nm=f.makeNetMatch(f.makeSession(id,'a',[['a','A'],['b','B']]),{id:'slosh-cap'});const actors=['a','b'].map((owner,nid)=>f.makeActor({nid,owner,remote:owner!==id,team:nid,roller:false}));f.G.match=f.bind(nm,actors);f.G.time=10;const V=(...x)=>new f.THREE.Vector3(...x);const face={id:0,paintable:true,turf:true,wall:false,block:0,origin:V(-20,0,-20),u:V(1,0,0),v:V(0,0,1),n:V(0,1,0),su:40,sv:40};const level={faces:[face],blocks:[{aabbMin:V(-20,-.1,-20),aabbMax:V(20,0,20),faces:[0,-1,-1,-1,-1,-1]}],pointInside:()=>false,queryBlocks:()=>[0]};class CPU extends f.PaintSystem{_initGPU(){} _pushQuad(){}}f.G.paint=new CPU(null,level,{atlasSize:1024,maxDensity:8,cell:.25});return{f,nm,actors};}
 
 function receive(c,e){const row=JSON.parse(JSON.stringify(e));row._netSeq=e._netSeq;row._netTick=e._netTick;c.nm._peer('a');c.nm._play('a',row);}
@@ -21,10 +22,14 @@ for(const options of [{},{distance:10},{distance:18},{drop:5},{ordinal:1},{ordin
 test('sourced Slosher terrain ink keeps its accepted source-shot kind and rejects forged source-splash cores',async()=>{
  const h=await pair(),head=h.rows[1];
  assert.equal(head[8],'source-shot','the live Slosher source stamp carries its physical kind over the wire');
+ const b={projectileId:h.p._netId,start:h.p.start,seed:h.p.seed,
+   heading:h.p.vel.clone(),unit:h.p.fidelitySloshUnit,index:h.p.fidelitySloshIndex};
+ assert.equal(slosherImpactMatches(b,head),true,'the original source core matches its numeric birth record');
  for(const e of h.rows)receive(h.receiver,e);
  same(h.sender,h.receiver);
  const forged=JSON.parse(JSON.stringify(head));forged._netSeq=head._netSeq+2;forged._netTick=head._netTick;
  forged[8]='source-splash';
+ assert.equal(slosherImpactMatches(b,forged),false,'a different source kind cannot reuse the Slosher birth');
  const before=Array.from(h.receiver.f.G.paint.grid);
  receive(h.receiver,forged);
  assert.deepEqual(Array.from(h.receiver.f.G.paint.grid),before,'a drop kind cannot impersonate an authenticated head impact');
