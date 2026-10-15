@@ -58,6 +58,11 @@ export function adaptRankedUi(rel, code) {
     'const JA = {\n  ...' + JSON.stringify(RANKED_JA) + ',', 'ranked Japanese dictionary');
   if (rel !== 'src/ui/menus.js') return code;
 
+  code = once(code, "blurb: `Everyone's one squad against ${BOSS_NAME}, a giant crab in a rusted container. Sink it before time runs out!`",
+    "blurb: tr('Everyone is one squad against {boss}. Defeat it before time runs out!', { boss: BOSS_NAME })", 'boss mode description');
+  code = once(code, "sub: `Pick a stage and the time of day · your squad of 8 vs ${BOSS_NAME}`",
+    "sub: tr('Pick a stage and the time of day · your squad of 8 vs {boss}', { boss: BOSS_NAME })", 'boss setup description');
+
   code = once(code, "sub: 'Turf War · Boss Battle'", "sub: 'Turf War · Ranked · Boss Battle'", 'main menu ranked modes');
   code = once(code, ": this._header('TURF WAR', { sub: 'Pick a stage and the time of day · 4 v 4 against bots' })",
     ": this._header(playModeName(st.mode), { sub: 'Pick a stage and the time of day · 4 v 4 against bots' })", 'setup rule name');

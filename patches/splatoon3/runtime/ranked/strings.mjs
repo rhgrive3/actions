@@ -2,6 +2,13 @@
 export const RANKED_JA = Object.freeze({
   'SPLAT ZONES': 'ガチエリア', 'TOWER CONTROL': 'ガチヤグラ',
   'RAINMAKER': 'ガチホコバトル', 'CLAM BLITZ': 'ガチアサリ', 'RANKED': 'ガチルール',
+  'BOSS BATTLE': 'ボスバトル', 'CO-OP': '協力プレイ', 'CLASSIC': '基本ルール',
+  'VS BOTS': 'ボット対戦', 'SQUAD OF 8': '8人で協力', '1 BOSS': 'ボス1体',
+  'SELECT': '決定', 'Mode': 'ルール', 'PUBLIC BETA': '公開テスト版',
+  'Choose a mode · you and the bots': 'ルールを選んで、ボットとバトル',
+  'Two teams of four, one harbour. Ink the most ground before the whistle.': '4対4で塗り合うバトル。時間内にたくさん地面を塗ったチームの勝ち！',
+  'Everyone is one squad against {boss}. Defeat it before time runs out!': '全員で協力して{boss}に挑もう。時間内にボスを倒せば勝利！',
+  'Pick a stage and the time of day · your squad of 8 vs {boss}': 'ステージと時間帯を選ぼう · 8人で{boss}に挑戦',
   'Turf War · Ranked · Boss Battle': 'ナワバリ・ガチルール・ボスバトル',
   'You will leave this battle and head back to the lobby.': 'バトルを終了してロビーに戻ります。',
   'Capture the zones and reduce your count to zero!': 'エリアを確保して、自分のカウントを0にしよう！',

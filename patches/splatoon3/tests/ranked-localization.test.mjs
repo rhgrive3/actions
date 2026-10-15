@@ -19,7 +19,7 @@ for (const lang of ['ja', 'en']) test(`composed game dictionary translates ranke
     }, { context });
   });
   await module.evaluate();
-  for (const source of ['SPLAT ZONES', 'TOWER CONTROL', 'RAINMAKER', 'CLAM BLITZ', 'RANKED', 'CHECKPOINTS', 'TIME · LOWEST COUNT WINS']) {
+  for (const source of ['SPLAT ZONES', 'TOWER CONTROL', 'RAINMAKER', 'CLAM BLITZ', 'BOSS BATTLE', 'RANKED', 'CHECKPOINTS', 'Choose a mode · you and the bots', 'TIME · LOWEST COUNT WINS']) {
     assert.equal(module.namespace.tx(source), lang === 'ja' ? RANKED_JA[source] : source);
   }
   assert.equal(module.namespace.t('PENALTY {n}', { n: 12 }), lang === 'ja' ? 'ペナルティ 12' : 'PENALTY 12');
