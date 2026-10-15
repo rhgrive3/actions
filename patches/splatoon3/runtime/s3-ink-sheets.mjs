@@ -19,9 +19,9 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const SHEET_STYLE = Object.freeze({ crown: 0, arc: 1 });
 // [style, life frames, length/radius, radius/width, arc0, arc1, layers]
 export const FIRE_INK = Object.freeze({
-  shot: Object.freeze({ style: 0, life: 7, length: 0.26, radius: 0.3, layers: 1, specks: 4 }),
-  pellet: Object.freeze({ style: 0, life: 11, length: 0.45, radius: 0.6, layers: 2, specks: 6, drip: true }),
-  arrow: Object.freeze({ style: 1, life: 14, radius: 0.32, width: 0.6, arc0: -2.6, arc1: 3.4, length: 1.5, layers: 3, specks: 12, hang: true }),
+  shot: Object.freeze({ style: 0, life: 7, length: 0.36, radius: 0.46, layers: 1, specks: 5 }),
+  pellet: Object.freeze({ style: 0, life: 11, length: 0.6, radius: 0.95, layers: 2, specks: 8, drip: true }),
+  arrow: Object.freeze({ style: 1, life: 14, radius: 0.62, width: 0.7, arc0: -2.6, arc1: 3.6, length: 1.9, layers: 4, specks: 16, hang: true }),
   'slash-v': Object.freeze({ style: 1, life: 12, radius: 2.2, width: 0.72, arc0: 1.95, arc1: -1.05, layers: 3, specks: 4, pivotY: 0.95 }),
   'slash-h': Object.freeze({ style: 1, life: 10, radius: 1.55, width: 0.55, arc0: 1.75, arc1: -1.75, layers: 2, specks: 3, pivotY: 0.9 }),
 });
@@ -102,6 +102,9 @@ const SHEET_CUT = `
     } else {
       float lip = 0.7 + 0.3 * s3n(vec2(uv.x * 18.0 + seed * 11.0, seed * 3.0));
       if (uv.y > lip) discard;
+      // the wave is several poured ribbons with gaps between them
+      float band = fract(uv.y * 3.0 + 0.35 * s3n(vec2(uv.x * 5.0 + seed * 9.0, seed)));
+      if (band < 0.1 + 0.08 * age) discard;
       // the oldest end of the sweep thins out first; the wave stays whole early
       float tail = smoothstep(0.0, 0.08 + 0.5 * age * age, uv.x);
       if (s3n(vec2(uv.x * 9.0, uv.y * 3.0 + seed)) > tail + 0.3) discard;
