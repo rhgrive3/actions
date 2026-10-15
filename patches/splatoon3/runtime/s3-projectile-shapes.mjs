@@ -27,7 +27,7 @@
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
 import { ALTERNATE_WEAPON_KITS } from './alternate-weapon-kits-data.mjs';
 import { shotTailFrames } from './weapons-fidelity.mjs';
-import { createInkSheets, FIRE_INK, SPIRAL_SPLASH, MACHINE_ROUND } from './s3-ink-sheets.mjs';
+import { createInkSheets, FIRE_INK, SPIRAL_SPLASH } from './s3-ink-sheets.mjs';
 
 const INSTALLED = Symbol.for('inkwave.s3.projectile-shapes.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
@@ -59,6 +59,8 @@ export const S3_SHAPE = Object.freeze({
   // slab follows the screenshot's stronger curve and chord.
   slashH: Object.freeze({ halfSpan: 1.32, bow: 0.2, depth: 0.5, thickness: 0.15 }),
   slashV: Object.freeze({ halfSpan: 1.95, bow: 0.9, depth: 0.8, thickness: 0.22 }),
+  // Machine glob; its spiral splashes are SWEPs ribbons (s3-ink-sheets.mjs).
+  machine: Object.freeze({ radius: 0.2 }),
   explosher: Object.freeze({ radius: 0.24, sparkles: 28 }),
   bubble: Object.freeze({ core: 0.7, trailing: 3 }),
 });
@@ -268,7 +270,7 @@ function sparkleMaterial(THREE) {
   });
 }
 
-const MAX_BODY = 160, MAX_SLASH = 16, MAX_SHELL = 96, MAX_CORE = 32, MAX_SPARK = 160, MAX_MACHINE = 16, MAX_BEAM = 64;
+const MAX_BODY = 160, MAX_SLASH = 16, MAX_SHELL = 96, MAX_CORE = 32, MAX_SPARK = 160;
 
 function createRenderer(THREE, scene) {
   const body = new THREE.InstancedMesh(bodyGeometry(THREE), bodyMaterial(THREE), MAX_BODY);
@@ -288,11 +290,6 @@ function createRenderer(THREE, scene) {
   const slashV = new THREE.InstancedMesh(crescentGeometry(THREE, S3_SHAPE.slashV), slashMat, MAX_SLASH);
   const shell = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 24, 16), bubbleMaterial(THREE), MAX_SHELL);
   const core = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 20, 14), glossy(THREE, 's3-core-1'), MAX_CORE);
-  // Sloshing Machine round as SWEPs draws it: an ink box and a beam to its trail
-  const machineBox = new THREE.InstancedMesh(new THREE.BoxGeometry(2, 2, 2), glossy(THREE, 's3-core-1'), MAX_MACHINE);
-  const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 10, 1, false).rotateX(Math.PI / 2).translate(0, 0, -0.5);
-  const machineBeam = new THREE.InstancedMesh(beamGeo, glossy(THREE, 's3-core-1'), MAX_BEAM);
-  const beamDots = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 8), glossy(THREE, 's3-core-1'), MAX_BEAM * 2);
   const sparkGeo = new THREE.BufferGeometry();
   const sparkPos = new THREE.BufferAttribute(new Float32Array(MAX_SPARK * 3), 3).setUsage(THREE.DynamicDrawUsage);
   const sparkSize = new THREE.BufferAttribute(new Float32Array(MAX_SPARK), 1).setUsage(THREE.DynamicDrawUsage);
@@ -300,7 +297,7 @@ function createRenderer(THREE, scene) {
   sparkGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e5);
   const sparks = new THREE.Points(sparkGeo, sparkleMaterial(THREE));
   const white = new THREE.Color(1, 1, 1);
-  for (const m of [body, slashH, slashV, shell, core, machineBox, machineBeam, beamDots]) {
+  for (const m of [body, slashH, slashV, shell, core]) {
     m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     m.setColorAt(0, white); m.instanceColor.setUsage(THREE.DynamicDrawUsage);
     m.frustumCulled = false; m.count = 0; m.visible = false;
@@ -314,16 +311,16 @@ function createRenderer(THREE, scene) {
   shell.renderOrder = 2;
   sparks.frustumCulled = false; sparks.visible = false; sparks.renderOrder = 3;
   sparks.onBeforeRender = (renderer, sc, camera, geometry) => { geometry.drawRange.count = sc.overrideMaterial ? 0 : sparks.userData.count || 0; };
-  scene.add(body, slashH, slashV, shell, core, machineBox, machineBeam, beamDots, sparks);
+  scene.add(body, slashH, slashV, shell, core, sparks);
   const sheets = createInkSheets(THREE, scene, { nearDither: NEAR_DITHER, rim: RIM });
-  return { body, bodyData, slashH, slashV, shell, core, machineBox, machineBeam, beamDots, sparks, sparkPos, sparkSize, sheets, lastFire: { kind: '', x: 0, y: 0, z: 0, t: -1 },
+  return { body, bodyData, slashH, slashV, shell, core, sparks, sparkPos, sparkSize, sheets, lastFire: { kind: '', x: 0, y: 0, z: 0, t: -1 },
     m: new THREE.Matrix4(), q: new THREE.Quaternion(), q2: new THREE.Quaternion(), s: new THREE.Vector3(),
     v: new THREE.Vector3(), v2: new THREE.Vector3(), f: new THREE.Vector3(), x: new THREE.Vector3(), y: new THREE.Vector3(),
-    basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), Xax: new THREE.Vector3(1, 0, 0), Yax: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
+    basis: new THREE.Matrix4(), Z: new THREE.Vector3(0, 0, 1), UP: new THREE.Vector3(0, 1, 0), c: new THREE.Color(),
     dispose() {
       sheets.dispose();
-      scene.remove(body, slashH, slashV, shell, core, machineBox, machineBeam, beamDots, sparks);
-      for (const o of [body, slashH, slashV, shell, core, machineBox, machineBeam, beamDots, sparks]) { o.geometry.dispose(); o.material.dispose(); }
+      scene.remove(body, slashH, slashV, shell, core, sparks);
+      for (const o of [body, slashH, slashV, shell, core, sparks]) { o.geometry.dispose(); o.material.dispose(); }
     } };
 }
 
@@ -375,7 +372,7 @@ export function bodyParams(p, kind, sp) {
 }
 
 // Blob-mesh entries (glossy ink balls) appended inside the existing draw pass:
-// Explosher globs (the Bloblobber core is a
+// Machine globs, Explosher globs (the Bloblobber core is a
 // true sphere in its own mesh: the native blob always tapers its back half).
 export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capacity, matrix, rotation, scale, dir, axis) {
   const list = system?.list;
@@ -393,14 +390,21 @@ export function appendS3ShapeBlobs(system, B, shp, inkLook, petals, count, capac
   for (const p of list) {
     const kind = p.s3Shape;
     if (count >= capacity) break;
-    if (kind !== 'explosher') continue;
+    if (kind !== 'machine' && kind !== 'explosher') continue;
     if (!p.owner?.color || p.delay > 0) continue;
     const sp = direction(p, dir);
     rotation.setFromUnitVectors(axis, dir);
     const seed = p.seed || 0, ph = seed * 40 + p.age * 18;
     const grow = clamp(p.age * 20, 0.2, 1);
-    const R = S3_SHAPE.explosher.radius * grow;
-    write(p.pos, R, p.owner.color, 1.15 + Math.min(0.3, sp * 0.006), 0.12, ph, [0.32, 3, 1, (seed * 43.98) % 6.2832]);
+    if (kind === 'explosher') {
+      const R = S3_SHAPE.explosher.radius * grow;
+      write(p.pos, R, p.owner.color, 1.15 + Math.min(0.3, sp * 0.006), 0.12, ph, [0.32, 3, 1, (seed * 43.98) % 6.2832]);
+    } else {
+      // Source DrawSizeParam: only the leading unit is visible (unit 1 is 0).
+      if (!(p.vis > 0)) continue;
+      const cfg = S3_SHAPE.machine, R = cfg.radius * grow;
+      write(p.pos, R, p.owner.color, 1.2 + Math.min(0.3, sp * 0.006), 0.05, ph, [0, 1, 1, seed]);
+    }
   }
   return count;
 }
@@ -431,36 +435,6 @@ function fireInk(R, p, kind, f, G, system) {
   if (burst) R.sheets.specks(G?.fx, burst);
 }
 
-// SWEPs ShooterInk Think(): trail point of a round (see MACHINE_ROUND).
-function machineTail(p, out) {
-  const start = p.start || p.pos, tt = p.age - MACHINE_ROUND.trailDelay;
-  if (!(tt > 0)) return out.copy(start);
-  const f = clamp((tt - (p.straight || 0)) / MACHINE_ROUND.trailLag, 0, 0.8);
-  out.copy(p.pos).addScaledVector(p.vel, -MACHINE_ROUND.trailDelay * (1 - f));
-  // never behind the launch point
-  return start.distanceToSquared(p.pos) < out.distanceToSquared(p.pos) ? out.copy(start) : out;
-}
-
-// SWEPs drop: IsDrop starts its trail at once (no muzzle phase), straight 0.
-function dropTail(d, out) {
-  const t = (d.frames || 0) / 60, f = clamp(t / MACHINE_ROUND.trailLag, 0, 0.8);
-  out.copy(d.pos).addScaledVector(d.vel, -MACHINE_ROUND.trailDelay * (1 - f));
-  return out;
-}
-
-// RenderGeneral beam (width DrawRadius) from `head` back along -dir by len.
-function beam(R, n, head, dir, len, color) {
-  R.q.setFromUnitVectors(R.Z, dir);
-  R.m.compose(head, R.q, R.s.set(MACHINE_ROUND.beamWidth / 2, MACHINE_ROUND.beamWidth / 2, Math.max(len, 1e-4)));
-  R.machineBeam.setMatrixAt(n, R.m); R.machineBeam.setColorAt(n, color);
-  R.s.setScalar(MACHINE_ROUND.dot / 2);
-  for (let end = 0; end < 2; end++) {
-    R.m.compose(R.v.copy(head).addScaledVector(dir, -end * len), R.q, R.s);
-    R.beamDots.setMatrixAt(n * 2 + end, R.m); R.beamDots.setColorAt(n * 2 + end, color);
-  }
-  return n + 1;
-}
-
 // SWEPs CreateSpiralEffects: the visible Sloshing Machine round leaves a group
 // of spiral ribbons every span; groups step round by 360 / RoundSplitNum.
 // Timed from the round's own birth, so draw rate never changes the count.
@@ -484,35 +458,16 @@ function spiralInk(R, p, f, G) {
 
 export function drawS3Shapes(system, THREE, G) {
   const R = system._s3Shapes || (system._s3Shapes = createRenderer(THREE, system.scene));
-  const { body, bodyData, slashH, slashV, shell, core, machineBox, machineBeam, beamDots, sparkPos, sparkSize, m, q, q2, s, v, f, x, y, basis, Z, UP } = R;
+  const { body, bodyData, slashH, slashV, shell, core, sparkPos, sparkSize, m, q, q2, s, v, f, x, y, basis, Z, UP } = R;
   const bd = bodyData.array, cam = G?.camera?.position;
-  let nb = 0, nh = 0, nv = 0, ns = 0, nc = 0, nk = 0, nm = 0, nbeam = 0;
+  let nb = 0, nh = 0, nv = 0, ns = 0, nc = 0, nk = 0;
   for (const p of system.list) {
     const kind = p.s3Shape;
     if (!kind || p.delay > 0 || !p.owner?.color) continue;
     const sp = direction(p, f);
     const color = p.owner.color;
     if (FIRE_INK[kind] && p.s3FireSeed !== p.seed) fireInk(R, p, kind, f, G, system);
-    if (kind === 'machine' && p.vis > 0) {
-      spiralInk(R, p, f, G);
-      // Source DrawSizeParam: only the leading unit is visible (unit 1 is 0).
-      if (nm < MAX_MACHINE) {
-        const tail = machineTail(p, R.v2);
-        v.copy(p.pos).sub(tail);
-        const len = v.length();
-        if (len > 1e-4) f.copy(v).multiplyScalar(1 / len);
-        // Angle(pos - trail), then RotateAroundAxis(Up, 45), RotateAroundAxis(Right, 45)
-        x.crossVectors(UP, f); if (x.lengthSq() < 1e-6) x.set(1, 0, 0); x.normalize();
-        y.crossVectors(f, x);
-        basis.makeBasis(x, y, f); q.setFromRotationMatrix(basis);
-        q2.setFromAxisAngle(R.Yax, Math.PI / 4); q.multiply(q2);
-        q2.setFromAxisAngle(R.Xax, Math.PI / 4); q.multiply(q2);
-        m.compose(p.pos, q, s.setScalar(MACHINE_ROUND.half));
-        machineBox.setMatrixAt(nm, m); machineBox.setColorAt(nm, color);
-        nm++;
-        if (nbeam < MAX_BEAM) nbeam = beam(R, nbeam, p.pos, f, len, color);
-      }
-    }
+    if (kind === 'machine' && p.vis > 0) spiralInk(R, p, f, G);
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') {
       if (nb >= MAX_BODY) continue;
       const b = bodyParams(p, kind, sp);
@@ -586,18 +541,6 @@ export function drawS3Shapes(system, THREE, G) {
   }
   bodyData.clearUpdateRanges(); bodyData.addUpdateRange(0, nb * 4); bodyData.needsUpdate = nb > 0;
   upload(body, nb); upload(slashH, nh); upload(slashV, nv); upload(shell, ns); upload(core, nc);
-  // SWEPs drops of the Sloshing Machine are RenderGeneral beams too
-  for (const d of system._s3SplashDrops || []) {
-    if (nbeam >= MAX_BEAM) break;
-    if (d?.sourceActor !== 'WeaponSlosherLauncher' || !d.owner?.color || !d.pos || !d.vel || d.owner.remote) continue;
-    if (cam && cam.distanceToSquared(d.pos) > 900) continue;
-    const tail = dropTail(d, R.v2);
-    v.copy(d.pos).sub(tail);
-    const len = v.length();
-    if (len > 1e-4) f.copy(v).multiplyScalar(1 / len); else f.set(0, -1, 0);
-    nbeam = beam(R, nbeam, d.pos, f, len, d.owner.color);
-  }
-  upload(machineBox, nm); upload(machineBeam, nbeam); upload(beamDots, nbeam * 2);
   // SWEPs MuzzleSplash renders at the muzzle attachment every frame
   for (const b of R.sheets.bursts) if (b.owner?.character?.getMuzzle && b.owner.pos) {
     system._muzzle(b.owner, R.v2);
@@ -610,7 +553,7 @@ export function drawS3Shapes(system, THREE, G) {
     sparkPos.clearUpdateRanges(); sparkPos.addUpdateRange(0, nk * 3); sparkPos.needsUpdate = true;
     sparkSize.clearUpdateRanges(); sparkSize.addUpdateRange(0, nk); sparkSize.needsUpdate = true;
   }
-  return { body: nb, slashH: nh, slashV: nv, shell: ns, core: nc, machine: nm, beams: nbeam, sparkles: nk, sheets: ink.sheets, spirals: ink.spirals };
+  return { body: nb, slashH: nh, slashV: nv, shell: ns, core: nc, sparkles: nk, sheets: ink.sheets, spirals: ink.spirals };
 }
 
 // Classify every live projectile before the native pass (which skips
