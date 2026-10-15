@@ -437,14 +437,15 @@ varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; var
 void main(){
   int style = int(vPar.x + 0.5); float t = vPar.y, seed = vPar.z, spd = vPar.w;
   float u = vUv.x, along = vUv.y * vLen; float a = 0.0; vec3 col = vCol.rgb;
-  if (style == 0) {             // laser: translucent team-colour tube wound with bright spiral bands
-    float helix = pow(0.5 + 0.5 * sin((u * 2.0 - along * 0.32 + uTime * spd * 0.5) * 6.2831853), 3.0);
-    float helix2 = pow(0.5 + 0.5 * sin((u * 2.0 + along * 0.21 - uTime * spd * 0.35 + 0.5) * 6.2831853), 6.0);
-    float crack = sxNoise(vec2(u * 12.0, along * 1.4 - uTime * spd * 2.0 + seed * 30.0));
-    float rim = 1.0 - vFres;
-    a = clamp(0.22 + helix * 0.62 + helix2 * 0.35 + crack * 0.1 - rim * rim * 0.25, 0.0, 1.0);
-    col *= 0.62 + helix * 0.75 + helix2 * 0.6 + pow(vFres, 6.0) * 0.5;
-    a *= smoothstep(0.0, 0.8, along);
+  if (style == 0) {             // laser (S3 77.1s): a thick, opaque team-colour screw — bright ridges and dark grooves
+    // winding along it, lit like ink, the grooves racing outward
+    float ridge = 0.5 + 0.5 * sin((u * 3.0 - along * 0.9 + uTime * spd * 0.6) * 6.2831853);
+    float groove = smoothstep(0.15, 0.0, ridge), crest = smoothstep(0.75, 1.0, ridge);
+    vec3 N = normalize(vNv) * (gl_FrontFacing ? 1.0 : -1.0);
+    vec3 lit = uAdd > 0.5 ? col : sxInk(col, N, normalize(vVv), 0.9);
+    col = lit * (0.55 + 0.6 * ridge) + col * crest * 0.35;
+    col *= 1.0 - 0.45 * groove;
+    a = smoothstep(0.0, 0.6, along) * (uAdd > 0.5 ? 0.6 : 1.0) * smoothstep(0.0, 0.12, vFres);
   } else if (style == 1) {      // ink jet: a solid glossy liquid column, ripples pouring along it, breaking up at the end
     float streak = sxNoise(vec2(u * 9.0 + seed * 7.0, along * 2.2 - uTime * spd));
     float brk = (1.0 - vUv.y) - 0.35 * sxNoise(vec2(u * 5.0 + seed * 3.0, along * 1.3 - uTime * spd * 1.3));

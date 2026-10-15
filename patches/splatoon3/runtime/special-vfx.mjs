@@ -486,7 +486,7 @@ const ROUND_FX = {
   },
   crabTank: {
     when: p => p.s3AllSpecialMode === 'cannon' || p.type !== 'shot',
-    start(r, p) { r.d.ink = this.ribbon(false, { width: 0.32, widthTail: 0.06, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.22, spacing: 0.12 });
+    start(r, p) { r.d.ink = this.ribbon(false, { width: p.s3AllSpecialMode === 'cannon' ? 0.95 : 0.32, widthTail: p.s3AllSpecialMode === 'cannon' ? 0.4 : 0.06, color: r.color, alpha: 1, style: RIBBON.INK, life: p.s3AllSpecialMode === 'cannon' ? 0.4 : 0.22, spacing: 0.12 });
       r.d.smoke = this.ribbon(false, { width: 0.2, widthTail: 0.7, color: [0.85, 0.85, 0.88], alpha: 0.45, style: RIBBON.SMOKE, life: 0.5, spacing: 0.2 }); },
     frame(r, p) { this.pushRibbon(r.d.ink, p.pos, false); this.pushRibbon(r.d.smoke, p.pos, false); },
     impact(r) { this.inkBlast(r.last, r.color, 4.5, { streaks: 16, chunks: 12, mist: 5, native: false }); },
@@ -713,7 +713,8 @@ const KIT_FX = {
     },
   },
   cooler: {
-    start(r, c) { const p = c.pos || c.mesh?.position; if (!p) return; this.flash(this.v[0].copy(p).setY(p.y + 0.6), r.color, 0.9, 0.2); this.stars(p, 8, 0.6, this.hdr(r.color, 1.6, 1.4), { h: 1.2, h0: 0.3 }); },
+    start(r, c) { const p = c.pos || c.mesh?.position; if (!p) return; this.flash(this.v[0].copy(p).setY(p.y + 0.6), r.color, 0.9, 0.2); this.stars(p, 8, 0.6, this.hdr(r.color, 1.6, 1.4), { h: 1.2, h0: 0.3 });
+      this.inkBlast(this.v[1].copy(p), r.color, 3, { streaks: 22, chunks: 14, mist: 3, dome: 0.32 }); },   // S3 (156.1s): the stand lands in a big splash
     frame(r, c, dt) {
       const p = c.pos || c.mesh?.position; if (!p || !this.near(p, 40)) return;
       r.acc = (r.acc || 0) + dt;
@@ -842,9 +843,9 @@ const DIRECTORS = {
         if (!L) {
           L = { actor: a, from, to: end, drawTo: from.clone().lerp(end, 0.2), seen: this.time };
           // S3: a thick team-colour tube wound with brighter spiral bands, a hot core and a soft halo
-          L.outer = this.beam(false, 0, BEAM.LASER, from, end, C.beamRadius * 0.8, C.beamRadius * 1.15, this.hdr(c, 1.25, 0.3), 0.95, { speed: 9 });
-          L.halo = this.beam(true, 0, BEAM.LINE, from, end, C.beamRadius * 1.5, C.beamRadius * 2.1, this.hdr(c, 0.9, 0.1), 0.35, { speed: 0, seed: 0.1 });
-          L.core = this.beam(true, 0, BEAM.LINE, from, end, C.coreRadius, C.coreRadius * 1.3, this.hdr(c, 1.4, 2.2), 1, { speed: 0, seed: 0.1 });
+          L.outer = this.beam(false, 0, BEAM.LASER, from, end, C.beamRadius * 0.85, C.beamRadius * 1.2, c, 1, { speed: 9 });
+          L.halo = this.beam(true, 0, BEAM.LINE, from, end, C.beamRadius * 1.4, C.beamRadius * 1.9, this.hdr(c, 0.8, 0.1), 0.18, { speed: 0, seed: 0.1 });
+          L.core = this.beam(true, 0, BEAM.LINE, from, end, C.coreRadius * 0.7, C.coreRadius, this.hdr(c, 1.2, 0.6), 0.5, { speed: 0, seed: 0.1 });
           this.lasers.set(key, L);
           this.muzzle(from, this.v[0].copy(end).sub(from).normalize(), c, 1.4);
         }
@@ -906,7 +907,7 @@ const DIRECTORS = {
       for (let i = 0; i < 2; i++) {
         const s = i ? 1 : -1;
         const nozzle = this.v[0].set(a.pos.x - f.x * 0.32 + side.x * s * 0.16, a.pos.y + 0.55, a.pos.z - f.z * 0.32 + side.z * s * 0.16);
-        const len = squid ? 0 : clamp(nozzle.y - ground, 0.5, 6.5);
+        const len = squid ? 0 : clamp(nozzle.y - ground, 0.5, 1.5);   // S3: short jets under the pack, not columns to the floor
         const end = this.v[1].copy(nozzle).setY(nozzle.y - len);
         end.x -= f.x * 0.35; end.z -= f.z * 0.35;
         const flick = 0.9 + 0.1 * Math.sin(this.time * 47 + i * 2);
@@ -916,7 +917,8 @@ const DIRECTORS = {
           if (vfxRandom() < 0.6) { const k = vfxRandom(); this.v[2].copy(nozzle).lerp(end, k);
             this.puff(PUFF.CHUNK, this.v[2], rnd(1.2, -1.2), -rnd(9, 5), rnd(1.2, -1.2), 0.25, 0.07 + 0.08 * k, 0.04, c, 1, { grav: 10, drag: 0.5 }); } }
         if (!squid && vfxRandom() < 0.7) this.drop(nozzle, rnd(1, -1), -rnd(14, 8), rnd(1, -1), 0.25, 0.07, c, { drag: 1, grav: 10 });
-        if (!squid && len < 6.4 && vfxRandom() < 0.55) { // splash where the jets hit the floor
+        if (!squid && vfxRandom() < 0.8) this.drop(end, rnd(1, -1), -rnd(10, 6), rnd(1, -1), 0.6, rnd(0.12, 0.06), c, { grav: 14, drag: 0.2, stretch: 0.05 });   // ink raining off the jets
+        if (!squid && nozzle.y - ground < 7 && vfxRandom() < 0.55) { // splash where the ink lands
           this.v[2].copy(end).setY(ground + 0.05);
           const th = rnd(TAU), sp = rnd(5, 2);
           this.puff(PUFF.CHUNK, this.v[2], Math.cos(th) * sp, rnd(4, 1.5), Math.sin(th) * sp, 0.5, 0.12, 0.04, c, 1, { grav: 15, drag: 0.6 });
@@ -1009,6 +1011,8 @@ const DIRECTORS = {
       this.activation(a, t.color, 1);
       const p = this.v[0].copy(a.pos).setY(a.pos.y + 0.9);
       this.chunks(p, 26, 11, t.color, { size: 0.26, upMin: 0.1 });
+      this.streaks(p, 44, 15, t.color, { up: 0.2, spread: 1.4, life: 0.8, size: 0.09 });   // S3 (239.1s): an explosive splatter
+      this.petals(p, 30, 12, t.color, { size: 0.3, upMin: -0.4, upMax: 0.9 });
       this.disc(false, 0.9, DISC.SPLAT, this.v[1].copy(a.pos).setY(a.pos.y + 0.03), this.up, 0.5, 2.4, t.color, 1, { hold: 0.6 });
       this.nativeBurst(p, this.up, this.c.setRGB(...t.color), { count: 26, speed: 8, size: 0.14, spread: 1 });
     },
@@ -1118,6 +1122,7 @@ const DIRECTORS = {
           for (const s of [-1, 1]) {
             const p = this.v[1].set(a.pos.x + dir.x * 0.9 + side.x * s * 0.4, g + 0.25, a.pos.z + dir.z * 0.9 + side.z * s * 0.4);
             this.puff(PUFF.CHUNK, p, side.x * s * rnd(7, 4) + dir.x * 3, rnd(6, 3), side.z * s * rnd(7, 4) + dir.z * 3, 0.55, 0.17, 0.05, c, 1, { grav: 16, drag: 0.6 });
+            this.petals(p, 1, 7, c, { size: 0.34, upMin: 0.45, upMax: 0.95, life: 0.7 });   // S3 (102.8s): tall waves of spray shards
             if (vfxRandom() < 0.4) this.puff(PUFF.MIST, p, side.x * s * 2, 1, side.z * s * 2, 0.6, 0.5, 1.4, this.hdr(c, 0.9), 0.35);
           }
           this.spark(SPARK.STREAK, this.v[1].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(1.5, 0.3), a.pos.z + rnd(1, -1)), -dir.x * 20, 0, -dir.z * 20, 0.12, 0.04, 0.02, [1.2, 1.2, 1.25], 0.35, { stretch: 0.06, drag: 0 });   // faint speed lines
@@ -1217,7 +1222,7 @@ const DIRECTORS = {
     frame(a, t, dt) {
       const c = t.color;
       if (t.phase === 'charge') {   // ink drawn in to the body
-        if (t.d.fil) { const k = clamp01((this.time - t.phaseAt) / (35 / 60)); stepFilaments(this, a, t.d.fil, 1.6 - 0.6 * k, 0.45, 9 + 10 * k, null, dt); }
+        if (t.d.fil) { const k = clamp01((this.time - t.phaseAt) / (35 / 60)); stepFilaments(this, a, t.d.fil, 1.35 - 0.35 * k, 0.5, 8 + 12 * k, a._s3AllSpecialState?.direction || null, dt); }
         if (vfxRandom() < 0.8) { const th = rnd(TAU), d = rnd(3, 2); this.v[0].set(a.pos.x + Math.cos(th) * d, a.pos.y + rnd(1.4, 0.1), a.pos.z + Math.sin(th) * d);
           this.drop(this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 0.35 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.08, c, { drag: 0, grav: 0, stretch: 0.05, shrink: 0.3 }); }
       } else if (t.phase === 'dash' && t.d.dashRibs) {   // S3: corkscrewing ink arcs round the charge
@@ -1307,36 +1312,40 @@ function trizookaMuzzle(self, a, c) {
   self.muzzle(m, f, c, 0.95);
   for (let i = 0; i < 3; i++) self.disc(true, 0.26 + i * 0.06, DISC.SHOCK, self.v[2].copy(m).addScaledVector(f, 0.5 + i * 0.6), f, 0.25, 0.8 + i * 0.3, self.hdr(c, 1.2, 0.8), 0.5);
   self.smoke(m, 6, [0.94, 0.94, 0.96], { size: 0.4, speed: 2.2, life: 0.9, alpha: 0.5, rise: 1 });
-  self.streaks(m, 10, 12, c, { up: 0.1, life: 0.4 });
+  self.streaks(m, 26, 13, c, { up: 0.1, life: 0.5, size: 0.08 });
+  self.petals(m, 14, 10, c, { size: 0.26, upMin: -0.3, upMax: 0.6 });
+  self.spark(SPARK.GLOW, m, 0, 0, 0, 0.14, 0.7, 1.3, [2.4, 2.4, 2.4], 0.8);   // S3 (205.5s): white-hot core of the burst
 }
-// Kraken strands: thin ribbons orbiting the body on tilted circles (a cage); every few strands is a white streak.
+// Kraken strands (S3 89.9/92.9s): thin pink and white strands rolling round the body's front-back axis — each
+// one a ring standing across the direction of travel (side/up plane), set at its own place along the body and
+// slightly tipped, all spinning the same way like a drill. Every few strands is a white streak.
 function krakenFilaments(self, c, n, w, life, whiteEvery) {
-  const out = [];
+  const out = [], dir = vfxRandom() < 0.5 ? -1 : 1;
   for (let i = 0; i < n; i++) {
     const white = whiteEvery > 0 && i % whiteEvery === whiteEvery - 1;
     out.push({ r: white ? self.ribbon(true, { width: w * 0.6, widthTail: 0.01, color: [2.0, 2.0, 2.0], alpha: 0.9, style: RIBBON.GLOW, life, spacing: 0.03 })
                         : self.ribbon(false, { width: w, widthTail: w * 0.25, color: c, alpha: 1, style: RIBBON.INK, life, spacing: 0.03 }),
-      white, tilt: rnd(1.2, -1.2), az: rnd(TAU), ph: rnd(TAU), sp: rnd(1.25, 0.8) * (vfxRandom() < 0.5 ? -1 : 1), rr: rnd(1.1, 0.85) });
+      white, off: rnd(0.9, -0.7), tip: rnd(0.35, -0.35), ph: rnd(TAU), sp: rnd(1.2, 0.85) * dir, rr: rnd(1.1, 0.8) });
   }
   return out;
 }
 function stepFilaments(self, a, fil, R, cy, speed, f, dt) {
   if (!fil?.length) return;
+  // the travel axis: the dash/charge direction, else the facing
+  const fw = f || self.forward(a, self.v[6]), fl = Math.hypot(fw.x, fw.z) || 1, fx = fw.x / fl, fz = fw.z / fl, sx = fz, sz = -fx;
   // Sub-steps through the frame, sweeping both the strand's angle (accumulated, so a changing speed never jumps it)
   // and the body's movement (the dash covers 0.35 m a frame), so a strand draws a smooth arc instead of chords.
-  const cx = a.pos.x + (f ? f.x * 0.35 : 0), cyy = a.pos.y + cy, cz = a.pos.z + (f ? f.z * 0.35 : 0);
+  const cx = a.pos.x, cyy = a.pos.y + cy, cz = a.pos.z;
   const lc = fil.lc || [cx, cyy, cz], move = Math.hypot(cx - lc[0], cyy - lc[1], cz - lc[2]);
-  const n = Math.max(1, Math.min(16, Math.ceil(Math.max(speed * R * 1.4 * dt, move) / 0.05))), now = self.kit.time;
+  const n = Math.max(1, Math.min(16, Math.ceil(Math.max(speed * R * 1.3 * dt, move) / 0.05))), now = self.kit.time;
   for (const q of fil) {
-    const ct = Math.cos(q.tilt), st = Math.sin(q.tilt), ca = Math.cos(q.az), sa = Math.sin(q.az), pool = q.white ? self.kit.glowRibbons : self.kit.ribbons;
-    const th0 = q.ang ?? q.ph, dth = speed * q.sp * dt;
+    const pool = q.white ? self.kit.glowRibbons : self.kit.ribbons, th0 = q.ang ?? q.ph, dth = speed * q.sp * dt;
     q.ang = th0 + dth;
     for (let k = 1; k <= n; k++) {
-      const u = k / n, th = th0 + dth * u;
-      // a circle in the XZ plane, tilted about X then turned about Y
-      const x = Math.cos(th) * R * q.rr, y = Math.sin(th) * R * q.rr * st * 0.6, z = Math.sin(th) * R * q.rr * ct;
-      const X = x * ca + z * sa, Z = -x * sa + z * ca;
-      pool.push(q.r, lc[0] + (cx - lc[0]) * u + X, lc[1] + (cyy - lc[1]) * u + y, lc[2] + (cz - lc[2]) * u + Z, now - dt * (1 - u));
+      const u = k / n, th = th0 + dth * u, rh = R * q.rr, rv = R * q.rr * 0.72;
+      const cs = Math.cos(th) * rh, sn = Math.sin(th) * rv, along = q.off + q.tip * Math.sin(th);   // a ring across the travel axis
+      pool.push(q.r, lc[0] + (cx - lc[0]) * u + sx * cs + fx * along, lc[1] + (cyy - lc[1]) * u + sn, lc[2] + (cz - lc[2]) * u + sz * cs + fz * along,
+        now - dt * (1 - u));
     }
   }
   fil.lc = [cx, cyy, cz];

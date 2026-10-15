@@ -1473,18 +1473,21 @@ export function buildScreenSheet(THREE, color, width, height) {
         return mix(mix(h(i), h(i+vec2(1.0,0.0)), u.x), mix(h(i+vec2(0.0,1.0)), h(i+vec2(1.0,1.0)), u.x), u.y); }
       float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * n(p); p = p * 2.02 + 7.3; a *= 0.5; } return s; }
       void main(){
-        vec2 p = vUv * vec2(3.2, 1.9) + uFlow;
+        vec2 p = vUv * vec2(2.1, 1.25) + uFlow;   // broad swirls
         float t = uTime;
         vec2 q = vec2(fbm(p + vec2(0.0, t * 0.13)), fbm(p + vec2(5.2, 1.3) - t * 0.09));
         vec2 r = vec2(fbm(p + 3.0 * q + vec2(1.7, 9.2) + t * 0.11), fbm(p + 3.0 * q + vec2(8.3, 2.8) - t * 0.07));
         float m = fbm(p + 3.4 * r);
         float bands = sin(m * 19.0 + r.x * 6.0);
-        vec3 dark = uColor * 0.42, light = mix(uColor, vec3(1.0), 0.42);
-        vec3 col = mix(dark, uColor * 1.08, smoothstep(-0.65, 0.15, bands));
-        col = mix(col, light, smoothstep(0.55, 0.86, bands));
-        col = mix(col, vec3(1.0), smoothstep(0.93, 0.995, bands) * 0.85);
+        // S3 footage (118.6-122.5s): deep, saturated swirls of the team colour with warmer and pinker bands
+        // (red with orange and pink for a red team), only a thin light vein; never pastel or white-washed
+        vec3 dark = uColor * 0.38, warm = clamp(uColor + vec3(0.12, 0.32, -0.08), 0.0, 1.4), pink = clamp(uColor + vec3(0.05, -0.02, 0.35), 0.0, 1.4);
+        vec3 col = mix(dark, uColor, smoothstep(-0.7, 0.0, bands));
+        col = mix(col, warm, smoothstep(0.2, 0.55, bands) * (0.5 + 0.5 * sin(m * 7.0 + r.y * 4.0)));
+        col = mix(col, pink, smoothstep(0.55, 0.85, bands) * 0.8);
+        col = mix(col, uColor * 1.3 + 0.12, smoothstep(0.95, 0.995, bands) * 0.6);
         float edge = smoothstep(0.0, 0.035, vUv.x) * smoothstep(0.0, 0.035, 1.0 - vUv.x);
-        float a = uOpacity * (0.86 + 0.14 * smoothstep(0.3, 0.9, bands)) * mix(0.6, 1.0, edge);
+        float a = min(1.0, uOpacity * 1.1) * mix(0.75, 1.0, edge);
         gl_FragColor = vec4(col, a);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

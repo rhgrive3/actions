@@ -448,13 +448,14 @@ function createVacVortex(color,length,near,far){
 }
 function createStormCloud(color){
   const g=root('storm-cloud'),geo=geometry('storm-puff',()=>{const d=new THREE.SphereGeometry(1,20,12);d.userData.specialShared=true;return d;});
-  const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.56),roughness:.81,
-    emissive:color,emissiveIntensity:.10});
+  // S3 footage (37.6-45.5s): a flat, lumpy slab of glossy ink, bright team colour from below
+  const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(color).multiplyScalar(.9),roughness:.32,metalness:.05,
+    emissive:color,emissiveIntensity:.16});
   const puffs=new THREE.InstancedMesh(geo,mat,15);puffs.name='storm-cloud-puffs';puffs.userData.bob=0;puffs.castShadow=true;
   const transform=new THREE.Object3D();
   for(let i=0;i<15;i++){const angle=i*Math.PI*2/9,outer=i>0&&i<10,r=outer?2.1:i>9?.8:0;
     transform.position.set(Math.cos(angle)*r,i>9?.75:0,Math.sin(angle)*r);
-    transform.scale.set(outer?1.45:1.6,i>9?1.0:.80,outer?1.45:1.6);transform.updateMatrix();puffs.setMatrixAt(i,transform.matrix);}
+    transform.scale.set(outer?1.45:1.6,i>9?.5:.42,outer?1.45:1.6);transform.updateMatrix();puffs.setMatrixAt(i,transform.matrix);}
   puffs.instanceMatrix.needsUpdate=true;puffs.computeBoundingSphere();g.add(puffs);return g;
 }
 function createTacticooler(color){
