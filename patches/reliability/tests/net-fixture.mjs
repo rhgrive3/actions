@@ -38,7 +38,7 @@ export async function fixture({ search = '', adapt = true } = {}) {
   const module = source => new vm.SourceTextModule(source, { context });
   const core = module('export const G={}; export const emit=()=>{};');
   const config = module(`
-    export const MAPS=[{id:'map'}],WEAPONS={shooter:{}},WEAPON_ORDER=['shooter'],MATCH={defaultDuration:180},BOT_NAMES=[],TEAM_PALETTES=[];
+    export const MAPS=[{id:'map'}],WEAPONS={shooter:{}},WEAPON_ORDER=['shooter'],MATCH={defaultDuration:180},BOT_NAMES=[],TEAM_PALETTES=[{}];
     export const mapNoBots=()=>false,mapBossOk=()=>true,bossFallbackMap=()=>null,noBotsStartBlock=()=>null;
   `);
   const style = module('export const randomStyle=()=>({});');
@@ -46,7 +46,8 @@ export async function fixture({ search = '', adapt = true } = {}) {
   const load = rel => module(adapt ? adaptNet(rel, readSource(rel)) : readSource(rel));
   const transport = load('src/net/transport.js');
   const session = load('src/net/session.js');
-  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match })[spec]);
+  const admission = module(fs.readFileSync(new URL('../session-admission.mjs', import.meta.url),'utf8'));
+  await session.link(spec => ({ '../core/ctx.js': core, '../config.js': config, '../game/character-style.js': style, './transport.js': transport, './netmatch.js': match, '../../patches/reliability/session-admission.mjs': admission })[spec]);
   await session.evaluate();
   const G = core.namespace.G;
   G.game = { netMatchGo() {} };
@@ -55,7 +56,7 @@ export async function fixture({ search = '', adapt = true } = {}) {
     net, G, sockets, timers, Transport: transport.namespace.Transport,
     constructionFails: () => { failConstructor = true; },
     message(socket, data) { socket.onmessage?.({ data: typeof data === 'string' ? data : JSON.stringify(data) }); },
-    welcome(socket, { id = 'me', host = 'me', members = [{ id: 'me', name: 'Player' }] } = {}) {
+    welcome(socket, { id = 'me', host = id, members = [...new Set([host, id])].map(id=>({id,name:'Player'})) } = {}) {
       socket.onmessage?.({ data: JSON.stringify({ t: 'welcome', id, host, members }) });
     },
     run(id) { const item = timers.get(id); if (!item) throw new Error('Missing fixture timer'); if (!item.interval) timers.delete(id); now += item.ms; item.fn(); },

@@ -1,5 +1,24 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-15：ガチルールの表示・ボット・エリア範囲
+
+今回の基準は main `b1080d9`。915件の open/closed Issue と547件の PR の題名・本文を照合し、乗り込みを扱う既存 PR #1395 と重複する変更は避けた。公開ソースを直接変更せず、本番と同じ build overlay を修正している。
+
+- ヤグラ：`runtime/ranked/bots.mjs` はルール目標の `ride` で射撃を無効化し、通常の戦闘AIが選んだエイム・射撃・チャージ解放を上書きしていた。近距離の知覚済みの敵には通常戦闘を使用し、乗っている間は移動だけを止める。味方が乗っているときは、床が確認できた護衛位置をほかの味方の目標にする。乗り込みの物理やジャンプ値は変更しない。
+- 回復：通常AIの `refill` 状態を目標移動で上書きしていたため、空タンクで移動・射撃を繰り返す問題も修正。ホコ持ちの専用射撃は従来の制御を保持する。
+- 日本語：ガチ4ルールの選択カード、説明、動的なルーム名、HUD、通知、ペナルティ、結果を共通辞書に追加。英語設定も維持する。設定・ポーズ画面に残っていたナワバリ固定表記と、日本語固定だった開始案内も修正。アサリ投げの案内は現在の入力機器に合わせる。
+- エリア：`native-ranked.mjs` の全ステージ一律6×6を廃止。中央付近の往復到達可能な塗り床を探索し、同じ高さの床プローブで障害物部分と空隙を区別する。70%以上が到達可能な塗り床である、最大13×11の固定領域を選ぶ。原典エリアでは中心の高さ±0.75の床だけを塗り集計・確保時の塗りに含め、同じX/Zの箱上・別階を除外する。配置は同じステージ・データで決定的に再現され、試合中は動かない。広いエリアのボットは2秒ごとに25点の塗り先を分担し、床がない点や高すぎる点を避ける。領域自体と塗り目標の移動を分離する。旧ブロックアウトの調整済み配置は変更しない。
+
+比較対象は引き続き Splatoon 3 Ver.11.3.0。[任天堂のルール案内](https://www.nintendo.com/jp/ichikara/av5ja/03_en.html)と[今回以前のルール調査](inkwave-ranked-research-2026-10-11.md)が示す、エリアの塗り確保とヤグラを運ぶ目的に合わせる。ただしボットの護衛距離、エリアの寸法・探索範囲・70%の床条件は INKWAVE 内の調整値であり、本家の配置・AI・フレーム値を復元したものではない。原典ステージは引き続き `version1130Verified: false`。
+
+検証はロジック・本番ソース合成・ブラウザを分けて実施。最終の関連263件は262成功・任意fixture1件スキップ。実際の Actor / Projectiles によるヤグラ試験で、乗り込み、カウント進行、敵への正の被ダメージを確認した。30/60/120Hzの入力所有権・チャージ解放、回復、日本語/英語、狭い床・欠損・異なる高さ・障害物を回帰対象にしている。
+
+拡張13×11領域では、既存の高さ無制限の面積集計により地面を全塗りしても約65.6%で止まる再現も確認。床の高さを指定する修正と塗り先分散後は、実際の射撃のみで確保・カウント進行する追加回帰が成功した。
+
+原典のユノハナ公開OBJ（KiTrix `0611f51b35c9736ee986fb2218461e2585b7875e`、SHA-256 `c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8`）を既存コンバーターと実 NavGraph/RankedWorld に入力したCPU検証では、中心 `[-8.5, 3, 5]`、13×11、塗り集計1856セル・約111.21平方ワールド単位を確認。矩形143の全域を塗れるとの主張ではなく、障害物等を除いた既存の実セル集計である。残る4原典ステージの個別配置と、Switch実機との比較は未検証。
+
+初回合成ビルドの Chromium 151 実ブラウザでは4ルールのオフラインと200ms中継遅延の2クライアント通信、カウント・結果同期を確認し、16枚を保存、page error は0。これはユノハナの本家配置や全ステージの到達性を保証する試験ではない。最終の本番ビルド、梱包検査10件、起動サイズ制限も成功。英語・日本語のモード選択/設定と、修正合成ビルドのポーズ/HUDも実ブラウザで確認した。CPU/ブラウザの詳細ログと原典データは作業環境の `/workspace/scratch/` に保存し、原典のモデルや画像はコミットしない。
+
 公開版 INKWAVE の操作とゲームロジックを調査した。イカロール、イカノボリ、チャージキープ、ローラーの縦振りなどに機能上の差分がある。歩行・泳ぎは加減速と旋回を測定したが、本家の実機データがない項目は一致・不一致を確定していない。
 
 ## 比較対象と証拠
@@ -4316,6 +4335,17 @@ The preceding density/duplicate-work counts retain their historical inputs and d
 
 限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。
 
+## 2026-10-13 Ink Vac の実 Actor.update 描画所有権
+
+- 基準は main `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`（#1252 の 17F 発動・12F 吸引開始・20F 反撃移行を含む）。既存の Splatoon 3 11.3.0 参照プロファイルを変更しない。本家のキューインキ構え・銃口・関節位置との実機比較は未確認。この修正は公開 INKWAVE の更新経路の不整合を直すもので、本家との一致を新たに証明しない。
+- 再現: Player00 の動的ソースモーションを読み込み、通常の `Actor.update` でキューインキを起動・保持する。従来の native wrapper はゲームロジックへの通常スペシャル混入を防ぐため `specialActive` を一時的に隠すが、同じ更新中の source 上半身判定と special presentation まで null を見ていた。main の実更新では sourceUpper=true / Vac presentation=null。更新後に手動で Character だけ再更新すると Vac が現れ、左右の手が約 0.58 / 0.39 m 動く。この手動再更新は修正にも合格判定にも使用しない。
+- 実装: `special-presentation-owner.mjs` の同期・入れ子可能な一時コンテキストを `kit-ink-vac.mjs` の委譲更新だけに置き、`source-weapon-owner.mjs` と `special-motion.mjs` が描画用トークンを読む。実際の `specialActive` / fire・sub 等のマスク、入力受理、移動・発動・吸引・反撃時計は維持。キャンセルで native state が消えた場合と死亡時はコンテキストを即座に無効化し、例外でも finally で元のスコープを復元する。
+- 検証: 新規 `kit-ink-vac-presentation-owner.test.mjs` は実 Actor / Character / Physics / Projectiles と読み込み完了した Player00 を使う。30/60/120 Hz の保持・解除・通常射撃復帰、17F+12F / 20F 境界、1発だけの反撃、通常弾の誤発射防止、入れ子・内外の例外・更新途中の破棄を確認。source と実 minified build で各6件、既存の Ink Vac / issue1090 / special-presentation 63件が合格。元の失敗プローブを変更せず source / minified の両方で合格。これは床・自インクを限定したモジュール実更新検証で、フル対戦や GPU 描画ではない。
+- 影響と限界: 正しい構えは Character のばね・ポーズ乱数の履歴を変える。既存 shooter・既定ギア、移動→Vac 保持/解除→通常射撃の22秒の比較（30/60/120 Hz、計4620更新）では、グローバル乱数を同値にしてポーズ乱数を通常のまま残すと、復帰後の通常弾発生位置は最大 **10.907 mm**、方向は最大 **0.033454度** 異なる。最後の21.93秒以降のバーストにも差があり、有限の収束時間は確認していない。actor の照準方向・照準点・yaw/pitch、入力受理時刻、Vac 状態/時計、spread 幅/bloom、ダメージ値は同じだったが、弾道・命中の完全同一性は主張しない。
+- 命中境界: 同じ60 Hzの復帰最初の通常弾を native InkFlight / Actor.damage で飛ばすと、z=8 m の右側命中境界が約 **1.486 mm** 動いた。共通の敵位置 x=2.80619385298707 m, z=8 m では基準は外れ（100 HP）、修正後は36ダメージ（64 HP）。中心の敵は両方36ダメージ。これは意図的な境界例であり、一般的な命中率や本家との精度比較ではない。
+- 乱数とオンライン: 同一 seed のグローバル Math.random を使う比較では、新たに表示する Three の物体/素材 UUID により通常弾の個別 spread サンプルもずれる。呼び出し元監査では差分は全て `Three.generateUUID`（各4回）で、追加のゲームプレイ乱数呼び出しはない。既存 spread の2回の抽選と分布式/幅は変更していない。グローバル乱数と Character 乱数を両方固定した対照では1890更新の source/minified トレースが一致するが、これは実運用のビット一致を意味しない。オンラインは `NetMatch.recProj` が発生位置・速度・inkMeta を送信し、受信側 `ghostProjectile` はそれを復元する。ghost は描画のみで、塗り・ダメージは所有者から別送される。この経路はグローバル乱数の lockstep 再現を要求しない。RNG 系統の再設計は行っていない。
+- ブラウザゲート `check-inkwave-special-presentation.mjs` の Vac 部分は手動 `_updateSpecial` / `_finishFrame` を廃し、実 `Actor.update` と native Physics で inhale・exhale・解除復帰を通す。モデル非表示差分の pixels、左右グリップ、反撃数を判定し、既存の他スペシャル用手動診断と区別する。変更後のブラウザ実行・画像確認・CI は未実行で、描画成功とは記載しない。
+
 ## 2026-10-13: タブレット・スマホでの Bot 密集時の重さ（試合中のシェーダー同期コンパイルと塗り所有判定の割り当て）
 
 - **本家の根拠**: 参照版は Ver.11.3.0。任天堂の公開資料には、描画プログラムのコンパイル時期や CPU・メモリ予算は記載されていない。本家で Bot（またはプレイヤー）が密集したり、スペシャルを発動したりしたときに表示が止まることは想定しない。Switch 実機の該当挙動は未確認。
@@ -4440,3 +4470,27 @@ The three reviewed PR #1445 workstreams are reconciled with the latest main rath
 - The initial guard incorrectly bounded `tail0` (a dimensionless ratio) to16 and rejected three legitimate zero-width Diffusion Slosher births (6/9 survived). Pinned source-guided rendering computes `1 + length/max(.001,radius)` and can reach4001. The revised guard separately bounds the ratio at4096 and base drawn tail extent at128 (the prior 8×16 extent), with a renderer check using its actual fallback width. This preserves zero/tiny-width native entries without permitting giant visible tails; nonfinite/negative/string/over-budget values still fail. These ceilings are admission/calibration bounds, not Nintendo values.
 
 Negative control reproduces the actual PR CI failure by assertion. Corrected combined native queue/volume/pool suite passes20/20; adjacent source network/snapshot/ranked checks pass42/42. The full quality rerun, emitted checks and final provenance are recorded in the systems audit. WebKit/physical-device limits remain separate.
+
+## 2026-10-13: rematch material ownership handoff candidate (#1367)
+
+A bounded owned-material bridge preserves native program references until replacement menu-character warmup settles, and the existing Character disposed flag now blocks resource creation after a pending optional-motion load. Setup/start callbacks, same-object material reuse, cancellation, failure, context loss, repeated returns and overflow are covered. Source25/25, emitted25/25, adjacent191/191 and packaging/workflow24/24 pass; exact18ce emitted runtime retains two expected failures. Independent native ownership accounting matches18 baseline disposal events and excludes four shared materials.
+
+This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. One generation/512 materials and an8000ms fallback timer do not bound GPU bytes or actual wall-clock retention during a stall. Repeated same-object disposal requests coalesce; material texture/uniform/listener references may remain indirectly retained. See [the scoped evidence and fixture limitations](inkwave-rematch-material-handoff-2026-10-13.md). The final candidate is composed on d6285dca, retaining CPU/input/bomb gates and report history; its25 source/25 emitted,202 adjacent and9 packaging checks pass. Combined-tree review/publication remains centrally coordinated.
+
+## 2026-10-15: batch E/F — online admission, recovery and corrupt view settings
+
+Comparison reference remains the previously pinned Splatoon3 Ver.11.3.0 / Leanny `7280ff9…` dataset and its recorded conditions. This change concerns INKWAVE's browser/storage/relay contracts; Nintendo's private wire format is not available and is not treated as equivalent. Retail movement, paint, sensor and camera numerical parity remains unmeasured.
+
+- Relay JSON null/invalid member frames previously threw or completed a broken handshake. Host lobby snapshots could update map/time before failing on players; invalid peer name/ping could corrupt and rebroadcast the roster. Validate the complete payload before mutation. Native valid eight-player Turf/Boss and all four Ranked modes, gear extensions and optional legacy fields remain admitted. Reproduce through Transport.onmessage with malformed controls or `m|host|{"k":"lobby","l":…}` followed by valid frames. Session/player/lobby state and events stay unchanged on rejection and resume on valid input.
+- JSON pong previously left the outstanding recovery ping set, so the six-second foreground watchdog closed an answered connection. Accept finite, nonfuture current-probe timestamps, clear the acknowledged probe, and ignore older probes. Text-pong behavior remains. These are INKWAVE liveness rules, not retail network timing values.
+- Stored FOV/mouse sensitivity and live settings updates previously admitted strings, objects, NaN/Infinity or out-of-range numbers into native camera/aim calculations. Normalize at actual Game boot and settings entry using existing UI ranges (FOV65–100, mouse0.2–3). Corrupt saves recover defaults; invalid live changes preserve the last valid values. These bounds describe INKWAVE browser controls, not Splatoon3 FOV/stick calibration. TV/handheld profiles, horizontal-FOV migration and numeric60 FPS remain separate and preserved.
+
+Six wire negative cases and three view negative cases fail before their correction. Final emitted Session/Transport7/7 and real Game/view4/4 pass; Chromium's local WebSocket injection and native projection pass with0 page errors. Source regression counts, build identity and the explicit browser/retail limits are recorded in the systems audit and its browser receipt. Public `inkwave-public/` sources remain unchanged; corrections ship through the build composition.
+
+## 2026-10-15: 発射時のインク表現
+
+シューター・シェルター・ストリンガー・ワイパーの発射の瞬間に出るインク膜（銃口の穴あき膜、傘の前の開花、弓に巻きつく帯、振りの軌跡の波）を、本家の公式映像を拡大して比較し追加した。表示のみで、弾・当たり・塗り・通信は変更していない。寸法・寿命は映像の目視による校正値であり、銃口付近以外の本家比較は未確認のまま。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
+
+## 2026-10-15: SplatoonSWEPs を参考にした発射時のインク
+
+所有者の指示で SplatoonSWEPs（Splatoon 2 の Garry's Mod 版）のテクスチャをそのまま取り込み、シューター・シェルターの銃口膜を SWEPs の MuzzleSplash（円錐2枚、α テスト基準 0.1→0.9）にした。ストリンガー・ワイパーの帯は inkring テクスチャで破れる。スクリュースロッシャーは SWEPs の箱と半透明の渦が本家と違うため採らず、所有者提供の本家画像に合わせて、回転するねじれた穴あきのインク膜（丸い塊なし）と細い筋のしずくにした。表示のみで、弾・当たり・塗り・通信は変更していない。数値は SWEPs の値または画像からの目視で、Splatoon 3 の実測ではない。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。

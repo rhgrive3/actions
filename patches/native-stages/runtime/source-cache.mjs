@@ -33,15 +33,61 @@ export async function sourceBytes(id,url,expected,signal,onProgress){
  await verifySourceBytes(bytes,expected);try{await cache?.put(url,new Response(bytes));}catch{}
  return bytes;
 }
-function openDB(){return new Promise((resolve,reject)=>{const request=indexedDB.open(DB,1);request.onupgradeneeded=()=>request.result.createObjectStore('stages',{keyPath:'key'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
-function transact(db,mode,run){return new Promise((resolve,reject)=>{const t=db.transaction('stages',mode),s=t.objectStore('stages');let result;run(s,value=>{result=value;});t.oncomplete=()=>resolve(result);t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error);});}
+// File-list metadata shares the existing two raw-source cache slots. It does
+// not read or retain derived geometry and is independent of IndexedDB schema.
+function checkedSourceTree(tree,pinned){
+ if(!tree||tree.sha!==pinned||tree.truncated!==false||!Array.isArray(tree.tree))throw Error('Unpinned source file list');
+ for(const f of tree.tree)if(f.type==='blob'){
+  if(typeof f.path!=='string'||f.path.startsWith('/')||f.path.split('/').some(p=>p==='..'||p===''))throw Error('Unsafe source path');
+  if(!Number.isSafeInteger(f.size)||f.size<0||!/^[a-f0-9]{40}$/.test(f.sha))throw Error('Invalid source file metadata');
+ }
+ return tree;
+}
+export async function sourceTree(id,pinned,signal){
+ if(!/^[a-f0-9]{40}$/.test(pinned))throw Error('Unpinned source tree');
+ const key='https://inkwave.invalid/native-source-tree/'+pinned,encoder=new TextEncoder();let cache;
+ try{
+  cache=await slots(id);const old=await cache?.match(key);
+  if(old)try{
+   const saved=await old.json();
+   if(saved.schema!==1||saved.tree!==pinned||typeof saved.body!=='string'||!/^[a-f0-9]{64}$/.test(saved.sha256)||!Number.isSafeInteger(saved.bytes)||saved.bytes<0)throw Error('Invalid source metadata envelope');
+   await verifySourceBytes(encoder.encode(saved.body),{sha256:saved.sha256,bytes:saved.bytes});
+   return checkedSourceTree(JSON.parse(saved.body),pinned);
+  }catch{await cache.delete(key);}
+ }catch{}
+ const r=await fetch('https://api.github.com/repos/kirakira-dev/KiTrix/git/trees/'+pinned+'?recursive=1',{signal,credentials:'omit',mode:'cors',referrerPolicy:'no-referrer'});
+ if(!r.ok)throw Error('Source file list unavailable ('+r.status+')');
+ const body=await r.text(),tree=checkedSourceTree(JSON.parse(body),pinned),bytes=encoder.encode(body);
+ try{if(cache){const sha256=hex(await crypto.subtle.digest('SHA-256',bytes));await cache.put(key,new Response(JSON.stringify({schema:1,tree:pinned,bytes:bytes.byteLength,sha256,body})));}}catch{}
+ return tree;
+}
+function openDB(){return new Promise((resolve,reject)=>{
+ const request=indexedDB.open(DB,2);let blocked=false;
+ request.onblocked=()=>{blocked=true;reject(Error('Derived cache upgrade blocked'));};
+ request.onupgradeneeded=()=>{
+  if(blocked){request.transaction.abort();return;}
+  const db=request.result,s=db.objectStoreNames.contains('stages')?request.transaction.objectStore('stages'):db.createObjectStore('stages',{keyPath:'key'});
+  const times=db.createObjectStore('stage-times',{keyPath:'key'}),r=s.openCursor();
+  // Copy only eviction metadata once. Later writes never read stage payloads.
+  r.onsuccess=()=>{const c=r.result;if(c){times.put({key:c.primaryKey,time:c.value.time});c.continue();}};
+ };
+ request.onsuccess=()=>{if(blocked)request.result.close();else resolve(request.result);};
+ request.onerror=()=>reject(request.error);
+});}
+function transact(db,mode,run){return new Promise((resolve,reject)=>{const t=db.transaction(mode==='readwrite'?['stages','stage-times']:'stages',mode),s=t.objectStore('stages');let result;run(s,value=>{result=value;},t);t.oncomplete=()=>resolve(result);t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error);});}
 const arrays=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
 async function seal(data){const hashes=await Promise.all(arrays.map(k=>crypto.subtle.digest('SHA-256',data[k])));hashes.push(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(data.manifest))));return hashes.map(hex).join('/');}
 export async function readDerived(key){
  let db;try{db=await openDB();const row=await transact(db,'readonly',(s,done)=>{const r=s.get(key);r.onsuccess=()=>done(r.result);});if(!row||await seal(row.data)!==row.seal)return null;return row.data;}catch{return null;}finally{db?.close();}
 }
 export async function writeDerived(key,data){
- let db;try{const signature=await seal(data);db=await openDB();await transact(db,'readwrite',s=>{
-  const r=s.getAll();r.onsuccess=()=>{const other=r.result.filter(v=>v.key!==key).sort((a,b)=>b.time-a.time);for(const row of other.slice(1))s.delete(row.key);s.put({key,time:Date.now(),seal:signature,data});};
+ let db;try{const signature=await seal(data);db=await openDB();await transact(db,'readwrite',(s,_done,t)=>{
+  const times=t.objectStore('stage-times'),r=times.getAll(),keys=s.getAllKeys();let rows,stageKeys;
+  const update=()=>{
+   if(!rows||!stageKeys)return;
+   if(rows.length!==stageKeys.length||rows.some((row,i)=>indexedDB.cmp(row.key,stageKeys[i])!==0)){t.abort();return;}
+   const other=rows.filter(v=>v.key!==key).sort((a,b)=>b.time-a.time);for(const row of other.slice(1)){s.delete(row.key);times.delete(row.key);}const time=Date.now();s.put({key,time,seal:signature,data});times.put({key,time});
+  };
+  r.onsuccess=()=>{rows=r.result;update();};keys.onsuccess=()=>{stageKeys=keys.result;update();};
  });}catch{}finally{db?.close();}
 }

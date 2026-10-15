@@ -8,6 +8,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const BUILT = process.env.INKWAVE_CONTROLS_SITE;
@@ -15,7 +16,7 @@ const MAP_GYRO_BASELINE = process.env.INKWAVE_MAP_GYRO_BASELINE === '1';
 const NEGATIVE = process.env.INKWAVE_CONTROLS_BASELINE === '1';
 const NAVIGATION_BASELINE = process.env.INKWAVE_NAVIGATION_BASELINE === '1';
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ diorama = false, match = false, character = false, network = false, fxHooks = false, fidelity = false, session = false, ranked = false, clock = performance } = {}) {
+export async function fixture({ diorama = false, match = false, character = false, network = false, fxHooks = false, fidelity = false, session = false, ranked = false, production = false, clock = performance } = {}) {
   // The negative control omits only the adapter under test from the real order.
   let reliability = adaptReliability;
   if (NEGATIVE || NAVIGATION_BASELINE || MAP_GYRO_BASELINE) {
@@ -52,7 +53,8 @@ export async function fixture({ diorama = false, match = false, character = fals
     const relative = path.relative(UPSTREAM, file);
     const raw = fs.readFileSync(file, 'utf8');
     let source = !BUILT && file.startsWith(UPSTREAM + path.sep) ? adaptQualitySource(relative, reliability(relative, adaptTouchLayout(relative, adaptSource(relative, raw)))) : raw;
-    if (network && !BUILT && file.startsWith(UPSTREAM + path.sep)) source = adaptNetworkSource(relative, source);
+    if (production && !BUILT && file.startsWith(UPSTREAM + path.sep)) source = adaptBuildSource(relative,raw);
+    if (!production && network && !BUILT && file.startsWith(UPSTREAM + path.sep)) source = adaptNetworkSource(relative, source);
     const mod = new vm.SourceTextModule(source, { context, identifier: file }); modules.set(file, mod); return mod;
   }
   const root = new vm.SourceTextModule(`
@@ -69,7 +71,7 @@ export async function fixture({ diorama = false, match = false, character = fals
     ${match ? "export * from './inkwave-public/src/game/match.js';" : ''}
     export * from './inkwave-public/src/core/input.js';
     export * from './inkwave-public/src/net/netmatch.js';
-    ${session ? "export * from './inkwave-public/src/net/session.js';" : ''}
+    ${session ? "export * from './inkwave-public/src/net/session.js'; export {Transport} from './inkwave-public/src/net/transport.js'; export {getPlatformLifecycle} from './patches/local-quality/platform-lifecycle.mjs';" : ''}
     ${ranked ? "export {installRanked, buildFrame} from './patches/splatoon3/runtime/ranked/install.mjs'; export {RankedEngine} from './patches/splatoon3/runtime/ranked/engine.mjs';" : ''}
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';

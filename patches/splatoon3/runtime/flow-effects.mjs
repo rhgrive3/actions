@@ -27,7 +27,8 @@ export function refreshFlowEffects(actor, api, tuning, abilityPoints, gearCurve)
     for (const id of ['runSpeed', 'swimSpeed', 'inkResistance']) basePoints[id] = Math.min(57, (basePoints[id] || 0) + 30);
   const ap = flowAbilityPoints(basePoints, active, tuning.flow.abilityPoints);
   const extra = tuning.gearExtra, base = api.WEAPONS[actor.weaponId];
-  for (const id of FLOW_ABILITIES) m[id] = gearCurve(ap[id] || 0, ...tuning.gear[id]);
+  // Weight-specific run/swim curves below own these two final values.
+  for (const id of FLOW_ABILITIES) if (id !== 'runSpeed' && id !== 'swimSpeed') m[id] = gearCurve(ap[id] || 0, ...tuning.gear[id]);
   m.runSpeed = gearCurve(ap.runSpeed || 0, ...weightSpeedCurve(actor.weaponId, 'run')) * 60 / tuning.player.runSpeed;
   m.swimSpeed = gearCurve(ap.swimSpeed || 0, ...weightSpeedCurve(actor.weaponId, 'swim')) * 60 / tuning.player.swimSpeed;
   m.enemyMoveSpeed = m.inkResistance * 60;

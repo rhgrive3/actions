@@ -3,7 +3,7 @@ import test from 'node:test';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 
-for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} body and ancillary paint change ownership without turf or special credit`, async () => {
+for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} sourced paint keeps physical ownership bounded without inventing spatter credit`, async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { paint, V } = makePaintWorld(f, { wall: surface === 'wall', occluded: surface === 'occluded-floor' });
   const owner = f.make('shooter'), onWall = surface === 'wall';
@@ -22,10 +22,10 @@ for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} body a
   for (let tick = 0; tick < finishTicks; tick++) paint.advanceSimulation(1 / 60);
   const added = [];
   for (let i = 0; i < paint.grid.length; i++) if (!bodyGrid[i] && paint.grid[i]) added.push(i);
-  assert.ok(added.length > 0, 'real ancillary ownership grows on the excluded surface');
+  assert.equal(added.length, 0, 'no unsourced late satellite ink on excluded surfaces');
   assert.ok(added.every(i => paint._paintOwnershipOrder[i] === order),
     'ancillary grid writes retain their chronological owner');
-  assert.ok(paint.version > version, 'non-scoring paint changes still invalidate cached surface reads');
+  assert.equal(paint.version, version, 'a sourced mask with no new cells never invalidates the cache twice');
   assert.deepEqual(Array.from(paint.counts), [0, 0], 'neither surface contributes to Turf coverage');
   assert.equal(owner.stats.turf, 0, 'excluded ancillary cells cannot award turf points');
   assert.equal(owner.special, 0, 'excluded ancillary cells cannot charge special');
@@ -35,28 +35,39 @@ for (const surface of ['wall', 'occluded-floor']) test(`native ${surface} body a
   assert.equal(paint.version, finishedVersion, 'finished growth does not invent another mutation');
 });
 
-test('real native Slosher flight awards positive late floor cells at finer supported paint-grid resolution', async () => {
+test('real native Slosher flight credits its source body once at finer supported paint-grid resolution', async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { G } = f, { paint, face } = makePaintWorld(f, { cell: 0.125 }), owner = f.make('slosher');
   G.settings = {}; f.setRandom(() => 0.37);
   owner.aimDir.set(0, 0, 1); owner.aimPoint.set(0, 1.05, 10);
   const emissions = [], nativeSplat = paint.splat;
   paint.splat = function (center, radius, team, opts = {}) {
-    emissions.push(opts.claimOwner);
+    emissions.push({ owner: opts.claimOwner, kind: opts.kind });
     return nativeSplat.call(this, center, radius, team, opts);
   };
   G.projectiles.fireSlosh(owner, owner.weapon);
-  let lateCredit = 0, lateCells = 0;
+  let lateCredit = 0, lateCells = 0, physicalLateCredit = 0, physicalLateCells = 0;
   // The real projectile and paint clocks interleave exactly as production does.
   for (let tick = 0; tick < 152; tick++) {
+    const bodyBefore = owner.stats.turf, bodyCellsBefore = paint.counts[owner.team];
     G.time += 1 / 60; G.projectiles.update(1 / 60);
+    assert.equal(owner.stats.turf - bodyBefore, (paint.counts[owner.team] - bodyCellsBefore) * face.cu * face.cv,
+      'each native projectile emission credits exactly its new source-body cells');
+    physicalLateCredit += owner.stats.turf - bodyBefore;
+    physicalLateCells += paint.counts[owner.team] - bodyCellsBefore;
     const before = owner.stats.turf, cellsBefore = paint.counts[owner.team];
     paint.advanceSimulation(1 / 60);
     const credit = owner.stats.turf - before, cells = paint.counts[owner.team] - cellsBefore;
     assert.equal(credit, cells * face.cu * face.cv, 'each temporal phase credits only its newly claimed floor cells');
     lateCredit += credit; lateCells += cells;
   }
-  assert.ok(emissions.length > 1 && emissions.every(a => a === owner), 'real release and landing paths retain the same actor');
-  assert.ok(lateCells > 0 && lateCredit > 0, 'finer sampling exercises genuine positive native Slosher ancillary credit');
+  assert.ok(emissions.length > 1 && emissions.every(e => e.owner === owner), 'real release and landing paths retain the same actor');
+  assert.ok(emissions.every(e => e.kind === 'source-shot' || e.kind === 'source-splash'));
+  assert.ok(owner.stats.turf > 0 && paint.counts[owner.team] > 0, 'the full real volley claims positive floor ownership');
+  assert.equal(owner.stats.turf, paint.counts[owner.team] * face.cu * face.cv);
+  assert.ok(physicalLateCredit > 0 && physicalLateCells > 0, 'real delayed projectile landings add source-owned floor credit');
+  assert.equal(physicalLateCredit, physicalLateCells * face.cu * face.cv);
+  assert.equal(lateCells, 0, 'source masks cannot add procedural late satellite cells, even at finer resolution');
+  assert.equal(lateCredit, 0, 'no second credit after the full source body was claimed');
   assert.equal(owner.special, owner.stats.turf);
 });

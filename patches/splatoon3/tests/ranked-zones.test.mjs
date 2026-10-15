@@ -35,6 +35,19 @@ class FakeEngine {
 const stage = count => ({ id: 'test', zones: Array.from({ length: count }, (_, i) => ({ center: [i, 0, 0], size: [2, 2] })) });
 const frame = (...ratios) => ({ zoneCoverage: ratios });
 
+test('large-zone paint goals spread by slot and simulation time and skip unsupported floors', () => {
+  const engine = new FakeEngine(), large = { zones: [{ center: [0, 0, 0], size: [13, 11] }] };
+  const rule = new ZonesRule(engine, large), live = { floorAt: () => 0 };
+  const first = rule.botGoal({ team: 0, slot: 0, pos: [0, 0, 0] }, live);
+  const second = rule.botGoal({ team: 0, slot: 1, pos: [0, 0, 0] }, live);
+  assert.notDeepEqual(first.pos, second.pos);
+  engine.elapsed = 3;
+  assert.notDeepEqual(rule.botGoal({ team: 0, slot: 0, pos: [0, 0, 0] }, live).pos, first.pos);
+  const safe = rule.botGoal({ team: 0, slot: 0, pos: [0, 0, 0] }, { floorAt: (x, z) => x === 0 && z === 0 ? 0 : null });
+  assert.deepEqual(safe.pos, [0, 0, 0]);
+  assert.deepEqual(large.zones[0].center, [0, 0, 0], 'the zone itself stays fixed');
+});
+
 test('one zone captures at 70%, scores continuously, and awards the documented losing-team special rate', () => {
   const engine = new FakeEngine();
   const rule = new ZonesRule(engine, stage(1));

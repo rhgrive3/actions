@@ -21,12 +21,15 @@ async function paint(charge,{ground=false,ghost=false,dt=1/60}={}) {
  if(ghost)f.ps.ghostFire(f.a,{weapon:'charger',charge,muzzle:new V(0,1.05,.3),dir:f.a.aimDir.clone()});
  else f.ps.fireCharger(f.a,f.a.weapon,charge);
  // Production now owns a finite flight; launch itself cannot paint or hit.
- assert.equal(paint.length,ghost?0:1,'only the dedicated feet stamp exists at launch');if(!ghost){assert.equal(paint[0].opts.kind,'trail');near(paint[0].r,f.a.weapon.feetPaintRadius);}assert.equal(impacts.length,0);
+ assert.equal(paint.length,ghost?0:1,'only the dedicated feet stamp exists at launch');if(!ghost){assert.equal(paint[0].opts.kind,'source-splash','sourced Charger feet stamp keeps its own source paint kind');near(paint[0].r,f.a.weapon.feetPaintRadius);}assert.equal(impacts.length,0);
  assert.equal(f.ps._fidelityChargerFlights.length,1);
  let frames=0;
  while(f.ps._fidelityChargerFlights.length && frames++<120)f.ps.update(dt);
  assert.equal(f.ps._fidelityChargerFlights.length,0,'finite flight reaches its obstacle');
- const feet=paint.filter(p=>p.opts?.kind==='trail');const flightPaint=paint.filter(p=>p.opts?.kind!=='trail');f.ps.clear();return {...f,paint:flightPaint,feet,impacts,frames};
+ // Feet and later flight splashes intentionally share source-splash; distinguish
+ // their ownership by the launch event index, not the obsolete legacy kind.
+ const feet=ghost?[]:paint.slice(0,1),flightPaint=paint.slice(ghost?0:1);
+ f.ps.clear();return {...f,paint:flightPaint,feet,impacts,frames};
 }
 // #840: the FullCharge paint step applies only at the authoritative full state
 // (charge 1, ding-aligned). Near-full partials interpolate toward the pinned
