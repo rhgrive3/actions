@@ -33,7 +33,7 @@ test('Shooter main body selects source width and straight/break-free depth from 
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
   const { V } = makePaintWorld(f);
   const w = f.WEAPONS.shooter;
-  const start = V(0,1,0), floor = V(0,0,1.1);
+  const start = V(0,0,0), floor = V(0,0,1.1);
   const shot = { start, vel: V(0,-1,0), inkProfile: {}, inkPhase: 0,
     fidelityPhase: 0 };
   near(shooterImpactRadius(w, shot, floor), 1.93);
