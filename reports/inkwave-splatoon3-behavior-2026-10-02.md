@@ -4626,3 +4626,20 @@ Six wire negative cases and three view negative cases fail before their correcti
 ## 2026-10-15: SplatoonSWEPs を参考にした発射時のインク
 
 所有者の指示で SplatoonSWEPs（Splatoon 2 の Garry's Mod 版）のテクスチャをそのまま取り込み、シューター・シェルターの銃口膜を SWEPs の MuzzleSplash（円錐2枚、α テスト基準 0.1→0.9）にした。ストリンガー・ワイパーの帯は inkring テクスチャで破れる。スクリュースロッシャーは SWEPs の箱と半透明の渦が本家と違うため採らず、所有者提供の本家画像に合わせて、回転するねじれた穴あきのインク膜（丸い塊なし）と細い筋のしずくにした。表示のみで、弾・当たり・塗り・通信は変更していない。数値は SWEPs の値または画像からの目視で、Splatoon 3 の実測ではない。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
+
+## 2026-10-16: native collision query lifetime optimization
+
+- Reference/conditions: retain the documented Splatoon 3 11.3.0 baseline; all
+  weapon/gear settings unchanged. No new retail numeric values are inferred.
+- INKWAVE implementation: `patches/native-stages/runtime/triangle-world.mjs`
+  reuses traversal stacks and supports caller-owned ray results;
+  `native-physics.mjs` copies pooled hits and ends a fit query after obstruction.
+- Reproduction/impact: repeated movement, camera/weapon rays and blocked body
+  probes on native triangle stages avoid temporary allocations and unnecessary
+  traversal, preserving geometry, tolerances, nearest-hit order and grate rules.
+- Verification: frozen-before comparison, 7,000 mixed rays, native movement at
+  30/60/120 Hz, existing actual weapon/damage/paint replays at all three rates,
+  and actual minified Chromium component comparison. Logic/component verification
+  is distinct from full-game rendering; Switch/mobile hardware and retail
+  equivalence remain unverified. Details and workload limits are in
+  `reports/inkwave-bvh-optimization-2026-10-16.md`.

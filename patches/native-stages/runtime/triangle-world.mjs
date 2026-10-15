@@ -11,11 +11,19 @@ export class TriangleWorld {
   this._box=new THREE.Box3();this._ta=V();this._tb=V();this._tc=V();this._triangle=new THREE.Triangle();
   this._u=V();this._v=V();this._w=V();this._p=V();this._q=V();this._cp=V();this._sp=V();this._bestp=V();this._bests=V();this._d=V();this._s0=V();this._s1=V();this._center=V();this._normal=V();
   this.queryCount=0;this.triangleTests=0;
+  // One traversal stack per active nesting level. Callbacks may issue another
+  // box/ray query; finally releases even an interrupted or throwing traversal.
+  this._queryStacks=[];this._queryDepth=0;
  }
+ _acquireStack(){const depth=this._queryDepth++,stack=this._queryStacks[depth]||(this._queryStacks[depth]=[]);stack.push(0);return stack;}
+ _releaseStack(stack){stack.length=0;this._queryDepth--;}
  // anyHit is reserved for Boolean ground support; ordinary callers retain exact nearest-hit data.
- ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2,anyHit=false,minHitY=-Infinity}={}) {
+ // Optional out owns point/normal Vector3s distinct from the ray inputs. Misses
+ // leave it untouched; callers omitting it still receive independently owned hits.
+ ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2,anyHit=false,minHitY=-Infinity}={},out=null) {
   if(!Number.isFinite(origin.x+origin.y+origin.z+dir.x+dir.y+dir.z))return null;
-  const nodes=this.nodes,stack=[0],verts=this.triangles,norm=this.normals;let best=far,id=-1,bu=0,bv=0;
+  const nodes=this.nodes,stack=this._acquireStack(),verts=this.triangles,norm=this.normals;let best=far,id=-1,bu=0,bv=0;
+  try {
   // Ground/edge probes use this exact direction. Keep native division and
   // traversal order; no reciprocal approximation or cross-query cache.
   const verticalDown=dir.x===0&&dir.z===0&&dir.y===-1;
@@ -55,14 +63,20 @@ export class TriangleWorld {
    }
   }
   if(id<0)return null;
-  const normal=new THREE.Vector3().fromArray(norm,id*3);if(normal.dot(dir)>0)normal.negate();
-  return {triangle:id,distance:best,point:origin.clone().addScaledVector(dir,best),normal,u:bu,v:bv,flags:this.flags[id],object:this.objectIds[id]};
+  const normal=(out?out.normal:new THREE.Vector3()).fromArray(norm,id*3);if(normal.dot(dir)>0)normal.negate();
+  const point=out?out.point.copy(origin).addScaledVector(dir,best):origin.clone().addScaledVector(dir,best);
+  if(!out)return {triangle:id,distance:best,point,normal,u:bu,v:bv,flags:this.flags[id],object:this.objectIds[id]};
+  out.triangle=id;out.distance=best;out.u=bu;out.v=bv;out.flags=this.flags[id];out.object=this.objectIds[id];return out;
+  } finally {this._releaseStack(stack);}
  }
- queryBox(min,max,fn){
-  const a=this.nodes,stack=[0];
+ // Opt-in early termination leaves existing callback return semantics intact.
+ queryBox(min,max,fn,stopOnFalse=false){
+  const a=this.nodes,stack=this._acquireStack();
+  try {
   while(stack.length){const n=stack.pop()*8;if(a[n]>max.x||a[n+1]>max.y||a[n+2]>max.z||a[n+3]<min.x||a[n+4]<min.y||a[n+5]<min.z)continue;
-   const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack.push(left,right);continue;}const start=-left-1;for(let k=start;k<start+right;k++)fn(this.order[k]);
+   const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack.push(left,right);continue;}const start=-left-1;for(let k=start;k<start+right;k++)if(fn(this.order[k])===false&&stopOnFalse)return;
   }
+  } finally {this._releaseStack(stack);}
  }
  /** Continuous sphere contact with unchanged source faces, edges and vertices.
   * Each feature yields a linear/quadratic earliest entry, including a linearly
