@@ -45,10 +45,13 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
     if (code.includes('  _drawInk(y0 = 0, y1 = this.h, x0 = 0, x1 = this.w) {') &&
         code.includes('for (let px = x0; px < x1; px++)') &&
         code.includes('putImageData(this.inkImg, 0, 0, x0, y0, x1 - x0, y1 - y0)') &&
-        code.includes('else this._drawDirtyInk(_rec);') &&
+        code.includes('_inkNoop = !dirty && !this._animatedLast') &&
         code.includes('const ry0 = Math.max(0, y0 - 1), ry1 = Math.min(H, y1 + 1);') &&
         code.includes('const _pb = this._lastFlashBox;') &&
-        code.includes('this._lastFlashBox = _nextFlash;')) return code;
+        code.includes('this._lastFlashBox = _nextFlash;') &&
+        code.includes('let dirty = false, _inkNoop = false;') &&
+        code.includes('const _priorComposeDirty = this._composeDirty;') &&
+        code.includes('if (!_inkNoop || _priorComposeDirty || animated || force) this._compose(cdt);')) return code;
     code = replaceOnce(code,
       '  _drawInk(y0 = 0, y1 = this.h) {',
       '  _drawInk(y0 = 0, y1 = this.h, x0 = 0, x1 = this.w) {',
@@ -153,10 +156,21 @@ export function adaptMinimapDirty(rel, code, replaceOnce) {
       '            _rec.full = false; _rec.x0 = Infinity; _rec.z0 = Infinity; _rec.x1 = -Infinity; _rec.z1 = -Infinity;\n' +
       '          }\n' +
       '        }\n' +
-      '      } else this._drawDirtyInk(_rec);\n' +
+      '      } else {\n' +
+      '        _inkNoop = !dirty && !this._animatedLast && (!(_rec.x1 >= _rec.x0) || !(_rec.z1 >= _rec.z0));\n' +
+      '        this._drawDirtyInk(_rec);\n' +
+      '      }\n' +
       '      dirty = true;\n' +
       '    }',
       'minimap bounded dirty refresh branch');
+    // Empty ink bounds still consume the original compose cadence. Only omit
+    // the unchanged canvas work, never advance a later dynamic overlay frame.
+    code = replaceOnce(code, '    let dirty = false;',
+      '    let dirty = false, _inkNoop = false;', 'minimap empty refresh marker');
+    code = replaceOnce(code, '    this._composeDirty = this._composeDirty || dirty;',
+      '    const _priorComposeDirty = this._composeDirty;\n    this._composeDirty = this._composeDirty || dirty;', 'minimap preserve pending compose');
+    code = replaceOnce(code, '      this._compose(cdt);',
+      '      if (!_inkNoop || _priorComposeDirty || animated || force) this._compose(cdt);', 'minimap skip only empty static compose');
     return code;
   }
   return code;
