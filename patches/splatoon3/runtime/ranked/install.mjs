@@ -97,13 +97,15 @@ export function installRanked(context) {
   const controller = PlayerController.prototype.update;
   PlayerController.prototype.update = function (dt) {
     const r = controller.call(this, dt), a = this.a, m = G.match;
-    if (m?.mode === 'clams' && this.enabled && a?.alive) {
+    if (m?.mode === 'clams' && a) {
       const input = this.input, touch = input.mobile;
       const inv = m.ranked?.rule.state.inventories?.[actorId(a)];
       const throwHeld = input.down('KeyC') || input.padButton(1) || (!!(inv?.small || inv?.power) && !!touch?.down('sub'));
-      a.intent.throw = !!throwHeld && !a._rankedThrowHeld;
+      const allowed = this.enabled && a.alive && !this.mapHeld && !this.menuBlocked;
+      a.intent.throw = !!allowed && !!throwHeld && !a._rankedThrowHeld;
       a._rankedThrowHeld = !!throwHeld;
-      if (throwHeld && touch?.down('sub')) {
+      if (!allowed) a._rankedThrowPending = false;
+      if (allowed && throwHeld && touch?.down('sub')) {
         a.intent.sub = false;
         if (a._prevIntent) a._prevIntent.sub = false;
       }
@@ -147,9 +149,11 @@ function prepareCarrier(api, actor) {
 export function buildFrame(match, api) {
   const nm = api.G.netm, inputs = {};
   const actors = match.actors.map(a => {
-    const id = actorId(a), cmd = a.remote && nm?.isHost ? nm.rankedInputs?.get(id) : a._rankedInput;
-    if (cmd && (!a.remote || api.G.time - cmd.at < .75)) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
-    if (a.remote && cmd) cmd.throw = false;
+    const id = actorId(a), received = a.remote && nm?.isHost ? nm.rankedInputs?.get(id) : a._rankedInput;
+    const age = a.remote && received ? api.G.time - received.at : 0;
+    const cmd = !a.remote || Number.isFinite(age) && age >= 0 && age < .75 ? received : null;
+    if (cmd) inputs[id] = { fire: !!cmd.fire, throw: !!cmd.throw, aim: cmd.aim };
+    if (a.remote && received) received.throw = false;
     if (!a.remote) { a.intent.throw = false; if (!nm || nm.isHost) a._rankedThrowPending = false; }
     const special = a.remote && cmd ? cmd.special : a.specialActive?.id ?? null;
     const specialDeployed = a.remote && cmd ? cmd.specialDeployed : special === 'storm' && a.specialActive?.t > 0;

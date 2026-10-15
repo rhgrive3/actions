@@ -15,7 +15,7 @@ const MAP_GYRO_BASELINE = process.env.INKWAVE_MAP_GYRO_BASELINE === '1';
 const NEGATIVE = process.env.INKWAVE_CONTROLS_BASELINE === '1';
 const NAVIGATION_BASELINE = process.env.INKWAVE_NAVIGATION_BASELINE === '1';
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-export async function fixture({ diorama = false, match = false, character = false, network = false, fxHooks = false, fidelity = false, session = false, clock = performance } = {}) {
+export async function fixture({ diorama = false, match = false, character = false, network = false, fxHooks = false, fidelity = false, session = false, ranked = false, clock = performance } = {}) {
   // The negative control omits only the adapter under test from the real order.
   let reliability = adaptReliability;
   if (NEGATIVE || NAVIGATION_BASELINE || MAP_GYRO_BASELINE) {
@@ -70,6 +70,7 @@ export async function fixture({ diorama = false, match = false, character = fals
     export * from './inkwave-public/src/core/input.js';
     export * from './inkwave-public/src/net/netmatch.js';
     ${session ? "export * from './inkwave-public/src/net/session.js';" : ''}
+    ${ranked ? "export {installRanked, buildFrame} from './patches/splatoon3/runtime/ranked/install.mjs'; export {RankedEngine} from './patches/splatoon3/runtime/ranked/engine.mjs';" : ''}
     export * from './inkwave-public/src/core/shadowcache.js';
     export * as THREE from 'three';
     export { FixedClock, installClock, runSimulation } from './patches/splatoon3/runtime/clock.mjs';
@@ -109,7 +110,7 @@ export async function fixture({ diorama = false, match = false, character = fals
     return a;
   }
   function tick(a, frames = 1) { for (let i = 0; i < frames; i++) { G.time += 1 / 60; a.update(1 / 60); } }
-  return { ...api, profile, make, tick, shots, storage, setPads:p=>{pads=p;},
+  return { ...api, profile, make, tick, shots, storage, context, setPads:p=>{pads=p;},
     event:(name,value)=>{for(const fn of listeners.get(name)||[])fn(value);},
     sources:modules };
 }

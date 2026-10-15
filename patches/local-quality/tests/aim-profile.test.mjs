@@ -968,3 +968,34 @@ test('installed platform gyro request cannot activate the replacement aim profil
   assert.equal(mobile.gyro.enabled, false);
   assert.equal(mobile.s.gyro, false);
 });
+
+
+test('nested active-profile gyro changes start and stop the sensor without switching profiles', async () => {
+  const { game, gyro } = createComposedSettingsFixture();
+  game._setSettings({ aimProfiles: { tv: { gyro: true } } });
+  await Promise.resolve(); await Promise.resolve();
+  assert.equal(game.settings.gyro, true);
+  assert.equal(gyro.enabled, true, 'effective nested ON must start the sensor');
+  game._setSettings({ aimProfiles: { tv: { gyro: false } } });
+  assert.equal(gyro.enabled, false, 'effective nested OFF must stop the sensor');
+  assert.equal(game.settings.aimProfiles.handheld.gyro, true, 'inactive profile remains independent');
+});
+
+test('nested active-profile gyro permission uses the final projected value over a conflicting flat update', async () => {
+  const { game, gyro, resolvePermission } = createComposedSettingsFixture({ needsPermission: true });
+  game._setSettings({ gyro: false, aimProfiles: { tv: { gyro: true } } });
+  assert.equal(game.settings.gyro, true);
+  resolvePermission(true); await Promise.resolve(); await Promise.resolve();
+  assert.equal(gyro.enabled, true, 'the chosen nested ON must be admitted');
+});
+
+test('nested OFF invalidates an earlier pending permission even if nested ON follows before it resolves', async () => {
+  const { game, gyro, resolvePermission } = createComposedSettingsFixture({ needsPermission: true });
+  game._setSettings({ gyro: true });
+  game._setSettings({ aimProfiles: { tv: { gyro: false } } });
+  game._setSettings({ aimProfiles: { tv: { gyro: true } } });
+  resolvePermission(true); await Promise.resolve(); await Promise.resolve();
+  assert.equal(gyro.enabled, false, 'old permission must not activate a newer intent');
+  resolvePermission(true); await Promise.resolve(); await Promise.resolve();
+  assert.equal(gyro.enabled, true, 'the current intent still activates');
+});

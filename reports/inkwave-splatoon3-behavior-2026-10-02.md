@@ -4405,9 +4405,45 @@ MAP/PAUSEとGYROに触れて24pxより外へ動かし、元へ戻して離す操
 
 本家参照は既存のSplatoon 3 11.3.0。24px/900msは元からあるINKWAVEのブラウザUI値であり本家値ではない。武器・ギア・移動・射撃数値を推測で更新していない。修正前mainで新規10ケース中9件の失敗を再現し、修正後の同一テストと実際のminified module、Chromiumの実タッチ経路を検証。ブラウザのpad/最終gyro callbackはspy、試し撃ちDOM/cameraはfixtureであり、実センサー・Switch・モバイル実機の受入とは区別する。詳細は [追加修正の記録](inkwave-tap-range-followup-2026-10-15.md)。
 
+
+## 2026-10-15 ranked input / network lifetime follow-up
+
+Comparison target remains Splatoon 3 11.3.0, existing pinned Leanny reference `7280ff9cde8bb1c5dcef46c700c326471584d2e6`. No retail frame, damage, movement, or special table values changed. This follow-up repairs INKWAVE input arbitration and wire admission; it does not establish retail protocol equivalence.
+
+- Clam throw now respects the same map/menu/disabled/dead input ownership as ordinary attacks. Opening the Turf Map and pressing C no longer spends a clam; release is sampled while blocked, and pending network throws are cleared. Reproduction uses actual composed Input/PlayerController/Actor and ClamsRule, including a fresh press after unblocking.
+- Invalid ranked damage (nonfinite amount, old victim life, unknown victim) and out-of-range Rainmaker barrier hits no longer advance accepted sequence counters. Valid subsequent hits still apply once; numeric-string barrier damage is rejected. No combat damage values or authority model changed.
+- Ranked damage/input/hit admission stops after play/winner and after network disposal, matching the base receiver lifecycle. Remote command special metadata now expires with its existing 0.75-second fire/throw lease, so stale Crab state cannot indefinitely forbid clam collection.
+- Regression: `patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs`. Same six tests on unmodified `d6dc80e` fail by assertion (0/6); candidate passes 6/6. Wider ranked/pause/map source suite: 278 pass, one existing emitted-only skip; one skeletal test fixture initially lacked winner and passed after treating absent winner as unset. Targeted rerun 34/34. Emitted/build/browser evidence is recorded in the systems audit report; no Switch hardware comparison claimed.
+
+
+## 2026-10-15 effective aim-profile gyro transitions
+
+Splatoon 3 comparison remains independent TV/Tabletop and Handheld motion-control options at 11.3.0. No sensitivity curves or retail timings changed. `patches/local-quality/aim-profile-adapter.mjs` now compares effective gyro state before and after profile projection and uses the final projected value when starting/stopping the sensor. Nested active-profile edits no longer silently leave the sensor unchanged, conflicting flat/nested values honor the existing nested precedence, and OFF invalidates pending permission before a later ON. Inactive-profile edits do not prompt. Denial reverts and persists only the active profile.
+
+Three extracted composed Game regressions fail on the baseline and pass after the fix. A separate whole-module VM fixture executes the actual composed Game and installed MobileInput platform owner; its physical sensor and storage/display seams are spies. Five scenarios cover ON/OFF, conflicting edits, inactive edits, stale permission and denial persistence. Source related suite passes 61/61 plus the five whole-module tests. Emitted and packaging results are recorded in the systems audit; physical iOS/Android permission behavior and Switch comparison are still unverified.
+
+
+## 2026-10-15 special audio match disposal
+
+Reference remains Splatoon 3 11.3.0 for the gameplay/special lifecycle; this is INKWAVE resource ownership, with no audio authenticity, loudness, timing or hardware claim. `patches/splatoon3/runtime/audio/kit-runtime.mjs` now retires each disposed match actor from its continuous-special audio map on the existing `match:dispose` event. Native Match.dispose resets main-weapon runners but does not emit a terminal state transition or per-actor removal, so direct disposal previously left the special loop handle and actor graph resident until another event. Late disposal scopes cleanup to that match's actors, preserving a replacement match's sounds.
+
+The native composed Match/Actor/audio test fails two assertions before the change and passes after; removal/splat cleanup remains an idempotent control. A physical mixer is stubbed, so tests establish stop/ownership behavior rather than audible quality. Broader audio loader cancellation tests and Boss audio disposal tests also pass. Emitted evidence and remaining blockers are in the systems audit record.
+
+
+## 2026-10-15 queued duration / remote resource hardening with native wire compatibility
+
+The three reviewed PR #1445 workstreams are reconciled with the latest main rather than merged at the failing `9035c274` head. Splatoon 3 reference remains 11.3.0; the 24h admission ceiling, 6s anomalous FIFO escape, 30s abandoned-ghost-flight cutoff, and wire/render bounds are INKWAVE limits, not retail parameters. No weapon damage, trajectory, paint or sensitivity tuning changes.
+
+- URL, offline startup and native Match constructor now reject nonfinite/nonpositive/over-24h duration, preserve intentional 90s Turf and Boss defaults, and leave Ranked's 300s clock and the range's explicit untimed lifecycle intact.
+- Out-of-arena remote bomb births are rejected before scene/identity admission. Capacity backpressure keeps ordinary FIFO order, but after 6 receiver seconds retires one unreplayable blocked birth so later paint/actions can continue. Only abandoned airborne ghost bombs expire at 30s; deployed Sprinkler and local/native fuse behavior remain unchanged.
+- Remote visual metadata is validated at ingress/replay/allocation and defended at draw. A remote bead/head ceiling of 636 out of the native 700 slots preserves local headroom, retaining the native draw safety margin.
+- The initial guard incorrectly bounded `tail0` (a dimensionless ratio) to16 and rejected three legitimate zero-width Diffusion Slosher births (6/9 survived). Pinned source-guided rendering computes `1 + length/max(.001,radius)` and can reach4001. The revised guard separately bounds the ratio at4096 and base drawn tail extent at128 (the prior 8×16 extent), with a renderer check using its actual fallback width. This preserves zero/tiny-width native entries without permitting giant visible tails; nonfinite/negative/string/over-budget values still fail. These ceilings are admission/calibration bounds, not Nintendo values.
+
+Negative control reproduces the actual PR CI failure by assertion. Corrected combined native queue/volume/pool suite passes20/20; adjacent source network/snapshot/ranked checks pass42/42. The full quality rerun, emitted checks and final provenance are recorded in the systems audit. WebKit/physical-device limits remain separate.
+
+
 ## 2026-10-13: rematch material ownership handoff candidate (#1367)
 
 A bounded owned-material bridge preserves native program references until replacement menu-character warmup settles, and the existing Character disposed flag now blocks resource creation after a pending optional-motion load. Setup/start callbacks, same-object material reuse, cancellation, failure, context loss, repeated returns and overflow are covered. Source25/25, emitted25/25, adjacent191/191 and packaging/workflow24/24 pass; exact18ce emitted runtime retains two expected failures. Independent native ownership accounting matches18 baseline disposal events and excludes four shared materials.
 
 This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. One generation/512 materials and an8000ms fallback timer do not bound GPU bytes or actual wall-clock retention during a stall. Repeated same-object disposal requests coalesce; material texture/uniform/listener references may remain indirectly retained. See [the scoped evidence and fixture limitations](inkwave-rematch-material-handoff-2026-10-13.md). The final candidate is composed on d6285dca, retaining CPU/input/bomb gates and report history; its25 source/25 emitted,202 adjacent and9 packaging checks pass. Combined-tree review/publication remains centrally coordinated.
-

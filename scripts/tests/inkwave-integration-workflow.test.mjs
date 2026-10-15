@@ -150,3 +150,16 @@ test('worker source regressions have their pinned dependency and writable persis
   assert(storage.includes('test -w "$INKWAVE_TEST_SCRATCH"'));
   assert(workflow.includes('INKWAVE_TEST_SCRATCH: /mnt/workspace/.dev-state/agent-work/scratch/inkwave-worker-${{ github.run_id }}-${{ github.run_attempt }}'));
 });
+
+test('emitted material handoff is mandatory and runs only after a complete site build', () => {
+  const build = workflow.indexOf('name: Verify emitted Tenacity lock and passive ownership');
+  const name = 'name: Verify real emitted material handoff ownership and cancellation';
+  const at = workflow.indexOf(name);
+  assert.ok(build > 0 && at > 0 && at < build,
+    'material ownership must be checked against the same generated production site');
+  const block = workflow.slice(at, build);
+  assert.ok(block.includes('INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site'));
+  assert.ok(block.includes('node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs'));
+  assert.ok(workflow.includes('patches/local-quality/tests/*.test.mjs'),
+    'do not remove the original source regression gate');
+});
