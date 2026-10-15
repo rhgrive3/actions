@@ -1,0 +1,11 @@
+{
+  "sourceHead": "c99d1310a6cfb1ba65e9fb3394799c6fdbc42778",
+  "sourceTree": "0db88d4cafcee36f67bd88b4c9f541997c520ca1",
+  "compositionTree": "4402a50eceaa551a0bc822b7dedcef33808b2107",
+  "soleAddedPath": "patches/native-stages/definitions/shipshape.json",
+  "definitionGitBlob": "342ee65fe024f68313e68d60c2fb0af9463c8b03",
+  "preservedExistingLeaves": 3342,
+  "preservedRuntimeBlobs": 243,
+  "runtimeMapSHA256": "60960b018cd6aff4f492fcf77aeb1d159ed805a815792f4cbde3e1745c0dbff3",
+  "scope": "Computed diagnostic tree only; no commit/publication/execution"
+}

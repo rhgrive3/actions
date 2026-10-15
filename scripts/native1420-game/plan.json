@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "executionAuthorized": false,
+  "workflowIncluded": true,
+  "sourceHead": "c99d1310a6cfb1ba65e9fb3394799c6fdbc42778",
+  "sourceTree": "0db88d4cafcee36f67bd88b4c9f541997c520ca1",
+  "composition": {
+    "diagnosticOnly": true,
+    "soleOverlayPath": "patches/native-stages/definitions/shipshape.json",
+    "definitionGitBlob": "342ee65fe024f68313e68d60c2fb0af9463c8b03",
+    "definitionSHA256": "8c7e69363af843e658b9519bcdd4768b0c71862b09d8d3764a97183df45c6c57",
+    "compositionTree": "4402a50eceaa551a0bc822b7dedcef33808b2107",
+    "requireBeforeExecution": "Canonical Git tree recomputation from exact c99 full tree plus sole definition; preserve every existing blob, including all runtime and both harnesses. Record checkout and overlay identities separately.",
+    "receipt": "composition-receipt.json"
+  },
+  "harnesses": [
+    {
+      "path": "scripts/check-inkwave-shipshape-ranked-objectives.mjs",
+      "gitBlob": "99f55cfee654a155fdbaad4997c898204dd86178",
+      "sha256": "cf2b5ea4fecd1c04b6b7838756de13f0bc87e8c8dc764cff533ac8ed9b44b9c5"
+    },
+    {
+      "path": "scripts/check-inkwave-shipshape-climb-refill-guards.mjs",
+      "gitBlob": "39959661164a9db9af1c1f5cf6636dbbfc0bbcb6",
+      "sha256": "35ce7781d689f4215cd4d52344ed8d2931768fe11d4ff7410ce7bec66b234830"
+    }
+  ],
+  "selection": {
+    "NATIVE_STAGE_IDS": "shipshape",
+    "NATIVE_SHIPSHAPE_RANKED_MODES": "zones",
+    "NATIVE_SHIPSHAPE_TEAMS": "1",
+    "NATIVE_SHIPSHAPE_RENDER_HZ": "30,60,120"
+  },
+  "wetRates": [
+    30,
+    60,
+    120
+  ],
+  "receiptGate": "verify-game-receipts.mjs",
+  "executionPrerequisites": [
+    "Independent final package review and root publication/run authorization, with fresh PR1324 ownership check",
+    "Hosted workflow must install pinned dependencies, provide a clean exact checkout and fresh output paths, set a bounded timeout, and upload only GAME_EVIDENCE JSON/logs",
+    "run-hosted.sh now implements composition/build identity, strict pinned resources/tree replay, WS denial, unchanged harness execution and final binding/behavior gates"
+  ],
+  "limits": [
+    "Controlled initial actor/source route; other actors frozen",
+    "Existing harnesses use _skipRender while stepping Game; terminal render is not pixel/source-pose qualification",
+    "No relay, whole-stage/rule matrix, hardware FPS, Ready/merge or current aggregate qualification",
+    "Historical Game evidence remains e4c74282; CPU run38679015082 used procedural motion fallback"
+  ],
+  "commandsAfterPrerequisites": [
+    "NATIVE_STAGE_IDS=shipshape NATIVE_SHIPSHAPE_RANKED_MODES=zones NATIVE_SHIPSHAPE_TEAMS=1 NATIVE_SHIPSHAPE_RENDER_HZ=30,60,120 node scripts/check-inkwave-shipshape-ranked-objectives.mjs COMPOSED_SITE DRY_EVIDENCE",
+    "node scripts/check-inkwave-shipshape-climb-refill-guards.mjs COMPOSED_SITE WET_EVIDENCE",
+    "node verify-game-receipts.mjs DRY_EVIDENCE/browser.json WET_EVIDENCE/browser.json"
+  ],
+  "privateLauncher": "run-hosted.sh",
+  "launcherRequires": {
+    "GITHUB_ACTIONS": "true",
+    "NATIVE1420_GAME_AUTHORIZED": "true",
+    "dependencies": {
+      "node": "22.23.3",
+      "esbuild": "0.28.2",
+      "playwright": "1.62.1"
+    },
+    "freshCleanCheckout": "c99d1310a6cfb1ba65e9fb3394799c6fdbc42778"
+  },
+  "proposedBranch": "review/native1420-game-behavior-20261015",
+  "hostedLimits": {
+    "heapMiB": 2048,
+    "processTreeRSSMiB": 3072,
+    "systemReserveMiB": 2048,
+    "qualificationDeadlineSeconds": 600,
+    "jobTimeoutMinutes": 30
+  }
+}

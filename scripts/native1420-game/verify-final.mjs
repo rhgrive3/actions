@@ -1,0 +1,8 @@
+import fs from 'node:fs';import {pathToFileURL} from 'node:url';import assert from 'node:assert/strict';import crypto from 'node:crypto';import {verifyGameReceipts} from './verify-game-receipts.mjs';
+const read=p=>JSON.parse(fs.readFileSync(p)),sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+export function verifyFinal(d,w,networks,binding,plan){
+assert.equal(binding.sourceHead,plan.sourceHead);assert.equal(binding.sourceTree,plan.sourceTree);assert.equal(binding.compositionTree,plan.composition.compositionTree);assert.equal(binding.definitionGitBlob,plan.composition.definitionGitBlob);assert.equal(binding.helperSHA256,'4cb34f74838596bfe3bad1ff9c15a86a7029b40ae40d13ea73d82c4b5b5dd136');for(const k of ['manifestSHA256','engineSHA256','contentHash','inputHash'])assert.match(binding[k],/^[a-f0-9]{64}$/);
+assert.equal(networks.length,2);for(const [i,n] of networks.entries()){const harness=plan.harnesses[i];assert.deepEqual(n.binding,binding);assert.deepEqual(n.harness,harness);assert.deepEqual(n.errors,[]);assert.equal(n.webSockets,0);assert(n.loadedArtifacts.some(x=>x.path==='patches/native-stages/runtime/engine.mjs'&&x.sha256===binding.engineSHA256));assert(n.sourceDownloads.some(x=>x.sha256==='8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9'&&x.bytes===49575330));}
+assert.equal(w.contentHash,binding.contentHash);assert.equal(w.inputHash,binding.inputHash);return {...verifyGameReceipts(d,w),binding};
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const [dry,wet,dryNet,wetNet,bindingFile]=process.argv.slice(2);console.log(JSON.stringify(verifyFinal(read(dry),read(wet),[read(dryNet),read(wetNet)],read(bindingFile),read(new URL('./plan.json',import.meta.url))),null,2));}

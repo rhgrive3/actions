@@ -1,0 +1,117 @@
+name: INKWAVE isolated native dry-refill Game behavior
+on:
+  push:
+    branches: [review/native1420-game-behavior-20261015]
+permissions:
+  contents: read
+concurrency:
+  group: native1420-game-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  dry-refill-game:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/review/native1420-game-behavior-20261015' && github.repository == 'rhgrive3/actions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: c99d1310a6cfb1ba65e9fb3394799c6fdbc42778
+      NODE_OPTIONS: --max-old-space-size=2048
+      NATIVE1420_GAME_AUTHORIZED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: c99d1310a6cfb1ba65e9fb3394799c6fdbc42778
+          persist-credentials: false
+          path: common
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify frozen diagnostic package and immutable source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C diagnostic rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C common rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C common rev-parse HEAD^{tree})" = 0db88d4cafcee36f67bd88b4c9f541997c520ca1
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('diagnostic/scripts/native1420-game');m=json.loads((p/'package.json').read_text())
+          assert len(m['files'])==15
+          for name,pin in m['files'].items():
+              f=pathlib.Path('diagnostic/.github/workflows/inkwave-native-dry-refill-game.yml') if name=='inkwave-native-dry-refill-game.yml' else p/name
+              b=f.read_bytes();assert len(b)==pin['bytes'] and hashlib.sha256(b).hexdigest()==pin['sha256'],name
+          PY
+      - name: Install pinned hosted dependencies
+        working-directory: diagnostic/scripts/native1420-game
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          node --version
+          python --version
+      - name: Run bounded isolated Game behavior qualification
+        shell: bash
+        run: |
+          set -euo pipefail
+          export COMMON_CHECKOUT="$GITHUB_WORKSPACE/common"
+          export GAME_SITE="$RUNNER_TEMP/native1420-site"
+          export GAME_EVIDENCE="$GITHUB_WORKSPACE/evidence"
+          export PACKAGE="$GITHUB_WORKSPACE/diagnostic/scripts/native1420-game"
+          python - <<'PY'
+          import json,os,pathlib,signal,subprocess,time
+          # Same conservative 3GiB process-tree RSS and 2GiB system reserve as CPU qualification.
+          # A single 600s supervised qualification budget; the job has a 30min hard timeout.
+          cap=3*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None
+          def available():
+              return int(next(x.split()[1] for x in pathlib.Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')))*1024
+          assert available()>=cap,'Insufficient starting memory'
+          p=subprocess.Popen(['bash',os.environ['PACKAGE']+'/run-hosted.sh'],start_new_session=True);start=time.monotonic()
+          while p.poll() is None:
+              rss=0;processes={}
+              for d in pathlib.Path('/proc').iterdir():
+                  if not d.name.isdigit():continue
+                  try:
+                      fields=(d/'stat').read_text().rsplit(')',1)[1].split()
+                      processes[int(d.name)]=(int(fields[1]),int(fields[21])*os.sysconf('SC_PAGE_SIZE'))
+                  except (OSError,ValueError,IndexError):pass
+              descendants={p.pid}
+              while True:
+                  expanded=descendants|{pid for pid,(parent,_) in processes.items() if parent in descendants}
+                  if expanded==descendants:break
+                  descendants=expanded
+              rss=sum(processes[pid][1] for pid in descendants if pid in processes)
+              free=available();peak=max(peak,rss);minimum=free if minimum is None else min(minimum,free)
+              if rss>cap:reason='process-tree RSS cap exceeded'
+              elif free<reserve:reason='system memory reserve reached'
+              elif time.monotonic()-start>deadline:reason='600s qualification timeout'
+              if reason:
+                  for pid in descendants:
+                      try:os.kill(pid,signal.SIGTERM)
+                      except ProcessLookupError:pass
+                  try:p.wait(timeout=10)
+                  except subprocess.TimeoutExpired:
+                      for pid in descendants:
+                          try:os.kill(pid,signal.SIGKILL)
+                          except ProcessLookupError:pass
+                      p.wait()
+                  break
+              time.sleep(.25)
+          e=pathlib.Path(os.environ['GAME_EVIDENCE']);e.mkdir(exist_ok=True)
+          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'peakProcessTreeRSSBytes':peak,'minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'Hosted controlled fixed-step Game behavior; no hardware/FPS/pixel claim'},indent=2)+'\n')
+          assert p.returncode==0 and reason is None,'Game qualification failed; preserve compact evidence'
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native1420-game-c99d1310-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            evidence/*.json
+            evidence/*.log

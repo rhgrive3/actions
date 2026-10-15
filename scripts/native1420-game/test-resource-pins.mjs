@@ -1,0 +1,8 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import crypto from 'node:crypto';import {selectedSourceStage,verifyCachedTreeResponse,pinnedResourceEntries,verifyGitResource} from './prepare-resources.mjs';
+const hash=b=>crypto.createHash('sha256').update(b).digest('hex'),tree='d1b59d640b885fee46b3cb93c6dab4b38ba32019',url='https://api.github.com/repos/kirakira-dev/KiTrix/git/trees/'+tree+'?recursive=1';
+function sample(){const bytes=Buffer.from(JSON.stringify({sha:tree,truncated:false,tree:[{path:'Vss_Twist00.mtl',type:'blob',mode:'100644',sha:'a'.repeat(40),size:3},{path:'textures/a.png',type:'blob',mode:'100644',sha:'b'.repeat(40),size:4}]}));return [{url,body:bytes.toString('base64')},{[url]:hash(bytes)}];}
+test('valid pinned tree cache accepted',()=>assert.equal(verifyCachedTreeResponse(...sample()).url,url));
+for(const [name,mutate]of Object.entries({missing:f=>f[0]=null,corrupt:f=>f[0].body=Buffer.from('bad').toString('base64'),wrongURL:f=>f[0].url+='bad',wrongPin:f=>f[1][url]='a'.repeat(64)}))test('reject cache '+name,()=>{const f=sample();mutate(f);assert.throws(()=>verifyCachedTreeResponse(...f));});
+test('wrong stage tree rejects',()=>assert.throws(()=>selectedSourceStage([{build:{nativeStages:{stages:[{id:'shipshape',internal:'Vss_Twist00',sourceSha256:'8413aae6785ae2a8cbbecf075bde9c13e0aed55e4e2a048b93c894c91c3771d9',tree:'a'.repeat(40)}]}}}])));
+test('resource wrong blob rejects',()=>assert.throws(()=>verifyGitResource(Buffer.from('abc'),{size:3,sha:'a'.repeat(40)})));
+test('resource traversal rejects',()=>assert.throws(()=>pinnedResourceEntries({tree,internal:'Vss_Twist00'},{sha:tree,truncated:false,tree:[{path:'../a',type:'blob'}]})));
