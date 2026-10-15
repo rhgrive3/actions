@@ -28,6 +28,7 @@
 
 import { kitSubFor } from './kit-subs.mjs';
 import { createVacVortex } from './special-motion.mjs';
+import { withSpecialPresentation } from './special-presentation-owner.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes, damageBigBubblerFromInkVac } from './kit-big-bubbler.mjs';
 
 let api = null;
@@ -857,7 +858,11 @@ export function installKitInkVac(context, _profile) {
       this.form = 'kid';
       this.specialActive = null;
       let result;
-      try { result = update.call(this, dt); }
+      try {
+        result = withSpecialPresentation(this, s,
+          () => this.alive && states.get(this) === state,
+          () => update.call(this, dt));
+      }
       finally {
         it.fire = fire; it.sub = sub; it.squid = squid;it.jump=jump;
         if(startup)it.move.copy(state._move);
