@@ -34,6 +34,7 @@ import { FOLLOWUP_MODELS as THIRD_NOUVEAU } from './variants-stamper-nouveau-fol
 import { FOLLOWUP_MODELS as THIRD_RUST } from './variants-wiper-rust-followup.mjs';
 import { FOLLOWUP_MODELS as THIRD_STICKERZ } from './variants-stickerz-followup.mjs';
 import { FOLLOWUP_MODELS as THIRD_C } from './variants-c-third-followup.mjs';
+import { FOLLOWUP_MODELS as FIFTH_CHARGERS } from './variants-charger-followups.mjs';
 
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 const FAMILIES = Object.freeze([['shooter', SHOOTERS], ['shooter', SHOOTERS_B], ['blaster', BLASTERS], ['dualies', DUALIES],
@@ -61,7 +62,7 @@ for (const [family, mod] of FAMILIES) {
 // Explicitly adopted candidates only. Other alternate kits retain their base model.
 const VARIANT_SPECS = new Map(), VARIANT_KITS = new Map(), VARIANT_KEYS = new Map();
 const KITS_BY_ROW = new Map(ALTERNATE_WEAPON_KITS.map(kit => [kit.main, kit]));
-for (const mod of [BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C]) {
+for (const mod of [BULBZ_VARIANTS, SQUIFFER_VARIANTS, NOCT_VARIANTS, MILK_VARIANTS, SORELLA_VARIANTS, EXPLOSHER_VARIANTS, SECOND_BRELLA, SECOND_REEF, SECOND_INKLINE, SECOND_WELLSTRING, SECOND_C, THIRD_SHOOTERS, THIRD_NEO, THIRD_CHARCOAL, THIRD_NOUVEAU, THIRD_RUST, THIRD_STICKERZ, THIRD_C, FIFTH_CHARGERS]) {
   for (const [key, spec] of Object.entries(mod)) {
     const kit = KITS_BY_ROW.get(key), record = kit && RECORDS.get(kit.baseId);
     if (!kit || !record || spec.sourceRow !== key || spec.baseId !== kit.baseId)
