@@ -208,7 +208,43 @@ test('#912 composed main/Super Jump Slam uses source damage endpoints independen
     assert.equal(damage(outside), undefined);
     assert.ok(hits.every(h => h.attacker === owner && h.cause === 'slam'));
   } finally {
-    G.projectiles.applyHit = originalHit; G.physics.los = originalLOS; G.actors = prev;
+    G.projectiles.applyHit = originalHit; G.physics.los = originalLOS;
+    // This shared VM fixture otherwise leaves detached meshes in G.scene.
+    for (const a of G.actors) {
+      G.scene.remove(a.character.root);
+      a.character.dispose?.();
+    }
+    G.actors = prev;
+  }
+});
+
+test('#912 actual composed Actor.splat before landing preserves two damaging fists', async () => {
+  const f = await getBoot();
+  f.G.actors = [];
+  const owner = f.make();
+  const attacker = f.make({ team: 1, pos: [20, 0, 0] });
+  const victim = f.make({ team: 1, pos: [0, 0, 5.664] });
+  const hits = [], previousHit = f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit = (source, target, amount, cause) => {
+    if (source === owner && target === victim) hits.push([amount, cause]);
+  };
+  try {
+    owner.special = owner.specialCost();
+    owner.intent.special = true;
+    f.tick(owner);
+    owner.intent.special = false;
+    assert.ok(owner._s3TripleSlamFists, 'normal special creates independent fist state');
+    owner.splat(attacker, 'shooter');
+    assert.equal(owner.alive, false);
+    assert.equal(owner.specialActive, null, 'native death cancels only the user action');
+    f.tick(owner, 84);
+    assert.equal(hits.length, 0, 'no early after-death fist hit');
+    f.tick(owner);
+    assert.equal(hits.length, 2, 'both live fists finish despite native death');
+    assert.ok(hits.every(([dmg, cause]) => dmg === 220 && cause === 'slam'));
+    assert.equal(owner._s3TripleSlamFists, null);
+  } finally {
+    f.G.projectiles.applyHit = previousHit;
   }
 });
 
