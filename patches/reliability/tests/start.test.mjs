@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { beginMaterialHandoff as beginNativeMaterialHandoff } from '../../local-quality/material-handoff.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
@@ -79,6 +80,7 @@ function boot(source, held = []) {
     nativeStageEnabled,NATIVE_IDS,
     releaseNativeWorld(game) { assert.equal(game.nativeWorld,undefined,'source worlds are exercised by the native stage fixture'); },
     isRankedMode,
+    beginMaterialHandoff: (game, previous, renderer) => beginNativeMaterialHandoff(game, previous, renderer, { setTimeout: () => 1, clearTimeout() {} }),
     // These fixtures use legacy maps; composed main also imports native-world helpers.
     nativeStageEnabled: false, NATIVE_IDS: [],
     buildNativeWorld() { throw new Error('Legacy fixture must not enter native world loading'); },

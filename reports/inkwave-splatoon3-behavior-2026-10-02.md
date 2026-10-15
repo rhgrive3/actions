@@ -4452,6 +4452,22 @@ The three reviewed PR #1445 workstreams are reconciled with the latest main rath
 
 Negative control reproduces the actual PR CI failure by assertion. Corrected combined native queue/volume/pool suite passes20/20; adjacent source network/snapshot/ranked checks pass42/42. The full quality rerun, emitted checks and final provenance are recorded in the systems audit. WebKit/physical-device limits remain separate.
 
+## 2026-10-13: rematch material ownership handoff candidate (#1367)
+
+A bounded owned-material bridge preserves native program references until replacement menu-character warmup settles, and the existing Character disposed flag now blocks resource creation after a pending optional-motion load. Setup/start callbacks, same-object material reuse, cancellation, failure, context loss, repeated returns and overflow are covered. Source25/25, emitted25/25, adjacent191/191 and packaging/workflow24/24 pass; exact18ce emitted runtime retains two expected failures. Independent native ownership accounting matches18 baseline disposal events and excludes four shared materials.
+
+This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. One generation/512 materials and an8000ms fallback timer do not bound GPU bytes or actual wall-clock retention during a stall. Repeated same-object disposal requests coalesce; material texture/uniform/listener references may remain indirectly retained. See [the scoped evidence and fixture limitations](inkwave-rematch-material-handoff-2026-10-13.md). The final candidate is composed on d6285dca, retaining CPU/input/bomb gates and report history; its25 source/25 emitted,202 adjacent and9 packaging checks pass. Combined-tree review/publication remains centrally coordinated.
+
+## 2026-10-15: batch E/F — online admission, recovery and corrupt view settings
+
+Comparison reference remains the previously pinned Splatoon3 Ver.11.3.0 / Leanny `7280ff9…` dataset and its recorded conditions. This change concerns INKWAVE's browser/storage/relay contracts; Nintendo's private wire format is not available and is not treated as equivalent. Retail movement, paint, sensor and camera numerical parity remains unmeasured.
+
+- Relay JSON null/invalid member frames previously threw or completed a broken handshake. Host lobby snapshots could update map/time before failing on players; invalid peer name/ping could corrupt and rebroadcast the roster. Validate the complete payload before mutation. Native valid eight-player Turf/Boss and all four Ranked modes, gear extensions and optional legacy fields remain admitted. Reproduce through Transport.onmessage with malformed controls or `m|host|{"k":"lobby","l":…}` followed by valid frames. Session/player/lobby state and events stay unchanged on rejection and resume on valid input.
+- JSON pong previously left the outstanding recovery ping set, so the six-second foreground watchdog closed an answered connection. Accept finite, nonfuture current-probe timestamps, clear the acknowledged probe, and ignore older probes. Text-pong behavior remains. These are INKWAVE liveness rules, not retail network timing values.
+- Stored FOV/mouse sensitivity and live settings updates previously admitted strings, objects, NaN/Infinity or out-of-range numbers into native camera/aim calculations. Normalize at actual Game boot and settings entry using existing UI ranges (FOV65–100, mouse0.2–3). Corrupt saves recover defaults; invalid live changes preserve the last valid values. These bounds describe INKWAVE browser controls, not Splatoon3 FOV/stick calibration. TV/handheld profiles, horizontal-FOV migration and numeric60 FPS remain separate and preserved.
+
+Six wire negative cases and three view negative cases fail before their correction. Final emitted Session/Transport7/7 and real Game/view4/4 pass; Chromium's local WebSocket injection and native projection pass with0 page errors. Source regression counts, build identity and the explicit browser/retail limits are recorded in the systems audit and its browser receipt. Public `inkwave-public/` sources remain unchanged; corrections ship through the build composition.
+
 ## 2026-10-15: 発射時のインク表現
 
 シューター・シェルター・ストリンガー・ワイパーの発射の瞬間に出るインク膜（銃口の穴あき膜、傘の前の開花、弓に巻きつく帯、振りの軌跡の波）を、本家の公式映像を拡大して比較し追加した。表示のみで、弾・当たり・塗り・通信は変更していない。寸法・寿命は映像の目視による校正値であり、銃口付近以外の本家比較は未確認のまま。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
