@@ -105,14 +105,36 @@ async function capture(input,shared){
    for(const {pivot,parent,before,local} of snapshots)if(pivot.parent!==parent||pivot.matrix.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-local.elements[k])>1e-8)||pivot.matrixWorld.elements.some((v,k)=>!Number.isFinite(v)||Math.abs(v-before[k])>1e-8))throw Error('Held capture changed native pivot');
    for(const s of snapshots)s.pivot.matrixWorldNeedsUpdate=s.matrixWorldNeedsUpdate;
   }
-  const frames=[],cameras={},poses={},unlitMaterials=new Map();
+  const frames=[],cameras={},poses={},apertures={},unlitMaterials=new Map();
   function close(a,b,label){if(a.length!==b.length||a.some((v,i)=>!Number.isFinite(v)||Math.abs(v-b[i])>1e-8))throw Error('A/B mismatch '+label);}
+  function apertureEvidence(weapon,camera){
+   const co=Math.cos(.56),si=Math.sin(.56),mouthLocal=(x,v)=>new THREE.Vector3(x,.090+v*co,.141-v*si);
+   const modelWorld=weapon.body.matrixWorld,inv=modelWorld.clone().invert();
+   const mouthCenter=mouthLocal(0,0).applyMatrix4(modelWorld),normal=new THREE.Vector3(0,si,co).applyMatrix3(new THREE.Matrix3().getNormalMatrix(modelWorld)).normalize();
+   const facing=normal.dot(camera.position.clone().sub(mouthCenter).normalize());
+   if(!(facing>.15))throw Error('Aperture camera is behind/edge-on to actual model mouth');
+   const projected=[];for(const [x,v,a]of [[.073-.017,.041-.017,0],[-.073+.017,.041-.017,Math.PI/2],[-.073+.017,-.041+.017,Math.PI],[.073-.017,-.041+.017,3*Math.PI/2]])for(let k=0;k<8;k++){const q=a+k*Math.PI/16;projected.push(mouthLocal(x+.017*Math.cos(q),v+.017*Math.sin(q)).applyMatrix4(modelWorld).project(camera));}
+   if(projected.some(p=>![p.x,p.y,p.z].every(Number.isFinite)||Math.abs(p.x)>.95||Math.abs(p.y)>.95||p.z<=-1||p.z>=1))throw Error('Actual mouth is outside capture framing');
+   const area=Math.abs(projected.reduce((sum,p,i)=>{const q=projected[(i+1)%projected.length];return sum+p.x*q.y-q.x*p.y;},0))/8;
+   if(!(area>.005))throw Error('Actual mouth occupies insufficient image area');
+   let visibleInterior=0;const samples=[];
+   for(let i=0;i<7;i++)for(let j=0;j<5;j++){
+    const target=mouthLocal((i-3)/3*.073*.75,(j-2)/2*.041*.65).applyMatrix4(modelWorld),ray=new THREE.Raycaster(camera.position,camera.position.clone().sub(target).negate().normalize());
+    const hits=ray.intersectObjects([weapon.body,weapon.ink].filter(Boolean),false),hit=hits[0],local=hit?.point.clone().applyMatrix4(inv);
+    const interior=Boolean(local&&new THREE.Vector3(0,si,co).dot(local.clone().sub(mouthLocal(0,0)))<-.0005&&local.z>-.005&&local.z<.14&&local.y>.02&&local.y<.14);
+    if(interior)visibleInterior++;samples.push({interior,point:local?.toArray()||null});
+   }
+   if(visibleInterior<18)throw Error('Actual cavity interior is obscured: '+visibleInterior+'/35');
+   return {facing,projectedAreaFraction:area,visibleInterior,sampleCount:35,mouthNdc:projected.map(p=>p.toArray()),modelWorld:modelWorld.toArray(),samples};
+  }
+
   function cameraFrame(key,group,dir,weapon){
    if(weapon.near!==true||weapon.body.visible!==true||weapon.bodyFar.visible!==false)throw Error('A/B requires actual near body '+key);
    if(shared){const c=shared.cameras[key];if(!c)throw Error('Missing frozen camera '+key);camera.up.fromArray(c.up);camera.position.fromArray(c.position);camera.quaternion.fromArray(c.quaternion);camera.scale.fromArray(c.scale);camera.matrixAutoUpdate=false;camera.matrix.fromArray(c.local);camera.matrixWorld.fromArray(c.world);camera.matrixWorldInverse.copy(camera.matrixWorld).invert();camera.projectionMatrix.fromArray(c.projection);camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();}
    else{const b=new THREE.Box3().setFromObject(group),center=b.getCenter(new THREE.Vector3()),span=Math.max(...b.getSize(new THREE.Vector3()).toArray());if(!(span>0&&Number.isFinite(span)))throw Error('Bad bounds');camera.position.copy(center).add(new THREE.Vector3(...dir).normalize().multiplyScalar(span*2.5));camera.lookAt(center);camera.updateMatrixWorld(true);}
    cameras[key]={up:camera.up.toArray(),position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),scale:camera.scale.toArray(),local:camera.matrix.toArray(),world:camera.matrixWorld.toArray(),projection:camera.projectionMatrix.toArray()};
    if(shared)for(const p of ['up','position','quaternion','scale','local','world','projection'])close(cameras[key][p],shared.cameras[key][p],key+' '+p);
+   apertures[key]=apertureEvidence(weapon,camera);
    for(const mode of ['lit','unlit']){
     if(weapon.near!==true||weapon.body.visible!==true||weapon.bodyFar.visible!==false)throw Error('A/B near-body pass '+key+' '+mode);
     const changed=[];
@@ -150,8 +172,8 @@ async function capture(input,shared){
     if(shared){for(const p of ['pivot','local','muzzle'])close(poses[key][p],shared.poses[key][p],key+' '+p);for(const p of ['near','bodyVisible','bodyFarVisible','bucketDrain','projectiles','time','rng'])if(poses[key][p]!==shared.poses[key][p])throw Error('A/B state mismatch '+key+' '+p);}
     scene.add(group);try{mountHeld(snapshots,group);
      for(const [name,dir]of [['frontal-oblique',[-.5,.3,1]],['front',[0,.15,1]],['upper',[-.6,1,.6]]]){
-      const worldDirection=new THREE.Vector3(...dir).transformDirection(w.pivot.matrixWorld).toArray();
-      camera.up.set(0,1,0).transformDirection(w.pivot.matrixWorld);
+      const worldDirection=new THREE.Vector3(...dir).transformDirection(w.body.matrixWorld).toArray();
+      camera.up.set(0,1,0).transformDirection(w.body.matrixWorld);
       cameraFrame(key+'-'+name,group,worldDirection,w);
      }
     }finally{restoreHeld(snapshots,group,scene,ch);}
@@ -159,7 +181,7 @@ async function capture(input,shared){
    projectiles.clear();
    ch.dispose();
   }
-  for(const m of unlitMaterials.values())m.dispose();env.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return {frames,cameras,poses,rng:window.__abRngState()};
+  for(const m of unlitMaterials.values())m.dispose();env.dispose();sky.dispose();pmrem.dispose();renderer.dispose();return {frames,cameras,poses,apertures,rng:window.__abRngState()};
  },{prefix,ids,shared});
  }finally{await context.close();await new Promise(r=>server.close(r));}
 }
@@ -169,5 +191,5 @@ try{
  assert.equal(a.frames.length,24);assert.equal(b.frames.length,24);assert.equal(Object.keys(a.poses).length,4);assert.deepEqual(a.cameras,b.cameras);assert.deepEqual(a.poses,b.poses);assert.deepEqual(errors,[]);assert.deepEqual(networkFailures,[]);
  const images=[];for(const [label,result]of [['frozen',a],['candidate',b]])for(const f of result.frames){const file=label+'-'+f.key+'-'+f.mode+'.png',bytes=Buffer.from(f.png,'base64');fs.writeFileSync(path.join(out,file),bytes);images.push({file,sha256:hash(bytes),triangles:f.triangles});}
  const summary=input=>({sourceSha:input.sourceSha,contentHash:input.manifest.contentHash,modelInputs:input.modelInputs});
- const receipt={baseline:summary(baseline),candidate:summary(candidate),inputComparison,harnessSHA256:hash(fs.readFileSync(new URL(import.meta.url))),pipelineHashes,seed,rng:a.rng,renderer:'Chromium SwiftShader',size:[720,600],cameraBasis:'Frozen009a native weapon bounds; local model directions transformed through native pivot; exact shared TRS/local/world/projection matrices',unlit:'MeshBasicMaterial diagnostic preserves base color, vertex colors, map, side, opacity and depth flags; production callbacks disabled only for unlit pass',characterRendered:false,method:'Controlled weapon-only presentation: actual WeaponRunner input and Projectiles admission select full/drained states; projectiles remain in a separate non-rendered scene. Reference-like camera is approximate, not calibrated, and projected ratios do not establish 3D dimensions. No gameplay aiming/ballistics or retail-fidelity acceptance claim',strictTolerance:1e-8,poses:a.poses,cameras:a.cameras,images,errors,networkFailures};fs.writeFileSync(path.join(out,'ab-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({frames:images.length,poses:Object.keys(a.poses).length,baseline:receipt.baseline,candidate:receipt.candidate}));
+ const receipt={baseline:summary(baseline),candidate:summary(candidate),inputComparison,harnessSHA256:hash(fs.readFileSync(new URL(import.meta.url))),pipelineHashes,seed,rng:a.rng,renderer:'Chromium SwiftShader',size:[720,600],cameraBasis:'Frozen009a native weapon bounds; local model directions transformed through actual body matrixWorld including native inHand offset; exact shared TRS/local/world/projection matrices',unlit:'MeshBasicMaterial diagnostic preserves base color, vertex colors, map, side, opacity and depth flags; production callbacks disabled only for unlit pass',characterRendered:false,method:'Controlled weapon-only presentation: actual WeaponRunner input and Projectiles admission select full/drained states; projectiles remain in a separate non-rendered scene. Reference-like camera is approximate, not calibrated, and projected ratios do not establish 3D dimensions. No gameplay aiming/ballistics or retail-fidelity acceptance claim',strictTolerance:1e-8,poses:a.poses,cameras:a.cameras,apertures:{frozen:a.apertures,candidate:b.apertures},images,errors,networkFailures};fs.writeFileSync(path.join(out,'ab-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({frames:images.length,poses:Object.keys(a.poses).length,baseline:receipt.baseline,candidate:receipt.candidate}));
 }catch(e){fs.writeFileSync(path.join(out,'ab-error.json'),JSON.stringify({error:String(e),errors,networkFailures},null,2));throw e;}finally{await browser?.close();}

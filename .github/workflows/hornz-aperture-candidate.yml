@@ -40,8 +40,8 @@ jobs:
             grep -qx "# pass $pass" hornz-test-results/motion-$mode.tap
             grep -qx "# skipped $skip" hornz-test-results/motion-$mode.tap
             node --experimental-vm-modules --test --test-reporter=tap scripts/capture-hornz-aperture-ab.test.mjs | tee hornz-test-results/harness-$mode.tap
-            grep -qx '# tests 13' hornz-test-results/harness-$mode.tap
-            grep -qx '# pass 13' hornz-test-results/harness-$mode.tap
+            grep -qx '# tests 14' hornz-test-results/harness-$mode.tap
+            grep -qx '# pass 14' hornz-test-results/harness-$mode.tap
             grep -qx '# fail 0' hornz-test-results/harness-$mode.tap
             grep -qx '# skipped 0' hornz-test-results/harness-$mode.tap
           done
