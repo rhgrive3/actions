@@ -1,3 +1,5 @@
+import { fixture as kitFixture } from './kit-composed-fixture.mjs';
+import { installKitInkVac, VAC_ID } from '../runtime/kit-ink-vac.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -39,7 +41,12 @@ test('#1120 Ink Vac firing phase consumes a real ZR release edge, not the held s
   const code = readPatch('patches/splatoon3/runtime/kit-ink-vac.mjs');
   assert.ok(code.includes('state.exhaleArmed = !!state.fireHeld;'));
   assert.ok(code.includes('const releaseEdge = state.exhaleArmed && state.fireHeld && !fire;'));
-  assert.ok(code.includes('if (releaseEdge || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);'));
+  // #1252 buffers a real edge until the 20F transition has completed. Keep
+  // guarding against the old held-level trigger without requiring immediate fire.
+  assert.ok(code.includes('const freshPressEdge = !state.exhaleArmed && !state.fireHeld && !!fire;'));
+  assert.ok(code.includes('if(freshPressEdge||releaseEdge)state.exhaleFireRequested=true;'));
+  assert.ok(code.includes('const ready=state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds;'));
+  assert.ok(code.includes('if(ready&&(state.exhaleFireRequested||state.t+1e-10>=INK_VAC_CALIBRATION.inhaleToExhaleSeconds+INK_VAC_CALIBRATION.exhaleHoldSeconds))release(state);'));
   assert.ok(!code.includes('if (fire || state.t + 1e-10 >= INK_VAC_CALIBRATION.exhaleHoldSeconds) release(state);'));
 });
 
@@ -117,4 +124,23 @@ test('#1134 Charger actor candidates are clipped strictly before the nearest def
   assert.ok(code.includes('if(chargerActorBeforeStop(t,length,distance))actors.push'));
   assert.ok(code.indexOf('const defense=system.kitDefenseCandidate') < code.indexOf('const actors=[]'),
     'defense stop distance is resolved before actor candidates are admitted');
+});
+
+test('#1120 installed Ink Vac honors real release edge after suction hold', async () => {
+  const f = await kitFixture(); installKitInkVac(f, f.profile);
+  const system = f.G.projectiles = new f.Projectiles(new f.THREE.Scene());
+  const actor = f.make('charger');
+  actor.weapon = { ...actor.weapon, special: VAC_ID, specialCost: 190 };
+  actor.special = 190; actor.intent.fire = true; actor.intent.special = true;
+  f.tick(actor); actor.intent.special = false; f.tick(actor, 29);
+  for (let frame = 0; frame < 400 && f.inkVacState(actor)?.phase === 'inhale'; frame++) f.tick(actor);
+  assert.equal(f.inkVacState(actor)?.phase, 'exhale', 'the actual suction lifecycle reaches countershot');
+  for (let frame = 0; frame < 20; frame++) {
+    f.tick(actor);
+    assert.equal(system.list.length, 0, 'continuing to hold suction ZR cannot auto-fire');
+  }
+  actor.intent.fire = false; f.tick(actor);
+  assert.equal(f.inkVacState(actor), null, 'a genuine release fires after the 20F transition');
+  assert.equal(system.list.length, 1, 'the release authors exactly one native countershot');
+  f.tick(actor, 3); assert.equal(system.list.length, 1, 'the release is not replayed on following frames');
 });

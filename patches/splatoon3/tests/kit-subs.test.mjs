@@ -327,6 +327,24 @@ test('the real native PaintSystem accepts the rolling trail centre', async () =>
   assert.equal(cur.s3TrailPoint, before, 'the trail point is reused, not reallocated per frame');
 });
 
+test('Curling trail projects to a surface only within the source PaintCheckHeight', async () => {
+  const api=await production();ground(api,'record');
+  const {projectiles,bomb}=await throwReal(api,'curling',1,8);bomb.s3Mode='rolling';
+  bomb.pos.set(2,1.5,3);
+  let reach=-1,stamps=0,point=null;
+  api.G.physics.raycast=(origin,down,maxDistance,out)=>{
+    reach=maxDistance;assert.equal(down.y,-1);
+    out.hit=true;out.point.set(origin.x,0,origin.z);out.normal.set(0,1,0);return out;
+  };
+  const paint={splat(p){stamps++;point=p.clone();return 1;}};
+  assert.equal(kitBombTrail(api.SUB,bomb,paint,projectiles,api.G),1);
+  assert.equal(reach,2,'MoveParam.PaintCheckHeight is the downward surface-search limit');
+  near(point.x,2,'trail keeps the contacted X');near(point.y,.1,'trail uses the contact point plus its bias');near(point.z,3,'trail keeps the contacted Z');
+  api.G.physics.raycast=(_origin,_down,maxDistance,out)=>{reach=maxDistance;out.hit=false;return out;};
+  assert.equal(kitBombTrail(api.SUB,bomb,paint,projectiles,api.G),0,'no surface within the source range means no trail stamp');
+  assert.equal(stamps,1);
+});
+
 test('a ghost bomb gets no kit authority', async () => {
   const api = await production();
   ground(api);
@@ -1023,4 +1041,27 @@ test('Autobomb fuse admission follows a real landed chase, not a new terrain hit
   assert.equal(kitBombKeepsFuse({ ...native, s3Auto: null }), false, 'a bomb that never landed is not fuse-authoritative');
   assert.equal(kitBombKeepsFuse({ ...native, s3Mode: 'flight' }), false, 'a flying bomb has no grounded chase fuse');
   assert.equal(kitBombKeepsFuse({ ...native, ghost: true, s3Resolved: null }), false, 'unverified ghost cannot gain owner fuse authority');
+});
+
+
+test('full installer Curling trail uses the emitted floor projection and skips a missing floor', async () => {
+  const { fixture } = await import('./source-fixture.mjs');
+  const f = await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,
+    extraExports:"export {kitBombTrail as nativeTrail} from './patches/splatoon3/runtime/kit-subs.mjs';"});
+  const actor=f.make('roller');actor.weapon={...actor.weapon,sub:'curling'};actor.weaponRunner.reset();
+  const projectiles=f.G.projectiles;projectiles.throwBomb(actor);
+  const bomb=projectiles.bombs.at(-1);assert.equal(bomb.s3Resolved.spec.id,'curling');
+  bomb.s3Mode='rolling';bomb.pos.set(2,1.5,3);
+  let reach=-1,stamps=0,point=null;
+  f.G.physics.raycast=(origin,down,maxDistance,out)=>{
+    reach=maxDistance;assert.equal(down.x,0);assert.equal(down.y,-1);assert.equal(down.z,0);
+    out.hit=true;out.point.set(origin.x,0,origin.z);out.normal.set(0,1,0);return out;
+  };
+  const paint={splat(p){stamps++;point=Array.from(p.toArray());return 1;}};
+  assert.equal(f.nativeTrail(f.SUB,bomb,paint,projectiles),1);
+  assert.equal(reach,2);assert.deepEqual(point,[2,.1,3]);
+  const reused=bomb.s3TrailPoint;
+  f.G.physics.raycast=(_o,_d,maxDistance,out)=>{reach=maxDistance;out.hit=false;return out;};
+  assert.equal(f.nativeTrail(f.SUB,bomb,paint,projectiles),0);
+  assert.equal(stamps,1,'missing floor emits no paint stamp');assert.equal(bomb.s3TrailPoint,reused);
 });

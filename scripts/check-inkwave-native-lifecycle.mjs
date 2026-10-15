@@ -39,7 +39,7 @@ try{
  // Mobile emulation tests a touch viewport, GL rendering and CPU frame costs.
  // SwiftShader is not a real mobile GPU; this must not be reported as device FPS.
  result.mobile=[];
- for(const id of ['scorch','hagglefish','inkblot','mako','brinewater']){
+ for(const id of (process.env.NATIVE_MOBILE_STAGE_IDS||'scorch,hagglefish,inkblot,mako,brinewater').split(',')){
   console.log('mobile '+id);const c=await browser.newContext({viewport:{width:844,height:390},hasTouch:true,isMobile:true,deviceScaleFactor:1}),p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));
   await p.addInitScript(()=>{localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:false,musicVolume:0}));let s=0x12345678;Math.random=()=>{s|=0;s=s+0x6d2b79f5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};});
   await p.goto(address+'/?map='+id,{waitUntil:'domcontentloaded'});await p.evaluate(async()=>globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G);await p.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await p.locator('#boot-error').textContent(),'');

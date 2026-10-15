@@ -5,13 +5,11 @@ import { specialMotionAllowsAction, bombMotionAllowsAction } from './action-admi
 const INSTALL = Symbol.for('inkwave.s3.roller-detail-motion.install.v1');
 const RUNNER = Symbol.for('inkwave.s3.roller-detail-motion.runner.v1');
 const ACTOR = Symbol.for('inkwave.s3.roller-detail-motion.actor.v1');
-const mix = (a, b, t) => a + (b - a) * t;
-const ease = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
-// roller.mjs maps the horizontal release to native age .23. The native whip
-// begins at .15. Meet its existing target there, without retiming the release.
+// roller.mjs now owns the full horizontal Hermite grip spline, including the
+// former detail coil endpoint at .15/.23 of windup. Keep this boundary for
+// diagnostic phase reporting, but never layer a second zero-velocity easing
+// across it (that created a visible micro-pause in the swing).
 const COIL_END = .15 / .23;
-const COIL_ANCHOR = [-.13, 1.06, -.02];
-const COIL_ROTATION = [-2.3, .3, 0];
 function hidden(root) {
   for (let node = root; node; node = node.parent) if (node.visible === false) return true;
   return false;
@@ -81,17 +79,10 @@ export function installRollerDetailMotion({ Character, CHARACTER_CHANNELS: C, CH
       detail.startAnchor = Array.from(pose.slice(C.ANC, C.ANC + 3));
       detail.startRotation = Array.from(pose.slice(C.ANCR, C.ANCR + 3));
     }
-    const result = flick.call(this, pose, ft);
-    const u = ease(a.elapsed / (a.windup * COIL_END));
-    // The old low-carry coil blended with the raised carry first swung forward,
-    // then backward. One interpolation reaches the same existing coil endpoint.
-    // Only the weapon's pre-IK pose changes; actual arms, skin and geometry use
-    // the native two-bone solver and drawing hierarchy unchanged.
-    for (let i = 0; i < 3; i++) {
-      pose[C.ANC + i] = mix(detail.startAnchor[i], COIL_ANCHOR[i], u);
-      pose[C.ANCR + i] = mix(detail.startRotation[i], COIL_ROTATION[i], u);
-    }
-    return result;
+    // The shared roller spline already reaches the measured grip-space coil
+    // key at exactly this boundary. Record the initial grip for diagnostics,
+    // then let that single curve feed the normal two-arm IK unmodified.
+    return flick.call(this, pose, ft);
   };
   P.setWeapon = function (...args) { clear(this); return setWeapon.apply(this, args); };
   P.setVisible = function (value) { if (!value) block(this); return setVisible.call(this, value); };

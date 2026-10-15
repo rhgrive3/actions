@@ -4031,6 +4031,17 @@ Keep a deployed Splash Wall's mesh at the authoritative collision yaw rather tha
 Independent review found single-cloud LOS4x and96-overlap LOS4x in the first live-membership implementation. Skip LOS for equal/weaker clouds after a current minimum is proven, and omit redundant grounded-human/unused airborne-squid lookups without caching state. Node eight-Actor stress measurements reduce96-overlap3072→784 LOS/tick and median1.478→.661ms; single-cloud32→24 LOS and .0577→.0466ms remain above old lease-based main. See reports/inkwave-mist-query-cost-2026-10-12.md. Current position/gear/life/expiry and stronger blocked clouds remain checked; browser timing is not established.
 
 
+## 2026-10-11 サブ14種・スペシャル19種の性能再照合
+
+Driveのpart02アーカイブとS3 11.3.0パラメータ、条件を記録したWiki値を再照合。数値の保管だけでなく、インク節約・軽減・時間・SPU・設置物・装甲・native通信の実際の消費箇所を修正した。根拠、実装箇所、再現、プレイ影響、確認状態は `reports/inkwave-source-parity-corrections-20261011.md`、個別のsource葉監査は `reports/source-parity-coverage-20261011.json`、設置物・装甲・通信の監査は `reports/interaction-parity-20261011.md` に記録。
+
+本節は全挙動の実機一致認定ではない。ロジック単独、配信ビルド、ブラウザ動作、本家実機比較を区別する。世界距離、標的選択、飛行/接地/壁の反応、塗り形状、未公開フィールドの意味について未確認を残す。モデリングと本格的なアニメーションは依頼の範囲外。既存の未確認項目を本変更だけで解消済みにしない。
+
+### 2026-10-11 最終ソース消費・main統合追記
+
+NiceBall／Stamp／Crabの射出・重力・抵抗、Zipフック到達時間、Reef rut／Inkjet・Reef周辺塗りの値を実処理へ追加。実Actorの発射からProjectilesの30/60/120Hz進行を測定した。最新main PR1237の靴メイン対物ギアとnative Sprinkler修正も保ち、rawダメージ・攻撃行・ギアを送るowner判定で2重倍率を防止。具体的な根拠・再現・影響・未検証は`reports/inkwave-source-parity-corrections-20261011.md`と各parity報告に記載。実機完全一致は認定していない。
+
+
 ## 2026-10-12 原典表示メッシュ5ステージ統合
 
 固定 KiTrix 表示OBJから5ステージをローカルビルドする処理と、既存 Actor/Physics/PaintSystem/ナビ/ミニマップ/ランク world への接続を追加した。生/変換アセットの再配布権限は未確認のため公開ビルドには含めない。本家の参照版は11.3.0。詳細・再現手順・確認済み/未確認の区分は [原典ステージ統合記録](inkwave-native-stage5-2026-10-12.md)。30/60/120 Hz は INKWAVE ロジック検証であり実機比較の代用ではない。スポーン、表示由来の collision/paint/grate 属性、4ランクルールの配置、OBJの版、実モバイル性能は未確認を維持する。
@@ -4057,6 +4068,8 @@ Independent review found single-cloud LOS4x and96-overlap LOS4x in the first liv
 
 - **常駐配列のレビュー修正**: 頂点/法線viewが未使用の元pack全体を保持していたため、登録時に必要範囲だけ独立保持する。元画素・全頂点/法線bitとGPU配置は維持。両元packの実登録配列backing storageは68,992,952→39,520,236byte（28.107MiB減）。これはJS object/一時decode peak/driver VRAM込みの総メモリではない。16MiBの未使用backingを持つ負対照で所有範囲と頂点一致を検証し、標準起動の描画と全CIを再実行する。
 
+2026-10-12継続: PR #1285をmainへマージし、Pages公開版で原典5択とユノハナの8人起動を確認した。続きの `codex/stage5-render-performance` は元三角形/塗り属性/CPU authorityを保持し、画面外インクのindexだけを除外する。地形15方向の画素差0、全原典Node23/関連27が成功。中央比較視点のインク三角形は約39〜53%減ったが、ソフトウェアGL時間のばらつきがあり実機FPS改善とは判定しない。詳細とシミュレーション/画素比較の条件は [描画領域の記録](inkwave-native-stage-render-2026-10-12.md)。本家11.3.0のscene/mask/スポーン/描画と実モバイルは未確認を維持する。
+
 ## 2026-10-12: プライムシューター・ジェットスイーパーのモデル作り直しと銃口・構え
 
 参照版 Ver.11.3.0。ブキ: プライムシューター（Wmn_Shooter_Expert）、ジェットスイーパー（Wmn_Shooter_Long）。ギア・状態の前提なし（立ち止まって待機→長押し射撃）。
@@ -4072,3 +4085,293 @@ Independent review found single-cloud LOS4x and96-overlap LOS4x in the first liv
 | グリップの傾き（プライム 0.37→0.23 rad、ジェット 0.30→0.28 rad）と支え手位置の変更。ジェットは構えを胸側へ寄せる上書き（aim z 0.16、carry/run） | 待機・歩行・射撃 | 見た目と、撃ち始めの1フレーム目の銃口位置（構えが上がる途中の補間元） | 画像からの推定。ジェットの本家の左手位置は未確認 |
 
 計測方法: `Actor`/`WeaponRunner`/`Character` を実際に動かし、立ち止まって 0.6 s 待機後に長押し射撃、2.4 s 時点の `ch.getMuzzle()` をアクター位置・照準方向基準で記録（変更前は同じ手順を変更前のファイルで実行）。弾速・射程・拡散・ダメージ・塗りの数値は変更していない。検証: `weapon-models-all.test.mjs`（全65種、支え手誤差 ≤ 0.008 m）、`weapon-detail-motion` / `shooter-*` / `weapon-weight-gear` / `special-projectile-paint-credit` の各テスト、`scripts/check-inkwave-weapon-models.mjs`（ビルド成果物、ヘッドレス Chromium）。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
+
+## 2026-10-13: 残り11種のサブウェポンのモデル（複数方向の実物資料との比較）
+
+参照版 Ver.11.3.0。対象: クイックボム・ロボットボム・タンサンボム・トーピード・トラップ・ポイズンミスト・ラインマーカー・スプラッシュシールド・スプリンクラー・ジャンプビーコン・ポイントセンサー（スプラッシュ・キューバン・カーリングは 2026-10-11 に作成済み）。ブキ・ギアの前提なし（サブパワーアップ 0）。
+
+- **本家の根拠**: Inkipedia の S3 サブアイコン、公式プロモレンダー（S2 の同形状。真横・正面・斜め）、S2 プロモ画像（歩行・手持ち・真上）、S3 ゲーム画面、ラインマーカーは公式回転動画（8 方向）。ファイル名の一覧と読み取った構造は `patches/splatoon3/reference/sub-models.md`。モデルの寸法・メッシュは公開されておらず、形と比率は画像からの推定。
+- **修正前の差分**:
+  - 本家のボム経路に乗るロボットボムとスプリンクラーは、スプラッシュボムの三角錐として飛び、着地後もそのままだった。
+  - all-subs 経路の8種は球・円柱・箱だった。シールドは半透明の板、霧は1個の半透明球。設置物は全部 `yaw + age*2` で回り続けていた。
+  - ポイントセンサーは直径 0.26 m の光る球だった。
+  - 手持ちは、この11種がすべてスプラッシュボム（0.2 倍、約 10 cm）。スプラッシュ・キューバン・カーリングも 0.2 倍で、頭の横で点にしか見えなかった。
+- **INKWAVE の実装箇所**: `patches/splatoon3/runtime/sub-models.mjs`（新規。11種のモデル、`poseSubModel`、手持ち）、`all-subs.mjs`（`buildVisual` / `poseVisual`、共有ジオメトリを破棄しない `disposeVisual`）、`bomb-models.mjs`（ロボットボム・スプリンクラーの投擲モデルと向き・回転、全14種の手持ち、`HELD_SCALE`）、`kit-support.mjs`（ポイントセンサー）、`scripts/build-inkwave.mjs`（遅延プリロード一覧に追加）。
+
+| 差分（修正内容） | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|
+| 11種を個別のモデルに置き換え（形は参照資料の表のとおり。インク色の部分はチーム色） | 各サブを装備して構え・投げ・設置 | 見た目のみ | 全11種を4方向で描画し、参照画像と並べて比較・修正（2回）。ビルド成果物をヘッドレス Chromium で描画し、実際の Actor・WeaponRunner・Projectiles で構え→投擲→着地まで全14種が自分のモデルになることを確認（`scripts/render-inkwave-sub-gallery.mjs`）。本家実機との並べ比較は未実施 |
+| ロボットボム: 直立のまま進行方向（停止中は標的）を向き、歩く速さで脚を交互に振る。足が接地面に乗る | 敵の近くへ投げる | 見た目のみ（追尾・速度・爆発は既存のまま） | ロジック単独（実レコードで標的方向を向く・脚が動く・転がらない）。歩幅と脚の振りの速さは未確認 |
+| スプリンクラー: 円すいより上が回る。速さは固定表 `SpinDegreesPerFrame` 33/11/1 度/フレームを段階で切り替え、設置後 30F は止まる。床・壁・天井の面に底を向ける | 床・壁に投げて段階の切り替わりまで待つ | 見た目のみ（噴射の方向・間隔は既存の `kit-sprinkler`） | ロジック単独（第1段階で1フレームあたり33度）。見た目の腕の向きと噴射方向の一致は未比較 |
+| トーピード・ラインマーカー: 機首（ラインマーカーは太い側）を進行方向へ向ける。トーピードはプロペラが回る | 投げる | 見た目のみ | ロジック単独（前方向と速度の向きが一致）。ラインマーカーの向きは S3 画面（線がペン先から後ろへ伸びる）から判断 |
+| シールド: 投擲中はたたんだ形（0.22 倍、腕は上向き）。設置後 0.35 s で伸びて腕が開き、開き切ってから幕を出す。腕の幅はゲーム側の壁幅 4.2 m に合わせた | 投げて設置を見る | 見た目のみ（耐久・当たり判定・持続は既存）。幕が出るまでの見た目の遅れは 0.35 s（当たり判定は既存の `activeAt`） | 展開の速さ・本家の伸び方は未確認。S3 画面では幅と高さがほぼ同じで、横長の比率は本家と異なる（当たり判定の寸法 4.2×2.8 m が調整値のため） |
+| トラップ: 起動後だけ点の輪を出す。ポイズンミスト: 設置後は淡い球を重ねた霧（ゲーム側の半径） | 置く／投げる | 見た目のみ | 点の輪・霧の濃さは画像から推定。トラップの探知範囲の床の輪は未実装（誰に見えるかを未確認のため） |
+| 設置物が回り続ける表示（`rotation.y = yaw + age*2`）をやめた。回るのはスプリンクラーの頭・ビーコンのアンテナ・トラップの点の輪だけ | 設置して待つ | 見た目のみ | ロジック単独 |
+| 手持ち: 全14種が自分のモデルを持つ。大きさを 0.2→0.55 倍（スプラッシュボム幅 0.10→0.28 m）にし、立てて置く機器は底を手のひらに乗せる向き | サブボタンを押し続けて構える | 見た目のみ（投擲の発生位置は手の位置で、モデルの大きさに依存しない） | ヘッドレス Chromium の実 Character で、構え中に肩の後ろで頭ほどの大きさで見えることを確認。本家の持ち方・大きさは画像からの推定で未確認 |
+
+検証: `sub-models.test.mjs`（8件: 全モデルの生成・三角形数・共有ジオメトリ、接地・向き・比率、アニメーション、all-subs の実オブジェクト、シールドの展開・霧・破棄、本家経路のロボットボム／スプリンクラーの実レコード、実 Character の手持ちと色替え）、既存の `bomb-kit-fidelity` / `all-subs` / `kit-subs` / `bomb-motion` / スプリンクラー・サポートキット関連のテスト。いずれもロジック単独またはブラウザ描画で、本家実機比較ではない。
+
+### 2026-10-13 追補: スプラッシュシールドの作り直し
+
+- **本家の根拠**: S2 公式レンダー（正面・全高）と S3 画面の拡大。帯は固定色のマゼンタ、腕とスリーブは固定色の紫、針と腕の先は緑、足と下の棒は銀（3段の伸縮式）、上の棒は黒い溝付きで、インク色なのはタンクの中身と落ちる筋だけ。筋は膜のない分かれた筋（片側約7本）。
+- **修正前の差分**: 帯・腕がインク色、足が黒、下の棒が1本、筋の間に半透明の膜、タンクが長すぎ、留め具・支え・上の線が小さかった。
+- **INKWAVE の実装箇所**: `sub-models.mjs` の `splashWallModel`。部品の高さは S2 レンダーのハブまで 570 px から換算。投擲中のたたんだ形は下の棒が縮み腕を上に束ねる。タンクの液面は残り耐久に連動（満タンで 85%）。
+- **プレイへの影響**: 見た目のみ。
+- **確認状態**: 4 方向の描画と参照画像の比較、`sub-models.test.mjs`。腕の幅は当たり判定（4.2 m）に合わせたため本家より約 25% 横長。液面と耐久の関係は未確認。
+
+## 2026-10-13: スペシャルウェポン13種のモデル（装置・置く物・弾）
+
+参照版 Ver.11.3.0。対象: マルチミサイル、ジェットパック、ナイスダマ、ウルトラハンコ、ショクワンダー、メガホンレーザー5.1ch、カニタンク、サメライド、トリプルトルネード、デコイチラシ、テイオウイカ、スミナガシート、ホップソナー（all-specials の13種）。ウルトラショット・キューインキ・アメフラシ・ウルトラチャクチ・グレートバリア・エナジースタンドは既存の専用モデルのまま。
+
+- **本家の根拠**: S3 スペシャルアイコン、公式モデル画像（S3/S2 "Model.png"）、公式プロモレンダー、公式回転動画（8 方向）、キャラの回転画像（ショクワンダー・テイオウイカ）、S3 プロモ画面。一覧は `patches/splatoon3/reference/special-models.md`。寸法は公開されておらず画像からの推定。
+- **修正前の差分**: 装置・乗り物・変身の見た目がなく、置く物はデコイ＝球、竜巻の目印＝球と円盤、ホップソナー＝円柱、スミナガシート＝半透明の長方形、カニタンクの球＝半透明の球だった。弾はインクの弾だけだった。
+- **INKWAVE の実装箇所**: `special-models.mjs`（モデル）、`special-presentation.mjs`（装置の装着と手を添える処理、置く物・弾の表示）、`install.mjs`、`scripts/build-inkwave.mjs`。
+
+| 差分（修正内容） | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|
+| 13種の装置・乗り物・変身を表示（肩の発射機、背中のタンクと砲、頭上の光る球、両手で持つハンコ、全身インク化と線、周りに浮かぶ6基のスピーカー、乗るカニ型機体と球形態、乗るサメ、ケース、発射機、テイオウイカ、瓶、ホップソナー） | 各スペシャルを発動 | 見た目のみ（メインブキは装置を持つ間だけ非表示） | ビルド成果物をヘッドレス Chromium で描画し、実際の Actor・Character で13種すべての表示を確認（`scripts/render-inkwave-special-gallery.mjs`）。本家実機との比較は未実施 |
+| 手で持つ装置・乗り物の握りへ腕を伸ばす（キャラの2関節の腕の計算） | 発動して構える | 見た目のみ | ブラウザ描画で手が握りに届くことを確認。握る位置・肘の向きは推定 |
+| 置く物（デコイ・目印・竜巻・波の帯・スミナガシート）を、ゲーム側の仮の形を隠して同じ位置に描画 | 各スペシャルを使って置く | 見た目のみ（位置・寿命・当たり判定はゲーム側） | ロジック単独（`special-models.test.mjs`）とブラウザ描画 |
+| 弾（マルチミサイル・ナイスダマ・ウルトラハンコ）をモデルで描画（インクの弾の上に重ねる） | 発射・投擲 | 見た目のみ | ロジック単独（ミサイルの向きが速度と一致） |
+
+ユーザーの指摘による修正（同日）: テイオウイカは初版で四角錐の頭・棒状の脚で、回転画像の 1 コマに 2 体並ぶことに気付かず横幅を約 1.3 倍に測っていたため、測り直して作り直した。ウルトラハンコは初版で手と離れて浮いていたため、両手で柄を持つ形にした。テイオウイカの目も指摘を受けて作り直した。初版は小さな白目と黒目を左右別々に置いていたが、本家（S3 Kraken Royale Model.png の拡大像、アイコン）は左右の白目がつながったゴーグル形の帯で、下辺に黒い縁、インク色の大きな虹彩、中央へ下がる瞼が虹彩の上側を隠す。この形に合わせた（実装: `special-models.mjs` の `kraken`。見た目のみ。確認はヘッドレス Chromium の単体描画と参照画像の並置で、本家実機との比較は未実施）。
+スペシャルモデルの作り直し（同日、ユーザーの「他のモデルでもクオリティを上げられるものは上げて」による）: 全モデルを参照画像と並べて描画し、差が大きかったマルチミサイル、ジェットパック、ウルトラハンコ、カニタンク（球形態を含む）、サメライド、トリプルトルネード（ケース・目印）、デコイチラシ（発射機・風船）を作り直した。各モデルの構造と根拠の画像は `patches/splatoon3/reference/special-models.md`。表示位置の変更: トリプルトルネードのケースは S3 promo image に合わせて背負う形（ふたを閉じる）にした。カニタンクは前の版で地面より 0.32 m 下に置いていたため地面の高さに直し、手を新しいハンドルへ伸ばす。サメライドの手は背の左右の取っ手、マルチミサイル・ジェットパックの砲・デコイチラシの手の位置も新しい握りへ合わせた。プレイへの影響は見た目だけ（位置・速度・寿命・塗り・ダメージ・当たり判定・通信は変更なし）。ただし three.js はジオメトリ・マテリアル・メッシュを作るたびに UUID 用に `Math.random` を 4 回呼ぶ。モデルの生成（装置の装着、投げたサブ、置く物、弾）でこの呼び出し回数が変わるため、以後の拡散角・塗りシードなど `Math.random` から引く値の並びはずれる（分布は変わらない。ネット対戦は塗りシードを送るため同期には影響しないが、同じ乱数の並びで結果を再現する比較は一致しなくなる。未計測）。確認はモデル単体の描画と参照画像の並置、ビルド成果物のヘッドレス Chromium での実際の Actor・Character への装着描画、`check-inkwave-special-presentation.mjs` の合格。本家実機との比較は未実施で、寸法・持ち方・背負う位置・カニタンクに乗る高さ（INKWAVE は乗る姿勢がなく子どもは地面に立ったまま）は未確認。
+未確認・未対応: 体の姿勢（乗る・飛ぶ・掲げる）、メガホンレーザーのスピーカーが標的へ飛ぶ動き、テイオウイカの跳ねる動き、模様・文字、相手側の段階表示。
+
+## 2026-10-13 ガチ4ルールのWiki監査後の修正
+
+参照はSplatoon 3 11.3.0、S3mixの各ルール詳細、Nintendoのガチキング基本ルール、Inkipediaの延長・同点注記。詳細な根拠・再現操作・実装・影響・未確認値は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` に記録した。アサリの攻撃ゴール／防衛ゴールを取り違えた延長判定、ホコの未突破カンモンより先のカウント・通常空中カウント・拾得位置からの後退・中央放置バリア・敵陣側の時間切れ復帰、ヤグラのカンモン上での進捗消去、同点時の1カウント補正、占有済み地点へのアサリ重複生成を修正。スペシャル別の取得／投擲、全所持アサリのイベント単位の散乱、ガチアサリの着弾塗り・反撃用アサリの塗り、ゴール破壊までの回転待ちも接続した。
+
+確認は単独ロジック・実ゲームクラスの接続・ブラウザ・CIで区別する。1/60・0.05・0.2秒の入力間隔と、通常終了・延長突入・20秒期限・バリア破壊・スナップショット復元の順序を回帰テストする。公開URLのブラウザ検証はmain公開後のCIにも追加した。Wiki間のホコ後退倍率・延長猶予・アサリペナルティ端数、地形／カウント写像／投擲慣性／塗り半径／回転待ちの厳密時間、ヤグラ上の設置物追従・寿命、本家Switch実機との比較は未確認を維持する。実装のCI成功だけで本家と完全一致とは判定しない。
+
+### 2026-10-13 ホコショットの再点検
+
+専用弾の存在に加え、S3mix のチャージ前隙（ヒト1F/イカ6F）、射撃前隙1F、射撃後隙20F、チャージキープ不可、部分チャージの非爆発、満チャージ音・発光、チャージ中速度を実装境界で補完した。専用弾は native kitDefenseCandidate の先着判定、飛行中の下向き塗り、反動、フル弾の着弾待ち、水・ハンコ・キューインキの消去に接続した。60Fちょうどの丸め誤差と爆風の足元基準も修正。Wiki/11.3.0 パラメータとロジック試験・ネイティブ試験・ブラウザ試験は区別して記録する。完全な本家弾道、反動の単位変換、着弾後0.2秒の待ち時間、防御物への全爆風補正は実機未確認。詳細と再現条件は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` のホコ追補に記載。
+
+同追補: 通常チャージャーを溜めたままホコを取得すると元の WeaponRunner が busy のまま凍り、泳ぎを禁止し、ホコを失った後に古い射撃が再開し得る経路も修正した。所持開始時に一度だけ通常ブキ状態を初期化し、実際のチャージ→取得→イカ変身→所持解除で古い弾が出ないことをネイティブ試験で確認。既に発射済みの傘の存続などは本家比較未確認として残す。
+## 2026-10-13 傘とスペシャルの入力差分
+
+`reports/inkwave-brella-special-controls-20261013.md` に19種の操作条件、Wiki/11.3.0の根拠、実行箇所、反例、未確認項目を追記。パージの布描画欠落、開口サイズ、飛行のRunner依存を修正。ナイスダマの早投げ/自動投げ/移動、R投擲系のZR代用、ジェットパックの連射/任意終了、ミサイルの空撃ち/距離制限、デコイ8→12、サメの操舵、メガホン2→6、カタログメインのスペシャル中抑止、キューインキの無操作吸引、スタンド即設置を是正。形状・弾道・追跡・通信相手の傘表示、ギア/ゲージの全実機条件は未確認を保持し、完了に読み替えない。
+
+傘/スペシャル追補: 環境復旧後に現行mainを統合。装甲/Burst/シールドの追補を含む関連272件は旧fixture4件を修正後に通過（任意1件skip）。実PerspectiveCameraのfar clippingによるマルチミサイルの距離制限も除去し、far=50に対する距離200の10発を検証。06c1ba6のCIでは傘の実WebGL表示・飛行・clearが通過。残るブラウザfixtureを50% Mist、ZR保持、R離し/接地の操作へ更新。未確認の実機比較は維持する。
+
+傘/スペシャル最終追補: キューインキのZR保持をnative snapshot既存firing bitで通信し、相手側の離し/イカ/再開も判定・描画に反映。スタンドは実床への接触で0.03浮かせず、ServeAreaHeightDown=0の本家値と同じ床の飲料受け取りを両立。関連318件全通過、配信ビルド/容量通過。全体ゲートを修正後のコードで再実行中。詳細は20261013の傘/スペシャル照合記録。実機完全一致の未確認項目は維持。
+
+傘/スペシャルWiki再確認追補: キューインキの17F発動→12F/18F吸引開始、0.22%/F敵タンク減少、吸引後20F移行→150F射撃猶予を反映。スタンドのserve円柱はnative PLAYER capsuleの一部接触を含め、高台の頭/横端/丸い角/イカ拒否を検証。最終差分はVac54件と周辺100件の対象で確認し、quick・配信ビルド・容量通過。総合5,174件の試験履歴は20261013照合記録に区別して記載。実機未確認値は維持する。
+
+公開追補: main1cc77ff8のPagesではlocal-quality922通過/8任意skip。練習場fixtureのintent.move=false初期化をVector3保持へ修正し、反撃予約19F無弾/20F発射を追加。練習場43件全通過。公開ゲートを保持して再公開。
+
+
+## Ink Vac release contract fixture follow-up (2026-10-13)
+
+The old #1120 source-contract assertion still required immediate release through a pre-#1252 source string. Current main correctly buffers a fresh press/release edge until the sourced 20F inhale-to-exhale transition, then permits the 150F shot window. The regression now requires the existing edge queue, readiness guard and transition-plus-hold deadline while retaining the held-suction negative guard. Runtime behavior is unchanged. Clean-main source and emitted native controls distinguish held ZR, buffered early release, no projectile through transition frame19 and exactly one on frame20; fixture logic and browser evidence remain separately reported, with no new hardware parity claim.
+
+The same shared fixture route also carries the exact catalog-browser setup correction authored in #1355: advance Nice Ball by30 native frames and Crab by1 before the existing Object Shredder armor and armor-break assertions. Clean-main source and minified probes retain negative boundaries at1F/29F (armor470 unchanged) and positive boundaries at30F/31F (armor400 without gear or393 with gear, body100). No armor timing or damage code changes. This test-only integration unblocks the two inherited main gate mismatches without adopting #1355's separate Rainmaker wall/owner runtime changes.
+
+## 2026-10-12: ソイチューバー・バケットスロッシャーのモデル作り直し
+
+参照版 Ver.11.3.0（ソイチューバー、バケットスロッシャー。ギア・状態は既定、操作は待機・歩行・射撃の長押し）。記録は `patches/splatoon3/reference/weapon-models/{chargers,sloshers}.md`、実装は `patches/splatoon3/runtime/weapon-models/{chargers,sloshers}.mjs`。根拠は Inkipedia の本家3Dレンダー、"S3 Custom Goo Tuber model rotating.mp4"、"S3 Goo Tuber charge 10.0.0.mp4"、"S3 Slosher Deco model rotating.mp4"、"S3 Slosher promo image.jpg"、"S3 Slosher Weapon Class Signals.mp4"。寸法は画像からの推定で、実機計測ではない。
+
+| 差分 | 本家の根拠 | INKWAVE の実装箇所 | 再現操作 | プレイへの影響 | 確認状態 |
+|---|---|---|---|---|---|
+| ソイチューバーのホースを灰白色・送液管に掛かる約2¼巻きのコイル（左右軸まわり）に変更。旧版は常時インク色の縦2ループ | 回転動画・本家レンダーでホースは白〜灰色、チャージ映像で送液管に掛けたコイル | `chargers.mjs` `gooTuber` | 待機・構え | 見た目のみ | 画像から推定（巻き数・半径） |
+| ソイチューバーのホースと送液管がチャージに応じてインク色に満ちる（チャージコイル、ホース始端→コイル→送液管の順） | チャージ映像で空の灰色からインク色へ変化 | `gooTuber` の `glow`、`gooAnimate` | 長押しでチャージ | 見た目のみ（チャージ量・判定は既存） | 色の変化は映像で確認。満ちる順序・タイミングは未確認 |
+| ソイチューバーの全長 0.67 → 0.86 m、左手位置 z 0.165 m、構え位置 aim.p [-0.09, 0.06, 0.18] | チャージ映像の手・頭との比率 | `gooTuber`、`GOO_HOLD` | 構え | 見た目のみ。銃口は新しいノズル先端（z 0.574 m、高さ 0.075 m）へ移動し、弾の発生位置が変わる | 画像から推定。実機の発生位置は未比較（実機計測が必要） |
+| ソイチューバーのバルブがチャージで赤→白に変わる表現は未実装 | チャージ映像 | — | 長押しでチャージ | 見た目のみ | 未実装 |
+| バケットスロッシャーを横倒しの黒い丸バケツ（口は前上向きの斜め切り）・ラベンダーの枠・上部ハンドル・左右のコイルオーバーで作り直し。旧版は口が上向きの円錐バケツ | 回転動画の正面・側面・背面、本家レンダー | `sloshers.mjs` `bucketSlosher` | 待機・振り | 見た目のみ。インク量の表示（液面と溜まったインク）は既存の減少・回復を維持 | 画像から推定 |
+| バケットスロッシャーの待機・歩行は口を前に向けて右脇に下げる（`nativeCarry`） | Weapon Class Signals 映像の待機姿勢 | `sloshers.mjs` MODELS（slosher） | 待機・歩行 | 見た目のみ | 映像で確認（角度は推定） |
+| バケットスロッシャーの構え（aim）を 0.8 rad 上へ傾け、ネイティブの振り（+1.5〜1.95 rad）で放出時の口が前（約 −20°）を向くようにした | 本家は振り上げて前へ投げる | `sloshers.mjs` hold.aim.r | 長押しで連続の振り | 見た目のみ（放出 12F／29F・弾の発生位置は不変） | 振りの軌道・口の角度は未確認（実機計測が必要） |
+| バケットスロッシャーの右手は本家では上部ハンドル。INKWAVE はネイティブの縦グリップ（U字フレーム中央）を保持 | プロモ画像・映像 | `bucketSlosher` | 待機・振り | 見た目のみ | 差分として残す（未対応） |
+
+検証: `weapon-models-all.test.mjs`、チャージャー・スロッシャー関連とモーション関連のテスト 568件（`slosher-release-motion.test.mjs` の振り上げキー検査を、武器ごとの構えピッチを差し引いた比較へ更新）、`check-inkwave-patches.mjs` 全体。ロジック単独とブラウザ描画のみで、本家実機との比較ではない。
+
+## 2026-10-12: 立ち方・ブキの持ち方・足運び（P02 の一部）
+
+- **本家の根拠**: 参照版は Ver.11.3.0。任天堂公式ブキ紹介のシューター動画 `y7Zl26Zl12n`（側面の歩き、射撃後の待機）と `9LnjRgbl2Ng`（背後からの射撃しながらの走り）。どちらも過去の記録と SHA-256 が一致した。収録版・入力・ギアは不明。上体と頭は待機・歩き・走りで直立し、射撃していないシューターは右手で腰の高さに持つ（歩きは銃身がほぼ水平で前向き、立ち止まると銃口が下）。歩きで後ろのすねは水平まで上がらない。
+- **INKWAVE の実装箇所**: 試合中の体は初代（Wii U）`Player00` クリップをリターゲットした `src/game/motion/source-controller.js` / `retarget.js` が決める。射撃中の上半身だけが本体の手続き姿勢。初代の Hold 系クリップは上体 16〜31°・首 最大 25°前傾していて、そのまま出ていた。シューターの銃身は体の左へ 63〜72°横向き、遊脚の足首は弱い入力でも 0.25 m 上がり膝が 100°曲がる。
+- **再現操作**: シューターで止まる、弱い入力で歩く、最大入力で走る。正面と側面から見る。
+- **変更**: `patches/splatoon3/runtime/source-posture.mjs` を adapter で 3 箇所に接続。idle/move 状態だけ、上体の前傾を 20〜40%、首を 25% に縮める。射撃していないシューターは、移動中だけ銃身をほぼ水平・前向きにする（両手持ちのまま）。停止中の持ち方は変えない。遊脚の足首の高さを歩き 50%、走り 70% にする。補正後は待機の上体 4.7°・首 4.8°、歩きは上体 3°・首 2°・銃口ピッチ −8°、膝 93°。
+- **プレイへの影響**: 見た目だけ。発射位置の差は初弾 0.000 mm、射撃 1 秒後 0.010 mm。移動・接地・射撃のロジックは不変。
+- **確認状態**: 実ソースバンクを読み込む VM テスト（`patches/splatoon3/tests/source-posture.test.mjs`）と Chromium 描画で確認。Switch 実機比較ではない。停止中の持ち方は途中で片手持ちに変えたが、本家は支え手を添えていて判断が誤りだったため、修正前の両手持ちに戻した。射撃中にブキを体から離して構える差（発射位置に影響するため未変更）、シューター以外の持ち方、待機のしゃがみの深さ、歩幅・歩調・横歩き・後ろ歩き・坂は未確認のまま。詳細は `patches/splatoon3/reference/stance-carry-comparison-2026-10-12.md`。
+
+
+## 2026-10-13: 復帰待ちのジャンプ予約を対象の戦闘ライフに束縛（#1357）
+
+- **再現 / 実装箇所**: `patches/reliability/respawn-navigation-adapter.mjs` の予約は味方Actorへの参照だけを保持していた。自分の復帰待ちに選択した味方が死亡・再出現し、観測側が死亡中のtickを見ないと、同じActorの新しいライフ・復帰地点へ追加確認なしでジャンプした。現main `ee9fbbab` の実Actor/PlayerController合成でライフ1→2、目的地(18,0,6)→約(0.908,4.5,0.621)を再現。死亡tickを観測すると既存取消が働くため、観測順序依存の欠落である。
+- **変更 / 影響**: 予約時の既存`netLife`を保存し、待機中と着地後の実行直前に照合する。受信済み`net.lastLife`が描画中のライフより新しい場合も古い対象で予約・実行しない。`netTp`は同一ライフのテレポートにも変わるため使わない。通常の味方移動、同一ライフのジャンプ・テレポート、新ライフへの新しい明示確認、ホーム座標とグレートバリアのID/serial経路を維持する。通信形式・射撃・移動係数は変更しない。
+- **確認状態**: 未変更mainでは新規8件のうち6件失敗、死亡観測と同一ライフ移動の2対照は成功。修正後は実Actorを含む復帰ナビゲーション49件が通過。最小化後コードの回帰、近傍の入力/ジャンプ回帰、Chromium/WebKitの既存入力ブラウザゲートへ同じライフ境界の確認を接続する。exact-head CI結果はPRに記録し、未実行を成功扱いにしない。ブラウザゲートのActorは状態fixture、実Actorの死亡/再出現はsource/emitted Nodeで別に検証する。
+- **本家比較 / 未確認**: S3 Ver.11.3.0比較の既存#409復帰時マップ選択と#362確定済み着地点の範囲を維持する。今回の根拠はINKWAVE内部の選択取消と戦闘ライフの一貫性であり、本家の未公開ライフ識別子や全復帰予約タイミングを同定したものではない。実機・実ネットワークの遅延分布と完全な本家一致は未確認。
+
+- #1359 pad-map証拠の修正: classだけで成功とした旧PNGは、WebKitでmap不可視・Chromiumで入口アニメーション途中だった。verifierをnative D-pad選択・HUD spring/CSS完了観測・保存PNGの選択行/ビーコン/案内画素確認へ強化。positive判定に固定sleepやstyle強制変更は使わず、text/iconだけを隠す別の負例PNGは必ず拒否し、5つのlife-token caseを保持。gameplay/本家係数の変更ではなく、新しい両engine描画証拠は最終CI待ち。詳細は `reports/reliability/pad-map-rendered-evidence-2026-10-13.md`。
+
+### Issue #1360: emitted map/gyro verification follows the explicit Turf Map contract
+
+- Scope: test-only repair to `patches/reliability/tests/map-gyro.test.mjs` and an unconditional post-build invocation in the existing Validate workflow. Runtime and frozen source are unchanged. The earlier #523 corner-map default remains OFF; merged #907 intentionally supplies live raster/actor data to an explicitly opened Turf Map.
+- Baseline: clean main `ee9fbbab5883f20d1968e36a4b6b2faeb1f748fe`, optimized build, emitted Node suite = 11 pass / 2 fail. The obsolete fixture lacks `toCanvas` and also assumes all map transport stays hidden while Tab is open. Source-only runs skip these emitted cases.
+- Verification: use the actual emitted `Minimap.prototype.toCanvas` with logical dimensions and nonzero bounds, then check normalized coordinates, orientation, actor metadata and canvas identity. Both alive/dead paths and both map orientations retain gyro ownership, hover and A-confirmation assertions. Closed → open → closed HUD calls require hidden-only work and null transport when closed, update/projection work and expanded transport when open, with the corner setting unchanged throughout. Repaired emitted suite = 15/15 pass.
+- Negative controls: separately disabling explicit-map transport, suppressing actor-marker generation, or corrupting native projection each rejects all 4 emitted alive/dead × orientation cases. Counts represent behavioral assertions on deliberately mutated emitted copies, not a browser result.
+- Limits / S3 comparison: this corrects the INKWAVE verifier to its already-merged explicit-map behavior; it introduces no Nintendo numerical claims or gameplay changes. Node executes emitted Game/Match/controller/Minimap projection, but canvas raster scheduling is counted rather than drawn. Browser rendering, physical gyro and retail S3 parity remain separate evidence; existing full browser gates are retained.
+
+## 2026-10-13: full-installed native bomb victim authority
+
+Independent full `installS3` execution exposed an existing blanket ghost-explosion return in `kit-defense.mjs`: an authenticated native bomb reached the receiver but could not reach its real local Actor.damage. The narrow correction admits only native bomb replicas to the existing victim/life authority guard, preserves native Bubbler occlusion, and never spends or proposes replica object HP. Other ghost blast authority is unchanged.
+
+The permanent eleven-case full-installer regression retains actual Actor.damage and the following fixed-tick lethal commit. It covers valid damage, range/team/remote-victim/recipient-life/invulnerability/LOS negatives, and both owned and replayed native Bubbler shielding; removing the shield admits the identical blast without an object-HP mutation or proposal. An independent source counterfactual restoring the blanket guard suppresses all five positive paths. Source and actual emitted ee9 composition passed the independent eleven-case probe. Browser execution remains separate. This is an INKWAVE network-authority consistency correction, not evidence of retail S3 numerical parity; no source coefficient is changed.
+
+## 2026-10-13: 小さい画面のインク残量タンクの負半径を修正（#1340）
+
+- **再現条件 / 実装箇所**: `s3-hud-look-adapter.mjs` が置換する本番 `_drawTank`。320×200 CSS px、DPR 1では幅5 pxのタンクの枠最小値2.4 pxが内側を超え、`Path2D.roundRect` の下角半径が−0.48になる。実ゲームの通常PlayerController更新でRangeErrorとなり、フレームを中断した（診断run 38342113690）。320/360 px幅の縦画面も同じCSS寸法域になる。
+- **変更**: 既存の枠で正の液面領域・非負の角を維持できる場合は同じ数値を使う。成立しない小寸法だけ、外側の足の半径以内に枠を収める。極小キャンバスでもパディング、肩、足を利用可能な幅・高さに収める。例外を握り潰す、タンクを隠す、HUDやコントローラーを省略する処理は追加しない。
+- **確認状態**: 本番合成メソッドで旧式の−0.48例外、正常寸法の描画命令・色の完全一致、往復リサイズ、DPR 0.75〜3、小さい正寸法と非表示DOMの既存フォールバックを回帰検証。ブラウザゲートは実際の最小化ビルドを320×568から起動し、320×200を含む縦横サイズへ変更、通常フレームでインク量100/0/50のキャンバス画素変化をスモーク検証する（外枠・サブ消費線を含むため、インクだけの被覆率や視覚一致の測定ではない）。Chromium/WebKitの結果はPRのexact-head CI・artifactで確定し、未実行を成功扱いにしない。
+- **本家比較 / 未確認**: 既存S3映像参照のタンク形状・平らな液面・サブ消費線を保持する。参照版・ブキ・ギアによるゲーム数値の変更はない。今回の根拠はブラウザのroundRect仕様とINKWAVEの再現であり、本家Ver.11.3.0の実機タンク寸法・実機モバイル対応・完全な視覚一致を確認したものではない。射撃、移動、インク消費/回復の権威ロジックは未変更。
+
+ホコ攻撃種別の追補: ナイスダマ装甲への60＋180が、所持している通常シューターの倍率.7を誤って使い42＋126になる経路を再現・修正。11.3.0のGachihoko_Bullet／Gachihoko_BombCore／GachihokoTimeUpBurstを装甲・設置物・ネイティブ通信へ渡す。グレートバリアはネイティブの外膜/弱点・raw単位x10・DamgeRatio .64・対物ギアを再利用し、接触/近傍着弾の爆風と所持者側のHP提案へ接続。破壊前の遮蔽は同じ爆発まで維持するローカル整合性方針。実機の破壊フレーム・傘/バリア全形状・弾道一致は未確認を維持。操作条件・再現・確認範囲は `reports/inkwave-ranked-rule-corrections-2026-10-13.md` の追補参照。最終CIはPR1355で確認する。
+
+
+## Ranked Rainmaker native wall ownership follow-up (2026-10-13)
+
+S3mix Splash Wall supplies Rainmaker direct x1 / weapon-blast x2. Dedicated ranked effects now share native object HP and the owner-authenticated proposal path; native Object Shredder is applied separately once. A guest locally owning a Rainmaker visual replay may submit native object hits while actor damage and paint remain ranked-host authority; host proxies do not submit/spend the same object hit. Wall planes are retained for this explosion's occlusion when its HP is removed. This ordering and existing wall/world geometry are local implementation choices; other defense blast rows and exact console behavior remain unmeasured. Five installed-runtime tests and the browser wall HP proof are added; validation is pending until CI reports success. See reports/inkwave-ranked-rule-corrections-2026-10-13.md.
+
+独立レビュー追補: ホコのチャージ/射撃待ち/射撃後硬直の専用速度が採用済みMist減速を迂回する経路と、取得時にInk Vac/Trizookaの独立状態が残る経路を修正。実際のMist配置と30/60/120Hz・サブ影響軽減0/57APで減速の1回適用と退出復帰を確認し、ネイティブ取得から吸引終了・終了通知・再発動と発射/展開済み攻撃の存続を回帰検査する。S3mixのホコ取得・ポイズンミストの記述と既存11.3.0耐性係数を根拠とし、速度の世界単位換算・ブラウザFPS・Switch実機比較は未確認のまま維持する。詳細は上記ルール修正記録の独立レビュー節。
+
+同修正の現行main追補: 外部統合ee9fbbabのMist係数0.5/0.75、キューインキ17F発動と保持吸引、反撃19F無弾/20F発射を維持して再合成。修正前は対象5件が失敗し、修正後はホコ6件・傘/スペシャル操作12件・練習場8件の26件がsource/実minify双方で通過。旧e57上のブラウザ証拠を新合成の証明には流用せず、新headのCIで再検証する。
+
+
+## 2026-10-14 — 全issue監査と入力寿命の修正
+
+全69件を確認し、#1396（取消済みPointer Lock）、#1400（editorへのpad入力透過）を修正。#1359/#1321の検証済み候補から#1357/#1360/#1340/#1311を集約した。公開ミラーとworkflowは不変。source監査455pass/4skip、配布版の入力/復活97passとnetwork32pass、梱包9pass、容量ゲート通過。修正前のbrowser反例を保ち、配布版の実Chromiumでeditor・neutral待ち・取消lock・fresh retry・小さいnative Canvas2D tankの5ケースが合格。controllerと非同期latencyは制御fixtureで、Switch/Android/iOS/Joy-Conの実機比較ではない。未公開の数値・曲線・原典単位を確定せず、残り63件を全解消済みとしない。全件表、正確なsource/build hash、失敗の保持、参照は `reports/inkwave-issue-resolution-2026-10-14.md` と同名JSON。
+
+## 2026-10-13 — 18ce7b6c 後の入力寿命の残差
+
+- 外部 main の #1396/#1400 修正を保持し、同じ pad poll の accept で editor が開閉した後の B/Start/肩/スティック透過と、Input 無効化後の Pointer Lock 遅延完了だけを限定修正する。単一 pending request と全入力 neutral 待ちの既存契約は保持。
+- source と実配布コード回帰は各 48/48、隣接 85/85、workflow 15/15、梱包 9/9。現 main 反例は新規 15 件が失敗。独立レビューでも source/配布各 48 件と native lifecycle 各 5 件を再確認。最終 CI と採用は別途確認し、この追記だけで解消済みとしない。詳細と限界は `reports/inkwave-input-followup-2026-10-13.md`。
+
+
+## 2026-10-13: 18ce composition の Curling / native Sprinkler 防御回帰を復元
+
+14f9 で通過していた Curling の 20 HP 接触・Bomb_CurlingBullet 行と、native Sprinkler の Bomb / Vac / Wail AoE・所有者側ダメージ提案が、18ce の旧ファイル取り込みで失われた。元の4ケースをそのまま比較し、14f9成功・18ce失敗を確認。対象2 runtime hunkと削除された3 AoE testだけを復元し、18ceのvictim-local ghost bomb authority、Bubbler遮蔽、FIFO/quota、producer reset、候補vector遅延構築を維持した。source34+追加1通過。実minifiedを指定した35ケースも通過（26はfull-installer/emitted、既存9はsource defenseの手動installを残す）。追加Curlingケースと復元AoE3件は18ce実minifiedで失敗し修正版で成功。runtime独立reviewとsource34件は通過、追加test/documentationの最終readbackは未完。本家の新規実機一致やstutter解消は主張しない。詳細は `reports/inkwave-bomb-defense-restoration-2026-10-13.md`。
+
+同日追補: さらに Curling trail の床投影欠落を、14f9実minified成功・18ce実minified失敗で確認。source PaintCheckHeight=2 の下向き接地探索と接地点の塗り、床なし時の非塗りだけを旧実装どおり復元し、18ceのghost Sprinkler置換は全byte維持。kit-subs source38件、新規実emitted1件、合成後の防御/authority source35件・emitted指定35件（うち既存9件はsource防御手動install）成功。最終buildは `b1cedb52073238d645239872a3767a69f70107e69965364b92293fd79d6a3c50`。GPU描画・実機・stutter改善を示す結果ではない。
+
+### 2026-10-13: deterministic Super Chump expiry attribution
+
+The shared source regression incorrectly attributed all nearby cross stamps to each decoy. Legal activation seed 111 places decoys 6 and 9 at the same position: native expiry still produces four cross stamps and one satellite per decoy (48 + 12 overall), while the old spatial grouping counts eight at either overlapping position. This caused the exact fc48 CI assertion failure and is a test attribution defect, not a change to native paint behavior.
+
+The regression now uses each native expiry event to identify its emitting decoy and checks the exact cross shape, team, claim owner, no-special credit and once-only expiry. The overlapping seed remains explicit; missing/extra cross stamps, duplicate expiry, displaced geometry and wrong ownership are rejected. Independent source and retained production-emitted controls passed; the old seeded assertion and runtime count/duplicate-expiry mutations fail as intended. The test-only change does not modify runtime, paint constants, budgets or update scheduling. Final new-main release checks retain their own exact build and test identities.
+
+## 2026-10-13: optional motion-denial evidence lifetime (#187 boundary)
+
+- Baseline: main `9bed52751a909af84f9a9c0d6abb7cdd1a61c6b0`; production `inkwave-public/` composed with the existing local-quality Gyro/MobileInput overlays. This is not the removed prototype.
+- Controlled reproduction: orientation permission resolves first; a zero-rate motion sample is observed; the independent motion-permission promise subsequently resolves `denied`. Main retains the earlier stationary evidence and suppresses a later legitimate orientation-only turn for the remainder of its existing 75 ms trust window. All four 30/60/90/120 Hz cases reproduce the loss.
+- Narrow correction: before admitting stationary evidence in the orientation path, retire that evidence when the current optional motion permission is explicitly denied. Orientation permission, sensor listeners, sensitivity, calibration, 0.35 deg/s threshold, 75 ms window, and valid/granted motion paths are unchanged. No actual user permission is changed by this patch or its tests.
+- Regression scope: real source-composed Gyro/MobileInput and real GyroPermission asynchronous callbacks with controlled sensor/permission fixture delivery. Covers delayed denial, ignored subsequent denied samples, granted/no-motion controls, queued aim preservation, and rejected stale permission generations. Existing gyro suites remain required; physical Android/iOS permission-delivery timing and hardware sensor behavior are unverified.
+- Comparison boundary: S3 11.3.0 remains the gameplay reference, but browser sensor permission sequencing has no claimed Nintendo-equivalent numeric behavior. This fixes a browser-only input-admission inconsistency; it does not establish general #187 Android drift calibration or justify closing that Issue. Browser UI and final-head hosted CI are not yet verified.
+
+
+## 2026-10-13: native remote bomb authority and bounded admission (#1321 correction)
+
+The live bomb cap cannot treat native replicas as cosmetic: they drive victim-local bomb/Storm consequences. The correction reserves locally bound roster shares, keeps quota-full attacks in the existing finite owner FIFO without spending event/Storm identity, and mirrors native same-owner Sprinkler replacement so persistent replicas cannot pin that FIFO. The hard actor/owner/global object limits and input/owner/life guards remain.
+
+A full `installS3` regression also exposed the existing `kit-defense` blanket ghost return, which suppressed even unsaturated victim-local bomb damage. Only native bomb replicas now reach the existing victim-authority lane; native Bubbler shielding stays read-only and neither replica object HP nor remote damage proposals are granted. The older partial-installer diagnostic is not adoption proof. Full-installed source and actual minified controls cover the correction; exact-head browser/CI acceptance remains pending.
+
+These are INKWAVE online consistency fixes, not a retail Splatoon 3 timing measurement. No source coefficients were inferred or changed. Controlled terminal geometry, constrained producer locomotion, finite backlog limits and remaining browser/retail limits are recorded in [the bounded authority report](network-replication/bomb-authority-budget-2026-10-13.md).
+
+- #1321 密集負荷の限定診断: native 161発の遅延burstは欠落113→0・live48→28だが、総CPU中央値425→799ms、追加FIFO待ちは合成owner clockで最大183ms。最後の試行は16.67ms超の連続処理frameが2→11となり、負荷無害・実機FPS改善とは扱わない。Sprinkler置換はlive48→7となったが、生成/破棄費用も記録した。詳細・再現用診断は `reports/network-replication/bomb-authority-budget-2026-10-13.md`。browserでのstall/実時間遅延は未確認。
+
+- #1321 重複処理削減: native bombの隣接Euler更新を1回のsetにまとめ、native Sprinklerの該当候補が無いstepでは一時Vector生成を避けた。600frameの全状態・順序・life判定を保持し、独立4536回転/630接触比較と実minified33+14caseで確認。161発burstのVector clone38182→2279、Quaternion更新71484→35742。実時間stall改善は未証明で、追加待ちとmain採用holdを維持する。
+
+
+## 2026-10-13: #1368 native producer test identity correction
+
+The old mixed-sub producer/lifecycle coverage claim is withdrawn: directly replacing the fixture weapon's sub did not reset the native runner's cached Suction spec. Wire labels could say Curling/Autobomb/Sprinkler while owner physics still resolved Suction. The correction resets the real runner and checks live/release/birth/resolved/wire/receiver subtype, exact ink debit and each intended native lifecycle; a no-reset negative must fail. Autobomb/Sprinkler use verified downward throws so the fixture actually reaches search/deployment before out-of-floor retirement or replacement. This is a test/report correction, with no production or retail coefficient change.
+
+The preceding density/duplicate-work counts retain their historical inputs and do not become corrected kit-specific performance evidence. The ordinary synthetic-floor scope, consecutive-stall and admission-wait limitations remain. Separate full-installer victim-local damage, Bubbler and recipient-life evidence is unaffected. Final bound verification is recorded in `reports/network-replication/bomb-authority-budget-2026-10-13.md`; browser and retail comparisons remain distinct.
+
+
+## 2026-10-13: audio v11 非同期ロードの所有期間（#1322 派生）
+
+音響Draft5530272では、manifest待機中に音声bankを破棄・コンテキスト置換しても、完了後に古いbankへの取得・デコード・再格納が続く。実モジュールと合成データで再現し、既存のgenerationとbank/context所有判定を各await境界へ接続した。正常な共有キャッシュ、新しい所有者のロード、失敗後の再試行は維持する。stopAllや音声再生規則、MP3は変更しない。
+
+限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。
+
+## 2026-10-13: タブレット・スマホでの Bot 密集時の重さ（試合中のシェーダー同期コンパイルと塗り所有判定の割り当て）
+
+- **本家の根拠**: 参照版は Ver.11.3.0。任天堂の公開資料には、描画プログラムのコンパイル時期や CPU・メモリ予算は記載されていない。本家で Bot（またはプレイヤー）が密集したり、スペシャルを発動したりしたときに表示が止まることは想定しない。Switch 実機の該当挙動は未確認。
+- **比較条件**: ブキ・ギア・操作入力の変更ではなく、表示用プログラムの準備時期とメモリ割り当てだけを対象にした。ブキ・ギアの条件は該当しない。Chromium（SwiftShader、Android タブレット相当の UA とタッチ、640×400）で `tidewater` のナワバリを使った。全 Bot を自分の周囲 2.5〜6 m に集め、射撃させ、スペシャルゲージを満タンに保った。
+- **INKWAVE の実装箇所と変更**:
+  1. `patches/splatoon3/runtime/hit-spawn-motion.mjs`: スポーン時コーティングが、LOD クロスフェード用の複製マテリアル（`character-lod.js` の `ditherMaterial`）にもう一度適用され、キャッシュキーが `…|iwSpawnCoating1|iwLodZ|iwSpawnCoating1` に書き換わっていた。シェーダー本文は同一なのに、`warmAll` 済みのプログラムとは別物として、Bot の最初の LOD 切り替え時に皮膚・服・髪の 3 本を同期リンクしていた。キーに印がある複製は包み直さないように変更した。
+  2. `patches/splatoon3/runtime/special-motion.mjs` と `all-specials.mjs`: 発動ごとに作って破棄する特殊表示がある。キューインキの渦、ナイスダマの膜、ウルトラチャクチの拳、アメフラシの雲、エナジースタンド、スクリーン・グレートバリア・デコイ・マーカー・カニタンク球などの設置物である。three.js r186 は最後のマテリアルが破棄されるとプログラムとシェーダーステージ ID を捨てるので、発動のたびに再リンクしていた（変更前の計測では、キューインキの 2 回目の発動中にも新規プログラムが発生）。キャラの試合ロード時 `warmAll` と同じ HDR 描画先・同じシーンで、各生成関数のインスタンスを 1 組だけコンパイルし、破棄せず保持するようにした。設置物は `worldMeshParts` に切り出し、同じ関数から作る。
+  3. （取り下げ）`paint-ownership.mjs` の付随形状のプロパティ構成の統一は、main に入った #1270（ピースを直接渡すサンプリング）の、変更前の形状オブジェクトと完全一致を求めるテストと両立しないので、main の実装に戻した。効果も小さかった（マイクロベンチで GC 回数 -21%、処理時間はほぼ同じ）。
+  4. `patches/local-quality/perf-readout-adapter.mjs`: URL に `?perf` を付けたときだけ、FPS 表示に CPU 時間（sim / draw）・描画解像度の倍率・ドローコール数を追記する。付けない場合の表示は従来と同一。
+- **再現操作**: 試合開始後に Bot を自分の周囲へ集め、撃ち合いでやられた Bot の LOD 切り替えやリスポーンを待つ。またはスペシャルを 2 回以上発動させる。
+- **プレイへの影響**: 見た目、移動、射撃、塗り、ダメージ、通信、AI、シミュレーション時計は変更していない。塗り所有のコードは main と同一（上記 3 は取り下げ）。シェーダー本文が同一であることは、既存アサーション（コーティング uniform が 1 つ）で確認した。
+- **確認状態**:
+  - ロジック単独: `hit-spawn-motion`・`special-*`・`kit-ink-vac`・`all-specials`・塗り所有関連・新規の `special-program-keepers` / `perf-readout` テストが通過。
+  - ブラウザ実動作（SwiftShader）: Bot が密集したときの新規プログラムは、変更前 3 本 → 変更後 0 本。試合ロード後に、渦・膜・拳・雲・エナジースタンド・設置物 6 種をそれぞれ 2 回「作成→描画→破棄」した。変更前は毎回 1〜2 本を新規コンパイルしていた（エナジースタンドは 1 回あたり 5.2 秒と 3.4 秒停止。ソフトウェア描画での値）。変更後は全種類・全回とも 0 本。
+  - 未確認: 端末 GPU でのコンパイル時間、FPS、電力、Switch との同等性。SwiftShader の描画時間は GPU 時間の代わりにならない。
+
+## 2026-10-13: 描画されない固定ティックでの Bot・遠隔キャラの見た目更新の省略（ユーザー了承済みの差分）
+
+- **本家の根拠**: 参照版は Ver.11.3.0。本家は Switch 上で 60fps 描画を前提にしている。描画が 60fps を下回ったときに、キャラの姿勢や弾の発射位置をどう扱うかは、公開資料に記載がない。本家の該当挙動は未確認。
+- **比較条件**: ブキ・ギアの条件は変えていない。Chromium（SwiftShader、Android タブレット相当、640×400）の `tidewater` で、全 Bot を周囲 2.5〜6 m に集めて射撃させた。描画は省略し、1 フレーム 1/30 秒（固定ティック 2 回）と 1/60 秒（1 回）で比べた。同じ試合の中で、オプトアウト用フラグにより ON / OFF を交互に計測した。
+- **INKWAVE の実装箇所と変更**: `patches/splatoon3/runtime/clock.mjs` の `FixedClock.advance` が、各ティックに「描画前の最後のティックか」（`finalTick`）と「進行中か」（`advancing`）を記録する。`patches/local-quality/intermediate-tick-budget.mjs` は、Bot（`isBot`）と遠隔キャラ（`remote`）について、最後でないティックの `Character.update` を見送る。見送った時間は、最後のティックでまとめた dt として 1 回の更新に渡す。ローカルプレイヤー、練習場、メニューやショーケースなどクロック外からの呼び出しは、従来どおり毎ティック更新する。60fps 以上ではすべてのティックが最後なので、何も変わらない。
+- **再現操作**: 描画が 60fps 未満の端末で、Bot が射撃や移動をしている場面を見る。
+- **プレイへの影響（差分）**: 60fps 未満のときだけ生じる。
+  - 省略したティックで Bot が撃つと、弾の発射位置（武器モデルの銃口と構え具合の補間）が、最後に描画したティックの腕の姿勢から計算される。体の位置と向きはエンジン側が毎ティック更新するので、ずれるのは腕の姿勢分だけで、最大 1〜2 ティック分である。
+  - 足音などキャラ由来のイベントの時刻も、最大で同じティック数ずれる。
+  - 髪・服の揺れなどのばね積分が、2〜3 回の小さな刻みではなく 1 回のまとめた刻みになる。
+  - Bot の移動、照準方向、判定、ダメージ、塗り、AI、試合時計には触れていない。
+- **確認状態**:
+  - ロジック単独: クロックのフラグ（60/30/24/120fps と予算打ち切り）、Bot・遠隔だけが見送られること、合計時間が保存されること、ローカル・練習場・クロック外は毎回更新されることをテストで確認した（`patches/local-quality/tests/intermediate-tick-budget.test.mjs`）。
+  - ブラウザ実動作（SwiftShader）: 1 フレームの CPU 時間の中央値は、30fps 相当で 15.4 ms → 8.3 ms、60fps 相当で 6.2 ms → 6.1 ms（変化なし）だった。
+  - 未確認: 端末実機での FPS、発射位置のずれの実測値、Switch との比較。
+
+## 2026-10-14: 空のインスタンス描画バッチを描画リストから外す（見た目・挙動は不変）
+
+- **本家の根拠**: 描画パイプラインの内部処理であり、本家と比較する挙動はない。ブキ・ギアの条件は該当しない。
+- **INKWAVE の実装箇所と変更**:
+  - `patches/local-quality/ink-volume/runtime.mjs`: インクの立体表示は、柄・フレーム・段階ごとにインスタンス描画バッチを持つ（本体とフチで約 140 個）。インスタンス数が 0 の間も「表示」扱いだったので、three.js が毎フレーム全バッチについて、プログラム・状態・頂点配列の設定をし、`onBeforeRender` による全 uniform の再転送もしていた。インスタンス数が 0 の間だけ非表示にした。ただし新しく登録したパックは、最初の 2 フレームだけ全バッチを従来どおり表示する。こうすると、アトラステクスチャの転送とシェーダーのコンパイルが、これまでと同じタイミング（登録直後）で済み、試合中の初回使用時にずれ込まない。これは CI の `check-inkwave-volumes.mjs` が検出した。破棄で解放されるテクスチャ数が 2 足りず、未使用ファミリーのテクスチャが未転送のままだった。
+  - `patches/local-quality/fx-empty-pools-adapter.mjs`: エフェクトの粒子プール 6 個（しずく・煙・光・リング＋マーク・薬莢・ビーム＋柱）も同様にした。プールの更新後に `instanceCount > 0` で表示を決める。環境の塵（motes）は従来の切り替えのまま触れない。
+- **プレイへの影響**: なし。インスタンス数 0 のメッシュはもともと何も描いていない。起動時のシェーダー事前コンパイル（`compile` は非表示物体のマテリアルも対象にする）、描画順、ゲームロジックは変わらない。
+- **確認状態**:
+  - ロジック単独: `ink-volume.test.mjs`（空バッチは非表示、使用中は表示。修正前のコードでは失敗することを確認）と `fx-empty-pools.test.mjs`（実 FX で、待機中は非表示、発生中は表示、消滅後は再び非表示、motes の切り替えは保持）。
+  - ブラウザ実動作（SwiftShader、Bot 密集）: 同じ試合で旧／新を交互に計測した。three.js が描画準備する物体数は 1 フレーム 239 → 102、three.js の JS 時間は 8.0 → 7.2 ms。GL 命令自体のコストは、この環境では GPU 待ちと分離できず未計測。
+  - 未確認: 端末実機での FPS。
+
+## 2026-10-14: タッチ端末でキャラの影を遠距離用モデルから描く（画質はほぼ不変）
+
+- **本家の根拠**: 影の描画方法は内部処理であり、本家と比較する挙動はない。ブキ・ギアの条件は該当しない。
+- **INKWAVE の実装箇所と変更**: `patches/local-quality/kid-shadow-proxy.mjs`（`installQuality` から接続。対象はタッチ端末のみ）。
+  - 太陽の影は、約 116 m を 2048² の 1 枚で覆うので、1 テクセルが約 5.7 cm になる。それなのにキャラは、表示中の段階のモデル（近距離 11.1 万／中距離 3.2 万三角形）で毎フレーム影を描いていた。
+  - 各キャラに、遠距離用モデル（同じ骨格・同じマテリアル）の影専用コピーを置く。対象は肌・服・髪で、遠距離段階ではもともと影を落とさない髪も含める。
+  - 表示用の各段階で、対応する部位は影を落とさないようにした。遠距離用に対応部位がない部位は、従来どおり自分で影を落とす。
+  - 影専用コピーはレイヤー 30 にだけ置く。three.js の影パスは、表示カメラのレイヤーで描画対象を判定するので、影パスを実行している間だけ表示カメラにレイヤー 30 を足す。通常描画・AO・反射には映らない。
+  - キャラのグループの表示・縮尺（変身・非表示・スポーン）にそのまま従う。画質設定を変えてモデルが作り直されたときは、コピーも作り直す。
+- **プレイへの影響**: なし。影の形がわずかに変わるだけで、ゲームロジックには触れない。PC（影 4096²）は従来どおり。
+- **確認状態**:
+  - ロジック単独: `kid-shadow-proxy.test.mjs`。遠距離用ジオメトリであること、表示段階では影を落とさないこと、段階切り替えへの追従、遠距離段階を先に作った場合、作り直し、影パス中だけレイヤーが見えて終わると元に戻ること、無効時は従来どおりであることを確認した。
+  - ブラウザ実動作（SwiftShader、1133×744 CSS、DPR 2、Bot 8 体密集、同じ瞬間の描画で比較）: 影パスの三角形は 275k → 119k、1 フレームの合計は 663k → 506k。画像差は、2/255 を超える画素が 0.1%、8/255 を超える画素が 0.006%、最大 44/255 で、足元と自分の体に落ちる影の縁にわずかに出るだけだった。切り出し画像を目視で比べても区別できなかった。同じ条件で 2 回描くと完全に一致する（決定的）ことも確認した。
+  - 未確認: 端末実機での FPS と GPU 時間。
+
+## 2026-10-14: Tenacity respects spent-special locks (Refs #469 / #647)
+
+On main `636e2b68`, the real Actor/Match production composition recharged after Ink Storm's throw animation while its gauge lock remained live, and increased Slam's pending landing segment. Both passive helpers now honor those existing lock owners. A Match-local capability also prevents simultaneous Actor and post-roster Match awards; existing independent rate constants stay unchanged. See [reproduction, reference confidence and bounded validation](inkwave-tenacity-special-lock-2026-10-14.md). The existing community rate discrepancy, retail drain curves and hardware comparison remain unverified; no full Issue closure or retail-parity claim.
+
+## 2026-10-13 ネイティブ地形のボット水際判定の計算削減
+
+`BotBrain._wet` が必要とする「落下死の高さ以上に歩ける地面があるか」だけを、従来と同じ真下レイ・法線条件・距離・境界値で判定する。通常の最寄り地面、射撃、当たり判定、塗り、ボット数・更新頻度は変更しない。上下に重なる床、穴、天井、斜面、グレーチング、カスタム地面取得を固定旧実装と照合した。実際の Actor→ブキ→弾→ダメージと塗り命令、地形で遮られた標的、30/60/120 Hz の集団ボットと配信済み形式の圧縮コードも別々に検証。
+
+本家の参照条件は既存記録の Splatoon 3 11.3.0。今回、新しい本家フレーム値・地形形状・ボット挙動の一致は主張しない。INKWAVE の同一入力に対する既存結果の維持と計算量だけが対象。詳細・再現条件・全CPU試行・実機未確認の区別は `reports/inkwave-native-ground-support-2026-10-13.md` と同名の evidence JSON に記載。ネイティブ地形の支持判定の三角形検査は減ったが、共有環境の全体CPU時間はばらつきが大きく、iPadやブラウザのFPS改善、操作不能の解消は未確認を維持する。
+
+## 2026-10-13: native downward-slab predicate experiment
+
+A separate ee9-based CPU candidate changes only the ordered exact-down BVH interval rejection, retaining native divisions, fallback/coercion behavior and every nearest-hit field/counter. No bot, cadence, movement, damage, paint or visual behavior is intentionally changed. Source and actual emitted before/after replay match separately at 30/60/120 Hz; real damage and native-wall protection tests also pass. This preserves the existing INKWAVE comparison baseline rather than declaring new Splatoon 3 Ver.11.3.0 retail parity.
+
+Captured rays use 73.8% fewer Math min/max calls with identical triangle work. Normal-realm Node timing has one mixed short batch and a favorable longer batch; the same-harness VM CPU replay improves in all four pairs. None establishes browser, whole-game FPS or iPad mini6 performance. Source versus emitted trajectories differ even on baseline and are not compared as identical. Full evidence, all raw trial values, limitations and reproduction: [native vertical-slab report](inkwave-native-vertical-slab-2026-10-13.md). PR #1366 remains frozen and separate; no main merge is performed.
+
+
+## 2026-10-15: 体力バーの表示安定性とDOM更新削減
+
+`runtime/combat-info.mjs` の canonical 体力バーに、DOMノード単位の最終描画値キャッシュを追加。同じ表示位置・HP・色を毎フレーム書き直す処理と、非表示済みバーへの重複書き込みを削減した。NaN/Infinityの投影座標はマーカー生成時に除外し、描画側も不正な座標/HPで古い表示を残さず隠す。正常な次フレームでは再表示し、行オブジェクトの再利用や別Actorへの割当でも最新値を描画する。
+
+比較対象は既存のSplatoon 3 11.3.0・全ブキ/ギア。Ver.11の体力表示と固定SplPlayerの180F表示窓、遮蔽・潜伏・非公開追跡・復活lifeの条件を維持し、本家の非公開描画方式や実機FPS改善は主張しない。修正前mainで新規5件すべて失敗、source関連35件と隣接36件、実際のminified helper新規5件＋composition3件が成功。DOM/描画失敗はfixtureであり、ChromiumとSwitch/モバイル実機は未検証。手順と検証範囲は [体力HUDの記録](inkwave-health-hud-stability-2026-10-15.md)。

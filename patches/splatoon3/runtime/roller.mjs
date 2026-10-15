@@ -635,26 +635,70 @@ export function installRollerLogic({ WeaponRunner, Actor, G, on, THREE, Hit }, _
   };
 }
 
+// Native attack release owns the exact end of windup for both swings. The
+// authored *pose* uses C1-continuous nonuniform Hermite segments. Shared
+// velocities at coil / release / follow-through eliminate the stop-and-go
+// motion produced by chaining several independent smoothsteps. These are
+// INKWAVE grip coordinates, NOT recovered Nintendo bone tracks.
+const HORIZONTAL_GRIPS = [
+  // Enter directly from the settled shoulder carry. The old forward-facing
+  // initial grip rotated 3.3 radians over the first few ticks and dropped the
+  // real roller geometry between coil samples; the two-arm IK correction now
+  // preserves both grip sockets without that discontinuity.
+  { a: READY_ANCHOR, r: READY_ROTATION },
+  { a: [-.13, 1.06, -.02], r: [-2.3, .3, 0] },
+  { a: [-.07, .98 + DRUM_LIFT, .3], r: [-.1, .05, 0] },
+  { a: [-.06, .74, .3], r: [.75, .05, 0] },
+  { a: READY_ANCHOR, r: READY_ROTATION },
+];
+const VERTICAL_GRIPS = [
+  { a: READY_ANCHOR, r: READY_ROTATION },
+  { a: [.015, 1.11, .025], r: [VERTICAL_SWING.coil, .015, Math.PI / 2] },
+  { a: [-.025, 1.05, .23], r: [VERTICAL_SWING.release, 0, Math.PI / 2] },
+  { a: [-.025, 1.12, .28], r: [VERTICAL_SWING.follow, 0, 0] },
+  { a: READY_ANCHOR, r: READY_ROTATION },
+];
+function slope(keys, times, i, joint, component) {
+  if (i === 0 || i === keys.length - 1) return 0;
+  const before = (keys[i][joint][component] - keys[i - 1][joint][component]) / (times[i] - times[i - 1]);
+  const after = (keys[i + 1][joint][component] - keys[i][joint][component]) / (times[i + 1] - times[i]);
+  if (before * after <= 0) return 0;
+  // Weighted harmonic mean prevents overshoot while keeping the same tangent
+  // on both sides of a keyframe (including the release frame).
+  const a = times[i] - times[i - 1], b = times[i + 1] - times[i];
+  const w1 = 2 * b + a, w2 = b + 2 * a;
+  return (w1 + w2) / (w1 / before + w2 / after);
+}
+function swingPose(elapsed, windup, interval, keys) {
+  const release = Math.max(1e-6, windup);
+  const end = Math.max(release + 1 / 60, interval);
+  const follow = release + Math.min(.12, (end - release) * .55);
+  const times = [0, release * .65, release, follow, end];
+  const t = Math.max(0, Math.min(end, elapsed));
+  let segment = 0;
+  while (segment < 3 && t > times[segment + 1]) segment++;
+  const h = times[segment + 1] - times[segment], u = Math.max(0, Math.min(1, (t - times[segment]) / h));
+  const u2 = u * u, u3 = u2 * u;
+  const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u;
+  const h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+  const sample = (joint, component) =>
+    h00 * keys[segment][joint][component]
+    + h10 * h * slope(keys, times, segment, joint, component)
+    + h01 * keys[segment + 1][joint][component]
+    + h11 * h * slope(keys, times, segment + 1, joint, component);
+  const anchor = [sample('a', 0), sample('a', 1), sample('a', 2)];
+  const rotation = [sample('r', 0), sample('r', 1), sample('r', 2)];
+  return { anchor, rotation, weight: ease(t / (2 / 60)) * (1 - ease((t - follow) / (end - follow))),
+    coil: ease(t / (release * .65)) * (1 - ease((t - release * .65) / (release * .35))),
+    whip: ease((t - release * .65) / (release * .35)) * (1 - ease((t - follow) / (end - follow))) };
+}
+export function horizontalRollerPose(elapsed, windup, interval) {
+  return swingPose(elapsed, windup, interval, HORIZONTAL_GRIPS);
+}
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
 export function verticalRollerPose(elapsed, windup, interval) {
-  const coil = ease(elapsed / (windup * .68));
-  const whip = ease((elapsed - windup * .76) / (windup * .24));
-  const follow = ease((elapsed - windup) / .12);
-  const recover = ease((elapsed - windup - .12) / Math.max(.01, interval - windup - .12));
-  const weight = ease(elapsed / (2 / 60)) * (1 - recover);
-  const anchor = [mix(READY_ANCHOR[0], .015, coil), mix(READY_ANCHOR[1], 1.11, coil), mix(READY_ANCHOR[2], .025, coil)];
-  const rotation = [mix(READY_ROTATION[0], VERTICAL_SWING.coil, coil), mix(READY_ROTATION[1], .015, coil), mix(READY_ROTATION[2], Math.PI / 2, coil)];
-  // Keep the upright drum clear of the floor through its follow-through. A
-  // horizontal carry-height target clips the lower cap while the axis is tilted.
-  const release = [-.025, 1.05, .23], end = [-.025, 1.12, .28];
-  for (let i = 0; i < 3; i++) anchor[i] = mix(mix(anchor[i], release[i], whip), end[i], follow);
-  rotation[0] = mix(mix(rotation[0], VERTICAL_SWING.release, whip), VERTICAL_SWING.follow, follow);
-  rotation[1] = mix(rotation[1], 0, whip);
-  // The drum lands across the front: an upright drum as wide as the Inkling is
-  // tall would drive its lower end into the floor at the bottom of the slam.
-  rotation[2] = mix(rotation[2], ROLL_ROTATION[2], follow);
-  return { anchor, rotation, weight, coil: coil * (1 - whip), whip: whip * (1 - recover) };
+  return swingPose(elapsed, windup, interval, VERTICAL_GRIPS);
 }
 
 export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {
@@ -666,41 +710,116 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
   // target BEFORE the native arm IK; its left-hand solver then follows the same
   // unchanged grips. The support cylinder is derived from this rig's actual
   // geometry, not a new height constant or a gameplay collision volume.
+  // Solve the displayed roller around the *actual right wrist*. The weapon
+  // is attached to handR, not to the nominal IK target: translating that target
+  // past the arm's finite reach never translates the drum, but it detaches the
+  // support hand. Rotate the weapon around handR so both actual wrists meet
+  // their authored sockets without changing the gameplay Runner or hit volume.
   const solve = Character.prototype._solveLimb, bounds = new WeakMap();
-  let center, axisX, axisY, axisZ, lift, weaponQ, inverseHandQ;
+  let rightOrigin, rightParentQ, leftOrigin, leftParentQ, delta, toLeft, axis, searchAxis, turn;
+  let weaponQ, inverseHandQ, candidateQ, bestQ, baseQ, center, axisX, axisY, axisZ, trialQ;
+  const SEARCH_AXES = [[1,0,0],[0,1,0],[0,0,1]];
+  const rotCos = v => Math.max(-1, Math.min(1, v));
   Character.prototype._solveLimb = function (limb, target, pole, orientation, weight, index) {
-    if (this._s3RollerContactPose && limb === this.limbs.armR && orientation && weight > .999 && !this.P[C.SPIN]) {
-      const d = this.weapon.def;
-      let bound = bounds.get(d);
+    const isRightRoller = limb === this.limbs.armR && this.weaponKind === 'roller' &&
+      // A held special replaces the roller with its own two-hand prop. Its
+      // wrist targets must use the native solver, never roller drum alignment.
+      this.kidForm && !this.dance && !this.actor?.specialActive && !!orientation && weight > .999 && !this.P[C.SPIN];
+    if (!isRightRoller) return solve.call(this, limb, target, pole, orientation, weight, index);
+    const d = this.weapon.def, arms = this.limbs;
+    if (!rightOrigin) {
+      rightOrigin = target.clone(); rightParentQ = orientation.clone();
+      leftOrigin = target.clone(); leftParentQ = orientation.clone();
+      delta = target.clone(); toLeft = target.clone(); axis = target.clone(); searchAxis = target.clone();
+      turn = orientation.clone(); weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
+      candidateQ = orientation.clone(); bestQ = orientation.clone(); baseQ = orientation.clone(); trialQ = orientation.clone();
+      center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone();
+    }
+    // The native solver clamps exactly at 99.95% of the rest-chain length.
+    // Keep the visual grip target just inside that physical limit.
+    this._kidXform(arms.armR.up.parent, rightOrigin, rightParentQ);
+    rightOrigin.add(delta.copy(arms.armR.up.position).applyQuaternion(rightParentQ));
+    const reachR = (arms.armR.a + arms.armR.b) * .9995 - .001;
+    delta.subVectors(target, rightOrigin);
+    if (delta.length() > reachR) target.copy(rightOrigin).add(delta.setLength(reachR));
+    this._kidXform(arms.armL.up.parent, leftOrigin, leftParentQ);
+    leftOrigin.add(delta.copy(arms.armL.up.position).applyQuaternion(leftParentQ));
+    const reachL = (arms.armL.a + arms.armL.b) * .9995 - .001;
+    const armLeftHeld = this.P[C.IKL] > .99 && this.P[C.LTW] < .001;
+    const alignLeft = q => {
+      if (!armLeftHeld) return;
+      weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      delta.copy(d.handL.pos).sub(d.handR.pos).applyQuaternion(weaponQ);
+      toLeft.subVectors(leftOrigin, target);
+      const a = delta.length(), b = toLeft.length();
+      if (a < 1e-7 || b < 1e-7) return;
+      const now = Math.acos(rotCos(delta.dot(toLeft) / (a * b)));
+      const allowable = Math.acos(rotCos((a*a + b*b - reachL*reachL)/(2*a*b)));
+      if (now <= allowable) return;
+      axis.crossVectors(delta, toLeft);
+      if (axis.lengthSq() < 1e-12) return;
+      // Minimum-angle quaternion sending the support grip into left IK reach;
+      // margin keeps it in reach after native f32 bone transforms.
+      q.premultiply(turn.setFromAxisAngle(axis.normalize(),now-allowable + .003));
+    };
+    const contacting = !!this._s3RollerContactPose;
+    const swinging = !contacting && !!this.s3RollerFlick && this.grounded;
+    const neededGround = contacting || swinging;
+    let bound;
+    const bottom = q => {
       if (!bound) {
-        let minX = Infinity, maxX = -Infinity, radius = 0;
-        for (const geo of [d.drum, d.drumCaps]) {
-          const p = geo?.attributes.position;
-          for (let i = 0; p && i < p.count; i++) {
-            minX = Math.min(minX, p.getX(i)); maxX = Math.max(maxX, p.getX(i));
-            radius = Math.max(radius, Math.hypot(p.getY(i), p.getZ(i)));
+        bound = bounds.get(d);
+        if (!bound) {
+          let minX = Infinity, maxX = -Infinity, radius = 0;
+          for (const geo of [d.drum, d.drumCaps]) {
+            const pos = geo?.attributes.position;
+            for (let i = 0; pos && i < pos.count; i++) {
+              minX = Math.min(minX,pos.getX(i)); maxX = Math.max(maxX,pos.getX(i));
+              radius = Math.max(radius,Math.hypot(pos.getY(i),pos.getZ(i)));
+            }
           }
+          bound = {centerX:(minX+maxX)*.5, halfWidth:(maxX-minX)*.5, radius};
+          bounds.set(d,bound);
         }
-        bound = { centerX: (minX + maxX) / 2, halfWidth: (maxX - minX) / 2, radius };
-        bounds.set(d, bound);
-      }
-      if (!center) {
-        center = target.clone(); axisX = target.clone(); axisY = target.clone(); axisZ = target.clone(); lift = target.clone();
-        weaponQ = orientation.clone(); inverseHandQ = orientation.clone();
       }
       const kid = this.kid;
-      weaponQ.copy(orientation).multiply(inverseHandQ.copy(d.handR.quat).invert());
-      center.copy(d.drumAt); center.x += bound.centerX;
+      weaponQ.copy(q).multiply(inverseHandQ.copy(d.handR.quat).invert());
+      center.copy(d.drumAt);center.x += bound.centerX;
       center.sub(d.handR.pos).applyQuaternion(weaponQ).add(target).multiply(kid.scale).applyQuaternion(kid.quaternion).add(kid.position);
-      axisX.set(1, 0, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      axisY.set(0, 1, 0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      axisZ.set(0, 0, 1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
-      const bottom = center.y - bound.halfWidth * Math.abs(axisX.y) - bound.radius * Math.hypot(axisY.y, axisZ.y);
-      if (Number.isFinite(bottom) && bottom !== 0) {
-        lift.set(0, -bottom, 0).applyQuaternion(inverseHandQ.copy(kid.quaternion).invert()).divide(kid.scale);
-        target.add(lift);
+      axisX.set(1,0,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisY.set(0,1,0).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      axisZ.set(0,0,1).applyQuaternion(weaponQ).multiply(kid.scale).applyQuaternion(kid.quaternion);
+      return center.y - bound.halfWidth*Math.abs(axisX.y) - bound.radius*Math.hypot(axisY.y,axisZ.y);
+    };
+    const evaluate = q => {
+      alignLeft(q);
+      const floor = neededGround ? bottom(q) : .1;
+      // Native rolling already provides an acceptable near-ground drum. Only
+      // correct real penetration or a high floating contact, not every frame.
+      const groundError = contacting ? Math.max(0,-.003-floor,floor-.025) : Math.max(0,-.002-floor);
+      return groundError;
+    };
+    bestQ.copy(orientation);
+    let bestGroundError = evaluate(bestQ);
+    // A roll surface must sit near the floor; a windup must never clip it.
+    // Search purely in orientation, so the right hand remains the pivot and
+    // the left hand remains reachable after every tested candidate.
+    if (neededGround && bestGroundError > .003) {
+      let bestCost = bestGroundError*30;
+      baseQ.copy(orientation);
+      for(const [x,y,z] of SEARCH_AXES)for(const sign of [-1,1]) {
+        searchAxis.set(x,y,z);
+        for(let step=1;step<=30;step++){
+          const a=step*.05;
+          candidateQ.copy(trialQ.setFromAxisAngle(searchAxis,sign*a)).multiply(baseQ);
+          const floorError=evaluate(candidateQ);
+          const cost=floorError*30+a*.06;
+          if(cost<bestCost){bestCost=cost;bestGroundError=floorError;bestQ.copy(candidateQ);}
+          if(floorError<=.003)break;
+        }
       }
     }
+    orientation.copy(bestQ);
     return solve.call(this, limb, target, pole, orientation, weight, index);
   };
   Character.prototype._s3CancelRollerFlick = function () {
@@ -761,22 +880,18 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
     // roll begins. Input release/cancel before admission still uses recovery.
     if (state.released && state.rolling && this.kidForm && this.grounded && !this.dance) return;
     if (!state.vertical) {
-      // Preserve the upstream horizontal joints, retiming coil/whip/recovery to
-      // the actual attack, including the existing calibrated cooldown.
-      const age = state.elapsed < state.windup ? state.elapsed / state.windup * .23 : .23 + (state.elapsed - state.windup) / (state.interval - state.windup) * .45;
+      // Torso effort and arm IK remain native, but the actual two-hand grip
+      // is sampled directly from the Runner's release time instead of
+      // borrowing the incompatible fixed .23/.68-second preview timeline.
+      const age = state.elapsed < state.windup
+        ? state.elapsed / state.windup * .23
+        : .23 + (state.elapsed - state.windup) / Math.max(1 / 60, state.interval - state.windup) * .45;
       const base = P.slice();
       flick.call(this, P, age);
-      const coil = ease(state.elapsed / (state.windup * .65)) * (1 - ease((state.elapsed - state.windup * .65) / (state.windup * .35)));
-      const recover = ease((age - .42) / .26);
-      P[C.ANC + 1] -= .16 * coil;
-      // The sweep keeps the larger drum (roller-model.mjs) at the same floor clearance.
-      P[C.ANC + 1] += (.2 + DRUM_LIFT) * ease((state.elapsed - state.windup) / .08) * (1 - recover);
-      // Start from the raised carry instead of first dropping to the upstream
-      // low carry and lifting again. Keep its arm/body curves for the swing.
-      const lift = ease(state.elapsed / (state.windup * .64));
+      const curve = horizontalRollerPose(state.elapsed, state.windup, state.interval);
       for (let i = 0; i < 3; i++) {
-        P[C.ANC + i] = mix(base[C.ANC + i], P[C.ANC + i], lift);
-        P[C.ANCR + i] = mix(base[C.ANCR + i], P[C.ANCR + i], lift);
+        P[C.ANC + i] = curve.anchor[i];
+        P[C.ANCR + i] = curve.rotation[i];
       }
       const weight = ease(state.elapsed / (3 / 60)) * (state.released && state.rolling ? 1 - this.wRoll : 1);
       for (let i = 0; i < P.length; i++) P[i] = mix(base[i], P[i], weight);

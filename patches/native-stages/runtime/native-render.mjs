@@ -7,9 +7,12 @@ export function nativeInkMaterial(paint, murals, texlib){
  const compile=mat.onBeforeCompile;
  mat.onBeforeCompile=shader=>{
   compile(shader);
-  shader.fragmentShader=shader.fragmentShader.replace('void main() {','void main() {\nif (texture2D(uPaint, vPaintUv).a < 0.015) discard;');
+  // Ink shading uses dFdx/fwidth. Discarding at the start of a non-uniform
+  // fragment quad makes those derivatives undefined at the ink edge. Evaluate
+  // shading first, then suppress unpainted fragments before writing colour.
+  shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>','if (texture2D(uPaint, vPaintUv).a < 0.015) discard;\n#include <opaque_fragment>');
  };
- mat.customProgramCacheKey=()=> 'native-ink-overlay-v1';return mat;
+ mat.customProgramCacheKey=()=> 'native-ink-overlay-v2';return mat;
 }
 
 export function nativeInkGeometry(level,paint){

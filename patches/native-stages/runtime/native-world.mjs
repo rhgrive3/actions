@@ -8,6 +8,7 @@ import { loadNativeData,loadNativeTextures } from './native-load.mjs';
 import { NativeLevel } from './native-level.mjs';
 import { NativePhysics } from './native-physics.mjs';
 import { nativeDisplay,nativeInkGeometry,nativeInkMaterial } from './native-render.mjs';
+import { NativeInkMesh } from './native-ink-chunks.mjs';
 import {sourceLoadingStatus} from './source-menu.mjs';
 
 function releaseCurrent(game){
@@ -22,7 +23,7 @@ function releaseCurrent(game){
 /** Prepare detached, publish atomically through the existing worldCurrent guard. */
 export async function buildNativeWorld(game,map,current){
  game._nativeAbort?.abort();const controller=game._nativeAbort=new AbortController(),signal=controller.signal,start=performance.now();
- let display,paint,inkGeometry,inkMat;
+ let display,paint,inkGeometry,inkMat,inkMesh;
  const status=sourceLoadingStatus(map.name);
  try{
   const data=await loadNativeData(map.id,signal);if(!current())return;
@@ -45,10 +46,10 @@ export async function buildNativeWorld(game,map,current){
   const shaderWarmMilliseconds=performance.now()-warmStart;
   level.nativePaint=paint;
   inkGeometry=nativeInkGeometry(level,paint);inkMat=nativeInkMaterial(paint,game.murals,game.texlib);
-  const inkMesh=new THREE.Mesh(inkGeometry,inkMat);inkMesh.name='native-game-ink';inkMesh.receiveShadow=true;
+  inkMesh=new NativeInkMesh(inkGeometry,inkMat);
   status.update('navigation');await new Promise(resolve=>requestAnimationFrame(resolve));
   const navStart=performance.now(),nav=new NavGraph(level,physics);
-  if(!current()){display.dispose();paint.dispose();inkGeometry.dispose();inkMat.dispose();return;}
+  if(!current()){display.dispose();paint.dispose();inkMesh.dispose();inkMat.dispose();return;}
   releaseCurrent(game);
   G.level=level;G.physics=physics;G.paint=paint;G.nav=nav;game.layoutId=map.id;game.mapDef=map;game._builtQuality=game.settings.quality;
   game.levelMat=inkMat;game.levelMesh=inkMesh;G.scene.add(display.group,inkMesh);
@@ -57,11 +58,11 @@ export async function buildNativeWorld(game,map,current){
   (game.swimWake||(game.swimWake=new SwimWake())).reset();
   game.minimap=new Minimap(level,paint,Math.min(3,512/Math.max(level.bounds.maxX-level.bounds.minX,level.bounds.maxZ-level.bounds.minZ)));
   game.nativeWorld={display,level,metrics:{loadMilliseconds:performance.now()-start,navMilliseconds:performance.now()-navStart,shaderWarmMilliseconds,vertices:data.manifest.geometry.vertices,triangles:data.manifest.geometry.triangles,faces:level.faces.length,gridBytes:paint.grid.byteLength,atlas:paint.size,ppm:paint.ppm,textureCount:textures.size,quality,version1130Verified:false},
-   dispose(){display.dispose();inkMesh.removeFromParent();inkMesh.geometry.dispose();inkMat.dispose();}};
+   dispose(){display.dispose();inkMesh.dispose();inkMat.dispose();}};
   if(G.env?.rebuildForArena)G.env.rebuildForArena(level.bounds,game._footprint(level));
   game._shadowRoots();if(G.teamColors[0])game._setPalette(game.palette||game._pickPalette());
  }catch(error){
-  display?.dispose();paint?.dispose();inkGeometry?.dispose();inkMat?.dispose();
+  display?.dispose();paint?.dispose();if(inkMesh)inkMesh.dispose();else inkGeometry?.dispose();inkMat?.dispose();
   if(error.name!=='AbortError'&&current())throw error;
  }finally{status.close();}
 }
