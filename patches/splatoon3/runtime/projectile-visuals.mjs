@@ -264,8 +264,16 @@ export class ProjectileVisualRuntime {
     p._iwVisualKind=null;p._iwVisualOrdinal=null;p._iwVisualGroup=0;p._iwVisualLastNetStep=-1;
     p._iwVisualEpoch=NaN;p._iwVisualRenderStart=0;p._iwVisualRenderAge=0;
   }
-  handles(p) { return !!p._iwVisualHistory && p._iwVisualKind!=='legacy'; }
+  // The original VTF-backed roller effect remains the presentation owner
+  // whenever the installed InkVolumes pack is ready. A second procedural
+  // body would duplicate its GPU draws and silently disable the source atlas.
+  // If the pack is unavailable, the new bounded geometry remains the fallback.
+  nativeVolumeOwns(p) { return p?._inkVolumeHorizontal === true &&
+    this.helpers.nativeVolumeOwns?.(p) === true; }
+  handles(p) { return !this.nativeVolumeOwns(p) &&
+    !!p._iwVisualHistory && p._iwVisualKind!=='legacy'; }
   ensureBirth(p) {
+    if(this.nativeVolumeOwns(p))return false;
     if(p._iwVisualHistory)return true;
     // Deferred Bucket rounds have no authoritative muzzle until their actual
     // physics birth refresh. Do not draw a connection to the enqueue position.
@@ -319,6 +327,7 @@ export class ProjectileVisualRuntime {
     if(!p._iwVisualHistory)this.beginStep(p);
   }
   recordStep(p,dt=DT) {
+    if(this.nativeVolumeOwns(p))return;
     const kind=p._iwVisualKind||projectileVisualKind(p);p._iwVisualKind=kind;
     if(this.disposed || kind==='legacy')return;
     let h=p._iwVisualHistory;
