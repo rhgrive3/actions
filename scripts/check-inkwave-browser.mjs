@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { runMinimapCanvasProbe } from './lib/minimap-canvas-probe.mjs';
 import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
@@ -48,6 +47,7 @@ if(process.argv.includes('--exact-source')) {
   files.forEach((file,i)=>{if(blobs[i]!==tree.get(file))throw new Error('Build input differs from commit: '+file);});
 }
 // Identity-negative fixtures intentionally stop before loading browser helpers.
+const { runMinimapCanvasProbe } = await import('./lib/minimap-canvas-probe.mjs');
 const { probeTurfLead } = await import('./lib/inkwave-turf-lead-probe.mjs');
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE?pathToFileURL(process.env.PLAYWRIGHT_MODULE).href:'playwright');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.woff2':'font/woff2','.glb':'model/gltf-binary'};

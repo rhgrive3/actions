@@ -17,7 +17,7 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  if(!/^[a-f0-9]{64}$/.test(manifest.build?.revision||''))throw Error('Invalid build revision');
  const prefix='_versions/'+manifest.build.revision+'/';
  const emitted={};
- for(const [name,suffix] of Object.entries({minimap:'src/game/minimap.js',ctx:'src/core/ctx.js',config:'src/config.js',dirty:'patches/splatoon3/runtime/minimap-dirty.mjs'})){
+ for(const [name,suffix] of Object.entries({minimap:'src/game/minimap.js',ctx:'src/core/ctx.js',config:'src/config.js',dirty:'patches/splatoon3/runtime/minimap-dirty.mjs',three:'vendor/three/build/three.module.js'})){
   const keys=Object.keys(manifest.artifacts).filter(p=>p===prefix+suffix);
   if(keys.length!==1)throw Error('Unique versioned minimap dependency required: '+suffix);
   emitted[name]={path:keys[0],sha256:manifest.artifacts[keys[0]]};
@@ -29,6 +29,10 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
  try {
  const load=frame.contentWindow.Function('url','return import(url)');
  const origin=location.origin+'/';
+ // about:blank frames do not inherit the parent import map. Bind the same emitted Three before any module import.
+ const threeURL=new URL(emitted.three.path,origin).href;
+ const importMap=frame.contentDocument.createElement('script');importMap.type='importmap';
+ importMap.textContent=JSON.stringify({imports:{three:threeURL}});frame.contentDocument.head.appendChild(importMap);
  for(const item of Object.values(emitted)){
   const response=await fetch(new URL(item.path,origin));if(!response.ok)throw Error('Emitted dependency HTTP failure');
   const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await response.arrayBuffer())),x=>x.toString(16).padStart(2,'0')).join('');
