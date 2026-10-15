@@ -165,6 +165,17 @@ test('native ranked bots paint and capture a zone, then count it down', () => {
   assert.ok(seen.maxCountDelta > 0, `captured zones must change the ranked count: ${JSON.stringify([...seen.events])}`);
 });
 
+test('native projectiles cover and capture an expanded 13 by 11 zone', () => {
+  const original = stage.zones;
+  stage.zones = [{ center: original[0].center.slice(), size: [13, 11], heightTolerance: 0.75 }];
+  const match = start('zones', { inactiveTeams: [0] }), seen = metrics();
+  try {
+    step(match, 90 * 60, seen, state => state.maxCountDelta > 0);
+    assert.ok(seen.events.get('zone-capture') > 0, 'distributed paint goals must capture the expanded real paint index: ' + JSON.stringify({ coverage: match.rankedWorld.zoneCoverage(), actors: match.actors.filter(a => a.alive).map(a => ({ pos: a.pos.toArray(), ink: a.ink, mode: a.bot.mode, goal: a.bot.goal, pi: a.bot.pi, path: a.bot.path, want: match.ranked.rule.botGoal({team:a.team,slot:a.slot,pos:a.pos.toArray()}, frameFor(match)) })) }));
+    assert.ok(seen.maxCountDelta > 0);
+  } finally { finish(match); stage.zones = original; }
+});
+
 test('native ranked bots jump onto the moving Tower deck and carry its live objective', () => {
   const match = start('tower'), seen = metrics();
   let hits = 0;

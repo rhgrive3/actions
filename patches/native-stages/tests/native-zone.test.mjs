@@ -14,7 +14,7 @@ const middle = { x: 0, y: 0, z: 0 };
 test('a broad native floor supports a larger fixed zone with deterministic placement', () => {
   const nodes = floor(12, 10);
   const zone = nativeZone(nodes, middle);
-  assert.deepEqual(zone, { center: [0, 0, 0], size: [13, 11] });
+  assert.deepEqual(zone, { center: [0, 0, 0], size: [13, 11], heightTolerance: 0.75 });
   assert.deepEqual(nativeZone([...nodes].reverse(), middle), zone);
   assert.ok(zone.size[0] * zone.size[1] > 36 * 3);
 });

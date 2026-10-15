@@ -5,6 +5,7 @@ export const RANKED_JA = Object.freeze({
   'BOSS BATTLE': 'ボスバトル', 'CO-OP': '協力プレイ', 'CLASSIC': '基本ルール',
   'VS BOTS': 'ボット対戦', 'SQUAD OF 8': '8人で協力', '1 BOSS': 'ボス1体',
   'SELECT': '決定', 'Mode': 'ルール', 'PUBLIC BETA': '公開テスト版',
+  'DIFFICULTY': '難しさ', 'HOST': 'ホスト', 'YOU’RE THE HOST': 'あなたがホスト',
   'Choose a mode · you and the bots': 'ルールを選んで、ボットとバトル',
   'Two teams of four, one harbour. Ink the most ground before the whistle.': '4対4で塗り合うバトル。時間内にたくさん地面を塗ったチームの勝ち！',
   'Everyone is one squad against {boss}. Defeat it before time runs out!': '全員で協力して{boss}に挑もう。時間内にボスを倒せば勝利！',

@@ -58,6 +58,9 @@ export function adaptRankedUi(rel, code) {
     'const JA = {\n  ...' + JSON.stringify(RANKED_JA) + ',', 'ranked Japanese dictionary');
   if (rel !== 'src/ui/menus.js') return code;
 
+  code = once(code, "const diffText = (v) => (boss ? BOSS_DIFF_INFO[v] : DIFF_INFO[v]?.text) || '';",
+    "const diffText = (v) => tr((boss ? BOSS_DIFF_INFO[v] : DIFF_INFO[v]?.text) || '');", 'setup difficulty explanation');
+
   code = once(code, "blurb: `Everyone's one squad against ${BOSS_NAME}, a giant crab in a rusted container. Sink it before time runs out!`",
     "blurb: tr('Everyone is one squad against {boss}. Defeat it before time runs out!', { boss: BOSS_NAME })", 'boss mode description');
   code = once(code, "sub: `Pick a stage and the time of day · your squad of 8 vs ${BOSS_NAME}`",
@@ -182,8 +185,8 @@ const playModeName = (id) => tr(PLAY_MODE_NAMES[id] || PLAY_MODE_NAMES.turf);`, 
         el.classList.toggle('is-bossmode', bm);
         el.classList.toggle('is-rankedmode', rm);
         el.dataset.mode = activeMode;
-        diffLbl.querySelector('.iw-lset__lbltxt').textContent = bm ? 'DIFFICULTY' : 'BOT SKILL';
-        hostChip.lastChild.textContent = bm ? 'HOST' : 'YOU’RE THE HOST';
+        diffLbl.querySelector('.iw-lset__lbltxt').textContent = tr(bm ? 'DIFFICULTY' : 'BOT SKILL');
+        hostChip.lastChild.textContent = tr(bm ? 'HOST' : 'YOU’RE THE HOST');
         lenSegT.el.style.display = bm || rm ? 'none' : '';
         lenSegB.el.style.display = bm ? '' : 'none';
         lenSegR.el.style.display = rm ? '' : 'none';

@@ -27,5 +27,5 @@ export function nativeZone(nodes, middle, step = 1, support = null) {
     if (supported && paintable / ((2 * rx + 1) * (2 * rz + 1)) >= 0.7)
       best = { center: [center.x, center.y, center.z], size: [width, depth], score };
   }
-  return { center: best.center, size: best.size };
+  return { center: best.center, size: best.size, heightTolerance: 0.75 };
 }
