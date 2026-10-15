@@ -465,7 +465,7 @@ async function main() {
       }
     }, { prefix, width: WIDTH, height: HEIGHT });
     result.summary = validateFlowRenderResult(result);
-    result.curveParity = await runFlowCurveEmittedProbe(page, {prefix,root:new URL('../',import.meta.url)});
+    result.curveParity = await runFlowCurveEmittedProbe(page, {prefix,root:new URL('../',import.meta.url),manifest});
     const required = ['patches/splatoon3/runtime/flow-effects.mjs', 'patches/splatoon3/runtime/gear.mjs', 'patches/splatoon3/runtime/weapon-weight.mjs', 'patches/splatoon3/profile.json', 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/flow-motion.mjs',
       'patches/splatoon3/runtime/flow.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js',
       'vendor/three/build/three.module.js', 'vendor/three/jsm/postprocessing/GTAOPass.js'];
@@ -483,6 +483,7 @@ async function main() {
     result.toolchain = { node: process.version, chromium: browser.browser()?.version() || null };
   } catch (error) {
     failure = error;
+    if (error.flowCurveParity) result = { ...(result || {}), curveParity: error.flowCurveParity };
     try { if (page) result = { ...(result || {}), progress: await page.evaluate(() => globalThis.flowProbeProgress || null) }; } catch {}
     try { await page?.screenshot({ path: path.join(output, 'flow-render-failed.png'), timeout: 10000 }); } catch {}
   } finally {
