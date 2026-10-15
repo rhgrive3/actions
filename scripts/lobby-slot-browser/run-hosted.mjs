@@ -1,0 +1,19 @@
+import fs from'node:fs';import path from'node:path';import assert from'node:assert/strict';import{execFileSync,spawnSync}from'node:child_process';import{hash,verifyBinding}from'./bindings.mjs';import{compare}from'./verify.mjs';
+assert.equal(process.env.GITHUB_ACTIONS,'true');assert.equal(process.env.LOBBY_SLOT_AUTHORIZED,'true');const pkg=import.meta.dirname,plan=JSON.parse(fs.readFileSync(path.join(pkg,'package.json'))),out=path.resolve(process.env.LOBBY_SLOT_EVIDENCE);fs.mkdirSync(out,{recursive:true});
+const run=(file,args,timeout=240000)=>{const p=spawnSync(process.execPath,[path.join(pkg,file),...args],{encoding:'utf8',timeout,maxBuffer:8*1024*1024});return p;};
+// Both native CSSOM smoke processes remain inside the outer identity-safe RSS/deadline supervisor.
+for(const engine of ['chromium','webkit']){const p=run('style-smoke.mjs',[engine],60000);fs.writeFileSync(path.join(out,engine+'-smoke.log'),(p.stdout||'')+(p.stderr||''));assert.equal(p.status,0,'native CSSOM smoke '+engine);const smoke=JSON.parse(fs.readFileSync(path.join(out,engine+'-style-smoke.json')));assert.equal(smoke.engine,engine);assert(!smoke.failure);assert.equal(smoke.result?.status,'passed');assert.equal(smoke.result.restored,true);assert.deepEqual(smoke.result.writes,[['transform','rotate(1rad)'],['opacity','0.5'],['opacity','0.5']]);}
+const builds={};
+for(const role of ['baseline','candidate']){
+ const s=plan.sources[role],root=path.resolve(process.env[role.toUpperCase()+'_CHECKOUT']),site=path.join(process.env.RUNNER_TEMP,'lobby-slot-'+role),git=(...a)=>execFileSync('git',['-C',root,...a],{encoding:'utf8'}).trim();
+ assert.equal(git('rev-parse','HEAD'),s.head);assert.equal(git('rev-parse','HEAD^{tree}'),s.tree);assert.equal(git('status','--porcelain'),'');for(const[p,b]of Object.entries(s.blobs))assert.equal(git('rev-parse','HEAD:'+p),b);assert(!fs.existsSync(site));
+ const build=spawnSync(process.execPath,['scripts/build-inkwave.mjs','inkwave-public',site],{cwd:root,env:{...process.env,ESBUILD_MODULE:path.join(pkg,'node_modules/esbuild/lib/main.js')},encoding:'utf8',timeout:180000,maxBuffer:16*1024*1024});fs.writeFileSync(path.join(out,role+'-build.log'),(build.stdout||'')+(build.stderr||''));assert.equal(build.status,0);assert.equal(git('status','--porcelain'),'');
+ const bytes=fs.readFileSync(path.join(site,'inkwave-build.json')),m=JSON.parse(bytes),index=fs.readFileSync(path.join(site,'index.html'),'utf8');assert.equal(m.build.esbuild,'0.28.2');assert.equal(m.build.optimization,'esbuild-minify');
+ for(const p of Object.keys(s.blobs)){if(p.includes('/tests/'))continue;const h=hash(fs.readFileSync(path.join(root,p)));assert(Object.entries(m.files).some(([name,value])=>name===(p.startsWith('patches/')?p.slice(8):p.replace(/^inkwave-public\//,'upstream/'))&&value===h),'production build source inclusion '+p);}
+ builds[role]={site,bytes,m,index};fs.writeFileSync(path.join(out,role+'-binding.json'),JSON.stringify({...s,manifestSHA256:hash(bytes),inputHash:m.inputHash,contentHash:m.contentHash},null,2));
+}
+for(const engine of ['chromium','webkit']){
+ const results=[],inputFile=path.join(out,engine+'-input.json');
+ for(const role of ['baseline','candidate']){const b=builds[role],receiptFile=path.join(out,engine+'-'+role+'.json'),p=run('browser.mjs',[b.site,receiptFile,role==='baseline'?'-':inputFile,engine]);fs.writeFileSync(path.join(out,engine+'-'+role+'.log'),(p.stdout||'')+(p.stderr||''));assert.equal(p.status,0,engine+' '+role);const r=JSON.parse(fs.readFileSync(receiptFile));verifyBinding(r,b.m,b.bytes,b.index);assert.equal(r.engine,engine);assert.equal(r.seed,5205);if(role==='baseline')fs.writeFileSync(inputFile,JSON.stringify(r.lobby.input));results.push(r.lobby);}
+ fs.writeFileSync(path.join(out,engine+'-qualification.json'),JSON.stringify(compare(...results),null,2));
+}

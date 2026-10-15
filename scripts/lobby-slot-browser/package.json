@@ -1,0 +1,82 @@
+{
+  "executionAuthorized": false,
+  "diagnosticBranch": "review/lobby-slot-browser-20261015",
+  "scope": "Native lobby component DOM/CSS endpoints and transform assignments; per-head natural projection observation plus identical baseline trace replay; no FPS or full network gameplay claim",
+  "sources": {
+    "baseline": {
+      "head": "01aa5cc61c842a8616ab38ff5fb541b6becf1395",
+      "tree": "a1b8f2f076d8b271c0640fb255132d2b4acf134d",
+      "blobs": {
+        "inkwave-public/src/ui/menus.js": "a1ed8018c5c896c2973eee6c947299f5cca50883",
+        "inkwave-public/src/game/showcase.js": "02ab7f694f6d16aa02420d660fd846b1a99a894a",
+        "inkwave-public/src/net/mock.js": "af8c170a050b65c3356055dd0be43ef95410b015",
+        "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8",
+        "patches/local-quality/adapter.mjs": "e3b67aa5789bc5efd3a2c90ae9ae7a918e4506ee"
+      }
+    },
+    "candidate": {
+      "head": "850cc666fa6d31ff3d6934797116f3c8f899a491",
+      "tree": "7ddb832f6115a885f80e181e7a6402851a9f387b",
+      "blobs": {
+        "inkwave-public/src/ui/menus.js": "a1ed8018c5c896c2973eee6c947299f5cca50883",
+        "inkwave-public/src/game/showcase.js": "02ab7f694f6d16aa02420d660fd846b1a99a894a",
+        "inkwave-public/src/net/mock.js": "af8c170a050b65c3356055dd0be43ef95410b015",
+        "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8",
+        "patches/local-quality/adapter.mjs": "e8fbe514122e556f24e053e2fb9b2bfe55605e42",
+        "patches/local-quality/lobby-slot-transform-adapter.mjs": "9652f16084b14539f185aa7a59253ff008fdcee7"
+      }
+    }
+  },
+  "files": {
+    "bindings.mjs": {
+      "bytes": 1803,
+      "sha256": "44f9dfcc8ca8f668c5aef5459462a086f469adb94157903a7c562f8045fc0163",
+      "publicationPath": "scripts/lobby-slot-browser/bindings.mjs"
+    },
+    "bindings.test.mjs": {
+      "bytes": 1896,
+      "sha256": "72ac5dc6aa3e62edbe1a0cdd9fbc650264ce14f5c49f78094201d11c8010acd4",
+      "publicationPath": "scripts/lobby-slot-browser/bindings.test.mjs"
+    },
+    "browser.mjs": {
+      "bytes": 4729,
+      "sha256": "e91ea739b07bc641ac6adb1976be59d5453af874cb5e9b37d5262748f85876e3",
+      "publicationPath": "scripts/lobby-slot-browser/browser.mjs"
+    },
+    "inkwave-lobby-slot-browser.yml": {
+      "bytes": 6418,
+      "sha256": "d9018d01c980e4f1f9ae4f473e9db5139953b174144c9aca0ea01cb6863846c1",
+      "publicationPath": ".github/workflows/inkwave-lobby-slot-browser.yml"
+    },
+    "lobby-probe.mjs": {
+      "bytes": 5795,
+      "sha256": "008cfba37a4867f29e43860b66d07dca9ef82354ed15cdcc73d0908d9a69133d",
+      "publicationPath": "scripts/lobby-slot-browser/lobby-probe.mjs"
+    },
+    "native-style.mjs": {
+      "bytes": 1143,
+      "sha256": "fccf366efeff45c772f660933ffece3f31dd5bca9f8ed06489cb7a82c7bb44e2",
+      "publicationPath": "scripts/lobby-slot-browser/native-style.mjs"
+    },
+    "run-hosted.mjs": {
+      "bytes": 3824,
+      "sha256": "9686f3b4fbaece9c7005a8a41d79ac939fb12f44bcb066687d1753f10ea13199",
+      "publicationPath": "scripts/lobby-slot-browser/run-hosted.mjs"
+    },
+    "style-smoke.mjs": {
+      "bytes": 2746,
+      "sha256": "60f5ff7536ab9d439906db5c6896ba46627fbe5c9e8af00f83d674cbafd8a14a",
+      "publicationPath": "scripts/lobby-slot-browser/style-smoke.mjs"
+    },
+    "verify.mjs": {
+      "bytes": 3443,
+      "sha256": "1abeb3075f92556be65e6ea4ae1e08fb55e1dc8c7e7ff07f3ba21cfe7e245859",
+      "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
+    },
+    "verify.test.mjs": {
+      "bytes": 2071,
+      "sha256": "b66a51298f72a1d759d7ef366e88f5d1cde2122d8407b01ef7b10692abe2c668",
+      "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
+    }
+  }
+}
