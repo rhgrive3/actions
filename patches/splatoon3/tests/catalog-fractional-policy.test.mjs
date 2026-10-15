@@ -111,6 +111,8 @@ for(const name of ['first','flash','gravity','heavy','precision','quicklong','qu
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);f.G.settings={};f.G.physics.segment=(a,b,h)=>{h.hit=false;return h;};
  const a=f.make('s3-shooter-'+name);a.form='kid';a.ink=100;a.pos.set(0,8,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,8,60);
  for(let j=0;j<2;j++){
+ // Nearest SplitNum slot: every budgeted release lies within this short-lived round's reach.
+ a.weaponRunner.update(0,{fire:false});a.weaponRunner.catalogState.paintShotOrdinal=a.weapon.catalogRecord.parameters.SplashSpawnParam.SplitNum*(j+1)-1;
  emitMainShot(f,a);const p=f.G.projectiles.list.at(-1);assert.ok(p.catalog.descriptor.splashDropSpec);
  for(let i=0;i<30;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
  assert.equal(p.catalog.dropCount,p.catalog.descriptor.splashCount);

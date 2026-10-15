@@ -918,6 +918,24 @@ function slosherCollisionRadius(p, age, field, y) {
 }
 export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius(p,p.age,false,p.pos?.y); }
 function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
+// Slosher globs and Roller flicks grow their terrain (Field) radius to 0.4-1.05
+// within 2-4 F. Ending the whole glob on the first contact of that grown sphere
+// made a level Splat Bucket throw (born ~0.7-0.9 m high, Field 0.5-0.8) die
+// after ~8 F at ~11 m with its centre still 0.92 m above the floor (sourced
+// BaseDistance 14), and made a glob clipping a low wall with its lower half
+// vanish instead of carrying on above it. A contact BELOW the glob centre
+// (contact normal pointing up into the glob) is now a graze: the glob ends when
+// its core, the unit's sourced InitRadiusForField, reaches terrain. Side walls
+// and ceilings still end it on first contact of the grown sphere.
+// INKWAVE rule (normal threshold included); retail collision code is not public.
+export const GLOB_GRAZE = Object.freeze({ normalY: 0.3 });
+function globGrazeEligible(p) {
+  return !!p?.fidelityFieldCollision && !p.fidelityWallDrop &&
+    (p.type==='slosh' || (p.type==='drop' && (p.s3Weapon?.kind||p.owner?.weapon?.kind)==='roller'));
+}
+function globCoreRadius(p,y) {
+  return Math.max(0,p.fidelityFieldCollision.initRadius)*slosherDropScale(p,y);
+}
 // #1011: footprint uses the source unit and first/after bullet distinctions.
 export function fidelitySlosherImpactPaint(p, point) {
   const src=slosherPaintRecord(p), start=p?.start, scale=completion?.worldUnitsPerSourceUnit ?? 1;
@@ -1284,7 +1302,14 @@ export function fidelityWorldHit(system,p) {
   if(!s.worldReady){
     s.world.kitDefense=null;
     if(isKitProjectile(p)) kitTrizookaWorldSweep(system,p,s.world,api.G.physics);
-    else sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
+    else {
+      const age0=p.fidelityPrevAge??p.age;
+      sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,age0,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
+      // A grown Slosher/Roller glob whose LOWER part meets the floor or a low
+      // wall's top keeps flying; only its core ends it (see GLOB_GRAZE).
+      if(s.world.hit&&globGrazeEligible(p)&&s.world.normal.y>GLOB_GRAZE.normalY)
+        sweptWorldHit(api.G.physics,p.prev,p.pos,globCoreRadius(p,p.prev?.y),globCoreRadius(p,p.pos?.y),s.world,true);
+    }
     const defense=system.kitDefenseCandidate?.(p);
     if(defense&&Number.isFinite(defense.distance)&&defense.distance>=0&&(!s.world.hit||defense.distance<s.world.dist-EPSILON)){
       s.world.hit=true;s.world.dist=defense.distance;s.world.kitDefense=defense;

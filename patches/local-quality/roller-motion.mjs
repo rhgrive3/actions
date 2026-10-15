@@ -27,7 +27,8 @@ export function installRollerMotionQuality({Character,CHARACTER_CHANNELS:C}, det
   P._poseFlick=function(pose,ft){
     const a=this.s3RollerFlick;
     const result=original.call(this,pose,ft);
-    if(!a?.vertical||a!==this.s3RollerFlick||this.weaponKind!=='roller'||!detailSnapshot(this)?.active)return result;
+    // The heavy swing shape has its own release velocity (roller-heavy-swing.mjs).
+    if(!a?.vertical||a.swingShape||a!==this.s3RollerFlick||this.weaponKind!=='roller'||!detailSnapshot(this)?.active)return result;
     const rolling=a.released&&a.rolling?1-this.wRoll:1;
     pose[C.ANCR]+=verticalSwingCorrection(a.elapsed,a.windup,a.interval)*rolling;
     return result;

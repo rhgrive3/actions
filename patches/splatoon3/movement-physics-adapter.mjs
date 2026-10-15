@@ -111,8 +111,9 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (!isSquid && this.hardLand > 0) vt *= 1 - (1 - P.hardLandSlow) * this.hardLand;
     const accel = groundAcceleration(this, P, isSquid);
     if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed*mist); // enemy ink limits target speed, not the selected S3 acceleration
+    if (!isSquid) shedFormExitOverspeed(this, vt, dt); // swim speed carried out of a surfacing squid
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
-    return "import { toxicMistScale } from '../../patches/splatoon3/runtime/toxic-mist.mjs';\nimport { attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+    return "import { toxicMistScale } from '../../patches/splatoon3/runtime/toxic-mist.mjs';\nimport { attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, shedFormExitOverspeed, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     replace('    if (this.rolling) return lerp(w.rollSpeed * 0.5, w.rollSpeed, smoothstep(0, 0.45, this.rollT));',

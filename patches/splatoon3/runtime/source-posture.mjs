@@ -38,6 +38,14 @@ export const SOURCE_POSTURE = Object.freeze({
   // with 109° knee flexion (run: 0.70, 136°); the S3 shooter walk keeps the
   // trailing shin well short of horizontal.
   footLift: Object.freeze({ walkKeep: 0.5, runKeep: 0.7 }),
+  // Fraction of the source clip's lateral (side-to-side) lean kept while side-stepping. The Wii U
+  // WalkLeft/Right(Shoot) clips bank the pelvis 12-14 deg and the chest/neck 17-20 deg into the step
+  // (measured on this bank: lateral component of the bone up axis 0.20-0.34 at steady 4.32 m/s strafe while
+  // firing, versus |0.05| walking forward/back). The S3 footage compared above shows an upright torso while
+  // walking and running; strafe-shooting angles were not measured. Playtesters compared the banked
+  // silhouette with S3 as the body tipping over on every left-right ("rerere") reversal. Scaled by the
+  // controller's own smoothed |sideways travel| so forward/back gaits keep their natural per-step sway.
+  lateralKeep: 0.2,
 });
 const CORRECTED_STATES = new Set(['idle', 'move']);
 let enabled = true;
@@ -144,12 +152,30 @@ function advanceWeight(retarget) {
   return st.weight;
 }
 
+const ZAX = new THREE.Vector3(0, 0, 1), YAX = new THREE.Vector3(0, 1, 0);
+/** 0..1 share of the lateral lean removed this frame: posture weight (ground idle/move only) times the
+ *  controller's smoothed sideways-travel balance. */
+export function sourceLateralCorrection(retarget) {
+  const c = controllerOf(retarget);
+  if (!enabled || !c || c.manual) return 0;
+  return postureState(retarget).weight * clamp(c.strafeBalance || 0, 0, 1) * (1 - SOURCE_POSTURE.lateralKeep);
+}
+/** Roll `q` about the kid Z axis so the bone's axis loses that share of its side lean. */
+function correctLateral(retarget, q, axis) {
+  const k = sourceLateralCorrection(retarget);
+  if (k <= 1e-4) return 0;
+  _d.copy(axis).applyQuaternion(q);
+  const angle = Math.atan2(_d.x, _d.y) * k;
+  if (Math.abs(angle) > 1e-7) q.premultiply(_q.setFromAxisAngle(ZAX, angle));
+  return angle;
+}
+
 /** Called by HumanRetarget.apply for every mapped bone after its source world rotation is solved and
  *  before the aim pitch is applied. `upper` = the source owns the upper body this frame; the first
  *  entry (hips) advances the blend weight once per frame. Rotates spine/chest/neck/head about the
  *  kid X axis so the clip's forward lean is reduced; arms keep their solved world orientation. */
 export function sourcePostureBone(retarget, target, q, dir, upper = true) {
-  if (target === 'hips') { advanceWeight(retarget); return; }
+  if (target === 'hips') { advanceWeight(retarget); correctLateral(retarget, q, YAX); return; }
   if (!upper) return;
   if (target !== 'spine' && target !== 'chest' && target !== 'neck' && target !== 'head') return;
   const st = postureState(retarget), w = st.weight;
@@ -171,6 +197,8 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
     if (target === 'neck') st.neck = angle;
   }
   if (Math.abs(angle) > 1e-7) q.premultiply(_q.setFromAxisAngle(XAX, angle));
+  // Side lean after the sagittal correction, measured on each bone's own up axis (the displayed lean).
+  correctLateral(retarget, q, YAX);
 }
 
 /** Called by SourceMotionController.alignWeapon with the weapon orientation (kid space, before aim pitch).

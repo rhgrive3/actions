@@ -1,5 +1,6 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
+import { HEAVY_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
 import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
@@ -692,13 +693,42 @@ function swingPose(elapsed, windup, interval, keys) {
     coil: ease(t / (release * .65)) * (1 - ease((t - release * .65) / (release * .35))),
     whip: ease((t - release * .65) / (release * .35)) * (1 - ease((t - follow) / (end - follow))) };
 }
-export function horizontalRollerPose(elapsed, windup, interval) {
-  return swingPose(elapsed, windup, interval, HORIZONTAL_GRIPS);
+// Heavy-roller swing shape and its presentation length: see roller-heavy-swing.mjs.
+export { HEAVY_ROLLER_SWING, heavyRollerSwingEnd };
+function hermiteKeys(keys, times, t) {
+  let segment = 0;
+  while (segment < keys.length - 2 && t > times[segment + 1]) segment++;
+  const h = times[segment + 1] - times[segment], u = Math.max(0, Math.min(1, (t - times[segment]) / h));
+  const u2 = u * u, u3 = u2 * u;
+  const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
+  const sample = (joint, component) =>
+    h00 * keys[segment][joint][component] + h10 * h * slope(keys, times, segment, joint, component)
+    + h01 * keys[segment + 1][joint][component] + h11 * h * slope(keys, times, segment + 1, joint, component);
+  return { anchor: [sample('a', 0), sample('a', 1), sample('a', 2)], rotation: [sample('r', 0), sample('r', 1), sample('r', 2)] };
+}
+function heavySwingPose(elapsed, windup, interval, keys) {
+  const H = HEAVY_ROLLER_SWING, release = Math.max(1e-6, windup);
+  const whip = Math.min(H.whip, release * .5), hold = release - whip;
+  const coilAt = Math.min(H.coilAt, hold * .9);
+  const restEnd = Math.max(release + H.rest, interval), end = restEnd + H.ret;
+  // READY -> level overhead -> held -> drum down at release -> rest -> READY.
+  const k = [keys[0], keys[1], keys[1], keys[3], keys[3], keys[4]];
+  const times = [0, coilAt, hold, release, restEnd, end];
+  const t = Math.max(0, Math.min(end, elapsed));
+  const { anchor, rotation } = hermiteKeys(k, times, t);
+  return { anchor, rotation, weight: ease(t / (2 / 60)),
+    coil: ease(t / coilAt) * (1 - ease((t - hold) / whip)),
+    whip: ease((t - hold) / whip) * (1 - ease((t - restEnd) / H.ret)) };
+}
+export function horizontalRollerPose(elapsed, windup, interval, shape = null) {
+  return shape === 'heavy' ? heavySwingPose(elapsed, windup, interval, HORIZONTAL_GRIPS)
+    : swingPose(elapsed, windup, interval, HORIZONTAL_GRIPS);
 }
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
-export function verticalRollerPose(elapsed, windup, interval) {
-  return swingPose(elapsed, windup, interval, VERTICAL_GRIPS);
+export function verticalRollerPose(elapsed, windup, interval, shape = null) {
+  return shape === 'heavy' ? heavySwingPose(elapsed, windup, interval, VERTICAL_GRIPS)
+    : swingPose(elapsed, windup, interval, VERTICAL_GRIPS);
 }
 
 export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {
@@ -888,7 +918,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
         : .23 + (state.elapsed - state.windup) / Math.max(1 / 60, state.interval - state.windup) * .45;
       const base = P.slice();
       flick.call(this, P, age);
-      const curve = horizontalRollerPose(state.elapsed, state.windup, state.interval);
+      const curve = horizontalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape);
       for (let i = 0; i < 3; i++) {
         P[C.ANC + i] = curve.anchor[i];
         P[C.ANCR + i] = curve.rotation[i];
@@ -897,7 +927,7 @@ export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTE
       for (let i = 0; i < P.length; i++) P[i] = mix(base[i], P[i], weight);
       return;
     }
-    const p = verticalRollerPose(state.elapsed, state.windup, state.interval), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);
+    const p = verticalRollerPose(state.elapsed, state.windup, state.swingInterval ?? state.interval, state.swingShape), w = p.weight * (state.released && state.rolling ? 1 - this.wRoll : 1);
     for (let i = 0; i < 3; i++) {
       P[C.ANC + i] = mix(P[C.ANC + i], p.anchor[i], w);
       P[C.ANCR + i] = mix(P[C.ANCR + i], p.rotation[i], w);

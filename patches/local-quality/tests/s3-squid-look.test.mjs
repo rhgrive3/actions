@@ -10,15 +10,12 @@ import { readSource } from '../../reliability/tests/hud-fixture.mjs';
 
 const compose = (rel, input = readSource(rel)) => adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, input))));
 
-test('S3 squid look: own-ink mound replaces the local see-through squid only while swimming on the ground', () => {
+test('S3 squid look: no floor-level own-colour mound; the local swimmer keeps the squid-shaped ghost', () => {
   const ch = compose('src/game/character.js');
   new vm.SourceTextModule(ch);
-  assert.match(ch, /function s3BulgeGeometry\(\)/);
-  assert.match(ch, /this\.squid\.bulge = bulge;/);
+  assert.doesNotMatch(ch, /s3BulgeGeometry|squid\.bulge|s3Bulge/, 'the hemisphere mound read as an ellipse under the squid');
   const upd = ch.slice(ch.indexOf('  _updateSquid(dt, s) {'));
-  assert.match(upd, /const bulgeOn = !!sq\.bulge && form === 'swim' && !airborne && this\.isLocal/);
-  assert.match(upd, /if \(bulgeOn\) \{\n\s+sq\.ghost\.visible = false;/, 'the mound takes over from the ghost, never both');
-  assert.match(ch, /this\._ownMats\.push\(bulgeMat\)/, 'mound material is released by the native dispose path');
+  assert.match(upd, /const ghost = local && this\.isLocal;\n\s+sq\.ghost\.visible = ghost;/);
   assert.ok(JSON.stringify(qualityIdentity()).includes('s3-squid-look-adapter.mjs'));
 });
 
