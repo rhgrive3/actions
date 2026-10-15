@@ -215,9 +215,10 @@ test('#713 non-roller impact paint stays native and the roller selectors stay in
   assert.equal(f.paint.length,1);
   // #79 replaces the floor shot's native stretch and jittered radius with the sourced Shooter footprint:
   // grazing impact takes the straight Max envelope (DepthScaleMax 2.24, stretch = depth - 1) and the
-  // radius interpolates WidthMiddle 1.93 -> WidthFar 1.71 from DistanceMiddle 1.1 to the weapon range.
+  // radius interpolates WidthMiddle 1.93 -> WidthFar 1.71 from DistanceMiddle 1.1 to the independent PaintParam DistanceFar default 20.
   approx(f.paint[0].opts.stretchAmt,2.24-1);
-  approx(f.paint[0].radius,1.93+(1.71-1.93)*(8-1.1)/(a.weapon.range-1.1),1e-9);
+  assert.equal(a.weapon.impactPaint.distanceFar,20,'sparse PaintParam uses its own DistanceFar default, not firing range');
+  approx(f.paint[0].radius,1.93+(1.71-1.93)*(8-1.1)/(20-1.1),1e-9);
   // Wall contact keeps the native path (#79), so the native constant and random radius band still apply.
   f.paint.length=0;
   f.G.projectiles._impact(p,{point:hit.point,normal:new V(-1,0,0)});

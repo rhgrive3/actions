@@ -17,7 +17,7 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
     };
     const method = { roller: 'fireFlick', slosher: 'fireSlosh', blaster: 'fireBlaster' }[weapon];
     G.projectiles[method](owner, owner.weapon);
-    const releaseEmissions = emissions.length;
+    const releaseEmissions = emissions.length, releaseTurf = owner.stats.turf, releaseCells = paint.counts[owner.team];
     for (let tick = 0; tick < 120; tick++) { G.time += 1 / 60; G.projectiles.update(1 / 60); }
     assert.ok(emissions.length > releaseEmissions, 'native projectiles reach their real floor/timed paint paths');
     if (weapon !== 'blaster') assert.ok(releaseEmissions > 0, 'the independent native release-footprint is exercised');
@@ -29,13 +29,22 @@ for (const weapon of ['roller', 'slosher', 'blaster']) test(`native ${weapon} re
     const lateCredit = owner.stats.turf - before;
     assert.equal(lateCredit, (paint.counts[owner.team] - cellsBefore) * face.cu * face.cv,
       `every native later cell credits its actual owner for seed ${seed}`);
+    if (weapon === 'slosher') {
+      assert.ok(before > releaseTurf && cellsBefore > releaseCells, 'genuine post-release projectile landings claim additional floor cells');
+      assert.equal(before - releaseTurf, (cellsBefore - releaseCells) * face.cu * face.cv,
+        'physical delayed landing credit reaches its emitting owner exactly');
+      assert.ok(emissions.every(e => e.kind === 'source-shot' || e.kind === 'source-splash'),
+        'all native Slosher release and landing masks use their explicit source kind');
+      assert.ok(before > 0 && cellsBefore > 0, 'real source body paint already earns positive turf');
+      assert.equal(before, cellsBefore * face.cu * face.cv, 'immediate source cells credit the emitting actor exactly');
+      assert.equal(lateCredit, 0, 'completed source masks add no procedural ancillary turf');
+    }
     totalLateCredit += lateCredit;
   }
-  // Slosher's first stamp now uses the sourced unit/bullet footprint (#1011),
-  // which reaches cells not yet owned after the overlap on the 0.25-unit grid.
-  // Overlap still cannot invent turf: every late credit is checked above
-  // against the actual grid-count delta for the same owner.
-  assert.ok(totalLateCredit > 0, `native ${weapon} later cells reach the emitting actor`);
+  // Source masks claim their full bounded body immediately. Generic Roller and
+  // Blaster growth still exercises positive late credit; no path may invent it.
+  if (weapon === 'slosher') assert.equal(totalLateCredit, 0);
+  else assert.ok(totalLateCredit > 0, `native ${weapon} later cells reach the emitting actor`);
 });
 
 for (const sub of ['suction', 'curling']) test(`native ${sub} detonation retains its owner for every core and satellite splat`, async () => {
