@@ -19,7 +19,7 @@ for(const stage of catalog.stages)for(const [file,prefix] of [
  assert.deepEqual(nativeStageIdentity(),report.nativeBindings,'native source changed during the matrix');
  const name=prefix+stage.id,pattern='^'+name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$';
  const result=spawnSync(process.execPath,['--experimental-vm-modules','--test','--test-reporter=tap','--test-name-pattern',pattern,'patches/native-stages/tests/'+file],{
-  encoding:'utf8',timeout:15*60*1000,maxBuffer:4*1024*1024,env:{...process.env,INKWAVE_NATIVE_STAGE_ASSETS:assets}
+  encoding:'utf8',timeout:15*60*1000,maxBuffer:4*1024*1024,env:{...process.env,INKWAVE_NATIVE_STAGE_ASSETS:assets,INKWAVE_NATIVE_STAGE_TEST_CHILD:'1'}
  });
  const log=(result.stdout||'')+(result.stderr||''),logFile=stage.id+'-'+file+'.log';
  fs.writeFileSync(path.join(out,logFile),log);

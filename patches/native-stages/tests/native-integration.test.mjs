@@ -1,3 +1,4 @@
+import {isolatedNativeStageTest} from './stage-process-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,7 +12,8 @@ const IDS=ROOT?JSON.parse(fs.readFileSync(path.join(ROOT,'catalog.json'),'utf8')
 test('public builds offer five source choices without reference model payload',()=>{
  const build=prepareNativeStageBuild(null);assert.equal(build.root,null);assert.equal(build.config.mode,'browser-direct');for(const id of ['scorch','hagglefish','inkblot','mako','brinewater'])assert(build.config.stages.some(s=>s.id===id));
 });
-for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async()=>{
+for(const id of IDS)test('native source physics, painting, movement, nav and rules: '+id,{skip:!ROOT},async(testContext)=>{
+ if(await isolatedNativeStageTest(import.meta.url,testContext.name))return;
  const f=await nativeFixture(),{G,THREE,PLAYER}=f,data=readStage(ROOT,id),level=new f.NativeLevel(data),physics=new f.NativePhysics(level);
  G.level=level;G.physics=physics;
  class CpuPaint extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}

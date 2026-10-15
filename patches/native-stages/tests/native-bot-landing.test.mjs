@@ -1,7 +1,9 @@
+import {isolatedNativeStageTest} from './stage-process-fixture.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';
 import {nativeFixture,readStage} from './fixture.mjs';
 const root=process.env.INKWAVE_NATIVE_STAGE_ASSETS,ids=root?JSON.parse(fs.readFileSync(path.join(root,'catalog.json'))).stages.map(s=>s.id):['scorch','hagglefish','inkblot','mako','brinewater'];
-for(const id of ids)test('source bot launch retains an actual directed objective route after touchdown: '+id,{skip:!root},async()=>{
+for(const id of ids)test('source bot launch retains an actual directed objective route after touchdown: '+id,{skip:!root},async(testContext)=>{
+ if(await isolatedNativeStageTest(import.meta.url,testContext.name))return;
  const f=await nativeFixture(),{G,THREE}=f,data=readStage(root,id);G.level=new f.NativeLevel(data);G.physics=new f.NativePhysics(G.level);
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  G.paint=new Cpu(null,G.level,{atlasSize:2048,maxDensity:4,cell:.25});G.nav=new f.NavGraph(G.level,G.physics);G.match.mode='turf';G.match.opts={};
