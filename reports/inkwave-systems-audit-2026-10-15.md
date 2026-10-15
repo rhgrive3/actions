@@ -40,3 +40,18 @@ Validation:
 | #1434 whole-game performance / Switch equivalence | Full-game timing and real hardware evidence still required; byte gates and logic tests are not substitutes |
 
 Reference remains Splatoon 3 11.3.0 and pinned Leanny commit `7280ff9cde8bb1c5dcef46c700c326471584d2e6`. No new retail numerical claims are introduced.
+
+## Batch B: effective profile-to-sensor transitions
+
+Baseline: merged batch A `e975fb76c63ee6a70af7b288b250cb514ccc6553` (PR #1452). Three new extracted Game regressions fail by assertion before the change; all pass after. The whole-module Game/MobileInput fixture covers five cases and runs against source or an explicit emitted site. It stubs only sensor responses, storage and display seams and removes the automatic renderer bootstrap.
+
+- Nested active-profile ON/OFF now updates the installed sensor owner.
+- Conflicting flat/nested edits use the existing final nested projection when deciding sensor ON/OFF.
+- Nested OFF invalidates a pending permission; old success cannot activate a subsequent ON.
+- Inactive edits create no prompt; current denial reverts and saves only the active profile.
+- Related source checks: 61 pass; whole-module source: 5 pass. Baseline whole-module: 1 pass / 4 assertion failures.
+- CI gains the same five whole-module cases against emitted/minified code. Exact-HEAD packaging and emitted execution are required before merge. Sensor APIs remain mocked; no physical permission or latency claim.
+
+Batch A merge receipt: PR #1452 merged as `e975fb76c63ee6a70af7b288b250cb514ccc6553`; merge tree exactly matches the locally validated tree `a4c4636f145e4ef4d1d38fad1ca166d7e12b66fd`. Additional emitted ranked integration/network tests: 32 pass; exact-HEAD packaging: 10 pass. CI was queued at merge, not reported as green.
+
+Batch B emitted checks: five whole-module sensor-transition cases pass against minified code; adjacent emitted map/gyro/disable/inversion tests pass 26/26, including the emitted-only Game HUD cases. Related source composition/idle/startup tests pass 28/28 (overlap with the 61-case suite above).
