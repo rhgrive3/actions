@@ -437,6 +437,16 @@ test('reacquires shooter carry without a grounded ToHuman weapon snap', async ()
     api.posture.sourceCarryWeapon(ch.sourceMotion, q);
     return q.angleTo(new api.THREE.Quaternion());
   };
+  // Replay the exact source weapon bone, not an identity-Quaternion surrogate.
+  // Applying the carry in isolation measures the additional angular step that
+  // the actual Player00 hand-off would introduce to the production weapon.
+  const sourceCarryTurn = () => {
+    const c = ch.sourceMotion;
+    const original = c.pose.wq[c.bank.index.weapon].clone().multiply(c.weaponReference);
+    const corrected = original.clone();
+    api.posture.sourceCarryWeapon(c, corrected);
+    return original.angleTo(corrected);
+  };
   drive(api, ch, st, { frames: 90 });
   st.form = 'squid';
   drive(api, ch, st, { speed: 6, frames: 45 });
@@ -445,7 +455,8 @@ test('reacquires shooter carry without a grounded ToHuman weapon snap', async ()
   drive(api, ch, st, { speed: 6, frames: 90, onFrame: () => {
     const c = ch.sourceMotion;
     samples.push({ state: c.state,
-      carry: api.posture.sourceCarryWeight(c.retarget), angle: carryAngle() });
+      carry: api.posture.sourceCarryWeight(c.retarget), angle: carryAngle(),
+      sourceTurn: sourceCarryTurn() });
   } });
   const toHuman = samples.filter(x => x.state === 'ToHuman');
   assert.ok(toHuman.length > 0 && toHuman.every(x => x.carry === 0 && x.angle < 1e-10));
@@ -453,6 +464,10 @@ test('reacquires shooter carry without a grounded ToHuman weapon snap', async ()
   assert.ok(moving.length >= 15, 'real source bank finishes ToHuman into ordinary movement');
   assert.ok(moving[0].carry > 0 && moving[0].carry < 0.20,
     'first grounded return must ease in, not apply the full shooter yaw in one frame');
+  assert.ok(moving[0].sourceTurn <= 0.030001,
+    `actual sourced weapon hand-off must not add a sudden turn: ${moving[0].sourceTurn} rad`);
+  assert.ok(moving.some((p, i) => i > 40 && p.sourceTurn > 0.03),
+    'carry must recover visibly after hand-off rather than being disabled to pass the bound');
   let previous = 0, previousAngle = 0;
   for (const x of moving.slice(0, 15)) {
     assert.ok(x.carry >= previous - 1e-8 && x.carry - previous < 0.15,

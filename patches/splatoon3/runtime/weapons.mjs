@@ -93,14 +93,15 @@ export function splatlingBurst(w, charge) {
   return c <= boundary ? w.burstFirst * c / boundary : w.burstFirst + (w.burstMax - w.burstFirst) * (c - boundary) / (1 - boundary);
 }
 // Reserve complete emitted rounds, not fractional duration-equivalents (#543).
-// Ceil the requested count, cap it by paid whole rounds, and run whole cadence
-// slots. Partial duration changes by less than one fire interval; full stays 40.
+// MaxShootingFrame is the last eligible slot: include t=0 and the final
+// 160F round (41 total), consistent with the added Spinners and Wiki table.
+// A stream ends one reference frame after its final emitted round.
 export function splatlingReservation(w, charge, availableInk) {
   if (![w.fireInterval, w.inkPerShot, charge, availableInk].every(Number.isFinite) || !(w.fireInterval > 0) || !(w.inkPerShot > 0)) throw new Error('Invalid Splatling reservation');
-  const requested = Math.max(0, Math.ceil(splatlingBurst(w, charge) / w.fireInterval - 1e-10));
+  const requested = charge <= 0 ? 0 : Math.floor(splatlingBurst(w, charge) / w.fireInterval + 1e-10) + 1;
   const affordable = Math.max(0, Math.floor(Math.max(0, availableInk) / w.inkPerShot + 1e-10));
   const shots = Math.min(requested, affordable);
-  return { shots, cost: shots * w.inkPerShot, duration: shots * w.fireInterval };
+  return { shots, cost: shots * w.inkPerShot, duration: shots ? (shots - 1) * w.fireInterval + 1 / 60 : 0 };
 }
 export function splatlingChargeCap(ink, w) {
   const fraction = Math.max(0, Math.min(1, ink / w.inkFull)), first = w.burstFirst / w.burstMax, boundary = w.firstChargeTime / w.chargeTime;
