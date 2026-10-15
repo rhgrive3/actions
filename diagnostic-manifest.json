@@ -6,7 +6,7 @@
     "modelSource": 79,
     "modelEmitted": 79,
     "skips": 0,
-    "controls": 58,
+    "controls": 73,
     "images": 56,
     "brellaLifecycleReceipts": 60,
     "workRows": 32
@@ -26,9 +26,9 @@
     },
     {
       "path": "capture-second-integration.mjs",
-      "sha256": "21780af9132bb6cdc9aef26a9b7fd37b029731213d8c95c8f2835f6c20f11e7e",
-      "blob": "59046c3ec184f92694f8fda543ffc615b82eb7e0",
-      "bytes": 12687
+      "sha256": "4b3e662dc4ea2be71e816a8e24d68854c026a53d711a3c26dfae280b86b8c237",
+      "blob": "6d2ad10910012b48673d03718ac8d14b66180b77",
+      "bytes": 13280
     },
     {
       "path": "second-capture-integrity.test.mjs",
@@ -38,9 +38,9 @@
     },
     {
       "path": "capture-brella-second.mjs",
-      "sha256": "6e8e78f6a128f909df174e2e9d19877ef6b0f315b0c9aad759620b89e989074d",
-      "blob": "97335f1102ddad51334b0002c29064e1abcc0c4a",
-      "bytes": 12396
+      "sha256": "9cde3ad9912842f1287610bf5f6783c8dd8ef1386909a6016e7740df2be6eb56",
+      "blob": "13509945b3f5e90184446a142ea22f3fb0e1f80f",
+      "bytes": 13052
     },
     {
       "path": "capture-b-second.mjs",
@@ -50,9 +50,9 @@
     },
     {
       "path": "capture-c-second.mjs",
-      "sha256": "c2edb4ec24806f585d59f8c8172f639bcdfc5397b8b241051633ebfcb0caea40",
-      "blob": "e7b3f725fd9e3af27b7c83e2f29b230d9757a87b",
-      "bytes": 8738
+      "sha256": "23feb231714aed45f1548f467e4377a49f6f6f78f593c9037aa689c9b59cb326",
+      "blob": "523f9ed475a909f977177e086398b8bdac23d635",
+      "bytes": 10110
     },
     {
       "path": "compare-native-weapon-work.mjs",
@@ -104,9 +104,9 @@
     },
     {
       "path": ".github/workflows/second-weapon-acceptance.yml",
-      "sha256": "b0c2df69ac0083f5df7900f138954bf0b2699d91e47dda7a3217bfa674c77790",
-      "blob": "84dbe43c0940bda6f921673ee313c4b2ed1c3eec",
-      "bytes": 2631
+      "sha256": "0d76eb29f4c81e93c5032bdf45996905ebc3dc857890fb24c9b1536fb72a3e61",
+      "blob": "1dd5f4789958814613d4297331c3cfdc077d7052",
+      "bytes": 2832
     },
     {
       "path": "capture-b-second.test.mjs",
@@ -143,6 +143,30 @@
       "sha256": "05d00b6b0c639ef4e0251b4f5b8c40282cf3b59b46e0014ccb41c1372741a8c6",
       "blob": "85d5969c75342e52a373bfcbc8fd3cbafa338efd",
       "bytes": 1499
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "b07dd849b85a8237e89fbe91203b46030fcb13fc0792e467fc8ade346fc4aca2",
+      "blob": "37d149badd419a4e9e7941f23d6f5c53ec4949d5",
+      "bytes": 1231
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "014b0ab28ad4d73c96ef4fa8014a1f01772fde35a363924b1a731559a398e473",
+      "blob": "bb68c8052f9291e63ed3eec222bc432ab8ff6db3",
+      "bytes": 2104
+    },
+    {
+      "path": "canopy-identity.test.mjs",
+      "sha256": "f3083c5a78011ca55424dd64c999e1df16a3171b09e9d87ff293a7eae63405c0",
+      "blob": "073ec7eed9da6b5a9f75640bd2dfee3f882762d2",
+      "bytes": 4252
+    },
+    {
+      "path": "capture-c-second.test.mjs",
+      "sha256": "e00c75d3ee605752cf3f42d6274a675a84a20005f2567d2c0bb577e82fcb1f2c",
+      "blob": "e20dae8e7ef3aab3c87ede17939fc372395d133c",
+      "bytes": 3905
     }
   ],
   "candidateHead": "52e868afd8f64b6d830d3c0df0e9e9690d9b3751"

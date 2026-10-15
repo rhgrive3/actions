@@ -3,6 +3,7 @@ export async function captureBrellaSecond({api,R,THREE,scene,renderer,camera}){
  const {Actor,Character,G}=api,dt=1/60;
  const originalRandom=Math.random;let randomState=0;const resetRng=()=>{randomState=0x6b17a9c3;};
  const saved={actors:G.actors,time:G.time,projectiles:G.projectiles,segment:G.physics.segment,cameraPosition:camera.position.clone(),cameraQuaternion:camera.quaternion.clone()};
+ let lastObservation=null;
  const frames=[],states=[],owned=[],reference=new Map();let ownedProjectiles=null;
   function snapshotHeld(weapons){
    return weapons.map(weapon=>{const pivot=weapon.pivot,parent=pivot.parent;return {weapon,pivot,parent,sibling:parent.children.indexOf(pivot),before:pivot.matrixWorld.elements.slice(),local:pivot.matrix.clone(),world:pivot.matrixWorld.clone(),position:pivot.position.clone(),quaternion:pivot.quaternion.clone(),scale:pivot.scale.clone(),matrixAutoUpdate:pivot.matrixAutoUpdate,matrixWorldAutoUpdate:pivot.matrixWorldAutoUpdate,matrixWorldNeedsUpdate:pivot.matrixWorldNeedsUpdate};});
@@ -26,10 +27,10 @@ export async function captureBrellaSecond({api,R,THREE,scene,renderer,camera}){
    for(const s of snapshots)s.pivot.matrixWorldNeedsUpdate=s.matrixWorldNeedsUpdate;
   }
 
-      function observeCanopyHandoff(before, wasLaunched, after, actor, weaponId, scene) {
+      function observeCanopyHandoff(before, wasLaunched, after, actor, weaponId, scene, source) {
         const mesh = before?.mesh;
         return !!before && wasLaunched === false && before.launched === true && after === null
-          && before.owner === actor && before.weaponId === weaponId
+          && before.owner === actor && before.weaponId === weaponId && before.visualSource === source
           && Number.isFinite(before.remaining) && before.remaining > 0
           && mesh?.parent === scene && mesh.visible === true && mesh.name === 'brella-canopy:' + weaponId
           && !!before.visualSource?.parts?.canopy?.geo
@@ -47,7 +48,7 @@ export async function captureBrellaSecond({api,R,THREE,scene,renderer,camera}){
           || frame - pending.frame >= canopyHideApplications(1 / 60)) return false;
         if (weapon !== pending.weapon || state?.canopy !== null || !(state.naked > 0)
           || pending.canopy.mesh !== pending.mesh || pending.canopy.visualSource !== pending.source
-          || !observeCanopyHandoff(pending.canopy, false, state.canopy, actor, weaponId, scene)) return false;
+          || !observeCanopyHandoff(pending.canopy, false, state.canopy, actor, weaponId, scene, weapon.def)) return false;
         return heldCanopyHidden(weapon);
       }
 
@@ -66,6 +67,8 @@ export async function captureBrellaSecond({api,R,THREE,scene,renderer,camera}){
   ch.actor=a;ch.onEvent=null;ch.setLod('game');a.grounded=a.ground.hit=true;a.form='kid';a.kidT=10;G.actors=[a];
   if(ch.root.parent||w.def.modelId!==baseId)throw Error('Unexpected held model');
   if(role==='variant'&&w.def.modelVariantId!==rowId)throw Error('Wrong emitted Second-batch Brella');
+  const catalogId=a.weapon.catalogRecord?.id;
+  if(catalogId!==baseId||catalogId!==w.def.modelId)throw Error('Wrong native catalog base identity');
   if(ch._sourceMotionLoader)await ch._sourceMotionLoader;if(ch.sourceMotion?.ready)await ch.sourceMotion.ready;
   resetRng();
   let frame=0,lastFire=false,pending=null,maxGrip=0;
@@ -76,7 +79,8 @@ export async function captureBrellaSecond({api,R,THREE,scene,renderer,camera}){
    if(w.near!==true||w.body.visible!==true||w.bodyFar.visible!==false)throw Error('Second-batch Brella near body required');
    const C=api.CHARACTER_CHANNELS;if(ch.P[C.IKL]>.99&&ch.P[C.LTW]<.001){const grip=w.off.localToWorld(w.def.handL.pos.clone()).distanceTo(ch.bones.handL.getWorldPosition(new THREE.Vector3()));if(!Number.isFinite(grip)||grip>.008)throw Error('Second-batch Brella grip error');maxGrip=Math.max(maxGrip,grip);}
    const state=a.weaponRunner.catalogState;
-   if(observeCanopyHandoff(c,launched,state?.canopy,a,id,scene))pending={canopy:c,mesh:c.mesh,source:c.visualSource,weapon:w,frame};
+   if(observeCanopyHandoff(c,launched,state?.canopy,a,catalogId,scene,w.def))pending={canopy:c,mesh:c.mesh,source:c.visualSource,weapon:w,frame};
+   lastObservation={id,catalogId,role,team,frame,heldCanopy:!!state?.canopy,naked:state?.naked,pending:!!pending,observedWeaponId:c?.weaponId||null,observedMeshName:c?.mesh?.name||null,observedOwner:c?.owner===a,observedSource:c?.visualSource===w.def,bo:w.ps.bo,bv:w.ps.bv};
    frame++;return state;
   };
   const snap=state=>{
@@ -102,11 +106,11 @@ export async function captureBrellaSecond({api,R,THREE,scene,renderer,camera}){
   for(let n=0;n<400;n++){
    const cs=tick(true);if(!pending)continue;
    const current=frame-1;
-   if(!observeCanopyHandoff(pending.canopy,false,cs.canopy,a,id,scene)||pending.canopy.mesh!==pending.mesh||pending.canopy.visualSource!==pending.source)throw Error('Detached ownership lost');
+   if(!observeCanopyHandoff(pending.canopy,false,cs.canopy,a,catalogId,scene,w.def)||pending.canopy.mesh!==pending.mesh||pending.canopy.visualSource!==pending.source)throw Error('Detached ownership lost');
    if(current-pending.frame>=canopyHideApplications(dt))throw Error('Native hide bound');
-   if(observeHeldAfterHandoff(pending,current,cs,w,a,id,scene)){snap('launched');break;}
+   if(observeHeldAfterHandoff(pending,current,cs,w,a,catalogId,scene)){snap('launched');break;}
   }
-  if(!frames.some(r=>r.role===role&&r.team===team&&r.state==='launched'))throw Error('Missing launch');
+  if(!states.some(r=>r.kit===kit&&r.role===role&&r.team===team&&r.state==='launched'))throw Error('Missing launch');
   G.projectiles.clear();a.weaponRunner.reset();pending=null;lastFire=false;
   for(let n=0;n<100;n++){const cs=tick(true);if(cs.canopy?.open&&w.ps.bo>.9)break;}
   const can=a.weaponRunner.catalogState.canopy;if(!can?.open||can.launched)throw Error('Missing break target');
@@ -120,7 +124,7 @@ export async function captureBrellaSecond({api,R,THREE,scene,renderer,camera}){
  }
  if(frames.length!==24||states.length!==60)throw Error('Expected 24 matched Brella images and 60 native lifecycle receipts');
  return {frames,states,scope:'Actual native Runner/Actor animation and damage admission with controlled level/projectile rendering; held weapon components only, no full Game/compositor or FPS claim'};
- }finally{
+ }catch(error){error.capturePartial={frames,states,state:lastObservation,error:String(error)};throw error; }finally{
   Math.random=originalRandom;const cleanupErrors=[];try{ownedProjectiles?.clear();}catch(e){cleanupErrors.push(String(e));}G.projectiles=saved.projectiles;G.actors=saved.actors;G.time=saved.time;G.physics.segment=saved.segment;try{camera.position.copy(saved.cameraPosition);camera.quaternion.copy(saved.cameraQuaternion);camera.updateMatrixWorld(true);}catch(e){cleanupErrors.push(String(e));}for(const a of owned)try{a.character.dispose();}catch(e){cleanupErrors.push(String(e));}if(cleanupErrors.length)throw Error('Second-batch Brella cleanup: '+cleanupErrors.join('; '));
  }
 }

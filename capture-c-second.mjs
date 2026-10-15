@@ -3,7 +3,21 @@ export async function captureCSecond({api,R,THREE,scene,renderer,camera}){
  const {Actor,Character,G,WEAPONS}=api;
  const before={random:Math.random,actors:G.actors,time:G.time,cameraPosition:camera.position.clone(),cameraQuaternion:camera.quaternion.clone()};
  let randomState=0;const resetRng=()=>{randomState=0x6b17a9c3;Math.random=()=>{randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296;};};
+ let currentCapture=null;
  const frames=[];const owned=[];const baseCameras=new Map(),basePoses=new Map();
+  function fitHeldCamera(bounds,center,view,camera,THREE){
+   if(!(camera.isPerspectiveCamera&&camera.fov>0&&camera.fov<180&&camera.aspect>0&&camera.zoom>0&&camera.near>0&&camera.far>camera.near))throw Error('Invalid held camera');
+   const direction=new THREE.Vector3(...view).normalize();
+   camera.position.copy(center).add(direction);camera.lookAt(center);
+   const inverse=camera.quaternion.clone().invert(),tanY=Math.tan(camera.fov*Math.PI/360)/camera.zoom,tanX=tanY*camera.aspect;
+   let distance=0;
+   for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
+    const p=new THREE.Vector3(x,y,z).sub(center).applyQuaternion(inverse);
+    distance=Math.max(distance,p.z+Math.abs(p.x)/(tanX*.9),p.z+Math.abs(p.y)/(tanY*.9),p.z+camera.near*1.1);
+   }
+   if(!Number.isFinite(distance)||distance<=0)throw Error('Invalid held fit distance');
+   camera.position.copy(center).addScaledVector(direction,distance);camera.updateMatrixWorld(true);
+  }
   function nativeHands(w,paired){
    const hands=[],seen=new Set();
    for(let current=w;current;current=current.left){if(seen.has(current)||hands.length>=2)throw Error('Invalid native weapon chain');seen.add(current);hands.push(current);}
@@ -58,10 +72,11 @@ export async function captureCSecond({api,R,THREE,scene,renderer,camera}){
     for(const w of weapons)if(w.near!==true||w.body.visible!==true||w.bodyFar.visible!==false)throw Error('Native near-body required');
     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),span=Math.max(...bounds.getSize(new THREE.Vector3()).toArray());
     if(!(span>0&&Number.isFinite(span)))throw Error('Invalid native held bounds');
-    if(role==='base'){camera.position.copy(center).add(new THREE.Vector3(...entry.view).normalize().multiplyScalar(span*2.5));camera.lookAt(center);baseCameras.set(comparisonKey,{position:camera.position.clone(),quaternion:camera.quaternion.clone()});}else{const fixed=baseCameras.get(comparisonKey);if(!fixed)throw Error('Missing base camera');camera.position.copy(fixed.position);camera.quaternion.copy(fixed.quaternion);}camera.updateMatrixWorld(true);
+    if(role==='base'){fitHeldCamera(bounds,center,entry.view,camera,THREE);baseCameras.set(comparisonKey,{position:camera.position.clone(),quaternion:camera.quaternion.clone()});}else{const fixed=baseCameras.get(comparisonKey);if(!fixed)throw Error('Missing base camera');camera.position.copy(fixed.position);camera.quaternion.copy(fixed.quaternion);}camera.updateMatrixWorld(true);
     const projected=[];for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z])projected.push(new THREE.Vector3(x,y,z).project(camera).toArray());
     if(projected.flat().some(v=>!Number.isFinite(v)))throw Error('Nonfinite C2 projection');
     const projectedBounds={min:[0,1,2].map(k=>Math.min(...projected.map(p=>p[k]))),max:[0,1,2].map(k=>Math.max(...projected.map(p=>p[k])))};
+    currentCapture={id,role,team,state,bounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},projectedBounds,camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,aspect:camera.aspect,near:camera.near,far:camera.far}};
     if(projectedBounds.min.some(v=>v< -1)||projectedBounds.max.some(v=>v>1)||projectedBounds.max[0]<=projectedBounds.min[0]||projectedBounds.max[1]<=projectedBounds.min[1])throw Error('C2 held bounds outside camera');
     renderer.render(scene,camera);renderer.render(scene,camera);
     if(renderer.getContext().getError()!==0||renderer.info.render.triangles<=0)throw Error('WebGL native held');
@@ -72,8 +87,9 @@ export async function captureCSecond({api,R,THREE,scene,renderer,camera}){
  }
  if(frames.length!==8)throw Error('Expected eight matched Gold Dynamo/Tri Nouveau views');
  return {scope:'Native weapon component visibility; controlled presentation states, no gameplay firing admission or character render',frames};
- }finally{
-  Math.random=before.random;G.actors=before.actors;G.time=before.time;camera.position.copy(before.cameraPosition);camera.quaternion.copy(before.cameraQuaternion);camera.updateMatrixWorld(true);
-  const errors=[];for(const a of owned)try{a.character.dispose();}catch(e){errors.push(String(e));}if(errors.length)throw Error('Native character cleanup: '+errors.join('; '));
+ }catch(error){error.capturePartial={frames,currentCapture,error:String(error)};throw error;}finally{
+  Math.random=before.random;G.actors=before.actors;G.time=before.time;
+  const errors=[];try{camera.position.copy(before.cameraPosition);camera.quaternion.copy(before.cameraQuaternion);camera.updateMatrixWorld(true);}catch(e){errors.push(String(e));}
+  for(const a of owned)try{a.character.dispose();}catch(e){errors.push(String(e));}if(errors.length)throw Error('Native capture cleanup: '+errors.join('; '));
  }
 }

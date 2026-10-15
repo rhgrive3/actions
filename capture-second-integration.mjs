@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {writeCaptureCheckpoint} from './capture-checkpoint.mjs';
 import {validateBuildBinding,validateDelivered} from './build-binding.mjs';
 // Single-site integration smoke. Original frozen A/B remains a separate gate.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';import {chromium} from 'playwright';import {PNG} from 'pngjs';import {captureBrellaSecond} from './capture-brella-second.mjs';import {captureBSecond} from './capture-b-second.mjs';import {captureCSecond} from './capture-c-second.mjs';import {compareNativeWeaponWork} from './compare-native-weapon-work.mjs';import {validateSecondFrames} from './second-capture-contract.mjs';
@@ -24,6 +25,7 @@ async function capture(input,shared){
  await context.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!=='http://127.0.0.1:'+server.address().port){networkFailures.push({url:u.href,error:'external origin rejected'});return route.abort();}return route.continue();});
  await context.addInitScript(({seed})=>{window.__captureNativeNow=performance.now.bind(performance);let state=seed>>>0;Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};Date.now=()=>1700000000000;Object.defineProperty(performance,'now',{value:()=>1000});window.__abRngState=()=>state;window.__abResetRng=()=>{state=seed>>>0;};},{seed});
  const page=await context.newPage();page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
+ await page.exposeFunction('__captureCheckpoint',(phase,data)=>writeCaptureCheckpoint(out,plan.head,phase,data));
  await page.goto('http://127.0.0.1:'+server.address().port+'/review');
  return await page.evaluate(async({prefix,ids,shared,aSource,bSource,cSource,workSource,variantIds,baseModelCount})=>{
   function validateThreeExports(namespace){
@@ -75,9 +77,11 @@ async function capture(input,shared){
   if(shared&&JSON.stringify(environmentReceipt)!==JSON.stringify(shared.environment))throw Error('A/B native environment drift');
   scene.add(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);scene.environment=nativeEnvironment.envMap;scene.environmentIntensity=environmentReceipt.environmentIntensity;
   const work=await (0,eval)('('+workSource+')')({api,R,THREE,scene,renderer,camera});
-  const C=await (0,eval)('('+cSource+')')({api,R,THREE,scene,renderer,camera});
+  await window.__captureCheckpoint('work',work);
+  let C;try{C=await (0,eval)('('+cSource+')')({api,R,THREE,scene,renderer,camera});await window.__captureCheckpoint('C',C);}catch(error){await window.__captureCheckpoint('C-failure',error.capturePartial||{error:String(error)});throw error;}
   const B=await (0,eval)('('+bSource+')')({api,R,THREE,scene,renderer,camera});
-  const A=await (0,eval)('('+aSource+')')({api,R,THREE,scene,renderer,camera});
+  await window.__captureCheckpoint('B',B);
+  let A;try{A=await (0,eval)('('+aSource+')')({api,R,THREE,scene,renderer,camera});await window.__captureCheckpoint('A',A);}catch(error){await window.__captureCheckpoint('A-failure',error.capturePartial||{error:String(error)});throw error;}
   if(shaderErrors.length)throw Error('Shader errors: '+shaderErrors.join('\n'));
   scene.remove(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);nativeEnvironment.dispose();
   return {A,B,C,work,environment:environmentReceipt,undersizedRejected,shaderErrors};
