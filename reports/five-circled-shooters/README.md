@@ -135,3 +135,10 @@ Merged immutable main `01aa5cc61c842a8616ab38ff5fb541b6becf1395`, retaining its 
 Source focused geometry/real Actor/compact-stripe contracts pass 11/11; emitted five-model and complete real Actor model contracts pass 8/8 without skips, at build content hash `f72df645fb901a1b933254b29ac92e56c78bb25b61f54985e963ca69f89300a6`. Source actor emission includes 30/60/120 Hz. Responsive workflow contracts pass 15/15; all fourteen Chromium/WebKit viewport cases remain mandatory in separate browser processes. These are local composition and model attachment checks, not a Nintendo footage acceptance or hardware performance result.
 
 Nova's observed 92.97 mm visual aperture/socket discrepancy, lack of a verified retail muzzle coordinate and final visual/current-main browser crowd review remain open. No arbitrary gameplay muzzle relocation is made here. Keep Draft until that acceptance is resolved.
+
+
+## 2026-10-16 JST latest-main integration
+
+Merged immutable current main `ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a`, preserving both responsive-wrapper checks and main's additional explicit case-filter assertion. The three dedicated before-build pins now use that snapshot. Rebuilt actual emitted real Actor/five-model contracts pass8/8 without skips. Workflow contracts pass16/16. Their newly imported live-log test initially failed under CPU contention because its child could finish during an arbitrary30ms wait; the test now requires the parent to observe persisted progress before acknowledging the child's finish. The original logger and its exit/error policy are unchanged. This is deterministic progress-order verification, not a relaxed timeout/assertion.
+
+Nova's aperture/socket and final visual/performance acceptance remain open as above. No unreviewed gameplay muzzle relocation is introduced.
