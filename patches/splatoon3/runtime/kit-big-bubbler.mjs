@@ -650,10 +650,13 @@ export function damageBigBubblerFromInkVac(dome, attacker, amount, point = dome?
 export function damageBigBubblerFromBeam(attacker, start, end, damage, cause = 'MicroLaser') {
   if (!api || !attacker || attacker.remote || !attacker.alive || !Number.isInteger(attacker.team) ||
       !start?.isVector3 || !end?.isVector3 || !(damage > 0) || cause !== 'MicroLaser') return 0;
+  const maxContacts = domes.length + remoteDomes.length;
+  // No target can be queried or damaged. Avoid per-beam scratch allocations;
+  // read the live pools each call so later deployments are admitted immediately.
+  if (maxContacts === 0) return 0;
   const probe = { owner: attacker, team: attacker.team, damage, size: 0, type: 'beam',
     s3BubblerRow: cause, damageSource: cause, ghost: false };
   const excludedDomeIds = new Set();
-  const maxContacts = domes.length + remoteDomes.length;
   let applied = 0;
   for (let i = 0; i < maxContacts; i++) {
     const candidate = kitBarrierCandidate(probe, start, end, excludedDomeIds);
