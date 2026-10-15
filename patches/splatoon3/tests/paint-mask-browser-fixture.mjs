@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CATALOG_WALL_DROP } from '/ASSET/patches/splatoon3/runtime/catalog-wall-drop-data.mjs';
 import { catalogPaintEllipse } from '/ASSET/patches/splatoon3/runtime/catalog-splash-paint.mjs';
 // Tests the emitted shader, emitted CPU mask, and native seed attribute packing.
 // Only raster derivatives/AA are replaced: points query exact gameplay samples,
@@ -221,6 +222,8 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     const shape=catalogPaintEllipse(2,depth);
     cases.push({kind:0,sa:shape.stretchAmt,R:shape.radius,seed,rotate:shape.rotate,depth});
   }
+  const wallRadii = [...new Set(Object.values(CATALOG_WALL_DROP).flatMap(r => [r.paint.PaintRadiusShock,r.paint.PaintRadiusFall]))];
+  for (const R of wallRadii) for (const seed of [.11,.5,.93]) cases.push({kind:0,sa:0,R,seed,wall:true});
   // Dedicated WidthHalf masks must execute on both surface orientations, with
   // independently timed splashes, tiny drops and rotated narrow-depth shapes.
   // Retain every preexisting generic case and its bidirectional pixel checks.
@@ -231,7 +234,7 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
         cases.push({ wall, kind, sa:shape.stretchAmt, R:shape.radius, seed, rotate:shape.rotate, depth });
       }
   for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false } of cases) {
-    face.wall = wall;
+    face.wall = wall; face.turf = !wall;
     paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
     paint._paintOwnershipOrder = new Uint32Array(n * n);
     const sdu = sa ? (rotate ? -.8 : .6) : 0, sdv = sa ? (rotate ? .6 : .8) : 0, lu = 16, lv = 16;
@@ -259,7 +262,7 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 227 && rows.filter(r => r.kind < 8).length === 99 && result.cpuCells > 0,
+  check(rows.length === 227 + wallRadii.length * 3 && rows.filter(r => r.kind < 8).length === 99 + wallRadii.length * 3 && result.cpuCells > 0,
     'all original body cases plus 128 sourced floor/wall cases exercised');
   for (const wall of [false, true]) for (const kind of [8, 9]) {
     const sourced = rows.filter(row => row.wall === wall && row.kind === kind);
