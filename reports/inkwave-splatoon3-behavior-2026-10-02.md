@@ -4467,3 +4467,11 @@ Comparison reference remains the previously pinned Splatoon3 Ver.11.3.0 / Leanny
 - Stored FOV/mouse sensitivity and live settings updates previously admitted strings, objects, NaN/Infinity or out-of-range numbers into native camera/aim calculations. Normalize at actual Game boot and settings entry using existing UI ranges (FOV65–100, mouse0.2–3). Corrupt saves recover defaults; invalid live changes preserve the last valid values. These bounds describe INKWAVE browser controls, not Splatoon3 FOV/stick calibration. TV/handheld profiles, horizontal-FOV migration and numeric60 FPS remain separate and preserved.
 
 Six wire negative cases and three view negative cases fail before their correction. Final emitted Session/Transport7/7 and real Game/view4/4 pass; Chromium's local WebSocket injection and native projection pass with0 page errors. Source regression counts, build identity and the explicit browser/retail limits are recorded in the systems audit and its browser receipt. Public `inkwave-public/` sources remain unchanged; corrections ship through the build composition.
+
+## 2026-10-15: 発射時のインク表現
+
+シューター・シェルター・ストリンガー・ワイパーの発射の瞬間に出るインク膜（銃口の穴あき膜、傘の前の開花、弓に巻きつく帯、振りの軌跡の波）を、本家の公式映像を拡大して比較し追加した。表示のみで、弾・当たり・塗り・通信は変更していない。寸法・寿命は映像の目視による校正値であり、銃口付近以外の本家比較は未確認のまま。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
+
+## 2026-10-15: SplatoonSWEPs を参考にした発射時のインク
+
+所有者の指示で SplatoonSWEPs（Splatoon 2 の Garry's Mod 版）のテクスチャをそのまま取り込み、シューター・シェルターの銃口膜を SWEPs の MuzzleSplash（円錐2枚、α テスト基準 0.1→0.9）にした。ストリンガー・ワイパーの帯は inkring テクスチャで破れる。スクリュースロッシャーは SWEPs の箱と半透明の渦が本家と違うため採らず、所有者提供の本家画像に合わせて、回転するねじれた穴あきのインク膜（丸い塊なし）と細い筋のしずくにした。表示のみで、弾・当たり・塗り・通信は変更していない。数値は SWEPs の値または画像からの目視で、Splatoon 3 の実測ではない。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。

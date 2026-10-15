@@ -116,8 +116,16 @@ try {
             if (view === 'tele-back') cam.position.copy(at).addScaledVector(fwd, -9).addScaledVector(right, 1.5).add(new THREE(0, 2.0, 0));
             cam.lookAt(at);
           }
+          if (view.startsWith('muzzle-')) {
+            const st = list.find(p => p.start)?.start || a.pos.clone().add(new THREE(0, 1, 0));
+            const at = st.clone().addScaledVector(fwd, 0.6);
+            if (view === 'muzzle-side') cam.position.copy(at).addScaledVector(right, -11).add(new THREE(0, 0.6, 0));
+            if (view === 'muzzle-oblique') cam.position.copy(at).addScaledVector(right, -7).addScaledVector(fwd, 7).add(new THREE(0, 2.6, 0));
+            if (view === 'muzzle-back') cam.position.copy(at).addScaledVector(fwd, -10).addScaledVector(right, 2).add(new THREE(0, 2.5, 0));
+            cam.lookAt(at);
+          }
           window.__shapeFov ??= cam.fov;
-          cam.fov = tele ? 14 : window.__shapeFov;
+          cam.fov = tele ? 14 : view.startsWith('muzzle-') ? 16 : window.__shapeFov;
           cam.up.set(0, 1, 0);
           cam.updateMatrixWorld(); cam.updateProjectionMatrix();
           g.R.render();
