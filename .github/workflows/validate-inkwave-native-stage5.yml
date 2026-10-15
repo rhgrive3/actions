@@ -33,7 +33,7 @@ jobs:
       - name: Build public composition without reference models
         run: node scripts/build-inkwave.mjs inkwave-public _site
       - name: Verify emitted Boolean-ground hit and damage parity
-        run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/boolean-ground-parity.test.mjs
+        run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/boolean-ground-parity.test.mjs patches/native-stages/tests/sphere-triangle-small-world.test.mjs
       - name: Verify emitted vertical-slab hit and damage parity
         run: INKWAVE_BUILT_SITE="$PWD/_site" node --experimental-vm-modules --test patches/native-stages/tests/vertical-slab-parity.test.mjs
       - name: Assert reference model payload remains excluded
