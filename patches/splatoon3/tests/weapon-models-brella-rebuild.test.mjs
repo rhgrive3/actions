@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { fixture } from './source-fixture.mjs';
+import { BRELLA_APERTURE } from '../runtime/brella-aperture.mjs';
 const IDS = ['s3-shelter-normal','s3-shelter-wide','s3-shelter-focus'];
 const MUZZLE = [.62,.872,.622], LEFT = [.09,.14,.08];
 let promise;
@@ -40,7 +41,7 @@ test('30/60/120 Hz open, fold, launch, break and reappear remain read-only finit
     const d=f.getWeaponDef(id),parts={};for(const name of['canopy','canopyInk'])if(d.parts[name])parts[name]=new f.THREE.Object3D();
     const w={def:d,parts,ps:{},ink:new f.THREE.Object3D()},cloth=parts.canopyInk||w.ink;
     const step=(canopy,naked=0)=>{const cs=Object.freeze({canopy:canopy&&Object.freeze(canopy),naked});const st=Object.freeze({runner:Object.freeze({catalogState:cs}),dt:1/hz});for(let j=0;j<hz;j++){f.REG.weaponModelSpec(id).animate(w,st);for(const p of Object.values(parts))assert.ok(p.scale.toArray().every(Number.isFinite));}};
-    step({open:true,launched:false});assert.ok(parts.canopy.scale.x>9.08&&parts.canopy.scale.x<9.10);assert.equal(parts.canopy.visible,true);
+    step({open:true,launched:false});assert.ok(Math.abs(parts.canopy.scale.x-BRELLA_APERTURE[id].scale/.11)<.01,'current main aperture calibration');assert.equal(parts.canopy.visible,true);
     step({open:false,launched:false});assert.ok(parts.canopy.scale.x<1.001);
     step({open:true,launched:true});assert.equal(parts.canopy.visible,false);assert.equal(cloth.visible,false);
     step(null,3);assert.equal(parts.canopy.visible,false);
@@ -53,7 +54,9 @@ test('all three real runners still emit, open shields, block hostile shots and l
     f.G.projectiles.clear();f.G.actors=[];const a=f.make(id);a.form='kid';a.intent.fire=true;a.ink=100;
     let sawOpen=false,sawLaunch=false,hit=false;
     for(let j=0;j<7*hz;j++){
+      const held=a.weaponRunner.catalogState?.canopy;
       f.G.time+=1/hz;a.ink=100;a.weaponRunner.update(1/hz,{fire:true,firePressed:j===0});
+      if(held?.launched){sawLaunch=true;assert.notEqual(a.weaponRunner.catalogState.canopy,held);assert.equal(held.owner,a);assert.ok(held.remaining>0);}
       const c=a.weaponRunner.catalogState.canopy;
       if(c?.open&&!c.launched){sawOpen=true;if(!hit){const p=f.G.projectiles._new();p.team=1;p.damage=10;p.owner={remote:false};p.prev.copy(c.pos).add(new f.THREE.Vector3(0,0,3));p.pos.copy(c.pos).sub(new f.THREE.Vector3(0,0,3));const guard=f.G.projectiles.kitDefenseCandidate(p);assert.ok(guard,id+' live shield');const hp=c.hp;guard.onHit(p);assert.equal(c.hp,hp-10);hit=true;}}
       if(c?.launched)sawLaunch=true;

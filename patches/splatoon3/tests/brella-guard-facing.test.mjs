@@ -26,9 +26,9 @@ test('build hook is single-use and preserves special/superjump and roller preced
   assert.throws(()=>adaptBrellaGuardFacing('src/game/actor.js',code,replaceOnce),/expected exactly one/);
   assert.equal(adaptBrellaGuardFacing('src/game/character.js','untouched',replaceOnce),'untouched');
 });
-test('all 65 closed weapons and every non-target live guard retain exact existing facing traces',async()=>{
+test('all 160 registered kits and every non-target live guard retain exact existing facing traces',async()=>{
   const a=await setup(),b=await setup({adaptRuntime:(rel,s)=>rel.endsWith('/brella-guard-facing.mjs')?'export function heldBrellaGuardFacing(){return false;}':s});
-  const ids=Array.from(a.WEAPON_ORDER);assert.equal(ids.length,65);let cases=0;
+  const ids=Array.from(a.WEAPON_ORDER);assert.equal(ids.length,160);let cases=0;
   for(const id of ids)for(const mode of ['closed','ordinary','fire','sub','special','superjump','squid'])for(const hz of[30,60,120]){
     if(IDS.includes(id)&&mode==='ordinary')continue;
     const actors=[a.make(id),b.make(id)];
@@ -73,7 +73,9 @@ test('repeated close/reopen and launch relinquish facing without leaking a timer
   for(const id of IDS)for(const hz of[30,60,120]){
     const a=f.make(id),r=a.weaponRunner;let previous=false,sawOpen=false,sawLaunch=false,sawPrepare=false,closed=0;
     for(const [seconds,fire]of[[1.3,true],[.08,false],[.16,true],[.08,false],[1.8,true],[.2,false],[6,true]])for(let j=0;j<Math.ceil(seconds*hz);j++){
+      const held=r.catalogState?.canopy;
       a.intent.fire=fire;a.ink=100;r.update(1/hz,{fire,firePressed:fire&&!previous});previous=fire;
+      if(held?.launched){sawLaunch=true;assert.notEqual(r.catalogState.canopy,held,'launched canopy has its independent owner');assert.equal(held.owner,a);assert.ok(held.remaining>0);assert.equal(heldBrellaGuardFacing(a),false);}
       const c=r.catalogState.canopy;sawOpen ||= !!c?.open&&!c.launched;sawLaunch ||= !!c?.launched;sawPrepare ||= !!c?.preparing;
       if(!fire){closed++;assert.equal(c?.preparing||false,false);assert.equal(heldBrellaGuardFacing(a),false);}
       if(c?.launched)assert.equal(heldBrellaGuardFacing(a),false);
