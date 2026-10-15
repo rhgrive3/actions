@@ -1,0 +1,69 @@
+name: INKWAVE native texture cancellation browser acceptance
+on:
+  push:
+    branches: [review/native-texture-cancellation-browser-20261015]
+permissions:
+  contents: read
+concurrency:
+  group: native-texture-cancellation-browser-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  bitmap:
+    if: github.event_name == 'push' && github.repository == 'rhgrive3/actions' && github.ref == 'refs/heads/review/native-texture-cancellation-browser-20261015'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_OPTIONS: --max-old-space-size=512
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 2b8bcb13df53158d78e3b5ff0dc82d49448ecdb6
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+      - name: Verify frozen diagnostic and source pins
+        run: |
+          test "$(git -C diagnostic rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C source rev-parse HEAD)" = 2b8bcb13df53158d78e3b5ff0dc82d49448ecdb6
+          test "$(git -C source rev-parse HEAD^{tree})" = 27246d19e76d42728e9621eac880bfc08cabe6be
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path('diagnostic/scripts/diagnostics/native-texture-cancellation')
+          m=json.loads((p/'manifest.json').read_text())
+          actual={f.name for f in p.iterdir() if f.is_file() and f.name!='manifest.json'}
+          assert actual|{'workflow.yml'}==set(m['files'])
+          assert m['sourceHead']=='2b8bcb13df53158d78e3b5ff0dc82d49448ecdb6'
+          assert m['sourceTree']=='27246d19e76d42728e9621eac880bfc08cabe6be'
+          for name,pin in m['files'].items():
+              f=pathlib.Path('diagnostic/.github/workflows/native-texture-cancellation-browser.yml') if name=='workflow.yml' else p/name
+              b=f.read_bytes();assert len(b)==pin['bytes'] and hashlib.sha256(b).hexdigest()==pin['sha256'],name
+          plan=json.loads((p/'plan.json').read_text())
+          assert plan['sourceHead']==m['sourceHead'] and plan['sourceTree']==m['sourceTree']
+          PY
+      - name: Install pinned Chromium dependency
+        working-directory: diagnostic/scripts/diagnostics/native-texture-cancellation
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Run bounded isolated real-browser acceptance
+        run: |
+          export PACKAGE="$GITHUB_WORKSPACE/diagnostic/scripts/diagnostics/native-texture-cancellation"
+          export SOURCE_ROOT="$GITHUB_WORKSPACE/source"
+          export BITMAP_EVIDENCE="$GITHUB_WORKSPACE/evidence"
+          python "$PACKAGE/supervise.py"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-texture-cancellation-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            evidence/*.json
+            evidence/*.log

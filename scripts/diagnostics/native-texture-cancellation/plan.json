@@ -1,0 +1,5 @@
+{
+  "sourceHead": "2b8bcb13df53158d78e3b5ff0dc82d49448ecdb6",
+  "sourceTree": "27246d19e76d42728e9621eac880bfc08cabe6be",
+  "scope": "Real Chromium resource-lifetime component qualification. Native ImageBitmap/Canvas/CacheStorage/Three.Texture, exact unmodified source modules and controlled async boundaries. No full Game, stage assets, GPU upload, RSS, device-crash causality or Safari/iPad qualification."
+}

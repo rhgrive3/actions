@@ -1,0 +1,55 @@
+{
+  "sourceHead": "2b8bcb13df53158d78e3b5ff0dc82d49448ecdb6",
+  "sourceTree": "27246d19e76d42728e9621eac880bfc08cabe6be",
+  "scope": "Real Chromium component cancellation acceptance; exact source modules and Three; isolated synthetic CacheStorage/PNG. No stage, full production graph, GPU upload, RSS improvement or device-crash qualification.",
+  "files": {
+    "README.txt": {
+      "bytes": 2115,
+      "sha256": "0d788d32307d8ede00e71ceac0b809f277db7d861aac877e00d1ae18eab76f07"
+    },
+    "probe.mjs": {
+      "bytes": 7194,
+      "sha256": "1f17f5ef4cc1b0d5218424835917ff203526dd4791c4ba0b66f30968ce826b25"
+    },
+    "gate.mjs": {
+      "bytes": 3210,
+      "sha256": "5ed8991c10acda9865ae0ea6391e5f743d5fe673c4a8eb42f9d2c091f58b0b4b"
+    },
+    "gate.test.mjs": {
+      "bytes": 3408,
+      "sha256": "aaf37f9037a3cf9da116f16320279cb7d711e67ce3dc44441f677d265892b73c"
+    },
+    "binding.mjs": {
+      "bytes": 2455,
+      "sha256": "b9e6ecc22f44e31e817ce34a6a64fd453d7aa48900adc78b25537e177ceb458d"
+    },
+    "binding.test.mjs": {
+      "bytes": 1769,
+      "sha256": "bd934d271367ea9c136bdc35a4032d72d1fb1ebd9251e9f3517cf0a1d58cdec6"
+    },
+    "acceptance.mjs": {
+      "bytes": 5038,
+      "sha256": "27b072e06a9ecdf3cca2f7c0bf63a15ed8577f1177ae3f8af52a9a09cd25b58b"
+    },
+    "baseline.mjs": {
+      "bytes": 6792,
+      "sha256": "6b706ae30aafccda4abde8913f0d57f8518a92e0173cfaf3f1904d5b4965487b"
+    },
+    "plan.json": {
+      "bytes": 411,
+      "sha256": "0ea24e91e83f503dac961a48b47321af31e8013b33882e3dfc7d961ac663724d"
+    },
+    "run-hosted.sh": {
+      "bytes": 274,
+      "sha256": "907b397eeeb0d74291f7667e317514927b27eb5cf6b29cf4d9de98c7b8f744e7"
+    },
+    "supervise.py": {
+      "bytes": 3401,
+      "sha256": "e84851f5ea7ee20f19c6b3c5bfb1db476a769ec8d4d2ce2f76735c2cd27fae49"
+    },
+    "workflow.yml": {
+      "bytes": 3138,
+      "sha256": "8e66f05974d2e96cebe656b85371d0c90f6f43c8c05551b0ee03f7f571faf25c"
+    }
+  }
+}
