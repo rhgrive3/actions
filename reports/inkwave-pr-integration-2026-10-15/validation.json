@@ -172,5 +172,13 @@
     "scope": "Intermediate integration build. Final active browser separately verifies current loadout at desktop and small viewport."
   },
   "retailAndPhysicalDeviceParity": "unverified",
-  "githubActions": "not claimed passed"
+  "githubActions": "not claimed passed",
+  "lateSourcePrFollowup": {
+    "number": 1473,
+    "incomingHead": "2dd0926ee87e24b39810d3f7a8a03044f41d50e9",
+    "verifiedMerge": "2963a5534",
+    "pass": 11,
+    "fail": 0,
+    "scope": "Test-only reconciliation with main c02768eb1; retains floor core, explicit radii, X wall and added Z frontal-wall checks. Production build inputs unchanged."
+  }
 }

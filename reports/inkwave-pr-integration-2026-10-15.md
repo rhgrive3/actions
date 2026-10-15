@@ -19,3 +19,8 @@ VM/CPU の通信回帰検証は最終統合後に 512/512（スキップなし�
 
 
 対象 head、生成物 hash、検証範囲と件数: [validation.json](inkwave-pr-integration-2026-10-15/validation.json)。ローカルの詳細ログ・画像は `/workspace/scratch/pr-resolution/` と `.ci-scratch/pr-resolution/responsive/` に保持する。
+
+
+## #1473 の直前更新への追従
+
+#1478 を main `c02768eb1` へマージした直前、#1473 に検証のみの更新 `2dd0926ee` が追加された。main を同 PR に取り込み、既存の床コア半径 0.1・成長半径 0.55 の照合と X 壁の接触距離に加え、追加された Z 正面壁の検証も維持した。対象の送受信検証 11/11 が通過。変更は検証とこの記録のみで、生成物の入力・ゲーム挙動は上記最終検証から変わらない。
