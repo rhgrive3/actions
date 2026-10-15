@@ -622,16 +622,17 @@ export function blasterBurstAxisDirections(contract) {
   return out;
 }
 
-function detachedPaint(system, state, point, radius, salt) {
+function detachedPaint(system, state, point, radius, salt, face = state.paintFace) {
   if (state.ghost || !(radius > 0) || !api?.G?.paint) return 0;
   const area = api.G.paint.splat(point, radius, state.team, {
+    ...(Number.isInteger(face) && face >= 0 ? { face } : {}),
     seed: seededUnit(state.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: state.owner,
   });
   if (Number.isFinite(area)) state.owner?.addTurf?.(area);
   return area || 0;
 }
 
-function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
+function startDetachedWallDrop(system, p, hit, move, paint, tag, salt, paintFace = null) {
   if (!move || !paint || !eligibleWallDropHit(hit)) return false;
   const firstFrames = seededFrames(p.seed, move.FallPeriodFirstFrameMin, move.FallPeriodFirstFrameMax, salt ^ 0x11);
   const secondFrames = Math.max(0, Math.round(move.FallPeriodSecondFrame ?? 0));
@@ -639,7 +640,7 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
   const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
   if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid detached wall-drop speed');
   const state = {
-    tag, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost,
+    tag, paintFace, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost,
     frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames,
     firstSpeed, secondSpeed,
     shockRadius: Number(paint.PaintRadiusShock) || 0,
@@ -654,6 +655,15 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
   (system._s3DetachedWallDrops || (system._s3DetachedWallDrops = [])).push(state);
   detachedPaint(system, state, state.pos, state.shockRadius, salt ^ 0x33);
   return true;
+}
+
+// Added catalog bullets share the bounded detached wall-slide lifecycle.
+// Admit only sourced paintable face contacts; ghosts cannot duplicate ownership.
+export function startCatalogWallDrop(system, p, hit, source) {
+  if (p.ghost || !source) return false;
+  const face = api?.G?.physics?.level?.faces?.[hit.face];
+  if (!Number.isInteger(hit.face) || hit.face < 0 || !face || face.paintable === false) return false;
+  return startDetachedWallDrop(system, p, hit, source.move, source.paint, 'catalog', 0x576, hit.face);
 }
 
 function advanceDetachedWallDrops(system, dt) {
@@ -672,7 +682,8 @@ function advanceDetachedWallDrops(system, dt) {
       const hit = moved ? api.G.physics.segment(state.from, state.next, state.hit, true) : null;
       if (hit?.hit) {
         state.pos.copy(hit.point).addScaledVector(hit.normal, .02);
-        if (hit.normal.y > .45) detachedPaint(system, state, state.pos, state.groundRadius, 0x6a0d);
+        if (hit.normal.y > .45) detachedPaint(system, state, state.pos, state.groundRadius, 0x6a0d,
+          state.paintFace == null ? null : hit.face);
         state.frame = state.totalFrames;
         break;
       }

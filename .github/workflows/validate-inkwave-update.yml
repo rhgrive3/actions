@@ -245,6 +245,8 @@ jobs:
             list(pool.map(fetch_source,sorted(paths)))
           PY
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test patches/splatoon3/tests/main-weapon-catalog-data.test.mjs
+          node scripts/generate-inkwave-catalog-wall-drop.mjs .reference-data/catalog/data/parameter/1130/weapon
+          git diff --exit-code -- patches/splatoon3/runtime/catalog-wall-drop-data.mjs
           INKWAVE_MAIN_WEAPON_REFERENCE=.reference-data/catalog node --test --test-name-pattern='pinned alternate rows match raw' patches/splatoon3/tests/alternate-weapon-kits.test.mjs
           node scripts/generate-inkwave-weight-reference.mjs .reference-data/catalog/data/parameter/1130/weapon
           git diff --exit-code -- patches/splatoon3/reference/weapon-weight-1130.json patches/splatoon3/runtime/weapon-weight-data.mjs

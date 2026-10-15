@@ -14,7 +14,8 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, startCatalogWallDrop } from './weapons-fidelity.mjs';
+import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
@@ -765,6 +766,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=p.catalog,d=s.descriptor,r=s.r;
     if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub')return true;
     const at=h.point||p.pos;
+    if(startCatalogWallDrop(system,p,h,CATALOG_WALL_DROP[r.id]))return true;
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
     if(d.key==='arrow') {
       const det=d.b.DetonationParam,frames=d.charge*chargeFrames(r);
