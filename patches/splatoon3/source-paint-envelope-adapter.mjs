@@ -48,8 +48,11 @@ export function adaptSourcedPaintFootprint(rel, code, replaceOnce) {
     'source CPU range cull');
   code = replaceOnce(code,
     '          if (d / (r * blobWobble(Math.atan2(py, px), seed)) > 1) continue; // PR1188: GPU body zero crossing',
-    '          if (d / (r * (sourced ? 1 : blobWobble(Math.atan2(py, px), seed))) > 1) continue; // PR1188: GPU body zero crossing',
-    'literal WidthHalf CPU/GPU boundary parity');
+    '          if (sourced && d > r) continue;\n' +
+    '          if (!sourced) {\n' +
+    '          if (d / (r * blobWobble(Math.atan2(py, px), seed)) > 1) continue; // PR1188: GPU body zero crossing\n' +
+    '          }',
+    'source WidthHalf with original generic CPU predicate preserved for hotpath adapter');
   code = replaceOnce(code,
     'const drips = wall && kind !== K_SPECK && kind !== K_ROLL ? 1 : 0;',
     'const drips = wall && kind !== K_SPECK && kind !== K_ROLL && kind !== K_SOURCE_SHOT && kind !== K_SOURCE_SPLASH ? 1 : 0;',
