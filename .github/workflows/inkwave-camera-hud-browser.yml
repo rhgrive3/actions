@@ -45,7 +45,7 @@ jobs:
           python - <<'PY'
           import hashlib,json,pathlib
           root=pathlib.Path('diagnostic');p=root/'scripts/camera-hud-browser';m=json.loads((p/'package.json').read_text())
-          assert len(m['files'])==7
+          assert len(m['files'])==8
           for name,pin in m['files'].items():
               f=root/'.github/workflows/inkwave-camera-hud-browser.yml' if name=='inkwave-camera-hud-browser.yml' else p/name
               b=f.read_bytes();assert len(b)==pin['bytes'] and hashlib.sha256(b).hexdigest()==pin['sha256'],name

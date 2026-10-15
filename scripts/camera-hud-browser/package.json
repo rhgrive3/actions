@@ -30,8 +30,8 @@
       "publicationPath": "scripts/camera-hud-browser/bindings.mjs"
     },
     "bindings.test.mjs": {
-      "bytes": 4011,
-      "sha256": "9d62b6869ac2d7a22615dff489871990f1262f4babdda5b4b274458660935be9",
+      "bytes": 6343,
+      "sha256": "652a1db1a64197313fd36d0c6dbfb1db417d8250e00652365f6abe94e2dfeb08",
       "publicationPath": "scripts/camera-hud-browser/bindings.test.mjs"
     },
     "browser.mjs": {
@@ -45,19 +45,29 @@
       "publicationPath": "scripts/camera-hud-browser/camera-probe.mjs"
     },
     "hud-probe.mjs": {
-      "bytes": 5146,
-      "sha256": "331f0f0f553df22d2da5165d189937fc3f64836b1fbd549560309be58f72e4d1",
+      "bytes": 5929,
+      "sha256": "3c1f96a531b04b5ec938b7890c153a80a8001ccc2307119d63e26331b9da25b1",
       "publicationPath": "scripts/camera-hud-browser/hud-probe.mjs"
     },
     "run-hosted.mjs": {
-      "bytes": 2623,
-      "sha256": "c7ac26913d60626eb93582c33c867c872a789876ae11a5508295fb7a96cadf8e",
+      "bytes": 2820,
+      "sha256": "94593684607e2424e0c25d20ab0f3bb182bbc84eb2d586a51501f78681e4c226",
       "publicationPath": "scripts/camera-hud-browser/run-hosted.mjs"
     },
     "inkwave-camera-hud-browser.yml": {
       "bytes": 6393,
-      "sha256": "2b5534ae71815832a5d3b76ccbf92ab707b672ef9c736eecf91ed6d30c91d9a5",
+      "sha256": "d94f37f0ee71f2d38c6c376bdb1a8324f1d24f82d794bacc0c791d876976394d",
       "publicationPath": ".github/workflows/inkwave-camera-hud-browser.yml"
+    },
+    "style-smoke.mjs": {
+      "publicationPath": "scripts/camera-hud-browser/style-smoke.mjs",
+      "bytes": 2749,
+      "sha256": "ff7cab5edd0f672fa4b59a9eb37234649ff9be9cdbbd2efd95e4976d57e7a391"
     }
+  },
+  "diagnosticParent": "58dc2551c34415f97a4428ff2eff0fbb2caa0712",
+  "failureArtifact": {
+    "id": 11949513629,
+    "sha256": "587eee24c7db3a432a7989b0d6918a28be032ebe78b4f1b1fe53931a55bc36f3"
   }
 }
