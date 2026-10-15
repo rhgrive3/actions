@@ -29,6 +29,10 @@ const device = option('--device', 'all');
 const BOOT_SEED = 0x49574b33;
 const MIN_PERFORMANCE_FRAMES = 12;
 const PERFORMANCE_TIMEOUT_MS = 120000;
+// Full native renderer / actor shader warmup under CI SwiftShader can exceed
+// one minute before the offline Turf controller is constructed. This limit
+// still requires genuine production bootstrap and the real playing state.
+const NATIVE_BOOT_TIMEOUT_MS = 180000;
 if (!['low', 'medium', 'high'].includes(quality)) throw new Error('--quality must be low, medium, or high');
 if (!['all', 'visuals', 'performance'].includes(capture)) throw new Error('--capture must be all, visuals, or performance');
 if (!['all', 'desktop', 'mobile'].includes(device)) throw new Error('--device must be all, desktop, or mobile');
@@ -163,7 +167,7 @@ async function openGameContext({ mobile = false } = {}) {
         (m?.state === 'intro' || m?.state === 'playing') &&
         !m.attract && m.local?.isLocal && m.controller && g.debug &&
         G.projectiles && G.renderer;
-    }, null, { timeout: 60000 });
+    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS });
     const introTransition = await page.evaluate(completeNativeTurfIntro);
     (report.provenance.introTransitions ||= []).push({ mobile, ...introTransition });
     await page.waitForFunction(() => {
@@ -177,7 +181,11 @@ async function openGameContext({ mobile = false } = {}) {
       return { mode: G?.mode, state: m?.state, stateT: m?.stateT, attract: m?.attract,
         matchIdentity: m === G?.match, local: m?.local?.isLocal, controller: !!m?.controller,
         frozen: g?.frozen, paused: m?.paused, visibility: document.visibilityState,
-        orientationBlocked: m?.controller?.orientationBlocked, bootError: document.querySelector('#boot-error')?.textContent };
+        orientationBlocked: m?.controller?.orientationBlocked,
+        bootMarks: g?.bootMarks?.slice(-14),
+        bootMs: g?.bootMs, renderer: !!G?.renderer,
+        actors: m?.actors?.length, matchedMap: g?.mapDef?.id,
+        bootError: document.querySelector('#boot-error')?.textContent };
     }).catch(error => ({ snapshotFailure: error.message }));
     report.browserDiagnostics.push({ event: 'native-startup-timeout', mobile, observed });
     throw error;
@@ -1474,7 +1482,11 @@ try {
     status: report.status, comparisonStatus: report.comparisonStatus, mode, build: report.build, screenshots: report.screenshots.length,
     visualScenarios: report.visualScenarios.map(s => ({ name: s.name, births: Array.isArray(s.births) ? s.births.length : s.births?.length, impactFrame: s.impactFrame ?? null })),
     performance: report.performance.map(p => ({ scenario: p.scenario, fps: p.fps, frameCpuMs: p.frameCpuMs, gpuRenderMs: p.gpuRenderMs, calls: p.renderer.calls, geometries: p.renderer.geometries, textures: p.renderer.textures })),
-    error: report.error, errors: report.errors, output: outfile, browserTrace: tracePath,
+    error: report.error, errors: report.errors,
+    browserDiagnostics: report.browserDiagnostics,
+    pageErrors: mimeErrors.slice(-20),
+    bootTimeoutMs: NATIVE_BOOT_TIMEOUT_MS,
+    output: outfile, browserTrace: tracePath,
   }));
 }
 if (report.status !== 'passed') process.exitCode = 1;
