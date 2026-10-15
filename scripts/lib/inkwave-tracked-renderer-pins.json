@@ -1,0 +1,40 @@
+{
+  "baseline": "6b186c7f1ba33956b2e86a29a8ea3a58b7544e50",
+  "candidate": "d7ad981878d309eb47c96e0ea40794ff2d4c2fd0",
+  "candidateTree": "68738743f7b89485ea50506a4fec47d508a39c67",
+  "inputs": {
+    "inkwave-public/src/game/weapons.js": {
+      "gitBlobSHA1": "85610c7a3634cd058d1873e397351c94f27a1e7c",
+      "sha256": "a7dfed27d9e67f2b47cde32d12b319cb8d7f77d50b70baa89daee50df0bb78f5",
+      "bytes": 83428
+    },
+    "inkwave-public/vendor/three/build/three.core.js": {
+      "gitBlobSHA1": "0a1d6cb9ef3cabc97a50bd02394c85e8d1c513c2",
+      "sha256": "9edde002b066a9a05676a6127f67735b62baf399bdea529f2f7e31657da769e6",
+      "bytes": 1458113
+    },
+    "inkwave-public/vendor/three/build/three.module.js": {
+      "gitBlobSHA1": "c52087acfabae80efabb8cc05e3a1d96e35a1426",
+      "sha256": "9052042d676cb0fdc1ddfefe193053f34b7ac0513a616fdac4535d49987812ea",
+      "bytes": 662772
+    },
+    "patches/local-quality/ink-volume-adapter.mjs": {
+      "gitBlobSHA1": "ec1103972b9d0fd63f8bdaff19b377fb84511efc",
+      "sha256": "000c2fdacdf4db56227c0434a1351709b5484460459c0e99632dd0eefd0f254a",
+      "bytes": 4766
+    },
+    "patches/local-quality/ink-volume/recipes.mjs": {
+      "gitBlobSHA1": "dae1d73938ee79c4c6c4166098059cb43cba510c",
+      "sha256": "9dfdb55fab7a81464997f7a64b329d55b97335d3a36a102ea32f202965b37f99",
+      "bytes": 6490
+    },
+    "patches/splatoon3/runtime/main-weapon-catalog.mjs": {
+      "gitBlobSHA1": "a859d65dc18eeca85d9a48f18d037057cc769aed",
+      "sha256": "98291f2d8392e0f7205a6e67ab9b05af2a522d4330361daa57f44798bd62f069",
+      "bytes": 65837
+    }
+  },
+  "drawSHA256": "f498613966c66da6e9e99f0b5aeef9aaa626c0c81ef6d7863e761827b562b58d",
+  "fullMaterialSHA256": "73778e76c8720940f70fe06d2042a14f22f76f7f4399936504139f8da907753e",
+  "emittedWeaponsSHA256": "36020235e01d6ef445f4e776ddf84310b6572838d1eda70b22afffc2f0397467"
+}
