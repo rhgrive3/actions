@@ -49,6 +49,21 @@ export async function checkWeaponAppearancePicker({ page, evidence }) {
     assert(before.kit===initial.id&&before.selected===initial.defaultId,
       'official kit default '+JSON.stringify({before,defaultId:initial.defaultId}));
     assert(before.candidate,'included in native navigation candidates');
+    const layout=await page.evaluate(() => {
+      const m=globalThis.s3ProbeG.game.menus,root=m._scr?.el;
+      const b=root?.querySelector('[data-id="weapon-appearance"]');
+      const grid=root?.querySelector('.iw-wgrid.is-compact');
+      const rect=b?.getBoundingClientRect();
+      const hit=rect && document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
+      return {control:rect && {x:rect.x,y:rect.y,width:rect.width,height:rect.height},
+        viewport:[innerWidth,innerHeight],gridClientHeight:grid?.clientHeight,
+        gridScrollHeight:grid?.scrollHeight,hitId:hit?.closest?.('[data-id]')?.dataset.id,
+        actualHit:b&&(hit===b||b.contains(hit)),nativeButton:!!m._binds.get(b)?.accept};
+    });
+    assert(layout.control?.width>0&&layout.control.y>=0&&
+      layout.control.y+layout.control.height<=layout.viewport[1]&&
+      layout.actualHit&&layout.nativeButton&&layout.gridScrollHeight>layout.gridClientHeight,
+      'scroll-bounded accessible appearance action '+JSON.stringify(layout));
     // Pointer focus is an event-time property: subsequent hover/navigation can
     // legitimately move the focus before the async storage read completes.
     // Verify a trusted native click and focus *during that click*, not later.
