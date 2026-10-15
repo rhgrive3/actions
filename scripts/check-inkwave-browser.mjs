@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { runMinimapCanvasProbe } from './lib/minimap-canvas-probe.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
@@ -433,6 +434,7 @@ try {
   }
   if (!uiProbesOnly) result.runtimeQuality = await runQualityBrowserProbe(page);
   result.paintMipmaps = await runPaintMipmapBrowserProbe(page);
+  if (!uiProbesOnly) result.minimapCanvas = await runMinimapCanvasProbe(page,{root:ROOT,evidence,sourceSha,contentHash:manifest.contentHash,manifest});
   result.status = 'passed';
 } catch (error) {
   result = { ...(result || {}), status: 'failed', error: error.message };
