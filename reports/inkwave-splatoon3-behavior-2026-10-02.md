@@ -4683,6 +4683,7 @@ Current-base follow-up (2026-10-13): the final reconciliation preserves external
 - 回帰検証は凍結した従来 ray 実装を保持。従来 BVH が実際に訪問した三角形を別順で総当たりして期待する等距離選択を独立に求め、ヒットの全情報と元の走査回数を照合する。レイとカプセルの走査順逆転ケースを含め 19 件通過。
 - JS 変換の Bluefin 原典形状で、両陣営の実 Actor / Brain / WeaponRunner / Projectile / Paint を使い、射撃、落下、壁登りによる対岸の本来の上岸への到達を CPU 60 Hz で確認。これは本家 AI や実機の移動値の検証ではない。
 
+
 ## 2026-10-16: native collision query lifetime optimization
 
 - Reference/conditions: retain the documented Splatoon 3 11.3.0 baseline; all
