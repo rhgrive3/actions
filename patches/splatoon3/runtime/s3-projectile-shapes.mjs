@@ -25,10 +25,13 @@
 // Lengths, radii, counts and timings marked "calibration" are INKWAVE values
 // read off footage, not extracted Nintendo mesh data.
 import { MAIN_WEAPON_CATALOG } from './main-weapon-catalog-data.mjs';
+import { ALTERNATE_WEAPON_KITS } from './alternate-weapon-kits-data.mjs';
 import { shotTailFrames } from './weapons-fidelity.mjs';
 
 const INSTALLED = Symbol.for('inkwave.s3.projectile-shapes.v1');
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
+// Alternate kits share their base weapon's main behaviour and projectiles.
+for (const kit of ALTERNATE_WEAPON_KITS) if (RECORDS.has(kit.baseId)) RECORDS.set(kit.id, RECORDS.get(kit.baseId));
 const SLOSH_SHAPES = Object.freeze({
   WeaponSlosherLauncher: 'machine', WeaponSlosherWashtub: 'explosher', WeaponSlosherBathtub: 'bubble',
 });

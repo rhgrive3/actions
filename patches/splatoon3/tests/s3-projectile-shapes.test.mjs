@@ -32,6 +32,9 @@ const CASES = [
   ['s3-shelter-normal', 'pellet', 3], ['s3-stringer-normal', 'arrow', 80], ['s3-stringer-short', 'arrow', 80],
   ['s3-saber-normal', 'slash-h', 2], ['s3-saber-normal', 'slash-v', 40],
   ['s3-slosher-launcher', 'machine', 3], ['s3-slosher-washtub', 'explosher', 3], ['s3-slosher-bathtub', 'bubble', 3],
+  // alternate kits share their base weapon's rounds
+  ['shooter-01', 'shot', 3], ['s3-shelter-wide-01', 'pellet', 3], ['s3-stringer-explosion-01', 'arrow', 80],
+  ['s3-saber-lite-01', 'slash-h', 2], ['s3-slosher-bathtub-01', 'bubble', 3],
 ];
 
 test('real births of the seven owned families draw S3 silhouettes, skip the generic teardrop and stay read-only', async () => {
