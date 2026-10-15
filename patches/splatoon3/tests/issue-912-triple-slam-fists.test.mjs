@@ -169,12 +169,13 @@ test('#912 composed production Tidal Slam: fists explode 15F after landing, sepa
     assert.equal(a.specialActive, null, 'player landed');
     const playerHits = hits.filter(h => h.victim === playerVictim);
     assert.equal(playerHits.length, 1, 'player blast hits the behind-victim once, at landing');
-    assert.equal(hits.filter(h => h.victim === fistVictim).length, 0, 'no fist damage before 15F');
+    const landingHits = hits.filter(h => h.victim === fistVictim).length;
+    assert.equal(landingHits, 1, 'the 9.6u main blast already reaches this victim at landing');
     f.tick(a, 14);
-    assert.equal(hits.filter(h => h.victim === fistVictim).length, 0, 'still no fist damage at 14F');
+    assert.equal(hits.filter(h => h.victim === fistVictim).length, landingHits, 'no additional fist damage at 14F');
     f.tick(a, 1);
-    const fistHits = hits.filter(h => h.victim === fistVictim);
-    assert.equal(fistHits.length, 2, 'both fists damage the victim independently');
+    const fistHits = hits.filter(h => h.victim === fistVictim).slice(landingHits);
+    assert.equal(fistHits.length, 2, 'both fists damage the victim independently after 15F');
     assert.ok(fistHits.every(h => h.cause === 'slam' && h.amount > 60 && h.amount <= 220));
     assert.ok(fistHits.reduce((s, h) => s + h.amount, 0) >= 100);
     assert.equal(hits.filter(h => h.victim === playerVictim).length, 1, 'player blast is not duplicated');

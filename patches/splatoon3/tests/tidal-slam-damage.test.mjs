@@ -20,7 +20,8 @@ test('#917 the composed Tidal Slam carries S3 Triple Splashdown 220/60, not the 
 
 test('#917 _slamImpact applies 220 near and 60 at the outer edge (also the Super Jump path, which reuses SPECIALS.slam)', async () => {
   const f = await getBoot(), sp = f.SPECIALS.slam;
-  f.G.actors = []; const attacker = f.make(), near = f.make({ team: 1, pos: [1, 0, 0] }), edge = f.make({ team: 1, pos: [sp.radius - 1e-6, 0, 0] });
+  f.G.actors = []; const attacker = f.make(), near = f.make({ team: 1, pos: [1, 0, 0] }), edge = f.make({ team: 1, pos: [sp.damageRadius - 1e-6, 0, 0] });
+  assert.equal(sp.damageRadius, 9.6, 'the HP boundary is independent from the smaller paint radius');
   const hits = [], applyHit = f.G.projectiles.applyHit;
   f.G.projectiles.applyHit = (_owner, victim, amount, cause) => hits.push({ victim, amount, cause });
   try { attacker._slamImpact(sp); } finally { f.G.projectiles.applyHit = applyHit; }
