@@ -296,12 +296,22 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify emitted Tenacity lock and passive ownership
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/tenacity-special-lock.test.mjs
+      - name: Verify emitted health HUD stability and visibility composition
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/health-hud-stability.test.mjs patches/splatoon3/tests/health-bar-composition-716.test.mjs
       - name: Verify emitted modal controller and Pointer Lock lifetimes
         run: INKWAVE_CONTROLS_SITE="$PWD/_site" INKWAVE_POINTER_LOCK_SITE="$PWD/_site" node --experimental-vm-modules --test patches/reliability/tests/editor-pad-menu.test.mjs patches/reliability/tests/touch-pointerlock.test.mjs
       - name: Verify emitted explicit Turf Map and gyro transport
         run: INKWAVE_CONTROLS_SITE=_site node --experimental-vm-modules --test patches/reliability/tests/map-gyro.test.mjs
-      - name: Verify built rematch material ownership handoff
-        run: INKWAVE_MATERIAL_HANDOFF_SITE=_site node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs
+      - name: Verify emitted empty Bubbler beam lifecycle
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/bubbler-empty-beam-emitted.test.mjs
       - name: Verify exact owned rectangle scans against production build
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site

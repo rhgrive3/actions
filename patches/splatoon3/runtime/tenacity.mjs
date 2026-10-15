@@ -6,7 +6,8 @@ import { turfCombatAllowed } from './turf-combat.mjs';
 export const TENACITY_POINTS_PER_SECOND = 3.24;
 export function advanceTenacity(actor, dt, api) {
   const match=api.G.match;
-  if(!(dt>0)||!Number.isFinite(dt)||!actor?.alive||actor.remote||actor.specialActive||
+  if(!(dt>0)||!Number.isFinite(dt)||!actor?.alive||actor.remote||actor.specialActive||actor.stormGaugeLock>0||actor.s3TidalSlamGaugeFinish||
+    (match?.mode==='turf'&&match[Symbol.for('inkwave.tenacity.match-owner.v1')]===true)||
     actor.s3?.loadout?.[0]?.main!=='tenacity'||!match||match.attract||match.paused||match.bossMode||match.range||match.opts?.range||
     !match.playing?.()||!turfCombatAllowed(api.G))return 0;
   const roster=match.actors||api.G.actors;

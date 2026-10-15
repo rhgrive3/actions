@@ -4294,12 +4294,6 @@ The preceding density/duplicate-work counts retain their historical inputs and d
 
 限定試験32/32、既存音響試験28/28が通過。元コードは同じ32項目中18件で破棄後の継続処理が失敗し、独立レビューでも確認した。既存音響workflowのテスト列へ1ファイルだけ追加した。実AudioContext・生成コード・ブラウザ・聴感は未検証。開始済みfetch/decode/hash自体を中断せず、未完Promiseの存続時間も制限しない。[詳細と試験の範囲](inkwave-audio-loader-lifetime-2026-10-13.md)。
 
-## 2026-10-13: rematch material ownership handoff candidate (#1367)
-
-A bounded owned-material bridge preserves native program references until replacement menu-character warmup settles, and the existing Character disposed flag now blocks resource creation after a pending optional-motion load. Setup/start callbacks, same-object material reuse, cancellation, failure, context loss, repeated returns and overflow are covered. Source25/25, emitted25/25, adjacent191/191 and packaging/workflow24/24 pass; exact18ce emitted runtime retains two expected failures. Independent native ownership accounting matches18 baseline disposal events and excludes four shared materials.
-
-This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. One generation/512 materials and an8000ms fallback timer do not bound GPU bytes or actual wall-clock retention during a stall. Repeated same-object disposal requests coalesce; material texture/uniform/listener references may remain indirectly retained. See [the scoped evidence and fixture limitations](inkwave-rematch-material-handoff-2026-10-13.md). The final candidate is composed on d6285dca, retaining CPU/input/bomb gates and report history; its25 source/25 emitted,202 adjacent and9 packaging checks pass. Combined-tree review/publication remains centrally coordinated.
-
 ## 2026-10-13: タブレット・スマホでの Bot 密集時の重さ（試合中のシェーダー同期コンパイルと塗り所有判定の割り当て）
 
 - **本家の根拠**: 参照版は Ver.11.3.0。任天堂の公開資料には、描画プログラムのコンパイル時期や CPU・メモリ予算は記載されていない。本家で Bot（またはプレイヤー）が密集したり、スペシャルを発動したりしたときに表示が止まることは想定しない。Switch 実機の該当挙動は未確認。
@@ -4359,6 +4353,10 @@ This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. On
   - ブラウザ実動作（SwiftShader、1133×744 CSS、DPR 2、Bot 8 体密集、同じ瞬間の描画で比較）: 影パスの三角形は 275k → 119k、1 フレームの合計は 663k → 506k。画像差は、2/255 を超える画素が 0.1%、8/255 を超える画素が 0.006%、最大 44/255 で、足元と自分の体に落ちる影の縁にわずかに出るだけだった。切り出し画像を目視で比べても区別できなかった。同じ条件で 2 回描くと完全に一致する（決定的）ことも確認した。
   - 未確認: 端末実機での FPS と GPU 時間。
 
+## 2026-10-14: Tenacity respects spent-special locks (Refs #469 / #647)
+
+On main `636e2b68`, the real Actor/Match production composition recharged after Ink Storm's throw animation while its gauge lock remained live, and increased Slam's pending landing segment. Both passive helpers now honor those existing lock owners. A Match-local capability also prevents simultaneous Actor and post-roster Match awards; existing independent rate constants stay unchanged. See [reproduction, reference confidence and bounded validation](inkwave-tenacity-special-lock-2026-10-14.md). The existing community rate discrepancy, retail drain curves and hardware comparison remain unverified; no full Issue closure or retail-parity claim.
+
 ## 2026-10-13 ネイティブ地形のボット水際判定の計算削減
 
 `BotBrain._wet` が必要とする「落下死の高さ以上に歩ける地面があるか」だけを、従来と同じ真下レイ・法線条件・距離・境界値で判定する。通常の最寄り地面、射撃、当たり判定、塗り、ボット数・更新頻度は変更しない。上下に重なる床、穴、天井、斜面、グレーチング、カスタム地面取得を固定旧実装と照合した。実際の Actor→ブキ→弾→ダメージと塗り命令、地形で遮られた標的、30/60/120 Hz の集団ボットと配信済み形式の圧縮コードも別々に検証。
@@ -4370,3 +4368,17 @@ This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. On
 A separate ee9-based CPU candidate changes only the ordered exact-down BVH interval rejection, retaining native divisions, fallback/coercion behavior and every nearest-hit field/counter. No bot, cadence, movement, damage, paint or visual behavior is intentionally changed. Source and actual emitted before/after replay match separately at 30/60/120 Hz; real damage and native-wall protection tests also pass. This preserves the existing INKWAVE comparison baseline rather than declaring new Splatoon 3 Ver.11.3.0 retail parity.
 
 Captured rays use 73.8% fewer Math min/max calls with identical triangle work. Normal-realm Node timing has one mixed short batch and a favorable longer batch; the same-harness VM CPU replay improves in all four pairs. None establishes browser, whole-game FPS or iPad mini6 performance. Source versus emitted trajectories differ even on baseline and are not compared as identical. Full evidence, all raw trial values, limitations and reproduction: [native vertical-slab report](inkwave-native-vertical-slab-2026-10-13.md). PR #1366 remains frozen and separate; no main merge is performed.
+
+
+## 2026-10-15: 体力バーの表示安定性とDOM更新削減
+
+`runtime/combat-info.mjs` の canonical 体力バーに、DOMノード単位の最終描画値キャッシュを追加。同じ表示位置・HP・色を毎フレーム書き直す処理と、非表示済みバーへの重複書き込みを削減した。NaN/Infinityの投影座標はマーカー生成時に除外し、描画側も不正な座標/HPで古い表示を残さず隠す。正常な次フレームでは再表示し、行オブジェクトの再利用や別Actorへの割当でも最新値を描画する。
+
+比較対象は既存のSplatoon 3 11.3.0・全ブキ/ギア。Ver.11の体力表示と固定SplPlayerの180F表示窓、遮蔽・潜伏・非公開追跡・復活lifeの条件を維持し、本家の非公開描画方式や実機FPS改善は主張しない。修正前mainで新規5件すべて失敗、source関連35件と隣接36件、実際のminified helper新規5件＋composition3件が成功。DOM/描画失敗はfixtureであり、ChromiumとSwitch/モバイル実機は未検証。手順と検証範囲は [体力HUDの記録](inkwave-health-hud-stability-2026-10-15.md)。
+
+## 2026-10-13: rematch material ownership handoff candidate (#1367)
+
+A bounded owned-material bridge preserves native program references until replacement menu-character warmup settles, and the existing Character disposed flag now blocks resource creation after a pending optional-motion load. Setup/start callbacks, same-object material reuse, cancellation, failure, context loss, repeated returns and overflow are covered. Source25/25, emitted25/25, adjacent191/191 and packaging/workflow24/24 pass; exact18ce emitted runtime retains two expected failures. Independent native ownership accounting matches18 baseline disposal events and excludes four shared materials.
+
+This is a lifecycle/cache candidate, not a demonstrated hosted GPU-stall fix. One generation/512 materials and an8000ms fallback timer do not bound GPU bytes or actual wall-clock retention during a stall. Repeated same-object disposal requests coalesce; material texture/uniform/listener references may remain indirectly retained. See [the scoped evidence and fixture limitations](inkwave-rematch-material-handoff-2026-10-13.md). The final candidate is composed on d6285dca, retaining CPU/input/bomb gates and report history; its25 source/25 emitted,202 adjacent and9 packaging checks pass. Combined-tree review/publication remains centrally coordinated.
+
