@@ -5,7 +5,6 @@ import vm from 'node:vm';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { fixture } from './source-fixture.mjs';
 import { migrateAimProfiles, applyAimSettingsChange } from '../../local-quality/aim-profile.mjs';
-import { normalizeViewSettings } from '../../local-quality/view-settings.mjs';
 import { initialGyroDefaults } from '../../local-quality/gyro-permission.mjs';
 import { normalizeViewSettings } from '../../local-quality/view-settings.mjs';
 import { notePausedWorldChange } from '../../local-quality/idle-resources.mjs';

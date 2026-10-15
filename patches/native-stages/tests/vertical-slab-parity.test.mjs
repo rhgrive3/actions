@@ -114,7 +114,9 @@ test('ordered scalar predicate retains all special values and one million extrem
 
 test('full source or emitted rays preserve inverted/NaN/extreme slab fallback and memory layout',()=>{
  const d=planes([[0],[2]]),a=new OldWorld(d),b=new CurrentWorld(d);
- assert.deepEqual(Object.keys(b).sort(),Object.keys(a).sort());
+ // Traversal scratch is per nesting depth, never an auxiliary geometry copy.
+ assert.deepEqual(Object.keys(b).filter(k=>!['_queryStacks','_queryDepth'].includes(k)).sort(),Object.keys(a).sort());
+ assert.equal(b._queryDepth,0);assert.equal(b._queryStacks.length,0);
  for(const key of ['nodes','triangles','normals','flags','objectIds','order'])assert.equal(b[key],a[key],'no auxiliary geometry copy');
  const special=[NaN,Infinity,-Infinity,Number.MAX_VALUE,-Number.MAX_VALUE,Number.MIN_VALUE,-Number.MIN_VALUE,-1,-0,0,1,4];
  let checked=0;
