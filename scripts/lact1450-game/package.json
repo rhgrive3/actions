@@ -1,0 +1,63 @@
+{
+  "executionAuthorized": false,
+  "diagnosticBranch": "review/lact1450-game-20261015",
+  "baseDiagnosticHead": "d7f223024be147cf763d2a27fc8e9ddb62c7c142",
+  "sources": {
+    "baseline": {
+      "head": "81bac38832f11eb77413e6c39713bda8a0ad7936",
+      "tree": "4401da6b37cef011724833ef971149fae314fec4",
+      "runtimeBlob": "57b6d433409126f20d48bebe6397a32a043b8c74"
+    },
+    "candidate": {
+      "head": "d7f223024be147cf763d2a27fc8e9ddb62c7c142",
+      "tree": "54e0e09e618d6c9db489fa4af593e0f353907682",
+      "runtimeBlob": "20955095cd437a184bfd7c4598124714e7b27d8a"
+    }
+  },
+  "catalogCheckerPreimage": "58bde54b77dba39e0fe1981136d11d4aeb118718",
+  "scope": "Private separate diagnostic proposal. No actual browser execution yet. No PR1450 source changes.",
+  "files": {
+    "scripts/check-inkwave-catalog-browser.mjs": {
+      "bytes": 44199,
+      "sha256": "0ea03bef400384874ec516904fa89e4d1bc6ecf35936bda2c6433c2e060b1b83",
+      "gitBlob": "cd773424d4f503823a8a5e4335028ca53ff26b07",
+      "publicationPath": "scripts/lact1450-game/scripts/check-inkwave-catalog-browser.mjs"
+    },
+    "scripts/lib/lact-game-probe.mjs": {
+      "bytes": 9391,
+      "sha256": "a7ad58ab750f79e57fd3bef1a8baf6ab0ef3b840cb70d4d8cb6ed5b3aa81745d",
+      "gitBlob": "b4760efe2f821d7f6c4de9852bea14ede65f3370",
+      "publicationPath": "scripts/lact1450-game/scripts/lib/lact-game-probe.mjs"
+    },
+    "scripts/test-lact-game-probe.mjs": {
+      "bytes": 4538,
+      "sha256": "2cd9c6cef8f158969e65bf535676c8e38cb8fa280affaa0fc33e210c0ca1ba98",
+      "gitBlob": "7541565e22fdfaa218e2de486ff65aa9b1127e77",
+      "publicationPath": "scripts/lact1450-game/scripts/test-lact-game-probe.mjs"
+    },
+    "verify-receipts.mjs": {
+      "bytes": 3140,
+      "sha256": "abdc7cd44fd598f9646624fd646fdb7d139f77aab13f974670bb99a78648de0c",
+      "gitBlob": "b89db7752f690783a10163ca36742b11ae0607ec",
+      "publicationPath": "scripts/lact1450-game/verify-receipts.mjs"
+    },
+    "run-hosted.mjs": {
+      "bytes": 3281,
+      "sha256": "e0beac1082ec91937346e413f95d7b0d327420f419066f5a30ce3e4d2d470b43",
+      "gitBlob": "75c83ec522925f6c6247914d184ed818077965f9",
+      "publicationPath": "scripts/lact1450-game/run-hosted.mjs"
+    },
+    "test-bindings.mjs": {
+      "bytes": 4826,
+      "sha256": "866f043287c359a26b6577510ee4988ba3c837ea95737abd81588483ac12ec0f",
+      "gitBlob": "ed18d9f022fd55cd3fbf57ee0fece14381d7bbb1",
+      "publicationPath": "scripts/lact1450-game/test-bindings.mjs"
+    },
+    "inkwave-lact-game.yml": {
+      "bytes": 5805,
+      "sha256": "35cb6e15675ca9efc8cf30a6c02d39d594cc438c7be807cb103fbaa8e02d626a",
+      "gitBlob": "34693a4178824fb26e590a1e6f80097ce34b1acb",
+      "publicationPath": ".github/workflows/inkwave-lact-game.yml"
+    }
+  }
+}
