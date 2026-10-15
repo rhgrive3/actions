@@ -230,7 +230,7 @@ function wellstring(d){
 const st8 = new WeakMap();
 function bowState(ch) { let m = st8.get(ch); if (!m) st8.set(ch, m = { roll: 0 }); return m; }
 export function FAMILY_POSE(ch, dt, s, C) {
-  if (!MODELS[ch.weaponModel]) return;
+  if (!MODELS[ch.weapon?.def?.modelId ?? ch.weaponModel]) return;
   const m = bowState(ch); dt = Math.min(0.1, Math.max(0, dt || 0));
   m.roll = damp(m.roll, ch.grounded ? 1 : 0, 9, dt);
   ch.P[C.ANCR + 2] += GROUND_ROLL * m.roll;

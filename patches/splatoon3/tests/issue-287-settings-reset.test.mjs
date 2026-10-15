@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 import { fixture } from './source-fixture.mjs';
 import { migrateAimProfiles, applyAimSettingsChange } from '../../local-quality/aim-profile.mjs';
+import { normalizeViewSettings } from '../../local-quality/view-settings.mjs';
 import { initialGyroDefaults } from '../../local-quality/gyro-permission.mjs';
 import { notePausedWorldChange } from '../../local-quality/idle-resources.mjs';
 import { legacyPadToS3, s3PadMultiplier } from '../runtime/pad-sensitivity.mjs';
@@ -23,7 +24,7 @@ async function settingsRig(saved) {
   const G = { mode:'match' };
   const context = {
     DEFAULT_SETTINGS, G, migrateAimProfiles, applyAimSettingsChange, initialGyroDefaults,
-    legacyPadToS3, notePausedWorldChange,
+    legacyPadToS3, notePausedWorldChange, normalizeViewSettings,
     localStorage: { getItem:k=>storage.get(k) ?? null, setItem:(k,v)=>storage.set(k,v) },
     // Display/resource owners are irrelevant to settings storage and are inert.
     applyRuntimeWorldQuality(){}, refreshEnvironmentBudget(){}, effectiveQuality(){}, dressingFor(){}, THREE:{},
