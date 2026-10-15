@@ -137,7 +137,7 @@ export function adaptSource(rel, code) {
       "      if (width > 0) shape.radius = width;\n" +
       "      if (depth > 0) shape.stretch = Math.max(0, depth - 1);\n" +
       "    }\n" +
-      "    this.paint(p, hit, shape, p.vel, 'shot');",
+      "    this.paint(p, hit, splashPaintFootprint(shape), p.vel, 'shot');",
       'source Shooter terminal paint width in live InkFlight runtime');
     code = "import { shooterImpactRadius, shooterImpactDepthScale, SHOOTER_FLOOR_NORMAL_Y } from '../../patches/splatoon3/runtime/shooter-impact-paint.mjs';\n" + code;
     code = "import { fidelityDualiesNativeImpactPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
