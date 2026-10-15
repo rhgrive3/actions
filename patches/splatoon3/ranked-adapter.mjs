@@ -10,7 +10,17 @@ export function adaptRanked(rel, code) {
   if (rel === 'src/game/match.js') {
     code = importEngine + code;
     code = once(code, "this.mode = opts.mode === 'boss' && !this.attract ? 'boss' : 'turf';", "this.mode = !this.attract && (opts.mode === 'boss' || isRankedMode(opts.mode)) ? opts.mode : 'turf';", 'Match mode');
-    code = once(code, 'this.duration = opts.duration ||', 'this.duration = isRankedMode(this.mode) ? 300 : opts.duration ||', 'ranked clock');
+    // Network may already validate malformed match time. Preserve that check
+    // while retaining Ranked's authoritative 300-second clock.
+    const validatedClock = 'this.duration = typeof opts.duration === "number" && Number.isFinite(opts.duration) && opts.duration > 0 && opts.duration <= 86400 ? opts.duration : (this.bossCfg ? this.bossCfg.duration : MATCH.defaultDuration);';
+    if (code.includes(validatedClock)) {
+      code = once(code, validatedClock,
+        'this.duration = isRankedMode(this.mode) ? 300 : ' + validatedClock.slice('this.duration = '.length),
+        'ranked clock with validated duration');
+    } else {
+      code = once(code, 'this.duration = opts.duration ||',
+        'this.duration = isRankedMode(this.mode) ? 300 : opts.duration ||', 'ranked clock');
+    }
     code = once(code, 'this.time -= dt;', 'if (!this.ranked) this.time -= dt;', 'single clock owner');
     code = once(code, 'if (this.time <= 0) {', 'if (!this.ranked && this.time <= 0) {', 'ranked overtime authority');
     code = once(code, 'captureTurfFinish(this, s, G.paint, G.netm, G.game?.minimap);', "if (!this.ranked) captureTurfFinish(this, s, G.paint, G.netm, G.game?.minimap);", 'scoring scope');
