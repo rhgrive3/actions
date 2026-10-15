@@ -879,7 +879,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         if(d.sloshFall){
           const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,from:p.pos.clone(),
             direction,radius:d.splashRadius,spec:d.sloshFall.spec,depth:true,kind:'drop'});
-          if(drop)drop.drawRadius=d.sloshFall.drawRadius;
+          if(drop){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
         }else floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }

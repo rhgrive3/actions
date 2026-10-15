@@ -1,3 +1,4 @@
+import {normalizeViewSettings} from '../view-settings.mjs';
 import {notePausedWorldChange} from '../idle-resources.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -44,7 +45,7 @@ function settingsLoader(context, defaults) {
   const statement = main.match(/this\.settings = G\.settings = migrateAimProfiles\([^\n]+/)?.[0];
   assert.ok(load && statement, 'actual native boot load and migration must be present');
   return vm.runInNewContext(`${load}\nfunction bootSettings() { ${statement} return this.settings; }; bootSettings`, {
-    localStorage: context.localStorage, G: context.G, DEFAULT_SETTINGS: defaults, migrateAimProfiles, initialGyroDefaults,
+    localStorage: context.localStorage, G: context.G, DEFAULT_SETTINGS: defaults, migrateAimProfiles, initialGyroDefaults, normalizeViewSettings,
   });
 }
 
@@ -380,7 +381,7 @@ function createComposedSettingsFixture({ gyroSupported = true, needsPermission =
   };
 
   const sandbox = {
-    notePausedWorldChange, applyAimSettingsChange, Promise, clearTimeout, G: { mode: 'match' }, t: value => value,
+    notePausedWorldChange, applyAimSettingsChange, normalizeViewSettings, Promise, clearTimeout, G: { mode: 'match' }, t: value => value,
     localStorage: { setItem(_key, value) { game.saved.push(JSON.parse(value)); } },
   };
   const save = compose('src/main.js').match(/^function saveJSON.*$/m)[0];

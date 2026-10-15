@@ -33,6 +33,34 @@ export async function sourceBytes(id,url,expected,signal,onProgress){
  await verifySourceBytes(bytes,expected);try{await cache?.put(url,new Response(bytes));}catch{}
  return bytes;
 }
+// File-list metadata shares the existing two raw-source cache slots. It does
+// not read or retain derived geometry and is independent of IndexedDB schema.
+function checkedSourceTree(tree,pinned){
+ if(!tree||tree.sha!==pinned||tree.truncated!==false||!Array.isArray(tree.tree))throw Error('Unpinned source file list');
+ for(const f of tree.tree)if(f.type==='blob'){
+  if(typeof f.path!=='string'||f.path.startsWith('/')||f.path.split('/').some(p=>p==='..'||p===''))throw Error('Unsafe source path');
+  if(!Number.isSafeInteger(f.size)||f.size<0||!/^[a-f0-9]{40}$/.test(f.sha))throw Error('Invalid source file metadata');
+ }
+ return tree;
+}
+export async function sourceTree(id,pinned,signal){
+ if(!/^[a-f0-9]{40}$/.test(pinned))throw Error('Unpinned source tree');
+ const key='https://inkwave.invalid/native-source-tree/'+pinned,encoder=new TextEncoder();let cache;
+ try{
+  cache=await slots(id);const old=await cache?.match(key);
+  if(old)try{
+   const saved=await old.json();
+   if(saved.schema!==1||saved.tree!==pinned||typeof saved.body!=='string'||!/^[a-f0-9]{64}$/.test(saved.sha256)||!Number.isSafeInteger(saved.bytes)||saved.bytes<0)throw Error('Invalid source metadata envelope');
+   await verifySourceBytes(encoder.encode(saved.body),{sha256:saved.sha256,bytes:saved.bytes});
+   return checkedSourceTree(JSON.parse(saved.body),pinned);
+  }catch{await cache.delete(key);}
+ }catch{}
+ const r=await fetch('https://api.github.com/repos/kirakira-dev/KiTrix/git/trees/'+pinned+'?recursive=1',{signal,credentials:'omit',mode:'cors',referrerPolicy:'no-referrer'});
+ if(!r.ok)throw Error('Source file list unavailable ('+r.status+')');
+ const body=await r.text(),tree=checkedSourceTree(JSON.parse(body),pinned),bytes=encoder.encode(body);
+ try{if(cache){const sha256=hex(await crypto.subtle.digest('SHA-256',bytes));await cache.put(key,new Response(JSON.stringify({schema:1,tree:pinned,bytes:bytes.byteLength,sha256,body})));}}catch{}
+ return tree;
+}
 function openDB(){return new Promise((resolve,reject)=>{const request=indexedDB.open(DB,1);request.onupgradeneeded=()=>request.result.createObjectStore('stages',{keyPath:'key'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
 function transact(db,mode,run){return new Promise((resolve,reject)=>{const t=db.transaction('stages',mode),s=t.objectStore('stages');let result;run(s,value=>{result=value;});t.oncomplete=()=>resolve(result);t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error);});}
 const arrays=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
