@@ -1,5 +1,24 @@
 # INKWAVE とスプラトゥーン3の挙動比較
 
+## 2026-10-15：ガチルールの表示・ボット・エリア範囲
+
+今回の基準は main `b1080d9`。915件の open/closed Issue と547件の PR の題名・本文を照合し、乗り込みを扱う既存 PR #1395 と重複する変更は避けた。公開ソースを直接変更せず、本番と同じ build overlay を修正している。
+
+- ヤグラ：`runtime/ranked/bots.mjs` はルール目標の `ride` で射撃を無効化し、通常の戦闘AIが選んだエイム・射撃・チャージ解放を上書きしていた。近距離の知覚済みの敵には通常戦闘を使用し、乗っている間は移動だけを止める。味方が乗っているときは、床が確認できた護衛位置をほかの味方の目標にする。乗り込みの物理やジャンプ値は変更しない。
+- 回復：通常AIの `refill` 状態を目標移動で上書きしていたため、空タンクで移動・射撃を繰り返す問題も修正。ホコ持ちの専用射撃は従来の制御を保持する。
+- 日本語：ガチ4ルールの選択カード、説明、動的なルーム名、HUD、通知、ペナルティ、結果を共通辞書に追加。英語設定も維持する。設定・ポーズ画面に残っていたナワバリ固定表記と、日本語固定だった開始案内も修正。アサリ投げの案内は現在の入力機器に合わせる。
+- エリア：`native-ranked.mjs` の全ステージ一律6×6を廃止。中央付近の往復到達可能な塗り床を探索し、同じ高さの床プローブで障害物部分と空隙を区別する。70%以上が到達可能な塗り床である、最大13×11の固定領域を選ぶ。原典エリアでは中心の高さ±0.75の床だけを塗り集計・確保時の塗りに含め、同じX/Zの箱上・別階を除外する。配置は同じステージ・データで決定的に再現され、試合中は動かない。広いエリアのボットは2秒ごとに25点の塗り先を分担し、床がない点や高すぎる点を避ける。領域自体と塗り目標の移動を分離する。旧ブロックアウトの調整済み配置は変更しない。
+
+比較対象は引き続き Splatoon 3 Ver.11.3.0。[任天堂のルール案内](https://www.nintendo.com/jp/ichikara/av5ja/03_en.html)と[今回以前のルール調査](inkwave-ranked-research-2026-10-11.md)が示す、エリアの塗り確保とヤグラを運ぶ目的に合わせる。ただしボットの護衛距離、エリアの寸法・探索範囲・70%の床条件は INKWAVE 内の調整値であり、本家の配置・AI・フレーム値を復元したものではない。原典ステージは引き続き `version1130Verified: false`。
+
+検証はロジック・本番ソース合成・ブラウザを分けて実施。最終の関連263件は262成功・任意fixture1件スキップ。実際の Actor / Projectiles によるヤグラ試験で、乗り込み、カウント進行、敵への正の被ダメージを確認した。30/60/120Hzの入力所有権・チャージ解放、回復、日本語/英語、狭い床・欠損・異なる高さ・障害物を回帰対象にしている。
+
+拡張13×11領域では、既存の高さ無制限の面積集計により地面を全塗りしても約65.6%で止まる再現も確認。床の高さを指定する修正と塗り先分散後は、実際の射撃のみで確保・カウント進行する追加回帰が成功した。
+
+原典のユノハナ公開OBJ（KiTrix `0611f51b35c9736ee986fb2218461e2585b7875e`、SHA-256 `c8d0e21345ff9f4eb528e699de2ad9c478af78d7284f347399cc59ab94eb4cd8`）を既存コンバーターと実 NavGraph/RankedWorld に入力したCPU検証では、中心 `[-8.5, 3, 5]`、13×11、塗り集計1856セル・約111.21平方ワールド単位を確認。矩形143の全域を塗れるとの主張ではなく、障害物等を除いた既存の実セル集計である。残る4原典ステージの個別配置と、Switch実機との比較は未検証。
+
+初回合成ビルドの Chromium 151 実ブラウザでは4ルールのオフラインと200ms中継遅延の2クライアント通信、カウント・結果同期を確認し、16枚を保存、page error は0。これはユノハナの本家配置や全ステージの到達性を保証する試験ではない。最終の本番ビルド、梱包検査10件、起動サイズ制限も成功。英語・日本語のモード選択/設定と、修正合成ビルドのポーズ/HUDも実ブラウザで確認した。CPU/ブラウザの詳細ログと原典データは作業環境の `/workspace/scratch/` に保存し、原典のモデルや画像はコミットしない。
+
 公開版 INKWAVE の操作とゲームロジックを調査した。イカロール、イカノボリ、チャージキープ、ローラーの縦振りなどに機能上の差分がある。歩行・泳ぎは加減速と旋回を測定したが、本家の実機データがない項目は一致・不一致を確定していない。
 
 ## 比較対象と証拠
@@ -4475,3 +4494,20 @@ Six wire negative cases and three view negative cases fail before their correcti
 ## 2026-10-15: SplatoonSWEPs を参考にした発射時のインク
 
 所有者の指示で SplatoonSWEPs（Splatoon 2 の Garry's Mod 版）のテクスチャをそのまま取り込み、シューター・シェルターの銃口膜を SWEPs の MuzzleSplash（円錐2枚、α テスト基準 0.1→0.9）にした。ストリンガー・ワイパーの帯は inkring テクスチャで破れる。スクリュースロッシャーは SWEPs の箱と半透明の渦が本家と違うため採らず、所有者提供の本家画像に合わせて、回転するねじれた穴あきのインク膜（丸い塊なし）と細い筋のしずくにした。表示のみで、弾・当たり・塗り・通信は変更していない。数値は SWEPs の値または画像からの目視で、Splatoon 3 の実測ではない。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
+
+## 2026-10-16: native collision query lifetime optimization
+
+- Reference/conditions: retain the documented Splatoon 3 11.3.0 baseline; all
+  weapon/gear settings unchanged. No new retail numeric values are inferred.
+- INKWAVE implementation: `patches/native-stages/runtime/triangle-world.mjs`
+  reuses traversal stacks and supports caller-owned ray results;
+  `native-physics.mjs` copies pooled hits and ends a fit query after obstruction.
+- Reproduction/impact: repeated movement, camera/weapon rays and blocked body
+  probes on native triangle stages avoid temporary allocations and unnecessary
+  traversal, preserving geometry, tolerances, nearest-hit order and grate rules.
+- Verification: frozen-before comparison, 7,000 mixed rays, native movement at
+  30/60/120 Hz, existing actual weapon/damage/paint replays at all three rates,
+  and actual minified Chromium component comparison. Logic/component verification
+  is distinct from full-game rendering; Switch/mobile hardware and retail
+  equivalence remain unverified. Details and workload limits are in
+  `reports/inkwave-bvh-optimization-2026-10-16.md`.

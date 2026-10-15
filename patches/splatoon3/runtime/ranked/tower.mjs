@@ -387,8 +387,23 @@ export class TowerRule {
     }
   }
 
-  botGoal(actor) {
+  botGoal(actor, frame) {
     if (!actor || !teamId(actor.team)) return null;
+    const riding = actorRides(actor, this.state.position, finite(this.stage?.tower?.halfSize, 1.4));
+    if (this.state.riders[actor.team] > 0 && !riding) {
+      // Keep an escort lane instead of putting every ally on the same deck.
+      // Resolve support through the live world; never invent a walkable floor.
+      const next = writePathPosition([0, 0, 0], this.metrics,
+        this.state.pathDistance + (actor.team === 0 ? 4 : -4));
+      const side = (finite(actor.slot) % 2 ? 1 : -1) * 3;
+      const dx = next[0] - this.state.position[0], dz = next[2] - this.state.position[2];
+      const length = Math.hypot(dx, dz) || 1;
+      const x = next[0] + dz / length * side, z = next[2] - dx / length * side;
+      if (typeof frame?.floorAt === 'function') {
+        const y = frame.floorAt(x, z);
+        if (Number.isFinite(y)) return { pos: [x, y, z], action: 'defend' };
+      }
+    }
     return {
       pos: this.state.position.slice(),
       action: this.state.controllingTeam === actor.team && this.state.riders[actor.team] > 0 ? 'defend' : 'ride',

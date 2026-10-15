@@ -29,6 +29,7 @@ import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
 import { adaptPaintOwnership } from './paint-ownership-adapter.mjs';
+import { adaptSourcedPaintFootprint } from './source-paint-envelope-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -93,6 +94,11 @@ export function adaptSource(rel, code) {
       'const options = { seed: p.seed, kind, face: hit.face,',
       'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
       'native ink-flight temporal paint owner');
+    code = replaceOnce(code,
+      'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
+      'const options = { seed: p.seed, kind: sourceFlightInkKind(kind), face: hit.face, claimOwner: p.owner,',
+      'source WidthHalf uses sourced paint kind, not artificial satellites');
+    code = "import { sourceFlightInkKind } from '../../patches/splatoon3/runtime/source-shot-footprint.mjs';\n" + code;
     // PR1188: detached splash drops use the same ellipse mapping as Blaster and
     // Roller splashes: a WidthHalf x (WidthHalf * depth) footprint centred on
     // the landing point (equal length and area on PaintSystem's forward smear).
@@ -120,6 +126,20 @@ export function adaptSource(rel, code) {
       "    }\n" +
       "    this.paint(p, hit, shape, p.vel, 'shot');",
       'native Dualies retained-source terminal paint owner');
+    // Ordinary InkFlight Shooters bypass _impact and thus otherwise miss the
+    // same 11.3.0 WidthHalf model already used by generic Shooter projectiles.
+    // Keep native paintShape depth: it already interpolates the existing
+    // BreakFree height band. A phase-only helper would discard that behavior.
+    code = replaceOnce(code,
+      "    this.paint(p, hit, shape, p.vel, 'shot');",
+      "    const shooter = p.inkKey === 'shooter' ? (p.s3Weapon || p.owner?.weapon) : null;\n" +
+      "    if (shooter?.impactPaint && hit.normal?.y >= SHOOTER_FLOOR_NORMAL_Y) {\n" +
+      "      const width = shooterImpactRadius(shooter, p, hit.point);\n" +
+      "      if (width > 0) shape.radius = width;\n" +
+      "    }\n" +
+      "    this.paint(p, hit, splashPaintFootprint(shape), p.vel, 'shot');",
+      'source Shooter terminal paint width in live InkFlight runtime');
+    code = "import { shooterImpactRadius, SHOOTER_FLOOR_NORMAL_Y } from '../../patches/splatoon3/runtime/shooter-impact-paint.mjs';\n" + code;
     code = "import { fidelityDualiesNativeImpactPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
     // share one collision authority. A wall impact must retain the falling
@@ -1713,6 +1733,7 @@ export function adaptSource(rel, code) {
       ['  if (k < 5.5) return vec4(2.0, 2.0, 0.0, 1.0);     // droplet paint', '  if (k < 5.5) return vec4(2.0, 0.0, 0.0, 1.0);     // droplet paint'],
       ['      float len = r * (0.07 + (big ? 0.5 : 0.4) * h2 * h2 * h2) * tsp;', '      float len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;'],
     ]) code = replaceOnce(code, from, to, 'paint shape within the source radius');
+    code = adaptSourcedPaintFootprint(rel, code, replaceOnce);
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
       "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
       code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +

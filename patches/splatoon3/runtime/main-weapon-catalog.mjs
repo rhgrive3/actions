@@ -1,5 +1,6 @@
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount } from './catalog-splash-paint.mjs';
+import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
@@ -349,7 +350,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   function paint(owner, at, radius, depth=1, direction=null, face=-1) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
-    const options = {seed:Math.random(),claimOwner:owner,kind:'shot',face};
+    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face};
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||down.clone().negate();

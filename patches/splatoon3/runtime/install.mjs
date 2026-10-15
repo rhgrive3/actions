@@ -11,7 +11,7 @@ import { CameraRig } from '../../../src/game/cameraRig.js';
 import { Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE } from '../../../src/game/character.js';
 import { WeaponRunner, Projectiles } from '../../../src/game/weapons.js';
 import { NetMatch } from '../../../src/net/netmatch.js';
-import { LANG } from '../../../src/i18n.js';
+import { LANG, TXT } from '../../../src/i18n.js';
 import { PaintSystem } from '../../../src/world/paint.js';
 import { Minimap } from '../../../src/game/minimap.js';
 import { PlayerController } from '../../../src/game/player.js';
@@ -92,7 +92,7 @@ let installed = false;
 export function install(profile) {
   if (installed) throw new Error('INKWAVE patches already installed');
   if (profile.schema !== 1 || profile.referenceVersion !== '11.3.0') throw new Error('Unsupported gameplay profile');
-  const api = { THREE, G, on, emit, LANG, PLAYER, WEAPONS, WEAPON_ORDER, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, CameraRig, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
+  const api = { THREE, G, on, emit, LANG, TXT, PLAYER, WEAPONS, WEAPON_ORDER, SUB, SPECIALS, SUB_ICONS, SPECIAL_ICONS, Actor, CameraRig, NetMatch, Character, CHARACTER_CHANNELS, CHARACTER_TIMERS, CHARACTER_FOOT_MODES, CHARACTER_FOOT_METRICS, CHARACTER_BOMB_POSE, WeaponRunner, Projectiles, PaintSystem, Minimap, PlayerController, Menus, HUD, ShadowCache, Physics, Hit };
   Object.assign(PLAYER, profile.player);
   for (const [kind, data] of Object.entries(profile.weapons)) {
     if (!WEAPONS[kind]) throw new Error(`Missing upstream weapon ${kind}`);

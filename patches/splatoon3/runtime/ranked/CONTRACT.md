@@ -12,6 +12,8 @@ Frame: `{actors:[{id,team,pos:[x,y,z],alive,grounded,remote,weight,swimming}], i
 
 Stage: `{id,zones:[{center:[x,y,z],size:[width,depth]}], tower:{path:[[x,y,z],...],centerIndex, checkpoints:[[{progress:0..1,count:seconds},...],[...]],speed:worldUnitsPerSecond,halfSize:1.4}, rainmaker:{center:[x,y,z],checkpoints:[[[x,y,z],...],[[x,y,z],...]],goals:[[x,y,z],[x,y,z]],retreatZ:[z,z]},clams:{spawns:[[x,y,z],...],goals:[[x,y,z],[x,y,z]]}}`.
 
+Source-calibrated zones may specify `heightTolerance` in local world units. `RankedWorld` then indexes and capture-paints only cells within that distance of `center[1]`; overlapping box tops or other storeys are excluded. Omitted tolerance preserves existing authored blockout indexing. This is a local floor-band calibration, not recovered retail rule geometry.
+
 Important orientation: `goals[team]` and `checkpoints[team]` are that team's ATTACK objectives in ENEMY territory. Team 0 starts negative Z. Tower full path starts negative Z to positive Z; increasing coordinate/progress attacks for team 0. `botGoal` returns current reachable objective; world data determines routes.
 
 Events consumed by runtime: `zone-capture {zone,team}` fills entire zone ink; `rainmaker-pop {pos,team,radius,damage}` paint/explosion; `rainmaker-timeout {id,pos,team}` explosion/death; `rainmaker-shot {id,team,pos,aim,charge,damage,radius,speed}` dedicated projectile; other kinds are announcements (`tower-capture`, `checkpoint`, `clam-score`, `overtime`, `finish`). Rule `state` should expose required objects and timers directly with clear names.

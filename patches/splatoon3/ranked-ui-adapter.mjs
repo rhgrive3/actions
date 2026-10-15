@@ -1,3 +1,4 @@
+import { RANKED_JA } from './runtime/ranked/strings.mjs';
 function once(code, before, after, label) {
   const at = code.indexOf(before);
   if (at < 0 || code.indexOf(before, at + before.length) >= 0) throw new Error(`INKWAVE ranked UI conflict: ${label}`);
@@ -53,14 +54,32 @@ const MODE_STYLE = `
 `;
 
 export function adaptRankedUi(rel, code) {
+  if (rel === 'src/i18n.js') return once(code, 'const JA = {',
+    'const JA = {\n  ...' + JSON.stringify(RANKED_JA) + ',', 'ranked Japanese dictionary');
   if (rel !== 'src/ui/menus.js') return code;
+
+  code = once(code, "const diffText = (v) => (boss ? BOSS_DIFF_INFO[v] : DIFF_INFO[v]?.text) || '';",
+    "const diffText = (v) => tr((boss ? BOSS_DIFF_INFO[v] : DIFF_INFO[v]?.text) || '');", 'setup difficulty explanation');
+
+  code = once(code, "blurb: `Everyone's one squad against ${BOSS_NAME}, a giant crab in a rusted container. Sink it before time runs out!`",
+    "blurb: tr('Everyone is one squad against {boss}. Defeat it before time runs out!', { boss: BOSS_NAME })", 'boss mode description');
+  code = once(code, "sub: `Pick a stage and the time of day · your squad of 8 vs ${BOSS_NAME}`",
+    "sub: tr('Pick a stage and the time of day · your squad of 8 vs {boss}', { boss: BOSS_NAME })", 'boss setup description');
+
+  code = once(code, "sub: 'Turf War · Boss Battle'", "sub: 'Turf War · Ranked · Boss Battle'", 'main menu ranked modes');
+  code = once(code, ": this._header('TURF WAR', { sub: 'Pick a stage and the time of day · 4 v 4 against bots' })",
+    ": this._header(playModeName(st.mode), { sub: 'Pick a stage and the time of day · 4 v 4 against bots' })", 'setup rule name');
+  code = once(code, "h('span', { class: 'iw-pmatch__tag' }, 'TURF WAR')",
+    "h('span', { class: 'iw-pmatch__tag' }, playModeName(G.match?.mode))", 'pause rule name');
+  code = once(code, "'You will leave this Turf War and head back to the lobby. Your turf will not count.'",
+    "'You will leave this battle and head back to the lobby.'", 'quit current rule');
 
   code = once(code, "const BOSS_DURATIONS = [180, 240, 300];", `const BOSS_DURATIONS = [180, 240, 300];
 const RANKED_MODE_IDS = Object.freeze(['zones', 'tower', 'rainmaker', 'clams']);
 const PLAY_MODE_IDS = Object.freeze(['turf', ...RANKED_MODE_IDS, 'boss']);
 const PLAY_MODE_NAMES = Object.freeze({ turf: 'TURF WAR', zones: 'SPLAT ZONES', tower: 'TOWER CONTROL', rainmaker: 'RAINMAKER', clams: 'CLAM BLITZ', boss: 'BOSS BATTLE' });
 const isRankedMode = (id) => RANKED_MODE_IDS.includes(id);
-const playModeName = (id) => PLAY_MODE_NAMES[id] || PLAY_MODE_NAMES.turf;`, 'ranked mode catalog');
+const playModeName = (id) => tr(PLAY_MODE_NAMES[id] || PLAY_MODE_NAMES.turf);`, 'ranked mode catalog');
 
   code = once(code, "    this.el = h('div', { class: 'iw-ui', 'data-screen': '' });", `    this.el = h('div', { class: 'iw-ui', 'data-screen': '' });
     if (!document.querySelector('style[data-iw-ranked-modes]')) {
@@ -166,8 +185,8 @@ const playModeName = (id) => PLAY_MODE_NAMES[id] || PLAY_MODE_NAMES.turf;`, 'ran
         el.classList.toggle('is-bossmode', bm);
         el.classList.toggle('is-rankedmode', rm);
         el.dataset.mode = activeMode;
-        diffLbl.querySelector('.iw-lset__lbltxt').textContent = bm ? 'DIFFICULTY' : 'BOT SKILL';
-        hostChip.lastChild.textContent = bm ? 'HOST' : 'YOU’RE THE HOST';
+        diffLbl.querySelector('.iw-lset__lbltxt').textContent = tr(bm ? 'DIFFICULTY' : 'BOT SKILL');
+        hostChip.lastChild.textContent = tr(bm ? 'HOST' : 'YOU’RE THE HOST');
         lenSegT.el.style.display = bm || rm ? 'none' : '';
         lenSegB.el.style.display = bm ? '' : 'none';
         lenSegR.el.style.display = rm ? '' : 'none';
@@ -177,7 +196,7 @@ const playModeName = (id) => PLAY_MODE_NAMES[id] || PLAY_MODE_NAMES.turf;`, 'ran
 
   code = once(code,
     "          if (!isHost()) this.toast(`${host ? host.name : 'The host'} picked ${bossMode() ? `BOSS BATTLE — everyone vs ${BOSS_NAME}!` : 'TURF WAR'}`, { icon: bossMode() ? BOSS_GLYPH : GLYPHS.flag });",
-    "          if (!isHost()) this.toast(`${host ? host.name : 'The host'} picked ${playModeName(lob.mode)}`, { icon: bossMode() ? BOSS_GLYPH : GLYPHS.flag });",
+    "          if (!isHost()) this.toast(tr('{host} picked {mode}', { host: host ? host.name : tr('The host'), mode: playModeName(lob.mode) }), { icon: bossMode() ? BOSS_GLYPH : GLYPHS.flag });",
     'ranked room mode announcement');
 
   code = once(code,
@@ -218,9 +237,9 @@ const playModeName = (id) => PLAY_MODE_NAMES[id] || PLAY_MODE_NAMES.turf;`, 'ran
       [0, 1].map((team) => h('div', { class: 'iw-ranked-result__team', style: { '--team': colors[team] } },
         h('b', null, names[team] || TEAM_NAMES[team]),
         h('strong', null, String(Math.ceil((d.counts && d.counts[team] != null) ? d.counts[team] : 100))),
-        h('small', null, 'PENALTY ' + Math.ceil((d.penalties && d.penalties[team]) || 0)))),
+        h('small', null, tr('PENALTY {n}', { n: Math.ceil((d.penalties && d.penalties[team]) || 0) })))),
       h('div', { class: 'iw-ranked-result__call' }, d.knockout
-        ? 'KNOCKOUT · ' + (names[winTeam] || TEAM_NAMES[winTeam]) + ' WIN'
+        ? tr('KNOCKOUT · {team} WIN', { team: names[winTeam] || TEAM_NAMES[winTeam] })
         : d.overtime ? 'OVERTIME RESULT' : d.reason === 'time' ? 'TIME · LOWEST COUNT WINS' : 'RANKED RESULT')) : null;
 
     // boss: HULLBREAKER's HP drains to what was left, the clock counts up, then SUNK! / ESCAPED is stamped on it`,
