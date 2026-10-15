@@ -61,15 +61,33 @@ export async function sourceTree(id,pinned,signal){
  try{if(cache){const sha256=hex(await crypto.subtle.digest('SHA-256',bytes));await cache.put(key,new Response(JSON.stringify({schema:1,tree:pinned,bytes:bytes.byteLength,sha256,body})));}}catch{}
  return tree;
 }
-function openDB(){return new Promise((resolve,reject)=>{const request=indexedDB.open(DB,1);request.onupgradeneeded=()=>request.result.createObjectStore('stages',{keyPath:'key'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
-function transact(db,mode,run){return new Promise((resolve,reject)=>{const t=db.transaction('stages',mode),s=t.objectStore('stages');let result;run(s,value=>{result=value;});t.oncomplete=()=>resolve(result);t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error);});}
+function openDB(){return new Promise((resolve,reject)=>{
+ const request=indexedDB.open(DB,2);let blocked=false;
+ request.onblocked=()=>{blocked=true;reject(Error('Derived cache upgrade blocked'));};
+ request.onupgradeneeded=()=>{
+  if(blocked){request.transaction.abort();return;}
+  const db=request.result,s=db.objectStoreNames.contains('stages')?request.transaction.objectStore('stages'):db.createObjectStore('stages',{keyPath:'key'});
+  const times=db.createObjectStore('stage-times',{keyPath:'key'}),r=s.openCursor();
+  // Copy only eviction metadata once. Later writes never read stage payloads.
+  r.onsuccess=()=>{const c=r.result;if(c){times.put({key:c.primaryKey,time:c.value.time});c.continue();}};
+ };
+ request.onsuccess=()=>{if(blocked)request.result.close();else resolve(request.result);};
+ request.onerror=()=>reject(request.error);
+});}
+function transact(db,mode,run){return new Promise((resolve,reject)=>{const t=db.transaction(mode==='readwrite'?['stages','stage-times']:'stages',mode),s=t.objectStore('stages');let result;run(s,value=>{result=value;},t);t.oncomplete=()=>resolve(result);t.onerror=()=>reject(t.error);t.onabort=()=>reject(t.error);});}
 const arrays=['vertices','indices','triangles','normals','flags','objectIds','nodes','order','triangleFace','mask'];
 async function seal(data){const hashes=await Promise.all(arrays.map(k=>crypto.subtle.digest('SHA-256',data[k])));hashes.push(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(data.manifest))));return hashes.map(hex).join('/');}
 export async function readDerived(key){
  let db;try{db=await openDB();const row=await transact(db,'readonly',(s,done)=>{const r=s.get(key);r.onsuccess=()=>done(r.result);});if(!row||await seal(row.data)!==row.seal)return null;return row.data;}catch{return null;}finally{db?.close();}
 }
 export async function writeDerived(key,data){
- let db;try{const signature=await seal(data);db=await openDB();await transact(db,'readwrite',s=>{
-  const r=s.getAll();r.onsuccess=()=>{const other=r.result.filter(v=>v.key!==key).sort((a,b)=>b.time-a.time);for(const row of other.slice(1))s.delete(row.key);s.put({key,time:Date.now(),seal:signature,data});};
+ let db;try{const signature=await seal(data);db=await openDB();await transact(db,'readwrite',(s,_done,t)=>{
+  const times=t.objectStore('stage-times'),r=times.getAll(),keys=s.getAllKeys();let rows,stageKeys;
+  const update=()=>{
+   if(!rows||!stageKeys)return;
+   if(rows.length!==stageKeys.length||rows.some((row,i)=>indexedDB.cmp(row.key,stageKeys[i])!==0)){t.abort();return;}
+   const other=rows.filter(v=>v.key!==key).sort((a,b)=>b.time-a.time);for(const row of other.slice(1)){s.delete(row.key);times.delete(row.key);}const time=Date.now();s.put({key,time,seal:signature,data});times.put({key,time});
+  };
+  r.onsuccess=()=>{rows=r.result;update();};keys.onsuccess=()=>{stageKeys=keys.result;update();};
  });}catch{}finally{db?.close();}
 }
