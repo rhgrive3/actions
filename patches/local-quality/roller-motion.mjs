@@ -21,16 +21,11 @@ export function verticalSwingCorrection(elapsed,windup,interval){
   const recover=ease((elapsed-windup-.12)/Math.max(.01,interval-windup-.12));
   return (verticalSwingAngle(elapsed,windup)-old)*ease(elapsed/(2/60))*(1-recover);
 }
-export function installRollerMotionQuality({Character,CHARACTER_CHANNELS:C}, detailSnapshot){
-  const P=Character.prototype;if(Object.hasOwn(P,INSTALLED))return;
-  Object.defineProperty(P,INSTALLED,{value:true});const original=P._poseFlick;
-  P._poseFlick=function(pose,ft){
-    const a=this.s3RollerFlick;
-    const result=original.call(this,pose,ft);
-    // The heavy swing shape has its own release velocity (roller-heavy-swing.mjs).
-    if(!a?.vertical||a.swingShape||a!==this.s3RollerFlick||this.weaponKind!=='roller'||!detailSnapshot(this)?.active)return result;
-    const rolling=a.released&&a.rolling?1-this.wRoll:1;
-    pose[C.ANCR]+=verticalSwingCorrection(a.elapsed,a.windup,a.interval)*rolling;
-    return result;
-  };
+export function installRollerMotionQuality({Character}, _detailSnapshot){
+  // roller.mjs now poses every Roller swing with its own release velocity (one
+  // S3 swing order: overhead hold -> slam -> floor rest, roller-heavy-swing.mjs).
+  // This correction repaired the zero velocity of the former stretched spline;
+  // layering it on the new curve would bend the slam. It stays a no-op install.
+  const P=Character?.prototype;if(!P||Object.hasOwn(P,INSTALLED))return;
+  Object.defineProperty(P,INSTALLED,{value:true});
 }

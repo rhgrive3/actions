@@ -928,7 +928,27 @@ function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,t
 // its core, the unit's sourced InitRadiusForField, reaches terrain. Side walls
 // and ceilings still end it on first contact of the grown sphere.
 // INKWAVE rule (normal threshold included); retail collision code is not public.
-export const GLOB_GRAZE = Object.freeze({ normalY: 0.3 });
+// The grazed part is not discarded: like water it splashes where it touched.
+// Each graze paints the floor/wall under the glob with the cross-section the
+// grown sphere cuts through that surface (r^2 - h^2), at most once per that
+// radius of travel, so a glob skimming a floor leaves a continuous wet trail
+// and a low wall's top is painted while the rest of the glob carries on.
+export const GLOB_GRAZE = Object.freeze({ normalY: 0.3, minPaintFraction: 0.25 });
+export function globGrazePaint(game, p, point, normal, radius, face = -1) {
+  const owner = p?.owner;
+  if (!game?.paint?.splat || !owner || p.ghost || owner.remote || !(radius > 0) || !point || !normal) return 0;
+  const h = (p.pos.x - point.x) * normal.x + (p.pos.y - point.y) * normal.y + (p.pos.z - point.z) * normal.z;
+  const cut = Math.sqrt(Math.max(0, radius * radius - Math.max(0, h) * h));
+  const paintRadius = Math.max(radius * GLOB_GRAZE.minPaintFraction, cut);
+  const center = p.pos.clone().addScaledVector(normal, -Math.max(0, h)).addScaledVector(normal, 0.05);
+  const last = p.s3GrazePaint;
+  if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
+  p.s3GrazePaint = { at: center, face };
+  const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
+  const area = game.paint.splat(center, paintRadius, p.team, { seed, claimOwner: owner });
+  if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
+  return area;
+}
 function globGrazeEligible(p) {
   return !!p?.fidelityFieldCollision && !p.fidelityWallDrop &&
     (p.type==='slosh' || (p.type==='drop' && (p.s3Weapon?.kind||p.owner?.weapon?.kind)==='roller'));
@@ -1307,8 +1327,13 @@ export function fidelityWorldHit(system,p) {
       sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,age0,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
       // A grown Slosher/Roller glob whose LOWER part meets the floor or a low
       // wall's top keeps flying; only its core ends it (see GLOB_GRAZE).
-      if(s.world.hit&&globGrazeEligible(p)&&s.world.normal.y>GLOB_GRAZE.normalY)
+      if(s.world.hit&&globGrazeEligible(p)&&s.world.normal.y>GLOB_GRAZE.normalY){
+        const touch=s.grazeTouch||(s.grazeTouch={point:s.world.point.clone(),normal:s.world.normal.clone()});
+        touch.point.copy(s.world.point);touch.normal.copy(s.world.normal);const face=s.world.face;
         sweptWorldHit(api.G.physics,p.prev,p.pos,globCoreRadius(p,p.prev?.y),globCoreRadius(p,p.pos?.y),s.world,true);
+        // Only a graze the glob survives this step splashes here; a core contact paints as its impact.
+        if(!s.world.hit)globGrazePaint(api.G,p,touch.point,touch.normal,fieldRadiusAt(p,p.age,p.pos?.y),face);
+      }
     }
     const defense=system.kitDefenseCandidate?.(p);
     if(defense&&Number.isFinite(defense.distance)&&defense.distance>=0&&(!s.world.hit||defense.distance<s.world.dist-EPSILON)){

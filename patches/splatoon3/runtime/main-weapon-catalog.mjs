@@ -14,7 +14,7 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees, GLOB_GRAZE } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint } from './weapons-fidelity.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
@@ -847,7 +847,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         let candidate=sweptWorldHit(G.physics,q.from,q.to,f0,f1,q.hit,true);
         if(graze&&candidate.hit&&candidate.normal.y>GLOB_GRAZE.normalY){
           const core=collisionRadius(q.param,'Field',0,s.index,bounceScale);
-          if(core<Math.min(f0,f1))candidate=sweptWorldHit(G.physics,q.from,q.to,core,core,q.hit,true);
+          if(core<Math.min(f0,f1)){
+            const touch=s.grazeTouch||(s.grazeTouch={point:candidate.point.clone(),normal:candidate.normal.clone()});
+            touch.point.copy(candidate.point);touch.normal.copy(candidate.normal);const face=candidate.face;
+            candidate=sweptWorldHit(G.physics,q.from,q.to,core,core,q.hit,true);
+            // The grazed part splashes where it touched; the rest of the glob flies on.
+            if(!candidate.hit)globGrazePaint(G,p,touch.point,touch.normal,f1,face);
+          }
         }
         if(candidate.hit&&(!world.hit||candidate.dist<world.dist))world=candidate;
       }

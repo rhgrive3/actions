@@ -132,7 +132,11 @@ function advanceWeight(retarget) {
   if (!enabled) st.weight = 0;
   if (!enabled || st.time === null || now === null || now < st.time) { st.weight = enabled ? wanted : 0; st.move = move; }
   else {
-    const dt = clamp(now - st.time, 0, 0.1);
+    // The humanoid retarget (and this clock) is not evaluated while the kid is
+    // hidden as a squid. A kid that surfaces straight into locomotion must not
+    // apply the whole hidden gap (clamped to 0.1 s) as one blend step: that
+    // snapped the shooter carry 0 -> 0.55 in one frame. Resume at one frame.
+    const gap = now - st.time, dt = gap > 0.05 ? 1 / 60 : clamp(gap, 0, 0.1);
     st.weight += (wanted - st.weight) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
     st.move += (move - st.move) * (1 - Math.exp(-SOURCE_POSTURE.standResponse * dt));
     // Do not snap the weapon from ToHuman's authored hold to a fully yaw-

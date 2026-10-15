@@ -1,6 +1,6 @@
 import { specialMotionAllowsAction } from './action-admission.mjs';
 import { ROLLER_DRUM } from './roller-model.mjs';
-import { HEAVY_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
+import { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from './roller-heavy-swing.mjs';
 import { hasFullCancelGroundAttack, takeFullCancelGroundAttack } from './movement.mjs';
 import { rollerBubblerCandidate, applyRollerBubblerHit } from './kit-big-bubbler.mjs';
 // Roller-specific refinements. Timing comes from the existing gameplay profile;
@@ -670,31 +670,8 @@ function slope(keys, times, i, joint, component) {
   const w1 = 2 * b + a, w2 = b + 2 * a;
   return (w1 + w2) / (w1 / before + w2 / after);
 }
-function swingPose(elapsed, windup, interval, keys) {
-  const release = Math.max(1e-6, windup);
-  const end = Math.max(release + 1 / 60, interval);
-  const follow = release + Math.min(.12, (end - release) * .55);
-  const times = [0, release * .65, release, follow, end];
-  const t = Math.max(0, Math.min(end, elapsed));
-  let segment = 0;
-  while (segment < 3 && t > times[segment + 1]) segment++;
-  const h = times[segment + 1] - times[segment], u = Math.max(0, Math.min(1, (t - times[segment]) / h));
-  const u2 = u * u, u3 = u2 * u;
-  const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u;
-  const h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
-  const sample = (joint, component) =>
-    h00 * keys[segment][joint][component]
-    + h10 * h * slope(keys, times, segment, joint, component)
-    + h01 * keys[segment + 1][joint][component]
-    + h11 * h * slope(keys, times, segment + 1, joint, component);
-  const anchor = [sample('a', 0), sample('a', 1), sample('a', 2)];
-  const rotation = [sample('r', 0), sample('r', 1), sample('r', 2)];
-  return { anchor, rotation, weight: ease(t / (2 / 60)) * (1 - ease((t - follow) / (end - follow))),
-    coil: ease(t / (release * .65)) * (1 - ease((t - release * .65) / (release * .35))),
-    whip: ease((t - release * .65) / (release * .35)) * (1 - ease((t - follow) / (end - follow))) };
-}
 // Heavy-roller swing shape and its presentation length: see roller-heavy-swing.mjs.
-export { HEAVY_ROLLER_SWING, heavyRollerSwingEnd };
+export { HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd };
 function hermiteKeys(keys, times, t) {
   let segment = 0;
   while (segment < keys.length - 2 && t > times[segment + 1]) segment++;
@@ -706,29 +683,33 @@ function hermiteKeys(keys, times, t) {
     + h01 * keys[segment + 1][joint][component] + h11 * h * slope(keys, times, segment + 1, joint, component);
   return { anchor: [sample('a', 0), sample('a', 1), sample('a', 2)], rotation: [sample('r', 0), sample('r', 1), sample('r', 2)] };
 }
-function heavySwingPose(elapsed, windup, interval, keys) {
-  const H = HEAVY_ROLLER_SWING, release = Math.max(1e-6, windup);
-  const whip = Math.min(H.whip, release * .5), hold = release - whip;
-  const coilAt = Math.min(H.coilAt, hold * .9);
-  const restEnd = Math.max(release + H.rest, interval), end = restEnd + H.ret;
-  // READY -> level overhead -> held -> drum down at release -> rest -> READY.
+// One S3 swing order for every Roller (roller-heavy-swing.mjs): READY -> level
+// overhead -> held -> slam, drum down at the release frame -> rest -> READY.
+// The former stretched spline coiled for 65% of the windup and whipped for the
+// remaining 35% (7F on the Splat Roller, 16F on the Dynamo), so ink left with
+// the drum still at chest height.
+function s3SwingPose(elapsed, windup, interval, keys, heavy) {
+  const H = HEAVY_ROLLER_SWING, S = STANDARD_ROLLER_SWING, release = Math.max(1e-6, windup);
+  const whip = Math.min(heavy ? H.whip : S.whip, release * .5), hold = release - whip;
+  const coilAt = heavy ? Math.min(H.coilAt, hold * .9) : Math.min(S.coilMax, S.coilFraction * release, hold * .9);
+  let restEnd, end;
+  if (heavy) { restEnd = Math.max(release + H.rest, interval); end = restEnd + H.ret; }
+  else { end = Math.max(release + 1 / 60, interval); restEnd = end - Math.min(S.ret, (end - release) * .5); }
   const k = [keys[0], keys[1], keys[1], keys[3], keys[3], keys[4]];
   const times = [0, coilAt, hold, release, restEnd, end];
   const t = Math.max(0, Math.min(end, elapsed));
   const { anchor, rotation } = hermiteKeys(k, times, t);
-  return { anchor, rotation, weight: ease(t / (2 / 60)),
+  return { anchor, rotation, weight: ease(t / (2 / 60)) * (1 - ease((t - restEnd) / (end - restEnd))),
     coil: ease(t / coilAt) * (1 - ease((t - hold) / whip)),
-    whip: ease((t - hold) / whip) * (1 - ease((t - restEnd) / H.ret)) };
+    whip: ease((t - hold) / whip) * (1 - ease((t - restEnd) / (end - restEnd))) };
 }
 export function horizontalRollerPose(elapsed, windup, interval, shape = null) {
-  return shape === 'heavy' ? heavySwingPose(elapsed, windup, interval, HORIZONTAL_GRIPS)
-    : swingPose(elapsed, windup, interval, HORIZONTAL_GRIPS);
+  return s3SwingPose(elapsed, windup, interval, HORIZONTAL_GRIPS, shape === 'heavy');
 }
 // The X axis across the drum turns upright around the handle (local +Z).
 // This is a pose target for the existing two-arm IK, not a second bone rig.
 export function verticalRollerPose(elapsed, windup, interval, shape = null) {
-  return shape === 'heavy' ? heavySwingPose(elapsed, windup, interval, VERTICAL_GRIPS)
-    : swingPose(elapsed, windup, interval, VERTICAL_GRIPS);
+  return s3SwingPose(elapsed, windup, interval, VERTICAL_GRIPS, shape === 'heavy');
 }
 
 export function installRollerMotion({ Character, CHARACTER_CHANNELS: C, CHARACTER_TIMERS: T }, _profile) {

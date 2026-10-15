@@ -7,7 +7,7 @@ import { adaptSource } from '../adapter.mjs';
 import { sourceFormClipAdmitted, sourceAirBlendStart, SOURCE_FORM_TRANSITION } from '../runtime/source-form-transition.mjs';
 import { shedFormExitOverspeed, stepGroundVelocity, FORM_EXIT_OVERSPEED } from '../runtime/movement-physics.mjs';
 import { catalogSplashFirst } from '../runtime/catalog-splash-paint.mjs';
-import { horizontalRollerPose, verticalRollerPose, ROLLER_POSE, HEAVY_ROLLER_SWING, heavyRollerSwingEnd } from '../runtime/roller.mjs';
+import { horizontalRollerPose, verticalRollerPose, ROLLER_POSE, HEAVY_ROLLER_SWING, STANDARD_ROLLER_SWING, heavyRollerSwingEnd } from '../runtime/roller.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -88,9 +88,8 @@ test('heavy roller swing: level overhead hold, ink with the drum down, floor res
     const at = t => fn(t, windup, interval, 'heavy');
     const top = at(H.coilAt), held = at(windup - H.whip - 1 / 60);
     for (let i = 0; i < 3; i++) near(held.rotation[i], top.rotation[i], 1e-9, label + ' holds overhead until the whip');
-    const light = fn(windup, windup, interval), heavy = at(windup), follow = at(windup + H.rest * .5);
+    const heavy = at(windup), follow = at(windup + H.rest * .5);
     for (let i = 0; i < 3; i++) near(heavy.rotation[i], follow.rotation[i], 1e-9, label + ' drum already down at release');
-    assert.notDeepEqual(light.rotation, heavy.rotation, label + ' differs from the stretched light spline');
     const done = at(end);
     for (let i = 0; i < 3; i++) {
       near(done.anchor[i], ROLLER_POSE.READY_ANCHOR[i], 1e-7, label + ' anchor back to carry');
@@ -106,6 +105,19 @@ test('heavy roller swing: level overhead hold, ink with the drum down, floor res
       previous = next;
     }
   }
-  // Light rollers keep their calibrated spline exactly.
-  assert.deepEqual(horizontalRollerPose(.2, 21 / 60, 42 / 60, null), horizontalRollerPose(.2, 21 / 60, 42 / 60));
+});
+
+test('standard roller swing (Splat Roller 21F/26F): same S3 order inside the gameplay interval', () => {
+  const S = STANDARD_ROLLER_SWING;
+  for (const [fn, windup, interval, label] of [[horizontalRollerPose, 21 / 60, 42 / 60, 'horizontal'], [verticalRollerPose, 26 / 60, 47 / 60, 'vertical']]) {
+    const at = t => fn(t, windup, interval);
+    const coilAt = Math.min(S.coilMax, S.coilFraction * windup), hold = windup - S.whip;
+    const top = at(coilAt), held = at(hold - 1 / 120);
+    for (let i = 0; i < 3; i++) near(held.rotation[i], top.rotation[i], 1e-9, label + ' level overhead is held');
+    const release = at(windup), rest = at(windup + 2 / 60);
+    for (let i = 0; i < 3; i++) near(release.rotation[i], rest.rotation[i], 1e-9, label + ' drum down at the release frame');
+    const done = at(interval);
+    for (let i = 0; i < 3; i++) near(done.rotation[i], ROLLER_POSE.READY_ROTATION[i], 1e-7, label + ' back to carry at the interval');
+    assert.equal(done.weight, 0, label + ' hands the pose back at the interval');
+  }
 });
