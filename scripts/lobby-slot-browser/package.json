@@ -41,8 +41,8 @@
       "publicationPath": "scripts/lobby-slot-browser/bindings.test.mjs"
     },
     "browser.mjs": {
-      "bytes": 5040,
-      "sha256": "05c7735cc04ca3e2430506a8f0b04ef30db3dcbaf002b2509e65949a5a6b0daa",
+      "bytes": 6004,
+      "sha256": "a2a732f71cea2c4839ef12bc338a95e20a7f6668a2783e8586ff5c6dfb5248cb",
       "publicationPath": "scripts/lobby-slot-browser/browser.mjs"
     },
     "inkwave-lobby-slot-browser.yml": {
@@ -76,11 +76,11 @@
       "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
     },
     "verify.test.mjs": {
-      "bytes": 3842,
-      "sha256": "a473b3884dfb360dd1edc5d21dd96319c3a80c55e6835370ecfc44a7d04da639",
+      "bytes": 5512,
+      "sha256": "78bf72aae142d5acf2312dd0f28b6a02418b6ca4f38e5f07dfec3b60eed24bd1",
       "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
     }
   },
-  "repairOf": "aedcbbb3d824e8e8a95e409e55f2d1d860311305",
-  "repairReason": "Call actual Showcase camera refresh after simulation, as native render does before menu projection. Retain dynamic-change gate and all DOM equality checks."
+  "repairOf": "22f2e602be412696968e214d0a364a1761b41b11",
+  "repairReason": "Record readiness stage and exact unchanged predicate inputs after baseline startup timeout; no timeout or acceptance relaxation."
 }

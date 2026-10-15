@@ -14,3 +14,16 @@ const advanceSource=probeSource.match(/function advanceNativeLobby\(sc,width,hei
 const advance=(0,eval)('('+advanceSource+')');
 test('native camera tick follows simulation with exact viewport before capture',()=>{const calls=[],sc={update(dt){calls.push(['update',dt]);},_lobCamera(w,h){calls.push(['camera',w,h,this._fdt]);}};advance(sc,1000,800);assert.deepEqual(calls,[['update',1/60],['camera',1000,800,1/60]]);assert.match(probeSource,/advanceNativeLobby\(sc,innerWidth,innerHeight\);capture\('moving'\+i\)/);});
 test('missing or failed native camera step fails closed',()=>{assert.throws(()=>advance({update(){}},1000,800));const failure=Error('camera failure');assert.throws(()=>advance({update(){},_lobCamera(){throw failure;}},1000,800),e=>e===failure);});
+
+const browserSource=fs.readFileSync(new URL('./browser.mjs',import.meta.url),'utf8');
+const readinessSource=browserSource.slice(0,browserSource.indexOf("import fs from"));
+const readiness=(0,eval)('('+readinessSource.trim()+')');
+test('readiness observations preserve all original gates and expose failed condition',()=>{
+ const saved={G:globalThis.COMPONENT_G,game:globalThis.__inkwave,receipt:globalThis.LOBBY_READINESS};let calls=0;
+ const sc={mode:'lobby',lob:{ready:true,k:1,room:{}},lobbySlotAnchor(){calls++;return {x:1,y:2,s:1,vis:1,behind:false};}},game={showcase:sc,frozen:false},G={game,mode:'menu',menus:{_scr:{name:'lobby'}},net:{state:'lobby',isMock:true}};
+ globalThis.COMPONENT_G=G;globalThis.__inkwave=game;delete globalThis.LOBBY_READINESS;
+ try{assert.equal(readiness(),true);assert.equal(calls,8);assert.equal(globalThis.LOBBY_READINESS.gameIdentity,true);const original=JSON.stringify(G);
+ for(const change of ['ready','fade','menu','visible']){const before=calls;if(change==='ready')sc.lob.ready=false;if(change==='fade')sc.lob.k=.99;if(change==='menu')G.menus._scr.name='main';if(change==='visible')sc.lobbySlotAnchor=()=>{calls++;return {vis:0};};assert.equal(readiness(),false);assert.equal(globalThis.LOBBY_READINESS.ready,false);assert.equal(calls-before,change==='visible'?8:0);sc.lob.ready=true;sc.lob.k=1;G.menus._scr.name='lobby';}
+ assert.equal(JSON.stringify(G),original);assert.equal(globalThis.LOBBY_READINESS.polls,5);assert.match(browserSource,/waitForFunction\(observeLobbyReadiness,null,\{timeout:30000\}\)/);
+ }finally{globalThis.COMPONENT_G=saved.G;globalThis.__inkwave=saved.game;globalThis.LOBBY_READINESS=saved.receipt;}
+});
