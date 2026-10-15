@@ -92,7 +92,10 @@ test('production source mask uses original WidthHalf without artificial shrink o
     fs.readFileSync(new URL('../../../inkwave-public/src/game/inkFlightRuntime.js', import.meta.url), 'utf8'));
   assert.match(flight, /kind: sourceFlightInkKind\(kind\)/);
   assert.match(flight, /shooterImpactRadius\(shooter, p, hit\.point\)/);
-  assert.match(flight, /shooterImpactDepthScale\(shooter, p, hit\.normal\)/);
+  // Keep the live 60 Hz InkFlight paintShape depth/phase/height interpolation.
+  // The narrower Shooter WidthHalf replaces the radius, not that native stretch.
+  assert.match(flight, /paintShape\(p\.inkProfile, p\.start\.distanceTo\(hit\.point\), angle, p\.inkPhase, Math\.max\(0, p\.inkPeak - hit\.point\.y\)\)/);
+  assert.match(flight, /if \(width > 0\) shape\.radius = width;/);
   assert.match(flight, /this\.paint\(p, hit, splashPaintFootprint\(shape\), p\.vel, 'shot'\)/);
   const network = fs.readFileSync(new URL('../../network-replication/adapter.mjs', import.meta.url), 'utf8');
   assert.match(network, /'source-shot', 'source-splash'/);
