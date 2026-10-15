@@ -17,6 +17,7 @@
 //    select BreakFree, following the Roller convention of #611. Not validated for Shooter.
 // Wall impacts are not handled here. The caller only applies this to floor contacts.
 import { rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
+import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 
 /** Floor contact threshold; the same normal.y >= 0.4 gate used by the Shooter nearest splash. */
 export const SHOOTER_FLOOR_NORMAL_Y = 0.4;
@@ -64,7 +65,7 @@ export function withShooterImpactPaint(game, projectile, hit, weapon, callback) 
   paint.splat = function (point, nativeRadius, team, opts = {}) {
     if (replaced) return native.call(this, point, nativeRadius, team, opts);
     replaced = true;
-    return native.call(this, point, radius, team, { ...opts, stretchAmt: Math.max(0, depth - 1) });
+    return native.call(this, point, radius, team, { ...opts, kind: SOURCE_SHOT_PAINT_KIND, stretchAmt: Math.max(0, depth - 1) });
   };
   try { return callback(); } finally { paint.splat = native; }
 }
