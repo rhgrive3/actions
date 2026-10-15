@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   tripleSlamFistCenters, tripleSlamFistDamage, tickTripleSlamFists,
-  installTripleSlamFists, FIST_TRAVEL, FIST_STAMP_RADIUS, tripleSlamFistStamps,
+  installTripleSlamFists, FIST_TRAVEL, FIST_STAMP_RADIUS, tripleSlamFistStamps, tripleSlamFistPower,
 } from '../runtime/triple-slam-fists.mjs';
 import { getBoot } from './tidal-slam-fixture.mjs';
 
@@ -60,6 +60,40 @@ test('#912 pinned 11.3.0 symmetric fist centers and near/far damage endpoints', 
   assert.equal(tripleSlamFistDamage(9.6), 60);
   assert.equal(tripleSlamFistDamage(9.600001), 0);
   assert.equal(FIST_TRAVEL, 15 / 60);
+});
+
+test('#912 pinned Pogo gear power scales only the fist blast/paint radii', () => {
+  const low = tripleSlamFistPower(0), high = tripleSlamFistPower(57);
+  assert.deepEqual(low, { damageRadiusRate: 1, paintRadius: 10 });
+  assert.deepEqual(high, { damageRadiusRate: 1.1, paintRadius: 12 });
+  const mid = tripleSlamFistPower(20);
+  assert.ok(mid.damageRadiusRate > 1 && mid.damageRadiusRate < 1.1);
+  assert.ok(mid.paintRadius > 10 && mid.paintRadius < 12);
+  // The 220 and 60 damage endpoints do not grow with Special Power Up.
+  assert.equal(tripleSlamFistDamage(6.4 * high.damageRadiusRate, high.damageRadiusRate), 220);
+  assert.equal(tripleSlamFistDamage(9.6 * high.damageRadiusRate, high.damageRadiusRate), 60);
+  assert.equal(tripleSlamFistDamage(9.6 * high.damageRadiusRate + .001, high.damageRadiusRate), 0);
+});
+
+test('#912 actual fist owner snapshots AP57 Pogo radii and replicates larger paint clusters', () => {
+  const w = world({ victim: [-3.27, 0, 12.5] }), a = new w.Actor();
+  a.s3 = { modifiers: { specialPowerAP: 57 } };
+  a._startSpecial();
+  assert.equal(a._s3TripleSlamFists.damageRadiusRate, 1.1);
+  assert.equal(a._s3TripleSlamFists.paintRadius, 12);
+  // A mid-special loadout refresh cannot alter already launched fists.
+  a.s3.modifiers.specialPowerAP = 0;
+  a._slamImpact();
+  for (let i = 0; i < 14; i++) a.update(1 / 60);
+  assert.equal(w.hits.length, 0);
+  a.update(1 / 60);
+  assert.equal(w.paint.length, 2 * tripleSlamFistStamps(12).length);
+  assert.ok(w.paint.every(p => p.radius === FIST_STAMP_RADIUS && p.opts.claimMode === 'no-special'));
+  assert.equal(w.hits.length, 2, 'both source-scaled blast circles reach the distant target');
+  assert.equal(w.hits[0].damage, 220, '6.4m base near radius expands to 7.04m without adding damage');
+  assert.ok(w.hits[1].damage > 60 && w.hits[1].damage < 220);
+  assert.ok(w.blasts.every(row => Math.abs(row[2] - 10.56) < 1e-8));
+  assert.equal(a._s3TripleSlamFists, null);
 });
 
 test('#912 fist stamps are inside the 10-radius cluster and each stays under the remote admission ceiling', () => {
