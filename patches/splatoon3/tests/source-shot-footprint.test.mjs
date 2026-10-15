@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { adaptSource } from '../adapter.mjs';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
+import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 import { sourceFlightInkKind, SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from '../runtime/source-shot-footprint.mjs';
 
 const near = (a, b, tol = 1e-10) =>
@@ -25,6 +26,25 @@ test('11.3.0 pinned Shooter inputs remain the source of separate terminal, mid-f
   assert.equal(sourceFlightInkKind('trail'), SOURCE_SPLASH_PAINT_KIND);
   assert.equal(sourceFlightInkKind('drop'), SOURCE_SPLASH_PAINT_KIND);
   assert.equal(sourceFlightInkKind('blast'), 'blast');
+});
+
+test('all 65 source main weapon records retain numeric paint widths rather than a global rescale', () => {
+  assert.equal(MAIN_WEAPON_CATALOG.referenceVersion, '11.3.0');
+  assert.equal(MAIN_WEAPON_CATALOG.records.length, 65);
+  for (const r of MAIN_WEAPON_CATALOG.records) {
+    const source = r.parameters;
+    const widths = [];
+    function visit(value) {
+      if (Array.isArray(value)) return value.forEach(visit);
+      if (!value || typeof value !== 'object') return;
+      for (const [k, v] of Object.entries(value)) {
+        if (k.startsWith('WidthHalf') && Number.isFinite(v)) widths.push(v);
+        else if (typeof v === 'object') visit(v);
+      }
+    }
+    visit(source);
+    assert.ok(widths.some(x => x > 0), r.sourceRow + ' needs a real positive source width');
+  }
 });
 
 test('production source mask uses original WidthHalf without artificial shrink or satellite Turf', () => {
