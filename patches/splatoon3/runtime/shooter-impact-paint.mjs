@@ -7,22 +7,24 @@
 //   WidthHalfNear 1.93, WidthHalfMiddle 1.93, WidthHalfFar 1.71, DistanceMiddle 1.1,
 //   DepthScaleMax 2.24, DepthScaleMin 1.31, DepthScaleMaxBreakFree 2.24, DepthScaleMinBreakFree 1.12.
 //
-// Values that the record does NOT provide are provisional and stay 未確認:
-//  * Far-band anchor. The record has no far distance; INKWAVE uses the weapon's own
-//    range as the far end of the Middle->Far interpolation.
-//  * Impact-angle thresholds. The record has no DegreeUse* fields. The Splat Roller
-//    schema defaults (10 / 35 degrees, see roller-impact-paint.mjs #674) are used
-//    provisionally. They are not validated for Shooter.
-//  * Phase mapping. Phase 0 (straight) selects the straight envelope and phases 1/2
-//    select BreakFree, following the Roller convention of #611. Not validated for Shooter.
+// Sparse weapon rows omit schema defaults. The independently catalogued
+// spl__BulletShooterPaintParam default table defines DistanceNear=1.1,
+// DistanceFar=20 and DegreeUseDepthScaleMax/Min=10/35 degrees:
+// https://splatoonwiki.org/wiki/Template:Shooter_data_S3
+// These are internal-paramtable defaults, not film measurements or values
+// fabricated by looking at INKWAVE's silhouette.
+// Still unverified: detailed BreakFree HEIGHT selector and retail renderer
+// texture. Phase 0 selects straight; 1/2 use the matching BreakFree fields.
 // Wall impacts are not handled here. The caller only applies this to floor contacts.
 import { rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 
 /** Floor contact threshold; the same normal.y >= 0.4 gate used by the Shooter nearest splash. */
 export const SHOOTER_FLOOR_NORMAL_Y = 0.4;
-const PROVISIONAL_DEGREE_MAX = 10;
-const PROVISIONAL_DEGREE_MIN = 35;
+export const SHOOTER_PARAMTABLE_DEFAULTS = Object.freeze({
+  distanceNear: 1.1, distanceFar: 20,
+  degreeUseDepthScaleMax: 10, degreeUseDepthScaleMin: 35,
+});
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -32,10 +34,14 @@ export function shooterImpactRadius(weapon, projectile, hitPoint) {
   if (!paint || !projectile?.start || !hitPoint) return null;
   const distance = projectile.start.distanceTo(hitPoint);
   if (!(distance >= 0)) return null;
-  if (distance <= paint.distanceMiddle) return paint.widthNear;
-  const far = weapon.range;
-  if (!(far > paint.distanceMiddle)) return paint.widthFar;
-  return lerp(paint.widthMiddle, paint.widthFar, clamp01((distance - paint.distanceMiddle) / (far - paint.distanceMiddle)));
+  const near = paint.distanceNear ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceNear;
+  const middle = paint.distanceMiddle;
+  const far = paint.distanceFar ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceFar;
+  if (![near, middle, far].every(Number.isFinite) || near < 0 || middle < near || far <= middle) return null;
+  if (distance <= near) return paint.widthNear;
+  if (distance < middle && middle > near)
+    return lerp(paint.widthNear, paint.widthMiddle, clamp01((distance - near) / (middle - near)));
+  return lerp(paint.widthMiddle, paint.widthFar, clamp01((distance - middle) / (far - middle)));
 }
 
 /** Depth scale (elongation) from the impact angle; grazing impacts use the Max envelope. */
@@ -49,7 +55,10 @@ export function shooterImpactDepthScale(weapon, projectile, normal) {
   const straight = (phase ?? 0) === 0;
   const max = straight ? paint.depthMax : paint.depthMaxBreakFree;
   const min = straight ? paint.depthMin : paint.depthMinBreakFree;
-  return lerp(max, min, clamp01((angle - PROVISIONAL_DEGREE_MAX) / (PROVISIONAL_DEGREE_MIN - PROVISIONAL_DEGREE_MAX)));
+  const lo = paint.degreeUseDepthScaleMax ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMax;
+  const hi = paint.degreeUseDepthScaleMin ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMin;
+  if (!(hi > lo)) return null;
+  return lerp(max, min, clamp01((angle - lo) / (hi - lo)));
 }
 
 /**
