@@ -8,7 +8,8 @@ self.onmessage=async({data:{id,runtimeSha256}})=>{
   const key=SOURCE_RECIPE+'/'+runtimeSha256+'/'+stage.sourceSha256,start=performance.now();
   const gb=Number(self.navigator?.deviceMemory)||0,handheld=/Android|iPhone|iPad|iPod/i.test(self.navigator?.userAgent||'');
   const constrained=(gb>0&&gb<=4)||handheld;
-  let data=await readDerived(key),cached=!!data;
+  // Reading an older derived entry also structured-clones the entire stage.
+  let data=constrained?null:await readDerived(key),cached=!!data;
   if(!data){
    self.postMessage({progress:'download',id});
    const [obj,tree]=await Promise.all([
