@@ -538,11 +538,6 @@
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },
-  "weapons.dualies.rollDist": {
-    "value": 5,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
-  },
   "weapons.blaster.inkPerShot": {
     "value": 10,
     "status": "derived from pinned extracted data; physical scale unverified",
@@ -744,7 +739,7 @@
     "binding": null
   },
   "weapons.splatling.inkPerShot": {
-    "value": 0.5625,
+    "value": 0.5487804878048781,
     "status": "calibration or derived value; see reference raw table and unverified list",
     "binding": null
   },

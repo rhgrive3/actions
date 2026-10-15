@@ -27,6 +27,7 @@ const FPS = 60, MAX_STAMP_RADIUS = 3.74;
 const q2 = n => Math.round(n * 100) / 100;
 const q3 = n => Math.round(n * 1000) / 1000;
 const finite = n => typeof n === 'number' && Number.isFinite(n);
+const finite3 = p => p && finite(p.x) && finite(p.y) && finite(p.z);
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const SPECIALS = Object.freeze({
   tentaMissiles: { name: 'Tenta Missiles', source: 'WeaponSpMultiMissile', duration: 10, radius: 4.25, paintRadius: 3.15, near: 150, far: 30, status: '11.3.0 table: 150/50/30 at 1.1/2.1/4.25; paint radius 3.15/3.465/3.78; source launch counts 10/5/4 by target bucket and 4F missile interval; up to5-target selection and 600F aim window from gameplay reference, reticle geometry calibrated' },
@@ -1523,9 +1524,16 @@ function activeStep(rt,actor,dt) {
     }
     const hookInk=state.hookInkCost??(state.hookInk??.025)*100;
     if(state.phase==='ready'&&edges.sub&&elapsed+1e-8>=(state.nextHookAt||0)&&state.inkFuel>=hookInk){
-      state.inkFuel-=hookInk;const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z).clone(),target=aimPoint(rt,actor,35,rt.v0).clone();
-      if(origin.distanceTo(target)<3){state.nextHookAt=elapsed+20/FPS;state.failedHooks=(state.failedHooks||0)+1;}
-      else {state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target);}
+      const origin=rt.v0.set(actor.pos.x,actor.pos.y+1.05,actor.pos.z),direction=aimDirection(rt,actor,rt.v1);
+      const contact=rt.api.G.physics?.raycast?.(origin,direction,35,rt.hit,true);
+      // A reticle coordinate is not a surface. Missed hooks neither spend
+      // hook ink nor pull the player into empty space (Wiki: 45F miss wait).
+      if(!contact?.hit||!finite3(contact.point)||origin.distanceTo(contact.point)>35+1e-6){
+        state.nextHookAt=elapsed+45/FPS;state.failedHooks=(state.failedHooks||0)+1;
+      }else {
+        const target=contact.point.clone();state.inkFuel-=hookInk;
+        state.zipHits=new Set();state.zipPaintT=0;zipTo(rt,actor,state,target);
+      }
     }
     if(state.inkFuel<=0||elapsed+1e-8>=state.duration)returnToOrigin(rt,actor,state,state.inkFuel<=0?'ink':'duration');
     return;
