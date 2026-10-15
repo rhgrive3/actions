@@ -36,3 +36,12 @@ The catalog-only lane now binds shock/fall stamps to the original wall face. A r
 ## Limits
 
 The finite-period, two-speed slide lifecycle and distance-based paint spacing are existing INKWAVE model choices. This change connects explicit values to that model. The optional FreeGravityType enum is retained as provenance but not interpreted as an invented post-period free-fall law. Sparse defaults, retail interpolation, precise Nintendo primitive/stencil and omitted post-period behavior remain unverified. Generic shader drips remain separate from this projectile-wall lifecycle. This is a concrete missing connection fix, not complete visual or engine equivalence.
+
+
+## Current-main integration, adoption still held (2026-10-15)
+
+Integrated current main `01aa5cc61c842a8616ab38ff5fb541b6becf1395` using a two-parent non-force merge. Shared imports retain main's current spread/freefall/rebound/projectile-shape owners while adding only the wall-drop starter and source table. The generator gate and the newer95-kit raw-reference gate both remain.
+
+Current source9/9 and actual emitted9/9 wall-drop tests pass without skips, including all23 real main rounds, source radii, surface-only credit, death persistence,30/60/120Hz parity, replay and perpendicular corner. Production content hash `ede53c77dfcb813a0526a673034e667826b024554a731125a7caccc61044fe23`. No width, lifecycle, paint-credit or timing parameter changed in this reconciliation.
+
+The measured feature CPU/network increase remains an adoption blocker; current-main browser cost A/B, full exact-head CI and independent review remain pending. The candidate remains Draft and is not approved for main integration.
