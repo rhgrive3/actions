@@ -174,7 +174,7 @@ async function openGameContext({ mobile = false } = {}) {
       const g = window.__inkwave, G = window.__G, m = g?.match;
       return G?.mode === 'match' && m === G.match && m?.state === 'playing' &&
         !m.attract && m.local?.isLocal && m.controller && G.projectiles && G.renderer;
-    }, null, { timeout: 30000 });
+    }, null, { timeout: NATIVE_BOOT_TIMEOUT_MS });
   } catch (error) {
     const observed = await page.evaluate(() => {
       const g = window.__inkwave, G = window.__G, m = g?.match;
