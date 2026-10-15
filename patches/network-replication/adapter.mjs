@@ -1690,6 +1690,9 @@ function readPaintOrder(nm, from, e) {
     || !Number.isSafeInteger(e._netSeq) || e._netSeq < 1)) return false;
   const row = e[14];
   if (Array.isArray(row)) {
+    // A canonical row has 17 columns, or 18 with an array capability at 15.
+    // A malformed extra capability must not silently downgrade to plain paint.
+    if (e.length > 17 && !Array.isArray(e[15])) return false;
     if (!hasSeq || row.length !== 4 || row[0] !== PAINT_ORDER_TAG
       || row[1] !== (typeof nm.cfg?.id === 'string' ? nm.cfg.id : '')
       || !isPaintOrderClock(row[2]) || row[2] === 0
@@ -1723,6 +1726,8 @@ function paintTeamAdmitted(nm, from, e) {
 // stripped of its #1209 capability tag) stays under the legacy ceiling.
 const PAINT_VICTIM_BLAST_REACH = 6;
 function paintVictimBlastAboveCeiling(nm, from, e) {
+  // A capability-bearing row must pass its own validator, not the plain victim-blast exception.
+  if (Array.isArray(e[15])) return false;
   if (!paintVictimBlastSignature(e)) return false;
   for (const a of nm.byNid?.values?.() || []) {
     if (a.owner !== from || a.team === e[6] || !a.pos) continue;
