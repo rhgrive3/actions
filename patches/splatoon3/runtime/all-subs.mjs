@@ -551,6 +551,13 @@ function damageCustomObject(api,source,target,point,damage,cause=null){
   return amount;
 }
 
+// Ranked Rainmaker uses the same raw damage / authored cause / owning-client
+// boundary as native sub and special attacks. The owner applies source rates
+// and Object Shredder once; remote presentation never spends local HP.
+export function applySubObjectHit(api, projectiles, object, projectile, point, damage, cause=null) {
+  return damageCustomObject(api, projectile, object, point, damage, cause);
+}
+
 function isSubObjectBlastTarget(target){
   return target.phase==='deployed'&&['splashWall','sprinkler','beakon'].includes(target.subId) ||
     target.subId==='torpedo'&&target.chasedTarget&&['flight','chase'].includes(target.phase);

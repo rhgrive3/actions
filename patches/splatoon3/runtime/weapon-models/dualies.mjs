@@ -4,8 +4,7 @@
 // renders show the pair overlapped; the turntables show single pistols). Parts the turntable shows in team
 // colour are ink. The native recoil `slide` / `slideInk` / `led` channels are kept (hidden: no real dualie
 // has a sliding top). Scale: the pistol handle is 0.11 m. Everything is procedural geometry.
-import { Pieces, M, box, sphere, zlathe, zcyl, ring, cyl, pipe, slab, smoothOutline, pistolGrip, TRIGGER_PIVOT,
-  part, rebuild } from './kit.mjs';
+import { Pieces, M, box, sphere, zlathe, zcyl, ring, cyl, pipe, slab, smoothOutline, pistolGrip, TRIGGER_PIVOT, part, rebuild, THREE, V, ylathe, sweep } from './kit.mjs';
 
 const finish = (d, body, ink, trig, muzzle) => rebuild(d, { body, ink, parts: { trigger: part(trig, TRIGGER_PIVOT) }, muzzle });
 /** Side-profile shell: outline [[z, y], ...] (muzzle +Z) extruded `t` across X. */
@@ -92,20 +91,93 @@ function squelchers(d) {
 }
 
 function darkTetra(d) {
-  // Wmn_Maneuver_Stepper: a white C-frame with a purple strip and a looped hook on top, a black body by the
-  // grip, a long curved skid under it like a blade with oval cut-outs filled with ink, a black nozzle.
-  const C = { white: '#e9e9e6', black: '#1b1c20', purple: '#6a2fb3', grey: '#8d9299' };
-  const body = new Pieces(), ink = new Pieces();
-  const trig = pistolGrip(body, { color: C.black, triggerColor: C.black, guardColor: C.black, base: false });
-  body.add(shell([[-0.05, 0.05], [-0.04, 0.09], [0.08, 0.1], [0.12, 0.08], [0.12, 0.04], [0.02, 0.04]], 0.036, 0.006, 24), C.black, M.satin);
-  body.add(shell([[0.06, 0.1], [0.1, 0.12], [0.12, 0.08], [0.115, -0.05], [0.09, -0.055], [0.09, 0.06]], 0.03, 0.005, 24), C.white, M.gloss); // front C
-  body.add(box(0.032, 0.09, 0.01, 0, 0.03, 0.105, 0.3), C.purple, M.gloss);
-  body.add(pipe([[0, 0.11, 0.08], [0, 0.15, 0.085], [0, 0.155, 0.11], [0, 0.125, 0.112]], 0.004, 16, 5), C.white, M.gloss); // hook
-  // skid: a flat curved blade from under the grip forward, with ink ovals
-  body.add(shell([[-0.08, -0.07], [-0.05, -0.09], [0.06, -0.095], [0.15, -0.075], [0.17, -0.055], [0.15, -0.06], [0.06, -0.078], [-0.05, -0.074]], 0.05, 0.004, 32), C.white, M.gloss);
-  for (const z of [-0.03, 0.02, 0.07, 0.12]) ink.add(sphere(0.016, 0.004, 0.012, 0, -0.08 + (z > 0.1 ? 0.006 : 0), z, 14, 4));
-  body.add(zlathe([[0, 0.12], [0.017, 0.12], [0.017, 0.14], [0.012, 0.145], [0, 0.145]], 0, 0.065, 0, 16), C.black, M.satin);
-  return finish(d, body, ink, trig, [0, 0.065, 0.147]);
+  // Wmn_Maneuver_Stepper. Single pistol, reconstructed from side, rear, front and oblique turntable views.
+  // Dark target colours come from its official render; the stored Light rotation sheet is geometry-only.
+  // Anchor frames and the existing muzzle remain native; these are merged static construction pieces.
+  const C={white:'#e8e8e1',silver:'#9ba2a4',black:'#202328',rubber:'#15191d',purple:'#702891',grey:'#757c80'};
+  const body=new Pieces(),ink=new Pieces();
+  const trig=pistolGrip(body,{color:C.rubber,triggerColor:C.black,guard:false,base:false});
+  // Dark variant: black rear cheeks on both sides, with separate grey kidney-shaped pads.
+  const rear=[[-.050,.065],[-.041,.096],[-.022,.108],[.012,.100],[.019,.071],[.006,.032],[-.001,-.025],[-.022,-.065],[-.059,-.079],[-.064,-.064],[-.043,-.048],[-.043,.004]];
+  body.add(shell(rear,.027,.003,36),C.black,M.satin);
+  body.add(ylathe([[0,-.078],[.023,-.078],[.035,-.064],[.043,-.044],[.039,-.025],[.020,-.004],[.013,.012],[0,.012]],0,0,0,18).scale(1,1,.48).translate(0,0,-.038),C.black,M.rubber);
+  for(const sx of[-1,1]){
+    const cheek=[[-.035,.088],[-.020,.099],[.015,.091],[.016,.060],[.002,.026],[-.007,-.034],[-.026,-.065],[-.055,-.077],[-.052,-.059],[-.031,-.043],[-.026,.005]];
+    body.add(shell(cheek,.003,.0015,30).translate(sx*.015,0,0),C.black,M.satin);
+    const pad=[[-.019,.044],[-.034,.030],[-.038,.002],[-.029,-.030],[-.017,-.045],[-.006,-.033],[-.001,-.006],[-.005,.023]];
+    body.add(shell(pad,.0035,.0012,28).translate(sx*.018,.022,0),C.black,M.rubber);
+    body.add(shell(pad.map(([z,y])=>[-.019+(z+.019)*.73,y*.80]),.0018,.0006,24).translate(sx*.020,.022,0),C.grey,M.satin);
+    for(const y of[-.004,.047]){body.add(cyl(.004,[sx*.020,y,-.021],[sx*.022,y,-.021],10),C.silver,M.satin);body.add(box(.001,.0012,.005,sx*.023,y,-.021,.15,6,4),C.black,M.print);}
+    // Fine grip ribs follow the curved grey pad, without changing its hand-contact thickness.
+    if(sx<0)for(let i=0;i<8;i++)body.add(cyl(.0007,[sx*.022,.002+i*.006,-.031],[sx*.022,.005+i*.005,-.010],6),C.silver,M.satin);
+  }
+  // Dark receiver: a rounded mechanical rear housing and one broad recessed central band.
+  // The earlier two-slot rectangular cheek read as a thin ladder and hid the chamber's volume.
+  body.add(box(.044,.042,.076,0,.069,.009,.38,12,8),C.black,M.satin);
+  body.add(box(.036,.011,.042,0,.094,.003,.28,10,6),C.white,M.satin);
+  for(const y of[.079,.052]){
+    body.add(zlathe([[0,.034],[.016,.034],[.018,.041],[.018,.124],[.015,.134],[0,.134]],0,y,0,12),C.black,M.satin);
+    body.add(zlathe([[.004,.132],[.016,.132],[.018,.137],[.017,.144],[.006,.146],[.004,.143]],0,y,0,22),C.white,M.satin);
+    body.add(zlathe([[0,.141],[.005,.141],[.005,.146],[0,.146]],0,y,0,12),C.grey,M.satin);
+    body.add(ring(.006,.0013,0,y,.146,'z',4,14),C.white,M.satin);
+  }
+  const chamber=[[.033,.051],[.041,.041],[.070,.035],[.111,.036],[.122,.045],[.122,.092],[.041,.096],[.030,.085]];
+  const slot=[[[.039,.058],[.116,.058],[.116,.074],[.036,.074]]];
+  for(const sx of[-1,1]){
+    const cover=slab(chamber,.003,sx*.022,0,slot),pos=cover.attributes.position;
+    // The rounded rear is wider than the front collar. This thickness is visible in front/oblique views.
+    for(let i=0;i<pos.count;i++){const t=Math.max(0,Math.min(1,(pos.getZ(i)-.033)/.089));pos.setX(i,pos.getX(i)-sx*t*.003);}
+    cover.computeVertexNormals();body.add(cover,C.white,M.satin);
+    body.add(box(.003,.016,.073,sx*.022,.066,.078,.16,8,4),C.black,M.rubber);
+    for(let k=0;k<6;k++)body.add(new THREE.BoxGeometry(.001,.012,.0013).translate(sx*.024,.066,.063+k*.008),C.grey,M.satin);
+    for(const y of[.066,.086]){body.add(cyl(.004,[sx*.023,y,.043],[sx*.025,y,.043],10),C.silver,M.satin);body.add(new THREE.BoxGeometry(.0008,.001,.005).translate(sx*.0258,y,.043),C.black,M.print);}
+    body.add(slab([[.124,.038],[.130,.037],[.132,.098],[.124,.100]],.0018,sx*.018,0),C.purple,M.gloss);
+  }
+  body.add(box(.035,.007,.076,0,.098,.079,.3,10,4),C.white,M.satin);
+  body.add(box(.032,.068,.009,0,.067,.128,.25,10,6),C.purple,M.gloss);
+  // The front leg is a curved black load-bearing core with two thin white cheeks and rounded ankle covers.
+  const leg=[[.118,.102],[.133,.098],[.136,.038],[.126,.005],[.110,-.022],[.095,-.051],[.077,-.060],[.068,-.052],[.085,-.029],[.103,.010],[.109,.053]];
+  body.add(shell(leg,.024,.002,32),C.black,M.satin);
+  const face=[[.129,.100],[.140,.096],[.138,.040],[.126,.009],[.111,-.025],[.103,-.057],[.085,-.068],[.074,-.058],[.090,-.034],[.109,.012],[.119,.045]];
+  for(const sx of[-1,1]){
+    body.add(shell(face,.004,.0016,32).translate(sx*.014,0,0),C.white,M.satin);
+    body.add(sphere(.013,.020,.024,sx*.020,-.060,.090,14,10),C.white,M.satin);
+    body.add(cyl(.006,[sx*.022,-.059,.092],[sx*.034,-.059,.092],12),C.silver,M.satin);
+  }
+  const loop=[[0,.102,.132],[0,.131,.134],[0,.165,.148],[0,.179,.163],[0,.177,.174],[0,.164,.178],[0,.148,.163],[0,.119,.141],[0,.103,.137]];
+  body.add(sweep(loop.map(p=>V(...p)),{seg:30,radial:8,capSteps:2,radius:()=>.0038,flat:1.75,outward:(_p,out)=>out.set(1,0,0)}).geo,C.white,M.satin);
+  // Swept shoe: width and pitch change along its length. Side profile alone cannot describe this volume.
+  const deck=[[-.098,-.069,.024],[-.073,-.083,.029],[-.025,-.088,.033],[.035,-.083,.036],[.087,-.064,.049],[.126,-.050,.056],[.141,-.040,.050]];
+  const p=[],idx=[];for(const[z,y,w]of deck){for(const[x,dy]of[[-w+.002,.004],[w-.002,.004],[w,.001],[w,-.004],[w-.002,-.006],[-w+.002,-.006],[-w,-.004],[-w,.001]])p.push(x,y+dy,z);}
+  for(let j=0;j<deck.length-1;j++)for(let k=0;k<8;k++){const a=j*8+k,b=j*8+(k+1)%8,c=b+8,e=a+8;idx.push(a,c,b,a,e,c);}for(let k=1;k<7;k++){idx.push(0,k,k+1);const a=(deck.length-1)*8;idx.push(a,a+k+1,a+k);}
+  const shoe=new THREE.BufferGeometry();shoe.setAttribute('position',new THREE.Float32BufferAttribute(p,3));shoe.setIndex(idx);shoe.computeVertexNormals();body.add(shoe,C.black,M.rubber);
+  for(const sx of[-1,1])body.add(pipe(deck.map(([z,y,w])=>[sx*(w-.001),y+.004,z]),.0027,32,5),C.white,M.satin);
+  ink.add(slab([[-.070,-.019],[-.020,0],[-.070,.019]],.001,0,.0004).rotateZ(Math.PI/2).translate(0,-.078,0));
+  // Dark variant rebound cushions are pale rubber, not the ink-coloured cushions of the Light reference.
+  for(const[x,z,y]of[[0,-.056,-.096],[-.032,.082,-.080],[.032,.082,-.080]]){
+    const spring=ylathe([[0,-.014],[.014,-.014],[.022,-.010],[.022,-.006],[.017,-.004],[.022,0],[.022,.005],[.017,.008],[.018,.013],[0,.013]],0,0,0,18).scale(1,1,.78).translate(x,y,z);body.add(spring,C.white,M.satin);
+    for(const dy of[-.012,.004,.012])body.add(ylathe([[.014,dy],[.022,dy],[.022,dy+.0018],[.014,dy+.0018]],0,0,0,18).scale(1,1,.78).translate(x,y,z),C.white,M.satin);
+  }
+  // Front rebound faces are the raised ends of long black blades, not detached round buttons.
+  for(const sx of[-1,1]){
+    const x=sx*.036,y=-.044,z=.153,foot=new Pieces(),col=new Pieces();
+    // Sweep an elliptical cap into a tapered rear blade. Cross-sections carry
+    // their own thickness normal; tessellated strips cannot bridge across the bend.
+    const rows=[-.054,-.048,-.039,-.030,-.021,-.014,-.008,0,.010,.020,.027],bp=[],bi=[],c=Math.cos(-.45),sn=Math.sin(-.45);
+    for(const v of rows){
+      const extent=v<0?.054:.027,width=Math.max(.0008,.024*Math.sqrt(Math.max(0,1-(v/extent)**2))),t=Math.max(0,Math.min(1,(-v-.014)/.040));
+      const dy=c-(v<-.014?.5:0),dz=sn+(v<-.014?2.575:0),len=Math.hypot(dy,dz);
+      for(const[u,w]of[[-width,.005],[width,.005],[width,.001],[-width,.001]])bp.push(u,c*v+.020*t-w*dz/len,sn*v-.103*t+w*dy/len);
+    }
+    for(let j=0;j<rows.length-1;j++)for(let k=0;k<4;k++){const a=j*4+k,b=j*4+(k+1)%4,c=b+4,e=a+4;bi.push(a,b,c,a,c,e);}
+    const end=(rows.length-1)*4;bi.push(0,2,1,0,3,2,end,end+1,end+2,end,end+2,end+3);
+    const blade=new THREE.BufferGeometry();blade.setAttribute('position',new THREE.Float32BufferAttribute(bp,3));blade.setIndex(bi);blade.computeVertexNormals();body.add(blade.rotateY(sx*.52).translate(x,y,z),C.black,M.rubber);
+    col.add(zlathe([[0,.007],[.012,.007],[.013,.0085],[0,.009]],0,0,0,18));
+    foot.add(ring(.008,.0012,0,0,.010,'z',4,16),C.grey,M.satin);
+    const face=g=>g.rotateX(-.45).rotateY(sx*.52).translate(x,y,z);
+    body.merge(foot.transform(face));ink.merge(col.transform(face));
+  }
+  return finish(d,body,ink,trig,[0,.065,.147]);
 }
 
 function douser(d) {

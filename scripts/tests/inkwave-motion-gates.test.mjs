@@ -8,6 +8,20 @@ import {spawnSync} from 'node:child_process';
 import {validateWalkingResult,validateWalkingReceipts,pixelDifference} from '../check-inkwave-motion.mjs';
 import {validateDetailResult,validateDetailReceipts,pixelDifference as detailPixels} from '../check-inkwave-motion-detail.mjs';
 import {walkingFixture,detailFixture} from './inkwave-motion-gate-fixtures.mjs';
+import {catalogInputPath,validateCatalogInputReceipts} from '../check-inkwave-motion-catalog.mjs';
+// The native stage build records actual source SHA256 inputs. The catalog
+// verifier must recognize their namespace without relaxing path containment.
+test('catalog source receipts recognize native stage inputs but reject traversal',()=>{
+ assert.equal(catalogInputPath('native-stages/adapter.mjs'),'patches/native-stages/adapter.mjs');
+ assert.equal(catalogInputPath('native-stages/runtime/engine.mjs'),'patches/native-stages/runtime/engine.mjs');
+ for(const key of ['native-stages/../adapter.mjs','native-stages//adapter.mjs','unknown/adapter.mjs'])
+   assert.throws(()=>catalogInputPath(key),/input namespace\/path/);
+ const files={'native-stages/adapter.mjs':crypto.createHash('sha256').update('native-module').digest('hex')};
+ const manifest={files,inputHash:crypto.createHash('sha256').update(JSON.stringify(files)).digest('hex')};
+ const good={key:'native-stages/adapter.mjs',file:'patches/native-stages/adapter.mjs',sha256:files['native-stages/adapter.mjs'],committedSHA256:files['native-stages/adapter.mjs'],bytes:13};
+ assert.doesNotThrow(()=>validateCatalogInputReceipts(manifest,[good]));
+ assert.throws(()=>validateCatalogInputReceipts(manifest,[{...good,committedSHA256:'0'.repeat(64)}]),/committed source input identity/);
+});
 // These fabricated records test the gates. Actual WebGL remains a separate gate.
 test('walking accepts complete finite contacts and rejects missing or non-finite evidence',()=>{
  assert.equal(validateWalkingResult(walkingFixture()).length,10);
