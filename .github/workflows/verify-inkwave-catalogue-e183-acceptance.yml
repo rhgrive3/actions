@@ -1,0 +1,89 @@
+name: Verify exact 1419 catalogue Game acceptance
+on:
+  push:
+    branches: [codex/native-catalogue-e183-acceptance]
+permissions:
+  contents: read
+concurrency:
+  group: catalogue-e183-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  catalogue-game:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/native-catalogue-e183-acceptance' && github.repository == 'rhgrive3/actions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASELINE_SHA: 6b186c7f1ba33956b2e86a29a8ea3a58b7544e50
+      CANDIDATE_SHA: e183103a4b6a77a9639d99801ad6ffbdfe9e3f54
+      CANDIDATE_TREE: 8f0ea7adb8a29523086facb8de07c71fe3b497ff
+      CATALOGUE_TREE_RESPONSE_CACHE: ${{ runner.temp }}/catalogue-pinned-tree-response.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: harness
+      - uses: actions/checkout@v4
+        with:
+          ref: 6b186c7f1ba33956b2e86a29a8ea3a58b7544e50
+          persist-credentials: false
+          path: baseline
+      - uses: actions/checkout@v4
+        with:
+          ref: e183103a4b6a77a9639d99801ad6ffbdfe9e3f54
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install pinned hosted browser and build dependencies
+        working-directory: harness
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Verify private harness contracts
+        working-directory: harness
+        run: node --test scripts/test-inkwave-catalogue-game-acceptance.mjs
+      - name: Build clean immutable numeric-correction plus existing-main reconciliation pair
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          test "$(git -C harness rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git -C baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C candidate rev-parse HEAD^{tree})" = "$CANDIDATE_TREE"
+          test -z "$(git -C baseline status --porcelain)"
+          test -z "$(git -C candidate status --porcelain)"
+          echo "BASELINE_ROOT=$GITHUB_WORKSPACE/baseline" >> "$GITHUB_ENV"
+          echo "CANDIDATE_ROOT=$GITHUB_WORKSPACE/candidate" >> "$GITHUB_ENV"
+          echo "BASELINE_SITE=$GITHUB_WORKSPACE/baseline-site" >> "$GITHUB_ENV"
+          echo "CANDIDATE_SITE=$GITHUB_WORKSPACE/candidate-site" >> "$GITHUB_ENV"
+          echo "STAGE_PAIR_BINDINGS=$GITHUB_WORKSPACE/evidence/build-bindings.json" >> "$GITHUB_ENV"
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/harness/node_modules/esbuild/lib/main.js"
+          (cd baseline && node scripts/build-inkwave.mjs inkwave-public ../baseline-site) > evidence/baseline-build.log 2>&1
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site) > evidence/candidate-build.log 2>&1
+      - name: Bind source, emitted bundles and exact plan
+        working-directory: harness
+        run: |
+          node scripts/bind-inkwave-stage-pair.mjs
+          node scripts/prepare-inkwave-native-resource-pins.mjs "$BASELINE_SITE" "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/render-resources.json"
+          node scripts/prepare-inkwave-catalogue-acceptance-plan.mjs "$STAGE_PAIR_BINDINGS" "$BASELINE_SITE" "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/acceptance-plan.json" "$GITHUB_WORKSPACE/evidence/render-resources.json"
+      - name: Verify emitted tiny regressions and ordinary catalogue Game
+        working-directory: harness
+        env:
+          CATALOGUE_ACCEPTANCE_AUTHORIZED: 'true'
+        run: node scripts/check-inkwave-catalogue-game-acceptance.mjs "$GITHUB_WORKSPACE/evidence/acceptance-plan.json" "$BASELINE_SITE" "$CANDIDATE_SITE" "$GITHUB_WORKSPACE/evidence/catalogue-game" "$STAGE_PAIR_BINDINGS"
+      - name: Preserve scope and independent holds
+        if: always()
+        run: |
+          mkdir -p evidence
+          printf '%s\n' '{"baseline":"6b186c7f1ba33956b2e86a29a8ea3a58b7544e50","candidate":"e183103a4b6a77a9639d99801ad6ffbdfe9e3f54","scope":"Numeric correction plus existing-main Curling projection and current controlled natural visibility; not pre-PR1419 original iPad issue before/after","bluefin":"excluded until separate reviewed definition composition","relay":"held-not-run","physicalIPad":"unverified","sourceRegressionCI":"separate run38663880385; not inferred from this gate"}' > evidence/scope.json
+      - name: Upload bounded captures and receipts only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalogue-e183-acceptance-${{ github.sha }}
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: error
