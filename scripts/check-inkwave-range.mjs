@@ -11,6 +11,10 @@
 //   node scripts/check-inkwave-range.mjs --site <built site> --evidence-dir <dir> --profile-dir <dir> [--quick]
 //   (RANGE_BROWSERS=chromium limits the browsers for a local run; CI runs all of them)
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
+const FROZEN_SOURCE='13c640aadb74e47b374c647c182d43baf02ae42d';
+const FROZEN_CONTENT='9a18a6d067a9c46fcef166142a84c0437cd52a7b81ae820506afb72f71757847';
+import { collectPauseVisualState, assertPauseVisualState, assertArtifactDigest } from './range-pause-visual.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -19,6 +23,9 @@ import { pathToFileURL } from 'node:url';
 
 const option = (name) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) throw new Error('Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), profile = option('--profile-dir');
+const sourceRoot=option('--source');
+if(execFileSync('git',['-C',sourceRoot,'rev-parse','HEAD'],{encoding:'utf8'}).trim()!==FROZEN_SOURCE)throw Error('Frozen source SHA mismatch');
+if(execFileSync('git',['-C',sourceRoot,'status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim())throw Error('Frozen source has tracked modifications');
 const quick = process.argv.includes('--quick');
 const signageOnly = process.argv.includes('--signage-only');
 const physical = (p) => (fs.existsSync(p) ? fs.realpathSync(p) : path.join(physical(path.dirname(p)), path.basename(p)));
@@ -32,14 +39,23 @@ const manifest = JSON.parse(fs.readFileSync(path.join(site, 'inkwave-build.json'
 if (hash(JSON.stringify(manifest.artifacts)) !== manifest.contentHash) throw new Error('Build identity mismatch');
 if (!Object.keys(manifest.files).some((k) => k.startsWith('practice-range/'))) throw new Error('Build does not include the practice range layer');
 
+if(manifest.contentHash!==FROZEN_CONTENT||manifest.build.esbuild!=='0.28.2')throw Error('Frozen emitted build mismatch');
+for(const [file,digest] of Object.entries(manifest.artifacts))if(hash(fs.readFileSync(path.join(site,file)))!==digest)throw Error('Artifact mismatch '+file);
+const requestFailures=[],requestedArtifacts=new Set();
+const manifestBytes=fs.readFileSync(path.join(site,'inkwave-build.json'));
 const pw = await import(process.env.PLAYWRIGHT_MODULE ? pathToFileURL(process.env.PLAYWRIGHT_MODULE).href : 'playwright');
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2' };
 const server = http.createServer((q, r) => {
   try {
     const p = decodeURIComponent(new URL(q.url, 'http://x').pathname), f = path.resolve(site, '.' + (p === '/' ? '/index.html' : p));
     if (!f.startsWith(site + path.sep) || !fs.statSync(f).isFile()) throw 0;
+    const key=path.relative(site,f).split(path.sep).join('/');
+    if(!Object.hasOwn(manifest.artifacts,key)&&key!=='inkwave-build.json')throw Error('Unlisted artifact '+key);
+    const bytes=fs.readFileSync(f);
+    assertArtifactDigest(key,hash(bytes),manifest.artifacts,hash(manifestBytes));
+    requestedArtifacts.add(key);
     r.writeHead(200, { 'content-type': mime[path.extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' }); fs.createReadStream(f).pipe(r);
-  } catch { r.writeHead(404); r.end('Not found'); }
+  } catch (e) { requestFailures.push({url:q.url,error:String(e)}); r.writeHead(404); r.end('Not found'); }
 });
 await new Promise((res) => server.listen(0, '127.0.0.1', res));
 const base = `http://127.0.0.1:${server.address().port}/`;
@@ -64,6 +80,9 @@ for (const run of RUNS) {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => out.errors.push(String(e.message).slice(0, 400)));
     page.on('response', (r) => { if (r.status() >= 400) out.missing.push(r.status() + ' ' + r.url()); });
+    page.on('console',m=>{if(m.type()==='error')out.errors.push('console: '+m.text());});
+    page.on('requestfailed',r=>out.missing.push('failed '+r.url()));
+    await page.route('**/*',async route=>{if(new URL(route.request().url()).origin!==base.slice(0,-1)){out.missing.push('unknown origin '+route.request().url());await route.abort();}else await route.continue();});
     await page.addInitScript(() => localStorage.setItem('inkwave.settings', JSON.stringify({ quality: 'low', lang: 'en' })));
     await page.goto(base + '?range&skipTitle', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForFunction(() => (window.__G?.match?.range && window.__G.match.state === 'playing') || document.getElementById('boot-error')?.textContent, null, { timeout: 420000 });
@@ -227,7 +246,20 @@ for (const run of RUNS) {
     await page.evaluate(() => window.__inkwave.pause());
     await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
     await page.waitForTimeout(1200);
+    const pauseBefore = await page.evaluate(collectPauseVisualState);
     await page.screenshot({ path: path.join(evidence, run.name + '-pause.png'), timeout: 240000 });
+    const pauseAfter = await page.evaluate(collectPauseVisualState);
+    // Persist first evidence before any RAF/second-capture await can stall.
+    const pauseReceipt = { phase:'original-captured', sourceSha:FROZEN_SOURCE, diagnosticSha:process.env.GITHUB_SHA||null, contentHash:manifest.contentHash, before:pauseBefore, after:pauseAfter, originalPngSha256:hash(fs.readFileSync(path.join(evidence,run.name+'-pause.png'))) };
+    fs.writeFileSync(path.join(evidence, run.name + '-pause-visual.json'), JSON.stringify(pauseReceipt, null, 2));
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const secondBefore=await page.evaluate(collectPauseVisualState);
+    await page.screenshot({path:path.join(evidence,run.name+'-pause-second-frame.png'),timeout:240000});
+    const secondAfter=await page.evaluate(collectPauseVisualState);
+    Object.assign(pauseReceipt,{phase:'both-captured',secondBefore, secondAfter,secondPngSha256:hash(fs.readFileSync(path.join(evidence,run.name+'-pause-second-frame.png')))});
+    fs.writeFileSync(path.join(evidence, run.name + '-pause-visual.json'), JSON.stringify(pauseReceipt, null, 2));
+    assertPauseVisualState(pauseBefore); assertPauseVisualState(pauseAfter); assertPauseVisualState(secondBefore); assertPauseVisualState(secondAfter);
+    out.checks.pauseVisual = pauseReceipt;
     // The hub ring remains readable. The scrollable picker must expose
     // all 65 original mains plus their 95 non-replica _01/_02 kits, not drop
     // entries when its catalogue grows beyond the former 65-item limit.
@@ -386,6 +418,8 @@ for (const run of RUNS) {
   console.log(run.name, out.status, out.failure || '');
 }
 server.close();
+if(requestFailures.length)failed=true;
+fs.writeFileSync(path.join(evidence,'capture-input-receipt.json'),JSON.stringify({sourceSha:FROZEN_SOURCE,diagnosticSha:process.env.GITHUB_SHA||null,contentHash:manifest.contentHash,scriptSha256:hash(fs.readFileSync(new URL(import.meta.url))),helperSha256:hash(fs.readFileSync(new URL('./range-pause-visual.mjs',import.meta.url))),requestedArtifacts:[...requestedArtifacts].sort(),requestFailures},null,2));
 const result = { scope: signageOnly ? 'signage-only' : 'full-range', fullAcceptance: !signageOnly, status: failed ? 'failed' : 'passed', contentHash: manifest.contentHash, runs: results };
 fs.writeFileSync(path.join(evidence, 'range-result.json'), JSON.stringify(result, null, 2) + '\n');
 if (failed) process.exitCode = 1;

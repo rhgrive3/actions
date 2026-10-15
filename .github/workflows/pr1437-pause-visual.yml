@@ -1,0 +1,52 @@
+name: Diagnose exact PR1437 range pause visibility
+on:
+  push:
+    branches: [review/pr1437-pause-visual-20261015]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Gate diagnostic helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p pause-diagnostic/tests
+          node --check scripts/check-inkwave-range.mjs
+          node --test --test-reporter=tap scripts/range-pause-visual.test.mjs | tee pause-diagnostic/tests/source.tap
+          grep -qx '# tests 6' pause-diagnostic/tests/source.tap
+          grep -qx '# pass 6' pause-diagnostic/tests/source.tap
+          grep -qx '# fail 0' pause-diagnostic/tests/source.tap
+          grep -qx '# skipped 0' pause-diagnostic/tests/source.tap
+      - uses: actions/checkout@v4
+        with:
+          ref: 13c640aadb74e47b374c647c182d43baf02ae42d
+          path: _frozen_source
+      - name: Build immutable source with original compiler
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        run: |
+          test "$(git -C _frozen_source rev-parse HEAD)" = 13c640aadb74e47b374c647c182d43baf02ae42d
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          (cd _frozen_source && node scripts/build-inkwave.mjs inkwave-public ../_frozen_site)
+      - name: Install original browser matrix
+        run: npx playwright install --with-deps chromium webkit
+      - name: Capture unchanged pause path and fail-closed visual states
+        run: node scripts/check-inkwave-range.mjs --source _frozen_source --site _frozen_site --evidence-dir pause-diagnostic/evidence --profile-dir pause-diagnostic/profiles
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr1437-pause-visual-${{ github.sha }}
+          path: |
+            pause-diagnostic/evidence
+            pause-diagnostic/tests
+          if-no-files-found: error
+          retention-days: 7
