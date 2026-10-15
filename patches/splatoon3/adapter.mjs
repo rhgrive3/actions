@@ -126,20 +126,19 @@ export function adaptSource(rel, code) {
       "    this.paint(p, hit, shape, p.vel, 'shot');",
       'native Dualies retained-source terminal paint owner');
     // Ordinary InkFlight Shooters bypass _impact and thus otherwise miss the
-    // same 11.3.0 WidthHalf/DepthScale model already used by generic Shooter
-    // projectiles. Use the existing numeric source helper, not artist tuning.
+    // same 11.3.0 WidthHalf model already used by generic Shooter projectiles.
+    // Keep native paintShape depth: it already interpolates the existing
+    // BreakFree height band. A phase-only helper would discard that behavior.
     code = replaceOnce(code,
       "    this.paint(p, hit, shape, p.vel, 'shot');",
       "    const shooter = p.inkKey === 'shooter' ? (p.s3Weapon || p.owner?.weapon) : null;\n" +
       "    if (shooter?.impactPaint && hit.normal?.y >= SHOOTER_FLOOR_NORMAL_Y) {\n" +
       "      const width = shooterImpactRadius(shooter, p, hit.point);\n" +
-      "      const depth = shooterImpactDepthScale(shooter, p, hit.normal);\n" +
       "      if (width > 0) shape.radius = width;\n" +
-      "      if (depth > 0) shape.stretch = Math.max(0, depth - 1);\n" +
       "    }\n" +
       "    this.paint(p, hit, splashPaintFootprint(shape), p.vel, 'shot');",
       'source Shooter terminal paint width in live InkFlight runtime');
-    code = "import { shooterImpactRadius, shooterImpactDepthScale, SHOOTER_FLOOR_NORMAL_Y } from '../../patches/splatoon3/runtime/shooter-impact-paint.mjs';\n" + code;
+    code = "import { shooterImpactRadius, SHOOTER_FLOOR_NORMAL_Y } from '../../patches/splatoon3/runtime/shooter-impact-paint.mjs';\n" + code;
     code = "import { fidelityDualiesNativeImpactPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
     // share one collision authority. A wall impact must retain the falling
