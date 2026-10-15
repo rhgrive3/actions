@@ -2116,7 +2116,14 @@ function firstSplatStateFor(session,cfg) {
       if (p.delay > 0) continue;
       if (p.ghost && (![p.pos.x,p.pos.y,p.pos.z,p.start.x,p.start.y,p.start.z,p.vel.x,p.vel.y,p.vel.z,p.age,p.life,p.size,p.seed]
             .every(Number.isFinite) || p.life <= 0
-        || [p.vis,p.tail0,p.tailK,p.wob,p.wobF,p.nose].some(v => v !== undefined && !Number.isFinite(v)))) continue;`,
+        || [p.vis,p.tail0,p.tailK,p.wob,p.wobF,p.nose].some(v => v !== undefined && !Number.isFinite(v))
+        || p.vis !== undefined && (p.vis < 0 || p.vis > 8)
+        || p.tail0 !== undefined && (p.tail0 < 0 || p.tail0 > 16)
+        || p.tailK !== undefined && (p.tailK < 0 || p.tailK > 16)
+        || p.wob !== undefined && (p.wob < 0 || p.wob > 4)
+        || p.wobF !== undefined && (p.wobF < 0 || p.wobF > 512)
+        || p.nose !== undefined && (p.nose < -2 || p.nose > 4)
+        || p.sats !== undefined && (!Number.isSafeInteger(p.sats) || p.sats < 0 || p.sats > SAT_SIZE.length))) continue;`,
       'reject poisoned draw records and preserve local headroom');
     patch('      n++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
       '      n++; if (p.ghost) remoteDrawn++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
