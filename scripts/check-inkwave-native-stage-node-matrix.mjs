@@ -3,17 +3,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
+import {nativeStageIdentity} from './lib/inkwave-native-stages.mjs';
 const assets=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]);
 const catalog=JSON.parse(fs.readFileSync(path.join(assets,'catalog.json')));
 assert(catalog.stages.length>0);
 fs.mkdirSync(out,{recursive:true});
-const report={status:'running',sourceCommit:catalog.sourceCommit,stages:catalog.stages.map(s=>s.id),cases:[]};
+const head=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'});assert.equal(head.status,0);
+const report={status:'running',sourceHead:head.stdout.trim(),sourceCommit:catalog.sourceCommit,nativeBindings:nativeStageIdentity(),stages:catalog.stages.map(s=>s.id),cases:[]};
 const write=()=>fs.writeFileSync(path.join(out,'matrix.json'),JSON.stringify(report,null,2)+'\n');
 write();
 for(const stage of catalog.stages)for(const [file,prefix] of [
  ['native-bot-landing.test.mjs','source bot launch retains an actual directed objective route after touchdown: '],
  ['native-integration.test.mjs','native source physics, painting, movement, nav and rules: ']
 ]){
+ assert.deepEqual(nativeStageIdentity(),report.nativeBindings,'native source changed during the matrix');
  const name=prefix+stage.id,pattern='^'+name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$';
  const result=spawnSync(process.execPath,['--experimental-vm-modules','--test','--test-reporter=tap','--test-name-pattern',pattern,'patches/native-stages/tests/'+file],{
   encoding:'utf8',timeout:15*60*1000,maxBuffer:4*1024*1024,env:{...process.env,INKWAVE_NATIVE_STAGE_ASSETS:assets}
