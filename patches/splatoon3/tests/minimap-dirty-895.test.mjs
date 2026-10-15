@@ -185,8 +185,7 @@ test('#895 adapter anchors are exact, unique and fail-closed; #419 anchors survi
   assert.match(mm, /for \(let px = x0; px < x1; px\+\+\)/);
   assert.match(mm, /putImageData\(this\.inkImg, 0, 0, x0, y0, x1 - x0, y1 - y0\)/);
   assert.match(mm, /putImageData\(this\.flashImg, 0, 0, x0, y0, x1 - x0, y1 - y0\)/);
-  assert.match(mm, /this\._drawDirtyInk\(_rec\);/);
-  assert.match(mm, /_inkNoop = !dirty && !this\._animatedLast/);
+  assert.match(mm, /else \{\n        _inkNoop = !dirty && !this\._animatedLast && \(!\(_rec\.x1 >= _rec\.x0\) \|\| !\(_rec\.z1 >= _rec\.z0\)\);\n        this\._drawDirtyInk\(_rec\);\n      \}/);
   assert.match(mm, /if \(!_inkNoop \|\| _priorComposeDirty \|\| animated \|\| force\) this\._compose\(cdt\);/);
   assert.equal(adaptSource('src/game/minimap.js', mm), mm);
   const mmDrift = mmRaw.replace('  _drawInk(y0 = 0, y1 = this.h) {', '  _drawInk(y0 = 0, y1 = this.h, extra) {');
@@ -569,3 +568,4 @@ test('#895 the alpha/bilinear pass visits only the halo rectangle, never full wi
   assert.equal(visits, halo, `the first pass visits exactly the halo rectangle (${halo} pixels)`);
   assert.ok(halo < fullWidth, `the halo (${halo}) is strictly narrower than the full-width scan (${fullWidth})`);
 });
+
