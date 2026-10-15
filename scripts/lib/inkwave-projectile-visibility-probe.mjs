@@ -19,6 +19,7 @@ export async function inspectNativeProjectileOcclusion({isolate=false}={}) {
   const sample=()=>JSON.stringify(rounds.map((p,i)=>({scalars:Object.keys(p).sort().filter(k=>p[k]===null||['number','string','boolean','undefined'].includes(typeof p[k])).map(k=>[k,typeof p[k],typeof p[k]==='number'&&!Number.isFinite(p[k])?String(p[k]):p[k]]),vectors:vectorKeys.map(k=>[k,p[k]?.toArray?.()??null]),ownerUnchanged:p.owner===ownerReferences[i]})));
   const camera=cameraState();
   const fields=sample(),projectileMeshes=[G.projectiles.blobs];
+  for(const mesh of Object.values(G.projectiles._s3Shapes||{}))if(mesh?.isObject3D)projectileMeshes.push(mesh);
   for(const asset of G.fx.inkVolumes?.assets.values()||[])for(const pattern of asset.patterns)for(const levels of pattern.frames)for(const batch of levels)projectileMeshes.push(batch.mesh,batch.fringe);
   const unique=[...new Set(projectileMeshes.filter(Boolean))],projectileSet=new Set(unique),all=[];
   G.scene.traverse(o=>all.push(o));
@@ -147,7 +148,7 @@ export async function captureNativeProjectileTemporal({frames}) {
   for(const frame of frames){
    while(simulationFrame<frame){simulationFrame++;inNativeFrame=true;try{g._frame(1/60);}finally{inNativeFrame=false;}}
    if(actor.pos.distanceTo(stance)>1e-5||g.rig.yaw!==yaw||g.rig.pitch!==pitch)throw Error('Temporal stance changed; not comparable');
-   const meshes=[system.blobs];for(const asset of G.fx.inkVolumes?.assets.values()||[])for(const p of asset.patterns)for(const ls of p.frames)for(const b of ls)meshes.push(b.mesh,b.fringe);
+   const meshes=[system.blobs];for(const mesh of Object.values(system._s3Shapes||{}))if(mesh?.isObject3D)meshes.push(mesh);for(const asset of G.fx.inkVolumes?.assets.values()||[])for(const p of asset.patterns)for(const ls of p.frames)for(const b of ls)meshes.push(b.mesh,b.fringe);
    const visible=new Map(meshes.map(m=>[m,m.visible])),before=fieldState(),callsBefore=drawCount;
    const materialState=()=>JSON.stringify(meshes.flatMap(m=>Array.isArray(m.material)?m.material:[m.material]).filter(Boolean).map(m=>[m.uuid,m.opacity,m.transparent,m.depthTest,m.depthWrite,m.colorWrite,m.side,m.alphaTest]));const materialsBefore=materialState();
    const row={frame,age:tracked.age,survives:system.list.includes(tracked),position:tracked.pos.toArray(),velocity:tracked.vel.toArray(),camera:cameraKey(),stance:actor.pos.toArray(),nativeDrawCount:drawCount,volumes:{...G.fx.inkVolumes?.metrics}};report.frames.push(row);
@@ -276,7 +277,7 @@ export async function probeProjectileVisibility(page, out, {casePlan=null}={}) {
         c.copy(__projectileProbe.camera);
         if(view!=='native'&&p){const dir=p.vel.clone().normalize(),offset=dir.clone();if(view==='side')offset.set(dir.z,.25,-dir.x);else if(view==='above')offset.set(0,1,.01);else offset.negate();c.position.copy(p.pos).addScaledVector(offset.normalize(),4);c.lookAt(p.pos);}
         c.updateMatrixWorld();
-        const meshes=[G.projectiles.blobs];for(const asset of G.fx.inkVolumes?.assets.values()||[])for(const pattern of asset.patterns)for(const levels of pattern.frames)for(const batch of levels)meshes.push(batch.mesh,batch.fringe);
+        const meshes=[G.projectiles.blobs];for(const mesh of Object.values(G.projectiles._s3Shapes||{}))if(mesh?.isObject3D)meshes.push(mesh);for(const asset of G.fx.inkVolumes?.assets.values()||[])for(const pattern of asset.patterns)for(const levels of pattern.frames)for(const batch of levels)meshes.push(batch.mesh,batch.fringe);
         const before=JSON.stringify(__projectileProbe.rounds.map(p=>[p.pos.toArray(),p.vel.toArray(),p.age,p.damage,p.seed]));
         const visible=meshes.map(m=>m.visible),gl=G.renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
         const read=()=>{g.R.render();const bytes=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,bytes);return bytes;};

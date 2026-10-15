@@ -68,7 +68,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify only the isolated diagnostic contracts
         working-directory: harness
-        run: node --test scripts/test-inkwave-stage-game-pair.mjs scripts/test-inkwave-lighting-controls.mjs
+        run: node --test scripts/test-inkwave-stage-game-pair.mjs scripts/test-inkwave-lighting-controls.mjs scripts/test-inkwave-projectile-visibility-shapes.mjs
       - name: Build both immutable public sites without model payload
         id: builds
         shell: bash
