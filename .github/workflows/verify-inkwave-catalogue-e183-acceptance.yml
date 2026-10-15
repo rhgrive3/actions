@@ -16,8 +16,10 @@ jobs:
       BASELINE_SHA: 6b186c7f1ba33956b2e86a29a8ea3a58b7544e50
       CANDIDATE_SHA: e183103a4b6a77a9639d99801ad6ffbdfe9e3f54
       CANDIDATE_TREE: 8f0ea7adb8a29523086facb8de07c71fe3b497ff
-      CATALOGUE_TREE_RESPONSE_CACHE: ${{ runner.temp }}/catalogue-pinned-tree-response.json
     steps:
+      - name: Set ephemeral pinned tree cache path
+        shell: bash
+        run: echo "CATALOGUE_TREE_RESPONSE_CACHE=$RUNNER_TEMP/catalogue-pinned-tree-response.json" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
