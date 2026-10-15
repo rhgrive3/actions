@@ -136,3 +136,12 @@ buffer hashes still match `2d9d2d15`. The new production contentHash is
 `1bd06b27bc5af1e7611b4e5ad1220be693a285f2a295cad03e6048f8f158417d`.
 Fresh integration-head browser images, main-baseline ABBA and required CI
 remain mandatory; these local preflights do not replace them.
+
+
+## 2026-10-15 current-main nine-model composition
+
+Integrated main `01aa5cc61c842a8616ab38ff5fb541b6becf1395` and kept its current Roller reset/rolling counters and independently owned launched canopies. Added only the feature's preparation-state clearing/admission to that owner. Visual and crowd workflows now compare against this immutable main; the historical native-input namespace negative remains separately pinned to ed3 rather than expecting current main to retain an already-fixed defect.
+
+The first fresh25-test source run passed21, including all243 guard pose cases at30/60/120Hz; four assertions retained stale65-kit, aperture and held-launched-canopy assumptions. Those four now cover all160 registered kits, the adopted BRELLA_APERTURE table, and the exact held canopy object transferring to its independent launched owner. Source4/4 and actual emitted4/4 reruns pass; no pose/hand tolerances, firing, damage, widths or renderer coverage were relaxed. Product content hash `866e6f9bd0bd4e40777ab9de08895f32536374800da37bb492d5282b0f922330`.
+
+Current-head hosted CI, all-nine final visual review and current-main eight-Actor completed-output ABBA remain pending. Earlier retail/hidden-shape, device-performance and user visual acceptance limitations stay explicit; this reconciliation is not a main merge or an FPS-neutrality claim.
