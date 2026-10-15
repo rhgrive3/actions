@@ -105,6 +105,9 @@ function sourceCells(f) {
 
 test('Slosher source-scaled paint golden rejects stale scale and double-counted base depth', async () => {
   const current = await receipt(), legacy = await receipt({ legacyScale: true }), oldDepth = await receipt({ legacyDepth: true });
+  // Preserve immutable native values while diagnosing the authored WidthHalf
+  // ellipse transition; never mark a mismatched golden as passing.
+  console.log('INKWAVE_SLOSH_SOURCE_MASK_GOLDEN '+JSON.stringify({current:current.paint,legacy:legacy.paint,oldDepth:oldDepth.paint}));
   assert.equal(current.paint.bounds.maxZ, 16.125);
   assert.equal(current.paint.area, 72.8125);
   assert.equal(legacy.paint.bounds.maxZ, 13.625, 'negative control retains the stale scale with the sourced mask');
