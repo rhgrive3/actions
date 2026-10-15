@@ -31,13 +31,15 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
   if(quality==='high')Object.assign(roles,{normal:src.maps?.normal,roughness:src.maps?.roughness,emissive:src.maps?.emissive});
   for(const [role,file] of Object.entries(roles))if(file)jobs.set(file,{role,encoding:src.normalEncoding});
  }
+ const checkAbort=()=>{if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
  let next=0;const rows=[...jobs];
  const worker=async()=>{while(next<rows.length){
-  const [file,job]=rows[next++],{role}=job;let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal),blob=new Blob([buffer],{type:'image/png'});
+  checkAbort();
+  const [file,job]=rows[next++],{role}=job;let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal);checkAbort();const blob=new Blob([buffer],{type:'image/png'});
   let bitmap,texture,transferred=false;
   try{
-  bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});const ratio=Math.min(1,limit/Math.max(bitmap.width,bitmap.height));
-  if(ratio<1){const original=bitmap;bitmap=null;try{bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});}finally{original.close();}}
+  bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});checkAbort();const ratio=Math.min(1,limit/Math.max(bitmap.width,bitmap.height));
+  if(ratio<1){const original=bitmap;bitmap=null;try{bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});}finally{original.close();}checkAbort();}
   if(data.manifest.sourceMode==='browser-direct'){
    const matched=Object.values(data.manifest.materials).filter(m=>m.albedo===file||Object.values(m.maps).includes(file));
    let pixels;
