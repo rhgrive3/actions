@@ -41,6 +41,7 @@ test('real births of the seven owned families draw S3 silhouettes, skip the gene
   const f = await api(), system = f.G.projectiles;
   for (const [id, kind, hold] of CASES) {
     fire(f, id, hold);
+    system._s3Shapes?.sheets.clear();
     for (let i = 0; i < 2; i++) system.update(1 / 60);
     const live = system.list.filter(p => p.delay <= 0);
     assert(live.length, id + ' live round');
@@ -50,7 +51,7 @@ test('real births of the seven owned families draw S3 silhouettes, skip the gene
     assert.deepEqual(system.list.map(snapshot), before, id + ' drawing never changes gameplay state');
     // Falling drops may use the blob mesh; the round itself must not.
     const m = new f.THREE.Matrix4(), at = new f.THREE.Vector3();
-    const ownBlobs = kind === 'machine' || kind === 'explosher';
+    const ownBlobs = kind === 'explosher';
     if (!ownBlobs) for (let i = 0; i < system.blobs.count; i++) {
       system.blobs.getMatrixAt(i, m); at.setFromMatrixPosition(m);
       if ((system._s3SplashDrops || []).some(d => at.distanceTo(d.pos) < 1e-6)) continue; // a real falling splash
@@ -58,10 +59,18 @@ test('real births of the seven owned families draw S3 silhouettes, skip the gene
     }
     const c = system.s3ShapeCounts;
     if (kind === 'shot' || kind === 'pellet' || kind === 'arrow') assert.equal(c.body, live.length, id + ' body per round');
-    if (kind === 'slash-h') assert.equal(c.slashH, live.length);
-    if (kind === 'slash-v') assert.equal(c.slashV, live.length);
+    // leading slab plus the thinner layer peeling off behind it
+    if (kind === 'slash-h') assert.equal(c.slashH, 2 * live.length);
+    if (kind === 'slash-v') assert.equal(c.slashV, 2 * live.length);
+    // one firing-ink burst per shot or volley, drawn as torn sheets
+    const firing = ['shot', 'pellet', 'arrow', 'slash-h', 'slash-v'].includes(kind);
+    assert.equal(system._s3Shapes.sheets.bursts.length, firing ? 1 : 0, id + ' firing ink burst');
+    if (firing) assert(c.sheets > 0, id + ' firing ink sheets drawn');
     if (kind === 'bubble') { assert(c.shell >= live.length, 'clear shell per bubble'); assert.equal(c.core, live.length, 'round ink core per bubble'); }
-    if (kind === 'machine') assert(system.blobs.count > live.length, 'glob plus corkscrew beads');
+    if (kind === 'machine') {
+      // no ball: the visible round is one spinning twisted membrane
+      assert.equal(c.drills, live.filter(p => p.vis > 0).length, 'one membrane per visible round');
+    } else assert.equal(c.drills, 0, id + ' no machine membrane');
     if (kind === 'explosher') { assert(system.blobs.count >= live.length, 'glob (+ falling splashes)'); assert(c.sparkles > 0, 'glitter'); }
   }
 });
@@ -128,4 +137,42 @@ test('charged Splatana slash is born at ShotBulletOffset_Vertical and clears a f
   assert(Math.abs(p.start.y - 2.2) < 1e-6, 'sourced 2.2 birth height above the feet: ' + p.start.y);
   for (let i = 0; i < 4; i++) system.update(1 / 60);
   assert(system.list.includes(p), 'slash survives its first ticks instead of dying in the floor');
+});
+
+test('SWEPs muzzle splash cones and shipped SWEPs assets', async () => {
+  const { splashCone, FIRE_INK } = await import('../runtime/s3-ink-sheets.mjs');
+  const { MUZZLE_SPLASH, INK_RING } = await import('../runtime/s3-sweps-assets.mjs');
+  const cfg = FIRE_INK.shot, close = (a, b) => Math.abs(a - b) < 1e-9;
+  // MuzzleSplash.lua: t = Lerp(f, 3, rad*scale), r = Lerp(4f(1-f), rad/5, rad); 2nd cone at 2f, t = Lerp(1.4f)
+  assert(close(cfg.length / cfg.radius, 2) && close(cfg.radius / cfg.minLength, 25 / 3), 'shooter a, s, r = 7, 2, 25');
+  assert.equal(cfg.life, 7);
+  // SWEPs' own scale: ss.ToHammerUnits HU per DU, 10 DU per INKWAVE metre
+  assert(Math.abs(cfg.radius - 25 * 0.1 / (0.1 * 3.28084 * 16 * (1.00965 / 1.5))) < 1e-9, 'radius 25 HU');
+  let c = splashCone(cfg, 0, 0); assert(close(c.length, cfg.minLength) && close(c.radius, cfg.radius / 5));
+  c = splashCone(cfg, 0.5, 0); assert(close(c.radius, cfg.radius));
+  c = splashCone(cfg, 1, 0); assert(close(c.length, cfg.length) && close(c.radius, cfg.radius / 5));
+  c = splashCone(cfg, 0.25, 1); assert(close(c.radius, cfg.radius), 'second cone peaks at a quarter life');
+  c = splashCone(cfg, 0.8, 1); assert(close(c.radius, cfg.radius / 5), 'GMod Lerp clamps');
+  assert(close(c.length, cfg.length), '1.4f clamps to the full length');
+  const b64 = s => Math.floor(s.length * 3 / 4) - (s.endsWith('==') ? 2 : s.endsWith('=') ? 1 : 0);
+  assert.equal(b64(MUZZLE_SPLASH.alpha), 128 * 128); assert.equal(b64(INK_RING.alpha), 128 * 256);
+});
+
+test('the Sloshing Machine round is one spinning membrane that never reaches behind the muzzle', async () => {
+  const f = await api(), system = f.G.projectiles;
+  const { MACHINE_DRILL } = await import('../runtime/s3-ink-sheets.mjs');
+  fire(f, 's3-slosher-launcher');
+  for (let i = 0; i < 3; i++) system.update(1 / 60);
+  const p = system.list.find(q => q.delay <= 0 && q.vis > 0);
+  assert(p, 'visible machine round');
+  const phase = [];
+  for (const t of [10, 10 + 1 / 60]) {
+    f.G.time = t; system._draw();
+    const a = system._s3Shapes.sheets.drillMesh.geometry.getAttribute('aDrill');
+    assert.equal(system.s3ShapeCounts.drills, 1);
+    assert(a.array[0] <= p.start.distanceTo(p.pos) + 1e-6 && a.array[0] <= MACHINE_DRILL.length, 'clamped to travel');
+    phase.push(a.array[2]);
+  }
+  const step = ((phase[1] - phase[0]) % 6.283185307179586 + 6.283185307179586) % 6.283185307179586;
+  assert(Math.abs(step - MACHINE_DRILL.spin / 60) < 1e-5, 'spins with time, not with draw count');
 });
