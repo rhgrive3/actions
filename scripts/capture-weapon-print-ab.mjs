@@ -35,10 +35,16 @@ async function capture(input,shared){
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const context=await browser.newContext({viewport:{width:1920,height:1080},deviceScaleFactor:1});
  try{
  await context.addInitScript(({seed})=>{let state=seed>>>0;Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};Date.now=()=>1700000000000;Object.defineProperty(performance,'now',{value:()=>1000});window.__abRngState=()=>state;window.__abResetRng=()=>{state=seed>>>0;};},{seed});
- const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
+ const page=await context.newPage();page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
  await page.goto('http://127.0.0.1:'+server.address().port+'/review');
  return await page.evaluate(async({prefix,ids,shared})=>{
-  const THREE=await import('three');
+  function validateThreeExports(namespace){
+   const required=['Box3','Color','Float32BufferAttribute','Group','HalfFloatType','MeshBasicMaterial','NeutralToneMapping','PerspectiveCamera','SRGBColorSpace','Scene','Vector3','WebGLRenderer'];
+   for(const name of required)if(namespace[name]===undefined)throw Error('Missing emitted THREE export: '+name);
+   return required;
+  }
+  const THREE=await import('three');validateThreeExports(THREE);
+  const {Environment}=await import(prefix+'src/world/environment.js');
   const {install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
   const {installMainWeaponCatalogRuntime}=await import(prefix+'patches/splatoon3/runtime/main-weapon-catalog.mjs');
   const R=await import(prefix+'patches/splatoon3/runtime/weapon-models/registry.mjs');
@@ -48,17 +54,36 @@ async function capture(input,shared){
   const {Actor,Character,G,Physics,WEAPONS}=api;
   const scene=new THREE.Scene();scene.background=new THREE.Color('#e6eaf2');G.scene=scene;
   const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(1920,1080);
-  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;document.body.append(renderer.domElement);
-  const pixels=new Uint8Array(32*16*4);for(let y=0;y<16;y++)for(let x=0;x<32;x++){const n=(y*32+x)*4,v=y<9?235:130;pixels.set([v,v,Math.min(255,v+12),255],n);}
-  const sky=new THREE.DataTexture(pixels,32,16);sky.mapping=THREE.EquirectangularReflectionMapping;sky.colorSpace=THREE.SRGBColorSpace;sky.needsUpdate=true;
-  const pmrem=new THREE.PMREMGenerator(renderer),env=pmrem.fromEquirectangular(sky);scene.environment=env.texture;
-  scene.add(new THREE.HemisphereLight(0xffffff,0x60718d,2.1));
-  const key=new THREE.DirectionalLight(0xffffff,3.3);key.position.set(-2,4,3);scene.add(key);
+  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=.94;document.body.append(renderer.domElement);
+  const shaderErrors=[];renderer.debug.checkShaderErrors=true;renderer.debug.onShaderError=(gl,program,vs,fs)=>shaderErrors.push([gl.getProgramInfoLog(program),gl.getShaderInfoLog(vs),gl.getShaderInfoLog(fs)].join('\n'));
   const camera=new THREE.PerspectiveCamera(34,1920/1080,.15,6500);G.camera=camera;
   G.teamColors=[new THREE.Color('#ff8825'),new THREE.Color('#484ce8')];
   G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,o)=>{o.length=0;return o;}};
   G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.match={playing:()=>true};G.time=0;
   G.projectiles=Object.fromEntries(['fireShooter','fireDualies','fireBlaster','fireSlosh','fireFlick','fireCharger','fireSplatling','throwBomb'].map(n=>[n,()=>{}]));
+  function validateEnvironmentContract(e){
+   if(e.cubeSize!==256||e.width!==768||e.height!==1024||e.colorSpace!=='srgb-linear'||e.type!==THREE.HalfFloatType||e.mapping!==306)throw Error('Invalid production PMREM dimensions, LOD or color-space contract');
+   if(!Number.isFinite(e.meanRadiance)||e.meanRadiance<=0||!Number.isFinite(e.maxRadiance)||e.maxRadiance<=0||e.nonfinite!==0||e.negative!==0||e.positivePixels<1000)throw Error('Invalid PMREM radiance');
+   return e;
+  }
+  // IEEE754 binary16 readback; do not require tree-shaken DataUtils exports.
+  function halfFloat(bits){
+   const sign=bits&0x8000?-1:1,exponent=(bits>>>10)&31,fraction=bits&1023;
+   return exponent===31?(fraction?NaN:sign*Infinity):sign*(exponent?2**(exponent-15)*(1+fraction/1024):2**-14*fraction/1024);
+  }
+  function environmentEvidence(env){
+   const rt=env._envRT,raw=new Uint16Array(rt.width*rt.height*4);renderer.readRenderTargetPixels(rt,0,0,rt.width,rt.height,raw);
+   let sum=0,max=0,nonfinite=0,negative=0,positivePixels=0;
+   for(let i=0;i<raw.length;i+=4){let lit=false;for(let c=0;c<3;c++){const v=halfFloat(raw[i+c]);if(!Number.isFinite(v))nonfinite++;if(v<0)negative++;if(v>0)lit=true;sum+=v;max=Math.max(max,v);}if(lit)positivePixels++;}
+   if(renderer.getContext().getError()!==0||shaderErrors.length)throw Error('Native environment GPU/shader error');
+   return validateEnvironmentContract({theme:env.theme,cubeSize:rt.height/4,width:rt.width,height:rt.height,colorSpace:rt.texture.colorSpace,type:rt.texture.type,mapping:rt.texture.mapping,meanRadiance:sum/(rt.width*rt.height*3),maxRadiance:max,nonfinite,negative,positivePixels,environmentIntensity:env.scene.environmentIntensity,sun:{position:env.sun.position.toArray(),target:env.sun.target.position.toArray(),color:env.sun.color.toArray(),intensity:env.sun.intensity},hemi:{color:env.hemi.color.toArray(),ground:env.hemi.groundColor.toArray(),intensity:env.hemi.intensity}});
+  }
+  window.__abResetRng();const nativeScene=new THREE.Scene(),nativeEnvironment=new Environment(renderer,nativeScene,{theme:'day',shadowSize:512});
+  const environmentReceipt=environmentEvidence(nativeEnvironment);
+  let undersizedRejected=false;try{validateEnvironmentContract({...environmentReceipt,cubeSize:8,width:336,height:32});}catch(e){undersizedRejected=/PMREM/.test(String(e));}
+  if(!undersizedRejected)throw Error('Undersized PMREM negative control was not rejected');
+  if(shared&&JSON.stringify(environmentReceipt)!==JSON.stringify(shared.environment))throw Error('A/B native environment drift');
+  scene.add(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);scene.environment=nativeEnvironment.envMap;scene.environmentIntensity=environmentReceipt.environmentIntensity;
   function captureModes(baseId){
    const chargeFamily=baseId==='s3-stringer-normal'||baseId==='s3-charger-quick',pairedFamily=baseId==='s3-maneuver-short';
    return {chargeFamily,pairedFamily,poseStates:chargeFamily?['rest','charge','release']:['rest'],groundStates:chargeFamily?[true,false]:[true]};
@@ -153,14 +178,14 @@ async function capture(input,shared){
    }
    ch.dispose();
   }
-  for(const m of unlitMaterials.values())m.dispose();env.dispose();sky.dispose();pmrem.dispose();return {frames,cameras,poses,rng:window.__abRngState(),gpu:{depthBits:renderer.getContext().getParameter(renderer.getContext().DEPTH_BITS),context:renderer.getContext().getContextAttributes(),logarithmicDepthBuffer:renderer.capabilities.logarithmicDepthBuffer,reverseDepthBuffer:renderer.capabilities.reverseDepthBuffer}};
+  if(shaderErrors.length)throw Error('Shader errors: '+shaderErrors.join('\n'));for(const m of unlitMaterials.values())m.dispose();scene.remove(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);nativeEnvironment.dispose();return {frames,cameras,poses,environment:environmentReceipt,undersizedRejected,shaderErrors,rng:window.__abRngState(),gpu:{depthBits:renderer.getContext().getParameter(renderer.getContext().DEPTH_BITS),context:renderer.getContext().getContextAttributes(),logarithmicDepthBuffer:renderer.capabilities.logarithmicDepthBuffer,reverseDepthBuffer:renderer.capabilities.reverseDepthBuffer}};
  },{prefix,ids,shared});
  }finally{await context.close();await new Promise(r=>server.close(r));}
 }
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const a=await capture(baseline,null);const b=await capture(candidate,{cameras:a.cameras,poses:a.poses});
- assert.equal(a.frames.length,24);assert.equal(b.frames.length,24);assert.equal(Object.keys(a.poses).length,20);assert.deepEqual(a.cameras,b.cameras);assert.deepEqual(a.poses,b.poses);assert.deepEqual(errors,[]);assert.deepEqual(networkFailures,[]);
+ const a=await capture(baseline,null);const b=await capture(candidate,{cameras:a.cameras,poses:a.poses,environment:a.environment});
+ assert.equal(a.frames.length,24);assert.equal(b.frames.length,24);assert.equal(Object.keys(a.poses).length,20);assert.deepEqual(a.cameras,b.cameras);assert.deepEqual(a.poses,b.poses);assert.deepEqual(a.environment,b.environment);assert.ok(a.undersizedRejected&&b.undersizedRejected);assert.deepEqual(a.shaderErrors,[]);assert.deepEqual(b.shaderErrors,[]);assert.deepEqual(errors,[]);assert.deepEqual(networkFailures,[]);
  const images=[];for(const [label,result]of [['frozen',a],['candidate',b]])for(const f of result.frames){const file=label+'-'+f.key+'-'+f.mode+'.png',bytes=Buffer.from(f.png,'base64');fs.writeFileSync(path.join(out,file),bytes);images.push({file,sha256:hash(bytes),triangles:f.triangles,foregroundPixels:f.foregroundPixels,quantizedColors:f.quantizedColors,printROI:f.printROI});}
  const comparisons=[];for(let i=0;i<a.frames.length;i++){
   const left=a.frames[i],right=b.frames[i];assert.equal(left.key,right.key);assert.equal(left.mode,right.mode);
@@ -172,5 +197,5 @@ try{
  }
  assert.ok(comparisons.some(x=>x.key.startsWith('s3-stringer-normal')&&x.changedPixelsAbove3>0),'Bulbz surface change must be visible in at least one matched frame');
  const summary=input=>({sourceSha:input.sourceSha,contentHash:input.manifest.contentHash,inputHash:input.manifest.inputHash,modelInputs:input.modelInputs});
- const receipt={baseline:summary(baseline),candidate:summary(candidate),pipelineHashes,seed,rng:a.rng,renderer:'Chromium SwiftShader',size:[1920,1080],gpu:{baseline:a.gpu,candidate:b.gpu},cameraBasis:'Frozen print-region bounds; exact shared local/world/projection matrices; four consecutive release frames and 0.125-pixel camera drift',unlit:'MeshBasicMaterial diagnostic preserves base color, vertex colors, map, side, opacity and depth flags; production callbacks disabled only for unlit pass',characterRendered:false,method:'Controlled native presentation comparison: manually assigned runner charge, native charge_release event, and stubbed projectile methods; no gameplay admission or ballistics claim',strictTolerance:1e-8,poses:a.poses,cameras:a.cameras,images,comparisons,errors,networkFailures};fs.writeFileSync(path.join(out,'ab-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({frames:images.length,poses:Object.keys(a.poses).length,baseline:receipt.baseline,candidate:receipt.candidate}));
+ const receipt={baseline:summary(baseline),candidate:summary(candidate),pipelineHashes,seed,rng:a.rng,renderer:'Chromium SwiftShader',size:[1920,1080],environment:a.environment,undersizedRejected:a.undersizedRejected,colorPipeline:{output:'sRGB',toneMapping:'Neutral',exposure:.94,postprocessing:false},gpu:{baseline:a.gpu,candidate:b.gpu},cameraBasis:'Frozen print-region bounds; exact shared local/world/projection matrices; four consecutive release frames and 0.125-pixel camera drift',unlit:'MeshBasicMaterial diagnostic preserves base color, vertex colors, map, side, opacity and depth flags; production callbacks disabled only for unlit pass',characterRendered:false,method:'Production day Environment PMREM and native lights, Neutral tone mapping/exposure .94; no production compositor/postprocess. Controlled native presentation comparison: manually assigned runner charge, native charge_release event, and stubbed projectile methods; no gameplay admission or ballistics claim',strictTolerance:1e-8,poses:a.poses,cameras:a.cameras,images,comparisons,errors,networkFailures};fs.writeFileSync(path.join(out,'ab-result.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify({frames:images.length,poses:Object.keys(a.poses).length,baseline:receipt.baseline,candidate:receipt.candidate}));
 }catch(e){fs.writeFileSync(path.join(out,'ab-error.json'),JSON.stringify({error:String(e),errors,networkFailures},null,2));throw e;}finally{await browser?.close();}

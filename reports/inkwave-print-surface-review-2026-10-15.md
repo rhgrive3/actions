@@ -28,7 +28,7 @@ Squiffer geometry, print traces and palette are unchanged. A separate CPU qualif
 ## Source, emitted and image gates
 
 Dedicated workflow:
--11 capture-harness cases, including affine native matrix restoration, material restoration on failure, and blank framebuffer rejection.
+-13 capture-harness cases, including affine native matrix restoration, material restoration on failure, and blank framebuffer rejection.
 -20 source and20 emitted cases: inheritedSquiffer9, inheritedBulbz8, flat-print3. All must pass with zero skips/cancellations/todo.
 -Separate immutable-baseline and candidate builds with pinned compiler and identical build pipeline sources.
 -48 PNGs at1920x1080: two builds, two weapons, two teams, one charge close-up lit/unlit and four consecutive release-motion lit frames.
@@ -40,3 +40,7 @@ Dedicated workflow:
 ## Remaining limits
 
 The original Bulbz marble pattern is not traced; tube proportions, engraving and calibrated retail material response remain open. Squiffer's central burst lettering and some rear graphic interiors are intentionally absent rather than invented. Existing official and candidate lighting/cameras differ, so their colors do not justify a material retune. These capture gates do not confer whole-model retail fidelity, native gameplay admission, physical-device acceptance, or merge approval. Fresh images require human inspection after workflow completion.
+
+## Controlled native environment correction
+
+The first successful capture run38664401966 verified 48 image hashes/dimensions and 11/20/20 tests, but used an undersized synthetic PMREM and ACES exposure1. It supports shape/ROI comparisons only, not material acceptance. The revised harness uses the actual emitted production day Environment with PMREM cube256, native sun/hemi, Neutral tone mapping and exposure0.94. Readback validates768×1024 HalfFloat linear-sRGB CubeUV and positive finite radiance; malformed PMREM and missing emitted THREE symbols are negative controls. The production compositor, grade, FXAA and stage shadows are absent, so this remains a controlled native-environment material test. Actual held Game/native-compositor evidence remains required for full visual acceptance. No geometry or palette was changed to compensate for lighting.

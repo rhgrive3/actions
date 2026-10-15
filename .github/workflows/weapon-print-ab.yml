@@ -27,7 +27,7 @@ jobs:
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
           node --test --test-reporter=tap scripts/capture-weapon-print-ab.test.mjs | tee print-test-results/harness.tap
           env -u INKWAVE_BUILT_SITE node --experimental-vm-modules --test --test-reporter=tap --test-concurrency=1 patches/splatoon3/tests/weapon-variant-new-squiffer-v4.test.mjs patches/splatoon3/tests/weapon-variant-bulbz.test.mjs patches/splatoon3/tests/weapon-bulbz-flat-print.test.mjs | tee print-test-results/source.tap
-          for item in harness:11 source:20; do
+          for item in harness:13 source:20; do
             name=${item%:*}; count=${item#*:}
             grep -qx "# tests $count" print-test-results/$name.tap
             grep -qx "# pass $count" print-test-results/$name.tap
@@ -69,10 +69,12 @@ jobs:
           const sha=b=>createHash('sha256').update(b).digest('hex'),read=p=>fs.readFileSync(p),out='print-test-results/';
           const build=JSON.parse(read(out+'candidate-build.json')),ab=JSON.parse(read('weapon-print-ab/ab-result.json')),head=read(out+'head.txt').toString().trim();
           assert.equal(ab.candidate.sourceSha,head);assert.equal(ab.baseline.sourceSha,'009a9e54898b0ed48e38f5ede105077a736e7a0b');assert.equal(ab.candidate.contentHash,build.contentHash);assert.equal(ab.candidate.inputHash,build.inputHash);assert.equal(ab.images.length,48);assert.equal(ab.comparisons.length,24);assert.equal(ab.characterRendered,false);assert.deepEqual(ab.errors,[]);assert.deepEqual(ab.networkFailures,[]);
+          assert.deepEqual(ab.colorPipeline,{output:'sRGB',toneMapping:'Neutral',exposure:.94,postprocessing:false});assert.equal(ab.undersizedRejected,true);
+          const env=ab.environment;assert.equal(env.cubeSize,256);assert.equal(env.width,768);assert.equal(env.height,1024);assert.equal(env.colorSpace,'srgb-linear');assert.equal(env.type,1016);assert.equal(env.mapping,306);assert.ok(Number.isFinite(env.meanRadiance)&&env.meanRadiance>0&&Number.isFinite(env.maxRadiance)&&env.maxRadiance>0);assert.equal(env.nonfinite,0);assert.equal(env.negative,0);assert.ok(env.positivePixels>=1000);
           const emitted=read(out+'emitted.tap').toString().split('\n').filter(s=>s.startsWith('# INKWAVE built fixture '));assert.ok(emitted.length>=3);for(const s of emitted)assert.ok(s.endsWith(' contentHash='+build.contentHash));assert.ok(!read(out+'source.tap').toString().includes('INKWAVE built fixture'));
           for(const img of ab.images){assert.equal(sha(read('weapon-print-ab/'+img.file)),img.sha256);assert.ok(img.foregroundPixels>=250&&img.quantizedColors>=16);assert.ok(img.printROI.visiblePixels>=32&&img.printROI.inFrameVertices/img.printROI.selectedVertices>=.75);assert.ok(img.printROI.ndcBounds.every(Number.isFinite));}
           const files=['harness.tap','source.tap','emitted.tap','source-tree.txt','candidate-build.json','baseline-build.json'];
-          fs.writeFileSync(out+'verification.json',JSON.stringify({head,tree:read(out+'tree.txt').toString().trim(),inputHash:build.inputHash,contentHash:build.contentHash,tests:{harness:11,source:20,emitted:20,skipped:0},files:Object.fromEntries(files.map(p=>[p,sha(read(out+p))])),abReceiptSHA256:sha(read('weapon-print-ab/ab-result.json')),images:48,limits:'Controlled weapon-only native presentation, not gameplay admission, retail fidelity or physical-device acceptance.'},null,2));
+          fs.writeFileSync(out+'verification.json',JSON.stringify({head,tree:read(out+'tree.txt').toString().trim(),inputHash:build.inputHash,contentHash:build.contentHash,tests:{harness:13,source:20,emitted:20,skipped:0},files:Object.fromEntries(files.map(p=>[p,sha(read(out+p))])),abReceiptSHA256:sha(read('weapon-print-ab/ab-result.json')),images:48,limits:'Controlled weapon-only native presentation, not gameplay admission, retail fidelity or physical-device acceptance.'},null,2));
           JS
       - uses: actions/upload-artifact@v4
         if: always()
