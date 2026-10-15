@@ -16,14 +16,6 @@ export function adaptPaintBodyEdge(rel, code, replaceOnce) {
 export function adaptPaintOwnership(rel, code, replaceOnce) {
   if (rel === 'src/world/paint.js') {
     code = "import { paintShapeSeed } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
-    // The custom shader throws satellites outside source WidthHalf. Record the
-    // nominal source radius for network, then normalize the CPU/GPU paint raster.
-    code = replaceOnce(code,
-      '    const kind = cosmetic && opts.kind === undefined ? K_SPECK : this._kind(opts, radius, st, sAmt);',
-      '    const kind = cosmetic && opts.kind === undefined ? K_SPECK : this._kind(opts, radius, st, sAmt);\n' +
-      '    radius = sourceShotRasterRadius(radius, kind, opts.face, cosmetic, opts.kind);',
-      'source-defined shot width bounds procedural raster');
-    code = "import { sourceShotRasterRadius } from '../../patches/splatoon3/runtime/source-shot-footprint.mjs';\n" + code;
     code = replaceOnce(code,
       'float hsh(float n) { return fract(sin(n) * 43758.5453123); }',
       'float hsh(float n) { return fract(sin(n) * 43758.5453123); }\n' + PAINT_SHAPE_HASH_GLSL,
