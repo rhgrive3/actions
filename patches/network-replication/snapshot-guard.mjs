@@ -75,6 +75,33 @@ export function allowGhostBombBirth(bombs, actor, ownerId, kind = 'bomb', roster
   return true;
 }
 
+// Bounds intentionally far exceed every published arena and legal native throw.
+// Stage bounds add an outer horizontal envelope when a Level supplies them.
+export function validNetworkBombBirth(e, stageBounds = null) {
+  if (!Array.isArray(e) || e[1] !== 'b' || (e[3] !== 'bomb' && e[3] !== 'storm')) return false;
+  for (let i = 4; i <= 9; i++) if (!bounded(e[i], -4096, 4096)) return false;
+  if (Math.hypot(e[7], e[8], e[9]) > 1024) return false;
+  const b = stageBounds;
+  if (b && [b.minX,b.maxX,b.minZ,b.maxZ].every(finite)
+    && b.minX <= b.maxX && b.minZ <= b.maxZ) {
+    if (e[4] < b.minX - 256 || e[4] > b.maxX + 256
+      || e[6] < b.minZ - 256 || e[6] > b.maxZ + 256) return false;
+  }
+  return true;
+}
+
+// Only visual metadata is checked. Gameplay parameters and owner authority
+// keep their independent existing gates. Matches current native producer slots
+// 19..26 and the renderer's four-entry SAT_SIZE table.
+export function validNetworkProjectileCosmetics(e) {
+  if (!Array.isArray(e) || e[1] !== 'p') return false;
+  if (e[19] !== undefined && e[19] !== 0 && e[19] !== 1) return false;
+  for (const [i,low,high] of [[20,0,8],[21,0,16],[22,0,16],[23,0,4],[24,0,512],[25,-2,4]]) {
+    if (e[i] !== undefined && !bounded(e[i], low, high)) return false;
+  }
+  return e[26] === undefined || integer(e[26], 0, 4);
+}
+
 export function validSnapshotTimestamp(timestamp) {
   return finite(timestamp) && timestamp >= 0 && Number.isSafeInteger(Math.round(timestamp * 1000));
 }
