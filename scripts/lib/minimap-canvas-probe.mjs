@@ -23,7 +23,7 @@ export async function runMinimapCanvasProbe(page,{root,evidence,sourceSha,conten
   emitted[name]={path:keys[0],sha256:manifest.artifacts[keys[0]]};
  }
  const result=await page.evaluate(async ({sources,runtime,emitted})=>{
- const assert=(v,m='assertion')=>{if(!v)throw Error(m);};assert.equal=(a,b,m)=>assert(a===b,m);assert.deepEqual=(a,b,m)=>assert(JSON.stringify(a)===JSON.stringify(b),m);
+ const assert=(v,m='assertion')=>{if(!v)throw Error(m);};assert.equal=(a,b,m)=>assert(a===b,m);assert.deepEqual=(a,b,m)=>{if(JSON.stringify(a)!==JSON.stringify(b)){const keys=Object.keys(a).filter(k=>JSON.stringify(a[k])!==JSON.stringify(b[k]));throw Error(m+' differing fields: '+keys.map(k=>k==='output'?k+': pixel '+a[k].findIndex((v,i)=>v!==b[k][i]):k+': '+JSON.stringify(a[k])+' vs '+JSON.stringify(b[k])).join('; '));}};
  const images=[];
  const frame=document.createElement('iframe');frame.hidden=true;document.body.appendChild(frame);
  try {
