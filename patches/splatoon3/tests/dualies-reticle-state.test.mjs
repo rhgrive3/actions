@@ -3,7 +3,18 @@ import {fixture} from './weapon-edgecases-fixture.mjs';import {adaptSource} from
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),SITE=process.env.INKWAVE_RETICLE_BUILT_SITE;
 async function hudMethod(){const sourceRoot=SITE||path.join(ROOT,'inkwave-public'),mods=new Map(),context=vm.createContext({console,performance,URL,innerWidth:1280,innerHeight:720});
  const load=file=>{if(!SITE&&file.startsWith(path.join(sourceRoot,'patches')+path.sep))file=path.join(ROOT,path.relative(sourceRoot,file));if(mods.has(file))return mods.get(file);let code=fs.readFileSync(file,'utf8');if(!SITE){const rel=path.relative(sourceRoot,file);if(!rel.startsWith('..'))code=adaptQualitySource(rel,adaptReliability(rel,adaptTouchLayout(rel,adaptSource(rel,code))));}const m=new vm.SourceTextModule(code,{context,identifier:file,initializeImportMeta(meta){meta.url=new URL(file,'file:').href;}});mods.set(file,m);return m;};
- const m=load(path.join(sourceRoot,'src/ui/hud.js'));await m.link((s,f)=>load(s==='three'?path.join(sourceRoot,'vendor/three/build/three.module.js'):s.startsWith('three/addons/')?path.join(sourceRoot,'vendor/three/jsm',s.slice('three/addons/'.length)):path.resolve(path.dirname(f.identifier),s)));await m.evaluate();return m.namespace.HUD.prototype._updCrosshair;
+ const m=load(path.join(sourceRoot,'src/ui/hud.js'));await m.link((s,f)=>{
+  if(s==='three')return load(path.join(sourceRoot,'vendor/three/build/three.module.js'));
+  if(s.startsWith('three/addons/'))return load(path.join(sourceRoot,'vendor/three/jsm',s.slice('three/addons/'.length)));
+  let target=path.resolve(path.dirname(f.identifier),s);
+  // Resolve production aliases independently of the entry module's origin.
+  // A patch import '../../src/...' escapes to the repository root in source
+  // fixtures, but that src/ tree lives under the actual emitted game site.
+  if(target.startsWith(path.join(ROOT,'src')+path.sep))target=path.join(sourceRoot,path.relative(ROOT,target));
+  if(target.startsWith(path.join(ROOT,'vendor')+path.sep))target=path.join(sourceRoot,path.relative(ROOT,target));
+  if(SITE&&target.startsWith(path.join(ROOT,'patches')+path.sep))target=path.join(sourceRoot,path.relative(ROOT,target));
+  return load(target);
+ });await m.evaluate();return m.namespace.HUD.prototype._updCrosshair;
 }
 function node(){const classes=new Set(),parts=new Map();return {classes,querySelector(key){if(!parts.has(key))parts.set(key,node());return parts.get(key);},classList:{toggle(k,on){on?classes.add(k):classes.delete(k);}},style:{setProperty(){}}};}
 async function setup(){const f=await fixture(),a=f.make('dualies'),r=a.weaponRunner,h={_L:{kind:'dualies',weapon:'dualies'},_bloom:0,_kick:0,ret:node(),xh:node(),shield:node(),subChip:node(),_local:()=>a,_snd(){},_updCrosshair:await hudMethod()};return {...f,a,r,h,draw(dt=1/60){h._updCrosshair({weapon:'dualies',crosshair:{spread:r.spread}},dt);return h.ret.classes.has('is-lock');}};}
