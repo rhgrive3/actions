@@ -7,3 +7,10 @@ test('wrong projection, missing real movement, false hidden/return and lost bot 
 test('visible output mismatch and no reduction reject',()=>{const b=fixture(true);b.frames[3].rows[2].text='wrong';assert.throws(()=>compare(fixture(),b));assert.throws(()=>compare(fixture(),fixture()));});
 
 test('intentional zero-size anchor requires positive visible child and stack',()=>{const a=fixture(),b=fixture(true);assert.equal(a.frames[0].rows[0].rect[2],0);compare(a,b);b.frames[0].rows[0].stack.rect[2]=0;assert.throws(()=>compare(a,b));});
+
+import fs from 'node:fs';
+const probeSource=fs.readFileSync(new URL('./lobby-probe.mjs',import.meta.url),'utf8');
+const advanceSource=probeSource.match(/function advanceNativeLobby\(sc,width,height\)\{[^}]+\}/)?.[0];assert(advanceSource);
+const advance=(0,eval)('('+advanceSource+')');
+test('native camera tick follows simulation with exact viewport before capture',()=>{const calls=[],sc={update(dt){calls.push(['update',dt]);},_lobCamera(w,h){calls.push(['camera',w,h,this._fdt]);}};advance(sc,1000,800);assert.deepEqual(calls,[['update',1/60],['camera',1000,800,1/60]]);assert.match(probeSource,/advanceNativeLobby\(sc,innerWidth,innerHeight\);capture\('moving'\+i\)/);});
+test('missing or failed native camera step fails closed',()=>{assert.throws(()=>advance({update(){}},1000,800));const failure=Error('camera failure');assert.throws(()=>advance({update(){},_lobCamera(){throw failure;}},1000,800),e=>e===failure);});

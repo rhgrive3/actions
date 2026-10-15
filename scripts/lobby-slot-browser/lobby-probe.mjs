@@ -22,7 +22,9 @@ export async function lobbyProbe({input=null,styleHelper}) {
   const capture=label=>{const anchors=read(),n=writes.length;menus._scr.tick(1/60);natural.push({label,anchors,bots:net.lobby.bots!==false});naturalObservation.push({label,assignments:writes.length-n,transforms:slots.map(el=>el.style.transform),visible:slots.map(el=>el.classList.contains('is-on'))});};
   check(read().some(a=>a&&a.vis>.5),'at least one actual visible free slot');
   for(let i=0;i<60;i++)capture('fixed'+i);
-  for(let i=0;i<60;i++){sc.update(1/60);capture('moving'+i);}
+  // Showcase.render refreshes this camera before normal menu projection reads.
+  function advanceNativeLobby(sc,width,height){sc.update(1/60);sc._fdt=1/60;sc._lobCamera(width,height);}
+  for(let i=0;i<60;i++){advanceNativeLobby(sc,innerWidth,innerHeight);capture('moving'+i);}
   const mode=sc.mode;try{sc.mode='main';capture('hidden');}finally{sc.mode=mode;}
   capture('return0');capture('return1');capture('external-repair');net.setSettings({bots:false});check(net.lobby.bots===false,'native bots off');capture('bots-off');net.setSettings({bots:true});check(net.lobby.bots===true,'native bots on');capture('bots-on');capture('reenter');
   input ||= natural;

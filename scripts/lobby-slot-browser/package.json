@@ -51,8 +51,8 @@
       "publicationPath": ".github/workflows/inkwave-lobby-slot-browser.yml"
     },
     "lobby-probe.mjs": {
-      "bytes": 6974,
-      "sha256": "26a0fbdf28661aed9aaeadeca9c11a6944e27367827a80e0268e8cd2c7f4fb70",
+      "bytes": 7190,
+      "sha256": "9de62a95b187510c152733d1581ea65a3444eab6d1dc236c1c0fa3614b66dad8",
       "publicationPath": "scripts/lobby-slot-browser/lobby-probe.mjs"
     },
     "native-style.mjs": {
@@ -76,11 +76,11 @@
       "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
     },
     "verify.test.mjs": {
-      "bytes": 2917,
-      "sha256": "a68b6aa79c15b44f83717f747272c3ef401fea1fbad11f5272d7d76bc3f8c062",
+      "bytes": 3842,
+      "sha256": "a473b3884dfb360dd1edc5d21dd96319c3a80c55e6835370ecfc44a7d04da639",
       "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
     }
   },
-  "repairOf": "49fd37e859f4b955fc964985903132db7b14fded",
-  "repairReason": "Exact native CSS makes parent .iw-plate width/height zero. Validate actual visible ghost/stack bounds and ancestor opacity; retain parent transform assignment count. Native CSS bob compared at shared phase zero."
+  "repairOf": "aedcbbb3d824e8e8a95e409e55f2d1d860311305",
+  "repairReason": "Call actual Showcase camera refresh after simulation, as native render does before menu projection. Retain dynamic-change gate and all DOM equality checks."
 }
