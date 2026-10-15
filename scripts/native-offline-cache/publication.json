@@ -1,0 +1,37 @@
+{
+  "candidateHead": "049bf758f46e86785d4fd66c1e98927f4b7e1935",
+  "candidateTree": "70ef1054e71da9eaa9fde8abb867a3d9cb90a05f",
+  "branch": "review/native-offline-cache-20261015",
+  "status": "private draft; syntax checked; no browser execution",
+  "scope": "3 real CacheStorage/native worker cases per engine, fixture catalogue/converter. Existing worker kept alive across selections.",
+  "files": {
+    "README.txt": {
+      "sha256": "25ccce668508d147d1d53165e46c1aba619656117288bfb4fc357d3242355dc0",
+      "bytes": 1149
+    },
+    "acceptance.mjs": {
+      "sha256": "fb8588eff1a25eaec3ab03299e5554ebb4f871687e42ac2da7a46e0e636f811e",
+      "bytes": 6385
+    },
+    "native-offline-cache.yml": {
+      "sha256": "9153d9fffa659bb73c7f65901d7ed72e995c98ee6f9b57711e767070d98914d1",
+      "bytes": 2952
+    },
+    "run-hosted.sh": {
+      "sha256": "e2cca943db7aba931165679344347646e31697be2db9cd73f4e66db3a5b90f2f",
+      "bytes": 139
+    },
+    "source-cache-candidate.mjs": {
+      "sha256": "178092377ef3128455607e3a4380f17598737eb5f77594de7313f5da439a2c49",
+      "bytes": 6285
+    },
+    "source-worker-candidate.mjs": {
+      "sha256": "935773e09665146ec564d3fe280884c713f86e10582053df7d9cb8d65267a679",
+      "bytes": 2283
+    },
+    "supervise.py": {
+      "sha256": "3b261895182c243355ba43d16e80c94d4171d8bdfb295f66d01a8ed9ee8dbeae",
+      "bytes": 3391
+    }
+  }
+}
