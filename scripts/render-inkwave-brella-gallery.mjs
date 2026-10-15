@@ -139,7 +139,19 @@ try {
       function heldCanopyHidden(weapon) {
         return !!weapon.parts.canopy && ['canopy', 'canopyInk'].every(name => !weapon.parts[name] || weapon.parts[name].visible === false);
       }
+      // makeAnimate damps bv toward zero at 28/s and hides at <= .02.
+      // Runner.update precedes _finishFrame/Character.update, so launch includes application 1.
+      function canopyHideApplications(dt) { return Math.ceil(Math.log(.02) / (-28 * dt)); }
+      function observeHeldAfterHandoff(pending, frame, state, weapon, actor, weaponId, scene) {
+        if (!pending || !Number.isInteger(frame) || frame < pending.frame
+          || frame - pending.frame >= canopyHideApplications(1 / 60)) return false;
+        if (weapon !== pending.weapon || state?.canopy !== null || !(state.naked > 0)
+          || pending.canopy.mesh !== pending.mesh || pending.canopy.visualSource !== pending.source
+          || !observeCanopyHandoff(pending.canopy, false, state.canopy, actor, weaponId, scene)) return false;
+        return heldCanopyHidden(weapon);
+      }
       const shots = {}; let maxGrip = 0, nonFinite = false, fired = 0, sawOpen=false,sawLaunched=false,sawHidden=false,sawFolded=false;
+      let pendingHandoff = null;
       const benchCam=new THREE.PerspectiveCamera(42,1,.05,30);benchCam.position.set(-1.6,1.15,2.4);benchCam.lookAt(0,.8,.25);
       const bench=()=>{benchCam.position.copy(a.pos).add(new THREE.Vector3(-1.6,1.15,2.4).multiplyScalar(1.15));benchCam.lookAt(a.pos.clone().add(new THREE.Vector3(0,.8,.25)));const gl=renderer.getContext(),ms=[];for(let j=0;j<50;j++){const t=performance.now();renderer.render(scene,benchCam);gl.finish();if(j>=10)ms.push(performance.now()-t);}ms.sort((a,b)=>a-b);return{scope:'CPU submission plus gl.finish flush/backpressure only; GPU completion is not established.',lod:ch.lodTier,weaponNear:ch.weapon.near,p50:ms[Math.floor(ms.length*.5)],p95:ms[Math.floor(ms.length*.95)],drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};};
       const C = api.CHARACTER_CHANNELS;
@@ -165,12 +177,16 @@ try {
         if(frame===25)res.closedRender=bench();
         if(c?.open&&!c.launched&&ch.weapon.ps.bo>.9&&!sawOpen){sawOpen=true;shots.heldOpen=look(frame,'front');shots.heldOpenRear=look(frame,'back');shots.heldOpenSide=look(frame,'right');res.openFrame=frame;res.openRender=bench();}
         const handedOff = observeCanopyHandoff(canopyBefore, wasLaunched, c, a, id, scene);
-        if(handedOff){sawLaunched=true;res.launchFrame=frame;res.launchOwnership={owner:true,weaponId:id,heldStateCleared:c===null,detachedName:canopyBefore.mesh.name,detachedInScene:true};}
-        // Character.update can consume the native launch token on the next
-        // animation tick after Runner detaches the canopy. Require the real
-        // held mesh to become hidden after the validated handoff, rather than
-        // assuming both owners commit on the same source frame.
-        if(sawLaunched&&heldCanopyHidden(ch.weapon)&&!sawHidden){sawHidden=true;shots.launched=look(frame,'front');res.hiddenFrame=frame;}
+        if(handedOff&&!sawLaunched){pendingHandoff={canopy:canopyBefore,mesh:canopyBefore.mesh,source:canopyBefore.visualSource,weapon:ch.weapon,frame};sawLaunched=true;res.launchFrame=frame;res.launchOwnership={owner:true,weaponId:id,heldStateCleared:c===null,detachedName:canopyBefore.mesh.name,detachedInScene:true};}
+        if(pendingHandoff&&!sawHidden){
+          if(ch.weapon!==pendingHandoff.weapon||cs?.canopy!==null||!(cs.naked>0)||pendingHandoff.canopy.mesh!==pendingHandoff.mesh||pendingHandoff.canopy.visualSource!==pendingHandoff.source||!observeCanopyHandoff(pendingHandoff.canopy,false,cs.canopy,a,id,scene))throw new Error(id+' detached canopy ownership lost before held hide');
+          if(frame-pendingHandoff.frame>=canopyHideApplications(1/60))throw new Error(id+' held canopy hide exceeded native damping bound');
+          if(observeHeldAfterHandoff(pendingHandoff,frame,cs,ch.weapon,a,id,scene)){
+            sawHidden=true;shots.launched=look(frame,'front');res.hiddenFrame=frame;
+            res.hideApplications=frame-pendingHandoff.frame+1;
+            res.hideApplicationLimit=canopyHideApplications(1/60);
+          }
+        }
         if(frame>firstEnd+10&&ch.weapon.parts.canopy.visible&&ch.weapon.ps.bo<.02&&!sawFolded){sawFolded=true;shots.folded=look(frame,'front');}
 
       }

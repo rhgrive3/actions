@@ -9,3 +9,24 @@ test('draw differences and incomplete synchronization evidence remain failures',
 
 for(const id of selected)for(const tier of ['game','far'])test(id+' '+tier+' wrong weapon near state rejects',()=>{const r=result((d,{pair})=>{if(pair==='after-B'){const i=d.tiers[tier].ids.indexOf(id);if(i>=0)d.tiers[tier].weaponNear[i]=!d.tiers[tier].weaponNear[i];}});assert.notEqual(r.status,0);});
 test('unknown weapon/tier cannot create permissive policy',()=>{assert.throws(()=>expectedWeaponNear('unknown','far'));assert.throws(()=>expectedWeaponNear(selected[0],'unknown'));});
+
+const lowerDraws=d=>{d.tiers.game.drawCalls=50;d.tiers.far.drawCalls=20;};
+test('all ABBA pairs accept lower positive baseline draws below historical ceilings',()=>{const r=result(lowerDraws);assert.equal(r.status,0,r.stderr);});
+test('each candidate pair rejects one draw above the measured baseline even within the historical ceiling',()=>{
+ for(const scenario of Object.keys(rosters))for(const tier of ['game','far'])for(const pair of ['after-B','after-B2']){
+  const r=result((d,c)=>{lowerDraws(d);if(c.scenario===scenario&&c.pair===pair)d.tiers[tier].drawCalls++;});
+  assert.notEqual(r.status,0,scenario+'/'+pair+'/'+tier);assert.match(r.stderr,/candidate must not exceed exact-head baseline draws/);
+ }
+});
+test('each repeated baseline rejects one draw of drift below the historical ceiling',()=>{
+ for(const scenario of Object.keys(rosters))for(const tier of ['game','far']){
+  const r=result((d,c)=>{lowerDraws(d);if(c.scenario===scenario&&c.pair==='before-A2')d.tiers[tier].drawCalls++;});
+  assert.notEqual(r.status,0,scenario+'/'+tier);assert.match(r.stderr,/immutable baseline repeat draw budget/);
+ }
+});
+test('zero draws reject in every roster tier and ABBA pair',()=>{
+ for(const scenario of Object.keys(rosters))for(const tier of ['game','far'])for(const pair of ['before-A','after-B','after-B2','before-A2']){
+  const r=result((d,c)=>{lowerDraws(d);if(c.scenario===scenario&&c.pair===pair)d.tiers[tier].drawCalls=0;});
+  assert.notEqual(r.status,0,scenario+'/'+pair+'/'+tier);assert.match(r.stderr,/nonempty measured draw count/);
+ }
+});

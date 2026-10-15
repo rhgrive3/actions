@@ -115,12 +115,15 @@ export function appendSourcedSplashVisuals(system, mesh, shapes, inkLook, petals
     // Slosher splashes carry their sourced DrawRadius; Shooter drops keep the
     // bounded footprint-derived size.
     const radius=d.drawRadius>0?d.drawRadius:Math.min(.07,.042+Math.sqrt(Math.max(0,d.radius||0))*.008);
-    scale.setScalar(radius);
+    // Sloshing Machine drops hang off its membrane as thin strands, not balls
+    // (Splatoon 3 promotional screenshot, 2026-10-15 report).
+    const strand=d.sourceActor==='WeaponSlosherLauncher';
+    scale.setScalar(strand?radius*.4:radius);
     matrix.compose(d.pos,rotation,scale);
     mesh.setMatrixAt(count,matrix);mesh.setColorAt(count,d.owner.color);
     const o=count*4;
     // Rounded bead stretched along its fall (S3 Splattershot side frames).
-    shapes[o]=1.05+Math.min(.6,speed*.006);
+    shapes[o]=strand?2.4:1.05+Math.min(.6,speed*.006);
     shapes[o+1]=.03;shapes[o+2]=(d.seed||0)*30+(d.frames||0)*.65;shapes[o+3]=0;
     inkLook[o]=.12;inkLook[o+1]=4;inkLook[o+2]=.9;
     inkLook[o+3]=((d.seed||0)*43.98)%(Math.PI*2);

@@ -74,7 +74,7 @@ if (process.argv[2] === '--roster') {
     }
     comparison[scenario]=all;
   }
-  fs.writeFileSync(path.join(root,'comparison.json'),JSON.stringify({scope:'Approved model-complexity envelope, not a lightweight/performance-success claim. Game +1MiB, far +128KiB versus the same immutable main ed3a composition; existing per-model <=16000 triangle and geometry-attribute contracts run separately. Completion timing uses actual postprocessor final-output readPixels on SwiftShader and requires manual review.',selected,rosters,comparison},null,2));
+  fs.writeFileSync(path.join(root,'comparison.json'),JSON.stringify({scope:'Approved model-complexity envelope, not a lightweight/performance-success claim. Game +1MiB, far +128KiB versus the same immutable main adbd83ee4f6aaef8cb7853de997d42d702c8badf composition; existing per-model <=16000 triangle and geometry-attribute contracts run separately. Completion timing uses actual postprocessor final-output readPixels on SwiftShader and requires manual review.',selected,rosters,comparison},null,2));
   console.log('NINE_MODEL_CROWD_ABBA '+JSON.stringify({selected,rosters,comparison}));
 }
 

@@ -1,4 +1,5 @@
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
+import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
 import { adaptInkVolumes } from './ink-volume-adapter.mjs';
@@ -81,6 +82,8 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'view-settings.mjs',
+  'material-handoff-adapter.mjs', 'material-handoff.mjs',
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
@@ -143,6 +146,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptMaterialHandoff(rel, code);
   code = adaptCameraFovCache(rel, code);
   if (rel === 'src/ui/hud.js') code = replaceOnce(code, "      d.el.style.transform = `rotate(${ang.toFixed(3)}rad)`;\n      d.el.style.opacity = o.toFixed(2);", "      const transform = `rotate(${ang.toFixed(3)}rad)`, opacity = o.toFixed(2);\n      if (d._transform !== transform) { d._transform = transform; d.el.style.transform = transform; }\n      if (d._opacity !== opacity) { d._opacity = opacity; d.el.style.opacity = opacity; }", 'damage-direction unchanged style writes');
   code = adaptMuralAtlas(rel, code, replaceOnce);
@@ -268,6 +272,18 @@ function adaptQualityLayer(rel, code) {
     code = adaptTouchRelayout(rel, code);
   }
   code = adaptPlatformSource(rel, code);
+  if (rel === 'src/main.js') {
+    code = "import { normalizeViewSettings } from '../patches/local-quality/view-settings.mjs';\n" + code;
+    code = replaceOnce(code,
+      "migrateAimProfiles(loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile)), DEFAULT_SETTINGS)",
+      "migrateAimProfiles(normalizeViewSettings(loadJSON('inkwave.settings', initialGyroDefaults(DEFAULT_SETTINGS, this.mobile)), DEFAULT_SETTINGS), DEFAULT_SETTINGS)",
+      'finite persisted camera and mouse settings');
+    code = replaceOnce(code,
+      '    applyAimSettingsChange(this.settings, partial);',
+      '    partial = normalizeViewSettings({ ...partial }, this.settings);\n    applyAimSettingsChange(this.settings, partial);',
+      'finite live camera and mouse settings');
+  }
+
   if (rel === 'src/game/cameraRig.js') {
     code = replaceOnce(code,
       "    if (this.mode !== this._prevMode || (this.mode === 'follow' && this.target !== this._prevTarget)) {\n",
