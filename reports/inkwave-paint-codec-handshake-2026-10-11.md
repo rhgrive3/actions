@@ -65,3 +65,10 @@ Local Node measurements indicate lower packTick costs for multi-row packets;
 new production-browser evidence is still required. Main a5b7d86e (PR1247)
 is integrated separately, preserving sparse transient-gear sidecars and the
 receiving-realm death/respawn/buff takeover regression.
+
+
+## 2026-10-15 current-main completion work
+
+Current main `01aa5cc61c842a8616ab38ff5fb541b6becf1395` is integrated without force or replacing its network admission, queued-resource bounds or gear sidecars. The shared test fixture now supports both an explicit built root and INKWAVE_BUILT_SITE, plus the complete production composition; both selectors resolve the actual emitted modules rather than applying adapters twice. Preserve current main's URL/text/timer/import-meta platform seams and the codec's real NetSession export/receiving-realm JSON. The mandatory emitted codec job and all newer main jobs are retained.
+
+Fresh local source codec/transport/queue suite74/74, actual emitted74/74, and the entire source network suite505/505 pass without skips. Production content hash `a6f9b7a319b161a00ef9518a355680084570ec6db0fcd42391f4f861bc66bed4`. Historical 0826 browser bandwidth/CPU/memory results remain historical: this integration has not earned fresh browser cost acceptance or an FPS claim. Current public-head CI and refreshed browser A/B remain required before adoption.
