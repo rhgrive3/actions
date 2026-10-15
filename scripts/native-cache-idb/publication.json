@@ -1,0 +1,50 @@
+{
+  "baseHead": "01aa5cc61c842a8616ab38ff5fb541b6becf1395",
+  "scope": "diagnostic-only synthetic real WebKit IndexedDB; no iPad device claim",
+  "files": {
+    "README.txt": {
+      "sha256": "02720884a3d5951da0c3cbd3a4b5364d392c826606c07c606d3d07d50503ff86",
+      "bytes": 1728
+    },
+    "acceptance.mjs": {
+      "sha256": "27ea5a70a2e5c7313af51f01174924499247f498fee3a0ba1788e0cf3972aa8c",
+      "bytes": 12123
+    },
+    "baseline.mjs": {
+      "sha256": "31a47aeb648147683589e6483831ab5f03c1d9e401cec42f84c5edf3a7633de1",
+      "bytes": 4333
+    },
+    "candidate.mjs": {
+      "sha256": "8561727ceee23794958ca74e6861b5215de7651ac22594d688f6a1f6ee978bfc",
+      "bytes": 7311
+    },
+    "harness-package.json": {
+      "sha256": "73a62e69a453a2a24d7d3da4ae4ead6267f381f1ac2ba356ee620c9edea4dfff",
+      "bytes": 969
+    },
+    "native-cache-idb.yml": {
+      "sha256": "d6cbcbf285c302dd66ef737a9f3f1a63d039e1bbbb6639d020ecb2902229da01",
+      "bytes": 3225
+    },
+    "receipt-gate.mjs": {
+      "sha256": "fedc15173bc9a00dc49d8641b5b12133f61cdad011a92352fd410b2787fd7258",
+      "bytes": 995
+    },
+    "receipt-gate.test.mjs": {
+      "sha256": "54370b34d3d021b825aa7c9e990038faa99de9c1b885279fb12a84f48c6ffab3",
+      "bytes": 1327
+    },
+    "run-hosted.sh": {
+      "sha256": "c157750aa2f8eaa274c6c5c3bd333773155460812fce982d74025175c035daf8",
+      "bytes": 272
+    },
+    "supervise.py": {
+      "sha256": "3b261895182c243355ba43d16e80c94d4171d8bdfb295f66d01a8ed9ee8dbeae",
+      "bytes": 3391
+    }
+  },
+  "candidateHead": "66ddd5131f5d9cefebdfad20971f38003f95cc74",
+  "candidateTree": "c9eeb95dad421e9a13ccb51c99111d68432dadf0",
+  "branch": "review/native-combined-cache-20261015",
+  "status": "private exact-combined-source acceptance; no browser execution yet"
+}

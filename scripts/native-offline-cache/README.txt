@@ -1,0 +1,5 @@
+Draft, not published or browser-run. Candidate public head must be bound before review/publication.
+Three browser cases per engine: successful warmed raw CacheStorage re-selection with context fully offline; corrupted metadata envelope rejects; missing OBJ rejects. All use a fresh browser context and actual native Worker and CacheStorage APIs. Controlled miniature catalogue/converter and pinned OBJ/MTL/Git-tree API response isolate cache behavior without a full native-stage build/download. A single worker remains alive across selections; offline page reload/new worker bootstrap is outside scope.
+Existing 120-second / 2GiB summed RSS / 2GiB free-memory reserve supervisor is reused unchanged. No runtime edit or source parameter change. Offline failures are expected network failures, not console-error allowances for successful runs. No actual hardware/performance claim.
+Runtime pins: source-cache SHA256178092377ef3128455607e3a4380f17598737eb5f77594de7313f5da439a2c49; worker935773e09665146ec564d3fe280884c713f86e10582053df7d9cb8d65267a679.
+This package is independent of the cancelled upgrade-abort IDB publication and does not retry it.
