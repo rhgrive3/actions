@@ -309,6 +309,8 @@ jobs:
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs
+      - name: Verify actual built codec and authenticated JSON transport
+        run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-packet-codec.test.mjs patches/network-replication/tests/paint-packet-codec-order.test.mjs
       - name: Verify emitted Tenacity lock and passive ownership
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
