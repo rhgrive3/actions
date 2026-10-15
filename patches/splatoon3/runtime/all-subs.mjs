@@ -1107,10 +1107,10 @@ function updateFlight(api, projectiles, object, dt) {
       return;
     }
     if(object.subId==='fizzy'){burstFizzy(api,projectiles,object);return;}
-    if(object.subId==='angleShooter'){
-      object.bounceCount++;object.vel.multiplyScalar(-.72);object.pos.addScaledVector(object.vel,dt);
-      if(object.bounceCount<=spec.maxBounces){emitEvent(api,object,'bounce',{bounceCount:object.bounceCount});return;}
-    } else { blast(api,object,object.pos); }
+    // Wiki Line Marker: a direct player hit terminates the projectile/line.
+    // Only terrain can reflect it; reflecting off a player allowed a second
+    // unsupported 40-damage hit on the return path.
+    if(object.subId!=='angleShooter')blast(api,object,object.pos);
     removeObject(api,projectiles,object);return;
   }
   if(world?.hit){

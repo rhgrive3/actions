@@ -15,7 +15,8 @@ const FREEFALL_GUARD = Symbol.for('inkwave.splatoon3.roller-freefall.v1');
 const TRIGGER_HOOKED = Symbol.for('inkwave.splatoon3.roller-freefall.trigger-hooked');
 
 export function isRollerActor(a) {
-  return !!(a && (a.weaponId === 'roller' || a.weapon?.kind === 'roller'));
+  return !!(a && (a.weaponId === 'roller' || a.weapon?.kind === 'roller' ||
+    a.weapon?.behaviorKind === 'roller'));
 }
 
 export function resetAirborneState(a) {

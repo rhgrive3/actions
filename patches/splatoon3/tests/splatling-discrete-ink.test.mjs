@@ -17,24 +17,24 @@ function burst(f,frames,{gear=false,available=null}={}) {
 test('#543 every legal fixed-tick partial charge pays exactly its discrete emitted count',async()=>{
  const realm=await fixture(),owners=new WeakSet();let cases=0;
  for(const gear of [false,true])for(let frames=1;frames<=72;frames++){
-  const f=burst(realm,frames,{gear}),w=f.a.weapon,expected=Math.ceil(splatlingBurst(w,f.charge)/w.fireInterval-1e-10);
+  const f=burst(realm,frames,{gear}),w=f.a.weapon,expected=Math.floor(splatlingBurst(w,f.charge)/w.fireInterval+1e-10)+1;
   for(const owner of [f.a,f.r,f.a.s3,w]){assert.equal(owners.has(owner),false,'each case has independent native owners');owners.add(owner);}
-  assert.equal(f.shots.length,expected,`frame ${frames}, gear ${gear}`);near(f.paid,f.shots.length*w.inkPerShot);near(f.duration,expected*w.fireInterval);
+  assert.equal(f.shots.length,expected,`frame ${frames}, gear ${gear}`);near(f.paid,f.shots.length*w.inkPerShot);near(f.duration,(expected-1)*w.fireInterval+1/60);
   for(let i=1;i<f.shotFrames.length;i++)assert.equal(f.shotFrames[i]-f.shotFrames[i-1],4);
-  if(frames===72){assert.equal(f.shots.length,40);near(f.paid,w.inkFull);near(f.duration,w.burstMax);}
+  if(frames===72){assert.equal(f.shots.length,41);near(f.paid,w.inkFull);near(f.duration,w.burstMax+1/60);}
   cases++;
  }
  assert.equal(cases,144,'all 72 charge frames with and without gear');
 });
-test('#543 one charge tick after startup pays one .5625 round; repeated taps preserve discrete cost',async()=>{
- const f=burst(await fixture(),1);assert.equal(f.shots.length,1);near(f.paid,.5625);
+test('#543 one charge tick after startup pays one 22.5/41 round; repeated taps preserve discrete cost',async()=>{
+ const f=burst(await fixture(),1);assert.equal(f.shots.length,1);near(f.paid,(22.5/41));
  const g=await fixture(),a=g.make('splatling'),r=a.weaponRunner;
  for(let n=0;n<50;n++){r.update(dt,{fire:true});near(r.charge,0);r.update(dt,{fire:true});r.update(dt,{fire:false});for(let i=0;i<30;i++)r.update(dt,{fire:false});}
  assert.equal(g.shots.length,50);near(100-a.ink,50*a.weapon.inkPerShot);
 });
 test('#543 low available ink caps reservation to whole affordable rounds, never negative or free',async()=>{
  const realm=await fixture();
- for(const available of [0,.1,.5625-1e-7,.5625,.8,1.125,2,22.5]){
+ for(const available of [0,.1,(22.5/41)-1e-7,(22.5/41),.8,(45/41),2,22.5]){
   const f=burst(realm,72,{available});assert.equal(f.shots.length,Math.floor(available/f.a.weapon.inkPerShot+1e-10));near(f.paid,f.shots.length*f.a.weapon.inkPerShot);assert.ok(f.a.ink>=0);
  }
 });
@@ -43,9 +43,9 @@ test('#543 shared fixture realm does not share gear, ink or shot observations be
  assert.notEqual(geared.a,empty.a);assert.notEqual(empty.a,fresh.a);
  assert.notEqual(geared.r,fresh.r);assert.notEqual(geared.a.s3,fresh.a.s3);assert.notEqual(geared.a.weapon,fresh.a.weapon);
  assert.ok(geared.a.weapon.inkPerShot<fresh.a.weapon.inkPerShot);
- assert.equal(geared.shots.length,40);assert.equal(empty.shots.length,0);assert.equal(fresh.shots.length,1);
- near(geared.a.ink,100-geared.paid);near(empty.a.ink,0);near(fresh.a.ink,100-.5625);near(fresh.paid,.5625);
- near(realm.WEAPONS.splatling.inkPerShot,.5625);
+ assert.equal(geared.shots.length,41);assert.equal(empty.shots.length,0);assert.equal(fresh.shots.length,1);
+ near(geared.a.ink,100-geared.paid);near(empty.a.ink,0);near(fresh.a.ink,100-(22.5/41));near(fresh.paid,(22.5/41));
+ near(realm.WEAPONS.splatling.inkPerShot,(22.5/41));
 });
 test('#543 canceled charge consumes no firing ink; stream cancellation does not invent emitted rounds',async()=>{
  const f=await fixture(),a=f.make('splatling'),r=a.weaponRunner;for(let i=0;i<12;i++)r.update(dt,{fire:true});a.form='squid';r.update(dt,{fire:false});near(a.ink,100);assert.equal(f.shots.length,0);assert.equal(r.streaming,false);
@@ -53,7 +53,7 @@ test('#543 canceled charge consumes no firing ink; stream cancellation does not 
 });
 test('#543 zero-charge/invalid plan and exact floating-point full boundaries',async()=>{
  const f=await fixture(),w=f.WEAPONS.splatling;assert.deepEqual(splatlingReservation(w,0,100),{shots:0,cost:0,duration:0});
- near(splatlingReservation(w,1,100).cost,22.5);assert.equal(splatlingReservation(w,2,100).shots,40);
+ near(splatlingReservation(w,1,100).cost,22.5);assert.equal(splatlingReservation(w,2,100).shots,41);
  for(const x of [NaN,Infinity])assert.throws(()=>splatlingReservation(w,.5,x));
 });
 test('#543 actual native projectile and packet carry one complete round after minimal reservation',async()=>{
