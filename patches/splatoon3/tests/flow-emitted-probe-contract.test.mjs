@@ -1,0 +1,15 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {flowCurveCases,validateFlowCurveRows} from '../../../scripts/lib/flow-curve-emitted-probe.mjs';
+import {refreshFlowEffects} from '../runtime/flow-effects.mjs';
+import {weaponWeight} from '../runtime/weapon-weight.mjs';
+const gear=fs.readFileSync(new URL('../runtime/gear.mjs',import.meta.url),'utf8');
+const curve=vm.runInNewContext(gear.slice(gear.indexOf('export function gearCurve('),gear.indexOf('export function modifiersFor(')).replace('export ','')+';gearCurve');
+const profile=JSON.parse(fs.readFileSync(new URL('../profile.json',import.meta.url),'utf8'));
+const rows=flowCurveCases(refreshFlowEffects,curve,weaponWeight,profile);
+test('emitted probe input matrix has 24 cases across three weights and unchanged-state zero work',()=>{assert.deepEqual(validateFlowCurveRows(rows,structuredClone(rows)),{cases:24,refreshCalls:312,cachedCalls:0});});
+test('missing export and wrong weight reject',()=>{assert.throws(()=>flowCurveCases(undefined,curve,weaponWeight,profile));assert.throws(()=>flowCurveCases(refreshFlowEffects,curve,()=> 'Mid',profile));});
+test('changed output, missing rows and nonfinite output reject',()=>{for(const edit of [r=>r.pop(),r=>r[0].modifiers.runSpeed+=.001,r=>r[0].spreadAir=NaN]){const bad=structuredClone(rows);edit(bad);assert.throws(()=>validateFlowCurveRows(bad,rows));}});
+test('fixture must exercise optimized curve count, not just equal output',()=>{const extra=(a,b,p,ap,c)=>{refreshFlowEffects(a,b,p,ap,c);c(0,0,.5,1);};assert.throws(()=>flowCurveCases(extra,curve,weaponWeight,profile));});
