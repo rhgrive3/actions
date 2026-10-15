@@ -198,11 +198,28 @@ export class ZonesRule {
       const priority = owner === actor.team ? 2 : owner === -1 ? 1 : 0;
       const distance = (center[0] - origin[0]) ** 2 + (center[1] - origin[1]) ** 2 + (center[2] - origin[2]) ** 2;
       const score = priority * 1e6 - coverageRatio * 1e3 + distance;
-      if (!best || score < best.score) best = { center, owner, score };
+      if (!best || score < best.score) best = { center, owner, score, size: this.stage.zones[index].size };
     }
     if (!best) return null;
+    const position = best.center.slice();
+    // The larger local zones need paint across their whole footprint. Assign
+    // staggered, clock-driven sweep points instead of stacking every bot at
+    // the center. Keep the original small blockout goals unchanged.
+    if (Array.isArray(best.size) && Math.max(...best.size) > 9 && typeof frame?.floorAt === 'function') {
+      const phase = Math.floor(finite(this.engine.elapsed) / 2) + Math.trunc(finite(actor.slot)) * 7 + actor.team * 13;
+      for (let attempt = 0; attempt < 25; attempt++) {
+        const cell = (phase + attempt) % 25, row = Math.floor(cell / 5);
+        const column = row % 2 ? 4 - cell % 5 : cell % 5;
+        const x = best.center[0] + (column - 2) * best.size[0] * 0.2;
+        const z = best.center[2] + (row - 2) * best.size[1] * 0.2;
+        const y = frame.floorAt(x, z);
+        if (!Number.isFinite(y) || Math.abs(y - best.center[1]) > 0.75) continue;
+        position[0] = x; position[1] = y; position[2] = z;
+        break;
+      }
+    }
     return {
-      pos: [best.center[0], best.center[1], best.center[2]],
+      pos: position,
       action: best.owner === actor.team && this.state.controllingTeam === actor.team ? 'defend' : 'paint',
     };
   }
