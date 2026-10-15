@@ -91,6 +91,19 @@ export async function checkWeaponAppearancePicker({ page, evidence }) {
         });
       },{once:true});
     });
+    // Choosing a different kit restarts the detail panel's native is-swap
+    // animation. Its button can be visible/hit-testable before the cumulative
+    // opacity passes the menu owner's admission threshold. Move the actual
+    // pointer first, then wait for the same live control to become admissible.
+    await button.hover();
+    await page.waitForFunction(() => {
+      const m=globalThis.s3ProbeG.game.menus,root=m._scr?.el;
+      const control=root?.querySelector('[data-id="weapon-appearance"]');
+      if(!control||m.current!==m._scr.name||root.inert||m._modal||!m._binds.get(control)?.accept)return false;
+      let opacity=1;
+      for(let el=control;el;el=el.parentElement){opacity*=Number(getComputedStyle(el).opacity);if(el===root)break;}
+      return opacity>0.6;
+    },null,{timeout:15000});
     await button.click();await waitPreference(initial.base);
     const pointer=await read();
     pointer.admissions=await page.evaluate(() => globalThis.s3ProbeG.game.menus.__appearanceClickTrace??[]);

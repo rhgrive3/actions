@@ -14,10 +14,10 @@ function world(degrees=0,{floorY=0,extra=[]}={}){
  const calls=[],splat=paint.splat;paint.splat=function(at,r,team,opts){const area=splat.call(this,at,r,team,opts);calls.push({at:at.clone(),r,area,face:opts.face});return area;};
  return {paint,level,calls};
 }
-function actor(id,z=4){const a=f.make(id);a.pos.set(0,20,z);const h={hit:false,point:V(),normal:V()};f.G.physics.raycast(a.pos,V(0,-1,0),40,h,true);assert.ok(h.hit);a.pos.copy(h.point);a.ground.hit=true;a.ground.face=h.face;a.ground.normal.copy(h.normal);a.groundN.copy(h.normal);a.yaw=0;a.aimDir.set(0,-1,.001).normalize();a.grounded=true;a.form='kid';a.ink=100;a.weaponRunner.cooldown=0;return a;}
+function actor(id,z=4){const a=f.make(id);a.pos.set(0,20,z);const h={hit:false,point:V(),normal:V()};f.G.physics.raycast(a.pos,V(0,-1,0),40,h,true);assert.ok(h.hit);a.pos.copy(h.point);a.ground.hit=true;a.ground.face=h.face;a.ground.normal.copy(h.normal);a.groundN.copy(h.normal);a.yaw=0;a.aimDir.set(0,-1,.001).normalize();a.grounded=true;a.form='kid';a.ink=100;a.intent.move.set(0,0,1);a.vel.set(0,0,.12);a.weaponRunner.cooldown=0;return a;}
 const tick=(a,dt,fire=true)=>{f.G.time+=dt;a.weaponRunner.update(dt,{fire,firePressed:false,sub:false});f.G.paint.advanceSimulation(dt);};
 
-function enableActor(a){delete a._integrate;a.intent.fire=true;a._prevIntent.fire=true;a.kidT=10;a.aimPitch=-Math.PI/2;a.aimYaw=0;a.weaponRunner.cooldown=0;}
+function enableActor(a){delete a._integrate;a.intent.fire=true;a._prevIntent.fire=true;a.intent.move.set(Math.sin(a.yaw),0,Math.cos(a.yaw));a.vel.set(Math.sin(a.yaw)*.12,0,Math.cos(a.yaw)*.12);a.kidT=10;a.aimPitch=-Math.PI/2;a.aimYaw=0;a.weaponRunner.cooldown=0;}
 function actorTick(a){f.G.time+=1/60;a.update(1/60);f.G.paint.advanceSimulation(1/60);}
 for(const gap of [0,.000001,.0001,.01,.2])for(const detour of [false,true]) test('distinct native faces gap '+gap+' offpath detour '+detour,()=>{
  world();const tris=[];for(const [z0,z1] of [[-2,.2],[.2+gap,2]])tris.push(-2,0,z0,2,0,z0,2,0,z1,-2,0,z0,2,0,z1,-2,0,z1);
@@ -27,7 +27,12 @@ for(const gap of [0,.000001,.0001,.01,.2])for(const detour of [false,true]) test
 });
 
 for(const strips of [64,65,1024]) test('continuous native tessellation '+strips,()=>{
- world();const tris=[];for(const [z0,z1] of Array.from({length:strips},(_,i)=>[-.001+i*.602/strips,-.001+(i+1)*.602/strips]))tris.push(-2,0,z0,2,0,z0,2,0,z1,-2,0,z0,2,0,z1,-2,0,z1);
+ world();const tris=[];
+ // A real moving Actor advances between the support query and forward drum contact.
+ // Extend only the continuous source strips past that legitimate endpoint;
+ // the seam count, exact triangle faces and positive/negative assertions remain strict.
+ const span=.802;
+ for(const [z0,z1] of Array.from({length:strips},(_,i)=>[-.001+i*span/strips,-.001+(i+1)*span/strips]))tris.push(-2,0,z0,2,0,z0,2,0,z1,-2,0,z0,2,0,z1,-2,0,z1);
  const d={triangles:new Float32Array(tris),normals:new Float32Array([0,1,0,0,1,0,0,1,0,0,1,0]),flags:new Uint32Array([3,3,3,3]),objectIds:new Uint32Array([0,0,0,0]),nodes:new Float32Array([-2,0,-2,2,0,2,-1,4]),order:new Uint32Array([0,1,2,3]),triangleFace:new Int32Array([0,0,0,0]),mask:new Uint8Array(64).fill(1),manifest:{id:'gap',bounds:{minX:-2,maxX:2,minZ:-2,maxZ:2},spawnPads:[[0,0,-1],[0,0,1]],spawnBarrier:0,gridCells:64,objects:[{collidable:true,bounds:[[-2,0,-2],[2,0,2]]}],faces:[{origin:[-2,0,-2],u:[1,0,0],v:[0,0,1],n:[0,1,0],su:4,sv:4,nu:8,nv:8,cu:.5,cv:.5,grid:0,object:0,triangles:[0,1,2,3],bounds:[[-2,0,-2],[2,0,2]]}]}};
  const count=tris.length/9;d.normals=new Float32Array(Array.from({length:count},()=>[0,1,0]).flat());d.flags=new Uint32Array(count).fill(3);d.objectIds=new Uint32Array(count);d.order=new Uint32Array(Array.from({length:count},(_,i)=>i));d.triangleFace=new Int32Array(count);d.nodes[7]=count;d.manifest.faces[0].triangles=Array.from(d.order);
  d.triangleFace=new Int32Array(Array.from({length:count},(_,i)=>Math.floor(i/2)));const template=d.manifest.faces[0];d.manifest.faces=Array.from({length:strips},(_,i)=>({...template,triangles:[2*i,2*i+1]})); const level=f.G.level=new f.NativeLevel(d);f.G.physics=new f.NativePhysics(level);const calls=[];f.G.paint={sample:()=>0,splat:(...args)=>{calls.push(args);return 0;},advanceSimulation:()=>{}};

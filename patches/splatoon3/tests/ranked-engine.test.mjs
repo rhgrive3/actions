@@ -68,6 +68,8 @@ function prepareLastFrameScore(engine) {
     engine.rule.state.barrier.active = false;
     engine.rule.state.carrier = 'last-frame-carrier';
     engine.rule.state.carrierTeam = 0;
+    // The dunk started 29F earlier; its final frame coincides with time-up.
+    engine.rule.state.goalHold = { remaining: 1 / 60 };
     return { ...neutralFrame, actors: [{ id: 'last-frame-carrier', team: 0, pos: [10, 0, 0], alive: true, grounded: true }] };
   }
 

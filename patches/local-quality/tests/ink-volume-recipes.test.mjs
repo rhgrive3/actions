@@ -37,9 +37,15 @@ test('composite reservation is atomic, reuses batches, keeps nonuniform transfor
   const camera=new f.THREE.PerspectiveCamera(60,1,.1,100);p.pos.set(4,0,-3);e.begin(camera);assert(e.submitComposite(p,[part]));e.end();assert.equal(e.metrics.culled,0,'stretched body intersects view although its centre does not');
   e.dispose();assert(e.plans.every(plan=>plan.batch===null),'preflight scratch releases disposed GPU/CPU buffers');
 });
-test('all 36 supported main definitions emit classified native rounds and render without changing gameplay',async()=>{
+test('all 22 supported main definitions emit classified native rounds and render without changing gameplay',async()=>{
   const f=await api(),system=f.G.projectiles,e=renderer(f,1024);e.register('roller',pack(f,16,16,16));const line=pack(f,32,8),dot=pack(f);e.register('shooter',{...line,patterns:[line.patterns[0],dot.patterns[0]]});
-  const records=f.MAIN_WEAPON_CATALOG.records.filter(r=>['roller','brush','shooter','dualies','splatling'].includes(r.family)||['slosher','s3-slosher-diffusion'].includes(r.id));assert.equal(records.length,36);
+  // Shooter rounds are owned by the S3 rod silhouette (s3-projectile-shapes.mjs).
+  for(const r of f.MAIN_WEAPON_CATALOG.records.filter(r=>r.family==='shooter')){
+    system.clear();f.G.actors.length=0;const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;f.tick(a,20);a.intent.fire=false;assert(system.list.length,r.id+' native action');
+    assert(system.list.every(p=>p._inkVolumeRecipe===null),r.id+' leaves the volume rod');
+    e.begin();for(const p of system.list)assert.equal(f.submitInkVolume(e,p),false,r.id+' no volume submission');e.end();
+  }
+  const records=f.MAIN_WEAPON_CATALOG.records.filter(r=>['roller','brush','dualies','splatling'].includes(r.family)||['slosher','s3-slosher-diffusion'].includes(r.id));assert.equal(records.length,22);
   for(const r of records){
     system.clear();f.G.actors.length=0;const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;f.tick(a,130);a.intent.fire=false;f.tick(a,35);assert(system.list.length,r.id+' native action');
     assert(system.list.every(p=>p._inkVolumeRecipe),r.id+' classification');for(let i=0;i<3;i++)system.update(1/60);assert(system.list.length,r.id+' actual flight');const before=system.list.map(snapshot);e.begin();let drawn=0;for(const p of system.list)if(f.submitInkVolume(e,p))drawn++;e.end();assert(drawn>0,r.id+' positive finite presentation');assert.deepEqual(system.list.map(snapshot),before,r.id+' authoritative state');
@@ -49,9 +55,10 @@ test('all 36 supported main definitions emit classified native rounds and render
     for(let i=0;i<3;i++)system.update(1/60);const before=system.list.map(snapshot);e.begin();let drawn=0;for(const p of system.list)if(f.submitInkVolume(e,p))drawn++;e.end();assert(drawn>0,r.id+' vertical volume');assert.deepEqual(system.list.map(snapshot),before);
   }e.dispose();
 });
-test('actual Shooter/Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect',async()=>{
+test('actual Dualies/Splatling births draw connected rods, preserve authority, and fall back as one effect',async()=>{
   const f=await api(),e=renderer(f),line=pack(f,32,8),dot=pack(f);e.register('shooter',{...line,patterns:[line.patterns[0],dot.patterns[0]]});
-  for(const kind of ['shooter','dualies','splatling']) {
+  {const a=f.make('shooter');f.G.projectiles.clear();f.G.projectiles.fireShooter(a,a.weapon,0);assert.equal(f.G.projectiles.list[0]._inkVolumeRecipe,null,'Shooter uses the S3 rod silhouette');}
+  for(const kind of ['dualies','splatling']) {
     const a=f.make(kind);f.G.projectiles.clear();f.G.projectiles.fireShooter(a,a.weapon,0);assert(f.G.projectiles.list.length);
     const p=f.G.projectiles.list[0];assert.equal(p._inkVolumeRecipe,'shooter');p.age=3/60;p.pos.addScaledVector(p.vel,3/60);
     const before=snapshot(p);e.begin();assert(f.submitInkVolume(e,p));e.end();assert.deepEqual(snapshot(p),before);assert.equal(e.metrics.active,3);
@@ -71,7 +78,7 @@ test('native tip translations retain exact Float32 endpoints at decimal-rounding
     [-3.449965,3.44996501,1.06460501],
   ];
   try {
-    for(const kind of ['shooter','dualies','splatling']) {
+    for(const kind of ['dualies','splatling']) {
       f.G.projectiles.clear();const a=f.make(kind);f.G.projectiles.fireShooter(a,a.weapon,0);
       const p=f.G.projectiles.list[0];assert(p,kind+' native birth');p.age=3/60;
       for(const xyz of positions) {
@@ -106,13 +113,13 @@ test('Slosher uses a continuous sheet and sourced tail without detached beads or
 });
 test('catalogue local and JSON-wire births keep immutable family/mode through weapon switches and pooled reuse',async()=>{
   const f=await api(),system=f.G.projectiles,peer=f.make('shooter');peer.remote=true;peer.nid=9;peer.team=1;f.G.netm=new f.NetMatch({myId:7},{});
-  for(const [id,vertical,recipe] of [['s3-roller-compact',false,'roller-horizontal'],['s3-roller-compact',true,'roller-vertical'],['s3-shooter-first',false,'shooter'],['s3-slosher-diffusion',false,'slosher'],['s3-brush-mini',false,'brush']]) {
-    system.clear();f.G.netm.out.length=0;const a=f.make(id);a.nid=7;a.form='kid';a.grounded=!vertical;a.intent.fire=true;
+  for(const [id,vertical,recipe] of [['s3-roller-compact',false,'roller-horizontal'],['s3-roller-compact',true,'roller-vertical'],['s3-shooter-first',false,null],['s3-slosher-diffusion',false,'slosher'],['s3-brush-mini',false,'brush']]) {
+    system.clear();f.G.netm.out.length=0;const a=f.make(id);a.nid=7;a.form='kid';a.grounded=true;a.intent.jump=vertical;a.intent.fire=true;
     let ticks=0;while(!system.list.length&&ticks++<180)f.tick(a);a.intent.fire=false;assert(system.list.length,id+' native action emits');
     assert(system.list.every(p=>p._inkVolumeRecipe===recipe),id+' local classification');
     const packets=JSON.parse(JSON.stringify(f.G.netm.out.filter(e=>e[1]==='p')));assert(packets.length,id+' real wire births');const original=JSON.stringify(packets);
     system.clear();peer.weaponRunner.s3FlickVertical=!vertical;for(const event of packets)system.ghostProjectile(peer,event);
     assert.equal(system.list.length,packets.length);assert.equal(JSON.stringify(packets),original);
-    for(const p of system.list){assert.equal(p._inkVolumeRecipe,recipe,id+' remote classification after metadata');assert.equal(p.wid,id);assert.equal(p.damage,0);assert.equal(p.ghost,true);assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());}
+    for(const p of system.list){assert.equal(p._inkVolumeRecipe,recipe,id+' remote classification after metadata');assert.equal(p.wid,id);assert.equal(p.damage,0);assert.equal(p.ghost,true);if(recipe)assert.deepEqual(p._inkVolumeDirection.toArray(),p.vel.toArray());}
   }
 });
