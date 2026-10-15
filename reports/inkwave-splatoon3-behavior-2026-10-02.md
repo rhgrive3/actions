@@ -4494,3 +4494,8 @@ Six wire negative cases and three view negative cases fail before their correcti
 ## 2026-10-15: SplatoonSWEPs を参考にした発射時のインク
 
 所有者の指示で SplatoonSWEPs（Splatoon 2 の Garry's Mod 版）のテクスチャをそのまま取り込み、シューター・シェルターの銃口膜を SWEPs の MuzzleSplash（円錐2枚、α テスト基準 0.1→0.9）にした。ストリンガー・ワイパーの帯は inkring テクスチャで破れる。スクリュースロッシャーは SWEPs の箱と半透明の渦が本家と違うため採らず、所有者提供の本家画像に合わせて、回転するねじれた穴あきのインク膜（丸い塊なし）と細い筋のしずくにした。表示のみで、弾・当たり・塗り・通信は変更していない。数値は SWEPs の値または画像からの目視で、Splatoon 3 の実測ではない。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
+
+
+## 2026-10-16 JST — #841 native Storm recovery acceptance
+
+Current main `ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a` retains normal0.21 HP/fixed-frame recovery during actual Storm throw, the60F damage wait, max100 and single allied-rain recovery. Source8/8 and emitted8/8 plus genuine-browser9/9 controlled30/60/120Hz cases now pass with ordinary Q→Sub press/release and the real emitter/cloud. No gameplay values changed; HP/damage-age/special gauge are explicit setup, SwiftShader is not physical-device or proprietary Nintendo animation calibration. See `inkwave-issue-followup-2026-10-16.md` and its bounded receipt. This closes the HP-freeze acceptance for#841 only; other Issues keep their remaining conditions.
