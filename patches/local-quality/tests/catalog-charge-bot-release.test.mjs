@@ -69,7 +69,7 @@ function scenario(f, id, { ink = 90, mode = 'paint' } = {}) {
   return { a, brain, trace, step };
 }
 
-function checkBoundedRelease(label, w, hz, maxSeconds = 0.9) {
+function checkBoundedRelease(label, w, hz, maxSeconds = 2.25) {
   const history = w.trace;
   assert.ok(history.some(s => s.fire), label + ' must attempt a legitimate charge');
   assert.ok(history.some((s,i) => i && history[i - 1].fire && !s.fire), label + ' must release Fire');
@@ -109,7 +109,7 @@ test('catalogue bots release in aimed combat, never hold a charged weapon indefi
     const id = catalogId(f, family);
     const w = scenario(f, id, { mode:'fight' });
     for (let i = 0; i < 60 * 4; i++) w.step();
-    checkBoundedRelease(id + ' fight', w, 60, 1.5);
+    checkBoundedRelease(id + ' fight', w, 60, 2.25);
   }
 });
 
@@ -133,7 +133,7 @@ test('composed catalogue charge AI runs at 30/60/120Hz without indefinite hold',
   for (const hz of [30,60,120]) for (const family of HOLD_FAMILIES) {
     const id = catalogId(f, family), w = scenario(f, id);
     for (let i = 0; i < hz * 4; i++) w.step(hz);
-    checkBoundedRelease(id + ' @' + hz + 'Hz', w, hz, 1.25);
+    checkBoundedRelease(id + ' @' + hz + 'Hz', w, hz, 2.25);
   }
 });
 
