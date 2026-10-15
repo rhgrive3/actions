@@ -549,7 +549,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       trail:0,trailEvery:0,trailRadius:0,grav:0,drag:0,seed:Math.random(),ghost:!!options.ghost,
       delay:finite(options.delay,0),vis:.1,tail0:.8,tailK:1.3,wob:.02,wobF:26,nose:.3,sats:0,
       inkMeta:{s3Catalog:[1,descriptor.key,descriptor.unit,descriptor.charge,options.index||0]},
-      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
+      // Splatlings without FreeGravity (projected-splash path) stagger by SplitNum too:
+      // a Hydra's 23.5 SpawnBetweenLength otherwise left ~6-19 m dry under sustained fire.
+      catalog:{r,descriptor,travel:0,nextSplash:descriptor.splashDropSpec||descriptor.splashStaggered?descriptor.splashFirst:1,dropCount:0,hit:new Hit(),seen:new Set(),volley:options.volley,
         index:options.index||0,phase:0,stuck:false,fuse:0,carry:0,range:descriptor.range,bounces:0,groundBounces:0}});
     p.pos.copy(at);p.prev.copy(at);p.start.copy(at);p.vel.copy(direction).multiplyScalar(options.speed??descriptor.speed);
     p.vel.y += finite(options.lift,0);updateCatalogVisual(p);
@@ -563,11 +565,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // Shooter budgets also apply to the existing projected-paint fallback;
     // missing physics still yields no detached splash spec or invented gravity.
     const sourceNum=desc.b.SplashSpawnParam?.SpawnNum;
-    if ((desc.splashDropSpec || r.family==='shooter') && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
+    if ((desc.splashDropSpec || r.family==='shooter' || r.family==='splatling') && (r.family==='shooter'||r.family==='splatling'||r.family==='dualies') &&
         Number.isFinite(sourceNum) && sourceNum >= 0) {
       const ordinal=s.paintShotOrdinal||0;
       desc.splashCount=catalogFractionalSplashCount(sourceNum,ordinal);
-      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);
+      desc.splashFirst=catalogSplashFirst(desc.b.SplashSpawnParam,ordinal);desc.splashStaggered=true;
       s.paintShotOrdinal=ordinal+1;
     }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);

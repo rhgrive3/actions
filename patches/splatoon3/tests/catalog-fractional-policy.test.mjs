@@ -63,7 +63,10 @@ test('TripleQuick legacy projection consumes the local budget even for zero or t
   const credits=[];let stamps=0;
   a.addTurf=amount=>credits.push(amount);
   f.G.paint.splat=()=>{stamps++;return credit;};
-  for(const expected of [1,2]){
+  // TripleQuick SplitNum 12, ForceSpawnNearestAddNumArray [3,6,9]: ordinals 2 and 5 are nearest-release
+  // slots (budgets 1 and 2), so every candidate lies within the round's reach under SplitNum staggering.
+  for(const [ordinal,expected] of [[2,1],[5,2]]){
+   a.weaponRunner.update(0,{fire:false,firePressed:false,sub:false});a.weaponRunner.catalogState.paintShotOrdinal=ordinal;
    const p=emit(f,a),before=stamps;
    f.G.physics.raycast=(at,d,len,h)=>{h.hit=true;h.face=0;h.point.copy(at);h.point.y=0;return h;};
    for(let i=0;i<30;i++){f.G.time+=1/60;f.G.projectiles.update(1/60);}
@@ -75,7 +78,7 @@ test('TripleQuick legacy projection consumes the local budget even for zero or t
    f.G.projectiles.clear();
   }
   assert.deepEqual(credits,[credit,credit,credit]);
-  assert.equal(a.weaponRunner.catalogState.paintShotOrdinal,2);
+  assert.equal(a.weaponRunner.catalogState.paintShotOrdinal,6);
  }
 });
 test('zero and tiny fractional candidate budgets stay arithmetic-only',()=>{
@@ -91,7 +94,9 @@ for(const dt of [1/30,1/60,1/144])test('TripleQuick real projected paint and tur
  const {paint,face}=makePaintWorld(f);f.G.settings={};f.setRandom(()=>.37);
  const a=f.make('s3-shooter-triplequick');a.form='kid';a.ink=100;a.pos.set(0,0,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,1.05,60);
  const stamps=[];const splat=paint.splat;paint.splat=function(...args){const value=splat.apply(this,args);stamps.push({value,owner:args[3]?.claimOwner});return value;};
- for(let ordinal=0;ordinal<2;ordinal++){
+ // Nearest-release SplitNum slots (see above): budgets 1 then 2.
+ for(const [slot,ordinal] of [[2,0],[5,1]]){
+  a.weaponRunner.update(0,{fire:false,firePressed:false,sub:false});a.weaponRunner.catalogState.paintShotOrdinal=slot;
   const before=stamps.length;emitMainShot(f,a);const p=f.G.projectiles.list.at(-1);
   assert.equal(p.catalog.descriptor.splashDropSpec,null);assert.equal(p.catalog.descriptor.splashCount,ordinal+1);
   for(let i=0;i<Math.ceil(0.15/dt) && p.catalog.dropCount<ordinal+1;i++){f.G.time+=dt;f.G.projectiles.update(dt);paint.advanceSimulation(dt);}
