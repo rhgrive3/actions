@@ -132,7 +132,7 @@ export function FAMILY_TRIGGER(ch, name) {
 
 const mix = (a, b, t) => a + (b - a) * t;
 export function FAMILY_POSE(ch, dt, s, C) {
-  const cfg = SABER[ch.weaponModel]; if (!cfg) return;
+  const cfg = SABER[ch.weapon?.def?.modelId || ch.weaponModel]; if (!cfg) return;
   const m = sabState(ch), r = ch._runner?.(s), cs = r?.catalogState;
   dt = Math.min(0.1, Math.max(0, dt || 0));
   const busy = !!cs && !!(cs.pending || cs.melee);

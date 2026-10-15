@@ -293,7 +293,7 @@ const guardStates = new WeakMap(), guardInv = new THREE.Matrix4(), guardCentre =
 const guardEuler = new THREE.Euler(0,0,0,'YXZ'), guardQ = new THREE.Quaternion();
 const GUARD_PLANE = { 's3-shelter-normal': .5, 's3-shelter-wide': .74, 's3-shelter-focus': .525 };
 function guardPose(ch, dt, s, C) {
-  const plane = GUARD_PLANE[ch.weaponModel]; if (plane === undefined) return;
+  const plane = GUARD_PLANE[ch.weapon?.def?.modelId ?? ch.weaponModel]; if (plane === undefined) return;
   const r = ch._runner?.(s), canopy = r?.catalogState?.canopy;
   let m = guardStates.get(ch);
   const active = !!canopy?.open && !canopy.launched;
