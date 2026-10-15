@@ -14,7 +14,7 @@ Bounded receipt: [inkwave-storm-recovery-841-2026-10-16.json](inkwave-storm-reco
 
 ## Validation failures repaired
 
-The current-main #287 settings reset test had a duplicate `normalizeViewSettings` import and could not parse. Removing only that duplicate restores2/2 native settings persistence/reset cases. Broader controller calibration remains independent and #287 is not closed by this change.
+The audited main #287 settings reset test had a duplicate `normalizeViewSettings` import and could not parse. Its2/2 native settings persistence/reset cases pass after removing the duplicate. Main independently adopted that fix through PR#1477; this branch retains main's single canonical import. Broader controller calibration remains independent and #287 is not closed by this change.
 
 The live-log test assumed its parent would observe child output within30ms. Under contention, started/finished could arrive in one chunk. The child now waits for a file acknowledgement written only after the parent confirms progress was persisted and forwarded. All original assertions and the production logger remain unchanged:3/3 live-log contracts and16/16 complete workflow contracts pass.
 

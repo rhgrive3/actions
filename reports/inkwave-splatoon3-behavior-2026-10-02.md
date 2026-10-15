@@ -4499,3 +4499,19 @@ Six wire negative cases and three view negative cases fail before their correcti
 ## 2026-10-16 JST — #841 native Storm recovery acceptance
 
 Current main `ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a` retains normal0.21 HP/fixed-frame recovery during actual Storm throw, the60F damage wait, max100 and single allied-rain recovery. Source8/8 and emitted8/8 plus genuine-browser9/9 controlled30/60/120Hz cases now pass with ordinary Q→Sub press/release and the real emitter/cloud. No gameplay values changed; HP/damage-age/special gauge are explicit setup, SwiftShader is not physical-device or proprietary Nintendo animation calibration. See `inkwave-issue-followup-2026-10-16.md` and its bounded receipt. This closes the HP-freeze acceptance for#841 only; other Issues keep their remaining conditions.
+## 2026-10-16: native collision query lifetime optimization
+
+- Reference/conditions: retain the documented Splatoon 3 11.3.0 baseline; all
+  weapon/gear settings unchanged. No new retail numeric values are inferred.
+- INKWAVE implementation: `patches/native-stages/runtime/triangle-world.mjs`
+  reuses traversal stacks and supports caller-owned ray results;
+  `native-physics.mjs` copies pooled hits and ends a fit query after obstruction.
+- Reproduction/impact: repeated movement, camera/weapon rays and blocked body
+  probes on native triangle stages avoid temporary allocations and unnecessary
+  traversal, preserving geometry, tolerances, nearest-hit order and grate rules.
+- Verification: frozen-before comparison, 7,000 mixed rays, native movement at
+  30/60/120 Hz, existing actual weapon/damage/paint replays at all three rates,
+  and actual minified Chromium component comparison. Logic/component verification
+  is distinct from full-game rendering; Switch/mobile hardware and retail
+  equivalence remain unverified. Details and workload limits are in
+  `reports/inkwave-bvh-optimization-2026-10-16.md`.
