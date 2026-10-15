@@ -24,3 +24,12 @@ The PR1437-composed minified build is `9a206f9fbd46` (full hash in the delivery 
 The existing `validate-inkwave-update.yml` browser job already invokes `scripts/check-inkwave-browser.mjs`. That gate now calls `scripts/lib/inkwave-weapon-appearance-probe.mjs` to exercise trusted pointer and keyboard activation, the native pad-accept API, explicitBase/default transitions, retained kit values, reopening persistence and a screenshot on the real verified build. Syntax is checked locally; real-browser execution on the eventual PR head remains pending. The pad API probe does not claim physical-controller validation.
 
 Independent full-cycle probes and final emitted test totals are recorded in the delivery manifest. Simulation/finite transforms, browser UI acceptance, and native retail comparison are separate evidence levels. Retail capture/mesh-fidelity acceptance remains open.
+
+
+## Current-main input/CI reconciliation (2026-10-15)
+
+Integrated main `01aa5cc61c842a8616ab38ff5fb541b6becf1395`; this restores the missing adopted tap-gesture browser script and newer defense/input dependencies without weakening their workflow gates. The picker probe now moves the real pointer and waits for the actual detail-panel cumulative opacity/native binding after the kit-selection is-swap animation. It does not force visibility, call the accept handler, or bypass the menu owner.
+
+Current source registry/preference/95-kit/explicit-base isolation4/4 and existing menu input-ownership5/5 pass. Actual Chromium on the current emitted build completes trusted pointer Base, Enter, native pad-menu accept, persistence after reopening, layout/hit testing and unchanged kit/sub/special/cost assertions with zero page errors. Saved proof is a local browser artifact, not physical-controller evidence. Content hash `34addc4e287f786ce8164919fa005bd3fcc32e2815262a97f18ac4b4b912a2ec`.
+
+The prior visual rejection is still binding: silhouette/emblem/pattern corrections and full93-appearance visual acceptance are not supplied by this technical reconciliation. This remains Draft pending final public-head CI and visual acceptance; no retail reproduction or main adoption claim.
