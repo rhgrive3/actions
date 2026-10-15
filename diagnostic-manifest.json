@@ -1,12 +1,12 @@
 {
   "status": "frozen diagnostic; independently reviewed; hosted results pending",
-  "candidateTree": "ff7fc3039809daba8e128213103a283d6aa3c200",
+  "candidateTree": "5df83f55c0d32309d7281fe3605a09c6a112bd74",
   "baseHead": "d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd",
   "expected": {
     "modelSource": 79,
     "modelEmitted": 79,
     "skips": 0,
-    "controls": 73,
+    "controls": 80,
     "images": 56,
     "brellaLifecycleReceipts": 60,
     "workRows": 32
@@ -26,9 +26,9 @@
     },
     {
       "path": "capture-second-integration.mjs",
-      "sha256": "4b3e662dc4ea2be71e816a8e24d68854c026a53d711a3c26dfae280b86b8c237",
-      "blob": "6d2ad10910012b48673d03718ac8d14b66180b77",
-      "bytes": 13280
+      "sha256": "44c31aee9b986c53cdc2615e24954d0297a0a0764477359596c7039b794cad1c",
+      "blob": "6c08182972b22337f266997c421b560c6ffdd786",
+      "bytes": 13398
     },
     {
       "path": "second-capture-integrity.test.mjs",
@@ -44,9 +44,9 @@
     },
     {
       "path": "capture-b-second.mjs",
-      "sha256": "4e214203a9925f7985e0d28790c1de3e118573bffa7865c365fdcb37b8f5d5d0",
-      "blob": "880163246a710eb1af655d5293656d4d71030f73",
-      "bytes": 10805
+      "sha256": "2e8aa59ba8a44e368c1b990587da62548bbb5fc066e028b30772ca80130cd776",
+      "blob": "c0790078b1f5fc0e5b36de873bf1fc51f2ae7119",
+      "bytes": 12211
     },
     {
       "path": "capture-c-second.mjs",
@@ -104,15 +104,15 @@
     },
     {
       "path": ".github/workflows/second-weapon-acceptance.yml",
-      "sha256": "0d76eb29f4c81e93c5032bdf45996905ebc3dc857890fb24c9b1536fb72a3e61",
-      "blob": "1dd5f4789958814613d4297331c3cfdc077d7052",
-      "bytes": 2832
+      "sha256": "1dbe35d7d5b3537787959c25c0c4967300d715d7d8122be5c53b589ab081ce38",
+      "blob": "07be90ed2d25c2a308bd7fea7c2e75f3901af16e",
+      "bytes": 2877
     },
     {
       "path": "capture-b-second.test.mjs",
-      "sha256": "ad74224790ec8144f37791ebcb1d680db580efee6054308756b92b131ae564a4",
-      "blob": "7059c7cedf526a3f6507ce6849c2798d65796c70",
-      "bytes": 3145
+      "sha256": "39844211114b694deedd3f5fa2983a463cbd1a9e40f402e4d6531431bdfe151d",
+      "blob": "fca49880867be3edc3491c110a4f3fd737bf2346",
+      "bytes": 6448
     },
     {
       "path": "brella-capture-controls.test.mjs",
@@ -122,15 +122,15 @@
     },
     {
       "path": "acceptance-plan.json",
-      "sha256": "1dce60e71f566363095291bf8c15593ec39f73da900b8173bfcafd9409ea34f7",
-      "blob": "7beafbc284a38a34b27fcf569695224c62876e25",
+      "sha256": "20d48c0a09642d9ce1948889f4ffb33de8cf367ae02b78d426a7c2b21d6e06a7",
+      "blob": "3ebc8d9e5d94a5adb41393ab3ee493b623de6c8b",
       "bytes": 5636
     },
     {
       "path": "ACCEPTANCE_SCOPE.txt",
-      "sha256": "902ddf3c466ba449d80e6672ce4e4bb77ddde91b896bac6f716774e0997496d9",
-      "blob": "deb072a5028a07f24d18fc714948ad96ef11c78e",
-      "bytes": 2025
+      "sha256": "4bfa670dd7927bd96af76cc0d86c8c7857b487f072160be7407e73d050288d6a",
+      "blob": "1c89b094fd361ee75008f226ad1191bf9eacc3f7",
+      "bytes": 2137
     },
     {
       "path": "select-candidate.mjs",
@@ -167,7 +167,13 @@
       "sha256": "e00c75d3ee605752cf3f42d6274a675a84a20005f2567d2c0bb577e82fcb1f2c",
       "blob": "e20dae8e7ef3aab3c87ede17939fc372395d133c",
       "bytes": 3905
+    },
+    {
+      "path": "capture-checkpoint-order.test.mjs",
+      "sha256": "251870a3d0ca7ec78325481175cf780e96dadbd03c9c3e247e64730200757481",
+      "blob": "c18d1cff8251a1d6b0caded9140009a6bdf6e7c2",
+      "bytes": 1301
     }
   ],
-  "candidateHead": "52e868afd8f64b6d830d3c0df0e9e9690d9b3751"
+  "candidateHead": "5cd2c82c3c76295aa20191a7bc500beacf2b69f8"
 }

@@ -1,5 +1,5 @@
 Second limited weapon batch, stacked on the frozen six-model first batch.
-Candidate PR1471: 52e868afd8f64b6d830d3c0df0e9e9690d9b3751, tree ff7fc3039809daba8e128213103a283d6aa3c200; parent d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd.
+Candidate PR1471: 5cd2c82c3c76295aa20191a7bc500beacf2b69f8, tree 5df83f55c0d32309d7281fe3605a09c6a112bd74; sole parent 52e868afd8f64b6d830d3c0df0e9e9690d9b3751; original stack base d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd. The latest successor changes two tests only.
 
 One shared production build, exact fourteen-variant registry and unchanged65 base-model catalog. All source inputs, builder and actual served artifact hashes are required. Source and emitted gates use the same13 model test files, expected79 passed/zero skipped. This includes actual Actor/Character tests for the first6 and new8, with controlled runner states, hold/nativeCarry/part animator and matrix assertions. These are not a blanket real firing/payment test for all fourteen weapons. Existing Settings fixture2 tests remain separate from model79.
 

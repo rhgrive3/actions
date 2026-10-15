@@ -79,8 +79,7 @@ async function capture(input,shared){
   const work=await (0,eval)('('+workSource+')')({api,R,THREE,scene,renderer,camera});
   await window.__captureCheckpoint('work',work);
   let C;try{C=await (0,eval)('('+cSource+')')({api,R,THREE,scene,renderer,camera});await window.__captureCheckpoint('C',C);}catch(error){await window.__captureCheckpoint('C-failure',error.capturePartial||{error:String(error)});throw error;}
-  const B=await (0,eval)('('+bSource+')')({api,R,THREE,scene,renderer,camera});
-  await window.__captureCheckpoint('B',B);
+  let B;try{B=await (0,eval)('('+bSource+')')({api,R,THREE,scene,renderer,camera});await window.__captureCheckpoint('B',B);}catch(error){await window.__captureCheckpoint('B-failure',error.capturePartial||{error:String(error)});throw error;}
   let A;try{A=await (0,eval)('('+aSource+')')({api,R,THREE,scene,renderer,camera});await window.__captureCheckpoint('A',A);}catch(error){await window.__captureCheckpoint('A-failure',error.capturePartial||{error:String(error)});throw error;}
   if(shaderErrors.length)throw Error('Shader errors: '+shaderErrors.join('\n'));
   scene.remove(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);nativeEnvironment.dispose();
