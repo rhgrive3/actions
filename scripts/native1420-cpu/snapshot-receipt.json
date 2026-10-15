@@ -1,0 +1,4220 @@
+{
+  "head": "c99d1310a6cfb1ba65e9fb3394799c6fdbc42778",
+  "files": [
+    {
+      "path": "inkwave-public/src/audio/audio.js",
+      "blob": "e7cbc60ba654fa50ea38584063ac01b49e9ff56b",
+      "bytes": 81768
+    },
+    {
+      "path": "inkwave-public/src/audio/bossAudio.js",
+      "blob": "faef225b8774503221593bfa63844c46bafd2d25",
+      "bytes": 9718
+    },
+    {
+      "path": "inkwave-public/src/audio/music.js",
+      "blob": "04b6edf52b6e4255cd0a6e21e2149e30f5ceea28",
+      "bytes": 64670
+    },
+    {
+      "path": "inkwave-public/src/boss/boss.js",
+      "blob": "8d661808f7e58506b8df2284690be122b1f28eac",
+      "bytes": 27066
+    },
+    {
+      "path": "inkwave-public/src/boss/bossAnim.js",
+      "blob": "33d9cea22e78cf2bc92a44791649d4d471349b5a",
+      "bytes": 54527
+    },
+    {
+      "path": "inkwave-public/src/boss/bossBrain.js",
+      "blob": "e978bfde30efac8b53cbf23fae264860f6a43988",
+      "bytes": 19636
+    },
+    {
+      "path": "inkwave-public/src/boss/bossHazards.js",
+      "blob": "34108853448ae184eb26815f0ba172fd72ee4b33",
+      "bytes": 32594
+    },
+    {
+      "path": "inkwave-public/src/boss/bossMats.js",
+      "blob": "7fc3a8737ba34e077bc6f538c6b706a80a562fca",
+      "bytes": 36859
+    },
+    {
+      "path": "inkwave-public/src/boss/bossMode.js",
+      "blob": "d2c5471d7acd7159b17cf18f7c16645ad0a0d1b8",
+      "bytes": 2209
+    },
+    {
+      "path": "inkwave-public/src/boss/bossModel.js",
+      "blob": "629ca6b2871a01d6f1621563fcf2951f913478c0",
+      "bytes": 14439
+    },
+    {
+      "path": "inkwave-public/src/boss/bossModelFx.js",
+      "blob": "b907c156d0c7f808106adb9feb7684b3b34676a8",
+      "bytes": 9714
+    },
+    {
+      "path": "inkwave-public/src/boss/bossModelGeo.js",
+      "blob": "a33f47d1f7922bf8a94bc913965e4869c619a6e4",
+      "bytes": 68734
+    },
+    {
+      "path": "inkwave-public/src/boss/bossNav.js",
+      "blob": "2b40f5fd8d1ae17f5c15c361d394516d0bd30198",
+      "bytes": 12774
+    },
+    {
+      "path": "inkwave-public/src/config.js",
+      "blob": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8",
+      "bytes": 17193
+    },
+    {
+      "path": "inkwave-public/src/core/ctx.js",
+      "blob": "637789587ff84ddeea2aeb01b6e7e4ad83343c76",
+      "bytes": 1928
+    },
+    {
+      "path": "inkwave-public/src/core/device.js",
+      "blob": "263e94f9d4b97bfdc7f5e5e9ed76fc1b23973f1d",
+      "bytes": 2757
+    },
+    {
+      "path": "inkwave-public/src/core/gyro.js",
+      "blob": "c1b17e3e62cffd86ab81f4f96002c67ad719348a",
+      "bytes": 11520
+    },
+    {
+      "path": "inkwave-public/src/core/input.js",
+      "blob": "bcabc818d6e57e526748df15aec6d478a1223de0",
+      "bytes": 7310
+    },
+    {
+      "path": "inkwave-public/src/core/mobile.js",
+      "blob": "c63ef307b951fab33bd74ba94ace0338139d075f",
+      "bytes": 28398
+    },
+    {
+      "path": "inkwave-public/src/core/renderer.js",
+      "blob": "a22536edfe01fac84f7e04e76738f7b8be5d2967",
+      "bytes": 13808
+    },
+    {
+      "path": "inkwave-public/src/core/shadowcache.js",
+      "blob": "8e0354de7b38936138f1cb00c41af59f37dd1168",
+      "bytes": 9188
+    },
+    {
+      "path": "inkwave-public/src/dev/stubs.js",
+      "blob": "e8245efc520d38bd079e4b0b3057343adbbe8282",
+      "bytes": 2123
+    },
+    {
+      "path": "inkwave-public/src/fx/fx.js",
+      "blob": "c7ed50dde7816a5fe8ad19e628691c913a15da96",
+      "bytes": 122029
+    },
+    {
+      "path": "inkwave-public/src/fx/fxHooks.js",
+      "blob": "3d70174a25c34a09593d19340ec783376c9fc83e",
+      "bytes": 35952
+    },
+    {
+      "path": "inkwave-public/src/fx/screenfx.js",
+      "blob": "1584cd2b7acf43cbfc613ad2c0d2a0a608acd08f",
+      "bytes": 54364
+    },
+    {
+      "path": "inkwave-public/src/fx/swimWake.js",
+      "blob": "faffb0501aea1086b5b3c0dde129248ded9b18b5",
+      "bytes": 5123
+    },
+    {
+      "path": "inkwave-public/src/game/actor.js",
+      "blob": "84d425009b3b01eca9a6b4009c2dcadb170612ef",
+      "bytes": 48957
+    },
+    {
+      "path": "inkwave-public/src/game/bots.js",
+      "blob": "cc7509fec2b67e862a4f875ba6b5a87d18744e3b",
+      "bytes": 41330
+    },
+    {
+      "path": "inkwave-public/src/game/cameraRig.js",
+      "blob": "4aa0afe836d5e178002cbc08239727fd3868b9f4",
+      "bytes": 25218
+    },
+    {
+      "path": "inkwave-public/src/game/character-face.js",
+      "blob": "a6e30e289ddbdb7a073d61196620d81946ec53be",
+      "bytes": 58772
+    },
+    {
+      "path": "inkwave-public/src/game/character-geo.js",
+      "blob": "bcc01ce107d566bedc998307496cf29beb99d099",
+      "bytes": 112858
+    },
+    {
+      "path": "inkwave-public/src/game/character-hair.js",
+      "blob": "55ede4cb7a4db8459687ee284679a18e1195474c",
+      "bytes": 19704
+    },
+    {
+      "path": "inkwave-public/src/game/character-lod.js",
+      "blob": "aeaed818231b333acc2dae0e164a19115455a4e9",
+      "bytes": 11135
+    },
+    {
+      "path": "inkwave-public/src/game/character-mats.js",
+      "blob": "cb2d7ba4b8867936a48cf4a0e141969a10e22a50",
+      "bytes": 107173
+    },
+    {
+      "path": "inkwave-public/src/game/character-outfit.js",
+      "blob": "495c26a37a15d03b3092a7daceb57c38f6eef94a",
+      "bytes": 100141
+    },
+    {
+      "path": "inkwave-public/src/game/character-style.js",
+      "blob": "865199096da4ac30ca0248424f5060ed0822e91f",
+      "bytes": 8424
+    },
+    {
+      "path": "inkwave-public/src/game/character-weapons.js",
+      "blob": "3ac287943669ba320abbf040a2dcbefc521025b3",
+      "bytes": 65448
+    },
+    {
+      "path": "inkwave-public/src/game/character.js",
+      "blob": "f42098255c38ae6d2bbddcfcd9b3d2082b09b4db",
+      "bytes": 230702
+    },
+    {
+      "path": "inkwave-public/src/game/inkCollision.js",
+      "blob": "b0694724ba3704b53a2e3d6b7a5ae53ded7b10c6",
+      "bytes": 5310
+    },
+    {
+      "path": "inkwave-public/src/game/inkFlight.js",
+      "blob": "eeab25571d40ad4ad7656235965ee1efacda80fa",
+      "bytes": 9879
+    },
+    {
+      "path": "inkwave-public/src/game/inkFlightRuntime.js",
+      "blob": "9173bdff8b58017a43d40d18a21de682137aae39",
+      "bytes": 10992
+    },
+    {
+      "path": "inkwave-public/src/game/lobbySet-geo.js",
+      "blob": "8688c49f773d064077e79aac3620666d4e13ad5a",
+      "bytes": 24684
+    },
+    {
+      "path": "inkwave-public/src/game/lobbySet-mats.js",
+      "blob": "1e2c876981bb5c1c3fba6881a86c3324ddbeb8fd",
+      "bytes": 26713
+    },
+    {
+      "path": "inkwave-public/src/game/lobbySet-tex.js",
+      "blob": "54a1334528bd06ebd9476584a4d39c1142b6a084",
+      "bytes": 29035
+    },
+    {
+      "path": "inkwave-public/src/game/lobbySet.js",
+      "blob": "a64971eaa197021a48840074460c21b787ae9404",
+      "bytes": 59076
+    },
+    {
+      "path": "inkwave-public/src/game/match.js",
+      "blob": "4cd01c0c35099d53e062446b34c5f3caa252a968",
+      "bytes": 11002
+    },
+    {
+      "path": "inkwave-public/src/game/minimap.js",
+      "blob": "ac2795a523c7fe8ac00c570f9f3e17a2cebebc96",
+      "bytes": 25604
+    },
+    {
+      "path": "inkwave-public/src/game/motion/body-balance.js",
+      "blob": "dd09f8a596af1a87169e71c935f114f735716a9a",
+      "bytes": 4506
+    },
+    {
+      "path": "inkwave-public/src/game/motion/cadence-control.js",
+      "blob": "8f90844cc260124a3799281fdcc390592a7d0e94",
+      "bytes": 1408
+    },
+    {
+      "path": "inkwave-public/src/game/motion/contact-transition.js",
+      "blob": "c78aa93a72adccdc3b19c55a2122646843ad4985",
+      "bytes": 1503
+    },
+    {
+      "path": "inkwave-public/src/game/motion/gait-targets.js",
+      "blob": "e7511eba09c3b2c40eb1fbfab7029ec99acdb04f",
+      "bytes": 1449
+    },
+    {
+      "path": "inkwave-public/src/game/motion/hair-targets.js",
+      "blob": "d0771fbcdb9cb5ed27006d55db49a15402a6bcf1",
+      "bytes": 2381
+    },
+    {
+      "path": "inkwave-public/src/game/motion/locomotion-profile.js",
+      "blob": "cd494a993ca08557028cb061307c65029d760045",
+      "bytes": 5206
+    },
+    {
+      "path": "inkwave-public/src/game/motion/retarget.js",
+      "blob": "4d167374ea6068ebc76525736c00055e6f658a82",
+      "bytes": 31978
+    },
+    {
+      "path": "inkwave-public/src/game/motion/root-hair.js",
+      "blob": "0b46709c7b9de6e4f26efbfc7536b3a610f60fb5",
+      "bytes": 2835
+    },
+    {
+      "path": "inkwave-public/src/game/motion/run-foot-path.js",
+      "blob": "375fb60ef786c46cbb22435879af694fffc1e036",
+      "bytes": 1604
+    },
+    {
+      "path": "inkwave-public/src/game/motion/source-bank.js",
+      "blob": "ea988149006a9f41779caf7702f9ccbd82dc3cd3",
+      "bytes": 13172
+    },
+    {
+      "path": "inkwave-public/src/game/motion/source-controller.js",
+      "blob": "f8d8eb1146fb48241b1a4987325f6496c37997e9",
+      "bytes": 34440
+    },
+    {
+      "path": "inkwave-public/src/game/motion/squid-rig.js",
+      "blob": "5cfa98ef81ae4705b5d5eddba1539dbea98d000a",
+      "bytes": 8529
+    },
+    {
+      "path": "inkwave-public/src/game/nav.js",
+      "blob": "cb4e3218d8d3489b7696bab719d3a0a87f92867f",
+      "bytes": 8504
+    },
+    {
+      "path": "inkwave-public/src/game/physics.js",
+      "blob": "6d22e9e884cfda4f7154dc742e0699c4d0e516cf",
+      "bytes": 16970
+    },
+    {
+      "path": "inkwave-public/src/game/player.js",
+      "blob": "ce5065b296e5533164dca1abbf0aad618f55c75b",
+      "bytes": 11945
+    },
+    {
+      "path": "inkwave-public/src/game/showcase.js",
+      "blob": "02ab7f694f6d16aa02420d660fd846b1a99a894a",
+      "bytes": 158118
+    },
+    {
+      "path": "inkwave-public/src/game/weapons.js",
+      "blob": "85610c7a3634cd058d1873e397351c94f27a1e7c",
+      "bytes": 83428
+    },
+    {
+      "path": "inkwave-public/src/i18n.js",
+      "blob": "42059d1d13647cf254349eeb40e0c01ae69e03a4",
+      "bytes": 36379
+    },
+    {
+      "path": "inkwave-public/src/main.js",
+      "blob": "f045210e1cc96b601b46d7468327c86801708b0e",
+      "bytes": 73163
+    },
+    {
+      "path": "inkwave-public/src/net/mock.js",
+      "blob": "af8c170a050b65c3356055dd0be43ef95410b015",
+      "bytes": 16710
+    },
+    {
+      "path": "inkwave-public/src/net/netmatch.js",
+      "blob": "7b81be3aa98ec75c4124b22e472e8f62f1a97e35",
+      "bytes": 42534
+    },
+    {
+      "path": "inkwave-public/src/net/session.js",
+      "blob": "9b86c6ceb987744ad6a6d9c2fdbf8f98de9f694a",
+      "bytes": 17518
+    },
+    {
+      "path": "inkwave-public/src/net/transport.js",
+      "blob": "526ea2869d2a08e23cf01cb8a92dccf8756de7a4",
+      "bytes": 5468
+    },
+    {
+      "path": "inkwave-public/src/ui/boss-art.js",
+      "blob": "a403ea0d4d53e268c779a13546eae503b64dafef",
+      "bytes": 14345
+    },
+    {
+      "path": "inkwave-public/src/ui/diorama.js",
+      "blob": "d586ffa279643ffce2fc28486a27839548e7b765",
+      "bytes": 11854
+    },
+    {
+      "path": "inkwave-public/src/ui/hud-boss.js",
+      "blob": "7b372ef2592d541e20c4bbaff8fdaed2a9e391d7",
+      "bytes": 29253
+    },
+    {
+      "path": "inkwave-public/src/ui/hud.js",
+      "blob": "893490e98c2444876a1d9b76207e820c348c2781",
+      "bytes": 84335
+    },
+    {
+      "path": "inkwave-public/src/ui/menu-art.js",
+      "blob": "7cb28a835728c51186960837951bddadc4c6502e",
+      "bytes": 77984
+    },
+    {
+      "path": "inkwave-public/src/ui/menus.js",
+      "blob": "a1ed8018c5c896c2973eee6c947299f5cca50883",
+      "bytes": 252955
+    },
+    {
+      "path": "inkwave-public/src/ui/news.js",
+      "blob": "93c55417c0d9a9fa42155d566ef128546f253592",
+      "bytes": 16292
+    },
+    {
+      "path": "inkwave-public/src/ui/ui-icons.js",
+      "blob": "7a010396dd2e24b079381bd972bd5c4f0bb01cf9",
+      "bytes": 37153
+    },
+    {
+      "path": "inkwave-public/src/ui/ui-util.js",
+      "blob": "e614e61f7a40746421424b452dddb21d6319fc81",
+      "bytes": 11624
+    },
+    {
+      "path": "inkwave-public/src/world/decor.js",
+      "blob": "d07c4931bc29e33982999433b46ae147ea060a15",
+      "bytes": 29436
+    },
+    {
+      "path": "inkwave-public/src/world/dressing.js",
+      "blob": "b985d1a1bb90520b123e0ed694adcf25a12b0078",
+      "bytes": 21626
+    },
+    {
+      "path": "inkwave-public/src/world/environment.js",
+      "blob": "44809b67fc7299991b507f87cda6b6995bf4ea26",
+      "bytes": 156649
+    },
+    {
+      "path": "inkwave-public/src/world/inkShading.js",
+      "blob": "ba23601c7d1320e252082b9334ea5be8bac14522",
+      "bytes": 17465
+    },
+    {
+      "path": "inkwave-public/src/world/level.js",
+      "blob": "6eecedce7f95307d14ab18d101839ce684f4932e",
+      "bytes": 21719
+    },
+    {
+      "path": "inkwave-public/src/world/levelMaterial.js",
+      "blob": "d5dc64453ebbd133f755835f21b55b580b6f0815",
+      "bytes": 40294
+    },
+    {
+      "path": "inkwave-public/src/world/mapThumb.js",
+      "blob": "26aa093f16294e479b463c3eacf0e71baec91190",
+      "bytes": 7491
+    },
+    {
+      "path": "inkwave-public/src/world/mapkit.js",
+      "blob": "35f46cfde383fee448de3a8898fa91bd9a5085eb",
+      "bytes": 4127
+    },
+    {
+      "path": "inkwave-public/src/world/maps.js",
+      "blob": "02345a5c2768b4700fca87dd5c1c682314bcb0ee",
+      "bytes": 18838
+    },
+    {
+      "path": "inkwave-public/src/world/murals.js",
+      "blob": "ba5a2d57c445392725ae0070140d2c61c0164406",
+      "bytes": 19689
+    },
+    {
+      "path": "inkwave-public/src/world/paint.js",
+      "blob": "e92e8b90b94df3797886f1ce476b2061693fe86d",
+      "bytes": 36556
+    },
+    {
+      "path": "inkwave-public/src/world/props-marina-dock.js",
+      "blob": "2950731f8df7ed866c546107c9fb3a5175ca5b68",
+      "bytes": 137002
+    },
+    {
+      "path": "inkwave-public/src/world/props-marina-vessels.js",
+      "blob": "55413770ae679b0c5fe7ec2c10a177fe851596c6",
+      "bytes": 151382
+    },
+    {
+      "path": "inkwave-public/src/world/props.js",
+      "blob": "ebfce4e4b20a55b985efe9986ad19c594ff4d511",
+      "bytes": 231709
+    },
+    {
+      "path": "inkwave-public/src/world/stages/cargo/layout.js",
+      "blob": "7114585d4c305c96545faad7102012e14b72fa21",
+      "bytes": 19179
+    },
+    {
+      "path": "inkwave-public/src/world/stages/cargo/murals.js",
+      "blob": "605521faf2dffa6debc832612c0ac279cbd4cdb8",
+      "bytes": 16961
+    },
+    {
+      "path": "inkwave-public/src/world/stages/cargo/props.js",
+      "blob": "2fa13c51ad30cc41b8dcaf6fa409f305f77c818f",
+      "bytes": 134792
+    },
+    {
+      "path": "inkwave-public/src/world/stages/cargo/surfaces.js",
+      "blob": "d9dc064155872d302dc80990fa72c54743d8df56",
+      "bytes": 9487
+    },
+    {
+      "path": "inkwave-public/src/world/stages/index.js",
+      "blob": "6844bad7adc629ed49507873a36f3605571491a8",
+      "bytes": 815
+    },
+    {
+      "path": "inkwave-public/src/world/stages/surfaces.js",
+      "blob": "11366b4bbd087c1c4834a517f31ecc5b882209d0",
+      "bytes": 1442
+    },
+    {
+      "path": "inkwave-public/src/world/texlib.js",
+      "blob": "19581e5e70e616d19b0e7ee8df17caf44cc9a92f",
+      "bytes": 90333
+    },
+    {
+      "path": "inkwave-public/vendor/three/build/three.core.js",
+      "blob": "0a1d6cb9ef3cabc97a50bd02394c85e8d1c513c2",
+      "bytes": 1458113
+    },
+    {
+      "path": "inkwave-public/vendor/three/build/three.module.js",
+      "blob": "c52087acfabae80efabb8cc05e3a1d96e35a1426",
+      "bytes": 662772
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/geometries/RoundedBoxGeometry.js",
+      "blob": "038370c48e7cbcb6749cbf7121372d8c39020a60",
+      "bytes": 6470
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/math/SimplexNoise.js",
+      "blob": "3f251002e2b2a319b1491cb8c489128225cfb8e4",
+      "bytes": 15148
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/EffectComposer.js",
+      "blob": "a16d97eabad3998f6a688f1d44a27f4135a2628c",
+      "bytes": 8501
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/GTAOPass.js",
+      "blob": "a2ced81be8322872b30fb4085851158109ed499c",
+      "bytes": 19910
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/MaskPass.js",
+      "blob": "3a2afff8cf261faa6972d87c4843580901eac7ad",
+      "bytes": 4694
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/OutputPass.js",
+      "blob": "1366c6e1906e22cb556d24ae58bcf9efc24cca33",
+      "bytes": 4184
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/Pass.js",
+      "blob": "50acb4784ee0d67f34f5efcb574b55d0b083c81b",
+      "bytes": 4218
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/RenderPass.js",
+      "blob": "e8428a1c7ef849f69cd5c6d576b003520955ba81",
+      "bytes": 4280
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/ShaderPass.js",
+      "blob": "ce72fcf13ec3daff78b940fe2bfc78def01729e8",
+      "bytes": 3228
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/postprocessing/UnrealBloomPass.js",
+      "blob": "05b3f63c1004fe7ac819eac7a98cfae2ae0c49b1",
+      "bytes": 15397
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/CopyShader.js",
+      "blob": "6deb24849e1dd080f35af75728d29028920f1fb3",
+      "bytes": 729
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/GTAOShader.js",
+      "blob": "2ca4ef0f94ca803efd63841157ee8e7408247f0f",
+      "bytes": 12166
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/LuminosityHighPassShader.js",
+      "blob": "16ff4e69f7cf741409060477770d4c91e62a944a",
+      "bytes": 1291
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/OutputShader.js",
+      "blob": "5f257829fe655f74252d67585e1d63e035c05b67",
+      "bytes": 1876
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/shaders/PoissonDenoiseShader.js",
+      "blob": "ff3e45feb6d75d0da0bf5fb034a52230ba78243e",
+      "bytes": 7080
+    },
+    {
+      "path": "inkwave-public/vendor/three/jsm/utils/BufferGeometryUtils.js",
+      "blob": "a167e11b0558954a00960dc3cad00ead6476fbe7",
+      "bytes": 37712
+    },
+    {
+      "path": "patches/loading-cache/adapter.mjs",
+      "blob": "34ca83929ce900387f550b004c9875ce37c14600",
+      "bytes": 15385
+    },
+    {
+      "path": "patches/loading-cache/runtime/startup.mjs",
+      "blob": "d165c7fe5909381091a1cf2bf7aaf6ea014e72c9",
+      "bytes": 9963
+    },
+    {
+      "path": "patches/loading-cache/sw.js",
+      "blob": "2dfc7c17db1784e1dae898c3db3d2e44cf0dafbb",
+      "bytes": 12823
+    },
+    {
+      "path": "patches/loading-cache/vendor/acorn.mjs",
+      "blob": "74d5fc431be2b5062245e72937ef2032164b51cd",
+      "bytes": 229792
+    },
+    {
+      "path": "patches/local-quality/actor-weapon-input-adapter.mjs",
+      "blob": "b42dee6116fc141425ecd1558f4443e94bb1b70b",
+      "bytes": 4006
+    },
+    {
+      "path": "patches/local-quality/adapter.mjs",
+      "blob": "2998866891eb6675ea935b35345b91b5c51c6084",
+      "bytes": 38104
+    },
+    {
+      "path": "patches/local-quality/aim-profile-adapter.mjs",
+      "blob": "7bf54d85dc3c2e2c3af213175c00712f85d7f7a2",
+      "bytes": 16451
+    },
+    {
+      "path": "patches/local-quality/aim-profile.mjs",
+      "blob": "e1b9d0b70636cf2b390e48c5dd4cfc53c730c369",
+      "bytes": 5966
+    },
+    {
+      "path": "patches/local-quality/audio-listener-adapter.mjs",
+      "blob": "2e63bb0430938b8440dd0ed810dee885a4202321",
+      "bytes": 1194
+    },
+    {
+      "path": "patches/local-quality/boss-hit-adapter.mjs",
+      "blob": "d976373f9dbb1758ebd01909f7d6232bd63397a5",
+      "bytes": 4052
+    },
+    {
+      "path": "patches/local-quality/bot-edge-guard-adapter.mjs",
+      "blob": "e41e967ade4e0526edbfe42265a0b41d56962a99",
+      "bytes": 3096
+    },
+    {
+      "path": "patches/local-quality/bot-paint-device-profile.mjs",
+      "blob": "b0bd6d182a17077e3aba2fa7203263ad7a8934d9",
+      "bytes": 2198
+    },
+    {
+      "path": "patches/local-quality/bot-paint-observation-adapter.mjs",
+      "blob": "0bddcc67eaf006e14d0c7ba66c598cfb8a556379",
+      "bytes": 2507
+    },
+    {
+      "path": "patches/local-quality/bot-refill-release-adapter.mjs",
+      "blob": "748681055f99d31d71c4a60e1c8685fecc244dd9",
+      "bytes": 2780
+    },
+    {
+      "path": "patches/local-quality/charger-sight.mjs",
+      "blob": "086635ec03afac9b0f5e963486d8ee15e02d61a5",
+      "bytes": 661
+    },
+    {
+      "path": "patches/local-quality/cloth-derivative-adapter.mjs",
+      "blob": "ba625ebd314a884f243db10d027b9e5f1b6e4c39",
+      "bytes": 2926
+    },
+    {
+      "path": "patches/local-quality/collision-hotpath-adapter.mjs",
+      "blob": "6f48567860d2b5d2bc679aa27cf64976437e879a",
+      "bytes": 3281
+    },
+    {
+      "path": "patches/local-quality/composer-format-adapter.mjs",
+      "blob": "ba2472ed2330fad7a31ede0169ca039416214559",
+      "bytes": 9198
+    },
+    {
+      "path": "patches/local-quality/composer-target-adapter.mjs",
+      "blob": "a28244d724daead750dd4c56c28c17502793ef0e",
+      "bytes": 5961
+    },
+    {
+      "path": "patches/local-quality/depth-cache.mjs",
+      "blob": "74e2bbe2808b5acd7b326097f3431915090b463c",
+      "bytes": 4715
+    },
+    {
+      "path": "patches/local-quality/final-count-adapter.mjs",
+      "blob": "aac3fa5c095a3accb483b22ae18619379fbf79c7",
+      "bytes": 1526
+    },
+    {
+      "path": "patches/local-quality/final-minute-music-adapter.mjs",
+      "blob": "7e4e30e998853ab14ef81accecb2679fa77165db",
+      "bytes": 682
+    },
+    {
+      "path": "patches/local-quality/finish-tape-adapter.mjs",
+      "blob": "539ffa6d0b99c975ad55b87ae4783e8d9e3975a2",
+      "bytes": 6573
+    },
+    {
+      "path": "patches/local-quality/first-touch-adapter.mjs",
+      "blob": "b8996bd2b2be51a8de49f21702ad29e47ae3dd63",
+      "bytes": 1238
+    },
+    {
+      "path": "patches/local-quality/first-touch-source-adapter.mjs",
+      "blob": "a262dac4ab81200495c0df6262d485602de1b7bb",
+      "bytes": 1327
+    },
+    {
+      "path": "patches/local-quality/frame-order-adapter.mjs",
+      "blob": "aab516b10058afea78d47f877b1615320711a3aa",
+      "bytes": 3328
+    },
+    {
+      "path": "patches/local-quality/fx-actor-lifetime-adapter.mjs",
+      "blob": "5a343a6f719ca2d5f521e1dfdbdbc6e7cfe6ab68",
+      "bytes": 926
+    },
+    {
+      "path": "patches/local-quality/gyro-permission.mjs",
+      "blob": "b224e78032c4f45a815b4c6a96c1c8c83f4903a1",
+      "bytes": 13829
+    },
+    {
+      "path": "patches/local-quality/gyro-startup.mjs",
+      "blob": "9d7579d954759f0b243e3ef91a921a67f9fc7e32",
+      "bytes": 3536
+    },
+    {
+      "path": "patches/local-quality/gyro.mjs",
+      "blob": "5a567634580153d17378c20e766c2d1e8ff22007",
+      "bytes": 14890
+    },
+    {
+      "path": "patches/local-quality/hud-authority-adapter.mjs",
+      "blob": "a8137933c31c7ebd9461a5121e487f00d99d598a",
+      "bytes": 8492
+    },
+    {
+      "path": "patches/local-quality/hud-snapshots-adapter.mjs",
+      "blob": "cd8caae60ce67356003e0e07262464cf3609d455",
+      "bytes": 8037
+    },
+    {
+      "path": "patches/local-quality/hud-snapshots.mjs",
+      "blob": "1927a92f7c618dc6fe9920986902a7a354bac61e",
+      "bytes": 4242
+    },
+    {
+      "path": "patches/local-quality/idle-adapter.mjs",
+      "blob": "f909d99f26b078be65cc3dc72a4ededfe027d1c1",
+      "bytes": 8985
+    },
+    {
+      "path": "patches/local-quality/idle-resources.mjs",
+      "blob": "9859b5b4de0ed34bdab56224ee4c6d7ead02ddce",
+      "bytes": 9014
+    },
+    {
+      "path": "patches/local-quality/ink-volume-adapter.mjs",
+      "blob": "ec1103972b9d0fd63f8bdaff19b377fb84511efc",
+      "bytes": 4766
+    },
+    {
+      "path": "patches/local-quality/ink-volume/assets/roller/manifest.json",
+      "blob": "08d009173638900a0b9ec3c5088b48efa66575b8",
+      "bytes": 26503
+    },
+    {
+      "path": "patches/local-quality/ink-volume/assets/shooter/manifest.json",
+      "blob": "87cd67120e834715f577d7971034eef679a879f3",
+      "bytes": 2590
+    },
+    {
+      "path": "patches/local-quality/ink-volume/mesh.mjs",
+      "blob": "67996bef857c969d2c8f214eb582545e246e03af",
+      "bytes": 13596
+    },
+    {
+      "path": "patches/local-quality/ink-volume/pack.mjs",
+      "blob": "d17ca9315de99b3901c57e490a155b2dfc401d67",
+      "bytes": 5684
+    },
+    {
+      "path": "patches/local-quality/ink-volume/recipes.mjs",
+      "blob": "dae1d73938ee79c4c6c4166098059cb43cba510c",
+      "bytes": 6490
+    },
+    {
+      "path": "patches/local-quality/ink-volume/roller.mjs",
+      "blob": "5c8c63cce6982e795627c587fbe66ab297f0f8c8",
+      "bytes": 1033
+    },
+    {
+      "path": "patches/local-quality/ink-volume/runtime.mjs",
+      "blob": "069073ed8a6f2791390432168b8acecb7271ca74",
+      "bytes": 16191
+    },
+    {
+      "path": "patches/local-quality/ink-volume/vtf.mjs",
+      "blob": "1de67e08fc6c84cc46c74f780f000d0945635d12",
+      "bytes": 3795
+    },
+    {
+      "path": "patches/local-quality/install.mjs",
+      "blob": "8e79125668406a853b381dd6872900a20be10b6f",
+      "bytes": 1441
+    },
+    {
+      "path": "patches/local-quality/issue-190-adapter.mjs",
+      "blob": "ba2a45fac002a177732a4ad2fa7a38b0beba1487",
+      "bytes": 6695
+    },
+    {
+      "path": "patches/local-quality/issue-418-adapter.mjs",
+      "blob": "58adb0b5d1f2235d2d549666897eeb14f4d55555",
+      "bytes": 2529
+    },
+    {
+      "path": "patches/local-quality/issue-461-sfx-mute.mjs",
+      "blob": "7cbc91591a2a087a0000c713d42061bddc08c49f",
+      "bytes": 7382
+    },
+    {
+      "path": "patches/local-quality/issue-472-adapter.mjs",
+      "blob": "b7a2124b4ce4f47830e86986d038797937b7ef59",
+      "bytes": 2929
+    },
+    {
+      "path": "patches/local-quality/issue-480-camera-shake-fidelity.mjs",
+      "blob": "7a8177cbea1d60690ee879a065b085093ae66ccd",
+      "bytes": 3326
+    },
+    {
+      "path": "patches/local-quality/landing-rigidity-adapter.mjs",
+      "blob": "5bbbfcac912b39f57c3f88fdf112d3d493d9568b",
+      "bytes": 769
+    },
+    {
+      "path": "patches/local-quality/lobby-quality-adapter.mjs",
+      "blob": "b0287a1d4d5e7ca0c12870265d1239e5c249d4c9",
+      "bytes": 3004
+    },
+    {
+      "path": "patches/local-quality/lobby-resource-adapter.mjs",
+      "blob": "d7000668b55bee49dc0053e0f83390709efda8bc",
+      "bytes": 3907
+    },
+    {
+      "path": "patches/local-quality/map-teammate-status-adapter.mjs",
+      "blob": "f73b7c131705606f07868eef32622ab242df2fe9",
+      "bytes": 1490
+    },
+    {
+      "path": "patches/local-quality/match-retainer-adapter.mjs",
+      "blob": "7706d224706f575bb69954237131d91acbd6cdf5",
+      "bytes": 3282
+    },
+    {
+      "path": "patches/local-quality/medal-adapter.mjs",
+      "blob": "1ef98cb4a7dce23daf0be11496fccfe867f315ac",
+      "bytes": 20366
+    },
+    {
+      "path": "patches/local-quality/menu-navigation-timer-adapter.mjs",
+      "blob": "a317ddbfc0e0688081ca98620dd716c51c26aa4a",
+      "bytes": 2999
+    },
+    {
+      "path": "patches/local-quality/menu-preview.mjs",
+      "blob": "0e0a7226541193bd335bf09ac3f7f96877d3e522",
+      "bytes": 1998
+    },
+    {
+      "path": "patches/local-quality/menu.mjs",
+      "blob": "e0f89b4d8caa2e87f2c002d7db98db142c5b47f8",
+      "bytes": 7219
+    },
+    {
+      "path": "patches/local-quality/minimap-resource-adapter.mjs",
+      "blob": "8881ef9c7b97cf8bb08a597cdbb487fb178eed43",
+      "bytes": 6562
+    },
+    {
+      "path": "patches/local-quality/mobile-platform.mjs",
+      "blob": "6f5f9633a3f0f98ac4839eef7137bcfc8752bc77",
+      "bytes": 8800
+    },
+    {
+      "path": "patches/local-quality/mural-atlas-adapter.mjs",
+      "blob": "e47dc874d4b42c4cb09074ed04abc2e947a89a62",
+      "bytes": 1826
+    },
+    {
+      "path": "patches/local-quality/music-idle.mjs",
+      "blob": "70591cd48220b5007016b486a408a8aab43a0ff9",
+      "bytes": 1974
+    },
+    {
+      "path": "patches/local-quality/offline-offscreen-budget.mjs",
+      "blob": "28d7e21335275848e1495ac92b26a98ae6058125",
+      "bytes": 13918
+    },
+    {
+      "path": "patches/local-quality/offscreen-visual-budget.mjs",
+      "blob": "c2be82d2641fc82b86e328c16c2f4cbd50b99d4c",
+      "bytes": 15064
+    },
+    {
+      "path": "patches/local-quality/paint-hotpath-adapter.mjs",
+      "blob": "e372aee371dd057e0711355dc7595a690a0bd488",
+      "bytes": 4963
+    },
+    {
+      "path": "patches/local-quality/paint-mipmap-probe.mjs",
+      "blob": "23f3d8211906fd63461f7863acebdcce006f601c",
+      "bytes": 5432
+    },
+    {
+      "path": "patches/local-quality/platform-adapter.mjs",
+      "blob": "7f954deea803a531412fc287eb1dde9aa07cbb58",
+      "bytes": 5746
+    },
+    {
+      "path": "patches/local-quality/platform-audio.mjs",
+      "blob": "840d94acdd9cb1542a287f7d4c1a740ea5f0da45",
+      "bytes": 6241
+    },
+    {
+      "path": "patches/local-quality/platform-game.mjs",
+      "blob": "6a9ccdd8cabca4e05bf8f104aaa3c822ccdd2f9a",
+      "bytes": 16336
+    },
+    {
+      "path": "patches/local-quality/platform-input.mjs",
+      "blob": "01b549cacbc0a691719ae8ffd7d36318a9918665",
+      "bytes": 5487
+    },
+    {
+      "path": "patches/local-quality/platform-lifecycle.mjs",
+      "blob": "14594a4f2fa8443e634e5a3a3f71133a5f697e9f",
+      "bytes": 10030
+    },
+    {
+      "path": "patches/local-quality/platform-transport.mjs",
+      "blob": "05e0de546b49249c3e3f22531e259c8b36a5cc1e",
+      "bytes": 1672
+    },
+    {
+      "path": "patches/local-quality/portrait-guard-adapter.mjs",
+      "blob": "a765e0f214528fef69cd9dc304860d7d2227ff64",
+      "bytes": 1475
+    },
+    {
+      "path": "patches/local-quality/portrait-guard.mjs",
+      "blob": "9d881af33c30da4066ec5308d668b986b1440acd",
+      "bytes": 2660
+    },
+    {
+      "path": "patches/local-quality/portrait-work.mjs",
+      "blob": "dcc282c12aa6584d031918a6e5fa2b522f38a133",
+      "bytes": 18157
+    },
+    {
+      "path": "patches/local-quality/prop-atlas-adapter.mjs",
+      "blob": "a2369a0ec87c93c85b90636d004a629291417b90",
+      "bytes": 2398
+    },
+    {
+      "path": "patches/local-quality/prop-retention-adapter.mjs",
+      "blob": "7f90ad7ea55a19e0242410edd68ba8945a22432a",
+      "bytes": 5811
+    },
+    {
+      "path": "patches/local-quality/quality-probe.mjs",
+      "blob": "a7c6252b612f9846e86a57a188d20fe75afd784b",
+      "bytes": 2973
+    },
+    {
+      "path": "patches/local-quality/range-frame-pacing-adapter.mjs",
+      "blob": "d1cd6c50a94097e1c427eda11e4eecc44c7392b8",
+      "bytes": 4090
+    },
+    {
+      "path": "patches/local-quality/range-frame-pacing.mjs",
+      "blob": "2611813390fae929adb8e6aa8ab141acac16ab44",
+      "bytes": 2954
+    },
+    {
+      "path": "patches/local-quality/range-frame-profiler.mjs",
+      "blob": "f00da4234250b4b5d939d554e19c2553f5c99e29",
+      "bytes": 6229
+    },
+    {
+      "path": "patches/local-quality/range-hitch-tracer.mjs",
+      "blob": "69525937cb60bcbffd3e709b062f1168aa87fdc2",
+      "bytes": 13001
+    },
+    {
+      "path": "patches/local-quality/refl-skip-adapter.mjs",
+      "blob": "fc99be27380a80f39b12ca1e46c60f55999ccb95",
+      "bytes": 3307
+    },
+    {
+      "path": "patches/local-quality/resource-adapter.mjs",
+      "blob": "6a2ff3e4ad4c21c8d44927a32a791c5b9b0f115a",
+      "bytes": 7055
+    },
+    {
+      "path": "patches/local-quality/resource-budget.mjs",
+      "blob": "c855bed08df1875bafe4411c767cd76891fc5189",
+      "bytes": 2494
+    },
+    {
+      "path": "patches/local-quality/result-continuation-adapter.mjs",
+      "blob": "fdda9d9875dba5e99168f59fc449187bdadcbe56",
+      "bytes": 4850
+    },
+    {
+      "path": "patches/local-quality/result-continuation.mjs",
+      "blob": "b8211a1947d7bb70e46b454694c5f0104d59ba96",
+      "bytes": 4635
+    },
+    {
+      "path": "patches/local-quality/retarget-branch-update-adapter.mjs",
+      "blob": "ad1b54712848d9c381258db81059dae3f85b752c",
+      "bytes": 1565
+    },
+    {
+      "path": "patches/local-quality/roller-motion.mjs",
+      "blob": "f57706f6f79e1fb258f3720d6cd7b0f2f63d1537",
+      "bytes": 2211
+    },
+    {
+      "path": "patches/local-quality/roller-visual.mjs",
+      "blob": "0836b056cd8aeadc7a46990f04c68343ffb90e45",
+      "bytes": 2034
+    },
+    {
+      "path": "patches/local-quality/runtime-frame-scratch-adapter.mjs",
+      "blob": "6e031dc634e664a16058c855148fcd56c7fee581",
+      "bytes": 5082
+    },
+    {
+      "path": "patches/local-quality/runtime/audio-listener.mjs",
+      "blob": "b87204356a1c2e9aa29ab3413ad68e57ca19640b",
+      "bytes": 4810
+    },
+    {
+      "path": "patches/local-quality/s3-hud-look-adapter.mjs",
+      "blob": "0b92aedc582c36888813d41a926b0503491a8c89",
+      "bytes": 19991
+    },
+    {
+      "path": "patches/local-quality/s3-squid-look-adapter.mjs",
+      "blob": "f2165750abb40aaf9c6247287760b0ffec3ea610",
+      "bytes": 6894
+    },
+    {
+      "path": "patches/local-quality/score-reticle-adapter.mjs",
+      "blob": "e3d37655bb4d65319e0d975aabcac49fec475655",
+      "bytes": 1596
+    },
+    {
+      "path": "patches/local-quality/screen-angle.mjs",
+      "blob": "725dbe6ddac7fc5dd596fa06004bc9127b3b9ebe",
+      "bytes": 2876
+    },
+    {
+      "path": "patches/local-quality/screenfx-damage-reset-adapter.mjs",
+      "blob": "d9cb4b33dd1a53fb34687110f8e8c9abd983d40a",
+      "bytes": 375
+    },
+    {
+      "path": "patches/local-quality/screenfx-lens-release-adapter.mjs",
+      "blob": "4f8acab846d85902cff7d04358ea74aee78e49b3",
+      "bytes": 2618
+    },
+    {
+      "path": "patches/local-quality/showcase-alpha-adapter.mjs",
+      "blob": "c37dc6604a5c0073c1ed5df9d8e988d09382eaa4",
+      "bytes": 1752
+    },
+    {
+      "path": "patches/local-quality/showcase-shadow-adapter.mjs",
+      "blob": "4ea478133ce1d7f7229fce2a8b83d4b82d525622",
+      "bytes": 959
+    },
+    {
+      "path": "patches/local-quality/showcase-shadow.mjs",
+      "blob": "d288e3269924102cbacfef20dc2e4ae5f09a31da",
+      "bytes": 880
+    },
+    {
+      "path": "patches/local-quality/splatling-reticle-adapter.mjs",
+      "blob": "04125d5099de2683d60229baf6502bd40c4a8516",
+      "bytes": 1588
+    },
+    {
+      "path": "patches/local-quality/splatling-reticle.mjs",
+      "blob": "ddf26047060cc3ac224eb07b933033f718734255",
+      "bytes": 1304
+    },
+    {
+      "path": "patches/local-quality/surface.mjs",
+      "blob": "344427add27c6fe78d0f5791c13324de2cf38c1f",
+      "bytes": 784
+    },
+    {
+      "path": "patches/local-quality/team-special-signal-adapter.mjs",
+      "blob": "a9f3d2d74949b4b82bf5db46e556b2dbb7e69bba",
+      "bytes": 2988
+    },
+    {
+      "path": "patches/local-quality/team-wipeout-adapter.mjs",
+      "blob": "038f5cc2fc0688359477d01f068345380a0c0d07",
+      "bytes": 3368
+    },
+    {
+      "path": "patches/local-quality/team-wipeout.mjs",
+      "blob": "4d23839eb408933b763062634af0938e9000b11f",
+      "bytes": 2580
+    },
+    {
+      "path": "patches/local-quality/tenacity-adapter.mjs",
+      "blob": "a7bec4678f9a6bdccd35bdb048eff0e7b551f221",
+      "bytes": 1984
+    },
+    {
+      "path": "patches/local-quality/tenacity.mjs",
+      "blob": "a8ef52a9704778f368719ee8df993caf22151899",
+      "bytes": 1649
+    },
+    {
+      "path": "patches/local-quality/texlib-adapter.mjs",
+      "blob": "afbe753019be52c3eed8a7582b73e525d0bfb455",
+      "bytes": 11279
+    },
+    {
+      "path": "patches/local-quality/texlib.mjs",
+      "blob": "bc35d081628566a5c382c7a4cfca0ba18a7db3b7",
+      "bytes": 4862
+    },
+    {
+      "path": "patches/local-quality/touch-relayout-adapter.mjs",
+      "blob": "4dd2f8936a41b591413cc99be37b76dde2829586",
+      "bytes": 790
+    },
+    {
+      "path": "patches/local-quality/touch-relayout.mjs",
+      "blob": "d9d1de03713fb4bb666f3c3e0a2bcbac32a42282",
+      "bytes": 2420
+    },
+    {
+      "path": "patches/local-quality/turf-lead-adapter.mjs",
+      "blob": "32408e10b66eb639ac2b04e2a59415bbd828eaee",
+      "bytes": 3305
+    },
+    {
+      "path": "patches/local-quality/ui-actor-lifetime-adapter.mjs",
+      "blob": "d60ac2b5842ab17803a0b1bc20b77fc1c29c2e0c",
+      "bytes": 4644
+    },
+    {
+      "path": "patches/local-quality/world-quality.mjs",
+      "blob": "c50ec4ca4748cec2e645ac59efca4b61c199c950",
+      "bytes": 13196
+    },
+    {
+      "path": "patches/native-stages/adapter.mjs",
+      "blob": "0df39d0a1bdd1e7d6415766d13e6b52deebd513e",
+      "bytes": 21394
+    },
+    {
+      "path": "patches/native-stages/definitions/lemuria.json",
+      "blob": "b64fe1e5bb7bb35e699f9de657d733bbe9cf609c",
+      "bytes": 490
+    },
+    {
+      "path": "patches/native-stages/rule-availability-adapter.mjs",
+      "blob": "dc765f1ab0cd3b025292aea3349842c049a5d75c",
+      "bytes": 3447
+    },
+    {
+      "path": "patches/native-stages/runtime/build-config.mjs",
+      "blob": "707dbdbbd53ad69c2834fd45ca0a6e7f5de9769e",
+      "bytes": 202
+    },
+    {
+      "path": "patches/native-stages/runtime/engine.mjs",
+      "blob": "59a28d3097fb108df46cc161e2c3bd9d2c617ad6",
+      "bytes": 2270
+    },
+    {
+      "path": "patches/native-stages/runtime/native-approach.mjs",
+      "blob": "5d630e22015da656eb21ac21c08bd9e49c62979d",
+      "bytes": 19811
+    },
+    {
+      "path": "patches/native-stages/runtime/native-bot-form.mjs",
+      "blob": "ae6acaf1111709f7e0295c3f6c490341d35c2cad",
+      "bytes": 3227
+    },
+    {
+      "path": "patches/native-stages/runtime/native-bot-support.mjs",
+      "blob": "d6e0f30d68c18d5dd4650cd884c4971b8a299b4c",
+      "bytes": 3069
+    },
+    {
+      "path": "patches/native-stages/runtime/native-bots.mjs",
+      "blob": "32ae24daa51d80ad11da2c28fe8a95c01359e16c",
+      "bytes": 893
+    },
+    {
+      "path": "patches/native-stages/runtime/native-climb.mjs",
+      "blob": "6770841e79c1a4e59219019ca2a157e08aa8f719",
+      "bytes": 12999
+    },
+    {
+      "path": "patches/native-stages/runtime/native-combat-support.mjs",
+      "blob": "2a06562da0e2a42f5d9f592810138fba10514442",
+      "bytes": 2507
+    },
+    {
+      "path": "patches/native-stages/runtime/native-drop.mjs",
+      "blob": "3b1a6c9b7dc34b2bb76589a94d31239b3174cc09",
+      "bytes": 13043
+    },
+    {
+      "path": "patches/native-stages/runtime/native-ink-chunks.mjs",
+      "blob": "8c8cab89a2e777469b2e171d7a6617727fe2d9c9",
+      "bytes": 4112
+    },
+    {
+      "path": "patches/native-stages/runtime/native-jump-attach.mjs",
+      "blob": "26cdbeae7e038ff0e8ccde47432739f011653748",
+      "bytes": 13777
+    },
+    {
+      "path": "patches/native-stages/runtime/native-jump-input.mjs",
+      "blob": "f0d22fdb30d073362909acee948088459373fe22",
+      "bytes": 5394
+    },
+    {
+      "path": "patches/native-stages/runtime/native-level.mjs",
+      "blob": "fd88131bb4acca49b429b7c761a140465f74f484",
+      "bytes": 5577
+    },
+    {
+      "path": "patches/native-stages/runtime/native-load.mjs",
+      "blob": "7672fb3464fe31648f08b5ca86495a262150d59e",
+      "bytes": 6490
+    },
+    {
+      "path": "patches/native-stages/runtime/native-minimap.mjs",
+      "blob": "992c8251ac3e3c55dc025dee19f28283f30ab489",
+      "bytes": 3441
+    },
+    {
+      "path": "patches/native-stages/runtime/native-nav.mjs",
+      "blob": "0e925a93f6b31784643bdcc41327ea99594ac0b5",
+      "bytes": 7301
+    },
+    {
+      "path": "patches/native-stages/runtime/native-paint.mjs",
+      "blob": "73c8ebc0455e8db83f747c73b27c47d92f0b3bfb",
+      "bytes": 1074
+    },
+    {
+      "path": "patches/native-stages/runtime/native-physics.mjs",
+      "blob": "a9d3cb3a57ae0dcdb8bbab78038f18751f312982",
+      "bytes": 6246
+    },
+    {
+      "path": "patches/native-stages/runtime/native-projectile-sweep.mjs",
+      "blob": "bcf4717ff4786a6730f866ac2342ba3a4cfb44ce",
+      "bytes": 1605
+    },
+    {
+      "path": "patches/native-stages/runtime/native-quality.mjs",
+      "blob": "67516a2eda4d9841a73f5b58ae599eb26c9fb186",
+      "bytes": 1854
+    },
+    {
+      "path": "patches/native-stages/runtime/native-ranked-boarding.mjs",
+      "blob": "b9e50851b917bd7986adc6fc386919fc0525a4f9",
+      "bytes": 4578
+    },
+    {
+      "path": "patches/native-stages/runtime/native-ranked-goals.mjs",
+      "blob": "7d89abe502e5b904568e6b5e2e57b2fe57020e9c",
+      "bytes": 3127
+    },
+    {
+      "path": "patches/native-stages/runtime/native-ranked.mjs",
+      "blob": "c0d4e7c317e21ef08702f73cd8081186d760cefc",
+      "bytes": 11496
+    },
+    {
+      "path": "patches/native-stages/runtime/native-render.mjs",
+      "blob": "ef06f9ed7b1fb3087616397b2ec00b5eb37538ca",
+      "bytes": 5516
+    },
+    {
+      "path": "patches/native-stages/runtime/native-spawn.mjs",
+      "blob": "68f8df2f2657a3df1bba8566e952e463b1745168",
+      "bytes": 4578
+    },
+    {
+      "path": "patches/native-stages/runtime/native-surge.mjs",
+      "blob": "f3ee39677fc56738f2854cb7246647aa2450f4f0",
+      "bytes": 11338
+    },
+    {
+      "path": "patches/native-stages/runtime/native-tower-boarding.mjs",
+      "blob": "82bcd781d46557c8744375ea582bd67fe95cae56",
+      "bytes": 2462
+    },
+    {
+      "path": "patches/native-stages/runtime/native-tower-calibration.mjs",
+      "blob": "24b7bfc27575b4347446d26718c860dab05527e6",
+      "bytes": 881
+    },
+    {
+      "path": "patches/native-stages/runtime/native-tower-clearance.mjs",
+      "blob": "f377d3cd8526342a364a98e4ca2a02f5dd631354",
+      "bytes": 1362
+    },
+    {
+      "path": "patches/native-stages/runtime/native-world.mjs",
+      "blob": "8c40cfba092b48ede1ade630065f29bb7fe3f014",
+      "bytes": 5413
+    },
+    {
+      "path": "patches/native-stages/runtime/registry.mjs",
+      "blob": "db3fa2d3ded313cd95589de0df59081dfc6db932",
+      "bytes": 1629
+    },
+    {
+      "path": "patches/native-stages/runtime/rule-availability.mjs",
+      "blob": "dd44673681802d34383dd0dc8d2094aec71fc490",
+      "bytes": 473
+    },
+    {
+      "path": "patches/native-stages/runtime/source-cache.mjs",
+      "blob": "842dc015347cd4522a8f6f016f06c023486133b6",
+      "bytes": 4333
+    },
+    {
+      "path": "patches/native-stages/runtime/source-catalog.mjs",
+      "blob": "c039c294b0926c08bfb2de73377e3e615db604eb",
+      "bytes": 2997
+    },
+    {
+      "path": "patches/native-stages/runtime/source-convert.mjs",
+      "blob": "924087194ef4d9e993b7c4644be7115f0983e231",
+      "bytes": 15808
+    },
+    {
+      "path": "patches/native-stages/runtime/source-data.mjs",
+      "blob": "a844dd99d9391413ca3bad23aaebe87021f2bc8a",
+      "bytes": 1130
+    },
+    {
+      "path": "patches/native-stages/runtime/source-menu.mjs",
+      "blob": "d300782478a11030935b3b9adf380275b2ca1b3f",
+      "bytes": 2584
+    },
+    {
+      "path": "patches/native-stages/runtime/source-worker.mjs",
+      "blob": "50d5fde4507802f9265e26cca1e610d684433086",
+      "bytes": 1988
+    },
+    {
+      "path": "patches/native-stages/runtime/triangle-world.mjs",
+      "blob": "ffcc19a33d233713d6b9ae119c4a37ab55d23aa7",
+      "bytes": 9317
+    },
+    {
+      "path": "patches/native-stages/tests/browser-source.test.mjs",
+      "blob": "e3dd6598ba577864e1ca411580391c6a1a75062c",
+      "bytes": 3146
+    },
+    {
+      "path": "patches/native-stages/tests/catalog-extension.test.mjs",
+      "blob": "b64eecb12aba1ad996b036e64cc2eddb1f0043ae",
+      "bytes": 3787
+    },
+    {
+      "path": "patches/native-stages/tests/fixture.mjs",
+      "blob": "fb2a2e2bd804e48ae63f8fa29ecae774cd9045ff",
+      "bytes": 3802
+    },
+    {
+      "path": "patches/native-stages/tests/geometry-contract.test.mjs",
+      "blob": "8e5c9c6afbc2b17d21dbe5ed7a32b31dbffbbcc3",
+      "bytes": 2688
+    },
+    {
+      "path": "patches/native-stages/tests/ink-chunks.test.mjs",
+      "blob": "86cbf7a0379161458bae7d32c8ad113bdbdb4526",
+      "bytes": 5618
+    },
+    {
+      "path": "patches/native-stages/tests/lemuria-unavailable.test.mjs",
+      "blob": "147aa05030244db15ab13df72fb29076b9171a2b",
+      "bytes": 5291
+    },
+    {
+      "path": "patches/native-stages/tests/native-approach-negative-source.test.mjs",
+      "blob": "b2135027814e758a4a701fdfe0bac5f964e675f9",
+      "bytes": 8584
+    },
+    {
+      "path": "patches/native-stages/tests/native-approach-source.test.mjs",
+      "blob": "5edcd7f5afa7c21692ffcaaae6bd18eb93ad2502",
+      "bytes": 7979
+    },
+    {
+      "path": "patches/native-stages/tests/native-approach.test.mjs",
+      "blob": "d032c3708c189c883691ded631b6588bfcf03c5c",
+      "bytes": 7011
+    },
+    {
+      "path": "patches/native-stages/tests/native-arena-basis.test.mjs",
+      "blob": "a0bbfe961b5c65e53e6ea9abed9d34ebeaff6ddf",
+      "bytes": 5042
+    },
+    {
+      "path": "patches/native-stages/tests/native-bot-landing.test.mjs",
+      "blob": "32c92c59161213261e11a0656843f33c2f7b996b",
+      "bytes": 2797
+    },
+    {
+      "path": "patches/native-stages/tests/native-build-fixture.test.mjs",
+      "blob": "d884680f3e8e87a396bdbce5e50f137c4b5f512b",
+      "bytes": 1137
+    },
+    {
+      "path": "patches/native-stages/tests/native-climb-recovery.test.mjs",
+      "blob": "987ab934f95ae1f3cbc3587f3aacc7cbd0688ea3",
+      "bytes": 9292
+    },
+    {
+      "path": "patches/native-stages/tests/native-climb.test.mjs",
+      "blob": "cc7af33fc7e95f58b3c1074e5b5e0a1d1b4d13bc",
+      "bytes": 12211
+    },
+    {
+      "path": "patches/native-stages/tests/native-combat-support.test.mjs",
+      "blob": "74adcd6ec986f497152786377a017adbc8c361b6",
+      "bytes": 7530
+    },
+    {
+      "path": "patches/native-stages/tests/native-drop-cache.test.mjs",
+      "blob": "ec0712906eda2ebae674ea348e547dc07730dec0",
+      "bytes": 5250
+    },
+    {
+      "path": "patches/native-stages/tests/native-drop-recovery-lifecycle.test.mjs",
+      "blob": "75d1914f614d8852a5faa04dd115382782f45ed8",
+      "bytes": 2484
+    },
+    {
+      "path": "patches/native-stages/tests/native-drop-recovery.test.mjs",
+      "blob": "e888ae723c2fc37417a70b00b5286058992dfeb4",
+      "bytes": 12785
+    },
+    {
+      "path": "patches/native-stages/tests/native-drop.test.mjs",
+      "blob": "5a3a101d8e3fed1e5af9571779a2d862d1982546",
+      "bytes": 10269
+    },
+    {
+      "path": "patches/native-stages/tests/native-grounded-form-source.test.mjs",
+      "blob": "5e23fcbd359b717181b65d698b8e35355f72426f",
+      "bytes": 5039
+    },
+    {
+      "path": "patches/native-stages/tests/native-grounded-form.test.mjs",
+      "blob": "db3605cb5a88b8a8b415b3209af09ba5d28f8b52",
+      "bytes": 5233
+    },
+    {
+      "path": "patches/native-stages/tests/native-integration.test.mjs",
+      "blob": "f0ff06b41d4e67891cfb5f9c0f90211e3f0fcc43",
+      "bytes": 7348
+    },
+    {
+      "path": "patches/native-stages/tests/native-jump-attach-source.test.mjs",
+      "blob": "6ce9adfc0f9e46a7e8e0140db63097d9f5174694",
+      "bytes": 7286
+    },
+    {
+      "path": "patches/native-stages/tests/native-jump-attach.test.mjs",
+      "blob": "274c23c5a8c5efdfdee3950478d932b251296d3b",
+      "bytes": 3688
+    },
+    {
+      "path": "patches/native-stages/tests/native-jump-combat-input.test.mjs",
+      "blob": "682ab076020e3ec6caaaa711c2d40f1443de760e",
+      "bytes": 7295
+    },
+    {
+      "path": "patches/native-stages/tests/native-ordinary-floor-support.test.mjs",
+      "blob": "c24e93b0ea1107a7bd689d07b76b52de90dcfa6f",
+      "bytes": 3580
+    },
+    {
+      "path": "patches/native-stages/tests/native-ordinary-jump-input.test.mjs",
+      "blob": "50d12e75edccaf5f6e0ed5f1f43eb6804c2782cf",
+      "bytes": 7653
+    },
+    {
+      "path": "patches/native-stages/tests/native-projectile-sweep.test.mjs",
+      "blob": "afcac5f4930153df9852358e1acb60d5b01c3c23",
+      "bytes": 8193
+    },
+    {
+      "path": "patches/native-stages/tests/native-ranked-basis.test.mjs",
+      "blob": "bc2062bb277da6aa4da0290162ce618c94dd8320",
+      "bytes": 5007
+    },
+    {
+      "path": "patches/native-stages/tests/native-ranked-goals-policy.test.mjs",
+      "blob": "e1b727b20ae2a167738bd54e9a4e079cbca9c2ec",
+      "bytes": 1978
+    },
+    {
+      "path": "patches/native-stages/tests/native-ranked-goals-source.test.mjs",
+      "blob": "8f809edfc7a8c0a8b2e120b8d0c5c5b568933f2d",
+      "bytes": 8117
+    },
+    {
+      "path": "patches/native-stages/tests/native-ranked-tower-lifecycle.test.mjs",
+      "blob": "fc5497c357e4f738bdd432e7fc4ce04ae118dca7",
+      "bytes": 6363
+    },
+    {
+      "path": "patches/native-stages/tests/native-ranked-tower-source.test.mjs",
+      "blob": "45dff7818f43841f15478f9e1636b4e9d0aadc91",
+      "bytes": 5483
+    },
+    {
+      "path": "patches/native-stages/tests/native-ranked-traversal.test.mjs",
+      "blob": "98ca4d6bc0dd77ed195633983528ceea6191e89b",
+      "bytes": 6701
+    },
+    {
+      "path": "patches/native-stages/tests/native-route-search-budget.test.mjs",
+      "blob": "0b00b83fe51360feaf9c0483241bbadf33374a98",
+      "bytes": 5656
+    },
+    {
+      "path": "patches/native-stages/tests/native-source-foot-body.test.mjs",
+      "blob": "f40834d43f9cad431918cff82db38d6572c988fc",
+      "bytes": 8394
+    },
+    {
+      "path": "patches/native-stages/tests/native-source-foot-support.test.mjs",
+      "blob": "f38a9620941883c9eb2ee65145a9b04c1628d144",
+      "bytes": 4596
+    },
+    {
+      "path": "patches/native-stages/tests/native-source-waypoint.test.mjs",
+      "blob": "cd40b3fc00b802b01b302129f235df00ac8b7e0d",
+      "bytes": 6356
+    },
+    {
+      "path": "patches/native-stages/tests/native-spawn-nav.test.mjs",
+      "blob": "5a13b602695edc4ed30080beae9e6affe3d3dc32",
+      "bytes": 4309
+    },
+    {
+      "path": "patches/native-stages/tests/native-surge.test.mjs",
+      "blob": "8749ade82dacced212823b667feb9cc323effb21",
+      "bytes": 11950
+    },
+    {
+      "path": "patches/native-stages/tests/paint-cache.test.mjs",
+      "blob": "8e31f54e3b427ed05269586e760e23325992f10b",
+      "bytes": 1911
+    },
+    {
+      "path": "patches/native-stages/tests/ray-down-parity.test.mjs",
+      "blob": "0a495a6237e63fc4404cbdaf34f460bfdd4d985e",
+      "bytes": 3743
+    },
+    {
+      "path": "patches/native-stages/tests/shipshape-climb-dry-refill.test.mjs",
+      "blob": "acb55c97254872d9667a84d5857b42979fc9e0b3",
+      "bytes": 8229
+    },
+    {
+      "path": "patches/native-stages/tests/source-paint-coverage.test.mjs",
+      "blob": "137b3f9514e6eb229356a437cd24b22ae5f60188",
+      "bytes": 5298
+    },
+    {
+      "path": "patches/native-stages/tests/source-rule-availability.test.mjs",
+      "blob": "57f662f4c2b526f4265ab2f18046227e938bb06f",
+      "bytes": 1375
+    },
+    {
+      "path": "patches/native-stages/tests/source-rule-start.test.mjs",
+      "blob": "7f3550b40d44a9182ced71026232b592c3d49804",
+      "bytes": 3743
+    },
+    {
+      "path": "patches/native-stages/tests/source-wall-cap.test.mjs",
+      "blob": "5dcafde2473cb82e7f679d131e778193a6a2293b",
+      "bytes": 2162
+    },
+    {
+      "path": "patches/native-stages/tests/tower-arc-calibration.test.mjs",
+      "blob": "2b4569df03f3c363e142ddba88df6ccd50e08b80",
+      "bytes": 1884
+    },
+    {
+      "path": "patches/native-stages/tests/tower-input-boarding.test.mjs",
+      "blob": "4edbf3fbf99a68038a0bb17c402116a4c8ef248d",
+      "bytes": 2916
+    },
+    {
+      "path": "patches/native-stages/tests/tower-source-clearance.test.mjs",
+      "blob": "de72aff64153cc875cb9e618f674a72002d932e7",
+      "bytes": 3216
+    },
+    {
+      "path": "patches/native-stages/tests/undertow-minimap.test.mjs",
+      "blob": "74ecb572f52ecd85452cd95e2e5c7fe94fc07689",
+      "bytes": 6245
+    },
+    {
+      "path": "patches/network-replication/adapter.mjs",
+      "blob": "8fa191d2bbcec8b352d72a3771ba7c06406864ff",
+      "bytes": 179582
+    },
+    {
+      "path": "patches/network-replication/catalog-paint-admission.mjs",
+      "blob": "d3c1b2484f4ef15778351761f5d468153713a263",
+      "bytes": 1613
+    },
+    {
+      "path": "patches/network-replication/conditional-gear-adapter.mjs",
+      "blob": "9db98bd1f2a157eefa513997e645940ff412aade",
+      "bytes": 1552
+    },
+    {
+      "path": "patches/network-replication/dodge-clock-adapter.mjs",
+      "blob": "55607ce56c21e81984db19ca377c5d6318386eb6",
+      "bytes": 7700
+    },
+    {
+      "path": "patches/network-replication/gear-loadout-adapter.mjs",
+      "blob": "c1dc4e92ef2ca46786903c76643b4bb571c7e98a",
+      "bytes": 1707
+    },
+    {
+      "path": "patches/network-replication/issue-1088-surge-adapter.mjs",
+      "blob": "f39ea1d1705c2c24bf4a259158d22db5d355be40",
+      "bytes": 2679
+    },
+    {
+      "path": "patches/network-replication/issue-1088-surge-presentation.mjs",
+      "blob": "0f26ed30927b7986e07fb09ff79fdd25ee62cb22",
+      "bytes": 6325
+    },
+    {
+      "path": "patches/network-replication/kit-paint-adapter.mjs",
+      "blob": "e89d503a1ce56547ec62216c39bd3ce8a060a28c",
+      "bytes": 4696
+    },
+    {
+      "path": "patches/network-replication/kit-paint-admission.mjs",
+      "blob": "98d05954497526c07af67a18057e2ce1a922cfe7",
+      "bytes": 15871
+    },
+    {
+      "path": "patches/network-replication/result-admission.mjs",
+      "blob": "22deee3342ff6fb8dbecaf25d0c78dd9bae77c14",
+      "bytes": 1123
+    },
+    {
+      "path": "patches/network-replication/roller-presentation.mjs",
+      "blob": "e3f986617992f4437d15f5c7810d5d539c7334b5",
+      "bytes": 6623
+    },
+    {
+      "path": "patches/network-replication/slosher-paint-admission.mjs",
+      "blob": "5456c6d6a4d31a800bd4f4de8258c66fa38c3089",
+      "bytes": 3107
+    },
+    {
+      "path": "patches/network-replication/snapshot-guard.mjs",
+      "blob": "e7b98ba95b4eaf464f330306e90044857e4480c2",
+      "bytes": 12101
+    },
+    {
+      "path": "patches/network-replication/superjump-epoch.mjs",
+      "blob": "d54fd234fe95e0fd52a9967e2f0a8512252bf108",
+      "bytes": 3399
+    },
+    {
+      "path": "patches/network-replication/transient-gear-adapter.mjs",
+      "blob": "aca72e177819a14051261c940d066cc1ba955b07",
+      "bytes": 1045
+    },
+    {
+      "path": "patches/practice-range/adapter.mjs",
+      "blob": "b601ab652698b2cff3a62aa8b762cc29fd1f9ea3",
+      "bytes": 10017
+    },
+    {
+      "path": "patches/practice-range/assets/lightmaps/range.json",
+      "blob": "9e00a7701c054c4d8ebdf00ce77afd6d1cccff71",
+      "bytes": 73
+    },
+    {
+      "path": "patches/practice-range/install.mjs",
+      "blob": "dcc9b9b6402dc911076d2c272a2d966dd7ecc469",
+      "bytes": 4392
+    },
+    {
+      "path": "patches/practice-range/range-map.mjs",
+      "blob": "255e2cffe274ec71f9fc5339266094466376a1a4",
+      "bytes": 1108
+    },
+    {
+      "path": "patches/practice-range/runtime/dummy.mjs",
+      "blob": "ea8ac13071f5b6cda85fee4552405b0cb90d2c89",
+      "bytes": 8341
+    },
+    {
+      "path": "patches/practice-range/runtime/hud.mjs",
+      "blob": "1f910c0d5c9984a64be7e0e6ab75d03f52745877",
+      "bytes": 8692
+    },
+    {
+      "path": "patches/practice-range/runtime/menu.mjs",
+      "blob": "010c19de5f4e6bf9468fbc5967b823f17f495ad7",
+      "bytes": 10919
+    },
+    {
+      "path": "patches/practice-range/runtime/pads.mjs",
+      "blob": "2715709942a46c5933f6cc744d1e1010d0112440",
+      "bytes": 9083
+    },
+    {
+      "path": "patches/practice-range/runtime/session.mjs",
+      "blob": "0cfc175418c932fe178ecaa0ab2dfaaba58fe7eb",
+      "bytes": 15371
+    },
+    {
+      "path": "patches/practice-range/runtime/signage.mjs",
+      "blob": "bf473ce5519516c240b680aad3468da48de4733a",
+      "bytes": 15914
+    },
+    {
+      "path": "patches/practice-range/runtime/strings.mjs",
+      "blob": "2b7477035fc63ad4c92ddffe21d060e8b00dee53",
+      "bytes": 4539
+    },
+    {
+      "path": "patches/practice-range/stage/layout.mjs",
+      "blob": "26360e8f135e4c795a1fffb71a58da0fb7ba7560",
+      "bytes": 11990
+    },
+    {
+      "path": "patches/practice-range/stage/murals.mjs",
+      "blob": "2282b145da77b8921346c1658a5e8f3d5edc3516",
+      "bytes": 13691
+    },
+    {
+      "path": "patches/practice-range/stage/props.mjs",
+      "blob": "4e4ae2b72e972d4e0b9c18f8a44f601a30e74e07",
+      "bytes": 4289
+    },
+    {
+      "path": "patches/practice-range/stage/surfaces.mjs",
+      "blob": "5b12ffefc0bdabd99a4e91c4f569013c92483209",
+      "bytes": 3864
+    },
+    {
+      "path": "patches/practice-range/stage/zones.mjs",
+      "blob": "d520f83ec555254b83ddb9d3f40bab47d5947e63",
+      "bytes": 17082
+    },
+    {
+      "path": "patches/practice-range/tools/bake-ao.mjs",
+      "blob": "ec23deecd78e03b18e9ec3966fe1aa40f77b5dbf",
+      "bytes": 4864
+    },
+    {
+      "path": "patches/reliability/adapter.mjs",
+      "blob": "645c80496162fc916de9f3c9c4d3a363259f7c8e",
+      "bytes": 4521
+    },
+    {
+      "path": "patches/reliability/attract-adapter.mjs",
+      "blob": "535515ff7dba440c6eb8ca3d091f41e1d1606fcc",
+      "bytes": 3911
+    },
+    {
+      "path": "patches/reliability/combat-credit-adapter.mjs",
+      "blob": "8ee6635913f2c7de493c0297ac92c8f44cd97158",
+      "bytes": 2918
+    },
+    {
+      "path": "patches/reliability/combat-life-adapter.mjs",
+      "blob": "f2465ab737bcf21fcb5ce3846c02e50d5de3e205",
+      "bytes": 3770
+    },
+    {
+      "path": "patches/reliability/controls-adapter.mjs",
+      "blob": "1798fb72bdd1eec6479283df1a5001ad491416c3",
+      "bytes": 5876
+    },
+    {
+      "path": "patches/reliability/gyro-adapter.mjs",
+      "blob": "f21290208a44056926615b48ac49e148631e66b0",
+      "bytes": 6809
+    },
+    {
+      "path": "patches/reliability/gyro-invert-adapter.mjs",
+      "blob": "94f8598b90589b4c479680c702f097237824895a",
+      "bytes": 1845
+    },
+    {
+      "path": "patches/reliability/hold-cancel-adapter.mjs",
+      "blob": "9d4ff49aea9cd6e62649209487459861517d82ad",
+      "bytes": 2943
+    },
+    {
+      "path": "patches/reliability/home-jump-adapter.mjs",
+      "blob": "3e28394a34404d68f0b8d3e56c777b1d6454d4e5",
+      "bytes": 1723
+    },
+    {
+      "path": "patches/reliability/hud-adapter.mjs",
+      "blob": "b68128b5e2c423459b22980169907a2a8d882d8c",
+      "bytes": 6870
+    },
+    {
+      "path": "patches/reliability/inkwave-eight-followup-adapter.mjs",
+      "blob": "1228ef116a9768e3f089bb7144d0c6003a81f567",
+      "bytes": 3590
+    },
+    {
+      "path": "patches/reliability/inkwave-six-followup-adapter.mjs",
+      "blob": "a85777a1b37ca14e337f494ce8d65170481c686f",
+      "bytes": 1817
+    },
+    {
+      "path": "patches/reliability/input-adapter.mjs",
+      "blob": "452a4fcbe89e3db37f1dc7e3f9dd40e65f08ba5e",
+      "bytes": 6063
+    },
+    {
+      "path": "patches/reliability/input-ownership-adapter.mjs",
+      "blob": "8319930d2e3b0eb263bef67572216cddef0d0c73",
+      "bytes": 3092
+    },
+    {
+      "path": "patches/reliability/intro-adapter.mjs",
+      "blob": "88a857ca02c29ebb4538f81ba28fca13c178b1f3",
+      "bytes": 2406
+    },
+    {
+      "path": "patches/reliability/issue-464-adapter.mjs",
+      "blob": "a6cc7836b737c7bbb344046623430e578947d62b",
+      "bytes": 2761
+    },
+    {
+      "path": "patches/reliability/joycon-pair-adapter.mjs",
+      "blob": "2db8f18cbddedda54899615b18f25d959417e16c",
+      "bytes": 4048
+    },
+    {
+      "path": "patches/reliability/map-gyro-adapter.mjs",
+      "blob": "229c97ad6d94b2d66b5c8389ce4bf8f818ec6107",
+      "bytes": 4755
+    },
+    {
+      "path": "patches/reliability/map-look.mjs",
+      "blob": "b597949e885c3795a2d9740416dc6f174dc7b283",
+      "bytes": 3017
+    },
+    {
+      "path": "patches/reliability/map-toggle-adapter.mjs",
+      "blob": "674de41a138cb30567c661de8c123659732d3380",
+      "bytes": 5899
+    },
+    {
+      "path": "patches/reliability/menu-raf-adapter.mjs",
+      "blob": "abf2f433538ed58b8a64a534437e63a631eca53e",
+      "bytes": 964
+    },
+    {
+      "path": "patches/reliability/menu-takeover.mjs",
+      "blob": "9a69c9228c527b24ee5c3fd076843b871611ea45",
+      "bytes": 2280
+    },
+    {
+      "path": "patches/reliability/mobile-adapter.mjs",
+      "blob": "7a3358fa390f21005d8afd4489ef7e30f1b13bea",
+      "bytes": 5819
+    },
+    {
+      "path": "patches/reliability/navigation-adapter.mjs",
+      "blob": "98db4408c19530ff7b6cce24fbeaed4754cc63f6",
+      "bytes": 8422
+    },
+    {
+      "path": "patches/reliability/net-adapter.mjs",
+      "blob": "bbb668a00a42cee0d22e338b13a36291d6bbe69d",
+      "bytes": 17332
+    },
+    {
+      "path": "patches/reliability/net-hit-payload-adapter.mjs",
+      "blob": "022df9f9373174c95a5f243040ed5fa9fa0bddf8",
+      "bytes": 6243
+    },
+    {
+      "path": "patches/reliability/pad-handoff-adapter.mjs",
+      "blob": "10b54e6aa2d9c38a79f6b2ef52f67c802335d146",
+      "bytes": 3666
+    },
+    {
+      "path": "patches/reliability/pause-adapter.mjs",
+      "blob": "5e60e4da0f89ba058fd7ff5038c2da512e6a06ac",
+      "bytes": 4645
+    },
+    {
+      "path": "patches/reliability/pin-tap-adapter.mjs",
+      "blob": "e34f80c34940c2a42df0e6a5d275c5300746d733",
+      "bytes": 3582
+    },
+    {
+      "path": "patches/reliability/respawn-navigation-adapter.mjs",
+      "blob": "b33692490dd7bd2ebe036754eca331611af6a190",
+      "bytes": 13841
+    },
+    {
+      "path": "patches/reliability/results-adapter.mjs",
+      "blob": "e2caaa4be5e8511d1c373917623ccd2a335266fc",
+      "bytes": 4512
+    },
+    {
+      "path": "patches/reliability/special-barrier-adapter.mjs",
+      "blob": "ffc733dbf8e64d6db7e301baee773b1437bbe894",
+      "bytes": 1003
+    },
+    {
+      "path": "patches/reliability/special-water-adapter.mjs",
+      "blob": "5ff7068d6e56229f78ac11275b14a7d43957d8e6",
+      "bytes": 6715
+    },
+    {
+      "path": "patches/reliability/start-adapter.mjs",
+      "blob": "5d57b41e0be0d60e8398236247e0059ea8e0f793",
+      "bytes": 13223
+    },
+    {
+      "path": "patches/reliability/sub-action-adapter.mjs",
+      "blob": "05538b8653d4876e501bacf4d695abd6e3ee31b7",
+      "bytes": 3113
+    },
+    {
+      "path": "patches/reliability/superjump-chain-adapter.mjs",
+      "blob": "89ac1f16f0426fbf4ac0ba03c93b9507e1e0472c",
+      "bytes": 1844
+    },
+    {
+      "path": "patches/reliability/touch-edge-adapter.mjs",
+      "blob": "b28b7b30ddbd4681a6f0bbd0d39b45f814f8db12",
+      "bytes": 3185
+    },
+    {
+      "path": "patches/reliability/touch-gyro-owner-adapter.mjs",
+      "blob": "9bb957d4cf649674362abd95577ef47188af6d1f",
+      "bytes": 1227
+    },
+    {
+      "path": "patches/reliability/touch-pointerlock-adapter.mjs",
+      "blob": "418ef0f9defed5c23b4aec21a88f68389cde86c8",
+      "bytes": 9170
+    },
+    {
+      "path": "patches/splatoon3/adapter.mjs",
+      "blob": "100b221338c2c04f42e90ff0492096e69c0f812e",
+      "bytes": 152149
+    },
+    {
+      "path": "patches/splatoon3/agent3-weapon-physics-adapter.mjs",
+      "blob": "ffcf7ae2348f56b6d56b7468dd2a09f65a4f83b7",
+      "bytes": 2029
+    },
+    {
+      "path": "patches/splatoon3/assets/stages/manifest.json",
+      "blob": "079f88d83166be3d5dc8dbff4a2576e4e8d63ab7",
+      "bytes": 250
+    },
+    {
+      "path": "patches/splatoon3/assist-presentation-adapter.mjs",
+      "blob": "3088df252c80354f16b4ce5d26e94de3053088cc",
+      "bytes": 3564
+    },
+    {
+      "path": "patches/splatoon3/bootstrap.mjs",
+      "blob": "d1a9575d180cf4fabee1c383931779c73c70606f",
+      "bytes": 1739
+    },
+    {
+      "path": "patches/splatoon3/bubbler-map-adapter.mjs",
+      "blob": "ca283093987815e534757b7ee0038d5dd4271dd6",
+      "bytes": 52397
+    },
+    {
+      "path": "patches/splatoon3/camera-aim-controls-adapter.mjs",
+      "blob": "25b421d50f23261270ee50344f8935e573e9249d",
+      "bytes": 4277
+    },
+    {
+      "path": "patches/splatoon3/charger-field-adapter.mjs",
+      "blob": "effa359fd36fa959a9d40fdb247fe8a5679c3fd4",
+      "bytes": 793
+    },
+    {
+      "path": "patches/splatoon3/charger-sight-cache-adapter.mjs",
+      "blob": "059b6425cdd5022f055802be9b0d71c26a2ef7ac",
+      "bytes": 3021
+    },
+    {
+      "path": "patches/splatoon3/charger-surface-adapter.mjs",
+      "blob": "44d4a21d7a9a0e771c5be17d170174995ac7ac71",
+      "bytes": 1689
+    },
+    {
+      "path": "patches/splatoon3/clothing-gear-adapter.mjs",
+      "blob": "b1e47eaac35f89a3a7aa0e3443ea837ffd370f68",
+      "bytes": 2453
+    },
+    {
+      "path": "patches/splatoon3/combat-range-adapter.mjs",
+      "blob": "f84b9cc571f1c80e9ce2f87a3fae0b7c974c04bf",
+      "bytes": 827
+    },
+    {
+      "path": "patches/splatoon3/contact-recovery-adapter.mjs",
+      "blob": "6a31729f5a0e08c32bcbd02559f349f32f359b9f",
+      "bytes": 576
+    },
+    {
+      "path": "patches/splatoon3/enemy-ink-recovery-adapter.mjs",
+      "blob": "93bedfe4fa02480fabbd0cb307430a5b52bd50eb",
+      "bytes": 909
+    },
+    {
+      "path": "patches/splatoon3/gear-sub-adapter.mjs",
+      "blob": "30f0bbaa5f9852f397855d0c4697a95ffbc7a37c",
+      "bytes": 5845
+    },
+    {
+      "path": "patches/splatoon3/issue-196-adapter.mjs",
+      "blob": "a7abb4f6a579c09003ea88685b9aaa270750a76d",
+      "bytes": 3109
+    },
+    {
+      "path": "patches/splatoon3/issue-284-adapter.mjs",
+      "blob": "10880bcac4bfb7782a0157bdfd294b889b8ee73f",
+      "bytes": 7220
+    },
+    {
+      "path": "patches/splatoon3/issue-405-adapter.mjs",
+      "blob": "f252f3257df452ea10e12d9a06288d6a639876c8",
+      "bytes": 2006
+    },
+    {
+      "path": "patches/splatoon3/issue-427-adapter.mjs",
+      "blob": "9e7d3f9e3beb7a7611d9016e14af9f7aa74b1847",
+      "bytes": 23106
+    },
+    {
+      "path": "patches/splatoon3/issue-435-adapter.mjs",
+      "blob": "b9fd628aa0688b7e3f11fe145fc6b99776267703",
+      "bytes": 4149
+    },
+    {
+      "path": "patches/splatoon3/issue-460-adapter.mjs",
+      "blob": "4e10fb1838decca0a8ffc97b5f23fa750cc45697",
+      "bytes": 8840
+    },
+    {
+      "path": "patches/splatoon3/issue-460-gauge.mjs",
+      "blob": "0e7704b4a630ae94aedd5fa9fb9d8a103285ce84",
+      "bytes": 10255
+    },
+    {
+      "path": "patches/splatoon3/issue-460-marker.mjs",
+      "blob": "3df2b070fd7101eeafb9fc4b609a37bc06b23c62",
+      "bytes": 4178
+    },
+    {
+      "path": "patches/splatoon3/issue-465-adapter.mjs",
+      "blob": "74d882f690323dd462a32fec19f1914d18a510b6",
+      "bytes": 695
+    },
+    {
+      "path": "patches/splatoon3/issue-477-adapter.mjs",
+      "blob": "a56713f53b652b02f59ac7050908951345af80a1",
+      "bytes": 17228
+    },
+    {
+      "path": "patches/splatoon3/issue-479-adapter.mjs",
+      "blob": "261d3d2389df9ff5d66e945caab666cad3dba11f",
+      "bytes": 3473
+    },
+    {
+      "path": "patches/splatoon3/issue-481-adapter.mjs",
+      "blob": "df85361b91947673134eafef7aa0a4e15a10e808",
+      "bytes": 11760
+    },
+    {
+      "path": "patches/splatoon3/issue-482-adapter.mjs",
+      "blob": "2ec9e1207939dba7fd27ebc8eb6380ecda8bf1f5",
+      "bytes": 4362
+    },
+    {
+      "path": "patches/splatoon3/issue-483-adapter.mjs",
+      "blob": "63323e2539e8ee2138f3f2d240498a7c1414d367",
+      "bytes": 8344
+    },
+    {
+      "path": "patches/splatoon3/issue-484-adapter.mjs",
+      "blob": "95113df34945cc5abc49bc03f45b0c6c7d9ca027",
+      "bytes": 8744
+    },
+    {
+      "path": "patches/splatoon3/issue-719-dodge-adapter.mjs",
+      "blob": "3205b423b262e6e12d22574c6ea445f1dd53cf33",
+      "bytes": 1459
+    },
+    {
+      "path": "patches/splatoon3/issue-batch-1171-adapter.mjs",
+      "blob": "bc0d1d56600d7abecc8447af826dca7ac773b743",
+      "bytes": 4507
+    },
+    {
+      "path": "patches/splatoon3/judd-result-adapter.mjs",
+      "blob": "008b36e6b5f751fea90f4652f45ff6d731675f95",
+      "bytes": 9238
+    },
+    {
+      "path": "patches/splatoon3/kit-rescue-adapter.mjs",
+      "blob": "502d1c53ef8bf104818ce693fb31fdf343a7dcbb",
+      "bytes": 16879
+    },
+    {
+      "path": "patches/splatoon3/lobby-host-team-adapter.mjs",
+      "blob": "4046a703c3981a995f3fb597308422c4b9222195",
+      "bytes": 12133
+    },
+    {
+      "path": "patches/splatoon3/local-batch-01-adapter.mjs",
+      "blob": "5a44bf30ccd956c20e906fbd7bdf1d099bb3ea1b",
+      "bytes": 5370
+    },
+    {
+      "path": "patches/splatoon3/match-hud-adapter.mjs",
+      "blob": "71f23ed7ea851adde6c33636a55806a67ae0bb63",
+      "bytes": 4884
+    },
+    {
+      "path": "patches/splatoon3/minimap-dirty-adapter.mjs",
+      "blob": "394a98c198ee1d95117e41402331a08a2971391b",
+      "bytes": 10615
+    },
+    {
+      "path": "patches/splatoon3/movement-physics-adapter.mjs",
+      "blob": "de6e043b1013620bed94e2b22acdbab0810b04bb",
+      "bytes": 11312
+    },
+    {
+      "path": "patches/splatoon3/pad-sensitivity-adapter.mjs",
+      "blob": "595b052e3ad4c0369242a8df38fec506cecbedae",
+      "bytes": 2434
+    },
+    {
+      "path": "patches/splatoon3/paint-ownership-adapter.mjs",
+      "blob": "fc426f8a31b3d9831bca5beb93081fccfb42745b",
+      "bytes": 8345
+    },
+    {
+      "path": "patches/splatoon3/paint-splat-pool-adapter.mjs",
+      "blob": "e56428c9cc6f7ec094f318a3384797c03ac39ca2",
+      "bytes": 6808
+    },
+    {
+      "path": "patches/splatoon3/profile.json",
+      "blob": "6c72912fa7e3e0c69369b404547a83d36098a5d5",
+      "bytes": 137130
+    },
+    {
+      "path": "patches/splatoon3/pwa/sw.js",
+      "blob": "11ead5a8200f657b315dff5b9bec0da7ce933d44",
+      "bytes": 1494
+    },
+    {
+      "path": "patches/splatoon3/ranked-adapter.mjs",
+      "blob": "e52c184b49828064302c2633a4857a9d1a3a9fb5",
+      "bytes": 8830
+    },
+    {
+      "path": "patches/splatoon3/ranked-ui-adapter.mjs",
+      "blob": "fb904e00241ddeeaf824fb0b95d63967d28c8c7f",
+      "bytes": 19501
+    },
+    {
+      "path": "patches/splatoon3/reference/canonical-kits-1130.json",
+      "blob": "e06baa489c8e4d238f0be9746550c3b0b03ffea3",
+      "bytes": 23921
+    },
+    {
+      "path": "patches/splatoon3/reference/curated-numbers.json",
+      "blob": "cbcf826f5b49808fb7f394188ed3d378ef509f44",
+      "bytes": 104528
+    },
+    {
+      "path": "patches/splatoon3/reference/gear-params-1130.json",
+      "blob": "106daa6e1c2054bd6b1bf87cd876e033a54d20d5",
+      "bytes": 1820
+    },
+    {
+      "path": "patches/splatoon3/reference/gear-traits-1130.json",
+      "blob": "22f2f40d00ce30d58e5143c349b4b5359b127724",
+      "bytes": 3259
+    },
+    {
+      "path": "patches/splatoon3/reference/kit-main-reference.json",
+      "blob": "d92d8d6fcdd4e9e2cb90ce25b13861e0ee39a6b0",
+      "bytes": 7840
+    },
+    {
+      "path": "patches/splatoon3/reference/line-marker-1130.json",
+      "blob": "de15b7574ee816b8e2460e6c1bd82dee5b8dfed3",
+      "bytes": 1579
+    },
+    {
+      "path": "patches/splatoon3/reference/numeric-status.json",
+      "blob": "6ad111717a813ef0579cc5c2822302e01552f772",
+      "bytes": 131836
+    },
+    {
+      "path": "patches/splatoon3/reference/object-shredder-1130.json",
+      "blob": "ac0510f2267e6ddab9f3099bad40f13c9ffc292d",
+      "bytes": 1652
+    },
+    {
+      "path": "patches/splatoon3/reference/shooter-reticle-reference.json",
+      "blob": "fa4b1819ebb3ce67f918cdc76a6027105fa74711",
+      "bytes": 3391
+    },
+    {
+      "path": "patches/splatoon3/reference/splatling-reticle-reference.json",
+      "blob": "74f2466f450182372fe0c605349f3d7a5b119f36",
+      "bytes": 2143
+    },
+    {
+      "path": "patches/splatoon3/reference/splatoon2-550/BlasterMiddle.json",
+      "blob": "079984ac3665cf30bc3e2cbceb717cf960121383",
+      "bytes": 2641
+    },
+    {
+      "path": "patches/splatoon3/reference/splatoon2-550/BlasterMiddle_Burst.json",
+      "blob": "18052c7c08ee381dddcce93bb4ac901c360afc66",
+      "bytes": 2640
+    },
+    {
+      "path": "patches/splatoon3/reference/splatoon2-550/ShooterNormal.json",
+      "blob": "5864886c005c8f8f3e3795cd716a9fcd3e9bd66d",
+      "bytes": 2893
+    },
+    {
+      "path": "patches/splatoon3/reference/splatoon2-550/SpinnerStandard.json",
+      "blob": "9fa32d525f34c91804afe242c6223a21e34dd35f",
+      "bytes": 2895
+    },
+    {
+      "path": "patches/splatoon3/reference/splatoon2-550/TwinsNormal_2.json",
+      "blob": "3373f8794d15a4ffb33032edf5cfd13f69835a4a",
+      "bytes": 2067
+    },
+    {
+      "path": "patches/splatoon3/reference/sprinkler-1130.json",
+      "blob": "d4229468d5b4d3f7c5c9389b22f021aa46efc439",
+      "bytes": 1348
+    },
+    {
+      "path": "patches/splatoon3/reference/sub-special-fidelity-reference.json",
+      "blob": "d283a43f640c88c0dc9888043d43530dc8d299a0",
+      "bytes": 12309
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/WeaponBlasterMiddle.game__GameParameterTable.json",
+      "blob": "d3a7a48d601a12e17a050cd934cd4e8c2fe34ee7",
+      "bytes": 5028
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/WeaponChargerNormal.game__GameParameterTable.json",
+      "blob": "176e465690d25219a8df12ae594d3d8d536abef2",
+      "bytes": 3545
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/WeaponManeuverNormal.game__GameParameterTable.json",
+      "blob": "63cae8c18faf4757ebaa81c5eaff22995087448a",
+      "bytes": 3762
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/WeaponRollerNormal.game__GameParameterTable.json",
+      "blob": "b424343715cf39cc9262af05a99a9c4d322cca7f",
+      "bytes": 17011
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/WeaponShooterNormal.game__GameParameterTable.json",
+      "blob": "bd43a9a6af6a86e8b1d3c1416eadf94724da3079",
+      "bytes": 3018
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/WeaponSlosherStrong.game__GameParameterTable.json",
+      "blob": "a7cbb627bd2b7aac9a19aa315eae513479e0390b",
+      "bytes": 17112
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/WeaponSpinnerStandard.game__GameParameterTable.json",
+      "blob": "76e62caaa2c3bee8f502b1794c8cf91cf5cbc972",
+      "bytes": 3643
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-audit-1130/manifest.json",
+      "blob": "a983fedaeb22547a31fefe65158fde95dc90dd12",
+      "bytes": 2121
+    },
+    {
+      "path": "patches/splatoon3/reference/weapon-weight-1130.json",
+      "blob": "092391db5228b92a45e0b921ae088b89603728ae",
+      "bytes": 22987
+    },
+    {
+      "path": "patches/splatoon3/reference/weapons-fidelity-reference.json",
+      "blob": "a8cd121c3325667cbaa0f062bf4a179395ed068b",
+      "bytes": 44270
+    },
+    {
+      "path": "patches/splatoon3/respawn-lifecycle-adapter.mjs",
+      "blob": "37ca8d250326ac34c952ae662cc57e4e765d35f1",
+      "bytes": 3211
+    },
+    {
+      "path": "patches/splatoon3/roller-depletion-adapter.mjs",
+      "blob": "42832ffc5c8a63e7294ea1c872e20af6f9d2e558",
+      "bytes": 1320
+    },
+    {
+      "path": "patches/splatoon3/roller-max-paint-adapter.mjs",
+      "blob": "e8301e915c9da7b1b171143deb2682c16a26d788",
+      "bytes": 650
+    },
+    {
+      "path": "patches/splatoon3/runtime/action-admission.mjs",
+      "blob": "019fa53cdf73a0d8f55f5f2b564055b979d17257",
+      "bytes": 2836
+    },
+    {
+      "path": "patches/splatoon3/runtime/actor-motion.mjs",
+      "blob": "7ba33bafc72e68999f091a764e4d3428fd03212f",
+      "bytes": 3320
+    },
+    {
+      "path": "patches/splatoon3/runtime/agent3-weapon-physics.mjs",
+      "blob": "d28ad41fc429eacd66308a7a5f9c931b50cbeba9",
+      "bytes": 11648
+    },
+    {
+      "path": "patches/splatoon3/runtime/all-specials.mjs",
+      "blob": "d79058ce3869cfd867b1687f5bcd59d43e725f1d",
+      "bytes": 120442
+    },
+    {
+      "path": "patches/splatoon3/runtime/all-subs.mjs",
+      "blob": "a2703ecaae9faa1a279c479b0aed38fd0fbd8ffa",
+      "bytes": 91022
+    },
+    {
+      "path": "patches/splatoon3/runtime/battle-framing.mjs",
+      "blob": "4675709adef1611b652f2f4c56f05a1d79d14b14",
+      "bytes": 2652
+    },
+    {
+      "path": "patches/splatoon3/runtime/blast-occlusion.mjs",
+      "blob": "a36e2360b19287e0ef5d6343e306684a5ff04639",
+      "bytes": 2007
+    },
+    {
+      "path": "patches/splatoon3/runtime/blaster-flight-paint.mjs",
+      "blob": "3390562e6233fa6d8561405d06208ae0ff12f351",
+      "bytes": 15129
+    },
+    {
+      "path": "patches/splatoon3/runtime/blaster-mechanism-model.mjs",
+      "blob": "e65d3683bf64e000f95ac5f2a5a06f39abc4eb99",
+      "bytes": 3434
+    },
+    {
+      "path": "patches/splatoon3/runtime/blaster-mechanism.mjs",
+      "blob": "04b858f07490fd4f5bd4e30703b0f08689739d80",
+      "bytes": 2186
+    },
+    {
+      "path": "patches/splatoon3/runtime/bomb-models.mjs",
+      "blob": "eb84d513e9c2de07087db2c53d50256584daab36",
+      "bytes": 22434
+    },
+    {
+      "path": "patches/splatoon3/runtime/bomb-motion.mjs",
+      "blob": "d3f22853b05e1701cde50579e7bef0a1a1ca983f",
+      "bytes": 14554
+    },
+    {
+      "path": "patches/splatoon3/runtime/brella-aperture.mjs",
+      "blob": "0f551300cc9b23315269cad7fe3b2ffc51006e9d",
+      "bytes": 246
+    },
+    {
+      "path": "patches/splatoon3/runtime/brella-canopy-visual.mjs",
+      "blob": "4c8003638431bfde84119859b967f63863880875",
+      "bytes": 1468
+    },
+    {
+      "path": "patches/splatoon3/runtime/camera-aim-controls.mjs",
+      "blob": "b52d28b068d37180768d70ad7c2517e2b19cd249",
+      "bytes": 8304
+    },
+    {
+      "path": "patches/splatoon3/runtime/canonical-kits-data.mjs",
+      "blob": "99fdf2d40b12bd6887144f50fd72e0028943d16d",
+      "bytes": 6773
+    },
+    {
+      "path": "patches/splatoon3/runtime/canonical-kits.mjs",
+      "blob": "a8c20b1e524b7776e701922fb37ce6d11ecccc2b",
+      "bytes": 2299
+    },
+    {
+      "path": "patches/splatoon3/runtime/carry-motion.mjs",
+      "blob": "791a1f304cfdbda90eba646098591831912c8361",
+      "bytes": 2484
+    },
+    {
+      "path": "patches/splatoon3/runtime/catalog-splash-paint.mjs",
+      "blob": "a79aa44de2471a4eada085deeb4989a38699c599",
+      "bytes": 2251
+    },
+    {
+      "path": "patches/splatoon3/runtime/catalogue-payload.mjs",
+      "blob": "4cc98aad275181b2d2df552fb02ab6dc7cfd86f4",
+      "bytes": 836
+    },
+    {
+      "path": "patches/splatoon3/runtime/catalogue.mjs",
+      "blob": "c9567167d6cd7bf5e5cbb4b1aaaa2590cd8fd6d4",
+      "bytes": 31962
+    },
+    {
+      "path": "patches/splatoon3/runtime/charger-sight-cache.mjs",
+      "blob": "59c1ff79c4604271435d525577fdc2c908d2186c",
+      "bytes": 1341
+    },
+    {
+      "path": "patches/splatoon3/runtime/charger-surface.mjs",
+      "blob": "ece53ea321ff570d0f8ed76e288e5b7df6d38e8f",
+      "bytes": 2483
+    },
+    {
+      "path": "patches/splatoon3/runtime/clock.mjs",
+      "blob": "7998998b0b11a06447a638118fe2ddecb0d5741b",
+      "bytes": 6043
+    },
+    {
+      "path": "patches/splatoon3/runtime/clothing-gear.mjs",
+      "blob": "885729d41fd324e073bf574e70b1df12ea58c940",
+      "bytes": 4250
+    },
+    {
+      "path": "patches/splatoon3/runtime/combat-info.mjs",
+      "blob": "7ac326f7cea9e9644e7cdb567e7c1aafb203693e",
+      "bytes": 4716
+    },
+    {
+      "path": "patches/splatoon3/runtime/conditional-gear-network.mjs",
+      "blob": "00447baed89a74b0a39cff885960080b8403dc6d",
+      "bytes": 5772
+    },
+    {
+      "path": "patches/splatoon3/runtime/conditional-gear.mjs",
+      "blob": "f44535ff9d42464ccc9203c4e602df0d6e377bb4",
+      "bytes": 5508
+    },
+    {
+      "path": "patches/splatoon3/runtime/contact-recovery.mjs",
+      "blob": "7104c1893f1beac6df57ee96624d66cac5f938f6",
+      "bytes": 2120
+    },
+    {
+      "path": "patches/splatoon3/runtime/controller-motion.mjs",
+      "blob": "8c70531b1f423482ba2a310616af04f9b570e935",
+      "bytes": 34272
+    },
+    {
+      "path": "patches/splatoon3/runtime/damage-timing.mjs",
+      "blob": "d28dfcef1cf11fce06beab728ac782dd06fc044f",
+      "bytes": 3800
+    },
+    {
+      "path": "patches/splatoon3/runtime/death-blast.mjs",
+      "blob": "6e71a79445a92be4bb2bb2f0c0bd67e97ed1b899",
+      "bytes": 5039
+    },
+    {
+      "path": "patches/splatoon3/runtime/death-camera.mjs",
+      "blob": "872dfbd52f35363fb805f2b7fcca24e6e6fe3b4f",
+      "bytes": 138
+    },
+    {
+      "path": "patches/splatoon3/runtime/death-card.mjs",
+      "blob": "d14ec1932a186b2986f6b01fb479f098e25adcb0",
+      "bytes": 1267
+    },
+    {
+      "path": "patches/splatoon3/runtime/disconnect-fidelity.mjs",
+      "blob": "41c5d6171e904fc4fb7ce5f8e9bfe5ee05bda09e",
+      "bytes": 21169
+    },
+    {
+      "path": "patches/splatoon3/runtime/dry-ink.mjs",
+      "blob": "d295ec9a536ea328d80c784cee41c094a7697eca",
+      "bytes": 1663
+    },
+    {
+      "path": "patches/splatoon3/runtime/dualies-accuracy.mjs",
+      "blob": "f0f05b329cb3846af4f509720ec7d7deca50d2ec",
+      "bytes": 2517
+    },
+    {
+      "path": "patches/splatoon3/runtime/dualies-guide-cache.mjs",
+      "blob": "992c5bf87e0f078414712f26fcfdb1044d5b4ce2",
+      "bytes": 2049
+    },
+    {
+      "path": "patches/splatoon3/runtime/dualies-motion.mjs",
+      "blob": "02c7ae0a898515e57e06d5fe91a50277aaf77e54",
+      "bytes": 10745
+    },
+    {
+      "path": "patches/splatoon3/runtime/dualies-network.mjs",
+      "blob": "b0a6818c6dda6aa1e0502e831b6fcef6bbb14010",
+      "bytes": 5146
+    },
+    {
+      "path": "patches/splatoon3/runtime/dualies-slide-paint.mjs",
+      "blob": "e72e3a095502f3eab65c530e0eaf25bad29cb645",
+      "bytes": 5296
+    },
+    {
+      "path": "patches/splatoon3/runtime/emotes-motion.mjs",
+      "blob": "c73ee3bed4b07fe55035c65de4b223b4be46908a",
+      "bytes": 7666
+    },
+    {
+      "path": "patches/splatoon3/runtime/face-motion.mjs",
+      "blob": "1cea4d321d33629d3d0d66e200ce707493dc5901",
+      "bytes": 8215
+    },
+    {
+      "path": "patches/splatoon3/runtime/final-damage.mjs",
+      "blob": "ad3b0edfdd1fdfee83996c80460fa57d37d734c0",
+      "bytes": 3713
+    },
+    {
+      "path": "patches/splatoon3/runtime/flow-effects.mjs",
+      "blob": "4fd1fdd2d96b82624e916473d18c7f8ac841e4f8",
+      "bytes": 3823
+    },
+    {
+      "path": "patches/splatoon3/runtime/flow-motion.mjs",
+      "blob": "1f5b9f8c550d5d994ece9f2960dbf601ebc171e1",
+      "bytes": 20505
+    },
+    {
+      "path": "patches/splatoon3/runtime/flow.mjs",
+      "blob": "8c0cece93832199e0061c73ba0ab00bdb392f1e9",
+      "bytes": 13345
+    },
+    {
+      "path": "patches/splatoon3/runtime/form-motion.mjs",
+      "blob": "0e254484c3ee1289ec44b8092b5f5eaf0248b647",
+      "bytes": 9959
+    },
+    {
+      "path": "patches/splatoon3/runtime/gear-loadout-network.mjs",
+      "blob": "33de5d3d314a8c6a5100c532ae7ba8b89b74f63e",
+      "bytes": 4520
+    },
+    {
+      "path": "patches/splatoon3/runtime/gear.mjs",
+      "blob": "e2b3c02681f5586552b964bcd2c058c438f205b7",
+      "bytes": 30953
+    },
+    {
+      "path": "patches/splatoon3/runtime/hair-cache.mjs",
+      "blob": "a95aedaacbb17dbd0329d117d9dd4c5c838f3694",
+      "bytes": 6497
+    },
+    {
+      "path": "patches/splatoon3/runtime/haunt.mjs",
+      "blob": "12f206a23ab82974cd2eeffe51f4a24df063a8d9",
+      "bytes": 10196
+    },
+    {
+      "path": "patches/splatoon3/runtime/health-bars.mjs",
+      "blob": "4c7dc613a5056c38911ff596f8eb60e86c57cd34",
+      "bytes": 7117
+    },
+    {
+      "path": "patches/splatoon3/runtime/hit-spawn-motion.mjs",
+      "blob": "cd7f0f1c4bb9a9bf8260943ed0d769536e0787ef",
+      "bytes": 8471
+    },
+    {
+      "path": "patches/splatoon3/runtime/idle-motion.mjs",
+      "blob": "02b6e62171ca86f723d420799442d1c8733f1f10",
+      "bytes": 6046
+    },
+    {
+      "path": "patches/splatoon3/runtime/install.mjs",
+      "blob": "bedee6620368a7bff6694925c4cb30164fbe2c4d",
+      "bytes": 11791
+    },
+    {
+      "path": "patches/splatoon3/runtime/issue-415-adapter.mjs",
+      "blob": "b68d4b404fb11d6dde1d925bfe58b0a3f743ba00",
+      "bytes": 1223
+    },
+    {
+      "path": "patches/splatoon3/runtime/issue-465-blaster-startup.mjs",
+      "blob": "d367544d2ec4a9e3efe5d21223916b7f94379fac",
+      "bytes": 2331
+    },
+    {
+      "path": "patches/splatoon3/runtime/issue-eight-followup.mjs",
+      "blob": "edfdc6296d2b23a92762f4dbe21c54074f6036a7",
+      "bytes": 4268
+    },
+    {
+      "path": "patches/splatoon3/runtime/issue-five-hotfix-a.mjs",
+      "blob": "4e9740a07ab1ad865f4d7494a9929328720640c9",
+      "bytes": 1392
+    },
+    {
+      "path": "patches/splatoon3/runtime/issue-five-hotfix-b.mjs",
+      "blob": "8a722de3e415a1757924b38d46379f6893ff8ad0",
+      "bytes": 2797
+    },
+    {
+      "path": "patches/splatoon3/runtime/issue-five-hotfix-c.mjs",
+      "blob": "3da865619148e6e473d7f29e356b6650a71f19a6",
+      "bytes": 639
+    },
+    {
+      "path": "patches/splatoon3/runtime/jump-motion.mjs",
+      "blob": "f6dc9fbfb2a02ce2807d45b5462289aa9eb56fc5",
+      "bytes": 11228
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-autobomb.mjs",
+      "blob": "132c2733c1c9de8c0d8fb4ade0c32d4d7f1b8d2e",
+      "bytes": 2915
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-big-bubbler.mjs",
+      "blob": "c2eb6ecc8c58855a4f71271bc7fe08a888c54afb",
+      "bytes": 78049
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-composition.mjs",
+      "blob": "7e77100f22e597eb99d4215bde860bb04333b47f",
+      "bytes": 7368
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-defense.mjs",
+      "blob": "498bfb59b596278d454bdea4ec777ef6dec06f69",
+      "bytes": 6288
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-ink-vac.mjs",
+      "blob": "9ddea0fd0c31d694f09b04822785d974b6e52820",
+      "bytes": 56104
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-network.mjs",
+      "blob": "4b7cf68680e0950cb1fcc67585799afea2f19acf",
+      "bytes": 2273
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-sprinkler.mjs",
+      "blob": "c2e75aef4deafba65053b5ed4e9d6a7b03fca11a",
+      "bytes": 5789
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-subs.mjs",
+      "blob": "f7ca9fea93ecbe92b8f9c6a0ead26169a54813d8",
+      "bytes": 53346
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-support.mjs",
+      "blob": "963a410802b074779d76e75b218ee34721653453",
+      "bytes": 19341
+    },
+    {
+      "path": "patches/splatoon3/runtime/kit-trizooka.mjs",
+      "blob": "963f70a7d8c045e3e0c9c18350a472bf19361155",
+      "bytes": 37066
+    },
+    {
+      "path": "patches/splatoon3/runtime/landing-motion.mjs",
+      "blob": "92d627a205a9d8f0c0233501d46cd71568930121",
+      "bytes": 5872
+    },
+    {
+      "path": "patches/splatoon3/runtime/legacy-walk-curves.mjs",
+      "blob": "bbc0612c4b6f1ff1799cda25b6157b2989b49807",
+      "bytes": 9830
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-knockback.mjs",
+      "blob": "c0a4010f5baee90b545b4361613c37c5f28ccdb5",
+      "bytes": 6847
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-weapon-catalog-data.mjs",
+      "blob": "951f351e83d33c866905f06deedd650eac149b30",
+      "bytes": 63890
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "blob": "a859d65dc18eeca85d9a48f18d037057cc769aed",
+      "bytes": 65837
+    },
+    {
+      "path": "patches/splatoon3/runtime/map-reveal.mjs",
+      "blob": "a04a990a779e14efd254dd3c60011f1d82726341",
+      "bytes": 1153
+    },
+    {
+      "path": "patches/splatoon3/runtime/minimap-dirty.mjs",
+      "blob": "9817f8ceab09ec9968ca06f31d9a3a7a772dcfb2",
+      "bytes": 4717
+    },
+    {
+      "path": "patches/splatoon3/runtime/movement-motion.mjs",
+      "blob": "5f97d5d99854b3d03010adf8a3e4b24b8faa3a81",
+      "bytes": 10270
+    },
+    {
+      "path": "patches/splatoon3/runtime/movement-physics.mjs",
+      "blob": "a8a47ca96e0ad86b95c036cf682c078eac877529",
+      "bytes": 12124
+    },
+    {
+      "path": "patches/splatoon3/runtime/movement.mjs",
+      "blob": "33897722f2c6fc725de3684ace7582167095648e",
+      "bytes": 23600
+    },
+    {
+      "path": "patches/splatoon3/runtime/muzzle-feedback.mjs",
+      "blob": "68641fe8acb880adc1d4bfb7c82657c67f22357c",
+      "bytes": 3401
+    },
+    {
+      "path": "patches/splatoon3/runtime/native-sprinkler-damage.mjs",
+      "blob": "1c73368f0e42e817e6c352acb0a89d089c4f96fa",
+      "bytes": 7448
+    },
+    {
+      "path": "patches/splatoon3/runtime/normal-jump-hold.mjs",
+      "blob": "0d61036ab9c96671aa2ef9c6df06cfc42816521e",
+      "bytes": 4770
+    },
+    {
+      "path": "patches/splatoon3/runtime/object-gear.mjs",
+      "blob": "1c0841c8ad6da19ebe35e6ff1943e9c025980b78",
+      "bytes": 1937
+    },
+    {
+      "path": "patches/splatoon3/runtime/pad-sensitivity.mjs",
+      "blob": "8c0e62c04323c5e950bc37140e4c4edace97559c",
+      "bytes": 568
+    },
+    {
+      "path": "patches/splatoon3/runtime/paint-ownership.mjs",
+      "blob": "e8fc143ea848c919cf25355b8fa5bd0f87e4dd50",
+      "bytes": 27518
+    },
+    {
+      "path": "patches/splatoon3/runtime/player-hurtbox.mjs",
+      "blob": "e207ff29c3b94e0d086ec7f668da9cb2e8fcee3b",
+      "bytes": 543
+    },
+    {
+      "path": "patches/splatoon3/runtime/private-tracking-render.mjs",
+      "blob": "f4a70bffb17b826196b39fe5ee0da52004e2442b",
+      "bytes": 4343
+    },
+    {
+      "path": "patches/splatoon3/runtime/private-tracking.mjs",
+      "blob": "afc86b99bdce0994a4930fd4ae29542c0c8977b1",
+      "bytes": 6248
+    },
+    {
+      "path": "patches/splatoon3/runtime/projectile-collision.mjs",
+      "blob": "f9cdc17f9a7099172f1e320503746039fea6c4a2",
+      "bytes": 1686
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked-gear.mjs",
+      "blob": "7b1fa484a2ff8569e1d7c134885a42a91c7e6778",
+      "bytes": 2464
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/bots.mjs",
+      "blob": "017f2349591515777e6b0d5b70efbc6189e1e741",
+      "bytes": 21145
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/clams.mjs",
+      "blob": "fc796f7b5d6c8721eaaa41a2fe220c152ee8642c",
+      "bytes": 38664
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/combat.mjs",
+      "blob": "df0ed948c205b6d644324e7778e4bdc9149a7e7f",
+      "bytes": 15158
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/engine.mjs",
+      "blob": "5a51af21e6eab518687284dd1bdeaa5eeea14efb",
+      "bytes": 13272
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/install.mjs",
+      "blob": "2b82eb8ba439c03b330a0f3cb462f495f501a04a",
+      "bytes": 8329
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/network.mjs",
+      "blob": "67443af111c4425c39572fb5235ea52219644a39",
+      "bytes": 8522
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/rainmaker.mjs",
+      "blob": "719971d82ea328e59f8829258efa97f39b1c87cf",
+      "bytes": 33537
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/stages.mjs",
+      "blob": "e221e250b0fb5f16ad3b4ed1f00c2edd1a832f7e",
+      "bytes": 7542
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/tower.mjs",
+      "blob": "8ae9e36d29fc97b77dcd83ef5606c3292bc1ad20",
+      "bytes": 17560
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/ui.mjs",
+      "blob": "6726ec447eb3418efc5557dfa2a4f0e6e2f8b7c6",
+      "bytes": 18977
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/world.mjs",
+      "blob": "36a1e8b2a916d1cbd09df5aece9075b41b6db025",
+      "bytes": 44388
+    },
+    {
+      "path": "patches/splatoon3/runtime/ranked/zones.mjs",
+      "blob": "8c7bafdfe6872dbe97b74265e965177b21a2a804",
+      "bytes": 7781
+    },
+    {
+      "path": "patches/splatoon3/runtime/remote-dodge-clock.mjs",
+      "blob": "d1d0e46b1a8a7d14d79935db86fbfc5089574503",
+      "bytes": 6225
+    },
+    {
+      "path": "patches/splatoon3/runtime/render.mjs",
+      "blob": "c61bc1d9eaa31e866848ab186cf2309b1596be2a",
+      "bytes": 5801
+    },
+    {
+      "path": "patches/splatoon3/runtime/resources.mjs",
+      "blob": "e0b0db7c326c4bf0c29fd8659267858db68c5e62",
+      "bytes": 8521
+    },
+    {
+      "path": "patches/splatoon3/runtime/respawn-lifecycle.mjs",
+      "blob": "6c0d9758f25635a632d01a810a6b1db8b6313af9",
+      "bytes": 19012
+    },
+    {
+      "path": "patches/splatoon3/runtime/results-scoring.mjs",
+      "blob": "60b5fa068132234e0396a382a3ca5c5e860f35e1",
+      "bytes": 588
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-body-knockback.mjs",
+      "blob": "cb87329268ada1072bf4811f7be2de56d797132b",
+      "bytes": 6112
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-detail-motion.mjs",
+      "blob": "0e2f6ecb488d6d7bf608d3aa248f9ba2d125f097",
+      "bytes": 6581
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-fold.mjs",
+      "blob": "ee78ac6dc6dda7909e8687ee4e7988f76f02f874",
+      "bytes": 12255
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-freefall.mjs",
+      "blob": "5e611c59b40c9aa549e48b5d22ed527c0ffcbb81",
+      "bytes": 6252
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-impact-paint.mjs",
+      "blob": "13bdb1e239f405a17577ec9cd8cf30f071a15e4a",
+      "bytes": 11439
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-max-paint.mjs",
+      "blob": "83daf7053eb6b34e5a1810a5584044905439a0ab",
+      "bytes": 2341
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-model.mjs",
+      "blob": "2c47a32eda3de67c5054319d04b46cf6ef6b3466",
+      "bytes": 1962
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller-vertical-paint.mjs",
+      "blob": "7d6b17ab28afc152d0821e435d92be7d21fb682a",
+      "bytes": 2714
+    },
+    {
+      "path": "patches/splatoon3/runtime/roller.mjs",
+      "blob": "c30ed19ad97d71097c7750e2c2ccda1292cd3281",
+      "bytes": 44227
+    },
+    {
+      "path": "patches/splatoon3/runtime/scoring.mjs",
+      "blob": "12faa58cf0ffb9cd9c3f2c56ac872c44d9b769fd",
+      "bytes": 2822
+    },
+    {
+      "path": "patches/splatoon3/runtime/shooter-accuracy.mjs",
+      "blob": "ded49f861e0dcc6b09bc9aa51291b0c5bb5b33da",
+      "bytes": 3137
+    },
+    {
+      "path": "patches/splatoon3/runtime/shooter-impact-paint.mjs",
+      "blob": "c9ecb5f62647b30b51c5d9a0b11aa64d93a6be1d",
+      "bytes": 3955
+    },
+    {
+      "path": "patches/splatoon3/runtime/shooter-movement.mjs",
+      "blob": "1f2997cabc907992bc6e404c60241fe8fdc1a73c",
+      "bytes": 1776
+    },
+    {
+      "path": "patches/splatoon3/runtime/shooter-nearest-paint.mjs",
+      "blob": "2ca6d56f6bc4dd3e6ee31c5bcf93c64be6deffc0",
+      "bytes": 786
+    },
+    {
+      "path": "patches/splatoon3/runtime/slosher-intermediate-paint.mjs",
+      "blob": "7e50947314edb5954482dfa62e7a5f49ad9dc1c5",
+      "bytes": 6537
+    },
+    {
+      "path": "patches/splatoon3/runtime/slosher-nearest-paint.mjs",
+      "blob": "9bb8056b1ee0301f52a14f06f6c88ef8ea2d2ea4",
+      "bytes": 3094
+    },
+    {
+      "path": "patches/splatoon3/runtime/source-posture.mjs",
+      "blob": "8fc67e84dbf3f72f8ccb8e89108c4e34dfbfb85e",
+      "bytes": 7842
+    },
+    {
+      "path": "patches/splatoon3/runtime/source-weapon-owner.mjs",
+      "blob": "26182fc55ec842403afae6d1d59b5ec14efa7865",
+      "bytes": 1243
+    },
+    {
+      "path": "patches/splatoon3/runtime/spawn-pose-motion.mjs",
+      "blob": "93ad923953f7fa597781795a6ec8aaa27a937501",
+      "bytes": 6763
+    },
+    {
+      "path": "patches/splatoon3/runtime/special-models.mjs",
+      "blob": "a734744d80970843a61a64bc6b68308fdf4fef0c",
+      "bytes": 104822
+    },
+    {
+      "path": "patches/splatoon3/runtime/special-motion.mjs",
+      "blob": "076e6027ac7d21fb89f08cfa1a80f64aca873c87",
+      "bytes": 47053
+    },
+    {
+      "path": "patches/splatoon3/runtime/special-presentation.mjs",
+      "blob": "d46e759faac96fcf7623bd1e162fa4d4ac1ee5b0",
+      "bytes": 18640
+    },
+    {
+      "path": "patches/splatoon3/runtime/splatling-jump-spread.mjs",
+      "blob": "21980a7d317f36cfadeec43d82a4d8944b18080b",
+      "bytes": 2989
+    },
+    {
+      "path": "patches/splatoon3/runtime/splatling-radius-charge.mjs",
+      "blob": "9ed50543a560b70ffa89c697bd64eb9507a895a4",
+      "bytes": 736
+    },
+    {
+      "path": "patches/splatoon3/runtime/splatling-startup-compat.mjs",
+      "blob": "9bf45346dd6de265c2735174a11e548d3ca7a76d",
+      "bytes": 1889
+    },
+    {
+      "path": "patches/splatoon3/runtime/splatling.mjs",
+      "blob": "4defa6d21564770a30c6dc9d963513c5e63b6355",
+      "bytes": 14149
+    },
+    {
+      "path": "patches/splatoon3/runtime/squidroll-motion.mjs",
+      "blob": "367c591f4e2e3f0697ed8b8d4bd8ce2bdd55db5d",
+      "bytes": 9354
+    },
+    {
+      "path": "patches/splatoon3/runtime/storm-effects.mjs",
+      "blob": "37d4b42cef2e1fbd7357807d846d7386f62228be",
+      "bytes": 5995
+    },
+    {
+      "path": "patches/splatoon3/runtime/storm-power.mjs",
+      "blob": "3fe52b0f68031afa1ac0a6f682dcd7c4825b74e1",
+      "bytes": 1586
+    },
+    {
+      "path": "patches/splatoon3/runtime/sub-mark-resistance.mjs",
+      "blob": "5c5d2f17b3253ef5e747e40476aba9455fb4d3e5",
+      "bytes": 756
+    },
+    {
+      "path": "patches/splatoon3/runtime/sub-models.mjs",
+      "blob": "8731c7ada8671a1e4aaa7b352e22943c560a9995",
+      "bytes": 54643
+    },
+    {
+      "path": "patches/splatoon3/runtime/sub-ready.mjs",
+      "blob": "962fdda0731b104574ad94e135bfebdcf5e6705e",
+      "bytes": 6436
+    },
+    {
+      "path": "patches/splatoon3/runtime/sub-resistance.mjs",
+      "blob": "f3eb2d5fbb0b4a53636644adc7b05eeb3c2bc482",
+      "bytes": 19452
+    },
+    {
+      "path": "patches/splatoon3/runtime/sub-special-fidelity.mjs",
+      "blob": "67c8c9d65ab87b65470bd88a95cd20dab5a615e3",
+      "bytes": 22202
+    },
+    {
+      "path": "patches/splatoon3/runtime/superjump-destination.mjs",
+      "blob": "632d7ffa6336bc880593d749580c96bb59b83bf2",
+      "bytes": 595
+    },
+    {
+      "path": "patches/splatoon3/runtime/superjump-motion.mjs",
+      "blob": "90c85cdb7f0c1643b86f3c1eb5e4e8f3cd704b2c",
+      "bytes": 8697
+    },
+    {
+      "path": "patches/splatoon3/runtime/superjump-target-notification.mjs",
+      "blob": "a062583bd6c4a6d9047fed68626f596113b3cc11",
+      "bytes": 2152
+    },
+    {
+      "path": "patches/splatoon3/runtime/superjump.mjs",
+      "blob": "4a3bf1ecf8465f0644f5771571d3503e76f08d7c",
+      "bytes": 6366
+    },
+    {
+      "path": "patches/splatoon3/runtime/support-cooler.mjs",
+      "blob": "9b6f2b4deea711c5c336715f2b0522731a963d53",
+      "bytes": 3404
+    },
+    {
+      "path": "patches/splatoon3/runtime/support-recon.mjs",
+      "blob": "a63a87e33b4b895b06e1978cf1047122e8784cec",
+      "bytes": 3032
+    },
+    {
+      "path": "patches/splatoon3/runtime/swim-motion.mjs",
+      "blob": "608e0f91756fcc4b715c72f738cae2f265c8238b",
+      "bytes": 10472
+    },
+    {
+      "path": "patches/splatoon3/runtime/swim-stealth.mjs",
+      "blob": "54457f36629256354021b2e94e4399421c122f92",
+      "bytes": 1408
+    },
+    {
+      "path": "patches/splatoon3/runtime/tenacity.mjs",
+      "blob": "c248950bb7467c48d32d0fa27be9bb7e777c372b",
+      "bytes": 1581
+    },
+    {
+      "path": "patches/splatoon3/runtime/tidal-slam-gauge.mjs",
+      "blob": "007d9f388ba2cefc400f07ea7a748f78c0fdd2e3",
+      "bytes": 9158
+    },
+    {
+      "path": "patches/splatoon3/runtime/toxic-mist.mjs",
+      "blob": "d6e6705dfaa3b91ad04864468a423a81dfabc3ea",
+      "bytes": 1636
+    },
+    {
+      "path": "patches/splatoon3/runtime/transient-gear-network.mjs",
+      "blob": "ea2b2a3a8932cab5d10b26cf9c59de68a44cbbb0",
+      "bytes": 4117
+    },
+    {
+      "path": "patches/splatoon3/runtime/triple-slam-fists.mjs",
+      "blob": "40b6c31e3846933d0faa1d32926411d08321b41b",
+      "bytes": 9066
+    },
+    {
+      "path": "patches/splatoon3/runtime/trizooka-collision.mjs",
+      "blob": "43ab52f480b14cd166ac37fca6195aed9fa13609",
+      "bytes": 22309
+    },
+    {
+      "path": "patches/splatoon3/runtime/turf-combat.mjs",
+      "blob": "fded65bfc161d3c478038a15cce4056e833c1ea4",
+      "bytes": 2040
+    },
+    {
+      "path": "patches/splatoon3/runtime/turf-finish.mjs",
+      "blob": "7130e5e521198839fdcf333b1a89d7470f6142f1",
+      "bytes": 7792
+    },
+    {
+      "path": "patches/splatoon3/runtime/ui.mjs",
+      "blob": "b89f324413096e81c20117ae21056d227b7cd633",
+      "bytes": 3757
+    },
+    {
+      "path": "patches/splatoon3/runtime/walk-foot-clearance.mjs",
+      "blob": "53c53e621655a792186a6895f9895bbf47c7a51f",
+      "bytes": 1662
+    },
+    {
+      "path": "patches/splatoon3/runtime/walk.mjs",
+      "blob": "f8bedc52f73abbd92658ff2149f083a4336cdacb",
+      "bytes": 22312
+    },
+    {
+      "path": "patches/splatoon3/runtime/wall-motion.mjs",
+      "blob": "e71952d9d153814831354a3d14e26c21ea298fea",
+      "bytes": 14271
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-accuracy.mjs",
+      "blob": "cee4eec14360c4ccfac0debe8bd1918e888a2f6a",
+      "bytes": 3501
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-detail-motion.mjs",
+      "blob": "849810412491c1a2fa612252468577d68840b0ef",
+      "bytes": 26971
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-edgecases.mjs",
+      "blob": "b35b0a72c04cb2830731df7c9d33e14abaef3d1a",
+      "bytes": 23333
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-family-motion.mjs",
+      "blob": "622c03124d21572d44f61374c2d1c31c7cd240d1",
+      "bytes": 1917
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-gates.mjs",
+      "blob": "acfb02090b29831f5642b997584432cc671073ba",
+      "bytes": 7475
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-hit-reaction.mjs",
+      "blob": "76570c271ea5862a8fb0217e80e45774b38024ce",
+      "bytes": 8772
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/blasters.mjs",
+      "blob": "fc80ded3e03291627a1305a2af6b5c771c463ca4",
+      "bytes": 41876
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/brellas.mjs",
+      "blob": "4e7715751e695edf8ae156659010b8bf56600251",
+      "bytes": 13652
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/brushes.mjs",
+      "blob": "34850c06aae8e05ccd3b05bce05dadec533ff35c",
+      "bytes": 18101
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/chargers.mjs",
+      "blob": "f44e66e135308b7c734b242c70c697179a4aabec",
+      "bytes": 42108
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/dualies.mjs",
+      "blob": "5b9ea457da3a0112cacf2080634111ec8c3891e0",
+      "bytes": 12186
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+      "blob": "060aec58f73ee1ca5ae2a028972c53252ab9c9f6",
+      "bytes": 15808
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "blob": "a6ec5af43dafd5587726387370403a00b1bbe254",
+      "bytes": 5140
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/rollers.mjs",
+      "blob": "2c61d48d480db625d45b421b727007be0620d38f",
+      "bytes": 27814
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/shooters-b.mjs",
+      "blob": "38e1cdc0927e79f89a39fc0c4d7a981e56ecdb89",
+      "bytes": 37274
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/shooters.mjs",
+      "blob": "da74818e92a2708d467c0199a0cea720d9935095",
+      "bytes": 39769
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/sloshers.mjs",
+      "blob": "4c9c5341e3d719fe296e14c0cb92768236e28999",
+      "bytes": 29450
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/splatanas.mjs",
+      "blob": "7c1d20fb00d63ebafa7454de4491a5bdd9564ed4",
+      "bytes": 9041
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/splatlings.mjs",
+      "blob": "ecc7f4c21586fd1019fa957f32c0ca0ba06a041e",
+      "bytes": 25517
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/stringers.mjs",
+      "blob": "c4bbcd5e8bd97c7cabbf312ac363f549c103816e",
+      "bytes": 11796
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-motion.mjs",
+      "blob": "39cb7c878a5a69426766b4a47ed02d230f125a3d",
+      "bytes": 9892
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-paint-inertia.mjs",
+      "blob": "a9c75fafc04a9fd2883db4cacd7de4e592d0c36b",
+      "bytes": 953
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-reference-models.mjs",
+      "blob": "f8bbdde9ec5b1f1c91b69b27ce709d22d29c1d9d",
+      "bytes": 13902
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-weight-data.mjs",
+      "blob": "80471a9f575e670fc949da9bf79b1194198e0e24",
+      "bytes": 2419
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-weight.mjs",
+      "blob": "22868102e9f3536cc902ce22be668b7fdc29158e",
+      "bytes": 933
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons-charger-flight.mjs",
+      "blob": "622d21723f0d56366954b27108e2b41cdb737144",
+      "bytes": 21889
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons-collision.mjs",
+      "blob": "dad2e3f2d2aaf9628fce0523c400f3d351bd9054",
+      "bytes": 7514
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons-fidelity.mjs",
+      "blob": "1fcbade80c4016af86d5d9071182df12229defb9",
+      "bytes": 153779
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapons.mjs",
+      "blob": "3a69aa70d9cb8cc349971d00815865d99478588c",
+      "bytes": 78844
+    },
+    {
+      "path": "patches/splatoon3/scorch-gorge-adapter.mjs",
+      "blob": "411061d12eb0b038914e95ff57649f3a00ed1046",
+      "bytes": 2711
+    },
+    {
+      "path": "patches/splatoon3/score-hud-adapter.mjs",
+      "blob": "7a6eeb182bf9d5744c1b62b19505ab5e42f68eca",
+      "bytes": 6087
+    },
+    {
+      "path": "patches/splatoon3/stage/scorch-layout.mjs",
+      "blob": "e88d82027eaabab0cfa1fdc8dfafd29f877775b8",
+      "bytes": 6378
+    },
+    {
+      "path": "patches/splatoon3/storm-effects-adapter.mjs",
+      "blob": "165a041acdcda42c9e80b413a8018655cafa8912",
+      "bytes": 5936
+    },
+    {
+      "path": "patches/splatoon3/sub-special-adapter.mjs",
+      "blob": "cc6ff9671a3de2d77fc54722b2ca3f3e05b5f598",
+      "bytes": 1669
+    },
+    {
+      "path": "patches/splatoon3/tests/source-fixture.mjs",
+      "blob": "e2530ebd332367da26c4ed0b3aca70f3f33ddb14",
+      "bytes": 10019
+    },
+    {
+      "path": "patches/splatoon3/tidal-slam-gauge-adapter.mjs",
+      "blob": "d4720607d6c7bb7cf37e31a46a546a8c69d0f2bd",
+      "bytes": 2737
+    },
+    {
+      "path": "patches/splatoon3/upstream-lock.json",
+      "blob": "8d184842ed172967893d8eaa0ca252893b8369ea",
+      "bytes": 2774
+    },
+    {
+      "path": "patches/splatoon3/weapon-catalog-adapter.mjs",
+      "blob": "14d47b88f7d7825ecbaa326e3907aeca68601f3f",
+      "bytes": 9608
+    },
+    {
+      "path": "patches/splatoon3/weapon-edgecases-adapter.mjs",
+      "blob": "8feca0fb29a4d296308d5585dc60bb5e4fd45add",
+      "bytes": 4111
+    },
+    {
+      "path": "patches/splatoon3/weapon-paint-inertia-adapter.mjs",
+      "blob": "abb21de7d555fbcf99ee87f9cde531db56ae756c",
+      "bytes": 587
+    },
+    {
+      "path": "patches/splatoon3/weapons-adapter.mjs",
+      "blob": "6bacd54d2c602924d0ef2c61eeea1fc9ec5bfd7f",
+      "bytes": 25946
+    },
+    {
+      "path": "patches/touch-layout/adapter.mjs",
+      "blob": "9831f6701bb312cb7568edf74417a32fc8ea08cc",
+      "bytes": 3974
+    },
+    {
+      "path": "patches/touch-layout/mobile.js",
+      "blob": "4cf861374c45569a2326ca063083ce59bf71eb37",
+      "bytes": 13770
+    },
+    {
+      "path": "scripts/analyze-inkwave-startup.mjs",
+      "blob": "8cb59d3e3d3de847da53e7a0603308237f2f6682",
+      "bytes": 8101
+    },
+    {
+      "path": "scripts/audit-inkwave-paint-reference.mjs",
+      "blob": "2a27604f6738396c8441aae952fce5c2bf69469e",
+      "bytes": 7390
+    },
+    {
+      "path": "scripts/bake-inkwave-projectile-volumes.mjs",
+      "blob": "e101cfda7d653509bd2870f709dabdd686bf2033",
+      "bytes": 711
+    },
+    {
+      "path": "scripts/bake-inkwave-volumes.mjs",
+      "blob": "a30e1ea9fa4e2fbc59ff1ca9f39aeb19bd7e8c93",
+      "bytes": 7727
+    },
+    {
+      "path": "scripts/bench-inkwave-mist-query.mjs",
+      "blob": "2820683dc184f49fd545eb35284f88a680f8db56",
+      "bytes": 1906
+    },
+    {
+      "path": "scripts/bench-inkwave-native-combat-support.mjs",
+      "blob": "846d25fc1e1ccbe287386aa5ad12d125565df640",
+      "bytes": 2527
+    },
+    {
+      "path": "scripts/benchmark-inkwave-cache-model.mjs",
+      "blob": "b03438f3e4ef195a5c5a36dc4f89f4eba6f2c107",
+      "bytes": 5553
+    },
+    {
+      "path": "scripts/benchmark-inkwave-startup-cpu.mjs",
+      "blob": "a8c1b98009f60d96ead6cdf990e8acb53522129b",
+      "bytes": 2937
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "blob": "2ec555f2ac49164e2f12ad87f14ac5add81f2d22",
+      "bytes": 37420
+    },
+    {
+      "path": "scripts/check-inkwave-actor-motion-preload.mjs",
+      "blob": "1b3c8f3a84fa5ed3eeb034eda45c3c0653153a6a",
+      "bytes": 2515
+    },
+    {
+      "path": "scripts/check-inkwave-batch4.mjs",
+      "blob": "3fc6bb1b41417054a26a6fc345e6948889b22ce5",
+      "bytes": 9728
+    },
+    {
+      "path": "scripts/check-inkwave-brella-controls.mjs",
+      "blob": "4b5a87223e7ecd65b1a43f9897cf74ab79dfe68b",
+      "bytes": 6098
+    },
+    {
+      "path": "scripts/check-inkwave-browser.mjs",
+      "blob": "d792cb93f4ec54c3463f950999554e808287ad51",
+      "bytes": 35357
+    },
+    {
+      "path": "scripts/check-inkwave-catalog-browser.mjs",
+      "blob": "58bde54b77dba39e0fe1981136d11d4aeb118718",
+      "bytes": 42541
+    },
+    {
+      "path": "scripts/check-inkwave-cloth-game.mjs",
+      "blob": "824b534a47bfe5ede9b7535be938bbf9e4c3e4cd",
+      "bytes": 12214
+    },
+    {
+      "path": "scripts/check-inkwave-cloth-rig.mjs",
+      "blob": "3a25710e3893fe413750d5393a6ef317a84765cf",
+      "bytes": 11871
+    },
+    {
+      "path": "scripts/check-inkwave-composer-target.mjs",
+      "blob": "bafbf0e69d811faf70660b68e9935719b29d92bf",
+      "bytes": 2839
+    },
+    {
+      "path": "scripts/check-inkwave-composer-webgl.mjs",
+      "blob": "a67f749071e63c93fbcf12c7ab9e0b4d9bc11b3a",
+      "bytes": 28370
+    },
+    {
+      "path": "scripts/check-inkwave-crowd-rig.mjs",
+      "blob": "b391dd51eec5731d8698dfe7bd7d0c0dfab7718c",
+      "bytes": 11823
+    },
+    {
+      "path": "scripts/check-inkwave-flow-render.mjs",
+      "blob": "1bbebb5383bad665cd4d8fe4c60a9feb7aaa985b",
+      "bytes": 38294
+    },
+    {
+      "path": "scripts/check-inkwave-hud-authority.mjs",
+      "blob": "862d4dd00f43b82e71481c3d479d62a7cfc44be8",
+      "bytes": 39090
+    },
+    {
+      "path": "scripts/check-inkwave-idle-resources.mjs",
+      "blob": "2a7e398ce274e2542f471bcd5b4714e41bce07e0",
+      "bytes": 23233
+    },
+    {
+      "path": "scripts/check-inkwave-issue-input.mjs",
+      "blob": "5c79fe95637e0bae2be655b11278434d32c700d7",
+      "bytes": 8217
+    },
+    {
+      "path": "scripts/check-inkwave-lemuria-unavailable.mjs",
+      "blob": "e0daaf70194e61aaa2da7a0ca5cd6a505b60e769",
+      "bytes": 10775
+    },
+    {
+      "path": "scripts/check-inkwave-motion-catalog.mjs",
+      "blob": "0b68da03207e6983d44b49c5bd78b016f8c6bab3",
+      "bytes": 96752
+    },
+    {
+      "path": "scripts/check-inkwave-motion-detail.mjs",
+      "blob": "ae1b9cb4ee2f2606f2c8f56eb7cd87e221e09572",
+      "bytes": 42286
+    },
+    {
+      "path": "scripts/check-inkwave-motion.mjs",
+      "blob": "f3239a042df46839970a16ed455469a06498c2a3",
+      "bytes": 16108
+    },
+    {
+      "path": "scripts/check-inkwave-movement-speed.mjs",
+      "blob": "0b73bdd3e5d7951ef9734905d2063b2827ebcb7a",
+      "bytes": 7016
+    },
+    {
+      "path": "scripts/check-inkwave-native-camera-basis.mjs",
+      "blob": "07698701ef03211d0cb832456013857c786f6dcb",
+      "bytes": 11143
+    },
+    {
+      "path": "scripts/check-inkwave-native-clams-goals.mjs",
+      "blob": "07a41709b3bb2f56852328ff7a8ce614ab39378e",
+      "bytes": 8968
+    },
+    {
+      "path": "scripts/check-inkwave-native-climbs.mjs",
+      "blob": "d1dc0421ff502054fa05d0fbe53e472de1b29c08",
+      "bytes": 9057
+    },
+    {
+      "path": "scripts/check-inkwave-native-combat-support.mjs",
+      "blob": "a2c0ea02ce0db885a7219b66003fb2bb1ed37729",
+      "bytes": 7736
+    },
+    {
+      "path": "scripts/check-inkwave-native-drop-recovery.mjs",
+      "blob": "31f73252834a42a0dd94ad74bcb186870e7b0a4b",
+      "bytes": 16572
+    },
+    {
+      "path": "scripts/check-inkwave-native-drops.mjs",
+      "blob": "845a9c8785e3f7322da7838aabad8d4dbfe98dcd",
+      "bytes": 11352
+    },
+    {
+      "path": "scripts/check-inkwave-native-floor-initial.mjs",
+      "blob": "d7172315eb50fa1047a04287a301bc4d78692f20",
+      "bytes": 7573
+    },
+    {
+      "path": "scripts/check-inkwave-native-foot-body.mjs",
+      "blob": "6922f1a794d0e62e6e0e50aa9b6442890e981e99",
+      "bytes": 9195
+    },
+    {
+      "path": "scripts/check-inkwave-native-game-clock-projectiles.mjs",
+      "blob": "646742d1fbdf1230b6f5002ae5670105f281dfa1",
+      "bytes": 8163
+    },
+    {
+      "path": "scripts/check-inkwave-native-grounded-form.mjs",
+      "blob": "e07461110ed4aebb48c5913f63c128389743d0f2",
+      "bytes": 10437
+    },
+    {
+      "path": "scripts/check-inkwave-native-ink-edges.mjs",
+      "blob": "8f6e83ff43fbd11353cafa41e2ab5d792ac51cea",
+      "bytes": 12581
+    },
+    {
+      "path": "scripts/check-inkwave-native-jump-attach.mjs",
+      "blob": "443d682244990153b641f86dfcd79c17619c4853",
+      "bytes": 11351
+    },
+    {
+      "path": "scripts/check-inkwave-native-jump-combat-initial.mjs",
+      "blob": "2bf3ae88e805229f6a6647859a264d8063d30f8f",
+      "bytes": 7836
+    },
+    {
+      "path": "scripts/check-inkwave-native-jump-combat-local.mjs",
+      "blob": "13bebd58e2d0955927efdb30b03b7d8a21996067",
+      "bytes": 11686
+    },
+    {
+      "path": "scripts/check-inkwave-native-jump-combat.mjs",
+      "blob": "4cd7bf5cfcbaa6377364184d9b5148d651295ae6",
+      "bytes": 27964
+    },
+    {
+      "path": "scripts/check-inkwave-native-lifecycle.mjs",
+      "blob": "7c4fcf445f5a1d14ef54184c297b136f188764f0",
+      "bytes": 11496
+    },
+    {
+      "path": "scripts/check-inkwave-native-online.mjs",
+      "blob": "1c2f503a66ee830ae0bf2340d3f86645e35ca5c0",
+      "bytes": 16380
+    },
+    {
+      "path": "scripts/check-inkwave-native-ordinary-jump-input.mjs",
+      "blob": "85e806997bbda23bd01afef8cbe09c068db0ef83",
+      "bytes": 9942
+    },
+    {
+      "path": "scripts/check-inkwave-native-ordinary-jump-lifecycle.mjs",
+      "blob": "cd5e95ee0efcac135e70590451d65dc708b94ba3",
+      "bytes": 8909
+    },
+    {
+      "path": "scripts/check-inkwave-native-projectiles.mjs",
+      "blob": "87e68e9d5ce7531de8078347cbea0c1f3ea37cca",
+      "bytes": 6394
+    },
+    {
+      "path": "scripts/check-inkwave-native-ranked-drops.mjs",
+      "blob": "bc2975b74bfc53bc20570820496ceb4eed7c7b79",
+      "bytes": 12522
+    },
+    {
+      "path": "scripts/check-inkwave-native-ranked-inputs.mjs",
+      "blob": "f7c06469238849cc2b682738b6e8aab8d1b6de82",
+      "bytes": 8567
+    },
+    {
+      "path": "scripts/check-inkwave-native-ranked-surges.mjs",
+      "blob": "20e974d03b76942d82ee99164ac3237c7007247d",
+      "bytes": 9786
+    },
+    {
+      "path": "scripts/check-inkwave-native-ranked-tower.mjs",
+      "blob": "53eb43d8aa6c920e353d5d9ed7f4276b0a271c40",
+      "bytes": 8669
+    },
+    {
+      "path": "scripts/check-inkwave-native-ranked-traversal.mjs",
+      "blob": "c3e37bfc7d5f31d85498d710b86acc27aad6ca4a",
+      "bytes": 6621
+    },
+    {
+      "path": "scripts/check-inkwave-native-render.mjs",
+      "blob": "fe5bd4873fdbd4ca6dce42a9c5a1fa22033437d3",
+      "bytes": 10535
+    },
+    {
+      "path": "scripts/check-inkwave-native-search-budget.mjs",
+      "blob": "f651a98a3d3560825ac30d20e44fe3db664fc7d0",
+      "bytes": 8050
+    },
+    {
+      "path": "scripts/check-inkwave-native-source-browser.mjs",
+      "blob": "3a66978332a466b3f08e982c48cb2974734c68db",
+      "bytes": 9777
+    },
+    {
+      "path": "scripts/check-inkwave-native-spawn-landing.mjs",
+      "blob": "a954413c4782a8e8f75d71de629f4ad3aaff847b",
+      "bytes": 7934
+    },
+    {
+      "path": "scripts/check-inkwave-native-spawn-nav.mjs",
+      "blob": "7e6afb81219ee8601828b66fcdb59e1fd741c6f9",
+      "bytes": 5532
+    },
+    {
+      "path": "scripts/check-inkwave-native-stages.mjs",
+      "blob": "2fa759cc4a18fb99ebce2f566f9121e0e7b80ea4",
+      "bytes": 20162
+    },
+    {
+      "path": "scripts/check-inkwave-native-surges.mjs",
+      "blob": "783c719f864909798e6fafcea6dc104fbf2a41aa",
+      "bytes": 13303
+    },
+    {
+      "path": "scripts/check-inkwave-native-tower-calibration.mjs",
+      "blob": "4594afb86951e00ac559ada87f0ba74ff7b70c09",
+      "bytes": 10049
+    },
+    {
+      "path": "scripts/check-inkwave-network-browser.mjs",
+      "blob": "cdf7a030d5bb69c4b923fd80b787ec69a7d51978",
+      "bytes": 19089
+    },
+    {
+      "path": "scripts/check-inkwave-network-comparison.mjs",
+      "blob": "e14952342ffa67b096705600c2c0235be9bc0b64",
+      "bytes": 14980
+    },
+    {
+      "path": "scripts/check-inkwave-offscreen-workload.mjs",
+      "blob": "95bb7038c872eb9e74635d1bde73fb7dae8741e6",
+      "bytes": 23612
+    },
+    {
+      "path": "scripts/check-inkwave-paint-mask.mjs",
+      "blob": "ff1d82f48f768dd3c77abe4b8bcdbf253a2be5cf",
+      "bytes": 8935
+    },
+    {
+      "path": "scripts/check-inkwave-patches.mjs",
+      "blob": "ce7cfc7ad571b3124667556e3aa44275d1b3cb74",
+      "bytes": 5359
+    },
+    {
+      "path": "scripts/check-inkwave-pr1171.mjs",
+      "blob": "b6746ec6385e334088192ff5c95d6ac9811e5691",
+      "bytes": 13281
+    },
+    {
+      "path": "scripts/check-inkwave-projectile-volumes.mjs",
+      "blob": "021ecf91654939b0bfb3108bd0e7914aab492c8c",
+      "bytes": 14690
+    },
+    {
+      "path": "scripts/check-inkwave-range.mjs",
+      "blob": "ab25f0028324d7b3a5cc6272e9e3ffaf75c33e09",
+      "bytes": 26697
+    },
+    {
+      "path": "scripts/check-inkwave-ranked-browser.mjs",
+      "blob": "3daae7b89be5b3cd66358e4a7e0d0a233a0cb8a0",
+      "bytes": 19697
+    },
+    {
+      "path": "scripts/check-inkwave-reliability.mjs",
+      "blob": "bcd1f25290ad244f8ec4f813775713fe4a2b2353",
+      "bytes": 45777
+    },
+    {
+      "path": "scripts/check-inkwave-rematch-lifecycle.mjs",
+      "blob": "17ea03c402442c1cc9b18f86c0b876c1055bbb72",
+      "bytes": 29121
+    },
+    {
+      "path": "scripts/check-inkwave-resource-render.mjs",
+      "blob": "e5e6cbace3652a2e8096fb64b8cbcbe5ba96e551",
+      "bytes": 23148
+    },
+    {
+      "path": "scripts/check-inkwave-responsive-core.mjs",
+      "blob": "f4427bcb0737553f541684fd62a7f8d0a02a4e52",
+      "bytes": 14098
+    },
+    {
+      "path": "scripts/check-inkwave-responsive.mjs",
+      "blob": "5c1ce4b3a05087a77cd0acae1c6f1e772d3d03d0",
+      "bytes": 21890
+    },
+    {
+      "path": "scripts/check-inkwave-result-continuation.mjs",
+      "blob": "16a179a7e990710520416e366c35ad5a094c10ac",
+      "bytes": 4729
+    },
+    {
+      "path": "scripts/check-inkwave-room-gyro.mjs",
+      "blob": "895070f40db650aab15b0643d8360807889a278e",
+      "bytes": 11066
+    },
+    {
+      "path": "scripts/check-inkwave-runtime-performance.mjs",
+      "blob": "483a3bd5849f995ba893c4dd5d6fe34ce9631251",
+      "bytes": 28100
+    },
+    {
+      "path": "scripts/check-inkwave-seven-claims.mjs",
+      "blob": "af25e45cc84ad87795b02cf5759c4f242621fd34",
+      "bytes": 8935
+    },
+    {
+      "path": "scripts/check-inkwave-shipshape-climb-refill-guards.mjs",
+      "blob": "39959661164a9db9af1c1f5cf6636dbbfc0bbcb6",
+      "bytes": 8441
+    },
+    {
+      "path": "scripts/check-inkwave-shipshape-ranked-objectives.mjs",
+      "blob": "99f55cfee654a155fdbaad4997c898204dd86178",
+      "bytes": 11917
+    },
+    {
+      "path": "scripts/check-inkwave-special-presentation.mjs",
+      "blob": "140e8ec9ae89c8ebf199e4072529c35873972150",
+      "bytes": 11843
+    },
+    {
+      "path": "scripts/check-inkwave-startup-browser.mjs",
+      "blob": "e5746d6c39019cb7d54062efe98282d466649622",
+      "bytes": 14667
+    },
+    {
+      "path": "scripts/check-inkwave-startup-budget.mjs",
+      "blob": "964f297e30dbb72358922e6053c54e093378320d",
+      "bytes": 5847
+    },
+    {
+      "path": "scripts/check-inkwave-sub-special-reference.mjs",
+      "blob": "f0aa8a854fc92f470d8ad775e9dc01e58cf3235c",
+      "bytes": 1363
+    },
+    {
+      "path": "scripts/check-inkwave-touch-layout-identity.mjs",
+      "blob": "652ae1a7350955cb385a14df0b40300b353aceef",
+      "bytes": 6517
+    },
+    {
+      "path": "scripts/check-inkwave-touch-layout.mjs",
+      "blob": "01e0d9b769e2a7afa973208d3cb70b0bf6c538ed",
+      "bytes": 18750
+    },
+    {
+      "path": "scripts/check-inkwave-ui-probes.mjs",
+      "blob": "a67808af3de9f519b75c9eebce1f72e853577dcd",
+      "bytes": 6226
+    },
+    {
+      "path": "scripts/check-inkwave-volley-vortex.mjs",
+      "blob": "607e0252a47ad9f9fba8c98b0be2d95339b6729a",
+      "bytes": 10811
+    },
+    {
+      "path": "scripts/check-inkwave-volumes.mjs",
+      "blob": "4471b7ae1bf1a0dfefe93bf5a030d90f4b2abb3d",
+      "bytes": 16311
+    },
+    {
+      "path": "scripts/check-inkwave-wall-render.mjs",
+      "blob": "b8349856f11a801fb6938b9b84e4a3f299d61b7c",
+      "bytes": 38850
+    },
+    {
+      "path": "scripts/check-inkwave-weapon-models.mjs",
+      "blob": "85e419fea6809de4b847c12f48e0916243cc1c76",
+      "bytes": 8939
+    },
+    {
+      "path": "scripts/check-inkwave-weapons-fidelity.mjs",
+      "blob": "225e25f54fe54c265030a4cb5f7f1b9b0310e65b",
+      "bytes": 19992
+    },
+    {
+      "path": "scripts/check-weapon-audit-browser.mjs",
+      "blob": "ad44b6a43f968f0c6643a424b61cb36a303c606d",
+      "bytes": 6280
+    },
+    {
+      "path": "scripts/check-weapons-reference.mjs",
+      "blob": "48508f834266e8248364aa23cfd367c1d673675b",
+      "bytes": 1335
+    },
+    {
+      "path": "scripts/compare-inkwave-crowd-rig.mjs",
+      "blob": "b5c5648fb09e462fde6cfa0e9e401fb37ceab693",
+      "bytes": 2290
+    },
+    {
+      "path": "scripts/compare-inkwave-runtime-performance.mjs",
+      "blob": "bcba6bc9401108e855a3c1661c541df3aaca386e",
+      "bytes": 8310
+    },
+    {
+      "path": "scripts/composer-target-three-loader.mjs",
+      "blob": "34de3ac887302eee2aa83ff5a1d171190f0f32b5",
+      "bytes": 882
+    },
+    {
+      "path": "scripts/create-inkwave-projectile-fixture.mjs",
+      "blob": "2ad2a74d21ecfb95702d53503872feca31e0e1bf",
+      "bytes": 1159
+    },
+    {
+      "path": "scripts/create-inkwave-volume-fixture.mjs",
+      "blob": "2f02aab23561657f266248933047d658bb20c014",
+      "bytes": 1186
+    },
+    {
+      "path": "scripts/diagnose-inkwave-native-ray-live-equivalence.mjs",
+      "blob": "4e652880197553d080ad5126a0db8af4a377853d",
+      "bytes": 13403
+    },
+    {
+      "path": "scripts/fixtures/paint-piece-workload.mjs",
+      "blob": "96098b332c1c913c893d6a12f003c70c55054ee5",
+      "bytes": 10095
+    },
+    {
+      "path": "scripts/generate-inkwave-canonical-kits.mjs",
+      "blob": "b60e375c3f0bbfe07425e05bb9d87a5409484800",
+      "bytes": 3182
+    },
+    {
+      "path": "scripts/generate-inkwave-weight-reference.mjs",
+      "blob": "27f336f22879fdcf6db6105e00a7ea49f2ba6299",
+      "bytes": 1599
+    },
+    {
+      "path": "scripts/hex-realgame-holdout.mjs",
+      "blob": "9e99d40e406f9bad1fac41d7ef83920aa19020b8",
+      "bytes": 8930
+    },
+    {
+      "path": "scripts/hex-tail-profile.mjs",
+      "blob": "c5d99d079dc028677afeab0954e9f45a094a12ba",
+      "bytes": 6026
+    },
+    {
+      "path": "scripts/inkwave-focus-loss-case.mjs",
+      "blob": "a5a7dbda3a1663242818623222c31c1826ce336f",
+      "bytes": 1098
+    },
+    {
+      "path": "scripts/inkwave-range-profile-acceptance.mjs",
+      "blob": "8f6a6799879c3db68864244da2ab97f87aa772ce",
+      "bytes": 1397
+    },
+    {
+      "path": "scripts/inkwave-responsive-fixture.mjs",
+      "blob": "9553723c347b4d159bf9b41adba299d2d1ad806c",
+      "bytes": 753
+    },
+    {
+      "path": "scripts/inkwave-source-composition.mjs",
+      "blob": "1e99f84291907c8354b6d53ec0143267f83aae3c",
+      "bytes": 1134
+    },
+    {
+      "path": "scripts/inkwave-touch-transition-cases.mjs",
+      "blob": "175090973d289ff31833875eb81d99db7caae5d0",
+      "bytes": 42119
+    },
+    {
+      "path": "scripts/lib/inkwave-build-only-modules.mjs",
+      "blob": "d79686b5d7abe1fbdc8573fc1b0fb3c4f3c1ff2a",
+      "bytes": 6415
+    },
+    {
+      "path": "scripts/lib/inkwave-cache-manifest.mjs",
+      "blob": "648de39e28cfa0929df9f77d1d4e61ae2a25f1f6",
+      "bytes": 866
+    },
+    {
+      "path": "scripts/lib/inkwave-crowd-integration.mjs",
+      "blob": "1e9503b7260f5bb86202b8b7c6e42268d44c2754",
+      "bytes": 10795
+    },
+    {
+      "path": "scripts/lib/inkwave-cursor-timeline-diagnostics.mjs",
+      "blob": "e6580ef3621f0f95fb643d9e3ada2cbbc8398a4e",
+      "bytes": 1073
+    },
+    {
+      "path": "scripts/lib/inkwave-lossless-lightmap.mjs",
+      "blob": "e85ab3e368fc9f93e7f9b151f5434a601fbafdad",
+      "bytes": 5084
+    },
+    {
+      "path": "scripts/lib/inkwave-module-imports.mjs",
+      "blob": "0b1bcb414da6da3b3bcdffc6ea01e7ffca618c30",
+      "bytes": 730
+    },
+    {
+      "path": "scripts/lib/inkwave-native-stages.mjs",
+      "blob": "cb2241b3a20e9ccd7853497ffebe7ce271f7c101",
+      "bytes": 6467
+    },
+    {
+      "path": "scripts/lib/inkwave-rematch-diagnostics.mjs",
+      "blob": "dc5aa6ff38c38b4a0dd9e7b6250f5705b58ba168",
+      "bytes": 1452
+    },
+    {
+      "path": "scripts/lib/inkwave-respawn-hud.mjs",
+      "blob": "56942ad109b67da5595b46739d5b0c9db7052675",
+      "bytes": 847
+    },
+    {
+      "path": "scripts/lib/inkwave-responsive-server.mjs",
+      "blob": "5380fc885800a6bd246bf7f5831f5e0a65254a63",
+      "bytes": 2040
+    },
+    {
+      "path": "scripts/lib/inkwave-runtime-evidence.mjs",
+      "blob": "6a36bf47a13e06d69d4de9fdd09530f4cfccd876",
+      "bytes": 5003
+    },
+    {
+      "path": "scripts/lib/inkwave-source-compaction.mjs",
+      "blob": "df4048abcecc32c8bc928671f5e6198029352fe3",
+      "bytes": 7586
+    },
+    {
+      "path": "scripts/lib/inkwave-stage-assets.mjs",
+      "blob": "21bae085ca71f69a6db3f633616ae14b2b2697e6",
+      "bytes": 2866
+    },
+    {
+      "path": "scripts/lib/inkwave-touch-layout-diagnostics.mjs",
+      "blob": "75b39c412bf762f70d054a50e3c5ff940f493fae",
+      "bytes": 1345
+    },
+    {
+      "path": "scripts/lib/inkwave-touch-viewport.mjs",
+      "blob": "33fd6d9a05c605ce7964462b6ac63df1be159e01",
+      "bytes": 2106
+    },
+    {
+      "path": "scripts/lib/inkwave-turf-lead-probe.mjs",
+      "blob": "c0922fe17d513bcde1f2c7c892e50bcf7d2eb97b",
+      "bytes": 7115
+    },
+    {
+      "path": "scripts/lib/inkwave-worker-compaction.mjs",
+      "blob": "c35e79daacffeb37a7532d4f2c0d9254d144b9a0",
+      "bytes": 1100
+    },
+    {
+      "path": "scripts/lib/live-ray-mirror.mjs",
+      "blob": "fbd57161f6516c077bcb1307aa310cbd91aa3131",
+      "bytes": 5513
+    },
+    {
+      "path": "scripts/lib/native-projectile-probe.mjs",
+      "blob": "b14c8cff9afa272e340fd51124bdf72c8c4387fb",
+      "bytes": 1380
+    },
+    {
+      "path": "scripts/measure-blaster-floor-paint.mjs",
+      "blob": "2b23b3d326878fed98862883f526b2a4e1e1ab34",
+      "bytes": 3640
+    },
+    {
+      "path": "scripts/measure-camera-aim-controls.mjs",
+      "blob": "80cd6aa42bd6d6c53e31128c7840dc3a1b8225e0",
+      "bytes": 7305
+    },
+    {
+      "path": "scripts/measure-inkwave-empty-weapon-draws.mjs",
+      "blob": "f1a660edf3677529bec9eb0edd1ab818396e7c19",
+      "bytes": 16052
+    },
+    {
+      "path": "scripts/measure-inkwave-storm-rain.mjs",
+      "blob": "f6c424f98ad9ee869312056c988a4332a42067e6",
+      "bytes": 15467
+    },
+    {
+      "path": "scripts/measure-inkwave-sub-special.mjs",
+      "blob": "f8a2e00185221ff5e48b681bff9cfd954e94b0c4",
+      "bytes": 3749
+    },
+    {
+      "path": "scripts/measure-native-tower-calibration.mjs",
+      "blob": "0e4f804b516d1e7acdcf901894e24f9f96244192",
+      "bytes": 6091
+    },
+    {
+      "path": "scripts/measure-owned-run-scan.mjs",
+      "blob": "1cea127e7617b5f279217fd42c18c182be3ca829",
+      "bytes": 1875
+    },
+    {
+      "path": "scripts/measure-paint-piece-workload.mjs",
+      "blob": "d0fd08ed8e5652435d778033d8a16ff23416f141",
+      "bytes": 10883
+    },
+    {
+      "path": "scripts/measure-splatoon2-3-lineage.mjs",
+      "blob": "6441fb45d9ddb9fadcdf1410e9d4ecf81923a4aa",
+      "bytes": 9334
+    },
+    {
+      "path": "scripts/measure-weapons-fidelity.mjs",
+      "blob": "cdd523d5d523bcc83041186b156f9fad34d248b6",
+      "bytes": 12536
+    },
+    {
+      "path": "scripts/package-inkwave-volume-packs.mjs",
+      "blob": "e099dbb1ee161f503a27b8d9a2f4b4207192c5fc",
+      "bytes": 1342
+    },
+    {
+      "path": "scripts/pr9263-benchmark-aggregate.mjs",
+      "blob": "c36db702a8d30e62c0f5594144355b46e8e61222",
+      "bytes": 4487
+    },
+    {
+      "path": "scripts/pr9263-benchmark-local.mjs",
+      "blob": "5352167d977af6fe77a539d5ab2eecc4d700bee1",
+      "bytes": 9137
+    },
+    {
+      "path": "scripts/pr9263-benchmark-shard.mjs",
+      "blob": "a82a3cf589dbadcdfbceda5316e9aa8b5e44ee49",
+      "bytes": 6834
+    },
+    {
+      "path": "scripts/probes/inkwave-native-down-ray.mjs",
+      "blob": "b1bede17a8be68b2e01d67d5a6a72ca277a95e56",
+      "bytes": 5907
+    },
+    {
+      "path": "scripts/render-inkwave-mini-nautilus-gallery.mjs",
+      "blob": "77bb75b2bbee3da2f50d67f4a92cd943bdc72a6f",
+      "bytes": 19298
+    },
+    {
+      "path": "scripts/render-inkwave-special-gallery.mjs",
+      "blob": "9e3a61ae5ba136576a130cf70c70646212c33200",
+      "bytes": 8067
+    },
+    {
+      "path": "scripts/render-inkwave-sub-gallery.mjs",
+      "blob": "e55c39a5679fe2bb498b681459af0f3d69631b9d",
+      "bytes": 9376
+    },
+    {
+      "path": "scripts/render-inkwave-weapon-gallery.mjs",
+      "blob": "e45be5e4adfd9c90db3da7be762ba7ab735723cb",
+      "bytes": 12025
+    },
+    {
+      "path": "scripts/render-inkwave-weapon-lod-boundaries.mjs",
+      "blob": "ee05224b481e43279a4580bd3e8d1d6af9bfdce6",
+      "bytes": 15276
+    },
+    {
+      "path": "scripts/replay-inkwave-startup.mjs",
+      "blob": "f3f773f18643d4ba7626f6779572bd9a7f339440",
+      "bytes": 4123
+    },
+    {
+      "path": "scripts/review-inkwave-upstream.mjs",
+      "blob": "da14ccb02ced8f4fae9141ead4059a30f45aebb9",
+      "bytes": 1233
+    },
+    {
+      "path": "scripts/run-inkwave-focused-tests.mjs",
+      "blob": "3e3349143d0f6d0263f1a721a3a2e41a92e23d52",
+      "bytes": 5103
+    },
+    {
+      "path": "scripts/run-logged-test-process.mjs",
+      "blob": "f726fe525d9f3dcc6cbab745d150a1d8f0dd3054",
+      "bytes": 934
+    },
+    {
+      "path": "scripts/sync-inkwave-numeric-status.mjs",
+      "blob": "760a5ecf01792efbdd0c02e30231dcba189acef4",
+      "bytes": 1445
+    },
+    {
+      "path": "scripts/test-camera-aim-controls.mjs",
+      "blob": "5f8927a6c8a28cee36f4dcbdbc6a1daff1701a19",
+      "bytes": 2403
+    },
+    {
+      "path": "scripts/verify-completion-sources.mjs",
+      "blob": "0800563d821979e82d40a71e76ffb67d3c2c3808",
+      "bytes": 5080
+    },
+    {
+      "path": "scripts/verify-inkwave-reference.mjs",
+      "blob": "4729adabec909841ed076670fa31d8dda75ad8a5",
+      "bytes": 1557
+    },
+    {
+      "path": "scripts/verify-inkwave-volume-pack.mjs",
+      "blob": "ef9b9c6124bfbd9c632921d081fd91c2f6c281e5",
+      "bytes": 3651
+    },
+    {
+      "path": "scripts/weapons-fixture.mjs",
+      "blob": "ec2d6fc70529bf1af315d5dfbb0d6db1014d59c2",
+      "bytes": 9071
+    }
+  ]
+}

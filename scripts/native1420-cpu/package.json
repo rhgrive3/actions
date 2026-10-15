@@ -1,0 +1,61 @@
+{
+  "sourceHead": "c99d1310a6cfb1ba65e9fb3394799c6fdbc42778",
+  "branch": "codex/native1420-cpu-qualification",
+  "status": "prepared for review, not published",
+  "files": [
+    {
+      "path": "scripts/native1420-cpu/convert-authentic-stream.mjs",
+      "file": "convert-authentic-stream.mjs",
+      "bytes": 3322,
+      "sha256": "431b23c97e826724387ece28f3dddb9641e5173b2686fc37b462fe04408adad9"
+    },
+    {
+      "path": ".github/workflows/inkwave-native-dry-refill-cpu.yml",
+      "file": "inkwave-native-dry-refill-cpu.yml",
+      "bytes": 2919,
+      "sha256": "7f08b84fbd029a949ee7d9f68fb92069196b6598768a82115d32427bdfeb035c"
+    },
+    {
+      "path": "scripts/native1420-cpu/run-split-capped.py",
+      "file": "run-split-capped.py",
+      "bytes": 3684,
+      "sha256": "50e8d68417b10b288cf2cee2242c2877073a47667cdf709fa899c54a8bdf7515"
+    },
+    {
+      "path": "scripts/native1420-cpu/shipshape-current-definition.json",
+      "file": "shipshape-current-definition.json",
+      "bytes": 989,
+      "sha256": "8c7e69363af843e658b9519bcdd4768b0c71862b09d8d3764a97183df45c6c57"
+    },
+    {
+      "path": "scripts/native1420-cpu/shipshape-definition.json",
+      "file": "shipshape-definition.json",
+      "bytes": 989,
+      "sha256": "8c7e69363af843e658b9519bcdd4768b0c71862b09d8d3764a97183df45c6c57"
+    },
+    {
+      "path": "scripts/native1420-cpu/snapshot-receipt.json",
+      "file": "snapshot-receipt.json",
+      "bytes": 129788,
+      "sha256": "e964404341c05e516605a8db2a686830b66f03191b51fa78142f2fbd80b8d9bc"
+    },
+    {
+      "path": "scripts/native1420-cpu/test-authentic-stream.mjs",
+      "file": "test-authentic-stream.mjs",
+      "bytes": 2732,
+      "sha256": "960e5fcb516006c333346f806fa72bcf91108534e7712a7f5a1d9e3d4051628d"
+    },
+    {
+      "path": "scripts/native1420-cpu/verify-package.py",
+      "file": "verify-package.py",
+      "bytes": 1794,
+      "sha256": "1a0a824a57f64149618f15c2833c0acd8d6015d411f7e1e997b9e12c9d9a9ccf"
+    },
+    {
+      "path": "scripts/native1420-cpu/verify-result.py",
+      "file": "verify-result.py",
+      "bytes": 1728,
+      "sha256": "499f1ff54668d058ac36ce7fa8d0249f9ff66ff0a08e9a5584ef008812f71949"
+    }
+  ]
+}

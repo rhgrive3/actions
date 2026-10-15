@@ -1,0 +1,69 @@
+name: INKWAVE isolated native dry-refill CPU qualification
+on:
+  push:
+    branches: [codex/native1420-cpu-qualification]
+permissions:
+  contents: read
+concurrency:
+  group: native1420-cpu-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  dry-refill-cpu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SOURCE_SHA: c99d1310a6cfb1ba65e9fb3394799c6fdbc42778
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: c99d1310a6cfb1ba65e9fb3394799c6fdbc42778
+          persist-credentials: false
+          path: qualification/native1420-current-private/snapshot
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact source and prepare CPU-only package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C qualification/native1420-current-private/snapshot rev-parse HEAD)" = "$SOURCE_SHA"
+          cp diagnostic/scripts/native1420-cpu/* qualification/native1420-current-private/
+          cd qualification
+          python native1420-current-private/verify-package.py
+      - name: Install existing pinned regression dependencies
+        working-directory: qualification/native1420-current-private/snapshot
+        run: |
+          python -m pip install -r patches/native-stages/tools/requirements-ci.txt
+          npm install --no-save --no-package-lock esbuild@0.28.2
+          python --version
+          node --version
+          python -m pip freeze
+      - name: Run unchanged default native regressions sequentially
+        working-directory: qualification/native1420-current-private/snapshot
+        run: |
+          set -o pipefail
+          node --max-old-space-size=2048 --experimental-vm-modules --test --test-concurrency=1 patches/native-stages/tests/*.test.mjs 2>&1 | tee ../hosted-default-tests.log
+      - name: Run exact authentic dry-refill CPU fixture with bounded memory transfer
+        working-directory: qualification
+        run: python native1420-current-private/run-split-capped.py
+      - name: Require actual dry-refill result and retain compact evidence
+        working-directory: qualification
+        run: python native1420-current-private/verify-result.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native1420-cpu-c99d1310-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            qualification/native1420-current-private/*receipt.json
+            qualification/native1420-current-private/authentic-fixture-binding.json
+            qualification/native1420-current-private/qualification-result.json
+            qualification/native1420-current-private/*.log
