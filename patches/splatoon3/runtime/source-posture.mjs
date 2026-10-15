@@ -28,11 +28,6 @@ export const SOURCE_POSTURE = Object.freeze({
   // and between the standing and moving shooter carry (starts and stops never snap).
   response: 8,
   standResponse: 6,
-  // Suppress the old Wii U ToHuman bow only after the humanoid silhouette starts
-  // reappearing. Smoothstep reaches full correction before the ordinary idle
-  // source pose takes over, so there is no uncorrected one-frame "nod".
-  emergeStart: 0.20,
-  emergeFull: 0.85,
   // Moving shooter carry: muzzle pitch (rad, negative = down), inward yaw toward
   // the midline (rad, + = kid left) and how much of the source barrel direction
   // is replaced by that target. Faded out when standing: the standing two-hand
@@ -68,14 +63,13 @@ function controllerOf(retarget) {
   const c = retarget.character?.sourceMotion;
   return c && c.retarget === retarget ? c : null;
 }
-/** Source ToHuman is crouched in the Wii U rig. Keep its earliest curl, but
- * remove the forward bow while the human silhouette becomes visible. No
- * side effect on squid/air/manual paths or the authoritative form timer. */
+/** The source controller's clip duration and formWeight already determine
+ * whether the humanoid is visible. Correct the actual ToHuman bone directions
+ * whenever they are displayed: no guessed 20% / 85% timing thresholds.
+ * The squid rig, airborne forms, and manual samples keep their own motion. */
 export function sourceEmergePostureWeight(c) {
-  if (!c || c.manual || c.formKid !== true || c.state !== 'ToHuman' || !c.grounded) return 0;
-  const t = clamp((c.formWeight - SOURCE_POSTURE.emergeStart) /
-    (SOURCE_POSTURE.emergeFull - SOURCE_POSTURE.emergeStart), 0, 1);
-  return t * t * (3 - 2 * t);
+  return c && !c.manual && c.formKid === true && c.state === 'ToHuman' &&
+    c.grounded && c.formWeight > 0 ? 1 : 0;
 }
 /** 0..1 weight of the posture correction for this controller frame (smoothed, frame-rate independent). */
 export function sourcePostureWeight(retarget) {
@@ -122,7 +116,12 @@ export function sourcePostureBone(retarget, target, q, dir, upper = true) {
     _d.copy(dir).applyQuaternion(q);
     const lean = Math.atan2(_d.z, _d.y);
     const P = SOURCE_POSTURE;
-    const keep = TORSO.has(target) ? P.torsoStandKeep + (P.torsoMoveKeep - P.torsoStandKeep) * smoothMove(retarget) : P.neckKeep;
+    // ToHuman's forward tilt comes directly from the sampled source bone q.
+    // Cancel that actual lean, not a video-estimated angle or frame fraction.
+    const emergence = sourceEmergePostureWeight(controllerOf(retarget));
+    const keep = emergence ? 0 : TORSO.has(target)
+      ? P.torsoStandKeep + (P.torsoMoveKeep - P.torsoStandKeep) * smoothMove(retarget)
+      : P.neckKeep;
     angle = -lean * (1 - keep) * w;
     if (target === 'neck') st.neck = angle;
   }
