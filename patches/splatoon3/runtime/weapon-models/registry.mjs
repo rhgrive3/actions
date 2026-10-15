@@ -3,7 +3,7 @@
 // (modelKind) still selects gameplay, native HOLD data and the animated part
 // channels the family runtime drives. Geometry is procedural and built lazily.
 import { MAIN_WEAPON_CATALOG } from '../main-weapon-catalog-data.mjs';
-import { VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
+import { ALTERNATE_WEAPON_KITS, VARIANT_BASE_WEAPON } from '../alternate-weapon-kits-data.mjs';
 import * as SHOOTERS from './shooters.mjs';
 import * as SHOOTERS_B from './shooters-b.mjs';
 import * as BLASTERS from './blasters.mjs';
@@ -16,6 +16,9 @@ import * as SLOSHERS from './sloshers.mjs';
 import * as SPLATLINGS from './splatlings.mjs';
 import * as BRELLAS from './brellas.mjs';
 import * as SPLATANAS from './splatanas.mjs';
+import { VARIANT_MODELS as SHOOTER_VARIANTS } from './shooter-blaster-variants.mjs';
+import { VARIANT_MODELS as MELEE_VARIANTS } from './variants-melee.mjs';
+import { VARIANT_MODELS as RANGED_VARIANTS } from './variants-ranged-defense.mjs';
 
 const RECORDS = new Map(MAIN_WEAPON_CATALOG.records.map(r => [r.id, r]));
 const FAMILIES = Object.freeze([['shooter', SHOOTERS], ['shooter', SHOOTERS_B], ['blaster', BLASTERS], ['dualies', DUALIES],
@@ -40,6 +43,32 @@ for (const [family, mod] of FAMILIES) {
     SPECS.set(id, Object.freeze({ ...spec, id, family, modelKind: r.modelKind }));
   }
 }
+// Alternate appearance IDs never enter the gameplay catalogue. Only implemented
+// rows are selectable; retain base IDs for direct family animation table lookups.
+const VARIANTS = new Map();
+for (const group of [SHOOTER_VARIANTS, MELEE_VARIANTS, RANGED_VARIANTS]) {
+  for (const [id, spec] of Object.entries(group)) {
+    if (SPECS.has(id) || VARIANTS.has(id)) throw new Error(`Duplicate weapon appearance ${id}`);
+    const base = SPECS.get(spec.baseId);
+    if (!base || typeof spec.build !== 'function' || spec.sourceRow !== id) throw new Error(`Invalid weapon appearance ${id}`);
+    VARIANTS.set(id, Object.freeze({ ...spec, id, family: base.family, modelKind: base.modelKind }));
+  }
+}
+const KIT_ROWS = new Map(ALTERNATE_WEAPON_KITS.map(kit => [kit.id, kit.main]));
+export function weaponBaseModelId(id) { return VARIANTS.get(id)?.baseId ?? VARIANT_BASE_WEAPON[id] ?? id; }
+/** Official kit appearance, independently of the device-local override. */
+export function weaponDefaultAppearance(id) {
+  const base = weaponBaseModelId(id), row = KIT_ROWS.get(id);
+  return VARIANTS.get(row)?.baseId === base ? row : weaponModelKey(base);
+}
+export function weaponVariantSpec(id) { return VARIANTS.get(id) ?? null; }
+export function registeredWeaponVariants(baseId) {
+  return [...VARIANTS.keys()].filter(id => baseId === undefined || VARIANTS.get(id).baseId === weaponBaseModelId(baseId));
+}
+export function weaponAppearanceKey(baseId, variantId) {
+  baseId = weaponBaseModelId(baseId);
+  return VARIANTS.get(variantId)?.baseId === baseId ? variantId : weaponModelKey(baseId);
+}
 /** Family-level pose layer (brush / splatana / brella / stringer …): fn(character, dt, animState). */
 export function weaponFamilyPose(id) { return FAMILY_POSE.get(weaponBehaviorFamily(id)) ?? null; }
 /** Family one-shot handler: fn(character, name, arg) → true when it replaces the native one-shot
@@ -47,21 +76,23 @@ export function weaponFamilyPose(id) { return FAMILY_POSE.get(weaponBehaviorFami
 export function weaponFamilyTrigger(id) { return FAMILY_TRIGGER.get(weaponBehaviorFamily(id)) ?? null; }
 
 /** Native visual family (HOLD key / part channels) for a weapon ID or family kind. */
-export function weaponModelFamily(id) { const base = VARIANT_BASE_WEAPON[id] || id; return RECORDS.get(base)?.modelKind ?? base; }
+export function weaponModelFamily(id) { return RECORDS.get(weaponBaseModelId(id))?.modelKind ?? id; }
 /** Catalogue behaviour family (brush, brella, stringer, splatana …) for a weapon ID. */
-export function weaponBehaviorFamily(id) { const base = VARIANT_BASE_WEAPON[id] || id; return RECORDS.get(base)?.family ?? base; }
+export function weaponBehaviorFamily(id) { return RECORDS.get(weaponBaseModelId(id))?.family ?? id; }
 /** Cache key for getWeaponDef: the weapon ID when it owns a model, else its shared family model. */
-export function weaponModelKey(id) { const base = VARIANT_BASE_WEAPON[id] || id; return SPECS.has(base) ? base : weaponModelFamily(base); }
-export function weaponModelSpec(id) { return SPECS.get(VARIANT_BASE_WEAPON[id] || id) ?? null; }
+export function weaponModelKey(id) { const base = weaponBaseModelId(id); return VARIANTS.has(id) ? id : SPECS.has(base) ? base : weaponModelFamily(base); }
+export function weaponModelSpec(id) { return SPECS.get(weaponBaseModelId(id)) ?? null; }
 export function registeredWeaponModels() { return [...SPECS.keys()]; }
 
 /** Apply the weapon's own model to a freshly built family def (before finishParts). */
 export function buildWeaponModel(key, base) {
-  const spec = SPECS.get(key);
+  const spec = VARIANTS.get(key) ?? SPECS.get(key);
   if (!spec) return base;
   const family = base.kind;
   const d = spec.build(base) || base;
-  d.kind = family; d.modelId = key; d.referenceWeapon = RECORDS.get(key).names.en;
+  const baseId = weaponBaseModelId(key);
+  d.kind = family; d.modelId = baseId; d.referenceWeapon = RECORDS.get(baseId).names.en;
+  if (VARIANTS.has(key)) { d.modelVariantId = key; d.appearanceName = spec.name; }
   d.referenceModelName = spec.sourceModel ?? null;
   if (spec.animate) d.animate = spec.animate;
   return d;
@@ -77,6 +108,7 @@ function merge(base, over) {
   return out;
 }
 export function weaponHold(key, base) {
+  key = weaponBaseModelId(key);
   const spec = SPECS.get(key);
   if (!spec?.hold || !base) return base;
   let byKey = holds.get(base);
@@ -90,5 +122,5 @@ export function weaponHold(key, base) {
 // clips; those families (and any model asking for it) keep the native hold.
 const NATIVE_CARRY = new Set(['brella', 'splatana', 'stringer', 'brush']);
 export function weaponNeedsNativeCarry(id) {
-  return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(VARIANT_BASE_WEAPON[id] || id)?.nativeCarry);
+  return !!id && (NATIVE_CARRY.has(weaponBehaviorFamily(id)) || !!SPECS.get(weaponBaseModelId(id))?.nativeCarry);
 }

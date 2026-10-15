@@ -33,7 +33,7 @@ const OUT = physicalLocation(path.resolve(process.argv[3] || '_site'));
 if (fs.existsSync(OUT) && !fs.statSync(OUT).isDirectory()) throw new Error('Build output must be a directory');
 const projectRoot = path.resolve(PATCH_ROOT, '../..');
 // Inlined into weapon-models/registry.mjs by the production build (see the patch copy loop).
-const WEAPON_MODEL_FAMILY = /^runtime\/weapon-models\/(shooters|shooters-b|blasters|dualies|rollers|brushes|chargers|stringers|sloshers|splatlings|brellas|splatanas)\.mjs$/;
+const WEAPON_MODEL_FAMILY = /^runtime\/weapon-models\/(shooters|shooters-b|blasters|dualies|rollers|brushes|chargers|stringers|sloshers|splatlings|brellas|splatanas|shooter-blaster-variants|variant-shooter-surfaces|variants-melee|variants-ranged-defense)\.mjs$/;
 const contains = (parent, child) => parent === child || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
 if (contains(OUT, projectRoot) || contains(OUT, SRC) || contains(SRC, OUT) || contains(PATCH_ROOT, OUT) || contains(RELIABILITY_ROOT, OUT) || contains(QUALITY_ROOT, OUT) || contains(NETWORK_ROOT, OUT) || contains(LOADING_ROOT, OUT) || contains(RANGE_ROOT, OUT)) throw new Error('Build output must be separate from upstream source and patch files');
 checkCompatibility(SRC);

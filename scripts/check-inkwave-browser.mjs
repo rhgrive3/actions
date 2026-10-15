@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { runMinimapCanvasProbe } from './lib/minimap-canvas-probe.mjs';
+import { checkWeaponAppearancePicker } from './lib/inkwave-weapon-appearance-probe.mjs';
 import { runQualityBrowserProbe } from '../patches/local-quality/quality-probe.mjs';
 import { runPaintMipmapBrowserProbe } from '../patches/local-quality/paint-mipmap-probe.mjs';
 import { checkHudAuthority, checkUiVisualProbes } from './check-inkwave-hud-authority.mjs';
@@ -109,6 +110,7 @@ try {
     const m=globalThis.s3ProbeG.game.menus,el=m._scr?.el;
     return m.current==='loadout'&&el?.isConnected&&!el.classList.contains('is-leaving')&&!m._modal;
   });
+  result.weaponAppearancePicker = await checkWeaponAppearancePicker({page,evidence});
   const kitMenu=await page.evaluate(async()=>{
     const {CANONICAL_KITS}=await import(new URL('patches/splatoon3/runtime/canonical-kits-data.mjs',document.baseURI).href);
     localStorage.removeItem('inkwave.catalogue-kit.v1');

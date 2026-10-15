@@ -20,8 +20,10 @@ export function adaptWeaponCatalog(rel, code) {
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
       "import { PLAYER } from '../config.js';",
-      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';",
+      "import { PLAYER, WEAPONS } from '../config.js';\nimport { weaponModelKey, weaponModelFamily, weaponHold, weaponNeedsNativeCarry, weaponAppearanceKey, weaponDefaultAppearance } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\nimport { selectedWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\n",
       'character weapon catalog import');
+    code = replaceOnce(code, "    this.setWeapon(opts.weapon || 'shooter');",
+      "    this.weaponAppearancePreview = opts.weaponAppearancePreview === true;\n    this.setWeapon(opts.weapon || 'shooter');", 'personal preview appearance');
     // A weapon ID keeps its own model (cache key) while its family remains the
     // HOLD/behaviour kind every native and patched pose layer reads.
     return replaceOnce(code,
@@ -38,13 +40,16 @@ export function adaptWeaponCatalog(rel, code) {
     let kind = WEAPONS[id]?.modelKind || WEAPONS[id]?.kind || weaponModelFamily(id);
     if (!HOLD[kind]) kind = 'shooter';
     const model = (WEAPONS[id] || HOLD[weaponModelFamily(id)]) ? weaponModelKey(id) : kind;
-    if (kind === this.weaponKind && model === this.weaponModel && this.weapon) return;
+    const selected = (this.isLocal || this.weaponAppearancePreview) ? selectedWeaponAppearance(id) : weaponDefaultAppearance(id);
+    const visual = weaponAppearanceKey(model, selected);
+    if (kind === this.weaponKind && model === this.weaponModel && visual === this.weaponAppearanceModel && this.weapon) return;
     const old = this.weapon;
     if (old) { this.bones.handR.remove(old.pivot); if (old.left) this.bones.handL.remove(old.left.pivot); }
-    const w = this._getWeapon(model);
+    const w = this._getWeapon(visual);
     this.bones.handR.add(w.pivot);
     if (w.left) this.bones.handL.add(w.left.pivot);
     this.weaponKind = kind; this.weaponModel = model; this.weapon = w; this.hold = weaponHold(model, HOLD[kind]);
+    this.weaponAppearanceModel = visual; this.modelVariantId = visual === model ? null : visual;
     this.weaponNativeCarry = weaponNeedsNativeCarry(id);`,
       'character weapon ID to its own model and family hold');
   }
@@ -144,6 +149,27 @@ export function adaptWeaponCatalog(rel, code) {
   }
 
   if (rel === 'src/ui/menus.js') {
+    code = "import { weaponAppearanceOptions, weaponAppearancePreference, setWeaponAppearance } from '../../patches/splatoon3/runtime/weapon-appearance.mjs';\nimport { weaponBaseModelId } from '../../patches/splatoon3/runtime/weapon-models/registry.mjs';\n" + code;
+    code = replaceOnce(code, "    // ---- detail panel\n", `    // Appearance is device-local and preserves this weapon's sub/special/stats.
+    const appearanceLabel = h('span');
+    const appearance = h('button', { class: 'iw-btn iw-btn--menu', type: 'button', 'aria-label': 'Weapon appearance / ブキの見た目' }, appearanceLabel);
+    const refreshAppearance = () => {
+      const options = weaponAppearanceOptions(shown), selected = weaponAppearancePreference(shown) ?? '';
+      appearanceLabel.textContent = 'APPEARANCE / 見た目: ' + (options.find(o => o.id === selected) || options[0]).name;
+      appearance.hidden = options.length < 2;
+      appearance.disabled = options.length < 2;
+    };
+    this._bind(appearance, { id: 'weapon-appearance', accept: () => {
+      const options = weaponAppearanceOptions(shown), selected = weaponAppearancePreference(shown) ?? '';
+      const index = Math.max(0, options.findIndex(o => o.id === selected));
+      setWeaponAppearance(shown, options[(index + 1) % options.length].id);
+      for (const c of this._sc()?.chars || []) if (c.weaponAppearancePreview && c.weaponModel === weaponBaseModelId(shown)) c.setWeapon(shown);
+      refreshAppearance(); this._sfx('ui_toggle');
+    } });
+    // ---- detail panel
+`, 'appearance selector');
+    code = replaceOnce(code, "      blurb,\n      h('div', { class: 'iw-wd__stats' }", "      blurb, appearance,\n      h('small', null, 'Visual only · Local device / 見た目のみ・この端末'),\n      h('div', { class: 'iw-wd__stats' }", 'appearance panel');
+    code = replaceOnce(code, "      shown = id;\n      const w = Ws[id]", "      shown = id;\n      refreshAppearance();\n      const w = Ws[id]", 'appearance refresh');
     code = replaceAllExpected(code,
       'weaponIcon(W.kind || lo.weapon)', 'weaponIcon(W.id || lo.weapon)', 5,
       'loadout and kit weapon ID icons');
@@ -173,6 +199,7 @@ export function adaptWeaponCatalog(rel, code) {
   }
 
   if (rel === 'src/game/showcase.js') {
+    code = replaceAllExpected(code, "name: 'preview', isLocal: false", "name: 'preview', isLocal: false, weaponAppearancePreview: true", 2, 'personal showcase appearance');
     return replaceOnce(code,
       "const weaponKind = (id) => (WEAPONS[id] && WEAPONS[id].kind) || id || 'shooter';",
       "const weaponKind = (id) => (WEAPONS[id] ? id : id || 'shooter'); // Character.setWeapon resolves its family",
