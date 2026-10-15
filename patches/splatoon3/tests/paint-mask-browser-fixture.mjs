@@ -207,6 +207,10 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
   const bodyShader = nativeShader.replace(tx, 'float tx = 1.0 / 64.0;')
     .replace(tail, '  gl_FragColor = vec4(sd < 0.0 ? 1.0 : 0.0, abs(sd) < 1e-3 ? 1.0 : 0.0, 0.0, 1.0);');
   const gpu = program(bodyShader), rows = [];
+  const sourceBoundary = 'sd = length(p) - r * grow;';
+  check(bodyShader.split(sourceBoundary).length === 2, 'one dedicated sourced paint boundary');
+  const genericSource = program(bodyShader.replace(sourceBoundary,
+    'sd = length(p) - r * grow * wob(atan(p.y, p.x), seed);'));
   const size = 32, cell = 0.25, n = size / cell;
   const face = { atlas: { x: 0, y: 0, pad: 2, ppm: 64 }, su: size, sv: size, nu: n, nv: n, cu: cell, cv: cell,
     grid: 0, wall: false, turf: true };
@@ -217,7 +221,17 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
     const shape=catalogPaintEllipse(2,depth);
     cases.push({kind:0,sa:shape.stretchAmt,R:shape.radius,seed,rotate:shape.rotate,depth});
   }
-  for (const { kind, sa, R, seed, rotate=false, depth=null } of cases) {
+  // Dedicated WidthHalf masks must execute on both surface orientations, with
+  // independently timed splashes, tiny drops and rotated narrow-depth shapes.
+  // Retain every preexisting generic case and its bidirectional pixel checks.
+  for (const wall of [false, true]) for (const kind of [8, 9])
+    for (const radius of [.05, .65, 1.93, 4.024884828332687])
+      for (const depth of [.25, 1, 1.31, 2.24]) for (const seed of [.11, .93]) {
+        const shape = catalogPaintEllipse(radius, depth);
+        cases.push({ wall, kind, sa:shape.stretchAmt, R:shape.radius, seed, rotate:shape.rotate, depth });
+      }
+  for (const { kind, sa, R, seed, rotate=false, depth=null, wall=false } of cases) {
+    face.wall = wall;
     paint.grid = new Uint8Array(n * n); paint.dead = new Uint8Array(n * n); paint.counts = [0, 0];
     paint._paintOwnershipOrder = new Uint32Array(n * n);
     const sdu = sa ? (rotate ? -.8 : .6) : 0, sdv = sa ? (rotate ? .6 : .8) : 0, lu = 16, lv = 16;
@@ -228,20 +242,30 @@ function bodyMaskRows(paint, nativeShader, program, query, tx, tail) {
       if (Math.hypot(x, y) > R * (1 + sa) * 1.6) continue;
       points.push(x, y, 0); index.push(j * n + i);
     }
-    const pixels = query(gpu, points, [R, 0, Math.fround(seed), 2 * kind], [3, 1, 2, 0], [sdu, sdv, sa]);
+    const splat = [R, 0, Math.fround(seed), 2 * kind + (wall ? 1 : 0)];
+    const pixels = query(gpu, points, splat, [3, 1, 2, 0], [sdu, sdv, sa]);
+    const reverted = kind >= 8 ? query(genericSource, points, splat, [3, 1, 2, 0], [sdu, sdv, sa]) : null;
+    let negativeDifferences = 0;
     let cpu = 0, gpuCells = 0, cpuOnly = 0, gpuOnly = 0, ties = 0;
     for (let k = 0; k < index.length; k++) {
       const owned = paint.grid[index[k]] === 1, visible = pixels[k * 4] === 255, tie = pixels[k * 4 + 1] === 255;
       if (owned) cpu++; if (visible) gpuCells++;
       if (owned !== visible) { if (tie) ties++; else if (owned) cpuOnly++; else gpuOnly++; }
+      if (reverted && visible !== (reverted[k * 4] === 255)) negativeDifferences++;
     }
-    rows.push({ kind, sa, R, seed, depth, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties });
+    rows.push({ wall, kind, sa, R, seed, depth, cpu, gpu: gpuCells, cpuOnly, gpuOnly, ties, negativeDifferences });
   }
   const result = { rows, cpuOnly: rows.reduce((t, r) => t + r.cpuOnly, 0), gpuOnly: rows.reduce((t, r) => t + r.gpuOnly, 0),
     ties: rows.reduce((t, r) => t + r.ties, 0), cpuCells: rows.reduce((t, r) => t + r.cpu, 0), gpuCells: rows.reduce((t, r) => t + r.gpu, 0) };
   // Only float32 ties on the SDF zero crossing (|sd| < 1e-3 WU, 1/16 texel) may disagree.
   check(result.cpuOnly === 0 && result.gpuOnly === 0, `CPU body ownership differs from the rendered body: ${JSON.stringify(rows.filter(r => r.cpuOnly || r.gpuOnly).slice(0, 4))}`);
-  check(rows.length === 99 && result.cpuCells > 0, 'all body kinds and catalog depth envelopes exercised');
+  check(rows.length === 227 && rows.filter(r => r.kind < 8).length === 99 && result.cpuCells > 0,
+    'all original body cases plus 128 sourced floor/wall cases exercised');
+  for (const wall of [false, true]) for (const kind of [8, 9]) {
+    const sourced = rows.filter(row => row.wall === wall && row.kind === kind);
+    check(sourced.length === 32 && sourced.some(row => row.cpu > 0), 'sourced mask claims actual cells');
+    check(sourced.some(row => row.negativeDifferences > 0), 'reverting only sourced boundary must change GPU cells');
+  }
   return result;
 }
 

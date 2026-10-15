@@ -7,22 +7,23 @@ import { shooterImpactRadius, shooterImpactDepthScale } from '../runtime/shooter
 const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
 const lerp = (a, b, t) => a + (b - a) * t;
 // Sourced Ver. 11.3.0 values (WeaponShooterNormal PaintParam), scale 1.
-const impactPaint = { widthNear: 1.93, widthMiddle: 1.93, widthFar: 1.71, distanceMiddle: 1.1,
+const impactPaint = { widthNear: 1.93, widthMiddle: 1.93, widthFar: 1.71, distanceNear: 1.1, distanceMiddle: 1.1, distanceFar: 20,
   depthMax: 2.24, depthMin: 1.31, depthMaxBreakFree: 2.24, depthMinBreakFree: 1.12 };
 const weapon = { range: 10, impactPaint };
 const vec = (x, y, z) => ({ x, y, z, distanceTo(o) { return Math.hypot(x - o.x, y - o.y, z - o.z); } });
 const incidence = deg => { const r = deg * Math.PI / 180; return { x: Math.cos(r), y: -Math.sin(r), z: 0 }; };
 const floorNormal = vec(0, 1, 0);
 
-test('#79 floor footprint: near band keeps WidthHalfNear, far end reaches WidthHalfFar, beyond range clamps', () => {
+test('#79 floor footprint uses Shooter paramtable default 20-distance far anchor instead of weapon range', () => {
   const at = d => shooterImpactRadius(weapon, { start: vec(0, 0, 0) }, vec(d, 0, 0));
   near(at(0.5), 1.93);
   near(at(1.1), 1.93);
-  near(at(10), 1.71);
-  near(at(14), 1.71);
-  near(at(5.55), lerp(1.93, 1.71, (5.55 - 1.1) / (10 - 1.1)));
+  near(at(10), lerp(1.93, 1.71, (10 - 1.1) / (20 - 1.1)));
+  near(at(20), 1.71);
+  near(at(24), 1.71);
+  near(at(5.55), lerp(1.93, 1.71, (5.55 - 1.1) / (20 - 1.1)));
   // Monotonic between the sourced middle and far endpoints.
-  assert.ok(at(3) >= at(7) && at(7) >= at(10));
+  assert.ok(at(3) >= at(7) && at(7) >= at(20));
   assert.equal(shooterImpactRadius({ range: 10 }, { start: vec(0, 0, 0) }, vec(1, 0, 0)), null);
 });
 
@@ -69,7 +70,7 @@ test('#79 floor impact paint uses the sourced footprint and ignores the native r
   assert.ok(seen.every(r => Math.abs(r - 1.93) < 1e-9));
 });
 
-test('#79 far-range floor impact reaches the sourced far width at the weapon range', async () => {
+test('#79 far-range floor impact uses 20-distance source anchor even when weapon range differs', async () => {
   const f = await world({ fidelity: true, seed: 3 });
   const { Vector3 } = f.THREE, G = f.G, w = f.WEAPONS.shooter;
   const a = f.make('shooter');
@@ -81,7 +82,9 @@ test('#79 far-range floor impact reaches the sourced far width at the weapon ran
   f.projectiles._impact(p, { point: new Vector3(w.range, 0, 0), normal: new Vector3(0, 1, 0) });
   G.paint.splat = native;
   assert.equal(records.length, 1);
-  near(records[0], w.impactPaint.widthFar);
+  near(records[0], shooterImpactRadius(w,p,new Vector3(w.range,0,0)));
+  near(shooterImpactRadius(w,p,new Vector3(w.impactPaint.distanceFar,0,0)), 1.71);
+  assert.equal(w.impactPaint.distanceFar, 20);
   near(w.impactPaint.widthFar, 1.71);
 });
 

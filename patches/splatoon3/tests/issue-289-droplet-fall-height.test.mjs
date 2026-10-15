@@ -1,3 +1,4 @@
+import { SOURCE_SPLASH_PAINT_KIND } from '../runtime/source-shot-footprint.mjs';
 // #289 regression: Splattershot flight droplets fall-height paint scaling and 4u cutoff removal
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -124,7 +125,7 @@ async function emittedDroplet(height) {
   const born = [];
   f.projectiles.inkFlight.trace = ev => { if (ev.event === 'drop-born') born.push(ev); };
   for (let i = 0; i < 150; i++) f.projectiles.update(1 / 60);
-  const drops = f.paints.filter(row => row.kind === 'drop' || row.kind === 'trail');
+  const drops = f.paints.filter(row => row.kind === SOURCE_SPLASH_PAINT_KIND);
   assert.ok(born.length > 0, 'the active head released a real detached drop');
   assert.ok(drops.length > 0, 'a detached Shooter drop reached real paint geometry');
   assert.ok(drops.some(row => row.area > 0), 'native authoritative CPU turf ownership advanced');
@@ -145,7 +146,7 @@ test('#289 real flight splats preserve fall-height depth scaling below 3, across
   const footprints = [];
   for (const h of heights) {
     const { drops } = await emittedDroplet(h);
-    const first = drops.find(row => row.kind === 'drop' && row.area > 0) || drops.find(row => row.area > 0);
+    const first = drops.find(row => row.kind === SOURCE_SPLASH_PAINT_KIND && row.area > 0) || drops.find(row => row.area > 0);
     assert.ok(first && Number.isFinite(first.stretchAmt), 'actual PaintSystem received a finite depth value');
     footprints.push(first.stretchAmt);
   }

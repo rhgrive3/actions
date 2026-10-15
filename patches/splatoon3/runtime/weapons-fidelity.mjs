@@ -8,7 +8,8 @@ import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
-import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint } from './shooter-impact-paint.mjs';
+import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';
+import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -363,7 +364,7 @@ function withDualiesImpactPaint(game,p,hit,source,callback) {
   paint.splat=function(center,radius,team,opts={}) {
     if (!first) return native.call(this,center,radius,team,opts);
     first=false;
-    const next={...opts};
+    const next={...opts,kind:SOURCE_SHOT_PAINT_KIND};
     if (source.depthScale !== null) {
       // The angle was already consumed above. Avoid applying a second cos(angle)
       // attenuation in the rasterizer by supplying the in-plane unit heading.
@@ -490,7 +491,7 @@ function eligibleWallDropHit(hit) {
 }
 function wallDropPaint(p, point, radius, state, salt) {
   if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), claimOwner: p.owner });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return area || 0;
 }
@@ -624,7 +625,7 @@ export function blasterBurstAxisDirections(contract) {
 function detachedPaint(system, state, point, radius, salt) {
   if (state.ghost || !(radius > 0) || !api?.G?.paint) return 0;
   const area = api.G.paint.splat(point, radius, state.team, {
-    seed: seededUnit(state.seed, salt + state.paintIndex++), claimOwner: state.owner,
+    seed: seededUnit(state.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: state.owner,
   });
   if (Number.isFinite(area)) state.owner?.addTurf?.(area);
   return area || 0;
@@ -752,7 +753,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   if (sphereRadius > 0 && api.G.paint?.splat) {
     const centre = system._s3BlasterBurstCentre || (system._s3BlasterBurstCentre = new api.THREE.Vector3());
     centre.copy(point);
-    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), claimOwner: p.owner });
+    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), kind: SOURCE_SHOT_PAINT_KIND, claimOwner: p.owner });
     if (Number.isFinite(area) && area) p.owner?.addTurf?.(area);
   }
   if (burst.timedDropOn && dropRadius > 0) {
@@ -945,7 +946,7 @@ export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
   p.s3GrazePaint = { at: center, face };
   const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
-  const area = game.paint.splat(center, paintRadius, p.team, { seed, claimOwner: owner });
+  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: owner });
   if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
   return area;
 }
@@ -1652,8 +1653,9 @@ export function installWeaponsFidelity(context,profile) {
     dropHeightMin: (shooterPaint.DepthMinDropHeight ?? 10) * paintScale,
     worldUnitsPerSourceUnit: paintScale,
   });
-  // #79: Shooter PaintParam (Ver. 11.3.0). Far anchor and angle thresholds are not
-  // in the record; see shooter-impact-paint.mjs for the provisional choices.
+  // #79: Shooter PaintParam (Ver. 11.3.0). Sparse weapon JSON omits typed
+  // 1.1/20 distance and 10/35 angle schema defaults documented in the
+  // original parameter table; never substitute the weapon's firing range.
   const shooterImpact = completion.weapons?.shooter?.PaintParam;
   const impactSource = [shooterImpact?.WidthHalfNear, shooterImpact?.WidthHalfMiddle, shooterImpact?.WidthHalfFar,
     shooterImpact?.DistanceMiddle, shooterImpact?.DepthScaleMax, shooterImpact?.DepthScaleMin,
@@ -1664,7 +1666,11 @@ export function installWeaponsFidelity(context,profile) {
     widthNear: shooterImpact.WidthHalfNear * paintScale,
     widthMiddle: shooterImpact.WidthHalfMiddle * paintScale,
     widthFar: shooterImpact.WidthHalfFar * paintScale,
+    distanceNear: (shooterImpact.DistanceNear ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceNear) * paintScale,
     distanceMiddle: shooterImpact.DistanceMiddle * paintScale,
+    distanceFar: (shooterImpact.DistanceFar ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceFar) * paintScale,
+    degreeUseDepthScaleMax: shooterImpact.DegreeUseDepthScaleMax ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMax,
+    degreeUseDepthScaleMin: shooterImpact.DegreeUseDepthScaleMin ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMin,
     depthMax: shooterImpact.DepthScaleMax,
     depthMin: shooterImpact.DepthScaleMin,
     depthMaxBreakFree: shooterImpact.DepthScaleMaxBreakFree,

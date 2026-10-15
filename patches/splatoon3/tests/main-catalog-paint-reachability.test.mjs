@@ -9,11 +9,14 @@ for(const r of C.records){
  f.G.projectiles.clear();f.G.actors=[]; const {paint,V}=makePaintWorld(f); // each weapon uses a fresh battle; detached canopies survive owner resets
 f.G.settings={};f.setRandom(()=>.37);
  const a=f.make(r.id);a.form='kid';a.aimDir.set(0,-.12,1).normalize();a.aimPoint.set(0,0,12);a.pos.set(0,0,0);a.ink=100;
- let stamps=0,ownerless=0,invalid=0;const raw=paint.splat;
- paint.splat=function(at,R,team,opts={}){stamps++;if(!opts.cosmetic&&!opts.claimOwner&&!this._paintNextOwner)ownerless++;if(!Number.isFinite(R)||R<=0)invalid++;return raw.call(this,at,R,team,opts);};
+ let stamps=0,ownerless=0,invalid=0,sourceStamps=0;const kinds=new Set(),raw=paint.splat;
+ paint.splat=function(at,R,team,opts={}){stamps++;kinds.add(opts.kind??'inferred');
+ if(opts.kind==='source-shot'||opts.kind==='source-splash')sourceStamps++;
+ if(!opts.cosmetic&&!opts.claimOwner&&!this._paintNextOwner)ownerless++;
+ if(!Number.isFinite(R)||R<=0)invalid++;return raw.call(this,at,R,team,opts);};
  let error=null;
  try{for(let i=0;i<360;i++){a.intent.fire=i<150;f.G.time+=1/60;a.update(1/60);f.G.projectiles.update(1/60);paint.advanceSimulation(1/60);}}catch(e){error=e.stack;}
- rows.push({id:r.id,family:r.family,legacy:r.legacy,stamps,ownerless,invalid,cells:paint.counts[0],turf:a.stats.turf,special:a.special,error});assert.equal(error,null,r.id);assert.ok(stamps>0,r.id+' emits real paint');assert.ok(paint.counts[0]>0,r.id+' owns floor');assert.equal(ownerless,0,r.id+' owner association');assert.equal(invalid,0,r.id+' finite positive radii');assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' turf counted once');
+ rows.push({id:r.id,family:r.family,legacy:r.legacy,stamps,ownerless,invalid,cells:paint.counts[0],turf:a.stats.turf,special:a.special,error});assert.equal(error,null,r.id);assert.ok(stamps>0,r.id+' emits real paint');assert.ok(paint.counts[0]>0,r.id+' owns floor');assert.equal(ownerless,0,r.id+' owner association');assert.equal(invalid,0,r.id+' finite positive radii');assert.ok(sourceStamps>0,r.id+' emitted no internally sourced physical paint kind: '+JSON.stringify([...kinds]));assert.equal(a.stats.turf,paint.counts[0]*.0625,r.id+' turf counted once');
 }
 assert.equal(rows.length,65);
 });
