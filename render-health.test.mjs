@@ -1,0 +1,5 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import{validateRenderHealth}from'./render-health.mjs';
+test('healthy actual interface passes',()=>validateRenderHealth({getContext:()=>({isContextLost:()=>false,getError:()=>0})}));
+test('context loss fails',()=>assert.throws(()=>validateRenderHealth({getContext:()=>({isContextLost:()=>true,getError:()=>0})}),/context lost/));
+test('GL error fails',()=>assert.throws(()=>validateRenderHealth({getContext:()=>({isContextLost:()=>false,getError:()=>1282})}),/GL error 1282/));
+test('every capture render checks health before pixels and error receipt precedes throw',()=>{const s=fs.readFileSync(new URL('./probe.mjs',import.meta.url),'utf8'),w=fs.readFileSync(new URL('./capture.mjs',import.meta.url),'utf8');assert.match(s,/renderer.render\(scene,camera\);validateRenderHealth\(renderer\);frames.push/);assert.match(s,/error.capturePartial=\{results,current:\{id,shots,moved,frames\}\};throw error/);assert.match(w,/remote-partial.json'[\s\S]*throw Error\(result.failure/);});

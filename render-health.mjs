@@ -1,0 +1,1 @@
+export function validateRenderHealth(renderer){const gl=renderer.getContext();if(gl.isContextLost())throw Error('Remote render context lost');const error=gl.getError();if(error!==0)throw Error('Remote render GL error '+error);}

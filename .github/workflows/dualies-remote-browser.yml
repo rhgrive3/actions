@@ -1,0 +1,74 @@
+name: Verify emitted remote dualies presentation
+on:
+  push:
+    branches: [review/dualies-remote-browser-20261015]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    if: github.repository == 'rhgrive3/actions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_OPTIONS: --max-old-space-size=2048
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: 59d78d90e84855852c13fbad6ccc4ab86fadd1c3
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+      - name: Verify frozen package and checkout
+        run: |
+          python - <<'PY'
+          import pathlib,json,hashlib,subprocess
+          root=pathlib.Path('diagnostic');p=json.loads((root/'package.json').read_text())
+          assert len(p['files'])==len(set(p['files'])) and len(p['files'])==14
+          for name,r in p['files'].items():
+              b=(root/name).read_bytes();assert len(b)==r['bytes'] and hashlib.sha256(b).hexdigest()==r['sha256'],name
+          plan=json.loads((root/'plan.json').read_text())
+          for suffix,want in [('HEAD',plan['head']),('HEAD^{tree}',plan['tree'])]:assert subprocess.check_output(['git','-C','candidate','rev-parse',suffix],text=True).strip()==want
+          PY
+      - name: Install pinned build and Chromium dependencies
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Receipt rejection controls
+        run: node --test diagnostic/gate.test.mjs diagnostic/build-binding.test.mjs diagnostic/render-health.test.mjs diagnostic/cleanup.test.mjs
+      - name: Existing source regressions
+        run: |
+          mkdir -p evidence
+          cd candidate
+          node --experimental-vm-modules --test patches/network-replication/tests/dualies-presentation-clock.test.mjs patches/splatoon3/tests/catalog-dualies-native-actor.test.mjs patches/splatoon3/tests/catalog-dualies-origin.test.mjs patches/splatoon3/tests/catalog-dualies-origin-admission.test.mjs > ../evidence/source.tap 2>&1
+      - name: One immutable production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          cd candidate
+          node scripts/build-inkwave.mjs inkwave-public ../candidate-site
+          cp ../candidate-site/inkwave-build.json ../evidence/build.json
+      - name: Existing emitted regressions
+        run: |
+          export INKWAVE_BUILT_SITE="$PWD/candidate-site"
+          cd candidate
+          node --experimental-vm-modules --test patches/network-replication/tests/dualies-presentation-clock.test.mjs patches/splatoon3/tests/catalog-dualies-native-actor.test.mjs patches/splatoon3/tests/catalog-dualies-origin.test.mjs patches/splatoon3/tests/catalog-dualies-origin-admission.test.mjs > ../evidence/emitted.tap 2>&1
+      - name: Actual emitted browser remote receiver
+        run: |
+          export PACKAGE="$PWD/diagnostic" SOURCE="$PWD/candidate" SITE="$PWD/candidate-site" REMOTE_EVIDENCE="$PWD/evidence"
+          python diagnostic/supervise.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dualies-remote-browser
+          path: |
+            evidence/*.json
+            evidence/*.tap
+            evidence/*.png
+          if-no-files-found: error

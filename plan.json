@@ -1,0 +1,27 @@
+{
+  "head": "59d78d90e84855852c13fbad6ccc4ab86fadd1c3",
+  "tree": "f98e559b3ec03f30bdb2343dda58fd2b2d3ca38c",
+  "sourcePins": [
+    {
+      "path": "patches/network-replication/adapter.mjs",
+      "key": "network-replication/adapter.mjs",
+      "sha256": "1d0b4b88b7e86a91fec9e1dd25b468f8cbe71fd91e67462b69b8b76d7e12dbd4"
+    },
+    {
+      "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "key": "patch/runtime/main-weapon-catalog.mjs",
+      "sha256": "783cc906671eb67cce16e17cc9cbbfacd2093dcbfab91a4dda85a747b94c02ca"
+    },
+    {
+      "path": "inkwave-public/src/net/netmatch.js",
+      "key": "upstream/src/net/netmatch.js",
+      "sha256": "b9ae0235b623c463f04f075dd1bbc305b15add3595dc8e776837e18caa9555d8"
+    },
+    {
+      "path": "inkwave-public/src/game/character-weapons.js",
+      "key": "upstream/src/game/character-weapons.js",
+      "sha256": "aa6f865e329016aff6efac127ee69dd288b046a911f89189466a4f18c68f5f89"
+    }
+  ],
+  "scope": "Base five Dualies and nondual, native in-memory transport, actual emitted browser/GPU. No variant-model or external network qualification."
+}
