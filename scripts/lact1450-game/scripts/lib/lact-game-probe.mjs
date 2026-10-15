@@ -9,6 +9,9 @@ export async function lactGameScenario({id,holdTicks,expectKeep,captureFailure=f
  const rec=a.weapon.catalogRecord,p=rec.parameters.spl__WeaponStringerParam;
  check(p&&Number.isSafeInteger(holdTicks)&&holdTicks>0,'source parameters');
  check(expectKeep ? rec.sourceActor==='WeaponStringerShort' : rec.sourceActor==='WeaponStringerNormal'&&p.IsEnableChargeKeep===false,'explicit source capability control');
+ // Match the pinned native emitArrow implementation; omitted ArrowNum is three.
+ const arrowCount=Number.isFinite(p.ShotParam?.ArrowNum)?p.ShotParam.ArrowNum:3;
+ check(Number.isSafeInteger(arrowCount)&&arrowCount>0,'native arrow count contract');
  const keepTicks=p.ChargeKeepParam?.KeepChargeFullFrame;
  const expectedCost=p.ChargeParam.InkConsumeFullCharge*100;
  check(Number.isFinite(expectedCost)&&expectedCost>0,'source full charge ink');
@@ -42,10 +45,10 @@ export async function lactGameScenario({id,holdTicks,expectKeep,captureFailure=f
     const retained=expectKeep&&holdTicks<keepTicks;if(retained)near(debit,paid,'retained charge not charged twice');
     if(r.charge===1){near(s.paid,paid,'restored/recharged full payment');near(s.chargeF,frames,'restored/recharged frames');near(debit,paid*(retained?1:2),'correct total payment');restoreTicks=returned;next('release');}
    }else if(phase==='release'){
-    check(births.length===p.ShotParam.ArrowNum,'one native arrow volley');check(births.every(q=>q.weapon===rec.id&&q.charge===1),'fully charged owned arrows');
+    check(births.length===arrowCount,'one native arrow volley');check(births.every(q=>q.weapon===rec.id&&q.charge===1),'fully charged owned arrows');
     check(s.stored===null&&s.paid===0&&s.chargeF===0&&r.charge===0&&!r.charging,'release clears funded charge');next('after');
    }else if(phase==='after'){
-    check(births.length===p.ShotParam.ArrowNum,'no duplicate/delayed volley');near(debit,paid*((expectKeep&&holdTicks<keepTicks)?1:2),'no later debit');if(++after===20)done=true;
+    check(births.length===arrowCount,'no duplicate/delayed volley');near(debit,paid*((expectKeep&&holdTicks<keepTicks)?1:2),'no later debit');if(++after===20)done=true;
    }
   }
   check(done,'bounded scenario completes');

@@ -1,7 +1,7 @@
 {
   "executionAuthorized": false,
   "diagnosticBranch": "review/lact1450-game-20261015",
-  "baseDiagnosticHead": "d7f223024be147cf763d2a27fc8e9ddb62c7c142",
+  "baseDiagnosticHead": "2cd75d8843e5b558303026e395e5d8f20bf37326",
   "sources": {
     "baseline": {
       "head": "81bac38832f11eb77413e6c39713bda8a0ad7936",
@@ -15,7 +15,7 @@
     }
   },
   "catalogCheckerPreimage": "58bde54b77dba39e0fe1981136d11d4aeb118718",
-  "scope": "Private separate diagnostic proposal. No actual browser execution yet. No PR1450 source changes.",
+  "scope": "Diagnostic-only count comparator correction after preserved failed run38682291421. Candidate and baseline source heads unchanged; actual fresh qualification pending.",
   "files": {
     "scripts/check-inkwave-catalog-browser.mjs": {
       "bytes": 44199,
@@ -24,15 +24,15 @@
       "publicationPath": "scripts/lact1450-game/scripts/check-inkwave-catalog-browser.mjs"
     },
     "scripts/lib/lact-game-probe.mjs": {
-      "bytes": 9391,
-      "sha256": "a7ad58ab750f79e57fd3bef1a8baf6ab0ef3b840cb70d4d8cb6ed5b3aa81745d",
-      "gitBlob": "b4760efe2f821d7f6c4de9852bea14ede65f3370",
+      "bytes": 9619,
+      "sha256": "0d7c346dde997d3ea00cf1c5266ec07659ef7afefbdee48ed40ed34f0f3e07a6",
+      "gitBlob": "b7267b4b8bd6f2a2856225a25d980c730e25b34b",
       "publicationPath": "scripts/lact1450-game/scripts/lib/lact-game-probe.mjs"
     },
     "scripts/test-lact-game-probe.mjs": {
-      "bytes": 4538,
-      "sha256": "2cd9c6cef8f158969e65bf535676c8e38cb8fa280affaa0fc33e210c0ca1ba98",
-      "gitBlob": "7541565e22fdfaa218e2de486ff65aa9b1127e77",
+      "bytes": 5323,
+      "sha256": "179b1e3c2b7c867aa1ef1ff9390d9bd512bde4d80ceb8821a1a91628d5d64376",
+      "gitBlob": "08b7a37e8044e3e2bc6008b86e6bc4c9d3d9d382",
       "publicationPath": "scripts/lact1450-game/scripts/test-lact-game-probe.mjs"
     },
     "verify-receipts.mjs": {

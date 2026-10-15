@@ -1,7 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {lactGameScenario,verifyGameInstance} from './lib/lact-game-probe.mjs';
-function fixture({other=false,fault}={}){
+function fixture({other=false,fault,omitArrowNum=false}={}){
  const id=other?'s3-stringer-normal':'s3-stringer-short',p={ChargeKeepParam:{KeepChargeFullFrame:75},ChargeParam:{InkConsumeFullCharge:.065},ShotParam:{ArrowNum:3},...(other?{IsEnableChargeKeep:false}:{})};
+ if(omitArrowNum)delete p.ShotParam.ArrowNum;
  const s={paid:0,chargeF:0,stored:null},r={catalogState:s,charge:0,charging:false},a={weaponId:id,alive:true,grounded:true,ink:100,form:'kid',weaponRunner:r,weapon:{catalogRecord:{id,sourceActor:other?'WeaponStringerNormal':'WeaponStringerShort',sourceSha256:'synthetic-test',parameters:{spl__WeaponStringerParam:p}}}};
  const system={_push(q){return q;}},originalPush=system._push;let everStored=false,emitted=false;
  const g={input:{mouse:{left:false},keys:new Set()},_skipRender:false,s3Clock:{ticks:0},_frame(){
@@ -23,3 +24,5 @@ test('portable source has no direct runner/actor tick or charge/form/ink injecti
 test('missing-keep failure retains specific paid actual-squid evidence',async()=>{const f=fixture({fault:'missingKeep'});const x=await lactGameScenario({id:f.id,holdTicks:30,expectKeep:true,captureFailure:true});assert.equal(x.status,'failed');assert.equal(x.failure.message,'LACT Game: stored charge before expiry');assert.equal(x.failure.phase,'hold');assert.equal(x.failure.held,1);assert.equal(x.failure.form,'squid');assert.equal(x.paid,6.5);assert.equal(x.debit,6.5);assert.equal(x.births.length,0);assert(x.restored);});
 
 test('actual running Game identity rejects duplicated context module',()=>{const saved=globalThis.__inkwave;try{const f=fixture();globalThis.__inkwave=f.g;assert.equal(verifyGameInstance(),true);globalThis.__inkwave={};assert.throws(verifyGameInstance,/not the running Game instance/);}finally{if(saved===undefined)delete globalThis.__inkwave;else globalThis.__inkwave=saved;}});
+
+for(const fault of [undefined,'wrongArrowCount','lateArrow'])test('native omitted ArrowNum '+(fault||'three arrows and 20 post-release ticks'),async()=>{const f=fixture({other:true,omitArrowNum:true,fault});if(fault){await assert.rejects(lactGameScenario({id:f.id,holdTicks:30,expectKeep:false}),/native arrow volley|duplicate\/delayed volley/);}else{const x=await lactGameScenario({id:f.id,holdTicks:30,expectKeep:false});assert.equal(x.births.length,3);assert.equal(x.debit,13);const after=x.transitions.find(t=>t.to==='after');assert.equal(x.ticks-after.tick,20);assert.equal(x.expectKeep,false);}assert.equal(f.system._push,f.originalPush);assert.equal(Object.getOwnPropertyDescriptor(f.a,'ink').get,undefined);});
