@@ -43,3 +43,11 @@ Source-guided shooter-family `InkFlightRuntime` uses the same kind. For `WeaponS
 6. Pixel/atlas geometry must be checked separately in Chromium/WebKit before claiming retail visual correctness.
 
 Changes are pending validation in draft PR #1443. Do not convert this report into a claim of full S3 11.3.0 paint parity.
+
+## Current-main integration and direct GPU coverage (2026-10-15)
+
+Integrated main `01aa5cc61c842a8616ab38ff5fb541b6becf1395` without replacing its projectile shapes or native splash air-resistance import. The two shared import conflicts retain both owners. Focused source footprint/all-65 reachability/projectile-shape tests pass 14/14; production packaging and source/emitted Slosher golden checks pass 12/12 with no skips. Production content hash: `5a987ee6ad9b` (full hash in the build manifest).
+
+The existing real WebGL body verifier previously exercised only generic kinds. It now retains all 99 generic cases and adds 128 source-shot/source-splash cases across floor/wall flags, four radii, four depth ratios and two seeds. Chromium source-composed and emitted results agree exactly: 227 body cases, 79,208 CPU cells, 79,199 GPU cells, zero non-boundary CPU-only/GPU-only differences and nine preexisting float32 boundary ties. Reverting only the sourced shader branch changes cell results for each sourced kind/surface pair. All 124 ancillary cases and 1,512 integer-hash queries remain mandatory.
+
+The verifier waits for its explicit completion receipt after document response commit; synchronous shader work no longer consumes a separate 30-second DOMContentLoaded budget. The existing 120-second result deadline and all pixel/negative-control assertions remain. Whole-suite/hosted exact-head CI and WebKit remain pending; these bounded Chromium results are not Nintendo mask fidelity, physical-device performance or full per-weapon phase coverage.
