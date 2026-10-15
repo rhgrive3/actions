@@ -1,0 +1,75 @@
+name: Review Hornz aperture hypothesis against frozen 009a
+on:
+  push:
+    branches: [review/weapon-hornz-aperture-candidate-20261014]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build exact candidate
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Gate source and emitted Hornz cavity, motion and stripe
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p hornz-test-results
+          for mode in source emitted; do
+            unset INKWAVE_BUILT_SITE
+            if [ "$mode" = emitted ]; then export INKWAVE_BUILT_SITE=_site; fi
+            node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-cavity-wall-motion.test.mjs patches/splatoon3/tests/hornz-stripe-containment.test.mjs | tee hornz-test-results/cavity-stripe-$mode.tap
+            grep -qx '# tests 3' hornz-test-results/cavity-stripe-$mode.tap
+            grep -qx '# pass 3' hornz-test-results/cavity-stripe-$mode.tap
+            grep -qx '# fail 0' hornz-test-results/cavity-stripe-$mode.tap
+            grep -qx '# skipped 0' hornz-test-results/cavity-stripe-$mode.tap
+            node --experimental-vm-modules --test --test-reporter=tap patches/splatoon3/tests/hornz-ink-surface-motion.test.mjs patches/splatoon3/tests/catalog-slosher-presentation.test.mjs | tee hornz-test-results/motion-$mode.tap
+            grep -qx '# tests 8' hornz-test-results/motion-$mode.tap
+            grep -qx '# fail 0' hornz-test-results/motion-$mode.tap
+            if [ "$mode" = source ]; then pass=8; skip=0; else pass=5; skip=3; fi
+            grep -qx "# pass $pass" hornz-test-results/motion-$mode.tap
+            grep -qx "# skipped $skip" hornz-test-results/motion-$mode.tap
+            node --experimental-vm-modules --test --test-reporter=tap scripts/capture-hornz-aperture-ab.test.mjs | tee hornz-test-results/harness-$mode.tap
+            grep -qx '# tests 13' hornz-test-results/harness-$mode.tap
+            grep -qx '# pass 13' hornz-test-results/harness-$mode.tap
+            grep -qx '# fail 0' hornz-test-results/harness-$mode.tap
+            grep -qx '# skipped 0' hornz-test-results/harness-$mode.tap
+          done
+      - uses: actions/checkout@v4
+        with:
+          ref: 009a9e54898b0ed48e38f5ede105077a736e7a0b
+          path: _baseline_source
+      - name: Build immutable 009a with same compiler
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        run: |
+          test "$(git -C _baseline_source rev-parse HEAD)" = 009a9e54898b0ed48e38f5ede105077a736e7a0b
+          (cd _baseline_source && node scripts/build-inkwave.mjs inkwave-public ../_baseline_site)
+      - name: Install browser after gates
+        run: npx playwright install --with-deps chromium
+      - name: Capture Hornz only, 48 matched images
+        run: node scripts/capture-hornz-aperture-ab.mjs --baseline-source _baseline_source --baseline-site _baseline_site --candidate-source . --candidate-site _site --out hornz-aperture-ab
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hornz-aperture-ab-${{ github.sha }}
+          path: hornz-aperture-ab
+          if-no-files-found: warn
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hornz-aperture-tests-${{ github.sha }}
+          path: hornz-test-results
+          if-no-files-found: warn
+          retention-days: 7
