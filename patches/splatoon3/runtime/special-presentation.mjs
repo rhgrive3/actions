@@ -146,9 +146,9 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     // charging, stretches along the dash and noses up on a jump. The model is authored upright (mantle +Y,
     // face +Z), so the holder lays it down: Rx(-90°) turns the mantle backward with the face up, Ry(180°)
     // turns it to lead. In model space afterwards: x = side, y = length (mantle forward), z = up.
-    const M = SPECIAL_DEVICE_MOTION.kraken, phase = state?.phase ?? a.specialActive?.phase;
+    const M = SPECIAL_DEVICE_MOTION.kraken, speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0), vy = a.vel?.y || 0, air = a.grounded === false;
+    const phase = state?.phase ?? a.specialActive?.phase ?? remoteKrakenPhase(a);
     const emerge = easeOutBack(age / M.emerge), e = Math.max(0.01, emerge);
-    const speed = Math.hypot(a.vel?.x || 0, a.vel?.z || 0), vy = a.vel?.y || 0, air = a.grounded === false;
     let sx = 1, len = 1, up = 1;
     if (phase === 'charge') { const k = smooth((state?.chargeT || 0) / M.charge); len = 1 - 0.18 * k; sx = 1 + 0.12 * k; up = 1 + 0.1 * k + 0.02 * Math.sin(t * 40) * k; }
     else if (phase === 'dash') { len = 1.28; sx = 0.88; up = 0.86; }
@@ -172,6 +172,14 @@ function animateDevice(a, s, d, spec, state, t, dt) {
     d.holder.position.set(base.x, base.y + 0.35 * s.ready, base.z - 0.15 * s.ready);
     d.holder.rotation.x = spec.rot[0] - 0.6 * s.ready;
   }
+}
+
+// The network carries a remote Kraken's special flag but not its charge/dash phase. The dash is unmistakable
+// in the replicated velocity (21 m/s against 5.5 walking, 1.9 charging), so a remote Kraken over 12 m/s is drawn
+// dashing; its charge cannot be told from standing still and is not drawn.
+export function remoteKrakenPhase(a) {
+  if (!a?.remote || a.specialActive?.id !== 'krakenRoyale') return null;
+  return Math.hypot(a.vel?.x || 0, a.vel?.z || 0) > 12 ? 'dash' : null;
 }
 
 export function installSpecialModels(api) {

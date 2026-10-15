@@ -23,6 +23,7 @@ import { inkVacState } from './kit-ink-vac.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 import { createInkFist, disposeSpecialModel } from './special-motion.mjs';
 import { superChumpLandingPreview, tentaMissilesLockPreview } from './all-specials.mjs';
+import { remoteKrakenPhase } from './special-presentation.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.special-vfx.install.v1');
 const TAU = Math.PI * 2;
@@ -241,7 +242,7 @@ class Director {
       if (!a) continue;
       const t = this.track(a);
       if (t) {
-        const phase = a._s3AllSpecialState?.phase ?? a.specialActive?.phase ?? null;
+        const phase = a._s3AllSpecialState?.phase ?? a.specialActive?.phase ?? remoteKrakenPhase(a);
         if (phase !== t.phase) { t.prev = t.phase; t.phase = phase; t.phaseAt = this.time; this.call(DIRECTORS[t.id]?.phase, a, t, phase); }
         t.color = this.rgb(a);
         this.call(DIRECTORS[t.id]?.frame, a, t, dt);

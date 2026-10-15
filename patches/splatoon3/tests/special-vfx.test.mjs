@@ -260,3 +260,13 @@ test('Tenta Missiles lock HUD brackets exactly the opponents the salvo locks', a
   assert.equal(targets.length, 1, 'the salvo locks one target');
   G.projectiles.clear(); fx.clear(); G.actors.length = 0;
 });
+
+test('a remote Kraken is drawn dashing only at dash speed (the network carries no phase)', async () => {
+  const { remoteKrakenPhase } = await import('../runtime/special-presentation.mjs');
+  const a = { remote: true, specialActive: { id: 'krakenRoyale', net: true }, vel: { x: 0, y: 0, z: 0 } };
+  assert.equal(remoteKrakenPhase(a), null, 'standing or charging cannot be told apart');
+  a.vel.x = 5.5; assert.equal(remoteKrakenPhase(a), null, 'swimming at the Kraken move speed');
+  a.vel.x = 21 * Math.SQRT1_2; a.vel.z = 21 * Math.SQRT1_2; assert.equal(remoteKrakenPhase(a), 'dash', 'the 21 m/s dash');
+  assert.equal(remoteKrakenPhase({ ...a, remote: false }), null, 'local actors use their own state');
+  assert.equal(remoteKrakenPhase({ ...a, specialActive: { id: 'reefslider' } }), null);
+});
