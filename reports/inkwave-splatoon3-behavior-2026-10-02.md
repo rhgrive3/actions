@@ -4444,3 +4444,7 @@ Negative control reproduces the actual PR CI failure by assertion. Corrected com
 ## 2026-10-15: 発射時のインク表現
 
 シューター・シェルター・ストリンガー・ワイパーの発射の瞬間に出るインク膜（銃口の穴あき膜、傘の前の開花、弓に巻きつく帯、振りの軌跡の波）を、本家の公式映像を拡大して比較し追加した。表示のみで、弾・当たり・塗り・通信は変更していない。寸法・寿命は映像の目視による校正値であり、銃口付近以外の本家比較は未確認のまま。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。
+
+## 2026-10-15: SplatoonSWEPs を参考にした発射時のインク
+
+所有者の指示で SplatoonSWEPs（Splatoon 2 の Garry's Mod 版）のテクスチャと螺旋モデルをそのまま取り込み、シューター・シェルターの銃口膜を SWEPs の MuzzleSplash（円錐2枚、α テスト基準 0.1→0.9）に、スクリュースロッシャーの螺旋を SWEPs の SloshingSpiral（5フレームごとに3本、11フレーム）に置き換えた。ストリンガー・ワイパーの帯は inkring テクスチャで破れる。表示のみで、弾・当たり・塗り・通信は変更していない。数値は SWEPs（Splatoon 2 準拠）の値であり、Splatoon 3 の値としては未確認。詳細は [弾形状の記録](inkwave-s3-projectile-shapes-2026-10-15.md) の追記。

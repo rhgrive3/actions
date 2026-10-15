@@ -42,6 +42,7 @@ test('real births of the seven owned families draw S3 silhouettes, skip the gene
   for (const [id, kind, hold] of CASES) {
     fire(f, id, hold);
     system._s3Shapes?.sheets.clear();
+    for (const p of system.list) p.s3SpiralSeed = undefined;
     for (let i = 0; i < 2; i++) system.update(1 / 60);
     const live = system.list.filter(p => p.delay <= 0);
     assert(live.length, id + ' live round');
@@ -67,7 +68,12 @@ test('real births of the seven owned families draw S3 silhouettes, skip the gene
     assert.equal(system._s3Shapes.sheets.bursts.length, firing ? 1 : 0, id + ' firing ink burst');
     if (firing) assert(c.sheets > 0, id + ' firing ink sheets drawn');
     if (kind === 'bubble') { assert(c.shell >= live.length, 'clear shell per bubble'); assert.equal(c.core, live.length, 'round ink core per bubble'); }
-    if (kind === 'machine') assert(system.blobs.count > live.length, 'glob plus corkscrew beads');
+    if (kind === 'machine') {
+      // SWEPs spiral splash: one group of three ribbons as the round leaves
+      assert(system.blobs.count >= live.filter(p => p.vis > 0).length, 'glob');
+      assert.equal(c.spirals, 3, 'one spiral group at the start of flight');
+      assert(system._s3Shapes.sheets.spirals.every(s => s.color.equals(live[0].owner.color)), 'spirals take the ink colour');
+    } else assert.equal(c.spirals, 0, id + ' no spiral splash');
     if (kind === 'explosher') { assert(system.blobs.count >= live.length, 'glob (+ falling splashes)'); assert(c.sparkles > 0, 'glitter'); }
   }
 });
@@ -134,4 +140,49 @@ test('charged Splatana slash is born at ShotBulletOffset_Vertical and clears a f
   assert(Math.abs(p.start.y - 2.2) < 1e-6, 'sourced 2.2 birth height above the feet: ' + p.start.y);
   for (let i = 0; i < 4; i++) system.update(1 / 60);
   assert(system.list.includes(p), 'slash survives its first ticks instead of dying in the floor');
+});
+
+test('SWEPs muzzle splash cones and shipped SWEPs assets', async () => {
+  const { splashCone, FIRE_INK, SPIRAL_SPLASH } = await import('../runtime/s3-ink-sheets.mjs');
+  const { MUZZLE_SPLASH, INK_RING, SLOSHING_SPIRAL } = await import('../runtime/s3-sweps-assets.mjs');
+  const cfg = FIRE_INK.shot, close = (a, b) => Math.abs(a - b) < 1e-9;
+  // MuzzleSplash.lua: t = Lerp(f, 3, rad*scale), r = Lerp(4f(1-f), rad/5, rad); 2nd cone at 2f, t = Lerp(1.4f)
+  assert(close(cfg.length / cfg.radius, 2) && close(cfg.radius / cfg.minLength, 25 / 3), 'shooter a, s, r = 7, 2, 25');
+  assert.equal(cfg.life, 7);
+  let c = splashCone(cfg, 0, 0); assert(close(c.length, cfg.minLength) && close(c.radius, cfg.radius / 5));
+  c = splashCone(cfg, 0.5, 0); assert(close(c.radius, cfg.radius));
+  c = splashCone(cfg, 1, 0); assert(close(c.length, cfg.length) && close(c.radius, cfg.radius / 5));
+  c = splashCone(cfg, 0.25, 1); assert(close(c.radius, cfg.radius), 'second cone peaks at a quarter life');
+  c = splashCone(cfg, 0.8, 1); assert(close(c.radius, cfg.radius / 5), 'GMod Lerp clamps');
+  assert(close(c.length, cfg.length), '1.4f clamps to the full length');
+  assert.deepEqual([SPIRAL_SPLASH.spanFrames, SPIRAL_SPLASH.sameTime, SPIRAL_SPLASH.roundSplit, SPIRAL_SPLASH.lifeFrames, SPIRAL_SPLASH.roll],
+    [5, 3, 4, 11, 120], 'weapon_sloshingmachine.lua mSpiralSplash*');
+  const b64 = s => Math.floor(s.length * 3 / 4) - (s.endsWith('==') ? 2 : s.endsWith('=') ? 1 : 0);
+  assert.equal(b64(MUZZLE_SPLASH.alpha), 128 * 128); assert.equal(b64(INK_RING.alpha), 128 * 256);
+  assert.equal(SLOSHING_SPIRAL.position.length, 78 * 3); assert.equal(SLOSHING_SPIRAL.index.length, 120 * 3);
+  assert(SLOSHING_SPIRAL.index.every(i => i >= 0 && i < 78));
+});
+
+test('the Sloshing Machine leaves a SWEPs spiral group every 5 frames, at any draw rate', async () => {
+  const f = await api(), system = f.G.projectiles;
+  for (const hz of [60, 144, 30]) {
+    fire(f, 's3-slosher-launcher');
+    const p = system.list.find(q => q.delay <= 0 && q.vis > 0);
+    assert(p, 'visible machine round');
+    const sheets = () => system._s3Shapes.sheets;
+    system._draw(); sheets().clear(); p.s3SpiralSeed = undefined;
+    const t0 = f.G.time = 100, born = p.age, spawned = [];
+    const add = sheets().addSpiral;
+    sheets().addSpiral = function (...a) { spawned.push(a[3]); return add.apply(this, a); };
+    for (let i = 0; i <= Math.round(hz * 20 / 60); i++) {
+      p.age = born + i / hz; f.G.time = t0 + i / hz; system._draw();
+    }
+    sheets().addSpiral = add;
+    const groups = Math.floor((p.age + 1e-9) / (5 / 60)) - Math.floor(born / (5 / 60)) + 1;
+    assert.equal(spawned.length, groups * 3, hz + ' Hz: three ribbons per group');
+    // 120 deg apart, the group itself stepping 90 deg
+    assert.deepEqual(spawned.slice(0, 3).map(d => d % 360), [0, 120, 240].map(d => (d + spawned[0]) % 360));
+    if (groups > 1) assert.equal((spawned[3] - spawned[0] + 360) % 360, 90);
+    assert(system.s3ShapeCounts.spirals > 0 && system.s3ShapeCounts.spirals <= 9, 'at most three live groups');
+  }
 });
