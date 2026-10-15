@@ -140,3 +140,12 @@ The old gallery's maxGrip metric excludes dualies and is not dual-hand closure p
 ## Fresh f639 + shared verification composition
 
 The external5902e346 model tree already pins both QA baselines to f6399281. The final composition preserves its exact runtime/test/gallery bytes and adds shared68681bf verifier contracts. Source/minified checks and the new build identity are recorded in the PR; hosted exact-head rendering and ABBA remain pending. Original adverse/invalid timing reports and the scope limits above remain in force.
+
+
+## Current-main shell reconciliation (2026-10-15)
+
+Integrated main `01aa5cc61c842a8616ab38ff5fb541b6becf1395` with both behavior-report histories preserved; runtime shell/material/geometry bytes remain this PR's reviewed feature. Both hosted visual/ABBA baselines now pin that main. Browser diagnostics accept CHROMIUM_PATH and handle their native favicon request as204, retaining all other console/resource errors.
+
+Current source model/material/isolation10/10 passed. On emitted content `a39abd9e5f10cfd3743363da25af251e83c7f122a0f8ffaf850ad20563646640`, the actual source-loaded Ballpoint Actor capture executes all eight game/far × dark/light × two-team full-post cases: shell visible, shared ranges restored, one additional nonzero plus one zero-count GL submission per Actor. Safe Normal/Depth/AO changes remain0/0/0; disabling that guard yields2944/2944/1152. The current screenshot was inspected. This one-Actor gallery's final status failed only for its favicon404; the narrow server repair and final hosted rerun remain required, and that failed run is not called overall green.
+
+No new completed-output eight-Actor ABBA or hardware result is claimed. Old timing results stay historical; pending public-head CI, full visual rerun and refreshed same-baseline cost review remain adoption gates.
