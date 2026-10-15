@@ -74,8 +74,10 @@ test('Luna Blaster source splash drops retain their 3.84 radius on terrain repla
  assert.equal(radius,3.84);
  const nm=makeNetwork(makeActor('host',record));
  assert.equal(catalogPaintRadiusLimit(nm,'host'),radius);
- const row=[0,'s',-11,8,-55,radius,0,.3125,'shot',0,0,0,0,49428];
+ const row=[0,'s',-11,8,-55,radius,0,.3125,'source-shot',0,0,0,0,49428];
  assert.equal(kitPaintRadiusAllowed(nm,'host',row,5.2*.72),true);
+ const falling=[...row];falling[8]='source-splash';
+ assert.equal(kitPaintRadiusAllowed(nm,'host',falling,5.2*.72),true,'sourced falling event remains bound to the exact source radius');
  assert.equal(kitPaintRadiusAllowed(nm,'other',row,5.2*.72),false);
  const forged=[...row];forged[5]=radius+.001;
  assert.equal(kitPaintRadiusAllowed(nm,'host',forged,5.2*.72),false);

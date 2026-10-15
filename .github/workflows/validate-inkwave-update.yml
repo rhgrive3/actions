@@ -536,6 +536,7 @@ jobs:
       - name: Reject forged touch and reliability source identities
         if: matrix.suite == 'ui'
         run: |
+          node --test scripts/tests/inkwave-identity-helper-loading.test.mjs scripts/lib/minimap-canvas-three-binding.test.mjs
           node scripts/check-inkwave-touch-layout-identity.mjs --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-touch" --evidence-dir "$CI_STORAGE/evidence/identity-touch"
           node scripts/check-inkwave-touch-layout-identity.mjs --network --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-network" --evidence-dir "$CI_STORAGE/evidence/identity-network"
           node scripts/check-inkwave-touch-layout-identity.mjs --reliability --site .built-site/_site --source inkwave-public --checkout-dir "$CI_STORAGE/identity-reliability" --evidence-dir "$CI_STORAGE/evidence/identity-reliability"

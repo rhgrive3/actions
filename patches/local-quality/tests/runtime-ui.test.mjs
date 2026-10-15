@@ -70,8 +70,11 @@ test('the ring keeps its native appearance animation: shown with is-on (CSS fade
  m._setFocus(null);assert(!m.cursorEl.classList.contains('is-on'));assert.equal(m.cursorEl.style.visibility,'hidden');
 });
 test('cursor source connections fail closed on upstream drift and double application',()=>{
- const raw=read('inkwave-public/src/ui/menus.js');assert.throws(()=>adaptQualitySource('src/ui/menus.js',raw.replace('    if (!want) {','    if (!want) /* drift */ {')),/quality patch conflict/);
- assert.throws(()=>adaptQualitySource('src/ui/menus.js',adaptQualitySource('src/ui/menus.js',raw)),/quality patch conflict/);
+ // The new slot adapter also rejects duplicate application, and its precise
+ // anchor check can fire before the older cursor-quality guard.
+ const conflict=/(?:quality patch conflict|lobby slot transform: expected exactly one anchor)/;
+ const raw=read('inkwave-public/src/ui/menus.js');assert.throws(()=>adaptQualitySource('src/ui/menus.js',raw.replace('    if (!want) {','    if (!want) /* drift */ {')),conflict);
+ assert.throws(()=>adaptQualitySource('src/ui/menus.js',adaptQualitySource('src/ui/menus.js',raw)),conflict);
 });
 test('logically off ring is hidden despite its native CSS opacity fade, and reappears on mode recovery',()=>{
  const {m,el,time}=fixture(),a=el(10,20,'row'),b=el(100,120,'row');m._setFocus(a);m._updateCursor(1/60);assert.equal(m.cursorEl.style.visibility,'');
