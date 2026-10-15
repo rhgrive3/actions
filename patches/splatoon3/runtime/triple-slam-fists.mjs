@@ -2,15 +2,17 @@
 // travel 6.54 source units, 30 degrees either side of the activation yaw, and
 // explode 15F after the player's own landing impact.
 //
-// Sources: Splatoon Wiki "Triple Splashdown" (v11.3.0: fist distance 6.54,
-// 220-damage radius 6.4, 60-damage radius 9.6, 0.25 s fist delay; ink-splatter
-// radius 10 from v9.3.0) and Nintendo's 11.3.0 notes (fist travel +9%, reduced
-// 100+ overlap area). The pinned Leanny extraction carries no fist parameters.
+// Sources: pinned Leanny/splat3@7280ff9c WeaponSpPogo BlastParamNormal
+// (6.4/9.6 damage endpoints, 10/11/12 paint radius and 1/1.05/1.1 damage-
+// radius AP scale) and BulletParam (6.54 travel, 15F MoveFrame); Splatoon Wiki
+// and Nintendo's 11.3.0 notes provide additional contextual references.
 //
 // Unverified and therefore not claimed: the falloff shape between 220 and 60
 // (linear here), fist mesh/texture, the fists rising over slopes and short walls
 // (LOS-blocking is an approximation), fist SFX/VFX, and remote presentation.
 // Super Jump Slam never reaches _startSpecial, so it stays a single explosion.
+
+import { gearCurve } from './gear.mjs';
 
 const INSTALL = Symbol.for('inkwave.s3.triple-slam-fists');
 const DEG = Math.PI / 180;
@@ -20,6 +22,17 @@ export const FIST_SOURCE_ANGLE = 30 * DEG;
 export const FIST_NEAR_RADIUS = 6.4;
 export const FIST_FAR_RADIUS = 9.6;
 export const FIST_PAINT_RADIUS = 10;
+export const FIST_DAMAGE_RADIUS_AP = Object.freeze([1, 1.05, 1.1]);
+export const FIST_PAINT_RADIUS_AP = Object.freeze([10, 11, 12]);
+// The pinned Pogo source applies Special Power Up to radius, not damage.
+// Capture these curves at activation; changing gear later cannot retune a live fist.
+export function tripleSlamFistPower(ap = 0) {
+  const points = finite(ap) ? ap : 0;
+  return {
+    damageRadiusRate: gearCurve(points, ...FIST_DAMAGE_RADIUS_AP),
+    paintRadius: gearCurve(points, ...FIST_PAINT_RADIUS_AP),
+  };
+}
 // Remote paint admission accepts radius <= 3.744 (network-replication PAINT_RADIUS_MAX, #522), so a
 // 10-radius fist splat cannot be replicated as one row. It is emitted as a hex cluster of stamps at
 // this radius instead. Each stamp is an ordinary paint row that every peer admits, so sender and
@@ -74,6 +87,8 @@ export function tripleSlamFistDamage(distance, scale = 1) {
 function blast(actor, record, G, THREE) {
   if (!G?.projectiles?.applyHit || actor.remote || !record?.centers?.length) return;
   const v = new THREE.Vector3(), from = new THREE.Vector3(), stampAt = new THREE.Vector3();
+  const damageRadiusScale = record.scale * (record.damageRadiusRate ?? 1);
+  const paintRadius = record.scale * (record.paintRadius ?? FIST_PAINT_RADIUS);
   for (const center of record.centers) {
     const top = Number.isFinite(G.level?.groundHeight?.(center.x, center.z, center.y + 8))
       ? G.level.groundHeight(center.x, center.z, center.y + 8) : center.y;
@@ -87,7 +102,7 @@ function blast(actor, record, G, THREE) {
       // turf and never refills the special gauge. Each stamp is an admissible
       // remote row (radius <= FIST_STAMP_RADIUS); the cluster replaces one 10-radius splat.
       let area = 0;
-      for (const stamp of tripleSlamFistStamps(FIST_PAINT_RADIUS * record.scale)) {
+      for (const stamp of tripleSlamFistStamps(paintRadius)) {
         const sx = q2(center.x + stamp.dx), sz = q2(center.z + stamp.dz);
         // Splitting a single impact changes only horizontal stamp placement.
         // Re-projecting each offset onto groundHeight would lift ink onto an
@@ -106,7 +121,7 @@ function blast(actor, record, G, THREE) {
     for (const victim of G.actors || []) {
       if (!victim.alive || victim.team === actor.team || victim === actor) continue;
       const dist = Math.hypot(victim.pos.x - pos.x, victim.pos.y + .8 - pos.y, victim.pos.z - pos.z);
-      const damage = tripleSlamFistDamage(dist, record.scale);
+      const damage = tripleSlamFistDamage(dist, damageRadiusScale);
       if (!(damage > 0)) continue;
       const target = new THREE.Vector3(victim.pos.x, victim.pos.y + .8, victim.pos.z);
       if (G.physics?.los && !G.physics.los(pos, target)) continue;
@@ -116,7 +131,7 @@ function blast(actor, record, G, THREE) {
     }
     // Local presentation only. The special:slam event is deliberately not
     // emitted: the boss listener would apply its own 180/55 splash per fist.
-    G.fx?.explosion?.(pos, actor.color, FIST_FAR_RADIUS * record.scale);
+    G.fx?.explosion?.(pos, actor.color, FIST_FAR_RADIUS * damageRadiusScale);
   }
 }
 
@@ -149,9 +164,11 @@ export function installTripleSlamFists({ Actor, G, THREE }, profile) {
     const origin = admitted ? { x: this.pos.x, y: this.pos.y, z: this.pos.z } : null;
     const yaw = this.yaw;
     const result = start.apply(this, args);
-    if (admitted && this.specialActive?.id === 'slam')
+    if (admitted && this.specialActive?.id === 'slam') {
+      const power = tripleSlamFistPower(this.s3?.modifiers?.specialPowerAP ?? this.s3?.abilityPoints?.specialPower ?? 0);
       this._s3TripleSlamFists = { origin, centers: tripleSlamFistCenters(origin, yaw, worldScale),
-        remaining: null, scale: worldScale };
+        remaining: null, scale: worldScale, ...power };
+    }
     return result;
   };
   Actor.prototype._slamImpact = function (...args) {
