@@ -22,6 +22,7 @@
 | `runtime/flow-motion.mjs` | フロー開始・延長・失効の粒子と外周表示、描画パスとリソースの分離 |
 | `runtime/walk.mjs` | 足の接地・踏み出し・停止・方向転換、腰・上体の歩行校正。左右の足は一つの歩行時計で交互に動く |
 | `runtime/carry-motion.mjs` | シューターの歩行・待機・射撃・復帰で連続する両手の支持 |
+| `runtime/source-posture.mjs` | Wii U 版ソースモーションの上体・首の前傾、シューターの非射撃時の持ち方、遊脚の高さを S3 映像に合わせて補正（`reference/stance-carry-comparison-2026-10-12.md`） |
 | `runtime/jump-motion.mjs`, `runtime/landing-motion.mjs` | 通常ジャンプの武器種別 presentation selector と INKWAVE ローカル脚校正（#1116）、着地の圧縮・復帰 |
 | `runtime/swim-motion.mjs`, `runtime/wall-motion.mjs` | 通常の泳ぎ・方向転換、壁登り・イカノボリの表示 |
 | `runtime/form-motion.mjs` | ヒト・イカへの変形と中断時の復帰 |
@@ -39,6 +40,7 @@
 | `runtime/flow.mjs` | フローの発動・延長・失効。強化量等は暫定設定 |
 | `runtime/scoring.mjs` | 壁を除く、露出した床の実面積による塗り判定 |
 | `runtime/death-blast.mjs` | やられ爆発の塗りを SplPlayer `DieBlastParam`（半径 5.0、周囲の飛沫 10 個・半径 1.0）に合わせる。飛沫の飛行は未模擬 |
+| `runtime/s3-projectile-shapes.mjs` | シューター・シェルター・ストリンガー・ワイパー・スクリュー・エクスプロッシャー・オーバーフロッシャーの飛行中の弾の形（棒・紡錘・針・三日月板・螺旋・光点・透明な泡）。表示のみ。根拠は `reports/inkwave-s3-projectile-shapes-2026-10-15.md` |
 | `runtime/bomb-models.mjs` | ボム3種の見た目（スプラッシュ＝丸い三角錐、キューバン＝吸盤付きの缶、カーリング＝取っ手付きの黒い円筒と緑→赤ランプ）を投擲・ゴースト・手持ちに適用。表示のみ |
 | `runtime/ui.mjs`, `runtime/render.mjs` | 公開版のメニュー・影無効時の起動不具合を補正 |
 | `profile.json` | 挙動の設定、数値の出典との対応、未確認事項 |

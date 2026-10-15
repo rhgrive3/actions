@@ -43,9 +43,24 @@ test('lost or duplicated compaction markers fail closed',t=>{
   assert.throws(()=>finalizeLoadingWorker(root,revision,plan,s=>s.replace('__INKWAVE_CACHE_CONFIG_VALUE__','null')),/worker stamp/);
   assert.throws(()=>finalizeLoadingWorker(root,revision,plan,s=>s+'\n__INKWAVE_CACHE_CONFIG_VALUE__'),/worker stamp/);
 });
-test('template compaction never bypasses the unchanged worker size ceiling',t=>{
+test('template compaction never bypasses the raised worker size ceiling',t=>{
   const root=setup(t),assets={};
-  for(let i=0;i<1000;i++)assets[`asset-${i}.js`]=[1,'d'.repeat(64)];
-  const plan={assets,precache:Object.keys(assets),assetBytes:1000,precacheBytes:1000};
-  assert.throws(()=>finalizeLoadingWorker(root,revision,plan,()=> 'const BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;'),/68 KiB/);
+  for(let i=0;i<3200;i++)assets[`asset-${i}.js`]=[1,'d'.repeat(64)];
+  const plan={assets,precache:Object.keys(assets),assetBytes:3200,precacheBytes:3200};
+  assert.throws(()=>finalizeLoadingWorker(root,revision,plan,()=> 'const BUILD=__INKWAVE_CACHE_CONFIG_VALUE__;'),/192 KiB/);
+});
+
+test('production precache indices preserve the ordered integrity map and reject missing paths',t=>{
+  const root=setup(t);
+  const assets={'z/long/dependency/alpha.mjs':[7,'b'.repeat(64)],'a/long/dependency/beta.css':[9,'c'.repeat(64)]};
+  const plan={assets,precache:['a/long/dependency/beta.css','z/long/dependency/alpha.mjs'],
+    assetBytes:16,precacheBytes:16,budget:{mode:'production',worker:192*1024}};
+  const result=finalizeLoadingWorker(root,revision,plan);
+  const raw=literal(root),names=Object.keys(raw.assets);
+  assert.deepEqual(raw.precache,[1,0]);
+  assert.deepEqual(raw.precache.map(i=>names[i]),plan.precache);
+  assert.deepEqual(raw.assets,assets);
+  assert.equal(result.precacheCount,plan.precache.length);
+  assert.equal(result.workerBytes,fs.statSync(path.join(root,'sw.js')).size);
+  assert.throws(()=>finalizeLoadingWorker(root,revision,{...plan,precache:['missing.js']}),/missing precache dependency/);
 });

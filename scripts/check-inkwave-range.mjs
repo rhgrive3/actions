@@ -11,6 +11,7 @@
 //   node scripts/check-inkwave-range.mjs --site <built site> --evidence-dir <dir> --profile-dir <dir> [--quick]
 //   (RANGE_BROWSERS=chromium limits the browsers for a local run; CI runs all of them)
 import fs from 'node:fs';
+import {waitForPauseEntrance,collectPauseEntranceEvidence} from './inkwave-range-pause-readiness.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -225,17 +226,35 @@ for (const run of RUNS) {
     if (Math.abs(p.area - 400) > 1e-6 || !(p.own > 0) || !p.reset || p.after !== 0 || !p.switched || p.weaponAfter === p.weaponBefore) throw new Error('paint/pads ' + JSON.stringify(p));
     // the range pause screen + travel
     await page.evaluate(() => window.__inkwave.pause());
-    await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
-    await page.waitForTimeout(1200);
+    let pauseReadinessError;
+    try { await waitForPauseEntrance(page); }
+    catch (error) { pauseReadinessError = error; }
+    out.checks.pauseEntrance = {settled: !pauseReadinessError,
+      error: pauseReadinessError ? String(pauseReadinessError) : null};
+    out.checks.pauseEntrance.state = await page.evaluate(collectPauseEntranceEvidence);
+    fs.writeFileSync(path.join(evidence, run.name + '-pause-readiness.json'),
+      JSON.stringify({contentHash:manifest.contentHash,...out.checks.pauseEntrance},null,2));
     await page.screenshot({ path: path.join(evidence, run.name + '-pause.png'), timeout: 240000 });
-    // The physical hub ring remains readable; all 65 mains live in the scrollable picker.
+    if (pauseReadinessError) throw pauseReadinessError;
+    // The hub ring remains readable. The scrollable picker must expose
+    // all 65 original mains plus their 95 non-replica _01/_02 kits, not drop
+    // entries when its catalogue grows beyond the former 65-item limit.
     out.checks.weaponPicker = await page.evaluate(() => {
       const chips = [...document.querySelectorAll('.iwr-wchip')];
       const ids = chips.map(c => c.dataset.id);
-      return { count: chips.length, unique: new Set(ids).size, last: ids.at(-1), catalog: ids.filter(id => id?.startsWith('w-s3-')).length };
+      const variants = ids.filter(id => /-0[12]$/.test(id || ''));
+      const bases = ids.filter(id => !/-0[12]$/.test(id || ''));
+      return { count: chips.length, unique: new Set(ids).size, last: ids.at(-1),
+        catalog: ids.filter(id => id?.startsWith('w-s3-')).length,
+        bases: bases.length, variants: variants.length,
+        second: variants.filter(id => id.endsWith('-01')).length,
+        third: variants.filter(id => id.endsWith('-02')).length };
     });
     const picker = out.checks.weaponPicker;
-    if (picker.count !== 65 || picker.unique !== 65 || picker.catalog !== 58 || !picker.last?.startsWith('w-s3-')) throw new Error('range weapon picker ' + JSON.stringify(picker));
+    if (picker.count !== 160 || picker.unique !== 160 || picker.bases !== 65 ||
+        picker.variants !== 95 || picker.second !== 65 || picker.third !== 30 ||
+        picker.catalog !== 142 || !picker.last?.startsWith('w-s3-'))
+      throw new Error('range weapon picker ' + JSON.stringify(picker));
     await page.locator('.iwr-pausescr:not(.is-leaving) .iwr-wchip').last().click();
     await page.waitForFunction(id => window.__G.local.weaponId === id && !window.__G.match.paused, picker.last.slice(2), { timeout: 30000 });
     out.checks.weaponPicker.selected = await page.evaluate(() => window.__G.local.weaponId);

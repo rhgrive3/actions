@@ -8,8 +8,159 @@ const bounded = (value, min, max) => finite(value) && value >= min && value <= m
 const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
 // The wire encodes performance.now() seconds with r3(), i.e. rounded milliseconds.
 // Keep that integer representable before it can poison the peer replay watermark.
+// #1283: owner-authenticated event rows must also have a safe, replayable
+// payload. The regular producer packs vectors as [x,y,z] and actor refs as
+// { n: nid }. Check the wire shape before any event sequence is committed.
+const EVENT_VECTOR_FIELDS = ['pos', 'to', 'muzzle', 'dir', 'normal'];
+const validEventVector = value => Array.isArray(value) && value.length === 3
+  && value.every(n => bounded(n, -1e6, 1e6));
+export function validForwardedEventPayload(name, payload) {
+  if (typeof name !== 'string' || !payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  // Also protect other forwarded vector events. Optional fields stay optional,
+  // but present fields must never become non-finite THREE.Vector3 components.
+  for (const key of EVENT_VECTOR_FIELDS) {
+    if (Object.hasOwn(payload, key) && !validEventVector(payload[key])) return false;
+  }
+  if (name === 'weapon:fire') {
+    // Charger ribbons turn these into a mesh width and lifetime. Keep the
+    // scalars numeric on all forwarded shots, before replay identity advances.
+    return (!Object.hasOwn(payload, 'charge') || bounded(payload.charge, 0, 1.25))
+      && (!Object.hasOwn(payload, 'len') || bounded(payload.len, Number.EPSILON, 128));
+  }
+  if (name !== 'special:slam') return true;
+  const actor = payload.actor;
+  return !!actor && typeof actor === 'object' && !Array.isArray(actor)
+    && integer(actor.n, 0, 0x7fffffff)
+    && validEventVector(payload.pos)
+    && bounded(payload.radius, Number.MIN_VALUE, 64)
+    && Math.fround(payload.radius) > 0;
+}
+
+// Receiver-side, active-object budgets, not the size of the pending event FIFO.
+// Remote bombs also own victim-local damage, so another actor must not borrow
+// their share of the live-object budget. Ordinary local bombs remain intact.
+// Count live objects rather than maintaining counters that could go stale on
+// explosion, recycling, disconnect, match reset, or ownership handoff.
+export const REMOTE_GHOST_BOMB_LIMITS = Object.freeze({ actor: 24, peer: 48, total: 96 });
+export const REMOTE_GHOST_STORM_RESERVE = 2;
+export function ghostBombActorAllowance(actor, ownerId, roster = null) {
+  if (!actor || actor.owner !== ownerId) return 0;
+  if (roster === null) return REMOTE_GHOST_BOMB_LIMITS.actor;
+  if (!Array.isArray(roster) || !roster.includes(actor) || !roster.length) return 0;
+  let owned = 0;
+  for (const entry of roster) if (entry?.owner === ownerId) owned++;
+  return Math.min(REMOTE_GHOST_BOMB_LIMITS.actor,
+    Math.floor(REMOTE_GHOST_BOMB_LIMITS.total / roster.length),
+    Math.floor(REMOTE_GHOST_BOMB_LIMITS.peer / owned));
+}
+export function allowGhostBombBirth(bombs, actor, ownerId, kind = 'bomb', roster = null) {
+  if (!Array.isArray(bombs) || !actor || typeof ownerId !== 'string' || !ownerId) return false;
+  const allowance = ghostBombActorAllowance(actor, ownerId, roster);
+  const stormAllowance = Math.min(REMOTE_GHOST_STORM_RESERVE, allowance);
+  const classAllowance = kind === 'storm' ? stormAllowance : allowance - stormAllowance;
+  if (classAllowance <= 0) return false;
+  let total = 0, byPeer = 0, byActor = 0, byClass = 0;
+  for (const b of bombs) {
+    if (!b?.ghost) continue;
+    total++;
+    if (b.owner?.owner === ownerId) byPeer++;
+    if (b.owner === actor) {
+      byActor++;
+      if ((b.kind === 'storm') === (kind === 'storm')) byClass++;
+    }
+    if (total >= REMOTE_GHOST_BOMB_LIMITS.total
+      || byPeer >= REMOTE_GHOST_BOMB_LIMITS.peer
+      || byActor >= allowance || byClass >= classAllowance) return false;
+  }
+  return true;
+}
+
+// Bounds intentionally far exceed every published arena and legal native throw.
+// Stage bounds add an outer horizontal envelope when a Level supplies them.
+export function validNetworkBombBirth(e, stageBounds = null) {
+  if (!Array.isArray(e) || e[1] !== 'b' || (e[3] !== 'bomb' && e[3] !== 'storm')) return false;
+  for (let i = 4; i <= 9; i++) if (!bounded(e[i], -4096, 4096)) return false;
+  if (Math.hypot(e[7], e[8], e[9]) > 1024) return false;
+  const b = stageBounds;
+  if (b && [b.minX,b.maxX,b.minZ,b.maxZ].every(finite)
+    && b.minX <= b.maxX && b.minZ <= b.maxZ) {
+    if (e[4] < b.minX - 256 || e[4] > b.maxX + 256
+      || e[6] < b.minZ - 256 || e[6] > b.maxZ + 256) return false;
+  }
+  return true;
+}
+
+// Only visual metadata is checked. Gameplay parameters and owner authority
+// keep their independent existing gates. Matches current native producer slots
+// 19..26 and the renderer's four-entry SAT_SIZE table.
+// Tail is a ratio, not a world length. Source-owned zero-width Slosher
+// entries reach 1 + 4/.001 = 4001; bound ratio and base drawn extent separately.
+export const NETWORK_PROJECTILE_TAIL_RATIO_MAX = 4096;
+export const NETWORK_PROJECTILE_TAIL_EXTENT_MAX = 128;
+export function validNetworkProjectileCosmetics(e) {
+  if (!Array.isArray(e) || e[1] !== 'p') return false;
+  if (e[19] !== undefined && e[19] !== 0 && e[19] !== 1) return false;
+  for (const [i,low,high] of [[20,0,8],[22,0,16],[23,0,4],[24,0,512],[25,-2,4]]) {
+    if (e[i] !== undefined && !bounded(e[i], low, high)) return false;
+  }
+  if (e[21] !== undefined) {
+    const width = e[20] ?? e[15];
+    if (!bounded(e[21], 0, NETWORK_PROJECTILE_TAIL_RATIO_MAX) || !finite(width) || width < 0
+      || width * e[21] > NETWORK_PROJECTILE_TAIL_EXTENT_MAX) return false;
+  }
+  return e[26] === undefined || integer(e[26], 0, 4);
+}
+
 export function validSnapshotTimestamp(timestamp) {
   return finite(timestamp) && timestamp >= 0 && Number.isSafeInteger(Math.round(timestamp * 1000));
+}
+
+const OWNER_CLOCK_MAX = 365 * 24 * 60 * 60;
+const OWNER_TICK_FORWARD_GRACE = 5;
+const OWNER_SIM_TICK_MAX = 90 * 24 * 60 * 60 * 60;
+const OWNER_SIM_TICK_GRACE = 600;
+const EVENT_SEQUENCE_MAX = 10_000_000;
+const EVENT_SEQUENCE_FORWARD_WINDOW = 65_536;
+export const NETWORK_PROJECTILE_LIFE_MAX = 10;
+export const NETWORK_PROJECTILE_DELAY_MAX = 2;
+
+// Owner performance.now() clocks may have arbitrary offsets across peers, so
+// the first packet establishes the offset. After that, sender time may advance
+// only by the local receive elapsed time plus a generous hitch/jitter budget.
+export function validOwnerTickAdvance(timestamp, previousTimestamp, receivedAt, previousReceivedAt) {
+  if (!validSnapshotTimestamp(timestamp) || timestamp > OWNER_CLOCK_MAX) return false;
+  if (previousTimestamp === undefined) return true;
+  if (!validSnapshotTimestamp(previousTimestamp) || timestamp <= previousTimestamp) return false;
+  const senderDelta = timestamp - previousTimestamp;
+  if (!finite(receivedAt) || !finite(previousReceivedAt)) return senderDelta <= OWNER_TICK_FORWARD_GRACE;
+  const receiveDelta = Math.max(0, receivedAt - previousReceivedAt);
+  return senderDelta <= receiveDelta + OWNER_TICK_FORWARD_GRACE;
+}
+
+// d.u is G.time * 60. It may stall while gameplay is paused, but within one
+// owner epoch it must not run backwards or jump hundreds of seconds ahead of
+// the corresponding owner timestamp.
+export function validOwnerSimulationTick(tick, timestamp, points) {
+  if (!integer(tick, 0, OWNER_SIM_TICK_MAX) || !validSnapshotTimestamp(timestamp)) return false;
+  if (!Array.isArray(points) || points.length < 2) return true;
+  const previousTimestamp = points[points.length - 2], previousTick = points[points.length - 1];
+  if (!validSnapshotTimestamp(previousTimestamp) || !integer(previousTick, 0, OWNER_SIM_TICK_MAX)
+    || timestamp <= previousTimestamp || tick < previousTick) return false;
+  const expectedTicks = Math.ceil((timestamp - previousTimestamp) * 60);
+  return tick - previousTick <= expectedTicks + OWNER_SIM_TICK_GRACE;
+}
+
+// Sequence identity is session-scoped and can legitimately have gaps, but a
+// single packet must never be able to jump the replay watermark near MAX_SAFE.
+export function validEventSequence(sequence, previousSequence = 0) {
+  if (!integer(sequence, 1, EVENT_SEQUENCE_MAX)) return false;
+  if (!integer(previousSequence, 0, EVENT_SEQUENCE_MAX) || previousSequence === 0) return true;
+  return sequence > previousSequence && sequence - previousSequence <= EVENT_SEQUENCE_FORWARD_WINDOW;
+}
+
+export function validNetworkProjectileTiming(delay, life) {
+  return bounded(delay, 0, NETWORK_PROJECTILE_DELAY_MAX)
+    && bounded(life, Number.EPSILON, NETWORK_PROJECTILE_LIFE_MAX);
 }
 // Native Boss.pack has 18 fields, plus an optional full move record. Match the
 // producer's structural contract before Boss.unpack/Hermite/guest follow.

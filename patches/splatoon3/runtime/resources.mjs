@@ -38,8 +38,12 @@ export function updateHealthRecovery(a, dt, onEnemy = false, submerged = false) 
   // S3 verification Wiki, Ink Storm (11.3.0 baseline): friendly rain gives
   // humanoid actors the submerged recovery rate; submerged rate and the
   // ordinary 60F post-damage wait are unchanged. See the source evidence report.
-  const P = api.PLAYER, r = tuning, rain = stormRecoveryState(a, api);
-  if (!onEnemy && !rain.enemy && a.lastDamage + 1e-10 >= r.regenDelay && a.hp < P.hp) {
+  const P = api.PLAYER, r = tuning;
+  // Rain cannot change an ineligible recovery tick. Keep the exact comparisons
+  // (including NaN behavior), and query live clouds once recovery is possible.
+  if (onEnemy || !(a.lastDamage + 1e-10 >= r.regenDelay) || !(a.hp < P.hp)) return;
+  const rain = stormRecoveryState(a, api);
+  if (!rain.enemy) {
     a.hp = Math.min(P.hp, a.hp + (submerged || rain.ally ? r.regenRateSwim : r.regenRate) * dt);
   }
 }

@@ -43,6 +43,14 @@ export class RankedEngine {
   addPenalty(team, amount) {
     if (teamOk(team) && Number.isFinite(amount) && amount > 0) this.penalties[team] += amount;
   }
+  resolveTie(team) {
+    // The later team loses one count when its objective possession ends.
+    // Best-count monotonicity has this one explicit rule exception.
+    if (this.winner !== null || !teamOk(team) || this.leader !== 1 - team
+      || this.counts[team] !== this.counts[1 - team] || this.counts[team] >= 100) return;
+    this.counts[team] = Math.min(100, this.counts[team] + 1);
+    this.event('tie-adjust', { team, count: this.counts[team] });
+  }
   event(kind, data = {}) {
     this.events.push({ kind, ...data, at: this.elapsed });
     if (this.events.length > 256) this.events.shift();
@@ -153,15 +161,29 @@ function validRuleState(mode, r) {
     && matrix(r.checkpointProgress, number) && matrix(r.checkpointLossSeconds, number)
     && matrix(r.checkpointCleared, x => typeof x === 'boolean') && matrix(r.riderIds, x => typeof x === 'string');
   if (mode === 'rainmaker') return vec(r.pos) && team(r.carrierTeam) && (r.carrier === null || typeof r.carrier === 'string')
+    && (r.goalHold == null || r.carrier !== null && [0, 1].includes(r.carrierTeam)
+      && typeof r.goalHold === 'object' && !Array.isArray(r.goalHold)
+      && number(r.goalHold.remaining) && r.goalHold.remaining >= 0 && r.goalHold.remaining <= .5)
+    && vec(r.lastGroundedPos) && (r.pickupZ === null || number(r.pickupZ)) && number(r.respawnRemaining) && r.respawnRemaining >= 0 && r.respawnRemaining <= 3
     && r.barrier && typeof r.barrier.active === 'boolean' && number(r.barrier.max) && number(r.barrier.balance)
-    && r.charge && number(r.charge.value) && number(r.charge.seconds)
+    && r.charge && number(r.charge.value) && r.charge.value >= 0 && r.charge.value <= 1
+    && number(r.charge.seconds) && r.charge.seconds >= 0 && r.charge.seconds <= 1 && typeof r.charge.firing === 'boolean'
+    && number(r.charge.delay) && r.charge.delay >= 0 && r.charge.delay <= .1
+    && number(r.charge.recovery) && r.charge.recovery >= 0 && r.charge.recovery <= 20 / 60
+    && typeof r.charge.wasSwimming === 'boolean'
+    && (r.charge.pending === null || r.charge.pending && vec(r.charge.pending.pos) && vec(r.charge.pending.aim)
+      && typeof r.charge.pending.actorId === 'string' && [0, 1].includes(r.charge.pending.team)
+      && ['charge','damage','blastDamage','outerDamage','radius','nearRadius','directRange','effectiveRange','paintRadius','speed','launchY','recoil','trailRadius'].every(k => number(r.charge.pending[k]) && r.charge.pending[k] >= 0 && r.charge.pending[k] <= 300))
     && r.checkpoint && list(r.checkpoint.passed, x => typeof x === 'boolean') && r.checkpoint.passed.length === 2
     && r.overtime && typeof r.overtime.active === 'boolean'
     && nums(['holderTime', 'holderRemaining', 'dropTimer', 'shotSequence']);
   if (mode === 'clams') return list(r.clams, c => c && ['small', 'power'].includes(c.kind) && vec(c.pos) && vec(c.velocity) && typeof c.grounded === 'boolean')
     && r.inventories && typeof r.inventories === 'object' && !Array.isArray(r.inventories)
     && Object.values(r.inventories).every(i => i && number(i.small) && i.small >= 0 && i.small <= 7 && typeof i.power === 'boolean')
-    && list(r.baskets, b => b && [0, 1].includes(b.team) && vec(b.goal) && typeof b.barrierOpen === 'boolean' && number(b.openTimer) && number(b.cooldown)) && r.baskets.length === 2
+    && list(r.baskets, b => b && [0, 1].includes(b.team) && vec(b.goal) && typeof b.barrierOpen === 'boolean' && number(b.openTimer) && number(b.cooldown)
+      && (b.pendingBreak == null || vec(b.pendingBreak.pos) && number(b.pendingBreak.remaining) && b.pendingBreak.remaining >= -1e-8 && b.pendingBreak.remaining <= 1.2 && Number.isSafeInteger(b.pendingBreak.sequence) && b.pendingBreak.sequence >= 0)) && r.baskets.length === 2
+    && r.specialDrops && typeof r.specialDrops === 'object' && !Array.isArray(r.specialDrops) && Object.values(r.specialDrops).every(n => Number.isSafeInteger(n) && n >= 0 && n <= 100000)
+    && Number.isSafeInteger(r.nextBreakSequence) && r.nextBreakSequence >= 0 && r.nextBreakSequence <= 100000
     && r.baskets.every((b, i) => b.team === i)
     && pair(r.generatedPower, 10000) && pair(r.scoredPoints, 10000) && r.actorPositions && r.actorTeams
     && Object.values(r.actorPositions).every(vec) && Object.values(r.actorTeams).every(team)

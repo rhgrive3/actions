@@ -49,10 +49,10 @@ async function rig({ negative = false } = {}) {
 
 test('#1178 negative control: malformed event container throws after poisoning peer watermark', async () => {
   const f=await rig({negative:true}); f.nm.onMessage('p2',f.packet(1000,1));
-  const peer=f.nm.peers.get('p2'), bad=f.packet(2000,40,{});
+  const peer=f.nm.peers.get('p2'), bad=f.packet(1000.1,40,{});
   assert.throws(()=>f.nm.onMessage('p2',bad), /filter is not a function/);
-  assert.equal(peer.lastTs,2000); assert.equal(f.actor.net.buf.at(-1).x,40);
-  f.nm.onMessage('p2',f.packet(1000.1,7));
+  assert.equal(peer.lastTs,1000.1); assert.equal(f.actor.net.buf.at(-1).x,40);
+  f.nm.onMessage('p2',f.packet(1000.05,7));
   assert.equal(f.actor.net.buf.at(-1).x,40,'later normal snapshot is suppressed by rejected packet clock');
 });
 
@@ -69,8 +69,8 @@ test('#1178 malformed event containers leave clock/actor state unchanged and nex
 
 test('#1178 negative control: early credit filter must not dereference null before the later row validator', async () => {
   const f=await rig({negative:'row'}); f.nm.onMessage('p2',f.packet(1000,1));
-  assert.throws(()=>f.nm.onMessage('p2',f.packet(2000,40,[null])), /null/);
-  assert.equal(f.nm.peers.get('p2').lastTs,2000);
+  assert.throws(()=>f.nm.onMessage('p2',f.packet(1000.1,40,[null])), /null/);
+  assert.equal(f.nm.peers.get('p2').lastTs,1000.1);
 });
 
 test('#1178 missing/null/empty event lists and bad individual rows retain existing snapshot admission', async () => {

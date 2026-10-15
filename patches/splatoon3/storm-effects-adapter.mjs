@@ -26,8 +26,28 @@ export function adaptStormEffects(rel, code) {
   if (rel === 'src/game/weapons.js') {
     code = once(code, '  _updateClouds(dt) {\n    const sp = SPECIALS.storm;', '  _updateClouds(dt) {\n    const rainHits = new Map();\n    const sp = SPECIALS.storm;', 'rain damage arbitration');
     code = once(code, "          const killed = e.damage(sp.dps * dt, c.owner, 'storm');\n          if (killed) emit('hit', { attacker: c.owner, victim: e, damage: 0, killed: true, weaponId: 'storm' });", '          collectStormHit(rainHits, e, c, sp.dps * dt);', 'non-stacking rain damage');
+    code = once(code,
+      '          collectStormHit(rainHits, e, c, sp.dps * dt);\n        }\n      }\n      if (c.t >= c.dur)',
+      `          collectStormHit(rainHits, e, c, sp.dps * dt);
+        }
+        // The continuous cloud tick damages deployed devices through the same
+        // object HP/ownership boundary as other specials. Rain particles remain
+        // paint-only; this uses the cloud's InkStorm source row, not InkStormRain.
+        if (!c.ghost && !c.owner.remote) {
+          const objectRadius = Math.hypot(sp.radius * s, STORM_RAIN_REACH + 2);
+          const damageStormObject = (_distance, object) => {
+            if (!stormRainObjectContains(c, object, sp.radius, s)) return 0;
+            _v.copy(object.pos); _v.y += 1.2;
+            _v2.set(object.pos.x, c.group.position.y - 0.6, object.pos.z);
+            return G.physics.los(_v, _v2) ? sp.dps * dt : 0;
+          };
+          this.s3DamageSubObjects?.(c.owner, c.group.position, objectRadius, damageStormObject, 'InkStorm');
+          this.s3DamageSpecialObjects?.(c.owner, c.group.position, objectRadius, damageStormObject, 'InkStorm');
+        }
+      }
+      if (c.t >= c.dur)`, 'continuous Storm object contact');
     code = once(code, "      if (c.t >= c.dur) { emit('storm:end', { pos: c.group.position.clone(), team: c.team, actor: c.owner }); this._releaseCloud(c, 0.3); this.clouds.splice(i, 1); }\n    }\n  }", "      if (c.t >= c.dur) { emit('storm:end', { pos: c.group.position.clone(), team: c.team, actor: c.owner }); this._releaseCloud(c, 0.3); this.clouds.splice(i, 1); }\n    }\n    applyStormHits(rainHits, emit);\n  }", 'one rain hit per actor tick');
-    return "import { collectStormHit, applyStormHits, STORM_RAIN_REACH, stormRainScale, stormRainContains } from '../../patches/splatoon3/runtime/storm-effects.mjs';\n" + code;
+    return "import { collectStormHit, applyStormHits, STORM_RAIN_REACH, stormRainScale, stormRainContains, stormRainObjectContains } from '../../patches/splatoon3/runtime/storm-effects.mjs';\n" + code;
   }
   return code;
 }

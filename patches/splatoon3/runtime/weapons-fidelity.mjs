@@ -1,4 +1,5 @@
 import { withMainDirectDamage } from './private-tracking.mjs';
+import { VARIANT_BASE_WEAPON } from './alternate-weapon-kits-data.mjs';
 import { configureRollerVerticalPaint, paintRollerVerticalFlight } from './roller-vertical-paint.mjs';
 import { paintRollerMaximumWidth } from './roller-max-paint.mjs';
 import { configureBlasterFlightPaint, paintBlasterFlight, spawnSplashDrop, advanceSplashDrops } from './blaster-flight-paint.mjs';
@@ -313,7 +314,7 @@ export function configureFidelityInkFlight(projectiles, helpers) {
 
 // Source records supply endpoints/counts. Added random draws are deterministic
 // under the fixture seed; the source PRNG/bias distribution is not recovered.
-function rawWeapon(w) { return completion?.weapons[w.id || w.kind]; }
+function rawWeapon(w) { const id = w?.id || w?.kind; return completion?.weapons[VARIANT_BASE_WEAPON[id] || id]; }
 
 // #992: S3 BulletShooterPaintParam's sparse defaults and interpolation semantics
 // are documented by the original parameter research in
@@ -1111,9 +1112,10 @@ export function fidelitySlosherDrawRadius(p) {
 // Airborne ink silhouette (render only; collision, paint and packets are
 // untouched). Splatoon 3 footage (Inkipedia "S3 About videos" Splattershot /
 // Slosher, Nintendo official turf-war clip) shows no round balls:
-// - a Shooter round is a long smooth constant-width rod of ink (its tail,
-//   see shotTailFrames) while the SplashSpawn drops along the path fly as
-//   flat jagged splinters;
+// - a Shooter round is a long smooth rod of ink (its tail, see
+//   shotTailFrames); Shooter-family rounds are now drawn by
+//   s3-projectile-shapes.mjs. The SplashSpawn drops falling from the path are
+//   rounded beads (only the muzzle tear is jagged);
 // - Roller/Brush flicks are spiky splash crowns;
 // - a Slosher throw is one broad thin sheet without detached beads.
 // Each entry is [spike amplitude (head radii), spike count, cross-section
@@ -1121,8 +1123,7 @@ export function fidelitySlosherDrawRadius(p) {
 // width scale on the drawn radius, trailing beads 1/0]. The Slosher width 0.5
 // is read off the footage (the sheet is at most about half the character's
 // height wide while DrawSizeParam is 1.0); the rod width 0.7 matches the
-// nozzle; the splinter size 2.2x the native drop radius matches the
-// fragments near the muzzle. All are INKWAVE calibration against footage,
+// nozzle; falling drops draw at 1.5x the native drop radius. All are INKWAVE calibration against footage,
 // not extracted Nintendo mesh data.
 export const INK_LOOK=Object.freeze({
   shot:Object.freeze([0.15,-5,1,1,0.7,1]),   // negative count = rod body
@@ -1130,7 +1131,10 @@ export const INK_LOOK=Object.freeze({
   slosh:Object.freeze([0.3,4,0.32,1,0.5,0]),
   blast:Object.freeze([0.35,6,1,1,1,1]),
   satellite:Object.freeze([0.5,4,1,1,1,1]),
-  droplet:Object.freeze([1.3,6,0.35,1.5,2.2,1]),
+  // Falling SplashSpawn drops: rounded beads stretched a little along their
+  // fall (S3 About video 05, 2.6-4.4 s side frames), not flat splinters.
+  droplet:Object.freeze([0.12,4,0.9,1.25,1.5,1]),
+  bubble:Object.freeze([0,1,1,1,1,0]), // Bloblobber round bubble (no spiky crown or beads)
   none:Object.freeze([0,1,1,1,1,1]),
 });
 // Shooter-family tail (rod) length. Splatoon 3 keeps a separate tail end per
@@ -1149,18 +1153,30 @@ export const INK_LOOK=Object.freeze({
 // sourced value.
 export const SHOT_TAIL_FRAMES_DEFAULT=2;
 export function shotTailFrames(p) {
-  const v=completion?.weapons?.[p?.wid]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
+  const id=p?.wid;
+  const v=completion?.weapons?.[VARIANT_BASE_WEAPON[id] || id]?.spl__BulletShooterTailLengthParam?.MaxLengthFrame;
   return Number.isFinite(v)&&v>0?v:SHOT_TAIL_FRAMES_DEFAULT;
 }
 // Back length (in drawn head radii) for the instanced blob. Others: the
 // native tail scaled by the look; under a width scale the length beyond the
 // drawn head stays the same world length (the Slosher's sourced TailLength).
 export function fidelityInkTail(p,tail,drawnRadius,look) {
+  // Catalog Sloshers keep their own sourced DrawSizeParam TailLength and are
+  // physically 'shot' internally. Never force the Shooter 2-frame rod on them.
+  const style=p?.catalogVisual?.style;
+  if(style==='bubble')return 1;
+  if(style==='sheet')return Math.max(1,1+Math.max(0,(p.tail0??1)-1)/look[4]);
+  if(style==='crown')return Math.max(1,1+(tail*look[3]-1)/look[4]);
   if(p?.type!=='shot'||!(drawnRadius>0)||!p.start||!p.pos)return Math.max(1,1+(tail*look[3]-1)/look[4]);
   const travel=p.start.distanceTo(p.pos),speed=p.vel?p.vel.length():0;
   return Math.max(1,Math.min(travel,speed*shotTailFrames(p)/60)/drawnRadius);
 }
 export function fidelityInkLook(p) {
+  const style=p?.catalogVisual?.style;
+  if(style==='sheet')return INK_LOOK.slosh;
+  if(style==='bubble')return INK_LOOK.bubble;
+  if(style==='crown')return INK_LOOK.drop;
+  if(style==='rod')return INK_LOOK.shot;
   return INK_LOOK[p?.type]??INK_LOOK.none;
 }
 export function writeInkLook(out,index,look,seed) {
@@ -1649,7 +1665,7 @@ export function installWeaponsFidelity(context,profile) {
       freeVelocityY:defaults.brakeToFreeVelocityY}));
   }
   function initializeSplatlingFlight(p,w){
-    const move=moves.get(w.id)||null;
+    const move=moves.get(VARIANT_BASE_WEAPON[w.id] || w.id)||null;
     p.fidelityMove=move;
     if(!move||!Number.isFinite(w.straightTime)||!Number.isFinite(w.referenceGravity))return false;
     p.straight=w.straightTime;p.grav=w.referenceGravity;p.drag=move.freeDrag*60;
@@ -1704,7 +1720,7 @@ export function installWeaponsFidelity(context,profile) {
     if(p.s3SpecialWeapon)return;
     if(!w)return;
     const raw=rawWeapon(w);p.s3Weapon=w;p.wid=w.id;p.fidelityPhase=0;
-    p.fidelityMove=moves.get(w.id)||null;
+    p.fidelityMove=moves.get(VARIANT_BASE_WEAPON[w.id] || w.id)||null;
     if(raw?.CollisionParam){
       const c=w.kind==='dualies'&&p.owner?.weaponRunner?.s3Turret?raw.CollisionLapOverParam:raw.CollisionParam;
       // On ghosts the existing size field disambiguates standing vs turret radius.
@@ -1919,7 +1935,7 @@ export function installWeaponsFidelity(context,profile) {
       pose.muzzle.lerp(pose.aimMuzzle,1-ready);
     pose.base.copy(actor.pos);pose.base.y+=actor.form==='squid' ? .4 : 1.05;
     const raw=rawWeapon(w),guide=w.shotGuide,unit=mode==='slosher'?guide&&raw?.UnitGroupParam?.Unit?.[guide.unitOrderNum]:null;
-    const unitMove=unit?.MoveParam,move=moves.get(w.id)||null,runner=actor.weaponRunner;
+    const unitMove=unit?.MoveParam,move=moves.get(VARIANT_BASE_WEAPON[w.id] || w.id)||null,runner=actor.weaponRunner;
     const game=api.G,physics=game?.physics,level=physics?.level||game?.level||null;
     s.mode=mode;s.actor=actor;s.weapon=w;s.actorWeapon=actor.weapon;s.character=ch;
     s.getMuzzle=ch.getMuzzle;s.getAimMuzzle=ch.getAimMuzzle;s.aimReadyMethod=ch.aimReady;s.aimReady=ready;
@@ -2357,7 +2373,17 @@ export function installWeaponsFidelity(context,profile) {
         }
         if(w?.kind==='roller' && p.type==='drop' && p.fidelityRollerUnit){
           // #411/#674/#611/#713 share one authoritative landing-paint sample.
-          return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>nativeImpact.call(this,p,hit));
+          return withRollerImpactPaint(context.G,p,hit,completion.worldUnitsPerSourceUnit,()=>{
+            const result=nativeImpact.call(this,p,hit);
+            // The painted footprint remains owned by withRollerImpactPaint.
+            // This is a separate, unpainted 0.2-0.3s impact sheet so the
+            // airborne blob does not disappear at the moment of contact.
+            if(p.owner?.color&&hit?.point&&(p.owner.isLocal||
+               !context.G.camera?.position||context.G.camera.position.distanceToSquared(hit.point)<625))
+              context.G.fx?.burst(hit.point,hit.normal,p.owner.color,
+                {count:12,speed:2.5,size:.14,spread:1.2,paint:false});
+            return result;
+          });
         }
         if(w?.kind==='shooter' && p.type==='shot' && !p.fidelityWallDrop && w.impactPaint &&
            hit?.normal?.y>=SHOOTER_FLOOR_NORMAL_Y && context.G.paint?.splat){

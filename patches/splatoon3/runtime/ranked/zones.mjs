@@ -92,6 +92,7 @@ export class ZonesRule {
       && teamId(this.state.zones[0].team)
       ? this.state.zones[0].team : -1;
     this.state.controllingTeam = allTeam;
+    if (previousControl >= 0 && previousControl !== allTeam) this.engine.resolveTie?.(previousControl);
 
     if (allTeam >= 0) {
       if (this.state.zoneRunTeam < 0) {
@@ -144,7 +145,9 @@ export class ZonesRule {
     if (!ownsAllZones && !recentlyLost) return false;
     this.state.overtimeTeam = losingTeam;
     this.state.overtimeElapsed = 0;
-    this.state.neutralSeconds = 0;
+    // The existing recent-loss qualifier carries the same uninterrupted
+    // neutral period across regulation end; time-up does not grant 10s again.
+    this.state.neutralSeconds = ownsAllZones ? 0 : this.state.controlLostSeconds;
     return true;
   }
 

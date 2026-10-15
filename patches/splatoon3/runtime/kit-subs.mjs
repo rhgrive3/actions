@@ -33,7 +33,7 @@ import { fidelityThrowVelocity, SUB_SPECIAL_FIDELITY } from './sub-special-fidel
 // scope, so these hooks always read the one live registry and still behave exactly
 // like the native code when installKitSubs has not been applied.
 
-import { SPRINKLER, beginSprinkler, stepSprinkler } from './kit-sprinkler.mjs';
+import { SPRINKLER, beginSprinkler, stepSprinkler, resolveSprinklerPower } from './kit-sprinkler.mjs';
 import { AUTOBOMB, startAutobomb, stepAutobomb } from './kit-autobomb.mjs';
 const FRAME = 1 / 60;
 const rawDamage = (v) => (v == null ? null : v / 10);
@@ -327,6 +327,10 @@ export function resolveSubAtCharge(sub, charge) {
 function actorSubSpec(actor, sub) {
   const m = actor?.s3?.modifiers || {}, power = m.subPower ?? 1;
   const cost = sub.inkCost ?? sub.inkCostFallback;
+  if(sub.mode==='sprinkler'){
+    const resolved=resolveSprinklerPower(sub,actor?.s3?.abilityPoints?.subPower);
+    return {...resolved,inkCost:Number.isFinite(cost)?cost*(m.inkSaverSub??1):cost};
+  }
   return { ...sub, inkCost: Number.isFinite(cost) ? cost * (m.inkSaverSub ?? 1) : cost,
     throwSpeed: Number.isFinite(sub.throwSpeed) ? sub.throwSpeed * power : sub.throwSpeed,
     throwSpeedMaxCharge: Number.isFinite(sub.throwSpeedMaxCharge) ? sub.throwSpeedMaxCharge * power : sub.throwSpeedMaxCharge };
@@ -640,7 +644,7 @@ export function kitBombContact(SUB, b, hit, dt) {
 // Rolling trail, called from the native loop once the bomb is rolling. The centre
 // is a real THREE.Vector3 because the native PaintSystem reads vector fields.
 // Allocated once per bomb and reused; no per-frame allocation.
-export function kitBombTrail(SUB, b, paint, projectiles) {
+export function kitBombTrail(SUB, b, paint, projectiles, game = G_REF) {
   if (b?.s3Mode === 'chasing') { stepAutobomb(b, G_REF); return 0; }
   if (b?.s3Mode === 'sprinkling') {
     if (b.owner?.alive === false) return 0;
@@ -674,7 +678,19 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
   // native PaintSystem receives the type it expects, with no extra module import
   // and no per-frame allocation.
   if (!b.s3TrailPoint) b.s3TrailPoint = new b.pos.constructor();
-  b.s3TrailPoint.copy(b.pos);
+  const physics = game?.physics;
+  if (physics?.raycast && Number.isFinite(spec.paintCheckHeight)) {
+    const scratch = projectiles || b;
+    const origin = scratch._s3CurlingPaintOrigin || (scratch._s3CurlingPaintOrigin = new b.pos.constructor());
+    const down = scratch._s3CurlingPaintDown || (scratch._s3CurlingPaintDown = new b.pos.constructor());
+    const hit = scratch._s3CurlingPaintHit || (scratch._s3CurlingPaintHit = {
+      hit: false, dist: 0, point: new b.pos.constructor(), normal: new b.pos.constructor(), block: -1, face: -1,
+    });
+    origin.copy(b.pos); origin.y += 0.2; down.set(0, -1, 0);
+    const floor = physics.raycast(origin, down, spec.paintCheckHeight, hit, true);
+    if (!floor?.hit) return 0;
+    b.s3TrailPoint.copy(floor.point).addScaledVector(floor.normal, 0.1);
+  } else b.s3TrailPoint.copy(b.pos);
   const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random(), claimOwner: b.owner });
   if (area > 0) b.owner?.addTurf?.(area);
   return area;
@@ -835,6 +851,21 @@ const PACKET_SUB_IDS = Object.freeze(['suction', 'curling', 'sprinkler', 'autobo
 
 const packetSubId = (raw) => (typeof raw === 'string' && raw.length <= 16 && PACKET_SUB_IDS.includes(raw) ? raw : null);
 
+// Match the native owner's one-Sprinkler lifecycle for authenticated replicas.
+// Network admission can call this before allocating the replacement, so an old
+// persistent Sprinkler cannot pin a finite bomb budget. Never retire local
+// authority, another actor's device, or that actor's other deployed attacks.
+export function retireReplacedGhostSprinklers(projectiles, actor, except = null) {
+  if (!Array.isArray(projectiles?.bombs) || !actor) return;
+  for (let i = projectiles.bombs.length - 1; i >= 0; i--) {
+    const b = projectiles.bombs[i];
+    if (b === except || b?.ghost !== true || b.owner !== actor
+      || b.s3GhostResolved?.spec?.mode !== 'sprinkler') continue;
+    projectiles._releaseBomb(b);
+    projectiles.bombs.splice(i, 1);
+  }
+}
+
 // Recording side. Returns `null` while a ghost is being replayed: `ghostBomb`
 // builds its record through the native `throwBomb`, whose `!a.remote` guard is the
 // only thing standing between a peer's packet and a new packet of our own. Once a
@@ -865,6 +896,7 @@ export function kitGhostBombAttach(SUB, projectiles, b, rawId, rawCharge) {
   // the whole life of the record.
   const resolved = resolveSubAtCharge(spec, charge);
   if (!resolved) return null;
+  if (spec.mode === 'sprinkler') retireReplacedGhostSprinklers(projectiles, b.owner, b);
   b.s3GhostResolved = resolved;
   b.s3Charge = resolved.charge;
   b.s3Mode = 'flight';

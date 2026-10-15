@@ -88,7 +88,10 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (!this.grounded) {
       // Retain each form's target speed. The shared humanoid air calibration
       // owns ordinary acceleration and neutral/reverse braking in both forms.
-      const target = isSquid ? Math.max(P.squidDrySpeed, sp) : Math.max(this.weaponRunner.moveSpeed(), P.airMinSpeed);
+      const mist=isSquid?1:toxicMistScale(this);
+      // Squid airborne momentum remains unchanged until its retail Mist
+      // rule is established; do not introduce an inferred velocity cap.
+      const target = isSquid ? Math.max(P.squidDrySpeed,sp) : Math.max(this.weaponRunner.moveSpeed(), P.airMinSpeed*mist);
       const tvx = mh > 0.01 ? (mv.x / mh) * target * mag : 0, tvz = mh > 0.01 ? (mv.z / mh) * target * mag : 0;
       const dvx = tvx - vx, dvz = tvz - vz, dl = Math.hypot(dvx, dvz);
       const rate = P.airAccel * attackAirRateScale(this, P) * dt;
@@ -100,16 +103,16 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (groundStart < 0 || groundEnd < groundStart) throw new Error('Movement physics: missing grounded movement block');
     replace(code.slice(groundStart, groundEnd),
 `    // ---- grounded: Splatoon 3 constant vector acceleration model
+    const mist=(isSquid||onEnemy)?toxicMistScale(this):1;
     let vt;
-    if (isSquid && this.submerged) vt = P.swimSpeed;
-    else if (isSquid) vt = P.squidDrySpeed;
+    if (isSquid && this.submerged) vt = P.swimSpeed*mist;
+    else if (isSquid) vt = P.squidDrySpeed*mist;
     else vt = this.weaponRunner.moveSpeed();
     if (!isSquid && this.hardLand > 0) vt *= 1 - (1 - P.hardLandSlow) * this.hardLand;
-    let accel = (this.weaponRunner.firingPose?.() || this.intent.sub || this.weaponRunner.aimingSub || this.specialActive)
-      ? (P.s3AttackGroundAccel ?? 72) : (P.s3GroundAccel ?? 36);
-    if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed); // enemy ink limits target speed, not the selected S3 acceleration
+    const accel = groundAcceleration(this, P, isSquid);
+    if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed*mist); // enemy ink limits target speed, not the selected S3 acceleration
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
-    return "import { attackAirRateScale, integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+    return "import { toxicMistScale } from '../../patches/splatoon3/runtime/toxic-mist.mjs';\nimport { attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     replace('    if (this.rolling) return lerp(w.rollSpeed * 0.5, w.rollSpeed, smoothstep(0, 0.45, this.rollT));',

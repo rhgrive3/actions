@@ -22,24 +22,33 @@ export const TACTICOOLER = Object.freeze({
     inkResistance: 57,
   }),
 });
+// WeaponSpEnergyStand.FridgeParam.PutFrameOnYagura is 450F; ordinary stands
+// last 900F. Stand lifetime is independent of the drink buff duration.
+export function tacticoolerStandFrames(onTower = false) {
+  return onTower === true ? TACTICOOLER_SOURCE.putFrameOnYagura : TACTICOOLER_SOURCE.putFrame;
+}
 export function tacticoolerDrinkFrames(ap, gearCurve) {
   return typeof gearCurve === 'function'
     ? Math.round(gearCurve(ap || 0, ...TACTICOOLER_SOURCE.powerUpFrames))
     : TACTICOOLER_SOURCE.powerUpFrames[0];
 }
-export function drinkEligible(actor, stand, now) {
+export function drinkEligible(actor, stand, now, player = null) {
   if (!actor?.alive || actor.remote || actor.form !== 'kid' ||
       actor.team !== stand?.team || !actor.pos || !stand.pos ||
       !Number.isFinite(now) || !(stand.expires > now) ||
       stand.taken?.has(actor)) return false;
   const p = actor.pos, s = stand.pos;
   const dx=p.x-s.x,dz=p.z-s.z,dy=p.y-s.y;
-  // The pinned 11.3.0 serve cylinder extends 0 down and 3 up from the stand.
-  // No symmetric below-floor pickup through a stage/deck.
-  return Number.isFinite(dx) && Number.isFinite(dy) && Number.isFinite(dz) &&
-    dx*dx+dz*dz <= TACTICOOLER.radiusWorld ** 2 &&
-    dy >= -TACTICOOLER_SOURCE.serveAreaHeightDown &&
-    dy <= TACTICOOLER_SOURCE.serveAreaHeightUp;
+  // The source cylinder extends 0 down and 3 up, but the Wiki specifies
+  // overlap with any part of the kid's collider, including a head below a
+  // platform. Obstacles do not block pickup. The native runtime supplies its
+  // actual capsule dimensions; dimensionless callers remain point queries.
+  if (![dx,dy,dz].every(Number.isFinite)) return false;
+  const radius=Math.max(0,Number(player?.radius)||0),height=Math.max(radius*2,Number(player?.height)||0);
+  const radialGap=Math.max(0,Math.hypot(dx,dz)-TACTICOOLER.radiusWorld);
+  const lo=dy+radius,hi=dy+height-radius,base=-TACTICOOLER_SOURCE.serveAreaHeightDown,top=TACTICOOLER_SOURCE.serveAreaHeightUp;
+  const verticalGap=Math.max(0,base-hi,lo-top);
+  return radialGap*radialGap+verticalGap*verticalGap<=radius*radius+1e-12;
 }
 export function giveDrink(actor, now, seconds = TACTICOOLER.drinkSeconds) {
   if (!actor?.alive || actor.remote || !Number.isFinite(now) ||

@@ -4,6 +4,14 @@
  * no skipWaiting, automatic reload, or cross-revision response substitution.
  */
 const BUILD = /*__INKWAVE_CACHE_BUILD__*/ null;
+// Convert valid production manifest indices to their immutable asset paths.
+if(BUILD.precache.some(value=>typeof value==='number')){
+  const paths=Object.keys(BUILD.assets);
+  BUILD.precache=BUILD.precache.map(index=>{
+    if(!Number.isSafeInteger(index)||index<0||index>=paths.length)throw new Error('Invalid precache index');
+    return paths[index];
+  });
+}
 const SCOPE = new URL(self.registration.scope);
 const PREFIX = `inkwave-startup-v2:${SCOPE.pathname}:`;
 const META = PREFIX + 'state';
@@ -14,8 +22,8 @@ const INDEX_URL = new URL('index.html', SCOPE).href;
 const CURRENT = SNAPSHOT(BUILD.revision);
 const REVISION_PREFIX = new URL(`_versions/${BUILD.revision}/`, SCOPE).href;
 const NAVIGATION_TIMEOUT_MS = 4000;
-const MAX_HTML_BYTES = 512 * 1024;
-const MAX_REVISION_BYTES = 12 * 1024 * 1024;
+const MAX_HTML_BYTES = 1024 * 1024;
+const MAX_REVISION_BYTES = 48 * 1024 * 1024;
 const flights = new Map();
 const jsonResponse = value => new Response(JSON.stringify(value), { headers: { 'Content-Type': 'application/json' } });
 const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');

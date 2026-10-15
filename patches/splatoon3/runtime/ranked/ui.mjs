@@ -68,6 +68,8 @@ function objectiveText(engine, G) {
     return `${teamName(team)} TOWER · ${p}%${total ? ` · CP ${Math.min(index, total)}/${total}` : ''}`;
   }
   if (engine.mode === 'rainmaker') {
+    if (state.goalHold) return 'DUNKING · PROTECT THE CARRIER!';
+    if (state.respawnRemaining > 0) return `REFORMING SHIELD · ${Math.ceil(state.respawnRemaining)}s`;
     const barrier = state.barrier;
     if (barrier?.active) {
       const max = Math.max(0, finite(barrier.max));
@@ -78,7 +80,7 @@ function objectiveText(engine, G) {
       const actor = (G.match?.actors || []).find(a => String(a.nid ?? `${a.team}:${a.slot}`) === String(state.carrier));
       const held = Math.ceil(Math.max(0, finite(state.holderRemaining)));
       const charge = Math.round(clamp01(state.charge?.value) * 100);
-      return `CARRY ${held}s · ${actor?.name || teamName(actor?.team)} · CHARGE ${charge}%`;
+      return `CARRY ${held}s · ${actor?.name || teamName(actor?.team)} · CHARGE ${charge}%${state.retreatRate > 1 ? ' · RETREAT!' : ''}`;
     }
     const owner = state.lastCarrierTeam;
     return owner === 0 || owner === 1 ? 'RAINMAKER DROPPED · PICK IT UP' : 'SHIELD POPPED · PICK UP THE RAINMAKER';

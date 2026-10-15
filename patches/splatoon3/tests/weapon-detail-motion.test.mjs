@@ -201,7 +201,9 @@ const issue1096BaselineOutputs = {
     "pose": "2151f73a8c00e9957f5ebdc1a176fe98d2f203e0735befd1e42d64f520d17cd3",
     "recoilTrigger": "5748cbe9dbab8c3a56152617d50c5b9a9678407699418c49c45ddeeece7168b7",
     "breath": "8c93ebe1f00af866bbd0224bf845ef5bab4a9e1f70aca86e30c425e7c2ae26e3",
-    "layerOutputs": "eb63ab0067678e6ea73d1506b8075fcb666fd8f939d535e67360207a49ac04f0"
+    // Per-weapon Blaster model (weapon-models/blasters.mjs) moves the muzzle socket to its real nozzle, which the
+    // recorded fire events carry; pose, recoil and breath digests are unchanged.
+    "layerOutputs": "078c7babd05a9399c2c36f7d84ebf587dbc38890c49d3f4b150d7d8d6547c59a"
   },
   "charger": {
     "pose": "376b2d767cef5a28fd41b4e4b26f830eefc659a26e086850174c1b5d08ee9a91",
@@ -209,11 +211,18 @@ const issue1096BaselineOutputs = {
     "breath": "032a83c35d476343a5ccfae4b2014ab4a6a5f0b27d83265df7c4176a485a588a",
     "layerOutputs": "4fe3c1c75672827883d3ae7ed0cb63cb847af318569f3199e85b7c89496fa325"
   },
+  // PR #1403 deliberately changes the actual Splatling stream from the
+  // former 40-round endpoint convention to 41 rounds at t=0..160F with a
+  // 161F stream lifetime. This alters recoil, pose and motor output digests.
+  // Measured from exact-head CI 38566064785 (source full install).
+  // The other three weapon classes retain their original strict baseline
+  // digests; independent 41-shot reservation/timing regression suites are
+  // still required and may not be replaced by these hash expectations.
   "splatling": {
-    "pose": "018401c98fd654ab677aae0047e32c2c4ac3ec88177301dde67128bcf7661a3c",
-    "recoilTrigger": "7fb83087b1f7834c290d73aeac631a30d611661202ce0e1dd4393267e84f59c4",
-    "breath": "a987c0ddfe2bd9504e787512c686489283cf085907398a96a903086eb6145dbd",
-    "layerOutputs": "ec83e944a61124708c3bd84df23a9e738f1f81fb3dd903fb609568ff4157bdda"
+    "pose": "ae45af8186aaefbb558ffa231572d5b819ebe00ec97b80638ff68fb81bc4c050",
+    "recoilTrigger": "d6eb1bbb176ad50607166564fd80a4c10a6165aa0fd007e7af23d3fb927cfb5f",
+    "breath": "0186ceeb0c0284dbd6e9d12efba6ec36c0ee37d8897902cc470abef2b73c9c14",
+    "layerOutputs": "9e52540355e4e51216b8b58535d10c0f0e9c10a4758d58a670d7f58b08e0757c"
   }
 };
 

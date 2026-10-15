@@ -162,22 +162,22 @@ export class TowerRule {
       const towerSpeed = Math.max(0, finite(this.stage?.tower?.speed, 0));
       if (teamId(this.state.controllingTeam)) {
         const owner = this.state.controllingTeam;
+        const ownedSeconds = Math.max(0, Math.min(dt, EMPTY_NEUTRAL_SECONDS - previousEmpty));
         const ownSide = owner === 0 ? this.state.pathDistance < metrics.center - EPSILON
           : this.state.pathDistance > metrics.center + EPSILON;
         if (ownSide) {
-          this._moveTowardCenter(dt * towerSpeed * UNATTENDED_RETURN_SPEED, metrics);
+          this._moveTowardCenter(ownedSeconds * towerSpeed * UNATTENDED_RETURN_SPEED, metrics);
           movedBy = owner;
         }
-        if (previousEmpty < EMPTY_NEUTRAL_SECONDS && this.state.emptySeconds >= EMPTY_NEUTRAL_SECONDS) {
+        if (this.state.emptySeconds >= EMPTY_NEUTRAL_SECONDS) {
           this._setController(-1);
-          const returnSeconds = Math.max(0, this.state.emptySeconds - EMPTY_NEUTRAL_SECONDS);
+          const returnSeconds = dt - ownedSeconds;
           if (returnSeconds > 0) this._moveTowardCenter(returnSeconds * towerSpeed * UNATTENDED_RETURN_SPEED, metrics);
         }
       } else {
         const returnSeconds = Math.max(0, this.state.emptySeconds - EMPTY_NEUTRAL_SECONDS)
           - Math.max(0, previousEmpty - EMPTY_NEUTRAL_SECONDS);
-        if (previousEmpty >= EMPTY_NEUTRAL_SECONDS)
-          this._moveTowardCenter(returnSeconds * towerSpeed * UNATTENDED_RETURN_SPEED, metrics);
+        this._moveTowardCenter(returnSeconds * towerSpeed * UNATTENDED_RETURN_SPEED, metrics);
       }
     }
 
@@ -192,6 +192,7 @@ export class TowerRule {
 
   _setController(team) {
     if (this.state.controllingTeam === team) return;
+    if (teamId(this.state.controllingTeam)) this.engine.resolveTie?.(this.state.controllingTeam);
     this.state.controllingTeam = team;
     if (teamId(team)) this.state.lastController = team;
     this.engine.event?.('tower-capture', { team });
@@ -304,15 +305,16 @@ export class TowerRule {
         if (this.state.checkpointCleared[team][index] || this.state.checkpointProgress[team][index] <= EPSILON) continue;
         const marker = routeCoordinate(team, list[index].progress, metrics);
         const atMarker = Math.abs(this.state.pathDistance - marker) <= 1e-5;
-        if (activeTeam === team && atMarker) {
+        if (atMarker) {
           this.state.checkpointLossSeconds[team][index] = 0;
           continue;
         }
         this.state.checkpointLossSeconds[team][index] += dt;
-        if (this.state.checkpointLossSeconds[team][index] >= CHECKPOINT_RECOVERY_SECONDS) {
-          this.state.checkpointProgress[team][index] = 0;
-          this.state.checkpointLossSeconds[team][index] = 0;
-        }
+        // S3mix describes recovery only after leaving the marker, taking
+        // roughly three seconds. The linear curve is a local approximation.
+        this.state.checkpointProgress[team][index] = Math.max(0,
+          this.state.checkpointProgress[team][index] - list[index].count * dt / CHECKPOINT_RECOVERY_SECONDS);
+        if (this.state.checkpointProgress[team][index] < EPSILON) this.state.checkpointProgress[team][index] = 0;
       }
     }
   }
