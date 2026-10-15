@@ -167,13 +167,20 @@ test('native ranked bots paint and capture a zone, then count it down', () => {
 
 test('native ranked bots jump onto the moving Tower deck and carry its live objective', () => {
   const match = start('tower'), seen = metrics();
+  let hits = 0;
+  const stop = f.on('hit', event => {
+    if (event.damage > 0 && match.actors.includes(event.attacker) && match.actors.includes(event.victim)
+      && event.attacker.team !== event.victim.team) hits++;
+  });
   const initial = match.ranked.rule.state.pathDistance;
-  step(match, 60 * 60, seen);
+  try { step(match, 60 * 60, seen); }
+  finally { stop(); }
   const moved = Math.abs(match.ranked.rule.state.pathDistance - initial) > 0.5 || seen.maxProgress > initial / match.ranked.rule.metrics.total + 0.01;
   finish(match);
   assert.ok(seen.boarded, `at least one native Actor must land on the live tower collider: ${JSON.stringify([...seen.events])}`);
   assert.ok(moved, `native riders must move the Tower and update counts: ${JSON.stringify([...seen.events])}`);
   assert.ok(seen.maxCountDelta > 0, `native riders must change an actual ranked count: ${JSON.stringify([...seen.events])}`);
+  assert.ok(hits > 0, 'native Tower projectiles must inflict accepted opponent damage while bots play the objective');
 });
 
 test('native Rainmaker combat pops the shield, picks up, and lets nearby escorts fight', () => {

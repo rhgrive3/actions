@@ -150,7 +150,8 @@ test('ranked Clams minimap uses live positions and marks every Power Clam carrie
 });
 
 test('ranked HUD exposes the Clams throw controls and wraps within a tiny viewport', () => {
-  assert.match(rankedUiSource, /THROW C \/ A/);
+  assert.match(rankedUiSource, /THROW \[C\]/);
+  assert.match(rankedUiSource, /THROW \[A\]/);
   assert.match(rankedUiSource, /max-width:min\(calc\(100vw - 12px\),720px\)/);
   assert.match(rankedUiSource, /@media \(max-width:560px\) \{ \.iw-ranked-hud \{ width:calc\(100vw - 12px\)/);
   assert.match(rankedUiSource, /display:flex; flex-wrap:wrap; align-items:center; justify-content:center/);
