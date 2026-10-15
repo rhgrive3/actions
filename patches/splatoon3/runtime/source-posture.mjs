@@ -55,7 +55,7 @@ function moveFactor(c) {
   return m * m * (3 - 2 * m);
 }
 function postureState(retarget) {
-  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false });
+  return retarget.s3Posture || (retarget.s3Posture = { weight: 0, move: 0, time: null, neck: 0, carryEligible: false, carryMix: 0 });
 }
 /** Smoothed 0 standing … 1 moving, so a stop or start never snaps the carry or the support hand. */
 function smoothMove(retarget) { return postureState(retarget).move; }
@@ -79,7 +79,8 @@ export function sourcePostureWeight(retarget) {
  * Only that prior acquisition survives into air/land; a new visible humanoid
  * emerging into air must not borrow the old squid's weapon pose. */
 export function sourceCarryWeight(retarget) {
-  return postureState(retarget).carryEligible ? 1 : 0;
+  const st = postureState(retarget);
+  return st.carryEligible ? st.carryMix : 0;
 }
 function formClipOwnsCarry(c) {
   return !c || !!c.manual || c.formKid === false ||
@@ -95,11 +96,23 @@ function advanceWeight(retarget) {
   const move = moveFactor(c);
   // Preserve ordinary moving->air->land carry continuity. Only grounded
   // idle/move can acquire it; ToHuman/manual/squid reset that origin state.
-  if (!enabled || !c || c.manual || c.formKid === false ||
-      st.time === null || now === null || now < st.time) st.carryEligible = false;
+  const fresh = st.time === null || now === null || now < st.time;
+  if (!enabled || !c || c.manual || c.formKid === false || fresh) {
+    st.carryEligible = false;
+    st.carryMix = 0;
+  }
   if (enabled && c && !c.manual && c.formKid !== false) {
-    if (CORRECTED_STATES.has(c.state)) st.carryEligible = true;
-    else if (c.state !== 'air' && c.state !== 'land') st.carryEligible = false;
+    if (CORRECTED_STATES.has(c.state)) {
+      if (!st.carryEligible) {
+        st.carryEligible = true;
+        // A brand-new retarget controller starts in its ordinary authored
+        // ground stance; only re-entry from an actual form/action fades in.
+        if (fresh) st.carryMix = 1;
+      }
+    } else if (c.state !== 'air' && c.state !== 'land') {
+      st.carryEligible = false;
+      st.carryMix = 0;
+    }
   }
   if (!enabled) st.weight = 0;
   if (!enabled || st.time === null || now === null || now < st.time) { st.weight = enabled ? wanted : 0; st.move = move; }
@@ -107,6 +120,11 @@ function advanceWeight(retarget) {
     const dt = clamp(now - st.time, 0, 0.1);
     st.weight += (wanted - st.weight) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
     st.move += (move - st.move) * (1 - Math.exp(-SOURCE_POSTURE.standResponse * dt));
+    // Do not snap the weapon from ToHuman's authored hold to a fully yaw-
+    // corrected shooter on the first new grounded frame. Ordinary air/land
+    // preserves the previous mix and uses the existing posture fade.
+    if (st.carryEligible && CORRECTED_STATES.has(c?.state))
+      st.carryMix += (1 - st.carryMix) * (1 - Math.exp(-SOURCE_POSTURE.response * dt));
   }
   // The source transition's visible silhouette must not remain hunched merely
   // because the preceding squid state had a zero posture correction weight.
@@ -153,7 +171,7 @@ export function sourceCarryWeapon(controller, weaponQ) {
   const c = controller.character;
   if (!c || c.weaponKind !== 'shooter' || !controller.retarget ||
       formClipOwnsCarry(controller) || !sourceCarryWeight(controller.retarget)) return;
-  const w = sourcePostureWeight(controller.retarget) *
+  const w = sourceCarryWeight(controller.retarget) * sourcePostureWeight(controller.retarget) *
     clamp(1 - (controller.shootBlend || 0), 0, 1) * smoothMove(controller.retarget);
   if (w <= 1e-4) return;
   const k = SOURCE_POSTURE.carry;
