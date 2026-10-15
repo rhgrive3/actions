@@ -137,20 +137,36 @@ test('production: 95 variants select the original model, and both legacy/catalog
   f.G.physics.segment=(_a,_b,h)=>{h.hit=false;return h;};
   assert.equal(f.WEAPON_ORDER.length,160);
   assert.equal(f.REG.registeredWeaponModels().length,65);
+  // Only explicitly registered variant source rows can own an independent
+  // appearance. Every other kit must still route to its original base model.
+  const reviewed=new Set(f.REG.registeredWeaponVariantModels());
   for(const kit of records) {
     const w=f.WEAPONS[kit.id], b=f.WEAPONS[kit.baseId];
     assert.ok(w,'playable '+kit.main);
     assert.equal(w.sub,kit.sub); assert.equal(w.special,kit.special);
     assert.equal(w.specialCost,kit.specialCost);
     assert.equal(w.modelKind,b.modelKind);
-    assert.equal(f.REG.weaponModelKey(kit.id),kit.baseId);
+    const modelKey=f.REG.weaponModelKey(kit.id);
+    assert.equal(modelKey,reviewed.has(kit.main)?kit.main:kit.baseId,
+      kit.main+' must select only its explicit reviewed visual owner');
+    if(reviewed.has(kit.main)) {
+      const spec=f.REG.weaponModelSpec(kit.id);
+      assert.equal(spec?.sourceRow,kit.main,'registered visual must preserve official source row');
+      assert.equal(spec?.baseId,kit.baseId,'variant visual must preserve base gameplay owner');
+      assert.equal(spec?.family,f.REG.weaponBehaviorFamily(kit.baseId));
+    }
     assert.equal(f.REG.weaponBehaviorFamily(kit.id),f.REG.weaponBehaviorFamily(kit.baseId));
     assert.equal(f.REG.weaponModelFamily(kit.id),f.REG.weaponModelFamily(kit.baseId));
   }
   for(const kit of [records.find(x=>x.main==='Shooter_Normal_01'),
                     records.find(x=>x.main==='Shooter_Precision_02'),
                     records.find(x=>x.main==='Roller_Compact_02')]) {
-    assert.strictEqual(f.getWeaponDef(f.REG.weaponModelKey(kit.id)), f.getWeaponDef(kit.baseId));
+    const modelKey=f.REG.weaponModelKey(kit.id),selected=f.getWeaponDef(modelKey),base=f.getWeaponDef(kit.baseId);
+    if(reviewed.has(kit.main)){
+      assert.notStrictEqual(selected,base,'approved visual finish owns its independent def');
+      assert.equal(selected.modelId,kit.baseId,'variant visual keeps original native model/animation family');
+      assert.equal(selected.modelVariantId,kit.main,'variant visual identity stays source-row bound');
+    } else assert.strictEqual(selected,base,'unmodified kit shares canonical base geometry');
     f.G.projectiles.clear();f.G.actors.length=0;
     const actor=f.make(kit.id);
     assert.equal(actor.weaponId,kit.id);
