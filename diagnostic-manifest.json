@@ -6,7 +6,7 @@
     "source": 46,
     "emitted": 46,
     "skipped": 0,
-    "diagnosticControls": 32,
+    "diagnosticControls": 39,
     "images": 54,
     "measuredRows": 24,
     "steadySamplesPerRow": 12
@@ -99,9 +99,9 @@
     },
     {
       "path": ".github/workflows/limited-weapon-acceptance.yml",
-      "sha256": "278e8b7bbd648f837d67e390dabe6cdfd690476339ee7015bb44ed865965c547",
-      "blob": "f92040a9742005ad12cdeb6b797988edea26b3a0",
-      "bytes": 2731
+      "sha256": "45d33ece71372abcb3033ee75824f27c215952965e08e2994d62f7134c828ec5",
+      "blob": "037d317ae879ae1b3966e2313abf6b04333c6cd6",
+      "bytes": 2549
     },
     {
       "path": "acceptance-plan.json",
@@ -114,6 +114,18 @@
       "sha256": "58d9c98b708b41fec513d641da1bbd68adcab149dee775aeba053cc2ab2f9bf2",
       "blob": "75b77f5db51fb167336505187943b602090515c1",
       "bytes": 2535
+    },
+    {
+      "path": "select-candidate.mjs",
+      "sha256": "8c4909cd550f1b0ea496d68d9b6a7d84599ef023fe218cf60e2e3441332baff5",
+      "blob": "fd9865c0656ee1c55578871476f6bfc3cc1982b4",
+      "bytes": 491
+    },
+    {
+      "path": "select-candidate.test.mjs",
+      "sha256": "05d00b6b0c639ef4e0251b4f5b8c40282cf3b59b46e0014ccb41c1372741a8c6",
+      "blob": "85d5969c75342e52a373bfcbc8fd3cbafa338efd",
+      "bytes": 1499
     }
   ],
   "candidateHead": "d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd",

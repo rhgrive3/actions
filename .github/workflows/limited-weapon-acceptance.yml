@@ -17,8 +17,8 @@ jobs:
           node-version: 22
       - name: Require frozen plan
         run: |
-          node --input-type=module -e "import fs from 'node:fs';import {validateVariantPlan}from './diagnostic/variant-plan.mjs';validateVariantPlan(JSON.parse(fs.readFileSync('./diagnostic/acceptance-plan.json')))"
-          echo "CANDIDATE=$(node -p 'require(\"./diagnostic/acceptance-plan.json\").candidateHead')" >> "$GITHUB_ENV"
+          node --test diagnostic/select-candidate.test.mjs
+          node diagnostic/select-candidate.mjs diagnostic/acceptance-plan.json "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.CANDIDATE }}
