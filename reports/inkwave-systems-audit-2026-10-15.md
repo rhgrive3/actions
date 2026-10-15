@@ -55,3 +55,32 @@ Baseline: merged batch A `e975fb76c63ee6a70af7b288b250cb514ccc6553` (PR #1452). 
 Batch A merge receipt: PR #1452 merged as `e975fb76c63ee6a70af7b288b250cb514ccc6553`; merge tree exactly matches the locally validated tree `a4c4636f145e4ef4d1d38fad1ca166d7e12b66fd`. Additional emitted ranked integration/network tests: 32 pass; exact-HEAD packaging: 10 pass. CI was queued at merge, not reported as green.
 
 Batch B emitted checks: five whole-module sensor-transition cases pass against minified code; adjacent emitted map/gyro/disable/inversion tests pass 26/26, including the emitted-only Game HUD cases. Related source composition/idle/startup tests pass 28/28 (overlap with the 61-case suite above).
+
+## Batch C: continuous special audio disposal
+
+Baseline: `1bacf21b8ce33137253ab89b83b51cbf1009fe43` (PR #1453). Batch B's merge tree `977ff24a6c590ba6dcf2a7b208adca5ece2384bc` exactly matches the locally tested/uploaded tree; packaging passed 10/10. Its CI was queued at merge.
+
+Native direct Match.dispose previously left continuous special handles and their actor references in kit audio's active Map. The existing `match:dispose` event now retires only that match's actors, before character disposal. Removing/splatting actors still retires once. A replacement match's active sounds survive disposal of an old match.
+
+- Negative native Match/Actor fixture: 1 pass / 2 assertion failures. Initial missing terrain seam was corrected before recording negative assertions.
+- Candidate native disposal + audio-loader lifetime + Boss lifetime: 38/38 pass.
+- Entire audio test set: 74/74 pass, including 2,088 rendered procedural PCM fixture variants. This is test-only synthetic render coverage, not licensed/retail playback acceptance.
+- Same native disposal cases are added to emitted CI. Emitted/build packaging and broader controls/network/quality results must be checked before merge.
+
+Batch C emitted disposal tests pass 3/3; emitted cross-check of batches A/B passes 11/11.
+
+## Ready existing work reviewed during the audit
+
+PR #1448's four-file verifier patch was reviewed: one absolute 30-second selector/animation deadline, no readiness relaxation, first-state evidence captured before screenshots. Its 12 portable tests pass locally, and all substantive exact-head GitHub checks were successful. Merged as `23c0e2960f05bcd511dd93d57cf89d13f0ae9948`. This does not fix or close #1432. PR #1445's duration/bomb/cosmetic hardening is separately reviewed; its final Validate job is still running, so it has not been treated as accepted.
+
+## Final batch C validation and remaining work
+
+- Network replication + reliability source suite: 1,459 pass / 0 fail / 11 emitted-only skips (1,470 tests).
+- Local quality + practice range + movement + cache source suite: 1,060 pass / 0 fail / 14 environment/emitted-only skips (1,074 tests).
+- Final exact-HEAD build packaging plus imported pause readiness helper: 22/22 pass. Startup dependency/byte gates pass. Workflow/runtime-evidence/cursor diagnostics: 44/44 pass.
+- Final content/input hashes: `28f0f4d4d547aa3f73b9ad477d7423b77cdacd78d9f5c8f9fc2c195a49813808` / `4bb0a96ae3443b2bc968046c1068e55155cc7f29f40e7aeb69a813371ea52e4b`. Pre/post verifier reconciliation builds have identical hashes.
+- Chromium 153.0.8010.0 real game rematch verifier: all three strict lifecycle rounds plus 95 simulated seconds in the untimed range and return to ordinary Turf pass. No failures, browser errors or missing resources. Compressed original receipt: `inkwave-systems-c-rematch-2026-10-15.json.gz`. No opacity assertions, deadlines, animation behavior or native input paths were relaxed. This run did not reproduce #1432; it does not prove that intermittent issue resolved.
+- Existing native touch reliability verifier: Chromium completes all 38 checks, including held release/repress through actual Actor/Runner/Character, without browser errors. Original overall failed receipt: `inkwave-systems-c-reliability-2026-10-15.json`. WebKit download succeeded, but launch requires missing GTK/GStreamer/etc. libraries; Playwright install-deps fails on setgroups/setuid/setgid in this managed environment. Thus #1430's required two-engine repetition is not accepted or closed. Physical sensor and Switch comparison remain unavailable.
+- PR #1445's final Validate job failed in `ink-volume-recipes.test.mjs` (native catalogue wire births 6 vs 9). Inspection reproduces the failure: legitimate zero-width Diffusion Slosher entries serialize tail0=501, while its new admission caps tail0 at16. This is a concrete compatibility failure; do not merge that head. Its other substantive jobs passed, but they do not replace the failed quality regression.
+
+Independent defects confirmed during this audit are repaired in batches A/B/C. Remaining retail movement/paint numerical calibration, physical-device behavior and whole-game hardware benchmarks still need their actual evidence. Existing visual/stage/model PRs retain their own acceptance work; no unmeasured retail values or unsupported rendering fixes are inferred from these passing tests.
