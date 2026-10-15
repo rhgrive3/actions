@@ -149,6 +149,8 @@ test('SWEPs muzzle splash cones and shipped SWEPs assets', async () => {
   // MuzzleSplash.lua: t = Lerp(f, 3, rad*scale), r = Lerp(4f(1-f), rad/5, rad); 2nd cone at 2f, t = Lerp(1.4f)
   assert(close(cfg.length / cfg.radius, 2) && close(cfg.radius / cfg.minLength, 25 / 3), 'shooter a, s, r = 7, 2, 25');
   assert.equal(cfg.life, 7);
+  // SWEPs' own scale: ss.ToHammerUnits HU per DU, 10 DU per INKWAVE metre
+  assert(Math.abs(cfg.radius - 25 * 0.1 / (0.1 * 3.28084 * 16 * (1.00965 / 1.5))) < 1e-9, 'radius 25 HU');
   let c = splashCone(cfg, 0, 0); assert(close(c.length, cfg.minLength) && close(c.radius, cfg.radius / 5));
   c = splashCone(cfg, 0.5, 0); assert(close(c.radius, cfg.radius));
   c = splashCone(cfg, 1, 0); assert(close(c.length, cfg.length) && close(c.radius, cfg.radius / 5));

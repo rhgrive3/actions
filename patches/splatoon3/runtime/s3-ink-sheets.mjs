@@ -10,7 +10,7 @@
 //   16 segments open forward from the nozzle with the muzzlesplash texture
 //   square-mapped onto them (apex = texture centre). The alpha-test reference
 //   rises 0.1 -> 0.9 over the life so the splat tears from its thin centre out
-//   to its fingers. Length t = Lerp(f, 3, rad * scale), radius
+//   to its fingers. It follows the muzzle while it lives. Length t = Lerp(f, 3, rad * scale), radius
 //   r = Lerp(4f(1 - f), rad / 5, rad); the second cone runs at 2f with
 //   t = Lerp(1.4f, ...). Shooter dispatch: 7 frames, scale 2, radius 25 HU.
 // - Sloshing Machine: lua/effects/SplatoonSWEPsShooterInk.lua CreateSpiralEffects
@@ -18,22 +18,19 @@
 //   frames the round leaves mSpiralSplashSameTimeBulletNum (3) spiral ribbons
 //   120 deg apart, offset 360 / mSpiralSplashRoundSplitNum (90) deg per group;
 //   each lives mSpiralSplashLifeFrame (11) frames, rolls 120 deg and drifts
-//   20 HU forward while fading.
+//   20 HU forward while its alpha fades linearly (translucent inkring).
 // - Stringer / Splatana are not in SWEPs. Their swept ribbons keep the footage
 //   calibration below and take the inkring membrane texture for holes and edge.
 //   Stringer: twisted ribbons wrap the bow on release while droplets hang
 //   (About video 03, 1.70-1.82 s). Splatana: a huge layered wave along the
 //   blade arc with a torn outer edge (Splatana Wiper promotional screenshot).
-// Units: scaled by character height, INKWAVE kid 1.45 m (config PLAYER.height)
-// to the 72 HU Garry's Mod player SWEPs is drawn around. Its own DU conversion
-// (3.53 HU per DU, 10 DU per metre) would make every effect 1.4x larger next
-// to the character, and the Sloshing Machine rings then outgrow the player's
-// body, unlike Nintendo footage (Bilibili BV15N411h7Ke, 9.7 s).
+// Built the same way as SWEPs, at its own scale: ss.ToHammerUnits
+// (.1 * 3.28084 * 16 * 1.00965 / 1.5 HU per DU) with INKWAVE's 10 DU per metre.
 import { MUZZLE_SPLASH, INK_RING, SLOSHING_SPIRAL } from './s3-sweps-assets.mjs';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (f, a, b) => a + (b - a) * clamp(f, 0, 1); // GMod Lerp clamps
-const HU = 1.45 / 72;
+const HU = 0.1 / (0.1 * 3.28084 * 16 * (1.00965 / 1.5)); // metres per Hammer unit
 
 export const SHEET_STYLE = Object.freeze({ splash: 0, arc: 1 });
 export const FIRE_INK = Object.freeze({
@@ -140,7 +137,7 @@ const BUMP = `
     float det = dot(sx, r1) * face;
     return normalize(abs(det) * n - sign(det) * (dh.x * r1 + dh.y * r2));
   }`;
-const FRAGMENT_STATE = '\nfloat vS3Streak = 1.0; vec2 vS3Dh = vec2(0.0);';
+const FRAGMENT_STATE = '\nfloat vS3Streak = 1.0; float vS3Alpha = 1.0; vec2 vS3Dh = vec2(0.0);';
 
 const SHEET_FRAGMENT = `
   varying vec2 vS3Uv;
@@ -182,18 +179,19 @@ const SPIRAL_FRAGMENT = `
   varying vec2 vS3S;
   uniform sampler2D s3Ring;
   ${BUMP}`;
-// SWEPs fades the spiral's alpha over its life; an alpha test on the same
-// inkring texture tears it apart instead and needs no sorting.
+// SloshingSpiral.lua: translucent inkring, alpha = texture * (Duration - t) / Duration.
 const SPIRAL_CUT = `
   {
     float h = texture2D(s3Ring, vS3Uv).r;
     vS3Dh = vec2(dFdx(h), dFdy(h)) * 2.5;
-    if (h < mix(0.08, 0.95, vS3S.x)) discard;
+    vS3Alpha = h * (1.0 - vS3S.x);
+    if (vS3Alpha < 0.004) discard;
     vS3Streak = 0.8 + 0.3 * h;
   }`;
 
-function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertexBody, fragmentHead, cut }) {
-  const mat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.1, side: THREE.DoubleSide });
+function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertexBody, fragmentHead, cut, translucent = false }) {
+  const mat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.14, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 1.1, side: THREE.DoubleSide,
+    transparent: translucent, depthWrite: !translucent });
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, uniforms);
     let vs = sh.vertexShader.replace('#include <common>', '#include <common>' + vertexHead);
@@ -202,7 +200,7 @@ function inkMaterial(THREE, key, nearDither, rim, uniforms, { vertexHead, vertex
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>' + fragmentHead + FRAGMENT_STATE)
       .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>' + cut + nearDither)
-      .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= vS3Streak;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb *= vS3Streak; diffuseColor.a *= vS3Alpha;')
       .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n normal = s3Bump(-vViewPosition, normal, vS3Dh, faceDirection);')
       .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>' + rim);
   };
@@ -233,10 +231,10 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
   const a = new THREE.InstancedBufferAttribute(new Float32Array(MAX_SHEET * 4), 4).setUsage(THREE.DynamicDrawUsage);
   const b = new THREE.InstancedBufferAttribute(new Float32Array(MAX_SHEET * 4), 4).setUsage(THREE.DynamicDrawUsage);
   mesh.geometry.setAttribute('aSheetA', a); mesh.geometry.setAttribute('aSheetB', b);
-  const spiral = new THREE.InstancedMesh(spiralGeometry(THREE), inkMaterial(THREE, 's3-ink-spiral-1', nearDither, rim, uniforms, {
+  const spiral = new THREE.InstancedMesh(spiralGeometry(THREE), inkMaterial(THREE, 's3-ink-spiral-2', nearDither, rim, uniforms, {
     vertexHead: SPIRAL_VERTEX,
     vertexBody: [['#include <begin_vertex>', '#include <begin_vertex>\nvS3Uv = uv; vS3S = aSpiral;']],
-    fragmentHead: SPIRAL_FRAGMENT, cut: SPIRAL_CUT,
+    fragmentHead: SPIRAL_FRAGMENT, cut: SPIRAL_CUT, translucent: true,
   }), MAX_SPIRAL);
   const sa = new THREE.InstancedBufferAttribute(new Float32Array(MAX_SPIRAL * 2), 2).setUsage(THREE.DynamicDrawUsage);
   spiral.geometry.setAttribute('aSpiral', sa);
@@ -263,12 +261,13 @@ export function createInkSheets(THREE, scene, { nearDither, rim }) {
   return {
     mesh, spiral, bursts, spirals,
     // Remember one firing; `at` is the nozzle (or the swing pivot), `dir` the shot direction.
-    add(kind, at, dir, color, seed, time) {
+    // `owner` (SWEPs splash only) keeps the splash on that actor's muzzle.
+    add(kind, at, dir, color, seed, time, owner = null) {
       const cfg = FIRE_INK[kind];
       if (!cfg) return null;
       if (bursts.length >= MAX_BURST) bursts.shift();
       const burst = { kind, cfg, t0: time, seed, color: color.clone ? color.clone() : color,
-        at: at.clone(), dir: dir.clone().normalize() };
+        at: at.clone(), dir: dir.clone().normalize(), owner };
       bursts.push(burst);
       return burst;
     },

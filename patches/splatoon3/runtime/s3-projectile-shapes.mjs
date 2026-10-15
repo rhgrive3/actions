@@ -421,7 +421,7 @@ function fireInk(R, p, kind, f, G, system) {
   last.kind = kind; last.t = time - p.age; last.x = p.start.x; last.y = p.start.y; last.z = p.start.z;
   const cam = G?.camera?.position;
   if (cam && cam.distanceToSquared(p.start) > 1600) return;
-  let at = p.start, t0 = time - p.age;
+  let at = p.start, t0 = time - p.age, follow = null;
   const cfg = FIRE_INK[kind];
   if (cfg.pivotY != null && p.owner?.pos) {
     // the swing wave hangs around the player, already mid-sweep at bullet birth
@@ -429,9 +429,9 @@ function fireInk(R, p, kind, f, G, system) {
   } else if (cfg.style === 0 && typeof system?._muzzle === 'function' && p.owner?.character?.getMuzzle && p.owner.pos) {
     // SWEPs sticks the splash to the muzzle attachment; rounds are born ahead of it
     system._muzzle(p.owner, R.v);
-    if (R.v.distanceToSquared(p.start) < 4) at = R.v;
+    if (R.v.distanceToSquared(p.start) < 4) { at = R.v; follow = p.owner; }
   }
-  const burst = R.sheets.add(kind, at, f, p.owner.color, p.seed || 0, t0);
+  const burst = R.sheets.add(kind, at, f, p.owner.color, p.seed || 0, t0, follow);
   if (burst) R.sheets.specks(G?.fx, burst);
 }
 
@@ -541,6 +541,12 @@ export function drawS3Shapes(system, THREE, G) {
   }
   bodyData.clearUpdateRanges(); bodyData.addUpdateRange(0, nb * 4); bodyData.needsUpdate = nb > 0;
   upload(body, nb); upload(slashH, nh); upload(slashV, nv); upload(shell, ns); upload(core, nc);
+  // SWEPs MuzzleSplash renders at the muzzle attachment every frame
+  for (const b of R.sheets.bursts) if (b.owner?.character?.getMuzzle && b.owner.pos) {
+    system._muzzle(b.owner, R.v2);
+    if (R.v2.distanceToSquared(b.at) < 4) b.at.copy(R.v2);
+    if (b.owner.aimDir?.lengthSq?.() > 1e-6) b.dir.copy(b.owner.aimDir).normalize();
+  }
   const ink = R.sheets.draw(Number.isFinite(G?.time) ? G.time : 0, cam);
   R.sparks.visible = nk > 0; R.sparks.userData.count = nk; R.sparks.geometry.setDrawRange(0, nk);
   if (nk) {
