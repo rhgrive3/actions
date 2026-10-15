@@ -279,7 +279,8 @@ test('the posture blend is frame-rate independent, holds on paused frames and le
 test('source ToHuman bow is corrected after kid silhouette returns, without changing action clocks', async () => {
   const api = await production();
   const emergence = api.posture.sourceEmergePostureWeight;
-  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0.2 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0 }), 0);
+  assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0.001 }), 1);
   assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: true, formWeight: 0.85 }), 1);
   assert.equal(emergence({ state: 'ToHuman', formKid: false, grounded: true, formWeight: 1 }), 0);
   assert.equal(emergence({ state: 'ToHuman', formKid: true, grounded: false, formWeight: 1 }), 0);
