@@ -301,6 +301,10 @@ jobs:
           node scripts/check-inkwave-startup-budget.mjs _site
           INKWAVE_BUILT_SITE=_site node --test scripts/tests/inkwave-build-packaging.test.mjs
           git rev-parse HEAD > _site-source-sha.txt
+      - name: Verify real emitted material handoff ownership and cancellation
+        env:
+          INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs
       - name: Verify emitted Tenacity lock and passive ownership
         env:
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
@@ -533,7 +537,7 @@ jobs:
         run: node scripts/check-inkwave-range.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/range" --profile-dir "$CI_STORAGE/cache/range"
       - name: Verify responsive menus in Chromium and WebKit
         if: matrix.suite == 'responsive'
-        run: node scripts/check-inkwave-responsive.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
+        run: node scripts/check-inkwave-responsive-isolated.mjs --source .built-site/_site --section all --evidence-dir "$CI_STORAGE/evidence/responsive" --profile-dir "$CI_STORAGE/cache/responsive"
       - name: Measure cold, warm, PWA restart and offline startup in Chromium
         if: matrix.suite == 'startup'
         run: node scripts/check-inkwave-startup-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/startup" --profile-dir "$CI_STORAGE/cache/startup" --source-sha "$SOURCE_SHA" --runs 3
