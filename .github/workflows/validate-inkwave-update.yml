@@ -118,6 +118,8 @@ jobs:
           if-no-files-found: error
           path: ${{ env.FOCUSED_EVIDENCE_DIR }}/
           retention-days: 14
+      - name: Verify queued InkFlight and catalogue bot liveness fixes
+        run: node --experimental-vm-modules --test patches/network-replication/tests/queue-inkflight-owned-profile.test.mjs patches/local-quality/tests/catalog-charge-bot-release.test.mjs
       - name: Verify source session admission and finite view settings
         run: node --experimental-vm-modules --test patches/reliability/tests/session-wire-admission.test.mjs patches/local-quality/tests/view-settings.test.mjs
       - name: Verify claimed room startup and gyro health regressions

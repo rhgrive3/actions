@@ -95,6 +95,19 @@ export function validNetworkBombBirth(e, stageBounds = null) {
 // 19..26 and the renderer's four-entry SAT_SIZE table.
 // Tail is a ratio, not a world length. Source-owned zero-width Slosher
 // entries reach 1 + 4/.001 = 4001; bound ratio and base drawn extent separately.
+// Slot 27 is a legacy scalar, null, a catalogue metadata object or a
+// source-guided ink-flight tuple. Only the tuple is consumed by InkFlightRuntime.
+// Admit only the known on-wire profiles before owner replay sequence advances.
+const NETWORK_INK_FLIGHT_PROFILES = new Set(['shooter', 'dualies', 'splatling']);
+export function validNetworkProjectileInkMeta(meta) {
+  if (!Array.isArray(meta)) return true;
+  return meta.length === 5 && meta[0] === 'iw-ink-flight-1'
+    && typeof meta[1] === 'string' && NETWORK_INK_FLIGHT_PROFILES.has(meta[1])
+    && integer(meta[2], 0, Number.MAX_SAFE_INTEGER)
+    && bounded(meta[3], 0, 1) && meta[3] < 1
+    && typeof meta[4] === 'boolean';
+}
+
 export const NETWORK_PROJECTILE_TAIL_RATIO_MAX = 4096;
 export const NETWORK_PROJECTILE_TAIL_EXTENT_MAX = 128;
 export function validNetworkProjectileCosmetics(e) {
@@ -108,7 +121,7 @@ export function validNetworkProjectileCosmetics(e) {
     if (!bounded(e[21], 0, NETWORK_PROJECTILE_TAIL_RATIO_MAX) || !finite(width) || width < 0
       || width * e[21] > NETWORK_PROJECTILE_TAIL_EXTENT_MAX) return false;
   }
-  return e[26] === undefined || integer(e[26], 0, 4);
+  return (e[26] === undefined || integer(e[26], 0, 4)) && validNetworkProjectileInkMeta(e[27]);
 }
 
 export function validSnapshotTimestamp(timestamp) {

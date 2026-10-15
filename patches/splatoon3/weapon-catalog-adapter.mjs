@@ -16,17 +16,6 @@ function replaceAllExpected(code, before, after, expected, label) {
   return code.split(before).join(after);
 }
 
-function behaviorKindHelper(name) {
-  return `// Temporary legacy-control approximation for catalog families; this does not define Splatoon 3 behavior.
-const ${name} = (weapon) => {
-  const family = weapon?.behaviorKind || (weapon?.kind === 'catalog' ? weapon?.modelKind : weapon?.kind);
-  if (family === 'stringer' || family === 'splatana') return 'charger';
-  if (family === 'brush') return 'roller';
-  if (family === 'brella') return 'shooter';
-  return family;
-};`;
-}
-
 export function adaptWeaponCatalog(rel, code) {
   if (rel === 'src/game/character.js') {
     code = replaceOnce(code,
@@ -93,18 +82,13 @@ export function adaptWeaponCatalog(rel, code) {
   }
 
   if (rel === 'src/game/bots.js') {
-    code = "import { driveCanonicalBotSpecial } from '../../patches/splatoon3/runtime/canonical-kits.mjs';\n" + code;
-    code = replaceOnce(code, '    // ---------------- aim: critically-damped spring',
-      '    driveCanonicalBotSpecial(a, it, dt, this.target);\n    // ---------------- aim: critically-damped spring', 'canonical bot special inputs');
-    code = replaceOnce(code,
-      "import { PLAYER, DIFFICULTY, SUB } from '../config.js';",
-      `import { PLAYER, DIFFICULTY, SUB } from '../config.js';\n\n${behaviorKindHelper('botBehaviorKind')}`,
-      'bot behavior-kind helper');
-    code = replaceAllExpected(code, 'w.kind', 'botBehaviorKind(w)', 45, 'bot weapon family decisions');
-    return replaceOnce(code,
-      'this.a.weapon.kind === \'charger\'',
-      "botBehaviorKind(this.a.weapon) === 'charger'",
-      'boss bot behavior-kind decision');
+    // BotBrain now owns its precise behavior-family selection in the source.
+    // Do not rewrite 45 `w.kind` occurrences or fold Stringer/Splatana into
+    // Charger here. Preserve the independent canonical special adapter only.
+    code = "import { driveCanonicalBotSpecial } from '../../patches/splatoon3/runtime/canonical-kits.mjs';\\n".replace('\\n','\n') + code;
+    return replaceOnce(code, '    // ---------------- aim: critically-damped spring',
+      '    driveCanonicalBotSpecial(a, it, dt, this.target);\\n    // ---------------- aim: critically-damped spring'.replace('\\n','\n'),
+      'canonical bot special inputs');
   }
 
   if (rel === 'src/game/player.js') {
