@@ -1,5 +1,5 @@
 {
-  "status": "frozen local controls; independent review pending; actual browser pending",
+  "status": "Frozen literal checkout repair; actual GPU pending",
   "candidateHead": "97e73d721e262c4d13f7f9a7eacfedddefacbcd3",
   "candidateTree": "d3ec5f0141ac8dd6e46cc835b48aa6c597e83a2f",
   "baseHead": "21f54ffc024383d0d65b77ffece0e710c93b4bd3",
@@ -8,7 +8,7 @@
     "modelEmitted": 145,
     "skips": 0,
     "settingsSource": 2,
-    "controls": 68,
+    "controls": 72,
     "images": 72,
     "workRows": 36
   },
@@ -51,8 +51,8 @@
     },
     {
       "path": "variant-plan.test.mjs",
-      "blob": "7bcea8610510140c729b579a267eccccb65a94d9",
-      "sha256": "302a4462fc51e184ae7fcd16d7b0915d453652927ce78d260a7fe57130625120",
+      "blob": "6facd27aed18206baa7101fb4d51c1fdb8166c54",
+      "sha256": "0f91ac4b1851bee13b10d3feb93951bfaa9d7f2a1ddf8eb77299fe6535d1b536",
       "bytes": 1927
     },
     {
@@ -141,9 +141,21 @@
     },
     {
       "path": ".github/workflows/fifth-weapon-acceptance.yml",
-      "blob": "726cb197626b2bcbdf9bf63ca4241b6b73aea35a",
-      "sha256": "1474837940f9a2a8659303c224814f9bf5f4c1207f5177bea1fbe13535f66442",
-      "bytes": 2962
+      "blob": "d9297652fcc907e5063618c257841ebae396f815",
+      "sha256": "42545e2c80129ae95312d4e60f8b6cd32548ca6dc1de91e8f0d47f67f34c93ae",
+      "bytes": 3147
+    },
+    {
+      "path": "check-diagnostic-layout.mjs",
+      "blob": "79d3025f8c5c3a9f3ef8f61670763d888b5e7353",
+      "sha256": "44f3ed95e235400a488e21a1846d543232be5eb099ce8dd806ca66d42371af6c",
+      "bytes": 2165
+    },
+    {
+      "path": "diagnostic-layout.test.mjs",
+      "blob": "4d8126470ff2d34f209d25b253e02e820113ce8c",
+      "sha256": "3e491694f2ae5c3d19ea438b271d227f5f5dd1f30102f975e74636fc267cb28e",
+      "bytes": 3371
     }
   ]
 }

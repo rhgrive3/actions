@@ -17,6 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Verify literal diagnostic checkout layout
+        run: |
+          node diagnostic/check-diagnostic-layout.mjs
+          node --test diagnostic/diagnostic-layout.test.mjs
       - name: Require frozen plan
         run: |
           node --test diagnostic/select-candidate.test.mjs
