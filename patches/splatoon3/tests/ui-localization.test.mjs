@@ -14,6 +14,8 @@ test('room state templates preserve names, codes and English mode',()=>{
  assert.equal(translate('Waiting for Player <1>'),'Player <1>を待っています');
  assert.equal(translate('2 bots join the squad'),'チームにボット2人を追加');
  assert.equal(translate('Player <1>'),'Player <1>');
+ assert.equal(translate('Player <1> joined the room'),'Player <1>が参加しました');
+ assert.equal(translate('Waiting for Player <1> to ready up'),'Player <1>の準備を待っています');
  assert.equal(makeUiTranslator(x=>x,UI_JA,false)('Waiting for Player <1>'),'Waiting for Player <1>');
 });
 test('live DOM updates translate owned labels while player names remain byte-identical',()=>{

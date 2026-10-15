@@ -7,6 +7,11 @@ import { MODELS as SPLATLINGS } from './splatlings.mjs';
 import { MODELS as DUALIES } from './dualies.mjs';
 import { MODELS as BRELLAS } from './brellas.mjs';
 import { MODELS as STRINGERS } from './stringers.mjs';
+import { FOLLOWUP_MODELS as CURRENT_BRELLAS } from './variants-brella-palette-followup.mjs';
+import { FOLLOWUP_MODELS as CURRENT_REEF } from './variants-reef-deco-followup.mjs';
+import { FOLLOWUP_MODELS as CURRENT_INKLINE } from './variants-inkline-followup.mjs';
+import { FOLLOWUP_MODELS as CURRENT_WELLSTRING } from './variants-custom-wellstring-followup.mjs';
+const CURRENT_FINISHES = {...CURRENT_BRELLAS,...CURRENT_REEF,...CURRENT_INKLINE,...CURRENT_WELLSTRING};
 const BASE = { ...CHARGERS, ...SPLATLINGS, ...DUALIES, ...BRELLAS, ...STRINGERS };
 const colors = new Map();
 const color = value => { if (!colors.has(value)) colors.set(value,new THREE.Color(value)); return colors.get(value); };
@@ -32,7 +37,7 @@ function variant(sourceRow,baseId,name,palette,detail,referenceName=name) {
   const base=BASE[baseId];
   definitions.push([sourceRow,Object.freeze({...base,baseId,sourceRow,name,
     sourceUrl:`https://splatoonwiki.org/wiki/File:S3_${referenceName.replaceAll(' ','_').replaceAll('+','%2B')}_model_rotating.mp4`,
-    build(d){return finish(base.build(d),palette,detail);}})]);
+    build(d){return CURRENT_FINISHES[sourceRow]?.build(d) ?? finish(base.build(d),palette,detail);}})]);
 }
 // Small markings are vertex-color approximations, not imported retail textures.
 const within = (p,i,x,y,z,w,h,l) => Math.abs(p.getX(i)-x)<w && Math.abs(p.getY(i)-y)<h && Math.abs(p.getZ(i)-z)<l;
@@ -51,7 +56,7 @@ variant('Maneuver_Dual_01','s3-maneuver-dual','Custom Dualie Squelchers',{},(n,p
 variant('Maneuver_Short_01','s3-maneuver-short','Dapple Dualies Nouveau',{'#a01a5c':'#26438b'});
 variant('Maneuver_Stepper_01','s3-maneuver-stepper','Light Tetra Dualies',{'#202328':'#e5e5df','#702891':'#d3423c'});
 variant('Shelter_Focus_01','s3-shelter-focus','Recycled Brella 24 Mk II',{'#bd4728':'#ad723b'},(n,p,i,c)=>n==='body'&&p.getZ(i)>.53&&close(c,i,color('#bd4728'))?'#885294':null);
-variant('Stringer_Explosion_01','s3-stringer-explosion','Custom Wellstring V',{},(n,p,i,c)=>n==='body'&&p.getY(i)<.02&&Math.abs(p.getZ(i))<.04&&close(c,i,color('#1f5d46'))?'#25292c':null);
+variant('Stringer_Explosion_01','s3-stringer-explosion','Custom Wellstring V',{'#527e91':'#25292c'});
 variant('Maneuver_Normal_01','dualies','Enperry Splat Dualies',{'#2f8a3a':'#d3ab33','#c02a8e':'#ecebe6'});
 variant('Shelter_Wide_01','s3-shelter-wide','Tenta Sorella Brella',{'#b72328':'#dcc536'});
 variant('Stringer_Short_01','s3-stringer-short','REEF-LUX 450 Deco',{},(n,p,i,c)=>n==='body'&&p.getZ(i)>.09&&close(c,i,color('#a9adb4'))?'#24272a':null);
@@ -115,7 +120,7 @@ variant('Spinner_Quick_02','s3-spinner-quick','Mini Splatling RTL-R',{'#493098':
 variant('Spinner_Hyper_02','s3-spinner-hyper','Torrentz Hydra Splatling',{'#e2702a':'#db4d40','#e8c22a':'#e6d9c6'},(n,p,i,c)=>close(c,i,color('#c7cacd'))?(n==='body'?'#3ba0b5':'#3d4345'):n==='body'&&close(c,i,color('#17181b'))&&p.getZ(i)<-.03?'#d8584a':null);
 variant('Shelter_Wide_02','s3-shelter-wide','Tenta Brella CRE-M',{'#5c6440':'#c5c4b3','#2c302c':'#646c69','#d8262c':'#545c54'});
 variant('Stringer_Normal_01','s3-stringer-normal','Inkline Tri-Stringer',{'#7a3b22':'#ba9b55','#2b2c31':'#535b3b'});
-variant('Stringer_Normal_02','s3-stringer-normal','Bulbz Tri-Stringer',{'#7a3b22':'#b58085'});
+variant('Stringer_Normal_02','s3-stringer-normal','Bulbz Tri-Stringer',{'#68452d':'#b58085'});
 {
   const base=BASE['s3-stringer-short'];
   definitions.push(['Stringer_Short_02',Object.freeze({...base,baseId:'s3-stringer-short',sourceRow:'Stringer_Short_02',name:'REEF-LUX 450 MIL-K',

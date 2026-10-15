@@ -1,5 +1,4 @@
 import { parse } from '../loading-cache/vendor/acorn.mjs';
-import { UI_JA, UI_EN } from './runtime/ui-strings.mjs';
 
 // Translate UI-owned text at its update site. A DOM observer would repeatedly
 // scan the live HUD and could rewrite player names or chat messages.
@@ -22,6 +21,12 @@ export function adaptUiLocalization(rel, code) {
     const title = 'return `${TITLE_ADJ[x % TITLE_ADJ.length]} ${TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]}`;';
     if (!code.includes(title)) throw Error('Missing authored splashtag localization anchor');
     code = code.replace(title, "return LANG === 'ja' ? tr(TITLE_ADJ[x % TITLE_ADJ.length]) + tr(TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]) : `${TITLE_ADJ[x % TITLE_ADJ.length]} ${TITLE_NOUN[(x >>> 8) % TITLE_NOUN.length]}`;");
+    const errorToast = "this.toast(E ? `${E.title[0]}${E.title.slice(1).toLowerCase()} — ${E.text.split('.')[0]}.` : msg,";
+    if (!code.includes(errorToast)) throw Error('Missing room error localization anchor');
+    code = code.replace(errorToast, "this.toast(E ? `${tr(E.title)} — ${tr(E.text)}` : tr(msg),");
+    code = code.replace('`${E.title} — ${E.text}`', '`${tr(E.title)} — ${tr(E.text)}`');
+    code = code.replace("host ? host.name : 'The host'", "host ? host.name : tr('The host')");
+
   }
   const ast = parse(code, { ecmaVersion: 'latest', sourceType: 'module' }), changes = [];
   const ownedValues = new Set(['hint','txt','E.title','E.text','m.blurb || \'\'','w.blurb || \'\'','sp.blurb || \'\'','info[v]?.text || \'\'','MOVE_LABELS[id] || id.toUpperCase()']);
@@ -38,6 +43,7 @@ export function adaptUiLocalization(rel, code) {
   function text(node) {
     if (!node || translated(node)) return;
     if (node.type === 'ConditionalExpression') { text(node.consequent); text(node.alternate); }
+    else if (node.type === 'LogicalExpression' && ['||','??'].includes(node.operator)) { text(node.left); text(node.right); }
     else if (hasEnglish(node)) wrap(node);
   }
   function visit(node) {

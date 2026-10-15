@@ -28,13 +28,18 @@ test('ranged variants own fresh finishes while preserving exact topology, channe
   let changed=0;
   for(const [n,g] of geometries(v)){
    const b=new Map(geometries(original)).get(n);assert.ok(b,id+' '+n);
+   const fixedString=id==='Stringer_Short_01'&&['string','stringL'].includes(n);
    assert.deepEqual(Array.from(g.index?.array??[]),Array.from(b.index?.array??[]),id+' index '+n);
    for(const [a,attr] of Object.entries(g.attributes)){
     assert.ok(Array.from(attr.array).every(Number.isFinite),id+' finite '+n+'.'+a);
-    if(a!=='color'||n==='ink'||n==='glow'||original.parts[n]?.mat!=='body'&&n!=='body') assert.deepEqual(Array.from(attr.array),Array.from(b.attributes[a].array),id+' unchanged '+n+'.'+a);
+    if(fixedString&&a==='color'){
+     const black=new f.THREE.Color('#24272a');
+     for(let i=0;i<attr.count;i++)assert.deepEqual([attr.getX(i),attr.getY(i),attr.getZ(i)],Array.from(new Float32Array([black.r,black.g,black.b])),id+' sourced fixed string');
+     assert.notDeepEqual(Array.from(attr.array),Array.from(b.attributes.color.array));changed++;
+    } else if(a!=='color'||n==='ink'||n==='glow'||original.parts[n]?.mat!=='body'&&n!=='body') assert.deepEqual(Array.from(attr.array),Array.from(b.attributes[a].array),id+' unchanged '+n+'.'+a);
     else if(!Buffer.from(attr.array.buffer).equals(Buffer.from(b.attributes[a].array.buffer)))changed++;
    }
-   if(v.parts[n]) {assert.deepEqual(v.parts[n].pivot.toArray(),original.parts[n].pivot.toArray());assert.equal(v.parts[n].mat,original.parts[n].mat);}
+   if(v.parts[n]) {assert.deepEqual(v.parts[n].pivot.toArray(),original.parts[n].pivot.toArray());assert.equal(v.parts[n].mat,fixedString?'body':original.parts[n].mat);}
   }
   assert.ok(changed>0,id+' visible owned color difference');
   assert.deepEqual(signature(spec.build(fresh())),signature(v),id+' deterministic');

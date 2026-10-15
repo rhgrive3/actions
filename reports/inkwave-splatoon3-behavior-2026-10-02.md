@@ -4708,3 +4708,8 @@ Current-base follow-up (2026-10-13): the final reconciliation preserves external
 
 Current main `ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a` retains normal0.21 HP/fixed-frame recovery during actual Storm throw, the60F damage wait, max100 and single allied-rain recovery. Source8/8 and emitted8/8 plus genuine-browser9/9 controlled30/60/120Hz cases now pass with ordinary Q→Sub press/release and the real emitter/cloud. No gameplay values changed; HP/damage-age/special gauge are explicit setup, SwiftShader is not physical-device or proprietary Nintendo animation calibration. See `inkwave-issue-followup-2026-10-16.md` and its bounded receipt. This closes the HP-freeze acceptance for#841 only; other Issues keep their remaining conditions.
 
+
+- 初回の全体ソース検証は 6,293 件（6,260 通過、10 失敗、23 任意参照なしのスキップ）。失敗したメニュー VM の翻訳関数、ミニマップの旧アンカー、描画数ゼロ時の診断順、古い基本色に紐づいた外観を修正して対象を再実行。表彰・ルームの参加退出・ホスト交代・クリップボード失敗・切断理由も日本語で通知する。
+- 後続レビューの REEF-LUX Deco は弦 2 チャンネルを固定の黒へ変更する。検証側でもその 2 チャンネルだけを明示し、黒の全頂点色と固定材質を照合。他の所有インク、全位置・法線・索引・銃口・アニメーションを従来どおり厳密に検証する。
+- ローラー通信の既存検証は、下側接触を継続させる変更前の成長半径を期待していた。原典下ユニットの初期半径 0.1 / 成長後半径 0.55 を照合し、床の最終接触距離 1.9 と側壁の接触距離 1.45 の両方を送受信で一致確認する検証へ更新。判定や誤差許容を緩めていない。
+- JS 変換の原典データ 23 ステージで、物理・塗り・壁泳ぎ・移動・ナビ・ガチルールの CPU 検証 24 件（公開設定の検証 1 件を含む）が通過。各ステージの初期降下と目標への経路も、両チーム × 30/60/120 Hz × 4 枠の 24 条件で検証した。Bluefin の正側上岸は射撃・インク回復・ジャンプ・壁登り・既存 Surge を使う実 Actor 入力を 30/60/120 Hz で確認した。本家の実機比較とハードウェア FPS は未確認のまま。
