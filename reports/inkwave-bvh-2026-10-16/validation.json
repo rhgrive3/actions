@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "verifiedRuntimeCommit": "6897b3d4eaf7ed41437f038492c453a16be13255",
+  "productContentHash": "80f8ddeae37ee0f8eb8514d8f3396c0c814e2470c69c0214da42485f80bc4d81",
+  "fullGameplay": {
+    "tests": 5890,
+    "pass": 5865,
+    "fail": 0,
+    "skipped": 25
+  },
+  "localQuality": {
+    "tests": 1014,
+    "pass": 1005,
+    "fail": 0,
+    "skipped": 9
+  },
+  "nativeSource": {
+    "tests": 98,
+    "pass": 83,
+    "fail": 0,
+    "skipped": 15
+  },
+  "emittedNativeAndPackaging": {
+    "tests": 35,
+    "pass": 35,
+    "fail": 0,
+    "skipped": 0
+  },
+  "sourceWorkflowAndPackaging": {
+    "tests": 29,
+    "pass": 24,
+    "fail": 0,
+    "skipped": 5
+  },
+  "afterUpstreamImportIntegration": {
+    "tests": 2,
+    "pass": 2,
+    "fail": 0,
+    "skipped": 0
+  },
+  "negativeControlOnEe06": {
+    "tests": 8,
+    "pass": 4,
+    "fail": 4,
+    "expected": true
+  },
+  "fullGameChromium": {
+    "status": "passed",
+    "scope": "full-active",
+    "fullAcceptance": true,
+    "verifiedResponses": 431,
+    "errors": []
+  },
+  "remoteCI": "queued at the time of local acceptance; not claimed successful",
+  "limits": [
+    "Suite totals overlap and must not be added as unique case counts.",
+    "Native shape replays are CPU-only, distinct from actual game WebGL verification.",
+    "No mobile-device FPS or Switch retail-equivalence claim."
+  ]
+}
