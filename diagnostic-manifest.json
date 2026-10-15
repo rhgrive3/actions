@@ -6,7 +6,7 @@
     "modelSource": 79,
     "modelEmitted": 79,
     "skips": 0,
-    "controls": 51,
+    "controls": 58,
     "images": 56,
     "brellaLifecycleReceipts": 60,
     "workRows": 32
@@ -104,9 +104,9 @@
     },
     {
       "path": ".github/workflows/second-weapon-acceptance.yml",
-      "sha256": "33ce09f6c7ba756ea91e382e89d9705ed0d4846caabb8c32f0b87536885127a0",
-      "blob": "cc842cde42c852595381c3204d92e0e6a5c36baa",
-      "bytes": 2813
+      "sha256": "b0c2df69ac0083f5df7900f138954bf0b2699d91e47dda7a3217bfa674c77790",
+      "blob": "84dbe43c0940bda6f921673ee313c4b2ed1c3eec",
+      "bytes": 2631
     },
     {
       "path": "capture-b-second.test.mjs",
@@ -131,6 +131,18 @@
       "sha256": "902ddf3c466ba449d80e6672ce4e4bb77ddde91b896bac6f716774e0997496d9",
       "blob": "deb072a5028a07f24d18fc714948ad96ef11c78e",
       "bytes": 2025
+    },
+    {
+      "path": "select-candidate.mjs",
+      "sha256": "8c4909cd550f1b0ea496d68d9b6a7d84599ef023fe218cf60e2e3441332baff5",
+      "blob": "fd9865c0656ee1c55578871476f6bfc3cc1982b4",
+      "bytes": 491
+    },
+    {
+      "path": "select-candidate.test.mjs",
+      "sha256": "05d00b6b0c639ef4e0251b4f5b8c40282cf3b59b46e0014ccb41c1372741a8c6",
+      "blob": "85d5969c75342e52a373bfcbc8fd3cbafa338efd",
+      "bytes": 1499
     }
   ],
   "candidateHead": "52e868afd8f64b6d830d3c0df0e9e9690d9b3751"
