@@ -1,0 +1,68 @@
+name: Review Custom Hydra rear-can material against fc99
+on:
+  push:
+    branches: [review/custom-hydra-metal-ab-20261015]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build exact candidate
+        run: |
+          test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
+          node scripts/build-inkwave.mjs inkwave-public _site
+      - name: Gate source model and source/emitted capture harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p custom-hydra-tests
+          node --experimental-vm-modules --test --test-reporter=tap scripts/custom-hydra-metal-model.test.mjs | tee custom-hydra-tests/model-source.tap
+          grep -qx '# pass 5' custom-hydra-tests/model-source.tap
+          grep -qx '# fail 0' custom-hydra-tests/model-source.tap
+          grep -qx '# skipped 0' custom-hydra-tests/model-source.tap
+          for mode in source emitted; do
+            unset INKWAVE_BUILT_SITE
+            if [ "$mode" = emitted ]; then export INKWAVE_BUILT_SITE=_site; fi
+            node --experimental-vm-modules --test --test-reporter=tap scripts/capture-custom-hydra-metal-ab.test.mjs | tee custom-hydra-tests/harness-$mode.tap
+            grep -qx '# tests 10' custom-hydra-tests/harness-$mode.tap
+            grep -qx '# pass 10' custom-hydra-tests/harness-$mode.tap
+            grep -qx '# fail 0' custom-hydra-tests/harness-$mode.tap
+            grep -qx '# skipped 0' custom-hydra-tests/harness-$mode.tap
+          done
+      - uses: actions/checkout@v4
+        with:
+          ref: fc99fcd099548723b7c76e1be0b1512d84c18444
+          path: _baseline_source
+      - name: Build immutable fc99 with same compiler
+        env:
+          ESBUILD_MODULE: ${{ github.workspace }}/node_modules/esbuild/lib/main.js
+        run: |
+          test "$(git -C _baseline_source rev-parse HEAD)" = fc99fcd099548723b7c76e1be0b1512d84c18444
+          (cd _baseline_source && node scripts/build-inkwave.mjs inkwave-public ../_baseline_site)
+      - name: Install Chromium after gates
+        run: npx playwright install --with-deps chromium
+      - name: Capture 48 matched Hydra images and can brightness
+        run: node scripts/capture-custom-hydra-metal-ab.mjs --baseline-source _baseline_source --baseline-site _baseline_site --candidate-source . --candidate-site _site --out custom-hydra-metal-ab
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: custom-hydra-metal-ab-${{ github.sha }}
+          path: custom-hydra-metal-ab
+          if-no-files-found: warn
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: custom-hydra-tests-${{ github.sha }}
+          path: custom-hydra-tests
+          if-no-files-found: warn
+          retention-days: 7

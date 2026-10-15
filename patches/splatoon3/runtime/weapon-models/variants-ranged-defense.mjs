@@ -56,6 +56,17 @@ variant('Maneuver_Normal_01','dualies','Enperry Splat Dualies',{'#2f8a3a':'#d3ab
 variant('Shelter_Wide_01','s3-shelter-wide','Tenta Sorella Brella',{'#d8262c':'#dcc536'});
 variant('Stringer_Short_01','s3-stringer-short','REEF-LUX 450 Deco',{},(n,p,i,c)=>n==='body'&&p.getZ(i)>.09&&close(c,i,color('#a9adb4'))?'#24272a':null);
 variant('Spinner_Hyper_01','s3-spinner-hyper','Custom Hydra Splatling',{'#e8c22a':'#8ccddc'});
+// The Custom Hydra reference retains a reflective silver rear can.
+// Classify only its fixed body-owned silver surface; retain labels/cage/barrels.
+{
+ const [row,definition]=definitions[definitions.length-1];
+ definitions[definitions.length-1]=[row,Object.freeze({...definition,build(d){
+  const model=definition.build(d),c=model.body.attributes.color,material=model.body.attributes.aMat.clone(),silver=color('#c7cacd');
+  let count=0;for(let i=0;i<c.count;i++)if(close(c,i,silver)){material.setX(i,3);count++;}
+  if(!count)throw Error('Custom Hydra silver can surface absent');
+  model.body.setAttribute('aMat',material);return model;
+ }})];
+}
 variant('Charger_Pencil_01','s3-charger-pencil','Snipewriter 5B',{'#2452c9':'#8b3037'});
 
 // Transfer existing complete triangles into the native team-ink channel. No
