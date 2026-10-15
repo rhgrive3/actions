@@ -644,7 +644,7 @@ export function kitBombContact(SUB, b, hit, dt) {
 // Rolling trail, called from the native loop once the bomb is rolling. The centre
 // is a real THREE.Vector3 because the native PaintSystem reads vector fields.
 // Allocated once per bomb and reused; no per-frame allocation.
-export function kitBombTrail(SUB, b, paint, projectiles) {
+export function kitBombTrail(SUB, b, paint, projectiles, game = G_REF) {
   if (b?.s3Mode === 'chasing') { stepAutobomb(b, G_REF); return 0; }
   if (b?.s3Mode === 'sprinkling') {
     if (b.owner?.alive === false) return 0;
@@ -678,7 +678,19 @@ export function kitBombTrail(SUB, b, paint, projectiles) {
   // native PaintSystem receives the type it expects, with no extra module import
   // and no per-frame allocation.
   if (!b.s3TrailPoint) b.s3TrailPoint = new b.pos.constructor();
-  b.s3TrailPoint.copy(b.pos);
+  const physics = game?.physics;
+  if (physics?.raycast && Number.isFinite(spec.paintCheckHeight)) {
+    const scratch = projectiles || b;
+    const origin = scratch._s3CurlingPaintOrigin || (scratch._s3CurlingPaintOrigin = new b.pos.constructor());
+    const down = scratch._s3CurlingPaintDown || (scratch._s3CurlingPaintDown = new b.pos.constructor());
+    const hit = scratch._s3CurlingPaintHit || (scratch._s3CurlingPaintHit = {
+      hit: false, dist: 0, point: new b.pos.constructor(), normal: new b.pos.constructor(), block: -1, face: -1,
+    });
+    origin.copy(b.pos); origin.y += 0.2; down.set(0, -1, 0);
+    const floor = physics.raycast(origin, down, spec.paintCheckHeight, hit, true);
+    if (!floor?.hit) return 0;
+    b.s3TrailPoint.copy(floor.point).addScaledVector(floor.normal, 0.1);
+  } else b.s3TrailPoint.copy(b.pos);
   const area = paint.splat(b.s3TrailPoint, radius, b.team, { seed: Math.random(), claimOwner: b.owner });
   if (area > 0) b.owner?.addTurf?.(area);
   return area;
