@@ -33,8 +33,8 @@ jobs:
             unset INKWAVE_BUILT_SITE
             if [ "$mode" = emitted ]; then export INKWAVE_BUILT_SITE=_site; fi
             node --experimental-vm-modules --test --test-reporter=tap scripts/capture-custom-hydra-metal-ab.test.mjs | tee custom-hydra-tests/harness-$mode.tap
-            grep -qx '# tests 14' custom-hydra-tests/harness-$mode.tap
-            grep -qx '# pass 14' custom-hydra-tests/harness-$mode.tap
+            grep -qx '# tests 15' custom-hydra-tests/harness-$mode.tap
+            grep -qx '# pass 15' custom-hydra-tests/harness-$mode.tap
             grep -qx '# fail 0' custom-hydra-tests/harness-$mode.tap
             grep -qx '# skipped 0' custom-hydra-tests/harness-$mode.tap
           done

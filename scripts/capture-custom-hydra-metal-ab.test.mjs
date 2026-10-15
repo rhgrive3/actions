@@ -50,3 +50,12 @@ test('exact native renderer uses Neutral tone mapping and main exposure .94',()=
  const check=vm.runInNewContext('('+extract('validateEnvironmentContract')+')',{THREE:{HalfFloatType:1016}});
  for(const renderer of [{toneMapping:4,exposure:.94,outputColorSpace:'srgb'},{toneMapping:7,exposure:1,outputColorSpace:'srgb'},{toneMapping:7,exposure:.94,outputColorSpace:'srgb-linear'}])assert.throws(()=>check({renderer}),/renderer/);
 });
+
+test('all callback THREE symbols exist; missing required export rejects before capture',async()=>{
+ const names=[...new Set([...source.matchAll(/THREE\.([A-Za-z_$][\w$]*)/g)].map(m=>m[1]))].sort();
+ const check=vm.runInNewContext('('+extract('validateThreeExports')+')');
+ let namespace=THREE;
+ if(process.env.INKWAVE_BUILT_SITE){const site=path.resolve(process.env.INKWAVE_BUILT_SITE),m=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));namespace=await import(pathToFileURL(path.join(site,'_versions',m.build.revision,'vendor/three/build/three.module.js')));}
+ check(namespace,names);assert.ok(names.length>=12);for(const name of names)assert.throws(()=>check({...namespace,[name]:undefined},names),/Missing emitted THREE export/);
+ assert.ok(source.includes('renderer.toneMapping=0'));assert.ok(!source.includes('THREE.NoToneMapping'));
+});

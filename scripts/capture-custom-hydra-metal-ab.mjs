@@ -42,6 +42,7 @@ const inputComparison=compareInputs(baseline.manifest,candidate.manifest);
 const pipeline=['scripts/build-inkwave.mjs','scripts/inkwave-source-composition.mjs',...fs.readdirSync(path.join(baseline.source,'scripts/lib')).filter(x=>x.endsWith('.mjs')).map(x=>'scripts/lib/'+x),...['splatoon3','touch-layout','reliability','local-quality','network-replication','loading-cache','practice-range'].map(x=>'patches/'+x+'/adapter.mjs')];
 const pipelineHashes={};for(const p of pipeline){const a=path.join(baseline.source,p),b=path.join(candidate.source,p);if(p==='package-lock.json'&&!fs.existsSync(a)&&!fs.existsSync(b))continue;assert.equal(hash(fs.readFileSync(a)),hash(fs.readFileSync(b)),'A/B pipeline differs: '+p);pipelineHashes[p]=hash(fs.readFileSync(a));}
 const seed=0x6b17a9c3,ids=['s3-spinner-hyper-01'];
+const requiredThreeExports=[...new Set([...fs.readFileSync(new URL(import.meta.url),'utf8').matchAll(/THREE\.([A-Za-z_$][\w$]*)/g)].map(m=>m[1]))].sort();
 const errors=[],networkFailures=[];let browser;
 async function capture(input,shared){
  const {site,manifest}=input,prefix='/_versions/'+manifest.build.revision+'/';
@@ -51,8 +52,12 @@ async function capture(input,shared){
  await context.addInitScript(({seed})=>{let state=seed>>>0;Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};Date.now=()=>1700000000000;Object.defineProperty(performance,'now',{value:()=>1000});window.__abRngState=()=>state;window.__abResetRng=()=>{state=seed>>>0;};},{seed});
  const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
  await page.goto('http://127.0.0.1:'+server.address().port+'/review');
- return await page.evaluate(async({prefix,ids,shared})=>{
+ return await page.evaluate(async({prefix,ids,shared,requiredThreeExports})=>{
   const THREE=await import('three');
+  function validateThreeExports(namespace,names){
+   for(const name of names)if(namespace[name]===undefined)throw Error('Missing emitted THREE export '+name);
+  }
+  validateThreeExports(THREE,requiredThreeExports);
   const {Environment}=await import(prefix+'src/world/environment.js');
   const {install}=await import(prefix+'patches/splatoon3/runtime/install.mjs');
   const {installMainWeaponCatalogRuntime}=await import(prefix+'patches/splatoon3/runtime/main-weapon-catalog.mjs');
@@ -139,7 +144,7 @@ async function capture(input,shared){
    const clone=geo.clone();clone.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
    const saved=[],materials=[],background=scene.background,tone=renderer.toneMapping;
    try{
-    scene.background=new THREE.Color(0);renderer.toneMapping=THREE.NoToneMapping;
+    scene.background=new THREE.Color(0);renderer.toneMapping=0;
     group.traverse(o=>{if(!o.isMesh)return;saved.push([o,o.material,o.onBeforeRender,o.geometry]);const convert=original=>{const m=new THREE.MeshBasicMaterial({color:o===body?0xffffff:0,vertexColors:o===body,side:original.side,depthTest:original.depthTest,depthWrite:original.depthWrite});materials.push(m);return m;};o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);o.onBeforeRender=()=>{};if(o===body)o.geometry=clone;});
     renderer.render(scene,camera);const gl=renderer.getContext(),pixels=new Uint8Array(720*600*4);gl.readPixels(0,0,720,600,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
     const indices=[];let minX=720,minY=600,maxX=0,maxY=0;for(let i=0;i<720*600;i++)if(pixels[i*4]>250&&pixels[i*4+1]>250&&pixels[i*4+2]>250){indices.push(i);const x=i%720,y=Math.floor(i/720);minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
@@ -201,7 +206,7 @@ async function capture(input,shared){
    ch.dispose();
   }
   if(shaderErrors.length)throw Error('Shader errors: '+shaderErrors.join('\n'));if(activeEnvironment)scene.remove(activeEnvironment.sun,activeEnvironment.sun.target,activeEnvironment.hemi);for(const env of Object.values(nativeEnvironments))env.dispose();renderer.dispose();return {frames,cameras,poses,environments:environmentReceipts,undersizedRejected,shaderErrors,rng:window.__abRngState()};
- },{prefix,ids,shared});
+ },{prefix,ids,shared,requiredThreeExports});
  }finally{await context.close();await new Promise(r=>server.close(r));}
 }
 try{
