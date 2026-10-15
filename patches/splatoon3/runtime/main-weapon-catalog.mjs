@@ -1,3 +1,4 @@
+import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
@@ -350,7 +351,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // that the native two-pistol renderer and trigger animation own.
     // All non-Dualies retain the original one-muzzle/aim path.
     if(hand===null)G.projectiles._muzzle(a,muzzle);
-    else G.projectiles._muzzleHand(a,hand,muzzle);
+    else {
+      G.projectiles._muzzleHand(a,hand,muzzle);
+      if(hand){base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;constrainMuzzle(G.physics,base,muzzle);}
+    }
     G.projectiles._aimFrom(a,muzzle,dir);
     return muzzle;
   }
