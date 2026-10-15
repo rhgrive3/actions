@@ -10,3 +10,5 @@ Controlled native day Environment with PMREM256, Neutral/.94 and sRGB, common ba
 Processing comparison keeps32 rows (eight models, base/variant, two teams), construction/first measured render and twelve alternating post-warmup samples separate. Four warmups per role, identical full-resolution synchronous RGBA readback. Shared caches may already be warm; these are controlled submission/readback wall times, not GPU timer values or gameplay FPS.
 
 Local controls51 passed. New actual Actor source8 passed. Full hosted source/emitted, GPU images and processing measurements remain pending. No new model geometry, palette tuning or runtime behavior change is introduced by this diagnostic package.
+
+Camera-only B3 correction uses the base body world orientation for both roles. All 12 paired PNG hashes must differ; failed checks preserve partial images and observations. Source replay uses the published 34 degree, 16:9 camera. New GPU acceptance is pending.

@@ -1,7 +1,7 @@
 name: Review second limited weapon batch
 on:
   push:
-    branches: [review/second-weapon-acceptance-20261015]
+    branches: [review/second-bow-visible-20261015]
 permissions:
   contents: read
 jobs:
@@ -31,7 +31,7 @@ jobs:
           npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
           npx playwright install --with-deps chromium
       - name: Portable fail-closed capture controls
-        run: node --test diagnostic/build-binding.test.mjs diagnostic/second-capture-integrity.test.mjs diagnostic/variant-plan.test.mjs diagnostic/second-capture-contract.test.mjs diagnostic/native-work-controls.test.mjs diagnostic/capture-b-second.test.mjs diagnostic/brella-capture-controls.test.mjs
+        run: node --test diagnostic/build-binding.test.mjs diagnostic/second-capture-integrity.test.mjs diagnostic/variant-plan.test.mjs diagnostic/second-capture-contract.test.mjs diagnostic/native-work-controls.test.mjs diagnostic/capture-b-second.test.mjs diagnostic/bow-visible-pairs.test.mjs diagnostic/brella-capture-controls.test.mjs
       - name: Diagnostic identity and failure-evidence controls
         run: node --test diagnostic/canopy-identity.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/capture-checkpoint-order.test.mjs diagnostic/capture-c-second.test.mjs
       - name: Exact candidate source gates

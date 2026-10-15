@@ -6,7 +6,7 @@
     "modelSource": 79,
     "modelEmitted": 79,
     "skips": 0,
-    "controls": 80,
+    "controls": 88,
     "images": 56,
     "brellaLifecycleReceipts": 60,
     "workRows": 32
@@ -26,9 +26,9 @@
     },
     {
       "path": "capture-second-integration.mjs",
-      "sha256": "44c31aee9b986c53cdc2615e24954d0297a0a0764477359596c7039b794cad1c",
-      "blob": "6c08182972b22337f266997c421b560c6ffdd786",
-      "bytes": 13398
+      "sha256": "b8afdec55508a53ac8760e7552fa02b5912994dab4d38d9a010d4e3bf01e4e9f",
+      "blob": "1bc6b2c4942933d8ae1c7e5549000bbb488ef3bb",
+      "bytes": 13722
     },
     {
       "path": "second-capture-integrity.test.mjs",
@@ -44,9 +44,9 @@
     },
     {
       "path": "capture-b-second.mjs",
-      "sha256": "2e8aa59ba8a44e368c1b990587da62548bbb5fc066e028b30772ca80130cd776",
-      "blob": "c0790078b1f5fc0e5b36de873bf1fc51f2ae7119",
-      "bytes": 12211
+      "sha256": "dada9282eb4653cd7410ccf00a8db57851643c0a95052e17d5f1f10746e1a4f3",
+      "blob": "778281db4963b1b88965f0d2977cf28b92227f66",
+      "bytes": 12247
     },
     {
       "path": "capture-c-second.mjs",
@@ -104,15 +104,15 @@
     },
     {
       "path": ".github/workflows/second-weapon-acceptance.yml",
-      "sha256": "1dbe35d7d5b3537787959c25c0c4967300d715d7d8122be5c53b589ab081ce38",
-      "blob": "07be90ed2d25c2a308bd7fea7c2e75f3901af16e",
-      "bytes": 2877
+      "sha256": "308e128201074a581d89be6a65f417a3dd8f86af98d34adc0199a4af650d60df",
+      "blob": "bde60a0abcc45126e4b6442acd802d3f85fbbd7f",
+      "bytes": 2909
     },
     {
       "path": "capture-b-second.test.mjs",
-      "sha256": "39844211114b694deedd3f5fa2983a463cbd1a9e40f402e4d6531431bdfe151d",
-      "blob": "fca49880867be3edc3491c110a4f3fd737bf2346",
-      "bytes": 6448
+      "sha256": "86f9191936aa1664ca2973d34e02e717b5f83764eb33b5bcbe833d4a9d900bee",
+      "blob": "0bf1ced0a2d07330bd0bfd1a893f996a8b5e4321",
+      "bytes": 7071
     },
     {
       "path": "brella-capture-controls.test.mjs",
@@ -128,9 +128,9 @@
     },
     {
       "path": "ACCEPTANCE_SCOPE.txt",
-      "sha256": "4bfa670dd7927bd96af76cc0d86c8c7857b487f072160be7407e73d050288d6a",
-      "blob": "1c89b094fd361ee75008f226ad1191bf9eacc3f7",
-      "bytes": 2137
+      "sha256": "66dbcd42b6b10f3ae7e6cbc0f39c5e2219e7592ecd54aafff6cc7eb80e4d2560",
+      "blob": "ac9f26cdd7a71c3e659eab33890a9006c676f12a",
+      "bytes": 2399
     },
     {
       "path": "select-candidate.mjs",
@@ -146,15 +146,15 @@
     },
     {
       "path": "capture-checkpoint.mjs",
-      "sha256": "b07dd849b85a8237e89fbe91203b46030fcb13fc0792e467fc8ade346fc4aca2",
-      "blob": "37d149badd419a4e9e7941f23d6f5c53ec4949d5",
-      "bytes": 1231
+      "sha256": "e33c0873d46a9befebfab54180c98bce74a31cba3837918ab1459d92d3138765",
+      "blob": "7d0fbcbaafbc6d8f0c726dba85ad6c20cbc83ebc",
+      "bytes": 1243
     },
     {
       "path": "capture-checkpoint.test.mjs",
-      "sha256": "014b0ab28ad4d73c96ef4fa8014a1f01772fde35a363924b1a731559a398e473",
-      "blob": "bb68c8052f9291e63ed3eec222bc432ab8ff6db3",
-      "bytes": 2104
+      "sha256": "57d6a094cc1a52c577f230b45ba4bd6337e3abba0e4204ba41291e88b949b517",
+      "blob": "1122be7bb4d79bdfee2e715d55221705da045a48",
+      "bytes": 2654
     },
     {
       "path": "canopy-identity.test.mjs",
@@ -173,6 +173,18 @@
       "sha256": "251870a3d0ca7ec78325481175cf780e96dadbd03c9c3e247e64730200757481",
       "blob": "c18d1cff8251a1d6b0caded9140009a6bdf6e7c2",
       "bytes": 1301
+    },
+    {
+      "path": "bow-visible-pairs.mjs",
+      "sha256": "7fdf3185927c2d5b293faaa6ed70104107d03b49a014b0d399b1ef53e37d5190",
+      "blob": "4a578e18b39e21a78a8da476052fb3d65c20f8f2",
+      "bytes": 1351
+    },
+    {
+      "path": "bow-visible-pairs.test.mjs",
+      "sha256": "56815cfb89099d80b87a68dba0276974fa0dcb698f1fb4f27a1101b0961c1ff3",
+      "blob": "6b730cd09f28a79c30f0c68ee75762278c0a7ef7",
+      "bytes": 2194
     }
   ],
   "candidateHead": "5cd2c82c3c76295aa20191a7bc500beacf2b69f8"

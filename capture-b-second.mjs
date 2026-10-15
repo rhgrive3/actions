@@ -82,7 +82,7 @@ export async function captureBSecond({api,R,THREE,scene,renderer,camera}){
     for(const w of weapons)if(w.near!==true||w.body.visible!==true||w.bodyFar.visible!==false)throw Error('Native near-body required');
     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),span=Math.max(...bounds.getSize(new THREE.Vector3()).toArray());
     if(!(span>0&&Number.isFinite(span)))throw Error('Invalid native held bounds');
-    if(role==='base'){camera.position.copy(center).add(new THREE.Vector3(...entry.view).normalize().multiplyScalar(span*2.5));camera.lookAt(center);baseCameras.set(comparisonKey,{position:camera.position.clone(),quaternion:camera.quaternion.clone()});}else{const fixed=baseCameras.get(comparisonKey);if(!fixed)throw Error('Missing base camera');camera.position.copy(fixed.position);camera.quaternion.copy(fixed.quaternion);}camera.updateMatrixWorld(true);
+    if(role==='base'){camera.position.copy(center).add(new THREE.Vector3(...entry.view).transformDirection(weapons[0].body.matrixWorld).multiplyScalar(span*2.5));camera.lookAt(center);baseCameras.set(comparisonKey,{position:camera.position.clone(),quaternion:camera.quaternion.clone()});}else{const fixed=baseCameras.get(comparisonKey);if(!fixed)throw Error('Missing base camera');camera.position.copy(fixed.position);camera.quaternion.copy(fixed.quaternion);}camera.updateMatrixWorld(true);
     const projected=[];for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z])projected.push(new THREE.Vector3(x,y,z).project(camera));
     const projectedBounds=validateProjection(projected);
     const poseRng={state:rng,calls:rngCalls};

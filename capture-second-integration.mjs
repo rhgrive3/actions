@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {validateBowVisiblePairs} from './bow-visible-pairs.mjs';
 import {writeCaptureCheckpoint} from './capture-checkpoint.mjs';
 import {validateBuildBinding,validateDelivered} from './build-binding.mjs';
 // Single-site integration smoke. Original frozen A/B remains a separate gate.
@@ -94,6 +95,8 @@ try{
   const bytes=Buffer.from(f.png,'base64'),image=PNG.sync.read(bytes);assert.equal(image.width,1920);assert.equal(image.height,1080);let foreground=0;const colors=new Set();for(let i=0;i<image.data.length;i+=4){if(Math.abs(image.data[i]-image.data[0])+Math.abs(image.data[i+1]-image.data[1])+Math.abs(image.data[i+2]-image.data[2])>12)foreground++;if(i%64===0)colors.add((image.data[i]>>3)*1024+(image.data[i+1]>>3)*32+(image.data[i+2]>>3));}assert.ok(foreground>=250&&colors.size>=16,'blank frame '+group+index);
   const file=group+'-'+index+'-'+f.id+'-team'+f.team+'-'+f.state+'.png';fs.writeFileSync(path.join(out,file),bytes);const {png,...row}=f;images.push({group,...row,file,sha256:hash(bytes),foregroundPixels:foreground,quantizedColors:colors.size});
  }}validateSecondFrames(result.A.states,'A',{states:true});assert.equal(images.length,56);
+ fs.writeFileSync(path.join(out,'bow-visible-observations.json'),JSON.stringify({sourceSha:plan.head,acceptanceComplete:false,images:images.filter(r=>r.group==='B')},null,2));
+ const bowPairs=validateBowVisiblePairs(images.filter(r=>r.group==='B'));
  assert.equal(result.work.results.length,32);for(const r of result.work.results){assert.equal(r.steadyMs.length,12);assert.ok([r.constructionMs,r.firstMeasuredRenderMs,...r.steadyMs].every(n=>Number.isFinite(n)&&n>=0));assert.ok(r.triangles>0&&r.drawCalls>0&&r.geometryBytes>0);}
- fs.writeFileSync(path.join(out,'second-integration.json'),JSON.stringify({sourceSha:plan.head,contentHash:manifest.contentHash,buildBinding,delivered,environment:result.environment,images,lifecycle:result.A.states,work:result.work,scopes:{A:result.A.scope,B:result.B.scope,C:result.C.scope},errors,networkFailures},null,2));
+ fs.writeFileSync(path.join(out,'second-integration.json'),JSON.stringify({sourceSha:plan.head,contentHash:manifest.contentHash,buildBinding,delivered,environment:result.environment,images,bowPairs,lifecycle:result.A.states,work:result.work,scopes:{A:result.A.scope,B:result.B.scope,C:result.C.scope},errors,networkFailures},null,2));
 }catch(e){fs.writeFileSync(path.join(out,'second-integration-error.json'),JSON.stringify({error:String(e),errors,networkFailures},null,2));throw e;}finally{await browser?.close();}

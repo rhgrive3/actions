@@ -1,5 +1,5 @@
 import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import crypto from 'node:crypto';
-const PHASES=new Set(['work','explosher','noct-milk','sorella','sorella-failure','A','A-failure','B','C','C-failure']);
+const PHASES=new Set(['work','explosher','noct-milk','sorella','sorella-failure','A','A-failure','B','B-failure','C','C-failure']);
 export function writeCaptureCheckpoint(out,sourceHead,phase,data){
  assert.match(sourceHead,/^[a-f0-9]{40}$/);assert.ok(PHASES.has(phase),'Known checkpoint phase');assert.ok(data&&typeof data==='object');
  const dir=path.join(out,'partial');fs.mkdirSync(dir,{recursive:true});const frames=[];
