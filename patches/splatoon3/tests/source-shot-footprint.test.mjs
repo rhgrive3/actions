@@ -1,112 +1,120 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { sourceShotRasterRadius, SOURCE_SHOT_RASTER_ENVELOPE as bounds } from '../runtime/source-shot-footprint.mjs';
+import { fixture } from './source-fixture.mjs';
+import { makePaintWorld } from './paint-authority-fixture.mjs';
+import { sourceFlightInkKind, SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from '../runtime/source-shot-footprint.mjs';
 
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const upstream = path.join(ROOT, 'inkwave-public/src/world/paint.js');
-const close = (actual, expected) => assert.ok(Math.abs(actual - expected) <= 1e-12,
-  'expected ' + actual + ' ≈ ' + expected);
+const near = (a, b, tol = 1e-10) =>
+  assert.ok(Math.abs(a-b) <= tol, 'expected ' + a + ' ~= ' + b);
 
-test('shot source WidthHalf bounds procedural rays, satellites and fine spatter', () => {
-  // Original procedural shader: fine spatter at <= (1.3 + 1.2) R plus
-  // <= (0.011 + 0.02) R dot radius. Source WidthHalf is a maximum,
-  // not the inner circle of a second layer of randomly flung splashes.
-  assert.ok(bounds.shot >= 2.531);
-  assert.ok(bounds.drop >= 1.1 + .8 + .113);
-  for (const [name, sourceWidth] of [
-    ['Splattershot near', 1.93],
-    ['Splattershot far', 1.71],
-    ['Splattershot intermediate', 1.472],
-    ['Splattershot forced nearest', 2.0608],
-    ['Splat Dualies', 1.71],
-    ['Heavy Splatling', 2.226],
-  ]) {
-    const inner = sourceShotRasterRadius(sourceWidth, 0, 13);
-    close(inner * bounds.shot, sourceWidth);
-    assert.ok(inner < sourceWidth, name + ' is no longer inflated by the raster corona');
-  }
-  close(sourceShotRasterRadius(1.472, 5, 4) * bounds.drop, 1.472);
-  close(sourceShotRasterRadius(2.0608, 4, 4) * bounds.shot, 2.0608);
-});
-
-test('only source-faced paint is adjusted: specials, body rollers, cosmetics and legacy splats are untouched', () => {
-  for (const kind of [2, 3, 6, 7]) {
-    close(sourceShotRasterRadius(2.1, kind, 0), 2.1);
-  }
-  for (const kind of [0, 1, 4, 5]) {
-    close(sourceShotRasterRadius(2.1, kind, undefined), 2.1);
-    close(sourceShotRasterRadius(2.1, kind, 0, true), 2.1);
-    close(sourceShotRasterRadius(2.1, kind, 0.5), 2.1);
-    close(sourceShotRasterRadius(2.1, kind, NaN), 2.1);
-    close(sourceShotRasterRadius(2.1, kind, 0, false) > 0 ? 1 : 0, 1);
-  }
-  // NetMatch encodes face -1 for catalogue shots and omits that face on
-  // receiver playback. Its explicit kind='shot' survives on the wire.
-  close(sourceShotRasterRadius(1.93, 0, -1, false, 'shot'),
-    sourceShotRasterRadius(1.93, 0, undefined, false, 'shot'));
-  close(sourceShotRasterRadius(1.93, 0, undefined, false, 'bomb'), 1.93);
-  close(sourceShotRasterRadius(1.93, 0, undefined), 1.93);
-  close(sourceShotRasterRadius(0, 0, 3), 0);
-  close(sourceShotRasterRadius(-1, 0, 3), -1);
-  assert.equal(sourceShotRasterRadius(Infinity, 0, 3), Infinity);
-});
-
-test('actual production paint composition normalizes once after network recording, before shared CPU/GPU stamping', () => {
-  const source = fs.readFileSync(upstream, 'utf8');
-  const built = adaptSource('src/world/paint.js', source);
-  const injected = 'radius = sourceShotRasterRadius(radius, kind, opts.face, cosmetic, opts.kind);';
-  assert.equal(built.split(injected).length - 1, 1, 'only one transform, never twice');
-  assert.ok(built.includes("import { sourceShotRasterRadius } from '../../patches/splatoon3/runtime/source-shot-footprint.mjs';"));
-  assert.ok(built.indexOf('nm.recSplat(center, radius, team, opts)') < built.indexOf(injected),
-    'nominal width is recorded on wire, receiver reconstructs exactly once');
-  assert.ok(built.indexOf(injected) < built.indexOf('const reachK = REACH[kind]'),
-    'world query and GPU bounds must use corrected radius');
-  assert.ok(built.indexOf(injected) < built.indexOf('claimed += this._cpuSplat('),
-    'turf and GPU cannot use different radii');
-  assert.ok(built.includes('float dist = r * (1.1 + (big ? 1.05 : 0.8) * h2 * h2)'));
-  assert.ok(built.includes('r * (1.3 + 1.2 * h2)'),
-    'changing artist radius-extents requires an updated maximum-reach proof');
-});
-
-
-test('actual PaintSystem gives local and network replay identical source-shot body ownership', async () => {
-  const { fixture } = await import('./source-fixture.mjs');
-  const { makePaintWorld } = await import('./paint-authority-fixture.mjs');
+test('11.3.0 pinned Shooter inputs remain the source of separate terminal, mid-flight and foot paint', async () => {
   const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
-  const { paint, V, face } = makePaintWorld(f);
-  const input = V(0, 0, 8), rawRadius = 1.93;
-  const seed = .37, net = { mute: 0, applying: false, out: [],
-    recSplat(center, radius, team, opts) {
-      this.out.push({ radius, team, kind: opts.kind, face: opts.face, seed: opts.seed, point: center.clone() });
-    },
-  };
-  f.G.netm = net;
-  const snapshot = (withFace) => {
-    paint.clear();
-    const area = paint.splat(input, rawRadius, 0, { kind: 'shot', seed,
-      ...(withFace ? { face: 0 } : {}) });
-    assert.ok(area > 0);
-    const growing = paint.growing.at(-1);
-    close(growing.R, rawRadius / bounds.shot);
-    assert.ok(growing.entries.includes(face), 'real floor face receives the sourced stamp');
-    return { area, body: Array.from(paint.grid), radius: growing.R };
-  };
+  const raw = f.profile.weaponsFidelityCompletion.weapons.shooter;
+  near(raw.PaintParam.WidthHalfNear, 1.93);
+  near(raw.PaintParam.WidthHalfMiddle, 1.93);
+  near(raw.PaintParam.WidthHalfFar, 1.71);
+  near(raw.PaintParam.DepthScaleMax, 2.24);
+  near(raw.SplashPaintParam.WidthHalf, 1.472);
+  near(raw.SplashPaintParam.WidthHalfNearest, 2.0608);
+  near(raw.SplashSpawnParam.SpawnNum, 1.5);
+  assert.equal(raw.SplashSpawnParam.SplitNum, 8);
+  assert.deepEqual(Array.from(raw.SplashSpawnParam.ForceSpawnNearestAddNumArray), [4]);
+  assert.equal(sourceFlightInkKind('shot'), SOURCE_SHOT_PAINT_KIND);
+  assert.equal(sourceFlightInkKind('trail'), SOURCE_SPLASH_PAINT_KIND);
+  assert.equal(sourceFlightInkKind('drop'), SOURCE_SPLASH_PAINT_KIND);
+  assert.equal(sourceFlightInkKind('blast'), 'blast');
+});
 
-  const local = snapshot(true);
-  assert.equal(net.out.length, 1);
-  assert.equal(net.out[0].radius, rawRadius, 'network retains nominal source width');
-  assert.equal(net.out[0].face, 0, 'world-contact face is recorded');
-  net.applying = true;
-  const remote = snapshot(true);
-  assert.deepEqual(remote, local, 'paint replay uses identical local source width');
-  net.applying = false;
-  const catalogLocal = snapshot(false);
-  net.applying = true;
-  const catalogReplay = snapshot(false);
-  assert.deepEqual(catalogReplay, catalogLocal,
-    'face-less catalog shot also has matching network replay footprint');
+test('production source mask uses original WidthHalf without artificial shrink or satellite Turf', () => {
+  const raw = fs.readFileSync(new URL('../../../inkwave-public/src/world/paint.js', import.meta.url), 'utf8');
+  const composed = adaptSource('src/world/paint.js', raw);
+  assert.match(composed, /'source-shot': 8, 'source-splash': 9/);
+  assert.match(composed, /const REACH = \[1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.25, 1.35, 1, 1\]/);
+  assert.match(composed, /min\(1\.0, wob\(atan\(p\.y, p\.x\), seed\)\)/);
+  assert.match(composed, /Math\.min\(1, blobWobble\(Math\.atan2\(py, px\), seed\)\)/);
+  assert.match(composed, /const sourced = kind === K_SOURCE_SHOT \|\| kind === K_SOURCE_SPLASH/);
+  assert.doesNotMatch(composed, /sourceShotRasterRadius|2\.56|2\.08/);
+  const flight = adaptSource('src/game/inkFlightRuntime.js',
+    fs.readFileSync(new URL('../../../inkwave-public/src/game/inkFlightRuntime.js', import.meta.url), 'utf8'));
+  assert.match(flight, /kind: sourceFlightInkKind\(kind\)/);
+  const network = fs.readFileSync(new URL('../../network-replication/adapter.mjs', import.meta.url), 'utf8');
+  assert.match(network, /'source-shot', 'source-splash'/);
+});
+
+test('source-defined WidthHalf and DepthScale bound real CPU turf on a flat floor', async () => {
+  const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
+  const { paint, face, V } = makePaintWorld(f, { cell: 0.125 });
+  const owner = f.make('shooter');
+  const params = f.profile.weaponsFidelityCompletion.weapons.shooter.PaintParam;
+  const centre = V(0, 0, 8), direction = V(0, 0, 1);
+  const width = params.WidthHalfNear, stretch = params.DepthScaleMax - 1;
+  const area = paint.splat(centre, width, owner.team, {
+    kind: SOURCE_SHOT_PAINT_KIND, face: 0, stretch: direction,
+    stretchAmt: stretch, seed: .37, claimOwner: owner,
+  });
+  assert.ok(area > 0);
+  const growth = paint.growing.at(-1);
+  assert.equal(growth.kind, 8);
+  near(growth.R, width);
+  near(growth.entries[6], stretch);
+  let cells = 0;
+  for (let y = 0; y < face.nv; y++) for (let x = 0; x < face.nu; x++) {
+    if (paint.grid[face.grid + y*face.nu + x] !== 1) continue;
+    cells++;
+    const du = face.origin.x + (x+.5)*face.cu - centre.x;
+    const dv = face.origin.z + (y+.5)*face.cv - centre.z;
+    const forwardScale = dv > 0 ? 1 + stretch : 1 + .25*stretch;
+    assert.ok(Math.hypot(du, dv/forwardScale) <= width + 1e-8,
+      'source WidthHalf bounds lateral coverage after internal DepthScale elongation');
+  }
+  assert.ok(cells > 40);
+  const before = paint.counts[0];
+  for (let i=0;i<120;i++) paint.advanceSimulation(1/60);
+  assert.equal(paint.counts[0], before,
+    'no invented late satellites; S3 SplashSpawnParam produces its own drops');
+});
+
+test('actual native source ink flight retains separate head and detached splash numeric widths', async () => {
+  const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
+  const { paint, V } = makePaintWorld(f);
+  const owner = f.make('shooter');
+  const src = f.profile.weaponsFidelityCompletion.weapons.shooter;
+  const shot = src.PaintParam.WidthHalfNear;
+  const mid = src.SplashPaintParam.WidthHalf;
+  const shape = { radius: shot, stretch: src.PaintParam.DepthScaleMax-1 };
+  f.G.projectiles.inkFlight.paint({ owner, team: owner.team, ghost: false, seed: .37 },
+    { face: 0, point: V(0,0,8), normal: V(0,1,0) }, shape, V(0,0,1), 'shot');
+  const impact = paint.growing.at(-1);
+  assert.equal(impact.kind, 8);
+  near(impact.R, shot);
+  f.G.projectiles.inkFlight.paint({ owner, team: owner.team, ghost: false, seed: .72 },
+    { face: 0, point: V(12,0,8), normal: V(0,1,0) },
+    { radius: mid, stretch: 0 }, V(0,0,1), 'drop');
+  const drop = paint.growing.at(-1);
+  assert.equal(drop.kind, 9);
+  near(drop.R, mid);
+  assert.equal(paint.grid.filter(x => x === 1).length, paint.counts[0]);
+});
+
+test('same full-precision sourced event gives identical CPU ownership on local and replay clients', async () => {
+  const collect = async applying => {
+    const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
+    const { paint, V, face } = makePaintWorld(f);
+    const messages = [];
+    f.G.netm = { mute: 0, applying, recSplat(_at, r, _team, options) {
+      messages.push({ radius: r, kind: options.kind, face: options.face });
+    }};
+    const r = f.profile.weaponsFidelityCompletion.weapons.shooter.PaintParam.WidthHalfNear;
+    const area = paint.splat(V(0,0,8), r, 0,
+      { kind: SOURCE_SHOT_PAINT_KIND, face: 0, seed: .37, stretch: V(0,0,1), stretchAmt: 1.24 });
+    assert.ok(area > 0);
+    return { area, cells: Array.from(paint.grid), radius: paint.growing.at(-1).R,
+      kind: paint.growing.at(-1).kind, messages, faceCells: face.nu*face.nv };
+  };
+  const local = await collect(false), remote = await collect(true);
+  near(local.radius, 1.93);
+  assert.deepEqual(local.messages, [{ radius: 1.93, kind: SOURCE_SHOT_PAINT_KIND, face: 0 }]);
+  assert.deepEqual({ ...remote, messages: local.messages }, local);
 });
