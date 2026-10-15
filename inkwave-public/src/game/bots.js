@@ -11,6 +11,15 @@ import { PLAYER, DIFFICULTY, SUB } from '../config.js';
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
 const _stats = { own: 0, enemy: 0, empty: 0, n: 0 };
 
+const botBehaviorKind = (weapon) => {
+  // Catalogue firing family, not the shared `kind: 'catalog'` rendering key.
+  // Keep legacy Brush/Roller and Brella/Shooter decisions unchanged.
+  const family = weapon?.behaviorKind || (weapon?.kind === 'catalog' ? weapon?.modelKind : weapon?.kind);
+  if (family === 'brush') return 'roller';
+  if (family === 'brella') return 'shooter';
+  return family; // Do not fold Stringer/Splatana into Charger: both release on Fire-up.
+};
+
 export class BotBrain {
   constructor(actor, difficulty = 'normal') {
     this.a = actor;
@@ -78,7 +87,7 @@ export class BotBrain {
     // ---------------- mode selection (retreat = break line of sight and heal in own ink when losing a duel)
     const inkFrac = a.ink / PLAYER.inkMax;
     const hpFrac = a.hp / PLAYER.hp;
-    const w = a.weapon, family = w.behaviorKind || w.kind;
+    const w = a.weapon, family = botBehaviorKind(w);
     if (this.mode === 'retreat') {
       this.retreatT -= dt;
       if (hpFrac > 0.85 || this.retreatT <= 0 || (!this.target && hpFrac > 0.6)) { this.mode = 'paint'; this.path = null; this.goalTimer = 0; }
@@ -214,13 +223,13 @@ export class BotBrain {
         if (a.weaponRunner.charging) {
           it.fire = a.weaponRunner.charge < releaseAt;
           if (!it.fire) this.paintPause = 0.3 + Math.random() * 0.35;
-        } else it.fire = needPaint && inkFrac > (w.kind === 'catalog' ? 0.12 : 0.3) && this.paintPause <= 0;
+        } else it.fire = needPaint && inkFrac > (!!w.catalogRecord ? 0.12 : 0.3) && this.paintPause <= 0;
       } else if (family === 'splatling') {
         // spin up ~60 %, hose the lane while the stream runs, breathe, repeat
         const wr = a.weaponRunner;
         if (wr.streaming) it.fire = false;
         else if (wr.charging) { it.fire = wr.charge < 0.6; if (!it.fire) this.paintPause = 0.25 + Math.random() * 0.3; }
-        else it.fire = needPaint && inkFrac > (w.kind === 'catalog' ? 0.12 : 0.25) && this.paintPause <= 0;
+        else it.fire = needPaint && inkFrac > (!!w.catalogRecord ? 0.12 : 0.25) && this.paintPause <= 0;
       } else {
         it.fire = needPaint && inkFrac > 0.18;
       }
@@ -243,7 +252,7 @@ export class BotBrain {
 
   // shared by turf and boss play: bomb release, the aim spring, the smoothed move command, edge guard, stuck recovery
   _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {
-    const a = this.a, it = a.intent, w = a.weapon; const family = w.behaviorKind || w.kind;
+    const a = this.a, it = a.intent, w = a.weapon; const family = botBehaviorKind(w);
     if (this._bombAim) { it.sub = true; this._bombAim = false; this._releaseBomb = true; }
     else if (this._releaseBomb) { it.sub = false; this._releaseBomb = false; }
 
@@ -311,7 +320,7 @@ export class BotBrain {
   }
 
   _range() {
-    const w = this.a.weapon, family = w.behaviorKind || w.kind;
+    const w = this.a.weapon, family = botBehaviorKind(w);
     if (family === 'charger') return w.rangeMax * 0.9;
     if (family === 'roller') return 6;
     return w.range;
@@ -516,7 +525,7 @@ export class BotBrain {
   // belly while it's stunned — everyone piles in), step out of every telegraph, hop the shockwave rings, duck under the
   // sweep in own ink, pop the crablets that come for the squad, and clean boss ink off the routes (rollers most of all).
   _bossTick(dt) {
-    const a = this.a, it = a.intent, w = a.weapon, boss = G.boss; const family = w.behaviorKind || w.kind;
+    const a = this.a, it = a.intent, w = a.weapon, boss = G.boss; const family = botBehaviorKind(w);
     const inkFrac = a.ink / PLAYER.inkMax;
     it.fire = false; it.sub = false; it.special = false; it.squid = false; it.jump = false;
     if (this.think <= 0) { this.think = 0.12 + Math.random() * 0.1; this._bossPerceive(boss); }
@@ -643,7 +652,7 @@ export class BotBrain {
       if (belly && pick !== belly) pick = null;
       if (!pick) {
         this.shapeT = 1.2 + Math.random() * 1.5;
-        const eyes = (this.a.weapon.behaviorKind || this.a.weapon.kind) === 'charger' || Math.random() < 0.25 + this.diff.fireDiscipline * 0.3;
+        const eyes = botBehaviorKind(this.a.weapon) === 'charger' || Math.random() < 0.25 + this.diff.fireDiscipline * 0.3;
         const order = shapes.slice().sort((h1, h2) => {
           const s = (h) => (h === belly ? -100 : h.weak && eyes ? -50 : h.weak ? 10 : 0) + h.pos.distanceTo(eye);
           return s(h1) - s(h2);
@@ -668,7 +677,7 @@ export class BotBrain {
   // a spot to fight from: weapon range off its flank (not in front of it — slams, sweeps and charges go that way), clear
   // of the other bots, seeing it. When it's stunned everyone rushes the belly.
   _bossGoal(boss) {
-    const a = this.a, w = a.weapon, nav = G.nav; const family = w.behaviorKind || w.kind;
+    const a = this.a, w = a.weapon, nav = G.nav; const family = botBehaviorKind(w);
     this.goalTimer = 2.4 + Math.random() * 2;
     const stunned = boss.stunned || (boss.phase >= 3 && Math.random() < 0.3);
     this._rushing = boss.stunned;
