@@ -11,6 +11,7 @@
 //   node scripts/check-inkwave-range.mjs --site <built site> --evidence-dir <dir> --profile-dir <dir> [--quick]
 //   (RANGE_BROWSERS=chromium limits the browsers for a local run; CI runs all of them)
 import fs from 'node:fs';
+import {waitForPauseEntrance,collectPauseEntranceEvidence} from './inkwave-range-pause-readiness.mjs';
 import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
@@ -225,9 +226,16 @@ for (const run of RUNS) {
     if (Math.abs(p.area - 400) > 1e-6 || !(p.own > 0) || !p.reset || p.after !== 0 || !p.switched || p.weaponAfter === p.weaponBefore) throw new Error('paint/pads ' + JSON.stringify(p));
     // the range pause screen + travel
     await page.evaluate(() => window.__inkwave.pause());
-    await page.waitForSelector('.iwr-pausescr [data-id="z-bomb"]', { timeout: 30000 });
-    await page.waitForTimeout(1200);
+    let pauseReadinessError;
+    try { await waitForPauseEntrance(page); }
+    catch (error) { pauseReadinessError = error; }
+    out.checks.pauseEntrance = {settled: !pauseReadinessError,
+      error: pauseReadinessError ? String(pauseReadinessError) : null};
+    out.checks.pauseEntrance.state = await page.evaluate(collectPauseEntranceEvidence);
+    fs.writeFileSync(path.join(evidence, run.name + '-pause-readiness.json'),
+      JSON.stringify({contentHash:manifest.contentHash,...out.checks.pauseEntrance},null,2));
     await page.screenshot({ path: path.join(evidence, run.name + '-pause.png'), timeout: 240000 });
+    if (pauseReadinessError) throw pauseReadinessError;
     // The hub ring remains readable. The scrollable picker must expose
     // all 65 original mains plus their 95 non-replica _01/_02 kits, not drop
     // entries when its catalogue grows beyond the former 65-item limit.

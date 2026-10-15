@@ -51,7 +51,11 @@ export function installKitAudio(api,{listen,options}){
    if(p?.wid==='trizooka')sound(p.owner,'special','trizooka','explosion',point,.72);return result;};
  const stopAll=()=>{for(const r of active.values())r.handle?.stop(.04);active.clear();};
  listen('match:state',e=>{if(e?.state!=='playing')stopAll();});
- listen('actor:removed',e=>{const a=e?.actor||e;active.get(a)?.handle?.stop(.04);active.delete(a);});
+ const stopActor=a=>{active.get(a)?.handle?.stop(.04);active.delete(a);};
+ listen('actor:removed',e=>stopActor(e?.actor||e));
+ // Disposal does not emit a state transition or actor:removed for each actor.
+ // Release only this match: a late old owner must not stop its replacement.
+ listen('match:dispose',e=>{for(const a of e?.match?.actors||[])stopActor(a);});
  // Continuous power beds use one handle per active actor, never one per frame.
  const update=Actor.prototype._updateSpecial;
  Actor.prototype._updateSpecial=function(dt,...args){const result=update.call(this,dt,...args),id=this.specialActive?.id;
@@ -66,6 +70,6 @@ export function installKitAudio(api,{listen,options}){
      if(!row){row={id,handle:G.audio?.loopWeapon?.('special:'+id,loopEvent,{...options(this,this.pos,.25),pitch:.85})};if(row.handle)active.set(this,row);}
      row?.handle?.set({pos:this.isLocal?undefined:this.pos,volume:.25});
    }return result;};
- listen('splatted',e=>{active.get(e?.victim)?.handle?.stop(.04);active.delete(e?.victim);});
+ listen('splatted',e=>stopActor(e?.victim));
  return {subCount:SUB_AUDIO_IDS.length,specialCount:SPECIAL_AUDIO_IDS.length,dispose(){stopAll();}};
 }

@@ -189,7 +189,7 @@ jobs:
           sudo mkdir -p "$browser_tmp"
           sudo chown "$(id -u):$(id -g)" "$browser_tmp"
       - name: Verify motion verifier regressions
-        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs
+        run: node --test scripts/tests/inkwave-motion-gates.test.mjs scripts/tests/inkwave-integration-workflow.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs scripts/tests/inkwave-queued-workflow-policy.test.mjs scripts/tests/inkwave-pad-map-evidence.test.mjs scripts/tests/inkwave-range-pause-readiness.test.mjs
       - name: Verify pinned primary numerical sources
         run: |
           python3 - <<'PY'
@@ -310,6 +310,22 @@ jobs:
           INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
           INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/reliability/tests/tap-gesture-continuity.test.mjs patches/practice-range/tests/target-feedback.test.mjs
+      - name: Verify emitted ranked input and network lifetime
+        env:
+          INKWAVE_CONTROLS_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/ranked-input-network-lifecycle.test.mjs
+      - name: Verify emitted active aim-profile sensor transitions
+        env:
+          INKWAVE_AIM_PROFILE_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/local-quality/tests/aim-profile-live-transition.test.mjs
+      - name: Verify emitted special audio match disposal
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/audio-match-disposal.test.mjs
+      - name: Verify emitted queue hardening and native catalogue wire compatibility
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/network-replication/tests/issue-queue-oct15-hardening.test.mjs patches/local-quality/tests/ink-volume-recipes.test.mjs
       - name: Verify emitted modal controller and Pointer Lock lifetimes
         run: INKWAVE_CONTROLS_SITE="$PWD/_site" INKWAVE_POINTER_LOCK_SITE="$PWD/_site" node --experimental-vm-modules --test patches/reliability/tests/editor-pad-menu.test.mjs patches/reliability/tests/touch-pointerlock.test.mjs
       - name: Verify emitted explicit Turf Map and gyro transport
