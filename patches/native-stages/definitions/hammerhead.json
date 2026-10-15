@@ -1,0 +1,35 @@
+{
+  "id": "hammerhead",
+  "internal": "Vss_Kaisou04",
+  "name": "マサバ海峡大橋",
+  "sourceSha256": "acc6983d529932832fbd9c5bb54c5e96fe43ccf3c9aaf5c21d3ca653af8359de",
+  "tree": "6b9bb90548f56bfb23321f849b6da64e894cbc04",
+  "bounds": {
+    "minX": -30,
+    "minZ": -104,
+    "maxX": 30,
+    "maxZ": 104
+  },
+  "spawnPads": [
+    [
+      0,
+      22.08,
+      -94
+    ],
+    [
+      0,
+      22.08,
+      94
+    ]
+  ],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Inferred symmetric support on revised Vss_Kaisou04 display triangles; Pnt navigation and landing calibrated locally, retail spawn and 11.3.0 placements unverified",
+  "sourceSemantics": {
+    "nonCollidableObjectPatterns": [
+      "^FldObj_Kaisou04Ships_",
+      "^FldObj_Kaisou04Fest_",
+      "^FldObj_Kaisou04Cars_"
+    ]
+  }
+}

@@ -43,14 +43,11 @@ if (process.argv[2] === '--roster') {
           for (const percentile of ['p50','p95']) assert.ok(Number.isFinite(row[metric][percentile]));
         assert.equal(row.frames.length,15);assert.equal(row.frames.filter(f=>f.phase==='measured').length,12);
         for(const [index,frame] of row.frames.entries()){assert.equal(frame.index,index);assert.equal(frame.phase,index<3?'warmup':'measured');for(const key of ['animationMs','submitMs','readbackWaitMs','renderThroughReadbackMs'])assert.ok(Number.isFinite(frame[key])&&frame[key]>=0,key+' valid raw timing');assert.equal(frame.glError,0);assert.equal(frame.contextLost,false);assert.equal(frame.defaultReadFramebuffer,true);assert.equal(frame.pixel.length,4);assert.equal(frame.pixel[3],255);assert.ok(frame.pixel.slice(0,3).some(x=>x!==0));assert.ok(frame.renderThroughReadbackMs>=frame.submitMs);assert.equal(frame.width,600);assert.equal(frame.height,600);}
-        // The immutable main can independently reduce draw counts (the
-        // accepted baseline is now below its historical ceiling). Bind
-        // candidate budgets to the measured same-commit baseline, not a
-        // frozen count from an older main. The historical cap still fails
-        // closed on draw-count regressions in that baseline.
-        const historicalCap=tier==='far'?59:scenario==='A'?118:119;
+        // Exact immutable adbd baseline, measured in both ABBA baseline runs.
+        // Native canopy retention is also bound by expectedWeaponNear above.
+        const baselineDraws={A:{game:88,far:65},B:{game:91,far:68}};
         assert.ok(Number.isSafeInteger(row.drawCalls)&&row.drawCalls>0,'nonempty measured draw count');
-        assert.ok(row.drawCalls<=historicalCap,'historical main draw ceiling');
+        if(pair==='before-A') assert.equal(row.drawCalls,baselineDraws[scenario][tier],'exact immutable main draw contract');
         if(pair==='before-A2') assert.equal(row.drawCalls,all['before-A'][tier].drawCalls,'immutable baseline repeat draw budget');
         if(pair.startsWith('after')) assert.ok(row.drawCalls<=all['before-A'][tier].drawCalls,'candidate must not exceed exact-head baseline draws');
       }

@@ -16,7 +16,7 @@ test('#978 release emits one source-driven paint-only NearestParam stamp indepen
   const [stamp]=f.paint;
   close(stamp.radius,1.56);
   close(stamp.opts.stretchAmt,.2);
-  assert.equal(stamp.opts.kind,'drop');
+  assert.equal(stamp.opts.kind,'source-splash');
   close(stamp.point.x,3); close(stamp.point.z,4);
   assert.equal(a.hp,100,'nearest paint cannot damage the shooter');
 });

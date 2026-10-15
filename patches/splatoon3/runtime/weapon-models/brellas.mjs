@@ -1,3 +1,4 @@
+import {box as fullBox,sphere as fullSphere,zlathe as fullZlathe,zcyl as fullZcyl,ring as fullRing,pipe as fullPipe,cyl as fullCyl} from './kit.mjs';
 import { BRELLA_APERTURE } from '../brella-aperture.mjs';
 // Brella family models (Splatoon 3 Ver.11.3.0): Splat Brella, Tenta Brella, Undercover Brella,
 // Recycled Brella 24 Mk I. The catalogue gives them the shooter model kind (pistol grip, trigger / led channels);
@@ -92,7 +93,7 @@ function clothMark(P, map, poly, color, lift = 0.0012) {
   // Pieces finalizes this triangle list into welded indexed vertices before merging.
   P.add(g, color, M.print);
 }
-function radialRib(P, k, n, R, depth, zH, color, radius = 0.0032, power = 1.6, segments = 8, radial = 5) {
+function radialRib(P, k, n, R, depth, zH, color, radius = 0.0032, power = 1.6, segments = 4, radial = 3) {
   const a = k * TAU / n, c = Math.cos(a), s = Math.sin(a), q = u => [c * R * u, SH + s * R * u, zH - depth * u ** power - 0.004];
   P.add(pipe([q(0), q(.25), q(.55), q(.8), q(1.015)], radius, segments, radial), color, M.satin);
   return q;
@@ -125,6 +126,15 @@ function makeAnimate(cfg) {
 
 // ------------------------------------------------------------------------------------------ Splat Brella
 function splat(d) {
+  // Private tessellation prototype: same dimensions/materials/parts and curve control points.
+  const box=(...a)=>{a[7]=Math.min(a[7]??12,6);a[8]=Math.min(a[8]??8,4);return fullBox(...a);};
+  const sphere=(...a)=>{a[6]=Math.min(a[6]??18,6);a[7]=Math.min(a[7]??12,3);return fullSphere(...a);};
+  const zlathe=(...a)=>{a[4]=Math.min(a[4]??20,8);return fullZlathe(...a);};
+  const zcyl=(...a)=>{a[5]=Math.min(a[5]??18,6);return fullZcyl(...a);};
+  const cyl=(...a)=>{a[3]=Math.min(a[3]??14,4);return fullCyl(...a);};
+  const pipe=(...a)=>{a[2]=Math.min(a[2]??20,5);a[3]=Math.min(a[3]??8,3);return fullPipe(...a);};
+  const ring=(...a)=>{a[6]=Math.min(a[6]??6,3);a[7]=Math.min(a[7]??22,10);return fullRing(...a);};
+
   // Eight sewn parasol gores, stepped pale hems, radial stays and a blue open trigger guard.
   // The reference is mostly ink-coloured cloth with separate pale panels, not concentric discs.
   const C = { grip: '#e2e4dc', blue: '#283bc1', black: '#171a1c', white: '#d2d7ce', rib: '#333938', red: '#b82030', print: '#44353d' };
@@ -144,8 +154,8 @@ function splat(d) {
   body.add(zcyl(.008, zH+.010, zH+.016, 0, SH, 12), '#050609', M.rubber);
   for (let k = 0; k < n; k++) {
     const map = gore(k, R, depth, zH, n);
-    inkP.add(fabric(map, .02, k % 2 === 0 ? .67 : 1, 0, 1, 8, 3), '#69cbb1', M.satin);
-    if (k % 2 === 0) canopy.add(fabric(map, .67, 1, 0, 1, 3, 3), C.white, M.satin);
+    inkP.add(fabric(map, .02, k % 2 === 0 ? .67 : 1, 0, 1, 4, 2), '#69cbb1', M.satin);
+    if (k % 2 === 0) canopy.add(fabric(map, .67, 1, 0, 1, 2, 2), C.white, M.satin);
     // Distinct dark/red radial crest, cloth label and parallel print strokes, authored procedurally.
     if (k === 1 || k === 5) {
       clothMark(canopy, map, [[.17,.35],[.32,.42],[.37,.15],[.45,.4],[.62,.32],[.53,.58],[.64,.77],[.42,.7],[.34,.9],[.3,.63]], C.print);
@@ -168,6 +178,15 @@ function splat(d) {
 
 // ------------------------------------------------------------------------------------------ Tenta Brella
 function tenta(d) {
+  // Private tessellation prototype: same dimensions/materials/parts and curve control points.
+  const box=(...a)=>{a[7]=Math.min(a[7]??12,6);a[8]=Math.min(a[8]??8,4);return fullBox(...a);};
+  const sphere=(...a)=>{a[6]=Math.min(a[6]??18,6);a[7]=Math.min(a[7]??12,3);return fullSphere(...a);};
+  const zlathe=(...a)=>{a[4]=Math.min(a[4]??20,8);return fullZlathe(...a);};
+  const zcyl=(...a)=>{a[5]=Math.min(a[5]??18,6);return fullZcyl(...a);};
+  const cyl=(...a)=>{a[3]=Math.min(a[3]??14,4);return fullCyl(...a);};
+  const pipe=(...a)=>{a[2]=Math.min(a[2]??20,5);a[3]=Math.min(a[3]??8,3);return fullPipe(...a);};
+  const ring=(...a)=>{a[6]=Math.min(a[6]??6,3);a[7]=Math.min(a[7]??22,10);return fullRing(...a);};
+
   // Tensioned tent fabric: curved hems, separate window/appliqué panels, bowed red poles
   // standing clear of the fabric, clips and ferrules. Existing grip/muzzle/launch geometry retained.
   const C={black:'#202322',red:'#b72328',olive:'#48503b',grey:'#92978b',edge:'#b0afa0',dark:'#30352e',metal:'#444b45'};
@@ -185,8 +204,8 @@ function tenta(d) {
   const corners=[[-1,-1],[1,-1],[1,1],[-1,1]];
   for(let k=0;k<4;k++){
     const A=corners[k],B=corners[(k+1)%4],map=(u,t)=>point(u*(A[0]*(1-t)+B[0]*t),u*(A[1]*(1-t)+B[1]*t));
-    (k%2?inkP:canopy).add(fabric(map,.025,1,0,1,8,6),k%2?'#528e40':k===0?C.olive:C.grey,M.satin);
-    canopy.add(fabric((u,t)=>{const q=map(u,t);q[2]+=.0015;return q;},.87,1,0,1,2,8),k===0?'#242c29':C.edge,M.satin);
+    (k%2?inkP:canopy).add(fabric(map,.025,1,0,1,k%2?5:4,3),k%2?'#528e40':k===0?C.olive:C.grey,M.satin);
+    canopy.add(fabric((u,t)=>{const q=map(u,t);q[2]+=.0015;return q;},.87,1,0,1,1,4),k===0?'#242c29':C.edge,M.satin);
     canopy.add(pipe([map(1,0),map(1,.25),map(1,.5),map(1,.75),map(1,1)],.003,10,5),C.dark,M.satin);
   }
   // Rounded rectangular window appliqués follow the non-planar fabric (both sides, no floating slab).
@@ -250,6 +269,15 @@ function undercover(d) {
 
 // ------------------------------------------------------------------------------------------ Recycled Brella 24 Mk I
 function recycled(d) {
+  // Private tessellation prototype: same dimensions/materials/parts and curve control points.
+  const box=(...a)=>{a[7]=Math.min(a[7]??12,6);a[8]=Math.min(a[8]??8,4);return fullBox(...a);};
+  const sphere=(...a)=>{a[6]=Math.min(a[6]??18,6);a[7]=Math.min(a[7]??12,3);return fullSphere(...a);};
+  const zlathe=(...a)=>{a[4]=Math.min(a[4]??20,8);return fullZlathe(...a);};
+  const zcyl=(...a)=>{a[5]=Math.min(a[5]??18,6);return fullZcyl(...a);};
+  const cyl=(...a)=>{a[3]=Math.min(a[3]??14,4);return fullCyl(...a);};
+  const pipe=(...a)=>{a[2]=Math.min(a[2]??20,5);a[3]=Math.min(a[3]??8,3);return fullPipe(...a);};
+  const ring=(...a)=>{a[6]=Math.min(a[6]??6,3);a[7]=Math.min(a[7]??22,10);return fullRing(...a);};
+
   // Wagasa: 24 individual paper gores, dark perimeter and pale registration ring, full
   // bamboo spokes with the smaller conical stretcher cage, and a red mechanical hub.
   const C={red:'#bd4728',black:'#242925',paper:'#bfc6bd',rim:'#42483e',bamboo:'#423d31',silver:'#b8b6a1'};
@@ -274,15 +302,18 @@ function recycled(d) {
   canopy.add(box(.096,.096,.008,0,SH,zH-.006,.12,8,4),C.rim,M.rubber);
   for(let k=0;k<n;k++){
     const map=gore(k,R,depth,zH,n,1.7,.0015,.004);
-    inkP.add(fabric(map,.10,.865,0,1,6,2),'#9b8bc6',M.satin);
+    inkP.add(fabric(map,.10,.865,0,1,3,2),'#9b8bc6',M.satin);
     canopy.add(fabric(map,.865,.898,0,1,1,2),C.paper,M.satin);
     canopy.add(fabric(map,.898,1,0,1,2,2),C.rim,M.satin);
-    const q=radialRib(canopy,k,n,R,depth,zH,C.bamboo,.003,1.7,7,4);
+    const q=radialRib(canopy,k,n,R,depth,zH,C.bamboo,.003,1.7,4,3);
     canopy.add(cyl(.0027,[Math.cos(k*TAU/n)*.021,SH+Math.sin(k*TAU/n)*.021,.353],q(.46),5),C.bamboo,M.satin);
     const end=q(1.014);canopy.add(sphere(.0045,.0045,.007,...end,6,4),C.black,M.rubber);
   }
   fold(canopy,zH,SZ);fold(inkP,zH,SZ);
-  return rebuild(d,{body,ink:inkP,parts:{trigger:part(trig,TRIGGER_PIVOT),led:part(led,[0,SH,zH+.014],'lamp',{color:'#0a2a20',emissive:'#27e0a0',intensity:1.3}),canopy:part(canopy,[0,SH,zH],'body')},gripL:GRIP_L(.08),muzzle:[0,SH,zH+.022]});
+  const result = rebuild(d,{body,ink:inkP,parts:{trigger:part(trig,TRIGGER_PIVOT),led:part(led,[0,SH,zH+.014],'lamp',{color:'#0a2a20',emissive:'#27e0a0',intensity:1.3}),canopy:part(canopy,[0,SH,zH],'body')},gripL:GRIP_L(.08),muzzle:[0,SH,zH+.022]});
+  // Only this ink geometry is the moving paper; retain its explicit launch ownership.
+  result.detachedCanopyInk = { geo: result.ink, pivot: result.parts.canopy.pivot.clone() };
+  return result;
 }
 
 // An open shield is still being actively held after a single-shot firingPose expires.

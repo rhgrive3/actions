@@ -19,6 +19,9 @@ async function shot(rate,height=8,{wall=false,dead=false,ghost=false}={}){
  if(wall){level.faces[1].origin.z=1.65;level.blocks[1].center.z=2.15;level.blocks[1].aabbMin.z=1.65;level.blocks[1].aabbMax.z=2.65;}f.G.settings={};f.setRandom(()=>.37);
  const a=f.make('s3-shooter-short');a.form='kid';a.pos.set(0,height,0);a.aimDir.set(0,0,1);a.aimPoint.set(0,height,60);a.grounded=true;
  const stamps=[],original=paint.splat;paint.splat=function(at,r,team,opts){stamps.push({time:f.G.time,at:at.clone(),r,opts:{...opts}});return original.call(this,at,r,team,opts);};
+ // Fire from the SplitNum cycle's nearest slot so the first splash releases at SpawnNearestLength
+ // (other slots stagger it one SpawnBetweenLength fraction farther, like the native splash planner).
+ a.weaponRunner.update(0,{fire:false});a.weaponRunner.catalogState.paintShotOrdinal=a.weapon.catalogRecord.parameters.SplashSpawnParam.SplitNum-1;
  a.intent.fire=true;a.weaponRunner.update(1/60,{fire:true,firePressed:true,sub:false});a.intent.fire=false;if(dead)a.alive=false;if(ghost){a.remote=true;for(const p of f.G.projectiles.list)p.ghost=true;}
  let queued=false;
  for(let i=0;i<rate*3;i++){f.G.time+=1/rate;f.G.projectiles.update(1/rate);paint.advanceSimulation(1/rate);if(f.G.projectiles._s3SplashDrops?.length)queued=true;}
@@ -27,7 +30,7 @@ async function shot(rate,height=8,{wall=false,dead=false,ghost=false}={}){
 
 test('airborne catalog splash lands before acquiring floor ownership, with deterministic 30/60/120Hz final paint',async()=>{
  const baseline=await shot(60);assert.ok(baseline.queued);assert.ok(baseline.landings.length>0);
- const drops=baseline.stamps.filter(s=>s.opts.kind==='drop');assert.ok(drops.length>0);
+ const drops=baseline.stamps.filter(s=>s.opts.kind==='source-splash');assert.ok(drops.length>0);
  assert.ok(drops.every(s=>s.time>.2),'high airborne splash cannot immediately ray-project onto floor');
  assert.ok(baseline.landings.every(l=>l.frames>0&&l.height>1));
  assert.equal(baseline.turf,baseline.cells*.0625);

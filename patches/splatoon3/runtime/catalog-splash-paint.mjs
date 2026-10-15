@@ -7,6 +7,23 @@ export function catalogFractionalSplashCount(value, ordinal) {
   return Math.max(0,Math.floor((ordinal+1)*value+1e-9)-Math.floor(ordinal*value+1e-9));
 }
 
+// SplitNum staggers each shot's first detached splash through one
+// SpawnBetweenLength interval, so sustained fire fills the whole line; the
+// SplitNum-th (and ForceSpawnNearestAddNumArray) shot releases at the nearest
+// distance. Same rule as the native shooter planner (inkFlight.js splashPlan).
+// Without it every added shooter released at SpawnNearestLength + k*spacing on
+// every shot: a Jet Squelcher (1.0 + k*10.0) left the floor between ~4 m and
+// ~10 m unpainted under sustained fire, unlike the native Splattershot.
+export function catalogSplashFirst(spawn, sequence) {
+  const nearest = Number.isFinite(spawn?.SpawnNearestLength) ? Math.max(0, spawn.SpawnNearestLength) : 1;
+  const spacing = spawn?.SpawnBetweenLength, split = spawn?.SplitNum;
+  if (!Number.isSafeInteger(sequence) || sequence < 0 || !Number.isInteger(split) || split < 1 ||
+      !(Number.isFinite(spacing) && spacing > 0)) return nearest;
+  const ordinal = sequence % split + 1;
+  const force = Array.isArray(spawn.ForceSpawnNearestAddNumArray) ? spawn.ForceSpawnNearestAddNumArray : [];
+  return ordinal === split || force.includes(ordinal) ? nearest : nearest + spacing * (split - ordinal) / split;
+}
+
 import { SPLASH_SHOOTER_PAINT_DEFAULTS, SPLASH_SHOOTER_SPAWN_DEFAULTS, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 
 // Added main weapons use the already installed, fixed-60Hz splash drop queue.

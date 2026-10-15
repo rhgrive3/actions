@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   tripleSlamFistCenters, tripleSlamFistDamage, tickTripleSlamFists,
-  installTripleSlamFists, FIST_TRAVEL, FIST_STAMP_RADIUS, tripleSlamFistStamps,
+  installTripleSlamFists, FIST_TRAVEL, FIST_ORPHAN_DEADLINE, FIST_STAMP_RADIUS, tripleSlamFistStamps,
 } from '../runtime/triple-slam-fists.mjs';
 import { getBoot } from './tidal-slam-fixture.mjs';
 
@@ -111,11 +111,27 @@ test('#912 Super Jump Slam and remotely presented actors never instantiate fists
   assert.equal(w.hits.length, 0);
 });
 
-test('#912 owner splatted before landing cancels the pending fists (no fist-only blast is invented)', () => {
+test('#912 surviving fists still detonate after the owner is splatted before landing', () => {
   const w = world(), a = new w.Actor(); a._startSpecial(); a.alive = false;
-  for (let i = 0; i < 200; i++) a.update(1 / 60);
-  assert.equal(w.hits.length, 0);
+  assert.equal(FIST_ORPHAN_DEADLINE, 85 / 60, 'documented approximate pre-landing-death fallback');
+  for (let i = 0; i < 84; i++) a.update(1 / 60);
+  assert.equal(w.hits.length, 0, 'never invent early fist damage before the independent deadline');
+  a.update(1 / 60);
+  assert.equal(w.hits.length, 2, 'both surviving fists independently hit despite player death');
+  assert.ok(w.hits.every(h => h.cause === 'slam'));
+  assert.equal(w.paint.length, 2 * tripleSlamFistStamps(10).length);
   assert.equal(a._s3TripleSlamFists, null);
+  for (let i = 0; i < 120; i++) a.update(1 / 60);
+  assert.equal(w.hits.length, 2, 'the owner-death fallback cannot duplicate fist damage');
+});
+
+test('#912 splatting the player after landing cannot cancel either already scheduled fist', () => {
+  const w = world(), a = new w.Actor(); a._startSpecial(); a._slamImpact();
+  a.alive = false;
+  for (let i = 0; i < 14; i++) a.update(1 / 60);
+  assert.equal(w.hits.length, 0);
+  a.update(1 / 60);
+  assert.equal(w.hits.length, 2, 'the original 15F post-landing timing persists through death');
 });
 
 test('#912 fist delay is time-based: 30 sub-steps of 1/120 s fire at the same 0.25 s as 15 ticks of 1/60 s', () => {
@@ -153,17 +169,83 @@ test('#912 composed production Tidal Slam: fists explode 15F after landing, sepa
     assert.equal(a.specialActive, null, 'player landed');
     const playerHits = hits.filter(h => h.victim === playerVictim);
     assert.equal(playerHits.length, 1, 'player blast hits the behind-victim once, at landing');
-    assert.equal(hits.filter(h => h.victim === fistVictim).length, 0, 'no fist damage before 15F');
+    const landingHits = hits.filter(h => h.victim === fistVictim).length;
+    assert.equal(landingHits, 1, 'the 9.6u main blast already reaches this victim at landing');
     f.tick(a, 14);
-    assert.equal(hits.filter(h => h.victim === fistVictim).length, 0, 'still no fist damage at 14F');
+    assert.equal(hits.filter(h => h.victim === fistVictim).length, landingHits, 'no additional fist damage at 14F');
     f.tick(a, 1);
-    const fistHits = hits.filter(h => h.victim === fistVictim);
-    assert.equal(fistHits.length, 2, 'both fists damage the victim independently');
+    const fistHits = hits.filter(h => h.victim === fistVictim).slice(landingHits);
+    assert.equal(fistHits.length, 2, 'both fists damage the victim independently after 15F');
     assert.ok(fistHits.every(h => h.cause === 'slam' && h.amount > 60 && h.amount <= 220));
     assert.ok(fistHits.reduce((s, h) => s + h.amount, 0) >= 100);
     assert.equal(hits.filter(h => h.victim === playerVictim).length, 1, 'player blast is not duplicated');
   } finally {
     f.G.projectiles.applyHit = applyHit;
+  }
+});
+
+test('#912 composed main/Super Jump Slam uses source damage endpoints independently of paint width', async () => {
+  const f = await getBoot();
+  const { G, SPECIALS } = f;
+  const prev = G.actors;
+  G.actors = [];
+  const owner = f.make();
+  const near = f.make({ team: 1, pos: [6.4, 0, 0] });
+  const mid = f.make({ team: 1, pos: [8, 0, 0] });
+  const far = f.make({ team: 1, pos: [9.6, 0, 0] });
+  const outside = f.make({ team: 1, pos: [9.61, 0, 0] });
+  const hits = [], originalHit = G.projectiles.applyHit, originalLOS = G.physics.los;
+  G.projectiles.applyHit = (attacker, victim, damage, cause) => hits.push({ attacker, victim, damage, cause });
+  G.physics.los = () => true;
+  try {
+    assert.equal(SPECIALS.slam.damageNearRadius, 6.4);
+    assert.equal(SPECIALS.slam.damageRadius, 9.6);
+    assert.equal(SPECIALS.slam.radius, 5.2, 'paint radius is unchanged; network admission must not change implicitly');
+    owner._slamImpact(SPECIALS.slam);
+    const damage = victim => hits.find(h => h.victim === victim)?.damage;
+    assert.equal(damage(near), 220);
+    assert.ok(Math.abs(damage(mid) - 140) < 1e-8, 'between 6.4 and 9.6 damage interpolates linearly');
+    assert.ok(Math.abs(damage(far) - 60) < 1e-8);
+    assert.equal(damage(outside), undefined);
+    assert.ok(hits.every(h => h.attacker === owner && h.cause === 'slam'));
+  } finally {
+    G.projectiles.applyHit = originalHit; G.physics.los = originalLOS;
+    // This shared VM fixture otherwise leaves detached meshes in G.scene.
+    for (const a of G.actors) {
+      G.scene.remove(a.character.root);
+      a.character.dispose?.();
+    }
+    G.actors = prev;
+  }
+});
+
+test('#912 actual composed Actor.splat before landing preserves two damaging fists', async () => {
+  const f = await getBoot();
+  f.G.actors = [];
+  const owner = f.make();
+  const attacker = f.make({ team: 1, pos: [20, 0, 0] });
+  const victim = f.make({ team: 1, pos: [0, 0, 5.664] });
+  const hits = [], previousHit = f.G.projectiles.applyHit;
+  f.G.projectiles.applyHit = (source, target, amount, cause) => {
+    if (source === owner && target === victim) hits.push([amount, cause]);
+  };
+  try {
+    owner.special = owner.specialCost();
+    owner.intent.special = true;
+    f.tick(owner);
+    owner.intent.special = false;
+    assert.ok(owner._s3TripleSlamFists, 'normal special creates independent fist state');
+    owner.splat(attacker, 'shooter');
+    assert.equal(owner.alive, false);
+    assert.equal(owner.specialActive, null, 'native death cancels only the user action');
+    f.tick(owner, 84);
+    assert.equal(hits.length, 0, 'no early after-death fist hit');
+    f.tick(owner);
+    assert.equal(hits.length, 2, 'both live fists finish despite native death');
+    assert.ok(hits.every(([dmg, cause]) => dmg === 220 && cause === 'slam'));
+    assert.equal(owner._s3TripleSlamFists, null);
+  } finally {
+    f.G.projectiles.applyHit = previousHit;
   }
 });
 

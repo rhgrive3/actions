@@ -15,6 +15,10 @@
 const INSTALL = Symbol.for('inkwave.s3.triple-slam-fists');
 const DEG = Math.PI / 180;
 export const FIST_TRAVEL = 15 / 60;
+// Public mechanics describe ~60F rising, ~10F falling and 15F travel before a
+// surviving fist impacts. This is a bounded community-based fallback for when
+// the player's landing callback never happens (death); not an extracted timer.
+export const FIST_ORPHAN_DEADLINE = 85 / 60;
 export const FIST_SOURCE_DISTANCE = 6.54;
 export const FIST_SOURCE_ANGLE = 30 * DEG;
 export const FIST_NEAR_RADIUS = 6.4;
@@ -123,13 +127,17 @@ function blast(actor, record, G, THREE) {
 export function tickTripleSlamFists(actor, dt, G, THREE) {
   const state = actor?._s3TripleSlamFists;
   if (!state || actor.remote || !finite(dt) || !(dt > 0)) return false;
-  // Fists are released only by the owner's landing. If the owner is splatted
-  // first, they are cancelled; no source supports a fist-only blast.
+  // The two fists are independent entities in S3. Killing the player does not
+  // cancel a surviving fist. A live landing still schedules exactly 15F below;
+  // if the player dies first, retain an activation-relative deadline rather
+  // than waiting forever for a landing callback the dead Actor cannot emit.
+  state.age = (state.age || 0) + dt;
   if (state.remaining == null) {
-    if (!actor.alive) actor._s3TripleSlamFists = null;
-    return false;
+    if (actor.alive) return false;
+    state.remaining = Math.max(0, FIST_ORPHAN_DEADLINE - state.age);
+  } else {
+    state.remaining = Math.max(0, state.remaining - dt);
   }
-  state.remaining = Math.max(0, state.remaining - dt);
   if (state.remaining > 1e-10) return false;
   actor._s3TripleSlamFists = null;
   blast(actor, state, G, THREE);
@@ -151,7 +159,7 @@ export function installTripleSlamFists({ Actor, G, THREE }, profile) {
     const result = start.apply(this, args);
     if (admitted && this.specialActive?.id === 'slam')
       this._s3TripleSlamFists = { origin, centers: tripleSlamFistCenters(origin, yaw, worldScale),
-        remaining: null, scale: worldScale };
+        remaining: null, age: 0, scale: worldScale };
     return result;
   };
   Actor.prototype._slamImpact = function (...args) {

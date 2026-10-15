@@ -134,11 +134,16 @@ test('special arena: a Tidal Slam at the centre hits the endurance targets, fall
     const end = s.targets.filter((t) => t.rangeTarget.kind === 'endurance').map((t) => [t.rangeTarget.label, t.rangeTarget.combo?.total || 0, Math.hypot(t.pos.x - R.ZONES.SPECIAL_CENTER[0], t.pos.z - R.ZONES.SPECIAL_CENTER[1])]);
     assert.equal(a.specialActive, null, 'native Slam completes its real physics lifecycle');
     assert.ok(end.length > 0, 'the arena has endurance targets');
-    const r = R.SPECIALS.slam.radius;
+    // The painted footprint stays at radius 5.2, but the S3 11.3.0
+    // Triple Splashdown *damage* band reaches 9.6 (220 near 6.4 / 60
+    // at the far edge). Keep this a gameplay hit test, not a turf test.
+    const sp = R.SPECIALS.slam;
+    const outerDamageRadius = sp.damageRadius ?? sp.radius;
     for (const [label, dmg, dist] of end) {
-      if (dist < r) assert.ok(dmg > 0, `${label} inside the slam radius took damage`);
-      else assert.equal(dmg, 0, `${label} outside the radius untouched`);
+      if (dist < outerDamageRadius) assert.ok(dmg > 0, `${label} inside the slam damage radius took damage`);
+      else if (dist > outerDamageRadius) assert.equal(dmg, 0, `${label} outside the damage radius untouched`);
     }
+    assert.ok(outerDamageRadius > sp.radius, 'S3 damage must extend beyond the old cosmetic paint footprint');
     assert.ok(end.every((t) => s.targets.find((x) => x.rangeTarget.label === t[0]).alive), 'endurance targets never pop');
   } finally { w.done(); }
 });

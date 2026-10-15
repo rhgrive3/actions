@@ -25,9 +25,9 @@ test('a collision retains earlier splash releases but emits no splash beyond the
 });
 test('remote ghost contact emits no authoritative splash',async()=>{assert.equal((await emit({wall:true,ghost:true})).drops.length,0);});
 
-test('falling catalog projectiles retain each explicit source nearest-release distance',async()=>{
+test('falling catalog projectiles release from the explicit source distance for their SplitNum slot',async()=>{
  const {MAIN_WEAPON_CATALOG}=await import('../runtime/main-weapon-catalog-data.mjs');
- const {catalogSplashDropSpec}=await import('../runtime/catalog-splash-paint.mjs');
+ const {catalogSplashDropSpec,catalogSplashFirst}=await import('../runtime/catalog-splash-paint.mjs');
  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export { installMainWeaponCatalogRuntime } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"});
  f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);makePaintWorld(f);f.G.settings={};
  const records=MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy&&catalogSplashDropSpec(r.parameters));assert.equal(records.length,22);
@@ -35,7 +35,11 @@ test('falling catalog projectiles retain each explicit source nearest-release di
   f.G.projectiles.clear();const a=f.make(r.id);a.aimDir.set(0,0,1);
   for(let i=0;i<60&&!f.G.projectiles.list.length;i++)a.weaponRunner.update(1/60,{fire:true,firePressed:i===0});
   const p=f.G.projectiles.list.find(p=>p.catalog);assert.ok(p,r.id);
-  assert.equal(p.catalog.nextSplash,r.parameters.SplashSpawnParam.SpawnNearestLength,r.id);
+  // Shooter-family first shot = slot 1: SpawnNearestLength + SpawnBetweenLength*(SplitNum-1)/SplitNum
+  // (native splashPlan rule); other families keep the explicit nearest distance.
+  const spawn=r.parameters.SplashSpawnParam,staggered=['shooter','splatling','dualies'].includes(r.family);
+  assert.equal(p.catalog.nextSplash,staggered?catalogSplashFirst(spawn,0):spawn.SpawnNearestLength,r.id);
+  if(staggered&&Number.isInteger(spawn.SplitNum))assert.equal(catalogSplashFirst(spawn,spawn.SplitNum-1),spawn.SpawnNearestLength,r.id+' nearest slot');
  }
 });
 

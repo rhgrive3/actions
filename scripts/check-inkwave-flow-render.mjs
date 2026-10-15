@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { runFlowCurveEmittedProbe } from './lib/flow-curve-emitted-probe.mjs';
 // Focused production Flow/GTAOPass regression. Read back actual Chromium WebGL
 // output; instrument real buffer uploads/deletions without replacing rendering.
 import fs from 'node:fs';
@@ -96,7 +97,7 @@ export function verifyFlowBuild(site, exactSource = false) {
   });
   if (hash(fs.readFileSync(path.join(ROOT, 'scripts/build-inkwave.mjs'))) !== manifest.build.script)
     throw Error('Flow build pipeline mismatch');
-  files.push('scripts/build-inkwave.mjs', 'scripts/check-inkwave-flow-render.mjs');
+  files.push('scripts/build-inkwave.mjs', 'scripts/check-inkwave-flow-render.mjs', 'scripts/lib/flow-curve-emitted-probe.mjs');
   let sourceSha = null;
   if (exactSource) {
     sourceSha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
@@ -464,7 +465,8 @@ async function main() {
       }
     }, { prefix, width: WIDTH, height: HEIGHT });
     result.summary = validateFlowRenderResult(result);
-    const required = ['patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/flow-motion.mjs',
+    result.curveParity = await runFlowCurveEmittedProbe(page, {prefix,root:new URL('../',import.meta.url),manifest});
+    const required = ['patches/splatoon3/runtime/flow-effects.mjs', 'patches/splatoon3/runtime/gear.mjs', 'patches/splatoon3/runtime/weapon-weight.mjs', 'patches/splatoon3/profile.json', 'patches/splatoon3/runtime/install.mjs', 'patches/splatoon3/runtime/flow-motion.mjs',
       'patches/splatoon3/runtime/flow.mjs', 'src/game/actor.js', 'src/game/character.js', 'src/game/weapons.js',
       'vendor/three/build/three.module.js', 'vendor/three/jsm/postprocessing/GTAOPass.js'];
     for (const file of required) if (!loaded.has(prefix.slice(1) + file)) throw Error('Actual Flow/GTAO module not loaded: ' + file);
@@ -481,6 +483,7 @@ async function main() {
     result.toolchain = { node: process.version, chromium: browser.browser()?.version() || null };
   } catch (error) {
     failure = error;
+    if (error.flowCurveParity) result = { ...(result || {}), curveParity: error.flowCurveParity };
     try { if (page) result = { ...(result || {}), progress: await page.evaluate(() => globalThis.flowProbeProgress || null) }; } catch {}
     try { await page?.screenshot({ path: path.join(output, 'flow-render-failed.png'), timeout: 10000 }); } catch {}
   } finally {

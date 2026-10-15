@@ -90,7 +90,7 @@ function squelchers(d) {
   return finish(d, body, ink, trig, [0, 0.068, 0.242]);
 }
 
-function darkTetra(d) {
+function darkTetra(d, rearShellColor = null) {
   // Wmn_Maneuver_Stepper. Single pistol, reconstructed from side, rear, front and oblique turntable views.
   // Dark target colours come from its official render; the stored Light rotation sheet is geometry-only.
   // Anchor frames and the existing muzzle remain native; these are merged static construction pieces.
@@ -99,11 +99,11 @@ function darkTetra(d) {
   const trig=pistolGrip(body,{color:C.rubber,triggerColor:C.black,guard:false,base:false});
   // Dark variant: black rear cheeks on both sides, with separate grey kidney-shaped pads.
   const rear=[[-.050,.065],[-.041,.096],[-.022,.108],[.012,.100],[.019,.071],[.006,.032],[-.001,-.025],[-.022,-.065],[-.059,-.079],[-.064,-.064],[-.043,-.048],[-.043,.004]];
-  body.add(shell(rear,.027,.003,36),C.black,M.satin);
+  body.add(shell(rear,.027,.003,36),rearShellColor ?? C.black,M.satin);
   body.add(ylathe([[0,-.078],[.023,-.078],[.035,-.064],[.043,-.044],[.039,-.025],[.020,-.004],[.013,.012],[0,.012]],0,0,0,18).scale(1,1,.48).translate(0,0,-.038),C.black,M.rubber);
   for(const sx of[-1,1]){
     const cheek=[[-.035,.088],[-.020,.099],[.015,.091],[.016,.060],[.002,.026],[-.007,-.034],[-.026,-.065],[-.055,-.077],[-.052,-.059],[-.031,-.043],[-.026,.005]];
-    body.add(shell(cheek,.003,.0015,30).translate(sx*.015,0,0),C.black,M.satin);
+    body.add(shell(cheek,.003,.0015,30).translate(sx*.015,0,0),rearShellColor ?? C.black,M.satin);
     const pad=[[-.019,.044],[-.034,.030],[-.038,.002],[-.029,-.030],[-.017,-.045],[-.006,-.033],[-.001,-.006],[-.005,.023]];
     body.add(shell(pad,.0035,.0012,28).translate(sx*.018,.022,0),C.black,M.rubber);
     body.add(shell(pad.map(([z,y])=>[-.019+(z+.019)*.73,y*.80]),.0018,.0006,24).translate(sx*.020,.022,0),C.grey,M.satin);
@@ -206,3 +206,6 @@ export const MODELS = {
   's3-maneuver-stepper': { sourceModel: 'Wmn_Maneuver_Stepper', build: darkTetra },
   's3-maneuver-long': { sourceModel: 'Wmn_Maneuver_Long', build: douser },
 };
+
+// Variant-only fixed rear shell finish; all default model builders remain unchanged.
+export const buildTetraWithRearShell = (d, color) => darkTetra(d, color);

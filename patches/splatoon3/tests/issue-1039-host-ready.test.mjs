@@ -35,7 +35,7 @@ async function room(mode = 'turf') {
 }
 function readyControl(net) {
   const logs = [], node = { classList:{}, querySelector:()=>({}) };
-  const context = {
+  const context = { tu:value=>value,
     net, isHost:()=>net.isHost, bossMode:()=>net.lobby.mode === 'boss',
     lob:net.lobby, meP:()=>net.lobby.players.find(p=>p.id===net.myId), players:()=>net.lobby.players,
     S:{launching:null}, readyBtn:node, startBtn:node, safeCall:fn=>fn(), renderBar(){},
@@ -130,7 +130,7 @@ test('#1039 host Turf exposes a Ready button and navigation reaches Confirm, Rea
     const startHint = {style:{}};
     const ids = { wChip:'weapon',lChip:'look',teamRow:'team',emoteBtn:'emote',confirmTeamsBtn:{style:{}},readyBtn:{style:{}},startBtn:{querySelector:()=>startHint} };
     const assignment = {id:'assignment'};
-    const env = { ...ids, teamAssignButtons:[assignment], isHost:()=>host, bossMode:()=>boss, lob:{teamsConfirmed:true}, el:{classList:{toggle(){}}} };
+    const env = { tu:value=>value, ...ids, teamAssignButtons:[assignment], isHost:()=>host, bossMode:()=>boss, lob:{teamsConfirmed:true}, el:{classList:{toggle(){}}} };
     const bar = section('    const barItems = () =>', '    const hostRows =');
     const items = vm.runInNewContext(`${bar}\nbarItems()`, env);
     assert.equal(items.includes(assignment), host && !boss);
@@ -190,7 +190,7 @@ test('#1039 live roster bindings survive team rerender, retire old controls and 
     _setFocus(button) { this._focus=button; } };
   const code = section("    let rosterSignature = '';", '    const confirmTeamsBtn =');
   const factory = vm.runInNewContext(`(function(){${code}\nreturn {render:renderTouchRoster,buttons:teamAssignButtons};})`, {
-    h:make, Ws:{shooter:{kind:'shooter',name:'Shooter'}}, weaponIcon:()=>'', GLYPHS:{crown:'c',check:'y',clock:'t'},
+    tu:value=>value, h:make, Ws:{shooter:{kind:'shooter',name:'Shooter'}}, weaponIcon:()=>'', GLYPHS:{crown:'c',check:'y',clock:'t'},
     isHost:()=>host, bossMode:()=>boss, players:()=>players, teamOf:p=>p.team, touchRoster:roster,
     lob:{teamsConfirmed:false}, S:{launching:false}, safeCall:fn=>fn(),
     net:{assignTeam(id,team) { players.find(p=>p.id===id).team=team; state.render(); }},

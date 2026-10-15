@@ -1,4 +1,5 @@
 import test from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {emptyLoadout} from '../runtime/gear.mjs';
@@ -14,7 +15,7 @@ async function world(id){
  nm.bind(m);f.G.netm=nm;f.G.match=m;f.G.actors=[a];
  return{f,a,nm,m,send(){f.G.time+=1/60;nm._sendTick();return json(packet);}};
 }
-function receive(w,p,from='owner',sample=true){w.nm.onMessage(from,json(p));if(sample){const peer=w.nm._peer(from);peer.tr=Math.max(peer.tr||0,p.ts);w.nm._sample(w.a,peer.tr,0);w.nm.applyRemote(w.a,1/60);}}
+function receive(w,p,from='owner',sample=true){w.f.context.__wire=JSON.stringify(p);w.nm.onMessage(from,vm.runInContext('JSON.parse(__wire)',w.f.context));delete w.f.context.__wire;if(sample){const peer=w.nm._peer(from);peer.tr=Math.max(peer.tr||0,p.ts);w.nm._sample(w.a,peer.tr,0);w.nm.applyRemote(w.a,1/60);}}
 function adopt(w){w.nm.s.hostId='viewer';w.nm.s.isHost=true;w.nm.onLeave('owner',true);}
 function head(w,id){w.a.s3.loadout=emptyLoadout();w.a.s3.loadout[0].main=id;w.a.s3RefreshGear();}
 function enemy(w){const a=w.f.make();a.team=1;a.invuln=0;return a;}
@@ -120,4 +121,20 @@ test('unconfigured conditional helper is inactive until runtime installation con
  const {openingRemaining}=await import('../runtime/conditional-gear-network.mjs?unconfigured-contract');
  assert.equal(openingRemaining({openingEnd:null},{duration:180,time:180}),0);
  const o=await world('owner');head(o,'openingGambit');assert.ok(o.a.s3.modifiers.runSpeed>1,'full installer configures conditional helpers before Actor refresh');
+});
+
+test('negotiated compressed paint preserves real conditional gear clocks through JSON and host takeover',async()=>{
+ const o=await world('owner'),r=await world('viewer'),q=[];
+ for(const w of [o,r]){
+  w.f.context.crypto=globalThis.crypto;
+  w.nm.s._members=new Map([['owner','Owner'],['viewer','Viewer']]);
+  w.nm.s.tr.sendTo=(to,d)=>{q.push([w.nm.s.myId,to,json(d)]);return true;};
+ }
+ o.send();r.send();let budget=30;while(q.length){assert.ok(budget-->0);const[from,to,d]=q.shift();(to==='owner'?o:r).nm.onMessage(from,d);}
+ head(o,'comeback');comeback(o);advance(o,8);r.m.time=o.m.time;
+ for(let i=0;i<24;i++)o.nm.recSplat(new o.f.THREE.Vector3(i*.02,0,0),.3,0,{seed:.31,kind:'drop',face:0,claimOwner:o.a});
+ const packet=o.send();assert.ok(packet.pe,'real _sendTick uses negotiated codec');assert.ok(packet.gg[1]);assert.ok(packet.gc[1]);assert.equal(packet.e,undefined);
+ receive(r,packet);near(r.a.s3.conditionalGear.comeback,12);assert.equal(r.a.s3.loadout[0].main,'comeback');
+ advance(r,2);adopt(r);near(r.a.s3.conditionalGear.comeback,10);assert.ok(r.a.s3.modifiers.runSpeed>1);
+ advance(r,10);near(r.a.s3.conditionalGear.comeback,0);near(r.a.s3.modifiers.runSpeed,1);
 });

@@ -841,8 +841,18 @@ export class Actor {
     for (const a of G.actors) {
       if (a.team === this.team || !a.alive) continue;
       const d = a.pos.distanceTo(c);
-      if (d > sp.radius) continue;
-      const dmg = d < sp.killRadius ? sp.damageMax : sp.damageMin + (sp.damageMax - sp.damageMin) * 0.3 * (1 - (d - sp.killRadius) / (sp.radius - sp.killRadius));
+      // S3 11.3.0's damage radii (6.4 near / 9.6 far) are independent
+      // of the legacy paint radius and its network admission ceiling.
+      // Preserve the original fallback for non-S3 special profiles.
+      const sourceDamage = Number.isFinite(sp.damageRadius) && Number.isFinite(sp.damageNearRadius)
+        && sp.damageRadius > sp.damageNearRadius && sp.damageNearRadius >= 0;
+      const damageFar = sourceDamage ? sp.damageRadius : sp.radius;
+      const damageNear = sourceDamage ? sp.damageNearRadius : sp.killRadius;
+      if (d > damageFar) continue;
+      const dmg = sourceDamage
+        ? (d <= damageNear ? sp.damageMax
+          : sp.damageMax + (sp.damageMin - sp.damageMax) * (d - damageNear) / (damageFar - damageNear))
+        : d < sp.killRadius ? sp.damageMax : sp.damageMin + (sp.damageMax - sp.damageMin) * 0.3 * (1 - (d - sp.killRadius) / (sp.radius - sp.killRadius));
       _v.copy(a.pos); _v.y += 0.8;
       if (G.physics.los(_v2.copy(c).setY(c.y + 0.8), _v)) G.projectiles.applyHit(this, a, dmg, 'slam');
     }

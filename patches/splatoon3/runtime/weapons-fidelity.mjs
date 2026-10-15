@@ -8,7 +8,8 @@ import { dualiesGuideInputsChanged } from './dualies-guide-cache.mjs';
 import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
-import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint } from './shooter-impact-paint.mjs';
+import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';
+import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -363,7 +364,7 @@ function withDualiesImpactPaint(game,p,hit,source,callback) {
   paint.splat=function(center,radius,team,opts={}) {
     if (!first) return native.call(this,center,radius,team,opts);
     first=false;
-    const next={...opts};
+    const next={...opts,kind:SOURCE_SHOT_PAINT_KIND};
     if (source.depthScale !== null) {
       // The angle was already consumed above. Avoid applying a second cos(angle)
       // attenuation in the rasterizer by supplying the in-plane unit heading.
@@ -490,7 +491,7 @@ function eligibleWallDropHit(hit) {
 }
 function wallDropPaint(p, point, radius, state, salt) {
   if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), claimOwner: p.owner });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return area || 0;
 }
@@ -621,16 +622,17 @@ export function blasterBurstAxisDirections(contract) {
   return out;
 }
 
-function detachedPaint(system, state, point, radius, salt) {
+function detachedPaint(system, state, point, radius, salt, face = state.paintFace) {
   if (state.ghost || !(radius > 0) || !api?.G?.paint) return 0;
   const area = api.G.paint.splat(point, radius, state.team, {
-    seed: seededUnit(state.seed, salt + state.paintIndex++), claimOwner: state.owner,
+    ...(Number.isInteger(face) && face >= 0 ? { face } : {}),
+    seed: seededUnit(state.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: state.owner,
   });
   if (Number.isFinite(area)) state.owner?.addTurf?.(area);
   return area || 0;
 }
 
-function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
+function startDetachedWallDrop(system, p, hit, move, paint, tag, salt, paintFace = null) {
   if (!move || !paint || !eligibleWallDropHit(hit)) return false;
   const firstFrames = seededFrames(p.seed, move.FallPeriodFirstFrameMin, move.FallPeriodFirstFrameMax, salt ^ 0x11);
   const secondFrames = Math.max(0, Math.round(move.FallPeriodSecondFrame ?? 0));
@@ -638,7 +640,7 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
   const firstSpeed = Number(move.FallPeriodFirstTargetSpeed ?? 0), secondSpeed = Number(move.FallPeriodSecondTargetSpeed ?? 0);
   if (![firstSpeed, secondSpeed].every(v => Number.isFinite(v) && v >= 0)) throw new RangeError('Invalid detached wall-drop speed');
   const state = {
-    tag, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost,
+    tag, paintFace, owner: p.owner, team: p.team, seed: Number.isFinite(p.seed) ? p.seed : 0, ghost: !!p.ghost,
     frame: 0, firstFrames, secondFrames, lastFrames, totalFrames: firstFrames + secondFrames + lastFrames,
     firstSpeed, secondSpeed,
     shockRadius: Number(paint.PaintRadiusShock) || 0,
@@ -653,6 +655,15 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt) {
   (system._s3DetachedWallDrops || (system._s3DetachedWallDrops = [])).push(state);
   detachedPaint(system, state, state.pos, state.shockRadius, salt ^ 0x33);
   return true;
+}
+
+// Added catalog bullets share the bounded detached wall-slide lifecycle.
+// Admit only sourced paintable face contacts; ghosts cannot duplicate ownership.
+export function startCatalogWallDrop(system, p, hit, source) {
+  if (p.ghost || !source) return false;
+  const face = api?.G?.physics?.level?.faces?.[hit.face];
+  if (!Number.isInteger(hit.face) || hit.face < 0 || !face || face.paintable === false) return false;
+  return startDetachedWallDrop(system, p, hit, source.move, source.paint, 'catalog', 0x576, hit.face);
 }
 
 function advanceDetachedWallDrops(system, dt) {
@@ -671,7 +682,8 @@ function advanceDetachedWallDrops(system, dt) {
       const hit = moved ? api.G.physics.segment(state.from, state.next, state.hit, true) : null;
       if (hit?.hit) {
         state.pos.copy(hit.point).addScaledVector(hit.normal, .02);
-        if (hit.normal.y > .45) detachedPaint(system, state, state.pos, state.groundRadius, 0x6a0d);
+        if (hit.normal.y > .45) detachedPaint(system, state, state.pos, state.groundRadius, 0x6a0d,
+          state.paintFace == null ? null : hit.face);
         state.frame = state.totalFrames;
         break;
       }
@@ -752,7 +764,7 @@ export function applyFidelityBlasterBurstPaint(system, p, point, direct) {
   if (sphereRadius > 0 && api.G.paint?.splat) {
     const centre = system._s3BlasterBurstCentre || (system._s3BlasterBurstCentre = new api.THREE.Vector3());
     centre.copy(point);
-    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), claimOwner: p.owner });
+    const area = api.G.paint.splat(centre, sphereRadius, p.team, { seed: seededUnit(seed, collision ? 0x1001 : 0x1106), kind: SOURCE_SHOT_PAINT_KIND, claimOwner: p.owner });
     if (Number.isFinite(area) && area) p.owner?.addTurf?.(area);
   }
   if (burst.timedDropOn && dropRadius > 0) {
@@ -918,6 +930,44 @@ function slosherCollisionRadius(p, age, field, y) {
 }
 export function fidelityPlayerCollisionRadius(p) { return slosherCollisionRadius(p,p.age,false,p.pos?.y); }
 function fieldRadiusAt(p,age,y=p.pos?.y) { return slosherCollisionRadius(p,age,true,y); }
+// Slosher globs and Roller flicks grow their terrain (Field) radius to 0.4-1.05
+// within 2-4 F. Ending the whole glob on the first contact of that grown sphere
+// made a level Splat Bucket throw (born ~0.7-0.9 m high, Field 0.5-0.8) die
+// after ~8 F at ~11 m with its centre still 0.92 m above the floor (sourced
+// BaseDistance 14), and made a glob clipping a low wall with its lower half
+// vanish instead of carrying on above it. A contact BELOW the glob centre
+// (contact normal pointing up into the glob) is now a graze: the glob ends when
+// its core, the unit's sourced InitRadiusForField, reaches terrain. Side walls
+// and ceilings still end it on first contact of the grown sphere.
+// INKWAVE rule (normal threshold included); retail collision code is not public.
+// The grazed part is not discarded: like water it splashes where it touched.
+// Each graze paints the floor/wall under the glob with the cross-section the
+// grown sphere cuts through that surface (r^2 - h^2), at most once per that
+// radius of travel, so a glob skimming a floor leaves a continuous wet trail
+// and a low wall's top is painted while the rest of the glob carries on.
+export const GLOB_GRAZE = Object.freeze({ normalY: 0.3, minPaintFraction: 0.25 });
+export function globGrazePaint(game, p, point, normal, radius, face = -1) {
+  const owner = p?.owner;
+  if (!game?.paint?.splat || !owner || p.ghost || owner.remote || !(radius > 0) || !point || !normal) return 0;
+  const h = (p.pos.x - point.x) * normal.x + (p.pos.y - point.y) * normal.y + (p.pos.z - point.z) * normal.z;
+  const cut = Math.sqrt(Math.max(0, radius * radius - Math.max(0, h) * h));
+  const paintRadius = Math.max(radius * GLOB_GRAZE.minPaintFraction, cut);
+  const center = p.pos.clone().addScaledVector(normal, -Math.max(0, h)).addScaledVector(normal, 0.05);
+  const last = p.s3GrazePaint;
+  if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
+  p.s3GrazePaint = { at: center, face };
+  const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
+  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: owner });
+  if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
+  return area;
+}
+function globGrazeEligible(p) {
+  return !!p?.fidelityFieldCollision && !p.fidelityWallDrop &&
+    (p.type==='slosh' || (p.type==='drop' && (p.s3Weapon?.kind||p.owner?.weapon?.kind)==='roller'));
+}
+function globCoreRadius(p,y) {
+  return Math.max(0,p.fidelityFieldCollision.initRadius)*slosherDropScale(p,y);
+}
 // #1011: footprint uses the source unit and first/after bullet distinctions.
 export function fidelitySlosherImpactPaint(p, point) {
   const src=slosherPaintRecord(p), start=p?.start, scale=completion?.worldUnitsPerSourceUnit ?? 1;
@@ -1284,7 +1334,19 @@ export function fidelityWorldHit(system,p) {
   if(!s.worldReady){
     s.world.kitDefense=null;
     if(isKitProjectile(p)) kitTrizookaWorldSweep(system,p,s.world,api.G.physics);
-    else sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,p.fidelityPrevAge??p.age,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
+    else {
+      const age0=p.fidelityPrevAge??p.age;
+      sweptWorldHit(api.G.physics,p.prev,p.pos,fieldRadiusAt(p,age0,p.prev?.y),fieldRadiusAt(p,p.age,p.pos?.y),s.world,true);
+      // A grown Slosher/Roller glob whose LOWER part meets the floor or a low
+      // wall's top keeps flying; only its core ends it (see GLOB_GRAZE).
+      if(s.world.hit&&globGrazeEligible(p)&&s.world.normal.y>GLOB_GRAZE.normalY){
+        const touch=s.grazeTouch||(s.grazeTouch={point:s.world.point.clone(),normal:s.world.normal.clone()});
+        touch.point.copy(s.world.point);touch.normal.copy(s.world.normal);const face=s.world.face;
+        sweptWorldHit(api.G.physics,p.prev,p.pos,globCoreRadius(p,p.prev?.y),globCoreRadius(p,p.pos?.y),s.world,true);
+        // Only a graze the glob survives this step splashes here; a core contact paints as its impact.
+        if(!s.world.hit)globGrazePaint(api.G,p,touch.point,touch.normal,fieldRadiusAt(p,p.age,p.pos?.y),face);
+      }
+    }
     const defense=system.kitDefenseCandidate?.(p);
     if(defense&&Number.isFinite(defense.distance)&&defense.distance>=0&&(!s.world.hit||defense.distance<s.world.dist-EPSILON)){
       s.world.hit=true;s.world.dist=defense.distance;s.world.kitDefense=defense;
@@ -1602,8 +1664,9 @@ export function installWeaponsFidelity(context,profile) {
     dropHeightMin: (shooterPaint.DepthMinDropHeight ?? 10) * paintScale,
     worldUnitsPerSourceUnit: paintScale,
   });
-  // #79: Shooter PaintParam (Ver. 11.3.0). Far anchor and angle thresholds are not
-  // in the record; see shooter-impact-paint.mjs for the provisional choices.
+  // #79: Shooter PaintParam (Ver. 11.3.0). Sparse weapon JSON omits typed
+  // 1.1/20 distance and 10/35 angle schema defaults documented in the
+  // original parameter table; never substitute the weapon's firing range.
   const shooterImpact = completion.weapons?.shooter?.PaintParam;
   const impactSource = [shooterImpact?.WidthHalfNear, shooterImpact?.WidthHalfMiddle, shooterImpact?.WidthHalfFar,
     shooterImpact?.DistanceMiddle, shooterImpact?.DepthScaleMax, shooterImpact?.DepthScaleMin,
@@ -1614,7 +1677,11 @@ export function installWeaponsFidelity(context,profile) {
     widthNear: shooterImpact.WidthHalfNear * paintScale,
     widthMiddle: shooterImpact.WidthHalfMiddle * paintScale,
     widthFar: shooterImpact.WidthHalfFar * paintScale,
+    distanceNear: (shooterImpact.DistanceNear ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceNear) * paintScale,
     distanceMiddle: shooterImpact.DistanceMiddle * paintScale,
+    distanceFar: (shooterImpact.DistanceFar ?? SHOOTER_PARAMTABLE_DEFAULTS.distanceFar) * paintScale,
+    degreeUseDepthScaleMax: shooterImpact.DegreeUseDepthScaleMax ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMax,
+    degreeUseDepthScaleMin: shooterImpact.DegreeUseDepthScaleMin ?? SHOOTER_PARAMTABLE_DEFAULTS.degreeUseDepthScaleMin,
     depthMax: shooterImpact.DepthScaleMax,
     depthMin: shooterImpact.DepthScaleMin,
     depthMaxBreakFree: shooterImpact.DepthScaleMaxBreakFree,

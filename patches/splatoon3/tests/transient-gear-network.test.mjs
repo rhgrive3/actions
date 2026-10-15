@@ -1,4 +1,5 @@
 import test from 'node:test';
+import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {fixture} from './source-fixture.mjs';
 import {emptyLoadout} from '../runtime/gear.mjs';
@@ -15,7 +16,7 @@ async function world(id,weapon='shooter'){
  nm.bind(m);f.G.netm=nm;f.G.match=m;f.G.actors=[a];
  return{f,a,nm,m,send(){f.G.time+=1/60;nm._sendTick();return json(packet);}};
 }
-function receive(w,p,from='owner',sample=true){w.nm.onMessage(from,json(p));if(sample){const peer=w.nm._peer(from);peer.tr=Math.max(peer.tr||0,p.ts);w.nm._sample(w.a,peer.tr,0);w.nm.applyRemote(w.a,1/60);}}
+function receive(w,p,from='owner',sample=true){w.f.context.__wire=JSON.stringify(p);w.nm.onMessage(from,vm.runInContext('JSON.parse(__wire)',w.f.context));delete w.f.context.__wire;if(sample){const peer=w.nm._peer(from);peer.tr=Math.max(peer.tr||0,p.ts);w.nm._sample(w.a,peer.tr,0);w.nm.applyRemote(w.a,1/60);}}
 function adopt(w){w.nm.s.hostId='viewer';w.nm.s.isHost=true;w.nm.onLeave('owner',true);}
 function head(w,id){w.a.s3.loadout=emptyLoadout();w.a.s3.loadout[0].main=id;w.a.s3RefreshGear();}
 function enemy(w){const a=w.f.make();a.team=1;a.invuln=0;return a;}
@@ -84,4 +85,19 @@ test('adopting an already-cancelled receipt still sends explicit retirement to a
  const o=await world('owner'),r=await world('viewer'),t=await world('third');o.f.giveDrink(o.a,0);const first=o.send();receive(r,first);receive(t,first);
  o.f.retireDrink(o.a,o.f.G.time,true);receive(r,o.send());adopt(r);t.nm.s.hostId='viewer';t.nm.onLeave('owner',true);
  const p=r.send();assert.deepEqual(p.gb[1].slice(6),[null,null]);receive(t,p,'viewer');t.nm.s.hostId='third';t.nm.s.isHost=true;t.nm.onLeave('viewer',true);assert.notEqual(t.a.s3.drink,true);
+});
+
+test('negotiated paint preserves sparse transient receipt and cancellation through JSON takeover',async()=>{
+ for(const cancel of [false,true]){
+  const o=await world('owner'),r=await world('viewer'),q=[];
+  for(const w of [o,r]){w.f.context.crypto=globalThis.crypto;w.nm.s._members=new Map([['owner','Owner'],['viewer','Viewer']]);w.nm.s.tr.sendTo=(to,d)=>{q.push([w.nm.s.myId,to,json(d)]);return true;};}
+  assert.equal(Object.hasOwn(o.send(),'gb'),false);r.send();let budget=30;while(q.length){assert.ok(budget-->0);const[from,to,d]=q.shift();(to==='owner'?o:r).nm.onMessage(from,d);}
+  const paint=()=>{for(let i=0;i<24;i++)o.nm.recSplat(new o.f.THREE.Vector3(i*.02,0,0),.3,0,{seed:.31,kind:'drop',face:0,claimOwner:o.a});};
+  head(o,'comeback');comeback(o);o.f.giveDrink(o.a,o.f.G.time);paint();const packet=o.send();assert.ok(packet.pe);assert.equal(packet.e,undefined);assert.ok(packet.gg[1]);assert.ok(packet.gc[1]);assert.ok(packet.gb[1][6]);receive(r,packet);
+  advance(r,2);
+  if(cancel){o.f.retireDrink(o.a,o.f.G.time,true);paint();const p=o.send();assert.ok(p.pe);assert.deepEqual(p.gb[1].slice(6),[null,null]);receive(r,p);}
+  adopt(r);
+  if(cancel)assert.notEqual(r.a.s3.drink,true);
+  else{assert.equal(r.a.s3.drink,true);near(r.a.s3.drinkUntil-r.f.G.time,15-1/60);ageAndRetire(r,15,60);assert.equal(r.a.s3.drink,false);}
+ }
 });

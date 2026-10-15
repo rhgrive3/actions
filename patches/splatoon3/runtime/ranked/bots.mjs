@@ -59,7 +59,9 @@ function clamThrowAim(actor, goal, engine) {
   };
 }
 
-function towerApproachPath(brain, target, engine, G, frame, jumpHeight) {
+function towerApproachPath(brain, target, engine, G, frame, jumpHeight, nativeTower) {
+  const source = nativeTower?.approach?.(brain, target, engine, G) ?? null;
+  if (source !== null) return source;
   const nav = G?.nav, actor = brain.a;
   if (!nav?.nodes?.length || typeof nav.nearest !== 'function' || typeof nav.path !== 'function') return false;
   const start = nav.nearest(actor.pos, 1.2);
@@ -151,7 +153,7 @@ function rainmakerBarrierApproach(brain, objective, shieldAim, frame, G) {
   return null;
 }
 
-function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
+function steerRanked(brain, dt, goal, engine, frame, G, PLAYER, nativeTower) {
   const a = brain.a, it = a.intent;
   const objective = point(goal.pos);
   if (!objective) return false;
@@ -203,7 +205,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
     const gravity = Math.max(1, finite(PLAYER?.gravity, 25));
     const maxJumpHeight = jumpVelocity * jumpVelocity / (2 * gravity) + 0.22;
     const foundTowerApproach = engine.mode === 'tower' && action === 'ride'
-      && towerApproachPath(brain, target, engine, G, frame, maxJumpHeight);
+      && towerApproachPath(brain, target, engine, G, frame, maxJumpHeight, nativeTower);
     // Only use the edge-target steering below after A* has selected a real
     // static nav node. If the nav mesh has no reachable node, keep the clear
     // short direct approach so a jump still carries the actor onto the deck.
@@ -230,9 +232,12 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
   // node in the static navigation mesh. If replanning fails, walk the final
   // short approach directly when the world adapter confirms a clear segment.
   const pathFinished = !brain.path || brain.pi >= brain.path.length;
-  let approachDx = dx, approachDz = dz, approachHorizontal = horizontal;
+  const sourceBoarding = G.level?.native && engine.mode === 'tower' && action === 'ride' ? brain._nativeTowerBoarding : null;
+  let approachDx = sourceBoarding ? sourceBoarding.proof.start[0] - a.pos.x : dx;
+  let approachDz = sourceBoarding ? sourceBoarding.proof.start[2] - a.pos.z : dz;
+  let approachHorizontal = Math.hypot(approachDx,approachDz);
   if (engine.mode === 'tower' && action === 'ride' && pathFinished
-    && Number.isInteger(brain._rankedApproachNode) && horizontal > 0.1) {
+    && !sourceBoarding && Number.isInteger(brain._rankedApproachNode) && horizontal > 0.1) {
     const halfSize = Math.max(0.8, finite(engine.stage?.tower?.halfSize, 1.4));
     const ux = dx / horizontal, uz = dz / horizontal;
     const edgeX = target.x - ux * (halfSize + 0.45);
@@ -253,6 +258,10 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
       catch { clear = false; }
     }
     if (clear) move.set(approachDx / approachHorizontal, 0, approachDz / approachHorizontal);
+  }
+  if(sourceBoarding&&pathFinished&&approachHorizontal>1e-6){
+    const mag=Math.min(.35,Math.max(.03,(approachHorizontal-.09)*.65));
+    move.set(approachDx/approachHorizontal*mag,0,approachDz/approachHorizontal*mag);
   }
   const towerRide = engine.mode === 'tower' && action === 'ride';
   const towerPlatformAction = engine.mode === 'tower' && (action === 'ride' || action === 'defend');
@@ -287,7 +296,7 @@ function steerRanked(brain, dt, goal, engine, frame, G, PLAYER) {
 
   // Hop onto the moving tower deck when the route reaches its side. The
   // normal path graph remains authoritative for safe approach and edge checks.
-  if (towerRide && !alreadyRiding && a.grounded && dy > 0.25
+  if (towerRide && !sourceBoarding && !alreadyRiding && a.grounded && dy > 0.25
     && horizontal <= finite(engine.stage?.tower?.halfSize, 1.4) + 1.35 && brain.jumpCd <= 0) {
     it.jump = true; brain.jumpCd = 0.65;
   }
@@ -362,8 +371,19 @@ export function installRankedBots(api = {}) {
   proto.update = function (dt) {
     const match = G?.match, engine = match?.ranked, actor = this.a;
     if (!engine || !RANKED_MODES.has(engine.mode) || !actor?.alive || actor.superJumpState
-      || (typeof match.playing === 'function' && !match.playing())) return update.call(this, dt);
+      || (typeof match.playing === 'function' && !match.playing())) {
+      if(this._nativeTowerBoarding)this._nativeTowerBoarding=null;
+      return update.call(this, dt);
+    }
+    if(engine.mode!=='tower'&&this._nativeTowerBoarding)this._nativeTowerBoarding=null;
 
+    this._nativeTraversalHandled = false;
+    if(this._nativeTowerBoarding){
+      const boardingFrame=engine.frame||{actors:[],inputs:{}};
+      const boardingGoal=engine.rule?.botGoal?.(frameActor(actor,boardingFrame),boardingFrame);
+      if(boardingGoal?.action!=='ride')this._nativeTowerBoarding=null;
+      else if(api.nativeTower?.update?.(this,G,engine,dt))return;
+    }
     let nativeTail = null;
     const hadOwnTail = Object.prototype.hasOwnProperty.call(this, '_tail');
     const oldTail = this._tail;
@@ -372,6 +392,9 @@ export function installRankedBots(api = {}) {
     try { result = update.call(this, dt); }
     finally { if (hadOwnTail) this._tail = oldTail; else delete this._tail; }
 
+    // A screened native wall/drop transition owns ordinary inputs until actual
+    // touchdown. Objective steering resumes after that physical transition.
+    if (G.level?.native && this._nativeTraversalHandled) return result;
     const frame = engine.frame || { actors: [], inputs: {} };
     const goal = engine.rule?.botGoal?.(frameActor(actor, frame), frame);
     if (!goal) {
@@ -387,15 +410,37 @@ export function installRankedBots(api = {}) {
     const rankedEscort = engine.mode === 'rainmaker' && actor.slot % 2 === 1
       && ['barrier', 'defend'].includes(goal?.action)
       && engine.rule?.state?.carrier !== actorId(actor);
-    if (rankedEscort && nativeTail && enemy?.alive && enemy.team !== actor.team && this.seeTimer > 0
-      && Math.hypot(enemy.pos.x - actor.pos.x, enemy.pos.z - actor.pos.z) <= 16
+    const towerCombat = engine.mode === 'tower' && ['ride', 'defend'].includes(goal.action);
+    const carrier = engine.mode === 'rainmaker' && engine.rule?.state?.carrier === actorId(actor);
+    // Refill owns its swim/paint cycle until the native controller releases it.
+    // Replacing it with an objective fire input strands an empty tank on land.
+    const refill = !carrier && this.mode === 'refill';
+    const duel = (rankedEscort || towerCombat) && enemy?.alive && enemy.team !== actor.team && this.seeTimer > 0
+      && Math.hypot(enemy.pos.x - actor.pos.x, enemy.pos.z - actor.pos.z) <= 16;
+    if ((refill || duel) && nativeTail
       && typeof oldTail === 'function') {
+      const row = frameActor(actor, frame);
+      const platform = point(engine.rule?.state?.position);
+      const riding = towerCombat && actor.grounded && (row.onTower || platform
+        && Math.abs(actor.pos.x - platform.x) <= finite(engine.stage?.tower?.halfSize, 1.4)
+        && Math.abs(actor.pos.z - platform.z) <= finite(engine.stage?.tower?.halfSize, 1.4)
+        && Math.abs(actor.pos.y - platform.y) <= 0.3);
+      if (riding && !refill) {
+        // Aim and weapon-specific charge/release still come from combat. A
+        // rider must not strafe off the moving deck while defending it.
+        nativeTail[1].set(0, 0, 0);
+        nativeTail[5] = false;
+        this.mvMag = 0;
+        this.noProg = 0;
+        this._needJump = false;
+        actor.intent.jump = false;
+      }
       oldTail.apply(this, nativeTail);
       return result;
     }
     // Native perception and reaction timing still run; the final steering and
     // objective action then take ownership for this frame.
-    if (!steerRanked(this, dt, goal, engine, frame, G, api.PLAYER) && nativeTail && typeof oldTail === 'function') oldTail.apply(this, nativeTail);
+    if (!steerRanked(this, dt, goal, engine, frame, G, api.PLAYER, api.nativeTower) && nativeTail && typeof oldTail === 'function') oldTail.apply(this, nativeTail);
     return result;
   };
   return () => { proto.update = update; delete proto._rankedBotWrapped; };

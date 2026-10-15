@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { INK_PROFILES } from '../../../inkwave-public/src/game/inkFlight.js';
 import { FixedClock } from '../runtime/clock.mjs';
 import { splatlingJumpRecoveryAt } from '../runtime/splatling-jump-spread.mjs';
 import { signedBiasSample } from '../runtime/weapon-edgecases.mjs';
@@ -289,8 +290,51 @@ test('zero-spread ground Splatling range probe preserves its native projectile a
   assert.deepEqual(paintMetrics(f), paintMetrics(control),
     'the jump-only control preserves production paint metrics and every painted footprint cell');
   const paint = paintMetrics(f);
-  // PR1188: the CPU body edge equals the rendered GPU body edge (was 0.97 of
-  // it), adding the visible boundary ring: 16.875/15.875/254 -> below.
-  assert.deepEqual({ maxZ: paint.bounds?.maxZ, area: paint.area, cells: paint.cells },
-    { maxZ: 17.125, area: 16.9375, cells: 271 });
+  assert.equal(f.draws(), 4, 'painting consumes no additional projectile RNG');
+  assert.equal(control.draws(), 4, 'control painting consumes no additional projectile RNG');
+  assert.deepEqual(structuredClone(f.paints), structuredClone(control.paints), 'paint time, source kind, centre, radius, seed and footprint inputs remain identical');
+  assert.equal(f.paints.length, 1, 'one native ground impact');
+  const impact = f.paints[0];
+  assert.equal(impact.kind, 'source-shot');
+  assert.equal(impact.seed, 0.715884089237079, 'the original seeded impact sequence is retained');
+  assert.equal(impact.cosmetic, false);
+  assert.deepEqual(structuredClone(f.impacts), structuredClone(control.impacts), 'physical landing events retain time, position and order');
+  assert.equal(f.impacts.length, 1);
+  const landing = f.impacts[0];
+  close(landing.time, 14/60); close(landing.pos[0], 0); close(landing.pos[1], 0);
+  close(landing.pos[2], 14.222816414228939); // unchanged fixed-seed native flight endpoint
+  const source = INK_PROFILES.splatling.paint;
+  assert.deepEqual([source.widthMiddle,source.widthFar,source.middle,source.far,source.depthMinFall],
+    [2.226,2.102,1.1,20,1.17], 'pinned Heavy Splatling source fields');
+  const distance=Math.hypot(landing.pos[0],landing.pos[1]-1.05,landing.pos[2]-.3);
+  const expectedRadius=source.widthMiddle+(source.widthFar-source.widthMiddle)*(distance-source.middle)/(source.far-source.middle);
+  const expectedStretch=1.6*(source.depthMinFall-1);
+  close(impact.radius, expectedRadius);
+  close(impact.stretchAmt, expectedStretch);
+  close(impact.center[0], landing.pos[0]); close(impact.center[1], landing.pos[1]+.005);
+  close(impact.center[2], landing.pos[2]-.375*expectedRadius*expectedStretch);
+
+  assert.deepEqual([...impact.stretch], [0, 0, 1]);
+  // Source WidthHalf uses a literal ellipse rather than the historical PR1188
+  // generic wobble body. Independently enumerate cell centres from the emitted
+  // radius and front/rear DepthScale contract; do not copy a new pixel snapshot.
+  const expectedCells = []; let expectedArea = 0;
+  for (const face of f.G.paint.paintFaces) {
+    assert.equal(face.wall, false);
+    const radiusSquared = impact.radius ** 2 - (impact.center[1] - face.origin.y) ** 2;
+    for (let j=0;j<face.nv;j++) for (let i=0;i<face.nu;i++) {
+      const x=face.origin.x+(i+.5)*face.cu, z=face.origin.z+(j+.5)*face.cv;
+      const dx=x-impact.center[0], dz=z-impact.center[2];
+      const depth=1+(dz>0?impact.stretchAmt:.25*impact.stretchAmt);
+      if (dx*dx+(dz/depth)**2 <= radiusSquared) {
+        expectedCells.push([Math.round(x*1e6)/1e6,Math.round(z*1e6)/1e6]);
+        expectedArea += face.cu*face.cv;
+      }
+    }
+  }
+  assert.ok(expectedCells.length>0);
+  assert.deepEqual(paint.cellsXZ, expectedCells, 'every scored cell follows the source ellipse');
+  assert.equal(paint.cells, expectedCells.length);
+  assert.equal(paint.area, Math.round(expectedArea*1e6)/1e6);
+  assert.equal(paint.bounds.maxZ, Math.max(...expectedCells.map(p=>p[1])));
 });

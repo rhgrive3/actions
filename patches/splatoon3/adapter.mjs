@@ -29,6 +29,7 @@ import { adaptJuddResult } from './judd-result-adapter.mjs';
 import { adaptScoreHud } from './score-hud-adapter.mjs';
 import { adaptPaintSplatPool } from './paint-splat-pool-adapter.mjs';
 import { adaptPaintOwnership } from './paint-ownership-adapter.mjs';
+import { adaptSourcedPaintFootprint } from './source-paint-envelope-adapter.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -39,6 +40,7 @@ import { adaptTidalSlamGauge } from './tidal-slam-gauge-adapter.mjs';
 import { adaptScorchGorge } from './scorch-gorge-adapter.mjs';
 import { adaptIssue719Dodge } from './issue-719-dodge-adapter.mjs';
 import { adaptWeaponCatalog } from './weapon-catalog-adapter.mjs';
+import { adaptWeaponLodMaterialPacking } from './weapon-lod-material-packing-adapter.mjs';
 export const PATCH_ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const sha256 = value => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -63,11 +65,17 @@ export function checkCompatibility(src, patchRoot = PATCH_ROOT) {
 
 export function adaptSource(rel, code) {
   code = adaptWeaponCatalog(rel, code);
+  code = adaptWeaponLodMaterialPacking(rel, code);
   if (rel === 'src/game/motion/source-controller.js') {
     code = replaceOnce(code, "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller';", "this.sourceUpper=!!SOURCE_WEAPONS[c.weaponKind]&&c.weaponKind!=='roller'&&!nativeWeaponPoseRequired(c,s);", 'native current-weapon attack owns upper body');
     // S3 shooter carry: lower the non-firing barrel to the right-hip hold before the aim pitch.
     code = replaceOnce(code, 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis).premultiply(this.retarget.aim);', 'this.weaponQ.copy(this.pose.wq[i]).multiply(basis);sourceCarryWeapon(this,this.weaponQ);this.weaponQ.premultiply(this.retarget.aim);', 'source shooter carry posture');
+    // ToHuman/ToSquid own the whole body only for a grounded, stationary change (moving: locomotion steps; air: jump pose).
+    code = replaceOnce(code, 'this.formTime=0;this.formEvent=true;', 'this.formTime=0;this.formEvent=true;this.s3FormClipDeclined=false;', 'source form clip admission reset');
+    code = replaceOnce(code, "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)){", "if(this.formEvent&&this.formTime<(this.bank.clips.get(this.formKid?'ToHuman':'ToSquid').frames/HOST_MOTION.fps)&&sourceFormClipAdmitted(this)){", 'source form clip admission');
+    code = replaceOnce(code, "if(this.finalState!=='air'){this.airBlendTime=0;", "if(this.finalState!=='air'){this.airBlendTime=sourceAirBlendStart(this,HOST_MOTION.transitionSeconds);", 'airborne form change skips stale dive crossfade');
     return "import { nativeWeaponPoseRequired } from '../../../patches/splatoon3/runtime/source-weapon-owner.mjs';\n" +
+      "import { sourceAirBlendStart, sourceFormClipAdmitted } from '../../../patches/splatoon3/runtime/source-form-transition.mjs';\n" +
       "import { sourceCarryWeapon } from '../../../patches/splatoon3/runtime/source-posture.mjs';\n" + code;
   }
   if (rel === 'src/game/motion/retarget.js') {
@@ -93,6 +101,11 @@ export function adaptSource(rel, code) {
       'const options = { seed: p.seed, kind, face: hit.face,',
       'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
       'native ink-flight temporal paint owner');
+    code = replaceOnce(code,
+      'const options = { seed: p.seed, kind, face: hit.face, claimOwner: p.owner,',
+      'const options = { seed: p.seed, kind: sourceFlightInkKind(kind), face: hit.face, claimOwner: p.owner,',
+      'source WidthHalf uses sourced paint kind, not artificial satellites');
+    code = "import { sourceFlightInkKind } from '../../patches/splatoon3/runtime/source-shot-footprint.mjs';\n" + code;
     // PR1188: detached splash drops use the same ellipse mapping as Blaster and
     // Roller splashes: a WidthHalf x (WidthHalf * depth) footprint centred on
     // the landing point (equal length and area on PaintSystem's forward smear).
@@ -120,6 +133,20 @@ export function adaptSource(rel, code) {
       "    }\n" +
       "    this.paint(p, hit, shape, p.vel, 'shot');",
       'native Dualies retained-source terminal paint owner');
+    // Ordinary InkFlight Shooters bypass _impact and thus otherwise miss the
+    // same 11.3.0 WidthHalf model already used by generic Shooter projectiles.
+    // Keep native paintShape depth: it already interpolates the existing
+    // BreakFree height band. A phase-only helper would discard that behavior.
+    code = replaceOnce(code,
+      "    this.paint(p, hit, shape, p.vel, 'shot');",
+      "    const shooter = p.inkKey === 'shooter' ? (p.s3Weapon || p.owner?.weapon) : null;\n" +
+      "    if (shooter?.impactPaint && hit.normal?.y >= SHOOTER_FLOOR_NORMAL_Y) {\n" +
+      "      const width = shooterImpactRadius(shooter, p, hit.point);\n" +
+      "      if (width > 0) shape.radius = width;\n" +
+      "    }\n" +
+      "    this.paint(p, hit, splashPaintFootprint(shape), p.vel, 'shot');",
+      'source Shooter terminal paint width in live InkFlight runtime');
+    code = "import { shooterImpactRadius, SHOOTER_FLOOR_NORMAL_Y } from '../../patches/splatoon3/runtime/shooter-impact-paint.mjs';\n" + code;
     code = "import { fidelityDualiesNativeImpactPaint } from '../../patches/splatoon3/runtime/weapons-fidelity.mjs';\n" + code;
     // #385/#604/#597: Source-guided head motion and sourced S3 wall-drop
     // share one collision authority. A wall impact must retain the falling
@@ -398,7 +425,8 @@ export function adaptSource(rel, code) {
       '    const muzzle = new THREE.Object3D(); muzzle.position.copy(d.muzzle);\n    const muzzlePart = d.muzzlePart && parts[d.muzzlePart];\n    if (muzzlePart) { muzzle.position.sub(d.parts[d.muzzlePart].pivot); muzzlePart.add(muzzle); } else off.add(muzzle);\n    const fold = attachRollerFold(d, off, parts, drum);', 'roller articulated hinge group and rendered mechanism muzzle');
     code = replaceOnce(code, 'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, near: true, pump: 0, trig: 0, left: null, hidden: 0 };',
       'return { def: d, pivot, off, body, ink, bodyFar, inkFar, glow, drum, muzzle, parts, partList, lamps, coil, fold, near: true, pump: 0, trig: 0, left: null, hidden: 0 };', 'roller fold instance handle');
-    return "import { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
+    code = replaceOnce(code, '    pivot.add(off);', '    pivot.add(off);\n    attachWeaponGlass(d, off);', 'independent transparent weapon shell at every LOD');
+    return "import { attachWeaponGlass } from '../../patches/splatoon3/runtime/weapon-models/kit.mjs';\nimport { attachRollerFold } from '../../patches/splatoon3/runtime/roller-fold.mjs';\nimport { dualiesMotionLock, dualiesMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/action-admission.mjs';\nimport { specialMotionAllowsFootPlant } from '../../patches/splatoon3/runtime/special-motion.mjs';\nimport { applyWalkLocomotion, walkLean, walkSwingUnloaded, walkFootReach, walkPelvisDrop, walkTreadAllowed, walkActive } from '../../patches/splatoon3/runtime/walk.mjs';\n"+code;
   }
   if (rel === 'styles/hud.css') {
     // Shooter-only placement; preserve the native spread signal and all other reticles.
@@ -1713,6 +1741,7 @@ export function adaptSource(rel, code) {
       ['  if (k < 5.5) return vec4(2.0, 2.0, 0.0, 1.0);     // droplet paint', '  if (k < 5.5) return vec4(2.0, 0.0, 0.0, 1.0);     // droplet paint'],
       ['      float len = r * (0.07 + (big ? 0.5 : 0.4) * h2 * h2 * h2) * tsp;', '      float len = r * (0.04 + 0.16 * h2 * h2 * h2) * tsp;'],
     ]) code = replaceOnce(code, from, to, 'paint shape within the source radius');
+    code = adaptSourcedPaintFootprint(rel, code, replaceOnce);
     return "import { installIssue570PaintPresentation } from '../../patches/splatoon3/runtime/render.mjs';\n" +
       "import { installIssue264PaintOwnership } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" +
       code + '\ninstallIssue570PaintPresentation(PaintSystem);\n' +

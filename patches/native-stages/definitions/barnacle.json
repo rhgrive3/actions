@@ -1,0 +1,24 @@
+{
+  "id": "barnacle",
+  "internal": "Vss_Section01",
+  "name": "タラポートショッピングパーク",
+  "sourceSha256": "2d792394f5672734b9faa0972293792f0983977318d464848f709aaec9232ad4",
+  "tree": "c7d87b908c565e698fade2f7bbe4c9353f200435",
+  "bounds": {"minX": -50, "minZ": -80, "maxX": 50, "maxZ": 80},
+  "spawnPads": [[-24, 7.5, -73], [24, 7.5, 73]],
+  "spawnBarrier": 2.5,
+  "version1130Verified": false,
+  "placementStatus": "Local opposed Wood01 source-floor supports and Field07/Frame interactive extent inferred from pinned renovated Section01 display triangles; retail spawns, collision, paint masks, moving-object states and ranked placements unverified",
+  "sourceSemantics": {
+    "inactiveObjectPatterns": ["^FldObj_Section01_SignageVlf_"],
+    "nonCollidableObjectPatterns": [
+      "^Fld_Section01_pPlane1840__Tile03$",
+      "^Fld_Section01_NameCrash__Sign01_[12]__Sign0[34]$",
+      "^Fld_Section01_.*__(?:PlantIvyRepeat|PlantIvyNotRepeat)$"
+    ],
+    "nonPaintableObjectPatterns": [
+      "^Fld(?:Obj)?_Section01_.*GeneralBoxNoPaint",
+      "^Fld(?:Obj)?_Section01_.*__mJyoheki(?:Metal)?Net$"
+    ]
+  }
+}

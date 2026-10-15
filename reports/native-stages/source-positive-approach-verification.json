@@ -1,0 +1,1431 @@
+{
+  "status": "qualified-named-independent-review-accepted",
+  "foundation": "04a0f6f658eda7ed7b92d06b0c2b4500bdfce8ea",
+  "runtimeCommit": "b199e432665327c81831494f07b4f9b0c2c46797",
+  "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+  "sourceBuffersUnchanged": [
+    {
+      "file": "bvh.bin",
+      "bytes": 1048544,
+      "sha256": "a14a8722856b54a92d386fd8a146349b2aed9b70a2e75f59a6a377f24608a8e1"
+    },
+    {
+      "file": "collision.bin",
+      "bytes": 6354216,
+      "sha256": "fc166a2b0e129b86ad27578cfbfe6d35bd0dd77c6e11635aadd7daef5df32225"
+    },
+    {
+      "file": "flags.bin",
+      "bytes": 706024,
+      "sha256": "730b26cbfe13019cf7004fb53c31e4495b637ddfe09cc8c7bc6cec7254bfd003"
+    },
+    {
+      "file": "indices.bin",
+      "bytes": 9293340,
+      "sha256": "6c06c6c243873a694dc97c2d243de501336256362f209583804f7909ad490ca4"
+    },
+    {
+      "file": "mask.bin",
+      "bytes": 2384253,
+      "sha256": "e3e63939bce772ff63d81ba9bffe233572a61d3aca146b3c3ed95883a64eb4ad"
+    },
+    {
+      "file": "normals.bin",
+      "bytes": 2118072,
+      "sha256": "e06f5bf1caae78d95982132bb3e95a7457c0348a415e775b9a9d6a38ce45e3cf"
+    },
+    {
+      "file": "objects.bin",
+      "bytes": 706024,
+      "sha256": "eb5282df2a325b4740c403d46372c4679cc92317413f1d421fcb34d6836a53d7"
+    },
+    {
+      "file": "order.bin",
+      "bytes": 706024,
+      "sha256": "4477be14f155b93a41f1c3e09a1e560012aa24783c759c11362f978bf566be7a"
+    },
+    {
+      "file": "triangleFace.bin",
+      "bytes": 706024,
+      "sha256": "46ea9a16bcfa26a467a6309d15a38c1848052951f18d866a4c9ca30f06ee9db0"
+    },
+    {
+      "file": "vertices.bin",
+      "bytes": 32775328,
+      "sha256": "158163465d73766bb2183dbb34a08cdd9eb909fe70a93f2760426bbde311770f"
+    }
+  ],
+  "unchangedTextureCount": 216,
+  "productionCPUBanksAt335": [
+    {
+      "team": 0,
+      "hz": 60,
+      "seconds": 48,
+      "replans": 1,
+      "transientPathMisses": 0,
+      "waypoints": 104,
+      "sourceClimbs": 2,
+      "sourceDrops": 3,
+      "start": [
+        -12,
+        15,
+        -70
+      ],
+      "goal": [
+        20,
+        9,
+        40.5
+      ],
+      "end": [
+        21.042880868317617,
+        9,
+        39.45711912999121
+      ],
+      "sourceGoalTriangle": 172810,
+      "minimumY": 3,
+      "distanceToGoal": 1.4748562691100418,
+      "alive": true,
+      "grounded": true,
+      "sourceFootSupported": true,
+      "continuousActualCapsuleSamples": 2880,
+      "continuousActualCapsuleFailures": 0,
+      "approachSourceProbes": {
+        "count": 168,
+        "minY": 4.912222174538507,
+        "maxY": 8.08969439676073,
+        "bounds": [
+          {
+            "from": "21,3,19.5",
+            "paintMinY": 3.7345582752935713,
+            "wallProbeMaxY": 8.643700408935548,
+            "sourceRoleIntervalSamples": 126,
+            "requiredPaintSamples": 112
+          }
+        ]
+      },
+      "weapon": "shooter / Shooter_Normal_00",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gearAP": 0,
+      "initialPaint": "unpainted",
+      "actualBrainActorWeaponProjectilesPaintClock": true
+    },
+    {
+      "team": 1,
+      "hz": 60,
+      "seconds": 74.46666666666667,
+      "replans": 2,
+      "transientPathMisses": 0,
+      "waypoints": 123,
+      "sourceClimbs": 1,
+      "sourceDrops": 4,
+      "start": [
+        12,
+        15,
+        70
+      ],
+      "goal": [
+        -20,
+        9,
+        -39.5
+      ],
+      "end": [
+        -21.004294836246984,
+        9,
+        -38.49570516376725
+      ],
+      "sourceGoalTriangle": 172794,
+      "minimumY": 2.950000047683716,
+      "distanceToGoal": 1.4202873780316883,
+      "alive": true,
+      "grounded": true,
+      "sourceFootSupported": true,
+      "continuousActualCapsuleSamples": 4468,
+      "continuousActualCapsuleFailures": 0,
+      "approachSourceProbes": null,
+      "weapon": "shooter / Shooter_Normal_00",
+      "sourceWeapon": "WeaponShooterNormal",
+      "gearAP": 0,
+      "initialPaint": "unpainted",
+      "actualBrainActorWeaponProjectilesPaintClock": true
+    }
+  ],
+  "priorArtifacts": {
+    "335Private": {
+      "contentHash": "10b6b82ebe13ae2203924234902d1db352b1699f566782d7ea0114e4cdb4495d",
+      "gameBankCases": 6,
+      "continuousActualCapsules": 24280,
+      "ownedSQSourceProbes": 504,
+      "keyboardPrefixCases": 3,
+      "keyboardContinuousCapsules": 1664
+    },
+    "2feePrivate": {
+      "contentHash": "51411584941de9e4001ffc8878d5a4a05acad52411ad4a1ee3f5e2d14bd6815f",
+      "gameBankCases": 6
+    }
+  },
+  "preservedFailures": [
+    "first firing stance minimum-input settle",
+    "original-pad team0 deadline120s at lowerY3",
+    "lowestY3.275 ownership request",
+    "held-B failed launch and distant same-height support steering"
+  ],
+  "conditions": {
+    "weapon": "Shooter_Normal_00",
+    "gearAP": 0,
+    "originalPads": [
+      [
+        -12,
+        15,
+        -70
+      ],
+      [
+        12,
+        15,
+        70
+      ]
+    ],
+    "gameSTEP": 0.016666666666666666,
+    "sourceCoordinatesUnscaled": true,
+    "version1130Verified": false,
+    "hardwareOrRetailPhysics": false,
+    "allLoadouts": false
+  },
+  "pending": [
+    "named final Hump report review",
+    "Ready and selfpromotion"
+  ],
+  "acceptedFoundation": "04a0f6f658eda7ed7b92d06b0c2b4500bdfce8ea",
+  "acceptedRuntimeFoundation": "3f9d0e544bd22f10bf65ef2d14abea0fc9f55bcb",
+  "commonHeadBeforeReport": "7a6acc60104af71d8fc97628e26c7216f27ec59a",
+  "nativeApproachSourceSha256": "5f35baf9cecb757838eb745bea7522422050d673f0324bff46c23a9005d17c63",
+  "privateCalibrationHead": "db1178fe52f138f06d8269c1d726cf2193e2a7b6",
+  "privateTrackedDefinitionSha256": "a319f311dd61e1465e26dc675672858c10968317a524fcba1a48dffbd207ead3",
+  "currentPair": {
+    "private": {
+      "contentHash": "f29b80ee33e34896e0ee01418e0fad153d26e39015077feddff2d68565dc2f0c",
+      "inputHash": "62c9dd979632a6d887ad16ebf1c00bd8fb2cd04574984cd6e96d7c4dfea888d7",
+      "revision": "7cc66d4378525ad4257382919acf38fda758b0da3108a3d3cd0c7e568d9b42ef"
+    },
+    "public": {
+      "contentHash": "00b338188f4a03ad0b78fd8d99f157feb58a01a14458597d655fbe52d7b5b81a",
+      "inputHash": "08e2630345259734707df0bc54c9736754a72537b77e7fe8d31fb194586fd7da",
+      "revision": "05fb3706ba5edf6fe9993f7e43ebfe4f3b8f19bfec23ced29de2724307889137"
+    },
+    "canonicalPackaging": {
+      "private": 9,
+      "public": 9,
+      "skips": 0,
+      "failures": 0
+    },
+    "budgets": {
+      "corePreloads": 131,
+      "rangePreloads": 14,
+      "passed": true
+    }
+  },
+  "currentProductionCPUKernels": {
+    "id": "bluefin",
+    "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "version1130Verified": false,
+    "candidateNodes": 10854,
+    "validNodes": 6985,
+    "verificationMilliseconds": 119612.768753,
+    "banks": [
+      {
+        "team": 0,
+        "hz": 60,
+        "seconds": 46.5,
+        "replans": 2,
+        "transientPathMisses": 0,
+        "waypoints": 104,
+        "sourceClimbs": 2,
+        "sourceDrops": 3,
+        "start": [
+          -12,
+          15,
+          -70
+        ],
+        "goal": [
+          20,
+          9,
+          40.5
+        ],
+        "end": [
+          21.048619043478226,
+          9,
+          39.45138095482376
+        ],
+        "sourceGoalTriangle": 172810,
+        "minimumY": 3,
+        "distanceToGoal": 1.4829712742502854,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 2790,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": {
+          "count": 168,
+          "minY": 4.912222174538507,
+          "maxY": 8.08969439676073,
+          "bounds": [
+            {
+              "from": "21,3,19.5",
+              "paintMinY": 3.7345582752935713,
+              "wallProbeMaxY": 8.643700408935548,
+              "sourceRoleIntervalSamples": 126,
+              "requiredPaintSamples": 112
+            }
+          ]
+        },
+        "weapon": "shooter / Shooter_Normal_00",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      },
+      {
+        "team": 1,
+        "hz": 60,
+        "seconds": 74.46666666666667,
+        "replans": 2,
+        "transientPathMisses": 0,
+        "waypoints": 123,
+        "sourceClimbs": 1,
+        "sourceDrops": 4,
+        "start": [
+          12,
+          15,
+          70
+        ],
+        "goal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "end": [
+          -21.004294836246984,
+          9,
+          -38.49570516376725
+        ],
+        "sourceGoalTriangle": 172794,
+        "minimumY": 2.950000047683716,
+        "distanceToGoal": 1.4202873780316883,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 4468,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": null,
+        "weapon": "shooter / Shooter_Normal_00",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gearAP": 0,
+        "initialPaint": "unpainted",
+        "actualBrainActorWeaponProjectilesPaintClock": true
+      }
+    ],
+    "conditions": "production 1/60 Actor/Brain kernel and Character muzzle; render cadence is independently checked in real Game Chromium; CPU VM optional source motion unavailable; source-supported initial poses only; no later Actor pose, velocity or ink assignment; goal reacquired after normal recovery; one isolated CPU actor; 0.5 RNG; no retail physics or hardware claim"
+  },
+  "currentSourceNegativeControls": {
+    "sourceSha256": "e6effc27b375336108429c8c1fc7cd93dc5e8e1559b1b2e0cde6d98d65853527",
+    "sourceArraysSha256": "0ce2bbe05a6194506f7e0cb0ca98b9b28f985b54cb1b06fc7d808c3ee082d1a0",
+    "negatives": [
+      {
+        "kind": "retained original NoPaint runway support",
+        "triangle": 172327,
+        "object": "Fld_Ruins03_polySurface4014_1__Tape00_np",
+        "face": -1
+      },
+      {
+        "kind": "genuine original NoPaint facade rejected",
+        "lower": 622,
+        "triangle": 49826,
+        "object": "FldObj_Ruins03PntStage_PlantE11_1__WallPlantIvyBundle",
+        "face": -1
+      },
+      {
+        "kind": "controlled eligibility-mask hole on original source face rejected",
+        "face": 29015,
+        "cell": 879778
+      },
+      {
+        "kind": "actual dynamic runway support rejected",
+        "block": 54574,
+        "triangle": -1
+      },
+      {
+        "kind": "actual held-B no-admission releases B and stale path",
+        "beforeSerial": 0,
+        "afterSerial": 0
+      },
+      {
+        "kind": "independent real supported normal jump admission",
+        "jumpSerial": 1
+      },
+      {
+        "kind": "actual airborne source-foot takeoff rejected",
+        "position": [
+          19,
+          3.1330555555555555,
+          -8.49
+        ],
+        "jumpSerial": 1
+      },
+      {
+        "kind": "actual admitted neutral jump returns to distant support and releases stale path",
+        "jumpSerial": 1,
+        "position": [
+          19,
+          3,
+          -8.5
+        ],
+        "distanceToFarSource": 2
+      }
+    ],
+    "manualPaint": false,
+    "physicalWritesAfterInitialSpawn": false
+  },
+  "currentCompiledGameBanks": {
+    "artifact": {
+      "contentHash": "f29b80ee33e34896e0ee01418e0fad153d26e39015077feddff2d68565dc2f0c",
+      "inputHash": "62c9dd979632a6d887ad16ebf1c00bd8fb2cd04574984cd6e96d7c4dfea888d7",
+      "revision": "7cc66d4378525ad4257382919acf38fda758b0da3108a3d3cd0c7e568d9b42ef"
+    },
+    "conditions": "real Chromium SwiftShader; installed Game._frame at render30/60/120 and observed production Actor/BotBrain STEP1/60; fresh normal eight-actor/seven-bot Match per trial; other actors start on independently supported positions near original own-team pads with frozen input; controlled bot starts on the original pad; empty initial ink and ordinary BotBrain/Actor/weapon/projectiles/paint clock; no later pose or ink assignment; every live capsule sweep and final static source-foot support verified; timed render frames include the independent sweep; 0.5 RNG before source Match Actor/Brain construction; not console or mobile hardware",
+    "banks": [
+      {
+        "team": 0,
+        "start": [
+          -12,
+          15,
+          -70
+        ],
+        "goal": [
+          20,
+          9,
+          40.5
+        ],
+        "sourceGoalTriangle": 172810,
+        "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+        "waypoints": 104,
+        "sourceClimbs": 2,
+        "sourceDrops": 3,
+        "renderHz": 30,
+        "physicsHz": 60,
+        "actorIntervals": [
+          0.016666666666666666
+        ],
+        "brainIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 2852,
+        "seconds": 47.53333333333333,
+        "replans": 2,
+        "transientPathMisses": 0,
+        "minimumY": 3,
+        "end": [
+          21.048817603452985,
+          9,
+          39.45118238145952
+        ],
+        "distanceToGoal": 1.4832520899273298,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 2852,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": {
+          "count": 168,
+          "minY": 4.912222174538507,
+          "maxY": 8.08969439676073,
+          "bounds": [
+            {
+              "from": "21,3,19.5",
+              "paintMinY": 3.7345582752935713,
+              "wallProbeMaxY": 8.643700408935548,
+              "sourceRoleIntervalSamples": 126,
+              "requiredPaintSamples": 112
+            }
+          ]
+        },
+        "approachPhases": [
+          {
+            "phase": "plant",
+            "tick": 1540,
+            "position": [
+              19.12945692775782,
+              3,
+              -8.579411608106005
+            ],
+            "velocity": [
+              -1.153049551726486,
+              0,
+              1.0257605073030245
+            ],
+            "form": "kid",
+            "serial": 2,
+            "surge": {}
+          },
+          {
+            "phase": "flight",
+            "tick": 1574,
+            "position": [
+              19.012524959418936,
+              3,
+              -8.507683074101536
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "form": "kid",
+            "serial": 2,
+            "surge": {}
+          },
+          {
+            "phase": "paint",
+            "tick": 1991,
+            "position": [
+              21.132121396917757,
+              3,
+              19.36576351609054
+            ],
+            "velocity": [
+              0.9620439193561597,
+              0,
+              0.1408083321928847
+            ],
+            "form": "kid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "run",
+            "tick": 2208,
+            "position": [
+              21.027108410566647,
+              3,
+              19.472959280486556
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "form": "squid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "attach",
+            "tick": 2232,
+            "position": [
+              23.842891175624164,
+              3.049999952316284,
+              19.4998835178915
+            ],
+            "velocity": [
+              10.919983095051691,
+              0,
+              -0.0007349199360944941
+            ],
+            "form": "squid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "release",
+            "tick": 2331,
+            "position": [
+              26.8249,
+              7.23969439676073,
+              19.49995060694244
+            ],
+            "velocity": [
+              0,
+              1.875,
+              0
+            ],
+            "form": "squid",
+            "serial": 4,
+            "surge": {
+              "phase": "charge",
+              "charge": 1
+            }
+          },
+          {
+            "phase": "human",
+            "tick": 2332,
+            "position": [
+              26.8249,
+              7.491443722272293,
+              19.500389641705585
+            ],
+            "velocity": [
+              1.2,
+              15,
+              0
+            ],
+            "form": "squid",
+            "serial": 4,
+            "surge": {
+              "phase": "burst",
+              "charge": 1
+            }
+          }
+        ],
+        "climbed": true,
+        "fire": true,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "gearAP": 0,
+        "verifiedRenderFrameMilliseconds": {
+          "p50": 6.200000002980232,
+          "p95": 26.099999994039536,
+          "max": 120.40000000596046
+        }
+      },
+      {
+        "team": 0,
+        "start": [
+          -12,
+          15,
+          -70
+        ],
+        "goal": [
+          20,
+          9,
+          40.5
+        ],
+        "sourceGoalTriangle": 172810,
+        "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+        "waypoints": 104,
+        "sourceClimbs": 2,
+        "sourceDrops": 3,
+        "renderHz": 60,
+        "physicsHz": 60,
+        "actorIntervals": [
+          0.016666666666666666
+        ],
+        "brainIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 2852,
+        "seconds": 47.53333333333333,
+        "replans": 2,
+        "transientPathMisses": 0,
+        "minimumY": 3,
+        "end": [
+          21.048817603452985,
+          9,
+          39.45118238145952
+        ],
+        "distanceToGoal": 1.4832520899273298,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 2852,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": {
+          "count": 168,
+          "minY": 4.912222174538507,
+          "maxY": 8.08969439676073,
+          "bounds": [
+            {
+              "from": "21,3,19.5",
+              "paintMinY": 3.7345582752935713,
+              "wallProbeMaxY": 8.643700408935548,
+              "sourceRoleIntervalSamples": 126,
+              "requiredPaintSamples": 112
+            }
+          ]
+        },
+        "approachPhases": [
+          {
+            "phase": "plant",
+            "tick": 1540,
+            "position": [
+              19.12945692775782,
+              3,
+              -8.579411608106005
+            ],
+            "velocity": [
+              -1.153049551726486,
+              0,
+              1.0257605073030245
+            ],
+            "form": "kid",
+            "serial": 2,
+            "surge": {}
+          },
+          {
+            "phase": "flight",
+            "tick": 1574,
+            "position": [
+              19.012524959418936,
+              3,
+              -8.507683074101536
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "form": "kid",
+            "serial": 2,
+            "surge": {}
+          },
+          {
+            "phase": "paint",
+            "tick": 1991,
+            "position": [
+              21.132121396917757,
+              3,
+              19.36576351609054
+            ],
+            "velocity": [
+              0.9620439193561597,
+              0,
+              0.1408083321928847
+            ],
+            "form": "kid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "run",
+            "tick": 2208,
+            "position": [
+              21.027108410566647,
+              3,
+              19.472959280486556
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "form": "squid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "attach",
+            "tick": 2232,
+            "position": [
+              23.842891175624164,
+              3.049999952316284,
+              19.4998835178915
+            ],
+            "velocity": [
+              10.919983095051691,
+              0,
+              -0.0007349199360944941
+            ],
+            "form": "squid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "release",
+            "tick": 2331,
+            "position": [
+              26.8249,
+              7.23969439676073,
+              19.49995060694244
+            ],
+            "velocity": [
+              0,
+              1.875,
+              0
+            ],
+            "form": "squid",
+            "serial": 4,
+            "surge": {
+              "phase": "charge",
+              "charge": 1
+            }
+          },
+          {
+            "phase": "human",
+            "tick": 2332,
+            "position": [
+              26.8249,
+              7.491443722272293,
+              19.500389641705585
+            ],
+            "velocity": [
+              1.2,
+              15,
+              0
+            ],
+            "form": "squid",
+            "serial": 4,
+            "surge": {
+              "phase": "burst",
+              "charge": 1
+            }
+          }
+        ],
+        "climbed": true,
+        "fire": true,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "gearAP": 0,
+        "verifiedRenderFrameMilliseconds": {
+          "p50": 3.2000000029802322,
+          "p95": 13.5,
+          "max": 2525.4000000059605
+        }
+      },
+      {
+        "team": 0,
+        "start": [
+          -12,
+          15,
+          -70
+        ],
+        "goal": [
+          20,
+          9,
+          40.5
+        ],
+        "sourceGoalTriangle": 172810,
+        "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+        "waypoints": 104,
+        "sourceClimbs": 2,
+        "sourceDrops": 3,
+        "renderHz": 120,
+        "physicsHz": 60,
+        "actorIntervals": [
+          0.016666666666666666
+        ],
+        "brainIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 2852,
+        "seconds": 47.53333333333333,
+        "replans": 2,
+        "transientPathMisses": 0,
+        "minimumY": 3,
+        "end": [
+          21.048817603452985,
+          9,
+          39.45118238145952
+        ],
+        "distanceToGoal": 1.4832520899273298,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 2852,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": {
+          "count": 168,
+          "minY": 4.912222174538507,
+          "maxY": 8.08969439676073,
+          "bounds": [
+            {
+              "from": "21,3,19.5",
+              "paintMinY": 3.7345582752935713,
+              "wallProbeMaxY": 8.643700408935548,
+              "sourceRoleIntervalSamples": 126,
+              "requiredPaintSamples": 112
+            }
+          ]
+        },
+        "approachPhases": [
+          {
+            "phase": "plant",
+            "tick": 1540,
+            "position": [
+              19.12945692775782,
+              3,
+              -8.579411608106005
+            ],
+            "velocity": [
+              -1.153049551726486,
+              0,
+              1.0257605073030245
+            ],
+            "form": "kid",
+            "serial": 2,
+            "surge": {}
+          },
+          {
+            "phase": "flight",
+            "tick": 1574,
+            "position": [
+              19.012524959418936,
+              3,
+              -8.507683074101536
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "form": "kid",
+            "serial": 2,
+            "surge": {}
+          },
+          {
+            "phase": "paint",
+            "tick": 1991,
+            "position": [
+              21.132121396917757,
+              3,
+              19.36576351609054
+            ],
+            "velocity": [
+              0.9620439193561597,
+              0,
+              0.1408083321928847
+            ],
+            "form": "kid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "run",
+            "tick": 2208,
+            "position": [
+              21.027108410566647,
+              3,
+              19.472959280486556
+            ],
+            "velocity": [
+              0,
+              0,
+              0
+            ],
+            "form": "squid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "attach",
+            "tick": 2232,
+            "position": [
+              23.842891175624164,
+              3.049999952316284,
+              19.4998835178915
+            ],
+            "velocity": [
+              10.919983095051691,
+              0,
+              -0.0007349199360944941
+            ],
+            "form": "squid",
+            "serial": 3,
+            "surge": {}
+          },
+          {
+            "phase": "release",
+            "tick": 2331,
+            "position": [
+              26.8249,
+              7.23969439676073,
+              19.49995060694244
+            ],
+            "velocity": [
+              0,
+              1.875,
+              0
+            ],
+            "form": "squid",
+            "serial": 4,
+            "surge": {
+              "phase": "charge",
+              "charge": 1
+            }
+          },
+          {
+            "phase": "human",
+            "tick": 2332,
+            "position": [
+              26.8249,
+              7.491443722272293,
+              19.500389641705585
+            ],
+            "velocity": [
+              1.2,
+              15,
+              0
+            ],
+            "form": "squid",
+            "serial": 4,
+            "surge": {
+              "phase": "burst",
+              "charge": 1
+            }
+          }
+        ],
+        "climbed": true,
+        "fire": true,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "gearAP": 0,
+        "verifiedRenderFrameMilliseconds": {
+          "p50": 1.300000011920929,
+          "p95": 6.200000002980232,
+          "max": 1506.2999999970198
+        }
+      },
+      {
+        "team": 1,
+        "start": [
+          12,
+          15,
+          70
+        ],
+        "goal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "sourceGoalTriangle": 172794,
+        "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+        "waypoints": 123,
+        "sourceClimbs": 1,
+        "sourceDrops": 4,
+        "renderHz": 30,
+        "physicsHz": 60,
+        "actorIntervals": [
+          0.016666666666666666
+        ],
+        "brainIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 5180,
+        "seconds": 86.33333333333333,
+        "replans": 3,
+        "transientPathMisses": 0,
+        "minimumY": 2.950000047683716,
+        "end": [
+          -20.98726427625215,
+          9,
+          -38.51273572378467
+        ],
+        "distanceToGoal": 1.3962025290962123,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 5180,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": null,
+        "approachPhases": [],
+        "climbed": true,
+        "fire": true,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "gearAP": 0,
+        "verifiedRenderFrameMilliseconds": {
+          "p50": 3.8999999910593033,
+          "p95": 23.299999997019768,
+          "max": 1768
+        }
+      },
+      {
+        "team": 1,
+        "start": [
+          12,
+          15,
+          70
+        ],
+        "goal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "sourceGoalTriangle": 172794,
+        "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+        "waypoints": 123,
+        "sourceClimbs": 1,
+        "sourceDrops": 4,
+        "renderHz": 60,
+        "physicsHz": 60,
+        "actorIntervals": [
+          0.016666666666666666
+        ],
+        "brainIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 5222,
+        "seconds": 87.03333333333333,
+        "replans": 3,
+        "transientPathMisses": 0,
+        "minimumY": 2.950000047683716,
+        "end": [
+          -21.01199655830449,
+          9,
+          -38.4880034422337
+        ],
+        "distanceToGoal": 1.4311792574485473,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 5222,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": null,
+        "approachPhases": [],
+        "climbed": true,
+        "fire": true,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "gearAP": 0,
+        "verifiedRenderFrameMilliseconds": {
+          "p50": 1.8999999910593033,
+          "p95": 6.700000002980232,
+          "max": 5303.29999999702
+        }
+      },
+      {
+        "team": 1,
+        "start": [
+          12,
+          15,
+          70
+        ],
+        "goal": [
+          -20,
+          9,
+          -39.5
+        ],
+        "sourceGoalTriangle": 172794,
+        "sourceGoalObject": "Fld_Ruins03_polySurface4564_1__FloorConcreteDamaged",
+        "waypoints": 123,
+        "sourceClimbs": 1,
+        "sourceDrops": 4,
+        "renderHz": 120,
+        "physicsHz": 60,
+        "actorIntervals": [
+          0.016666666666666666
+        ],
+        "brainIntervals": [
+          0.016666666666666666
+        ],
+        "actorTicks": 5222,
+        "seconds": 87.03333333333333,
+        "replans": 3,
+        "transientPathMisses": 0,
+        "minimumY": 2.950000047683716,
+        "end": [
+          -21.01199655830449,
+          9,
+          -38.4880034422337
+        ],
+        "distanceToGoal": 1.4311792574485473,
+        "alive": true,
+        "grounded": true,
+        "sourceFootSupported": true,
+        "continuousActualCapsuleSamples": 5222,
+        "continuousActualCapsuleFailures": 0,
+        "approachSourceProbes": null,
+        "approachPhases": [],
+        "climbed": true,
+        "fire": true,
+        "weapon": "shooter",
+        "sourceWeapon": "WeaponShooterNormal",
+        "gear": [
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          },
+          {
+            "main": "none",
+            "subs": [
+              "none",
+              "none",
+              "none"
+            ]
+          }
+        ],
+        "gearAP": 0,
+        "verifiedRenderFrameMilliseconds": {
+          "p50": 1.199999988079071,
+          "p95": 4.200000002980232,
+          "max": 257.69999998807907
+        }
+      }
+    ],
+    "actors": 8,
+    "aliveActors": 8,
+    "bots": 7,
+    "errors": [],
+    "continuousActualCapsules": 24180,
+    "ownedSourceSQProbes": 504
+  },
+  "retainedHumanKeyboard": {
+    "scope": "Exact v3 real keyboard receipt retained; independent v3/v4 executed human inputs, Actor/Character/Nav/Match/config/main and source physical/nav functions unchanged. Five differing paths are bot-only and bots were frozen. No v4 keyboard run is claimed. Future GroundBody stage keyboard requires a fresh composition.",
+    "contentHash": "ce9a75020d0833cce2e1c0dfe2f838d2bc3e7d3e3c3de7ecfe2b07416c7d549d",
+    "cases": [
+      {
+        "renderHz": 30,
+        "simulationHz": 60,
+        "seconds": 9.933333333333334,
+        "waypoints": 26,
+        "normalJumpSerialDelta": 1,
+        "continuousActualCapsules": 596,
+        "end": [
+          20.059349002906036,
+          3,
+          18.80679609799579
+        ],
+        "grounded": true,
+        "alive": true,
+        "sourceFoot": true,
+        "gearAP": 0,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "renderHz": 60,
+        "simulationHz": 60,
+        "seconds": 8.9,
+        "waypoints": 26,
+        "normalJumpSerialDelta": 1,
+        "continuousActualCapsules": 534,
+        "end": [
+          20.03659975165745,
+          3,
+          18.7088065670212
+        ],
+        "grounded": true,
+        "alive": true,
+        "sourceFoot": true,
+        "gearAP": 0,
+        "actors": 8,
+        "bots": 7
+      },
+      {
+        "renderHz": 120,
+        "simulationHz": 60,
+        "seconds": 8.9,
+        "waypoints": 26,
+        "normalJumpSerialDelta": 1,
+        "continuousActualCapsules": 534,
+        "end": [
+          20.03659975165745,
+          3,
+          18.7088065670212
+        ],
+        "grounded": true,
+        "alive": true,
+        "sourceFoot": true,
+        "gearAP": 0,
+        "actors": 8,
+        "bots": 7
+      }
+    ],
+    "errors": [],
+    "continuousActualCapsules": 1664
+  },
+  "actualTowerRiderGuard": {
+    "scope": "Real Chromium source Tower Match/RankedWorld with eight actors/seven bots, fixed1/60 setup, zero-AP canonical Shooter initially spawned on the actual supported dynamic deck. One direct new executor input-ownership guard; actual ground.block/world/level/match/block identities, traversal release and preserved current input/position/velocity/serial verified. No repeated Tower vehicle trajectory, original-pad route, render-cadence matrix or continuous capsule claim.",
+    "artifact": "ce9a75020d0833cce2e1c0dfe2f838d2bc3e7d3e3c3de7ecfe2b07416c7d549d",
+    "case": {
+      "nativeTowerRider": true,
+      "handled": false,
+      "inputAndBodyUnchanged": true,
+      "traversalCleared": true,
+      "groundBlock": 54574,
+      "towerBlock": 54574,
+      "grounded": true,
+      "position": [
+        0.65,
+        1.9500000000000002,
+        0.15000000000000002
+      ],
+      "mode": "tower",
+      "rankedMode": "tower",
+      "worldLevelBound": true,
+      "worldMatchBound": true,
+      "actualTowerBlockBound": true,
+      "typedEdgeKind": "gap-jump",
+      "actors": 8,
+      "bots": 7,
+      "gearAP": 0
+    },
+    "errors": []
+  },
+  "guardChecks": {
+    "currentFocused": {
+      "pass": 13,
+      "optionalSourceSkips": 4,
+      "fail": 0
+    },
+    "independentPure": {
+      "pass": 6,
+      "skip": 0,
+      "fail": 0
+    },
+    "sourceDedicated": {
+      "pass": 2,
+      "skip": 0,
+      "fail": 0
+    },
+    "earlierFullSourceAt2626": {
+      "total": 128,
+      "pass": 103,
+      "explicitOptionalSkips": 25,
+      "fail": 0,
+      "milliseconds": 939986.834938
+    }
+  },
+  "nextStageScope": "GroundBody32495 and upcoming qualified9bed composition must be consumed and freshly validated in OWN Bluefin stage; current common physical proof is explicitly3f9/bc scope.",
+  "historicalInitialFoundation": "90040586c3728ca20d69ed43014528e0f68cbbdf",
+  "historicalInitialQualifierCommit": "2626e98dda4d0957c7d0410c8d226fe0f69a8416",
+  "approachRuntimeChangeCommit": "bc420c0559d6494870569683beab4ba7963c9fb8",
+  "namedIndependentReview": {
+    "reviewer": "Humpback stage owner, read-only separate worktree",
+    "status": "CLOSED/ACCEPTED",
+    "reportHead": "68ad28d506855f8e09e3fb71c5df75314bf3babd",
+    "runtimeSourceSha256": "5f35baf9cecb757838eb745bea7522422050d673f0324bff46c23a9005d17c63",
+    "receipt": "/workspace/stage-worktrees/humpback/.ci-scratch/bluefin-peer/named-review.json",
+    "receiptSha256": "003e30df75a7487c000174fa5789852429a98e976319d1f49bf2fd2a80203197",
+    "keyboardBindingReceiptSha256": "2ccd8bd5d75c00ea79f54755681f050da0957d0cfed27b984678870c7402aa3a",
+    "scope": "Common b199/3f9 + bc only; current v4 Game6/source2/pair9+9/budgets and retained genuine v3 keyboard3 unchanged-human binding. Fresh GroundBody and later-main OWN stage qualification remains separate."
+  }
+}

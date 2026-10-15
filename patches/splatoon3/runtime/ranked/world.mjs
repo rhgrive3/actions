@@ -809,7 +809,10 @@ export class RankedWorld {
         if (this.paint.dead?.[cell]) continue;
         floorCellCenter(face, i, j, p);
         for (let index = 0; index < zones.length; index++) {
-          const zone = zones[index], [cx, , cz] = zone.center, [width, depth] = zone.size;
+          const zone = zones[index], [cx, cy, cz] = zone.center, [width, depth] = zone.size;
+          // Source-calibrated zones mark a floor band. Do not count a box top
+          // or another storey merely because it overlaps that floor in X/Z.
+          if (finite(zone.heightTolerance) && Math.abs(p.y - cy) > Math.max(0, zone.heightTolerance) + EPSILON) continue;
           if (p.x < cx - width / 2 - EPSILON || p.x > cx + width / 2 + EPSILON
             || p.z < cz - depth / 2 - EPSILON || p.z > cz + depth / 2 + EPSILON) continue;
           this._zoneCells[index].push({ face, cell, area: face.cu * face.cv, center: p.clone() });

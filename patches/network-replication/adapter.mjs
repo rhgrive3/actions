@@ -1630,7 +1630,7 @@ const PAINT_RADIUS_MAX = 5.2 * 0.72;
 // row above PAINT_RADIUS_MAX, and only with this exact victim-blast signature.
 const PAINT_VICTIM_BLAST_RADIUS = 5;
 const PAINT_VICTIM_SPLASH_RADIUS = 1;
-const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck']);
+const PAINT_EVENT_KINDS = new Set(['shot', 'line', 'blast', 'bomb', 'trail', 'drop', 'roll', 'rollFloor', 'speck', 'source-shot', 'source-splash']);
 const paintClockSessions = new WeakMap();
 function paintClockStateFor(session, cfg) {
   const matchId = typeof cfg?.id === 'string' ? cfg.id : '';
@@ -2555,8 +2555,13 @@ function canAllocateNetworkGhost(projectiles, actor) {
   }
   if (rel === 'src/game/weapons.js') {
     code="import { slosherImpactMetadata } from '../../patches/network-replication/slosher-paint-admission.mjs';\n"+code;
-    patch('{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }',
-      '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner, projectilePaint: slosherImpactMetadata(p,hit) }',
+    // The S3 source footprint introduces an explicit physical-ink kind before
+    // network provenance attaches. Accept exactly the two approved, mutually
+    // exclusive source compositions: direct old paint or source-kind paint.
+    const sourceKindAnchor = '{ seed: p.seed, kind: paint ? SOURCE_SHOT_PAINT_KIND : undefined, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }';
+    const ordinaryAnchor = '{ seed: p.seed, stretch: _dir, stretchAmt: paint?.stretchAmt ?? 1.25, claimOwner: p.owner }';
+    const paintAnchor = code.includes(sourceKindAnchor) ? sourceKindAnchor : ordinaryAnchor;
+    patch(paintAnchor, paintAnchor.slice(0, -2) + ', projectilePaint: slosherImpactMetadata(p,hit) }',
       'bind sourced Slosher terrain paint to its projectile birth');
   }
   if (rel === 'src/net/netmatch.js') {
@@ -2573,6 +2578,21 @@ function canAllocateNetworkGhost(projectiles, actor) {
     patch('    if (Array.isArray(d?.e)) d = { ...d, e: d.e.filter(Array.isArray) };',
       '    if (Array.isArray(d?.e)) d = { ...d, _eventOverBudget: d.e.length > 256, e: d.e.slice(0, 256).filter(Array.isArray) };',
       'cap owner timeline rows per packet');
+  }
+  if (rel === 'src/net/netmatch.js') {
+    code = "import { packPaintTick, acceptPaintTick, forgetPaintPeer } from '../../patches/splatoon3/runtime/paint-packet-codec.mjs';\n" + code;
+    patch('    this.s.tr?.broadcast(msg);',
+      '    this.s.tr?.broadcast(packPaintTick(this, msg));',
+      'negotiate lossless paint rows with current relay members');
+    patch('  onMessage(from, d) {',
+      '  onMessage(from, d) {\n    d = acceptPaintTick(this, from, d);\n    if (!d) return;',
+      'decode bounded paint rows before unchanged sender and HLC admission');
+    patch('  onLeave(id, hostChanged) {',
+      '  onLeave(id, hostChanged) {\n    forgetPaintPeer(this, id);',
+      'retire codec capability before same-id relay rejoin or host adoption');
+    patch("      case 'weapon:fire': G.projectiles?.ghostFire(a, e); break;",
+      "      case 'weapon:fire':\n        if (a.alive && (a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && e.weapon === (a.weapon.catalogRecord?.id || a.weapon.id) && (e.hand === 0 || e.hand === 1)) {\n          a.weaponRunner.hand = e.hand;\n          a.weaponRunner.sinceHand[e.hand] = 0;\n        }\n        G.projectiles?.ghostFire(a, e); break;", 'accepted remote dualies hand presentation');
+    patch('    const wr = a.weaponRunner;', "    const wr = a.weaponRunner;\n    if ((a.weapon?.behaviorKind || a.weapon?.kind) === 'dualies' && Number.isFinite(dt) && dt > 0) { wr.sinceHand[0] += dt; wr.sinceHand[1] += dt; }", 'remote dualies presentation clocks');
   }
   if (rel === 'src/net/netmatch.js') {code = adaptGearLoadout(code, once);code = adaptConditionalGear(code, once);code = adaptTransientGear(code, once);}
   return code;
