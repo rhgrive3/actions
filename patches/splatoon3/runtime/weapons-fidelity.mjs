@@ -8,6 +8,7 @@ import { installDualiesSlidePaint } from './dualies-slide-paint.mjs';
 import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint } from './shooter-impact-paint.mjs';
+import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -362,7 +363,7 @@ function withDualiesImpactPaint(game,p,hit,source,callback) {
   paint.splat=function(center,radius,team,opts={}) {
     if (!first) return native.call(this,center,radius,team,opts);
     first=false;
-    const next={...opts};
+    const next={...opts,kind:SOURCE_SHOT_PAINT_KIND};
     if (source.depthScale !== null) {
       // The angle was already consumed above. Avoid applying a second cos(angle)
       // attenuation in the rasterizer by supplying the in-plane unit heading.
