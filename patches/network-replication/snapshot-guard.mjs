@@ -93,11 +93,20 @@ export function validNetworkBombBirth(e, stageBounds = null) {
 // Only visual metadata is checked. Gameplay parameters and owner authority
 // keep their independent existing gates. Matches current native producer slots
 // 19..26 and the renderer's four-entry SAT_SIZE table.
+// Tail is a ratio, not a world length. Source-owned zero-width Slosher
+// entries reach 1 + 4/.001 = 4001; bound ratio and base drawn extent separately.
+export const NETWORK_PROJECTILE_TAIL_RATIO_MAX = 4096;
+export const NETWORK_PROJECTILE_TAIL_EXTENT_MAX = 128;
 export function validNetworkProjectileCosmetics(e) {
   if (!Array.isArray(e) || e[1] !== 'p') return false;
   if (e[19] !== undefined && e[19] !== 0 && e[19] !== 1) return false;
-  for (const [i,low,high] of [[20,0,8],[21,0,16],[22,0,16],[23,0,4],[24,0,512],[25,-2,4]]) {
+  for (const [i,low,high] of [[20,0,8],[22,0,16],[23,0,4],[24,0,512],[25,-2,4]]) {
     if (e[i] !== undefined && !bounded(e[i], low, high)) return false;
+  }
+  if (e[21] !== undefined) {
+    const width = e[20] ?? e[15];
+    if (!bounded(e[21], 0, NETWORK_PROJECTILE_TAIL_RATIO_MAX) || !finite(width) || width < 0
+      || width * e[21] > NETWORK_PROJECTILE_TAIL_EXTENT_MAX) return false;
   }
   return e[26] === undefined || integer(e[26], 0, 4);
 }

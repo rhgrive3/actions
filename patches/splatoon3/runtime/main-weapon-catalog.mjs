@@ -279,7 +279,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const r = RECORDS.get(s.id), kp = r.parameters.WeaponKeepChargeParam || r.parameters.spl__WeaponStringerParam?.ChargeKeepParam;
     if(keep&&s.stream>0&&kp?.EnableKeepChargeAnytime){s.chargeF=remainingCharge(r,s);s.paid=inkAt(r,s.chargeF)*inkMod(runner.a);}
     if (keep && s.chargeF > 0 && kp && (kp.EnableKeepChargeAnytime || s.chargeF+EPS >= chargeFrames(r)) &&
-      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep))
+      (r.family !== 'stringer' || r.parameters.spl__WeaponStringerParam.IsEnableChargeKeep ||
+        // Nintendo's LACT-450 guide explicitly confirms charge keep. Its pinned
+        // row omits this flag; this source-actor exception is not a schema default.
+        // https://www.nintendo.com/jp/character/splatoon/fashion/index.html
+        (r.sourceActor === 'WeaponStringerShort' && !Object.hasOwn(r.parameters.spl__WeaponStringerParam, 'IsEnableChargeKeep'))))
       s.stored = { frames:s.chargeF, paid:s.paid, remaining:finite(kp.KeepChargeFullFrame,75)/HZ };
     else if (!keep) s.stored = null;
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;

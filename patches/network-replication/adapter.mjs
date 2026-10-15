@@ -2103,7 +2103,7 @@ function firstSplatStateFor(session,cfg) {
     // Source-guided heads return before the generic fidelity branch below.
     // Trust no peer-controlled visual ribbon/head parameters, even through
     // direct ghost construction or recycled projectiles outside NetMatch.
-    code = "import { validNetworkProjectileCosmetics } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validNetworkProjectileCosmetics, NETWORK_PROJECTILE_TAIL_RATIO_MAX, NETWORK_PROJECTILE_TAIL_EXTENT_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
     patch('    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
       '    if (!validNetworkProjectileCosmetics(e)) return null;\n    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
       'validate cosmetic ghost at source allocation boundary');
@@ -2133,7 +2133,8 @@ function firstSplatStateFor(session,cfg) {
         || !Number.isFinite(p.size) || !Number.isFinite(p.seed)
         || p.age < 0 || p.life <= 0 || p.size < 0 || p.size > 64
         || p.vis !== undefined && (!Number.isFinite(p.vis) || p.vis < 0 || p.vis > 8)
-        || p.tail0 !== undefined && (!Number.isFinite(p.tail0) || p.tail0 < 0 || p.tail0 > 16)
+        || p.tail0 !== undefined && (!Number.isFinite(p.tail0) || p.tail0 < 0 || p.tail0 > NETWORK_PROJECTILE_TAIL_RATIO_MAX
+          || (p.catalogVisual ? p.vis : (p.vis || p.size)) * p.tail0 > NETWORK_PROJECTILE_TAIL_EXTENT_MAX)
         || p.tailK !== undefined && (!Number.isFinite(p.tailK) || p.tailK < 0 || p.tailK > 16)
         || p.wob !== undefined && (!Number.isFinite(p.wob) || p.wob < 0 || p.wob > 4)
         || p.wobF !== undefined && (!Number.isFinite(p.wobF) || p.wobF < 0 || p.wobF > 512)

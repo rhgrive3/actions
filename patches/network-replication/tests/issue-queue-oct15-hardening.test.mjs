@@ -113,6 +113,12 @@ test('real composed _draw cannot hide local shot or upload NaN from toxic remote
   P._draw();
   assert.equal(P.blobs.count,baseline,'direct poisoned renderer input must not displace the local shot');
   P.list.shift();
+  const tail=make(remote,true,0,501);tail.vis=8;P.list.unshift(tail);P._draw();
+  assert.equal(P.blobs.count,baseline,'oversized effective tail cannot displace the local shot');
+  tail.vis=.001;tail.tail0=4001;P._draw();
+  assert.equal(P.blobs.count,baseline+1,'bounded tiny-width source ratio remains drawable');
+  assert.ok(P.blobs.instanceMatrix.array.slice(0,P.blobs.count*16).every(Number.isFinite));
+  P.list.shift();
   for(let i=0;i<350;i++)P.list.unshift(make(remote,true,4,.8));
   P._draw();
   assert.ok(P.blobs.count<=700,'native budget remains finite');
@@ -189,4 +195,15 @@ test('ghost flight expiry is bounded without deleting deployed Sprinklers or ord
     P._updateBombs(1/60);
     assert.ok(P.bombs.includes(own),'local bomb retirement remains governed by native physics');
   }finally{P.clear();}
+});
+
+
+test('tail ratio admits native zero/tiny-width Slosher entries while bounding the drawn extent', () => {
+  const e=Array(27).fill(0);e[1]='p';e[15]=.1;e[20]=0;e[21]=501;
+  assert.equal(validNetworkProjectileCosmetics(e),true,'zero-width native Diffusion Slosher birth');
+  e[20]=.001;e[21]=4001;
+  assert.equal(validNetworkProjectileCosmetics(e),true,'source maximum length divided by minimum presentation denominator');
+  e[20]=8;assert.equal(validNetworkProjectileCosmetics(e),false,'a large visible width cannot inherit the tiny-width ratio');
+  e[20]=0;
+  for(const ratio of [4097,Infinity,NaN,-1,'501']){e[21]=ratio;assert.equal(validNetworkProjectileCosmetics(e),false);}
 });
