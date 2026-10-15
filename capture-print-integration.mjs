@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {writeCaptureCheckpoint} from './capture-checkpoint.mjs';
 import {validateBuildBinding,validateDelivered} from './build-binding.mjs';
 // Single-site integration smoke. Original frozen A/B remains a separate gate.
 import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';import {chromium} from 'playwright';import {PNG} from 'pngjs';import {captureNoctMilk} from './capture-noct-milk.mjs';import {captureSorella} from './capture-sorella.mjs';import {captureExplosher} from './capture-explosher.mjs';import {compareNativeWeaponWork} from './compare-native-weapon-work.mjs';
@@ -30,6 +31,7 @@ async function capture(input,shared){
  await context.route('**/*',route=>{const u=new URL(route.request().url());if(u.origin!=='http://127.0.0.1:'+server.address().port){networkFailures.push({url:u.href,error:'external origin rejected'});return route.abort();}return route.continue();});
  await context.addInitScript(({seed})=>{window.__captureNativeNow=performance.now.bind(performance);let state=seed>>>0;Math.random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};Date.now=()=>1700000000000;Object.defineProperty(performance,'now',{value:()=>1000});window.__abRngState=()=>state;window.__abResetRng=()=>{state=seed>>>0;};},{seed});
  const page=await context.newPage();page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('pageerror',e=>errors.push(String(e)));page.on('requestfailed',r=>networkFailures.push({url:r.url(),error:r.failure()}));page.on('response',r=>{if(r.status()>=400)networkFailures.push({url:r.url(),status:r.status()});});
+ await page.exposeFunction('__captureCheckpoint',(phase,data)=>writeCaptureCheckpoint(out,plan.head,phase,data));
  await page.goto('http://127.0.0.1:'+server.address().port+'/review');
  return await page.evaluate(async({prefix,ids,shared,helperSource,sorellaSource,explosherSource,workSource,variantIds,baseModelCount})=>{
   function validateThreeExports(namespace){
@@ -81,9 +83,12 @@ async function capture(input,shared){
   if(shared&&JSON.stringify(environmentReceipt)!==JSON.stringify(shared.environment))throw Error('A/B native environment drift');
   scene.add(nativeEnvironment.sun,nativeEnvironment.sun.target,nativeEnvironment.hemi);scene.environment=nativeEnvironment.envMap;scene.environmentIntensity=environmentReceipt.environmentIntensity;
   const measuredWork=await (0,eval)('('+workSource+')')({api,R,THREE,scene,renderer,camera});
+  await window.__captureCheckpoint('work',measuredWork);
   const explosher=await (0,eval)('('+explosherSource+')')({api,R,THREE,scene,renderer,camera});
+  await window.__captureCheckpoint('explosher',explosher);
   const noctMilk=await (0,eval)('('+helperSource+')')({api,R,THREE,scene,renderer,camera});
-  const sorella=await (0,eval)('('+sorellaSource+')')({api,R,THREE,scene,renderer,camera});
+  await window.__captureCheckpoint('noct-milk',noctMilk);
+  let sorella;try{sorella=await (0,eval)('('+sorellaSource+')')({api,R,THREE,scene,renderer,camera});await window.__captureCheckpoint('sorella',sorella);}catch(error){await window.__captureCheckpoint('sorella-failure',error.capturePartial||{error:String(error)});throw error;}
   function captureModes(baseId){
    const chargeFamily=baseId==='s3-stringer-normal'||baseId==='s3-charger-quick',pairedFamily=baseId==='s3-maneuver-short';
    return {chargeFamily,pairedFamily,poseStates:chargeFamily?['rest','charge','release']:['rest'],groundStates:chargeFamily?[true,false]:[true]};

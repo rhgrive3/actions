@@ -32,6 +32,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Portable fail-closed capture controls
         run: node --test diagnostic/build-binding.test.mjs diagnostic/capture-print-integrity.test.mjs diagnostic/variant-plan.test.mjs diagnostic/sorella-capture-controls.test.mjs diagnostic/native-work-controls.test.mjs
+      - name: Diagnostic identity and failure-evidence controls
+        run: node --test diagnostic/canopy-identity.test.mjs diagnostic/capture-checkpoint.test.mjs
       - name: Exact candidate source gates
         run: node diagnostic/run-owner-tests.mjs --plan diagnostic/acceptance-plan.json --source candidate --out evidence --mode source
       - name: One shared production emitted build

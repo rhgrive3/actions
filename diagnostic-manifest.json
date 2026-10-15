@@ -6,7 +6,7 @@
     "source": 46,
     "emitted": 46,
     "skipped": 0,
-    "diagnosticControls": 39,
+    "diagnosticControls": 47,
     "images": 54,
     "measuredRows": 24,
     "steadySamplesPerRow": 12
@@ -27,9 +27,9 @@
     },
     {
       "path": "capture-print-integration.mjs",
-      "sha256": "507464bf8a2aa69aa37d8bce77d41822bb2ef6a1c4b5f0cdefbff603d665853e",
-      "blob": "cb6eb411b4a461468e476c76416124e3b7091df9",
-      "bytes": 31614
+      "sha256": "bdfb4f9870298588583d4a6bf9cabf04f4ba1000421227beb7a1994cb74b506c",
+      "blob": "b8dfc44ff5c11bf4ad75f6a226b2b9f30e250aaa",
+      "bytes": 32152
     },
     {
       "path": "capture-print-integrity.test.mjs",
@@ -45,9 +45,9 @@
     },
     {
       "path": "capture-sorella.mjs",
-      "sha256": "0794578c3aa5964d48c54ed3aa5d18ebe15d7004480a7b4fda1bfed13f50ac8a",
-      "blob": "9e092a36ad203d48f9726f005eff91e48cb29ec1",
-      "bytes": 11775
+      "sha256": "9d238db56240206d1d9479050401101a31a35a67add08696f5fe10e6111ab004",
+      "blob": "cff3395273efdca260d0b97c0d16f15bec089fbb",
+      "bytes": 12424
     },
     {
       "path": "capture-explosher.mjs",
@@ -99,9 +99,9 @@
     },
     {
       "path": ".github/workflows/limited-weapon-acceptance.yml",
-      "sha256": "45d33ece71372abcb3033ee75824f27c215952965e08e2994d62f7134c828ec5",
-      "blob": "037d317ae879ae1b3966e2313abf6b04333c6cd6",
-      "bytes": 2549
+      "sha256": "2cb9304503007b39bd06ad20c1e9629f4b4923037e6f8816a0f7811c68183d49",
+      "blob": "6e7ce5665af3d6178a2681d789547a1dc1bf47d1",
+      "bytes": 2713
     },
     {
       "path": "acceptance-plan.json",
@@ -126,6 +126,24 @@
       "sha256": "05d00b6b0c639ef4e0251b4f5b8c40282cf3b59b46e0014ccb41c1372741a8c6",
       "blob": "85d5969c75342e52a373bfcbc8fd3cbafa338efd",
       "bytes": 1499
+    },
+    {
+      "path": "capture-checkpoint.mjs",
+      "sha256": "80b5cf51104dbbf0ea9dc7cfe144a30e6cc58218a5b3f803289aaaa5e8f5c88c",
+      "blob": "4fb6a46f248bdcfae8f348f9cef8f70b5b68d924",
+      "bytes": 1219
+    },
+    {
+      "path": "capture-checkpoint.test.mjs",
+      "sha256": "014b0ab28ad4d73c96ef4fa8014a1f01772fde35a363924b1a731559a398e473",
+      "blob": "bb68c8052f9291e63ed3eec222bc432ab8ff6db3",
+      "bytes": 2104
+    },
+    {
+      "path": "canopy-identity.test.mjs",
+      "sha256": "acb69f5f73943ee757fcb86a7f0ce89bd4daa2727a41b10017cd0a3d4ec7c0d9",
+      "blob": "6c7887dad49f92e0fd9c442402919accd4d3f0c8",
+      "bytes": 2854
     }
   ],
   "candidateHead": "d0e1bd7748ccf2cff3d3a347e24ab68d1c6b4edd",
