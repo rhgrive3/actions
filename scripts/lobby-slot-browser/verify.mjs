@@ -34,3 +34,10 @@ export function compare(a,b){verify(a);verify(b);assert.deepEqual(b.input,a.inpu
  assert.equal(b.frames[120].assignments,0);assert(b.frames[123].assignments>0,'external style repaired');assert(b.frames[126].assignments>0,'new native nodes initialized');
  return {status:'passed',fixed:{baseline:sum(a,0,60),candidate:sum(b,0,60)},moving:{baseline:sum(a,60,120),candidate:sum(b,60,120)},scope:'Shared native projections and native DOM/CSS endpoint parity; natural observations are separate, no FPS claim'};
 }
+
+export function verifyControlledReadiness(r){
+ assert.equal(r?.readinessMode,'controlled-component');
+ assert(Number.isInteger(r.controlledTicks)&&r.controlledTicks>=0&&r.controlledTicks<=120);
+ assert.equal(r.lobReady,true);assert.equal(r.ready,true);assert.equal(r.frozen,true);
+ assert(Number.isFinite(r.fade)&&r.fade>=1);assert.equal(r.gameIdentity,true);
+}

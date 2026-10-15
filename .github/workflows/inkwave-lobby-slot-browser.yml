@@ -1,7 +1,7 @@
 name: INKWAVE isolated lobby slot DOM assignment parity
 on:
   push:
-    branches: [review/lobby-slot-browser-20261015]
+    branches: [review/lobby-slot-component-readiness-20261015]
 permissions:
   contents: read
 concurrency:
@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   lobby-slot-browser:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/review/lobby-slot-browser-20261015' && github.repository == 'rhgrive3/actions'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/review/lobby-slot-component-readiness-20261015' && github.repository == 'rhgrive3/actions'
     strategy:
       fail-fast: false
       max-parallel: 1

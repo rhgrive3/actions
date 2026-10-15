@@ -1,7 +1,7 @@
 {
   "executionAuthorized": false,
-  "diagnosticBranch": "review/lobby-slot-browser-20261015",
-  "scope": "Native lobby component DOM/CSS endpoints and transform assignments; per-head natural projection observation plus identical baseline trace replay; no FPS or full network gameplay claim",
+  "diagnosticBranch": "review/lobby-slot-component-readiness-20261015",
+  "scope": "Controlled native lobby component DOM/CSS endpoints after native assets are ready. Native freeze then exact60Hz Showcase.update and camera projection; same127-frame comparison. No ordinary startup-latency, FPS or full network gameplay claim.",
   "sources": {
     "baseline": {
       "head": "01aa5cc61c842a8616ab38ff5fb541b6becf1395",
@@ -41,13 +41,13 @@
       "publicationPath": "scripts/lobby-slot-browser/bindings.test.mjs"
     },
     "browser.mjs": {
-      "bytes": 6004,
-      "sha256": "a2a732f71cea2c4839ef12bc338a95e20a7f6668a2783e8586ff5c6dfb5248cb",
+      "bytes": 6951,
+      "sha256": "94be0784ad7397d350eca212e80366ad8003b2885f33f8eb9659fbb81dac01b4",
       "publicationPath": "scripts/lobby-slot-browser/browser.mjs"
     },
     "inkwave-lobby-slot-browser.yml": {
-      "bytes": 7125,
-      "sha256": "c030f259cb07b8a120ca3f56f4245c4d5b7571bf6828a9b0ea7ea9add00aec59",
+      "bytes": 7149,
+      "sha256": "a6408fea57893f5713c6df9aaa35367b98a41abbbe1a3465ff6938248c974d66",
       "publicationPath": ".github/workflows/inkwave-lobby-slot-browser.yml"
     },
     "lobby-probe.mjs": {
@@ -71,13 +71,13 @@
       "publicationPath": "scripts/lobby-slot-browser/style-smoke.mjs"
     },
     "verify.mjs": {
-      "bytes": 4240,
-      "sha256": "65d71f264b062a838f97acab470b97957820c2ab022f4174539d1d55fcca0080",
+      "bytes": 4603,
+      "sha256": "0f7ba0cc83a2256236cacb7d8465af9f5428e049606b82aeaba03efb386ad4bc",
       "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
     },
     "verify.test.mjs": {
-      "bytes": 6593,
-      "sha256": "fef6ca3fbf88eeefa456e00b8a9a794d79a8752ddce0ff2d758d1063bb7bb8ca",
+      "bytes": 9941,
+      "sha256": "a9c23214f2d3cd772e15599343776168d12ac698b32da66a738aebce226dc484",
       "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
     }
   },
