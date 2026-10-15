@@ -5,6 +5,7 @@ import { adaptSource } from '../adapter.mjs';
 import { fixture } from './source-fixture.mjs';
 import { makePaintWorld } from './paint-authority-fixture.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
+import { shooterImpactRadius, shooterImpactDepthScale } from '../runtime/shooter-impact-paint.mjs';
 import { sourceFlightInkKind, SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from '../runtime/source-shot-footprint.mjs';
 
 const near = (a, b, tol = 1e-10) =>
@@ -26,6 +27,20 @@ test('11.3.0 pinned Shooter inputs remain the source of separate terminal, mid-f
   assert.equal(sourceFlightInkKind('trail'), SOURCE_SPLASH_PAINT_KIND);
   assert.equal(sourceFlightInkKind('drop'), SOURCE_SPLASH_PAINT_KIND);
   assert.equal(sourceFlightInkKind('blast'), 'blast');
+});
+
+test('Shooter main body selects source width and straight/break-free depth from the actual shot phase', async () => {
+  const f = await fixture({ productionComposition: true, fullRuntime: true, realProjectiles: true });
+  const { V } = makePaintWorld(f);
+  const w = f.WEAPONS.shooter;
+  const start = V(0,1,0), floor = V(0,0,1.1);
+  const shot = { start, vel: V(0,-1,0), inkProfile: {}, inkPhase: 0,
+    fidelityPhase: 0 };
+  near(shooterImpactRadius(w, shot, floor), 1.93);
+  near(shooterImpactRadius(w, shot, V(0,0,w.range)), 1.71);
+  near(shooterImpactDepthScale(w, shot, V(0,1,0)), 1.31);
+  shot.inkPhase = 2; // measured source flight free phase, not the generic fidelityPhase
+  near(shooterImpactDepthScale(w, shot, V(0,1,0)), 1.12);
 });
 
 test('all 65 source main weapon records retain numeric paint widths rather than a global rescale', () => {
