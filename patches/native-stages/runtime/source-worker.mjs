@@ -17,7 +17,12 @@ self.onmessage=async({data:{id,runtimeSha256}})=>{
    const name=stage.internal+'.mtl';if(!files[name])throw Error('Missing pinned MTL');
    const mtl=await sourceBytes(id,sourceURL(stage,name),files[name]);
    data=convertSource(stage,new TextDecoder().decode(obj),new TextDecoder().decode(mtl),files,p=>self.postMessage({progress:p,id}));
-   await writeDerived(key,data);
+   // Derived IndexedDB writes clone every large typed array before the
+   // renderer takes ownership. Avoid that competing peak on small devices.
+   // CacheStorage still retains the authenticated downloaded source.
+   const gb=Number(self.navigator?.deviceMemory)||0;
+   const handheld=/Android|iPhone|iPad|iPod/i.test(self.navigator?.userAgent||'');
+   if(!(gb>0&&gb<=4)&&!handheld)await writeDerived(key,data);
   }
   data.sourceMetrics={cached,conversionMilliseconds:performance.now()-start,recipe:SOURCE_RECIPE};
   self.postMessage({result:data},buffers.map(k=>data[k].buffer));
