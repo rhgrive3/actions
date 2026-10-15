@@ -35,3 +35,13 @@ Restore the existing main runtime blob 6a86c8534445ea761c07d3025a61895d9c93051d 
 Controlled same-dependency fixture A/B reproduced the unchanged assertion failure with both exact 6b/7d runtime bytes; substituting the existing main runtime passed the focused case and all 37 tests in the unchanged 7d kit-subs.test.mjs. These are private source-fixture checks, not a historical full checkout or a 95-test hosted aggregate pass. Fresh exact-new-head CI remains required.
 
 The separate immutable 6b-versus-7d hosted diagnostic remains pinned and unchanged; its evidence must not be relabeled as this new head. Draft, merge HOLD, relay and physical-iPad limits remain.
+
+## Existing Curling defense reconciliation (2026-10-15)
+
+Full validation run 38663880792 at e183 executed 5,215 tests: 5,190 passed, two failed, 23 skipped. Both failures concern inherited kit-defense source/test inconsistency: the #1113 source marker expects Curling admission, and the direct-contact test receives null instead of its candidate. Baseline6b, expansion parenta84 and e183 share runtime blob498bfb59b596278d454bdea4ec777ef6dec06f69 and unchanged relevant tests.
+
+Carry only the existing kit-defense.mjs blobc84e306e2468da4a8a9b4b44c5455365f1b91ea5 from main ancestor a8945c299484135daed8e2898841ff1d8c4c3587. It admits Curling and preserves its source identity and 20 HP direct-contact damage. The later unrelated defense-selection closure optimization is excluded. No test, native sphere kernel or geometry changes are included.
+
+Controlled same-dependency A/B reproduces both failures with the old runtime; the existing minimal runtime passes the focused source marker and all nine unchanged kit-defense tests. Independent review repeated nine tests successfully. These are local controlled-fixture results, not full new-head CI.
+
+Historical hosted6b/e183 catalogue run38665301920 passed emitted tiny controls and Tidewater gates, but original Inkblot acceptance remains incomplete. Its identical open-air shot has no floor within the unchanged4m projection range (nearest floor5.307122m); original candidate first-frame visibility measured53 pixels against threshold54. Separate ordinary-look diagnostic run38668845954 remains pinned to e183. Neither historical run qualifies this new head. Keep Draft, original expansion target and merge hold; fresh required CI and appropriate actual-Game qualification remain required.
