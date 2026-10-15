@@ -22,6 +22,8 @@ class FakeBotBrain {
   update(dt) {
     this.a.intent.fire = false;
     this.a.intent.sub = true; // ranked actions must suppress native bomb throws
+    if (this.nativeInput) Object.assign(this.a.intent, this.nativeInput);
+    if (this.nativeMode) this.mode = this.nativeMode;
     this._tail(dt, this._steer(dt), 0, 0, 6, false);
     return 'native-update';
   }
@@ -36,6 +38,39 @@ class FakeBotBrain {
     this.a.intent.move.copy(move);
   }
 }
+
+for (const hz of [30, 60, 120]) test(`Tower duels keep native fire/release and rider position at ${hz} Hz`, () => {
+  for (const fire of [true, false]) {
+    const { actor, brain, engine } = setup('tower', 'ride', [0, 1, 0], { pos: new Vec3(0, 1, 0) });
+    engine.rule.state = { position: [0, 1, 0] };
+    brain.nativeMode = 'fight';
+    brain.nativeInput = { fire, jump: true };
+    brain.target = { team: 1, alive: true, pos: new Vec3(0, 1, 5) };
+    brain.seeTimer = 1;
+    brain.mvMag = 1;
+    brain._needJump = true;
+    brain.update(1 / hz);
+    assert.equal(actor.intent.fire, fire, 'charge release must survive the ranked wrapper');
+    assert.equal(brain.mode, 'fight');
+    assert.equal(actor.intent.jump, false);
+    assert.equal(brain.mvMag, 0);
+    assert.deepEqual(actor.intent.move, new Vec3());
+    assert.equal(brain.pathCalls.length, 0, 'the objective must not replace a visible duel');
+  }
+});
+
+test('ranked refill preserves the native swim cycle, then resumes objective input', () => {
+  const { actor, brain } = setup('tower', 'ride');
+  brain.nativeMode = 'refill';
+  brain.nativeInput = { fire: false, squid: true };
+  brain.update(1 / 60);
+  assert.equal(actor.intent.squid, true);
+  assert.equal(actor.intent.fire, false);
+  assert.equal(brain.pathCalls.length, 0);
+  brain.nativeMode = 'paint';
+  brain.update(1 / 60);
+  assert.equal(brain.pathCalls.length, 1);
+});
 
 function setup(mode, action, pos = [4, 0, 0], actorOptions = {}) {
   const initialPos = actorOptions.pos instanceof Vec3 ? actorOptions.pos : new Vec3(...(actorOptions.pos || [0, 0, 0]));

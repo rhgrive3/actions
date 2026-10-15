@@ -11,6 +11,15 @@ import { PLAYER, DIFFICULTY, SUB } from '../config.js';
 const _v = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
 const _stats = { own: 0, enemy: 0, empty: 0, n: 0 };
 
+const botBehaviorKind = (weapon) => {
+  // Catalogue firing family, not the shared `kind: 'catalog'` rendering key.
+  // Keep legacy Brush/Roller and Brella/Shooter decisions unchanged.
+  const family = weapon?.behaviorKind || (weapon?.kind === 'catalog' ? weapon?.modelKind : weapon?.kind);
+  if (family === 'brush') return 'roller';
+  if (family === 'brella') return 'shooter';
+  return family; // Do not fold Stringer/Splatana into Charger: both release on Fire-up.
+};
+
 export class BotBrain {
   constructor(actor, difficulty = 'normal') {
     this.a = actor;
@@ -78,14 +87,14 @@ export class BotBrain {
     // ---------------- mode selection (retreat = break line of sight and heal in own ink when losing a duel)
     const inkFrac = a.ink / PLAYER.inkMax;
     const hpFrac = a.hp / PLAYER.hp;
-    const w = a.weapon;
+    const w = a.weapon, family = botBehaviorKind(w);
     if (this.mode === 'retreat') {
       this.retreatT -= dt;
       if (hpFrac > 0.85 || this.retreatT <= 0 || (!this.target && hpFrac > 0.6)) { this.mode = 'paint'; this.path = null; this.goalTimer = 0; }
-    } else if (this.target && this.seeTimer > 0 && ((hpFrac < 0.34 && w.kind !== 'roller' && a.lastDamage < 0.8) || hpFrac < 0.2) && Math.random() < 0.6 * dt * 60 * this.diff.fireDiscipline) {
+    } else if (this.target && this.seeTimer > 0 && ((hpFrac < 0.34 && family !== 'roller' && a.lastDamage < 0.8) || hpFrac < 0.2) && Math.random() < 0.6 * dt * 60 * this.diff.fireDiscipline) {
       this.mode = 'retreat'; this.retreatT = 2.2 + Math.random() * 1.4; this.repath = 0; this._pickRetreat();
     }
-    if (this.mode !== 'refill' && this.mode !== 'retreat' && inkFrac < 0.12 && !(this.target && this.seeTimer > 0 && w.kind !== 'roller' && inkFrac > 0.05)) {
+    if (this.mode !== 'refill' && this.mode !== 'retreat' && inkFrac < 0.12 && !(this.target && this.seeTimer > 0 && family !== 'roller' && inkFrac > 0.05)) {
       this.mode = 'refill'; this.refillUntil = 0.85 + Math.random() * 0.1;
     }
     if (this.mode === 'refill' && inkFrac >= this.refillUntil) this.mode = 'paint';
@@ -122,7 +131,7 @@ export class BotBrain {
       const range = this._range();
       // lead the target a little (projectile flight time)
       // lead the target by the projectile's time to arrive (lobs: the heave windup + a slower, longer arc)
-      const lead = w.kind === 'charger' ? 0 : w.kind === 'slosher' ? (w.windup || 0.13) + dist / ((w.projSpeed || 15) * 0.88) : dist / (w.projSpeed || 30);
+      const lead = family === 'charger' ? 0 : family === 'slosher' ? (w.windup || 0.13) + dist / ((w.projSpeed || 15) * 0.88) : dist / (w.projSpeed || 30);
       _v.set(t.pos.x + t.vel.x * lead, t.pos.y + (t.smoothY || 0) + (t.form === 'squid' ? 0.3 : 0.85), t.pos.z + t.vel.z * lead);
       _v2.copy(_v); _v2.x -= a.pos.x; _v2.y -= a.pos.y + 1.1; _v2.z -= a.pos.z;
       idealYaw = Math.atan2(_v2.x, _v2.z);
@@ -136,15 +145,15 @@ export class BotBrain {
       wantPitch = idealPitch + e * 0.6 * (0.75 * wander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
       if (this.mode === 'fight') {
         // movement in combat: keep preferred distance + eased strafing (+ swim in to close distance)
-        const pref = w.kind === 'charger' ? range * 0.8 : w.kind === 'roller' ? 0.5 : range * 0.7;
+        const pref = family === 'charger' ? range * 0.8 : family === 'roller' ? 0.5 : range * 0.7;
         if (this.strafeT <= 0) { this.strafeT = 0.6 + Math.random() * 1.2; this.strafe = Math.random() < 0.5 ? -1 : 1; this.strafeAmp = 0.5 + Math.random() * 0.5; }
         this.strafeS += (this.strafe * this.strafeAmp - this.strafeS) * (1 - Math.exp(-5 * dt));
         const nx = dx / Math.max(dist, 0.01), nz = dz / Math.max(dist, 0.01);
         let mvx = 0, mvz = 0;
         if (dist > pref + 1.2 && wantMove) { mvx = move.x; mvz = move.z; }
-        else if (dist < pref - 1.5 && w.kind !== 'roller') { mvx = -nx; mvz = -nz; }
-        if (w.kind !== 'charger' || !a.weaponRunner.charging) { mvx += -nz * this.strafeS * 0.9; mvz += nx * this.strafeS * 0.9; }
-        if (w.kind === 'roller' && dist < 7) { mvx = nx; mvz = nz; }
+        else if (dist < pref - 1.5 && family !== 'roller') { mvx = -nx; mvz = -nz; }
+        if (family !== 'charger' || !a.weaponRunner.charging) { mvx += -nz * this.strafeS * 0.9; mvz += nx * this.strafeS * 0.9; }
+        if (family === 'roller' && dist < 7) { mvx = nx; mvz = nz; }
         const l = Math.hypot(mvx, mvz);
         if (l > 0.01) move.set(mvx / l, 0, mvz / l); else move.set(0, 0, 0);
         // fire only when the *actual* aim is on the body (shots follow the visible aim, not the target)
@@ -153,17 +162,18 @@ export class BotBrain {
         const aimed = off < tol;
         this._firing = false;
         if (enemyVisible && this.react <= 0 && aimed && inkFrac > 0.02) {
-          if (w.kind === 'charger') {
-            it.fire = !(a.weaponRunner.charging && a.weaponRunner.charge >= this.chargeRelease);
+          if (family === 'charger' || family === 'stringer' || family === 'splatana') {
+            const releaseAt = family === 'splatana' ? 0.45 : this.chargeRelease;
+            it.fire = !(a.weaponRunner.charging && a.weaponRunner.charge >= releaseAt);
             if (a.weaponRunner.charging) move.multiplyScalar(0.3);
-          } else if (w.kind === 'roller') {
+          } else if (family === 'roller') {
             it.fire = dist < 5.5 || (a.weaponRunner.rolling && dist < 8);
-          } else if (w.kind === 'splatling') {
+          } else if (family === 'splatling') {
             // spin up (a full charge at range, a quicker partial one up close), release, track while the stream runs
             const wr = a.weaponRunner, want = dist > range * 0.55 ? this.chargeRelease : 0.55 + 0.25 * this.chargeRelease;
             it.fire = !wr.streaming && dist < range * 1.1 && !(wr.charging && wr.charge >= want);
             if (wr.charging) move.multiplyScalar(0.45);
-          } else if (w.kind === 'slosher') {
+          } else if (family === 'slosher') {
             it.fire = dist < range * 1.05;   // the lob also reaches targets up on ledges / behind low cover
           } else {
             it.fire = dist < range * 1.08;
@@ -173,20 +183,21 @@ export class BotBrain {
             it.sub = true; this.bombCd = 5 + Math.random() * 6;
             this._bombAim = true;
           }
-        } else if ((w.kind === 'charger' || w.kind === 'splatling') && a.weaponRunner.charging && !enemyVisible) {
-          it.fire = true; // keep charge while target briefly hidden
+        } else if (['charger', 'splatling', 'stringer', 'splatana'].includes(family) && a.weaponRunner.charging && !enemyVisible) {
+          // Hold across a brief loss of sight, but never beyond full charge.
+          it.fire = a.weaponRunner.charge < this.chargeRelease;
         }
         // out of range with own ink underfoot: swim in (fast, hard to hit) instead of walking
         if (!it.fire && !a.weaponRunner.charging && dist > range * 1.15 && a.groundTeam === 1) it.squid = true;
         // dodge: a strafe-hop right after taking a hit
-        if (w.kind === 'dualies') {
+        if (family === 'dualies') {
           // dodge roll: while firing, roll sideways when hit or when the fight gets close (the runner locks the turret after)
           const wr = a.weaponRunner;
           if (it.fire && this.dodgeCd <= 0 && a.grounded && !wr.dodge && wr.rollsLeft > 0 && (a.lastDamage < 0.3 || dist < 5.5) && Math.random() < 0.08 * dt * 60) {
             const side = Math.random() < 0.5 ? -1 : 1;
             if (!this._nearWater(a, 3.2)) { move.set(-nz * side, 0, nx * side); it.jump = true; this.dodgeCd = 1.4 + Math.random() * 1.6; }
           }
-        } else if (a.lastDamage < 0.25 && this.dodgeCd <= 0 && a.grounded && w.kind !== 'charger' && Math.random() < 0.3 && !this._nearWater(a, 1.6)) { it.jump = true; this.dodgeCd = 2 + Math.random() * 2.5; }
+        } else if (a.lastDamage < 0.25 && this.dodgeCd <= 0 && a.grounded && family !== 'charger' && Math.random() < 0.3 && !this._nearWater(a, 1.6)) { it.jump = true; this.dodgeCd = 2 + Math.random() * 2.5; }
         // special
         if (a.specialReady()) {
           if (w.special === 'slam' && dist < 4.5) it.special = true;
@@ -198,26 +209,27 @@ export class BotBrain {
       }
     } else if (this.mode === 'paint') {
       // paint the ground ahead with a sweeping aim
-      this.sweep += dt * (w.kind === 'charger' ? 0.8 : 2.1);
-      const sweepAmt = w.kind === 'roller' ? 0 : 0.55;
+      this.sweep += dt * (family === 'charger' ? 0.8 : 2.1);
+      const sweepAmt = family === 'roller' ? 0 : 0.55;
       wantYaw += Math.sin(this.sweep) * sweepAmt;
-      wantPitch = w.kind === 'charger' ? -0.12 : w.kind === 'blaster' ? -0.28 : w.kind === 'slosher' ? -0.16 : w.kind === 'splatling' ? -0.3 : -0.42;
+      wantPitch = family === 'charger' ? -0.12 : family === 'blaster' ? -0.28 : family === 'slosher' ? -0.16 : family === 'splatling' ? -0.3 : -0.42;
       const aheadStats = G.paint.regionStats(a.pos.x + Math.sin(wantYaw) * 4, a.pos.y, a.pos.z + Math.cos(wantYaw) * 4, 3, a.team, _stats);
       const needPaint = aheadStats.n === 0 || aheadStats.own < 0.75;
-      if (w.kind === 'roller') {
+      if (family === 'roller') {
         it.fire = inkFrac > 0.08 && (needPaint || Math.random() < 0.02) && wantMove;
-      } else if (w.kind === 'charger') {
-        // charge to ~70 % and release a paint line, then a short breather before the next one
+      } else if (family === 'charger' || family === 'stringer' || family === 'splatana') {
+        // Catalogue Stringers/Splatanas also emit on a Fire-off edge.
+        const releaseAt = family === 'splatana' ? 0.45 : family === 'stringer' ? 0.75 : 0.7;
         if (a.weaponRunner.charging) {
-          it.fire = a.weaponRunner.charge < 0.7;
+          it.fire = a.weaponRunner.charge < releaseAt;
           if (!it.fire) this.paintPause = 0.3 + Math.random() * 0.35;
-        } else it.fire = needPaint && inkFrac > 0.3 && this.paintPause <= 0;
-      } else if (w.kind === 'splatling') {
+        } else it.fire = needPaint && inkFrac > (!!w.catalogRecord ? 0.12 : 0.3) && this.paintPause <= 0;
+      } else if (family === 'splatling') {
         // spin up ~60 %, hose the lane while the stream runs, breathe, repeat
         const wr = a.weaponRunner;
         if (wr.streaming) it.fire = false;
         else if (wr.charging) { it.fire = wr.charge < 0.6; if (!it.fire) this.paintPause = 0.25 + Math.random() * 0.3; }
-        else it.fire = needPaint && inkFrac > 0.25 && this.paintPause <= 0;
+        else it.fire = needPaint && inkFrac > (!!w.catalogRecord ? 0.12 : 0.25) && this.paintPause <= 0;
       } else {
         it.fire = needPaint && inkFrac > 0.18;
       }
@@ -240,7 +252,7 @@ export class BotBrain {
 
   // shared by turf and boss play: bomb release, the aim spring, the smoothed move command, edge guard, stuck recovery
   _tail(dt, move, wantYaw, wantPitch, aimDist, wantMove) {
-    const a = this.a, it = a.intent, w = a.weapon;
+    const a = this.a, it = a.intent, w = a.weapon; const family = botBehaviorKind(w);
     if (this._bombAim) { it.sub = true; this._bombAim = false; this._releaseBomb = true; }
     else if (this._releaseBomb) { it.sub = false; this._releaseBomb = false; }
 
@@ -280,7 +292,7 @@ export class BotBrain {
     // along the edge (whichever diagonal is safe) or stop.
     if (this.mvMag > 0.05 && a.grounded) this._edgeGuard(a, it.move);
     // stuck recovery, based on progress toward the current waypoint: hop → skip the waypoint → replan
-    const trying = this.path && wantMove && !(w.kind === 'charger' && a.weaponRunner.charging);
+    const trying = this.path && wantMove && !(family === 'charger' && a.weaponRunner.charging);
     if (!trying) this.noProg = 0;
     if (this.noProg > 0.7 && this.jumpCd <= 0 && a.grounded && !this._nearWater(a, 1.2)) { it.jump = true; this.jumpCd = 1.0; }
     if (this.noProg > 1.5 && this.path && this.pi < this.path.length - 1 && !this._skipped) { this.pi++; this._skipped = true; this.bestD = Infinity; }
@@ -308,9 +320,9 @@ export class BotBrain {
   }
 
   _range() {
-    const w = this.a.weapon;
-    if (w.kind === 'charger') return w.rangeMax * 0.9;
-    if (w.kind === 'roller') return 6;
+    const w = this.a.weapon, family = botBehaviorKind(w);
+    if (family === 'charger') return w.rangeMax * 0.9;
+    if (family === 'roller') return 6;
     return w.range;
   }
 
@@ -513,7 +525,7 @@ export class BotBrain {
   // belly while it's stunned — everyone piles in), step out of every telegraph, hop the shockwave rings, duck under the
   // sweep in own ink, pop the crablets that come for the squad, and clean boss ink off the routes (rollers most of all).
   _bossTick(dt) {
-    const a = this.a, it = a.intent, w = a.weapon, boss = G.boss;
+    const a = this.a, it = a.intent, w = a.weapon, boss = G.boss; const family = botBehaviorKind(w);
     const inkFrac = a.ink / PLAYER.inkMax;
     it.fire = false; it.sub = false; it.special = false; it.squid = false; it.jump = false;
     if (this.think <= 0) { this.think = 0.12 + Math.random() * 0.1; this._bossPerceive(boss); }
@@ -560,9 +572,9 @@ export class BotBrain {
       wantPitch = idealPitch + e * 0.6 * (0.75 * wander(this.t * 2.1 + this.ph2) + 1.6 * acq * this.acqSignP);
       this.target = T;
       const range = this._range() + (T.crab ? 0 : T.rad * 0.6);
-      const inRange = dist < range * (w.kind === 'charger' ? 1.0 : 1.05);
+      const inRange = dist < range * (family === 'charger' ? 1.0 : 1.05);
       // circle-strafe a little while holding position (a squad that stands still gets slammed)
-      if (!wantMove && !th.level && w.kind !== 'charger') {
+      if (!wantMove && !th.level && family !== 'charger') {
         if (this.strafeT <= 0) { this.strafeT = 0.8 + Math.random() * 1.4; this.strafe = Math.random() < 0.5 ? -1 : 1; this.strafeAmp = 0.35 + Math.random() * 0.4; }
         this.strafeS += (this.strafe * this.strafeAmp - this.strafeS) * (1 - Math.exp(-4 * dt));
         const nx = _v2.x / Math.max(dist, 0.01), nz = _v2.z / Math.max(dist, 0.01);
@@ -575,14 +587,19 @@ export class BotBrain {
       this._firing = false;
       if (inRange && T.los && off < tol && this.react <= 0 && inkFrac > 0.02) {
         const wr = a.weaponRunner;
-        if (w.kind === 'charger') { it.fire = !(wr.charging && wr.charge >= this.chargeRelease); if (wr.charging) move.multiplyScalar(0.3); }
-        else if (w.kind === 'splatling') { it.fire = !wr.streaming && !(wr.charging && wr.charge >= this.chargeRelease * 0.9); if (wr.charging) move.multiplyScalar(0.45); }
-        else if (w.kind === 'roller') it.fire = dist < 5.5 || (wr.rolling && dist < 8);
+        if (family === 'charger' || family === 'stringer' || family === 'splatana') {
+          const releaseAt = family === 'splatana' ? 0.45 : this.chargeRelease;
+          it.fire = !(wr.charging && wr.charge >= releaseAt);
+          if (wr.charging) move.multiplyScalar(0.3);
+        }
+        else if (family === 'splatling') { it.fire = !wr.streaming && !(wr.charging && wr.charge >= this.chargeRelease * 0.9); if (wr.charging) move.multiplyScalar(0.45); }
+        else if (family === 'roller') it.fire = dist < 5.5 || (wr.rolling && dist < 8);
         else it.fire = true;
         this._firing = it.fire;
         this.mode = 'fight';   // (the aim spring's combat stiffness while shooting; reset each frame)
         if (this.bombCd <= 0 && !T.crab && a.ink > SUB.bomb.inkCost + 10 && dist > 5 && dist < 13 && Math.random() < 0.025) { it.sub = true; this.bombCd = 6 + Math.random() * 6; this._bombAim = true; }
-      } else if ((w.kind === 'charger' || w.kind === 'splatling') && a.weaponRunner.charging && T.los) it.fire = true;   // hold a charge through a blink
+      } else if (['charger', 'splatling', 'stringer', 'splatana'].includes(family)
+        && a.weaponRunner.charging && T.los) it.fire = a.weaponRunner.charge < this.chargeRelease;
       // specials: slam from under its claws, the storm cloud onto it
       if (a.specialReady() && !th.level && !T.crab) {
         if (w.special === 'slam' && dist < 5.5) it.special = true;
@@ -595,8 +612,10 @@ export class BotBrain {
       const st = G.paint.regionStats(a.pos.x + Math.sin(aheadYaw) * 3, a.pos.y, a.pos.z + Math.cos(aheadYaw) * 3, 2.5, a.team, _stats);
       if (a.groundTeam === 2 || (st.n && st.enemy > 0.2)) {
         this.sweep += dt * 2.1;
-        if (this.mode !== 'fight') { wantYaw = aheadYaw + (w.kind === 'roller' ? 0 : Math.sin(this.sweep) * 0.5); wantPitch = w.kind === 'charger' ? -0.12 : w.kind === 'blaster' ? -0.28 : -0.42; }
-        it.fire = w.kind === 'roller' ? wantMove : w.kind !== 'charger' && w.kind !== 'splatling' ? true : !a.weaponRunner.charging || a.weaponRunner.charge < 0.6;
+        if (this.mode !== 'fight') { wantYaw = aheadYaw + (family === 'roller' ? 0 : Math.sin(this.sweep) * 0.5); wantPitch = family === 'charger' ? -0.12 : family === 'blaster' ? -0.28 : -0.42; }
+        it.fire = family === 'roller' ? wantMove
+          : !['charger', 'splatling', 'stringer', 'splatana'].includes(family) ? true
+          : !a.weaponRunner.charging || a.weaponRunner.charge < (family === 'splatana' ? 0.45 : 0.6);
       }
     }
     if (this.mode === 'refill') {
@@ -633,7 +652,7 @@ export class BotBrain {
       if (belly && pick !== belly) pick = null;
       if (!pick) {
         this.shapeT = 1.2 + Math.random() * 1.5;
-        const eyes = this.a.weapon.kind === 'charger' || Math.random() < 0.25 + this.diff.fireDiscipline * 0.3;
+        const eyes = botBehaviorKind(this.a.weapon) === 'charger' || Math.random() < 0.25 + this.diff.fireDiscipline * 0.3;
         const order = shapes.slice().sort((h1, h2) => {
           const s = (h) => (h === belly ? -100 : h.weak && eyes ? -50 : h.weak ? 10 : 0) + h.pos.distanceTo(eye);
           return s(h1) - s(h2);
@@ -658,13 +677,13 @@ export class BotBrain {
   // a spot to fight from: weapon range off its flank (not in front of it — slams, sweeps and charges go that way), clear
   // of the other bots, seeing it. When it's stunned everyone rushes the belly.
   _bossGoal(boss) {
-    const a = this.a, w = a.weapon, nav = G.nav;
+    const a = this.a, w = a.weapon, nav = G.nav; const family = botBehaviorKind(w);
     this.goalTimer = 2.4 + Math.random() * 2;
     const stunned = boss.stunned || (boss.phase >= 3 && Math.random() < 0.3);
     this._rushing = boss.stunned;
     const fwd = boss.yaw, bx = boss.pos.x, bz = boss.pos.z;
     // rollers keep the squad's routes clean while the boss isn't open
-    if (w.kind === 'roller' && !boss.stunned) {
+    if (family === 'roller' && !boss.stunned) {
       let bestP = null, bs = 0.25;
       for (let i = 0; i < 12; i++) {
         const ang = Math.random() * Math.PI * 2, r = 3 + Math.random() * 12;
@@ -676,7 +695,7 @@ export class BotBrain {
       }
       if (bestP && Math.random() < 0.7) { this._pathTo(bestP, 0.4); return; }
     }
-    const reach = w.kind === 'charger' ? 15 : w.kind === 'roller' ? 3.2 : clamp(this._range() * 0.7, 4.5, 11);
+    const reach = family === 'charger' ? 15 : family === 'roller' ? 3.2 : clamp(this._range() * 0.7, 4.5, 11);
     const R = 3.4 + (boss.stunned ? Math.min(reach, 6) : reach);
     const mates = G.actors.filter((o) => o !== a && o.bot && o.alive && o.bot.goal >= 0);
     let best = -1, bs = -Infinity;

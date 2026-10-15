@@ -1,0 +1,135 @@
+{
+  "status": "Draft; source-profile human verifier closed; natural WS closed only on isolated unadopted catalogue composition",
+  "ownerBase": "1adbeda76f40c658a18656ed32c835791c9e1e98",
+  "testedComposition": "9e3c5a6088ddf2b9a0ad6ef36fc4356c48d43713",
+  "tree": "1c7086b1d9e7ae491c549eda22a05bd7b33ded86",
+  "build": {
+    "contentHash": "10501abeacfe5fa2f5dcc23c7652e65c53700043a1f32c7c75f77bf49e253415",
+    "inputHash": "a7c01183cb18d13a1b2532c56b44a0056f2b6b314d708ea3288a3d00600d93d3",
+    "revision": "030cc6193d73417af0d03d0bae556d02482c40ed320c1337c251ef489d19ac18"
+  },
+  "human": {
+    "status": "passed",
+    "cases": [
+      {
+        "team": 0,
+        "renderHz": 30,
+        "fixedSteps": 562,
+        "continuousSelectedProfileSweeps": 562,
+        "auditedActualSteps": 562,
+        "kinds": {
+          "continuous": 561,
+          "clear-form-switch": 1
+        },
+        "distanceToGoal": 0.2838445293278866,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "team": 0,
+        "renderHz": 60,
+        "fixedSteps": 552,
+        "continuousSelectedProfileSweeps": 552,
+        "auditedActualSteps": 552,
+        "kinds": {
+          "continuous": 551,
+          "clear-form-switch": 1
+        },
+        "distanceToGoal": 0.2646071750519957,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "team": 0,
+        "renderHz": 120,
+        "fixedSteps": 552,
+        "continuousSelectedProfileSweeps": 552,
+        "auditedActualSteps": 552,
+        "kinds": {
+          "continuous": 551,
+          "clear-form-switch": 1
+        },
+        "distanceToGoal": 0.2646071750519957,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "team": 1,
+        "renderHz": 30,
+        "fixedSteps": 364,
+        "continuousSelectedProfileSweeps": 363,
+        "auditedActualSteps": 364,
+        "kinds": {
+          "discrete-source-expansion": 1,
+          "continuous": 362,
+          "clear-form-switch": 1
+        },
+        "distanceToGoal": 0.3052982592504668,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "team": 1,
+        "renderHz": 60,
+        "fixedSteps": 363,
+        "continuousSelectedProfileSweeps": 362,
+        "auditedActualSteps": 363,
+        "kinds": {
+          "discrete-source-expansion": 1,
+          "continuous": 361,
+          "clear-form-switch": 1
+        },
+        "distanceToGoal": 0.2740787625129824,
+        "alive": true,
+        "grounded": true
+      },
+      {
+        "team": 1,
+        "renderHz": 120,
+        "fixedSteps": 363,
+        "continuousSelectedProfileSweeps": 362,
+        "auditedActualSteps": 363,
+        "kinds": {
+          "discrete-source-expansion": 1,
+          "continuous": 361,
+          "clear-form-switch": 1
+        },
+        "distanceToGoal": 0.2740787625129824,
+        "alive": true,
+        "grounded": true
+      }
+    ],
+    "totalSteps": 2756,
+    "discreteSourceExpansions": 3,
+    "errors": [],
+    "positiveBank": "natural Shooter wall/runway paint; keyboard jump/Shift/Space charge-release and kid pop",
+    "negativeBank": "seeded friendly wall ownership; keyboard source ascent; not natural paint proof",
+    "continuousFormInterpolationProved": false
+  },
+  "sourceControls": {
+    "passed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "negativeVariants": 12,
+    "actualSourceWall": 91050,
+    "selectedProfileClearPopAndRetiredProfileClips": true,
+    "sourceGeometryFlagsMaskUnchanged": true
+  },
+  "verifierBindings": {
+    "scripts/check-inkwave-native-bluefin-human.mjs": "412418ab99917696163b34a17d247c3c4bb9f515a89dcac3797c5cf7d9a1c996",
+    "scripts/lib/bluefin-source-step-audit.mjs": "ab70fe166200d5c49b9fe2e19ee503e82a3b56657ee10210c052e8ee95b7b49b",
+    "scripts/tests/bluefin-source-step-audit.test.mjs": "daf7927c8f15e44edfe15366dced98153f6b7c3f3ad4d8e171baf4447f2b02c8"
+  },
+  "naturalWSReceipt": "catalogue-source-sweep-resume-2026-10-14.json on PR1419; all5 on isolated code; not adopted owner runtime",
+  "privateReceipt": {
+    "path": "stages/.browser-evidence/resume/bluefin-human-final/browser.json",
+    "sha256": "fa98e83dcce711684602bd400cc0a636a330c6a51926504f54cd43d15f412e98"
+  },
+  "pending": [
+    "named Hump review of source-profile verifier and final stage",
+    "accepted catalogue common consumption and immutable owner pair",
+    "affected full current stage matrix and Ready-first self-integration"
+  ],
+  "thirdPartyPayloadCommitted": false,
+  "newMainMerge": false
+}

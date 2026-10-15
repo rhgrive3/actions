@@ -5,9 +5,15 @@ import { fixture } from './source-fixture.mjs';
 const TARGETS=['s3-spinner-quick','s3-spinner-serein'];
 let loaded;const production=()=>loaded??=fixture({fullRuntime:true,includeCharacter:true,productionComposition:true,realProjectiles:true,extraExports:"export {getWeaponDef} from './inkwave-public/src/game/character-weapons.js';\nexport {installMainWeaponCatalogRuntime} from './patches/splatoon3/runtime/main-weapon-catalog.mjs';"}).then(f=>{f.installMainWeaponCatalogRuntime(f.installedRuntime,f.profile);return f;});
 function geometryHash(d){const h=createHash('sha256');for(const k of['body','ink','bodyStatic','inkStatic','drum','drumCaps','glow']){h.update(k);const g=d[k];if(!g)continue;for(const [key,a]of Object.entries(g.attributes)){h.update(key);h.update(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength));}if(g.index){const a=g.index.array;h.update(Buffer.from(a.buffer,a.byteOffset,a.byteLength));}}for(const[k,p]of Object.entries(d.parts)){for(const[key,a]of Object.entries(p.geo.attributes)){h.update(k+key);h.update(Buffer.from(a.array.buffer,a.array.byteOffset,a.array.byteLength));}h.update(Buffer.from(p.geo.index.array.buffer));}return h.digest('hex');}
-test('four unrequested spinners, especially the approved Heavy, remain byte-identical to main b078c379',async()=>{
- const f=await production(),hashes={splatling:'04476159da61b7eac3e3eaa6fce5954ac5cdac1dc81cd3bac3c4b27024171f9c','s3-spinner-hyper':'ce3f8b84582a538d44c30b43e828122a4a171b41306dba1bc4ab0cf0a6472ee9','s3-spinner-downpour':'1a537f71f046316ab65a5488bf935f2a0a9516e085612a511ad2d2585c083dc9','s3-spinner-hypershort':'4ee5f5dd9acc1c355d31ee021d19b73098dd49edba8df33299a09438124c98a6'};
+test('three untouched spinners preserve main geometry while Ballpoint owns its separate transparent-shell revision',async()=>{
+ const f=await production(),hashes={splatling:'04476159da61b7eac3e3eaa6fce5954ac5cdac1dc81cd3bac3c4b27024171f9c','s3-spinner-hyper':'ce3f8b84582a538d44c30b43e828122a4a171b41306dba1bc4ab0cf0a6472ee9','s3-spinner-hypershort':'4ee5f5dd9acc1c355d31ee021d19b73098dd49edba8df33299a09438124c98a6'};
  for(const[id,hash]of Object.entries(hashes))assert.equal(geometryHash(f.getWeaponDef(id)),hash,id+' all geometry attributes/index including moving channels');
+ // The transparent Ballpoint is intentionally NOT one of the unchanged four from PR1276.
+ // Pin its actual post-integration opaque geometry and separately require a live, indexed shell.
+ const ball=f.getWeaponDef('s3-spinner-downpour');
+ assert.equal(geometryHash(ball),'c6202da579d5a2fd44d07a4063e10a4fb60487417c7d210cdc8eb4812617c827');
+ assert.ok(ball.glass?.index?.count>0,'Ballpoint shell survives composition');
+ assert.equal(ball.parts.barrels.mat,'ink','ink barrel remains visible through shell');
 });
 test('rebuilt Mini and Nautilus retain firing, grip and spin sockets without extra draw groups',async()=>{
  const f=await production();for(let i=0;i<TARGETS.length;i++){

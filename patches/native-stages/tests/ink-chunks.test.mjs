@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {nativeFixture,readStage} from './fixture.mjs';
+import fs from 'node:fs';import path from 'node:path';
 
 test('native ink clips unpainted colour after evaluating shading derivatives',async()=>{
  const f=await nativeFixture(),{THREE}=f,paint={texture:new THREE.Texture(),size:256},material=f.nativeInkMaterial(paint,new THREE.Texture());
@@ -73,7 +74,8 @@ test('render chunks preserve crossing triangles and bound only their indexed ver
  mesh.dispose();assert.equal(mesh.chunks.length,0);assert.equal(mesh.geometry,null);mesh.material.dispose();
 });
 
-for(const id of ['scorch','hagglefish','inkblot','mako','brinewater'])test('source ink partition preserves every vertex, triangle and paint attribute: '+id,{skip:!process.env.INKWAVE_NATIVE_STAGE_ASSETS},async()=>{
+const sourceIds=process.env.INKWAVE_NATIVE_STAGE_ASSETS?JSON.parse(fs.readFileSync(path.join(process.env.INKWAVE_NATIVE_STAGE_ASSETS,'catalog.json'),'utf8')).stages.map(s=>s.id):['scorch','hagglefish','inkblot','mako','brinewater'];
+for(const id of sourceIds)test('source ink partition preserves every vertex, triangle and paint attribute: '+id,{skip:!process.env.INKWAVE_NATIVE_STAGE_ASSETS},async()=>{
  const f=await nativeFixture(),level=new f.NativeLevel(readStage(process.env.INKWAVE_NATIVE_STAGE_ASSETS,id));
  class Cpu extends f.PaintSystem{_initGPU(){this.quads=0;} _pushQuad(){}}
  const paint=new Cpu(null,level,{atlasSize:2048,maxDensity:4}),g=f.nativeInkGeometry(level,paint),chunks=f.partitionNativeInk(g),seen=new Uint8Array(g.getAttribute('position').count/3),p=g.getAttribute('position'),point=new f.THREE.Vector3();

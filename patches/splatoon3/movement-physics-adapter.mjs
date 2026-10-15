@@ -26,6 +26,19 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
       '    this._resolve(isSquid, prevY, wasGrounded, dt);', 'resolver timestep');
     replace('  _resolve(isSquid, prevY, stick) {', '  _resolve(isSquid, prevY, stick, dt = 1 / 60) {', 'resolver timestep compatibility');
     replace('this.airTime + 1 / 60', 'this.airTime + dt', 'airtime in seconds');
+    replace('    const gh = this.ground;',
+      '    const bodyResolvedY = this.pos.y;\n    const gh = this.ground;', 'native source support coupling origin');
+    replace('    if (grounded) {\n      this.groundN.copy(gh.normal);',
+      '    if (grounded && G.level?.native && this.pos.y > bodyResolvedY + 1e-4 && G.physics.reconcileSourceFootBody) {\n' +
+      '      grounded = G.physics.reconcileSourceFootBody(this.pos, terrainRadius, lift, height, c, gh, P.footRadius, up, P.stepDown, isSquid);\n' +
+      '      if (c.ceiling && this.vel.y > 0) this.vel.y = 0;\n' +
+      '      if (c.wall) {\n' +
+      '        const n = c.wallNormal;\n' +
+      '        const vn = this.vel.x * n.x + this.vel.z * n.z;\n' +
+      '        if (vn < 0) { this.vel.x -= n.x * vn; this.vel.z -= n.z * vn; }\n' +
+      '      }\n' +
+      '    }\n' +
+      '    if (grounded) {\n      this.groundN.copy(gh.normal);', 'native raised source body and foot constraints');
     replace('      if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y + up);\n      if (gh.hit) {',
       '      if (!isSquid) this._railFeet(gh, this.pos.y - P.stepDown, this.pos.y + up);\n' +
       '      const raisedSupport = gh.hit && gh.y > this.pos.y + 1e-4;\n' +

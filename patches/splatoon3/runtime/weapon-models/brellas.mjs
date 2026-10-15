@@ -1,3 +1,4 @@
+import {box as fullBox,sphere as fullSphere,zlathe as fullZlathe,zcyl as fullZcyl,ring as fullRing,pipe as fullPipe,cyl as fullCyl} from './kit.mjs';
 import { BRELLA_APERTURE } from '../brella-aperture.mjs';
 // Brella family models (Splatoon 3 Ver.11.3.0): Splat Brella, Tenta Brella, Undercover Brella,
 // Recycled Brella 24 Mk I. The catalogue gives them the shooter model kind (pistol grip, trigger / led channels);
@@ -14,7 +15,7 @@ import { BRELLA_APERTURE } from '../brella-aperture.mjs';
 // The geometry is baked in the folded pose, so far LOD / unanimated rendering shows a closed umbrella; the animation
 // scales the part about the apex hub (x/y: width, z: length along the shaft).
 import { THREE, Pieces, M, V, box, sphere, zlathe, zcyl, ring, pipe, lathe, pistolGrip, gripSpec, part, rebuild,
-  TRIGGER_PIVOT, clamp, damp, smooth } from './kit.mjs';
+  TRIGGER_PIVOT, damp, smooth, cyl } from './kit.mjs';
 
 const TAU = Math.PI * 2, SH = 0.075, K_FOLD = 0.11;
 const GRIP_L = z => gripSpec([0, SH, z], [0, 0, 1], [0.5, 1, 0]);
@@ -43,13 +44,59 @@ function ribs(P, R, depth, zH, n, color, rr = 0.0045, strut = true, jut = 0) {
 function fold(P, zH, sz) {
   return P.transform(g => { g.translate(0, -SH, -zH).scale(K_FOLD, K_FOLD, sz).translate(0, SH, zH); g.computeVertexNormals(); });
 }
-/** A thin triangular prism through three points (tent panel). */
-function tri(a, b, c, th = 0.005) {
-  const A = V(...a), u = V(...b).sub(A), v = V(...c).sub(A), n = u.clone().cross(v).normalize().multiplyScalar(th);
-  const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(1, 0); sh.lineTo(0, 1); sh.closePath();
-  const g = new THREE.ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false });
-  g.applyMatrix4(new THREE.Matrix4().makeBasis(u, v, n).setPosition(A));
-  return g;
+/** Two-sided sewn fabric, sampled rather than making each face a flat triangle.
+ * Both skins are real indexed geometry; no extra material groups or double-sided draw. */
+function fabric(map, u0 = 0, u1 = 1, v0 = 0, v1 = 1, nu = 6, nv = 3, thickness = 0.002) {
+  const pos = [], ix = [], row = nv + 1, count = (nu + 1) * row;
+  for (let skin = 0; skin < 2; skin++) for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) {
+    const q = map(u0 + (u1 - u0) * i / nu, v0 + (v1 - v0) * j / nv);
+    pos.push(q[0], q[1], q[2] - skin * thickness);
+  }
+  for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+    const a = i * row + j, b = a + row, c = b + 1, d = a + 1;
+    ix.push(a, b, d, b, c, d, a + count, d + count, b + count, b + count, d + count, c + count);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(ix); g.computeVertexNormals(); return g;
+}
+/** A polygonal gore: sewn radial edges and a lightly hollowed hem, not a round disc. */
+function gore(k, R, depth, zH, n, power = 1.6, billow = 0.014, hemInset = 0.018) {
+  const a = k * TAU / n, b = (k + 1) * TAU / n;
+  return (u, t) => {
+    const hem = 1 - hemInset * Math.sin(Math.PI * t) * u ** 3;
+    return [R * u * hem * ((1 - t) * Math.cos(a) + t * Math.cos(b)),
+      SH + R * u * hem * ((1 - t) * Math.sin(a) + t * Math.sin(b)),
+      zH - depth * u ** power + billow * Math.sin(Math.PI * t) * Math.sin(Math.PI * u)];
+  };
+}
+/** A small inlaid cloth mark, mapped onto the same curved panel. */
+function clothMark(P, map, poly, color, lift = 0.0012) {
+  // Triangulate the concave ink marks in cloth coordinates, then subdivide before mapping.
+  // A single planar fan would cut through the domed cloth and lose the middle of the print.
+  const pos = [];
+  const emit = (a, b, c, depth) => {
+    if (depth) {
+      const mid = (x, y) => [(x[0] + y[0]) / 2, (x[1] + y[1]) / 2];
+      const ab = mid(a, b), bc = mid(b, c), ca = mid(c, a);
+      emit(a, ab, ca, depth - 1); emit(ab, b, bc, depth - 1);
+      emit(ca, bc, c, depth - 1); emit(ab, bc, ca, depth - 1); return;
+    }
+    for (const [u, t] of [a, b, c]) { const q = map(u, t); pos.push(q[0], q[1], q[2] + lift); }
+    for (const [u, t] of [c, b, a]) { const q = map(u, t); pos.push(q[0], q[1], q[2] - .002 - lift); }
+  };
+  for (const ids of THREE.ShapeUtils.triangulateShape(poly.map(([u,t]) => new THREE.Vector2(u,t)), [])) {
+    let [a,b,c] = ids.map(i => poly[i]);
+    if ((b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])<0) [b,c]=[c,b];
+    emit(a,b,c,1);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  // Pieces finalizes this triangle list into welded indexed vertices before merging.
+  P.add(g, color, M.print);
+}
+function radialRib(P, k, n, R, depth, zH, color, radius = 0.0032, power = 1.6, segments = 4, radial = 3) {
+  const a = k * TAU / n, c = Math.cos(a), s = Math.sin(a), q = u => [c * R * u, SH + s * R * u, zH - depth * u ** power - 0.004];
+  P.add(pipe([q(0), q(.25), q(.55), q(.8), q(1.015)], radius, segments, radial), color, M.satin);
+  return q;
 }
 
 // ------------------------------------------------------------------------------------------ canopy animation
@@ -67,60 +114,128 @@ function makeAnimate(cfg) {
       const g = w.parts[name]; if (!g) continue;
       g.visible = vis > 0.02; g.scale.set(Math.max(1e-3, sx), Math.max(1e-3, sx), Math.max(1e-3, sz));
     }
+    // Recycled has no other ink shell. Reuse its native ink draw for the moving
+    // paper rather than paying for an additional canopyInk mesh on every actor.
+    if (cfg.bodyInk && w.ink) {
+      const g=w.ink,p=w.def.parts.canopy.pivot;
+      g.visible=vis>.02;g.scale.set(Math.max(1e-3,sx),Math.max(1e-3,sx),Math.max(1e-3,sz));
+      g.position.set(p.x*(1-g.scale.x),p.y*(1-g.scale.y),p.z*(1-g.scale.z));
+    }
   };
 }
 
 // ------------------------------------------------------------------------------------------ Splat Brella
 function splat(d) {
-  // Wmn_Shelter_Normal: small white pistol grip with a blue trigger, black shaft, black hub with the nozzle, an
-  // octagonal grey / white umbrella with team-ink top panels and ink spike tips at the rib ends.
-  const C = { grip: '#e9ecf0', blue: '#2c45b8', black: '#1c1d22', white: '#dadcdc', rim: '#9a9fa2', rib: '#2a2c31' };
+  // Private tessellation prototype: same dimensions/materials/parts and curve control points.
+  const box=(...a)=>{a[7]=Math.min(a[7]??12,6);a[8]=Math.min(a[8]??8,4);return fullBox(...a);};
+  const sphere=(...a)=>{a[6]=Math.min(a[6]??18,6);a[7]=Math.min(a[7]??12,3);return fullSphere(...a);};
+  const zlathe=(...a)=>{a[4]=Math.min(a[4]??20,8);return fullZlathe(...a);};
+  const zcyl=(...a)=>{a[5]=Math.min(a[5]??18,6);return fullZcyl(...a);};
+  const cyl=(...a)=>{a[3]=Math.min(a[3]??14,4);return fullCyl(...a);};
+  const pipe=(...a)=>{a[2]=Math.min(a[2]??20,5);a[3]=Math.min(a[3]??8,3);return fullPipe(...a);};
+  const ring=(...a)=>{a[6]=Math.min(a[6]??6,3);a[7]=Math.min(a[7]??22,10);return fullRing(...a);};
+
+  // Eight sewn parasol gores, stepped pale hems, radial stays and a blue open trigger guard.
+  // The reference is mostly ink-coloured cloth with separate pale panels, not concentric discs.
+  const C = { grip: '#e2e4dc', blue: '#283bc1', black: '#171a1c', white: '#d2d7ce', rib: '#333938', red: '#b82030', print: '#44353d' };
   const zH = 0.6, R = 0.4, depth = 0.2, n = 8, SZ = 2.15;
   const body = new Pieces(), canopy = new Pieces(), inkP = new Pieces();
-  const trig = pistolGrip(body, { color: C.grip, triggerColor: C.blue, guardColor: C.grip, baseColor: C.black });
-  body.add(box(0.03, 0.026, 0.1, 0, 0.065, 0.0, 0.3), C.grip, M.satin);
-  body.add(zcyl(0.0125, -0.06, zH + 0.01, 0, SH, 14), C.black, M.satin);
-  body.add(zcyl(0.017, 0.03, 0.15, 0, SH, 14), C.black, M.rubber);
-  body.add(zlathe([[0, zH - 0.04], [0.026, zH - 0.04], [0.024, zH + 0.012], [0.012, zH + 0.02], [0, zH + 0.02]], 0, SH, 0, 14), C.black, M.satin);
-  const [o1, i1] = domeShell(R, depth, zH, 0, 0.62, n), [o2, i2] = domeShell(R, depth, zH, 0.62, 1, n);
-  inkP.add(o1, '#f0b429', M.satin).add(i1, '#c98f1d', M.satin);
-  canopy.add(o2, C.white, M.satin).add(i2, C.rim, M.satin);
-  ribs(canopy, R, depth, zH, n, C.rib);
-  for (let k = 0; k < n; k++) { const a = k * TAU / n; inkP.add(sphere(0.012, 0.012, 0.012, Math.cos(a) * R, SH + Math.sin(a) * R, zH - depth, 8, 6), '#f0b429', M.satin); }
-  fold(canopy, zH, SZ); fold(inkP, zH, SZ);
-  return rebuild(d, {
-    body, ink: new Pieces(),
-    parts: { trigger: part(trig, TRIGGER_PIVOT), canopy: part(canopy, [0, SH, zH], 'body'), canopyInk: part(inkP, [0, SH, zH], 'ink') },
-    gripL: GRIP_L(0.09), muzzle: [0, SH, zH + 0.02],
-  });
+  const trig = pistolGrip(body, { color: C.grip, triggerColor: C.blue, guard: false, baseColor: C.black, mat: M.satin });
+  body.add(pipe([[0, .035, .02], [0, .033, .053], [0, -.006, .047], [0, -.015, .013]], .0045, 12, 6), C.blue, M.gloss);
+  body.add(box(.032, .026, .083, 0, .059, .005, .25), C.grip, M.satin);
+  body.add(zcyl(.0125, -.06, zH + .01, 0, SH, 14), C.black, M.satin);
+  body.add(zcyl(.016, .048, .165, 0, SH, 14), C.black, M.rubber);
+  for (const z of [.025, .164, .325]) body.add(zcyl(.016, z, z + .009, 0, SH, 14), C.white, M.metal);
+  body.add(box(.03, .004, .064, 0, SH + .013, .265, .15, 8, 4), C.white, M.print);
+  for (let k = 0; k < 5; k++) body.add(box(.026, .005, .004, 0, SH + .015, .239 + k * .012, .2, 6, 4), C.black, M.print);
+  // Stepped runner below the canopy and a hollow-looking flared nozzle, at the existing socket.
+  body.add(zlathe([[.012, .40], [.024, .403], [.027, .42], [.017, .43]], 0, SH, 0, 16), C.black, M.satin);
+  body.add(zlathe([[.012, zH-.024], [.027, zH-.025], [.032, zH-.010], [.024, zH+.014], [.012, zH+.020], [.008, zH+.016]], 0, SH, 0, 20), C.black, M.satin);
+  body.add(zcyl(.008, zH+.010, zH+.016, 0, SH, 12), '#050609', M.rubber);
+  for (let k = 0; k < n; k++) {
+    const map = gore(k, R, depth, zH, n);
+    inkP.add(fabric(map, .02, k % 2 === 0 ? .67 : 1, 0, 1, 4, 2), '#69cbb1', M.satin);
+    if (k % 2 === 0) canopy.add(fabric(map, .67, 1, 0, 1, 2, 2), C.white, M.satin);
+    // Distinct dark/red radial crest, cloth label and parallel print strokes, authored procedurally.
+    if (k === 1 || k === 5) {
+      clothMark(canopy, map, [[.17,.35],[.32,.42],[.37,.15],[.45,.4],[.62,.32],[.53,.58],[.64,.77],[.42,.7],[.34,.9],[.3,.63]], C.print);
+      clothMark(canopy, map, [[.23,.42],[.35,.5],[.4,.32],[.45,.48],[.54,.45],[.47,.59],[.53,.68],[.4,.62],[.34,.75]], C.red, .0018);
+    }
+    if (k === 3 || k === 7) {
+      clothMark(canopy,map,[[.42,.37],[.49,.23],[.65,.25],[.72,.4],[.69,.65],[.54,.76],[.45,.64]],C.white);
+      clothMark(canopy,map,[[.44,.39],[.51,.27],[.64,.29],[.69,.42],[.67,.62],[.54,.71],[.48,.62]],C.print,.0018);
+      for(let j=0;j<4;j++) clothMark(canopy,map,[[.48+j*.046,.28],[.488+j*.046,.28],[.488+j*.046,.68],[.48+j*.046,.68]],C.white,.0023);
+    }
+    const q=radialRib(canopy,k,n,R,depth,zH,C.rib,.0033);
+    const brace=q(.48); canopy.add(cyl(.0026,[0,SH,.415],brace,6),C.rib,M.metal);
+    const end=q(1.018); inkP.add(sphere(.009,.009,.014,...end,8,5),'#69cbb1',M.satin);
+    canopy.add(sphere(.006,.006,.008,...brace,7,5),C.black,M.satin);
+    const a=map(1,0),m=map(1,.5),b=map(1,1);canopy.add(pipe([a,m,b],.0022,5,4),C.rib,M.satin);
+  }
+  fold(canopy,zH,SZ);fold(inkP,zH,SZ);
+  return rebuild(d,{body,ink:new Pieces(),parts:{trigger:part(trig,TRIGGER_PIVOT),canopy:part(canopy,[0,SH,zH],'body'),canopyInk:part(inkP,[0,SH,zH],'ink')},gripL:GRIP_L(.09),muzzle:[0,SH,zH+.02]});
 }
 
 // ------------------------------------------------------------------------------------------ Tenta Brella
 function tenta(d) {
-  // Wmn_Shelter_Wide: black T-grip, dark shaft, a rectangular tent canopy (about 1.6 : 1) held by two crossed red
-  // poles from the hub to the four corners; team-ink triangles left / right, olive panels top / bottom.
-  const C = { black: '#202321', red: '#d8262c', olive: '#5c6440', dark: '#2c302c', tan: '#8c8260' };
-  const zH = 0.85, a = 0.52, b = 0.32, depth = 0.22, SZ = 2.9, zc = zH - depth;
-  const body = new Pieces(), canopy = new Pieces(), inkP = new Pieces();
-  const trig = pistolGrip(body, { color: C.black, triggerColor: '#6a6f6a', guardColor: C.black, baseColor: C.black });
-  body.add(box(0.03, 0.026, 0.1, 0, 0.065, 0.0, 0.3), C.black, M.satin);
-  body.add(zcyl(0.0125, -0.06, zH + 0.01, 0, SH, 14), C.dark, M.satin);
-  body.add(zcyl(0.017, 0.07, 0.2, 0, SH, 14), C.black, M.rubber);
-  body.add(zlathe([[0, zH - 0.04], [0.03, zH - 0.04], [0.03, zH + 0.012], [0.015, zH + 0.022], [0, zH + 0.022]], 0, SH, 0, 14), C.black, M.satin);
-  const H = [0, SH, zH], c = (sx, sy) => [sx * a, SH + sy * b, zc];
-  inkP.add(tri(H, c(1, 1), c(1, -1)), '#58b838', M.satin).add(tri(H, c(-1, -1), c(-1, 1)), '#58b838', M.satin);
-  canopy.add(tri(H, c(-1, 1), c(1, 1)), C.olive, M.satin).add(tri(H, c(1, -1), c(-1, -1)), C.dark, M.satin);
-  for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
-    canopy.add(pipe([H, [sx * a * 0.5, SH + sy * b * 0.5, zH - depth * 0.45], [sx * a * 1.02, SH + sy * b * 1.02, zc - 0.012]], 0.0075, 6, 6), C.red, M.gloss);
-    canopy.add(sphere(0.011, 0.011, 0.011, sx * a * 1.02, SH + sy * b * 1.02, zc - 0.012, 8, 6), C.black, M.satin);
+  // Private tessellation prototype: same dimensions/materials/parts and curve control points.
+  const box=(...a)=>{a[7]=Math.min(a[7]??12,6);a[8]=Math.min(a[8]??8,4);return fullBox(...a);};
+  const sphere=(...a)=>{a[6]=Math.min(a[6]??18,6);a[7]=Math.min(a[7]??12,3);return fullSphere(...a);};
+  const zlathe=(...a)=>{a[4]=Math.min(a[4]??20,8);return fullZlathe(...a);};
+  const zcyl=(...a)=>{a[5]=Math.min(a[5]??18,6);return fullZcyl(...a);};
+  const cyl=(...a)=>{a[3]=Math.min(a[3]??14,4);return fullCyl(...a);};
+  const pipe=(...a)=>{a[2]=Math.min(a[2]??20,5);a[3]=Math.min(a[3]??8,3);return fullPipe(...a);};
+  const ring=(...a)=>{a[6]=Math.min(a[6]??6,3);a[7]=Math.min(a[7]??22,10);return fullRing(...a);};
+
+  // Tensioned tent fabric: curved hems, separate window/appliqué panels, bowed red poles
+  // standing clear of the fabric, clips and ferrules. Existing grip/muzzle/launch geometry retained.
+  const C={black:'#202322',red:'#b72328',olive:'#48503b',grey:'#92978b',edge:'#b0afa0',dark:'#30352e',metal:'#444b45'};
+  const zH=.85,a=.52,b=.32,depth=.22,SZ=2.9;
+  const body=new Pieces(),canopy=new Pieces(),inkP=new Pieces();
+  const trig=pistolGrip(body,{color:C.black,triggerColor:'#899287',guard:false,baseColor:C.black});
+  body.add(box(.045,.023,.046,0,.045,.008,.2),C.black,M.rubber);
+  body.add(box(.052,.013,.037,0,-.062,-.016,.35),C.black,M.rubber);
+  body.add(zcyl(.0125,-.06,zH+.01,0,SH,14),C.dark,M.satin);
+  body.add(zcyl(.017,.07,.20,0,SH,14),C.black,M.rubber);
+  for(const z of [.055,.205,.47])body.add(zcyl(.020,z,z+.012,0,SH,12),C.metal,M.metal);
+  body.add(zlathe([[.012,zH-.05],[.035,zH-.036],[.04,zH-.02],[.031,zH+.014],[.015,zH+.022],[.009,zH+.015]],0,SH,0,20),C.black,M.satin);
+  body.add(zcyl(.01,zH+.010,zH+.018,0,SH,12),'#090c0b',M.rubber);
+  const point=(x,y,lift=0)=>[a*x*(1-.06*(1-y*y)),SH+b*y*(1-.085*(1-x*x)),zH-depth*(.28*(x*x+y*y)+.44*Math.max(Math.abs(x),Math.abs(y)))+lift];
+  const corners=[[-1,-1],[1,-1],[1,1],[-1,1]];
+  for(let k=0;k<4;k++){
+    const A=corners[k],B=corners[(k+1)%4],map=(u,t)=>point(u*(A[0]*(1-t)+B[0]*t),u*(A[1]*(1-t)+B[1]*t));
+    (k%2?inkP:canopy).add(fabric(map,.025,1,0,1,k%2?5:4,3),k%2?'#528e40':k===0?C.olive:C.grey,M.satin);
+    canopy.add(fabric((u,t)=>{const q=map(u,t);q[2]+=.0015;return q;},.87,1,0,1,1,4),k===0?'#242c29':C.edge,M.satin);
+    canopy.add(pipe([map(1,0),map(1,.25),map(1,.5),map(1,.75),map(1,1)],.003,10,5),C.dark,M.satin);
   }
-  canopy.add(box(0.06, 0.06, 0.03, 0, SH, zH - 0.012, 0.3), C.black, M.satin);
-  fold(canopy, zH, SZ); fold(inkP, zH, SZ);
-  return rebuild(d, {
-    body, ink: new Pieces(),
-    parts: { trigger: part(trig, TRIGGER_PIVOT), canopy: part(canopy, [0, SH, zH], 'body'), canopyInk: part(inkP, [0, SH, zH], 'ink') },
-    gripL: GRIP_L(0.14), muzzle: [0, SH, zH + 0.022],
-  });
+  // Rounded rectangular window appliqués follow the non-planar fabric (both sides, no floating slab).
+  for(const side of [-1,1]){
+    const cx=side*.69,cy=0,rx=.22,ry=.43,shape=t=>{const x=Math.cos(t),y=Math.sin(t);return[cx+rx*Math.sign(x)*Math.abs(x)**.55,cy+ry*Math.sign(y)*Math.abs(y)**.55];};
+    for(const back of [false,true]){
+      const offset=back?-.004:.002;
+      const win=(r,t)=>{const p=shape(t*TAU);return point(cx+(p[0]-cx)*r,cy+(p[1]-cy)*r,offset);};
+      canopy.add(fabric(win,0,.89,0,1,2,16,.0005),back?'#6c7465':'#626d5a',M.rubber);
+      canopy.add(fabric(win,.89,1,0,1,1,16,.0005),C.edge,M.satin);
+      const edge=[];for(let j=0;j<=16;j++){const q=shape(j*TAU/16);edge.push(point(q[0],q[1],offset+.0006));}canopy.add(pipe(edge,.002,16,4),C.dark,M.satin);
+    }
+    for(const y of [-.79,.79]){
+      const c=point(side*.80,y,.005);canopy.add(box(.037,.035,.008,...c,.12,8,4),C.edge,M.satin);
+    }
+  }
+  // Curved external tent poles with eight black clips and two silver ferrules each.
+  for(const [sx,sy] of corners){
+    const q=u=>[sx*a*u,SH+sy*b*u,zH-depth*u**2+.03*Math.sin(Math.PI*u)];
+    canopy.add(pipe([q(0),q(.28),q(.58),q(.82),q(1.025)],.006,10,5),C.red,M.gloss);
+    for(const u of [.25,.5,.75,.97]){const p=q(u),q0=q(u-.026),q1=q(u+.026);canopy.add(cyl(.010,q0,q1,6),C.black,M.rubber);canopy.add(cyl(.0025,p,point(sx*u,sy*u,-.004),5),C.metal,M.metal);}
+    for(const u of [.37,.65])canopy.add(cyl(.0068,q(u-.03),q(u+.03),7),C.grey,M.metal);
+    canopy.add(sphere(.009,.009,.011,...q(1.025),8,5),C.black,M.rubber);
+    canopy.add(cyl(.003,[0,SH,zH-.17],point(sx*.35,sy*.35,-.009),6),C.black,M.metal);
+  }
+  // Mechanical central crossing plate travels with the canopy, unlike the nozzle/shaft.
+  canopy.add(box(.10,.067,.018,0,SH,zH-.008,.3,10,6),C.black,M.satin);
+  for(const x of [-.032,.032])for(const y of [-.02,.02])canopy.add(zcyl(.006,zH-.005,zH+.004,x,SH+y,7),C.grey,M.metal);
+  fold(canopy,zH,SZ);fold(inkP,zH,SZ);
+  return rebuild(d,{body,ink:new Pieces(),parts:{trigger:part(trig,TRIGGER_PIVOT),canopy:part(canopy,[0,SH,zH],'body'),canopyInk:part(inkP,[0,SH,zH],'ink')},gripL:GRIP_L(.14),muzzle:[0,SH,zH+.022]});
 }
 
 // ------------------------------------------------------------------------------------------ Undercover Brella
@@ -154,33 +269,92 @@ function undercover(d) {
 
 // ------------------------------------------------------------------------------------------ Recycled Brella 24 Mk I
 function recycled(d) {
-  // Wmn_Shelter_Focus: a wagasa-style oil-paper umbrella: ~24 dark bamboo ribs under a shallow grey paper dome, a red
-  // lacquered hub and handle (orange bent tip), black shaft, a green status ring on top of the hub.
-  const C = { red: '#d9532a', black: '#1f1f23', paper: '#c4c8c6', rim: '#9a9e9c', bamboo: '#3f2a20' };
-  const zH = 0.6, R = 0.44, depth = 0.15, n = 24, SZ = 3.0;
-  const body = new Pieces(), canopy = new Pieces(), inkP = new Pieces(), led = new Pieces();
-  const trig = pistolGrip(body, { color: C.red, triggerColor: C.black, guard: false, base: false });
-  body.add(pipe([[0, -0.056, -0.014], [0, -0.084, -0.03], [0, -0.08, -0.064], [0, -0.05, -0.078]], 0.0115, 10, 8), C.red, M.gloss);
-  body.add(zcyl(0.0115, -0.04, zH + 0.01, 0, SH, 12), C.black, M.satin);
-  body.add(box(0.026, 0.02, 0.1, 0, 0.066, 0.0, 0.3), C.red, M.gloss);
-  body.add(zcyl(0.016, 0.04, 0.16, 0, SH, 14), C.red, M.gloss);
-  body.add(zlathe([[0, zH - 0.07], [0.028, zH - 0.07], [0.03, zH - 0.02], [0.024, zH + 0.01], [0.012, zH + 0.022], [0, zH + 0.022]], 0, SH, 0, 16), C.red, M.gloss);
-  led.add(ring(0.026, 0.005, 0, SH, zH + 0.014, 'z', 4, 18), '#27e0a0', M.led);
-  const [o, i] = domeShell(R, depth, zH, 0, 1, n, 0.004, 1.7);
-  canopy.add(o, C.paper, M.satin).add(i, C.rim, M.satin);
-  ribs(canopy, R, depth, zH, n, C.bamboo, 0.0032, true, 0.015);
-  fold(canopy, zH, SZ);
-  return rebuild(d, {
-    body, ink: new Pieces(),
-    parts: { trigger: part(trig, TRIGGER_PIVOT), led: part(led, [0, SH, zH + 0.014], 'lamp', { color: '#0a2a20', emissive: '#27e0a0', intensity: 1.3 }),
-      canopy: part(canopy, [0, SH, zH], 'body') },
-    gripL: GRIP_L(0.08), muzzle: [0, SH, zH + 0.022],
-  });
+  // Private tessellation prototype: same dimensions/materials/parts and curve control points.
+  const box=(...a)=>{a[7]=Math.min(a[7]??12,6);a[8]=Math.min(a[8]??8,4);return fullBox(...a);};
+  const sphere=(...a)=>{a[6]=Math.min(a[6]??18,6);a[7]=Math.min(a[7]??12,3);return fullSphere(...a);};
+  const zlathe=(...a)=>{a[4]=Math.min(a[4]??20,8);return fullZlathe(...a);};
+  const zcyl=(...a)=>{a[5]=Math.min(a[5]??18,6);return fullZcyl(...a);};
+  const cyl=(...a)=>{a[3]=Math.min(a[3]??14,4);return fullCyl(...a);};
+  const pipe=(...a)=>{a[2]=Math.min(a[2]??20,5);a[3]=Math.min(a[3]??8,3);return fullPipe(...a);};
+  const ring=(...a)=>{a[6]=Math.min(a[6]??6,3);a[7]=Math.min(a[7]??22,10);return fullRing(...a);};
+
+  // Wagasa: 24 individual paper gores, dark perimeter and pale registration ring, full
+  // bamboo spokes with the smaller conical stretcher cage, and a red mechanical hub.
+  const C={red:'#bd4728',black:'#242925',paper:'#bfc6bd',rim:'#42483e',bamboo:'#423d31',silver:'#b8b6a1'};
+  const zH=.6,R=.44,depth=.15,n=24,SZ=3;
+  const body=new Pieces(),canopy=new Pieces(),inkP=new Pieces(),led=new Pieces();
+  const trig=pistolGrip(body,{color:C.red,triggerColor:C.black,guard:false,base:false,mat:M.gloss});
+  // Lacquered bent butt, with the dark exposed shaft and bright ferrules seen in the underside render.
+  body.add(pipe([[0,-.043,-.011],[0,-.071,-.022],[0,-.087,-.055],[0,-.078,-.090],[0,-.057,-.112]],.012,14,8),C.red,M.gloss);
+  for(const [y,z]of[[-.079,-.053],[-.060,-.108]])body.add(cyl(.013,[0,y-.004,z-.004],[0,y+.004,z+.004],10),C.silver,M.metal);
+  body.add(box(.028,.023,.075,0,.059,.002,.3),C.red,M.gloss);
+  body.add(zcyl(.0115,-.04,zH+.01,0,SH,12),C.black,M.satin);
+  body.add(zlathe([[.011,.04],[.019,.04],[.018,.13],[.027,.15],[.026,.174],[.013,.174]],0,SH,0,16),C.red,M.gloss);
+  body.add(zcyl(.017,.027,.046,0,SH,14),C.silver,M.metal);
+  // Conical runner/cage seat under the paper and a chunky black/red cylindrical muzzle housing.
+  body.add(zlathe([[.011,.335],[.029,.338],[.027,.36],[.013,.38]],0,SH,0,16),C.red,M.gloss);
+  body.add(zlathe([[.013,zH-.045],[.039,zH-.044],[.041,zH-.018],[.029,zH+.012],[.012,zH+.022],[.009,zH+.016]],0,SH,0,20),C.red,M.gloss);
+  for(const z of[zH-.038,zH-.015])body.add(ring(.041,.003,0,SH,z,'z',5,20),C.black,M.rubber);
+  for(const x of[-.032,.032])body.add(box(.014,.049,.035,x,SH,zH-.019,.3,8,5),C.black,M.satin);
+  led.add(ring(.026,.005,0,SH,zH+.014,'z',5,20),'#27e0a0',M.led);
+  body.add(zcyl(.015,zH+.010,zH+.019,0,SH,14),'#091411',M.rubber);
+  // Reinforced square collar in the cloth, kept on the disappearing canopy channel.
+  canopy.add(box(.096,.096,.008,0,SH,zH-.006,.12,8,4),C.rim,M.rubber);
+  for(let k=0;k<n;k++){
+    const map=gore(k,R,depth,zH,n,1.7,.0015,.004);
+    inkP.add(fabric(map,.10,.865,0,1,3,2),'#9b8bc6',M.satin);
+    canopy.add(fabric(map,.865,.898,0,1,1,2),C.paper,M.satin);
+    canopy.add(fabric(map,.898,1,0,1,2,2),C.rim,M.satin);
+    const q=radialRib(canopy,k,n,R,depth,zH,C.bamboo,.003,1.7,4,3);
+    canopy.add(cyl(.0027,[Math.cos(k*TAU/n)*.021,SH+Math.sin(k*TAU/n)*.021,.353],q(.46),5),C.bamboo,M.satin);
+    const end=q(1.014);canopy.add(sphere(.0045,.0045,.007,...end,6,4),C.black,M.rubber);
+  }
+  fold(canopy,zH,SZ);fold(inkP,zH,SZ);
+  const result = rebuild(d,{body,ink:inkP,parts:{trigger:part(trig,TRIGGER_PIVOT),led:part(led,[0,SH,zH+.014],'lamp',{color:'#0a2a20',emissive:'#27e0a0',intensity:1.3}),canopy:part(canopy,[0,SH,zH],'body')},gripL:GRIP_L(.08),muzzle:[0,SH,zH+.022]});
+  // Only this ink geometry is the moving paper; retain its explicit launch ownership.
+  result.detachedCanopyInk = { geo: result.ink, pivot: result.parts.canopy.pivot.clone() };
+  return result;
+}
+
+// An open shield is still being actively held after a single-shot firingPose expires.
+// Preserve the native firing/recoil pose; only the sustained guard is authored here.
+// The existing shield centre/direction are read, never resized or written. The render
+// surface is centred on that plane; capsule-vs-cloth outline differences remain gameplay policy.
+const guardStates = new WeakMap(), guardInv = new THREE.Matrix4(), guardCentre = V(), guardDir = V(), guardOffset = V();
+const guardEuler = new THREE.Euler(0,0,0,'YXZ'), guardQ = new THREE.Quaternion();
+const GUARD_PLANE = { 's3-shelter-normal': .5, 's3-shelter-wide': .74, 's3-shelter-focus': .525 };
+function guardPose(ch, dt, s, C) {
+  const plane = GUARD_PLANE[ch.weapon?.def?.modelId ?? ch.weaponModel]; if (plane === undefined) return;
+  const r = ch._runner?.(s), canopy = r?.catalogState?.canopy;
+  let m = guardStates.get(ch);
+  const active = !!canopy?.open && !canopy.launched;
+  if (!m && !active) return;
+  if (!m || m.weapon !== ch.weapon) { m = { weapon:ch.weapon, w:0, p:[0,0,0], r:[0,0,0] }; guardStates.set(ch,m); }
+  if (!ch.kidForm || ch.dance || r?.a?.specialActive || s.subAim || (ch.wSub || 0) > .01 || s.firing) { m.w = 0; return; }
+  m.w = damp(m.w, active ? 1 : 0, active ? 22 : 14, Math.min(.1,Math.max(0,dt||0)));
+  if (m.w < .001) { m.w = 0; return; }
+  if (active) {
+    ch.kid.updateWorldMatrix(true,false); guardInv.copy(ch.kid.matrixWorld).invert();
+    guardCentre.copy(canopy.pos).applyMatrix4(guardInv); guardDir.copy(canopy.dir).transformDirection(guardInv);
+    guardEuler.set(-Math.atan2(guardDir.y,Math.hypot(guardDir.x,guardDir.z)),Math.atan2(guardDir.x,guardDir.z),0,'YXZ');
+    guardQ.setFromEuler(guardEuler); guardOffset.set(0,SH,plane).applyQuaternion(guardQ); guardCentre.sub(guardOffset);
+    m.p[0]=guardCentre.x;m.p[1]=guardCentre.y;m.p[2]=guardCentre.z;
+    m.r[0]=guardEuler.x;m.r[1]=guardEuler.y;m.r[2]=0;
+  }
+  const P=ch.P,k=m.w;
+  for(let i=0;i<3;i++){P[C.ANC+i]+=(m.p[i]-P[C.ANC+i])*k;P[C.ANCR+i]+=(m.r[i]-P[C.ANCR+i])*k;}
+  P[C.AFOLT]*=1-k;P[C.AFOLR]*=1-k;P[C.IKR]=Math.max(P[C.IKR],k);P[C.IKL]=Math.max(P[C.IKL],k);P[C.LTW]*=1-k;
+  // During a strafe, the native carry turns toward travel after firing expires.
+  // Turn the upper body toward the shield while the native feet keep walking.
+  const yaw=Math.max(-Math.PI/2,Math.min(Math.PI/2,m.r[1])),two=k*(1-ch.wTwo);
+  P[C.HIPS+1]+=.25*yaw*k;P[C.SPINE+1]+=.25*yaw*k;P[C.CHEST+1]+=.5*yaw*k;
+  P[C.CLAVL+1]-=.28*two;P[C.CLAVR+1]+=.1*two;P[C.CLAVL+2]+=.04*two;
+  ch.wTwo=Math.max(ch.wTwo,k);
 }
 
 export const MODELS = {
-  's3-shelter-normal': { sourceModel: 'Wmn_Shelter_Normal', build: splat, animate: makeAnimate({ sz: 2.15, openRate: 16, foldRate: 9 }) },
-  's3-shelter-wide': { sourceModel: 'Wmn_Shelter_Wide', build: tenta, animate: makeAnimate({ sz: 2.9, openRate: 10, foldRate: 7 }) },
+  's3-shelter-normal': { sourceModel: 'Wmn_Shelter_Normal', build: splat, pose: guardPose, animate: makeAnimate({ sz: 2.15, openRate: 16, foldRate: 9 }) },
+  's3-shelter-wide': { sourceModel: 'Wmn_Shelter_Wide', build: tenta, pose: guardPose, animate: makeAnimate({ sz: 2.9, openRate: 10, foldRate: 7 }) },
   's3-shelter-compact': { sourceModel: 'Wmn_Shelter_Compact', build: undercover, animate: makeAnimate({ sz: 2.3, openRate: 16, foldRate: 9 }) },
-  's3-shelter-focus': { sourceModel: 'Wmn_Shelter_Focus', build: recycled, animate: makeAnimate({ sz: 3.0, openRate: 16, foldRate: 9 }) },
+  's3-shelter-focus': { sourceModel: 'Wmn_Shelter_Focus', build: recycled, pose: guardPose, animate: makeAnimate({ sz: 3.0, openRate: 16, foldRate: 9, bodyInk: true }) },
 };

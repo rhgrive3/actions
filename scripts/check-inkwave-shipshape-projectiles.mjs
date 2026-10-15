@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+function selectNativeProjectileWall(G) {
+ const V=G.local.pos.constructor,vec=(x=0,y=0,z=0)=>new V(x,y,z),down=vec(0,-1,0),level=G.level;
+ for(const face of level.faces){
+  if(Math.abs(face.n.y)>.12||face.su<.8||face.sv<.8)continue;
+  for(const fraction of [.5,.25,.75])for(const side of [1,-1]){
+   const target=face.origin.clone().addScaledVector(face.u,face.su*fraction).addScaledVector(face.v,face.sv*fraction),normal=face.n.clone().multiplyScalar(side);
+   const B=level.bounds;if(target.x<B.minX||target.x>B.maxX||target.z<B.minZ||target.z>B.maxZ)continue;
+   const stance=target.clone().addScaledVector(normal,3),floor=G.physics.raycast(stance.clone().add(vec(0,2,0)),down,9);
+   if(!floor.hit||floor.normal.y<.62||floor.face<0)continue;
+   stance.y=floor.point.y+.002;
+   if(stance.x<B.minX||stance.x>B.maxX||stance.z<B.minZ||stance.z>B.maxZ)continue;
+   const node=G.nav.nearest(stance,1.2);if(node<0||!G.nav.valid[node]||Math.abs(G.nav.nodes[node].y-stance.y)>.7||!G.level.spawnPads.every((pad,team)=>G.nav.path(G.nav.nativeSpawnNodeIds[team],node,team,50000)))continue;
+   if(!G.physics.bodyFits(stance,.38,.3,1.45))continue;
+   const eye=stance.clone().add(vec(0,1.05,0)),hit=G.physics.raycast(eye,normal.clone().negate(),5,undefined,true);
+   if(!hit.hit||hit.face<0||Math.abs(hit.normal.y)>.12||hit.dist<1.5||hit.dist>4.5)continue;
+   return {stance,target:hit.point.clone(),face:hit.face,triangle:hit.triangle,u:hit.u,v:hit.v,sourceObject:level.manifest.objects[level.triangleWorld.objectIds[hit.triangle]].name};
+  }
+ }
+ throw Error('No source-supported, clear standing shot to a paintable wall');
+}
+
+const site=path.resolve(process.argv[2]||'_site-native'),evidence=path.resolve(process.argv[3]||'.browser-evidence/native-projectiles');fs.mkdirSync(evidence,{recursive:true});
+const mime={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.png':'image/png','.woff2':'font/woff2','.svg':'image/svg+xml','.webp':'image/webp'};
+const server=http.createServer((req,res)=>{try{const url=new URL(req.url,'http://local'),file=path.resolve(site,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)));if(!file.startsWith(site+'/')||!fs.statSync(file).isFile())throw Error('Missing');res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res);}catch{res.writeHead(404);res.end('Missing');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const reports=[];
+try{
+ for(const id of (process.env.NATIVE_STAGE_IDS||'shipshape').split(',')){
+  const context=await browser.newContext({viewport:{width:800,height:600}}),page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text().slice(0,800));});
+  await page.addInitScript(()=>localStorage.setItem('inkwave.settings',JSON.stringify({quality:'low',shadows:false,bloom:false,minimap:true,musicVolume:0,audioVolume:0})));
+  await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'domcontentloaded'});
+  await page.evaluate(async()=>{globalThis.NG=(await import(new URL('src/core/ctx.js',document.baseURI))).G;});
+  await page.waitForFunction(()=>NG.game?.menus&&NG.mode!=='boot'||document.getElementById('boot-error')?.textContent,null,{timeout:180000});assert.equal(await page.locator('#boot-error').textContent(),'');
+  await page.evaluate(async id=>{const g=NG.game;g.debug.freeze();g.menus.wipe.cancel();await g.startMatch({mapId:id,mode:'turf',difficulty:'normal'});g._skipRender=true;for(let i=0;i<330;i++)g._frame(1/60);g.input.mouse.left=true;for(let i=0;i<3;i++)g._frame(1/60);g.input.mouse.left=false;for(let i=0;i<100;i++)g._frame(1/60);g.debug.freezeBots();},id);
+  await page.evaluate('globalThis.selectNativeProjectileWall='+selectNativeProjectileWall.toString());
+  const report=await page.evaluate(async()=>{
+   const G=NG,a=G.local,g=G.game,probe=selectNativeProjectileWall(G),cases=[];a.setWeapon('shooter');
+   const world=G.projectiles.inkFlight.world,splat=G.paint.splat,trace=[],naturalPaint=[];G.projectiles.inkFlight.world=function(...args){const h=world.apply(this,args);if(h.hit)trace.push({face:h.face,triangle:h.triangle,distanceToTarget:h.point.distanceTo(probe.target),object:h.triangle>=0?G.level.triangleWorld.objectIds[h.triangle]:-1});return h;};
+   G.paint.splat=function(...args){if(args[0].distanceTo(probe.target)<2)naturalPaint.push({face:args[3]?.face,kind:args[3]?.kind});return splat.apply(this,args);};
+   const random=Math.random;Math.random=()=>.5;
+   try{for(const hz of [30,60,120]){
+    G.projectiles.clear();G.paint.clear();trace.length=naturalPaint.length=0;
+    const aim=probe.target.clone().sub(probe.stance.clone().add({x:0,y:1.05,z:0})),yaw=Math.atan2(aim.x,aim.z);a.spawnAt(probe.stance,yaw);a.aimPoint.copy(probe.target);a.aimYaw=a.intent.aimYaw=yaw;a.aimPitch=a.intent.aimPitch=Math.atan2(aim.y,Math.hypot(aim.x,aim.z));
+    a.intent.move.set(0,0,0);a.intent.squid=a.intent.jump=a.intent.sub=a.intent.special=false;a.intent.fire=true;
+    let admitted=0;for(let i=0;i<hz&&!admitted;i++){G.time+=1/hz;a.update(1/hz);admitted=G.projectiles.list.length;}a.intent.fire=false;
+    if(!admitted)throw Error('No admitted ordinary shot '+JSON.stringify({hz,alive:a.alive,spawn:a.s3?.squidSpawn,mode:G.match.state,fire:a.intent.fire,weapon:a.weaponId}));
+    const times=[];for(let i=0;i<hz;i++){G.time+=1/hz;const t=performance.now();G.projectiles.update(1/hz);times.push(performance.now()-t);G.paint.advanceSimulation(1/hz);}
+    times.sort((a,b)=>a-b);const owned=G.paint.sample(probe.face,probe.u,probe.v),hit=trace.some(h=>h.triangle>=0&&h.object===G.level.triangleWorld.objectIds[probe.triangle]&&h.distanceToTarget<2);
+    if(!owned||!hit||!naturalPaint.length)throw Error('Source wall not painted by actual admitted shot '+JSON.stringify({hz,owned,hit,face:probe.face,trace,naturalPaint}));
+    if(!a.alive||!a.grounded)throw Error('Source-supported shooter lost ground');
+    cases.push({hz,admitted,owned,sourceSweepHit:hit,sourceContacts:trace,naturalWallSplats:naturalPaint.length,alive:a.alive,grounded:a.grounded,projectileCpu:{p50:times[Math.floor(times.length*.5)],p95:times[Math.floor(times.length*.95)],max:times.at(-1)}});
+   }}finally{Math.random=random;G.projectiles.inkFlight.world=world;G.paint.splat=splat;}
+   G.paint.flush(1/60);g._skipRender=false;G.renderer.render(G.scene,G.camera);
+   return {id:G.level.layout.id,sourceSha256:G.level.manifest.sourceSha256,version1130Verified:G.level.manifest.version1130Verified,actors:G.actors.length,bots:G.actors.filter(a=>a.bot).length,weapon:a.weaponId,sourceWeapon:a.weapon.sourceMainActor,gear:a.s3?.loadout,cases,sourceObject:probe.sourceObject,face:probe.face,triangle:probe.triangle,conditions:'controlled source-supported spawnAt stance inside interactive bounds and reachable from both original bank pads; ordinary Actor/WeaponRunner/Projectiles; bots frozen; single shot; 0.5 RNG; SwiftShader'};
+  });
+  assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(report.actors,8);assert.equal(report.bots,7);report.errors=errors;reports.push(report);console.log(JSON.stringify(report));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));await page.screenshot({path:path.join(evidence,id+'.png'),timeout:30000});await context.close();
+ }
+}finally{await browser.close();await new Promise(r=>server.close(r));fs.writeFileSync(path.join(evidence,'browser.json'),JSON.stringify(reports,null,2));}

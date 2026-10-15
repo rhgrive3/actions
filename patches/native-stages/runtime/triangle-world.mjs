@@ -1,5 +1,6 @@
 // BVH and segment/triangle distance adapted from the user-supplied R6 handoff.
 import * as THREE from 'three';
+import {sphereTriangleEntry} from './sphere-triangle-entry.mjs';
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const V=()=>new THREE.Vector3();
 
@@ -10,11 +11,19 @@ export class TriangleWorld {
   this._box=new THREE.Box3();this._ta=V();this._tb=V();this._tc=V();this._triangle=new THREE.Triangle();
   this._u=V();this._v=V();this._w=V();this._p=V();this._q=V();this._cp=V();this._sp=V();this._bestp=V();this._bests=V();this._d=V();this._s0=V();this._s1=V();this._center=V();this._normal=V();
   this.queryCount=0;this.triangleTests=0;
+  // One traversal stack per active nesting level. Callbacks may issue another
+  // box/ray query; finally releases even an interrupted or throwing traversal.
+  this._queryStacks=[];this._queryDepth=0;
  }
+ _acquireStack(){const depth=this._queryDepth++,stack=this._queryStacks[depth]||(this._queryStacks[depth]=[]);stack.push(0);return stack;}
+ _releaseStack(stack){stack.length=0;this._queryDepth--;}
  // anyHit is reserved for Boolean ground support; ordinary callers retain exact nearest-hit data.
- ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2,anyHit=false,minHitY=-Infinity}={}) {
+ // Optional out owns point/normal Vector3s distinct from the ray inputs. Misses
+ // leave it untouched; callers omitting it still receive independently owned hits.
+ ray(origin,dir,far=1000,{ignoreGrates=false,minNormalY=-2,anyHit=false,minHitY=-Infinity}={},out=null) {
   if(!Number.isFinite(origin.x+origin.y+origin.z+dir.x+dir.y+dir.z))return null;
-  const nodes=this.nodes,stack=[0],verts=this.triangles,norm=this.normals;let best=far,id=-1,bu=0,bv=0;
+  const nodes=this.nodes,stack=this._acquireStack(),verts=this.triangles,norm=this.normals;let best=far,id=-1,bu=0,bv=0;
+  try {
   // Ground/edge probes use this exact direction. Keep native division and
   // traversal order; no reciprocal approximation or cross-query cache.
   const verticalDown=dir.x===0&&dir.z===0&&dir.y===-1;
@@ -50,18 +59,84 @@ export class TriangleWorld {
     const qx=sy*ez-sz*ey,qy=sz*ex-sx*ez,qz=sx*ey-sy*ex,v=(dir.x*qx+dir.y*qy+dir.z*qz)*inv;
     if(v<-.000001||u+v>1.000001)continue;
     const distance=(fx*qx+fy*qy+fz*qz)*inv;
-    if(distance<.00001||distance>best)continue;if(anyHit){if(!(origin.y+dir.y*distance<minHitY))return true;continue;}best=distance;id=t;bu=u;bv=v;
+    if(distance<.00001||distance>best||distance===best&&id>=0&&t>id)continue;if(anyHit){if(!(origin.y+dir.y*distance<minHitY))return true;continue;}best=distance;id=t;bu=u;bv=v;
    }
   }
   if(id<0)return null;
-  const normal=new THREE.Vector3().fromArray(norm,id*3);if(normal.dot(dir)>0)normal.negate();
-  return {triangle:id,distance:best,point:origin.clone().addScaledVector(dir,best),normal,u:bu,v:bv,flags:this.flags[id],object:this.objectIds[id]};
+  const normal=(out?out.normal:new THREE.Vector3()).fromArray(norm,id*3);if(normal.dot(dir)>0)normal.negate();
+  const point=out?out.point.copy(origin).addScaledVector(dir,best):origin.clone().addScaledVector(dir,best);
+  if(!out)return {triangle:id,distance:best,point,normal,u:bu,v:bv,flags:this.flags[id],object:this.objectIds[id]};
+  out.triangle=id;out.distance=best;out.u=bu;out.v=bv;out.flags=this.flags[id];out.object=this.objectIds[id];return out;
+  } finally {this._releaseStack(stack);}
  }
- queryBox(min,max,fn){
-  const a=this.nodes,stack=[0];
+ // Opt-in early termination leaves existing callback return semantics intact.
+ queryBox(min,max,fn,stopOnFalse=false){
+  const a=this.nodes,stack=this._acquireStack();
+  try {
   while(stack.length){const n=stack.pop()*8;if(a[n]>max.x||a[n+1]>max.y||a[n+2]>max.z||a[n+3]<min.x||a[n+4]<min.y||a[n+5]<min.z)continue;
-   const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack.push(left,right);continue;}const start=-left-1;for(let k=start;k<start+right;k++)fn(this.order[k]);
+   const left=a[n+6]|0,right=a[n+7]|0;if(left>=0){stack.push(left,right);continue;}const start=-left-1;for(let k=start;k<start+right;k++)if(fn(this.order[k])===false&&stopOnFalse)return;
   }
+  } finally {this._releaseStack(stack);}
+ }
+ /** Continuous sphere contact with unchanged source faces, edges and vertices.
+  * Each feature yields a linear/quadratic earliest entry, including a linearly
+  * changing radius. The BVH and contact/material selection stay authoritative. */
+ sweepSphere(from,to,radius,{ignoreGrates=false,endRadius=radius}={}){
+  if(!(radius>=0)||!(endRadius>=0)||!Number.isFinite(radius+endRadius)||!Number.isFinite(from.x+from.y+from.z+to.x+to.y+to.z)||this.nodes.length<8)return null;
+  const scratch=this._sphereSweep||(this._sphereSweep={box:new THREE.Box3(),delta:V(),probe:V(),normal:V()}),{box,delta,probe,normal}=scratch;
+  delta.subVectors(to,from);const lengthSquared=delta.lengthSq(),length=Math.sqrt(lengthSquared);
+  const maxRadius=Math.max(radius,endRadius),change=endRadius-radius;
+  box.min.copy(from).min(to).addScalar(-maxRadius-1e-9);box.max.copy(from).max(to).addScalar(maxRadius+1e-9);
+  let best=Infinity,bestReference=null,result=null;this.queryCount++;
+  this.queryBox(box.min,box.max,id=>{
+   if(ignoreGrates&&(this.flags[id]&4))return;
+   const tri=this.triangle(id);this.triangleTests++;
+   let time=sphereTriangleEntry(tri,from,delta,radius,change,probe,normal);
+   if(time===Infinity)return;
+   const analyticTime=time;
+   if(result&&Math.abs(time-best)<=1e-9){
+    // Original distance searches quantise almost simultaneous source contacts.
+    // Preserve their selected triangle/material only for these ambiguous hits;
+    // far-away candidates never incur the old per-triangle search cost.
+    if(bestReference===null)bestReference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(result.triangle),probe);
+    const reference=this._sphereDistanceEntry(from,to,delta,radius,change,this.triangle(id),probe);
+    if(reference===Infinity||reference>bestReference||reference===bestReference&&id>result.triangle)return;
+    time=reference;bestReference=reference;
+   }else {if(time>best)return;bestReference=null;}
+   probe.copy(from).addScaledVector(delta,time);this._capsuleDistance(probe,probe,this.triangle(id));
+   normal.subVectors(probe,this._bestp);
+   if(normal.lengthSq()<1e-20){normal.fromArray(this.normals,id*3);if(normal.dot(delta)>0)normal.negate();}
+   else normal.normalize();
+   best=analyticTime;result={triangle:id,time,distance:time*length,point:this._bestp.clone(),normal:normal.clone(),flags:this.flags[id],object:this.objectIds[id]};
+  });
+  return result;
+ }
+ // The previous source entry equation is retained solely to resolve
+ // sub-nanosegment contact ordering, with its original brackets/iterations.
+ _sphereDistanceEntry(from,to,delta,radius,change,tri,probe){
+  const lengthSquared=delta.lengthSq(),maxRadius=Math.max(radius,radius+change);
+  if(this._capsuleDistance(from,to,tri)>maxRadius+1e-10)return Infinity;
+  const closest=lengthSquared?clamp(probe.copy(this._bests).sub(from).dot(delta)/lengthSquared,0,1):0;
+  if(this._capsuleDistance(from,from,tri)<=radius+1e-10)return 0;
+  let hi=closest;
+  if(change!==0){
+   const gap=t=>{probe.copy(from).addScaledVector(delta,t);return this._capsuleDistance(probe,probe,tri)-radius-change*t;};
+   if(gap(1)<=1e-10)hi=1;
+   else {
+    const ratio=(Math.sqrt(5)-1)*.5;let lo=0,high=1,a=high-ratio*(high-lo),b=lo+ratio*(high-lo),fa=gap(a),fb=gap(b);
+    for(let i=0;i<64;i++){
+     if(fa<=fb){high=b;b=a;fb=fa;a=high-ratio*(high-lo);fa=gap(a);}
+     else {lo=a;a=b;fa=fb;b=lo+ratio*(high-lo);fb=gap(b);}
+    }
+    hi=fa<=fb?a:b;if(Math.min(fa,fb)>1e-10)return Infinity;
+   }
+  }else if(!lengthSquared||!closest)return Infinity;
+  let lo=0;
+  for(let i=0;i<36;i++){
+   const mid=(lo+hi)*.5;probe.copy(from).addScaledVector(delta,mid);
+   if(this._capsuleDistance(probe,probe,tri)<=radius+change*mid+1e-10)hi=mid;else lo=mid;
+  }
+  return hi;
  }
  triangle(id,out=this._triangle){const i=id*9,a=this.triangles;out.a.fromArray(a,i);out.b.fromArray(a,i+3);out.c.fromArray(a,i+6);return out;}
  ground(x,y,z,up=.35,down=.5,squid=false){return this.ray(new THREE.Vector3(x,y+up,z),new THREE.Vector3(0,-1,0),up+down,{ignoreGrates:squid,minNormalY:.62});}

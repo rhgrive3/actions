@@ -1,3 +1,5 @@
+import { familyDescription } from './content-language.mjs';
+import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
@@ -15,7 +17,8 @@ import { ShooterAccuracy } from './shooter-accuracy.mjs';
 import { withShotBias } from './weapon-accuracy.mjs';
 import { spreadWeaponRound, signedBiasSample } from './weapon-edgecases.mjs';
 import { advanceShooterNearestSlot } from './shooter-nearest-paint.mjs';
-import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint } from './weapons-fidelity.mjs';
+import { rollerSpeedSwerveDegrees, GLOB_GRAZE, globGrazePaint, startCatalogWallDrop } from './weapons-fidelity.mjs';
+import { CATALOG_WALL_DROP } from './catalog-wall-drop-data.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
@@ -145,7 +148,7 @@ function definition(r, api) {
     catalogRecord:r, weaponWeight:weaponWeight(r.id), sourceMainActor:r.sourceActor, ...CANONICAL_KITS[r.id],
     kitReference:CANONICAL_KITS[r.id].main, kitStatus:'verified-base-kit',
     kitVerifiedSlots:['sub','special'], kitMissingSlots:{},
-    blurb:'Main-weapon numerical reference: Splatoon 3 11.3.0. Shared temporary model.',
+    blurb:familyDescription(r.family,api.LANG),
     range:Math.max(1, actualRange), rangeMax:Math.max(1,actualRange), rangeMin:finite(move.DistanceMinCharge,1),
     matchmakingRange:r.matchmakingRange, damage:damageMax(r), damageMin:finite(p.DamageParam?.ValueMin,0)/10,
     damageMax:damageMax(r), projSpeed:speed, straightTime:finite(move.GoStraightToBrakeStateFrame,4)/HZ,
@@ -293,7 +296,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     s.pending = null; s.chargeF = 0; s.paid = 0; s.stream = 0; s.burst = 0; s.rounds = 0;
     s.roll = null; s.rollPaint = null; s.lunge=null; s.melee=null; s.turret = 0;
     s.rollingFrames=0;s.rollingDash=false;
-    if (s.canopy && !s.canopy.launched) s.canopy.open = false;
+    if (s.canopy && !s.canopy.launched) { s.canopy.open = false; if (s.canopy.preparing) s.canopy.preparing = false; }
     runner.charging = false; runner.streaming = false; runner.rolling = false; runner.charge = 0;
   }
   R.reset = function(...args) { this.catalogState = null; return legacyReset.apply(this,args); };
@@ -333,16 +336,31 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return true;
   }
   const inkMod = a => (a.s3?.modifiers?.inkSaverMain ?? 1)/(a.weapon.inkTankScale||1);
-  function notify(a, r, origin, direction, charge = 0) {
-    a.character.trigger(r.family==='charger'||r.family==='stringer'?'charge_release':'shoot');
-    emit('weapon:fire',{actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge});
+  const catalogHands = [0,1].map(hand => Object.freeze({hand,valueOf(){return 1;}}));
+  function notify(a, r, origin, direction, charge = 0, hand = null) {
+    const trigger=r.family==='charger'||r.family==='stringer'?'charge_release':'shoot';
+    if(hand===null)a.character.trigger(trigger);else a.character.trigger(trigger,catalogHands[hand]);
+    const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
+    if(hand!==null)event.hand=hand;
+    emit('weapon:fire',event);
     if (a.isLocal || a._nearCamera?.()) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',
         {pos:a.isLocal?undefined:origin,volume:.45});
       G.fx?.muzzle(origin,direction,a.color,r.family==='blaster'?'blaster':'shooter');
     }
   }
-  function origin(a) { G.projectiles._muzzle(a,muzzle); G.projectiles._aimFrom(a,muzzle,dir); return muzzle; }
+  function origin(a, hand=null) {
+    // Catalogue Dualies must release the round from the same real hand socket
+    // that the native two-pistol renderer and trigger animation own.
+    // All non-Dualies retain the original one-muzzle/aim path.
+    if(hand===null)G.projectiles._muzzle(a,muzzle);
+    else {
+      G.projectiles._muzzleHand(a,hand,muzzle);
+      if(hand){base.copy(a.pos);base.y+=a.form==='squid'?.4:1.05;constrainMuzzle(G.physics,base,muzzle);}
+    }
+    G.projectiles._aimFrom(a,muzzle,dir);
+    return muzzle;
+  }
   function angle(direction,yaw=0,pitch=0) {
     const y = Math.atan2(direction.x,direction.z)+yaw*RAD;
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
@@ -575,7 +593,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     let t=key==='variable'?r.parameters.VariableWeaponParam||r.parameters.VariableShotParam||weaponParam(r):weaponParam(r);
     if(key==='variable'&&r.sourceActor==='WeaponSpinnerDownpour')t=interpolateFields(weaponParam(r),t,charge);
-    origin(a);
+    // Peek without consuming the next hand: denied shots must not rotate it.
+    const hand=r.family==='dualies' ? (runner.hand^1) : null;
+    origin(a,hand);
     const ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
     const jumpAge=r.family==='splatling' && Number.isFinite(a.s3SplatlingJumpAgeFrames)
       ? a.s3SplatlingJumpAgeFrames/HZ : s.jumpAge;
@@ -605,7 +625,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     spawn(a,r,desc,aim,at,{volley,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
-    notify(a,r,muzzle,aim,charge);
+    // Only an admitted, spawned catalogue round consumes the chosen hand.
+    // Hand-specific physics muzzle, network birth and visual trigger agree.
+    if(hand!==null){runner.hand=hand;runner.sinceHand[hand]=0;}
+    notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
@@ -793,6 +816,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const s=p.catalog,d=s.descriptor,r=s.r;
     if(p.ghost&&r.sourceActor!=='WeaponSlosherBathtub')return true;
     const at=h.point||p.pos;
+    if(startCatalogWallDrop(system,p,h,CATALOG_WALL_DROP[r.id]))return true;
     if(r.family==='blaster'){p.pos.copy(at);explosion(system,p,d.b.BlastParam);return true;}
     if(d.key==='arrow') {
       const det=d.b.DetonationParam,frames=d.charge*chargeFrames(r);
@@ -838,7 +862,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.carry=Math.max(0,s.carry-DT);
       if(s.stuck){s.fuse-=DT;if(s.fuse<=EPS){explosion(this,p,d.b.DetonationParam.BlastParam);return true;}continue;}
       const travelBefore=s.travel;
+      this.projectileVisuals?.beginPhysicsStep(p);
       advance(p);
+      this.projectileVisuals?.recordPhysicsPoint(p,p.age-DT);
       const shapes=lobes(p),len=p.prev.distanceTo(p.pos);
       const bounceScale=s.r.sourceActor==='WeaponSlosherBathtub'?s.bounces:0;
       let world=s.hit;world.hit=false;
@@ -1214,6 +1240,8 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(canopy){
       canopy.age+=dt;
       {canopy.pos.copy(a.pos).addScaledVector(a.aimDir,measure.radius);canopy.pos.y+=.8;canopy.dir.copy(a.aimDir);
+        // Prep belongs to the admitted pre-opening canopy only; do not prolong after input cancellation.
+        if(canopy.preparing)canopy.preparing=!!input.fire&&canopy.age*HZ<measure.open;
         canopy.open=!!input.fire&&canopy.age*HZ>=measure.open;
         if(canopy.open){
           const total=p.spl__WeaponShelterCanopyParam.InkConsumeUmbrella||0;
@@ -1238,7 +1266,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(!pay(runner,finite(t.InkConsume,.05)*100*inkMod(a)))return;
       if(s.naked<=EPS&&!s.canopy)s.canopy={hp:finite(c.CanopyHP,measure.hp*10)/10,age:0,open:false,launched:false,
         pos:a.pos.clone(),dir:a.aimDir.clone(),radius:finite(c.CanopyColRadius,measure.radius)};
-      if(s.canopy&&!s.canopy.launched&&!continuous)s.canopy.age=-measure.startup/HZ;
+      if(s.canopy&&!s.canopy.launched&&!continuous){s.canopy.age=-measure.startup/HZ;s.canopy.preparing=true;}
       beginPending(s,measure.startup,()=>{emitPellets(runner,r);runner.firingT=.35;});
       runner.cooldown=measure.repeat/HZ;
     }
@@ -1294,6 +1322,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const a=this.a,r=a.weapon.catalogRecord;
     if(!r)return legacyUpdate.call(this,dt,input);
     const s=state(this);
+    if(s.canopy?.preparing&&(!input.fire||input.sub||a.form!=='kid'||a.remote||!a.alive||a.specialActive||a.superJumpState||this.aimingSub))s.canopy.preparing=false;
     // Cancel BEFORE the installed sub preparation owner checks main busy state.
     if(input.sub||a.specialActive||!a.alive)cancel(this);
     if(a.form==='squid'){

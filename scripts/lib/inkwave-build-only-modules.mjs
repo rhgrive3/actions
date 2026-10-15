@@ -8,10 +8,15 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   // Source decoding/shape construction belong to the offline bake, not gameplay.
   'patches/local-quality/ink-volume/vtf.mjs',
   'patches/local-quality/ink-volume/mesh.mjs',
+  // Source-only Actor code transformers; injected runtime helpers ship separately.
+  'patches/splatoon3/brella-guard-facing-adapter.mjs',
+  'patches/splatoon3/issue-719-dodge-adapter.mjs',
   'patches/splatoon3/camera-aim-controls-adapter.mjs',
   'patches/splatoon3/ranked-adapter.mjs',
   'patches/splatoon3/ranked-ui-adapter.mjs',
+  'patches/splatoon3/ui-localization-adapter.mjs',
   'patches/splatoon3/weapon-catalog-adapter.mjs',
+  'patches/splatoon3/projectile-visual-adapter.mjs',
   // Source templates, build-time SVG/data and transform helpers have no runtime importers.
   'patches/local-quality/audio-listener-adapter.mjs',
   'patches/local-quality/finish-tape-adapter.mjs',

@@ -4,7 +4,7 @@ plane charts, polygon CPU masks. All gameplay semantics are inferred, not retail
 No input assets or generated derivatives may be added to the public repository.
 """
 from pathlib import Path
-import argparse, json, re, time, shutil
+import argparse, json, re, time, shutil, subprocess
 import numpy as np
 from PIL import Image
 from numba import njit
@@ -29,9 +29,17 @@ def raster_mask(xy, nu, nv, cu, cv):
   if abs(den)<1e-12:continue
   for j in range(max(0,int(min(ay,by,cy)/cv)),min(nv,int(max(ay,by,cy)/cv)+1)):
    for i in range(max(0,int(min(ax,bx,cx)/cu)),min(nu,int(max(ax,bx,cx)/cu)+1)):
-    x=(i+.5)*cu;y=(j+.5)*cv
-    u=((by-cy)*(x-cx)+(cx-bx)*(y-cy))/den;v=((cy-ay)*(x-cx)+(ax-cx)*(y-cy))/den
-    if u>=-1e-6 and v>=-1e-6 and u+v<=1+1e-6:out[j*nu+i]=1
+    x0=i*cu;y0=j*cv;x1=(i+1)*cu;y1=(j+1)*cv
+    epsilon=1e-9
+    if max(ax,bx,cx)<=x0+epsilon or min(ax,bx,cx)>=x1-epsilon or max(ay,by,cy)<=y0+epsilon or min(ay,by,cy)>=y1-epsilon:continue
+    mx=(x0+x1)*.5;my=(y0+y1)*.5;hx=(x1-x0)*.5;hy=(y1-y0)*.5;overlap=True
+    for edge in range(3):
+     ex=bx-ax if edge==0 else cx-bx if edge==1 else ax-cx
+     ey=by-ay if edge==0 else cy-by if edge==1 else ay-cy
+     nx=-ey;ny=ex;a=ax*nx+ay*ny;b=bx*nx+by*ny;c=cx*nx+cy*ny;p=mx*nx+my*ny;r=abs(nx)*hx+abs(ny)*hy
+     margin=epsilon*(abs(nx)+abs(ny))
+     if max(a,b,c)<=p-r+margin or min(a,b,c)>=p+r-margin:overlap=False;break
+    if overlap:out[j*nu+i]=1
  return out
 
 
@@ -77,10 +85,10 @@ def materials(src,objects,dst):
 
 
 def build(source,out,spec):
- sid,internal,name,expected,bounds,pad=spec;start=time.time();src=source/internal;dst=out/sid;dst.mkdir(parents=True,exist_ok=True)
+ sid,internal,name,expected,bounds,pad=spec[:6];definition=spec[6] if len(spec)>6 else {};semantics=definition.get('sourceSemantics');start=time.time();src=source/internal;dst=out/sid;dst.mkdir(parents=True,exist_ok=True)
  obj=src/(internal+'.obj');digest=sha(obj)
  if digest!=expected:raise ValueError(f'{internal}: expected pinned OBJ sha256 {expected}, got {digest} (LFS pointer or changed input)')
- geo,idx,objects=parse_obj(obj)
+ geo,idx,objects=parse_obj(obj,semantics)
  # Original vertices/normals/UV/index buffers are preserved, with no guessed scaling.
  geo.tofile(dst/'vertices.bin');idx.tofile(dst/'indices.bin')
  tri=[];norm=[];flags=[];oids=[]
@@ -112,6 +120,10 @@ def build(source,out,spec):
  mats,tex=materials(src,objects,dst)
  # Derive references solely from the pinned, local display export. No version claim.
  manifest=dict(schema=1,id=sid,internal=internal,name=name,sourceCommit=REV,sourceSha256=digest,version1130Verified=False,coordinates='OBJ Y-up float32, no scale/translation; retail unit equivalence unverified',boundsStatus='R6 core subobject selection, inferred interactive extent',bounds=dict(minX=bounds[0],minZ=bounds[1],maxX=bounds[2],maxZ=bounds[3]),spawnPads=[pad,[-pad[0],pad[1],-pad[2]]],spawnStatus='R6 inferred support estimates; not recovered retail placements',spawnBarrier=2.5,collisionStatus='inferred display triangles, not native collision',paintStatus='inferred name/material flags and planar polygon masks, not native paint masks',ruleStatus='Pnt display layer only; ranked objectives are local calibration',faces=faces,objects=objects,materials=mats,textureIntegrity=tex,gridCells=grid_offset,geometry=dict(vertices=len(geo),triangles=len(idx)//3,collisionTriangles=len(tri),bvhNodes=len(nodes),paintFaces=len(faces)),chartMaxPlaneError=maxerror,cell=.25)
+ manifest['spawnPads']=definition.get('spawnPads',manifest['spawnPads']);manifest['spawnBarrier']=definition.get('spawnBarrier',manifest['spawnBarrier'])
+ if semantics:manifest['sourceSemantics']=semantics
+ if definition.get('sourceNavigation'):manifest['sourceNavigation']=definition['sourceNavigation']
+ manifest['boundsStatus']=definition.get('placementStatus',manifest['boundsStatus']);manifest['spawnStatus']=definition.get('placementStatus',manifest['spawnStatus'])
  (dst/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,separators=(',',':')))
  files={p.relative_to(dst).as_posix():dict(bytes=p.stat().st_size,sha256=sha(p)) for p in sorted(dst.rglob('*')) if p.is_file() and p.name!='integrity.json'}
  (dst/'integrity.json').write_text(json.dumps(files,separators=(',',':')))
@@ -120,5 +132,9 @@ def build(source,out,spec):
 
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--source',required=True,type=Path);p.add_argument('--out',required=True,type=Path);p.add_argument('--stages',nargs='*');a=p.parse_args();a.out.mkdir(parents=True,exist_ok=True)
- summaries=[build(a.source,a.out,s) for s in STAGES if not a.stages or s[0] in a.stages]
+ root=Path(__file__).resolve().parents[3]
+ catalog=json.loads(subprocess.check_output(['node','--input-type=module','-e',"import {nativeStageCatalog} from './scripts/lib/inkwave-native-stages.mjs'; process.stdout.write(JSON.stringify(nativeStageCatalog()));"],cwd=root,text=True))
+ specs=[(s['id'],s['internal'],s['name'],s['sourceSha256'],[s['bounds'][k] for k in ['minX','minZ','maxX','maxZ']],s['spawnPads'][0],s) for s in catalog['stages']]
+ if a.stages and set(a.stages)-{s[0] for s in specs}:p.error('Unknown or unavailable stage: '+','.join(sorted(set(a.stages)-{s[0] for s in specs})))
+ summaries=[build(a.source,a.out,s) for s in specs if not a.stages or s[0] in a.stages]
  (a.out/'catalog.json').write_text(json.dumps(dict(schema=1,sourceCommit=REV,stages=summaries),ensure_ascii=False,indent=2))

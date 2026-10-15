@@ -1,0 +1,255 @@
+{
+  "referenceVersion": "11.3.0",
+  "sourceUrl": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/mush/1130/WeaponInfoMain.json",
+  "sourceSha256": "53641c4b4c96d56d3ed4ca8d4c7426d83a0bf28af6f85e9eafc391b2ae9f663e",
+  "records": [
+    {
+      "sourceRow": "Blaster_LightLong_01",
+      "baseId": "s3-blaster-lightlong",
+      "sourceId": 251,
+      "name": "Rブラスターエリートデコ",
+      "rowPointer": "/3",
+      "GameActor": "Work/Actor/WmnG_Blaster_LightLong_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_LightLong_02",
+      "baseId": "s3-blaster-lightlong",
+      "sourceId": 252,
+      "name": "RブラスターエリートWNTR",
+      "rowPointer": "/4",
+      "GameActor": "Work/Actor/WmnG_Blaster_LightLong_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_LightShort_01",
+      "baseId": "s3-blaster-lightshort",
+      "sourceId": 231,
+      "name": "クラッシュブラスターネオ",
+      "rowPointer": "/8",
+      "GameActor": "Work/Actor/WmnG_Blaster_LightShort_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_Light_01",
+      "baseId": "s3-blaster-light",
+      "sourceId": 241,
+      "name": "ラピッドブラスターデコ",
+      "rowPointer": "/12",
+      "GameActor": "Work/Actor/WmnG_Blaster_Light_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_Long_01",
+      "baseId": "s3-blaster-long",
+      "sourceId": 221,
+      "name": "ロングブラスターカスタム",
+      "rowPointer": "/16",
+      "GameActor": "Work/Actor/WmnG_Blaster_Long_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_Middle_01",
+      "baseId": "blaster",
+      "sourceId": 211,
+      "name": "ホットブラスターカスタム",
+      "rowPointer": "/20",
+      "GameActor": "Work/Actor/WmnG_Blaster_Middle_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_Middle_02",
+      "baseId": "blaster",
+      "sourceId": 212,
+      "name": "ホットブラスター艶",
+      "rowPointer": "/21",
+      "GameActor": "Work/Actor/WmnG_Blaster_Middle_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_Precision_01",
+      "baseId": "s3-blaster-precision",
+      "sourceId": 261,
+      "name": "S-BLAST91",
+      "rowPointer": "/25",
+      "GameActor": "Work/Actor/WmnG_Blaster_Precision_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Blaster_Short_01",
+      "baseId": "s3-blaster-short",
+      "sourceId": 201,
+      "name": "ノヴァブラスターネオ",
+      "rowPointer": "/30",
+      "GameActor": "Work/Actor/WmnG_Blaster_Short_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Blaze_01",
+      "baseId": "s3-shooter-blaze",
+      "sourceId": 31,
+      "name": "プロモデラーRG",
+      "rowPointer": "/183",
+      "GameActor": "Work/Actor/WmnG_Shooter_Blaze_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Blaze_02",
+      "baseId": "s3-shooter-blaze",
+      "sourceId": 32,
+      "name": "プロモデラー彩",
+      "rowPointer": "/184",
+      "GameActor": "Work/Actor/WmnG_Shooter_Blaze_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Expert_01",
+      "baseId": "s3-shooter-expert",
+      "sourceId": 71,
+      "name": "プライムシューターコラボ",
+      "rowPointer": "/188",
+      "GameActor": "Work/Actor/WmnG_Shooter_Expert_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Expert_02",
+      "baseId": "s3-shooter-expert",
+      "sourceId": 72,
+      "name": "プライムシューターFRZN",
+      "rowPointer": "/189",
+      "GameActor": "Work/Actor/WmnG_Shooter_Expert_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_First_01",
+      "baseId": "s3-shooter-first",
+      "sourceId": 11,
+      "name": "もみじシューター",
+      "rowPointer": "/195",
+      "GameActor": "Work/Actor/WmnG_Shooter_First_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Flash_01",
+      "baseId": "s3-shooter-flash",
+      "sourceId": 401,
+      "name": "ボトルガイザーフォイル",
+      "rowPointer": "/199",
+      "GameActor": "Work/Actor/WmnG_Shooter_Flash_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Gravity_01",
+      "baseId": "s3-shooter-gravity",
+      "sourceId": 51,
+      "name": ".52ガロンデコ",
+      "rowPointer": "/203",
+      "GameActor": "Work/Actor/WmnG_Shooter_Gravity_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Heavy_01",
+      "baseId": "s3-shooter-heavy",
+      "sourceId": 81,
+      "name": ".96ガロンデコ",
+      "rowPointer": "/207",
+      "GameActor": "Work/Actor/WmnG_Shooter_Heavy_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Heavy_02",
+      "baseId": "s3-shooter-heavy",
+      "sourceId": 82,
+      "name": ".96ガロン爪",
+      "rowPointer": "/208",
+      "GameActor": "Work/Actor/WmnG_Shooter_Heavy_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Long_01",
+      "baseId": "s3-shooter-long",
+      "sourceId": 91,
+      "name": "ジェットスイーパーカスタム",
+      "rowPointer": "/212",
+      "GameActor": "Work/Actor/WmnG_Shooter_Long_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Long_02",
+      "baseId": "s3-shooter-long",
+      "sourceId": 92,
+      "name": "ジェットスイーパーCOBR",
+      "rowPointer": "/213",
+      "GameActor": "Work/Actor/WmnG_Shooter_Long_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Normal_01",
+      "baseId": "shooter",
+      "sourceId": 41,
+      "name": "スプラシューターコラボ",
+      "rowPointer": "/222",
+      "GameActor": "Work/Actor/WmnG_Shooter_Normal_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Normal_02",
+      "baseId": "shooter",
+      "sourceId": 42,
+      "name": "スプラシューター煌",
+      "rowPointer": "/224",
+      "GameActor": "Work/Actor/WmnG_Shooter_Normal_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Precision_01",
+      "baseId": "s3-shooter-precision",
+      "sourceId": 21,
+      "name": "シャープマーカーネオ",
+      "rowPointer": "/232",
+      "GameActor": "Work/Actor/WmnG_Shooter_Precision_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Precision_02",
+      "baseId": "s3-shooter-precision",
+      "sourceId": 22,
+      "name": "シャープマーカーGECK",
+      "rowPointer": "/233",
+      "GameActor": "Work/Actor/WmnG_Shooter_Precision_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_QuickLong_01",
+      "baseId": "s3-shooter-quicklong",
+      "sourceId": 101,
+      "name": "スペースシューターコラボ",
+      "rowPointer": "/237",
+      "GameActor": "Work/Actor/WmnG_Shooter_QuickLong_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_QuickMiddle_01",
+      "baseId": "s3-shooter-quickmiddle",
+      "sourceId": 61,
+      "name": "N-ZAP89",
+      "rowPointer": "/240",
+      "GameActor": "Work/Actor/WmnG_Shooter_QuickMiddle_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_Short_01",
+      "baseId": "s3-shooter-short",
+      "sourceId": 1,
+      "name": "ボールドマーカーネオ",
+      "rowPointer": "/246",
+      "GameActor": "Work/Actor/WmnG_Shooter_Short_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_TripleMiddle_01",
+      "baseId": "s3-shooter-triplemiddle",
+      "sourceId": 311,
+      "name": "H3リールガンD",
+      "rowPointer": "/250",
+      "GameActor": "Work/Actor/WmnG_Shooter_TripleMiddle_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_TripleMiddle_02",
+      "baseId": "s3-shooter-triplemiddle",
+      "sourceId": 312,
+      "name": "H3リールガンSNAK",
+      "rowPointer": "/251",
+      "GameActor": "Work/Actor/WmnG_Shooter_TripleMiddle_02.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_TripleQuick_01",
+      "baseId": "s3-shooter-triplequick",
+      "sourceId": 301,
+      "name": "L3リールガンD",
+      "rowPointer": "/255",
+      "GameActor": "Work/Actor/WmnG_Shooter_TripleQuick_01.engine__actor__ActorParam.gyml"
+    },
+    {
+      "sourceRow": "Shooter_TripleQuick_02",
+      "baseId": "s3-shooter-triplequick",
+      "sourceId": 302,
+      "name": "L3リールガン箔",
+      "rowPointer": "/256",
+      "GameActor": "Work/Actor/WmnG_Shooter_TripleQuick_02.engine__actor__ActorParam.gyml"
+    }
+  ]
+}

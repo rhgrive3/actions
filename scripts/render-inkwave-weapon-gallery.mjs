@@ -44,6 +44,7 @@ try {
     const { installMainWeaponCatalogRuntime } = await import(prefix + 'patches/splatoon3/runtime/main-weapon-catalog.mjs');
     installWeaponsFidelity(api, profile); installMainWeaponCatalogRuntime(api, profile);
     const W = await import(prefix + 'src/game/character-weapons.js'), Mt = await import(prefix + 'src/game/character-mats.js');
+    const Kit = await import(prefix + 'patches/splatoon3/runtime/weapon-models/kit.mjs').catch(() => null);
     const R = await import(prefix + 'patches/splatoon3/runtime/weapon-models/registry.mjs').catch(() => null); // absent in pre-registry builds
     const { WEAPONS } = await import(prefix + 'src/config.js');
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -61,23 +62,24 @@ try {
     G.projectiles = new api.Projectiles({ add() {}, remove() {} }); // real emission path, projectiles not drawn
     G.physics.segment = (_a, _b, h) => { h.hit = false; return h; };
     const snap = () => renderer.domElement.toDataURL('image/png').split(',')[1];
-    window.__gallery = { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G };
+    window.__gallery = { THREE, api, W, Mt, R, Kit, WEAPONS, renderer, scene, snap, G };
   }, { prefix, size });
   const all = await page.evaluate(() => Object.keys(window.__gallery.WEAPONS).filter(id => window.__gallery.WEAPONS[id]?.class !== undefined || window.__gallery.WEAPONS[id]?.catalogRecord));
   const list = ids.length ? ids : all;
   const rows = [];
   for (const id of list) {
     const row = await page.evaluate(async ({ id, held }) => {
-      const { THREE, api, W, Mt, R, WEAPONS, renderer, scene, snap, G } = window.__gallery;
+      const { THREE, api, W, Mt, R, Kit, WEAPONS, renderer, scene, snap, G } = window.__gallery;
       const { Actor, Character } = api;
       const t0 = performance.now(), d = W.getWeaponDef(id), buildMs = performance.now() - t0, color = G.teamColors[0];
-      let bytes = 0; const geos = [d.body, d.ink, d.bodyStatic, d.inkStatic, d.drum, d.drumCaps, d.glow, ...Object.values(d.parts || {}).map(p => p.geo)];
+      let bytes = 0; const geos = [d.body, d.ink, d.bodyStatic, d.inkStatic, d.drum, d.drumCaps, d.glow, d.glass, ...Object.values(d.parts || {}).map(p => p.geo)];
       for (const geo of new Set(geos.filter(Boolean))) { for (const a of Object.values(geo.attributes)) bytes += a.array.byteLength; if (geo.index) bytes += geo.index.array.byteLength; }
       // whole weapon at rest, including the parts and drum/glow channels
       const g = new THREE.Group();
       g.add(new THREE.Mesh(d.body, Mt.getPlasticMaterial()), new THREE.Mesh(d.ink, Mt.getInkMaterial(color)));
       if (d.drum) { const drum = new THREE.Group(); drum.position.copy(d.drumAt); drum.add(new THREE.Mesh(d.drum, Mt.getInkMaterial(color)), new THREE.Mesh(d.drumCaps, Mt.getPlasticMaterial())); g.add(drum); }
       if (d.glow) g.add(new THREE.Mesh(d.glow, new THREE.MeshStandardMaterial({ color: '#797d85', roughness: .3 })));
+      Kit?.attachWeaponGlass?.(d, g);
       scene.add(g); g.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
       const half = Math.max(s.y, s.z) * 0.56;
@@ -90,7 +92,7 @@ try {
       const span = Math.max(s.x, s.y, s.z), cam = new THREE.PerspectiveCamera(30, 1, .01, 50);
       cam.position.copy(c).add(new THREE.Vector3(-0.9, 0.45, 1.1).normalize().multiplyScalar(span * 2.5)); cam.lookAt(c); renderer.render(scene, cam);
       const persp = snap(); scene.remove(g);
-      let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
+      let tris = 0; for (const geo of [d.body, d.ink, d.drum, d.drumCaps, d.glow, d.glass]) if (geo) tris += (geo.index ? geo.index.count : geo.attributes.position.count) / 3;
       const res = { id, family: R?.weaponBehaviorFamily(id) ?? WEAPONS[id]?.behaviorKind ?? WEAPONS[id]?.kind, modelKind: R?.weaponModelFamily(id) ?? WEAPONS[id]?.modelKind ?? WEAPONS[id]?.kind, own: !!R?.weaponModelSpec(id),
         size: s.toArray().map(v => +v.toFixed(4)), muzzle: d.muzzle.toArray().map(v => +v.toFixed(4)), tris: Math.round(tris), buildMs: +buildMs.toFixed(1), geometryKB: Math.round(bytes / 1024),
         images: { side, above, front: muzzleView, persp } };

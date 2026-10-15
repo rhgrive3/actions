@@ -201,6 +201,8 @@ export function hiddenPart(p) { return { ...p, src: emptyGeometry(), hidden: tru
  */
 export function rebuild(d, spec) {
   d.body?.dispose?.(); d.ink?.dispose?.();
+  d.glass?.dispose?.();
+  d.glass = spec.glass ? spec.glass.build() : null;
   d.body = spec.body ? spec.body.build() : emptyGeometry();
   d.ink = spec.ink ? spec.ink.build() : emptyGeometry();
   const keep = new Set(spec.keepParts || []);
@@ -240,3 +242,53 @@ export const clamp = (x, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, x));
 export const smooth = x => { x = clamp(x); return x * x * (3 - 2 * x); };
 /** Frame-rate independent exponential approach. */
 export const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
+
+// Transparent weapon shells are a separate, shared draw at every LOD. Never merge
+// them into opaque body/ink geometry or simplify a thin closed sleeve into a cap.
+// No screen-space transmission buffer or per-actor material is allocated.
+let weaponGlassMaterial;
+export function getWeaponGlassMaterial() {
+  if (!weaponGlassMaterial) {
+    const m = new THREE.MeshPhysicalMaterial({
+      name: 'iw-weapon-glass', color: 0xdfe9ee, roughness: 0.16, metalness: 0,
+      clearcoat: 0.65, clearcoatRoughness: 0.12, transparent: true, opacity: 0.22,
+      depthWrite: false, depthTest: true, side: THREE.FrontSide, transmission: 0,
+    });
+    // Thin clear plastic reflects more light at grazing angles. Raising only
+    // silhouette alpha keeps the transparent centre and costs no extra pass.
+    m.onBeforeCompile = shader => {
+      shader.fragmentShader = shader.fragmentShader.replace('#include <opaque_fragment>', `
+        float iwShellEdge = 1.0 - saturate(dot(geometryNormal, geometryViewDir));
+        diffuseColor.a = min(0.68, opacity + 0.46 * iwShellEdge * iwShellEdge);
+        #include <opaque_fragment>
+      `);
+    };
+    m.customProgramCacheKey = () => 'iw-weapon-glass-fresnel-1';
+    weaponGlassMaterial = m;
+  }
+  return weaponGlassMaterial;
+}
+
+// GTAO's normal/depth override ignores alpha. Follow the native transparent
+// effects' draw-range gate, then restore even after an override-only frame.
+// Definitions are shared between Actors, so never leave their range suppressed.
+const glassBeautyCounts = new WeakMap();
+function glassBeforeRender(_renderer, scene, _camera, geometry) {
+  geometry.drawRange.count = scene.overrideMaterial ? 0 : glassBeautyCounts.get(geometry);
+}
+function glassAfterRender(_renderer, _scene, _camera, geometry) {
+  geometry.drawRange.count = glassBeautyCounts.get(geometry);
+}
+
+export function attachWeaponGlass(d, off) {
+  if (!d.glass) return null;
+  const glass = new THREE.Mesh(d.glass, getWeaponGlassMaterial());
+  glass.name = 'weapon-glass';
+  if (!glassBeautyCounts.has(d.glass)) glassBeautyCounts.set(d.glass, d.glass.drawRange.count);
+  glass.onBeforeRender = glassBeforeRender; glass.onAfterRender = glassAfterRender;
+  // Keep normal transparent distance sorting. It must not cast an opaque shadow
+  // or write depth in front of its own ink/barrels or other actors.
+  glass.castShadow = false; glass.receiveShadow = false;
+  off.add(glass);
+  return glass;
+}

@@ -201,3 +201,15 @@ test('bot goals use plain positions and request a ride when control must be take
   assert.deepEqual(goal, { pos: [0, 0, 0], action: 'ride' });
   assert.equal(Array.isArray(goal.pos), true);
 });
+
+test('a supported escort lane leaves the deck to its current rider', () => {
+  const rule = new TowerRule(new FakeEngine(), stage());
+  rule.state.controllingTeam = 0;
+  rule.state.riders[0] = 1;
+  const frame = { floorAt: () => 0 };
+  const escort = rule.botGoal({ team: 0, slot: 1, pos: [0, 0, -5], alive: true }, frame);
+  assert.equal(escort.action, 'defend');
+  assert.ok(Math.hypot(escort.pos[0], escort.pos[2]) > 2);
+  const rider = rule.botGoal({ team: 0, pos: [0, 0, 0], alive: true, onTower: true }, frame);
+  assert.deepEqual(rider.pos, rule.state.position);
+});

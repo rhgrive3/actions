@@ -126,7 +126,8 @@ test('bot, player, and HUD decisions use temporary catalog behavior families', (
     [{ kind: 'dualies' }, 'dualies'],
   ];
   for (const [weapon, expected] of cases) {
-    assert.equal(botKind(weapon), expected);
+    assert.equal(botKind(weapon), ['stringer', 'splatana'].includes(weapon.behaviorKind) ? weapon.behaviorKind : expected,
+      'native bot charge families preserve their own Fire-release rules');
     assert.equal(playerView({ weapon }).kind, expected);
     assert.equal(hudKind(weapon, 'shooter'), expected);
     assert.equal(mainKind(weapon), expected);
