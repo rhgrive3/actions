@@ -65,6 +65,7 @@ vec3 sxInk(vec3 c, vec3 n, vec3 V, float g){
   vec3 col = mix(base, env, (0.03 + 0.97 * pow(edge, 4.0)) * g * 0.3);
   float rl = clamp(dot(R, uSunDirV), 0.0, 1.0);
   col += uSunCol * (pow(rl, 150.0) * 7.0 + pow(rl, 24.0) * 0.22) * g;
+  col += vec3(1.0) * smoothstep(0.86, 0.9, rl) * 0.85 * g;             // the crisp, painted-looking gloss spot of S3 ink
   return col * mix(0.85, 1.0, g);
 }
 `;
@@ -100,7 +101,7 @@ export function excludeFromOverridePasses(mesh) {
 // Sprite particles (sparks: additive, puffs: alpha)
 // ---------------------------------------------------------------------------------------------------------------
 export const SPARK = Object.freeze({ STREAK: 0, STAR: 1, GLOW: 2, RING: 3, RAY: 4 });
-export const PUFF = Object.freeze({ SMOKE: 0, MIST: 1, CHUNK: 2, DUST: 3 });
+export const PUFF = Object.freeze({ SMOKE: 0, MIST: 1, CHUNK: 2, DUST: 3, PETAL: 4 });
 const SPRITE_VERT = `
 attribute vec4 iPos;   // xyz, size
 attribute vec4 iDir;   // stretch direction xyz, stretch length (world)
@@ -165,6 +166,23 @@ void main(){
   } else if (kind == 1) {              // ink mist: soft, slightly lumpy
     float n = sxNoise(p * 3.0 + vPar.w * 13.0);
     a = (1.0 - smoothstep(0.25, 1.0, r + n * 0.18)) * 0.8;
+  } else if (kind == 4) {              // ink petal (S3 footage 83.0s/96.8s): a pointed leaf of glossy ink, team colour at the
+    // rim and a white-hot core, tumbling; lit with the droplet terms
+    vec2 q0 = p; float w = 0.3 * (1.0 - 0.15 * vPar.z);
+    float half_ = w * pow(max(1.0 - q0.y * q0.y, 0.0), 0.7);
+    float sd = abs(q0.x) - half_, fw = max(fwidth(sd), 1e-3);
+    a = (1.0 - smoothstep(-fw, fw, sd)) * step(abs(q0.y), 1.0);
+    if (a <= 0.0 || vCol.a < 0.03) discard;
+    float u = q0.x / max(half_, 1e-3);
+    float ca2 = cos(vPar.y), sa2 = sin(vPar.y);
+    vec2 ax = vec2(-sa2, ca2), bx = vec2(ca2, sa2);
+    vec3 n = normalize(vec3(bx * u * 0.8 + ax * q0.y * 0.35, 0.65));
+    col = sxInk(vCol.rgb, n, vec3(0.0, 0.0, 1.0), 1.0);
+    float core = (1.0 - smoothstep(0.15, 0.7, abs(u))) * (1.0 - smoothstep(0.35, 0.9, abs(q0.y)));
+    col = mix(col, vec3(1.6), core * 0.92);
+    gl_FragColor = vec4(col, a);
+    ${OUT}
+    return;
   } else {                             // ink chunk: a glossy liquid drop, round when slow and a teardrop (head leading)
     // when stretched along its velocity; shaded exactly like the game's droplets (sxInk)
     float st = vStretch, L = 1.0 + st;
@@ -724,8 +742,8 @@ export class SpecialVfxKit {
     const q = this.q, uT = this.uTime;
     this.sparks = new SpritePool(THREE, Math.round(900 * q), true, uT);
     this.puffs = new SpritePool(THREE, Math.round(520 * q), false, uT, L);
-    this.ribbons = new RibbonPool(THREE, 40, 28, false, uT, L);
-    this.glowRibbons = new RibbonPool(THREE, 28, 24, true, uT, L);
+    this.ribbons = new RibbonPool(THREE, 40, 48, false, uT, L);
+    this.glowRibbons = new RibbonPool(THREE, 28, 40, true, uT, L);
     const cyl = (radial, h = 1, open = true) => { const g = new THREE.CylinderGeometry(1, 1, 1, radial, h, open); g.translate(0, 0.5, 0); return g; };
     const beamAttrs = ['iA', 'iB', 'iCol', 'iPar'];
     this.beams = new ShapePool(THREE, 'beams+', cyl(14, 1), 48, beamAttrs, BEAM_VERT, BEAM_FRAG, true, uT, {}, L);

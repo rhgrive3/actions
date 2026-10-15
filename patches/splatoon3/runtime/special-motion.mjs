@@ -420,9 +420,12 @@ function createBubblerHardware(color){
   const material=new THREE.ShaderMaterial({uniforms:{color:{value:new THREE.Color(color)},age:{value:0},health:{value:1}},
     vertexShader:`varying vec3 n;varying vec3 v;varying vec2 uv0;void main(){uv0=uv;vec4 p=modelViewMatrix*vec4(position,1.);v=-p.xyz;n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*p;}`,
     fragmentShader:`uniform vec3 color;uniform float age;uniform float health;varying vec3 n;varying vec3 v;varying vec2 uv0;
-      void main(){float fres=pow(1.-abs(dot(normalize(n),normalize(v))),2.);float lines=pow(.5+.5*cos(uv0.y*50.+.3*sin(uv0.x*50.)-age*.4),32.);
-      vec2 grid=fract(uv0*vec2(100.,45.))-.5;float mesh=1.-smoothstep(.09,.16,length(grid));float a=(.045+.24*fres+.11*lines+.055*mesh)*(.7+.3*health);
-      gl_FragColor=vec4(color*(.85+.35*fres+.25*lines),a);#include <tonemapping_fragment>
+      // S3 footage (2.0-5.9s): the field is nearly clear; what reads is a stack of thin bright rings round the dome
+      // (latitude lines, drifting up) and a faint rim. No fog-like fill.
+      void main(){float fres=pow(1.-abs(dot(normalize(n),normalize(v))),3.);float k=fract(uv0.y*14.-age*.25);
+      float w=fwidth(uv0.y*14.)*1.2+.012;float lines=1.-smoothstep(w*.5,w*1.5,abs(k-.5));
+      float a=(.012+.1*fres+.55*lines*(.55+.45*(1.-uv0.y*.6)))*(.6+.4*health);
+      gl_FragColor=vec4(color*(1.15+.6*lines)+vec3(.25*lines),a);#include <tonemapping_fragment>
       #include <colorspace_fragment>}`.replace(';#include',';\n#include'),transparent:true,depthWrite:false,side:THREE.DoubleSide});
   const shell=mesh(g,geo,material,'bubbler-field');shell.castShadow=false;shell.renderOrder=4;
   g.userData.shell=shell;g.userData.emitter=emitter;return g;

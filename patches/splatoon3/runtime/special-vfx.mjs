@@ -115,6 +115,17 @@ class Director {
       this.puff(PUFF.CHUNK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, rnd(o.life ?? 0.9, 0.5), (o.size ?? 0.18) * rnd(1.4, 0.6), (o.size ?? 0.18) * 0.4, c, 1, { drag: 0.8, grav: 15, rot: rnd(TAU), spin: rnd(6, -6), stretch: 0.03, fadeIn: 0.01 });
     }
   }
+  // S3 ink petals: pointed glossy leaves with a white core, thrown out and tumbling (83.0s, 96.8s)
+  petals(p, n, speed, col, o = {}) {
+    n = Math.max(1, Math.round(n * this.kit.q));
+    const c = this.inkCol(col);
+    for (let i = 0; i < n; i++) {
+      const th = rnd(TAU), y = rnd(o.upMax ?? 0.9, o.upMin ?? -0.1), h = Math.sqrt(Math.max(0, 1 - y * y)), sp = speed * rnd(1.2, 0.5);
+      const sz = (o.size ?? 0.22) * rnd(1.5, 0.7);
+      this.kit.puffs.spawn(p.x, p.y, p.z, Math.cos(th) * h * sp, y * sp, Math.sin(th) * h * sp, rnd(o.life ?? 0.8, 0.45), sz, sz * 0.5, c[0], c[1], c[2], 1, PUFF.PETAL,
+        { drag: o.drag ?? 2.2, grav: o.grav ?? 7, rot: rnd(TAU), spin: rnd(10, -10), fadeIn: 0.01 });
+    }
+  }
   smoke(p, n, col, o = {}) {
     n = Math.max(1, Math.round(n * this.kit.q));
     for (let i = 0; i < n; i++) {
@@ -186,6 +197,7 @@ class Director {
     this.band(false, 0.7, BAND.SHOCK, p, R * 0.18, R * 0.8, 0.4, Math.min(4.5, R * 0.42), col, 1, { hold: 0.25 });
     this.streaks(this.v[5].copy(p).setY(p.y + 0.4), o.streaks ?? Math.min(40, 10 + R * 3), Math.min(26, 8 + R * 1.6), col, { up: 0.45, life: 0.6, size: 0.07 });
     this.chunks(this.v[5].copy(p).setY(p.y + 0.3), o.chunks ?? Math.min(28, 6 + R * 2), Math.min(18, 5 + R * 1.2), col, { size: 0.2 + R * 0.015 });
+    this.petals(this.v[5].copy(p).setY(p.y + 0.5), Math.min(24, 6 + R * 2), Math.min(16, 6 + R), col, { size: 0.18 + R * 0.02 });
     this.smoke(this.v[5].copy(p).setY(p.y + 0.4), o.mist ?? Math.min(10, 2 + R), this.hdr(col, 0.95), { kind: PUFF.MIST, size: 0.6 + R * 0.06, speed: 1.2 + R * 0.35, alpha: 0.4, life: 0.8 });
   }
   activation(a, col, scale = 1) {
@@ -197,6 +209,7 @@ class Director {
     this.disc(false, 0.42, DISC.SHOCK, this.v[2].copy(p).setY(p.y + 0.05), this.up, 0.4, C.ring * scale, col, 1, { hold: 0.15 });
     this.band(false, 0.5, BAND.SHOCK, p, 0.5 * scale, 1.3 * scale, 0.3, 1.2 * scale, col, 1, { hold: 0.2 });
     this.streaks(chest, C.streaks * scale, 9 * scale, col, { up: 0.35, life: 0.5, size: 0.05 });
+    this.petals(chest, 10 * scale, 8 * scale, col, { size: 0.16 * scale });
     for (let i = 0; i < Math.round(10 * this.kit.q); i++) {                 // the S3 activation spikes: rays radiating from the body
       const th = i / 10 * TAU + rnd(0.3), el = rnd(0.9, -0.2);
       this.spark(SPARK.RAY, chest, Math.cos(th) * Math.cos(el), Math.sin(el), Math.sin(th) * Math.cos(el), 0.22, 0.05 * scale, 0.015, this.hdr(col, 1.6, 1.0), 0.8,
@@ -664,10 +677,15 @@ const KIT_FX = {
   bubbler: {
     start(r, d) {
       const c = r.color, p = d.pos;
-      // S3 footage: a vertical beam of light shoots up from the launcher and the field ripples out
-      r.d.pillar = this.beam(true, 1.4, BEAM.PILLAR, p, this.v[0].copy(p).setY(p.y + 40), 0.35, 0.6, this.hdr(c, 2.4, 1.6), 1, { speed: 4, follow: (rec) => { rec.v[3] = 0.35 * (1 - rec.t / rec.life) + 0.05; rec.v[11] = 1 - smooth(rec.t / rec.life); } });
-      this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.2, 0.3);
-      for (let i = 0; i < 3; i++) this.shell(true, 0.9 + i * 0.25, SHELL.SHOCK, p, 0.5, 5.5 + i * 1.2, this.hdr(c, 1.5, 0.4), 0.45, { hemi: true });
+      // S3 footage (2.0-5.9s): a thin bright beam stands up from the launcher for as long as the field lasts,
+      // and the field ripples out once
+      r.d.pillar = this.beam(true, 0, BEAM.LINE, p, this.v[0].copy(p).setY(p.y + 30), 0.07, 0.05, this.hdr(c, 1.6, 2.2), 1, { speed: 0, seed: 0.1,
+        follow: (rec) => { if (r.gone) return false; const q = d.pos; rec.v[0] = q.x; rec.v[1] = q.y + 0.5; rec.v[2] = q.z; rec.v[4] = q.x; rec.v[5] = q.y + 30; rec.v[6] = q.z;
+          rec.v[11] = 0.75 + 0.25 * Math.sin(this.time * 9); } });
+      r.d.halo = this.beam(true, 0, BEAM.LINE, p, this.v[0].copy(p).setY(p.y + 30), 0.25, 0.2, this.hdr(c, 1.0, 0.6), 0.25, { speed: 0, seed: 0.1,
+        follow: (rec) => { if (r.gone) return false; const q = d.pos; rec.v[0] = q.x; rec.v[1] = q.y + 0.5; rec.v[2] = q.z; rec.v[4] = q.x; rec.v[5] = q.y + 30; rec.v[6] = q.z; } });
+      this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.0, 0.25);
+      this.shell(true, 0.8, SHELL.SHOCK, p, 0.5, 6, this.hdr(c, 1.3, 0.6), 0.5, { hemi: true });
       this.disc(false, 0.8, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.4, 4.5, c, 1);
       this.disc(false, 0.9, DISC.SPLAT, this.v[0].copy(p).setY(p.y + 0.03), this.up, 0.3, 1.8, c, 1);
       this.streaks(this.v[0].copy(p).setY(p.y + 0.4), 22, 12, c, { up: 0.7, life: 0.6 });
@@ -684,6 +702,7 @@ const KIT_FX = {
         this.spark(SPARK.STAR, this.v[0], 0, 0.3, 0, 0.5, 0.2, 0.02, this.hdr(r.color, 1.6, 1.2), 0.8); }
     },
     end(r, d) {
+      r.gone = true;
       const R = d.radius || 4, c = r.color;
       this.shell(true, 0.4, SHELL.SHOCK, d.pos, R, R * 1.15, this.hdr(c, 2, 1.2), 1, { hemi: true });
       for (let i = 0; i < Math.round(40 * this.kit.q); i++) { const th = rnd(TAU), el = rnd(1.4, 0.05);
@@ -1165,44 +1184,48 @@ const DIRECTORS = {
   krakenRoyale: {
     start(a, t) {   // S3: the transformation bursts in a ring of ink petals
       const c = t.color, p = this.v[0].copy(a.pos).setY(a.pos.y + 0.3);   // low: the Kraken's belly rests on the floor
-      this.activation(a, c, 1.3);
-      this.nativeBlast(p, this.c.setRGB(...c), 3);
-      for (let i = 0; i < Math.round(30 * this.kit.q); i++) { const th = rnd(TAU), el = rnd(1, -0.1), s = rnd(13, 6);
-        this.puff(PUFF.CHUNK, p, Math.cos(th) * Math.cos(el) * s, Math.sin(el) * s, Math.sin(th) * Math.cos(el) * s, rnd(0.9, 0.5), rnd(0.32, 0.16), 0.06, c, 1, { grav: 10, drag: 1.2, spin: rnd(9, -9) }); }
+      this.activation(a, c, 0.8);
+      // S3 (83.0s): the transformation throws a cloud of glossy pink petals with white cores
+      this.petals(p, 80, 13, c, { size: 0.32, life: 1.1, upMin: -0.05, upMax: 0.95 });
+      this.chunks(p, 14, 9, c, { size: 0.24 });
     },
     phase(a, t, phase) {
       const c = t.color;
       if (phase === 'charge') {
-        // ink wound tight round the body (a liquid spiral, as in the footage), not a ring of light
-        t.d.charge = this.band(false, 0, BAND.TWISTER, a.pos, 1.8, 1.8, 1.1, 1.1, c, 1, { fade: false, speed: 1.5, twist: 2,
-          follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const k = clamp01((this.time - t.phaseAt) / (35 / 60)); rec.v[0] = a.pos.x; rec.v[1] = a.pos.y; rec.v[2] = a.pos.z; rec.v[4] = 1.8 - 0.7 * k; rec.v[15] = 3 + 9 * k; } });
+        // thin ink filaments winding in round the body as the charge builds (the S3 effects are fine strands, not sheets)
+        t.d.fil = krakenFilaments(this, c, 12, 0.09, 0.24, 4);
         // S3 footage (85.0s): arrows on the floor point the way the charge will go
         t.d.arrows = this.disc(false, 0, DISC.CHEVRON, a.pos, this.up, 2.2, 2.2, [0.95, 0.95, 0.95], 0.95, { fade: false,
           follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const f = a._s3AllSpecialState?.direction || this.aim(a, this.v[6]);
             rec.v[0] = a.pos.x + f.x * 3.6; rec.v[1] = groundBelow(this, a) + 0.05; rec.v[2] = a.pos.z + f.z * 3.6; rec.v[7] = Math.atan2(f.z, f.x);
             rec.v[11] = 0.5 + 0.5 * smooth((this.time - t.phaseAt) / (35 / 60)); } });
-        (t.d.recs ||= []).push(t.d.charge, t.d.arrows);
+        (t.d.recs ||= []).push(t.d.arrows);
       } else if (phase === 'dash') {
         this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 0.4), c, 0.9, 0.16);
         this.disc(false, 0.4, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.6, 3.2, c, 1);
-        // S3 (89–93s): spiralling bands of liquid ink wrapped round the charge
-        t.d.dashRibs = [0, 1, 2].map(() => this.ribbon(false, { width: 0.26, widthTail: 0.06, color: c, alpha: 1, style: RIBBON.INK, life: 0.13, spacing: 0.08 }));
-        t.d.dashInk = this.ribbon(false, { width: 1.8, widthTail: 0.4, color: c, alpha: 1, style: RIBBON.INK, life: 0.3, spacing: 0.2, flat: true });
+        // S3 (89.9/92.9s): a cage of many thin pink and white strands whirling round the body, white streaks and petals
+        endFilaments(this, t.d.fil); t.d.fil = null;
+        t.d.dashRibs = krakenFilaments(this, c, 20, 0.13, 0.22, 3);
       }
-      if (phase !== 'dash' && t.d.dashRibs) { for (const r of t.d.dashRibs) this.kit.ribbons.end(r); this.kit.ribbons.end(t.d.dashInk); t.d.dashRibs = null; }
-      if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 0.3), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25); }
+      if (phase !== 'charge' && t.d.fil) { endFilaments(this, t.d.fil); t.d.fil = null; }
+      if (phase !== 'dash' && t.d.dashRibs) { endFilaments(this, t.d.dashRibs); t.d.dashRibs = null; }
+      if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 0.3), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25);
+        this.stars(a.pos, 8, 0.8, [3, 3, 3], { h: 1.2, h0: 0.2 }); this.petals(this.v[0], 30, 9, c, { size: 0.26 }); }   // S3 (96.8s): a white star burst and petals
     },
     frame(a, t, dt) {
       const c = t.color;
       if (t.phase === 'charge') {   // ink drawn in to the body
+        if (t.d.fil) { const k = clamp01((this.time - t.phaseAt) / (35 / 60)); stepFilaments(this, a, t.d.fil, 1.6 - 0.6 * k, 0.45, 9 + 10 * k, null, dt); }
         if (vfxRandom() < 0.8) { const th = rnd(TAU), d = rnd(3, 2); this.v[0].set(a.pos.x + Math.cos(th) * d, a.pos.y + rnd(1.4, 0.1), a.pos.z + Math.sin(th) * d);
           this.drop(this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 0.35 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.08, c, { drag: 0, grav: 0, stretch: 0.05, shrink: 0.3 }); }
       } else if (t.phase === 'dash' && t.d.dashRibs) {   // S3: corkscrewing ink arcs round the charge
-        for (let i = 0; i < 3; i++) { const th = this.time * 18 + i * TAU / 3, f = a._s3AllSpecialState?.direction || this.forward(a, this.v[5]);
-          const sx = f.z, sz = -f.x;
-          this.v[0].set(a.pos.x + sx * Math.cos(th) * 1.05 + f.x * 0.4, a.pos.y + 0.42 + Math.sin(th) * 0.42, a.pos.z + sz * Math.cos(th) * 1.05 + f.z * 0.4);
-          this.pushRibbon(t.d.dashRibs[i], this.v[0], false); }
-        this.pushRibbon(t.d.dashInk, this.v[1].set(a.pos.x, a.pos.y + 0.1, a.pos.z), false);
+        const f = a._s3AllSpecialState?.direction || this.forward(a, this.v[5]);
+        stepFilaments(this, a, t.d.dashRibs, 1.15, 0.5, 20, f, dt);
+        if (vfxRandom() < 0.9) {   // white speed streaks peeling back off the cage
+          this.v[0].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(1, 0.1), a.pos.z + rnd(1, -1));
+          this.spark(SPARK.STREAK, this.v[0], -f.x * 16, rnd(1, -1), -f.z * 16, 0.14, 0.05, 0.02, [2.2, 2.2, 2.2], 0.9, { stretch: 0.07, drag: 2 }); }
+        if (vfxRandom() < 0.5) this.petals(this.v[0].set(a.pos.x, a.pos.y + 0.5, a.pos.z), 1, 6, c, { size: 0.2, life: 0.5 });
+        if (vfxRandom() < 0.9) this.drop(this.v[1].set(a.pos.x - f.x * 0.8 + rnd(0.5, -0.5), a.pos.y + 0.15, a.pos.z - f.z * 0.8 + rnd(0.5, -0.5)), -f.x * 4 + rnd(2, -2), rnd(4, 1.5), -f.z * 4 + rnd(2, -2), 0.5, 0.12, c);
         if (vfxRandom() < 0.8) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(2, 0.2), a.pos.z + rnd(1, -1)), rnd(5, -5), rnd(5, 1), rnd(5, -5), 0.45, 0.2, 0.05, c, 1, { grav: 14 });
       } else if (vfxRandom() < 0.08) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(0.9, 0.3), a.pos.z + rnd(1.2, -1.2)), 0, -0.3, 0, 0.7, 0.09, 0.04, c, 1, { grav: 10 });
     },
@@ -1213,7 +1236,7 @@ const DIRECTORS = {
         this.band(false, 0.45, BAND.SHOCK, g, 0.6, 2.6, 0.3, 1.4, c, 1);
         this.chunks(this.v[1].copy(g).setY(g.y + 0.2), 14, 8, c, { size: 0.22 }); }
     },
-    end(a, t) { if (t.d.dashRibs) for (const r of t.d.dashRibs) this.kit.ribbons.end(r); if (t.d.dashInk) this.kit.ribbons.end(t.d.dashInk); },
+    end(a, t) { endFilaments(this, t.d.dashRibs); endFilaments(this, t.d.fil); },
   },
   // ---------------------------------------------------------------- Splattercolor Screen / Wave Breaker (device in hand)
   splattercolorScreen: { start(a, t) { this.activation(a, t.color, 0.9); } },
@@ -1285,6 +1308,39 @@ function trizookaMuzzle(self, a, c) {
   self.smoke(m, 6, [0.94, 0.94, 0.96], { size: 0.4, speed: 2.2, life: 0.9, alpha: 0.5, rise: 1 });
   self.streaks(m, 10, 12, c, { up: 0.1, life: 0.4 });
 }
+// Kraken strands: thin ribbons orbiting the body on tilted circles (a cage); every few strands is a white streak.
+function krakenFilaments(self, c, n, w, life, whiteEvery) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const white = whiteEvery > 0 && i % whiteEvery === whiteEvery - 1;
+    out.push({ r: white ? self.ribbon(true, { width: w * 0.6, widthTail: 0.01, color: [2.0, 2.0, 2.0], alpha: 0.9, style: RIBBON.GLOW, life, spacing: 0.03 })
+                        : self.ribbon(false, { width: w, widthTail: w * 0.25, color: c, alpha: 1, style: RIBBON.INK, life, spacing: 0.03 }),
+      white, tilt: rnd(1.2, -1.2), az: rnd(TAU), ph: rnd(TAU), sp: rnd(1.25, 0.8) * (vfxRandom() < 0.5 ? -1 : 1), rr: rnd(1.1, 0.85) });
+  }
+  return out;
+}
+function stepFilaments(self, a, fil, R, cy, speed, f, dt) {
+  if (!fil?.length) return;
+  // Sub-steps through the frame, sweeping both the strand's angle (accumulated, so a changing speed never jumps it)
+  // and the body's movement (the dash covers 0.35 m a frame), so a strand draws a smooth arc instead of chords.
+  const cx = a.pos.x + (f ? f.x * 0.35 : 0), cyy = a.pos.y + cy, cz = a.pos.z + (f ? f.z * 0.35 : 0);
+  const lc = fil.lc || [cx, cyy, cz], move = Math.hypot(cx - lc[0], cyy - lc[1], cz - lc[2]);
+  const n = Math.max(1, Math.min(16, Math.ceil(Math.max(speed * R * 1.4 * dt, move) / 0.05))), now = self.kit.time;
+  for (const q of fil) {
+    const ct = Math.cos(q.tilt), st = Math.sin(q.tilt), ca = Math.cos(q.az), sa = Math.sin(q.az), pool = q.white ? self.kit.glowRibbons : self.kit.ribbons;
+    const th0 = q.ang ?? q.ph, dth = speed * q.sp * dt;
+    q.ang = th0 + dth;
+    for (let k = 1; k <= n; k++) {
+      const u = k / n, th = th0 + dth * u;
+      // a circle in the XZ plane, tilted about X then turned about Y
+      const x = Math.cos(th) * R * q.rr, y = Math.sin(th) * R * q.rr * st * 0.6, z = Math.sin(th) * R * q.rr * ct;
+      const X = x * ca + z * sa, Z = -x * sa + z * ca;
+      pool.push(q.r, lc[0] + (cx - lc[0]) * u + X, lc[1] + (cyy - lc[1]) * u + y, lc[2] + (cz - lc[2]) * u + Z, now - dt * (1 - u));
+    }
+  }
+  fil.lc = [cx, cyy, cz];
+}
+function endFilaments(self, fil) { for (const q of fil || []) (q.white ? self.kit.glowRibbons : self.kit.ribbons).end(q.r); }
 // Killer Wail speaker mouths, from the drawn devices when present, otherwise from the shared ring layout.
 const SPEAKER_RING = [[-0.55, 1.95], [0.55, 1.95], [-1.0, 1.35], [1.0, 1.35], [-0.55, 0.75], [0.55, 0.75]];
 function speakerAnchors(self, a) {
