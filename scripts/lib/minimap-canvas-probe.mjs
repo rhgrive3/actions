@@ -45,7 +45,7 @@ class EmittedPaint{};emittedDirty.installMinimapDirty({Minimap:emittedMap.Minima
 function harness(adapt){
  const events={};let G={settings:{minimap:true},teamHex:['#ff8a14','#2f5bff'],game:{theme:'day'},match:{attract:false},projectiles:{bombs:[],clouds:[]}};
  const code=sources[adapt];
- const M=adapt==='emitted'?{M:emittedMap.Minimap,...emittedDirty}:new Function('G','on','requestIdleCallback','setTimeout','SPECIALS','SUB',code+'\n'+runtime+'\nreturn {M:Minimap,installMinimapDirty,_emptyInkDirty};')(G,(n,f)=>events[n]=f,()=>1,()=>1,emittedConfig.SPECIALS,emittedConfig.SUB);
+ const M=adapt==='emitted'?{M:emittedMap.Minimap,...emittedDirty}:frame.contentWindow.Function('G','on','requestIdleCallback','setTimeout','SPECIALS','SUB',code+'\n'+runtime+'\nreturn {M:Minimap,installMinimapDirty,_emptyInkDirty};')(G,(n,f)=>events[n]=f,()=>1,()=>1,emittedConfig.SPECIALS,emittedConfig.SUB);
  if(adapt==='emitted'){Object.assign(emittedCtx.G,G);G=emittedCtx.G;events['bomb:explode']=payload=>emittedCtx.emit('bomb:explode',payload);}
  const ctx={M:M.M},installMinimapDirty=M.installMinimapDirty,_emptyInkDirty=M._emptyInkDirty;
  const Paint=adapt==='emitted'?EmittedPaint:class {};installMinimapDirty({Minimap:ctx.M,PaintSystem:Paint});const paint=new Paint();Object.assign(paint,{grid:new Uint8Array(16),dead:new Uint8Array(16),paintFaces:[],version:0,cell:1,inkDirty:_emptyInkDirty()});
@@ -59,7 +59,7 @@ function observeAll(hs){return hs.map(h=>h.snapshot());}
 function encodeAll(hs){return hs.map(h=>h.m.canvas.toDataURL('image/png'));}
 function visible(a){const colors=new Set();for(let i=0;i<a.length;i+=4)if(a[i+3])colors.add(a.slice(i,i+4).join(','));assert(colors.size>1,'nonempty multicolor canvas required');}
 function run(name,steps){
- const a=harness('baseline'),b=harness('candidate'),e=harness('emitted');let observedOwner=false,observedFlash=false,overlayChanged=false,hiddenStable=true,flashFrame=null,clearedFlash=false;const hs=[a,b,e];let observed=observeAll(hs);const initial=observed[1].output;visible(initial);for(const h of hs)visible(Array.from(h.m.bctx.getImageData(0,0,h.m.w,h.m.h).data));
+ const a=harness('baseline'),b=harness('candidate'),e=harness('emitted');let observedOwner=false,observedFlash=false,overlayChanged=false,hiddenStable=true,flashFrame=null,clearedFlash=false;const hs=[a,b,e];for(const h of hs)assert.equal(h.m.canvas.ownerDocument,frame.contentDocument,'all Canvas fixtures share emitted document');let observed=observeAll(hs);const initial=observed[1].output;visible(initial);for(const h of hs)visible(Array.from(h.m.bctx.getImageData(0,0,h.m.w,h.m.h).data));
  const saveImage=name=>{const pngs=encodeAll(hs);images.push({name,png:pngs[1]});};
  try { for(let i=0;i<steps.length;i++){
   const step=steps[i],before=observed[1].output;
