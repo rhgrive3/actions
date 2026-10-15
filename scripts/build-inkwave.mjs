@@ -355,6 +355,10 @@ const deferredIntegrationPreloads = new Set([
   'patches/splatoon3/runtime/muzzle-feedback.mjs',
   'patches/splatoon3/runtime/superjump-target-notification.mjs',
 
+  // Data-only alternate kits remain static and offline-cached without adding
+  // HTML modulepreload requests for 95 additional loadout identities.
+  'patches/splatoon3/runtime/alternate-weapon-kits.mjs',
+  'patches/splatoon3/runtime/alternate-weapon-kits-data.mjs',
   // Per-main-weapon models (families inlined into registry.mjs): full precache retained, no extra eager hints.
   'patches/splatoon3/runtime/weapon-models/registry.mjs',
   'patches/splatoon3/runtime/weapon-family-motion.mjs',

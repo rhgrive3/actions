@@ -95,6 +95,7 @@ export class RangeSession {
       a.rangeTarget.combo = null; a.rangeTarget.deaths = 0;
     }
     this.last = null; this.log.length = 0;
+    this.hud.clearTargetFeedback?.();
     this.hud.toast(L('Targets reset'));
   }
 
@@ -124,7 +125,10 @@ export class RangeSession {
     const defs = [];
     // The hub ring fits seven non-overlapping training pads. The pause weapon
     // picker retains the complete catalog, including every newly registered main.
-    const carousel = WEAPON_ORDER.slice(0, 7);
+    // Variant kits are interleaved in WEAPON_ORDER, but the seven physical
+    // pads must stay on the original weapon families. The pause picker exposes
+    // the full catalog, including alternates.
+    const carousel = WEAPON_ORDER.filter(id => !WEAPONS[id]?.variantOf).slice(0, 7);
     carousel.forEach((id, i) => {
       const a = -Math.PI / 2 + (i / carousel.length) * Math.PI * 2;
       defs.push({ id: 'weapon:' + id, kind: 'weapon', weapon: id, x: CAROUSEL.center[0] + Math.cos(a) * CAROUSEL.r, z: CAROUSEL.center[1] + Math.sin(a) * CAROUSEL.r, color: '#35405a' });

@@ -24,6 +24,12 @@ test('queued non-finite autostart is rejected before Match; normal 90s and 2s ma
   const f=await sourceFixture({productionComposition:true,
     extraExports:"export { Match } from './inkwave-public/src/game/match.js';"});
   const valueFor = duration => new f.Match({duration,mode:'turf'});
+  for (const mode of ['zones', 'tower', 'rainmaker', 'clams']) {
+    assert.equal(new f.Match({duration:Infinity,mode}).duration, 300,
+      'Ranked match must keep its authoritative 300s clock: '+mode);
+    assert.equal(new f.Match({duration:90,mode}).duration, 300,
+      'Ranked duration cannot inherit Turf's optional 90s: '+mode);
+  }
   for (const invalid of [Infinity,-Infinity,NaN,-1,0,86401,1e300,'Infinity']) {
     const m=valueFor(invalid);
     assert.ok(Number.isFinite(m.time) && m.duration>0 && m.duration<=86400,
