@@ -332,9 +332,13 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     return true;
   }
   const inkMod = a => (a.s3?.modifiers?.inkSaverMain ?? 1)/(a.weapon.inkTankScale||1);
-  function notify(a, r, origin, direction, charge = 0) {
-    a.character.trigger(r.family==='charger'||r.family==='stringer'?'charge_release':'shoot');
-    emit('weapon:fire',{actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge});
+  const catalogHands = [0,1].map(hand => Object.freeze({hand,valueOf(){return 1;}}));
+  function notify(a, r, origin, direction, charge = 0, hand = null) {
+    const trigger=r.family==='charger'||r.family==='stringer'?'charge_release':'shoot';
+    if(hand===null)a.character.trigger(trigger);else a.character.trigger(trigger,catalogHands[hand]);
+    const event={actor:a,weapon:r.id,muzzle:origin.clone(),dir:direction.clone(),charge};
+    if(hand!==null)event.hand=hand;
+    emit('weapon:fire',event);
     if (a.isLocal || a._nearCamera?.()) {
       G.audio?.play(r.family==='charger'?'shoot_charger':r.family==='blaster'?'shoot_blaster':'shoot_shooter',
         {pos:a.isLocal?undefined:origin,volume:.45});
@@ -601,7 +605,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     spawn(a,r,desc,aim,at,{volley,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
-    notify(a,r,muzzle,aim,charge);
+    // Only an admitted, spawned catalog round advances native dual-wield presentation.
+    // Origin remains unchanged here; left-muzzle launch parity is a separate pending qualification.
+    let hand=null;
+    if(r.family==='dualies'){runner.hand^=1;hand=runner.hand;runner.sinceHand[hand]=0;}
+    notify(a,r,muzzle,aim,charge,hand);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
