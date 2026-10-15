@@ -4701,3 +4701,8 @@ Current-base follow-up (2026-10-13): the final reconciliation preserves external
 
 - 小画面の実ブラウザ画像で、外観ボタンの英日併記と生成称号の英語が残ることを確認し追加修正。外観ラベルは選択肢名と分けて翻訳し、生成称号はハッシュ元のプレイヤー名を変えず、既定の形容詞・名詞だけ翻訳する。ブキ一覧の説明とオンライン手順は小画面で収まる短い日本語にした。
 - main で追加された BVH 結果・スタック再利用も統合。凍結済みの最適化前ソルバーを残したまま、独立な検証側にも明示的な三角形 ID 順を与え、最適化による状態共有や動的障害物の優先順位を引き続き検証する。
+
+
+## 2026-10-16 JST — #841 native Storm recovery acceptance
+
+Current main `ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a` retains normal0.21 HP/fixed-frame recovery during actual Storm throw, the60F damage wait, max100 and single allied-rain recovery. Source8/8 and emitted8/8 plus genuine-browser9/9 controlled30/60/120Hz cases now pass with ordinary Q→Sub press/release and the real emitter/cloud. No gameplay values changed; HP/damage-age/special gauge are explicit setup, SwiftShader is not physical-device or proprietary Nintendo animation calibration. See `inkwave-issue-followup-2026-10-16.md` and its bounded receipt. This closes the HP-freeze acceptance for#841 only; other Issues keep their remaining conditions.
