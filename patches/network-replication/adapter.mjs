@@ -2120,16 +2120,26 @@ function firstSplatStateFor(session,cfg) {
       `      if (n >= MAX_BLOBS - 5) break;
       if (p.ghost && remoteDrawn >= MAX_BLOBS - 64) continue;
       if (p.delay > 0) continue;
-      if (p.ghost && (![p.pos.x,p.pos.y,p.pos.z,p.start.x,p.start.y,p.start.z,p.vel.x,p.vel.y,p.vel.z,p.age,p.life,p.size,p.seed]
-            .every(Number.isFinite) || p.life <= 0
-        || [p.vis,p.tail0,p.tailK,p.wob,p.wobF,p.nose].some(v => v !== undefined && !Number.isFinite(v))
-        || p.vis !== undefined && (p.vis < 0 || p.vis > 8)
-        || p.tail0 !== undefined && (p.tail0 < 0 || p.tail0 > 16)
-        || p.tailK !== undefined && (p.tailK < 0 || p.tailK > 16)
-        || p.wob !== undefined && (p.wob < 0 || p.wob > 4)
-        || p.wobF !== undefined && (p.wobF < 0 || p.wobF > 512)
-        || p.nose !== undefined && (p.nose < -2 || p.nose > 4)
-        || p.sats !== undefined && (!Number.isSafeInteger(p.sats) || p.sats < 0 || p.sats > SAT_SIZE.length))) continue;`,
+      // No ephemeral arrays or callbacks in the 60Hz ink renderer.
+      if (p.ghost && (
+        !p.pos || !p.start || !p.vel
+        || !Number.isFinite(p.pos.x) || !Number.isFinite(p.pos.y) || !Number.isFinite(p.pos.z)
+        || !Number.isFinite(p.start.x) || !Number.isFinite(p.start.y) || !Number.isFinite(p.start.z)
+        || !Number.isFinite(p.vel.x) || !Number.isFinite(p.vel.y) || !Number.isFinite(p.vel.z)
+        || Math.abs(p.pos.x) > 1e6 || Math.abs(p.pos.y) > 1e6 || Math.abs(p.pos.z) > 1e6
+        || Math.abs(p.start.x) > 1e6 || Math.abs(p.start.y) > 1e6 || Math.abs(p.start.z) > 1e6
+        || Math.abs(p.vel.x) > 4096 || Math.abs(p.vel.y) > 4096 || Math.abs(p.vel.z) > 4096
+        || !Number.isFinite(p.age) || !Number.isFinite(p.life)
+        || !Number.isFinite(p.size) || !Number.isFinite(p.seed)
+        || p.age < 0 || p.life <= 0 || p.size < 0 || p.size > 64
+        || p.vis !== undefined && (!Number.isFinite(p.vis) || p.vis < 0 || p.vis > 8)
+        || p.tail0 !== undefined && (!Number.isFinite(p.tail0) || p.tail0 < 0 || p.tail0 > 16)
+        || p.tailK !== undefined && (!Number.isFinite(p.tailK) || p.tailK < 0 || p.tailK > 16)
+        || p.wob !== undefined && (!Number.isFinite(p.wob) || p.wob < 0 || p.wob > 4)
+        || p.wobF !== undefined && (!Number.isFinite(p.wobF) || p.wobF < 0 || p.wobF > 512)
+        || p.nose !== undefined && (!Number.isFinite(p.nose) || p.nose < -2 || p.nose > 4)
+        || p.sats !== undefined && (!Number.isSafeInteger(p.sats) || p.sats < 0 || p.sats > SAT_SIZE.length)
+      )) continue;`,
       'reject poisoned draw records and preserve local headroom');
     patch('      n++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
       '      n++; if (p.ghost) remoteDrawn++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
