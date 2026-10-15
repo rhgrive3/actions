@@ -1,0 +1,86 @@
+{
+  "executionAuthorized": true,
+  "diagnosticBranch": "review/lobby-current-component-20261015",
+  "scope": "Controlled native lobby component DOM/CSS endpoints after native assets are ready. Native freeze then exact60Hz Showcase.update and camera projection; same127-frame comparison. No ordinary startup-latency, FPS or full network gameplay claim. Rebound to current main with already-adopted material handoff on both sides; earlier WebKit resource failure retained.",
+  "sources": {
+    "baseline": {
+      "head": "adbd83ee4f6aaef8cb7853de997d42d702c8badf",
+      "tree": "f467490286f48f7a07101322321c5213bd6f26b9",
+      "blobs": {
+        "inkwave-public/src/ui/menus.js": "a1ed8018c5c896c2973eee6c947299f5cca50883",
+        "inkwave-public/src/game/showcase.js": "02ab7f694f6d16aa02420d660fd846b1a99a894a",
+        "inkwave-public/src/net/mock.js": "af8c170a050b65c3356055dd0be43ef95410b015",
+        "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8",
+        "patches/local-quality/adapter.mjs": "caaf1384b29ecf3355cdb52109a8af7c561020d3",
+        "inkwave-public/styles/ui.css": "57ff39d488244a9a0760c41b10862e68af59083c"
+      }
+    },
+    "candidate": {
+      "head": "559f76ecd848822fc6da7c2b68d22e4a5607fc22",
+      "tree": "5ac9162e26d744a3af0c1fe7efb55494aebe54a2",
+      "blobs": {
+        "inkwave-public/src/ui/menus.js": "a1ed8018c5c896c2973eee6c947299f5cca50883",
+        "inkwave-public/src/game/showcase.js": "02ab7f694f6d16aa02420d660fd846b1a99a894a",
+        "inkwave-public/src/net/mock.js": "af8c170a050b65c3356055dd0be43ef95410b015",
+        "inkwave-public/src/config.js": "acef7bc0cca037f2d324ef8f8206b0d5f57e61a8",
+        "patches/local-quality/adapter.mjs": "5c6eb0cae2d1a2da6e64c573e52f707fcc34c119",
+        "patches/local-quality/lobby-slot-transform-adapter.mjs": "9652f16084b14539f185aa7a59253ff008fdcee7",
+        "inkwave-public/styles/ui.css": "57ff39d488244a9a0760c41b10862e68af59083c"
+      }
+    }
+  },
+  "files": {
+    "bindings.mjs": {
+      "bytes": 1803,
+      "sha256": "44f9dfcc8ca8f668c5aef5459462a086f469adb94157903a7c562f8045fc0163",
+      "publicationPath": "scripts/lobby-slot-browser/bindings.mjs"
+    },
+    "bindings.test.mjs": {
+      "bytes": 1896,
+      "sha256": "72ac5dc6aa3e62edbe1a0cdd9fbc650264ce14f5c49f78094201d11c8010acd4",
+      "publicationPath": "scripts/lobby-slot-browser/bindings.test.mjs"
+    },
+    "browser.mjs": {
+      "bytes": 6951,
+      "sha256": "94be0784ad7397d350eca212e80366ad8003b2885f33f8eb9659fbb81dac01b4",
+      "publicationPath": "scripts/lobby-slot-browser/browser.mjs"
+    },
+    "inkwave-lobby-slot-browser.yml": {
+      "bytes": 7135,
+      "sha256": "b0ffe3c0b23750b5c62420387d63d6e5a151441117fb2b44d95fccf89dc067c7",
+      "publicationPath": ".github/workflows/inkwave-lobby-slot-browser.yml"
+    },
+    "lobby-probe.mjs": {
+      "bytes": 7190,
+      "sha256": "9de62a95b187510c152733d1581ea65a3444eab6d1dc236c1c0fa3614b66dad8",
+      "publicationPath": "scripts/lobby-slot-browser/lobby-probe.mjs"
+    },
+    "native-style.mjs": {
+      "bytes": 1143,
+      "sha256": "fccf366efeff45c772f660933ffece3f31dd5bca9f8ed06489cb7a82c7bb44e2",
+      "publicationPath": "scripts/lobby-slot-browser/native-style.mjs"
+    },
+    "run-hosted.mjs": {
+      "bytes": 4222,
+      "sha256": "b6eb972198da7f5973810a75e8a3e153a98c13af1106b356c29c057862f07867",
+      "publicationPath": "scripts/lobby-slot-browser/run-hosted.mjs"
+    },
+    "style-smoke.mjs": {
+      "bytes": 2746,
+      "sha256": "60f5ff7536ab9d439906db5c6896ba46627fbe5c9e8af00f83d674cbafd8a14a",
+      "publicationPath": "scripts/lobby-slot-browser/style-smoke.mjs"
+    },
+    "verify.mjs": {
+      "bytes": 4603,
+      "sha256": "0f7ba0cc83a2256236cacb7d8465af9f5428e049606b82aeaba03efb386ad4bc",
+      "publicationPath": "scripts/lobby-slot-browser/verify.mjs"
+    },
+    "verify.test.mjs": {
+      "bytes": 9941,
+      "sha256": "a9c23214f2d3cd772e15599343776168d12ac698b32da66a738aebce226dc484",
+      "publicationPath": "scripts/lobby-slot-browser/verify.test.mjs"
+    }
+  },
+  "repairOf": "edcb9d281ef2fe0de033d6207aad560c22d760c8",
+  "repairReason": "Rebind unchanged controlled component acceptance to current main and reconciled PR1455; retain prior startup/resource failures."
+}

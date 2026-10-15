@@ -1,38 +1,134 @@
-name: INKWAVE lobby slot native CSSOM regression
+name: INKWAVE isolated lobby slot DOM assignment parity
 on:
-  pull_request:
-    paths:
-      - patches/local-quality/adapter.mjs
-      - patches/local-quality/lobby-slot-transform-adapter.mjs
-      - patches/local-quality/tests/lobby-slot-transform.test.mjs
-      - scripts/check-inkwave-lobby-slot-browser.mjs
-      - .github/workflows/inkwave-lobby-slot-browser.yml
+  push:
+    branches: [review/lobby-current-component-20261015]
 permissions:
   contents: read
 concurrency:
-  group: lobby-slot-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: lobby-slot-browser-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  native-cssom:
+  lobby-slot-browser:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/review/lobby-current-component-20261015' && github.repository == 'rhgrive3/actions'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        engine: [chromium, webkit]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NODE_OPTIONS: --max-old-space-size=2048
+      LOBBY_SLOT_AUTHORIZED: 'true'
+      LOBBY_SLOT_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: adbd83ee4f6aaef8cb7853de997d42d702c8badf
+          persist-credentials: false
+          path: baseline
+      - uses: actions/checkout@v4
+        with:
+          ref: 559f76ecd848822fc6da7c2b68d22e4a5607fc22
+          persist-credentials: false
+          path: candidate
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - run: npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1
-      - run: npx playwright install --with-deps chromium webkit
-      - name: Verify native DOM lobby transform write equivalence
+          node-version: 22.23.3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify frozen diagnostic package
+        shell: bash
         run: |
-          node --test patches/local-quality/tests/lobby-slot-transform.test.mjs
-          node scripts/check-inkwave-lobby-slot-browser.mjs .ci-scratch/lobby-slot-browser
+          set -euo pipefail
+          test "$(git -C diagnostic rev-parse HEAD)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import hashlib,json,pathlib
+          root=pathlib.Path('diagnostic');p=root/'scripts/lobby-slot-browser';m=json.loads((p/'package.json').read_text())
+          assert len(m['files'])==10
+          for name,pin in m['files'].items():
+              f=root/'.github/workflows/inkwave-lobby-slot-browser.yml' if name=='inkwave-lobby-slot-browser.yml' else p/name
+              b=f.read_bytes();assert len(b)==pin['bytes'] and hashlib.sha256(b).hexdigest()==pin['sha256'],name
+          PY
+      - name: Install pinned browser/build dependencies and run controls
+        working-directory: diagnostic/scripts/lobby-slot-browser
+        run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps "$LOBBY_SLOT_ENGINE"
+          mkdir -p "$GITHUB_WORKSPACE/evidence"
+          node --test --test-reporter=tap bindings.test.mjs verify.test.mjs | tee "$GITHUB_WORKSPACE/evidence/controls.tap"
+      - name: Compare fixed baseline and candidate component lobby DOM output
+        shell: bash
+        run: |
+          set -euo pipefail
+          export BASELINE_CHECKOUT="$GITHUB_WORKSPACE/baseline"
+          export CANDIDATE_CHECKOUT="$GITHUB_WORKSPACE/candidate"
+          export LOBBY_SLOT_EVIDENCE="$GITHUB_WORKSPACE/evidence"
+          export PACKAGE="$GITHUB_WORKSPACE/diagnostic/scripts/lobby-slot-browser"
+          python - <<'PY'
+          import json,os,pathlib,signal,subprocess,time
+          # Same conservative 3GiB process-tree RSS and 2GiB system reserve as CPU qualification.
+          # A single 600s supervised qualification budget; the job has a 30min hard timeout.
+          cap=3*1024**3;reserve=2*1024**3;deadline=600;peak=0;minimum=None;reason=None;peakProcesses=[];peakPhase=None
+          def available():
+              return int(next(x.split()[1] for x in pathlib.Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')))*1024
+          assert available()>=cap+reserve,'Insufficient starting memory and reserve'
+          p=subprocess.Popen(['node',os.environ['PACKAGE']+'/run-hosted.mjs'],start_new_session=True);start=time.monotonic()
+          while p.poll() is None:
+              rss=0;processes={}
+              for d in pathlib.Path('/proc').iterdir():
+                  if not d.name.isdigit():continue
+                  try:
+                      fields=(d/'stat').read_text().rsplit(')',1)[1].split()
+                      processes[int(d.name)]=(int(fields[1]),int(fields[21])*os.sysconf('SC_PAGE_SIZE'),int(fields[19]))
+                  except (OSError,ValueError,IndexError):pass
+              descendants={p.pid}
+              while True:
+                  expanded=descendants|{pid for pid,(parent,_,_) in processes.items() if parent in descendants}
+                  if expanded==descendants:break
+                  descendants=expanded
+              rss=sum(processes[pid][1] for pid in descendants if pid in processes)
+              free=available();minimum=free if minimum is None else min(minimum,free)
+              if rss>peak:
+                  peak=rss;peakProcesses=[{'pid':pid,'parent':processes[pid][0],'rss':processes[pid][1],'starttime':processes[pid][2]} for pid in sorted(descendants) if pid in processes]
+                  try:peakPhase=json.loads((pathlib.Path(os.environ['LOBBY_SLOT_EVIDENCE'])/'phase.json').read_text())
+                  except (OSError,ValueError):peakPhase=None
+              if rss>cap:reason='process-tree RSS cap exceeded'
+              elif free<reserve:reason='system memory reserve reached'
+              elif time.monotonic()-start>deadline:reason='600s qualification timeout'
+              if reason:
+                  identities={pid:processes[pid][2] for pid in descendants if pid in processes}
+                  def signal_same(pid,starttime,sig):
+                      try:
+                          current=(pathlib.Path('/proc')/str(pid)/'stat').read_text().rsplit(')',1)[1].split()
+                          if int(current[19])==starttime:os.kill(pid,sig)
+                      except (OSError,ValueError,IndexError):pass
+                  for pid,starttime in identities.items():signal_same(pid,starttime,signal.SIGTERM)
+                  try:p.wait(timeout=10)
+                  except subprocess.TimeoutExpired:pass
+                  finally:
+                      for pid,starttime in identities.items():signal_same(pid,starttime,signal.SIGKILL)
+                  p.wait()
+                  break
+              time.sleep(.25)
+          e=pathlib.Path(os.environ['LOBBY_SLOT_EVIDENCE']);e.mkdir(exist_ok=True)
+          (e/'resource-receipt.json').write_text(json.dumps({'exitCode':p.returncode,'reason':reason,'engine':os.environ['LOBBY_SLOT_ENGINE'],'peakProcessTreeRSSBytes':peak,'peakProcesses':peakProcesses,'peakPhase':peakPhase,'minimumSystemAvailableBytes':minimum,'rssCapBytes':cap,'reserveBytes':reserve,'deadlineSeconds':deadline,'elapsedSeconds':time.monotonic()-start,'scope':'Hosted controlled lobby slot DOM assignment parity; no hardware/FPS/pixel claim'},indent=2)+'\n')
+          assert p.returncode==0 and reason is None,'Component qualification failed; preserve compact evidence'
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: lobby-slot-native-cssom-${{ github.event.pull_request.head.sha }}
-          path: .ci-scratch/lobby-slot-browser/
-          if-no-files-found: warn
-          retention-days: 14
+          name: lobby-slot-browser-${{ matrix.engine }}-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            evidence/*.json
+            evidence/*.log
+            evidence/*.tap
+            evidence/*.png
