@@ -28,17 +28,12 @@ export function adaptSourcedPaintFootprint(rel, code, replaceOnce) {
     '    } else if (kind > 6.5) {\n' +
     '      sd = length(p) - r * grow * (1.0 + 0.12 * sin(3.0 * atan(p.y, p.x) + seed * 20.0));',
     'literal WidthHalf shader outer boundary');
-  // The source's DepthScale controls forward extension. The generic paint
-  // shader also stretched the rear by an invented 0.25 fraction. Source
-  // kinds do not add that unsupported rearward paint.
-  code = replaceOnce(code,
-    '    float s = a > 0.0 ? 1.0 + sa : 1.0 + 0.25 * sa;',
-    '    float s = a > 0.0 ? 1.0 + sa : (kind > 7.5 ? 1.0 : 1.0 + 0.25 * sa);',
-    'source forward-only DepthScale GPU footprint');
-  code = replaceOnce(code,
-    '            const s = a > 0 ? 1 + sa : 1 + 0.25 * sa;',
-    '            const s = a > 0 ? 1 + sa : (sourced ? 1 : 1 + 0.25 * sa);',
-    'source forward-only DepthScale CPU footprint');
+  // Source DepthScale is converted to this painter's asymmetric local
+  // stretch by catalogPaintEllipse / splashPaintFootprint:
+  // sa=1.6*(depth-1), centreBack=.375*radius*sa. The existing front
+  // (1+sa) and rear (1+.25sa) mapping is REQUIRED for equal source
+  // half-depth on both sides after that centre offset. Removing the rear
+  // quarter term silently shortened the source ellipse. Preserve it.
   code = replaceOnce(code,
     '    const roll = kind === K_ROLL;',
     '    const roll = kind === K_ROLL;\n    const sourced = kind === K_SOURCE_SHOT || kind === K_SOURCE_SPLASH;',
