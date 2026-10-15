@@ -67,8 +67,8 @@ test('production source mask uses original WidthHalf without artificial shrink o
   const composed = adaptSource('src/world/paint.js', raw);
   assert.match(composed, /'source-shot': 8, 'source-splash': 9/);
   assert.match(composed, /const REACH = \[1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.25, 1.35, 1, 1\]/);
-  assert.match(composed, /min\(1\.0, wob\(atan\(p\.y, p\.x\), seed\)\)/);
-  assert.match(composed, /Math\.min\(1, blobWobble\(Math\.atan2\(py, px\), seed\)\)/);
+  assert.match(composed, /sd = length\(p\) - r \* grow;/);
+  assert.match(composed, /sourced \? 1 : blobWobble/);
   assert.match(composed, /const sourced = kind === K_SOURCE_SHOT \|\| kind === K_SOURCE_SPLASH/);
   assert.doesNotMatch(composed, /sourceShotRasterRadius|2\.56|2\.08/);
   const flight = adaptSource('src/game/inkFlightRuntime.js',
