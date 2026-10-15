@@ -1,0 +1,22 @@
+{
+  "sourceHead": "efbdf888a9009d6024f39fa36ce359e775a3c799",
+  "sourceTree": "3bf8fa6e9a15c35a665c246044e77a3669a60a67",
+  "runtimePath": "patches/native-stages/runtime/native-world.mjs",
+  "candidateBlob": "13dbad145424af7f77af6fdd3a699e38fb0f4ad0",
+  "baselineBlob": "d627a3bfb81a6a443a4d49a45b630e488dfca70e",
+  "cases": [
+    "normal",
+    "warm-stale",
+    "frame-stale",
+    "reentrant"
+  ],
+  "pairing": "Fresh isolated Chromium context for each role and case; same 8x8 target, geometry, material and camera.",
+  "realGPU": "Actual pinned Three WebGLRenderer.compileAsync, render, framebuffer completeness, readRenderTargetPixels, native RAF callbacks, resource dispose events and context/GL errors.",
+  "controlledBoundary": "Compile promise completion and native RAF delivery are held by diagnostic gates. Cancellation occurs before those completions are returned to the unmodified coordinator. No claim of interrupting native GPU compilation.",
+  "syntheticDependencies": "PaintSystem with one plane and an 8x8 target; NativeLevel/Physics/Nav/Minimap/SwimWake/load/status and display/ink factories. Navigation workload is counted, not actual stage geometry or pathfinding.",
+  "scope": "Component lifecycle qualification only. No real stage, actual PaintSystem shader, full emitted build, RSS improvement, crash fix, iPad, or network claim.",
+  "launcherRequired": "Implemented: exact HEAD/tree and runtime/Three/fixture hashes; immutable versioned routes and bare-three mapping; unknown URL/WebSocket denial; pageerror/console.error/requestfailed zero through context close; finally partial artifact before context close; 120s/2GiB summed RSS/2GiB reserve; no production data.",
+  "publication": "Private ready-to-review hosted diagnostic; no browser execution yet. Existing native-load diagnostic remains unchanged.",
+  "baselineHead": "2b8bcb13df53158d78e3b5ff0dc82d49448ecdb6",
+  "browser": "Pinned Playwright Chromium with explicit SwiftShader software WebGL, matching existing hosted GPU diagnostics."
+}

@@ -1,0 +1,60 @@
+{
+  "sourceHead": "efbdf888a9009d6024f39fa36ce359e775a3c799",
+  "sourceTree": "3bf8fa6e9a15c35a665c246044e77a3669a60a67",
+  "baselineHead": "2b8bcb13df53158d78e3b5ff0dc82d49448ecdb6",
+  "scope": "Isolated Chromium SwiftShader component; actual coordinator and Three with explicit synthetic dependency adapters; no stage/browser performance or crash resolution claim",
+  "files": {
+    "README.txt": {
+      "sha256": "81492731705f04290205c7177b07471f740dcb5d24d0b1a344c3b322eb80cbe8",
+      "bytes": 1213
+    },
+    "probe.mjs": {
+      "sha256": "0aeeab073e8b039f7fd7438ff48c694f06079a52f9ed22ab5f7d0a2d99037063",
+      "bytes": 6366
+    },
+    "fixture.mjs": {
+      "sha256": "348b09e0eeb27f3f7ad3f48631d389b15d7de63b27e632d7fb8104f56f6f9db3",
+      "bytes": 2695
+    },
+    "gate.mjs": {
+      "sha256": "f8248fa85485e14a00b0a5600f7eff6a63f20831d0073851f089051102583a41",
+      "bytes": 1850
+    },
+    "gate.test.mjs": {
+      "sha256": "6d8f989ff428ac7c2f0a1b085e3146d62fdb0abeb09f1e532bf498446218dfe9",
+      "bytes": 2173
+    },
+    "binding.mjs": {
+      "sha256": "4365a8116d279a32b324333ae2cb9303baa668b741b93b764ae6ed4c85d7d9b3",
+      "bytes": 3573
+    },
+    "binding.test.mjs": {
+      "sha256": "a66bf395415cf29a088bf2d4777f52d8675fcf6bb9ad33c5e29e730e9016e471",
+      "bytes": 3407
+    },
+    "acceptance.mjs": {
+      "sha256": "e521639c2671905f2be7de0bd8f7da476e7eee79cdb4e8fc84f89350d957f4ef",
+      "bytes": 4997
+    },
+    "baseline.mjs": {
+      "sha256": "45a1df47519f80f9053658ab45194f3f1fbf95e3ebe874f7244ba38c469334d2",
+      "bytes": 5581
+    },
+    "plan.json": {
+      "sha256": "bfa30231a8d78003231ef5d009190f60b88a932ee8f3903b080d72cbf6a7e921",
+      "bytes": 2021
+    },
+    "run-hosted.sh": {
+      "sha256": "907b397eeeb0d74291f7667e317514927b27eb5cf6b29cf4d9de98c7b8f744e7",
+      "bytes": 274
+    },
+    "supervise.py": {
+      "sha256": "a04c1c404c6ed3449971b8bd3a6c54bc9b11bd26f5fe0c42ab4054bf982ef473",
+      "bytes": 3410
+    },
+    "workflow.yml": {
+      "sha256": "f266231b08b77a8224c0f02b80e451f4a2d2c673594dc040cf87fe95b792d4c1",
+      "bytes": 3120
+    }
+  }
+}

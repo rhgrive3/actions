@@ -1,0 +1,13 @@
+// Synthetic dependencies for the unmodified native-world coordinator only.
+export function makeWorldFixture(THREE,renderer){
+ const counts={},resources=[],warms=[],frames=[],paints=[],bump=k=>counts[k]=(counts[k]||0)+1;
+ const track=(resource,kind)=>{const row={kind,disposed:0,resource};resources.push(row);resource.addEventListener('dispose',()=>row.disposed++);return resource;};
+ const geo=kind=>track(new THREE.PlaneGeometry(1,1),kind),mat=kind=>track(new THREE.MeshBasicMaterial({color:0x43c893,side:THREE.DoubleSide}),kind);
+ const G={renderer,scene:new THREE.Scene(),teamColors:[]};let generation=0;
+ const game={settings:{quality:'low'},_shadowRoots(){bump('shadow')}};
+ const dependencies={three:THREE,ctx:{G},paint:{PaintSystem:class{
+  constructor(){paints.push(this);bump('paint');this.scene=new THREE.Scene();this.cam=new THREE.OrthographicCamera(-1,1,1,-1,.1,10);this.cam.position.z=2;this.rt=track(new THREE.WebGLRenderTarget(8,8),'paintTarget');this.texture=this.rt.texture;this.geometry=geo('paintGeometry');this.material=mat('paintMaterial');this.dryMesh=new THREE.Mesh(this.geometry,this.material);this.scene.add(this.dryMesh);this.dryMesh.visible=false;this.grid=new Uint8Array(1);this.size=8;this.ppm=1;}
+  dispose(){bump('paintDispose');this.rt.dispose();this.geometry.dispose();this.material.dispose();}
+ }},nav:{NavGraph:class{constructor(){bump('nav')}}},minimap:{Minimap:class{constructor(level){if(!level.nativeNav)throw Error('Detached navigation missing');bump('minimap')}}},swimWake:{SwimWake:class{reset(){bump('wake')}}},'native-load':{loadNativeData:async()=>({manifest:{geometry:{vertices:4,triangles:2}}}),loadNativeTextures:async()=>new Map()},'native-level':{NativeLevel:class{constructor(){this.faces=[];this.bounds={minX:0,maxX:1,minZ:0,maxZ:1}}}},'native-physics':{NativePhysics:class{}},'native-render':{nativeDisplay(){bump('display');const geometry=geo('displayGeometry'),material=mat('displayMaterial'),group=new THREE.Group();group.add(new THREE.Mesh(geometry,material));return{group,dispose(){bump('displayDispose');group.removeFromParent();geometry.dispose();material.dispose();}}},nativeInkGeometry(){bump('ink');return geo('inkGeometry')},nativeInkMaterial(){bump('inkMaterial');return mat('inkMaterial')}},'native-ink-chunks':{NativeInkMesh:class extends THREE.Mesh{constructor(g,m){super(g,m);bump('inkMesh')}dispose(){bump('inkDispose');this.removeFromParent();this.geometry.dispose();}}},'source-menu':{sourceLoadingStatus(){return{update(){},close(){bump('statusClose')}}}}};
+ return{counts,resources,warms,frames,paints,G,game,dependencies,newGeneration(){return ++generation},current:g=>()=>g===generation,invalidate(){generation++}};
+}
