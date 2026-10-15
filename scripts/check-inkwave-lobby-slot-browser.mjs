@@ -32,13 +32,17 @@ for(const [name,tool] of [['chromium',chromium],['webkit',webkit]]) {
     const slots=Array.from({length:8},(_,i)=>{
      const el=document.createElement('div'),plus=document.createElement('span');
      plus.className='iw-plate__plus';el.append(plus);container.append(el);
-     const style=el.style;let proto=style,descriptor;
-     while(proto&&!descriptor){descriptor=Object.getOwnPropertyDescriptor(proto,'transform');proto=Object.getPrototypeOf(proto);}
-     if(!descriptor?.get||!descriptor?.set)throw Error('native CSSOM transform property missing');
-     Object.defineProperty(style,'transform',{configurable:true,
-      get(){return descriptor.get.call(style);},
-      set(v){counts.writes++;descriptor.set.call(style,v);}
+     // CSSStyleDeclaration named properties need not expose a prototype
+     // transform descriptor (Chromium and WebKit differ). Intercept only
+     // calls by the exact production block; every write still reaches the
+     // actual browser style object and its native CSS normalization.
+     const style=el.style;
+     const counted=new Proxy(style,{
+      get(target,key){const v=Reflect.get(target,key,target);return typeof v==='function'?v.bind(target):v;},
+      set(target,key,v){if(key==='transform')counts.writes++;return Reflect.set(target,key,v,target);}
      });
+     Object.defineProperty(el,'style',{configurable:true,get(){return counted;}});
+     el.style.transform='';counts.writes=0;
      return{row:i>>2,i:i&3,el,txt:document.createElement('span')};
     });
     let frame={anchor:()=>null};
