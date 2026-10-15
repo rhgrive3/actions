@@ -118,7 +118,7 @@ export async function checkWeaponAppearancePicker({ page, evidence }) {
     await page.evaluate(()=>globalThis.s3ProbeG.game.menus.show('loadout',{force:true,wipe:false,light:false}));
     await page.locator(selector).waitFor({state:'visible'});const reopened=await read();
     assert(reopened.selected===pad.selected&&reopened.preference===pad.preference,'preference survives reopening');
-    if(evidence)await page.screenshot({path:evidence+'/weapon-appearance-picker.png'});
+    if(evidence)await page.screenshot({path:evidence+'/weapon-appearance-picker.png',animations:'disabled',timeout:90000});
     return {before,pointer,keyboard,pad,reopened,physicalController:false};
   } finally {
     await page.evaluate(async old => {
