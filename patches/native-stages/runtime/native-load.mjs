@@ -34,8 +34,10 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
  let next=0;const rows=[...jobs];
  const worker=async()=>{while(next<rows.length){
   const [file,job]=rows[next++],{role}=job;let {encoding}=job;const buffer=await verified(id,file,data.integrity,signal),blob=new Blob([buffer],{type:'image/png'});
-  let bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});const ratio=Math.min(1,limit/Math.max(bitmap.width,bitmap.height));
-  if(ratio<1){const original=bitmap;bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});original.close();}
+  let bitmap,texture,transferred=false;
+  try{
+  bitmap=await createImageBitmap(blob,{imageOrientation:'flipY'});const ratio=Math.min(1,limit/Math.max(bitmap.width,bitmap.height));
+  if(ratio<1){const original=bitmap;bitmap=null;try{bitmap=await createImageBitmap(original,{resizeWidth:Math.max(1,Math.round(original.width*ratio)),resizeHeight:Math.max(1,Math.round(original.height*ratio)),resizeQuality:'high'});}finally{original.close();}}
   if(data.manifest.sourceMode==='browser-direct'){
    const matched=Object.values(data.manifest.materials).filter(m=>m.albedo===file||Object.values(m.maps).includes(file));
    let pixels;
@@ -52,13 +54,13 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
     else for(const m of matched)m.channels[role]=mean[1]<1&&(mean[0]>2||hi[0]-lo[0]>4)?'r':'g';
    }
   }
-  let texture;
   if(role==='normal'&&['rg-reconstruct-z','unorm-rg','signed-byte-rg'].includes(encoding)){
    const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
    for(let i=0;i<pixels.length;i+=4){let x=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i]>127?pixels[i]-256:pixels[i])/127):pixels[i]/127.5-1,y=encoding==='signed-byte-rg'?Math.max(-1,(pixels[i+1]>127?pixels[i+1]-256:pixels[i+1])/127):pixels[i+1]/127.5-1;const len=Math.hypot(x,y);if(len>.95){x*=.95/len;y*=.95/len;}pixels[i]=Math.round((x*.5+.5)*255);pixels[i+1]=Math.round((y*.5+.5)*255);pixels[i+2]=Math.round((Math.sqrt(Math.max(0,1-x*x-y*y))*.5+.5)*255);pixels[i+3]=255;}
-   texture=new THREE.DataTexture(pixels,canvas.width,canvas.height);texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;bitmap.close();
+   texture=new THREE.DataTexture(pixels,canvas.width,canvas.height);texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;bitmap.close();bitmap=null;
   }else texture=new THREE.Texture(bitmap);
-  texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;textures.set(file,texture);
+  texture.colorSpace=['albedo','emissive'].includes(role)?THREE.SRGBColorSpace:THREE.NoColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;textures.set(file,texture);transferred=true;
+  }finally{if(!transferred){bitmap?.close();texture?.dispose();}}
  }};
  // Bound concurrent full-resolution decode/upload peaks; the same images and filters are used.
   const results=await Promise.allSettled(Array.from({length:Math.min(rows.length,textureLimit?2:quality==='high'?2:3)},worker));const failed=results.find(r=>r.status==='rejected');
