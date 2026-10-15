@@ -64,6 +64,8 @@ function scenario(f, id, { ink = 90, mode = 'paint' } = {}) {
       mode: brain.mode, fire: !!a.intent.fire, charging: !!a.weaponRunner.charging,
       catalogFrames: a.weaponRunner.catalogState?.chargeF ?? 0,
       ink: a.ink, shots: f.G.projectiles.list.filter(p => p.owner === a).length,
+      // Native Charger uses an instantaneous raycast and a pooled beam, not a list projectile.
+      beams: f.G.projectiles.beams.length,
     });
   }
   return { a, brain, trace, step };
@@ -96,7 +98,10 @@ test('all four catalogue charge families fire and release on dry turf with a rea
     const w = scenario(f, id);
     for (let i = 0; i < 240; i++) w.step();
     assert.ok(w.trace.some((s,i) => i && w.trace[i-1].fire && !s.fire), id + ' keeps its release edge');
-    assert.ok(w.trace.some(row => row.shots > 0), id + ' keeps its native shot');
+    const emitted = id === 'charger'
+      ? w.trace.some(row => row.beams > 0)
+      : w.trace.some(row => row.shots > 0);
+    assert.ok(emitted, id + ' must emit its real native ' + (id === 'charger' ? 'hitscan beam' : 'round'));
   }
   const auto = scenario(f, catalogId(f, 'shooter'));
   for (let i = 0; i < 100; i++) auto.step();
