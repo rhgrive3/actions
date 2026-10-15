@@ -194,6 +194,9 @@ async function openGameContext({ mobile = false } = {}) {
   const placement = await page.evaluate(() => {
     const g = window.__inkwave, G = window.__G;
     g.debug.freeze(); g.debug.freezeBots();
+    // Paired screenshots use equal drawing buffers after unequal boot warmup.
+    // Live performance windows resume the ordinary dynamic-resolution loop.
+    g.R.setDynamicScale(1);
     if (g.match.state !== 'playing' || g.match.attract || !g.match.local?.isLocal) {
       throw new Error('Capture setup requires the completed native local Turf startup');
     }
