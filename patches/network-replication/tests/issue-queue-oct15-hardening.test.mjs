@@ -113,7 +113,7 @@ test('real composed _draw cannot hide local shot or upload NaN from toxic remote
   let localVisible=false;
   for(let i=0;i<P.blobs.count;i++){
     P.blobs.getColorAt(i,color);
-    if(color.distanceTo(local.color)<.0001)localVisible=true;
+    if(Math.abs(color.r-local.color.r)<.0001 && Math.abs(color.g-local.color.g)<.0001 && Math.abs(color.b-local.color.b)<.0001)localVisible=true;
   }
   assert.equal(localVisible,true,'remote floods must reserve local ink rendering headroom');
   const mats=P.blobs.instanceMatrix.array.slice(0,P.blobs.count*16);
