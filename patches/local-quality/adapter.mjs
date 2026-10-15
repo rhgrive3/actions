@@ -1,3 +1,4 @@
+import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
 import { adaptClothDerivativeFlow } from './cloth-derivative-adapter.mjs';
@@ -81,6 +82,7 @@ import { adaptAudioListener } from './audio-listener-adapter.mjs';
 
 export const QUALITY_ROOT = fileURLToPath(new URL('./', import.meta.url));
 const IDENTITY_FILES = [
+  'lobby-slot-transform-adapter.mjs',
   'camera-fov-cache-adapter.mjs',
   'cloth-derivative-adapter.mjs',
   'retarget-branch-update-adapter.mjs',
@@ -143,6 +145,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptLobbySlotTransform(rel, code);
   code = adaptCameraFovCache(rel, code);
   if (rel === 'src/ui/hud.js') code = replaceOnce(code, "      d.el.style.transform = `rotate(${ang.toFixed(3)}rad)`;\n      d.el.style.opacity = o.toFixed(2);", "      const transform = `rotate(${ang.toFixed(3)}rad)`, opacity = o.toFixed(2);\n      if (d._transform !== transform) { d._transform = transform; d.el.style.transform = transform; }\n      if (d._opacity !== opacity) { d._opacity = opacity; d.el.style.opacity = opacity; }", 'damage-direction unchanged style writes');
   code = adaptMuralAtlas(rel, code, replaceOnce);
