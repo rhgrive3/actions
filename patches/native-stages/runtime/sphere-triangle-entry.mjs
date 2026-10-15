@@ -4,8 +4,8 @@
 function quadraticEntry(A,B,C,lo=0,hi=1){
  if(lo>hi)return Infinity;
  if((A*lo+B)*lo+C<=0)return lo;
- if(Math.abs(A)<1e-14){
-  if(Math.abs(B)<1e-14)return Infinity;
+ if(A===0){
+  if(B===0)return Infinity;
   const t=-C/B;return t>=lo&&t<=hi?t:Infinity;
  }
  const disc=B*B-4*A*C;if(disc<0)return Infinity;
