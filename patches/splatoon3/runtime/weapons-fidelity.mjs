@@ -657,16 +657,12 @@ function startDetachedWallDrop(system, p, hit, move, paint, tag, salt, paintFace
   return true;
 }
 
-// Added catalog bullets have their own collision interpreter, but share this
-// bounded wall-slide lifecycle with legacy bullets. Only complete explicit
-// records are admitted; ghosts never create a second ownership producer.
+// Added catalog bullets share the bounded detached wall-slide lifecycle.
+// Admit only sourced paintable face contacts; ghosts cannot duplicate ownership.
 export function startCatalogWallDrop(system, p, hit, source) {
   if (p.ghost || !source) return false;
   const face = api?.G?.physics?.level?.faces?.[hit.face];
   if (!Number.isInteger(hit.face) || hit.face < 0 || !face || face.paintable === false) return false;
-  // These are dedicated wall-slide stamps. Their adjacent-surface blast/splash
-  // projection is not established by the source, so keep this lane on its
-  // contacted surface; a subsequent actual floor contact gets its own face.
   return startDetachedWallDrop(system, p, hit, source.move, source.paint, 'catalog', 0x576, hit.face);
 }
 
