@@ -142,3 +142,7 @@ Nova's observed 92.97 mm visual aperture/socket discrepancy, lack of a verified 
 Merged immutable current main `ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a`, preserving both responsive-wrapper checks and main's additional explicit case-filter assertion. The three dedicated before-build pins now use that snapshot. Rebuilt actual emitted real Actor/five-model contracts pass8/8 without skips. Workflow contracts pass16/16. Their newly imported live-log test initially failed under CPU contention because its child could finish during an arbitrary30ms wait; the test now requires the parent to observe persisted progress before acknowledging the child's finish. The original logger and its exit/error policy are unchanged. This is deterministic progress-order verification, not a relaxed timeout/assertion.
 
 Nova's aperture/socket and final visual/performance acceptance remain open as above. No unreviewed gameplay muzzle relocation is introduced.
+
+## Latest main query composition — 2026-10-16 JST
+
+Composed main `6ad4bc0ea47fd35d53c1b2f541378c379b8cbdd8`, retaining its native collision query improvements and independently adopted settings-test import repair. All three dedicated comparison pins use that snapshot. A fresh production build passes10/10 emitted tests (five-model/real Actor, complete weapon-model registry, settings reset), zero skips or failures. Earlier workflow16/16 evidence remains scoped to its tested workflow tree. The unresolved Nova aperture/socket and final visual/performance acceptance remain open.
