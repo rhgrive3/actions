@@ -4,7 +4,7 @@
   "files": {
     "index.html": "13e4485f3974f806a1672e60200d6c86efd419a1cd41b18c9aa3e9cbf461a580",
     "src/main.js": "af8d0c1e0d5850ba10b5a1e5f1b5be15860927aab78fd85390775876bd41bcd1",
-    "src/game/actor.js": "403e66794a9dbb22c8d1f548a900030694e379d14f3b91e952118bea63730f42",
+    "src/game/actor.js": "f8c85831733661d6e40aa58f8d588ca576ab2affece932d7f2a574bd49cb2d5d",
     "src/game/weapons.js": "a7dfed27d9e67f2b47cde32d12b319cb8d7f77d50b70baa89daee50df0bb78f5",
     "src/game/player.js": "96b7ebb2e1c8715f08d15aeb292f9090d64c38f255361cfd78a0a095a53f9dfa",
     "src/game/match.js": "c76ca6b008204c70f3514d4fdfb76c19721d4363f8f6184f62067bc736d082c0",
@@ -25,5 +25,5 @@
     "src/game/motion/retarget.js": "3e35c49ace95b6548d09b188cfb439cf50b9bb9013897fa3ad092a8938af6459",
     "src/game/motion/source-controller.js": "1b9c098b4835bcf6dc1e3216cb2d39197b50c13edae45a78ff4fbd37f94d6074"
   },
-  "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides. Motion ContactPolish: src/game/character.js hash updated after reviewing additive source-motion lifecycle hooks, preserving issue-483 exact disposal anchor and all existing upstream pins. Optional source motion now imports dynamically so its ~70KB of JS and 10MiB of cold coefficient packs never increase the immutable 5MiB startup precache; runtime URLs remain versioned and on-demand integrity checked."
+  "integrationNote": "Three upstream-file overrides from INKWAVE PR #1142 are reviewed and pinned here; base sourceCommit describes the imported upstream snapshot, not these local overrides. Motion ContactPolish: src/game/character.js hash updated after reviewing additive source-motion lifecycle hooks, preserving issue-483 exact disposal anchor and all existing upstream pins. Optional source motion now imports dynamically so its ~70KB of JS and 10MiB of cold coefficient packs never increase the immutable 5MiB startup precache; runtime URLs remain versioned and on-demand integrity checked. Reviewed PR #1463 additive legacy Slam damage-radius source change separately against the unchanged S3 adapter actor insertion anchors, native old-radius fallback and tests. Only src/game/actor.js source checksum changes; new 6.4/9.6 local-calibration fields are independently recorded in numeric-status.json."
 }
