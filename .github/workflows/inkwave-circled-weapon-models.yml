@@ -1,0 +1,199 @@
+name: INKWAVE nine circled weapon model review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - patches/splatoon3/**
+      - patches/network-replication/**
+      - scripts/render-inkwave-circled-weapon-gallery.mjs
+      - scripts/compare-inkwave-circled-weapon-gallery.py
+      - scripts/render-inkwave-brella-gallery.mjs
+      - scripts/native-gallery-day.mjs
+      - scripts/native-gallery-day.test.mjs
+      - scripts/tests/inkwave-brella-lifecycle-observer.test.mjs
+      - scripts/compare-inkwave-brella-gallery.py
+      - scripts/verify-inkwave-nine-model-crowd.mjs
+      - scripts/render-inkwave-nine-model-crowd.mjs
+      - scripts/render-inkwave-nine-far-gallery.mjs
+      - .github/workflows/inkwave-circled-weapon-models.yml
+permissions:
+  contents: read
+concurrency:
+  group: circled-weapon-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+# Combined PR1271 gate: all families use the same admitted branch, avoiding old per-family skips.
+# Do not run this heavy review on unrelated PRs. A different integration branch must be explicitly admitted.
+jobs:
+  visual:
+    if: github.event.pull_request.number == 1271 && github.head_ref == 'feat/inkwave-splatana-stringer-rebuild'
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [saber, stringer, brella]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: adbd83ee4f6aaef8cb7853de997d42d702c8badf
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+          python3 -m pip install Pillow
+      - name: Build exact main and combined candidate production compositions
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: Render every selected weapon and actual Actor at matched cameras
+        env:
+          FAMILY: ${{ matrix.family }}
+        run: |
+          if [ "$FAMILY" = brella ]; then
+            IDS=s3-shelter-normal,s3-shelter-wide,s3-shelter-focus
+            GALLERY=brella
+          elif [ "$FAMILY" = saber ]; then
+            IDS=s3-saber-normal,s3-saber-lite,s3-saber-heavy
+            GALLERY=circled-weapon
+          else
+            IDS=s3-stringer-normal,s3-stringer-short,s3-stringer-explosion
+            GALLERY=circled-weapon
+          fi
+          node scripts/render-inkwave-${GALLERY}-gallery.mjs --site .model-before-site --out .model-evidence/before --ids "$IDS" --size 500
+          node scripts/render-inkwave-${GALLERY}-gallery.mjs --site .model-after-site --out .model-evidence/after --ids "$IDS" --size 500
+          node scripts/render-inkwave-nine-far-gallery.mjs --site .model-before-site --out .model-evidence/far-before --ids "$IDS" --size 400
+          node scripts/render-inkwave-nine-far-gallery.mjs --site .model-after-site --out .model-evidence/far-after --ids "$IDS" --size 400
+          python3 scripts/compare-inkwave-${GALLERY}-gallery.py .model-evidence reports/inkwave-weapon-model-workspace/refs ${IDS//,/ }
+          python3 - <<'PY'
+          import json,os
+          data=json.load(open('.model-evidence/after/gallery.json'))
+          assert not data['errors']
+          assert len(data['rows'])==3
+          before=json.load(open('.model-evidence/far-before/far-gallery.json'));after=json.load(open('.model-evidence/far-after/far-gallery.json'))
+          assert not before['errors'] and not after['errors']
+          assert len(before['rows'])==len(after['rows'])==3
+          for a,b in zip(before['rows'],after['rows']):
+            assert a['id']==b['id']
+            for view in a['views']: assert a['views'][view]['camera']==b['views'][view]['camera']
+          print('FAR_FIXED_CAMERA_GATE passed')
+          if os.environ['FAMILY']=='brella':
+            for row in data['rows']:
+              assert len(row['reverseCases'])==2
+              for case in row['reverseCases']:
+                assert case['meetsGuardBounds'],(row['id'],case)
+            print('BRELLA_REVERSE_BROWSER_GATE passed')
+          else:
+            for row in data['rows']:
+              assert not row['nonFinite'] and row['maxGrip']<.005,(row['id'],row['maxGrip'])
+          print('ALL_SELECTED_FAMILY_ACTORS passed',os.environ['FAMILY'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nine-model-review-${{ matrix.family }}-${{ github.event.pull_request.head.sha }}
+          path: .model-evidence
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+  contracts-and-crowd:
+    if: github.event.pull_request.number == 1271 && github.head_ref == 'feat/inkwave-splatana-stringer-rebuild'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: adbd83ee4f6aaef8cb7853de997d42d702c8badf
+          path: .model-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: |
+          npm install --no-save --no-package-lock esbuild@0.28.2 playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - uses: actions/checkout@v4
+        with:
+          ref: ed3a046574208471c5db5309e2469d263cacfdfd
+          path: .native-input-negative
+          persist-credentials: false
+      - name: Prepare the same persistent verifier fixture paths as general validation
+        run: |
+          runtime_fixtures=/mnt/workspace/.dev-state/agent-work/scratch/inkwave-runtime-performance-ui-evidence-tests
+          test "$(realpath -m "$runtime_fixtures")" = "$runtime_fixtures"
+          sudo mkdir -p "$runtime_fixtures"
+          sudo chown "$(id -u):$(id -g)" "$runtime_fixtures"
+          test -w "$runtime_fixtures"
+          browser_tmp=/mnt/workspace/.dev-state/agent-work/cache/iwrui
+          test "$(realpath -m "$browser_tmp")" = "$browser_tmp"
+          sudo mkdir -p "$browser_tmp"
+          sudo chown "$(id -u):$(id -g)" "$browser_tmp"
+      - name: All nine source contracts, eight bow shapes, paid preparation and 65-weapon isolation
+        run: |
+          node --test scripts/native-gallery-day.test.mjs scripts/tests/inkwave-brella-lifecycle-observer.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-circled-rebuild.test.mjs patches/splatoon3/tests/weapon-models-stringers-splatanas.test.mjs patches/splatoon3/tests/weapon-models-bow-shape-pass2.test.mjs patches/splatoon3/tests/camera-aim-controls.test.mjs patches/splatoon3/tests/controller-motion-integral.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/main-weapon-catalog.test.mjs patches/splatoon3/tests/weapon-catalog-adapter.test.mjs patches/splatoon3/tests/brella-guard-facing.test.mjs patches/splatoon3/tests/issue-857-roller-heading.test.mjs patches/splatoon3/tests/issue-973-facing-speed.test.mjs patches/splatoon3/tests/brella-facing-wire.test.mjs
+          WEAPON_IDS=s3-saber-normal,s3-saber-lite,s3-saber-heavy,s3-stringer-normal,s3-stringer-short,s3-stringer-explosion,s3-shelter-normal,s3-shelter-wide,s3-shelter-focus,s3-shelter-compact node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-all.test.mjs
+          node --experimental-vm-modules --test patches/network-replication/tests/paint-canonical-order.test.mjs
+          node --test patches/splatoon3/tests/nine-model-crowd-budget.test.mjs
+          node --experimental-vm-modules --test patches/reliability/tests/start.test.mjs patches/splatoon3/tests/issue-1039-host-ready.test.mjs
+          # Keep the exact-main namespace rejection as a negative control, then execute the integrated verifiers.
+          if NATIVE_INPUT_ROOT="$GITHUB_WORKSPACE/.native-input-negative" node --test scripts/tests/inkwave-native-stage-inputs.test.mjs > .native-input-before.log 2>&1; then
+            echo 'Native input negative control unexpectedly passed'; exit 1
+          fi
+          grep -q 'Catalog input namespace/path native-stages/' .native-input-before.log
+          node --test scripts/tests/inkwave-native-stage-inputs.test.mjs patches/splatoon3/tests/motion-catalog-gates.test.mjs scripts/tests/inkwave-runtime-evidence.test.mjs
+          # Current all65 correctness is mandatory; the unchanged 20% algorithm guard uses immutable main805 model sources.
+          WEAPON_LOD_REPORT=.current-lod.json WEAPON_LOD_FIXED_REPORT=.fixed-main805-lod.json node --experimental-vm-modules --test patches/splatoon3/tests/weapon-lod-boundaries.test.mjs
+      - name: Build immutable main and candidate
+        run: |
+          git rev-parse HEAD
+          export ESBUILD_MODULE="$GITHUB_WORKSPACE/node_modules/esbuild/lib/main.js"
+          node .model-baseline/scripts/build-inkwave.mjs .model-baseline/inkwave-public .model-before-site
+          node scripts/build-inkwave.mjs inkwave-public .model-after-site
+      - name: All nine emitted model and real Actor contracts, paid preparation and real NetMatch
+        env:
+          INKWAVE_BUILT_SITE: .model-after-site
+          WEAPON_IDS: s3-saber-normal,s3-saber-lite,s3-saber-heavy,s3-stringer-normal,s3-stringer-short,s3-stringer-explosion,s3-shelter-normal,s3-shelter-wide,s3-shelter-focus
+        run: |
+          node --experimental-vm-modules --test patches/splatoon3/tests/weapon-models-circled-rebuild.test.mjs patches/splatoon3/tests/weapon-models-brella-rebuild.test.mjs patches/splatoon3/tests/weapon-models-all.test.mjs patches/splatoon3/tests/brella-facing-wire.test.mjs
+          # Canonical remote checkout includes every pack blob and the integrated native namespace mapping.
+          node --test scripts/tests/inkwave-build-packaging.test.mjs
+          # Built fixtures do not apply adaptRuntime: the mutation-based 65-weapon A/B oracle is source-only.
+          node --experimental-vm-modules --test --test-name-pattern='^(open guard|preparation requires|repeated close|guard yaw-wrap|real held)' patches/splatoon3/tests/brella-guard-facing.test.mjs
+      - name: Adopted camera aim and same-tick muzzle on the exact combined composition
+        env:
+          INKWAVE_BUILT_SITE: .model-after-site
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/camera-aim-controls.test.mjs patches/splatoon3/tests/issue-1098-stored-muzzle.test.mjs patches/splatoon3/tests/issue-94-muzzle-feedback.test.mjs patches/splatoon3/tests/issue-945-muzzle-feedback-cache.test.mjs patches/splatoon3/tests/issue-413-world-aim.test.mjs patches/splatoon3/tests/issue-608-fidelity-aim.test.mjs
+      - name: Two eight-weapon rosters, native warmAll and full-post completion-read ABBA
+        run: |
+          for roster in A B; do
+            IDS=$(node scripts/verify-inkwave-nine-model-crowd.mjs --roster "$roster")
+            for pair in before-A after-B after-B2 before-A2; do
+              version="${pair%%-*}"
+              node scripts/render-inkwave-nine-model-crowd.mjs --site ".model-${version}-site" --out ".model-crowd/${roster}/${pair}" --roster "$roster"
+            done
+          done
+          node scripts/verify-inkwave-nine-model-crowd.mjs .model-crowd
+          cp .current-lod.json .fixed-main805-lod.json .native-input-before.log .model-crowd/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nine-model-crowd-${{ github.event.pull_request.head.sha }}
+          path: .model-crowd
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
