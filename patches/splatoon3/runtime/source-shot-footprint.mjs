@@ -1,38 +1,27 @@
-// INKWAVE raster-envelope calibration for source-defined main-weapon paint.
+// S3 11.3.0 source-backed paint events, not an artist-defined radius scale.
 //
-// S3 PaintParam / SplashPaintParam WidthHalf are treated as the width-half
-// envelope. The custom PaintSystem shader adds rays, satellite drops and fine
-// speckle *outside* its input circle. Passing WidthHalf as that inner circle
-// inflated an ordinary single shot substantially above the sourced width.
+// The caller already obtains WidthHalfNear/Middle/Far, WidthHalfNearest,
+// SplashPaintParam.WidthHalf and DepthScale* from the pinned weapon parameter
+// tables. Their numeric radii are passed through unchanged (no 2.56/2.08
+// correction and no speculative Switch-to-INKWAVE world-unit conversion).
 //
-// The baseline procedural shader's fine-spatter centre travels at most 2.5 R
-// and each dot extends at most .031 R, hence a conservative 2.56 R bound.
-// For the detached splash-drop shader (no fine spatter), satellites travel
-// at most 1.9 R with up to .113 R radius; 2.08 R allows for smooth joining.
-//
-// This calibrates ONLY that INKWAVE artist shader, not Nintendo's original
-// textures, masks, material growth or a verified pixel-for-pixel S3 footprint.
-// It does not alter source WidthHalf values, shot RNG, collision, damage,
-// projectile movement, timestamps or the network packet's nominal radius.
-// Both CPU ownership and GPU stamping consume the resulting radius together.
-export const SOURCE_SHOT_RASTER_ENVELOPE = Object.freeze({
-  shot: 2.56,
-  drop: 2.08,
-});
+// Source-backed events have their OWN raster kind because the generic INKWAVE
+// shader invents extra rays, dots and satellites that are not produced by
+// SplashSpawnParam. A source kind's body uses exactly the supplied WidthHalf
+// as its widest lateral semi-axis, retaining its own DepthScale stretch.
+// Actual detached paint drops remain separate sourced events and do not
+// gain additional independent, randomly placed, scored paint droplets.
+export const SOURCE_SHOT_PAINT_KIND = 'source-shot';
+export const SOURCE_SPLASH_PAINT_KIND = 'source-splash';
 
-// The PaintSystem uses 0=shot, 1=line, 4=trail, 5=drop, other kinds
-// (bomb, blast, roll, speck) keep their legacy size and shape.
-// A face key is the contract of the source collision or catalog paint path.
-// This excludes generic untyped and cosmetic splats from global shrinking.
-export function sourceShotRasterRadius(radius, kind, face, cosmetic = false, tag = undefined) {
-  // The source catalogue uses face=-1 when the floor ray cannot return a
-  // source face ID. NetMatch drops -1 during replay, but preserves kind='shot'.
-  // Preserve identical local/remote normalization for that explicitly tagged
-  // path without touching untagged legacy paint.
-  const sourceTaggedShot = kind === 0 && tag === 'shot';
-  if (cosmetic || (!Number.isInteger(face) && !sourceTaggedShot) ||
-      !Number.isFinite(radius) || radius <= 0) return radius;
-  if (kind === 0 || kind === 1 || kind === 4) return radius / SOURCE_SHOT_RASTER_ENVELOPE.shot;
-  if (kind === 5) return radius / SOURCE_SHOT_RASTER_ENVELOPE.drop;
-  return radius;
+export function sourceFlightInkKind(kind) {
+  if (kind === 'shot') return SOURCE_SHOT_PAINT_KIND;
+  if (kind === 'drop' || kind === 'trail') return SOURCE_SPLASH_PAINT_KIND;
+  return kind;
 }
+
+// Geometry used by the raster's source kinds: smooth deterministic growth,
+// a clipped organic inner edge, no synthetic satellites or timed spatter.
+// This is a bounded INKWAVE approximation. Nintendo's proprietary mask
+// textures and full per-pixel spread law have not been extracted.
+export const SOURCE_BODY_OUTLINE = 'min(1, blobWobble) / source WidthHalf';
