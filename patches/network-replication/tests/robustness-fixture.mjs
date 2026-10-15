@@ -9,49 +9,57 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource } from '../../local-quality/adapter.mjs';
 import { adaptNetworkSource } from '../adapter.mjs';
 import { adaptRange } from '../../practice-range/adapter.mjs';
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-export const UPSTREAM = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
+const BUILT = process.env.INKWAVE_BUILT_SITE;
+export const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
 export const PATCH_ROOT = path.join(ROOT, 'patches/splatoon3');
 export const QUALITY_ROOT = path.join(ROOT, 'patches/local-quality');
 
 const netRoot = path.join(ROOT, 'patches/network-replication');
 
-function relFor(file) {
-  if (file.startsWith(UPSTREAM + path.sep)) return path.relative(UPSTREAM, file);
-  if (file.startsWith(PATCH_ROOT + path.sep)) return 'patches/splatoon3/' + path.relative(PATCH_ROOT, file);
-  if (file.startsWith(QUALITY_ROOT + path.sep)) return 'patches/local-quality/' + path.relative(QUALITY_ROOT, file);
-  return path.relative(ROOT, file);
-}
 
 // One module environment. `network` selects whether the newest adapter participates.
-export async function fixture({ network = true, flow = false, fullRuntime = false, built = null, includeSession = false } = {}) {
-  const builtRoot = built ? path.resolve(built) : null;
-  const sourceRoot = process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-  const UPSTREAM = builtRoot || sourceRoot;
+// `productionComposition` uses the shared complete build adapter and S3 installer.
+// Both built selectors read emitted modules without applying adapters twice.
+export async function fixture({ network = true, flow = false, fullRuntime = false,
+  productionComposition = false, built = null, includeSession = false } = {}) {
+  const builtRoot = built || BUILT ? path.resolve(built || BUILT) : null;
+  const UPSTREAM = builtRoot || process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
   const PATCH_ROOT = builtRoot ? path.join(builtRoot, 'patches/splatoon3') : path.join(ROOT, 'patches/splatoon3');
+  if (productionComposition && !network) throw new Error('Production composition includes the network adapter');
   if (builtRoot) {
     if (!network) throw new Error('Built artifacts cannot disable an already-composed network adapter');
     const manifest = JSON.parse(fs.readFileSync(path.join(builtRoot, 'inkwave-build.json'), 'utf8'));
     console.log('INKWAVE network built fixture', builtRoot, 'contentHash=' + manifest.contentHash);
   }
+  function relFor(file) {
+    if (file.startsWith(UPSTREAM + path.sep)) return path.relative(UPSTREAM, file);
+    if (file.startsWith(PATCH_ROOT + path.sep)) return 'patches/splatoon3/' + path.relative(PATCH_ROOT, file);
+    if (file.startsWith(QUALITY_ROOT + path.sep)) return 'patches/local-quality/' + path.relative(QUALITY_ROOT, file);
+    return path.relative(ROOT, file);
+  }
   let seconds = 1000;
-  const context = vm.createContext({ console, URL, URLSearchParams, crypto: globalThis.crypto, performance: { now: () => seconds * 1000 } });
+  const context = vm.createContext({ console, crypto: globalThis.crypto,
+    performance: { now: () => seconds * 1000 }, URL, URLSearchParams, TextEncoder, TextDecoder,
+    setTimeout, clearTimeout, queueMicrotask, innerWidth:1280, innerHeight:720 });
   const modules = new Map();
 
-  const compose = network
+  const compose = productionComposition ? adaptBuildSource : network
     ? (rel, code) => adaptRange(rel, adaptNetworkSource(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))))
     : (rel, code) => adaptRange(rel, adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code)))));
 
   function resolve(spec, from) {
     if (spec === 'three') return path.join(UPSTREAM, 'vendor/three/build/three.module.js');
+    if (spec.startsWith('three/addons/')) return path.join(UPSTREAM, 'vendor/three/jsm', spec.slice('three/addons/'.length));
     let file = path.resolve(path.dirname(from), spec);
     if (file.startsWith(path.join(ROOT, 'inkwave-public/'))) file = path.join(UPSTREAM, path.relative(path.join(ROOT, 'inkwave-public'), file));
     if (!builtRoot && file.startsWith(path.join(UPSTREAM, 'patches/'))) file = path.join(ROOT, path.relative(UPSTREAM, file));
@@ -61,11 +69,13 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
   }
 
   function load(file) {
+    if (builtRoot && file.startsWith(path.join(ROOT, 'patches/'))) file = path.join(builtRoot, path.relative(ROOT, file));
     if (modules.has(file)) return modules.get(file);
     const raw = fs.readFileSync(file, 'utf8');
     const isSource = file.startsWith(UPSTREAM + path.sep) || file.startsWith(PATCH_ROOT + path.sep) || file.startsWith(QUALITY_ROOT + path.sep);
     const source = !builtRoot && isSource ? compose(relFor(file), raw) : raw;
-    const mod = new vm.SourceTextModule(source, { context, identifier: file });
+    const mod = new vm.SourceTextModule(source, { context, identifier: file,
+      initializeImportMeta(meta) { meta.url = pathToFileURL(file).href; } });
     modules.set(file, mod);
     return mod;
   }
@@ -90,6 +100,7 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
     export * from './patches/splatoon3/runtime/movement.mjs';
     export * from './patches/splatoon3/runtime/gear.mjs';
     export * from './patches/splatoon3/runtime/flow.mjs';
+    ${productionComposition ? "export { install as installS3 } from './patches/splatoon3/runtime/install.mjs';" : ''}
     export * from './patches/local-quality/roller-visual.mjs';
     export * as THREE from 'three';
   `, { context, identifier: path.join(ROOT, 'robustness-fixture.mjs') });
@@ -98,21 +109,24 @@ export async function fixture({ network = true, flow = false, fullRuntime = fals
 
   const api = { ...root.namespace };
   const { G, THREE, PLAYER, WEAPONS, NetMatch, Projectiles } = api;
-  const profile = JSON.parse(fs.readFileSync(path.join(PATCH_ROOT, 'profile.json'), 'utf8'));
+  const profile = JSON.parse(fs.readFileSync(path.join(builtRoot || ROOT, 'patches/splatoon3/profile.json'), 'utf8'));
   Object.assign(PLAYER, profile.player);
   Object.assign(api.SUB.bomb, profile.bomb);
   for (const [id,data] of Object.entries(profile.specials || {})) Object.assign(api.SPECIALS[id],data);
   for (const [id, data] of Object.entries(profile.weapons)) Object.assign(WEAPONS[id], data);
 
-  api.installWeapons(api, profile);
-  api.installWeaponsFidelity(api, profile);
-  api.installRollerVisualQuality(api);
-  if (fullRuntime) {
-    api.installMovement(api, profile);
-    api.installGear(api, profile);
-    if (flow) api.installFlow(api, profile);
-    api.installResources(api, profile);
-  } else if (flow) api.installFlow(api, profile);
+  if (productionComposition) api.installS3(profile);
+  else {
+    api.installWeapons(api, profile);
+    api.installWeaponsFidelity(api, profile);
+    api.installRollerVisualQuality(api);
+    if (fullRuntime) {
+      api.installMovement(api, profile);
+      api.installGear(api, profile);
+      if (flow) api.installFlow(api, profile);
+      api.installResources(api, profile);
+    } else if (flow) api.installFlow(api, profile);
+  }
 
   // ---- world stubs: physics only reports a flat floor at y = 0, no actors, no boss
   const floorHit = (a, b, hit) => {

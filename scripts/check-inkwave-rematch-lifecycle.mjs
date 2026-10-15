@@ -17,7 +17,8 @@ import path from 'node:path';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { boundedDiagnostic, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
+import { boundedDiagnostic, createFocusHistory, createOperationTrace } from './lib/inkwave-rematch-diagnostics.mjs';
+import { installCursorTimelineDiagnostics } from './lib/inkwave-cursor-timeline-diagnostics.mjs';
 
 const option = (name, fallback) => { const i = process.argv.indexOf(name); if (i < 0 || !process.argv[i + 1]) { if (fallback !== undefined) return fallback; throw new Error('Required ' + name); } return process.argv[i + 1]; };
 const site = path.resolve(option('--site')), evidence = path.resolve(option('--evidence-dir')), profile = path.resolve(option('--profile-dir'));
@@ -50,6 +51,7 @@ const ctx = await pw.chromium.launchPersistentContext(path.join(profile, 'rematc
   args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
 const page = await ctx.newPage();
+const browserVersion=ctx.browser()?.version?.() ?? null;
 const errors = [], missing = [], failures = [], rounds = [];
 const operationTrace = createOperationTrace();
 let activeRound = null, failureDiagnostics = null;
@@ -100,6 +102,8 @@ await page.addInitScript(() => {
   });
   cursorObserver.observe(document, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['class'] });
 });
+
+await page.addInitScript(installCursorTimelineDiagnostics);
 
 // Diagnose the single trusted gesture without changing or redispatching it.
 await page.addInitScript(() => {
@@ -187,6 +191,7 @@ const snap = () => page.evaluate(() => {
       return { type: animation.constructor?.name ?? null, name: animation.animationName ?? null,
         property: animation.transitionProperty ?? null, playState: animation.playState,
         currentTime: n(animation.currentTime), startTime: n(animation.startTime), progress: n(timing?.progress),
+        pending: !!animation.pending, playbackRate: n(animation.playbackRate), timelineTime: n(animation.timeline?.currentTime),
         target: target === ring ? 'cursor' : String(target?.className ?? target?.tagName ?? '').slice(0, 80) };
     }) ?? [];
   } catch {}
@@ -219,8 +224,9 @@ const snap = () => page.evaluate(() => {
         transitionProperty: ringStyle.transitionProperty, transitionDuration: ringStyle.transitionDuration,
         transitionDelay: ringStyle.transitionDelay, animationName: ringStyle.animationName, animations: ringAnimations, rect: rect(ring) } : null,
       cursorClassChanges: window.__lifecycleCursorClassChanges?.slice(-32) ?? [],
+      cursorTimelineEvents: window.__lifecycleCursorTimelineEvents?.slice(-48) ?? [],
       cursorAnimation: C ? { on: !!C.on, snapNext: !!C.snapNext, radius: C.r ?? null, axes: { x: spring(C.x), y: spring(C.y), w: spring(C.w), h: spring(C.h) } } : null,
-      document: { visibilityState: document.visibilityState, hidden: document.hidden }, connectedPads,
+      document: { visibilityState: document.visibilityState, hidden: document.hidden, hasFocus: document.hasFocus?.() ?? null, timelineTime: n(document.timeline?.currentTime), performanceNow: n(performance.now()) }, connectedPads,
       inputEvents: window.__lifecycleInputEvents ?? [],
       frameDriver: {
         platform: g.platform?.driver?.snapshot?.() ?? null,
@@ -256,18 +262,23 @@ const snap = () => page.evaluate(() => {
 const waitForFocusFrame = async () => {
   let timer;
   try {
-    await Promise.race([
-      page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve()))),
-      new Promise((resolve) => { timer = setTimeout(() => resolve(false), 1000); }),
+    return await Promise.race([
+      page.evaluate(() => new Promise((resolve) => requestAnimationFrame((timestamp) => resolve({ winner: 'frame', browserFrameTime: timestamp })))),
+      new Promise((resolve) => { timer = setTimeout(() => resolve({ winner: 'timeout', browserFrameTime: null }), 1000); }),
     ]);
   } finally { clearTimeout(timer); }
 };
 const alignedFocusSnapshot = async (phase) => operationTrace.run('aligned focus: ' + phase, async () => {
   const start = Date.now();
   let last = null;
+  const history = createFocusHistory();
   do {
-    await waitForFocusFrame();
+    const waitStartedMs = Date.now() - start;
+    const frameWait = await waitForFocusFrame();
+    const waitEndedMs = Date.now() - start;
     last = await snap();
+    history.record(last, { waitStartedMs, waitEndedMs, snapshotEndedMs: Date.now() - start, ...frameWait });
+    last.focusHistory = history.history;
     if (last.ringOn && last.ringVisible && last.ringOnFocus === true) return last;
   } while (Date.now() - start < 30000);
   return last;
@@ -276,7 +287,7 @@ const check = (round, phase, cond, message, detail) => { if (!cond) failures.pus
 
 let status = 'failed';
 const writeResult = () => {
-  const result = { status, contentHash: manifest.contentHash, cycles, failures, errors, missing, rounds,
+  const result = { status, contentHash: manifest.contentHash, browserVersion, cycles, failures, errors, missing, rounds,
     activeRound: status === 'failed' ? activeRound : null, operations: operationTrace.entries, failureDiagnostics };
   fs.writeFileSync(path.join(evidence, 'rematch-lifecycle-result.json'), JSON.stringify(result, null, 2) + '\n');
 };
@@ -335,6 +346,7 @@ try {
       'touch-owned main-menu button has its native visible focus-aligned selection ring', menu);
     await page.keyboard.press('ArrowDown');
     const keyboardMenu = await alignedFocusSnapshot('keyboard handoff');
+    round.keyboardFocusHistory = keyboardMenu.focusHistory;
     check(i + 1, 'menu', keyboardMenu.ringOn && keyboardMenu.ringVisible && keyboardMenu.ringOnFocus === true,
       'keyboard handoff restores the selection ring on the focused item (no pixel readback)', keyboardMenu);
     check(i + 1, 'menu', menu.fade < 0.05, 'fade cleared', menu.fade);

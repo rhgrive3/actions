@@ -130,11 +130,16 @@ export function installChargerFlight(api,completion) {
     if(actor.isLocal||actor._nearCamera?.())G.audio?.play('shoot_charger',{pos:actor.isLocal?undefined:origin,volume:actor.isLocal ? .8 : .6,pitch:1.08-.16*charge});
   }
   const keepMuzzle = completion.weapons.charger.WeaponKeepChargeParam?.MuzzleLocalPos;
+  // #1098's independent Wmn_Charger_NormalT-to-INKWAVE calibration was measured
+  // against the native family geometry. Per-weapon replacement meshes can move
+  // their visible muzzle without moving that existing kept-charge flight origin.
+  // Ordinary shots still use the actual weapon model's muzzle.
+  const keepCalibrationMuzzle = new THREE.Vector3(0, 0.058, 0.686);
   const keepBody = new THREE.Vector3();
   function resolveKeepOrigin(actor, out) {
     const gun = actor.character?.weapon;
     if (!gun?.off?.localToWorld ||
-        !storedChargerModelMuzzle(keepMuzzle, gun.def?.muzzle, out)) return false;
+        !storedChargerModelMuzzle(keepMuzzle, keepCalibrationMuzzle, out)) return false;
     gun.off.localToWorld(out); // live hand pose, shared with ordinary gun muzzle
     keepBody.copy(actor.pos); keepBody.y += actor.form === 'squid' ? .4 : 1.05;
     // Keep the native geometry/finite-value muzzle guard; unsafe points fall

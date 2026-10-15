@@ -455,3 +455,43 @@ test('large exact causal jumps and decimal carry never require clipping or chang
   settle(a); settle(b); settle(c);
   samePaint(a, b); samePaint(a, c);
 });
+
+
+test('#1281 full event FIFO preserves paint without blocking older queued paint', async () => {
+  const sender = await client('a'), observer = await client('c');
+  const firstCenter = new sender.f.THREE.Vector3(0.55, 0, 0.55);
+  const secondCenter = new sender.f.THREE.Vector3(1.45, 0, 1.45);
+
+  sender.paint.splat(firstCenter, 0.42, 0, { seed: 0.21 });
+  const first = sender.nm.out.at(-1);
+  const peer = observer.nm._peer('a');
+  observer.nm._tick('a', { k:'t', ts:first[0], r:2, u:first.at(-2), e:[received(first)] });
+  assert.equal(peer.events.length, 1);
+  assert.equal(peer._lastPaintSeq, first._netSeq);
+
+  for (let i = 0; i < 511; i++) peer.events.push([first[0], 'unknown-overflow-fixture']);
+  assert.equal(peer.events.length, 512);
+
+  sender.f.clock.advance(0.05);
+  sender.f.G.time += 0.05;
+  sender.paint.splat(secondCenter, 0.42, 0, { seed: 0.73 });
+  const second = sender.nm.out.at(-1);
+  observer.nm._tick('a', { k:'t', ts:second[0], r:2, u:second.at(-2), e:[received(second)] });
+
+  assert.equal(peer.events.length, 512, 'paint overflow grew the bounded event FIFO');
+  assert.equal(peer._lastPaintSeq, second._netSeq, 'committed overflow paint did not advance admission identity');
+  assert.equal(observer.nm._paintClockState.applied.get('a') || 0, 0,
+    'overflow paint consumed the playback watermark needed by older queued paint');
+  assert.notDeepEqual(Array.from(observer.paint.grid), Array.from(sender.paint.grid),
+    'fixture should still be missing the older queued paint before drain');
+
+  peer.tr = second[0];
+  peer.sim = second.at(-2);
+  observer.nm._playEvents();
+
+  assert.equal(peer.events.length, 0);
+  assert.deepEqual(Array.from(observer.paint.grid), Array.from(sender.paint.grid),
+    'late queued paint did not converge after overflow paint was committed first');
+  assert.deepEqual(Array.from(observer.paint.counts), Array.from(sender.paint.counts));
+  assert.deepEqual(Array.from(observer.paint.coverage()), Array.from(sender.paint.coverage()));
+});

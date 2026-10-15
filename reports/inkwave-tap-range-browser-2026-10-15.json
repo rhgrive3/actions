@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "browser": "153.0.8010.0",
+  "contentHash": "90b1f2edad09586d6c7db87883c8816943dd6714d088e5b334d47f926b020eba",
+  "scope": "focused native DOM touch routing; mocked pad/permission callback, no full-game or hardware acceptance",
+  "cases": [
+    "map: out-and-back cancelled, fresh tap accepted",
+    "pause: out-and-back cancelled, fresh tap accepted",
+    "gyro: out-and-back cancelled, fresh tap accepted",
+    "GYRO keeps touch ownership through 120 held-pad polls",
+    "canvas capture fallback delivers GYRO up/cancel exactly once"
+  ],
+  "trustedPointerDowns": 9,
+  "errors": []
+}

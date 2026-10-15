@@ -1,0 +1,215 @@
+{
+  "source": "same SHA-verified S3 standard Dynamo turntable as prior measurements",
+  "views": [
+    {
+      "name": "front",
+      "t": "0",
+      "axis": [
+        [
+          350,
+          414
+        ],
+        [
+          680,
+          132
+        ]
+      ],
+      "drumHub": [
+        299,
+        476
+      ],
+      "driveHub": [
+        358,
+        551
+      ],
+      "diameter": [
+        [
+          314,
+          373
+        ],
+        [
+          385,
+          451
+        ]
+      ],
+      "housingDiameter": [
+        [
+          364,
+          457
+        ],
+        [
+          457,
+          562
+        ]
+      ],
+      "casePlanes": [
+        [
+          380,
+          525
+        ],
+        [
+          418,
+          493
+        ]
+      ],
+      "cone": [
+        [
+          418,
+          493
+        ],
+        [
+          480,
+          438
+        ]
+      ],
+      "shaft": [
+        [
+          480,
+          438
+        ],
+        [
+          535,
+          383
+        ]
+      ],
+      "projectedAxisSeparationPx": 95.42536350467836,
+      "axisNormalSeparationPx": 95.34684586514138,
+      "localDrumDiameterPx": 105.47511554864494,
+      "housingDiameterPx": 140.2640367307315,
+      "housingToDrumRatio": 1.3298306050780477,
+      "offsetUsingDrumDiameter038": 0.34351042177378494,
+      "landmarkTolerancePx": 8,
+      "notes": "Visible hub tips and silhouette landmarks are not all coplanar; perspective and different axial stations remain."
+    },
+    {
+      "name": "rear",
+      "t": "6",
+      "axis": [
+        [
+          602,
+          77
+        ],
+        [
+          930,
+          437
+        ]
+      ],
+      "drumHub": [
+        941,
+        440
+      ],
+      "driveHub": [
+        850,
+        501
+      ],
+      "diameter": [
+        [
+          897,
+          477
+        ],
+        [
+          974,
+          404
+        ]
+      ],
+      "housingDiameter": [
+        [
+          895,
+          456
+        ],
+        [
+          804,
+          546
+        ]
+      ],
+      "projectedAxisSeparationPx": 109.55363982999378,
+      "axisNormalSeparationPx": 108.34975645921241,
+      "localDrumDiameterPx": 106.10372283760829,
+      "housingDiameterPx": 127.98828071350908,
+      "housingToDrumRatio": 1.2062562678351552,
+      "offsetUsingDrumDiameter038": 0.3880439475014071,
+      "landmarkTolerancePx": 8,
+      "notes": "Visible hub tips and silhouette landmarks are not all coplanar; perspective and different axial stations remain."
+    }
+  ],
+  "frontAxialEstimates": {
+    "casePlanes": {
+      "axisProjectedPx": 49.67766947511135,
+      "widthNormalizedModelEstimate": 0.2084025601834161
+    },
+    "cone": {
+      "axisProjectedPx": 82.86522774159504,
+      "widthNormalizedModelEstimate": 0.34762753152464654
+    },
+    "shaft": {
+      "axisProjectedPx": 77.54360761140086,
+      "widthNormalizedModelEstimate": 0.3253028276652656
+    }
+  },
+  "proposed": {
+    "drumCenter": [
+      0,
+      0,
+      1.13
+    ],
+    "driveAxisSetback": 0.36,
+    "driveCenterZ": 0.77,
+    "driveCenterY": 0,
+    "outerDiameter": 0.5,
+    "axialCore": 0.21,
+    "rearConeLength": 0.34,
+    "remarks": "Setback 0.36 is rounded from two projected estimates; Y=0 is a symmetry/coplanarity construction assumption, not an exact reconstructed source ordinate."
+  },
+  "scope": "reconstruct the offset generator/drive case, visible copper winding and radial teeth/ribs, twin axle support plates, rear cone and transverse shaft; retain gameplay sockets and drum motion",
+  "forkRefinement": {
+    "scope": "Authored planar faces before bevel, per axial side; overlapping joints counted twice, not an exact union area.",
+    "beforePlanarFaceArea": 0.10433197916086906,
+    "afterComponentArea": 0.05193945164436058,
+    "bearingArea": 0.02935816727562756,
+    "oneStrapArea": 0.011290642184366512,
+    "reductionFraction": 0.5021713183042819,
+    "strapWidthRange": [
+      0.026,
+      0.038
+    ],
+    "strapToCaseDiameter": [
+      0.052,
+      0.076
+    ],
+    "caseRadialWaist": 0.229,
+    "caseRimRadius": 0.247,
+    "caseOuterDiameter": 0.5,
+    "sourceComparison": "9-11s show small bearing plates and narrow curved fork straps onto a separate stepped case; the prior candidate used an excessively broad filled figure-eight plate. Strap width ratio 5.2-7.6% of case diameter is a construction estimate, not exact retail topology."
+  },
+  "bearingSupportContact": {
+    "method": "Intersect actual steel triangles at radial Y=-0.074, Z=drum axis, excluding gunmetal support faces and off-axis bolts",
+    "platePlanesX": [
+      0.8955,
+      1.0755
+    ],
+    "beforeSteelSpanX": [
+      0.9104999899864197,
+      1.0358225804716206
+    ],
+    "afterSteelSpanX": [
+      0.8855000138282776,
+      1.1134999655038227
+    ],
+    "change": "Extend existing steel collar back 0.025 and retain wider taper through the front pierced bearing plate, with no new vertices/triangles",
+    "evidence": "Regression fails before correction and passes afterward; positive axial overlap at both plate center planes",
+    "verifiedTotals": {
+      "bodyVertices": 6463,
+      "bodyTriangles": 13121,
+      "wholeWeaponTriangles": 15978,
+      "farBodyTriangles": 1123,
+      "originalMainFarBodyTriangles": 718,
+      "priorThinForkFarBodyTriangles": 756,
+      "sourceTests": {
+        "mainComposition": "ed3a046574208471c5db5309e2469d263cacfdfd",
+        "pass": 26,
+        "fail": 0,
+        "skip": 0
+      }
+    }
+  }
+}

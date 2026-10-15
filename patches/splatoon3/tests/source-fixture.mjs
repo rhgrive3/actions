@@ -1,3 +1,4 @@
+import { adaptBuildSource } from '../../../scripts/inkwave-source-composition.mjs';
 // Actual public modules plus the build adapter. No renderer, fake game model,
 // or second gameplay engine is used. Tests stub only display/audio/collisions.
 import assert from 'node:assert/strict';
@@ -6,18 +7,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { adaptSource } from '../adapter.mjs';
-import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
-import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptSpecialWater } from '../../reliability/special-water-adapter.mjs';
-import { adaptQualitySource } from '../../local-quality/adapter.mjs';
-import { adaptNetworkSource } from '../../network-replication/adapter.mjs';
-import { adaptRange } from '../../practice-range/adapter.mjs';
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 if (process.env.INKWAVE_BUILT_ROOT) throw new Error('Use INKWAVE_BUILT_SITE; INKWAVE_BUILT_ROOT is not a supported fixture switch');
 const BUILT = process.env.INKWAVE_BUILT_SITE;
 const UPSTREAM = BUILT ? path.resolve(BUILT) : process.env.INKWAVE_UPSTREAM_SOURCE || path.join(ROOT, 'inkwave-public');
-const adaptProduction = (rel, code) => adaptRange(rel, adaptNetworkSource(rel,
-  adaptQualitySource(rel, adaptReliability(rel, adaptTouchLayout(rel, adaptSource(rel, code))))));
+const adaptProduction = adaptBuildSource;
 // Super Jump admission calls the same native water predicate as ordinary and
 // special movement. Include its real production adapter in constrained boots.
 export const adaptConstrainedSource = (rel, code) => adaptSpecialWater(rel, adaptSource(rel, code));

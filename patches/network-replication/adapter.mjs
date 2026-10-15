@@ -31,6 +31,19 @@ export function networkIdentity() {
 }
 export function adaptNetworkSource(rel, code) {
   const patch = (before,after,label) => { code = once(code,before,after,rel+': '+label); };
+  if (rel === 'src/main.js') {
+    patch("duration: +params.get('autostart') || undefined",
+      "duration: (() => { const n = Number(params.get('autostart')); return Number.isFinite(n) && n > 0 && n <= 86400 ? n : undefined; })()",
+      'autostart cannot inject nonfinite match time');
+    patch('    const requestedDuration = o.duration || 0;',
+      '    const requestedDuration = typeof o.duration === "number" && Number.isFinite(o.duration) && o.duration > 0 && o.duration <= 86400 ? o.duration : 0;',
+      'public offline startMatch duration validation');
+  }
+  if (rel === 'src/game/match.js') {
+    patch('    this.duration = opts.duration || (this.bossCfg ? this.bossCfg.duration : MATCH.defaultDuration);',
+      '    this.duration = typeof opts.duration === "number" && Number.isFinite(opts.duration) && opts.duration > 0 && opts.duration <= 86400 ? opts.duration : (this.bossCfg ? this.bossCfg.duration : MATCH.defaultDuration);',
+      'Match constructor protects offline and network deadlines');
+  }
   if (rel === 'src/game/inkFlightRuntime.js') {
     patch('      for (const actor of G.actors) {',
       '      for (const actor of G.actors) {\n        if (p.ghost) break; // remote actor geometry cannot retire an owner-controlled head',
@@ -210,7 +223,7 @@ function finiteRemoteSample(s) {
 }
 function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded remote samples');
     code = "import { syncRemoteInitialSquidSpawn } from '../../patches/splatoon3/runtime/respawn-lifecycle.mjs';\n" + code;
-    patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
+    patch('const TICK = 1 / 20;', 'const HIT_DELIVERY_LIMIT = 64;\nconst HIT_RECEIPT_LIMIT = 120;\nconst HIT_SEQUENCE_WINDOW = 65536;\nconst BOMB_BUDGET_WAIT = Symbol("bomb-budget-wait");\nconst TICK = 1 / 20;', 'bounded hit transaction limits');
     code = "import { isPaintOrderClock, nextPaintOrderClock, paintClockComesAfter } from '../../patches/splatoon3/runtime/paint-ownership.mjs';\n" + code;
     patch('  if (a.invuln > 0) f |= F.invuln;', '  if (a.invuln > 0 || slamProtected(a)) f |= F.invuln;', 'Slam authoritative invulnerability wire flag');
     code = "import { slamProtected } from '../../patches/splatoon3/runtime/tidal-slam-gauge.mjs';\nimport { retireDisconnectedMainProjectiles } from '../../patches/splatoon3/runtime/disconnect-fidelity.mjs';\n" + code;
@@ -514,12 +527,13 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       '      const visual = packSquidrollSnapshot(x);\n      if (visual) sq[x.nid] = visual;\n      const dropRoll = packDropRollSnapshot(x);\n      if (dropRoll) dr[x.nid] = dropRoll;',
       'pack owner Drop Roller presentation without gameplay AP');
     patch('for (const p of this.peers.values()) this._advance(p, dt);', 'for (const p of this.peers.values()) { this._advance(p,dt); sampleOwnerSimulation(p); }', 'sample owner simulation clock');
-    patch('    // actors\n    if (d.a)', `    if (Number.isSafeInteger(d.u)) {
+    patch('    // actors\n    if (d.a)', `    const ownerSimulationTickAccepted = d.u === undefined || validOwnerSimulationTick(d.u, d.ts, p.physicsPoints);
+    if (d.u !== undefined && ownerSimulationTickAccepted) {
       const points = p.physicsPoints || (p.physicsPoints = []);
       points.push(d.ts,d.u); if (points.length > 80) { points.copyWithin(0,points.length-80); points.length = 80; }
     }
     // actors
-    if (d.a)`, 'snapshot physics tick pair');
+    if (d.a)`, 'bounded snapshot physics tick pair');
     patch('if (this.out.length) { msg.e = this.out; this.out = []; }', 'if (Object.keys(sq).length) msg.sq = sq;\n    if (Object.keys(dr).length) msg.dr = dr;\n    if (Object.keys(wp).length) msg.wp = wp;\n    if (Object.keys(bw).length) msg.bw = bw;\n    if (Object.keys(rf).length) msg.rf = rf;\n    if (this.out.length) { msg.r = 2; msg.e = this.out; this.out = []; }', 'event schema and optional presentation sidecars');
     patch('if (d.a) for (const s of d.a) {\n      const a = this.byNid.get(s[0]);',
       'if (d.a) for (const s of d.a) {\n      const rawRoll = d.sq && typeof d.sq === \'object\' && !Array.isArray(d.sq) && Object.hasOwn(d.sq, s[0])\n        ? readSquidrollSnapshot(d.sq[s[0]]) : null;\n      const roll = rawRoll === false ? null : rawRoll;\n      const rawPose = d.wp && typeof d.wp === \'object\' && !Array.isArray(d.wp) && Object.hasOwn(d.wp, s[0]) ? d.wp[s[0]] : null;\n      const pose = Array.isArray(rawPose) && rawPose.length === 3 && Number.isFinite(rawPose[0]) && rawPose[0] >= -1 && rawPose[0] <= 2 && Number.isInteger(rawPose[1]) && rawPose[1] >= 0 && rawPose[1] <= 3 && Number.isFinite(rawPose[2]) && rawPose[2] >= 0 && rawPose[2] <= 4 ? rawPose : null;\n      const rawWindup = d.bw && typeof d.bw === \'object\' && !Array.isArray(d.bw) && Object.hasOwn(d.bw, s[0]) ? d.bw[s[0]] : 0;\n      const windup = Number.isFinite(rawWindup) && rawWindup > 0 && rawWindup <= 1 ? rawWindup : 0;\n      const rawFlick = d.rf && typeof d.rf === \'object\' && !Array.isArray(d.rf) && Object.hasOwn(d.rf, s[0]) ? d.rf[s[0]] : null;\n      const flick = readRollerPresentation(rawFlick); if (flick) flick.owner = from;\n      const a = this.byNid.get(s[0]);',
@@ -537,13 +551,36 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       '      snap.rollVx = roll?.vx ?? 0; snap.rollVz = roll?.vz ?? 0;\n      snap.dropRollId = dropRoll?.id ?? 0; snap.dropRollRemaining = dropRoll?.remaining ?? 0;\n      snap.dropRollX = dropRoll?.x ?? 0; snap.dropRollZ = dropRoll?.z ?? 0; snap.dropRollDuration = dropRoll?.duration ?? 0;',
       'attach validated Drop Roller clock and direction');
     patch('if (d.e) for (const e of d.e) p.events.push(e);', `if (d.e) for (const e of d.e) {
-      // #1200: a sender event cannot be dated after its enclosing owner tick.\n      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts) continue;
+      // #1200/#1265/#1266/#1267: event identity is admitted only on an accepted owner clock.\n      if (!Array.isArray(e) || !validSnapshotTimestamp(e[0]) || !validSnapshotTimestamp(d.ts) || e[0] > d.ts) continue;
+      // #1283: invalid Slam/vector fields must not occupy the playback FIFO
+      // or consume sender event identity. Owner admission stays authoritative.
+      if (e[1] === 'ev' && !validForwardedEventPayload(e[2], e[3])) continue;
+      if (e[1] === 'b' && !validNetworkBombBirth(e, G.level?.bounds)) continue;
+      if (e[1] === 'p' && !validNetworkProjectileCosmetics(e)) continue;
+      if (e[1] === 'ev' && e[2] === 'special:slam') {
+        const slamActor = this.byNid.get(e[3].actor.n);
+        if (!slamActor?.remote || slamActor.owner !== from) continue;
+      }
       e._netPeer = from;
-      if (d.r === 2) { const seq = e[e.length-1]; if (!Number.isSafeInteger(seq) || seq < 1) continue; e._netSeq = seq; const tick = e[e.length-2]; if (!Number.isSafeInteger(tick) || tick < 0 || !(Number.isSafeInteger(d.u) && d.u >= 0 ? tick <= d.u : d.u === undefined && e[1] === 's')) continue; e._netTick = tick; }
+      if (d.r === 2) {
+        const hasOwnerTick = ownerSimulationTickAccepted && Number.isSafeInteger(d.u) && d.u >= 0;
+        // Older R2 paint envelopes can omit d.u; validate the event tick against
+        // the established sender timeline without granting non-paint event authority.
+        const legacyPaintWithoutOwnerTick = d.u === undefined && e[1] === 's'
+          && validOwnerSimulationTick(e[e.length-2], d.ts, p.physicsPoints);
+        if (!hasOwnerTick && !legacyPaintWithoutOwnerTick) continue;
+        const seq = e[e.length-1];
+        const sequenceBaseline = Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0);
+        if (!validEventSequence(seq, sequenceBaseline)) continue;
+        e._netSeq = seq;
+        const tick = e[e.length-2];
+        if (!Number.isSafeInteger(tick) || tick < 0 || (hasOwnerTick && tick > d.u)) continue;
+        e._netTick = tick;
+      }
       // Receiver-created proof only: an event cannot supply its own authority.
       e._stormSnapshot = null;
       e._deadlineEligible = e[1] === 's' && this.isHost && this.match?.state === 'playing'
-        && d.r === 2 && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
+        && d.r === 2 && ownerSimulationTickAccepted && Number.isSafeInteger(e._netTick) && Number.isSafeInteger(d.u)
         && e._netTick >= 0 && e._netTick <= d.u;
       e._finishPaintApplied = false;
       const stormNid = e[1] === 'b' && e[3] === 'storm' ? e[2]
@@ -552,12 +589,22 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       if (stormActor?.remote && stormActor.owner === from && snap?.t === d.ts
         && Number.isSafeInteger(snap.life) && snap.life === stormActor.net.lastLife
         && (snap.f & F.alive) && (snap.f & F.special)
-        && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
+        && ownerSimulationTickAccepted && Number.isSafeInteger(d.u) && Number.isSafeInteger(e._netTick) && e._netTick >= 0
         && e._netTick >= (p.physicsPoints?.at(-3) ?? 0) && e._netTick <= d.u && e[0] <= d.ts) {
         e._stormSnapshot = { owner: from, life: snap.life, at: snap.t, tick: d.u };
       }
       if (e[1] === 's') {
         if (e._netSeq !== undefined && e._netSeq <= Math.max(p._lastEventSeq || 0, p._lastPaintSeq || 0, this._paintClockState.applied.get(from) || 0)) continue;
+        // #1281: score-affecting paint must not disappear when the generic
+        // timeline FIFO is saturated. Apply only this paint immediately using
+        // canonical ownership, but do not advance the playback watermark: older
+        // queued paint still needs to replay and fill cells outside the newer stamp.
+        if (p.events.length >= 512) {
+          if (!this._applyRemoteSplatEvent(e, false)) continue;
+          e._finishPaintApplied = true;
+          if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
+          continue;
+        }
         if (receivePaintOrder(this, from, e) === false) continue;
         if (e._netSeq !== undefined) p._lastPaintSeq = e._netSeq;
       }
@@ -750,15 +797,13 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
     this.stats.in++;`, 'ordered tick replay guard');
     }
-    patch('  _playEvents() {', `  _applyRemoteSplatEvent(e) {
+    patch('  _playEvents() {', `  _applyRemoteSplatEvent(e, commitReplay = true) {
     const order = readPaintOrder(this, e._netPeer, e);
     if (order === false) return false;
     const state = this._paintClockState;
     if (e._netSeq !== undefined) {
       if (e._netSeq <= (state.applied.get(e._netPeer) || 0)) return false;
-      state.applied.set(e._netPeer, e._netSeq);
     }
-    receivePaintOrder(this, e._netPeer, e);
     this.applying = true;
     try {
       const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
@@ -769,8 +814,10 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       if (st) { opts.stretch = st; opts.stretchAmt = e[12]; }
       if (Number.isInteger(e[13]) && e[13] >= 0) opts.face = e[13];
       G.paint?.splat(_v.set(e[2], e[3], e[4]), e[5], e[6], opts);
-      return true;
     } finally { this.applying = false; }
+    if (e._netSeq !== undefined && commitReplay) state.applied.set(e._netPeer, e._netSeq);
+    receivePaintOrder(this, e._netPeer, e);
+    return true;
   }
 
   commitDeadlinePaint() {
@@ -786,6 +833,25 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
   }
 
   _playEvents() {`, 'authoritative pre-deadline paint commit');
+    patch('      const due = p.events.splice(0, i);\n      for (const e of due) this._play(id, e);', `      let consumed = 0;
+      while (consumed < i) {
+        // Keep a quota-full native attack in the existing bounded owner FIFO.
+        // Normal owner-time physics can retire older bombs before the next pass.
+        // Never consume its sequence/Storm token just because allocation waits.
+        if (this._play(id, p.events[consumed]) === BOMB_BUDGET_WAIT) {
+          // Keep ordinary delayed native throws in order. A peer must not use
+          // an exhausted quota to keep *paint and actions* behind this row
+          // indefinitely. Only a row that waited six receiver seconds is
+          // abandoned, then its sequence is retired so later events can play.
+          const blocked = p.events[consumed], receivedAt = now();
+          blocked._budgetWaitSince ??= receivedAt;
+          if (!Number.isFinite(receivedAt) || receivedAt - blocked._budgetWaitSince < 6) break;
+          if (Number.isSafeInteger(blocked._netSeq))
+            p._lastEventSeq = Math.max(p._lastEventSeq || 0, blocked._netSeq);
+        }
+        consumed++;
+      }
+      if (consumed) p.events.splice(0, consumed);`, 'bounded gameplay bomb backpressure');
     patch(`      case 's': {
         this.applying = true;
         const st = e[9] || e[10] || e[11] ? _v2.set(e[9], e[10], e[11]) : undefined;
@@ -800,6 +866,12 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (!e._finishPaintApplied) this._applyRemoteSplatEvent(e);
         break;
       }`, 'deadline paint is never double-applied');
+    // The kit column follows the optional Storm metadata column. Derive it
+    // from the same composed native replay call used below, not packet length
+    // (which also carries event sequence/tick and optional paint metadata).
+    const bombKitIndex = code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12])') ? 11
+      : code.includes('G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11])') ? 10 : -1;
+    code = "import { retireReplacedGhostSprinklers } from '../../patches/splatoon3/runtime/kit-subs.mjs';\n" + code;
     patch('  _play(from, e) {\n    switch (e[1]) {', `  _play(from, e) {
     if (e[1] === 's') e._netPeer = from;
     if (e[1] === 's') {
@@ -817,8 +889,15 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         if (!validBossMove(e[2])) return;
       } else if (!Number.isSafeInteger(e[2]) || !Number.isFinite(e[3]) || !Number.isFinite(e[4]) || !Number.isFinite(e[5])) return;
     }
-    const eventPeer = this.peers.get(from);
-    if (e._netSeq !== undefined && eventPeer) { if (e._netSeq <= (eventPeer._lastEventSeq || 0)) return; eventPeer._lastEventSeq = e._netSeq; }
+    const eventKind = e[1], eventPeer = this.peers.get(from);
+    if (!['s','p','pe','b','tr','ev','bm','bc'].includes(eventKind)) return;
+    if (eventKind === 'p' && (!validNetworkProjectileTiming(e[11], e[12])
+      || !validNetworkProjectileCosmetics(e))) return;
+    if (eventKind === 'b' && !validNetworkBombBirth(e, G.level?.bounds)) return;
+    if (eventKind === 'pe' && e[4] === 1 && (!Number.isFinite(e[5]) || !Number.isFinite(e[6]) || !Number.isFinite(e[7]))) return;
+    if (eventKind === 'tr' && typeof e[3] !== 'string') return;
+    if (eventKind === 'ev' && !validForwardedEventPayload(e[2], e[3])) return;
+    if (e._netSeq !== undefined && eventPeer && !validEventSequence(e._netSeq, eventPeer._lastEventSeq || 0)) return;
     if (e[1] === 'p' || e[1] === 'pe' || e[1] === 'b' || e[1] === 'tr') {
       const actor = this.byNid.get(e[2]);
       if (!actor?.remote || actor.owner !== from) return;
@@ -828,6 +907,21 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
       const actor = this.byNid.get(nid);
       if (!actor?.remote || actor.owner !== from) return;
     }
+    if (eventKind === 'b') {
+      const a = this.byNid.get(e[2]);
+      // Validate the existing Storm authority before allowing it to wait. An
+      // invalid/replayed special must never hold the owner's FIFO head hostage.
+      if (e[3] === 'storm') {
+        const auth = a?.net?._stormBirthAuth;
+        if (!stormSnapshotAllows(a, e._stormSnapshot, from) || a.weapon?.special !== 'storm'
+          || !auth || auth.used || auth.owner !== from || auth.life !== e._stormSnapshot.life
+          || !Number.isSafeInteger(e._netTick) || e._netTick !== auth.tick
+          || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) return;
+      }
+      ${bombKitIndex < 0 ? '' : `if (e[3] === 'bomb' && e[${bombKitIndex}] === 'sprinkler') retireReplacedGhostSprinklers(G.projectiles, a);`}
+      if (!allowGhostBombBirth(G.projectiles?.bombs, a, from, e[3], this.match?.actors)) return BOMB_BUDGET_WAIT;
+    }
+    if (e._netSeq !== undefined && eventPeer) eventPeer._lastEventSeq = e._netSeq;
     switch (e[1]) {`, 'event ownership and host-only Boss timeline admission');
     {
       const bombWithKitMeta = "case 'b': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9], e[10], e[11], e[12]); break; }";
@@ -847,7 +941,10 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
             || !Number.isSafeInteger(e._netSeq) || e._netSeq <= auth.useSeq) break;
           auth.used = true;
         }
-        const b = a && G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]${bombReplayArgs});
+        // These native replicas own victim-local bomb/Storm damage. Reserve
+        // each bound actor's share; ordinary bombs cannot consume Storm slots.
+        const b = a && allowGhostBombBirth(G.projectiles?.bombs, a, from, e[3], this.match?.actors)
+          ? G.projectiles?.ghostBomb(a, e[3], e[4], e[5], e[6], e[7], e[8], e[9]${bombReplayArgs}) : null;
         if (b) {
           b._netBorn = e[0]; b._netBornTick = e._netTick; b._netPeer = this.peers.get(from); b._netSteps = 0;
           b._netBornLocal = Number.isFinite(b._netPeer?.off) ? e[0] + b._netPeer.off : NaN;
@@ -894,7 +991,7 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
     }`, 'respawn invalidates storm and hit authority state');
     patch("case 'p': { const a = this.byNid.get(e[2]); if (a) G.projectiles?.ghostProjectile(a, e); break; }", `case 'p': {
         for (let index = 5; index <= 18; index++) if (!Number.isFinite(e[index])) return;
-        if (e[11] < 0 || e[12] <= 0) return;
+        if (!validNetworkProjectileTiming(e[11], e[12])) return;
         const prepareProjectile = G.projectiles?.prepareFidelityProjectilePacket;
         const packet = typeof prepareProjectile === 'function' ? prepareProjectile.call(G.projectiles, e) : e;
         if (typeof prepareProjectile === 'function' && !packet) return;
@@ -903,8 +1000,16 @@ function unpackActor(s, ts) {`, 'validate owner numeric actor rows and bounded r
         const kitOffset = packet.length === 35 || packet.length === 36 || packet.length === 37 ? 2 : 0;
         const birthId = packet[29 + inkMetaOffset + kitOffset];
         if (Number.isFinite(birthId) && peer) { if (birthId <= (peer._lastProjectileId || 0)) break; peer._lastProjectileId = birthId; }
-        const a = this.byNid.get(packet[2]), p = a && G.projectiles?.ghostProjectile(a, packet);
-        if (p) { p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0; p._netMaxSteps = Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2; }
+        // #1311: cosmetic births cannot exhaust the active projectile pool.
+        // Only the copy is skipped: its event identity was already consumed.
+        const a = this.byNid.get(packet[2]), projectiles = G.projectiles;
+        const p = a && canAllocateNetworkGhost(projectiles, a)
+          ? projectiles.ghostProjectile(a, packet) : null;
+        if (p) {
+          p._netBorn = e[0]; p._netBornTick = e._netTick; p._netPeer = this.peers.get(from); p._netSteps = 0;
+          const hardMaxSteps = Math.ceil((NETWORK_PROJECTILE_LIFE_MAX + NETWORK_PROJECTILE_DELAY_MAX) * 60) + 2;
+          p._netMaxSteps = Math.min(Math.ceil((p.life + Math.max(0,p.delay)) * 60) + 2, hardMaxSteps);
+        }
         break;
       }
       case 'pe': {
@@ -1996,6 +2101,63 @@ function firstSplatStateFor(session,cfg) {
   }
   if (rel === 'src/game/weapons.js') {
     // Source-guided heads return before the generic fidelity branch below.
+    // Trust no peer-controlled visual ribbon/head parameters, even through
+    // direct ghost construction or recycled projectiles outside NetMatch.
+    code = "import { validNetworkProjectileCosmetics, NETWORK_PROJECTILE_TAIL_RATIO_MAX, NETWORK_PROJECTILE_TAIL_EXTENT_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    patch('    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
+      '    if (!validNetworkProjectileCosmetics(e)) return null;\n    const p = this._new();\n    Object.assign(p, { type, wid: wid || null, owner: a, team: a.team, age: 0, life, straight, radius, damage: 0, size, trail: -1.5, trailEvery, trailRadius: 0.45,',
+      'validate cosmetic ghost at source allocation boundary');
+    // Earlier fidelity and quality adapters may prepend setup work at the
+    // beginning of _draw(). Change only the counter within that method.
+    {
+      const start = code.indexOf('  _draw() {');
+      const at = code.indexOf('    let n = 0;', start);
+      if (start < 0 || at < start || at > start + 2000)
+        throw Error('Network draw counter anchor mismatch');
+      code = code.slice(0, at) + '    let n = 0, remoteDrawn = 0;' + code.slice(at + '    let n = 0;'.length);
+    }
+    patch('      if (n >= MAX_BLOBS - 5) break;\n      if (p.delay > 0) continue;',
+      `      if (n >= MAX_BLOBS - 5) break;
+      if (p.ghost && remoteDrawn >= MAX_BLOBS - 64) continue;
+      if (p.delay > 0) continue;
+      // No ephemeral arrays or callbacks in the 60Hz ink renderer.
+      if (p.ghost && (
+        !p.pos || !p.start || !p.vel
+        || !Number.isFinite(p.pos.x) || !Number.isFinite(p.pos.y) || !Number.isFinite(p.pos.z)
+        || !Number.isFinite(p.start.x) || !Number.isFinite(p.start.y) || !Number.isFinite(p.start.z)
+        || !Number.isFinite(p.vel.x) || !Number.isFinite(p.vel.y) || !Number.isFinite(p.vel.z)
+        || Math.abs(p.pos.x) > 1e6 || Math.abs(p.pos.y) > 1e6 || Math.abs(p.pos.z) > 1e6
+        || Math.abs(p.start.x) > 1e6 || Math.abs(p.start.y) > 1e6 || Math.abs(p.start.z) > 1e6
+        || Math.abs(p.vel.x) > 4096 || Math.abs(p.vel.y) > 4096 || Math.abs(p.vel.z) > 4096
+        || !Number.isFinite(p.age) || !Number.isFinite(p.life)
+        || !Number.isFinite(p.size) || !Number.isFinite(p.seed)
+        || p.age < 0 || p.life <= 0 || p.size < 0 || p.size > 64
+        || p.vis !== undefined && (!Number.isFinite(p.vis) || p.vis < 0 || p.vis > 8)
+        || p.tail0 !== undefined && (!Number.isFinite(p.tail0) || p.tail0 < 0 || p.tail0 > NETWORK_PROJECTILE_TAIL_RATIO_MAX
+          || (p.catalogVisual ? p.vis : (p.vis || p.size)) * p.tail0 > NETWORK_PROJECTILE_TAIL_EXTENT_MAX)
+        || p.tailK !== undefined && (!Number.isFinite(p.tailK) || p.tailK < 0 || p.tailK > 16)
+        || p.wob !== undefined && (!Number.isFinite(p.wob) || p.wob < 0 || p.wob > 4)
+        || p.wobF !== undefined && (!Number.isFinite(p.wobF) || p.wobF < 0 || p.wobF > 512)
+        || p.nose !== undefined && (!Number.isFinite(p.nose) || p.nose < -2 || p.nose > 4)
+        || p.sats !== undefined && (!Number.isSafeInteger(p.sats) || p.sats < 0 || p.sats > SAT_SIZE.length)
+      )) continue;`,
+      'reject poisoned draw records and preserve local headroom');
+    patch('      n++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
+      '      n++; if (p.ghost) remoteDrawn++;\n      // satellites: only once the head has travelled clear of the gun, thinning out down the string',
+      'track remote cosmetic budget without changing valid shot order');
+    patch('      const ns = look[5] ? p.sats || 0 : 0;',
+      '      const ns = look[5] && Number.isSafeInteger(p.sats) ? Math.max(0, Math.min(SAT_SIZE.length, p.sats)) : 0;',
+      'defend against oversized satellite count');
+    patch('      for (let i = 0; i < ns && n < MAX_BLOBS; i++) {',
+      '      for (let i = 0; i < ns && n < MAX_BLOBS && (!p.ghost || remoteDrawn < MAX_BLOBS - 64); i++) {',
+      'reserve local draw slots against remote beads');
+    patch('        writeInkLook(inkLook, n, INK_LOOK.satellite, p.seed + i * 0.37);\n        n++;',
+      '        writeInkLook(inkLook, n, INK_LOOK.satellite, p.seed + i * 0.37);\n        n++; if (p.ghost) remoteDrawn++;',
+      'track satellite allocations at the render boundary');
+
+    // The existing later `charger zero values` adapter already changes || to ??.
+    patch("  _ghostBeam(a, m, dir, len, charge, near) {\n    const mesh = this._beamMesh();", "  _ghostBeam(a, m, dir, len, charge, near) {\n    // Defense in depth: callers must not create nonfinite or unbounded beam\n    // meshes even when called directly, outside the forwarded-event guard.\n    const finiteVector = v => v && [v.x, v.y, v.z].every(n =>\n      typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1e6);\n    if (!finiteVector(m) || !finiteVector(dir) || dir.lengthSq() < 1e-8\n      || dir.lengthSq() > 4 || !Number.isFinite(len) || len <= 0 || len > 128\n      || !Number.isFinite(charge) || charge < 0 || charge > 1.25\n      || this.beams.length >= 96) return;\n    const mesh = this._beamMesh();", "reject bad and excessive charger ribbons before scene allocation");
+    patch("      b.t += dt;\n      const k = b.t / b.life;\n      const u = b.mesh.material.uniforms;", "      b.t += dt;\n      // Heal existing poisoned records too, so a bad pre-fix beam cannot\n      // live forever or leave a nonfinite ribbon in the active list.\n      if (!Number.isFinite(b.t) || b.t < 0 || !Number.isFinite(b.life)\n        || b.life <= 0 || b.life > 2 || !Number.isFinite(b.th)\n        || b.th <= 0 || b.th > 1 || !Number.isFinite(b.t / b.life)) {\n        b.mesh.visible = false; this.beamPool.push(b.mesh); this.beams.splice(i, 1);\n        continue;\n      }\n      const k = b.t / b.life;\n      const u = b.mesh.material.uniforms;", "retire nonfinite charger ribbons safely");
     // Preserve the same owner terminal publication and receiver-only impact FX.
     patch('    if (p.inkProfile) return this.inkFlight.stepHead(p, dt);', `    if (p.inkProfile) {
       const dead = this.inkFlight.stepHead(p, dt);
@@ -2102,11 +2264,11 @@ ${bombHit}`;
         const clock = Math.min(p._netPeer.tr,p._netPeer.lastTs ?? p._netPeer.tr);
         const ownerElapsed = Number.isFinite(p._netPeer.sim) && Number.isFinite(p._netBornTick) ? p._netPeer.sim - p._netBornTick : (clock-p._netBorn)/SIM_DT;
         const target = Math.min(Math.floor(ownerElapsed+.0306)+1,p._netEndStep ?? Infinity);
-        const limit = p._netMaxSteps;
+        const limit = p._netMaxSteps, catchupTarget = Math.min(target, p._netSteps + 30);
         let dead = false;
         if (nm) nm.mute++;
         try {
-          while (!dead && p._netSteps < target && p._netSteps < limit) {
+          while (!dead && p._netSteps < catchupTarget && p._netSteps < limit) {
             p._netSteps++;
             const activeDt = Math.max(0, SIM_DT - Math.max(0, p.delay || 0));
             p.delay = Math.max(0, (p.delay || 0) - SIM_DT);
@@ -2129,11 +2291,11 @@ ${bombHit}`;
           // Step on the owner's playback clock, never on receipt wall time.
           // .0306 tick tolerates 0.51 ms legacy timestamp rounding, not travel distance.
           // Finite lifetime bounds catch-up work, including a delayed birth.
-          const limit = p._netMaxSteps;
+          const limit = p._netMaxSteps, catchupTarget = Math.min(target, p._netSteps + 30);
           let dead = false;
           if (nm) nm.mute++;
           try {
-            while (!dead && p._netSteps < target && p._netSteps < limit) {
+            while (!dead && p._netSteps < catchupTarget && p._netSteps < limit) {
               p._netSteps++;
               if (p.delay > 0) { p.delay -= SIM_DT; if (p.delay > 0) continue; }
               dead = this._step(p, SIM_DT);
@@ -2190,7 +2352,19 @@ ${bombHit}`;
       b.age += stepDt;`, 'bomb owner steps');
     bombs = bombs.replace(/\bdt\b/g,'stepDt').replace('_updateBombs(stepDt)', '_updateBombs(dt)').replace('peer ? SIM_DT : stepDt','peer ? SIM_DT : dt');
     bombs = bombs.replaceAll('this.bombs.splice(i, 1); continue;', 'this.bombs.splice(i, 1); break;');
+    bombs = once(bombs,'      b.age += stepDt;', `      b.age += stepDt;
+      // Bound abnormal ghost *flight*, never a legitimate deployed Sprinkler,
+      // suction attachment, Curling roll or Autobomb chase. Local bombs keep
+      // their native fuse and physics unchanged.
+      if (b.ghost && b.kind === 'bomb' && b.fuse < 0 && b.age > 30
+        && (b.s3Mode === 'flight' || b.s3Mode == null)) {
+        this._releaseBomb(b); this.bombs.splice(i, 1); break;
+      }`, 'retire off-world remote bomb flight');
     bombs = once(bombs,'      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);', '      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);\n      }', 'close bomb steps');
+    bombs = once(bombs,
+      '      b.mesh.rotation.x += b.spin.x * stepDt * (b.fuse < 0 ? 1 : 0.2);\n      b.mesh.rotation.z += b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2);',
+      '      b.mesh.rotation.set(b.mesh.rotation.x + b.spin.x * stepDt * (b.fuse < 0 ? 1 : 0.2), b.mesh.rotation.y, b.mesh.rotation.z + b.spin.y * stepDt * (b.fuse < 0 ? 1 : 0.2), b.mesh.rotation.order);',
+      'coalesce adjacent bomb Euler writes without skipping a physics step');
     code = code.slice(0,bombStart)+bombs+code.slice(bombEnd);
     patch('e.len || 20, e.charge || 0.5', 'e.len ?? 20, e.charge ?? 0.5', 'charger zero values');
     patch('    this.clouds.push({ owner: b.owner,', `    this.clouds.push({ _netPeer: b._netPeer, _netBorn: b._netBorn + (b._netSteps - 1) * SIM_DT, _netBornTick: b._netBornTick + b._netSteps - 1, _netSteps: 0, owner: b.owner,`, 'cloud inherits owner timeline');
@@ -2290,7 +2464,26 @@ ${bombHit}`;
 
   }
   if (rel === 'src/net/netmatch.js') {
-    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    code = "import { validActorSnapshotRow, validRemoteActorPose, validSnapshotTimestamp, validBossSnapshotRow, validBossMove, validOwnerTickAdvance, validOwnerSimulationTick, validEventSequence, validNetworkProjectileTiming, validForwardedEventPayload, allowGhostBombBirth, validNetworkBombBirth, validNetworkProjectileCosmetics, NETWORK_PROJECTILE_LIFE_MAX, NETWORK_PROJECTILE_DELAY_MAX } from '../../patches/network-replication/snapshot-guard.mjs';\n" + code;
+    // #1311: count only active ghost rounds; do not keep lifecycle counters.
+    // The native 700-blob render budget reserves 60 for local effects.
+    patch('const TICK = 1 / 20;', `const TICK = 1 / 20;
+const NETWORK_GHOST_TOTAL_LIMIT = 640;
+const NETWORK_GHOST_PEER_LIMIT = 256;
+const NETWORK_GHOST_ACTOR_LIMIT = 128;
+function canAllocateNetworkGhost(projectiles, actor) {
+  const live = projectiles?.list;
+  if (!Array.isArray(live) || typeof projectiles.ghostProjectile !== 'function') return false;
+  let total = 0, byPeer = 0, byActor = 0;
+  for (const round of live) {
+    if (!round?.ghost) continue;
+    if (++total >= NETWORK_GHOST_TOTAL_LIMIT) return false;
+    if (round.owner === actor && ++byActor >= NETWORK_GHOST_ACTOR_LIMIT) return false;
+    if (round.owner?.owner === actor.owner && ++byPeer >= NETWORK_GHOST_PEER_LIMIT) return false;
+  }
+  return true;
+}
+`, 'live remote projectile resource budget');
     patch('if (d.B && from === this.s.hostId && boss && !boss.sim) {',
       'if (d.B && from === this.s.hostId && boss && !boss.sim && validBossSnapshotRow(d.B, d.ts)) {',
       'validate host Boss snapshot before unpacking and buffering');
@@ -2300,6 +2493,19 @@ ${bombHit}`;
     patch('    if (!Number.isFinite(d.ts)) return;',
       '    if (!validSnapshotTimestamp(d.ts)) return;',
       'reject unsafe owner clock before replay watermark mutation');
+    patch(`    if (!validSnapshotTimestamp(d.ts)) return;
+    const previous = this.peers.get(from);
+    // One ordered replay gate owns both combat-life admission and projectile/event chronology.
+    if (previous?.lastTs !== undefined && d.ts <= previous.lastTs) return;
+    this.stats.in++;
+    const p = this._peer(from);`,
+      `    const receivedAt = now();
+    const previous = this.peers.get(from);
+    if (!validOwnerTickAdvance(d.ts, previous?.lastTs, receivedAt, previous?.lastReceiveAt)) return;
+    this.stats.in++;
+    const p = this._peer(from);
+    p.lastReceiveAt = receivedAt;`,
+      'bound owner tick forward progression');
     // #574: use the established authenticated, life-scoped, deduplicated hit
     // transaction. A zero-damage Blaster contact is admitted only with bounded
     // geometry; no other cause gains a zero/negative-damage exception.
@@ -2355,6 +2561,11 @@ ${bombHit}`;
   }
   if (rel === 'src/net/netmatch.js') {
     code = adaptKitPaintAdmission(code, once);
+    // Some composed source paths rewrite the method header, but all retain
+    // this unique unpack admission point inside _playEvent.
+    patch('    const e = unpackEvent(d, this);',
+      '    if (!validForwardedEventPayload(name, d)) return;\n    const e = unpackEvent(d, this);',
+      'defense in depth for direct forwarded event playback');
     patch('  _tick(from, d) {',
       "  _tick(from, d) {\n    if (d.e != null && !Array.isArray(d.e)) return;\n    if (from === this.s.hostId && d.c != null && (!Array.isArray(d.c) || d.c.length !== 2 || typeof d.c[0] !== 'string' || !Number.isFinite(d.c[1]) || d.c[1] < 0)) return;",
       'validate owner envelope before kit normalization or pending births');

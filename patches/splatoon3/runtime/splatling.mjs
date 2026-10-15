@@ -186,7 +186,7 @@ export function installSplatling(api, profile, { splatlingChargeCap, splatlingRe
       this.burstFrac = this.charge = this.burstT / this.burstDur;
       this.firingT = .3; a.fireFacing = .5;
       // One deterministic schedule, independent of held ZR and render rate.
-      // Keep the public 160F/4F = 40-shot endpoint convention in this batch.
+      // Include the sourced endpoint slot; reservation also owns its paid ink.
       while (state.emitted < state.shots && state.emitted * w.fireInterval < state.elapsed - EPS) {
         state.emitted++;
         state.unspent = state.paid * (1 - state.emitted / state.shots);

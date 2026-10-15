@@ -10,6 +10,7 @@ import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 import { runTouchTransitionCases, withWindowFocusRestored, runHybridKeyboardMapCases } from './inkwave-touch-transition-cases.mjs';
 import { runFocusLossCase } from './inkwave-focus-loss-case.mjs';
+import { waitForNativePadMap, readPadMapScreenshot, assertPadMapEvidence } from './lib/inkwave-pad-map-evidence.mjs';
 
 const option = name => { const i = process.argv.indexOf(name); assert(i >= 0 && process.argv[i + 1], 'Required ' + name); return path.resolve(process.argv[i + 1]); };
 const site = option('--site'), evidence = option('--evidence-dir'), cache = option('--profile-dir');
@@ -341,26 +342,53 @@ try {
       }
       await page.evaluate(() => { mobile.gyro.enabled = false; mobile.gyro.discard(); });
       entry.checks.push('native-touch-camera-reset-shares-controller-path-and-rebases-next-sensor-sample');
-      const padHighlight = await page.evaluate(() => {
-        window.navigationPrevious = { match: G.match, input: G.input, pad: input.pad, device: input.lastDevice };
-        input.pad = { mapping: 'standard' }; input.lastDevice = 'pad'; G.input = input;
-        G.match = { state: 'playing', controller }; controller.padJumpIndex = 1;
-        const hud = window.navigationHud = new HUD();
-        hud.lab = { local: controller.a, beacons: [0, 1, 2, 3].map(i => ({ x: .2 + i * .2, y: .3, name: 'Target ' + i, weapon: 'shooter', ok: true, home: i === 3 })) };
-        hud.setVisible(true); hud._mapT = 1;
-        const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
-        hud._updMap({ canvas, expanded: true, players: [] }, 0);
-        return { beacon: hud.beacons[1].classList.contains('is-hover'), row: hud.legendRows[1].classList.contains('is-hover'), cursor: hud.mapCursor.classList.contains('is-on'), guide: hud.mapLegend.querySelector('.iw-lg__foot').textContent };
-      });
-      assert.equal(padHighlight.beacon, true); assert.equal(padHighlight.row, true); assert.equal(padHighlight.cursor, false);
-      assert(padHighlight.guide.includes('A'));
-      await page.screenshot({ path: path.join(evidence, engineName + '-pad-map-selection.png') });
       await page.evaluate(() => {
-        navigationHud.dispose(); const old = navigationPrevious;
-        G.match = old.match; G.input = old.input; input.pad = old.pad; input.lastDevice = old.device;
-        controller.padJumpIndex = -1;
+        window.navigationPrevious = { match:G.match, actors:G.actors, input:G.input, pad:input.pad, device:input.lastDevice, pressed:[...input.padPressed], controllerDescriptors:Object.fromEntries(['mapHeld','padJumpTarget','padJumpIndex','pendingRespawnJump','_mapGyroYaw','_mapGyroPitch','_mapGyroCursor','mapGyroTarget'].map(key=>[key,Object.getOwnPropertyDescriptor(controller,key)])) };
+        input.pad = { mapping:'standard', buttons:Array.from({length:17},()=>({pressed:false,value:0})) }; input.lastDevice='pad'; G.input=input; input.padPressed.clear();
+        window.navigationTargets=[0,1,2].map(i=>({alive:true,team:controller.a.team,name:'Target '+i,pos:new THREE.Vector3(i,0,0)}));
+        G.actors=[controller.a,...navigationTargets];G.match={state:'playing',controller};controller.mapHeld=true;
+        const hud=window.navigationHud=new HUD();
+        hud.lab={local:controller.a,beacons:[0,1,2,3].map(i=>({x:.2+i*.2,y:.3,name:'Target '+i,weapon:'shooter',ok:true,home:i===3}))};
+        const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+        window.navigationMapFrame={canvas,expanded:true,players:[]};
+        hud.setVisible(true);hud._updMap(navigationMapFrame,0);
+        window.navigationMapEntrance=hud.map.getAnimations().filter(a=>a.animationName==='iw-hud-slide');
       });
-      entry.checks.push('actual-built-HUD-highlights-selected-pad-beacon-and-confirmation-guide');
+      entry.padMapSamples=[];
+      try {
+        for(const [index,button]of [[1,12],[2,15]]){
+          await page.evaluate(button=>{input.padPressed.add(button);controller.updatePadMapSelection(true);if(input.padPressed.has(button))throw Error('Native D-pad edge was not consumed');},button);
+          const state=await page.evaluate(waitForNativePadMap,{index});
+          const image=engineName+'-pad-map-selection'+(index===1?'':'-next')+'.png';
+          const png=await page.screenshot({path:path.join(evidence,image),animations:'allow'});
+          const pixels=state.regions?await page.evaluate(readPadMapScreenshot,{png:'data:image/png;base64,'+png.toString('base64'),regions:state.regions,viewport:state.viewport}):null;
+          const sample={image,state,pixels};entry.padMapSamples.push(sample);
+          fs.writeFileSync(path.join(evidence,engineName+'-pad-map-evidence.json'),JSON.stringify(entry.padMapSamples,null,2));
+          assertPadMapEvidence(sample);
+        }
+        // Negative control removes only text/icon ink, retaining the decorated
+        // label box, beacon ring, selected row and all native animation state.
+        const positive=entry.padMapSamples.at(-1);
+        await page.evaluate(()=>{const b=navigationHud.beacons[controller.padJumpIndex];window.navigationHiddenInk=[b.querySelector('.iw-bcn__label b'),b.querySelector('.iw-bcn__icon')].map(el=>({el,visibility:el.style.visibility}));for(const {el}of navigationHiddenInk)el.style.visibility='hidden';});
+        try{
+          const image=engineName+'-pad-map-no-text-icon.png',png=await page.screenshot({path:path.join(evidence,image),animations:'allow'});
+          const pixels=await page.evaluate(readPadMapScreenshot,{png:'data:image/png;base64,'+png.toString('base64'),regions:positive.state.regions,viewport:positive.state.viewport});
+          entry.padMapNegative={image,pixels};
+          fs.writeFileSync(path.join(evidence,engineName+'-pad-map-negative.json'),JSON.stringify(entry.padMapNegative,null,2));
+          const unit=pixels.scaleX*pixels.scaleY;
+          for(const region of ['icon','labelText'])assert(pixels[region].bright<8*unit,region+' detector must independently reject its hidden ink');
+          assert(pixels.disc.orange>=20*unit&&pixels.row.borderOrange>=8*unit,'negative control must preserve beacon color and selection border');
+          assert.throws(()=>assertPadMapEvidence({state:positive.state,pixels}),/icon|labelText/,'decorative boxes alone cannot stand in for text and icons');
+        }finally{await page.evaluate(()=>{for(const {el,visibility}of navigationHiddenInk)el.style.visibility=visibility;delete window.navigationHiddenInk;});}
+      } finally {
+        await page.evaluate(()=>{
+          navigationHud.dispose();const old=navigationPrevious;
+          G.match=old.match;G.actors=old.actors;G.input=old.input;input.pad=old.pad;input.lastDevice=old.device;
+          input.padPressed.clear();for(const button of old.pressed)input.padPressed.add(button);
+          for(const [key,descriptor]of Object.entries(old.controllerDescriptors)){if(descriptor)Object.defineProperty(controller,key,descriptor);else delete controller[key];}
+        });
+      }
+      entry.checks.push('actual-built-HUD-native-entry-and-D-pad-selection-have-visible-screenshot-pixels');
       const respawnNavigation = await page.evaluate(() => {
         const old = { match:G.match, actors:G.actors, input:G.input, level:G.level, device:input.lastDevice };
         const a={alive:false,grounded:false,team:0,intent:{move:new THREE.Vector3()},pos:new THREE.Vector3(),
@@ -408,6 +436,43 @@ try {
       });
       assert.deepEqual(respawnNavigation,{deadBlocked:true,hudQueued:true,dioramaDownDeferred:true,dioramaQueued:true,waitsForLanding:true,landed:true,pauseCancels:true,heldAxesPreserve:true,freshPadCancels:true});
       entry.checks.push('actual-built-Match-HUD-diorama-dead-map-selection-and-deferred-respawn-admission');
+      const queuedTargetLives = await page.evaluate(() => {
+        const old={match:G.match,actors:G.actors,device:input.lastDevice};
+        const rows=[];
+        try {
+          input.lastDevice='kbm';input.keys.clear();input.pressed.clear();input.keys.add('Tab');
+          for(const mode of ['same-life-teleport','recycled-target','accepted-new-life','stale-selection','fresh-selection']) {
+            // Use the emitted Match/PlayerController. Actor lifecycle itself is
+            // exercised by the source/emitted Node regression with real Actors.
+            const a={alive:false,grounded:false,team:0,intent:{move:new THREE.Vector3()},pos:new THREE.Vector3(),
+              canSuperJump(){return this.alive&&!this.superJumpState;},superJump(target){if(!this.canSuperJump())return false;this.superJumpState={target};return true;}};
+            const ally={alive:true,team:0,netLife:1,netTp:1,pos:new THREE.Vector3(18,0,6)};
+            const c=new controller.constructor(a,{yaw:0,pitch:0},input);c.computeAim=()=>{};
+            const match={state:'playing',paused:false,local:a,controller:c};G.match=match;G.actors=[a,ally];
+            input.pressed.add('Tab');
+            Match.prototype.updateController.call(match,1/60);
+            if(mode==='stale-selection')ally.net={lastLife:2};
+            const queued=c.requestMapJump(ally);
+            if(mode==='same-life-teleport'){ally.netTp++;ally.pos.set(24,0,9);}
+            if(mode==='recycled-target'||mode==='fresh-selection')ally.netLife=2;
+            if(mode==='accepted-new-life')ally.net={lastLife:2};
+            let fresh=false;
+            if(mode==='fresh-selection') { Match.prototype.updateController.call(match,1/60);fresh=!c.pendingRespawnJump&&c.requestMapJump(ally); }
+            a.alive=true;a.grounded=true;Match.prototype.updateController.call(match,1/60);
+            rows.push({mode,queued,fresh,jumped:a.superJumpState?.target===ally,pending:!!c.pendingRespawnJump});
+          }
+          return rows;
+        } finally { input.keys.clear();input.pressed.clear();input.lastDevice=old.device;G.match=old.match;G.actors=old.actors; }
+      });
+      assert.deepEqual(queuedTargetLives,[
+        {mode:'same-life-teleport',queued:true,fresh:false,jumped:true,pending:false},
+        {mode:'recycled-target',queued:true,fresh:false,jumped:false,pending:false},
+        {mode:'accepted-new-life',queued:true,fresh:false,jumped:false,pending:false},
+        {mode:'stale-selection',queued:false,fresh:false,jumped:false,pending:false},
+        {mode:'fresh-selection',queued:true,fresh:true,jumped:true,pending:false},
+      ]);
+      entry.queuedTargetLives=queuedTargetLives;
+      entry.checks.push('actual-built-controller-queued-superjump-target-combat-life-fence');
       const mapGyro = await page.evaluate(() => {
         const old={match:G.match,actors:G.actors,rig:G.rig,camera:G.camera,level:G.level,device:input.lastDevice,active:mobile.active,enabled:mobile.gyro.enabled};
         const a={alive:true,grounded:true,team:0,yaw:0,weapon:{kind:'shooter',range:12},pos:new THREE.Vector3(),intent:{move:new THREE.Vector3()},canSuperJump(){return true;}};

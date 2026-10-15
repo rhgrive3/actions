@@ -1,8 +1,11 @@
 import { validRankedSnapshot } from './engine.mjs';
+import { withObjectDamageCause } from '../sub-resistance.mjs';
+
+const damageCauses = new Set(['Gachihoko_Bullet', 'Gachihoko_BombCore', 'GachihokoTimeUpBurst']);
 
 export const actorId = a => String(a.nid ?? `${a.team}:${a.slot}`);
 const finiteVector = v => Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) <= 2000);
-function current(nm) { return nm.match?.ranked && nm._rankedAPI.G.netm === nm; }
+function current(nm) { return !nm._disposed && !nm.match?._disposed && nm.match?.ranked && nm._rankedAPI.G.netm === nm; }
 function envelope(nm, data) { return { ...data, match: nm.cfg.id, host: nm.s.hostId }; }
 
 export function installRankedNetwork(api) {
@@ -32,7 +35,8 @@ export function installRankedNetwork(api) {
         if (a && !this.isHost) {
           const cmd = a._rankedInput || {};
           d.rki = { match: this.cfg.id, id: actorId(a), seq: this.rankedInputSeq = (this.rankedInputSeq || 0) + 1,
-            fire: !!cmd.fire, throw: !!a._rankedThrowPending, aim: cmd.aim || [0, 0, 1] };
+            fire: !!cmd.fire, throw: !!a._rankedThrowPending, aim: cmd.aim || [0, 0, 1], special: a.specialActive?.id ?? null,
+            specialDeployed: a.specialActive?.id === 'storm' && a.specialActive?.t > 0, clamDrop: a._rankedClamDrop || 0 };
           a._rankedThrowPending = false;
         }
       }
@@ -48,23 +52,25 @@ export function installRankedNetwork(api) {
       const accepted = acceptState(this, d.rk);
       if (!accepted && ['st', 'res', 'end'].includes(d.k)) return;
     }
-    if (d.rki && this.isHost) {
+    if (d.rki && this.isHost && m.state === 'playing' && m.ranked.winner == null) {
       const cmd = d.rki, a = m.actors.find(a => actorId(a) === cmd.id);
       if (cmd.match === this.cfg.id && a?.owner === from && a.alive && Number.isSafeInteger(cmd.seq) && cmd.seq > 0 && finiteVector(cmd.aim)) {
         this.rankedInputs ||= new Map();
         const old = this.rankedInputs.get(cmd.id);
-        if (!old || cmd.seq > old.seq) this.rankedInputs.set(cmd.id, { seq: cmd.seq, fire: !!cmd.fire, throw: !!cmd.throw || !!old?.throw, aim: cmd.aim, at: G.time });
+        const specialOk = cmd.special == null || cmd.special === a.weapon?.special;
+        const dropOk = cmd.clamDrop === undefined || Number.isSafeInteger(cmd.clamDrop) && cmd.clamDrop >= 0 && cmd.clamDrop <= 100000;
+        if ((!old || cmd.seq > old.seq) && specialOk && dropOk) this.rankedInputs.set(cmd.id, { seq: cmd.seq, fire: !!cmd.fire, throw: !!cmd.throw || !!old?.throw, aim: cmd.aim, at: G.time,
+          special: cmd.special ?? null, specialDeployed: cmd.special === 'storm' && cmd.specialDeployed === true, clamDrop: Math.max(old?.clamDrop || 0, cmd.clamDrop || 0) });
       }
     }
     if (d.k === 'rkhit') {
-      if (!this.isHost || d.match !== this.cfg.id || m.state !== 'playing') return;
+      if (!this.isHost || d.match !== this.cfg.id || m.state !== 'playing' || m.ranked.winner != null) return;
       const a = m.actors.find(a => actorId(a) === d.id);
-      if (!a?.alive || a.owner !== from || !Number.isSafeInteger(d.seq) || !(d.damage > 0) || d.damage > 2000 || !finiteVector(d.pos)) return;
-      this.rankedHitSeq ||= new Map();
-      if (d.seq <= (this.rankedHitSeq.get(from) || 0)) return;
-      this.rankedHitSeq.set(from, d.seq);
+      if (!a?.alive || a.owner !== from || !Number.isSafeInteger(d.seq) || d.seq <= 0 || !Number.isFinite(d.damage) || !(d.damage > 0) || d.damage > 2000 || !finiteVector(d.pos)) return;
+      if (d.seq <= (this.rankedHitSeq?.get(from) || 0)) return;
       const s = m.ranked.rule.state;
       if (m.mode !== 'rainmaker' || !s.barrier?.active || !finiteVector(s.pos) || Math.hypot(...s.pos.map((n, i) => n - d.pos[i])) > 6) return;
+      (this.rankedHitSeq ||= new Map()).set(from, d.seq);
       // Shooter-owned collision is the existing game's combat authority. The
       // host admits identity/proximity and applies only the objective outcome.
       m.rankedBarrierHits.push({ id: d.id, team: a.team, damage: d.damage, kind: String(d.kind || 'main').slice(0, 32) });
@@ -79,11 +85,13 @@ export function installRankedNetwork(api) {
       return;
     }
     if (d.k === 'rkdamage') {
-      if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedDamageSeq || 0)) {
-        this.rankedDamageSeq = d.seq;
+      if (m.state !== 'playing' || m.ranked.winner != null) return;
+      if (!this.isHost && from === this.s.hostId && d.match === this.cfg.id && Number.isSafeInteger(d.seq) && d.seq > (this.rankedDamageSeq || 0)
+          && (d.cause === undefined || damageCauses.has(d.cause))) {
         const victim = m.actors.find(a => actorId(a) === d.victim), attacker = m.actors.find(a => actorId(a) === d.attacker);
         if (victim?.owner === this.myId && victim.alive && (victim.netLife ?? 0) === d.life && Number.isFinite(d.damage) && d.damage > 0 && d.damage <= 2000) {
-          const killed = victim.damage(d.damage, attacker || null, 'rainmaker');
+          this.rankedDamageSeq = d.seq;
+          const killed = withObjectDamageCause(attacker, () => victim.damage(d.damage, attacker || null, 'rainmaker'), d.cause || 'Gachihoko_Bullet');
           api.emit('hit', { attacker, victim, damage: d.damage, killed, weaponId: 'rainmaker' });
         }
       }
@@ -122,8 +130,9 @@ function validEvent(e) {
   if (e.kind.startsWith('rainmaker-')) {
     if (!finiteVector(e.pos)) return false;
     if (e.kind === 'rainmaker-shot' && (!finiteVector(e.aim) || !Number.isFinite(e.speed) || e.speed < 0 || e.speed > 300)) return false;
-    for (const key of ['damage', 'blastDamage', 'radius', 'paintRadius', 'nearRadius']) if (e[key] !== undefined && (!Number.isFinite(e[key]) || e[key] < 0 || e[key] > 2000)) return false;
+    for (const key of ['damage', 'blastDamage', 'outerDamage', 'radius', 'paintRadius', 'nearRadius', 'directRange', 'effectiveRange', 'launchY', 'recoil', 'trailRadius']) if (e[key] !== undefined && (!Number.isFinite(e[key]) || e[key] < 0 || e[key] > 2000)) return false;
   }
+  if (e.kind === 'clam-paint' && (!finiteVector(e.pos) || !Number.isFinite(e.radius) || e.radius <= 0 || e.radius > 1)) return false;
   return true;
 }
 export function acceptState(nm, packet) {

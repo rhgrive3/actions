@@ -142,7 +142,7 @@ function prepareAncillary(g, face, lu, lv, dn, sdu, sdv, sa, tn, dT, contract) {
   return pieces.length ? { pieces, sa, sdu, sdv, margin: pixel * 1.5, seed, dT } : null;
 }
 
-function pointInsideAncillary(mask, x, y, seed) {
+function pointInsideAncillary(mask, x, y, seed, p) {
   let px = x, py = y;
   if (mask.sa > 0) {
     const along = px * mask.sdu + py * mask.sdv;
@@ -150,31 +150,29 @@ function pointInsideAncillary(mask, x, y, seed) {
     const perpX = px - along * mask.sdu, perpY = py - along * mask.sdv;
     px = perpX + mask.sdu * (along / scale); py = perpY + mask.sdv * (along / scale);
   }
-  for (let n = 0; n < mask.pieces.length; n++) {
-    const p = mask.pieces[n], sx = p.type === 3 ? x : px, sy = p.type === 3 ? y : py;
-    if (sx < p.minX - mask.margin || sx > p.maxX + mask.margin || sy < p.minY - mask.margin || sy > p.maxY + mask.margin) continue;
-    if (p.type === 0 && sdRay(sx, sy, p.ax, p.ay, p.bx, p.by, p.ra, p.rb) < -mask.margin) return true;
-    if (p.type === 1 && Math.hypot(sx - p.x, sy - p.y) - p.radius < -mask.margin) return true;
-    if (p.type === 2) {
-      let qx = sx - p.x, qy = sy - p.y, along = qx * p.ux + qy * p.uy;
-      qx -= p.ux * along * (1 - 1 / p.el); qy -= p.uy * along * (1 - 1 / p.el);
-      if (Math.hypot(qx, qy) - p.radius < -mask.margin) return true;
-    }
-    if (p.type === 3) {
-      let qx = sx - p.x0, qy = sy - p.yTop;
-      const ty = clamp(-qy / Math.max(p.len, 1e-4), 0, 1);
-      qx += Math.sin(qy / p.r * 9 + seed * 20 + p.k * 2.3) * p.w * 0.35 * ty;
-      const wt = p.w * (1 + (0.6 - 1) * smoothstep(0.05, 0.85, ty));
-      const stream = Math.max(Math.abs(qx) - wt, Math.max(qy, -p.len - qy));
-      const tqy = (qy + p.len - p.w * 0.3) * 0.8;
-      const bulb = Math.hypot(qx, tqy) - p.w * (1.2 + 0.35 * p.h2) * (0.6 + 0.4 * mask.dT);
-      if (stream < -mask.margin || bulb < -mask.margin) return true;
-    }
+  const sx = p.type === 3 ? x : px, sy = p.type === 3 ? y : py;
+  if (sx < p.minX - mask.margin || sx > p.maxX + mask.margin || sy < p.minY - mask.margin || sy > p.maxY + mask.margin) return false;
+  if (p.type === 0 && sdRay(sx, sy, p.ax, p.ay, p.bx, p.by, p.ra, p.rb) < -mask.margin) return true;
+  if (p.type === 1 && Math.hypot(sx - p.x, sy - p.y) - p.radius < -mask.margin) return true;
+  if (p.type === 2) {
+    let qx = sx - p.x, qy = sy - p.y, along = qx * p.ux + qy * p.uy;
+    qx -= p.ux * along * (1 - 1 / p.el); qy -= p.uy * along * (1 - 1 / p.el);
+    if (Math.hypot(qx, qy) - p.radius < -mask.margin) return true;
+  }
+  if (p.type === 3) {
+    let qx = sx - p.x0, qy = sy - p.yTop;
+    const ty = clamp(-qy / Math.max(p.len, 1e-4), 0, 1);
+    qx += Math.sin(qy / p.r * 9 + seed * 20 + p.k * 2.3) * p.w * 0.35 * ty;
+    const wt = p.w * (1 + (0.6 - 1) * smoothstep(0.05, 0.85, ty));
+    const stream = Math.max(Math.abs(qx) - wt, Math.max(qy, -p.len - qy));
+    const tqy = (qy + p.len - p.w * 0.3) * 0.8;
+    const bulb = Math.hypot(qx, tqy) - p.w * (1.2 + 0.35 * p.h2) * (0.6 + 0.4 * mask.dT);
+    if (stream < -mask.margin || bulb < -mask.margin) return true;
   }
   return false;
 }
 
-function cellIsSolidlyVisible(mask, face, x, y) {
+function cellIsSolidlyVisible(mask, face, x, y, piece) {
   const dx = face.cu * 0.32, dy = face.cv * 0.32;
   // A paint cell owns its area when its center or one of four interior samples
   // lies well inside the shader mask. This catches most sub-cell satellites
@@ -182,7 +180,7 @@ function cellIsSolidlyVisible(mask, face, x, y) {
   for (let i = 0; i < 5; i++) {
     const sx = x + (i === 1 || i === 3 ? -dx : i > 1 ? dx : 0);
     const sy = y + (i === 1 || i === 2 ? -dy : i > 2 ? dy : 0);
-    if (pointInsideAncillary(mask, sx, sy, mask.seed)) return true;
+    if (pointInsideAncillary(mask, sx, sy, mask.seed, piece)) return true;
   }
   return false;
 }
@@ -217,11 +215,11 @@ function paintOrderId(paint, order) {
     paint._paintOwnershipSequence = (paint._paintOwnershipSequence + 1) >>> 0;
     if (paint._paintOwnershipSequence === 0) paint._paintOwnershipSequence = 1;
     record = { local: true, seq: paint._paintOwnershipSequence, legacy: false };
-    key = `local:${record.seq}`;
   }
   const id = paint._paintOrderRecords.length;
   paint._paintOrderRecords.push(record);
-  paint._paintOrderIds.set(key, id);
+  // Local stamps always receive a fresh ID; only network orders are deduplicated.
+  if (validNetworkOrder) paint._paintOrderIds.set(key, id);
   return id;
 }
 
@@ -312,7 +310,8 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
     const pad = Math.max(face.cu, face.cv) * 0.32 + mask.margin * (1 + Math.max(0, sa)) + 1e-9;
     const yLo = -Math.max(ext, down);
     for (let n2 = 0; n2 < mask.pieces.length; n2++) {
-      const box = pieceCellBox(mask, mask.pieces[n2], pad);
+      const piece = mask.pieces[n2];
+      const box = pieceCellBox(mask, piece, pad);
       const bi0 = Math.max(i0, Math.ceil((box[0] + lu) / face.cu - 0.5)), bi1 = Math.min(i1, Math.floor((box[1] + lu) / face.cu - 0.5));
       const bj0 = Math.max(j0, Math.ceil((box[2] + lv) / face.cv - 0.5)), bj1 = Math.min(j1, Math.floor((box[3] + lv) / face.cv - 0.5));
       for (let j = bj0; j <= bj1; j++) {
@@ -323,12 +322,15 @@ function claimAncillaryCells(paint, g, tn, dT, contract) {
           const index = face.grid + j * face.nu + i;
           if (x < -ext || x > ext) continue;
           if (visit[index] === stamp) continue;
-          visit[index] = stamp;
           const previousOrder = paint._paintOwnershipOrder[index] || 0;
-          if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) continue;
+          if (previousOrder && order && !paintOrderComesAfter(paint, order, previousOrder)) { visit[index] = stamp; continue; }
           const previous = paint.grid[index];
-          if (previous === value && previousOrder === order) continue;
-          if (!cellIsSolidlyVisible(mask, face, x, y)) continue;
+          if (previous === value && previousOrder === order) { visit[index] = stamp; continue; }
+          // This cell was enumerated from this piece's conservative box.
+          // Test only that piece, marking it visited only after a hit. A miss
+          // must remain eligible for overlapping pieces later in this stamp.
+          if (!cellIsSolidlyVisible(mask, face, x, y, piece)) continue;
+          visit[index] = stamp;
           if (previous === value) {
             claimPaintCell(paint, index, value, order);
             continue;
@@ -424,29 +426,29 @@ export function installIssue264PaintOwnership(PaintSystem, contract) {
     const j1 = Math.min(face.nv - 1, Math.floor(Math.min(face.sv, v1) / face.cv));
     let scratch = this._paintOrderRunScratch, runCount = 0;
     for (let j = j0; j <= j1; j++) {
-      let start = -1;
-      for (let i = i0; i <= i1 + 1; i++) {
-        const owns = i <= i1 && this._paintOwnershipOrder[face.grid + j * face.nu + i] === orderId;
-        if (owns && start < 0) start = i;
-        if ((!owns || i === i1 + 1) && start >= 0) {
-          const end = owns ? i : i - 1;
-          let x0 = Math.max(u0, start * face.cu), x1 = Math.min(u1, (end + 1) * face.cu);
-          let y0 = Math.max(v0, j * face.cv), y1 = Math.min(v1, (j + 1) * face.cv);
-          if (start === 0) x0 = Math.max(u0, -padM);
-          if (end === face.nu - 1) x1 = Math.min(u1, face.su + padM);
-          if (j === 0) y0 = Math.max(v0, -padM);
-          if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
-          if (x1 > x0 && y1 > y0) {
-            const offset = runCount * 4;
-            if (offset + 4 > scratch.length) {
-              const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
-              grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
-            }
-            scratch[offset] = x0; scratch[offset + 1] = x1;
-            scratch[offset + 2] = y0; scratch[offset + 3] = y1;
-            runCount++;
+      const row = face.grid + j * face.nu, owners = this._paintOwnershipOrder;
+      let i = i0;
+      while (i <= i1) {
+        while (i <= i1 && owners[row + i] !== orderId) i++;
+        if (i > i1) break;
+        const start = i++;
+        while (i <= i1 && owners[row + i] === orderId) i++;
+        const end = i - 1;
+        let x0 = Math.max(u0, start * face.cu), x1 = Math.min(u1, (end + 1) * face.cu);
+        let y0 = Math.max(v0, j * face.cv), y1 = Math.min(v1, (j + 1) * face.cv);
+        if (start === 0) x0 = Math.max(u0, -padM);
+        if (end === face.nu - 1) x1 = Math.min(u1, face.su + padM);
+        if (j === 0) y0 = Math.max(v0, -padM);
+        if (j === face.nv - 1) y1 = Math.min(v1, face.sv + padM);
+        if (x1 > x0 && y1 > y0) {
+          const offset = runCount * 4;
+          if (offset + 4 > scratch.length) {
+            const grown = new Float64Array(Math.max(scratch.length * 2, offset + 4));
+            grown.set(scratch); this._paintOrderRunScratch = scratch = grown;
           }
-          start = -1;
+          scratch[offset] = x0; scratch[offset + 1] = x1;
+          scratch[offset + 2] = y0; scratch[offset + 3] = y1;
+          runCount++;
         }
       }
     }

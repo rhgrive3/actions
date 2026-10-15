@@ -62,6 +62,20 @@ export function adaptIdleSource(rel, code, replace) {
     patch('this.diorama?.update(dt, this.rig.mapK);', 'this.diorama?.update(worldDt, this.rig.mapK);', 'attract diorama cadence');
     patch('G.paint.flush(dt);', 'G.paint.flush(worldDt);', 'attract paint cadence');
     patch('this.swimWake.update(dt, this.levelMat.userData.uniforms, G.camera.position);', 'this.swimWake.update(worldDt, this.levelMat.userData.uniforms, G.camera.position);', 'attract wake cadence');
+    // Menu demo only: coverage scans the entire turf grid after most splats.
+    // The reset condition is presentation-only; sampling twice per second
+    // preserves the same threshold and the 110s hard cap without taxing every
+    // bot decision tick. A new attract match checks immediately once.
+    patch('    this.attractT = 0; this.shotT = 0; this.shotIdx = 0;',
+      '    this.attractT = 0; this.shotT = 0; this.shotIdx = 0; this._attractCoverageElapsed = 0.5;',
+      'reset menu demo coverage timer');
+    patch('    const cov = G.paint.coverage();\n    if (this.attractT > 110 || cov[0] + cov[1] > 0.72) {',
+      '    this._attractCoverageElapsed = (this._attractCoverageElapsed || 0) + dt;\n' +
+      '    const inspect = this._attractCoverageElapsed >= 0.5;\n' +
+      '    if (inspect) this._attractCoverageElapsed = 0;\n' +
+      '    const cov = inspect && this.attractT <= 110 ? G.paint.coverage() : null;\n' +
+      '    if (this.attractT > 110 || (cov && cov[0] + cov[1] > 0.72)) {',
+      'throttle menu-only turf reset coverage scan');
     patch('  _dynRes(dt) {', '  _dynRes(dt) {\n    if (this.match?.paused && !this.match.attract && !G.netm) return;', 'paused frames are not GPU headroom samples');
     patch('      if (!setUp) this.R.render();', `      if (!setUp && pausedFrame.draw && (!menuAttractBudget || this._menuAttractFrame)) {
         // A paused quality/context invalidation may have retired the sun map.

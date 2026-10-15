@@ -6,7 +6,7 @@ import {emptyLoadout} from '../runtime/gear.mjs';
 const json=x=>JSON.parse(JSON.stringify(x));
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 async function world(id,weapon='shooter'){
- const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {Match} from './inkwave-public/src/game/match.js'; export {giveDrink,retireDrink} from './patches/splatoon3/runtime/support-cooler.mjs';"});
+ let f;f=await fixture({vmPerformance:{now:()=>1000*(f?.G.time||0)},fullRuntime:true,productionComposition:true,realProjectiles:true,extraExports:"export {Match} from './inkwave-public/src/game/match.js'; export {giveDrink,retireDrink} from './patches/splatoon3/runtime/support-cooler.mjs';"});
  f.profile.flow.threshold=1e6;
  f.G.level={...f.G.level,spawnPads:[new f.THREE.Vector3(),new f.THREE.Vector3()],blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};f.G.physics=new f.installedRuntime.Physics(f.G.level);
  f.G.scene ||= new f.THREE.Scene();f.G.camera ||= new f.THREE.PerspectiveCamera();
@@ -23,11 +23,11 @@ function enemy(w){const a=w.f.make();a.team=1;a.invuln=0;return a;}
 function advance(w,seconds,hz=60){for(let i=0;i<Math.round(seconds*hz);i++){const dt=1/hz;w.f.G.time+=dt;w.nm.update(dt);if(!w.m.paused){w.m.time-=dt;if(w.a.remote)w.nm.applyRemote(w.a,dt);else w.a.update(dt);}}}
 function comeback(w){w.a.splat(enemy(w));w.a.respawn();}
 
-function takeActualDrink(w){w.a.special=w.a.specialCost();w.a._startSpecial();assert.equal(w.f.G.projectiles._s3SupportCoolers.length,1);w.f.G.time+=1/60;w.nm.update(1/60);w.f.G.projectiles.update(1/60);assert.equal(w.a.s3.drink,true);}
+function takeActualDrink(w){w.a.special=w.a.specialCost();w.a._startSpecial();assert.equal((w.f.G.projectiles._s3SupportCoolers||[]).length,0);w.a.aimDir.set(0,-1,0);w.a.intent.sub=true;w.a._updateSpecial(1/60);w.a.intent.sub=false;for(let i=0;i<15&&w.a.specialActive;i++)w.a._updateSpecial(1/60);for(let i=0;i<20&&!(w.f.G.projectiles._s3SupportCoolers||[]).length;i++){w.f.G.time+=1/60;w.f.G.projectiles.update(1/60);}assert.equal(w.f.G.projectiles._s3SupportCoolers.length,1);w.f.G.time+=1/60;w.nm.update(1/60);w.f.G.projectiles.update(1/60);assert.equal(w.a.s3.drink,true);}
 function ageAndRetire(w,seconds,hz){advance(w,seconds,hz);w.f.G.projectiles.update(1/hz);}
 for(const hz of [30,60,120])test(`actual Tacticooler pickup survives JSON takeover and expires at ${hz}Hz`,async()=>{
- const o=await world('owner','s3-shooter-quickmiddle'),r=await world('viewer','s3-shooter-quickmiddle');takeActualDrink(o);const boosted=o.a.s3.modifiers.runSpeed;ageAndRetire(o,5,hz);r.m.time=o.m.time;receive(r,o.send());assert.notEqual(r.a.s3.drink,true,'presentation is not gameplay authority');assert.ok(r.a.s3.modifiers.runSpeed<boosted);
- advance(r,2,hz);adopt(r);assert.equal(r.a.s3.drink,true);near(r.a.s3.modifiers.runSpeed,boosted);near(r.a.s3.drinkUntil-r.f.G.time,10-1/60);
+ const o=await world('owner','s3-shooter-quickmiddle'),r=await world('viewer','s3-shooter-quickmiddle');takeActualDrink(o);const boosted=o.a.s3.modifiers.runSpeed;ageAndRetire(o,5,hz);const remaining=o.a.s3.drinkUntil-o.f.G.time;r.m.time=o.m.time;receive(r,o.send());assert.notEqual(r.a.s3.drink,true,'presentation is not gameplay authority');assert.ok(r.a.s3.modifiers.runSpeed<boosted);
+ advance(r,2,hz);adopt(r);assert.equal(r.a.s3.drink,true);near(r.a.s3.modifiers.runSpeed,boosted);near(r.a.s3.drinkUntil-r.f.G.time,remaining-2-1/60);
  ageAndRetire(r,10,hz);assert.equal(r.a.s3.drink,false);assert.ok(r.a.s3.modifiers.runSpeed<boosted);
 });
 test('same drink generation cannot refill and cancellation cannot replay its generation',async()=>{

@@ -167,7 +167,7 @@ test('#750: the shipped _draw head scale resolves to the sourced radius', async 
   const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const scale = vm.runInContext(
     `(() => { const _s = { v: 0, setScalar(v) { this.v = v; } };` +
-    `return (p, sp) => { ${head}\n_s.setScalar(vis); return _s.v; }; })()`,
+    `return (p, sp) => { for (let once = 0; once < 1; once++) { ${head}\n_s.setScalar(vis); return _s.v; } return _s.v; }; })()`,
     vm.createContext({ smoothstep, Math, sin: Math.sin, min: Math.min, max: Math.max, PI: Math.PI }),
   );
   const h = await flick(false), v = await flick(true);
