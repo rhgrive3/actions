@@ -43,6 +43,38 @@ float sxTri(vec2 p, vec2 a, vec2 b, vec2 c){ float d1 = sxCross(b - a, p - a), d
 float sxFbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * sxNoise(p); p = p * 2.03 + 17.1; a *= 0.5; } return s; }
 `;
 
+// Ink lighting shared with the game's own droplets (fx.js DROP_FRAG): the same sun/sky/ground uniforms (the FX
+// instance's _dropU objects, so the light follows the stage) and the same terms — sun and hemisphere ambient,
+// a darker lens rim, light transmitted through the body on the side away from the sun, sky reflection at grazing
+// angles and a crisp sun glint. n and V are view-space (V points to the eye); g is the gloss (0..1).
+const INK = `
+uniform vec3 uSunDirV; uniform vec3 uUpV; uniform vec3 uSunCol; uniform vec3 uSkyCol; uniform vec3 uGroundCol;
+// The droplet terms, balanced for large liquid surfaces as well as drops: ink is a deep, saturated body (diffuse
+// kept low so broad sheets don't wash out pale), its rim darker still, and the gloss is carried by a small hot sun
+// glint and a sky reflection tinted by the ink itself.
+vec3 sxInk(vec3 c, vec3 n, vec3 V, float g){
+  float ndl = dot(n, uSunDirV);
+  vec3 amb = mix(uGroundCol, uSkyCol, dot(n, uUpV) * 0.5 + 0.5);
+  vec3 base = c * (amb * 0.5 + uSunCol * clamp(ndl * 0.5 + 0.5, 0.0, 1.0) * 0.5 + 0.1);
+  float edge = 1.0 - clamp(dot(n, V), 0.0, 1.0);
+  base += c * (c + 0.25) * pow(clamp(-ndl, 0.0, 1.0), 1.5) * (0.35 + 0.65 * edge) * 0.6 * g;
+  base *= mix(1.0, 0.55, pow(edge, 2.0) * g);
+  vec3 R = reflect(-V, n);
+  vec3 env = mix(uGroundCol * 0.7, uSkyCol * 1.3, smoothstep(-0.15, 0.35, dot(R, uUpV)));
+  env = mix(env, env * (c * 0.8 + 0.2) * 1.6, 0.6);
+  vec3 col = mix(base, env, (0.03 + 0.97 * pow(edge, 4.0)) * g * 0.3);
+  float rl = clamp(dot(R, uSunDirV), 0.0, 1.0);
+  col += uSunCol * (pow(rl, 150.0) * 7.0 + pow(rl, 24.0) * 0.22) * g;
+  return col * mix(0.85, 1.0, g);
+}
+`;
+export function inkLightUniforms(THREE, fx) {
+  const u = fx?._dropU;
+  if (u?.uSunDirV && u.uUpV && u.uSunCol && u.uSkyCol && u.uGroundCol) return { uSunDirV: u.uSunDirV, uUpV: u.uUpV, uSunCol: u.uSunCol, uSkyCol: u.uSkyCol, uGroundCol: u.uGroundCol };
+  return { uSunDirV: { value: new THREE.Vector3(0.3, 0.8, 0.5).normalize() }, uUpV: { value: new THREE.Vector3(0, 1, 0) },
+    uSunCol: { value: new THREE.Color(1, 0.95, 0.88) }, uSkyCol: { value: new THREE.Color(0.55, 0.7, 0.9) }, uGroundCol: { value: new THREE.Color(0.35, 0.33, 0.3) } };
+}
+
 // Screen-space AO (the renderer's GTAOPass) redraws the whole scene with a MeshNormalMaterial override.
 // Effect meshes are transparent and place their instances in the vertex shader, so under that override
 // they would draw their base shapes (a ribbon strip in place, unit shapes at the world origin) into the
@@ -74,7 +106,7 @@ attribute vec4 iPos;   // xyz, size
 attribute vec4 iDir;   // stretch direction xyz, stretch length (world)
 attribute vec4 iCol;   // rgb, alpha
 attribute vec4 iPar;   // kind, rotation, age01, seed
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vStretch;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vStretch; varying vec2 vAx;
 void main(){
   vec4 c = viewMatrix * vec4(iPos.xyz, 1.0);
   vec3 dv = mat3(viewMatrix) * iDir.xyz;
@@ -84,7 +116,7 @@ void main(){
   float along = iDir.w * (l2 > 1e-4 ? l2 / max(length(dv), 1e-4) : 0.0) * 0.5;
   float s = iPos.w;
   c.xy += ax * position.y * (s + along) + bx * position.x * s;
-  vUv = position.xy; vCol = iCol; vPar = iPar; vStretch = along / max(s, 1e-4);
+  vUv = position.xy; vCol = iCol; vPar = iPar; vStretch = along / max(s, 1e-4); vAx = ax;
   gl_Position = projectionMatrix * c;
 }`;
 const SPARK_FRAG = `
@@ -117,8 +149,9 @@ void main(){
 }`;
 const PUFF_FRAG = `
 ${HASH}
+${INK}
 uniform float uTime;
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vStretch;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vStretch; varying vec2 vAx;
 void main(){
   int kind = int(vPar.x + 0.5);
   float ca = cos(vPar.y), sa = sin(vPar.y);
@@ -132,13 +165,27 @@ void main(){
   } else if (kind == 1) {              // ink mist: soft, slightly lumpy
     float n = sxNoise(p * 3.0 + vPar.w * 13.0);
     a = (1.0 - smoothstep(0.25, 1.0, r + n * 0.18)) * 0.8;
-  } else {                             // ink chunk: glossy blob with a lit rim and a highlight
-    float n = sxNoise(p * 2.3 + vPar.w * 7.0);
-    float rr = r + (n - 0.5) * 0.25;
-    a = 1.0 - smoothstep(0.78, 0.86, rr);
-    float shade = 0.7 + 0.45 * smoothstep(0.2, 0.86, rr) * (0.5 - p.y * 0.5);
-    col *= shade;
-    col += vec3(1.0) * pow(max(0.0, 1.0 - length(p - vec2(-0.3, 0.35)) * 3.2), 3.0) * 0.9;
+  } else {                             // ink chunk: a glossy liquid drop, round when slow and a teardrop (head leading)
+    // when stretched along its velocity; shaded exactly like the game's droplets (sxInk)
+    float st = vStretch, L = 1.0 + st;
+    vec2 P = vec2(vUv.x, vUv.y * L);                                   // quad units: x radius 1, y half-length L
+    float lump = (sxNoise(vec2(atan(P.y - st, P.x) * 1.6 + vPar.w * 17.0, vPar.w * 5.0)) - 0.5) * 0.22 * (1.0 - min(st, 1.0));
+    float rh = 0.92, rt = mix(rh, 0.12, clamp(st * 0.8, 0.0, 1.0));
+    vec2 A = vec2(0.0, st - (1.0 - rh)), B = vec2(0.0, -L + rt);
+    vec2 pa = P - A, ba = B - A;
+    float h = st > 1e-3 ? clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0) : 0.0;
+    vec2 o = pa - ba * h; float rad = mix(rh, rt, h) * (1.0 + lump) * mix(0.35, 1.0, clamp(vCol.a, 0.0, 1.0));   // ink shrinks, never turns see-through
+    float sd = length(o) - rad, fw = max(fwidth(sd), 1e-3);
+    a = 1.0 - smoothstep(-fw, fw, sd);
+    if (a <= 0.0) discard;
+    vec2 q = o / max(rad, 1e-3); float z = sqrt(max(1.0 - dot(q, q), 0.0));
+    vec2 bx = vec2(-vAx.y, vAx.x);
+    vec3 n = normalize(vec3(bx * q.x + vAx * q.y, z + 0.05));
+    col = sxInk(vCol.rgb, n, vec3(0.0, 0.0, 1.0), 1.0);
+    if (vCol.a < 0.03) discard;
+    gl_FragColor = vec4(col, a);
+    ${OUT}
+    return;
   }
   a *= vCol.a;
   if (a < 0.01) discard;
@@ -147,7 +194,7 @@ void main(){
 }`;
 
 class SpritePool {
-  constructor(THREE, cap, additive, uTime) {
+  constructor(THREE, cap, additive, uTime, light = {}) {
     this.cap = cap; this.n = 0; this.additive = additive;
     const g = new THREE.InstancedBufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3));
@@ -158,7 +205,7 @@ class SpritePool {
     this.aPar = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage);
     g.setAttribute('iPos', this.aPos); g.setAttribute('iDir', this.aDir); g.setAttribute('iCol', this.aCol); g.setAttribute('iPar', this.aPar);
     g.instanceCount = 1;
-    const m = new THREE.ShaderMaterial({ uniforms: { uTime }, vertexShader: SPRITE_VERT, fragmentShader: additive ? SPARK_FRAG : PUFF_FRAG,
+    const m = new THREE.ShaderMaterial({ uniforms: { uTime, ...(additive ? {} : light) }, vertexShader: SPRITE_VERT, fragmentShader: additive ? SPARK_FRAG : PUFF_FRAG,
       transparent: true, depthWrite: false, blending: additive ? THREE.CustomBlending : THREE.NormalBlending });
     if (additive) { m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor; m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor; }
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = additive ? 7 : 6;
@@ -216,12 +263,16 @@ class SpritePool {
 export const RIBBON = Object.freeze({ SMOKE: 0, INK: 1, GLOW: 2 });
 const RIBBON_VERT = `
 attribute vec4 aCol; attribute vec4 aRib; // rgb a | along01, side, style, seed
-varying vec4 vCol; varying vec4 vRib; varying vec3 vW;
-void main(){ vCol = aCol; vRib = aRib; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
+attribute vec3 aSide; attribute vec3 aFace; // world strip side and facing direction (for the ink tube normal)
+varying vec4 vCol; varying vec4 vRib; varying vec3 vW; varying vec3 vSide; varying vec3 vFace; varying vec3 vV;
+void main(){ vCol = aCol; vRib = aRib; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
+  vec4 mv = viewMatrix * w; vSide = mat3(viewMatrix) * aSide; vFace = mat3(viewMatrix) * aFace; vV = -mv.xyz;
+  gl_Position = projectionMatrix * mv; }`;
 const RIBBON_FRAG = `
 ${HASH}
+${INK}
 uniform float uTime; uniform float uAdd;
-varying vec4 vCol; varying vec4 vRib; varying vec3 vW;
+varying vec4 vCol; varying vec4 vRib; varying vec3 vW; varying vec3 vSide; varying vec3 vFace; varying vec3 vV;
 void main(){
   float along = vRib.x, side = vRib.y; int style = int(vRib.z + 0.5);
   float a = 0.0; vec3 col = vCol.rgb;
@@ -229,11 +280,21 @@ void main(){
     float n = sxFbm(vec2(along * 9.0 - uTime * 0.6 + vRib.w * 9.0, side * 1.3 + vRib.w * 4.0));
     a = (1.0 - smoothstep(0.35 + 0.4 * n, 1.0, abs(side))) * smoothstep(0.0, 0.06, along);
     col *= 0.82 + 0.3 * n;
-  } else if (style == 1) {     // ink: glossy band with a bright centre streak
+  } else if (style == 1) {     // ink: a glossy liquid tube that necks and breaks up toward its tail
     float s = abs(side);
-    a = 1.0 - smoothstep(0.82, 1.0, s + sxNoise(vec2(along * 14.0 + vRib.w * 5.0, 3.0)) * 0.25 * along);
-    col *= 0.85 + 0.45 * (1.0 - s);
-    col += vec3(0.9) * pow(1.0 - min(1.0, abs(side + 0.35) * 2.6), 6.0) * (1.0 - along);
+    float brk = sxNoise(vec2(along * 9.0 - uTime * 0.5 + vRib.w * 5.0, side * 0.7 + 3.0));
+    float wid = (1.0 - 0.55 * smoothstep(0.35, 1.0, along) * brk) * clamp(vCol.a * 1.25, 0.0, 1.0)
+      * sqrt(clamp(along / 0.05, 0.0, 1.0));   // a rounded head instead of a square cut   // fades by necking, not transparency
+    float sd = s - wid, fw = max(fwidth(sd), 1e-3);
+    a = 1.0 - smoothstep(-fw, fw, sd);
+    float u = clamp(side / max(wid, 0.05), -1.0, 1.0);
+    vec3 n = normalize(normalize(vSide) * u * 0.7 + normalize(vFace) * sqrt(max(1.0 - u * u * 0.49, 0.0)));
+    if (!gl_FrontFacing) n = reflect(n, normalize(vFace));
+    col = sxInk(col, n, normalize(vV), 1.0);
+    if (a < 0.005) discard;
+    gl_FragColor = uAdd > 0.5 ? vec4(col * a, a) : vec4(col, a);
+    ${OUT}
+    return;
   } else {                     // glow: soft core
     float s = abs(side);
     a = exp(-s * s * 3.5) * (1.0 - along * 0.6);
@@ -244,20 +305,23 @@ void main(){
   ${OUT}
 }`;
 class RibbonPool {
-  constructor(THREE, trails, points, additive, uTime) {
+  constructor(THREE, trails, points, additive, uTime, light = {}) {
     this.T = trails; this.M = points; this.additive = additive; this.list = [];
     const V = trails * points * 2;
     const g = new THREE.BufferGeometry();
     this.pos = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
     this.col = new THREE.BufferAttribute(new Float32Array(V * 4), 4).setUsage(THREE.DynamicDrawUsage);
     this.rib = new THREE.BufferAttribute(new Float32Array(V * 4), 4).setUsage(THREE.DynamicDrawUsage);
+    this.side = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
+    this.face = new THREE.BufferAttribute(new Float32Array(V * 3), 3).setUsage(THREE.DynamicDrawUsage);
     g.setAttribute('position', this.pos); g.setAttribute('aCol', this.col); g.setAttribute('aRib', this.rib);
+    g.setAttribute('aSide', this.side); g.setAttribute('aFace', this.face);
     const idx = [];
     for (let t = 0; t < trails; t++) for (let k = 0; k < points - 1; k++) {
       const a = (t * points + k) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
     g.setIndex(idx); g.setDrawRange(0, 6);
-    const m = new THREE.ShaderMaterial({ uniforms: { uTime, uAdd: { value: additive ? 1 : 0 } }, vertexShader: RIBBON_VERT, fragmentShader: RIBBON_FRAG,
+    const m = new THREE.ShaderMaterial({ uniforms: { uTime, uAdd: { value: additive ? 1 : 0 }, ...light }, vertexShader: RIBBON_VERT, fragmentShader: RIBBON_FRAG,
       transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: additive ? THREE.CustomBlending : THREE.NormalBlending });
     if (additive) { m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor; m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor; }
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = additive ? 7 : 6;
@@ -278,7 +342,7 @@ class RibbonPool {
   }
   end(r) { if (r) r.ended = true; }
   update(now, camPos) {
-    let v = 0; const P = this.pos.array, C = this.col.array, R = this.rib.array;
+    let v = 0; const P = this.pos.array, C = this.col.array, R = this.rib.array, SD = this.side.array, FC = this.face.array;
     const t = this._t, s = this._s, c = this._c;
     for (let i = this.list.length - 1; i >= 0; i--) {
       const r = this.list[i];
@@ -303,6 +367,7 @@ class RibbonPool {
           P[vi * 3] = q[0] + s.x * w * sg; P[vi * 3 + 1] = q[1] + s.y * w * sg; P[vi * 3 + 2] = q[2] + s.z * w * sg;
           C[vi * 4] = r.o.color[0]; C[vi * 4 + 1] = r.o.color[1]; C[vi * 4 + 2] = r.o.color[2]; C[vi * 4 + 3] = alpha;
           R[vi * 4] = along; R[vi * 4 + 1] = sg; R[vi * 4 + 2] = r.o.style; R[vi * 4 + 3] = r.o.seed;
+          SD[vi * 3] = s.x; SD[vi * 3 + 1] = s.y; SD[vi * 3 + 2] = s.z; FC[vi * 3] = c.x; FC[vi * 3 + 1] = c.y; FC[vi * 3 + 2] = c.z;
         }
       }
       v = slot;
@@ -310,7 +375,7 @@ class RibbonPool {
     // keep one degenerate segment drawn (warm program); zero alpha
     if (!v) { for (let k = 0; k < 4; k++) { C[k * 4 + 3] = 0; P[k * 3] = P[k * 3 + 1] = P[k * 3 + 2] = 0; } v = 0; }
     this.mesh.geometry.setDrawRange(0, Math.max(6, slot * (this.M - 1) * 6));
-    for (const a of [this.pos, this.col, this.rib]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
+    for (const a of [this.pos, this.col, this.rib, this.side, this.face]) { a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, slot) * this.M * 2 * a.itemSize); a.needsUpdate = true; }
   }
   clear() { this.list.length = 0; }
 }
@@ -327,7 +392,7 @@ export const DISC = Object.freeze({ SHOCK: 0, RETICLE: 1, TARGET: 2, FLASH: 3, R
 const BEAM_VERT = `
 attribute vec4 iA; attribute vec4 iB;  // start xyz r0 | end xyz r1
 attribute vec4 iCol; attribute vec4 iPar; // rgb a | style, t, seed, speed
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying float vLen;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying float vLen; varying vec3 vNv; varying vec3 vVv;
 void main(){
   vec3 A = iA.xyz, B = iB.xyz, d = B - A; float L = max(length(d), 1e-4); vec3 y = d / L;
   vec3 h = abs(y.y) < 0.95 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
@@ -339,14 +404,15 @@ void main(){
   vec3 w = A + d * k + radial * r;
   vec4 mv = viewMatrix * vec4(w, 1.0);
   vec3 n = normalize(mat3(viewMatrix) * radial);
-  vFres = abs(dot(n, normalize(-mv.xyz)));
+  vFres = abs(dot(n, normalize(-mv.xyz))); vNv = n; vVv = -mv.xyz;
   vUv = vec2(atan(position.z, position.x) / 6.2831853 + 0.5, k); vCol = iCol; vPar = iPar; vLen = L;
   gl_Position = projectionMatrix * mv;
 }`;
 const BEAM_FRAG = `
 ${HASH}
+${INK}
 uniform float uTime; uniform float uAdd;
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying float vLen;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying float vLen; varying vec3 vNv; varying vec3 vVv;
 void main(){
   int style = int(vPar.x + 0.5); float t = vPar.y, seed = vPar.z, spd = vPar.w;
   float u = vUv.x, along = vUv.y * vLen; float a = 0.0; vec3 col = vCol.rgb;
@@ -358,29 +424,34 @@ void main(){
     a = clamp(0.22 + helix * 0.62 + helix2 * 0.35 + crack * 0.1 - rim * rim * 0.25, 0.0, 1.0);
     col *= 0.62 + helix * 0.75 + helix2 * 0.6 + pow(vFres, 6.0) * 0.5;
     a *= smoothstep(0.0, 0.8, along);
-  } else if (style == 1) {      // ink jet: dense liquid column, streaks pouring along it
+  } else if (style == 1) {      // ink jet: a solid glossy liquid column, ripples pouring along it, breaking up at the end
     float streak = sxNoise(vec2(u * 9.0 + seed * 7.0, along * 2.2 - uTime * spd));
-    float body = smoothstep(0.05, 0.55, vFres);
-    a = body * (0.55 + 0.6 * streak) * (1.0 - smoothstep(0.55, 1.0, vUv.y));
-    col *= 0.75 + 0.6 * streak + 0.4 * pow(vFres, 6.0);
+    float brk = (1.0 - vUv.y) - 0.35 * sxNoise(vec2(u * 5.0 + seed * 3.0, along * 1.3 - uTime * spd * 1.3));
+    float fw = max(fwidth(brk), 1e-3);
+    a = smoothstep(-fw, fw, brk - 0.2 - (1.0 - vCol.a) * 0.7) * smoothstep(0.02, 0.2, vFres);
+    vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
+    N = normalize(N + normalize(vVv) * (streak - 0.5) * 0.5);
+    col = uAdd > 0.5 ? col * (0.75 + 0.6 * streak) : sxInk(col, N, normalize(vVv), 1.0);
   } else if (style == 2) {      // line: thin glow, optional dash (seed > .5)
     float dash = seed > 0.5 ? step(0.45, fract(along * 1.2 - uTime * spd)) : 1.0;
     a = pow(vFres, 1.5) * dash;
   } else if (style == 3) {      // pillar: vertical light column fading up
     a = pow(vFres, 2.0) * (1.0 - vUv.y) * (0.75 + 0.25 * sin(uTime * 14.0 + seed * 9.0));
     a *= 0.6 + 0.4 * sxNoise(vec2(u * 6.0, vUv.y * 4.0 - uTime * spd));
-  } else if (style == 4) {      // twister: ink wound into a spiral, ragged gaps
+  } else if (style == 4) {      // twister: liquid ink wound into a spiral, ragged gaps
     float sw = fract(u * 2.0 + vUv.y * 2.5 - uTime * spd);
-    float band = smoothstep(0.0, 0.18, sw) * (1.0 - smoothstep(0.55, 0.95, sw));
     float n = sxNoise(vec2(u * 8.0 + seed * 11.0, vUv.y * 6.0 - uTime * spd * 2.0));
-    a = band * (0.55 + 0.6 * n) * smoothstep(0.0, 0.06, vUv.y) * (1.0 - smoothstep(0.9, 1.0, vUv.y));
-    col *= 0.65 + 0.55 * n + 0.5 * pow(vFres, 4.0);
+    float body = min(sw - 0.06, 0.8 - sw) + (n - 0.5) * 0.25 - (1.0 - vCol.a) * 0.4;
+    float fw = max(fwidth(body), 1e-3);
+    a = smoothstep(-fw, fw, body) * smoothstep(0.0, 0.06, vUv.y) * (1.0 - smoothstep(0.9, 1.0, vUv.y));
+    vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
+    col = uAdd > 0.5 ? col * (0.65 + 0.55 * n) : sxInk(col, N, normalize(vVv), 1.0);
   } else {                      // charge: converging energy filaments
     float f = pow(0.5 + 0.5 * sin((u * 7.0 + seed * 3.0) * 6.2831853), 10.0);
     float flow = fract(vUv.y + uTime * spd);
     a = f * smoothstep(0.0, 0.3, flow) * (1.0 - smoothstep(0.6, 1.0, flow)) * vFres;
   }
-  a *= vCol.a;
+  if (uAdd > 0.5 || (style != 1 && style != 4)) a *= vCol.a;   // liquid styles already eroded by their alpha
   if (a < 0.004) discard;
   gl_FragColor = uAdd > 0.5 ? vec4(col * a, a) : vec4(col, a);
   ${OUT}
@@ -402,6 +473,7 @@ void main(){
 }`;
 const SHELL_FRAG = `
 ${HASH}
+${INK}
 uniform float uTime; uniform float uAdd;
 varying vec3 vN; varying vec3 vV; varying vec3 vL; varying vec4 vCol; varying vec4 vPar;
 void main(){
@@ -409,12 +481,22 @@ void main(){
   float f = 1.0 - abs(dot(normalize(vN), vV));
   vec2 sph = vec2(atan(vL.z, vL.x) / 6.2831853, vL.y);
   float a = 0.0; vec3 col = vCol.rgb;
-  if (style == 0) {            // ink dome: glossy, rim-lit, eroding into drops as it finishes
+  if (style == 0) {            // ink dome: an opaque, glossy, lumpy liquid surface tearing into holes as it finishes
     float n = sxFbm(vec2(sph.x * 10.0 + seed * 7.0, sph.y * 4.0 - t * 2.0));
-    float erode = smoothstep(t * 1.15 - 0.05, t * 1.15 + 0.08, n * 0.9 + (1.0 - vL.y) * 0.25);
-    a = (0.55 + 0.45 * pow(f, 1.4)) * erode;
-    col *= 0.75 + 0.55 * pow(f, 2.0) + 0.25 * n;
-    col += vec3(1.0) * pow(max(0.0, dot(normalize(vN), normalize(vec3(-0.4, 0.8, 0.45)))), 24.0) * 0.8;
+    float hole = n * 0.9 + (1.0 - vL.y) * 0.25 - (t * 1.15 - 0.02) - (1.0 - vCol.a) * 0.9;   // fading tears holes, it never turns see-through
+    float fw = max(fwidth(hole), 1e-3);
+    a = smoothstep(-fw, fw, hole);
+    float e = 0.06;
+    float nx = sxFbm(vec2(sph.x * 10.0 + seed * 7.0 + e, sph.y * 4.0 - t * 2.0)) - n;
+    float ny = sxFbm(vec2(sph.x * 10.0 + seed * 7.0, sph.y * 4.0 - t * 2.0 + e)) - n;
+    vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
+    vec3 T = normalize(cross(vec3(0.0, 1.0, 0.0), N) + vec3(1e-4)), Bt = cross(N, T);
+    N = normalize(N - (T * nx + Bt * ny) * 5.0);
+    col = sxInk(col, N, vV, 1.0);
+    if (a < 0.004) discard;
+    gl_FragColor = vec4(col, a);
+    ${OUT}
+    return;
   } else if (style == 1) {     // energy orb: fresnel glow with swirling filaments
     float sw = pow(0.5 + 0.5 * sin((sph.x * 5.0 + sph.y * 2.5 - uTime * (1.2 + seed)) * 6.2831853), 6.0);
     float n = sxNoise(vec2(sph.x * 18.0 + uTime * 0.7, sph.y * 6.0 - uTime * 0.9 + seed * 5.0));
@@ -441,21 +523,22 @@ void main(){
 const BAND_VERT = `
 attribute vec4 iPos; attribute vec4 iDim;   // xyz, spin | radius, height, taper, twist
 attribute vec4 iCol; attribute vec4 iPar;   // rgb a | style, t, seed, speed
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying vec3 vNv; varying vec3 vVv;
 void main(){
   float k = position.y; float ang = atan(position.z, position.x) + iPos.w + iDim.w * k;
   float r = iDim.x * mix(1.0, iDim.z, k);
   vec3 w = iPos.xyz + vec3(cos(ang) * r, k * iDim.y, sin(ang) * r);
   vec4 mv = viewMatrix * vec4(w, 1.0);
   vec3 n = normalize(mat3(viewMatrix) * vec3(cos(ang), 0.0, sin(ang)));
-  vFres = abs(dot(n, normalize(-mv.xyz)));
+  vFres = abs(dot(n, normalize(-mv.xyz))); vNv = n; vVv = -mv.xyz;
   vUv = vec2(atan(position.z, position.x) / 6.2831853 + 0.5, k); vCol = iCol; vPar = iPar;
   gl_Position = projectionMatrix * mv;
 }`;
 const BAND_FRAG = `
 ${HASH}
+${INK}
 uniform float uTime; uniform float uAdd;
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying float vFres; varying vec3 vNv; varying vec3 vVv;
 void main(){
   int style = int(vPar.x + 0.5); float t = vPar.y, seed = vPar.z, spd = vPar.w;
   float u = vUv.x, v = vUv.y, a = 0.0; vec3 col = vCol.rgb;
@@ -466,20 +549,28 @@ void main(){
     float flicker = 0.85 + 0.15 * sxNoise(vec2(u * 40.0 + seed * 9.0, uTime * spd * 2.0));
     a = (0.16 + 0.5 * stripe * (1.0 - v * 0.55) + top * 0.95 + base * 0.45) * flicker * (1.0 - smoothstep(0.96, 1.0, v));
     col = mix(col, vec3(max(col.r, max(col.g, col.b))) * 1.1, top * 0.45);
-  } else if (style == 1) {      // shock band: thin ring of thrown ink spray, ragged top
+  } else if (style == 1) {      // shock band: a crown of thrown liquid ink, torn into fingers at the top
     float n = sxFbm(vec2(u * 30.0 + seed * 9.0, v * 2.0 - t * 3.0));
-    a = (1.0 - smoothstep(0.25 + 0.6 * n, 1.0, v)) * (1.0 - t) * smoothstep(0.0, 0.05, v);
-    col *= 0.8 + 0.4 * n;
+    float n2 = sxNoise(vec2(u * 6.0 + seed * 13.0, seed * 3.0));             // uneven lobes, not a regular comb
+    float top = (0.18 + 0.5 * n + 0.42 * n2 * n2) * (1.0 - 0.55 * t) * (uAdd > 0.5 ? 1.0 : clamp(vCol.a, 0.0, 1.0)) - v;
+    float fw = max(fwidth(top), 1e-3);
+    a = smoothstep(-fw, fw, top) * smoothstep(0.0, 0.04, v) * (uAdd > 0.5 ? 1.0 - smoothstep(0.75, 1.0, t) : 1.0);
+    vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
+    N = normalize(N + vec3(0.0, (n - 0.5) * 0.8, 0.0));
+    col = uAdd > 0.5 ? col * (0.8 + 0.4 * n) : sxInk(col, N, normalize(vVv), 1.0);
   } else if (style == 2) {      // swirl: spinning streaked ribbon
     float sw = pow(0.5 + 0.5 * sin((u * 3.0 + v * 1.5 - uTime * spd) * 6.2831853), 4.0);
     // fade where the cylinder turns edge-on: otherwise its silhouette reads as a hard-edged sheet up close
     a = sw * sin(v * 3.14159) * (1.0 - t) * smoothstep(0.08, 0.55, vFres);
-  } else if (style == 3) {      // twister: spiralling ink, darker core, foam on the edges
+  } else if (style == 3) {      // twister: liquid ink wound in a spiral, with ragged gaps
     float sw = fract(u * 3.0 - v * 1.4 + uTime * spd + seed);
-    float band = smoothstep(0.0, 0.12, sw) * (1.0 - smoothstep(0.5, 0.9, sw));
     float n = sxNoise(vec2(u * 16.0 + seed * 3.0, v * 8.0 + uTime * spd * 3.0));
-    a = band * (0.5 + 0.7 * n) * smoothstep(0.0, 0.08, v) * (1.0 - smoothstep(0.85, 1.0, v));
-    col *= 0.6 + 0.5 * n + 0.45 * pow(1.0 - vFres, 3.0);
+    float body = min(sw - 0.05, 0.72 - sw) + (n - 0.5) * 0.25 - (uAdd > 0.5 ? 0.0 : (1.0 - vCol.a) * 0.4);
+    float fw = max(fwidth(body), 1e-3);
+    a = smoothstep(-fw, fw, body) * smoothstep(0.0, 0.08, v) * (1.0 - smoothstep(0.85, 1.0, v));
+    vec3 N = normalize(vNv); if (!gl_FrontFacing) N = -N;
+    N = normalize(N + vec3(0.0, (sw - 0.38) * 1.4, 0.0));
+    col = uAdd > 0.5 ? col * (0.6 + 0.5 * n) : sxInk(col, N, normalize(vVv), 1.0);
   } else {                      // curtain: marbled flowing sheet (Splattercolor Screen)
     vec2 q = vec2(u * 6.0, v * 2.5);
     float m = sxFbm(q + vec2(sxFbm(q * 1.3 + uTime * 0.12), sxFbm(q * 1.1 - uTime * 0.1)) * 1.6);
@@ -487,7 +578,7 @@ void main(){
     a = 0.85 * smoothstep(0.0, 0.03, v) * (1.0 - smoothstep(0.92, 1.0, v));
     col = mix(col * 0.55, col * 1.25 + 0.15, stripes);
   }
-  a *= vCol.a;
+  if (uAdd > 0.5 || (style != 1 && style != 3)) a *= vCol.a;   // liquid styles already eroded by their alpha
   if (a < 0.004) discard;
   gl_FragColor = uAdd > 0.5 ? vec4(col * a, a) : vec4(col, a);
   ${OUT}
@@ -495,28 +586,45 @@ void main(){
 const DISC_VERT = `
 attribute vec4 iPos; attribute vec4 iNrm;   // xyz, radius | normal xyz, spin
 attribute vec4 iCol; attribute vec4 iPar;   // rgb a | style, t, seed, extra
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying vec3 vNv; varying vec3 vTv; varying vec3 vBv; varying vec3 vVv;
 void main(){
   vec3 n = normalize(iNrm.xyz); vec3 h = abs(n.y) < 0.95 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
   vec3 x = normalize(cross(h, n)), y = cross(n, x);
   float s = sin(iNrm.w), c = cos(iNrm.w); vec2 p = mat2(c, -s, s, c) * position.xy;
   vec3 w = iPos.xyz + (x * p.x + y * p.y) * iPos.w + n * 0.02;
   vUv = position.xy; vCol = iCol; vPar = iPar;
-  gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
+  vec4 mv = viewMatrix * vec4(w, 1.0);
+  vNv = mat3(viewMatrix) * n; vTv = mat3(viewMatrix) * (x * c - y * s); vBv = mat3(viewMatrix) * (x * s + y * c); vVv = -mv.xyz;
+  gl_Position = projectionMatrix * mv;
 }`;
 const DISC_FRAG = `
 ${HASH}
+${INK}
 uniform float uTime; uniform float uAdd;
-varying vec2 vUv; varying vec4 vCol; varying vec4 vPar;
+varying vec2 vUv; varying vec4 vCol; varying vec4 vPar; varying vec3 vNv; varying vec3 vTv; varying vec3 vBv; varying vec3 vVv;
+// a glossy puddle: flat on top, its surface rolling over (normal tilting outward) at the blot's edge
+vec3 sxPuddle(vec3 c, float edgeK, float bump){
+  vec2 d = length(vUv) > 1e-4 ? normalize(vUv) : vec2(0.0);
+  vec3 N = normalize(normalize(vNv) + (normalize(vTv) * d.x + normalize(vBv) * d.y) * (edgeK * 1.6 + bump));
+  if (!gl_FrontFacing) N = -N;
+  return sxInk(c, N, normalize(vVv), 0.9);
+}
 void main(){
   int style = int(vPar.x + 0.5); float t = vPar.y, seed = vPar.z, ex = vPar.w;
   float r = length(vUv), ang = atan(vUv.y, vUv.x); float a = 0.0; vec3 col = vCol.rgb;
   if (r > 1.0) discard;
-  if (style == 0) {            // shock ring: a ragged expanding ring of ink spray
+  if (style == 0) {            // shock ring: a ragged expanding ring of ink spray (light when additive, liquid otherwise)
     float n = sxNoise(vec2(ang * 6.0 + seed * 20.0, t * 4.0));
     float w = 0.05 + 0.18 * (1.0 - t);
-    a = (1.0 - smoothstep(0.0, w, abs(r - (0.86 + 0.1 * n)))) * (1.0 - t);
-    a += (1.0 - smoothstep(0.75, 0.95, r)) * 0.18 * (1.0 - t) * n;
+    if (uAdd > 0.5) {
+      a = (1.0 - smoothstep(0.0, w, abs(r - (0.86 + 0.1 * n)))) * (1.0 - t);
+      a += (1.0 - smoothstep(0.75, 0.95, r)) * 0.18 * (1.0 - t) * n;
+    } else {
+      float ring = w * (0.6 + 0.8 * n) * clamp(vCol.a, 0.0, 1.0) - abs(r - (0.86 + 0.1 * n));
+      float fw = max(fwidth(ring), 1e-3);
+      a = smoothstep(-fw, fw, ring);
+      col = sxPuddle(col, clamp((r - 0.86 - 0.1 * n) / max(w, 1e-3), -1.0, 1.0) * 0.6, 0.0);
+    }
   } else if (style == 1) {     // reticle: double ring, four ticks, rotating brackets
     float ring = 1.0 - smoothstep(0.0, 0.03, abs(r - 0.92));
     float inner = (1.0 - smoothstep(0.0, 0.02, abs(r - 0.62))) * 0.6;
@@ -550,13 +658,14 @@ void main(){
       fill = max(fill, max(sxTri(p, tip, rt, nt), sxTri(p, tip, nt, lf)) * (0.5 + 0.5 * sin(uTime * 8.0 - float(i) * 1.6)));
     }
     a = (1.0 - smoothstep(0.022, 0.04, o)) + fill * 0.22;
-  } else {                     // splat: ink blot with tendrils (ground ink flash)
+  } else {                     // splat: a glossy ink blot with tendrils, drying back in from its rim
     float n = sxFbm(vec2(ang * 2.0 + seed * 9.0, r * 3.0));
-    float edge = 0.65 + 0.35 * n;
-    a = (1.0 - smoothstep(edge - 0.05, edge, r)) * (1.0 - t * t);
-    col *= 0.8 + 0.3 * n;
+    float edge = (0.65 + 0.35 * n) * (1.0 - 0.35 * t * t) * (uAdd > 0.5 ? 1.0 : mix(0.25, 1.0, clamp(vCol.a, 0.0, 1.0)));
+    float sd = edge - r, fw = max(fwidth(sd), 1e-3);
+    a = smoothstep(-fw, fw, sd) * (uAdd > 0.5 ? 1.0 - smoothstep(0.75, 1.0, t) : 1.0);
+    col = uAdd > 0.5 ? col * (0.8 + 0.3 * n) : sxPuddle(col, smoothstep(edge - 0.18, edge, r), (n - 0.5) * 0.3);
   }
-  a *= vCol.a;
+  if (uAdd > 0.5 || (style != 0 && style != 6)) a *= vCol.a;   // liquid styles already eroded by their alpha
   if (a < 0.004) discard;
   gl_FragColor = uAdd > 0.5 ? vec4(col * a, a) : vec4(col, a);
   ${OUT}
@@ -564,14 +673,14 @@ void main(){
 
 // A retained instanced pool. Records: { a: Float32Array(16) attribute values, t, life, follow?(rec,dt)->bool }.
 class ShapePool {
-  constructor(THREE, name, geometry, cap, attrs, vert, frag, additive, uTime, extra = {}) {
+  constructor(THREE, name, geometry, cap, attrs, vert, frag, additive, uTime, extra = {}, light = {}) {
     this.cap = cap; this.recs = []; this.attrs = attrs;
     const g = new THREE.InstancedBufferGeometry();
     for (const key of Object.keys(geometry.attributes)) g.setAttribute(key, geometry.attributes[key]);
     if (geometry.index) g.setIndex(geometry.index);
     this.buf = attrs.map(name => { const b = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4).setUsage(THREE.DynamicDrawUsage); g.setAttribute(name, b); return b; });
     g.instanceCount = 1;
-    const m = new THREE.ShaderMaterial({ uniforms: { uTime, uAdd: { value: additive ? 1 : 0 } }, vertexShader: vert, fragmentShader: frag,
+    const m = new THREE.ShaderMaterial({ uniforms: { uTime, uAdd: { value: additive ? 1 : 0 }, ...light }, vertexShader: vert, fragmentShader: frag,
       transparent: true, depthWrite: false, side: extra.side ?? THREE.DoubleSide, blending: additive ? THREE.CustomBlending : THREE.NormalBlending });
     if (additive) { m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor; m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor; }
     this.mesh = new THREE.Mesh(g, m); this.mesh.frustumCulled = false; this.mesh.renderOrder = extra.order ?? (additive ? 8 : 5); this.mesh.name = 'special-vfx:' + name;
@@ -607,29 +716,30 @@ class ShapePool {
 // The kit attached to one FX instance
 // ---------------------------------------------------------------------------------------------------------------
 export class SpecialVfxKit {
-  constructor(THREE, parent, quality = 1) {
+  constructor(THREE, parent, quality = 1, light = null) {
     this.THREE = THREE; this.q = Math.max(0.35, Math.min(1, quality));
+    const L = this.light = light || inkLightUniforms(THREE, null);
     this.uTime = { value: 0 }; this.time = 0;
     this.root = new THREE.Group(); this.root.name = 'special-vfx'; parent.add(this.root);
     const q = this.q, uT = this.uTime;
     this.sparks = new SpritePool(THREE, Math.round(900 * q), true, uT);
-    this.puffs = new SpritePool(THREE, Math.round(520 * q), false, uT);
-    this.ribbons = new RibbonPool(THREE, 40, 28, false, uT);
-    this.glowRibbons = new RibbonPool(THREE, 28, 24, true, uT);
+    this.puffs = new SpritePool(THREE, Math.round(520 * q), false, uT, L);
+    this.ribbons = new RibbonPool(THREE, 40, 28, false, uT, L);
+    this.glowRibbons = new RibbonPool(THREE, 28, 24, true, uT, L);
     const cyl = (radial, h = 1, open = true) => { const g = new THREE.CylinderGeometry(1, 1, 1, radial, h, open); g.translate(0, 0.5, 0); return g; };
     const beamAttrs = ['iA', 'iB', 'iCol', 'iPar'];
-    this.beams = new ShapePool(THREE, 'beams+', cyl(14, 1), 48, beamAttrs, BEAM_VERT, BEAM_FRAG, true, uT);
-    this.inkBeams = new ShapePool(THREE, 'beams', cyl(16, 8), 24, beamAttrs, BEAM_VERT, BEAM_FRAG, false, uT);
+    this.beams = new ShapePool(THREE, 'beams+', cyl(14, 1), 48, beamAttrs, BEAM_VERT, BEAM_FRAG, true, uT, {}, L);
+    this.inkBeams = new ShapePool(THREE, 'beams', cyl(16, 8), 24, beamAttrs, BEAM_VERT, BEAM_FRAG, false, uT, {}, L);
     const shellAttrs = ['iPos', 'iScl', 'iCol', 'iPar'];
-    this.shells = new ShapePool(THREE, 'shells+', new THREE.SphereGeometry(1, 36, 20), 40, shellAttrs, SHELL_VERT, SHELL_FRAG, true, uT, { side: THREE.FrontSide });
-    this.inkShells = new ShapePool(THREE, 'shells', new THREE.SphereGeometry(1, 36, 20), 24, shellAttrs, SHELL_VERT, SHELL_FRAG, false, uT, { side: THREE.DoubleSide });
+    this.shells = new ShapePool(THREE, 'shells+', new THREE.SphereGeometry(1, 36, 20), 40, shellAttrs, SHELL_VERT, SHELL_FRAG, true, uT, { side: THREE.FrontSide }, L);
+    this.inkShells = new ShapePool(THREE, 'shells', new THREE.SphereGeometry(1, 36, 20), 24, shellAttrs, SHELL_VERT, SHELL_FRAG, false, uT, { side: THREE.DoubleSide }, L);
     const bandAttrs = ['iPos', 'iDim', 'iCol', 'iPar'];
-    this.bands = new ShapePool(THREE, 'bands+', cyl(72, 4), 32, bandAttrs, BAND_VERT, BAND_FRAG, true, uT);
-    this.inkBands = new ShapePool(THREE, 'bands', cyl(64, 12), 16, bandAttrs, BAND_VERT, BAND_FRAG, false, uT);
+    this.bands = new ShapePool(THREE, 'bands+', cyl(72, 4), 32, bandAttrs, BAND_VERT, BAND_FRAG, true, uT, {}, L);
+    this.inkBands = new ShapePool(THREE, 'bands', cyl(64, 12), 16, bandAttrs, BAND_VERT, BAND_FRAG, false, uT, {}, L);
     const discAttrs = ['iPos', 'iNrm', 'iCol', 'iPar'];
     const quad = () => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3)); g.setIndex([0, 1, 2, 0, 2, 3]); return g; };
-    this.discs = new ShapePool(THREE, 'discs+', quad(), 96, discAttrs, DISC_VERT, DISC_FRAG, true, uT, { order: 9 });
-    this.inkDiscs = new ShapePool(THREE, 'discs', quad(), 48, discAttrs, DISC_VERT, DISC_FRAG, false, uT, { order: 4 });
+    this.discs = new ShapePool(THREE, 'discs+', quad(), 96, discAttrs, DISC_VERT, DISC_FRAG, true, uT, { order: 9 }, L);
+    this.inkDiscs = new ShapePool(THREE, 'discs', quad(), 48, discAttrs, DISC_VERT, DISC_FRAG, false, uT, { order: 4 }, L);
     this.pools = [this.sparks, this.puffs, this.beams, this.inkBeams, this.shells, this.inkShells, this.bands, this.inkBands, this.discs, this.inkDiscs];
     for (const p of [...this.pools, this.ribbons, this.glowRibbons]) { this.root.add(p.mesh); excludeFromOverridePasses(p.mesh); }
   }

@@ -18,7 +18,7 @@
 // game's FX pools (G.fx). Effect marks for animation (actor._s3SpecialMarks)
 // are presentation timestamps only.
 
-import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom, excludeFromOverridePasses } from './special-vfx-kit.mjs';
+import { SpecialVfxKit, SPARK, PUFF, RIBBON, BEAM, SHELL, BAND, DISC, vfxRandom, excludeFromOverridePasses, inkLightUniforms } from './special-vfx-kit.mjs';
 import { inkVacState } from './kit-ink-vac.mjs';
 import { bigBubblerDomes, bigBubblerRemoteDomes } from './kit-big-bubbler.mjs';
 import { createInkFist, disposeSpecialModel } from './special-motion.mjs';
@@ -55,7 +55,7 @@ class Director {
   constructor(api, fx) {
     this.api = api; this.THREE = api.THREE; this.G = api.G; this.fx = fx;
     const T = this.THREE;
-    this.kit = new SpecialVfxKit(T, fx.root, fx.q ?? 1);
+    this.kit = new SpecialVfxKit(T, fx.root, fx.q ?? 1, inkLightUniforms(T, fx));
     this.tracks = new Map(); this.rounds = new Map(); this.objects = new Map(); this.lasers = new Map();
     this.domes = new Map(); this.coolers = new Map(); this.fists = new Map(); this.storms = new Map();
     this.v = [0, 1, 2, 3, 4, 5, 6, 7].map(() => new T.Vector3());
@@ -76,17 +76,28 @@ class Director {
     this.kit.sparks.spawn(p.x, p.y, p.z, vx, vy, vz, life, s0, s1, col[0], col[1], col[2], a, kind, o);
   }
   puff(kind, p, vx, vy, vz, life, s0, s1, col, a = 1, o = null) {
+    if (kind === PUFF.CHUNK) { col = this.inkCol(col); if (o?.stretch === undefined) o = { ...o, stretch: 0.03 }; }   // liquid drops
     this.kit.puffs.spawn(p.x, p.y, p.z, vx, vy, vz, life, s0, s1, col[0], col[1], col[2], a, kind, o);
   }
-  // radial burst of velocity-stretched streaks
+  // radial burst of thrown ink: glossy teardrops stretched along their flight, falling under gravity
+  // (S3 sprays liquid ink, not light; o.glow keeps the old additive light streaks for genuinely luminous sources)
   streaks(p, n, speed, col, o = {}) {
     n = Math.max(1, Math.round(n * this.kit.q));
     const up = o.up ?? 0.4, life = o.life ?? 0.45, size = o.size ?? 0.06, drag = o.drag ?? 3.2;
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = clamp(up + rnd(o.spread ?? 1, -(o.spread ?? 1)) * 0.6, -1, 1), h = Math.sqrt(1 - y * y), s = speed * rnd(1.2, 0.55);
-      this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, { drag, grav: o.grav ?? 4, stretch: o.stretch ?? 0.09 });
+      if (o.glow) this.spark(SPARK.STREAK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.2, 0.7), size, size * 0.4, col, o.alpha ?? 1, { drag, grav: o.grav ?? 4, stretch: o.stretch ?? 0.09 });
+      else this.drop(p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, life * rnd(1.6, 1.0), size * rnd(2.6, 1.4), col, { drag: drag * 0.35, grav: o.grav ?? 14 });
     }
   }
+  // one liquid ink drop (a lit teardrop impostor in the puff pool); col is the plain team colour
+  drop(p, vx, vy, vz, life, size, col, o = {}) {
+    const c = this.inkCol(col);
+    this.puff(PUFF.CHUNK, p, vx, vy, vz, life, size, size * (o.shrink ?? 0.45), c, 1, { drag: o.drag ?? 0.9, grav: o.grav ?? 14, stretch: o.stretch ?? 0.035, fadeIn: 0.01 });
+  }
+  // ink is the team colour itself: strip any HDR lift a caller meant for glow (bloom threshold 2.4)
+  inkCol(c) { const m = Math.max(c[0], c[1], c[2]); if (m <= 1) return c; const lo = Math.min(c[0], c[1], c[2]), w = Math.min(lo, m - 1) * 0.8;
+    return [(c[0] - w) / (m - w), (c[1] - w) / (m - w), (c[2] - w) / (m - w)]; }
   stars(p, n, radius, col, o = {}) {
     n = Math.max(1, Math.round(n * this.kit.q));
     for (let i = 0; i < n; i++) {
@@ -97,9 +108,10 @@ class Director {
   }
   chunks(p, n, speed, col, o = {}) {
     n = Math.max(1, Math.round(n * this.kit.q));
+    const c = this.inkCol(col);
     for (let i = 0; i < n; i++) {
       const th = rnd(TAU), y = rnd(o.upMax ?? 1, o.upMin ?? 0.25), h = Math.sqrt(Math.max(0, 1 - y * y)), s = speed * rnd(1.15, 0.45);
-      this.puff(PUFF.CHUNK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, rnd(o.life ?? 0.9, 0.5), (o.size ?? 0.18) * rnd(1.4, 0.6), (o.size ?? 0.18) * 0.35, col, 1, { drag: 0.8, grav: 15, rot: rnd(TAU), spin: rnd(6, -6) });
+      this.puff(PUFF.CHUNK, p, Math.cos(th) * h * s, y * s, Math.sin(th) * h * s, rnd(o.life ?? 0.9, 0.5), (o.size ?? 0.18) * rnd(1.4, 0.6), (o.size ?? 0.18) * 0.4, c, 1, { drag: 0.8, grav: 15, rot: rnd(TAU), spin: rnd(6, -6), stretch: 0.03, fadeIn: 0.01 });
     }
   }
   smoke(p, n, col, o = {}) {
@@ -156,46 +168,49 @@ class Director {
     try { fx.explosion(pos, col, radius); } finally { fx.paintEffects = pe; }
   }
   nativeBurst(pos, normal, col, opts) { this.G.fx?.burst?.(pos, normal, col, { ...opts, paint: false }); }
+  // a brief light at the heart of a burst: small and short, so the liquid ink stays the subject
   flash(pos, col, size, life = 0.28) {
-    this.shell(true, life, SHELL.FLASH, pos, size * 0.2, size * 0.6, this.hdr(col, 1.6, 1.2), 0.85, { hold: 0.05 });
-    this.spark(SPARK.GLOW, pos, 0, 0, 0, life, size * 0.9, size * 1.5, this.hdr(col, 1.3, 0.6), 0.7);
+    this.shell(true, life * 0.7, SHELL.FLASH, pos, size * 0.15, size * 0.45, this.hdr(col, 1.2, 1.0), 0.6, { hold: 0.05 });
+    this.spark(SPARK.GLOW, pos, 0, 0, 0, life * 0.7, size * 0.6, size, this.hdr(col, 1.0, 0.5), 0.45);
   }
   // A big special explosion: the ink itself (dome, crown, drops), its shock (ground ring, sphere edge) and light.
   inkBlast(pos, col, radius, o = {}) {
     const G = this.G, R = radius, p = this.v[6].copy(pos);
     if (o.native !== false) this.nativeBlast(p, this.c.setRGB(col[0], col[1], col[2]), Math.min(R, 6));
-    this.flash(this.v[5].copy(p).setY(p.y + 0.6), col, Math.min(3.2, R * 0.35));
-    this.shell(false, o.domeLife ?? 0.75, SHELL.INK, p, R * 0.08, R * (o.dome ?? 0.5), this.hdr(col, 1.0), 0.95, { hemi: true, sy: o.sy ?? 0.85, hold: 0.25, ease: easeOut });
-    this.shell(true, 0.45, SHELL.SHOCK, p, R * 0.2, R * 1.02, this.hdr(col, 1.6, 1.0), 0.9, { hemi: true, sy: 0.55 });
-    this.disc(false, 0.9, DISC.SPLAT, this.v[5].copy(p).setY(p.y + 0.03), this.up, R * 0.25, R * 0.85, this.hdr(col, 0.9), 0.85, { hold: 0.55 });
-    this.disc(true, 0.55, DISC.SHOCK, this.v[5].copy(p).setY(p.y + 0.06), this.up, R * 0.2, R * 1.08, this.hdr(col, 1.4, 0.6), 1, { hold: 0.2 });
-    this.band(false, 0.7, BAND.SHOCK, p, R * 0.18, R * 0.8, 0.4, Math.min(4.5, R * 0.42), this.hdr(col, 1.0), 0.9, { hold: 0.25 });
-    this.streaks(this.v[5].copy(p).setY(p.y + 0.4), o.streaks ?? Math.min(40, 10 + R * 3), Math.min(26, 8 + R * 1.6), this.hdr(col, 2.2, 1.2), { up: 0.45, life: 0.5, size: 0.07 });
+    this.flash(this.v[5].copy(p).setY(p.y + 0.6), col, Math.min(2.6, R * 0.3));
+    // the liquid: a glossy ink dome tearing open, a crown thrown off its foot, a puddle and a ring of spray on the floor
+    this.shell(false, o.domeLife ?? 0.75, SHELL.INK, p, R * 0.08, R * (o.dome ?? 0.5), col, 1, { hemi: true, sy: o.sy ?? 0.85, hold: 0.25, ease: easeOut });
+    this.disc(false, 0.9, DISC.SPLAT, this.v[5].copy(p).setY(p.y + 0.03), this.up, R * 0.25, R * 0.85, col, 1, { hold: 0.55 });
+    this.disc(false, 0.5, DISC.SHOCK, this.v[5].copy(p).setY(p.y + 0.05), this.up, R * 0.2, R * 1.05, col, 1, { hold: 0.2 });
+    this.band(false, 0.7, BAND.SHOCK, p, R * 0.18, R * 0.8, 0.4, Math.min(4.5, R * 0.42), col, 1, { hold: 0.25 });
+    this.streaks(this.v[5].copy(p).setY(p.y + 0.4), o.streaks ?? Math.min(40, 10 + R * 3), Math.min(26, 8 + R * 1.6), col, { up: 0.45, life: 0.6, size: 0.07 });
     this.chunks(this.v[5].copy(p).setY(p.y + 0.3), o.chunks ?? Math.min(28, 6 + R * 2), Math.min(18, 5 + R * 1.2), col, { size: 0.2 + R * 0.015 });
-    this.smoke(this.v[5].copy(p).setY(p.y + 0.4), o.mist ?? Math.min(14, 3 + R), this.hdr(col, 0.95), { kind: PUFF.MIST, size: 0.6 + R * 0.06, speed: 1.2 + R * 0.35, alpha: 0.55, life: 0.9 });
+    this.smoke(this.v[5].copy(p).setY(p.y + 0.4), o.mist ?? Math.min(10, 2 + R), this.hdr(col, 0.95), { kind: PUFF.MIST, size: 0.6 + R * 0.06, speed: 1.2 + R * 0.35, alpha: 0.4, life: 0.8 });
   }
   activation(a, col, scale = 1) {
     const C = SPECIAL_VFX_CALIBRATION.activation, p = this.v[4].copy(a.pos);
     const chest = this.v[3].copy(p).setY(p.y + 0.95);
-    this.flash(chest, col, C.flash * scale * 0.6, 0.22);
-    this.disc(false, 0.8, DISC.SPLAT, this.v[2].copy(p).setY(p.y + 0.03), this.up, 0.4 * scale, 1.6 * scale, col, 0.95, { hold: 0.55 });
-    this.disc(true, 0.42, DISC.SHOCK, this.v[2].copy(p).setY(p.y + 0.05), this.up, 0.4, C.ring * scale, this.hdr(col, 1.6, 0.5), 1, { hold: 0.15 });
-    this.band(true, 0.5, BAND.SWIRL, p, 0.55 * scale, 0.95 * scale, 0.5, 2.1 * scale, this.hdr(col, 1.7, 0.4), 0.85, { speed: 2.5, hold: 0.3 });
-    this.streaks(chest, C.streaks * scale, 9 * scale, this.hdr(col, 2.4, 0.8), { up: 0.35, life: 0.4, size: 0.05 });
+    this.flash(chest, col, C.flash * scale * 0.5, 0.2);
+    // ink bursts off the body: a puddle, a ring of spray, a liquid crown and thrown drops
+    this.disc(false, 0.8, DISC.SPLAT, this.v[2].copy(p).setY(p.y + 0.03), this.up, 0.4 * scale, 1.6 * scale, col, 1, { hold: 0.55 });
+    this.disc(false, 0.42, DISC.SHOCK, this.v[2].copy(p).setY(p.y + 0.05), this.up, 0.4, C.ring * scale, col, 1, { hold: 0.15 });
+    this.band(false, 0.5, BAND.SHOCK, p, 0.5 * scale, 1.3 * scale, 0.3, 1.2 * scale, col, 1, { hold: 0.2 });
+    this.streaks(chest, C.streaks * scale, 9 * scale, col, { up: 0.35, life: 0.5, size: 0.05 });
     for (let i = 0; i < Math.round(10 * this.kit.q); i++) {                 // the S3 activation spikes: rays radiating from the body
       const th = i / 10 * TAU + rnd(0.3), el = rnd(0.9, -0.2);
-      this.spark(SPARK.RAY, chest, Math.cos(th) * Math.cos(el), Math.sin(el), Math.sin(th) * Math.cos(el), 0.26, 0.07 * scale, 0.02, this.hdr(col, 2.4, 1.0), 1,
+      this.spark(SPARK.RAY, chest, Math.cos(th) * Math.cos(el), Math.sin(el), Math.sin(th) * Math.cos(el), 0.22, 0.05 * scale, 0.015, this.hdr(col, 1.6, 1.0), 0.8,
         { drag: 0, stretch: 1.6 * scale, grav: 0 });
     }
     this.nativeBurst(this.v[2].copy(p).setY(p.y + 0.2), this.up, this.c.setRGB(col[0], col[1], col[2]), { count: Math.round(16 * scale), speed: 6, size: 0.1, paint: false });
-    this.stars(p, 8 * scale, 0.9 * scale, this.hdr(col, 1.9, 0.9), { h: 1.9, h0: 0.4 });
+    this.stars(p, 6 * scale, 0.9 * scale, this.hdr(col, 1.4, 1.2), { h: 1.9, h0: 0.4 });
   }
+  // a shot leaving the barrel: a small flash and a cone of liquid ink spray
   muzzle(pos, dir, col, size = 1) {
-    this.flash(pos, col, 0.4 * size, 0.12);
-    this.disc(true, 0.16, DISC.FLASH, pos, dir, 0.2 * size, 0.7 * size, this.hdr(col, 1.8, 0.8), 0.75, { hold: 0.05 });
+    this.flash(pos, col, 0.35 * size, 0.1);
+    this.disc(true, 0.12, DISC.FLASH, pos, dir, 0.15 * size, 0.5 * size, this.hdr(col, 1.3, 0.8), 0.55, { hold: 0.05 });
     for (let i = 0; i < Math.round(10 * size * this.kit.q); i++) {
-      const s = rnd(16, 7) * size;
-      this.spark(SPARK.STREAK, pos, (dir.x + rnd(0.35, -0.35)) * s, (dir.y + rnd(0.35, -0.35)) * s, (dir.z + rnd(0.35, -0.35)) * s, rnd(0.22, 0.1), 0.05 * size, 0.02, this.hdr(col, 2.3, 1.2), 1, { drag: 5, stretch: 0.06 });
+      const s = rnd(14, 6) * size;
+      this.drop(pos, (dir.x + rnd(0.3, -0.3)) * s, (dir.y + rnd(0.3, -0.3)) * s, (dir.z + rnd(0.3, -0.3)) * s, rnd(0.45, 0.25), 0.07 * size * rnd(1.4, 0.7), col, { drag: 2, grav: 12, stretch: 0.03 });
     }
   }
   // ------------------------------------------------------------------ actor tracks
@@ -429,8 +444,8 @@ const ROUND_FX = {
     impact(r) { this.inkBlast(r.last, r.color, 3.2, { streaks: 12, chunks: 8, mist: 4, native: false }); },
   },
   inkjet: {
-    start(r, p) { r.d.ink = this.ribbon(false, { width: 0.42, widthTail: 0.1, color: this.hdr(r.color, 1.05), alpha: 0.95, style: RIBBON.INK, life: 0.18, spacing: 0.12 }); },
-    frame(r, p) { this.pushRibbon(r.d.ink, p.pos, false); if (vfxRandom() < 0.5) this.spark(SPARK.GLOW, p.pos, 0, 0, 0, 0.1, 0.35, 0.1, this.hdr(r.color, 1.5, 0.5), 0.6); },
+    start(r, p) { r.d.ink = this.ribbon(false, { width: 0.45, widthTail: 0.1, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.2, spacing: 0.12 }); },
+    frame(r, p) { this.pushRibbon(r.d.ink, p.pos, false); if (vfxRandom() < 0.4) this.drop(p.pos, rnd(1.5, -1.5), rnd(1, -1), rnd(1.5, -1.5), 0.45, 0.1, r.color, { grav: 12 }); },
     impact(r) { this.inkBlast(r.last, r.color, 3.6, { streaks: 14, chunks: 10, mist: 4, native: false }); },
   },
   booyahBomb: {
@@ -445,13 +460,13 @@ const ROUND_FX = {
     impact(r) { r.done = true; this.flash(r.last, r.color, 2.2, 0.3); },
   },
   ultraStamp: {
-    start(r, p) { r.d.glow = this.ribbon(true, { width: 1.4, widthTail: 0.2, color: this.hdr(r.color, 1.4, 0.9), alpha: 0.8, style: RIBBON.GLOW, life: 0.25, spacing: 0.12 }); },
-    frame(r, p) { this.pushRibbon(r.d.glow, p.pos, true); if (vfxRandom() < 0.5) this.puff(PUFF.CHUNK, p.pos, rnd(1, -1), rnd(0.5, -1), rnd(1, -1), 0.5, 0.12, 0.04, r.color, 1, { grav: 14, drag: 0.5 }); },
+    start(r, p) { r.d.ink = this.ribbon(false, { width: 0.7, widthTail: 0.12, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.3, spacing: 0.12 }); },
+    frame(r, p) { this.pushRibbon(r.d.ink, p.pos, false); if (vfxRandom() < 0.6) this.puff(PUFF.CHUNK, p.pos, rnd(1, -1), rnd(0.5, -1), rnd(1, -1), 0.6, 0.14, 0.05, r.color, 1, { grav: 14, drag: 0.5 }); },
     impact(r) { this.inkBlast(r.last, r.color, 5.5, { streaks: 26, chunks: 18 }); },
   },
   crabTank: {
     when: p => p.s3AllSpecialMode === 'cannon' || p.type !== 'shot',
-    start(r, p) { r.d.ink = this.ribbon(false, { width: 0.32, widthTail: 0.06, color: this.hdr(r.color, 1.05), alpha: 0.95, style: RIBBON.INK, life: 0.22, spacing: 0.12 });
+    start(r, p) { r.d.ink = this.ribbon(false, { width: 0.32, widthTail: 0.06, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.22, spacing: 0.12 });
       r.d.smoke = this.ribbon(false, { width: 0.2, widthTail: 0.7, color: [0.85, 0.85, 0.88], alpha: 0.45, style: RIBBON.SMOKE, life: 0.5, spacing: 0.2 }); },
     frame(r, p) { this.pushRibbon(r.d.ink, p.pos, false); this.pushRibbon(r.d.smoke, p.pos, false); },
     impact(r) { this.inkBlast(r.last, r.color, 4.5, { streaks: 16, chunks: 12, mist: 5, native: false }); },
@@ -460,16 +475,16 @@ const ROUND_FX = {
     start(r, p) {
       // remote volleys arrive as replicated rounds: the first round of a volley carries the muzzle burst
       if (p.owner?.remote && (p.s3VolleyIndex || 0) === 0 && p.owner.alive) trizookaMuzzle(this, p.owner, r.color);
-      r.d.ink = this.ribbon(false, { width: 0.5, widthTail: 0.12, color: this.hdr(r.color, 1.05), alpha: 0.95, style: RIBBON.INK, life: 0.16, spacing: 0.12 });
-      r.d.glow = this.ribbon(true, { width: 0.6, widthTail: 0.1, color: this.hdr(r.color, 1.8, 1.0), alpha: 0.8, style: RIBBON.GLOW, life: 0.12, spacing: 0.12 }); },
+      r.d.ink = this.ribbon(false, { width: 0.55, widthTail: 0.12, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.2, spacing: 0.12 });
+      r.d.glow = this.ribbon(true, { width: 0.22, widthTail: 0.04, color: this.hdr(r.color, 1.2, 0.8), alpha: 0.6, style: RIBBON.GLOW, life: 0.08, spacing: 0.12 }); },
     frame(r, p) { this.pushRibbon(r.d.ink, p.pos, false); this.pushRibbon(r.d.glow, p.pos, true); },
     impact(r) { this.inkBlast(r.last, r.color, 3.4, { streaks: 18, chunks: 12, mist: 5, native: false }); },
   },
   inkVac: {
-    start(r, p) { r.d.glow = this.ribbon(true, { width: 1.3, widthTail: 0.3, color: this.hdr(r.color, 1.5, 0.8), alpha: 0.9, style: RIBBON.GLOW, life: 0.35, spacing: 0.15 });
-      r.d.ink = this.ribbon(false, { width: 0.9, widthTail: 0.2, color: this.hdr(r.color, 1.0), alpha: 0.95, style: RIBBON.INK, life: 0.22, spacing: 0.15 }); },
+    start(r, p) { r.d.glow = this.ribbon(true, { width: 0.4, widthTail: 0.08, color: this.hdr(r.color, 1.2, 0.6), alpha: 0.5, style: RIBBON.GLOW, life: 0.15, spacing: 0.15 });
+      r.d.ink = this.ribbon(false, { width: 1.0, widthTail: 0.2, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.28, spacing: 0.15 }); },
     frame(r, p) { this.pushRibbon(r.d.glow, p.pos, true); this.pushRibbon(r.d.ink, p.pos, false);
-      if (vfxRandom() < 0.7) this.spark(SPARK.STREAK, p.pos, rnd(3, -3), rnd(3, -3), rnd(3, -3), 0.25, 0.08, 0.02, this.hdr(r.color, 2, 1), 1, { stretch: 0.08 }); },
+      if (vfxRandom() < 0.7) this.drop(p.pos, rnd(3, -3), rnd(3, -3), rnd(3, -3), 0.5, 0.12, r.color, { grav: 10 }); },
     impact(r) { this.inkBlast(r.last, r.color, 5.5, { streaks: 26, chunks: 16 }); },
   },
 };
@@ -480,14 +495,14 @@ const ROUND_FX = {
 const OBJECT_FX = {
   marker: { // Triple Inkstrike beacon in flight → landing marker, then the twister drops
     start(r, o) {
-      r.d.trail = this.ribbon(true, { width: 0.3, widthTail: 0.05, color: this.hdr(r.color, 2.0, 0.8), alpha: 1, style: RIBBON.GLOW, life: 0.4, spacing: 0.12 });
+      r.d.trail = this.ribbon(true, { width: 0.18, widthTail: 0.04, color: this.hdr(r.color, 1.5, 0.8), alpha: 0.8, style: RIBBON.GLOW, life: 0.3, spacing: 0.12 });
       const tgt = o.target || o.pos;
       r.d.mark = this.disc(true, 0, DISC.TARGET, this.v[0].copy(tgt).setY(tgt.y + 0.05), this.up, 0.5, 0.5, this.hdr(r.color, 1.5, 0.7), 0.9,
         { fade: false, follow: (rec) => { const k = clamp01(r.age / ((o.flight || 82 / 60) * 0.6)); rec.v[3] = 1.2 + 6.5 * easeOut(k); rec.v[7] += 0.03; } });
     },
     frame(r, o) {
       this.pushRibbon(r.d.trail, o.pos, true);
-      if (vfxRandom() < 0.6) this.spark(SPARK.STAR, o.pos, 0, 0, 0, 0.3, 0.18, 0.02, this.hdr(r.color, 2, 1.2), 1);
+      if (vfxRandom() < 0.25) this.spark(SPARK.STAR, o.pos, 0, 0, 0, 0.3, 0.14, 0.02, this.hdr(r.color, 1.5, 1.2), 1);
       const C = SPECIAL_VFX_CALIBRATION.inkstrike, flight = o.flight || 82 / 60, left = flight - r.age, tgt = o.target || o.pos;
       // the twister descends out of the sky over the last frames of the beacon's flight
       if (left < C.dropFrames / 60 && !r.d.funnel) {
@@ -506,12 +521,13 @@ const OBJECT_FX = {
       if (r.d.funnel) r.d.funnel.dead = true;
       for (const k of ['mark']) if (r.d[k]) r.d[k].dead = true;
       this.flash(this.v[0].copy(p).setY(p.y + 1), c, 2.2, 0.3);
-      this.disc(true, 0.5, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.5, 8.5, this.hdr(c, 1.4, 0.8), 1);
+      this.disc(false, 0.5, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.5, 8.5, c, 1);
       const life = (o.dur || 51 / 60) + 0.5;
       const radius = () => Math.max(0.5, (o.currentRadius || 0.5));
       r.d.twA = this.band(false, life, BAND.TWISTER, p, 1, 1, C.twisterHeight, C.twisterHeight, this.hdr(c, 1.0), 0.95,
         { taper: 2.4, twist: 4, speed: 1.6, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.42; rec.v[3] += 0.22; } });
-      r.d.twB = this.band(true, life, BAND.SWIRL, p, 1, 1, C.twisterHeight * 0.8, C.twisterHeight * 0.8, this.hdr(c, 1.7, 0.6), 0.7,
+      // wind streaks wrapped round the ink column (pale air, not light)
+      r.d.twB = this.band(false, life, BAND.SWIRL, p, 1, 1, C.twisterHeight * 0.8, C.twisterHeight * 0.8, [0.92, 0.95, 0.97], 0.3,
         { taper: 2.8, twist: -3, speed: 3, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.55; rec.v[3] -= 0.15; } });
       r.d.twC = this.band(false, life, BAND.TWISTER, p, 1, 1, 3, 3, this.hdr(c, 0.9), 0.9,
         { taper: 0.7, twist: 2, speed: 2.4, hold: 0.8, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[2] = o.pos.z; rec.v[4] = radius() * 0.95; rec.v[3] += 0.3; } });
@@ -524,7 +540,7 @@ const OBJECT_FX = {
         const th = rnd(TAU), rr = R * rnd(1, 0.6);
         this.v[0].set(p.x + Math.cos(th) * rr, p.y + rnd(1.2, 0.1), p.z + Math.sin(th) * rr);
         // spray thrown off tangentially at the base
-        this.spark(SPARK.STREAK, this.v[0], -Math.sin(th) * 9, rnd(5, 1), Math.cos(th) * 9, 0.35, 0.07, 0.02, this.hdr(c, 1.9, 0.8), 1, { stretch: 0.08, grav: 8 });
+        this.drop(this.v[0], -Math.sin(th) * 9, rnd(5, 1), Math.cos(th) * 9, 0.5, 0.1, c, { grav: 12, drag: 0.6 });
         this.puff(PUFF.CHUNK, this.v[0], -Math.sin(th) * 6, rnd(8, 3), Math.cos(th) * 6, 0.6, 0.16, 0.05, c, 1, { grav: 16, drag: 0.6 });
         this.puff(PUFF.MIST, this.v[0], -Math.sin(th) * 3, rnd(3, 1), Math.cos(th) * 3, 0.7, 0.7, 1.6, this.hdr(c, 0.95), 0.4, { drag: 2, buoy: 1 });
       }
@@ -533,12 +549,12 @@ const OBJECT_FX = {
   },
   decoy: { // Super Chump balloon: confetti launch, landing marks, bob, pop
     start(r, o) {
-      r.d.trail = this.ribbon(true, { width: 0.25, widthTail: 0.04, color: this.hdr(r.color, 1.8, 0.8), alpha: 0.9, style: RIBBON.GLOW, life: 0.35, spacing: 0.15 });
+      r.d.trail = this.ribbon(false, { width: 0.22, widthTail: 0.05, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.3, spacing: 0.15 });
       if (o.target && o.phase === 'flight') r.d.mark = this.disc(true, (o.flight || 1.8) + 0.1, DISC.TARGET, this.v[0].copy(o.target).setY(o.target.y + 0.05), this.up, 0.4, 1.3, this.hdr(r.color, 1.3, 0.5), 0.6, { hold: 0.9, spin: 2 });
     },
     frame(r, o) {
-      if (o.phase === 'flight') { this.pushRibbon(r.d.trail, o.pos, true); if (vfxRandom() < 0.35) this.spark(SPARK.STAR, o.pos, 0, -1, 0, 0.35, 0.16, 0.02, this.hdr(r.color, 1.8, 1.4), 1); }
-      else if (!r.landed) { r.landed = true; this.kit.glowRibbons.end(r.d.trail); this.disc(false, 0.6, DISC.SPLAT, this.v[0].copy(o.pos).setY(o.pos.y + 0.03), this.up, 0.3, 1.4, r.color, 0.9); this.nativeBurst(o.pos, this.up, this.c.setRGB(...r.color), { count: 8, speed: 4, size: 0.08, paint: false }); }
+      if (o.phase === 'flight') { this.pushRibbon(r.d.trail, o.pos, false); if (vfxRandom() < 0.2) this.spark(SPARK.STAR, o.pos, 0, -1, 0, 0.3, 0.12, 0.02, this.hdr(r.color, 1.4, 1.2), 1); }
+      else if (!r.landed) { r.landed = true; this.kit.ribbons.end(r.d.trail); this.disc(false, 0.6, DISC.SPLAT, this.v[0].copy(o.pos).setY(o.pos.y + 0.03), this.up, 0.3, 1.4, r.color, 0.9); this.nativeBurst(o.pos, this.up, this.c.setRGB(...r.color), { count: 8, speed: 4, size: 0.08, paint: false }); }
       // the last second before the pop: a quickening flash
       const left = (o.dur || 5.3) - o.age;
       if (left < 1) { r.blink = (r.blink || 0) + 1; if (r.blink % Math.max(2, Math.round(left * 12)) === 0) this.spark(SPARK.GLOW, this.v[0].copy(o.pos).setY(o.pos.y + 0.8), 0, 0, 0, 0.12, 0.9, 1.2, this.hdr(r.color, 1.6, 1.2), 0.8); }
@@ -572,7 +588,7 @@ const OBJECT_FX = {
     start(r, o) {
       const c = r.color, p = o.pos;
       this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.2, 0.25);
-      this.disc(true, 0.6, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.3, 3.5, this.hdr(c, 1.4, 0.8), 1);
+      this.disc(false, 0.6, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.3, 3.5, c, 1);
       r.d.holo = this.shell(true, 0, SHELL.HOLO, this.v[0].copy(p), 1.1, 1.1, this.hdr(c, 1.3, 0.5), 0.75,
         { hemi: true, sy: 1.5, fade: false, follow: (rec) => { rec.v[0] = o.pos.x; rec.v[1] = o.pos.y; rec.v[2] = o.pos.z; const hp = o.maxHp ? clamp01(o.hp / o.maxHp) : 1; rec.v[11] = 0.45 + 0.35 * hp; } });
       r.d.dots = this.disc(true, 0, DISC.TARGET, this.v[0].copy(p).setY(p.y + 0.04), this.up, 2.2, 2.2, this.hdr(c, 1.2, 0.5), 0.55,
@@ -619,20 +635,21 @@ const OBJECT_FX = {
       } else if (!r.blasted) {
         r.blasted = true;
         const k0 = p.clone();
-        this.flash(this.v[0].copy(k0).setY(k0.y + 1.2), c, 6, 0.4);
+        this.flash(this.v[0].copy(k0).setY(k0.y + 1.2), c, 4, 0.35);
         const life = SPECIAL_VFX_CALIBRATION.booyah.blastSeconds + 0.35;
-        this.shell(true, life, SHELL.ORB, k0, 1, R, this.hdr(c, 1.3, 1.0), 0.85, { hemi: true, sy: 0.9, hold: 0.7, ease: t => smooth(t * 1.4) });
-        this.shell(false, life + 0.2, SHELL.INK, k0, 0.8, R * 0.97, this.hdr(c, 1.0), 0.55, { hemi: true, sy: 0.9, hold: 0.55, ease: t => smooth(t * 1.4) });
-        this.shell(true, life, SHELL.SHOCK, k0, 1, R * 1.03, this.hdr(c, 2.0, 1.4), 1, { hemi: true, sy: 0.9, hold: 0.75, ease: t => smooth(t * 1.4) });
-        this.disc(true, life, DISC.SHOCK, this.v[0].copy(k0).setY(k0.y + 0.06), this.up, 1, R * 1.05, this.hdr(c, 1.6, 0.8), 1, { hold: 0.7, ease: t => smooth(t * 1.4) });
-        this.disc(false, life + 0.5, DISC.SPLAT, this.v[0].copy(k0).setY(k0.y + 0.03), this.up, 1, R * 0.95, c, 0.8, { hold: 0.6, ease: t => smooth(t * 1.4) });
-        this.streaks(this.v[0].copy(k0).setY(k0.y + 1), 46, 26, this.hdr(c, 2.4, 1.6), { up: 0.4, life: 0.8, size: 0.09, drag: 1.5 });
+        // a glossy ink dome swelling to the blast radius, with a thin luminous skin over it
+        this.shell(false, life + 0.2, SHELL.INK, k0, 0.8, R * 0.97, c, 1, { hemi: true, sy: 0.9, hold: 0.55, ease: t => smooth(t * 1.4) });
+        this.shell(true, life, SHELL.ORB, k0, 1, R, this.hdr(c, 1.1, 0.8), 0.35, { hemi: true, sy: 0.9, hold: 0.7, ease: t => smooth(t * 1.4) });
+        this.shell(true, life, SHELL.SHOCK, k0, 1, R * 1.03, this.hdr(c, 1.5, 1.2), 0.6, { hemi: true, sy: 0.9, hold: 0.75, ease: t => smooth(t * 1.4) });
+        this.disc(false, life, DISC.SHOCK, this.v[0].copy(k0).setY(k0.y + 0.06), this.up, 1, R * 1.05, c, 1, { hold: 0.7, ease: t => smooth(t * 1.4) });
+        this.disc(false, life + 0.5, DISC.SPLAT, this.v[0].copy(k0).setY(k0.y + 0.03), this.up, 1, R * 0.95, c, 1, { hold: 0.6, ease: t => smooth(t * 1.4) });
+        this.streaks(this.v[0].copy(k0).setY(k0.y + 1), 46, 26, c, { up: 0.4, life: 0.9, size: 0.09, drag: 1.5 });
         this.chunks(this.v[0].copy(k0).setY(k0.y + 0.5), 30, 20, c, { size: 0.3 });
         this.nativeBlast(k0, this.c.setRGB(...c), 6);
       } else if (this.near(p, 80) && vfxRandom() < 0.9) {
         const k = clamp01((f - 40) / 40), th = rnd(TAU), rr = R * smooth(k * 1.4);
         this.v[0].set(p.x + Math.cos(th) * rr, p.y + rnd(1.5, 0.2), p.z + Math.sin(th) * rr);
-        this.spark(SPARK.STAR, this.v[0], Math.cos(th) * 4, rnd(5, 1), Math.sin(th) * 4, 0.5, 0.3, 0.04, this.hdr(c, 2, 1.5), 1);
+        this.drop(this.v[0], Math.cos(th) * 5, rnd(6, 2), Math.sin(th) * 5, 0.7, 0.16, c);
       }
     },
     end() {},
@@ -650,8 +667,9 @@ const KIT_FX = {
       r.d.pillar = this.beam(true, 1.4, BEAM.PILLAR, p, this.v[0].copy(p).setY(p.y + 40), 0.35, 0.6, this.hdr(c, 2.4, 1.6), 1, { speed: 4, follow: (rec) => { rec.v[3] = 0.35 * (1 - rec.t / rec.life) + 0.05; rec.v[11] = 1 - smooth(rec.t / rec.life); } });
       this.flash(this.v[0].copy(p).setY(p.y + 0.6), c, 1.2, 0.3);
       for (let i = 0; i < 3; i++) this.shell(true, 0.9 + i * 0.25, SHELL.SHOCK, p, 0.5, 5.5 + i * 1.2, this.hdr(c, 1.5, 0.4), 0.45, { hemi: true });
-      for (let i = 0; i < 3; i++) this.disc(true, 0.7 + i * 0.2, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.4, 3 + i * 1.6, this.hdr(c, 1.4, 0.4), 0.8);
-      this.streaks(this.v[0].copy(p).setY(p.y + 0.4), 22, 12, this.hdr(c, 2.2, 1.2), { up: 0.7, life: 0.5 });
+      this.disc(false, 0.8, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.4, 4.5, c, 1);
+      this.disc(false, 0.9, DISC.SPLAT, this.v[0].copy(p).setY(p.y + 0.03), this.up, 0.3, 1.8, c, 1);
+      this.streaks(this.v[0].copy(p).setY(p.y + 0.4), 22, 12, c, { up: 0.7, life: 0.6 });
     },
     frame(r, d, dt) {
       const hp = d.hpMax ? d.hp / d.hpMax : 1;
@@ -685,7 +703,7 @@ const KIT_FX = {
   },
   fist: { // Triple Splashdown fists: the existing ink-fist model replaces the box stand-in, with a glow trail and the slam
     start(r, f) {
-      r.d.trail = this.ribbon(true, { width: 1.1, widthTail: 0.15, color: this.hdr(r.color, 1.6, 0.7), alpha: 0.9, style: RIBBON.GLOW, life: 0.3, spacing: 0.15 });
+      r.d.trail = this.ribbon(false, { width: 0.9, widthTail: 0.15, color: r.color, alpha: 1, style: RIBBON.INK, life: 0.3, spacing: 0.15 });
       try {
         r.model = createInkFist(this.c.setRGB(...r.color).getHex(), this.THREE);
         r.model.name = 'splashdown-fist-model';
@@ -696,8 +714,9 @@ const KIT_FX = {
       r.yaw = Math.atan2(tg.x - o.x, tg.z - o.z);
     },
     frame(r, f, dt) {
-      this.pushRibbon(r.d.trail, f.pos, true);
-      if (vfxRandom() < 0.5) this.spark(SPARK.STAR, this.v[0].copy(f.pos).add(this.v[1].set(rnd(0.6, -0.6), rnd(0.6, -0.6), rnd(0.6, -0.6))), 0, 0, 0, 0.3, 0.25, 0.02, this.hdr(r.color, 2, 1.3), 1);
+      this.pushRibbon(r.d.trail, f.pos, false);
+      if (vfxRandom() < 0.4) this.drop(this.v[0].copy(f.pos).add(this.v[1].set(rnd(0.6, -0.6), rnd(0.3, -0.6), rnd(0.6, -0.6))), rnd(1, -1), -rnd(2, 0.5), rnd(1, -1), 0.6, 0.14, r.color);
+      if (vfxRandom() < 0.2) this.spark(SPARK.STAR, this.v[0].copy(f.pos).add(this.v[1].set(rnd(0.6, -0.6), rnd(0.6, -0.6), rnd(0.6, -0.6))), 0, 0, 0, 0.3, 0.18, 0.02, this.hdr(r.color, 1.5, 1.2), 1);
       if (!r.marked && f.target) { r.marked = true; r.d.mark = this.disc(true, 1.4, DISC.TARGET, this.v[0].copy(f.target).setY(f.target.y + 0.05), this.up, 1, 5.5, this.hdr(r.color, 1.2, 0.1), 0.4, { hold: 0.85 }); }
       if (r.model) {
         if (f.mesh) f.mesh.visible = false;
@@ -711,9 +730,9 @@ const KIT_FX = {
       }
     },
     end(r, f) {
-      this.kit.glowRibbons.end(r.d.trail);
+      this.kit.ribbons.end(r.d.trail);
       if (r.model) { disposeSpecialModel(r.model); r.model = null; }
-      if (f.dead && f.hp <= 0) { this.streaks(f.pos, 18, 10, this.hdr(r.color, 2, 1.2)); this.chunks(f.pos, 14, 7, r.color, { size: 0.22 }); return; }
+      if (f.dead && f.hp <= 0) { this.streaks(f.pos, 18, 10, r.color); this.chunks(f.pos, 14, 7, r.color, { size: 0.22 }); return; }
       this.inkBlast(f.target || f.pos, r.color, 6.4, { streaks: 24, chunks: 14, native: false });
     },
   },
@@ -726,14 +745,15 @@ const KIT_FX = {
       while (r.acc > 0.02) { r.acc -= 0.02;
         const th = rnd(TAU), rr = R * Math.sqrt(vfxRandom());
         this.v[0].set(p.x + Math.cos(th) * rr, p.y - 0.5, p.z + Math.sin(th) * rr);
-        this.spark(SPARK.STREAK, this.v[0], 0, -18, 0, Math.max(0.1, (p.y - 0.5 - ground) / 18), 0.035, 0.03, this.hdr(r.color, 1.5, 0.5), 0.85, { drag: 0, stretch: 0.07 });
+        // rain: thin liquid ink drops pulled long by their fall
+        this.puff(PUFF.CHUNK, this.v[0], 0, -18, 0, Math.max(0.1, (p.y - 0.5 - ground) / 18), 0.035, 0.03, r.color, 1, { drag: 0, grav: 0, stretch: 0.05, fadeIn: 0.01 });
       }
       while (r.drip > 0.09) { r.drip -= 0.09;
         const th = rnd(TAU), rr = R * 0.9 * Math.sqrt(vfxRandom());
         this.v[0].set(p.x + Math.cos(th) * rr, p.y - 0.45, p.z + Math.sin(th) * rr);
         this.puff(PUFF.CHUNK, this.v[0], 0, -2, 0, 0.9, 0.11, 0.06, r.color, 1, { grav: 16, drag: 0 });
         this.v[0].y = ground + 0.04;
-        this.disc(true, 0.35, DISC.SHOCK, this.v[0], this.up, 0.05, 0.45, this.hdr(r.color, 1.2, 0.3), 0.6);
+        this.disc(false, 0.35, DISC.SHOCK, this.v[0], this.up, 0.05, 0.45, r.color, 1);
       }
     },
     end(r, c) { const p = c.group?.position || c.pos; if (p) this.smoke(p, 8, this.hdr(r.color, 0.7), { kind: PUFF.SMOKE, size: 1.2, speed: 2, rise: 0.8, life: 1, alpha: 0.4 }); },
@@ -775,8 +795,8 @@ const DIRECTORS = {
         L.drawTo.lerp(to, 1 - Math.exp(-dt * 30));
         this.setBeam(L.outer, from, L.drawTo); this.setBeam(L.core, from, L.drawTo); this.setBeam(L.halo, from, L.drawTo);
         if (vfxRandom() < 0.6) { // impact crackle
-          this.spark(SPARK.STREAK, L.drawTo, rnd(6, -6), rnd(7, 1), rnd(6, -6), 0.25, 0.07, 0.02, this.hdr(c, 2.2, 1.3), 1, { stretch: 0.07, grav: 9 });
-          if (vfxRandom() < 0.3) this.spark(SPARK.GLOW, L.drawTo, 0, 0, 0, 0.1, 0.8, 1.4, this.hdr(c, 1.6, 1), 0.8);
+          this.drop(L.drawTo, rnd(6, -6), rnd(7, 1), rnd(6, -6), 0.45, 0.1, c, { grav: 12 });   // the beam splashes ink where it lands
+          if (vfxRandom() < 0.3) this.spark(SPARK.GLOW, L.drawTo, 0, 0, 0, 0.1, 0.6, 1.0, this.hdr(c, 1.3, 1), 0.6);
         }
         if (vfxRandom() < 0.35) { // sparks running along the beam
           const k = vfxRandom(); this.v[0].copy(from).lerp(L.drawTo, k);
@@ -851,11 +871,11 @@ const DIRECTORS = {
     start(a, t) {
       this.activation(a, t.color, 1.1);
       const p = a.pos;   // the launch: a ground blast below the pack
-      this.disc(false, 0.9, DISC.SPLAT, this.v[0].copy(p).setY(p.y + 0.03), this.up, 0.5, 2.6, t.color, 0.9);
-      this.disc(true, 0.5, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.4, 4, this.hdr(t.color, 1.4, 0.8), 1);
+      this.disc(false, 0.9, DISC.SPLAT, this.v[0].copy(p).setY(p.y + 0.03), this.up, 0.5, 2.6, t.color, 1);
+      this.disc(false, 0.5, DISC.SHOCK, this.v[0].copy(p).setY(p.y + 0.05), this.up, 0.4, 4, t.color, 1);
       this.smoke(p, 10, this.hdr(t.color, 0.95), { kind: PUFF.MIST, size: 0.8, speed: 4, rise: 0.6, life: 0.9, alpha: 0.55 });
-      t.d.jets = [0, 1].map(() => this.beam(false, 0, BEAM.JET, a.pos, a.pos, 0.12, 0.4, this.hdr(t.color, 1.05), 1, { speed: 14 }));
-      t.d.cones = [0, 1].map(() => this.beam(true, 0, BEAM.PILLAR, a.pos, a.pos, 0.08, 0.3, this.hdr(t.color, 1.6, 1.2), 0.7, { speed: 10 }));
+      t.d.jets = [0, 1].map(() => this.beam(false, 0, BEAM.JET, a.pos, a.pos, 0.12, 0.4, t.color, 1, { speed: 14 }));
+      t.d.cones = [0, 1].map(() => this.beam(true, 0, BEAM.PILLAR, a.pos, a.pos, 0.08, 0.3, this.hdr(t.color, 1.2, 1.0), 0.3, { speed: 10 }));
       t.d.recs = [...t.d.jets, ...t.d.cones];
     },
     frame(a, t, dt) {
@@ -870,11 +890,11 @@ const DIRECTORS = {
         end.x -= f.x * 0.35; end.z -= f.z * 0.35;
         const flick = 0.9 + 0.1 * Math.sin(this.time * 47 + i * 2);
         this.setBeam(t.d.jets[i], nozzle, end, 0.11 * flick, 0.42 * flick, squid ? 0 : 1);
-        this.setBeam(t.d.cones[i], nozzle, this.v[2].copy(nozzle).lerp(end, 0.35), 0.1, 0.24 * flick, squid ? 0 : 0.8);
-        if (!squid) { this.spark(SPARK.GLOW, nozzle, 0, 0, 0, 0.05, 0.28, 0.2, this.hdr(c, 1.7, 0.6), 0.8);
+        this.setBeam(t.d.cones[i], nozzle, this.v[2].copy(nozzle).lerp(end, 0.2), 0.08, 0.16 * flick, squid ? 0 : 0.3);
+        if (!squid) { this.spark(SPARK.GLOW, nozzle, 0, 0, 0, 0.05, 0.2, 0.15, this.hdr(c, 1.2, 0.6), 0.4);
           if (vfxRandom() < 0.6) { const k = vfxRandom(); this.v[2].copy(nozzle).lerp(end, k);
             this.puff(PUFF.CHUNK, this.v[2], rnd(1.2, -1.2), -rnd(9, 5), rnd(1.2, -1.2), 0.25, 0.07 + 0.08 * k, 0.04, c, 1, { grav: 10, drag: 0.5 }); } }
-        if (!squid && vfxRandom() < 0.7) this.spark(SPARK.STREAK, nozzle, rnd(1, -1), -rnd(14, 8), rnd(1, -1), 0.14, 0.07, 0.02, this.hdr(c, 2.2, 1.4), 1, { stretch: 0.04, drag: 2 });
+        if (!squid && vfxRandom() < 0.7) this.drop(nozzle, rnd(1, -1), -rnd(14, 8), rnd(1, -1), 0.25, 0.07, c, { drag: 1, grav: 10 });
         if (!squid && len < 6.4 && vfxRandom() < 0.55) { // splash where the jets hit the floor
           this.v[2].copy(end).setY(ground + 0.05);
           const th = rnd(TAU), sp = rnd(5, 2);
@@ -928,7 +948,7 @@ const DIRECTORS = {
         if (owner) { const rib = this.ribbon(true, { width: 0.35, widthTail: 0.05, color: this.hdr(c, 2, 1.4), alpha: 1, style: RIBBON.GLOW, life: 0.3, spacing: 0.15 });
           const to = new this.THREE.Vector3(owner.pos.x, owner.pos.y + 2.2, owner.pos.z), start = from.clone();
           this.shell(true, 0.45, SHELL.FLASH, start, 0.3, 0.3, this.hdr(c, 2, 2), 1, { follow: (rec) => { const k = smooth(rec.t / rec.life); this.v[7].copy(start).lerp(to, k); this.v[7].y += Math.sin(k * Math.PI) * 2; rec.v[0] = this.v[7].x; rec.v[1] = this.v[7].y; rec.v[2] = this.v[7].z; this.pushRibbon(rib, this.v[7], true); if (k >= 1) this.kit.glowRibbons.end(rib); } }); }
-      } else if (e.action === 'throw' && pos) { this.flash(pos, c, 1.6, 0.25); this.streaks(pos, 14, 10, this.hdr(c, 2, 1.4)); }
+      } else if (e.action === 'throw' && pos) { this.flash(pos, c, 1.6, 0.25); this.streaks(pos, 14, 10, c); }
     },
     end(a, t) { },
   },
@@ -946,15 +966,15 @@ const DIRECTORS = {
       if ((e.action === 'swing' || e.action === 'jumpSwing') && target) {
         const big = e.action === 'jumpSwing', g = this.v[0].copy(target); g.y = groundBelowPoint(this, target, a.pos.y);
         this.flash(this.v[1].copy(g).setY(g.y + 0.3), c, big ? 1.8 : 1.1, 0.18);
-        this.disc(true, 0.36, DISC.SHOCK, this.v[1].copy(g).setY(g.y + 0.05), this.up, 0.3, big ? 4.4 : 3.4, this.hdr(c, 1.3, 0.3), 0.6, { hold: 0.15 });
-        this.disc(false, 0.8, DISC.SPLAT, this.v[1].copy(g).setY(g.y + 0.03), this.up, 0.4, big ? 2.6 : 1.8, c, 0.9);
-        this.band(false, 0.45, BAND.SHOCK, g, 0.5, big ? 3.6 : 2.6, 0.3, big ? 1.8 : 1.2, this.hdr(c, 1.0), 0.95, { hold: 0.2 });
+        this.disc(false, 0.36, DISC.SHOCK, this.v[1].copy(g).setY(g.y + 0.05), this.up, 0.3, big ? 4.4 : 3.4, c, 1, { hold: 0.15 });
+        this.disc(false, 0.8, DISC.SPLAT, this.v[1].copy(g).setY(g.y + 0.03), this.up, 0.4, big ? 2.6 : 1.8, c, 1);
+        this.band(false, 0.45, BAND.SHOCK, g, 0.5, big ? 3.6 : 2.6, 0.3, big ? 1.8 : 1.2, c, 1, { hold: 0.2 });
         this.chunks(this.v[1].copy(g).setY(g.y + 0.2), big ? 18 : 12, big ? 11 : 8, c, { size: 0.2, upMin: 0.5 });
         this.smoke(g, big ? 8 : 5, [0.75, 0.73, 0.7], { kind: PUFF.DUST, size: 0.45, speed: 4, rise: 0.4, life: 0.7, alpha: 0.5, buoy: 0.2 });
         this.nativeBurst(this.v[1].copy(g).setY(g.y + 0.15), this.up, this.c.setRGB(...c), { count: big ? 16 : 10, speed: 7, size: 0.12, paint: false });
       } else if (e.action === 'block' && pos) {
         this.v[0].copy(pos); this.v[0].y += 1;
-        this.flash(this.v[0], [1, 1, 1], 0.6, 0.12); this.streaks(this.v[0], 10, 9, [3, 3, 2.6], { life: 0.25 });
+        this.flash(this.v[0], [1, 1, 1], 0.6, 0.12); this.streaks(this.v[0], 10, 9, [3, 3, 2.6], { life: 0.25, glow: true });   // a blocked shot: sparks off the stamp face
       } else if (e.action === 'throw' && pos) { this.flash(pos, c, 1.2, 0.2); }
     },
   },
@@ -964,7 +984,7 @@ const DIRECTORS = {
       this.activation(a, t.color, 1);
       const p = this.v[0].copy(a.pos).setY(a.pos.y + 0.9);
       this.chunks(p, 26, 11, t.color, { size: 0.26, upMin: 0.1 });
-      this.disc(false, 0.9, DISC.SPLAT, this.v[1].copy(a.pos).setY(a.pos.y + 0.03), this.up, 0.5, 2.4, t.color, 0.95, { hold: 0.6 });
+      this.disc(false, 0.9, DISC.SPLAT, this.v[1].copy(a.pos).setY(a.pos.y + 0.03), this.up, 0.5, 2.4, t.color, 1, { hold: 0.6 });
       this.nativeBurst(p, this.up, this.c.setRGB(...t.color), { count: 26, speed: 8, size: 0.14, spread: 1 });
     },
     frame(a, t, dt) {
@@ -974,18 +994,19 @@ const DIRECTORS = {
       if ((phase === 'hookFlight' || phase === 'zip') && target) {
         let head = target;
         if (phase === 'hookFlight') { const k = clamp01((st.hookFlightT || 0) / Math.max(1e-3, st.hookFlightDuration || 0.1)); head = this.v[1].copy(hand).lerp(target, easeOut(k)); }
-        if (!t.d.line) { t.d.line = this.beam(false, 0, BEAM.JET, hand, head, 0.06, 0.09, this.hdr(c, 1.05), 1, { speed: 20 }); t.d.glow = this.beam(true, 0, BEAM.LINE, hand, head, 0.05, 0.05, this.hdr(c, 1.6, 0.8), 0.7, { speed: 0 }); (t.d.recs ||= []).push(t.d.line, t.d.glow); }
-        const thick = phase === 'zip' ? 0.09 : 0.05;
-        this.setBeam(t.d.line, hand, head, thick * 0.8, thick, 1); this.setBeam(t.d.glow, hand, head, 0.05, 0.05, 0.7);
-        if (phase === 'hookFlight' && vfxRandom() < 0.8) this.spark(SPARK.GLOW, head, 0, 0, 0, 0.08, 0.3, 0.15, this.hdr(c, 1.8, 1), 1);
+        // the line is a stretched strand of liquid ink (S3), not a light beam
+        if (!t.d.line) { t.d.line = this.beam(false, 0, BEAM.JET, hand, head, 0.06, 0.09, c, 1, { speed: 20 }); (t.d.recs ||= []).push(t.d.line); }
+        const thick = phase === 'zip' ? 0.1 : 0.06;
+        this.setBeam(t.d.line, hand, head, thick * 0.8, thick, 1);
+        if (phase === 'hookFlight' && vfxRandom() < 0.6) this.drop(head, rnd(1, -1), rnd(1, -1.5), rnd(1, -1), 0.35, 0.09, c, { grav: 10 });
         if (phase === 'zip') {      // the pull: streaks peeling off the body and an ink trail behind
-          if (!t.d.trail) t.d.trail = this.ribbon(false, { width: 0.8, widthTail: 0.15, color: this.hdr(c, 1.0), alpha: 0.9, style: RIBBON.INK, life: 0.25, spacing: 0.15 });
+          if (!t.d.trail) t.d.trail = this.ribbon(false, { width: 0.8, widthTail: 0.15, color: c, alpha: 1, style: RIBBON.INK, life: 0.25, spacing: 0.15 });
           this.pushRibbon(t.d.trail, this.chest(a, this.v[2], 0.8), false);
           const v = a.vel || this.v[3].set(0, 0, 0);
-          for (let i = 0; i < 2; i++) this.spark(SPARK.STREAK, this.v[2].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(1.4, 0.2), a.pos.z + rnd(0.5, -0.5)), -v.x * 0.3, -v.y * 0.3, -v.z * 0.3, 0.16, 0.05, 0.02, this.hdr(c, 1.8, 1.2), 0.9, { stretch: 0.12, drag: 4 });
+          for (let i = 0; i < 2; i++) this.drop(this.v[2].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(1.4, 0.2), a.pos.z + rnd(0.5, -0.5)), -v.x * 0.3, -v.y * 0.3, -v.z * 0.3, 0.35, 0.08, c, { drag: 3, grav: 8, stretch: 0.06 });
         }
       } else {
-        if (t.d.line) { t.d.line.v[11] = 0; t.d.glow.v[11] = 0; }
+        if (t.d.line) t.d.line.v[11] = 0;
         if (t.d.trail) { this.kit.ribbons.end(t.d.trail); t.d.trail = null; }
       }
       // the coated body drips
@@ -995,7 +1016,7 @@ const DIRECTORS = {
       const c = this.rgb(a);
       if (e.action === 'zip' && target) {   // the hook lands: an ink splat where it grabs
         const n = this.v[0].copy(pos || a.pos).sub(target).normalize();
-        this.disc(false, 1.2, DISC.SPLAT, target, n, 0.3, 1.3, c, 0.95, { hold: 0.7 });
+        this.disc(false, 1.2, DISC.SPLAT, target, n, 0.3, 1.3, c, 1, { hold: 0.7 });
       } else if (e.action === 'hookImpact' && pos) {
         this.inkBlast(pos, c, 3.5, { streaks: 14, chunks: 10, native: false, dome: 0.35 });
       }
@@ -1006,7 +1027,7 @@ const DIRECTORS = {
     start(a, t) {
       this.activation(a, t.color, 1.2);
       this.chunks(this.v[0].copy(a.pos).setY(a.pos.y + 0.6), 20, 8, t.color, { size: 0.24 });
-      this.shell(false, 0.32, SHELL.INK, a.pos, 0.3, 1.2, this.hdr(t.color, 1), 0.75, { hemi: true, sy: 0.8, hold: 0.1 });
+      this.shell(false, 0.32, SHELL.INK, a.pos, 0.3, 1.2, t.color, 1, { hemi: true, sy: 0.8, hold: 0.1 });
     },
     frame(a, t, dt) {
       const st = a._s3AllSpecialState, ball = a.specialActive?.pose === 'ball' || st?.ballMode, c = t.color;
@@ -1017,7 +1038,7 @@ const DIRECTORS = {
           this.puff(PUFF.CHUNK, g, -v.x * 0.3 + rnd(3, -3), rnd(4, 1.5), -v.z * 0.3 + rnd(3, -3), 0.5, 0.15, 0.04, c, 1, { grav: 15 });
           if (vfxRandom() < 0.4) this.puff(PUFF.MIST, g, -v.x * 0.15, 0.5, -v.z * 0.15, 0.6, 0.5, 1.2, this.hdr(c, 0.9), 0.4);
         }
-        if (!t.d.rollRib) t.d.rollRib = this.ribbon(false, { width: 1.4, widthTail: 1.0, color: this.hdr(c, 1.0), alpha: 0.8, style: RIBBON.INK, life: 0.5, spacing: 0.25, flat: true });
+        if (!t.d.rollRib) t.d.rollRib = this.ribbon(false, { width: 1.4, widthTail: 1.0, color: c, alpha: 1, style: RIBBON.INK, life: 0.5, spacing: 0.25, flat: true });
         this.pushRibbon(t.d.rollRib, this.v[0].set(a.pos.x, a.pos.y + 0.06, a.pos.z), false);
       } else if (t.d.rollRib) { this.kit.ribbons.end(t.d.rollRib); t.d.rollRib = null; }
       if (st?.phase === 'finish' && !t.d.finished) { t.d.finished = true; this.smoke(a.pos, 8, this.hdr(c, 0.9), { kind: PUFF.MIST, size: 0.8, speed: 3, life: 0.8 }); }
@@ -1028,13 +1049,13 @@ const DIRECTORS = {
       if (e.action === 'shot' && pos) {
         const m = this.v[4].copy(pos).addScaledVector(dir, 0.9);
         this.flash(m, c, 0.32, 0.08);
-        this.spark(SPARK.STREAK, m, dir.x * 18, dir.y * 18, dir.z * 18, 0.1, 0.08, 0.03, this.hdr(c, 2.2, 1.2), 1, { stretch: 0.03, drag: 0 });
+        this.drop(m, dir.x * 18 + rnd(1.5, -1.5), dir.y * 18 + rnd(1.5, -1.5), dir.z * 18 + rnd(1.5, -1.5), 0.25, 0.08, c, { drag: 1, grav: 8, stretch: 0.02 });
         if (vfxRandom() < 0.4) this.puff(PUFF.SMOKE, m, dir.x * 2, 0.8, dir.z * 2, 0.5, 0.15, 0.45, [0.9, 0.9, 0.92], 0.35);
       } else if (e.action === 'cannon' && pos) {
         const m = this.v[4].copy(pos).addScaledVector(dir, 1.1);
         this.muzzle(m, dir, c, 1.15);
         this.smoke(m, 8, [0.92, 0.92, 0.95], { size: 0.45, speed: 2.5, life: 1.1, alpha: 0.55, rise: 1.5 });
-        this.disc(true, 0.3, DISC.SHOCK, m, dir, 0.3, 1.8, this.hdr(c, 1.6, 1), 1);
+        this.disc(false, 0.3, DISC.SHOCK, m, dir, 0.3, 1.8, c, 1);
       }
     },
   },
@@ -1042,17 +1063,18 @@ const DIRECTORS = {
   reefslider: {
     start(a, t) {   // summoning the shark: an ink wave wraps round the kid
       this.activation(a, t.color, 1.1);
-      this.band(false, 0.6, BAND.SHOCK, a.pos, 0.6, 2.2, 0.4, 2.2, this.hdr(t.color, 1.0), 0.95, { hold: 0.25 });
+      this.band(false, 0.6, BAND.SHOCK, a.pos, 0.6, 2.2, 0.4, 2.2, t.color, 1, { hold: 0.25 });
       this.chunks(this.v[0].copy(a.pos).setY(a.pos.y + 0.4), 22, 9, t.color, { size: 0.24, upMin: 0.4 });
     },
     phase(a, t, phase) {
       const c = t.color;
       if (phase === 'dash') {
-        this.disc(true, 0.45, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.5, 4, this.hdr(c, 1.4, 0.8), 1);
+        this.disc(false, 0.45, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.5, 4, c, 1);
         this.puff(PUFF.MIST, a.pos, 0, 1, 0, 0.6, 1, 2, this.hdr(c, 0.9), 0.5);
-        t.d.wakeL = this.ribbon(false, { width: 0.7, widthTail: 1.6, color: this.hdr(c, 1.0), alpha: 0.9, style: RIBBON.INK, life: 0.7, spacing: 0.3, flat: true });
-        t.d.wakeR = this.ribbon(false, { width: 0.7, widthTail: 1.6, color: this.hdr(c, 1.0), alpha: 0.9, style: RIBBON.INK, life: 0.7, spacing: 0.3, flat: true });
-        t.d.speed = this.ribbon(true, { width: 0.5, widthTail: 0.1, color: this.hdr(c, 1.6, 1), alpha: 0.6, style: RIBBON.GLOW, life: 0.25, spacing: 0.2 });
+        t.d.wakeL = this.ribbon(false, { width: 0.7, widthTail: 1.6, color: c, alpha: 1, style: RIBBON.INK, life: 0.7, spacing: 0.3, flat: true });
+        t.d.wakeR = this.ribbon(false, { width: 0.7, widthTail: 1.6, color: c, alpha: 1, style: RIBBON.INK, life: 0.7, spacing: 0.3, flat: true });
+        // pale air streaming past the rider (wind lines), not a light trail
+        t.d.speed = this.ribbon(false, { width: 0.3, widthTail: 0.05, color: [0.95, 0.97, 1.0], alpha: 0.35, style: RIBBON.SMOKE, life: 0.2, spacing: 0.2 });
       } else if (phase === 'brake') {
         t.d.warn = this.disc(true, 0, DISC.TARGET, a.pos, this.up, 1, 1, this.hdr(c, 1.6, 0.8), 0.9, { fade: false,
           follow: (rec) => { const k = clamp01((this.time - t.phaseAt) / (38 / 60)); rec.v[0] = a.pos.x; rec.v[1] = a.pos.y + 0.06; rec.v[2] = a.pos.z; rec.v[3] = 1 + 8 * easeOut(k); rec.v[7] += 0.03 + 0.1 * k; } });
@@ -1066,7 +1088,7 @@ const DIRECTORS = {
       if (phase === 'dash' || phase === 'brake') {
         const g = groundBelow(this, a);
         for (const [rib, s] of [[t.d.wakeL, -1], [t.d.wakeR, 1]]) this.pushRibbon(rib, this.v[0].set(a.pos.x + side.x * s * 0.55, g + 0.05, a.pos.z + side.z * s * 0.55), false);
-        this.pushRibbon(t.d.speed, this.v[0].set(a.pos.x, a.pos.y + 0.7, a.pos.z), true);
+        this.pushRibbon(t.d.speed, this.v[0].set(a.pos.x, a.pos.y + 0.7, a.pos.z), false);
         // bow spray: a V of ink chunks thrown off the nose
         t.acc = (t.acc || 0) + dt;
         while (t.acc > SPECIAL_VFX_CALIBRATION.reefslider.wakeEvery) { t.acc -= SPECIAL_VFX_CALIBRATION.reefslider.wakeEvery;
@@ -1075,11 +1097,12 @@ const DIRECTORS = {
             this.puff(PUFF.CHUNK, p, side.x * s * rnd(7, 4) + dir.x * 3, rnd(6, 3), side.z * s * rnd(7, 4) + dir.z * 3, 0.55, 0.17, 0.05, c, 1, { grav: 16, drag: 0.6 });
             if (vfxRandom() < 0.4) this.puff(PUFF.MIST, p, side.x * s * 2, 1, side.z * s * 2, 0.6, 0.5, 1.4, this.hdr(c, 0.9), 0.35);
           }
-          this.spark(SPARK.STREAK, this.v[1].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(1.5, 0.3), a.pos.z + rnd(1, -1)), -dir.x * 20, 0, -dir.z * 20, 0.12, 0.05, 0.02, [2.4, 2.4, 2.4], 0.6, { stretch: 0.06, drag: 0 });
+          this.spark(SPARK.STREAK, this.v[1].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(1.5, 0.3), a.pos.z + rnd(1, -1)), -dir.x * 20, 0, -dir.z * 20, 0.12, 0.04, 0.02, [1.2, 1.2, 1.25], 0.35, { stretch: 0.06, drag: 0 });   // faint speed lines
         }
         if (phase === 'brake') { // arming: the shark glows harder and faster before it bursts
           const k = clamp01((this.time - t.phaseAt) / (38 / 60));
-          if (vfxRandom() < 0.3 + 0.6 * k) this.spark(SPARK.GLOW, this.v[2].set(a.pos.x, a.pos.y + 0.7, a.pos.z), 0, 0, 0, 0.12, 1.2 + k, 2 + 2 * k, this.hdr(c, 1.5, 1.2), 0.7);
+          if (vfxRandom() < 0.3 + 0.6 * k) this.spark(SPARK.GLOW, this.v[2].set(a.pos.x, a.pos.y + 0.7, a.pos.z), 0, 0, 0, 0.12, 1.0 + k, 1.6 + 1.6 * k, this.hdr(c, 1.2, 1.0), 0.45);
+          if (vfxRandom() < 0.4 + 0.5 * k) this.drop(this.v[2].set(a.pos.x + rnd(0.6, -0.6), a.pos.y + rnd(0.9, 0.3), a.pos.z + rnd(0.6, -0.6)), rnd(2, -2), rnd(3, 1), rnd(2, -2), 0.4, 0.1, c);   // the shark sheds ink as it swells
         }
       } else if (phase === 'startup' && vfxRandom() < 0.5) {
         const th = rnd(TAU); this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + Math.cos(th) * 0.9, a.pos.y + 0.2, a.pos.z + Math.sin(th) * 0.9), -Math.sin(th) * 3, rnd(4, 2), Math.cos(th) * 3, 0.5, 0.14, 0.04, c, 1, { grav: 14 });
@@ -1090,11 +1113,11 @@ const DIRECTORS = {
         const c = this.rgb(a), R = finite(e.radius) ? e.radius : 14.9;
         this.inkBlast(pos, c, Math.min(10, R * 0.62), { streaks: 34, chunks: 26, mist: 10, dome: 0.55 });
         // the geyser: a column of ink thrown straight up out of the blast
-        this.beam(false, 0.8, BEAM.JET, pos, this.v[0].copy(pos).setY(pos.y + 7), 1.6, 0.5, this.hdr(c, 1.0), 1, { speed: -10, follow: (rec) => { const k = rec.t / rec.life; rec.v[5] = pos.y + 7 * easeOut(k * 1.6) * (1 - k * 0.3); rec.v[11] = 1 - smooth((k - 0.5) / 0.5); } });
-        this.band(false, 0.9, BAND.SHOCK, pos, 2, R * 0.8, 1, 5.5, this.hdr(c, 1.0), 0.9, { hold: 0.3 });
+        this.beam(false, 0.8, BEAM.JET, pos, this.v[0].copy(pos).setY(pos.y + 7), 1.6, 0.5, c, 1, { speed: -10, follow: (rec) => { const k = rec.t / rec.life; rec.v[5] = pos.y + 7 * easeOut(k * 1.6) * (1 - k * 0.3); rec.v[11] = 1 - smooth((k - 0.5) / 0.5); } });
+        this.band(false, 0.9, BAND.SHOCK, pos, 2, R * 0.8, 1, 5.5, c, 1, { hold: 0.3 });
       }
     },
-    end(a, t) { for (const k of ['wakeL', 'wakeR']) this.kit.ribbons.end(t.d[k]); this.kit.glowRibbons.end(t.d.speed); },
+    end(a, t) { for (const k of ['wakeL', 'wakeR', 'speed']) this.kit.ribbons.end(t.d[k]); },
   },
   // ---------------------------------------------------------------- Triple Inkstrike
   tripleInkstrike: {
@@ -1102,7 +1125,7 @@ const DIRECTORS = {
     frame(a, t, dt) {   // S3: "Twister time!" – green wind lines spiral round the kid while the case is open
       t.acc = (t.acc || 0) + dt;
       if (t.acc > 0.1) { t.acc = 0;
-        const rib = this.ribbon(true, { width: 0.12, widthTail: 0.02, color: this.hdr(t.color, 1.8, 0.8), alpha: 0.9, style: RIBBON.GLOW, life: 0.25, spacing: 0.08 });
+        const rib = this.ribbon(true, { width: 0.1, widthTail: 0.02, color: this.hdr(t.color, 1.3, 0.8), alpha: 0.6, style: RIBBON.GLOW, life: 0.25, spacing: 0.08 });
         const y0 = rnd(1.6, 0.3), ph = rnd(TAU), r0 = rnd(1.2, 0.8), dirSign = sgn();
         this.shell(true, 0.5, SHELL.FLASH, a.pos, 0, 0, [0, 0, 0], 0, { follow: (rec) => { const k = rec.t / rec.life, th = ph + dirSign * k * 5;
           this.v[7].set(a.pos.x + Math.cos(th) * r0, a.pos.y + y0 + k * 0.8, a.pos.z + Math.sin(th) * r0); this.pushRibbon(rib, this.v[7], true); if (k > 0.98) this.kit.glowRibbons.end(rib); } });
@@ -1144,12 +1167,13 @@ const DIRECTORS = {
       this.activation(a, c, 1.3);
       this.nativeBlast(p, this.c.setRGB(...c), 3);
       for (let i = 0; i < Math.round(30 * this.kit.q); i++) { const th = rnd(TAU), el = rnd(1, -0.1), s = rnd(13, 6);
-        this.puff(PUFF.CHUNK, p, Math.cos(th) * Math.cos(el) * s, Math.sin(el) * s, Math.sin(th) * Math.cos(el) * s, rnd(0.9, 0.5), rnd(0.32, 0.16), 0.06, this.hdr(c, rnd(1.15, 0.8)), 1, { grav: 10, drag: 1.2, spin: rnd(9, -9) }); }
+        this.puff(PUFF.CHUNK, p, Math.cos(th) * Math.cos(el) * s, Math.sin(el) * s, Math.sin(th) * Math.cos(el) * s, rnd(0.9, 0.5), rnd(0.32, 0.16), 0.06, c, 1, { grav: 10, drag: 1.2, spin: rnd(9, -9) }); }
     },
     phase(a, t, phase) {
       const c = t.color;
       if (phase === 'charge') {
-        t.d.charge = this.band(true, 0, BAND.SWIRL, a.pos, 1.8, 1.8, 1.1, 1.1, this.hdr(c, 1.4, 0.4), 0.4, { fade: false, speed: 3,
+        // ink wound tight round the body (a liquid spiral, as in the footage), not a ring of light
+        t.d.charge = this.band(false, 0, BAND.TWISTER, a.pos, 1.8, 1.8, 1.1, 1.1, c, 1, { fade: false, speed: 1.5, twist: 2,
           follow: (rec) => { if (this.tracks.get(a)?.phase !== 'charge') return false; const k = clamp01((this.time - t.phaseAt) / (35 / 60)); rec.v[0] = a.pos.x; rec.v[1] = a.pos.y; rec.v[2] = a.pos.z; rec.v[4] = 1.8 - 0.7 * k; rec.v[15] = 3 + 9 * k; } });
         // S3 footage (85.0s): arrows on the floor point the way the charge will go
         t.d.arrows = this.disc(false, 0, DISC.CHEVRON, a.pos, this.up, 2.2, 2.2, [0.95, 0.95, 0.95], 0.95, { fade: false,
@@ -1159,34 +1183,36 @@ const DIRECTORS = {
         (t.d.recs ||= []).push(t.d.charge, t.d.arrows);
       } else if (phase === 'dash') {
         this.flash(this.v[0].copy(a.pos).setY(a.pos.y + 0.6), c, 0.9, 0.16);
-        this.disc(true, 0.4, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.6, 3.2, this.hdr(c, 1.5, 0.5), 0.9);
-        t.d.dashRibs = [0, 1, 2].map(() => this.ribbon(true, { width: 0.32, widthTail: 0.05, color: this.hdr(c, 1.9, 1), alpha: 1, style: RIBBON.GLOW, life: 0.28, spacing: 0.12 }));
-        t.d.dashInk = this.ribbon(false, { width: 1.8, widthTail: 0.4, color: this.hdr(c, 1.0), alpha: 0.85, style: RIBBON.INK, life: 0.3, spacing: 0.2, flat: true });
+        this.disc(false, 0.4, DISC.SHOCK, this.v[0].copy(a.pos).setY(a.pos.y + 0.05), this.up, 0.6, 3.2, c, 1);
+        // S3 (89–93s): spiralling bands of liquid ink wrapped round the charge
+        t.d.dashRibs = [0, 1, 2].map(() => this.ribbon(false, { width: 0.26, widthTail: 0.06, color: c, alpha: 1, style: RIBBON.INK, life: 0.13, spacing: 0.08 }));
+        t.d.dashInk = this.ribbon(false, { width: 1.8, widthTail: 0.4, color: c, alpha: 1, style: RIBBON.INK, life: 0.3, spacing: 0.2, flat: true });
       }
-      if (phase !== 'dash' && t.d.dashRibs) { for (const r of t.d.dashRibs) this.kit.glowRibbons.end(r); this.kit.ribbons.end(t.d.dashInk); t.d.dashRibs = null; }
+      if (phase !== 'dash' && t.d.dashRibs) { for (const r of t.d.dashRibs) this.kit.ribbons.end(r); this.kit.ribbons.end(t.d.dashInk); t.d.dashRibs = null; }
       if (phase === 'finish') { this.nativeBlast(this.v[0].copy(a.pos).setY(a.pos.y + 0.5), this.c.setRGB(...c), 2.2); this.flash(this.v[0], c, 1.6, 0.25); }
     },
     frame(a, t, dt) {
       const c = t.color;
       if (t.phase === 'charge') {   // ink drawn in to the body
         if (vfxRandom() < 0.8) { const th = rnd(TAU), d = rnd(3, 2); this.v[0].set(a.pos.x + Math.cos(th) * d, a.pos.y + rnd(1.4, 0.1), a.pos.z + Math.sin(th) * d);
-          this.spark(SPARK.STREAK, this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 0.6 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.06, 0.02, this.hdr(c, 2, 1.2), 1, { drag: 0, stretch: 0.07 }); }
+          this.drop(this.v[0], (a.pos.x - this.v[0].x) * 4, (a.pos.y + 0.6 - this.v[0].y) * 4, (a.pos.z - this.v[0].z) * 4, 0.24, 0.08, c, { drag: 0, grav: 0, stretch: 0.05, shrink: 0.3 }); }
       } else if (t.phase === 'dash' && t.d.dashRibs) {   // S3: corkscrewing ink arcs round the charge
         for (let i = 0; i < 3; i++) { const th = this.time * 18 + i * TAU / 3, f = a._s3AllSpecialState?.direction || this.forward(a, this.v[5]);
           const sx = f.z, sz = -f.x;
-          this.v[0].set(a.pos.x + sx * Math.cos(th) * 1.25 + f.x * 0.6, a.pos.y + 0.75 + Math.sin(th) * 0.85, a.pos.z + sz * Math.cos(th) * 1.25 + f.z * 0.6);
-          this.pushRibbon(t.d.dashRibs[i], this.v[0], true); }
+          this.v[0].set(a.pos.x + sx * Math.cos(th) * 1.05 + f.x * 0.4, a.pos.y + 0.6 + Math.sin(th) * 0.6, a.pos.z + sz * Math.cos(th) * 1.05 + f.z * 0.4);
+          this.pushRibbon(t.d.dashRibs[i], this.v[0], false); }
         this.pushRibbon(t.d.dashInk, this.v[1].set(a.pos.x, a.pos.y + 0.1, a.pos.z), false);
         if (vfxRandom() < 0.8) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(1, -1), a.pos.y + rnd(2, 0.2), a.pos.z + rnd(1, -1)), rnd(5, -5), rnd(5, 1), rnd(5, -5), 0.45, 0.2, 0.05, c, 1, { grav: 14 });
       } else if (vfxRandom() < 0.08) this.puff(PUFF.CHUNK, this.v[1].set(a.pos.x + rnd(0.5, -0.5), a.pos.y + rnd(0.9, 0.3), a.pos.z + rnd(1.2, -1.2)), 0, -0.3, 0, 0.7, 0.09, 0.04, c, 1, { grav: 10 });
     },
     event(a, e, pos) {
       if (e.action === 'jump' && pos) { const c = this.rgb(a), g = this.v[0].copy(pos); g.y = groundBelowPoint(this, pos, a.pos.y);
-        this.disc(true, 0.45, DISC.SHOCK, this.v[1].copy(g).setY(g.y + 0.05), this.up, 0.4, 3.2, this.hdr(c, 1.5, 0.8), 1);
-        this.band(false, 0.45, BAND.SHOCK, g, 0.6, 2.6, 0.3, 1.4, this.hdr(c, 1.0), 0.95);
+        this.disc(false, 0.45, DISC.SHOCK, this.v[1].copy(g).setY(g.y + 0.05), this.up, 0.4, 3.2, c, 1);
+        this.disc(false, 0.8, DISC.SPLAT, this.v[1].copy(g).setY(g.y + 0.03), this.up, 0.4, 2.2, c, 1);
+        this.band(false, 0.45, BAND.SHOCK, g, 0.6, 2.6, 0.3, 1.4, c, 1);
         this.chunks(this.v[1].copy(g).setY(g.y + 0.2), 14, 8, c, { size: 0.22 }); }
     },
-    end(a, t) { if (t.d.dashRibs) for (const r of t.d.dashRibs) this.kit.glowRibbons.end(r); if (t.d.dashInk) this.kit.ribbons.end(t.d.dashInk); },
+    end(a, t) { if (t.d.dashRibs) for (const r of t.d.dashRibs) this.kit.ribbons.end(r); if (t.d.dashInk) this.kit.ribbons.end(t.d.dashInk); },
   },
   // ---------------------------------------------------------------- Splattercolor Screen / Wave Breaker (device in hand)
   splattercolorScreen: { start(a, t) { this.activation(a, t.color, 0.9); } },
@@ -1203,7 +1229,7 @@ const DIRECTORS = {
     start(a, t) { this.activation(a, t.color, 1); },
     frame(a, t, dt) {
       const st = inkVacState?.(a), c = t.color, phase = st?.phase || a.specialActive?.phase;
-      if (phase !== 'inhale') { if (phase === 'exhale' && !t.d.shot) { t.d.shot = true; const f = this.aim(a, this.v[1]); const m = this.v[0].copy(a.pos).setY(a.pos.y + 1).addScaledVector(f, 1.1); this.muzzle(m, f, c, 2.2); this.shell(true, 0.35, SHELL.SHOCK, m, 0.3, 2.4, this.hdr(c, 1.8, 1), 1); } return; }
+      if (phase !== 'inhale') { if (phase === 'exhale' && !t.d.shot) { t.d.shot = true; const f = this.aim(a, this.v[1]); const m = this.v[0].copy(a.pos).setY(a.pos.y + 1).addScaledVector(f, 1.1); this.muzzle(m, f, c, 2.2); this.shell(true, 0.3, SHELL.SHOCK, m, 0.3, 2.0, this.hdr(c, 1.3, 1), 0.6); } return; }
       const sucking = a._s3InkVacSucking || a.intent?.fire, f = this.aim(a, this.v[1]);
       const mouth = this.v[0].copy(a.pos).setY(a.pos.y + 1).addScaledVector(f, 0.9);
       if (sucking && this.near(a.pos, 70)) {
@@ -1215,12 +1241,12 @@ const DIRECTORS = {
           const up = this.v[2].set(0, 1, 0), right = this.v[3].crossVectors(f, up).normalize(); up.crossVectors(right, f).normalize();
           this.v[4].copy(mouth).addScaledVector(f, d).addScaledVector(right, Math.cos(th) * w).addScaledVector(up, Math.sin(th) * w);
           const k = 2.6 / 0.35;
-          this.spark(SPARK.STREAK, this.v[4], (mouth.x - this.v[4].x) * k / d * 1.4, (mouth.y - this.v[4].y) * k / d * 1.4, (mouth.z - this.v[4].z) * k / d * 1.4, 0.32, 0.05, 0.02, this.hdr(c, 1.9, 1.1), 0.9, { drag: 0, stretch: 0.06 });
+          this.drop(this.v[4], (mouth.x - this.v[4].x) * k / d * 1.4, (mouth.y - this.v[4].y) * k / d * 1.4, (mouth.z - this.v[4].z) * k / d * 1.4, 0.32, 0.06, c, { drag: 0, grav: 0, stretch: 0.04, shrink: 0.3 });
         }
         t.ringAcc = (t.ringAcc || 0) + dt;
         if (t.ringAcc > 0.14) { t.ringAcc = 0;   // rings that rush into the mouth
           const start = mouth.clone().addScaledVector(f, 2.6), end = mouth.clone(), n = f.clone();
-          this.disc(true, 0.35, DISC.SHOCK, start, n, 2, 0.35, this.hdr(c, 1.5, 0.6), 0.8, { hold: 0.7, follow: (rec) => { const k = rec.t / rec.life; this.v[7].copy(start).lerp(end, k * k); rec.v[0] = this.v[7].x; rec.v[1] = this.v[7].y; rec.v[2] = this.v[7].z; } });
+          this.disc(true, 0.35, DISC.SHOCK, start, n, 2, 0.35, this.hdr(c, 1.2, 0.6), 0.55, { hold: 0.7, follow: (rec) => { const k = rec.t / rec.life; this.v[7].copy(start).lerp(end, k * k); rec.v[0] = this.v[7].x; rec.v[1] = this.v[7].y; rec.v[2] = this.v[7].z; } });
         }
       }
     },
@@ -1254,9 +1280,9 @@ function trizookaMuzzle(self, a, c) {
   const dev = a.character?.kid?.getObjectByName?.('special:trizooka');
   if (dev?.userData?.muzzle) { dev.updateWorldMatrix(true, false); m.copy(dev.userData.muzzle).applyMatrix4(dev.matrixWorld); }
   self.muzzle(m, f, c, 0.95);
-  for (let i = 0; i < 3; i++) self.disc(true, 0.3 + i * 0.07, DISC.SHOCK, self.v[2].copy(m).addScaledVector(f, 0.5 + i * 0.6), f, 0.25, 0.9 + i * 0.35, self.hdr(c, 1.5, 0.6), 0.85);
+  for (let i = 0; i < 3; i++) self.disc(true, 0.26 + i * 0.06, DISC.SHOCK, self.v[2].copy(m).addScaledVector(f, 0.5 + i * 0.6), f, 0.25, 0.8 + i * 0.3, self.hdr(c, 1.2, 0.8), 0.5);
   self.smoke(m, 6, [0.94, 0.94, 0.96], { size: 0.4, speed: 2.2, life: 0.9, alpha: 0.5, rise: 1 });
-  self.streaks(m, 10, 12, self.hdr(c, 2.2, 1.4), { up: 0.1, life: 0.3 });
+  self.streaks(m, 10, 12, c, { up: 0.1, life: 0.4 });
 }
 // Killer Wail speaker mouths, from the drawn devices when present, otherwise from the shared ring layout.
 const SPEAKER_RING = [[-0.55, 1.95], [0.55, 1.95], [-1.0, 1.35], [1.0, 1.35], [-0.55, 0.75], [0.55, 0.75]];
