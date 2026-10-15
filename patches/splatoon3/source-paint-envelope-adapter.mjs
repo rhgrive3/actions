@@ -6,8 +6,8 @@
 export function adaptSourcedPaintFootprint(rel, code, replaceOnce) {
   if (rel !== 'src/world/paint.js') return code;
   code = replaceOnce(code,
-    "const K = { shot: 0, line: 1, blast: 2, bomb: 3, trail: 4, drop: 5, roll: 6, speck: 7 };",
-    "const K = { shot: 0, line: 1, blast: 2, bomb: 3, trail: 4, drop: 5, roll: 6, speck: 7, 'source-shot': 8, 'source-splash': 9 };",
+    "const K = { shot: 0, line: 1, blast: 2, bomb: 3, trail: 4, drop: 5, roll: 6, rollFloor: 6, speck: 7 };",
+    "const K = { shot: 0, line: 1, blast: 2, bomb: 3, trail: 4, drop: 5, roll: 6, rollFloor: 6, speck: 7, 'source-shot': 8, 'source-splash': 9 };",
     'source physical paint kind names');
   code = replaceOnce(code,
     'const K_SHOT = 0, K_LINE = 1, K_BLAST = 2, K_BOMB = 3, K_TRAIL = 4, K_DROP = 5, K_ROLL = 6, K_SPECK = 7;',
