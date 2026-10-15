@@ -10,7 +10,7 @@ export function adaptBotRefillRelease(rel, code, once) {
   // Keep an admitted charge inside the fallback until its release owner completes.
   const admission = 'a.groundTeam !== 1 && this._pathRemaining() < 1.5 && inkFrac > 0.03';
   if (code.split(admission).length - 1 !== 2) throw new Error('bot refill puddle admission conflict');
-  code = code.replaceAll(admission, 'a.groundTeam !== 1 && this._pathRemaining() < 1.5 && (inkFrac > 0.03 || ['charger', 'splatling', 'stringer', 'splatana'].includes(w.behaviorKind || w.kind) && (a.weaponRunner.charging || a.weaponRunner.s3ReleaseHold))');
+  code = code.replaceAll(admission, "a.groundTeam !== 1 && this._pathRemaining() < 1.5 && (inkFrac > 0.03 || ['charger', 'splatling', 'stringer', 'splatana'].includes(w.behaviorKind || w.kind) && (a.weaponRunner.charging || a.weaponRunner.s3ReleaseHold))");
   code = once(code,
     '  _pathRemaining() {',
     '  // Refill-puddle trigger. Held Fire only emits for weapons that fire while held; charger / splatling emit on release,\n' +
