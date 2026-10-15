@@ -1,6 +1,6 @@
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount } from './catalog-splash-paint.mjs';
-import { spawnSplashDrop } from './blaster-flight-paint.mjs';
+import { spawnSplashDrop, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
 import { validateCanonicalKits } from './canonical-kits.mjs';
 import { CANONICAL_KITS } from './canonical-kits-data.mjs';
@@ -17,6 +17,7 @@ import { rollerSpeedSwerveDegrees } from './weapons-fidelity.mjs';
 import { selectRollerFlickVertical, installActorFreefallHooks } from './roller-freefall.mjs';
 import { dashTurnBreakActive } from './movement-physics.mjs';
 import { catalogVisualSpec, updateCatalogVisual, catalogReboundSeparation, catalogBubbleCanBounce, catalogBubbleRadiusScale } from './projectile-presentation.mjs';
+import { installS3ProjectileShapes } from './s3-projectile-shapes.mjs';
 
 // This interpreter owns added MAIN weapons only. Existing seven implementations
 // retain their mature owners. Canonical kit identities use the pinned table.
@@ -262,6 +263,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
   if (Object.hasOwn(R, INSTALLED)) return;
   Object.defineProperty(R, INSTALLED, { value:true });
   installActorFreefallHooks(api);
+  installS3ProjectileShapes(api);
   const legacyUpdate = R.update, legacyReset = R.reset, legacyBusy = R.busy, legacyMove = R.moveSpeed;
   const step = P._step, fresh = P._new, ghost = P.ghostProjectile, clear = P.clear;
   const defaults = profile.weaponsFidelity;
@@ -526,7 +528,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       splashFirst:Math.max(0,finite(splash.SpawnNearestLength,1)),
       splashRadius:finite(b.SplashPaintParam?.WidthHalf,finite(sloshSplash?.DrawSizeCollisionPaintParam?.PaintWidthHalf,.4)),
       splashSpacing:finite(splash.DropInterval,finite(splash.SpawnBetweenLength,3)),
-      splashCount:Math.max(0,Math.ceil(finite(splash.SplashNumMax,finite(splash.SpawnNum,0))))};
+      splashCount:Math.max(0,Math.ceil(finite(splash.SplashNumMax,finite(splash.SpawnNum,0)))),
+      sloshFall:key==='slosh'?sloshFallSpec(sloshSplash):null};
+  }
+  // Slosher in-flight splashes fall through the shared fixed-60Hz drop queue
+  // (as PR1188 does for the native Sloshers) instead of stamping the floor
+  // instantly under the glob. Same schedule/footprint; the drop is visible.
+  function sloshFallSpec(splash) {
+    const draw=splash?.DrawSizeCollisionPaintParam,depth=finite(draw?.PaintDepthScale,0);
+    if(!(depth>0))return null;
+    return Object.freeze({drawRadius:finite(draw.DrawRadius,.1),spec:Object.freeze({gravity:.016*3600,drag:SPLASH_DROP_AIR_RESIST,
+      depthScaleMax:depth,depthScaleMin:depth,dropHeightMax:0,dropHeightMin:0,surfaceOnly:true,randomVelocity:null})});
   }
   function spawn(a,r,descriptor,direction,at,options={}) {
     const system=G.projectiles, p=system._new();
@@ -576,7 +588,17 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       catalogAngularLaunch(G.projectiles,aim,a,r.family,{...weaponParam(r),...t},s.accuracy,spread,s.jumpAge);
     }
     runner.spread=spread;
-    spawn(a,r,desc,aim,muzzle,{volley,
+    // The charged Splatana slash is born at the sourced ShotBulletOffset_Vertical
+    // (player-local, feet origin), not at the gun muzzle: its collider chain
+    // spans Y -1.6..+1.6, so a muzzle-height birth buried the lower lobes in
+    // the floor and the round died on its first tick.
+    let at=muzzle;
+    const vertical=key==='saber-vertical'?r.parameters.spl__WeaponSaberParam?.SwingParam?.ShotBulletOffset_Vertical:null;
+    if(vertical){
+      const yaw=Math.atan2(aim.x,aim.z),cy=Math.cos(yaw),sy=Math.sin(yaw),x=finite(vertical.X,0),z=finite(vertical.Z,0);
+      at=a.pos.clone().add(new THREE.Vector3(x*cy+z*sy,finite(vertical.Y,0),-x*sy+z*cy));
+    }
+    spawn(a,r,desc,aim,at,{volley,
       speed:r.family==='splatling'?catalogSpinnerLaunchSpeed(desc.speed,desc.m):undefined});
     notify(a,r,muzzle,aim,charge);
     const splash=desc.b.SplashSpawnParam,nearest=desc.b.SplashPaintParam;
@@ -853,7 +875,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       }
       if(!p.ghost&&!d.splashDropSpec&&d.splashCount>0&&s.dropCount<d.splashCount&&s.travel>=s.nextSplash){
         const direction=p.vel.clone().setY(0).normalize();
-        floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
+        if(d.sloshFall){
+          const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,from:p.pos.clone(),
+            direction,radius:d.splashRadius,spec:d.sloshFall.spec,depth:true,kind:'drop'});
+          if(drop)drop.drawRadius=d.sloshFall.drawRadius;
+        }else floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
