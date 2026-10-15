@@ -6,11 +6,11 @@ import path from 'node:path';
 import { runLoggedTestProcess } from '../run-logged-test-process.mjs';
 
 test('progress is persisted and forwarded while a child is still running; failure status remains failure', async()=>{
- const dir=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-live-log-')),logFile=path.join(dir,'tests.log');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'inkwave-live-log-')),logFile=path.join(dir,'tests.log'),ackFile=path.join(dir,'progress-observed');
  let output='',sawLive=false;
  try {
-  const stdout={write(chunk){output+=chunk; if(String(chunk).includes('started')) {assert(fs.readFileSync(logFile,'utf8').includes('started'));assert(!fs.readFileSync(logFile,'utf8').includes('finished'));sawLive=true;}}};
-  const result=await runLoggedTestProcess(process.execPath,['-e',"process.stdout.write('started\\n');setTimeout(()=>{process.stderr.write('failure detail\\n');process.stdout.write('finished\\n');process.exitCode=7;},30)"],{logFile,stdout,stderr:stdout});
+  const stdout={write(chunk){output+=chunk; if(String(chunk).includes('started')) {assert(fs.readFileSync(logFile,'utf8').includes('started'));assert(!fs.readFileSync(logFile,'utf8').includes('finished'));sawLive=true;fs.writeFileSync(ackFile,'observed');}}};
+  const result=await runLoggedTestProcess(process.execPath,['-e',"const fs=require('node:fs');process.stdout.write('started\\n');const poll=setInterval(()=>{if(!fs.existsSync(process.argv[1]))return;clearInterval(poll);process.stderr.write('failure detail\\n');process.stdout.write('finished\\n');process.exitCode=7;},5)",ackFile],{logFile,stdout,stderr:stdout});
   assert(sawLive);assert.equal(result.status,7);assert.equal(result.signal,null);
   const log=fs.readFileSync(logFile,'utf8');for(const text of ['started','finished','failure detail']) {assert(log.includes(text));assert(output.includes(text));}
  } finally {fs.rmSync(dir,{recursive:true,force:true});}
