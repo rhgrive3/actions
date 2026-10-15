@@ -21,3 +21,9 @@ The live-log test assumed its parent would observe child output within30ms. Unde
 ## Other Issue evidence
 
 #1467 and #1468 already have their implementation in independent PR#1465, head `6bc49ba22ec8a27a874e1e76e1463c812c91af9f`. Fresh source7/7 and rebuilt emitted7/7 pass; the Issues remain open pending integration and remaining browser/current-head acceptance. No duplicate runtime fix is introduced.
+
+## Audit scope and latest main composition
+
+The127-file Issue source audit ran861 tests:860 pass,one module-parse failure,zero skips. The sole failure was the duplicate settings-test import; its corrected file passed2/2 separately. Counts overlap focused suites; no single all-green861-test rerun is claimed.
+
+Main `6ad4bc0ea47fd35d53c1b2f541378c379b8cbdd8` is now composed. Its independently adopted canonical settings import and native query improvements are retained. Fresh settings plus full workflow contracts pass18/18, zero skips/failures. The Storm browser receipt remains explicitly scoped to its original main baseline; no later hardware/full-match proof is implied. PR#1465 has since received the same deterministic live-log repair and independent composed syntax verification; its critical Issues stay open until integration.
