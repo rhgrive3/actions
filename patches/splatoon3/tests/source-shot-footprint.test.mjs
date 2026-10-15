@@ -43,6 +43,19 @@ test('Shooter main body selects source width and straight/break-free depth from 
   near(shooterImpactDepthScale(w, shot, V(0,1,0)), 1.12);
 });
 
+test('source DepthScale maps to a centered WidthHalf x depth ellipse with no extra size', async () => {
+  const { catalogPaintEllipse } = await import('../runtime/catalog-splash-paint.mjs');
+  for (const depth of [1, 1.12, 1.2, 1.31, 2.24]) {
+    for (const radius of [1.472, 1.71, 1.93, 2.0608]) {
+      const e = catalogPaintEllipse(radius, depth), sa = e.stretchAmt;
+      near(e.radius, radius);
+      near((1 + sa) * radius - e.centreBack, depth * radius);
+      near((1 + .25 * sa) * radius + e.centreBack, depth * radius);
+      near(2*radius*(1+.625*sa), 2*depth*radius);
+    }
+  }
+});
+
 test('all 65 source main weapon records retain numeric paint widths rather than a global rescale', () => {
   assert.equal(MAIN_WEAPON_CATALOG.referenceVersion, '11.3.0');
   assert.equal(MAIN_WEAPON_CATALOG.records.length, 65);
@@ -76,6 +89,7 @@ test('production source mask uses original WidthHalf without artificial shrink o
   assert.match(flight, /kind: sourceFlightInkKind\(kind\)/);
   assert.match(flight, /shooterImpactRadius\(shooter, p, hit\.point\)/);
   assert.match(flight, /shooterImpactDepthScale\(shooter, p, hit\.normal\)/);
+  assert.match(flight, /this\.paint\(p, hit, splashPaintFootprint\(shape\), p\.vel, 'shot'\)/);
   const network = fs.readFileSync(new URL('../../network-replication/adapter.mjs', import.meta.url), 'utf8');
   assert.match(network, /'source-shot', 'source-splash'/);
 });
@@ -102,7 +116,7 @@ test('source-defined WidthHalf and DepthScale bound real CPU turf on a flat floo
     cells++;
     const du = face.origin.x + (x+.5)*face.cu - centre.x;
     const dv = face.origin.z + (y+.5)*face.cv - centre.z;
-    const forwardScale = dv > 0 ? 1 + stretch : 1; // source DepthScale has no invented rear stretch
+    const forwardScale = dv > 0 ? 1 + stretch : 1 + .25*stretch; // native painter smear before source-center adjustment
     assert.ok(Math.hypot(du, dv/forwardScale) <= width + 1e-8,
       'source WidthHalf bounds lateral coverage after internal DepthScale elongation');
   }
