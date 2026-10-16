@@ -506,8 +506,24 @@ function damageAt(distance, spec) {
   const falloff = spec.damageFalloff === 'calibrated-quadratic' ? (1 - t) ** 2 : 1 - t;
   return lerp(spec.damageMin,spec.damageMax,falloff);
 }
+// A per-call-depth pool is necessary: damage/paint hooks can synchronously
+// trigger a second sub lookup before the outer lookup has finished iterating.
 function hostileActors(api, owner) {
-  return (api.G.actors || []).filter(a => a && a.alive && a.team !== owner.team && a.pos && a !== owner);
+  const pool = api._allSubHostilePool || (api._allSubHostilePool = []);
+  const depth = api._allSubHostileDepth || 0;
+  const out = pool[depth] || (pool[depth] = []);
+  api._allSubHostileDepth = depth + 1;
+  out.length = 0;
+  const actors = api.G.actors || [], team = owner.team;
+  for (let i = 0; i < actors.length; i++) {
+    const a = actors[i];
+    if (a && a.alive && a.team !== team && a.pos && a !== owner) out.push(a);
+  }
+  return out;
+}
+function releaseHostileActors(api) {
+  const depth = --api._allSubHostileDepth;
+  api._allSubHostilePool[depth].length = 0;
 }
 function applyMark(api, target, team, seconds, subId) {
   if (!target?.alive || target.team === team || !(seconds > 0)) return false;
@@ -526,12 +542,16 @@ function markSeconds(spec, owner, apOverride = null) {
 function detonateInkMine(api,projectiles,mine){
   if(!mine||mine.dead||mine.subId!=='inkMine'||mine.ghost)return false;
   const baseDuration=markSeconds({markFrames:mine.spec.markFrames},mine.owner,mine.subPowerAP);
-  for(const target of hostileActors(api,mine.owner)){
+  { const __iwHostiles = hostileActors(api,mine.owner);
+    try {
+      for (const target of __iwHostiles) {
     const dx=target.pos.x-mine.pos.x,dy=target.pos.y+.7-mine.pos.y,dz=target.pos.z-mine.pos.z;
     if(dx*dx+dy*dy+dz*dz>mine.spec.markRadius**2||api.G.physics?.los&&!api.G.physics.los(mine.pos,target.pos))continue;
     applyMark(api,target,mine.team,baseDuration,mine.subId);
     if(Number.isInteger(target.nid))api.emit?.('all:sub',{v:1,phase:'mark',subId:mine.subId,seq:mine.seq,life:ownerLife(mine.owner),sourceLife:mine.sourceLife,eventSeq:nextSeq(mine.owner),
       targetId:target.nid,targetLife:ownerLife(target),frames:Math.round(baseDuration*60),sourceTeam:mine.team,actor:mine.owner});
+  }
+    } finally { releaseHostileActors(api); }
   }
   blast(api,mine,mine.pos);
   removeObject(api,projectiles,mine);
@@ -645,7 +665,9 @@ function blast(api, object, pos, burstIndex = 0) {
     const outer = spec.radius || spec.damageOuter || 0;
     if (outer > 0) {
       const targetPoint = api._allSubTargetPoint ||= new api.THREE.Vector3();
-      for (const target of hostileActors(api,object.owner)) {
+      { const __iwHostiles = hostileActors(api,object.owner);
+        try {
+          for (const target of __iwHostiles) {
         targetPoint.copy(target.pos); targetPoint.y += target.form === 'squid' ? .45 : .7;
         const d = targetPoint.distanceTo(pos);
         if (d > outer || api.G.physics?.los && !api.G.physics.los(pos,targetPoint)) continue;
@@ -654,13 +676,19 @@ function blast(api, object, pos, burstIndex = 0) {
         const amount = damageAt(d,spec);
         if (amount > 0) api.G.projectiles?.applyHit?.(object.owner,target,amount,object.subId);
       }
+        } finally { releaseHostileActors(api); }
+      }
       const mainCause=object.subId==='torpedo'?'Bomb_TorpedoBullet':object.subId==='inkMine'?'Bomb_Trap':null;
       damageSubObjectsInRadius(api,api.G.projectiles,object,pos,outer,d=>damageAt(d,spec),mainCause);
       if (spec.splashRadius > 0 && (object.subId !== 'torpedo' || object.chasedTarget)) {
-        for (const target of hostileActors(api,object.owner)) {
+        { const __iwHostiles = hostileActors(api,object.owner);
+          try {
+            for (const target of __iwHostiles) {
           targetPoint.copy(target.pos); targetPoint.y += .7;
           const d=targetPoint.distanceTo(pos);
           if (d <= spec.splashRadius && api.G.physics?.los?.(pos,targetPoint)) api.G.projectiles?.applyHit?.(object.owner,target,spec.splashDamage,object.subId+'-splash');
+        }
+          } finally { releaseHostileActors(api); }
         }
         damageSubObjectsInRadius(api,api.G.projectiles,object,pos,spec.splashRadius,()=>spec.splashDamage,'Bomb_TorpedoSplashBurst');
       }
@@ -675,9 +703,13 @@ function blast(api, object, pos, burstIndex = 0) {
 
 function closestActor(api, object, maxDistance, lineOfSight = true) {
   let best = null, bestD = maxDistance;
-  for (const target of hostileActors(api,object.owner)) {
+  { const __iwHostiles = hostileActors(api,object.owner);
+    try {
+      for (const target of __iwHostiles) {
     const dx=target.pos.x-object.pos.x,dy=target.pos.y+.7-object.pos.y,dz=target.pos.z-object.pos.z,d=Math.hypot(dx,dy,dz);
     if (d < bestD && (!lineOfSight || !api.G.physics?.los || api.G.physics.los(object.pos,target.pos))) { best=target;bestD=d; }
+  }
+    } finally { releaseHostileActors(api); }
   }
   return best ? { actor:best, distance:bestD } : null;
 }
@@ -735,11 +767,15 @@ function contactActor(api, object, start, end, size = .25) {
   if (!(length > 1e-7) || !api.Physics?.segmentCapsuleDist) return null;
   const base = api._allSubBase ||= new api.THREE.Vector3(), res=api._allSubCapsule ||= {t:0,dist:Infinity};
   let best=null;
-  for (const target of hostileActors(api,object.owner)) {
+  { const __iwHostiles = hostileActors(api,object.owner);
+    try {
+      for (const target of __iwHostiles) {
     const height=target.form==='squid'?api.PLAYER.squidHeight:api.PLAYER.height;
     base.copy(target.pos);base.y+=target.smoothY||0;
     api.Physics.segmentCapsuleDist(start,end,base,api.PLAYER.radius,height,res);
     if(res.dist <= api.PLAYER.radius+size && (!best||res.t*length<best.distance)) best={actor:target,distance:res.t*length,t:res.t};
+  }
+    } finally { releaseHostileActors(api); }
   }
   return best;
 }
@@ -766,11 +802,13 @@ function customObjectCandidate(api, projectiles, p, start, end) {
       if(side>ALL_SUB_SPECS.splashWall.wallWidth/2+(p.size||0)||y<object.pos.y-(p.size||0)||y>object.pos.y+ALL_SUB_SPECS.splashWall.wallHeight+(p.size||0))continue;
       hit={t,distance:t*length,point:new api.THREE.Vector3(x,y,z),normal:new api.THREE.Vector3(nX,0,nZ)};
     } else {
-      const v=end.clone().sub(start), denom=v.lengthSq(), center=object.pos;
-      const t=denom>1e-9?clamp(center.clone().sub(start).dot(v)/denom,0,1):0;
-      const point=start.clone().addScaledVector(v,t), radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:.42;
-      if(point.distanceToSquared(center)>(radius+(p.size||0))**2)continue;
-      hit={t,distance:t*length,point,normal:point.clone().sub(center).normalize()};
+      const vx=end.x-start.x, vy=end.y-start.y, vz=end.z-start.z, denom=vx*vx+vy*vy+vz*vz, center=object.pos;
+      const t=denom>1e-9?clamp(((center.x-start.x)*vx+(center.y-start.y)*vy+(center.z-start.z)*vz)/denom,0,1):0;
+      const px=start.x+vx*t, py=start.y+vy*t, pz=start.z+vz*t, radius=object.subId==='torpedo'?.3:object.subId==='inkMine'?.38:.42;
+      const dx=px-center.x, dy=py-center.y, dz=pz-center.z, lim=radius+(p.size||0);
+      if(dx*dx+dy*dy+dz*dz>lim*lim)continue;
+      const point=new api.THREE.Vector3(px,py,pz);
+      hit={t,distance:t*length,point,normal:new api.THREE.Vector3(dx,dy,dz).normalize()};
     }
     if(!hit||best&&hit.distance>=best.distance)continue;
     const candidate={ ...hit, object, visualOnly:!!p.ghost, settled:false };
@@ -1178,7 +1216,9 @@ function updateDeployed(api,projectiles,object,dt){
     if(object.hp<=0){removeObject(api,projectiles,object);return;}
     if((G.time||0)>=object.activeAt){
       const nX=Math.sin(object.yaw||0),nZ=Math.cos(object.yaw||0),rX=Math.cos(object.yaw||0),rZ=-Math.sin(object.yaw||0),now=G.time||0;
-      for(const target of hostileActors(api,object.owner)){
+      { const __iwHostiles = hostileActors(api,object.owner);
+        try {
+          for (const target of __iwHostiles) {
         const dx=target.pos.x-object.pos.x,dz=target.pos.z-object.pos.z;
         const side=Math.abs(dx*rX+dz*rZ),depth=Math.abs(dx*nX+dz*nZ),feet=target.pos.y;
         if(side>spec.wallWidth/2+api.PLAYER.radius||depth>.32||feet>object.pos.y+spec.wallHeight||feet+api.PLAYER.height<object.pos.y)continue;
@@ -1187,20 +1227,30 @@ function updateDeployed(api,projectiles,object,dt){
         api.G.projectiles?.applyHit?.(object.owner,target,spec.contactDamage,'splashWall');
         object.wallContactUntil.set(target,now+frameSeconds(spec.damageSpanFrames));
       }
+        } finally { releaseHostileActors(api); }
+      }
     }
   }
   if(object.subId==='inkMine'){
     if((G.time||0)<object.activeAt)return;
     if(object.ghost)return;
-    const found=hostileActors(api,object.owner).find(a=>{
-      const dx=a.pos.x-object.pos.x,dy=a.pos.y+.7-object.pos.y,dz=a.pos.z-object.pos.z;
-      return dx*dx+dy*dy+dz*dz<=spec.sensorRadius**2 && (!G.physics?.los||G.physics.los(object.pos,a.pos));
-    });
+    const hostiles=hostileActors(api,object.owner);
+    let found;
+    try {
+      found=hostiles.find(a=>{
+        const dx=a.pos.x-object.pos.x,dy=a.pos.y+.7-object.pos.y,dz=a.pos.z-object.pos.z;
+        return dx*dx+dy*dy+dz*dz<=spec.sensorRadius**2 && (!G.physics?.los||G.physics.los(object.pos,a.pos));
+      });
+    } finally { releaseHostileActors(api); }
     if(found||enemyInkNearMine(api,object))detonateInkMine(api,projectiles,object);
   } else if(object.subId==='toxicMist'){
-    for(const target of hostileActors(api,object.owner)){
+    { const __iwHostiles = hostileActors(api,object.owner);
+      try {
+        for (const target of __iwHostiles) {
       const dx=target.pos.x-object.pos.x,dy=target.pos.y+.7-object.pos.y,dz=target.pos.z-object.pos.z;
       if(dx*dx+dy*dy+dz*dz<=spec.radius**2&&(!G.physics?.los||G.physics.los(object.pos,target.pos)))armToxicStatus(api,object,target,true);
+    }
+      } finally { releaseHostileActors(api); }
     }
   } else if(object.subId==='sprinkler'){
     const ap=object.subPowerAP||0;

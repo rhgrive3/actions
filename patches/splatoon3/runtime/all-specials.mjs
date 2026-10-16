@@ -109,10 +109,13 @@ function upDirection(THREE) { return new THREE.Vector3(0, 1, 0); }
 function inputEdges(actor, state) {
   const it = actor.intent || {};
   const fire = !!it.fire, sub = !!it.sub, jump = !!it.jump, squid = !!it.squid, booyah=!!it.booyah;
-  const e = { fire: fire && !state.held.fire, fireUp: !fire && state.held.fire,
-    sub: sub && !state.held.sub, subUp: !sub && state.held.sub, jump: jump && !state.held.jump, squid: squid && !state.held.squid,
-    booyah:booyah&&!state.held.booyah };
-  state.held = { fire, sub, jump, squid, booyah };
+  const h = state.held || (state.held = { fire: false, sub: false, jump: false, squid: false, booyah: false });
+  const e = state.edges || (state.edges = { fire: false, fireUp: false, sub: false, subUp: false, jump: false, squid: false, booyah: false });
+  e.fire = fire && !h.fire; e.fireUp = !fire && h.fire;
+  e.sub = sub && !h.sub; e.subUp = !sub && h.sub;
+  e.jump = jump && !h.jump; e.squid = squid && !h.squid;
+  e.booyah = booyah && !h.booyah;
+  h.fire = fire; h.sub = sub; h.jump = jump; h.squid = squid; h.booyah = booyah;
   return e;
 }
 function aimDirection(rt, actor, out) {
@@ -745,7 +748,7 @@ function hitBeam(rt, actor, state, origin, direction, length, damage) {
     // closest point on the finite beam segment; a cylinder radius of 0.85 is
     // a world-scale calibration of the sourced continuous laser capsule.
     const d=rt.v14.subVectors(end,origin), dd=d.lengthSq();
-    const t=dd>1e-9?clamp(base.clone().sub(origin).dot(d)/dd,0,1):0;
+    const t=dd>1e-9?clamp(rt.v10.subVectors(base,origin).dot(d)/dd,0,1):0;
     const near=rt.v15.copy(origin).addScaledVector(d,t);
     if(base.distanceTo(near)>.85)continue;
     rt.api.G.projectiles.applyHit(actor,victim,damage,'killerWail');touched.add(victim);
@@ -1362,7 +1365,7 @@ function targetWaveOrigin(rt,actor) {
   for(const victim of rt.api.G.actors||[]) {
     if(!victim.alive||victim.team===actor.team)continue;
     const pos=rt.v3.set(victim.pos.x,victim.pos.y+.7,victim.pos.z),d=rt.v4.subVectors(end,origin),dd=d.lengthSq();
-    const t=dd>1e-9?clamp(pos.clone().sub(origin).dot(d)/dd,0,1):0;
+    const t=dd>1e-9?clamp(rt.v6.subVectors(pos,origin).dot(d)/dd,0,1):0;
     const near=rt.v5.copy(origin).addScaledVector(d,t);
     if(pos.distanceTo(near)<1.2)rt.api.G.projectiles.applyHit(actor,victim,3.5,'killerWail');
   }

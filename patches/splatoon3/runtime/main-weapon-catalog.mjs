@@ -785,8 +785,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const yaw=Math.atan2(p.vel.x,p.vel.z),cy=Math.cos(yaw),sy=Math.sin(yaw);
     for(let i=0;i<params.length;i++){
       const q=s.lobes[i],v=offsets[i]||{},x=finite(v.X,0),y=finite(v.Y,0),z=finite(v.Z,0);
-      q.from.copy(p.prev).add(new THREE.Vector3(x*cy+z*sy,y,-x*sy+z*cy));
-      q.to.copy(p.pos).add(new THREE.Vector3(x*cy+z*sy,y,-x*sy+z*cy));q.param=params[i];
+      const ox=x*cy+z*sy,oz=-x*sy+z*cy;
+      q.from.set(p.prev.x+ox,p.prev.y+y,p.prev.z+oz);
+      q.to.set(p.pos.x+ox,p.pos.y+y,p.pos.z+oz);q.param=params[i];
     }return s.lobes;
   }
   function advance(p) {
@@ -890,7 +891,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       let stop=world.hit?world.dist/Math.max(EPS,len):Infinity,target=null,boss=null,defense=this.kitDefenseCandidate?.(p);
       if(defense&&defense.distance/Math.max(EPS,len)<stop)stop=defense.distance/Math.max(EPS,len);
       else defense=null;
-      const pr1=Math.max(...shapes.map(q=>collisionRadius(q.param,'Player',p.age*HZ,s.index,bounceScale)));
+      // Math.max's -Infinity for an empty list and NaN propagation are kept.
+      let pr1=-Infinity;
+      for(let i=0;i<shapes.length;i++)pr1=Math.max(pr1,collisionRadius(shapes[i].param,'Player',p.age*HZ,s.index,bounceScale));
       for(const a of G.actors||[]){
         const friendly=a.team===p.team;
         if(!a.alive||a===p.owner||s.seen.has(a)||friendly&&(a.submerged||d.c.FriendThroughFrameForPlayer==null))continue;
@@ -1330,7 +1333,11 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       if(s.chargeF>0||s.stream>0)cancel(this,true);
       if(s.stored){s.stored.remaining-=dt;if(s.stored.remaining<=EPS)s.stored=null;}
     }
-    legacyUpdate.call(this,dt,{...input,fire:false,firePressed:false});
+    // Native/kit update readers use these four flags for sub-weapon logic.
+    // Allocate once per runner instead of per 60 Hz update.
+    const subInp=this._catalogSubInput||(this._catalogSubInput={fire:false,firePressed:false,sub:false,subReleased:false});
+    subInp.sub=input?.sub;subInp.subReleased=input?.subReleased;
+    legacyUpdate.call(this,dt,subInp);
     if(!Number.isFinite(dt)||dt<=0||a.remote||!a.alive||a.specialActive||a.superJumpState)return;
     // Wiki: orientation changes continuously even while swimming/unarmed.
     // Use explicit per-weapon forward/reverse rates; omitted tilt keep/reset
