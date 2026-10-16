@@ -1,6 +1,8 @@
 // Splatoon 3 Ver. 11.3.0 Triple Splashdown (ground activation): the two ink fists
 // travel 6.54 source units, 30 degrees either side of the activation yaw, and
-// explode 15F after the player's own landing impact.
+// travel for the extracted 15F after a separately modelled 2F emission gap.
+// The resulting 70F-player / 87F-fist flat-ground cadence follows community
+// frame observations; the 2F gap is derived, not present in the extraction.
 //
 // Sources: Splatoon Wiki "Triple Splashdown" (v11.3.0: fist distance 6.54,
 // 220-damage radius 6.4, 60-damage radius 9.6, 0.25 s fist delay; ink-splatter
@@ -14,11 +16,17 @@
 
 const INSTALL = Symbol.for('inkwave.s3.triple-slam-fists');
 const DEG = Math.PI / 180;
-export const FIST_TRAVEL = 15 / 60;
-// Public mechanics describe ~60F rising, ~10F falling and 15F travel before a
-// surviving fist impacts. This is a bounded community-based fallback for when
-// the player's landing callback never happens (death); not an extracted timer.
-export const FIST_ORPHAN_DEADLINE = 85 / 60;
+export const FIST_TRAVEL = 15 / 60; // Pogo BulletParam.MoveFrame, extracted
+// Community flat-ground video/frame table: player 70F, fists 87F. The raw table
+// gives travel 15F but no fist-launch-frame field. The residual two fixed ticks
+// are therefore a labelled INKWAVE emission-gap calibration, NOT a Nintendo
+// constant or a change to BulletParam.MoveFrame.
+export const FIST_EMISSION_GAP = 2 / 60;
+export const FIST_LANDING_DELAY = FIST_EMISSION_GAP + FIST_TRAVEL;
+// The fists outlive player death before landing. Without the ground callback,
+// use the independently observed 87F absolute activation deadline rather than
+// inventing a synthetic 70F body landing.
+export const FIST_ORPHAN_DEADLINE = 87 / 60;
 export const FIST_SOURCE_DISTANCE = 6.54;
 export const FIST_SOURCE_ANGLE = 30 * DEG;
 export const FIST_NEAR_RADIUS = 6.4;
@@ -128,7 +136,8 @@ export function tickTripleSlamFists(actor, dt, G, THREE) {
   const state = actor?._s3TripleSlamFists;
   if (!state || actor.remote || !finite(dt) || !(dt > 0)) return false;
   // The two fists are independent entities in S3. Killing the player does not
-  // cancel a surviving fist. A live landing still schedules exactly 15F below;
+  // cancel a surviving fist. A live landing schedules the separate emission
+  // gap and the unchanged extracted 15F traversal;
   // if the player dies first, retain an activation-relative deadline rather
   // than waiting forever for a landing callback the dead Actor cannot emit.
   state.age = (state.age || 0) + dt;
@@ -166,11 +175,12 @@ export function installTripleSlamFists({ Actor, G, THREE }, profile) {
     const state = this._s3TripleSlamFists;
     const result = impact.apply(this, args);
     if (state && !this.remote && this._s3TripleSlamFists === state && state.remaining == null)
-      state.remaining = FIST_TRAVEL;
+      state.remaining = FIST_LANDING_DELAY;
     return result;
   };
-  // Ticked before the native update: a fist released by this frame's landing
-  // is counted from the next fixed tick, so the delay is exactly 15F.
+  // Ticked before the native update: a fist scheduled by this frame's landing
+  // starts on the next fixed tick. The two modelled fixed ticks plus the raw
+  // 15F travel are 17 updates from that landing (87F when landing is 70F).
   Actor.prototype.update = function (dt, ...args) {
     tickTripleSlamFists(this, dt, G, THREE);
     return update.call(this, dt, ...args);
