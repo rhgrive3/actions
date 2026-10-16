@@ -12,3 +12,5 @@ This candidate composes PR #1490's frozen head `479b43f85ef4e8373449a037427777aa
 The navigation browser receipt is updated to the small-PR integrated build. Deterministic heuristic calls remain 84,329→60,509; timing variance between runs is retained and no reliable whole-game timing claim is made.
 
 PR #1490's final-head CI and native browser acceptance remain necessary before merge. Existing physical-device and Nintendo behavior calibration limitations remain open.
+
+The first integrated CI exposed two verification-fixture defects, including stale expectations also reproduced on clean main. The exact-source identity rejection remains strict, and frozen main receipts now guard every weapon hit sample and scoring cell. See [CI repair evidence](inkwave-core-ci-regressions-2026-10-16.md). The production graph is unchanged by these follow-up repairs.
