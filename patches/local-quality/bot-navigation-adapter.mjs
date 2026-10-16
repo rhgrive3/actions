@@ -5,6 +5,8 @@ export function adaptBotNavigation(rel, code, once) {
   const patch = (before, after, label) => { code = once(code, before, after, 'bot navigation: ' + label); };
   patch('    this.path = null; this.pi = 0; this.goal = -1;',
     '    this._failedGoals = null; this._combatDirectTarget = null; this._travelProbe = null;\n    this.path = null; this.pi = 0; this.goal = -1;', 'reset policy state');
+  patch('      this._wasDead = false;',
+    '      this._wasDead = false;\n      this.goalTimer = 0; this.repath = 0; this._failedGoals = null; this._combatDirectTarget = null;', 'resume navigation once after respawn');
   // Actor water death already permits supported dry docks below sea level.
   patch('return gy === -Infinity || gy < PLAYER.fallDeathY;', 'return gy === -Infinity;', 'supported dry dock is walkable');
   patch("    if (this.mode === 'refill' && inkFrac >= this.refillUntil) this.mode = 'paint';",
