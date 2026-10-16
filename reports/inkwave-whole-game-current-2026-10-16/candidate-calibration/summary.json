@@ -1,0 +1,363 @@
+{
+  "schema": 1,
+  "status": "inconclusive-workload-mismatch",
+  "mode": "calibrate",
+  "comparison": "Exact current-main C versus optimized B; calculation and post-depth changes",
+  "stage": "tidewater",
+  "scenario": "normal",
+  "order": [
+    "C",
+    "B",
+    "B",
+    "C"
+  ],
+  "settings": {
+    "quality": "medium",
+    "shadows": true,
+    "bloom": true,
+    "frameRate": "display",
+    "music": 0.6,
+    "sfx": 0.85,
+    "master": 0.8
+  },
+  "samples": 6,
+  "warmup": 30,
+  "viewport": [
+    480,
+    300
+  ],
+  "deviceScaleFactor": 1,
+  "hardwareClaim": false,
+  "scope": "Full production Game._frame with input polling, BotBrain, actors, collision, projectiles, paint, FX, environment, decor, props, camera, audio owners, HUD, menus and all render/post passes. Primary timing is successive rAF starts, including intervening browser/UI/audio scheduling contention. Secondary completedMs is only synchronous Game._frame JavaScript plus GPU readback; it excludes deferred DOM/compositing/audio completion. Fixed 60 Hz simulation and diagnostic crowd input/camera; readback serializes CPU/GPU.",
+  "limitations": [
+    "Software-rendered GitHub Actions is not a hardware-PC measurement.",
+    "C and B are exact immutable current production-source checkouts. Historical cloth-derived comparisons are not reused as current-main evidence.",
+    "Both current refs are built with their unchanged production builders. Both variants must naturally install and activate their service worker and report a complete offline snapshot before setup/warmup; this is the steady-state, enabled-PWA path.",
+    "Completed-frame throughput includes a 1-pixel synchronous readback, prevents CPU/GPU overlap, and excludes display scanout. It is not ordinary gameplay FPS or input-to-photon latency.",
+    "Normal-match scene: one unchanged PlayerController and seven unchanged BotBrains execute, then diagnostic input overrides make all eight actors stationary and outward-firing.",
+    "The native game scheduler is frozen; the diagnostic schedules one complete fixed-step frame per rAF. Dynamic resolution is held at 1 for workload comparability.",
+    "BotBrain still executes; its output intent is replaced by the same stationary, outward-firing input after its update. This avoids deaths and measures eight live actors throughout.",
+    "Eight CBBC/BCCB timing trials must pass strict C/B workload and pixel checks before reporting a comparative effect; improvement requires a positive lower confidence bound. Full image parity is verified at the endpoint, not on every measured frame."
+  ],
+  "environment": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpus": 5,
+    "memBytes": 18882699264,
+    "node": "v22.23.3",
+    "os": "6.18.44",
+    "platform": "linux",
+    "launch": {
+      "executablePath": "/usr/bin/chromium",
+      "headless": true,
+      "chromiumSandbox": true,
+      "args": [
+        "--use-angle=swiftshader"
+      ]
+    },
+    "browser": "154.0.8037.57",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "provenance": {
+    "C": {
+      "sourceSha": "f11d7e2d8908f61dcb4ef6b42d0a20aa9dcb993a",
+      "contentHash": "1e41c9e91bcaf484119dbf7641e39e3236740ecdb3ae186b295d246940eb1eff",
+      "revision": "9e314d35d1cb3ff5638985247a4340ebae5d69a9eecf42e434ecba8c91161f5e"
+    },
+    "B": {
+      "sourceSha": "3acf39f76bc9124ed4c7f153a6c9d60ed89c6e84",
+      "contentHash": "f62dc08341da0cc7667de891d0f1ed108b9ca7fef5507d31ce342b687aca8faf",
+      "revision": "c49a2996634378bea1e4851e62bdbd97ac421aa28409e8117ad38a709f1a2996"
+    },
+    "A": {
+      "sourceSha": "f11d7e2d8908f61dcb4ef6b42d0a20aa9dcb993a",
+      "contentHash": "1e41c9e91bcaf484119dbf7641e39e3236740ecdb3ae186b295d246940eb1eff",
+      "revision": "9e314d35d1cb3ff5638985247a4340ebae5d69a9eecf42e434ecba8c91161f5e"
+    }
+  },
+  "calibrationScope": {
+    "sourceA": "f11d7e2d8908f61dcb4ef6b42d0a20aa9dcb993a",
+    "sourceB": "3acf39f76bc9124ed4c7f153a6c9d60ed89c6e84",
+    "contentA": "1e41c9e91bcaf484119dbf7641e39e3236740ecdb3ae186b295d246940eb1eff",
+    "contentB": "f62dc08341da0cc7667de891d0f1ed108b9ca7fef5507d31ce342b687aca8faf",
+    "baseline": "C",
+    "candidate": "B",
+    "sourceC": "f11d7e2d8908f61dcb4ef6b42d0a20aa9dcb993a",
+    "contentC": "1e41c9e91bcaf484119dbf7641e39e3236740ecdb3ae186b295d246940eb1eff",
+    "sourceTreeC": "5d8d3cafa14e42f3769be0ec4ada796e32ce1d66",
+    "stage": "tidewater",
+    "scenario": "normal",
+    "settings": {
+      "quality": "medium",
+      "shadows": true,
+      "bloom": true,
+      "frameRate": "display",
+      "music": 0.6,
+      "sfx": 0.85,
+      "master": 0.8
+    },
+    "viewport": [
+      480,
+      300
+    ],
+    "warmup": 30
+  },
+  "comparability": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": false,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "startStateEqual": true,
+      "endStateEqual": true,
+      "pixelEqual": true,
+      "inputNodesEqual": true,
+      "frameWorkEqual": true
+    }
+  ],
+  "gameplayComparable": true,
+  "visualValidation": {
+    "CRepeatExact": true,
+    "BRepeatExact": false,
+    "CBExact": false,
+    "accepted": false,
+    "allowedChange": "none; exact pixels and workload required for both current refs"
+  },
+  "backgroundComparable": true,
+  "comparable": false,
+  "comparisonValid": false,
+  "improvementClaimAllowed": false,
+  "withinFrameBudget": true,
+  "projectedMeasurementMs": 1185648,
+  "fullReport": {
+    "file": "whole-game-calibrate.json.gz",
+    "uncompressedSha256": "20b65979d768dd151422fa3b626ec7f248772506df552124ba7aea1b7bb6e488",
+    "bytes": 9296718
+  },
+  "trials": [
+    {
+      "ordinal": 0,
+      "variant": "C",
+      "status": "complete",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "pixelSha256": "b8bf457de943249acda3e39a318d239d9657dd96c525ccc378a0cabc20b7929a",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 39078
+      },
+      "completed": {
+        "n": 6,
+        "mean": 915.3166666670392,
+        "p50": 878.4000000022352,
+        "p95": 1065.800000000745,
+        "p99": 1065.800000000745,
+        "min": 855.8999999985099,
+        "max": 1065.800000000745,
+        "fps": 1.0925180720693308,
+        "over16_67": 6,
+        "over33_33": 6,
+        "over50": 6,
+        "over100": 6
+      },
+      "pacing": {
+        "n": 5,
+        "mean": 920.8600000001491,
+        "p50": 882.4000000022352,
+        "p95": 1070.9000000022352,
+        "p99": 1070.9000000022352,
+        "min": 859.8999999985099,
+        "max": 1070.9000000022352,
+        "fps": 1.0859414026017398,
+        "over16_67": 5,
+        "over33_33": 5,
+        "over50": 5,
+        "over100": 5
+      },
+      "errors": []
+    },
+    {
+      "ordinal": 1,
+      "variant": "B",
+      "status": "complete",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "pixelSha256": "78fbc9a934484250dc3b45459a5bb561e41febc84281b1e3263ac0a4ba43a238",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 39078
+      },
+      "completed": {
+        "n": 6,
+        "mean": 1021.6000000002483,
+        "p50": 1036,
+        "p95": 1078.1000000014901,
+        "p99": 1078.1000000014901,
+        "min": 909.5,
+        "max": 1078.1000000014901,
+        "fps": 0.9788566953795584,
+        "over16_67": 6,
+        "over33_33": 6,
+        "over50": 6,
+        "over100": 6
+      },
+      "pacing": {
+        "n": 5,
+        "mean": 1031.639999999851,
+        "p50": 1059.6000000014901,
+        "p95": 1083.7000000029802,
+        "p99": 1083.7000000029802,
+        "min": 913.5999999977648,
+        "max": 1083.7000000029802,
+        "fps": 0.9693303865690982,
+        "over16_67": 5,
+        "over33_33": 5,
+        "over50": 5,
+        "over100": 5
+      },
+      "errors": []
+    },
+    {
+      "ordinal": 2,
+      "variant": "B",
+      "status": "complete",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "pixelSha256": "b8bf457de943249acda3e39a318d239d9657dd96c525ccc378a0cabc20b7929a",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 39078
+      },
+      "completed": {
+        "n": 6,
+        "mean": 961.4166666666666,
+        "p50": 949.2999999970198,
+        "p95": 1099.1000000014901,
+        "p99": 1099.1000000014901,
+        "min": 878.3000000007451,
+        "max": 1099.1000000014901,
+        "fps": 1.0401317500216694,
+        "over16_67": 6,
+        "over33_33": 6,
+        "over50": 6,
+        "over100": 6
+      },
+      "pacing": {
+        "n": 5,
+        "mean": 963.4199999995529,
+        "p50": 952.3999999985099,
+        "p95": 1104.699999999255,
+        "p99": 1104.699999999255,
+        "min": 881.8000000007451,
+        "max": 1104.699999999255,
+        "fps": 1.037968902452164,
+        "over16_67": 5,
+        "over33_33": 5,
+        "over50": 5,
+        "over100": 5
+      },
+      "errors": []
+    },
+    {
+      "ordinal": 3,
+      "variant": "C",
+      "status": "complete",
+      "invariants": {
+        "allEightAlive": true,
+        "allControllersUpdated": true,
+        "fixedScale": true,
+        "nonemptyRender": true,
+        "audioOn": true,
+        "stableDrawingBuffer": true,
+        "nonblankImage": true
+      },
+      "pixelSha256": "b8bf457de943249acda3e39a318d239d9657dd96c525ccc378a0cabc20b7929a",
+      "pixelBytes": 576000,
+      "imageValidation": {
+        "opaque": 144000,
+        "pixels": 144000,
+        "colors": 39078
+      },
+      "completed": {
+        "n": 6,
+        "mean": 988.4333333329608,
+        "p50": 937.1000000014901,
+        "p95": 1107.199999999255,
+        "p99": 1107.199999999255,
+        "min": 927.2999999970198,
+        "max": 1107.199999999255,
+        "fps": 1.0117020200320812,
+        "over16_67": 6,
+        "over33_33": 6,
+        "over50": 6,
+        "over100": 6
+      },
+      "pacing": {
+        "n": 5,
+        "mean": 1002.1399999998509,
+        "p50": 940.6999999992549,
+        "p95": 1113.6000000014901,
+        "p99": 1113.6000000014901,
+        "min": 931.8999999985099,
+        "max": 1113.6000000014901,
+        "fps": 0.9978645698207324,
+        "over16_67": 5,
+        "over33_33": 5,
+        "over50": 5,
+        "over100": 5
+      },
+      "errors": []
+    }
+  ]
+}
