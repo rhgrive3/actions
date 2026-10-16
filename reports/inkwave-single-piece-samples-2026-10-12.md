@@ -1,7 +1,0 @@
-# Direct ancillary-piece sample candidate
-
-Base: adopted main b078c37907351f1bbc13d0e7d4b5cbeb0a330009 (text c230d34). PR1251 already enumerates one piece at a time, but its private sample helper still used an index and a one-iteration generic piece loop for each of five samples per candidate cell. Pass that same immutable piece object directly. Preserve sample order, stretch arithmetic, every SDF/predicate, local/network precedence, timing, score and wire. No cache, retained state, spatial approximation or shader change.
-
-Source oracle5/5 and production-built16/16 pass against the unchanged original-mask fixture, including temporal and hash probes. Additional direct-predicate regression covers every four piece types, stretch, three seeds, wall/floor and exact bounding edges with ±1e-12 offsets, over30000samples. A one-piece mask passed to the immutable generic oracle is the expected predicate; the original fixture is not modified. Build e0e79751f2bc.
-
-Local Node component AB/BA,2000overwritten wall-stamp calls per sample: before1100.93/1037.28/977.46ms, after1020.72/1017.00/931.38ms. Allthree pairs improve, with identical458owned cells/version2000. This is a component trial, not whole-game or real-browser performance. Same-runner production-built1Actor/8Actor AB and strict Chromium/WebKit gates are required before adoption. The unrelated HLC comparison omission was measured separately and rejected; it is not included.

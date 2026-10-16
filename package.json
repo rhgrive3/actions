@@ -1,0 +1,48 @@
+{
+  "name": "default73-reopening-diagnostic",
+  "private": true,
+  "type": "module",
+  "frozenFiles": [
+    {
+      "path": "files/scripts/lib/inkwave-default-reopening.mjs",
+      "sha256": "971e3a3c695b8a804966050d2b29e42e594fe6c22e930382f4636bf63242effb",
+      "bytes": 8011
+    },
+    {
+      "path": "files/scripts/check-default-reopening.mjs",
+      "sha256": "786401de7c431e5c6c7f2b610b88122200f9da8d1619136cf048de1cd5c3643d",
+      "bytes": 37422
+    },
+    {
+      "path": "files/scripts/tests/inkwave-default-reopening.test.mjs",
+      "sha256": "764ea12edab15155c04c5678dce46e4d3423b100ab05058afb0ca54f2b09a940",
+      "bytes": 5715
+    },
+    {
+      "path": "prepare.mjs",
+      "sha256": "fc9f4e9d73a44d881432d8b5115289b8a71cd7c44e7a6710763cbc46ceb6983e",
+      "bytes": 3036
+    },
+    {
+      "path": "test-count.mjs",
+      "sha256": "cf9c9a56a83411d13a25c992a72dd8ef3bf1ac8fc06747ccaa0e9c538411a519",
+      "bytes": 260
+    },
+    {
+      "path": "workflow.test.mjs",
+      "sha256": "9955c9ddc73d411a7f41955a3c465b571861ad5af37b28911ab25afa0758503d",
+      "bytes": 3847
+    },
+    {
+      "path": "plan.json",
+      "sha256": "e074d94bd02c20c07ad3c45a98e1919dd873eb12cbeea95ff270e60fbee4d775",
+      "bytes": 574
+    },
+    {
+      "path": ".github/workflows/default73-reopening.yml",
+      "sha256": "074f880b82f05e7167195e6c95ce93b0b8a4719c041ea58972e7ea456bb5e374",
+      "bytes": 2536
+    }
+  ],
+  "version": "1.0.0"
+}

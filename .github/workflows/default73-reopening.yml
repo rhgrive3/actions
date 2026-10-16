@@ -1,0 +1,56 @@
+name: Verify fourteen saved default appearances reopen
+on:
+  push:
+    branches: [review/default73-reopening-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: diagnostic
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 97c1b517182846f6abf9007b2b3315ad2aa8e1a8
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned normal browser tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Exact game and separate diagnostic placement
+        run: |
+          node diagnostic/prepare.mjs candidate execution evidence
+          node --max-old-space-size=128 --test diagnostic/workflow.test.mjs > evidence/workflow-controls.tap
+      - name: Thirteen reopening controls
+        run: |
+          node --max-old-space-size=128 --preserve-symlinks --preserve-symlinks-main --test --test-reporter=tap execution/scripts/tests/inkwave-default-reopening.test.mjs > evidence/controls.tap
+          node diagnostic/test-count.mjs evidence/controls.tap
+      - name: One unchanged production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+          git -C candidate diff --exit-code
+      - name: Normal active browser and fourteen saved appearance reopens
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/diagnostic/node_modules/playwright/index.mjs
+        run: |
+          node --preserve-symlinks --preserve-symlinks-main execution/scripts/check-default-reopening.mjs --source-root "$PWD/candidate" --site "$PWD/candidate-site" --evidence-dir "$PWD/evidence/browser" --profile-dir "$PWD/browser-profile" --exact-source
+          git -C candidate diff --exit-code
+      - name: Preserve all evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: default73-reopening-acceptance
+          path: evidence
+          if-no-files-found: error

@@ -1,0 +1,17 @@
+{
+  "head": "97c1b517182846f6abf9007b2b3315ad2aa8e1a8",
+  "tree": "ec97b71f10c09ec49753dbe9ce30d137bd3a88dd",
+  "originalCheckerSHA256": "b389478f492894189255c0adfd54648404a8b2a3855b0edd5e6f203aadd483ec",
+  "overlays": [
+    "scripts/lib/inkwave-default-reopening.mjs",
+    "scripts/check-default-reopening.mjs",
+    "scripts/tests/inkwave-default-reopening.test.mjs"
+  ],
+  "rows": 14,
+  "phases": [
+    "base",
+    "default"
+  ],
+  "sourceFrames": false,
+  "scope": "Same-page normal native Showcase saved preference/reopen. No local combat or new shape qualification."
+}
