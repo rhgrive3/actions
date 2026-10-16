@@ -1,0 +1,54 @@
+name: Build pinned INKWAVE Drive edit update
+on:
+  push:
+    branches:
+      - snapshot/inkwave-edit-fd82e9-20261017
+    paths:
+      - .github/workflows/inkwave-drive-edit-delta-fd82e9.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  pack-main-edit-delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          fetch-depth: 1
+      - name: Snapshot helper scripts
+        shell: bash
+        run: |
+          cp tools/build_drive_edit_delta.py "$RUNNER_TEMP/build_drive_edit_delta.py"
+          cp tools/apply_drive_edit_delta.py "$RUNNER_TEMP/apply_drive_edit_delta.py"
+      - name: Fetch exact pinned base and main trees
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --filter=blob:none --depth=1 origin b1f571da0d1233e0194d2cae42779cdb6bb70f61
+          git fetch --filter=blob:none --depth=1 origin fd82e9fc65986e207d8939869f4a5687e2962fc7
+          git checkout --detach fd82e9fc65986e207d8939869f4a5687e2962fc7
+          test "$(git rev-parse HEAD)" = fd82e9fc65986e207d8939869f4a5687e2962fc7
+      - name: Build complete tracked delta, update instructions, and live PR status
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/build_drive_edit_delta.py"
+          du -sh deliverable
+          ls -lh delta-size-preview.zip
+      - name: Verify update package is within 10 MB Drive per-file cap
+        run: |
+          test "$(stat -c %s delta-size-preview.zip)" -lt 9200000
+      - uses: actions/upload-artifact@v4
+        with:
+          name: INKWAVE-main-fd82e9-20261017-edit-update
+          path: deliverable/
+          if-no-files-found: error
+          compression-level: 9
+          retention-days: 15
