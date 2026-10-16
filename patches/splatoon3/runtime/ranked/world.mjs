@@ -1,4 +1,7 @@
 import { createRankedStage } from './stages.mjs';
+import { createSmallClamResources, createSmallClamInventory, updateSmallClamInventory, SMALL_CLAM_HALF_HEIGHT } from './small-clam-model.mjs';
+import { createPowerClamResources } from './power-clam-model.mjs';
+import { createRainmakerModel, createRainmakerPresentation } from './rainmaker-model.mjs';
 
 const TEAM_INK_FALLBACK = [0x35c9df, 0xf35bce];
 const NEUTRAL = 0x9ceff2;
@@ -220,9 +223,8 @@ export class RankedWorld {
     if (this.mode === 'rainmaker') {
       this.rainmaker = new THREE.Group();
       this.rainmaker.name = 'ranked-rainmaker';
-      const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.38, 1), this._material(0xffde61, {
-        emissive: 0x7b4d0b, emissiveIntensity: 0.55, roughness: 0.3,
-      }));
+      const core = createRainmakerModel(THREE);
+      this.rainmakerPresentation = createRainmakerPresentation(THREE, core);
       core.position.y = 1;
       core.name = 'rainmaker-core';
       this.rainmaker.add(core);
@@ -296,12 +298,10 @@ export class RankedWorld {
         this.clamsGroup.add(marker);
         this.baskets.push({ marker, gate, hoop });
       }
-      this.clamGeometry = new THREE.OctahedronGeometry(0.2, 0);
-      this.clamMaterials = [
-        this._material(0xf4e3a2, { roughness: 0.42 }),
-        this._material(0xf1a5ed, { roughness: 0.35, emissive: 0x451b54, emissiveIntensity: 0.28 }),
-      ];
-      this.inventoryGeometry = new THREE.TorusGeometry(0.32, 0.055, 7, 16);
+      this.smallClamResources = createSmallClamResources(THREE);
+      this.powerClamResources = createPowerClamResources(THREE);
+      this.clamGeometry = this.smallClamResources.geometry;
+      this.clamMaterials = [this.smallClamResources.material, this.powerClamResources.material];
     }
   }
 
@@ -678,7 +678,8 @@ export class RankedWorld {
     const carrier = this._findActor(rainmaker?.carrier);
     if (carrier?.pos && validTeam(carrier.team)) position = [carrier.pos.x, carrier.pos.y, carrier.pos.z];
     this.rainmaker.position.set(position[0], position[1], position[2]);
-    this.rainmaker.rotation.y += 0.018;
+    if (carrier) this.rainmaker.rotation.y = 0;
+    else this.rainmaker.rotation.y += 0.018;
     const barrier = rainmaker?.barrier || {};
     const shield = barrier.active !== false;
     const max = Math.max(1, finite(barrier.max) ? barrier.max : 1000);
@@ -693,10 +694,9 @@ export class RankedWorld {
     if (carrier?.pos) this.rainmakerCarrier.position.set(carrier.pos.x, carrier.pos.y + 2.45, carrier.pos.z);
     else this.rainmakerCarrier.position.copy(this.rainmaker.position).add(new this.THREE.Vector3(0, 2.2, 0));
     const charge = rainmaker?.charge?.value || 0;
-    this.rainmakerCore.material.emissive?.setHex(charge >= 1 ? 0xffdc5c : 0x000000);
-    this.rainmakerCore.material.emissiveIntensity = charge >= 1 ? 1.3 : 0;
+    this.rainmakerPresentation.update(carrier, charge);
     const checkpoints = rainmaker?.checkpoint?.passed;
-    this.rainmakerCore.material.color.setHex(rainmaker?.dropped ? 0xffaf52 : 0xffde61);
+    this.rainmakerCore.material.color.setHex(0xffffff);
     this.rainmaker.userData.checkpointsPassed = Array.isArray(checkpoints) ? checkpoints.slice() : [];
     const opened = rainmaker?.checkpoint?.goalOpen || [];
     for (const marker of this.rainmakerMarkers?.checkpoints || []) {
@@ -731,10 +731,15 @@ export class RankedWorld {
     const THREE = this.THREE;
     const key = idKey(clam.id);
     let marker = this._clamMarkers.get(key);
-    if (marker) return marker;
     const power = clam.kind === 'power';
-    const mesh = new THREE.Mesh(this.clamGeometry, this.clamMaterials[power ? 1 : 0]);
-    mesh.scale.setScalar(power ? 1.75 : 1);
+    const resources = power ? this.powerClamResources : this.smallClamResources;
+    if (marker) {
+      marker.mesh.geometry = resources.geometry; marker.mesh.material = resources.material;
+      marker.kind = clam.kind;
+      marker.mesh.name = power ? `power-clam-${key}` : `clam-${key}`;
+      return marker;
+    }
+    const mesh = new THREE.Mesh(resources.geometry, resources.material);
     mesh.name = power ? `power-clam-${key}` : `clam-${key}`;
     this.clamsGroup.add(mesh);
     marker = { mesh, kind: clam.kind };
@@ -756,7 +761,7 @@ export class RankedWorld {
       const key = idKey(clam.id), marker = this._clamMarker(clam);
       present.add(key);
       marker.mesh.visible = true;
-      marker.mesh.position.set(p[0], p[1] + 0.22, p[2]);
+      marker.mesh.position.set(p[0], p[1] + (clam.kind === 'power' ? .255 : SMALL_CLAM_HALF_HEIGHT), p[2]);
       const velocity = vec(clam.velocity);
       const clock = finite(this.G.time) ? this.G.time : 0;
       if (velocity) marker.mesh.rotation.set(velocity[0] * 0.04, velocity[1] * 0.04 + clock * 1.4, velocity[2] * 0.04);
@@ -769,7 +774,7 @@ export class RankedWorld {
   }
 
   _updateInventories(engine) {
-    if (this.mode !== 'clams' || !this.inventoryGeometry) return;
+    if (this.mode !== 'clams' || !this.smallClamResources) return;
     const inventories = engine?.rule?.state?.inventories || {};
     const present = new Set();
     for (const [id, inventory] of Object.entries(inventories)) {
@@ -779,17 +784,27 @@ export class RankedWorld {
       present.add(id);
       let marker = this._inventoryMarkers.get(id);
       if (!marker) {
-        marker = new this.THREE.Mesh(this.inventoryGeometry,
-          new this.THREE.MeshBasicMaterial({ color: inventory.power ? 0xf1a5ed : 0xf4e3a2, transparent: true, opacity: 0.92 }));
-        marker.rotation.x = Math.PI / 2;
+        marker = new this.THREE.Group();
+        const small = createSmallClamInventory(this.THREE, this.smallClamResources);
+        const power = new this.THREE.Mesh(this.powerClamResources.geometry, this.powerClamResources.material);
+        marker.add(small, power);
+        marker.userData.smallClams = small; marker.userData.powerClam = power;
         marker.name = `ranked-clam-inventory-${id}`;
         this.clamsGroup.add(marker);
         this._inventoryMarkers.set(id, marker);
       }
       marker.visible = true;
-      marker.material.color.setHex(inventory.power ? 0xf1a5ed : 0xf4e3a2);
-      marker.position.set(actor.pos.x, actor.pos.y + 2.05 + Math.min(0.35, (inventory.small || 0) * 0.035), actor.pos.z);
-      marker.scale.setScalar(inventory.power ? 1.35 : 1);
+      const small = marker.userData.smallClams, power = marker.userData.powerClam;
+      updateSmallClamInventory(this.THREE, small, inventory.power ? 0 : inventory.small);
+      small.visible = !inventory.power && small.count > 0;
+      power.visible = !!inventory.power;
+      // A carried clam trails behind the carrier; this is presentation only.
+      // Local visual offsets do not change rule positions or throw origins.
+      const yaw = finite(actor.yaw) ? actor.yaw : 0;
+      marker.position.set(actor.pos.x - Math.sin(yaw) * .72,
+        actor.pos.y + (inventory.power ? .34 : .16), actor.pos.z - Math.cos(yaw) * .72);
+      marker.rotation.y = yaw;
+
     }
     for (const [id, marker] of this._inventoryMarkers) if (!present.has(id)) marker.visible = false;
   }
@@ -868,13 +883,15 @@ export class RankedWorld {
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
+    this.rainmakerPresentation?.release();
     this.group?.parent?.remove?.(this.group);
     this.group?.traverse?.(object => {
-      if (object.geometry && object.geometry !== this.clamGeometry && object.geometry !== this.inventoryGeometry) object.geometry.dispose?.();
+      if (object.isInstancedMesh) object.dispose?.();
+      if (object.geometry && object.geometry !== this.smallClamResources?.geometry && object.geometry !== this.powerClamResources?.geometry) object.geometry.dispose?.();
       if (Array.isArray(object.material)) object.material.forEach(material => material.dispose?.());
       else if (object.material && !this.clamMaterials?.includes(object.material)) object.material.dispose?.();
     });
-    this.clamGeometry?.dispose?.(); this.inventoryGeometry?.dispose?.();
+    this.smallClamResources?.geometry.dispose?.(); this.powerClamResources?.geometry.dispose?.();
     this.clamMaterials?.forEach(material => material.dispose?.());
     const paintState = this.towerPaintBase;
     if (paintState) {
