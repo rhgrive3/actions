@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "url": "https://rhgrive3.github.io/actions/",
+  "workflowMergeSha": "84630809391f25a51e512a850ca4abc21d07084c",
+  "contentHash": "6763149867d20be1b01ce1571d1992c72e82b37ff56d111497078fff9ab4324f",
+  "allBuildInputsEqual": true,
+  "allArtifactManifestEqual": true,
+  "criticalResponses": [
+    {
+      "path": "index.html",
+      "sha256": "cfb6090b0e07ce8aa0f61c9ef90fd53ab6ff893f07e8f6c50ecd5be77a2d8d32",
+      "bytes": 15714
+    },
+    {
+      "path": "sw.js",
+      "sha256": "3e904719dbe8a8b9bc23d190337ee35c9fb78d1b2cb7847fbdc32f75bfe513b2",
+      "bytes": 64461
+    },
+    {
+      "path": "src/game/nav.js",
+      "sha256": "f0c0063a821e9a2c407679b38281cd9928e833ed77b8a5a5ef3fdaf2e2176b7c",
+      "bytes": 4661
+    },
+    {
+      "path": "patches/native-stages/runtime/engine.mjs",
+      "sha256": "db58197032b7635c5eb87996d758e6b141c4e9830c00eda65831c29e928d5fcb",
+      "bytes": 137616
+    },
+    {
+      "path": "patches/native-stages/runtime/build-config.mjs",
+      "sha256": "10e85cb471da02c24feab7871280454f42168cccaf25e0fa0968550047780e21",
+      "bytes": 20293
+    },
+    {
+      "path": "_versions/672d16532fa22bf4503c15714a3256a9f1ffafb2149f2bc4bdb8363727a2b3e4/patches/native-stages/runtime/build-config.mjs",
+      "sha256": "10e85cb471da02c24feab7871280454f42168cccaf25e0fa0968550047780e21",
+      "bytes": 20293
+    },
+    {
+      "path": "_versions/672d16532fa22bf4503c15714a3256a9f1ffafb2149f2bc4bdb8363727a2b3e4/patches/native-stages/runtime/engine.mjs",
+      "sha256": "db58197032b7635c5eb87996d758e6b141c4e9830c00eda65831c29e928d5fcb",
+      "bytes": 137616
+    },
+    {
+      "path": "_versions/672d16532fa22bf4503c15714a3256a9f1ffafb2149f2bc4bdb8363727a2b3e4/patches/splatoon3/pwa/sw.js",
+      "sha256": "f520e27620475be12b462579a7def1c7c8348f559d91212d82e1809b191fd0aa",
+      "bytes": 876
+    },
+    {
+      "path": "_versions/672d16532fa22bf4503c15714a3256a9f1ffafb2149f2bc4bdb8363727a2b3e4/src/game/nav.js",
+      "sha256": "f0c0063a821e9a2c407679b38281cd9928e833ed77b8a5a5ef3fdaf2e2176b7c",
+      "bytes": 4661
+    },
+    {
+      "path": "_versions/672d16532fa22bf4503c15714a3256a9f1ffafb2149f2bc4bdb8363727a2b3e4/sw.js",
+      "sha256": "5b985cf9556c7f65d1691c0fae7f2bf3cdf1cf042835c0c0b91a507f2605cd94",
+      "bytes": 13185
+    }
+  ],
+  "checkedAtUnix": 1792140091.4366152
+}

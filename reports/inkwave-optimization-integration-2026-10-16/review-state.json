@@ -1,0 +1,23 @@
+{
+  "reviewData": {
+    "p1514": {
+      "reviews": {
+        "nodes": []
+      },
+      "reviewThreads": {
+        "nodes": []
+      }
+    },
+    "p1515": {
+      "reviews": {
+        "nodes": []
+      },
+      "reviewThreads": {
+        "nodes": []
+      }
+    }
+  },
+  "codeRabbitStatus": "SUCCESS",
+  "codeRabbitReview": "Bot explicitly skips automatic review for repository with fewer than 10 stars. Status is not a completed review.",
+  "scope": "No formal submitted reviews or review threads at this read. No unresolved changes requested."
+}

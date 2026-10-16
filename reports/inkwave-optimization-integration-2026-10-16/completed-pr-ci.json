@@ -1,0 +1,614 @@
+[
+  {
+    "headRefOid": "747a85ec45c275189bd15a3cc8f05a0af2dcf17f",
+    "mergeCommit": {
+      "oid": "84630809391f25a51e512a850ca4abc21d07084c"
+    },
+    "mergedAt": "2026-10-16T08:33:04Z",
+    "state": "MERGED",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:12:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769323/job/116858161546",
+        "name": "visual",
+        "startedAt": "2026-10-16T07:12:50Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE nine circled weapon model review"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:12:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769334/job/116858127495",
+        "name": "single-change-comparison",
+        "startedAt": "2026-10-16T07:12:44Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify composed INKWAVE crowd changes"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:12:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769280/job/116858126506",
+        "name": "paired-game",
+        "startedAt": "2026-10-16T07:12:43Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify immutable INKWAVE stage Game pair"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:12:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769591/job/116858127286",
+        "name": "compare",
+        "startedAt": "2026-10-16T07:12:44Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify lossless crowd rig updates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:13:06Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769545/job/116858126062",
+        "name": "frame-parity",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE allocation-only frame parity"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:34:38Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769466/job/116858126250",
+        "name": "volume",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE alpha volume geometry and game rendering"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:14:05Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769233/job/116858124780",
+        "name": "native-cssom",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE lobby slot native CSSOM regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:23:43Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769551/job/116858126487",
+        "name": "browser (chromium, 1)",
+        "startedAt": "2026-10-16T07:12:58Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:13:12Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769426/job/116858125649",
+        "name": "paint-parity",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE paint hotpath parity"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:14:07Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769553/job/116858126079",
+        "name": "reopened-six",
+        "startedAt": "2026-10-16T07:13:09Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE reopened-six focused regressions"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:13:08Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769645/job/116858126146",
+        "name": "frame-pacing",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE touch frame pacing"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:16:11Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769447/job/116858126142",
+        "name": "contracts",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE native stage integration"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T08:30:34Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126932",
+        "name": "validate",
+        "startedAt": "2026-10-16T07:14:07Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:28:49Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769551/job/116858125949",
+        "name": "browser (chromium, 2)",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:27:27Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769551/job/116858126303",
+        "name": "browser (webkit, 1)",
+        "startedAt": "2026-10-16T07:25:20Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:32:25Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769551/job/116858126545",
+        "name": "browser (webkit, 2)",
+        "startedAt": "2026-10-16T07:28:52Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:12:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769323/job/116858127538",
+        "name": "contracts-and-crowd",
+        "startedAt": "2026-10-16T07:12:44Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE nine circled weapon model review"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:12:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769334/job/116858166169",
+        "name": "live-ray-equivalence",
+        "startedAt": "2026-10-16T07:12:50Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify composed INKWAVE crowd changes"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:36:42Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126867",
+        "name": "browser (active, chromium webkit)",
+        "startedAt": "2026-10-16T07:13:10Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:23:26Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126828",
+        "name": "browser (catalog, chromium)",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:31:58Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858127073",
+        "name": "browser (ui, chromium webkit)",
+        "startedAt": "2026-10-16T07:16:13Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:38:24Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126933",
+        "name": "browser (responsive, chromium webkit)",
+        "startedAt": "2026-10-16T07:14:10Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:18:50Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858128210",
+        "name": "browser (network, chromium webkit)",
+        "startedAt": "2026-10-16T07:16:21Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:27:32Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126949",
+        "name": "browser (range, chromium webkit)",
+        "startedAt": "2026-10-16T07:13:41Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:20:33Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126895",
+        "name": "browser (startup, chromium)",
+        "startedAt": "2026-10-16T07:13:14Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:12:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858128882",
+        "name": "render-diagnostic",
+        "startedAt": "2026-10-16T07:12:44Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:16:19Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126590",
+        "name": "seven_claims",
+        "startedAt": "2026-10-16T07:12:47Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:16:35Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398/job/116858126749",
+        "name": "resource_paint_continuation",
+        "startedAt": "2026-10-16T07:12:46Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "StatusContext",
+        "context": "CodeRabbit",
+        "startedAt": "2026-10-16T07:12:50Z",
+        "state": "SUCCESS",
+        "targetUrl": ""
+      }
+    ],
+    "pr": 1514,
+    "validateRunUrl": "https://github.com/rhgrive3/actions/actions/runs/38865769398",
+    "fullSourceSuite": {
+      "files": 769,
+      "total": 6364,
+      "pass": 6341,
+      "conditionalSkips": 23,
+      "fail": 0
+    }
+  },
+  {
+    "headRefOid": "3acf39f76bc9124ed4c7f153a6c9d60ed89c6e84",
+    "mergeCommit": {
+      "oid": "a262d8bcd2c8e95d6fef76e6081d89c33aea25de"
+    },
+    "mergedAt": "2026-10-16T08:55:36Z",
+    "state": "MERGED",
+    "statusCheckRollup": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:36:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315716/job/116866249337",
+        "name": "visual",
+        "startedAt": "2026-10-16T07:36:54Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE nine circled weapon model review"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:36:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315659/job/116866194981",
+        "name": "single-change-comparison",
+        "startedAt": "2026-10-16T07:36:44Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify composed INKWAVE crowd changes"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:36:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315608/job/116866194521",
+        "name": "paired-game",
+        "startedAt": "2026-10-16T07:36:44Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify immutable INKWAVE stage Game pair"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:36:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315654/job/116866194534",
+        "name": "compare",
+        "startedAt": "2026-10-16T07:36:44Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify lossless crowd rig updates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:37:21Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315689/job/116866193209",
+        "name": "frame-parity",
+        "startedAt": "2026-10-16T07:37:07Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE allocation-only frame parity"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:54:09Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315596/job/116866192852",
+        "name": "volume",
+        "startedAt": "2026-10-16T07:36:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE alpha volume geometry and game rendering"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:38:31Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315747/job/116866193559",
+        "name": "native-cssom",
+        "startedAt": "2026-10-16T07:37:16Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE lobby slot native CSSOM regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:43:32Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315609/job/116866481245",
+        "name": "browser (chromium, 1)",
+        "startedAt": "2026-10-16T07:37:37Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:37:13Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315668/job/116866193131",
+        "name": "paint-parity",
+        "startedAt": "2026-10-16T07:37:00Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE paint hotpath parity"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:38:00Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315675/job/116866193317",
+        "name": "reopened-six",
+        "startedAt": "2026-10-16T07:37:09Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE reopened-six focused regressions"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:37:07Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315658/job/116866192942",
+        "name": "frame-pacing",
+        "startedAt": "2026-10-16T07:36:46Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE touch frame pacing"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:39:38Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315663/job/116866193323",
+        "name": "contracts",
+        "startedAt": "2026-10-16T07:37:21Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE native stage integration"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T08:55:01Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635998",
+        "name": "validate",
+        "startedAt": "2026-10-16T07:40:35Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:53:59Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315609/job/116866481349",
+        "name": "browser (chromium, 2)",
+        "startedAt": "2026-10-16T07:37:38Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:46:31Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315609/job/116866481009",
+        "name": "browser (webkit, 1)",
+        "startedAt": "2026-10-16T07:43:34Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:49:20Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315609/job/116866481164",
+        "name": "browser (webkit, 2)",
+        "startedAt": "2026-10-16T07:46:33Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE narrow HUD tank regression"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:36:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315716/job/116866195050",
+        "name": "contracts-and-crowd",
+        "startedAt": "2026-10-16T07:36:44Z",
+        "status": "COMPLETED",
+        "workflowName": "INKWAVE nine circled weapon model review"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:36:43Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315659/job/116866246789",
+        "name": "live-ray-equivalence",
+        "startedAt": "2026-10-16T07:36:53Z",
+        "status": "COMPLETED",
+        "workflowName": "Verify composed INKWAVE crowd changes"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:51:35Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635963",
+        "name": "browser (active, chromium webkit)",
+        "startedAt": "2026-10-16T07:38:06Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:47:00Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635805",
+        "name": "browser (catalog, chromium)",
+        "startedAt": "2026-10-16T07:38:33Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:55:06Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635890",
+        "name": "browser (ui, chromium webkit)",
+        "startedAt": "2026-10-16T07:38:06Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T08:03:44Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866636110",
+        "name": "browser (responsive, chromium webkit)",
+        "startedAt": "2026-10-16T07:42:35Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:40:32Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635673",
+        "name": "browser (network, chromium webkit)",
+        "startedAt": "2026-10-16T07:38:05Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:50:28Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635887",
+        "name": "browser (range, chromium webkit)",
+        "startedAt": "2026-10-16T07:38:27Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:53:25Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866636116",
+        "name": "browser (startup, chromium)",
+        "startedAt": "2026-10-16T07:42:22Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:38:02Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866637223",
+        "name": "render-diagnostic",
+        "startedAt": "2026-10-16T07:38:03Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:43:00Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635921",
+        "name": "seven_claims",
+        "startedAt": "2026-10-16T07:39:41Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-16T07:42:20Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620/job/116866635869",
+        "name": "resource_paint_continuation",
+        "startedAt": "2026-10-16T07:38:06Z",
+        "status": "COMPLETED",
+        "workflowName": "Validate INKWAVE update"
+      },
+      {
+        "__typename": "StatusContext",
+        "context": "CodeRabbit",
+        "startedAt": "2026-10-16T07:36:48Z",
+        "state": "SUCCESS",
+        "targetUrl": ""
+      }
+    ],
+    "pr": 1515,
+    "validateRunUrl": "https://github.com/rhgrive3/actions/actions/runs/38868315620",
+    "fullSourceSuite": {
+      "files": 769,
+      "total": 6364,
+      "pass": 6341,
+      "conditionalSkips": 23,
+      "fail": 0
+    }
+  }
+]

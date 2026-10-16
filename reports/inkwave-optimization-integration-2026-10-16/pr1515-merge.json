@@ -1,0 +1,10 @@
+{
+  "merged": true,
+  "pr": 1515,
+  "sha": "a262d8bcd2c8e95d6fef76e6081d89c33aea25de",
+  "head": "3acf39f76bc9124ed4c7f153a6c9d60ed89c6e84",
+  "mergedAt": "2026-10-16T08:55:36Z",
+  "mergedBy": "rhgrive3",
+  "tree": "b5a46abb5be10288151579f1105cdc634f235b40",
+  "equalsQualifiedIntegrationTree": true
+}

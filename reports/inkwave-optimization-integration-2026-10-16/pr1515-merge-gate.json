@@ -1,0 +1,26 @@
+{
+  "ready": true,
+  "pr": 1515,
+  "head": "3acf39f76bc9124ed4c7f153a6c9d60ed89c6e84",
+  "main": "84630809391f25a51e512a850ca4abc21d07084c",
+  "mergeTree": "b5a46abb5be10288151579f1105cdc634f235b40",
+  "requiredChecks": 21,
+  "successfulChecks": 21,
+  "allowedSkippedChecks": [
+    "compare",
+    "contracts-and-crowd",
+    "live-ray-equivalence",
+    "paired-game",
+    "render-diagnostic",
+    "single-change-comparison",
+    "visual"
+  ],
+  "externalStatuses": [
+    [
+      "CodeRabbit",
+      "SUCCESS"
+    ]
+  ],
+  "reviewStates": {},
+  "errors": []
+}
