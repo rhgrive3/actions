@@ -20,6 +20,10 @@ write('package.json','{"type":"module"}');
 write('patches/local-quality/quality-probe.mjs','export const runQualityBrowserProbe=()=>{throw Error("Unexpected probe")};');
 write('patches/local-quality/paint-mipmap-probe.mjs','export const runPaintMipmapBrowserProbe=()=>{throw Error("Unexpected probe")};');
 write('scripts/check-inkwave-hud-authority.mjs','export const checkHudAuthority=()=>{},checkUiVisualProbes=()=>{};');
+// Keep the checker's real import-time appearance helpers available. Their
+// browser functions must not run before source-identity validation.
+for(const [,relative] of checker.matchAll(/^import .* from '(\.\/lib\/[^']+\.mjs)';$/gm))
+ write(path.join('scripts',relative),fs.readFileSync(new URL(relative,new URL('../check-inkwave-browser.mjs',import.meta.url))));
 write('scripts/build-inkwave.mjs','// fixed build\n');
 const rows=[['touch-layout/mobile.js','patches/touch-layout/mobile.js'],['network-replication/adapter.mjs','patches/network-replication/adapter.mjs'],['reliability/input-adapter.mjs','patches/reliability/input-adapter.mjs']];
 for(const [,file]of rows)write(file,'// clean overlay\n');
