@@ -7,7 +7,7 @@ import { adaptSource } from '../../splatoon3/adapter.mjs';
 import { adaptTouchLayout } from '../../touch-layout/adapter.mjs';
 import { adaptReliability } from '../../reliability/adapter.mjs';
 import { adaptQualitySource, qualityIdentity } from '../adapter.mjs';
-import { adaptS3FaceEyes } from '../s3-face-eyes-adapter.mjs';
+import { adaptS3FaceLook } from '../s3-face-look-adapter.mjs';
 import { readSource, UPSTREAM } from '../../reliability/tests/hud-fixture.mjs';
 import { BUILD_ONLY_PATCH_MODULES } from '../../../scripts/lib/inkwave-build-only-modules.mjs';
 
@@ -46,13 +46,13 @@ function aperture(face) {
   return pts;
 }
 
-test('S3 face eyes: composed modules parse and the adapter is a build-only quality module', () => {
+test('S3 face look: composed modules parse and the adapter is a build-only quality module', () => {
   for (const rel of S3_FACE_EYES_FILES) new vm.SourceTextModule(compose(rel));
-  assert.ok(JSON.stringify(qualityIdentity()).includes('s3-face-eyes-adapter.mjs'));
-  assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/s3-face-eyes-adapter.mjs'));
+  assert.ok(JSON.stringify(qualityIdentity()).includes('s3-face-look-adapter.mjs'));
+  assert.ok(BUILD_ONLY_PATCH_MODULES.has('patches/local-quality/s3-face-look-adapter.mjs'));
 });
 
-test('S3 face eyes: the opening is wider than tall and spaced across the face', async () => {
+test('S3 face look: the opening is wider than tall and spaced across the face', async () => {
   const { face } = await realm();
   const pts = aperture(face);
   const xs = pts.map((q) => q.p.x), ys = pts.map((q) => q.p.y);
@@ -63,7 +63,7 @@ test('S3 face eyes: the opening is wider than tall and spaced across the face', 
   assert.ok(cx > 0.075 && cx < 0.1, `eye centre x ${cx}`);
 });
 
-test('S3 face eyes: the goggle covers the opening with a thin border and no wings', async () => {
+test('S3 face look: the goggle covers the opening with a thin border and no wings', async () => {
   const { face } = await realm();
   const { visorSD } = face, pts = aperture(face);
   const ca = pts.reduce((s, q) => s + q.az, 0) / pts.length, ce = pts.reduce((s, q) => s + q.el, 0) / pts.length;
@@ -80,7 +80,7 @@ test('S3 face eyes: the goggle covers the opening with a thin border and no wing
   for (let el = -0.3; el <= 0.6; el += 0.02) assert.ok(visorSD(1.1, el) < 0 && visorSD(-1.1, el) < 0);
 });
 
-test('S3 face eyes: the shader mask is the same shape as the geometry mask', async () => {
+test('S3 face look: the shader mask is the same shape as the geometry mask', async () => {
   const { face, matsSource } = await realm();
   const glsl = matsSource.slice(matsSource.indexOf('float iwVisorSD(float az, float el){'), matsSource.indexOf('float iwHairline('));
   // instantiate the template exactly as the module does, then read the GLSL back as JS
@@ -89,13 +89,14 @@ test('S3 face eyes: the shader mask is the same shape as the geometry mask', asy
     .replace('float iwVisorSD(float az, float el){', 'return (az, el) => {')
     .replace(/\bfloat\b/g, 'let').replace(/\babs\(/g, 'Math.abs(').replace(/\bpow\(/g, 'Math.pow(').replace(/\bexp\(/g, 'Math.exp(')
     .replace(/\bmin\(/g, 'Math.min(').replace(/iwSmax\(/g, 'smax(');
+  const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const smax = (a, b, k) => { const h = Math.min(1, Math.max(0, 0.5 + 0.5 * (a - b) / k)); return b + (a - b) * h + k * h * (1 - h); };
-  const shaderSD = new Function('smax', js)(smax);
+  const shaderSD = new Function('smax', 'smoothstep', js)(smax, smoothstep);
   for (let az = -1.4; az <= 1.4; az += 0.05) for (let el = -0.4; el <= 0.6; el += 0.05)
     assert.ok(Math.abs(shaderSD(az, el) - face.visorSD(az, el)) < 2e-3, `pigment vs geometry at ${az.toFixed(2)},${el.toFixed(2)}`);
 });
 
-test('S3 face eyes: every face detail level builds finite geometry', async () => {
+test('S3 face look: every face detail level builds finite geometry', async () => {
   const { face } = await realm();
   for (let lv = 0; lv <= 4; lv++) {
     const { geo } = face.buildFaceSkin(lv);
@@ -105,18 +106,57 @@ test('S3 face eyes: every face detail level builds finite geometry', async () =>
   }
 });
 
-test('S3 face eyes: blinking lids are mask-black, the iris is round on the wider ball', async () => {
-  const { matsSource } = await realm();
-  assert.match(matsSource, /vIwLid = abs\(a\);/);
-  assert.match(matsSource, /iwVisor = max\(iwVisor, smoothstep\(0\.08, 0\.15, vIwLid\)\);/);
-  assert.match(matsSource, /vec2 iq = ip\.xy \* vec2\(\$\{\(FACE_SHADER\.eyeR\.x \/ FACE_SHADER\.eyeR\.y\)\.toFixed\(4\)\}, 1\.0\) \/ sin\(uIrisR\);/);
-  assert.match(matsSource, /float pd = length\(iq\) - pr;/);
+test('S3 face look: lids move only inside the mask, so a blink closes black within a fixed outline', async () => {
+  const { face } = await realm();
+  const { acc } = face.buildFaceSkin(4);
+  let moving = 0;
+  for (let i = 0; i < acc.P.length; i++) {
+    const [up, low] = acc.lid[i];
+    assert.equal(low, 0, 'the lower lid stays put; the upper lid comes all the way down');
+    if (up < 0.02) continue;
+    moving++;
+    const q = acc.P[i].clone().sub(face.HEAD_C);
+    const az = Math.atan2(q.x, q.z), el = Math.asin(q.y / q.length());
+    // a few margin vertices tuck under the ball (hidden), so they may project just past the edge from the head centre
+    assert.ok(face.visorSD(az, el) > -0.01, `moving lid vertex outside the mask at ${az.toFixed(3)},${el.toFixed(3)}`);
+  }
+  assert.ok(moving > 100);
 });
 
-test('S3 face eyes: missing or duplicated anchors fail closed; other files pass through', () => {
+test('S3 face look: no socket bowl outside the mask, closed lids cover the ball black, round iris', async () => {
+  const { face, matsSource } = await realm();
+  const { acc } = face.buildFaceSkin(4);
+  const s = new face.HEAD_C.constructor();
+  let checked = 0;
+  for (let i = 0; i < acc.P.length; i++) {
+    if (acc.part[i] !== 3) continue;                                   // eye ring patches
+    const q = acc.P[i].clone().sub(face.HEAD_C), r = q.length();
+    const az = Math.atan2(q.x, q.z), el = Math.asin(q.y / r);
+    if (face.visorSD(az, el) > -0.01) continue;                        // under the mask the lids may sit lower
+    face.headSurfFace(az, el, 0, s);
+    // flush with the face; only past the outer corner may the skin rise a little over the wide eyeball
+    assert.ok(Math.abs(r - s.sub(face.HEAD_C).length()) < 0.0025, `skin dips ${(r - s.length()).toFixed(4)} m at ${az.toFixed(3)},${el.toFixed(3)}`);
+    checked++;
+  }
+  assert.ok(checked > 100);
+  assert.match(matsSource, /vec2 iq = ip\.xy \* vec2\(\$\{\(FACE_SHADER\.eyeR\.x \/ FACE_SHADER\.eyeR\.y\)\.toFixed\(4\)\}, 1\.0\) \/ sin\(uIrisR\);/);
+  assert.match(matsSource, /float pd = length\(iq\) - pr;/);
+  assert.match(matsSource, /col = mix\(col, vec3\(0\.012, 0\.0135, 0\.02\), lidCover\);/);
+});
+
+test('S3 face look: a projecting nose, and the face stays upright through the mouth', async () => {
+  const { face } = await realm();
+  const V = face.HEAD_C.constructor, n = new V();
+  const tip = face.headSurfFace(0, -0.182, 0, new V()), cheek = face.headSurfFace(0.25, -0.182, 0, new V());
+  assert.ok(tip.z - cheek.z > 0.02, `nose stands ${(tip.z - cheek.z).toFixed(4)} m proud of the cheeks`);
+  face.headSurfFace(0, face.MOUTH.el, 0, new V(), n);
+  assert.ok(n.y > -0.42 && n.z > 0.9, `mouth surface normal ${n.y.toFixed(3)},${n.z.toFixed(3)}`);
+});
+
+test('S3 face look: missing or duplicated anchors fail closed; other files pass through', () => {
   for (const rel of S3_FACE_EYES_FILES) {
     const raw = readSource(rel);
-    for (const input of ['', raw + raw]) assert.throws(() => adaptS3FaceEyes(rel, input), /S3 face eyes conflict/);
+    for (const input of ['', raw + raw]) assert.throws(() => adaptS3FaceLook(rel, input), /S3 face look conflict/);
   }
-  assert.equal(adaptS3FaceEyes('src/game/actor.js', 'unchanged'), 'unchanged');
+  assert.equal(adaptS3FaceLook('src/game/actor.js', 'unchanged'), 'unchanged');
 });

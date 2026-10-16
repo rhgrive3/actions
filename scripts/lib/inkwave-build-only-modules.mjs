@@ -89,7 +89,7 @@ export const BUILD_ONLY_PATCH_MODULES = new Set([
   'patches/local-quality/range-frame-pacing-adapter.mjs',
   'patches/local-quality/team-special-signal-adapter.mjs',
   'patches/local-quality/s3-squid-look-adapter.mjs',
-  'patches/local-quality/s3-face-eyes-adapter.mjs',
+  'patches/local-quality/s3-face-look-adapter.mjs',
   'patches/reliability/touch-gyro-owner-adapter.mjs',
   'patches/reliability/input-ownership-adapter.mjs',
   'patches/local-quality/screenfx-damage-reset-adapter.mjs',
