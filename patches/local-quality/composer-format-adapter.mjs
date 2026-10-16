@@ -107,7 +107,7 @@ export function selectComposerTargetFormat(THREE, renderer, {
       format: THREE.RGBFormat,
       type: THREE.UnsignedInt101111Type,
       samples: 0,
-      depthBuffer: true,
+      depthBuffer: false,
     });
     renderer.initRenderTarget(probe);
     renderer.setRenderTarget(probe);

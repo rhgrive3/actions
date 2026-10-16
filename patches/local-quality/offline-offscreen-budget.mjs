@@ -261,13 +261,14 @@ export function installOfflineOffscreenBudget(api, G) {
 // original fixed simulation cadence so visible movement, muzzle transforms,
 // paint ownership, damage and the menu camera never lose gameplay ticks.
 //
-// At 60 Hz desktop the demo brains make 30 decisions/s; the already
-// 20-Hz touch/LOW menu uses 10 decisions/s. Physics and rendered poses still
-// run at their prior rate. Half the bots start on the opposite tick.
+// All menu tiers make 30 decisions/s over the 60-Hz simulation. Native
+// BotBrain.update also integrates the aim spring, so feeding it 100 ms on
+// touch/LOW makes that spring oscillate even against a stationary target.
+// Half the bots start on the opposite tick. Drawing has its own budget.
 // Accumulate elapsed time and pass it to the native brain; do not lose timers.
 const ATTRACT_INSTALLED = Symbol.for('inkwave.local-quality.attract-bot-budget.v1');
 export const ATTRACT_AI_STEP = 1 / 30;
-export const ATTRACT_AI_TOUCH_STEP = 1 / 10;
+export const ATTRACT_AI_TOUCH_STEP = ATTRACT_AI_STEP;
 export function attractAiStep(G) {
   const touch = !!(G?.game?.mobile?.touch || G?.mobile?.touch);
   const low = (G?.game?.settings || G?.settings)?.quality === 'low';
@@ -305,7 +306,7 @@ export function installAttractBotBudget({ BotBrain }, G) {
       this._menuAttractFirst = undefined;
       this._menuAttractStep = step;
     }
-    // Stagger 4+4 brains on alternate 60-Hz or 20-Hz simulation frames.
+    // Stagger 4+4 brains on alternate 60-Hz simulation ticks.
     const first = this._menuAttractFirst ??
       (((actor.team + actor.slot) & 1) ? step / 2 : step);
     const accumulated = (this._menuAttractPending || 0) + dt;

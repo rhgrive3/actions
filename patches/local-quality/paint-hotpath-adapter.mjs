@@ -1,10 +1,29 @@
-// Build-time-only, behavior-preserving PaintSystem CPU allocation cleanup.
+// Build-time-only PaintSystem CPU allocation and bounded floating-point math cleanup.
 // Protected upstream source stays immutable; fail closed when any anchor changes.
 export function adaptPaintHotpath(rel, code, replaceOnce) {
   if (rel !== 'src/world/paint.js') return code;
   const change = (before, after, label) => {
     code = replaceOnce(code, before, after, 'paint hotpath: ' + label);
   };
+  // Multiplication-chain powers reduce CPU cost significantly. These may differ
+  // by a few ULPs from Math.pow: intentionally allow sub-picometer relative
+  // contour deviation, while retaining the same CPU/GPU cutoff predicates.
+  change(
+    `export function blobWobble(ang, seed) {
+  return 1 + 0.12 * Math.sin(3 * ang + seed * 6.2831) + 0.08 * Math.sin(5 * ang + seed * 17.0) +
+    0.05 * Math.sin(7 * ang + seed * 41.0) + 0.03 * Math.sin(11 * ang + seed * 73.0) + 0.018 * Math.sin(17 * ang + seed * 29.0) +
+    0.17 * Math.pow(Math.max(Math.cos(ang - seed * 37.7), 0), 28) + 0.12 * Math.pow(Math.max(Math.cos(ang - seed * 53.3 - 2.1), 0), 36);
+}`,
+    `export function blobWobble(ang, seed) {
+  let c1 = Math.cos(ang - seed * 37.7); c1 = c1 > 0 ? c1 * c1 : 0;
+  const c1_4 = c1 * c1, c1_8 = c1_4 * c1_4;
+  let c2 = Math.cos(ang - seed * 53.3 - 2.1); c2 = c2 > 0 ? c2 * c2 : 0;
+  const c2_4 = c2 * c2, c2_8 = c2_4 * c2_4, c2_16 = c2_8 * c2_8;
+  return 1 + 0.12 * Math.sin(3 * ang + seed * 6.2831) + 0.08 * Math.sin(5 * ang + seed * 17.0) +
+    0.05 * Math.sin(7 * ang + seed * 41.0) + 0.03 * Math.sin(11 * ang + seed * 73.0) + 0.018 * Math.sin(17 * ang + seed * 29.0) +
+    0.17 * (c1_8 * c1_8 * c1_8 * c1_4) + 0.12 * (c2_16 * c2_16 * c2_4);
+}`,
+    'replace high-power cosine spikes with fixed multiplication chains');
   // Fixed vertex-attribute names do not need a fresh five-element Array per
   // active paint-atlas GPU flush. The immutable shared list preserves order.
   change('const MAX_QUADS = 6000;',
