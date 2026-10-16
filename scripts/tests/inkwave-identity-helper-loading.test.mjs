@@ -15,7 +15,7 @@ const scratch=path.join(repo,'.dev-state','agent-work','identity-helper-regressi
 const root=fs.mkdtempSync(path.join(scratch,'fixture-'));
 const write=(name,bytes)=>{const p=path.join(root,name);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,bytes);};
 // Only import-time dependencies are inert. The exact production checker and
-// real Git identity comparison run in a child; no browser helper is installed.
+// real Git identity comparison run in a child; the mandatory minimap helper is absent.
 write('package.json','{"type":"module"}');
 write('patches/local-quality/quality-probe.mjs','export const runQualityBrowserProbe=()=>{throw Error("Unexpected probe")};');
 write('patches/local-quality/paint-mipmap-probe.mjs','export const runPaintMipmapBrowserProbe=()=>{throw Error("Unexpected probe")};');

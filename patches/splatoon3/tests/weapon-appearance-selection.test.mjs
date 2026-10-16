@@ -113,20 +113,20 @@ test('all alternate appearances retain finite native carry/attack poses and unch
   assert.ok(attacked>0,id+' admitted attack');a.weaponRunner.reset();ch.dispose();G.scene.remove(ch.root);f.AP.setWeaponAppearance(base,base,null);
  }
 });
-test('kit IDs retain gameplay APIs with45 reviewed defaults and50 base fallbacks',async()=>{
+test('kit IDs retain gameplay APIs with59 reviewed defaults and36 base fallbacks',async()=>{
  const {REG:R,AP,WEAPONS,WEAPON_ORDER}=await production();
- assert.equal(WEAPON_ORDER.length,160);let implemented=0;
+ assert.equal(WEAPON_ORDER.length,160);let implemented=0,fallback=0;
  for(const kit of ALTERNATE_WEAPON_KITS){
   assert.equal(R.weaponModelKey(kit.id),R.registeredWeaponVariantModels().includes(kit.main)?kit.main:kit.baseId);assert.equal(R.weaponBaseModelId(kit.id),kit.baseId);
   assert.equal(R.weaponModelSpec(kit.id),R.registeredWeaponVariantModels().includes(kit.main)?R.weaponVariantSpec(kit.main):R.weaponModelSpec(kit.baseId));
   assert.equal(R.weaponBehaviorFamily(kit.id),R.weaponBehaviorFamily(kit.baseId));
-  const expected=R.registeredWeaponVariantModels().includes(kit.main)?kit.main:kit.baseId;if(expected===kit.main)implemented++;
+  const expected=R.registeredWeaponVariantModels().includes(kit.main)?kit.main:kit.baseId;if(expected===kit.main)implemented++;else fallback++;
   assert.equal(R.weaponDefaultAppearance(kit.id),expected);assert.equal(AP.selectedWeaponAppearance(kit.id,memoryStorage()),expected);
   assert.equal(WEAPONS[kit.id].sourceRow,kit.main);assert.equal(WEAPONS[kit.id].sub,kit.sub);
   assert.equal(WEAPONS[kit.id].special,kit.special);assert.equal(WEAPONS[kit.id].specialCost,kit.specialCost);
   assert.ok(AP.weaponAppearanceOptions(kit.id).some(o=>o.id===kit.baseId));
  }
- assert.equal(implemented,45);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
+ assert.equal(implemented,59);assert.equal(fallback,36);assert.equal(R.weaponDefaultAppearance('unknown-kit'),'unknown-kit');
  assert.equal(AP.selectedWeaponAppearance('unknown-kit',memoryStorage()),'unknown-kit');
 });
 test('explicit Base persists separately from absent kit default and does not leak to peers',async()=>{

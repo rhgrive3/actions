@@ -17,7 +17,8 @@ const baseline=process.argv.includes('--baseline');
 const lagIndex=process.argv.indexOf('--delay-frames'),delayFrames=lagIndex<0?0:Number(process.argv[lagIndex+1]);assert(Number.isSafeInteger(delayFrames)&&delayFrames>=0&&delayFrames<=30);
 const site=option('--site'),evidence=option('--evidence-dir'),profile=option('--profile-dir');
 const physical=p=>fs.existsSync(p)?fs.realpathSync(p):path.join(physical(path.dirname(p)),path.basename(p));
-for(const p of [evidence,profile]){assert(physical(p).startsWith('/mnt/workspace/'),'Persistent workspace required');fs.mkdirSync(p,{recursive:true});}
+const persistentRoots=['/mnt/workspace',ROOT].map(physical);
+for(const p of [evidence,profile]){const resolved=physical(p);assert(!['/tmp','/var/tmp','/dev/shm'].some(r=>resolved===r||resolved.startsWith(r+'/'))&&persistentRoots.some(r=>resolved.startsWith(r+path.sep)),'Persistent workspace required');fs.mkdirSync(p,{recursive:true});}
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const build=JSON.parse(fs.readFileSync(path.join(site,'inkwave-build.json')));
 assert.equal(build.schema,1);assert.equal(hash(JSON.stringify(build.files)),build.inputHash);assert.equal(hash(JSON.stringify(build.artifacts)),build.contentHash);

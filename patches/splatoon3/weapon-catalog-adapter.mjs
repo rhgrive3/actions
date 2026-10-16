@@ -200,10 +200,14 @@ export function adaptWeaponCatalog(rel, code) {
 
   if (rel === 'src/game/showcase.js') {
     code = replaceAllExpected(code, "name: 'preview', isLocal: false", "name: 'preview', isLocal: false, weaponAppearancePreview: true", 2, 'personal showcase appearance');
-    return replaceOnce(code,
+    code = replaceOnce(code,
       "const weaponKind = (id) => (WEAPONS[id] && WEAPONS[id].kind) || id || 'shooter';",
       "const weaponKind = (id) => (WEAPONS[id] ? id : id || 'shooter'); // Character.setWeapon resolves its family",
       'showcase weapon ID routing');
+    return replaceOnce(code,
+      "    if (this.phase === 'emerge') {",
+      "    // A selection made during emergence must use the native hop once ready.\n    if (this.phase === 'pose' && this.hopWeapon) {\n      this.phase = 'hop'; this.hopT = t;\n    }\n    if (this.phase === 'emerge') {",
+      'queued showcase weapon selection after emergence');
   }
 
   return code;

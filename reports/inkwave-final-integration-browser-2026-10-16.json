@@ -1,0 +1,2112 @@
+{
+  "status": "passed",
+  "scope": "full-active",
+  "fullAcceptance": true,
+  "sourceSha": "fe39363d28e6595dab9ef6925142e2ed79d6b586",
+  "contentHash": "94f56dddea17bf1c6f24b9d198e4c42f8d88b2e8c5b3066d522e1a01fa9dbffe",
+  "browser": "Chromium 154.0.8037.57, headless SwiftShader",
+  "rawResultSha256": "5665ae3ea08c274af98f5fe12b20475feeaf07efc8e78e218073704267afe85b",
+  "verifiedResponses": 485,
+  "acceptedDefaultConsumption": {
+    "selectedCount": 57,
+    "manualCount": 94,
+    "rows": [
+      {
+        "row": "Spinner_Serein_01",
+        "kit": "s3-spinner-serein-01",
+        "base": "s3-spinner-serein",
+        "preference": null,
+        "selected": "Spinner_Serein_01",
+        "weaponModel": "Spinner_Serein_01",
+        "appearance": "Spinner_Serein_01",
+        "modelId": "s3-spinner-serein",
+        "modelVariantId": "Spinner_Serein_01",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 671
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": true,
+            "vertices": 3720
+          },
+          {
+            "body": false,
+            "vertices": 80
+          },
+          {
+            "body": false,
+            "vertices": 224
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Spinner_Hyper_01",
+        "kit": "s3-spinner-hyper-01",
+        "base": "s3-spinner-hyper",
+        "preference": null,
+        "selected": "Spinner_Hyper_01",
+        "weaponModel": "Spinner_Hyper_01",
+        "appearance": "Spinner_Hyper_01",
+        "modelId": "s3-spinner-hyper",
+        "modelVariantId": "Spinner_Hyper_01",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 1122
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": true,
+            "vertices": 1348
+          },
+          {
+            "body": false,
+            "vertices": 3
+          },
+          {
+            "body": false,
+            "vertices": 224
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Spinner_Hyper_02",
+        "kit": "s3-spinner-hyper-02",
+        "base": "s3-spinner-hyper",
+        "preference": null,
+        "selected": "Spinner_Hyper_02",
+        "weaponModel": "Spinner_Hyper_02",
+        "appearance": "Spinner_Hyper_02",
+        "modelId": "s3-spinner-hyper",
+        "modelVariantId": "Spinner_Hyper_02",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 1122
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": true,
+            "vertices": 1348
+          },
+          {
+            "body": false,
+            "vertices": 3
+          },
+          {
+            "body": false,
+            "vertices": 224
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Shooter_Expert_01",
+        "kit": "s3-shooter-expert-01",
+        "base": "s3-shooter-expert",
+        "preference": null,
+        "selected": "Shooter_Expert_01",
+        "weaponModel": "Shooter_Expert_01",
+        "appearance": "Shooter_Expert_01",
+        "modelId": "s3-shooter-expert",
+        "modelVariantId": "Shooter_Expert_01",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 126
+          },
+          {
+            "body": true,
+            "vertices": 3652
+          },
+          {
+            "body": false,
+            "vertices": 3
+          },
+          {
+            "body": false,
+            "vertices": 302
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Shooter_QuickLong_01",
+        "kit": "s3-shooter-quicklong-01",
+        "base": "s3-shooter-quicklong",
+        "preference": null,
+        "selected": "Shooter_QuickLong_01",
+        "weaponModel": "Shooter_QuickLong_01",
+        "appearance": "Shooter_QuickLong_01",
+        "modelId": "s3-shooter-quicklong",
+        "modelVariantId": "Shooter_QuickLong_01",
+        "drawn": [
+          {
+            "body": true,
+            "vertices": 5838
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": false,
+            "vertices": 3
+          },
+          {
+            "body": false,
+            "vertices": 544
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Shooter_Long_01",
+        "kit": "s3-shooter-long-01",
+        "base": "s3-shooter-long",
+        "preference": null,
+        "selected": "Shooter_Long_01",
+        "weaponModel": "Shooter_Long_01",
+        "appearance": "Shooter_Long_01",
+        "modelId": "s3-shooter-long",
+        "modelVariantId": "Shooter_Long_01",
+        "drawn": [
+          {
+            "body": true,
+            "vertices": 5748
+          },
+          {
+            "body": false,
+            "vertices": 126
+          },
+          {
+            "body": false,
+            "vertices": 3
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Maneuver_Gallon_01",
+        "kit": "s3-maneuver-gallon-01",
+        "base": "s3-maneuver-gallon",
+        "preference": null,
+        "selected": "Maneuver_Gallon_01",
+        "weaponModel": "Maneuver_Gallon_01",
+        "appearance": "Maneuver_Gallon_01",
+        "modelId": "s3-maneuver-gallon",
+        "modelVariantId": "Maneuver_Gallon_01",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": true,
+            "vertices": 1448
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": false,
+            "vertices": 1448
+          },
+          {
+            "body": false,
+            "vertices": 492
+          },
+          {
+            "body": false,
+            "vertices": 492
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Maneuver_Normal_02",
+        "kit": "dualies-02",
+        "base": "dualies",
+        "preference": null,
+        "selected": "Maneuver_Normal_02",
+        "weaponModel": "Maneuver_Normal_02",
+        "appearance": "Maneuver_Normal_02",
+        "modelId": "dualies",
+        "modelVariantId": "Maneuver_Normal_02",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 978
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": true,
+            "vertices": 978
+          },
+          {
+            "body": false,
+            "vertices": 42
+          },
+          {
+            "body": false,
+            "vertices": 42
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Shelter_Compact_01",
+        "kit": "s3-shelter-compact-01",
+        "base": "s3-shelter-compact",
+        "preference": null,
+        "selected": "Shelter_Compact_01",
+        "weaponModel": "Shelter_Compact_01",
+        "appearance": "Shelter_Compact_01",
+        "modelId": "s3-shelter-compact",
+        "modelVariantId": "Shelter_Compact_01",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 1141
+          },
+          {
+            "body": true,
+            "vertices": 538
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": false,
+            "vertices": 57
+          },
+          {
+            "body": false,
+            "vertices": 29
+          },
+          {
+            "body": false,
+            "vertices": 42
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Spinner_Downpour_01",
+        "kit": "s3-spinner-downpour-01",
+        "base": "s3-spinner-downpour",
+        "preference": null,
+        "selected": "Spinner_Downpour_01",
+        "weaponModel": "Spinner_Downpour_01",
+        "appearance": "Spinner_Downpour_01",
+        "modelId": "s3-spinner-downpour",
+        "modelVariantId": "Spinner_Downpour_01",
+        "drawn": [
+          {
+            "body": true,
+            "vertices": 1218
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": false,
+            "vertices": 132
+          },
+          {
+            "body": false,
+            "vertices": 3
+          },
+          {
+            "body": false,
+            "vertices": 224
+          },
+          {
+            "body": false,
+            "vertices": 160
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Spinner_HyperShort_01",
+        "kit": "s3-spinner-hypershort-01",
+        "base": "s3-spinner-hypershort",
+        "preference": null,
+        "selected": "Spinner_HyperShort_01",
+        "weaponModel": "Spinner_HyperShort_01",
+        "appearance": "Spinner_HyperShort_01",
+        "modelId": "s3-spinner-hypershort",
+        "modelVariantId": "Spinner_HyperShort_01",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 176
+          },
+          {
+            "body": true,
+            "vertices": 1696
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": false,
+            "vertices": 124
+          },
+          {
+            "body": false,
+            "vertices": 224
+          }
+        ],
+        "poseFinite": true
+      },
+      {
+        "row": "Spinner_Standard_01",
+        "kit": "splatling-01",
+        "base": "splatling",
+        "preference": null,
+        "selected": "Spinner_Standard_01",
+        "weaponModel": "Spinner_Standard_01",
+        "appearance": "Spinner_Standard_01",
+        "modelId": "splatling",
+        "modelVariantId": "Spinner_Standard_01",
+        "drawn": [
+          {
+            "body": false,
+            "vertices": 556
+          },
+          {
+            "body": true,
+            "vertices": 1558
+          },
+          {
+            "body": false,
+            "vertices": 86
+          },
+          {
+            "body": false,
+            "vertices": 58
+          },
+          {
+            "body": false,
+            "vertices": 224
+          }
+        ],
+        "poseFinite": true
+      }
+    ]
+  },
+  "canonicalLoadout": [
+    {
+      "id": "s3-shooter-short",
+      "sub": "curling",
+      "special": "ultraStamp",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 306.27345275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-first",
+      "sub": "bomb",
+      "special": "bubbler",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 306.3046875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-precision",
+      "sub": "burst",
+      "special": "crabTank",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 306.30469512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-blaze",
+      "sub": "fizzy",
+      "special": "reefslider",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 306.3359375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "shooter",
+      "sub": "suction",
+      "special": "trizooka",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 226.1796875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-gravity",
+      "sub": "splashWall",
+      "special": "killerWail",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 306.33595275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-quickmiddle",
+      "sub": "suction",
+      "special": "tacticooler",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 306.3671875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-expert",
+      "sub": "angleShooter",
+      "special": "crabTank",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 306.36719512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-heavy",
+      "sub": "sprinkler",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.3984375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-long",
+      "sub": "angleShooter",
+      "special": "inkVac",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.39845275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-quicklong",
+      "sub": "pointSensor",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 305.4296875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-short",
+      "sub": "bomb",
+      "special": "zipcaster",
+      "points": 170,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.42970275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "blaster",
+      "sub": "autobomb",
+      "special": "bubbler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 306.2734375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-long",
+      "sub": "suction",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.4609375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-lightshort",
+      "sub": "bomb",
+      "special": "trizooka",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.46094512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-light",
+      "sub": "inkMine",
+      "special": "tripleInkstrike",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 305.4609375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-lightlong",
+      "sub": "toxicMist",
+      "special": "inkVac",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 305.4921875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-blaster-precision",
+      "sub": "sprinkler",
+      "special": "reefslider",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 305.4921875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-triplequick",
+      "sub": "curling",
+      "special": "crabTank",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 305.5234375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-triplemiddle",
+      "sub": "pointSensor",
+      "special": "tacticooler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 305.5234375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shooter-flash",
+      "sub": "splashWall",
+      "special": "trizooka",
+      "points": 220,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.55469512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-compact",
+      "sub": "autobomb",
+      "special": "zipcaster",
+      "points": 160,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 305.5546875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "roller",
+      "sub": "curling",
+      "special": "bubbler",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 306.21095275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-heavy",
+      "sub": "sprinkler",
+      "special": "tacticooler",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.58594512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-hunter",
+      "sub": "inkMine",
+      "special": "tentaMissiles",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.6171875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-roller-wide",
+      "sub": "splashWall",
+      "special": "inkVac",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.61719512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-brush-mini",
+      "sub": "bomb",
+      "special": "killerWail",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.6484375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-brush-normal",
+      "sub": "suction",
+      "special": "zipcaster",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.64844512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-brush-heavy",
+      "sub": "curling",
+      "special": "waveBreaker",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.6796875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-quick",
+      "sub": "pointSensor",
+      "special": "bubbler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.67970275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "charger",
+      "sub": "bomb",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 306.24219512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-normalscope",
+      "sub": "bomb",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.7109375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-long",
+      "sub": "inkMine",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.71095275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-longscope",
+      "sub": "inkMine",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.7421875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-light",
+      "sub": "autobomb",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.74219512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-keeper",
+      "sub": "torpedo",
+      "special": "tentaMissiles",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 305.7421875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-charger-pencil",
+      "sub": "sprinkler",
+      "special": "tacticooler",
+      "points": 220,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 305.7734375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "slosher",
+      "sub": "bomb",
+      "special": "tripleInkstrike",
+      "points": 220,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 306.2421875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "sub": "toxicMist",
+      "special": "inkjet",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.77345275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-launcher",
+      "sub": "fizzy",
+      "special": "booyahBomb",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 305.8046875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-bathtub",
+      "sub": "sprinkler",
+      "special": "storm",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.80470275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-washtub",
+      "sub": "pointSensor",
+      "special": "storm",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.8359375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-slosher-double",
+      "sub": "suction",
+      "special": "reefslider",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.83594512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-quick",
+      "sub": "burst",
+      "special": "ultraStamp",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.8671875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "splatling",
+      "sub": "sprinkler",
+      "special": "waveBreaker",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 306.2109375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-hyper",
+      "sub": "autobomb",
+      "special": "booyahBomb",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.86720275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-downpour",
+      "sub": "fizzy",
+      "special": "inkjet",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 305.8984375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-serein",
+      "sub": "pointSensor",
+      "special": "storm",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 305.89845275878906,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-spinner-hypershort",
+      "sub": "curling",
+      "special": "tacticooler",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.9296875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-short",
+      "sub": "beakon",
+      "special": "tacticooler",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.92969512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "dualies",
+      "sub": "suction",
+      "special": "crabTank",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 226.17967987060547,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-gallon",
+      "sub": "splashWall",
+      "special": "booyahBomb",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.9609375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-dual",
+      "sub": "bomb",
+      "special": "waveBreaker",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.96094512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-stepper",
+      "sub": "autobomb",
+      "special": "reefslider",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 305.9921875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-maneuver-long",
+      "sub": "inkMine",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 305.99219512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-normal",
+      "sub": "sprinkler",
+      "special": "tripleInkstrike",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 305.9921875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-wide",
+      "sub": "beakon",
+      "special": "inkVac",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 253.421875,
+          "y": 306.0234375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-compact",
+      "sub": "inkMine",
+      "special": "reefslider",
+      "points": 180,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 306.0234375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-shelter-focus",
+      "sub": "angleShooter",
+      "special": "bubbler",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 306.05469512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-normal",
+      "sub": "toxicMist",
+      "special": "killerWail",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 668.140625,
+          "y": 306.0546875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-short",
+      "sub": "curling",
+      "special": "tentaMissiles",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 306.08594512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-stringer-explosion",
+      "sub": "autobomb",
+      "special": "ultraStamp",
+      "points": 200,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 306.1171875,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-saber-normal",
+      "sub": "burst",
+      "special": "zipcaster",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 391.6640625,
+          "y": 306.11719512939453,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-saber-lite",
+      "sub": "torpedo",
+      "special": "ultraStamp",
+      "points": 190,
+      "nativeInput": {
+        "point": {
+          "x": 115.18749237060547,
+          "y": 379.1484375,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    },
+    {
+      "id": "s3-saber-heavy",
+      "sub": "suction",
+      "special": "bubbler",
+      "points": 210,
+      "nativeInput": {
+        "point": {
+          "x": 529.90625,
+          "y": 379.14842224121094,
+          "opacity": 1
+        },
+        "trustedEvents": [
+          "pointerdown",
+          "pointerup",
+          "click"
+        ]
+      }
+    }
+  ],
+  "gearSelects": 12,
+  "gameplay": {
+    "state": "playing",
+    "elapsedAt20Hz": 3.0000000000023874,
+    "movement": 2.7603360000000166,
+    "movementProbe": {
+      "state": "playing",
+      "paused": false,
+      "alive": true,
+      "form": "kid",
+      "grounded": true,
+      "controller": true,
+      "enabled": true,
+      "menuBlocked": false,
+      "samples": [
+        {
+          "key": "KeyW",
+          "keyPresent": true,
+          "enabled": true,
+          "menuBlocked": false,
+          "intent": [
+            0,
+            0,
+            1
+          ],
+          "vel": [
+            0,
+            0,
+            0.6
+          ],
+          "deltaAfterFirstTick": 0.010000000000001563
+        }
+      ]
+    },
+    "hp": 100,
+    "gear": [
+      {
+        "main": "runSpeed",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      },
+      {
+        "main": "none",
+        "subs": [
+          "none",
+          "none",
+          "none"
+        ]
+      }
+    ],
+    "velocityFinite": true,
+    "clockTicks": 582,
+    "paintedFloorArea": 0.625,
+    "coverage": [
+      0.00014398802830541628,
+      0
+    ]
+  },
+  "actionReliability": {
+    "before": 1,
+    "renderOnly": 1,
+    "after": 2,
+    "held": 2,
+    "jumps": 0,
+    "physicalKeyboardEvents": true,
+    "groundCollisionPinned": true
+  },
+  "minimapCases": [
+    {
+      "name": "wall-only",
+      "frames": 120,
+      "observedOwner": false,
+      "observedFlash": false,
+      "overlayChanged": false,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 13,
+        "rasters": 1
+      },
+      "candidate": {
+        "composes": 1,
+        "rasters": 1
+      },
+      "emitted": {
+        "composes": 1,
+        "rasters": 1
+      }
+    },
+    {
+      "name": "overlay-bomb",
+      "frames": 103,
+      "observedOwner": false,
+      "observedFlash": false,
+      "overlayChanged": true,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 33,
+        "rasters": 1
+      },
+      "candidate": {
+        "composes": 33,
+        "rasters": 1
+      },
+      "emitted": {
+        "composes": 33,
+        "rasters": 1
+      }
+    },
+    {
+      "name": "overlay-FX",
+      "frames": 102,
+      "observedOwner": false,
+      "observedFlash": false,
+      "overlayChanged": true,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 23,
+        "rasters": 1
+      },
+      "candidate": {
+        "composes": 23,
+        "rasters": 1
+      },
+      "emitted": {
+        "composes": 23,
+        "rasters": 1
+      }
+    },
+    {
+      "name": "turf-flash",
+      "frames": 102,
+      "observedOwner": true,
+      "observedFlash": true,
+      "overlayChanged": false,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 18,
+        "rasters": 4
+      },
+      "candidate": {
+        "composes": 17,
+        "rasters": 4
+      },
+      "emitted": {
+        "composes": 17,
+        "rasters": 4
+      }
+    },
+    {
+      "name": "hidden-reopen",
+      "frames": 81,
+      "observedOwner": true,
+      "observedFlash": true,
+      "overlayChanged": false,
+      "hiddenStable": true,
+      "baseline": {
+        "composes": 15,
+        "rasters": 2
+      },
+      "candidate": {
+        "composes": 15,
+        "rasters": 2
+      },
+      "emitted": {
+        "composes": 15,
+        "rasters": 2
+      }
+    }
+  ],
+  "minimapNegativeControls": {
+    "blankRejected": true,
+    "corruptionRejected": true,
+    "clockRejected": true
+  },
+  "errors": [],
+  "consoleErrors": [],
+  "requestFailures": [],
+  "limitations": [
+    "Controlled browser simulation; no retail timing, hardware GPU, whole-game performance or physical controller parity claim.",
+    "Does not close #522, #838, #878, #1430, #1431, #1432 or #1434. Final remote CI is tracked separately."
+  ],
+  "networkBrowser": [
+    {
+      "status": "passed",
+      "bombAuthority": [
+        {
+          "direction": "host-to-guest",
+          "source": {
+            "nid": 0,
+            "owner": "p_ps4ejnx",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 1,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            }
+          ]
+        },
+        {
+          "direction": "guest-to-host",
+          "source": {
+            "nid": 1,
+            "owner": "p_cvi6shw",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 0,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            }
+          ]
+        }
+      ],
+      "baseline": false,
+      "delayFrames": 0,
+      "sourceSha": "fe39363d28e6595dab9ef6925142e2ed79d6b586",
+      "contentHash": "94f56dddea17bf1c6f24b9d198e4c42f8d88b2e8c5b3066d522e1a01fa9dbffe",
+      "fixtureHash": "d5739abe77369eb81819fec629a1ebf378cfab483242cfdfbeaa7c0117dbded3",
+      "transport": "real WebSocket + production RoomDurableObject.handleSession",
+      "arena": "native replication modules and physics; UI/character meshes/audio omitted",
+      "players": 2,
+      "attacksPerPlayer": 5,
+      "paired": 130,
+      "maxSpawnError": 0.007757005417960442,
+      "maxVelocityError": 0,
+      "maxPositionError": 0.007757005417960553,
+      "virtualSeconds": 6.833333333333333,
+      "tickPackets": 274,
+      "tickBytes": 221583,
+      "traces": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_ps4ejnx",
+              "remote": false
+            },
+            {
+              "nid": 1,
+              "owner": "p_cvi6shw",
+              "remote": true
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 1,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 124,
+          "maxPuffs": 32,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1944,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 6.474793139023407e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 3973,
+          "maxEnvelopeError": 6.10203356818981e-07
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_ps4ejnx",
+              "remote": true
+            },
+            {
+              "nid": 1,
+              "owner": "p_cvi6shw",
+              "remote": false
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 29,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 121,
+          "maxPuffs": 32,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1932,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 6.045977477391678e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 3984,
+          "maxEnvelopeError": 5.439474245637314e-07
+        }
+      ],
+      "loadedArtifacts": 299,
+      "errors": []
+    },
+    {
+      "status": "passed",
+      "bombAuthority": [
+        {
+          "direction": "host-to-guest",
+          "source": {
+            "nid": 0,
+            "owner": "p_ifi7h42",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 1,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            }
+          ]
+        },
+        {
+          "direction": "guest-to-host",
+          "source": {
+            "nid": 1,
+            "owner": "p_m0voq5e",
+            "ink": 30,
+            "kind": "bomb"
+          },
+          "sides": [
+            {
+              "sender": false,
+              "victimRemote": false,
+              "hp": 0,
+              "damage": [
+                {
+                  "nid": 0,
+                  "remote": false,
+                  "amount": 180
+                }
+              ],
+              "nativeReplicaClock": true
+            },
+            {
+              "sender": true,
+              "victimRemote": true,
+              "hp": 100,
+              "damage": [],
+              "nativeReplicaClock": true
+            }
+          ]
+        }
+      ],
+      "baseline": false,
+      "delayFrames": 2,
+      "sourceSha": "fe39363d28e6595dab9ef6925142e2ed79d6b586",
+      "contentHash": "94f56dddea17bf1c6f24b9d198e4c42f8d88b2e8c5b3066d522e1a01fa9dbffe",
+      "fixtureHash": "d5739abe77369eb81819fec629a1ebf378cfab483242cfdfbeaa7c0117dbded3",
+      "transport": "real WebSocket + production RoomDurableObject.handleSession",
+      "arena": "native replication modules and physics; UI/character meshes/audio omitted",
+      "players": 2,
+      "attacksPerPlayer": 5,
+      "paired": 130,
+      "maxSpawnError": 0.008024703496005361,
+      "maxVelocityError": 0,
+      "maxPositionError": 0.008024703496005224,
+      "virtualSeconds": 6.833333333333333,
+      "tickPackets": 274,
+      "tickBytes": 221707,
+      "traces": [
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_ifi7h42",
+              "remote": false
+            },
+            {
+              "nid": 1,
+              "owner": "p_m0voq5e",
+              "remote": true
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 1,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 125,
+          "maxPuffs": 32,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1912,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 5.865727121181149e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 4028,
+          "maxEnvelopeError": 5.849670624958589e-07
+        },
+        {
+          "actors": [
+            {
+              "nid": 0,
+              "owner": "p_ifi7h42",
+              "remote": true
+            },
+            {
+              "nid": 1,
+              "owner": "p_m0voq5e",
+              "remote": false
+            }
+          ],
+          "remaining": 0,
+          "stats": {
+            "in": 137,
+            "out": 137,
+            "extrap": 1,
+            "snaps": 1
+          },
+          "puffSourceSlots": 130,
+          "puffGenerationBytes": 520,
+          "maxProjectiles": 26,
+          "maxFx": 124,
+          "maxPuffs": 32,
+          "maxRemote": 13,
+          "projectileAllocations": 26,
+          "puffLinkedFrames": 690,
+          "remoteDropLinks": 1909,
+          "remotePuffLinks": 345,
+          "curtains": 10,
+          "unboundCurtains": 0,
+          "puffEnvelopeError": 5.473625305786806e-07,
+          "invalidPuffVisible": 0,
+          "linkedFrames": 4020,
+          "maxEnvelopeError": 5.286681576714344e-07
+        }
+      ],
+      "loadedArtifacts": 299,
+      "errors": []
+    }
+  ]
+}
