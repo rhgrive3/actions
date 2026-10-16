@@ -26,10 +26,18 @@ export async function loadNativeData(id,signal){
 }
 export async function loadNativeTextures(id,data,renderer,quality,signal,textureLimit){
  const jobs=new Map(),textures=new Map(),limit=Math.min(textureLimit||Infinity,quality==='low'?512:quality==='high'?4096:1024);
- for(const src of Object.values(data.manifest.materials)){
+ const materials=Object.values(data.manifest.materials);
+ for(const src of materials){
   const roles={albedo:src.albedo,opacity:src.maps?.opacity};
   if(quality==='high')Object.assign(roles,{normal:src.maps?.normal,roughness:src.maps?.roughness,emissive:src.maps?.emissive});
   for(const [role,file] of Object.entries(roles))if(file)jobs.set(file,{role,encoding:src.normalEncoding});
+ }
+ // Index each material once, including unrequested roles that share a selected
+ // file. Keep the job's original last-role precedence and material order.
+ if(data.manifest.sourceMode==='browser-direct')for(const m of materials){
+  for(const file of new Set([m.albedo,...Object.values(m.maps||{})])){
+   const job=jobs.get(file);if(job)(job.materials||(job.materials=[])).push(m);
+  }
  }
  const checkAbort=()=>{if(signal?.aborted)throw new DOMException('Aborted','AbortError');};
  let next=0;const rows=[...jobs];
@@ -43,7 +51,7 @@ export async function loadNativeTextures(id,data,renderer,quality,signal,texture
    let pixels;
    const readPixels=()=>{if(!pixels){const canvas=new OffscreenCanvas(bitmap.width,bitmap.height),ctx=canvas.getContext('2d');ctx.drawImage(bitmap,0,0);pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;}return pixels;};
   if(data.manifest.sourceMode==='browser-direct'){
-   const matched=Object.values(data.manifest.materials).filter(m=>m.albedo===file||Object.values(m.maps).includes(file));
+   const matched=job.materials;
    if(role==='albedo'){
     let alpha=false;const pngType=new Uint8Array(buffer)[25];if(pngType===6||pngType===4){const p=readPixels();for(let i=3;i<p.length;i+=4)if(p[i]<250){alpha=true;break;}}
     for(const m of matched)if(m.albedo===file)m.hasAlpha=alpha;

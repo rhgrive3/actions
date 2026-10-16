@@ -2143,23 +2143,43 @@
   },
   "specials.slam.damageMax": {
     "value": 220,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/0/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 2200
+    }
   },
   "specials.slam.damageMin": {
     "value": 60,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/1/Damage",
+      "index": null,
+      "factor": 0.1,
+      "rawValue": 600
+    }
   },
   "specials.slam.damageNearRadius": {
     "value": 6.4,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/0/Distance",
+      "index": null,
+      "factor": 1,
+      "rawValue": 6.4
+    }
   },
   "specials.slam.damageRadius": {
     "value": 9.6,
-    "status": "calibration or derived value; see reference raw table and unverified list",
-    "binding": null
+    "status": "derived from pinned extracted data; physical scale unverified",
+    "binding": {
+      "parameter": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/1/Distance",
+      "index": null,
+      "factor": 1,
+      "rawValue": 9.6
+    }
   },
   "specials.slam.hang": {
     "value": 0.5,

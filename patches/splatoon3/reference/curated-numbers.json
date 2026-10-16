@@ -56,6 +56,11 @@
       "id": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "sha256": "afece0e3e2016a895ba79483bfa63489b334c372293417b3b0ef072993bcb660"
+    },
+    {
+      "id": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "url": "https://raw.githubusercontent.com/Leanny/splat3/7280ff9cde8bb1c5dcef46c700c326471584d2e6/data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "sha256": "9edc75af8698166c89191cfa07c22aa3fda5ce4ea4d0ffaac600bd18be41e910"
     }
   ],
   "parameters": {
@@ -1643,7 +1648,7 @@
       "notes": "Primary extracted field; behavior and physical units are verified separately."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/PaintRadius": {
-      "value": 5.0,
+      "value": 5,
       "pointer": "/GameParameters/DieBlastParam/PaintRadius",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1659,7 +1664,7 @@
       "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/CollisionRadiusForPaint": {
-      "value": 5.0,
+      "value": 5,
       "pointer": "/GameParameters/DieBlastParam/CollisionRadiusForPaint",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1667,7 +1672,7 @@
       "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/KnockBackParam/Accel": {
-      "value": 0.0,
+      "value": 0,
       "pointer": "/GameParameters/DieBlastParam/KnockBackParam/Accel",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1683,7 +1688,7 @@
       "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius": {
-      "value": 1.0,
+      "value": 1,
       "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/PaintRadius",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1691,7 +1696,7 @@
       "notes": "Primary extracted field (player death blast); behavior and physical units are verified separately."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/DieBlastParam/SplashAroundParam/PitchMax": {
-      "value": 45.0,
+      "value": 45,
       "pointer": "/GameParameters/DieBlastParam/SplashAroundParam/PitchMax",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1731,7 +1736,7 @@
       "notes": "Primary extracted field; behavior and physical units are verified separately."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarWidth": {
-      "value": 70.0,
+      "value": 70,
       "pointer": "/GameParameters/spl__PlayerDispHPParam/BarWidth",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1739,7 +1744,7 @@
       "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarHeight": {
-      "value": 5.0,
+      "value": 5,
       "pointer": "/GameParameters/spl__PlayerDispHPParam/BarHeight",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1771,7 +1776,7 @@
       "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
     },
     "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json#/GameParameters/spl__PlayerDispHPParam/BarBgColor/A": {
-      "value": 1.0,
+      "value": 1,
       "pointer": "/GameParameters/spl__PlayerDispHPParam/BarBgColor/A",
       "sourceId": "data/parameter/1130/misc/SplPlayer.game__GameParameterTable.json",
       "status": "extracted",
@@ -1793,6 +1798,38 @@
       "status": "extracted",
       "unit": "raw reference units",
       "notes": "Primary extracted field (Ver.11.0 remaining-health bar; absent from the 10.1.0 table). UI unit of BarWidth/BarHeight is unpublished."
+    },
+    "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/0/Damage": {
+      "value": 2200,
+      "pointer": "/GameParameters/BlastParamNormal/DistanceDamage/0/Damage",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary 11.3.0 WeaponSpPogo BlastParamNormal endpoint. HP scaling in profile; private damage interpolation and runtime states are not inferred."
+    },
+    "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/1/Damage": {
+      "value": 600,
+      "pointer": "/GameParameters/BlastParamNormal/DistanceDamage/1/Damage",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary 11.3.0 WeaponSpPogo BlastParamNormal endpoint. HP scaling in profile; private damage interpolation and runtime states are not inferred."
+    },
+    "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/0/Distance": {
+      "value": 6.4,
+      "pointer": "/GameParameters/BlastParamNormal/DistanceDamage/0/Distance",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary 11.3.0 WeaponSpPogo BlastParamNormal endpoint. HP scaling in profile; private damage interpolation and runtime states are not inferred."
+    },
+    "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/1/Distance": {
+      "value": 9.6,
+      "pointer": "/GameParameters/BlastParamNormal/DistanceDamage/1/Distance",
+      "sourceId": "data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json",
+      "status": "extracted",
+      "unit": "raw reference units",
+      "notes": "Primary 11.3.0 WeaponSpPogo BlastParamNormal endpoint. HP scaling in profile; private damage interpolation and runtime states are not inferred."
     }
   }
 }
