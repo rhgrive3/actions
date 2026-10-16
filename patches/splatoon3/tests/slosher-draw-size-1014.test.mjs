@@ -148,6 +148,6 @@ test('#1014 recycled non-Slosher rounds have their own native material and no st
   assert.ok(ps._s3Shapes?.body?.visible && ps._s3Shapes.body.count===1,
     'native shooter mesh has one visible instance');
   assert.equal(ps.projectileVisuals.handles(p),false,'old shared bucket body cannot double-render');
-  assert.equal(p._iwVisualHistory,null,'no stale Slosher trail remains on the recycled round');
+  assert.equal(p._iwVisualHistory ?? null,null,'no stale Slosher trail remains on the recycled round');
   assert.ok(p.vis>0&&Number.isFinite(p.vis),'shooter retains its finite source visual radius');
 });
