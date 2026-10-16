@@ -1,0 +1,251 @@
+TAP version 13
+# (node:33104) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#642 acceptance: mobile uses a renderable packed HDR pair and frees it on resize/dispose
+ok 1 - \#642 acceptance: mobile uses a renderable packed HDR pair and frees it on resize/dispose
+  ---
+  duration_ms: 67.765975
+  type: 'test'
+  ...
+# Subtest: \#642 acceptance: unsupported WebGL, incomplete FBO and unproven ScreenFX fall back to RGBA16F
+ok 2 - \#642 acceptance: unsupported WebGL, incomplete FBO and unproven ScreenFX fall back to RGBA16F
+  ---
+  duration_ms: 45.729912
+  type: 'test'
+  ...
+# Subtest: \#642 acceptance: negative grade output selects HalfFloat, shipped grades remain eligible, and desktop keeps HDR
+ok 3 - \#642 acceptance: negative grade output selects HalfFloat, shipped grades remain eligible, and desktop keeps HDR
+  ---
+  duration_ms: 30.83798
+  type: 'test'
+  ...
+# Subtest: \#642 adapter composes with the existing renderer and the latest PR \#1175 lazy target diff
+ok 4 - \#642 adapter composes with the existing renderer and the latest PR \#1175 lazy target diff
+  ---
+  duration_ms: 22.9603
+  type: 'test'
+  ...
+# Subtest: \#642 packed roles survive all ScreenFX toggle parity, FXAA choices, resize and rebuild
+ok 5 - \#642 packed roles survive all ScreenFX toggle parity, FXAA choices, resize and rebuild
+  ---
+  duration_ms: 59.421557
+  type: 'test'
+  ...
+# Subtest: \#642 RGBA fallback preserves native render identity and swap behavior
+ok 6 - \#642 RGBA fallback preserves native render identity and swap behavior
+  ---
+  duration_ms: 35.460391
+  type: 'test'
+  ...
+# Subtest: \#642 packed wrapper forwards receiver, arguments, return value and original error
+ok 7 - \#642 packed wrapper forwards receiver, arguments, return value and original error
+  ---
+  duration_ms: 0.499592
+  type: 'test'
+  ...
+# Subtest: \#642 production emission configures once per native composer creation
+ok 8 - \#642 production emission configures once per native composer creation
+  ---
+  duration_ms: 1.002299
+  type: 'test'
+  ...
+# Subtest: \#642 baseline: native Three EffectComposer clones both targets in its constructor
+ok 9 - \#642 baseline: native Three EffectComposer clones both targets in its constructor
+  ---
+  duration_ms: 2.835709
+  type: 'test'
+  ...
+# Subtest: \#642 adapter changes only the full production renderer composition and round-trips
+ok 10 - \#642 adapter changes only the full production renderer composition and round-trips
+  ---
+  duration_ms: 56.823354
+  type: 'test'
+  ...
+# Subtest: \#642 lazy native pair keeps HDR across resize, hidden release and offscreen render
+ok 11 - \#642 lazy native pair keeps HDR across resize, hidden release and offscreen render
+  ---
+  duration_ms: 2.461216
+  type: 'test'
+  ...
+# Subtest: \#642 quality rebuild disposes the old native pair and preserves the new sample choice
+ok 12 - \#642 quality rebuild disposes the old native pair and preserves the new sample choice
+  ---
+  duration_ms: 2.952486
+  type: 'test'
+  ...
+# {"scope":"all original packed motion data, exact Float64 poses","variants":3,"clips":548,"poses":2740,"cacheBytes":0}
+# {"scope":"Player00 WalkHold_Nrml, 360 sampled frames","before":71280,"after":36360,"reduction":0.48989898989898994}
+# (node:33106) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: frozen source bank and guarded build-only rotation calculation
+ok 13 - frozen source bank and guarded build-only rotation calculation
+  ---
+  duration_ms: 1.407499
+  type: 'test'
+  ...
+# Subtest: every shipped clip keeps exact raw, local and world poses through seeks, loops and alternating output poses
+ok 14 - every shipped clip keeps exact raw, local and world poses through seeks, loops and alternating output poses
+  ---
+  duration_ms: 3690.819947
+  type: 'test'
+  ...
+# Subtest: rotation keys preserve negative zero, quaternion normalization, mode changes and overwritten outputs
+ok 15 - rotation keys preserve negative zero, quaternion normalization, mode changes and overwritten outputs
+  ---
+  duration_ms: 230.57668
+  type: 'test'
+  ...
+# Subtest: zero channels avoid exact sin/cos work across live animation frames
+ok 16 - zero channels avoid exact sin/cos work across live animation frames
+  ---
+  duration_ms: 369.547024
+  type: 'test'
+  ...
+# {"scope":"actual Three.js bones; exact Float64 state","compared":720,"cacheRecords":24}
+# {"scope":"6 strands x4 segments x3 axes, 120 warmed fixed ticks","before":{"sqrt":8640,"exp":8640,"cos":8640,"sin":8640},"after":{"sqrt":0,"exp":0,"cos":0,"sin":0}}
+# (node:33130) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: frozen pre-optimization spring and strict build-only connections
+ok 17 - frozen pre-optimization spring and strict build-only connections
+  ---
+  duration_ms: 1.444525
+  type: 'test'
+  ...
+# Subtest: exact spring state and bone transforms through rates, saturation, reset and coefficient changes
+ok 18 - exact spring state and bone transforms through rates, saturation, reset and coefficient changes
+  ---
+  duration_ms: 493.402559
+  type: 'test'
+  ...
+# Subtest: fixed tick exp/cos/sin work falls to zero after first tick; changing dt reuses axes
+ok 19 - fixed tick exp/cos/sin work falls to zero after first tick; changing dt reuses axes
+  ---
+  duration_ms: 197.790528
+  type: 'test'
+  ...
+# {"scope":"loaded production source motion","frames":450,"nonzeroInertiaFrames":447}
+# Subtest: loaded production Character preserves turns, gait, feet, skeleton and muzzle at 30/60/120Hz
+ok 20 - loaded production Character preserves turns, gait, feet, skeleton and muzzle at 30/60/120Hz
+  ---
+  duration_ms: 39762.59614
+  type: 'test'
+  ...
+# Subtest: \#272 Stealth Jump hides the super-jump sign from the opposing team only (far field / unknown position)
+ok 21 - \#272 Stealth Jump hides the super-jump sign from the opposing team only (far field / unknown position)
+  ---
+  duration_ms: 1.191404
+  type: 'test'
+  ...
+# Subtest: \#272 without Stealth Jump the sign is never concealed
+ok 22 - \#272 without Stealth Jump the sign is never concealed
+  ---
+  duration_ms: 0.217608
+  type: 'test'
+  ...
+# Subtest: \#272 with no known local viewer the sign is treated as hidden (conservative)
+ok 23 - \#272 with no known local viewer the sign is treated as hidden (conservative)
+  ---
+  duration_ms: 0.135585
+  type: 'test'
+  ...
+# Subtest: \#272 concealed marker snapshot exposes no countdown or label
+ok 24 - \#272 concealed marker snapshot exposes no countdown or label
+  ---
+  duration_ms: 0.345991
+  type: 'test'
+  ...
+# Subtest: \#272 owner-side adapter guards the landing ring and passes concealment to the gauge
+ok 25 - \#272 owner-side adapter guards the landing ring and passes concealment to the gauge
+  ---
+  duration_ms: 2.248175
+  type: 'test'
+  ...
+# Subtest: \#272 Nintendo: only FAR opponents lose the sign; an opponent near the landing point still sees it
+ok 26 - \#272 Nintendo: only FAR opponents lose the sign; an opponent near the landing point still sees it
+  ---
+  duration_ms: 0.440393
+  type: 'test'
+  ...
+# Subtest: \#272 remote (replicated loadout) landing ring and gauge use the same distance concealment
+ok 27 - \#272 remote (replicated loadout) landing ring and gauge use the same distance concealment
+  ---
+  duration_ms: 0.794757
+  type: 'test'
+  ...
+# Subtest: \#272 the sign fades linearly from 2.5 to 5 units for opponents and stays opaque for allies
+ok 28 - \#272 the sign fades linearly from 2.5 to 5 units for opponents and stays opaque for allies
+  ---
+  duration_ms: 76.644017
+  type: 'test'
+  ...
+# Subtest: \#272 owner and remote landing rings carry the fade alpha
+ok 29 - \#272 owner and remote landing rings carry the fade alpha
+  ---
+  duration_ms: 2.987318
+  type: 'test'
+  ...
+# (node:33144) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: \#272 Stealth Jump is a shoes-main-only fixed ability
+ok 30 - \#272 Stealth Jump is a shoes-main-only fixed ability
+  ---
+  duration_ms: 464.343116
+  type: 'test'
+  ...
+# Subtest: \#272 measured longitudinal metric uses XZ only and the 60..100 / 0..60F curve
+ok 31 - \#272 measured longitudinal metric uses XZ only and the 60..100 / 0..60F curve
+  ---
+  duration_ms: 544.831345
+  type: 'test'
+  ...
+# Subtest: \#272 stage foci: explicit calibration wins, otherwise the two team spawn pads; home jump points are never foci
+ok 32 - \#272 stage foci: explicit calibration wins, otherwise the two team spawn pads; home jump points are never foci
+  ---
+  duration_ms: 487.755156
+  type: 'test'
+  ...
+# Subtest: \#272 Stealth Jump composes after Quick Super Jump and does not alter preparation timing
+ok 33 - \#272 Stealth Jump composes after Quick Super Jump and does not alter preparation timing
+  ---
+  duration_ms: 474.216884
+  type: 'test'
+  ...
+# Subtest: \#272 shipped-stage spawn pads lengthen only the Stealth Jump flight of a back-to-front Actor jump
+ok 34 - \#272 shipped-stage spawn pads lengthen only the Stealth Jump flight of a back-to-front Actor jump
+  ---
+  duration_ms: 1273.519507
+  type: 'test'
+  ...
+# Subtest: gameplay draws inside fixed ticks do not depend on the number of rendered frames
+ok 35 - gameplay draws inside fixed ticks do not depend on the number of rendered frames
+  ---
+  duration_ms: 4.259904
+  type: 'test'
+  ...
+# Subtest: negative control: a shared stream makes gameplay draws frame-rate dependent
+ok 36 - negative control: a shared stream makes gameplay draws frame-rate dependent
+  ---
+  duration_ms: 1.237033
+  type: 'test'
+  ...
+# Subtest: the caller Math.random is restored after a frame and reused by the next frame
+ok 37 - the caller Math.random is restored after a frame and reused by the next frame
+  ---
+  duration_ms: 0.202094
+  type: 'test'
+  ...
+# Subtest: a clock advanced outside Game._frame keeps the plain Math.random
+ok 38 - a clock advanced outside Game._frame keeps the plain Math.random
+  ---
+  duration_ms: 0.11938
+  type: 'test'
+  ...
+1..38
+# tests 38
+# suites 0
+# pass 38
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 41227.468322

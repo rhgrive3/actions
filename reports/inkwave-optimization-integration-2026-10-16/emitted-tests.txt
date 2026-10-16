@@ -1,0 +1,127 @@
+TAP version 13
+# {"scope":"all original packed motion data, exact Float64 poses","variants":3,"clips":548,"poses":2740,"cacheBytes":0}
+# {"scope":"Player00 WalkHold_Nrml, 360 sampled frames","before":71280,"after":36360,"reduction":0.48989898989898994}
+# (node:33231) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: frozen source bank and guarded build-only rotation calculation
+ok 1 - frozen source bank and guarded build-only rotation calculation
+  ---
+  duration_ms: 6.468159
+  type: 'test'
+  ...
+# Subtest: every shipped clip keeps exact raw, local and world poses through seeks, loops and alternating output poses
+ok 2 - every shipped clip keeps exact raw, local and world poses through seeks, loops and alternating output poses
+  ---
+  duration_ms: 5841.723839
+  type: 'test'
+  ...
+# Subtest: rotation keys preserve negative zero, quaternion normalization, mode changes and overwritten outputs
+ok 3 - rotation keys preserve negative zero, quaternion normalization, mode changes and overwritten outputs
+  ---
+  duration_ms: 467.822709
+  type: 'test'
+  ...
+# Subtest: zero channels avoid exact sin/cos work across live animation frames
+ok 4 - zero channels avoid exact sin/cos work across live animation frames
+  ---
+  duration_ms: 874.541488
+  type: 'test'
+  ...
+# {"scope":"actual Three.js bones; exact Float64 state","compared":720,"cacheRecords":24}
+# {"scope":"6 strands x4 segments x3 axes, 120 warmed fixed ticks","before":{"sqrt":8640,"exp":8640,"cos":8640,"sin":8640},"after":{"sqrt":0,"exp":0,"cos":0,"sin":0}}
+# (node:33232) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: frozen pre-optimization spring and strict build-only connections
+ok 5 - frozen pre-optimization spring and strict build-only connections
+  ---
+  duration_ms: 2.752069
+  type: 'test'
+  ...
+# Subtest: exact spring state and bone transforms through rates, saturation, reset and coefficient changes
+ok 6 - exact spring state and bone transforms through rates, saturation, reset and coefficient changes
+  ---
+  duration_ms: 973.355872
+  type: 'test'
+  ...
+# Subtest: fixed tick exp/cos/sin work falls to zero after first tick; changing dt reuses axes
+ok 7 - fixed tick exp/cos/sin work falls to zero after first tick; changing dt reuses axes
+  ---
+  duration_ms: 243.153135
+  type: 'test'
+  ...
+# {"scope":"loaded production source motion","frames":450,"nonzeroInertiaFrames":447}
+# Subtest: loaded production Character preserves turns, gait, feet, skeleton and muzzle at 30/60/120Hz
+ok 8 - loaded production Character preserves turns, gait, feet, skeleton and muzzle at 30/60/120Hz
+  ---
+  duration_ms: 39451.730261
+  type: 'test'
+  ...
+# Subtest: excluded modules have audited build-only exports; mixed runtime adapters remain shipped
+ok 9 - excluded modules have audited build-only exports; mixed runtime adapters remain shipped
+  ---
+  duration_ms: 303.723277
+  type: 'test'
+  ...
+# Subtest: runtime helper URLs retain their exports without carrying build-time source transforms
+ok 10 - runtime helper URLs retain their exports without carrying build-time source transforms
+  ---
+  duration_ms: 98.51239
+  type: 'test'
+  ...
+# Subtest: minified static ESM imports are found without whitespace and with re-exports
+ok 11 - minified static ESM imports are found without whitespace and with re-exports
+  ---
+  duration_ms: 0.518291
+  type: 'test'
+  ...
+# Subtest: emitted lossless lightmaps preserve every pixel while reducing the offline snapshot
+ok 12 - emitted lossless lightmaps preserve every pixel while reducing the offline snapshot
+  ---
+  duration_ms: 517.483178
+  type: 'test'
+  ...
+# Subtest: ESM minification preserves the emitted module export interface
+ok 13 - ESM minification preserves the emitted module export interface
+  ---
+  duration_ms: 1398.704292
+  type: 'test'
+  ...
+# Subtest: network identity contains only exact paths owned by its namespace
+ok 14 - network identity contains only exact paths owned by its namespace
+  ---
+  duration_ms: 1.5011
+  type: 'test'
+  ...
+# Subtest: emitted identity binds every input to one canonical tracked path including S3 dodge dependencies
+ok 15 - emitted identity binds every input to one canonical tracked path including S3 dodge dependencies
+  ---
+  duration_ms: 443.961252
+  type: 'test'
+  ...
+# Subtest: emitted gameplay profile preserves all JSON values without shipping indentation
+ok 16 - emitted gameplay profile preserves all JSON values without shipping indentation
+  ---
+  duration_ms: 6.870224
+  type: 'test'
+  ...
+# Subtest: emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes
+ok 17 - emitted worker keeps the complete runtime graph, installs, and replays verified offline bytes
+  ---
+  duration_ms: 3093.079941
+  type: 'test'
+  ...
+# Subtest: indexed worker precache decodes strictly before offline graph checks
+ok 18 - indexed worker precache decodes strictly before offline graph checks
+  ---
+  duration_ms: 2.190197
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 41928.077599

@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "sourceSha": "359a2491ff1771aecdc41898a68a68695216cd5c",
+  "sourceTree": "b5a46abb5be10288151579f1105cdc634f235b40",
+  "baseMain": "b1f571da0d1233e0194d2cae42779cdb6bb70f61",
+  "pr1514Head": "747a85ec45c275189bd15a3cc8f05a0af2dcf17f",
+  "pr1515Head": "3acf39f76bc9124ed4c7f153a6c9d60ed89c6e84",
+  "contentHash": "bdf3f02436095bffbdd647f2f26cc8eebf2729b66f0128b66b9de064b591d2db",
+  "manifestSha256": "b071969767b056fd09d1813a8962bffa376b8fd7d4df3152d6f817e216babbef",
+  "sourceTests": {
+    "tests": 38,
+    "pass": 38
+  },
+  "emittedTests": {
+    "tests": 18,
+    "pass": 18
+  },
+  "exactPostPixelCasesPerEngine": 78,
+  "sourceGameVerifiedResponses": 476,
+  "scope": "Targeted integration qualification of the predicted final merge tree, supplementing both PR-head CI and accepted main. Includes new main RNG/Stealth Jump tests, exact poses and actual Game/Renderer/ScreenFX. No whole-game performance or physical-iPad claim."
+}
