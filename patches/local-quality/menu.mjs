@@ -23,11 +23,69 @@ export function installMenuQuality(Menus, env=globalThis){
   const place=(m,dt)=>{
     if(!m._focus?.isConnected)m._cur.targetEl=null;
     m._cur.snapNext=true;
-    const result=cursor.call(m,dt);syncRingVisibility(m);return result;
+    const result=cursor.call(m,dt);syncRingVisibility(m);anchorRing(m);return result;
   };
+  // A ring painted in viewport coordinates trails every scroll: the
+  // browser scrolls the list on its compositor at display rate, while the
+  // ring only moves on the next owner tick (one frame or more behind, worse
+  // while the 3D backdrop is heavy). Inside a scrolling region the ring
+  // becomes a child of that scroller, in its content coordinates, so it
+  // scrolls in the same composited layer as the focused item.
+  const SCROLL_Y=/(auto|scroll)/;
+  const scrollers=(m,f,root)=>{
+    const c=m._ringHosts;
+    if(c&&c.f===f&&c.root===root&&c.input===m._input)return c.list;
+    const list=[];
+    for(let e=f.parentElement;e;e=e.parentElement){
+      const cs=env.getComputedStyle?.(e);
+      if(cs&&(SCROLL_Y.test(cs.overflowY)||SCROLL_Y.test(cs.overflowX)))list.push(e);
+      if(e===root)break;
+    }
+    m._ringHosts={f,root,input:m._input,list};
+    return list;
+  };
+  const home=m=>{
+    const ring=m.cursorEl,a=m._ringAnchor;
+    if(!ring)return;
+    if(a){m._ringAnchor=null;if(a.restore!==null)a.host.style.position=a.restore;ring.classList.remove('is-anchored');}
+    if(ring.parentNode!==m.el&&m.el?.insertBefore)m.el.insertBefore(ring,m.wipeEl?.parentNode===m.el?m.wipeEl:null);
+  };
+  function anchorRing(m){
+    const ring=m.cursorEl,f=m._focus,root=m._modal||m._scr?.el;
+    if(!ring?.style||!m.el?.insertBefore)return;
+    let host=null;
+    if(m._cur.on&&f?.isConnected&&f.parentElement&&root?.contains?.(f))
+      host=scrollers(m,f,root).find(e=>e.scrollHeight>e.clientHeight+1||e.scrollWidth>e.clientWidth+1)||null;
+    if(!host){if(m._ringAnchor||ring.parentNode!==m.el)home(m);return;}
+    if(m._ringAnchor?.host!==host){
+      home(m);
+      const restore=env.getComputedStyle(host).position==='static'?host.style.position:null;
+      if(restore!==null)host.style.position='relative';
+      m._ringAnchor={host,restore};
+      ring.classList.add('is-anchored');
+    }
+    if(ring.parentNode!==host)host.appendChild(ring);
+    // The native pass wrote viewport geometry (and a viewport clip for
+    // lists). Convert to the scroller's content box; its own overflow clip
+    // replaces the computed one. Keep the ring inside the host horizontally
+    // so a full-width row is not cut along its sides.
+    const C=m._cur,b=host.getBoundingClientRect();
+    const ox=b.left+host.clientLeft-host.scrollLeft,oy=b.top+host.clientTop-host.scrollTop;
+    let x=C.x.x-ox,w=Math.max(0,C.w.x);
+    const lo=host.scrollLeft+1,hi=host.scrollLeft+host.clientWidth-1;
+    if(x<lo){w-=lo-x;x=lo;}
+    if(x+w>hi)w=Math.max(0,hi-x);
+    const st=ring.style;
+    st.transform=`translate3d(${x.toFixed(1)}px,${(C.y.x-oy).toFixed(1)}px,0)`;
+    st.width=w.toFixed(1)+'px';
+    if(C.clip){C.clip='';st.clipPath='';}
+  }
   if(cursor)P._updateCursor=function(dt){return place(this,dt);};
   // Logical selection, geometric target and the painted ring all commit in
   // this task, including touch's own-row highlight and deselection.
+  // toast() inserts its stack before the ring; the ring must be home first.
+  const toast=P.toast;
+  if(toast&&cursor)P.toast=function(...args){home(this);return toast.apply(this,args);};
   if(focus&&cursor)P._setFocus=function(...args){
     const old=this._focus,result=focus.apply(this,args);
     if(old!==this._focus)place(this,0);
@@ -79,7 +137,7 @@ export function installMenuQuality(Menus, env=globalThis){
   };
   if(settings)P._scr_settings=function(...args){preparePreviewRoot(this.el,env);return settings.apply(this,args);};
   if(swap)P._swap=function(...args){
-    clearPreviewRoot(this.el);guardInput(this);
+    clearPreviewRoot(this.el);guardInput(this);home(this);
     const result=swap.apply(this,args),r=ensure(this);
     if(active(this))r.arm();else stop(this,r);
     return result;
