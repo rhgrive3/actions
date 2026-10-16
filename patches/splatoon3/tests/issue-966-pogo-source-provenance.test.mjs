@@ -9,6 +9,7 @@ import { numericStatus } from '../../../scripts/sync-inkwave-numeric-status.mjs'
 // falloff function, splashdown animation, fall height, or engine-state timing.
 const profile = JSON.parse(readFileSync(new URL('../profile.json', import.meta.url), 'utf8'));
 const ledger = JSON.parse(readFileSync(new URL('../reference/numeric-status.json', import.meta.url), 'utf8'));
+const curated = JSON.parse(readFileSync(new URL('../reference/curated-numbers.json', import.meta.url), 'utf8'));
 const path = 'data/parameter/1130/weapon/WeaponSpPogo.game__GameParameterTable.json#/GameParameters/BlastParamNormal/DistanceDamage/';
 const rows = [
   ['damageMax', '0/Damage', 2200, 0.1, 220],
@@ -23,12 +24,16 @@ test('#966/#912 11.3.0 Pogo endpoints are traceable without borrowing legacy Sup
     assert.equal(profile.specials.slam[field], expected);
     assert.deepEqual(profile.bindings[key], {parameter: path + suffix, index: null, factor, rawValue});
     assert.equal(rawValue * factor, expected);
+    assert.equal(curated.parameters[path + suffix]?.value, rawValue);
+    assert.equal(curated.parameters[path + suffix]?.pointer, '/GameParameters/BlastParamNormal/DistanceDamage/' + suffix);
     assert.deepEqual(ledger[key], {
       value: expected,
       status: 'derived from pinned extracted data; physical scale unverified',
       binding: profile.bindings[key],
     });
   }
+  const pogo = curated.sources.find(s => s.id === path.split('#')[0]);
+  assert.equal(pogo?.sha256, '9edc75af8698166c89191cfa07c22aa3fda5ce4ea4d0ffaac600bd18be41e910');
   assert.notEqual(rows[0][2], 1800, 'retail Pogo is not the legacy single SuperLanding blast');
 });
 
