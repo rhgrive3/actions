@@ -30,6 +30,52 @@ async function world(mode = 'clams', host = false) {
 }
 const damage = f => ({ k: 'rkdamage', match: f.nm.cfg.id, seq: 1, victim: '1', attacker: '2', life: 1, damage: 30, cause: 'Gachihoko_Bullet' });
 
+for (const device of ['keyboard', 'pad', 'touch']) test(`a ${device} throw tap released before the next tick still throws one clam`, async () => {
+  const f = await world();
+  f.engine.rule.state.inventories['1'] = { team: 0, small: 2, power: false };
+  if (device === 'keyboard') f.input.pressed.add('KeyC');
+  if (device === 'pad') f.input.padPressed.add(1);
+  if (device === 'touch') {
+    f.input.lastDevice = 'touch';
+    f.input.mobile = { active: true, root: {}, lookDX: 0, lookDY: 0, moveX: 0, moveY: 0,
+      gyro: { enabled: false, discard() {} }, down: () => false, wasPressed: id => id === 'sub' };
+  }
+  f.controller.update(1 / 60); f.local.update(0);
+  f.engine.rule._processThrows(f.buildFrame(f.m, { G: f.G }));
+  assert.equal(f.engine.rule.state.inventories['1'].small, 1, 'the press edge survives release');
+  assert.equal(f.local.intent.sub, false, 'the touch throw never also arms a bomb');
+  f.input.pressed.clear(); f.input.padPressed.clear();
+  if (f.input.mobile) f.input.mobile.wasPressed = () => false;
+  f.controller.update(1 / 60); f.local.update(0);
+  f.engine.rule._processThrows(f.buildFrame(f.m, { G: f.G }));
+  assert.equal(f.engine.rule.state.inventories['1'].small, 1, 'the tap is consumed once');
+});
+
+test('holding the touch throw through an empty inventory never turns the same gesture into a bomb', async () => {
+  const f = await world();
+  f.engine.rule.state.inventories['1'] = { team: 0, small: 1, power: false };
+  let held = true, pressed = true;
+  f.input.lastDevice = 'touch';
+  f.input.mobile = { active: true, root: {}, lookDX: 0, lookDY: 0, moveX: 0, moveY: 0,
+    gyro: { enabled: false, discard() {} },
+    down: id => id === 'sub' && held, wasPressed: id => id === 'sub' && pressed };
+  const step = () => {
+    f.controller.update(1 / 60); f.local.update(1 / 60);
+    f.engine.rule._processThrows(f.buildFrame(f.m, { G: f.G }));
+  };
+  step(); pressed = false;
+  assert.equal(f.engine.rule.state.inventories['1'].small, 0);
+  for (let i = 0; i < 20; i++) step();
+  assert.equal(f.local.weaponRunner.aimingSub, false, 'the initial clam throw owns the complete hold');
+  held = false; step(); step();
+  assert.equal(f.G.projectiles.bombs.length, 0, 'releasing that gesture never emits a bomb');
+  held = pressed = true; step();
+  assert.equal(f.local.weaponRunner.aimingSub, true, 'a fresh empty-inventory gesture can still use SUB');
+  held = pressed = false;
+  for (let i = 0; i < 60; i++) step(); // retain the ordinary SUB ready/use delay
+  assert.equal(f.G.projectiles.bombs.length, 1);
+});
+
 test('opening the Turf Map blocks a fresh C throw and requires release before a later deliberate throw', async () => {
   const f = await world(); f.engine.rule.state.inventories['1'] = { team: 0, small: 2, power: false };
   f.controller.setTurfMap(true); f.input.keys.add('KeyC'); f.controller.update(1/60);

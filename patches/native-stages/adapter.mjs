@@ -159,7 +159,7 @@ export function adaptNativeStages(rel,code){
  }
  if(rel==='patches/splatoon3/runtime/ranked/install.mjs'){
   code="import {nativeRankedBotGoalReachable} from '../../../native-stages/runtime/engine.mjs';\n"+code;
-  once('    floorAt: (x, z) => match.rankedWorld.floorAt(x, z), blocked: (a, b) => match.rankedWorld.blocked(a, b) };', '    floorAt: (x, z) => match.rankedWorld.floorAt(x, z), blocked: (a, b) => match.rankedWorld.blocked(a, b),\n    botGoalRoute: api.G.level?.native ? (actor,target) => nativeRankedBotGoalReachable(api.G,actor,target) : undefined };');
+  once('    blocked: (a, b) => match.rankedWorld.blocked(a, b) };', '    blocked: (a, b) => match.rankedWorld.blocked(a, b),\n    botGoalRoute: api.G.level?.native ? (actor,target) => nativeRankedBotGoalReachable(api.G,actor,target) : undefined };');
  }
  if(rel==='patches/splatoon3/runtime/ranked/rainmaker.mjs'){
   code="import { nativeRetreatCoordinate } from '../../../native-stages/runtime/engine.mjs';\n"+code;
