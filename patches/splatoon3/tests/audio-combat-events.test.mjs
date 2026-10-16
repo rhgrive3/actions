@@ -60,9 +60,9 @@ test('actual final native burst wrapper scopes only splash damage, never ghosts'
 test('production HUD keeps one hit marker; damage/death/kill sounds remain connected',()=>{
   const src=fs.readFileSync(new URL('../../../inkwave-public/src/main.js',import.meta.url),'utf8');
   const built=adaptWeaponAudio('src/main.js',src);
-  assert.match(built,/blasterHitCuePitch\(attacker, weaponId\)/);
+  assert.match(built,/G\.audio\?\.blasterHitCuePitch\?\.\(attacker, weaponId\)/);
   assert.match(built,/on\('hit', \(\{ attacker, victim, damage, killed, weaponId \}\)/);
-  assert.equal((built.match(/hit_marker', \{ volume: 0\.6, pitch: blasterHitCuePitch/g)||[]).length,1);
+  assert.equal((built.match(/hit_marker', \{ volume: 0\.6, pitch: G\.audio\?\.blasterHitCuePitch/g)||[]).length,1);
   for(const cue of ['splat_enemy','splatted_self','ally_splatted','hurt'])
     assert.ok(src.includes("'"+cue+"'"),'retained combat cue '+cue);
 });
