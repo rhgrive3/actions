@@ -32,3 +32,30 @@ for(const kind of ['squid','sub','aiming'])for(const hz of [30,60,120])for(const
  assert.ok(w.calls[0].at.z>a.pos.z,'new contact stays at current drum position');
  assert.ok(w.calls[0].area>0,'new stroke still paints its current floor');
 });
+
+test('catalog Rollers use their own horizontal/vertical SwingMoveSpeed through post-release recovery',()=>{
+ for(const rec of records.filter(r=>r.family==='roller'))for(const vertical of [false,true]){
+  world();const a=actor(rec.id),wr=a.weaponRunner;
+  a.grounded=!vertical;
+  if(vertical)a.s3JumpAirborne=true; // actual admitted movement launch, not raw B input
+  const key=vertical?'vertical':'horizontal';
+  const src=rec.parameters[vertical?'WeaponVerticalSwingParam':'WeaponWideSwingParam'];
+  const target=src.SwingMoveSpeed*60;
+  assert.ok(Number.isFinite(target)&&target>0,rec.id+' source speed');
+  wr.update(1/60,{fire:true,firePressed:true});
+  assert.equal(wr.catalogState.s3SwingMode,key,rec.id+' admitted '+key);
+  assert.ok(wr.catalogState.pending,rec.id+' is winding');
+  assert.ok(Math.abs(wr.moveSpeed()-target)<1e-8,rec.id+' '+key+' windup');
+  let released=false,recovery=false;
+  for(let frame=0;frame<Math.ceil(wr.cooldown*60)+2;frame++){
+   wr.update(1/60,{fire:false,firePressed:false});
+   if(wr.catalogState.pending||wr.cooldown>1e-8){
+    assert.ok(Math.abs(wr.moveSpeed()-target)<1e-8,rec.id+' '+key+' frame '+frame);
+    if(!wr.catalogState.pending){released=true;if(wr.firingT<=1e-8)recovery=true;}
+   }
+  }
+  assert.equal(released,true,rec.id+' '+key+' real release');
+  assert.ok(wr.cooldown<=1/60+1e-8,rec.id+' '+key+' recovered');
+  assert.ok(wr.moveSpeed()>0);
+ }
+});
