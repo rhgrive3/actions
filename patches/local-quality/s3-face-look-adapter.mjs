@@ -6,8 +6,9 @@
 //  * eye opening wider than tall (about 1.3 : 1), spanning most of the face width; the irises rest toward the
 //    inner corners; iris about as tall as the opening, round, with a large black pupil (~0.6 of the iris) and a
 //    thin warm rim;
-//  * the mask is a thin goggle that hugs each opening (thin above, fuller below, short past the outer corner),
-//    joined by a nose bridge below the eye line whose top edge dips at the centre; no long wings;
+//  * the mask is a thin goggle band: its top edge is one smooth line, high over the outer half of each eye and
+//    sloping down past the inner corners to the low middle of the nose bridge (no step); fuller below the eyes,
+//    a rounded end just past the outer corner; no long wings;
 //  * blinking lids are mask-black and move inside a fixed mask outline (the upper lid comes down to the lower);
 //  * brows: short thick beans, inner end low near the mask, outer end higher;
 //  * the face is flush around the eyes (no visible socket bowl), one skin tone from the eyes to the cheeks;
@@ -35,10 +36,10 @@ const EDITS = {
       "export const BROW = { az0: 0.16, az1: 0.57, el: 0.345 };\n"],
     ["goggle mask doc",
       "/** Mask (Inkling eye mask) signed distance in the head's (az, el): > 0 inside. Same shape as the skin shader's pigment. */\n",
-      "/** Mask (Inkling eye mask) signed distance in the head's (az, el): > 0 inside. Same shape as the skin shader's pigment.\n *  Splatoon 3 goggle: a rounded-rectangle lobe hugging each eye opening (thin above, fuller below, short past the outer\n *  corner) and a nose bridge below the eye line whose top edge dips at the centre. */\nexport const MASK = { az: 0.565, el: 0.055, ain: 0.35, aout: 0.34, bt: 0.246, bb: 0.259, n: 2.4, bTop: 0.06, bDip: 0.06, bBot: -0.128, bbOut: 0.07 };\n"],
+      "/** Mask (Inkling eye mask) signed distance in the head's (az, el): > 0 inside. Same shape as the skin shader's pigment.\n *  Splatoon 3 goggle: one band between a top and a bottom edge. The top edge is a single smooth line: high over the outer\n *  half of each eye, sloping down past the inner corners to the low middle of the nose bridge (no step where the eye\n *  part meets the bridge). The bottom edge is fuller under the eyes, rises to the bridge and toward the outer corner,\n *  and the band ends in a rounded cap just past the outer corner. */\nexport const MASK = { top: 0.305, tLo: 0.03, t0: 0.06, t1: 0.48, tOut: 0.035, bot: -0.205, bLo: -0.13, b0: 0.1, b1: 0.45,\n  bRise: 0.09, r0: 0.62, r1: 0.95, cap: 0.93, capK: 1.2, capEl: 0.05, k: 0.04 };\n"],
     ["goggle mask shape",
       "  const lobe = (1 - Math.hypot((ax - 0.355) / 0.3, (el - 0.15) / 0.29)) * 0.26;\n  const bridge = ax < 0.42 ? 0.1 + 0.1 * sstep(0, 0.36, ax) - Math.abs(el - 0.17) : -1;\n  const s = (ax - 0.42) / 0.9;\n  const wc = 0.16 + 0.2 * Math.pow(clamp(s, 0, 1), 1.35);\n  const wh = 0.205 * Math.pow(clamp(1 - s, 0, 1), 0.8);\n  const wing = s > -0.1 && s <= 1 ? wh - Math.abs(el - wc) : -1;\n  return smaxK(smaxK(lobe, bridge, 0.06), wing, 0.07);\n",
-      "  const dx = Math.abs(ax - MASK.az) / (ax < MASK.az ? MASK.ain : MASK.aout);\n  // the lower edge rises toward the outer corner (follows the opening instead of filling the corner)\n  const bb = MASK.bb - (ax > MASK.az ? MASK.bbOut * sstep(0, 1, dx) : 0);\n  const dy = Math.abs(el - MASK.el) / (el > MASK.el ? MASK.bt : bb);\n  const lobe = (1 - Math.pow(Math.pow(dx, MASK.n) + Math.pow(dy, MASK.n), 1 / MASK.n)) * 0.25;\n  const top = MASK.bTop - MASK.bDip * gauss(ax, 0.12), bot = MASK.bBot + 0.01 * gauss(ax, 0.1);\n  const bridge = ax < 0.45 ? Math.min(top - el, el - bot) : -1;\n  return smaxK(lobe, bridge, 0.05);\n"],
+      "  const top = MASK.tLo + (MASK.top - MASK.tLo) * sstep(MASK.t0, MASK.t1, ax) - MASK.tOut * sstep(0.7, 0.95, ax);\n  const bot = MASK.bLo + (MASK.bot - MASK.bLo) * sstep(MASK.b0, MASK.b1, ax) + MASK.bRise * sstep(MASK.r0, MASK.r1, ax);\n  const cap = MASK.cap - ax - MASK.capK * (el - MASK.capEl) ** 2;\n  return sminK(sminK(top - el, el - bot, MASK.k), cap, 2 * MASK.k);\n"],
     ["softer, lower under-jaw blend",
       "const JAW_PLANE = { n: new V3(0, -1, 0.35).normalize(), d: 0, k: 0.016 };\nJAW_PLANE.d = 0.152 / Math.hypot(1, 0.35);                         // plane through (0, −0.152, 0) from HEAD_C, rising 35 % forward\n",
       "const JAW_PLANE = { n: new V3(0, -1, 0.2).normalize(), d: 0, k: 0.11 };\nJAW_PLANE.d = 0.162 / Math.hypot(1, 0.2);                          // plane through (0, −0.162, 0) from HEAD_C, rising 20 % forward\n"],
@@ -69,9 +70,12 @@ const EDITS = {
     ["lid shell sinks to just over the ball past the lids",
       "  const lid = lerp(EYEB.lidL, EYEB.lidU, up) + 0.018 * sstep(1.0, 1.25, e);\n",
       "  // the lid shell only shapes the lids: past them it sinks to just over the eyeball, so the face around the mask stays\n  // flush wherever the ball lies under it (and still covers the wide ball where it rises above the head)\n  const lid = Math.max(1.02, lerp(EYEB.lidL, EYEB.lidU, up) + 0.018 * sstep(1.0, 1.25, e) - 0.4 * lerp(sstep(1.24, 1.45, e), sstep(1.14, 1.35, e), up));\n"],
-    ["lids travel only inside the mask",
+    ["lid scratch vector",
+      "const _le = new V3();\n",
+      "const _le = new V3(), _lq = new V3();\n"],
+    ["lids travel only inside the mask, clear of its edge",
       "  if (s >= 0) return [tu * sstep(1.3, 1.03, e), 0];\n  return [0, tl * sstep(1.22, 1.03, e)];\n",
-      "  if (s >= 0) return [tu * sstep(1.12, 1.03, e), 0];   // the whole moving upper lid stays inside the mask (S3: black lids, fixed outline)\n  return [0, tl * sstep(1.1, 1.0, e)];\n"],
+      "  if (s >= 0) {\n    // the moving lid stays clear of the mask edge, so the outline never stretches with it (the eye shader paints the\n    // ball past the lid line mask-black, so a lid that travels less still reads as closed)\n    _lq.subVectors(p, HEAD_C);\n    const inMask = sstep(0.006, 0.05, visorSD(Math.atan2(_lq.x, _lq.z), Math.asin(clamp(_lq.y / _lq.length(), -1, 1))));\n    return [tu * sstep(1.12, 1.03, e) * inMask, 0];\n  }   // the whole moving upper lid stays inside the mask (S3: black lids, fixed outline)\n  return [0, tl * sstep(1.1, 1.0, e)];\n"],
     ["eye patch bounds",
       "const EYE_RECT = { az0: 0.085, az1: 0.625, el0: -0.25, el1: 0.44 };\n",
       "const EYE_RECT = { az0: 0.1, az1: 1.0, el0: -0.245, el1: 0.4 };\n"],
@@ -94,7 +98,7 @@ const EDITS = {
       "import { FACE_SHADER, MASK, LASHES } from './character-face.js';\n"],
     ["goggle mask pigment",
       "  float lobe = (1.0 - length(vec2((ax - 0.355) / 0.3, (el - 0.15) / 0.29))) * 0.26;\n  float bridge = ax < 0.42 ? 0.1 + 0.1 * smoothstep(0.0, 0.36, ax) - abs(el - 0.17) : -1.0;\n  float s = (ax - 0.42) / 0.9;\n  float wc = 0.16 + 0.2 * pow(clamp(s, 0.0, 1.0), 1.35);\n  float wh = 0.205 * pow(clamp(1.0 - s, 0.0, 1.0), 0.8);\n  float wing = (s > -0.1 && s <= 1.0) ? wh - abs(el - wc) : -1.0;\n  return iwSmax(iwSmax(lobe, bridge, 0.06), wing, 0.07);\n",
-      "  float dx = abs(ax - ${MASK.az.toFixed(4)}) / (ax < ${MASK.az.toFixed(4)} ? ${MASK.ain.toFixed(4)} : ${MASK.aout.toFixed(4)});\n  float bb = ${MASK.bb.toFixed(4)} - (ax > ${MASK.az.toFixed(4)} ? ${MASK.bbOut.toFixed(4)} * smoothstep(0.0, 1.0, dx) : 0.0);\n  float dy = abs(el - ${MASK.el.toFixed(4)}) / (el > ${MASK.el.toFixed(4)} ? ${MASK.bt.toFixed(4)} : bb);\n  float lobe = (1.0 - pow(pow(dx, ${MASK.n.toFixed(3)}) + pow(dy, ${MASK.n.toFixed(3)}), ${(1 / MASK.n).toFixed(5)})) * 0.25;\n  float top = ${MASK.bTop.toFixed(4)} - ${MASK.bDip.toFixed(4)} * exp(-pow(ax / 0.12, 2.0)), bot = ${MASK.bBot.toFixed(4)} + 0.01 * exp(-pow(ax / 0.1, 2.0));\n  float bridge = ax < 0.45 ? min(top - el, el - bot) : -1.0;\n  return iwSmax(lobe, bridge, 0.05);\n"],
+      "  float top = ${MASK.tLo.toFixed(4)} + ${(MASK.top - MASK.tLo).toFixed(4)} * smoothstep(${MASK.t0.toFixed(4)}, ${MASK.t1.toFixed(4)}, ax) - ${MASK.tOut.toFixed(4)} * smoothstep(0.7, 0.95, ax);\n  float bot = ${MASK.bLo.toFixed(4)} + ${(MASK.bot - MASK.bLo).toFixed(4)} * smoothstep(${MASK.b0.toFixed(4)}, ${MASK.b1.toFixed(4)}, ax) + ${MASK.bRise.toFixed(4)} * smoothstep(${MASK.r0.toFixed(4)}, ${MASK.r1.toFixed(4)}, ax);\n  float cap = ${MASK.cap.toFixed(4)} - ax - ${MASK.capK.toFixed(4)} * pow(el - ${MASK.capEl.toFixed(4)}, 2.0);\n  return -iwSmax(-(-iwSmax(-(top - el), -(el - bot), ${MASK.k.toFixed(4)})), -cap, ${(2 * MASK.k).toFixed(4)});\n"],
     ["soft blush, no boundary",
       "          float bl = exp(-pow((abs(az) - 0.6) / 0.2, 2.0) - pow((el + 0.3) / 0.13, 2.0));\n          float blushK = bl * mix(0.3, 0.12, smoothstep(0.35, 0.8, 1.0 - uSkinLum)) * (1.0 + 1.5 * clamp(uMouth2.w, 0.0, 1.0));\n",
       "          float bl = exp(-pow((abs(az) - 0.62) / 0.3, 2.0) - pow((el + 0.32) / 0.2, 2.0));\n          float blushK = bl * mix(0.14, 0.06, smoothstep(0.35, 0.8, 1.0 - uSkinLum)) * (1.0 + 1.5 * clamp(uMouth2.w, 0.0, 1.0));\n"],

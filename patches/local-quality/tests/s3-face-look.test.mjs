@@ -80,6 +80,21 @@ test('S3 face look: the goggle covers the opening with a thin border and no wing
   for (let el = -0.3; el <= 0.6; el += 0.02) assert.ok(visorSD(1.1, el) < 0 && visorSD(-1.1, el) < 0);
 });
 
+test('S3 face look: the mask top is one smooth line falling from over the eye to the bridge', async () => {
+  const { face } = await realm();
+  // top edge elevation per azimuth (bisection on the signed distance, searching down from the forehead)
+  const topAt = (az) => { let lo = -0.1, hi = 0.6; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (face.visorSD(az, m) > 0) lo = m; else hi = m; } return lo; };
+  const xs = [], ts = [];
+  for (let az = 0; az <= 0.62; az += 0.02) { xs.push(az); ts.push(topAt(az)); }
+  for (let i = 1; i < ts.length; i++) assert.ok(ts[i] >= ts[i - 1] - 1e-6, `top keeps rising outward at az ${xs[i].toFixed(2)}`);
+  // no step: the slope changes gradually everywhere between the bridge and the eye
+  for (let i = 2; i < ts.length; i++) {
+    const s1 = (ts[i - 1] - ts[i - 2]) / 0.02, s2 = (ts[i] - ts[i - 1]) / 0.02;
+    assert.ok(Math.abs(s2 - s1) < 0.35, `top edge bends sharply at az ${xs[i].toFixed(2)} (${s1.toFixed(2)} → ${s2.toFixed(2)})`);
+  }
+  assert.ok(ts[ts.length - 1] - ts[0] > 0.2, 'the bridge sits well below the top over the eye');
+});
+
 test('S3 face look: the shader mask is the same shape as the geometry mask', async () => {
   const { face, matsSource } = await realm();
   const glsl = matsSource.slice(matsSource.indexOf('float iwVisorSD(float az, float el){'), matsSource.indexOf('float iwHairline('));
