@@ -1,5 +1,6 @@
 import { WEAPON_AUDIO, fireArticulation } from './weapon-recipes.mjs';
 import { installKitAudio } from './kit-runtime.mjs';
+import { withBlasterSplashHit } from './blaster-hit.mjs';
 const INSTALL=Symbol.for('inkwave.weapon-audio.runtime.v1');
 // Exactly one runtime owns each admitted shot. The old native/catalogue
 // family SFX never layer over real weapon audio or substitute missing MP3s.
@@ -16,9 +17,17 @@ function stopLegacyShotDoublePlay(audio){
 const finite3=p=>!!p&&[p.x,p.y,p.z].every(Number.isFinite);
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function installWeaponAudioRuntime(api){
-  const {G,on,Actor,WeaponRunner}=api,R=WeaponRunner.prototype;
+  const {G,on,Actor,WeaponRunner,Projectiles}=api,R=WeaponRunner.prototype;
   stopLegacyShotDoublePlay(G.audio);
   if(R[INSTALL])return R[INSTALL];
+  // The direct body hit precedes _blastBurst; only the radius damage executed
+  // *inside* the already-installed native burst is an indirect Blaster hit.
+  // Keep the distinction scoped per actor without modifying hit/HP packets.
+  const oldBurst=Projectiles?.prototype?._blastBurst;
+  if(oldBurst)Projectiles.prototype._blastBurst=function(p,...args){
+    if(p?.type!=='blast'||p.ghost)return oldBurst.call(this,p,...args);
+    return withBlasterSplashHit(p.owner,()=>oldBurst.call(this,p,...args));
+  };
   const unsubs=[],active=new Set(),obstruction=new WeakMap();
   const stateFor=r=>r._mainAudioState||=( {id:null,engine:null,loops:{},wasReady:false,wasCharge:false,canopy:null,sBlastMode:null} );
   function options(a,pos=a?.pos,volume=1){
@@ -69,7 +78,17 @@ export function installWeaponAudioRuntime(api){
   const oldUpdate=R.update;
   R.update=function(dt,input,...rest){
     const a=this.a,s=stateFor(this),id=a?.weapon?.id;
-    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});}
+    if(s.id!==id||s.engine!==G.audio){stop(this);s.id=id;s.engine=G.audio;s.preloadedKit=null;G.audio?.prepareWeapon?.(id,{urgent:!!a?.isLocal});}
+    // A selected kit may become available only after the user's first gesture
+    // starts AudioContext. Preload the actual selected sub/special *events*
+    // rather than decoding all 381 samples or warming every remote actor.
+    const loader=G.audio?._realS3Loader,sub=a?.weapon?.sub,special=a?.weapon?.special;
+    const kitKey=String(sub||'')+'|'+String(special||'');
+    if(a?.isLocal&&loader&&G.audio?.ctx?.state!=='closed'&&s.preloadedKit!==kitKey){
+      s.preloadedKit=kitKey;
+      for(const [kit,events] of [['sub:'+sub,['fire','explosion']],['special:'+special,['open','fire','explosion','ready']]])
+        for(const event of events)loader.ensure(kit,event).catch(()=>{});
+    }
     s.firedThisUpdate=false;
     const result=oldUpdate.call(this,dt,input,...rest);
     // Legacy runners own redirected loops themselves; the catalog runners lacked them.

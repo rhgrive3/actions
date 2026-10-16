@@ -51,6 +51,15 @@ export function adaptWeaponAudio(rel,code){
     code=code.replace("G.audio?.play('roller_flick', { pos, volume: 0.8 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.8})");
     code=code.replace("G.audio?.play('slosh_throw', { pos, volume: 0.55 })","G.audio?.playWeapon?.(a.weapon.id,'windup',{actor:a,pos,volume:.55})");
   }
+  if(rel==='src/main.js'){
+    // The existing one-per-hit HUD click stays authoritative. Source hit events
+    // distinguish direct Blaster body contact from radius splash for its pitch.
+    code=once(code,"on('hit', ({ attacker, victim, damage, killed }) => {",
+      "on('hit', ({ attacker, victim, damage, killed, weaponId }) => {",'Blaster hit event identity');
+    code=once(code,"G.audio?.play('hit_marker', { volume: 0.6 });",
+      "G.audio?.play('hit_marker', { volume: 0.6, pitch: G.audio?.blasterHitCuePitch?.(attacker, weaponId) ?? 1 });",'Blaster hit marker articulation');
+    // Reuse already-loaded runtime audio for hit classification, preserving the core preload graph.
+  }
   if(rel==='src/audio/music.js'){
     code="import { installOriginalAudioScore } from '../../patches/splatoon3/runtime/audio/music-score.mjs';\n"+code;
     code=once(code,'const compiled = new Map();','installOriginalAudioScore(SONGS);\nconst compiled = new Map();','original score');
