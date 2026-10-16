@@ -156,7 +156,7 @@ jobs:
       - name: Verify source-guided ink flight model
         run: node --test tests/ink-flight/model.test.mjs
       - name: Verify cancelled native texture ownership
-        run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-texture-cancellation.test.mjs patches/native-stages/tests/native-normal-readback.test.mjs
+        run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-texture-cancellation.test.mjs patches/native-stages/tests/native-normal-readback.test.mjs patches/native-stages/tests/native-texture-index.test.mjs
       - name: Verify cancelled native world preparation
         run: node --max-old-space-size=128 --experimental-vm-modules --test patches/native-stages/tests/native-world-cancellation.test.mjs
       - name: Verify native BVH query lifetime and collision parity
@@ -317,6 +317,10 @@ jobs:
         env:
           INKWAVE_MATERIAL_HANDOFF_SITE: ${{ github.workspace }}/_site
         run: node --experimental-vm-modules --test patches/local-quality/tests/material-handoff.test.mjs
+      - name: Verify emitted motion caches against frozen baselines
+        env:
+          INKWAVE_BUILT_SITE: ${{ github.workspace }}/_site
+        run: node --experimental-vm-modules --test patches/local-quality/tests/root-hair-spring.test.mjs patches/local-quality/tests/pose-rotation.test.mjs
       - name: Verify actual built codec and authenticated JSON transport
         run: INKWAVE_BUILT_SITE=_site node --experimental-vm-modules --test patches/splatoon3/tests/paint-packet-codec.test.mjs patches/network-replication/tests/paint-packet-codec-order.test.mjs
       - name: Verify emitted Tenacity lock and passive ownership
@@ -398,7 +402,7 @@ jobs:
       matrix:
         include:
           - suite: active
-            browsers: chromium
+            browsers: chromium webkit
           - suite: catalog
             browsers: chromium
           - suite: ui
@@ -466,7 +470,19 @@ jobs:
         run: node scripts/check-inkwave-bvh-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/bvh-queries"
       - name: Verify native normal browser pixels bound to production sources
         if: matrix.suite == 'active'
-        run: node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/native-normal"
+        run: |
+          node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/native-normal"
+          node scripts/check-inkwave-native-normal-browser.mjs --site .built-site/_site --browser webkit --evidence-dir "$CI_STORAGE/evidence/native-normal-webkit"
+      - name: Compare emitted motion caches with the frozen baseline in Chromium and WebKit
+        if: matrix.suite == 'active'
+        run: |
+          node scripts/benchmark-inkwave-motion-caches.mjs --site .built-site/_site --browser chromium --out "$CI_STORAGE/evidence/motion-cache-chromium.json"
+          node scripts/benchmark-inkwave-motion-caches.mjs --site .built-site/_site --browser webkit --out "$CI_STORAGE/evidence/motion-cache-webkit.json"
+      - name: Verify mobile post depth allocation and exact pixels in Chromium and WebKit
+        if: matrix.suite == 'active'
+        run: |
+          node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser chromium --out "$CI_STORAGE/evidence/post-depth-chromium.json"
+          node scripts/check-inkwave-post-depth-browser.mjs --site .built-site/_site --browser webkit --out "$CI_STORAGE/evidence/post-depth-webkit.json"
       - name: Verify browser movement speed across directions and native firing/rolling transitions
         if: matrix.suite == 'active'
         run: node scripts/check-inkwave-movement-speed.mjs --site .built-site/_site --evidence-dir "$CI_STORAGE/evidence/movement-speed" --profile-dir "$CI_STORAGE/cache/movement-speed"
@@ -592,6 +608,8 @@ jobs:
             'range':['range/range-result.json'],
             'startup':['startup/startup-browser-result.json'],
           }[suite]
+          if suite=='active': checks.extend(['motion-cache-chromium.json','motion-cache-webkit.json','native-normal-webkit/native-normal-browser.json'])
+          if suite=='active': checks.extend(['post-depth-chromium.json','post-depth-webkit.json'])
           runtime_performance=os.environ['RUNTIME_PERFORMANCE']=='true'
           if suite=='active' and runtime_performance:
             checks.extend(['runtime-before/runtime-result.json','runtime-after/runtime-result.json','runtime-comparison.json'])
