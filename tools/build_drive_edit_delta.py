@@ -127,7 +127,7 @@ def main():
                  changes=changes)
     (ROOT/'DELTA_MANIFEST.json').write_text(
         json.dumps(delta, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
-    shutil.copyfile('tools/apply_drive_edit_delta.py', ROOT/'APPLY_UPDATE.py')
+    shutil.copyfile(Path(__file__).with_name('apply_drive_edit_delta.py'), ROOT/'APPLY_UPDATE.py')
     n = pr_status()
     (ROOT/'README_CURRENT.md').write_text(
         '# INKWAVE current main: editable snapshot update\n\n'
