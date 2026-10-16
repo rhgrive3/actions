@@ -1,6 +1,6 @@
 # Ranked objective model acceptance
 
-Fixed game source: 6c212c39978c51bc21e90ae0e9e7628b74627298, tree 31e760fe02e3f9f3c9174c7d26a6ddaf0f9fd123.
+Fixed game source: cd18eefdfd5b537eaba0b701e232c4b6d0c93666, tree cfafdf6394f040f17ed6e088ae0bd3f53eb0c08e.
 
 The diagnostic performs one ordinary production build. It validates all build input hashes and all generated artifact hashes, serves only that build's immutable content revision, and requires delivery of the actual objective modules, native game context, character/weapon entry points and Three.js. No source-frame or pose dataset is an input.
 

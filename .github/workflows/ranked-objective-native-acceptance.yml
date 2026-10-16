@@ -17,7 +17,7 @@ jobs:
           path: diagnostic
       - uses: actions/checkout@v4
         with:
-          ref: 6c212c39978c51bc21e90ae0e9e7628b74627298
+          ref: cd18eefdfd5b537eaba0b701e232c4b6d0c93666
           persist-credentials: false
           path: candidate
       - uses: actions/setup-node@v4
@@ -33,26 +33,42 @@ jobs:
           mkdir -p evidence
           node diagnostic/preflight.mjs
           node --test diagnostic/rainmaker-capture-contract.test.mjs diagnostic/rainmaker-cleanup.test.mjs diagnostic/clam-capture-contract.test.mjs diagnostic/carrier-contract.test.mjs diagnostic/build-binding.test.mjs diagnostic/preflight.test.mjs diagnostic/wiring.test.mjs diagnostic/compact-receipt.test.mjs diagnostic/capture-gpu-lifecycle.test.mjs diagnostic/capture-resources.test.mjs diagnostic/test-count.test.mjs
-      - name: Objective source contracts and actual Actor
+          SOURCE_ROOT="$GITHUB_WORKSPACE/candidate" node --test diagnostic/rainmaker-fixed-camera.test.mjs
+      - name: Objective source contracts
+        id: source
         working-directory: candidate
         run: |
-          timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/ranked-power-clam-model.test.mjs patches/splatoon3/tests/ranked-small-clam-model.test.mjs patches/splatoon3/tests/ranked-clam-model-lifecycle.test.mjs patches/splatoon3/tests/rainmaker-model.test.mjs patches/splatoon3/tests/rainmaker-model-actor.test.mjs patches/splatoon3/tests/ranked-world.test.mjs ../diagnostic/module-parity.test.mjs > ../evidence/source.tap
-          node ../diagnostic/test-count.mjs ../evidence/source.tap 33
+          timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/ranked-power-clam-model.test.mjs patches/splatoon3/tests/ranked-small-clam-model.test.mjs patches/splatoon3/tests/ranked-clam-model-lifecycle.test.mjs patches/splatoon3/tests/rainmaker-model.test.mjs patches/splatoon3/tests/ranked-world.test.mjs ../diagnostic/module-parity.test.mjs > ../evidence/source.tap
+          node ../diagnostic/test-count.mjs ../evidence/source.tap 30
+      - name: Source actual Actor (isolated memory and deadline)
+        id: source_actor
+        if: ${{ always() && steps.source.outcome == 'success' }}
+        working-directory: candidate
+        run: |
+          timeout --signal=TERM --kill-after=10s 360s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/rainmaker-model-actor.test.mjs > ../evidence/source-actor.tap
+          node ../diagnostic/test-count.mjs ../evidence/source-actor.tap 3
       - name: One production build
         id: build
         run: |
           export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
           (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
           cp candidate-site/inkwave-build.json evidence/candidate-build.json
-      - name: Actual emitted Actor acceptance
+      - name: Emitted module parity
         id: emitted
         if: ${{ always() && steps.build.outcome == 'success' }}
         working-directory: candidate
         run: |
-          INKWAVE_BUILT_SITE="$PWD/../candidate-site" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/rainmaker-model-actor.test.mjs ../diagnostic/module-parity.test.mjs > ../evidence/emitted.tap
-          node ../diagnostic/test-count.mjs ../evidence/emitted.tap 6
+          INKWAVE_BUILT_SITE="$PWD/../candidate-site" timeout --signal=TERM --kill-after=10s 300s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap ../diagnostic/module-parity.test.mjs > ../evidence/emitted.tap
+          node ../diagnostic/test-count.mjs ../evidence/emitted.tap 3
+      - name: Emitted actual Actor (isolated memory and deadline)
+        id: emitted_actor
+        if: ${{ always() && steps.build.outcome == 'success' }}
+        working-directory: candidate
+        run: |
+          INKWAVE_BUILT_SITE="$PWD/../candidate-site" timeout --signal=TERM --kill-after=10s 360s node --max-old-space-size=512 --experimental-vm-modules --test --test-concurrency=1 --test-reporter=tap patches/splatoon3/tests/rainmaker-model-actor.test.mjs > ../evidence/emitted-actor.tap
+          node ../diagnostic/test-count.mjs ../evidence/emitted-actor.tap 3
       - name: Three objectives native-day images
-        if: ${{ always() && steps.build.outcome == 'success' && steps.emitted.outcome == 'success' }}
+        if: ${{ always() && steps.build.outcome == 'success' && steps.emitted.outcome == 'success' && steps.emitted_actor.outcome == 'success' && steps.source.outcome == 'success' && steps.source_actor.outcome == 'success' }}
         run: timeout --signal=TERM --kill-after=10s 600s node diagnostic/capture-objectives-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
       - uses: actions/upload-artifact@v4
         if: always()

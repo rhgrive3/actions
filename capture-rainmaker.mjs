@@ -22,10 +22,17 @@ export async function captureRainmakerModel({api,THREE,RankedWorld,scene,rendere
   return {min:box.min.toArray(),max:box.max.toArray()};
  }
  async function capture(world,team,state,distance,ch=null){
-  scene.updateMatrixWorld(true);box.setFromObject(world.rainmakerCore);
-  if(ch)for(const name of['handR','handL','chest']){check(ch.bones[name],'Rainmaker carrier landmark missing');box.expandByPoint(ch.bones[name].getWorldPosition(new THREE.Vector3()));}
+  scene.updateMatrixWorld(true);
+  // Reuse the three measured reference boxes from accepted run 38940264959.
+  // This keeps every camera identical while the fit geometry changes.
+  const comparison={"field":{"bounds":{"min":[-0.5054200670670461,0.8999999985098839,-1.0086125307461942],"max":[0.496690538221931,1.899999976158142,0.5236910843220297]},"hash":{"near":"204404687bc7651f241bf4cf0bb2fff12492a98ad22bea75d6aaa2c8467a791c","far":"23590a5bee2b3be80801fed0cdb5a3494aec5684a8124ee165563d28e1d89c91"}},"held":{"bounds":{"min":[-0.4059304871149521,0.546445263671107,-0.8740119718344599],"max":[0.5690695367269057,1.7086367318660343,0.742747924009314]},"hash":{"near":"ede7518b3e1463257ed5ec28d0b87e7118ed9c20a4f50d1f3102a01d072638d2","far":"3ac69274f33561568353614253b1c61f8ebab424a90ae8d8407a0c0155c70e44"}},"drop":{"bounds":{"min":[0.09457993293295386,0.8999999985098839,-1.2086125307461941],"max":[1.096690538221931,1.899999976158142,0.3236910843220297]},"hash":{"near":"36ed809ade9abbd71a6c85d497a3aa68dad51cd4bfc03af89c47ab6c4abdfe89","far":"e30c591214ec087aba6e9bb98e8a79d3597858d79cd1b3499c4fb250ea8ea560"}}};
+  const reference=comparison[['held','charge','carrier'].includes(state)?'held':state];
+  box.min.fromArray(reference.bounds.min);box.max.fromArray(reference.bounds.max);
   box.getCenter(center);
   camera.position.copy(center).addScaledVector(direction,distance==='far'?9.2:4.6);camera.lookAt(center);camera.updateMatrixWorld(true);scene.updateMatrixWorld(true);
+  const cameraBytes=new TextEncoder().encode(JSON.stringify({position:camera.position.toArray(),quaternion:camera.quaternion.toArray()}));
+  const comparisonCameraSHA256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',cameraBytes)),b=>b.toString(16).padStart(2,'0')).join('');
+  check(comparisonCameraSHA256===reference.hash[distance==='far'?'far':'near'],'Rainmaker comparison camera changed');
   const bounds=coreBounds(world.rainmakerCore),visible=world.group.visible;
   check(world.rainmakerCore.visible,'Rainmaker core hidden');
   world.group.visible=false;let carrier=null;
@@ -44,7 +51,7 @@ export async function captureRainmakerModel({api,THREE,RankedWorld,scene,rendere
   for(let i=0;i<pixels.length;i+=4){if(Math.max(Math.abs(pixels[i]-blank[i]),Math.abs(pixels[i+1]-blank[i+1]),Math.abs(pixels[i+2]-blank[i+2]))>4)changedPixels++;for(let j=0;j<4;j++)signature=Math.imul(signature^pixels[i+j],16777619)>>>0;}
   check(changedPixels>32,'Rainmaker blank frame');
   const png=renderer.domElement.toDataURL('image/png');check(png.startsWith('data:image/png;base64,'),'Rainmaker PNG unavailable');
-  frames.push({team,state,distance,triangles,draws,changedPixels,pixelSignature:signature,bounds,width,height,...(carrier?{carrier}:{}),camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray()},png});
+  frames.push({team,state,distance,triangles,draws,changedPixels,pixelSignature:signature,bounds,width,height,...(carrier?{carrier}:{}),camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray()},comparisonCameraSHA256,png});
  }
  const floor={id:0,solid:true,grate:false,faces:[-1,-1,-1,-1,-1,-1],center:new THREE.Vector3(0,-1,0),half:new THREE.Vector3(100,1,100),axes:[new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),new THREE.Vector3(0,0,1)],aabbMin:new THREE.Vector3(-100,-2,-100),aabbMax:new THREE.Vector3(100,0,100)};
  try{
@@ -71,10 +78,10 @@ export async function captureRainmakerModel({api,THREE,RankedWorld,scene,rendere
     // Keep the actual mounted update/LOD path, without drawing any character,
     // hair, ordinary weapon or nameplate in the model comparison frames.
     characterVisibility.clear();ch.root.traverse(o=>{if(o.isMesh||o.isSprite){characterVisibility.set(o,o.visible);o.visible=false;}});ch.root.updateMatrixWorld(true);
-    const pose=Array.from(ch.P),position=actor.pos.toArray(),hand=ch.bones.handR.getWorldPosition(new THREE.Vector3());check(pose.length>0&&pose.every(Number.isFinite),'Rainmaker native pose empty or nonfinite');
+    const pose=Array.from(ch.P),position=actor.pos.toArray(),hand=ch.weapon.pivot.getWorldPosition(new THREE.Vector3());check(pose.length>0&&pose.every(Number.isFinite),'Rainmaker native pose empty or nonfinite');
     if(lastHand)handTravel+=hand.distanceTo(lastHand);lastHand=hand.clone();updateVisual();
     check(JSON.stringify(Array.from(ch.P))===JSON.stringify(pose)&&JSON.stringify(actor.pos.toArray())===JSON.stringify(position),'Rainmaker visual changed native pose or movement');
-    const error=world.rainmakerCore.getWorldPosition(new THREE.Vector3()).distanceTo(hand);maxAnchorError=Math.max(maxAnchorError,error);check(error<1e-6,'Rainmaker hand anchor mismatch');for(const[p]of pivots)check(p.visible===false,'Ordinary weapon still visible');
+    const error=world.rainmakerCore.getWorldPosition(new THREE.Vector3()).distanceTo(hand);maxAnchorError=Math.max(maxAnchorError,error);check(error<1e-6,'Rainmaker native fist anchor mismatch');for(const[p]of pivots)check(p.visible===false,'Ordinary weapon still visible');
    }
    const clockDelta=ch.t-startClock;check(Number.isFinite(clockDelta)&&clockDelta>1.4&&handTravel>1e-4,'Rainmaker actual Actor update missing');
    const both=async label=>{for(const distance of['near','far'])await capture(world,team,label,distance);};

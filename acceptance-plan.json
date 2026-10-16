@@ -1,12 +1,12 @@
 {
   "baseHead": "9fe55aa056d6b5c31773254a4796c7db50df02f8",
   "baseTree": "8d18203f847d6215ac1cf5d5141a6fc75ed11528",
-  "candidateTree": "31e760fe02e3f9f3c9174c7d26a6ddaf0f9fd123",
+  "candidateTree": "cfafdf6394f040f17ed6e088ae0bd3f53eb0c08e",
   "leaves": 4383,
   "payloadCount": 9,
   "scope": "Direct browser-created objective states; actual delivered model modules, ClamsRule and native Actors; synthetic flat floor; software WebGL normal-day. No full-stage, network, device or character model comparison qualification. Rainmaker captures rest/charge/attachment visuals with projectile sinks, not firing physics. Clam throws use actual ClamsRule projectiles.",
-  "head": "6c212c39978c51bc21e90ae0e9e7628b74627298",
-  "tree": "31e760fe02e3f9f3c9174c7d26a6ddaf0f9fd123",
+  "head": "cd18eefdfd5b537eaba0b701e232c4b6d0c93666",
+  "tree": "cfafdf6394f040f17ed6e088ae0bd3f53eb0c08e",
   "payload": [
     {
       "path": "patches/splatoon3/runtime/ranked/power-clam-model.mjs",
@@ -16,9 +16,9 @@
     },
     {
       "path": "patches/splatoon3/runtime/ranked/rainmaker-model.mjs",
-      "blob": "9238a295ed3a093d3c782021c96f5dc09a5d3a42",
-      "sha256": "bd91dafb3a67ad3b86ef7f687837358823f0ff686be5cf56ead9238283464b98",
-      "bytes": 6910
+      "blob": "e7442d50a7525a133f71f3aa03e355c781264f59",
+      "sha256": "9f629dcbefb00ef716e4a05d56e5363c6e1d1b75e3b8229e07f327b738310666",
+      "bytes": 7328
     },
     {
       "path": "patches/splatoon3/runtime/ranked/small-clam-model.mjs",
@@ -34,15 +34,15 @@
     },
     {
       "path": "patches/splatoon3/tests/rainmaker-model-actor.test.mjs",
-      "blob": "2cc9c1aee1ca0a9adba1ec6f5576851566764a2c",
-      "sha256": "ed0383e65d63c030aed695f1571bac4f82a6567cf198210dbb42c27850d79a24",
-      "bytes": 3667
+      "blob": "9da014c88d758240597f316b61b6b20e89a7dd6b",
+      "sha256": "77481809a5449edf6b6f94cdd955639240c824ca54f5a44539afa7f2b493a9b0",
+      "bytes": 10247
     },
     {
       "path": "patches/splatoon3/tests/rainmaker-model.test.mjs",
-      "blob": "ba53ef390b9256cf76b7c42e58d271a7a9175fae",
-      "sha256": "3b09b7b0e265c92f7d89d07f0ea749fe4c62b162ff9b0d31fd0f59c48a409f6f",
-      "bytes": 5118
+      "blob": "63766cd614fddd5f1bba0440721e5ade83cf38d3",
+      "sha256": "4effd59bb88873ae72a47c33ac5123270c616739102f8162614072a69527e79f",
+      "bytes": 5367
     },
     {
       "path": "patches/splatoon3/tests/ranked-clam-model-lifecycle.test.mjs",

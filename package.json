@@ -5,13 +5,13 @@
   "files": [
     {
       "path": "README.md",
-      "sha256": "bb1ea6dce7476e4bb4a40a3e996d1a036b6d3cfd2827bc468e72710ce1533a0d",
+      "sha256": "7b1495f29d3d22f8bcb9434105122e4de89c56980b186b6c270913a8fc967664",
       "bytes": 2725
     },
     {
       "path": "acceptance-plan.json",
-      "sha256": "20958e9052afd83fba35f899c335c79c439800cd376b48634c3fe5c0843bfc98",
-      "bytes": 3023
+      "sha256": "8b6bfdec8b1cfa5d92fb9a2cd82bdd5aeab8cae1d295fca698b9a50ffbc34dad",
+      "bytes": 3024
     },
     {
       "path": "capture-objectives-integration.mjs",
@@ -30,8 +30,8 @@
     },
     {
       "path": "capture-rainmaker.mjs",
-      "sha256": "08c518c34fb80d33829667c8d7e04e2220129c7730900ed5d1ed55d0945501f9",
-      "bytes": 15601
+      "sha256": "aa30dd2fc4e9064bc6d4cb2d849a46c4f3678071a36df1ad6f0cf78aae415d00",
+      "bytes": 17079
     },
     {
       "path": "clam-capture-contract.mjs",
@@ -70,7 +70,7 @@
     },
     {
       "path": "preflight.mjs",
-      "sha256": "c9f3d4dd25add957ab32822758943ea1e5fc2deff9af29a21fd54eb0f0b63f37",
+      "sha256": "190c856da1df1143b5e76b26519c5838837593bc1912fbe6278b2357d6746764",
       "bytes": 1901
     },
     {
@@ -110,13 +110,13 @@
     },
     {
       "path": "preflight.test.mjs",
-      "sha256": "e7f467f9436a089f758d92c017d72a28aad84bd7e1a4e84c6078b490c9c2c7c5",
+      "sha256": "082381634682e8768217a1c29906fba5795783f81c3dfbb48511551077195a4d",
       "bytes": 1261
     },
     {
       "path": "wiring.test.mjs",
-      "sha256": "7bed3378e48074c44d71e3113a55f9bd7ec36812ef68debdf43b6ad0d307296b",
-      "bytes": 3992
+      "sha256": "7640ea0a6daad821dc131018e057a57f0640bca716e668d61ca19588e5145a0a",
+      "bytes": 5449
     },
     {
       "path": "compact-receipt.test.mjs",
@@ -140,8 +140,13 @@
     },
     {
       "path": ".github/workflows/ranked-objective-native-acceptance.yml",
-      "sha256": "beceb569d61ac91d5a52e36245b2e36b6b0097ea6248074c684fbbbaefc75534",
-      "bytes": 3694
+      "sha256": "793ce7d79440633895a75383a9a0181b1fecc447628cb6bf89d3db1811675cc7",
+      "bytes": 4906
+    },
+    {
+      "path": "rainmaker-fixed-camera.test.mjs",
+      "sha256": "bff1226509cd70ebbdfb5db6e25755b1e2d7f0c19d790fd1ee9c2cf3adbc351b",
+      "bytes": 1923
     }
   ]
 }
