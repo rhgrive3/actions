@@ -4,7 +4,7 @@ const {AP,R,ALTERNATE_WEAPON_KITS}=await fixture({extraExports:"export * as AP f
 const rows=['Shooter_TripleMiddle_02', 'Shooter_Precision_02', 'Shooter_TripleQuick_02'];
 function store(initial=null){let raw=initial;const make=()=>({getItem:k=>{assert.equal(k,AP.WEAPON_APPEARANCE_STORAGE_KEY);return raw;},setItem:(k,v)=>{assert.equal(k,AP.WEAPON_APPEARANCE_STORAGE_KEY);raw=v;}});return {open:make,raw:()=>raw};}
 test('three A4 defaults persist explicit Base and manual preference through new storage handles',()=>{
- assert.equal(R.registeredWeaponVariantModels().length,79);assert.equal(AP.WEAPON_APPEARANCE_STORAGE_KEY,'inkwave.weapon-appearances.v1');
+ assert.equal(R.registeredWeaponVariantModels().length,82);assert.equal(AP.WEAPON_APPEARANCE_STORAGE_KEY,'inkwave.weapon-appearances.v1');
  for(const row of rows){const kit=ALTERNATE_WEAPON_KITS.find(k=>k.main===row);assert.ok(kit);const s=store();
   assert.equal(AP.weaponAppearancePreference(kit.id,s.open()),null);assert.equal(AP.selectedWeaponAppearance(kit.id,s.open()),row);
   AP.setWeaponAppearance(kit.id,kit.baseId,s.open());assert.deepEqual(JSON.parse(s.raw()),{[kit.baseId]:kit.baseId});assert.equal(AP.selectedWeaponAppearance(kit.id,s.open()),kit.baseId);
