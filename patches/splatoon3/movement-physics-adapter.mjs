@@ -92,7 +92,7 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     replace('    const side = _v2.set(mv.x, 0, mv.z);',
       '    const side = _v2.set(mv.x, 0, mv.z);\n    if (mh > 1) side.multiplyScalar(1 / mh);', 'wall lateral magnitude');
     replace('    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {',
-      '    } else if (rollingMovementActive(this) && !this.intent.sub) {\n      if (hs > 0.1) target = Math.atan2(this.vel.x, this.vel.z);\n    } else if (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub) {', 'roller authoritative heading');
+      '    } else if (rollingMovementActive(this) && !this.intent.sub) {\n      if (hs > 0.1) target = Math.atan2(this.vel.x, this.vel.z);\n    } else if (!reverseShotRelease(this) && (this.weaponRunner.firingPose() || this.fireFacing > 0 || this.intent.sub)) {', 'roller authoritative heading');
     const airStart = code.indexOf('    // ---- airborne: vector steering with light air control (momentum is kept)');
     const airEnd = code.indexOf('\n    // ---- grounded: speed + heading model', airStart);
     if (airStart < 0 || airEnd < airStart) throw new Error('Movement physics: missing airborne movement block');
@@ -126,7 +126,8 @@ export function adaptMovementPhysics(rel, code, replaceOnce) {
     if (onEnemy) vt = Math.min(vt, P.enemyInkSpeed*mist); // enemy ink limits target speed, not the selected S3 acceleration
     if (!isSquid) shedFormExitOverspeed(this, vt, dt); // swim speed carried out of a surfacing squid
     stepGroundVelocity(this.vel, mv.x, mv.z, vt, accel, dt);`, 'S3 grounded vector acceleration');
-    return "import { toxicMistScale } from '../../patches/splatoon3/runtime/toxic-mist.mjs';\nimport { airborneHumanTargetSpeed, attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, shedFormExitOverspeed, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
+    return "import { reverseShotRelease } from '../../patches/splatoon3/runtime/shooter-movement.mjs';\n" +
+      "import { toxicMistScale } from '../../patches/splatoon3/runtime/toxic-mist.mjs';\nimport { airborneHumanTargetSpeed, attackAirRateScale, groundAcceleration, integrateMovement, rollingMovementActive, shedFormExitOverspeed, stepGroundVelocity } from '../../patches/splatoon3/runtime/movement-physics.mjs';\n" + code;
   }
   if (rel === 'src/game/weapons.js') {
     replace('    if (this.rolling) return lerp(w.rollSpeed * 0.5, w.rollSpeed, smoothstep(0, 0.45, this.rollT));',

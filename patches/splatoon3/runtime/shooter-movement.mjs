@@ -31,3 +31,26 @@ export function shooterMovementActive(r) {
     !a.intent?.squid && !a.specialActive && !a.superJumpState && a.ink + 1e-10 >= a.weapon.inkPerShot;
   return !!heldStream || shooterShotReady(r);
 }
+
+// Gameplay shot clocks and source recovery are retained. The native 0.35s
+// firingPose/0.5s fireFacing timers also feed visuals, but must not make a
+// released backpedal keep facing the reticle or replay Shoot locomotion.
+// Read the world-space stick against the camera's aim, NOT the lagging body yaw.
+// This predicate owns presentation/facing only, never movement target speeds.
+export function reverseShotRelease(a) {
+  if (!a || a.remote || a.alive === false || a.form !== 'kid' ||
+      a.specialActive || a.superJumpState) return false;
+  const family = a.weapon?.behaviorKind || a.weapon?.catalogRecord?.family || a.weapon?.kind;
+  if (!['shooter', 'dualies', 'blaster', 'slosher', 'splatling'].includes(family)) return false;
+  const input = a.intent, r = a.weaponRunner, move = input?.move;
+  if (!r || !move || input.fire || input.sub || r.aimingSub ||
+      r.charging || r.streaming || r.dodge || r.lockT > 0 ||
+      r.slosh >= 0 || r.s3BlasterWindup > 0 || r.s3BlasterMoveRemaining > 1e-10 ||
+      r.s3ShooterPendingFirst || r.s3DualiesStart > 1e-10) return false;
+  const catalog = r.catalogState;
+  if (catalog?.pending || catalog?.melee || catalog?.roll || catalog?.lunge ||
+      catalog?.stream > 0 || catalog?.chargeF > 0) return false;
+  const length = Math.hypot(move.x, move.z), yaw = a.aimYaw;
+  return length > .2 && Number.isFinite(yaw) &&
+    (move.x * Math.sin(yaw) + move.z * Math.cos(yaw)) < -.2 * length;
+}
