@@ -27,7 +27,7 @@ import { installMovementMotion } from './movement-motion.mjs';
 import { installMinimapDirty } from './minimap-dirty.mjs';
 import { installWeapons, installArcPreviewPerformance } from './weapons.mjs';
 import { installWeaponsFidelity } from './weapons-fidelity.mjs';
-import { registerMainWeaponCatalog } from './main-weapon-catalog.mjs';
+import { registerMainWeaponCatalog, installMainWeaponCatalogRuntime } from './main-weapon-catalog.mjs';
 import { registerAlternateWeaponKits } from './alternate-weapon-kits.mjs';
 import { installRollerBodyKnockback } from './roller-body-knockback.mjs';
 import { installMuzzleFeedback } from './muzzle-feedback.mjs';
@@ -169,6 +169,10 @@ export function install(profile) {
   installMuzzleFeedback(api);
   installMinimapDirty(api);
   installWeaponDetailMotion(api, profile);
+  // Registering S3 mains alone does not connect their shooting, collision and paint
+  // owners. Install after native fidelity and detailed motion, exactly once in
+  // the normal production boot (not only in standalone test fixtures).
+  installMainWeaponCatalogRuntime(api, profile);
   installChargerSurface(api);
   // The S3 ShotGuideFrame guide reads the installed projectile motion records, so
   // it installs after main-weapon fidelity and before any aim/HUD consumer runs.

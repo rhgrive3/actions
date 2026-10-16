@@ -44,7 +44,9 @@ export function installWeaponMotion({ Character, WeaponRunner, CHARACTER_TIMERS:
     const muzzle = Projectiles.prototype._muzzle, origin = new THREE.Vector3(), delta = new THREE.Vector3(), hit = new Hit();
     Projectiles.prototype._muzzle = function (actor, out) {
       muzzle.call(this, actor, out);
-      if (actor.weapon?.kind !== 'slosher') return out;
+      // Added Sloshers use kind='catalog' but need the same last-segment
+      // obstruction guard. Preserve the original legacy-only pose timing.
+      if (actor.weapon?.kind !== 'slosher' && actor.weapon?.catalogRecord?.family !== 'slosher') return out;
       // Native LOS omits its last .05 WU. The retimed bucket may otherwise
       // spawn inside that omitted wall sliver. Use the actual full segment,
       // keeping the native emitter and its existing fallback in free space.

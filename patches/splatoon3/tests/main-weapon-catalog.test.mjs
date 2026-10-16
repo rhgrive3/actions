@@ -22,6 +22,46 @@ async function setup() {
   return f;
 }
 
+test('production install enables added weapon owners without a test-only second install', async () => {
+  const f = await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true });
+  f.G.physics.segment = (_a,_b,h) => { h.hit=false; return h; };
+  const legacy=f.make('shooter'); legacy.form='kid'; legacy.intent.fire=true;
+  f.tick(legacy, 10);
+  assert.ok(f.G.projectiles.list.some(p => p.wid==='shooter' && !p.catalog),
+    'legacy seven must retain their native owner');
+  for(const family of [...new Set(MAIN_WEAPON_CATALOG.records.filter(r=>!r.legacy).map(r=>r.family))]){
+    const r=MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy && r.family===family);
+    f.G.projectiles.clear();f.G.actors.length=0;
+    const a=f.make(r.id);a.form='kid';a.ink=100;a.intent.fire=true;
+    f.tick(a,130);a.intent.fire=false;f.tick(a,35);
+    assert.ok(f.G.projectiles.list.some(p=>p.wid===r.id&&p.catalog?.r===r),
+      r.id+' ('+family+') must use the installed catalogue owner');
+  }
+});
+
+test('added Slosher muzzle retains the legacy full-segment wall guard but Shooter is unchanged', async () => {
+  const f=await fixture({ fullRuntime:true, productionComposition:true, realProjectiles:true });
+  const row=MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy && r.family==='slosher');
+  assert.ok(row);
+  const a=f.make(row.id), shooter=f.make('shooter');
+  let rays=0;
+  f.G.physics.los=()=>true; // native shortcut omits its terminal sliver
+  f.G.physics.raycast=(_from,_dir,_len,h)=>{rays++;h.hit=true;return h;};
+  for(const actor of [a,shooter]){
+    actor.form='kid';actor.aimDir.set(0,0,1);
+    actor.character.getMuzzle=out=>out.copy(actor.pos).add(new f.THREE.Vector3(.25,1.1,.45));
+    actor.character.aimReady=()=>1;
+  }
+  const anchor=a.pos.clone();anchor.y+=1.05;
+  const blocked=f.G.projectiles._muzzle(a,new f.THREE.Vector3());
+  assert.ok(blocked.distanceTo(anchor)<1e-9,'catalog Slosher must not launch inside the overlooked wall sliver');
+  assert.equal(rays,2,'both the actual muzzle and fallback segment must be checked');
+  const before=rays;
+  const ordinary=f.G.projectiles._muzzle(shooter,new f.THREE.Vector3());
+  assert.ok(ordinary.distanceTo(shooter.pos.clone().add(new f.THREE.Vector3(.25,1.1,.45)))<1e-9);
+  assert.equal(rays,before,'other families retain their original muzzle path');
+});
+
 test('all 58 additions admit finite native main shots through Actor input', async () => {
   const f = await setup();
   assert.equal(f.WEAPON_ORDER.length,160); // 65 base mains + 95 playable alternate kits
