@@ -62,6 +62,19 @@ test('added Slosher muzzle retains the legacy full-segment wall guard but Shoote
   assert.equal(rays,before,'other families retain their original muzzle path');
 });
 
+test('catalog Shooter live reticle retains its sourced cone on cooldown/idle frames',async()=>{
+  const f=await fixture({fullRuntime:true,productionComposition:true,realProjectiles:true});
+  const row=MAIN_WEAPON_CATALOG.records.find(r=>!r.legacy&&r.family==='shooter'&&
+    Number.isFinite(r.parameters.WeaponParam?.Stand_DegSwerve)&&r.parameters.WeaponParam.Stand_DegSwerve>0);
+  assert.ok(row,'at least one additional Shooter with a sourced standing cone');
+  const actor=f.make(row.id);actor.form='kid';actor.grounded=true;
+  const expected=row.parameters.WeaponParam.Stand_DegSwerve;
+  f.tick(actor,3);
+  assert.ok(Math.abs(actor.weaponRunner.spread-expected)<1e-9,'reticle cone must not be zero while idle');
+  actor.intent.fire=true;f.tick(actor);actor.intent.fire=false;f.tick(actor,2);
+  assert.ok(Math.abs(actor.weaponRunner.spread-expected)<1e-9,'cooldown must not erase the live cone');
+});
+
 test('all 58 additions admit finite native main shots through Actor input', async () => {
   const f = await setup();
   assert.equal(f.WEAPON_ORDER.length,160); // 65 base mains + 95 playable alternate kits

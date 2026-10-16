@@ -1344,6 +1344,18 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       s.accuracy.advance(dt);
       if(ANGULAR_FAMILIES.has(r.family))advanceCatalogJumpClock(s,a,r.family,dt);
     }
+    // The legacy runner's _spreadDeg returns zero for kind='catalog'.
+    // Restore the sourced per-family cone on idle and cooldown frames so the
+    // reticle/shot guide does not flicker to perfect accuracy between rounds.
+    // The firing branch may still replace this with a mode-specific shot cone.
+    if(ANGULAR_FAMILIES.has(r.family)){
+      const t=weaponParam(r),ground=finite(t.Stand_DegSwerve,0),jump=finite(t.Jump_DegSwerve,ground);
+      const age=r.family==='splatling'&&Number.isFinite(a.s3SplatlingJumpAgeFrames)
+        ?a.s3SplatlingJumpAgeFrames/HZ:s.jumpAge;
+      this.spread=r.family==='dualies'&&s.turret>0?finite(t.LapOver_DegSwerve,0)
+        :catalogAngularEnvelope(r.family,!!a.grounded,ground,jump,age,
+          a.s3?.modifiers?.actionAirSpread??0,t);
+    }
     if(s.lunge){s.lunge.remaining-=dt;if(s.lunge.remaining<=EPS)s.lunge=null;}
     if(s.melee){s.melee.remaining-=dt;if(s.melee.remaining<=EPS){const melee=s.melee;s.melee=null;melee.fire();}}
     if(s.pending){s.pending.remaining-=dt;if(s.pending.remaining<=EPS){const pending=s.pending;s.pending=null;pending.fire();}}
