@@ -21,15 +21,19 @@ test('Curling release and preview consume own launch Y and inherited vertical tu
  f.a.vel.y=2;b=f.throw();near(b.vel.y,11.2,'YPlusRate 2');
  f.a.vel.y=20;b=f.throw();near(b.vel.y,16.8,'YMax 0.16/F');
  f.a.vel.y=-20;b=f.throw();near(b.vel.y,7.2,'YMinusRate zero');
- f.a.vel.y=0; f.a.aimPitch=.3;f.ps.updateArc(f.a,true);b=f.throw();
- // The Curling guide replays the bomb's own step pipeline (FlyGravity and
- // FlyPositionAirResist) and samples it so the whole fuse fits the 64-vertex
- // line; vertex 1 is the real bomb after that many steps.
- const steps=Math.ceil(b.fuse/DT-1e-9), every=Math.max(1,Math.ceil(steps/(f.ps.arcN-2)));
- const arc=f.ps.arcGeo.attributes.position;
- for(const [k,i] of [["X",0],["Y",1],["Z",2]])assert.ok(Math.abs(arc["get"+k](0)-b.pos.getComponent(i))<1e-4,"vertex 0 is the release point");
- for(let i=0;i<every;i++)f.step();
- near(arc.getX(1),b.pos.x);assert.ok(Math.abs(arc.getY(1)-b.pos.y)<1e-4);near(arc.getZ(1),b.pos.z);
+ f.a.vel.y=0; f.a.aimPitch=.3;
+ // Curling has no airborne path or blast-radius guide. Verify that switching
+ // from an already visible preview clears both render owners, rather than
+ // comparing hidden stale vertices to the later physical bomb trajectory.
+ f.ps.arcLine.visible=f.ps.arcRing.visible=true;
+ f.ps.updateArc(f.a,true);
+ assert.equal(f.ps.arcLine.visible,false,"Curling never draws a ballistic guide");
+ assert.equal(f.ps.arcRing.visible,false,"Curling never draws a predicted blast circle");
+ b=f.throw();
+ const start=b.pos.clone(), beforeVy=b.vel.y;
+ f.step();
+ assert.ok(b.pos.distanceTo(start)>0,"real Curling still integrates its launched trajectory");
+ assert.ok(b.vel.y<beforeVy,"real Curling retains FlyGravity while airborne");
 });
 test('Curling applies source X/Z player-velocity inheritance independently',async()=>{
  const f=await setup();f.a.vel.set(2,0,3);const b=f.throw();
