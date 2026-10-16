@@ -7,6 +7,7 @@ import http from 'node:http';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {chromium} from 'playwright';
+import {canonicalBvhBaseline} from './lib/bvh-browser-baseline.mjs';
 import {geometry,oldWorld,oldPhysics} from '../patches/native-stages/tests/fixtures/bvh-query-fixture.mjs';
 const option=n=>{const i=process.argv.indexOf(n);assert.ok(i>=0&&process.argv[i+1],n+' required');return path.resolve(process.argv[i+1]);};
 const site=option('--site'),out=option('--evidence-dir');fs.mkdirSync(out,{recursive:true});
@@ -27,7 +28,7 @@ try{
   for(const [key,C]of Object.entries({triangles:Float32Array,normals:Float32Array,nodes:Float32Array,flags:Uint32Array,objectIds:Uint32Array,order:Uint32Array,triangleFace:Int32Array,mask:Uint8Array}))data[key]=new C(data[key]);
   const make=old=>{const level=new NativeLevel(data);if(old)level.triangleWorld=new W(data);return {level,world:level.triangleWorld,physics:new (old?P:NativePhysics)(level)};};
   const pairs={before:make(true),after:make(false)},V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z),outputs={before:new Hit(),after:new Hit()};
-  const flat=h=>({...h,point:h.point.toArray(),normal:h.normal.toArray()}),equal=(a,b)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw Error('Browser result mismatch');};
+  const flat=h=>({...h,point:h.point.toArray(),normal:h.normal.toArray()}),equal=(a,b)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw Error('Browser result mismatch: '+JSON.stringify({expected:a,actual:b}));};
   const inputs=Array.from({length:300},(_,i)=>({origin:V((i%19-9)*.4,3+(i%7)*.2,(i%13-6)*.4),dir:i%4?V(0,-1,0):V(.3,-.8,.1).normalize(),feet:V((i%23-11)*.4,(i%9)*.3,0),grate:i%2===0}));
   let rayChecks=0,fitChecks=0;
   for(let repeat=0;repeat<10;repeat++)for(const {origin,dir,feet,grate}of inputs){equal(flat(pairs.before.physics.raycast(origin,dir,12,outputs.before,grate)),flat(pairs.after.physics.raycast(origin,dir,12,outputs.after,grate)));rayChecks++;equal(pairs.before.physics.bodyFits(feet,.38,.1,1.45,grate),pairs.after.physics.bodyFits(feet,.38,.1,1.45,grate));fitChecks++;}
@@ -41,8 +42,10 @@ try{
   for(const kind of ['raycast','bodyFits']){for(const name of ['before','after','after','before'])run(name,kind,10);for(const name of ['before','after','after','before','before','after','after','before']){const t=performance.now(),checksum=run(name,kind,50);timings.push({kind,name,queries:15000,ms:performance.now()-t,checksum});}}
   for(const kind of ['raycast','bodyFits'])if(new Set(timings.filter(r=>r.kind===kind).map(r=>r.checksum)).size!==1)throw Error('Timing window checksum mismatch');
   return {rayChecks,fitChecks,callbackCounts:counts,nestedOrder:true,exceptionRecovery:true,timings,triangles:data.triangles.length/9};
- },{data,base,oldWorld,oldPhysics});
+ },{data,base,oldWorld:canonicalBvhBaseline(oldWorld),oldPhysics});
  assert.deepEqual(errors,[]);assert.ok([...receipts].some(p=>p.endsWith('/patches/native-stages/runtime/engine.mjs')));
- const report={status:'passed',browser:await browser.version(),contentHash:manifest.contentHash,revision:manifest.build.revision,baseline:'ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a',synthetic:true,...result,verifiedArtifacts:[...receipts].sort(),errors,limits:['Actual emitted production modules in Chromium; explicit synthetic triangle geometry.','Component CPU timings, not full-game rendering, device FPS or native-stage load evidence.']};
+ const report={status:'passed',browser:await browser.version(),contentHash:manifest.contentHash,revision:manifest.build.revision,baseline:'ee06c87fc623cc793ebf9aaffd3ffc3a5081c60a',baselineContactRule:'b5d9cf208472fed2f775e74afc1632a1586f72bc canonical source-ID ties',synthetic:true,...result,verifiedArtifacts:[...receipts].sort(),errors,limits:['Actual emitted production modules in Chromium; explicit synthetic triangle geometry.','Component CPU timings, not full-game rendering, device FPS or native-stage load evidence.']};
  fs.writeFileSync(path.join(out,'bvh-browser.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({status:report.status,browser:report.browser,rayChecks:result.rayChecks,fitChecks:result.fitChecks,callbackCounts:result.callbackCounts}));
+}catch(error){
+ fs.writeFileSync(path.join(out,'bvh-browser-failure.json'),JSON.stringify({status:'failed',revision:manifest.build.revision,contentHash:manifest.contentHash,error:String(error),verifiedArtifacts:[...receipts].sort()},null,2)+'\n');throw error;
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

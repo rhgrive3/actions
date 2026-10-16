@@ -19,6 +19,8 @@ const write=(name,bytes)=>{const p=path.join(root,name);fs.mkdirSync(path.dirnam
 write('package.json','{"type":"module"}');
 write('patches/local-quality/quality-probe.mjs','export const runQualityBrowserProbe=()=>{throw Error("Unexpected probe")};');
 write('patches/local-quality/paint-mipmap-probe.mjs','export const runPaintMipmapBrowserProbe=()=>{throw Error("Unexpected probe")};');
+write('scripts/lib/inkwave-weapon-appearance-probe.mjs','export const checkWeaponAppearancePicker=()=>{throw Error("Unexpected appearance probe")};');
+write('scripts/lib/inkwave-accepted-default-probe.mjs','export const checkAcceptedDefaultConsumption=()=>{throw Error("Unexpected default probe")};');
 write('scripts/check-inkwave-hud-authority.mjs','export const checkHudAuthority=()=>{},checkUiVisualProbes=()=>{};');
 write('scripts/build-inkwave.mjs','// fixed build\n');
 const rows=[['touch-layout/mobile.js','patches/touch-layout/mobile.js'],['network-replication/adapter.mjs','patches/network-replication/adapter.mjs'],['reliability/input-adapter.mjs','patches/reliability/input-adapter.mjs']];

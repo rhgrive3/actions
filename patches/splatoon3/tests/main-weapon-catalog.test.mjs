@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './source-fixture.mjs';
-import { registerMainWeaponCatalog } from '../runtime/main-weapon-catalog.mjs';
 import { MAIN_WEAPON_CATALOG } from '../runtime/main-weapon-catalog-data.mjs';
 
-test('registration applies Japanese and English even after the early i18n boot',()=>{
+test('registration applies Japanese and English even after the early i18n boot',async()=>{
+  const { registerMainWeaponCatalog } = await fixture({ productionComposition:true,
+    extraExports:"export { registerMainWeaponCatalog } from './patches/splatoon3/runtime/main-weapon-catalog.mjs';" });
   for(const LANG of ['ja','en']){
     const legacy=MAIN_WEAPON_CATALOG.records.filter(r=>r.legacy);
     const WEAPONS=Object.fromEntries(legacy.map(r=>[r.id,{id:r.id,kind:r.modelKind,class:r.family}]));
