@@ -11,13 +11,16 @@ export function installAudioPlatform(AudioEngine, env = globalThis) {
   function ensure(a) {
     if (a._platformAudio) return a._platformAudio;
     const r = a._platformAudio = { pending: null, wanted: lifecycle.active, needsGesture: false, off: null, unlock: null, disposed: false };
-    const reconcile = () => {
+    const reconcile = (trustedGesture = false) => {
       const ctx = a.ctx;
       if (r.disposed || a._platformAudio !== r) return;
       if (!ctx || a.offline || ctx.state === 'closed') return;
       r.wanted = lifecycle.active;
       if (r.pending) {
-        if (r.wanted && ctx.state !== 'running' && env.navigator?.userActivation?.isActive === true) {
+        // On iPad WebKit a resume() started before user activation can remain pending.
+        // The native trusted touch/click handler must retry even when navigator.userActivation
+        // is unavailable or does not report isActive for that event.
+        if (r.wanted && ctx.state !== 'running' && (trustedGesture || env.navigator?.userActivation?.isActive === true)) {
           try { Promise.resolve(ctx.resume?.()).catch(() => { r.needsGesture = true; }); } catch {}
         }
         return;
@@ -35,8 +38,8 @@ export function installAudioPlatform(AudioEngine, env = globalThis) {
     };
     r.reconcile = reconcile;
     r.off = lifecycle.subscribe({ suspend: reconcile, resume: reconcile });
-    r.unlock = () => { if (lifecycle.active) reconcile(); };
-    for (const type of ['pointerdown', 'keydown', 'touchend', 'mousedown']) env.addEventListener?.(type, r.unlock, { capture: true, passive: true });
+    r.unlock = () => { if (lifecycle.active) reconcile(true); };
+    for (const type of ['pointerdown', 'keydown', 'touchend', 'click', 'mousedown']) env.addEventListener?.(type, r.unlock, { capture: true, passive: true });
     return r;
   }
   P._installUnlock = function () { ensure(this); };
@@ -44,7 +47,7 @@ export function installAudioPlatform(AudioEngine, env = globalThis) {
   P.disposePlatform = function () {
     const r = this._platformAudio; if (!r) return;
     r.disposed = true; r.off?.();
-    for (const type of ['pointerdown', 'keydown', 'touchend', 'mousedown']) env.removeEventListener?.(type, r.unlock, true);
+    for (const type of ['pointerdown', 'keydown', 'touchend', 'click', 'mousedown']) env.removeEventListener?.(type, r.unlock, true);
     this._platformAudio = null;
   };
 }
