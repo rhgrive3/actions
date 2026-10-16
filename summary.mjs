@@ -1,0 +1,3 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {pathToFileURL} from 'node:url';
+export function validateSummaries(source,emitted){for(const rows of[source,emitted]){assert.equal(rows.length,6);const keys=new Set();for(const r of rows){assert.equal(r.row,'Blaster_Short_01');assert(['base','manual','default'].includes(r.role));assert([0,1].includes(r.team));assert(!keys.has(r.role+':'+r.team));keys.add(r.role+':'+r.team);for(const k of['geometry','trace'])assert.match(r[k],/^[a-f0-9]{64}$/);assert(r.shots>0&&r.paints>0);}}assert.deepEqual(emitted,source);return true;}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)validateSummaries(...process.argv.slice(2,4).map(p=>JSON.parse(fs.readFileSync(p))));

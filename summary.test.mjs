@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {validateSummaries as check} from './summary.mjs';
+const rows=['base','manual','default'].flatMap(role=>[0,1].map(team=>({row:'Blaster_Short_01',role,team,geometry:'a'.repeat(64),trace:'b'.repeat(64),shots:5,paints:35})));
+test('six actual local roles must consume equal source and emitted geometry and trace',()=>{check(rows,structuredClone(rows));for(const mutation of[r=>r.pop(),r=>r[1]=r[0],r=>r[0].trace='c'.repeat(64),r=>r[0].shots=0,r=>r[0].row='wrong']){const x=structuredClone(rows);mutation(x);assert.throws(()=>check(rows,x));}});

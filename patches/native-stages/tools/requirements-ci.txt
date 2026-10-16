@@ -1,5 +1,0 @@
-# Dependencies for unconditional synthetic Python/Worker source-mask parity.
-# Match the verified Python3.12 local conversion environment; no model payloads.
-numpy==2.3.5
-Pillow==12.3.0
-numba==0.65.1

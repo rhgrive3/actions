@@ -1,0 +1,128 @@
+{
+  "head": "d44473fcd59599eb94bb3bb9a959e22da118184a",
+  "tree": "0fd8de5349efc039f1f67ccd3446f0230950d6c5",
+  "registrySHA256": "d2767ed2e2b0abacf82727963f672ada1516f733743ba561b0370d19486491b6",
+  "payload": [
+    {
+      "path": "patches/splatoon3/runtime/main-weapon-catalog.mjs",
+      "blob": "3425c3e0a9e3296e0770a08e37b4d87d17ad2a22",
+      "sha256": "398bf573c5609a2140f5ad8d799c8154d9bf6ac24a21593edc213a966f405e13"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/registry.mjs",
+      "blob": "00fe0b814a4eff7aa6556a8758cbf1e5c01816ed",
+      "sha256": "7f48837b06cf84ff0de5c261ae97839f6d4440f70e65817e1d8e5b6fdccd04a0"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/kit.mjs",
+      "blob": "c29be833c719915d9db1c2f5da9c3f6f74621e33",
+      "sha256": "b91c581e911399a515955cdcbc95565c0a7040cb29f530142bb7b68a8f103fc1"
+    },
+    {
+      "path": "scripts/build-inkwave.mjs",
+      "blob": "8c67d8852d4d73b674638ebf0486a424d04877a0",
+      "sha256": "3bea767f0a4e1137bca80ad795b5645820d22a8cab9eabe06d3222050313f04c"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/shooter-blaster-variants.mjs",
+      "blob": "099fec1b3ff7625eb43fbda9f626fcfa5c237fb2",
+      "sha256": "94a846196199d702e53aebf150972ef769fd6cf688f2c1715f1d28767d553812"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variant-shooter-surfaces.mjs",
+      "blob": "fea0205a4280314f110fe28f75e26240d39b2472",
+      "sha256": "bcb8cecdf20a55bfeb208603f812a814f074da2fb2fcbdd63fd5bbe71eca1681"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/blasters.mjs",
+      "blob": "fc80ded3e03291627a1305a2af6b5c771c463ca4",
+      "sha256": "1c31caa303d86f702c794cd8b7a99c9fe55389987619b16e0f46a0ffb50d4994"
+    },
+    {
+      "path": "patches/splatoon3/runtime/weapon-models/variants-accepted-luna-followup.mjs",
+      "blob": "daffb819463a7a26806d411d5eb77dfdfec9ae1c",
+      "sha256": "79f35203f5955b19bef8928b450b403fb10fcd5978fb6a9923b1fced977a32c5"
+    },
+    {
+      "path": "patches/splatoon3/tests/weapon-accepted-luna.test.mjs",
+      "blob": "a8a61732b19112c1d34fd93dae02646cab39003d",
+      "sha256": "7638e76fd73f4fdb5b6f261c32c9dea521c16c797b51379a459be324eaea26c6"
+    }
+  ],
+  "variantIds": [
+    "Stringer_Normal_02",
+    "Charger_Quick_01",
+    "Maneuver_Short_02",
+    "Stringer_Short_02",
+    "Shelter_Normal_01",
+    "Slosher_Washtub_01",
+    "Shelter_Wide_01",
+    "Shelter_Wide_02",
+    "Shelter_Focus_01",
+    "Stringer_Short_01",
+    "Stringer_Normal_01",
+    "Stringer_Explosion_01",
+    "Roller_Heavy_01",
+    "Slosher_Diffusion_01",
+    "Shooter_Blaze_01",
+    "Shooter_QuickMiddle_01",
+    "Shooter_Short_01",
+    "Shooter_Precision_01",
+    "Saber_Heavy_01",
+    "Saber_Normal_01",
+    "Saber_Normal_02",
+    "Saber_Lite_02",
+    "Slosher_Launcher_01",
+    "Slosher_Bathtub_01",
+    "Shooter_TripleQuick_01",
+    "Shooter_TripleMiddle_01",
+    "Maneuver_Short_01",
+    "Maneuver_Normal_01",
+    "Maneuver_Stepper_01",
+    "Maneuver_Long_01",
+    "Blaster_LightShort_01",
+    "Blaster_Precision_01",
+    "Blaster_Middle_01",
+    "Blaster_Light_01",
+    "Charger_Normal_01",
+    "Charger_NormalScope_01",
+    "Charger_Long_01",
+    "Charger_LongScope_01",
+    "Charger_Keeper_01",
+    "Charger_Light_01",
+    "Charger_Pencil_01",
+    "Charger_Normal_02",
+    "Charger_NormalScope_02",
+    "Slosher_Strong_01",
+    "Roller_Hunter_01",
+    "Spinner_Serein_01",
+    "Spinner_Hyper_01",
+    "Spinner_Hyper_02",
+    "Shooter_Expert_01",
+    "Shooter_QuickLong_01",
+    "Shooter_Long_01",
+    "Maneuver_Gallon_01",
+    "Maneuver_Normal_02",
+    "Shelter_Compact_01",
+    "Spinner_Downpour_01",
+    "Spinner_HyperShort_01",
+    "Spinner_Standard_01",
+    "Spinner_Quick_01",
+    "Spinner_Quick_02",
+    "Blaster_Short_01"
+  ],
+  "baseModelCount": 65,
+  "scope": "Eight existing views, normal local default selection and explicit base override; no source-frame dataset; prior manual GPU proof is separate.",
+  "limits": [
+    "Single icon does not establish owner-boundary intent",
+    "Rear396 fixed while front1536 owner faces remain",
+    "Source-only fixture until hosted emitted/GPU"
+  ],
+  "declaredTriangleDelta": 0,
+  "reference": {
+    "url": "https://github.com/Leanny/splat3/blob/7280ff9cde8bb1c5dcef46c700c326471584d2e6/images/weapon/Wst_Blaster_Short_01.png",
+    "gitBlob": "4cb1967dc265288af92bf5006dc3e1e9e5783fc0",
+    "sha256": "e72819a7081dce6ef0d6a4d64833df036e0c8aa8c650acde2ab4deea7dd0ab3e",
+    "observed": "Fixed original icon viewed: pale rear ball/nozzle trim, dark central body and dark stalk knob. Single palette does not independently establish owner boundaries."
+  }
+}

@@ -1,0 +1,56 @@
+name: Review normal default Luna Neo appearance
+on:
+  push:
+    branches: [review/luna-default-native-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: d44473fcd59599eb94bb3bb9a959e22da118184a
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Frozen package and controls
+        run: |
+          node diagnostic/preflight.mjs candidate
+          node --test diagnostic/test-count.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture.test.mjs diagnostic/selection-contract.test.mjs diagnostic/capture-gpu-lifecycle.test.mjs diagnostic/summary.test.mjs diagnostic/workflow.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs
+      - name: Exact source local Actor firing and paint ownership
+        run: |
+          mkdir -p evidence
+          LUNA_SOURCE="$PWD/candidate" LUNA_SUMMARY="$PWD/evidence/source-summary.json" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap candidate/patches/splatoon3/tests/weapon-accepted-luna.test.mjs > evidence/source.tap
+          node diagnostic/test-count.mjs evidence/source.tap
+      - name: One production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Exact emitted local Actor firing and paint ownership
+        run: |
+          LUNA_SUMMARY="$PWD/evidence/emitted-summary.json" LUNA_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap candidate/patches/splatoon3/tests/weapon-accepted-luna.test.mjs > evidence/emitted.tap
+          node diagnostic/test-count.mjs evidence/emitted.tap
+          node diagnostic/summary.mjs evidence/source-summary.json evidence/emitted-summary.json
+      - name: Normal-light eight native views
+        run: node diagnostic/capture-luna-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: normal-default-luna-neo-acceptance
+          path: evidence
+          if-no-files-found: error
