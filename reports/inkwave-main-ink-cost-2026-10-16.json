@@ -1,0 +1,322 @@
+{
+  "scope": "Actor/WeaponRunner/Projectiles/CPU Paint on bounded rectangular fixture; no render, movement integration stubbed",
+  "node": "v24.19.0",
+  "profileBytes": 4096,
+  "additionalProjectiles": 0,
+  "additionalStamps": 0,
+  "additionalWireFields": 0,
+  "rows": [
+    {
+      "id": "shooter",
+      "stamps": 45,
+      "sourceHash": "9ea1ff6c89c1599217f2a361a469a6e34d12a81d9632fc83d06a54653bffe1a8",
+      "circleCells": 738,
+      "candidateCells": 738,
+      "circleMedianMs": 66.86514699999998,
+      "candidateMedianMs": 67.63527799999974,
+      "samples": {
+        "circle": [
+          81.35024299999986,
+          67.57951400000002,
+          64.35464300000012,
+          66.86514699999998,
+          63.81005099999993
+        ],
+        "candidate": [
+          80.6687850000003,
+          65.06271000000015,
+          65.31242599999996,
+          67.63527799999974,
+          75.31750299999976
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "28188fd808510ec85358788a24e0da5c851d20398e9643b4e4a0ef1c4e7cd086"
+        },
+        {
+          "hz": 60,
+          "grid": "28188fd808510ec85358788a24e0da5c851d20398e9643b4e4a0ef1c4e7cd086"
+        },
+        {
+          "hz": 120,
+          "grid": "28188fd808510ec85358788a24e0da5c851d20398e9643b4e4a0ef1c4e7cd086"
+        }
+      ]
+    },
+    {
+      "id": "dualies",
+      "stamps": 36,
+      "sourceHash": "7d6e09664ab05fda47a2cbd18391a88c76b6fbf5851b3c9a4bf515cca78c2c41",
+      "circleCells": 615,
+      "candidateCells": 615,
+      "circleMedianMs": 40.778833000000304,
+      "candidateMedianMs": 41.26994299999933,
+      "samples": {
+        "circle": [
+          53.85607699999946,
+          40.778833000000304,
+          38.90146199999981,
+          57.42383500000051,
+          37.087798999999904
+        ],
+        "candidate": [
+          48.26475699999992,
+          41.26994299999933,
+          48.41402199999993,
+          36.598291000000245,
+          41.209271000000626
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "37afe7ebd48b8e8808b57222694173b480474e432db24f74f10b77a1e5330d0f"
+        },
+        {
+          "hz": 60,
+          "grid": "37afe7ebd48b8e8808b57222694173b480474e432db24f74f10b77a1e5330d0f"
+        },
+        {
+          "hz": 120,
+          "grid": "37afe7ebd48b8e8808b57222694173b480474e432db24f74f10b77a1e5330d0f"
+        }
+      ]
+    },
+    {
+      "id": "slosher",
+      "stamps": 91,
+      "sourceHash": "eedfc7f8bf90f0d141e9d697b797cacb3f4c85fbd9bc8b472026011ae1ae6a70",
+      "circleCells": 1156,
+      "candidateCells": 1156,
+      "circleMedianMs": 57.75422400000025,
+      "candidateMedianMs": 60.16994599999998,
+      "samples": {
+        "circle": [
+          57.75422400000025,
+          59.77205099999992,
+          55.995858000000226,
+          61.782828999999765,
+          48.94061099999999
+        ],
+        "candidate": [
+          81.25224100000014,
+          60.16994599999998,
+          53.81180300000051,
+          53.667075999999724,
+          80.71812099999988
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "13acfbb7ddd1b5e5021d7eaa2cd9dc6b612344f03c7286aa2d60b36e2905430f"
+        },
+        {
+          "hz": 60,
+          "grid": "13acfbb7ddd1b5e5021d7eaa2cd9dc6b612344f03c7286aa2d60b36e2905430f"
+        },
+        {
+          "hz": 120,
+          "grid": "13acfbb7ddd1b5e5021d7eaa2cd9dc6b612344f03c7286aa2d60b36e2905430f"
+        }
+      ]
+    },
+    {
+      "id": "roller",
+      "stamps": 27,
+      "sourceHash": "d2a3164cfe46d4dfe859259228b586205b025439311405722e0b7c98097c0a4d",
+      "circleCells": 719,
+      "candidateCells": 719,
+      "circleMedianMs": 29.945682999999917,
+      "candidateMedianMs": 29.203623999999763,
+      "samples": {
+        "circle": [
+          72.74972800000069,
+          29.945682999999917,
+          27.60885000000053,
+          25.6920599999994,
+          74.81560300000092
+        ],
+        "candidate": [
+          31.112150999999358,
+          33.00437299999976,
+          28.82094699999834,
+          24.73703000000023,
+          29.203623999999763
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "5ecc37811d0fff7b7c5271cc5a29c62bdc98f58a0b4c2efa6671432946408774"
+        },
+        {
+          "hz": 60,
+          "grid": "5ecc37811d0fff7b7c5271cc5a29c62bdc98f58a0b4c2efa6671432946408774"
+        },
+        {
+          "hz": 120,
+          "grid": "5ecc37811d0fff7b7c5271cc5a29c62bdc98f58a0b4c2efa6671432946408774"
+        }
+      ]
+    },
+    {
+      "id": "s3-brush-mini",
+      "stamps": 3,
+      "sourceHash": "da3623010f87a35c213b504efe43c19dcf07f5b6671143e94694d48c237d1b21",
+      "circleCells": 398,
+      "candidateCells": 398,
+      "circleMedianMs": 14.782094000000143,
+      "candidateMedianMs": 25.262932999999975,
+      "samples": {
+        "circle": [
+          14.782094000000143,
+          16.865874999999505,
+          14.801924000001236,
+          13.477147000001423,
+          13.225336999999854
+        ],
+        "candidate": [
+          19.656261000000086,
+          25.262932999999975,
+          59.43480600000112,
+          20.840447000002314,
+          25.322643000003154
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "7361ecbdbae10a36645069be4779a707da58679839999525c7f09136c9159ff9"
+        },
+        {
+          "hz": 60,
+          "grid": "7361ecbdbae10a36645069be4779a707da58679839999525c7f09136c9159ff9"
+        },
+        {
+          "hz": 120,
+          "grid": "7361ecbdbae10a36645069be4779a707da58679839999525c7f09136c9159ff9"
+        }
+      ]
+    },
+    {
+      "id": "s3-roller-heavy",
+      "stamps": 133,
+      "sourceHash": "8ebcc3440483bd6b04339b2a033260184c078e4c7af8ed8a0aa42910c05d59c4",
+      "circleCells": 1108,
+      "candidateCells": 1108,
+      "circleMedianMs": 37.27537099999972,
+      "candidateMedianMs": 45.29354799999783,
+      "samples": {
+        "circle": [
+          41.59174699999858,
+          166.5281410000025,
+          37.27537099999972,
+          36.56157499999972,
+          36.960705000001326
+        ],
+        "candidate": [
+          46.39567799999713,
+          47.463928999997734,
+          42.08577199999854,
+          41.89468399999896,
+          45.29354799999783
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "c7ed5640a9fe5a42d318055aaa80f4dda52c9234ade5f51d4550e32a2acd1196"
+        },
+        {
+          "hz": 60,
+          "grid": "c7ed5640a9fe5a42d318055aaa80f4dda52c9234ade5f51d4550e32a2acd1196"
+        },
+        {
+          "hz": 120,
+          "grid": "c7ed5640a9fe5a42d318055aaa80f4dda52c9234ade5f51d4550e32a2acd1196"
+        }
+      ]
+    },
+    {
+      "id": "s3-brush-heavy",
+      "stamps": 8,
+      "sourceHash": "4373e0ef8ecdaf524c800b5b8135660481ee5c32a740391b09ce1d73361ee705",
+      "circleCells": 358,
+      "candidateCells": 358,
+      "circleMedianMs": 17.623726999998325,
+      "candidateMedianMs": 20.869810000000143,
+      "samples": {
+        "circle": [
+          16.669888999997056,
+          17.623726999998325,
+          14.519798000001174,
+          26.01759999999922,
+          19.570843000001332
+        ],
+        "candidate": [
+          20.869810000000143,
+          23.87404499999684,
+          20.03616400000101,
+          19.840178999998898,
+          22.071411000000808
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "6fea8da217092185cb0c436179504aa07f93f21d487721673c8c62732c6ce49f"
+        },
+        {
+          "hz": 60,
+          "grid": "6fea8da217092185cb0c436179504aa07f93f21d487721673c8c62732c6ce49f"
+        },
+        {
+          "hz": 120,
+          "grid": "6fea8da217092185cb0c436179504aa07f93f21d487721673c8c62732c6ce49f"
+        }
+      ]
+    },
+    {
+      "id": "s3-slosher-diffusion",
+      "stamps": 151,
+      "sourceHash": "1f1e0f802325ee60fa3368b2362e966ee69bc8a48f58816a46432f7d4652e163",
+      "circleCells": 1182,
+      "candidateCells": 1182,
+      "circleMedianMs": 94.69269300000087,
+      "candidateMedianMs": 115.05711499999961,
+      "samples": {
+        "circle": [
+          94.69269300000087,
+          106.11846100000184,
+          115.4096529999988,
+          85.48035499999969,
+          94.37512400000196
+        ],
+        "candidate": [
+          115.05711499999961,
+          116.63587600000028,
+          215.0931789999995,
+          96.18111700000009,
+          97.67597999999998
+        ]
+      },
+      "rates": [
+        {
+          "hz": 30,
+          "grid": "555344f1c83f6e98a8bbd56f4f193d46cec12adc56f0bfcf58aac6006a3389f8"
+        },
+        {
+          "hz": 60,
+          "grid": "555344f1c83f6e98a8bbd56f4f193d46cec12adc56f0bfcf58aac6006a3389f8"
+        },
+        {
+          "hz": 120,
+          "grid": "555344f1c83f6e98a8bbd56f4f193d46cec12adc56f0bfcf58aac6006a3389f8"
+        }
+      ]
+    }
+  ]
+}

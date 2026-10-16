@@ -10,6 +10,7 @@ import { paintSlosherNearest } from './slosher-nearest-paint.mjs';
 import { withRollerImpactPaint, rollerImpactAngleDegrees } from './roller-impact-paint.mjs';
 import { SHOOTER_FLOOR_NORMAL_Y, withShooterImpactPaint, SHOOTER_PARAMTABLE_DEFAULTS } from './shooter-impact-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND, SOURCE_SPLASH_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 import { hurtboxRadius, hurtboxHeight } from './player-hurtbox.mjs';
 import { isKitProjectile, kitTrizookaFlight, kitTrizookaOrbitDelta, kitTrizookaActorRadius, kitTrizookaWorldSweep, kitTrizookaClearPooled, kitVolleyHitAuthority } from './trizooka-collision.mjs';
 import { segmentCapsuleEntry as kitSegmentCapsuleEntry } from './projectile-collision.mjs';
@@ -491,7 +492,7 @@ function eligibleWallDropHit(hit) {
 }
 function wallDropPaint(p, point, radius, state, salt) {
   if (p.ghost || !(radius > 0) || !api.G.paint) return 0;
-  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: p.owner });
+  const area = api.G.paint.splat(point, radius, p.team, { seed: seededUnit(p.seed, salt + state.paintIndex++), kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: p.owner });
   if (Number.isFinite(area)) p.owner?.addTurf?.(area);
   return area || 0;
 }
@@ -957,7 +958,7 @@ export function globGrazePaint(game, p, point, normal, radius, face = -1) {
   if (last && last.face === face && last.at.distanceTo(center) < paintRadius * 0.8) return 0;
   p.s3GrazePaint = { at: center, face };
   const seed = ((Math.imul(((p.seed || 0) * 4294967296) >>> 0, 2654435761) ^ (p.s3GrazeCount = (p.s3GrazeCount || 0) + 1)) >>> 0) / 4294967296;
-  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, claimOwner: owner });
+  const area = game.paint.splat(center, paintRadius, p.team, { seed, kind: SOURCE_SPLASH_PAINT_KIND, footprint: mainInkFootprint(p.s3Weapon), claimOwner: owner });
   if (Number.isFinite(area) && area > 0) owner.addTurf?.(area);
   return area;
 }

@@ -10,6 +10,7 @@ import { adaptRange } from '../patches/practice-range/adapter.mjs';
 import { adaptRanked } from '../patches/splatoon3/ranked-adapter.mjs';
 import { adaptCameraAimControls } from '../patches/splatoon3/camera-aim-controls-adapter.mjs';
 import { adaptProjectileVisuals } from '../patches/splatoon3/projectile-visual-adapter.mjs';
+import { adaptMainInkFootprints } from '../patches/splatoon3/main-ink-footprint-adapter.mjs';
 
 // Keep the tested source path identical to the production build's adapters.
 export function adaptBuildSource(rel, code) {
@@ -26,5 +27,6 @@ export function adaptBuildSource(rel, code) {
   code = adaptWeaponAudio(rel, code);
   code = adaptProjectileVisuals(rel, code);
   code = adaptUiLocalization(rel, code);
+  code = adaptMainInkFootprints(rel, code);
   return adaptCameraAimControls(rel, code);
 }

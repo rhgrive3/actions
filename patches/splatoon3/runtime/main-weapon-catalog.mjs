@@ -3,6 +3,7 @@ import { constrainMuzzle } from './camera-aim-controls.mjs';
 import { showDetachedCanopy, retireDetachedCanopy } from './brella-canopy-visual.mjs';
 import { catalogSplashDropSpec, catalogPaintEllipse, catalogFractionalSplashCount, catalogSplashFirst } from './catalog-splash-paint.mjs';
 import { SOURCE_SHOT_PAINT_KIND } from './source-shot-footprint.mjs';
+import { mainInkFootprint } from './main-ink-footprints.mjs';
 import { spawnSplashDrop, paintDistanceFlight, SPLASH_DROP_AIR_RESIST } from './blaster-flight-paint.mjs';
 import { rollerVerticalPaintSpec } from './roller-vertical-paint.mjs';
 import { resolveWeaponGearCurve, weaponWeight } from './weapon-weight.mjs';
@@ -367,10 +368,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     const p = Math.atan2(direction.y,Math.hypot(direction.x,direction.z))+pitch*RAD;
     return new THREE.Vector3(Math.sin(y)*Math.cos(p),Math.sin(p),Math.cos(y)*Math.cos(p));
   }
-  function paint(owner, at, radius, depth=1, direction=null, face=-1) {
+  function paint(owner, at, radius, depth=1, direction=null, face=-1, footprint=null) {
     if (!(radius>0) || !owner || owner.remote) return;
     // The recorded paint packet carries this seed; receivers never reroll it.
-    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face};
+    const options = {seed:Math.random(),claimOwner:owner,kind:SOURCE_SHOT_PAINT_KIND,face,footprint};
     let centre=at,paintRadius=radius;
     if (direction) {
       const normal=G.level?.faces?.[face]?.n||down.clone().negate();
@@ -387,10 +388,10 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     owner.addTurf(G.paint.splat(centre,paintRadius,owner.team,options));
   }
-  function floorPaint(owner, at, radius, depth=1, direction=null) {
+  function floorPaint(owner, at, radius, depth=1, direction=null, footprint=null) {
     base.copy(at); base.y += .15;
     const h = G.physics.raycast(base,down,Math.max(4,at.y-owner.pos.y+2),floorHit,true);
-    if (h.hit) paint(owner,h.point,radius,depth,direction,h.face);
+    if (h.hit) paint(owner,h.point,radius,depth,direction,h.face,footprint);
   }
 
   // Trace the centre path on actual collision polygons, never paint-chart
@@ -488,7 +489,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     contact.down.copy(current.normal).negate();
     const h=G.physics.raycast(contact.origin,contact.down,.3,contact.hit,true);
     if(h.hit&&current.endFaces.includes(h.face)&&h.point.distanceToSquared(contact.point)<1e-12)
-      paint(owner,h.point,radius,depth,direction,h.face);
+      paint(owner,h.point,radius,depth,direction,h.face,'ink-contact');
   }
 
   function mode(r, key='normal', unit=0, charge=0) {
@@ -634,7 +635,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     if(Number.isInteger(splash?.SplitNum)&&splash.SplitNum>0&&nearest?.WidthHalfNearest>0&&
        advanceShooterNearestSlot(s,{...splash,ForceSpawnNearestAddNumArray:splash.ForceSpawnNearestAddNumArray||[]})){
       const at=a.pos.clone().addScaledVector(a.aimDir.clone().setY(0).normalize(),finite(splash.SpawnNearestLength,0));
-      floorPaint(a,at,nearest.WidthHalfNearest);
+      floorPaint(a,at,nearest.WidthHalfNearest,1,null,mainInkFootprint(r));
     }
   }
   function emitUnits(runner,r,key,charge=0) {
@@ -686,7 +687,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     // high airborne swing paints nothing under the player (native foot-paint rule).
     base.set(a.pos.x+rx*o.X+fx*o.Z,a.pos.y+Math.max(0,n.MaxHeight),a.pos.z+rz*o.X+fz*o.Z);
     const h=G.physics.raycast(base,down,Math.max(0,n.MaxHeight)+Math.abs(o.Y),floorHit,true);
-    if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face);
+    if(h.hit&&h.normal.y>=.5)paint(a,h.point,n.PaintWidthHalf,1,null,h.face,mainInkFootprint(a.weapon));
   }
   function emitArrow(runner,r,charge) {
     const a=runner.a,p=r.parameters.spl__WeaponStringerParam,t=p.ShotParam||{}, frames=charge*chargeFrames(r), count=finite(t.ArrowNum,3);
@@ -833,7 +834,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
       // The source's first-bounce footprint decays by 15% on each later contact.
       // Retain the existing single paint owner and do not duplicate paint events.
       const bounceRadius=(finite(bp.PaintRadiusFirstBounce,d.radius)+finite(bp.AfterOffsetPaintRadiusFirstBnce,0)*s.index)*Math.pow(.85,s.bounces);
-      if(!p.ghost)paint(p.owner,at,bounceRadius);
+      if(!p.ghost)paint(p.owner,at,bounceRadius,1,null,-1,mainInkFootprint(r));
       const clearance=catalogReboundSeparation(collisionRadius(d.c,'Field',p.age*HZ,s.index,s.bounces+1));
       p.pos.copy(at).addScaledVector(h.normal,clearance);
       p.vel.reflect(h.normal);
@@ -847,7 +848,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
     }
     if(p.ghost)return true;
     const footprint=impactPaint(p);
-    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face);
+    paint(p.owner,at,footprint.width,footprint.depth,p.vel.clone().setY(0).normalize(),h.face,mainInkFootprint(r));
     if((r.family==='roller'||r.family==='brush'||r.family==='slosher')&&
        (p.owner?.isLocal||!G.camera?.position||G.camera.position.distanceToSquared(at)<625))
       G.fx?.burst(at,h.normal||down,p.owner.color,{count:r.family==='roller'?12:9,speed:2.5,
@@ -921,7 +922,7 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         while(s.dropCount<d.splashCount&&s.nextSplash<=endTravel+EPS){
           const from=p.prev.clone().lerp(p.pos,clamp((s.nextSplash-travelBefore)/len));
           spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,
-            from,direction,radius:d.splashRadius,spec:d.splashDropSpec,depth:true});
+            from,direction,radius:d.splashRadius,spec:d.splashDropSpec,depth:true,footprint:mainInkFootprint(s.r)});
           s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
         }
       }
@@ -948,9 +949,9 @@ export function installMainWeaponCatalogRuntime(api, profile) {
         const direction=p.vel.clone().setY(0).normalize();
         if(d.sloshFall){
           const drop=spawnSplashDrop(G,{owner:p.owner,team:p.team,seed:p.seed,salt:s.dropCount,from:p.pos.clone(),
-            direction,radius:d.splashRadius,spec:d.sloshFall.spec,depth:true,kind:'drop'});
+            direction,radius:d.splashRadius,spec:d.sloshFall.spec,depth:true,kind:'drop',footprint:mainInkFootprint(s.r)});
           if(drop){drop.drawRadius=d.sloshFall.drawRadius;drop.sourceActor=s.r.sourceActor;}
-        }else floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction);
+        }else floorPaint(p.owner,p.pos,d.splashRadius,d.depth,direction,mainInkFootprint(s.r));
         s.nextSplash+=Math.max(.1,d.splashSpacing);s.dropCount++;
       }
       if(p.age+EPS>=p.life||s.travel+EPS>=s.range){
