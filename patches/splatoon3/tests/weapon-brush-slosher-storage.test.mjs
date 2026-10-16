@@ -1,7 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import * as AP from '../runtime/weapon-appearance.mjs';
-import * as R from '../runtime/weapon-models/registry.mjs';
-import {ALTERNATE_WEAPON_KITS} from '../runtime/alternate-weapon-kits-data.mjs';
+import {fixture} from './source-fixture.mjs';
+const {AP,R,ALTERNATE_WEAPON_KITS}=await fixture({extraExports:"export * as AP from './patches/splatoon3/runtime/weapon-appearance.mjs';export * as R from './patches/splatoon3/runtime/weapon-models/registry.mjs';export {ALTERNATE_WEAPON_KITS} from './patches/splatoon3/runtime/alternate-weapon-kits-data.mjs';"});
 const rows=['Brush_Heavy_01','Brush_Heavy_02','Slosher_Double_01','Slosher_Diffusion_02'];
 function store(initial=null){let raw=initial;const make=()=>({getItem:k=>{assert.equal(k,AP.WEAPON_APPEARANCE_STORAGE_KEY);return raw;},setItem:(k,v)=>{assert.equal(k,AP.WEAPON_APPEARANCE_STORAGE_KEY);raw=v;}});return {open:make,raw:()=>raw};}
 test('four new defaults persist explicit Base and manual preference through new storage handles',()=>{
