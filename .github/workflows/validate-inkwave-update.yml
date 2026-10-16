@@ -146,7 +146,7 @@ jobs:
       - name: Verify source-sampled direction-aware humanoid gait
         run: node --experimental-vm-modules --test patches/splatoon3/tests/legacy-walk-reference.test.mjs
       - name: Verify source-bank torso, weapon carry and squid-to-human transitions
-        run: node --experimental-vm-modules --test patches/splatoon3/tests/source-posture.test.mjs
+        run: node --experimental-vm-modules --test patches/splatoon3/tests/source-posture.test.mjs patches/splatoon3/tests/reverse-shot-release.test.mjs
       - name: Verify PR1077 additional seven regressions
         run: node --experimental-vm-modules --test patches/splatoon3/tests/kit-ink-vac.test.mjs patches/splatoon3/tests/kit-subs.test.mjs patches/splatoon3/tests/issue-1008-1020-1037-1053.test.mjs
       - name: Diagnose nine-way walk contact regression
