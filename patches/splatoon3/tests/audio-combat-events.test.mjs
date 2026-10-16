@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { adaptWeaponAudio } from '../audio-adapter.mjs';
 import { withBlasterSplashHit, blasterHitCueKind, blasterHitCuePitch, BLASTER_HIT_PITCH } from '../runtime/audio/blaster-hit.mjs';
-import { specialActionAudioEvent } from '../runtime/audio/kit-runtime.mjs';
+import { specialActionAudioEvent, specialActivationAudioEvent } from '../runtime/audio/kit-runtime.mjs';
 import { installWeaponAudioRuntime } from '../runtime/audio/runtime.mjs';
 import { installWeaponAudioEngine } from '../runtime/audio/engine.mjs';
 
@@ -99,9 +99,16 @@ test('special phase owners select real installed MP3 events, not nonexistent dod
     ['waveBreaker','pulse','impact'],
     ['killerWail','laser','fire'],
     ['reefslider','impact','explosion'],
+    ['tentaMissiles','target','ready'],
+    ['killerWail','target','ready'],
   ]){
     assert.equal(specialActionAudioEvent(id,action),event,id+':'+action);
     assert.ok(clip('special:'+id,event),'installed real MP3: '+id+'/'+event);
+  }
+  for(const [id,event] of [['slam','charge'],['storm','fire'],['ultraStamp','ready'],
+    ['inkjet','open'],['zipcaster','open']]){
+    assert.equal(specialActivationAudioEvent(id),event);
+    assert.ok(clip('special:'+id,event),'installed activation MP3: '+id+'/'+event);
   }
   assert.equal(specialActionAudioEvent('inkVac','unknown-action'),null);
   assert.equal(specialActionAudioEvent('zipcaster','activate'),'open');
