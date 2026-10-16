@@ -1,4 +1,5 @@
 import { adaptLobbySlotTransform } from './lobby-slot-transform-adapter.mjs';
+import { adaptNavHeuristic } from './nav-heuristic-adapter.mjs';
 import { adaptCameraFovCache } from './camera-fov-cache-adapter.mjs';
 import { adaptMaterialHandoff } from './material-handoff-adapter.mjs';
 import { adaptRetargetBranchUpdates } from './retarget-branch-update-adapter.mjs';
@@ -137,6 +138,7 @@ const IDENTITY_FILES = [
   'screen-angle.mjs', 'frame-order-adapter.mjs', 'charger-sight.mjs',
   'paint-hotpath-adapter.mjs',
   'distance-hotpath-adapter.mjs',
+  'nav-heuristic-adapter.mjs',
   'collision-hotpath-adapter.mjs',
   'runtime-frame-scratch-adapter.mjs',
   'range-frame-pacing.mjs', 'range-frame-profiler.mjs', 'range-hitch-tracer.mjs', 'range-frame-pacing-adapter.mjs',
@@ -152,6 +154,7 @@ export function replaceOnce(code, before, after, label) {
 
 // Presentation-order corrections run last, on this layer's finished output.
 export function adaptQualitySource(rel, code) {
+  code = adaptNavHeuristic(rel, code, replaceOnce);
   code = adaptLobbySlotTransform(rel, code);
   code = adaptMaterialHandoff(rel, code);
   code = adaptCameraFovCache(rel, code);
