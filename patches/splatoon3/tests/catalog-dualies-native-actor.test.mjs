@@ -35,10 +35,11 @@ test('catalog Dualies feed native roll and turret Character pose without mutatin
   G.camera.position.set(0,2,2);G.camera.updateMatrixWorld();
   G.level={blocks:[],groundHeight:()=>0,queryBlocks:(_a,_b,_c,_d,out)=>{out.length=0;return out;}};
   G.physics=new Physics(G.level);G.paint={sample:()=>1,splat:()=>0};G.actors=[];G.time=0;
+  G.match={playing:()=>true};const ps=new Projectiles(G.scene);G.projectiles=ps;
   const a=new Actor({team:0,weapon:'s3-maneuver-dual',isLocal:false,CharacterClass:Character,style:{hair:0,skin:2,outfit:0,eyes:0}});
   const ch=a.character,r=a.weaponRunner;ch.actor=a;ch.onEvent=null;ch.inWorld=true;
   a.grounded=a.ground.hit=true;a.form='kid';a.intent.fire=true;
-  a.yaw=Math.PI/2;a.intent.move.set(1,0,0);G.actors=[a];
+  a.yaw=Math.PI/2;a.intent.move.set(1,0,0);G.actors=[a];G.scene.add(ch.root);
   try{
     assert.equal(r.tryDodge(a.intent.move),true);
     assert.equal(r.dodge,null,'native dodge physics was not overwritten');
@@ -52,11 +53,15 @@ test('catalog Dualies feed native roll and turret Character pose without mutatin
     assert.ok(view.lockT>0&&view.s3Turret,'render view sees the source post-roll turret');
     assert.equal(ch.dodgeDur,a.weapon.catalogRecord.parameters.SideStepParam.MoveFrame/60);
     assert.ok(Math.abs(ch.dodgeX)<1e-8&&Math.abs(ch.dodgeZ-1)<1e-8,'animation direction is root-relative');
+    // Drive the actual Character state/pose owner first, including the
+    // enhanced Dualies C1 motion adapter and its admission gates.
+    G.time+=1/60;r.update(1/60,{fire:false,firePressed:false});a._finishFrame(1/60);
+    assert.ok(ch._runner().dodge?.t>0,'sourced dodge age reaches the Character');
     ch._poseDodge(ch.P,Math.min(.1,ch.dodgeDur*.5));
     assert.ok(ch.tumble>0,'the native tumble must not be suppressed');
     assert.ok(Array.from(ch.P).every(Number.isFinite));
     assert.ok(r.catalogState.roll,'real gameplay roll unchanged by presentation');
     r.catalogState.roll=null;r.catalogState.turret=0;
     assert.strictEqual(ch._runner(),r,'render view retires at the actual end');
-  }finally{ch.dispose();G.actors=[];}
+  }finally{ps.clear();G.scene.remove(ch.root,ps.blobs,ps.arcLine,ps.arcRing);ch.dispose();G.actors=[];}
 });
