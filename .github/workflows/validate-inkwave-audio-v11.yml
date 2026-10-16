@@ -29,7 +29,7 @@ jobs:
         run: python3 tools/audio/verify-s3-real-files.py
       - name: Verify real-only event behavior
         run: |
-          node --experimental-vm-modules --test patches/splatoon3/tests/audio-v11-real-only.test.mjs patches/splatoon3/tests/real-s3-loader-v7.test.mjs patches/splatoon3/tests/weapon-audio.test.mjs patches/splatoon3/tests/audio-refinement.test.mjs patches/splatoon3/tests/audio-loader-lifetime.test.mjs
+          node --experimental-vm-modules --test patches/splatoon3/tests/audio-v11-real-only.test.mjs patches/splatoon3/tests/real-s3-loader-v7.test.mjs patches/splatoon3/tests/weapon-audio.test.mjs patches/splatoon3/tests/audio-refinement.test.mjs patches/splatoon3/tests/audio-loader-lifetime.test.mjs patches/splatoon3/tests/audio-combat-events.test.mjs
       - name: Build production site and check startup
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund esbuild@0.28.2
