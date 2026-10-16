@@ -1,0 +1,9 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';import{execFileSync}from'node:child_process';import{fileURLToPath,pathToFileURL}from'node:url';
+export function verifyLayout(root,expectedSha,git=(...a)=>execFileSync('git',['-C',root,...a],{encoding:'utf8'}).trim()){
+ root=fs.realpathSync(root);assert.match(expectedSha||'',/^[a-f0-9]{40}$/);assert.equal(git('rev-parse','HEAD'),expectedSha);assert.equal(fs.realpathSync(git('rev-parse','--show-toplevel')),root,'actual checkout root');
+ const plan=JSON.parse(fs.readFileSync(path.join(root,'acceptance-plan.json'))),manifest=JSON.parse(fs.readFileSync(path.join(root,'package.json')));assert.equal(plan.head,'f063d3c48462beaf46f240c718c3e0d838cc6f28');assert.equal(plan.tree,'3b11e41c77f6532b555e74f1811a0ef9c3bd6395');
+ const seen=new Set();for(const f of manifest.files){assert.ok(!path.isAbsolute(f.path)&&!f.path.split('/').includes('..')&&!seen.has(f.path));seen.add(f.path);const b=fs.readFileSync(path.join(root,f.path));assert.equal(crypto.createHash('sha256').update(b).digest('hex'),f.sha256,f.path);assert.equal(crypto.createHash('sha1').update('blob '+b.length+'\0').update(b).digest('hex'),f.gitBlob,f.path);assert.equal(b.length,f.bytes);}
+ for(const f of ['capture-lightlong.mjs','capture-lightlong-integration.mjs','lightlong-actor.test.mjs','lightlong-capture-contract.test.mjs','check-diagnostic-layout.mjs','diagnostic-layout.test.mjs','.github/workflows/manual-lightlong-acceptance.yml'])assert.ok(seen.has(f),'required root file '+f);
+ return{diagnosticHead:expectedSha,sourceHead:plan.head,files:seen.size};
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)console.log(JSON.stringify(verifyLayout(path.dirname(fileURLToPath(import.meta.url)),process.env.GITHUB_SHA)));

@@ -1,0 +1,56 @@
+name: Review existing Rapid Blaster Pro manual appearances
+on:
+  push:
+    branches: [review/manual-lightlong-mainf063-20261016]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
+          ref: f063d3c48462beaf46f240c718c3e0d838cc6f28
+          persist-credentials: false
+          path: candidate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Pinned tools
+        working-directory: diagnostic
+        run: |
+          npm install --no-save --no-package-lock --silent esbuild@0.28.2 playwright@1.62.1 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+      - name: Frozen package and controls
+        run: |
+          node diagnostic/check-diagnostic-layout.mjs
+          node diagnostic/preflight.mjs
+          node --test diagnostic/page-cleanup.test.mjs diagnostic/capture-resources.test.mjs diagnostic/capture.test.mjs diagnostic/lightlong-capture-contract.test.mjs diagnostic/build-binding.test.mjs diagnostic/capture-checkpoint.test.mjs diagnostic/test-count.test.mjs diagnostic/diagnostic-layout.test.mjs
+      - name: Exact source Actor firing
+        run: |
+          mkdir -p evidence
+          LIGHTLONG_SOURCE="$PWD/candidate" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap diagnostic/lightlong-actor.test.mjs > evidence/source.tap 2>&1
+          node diagnostic/test-count.mjs evidence/source.tap 2
+      - name: One production build
+        run: |
+          export ESBUILD_MODULE="$PWD/diagnostic/node_modules/esbuild/lib/main.js"
+          (cd candidate && node scripts/build-inkwave.mjs inkwave-public ../candidate-site)
+          cp candidate-site/inkwave-build.json evidence/candidate-build.json
+      - name: Exact emitted Actor firing
+        run: |
+          LIGHTLONG_SOURCE="$PWD/candidate" INKWAVE_BUILT_SITE="$PWD/candidate-site" node --max-old-space-size=512 --experimental-vm-modules --test --test-reporter=tap diagnostic/lightlong-actor.test.mjs > evidence/emitted.tap 2>&1
+          node diagnostic/test-count.mjs evidence/emitted.tap 2
+      - name: Normal-light twelve native views
+        run: node diagnostic/capture-lightlong-integration.mjs --plan diagnostic/acceptance-plan.json --source candidate --site candidate-site --out evidence/images
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: manual-lightlong-acceptance
+          path: evidence
+          if-no-files-found: error
